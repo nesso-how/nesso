@@ -1,0 +1,125 @@
+import { useGraphStore } from '@/store/graph'
+
+interface Props {
+  graphTitle: string
+  onReview: () => void
+}
+
+export function TopBar({ graphTitle, onReview }: Props) {
+  const { settings, setSetting } = useGraphStore()
+  const dark = settings.dark
+
+  return (
+    <div style={{
+      position: 'absolute',
+      top: 18,
+      left: '50%',
+      transform: 'translateX(-50%)',
+      zIndex: 30,
+      display: 'flex',
+      alignItems: 'center',
+      gap: 14,
+      background: 'var(--bg-elev)',
+      border: '0.5px solid var(--line)',
+      borderRadius: 999,
+      padding: '6px 8px 6px 18px',
+      boxShadow: 'var(--shadow-md)',
+      whiteSpace: 'nowrap',
+    }}>
+      {/* Brand */}
+      <div style={{
+        font: "600 17px 'Fraunces', ui-serif, Georgia, serif",
+        letterSpacing: '-0.01em',
+        display: 'inline-flex',
+        alignItems: 'baseline',
+        gap: 6,
+      }}>
+        Nesso
+        <i style={{ fontStyle: 'italic', color: 'var(--cat-causal)', fontWeight: 500 }}>·</i>
+      </div>
+
+      {/* Graph title crumb */}
+      <div style={{
+        font: "500 12px 'JetBrains Mono', ui-monospace",
+        color: 'var(--ink-3)',
+        padding: '0 8px',
+        borderLeft: '0.5px solid var(--line)',
+      }}>
+        {graphTitle}
+      </div>
+
+      {/* Search placeholder */}
+      <div style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 8,
+        padding: '0 10px',
+        height: 28,
+        background: 'var(--paper-deep)',
+        borderRadius: 999,
+        color: 'var(--ink-3)',
+        fontSize: 12,
+        minWidth: 200,
+        cursor: 'text',
+      }}>
+        <span>Search concepts…</span>
+        <kbd style={{
+          marginLeft: 'auto',
+          font: "500 10px 'JetBrains Mono', ui-monospace",
+          background: 'var(--bg-elev)',
+          padding: '1px 5px',
+          borderRadius: 4,
+          color: 'var(--ink-4)',
+        }}>⌘K</kbd>
+      </div>
+
+      {/* Review */}
+      <TopBarBtn title="Review mode (⌘R)" onClick={onReview}>
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M8 2.5a5.5 5.5 0 1 1-5.5 5.5" /><path d="M2.5 4V2h2" />
+        </svg>
+      </TopBarBtn>
+
+      {/* Theme toggle */}
+      <TopBarBtn title="Toggle theme" onClick={() => setSetting('dark', !dark)}>
+        {dark ? (
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <circle cx="8" cy="8" r="2.6" />
+            <path d="M8 1.5V3M8 13v1.5M1.5 8H3M13 8h1.5M3.4 3.4l1 1M11.6 11.6l1 1M12.6 3.4l-1 1M4.4 11.6l-1 1" />
+          </svg>
+        ) : (
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="M12.5 9.5A5 5 0 0 1 6.5 3.5a5 5 0 1 0 6 6z" />
+          </svg>
+        )}
+      </TopBarBtn>
+    </div>
+  )
+}
+
+function TopBarBtn({ children, title, onClick }: { children: React.ReactNode; title?: string; onClick?: () => void }) {
+  return (
+    <button
+      title={title}
+      onClick={onClick}
+      style={{
+        appearance: 'none',
+        border: 0,
+        background: 'transparent',
+        color: 'var(--ink-3)',
+        width: 30,
+        height: 30,
+        borderRadius: 999,
+        padding: 0,
+        cursor: 'default',
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+      onMouseEnter={e => { e.currentTarget.style.background = 'var(--paper-deep)'; e.currentTarget.style.color = 'var(--ink)' }}
+      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--ink-3)' }}
+    >
+      {children}
+    </button>
+  )
+}

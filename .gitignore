@@ -1,0 +1,40 @@
+# Dependencies
+node_modules
+
+# pnpm store when store-dir points inside the repo
+.pnpm-store
+pnpm-store
+
+# Build
+dist
+dist-ssr
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Env (keep examples tracked)
+.env
+.env.*
+!.env.example
+
+# Local / OS
+*.local
+.DS_Store
+Thumbs.db
+
+# Editors
+.idea
+.vscode/*
+!.vscode/extensions.json
+
+# Other package managers (repo uses pnpm)
+package-lock.json
+yarn.lock
+
+# Test / coverage
+coverage
