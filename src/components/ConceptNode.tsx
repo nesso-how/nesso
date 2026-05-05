@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0
 import { useState, useRef, useCallback } from 'react'
 import { Handle, Position, NodeProps } from '@xyflow/react'
 import type { Node } from '@xyflow/react'

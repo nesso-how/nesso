@@ -82,7 +82,11 @@ Each relation has a line style (solid, dashed, dotted, double, wavy) and an SVG 
 - [ ] Session export — download a JSON snapshot of the graph and interaction log for offline analysis
 - [x] Alpha release as a macOS desktop app via Tauri v2 (GitHub Releases: macOS arm64 + x64)
 - [ ] Tauri auto-updates (`tauri-plugin-updater`, signing, `latest.json` on GitHub Releases) — feasible once the repo is public
-- [x] Add license (MIT)
+- [x] Add license (GNU AGPL v3)
+
+## License
+
+Copyright © 2026 Omar Desogus. This project is licensed under the [GNU Affero General Public License v3.0](https://www.gnu.org/licenses/agpl-3.0.html) — see [`LICENSE`](LICENSE).
 
 ## Keyboard shortcuts
 

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0
 import type { GlyphKind } from '@/types/graph'
 
 interface Props {

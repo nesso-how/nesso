@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0
 export interface ConceptNodeData extends Record<string, unknown> {
   text: string
   conf: number        // 1–5

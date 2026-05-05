@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0
 import { useEffect, useRef } from 'react'
 import { useReactFlow } from '@xyflow/react'
 import { useGraphStore } from '@/store/graph'

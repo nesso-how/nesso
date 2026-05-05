@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0
 import type { EdgeCategory, EdgeTypeDef, EdgeTypeName } from '@/types/graph'
 
 export const EDGE_CATEGORIES: Record<EdgeCategory, { label: string; color: string; subtitle: string }> = {

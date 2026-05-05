@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { applyNodeChanges, applyEdgeChanges } from '@xyflow/react'

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0
 import type { CategoryPalette } from '@/types/graph'
 
 export const PALETTES: Record<CategoryPalette, Record<string, string>> = {

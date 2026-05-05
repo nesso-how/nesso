@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0
 interface Props {
   size?: number
   mood?: 'calm' | 'speaking'

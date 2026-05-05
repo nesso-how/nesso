@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0
 interface Props {
   legendOpen: boolean
   onToggleLegend: () => void

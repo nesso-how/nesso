@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0
 import { useGraphStore } from '@/store/graph'
 import { GraphSwitcher } from './GraphSwitcher'
 import { GraphIO } from './GraphIO'

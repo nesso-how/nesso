@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0
 import { useState, useRef, useEffect } from 'react'
 import Anthropic from '@anthropic-ai/sdk'
 import { SocratesGlyph } from './SocratesGlyph'

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0
 import { openDB } from 'idb'
 import type { Node, Edge } from '@xyflow/react'
 import type { ConceptNodeData } from '@/types/graph'

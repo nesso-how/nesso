@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0
 import { EDGE_TYPES, EDGE_CATEGORIES } from '@/data/edgeTypes'
 import { GlyphSVG } from './GlyphSVG'
 import { useGraphStore, selectedNodeSelector, selectedEdgeSelector } from '@/store/graph'
