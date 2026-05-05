@@ -6,7 +6,7 @@ name: Release
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
   workflow_dispatch:
 
 jobs:
@@ -18,13 +18,13 @@ jobs:
       matrix:
         include:
           - platform: macos-latest
-            args: '--target aarch64-apple-darwin'
+            args: "--target aarch64-apple-darwin"
           - platform: macos-latest
-            args: '--target x86_64-apple-darwin'
+            args: "--target x86_64-apple-darwin"
           - platform: ubuntu-22.04
-            args: ''
+            args: ""
           - platform: windows-latest
-            args: ''
+            args: ""
 
     runs-on: ${{ matrix.platform }}
 
@@ -40,11 +40,21 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: lts/*
-          cache: pnpm
-          cache-dependency-path: pnpm-lock.yaml
 
       - name: Enable pnpm via Corepack (uses packageManager in package.json)
         run: corepack enable
+
+      - name: Pnpm store path
+        id: pnpm-store
+        shell: bash
+        run: echo "path=$(pnpm store path)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -63,7 +73,7 @@ jobs:
         with:
           projectPath: ./src-tauri
           tagName: v__VERSION__
-          releaseName: 'Nesso v__VERSION__'
+          releaseName: "Nesso v__VERSION__"
           releaseBody: |
             **Alpha (Tauri v2)** — desktop bundles attached below. For day-to-day work, the web app is still `pnpm dev`.
           generateReleaseNotes: true
