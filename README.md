@@ -77,6 +77,7 @@ Each relation has a line style (solid, dashed, dotted, double, wavy) and an SVG 
 - [x] Persist settings, tutorial state, and relation-types panel visibility to LocalStorage
 - [x] Save and load graphs via IndexedDB
 - [x] Multiple graphs with tab switching
+- [ ] Parallel-edge handling — enforce one edge per directed pair, or offset overlapping arcs when multiple edges share the same source/target
 - [ ] Provider-agnostic AI — configure any OpenAI-compatible endpoint (Ollama, proprietary) from settings
 - [ ] Session export — download a JSON snapshot of the graph and interaction log for offline analysis
 - [x] Alpha release as a macOS desktop app via Tauri v2 (GitHub Releases: macOS arm64 + x64)
@@ -87,7 +88,7 @@ Each relation has a line style (solid, dashed, dotted, double, wavy) and an SVG 
 
 | Key                    | Action                       |
 | ---------------------- | ---------------------------- |
-| `?`                    | Toggle edge legend           |
+| `?`                    | Toggle keyboard shortcuts    |
 | `⌘R` / `Ctrl+R`        | Open review mode             |
 | `Delete` / `Backspace` | Delete selected node or edge |
 | `Escape`               | Close overlays               |
