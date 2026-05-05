@@ -28,6 +28,7 @@ interface GraphState {
   settings: NessoSettings
   tutorialDone: boolean
   relationTypesPanelOpen: boolean
+  mentorPanelExpanded: boolean
 
   // Per-graph viewports (persisted in localStorage for instant restore)
   viewports: Record<string, Viewport>
@@ -58,6 +59,7 @@ interface GraphState {
   // UI chrome (persisted)
   setRelationTypesPanelOpen: (open: boolean) => void
   toggleRelationTypesPanel: () => void
+  setMentorPanelExpanded: (expanded: boolean) => void
 
   // Viewport
   saveViewport: (id: string, vp: Viewport) => void
@@ -93,6 +95,7 @@ export const useGraphStore = create<GraphState>()(
       selected: null,
       tutorialDone: false,
       relationTypesPanelOpen: true,
+      mentorPanelExpanded: true,
       viewports: {},
       currentGraphId: SEED_ID,
       graphList: [{ id: SEED_ID, name: 'Programming concepts', updatedAt: Date.now() }],
@@ -184,6 +187,8 @@ export const useGraphStore = create<GraphState>()(
       toggleRelationTypesPanel: () =>
         set(s => ({ relationTypesPanelOpen: !s.relationTypesPanelOpen })),
 
+      setMentorPanelExpanded: (expanded) => set({ mentorPanelExpanded: expanded }),
+
       saveViewport: (id, vp) =>
         set(s => ({ viewports: { ...s.viewports, [id]: vp } })),
 
@@ -266,6 +271,7 @@ export const useGraphStore = create<GraphState>()(
         settings: s.settings,
         tutorialDone: s.tutorialDone,
         relationTypesPanelOpen: s.relationTypesPanelOpen,
+        mentorPanelExpanded: s.mentorPanelExpanded,
         currentGraphId: s.currentGraphId,
         graphList: s.graphList,
         viewports: s.viewports,

@@ -19,7 +19,8 @@ function emphasise(text: string): string {
 }
 
 export function MentorBubble() {
-  const [expanded, setExpanded] = useState(true)
+  const mentorPanelExpanded = useGraphStore(s => s.mentorPanelExpanded)
+  const setMentorPanelExpanded = useGraphStore(s => s.setMentorPanelExpanded)
   const [history, setHistory] = useState<Message[]>([])
   const [draft, setDraft] = useState('')
   const [thinking, setThinking] = useState(false)
@@ -56,8 +57,8 @@ export function MentorBubble() {
   }, [openingPrompt])
 
   useEffect(() => {
-    if (expanded && inputRef.current) inputRef.current.focus()
-  }, [expanded])
+    if (mentorPanelExpanded && inputRef.current) inputRef.current.focus()
+  }, [mentorPanelExpanded])
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight
@@ -117,7 +118,7 @@ export function MentorBubble() {
     }
   }
 
-  const unread = !expanded && history.length > 0 && history[history.length - 1].role === 'mentor'
+  const unread = !mentorPanelExpanded && history.length > 0 && history[history.length - 1].role === 'mentor'
     ? history.filter(m => m.role === 'mentor').length
     : 0
 
@@ -147,9 +148,9 @@ export function MentorBubble() {
         boxShadow: 'var(--shadow-lg)',
         display: 'flex',
         flexDirection: 'column',
-        transform: expanded ? 'none' : 'translateY(8px) scale(0.96)',
-        opacity: expanded ? 1 : 0,
-        pointerEvents: expanded ? 'auto' : 'none',
+        transform: mentorPanelExpanded ? 'none' : 'translateY(8px) scale(0.96)',
+        opacity: mentorPanelExpanded ? 1 : 0,
+        pointerEvents: mentorPanelExpanded ? 'auto' : 'none',
         transition: 'all 0.32s cubic-bezier(.4,.2,.2,1.05)',
       }}>
         {/* Header */}
@@ -184,7 +185,7 @@ export function MentorBubble() {
             </small>
           </div>
           <button
-            onClick={() => { setExpanded(false); setPromptSeed(i => i + 1) }}
+            onClick={() => { setMentorPanelExpanded(false); setPromptSeed(i => i + 1) }}
             style={{
               appearance: 'none', border: 0, background: 'transparent',
               color: 'var(--ink-4)', cursor: 'default',
@@ -308,7 +309,7 @@ export function MentorBubble() {
 
       {/* FAB */}
       <button
-        onClick={() => setExpanded(e => !e)}
+        onClick={() => setMentorPanelExpanded(!mentorPanelExpanded)}
         title="Socrates"
         style={{
           width: 64, height: 64, borderRadius: '50%',

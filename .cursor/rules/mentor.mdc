@@ -33,8 +33,13 @@ The opening message shown when the chat initialises depends on selection:
 ## System prompt context
 
 `buildSystemPrompt()` appends context lines for the current selection:
+
 - For a node: text, confidence score, days since review.
 - For an edge: source node text, relation label, target node text.
+
+## Panel open/closed
+
+Whether the mentor **card** is expanded is `mentorPanelExpanded` on `useGraphStore`, updated via `setMentorPanelExpanded`. It is persisted with the rest of UI chrome (`zustand` `persist` → localStorage). The FAB remains visible when collapsed.
 
 ## Message history
 
@@ -44,11 +49,14 @@ The opening message shown when the chat initialises depends on selection:
 
 ```ts
 client.messages.create({
-  model: '...',          // configured per provider
+  model: "...", // configured per provider
   max_tokens: 256,
   system: buildSystemPrompt(),
-  messages: history.map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text })),
-})
+  messages: history.map((m) => ({
+    role: m.role === "user" ? "user" : "assistant",
+    content: m.text,
+  })),
+});
 ```
 
 `max_tokens: 256` enforces the 90-word constraint on the model side as well.
