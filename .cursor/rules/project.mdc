@@ -9,12 +9,13 @@ Nesso is an AI-powered knowledge graph for active learning. Users build concept 
 
 ## Stack
 
-| Layer | Technology |
-|---|---|
-| Framework | React 18 + Vite + TypeScript |
-| Graph canvas | React Flow (`@xyflow/react`) |
-| State | Zustand (`src/store/graph.ts`) |
-| AI mentor | Provider-agnostic chat API (currently `@anthropic-ai/sdk`, swappable) |
+| Layer         | Technology                                                                     |
+| ------------- | ------------------------------------------------------------------------------ |
+| Framework     | React 18 + Vite + TypeScript                                                   |
+| Desktop shell | Tauri v2 (`src-tauri/`) — optional wrapper; web app still runs with `pnpm dev` |
+| Graph canvas  | React Flow (`@xyflow/react`)                                                   |
+| State         | Zustand (`src/store/graph.ts`)                                                 |
+| AI mentor     | Provider-agnostic chat API (currently `@anthropic-ai/sdk`, swappable)          |
 
 ## Source layout
 
@@ -28,6 +29,7 @@ src/
     palettes.ts       # CSS variable colour palettes for edge categories
     seedGraph.ts      # Initial demo graph + SOCRATIC_PROMPTS
   types/graph.ts      # ConceptNodeData, EdgeTypeName, NessoSettings, etc.
+src-tauri/            # Tauri v2 Rust project — tauri.conf.json, capabilities, icons
 ```
 
 ## Core concepts

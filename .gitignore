@@ -8,6 +8,7 @@ pnpm-store
 # Build
 dist
 dist-ssr
+src-tauri/target
 
 # Logs
 logs
