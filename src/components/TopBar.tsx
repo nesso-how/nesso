@@ -1,11 +1,11 @@
 import { useGraphStore } from '@/store/graph'
+import { GraphSwitcher } from './GraphSwitcher'
 
 interface Props {
-  graphTitle: string
   onReview: () => void
 }
 
-export function TopBar({ graphTitle, onReview }: Props) {
+export function TopBar({ onReview }: Props) {
   const { settings, setSetting } = useGraphStore()
   const dark = settings.dark
 
@@ -38,15 +38,8 @@ export function TopBar({ graphTitle, onReview }: Props) {
         <i style={{ fontStyle: 'italic', color: 'var(--cat-causal)', fontWeight: 500 }}>·</i>
       </div>
 
-      {/* Graph title crumb */}
-      <div style={{
-        font: "500 12px 'JetBrains Mono', ui-monospace",
-        color: 'var(--ink-3)',
-        padding: '0 8px',
-        borderLeft: '0.5px solid var(--line)',
-      }}>
-        {graphTitle}
-      </div>
+      {/* Graph switcher */}
+      <GraphSwitcher />
 
       {/* Search placeholder */}
       <div style={{

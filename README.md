@@ -65,11 +65,12 @@ Each relation has a line style (solid, dashed, dotted, double, wavy) and an SVG 
 - [ ] Concept search (⌘K)
 - [ ] Keyboard shortcuts dialog
 - [x] Persist settings, tutorial state, and relation-types panel visibility to LocalStorage
-- [ ] Save and load graphs via IndexedDB
-- [ ] Multiple graphs with tab switching
+- [x] Save and load graphs via IndexedDB
+- [x] Multiple graphs with tab switching
 - [ ] Provider-agnostic AI — configure any OpenAI-compatible endpoint (Ollama, proprietary) from settings
 - [ ] Session export — download a JSON snapshot of the graph and interaction log for offline analysis
 - [ ] Alpha release as a macOS desktop app via Tauri v2
+- [ ] Add license
 
 ## Keyboard shortcuts
 

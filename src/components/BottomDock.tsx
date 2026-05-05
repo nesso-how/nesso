@@ -37,21 +37,25 @@ export function BottomDock({ legendOpen, onToggleLegend, onZoomIn, onZoomOut, on
       <DockBtn mono onClick={onZoomOut}>−</DockBtn>
 
       <span
-        onClick={onFit}
-        title="Fit view"
         style={{
           font: "500 11px 'JetBrains Mono', ui-monospace",
           color: 'var(--ink-3)',
           padding: '0 6px',
           minWidth: 38,
           textAlign: 'center',
-          cursor: 'default',
         }}
       >
         {Math.round(zoom * 100)}%
       </span>
 
       <DockBtn mono onClick={onZoomIn}>+</DockBtn>
+
+      <DockBtn onClick={onFit} title="Center map">
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
+          <circle cx="7" cy="7" r="2" />
+          <path d="M7 1v2M7 11v2M1 7h2M11 7h2" />
+        </svg>
+      </DockBtn>
 
       <Sep />
 

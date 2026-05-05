@@ -9,6 +9,7 @@ import { MentorBubble } from './components/MentorBubble'
 import { Onboarding } from './components/Onboarding'
 import { ReviewMode } from './components/ReviewMode'
 import { useGraphStore, selectedNodeSelector, selectedEdgeSelector } from './store/graph'
+import { useAutoSave } from './hooks/useAutoSave'
 import { PALETTES } from './data/palettes'
 
 function AppInner() {
@@ -25,11 +26,52 @@ function AppInner() {
     relationTypesPanelOpen,
     setRelationTypesPanelOpen,
     toggleRelationTypesPanel,
+    loadGraph,
+    loadGraphList,
+    currentGraphId,
+    viewports,
   } = useGraphStore()
+
   const selectedNode = useGraphStore(selectedNodeSelector)
   const selectedEdge = useGraphStore(selectedEdgeSelector)
-  const { zoomIn, zoomOut, fitView, getZoom } = useReactFlow()
+  const { zoomIn, zoomOut, fitView, setViewport, getZoom } = useReactFlow()
   const [zoom, setZoom] = useState(1)
+
+  useAutoSave()
+
+  // Initial load: prefer graph from URL hash
+  useEffect(() => {
+    loadGraphList().then(list => {
+      const hashId = location.hash.slice(1)
+      const target = list.find(g => g.id === hashId) ? hashId : currentGraphId
+      loadGraph(target)
+    })
+  }, [])
+
+  // Keep URL hash in sync with current graph
+  useEffect(() => {
+    history.replaceState({}, '', '#' + currentGraphId)
+  }, [currentGraphId])
+
+  // Browser back/forward navigation
+  useEffect(() => {
+    const onPop = () => {
+      const hashId = location.hash.slice(1)
+      if (hashId) loadGraph(hashId)
+    }
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+  }, [loadGraph])
+
+  // Restore saved viewport instantly on graph switch (no animation)
+  useEffect(() => {
+    const saved = viewports[currentGraphId]
+    if (saved) {
+      setViewport(saved, { duration: 0 })
+    } else {
+      fitView({ padding: 0.15, duration: 0 })
+    }
+  }, [currentGraphId])
 
   // Apply theme
   useEffect(() => {
@@ -59,7 +101,6 @@ function AppInner() {
   }, [selected, deleteNode, deleteEdge, completeTutorial, toggleRelationTypesPanel])
 
   const handleAddConcept = useCallback(() => {
-    // Place new concept near center of view
     addNode(-200 + (Math.random() - 0.5) * 120, 280 + (Math.random() - 0.5) * 60)
   }, [addNode])
 
@@ -88,7 +129,7 @@ function AppInner() {
         rightInset={hasSelection ? 326 : 30}
       />
 
-      <TopBar graphTitle="Programming concepts" onReview={() => setShowReview(true)} />
+      <TopBar onReview={() => setShowReview(true)} />
       <EdgeLegend open={relationTypesPanelOpen} onClose={() => setRelationTypesPanelOpen(false)} />
       <Inspector />
       <BottomDock

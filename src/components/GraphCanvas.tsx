@@ -43,7 +43,10 @@ export function GraphCanvas({
     nodes, edges,
     onNodesChange, onEdgesChange,
     addEdge, setSelected, selected, settings,
+    viewports, currentGraphId,
   } = useGraphStore()
+
+  const defaultViewport = viewports[currentGraphId] ?? { x: 0, y: 0, zoom: 0.75 }
 
   const [pendingConn, setPendingConn] = useState<PendingConnection | null>(null)
   const connectingSource = useRef<string | null>(null)
@@ -116,11 +119,7 @@ export function GraphCanvas({
         onNodeClick={onNodeClick}
         onPaneClick={onPaneClick}
         connectionMode={ConnectionMode.Loose}
-        fitView
-        fitViewOptions={{
-          padding: 0.15,
-          includeHiddenNodes: false,
-        }}
+        defaultViewport={defaultViewport}
         minZoom={0.15}
         maxZoom={2.5}
         deleteKeyCode={null}
