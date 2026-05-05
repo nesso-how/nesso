@@ -8,12 +8,14 @@ import { Inspector } from './components/Inspector'
 import { MentorBubble } from './components/MentorBubble'
 import { Onboarding } from './components/Onboarding'
 import { ReviewMode } from './components/ReviewMode'
+import { ShortcutsDialog } from './components/ShortcutsDialog'
 import { useGraphStore, selectedNodeSelector, selectedEdgeSelector } from './store/graph'
 import { useAutoSave } from './hooks/useAutoSave'
 import { PALETTES } from './data/palettes'
 
 function AppInner() {
   const [showReview, setShowReview] = useState(false)
+  const [showShortcuts, setShowShortcuts] = useState(false)
 
   const {
     settings,
@@ -86,8 +88,8 @@ function AppInner() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
-      if (e.key === 'Escape') { completeTutorial(); setShowReview(false); return }
-      if (e.key === '?') toggleRelationTypesPanel()
+      if (e.key === 'Escape') { completeTutorial(); setShowReview(false); setShowShortcuts(false); return }
+      if (e.key === '?') { setShowShortcuts(s => !s); return }
       if (e.key === 'r' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); setShowReview(true) }
       if (e.key === '/') { e.preventDefault() }
       if ((e.key === 'Delete' || e.key === 'Backspace') && selected) {
@@ -98,7 +100,7 @@ function AppInner() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [selected, deleteNode, deleteEdge, completeTutorial, toggleRelationTypesPanel])
+  }, [selected, deleteNode, deleteEdge, completeTutorial])
 
   const handleAddConcept = useCallback(() => {
     addNode(-200 + (Math.random() - 0.5) * 120, 280 + (Math.random() - 0.5) * 60)
@@ -129,7 +131,7 @@ function AppInner() {
         rightInset={hasSelection ? 326 : 30}
       />
 
-      <TopBar onReview={() => setShowReview(true)} />
+      <TopBar onReview={() => setShowReview(true)} onShortcuts={() => setShowShortcuts(s => !s)} />
       <EdgeLegend open={relationTypesPanelOpen} onClose={() => setRelationTypesPanelOpen(false)} />
       <Inspector />
       <BottomDock
@@ -144,6 +146,7 @@ function AppInner() {
       <MentorBubble />
       <Onboarding open={!tutorialDone} onClose={completeTutorial} />
       <ReviewMode open={showReview} onClose={() => setShowReview(false)} />
+      <ShortcutsDialog open={showShortcuts} onClose={() => setShowShortcuts(false)} />
     </div>
   )
 }

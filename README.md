@@ -73,7 +73,7 @@ Each relation has a line style (solid, dashed, dotted, double, wavy) and an SVG 
 - [x] Theming — dark/light toggle, accent colour, category palettes
 - [x] Onboarding overlay
 - [ ] Concept search (⌘K)
-- [ ] Keyboard shortcuts dialog
+- [x] Keyboard shortcuts dialog
 - [x] Persist settings, tutorial state, and relation-types panel visibility to LocalStorage
 - [x] Save and load graphs via IndexedDB
 - [x] Multiple graphs with tab switching
