@@ -12,10 +12,20 @@ import { useGraphStore, selectedNodeSelector, selectedEdgeSelector } from './sto
 import { PALETTES } from './data/palettes'
 
 function AppInner() {
-  const [legendOpen, setLegendOpen] = useState(true)
   const [showReview, setShowReview] = useState(false)
 
-  const { settings, setSetting, addNode, selected, deleteNode, deleteEdge, tutorialDone, completeTutorial } = useGraphStore()
+  const {
+    settings,
+    addNode,
+    selected,
+    deleteNode,
+    deleteEdge,
+    tutorialDone,
+    completeTutorial,
+    relationTypesPanelOpen,
+    setRelationTypesPanelOpen,
+    toggleRelationTypesPanel,
+  } = useGraphStore()
   const selectedNode = useGraphStore(selectedNodeSelector)
   const selectedEdge = useGraphStore(selectedEdgeSelector)
   const { zoomIn, zoomOut, fitView, getZoom } = useReactFlow()
@@ -35,7 +45,7 @@ function AppInner() {
     const onKey = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
       if (e.key === 'Escape') { completeTutorial(); setShowReview(false); return }
-      if (e.key === '?') setLegendOpen(l => !l)
+      if (e.key === '?') toggleRelationTypesPanel()
       if (e.key === 'r' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); setShowReview(true) }
       if (e.key === '/') { e.preventDefault() }
       if ((e.key === 'Delete' || e.key === 'Backspace') && selected) {
@@ -46,7 +56,7 @@ function AppInner() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [selected, deleteNode, deleteEdge])
+  }, [selected, deleteNode, deleteEdge, completeTutorial, toggleRelationTypesPanel])
 
   const handleAddConcept = useCallback(() => {
     // Place new concept near center of view
@@ -74,16 +84,16 @@ function AppInner() {
       <GraphCanvas
         topInset={80}
         bottomInset={80}
-        leftInset={legendOpen ? 320 : 30}
+        leftInset={relationTypesPanelOpen ? 320 : 30}
         rightInset={hasSelection ? 326 : 30}
       />
 
       <TopBar graphTitle="Programming concepts" onReview={() => setShowReview(true)} />
-      <EdgeLegend open={legendOpen} onClose={() => setLegendOpen(false)} />
+      <EdgeLegend open={relationTypesPanelOpen} onClose={() => setRelationTypesPanelOpen(false)} />
       <Inspector />
       <BottomDock
-        legendOpen={legendOpen}
-        onToggleLegend={() => setLegendOpen(o => !o)}
+        legendOpen={relationTypesPanelOpen}
+        onToggleLegend={toggleRelationTypesPanel}
         onZoomIn={handleZoomIn}
         onZoomOut={handleZoomOut}
         onFit={handleFit}

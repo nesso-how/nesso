@@ -64,7 +64,7 @@ Each relation has a line style (solid, dashed, dotted, double, wavy) and an SVG 
 - [x] Onboarding overlay
 - [ ] Concept search (⌘K)
 - [ ] Keyboard shortcuts dialog
-- [x] Persist settings and tutorial state to LocalStorage
+- [x] Persist settings, tutorial state, and relation-types panel visibility to LocalStorage
 - [ ] Save and load graphs via IndexedDB
 - [ ] Multiple graphs with tab switching
 - [ ] Provider-agnostic AI — configure any OpenAI-compatible endpoint (Ollama, proprietary) from settings

@@ -16,6 +16,7 @@ interface GraphState {
   selected: Selection
   settings: NessoSettings
   tutorialDone: boolean
+  relationTypesPanelOpen: boolean
 
   // Graph mutations
   onNodesChange: (changes: NodeChange<Node<ConceptNodeData>>[]) => void
@@ -35,14 +36,19 @@ interface GraphState {
 
   // Tutorial
   completeTutorial: () => void
+
+  // UI chrome (persisted)
+  setRelationTypesPanelOpen: (open: boolean) => void
+  toggleRelationTypesPanel: () => void
 }
 
 export const useGraphStore = create<GraphState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
   ...makeSeedGraph(),
   selected: null,
   tutorialDone: false,
+  relationTypesPanelOpen: true,
   settings: {
     dark: false,
     accent: '#b14a2e',
@@ -118,10 +124,18 @@ export const useGraphStore = create<GraphState>()(
     set(s => ({ settings: { ...s.settings, [key]: value } })),
 
   completeTutorial: () => set({ tutorialDone: true }),
+
+  setRelationTypesPanelOpen: (open) => set({ relationTypesPanelOpen: open }),
+  toggleRelationTypesPanel: () =>
+    set(s => ({ relationTypesPanelOpen: !s.relationTypesPanelOpen })),
 }),
     {
       name: 'nesso',
-      partialize: (s) => ({ settings: s.settings, tutorialDone: s.tutorialDone }),
+      partialize: (s) => ({
+        settings: s.settings,
+        tutorialDone: s.tutorialDone,
+        relationTypesPanelOpen: s.relationTypesPanelOpen,
+      }),
     }
   )
 )

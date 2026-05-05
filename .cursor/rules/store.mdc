@@ -12,39 +12,43 @@ alwaysApply: false
 
 ```ts
 interface GraphState {
-  nodes: Node<ConceptNodeData>[]
-  edges: Edge[]
-  selected: { kind: 'node' | 'edge'; id: string } | null
-  settings: NessoSettings
-  tutorialDone: boolean
+  nodes: Node<ConceptNodeData>[];
+  edges: Edge[];
+  selected: { kind: "node" | "edge"; id: string } | null;
+  settings: NessoSettings;
+  tutorialDone: boolean;
+  relationTypesPanelOpen: boolean;
   // ... mutations below
 }
 ```
 
-Persistence: the store uses Zustand `persist` with key `nesso`. Only `settings` and `tutorialDone` are rehydrated; `nodes`, `edges`, and `selected` always come from the seed on load.
+Persistence: the store uses Zustand `persist` with key `nesso`. Only `settings`, `tutorialDone`, and `relationTypesPanelOpen` are rehydrated; `nodes`, `edges`, and `selected` always come from the seed on load.
 
 ## Mutations
 
-| Method | Effect |
-|---|---|
-| `onNodesChange` / `onEdgesChange` | React Flow change handlers (move, resize, remove) |
-| `updateNodeData(id, patch)` | Partial update of a node's `ConceptNodeData` |
-| `addNode(x?, y?)` | Inserts a new concept node, selects it, returns its id |
-| `deleteNode(id)` | Removes node and all its incident edges, clears selection if needed |
-| `addEdge(source, target, type)` | Inserts a `'nesso'` edge with `data.type`, selects it, returns id |
-| `updateEdgeType(id, type)` | Changes the relation type on an existing edge |
-| `deleteEdge(id)` | Removes edge, clears selection if needed |
-| `setSelected(sel)` | Sets selection (or `null` to deselect) |
-| `setSetting(key, value)` | Updates a single `NessoSettings` field |
-| `completeTutorial` | Sets `tutorialDone` to true (dismisses onboarding; persisted) |
+| Method                            | Effect                                                                   |
+| --------------------------------- | ------------------------------------------------------------------------ |
+| `onNodesChange` / `onEdgesChange` | React Flow change handlers (move, resize, remove)                        |
+| `updateNodeData(id, patch)`       | Partial update of a node's `ConceptNodeData`                             |
+| `addNode(x?, y?)`                 | Inserts a new concept node, selects it, returns its id                   |
+| `deleteNode(id)`                  | Removes node and all its incident edges, clears selection if needed      |
+| `addEdge(source, target, type)`   | Inserts a `'nesso'` edge with `data.type`, selects it, returns id        |
+| `updateEdgeType(id, type)`        | Changes the relation type on an existing edge                            |
+| `deleteEdge(id)`                  | Removes edge, clears selection if needed                                 |
+| `setSelected(sel)`                | Sets selection (or `null` to deselect)                                   |
+| `setSetting(key, value)`          | Updates a single `NessoSettings` field                                   |
+| `completeTutorial`                | Sets `tutorialDone` to true (dismisses onboarding; persisted)            |
+| `setRelationTypesPanelOpen(open)` | Shows or hides the left “Relation types” / edge legend panel (persisted) |
+| `toggleRelationTypesPanel`        | Toggles the relation types panel open/closed (persisted)                 |
 
 ## Selectors
 
 Two named selectors are exported from `graph.ts`:
 
 ```ts
-export const selectedNodeSelector = (s: GraphState) => Node<ConceptNodeData> | null
-export const selectedEdgeSelector = (s: GraphState) => Edge | null
+export const selectedNodeSelector = (s: GraphState) =>
+  Node<ConceptNodeData> | null;
+export const selectedEdgeSelector = (s: GraphState) => Edge | null;
 ```
 
 Use these in components — do not inline the selection look-up logic.
