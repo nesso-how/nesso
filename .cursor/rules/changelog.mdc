@@ -1,0 +1,19 @@
+---
+description: CHANGELOG and release notes (Keep a Changelog)
+globs: CHANGELOG.md
+alwaysApply: true
+---
+
+# Changelog
+
+The repo keeps a root [`CHANGELOG.md`](CHANGELOG.md) in [Keep a Changelog](https://keepachangelog.com/) style.
+
+## When a PR is merged
+
+- Add a bullet under **`## [Unreleased]`** describing the user-facing or notable change (Added / Changed / Fixed / etc. as appropriate). Do this in the same PR that introduces the change when possible.
+- That section is the draft for the **next** version: at release time, its contents are moved under a new dated `## [x.y.z] - YYYY-MM-DD` heading and `[Unreleased]` is left ready for the following cycle.
+
+## Releases
+
+- Version bumps (root `package.json`, `src-tauri/tauri.conf.json`), Git tags, and `CHANGELOG.md` sections must stay aligned.
+- Link references at the bottom of `CHANGELOG.md` must be updated when cutting a release (compare URLs for the new tag).
