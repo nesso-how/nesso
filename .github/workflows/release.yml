@@ -1,9 +1,13 @@
 name: Release
 
+# Runs the workflow YAML from the commit that triggered the event. Re-tag from
+# main after changing this file, or use workflow_dispatch on main.
+
 on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
 
 jobs:
   publish:
@@ -33,13 +37,14 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
 
-      - uses: pnpm/action-setup@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: lts/*
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
+
+      - name: Enable pnpm via Corepack (uses packageManager in package.json)
+        run: corepack enable
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
