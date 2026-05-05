@@ -11,4 +11,4 @@ Developer guide for AI assistants working in this repo. Detailed rules live in `
 | [mentor.mdc](.cursor/rules/mentor.mdc) | Socratic AI mentor integration — MentorBubble, system prompt, Claude API usage |
 | [conventions.mdc](.cursor/rules/conventions.mdc) | Coding conventions (TypeScript, React, state, naming) |
 | [constraints.mdc](.cursor/rules/constraints.mdc) | Hard constraints — what NOT to do |
-| [maintenance.mdc](.cursor/rules/maintenance.mdc) | When and how to keep these rules in sync with the code |
+| [maintenance.mdc](.cursor/rules/maintenance.mdc) | When and how to keep rules and the README roadmap in sync with the code |

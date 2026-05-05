@@ -16,3 +16,11 @@ When you modify code in an area covered by a `.cursor/rules/` file, update that 
 | Coding patterns, naming, import conventions | `conventions.mdc` |
 | Architectural constraints, "never do X" rules | `constraints.mdc` |
 | Overall stack, layout, core concepts | `project.mdc` |
+
+## README roadmap (`## Roadmap`)
+
+When you **complete** work that satisfies an unchecked item under `## Roadmap` in `README.md`, update that line to `- [x] ...` in the **same commit or PR** as the implementation.
+
+- If you ship something that clearly matches an existing roadmap line but wording drifted, adjust the line text so it still describes what shipped, then check it off.
+- If you add a significant **new** user-facing capability that belongs on the public roadmap, add a matching `- [ ]` line (keep items one line, consistent with the existing list).
+- If plans change and an item is dropped or replaced, edit or remove that line so the roadmap stays honest — do not leave stale `[ ]` rows for cancelled work without a brief reason or replacement.
