@@ -18,11 +18,14 @@ interface GraphState {
   settings: NessoSettings;
   tutorialDone: boolean;
   relationTypesPanelOpen: boolean;
+  viewports: Record<string, { x: number; y: number; zoom: number }>;
+  currentGraphId: string;
+  graphList: { id: string; name: string; updatedAt: number }[];
   // ... mutations below
 }
 ```
 
-Persistence: the store uses Zustand `persist` with key `nesso`. Only `settings`, `tutorialDone`, and `relationTypesPanelOpen` are rehydrated; `nodes`, `edges`, and `selected` always come from the seed on load.
+Persistence: Zustand `persist` (`nesso`) rehydrates `settings`, `tutorialDone`, `relationTypesPanelOpen`, `currentGraphId`, `graphList`, and `viewports`. Graph node/edge payloads live in IndexedDB (`src/store/db.ts`); the app loads the active graph via `loadGraph` and writes with `saveCurrentGraph` (debounced from `useAutoSave`).
 
 ## Mutations
 
@@ -40,6 +43,13 @@ Persistence: the store uses Zustand `persist` with key `nesso`. Only `settings`,
 | `completeTutorial`                | Sets `tutorialDone` to true (dismisses onboarding; persisted)            |
 | `setRelationTypesPanelOpen(open)` | Shows or hides the left “Relation types” / edge legend panel (persisted) |
 | `toggleRelationTypesPanel`        | Toggles the relation types panel open/closed (persisted)                 |
+| `saveViewport(id, vp)`            | Stores last React Flow viewport for a graph id (persisted)                |
+| `loadGraphList`                   | Refreshes `graphList` from IndexedDB                                      |
+| `loadGraph(id)`                   | Switches active graph: loads nodes/edges from IndexedDB; selects `id`    |
+| `saveCurrentGraph`                | Writes current nodes/edges for `currentGraphId` to IndexedDB              |
+| `createGraph(name)`               | New empty graph; saves, switches to it, returns id                        |
+| `renameGraph(id, name)`           | Updates graph name in IndexedDB and `graphList`                           |
+| `deleteGraph(id)`                 | Removes record from IndexedDB; if active, switches to another graph       |
 
 ## Selectors
 
