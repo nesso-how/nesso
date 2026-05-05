@@ -8,10 +8,12 @@ alwaysApply: true
 
 The repo keeps a root [`CHANGELOG.md`](CHANGELOG.md) in [Keep a Changelog](https://keepachangelog.com/) style.
 
-## When a PR is merged
+## While developing on `main`
 
-- Add a bullet under **`## [Unreleased]`** describing the user-facing or notable change (Added / Changed / Fixed / etc. as appropriate). Do this in the same PR that introduces the change when possible.
+- When you land a user-facing or notable change (direct commits on `main`, no PR required for now), add a bullet under **`## [Unreleased]`** (Added / Changed / Fixed / etc. as appropriate) in the **same commit** as the change when it makes sense, or immediately after so history stays honest.
 - That section is the draft for the **next** version: at release time, its contents are moved under a new dated `## [x.y.z] - YYYY-MM-DD` heading and `[Unreleased]` is left ready for the following cycle.
+
+If you later switch back to PRs, keep the same habit: update `## [Unreleased]` in the branch that introduces the change before merge.
 
 ## Releases
 
