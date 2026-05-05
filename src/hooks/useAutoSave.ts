@@ -5,6 +5,7 @@ import { useGraphStore } from '@/store/graph'
 
 const DEBOUNCE_MS = 500
 
+// Viewport is also saved from GraphCanvas `onMoveEnd` when only pan/zoom/fit changes (no node/edge edits).
 export function useAutoSave() {
   const nodes = useGraphStore(s => s.nodes)
   const edges = useGraphStore(s => s.edges)

@@ -15,15 +15,20 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
+- **Relation types:** reference is a centered modal (`RelationTypesDialog`, same UX as shortcuts/settings), opened from the **lines icon** in the top-right toolbar; removed the persistent left edge-legend strip and persisted `relationTypesPanelOpen`.
+- **Bottom dock:** replaces the legend toggle with primary **center** control (fit graph in view); zoom block unchanged.
+- **Inspector:** moves to the **left**; graph canvas widens on the left (not right) while a concept or relation is selected.
 - **AI:** mentor API key comes only from **Settings** (`aiApiKey`); removed **`VITE_AI_API_KEY`** / `.env.local` fallback.
 - **AI defaults:** mentor targets local **Ollama** (`http://localhost:11434/v1`, model `gemma2:2b`) by default; remote endpoints remain configurable in Settings.
 - **Auto-save:** graph-change debounce lowered from 800 ms to 500 ms (`useAutoSave`).
 - Relicense from MIT to **GNU AGPL v3.0** (`LICENSE`, `package.json`, `src-tauri/Cargo.toml`).
 - **TopBar:** centered pill keeps brand, graph switcher, and search placeholder; review, theme, and shortcuts moved to a top-right pill.
-- **Shortcuts:** **?** no longer toggles the relation-types panel (use the bottom-dock legend control or Edge legend UI instead).
+- **Shortcuts:** **?** no longer toggles relation types (use the relation-types toolbar button).
 
 ### Fixed
 
+- **Bottom dock zoom %:** stays in sync with the canvas for scroll/pinch zoom, fit/center, and graph switches — driven from the React Flow viewport via `GraphCanvas`, not timers on the +/- buttons only.
+- **Viewport persistence:** pan/zoom/**center** (fit) updates are written to persisted `viewports` on `ReactFlow` `onMoveEnd`, not only when nodes/edges auto-save.
 - **ConceptNode:** inline rename keeps a stable width via a hidden-measure span and overlay input; confidence underline hides while editing.
 
 ## [0.1.0-alpha.2] - 2026-05-05

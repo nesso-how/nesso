@@ -4,7 +4,7 @@ import { ReactFlowProvider, useReactFlow } from '@xyflow/react'
 import { GraphCanvas } from './components/GraphCanvas'
 import { TopBar } from './components/TopBar'
 import { BottomDock } from './components/BottomDock'
-import { EdgeLegend } from './components/EdgeLegend'
+import { RelationTypesDialog } from './components/RelationTypesDialog'
 import { Inspector } from './components/Inspector'
 import { MentorBubble } from './components/MentorBubble'
 import { Onboarding } from './components/Onboarding'
@@ -19,6 +19,7 @@ function AppInner() {
   const [showReview, setShowReview] = useState(false)
   const [showShortcuts, setShowShortcuts] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+  const [showRelationTypes, setShowRelationTypes] = useState(false)
 
   const {
     settings,
@@ -28,9 +29,6 @@ function AppInner() {
     deleteEdge,
     tutorialDone,
     completeTutorial,
-    relationTypesPanelOpen,
-    setRelationTypesPanelOpen,
-    toggleRelationTypesPanel,
     loadGraph,
     loadGraphList,
     currentGraphId,
@@ -39,7 +37,7 @@ function AppInner() {
 
   const selectedNode = useGraphStore(selectedNodeSelector)
   const selectedEdge = useGraphStore(selectedEdgeSelector)
-  const { zoomIn, zoomOut, fitView, setViewport, getZoom } = useReactFlow()
+  const { zoomIn, zoomOut, fitView, setViewport } = useReactFlow()
   const [zoom, setZoom] = useState(1)
 
   useAutoSave()
@@ -91,7 +89,14 @@ function AppInner() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
-      if (e.key === 'Escape') { completeTutorial(); setShowReview(false); setShowShortcuts(false); setShowSettings(false); return }
+      if (e.key === 'Escape') {
+        completeTutorial()
+        setShowReview(false)
+        setShowShortcuts(false)
+        setShowSettings(false)
+        setShowRelationTypes(false)
+        return
+      }
       if (e.key === '?') { setShowShortcuts(s => !s); return }
       if (e.key === ',' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); setShowSettings(s => !s); return }
       if (e.key === 'r' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); setShowReview(true) }
@@ -116,13 +121,11 @@ function AppInner() {
 
   const handleZoomIn = useCallback(() => {
     zoomIn({ duration: 200 })
-    setTimeout(() => setZoom(getZoom()), 220)
-  }, [zoomIn, getZoom])
+  }, [zoomIn])
 
   const handleZoomOut = useCallback(() => {
     zoomOut({ duration: 200 })
-    setTimeout(() => setZoom(getZoom()), 220)
-  }, [zoomOut, getZoom])
+  }, [zoomOut])
 
   const hasSelection = !!selectedNode || !!selectedEdge
 
@@ -131,20 +134,20 @@ function AppInner() {
       <GraphCanvas
         topInset={80}
         bottomInset={80}
-        leftInset={relationTypesPanelOpen ? 320 : 30}
-        rightInset={hasSelection ? 326 : 30}
+        leftInset={hasSelection ? 326 : 30}
+        rightInset={30}
+        onViewportZoomChange={setZoom}
       />
 
       <TopBar
         onReview={() => setShowReview(true)}
         onShortcuts={() => setShowShortcuts(s => !s)}
         onSettings={() => setShowSettings(s => !s)}
+        onRelationTypes={() => setShowRelationTypes(s => !s)}
       />
-      <EdgeLegend open={relationTypesPanelOpen} onClose={() => setRelationTypesPanelOpen(false)} />
+      <RelationTypesDialog open={showRelationTypes} onClose={() => setShowRelationTypes(false)} />
       <Inspector />
       <BottomDock
-        legendOpen={relationTypesPanelOpen}
-        onToggleLegend={toggleRelationTypesPanel}
         onZoomIn={handleZoomIn}
         onZoomOut={handleZoomOut}
         onFit={handleFit}

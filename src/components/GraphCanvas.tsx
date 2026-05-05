@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ReactFlow,
   Background,
   BackgroundVariant,
-  useReactFlow,
   ConnectionMode,
+  useStore,
   type OnConnect,
+  type OnMoveEnd,
   type NodeMouseHandler,
   type OnConnectStart,
   type OnConnectEnd,
@@ -18,7 +19,6 @@ import { NessoEdge } from './NessoEdge'
 import { RelationPicker } from './RelationPicker'
 import { useGraphStore } from '@/store/graph'
 import type { EdgeTypeName } from '@/types/graph'
-import { useState, useRef } from 'react'
 
 const nodeTypes = { concept: ConceptNode }
 const edgeTypes = { nesso: NessoEdge }
@@ -30,21 +30,31 @@ interface PendingConnection {
   screenY: number
 }
 
+function ViewportZoomReporter({ onZoomChange }: { onZoomChange: (zoom: number) => void }) {
+  const zoom = useStore(s => s.transform[2])
+  useEffect(() => {
+    onZoomChange(zoom)
+  }, [zoom, onZoomChange])
+  return null
+}
+
 export function GraphCanvas({
   topInset = 0,
   bottomInset = 0,
   leftInset = 0,
   rightInset = 0,
+  onViewportZoomChange,
 }: {
   topInset?: number
   bottomInset?: number
   leftInset?: number
   rightInset?: number
+  onViewportZoomChange?: (zoom: number) => void
 }) {
   const {
     nodes, edges,
     onNodesChange, onEdgesChange,
-    addEdge, setSelected, selected, settings,
+    addEdge, setSelected, selected,
     viewports, currentGraphId,
   } = useGraphStore()
 
@@ -78,6 +88,11 @@ export function GraphCanvas({
   const onPaneClick = useCallback(() => {
     setSelected(null)
   }, [setSelected])
+
+  const persistViewportOnMoveEnd = useCallback<OnMoveEnd>((_event, viewport) => {
+    const { currentGraphId: id, saveViewport } = useGraphStore.getState()
+    saveViewport(id, viewport)
+  }, [])
 
   const onPickRelation = useCallback((type: EdgeTypeName) => {
     if (!pendingConn) return
@@ -121,6 +136,7 @@ export function GraphCanvas({
         connectionLineComponent={NessoConnectionLine}
         onNodeClick={onNodeClick}
         onPaneClick={onPaneClick}
+        onMoveEnd={persistViewportOnMoveEnd}
         connectionMode={ConnectionMode.Loose}
         defaultViewport={defaultViewport}
         minZoom={0.15}
@@ -131,6 +147,9 @@ export function GraphCanvas({
         proOptions={{ hideAttribution: true }}
         style={{ background: 'transparent' }}
       >
+        {onViewportZoomChange && (
+          <ViewportZoomReporter onZoomChange={onViewportZoomChange} />
+        )}
         <Background
           variant={BackgroundVariant.Dots}
           gap={28}

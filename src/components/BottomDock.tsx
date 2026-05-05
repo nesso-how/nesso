@@ -1,7 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0
 interface Props {
-  legendOpen: boolean
-  onToggleLegend: () => void
   onZoomIn: () => void
   onZoomOut: () => void
   onFit: () => void
@@ -9,7 +7,7 @@ interface Props {
   onAddConcept: () => void
 }
 
-export function BottomDock({ legendOpen, onToggleLegend, onZoomIn, onZoomOut, onFit, zoom, onAddConcept }: Props) {
+export function BottomDock({ onZoomIn, onZoomOut, onFit, zoom, onAddConcept }: Props) {
   return (
     <div style={{
       position: 'absolute',
@@ -26,11 +24,12 @@ export function BottomDock({ legendOpen, onToggleLegend, onZoomIn, onZoomOut, on
       padding: 5,
       boxShadow: 'var(--shadow-md)',
     }}>
-      <DockBtn active={legendOpen} onClick={onToggleLegend}>
-        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.4">
-          <path d="M2 4h10M2 7h10M2 10h6" />
+      <DockBtn onClick={onFit} title="Fit graph in view">
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
+          <circle cx="7" cy="7" r="2" />
+          <path d="M7 1v2M7 11v2M1 7h2M11 7h2" />
         </svg>
-        <span style={{ marginLeft: 6, font: "500 11px 'JetBrains Mono', ui-monospace" }}>relations</span>
+        <span style={{ marginLeft: 6, font: "500 11px 'JetBrains Mono', ui-monospace" }}>center</span>
       </DockBtn>
 
       <Sep />
@@ -50,13 +49,6 @@ export function BottomDock({ legendOpen, onToggleLegend, onZoomIn, onZoomOut, on
       </span>
 
       <DockBtn mono onClick={onZoomIn}>+</DockBtn>
-
-      <DockBtn onClick={onFit} title="Center map">
-        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
-          <circle cx="7" cy="7" r="2" />
-          <path d="M7 1v2M7 11v2M1 7h2M11 7h2" />
-        </svg>
-      </DockBtn>
 
       <Sep />
 

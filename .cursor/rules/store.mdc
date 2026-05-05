@@ -17,7 +17,6 @@ interface GraphState {
   selected: { kind: "node" | "edge"; id: string } | null;
   settings: NessoSettings;
   tutorialDone: boolean;
-  relationTypesPanelOpen: boolean;
   mentorPanelExpanded: boolean;
   viewports: Record<string, { x: number; y: number; zoom: number }>;
   currentGraphId: string;
@@ -26,33 +25,31 @@ interface GraphState {
 }
 ```
 
-Persistence: Zustand `persist` (`nesso`, localStorage) rehydrates `settings`, `tutorialDone`, `relationTypesPanelOpen`, `mentorPanelExpanded`, `currentGraphId`, `graphList`, and `viewports`. Rehydrated `settings` is shallow-merged onto defaults so new keys (e.g. AI fields) appear for older saved blobs. Graph node/edge payloads live in IndexedDB (`src/store/db.ts`); the app loads the active graph via `loadGraph` and writes with `saveCurrentGraph` (debounced from `useAutoSave`).
+Persistence: Zustand `persist` (`nesso`, localStorage) rehydrates `settings`, `tutorialDone`, `mentorPanelExpanded`, `currentGraphId`, `graphList`, and `viewports`. Rehydrated `settings` is shallow-merged onto defaults so new keys (e.g. AI fields) appear for older saved blobs. Graph node/edge payloads live in IndexedDB (`src/store/db.ts`); the app loads the active graph via `loadGraph` and writes with `saveCurrentGraph` (debounced from `useAutoSave`). Legacy blobs may still carry `relationTypesPanelOpen`; it is dropped on merge.
 
 ## Mutations
 
-| Method                             | Effect                                                                                                                             |
-| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `onNodesChange` / `onEdgesChange`  | React Flow change handlers (move, resize, remove)                                                                                  |
-| `updateNodeData(id, patch)`        | Partial update of a node's `ConceptNodeData`                                                                                       |
-| `addNode(x?, y?)`                  | Inserts a new concept node, selects it, returns its id                                                                             |
-| `deleteNode(id)`                   | Removes node and all its incident edges, clears selection if needed                                                                |
-| `addEdge(source, target, type)`    | Inserts a `'nesso'` edge with `sourceHandle` / `targetHandle` matching concept node handles (`out` / `in`), selects it, returns id |
-| `updateEdgeType(id, type)`         | Changes the relation type on an existing edge                                                                                      |
-| `deleteEdge(id)`                   | Removes edge, clears selection if needed                                                                                           |
-| `setSelected(sel)`                 | Sets selection (or `null` to deselect)                                                                                             |
-| `setSetting(key, value)`           | Updates a single `NessoSettings` field                                                                                             |
-| `completeTutorial`                 | Sets `tutorialDone` to true (dismisses onboarding; persisted)                                                                      |
-| `setRelationTypesPanelOpen(open)`  | Shows or hides the left “Relation types” / edge legend panel (persisted)                                                           |
-| `toggleRelationTypesPanel`         | Toggles the relation types panel open/closed (persisted)                                                                           |
-| `setMentorPanelExpanded(expanded)` | Expands or collapses the Socrates mentor card (FAB stays visible; persisted)                                                       |
-| `saveViewport(id, vp)`             | Stores last React Flow viewport for a graph id (persisted)                                                                         |
-| `loadGraphList`                    | Refreshes `graphList` from IndexedDB                                                                                               |
-| `loadGraph(id)`                    | Switches active graph: loads nodes/edges from IndexedDB; selects `id`                                                              |
-| `saveCurrentGraph`                 | Writes current nodes/edges for `currentGraphId` to IndexedDB                                                                       |
-| `createGraph(name)`                | New empty graph; saves, switches to it, returns id                                                                                 |
-| `importGraph(name, nodes, edges)`  | New graph from provided React Flow nodes/edges; persists, appends to `graphList`, switches to it, returns id                          |
-| `renameGraph(id, name)`            | Updates graph name in IndexedDB and `graphList`                                                                                    |
-| `deleteGraph(id)`                  | Removes record from IndexedDB; if active, switches to another graph                                                                |
+| Method                             | Effect                                                                                                                                                      |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `onNodesChange` / `onEdgesChange`  | React Flow change handlers (move, resize, remove)                                                                                                           |
+| `updateNodeData(id, patch)`        | Partial update of a node's `ConceptNodeData`                                                                                                                |
+| `addNode(x?, y?)`                  | Inserts a new concept node, selects it, returns its id                                                                                                      |
+| `deleteNode(id)`                   | Removes node and all its incident edges, clears selection if needed                                                                                         |
+| `addEdge(source, target, type)`    | Inserts a `'nesso'` edge with `sourceHandle` / `targetHandle` matching concept node handles (`out` / `in`), selects it, returns id                          |
+| `updateEdgeType(id, type)`         | Changes the relation type on an existing edge                                                                                                               |
+| `deleteEdge(id)`                   | Removes edge, clears selection if needed                                                                                                                    |
+| `setSelected(sel)`                 | Sets selection (or `null` to deselect)                                                                                                                      |
+| `setSetting(key, value)`           | Updates a single `NessoSettings` field                                                                                                                      |
+| `completeTutorial`                 | Sets `tutorialDone` to true (dismisses onboarding; persisted)                                                                                               |
+| `setMentorPanelExpanded(expanded)` | Expands or collapses the Socrates mentor card (FAB stays visible; persisted)                                                                                |
+| `saveViewport(id, vp)`             | Stores last React Flow viewport for a graph id (persisted); invoked from `GraphCanvas` `onMoveEnd` and from debounced `useAutoSave` when nodes/edges change |
+| `loadGraphList`                    | Refreshes `graphList` from IndexedDB                                                                                                                        |
+| `loadGraph(id)`                    | Switches active graph: loads nodes/edges from IndexedDB; selects `id`                                                                                       |
+| `saveCurrentGraph`                 | Writes current nodes/edges for `currentGraphId` to IndexedDB                                                                                                |
+| `createGraph(name)`                | New empty graph; saves, switches to it, returns id                                                                                                          |
+| `importGraph(name, nodes, edges)`  | New graph from provided React Flow nodes/edges; persists, appends to `graphList`, switches to it, returns id                                                |
+| `renameGraph(id, name)`            | Updates graph name in IndexedDB and `graphList`                                                                                                             |
+| `deleteGraph(id)`                  | Removes record from IndexedDB; if active, switches to another graph                                                                                         |
 
 ## Selectors
 

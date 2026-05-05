@@ -28,7 +28,6 @@ interface GraphState {
   selected: Selection
   settings: NessoSettings
   tutorialDone: boolean
-  relationTypesPanelOpen: boolean
   mentorPanelExpanded: boolean
 
   // Per-graph viewports (persisted in localStorage for instant restore)
@@ -58,8 +57,6 @@ interface GraphState {
   completeTutorial: () => void
 
   // UI chrome (persisted)
-  setRelationTypesPanelOpen: (open: boolean) => void
-  toggleRelationTypesPanel: () => void
   setMentorPanelExpanded: (expanded: boolean) => void
 
   // Viewport
@@ -96,7 +93,6 @@ export const useGraphStore = create<GraphState>()(
       edges: [],
       selected: null,
       tutorialDone: false,
-      relationTypesPanelOpen: true,
       mentorPanelExpanded: true,
       viewports: {},
       currentGraphId: SEED_ID,
@@ -187,10 +183,6 @@ export const useGraphStore = create<GraphState>()(
         set(s => ({ settings: { ...s.settings, [key]: value } })),
 
       completeTutorial: () => set({ tutorialDone: true }),
-
-      setRelationTypesPanelOpen: (open) => set({ relationTypesPanelOpen: open }),
-      toggleRelationTypesPanel: () =>
-        set(s => ({ relationTypesPanelOpen: !s.relationTypesPanelOpen })),
 
       setMentorPanelExpanded: (expanded) => set({ mentorPanelExpanded: expanded }),
 
@@ -289,18 +281,19 @@ export const useGraphStore = create<GraphState>()(
       partialize: (s) => ({
         settings: s.settings,
         tutorialDone: s.tutorialDone,
-        relationTypesPanelOpen: s.relationTypesPanelOpen,
         mentorPanelExpanded: s.mentorPanelExpanded,
         currentGraphId: s.currentGraphId,
         graphList: s.graphList,
         viewports: s.viewports,
       }),
       merge: (persisted, current) => {
-        const p = persisted as Partial<GraphState> | undefined
+        const p = persisted as Partial<GraphState> & { relationTypesPanelOpen?: boolean } | undefined
+        if (!p) return current
+        const { relationTypesPanelOpen: _removed, ...rest } = p
         return {
           ...current,
-          ...p,
-          settings: { ...current.settings, ...p?.settings },
+          ...rest,
+          settings: { ...current.settings, ...p.settings },
         }
       },
     }

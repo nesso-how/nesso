@@ -25,7 +25,7 @@ function NodeInspector() {
   return (
     <div style={{
       position: 'absolute',
-      right: 18,
+      left: 18,
       top: 80,
       width: 296,
       zIndex: 25,
@@ -149,7 +149,7 @@ function EdgeInspector() {
   return (
     <div style={{
       position: 'absolute',
-      right: 18,
+      left: 18,
       top: 80,
       width: 296,
       zIndex: 25,

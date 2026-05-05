@@ -7,9 +7,10 @@ interface Props {
   onReview: () => void
   onShortcuts: () => void
   onSettings: () => void
+  onRelationTypes: () => void
 }
 
-export function TopBar({ onReview, onShortcuts, onSettings }: Props) {
+export function TopBar({ onReview, onShortcuts, onSettings, onRelationTypes }: Props) {
   const { settings, setSetting } = useGraphStore()
   const dark = settings.dark
 
@@ -86,6 +87,12 @@ export function TopBar({ onReview, onShortcuts, onSettings }: Props) {
         boxShadow: 'var(--shadow-md)',
       }}>
         <GraphIO />
+
+        <TopBarBtn title="Relation types" onClick={onRelationTypes}>
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.35" strokeLinecap="round">
+            <path d="M2 4.5h10M2 8h10M2 11.5h6" />
+          </svg>
+        </TopBarBtn>
 
         <TopBarBtn title="Review (⌘R)" onClick={onReview}>
           <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">

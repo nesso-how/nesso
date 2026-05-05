@@ -1,6 +1,6 @@
 ---
 description: Semantic edge model — categories, relation types, visual encoding
-globs: src/data/edgeTypes.ts, src/types/graph.ts, src/components/NessoEdge.tsx, src/components/EdgeLegend.tsx
+globs: src/data/edgeTypes.ts, src/types/graph.ts, src/components/NessoEdge.tsx, src/components/RelationTypesDialog.tsx
 alwaysApply: false
 ---
 
@@ -10,10 +10,10 @@ alwaysApply: false
 
 ```ts
 interface ConceptNodeData {
-  text: string      // concept label
-  conf: number      // confidence 1–5
-  reviewed: number  // days since last review
-  pinned: boolean   // pinned nodes are not deleted by review pruning
+  text: string; // concept label
+  conf: number; // confidence 1–5
+  reviewed: number; // days since last review
+  pinned: boolean; // pinned nodes are not deleted by review pruning
 }
 ```
 
@@ -21,16 +21,17 @@ interface ConceptNodeData {
 
 All edges carry a `data.type: EdgeTypeName`. The full definition lives in `src/data/edgeTypes.ts`.
 
-| Category | `EdgeTypeName` values |
-|---|---|
-| `taxonomic` | `is-a`, `instance-of`, `subtype-of` |
-| `structural` | `part-of`, `made-of`, `contains` |
-| `causal` | `causes`, `produces`, `enables`, `prevents`, `triggers` |
-| `dependency` | `requires`, `uses` |
-| `temporal` | `precedes`, `occurs-in` |
-| `opposition` | `contrasts-with`, `opposite-of` |
+| Category     | `EdgeTypeName` values                                   |
+| ------------ | ------------------------------------------------------- |
+| `taxonomic`  | `is-a`, `instance-of`, `subtype-of`                     |
+| `structural` | `part-of`, `made-of`, `contains`                        |
+| `causal`     | `causes`, `produces`, `enables`, `prevents`, `triggers` |
+| `dependency` | `requires`, `uses`                                      |
+| `temporal`   | `precedes`, `occurs-in`                                 |
+| `opposition` | `contrasts-with`, `opposite-of`                         |
 
 Each `EdgeTypeDef` has:
+
 - `cat: EdgeCategory` — which category it belongs to
 - `line: 'solid' | 'dashed' | 'dotted' | 'double' | 'wavy'` — stroke style
 - `glyph: GlyphKind` — SVG icon at the target end
