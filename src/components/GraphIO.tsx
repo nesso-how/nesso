@@ -79,8 +79,8 @@ export function GraphIO() {
         onMouseLeave={e => { e.currentTarget.style.background = open ? 'var(--paper-deep)' : 'transparent'; e.currentTarget.style.color = open ? 'var(--ink)' : 'var(--ink-3)' }}
       >
         <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M8 10V4M5 7l3-3 3 3" />
-          <path d="M3 11v2h10v-2" />
+          <path d="M5 6l3-3 3 3M11 10l-3 3-3-3" />
+          <path d="M8 3v10" />
         </svg>
       </button>
 

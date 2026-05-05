@@ -6,11 +6,11 @@ alwaysApply: false
 
 # Mentor (Socrates)
 
-`MentorBubble.tsx` is the AI chat component. It calls a chat completion API directly from the browser. The provider is swappable — the current implementation uses `@anthropic-ai/sdk` but nothing in the product depends on it.
+`MentorBubble.tsx` is the AI chat component. It calls an OpenAI-compatible **`POST …/chat/completions`** endpoint via `fetch` from the browser. Base URL, model, and optional API key come from `NessoSettings` (`aiBaseUrl`, `aiModel`, `aiApiKey`); when `aiApiKey` is empty, **`VITE_AI_API_KEY`** is used if set.
 
 ## Setup
 
-The API key is read from an environment variable (e.g. `VITE_ANTHROPIC_API_KEY`) and passed to the client. This is intentional for local-only use.
+Configure the mentor under **Settings** (gear, **⌘,**). Defaults target **Ollama** at `http://localhost:11434/v1` with a local model name (e.g. `llama3.2`); no bearer token is required for typical local setups. Keys are client-side by design — do not deploy publicly with secrets embedded.
 
 ## Persona
 
@@ -47,16 +47,12 @@ Whether the mentor **card** is expanded is `mentorPanelExpanded` on `useGraphSto
 
 ## API call
 
-```ts
-client.messages.create({
-  model: "...", // configured per provider
-  max_tokens: 256,
-  system: buildSystemPrompt(),
-  messages: history.map((m) => ({
-    role: m.role === "user" ? "user" : "assistant",
-    content: m.text,
-  })),
-});
-```
+`fetch(`${aiBaseUrl}/chat/completions`, …)` with JSON body:
+
+- `model` — `settings.aiModel`
+- `max_tokens` — `256`
+- `messages` — `[{ role: 'system', content: buildSystemPrompt() }, …]` followed by the conversation turns **after** the opening mentor line (`history.slice(1)` mapped to `user` / `assistant` roles).
+
+`Authorization: Bearer …` is sent when `settings.aiApiKey` or `VITE_AI_API_KEY` is non-empty.
 
 `max_tokens: 256` enforces the 90-word constraint on the model side as well.

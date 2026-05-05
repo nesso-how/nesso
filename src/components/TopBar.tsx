@@ -6,9 +6,10 @@ import { GraphIO } from './GraphIO'
 interface Props {
   onReview: () => void
   onShortcuts: () => void
+  onSettings: () => void
 }
 
-export function TopBar({ onReview, onShortcuts }: Props) {
+export function TopBar({ onReview, onShortcuts, onSettings }: Props) {
   const { settings, setSetting } = useGraphStore()
   const dark = settings.dark
 
@@ -109,6 +110,14 @@ export function TopBar({ onReview, onShortcuts }: Props) {
           <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
             <rect x="1.5" y="4.5" width="13" height="8" rx="1.5" />
             <path d="M4.5 8h1M7.5 8h1M10.5 8h1M5.5 11h5" />
+          </svg>
+        </TopBarBtn>
+
+        <TopBarBtn title="Settings (⌘,)" onClick={onSettings}>
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+            <path d="M1.5 5h11M1.5 11h11" />
+            <circle cx="5" cy="5" r="2" />
+            <circle cx="9" cy="11" r="2" />
           </svg>
         </TopBarBtn>
       </div>

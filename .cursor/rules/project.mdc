@@ -9,13 +9,13 @@ Nesso is an AI-powered knowledge graph for active learning. Users build concept 
 
 ## Stack
 
-| Layer         | Technology                                                                     |
-| ------------- | ------------------------------------------------------------------------------ |
-| Framework     | React 18 + Vite + TypeScript                                                   |
-| Desktop shell | Tauri v2 (`src-tauri/`) — optional wrapper; web app still runs with `pnpm dev` |
-| Graph canvas  | React Flow (`@xyflow/react`)                                                   |
-| State         | Zustand (`src/store/graph.ts`)                                                 |
-| AI mentor     | Provider-agnostic chat API (currently `@anthropic-ai/sdk`, swappable)          |
+| Layer         | Technology                                                                                                      |
+| ------------- | --------------------------------------------------------------------------------------------------------------- |
+| Framework     | React 18 + Vite + TypeScript                                                                                    |
+| Desktop shell | Tauri v2 (`src-tauri/`) — optional wrapper; web app still runs with `pnpm dev`                                  |
+| Graph canvas  | React Flow (`@xyflow/react`)                                                                                    |
+| State         | Zustand (`src/store/graph.ts`)                                                                                  |
+| AI mentor     | OpenAI-compatible `chat/completions` via `fetch`; defaults to local Ollama (endpoint / model / key in Settings) |
 
 ## Source layout
 
@@ -37,4 +37,4 @@ src-tauri/            # Tauri v2 Rust project — tauri.conf.json, capabilities,
 - **Node** — a `ConceptNode` with `text`, `conf` (1–5), `reviewed` (days ago), `pinned`.
 - **Edge** — a React Flow edge of type `'nesso'`, carrying `data.type: EdgeTypeName`.
 - **Selection** — a single `{ kind: 'node' | 'edge', id }` tracked in the store. Drives the Inspector and Socrates opening prompt.
-- **Settings** — `NessoSettings` in the store (dark mode, accent, encoding, palette, etc.). Applied via CSS custom properties on `<html>`.
+- **Settings** — `NessoSettings` in the store (dark mode, accent, encoding, palette, AI endpoint fields, etc.). Applied via CSS custom properties on `<html>` where relevant.

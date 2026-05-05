@@ -8,12 +8,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
+- Provider-agnostic AI: configure any OpenAI-compatible endpoint (Ollama, proprietary APIs, etc.) from the settings dialog (gear icon or **⌘,** / **Ctrl+,**).
 - `scripts/license-header.mjs` (+ `pnpm license-headers` / `pnpm license-headers:check`) inserts or verifies one-line `SPDX-License-Identifier` headers from `package.json` `"license"` in `src`/Tauri/HTML/CSS roots.
 - Keyboard shortcuts dialog (`ShortcutsDialog`): open with **?** or the keyboard icon in the top bar; Escape closes overlays including this dialog.
 - **Graph I/O:** export current graph as JSON from the top bar; import creates a new graph from a Nesso JSON file (`importGraph` in the store).
 
 ### Changed
 
+- **Env:** optional mentor API key env var is **`VITE_AI_API_KEY`** (used when Settings API key is empty).
+- **AI defaults:** mentor targets local **Ollama** (`http://localhost:11434/v1`, model `llama3.2`) by default; remote endpoints remain configurable in Settings.
 - **Auto-save:** graph-change debounce lowered from 800 ms to 500 ms (`useAutoSave`).
 - Relicense from MIT to **GNU AGPL v3.0** (`LICENSE`, `package.json`, `src-tauri/Cargo.toml`).
 - **TopBar:** centered pill keeps brand, graph switcher, and search placeholder; review, theme, and shortcuts moved to a top-right pill.

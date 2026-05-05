@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0
 import { useState, useRef, useEffect } from 'react'
-import Anthropic from '@anthropic-ai/sdk'
 import { SocratesGlyph } from './SocratesGlyph'
 import { useGraphStore, selectedNodeSelector, selectedEdgeSelector } from '@/store/graph'
 import { EDGE_TYPES, EDGE_CATEGORIES } from '@/data/edgeTypes'
@@ -31,6 +30,7 @@ export function MentorBubble() {
 
   const selectedNode = useGraphStore(selectedNodeSelector)
   const selectedEdge = useGraphStore(selectedEdgeSelector)
+  const settings = useGraphStore(s => s.settings)
   const { nodes, edges } = useGraphStore()
 
   // Derive opening prompt from selection
@@ -99,18 +99,29 @@ export function MentorBubble() {
     setThinking(true)
 
     try {
-      const client = new Anthropic({ apiKey: import.meta.env.VITE_ANTHROPIC_API_KEY, dangerouslyAllowBrowser: true })
-      const messages = next.map(m => ({
-        role: m.role === 'user' ? 'user' as const : 'assistant' as const,
-        content: m.text,
-      }))
-      const response = await client.messages.create({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 256,
-        system: buildSystemPrompt(),
-        messages,
+      const apiKey = settings.aiApiKey || import.meta.env.VITE_AI_API_KEY || ''
+      const baseUrl = settings.aiBaseUrl.replace(/\/+$/, '')
+      const res = await fetch(`${baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
+        },
+        body: JSON.stringify({
+          model: settings.aiModel,
+          max_tokens: 256,
+          messages: [
+            { role: 'system', content: buildSystemPrompt() },
+            ...next.slice(1).map(m => ({
+              role: m.role === 'user' ? 'user' : 'assistant',
+              content: m.text,
+            })),
+          ],
+        }),
       })
-      const reply = response.content[0].type === 'text' ? response.content[0].text : '…'
+      if (!res.ok) throw new Error(await res.text())
+      const data = (await res.json()) as { choices?: { message?: { content?: string | null } }[] }
+      const reply = data.choices?.[0]?.message?.content ?? '…'
       setHistory(h => [...h, { role: 'mentor', text: reply }])
     } catch {
       setHistory(h => [...h, { role: 'mentor', text: '*Hmm.* My voice failed me. Try again — slowly.' }])

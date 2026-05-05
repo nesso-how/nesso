@@ -8,13 +8,13 @@ Nesso is an interactive concept map where nodes are ideas and edges are typed se
 
 ## Stack
 
-| Layer        | Technology                                                                          |
-| ------------ | ----------------------------------------------------------------------------------- |
-| Framework    | React 18 + Vite + TypeScript                                                        |
-| Desktop      | Tauri v2 — binaries via [GitHub Releases](https://github.com/cedoor/nesso/releases) |
-| Graph canvas | [React Flow (`@xyflow/react`)](https://reactflow.dev/)                              |
-| State        | Zustand                                                                             |
-| AI mentor    | Any OpenAI-compatible chat API (default: Anthropic Claude via `@anthropic-ai/sdk`)  |
+| Layer        | Technology                                                                                                                   |
+| ------------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| Framework    | React 18 + Vite + TypeScript                                                                                                 |
+| Desktop      | Tauri v2 — binaries via [GitHub Releases](https://github.com/cedoor/nesso/releases)                                          |
+| Graph canvas | [React Flow (`@xyflow/react`)](https://reactflow.dev/)                                                                       |
+| State        | Zustand                                                                                                                      |
+| AI mentor    | OpenAI-compatible `chat/completions` via `fetch` (default: local [Ollama](http://localhost:11434); configurable in Settings) |
 
 ## Getting started
 
@@ -22,13 +22,15 @@ Nesso is an interactive concept map where nodes are ideas and edges are typed se
 pnpm install
 ```
 
-Create a `.env.local` file at the project root with your AI provider key:
+With defaults, Nesso talks to **Ollama** at `http://localhost:11434/v1` (no API key). Pull a model first, e.g. `ollama pull llama3.2`.
+
+For a cloud provider instead, set base URL / model / key in **Settings**, or put a fallback key in `.env.local`:
 
 ```
-VITE_ANTHROPIC_API_KEY=sk-ant-...
+VITE_AI_API_KEY=...   # optional; used when Settings API key is empty — whatever secret your endpoint expects as `Authorization: Bearer`
 ```
 
-> The API key is used client-side. This is intentional for local use; do not deploy this app publicly with your key embedded.
+> Any API key is used client-side. Do not deploy this app publicly with secrets embedded.
 
 ```sh
 pnpm dev
@@ -78,7 +80,7 @@ Each relation has a line style (solid, dashed, dotted, double, wavy) and an SVG 
 - [x] Save and load graphs via IndexedDB
 - [x] Multiple graphs with tab switching
 - [ ] Parallel-edge handling — enforce one edge per directed pair, or offset overlapping arcs when multiple edges share the same source/target
-- [ ] Provider-agnostic AI — configure any OpenAI-compatible endpoint (Ollama, proprietary) from settings
+- [x] Provider-agnostic AI — configure any OpenAI-compatible endpoint (Ollama, proprietary) from settings
 - [ ] Session export — download a JSON snapshot of the graph and interaction log for offline analysis
 - [x] Alpha release as a macOS desktop app via Tauri v2 (GitHub Releases: macOS arm64 + x64)
 - [ ] Tauri auto-updates (`tauri-plugin-updater`, signing, `latest.json` on GitHub Releases) — feasible once the repo is public
@@ -90,9 +92,10 @@ Copyright © 2026 Omar Desogus. This project is licensed under the [GNU Affero G
 
 ## Keyboard shortcuts
 
-| Key                    | Action                       |
-| ---------------------- | ---------------------------- |
-| `?`                    | Toggle keyboard shortcuts    |
-| `⌘R` / `Ctrl+R`        | Open review mode             |
-| `Delete` / `Backspace` | Delete selected node or edge |
-| `Escape`               | Close overlays               |
+| Key                    | Action                        |
+| ---------------------- | ----------------------------- |
+| `?`                    | Toggle keyboard shortcuts     |
+| `⌘,` / `Ctrl+,`        | Toggle settings (AI endpoint) |
+| `⌘R` / `Ctrl+R`        | Open review mode              |
+| `Delete` / `Backspace` | Delete selected node or edge  |
+| `Escape`               | Close overlays                |

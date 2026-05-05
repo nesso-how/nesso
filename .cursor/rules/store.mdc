@@ -26,7 +26,7 @@ interface GraphState {
 }
 ```
 
-Persistence: Zustand `persist` (`nesso`, localStorage) rehydrates `settings`, `tutorialDone`, `relationTypesPanelOpen`, `mentorPanelExpanded`, `currentGraphId`, `graphList`, and `viewports`. Graph node/edge payloads live in IndexedDB (`src/store/db.ts`); the app loads the active graph via `loadGraph` and writes with `saveCurrentGraph` (debounced from `useAutoSave`).
+Persistence: Zustand `persist` (`nesso`, localStorage) rehydrates `settings`, `tutorialDone`, `relationTypesPanelOpen`, `mentorPanelExpanded`, `currentGraphId`, `graphList`, and `viewports`. Rehydrated `settings` is shallow-merged onto defaults so new keys (e.g. AI fields) appear for older saved blobs. Graph node/edge payloads live in IndexedDB (`src/store/db.ts`); the app loads the active graph via `loadGraph` and writes with `saveCurrentGraph` (debounced from `useAutoSave`).
 
 ## Mutations
 

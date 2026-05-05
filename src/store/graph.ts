@@ -109,6 +109,9 @@ export const useGraphStore = create<GraphState>()(
         showConfidence: true,
         curveStyle: 'arc',
         categoryPalette: 'default',
+        aiBaseUrl: 'http://localhost:11434/v1',
+        aiModel: 'llama3.2',
+        aiApiKey: '',
       },
 
       onNodesChange: (changes) =>
@@ -292,6 +295,14 @@ export const useGraphStore = create<GraphState>()(
         graphList: s.graphList,
         viewports: s.viewports,
       }),
+      merge: (persisted, current) => {
+        const p = persisted as Partial<GraphState> | undefined
+        return {
+          ...current,
+          ...p,
+          settings: { ...current.settings, ...p?.settings },
+        }
+      },
     }
   )
 )

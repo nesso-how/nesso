@@ -12,6 +12,7 @@ const SECTIONS: { heading: string; rows: { keys: string[]; label: string }[] }[]
     heading: 'General',
     rows: [
       { keys: ['?'], label: 'Show keyboard shortcuts' },
+      { keys: [mod, ','], label: 'Settings (AI endpoint)' },
       { keys: ['Esc'], label: 'Close dialog / deselect' },
     ],
   },

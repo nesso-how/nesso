@@ -47,4 +47,9 @@ export interface NessoSettings {
   showConfidence: boolean
   curveStyle: CurveStyle
   categoryPalette: CategoryPalette
+  /** OpenAI-compatible API base, e.g. http://localhost:11434/v1 (Ollama) or a cloud vendor URL */
+  aiBaseUrl: string
+  aiModel: string
+  /** Stored in localStorage; empty falls back to `VITE_AI_API_KEY` */
+  aiApiKey: string
 }
