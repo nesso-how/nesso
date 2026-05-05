@@ -50,6 +50,7 @@ Persistence: Zustand `persist` (`nesso`, localStorage) rehydrates `settings`, `t
 | `loadGraph(id)`                    | Switches active graph: loads nodes/edges from IndexedDB; selects `id`                                                              |
 | `saveCurrentGraph`                 | Writes current nodes/edges for `currentGraphId` to IndexedDB                                                                       |
 | `createGraph(name)`                | New empty graph; saves, switches to it, returns id                                                                                 |
+| `importGraph(name, nodes, edges)`  | New graph from provided React Flow nodes/edges; persists, appends to `graphList`, switches to it, returns id                          |
 | `renameGraph(id, name)`            | Updates graph name in IndexedDB and `graphList`                                                                                    |
 | `deleteGraph(id)`                  | Removes record from IndexedDB; if active, switches to another graph                                                                |
 

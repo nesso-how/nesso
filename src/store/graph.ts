@@ -69,6 +69,7 @@ interface GraphState {
   loadGraph: (id: string) => Promise<void>
   saveCurrentGraph: (viewport?: Viewport) => Promise<void>
   createGraph: (name: string) => Promise<string>
+  importGraph: (name: string, nodes: Node<ConceptNodeData>[], edges: Edge[]) => Promise<string>
   renameGraph: (id: string, name: string) => Promise<void>
   deleteGraph: (id: string) => Promise<void>
 }
@@ -243,6 +244,20 @@ export const useGraphStore = create<GraphState>()(
           currentGraphId: id,
           nodes: [],
           edges: [],
+          selected: null,
+        }))
+        return id
+      },
+
+      importGraph: async (name, nodes, edges) => {
+        const id = 'g' + Math.random().toString(36).slice(2, 9)
+        const now = Date.now()
+        await dbSaveGraph({ id, name, createdAt: now, updatedAt: now, nodes, edges })
+        set(s => ({
+          graphList: [...s.graphList, { id, name, updatedAt: now }],
+          currentGraphId: id,
+          nodes,
+          edges,
           selected: null,
         }))
         return id

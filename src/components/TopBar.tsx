@@ -1,5 +1,6 @@
 import { useGraphStore } from '@/store/graph'
 import { GraphSwitcher } from './GraphSwitcher'
+import { GraphIO } from './GraphIO'
 
 interface Props {
   onReview: () => void
@@ -82,6 +83,8 @@ export function TopBar({ onReview, onShortcuts }: Props) {
         padding: 5,
         boxShadow: 'var(--shadow-md)',
       }}>
+        <GraphIO />
+
         <TopBarBtn title="Review (⌘R)" onClick={onReview}>
           <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
             <path d="M8 2.5a5.5 5.5 0 1 1-5.5 5.5" /><path d="M2.5 4V2h2" />
