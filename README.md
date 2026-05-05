@@ -36,7 +36,7 @@ pnpm dev
 
 ## Desktop (Tauri)
 
-Pre-built **alpha** installers (macOS, Windows, Linux) are published as [GitHub Releases](https://github.com/cedoor/nesso/releases) when a `v*` tag is pushed. Requires [Rust](https://rustup.rs/) locally:
+Pre-built **alpha** macOS installers (Apple silicon + Intel) are published as [GitHub Releases](https://github.com/cedoor/nesso/releases) when a `v*` tag is pushed. Requires [Rust](https://rustup.rs/) locally:
 
 ```sh
 pnpm install
@@ -79,7 +79,7 @@ Each relation has a line style (solid, dashed, dotted, double, wavy) and an SVG 
 - [x] Multiple graphs with tab switching
 - [ ] Provider-agnostic AI — configure any OpenAI-compatible endpoint (Ollama, proprietary) from settings
 - [ ] Session export — download a JSON snapshot of the graph and interaction log for offline analysis
-- [x] Alpha release as a macOS desktop app via Tauri v2 (GitHub Releases builds for macOS, Windows, Linux)
+- [x] Alpha release as a macOS desktop app via Tauri v2 (GitHub Releases: macOS arm64 + x64)
 - [x] Add license (MIT)
 
 ## Keyboard shortcuts
