@@ -1,0 +1,52 @@
+---
+description: Zustand store shape, mutations, and selector patterns
+globs: src/store/**/*.ts
+alwaysApply: false
+---
+
+# Store
+
+`src/store/graph.ts` is a single Zustand store that holds all app state. There is no other global state.
+
+## Shape
+
+```ts
+interface GraphState {
+  nodes: Node<ConceptNodeData>[]
+  edges: Edge[]
+  selected: { kind: 'node' | 'edge'; id: string } | null
+  settings: NessoSettings
+  // ... mutations below
+}
+```
+
+## Mutations
+
+| Method | Effect |
+|---|---|
+| `onNodesChange` / `onEdgesChange` | React Flow change handlers (move, resize, remove) |
+| `updateNodeData(id, patch)` | Partial update of a node's `ConceptNodeData` |
+| `addNode(x?, y?)` | Inserts a new concept node, selects it, returns its id |
+| `deleteNode(id)` | Removes node and all its incident edges, clears selection if needed |
+| `addEdge(source, target, type)` | Inserts a `'nesso'` edge with `data.type`, selects it, returns id |
+| `updateEdgeType(id, type)` | Changes the relation type on an existing edge |
+| `deleteEdge(id)` | Removes edge, clears selection if needed |
+| `setSelected(sel)` | Sets selection (or `null` to deselect) |
+| `setSetting(key, value)` | Updates a single `NessoSettings` field |
+
+## Selectors
+
+Two named selectors are exported from `graph.ts`:
+
+```ts
+export const selectedNodeSelector = (s: GraphState) => Node<ConceptNodeData> | null
+export const selectedEdgeSelector = (s: GraphState) => Edge | null
+```
+
+Use these in components — do not inline the selection look-up logic.
+
+## Rules
+
+- Do not add local `useState` for data that belongs in the store (node text, edge type, selection).
+- New store fields go in `GraphState`; initialise them in the `create(...)` call.
+- Selectors that are used in more than one component should be exported from `graph.ts`, not defined inline per component.

@@ -1,0 +1,54 @@
+---
+description: Socratic AI mentor integration — MentorBubble, system prompt, AI API usage
+globs: src/components/MentorBubble.tsx
+alwaysApply: false
+---
+
+# Mentor (Socrates)
+
+`MentorBubble.tsx` is the AI chat component. It calls a chat completion API directly from the browser. The provider is swappable — the current implementation uses `@anthropic-ai/sdk` but nothing in the product depends on it.
+
+## Setup
+
+The API key is read from an environment variable (e.g. `VITE_ANTHROPIC_API_KEY`) and passed to the client. This is intentional for local-only use.
+
+## Persona
+
+Socrates is a Socratic mentor: he asks short, pointed questions rather than explaining. Key behavioural rules baked into the system prompt:
+
+- Never generate graph content (no proposing new nodes or edges).
+- Prefer one question over a paragraph of explanation.
+- Give facts briefly when asked, then return to a question.
+- No emojis, no flattery. Responses under 90 words.
+- Markdown emphasis with `*asterisks*` for key words.
+
+## Opening prompt selection
+
+The opening message shown when the chat initialises depends on selection:
+
+1. **Edge selected** — tailored prompt for that `EdgeTypeName` if one exists in `SOCRATIC_PROMPTS`, otherwise a generic edge-category question.
+2. **Node selected** — tailored prompt for that node's text if one exists, otherwise a confidence/staleness-aware prompt based on `conf` and `reviewed`.
+3. **Nothing selected** — cycles through `SOCRATIC_PROMPTS` from `seedGraph.ts` via `promptSeed`.
+
+## System prompt context
+
+`buildSystemPrompt()` appends context lines for the current selection:
+- For a node: text, confidence score, days since review.
+- For an edge: source node text, relation label, target node text.
+
+## Message history
+
+`history: Message[]` is local to `MentorBubble` (not in the store). It is reset whenever the opening prompt changes (selection changes). Do not persist chat history to the store.
+
+## API call
+
+```ts
+client.messages.create({
+  model: '...',          // configured per provider
+  max_tokens: 256,
+  system: buildSystemPrompt(),
+  messages: history.map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text })),
+})
+```
+
+`max_tokens: 256` enforces the 90-word constraint on the model side as well.

@@ -1,0 +1,18 @@
+---
+description: Rule for keeping .cursor/rules/ in sync with the codebase
+alwaysApply: true
+---
+
+# Keeping rules up to date
+
+When you modify code in an area covered by a `.cursor/rules/` file, update that file in the same change if the modification makes any rule stale or incomplete. The mapping:
+
+| If you touch… | Update… |
+|---|---|
+| `src/components/**` | `components.mdc` |
+| `src/store/**` | `store.mdc` |
+| `src/types/graph.ts`, `src/data/edgeTypes.ts` | `graph-model.mdc` |
+| `src/components/MentorBubble.tsx`, AI provider/model | `mentor.mdc` |
+| Coding patterns, naming, import conventions | `conventions.mdc` |
+| Architectural constraints, "never do X" rules | `constraints.mdc` |
+| Overall stack, layout, core concepts | `project.mdc` |

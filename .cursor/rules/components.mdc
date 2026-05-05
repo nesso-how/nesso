@@ -1,0 +1,35 @@
+---
+description: Component responsibilities and data flow for Nesso
+globs: src/components/**/*.tsx
+alwaysApply: false
+---
+
+# Components
+
+All components live in `src/components/`. They read from the Zustand store via `useGraphStore` and dispatch mutations through store methods — no local state for graph data.
+
+## Responsibilities
+
+| Component | Role |
+|---|---|
+| `GraphCanvas` | React Flow canvas. Wires `nodeTypes`, `edgeTypes`, store change handlers. Respects `topInset`/`bottomInset`/`leftInset`/`rightInset` props for panel offsets. |
+| `ConceptNode` | Custom node. Renders text, confidence dots, reviewed badge. Handles click → `setSelected`. |
+| `NessoEdge` | Custom edge. Draws line with style (solid/dashed/dotted/double/wavy) and end glyph based on `EdgeTypeDef`. Respects `edgeEncoding` setting. |
+| `GlyphSVG` | Pure SVG renderer for the 16 `GlyphKind` icons used on edges. |
+| `TopBar` | Fixed top bar. Shows graph title, triggers review mode. |
+| `BottomDock` | Fixed bottom dock. Zoom in/out/fit, add node, legend toggle. |
+| `EdgeLegend` | Left panel. Lists all 6 categories and 17 relation types with their visual encoding. Closeable. |
+| `Inspector` | Right panel. Appears when a node or edge is selected. Edits `text`, `conf`, `pinned` for nodes; `type` for edges via `RelationPicker`. |
+| `RelationPicker` | Dropdown grid for selecting an `EdgeTypeName`. Groups by `EdgeCategory`. |
+| `MentorBubble` | FAB + card. Socratic AI chat. See `mentor.mdc`. |
+| `SocratesGlyph` | SVG avatar for Socrates (used in `MentorBubble`). |
+| `ReviewMode` | Full-screen overlay. Walks through low-confidence or stale nodes for spaced-repetition review. |
+| `Onboarding` | First-run overlay explaining the core workflow. |
+
+## Layout
+
+`App.tsx` renders all panels over a single `position: fixed; inset: 0` root. `GraphCanvas` receives inset props so the React Flow viewport avoids panel overlap — panels do not clip the canvas, they just narrow the usable area.
+
+## No prop drilling
+
+Components read global state directly from `useGraphStore`. Do not add props for data that is already in the store — add a selector instead.

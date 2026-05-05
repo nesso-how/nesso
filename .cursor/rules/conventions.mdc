@@ -1,0 +1,38 @@
+---
+description: Coding conventions for Nesso
+globs: src/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Coding conventions
+
+## TypeScript
+
+- All types live in `src/types/graph.ts`. Do not scatter type definitions across component files.
+- Prefer explicit return types on exported functions and hooks.
+- Use `import type` for type-only imports.
+
+## React
+
+- Functional components only.
+- `useCallback` / `useMemo` only when the dependency is genuinely unstable (passed as a prop to a memoised child, or in a `useEffect` dep array). Do not wrap everything by default.
+- CSS is inline styles or CSS custom properties. There is no CSS-modules or Tailwind setup — keep new styles consistent with the existing inline-style pattern.
+
+## State
+
+- Graph data (nodes, edges, selection, settings) belongs in the Zustand store, not in local `useState`.
+- Local state is fine for purely UI concerns: panel open/close, draft input text, animation triggers.
+
+## Naming
+
+- Components: PascalCase, one per file, filename matches component name.
+- Store selectors: `<noun>Selector` suffix, exported from `store/graph.ts`.
+- Edge type constants: `EDGE_TYPES`, `EDGE_CATEGORIES` — all caps, defined once in `data/edgeTypes.ts`.
+
+## Imports
+
+Path alias `@/` maps to `src/`. Use it for all non-relative imports (e.g. `import { useGraphStore } from '@/store/graph'`).
+
+## No comments
+
+Follow the project default: no comments unless the reason is genuinely non-obvious to a future reader. Identifiers should be self-describing.

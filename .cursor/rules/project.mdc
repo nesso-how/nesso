@@ -1,0 +1,38 @@
+---
+description: Project purpose, scope, and architecture overview for Nesso
+alwaysApply: true
+---
+
+# Project: Nesso
+
+Nesso is an AI-powered knowledge graph for active learning. Users build concept maps by placing nodes (ideas) and drawing typed semantic edges between them. A Socratic AI mentor probes their understanding through dialogue rather than explanation.
+
+## Stack
+
+| Layer | Technology |
+|---|---|
+| Framework | React 18 + Vite + TypeScript |
+| Graph canvas | React Flow (`@xyflow/react`) |
+| State | Zustand (`src/store/graph.ts`) |
+| AI mentor | Provider-agnostic chat API (currently `@anthropic-ai/sdk`, swappable) |
+
+## Source layout
+
+```
+src/
+  App.tsx             # Root: keyboard shortcuts, theme application, layout
+  components/         # All UI components (see components.mdc)
+  store/graph.ts      # Single Zustand store for all app state
+  data/
+    edgeTypes.ts      # EDGE_TYPES and EDGE_CATEGORIES — the semantic relation model
+    palettes.ts       # CSS variable colour palettes for edge categories
+    seedGraph.ts      # Initial demo graph + SOCRATIC_PROMPTS
+  types/graph.ts      # ConceptNodeData, EdgeTypeName, NessoSettings, etc.
+```
+
+## Core concepts
+
+- **Node** — a `ConceptNode` with `text`, `conf` (1–5), `reviewed` (days ago), `pinned`.
+- **Edge** — a React Flow edge of type `'nesso'`, carrying `data.type: EdgeTypeName`.
+- **Selection** — a single `{ kind: 'node' | 'edge', id }` tracked in the store. Drives the Inspector and Socrates opening prompt.
+- **Settings** — `NessoSettings` in the store (dark mode, accent, encoding, palette, etc.). Applied via CSS custom properties on `<html>`.

@@ -1,0 +1,52 @@
+---
+description: Semantic edge model — categories, relation types, visual encoding
+globs: src/data/edgeTypes.ts, src/types/graph.ts, src/components/NessoEdge.tsx, src/components/EdgeLegend.tsx
+alwaysApply: false
+---
+
+# Graph model
+
+## Node data (`ConceptNodeData`)
+
+```ts
+interface ConceptNodeData {
+  text: string      // concept label
+  conf: number      // confidence 1–5
+  reviewed: number  // days since last review
+  pinned: boolean   // pinned nodes are not deleted by review pruning
+}
+```
+
+## Edge categories and relation types
+
+All edges carry a `data.type: EdgeTypeName`. The full definition lives in `src/data/edgeTypes.ts`.
+
+| Category | `EdgeTypeName` values |
+|---|---|
+| `taxonomic` | `is-a`, `instance-of`, `subtype-of` |
+| `structural` | `part-of`, `made-of`, `contains` |
+| `causal` | `causes`, `produces`, `enables`, `prevents`, `triggers` |
+| `dependency` | `requires`, `uses` |
+| `temporal` | `precedes`, `occurs-in` |
+| `opposition` | `contrasts-with`, `opposite-of` |
+
+Each `EdgeTypeDef` has:
+- `cat: EdgeCategory` — which category it belongs to
+- `line: 'solid' | 'dashed' | 'dotted' | 'double' | 'wavy'` — stroke style
+- `glyph: GlyphKind` — SVG icon at the target end
+- `symmetric: boolean` — true for `contrasts-with` and `opposite-of`
+- `label: string` — human-readable label
+
+## Visual encoding
+
+`NessoEdge` renders each edge according to its `EdgeTypeDef`. The amount of visual information shown depends on the `edgeEncoding` setting:
+
+- `full` — line style + glyph + optional label
+- `category` — colour only (category colour, no glyph)
+- `minimal` — plain line, no glyph or colour distinction
+
+Category colours are CSS custom properties (`--cat-taxonomic`, `--cat-structural`, etc.) set by the active palette in `src/data/palettes.ts`.
+
+## React Flow edge type
+
+All edges in the store use `type: 'nesso'`, mapped to `NessoEdge` in `GraphCanvas`. Never use the default React Flow edge types — they do not carry glyph or line-style rendering.

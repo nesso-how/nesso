@@ -1,0 +1,30 @@
+---
+description: Hard constraints — what NOT to do in Nesso
+alwaysApply: true
+---
+
+# Constraints
+
+## Never store chat history in the global store
+
+`MentorBubble` conversation history is local state. It resets on selection change by design — each selection context starts a fresh Socratic dialogue. Do not lift it into the Zustand store.
+
+## Never use default React Flow edge types
+
+All edges must use `type: 'nesso'`. The custom `NessoEdge` renderer is load-bearing for visual encoding (line style, glyph, category colour). Plain React Flow edges skip all of this.
+
+## Never hardcode edge colours
+
+Category colours are CSS custom properties (`--cat-taxonomic`, etc.) set by the active palette. Do not hardcode hex values for edge or node colours — use the variables so palette switching works.
+
+## Never call the AI API outside MentorBubble
+
+All AI chat calls are centralised in `MentorBubble.tsx`. Do not instantiate the AI client elsewhere — the API key is client-side and calls should be scoped to the mentor interaction.
+
+## Never add a second global store
+
+The single `useGraphStore` in `src/store/graph.ts` is the source of truth. Do not introduce a second Zustand store, React context for data, or any other global state mechanism.
+
+## Never mutate React Flow node/edge arrays directly
+
+All graph mutations go through store methods (`addNode`, `deleteEdge`, `updateNodeData`, etc.) which return new arrays. Do not push into `nodes` or `edges` in place.
