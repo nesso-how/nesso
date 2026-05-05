@@ -1,4 +1,5 @@
 import type { ConceptNodeData, EdgeTypeName } from '@/types/graph'
+import { CONCEPT_HANDLE_IN, CONCEPT_HANDLE_OUT } from '@/data/conceptHandles'
 import type { Node, Edge } from '@xyflow/react'
 
 let _id = 0
@@ -77,6 +78,8 @@ export function makeSeedGraph(): { nodes: Node<ConceptNodeData>[]; edges: Edge[]
     id: `e${i}`,
     source: idMap[e.from],
     target: idMap[e.to],
+    sourceHandle: CONCEPT_HANDLE_OUT,
+    targetHandle: CONCEPT_HANDLE_IN,
     type: 'nesso',
     data: { type: e.type },
   }))

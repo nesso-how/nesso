@@ -5,70 +5,12 @@ import { EDGE_TYPES, EDGE_CATEGORIES } from '@/data/edgeTypes'
 import { GlyphSVG } from './GlyphSVG'
 import type { EdgeTypeName, EdgeEncoding } from '@/types/graph'
 import { useGraphStore } from '@/store/graph'
-
-// Find where the line from (cx,cy) toward (tx,ty) exits a rect of size (w,h) centered at (cx,cy).
-function rectExit(cx: number, cy: number, w: number, h: number, tx: number, ty: number) {
-  const dx = tx - cx, dy = ty - cy
-  if (dx === 0 && dy === 0) return { x: cx, y: cy }
-  const hx = w / 2, hy = h / 2
-  const sx = dx === 0 ? Infinity : hx / Math.abs(dx)
-  const sy = dy === 0 ? Infinity : hy / Math.abs(dy)
-  const s = Math.min(sx, sy)
-  return { x: cx + dx * s, y: cy + dy * s }
-}
+import { nessoArcPath, rectExit } from '@/geometry/nessoEdgeGeometry'
 
 export interface NessoEdgeData {
   type: EdgeTypeName
   siblingIdx?: number   // 0-based index among edges sharing the same node pair
   straight?: boolean    // override per edge (unused, controlled by settings)
-}
-
-// Single-arc quadratic bezier, matching the original prototype geometry.
-// Control point is offset perpendicularly from the midpoint of the chord.
-function arcPath(
-  sx: number, sy: number,
-  tx: number, ty: number,
-  siblingIdx = 0,
-  straight = false,
-): { path: string; labelX: number; labelY: number; arrowAngle: number } {
-  if (straight) {
-    const lx = (sx + tx) / 2
-    const ly = (sy + ty) / 2
-    return {
-      path: `M ${sx} ${sy} L ${tx} ${ty}`,
-      labelX: lx,
-      labelY: ly,
-      arrowAngle: Math.atan2(ty - sy, tx - sx),
-    }
-  }
-
-  const dx = tx - sx
-  const dy = ty - sy
-  const dist = Math.sqrt(dx * dx + dy * dy) || 1
-
-  // Perpendicular unit vector (rotate 90° CCW)
-  const nx = -dy / dist
-  const ny = dx / dist
-
-  // Sibling offset: each additional edge between the same pair gets pushed further
-  const off = siblingIdx * 14
-
-  // Control point: perpendicular offset from the midpoint
-  const bend = Math.min(dist * 0.22, 90) + off * 0.5
-  const cpx = (sx + tx) / 2 + nx * bend
-  const cpy = (sy + ty) / 2 + ny * bend
-
-  // Quadratic bezier path
-  const path = `M ${sx} ${sy} Q ${cpx} ${cpy} ${tx} ${ty}`
-
-  // Point at t=0.5 on the quadratic: 0.25*A + 0.5*CP + 0.25*B
-  const labelX = cpx * 0.5 + (sx + tx) * 0.25
-  const labelY = cpy * 0.5 + (sy + ty) * 0.25
-
-  // Tangent at t=1: direction from control point to endpoint
-  const arrowAngle = Math.atan2(ty - cpy, tx - cpx)
-
-  return { path, labelX, labelY, arrowAngle }
 }
 
 function EdgePathElement({
@@ -149,7 +91,7 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps) {
   const a = rectExit(scx, scy, sw + pad * 2, sh + pad * 2, tcx, tcy)
   const b = rectExit(tcx, tcy, tw + pad * 2, th + pad * 2, scx, scy)
 
-  const { path, labelX, labelY, arrowAngle } = arcPath(
+  const { path, labelX, labelY, arrowAngle } = nessoArcPath(
     a.x, a.y,
     b.x, b.y,
     edgeData?.siblingIdx ?? 0,

@@ -29,27 +29,27 @@ Persistence: Zustand `persist` (`nesso`) rehydrates `settings`, `tutorialDone`, 
 
 ## Mutations
 
-| Method                            | Effect                                                                   |
-| --------------------------------- | ------------------------------------------------------------------------ |
-| `onNodesChange` / `onEdgesChange` | React Flow change handlers (move, resize, remove)                        |
-| `updateNodeData(id, patch)`       | Partial update of a node's `ConceptNodeData`                             |
-| `addNode(x?, y?)`                 | Inserts a new concept node, selects it, returns its id                   |
-| `deleteNode(id)`                  | Removes node and all its incident edges, clears selection if needed      |
-| `addEdge(source, target, type)`   | Inserts a `'nesso'` edge with `data.type`, selects it, returns id        |
-| `updateEdgeType(id, type)`        | Changes the relation type on an existing edge                            |
-| `deleteEdge(id)`                  | Removes edge, clears selection if needed                                 |
-| `setSelected(sel)`                | Sets selection (or `null` to deselect)                                   |
-| `setSetting(key, value)`          | Updates a single `NessoSettings` field                                   |
-| `completeTutorial`                | Sets `tutorialDone` to true (dismisses onboarding; persisted)            |
-| `setRelationTypesPanelOpen(open)` | Shows or hides the left “Relation types” / edge legend panel (persisted) |
-| `toggleRelationTypesPanel`        | Toggles the relation types panel open/closed (persisted)                 |
-| `saveViewport(id, vp)`            | Stores last React Flow viewport for a graph id (persisted)                |
-| `loadGraphList`                   | Refreshes `graphList` from IndexedDB                                      |
-| `loadGraph(id)`                   | Switches active graph: loads nodes/edges from IndexedDB; selects `id`    |
-| `saveCurrentGraph`                | Writes current nodes/edges for `currentGraphId` to IndexedDB              |
-| `createGraph(name)`               | New empty graph; saves, switches to it, returns id                        |
-| `renameGraph(id, name)`           | Updates graph name in IndexedDB and `graphList`                           |
-| `deleteGraph(id)`                 | Removes record from IndexedDB; if active, switches to another graph       |
+| Method                            | Effect                                                                                                                             |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `onNodesChange` / `onEdgesChange` | React Flow change handlers (move, resize, remove)                                                                                  |
+| `updateNodeData(id, patch)`       | Partial update of a node's `ConceptNodeData`                                                                                       |
+| `addNode(x?, y?)`                 | Inserts a new concept node, selects it, returns its id                                                                             |
+| `deleteNode(id)`                  | Removes node and all its incident edges, clears selection if needed                                                                |
+| `addEdge(source, target, type)`   | Inserts a `'nesso'` edge with `sourceHandle` / `targetHandle` matching concept node handles (`out` / `in`), selects it, returns id |
+| `updateEdgeType(id, type)`        | Changes the relation type on an existing edge                                                                                      |
+| `deleteEdge(id)`                  | Removes edge, clears selection if needed                                                                                           |
+| `setSelected(sel)`                | Sets selection (or `null` to deselect)                                                                                             |
+| `setSetting(key, value)`          | Updates a single `NessoSettings` field                                                                                             |
+| `completeTutorial`                | Sets `tutorialDone` to true (dismisses onboarding; persisted)                                                                      |
+| `setRelationTypesPanelOpen(open)` | Shows or hides the left “Relation types” / edge legend panel (persisted)                                                           |
+| `toggleRelationTypesPanel`        | Toggles the relation types panel open/closed (persisted)                                                                           |
+| `saveViewport(id, vp)`            | Stores last React Flow viewport for a graph id (persisted)                                                                         |
+| `loadGraphList`                   | Refreshes `graphList` from IndexedDB                                                                                               |
+| `loadGraph(id)`                   | Switches active graph: loads nodes/edges from IndexedDB; selects `id`                                                              |
+| `saveCurrentGraph`                | Writes current nodes/edges for `currentGraphId` to IndexedDB                                                                       |
+| `createGraph(name)`               | New empty graph; saves, switches to it, returns id                                                                                 |
+| `renameGraph(id, name)`           | Updates graph name in IndexedDB and `graphList`                                                                                    |
+| `deleteGraph(id)`                 | Removes record from IndexedDB; if active, switches to another graph                                                                |
 
 ## Selectors
 

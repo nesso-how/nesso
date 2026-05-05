@@ -12,6 +12,7 @@ import {
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { ConceptNode } from './ConceptNode'
+import { NessoConnectionLine } from './NessoConnectionLine'
 import { NessoEdge } from './NessoEdge'
 import { RelationPicker } from './RelationPicker'
 import { useGraphStore } from '@/store/graph'
@@ -116,6 +117,7 @@ export function GraphCanvas({
         onConnect={onConnect}
         onConnectStart={onConnectStart}
         onConnectEnd={onConnectEnd}
+        connectionLineComponent={NessoConnectionLine}
         onNodeClick={onNodeClick}
         onPaneClick={onPaneClick}
         connectionMode={ConnectionMode.Loose}

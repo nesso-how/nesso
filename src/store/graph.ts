@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware'
 import { applyNodeChanges, applyEdgeChanges } from '@xyflow/react'
 import type { Node, Edge, NodeChange, EdgeChange } from '@xyflow/react'
 import type { ConceptNodeData, NessoSettings, EdgeTypeName } from '@/types/graph'
+import { CONCEPT_HANDLE_IN, CONCEPT_HANDLE_OUT } from '@/data/conceptHandles'
 import { makeSeedGraph } from '@/data/seedGraph'
 import { dbSaveGraph, dbLoadGraph, dbListGraphs, dbDeleteGraph } from './db'
 import type { GraphRecord } from './db'
@@ -145,7 +146,15 @@ export const useGraphStore = create<GraphState>()(
       addEdge: (source, target, type) => {
         const id = 'e' + Math.random().toString(36).slice(2, 8)
         set(s => ({
-          edges: [...s.edges, { id, source, target, type: 'nesso', data: { type } }],
+          edges: [...s.edges, {
+            id,
+            source,
+            target,
+            sourceHandle: CONCEPT_HANDLE_OUT,
+            targetHandle: CONCEPT_HANDLE_IN,
+            type: 'nesso',
+            data: { type },
+          }],
           selected: { kind: 'edge', id },
         }))
         return id

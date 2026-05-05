@@ -2,6 +2,7 @@ import { useState, useRef, useCallback } from 'react'
 import { Handle, Position, NodeProps } from '@xyflow/react'
 import type { Node } from '@xyflow/react'
 import type { ConceptNodeData } from '@/types/graph'
+import { CONCEPT_HANDLE_IN, CONCEPT_HANDLE_OUT } from '@/data/conceptHandles'
 import { useGraphStore } from '@/store/graph'
 
 type ConceptNodeType = Node<ConceptNodeData>
@@ -9,6 +10,7 @@ type ConceptNodeType = Node<ConceptNodeData>
 export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(data.text)
+  const [hovered, setHovered] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const { updateNodeData, setSelected, settings } = useGraphStore()
   const showConfidence = settings.showConfidence
@@ -25,12 +27,15 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
     setEditing(false)
   }, [id, updateNodeData])
 
-  const confColor = `var(--conf-${Math.max(1, Math.min(5, data.conf ?? 3))})`
+  const confLevel = Math.max(1, Math.min(5, data.conf ?? 3))
+  const confColor = showConfidence && data.conf != null ? `var(--conf-${confLevel})` : 'var(--ink)'
   const isStale = data.reviewed > 14
 
   return (
     <div
       onDoubleClick={(e) => { e.stopPropagation(); startEdit() }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       style={{
         position: 'relative',
         padding: '6px 14px',
@@ -56,19 +61,6 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
         }} />
       )}
 
-      {/* Confidence dot */}
-      {showConfidence && data.conf != null && (
-        <div style={{
-          position: 'absolute',
-          top: 0,
-          right: -2,
-          width: 6,
-          height: 6,
-          borderRadius: '50%',
-          background: confColor,
-          boxShadow: isStale ? `0 0 0 3px transparent, 0 0 0 4px ${confColor}44` : 'none',
-        }} />
-      )}
 
       {/* Pinned dot */}
       {data.pinned && (
@@ -119,22 +111,45 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
           }}>
             {data.text}
           </span>
-          {/* Underline */}
+          {/* Underline — color encodes confidence, dashed when stale */}
           <div style={{
             position: 'absolute',
             bottom: 5,
             left: 16,
             right: 16,
             height: selected ? 1.4 : 0.8,
-            background: 'var(--ink)',
-            opacity: selected ? 0.9 : 0.4,
+            background: isStale && showConfidence
+              ? `repeating-linear-gradient(90deg, ${confColor} 0, ${confColor} 4px, transparent 4px, transparent 8px)`
+              : confColor,
+            opacity: selected ? 0.9 : 0.55,
           }} />
         </>
       )}
 
-      {/* React Flow handles — invisible, used for edge connection */}
-      <Handle type="source" position={Position.Right} style={{ opacity: 0, width: 8, height: 8 }} />
-      <Handle type="target" position={Position.Left} style={{ opacity: 0, width: 8, height: 8 }} />
+      <Handle
+        id={CONCEPT_HANDLE_OUT}
+        type="source"
+        position={Position.Right}
+        style={{
+          width: 8, height: 8,
+          background: 'var(--accent)',
+          border: '1.5px solid var(--bg-card, #fff)',
+          opacity: hovered ? 0.85 : 0,
+          transition: 'opacity 120ms',
+        }}
+      />
+      <Handle
+        id={CONCEPT_HANDLE_IN}
+        type="target"
+        position={Position.Left}
+        style={{
+          width: 8, height: 8,
+          background: 'var(--accent)',
+          border: '1.5px solid var(--bg-card, #fff)',
+          opacity: hovered ? 0.85 : 0,
+          transition: 'opacity 120ms',
+        }}
+      />
     </div>
   )
 }
