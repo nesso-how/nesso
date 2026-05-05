@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'react'
 import { useReactFlow } from '@xyflow/react'
 import { useGraphStore } from '@/store/graph'
 
-const DEBOUNCE_MS = 800
+const DEBOUNCE_MS = 500
 
 export function useAutoSave() {
   const nodes = useGraphStore(s => s.nodes)
