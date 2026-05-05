@@ -110,7 +110,7 @@ export const useGraphStore = create<GraphState>()(
         curveStyle: 'arc',
         categoryPalette: 'default',
         aiBaseUrl: 'http://localhost:11434/v1',
-        aiModel: 'llama3.2',
+        aiModel: 'gemma2:2b',
         aiApiKey: '',
       },
 

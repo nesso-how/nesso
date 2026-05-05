@@ -15,8 +15,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
-- **Env:** optional mentor API key env var is **`VITE_AI_API_KEY`** (used when Settings API key is empty).
-- **AI defaults:** mentor targets local **Ollama** (`http://localhost:11434/v1`, model `llama3.2`) by default; remote endpoints remain configurable in Settings.
+- **AI:** mentor API key comes only from **Settings** (`aiApiKey`); removed **`VITE_AI_API_KEY`** / `.env.local` fallback.
+- **AI defaults:** mentor targets local **Ollama** (`http://localhost:11434/v1`, model `gemma2:2b`) by default; remote endpoints remain configurable in Settings.
 - **Auto-save:** graph-change debounce lowered from 800 ms to 500 ms (`useAutoSave`).
 - Relicense from MIT to **GNU AGPL v3.0** (`LICENSE`, `package.json`, `src-tauri/Cargo.toml`).
 - **TopBar:** centered pill keeps brand, graph switcher, and search placeholder; review, theme, and shortcuts moved to a top-right pill.

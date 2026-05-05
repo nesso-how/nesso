@@ -6,11 +6,11 @@ alwaysApply: false
 
 # Mentor (Socrates)
 
-`MentorBubble.tsx` is the AI chat component. It calls an OpenAI-compatible **`POST …/chat/completions`** endpoint via `fetch` from the browser. Base URL, model, and optional API key come from `NessoSettings` (`aiBaseUrl`, `aiModel`, `aiApiKey`); when `aiApiKey` is empty, **`VITE_AI_API_KEY`** is used if set.
+`MentorBubble.tsx` is the AI chat component. It calls an OpenAI-compatible **`POST …/chat/completions`** endpoint via `fetch` from the browser. Base URL, model, and optional API key come from `NessoSettings` (`aiBaseUrl`, `aiModel`, `aiApiKey`); there is no environment-variable fallback for the key.
 
 ## Setup
 
-Configure the mentor under **Settings** (gear, **⌘,**). Defaults target **Ollama** at `http://localhost:11434/v1` with a local model name (e.g. `llama3.2`); no bearer token is required for typical local setups. Keys are client-side by design — do not deploy publicly with secrets embedded.
+Configure the mentor under **Settings** (gear, **⌘,**). Defaults target **Ollama** at `http://localhost:11434/v1` with a local model name (e.g. `gemma2:2b`); no bearer token is required for typical local setups. Keys are client-side by design — do not deploy publicly with secrets embedded.
 
 ## Persona
 
@@ -53,6 +53,6 @@ Whether the mentor **card** is expanded is `mentorPanelExpanded` on `useGraphSto
 - `max_tokens` — `256`
 - `messages` — `[{ role: 'system', content: buildSystemPrompt() }, …]` followed by the conversation turns **after** the opening mentor line (`history.slice(1)` mapped to `user` / `assistant` roles).
 
-`Authorization: Bearer …` is sent when `settings.aiApiKey` or `VITE_AI_API_KEY` is non-empty.
+`Authorization: Bearer …` is sent when `settings.aiApiKey` is non-empty.
 
 `max_tokens: 256` enforces the 90-word constraint on the model side as well.

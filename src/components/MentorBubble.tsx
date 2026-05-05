@@ -99,7 +99,7 @@ export function MentorBubble() {
     setThinking(true)
 
     try {
-      const apiKey = settings.aiApiKey || import.meta.env.VITE_AI_API_KEY || ''
+      const apiKey = settings.aiApiKey
       const baseUrl = settings.aiBaseUrl.replace(/\/+$/, '')
       const res = await fetch(`${baseUrl}/chat/completions`, {
         method: 'POST',

@@ -67,7 +67,7 @@ export function SettingsDialog({ open, onClose }: Props) {
           <input
             type="text"
             value={settings.aiModel}
-            placeholder="llama3.2"
+            placeholder="gemma2:2b"
             onChange={e => setSetting('aiModel', e.target.value)}
             style={{
               width: '100%',
@@ -104,7 +104,7 @@ export function SettingsDialog({ open, onClose }: Props) {
             }}
           />
           <small style={{ font: "400 11px/1.4 'Inter', system-ui", color: 'var(--ink-4)', display: 'block', marginTop: 8 }}>
-            Usually empty for local Ollama. For hosted APIs, set a key here or leave empty and use <code style={{ fontFamily: "'JetBrains Mono', ui-monospace", fontSize: '10.5px' }}>VITE_AI_API_KEY</code> in <code style={{ fontFamily: "'JetBrains Mono', ui-monospace", fontSize: '10.5px' }}>.env.local</code>.
+            Usually empty for local Ollama. For hosted APIs, set whatever secret your endpoint expects as <code style={{ fontFamily: "'JetBrains Mono', ui-monospace", fontSize: '10.5px' }}>Authorization: Bearer</code>.
           </small>
         </label>
 

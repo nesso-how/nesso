@@ -22,15 +22,11 @@ Nesso is an interactive concept map where nodes are ideas and edges are typed se
 pnpm install
 ```
 
-With defaults, Nesso talks to **Ollama** at `http://localhost:11434/v1` (no API key). Pull a model first, e.g. `ollama pull llama3.2`.
+With defaults, Nesso talks to **Ollama** at `http://localhost:11434/v1` (no API key). Pull a model first, e.g. `ollama pull gemma2:2b`.
 
-For a cloud provider instead, set base URL / model / key in **Settings**, or put a fallback key in `.env.local`:
+For a cloud provider instead, set base URL, model, and **API key** in **Settings** (gear or **⌘,** / **Ctrl+,**).
 
-```
-VITE_AI_API_KEY=...   # optional; used when Settings API key is empty — whatever secret your endpoint expects as `Authorization: Bearer`
-```
-
-> Any API key is used client-side. Do not deploy this app publicly with secrets embedded.
+> Any API key is used client-side and stored in the browser (localStorage). Do not deploy this app publicly with secrets embedded.
 
 ```sh
 pnpm dev
