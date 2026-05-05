@@ -57,6 +57,41 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      - name: Release notes from CHANGELOG.md
+        id: changelog
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION=$(jq -r .version src-tauri/tauri.conf.json)
+          PREFIX="## [${VERSION}]"
+          TMP=$(mktemp)
+          printing=0
+          while IFS= read -r line || [[ -n "$line" ]]; do
+            if [[ "$line" == "$PREFIX"* ]]; then
+              printing=1
+              printf '%s\n' "$line"
+              continue
+            fi
+            if [[ "$printing" -eq 1 ]]; then
+              if [[ "$line" == "## ["* ]]; then
+                break
+              fi
+              if [[ "$line" =~ ^\[[^]]+\]: ]]; then
+                break
+              fi
+              printf '%s\n' "$line"
+            fi
+          done < CHANGELOG.md > "$TMP"
+          if [[ ! -s "$TMP" ]]; then
+            printf '%s\n' "No \`## [${VERSION}]\` section found in [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/${{ github.sha }}/CHANGELOG.md) for this tag. Add it before releasing." > "$TMP"
+          fi
+          {
+            echo 'body<<CHANGELOGEOF'
+            cat "$TMP"
+            echo CHANGELOGEOF
+          } >> "$GITHUB_OUTPUT"
+          rm -f "$TMP"
+
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -64,9 +99,8 @@ jobs:
           projectPath: ./src-tauri
           tagName: v__VERSION__
           releaseName: "Nesso v__VERSION__"
-          releaseBody: |
-            **Alpha (Tauri v2)** — desktop bundles attached below. For day-to-day work, the web app is still `pnpm dev`.
-          generateReleaseNotes: true
+          releaseBody: ${{ steps.changelog.outputs.body }}
+          generateReleaseNotes: false
           releaseDraft: false
           prerelease: true
           args: ${{ matrix.args }}

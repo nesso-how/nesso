@@ -17,3 +17,4 @@ The repo keeps a root [`CHANGELOG.md`](CHANGELOG.md) in [Keep a Changelog](https
 
 - Version bumps (root `package.json`, `src-tauri/tauri.conf.json`), Git tags, and `CHANGELOG.md` sections must stay aligned.
 - Link references at the bottom of `CHANGELOG.md` must be updated when cutting a release (compare URLs for the new tag).
+- **GitHub Releases:** `.github/workflows/release.yml` sets the release description from the `## [<version>]` section in `CHANGELOG.md` matching `src-tauri/tauri.conf.json` `version`. Add or update that section before tagging.

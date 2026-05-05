@@ -10,7 +10,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
-- Initial alpha: interactive knowledge graph (web + Tauri v2 desktop builds for macOS, Windows, and Linux via GitHub Releases).
+- Initial alpha: interactive knowledge graph (web + Tauri v2); desktop installers on GitHub Releases (macOS Apple silicon and Intel).
 
 [Unreleased]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.1...HEAD
 [0.1.0-alpha.1]: https://github.com/cedoor/nesso/releases/tag/v0.1.0-alpha.1
