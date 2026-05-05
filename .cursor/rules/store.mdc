@@ -16,9 +16,12 @@ interface GraphState {
   edges: Edge[]
   selected: { kind: 'node' | 'edge'; id: string } | null
   settings: NessoSettings
+  tutorialDone: boolean
   // ... mutations below
 }
 ```
+
+Persistence: the store uses Zustand `persist` with key `nesso`. Only `settings` and `tutorialDone` are rehydrated; `nodes`, `edges`, and `selected` always come from the seed on load.
 
 ## Mutations
 
@@ -33,6 +36,7 @@ interface GraphState {
 | `deleteEdge(id)` | Removes edge, clears selection if needed |
 | `setSelected(sel)` | Sets selection (or `null` to deselect) |
 | `setSetting(key, value)` | Updates a single `NessoSettings` field |
+| `completeTutorial` | Sets `tutorialDone` to true (dismisses onboarding; persisted) |
 
 ## Selectors
 

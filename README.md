@@ -8,12 +8,12 @@ Nesso is an interactive concept map where nodes are ideas and edges are typed se
 
 ## Stack
 
-| Layer | Technology |
-|---|---|
-| Framework | React 18 + Vite + TypeScript |
-| Graph canvas | [React Flow (`@xyflow/react`)](https://reactflow.dev/) |
-| State | Zustand |
-| AI mentor | Any OpenAI-compatible chat API (default: Anthropic Claude via `@anthropic-ai/sdk`) |
+| Layer        | Technology                                                                         |
+| ------------ | ---------------------------------------------------------------------------------- |
+| Framework    | React 18 + Vite + TypeScript                                                       |
+| Graph canvas | [React Flow (`@xyflow/react`)](https://reactflow.dev/)                             |
+| State        | Zustand                                                                            |
+| AI mentor    | Any OpenAI-compatible chat API (default: Anthropic Claude via `@anthropic-ai/sdk`) |
 
 ## Getting started
 
@@ -41,22 +41,41 @@ React + Vite single-page app. `src/components/` holds all UI components, `src/st
 
 Edges carry a semantic `type` from 17 named relations grouped into 6 categories:
 
-| Category | Relations |
-|---|---|
-| Taxonomic | `is-a`, `instance-of`, `subtype-of` |
-| Structural | `part-of`, `made-of`, `contains` |
-| Causal | `causes`, `produces`, `enables`, `prevents`, `triggers` |
-| Dependency | `requires`, `uses` |
-| Temporal | `precedes`, `occurs-in` |
-| Opposition | `contrasts-with`, `opposite-of` |
+| Category   | Relations                                               |
+| ---------- | ------------------------------------------------------- |
+| Taxonomic  | `is-a`, `instance-of`, `subtype-of`                     |
+| Structural | `part-of`, `made-of`, `contains`                        |
+| Causal     | `causes`, `produces`, `enables`, `prevents`, `triggers` |
+| Dependency | `requires`, `uses`                                      |
+| Temporal   | `precedes`, `occurs-in`                                 |
+| Opposition | `contrasts-with`, `opposite-of`                         |
 
 Each relation has a line style (solid, dashed, dotted, double, wavy) and an SVG glyph. Encoding density is controlled by the `edgeEncoding` setting (`full`, `category`, `minimal`).
 
+## Roadmap
+
+- [x] Interactive graph canvas — add, move, delete nodes and edges
+- [x] 17 typed relations across 6 semantic categories, each with distinct line style and glyph
+- [x] Inspector panel — edit concept text, confidence, pinned state, and relation type
+- [x] Socratic AI mentor — context-aware opening prompts based on selected node or edge
+- [x] Spaced-repetition review mode — surfaces stale or low-confidence nodes
+- [x] Edge encoding modes — full (glyph + style), category (colour only), minimal
+- [x] Theming — dark/light toggle, accent colour, category palettes
+- [x] Onboarding overlay
+- [ ] Concept search (⌘K)
+- [ ] Keyboard shortcuts dialog
+- [x] Persist settings and tutorial state to LocalStorage
+- [ ] Save and load graphs via IndexedDB
+- [ ] Multiple graphs with tab switching
+- [ ] Provider-agnostic AI — configure any OpenAI-compatible endpoint (Ollama, proprietary) from settings
+- [ ] Session export — download a JSON snapshot of the graph and interaction log for offline analysis
+- [ ] Alpha release as a macOS desktop app via Tauri v2
+
 ## Keyboard shortcuts
 
-| Key | Action |
-|---|---|
-| `?` | Toggle edge legend |
-| `⌘R` / `Ctrl+R` | Open review mode |
+| Key                    | Action                       |
+| ---------------------- | ---------------------------- |
+| `?`                    | Toggle edge legend           |
+| `⌘R` / `Ctrl+R`        | Open review mode             |
 | `Delete` / `Backspace` | Delete selected node or edge |
-| `Escape` | Close overlays |
+| `Escape`               | Close overlays               |

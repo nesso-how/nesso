@@ -13,10 +13,9 @@ import { PALETTES } from './data/palettes'
 
 function AppInner() {
   const [legendOpen, setLegendOpen] = useState(true)
-  const [showOnboarding, setShowOnboarding] = useState(true)
   const [showReview, setShowReview] = useState(false)
 
-  const { settings, setSetting, addNode, selected, deleteNode, deleteEdge } = useGraphStore()
+  const { settings, setSetting, addNode, selected, deleteNode, deleteEdge, tutorialDone, completeTutorial } = useGraphStore()
   const selectedNode = useGraphStore(selectedNodeSelector)
   const selectedEdge = useGraphStore(selectedEdgeSelector)
   const { zoomIn, zoomOut, fitView, getZoom } = useReactFlow()
@@ -35,7 +34,7 @@ function AppInner() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
-      if (e.key === 'Escape') { setShowOnboarding(false); setShowReview(false); return }
+      if (e.key === 'Escape') { completeTutorial(); setShowReview(false); return }
       if (e.key === '?') setLegendOpen(l => !l)
       if (e.key === 'r' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); setShowReview(true) }
       if (e.key === '/') { e.preventDefault() }
@@ -92,7 +91,7 @@ function AppInner() {
         onAddConcept={handleAddConcept}
       />
       <MentorBubble />
-      <Onboarding open={showOnboarding} onClose={() => setShowOnboarding(false)} />
+      <Onboarding open={!tutorialDone} onClose={completeTutorial} />
       <ReviewMode open={showReview} onClose={() => setShowReview(false)} />
     </div>
   )

@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 import { applyNodeChanges, applyEdgeChanges } from '@xyflow/react'
 import type { Node, Edge, NodeChange, EdgeChange } from '@xyflow/react'
 import type { ConceptNodeData, NessoSettings, EdgeTypeName } from '@/types/graph'
@@ -14,6 +15,7 @@ interface GraphState {
   edges: Edge[]
   selected: Selection
   settings: NessoSettings
+  tutorialDone: boolean
 
   // Graph mutations
   onNodesChange: (changes: NodeChange<Node<ConceptNodeData>>[]) => void
@@ -30,11 +32,17 @@ interface GraphState {
 
   // Settings
   setSetting: <K extends keyof NessoSettings>(key: K, value: NessoSettings[K]) => void
+
+  // Tutorial
+  completeTutorial: () => void
 }
 
-export const useGraphStore = create<GraphState>((set, get) => ({
+export const useGraphStore = create<GraphState>()(
+  persist(
+    (set, get) => ({
   ...makeSeedGraph(),
   selected: null,
+  tutorialDone: false,
   settings: {
     dark: false,
     accent: '#b14a2e',
@@ -108,7 +116,15 @@ export const useGraphStore = create<GraphState>((set, get) => ({
 
   setSetting: (key, value) =>
     set(s => ({ settings: { ...s.settings, [key]: value } })),
-}))
+
+  completeTutorial: () => set({ tutorialDone: true }),
+}),
+    {
+      name: 'nesso',
+      partialize: (s) => ({ settings: s.settings, tutorialDone: s.tutorialDone }),
+    }
+  )
+)
 
 // Selectors
 export const selectedNodeSelector = (s: GraphState) => {
