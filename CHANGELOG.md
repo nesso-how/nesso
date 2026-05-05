@@ -16,6 +16,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - **TopBar:** centered pill keeps brand, graph switcher, and search placeholder; review, theme, and shortcuts moved to a top-right pill.
 - **Shortcuts:** **?** no longer toggles the relation-types panel (use the bottom-dock legend control or Edge legend UI instead).
 
+### Fixed
+
+- **ConceptNode:** inline rename keeps a stable width via a hidden-measure span and overlay input; confidence underline hides while editing.
+
 ## [0.1.0-alpha.2] - 2026-05-05
 
 ### Added

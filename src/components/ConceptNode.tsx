@@ -75,55 +75,64 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
         }} />
       )}
 
-      {/* Text or input */}
-      {editing ? (
-        <input
-          ref={inputRef}
-          value={draft}
-          autoFocus
-          onChange={e => setDraft(e.target.value)}
-          onBlur={e => commit(e.target.value)}
-          onKeyDown={e => {
-            e.stopPropagation()
-            if (e.key === 'Enter') commit(draft)
-            if (e.key === 'Escape') { setEditing(false); setDraft(data.text) }
-          }}
-          onMouseDown={e => e.stopPropagation()}
-          style={{
-            border: 0,
-            outline: 'none',
-            background: 'transparent',
-            font: '500 16px Fraunces, ui-serif, Georgia, serif',
-            letterSpacing: '-0.005em',
-            color: 'var(--ink)',
-            textAlign: 'center',
-            width: Math.max(80, draft.length * 9),
-          }}
-        />
-      ) : (
-        <>
-          <span style={{
-            font: `${selected ? 600 : 500} ${selected ? 17 : 16}px Fraunces, ui-serif, Georgia, serif`,
-            letterSpacing: '-0.005em',
-            color: 'var(--ink)',
-            display: 'block',
-            whiteSpace: 'nowrap',
-          }}>
-            {data.text}
-          </span>
-          {/* Underline — color encodes confidence, dashed when stale */}
-          <div style={{
-            position: 'absolute',
-            bottom: 5,
-            left: 16,
-            right: 16,
-            height: selected ? 1.4 : 0.8,
-            background: isStale && showConfidence
-              ? `repeating-linear-gradient(90deg, ${confColor} 0, ${confColor} 4px, transparent 4px, transparent 8px)`
-              : confColor,
-            opacity: selected ? 0.9 : 0.55,
-          }} />
-        </>
+      {/* Text / editing — ghost span always holds the width, input overlays when editing */}
+      <div style={{ position: 'relative' }}>
+        <span style={{
+          font: '500 16px Fraunces, ui-serif, Georgia, serif',
+          letterSpacing: '-0.005em',
+          color: 'var(--ink)',
+          display: 'block',
+          whiteSpace: 'pre',
+          visibility: editing ? 'hidden' : 'visible',
+        }}>
+          {editing ? draft : data.text}
+        </span>
+
+        {editing && (
+          <input
+            ref={inputRef}
+            value={draft}
+            autoFocus
+            onChange={e => setDraft(e.target.value)}
+            onBlur={e => commit(e.target.value)}
+            onKeyDown={e => {
+              e.stopPropagation()
+              if (e.key === 'Enter') commit(draft)
+              if (e.key === 'Escape') { setEditing(false); setDraft(data.text) }
+            }}
+            onMouseDown={e => e.stopPropagation()}
+            style={{
+              position: 'absolute',
+              inset: 0,
+              border: 0,
+              padding: 0,
+              margin: 0,
+              width: '100%',
+              boxSizing: 'border-box',
+              background: 'transparent',
+              font: '500 16px Fraunces, ui-serif, Georgia, serif',
+              letterSpacing: '-0.005em',
+              color: 'var(--ink)',
+              textAlign: 'center',
+              outline: 'none',
+            }}
+          />
+        )}
+      </div>
+
+      {/* Underline — color encodes confidence, dashed when stale */}
+      {!editing && (
+        <div style={{
+          position: 'absolute',
+          bottom: 5,
+          left: 16,
+          right: 16,
+          height: selected ? 1.4 : 0.8,
+          background: isStale && showConfidence
+            ? `repeating-linear-gradient(90deg, ${confColor} 0, ${confColor} 4px, transparent 4px, transparent 8px)`
+            : confColor,
+          opacity: selected ? 0.9 : 0.55,
+        }} />
       )}
 
       <Handle
