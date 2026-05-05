@@ -8,13 +8,13 @@ Nesso is an interactive concept map where nodes are ideas and edges are typed se
 
 ## Stack
 
-| Layer        | Technology                                                                         |
-| ------------ | ---------------------------------------------------------------------------------- |
-| Framework    | React 18 + Vite + TypeScript                                                       |
+| Layer        | Technology                                                                          |
+| ------------ | ----------------------------------------------------------------------------------- |
+| Framework    | React 18 + Vite + TypeScript                                                        |
 | Desktop      | Tauri v2 — binaries via [GitHub Releases](https://github.com/cedoor/nesso/releases) |
-| Graph canvas | [React Flow (`@xyflow/react`)](https://reactflow.dev/)                             |
-| State        | Zustand                                                                            |
-| AI mentor    | Any OpenAI-compatible chat API (default: Anthropic Claude via `@anthropic-ai/sdk`) |
+| Graph canvas | [React Flow (`@xyflow/react`)](https://reactflow.dev/)                              |
+| State        | Zustand                                                                             |
+| AI mentor    | Any OpenAI-compatible chat API (default: Anthropic Claude via `@anthropic-ai/sdk`)  |
 
 ## Getting started
 
