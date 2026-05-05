@@ -80,4 +80,4 @@ jobs:
           releaseDraft: false
           prerelease: true
           args: ${{ matrix.args }}
-          uploadUpdaterJson: false
+          includeUpdaterJson: false

@@ -79,16 +79,19 @@ function Sep() {
 }
 
 function DockBtn({
-  children, active, mono, onClick, style,
+  children, active, mono, onClick, style, title,
 }: {
   children: React.ReactNode
   active?: boolean
   mono?: boolean
   onClick?: () => void
   style?: React.CSSProperties
+  title?: string
 }) {
   return (
     <button
+      type="button"
+      title={title}
       onClick={onClick}
       style={{
         appearance: 'none',
