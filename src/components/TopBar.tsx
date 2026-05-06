@@ -8,9 +8,10 @@ interface Props {
   onShortcuts: () => void
   onSettings: () => void
   onRelationTypes: () => void
+  onSearch: () => void
 }
 
-export function TopBar({ onReview, onShortcuts, onSettings, onRelationTypes }: Props) {
+export function TopBar({ onReview, onShortcuts, onSettings, onRelationTypes, onSearch }: Props) {
   const { settings, setSetting } = useGraphStore()
   const dark = settings.dark
 
@@ -46,19 +47,23 @@ export function TopBar({ onReview, onShortcuts, onSettings, onRelationTypes }: P
 
         <GraphSwitcher />
 
-        <div style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 8,
-          padding: '0 10px',
-          height: 28,
-          background: 'var(--paper-deep)',
-          borderRadius: 999,
-          color: 'var(--ink-3)',
-          fontSize: 12,
-          minWidth: 200,
-          cursor: 'text',
-        }}>
+        <button
+          onClick={onSearch}
+          style={{
+            appearance: 'none', border: 0,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 8,
+            padding: '0 10px',
+            height: 28,
+            background: 'var(--paper-deep)',
+            borderRadius: 999,
+            color: 'var(--ink-3)',
+            fontSize: 12,
+            minWidth: 200,
+            cursor: 'default',
+          }}
+        >
           <span>Search concepts…</span>
           <kbd style={{
             marginLeft: 'auto',
@@ -68,7 +73,7 @@ export function TopBar({ onReview, onShortcuts, onSettings, onRelationTypes }: P
             borderRadius: 4,
             color: 'var(--ink-4)',
           }}>⌘K</kbd>
-        </div>
+        </button>
       </div>
 
       {/* Top-right action pill */}

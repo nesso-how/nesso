@@ -70,7 +70,7 @@ Each relation has a line style (solid, dashed, dotted, double, wavy) and an SVG 
 - [x] Edge encoding modes — full (glyph + style), category (colour only), minimal
 - [x] Theming — dark/light toggle, accent colour, category palettes
 - [x] Onboarding overlay
-- [ ] Concept search (⌘K)
+- [x] Concept search (⌘K)
 - [x] Keyboard shortcuts dialog
 - [x] Persist settings, tutorial state, and relation-types panel visibility to LocalStorage
 - [x] Save and load graphs via IndexedDB

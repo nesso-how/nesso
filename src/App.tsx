@@ -11,6 +11,7 @@ import { Onboarding } from './components/Onboarding'
 import { ReviewMode } from './components/ReviewMode'
 import { ShortcutsDialog } from './components/ShortcutsDialog'
 import { SettingsDialog } from './components/SettingsDialog'
+import { SearchDialog } from './components/SearchDialog'
 import { useGraphStore, selectedNodeSelector, selectedEdgeSelector } from './store/graph'
 import { useAutoSave } from './hooks/useAutoSave'
 import { PALETTES } from './data/palettes'
@@ -21,11 +22,13 @@ function AppInner() {
   const [showShortcuts, setShowShortcuts] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [showRelationTypes, setShowRelationTypes] = useState(false)
+  const [showSearch, setShowSearch] = useState(false)
 
   const {
     settings,
     addNode,
     selected,
+    setSelected,
     deleteNode,
     deleteEdge,
     tutorialDone,
@@ -38,7 +41,7 @@ function AppInner() {
 
   const selectedNode = useGraphStore(selectedNodeSelector)
   const selectedEdge = useGraphStore(selectedEdgeSelector)
-  const { zoomIn, zoomOut, fitView, setViewport } = useReactFlow()
+  const { zoomIn, zoomOut, fitView, setViewport, setCenter } = useReactFlow()
   const [zoom, setZoom] = useState(1)
 
   useAutoSave()
@@ -101,10 +104,12 @@ function AppInner() {
         setShowShortcuts(false)
         setShowSettings(false)
         setShowRelationTypes(false)
+        setShowSearch(false)
         return
       }
       if (e.key === '?') { setShowShortcuts(s => !s); return }
       if (e.key === ',' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); setShowSettings(s => !s); return }
+      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); setShowSearch(s => !s); return }
       if (e.key === 'r' && !e.metaKey && !e.ctrlKey) { setShowReview(true) }
       if (e.key === '/') { e.preventDefault() }
       if ((e.key === 'Delete' || e.key === 'Backspace') && selected) {
@@ -116,6 +121,11 @@ function AppInner() {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [selected, deleteNode, deleteEdge, completeTutorial])
+
+  const handleSelectNode = useCallback((node: { id: string; position: { x: number; y: number } }) => {
+    setSelected({ kind: 'node', id: node.id })
+    setCenter(node.position.x + 100, node.position.y + 30, { zoom: 1.2, duration: 500 })
+  }, [setSelected, setCenter])
 
   const handleAddConcept = useCallback(() => {
     addNode(-200 + (Math.random() - 0.5) * 120, 280 + (Math.random() - 0.5) * 60)
@@ -150,6 +160,7 @@ function AppInner() {
         onShortcuts={() => setShowShortcuts(s => !s)}
         onSettings={() => setShowSettings(s => !s)}
         onRelationTypes={() => setShowRelationTypes(s => !s)}
+        onSearch={() => setShowSearch(s => !s)}
       />
       <RelationTypesDialog open={showRelationTypes} onClose={() => setShowRelationTypes(false)} />
       <Inspector />
@@ -165,6 +176,7 @@ function AppInner() {
       <ReviewMode open={showReview} onClose={() => setShowReview(false)} />
       <ShortcutsDialog open={showShortcuts} onClose={() => setShowShortcuts(false)} />
       <SettingsDialog open={showSettings} onClose={() => setShowSettings(false)} />
+      <SearchDialog open={showSearch} onClose={() => setShowSearch(false)} onSelect={handleSelectNode} />
     </div>
   )
 }

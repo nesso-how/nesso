@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- **Concept search:** `SearchDialog` — **⌘K** / **Ctrl+K** or TopBar control; filter concepts by label, **Enter** or click to select and center the canvas on the node.
+
 ### Changed
 
 - Relicense from **GNU AGPL v3.0** to **MIT** (`LICENSE`, `package.json`, `src-tauri/Cargo.toml`, SPDX headers in sources, README).
