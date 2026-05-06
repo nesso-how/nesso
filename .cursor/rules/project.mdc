@@ -34,7 +34,7 @@ src-tauri/            # Tauri v2 Rust project — tauri.conf.json, capabilities,
 
 ## Core concepts
 
-- **Node** — a `ConceptNode` with `text`, `conf` (1–5), `reviewed` (days ago), `pinned`.
+- **Node** — a `ConceptNode` with `text`, `conf` (1–5), `reviewed` (days ago).
 - **Edge** — a React Flow edge of type `'nesso'`, carrying `data.type: EdgeTypeName`.
 - **Selection** — a single `{ kind: 'node' | 'edge', id }` tracked in the store. Drives the Inspector and Socrates opening prompt.
 - **Settings** — `NessoSettings` in the store (dark mode, accent, encoding, palette, AI endpoint fields, etc.). Applied via CSS custom properties on `<html>` where relevant.

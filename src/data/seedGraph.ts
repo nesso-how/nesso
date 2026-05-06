@@ -6,15 +6,15 @@ import type { Node, Edge } from '@xyflow/react'
 let _id = 0
 const nid = () => `n${++_id}`
 
-type RawNode = { text: string; conf: number; reviewed: number; x: number; y: number; pinned?: boolean }
+type RawNode = { text: string; conf: number; reviewed: number; x: number; y: number }
 
 const RAW_NODES: RawNode[] = [
-  { text: 'Source code',       conf: 5, reviewed: 2,  x: -460, y: -180, pinned: true },
-  { text: 'Compiler',         conf: 4, reviewed: 4,  x: -180, y: -180, pinned: true },
+  { text: 'Source code',       conf: 5, reviewed: 2,  x: -460, y: -180 },
+  { text: 'Compiler',         conf: 4, reviewed: 4,  x: -180, y: -180 },
   { text: 'Bytecode',         conf: 4, reviewed: 7,  x:   80, y: -260 },
   { text: 'Machine code',     conf: 3, reviewed: 12, x:   80, y: -100 },
   { text: 'Interpreter',      conf: 4, reviewed: 6,  x: -180, y:  -20 },
-  { text: 'Runtime',          conf: 5, reviewed: 1,  x:  340, y: -180, pinned: true },
+  { text: 'Runtime',          conf: 5, reviewed: 1,  x:  340, y: -180 },
   { text: 'Heap',             conf: 4, reviewed: 5,  x:  580, y: -300 },
   { text: 'Stack',            conf: 5, reviewed: 3,  x:  580, y: -180 },
   { text: 'Garbage collection', conf: 2, reviewed: 21, x: 840, y: -300 },
@@ -72,7 +72,7 @@ export function makeSeedGraph(): { nodes: Node<ConceptNodeData>[]; edges: Edge[]
       id,
       type: 'concept',
       position: { x: n.x, y: n.y },
-      data: { text: n.text, conf: n.conf, reviewedAt: Date.now() - n.reviewed * 86_400_000, pinned: n.pinned ?? false },
+      data: { text: n.text, conf: n.conf, reviewedAt: Date.now() - n.reviewed * 86_400_000 },
     }
   })
   const edges: Edge[] = RAW_EDGES.map((e, i) => ({

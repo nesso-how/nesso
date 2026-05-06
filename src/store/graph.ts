@@ -140,7 +140,7 @@ export const useGraphStore = create<GraphState>()(
               id,
               type: 'concept',
               position: { x, y },
-              data: { text: 'New concept', conf: 1, reviewedAt: Date.now(), pinned: false },
+              data: { text: 'New concept', conf: 1, reviewedAt: Date.now() },
             },
           ],
           selected: { kind: 'node', id },

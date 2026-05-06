@@ -64,7 +64,7 @@ Each relation has a line style (solid, dashed, dotted, double, wavy) and an SVG 
 
 - [x] Interactive graph canvas — add, move, delete nodes and edges
 - [x] 17 typed relations across 6 semantic categories, each with distinct line style and glyph
-- [x] Inspector panel — edit concept text, confidence, pinned state, and relation type
+- [x] Inspector panel — edit concept text, confidence, and relation type
 - [x] Socratic AI mentor — context-aware opening prompts based on selected node or edge
 - [x] Spaced-repetition review mode — surfaces stale or low-confidence nodes
 - [x] Edge encoding modes — full (glyph + style), category (colour only), minimal

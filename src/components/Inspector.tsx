@@ -46,12 +46,6 @@ function NodeInspector() {
         alignItems: 'baseline',
       }}>
         <span>Concept</span>
-        <span style={{
-          color: node.data.pinned ? 'var(--cat-temporal)' : 'var(--ink-4)',
-          fontStyle: node.data.pinned ? 'italic' : 'normal',
-        }}>
-          {node.data.pinned ? 'pinned' : 'drifting'}
-        </span>
       </div>
 
       <h3 style={{
@@ -127,9 +121,6 @@ function NodeInspector() {
         paddingTop: 12,
         borderTop: '0.5px solid var(--line)',
       }}>
-        <ActionBtn onClick={() => updateNodeData(node.id, { pinned: !node.data.pinned })}>
-          {node.data.pinned ? 'Unpin' : 'Pin'}
-        </ActionBtn>
         <ActionBtn danger onClick={() => deleteNode(node.id)}>Delete</ActionBtn>
       </div>
     </div>

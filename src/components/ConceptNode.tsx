@@ -63,19 +63,6 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
       )}
 
 
-      {/* Pinned dot */}
-      {data.pinned && (
-        <div style={{
-          position: 'absolute',
-          top: 4,
-          left: 4,
-          width: 3,
-          height: 3,
-          borderRadius: '50%',
-          background: 'var(--ink-4)',
-        }} />
-      )}
-
       {/* Text / editing — ghost span always holds the width, input overlays when editing */}
       <div style={{ position: 'relative' }}>
         <span style={{

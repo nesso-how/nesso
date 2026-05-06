@@ -3,7 +3,6 @@ export interface ConceptNodeData extends Record<string, unknown> {
   text: string
   conf: number        // 1–5
   reviewedAt: number  // Unix timestamp ms of last review
-  pinned: boolean
 }
 
 export function daysAgo(ts: number): number {
