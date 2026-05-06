@@ -1,0 +1,78 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+
+      - name: Enable pnpm via Corepack (uses packageManager in package.json)
+        run: corepack enable
+
+      - name: Pnpm store path
+        id: pnpm-store
+        shell: bash
+        run: echo "path=$(pnpm store path)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/cache@v5
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
+      - name: Public base path for GitHub Pages
+        id: base
+        shell: bash
+        run: |
+          NAME="${{ github.event.repository.name }}"
+          OWNER="${{ github.repository_owner }}"
+          if [ "$NAME" = "${OWNER}.github.io" ]; then
+            echo "vite_base=/" >> "$GITHUB_OUTPUT"
+          else
+            echo "vite_base=/${NAME}/" >> "$GITHUB_OUTPUT"
+          fi
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec tsc -b
+          pnpm exec vite build --base "${{ steps.base.outputs.vite_base }}"
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
