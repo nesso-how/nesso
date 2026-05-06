@@ -93,7 +93,7 @@ export const useGraphStore = create<GraphState>()(
       edges: [],
       selected: null,
       tutorialDone: false,
-      mentorPanelExpanded: true,
+      mentorPanelExpanded: false,
       viewports: {},
       currentGraphId: SEED_ID,
       graphList: [{ id: SEED_ID, name: 'Programming concepts', updatedAt: Date.now() }],
