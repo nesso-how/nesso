@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.0-alpha.5] - 2026-05-06
+
 ### Added
 
 - **Concept search:** `SearchDialog` — **⌘K** / **Ctrl+K** or TopBar control; filter concepts by label, **Enter** or click to select and center the canvas on the node.
@@ -86,7 +88,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial alpha: interactive knowledge graph (web + Tauri v2); desktop installers on GitHub Releases (macOS Apple silicon and Intel).
 
-[Unreleased]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.4...HEAD
+[Unreleased]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.5...HEAD
+[0.1.0-alpha.5]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.4...v0.1.0-alpha.5
 [0.1.0-alpha.4]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.3...v0.1.0-alpha.4
 [0.1.0-alpha.3]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.2...v0.1.0-alpha.3
 [0.1.0-alpha.2]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.1...v0.1.0-alpha.2
