@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: AGPL-3.0
+// SPDX-License-Identifier: MIT
 import { CreateMLCEngine } from '@mlc-ai/web-llm'
 import type { MLCEngine, InitProgressReport } from '@mlc-ai/web-llm'
 import { useState, useEffect } from 'react'

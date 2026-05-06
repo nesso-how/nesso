@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: AGPL-3.0
+// SPDX-License-Identifier: MIT
 import { EDGE_CATEGORIES, EDGE_TYPES } from '@/data/edgeTypes'
 import { GlyphSVG } from './GlyphSVG'
 import { useGraphStore } from '@/store/graph'

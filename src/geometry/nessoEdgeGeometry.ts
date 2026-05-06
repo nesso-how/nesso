@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: AGPL-3.0
+// SPDX-License-Identifier: MIT
 // Shared path math for Nesso edges and the in-progress connection preview.
 
 export function rectExit(cx: number, cy: number, w: number, h: number, tx: number, ty: number) {

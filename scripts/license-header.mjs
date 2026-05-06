@@ -1,5 +1,5 @@
 /**
- * Ensures AGPL SPDX one-liners in source files matching package.json `"license"` (when present).
+ * Ensures SPDX one-liners in source files matching package.json `"license"` (when present).
  * Usage: node scripts/license-header.mjs [--check]
  * Without --check: inserts missing headers. With --check: exit 1 if any file is missing one.
  */
@@ -22,7 +22,7 @@ async function readLicenseId() {
   } catch {
     /* fall through */
   }
-  return 'AGPL-3.0'
+  return 'MIT'
 }
 
 const SPDX_REGEX = /\bSPDX-License-Identifier:/
@@ -57,7 +57,7 @@ function hasSpdxLine(content) {
 
 /**
  * @param {string} content
- * @param {string} spdxPlain // line without comment wrapper, e.g. "SPDX-License-Identifier: AGPL-3.0"
+ * @param {string} spdxPlain // line without comment wrapper, e.g. "SPDX-License-Identifier: MIT"
  * @returns {string}
  */
 function insertJsLike(content, spdxPlain) {

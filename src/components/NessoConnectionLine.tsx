@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: AGPL-3.0
+// SPDX-License-Identifier: MIT
 import type { ConnectionLineComponentProps } from '@xyflow/react'
 import { nessoArcPath, rectExit } from '@/geometry/nessoEdgeGeometry'
 import { useGraphStore } from '@/store/graph'

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: AGPL-3.0
+// SPDX-License-Identifier: MIT
 import { useState, useEffect, useCallback } from 'react'
 import { ReactFlowProvider, useReactFlow } from '@xyflow/react'
 import { GraphCanvas } from './components/GraphCanvas'

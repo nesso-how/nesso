@@ -2,7 +2,7 @@
   "name": "nesso",
   "private": true,
   "version": "0.1.0-alpha.4",
-  "license": "AGPL-3.0",
+  "license": "MIT",
   "packageManager": "pnpm@10.14.0",
   "type": "module",
   "scripts": {

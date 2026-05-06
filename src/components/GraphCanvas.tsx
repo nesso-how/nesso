@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: AGPL-3.0
+// SPDX-License-Identifier: MIT
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ReactFlow,

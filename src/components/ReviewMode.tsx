@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: AGPL-3.0
+// SPDX-License-Identifier: MIT
 import { useState, useMemo } from 'react'
 import { EDGE_TYPES, EDGE_CATEGORIES } from '@/data/edgeTypes'
 import { useGraphStore } from '@/store/graph'

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: AGPL-3.0
+// SPDX-License-Identifier: MIT
 import { useState } from 'react'
 import type { EdgeProps } from '@xyflow/react'
 import { useStore } from '@xyflow/react'

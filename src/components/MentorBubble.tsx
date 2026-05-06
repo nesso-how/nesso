@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: AGPL-3.0
+// SPDX-License-Identifier: MIT
 import { useState, useEffect, useCallback, useRef, type ChangeEvent } from 'react'
 import type { Node } from '@xyflow/react'
 import { SocratesGlyph } from './SocratesGlyph'

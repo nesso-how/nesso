@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: AGPL-3.0
+// SPDX-License-Identifier: MIT
 import { useGraphStore } from '@/store/graph'
 import { useWebLLM, initWebLLM, LOCAL_MODEL_LABEL, LOCAL_MODEL_SIZE } from '@/llm/webllm'
 

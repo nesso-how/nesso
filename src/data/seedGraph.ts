@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: AGPL-3.0
+// SPDX-License-Identifier: MIT
 import type { ConceptNodeData, EdgeTypeName } from '@/types/graph'
 import { CONCEPT_HANDLE_IN, CONCEPT_HANDLE_OUT } from '@/data/conceptHandles'
 import type { Node, Edge } from '@xyflow/react'
