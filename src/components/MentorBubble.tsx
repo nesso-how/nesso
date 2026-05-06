@@ -5,7 +5,7 @@ import { SocratesGlyph } from './SocratesGlyph'
 import { useGraphStore, selectedNodeSelector, selectedEdgeSelector } from '@/store/graph'
 import { daysAgo, type ConceptNodeData } from '@/types/graph'
 import { marked } from 'marked'
-import { getEngine, LOCAL_MODEL_ID, LOCAL_MODEL_LABEL } from '@/llm/webllm'
+import { getEngine, useWebLLM, LOCAL_MODEL_ID, LOCAL_MODEL_LABEL } from '@/llm/webllm'
 
 type MentorMode = 'gap' | 'explore' | 'bootstrap'
 
@@ -59,6 +59,10 @@ export function MentorBubble() {
   const updateNodeData = useGraphStore(s => s.updateNodeData)
   const selectedNode = useGraphStore(selectedNodeSelector)
   const selectedEdge = useGraphStore(selectedEdgeSelector)
+
+  const webllm = useWebLLM()
+  const modelLoading = settings.aiMode === 'local' && webllm.status === 'loading'
+  const modelReady = settings.aiMode !== 'local' || webllm.status === 'ready'
 
   const [mode, setMode] = useState<MentorMode>('gap')
   const [bootstrapText, setBootstrapText] = useState<string | null>(null)
@@ -168,6 +172,11 @@ export function MentorBubble() {
       setSessionComplete(false)
       return
     }
+    if (settings.aiMode === 'local' && webllm.status !== 'ready') {
+      setHistory([])
+      setSessionComplete(false)
+      return
+    }
 
     let queue: string[] = []
     if (mode === 'gap') {
@@ -200,7 +209,7 @@ export function MentorBubble() {
       .finally(() => { if (!cancelled) setLoadingInitial(false) })
 
     return () => { cancelled = true }
-  }, [mentorPanelExpanded, mode, currentGraphId, bootstrapText, sessionKey]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [mentorPanelExpanded, mode, currentGraphId, bootstrapText, sessionKey, webllm.status]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (mentorPanelExpanded && inputRef.current) inputRef.current.focus()
@@ -271,8 +280,9 @@ export function MentorBubble() {
     ? history.filter(m => m.role === 'mentor').length
     : 0
 
-  const inputDisabled = sessionComplete || loadingInitial || (mode === 'bootstrap' && !bootstrapText)
+  const inputDisabled = !modelReady || sessionComplete || loadingInitial || (mode === 'bootstrap' && !bootstrapText)
   const placeholder =
+    modelLoading ? 'Loading local model…' :
     sessionComplete ? 'Session complete.' :
     mode === 'bootstrap' && !bootstrapText ? 'Load a document first…' :
     selectedNode ? `Ask Socrates about "${selectedNode.data.text}"…` : 'Ask Socrates…'
@@ -315,12 +325,32 @@ export function MentorBubble() {
               <PulseDot active={!sessionComplete} />
               {sessionComplete ? 'Session complete' : 'Mentor · live'}
             </small>
-            <small style={{
-              font: "400 10px 'JetBrains Mono', ui-monospace",
-              color: 'var(--ink-4)', letterSpacing: '0.02em',
-            }}>
-              {settings.aiMode === 'local' ? LOCAL_MODEL_LABEL : settings.aiModel}
-            </small>
+            {modelLoading ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <div style={{
+                  height: 2, borderRadius: 999, background: 'var(--line)', overflow: 'hidden', width: '100%',
+                }}>
+                  <div style={{
+                    height: '100%', borderRadius: 999, background: 'var(--cat-causal)',
+                    width: `${Math.round(webllm.progress * 100)}%`,
+                    transition: 'width 0.4s ease',
+                  }} />
+                </div>
+                <small style={{
+                  font: "400 10px 'JetBrains Mono', ui-monospace",
+                  color: 'var(--ink-4)', letterSpacing: '0.02em',
+                }}>
+                  {LOCAL_MODEL_LABEL} · {Math.round(webllm.progress * 100)}%
+                </small>
+              </div>
+            ) : (
+              <small style={{
+                font: "400 10px 'JetBrains Mono', ui-monospace",
+                color: 'var(--ink-4)', letterSpacing: '0.02em',
+              }}>
+                {settings.aiMode === 'local' ? LOCAL_MODEL_LABEL : settings.aiModel}
+              </small>
+            )}
           </div>
           <button
             onClick={() => setMentorPanelExpanded(false)}
@@ -417,7 +447,14 @@ export function MentorBubble() {
         <div ref={scrollRef} style={{
           padding: '14px 16px 6px', overflowY: 'auto', flex: 1, minHeight: 80, scrollbarWidth: 'thin',
         }}>
-          {loadingInitial && history.length === 0 ? (
+          {modelLoading ? (
+            <p style={{
+              font: "400 11px/1.4 'JetBrains Mono', ui-monospace",
+              color: 'var(--ink-4)', letterSpacing: '0.02em', margin: 0,
+            }}>
+              {webllm.progressText || 'Initialising…'}
+            </p>
+          ) : loadingInitial && history.length === 0 ? (
             <ThinkingDots />
           ) : history.map((m, i) =>
             m.role === 'user' ? (
@@ -526,7 +563,7 @@ export function MentorBubble() {
         cursor: 'default', padding: 0,
         display: 'inline-flex', alignItems: 'center', justifyContent: 'center', position: 'relative',
       }}>
-        <SpinRing />
+        <SpinRing loading={modelLoading} />
         <SocratesGlyph size={42} />
         {unread > 0 && (
           <span style={{
@@ -578,12 +615,19 @@ function PulseDot({ active }: { active: boolean }) {
   )
 }
 
-function SpinRing() {
+function SpinRing({ loading }: { loading: boolean }) {
   return (
     <span style={{
       position: 'absolute', inset: -3, borderRadius: '50%',
-      border: '1px dashed var(--cat-causal)', opacity: 0.45,
-      animation: 'nx-spin 28s linear infinite', pointerEvents: 'none',
+      border: loading
+        ? '1.5px solid transparent'
+        : '1px dashed var(--cat-causal)',
+      borderTopColor: loading ? 'var(--cat-causal)' : undefined,
+      borderRightColor: loading ? 'var(--cat-causal)' : undefined,
+      borderBottomColor: loading ? 'var(--cat-causal)' : undefined,
+      opacity: loading ? 1 : 0.45,
+      animation: `nx-spin ${loading ? '1s' : '28s'} linear infinite`,
+      pointerEvents: 'none',
     }} />
   )
 }

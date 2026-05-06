@@ -14,6 +14,7 @@ import { SettingsDialog } from './components/SettingsDialog'
 import { useGraphStore, selectedNodeSelector, selectedEdgeSelector } from './store/graph'
 import { useAutoSave } from './hooks/useAutoSave'
 import { PALETTES } from './data/palettes'
+import { initWebLLM } from './llm/webllm'
 
 function AppInner() {
   const [showReview, setShowReview] = useState(false)
@@ -75,6 +76,11 @@ function AppInner() {
       fitView({ padding: 0.15, duration: 0 })
     }
   }, [currentGraphId])
+
+  // Auto-init WebLLM when local mode is active
+  useEffect(() => {
+    if (settings.aiMode === 'local') void initWebLLM()
+  }, [settings.aiMode])
 
   // Apply theme
   useEffect(() => {

@@ -9,7 +9,7 @@ alwaysApply: false
 `MentorBubble.tsx` is the AI chat component. Completions depend on **`NessoSettings.aiMode`**:
 
 - **`remote`** (default) — OpenAI-compatible **`POST …/chat/completions`** via `fetch`. Base URL, model, and optional API key come from `aiBaseUrl`, `aiModel`, `aiApiKey`; there is no environment-variable fallback for the key.
-- **`local`** — In-browser **WebGPU** inference via `@mlc-ai/web-llm` in `src/llm/webllm.ts`. User initiates download/cache from Settings; `getEngine()` exposes `MLCEngine` for `engine.chat.completions.create` with the same message shape as the remote path.
+- **`local`** — In-browser **WebGPU** inference via `@mlc-ai/web-llm` in `src/llm/webllm.ts`. `App.tsx` runs `initWebLLM()` when `aiMode === 'local'` so the MLC engine starts loading without opening Settings first. `MentorBubble` subscribes with `useWebLLM()` (status, `progress`, `progressText`) for a loading bar, placeholder, and transcript message; chat input stays disabled until `status === 'ready'`. `getEngine()` exposes `MLCEngine` for `engine.chat.completions.create` with the same message shape as the remote path.
 
 ## Setup
 
@@ -60,4 +60,4 @@ Whether the mentor **card** is expanded is `mentorPanelExpanded` on `useGraphSto
 
 `Authorization: Bearer …` is sent when `settings.aiApiKey` is non-empty.
 
-**Local:** `getEngine()` from `webllm.ts` must be non-null (user loaded the model in Settings). Then `engine.chat.completions.create({ model: LOCAL_MODEL_ID, max_tokens: 300, messages })` with the same `messages` array built for remote mode.
+**Local:** After `initWebLLM()` completes, `getEngine()` from `webllm.ts` is non-null. Until then the UI blocks sends. Then `engine.chat.completions.create({ model: LOCAL_MODEL_ID, max_tokens: 300, messages })` with the same `messages` array built for remote mode.

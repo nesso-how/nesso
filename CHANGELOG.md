@@ -9,6 +9,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Changed
 
 - Relicense from **GNU AGPL v3.0** to **MIT** (`LICENSE`, `package.json`, `src-tauri/Cargo.toml`, SPDX headers in sources, README).
+- **WebLLM (local AI):** `App` calls `initWebLLM()` when **Local model** is selected; `MentorBubble` uses `useWebLLM()` to show download/init progress, disable input until the engine is ready, and reset the session while loading.
 
 ## [0.1.0-alpha.4] - 2026-05-06
 
