@@ -1,16 +1,19 @@
 ---
 description: Socratic AI mentor integration — MentorBubble, system prompt, AI API usage
-globs: src/components/MentorBubble.tsx
+globs: src/components/MentorBubble.tsx,src/llm/webllm.ts
 alwaysApply: false
 ---
 
 # Mentor (Socrates)
 
-`MentorBubble.tsx` is the AI chat component. It calls an OpenAI-compatible **`POST …/chat/completions`** endpoint via `fetch` from the browser. Base URL, model, and optional API key come from `NessoSettings` (`aiBaseUrl`, `aiModel`, `aiApiKey`); there is no environment-variable fallback for the key.
+`MentorBubble.tsx` is the AI chat component. Completions depend on **`NessoSettings.aiMode`**:
+
+- **`remote`** (default) — OpenAI-compatible **`POST …/chat/completions`** via `fetch`. Base URL, model, and optional API key come from `aiBaseUrl`, `aiModel`, `aiApiKey`; there is no environment-variable fallback for the key.
+- **`local`** — In-browser **WebGPU** inference via `@mlc-ai/web-llm` in `src/llm/webllm.ts`. User initiates download/cache from Settings; `getEngine()` exposes `MLCEngine` for `engine.chat.completions.create` with the same message shape as the remote path.
 
 ## Setup
 
-Configure the mentor under **Settings** (gear, **⌘,**). Defaults target **Ollama** at `http://localhost:11434/v1` with a local model name (e.g. `gemma2:2b`); no bearer token is required for typical local setups. Keys are client-side by design — do not deploy publicly with secrets embedded.
+Configure the mentor under **Settings** (gear, **⌘,**). **Remote API** defaults target **Ollama** at `http://localhost:11434/v1` with a local model name (e.g. `gemma2:2b`); no bearer token is required for typical local setups. **Local model** uses a bundled MLC weight id (see `LOCAL_MODEL_*` in `webllm.ts`); requires a WebGPU-capable browser and one-time model download. Keys are client-side by design — do not deploy publicly with secrets embedded.
 
 ## Persona
 
@@ -45,10 +48,12 @@ Whether the mentor **card** is expanded is `mentorPanelExpanded` on `useGraphSto
 
 ## API call
 
-`fetch(`${aiBaseUrl}/chat/completions`, …)` with JSON body:
+**Remote:** `fetch(`${aiBaseUrl}/chat/completions`, …)` with JSON body:
 
 - `model` — `settings.aiModel`
 - `max_tokens` — `300`
 - `messages` — `[{ role: 'system', content: buildSystemPrompt() }, …]` plus full `history` turns mapped to `user` / `assistant` roles (initial mentor reply comes from the same assistant role in the thread).
 
 `Authorization: Bearer …` is sent when `settings.aiApiKey` is non-empty.
+
+**Local:** `getEngine()` from `webllm.ts` must be non-null (user loaded the model in Settings). Then `engine.chat.completions.create({ model: LOCAL_MODEL_ID, max_tokens: 300, messages })` with the same `messages` array built for remote mode.

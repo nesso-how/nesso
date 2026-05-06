@@ -8,6 +8,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
+- **Local in-browser AI (WebLLM):** Settings can switch **Remote API** (OpenAI-compatible `fetch`) vs **Local model** (WebGPU via `@mlc-ai/web-llm`, default Qwen2.5 1.5B with download/cache UI). `MentorBubble` uses the loaded MLC engine when `aiMode === 'local'`.
 - **Mentor modes** in `MentorBubble`: **Review** (priority queue of low-confidence or stale concepts, rate-and-advance), **Exploration** (free chat with node/edge list + selection context), **Bootstrap** (load a `.txt` / `.md` excerpt for document-grounded discussion). Dynamic system prompt per mode; session reset on graph switch or mode tab change.
 - `daysAgo()` helper in `src/types/graph.ts` for deriving “days since review” from `reviewedAt`.
 - GitHub Actions workflow **Deploy to GitHub Pages** (push to `main` or manual): builds the Vite app with the correct `base` for project sites (`/<repo>/`) or root user/org pages (`<owner>.github.io`), uploads `dist`, and publishes via **GitHub Actions** Pages.

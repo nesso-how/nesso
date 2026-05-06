@@ -105,6 +105,7 @@ export const useGraphStore = create<GraphState>()(
         showConfidence: true,
         curveStyle: 'arc',
         categoryPalette: 'default',
+        aiMode: 'remote',
         aiBaseUrl: 'http://localhost:11434/v1',
         aiModel: 'gemma2:2b',
         aiApiKey: '',

@@ -4,6 +4,7 @@ import type { Node } from '@xyflow/react'
 import { SocratesGlyph } from './SocratesGlyph'
 import { useGraphStore, selectedNodeSelector, selectedEdgeSelector } from '@/store/graph'
 import { daysAgo, type ConceptNodeData } from '@/types/graph'
+import { getEngine, LOCAL_MODEL_ID, LOCAL_MODEL_LABEL } from '@/llm/webllm'
 
 type MentorMode = 'gap' | 'explore' | 'bootstrap'
 
@@ -82,6 +83,18 @@ export function MentorBubble() {
     : null
 
   const fetchCompletion = useCallback(async (systemPrompt: string, msgs: Message[]): Promise<string> => {
+    const messages = [
+      { role: 'system' as const, content: systemPrompt },
+      ...msgs.map(m => ({ role: m.role === 'user' ? 'user' as const : 'assistant' as const, content: m.text })),
+    ]
+
+    if (settings.aiMode === 'local') {
+      const engine = getEngine()
+      if (!engine) throw new Error('Local model not loaded — open Settings and click "Download & use".')
+      const reply = await engine.chat.completions.create({ model: LOCAL_MODEL_ID, max_tokens: 300, messages })
+      return reply.choices[0]?.message?.content ?? '…'
+    }
+
     const baseUrl = settings.aiBaseUrl.replace(/\/+$/, '')
     const res = await fetch(`${baseUrl}/chat/completions`, {
       method: 'POST',
@@ -89,14 +102,7 @@ export function MentorBubble() {
         'Content-Type': 'application/json',
         ...(settings.aiApiKey ? { Authorization: `Bearer ${settings.aiApiKey}` } : {}),
       },
-      body: JSON.stringify({
-        model: settings.aiModel,
-        max_tokens: 300,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          ...msgs.map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text })),
-        ],
-      }),
+      body: JSON.stringify({ model: settings.aiModel, max_tokens: 300, messages }),
     })
     if (!res.ok) throw new Error(await res.text())
     const data = await res.json() as { choices?: { message?: { content?: string | null } }[] }
@@ -311,6 +317,12 @@ export function MentorBubble() {
               <PulseDot active={!sessionComplete} />
               {sessionComplete ? 'Session complete' : 'Mentor · live'}
             </small>
+            <small style={{
+              font: "400 10px 'JetBrains Mono', ui-monospace",
+              color: 'var(--ink-4)', letterSpacing: '0.02em',
+            }}>
+              {settings.aiMode === 'local' ? LOCAL_MODEL_LABEL : settings.aiModel}
+            </small>
           </div>
           <button
             onClick={() => setMentorPanelExpanded(false)}
@@ -349,8 +361,9 @@ export function MentorBubble() {
         {mode === 'gap' && currentReviewNode && !sessionComplete && (
           <div style={{
             display: 'flex', alignItems: 'center', gap: 8,
-            padding: '6px 16px', borderBottom: '0.5px solid var(--line)',
-            background: 'var(--paper-deep)',
+            padding: '6px 16px 6px 13px', borderBottom: '0.5px solid var(--line)',
+            background: 'var(--bg-elev)',
+            borderLeft: '3px solid var(--cat-causal)',
           }}>
             <span style={{
               font: "500 10px 'JetBrains Mono', ui-monospace",

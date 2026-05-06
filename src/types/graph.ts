@@ -51,6 +51,7 @@ export interface NessoSettings {
   showConfidence: boolean
   curveStyle: CurveStyle
   categoryPalette: CategoryPalette
+  aiMode: 'remote' | 'local'
   /** OpenAI-compatible API base, e.g. http://localhost:11434/v1 (Ollama) or a cloud vendor URL */
   aiBaseUrl: string
   aiModel: string
