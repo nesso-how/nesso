@@ -82,7 +82,9 @@ Each relation has a line style (solid, dashed, dotted, double, wavy) and an SVG 
 - [ ] Tauri auto-updates (`tauri-plugin-updater`, signing, `latest.json` on GitHub Releases) — feasible once the repo is public
 - [x] Add license (GNU AGPL v3)
 - [ ] Deploy on GH Pages once the repo is public
-- [ ] Build dynamic system prompts and AI multi-mode
+- [x] Build dynamic system prompts and AI multi-mode
+- [ ] Save AI chats history
+- [ ] Fix rendering of AI outputs (code etc)
 
 ## License
 

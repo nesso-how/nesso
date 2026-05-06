@@ -4,6 +4,7 @@ import type { Node } from '@xyflow/react'
 import { SocratesGlyph } from './SocratesGlyph'
 import { useGraphStore, selectedNodeSelector, selectedEdgeSelector } from '@/store/graph'
 import { daysAgo, type ConceptNodeData } from '@/types/graph'
+import { marked } from 'marked'
 import { getEngine, LOCAL_MODEL_ID, LOCAL_MODEL_LABEL } from '@/llm/webllm'
 
 type MentorMode = 'gap' | 'explore' | 'bootstrap'
@@ -13,11 +14,8 @@ interface Message {
   text: string
 }
 
-function emphasise(text: string): string {
-  return text
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    .replace(/\*([^*]+)\*/g, '<i>$1</i>')
-    .replace(/_([^_]+)_/g, '<em>$1</em>')
+function renderMarkdown(text: string): string {
+  return marked(text, { async: false }) as string
 }
 
 function priorityNodes(nodes: Node<ConceptNodeData>[]) {
@@ -432,10 +430,10 @@ export function MentorBubble() {
                 }}>{m.text}</span>
               </div>
             ) : (
-              <p key={i} style={{
+              <div key={i} style={{
                 font: "400 15px/1.5 'Fraunces', ui-serif, Georgia, serif",
                 color: 'var(--ink)', letterSpacing: '-0.005em', margin: '0 0 14px',
-              }} dangerouslySetInnerHTML={{ __html: emphasise(m.text) }} />
+              }} dangerouslySetInnerHTML={{ __html: renderMarkdown(m.text) }} />
             )
           )}
           {thinking && <ThinkingDots />}

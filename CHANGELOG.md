@@ -15,9 +15,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
+- **Mentor:** Assistant replies render **Markdown** (`marked`) instead of minimal `*italic*` / `_italic_` HTML escaping.
+- **README roadmap:** Mark dynamic system prompts / AI multi-mode complete; add items for persisting AI chats and richer output rendering (code blocks, etc.).
 - **Concept review field:** `ConceptNodeData.reviewed` (days ago, integer) replaced by `reviewedAt` (Unix ms). Seed data still authors `reviewed` as days in `seedGraph` raw nodes; `makeSeedGraph` converts to timestamps. New nodes use `Date.now()`.
 - **Spaced review shortcut:** **R** opens review mode (no Cmd/Ctrl); frees **⌘R** / **Ctrl+R** for the browser refresh habit.
-- README roadmap: add unchecked item for further dynamic prompts / multi-mode work.
 
 ### Fixed
 

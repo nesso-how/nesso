@@ -34,6 +34,10 @@ Three tabs set `mode`: **`gap`** (Review), **`explore`** (Exploration), **`boots
 
 On panel open / graph switch / `sessionKey` bump / bootstrap text load, the first mentor line is fetched by **POST**ing a synthetic user seed (“Start the review session…”, “Hello, I want to explore…”, etc.) with the appropriate system prompt — not a static `SOCRATIC_PROMPTS` opening.
 
+## Rendering
+
+Assistant `Message` text is HTML via **`marked`** (`renderMarkdown()` in `MentorBubble`, sync mode). User-authored bubbles remain plain text in a `<span>`.
+
 ## Selection vs history
 
 `history` remains local component state. Mode or graph changes reset the session (`sessionKey`, queue index). Exploration mode uses `selectedNode` / `selectedEdge` only as optional context inside `buildSystemPrompt`, not as a trigger for static per-selection openers from `seedGraph.ts`.
