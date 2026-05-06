@@ -2,7 +2,7 @@
 import { useState, useMemo } from 'react'
 import { EDGE_TYPES, EDGE_CATEGORIES } from '@/data/edgeTypes'
 import { useGraphStore } from '@/store/graph'
-import type { EdgeTypeName } from '@/types/graph'
+import { daysAgo, type EdgeTypeName } from '@/types/graph'
 
 interface Props {
   open: boolean
@@ -16,8 +16,8 @@ export function ReviewMode({ open, onClose }: Props) {
 
   const due = useMemo(() => {
     return nodes
-      .map(n => ({ ...n, _score: (n.data.reviewed ?? 0) * (6 - (n.data.conf ?? 3)) }))
-      .filter(n => n.data.reviewed > 7 || n.data.conf <= 3)
+      .map(n => ({ ...n, _score: daysAgo(n.data.reviewedAt) * (6 - (n.data.conf ?? 3)) }))
+      .filter(n => daysAgo(n.data.reviewedAt) > 7 || n.data.conf <= 3)
       .sort((a, b) => b._score - a._score)
       .slice(0, 8)
   }, [nodes])
@@ -26,7 +26,7 @@ export function ReviewMode({ open, onClose }: Props) {
 
   const advance = (newConf: number | null) => {
     if (newConf != null && due[idx]) {
-      updateNodeData(due[idx].id, { conf: newConf, reviewed: 0 })
+      updateNodeData(due[idx].id, { conf: newConf, reviewedAt: Date.now() })
     }
     setRevealed(false)
     if (idx + 1 >= due.length) onClose()

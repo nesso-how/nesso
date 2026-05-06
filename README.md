@@ -82,6 +82,7 @@ Each relation has a line style (solid, dashed, dotted, double, wavy) and an SVG 
 - [ ] Tauri auto-updates (`tauri-plugin-updater`, signing, `latest.json` on GitHub Releases) — feasible once the repo is public
 - [x] Add license (GNU AGPL v3)
 - [ ] Deploy on GH Pages once the repo is public
+- [ ] Build dynamic system prompts and AI multi-mode
 
 ## License
 
@@ -93,6 +94,6 @@ Copyright © 2026 Omar Desogus. This project is licensed under the [GNU Affero G
 | ---------------------- | ----------------------------- |
 | `?`                    | Toggle keyboard shortcuts     |
 | `⌘,` / `Ctrl+,`        | Toggle settings (AI endpoint) |
-| `⌘R` / `Ctrl+R`        | Open review mode              |
+| `R`                    | Open review mode              |
 | `Delete` / `Backspace` | Delete selected node or edge  |
 | `Escape`               | Close overlays                |

@@ -19,7 +19,7 @@ const SECTIONS: { heading: string; rows: { keys: string[]; label: string }[] }[]
   {
     heading: 'Graph',
     rows: [
-      { keys: [mod, 'R'], label: 'Start spaced-repetition review' },
+      { keys: ['R'], label: 'Start spaced-repetition review' },
       { keys: ['Del'], label: 'Delete selected concept or relation' },
     ],
   },

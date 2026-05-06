@@ -72,7 +72,7 @@ export function makeSeedGraph(): { nodes: Node<ConceptNodeData>[]; edges: Edge[]
       id,
       type: 'concept',
       position: { x: n.x, y: n.y },
-      data: { text: n.text, conf: n.conf, reviewed: n.reviewed, pinned: n.pinned ?? false },
+      data: { text: n.text, conf: n.conf, reviewedAt: Date.now() - n.reviewed * 86_400_000, pinned: n.pinned ?? false },
     }
   })
   const edges: Edge[] = RAW_EDGES.map((e, i) => ({

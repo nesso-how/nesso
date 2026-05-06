@@ -30,7 +30,7 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
 
   const confLevel = Math.max(1, Math.min(5, data.conf ?? 3))
   const confColor = showConfidence && data.conf != null ? `var(--conf-${confLevel})` : 'var(--ink)'
-  const isStale = data.reviewed > 14
+  const isStale = Math.floor((Date.now() - data.reviewedAt) / 86_400_000) > 14
 
   return (
     <div

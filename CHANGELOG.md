@@ -8,7 +8,19 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
+- **Mentor modes** in `MentorBubble`: **Review** (priority queue of low-confidence or stale concepts, rate-and-advance), **Exploration** (free chat with node/edge list + selection context), **Bootstrap** (load a `.txt` / `.md` excerpt for document-grounded discussion). Dynamic system prompt per mode; session reset on graph switch or mode tab change.
+- `daysAgo()` helper in `src/types/graph.ts` for deriving “days since review” from `reviewedAt`.
 - GitHub Actions workflow **Deploy to GitHub Pages** (push to `main` or manual): builds the Vite app with the correct `base` for project sites (`/<repo>/`) or root user/org pages (`<owner>.github.io`), uploads `dist`, and publishes via **GitHub Actions** Pages.
+
+### Changed
+
+- **Concept review field:** `ConceptNodeData.reviewed` (days ago, integer) replaced by `reviewedAt` (Unix ms). Seed data still authors `reviewed` as days in `seedGraph` raw nodes; `makeSeedGraph` converts to timestamps. New nodes use `Date.now()`.
+- **Spaced review shortcut:** **R** opens review mode (no Cmd/Ctrl); frees **⌘R** / **Ctrl+R** for the browser refresh habit.
+- README roadmap: add unchecked item for further dynamic prompts / multi-mode work.
+
+### Fixed
+
+- TopBar review button tooltip and README shortcuts table now match **R** for review mode.
 
 ## [0.1.0-alpha.3] - 2026-05-05
 

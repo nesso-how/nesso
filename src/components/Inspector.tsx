@@ -90,9 +90,9 @@ function NodeInspector() {
       <InspectorRow label="Last reviewed">
         <span style={{
           font: "500 12px 'JetBrains Mono', ui-monospace",
-          color: node.data.reviewed > 14 ? 'var(--cat-causal)' : 'var(--ink-2)',
+          color: Math.floor((Date.now() - node.data.reviewedAt) / 86_400_000) > 14 ? 'var(--cat-causal)' : 'var(--ink-2)',
         }}>
-          {node.data.reviewed === 0 ? 'today' : `${node.data.reviewed}d ago`}
+          {(d => d === 0 ? 'today' : `${d}d ago`)(Math.floor((Date.now() - node.data.reviewedAt) / 86_400_000))}
         </span>
       </InspectorRow>
 

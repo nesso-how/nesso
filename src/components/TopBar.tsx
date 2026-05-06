@@ -94,7 +94,7 @@ export function TopBar({ onReview, onShortcuts, onSettings, onRelationTypes }: P
           </svg>
         </TopBarBtn>
 
-        <TopBarBtn title="Review (⌘R)" onClick={onReview}>
+        <TopBarBtn title="Review (R)" onClick={onReview}>
           <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
             <path d="M8 2.5a5.5 5.5 0 1 1-5.5 5.5" /><path d="M2.5 4V2h2" />
           </svg>

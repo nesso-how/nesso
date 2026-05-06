@@ -2,8 +2,12 @@
 export interface ConceptNodeData extends Record<string, unknown> {
   text: string
   conf: number        // 1–5
-  reviewed: number    // days ago
+  reviewedAt: number  // Unix timestamp ms of last review
   pinned: boolean
+}
+
+export function daysAgo(ts: number): number {
+  return Math.floor((Date.now() - ts) / 86_400_000)
 }
 
 export type EdgeCategory =

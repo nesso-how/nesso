@@ -14,28 +14,26 @@ Configure the mentor under **Settings** (gear, **⌘,**). Defaults target **Olla
 
 ## Persona
 
-Socrates is a Socratic mentor: he asks short, pointed questions rather than explaining. Key behavioural rules baked into the system prompt:
+Socrates is a Socratic mentor: he asks short, pointed questions rather than explaining. Shared rules live in `MENTOR_BASE` inside `MentorBubble.tsx`:
 
 - Never generate graph content (no proposing new nodes or edges).
-- Prefer one question over a paragraph of explanation.
-- Give facts briefly when asked, then return to a question.
-- No emojis, no flattery. Responses under 90 words.
+- Prefer one short question over a long explanation; keep replies under ~90 words.
+- No emojis, no flattery.
 - Markdown emphasis with `*asterisks*` for key words.
 
-## Opening prompt selection
+## Modes and system prompt
 
-The opening message shown when the chat initialises depends on selection:
+Three tabs set `mode`: **`gap`** (Review), **`explore`** (Exploration), **`bootstrap`** (Bootstrap). `buildSystemPrompt()` returns the full system string for the active mode.
 
-1. **Edge selected** — tailored prompt for that `EdgeTypeName` if one exists in `SOCRATIC_PROMPTS`, otherwise a generic edge-category question.
-2. **Node selected** — tailored prompt for that node's text if one exists, otherwise a confidence/staleness-aware prompt based on `conf` and `reviewed`.
-3. **Nothing selected** — cycles through `SOCRATIC_PROMPTS` from `seedGraph.ts` via `promptSeed`.
+- **Review** — `priorityNodes()` queues concepts with `conf < 4` or `daysAgo(reviewedAt) > 14`, sorted by weakness. `buildReviewPrompt(node)` focuses the model on one concept. Users rate with in-panel controls; `updateNodeData` sets `reviewedAt: Date.now()` and the assistant continues with the next queued node until the session completes.
+- **Exploration** — Lists nodes (and up to 20 edges) plus optional selection context (selected node or edge type). Free Q&A about the graph; still must not invent nodes/edges for the user.
+- **Bootstrap** — Optional `.txt`/`.md` file loads text into local state (`bootstrapText`, first ~3000 chars in prompt). Helps reason about concepts to map; still no automated graph edits.
 
-## System prompt context
+On panel open / graph switch / `sessionKey` bump / bootstrap text load, the first mentor line is fetched by **POST**ing a synthetic user seed (“Start the review session…”, “Hello, I want to explore…”, etc.) with the appropriate system prompt — not a static `SOCRATIC_PROMPTS` opening.
 
-`buildSystemPrompt()` appends context lines for the current selection:
+## Selection vs history
 
-- For a node: text, confidence score, days since review.
-- For an edge: source node text, relation label, target node text.
+`history` remains local component state. Mode or graph changes reset the session (`sessionKey`, queue index). Exploration mode uses `selectedNode` / `selectedEdge` only as optional context inside `buildSystemPrompt`, not as a trigger for static per-selection openers from `seedGraph.ts`.
 
 ## Panel open/closed
 
@@ -43,16 +41,14 @@ Whether the mentor **card** is expanded is `mentorPanelExpanded` on `useGraphSto
 
 ## Message history
 
-`history: Message[]` is local to `MentorBubble` (not in the store). It is reset whenever the opening prompt changes (selection changes). Do not persist chat history to the store.
+`history: Message[]` is local to `MentorBubble` (not in the store). It resets when the mentor session restarts (panel open, mode tab, graph id, bootstrap load, `sessionKey`). Do not persist chat history to the store.
 
 ## API call
 
 `fetch(`${aiBaseUrl}/chat/completions`, …)` with JSON body:
 
 - `model` — `settings.aiModel`
-- `max_tokens` — `256`
-- `messages` — `[{ role: 'system', content: buildSystemPrompt() }, …]` followed by the conversation turns **after** the opening mentor line (`history.slice(1)` mapped to `user` / `assistant` roles).
+- `max_tokens` — `300`
+- `messages` — `[{ role: 'system', content: buildSystemPrompt() }, …]` plus full `history` turns mapped to `user` / `assistant` roles (initial mentor reply comes from the same assistant role in the thread).
 
 `Authorization: Bearer …` is sent when `settings.aiApiKey` is non-empty.
-
-`max_tokens: 256` enforces the 90-word constraint on the model side as well.

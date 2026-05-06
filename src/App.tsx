@@ -99,7 +99,7 @@ function AppInner() {
       }
       if (e.key === '?') { setShowShortcuts(s => !s); return }
       if (e.key === ',' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); setShowSettings(s => !s); return }
-      if (e.key === 'r' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); setShowReview(true) }
+      if (e.key === 'r' && !e.metaKey && !e.ctrlKey) { setShowReview(true) }
       if (e.key === '/') { e.preventDefault() }
       if ((e.key === 'Delete' || e.key === 'Backspace') && selected) {
         e.preventDefault()

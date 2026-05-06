@@ -12,7 +12,7 @@ alwaysApply: false
 interface ConceptNodeData {
   text: string; // concept label
   conf: number; // confidence 1–5
-  reviewed: number; // days since last review
+  reviewedAt: number; // Unix ms of last review (use `daysAgo(ts)` for whole days elapsed)
   pinned: boolean; // pinned nodes are not deleted by review pruning
 }
 ```
