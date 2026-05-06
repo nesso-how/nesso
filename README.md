@@ -81,6 +81,7 @@ Each relation has a line style (solid, dashed, dotted, double, wavy) and an SVG 
 - [x] Alpha release as a macOS desktop app via Tauri v2 (GitHub Releases: macOS arm64 + x64)
 - [ ] Tauri auto-updates (`tauri-plugin-updater`, signing, `latest.json` on GitHub Releases) — feasible once the repo is public
 - [x] Add license (GNU AGPL v3)
+- [ ] Deploy on GH Pages once the repo is public
 
 ## License
 
