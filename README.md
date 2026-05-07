@@ -6,6 +6,20 @@
 
 Nesso is an interactive concept map where nodes are ideas and edges are typed semantic relations. You draw connections between concepts, pick the relation type (e.g. `causes`, `requires`, `is-a`), and track your confidence in each node. When you select a node or edge, Socrates opens a dialogue rooted in that concept — asking questions, not giving answers, in the spirit of Socratic enquiry.
 
+## Features
+
+- **Knowledge graph canvas** — add, move, and delete concept nodes and typed edges
+- **17 semantic relation types** across 6 categories (taxonomic, structural, causal, dependency, temporal, opposition), each with a distinct line style and glyph
+- **Inspector panel** — edit concept text, set confidence (1–5), and change relation type in-place
+- **Socratic AI mentor** — opens a context-aware dialogue when you select a node or edge; probes understanding rather than explaining
+- **Spaced-repetition review mode** — surfaces low-confidence or stale nodes for targeted review
+- **Concept search** — ⌘K palette to jump to any node instantly
+- **Multiple graphs** — create, name, and switch between graphs; persisted in IndexedDB
+- **Provider-agnostic AI** — configure any OpenAI-compatible endpoint (Ollama locally, or any cloud provider) from Settings
+- **Edge encoding modes** — full (glyph + style), category (colour only), or minimal
+- **Theming** — dark/light toggle, accent colour, and per-category palette
+- **Desktop app** — macOS (Apple silicon + Intel) via Tauri v2, available on [GitHub Releases](https://github.com/cedoor/nesso/releases)
+
 ## Stack
 
 | Layer        | Technology                                                                                                                   |
@@ -62,29 +76,19 @@ Each relation has a line style (solid, dashed, dotted, double, wavy) and an SVG 
 
 ## Roadmap
 
-- [x] Interactive graph canvas — add, move, delete nodes and edges
-- [x] 17 typed relations across 6 semantic categories, each with distinct line style and glyph
-- [x] Inspector panel — edit concept text, confidence, and relation type
-- [x] Socratic AI mentor — context-aware opening prompts based on selected node or edge
-- [x] Spaced-repetition review mode — surfaces stale or low-confidence nodes
-- [x] Edge encoding modes — full (glyph + style), category (colour only), minimal
-- [x] Theming — dark/light toggle, accent colour, category palettes
-- [x] Onboarding overlay
-- [x] Concept search (⌘K)
-- [x] Keyboard shortcuts dialog
-- [x] Persist settings, tutorial state, and relation-types panel visibility to LocalStorage
-- [x] Save and load graphs via IndexedDB
-- [x] Multiple graphs with tab switching
-- [ ] Parallel-edge handling — enforce one edge per directed pair, or offset overlapping arcs when multiple edges share the same source/target
-- [x] Provider-agnostic AI — configure any OpenAI-compatible endpoint (Ollama, proprietary) from settings
-- [ ] Session export — download a JSON snapshot of the graph and interaction log for offline analysis
-- [x] Alpha release as a macOS desktop app via Tauri v2 (GitHub Releases: macOS arm64 + x64)
-- [ ] Tauri auto-updates (`tauri-plugin-updater`, signing, `latest.json` on GitHub Releases) — feasible once the repo is public
-- [x] Add license (MIT)
-- [ ] Deploy on GH Pages once the repo is public
-- [x] Build dynamic system prompts and AI multi-mode
-- [ ] Save AI chats history
-- [ ] Fix rendering of AI outputs (code etc)
+- [ ] Parallel-edge handling — one edge per directed pair, or offset overlapping arcs when source/target coincide
+- [ ] AI response rendering — proper formatting for code blocks and rich output
+- [ ] Chat history — persist and revisit past mentor sessions per graph
+- [ ] Session export — download a JSON snapshot of the graph and chat log
+- [ ] Confidence heatmap — colour-grade the canvas by node confidence
+- [ ] Seed graph — simplify the default graph for a broader audience
+- [ ] Design refresh
+- [ ] Translations — Italian and English to start
+- [ ] Voice I/O — speech input and text-to-speech output for the AI mentor
+- [ ] Two-mode system — student (active learning) and professor (build reference graphs, evaluate student maps)
+- [ ] Package extraction — modularise reusable parts as standalone npm libraries
+- [ ] Tauri auto-updates — signing and `latest.json` delivery via GitHub Releases *(pending public repo)*
+- [ ] GH Pages deployment *(pending public repo)*
 
 ## License
 
