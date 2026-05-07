@@ -58,6 +58,10 @@ interface GraphState {
 
   // UI chrome (persisted)
   setMentorPanelExpanded: (expanded: boolean) => void
+  sidebarCollapsed: boolean
+  sidebarDisplayOpen: boolean
+  setSidebarCollapsed: (v: boolean) => void
+  setSidebarDisplayOpen: (v: boolean) => void
 
   // Viewport
   saveViewport: (id: string, vp: Viewport) => void
@@ -94,6 +98,8 @@ export const useGraphStore = create<GraphState>()(
       selected: null,
       tutorialDone: false,
       mentorPanelExpanded: false,
+      sidebarCollapsed: true,
+      sidebarDisplayOpen: false,
       viewports: {},
       currentGraphId: SEED_ID,
       graphList: [{ id: SEED_ID, name: 'Programming concepts', updatedAt: Date.now() }],
@@ -187,6 +193,8 @@ export const useGraphStore = create<GraphState>()(
       completeTutorial: () => set({ tutorialDone: true }),
 
       setMentorPanelExpanded: (expanded) => set({ mentorPanelExpanded: expanded }),
+      setSidebarCollapsed: (v) => set({ sidebarCollapsed: v }),
+      setSidebarDisplayOpen: (v) => set({ sidebarDisplayOpen: v }),
 
       saveViewport: (id, vp) =>
         set(s => ({ viewports: { ...s.viewports, [id]: vp } })),
@@ -284,6 +292,8 @@ export const useGraphStore = create<GraphState>()(
         settings: s.settings,
         tutorialDone: s.tutorialDone,
         mentorPanelExpanded: s.mentorPanelExpanded,
+        sidebarCollapsed: s.sidebarCollapsed,
+        sidebarDisplayOpen: s.sidebarDisplayOpen,
         currentGraphId: s.currentGraphId,
         graphList: s.graphList,
         viewports: s.viewports,

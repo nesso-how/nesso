@@ -70,7 +70,7 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps) {
   const color = encoding === 'minimal' ? 'var(--ink-3)' : C.color
   const lineStyle = encoding === 'minimal' ? 'solid' : T.line
   const isSelected = selected || (storeSelected?.kind === 'edge' && storeSelected.id === id)
-  const showLabel = settings.showLabels || hovered || isSelected
+  const showLabel = encoding === 'full' || (encoding !== 'minimal' && (hovered || isSelected))
   const straight = settings.curveStyle === 'straight'
 
   if (!sourceNode || !targetNode) return null

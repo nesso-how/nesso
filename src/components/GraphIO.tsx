@@ -4,6 +4,10 @@ import { useGraphStore } from '@/store/graph'
 import type { Node as FlowNode, Edge } from '@xyflow/react'
 import type { ConceptNodeData } from '@/types/graph'
 
+const BACKUP_BTN_BG = '#0a0a0a'
+const BACKUP_BTN_OPEN = '#141414'
+const BACKUP_BTN_HOVER = '#1c1c1c'
+
 export function GraphIO() {
   const { nodes, edges, graphList, currentGraphId, importGraph } = useGraphStore()
   const [open, setOpen] = useState(false)
@@ -59,29 +63,27 @@ export function GraphIO() {
   return (
     <div ref={wrapRef} style={{ position: 'relative' }}>
       <button
-        title="Export / Import"
+        type="button"
+        title="Export / Import graph (JSON)"
         onClick={() => setOpen(o => !o)}
         style={{
           appearance: 'none',
           border: 0,
-          background: open ? 'var(--paper-deep)' : 'transparent',
-          color: open ? 'var(--ink)' : 'var(--ink-3)',
-          width: 30,
+          background: open ? BACKUP_BTN_OPEN : BACKUP_BTN_BG,
+          color: '#f5f5f5',
           height: 30,
           borderRadius: 999,
-          padding: 0,
+          padding: '0 14px',
           cursor: 'default',
           display: 'inline-flex',
           alignItems: 'center',
           justifyContent: 'center',
+          font: "500 12px 'Inter', ui-sans-serif",
         }}
-        onMouseEnter={e => { e.currentTarget.style.background = 'var(--paper-deep)'; e.currentTarget.style.color = 'var(--ink)' }}
-        onMouseLeave={e => { e.currentTarget.style.background = open ? 'var(--paper-deep)' : 'transparent'; e.currentTarget.style.color = open ? 'var(--ink)' : 'var(--ink-3)' }}
+        onMouseEnter={e => { e.currentTarget.style.background = BACKUP_BTN_HOVER }}
+        onMouseLeave={e => { e.currentTarget.style.background = open ? BACKUP_BTN_OPEN : BACKUP_BTN_BG }}
       >
-        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M5 6l3-3 3 3M11 10l-3 3-3-3" />
-          <path d="M8 3v10" />
-        </svg>
+        Backup
       </button>
 
       {open && (

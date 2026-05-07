@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { ReactFlowProvider, useReactFlow } from '@xyflow/react'
 import { GraphCanvas } from './components/GraphCanvas'
 import { TopBar } from './components/TopBar'
+import { Sidebar, SIDEBAR_WIDTH } from './components/Sidebar'
 import { BottomDock } from './components/BottomDock'
 import { RelationTypesDialog } from './components/RelationTypesDialog'
 import { Inspector } from './components/Inspector'
@@ -37,14 +38,18 @@ function AppInner() {
     loadGraphList,
     currentGraphId,
     viewports,
+    sidebarCollapsed,
+    setSidebarCollapsed,
   } = useGraphStore()
 
   const selectedNode = useGraphStore(selectedNodeSelector)
   const selectedEdge = useGraphStore(selectedEdgeSelector)
-  const { zoomIn, zoomOut, fitView, setViewport, setCenter } = useReactFlow()
+  const { zoomIn, zoomOut, fitView, setViewport, setCenter, getNodes } = useReactFlow()
   const [zoom, setZoom] = useState(1)
 
   useAutoSave()
+
+  const sidebarWidth = sidebarCollapsed ? 0 : SIDEBAR_WIDTH
 
   // Initial load: prefer graph from URL hash
   useEffect(() => {
@@ -132,8 +137,40 @@ function AppInner() {
   }, [addNode])
 
   const handleFit = useCallback(() => {
-    fitView({ padding: 0.15, duration: 400 })
-  }, [fitView])
+    const liveNodes = getNodes()
+    if (!liveNodes.length) return
+
+    const TOP = 52
+    const BOTTOM = 80
+    const RIGHT = 30
+    const PADDING = 0.15
+
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity
+    for (const n of liveNodes) {
+      const w = n.measured?.width ?? 80
+      const h = n.measured?.height ?? 32
+      minX = Math.min(minX, n.position.x)
+      maxX = Math.max(maxX, n.position.x + w)
+      minY = Math.min(minY, n.position.y)
+      maxY = Math.max(maxY, n.position.y + h)
+    }
+
+    const nodeW = maxX - minX
+    const nodeH = maxY - minY
+    const canvasW = window.innerWidth - sidebarWidth - RIGHT
+    const canvasH = window.innerHeight - TOP - BOTTOM
+
+    const zoom = Math.max(0.15, Math.min(
+      canvasW / (nodeW * (1 + 2 * PADDING)),
+      canvasH / (nodeH * (1 + 2 * PADDING)),
+      2.5
+    ))
+
+    const vpX = sidebarWidth + canvasW / 2 - ((minX + maxX) / 2) * zoom
+    const vpY = TOP + canvasH / 2 - ((minY + maxY) / 2) * zoom
+
+    setViewport({ x: vpX, y: vpY, zoom }, { duration: 400 })
+  }, [getNodes, setViewport, sidebarWidth])
 
   const handleZoomIn = useCallback(() => {
     zoomIn({ duration: 200 })
@@ -148,35 +185,46 @@ function AppInner() {
   return (
     <div style={{ position: 'fixed', inset: 0 }}>
       <GraphCanvas
-        topInset={80}
+        topInset={52}
         bottomInset={80}
-        leftInset={hasSelection ? 326 : 30}
+        leftInset={sidebarWidth + (hasSelection ? 326 : 30)}
         rightInset={30}
         onViewportZoomChange={setZoom}
       />
 
-      <TopBar
-        onReview={() => setShowReview(true)}
-        onShortcuts={() => setShowShortcuts(s => !s)}
-        onSettings={() => setShowSettings(s => !s)}
-        onRelationTypes={() => setShowRelationTypes(s => !s)}
+      <Sidebar
+        collapsed={sidebarCollapsed}
+        onCollapse={() => setSidebarCollapsed(true)}
         onSearch={() => setShowSearch(s => !s)}
+        onSettings={() => setShowSettings(s => !s)}
+        onShortcuts={() => setShowShortcuts(s => !s)}
+        onSelectConcept={handleSelectNode}
       />
+
+      <TopBar
+        sidebarCollapsed={sidebarCollapsed}
+        sidebarWidth={sidebarWidth}
+        onExpandSidebar={() => setSidebarCollapsed(false)}
+        onReview={() => setShowReview(true)}
+        onRelationTypes={() => setShowRelationTypes(s => !s)}
+      />
+
       <RelationTypesDialog open={showRelationTypes} onClose={() => setShowRelationTypes(false)} />
-      <Inspector />
+      <Inspector leftOffset={sidebarWidth} />
       <BottomDock
         onZoomIn={handleZoomIn}
         onZoomOut={handleZoomOut}
         onFit={handleFit}
         zoom={zoom}
         onAddConcept={handleAddConcept}
+        sidebarWidth={sidebarWidth}
       />
       <MentorBubble />
       <Onboarding open={!tutorialDone} onClose={completeTutorial} />
       <ReviewMode open={showReview} onClose={() => setShowReview(false)} />
       <ShortcutsDialog open={showShortcuts} onClose={() => setShowShortcuts(false)} />
       <SettingsDialog open={showSettings} onClose={() => setShowSettings(false)} />
-      <SearchDialog open={showSearch} onClose={() => setShowSearch(false)} onSelect={handleSelectNode} />
+      <SearchDialog open={showSearch} onClose={() => setShowSearch(false)} onSelectNode={handleSelectNode} onSelectGraph={(id) => loadGraph(id)} />
     </div>
   )
 }

@@ -12,6 +12,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
+- **Sidebar / top bar:** Footer **Settings** (icon + label) and **?** for keyboard shortcuts; **Hide** / **New** in the sidebar and **Sidebar** expand use icon + text; top-right **Review**, **Relations**, and **Backup** are text-only, with **Backup** on a near-black pill. Search (**⌘K**) is opened from the sidebar.
 - **Seed graph:** Default demo map is a smaller plant-life-cycle concept graph (replaces the CS/runtime example); Socratic demo prompts updated to match.
 - Light-theme `--conf-4` and `--conf-5` values for clearer distinction on the heatmap.
 

@@ -1,173 +1,114 @@
 // SPDX-License-Identifier: MIT
 import { useGraphStore } from '@/store/graph'
-import { GraphSwitcher } from './GraphSwitcher'
 import { GraphIO } from './GraphIO'
 
 interface Props {
-  onReview: () => void
-  onShortcuts: () => void
-  onSettings: () => void
+  sidebarCollapsed: boolean
+  sidebarWidth: number
+  onExpandSidebar: () => void
   onRelationTypes: () => void
-  onSearch: () => void
+  onReview: () => void
 }
 
-export function TopBar({ onReview, onShortcuts, onSettings, onRelationTypes, onSearch }: Props) {
-  const { settings, setSetting } = useGraphStore()
-  const dark = settings.dark
+export function TopBar({ sidebarCollapsed, sidebarWidth, onExpandSidebar, onRelationTypes, onReview }: Props) {
+  const { graphList, currentGraphId, nodes, edges } = useGraphStore()
+  const current = graphList.find(g => g.id === currentGraphId)
 
   return (
-    <>
-      {/* Centered nav pill */}
-      <div style={{
-        position: 'absolute',
-        top: 18,
-        left: '50%',
-        transform: 'translateX(-50%)',
-        zIndex: 30,
-        display: 'flex',
-        alignItems: 'center',
-        gap: 14,
-        background: 'var(--bg-elev)',
-        border: '0.5px solid var(--line)',
-        borderRadius: 999,
-        padding: '6px 8px 6px 18px',
-        boxShadow: 'var(--shadow-md)',
-        whiteSpace: 'nowrap',
-      }}>
-        <div style={{
-          font: "600 17px 'Fraunces', ui-serif, Georgia, serif",
+    <div style={{
+      position: 'absolute',
+      top: 0,
+      left: sidebarWidth,
+      right: 0,
+      height: 52,
+      zIndex: 25,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: '0 22px',
+      borderBottom: '0.5px solid var(--line)',
+      background: 'var(--paper)',
+      transition: 'left 180ms ease',
+    }}>
+      {/* Left: expand sidebar (when collapsed) + graph title + count */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        {sidebarCollapsed && (
+          <button
+            onClick={onExpandSidebar}
+            title="Expand sidebar"
+            type="button"
+            style={expandSidebarBtn}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--paper-deep)'; e.currentTarget.style.color = 'var(--ink)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--ink-3)' }}
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" style={{ flexShrink: 0 }}>
+              <rect x="2" y="3" width="12" height="10" rx="1.5" />
+              <path d="M6 3v10" />
+            </svg>
+            <span style={{ font: "500 12px 'Inter', ui-sans-serif" }}>Sidebar</span>
+          </button>
+        )}
+        <h1 style={{
+          margin: 0,
+          font: "500 16px 'Fraunces', ui-serif, Georgia, serif",
           letterSpacing: '-0.01em',
-          display: 'inline-flex',
-          alignItems: 'baseline',
-          gap: 6,
+          color: 'var(--ink)',
         }}>
-          Nesso
-          <i style={{ fontStyle: 'italic', color: 'var(--cat-causal)', fontWeight: 500 }}>·</i>
-        </div>
-
-        <GraphSwitcher />
-
-        <button
-          onClick={onSearch}
-          style={{
-            appearance: 'none', border: 0,
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 8,
-            padding: '0 10px',
-            height: 28,
-            background: 'var(--paper-deep)',
-            borderRadius: 999,
-            color: 'var(--ink-3)',
-            fontSize: 12,
-            minWidth: 200,
-            cursor: 'default',
-          }}
-        >
-          <span>Search concepts…</span>
-          <kbd style={{
-            marginLeft: 'auto',
-            font: "500 10px 'JetBrains Mono', ui-monospace",
-            background: 'var(--bg-elev)',
-            padding: '1px 5px',
-            borderRadius: 4,
-            color: 'var(--ink-4)',
-          }}>⌘K</kbd>
-        </button>
+          {current?.name ?? '…'}
+        </h1>
+        <span style={{
+          font: "500 10.5px 'JetBrains Mono', ui-monospace",
+          color: 'var(--ink-4)',
+          padding: '2px 7px',
+          border: '0.5px solid var(--line)',
+          borderRadius: 4,
+        }}>
+          {nodes.length} concepts · {edges.length} links
+        </span>
       </div>
 
-      {/* Top-right action pill */}
-      <div style={{
-        position: 'absolute',
-        top: 18,
-        right: 18,
-        zIndex: 30,
-        display: 'flex',
-        alignItems: 'center',
-        gap: 2,
-        background: 'var(--bg-elev)',
-        border: '0.5px solid var(--line)',
-        borderRadius: 999,
-        padding: 5,
-        boxShadow: 'var(--shadow-md)',
-      }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <LabelBtn onClick={onReview} title="Start review (R)">Review</LabelBtn>
+        <LabelBtn onClick={onRelationTypes} title="Relation types">Relations</LabelBtn>
         <GraphIO />
-
-        <TopBarBtn title="Relation types" onClick={onRelationTypes}>
-          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.35" strokeLinecap="round">
-            <path d="M2 4.5h10M2 8h10M2 11.5h6" />
-          </svg>
-        </TopBarBtn>
-
-        <TopBarBtn title="Review (R)" onClick={onReview}>
-          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <path d="M8 2.5a5.5 5.5 0 1 1-5.5 5.5" /><path d="M2.5 4V2h2" />
-          </svg>
-        </TopBarBtn>
-
-        <TopBarBtn title="Confidence heatmap" active={settings.showHeatmap} onClick={() => setSetting('showHeatmap', !settings.showHeatmap)}>
-          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" strokeLinecap="round">
-            <rect x="2" y="10" width="3" height="4" rx="0.8" fill="currentColor" opacity="0.4"/>
-            <rect x="6.5" y="6" width="3" height="8" rx="0.8" fill="currentColor" opacity="0.65"/>
-            <rect x="11" y="2" width="3" height="12" rx="0.8" fill="currentColor"/>
-          </svg>
-        </TopBarBtn>
-
-        <TopBarBtn title="Toggle theme" onClick={() => setSetting('dark', !dark)}>
-          {dark ? (
-            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <circle cx="8" cy="8" r="2.6" />
-              <path d="M8 1.5V3M8 13v1.5M1.5 8H3M13 8h1.5M3.4 3.4l1 1M11.6 11.6l1 1M12.6 3.4l-1 1M4.4 11.6l-1 1" />
-            </svg>
-          ) : (
-            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M12.5 9.5A5 5 0 0 1 6.5 3.5a5 5 0 1 0 6 6z" />
-            </svg>
-          )}
-        </TopBarBtn>
-
-        <TopBarBtn title="Keyboard shortcuts (?)" onClick={onShortcuts}>
-          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="1.5" y="4.5" width="13" height="8" rx="1.5" />
-            <path d="M4.5 8h1M7.5 8h1M10.5 8h1M5.5 11h5" />
-          </svg>
-        </TopBarBtn>
-
-        <TopBarBtn title="Settings (⌘,)" onClick={onSettings}>
-          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-            <path d="M1.5 5h11M1.5 11h11" />
-            <circle cx="5" cy="5" r="2" />
-            <circle cx="9" cy="11" r="2" />
-          </svg>
-        </TopBarBtn>
       </div>
-    </>
+    </div>
   )
 }
 
-function TopBarBtn({ children, title, onClick, active }: { children: React.ReactNode; title?: string; onClick?: () => void; active?: boolean }) {
+function LabelBtn({ onClick, title, children }: { onClick: () => void; title: string; children: React.ReactNode }) {
   return (
     <button
-      title={title}
+      type="button"
       onClick={onClick}
+      title={title}
       style={{
-        appearance: 'none',
-        border: 0,
-        background: active ? 'var(--paper-deep)' : 'transparent',
-        color: active ? 'var(--ink)' : 'var(--ink-3)',
-        width: 30,
-        height: 30,
-        borderRadius: 999,
-        padding: 0,
-        cursor: 'default',
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        appearance: 'none', border: '0.5px solid var(--line)',
+        background: 'transparent', borderRadius: 6,
+        padding: '5px 12px', cursor: 'default',
+        font: "500 12px 'Inter', ui-sans-serif",
+        color: 'var(--ink-3)',
       }}
       onMouseEnter={e => { e.currentTarget.style.background = 'var(--paper-deep)'; e.currentTarget.style.color = 'var(--ink)' }}
-      onMouseLeave={e => { e.currentTarget.style.background = active ? 'var(--paper-deep)' : 'transparent'; e.currentTarget.style.color = active ? 'var(--ink)' : 'var(--ink-3)' }}
+      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--ink-3)' }}
     >
       {children}
     </button>
   )
+}
+
+const iconBtn: React.CSSProperties = {
+  appearance: 'none', border: 0, background: 'transparent',
+  width: 30, height: 30, borderRadius: 6,
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+  color: 'var(--ink-3)', cursor: 'default',
+}
+
+const expandSidebarBtn: React.CSSProperties = {
+  ...iconBtn,
+  width: 'auto',
+  height: 30,
+  padding: '0 10px',
+  gap: 7,
 }

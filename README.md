@@ -83,7 +83,7 @@ Each relation has a line style (solid, dashed, dotted, double, wavy) and an SVG 
 - [x] Confidence heatmap — colour-grade the canvas by node confidence
 - [ ] FSRS-based review scheduling — replace the current heuristic with the [FSRS algorithm](https://github.com/open-spaced-repetition/fsrs4anki/wiki/The-Algorithm), mapping node confidence (1–5) to Again/Hard/Good/Easy ratings and tracking per-node stability and retrievability
 - [x] Seed graph — simplify the default graph for a broader audience
-- [ ] Design refresh
+- [x] Design refresh
 - [ ] Translations — Italian and English to start
 - [ ] Voice I/O — speech input and text-to-speech output for the AI mentor
 - [ ] Two-mode system — student (active learning) and professor (build reference graphs, evaluate student maps)

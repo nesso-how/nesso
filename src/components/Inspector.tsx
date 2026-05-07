@@ -4,16 +4,16 @@ import { GlyphSVG } from './GlyphSVG'
 import { useGraphStore, selectedNodeSelector, selectedEdgeSelector } from '@/store/graph'
 import type { EdgeTypeName } from '@/types/graph'
 
-export function Inspector() {
+export function Inspector({ leftOffset = 0 }: { leftOffset?: number }) {
   const selectedNode = useGraphStore(selectedNodeSelector)
   const selectedEdge = useGraphStore(selectedEdgeSelector)
 
-  if (selectedNode) return <NodeInspector />
-  if (selectedEdge) return <EdgeInspector />
+  if (selectedNode) return <NodeInspector leftOffset={leftOffset} />
+  if (selectedEdge) return <EdgeInspector leftOffset={leftOffset} />
   return null
 }
 
-function NodeInspector() {
+function NodeInspector({ leftOffset }: { leftOffset: number }) {
   const node = useGraphStore(selectedNodeSelector)!
   const { edges, nodes, updateNodeData, deleteNode, setSelected } = useGraphStore()
 
@@ -25,8 +25,8 @@ function NodeInspector() {
   return (
     <div style={{
       position: 'absolute',
-      left: 18,
-      top: 80,
+      left: leftOffset + 18,
+      top: 62,
       width: 296,
       zIndex: 25,
       background: 'var(--bg-elev)',
@@ -127,7 +127,7 @@ function NodeInspector() {
   )
 }
 
-function EdgeInspector() {
+function EdgeInspector({ leftOffset }: { leftOffset: number }) {
   const edge = useGraphStore(selectedEdgeSelector)!
   const { nodes, updateEdgeType, deleteEdge } = useGraphStore()
   const edgeType = edge.data?.type as EdgeTypeName
@@ -140,8 +140,8 @@ function EdgeInspector() {
   return (
     <div style={{
       position: 'absolute',
-      left: 18,
-      top: 80,
+      left: leftOffset + 18,
+      top: 62,
       width: 296,
       zIndex: 25,
       background: 'var(--bg-elev)',
