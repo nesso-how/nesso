@@ -81,14 +81,15 @@ Each relation has a line style (solid, dashed, dotted, double, wavy) and an SVG 
 - [ ] Chat history — persist and revisit past mentor sessions per graph
 - [ ] Session export — download a JSON snapshot of the graph and chat log
 - [ ] Confidence heatmap — colour-grade the canvas by node confidence
+- [ ] FSRS-based review scheduling — replace the current heuristic with the [FSRS algorithm](https://github.com/open-spaced-repetition/fsrs4anki/wiki/The-Algorithm), mapping node confidence (1–5) to Again/Hard/Good/Easy ratings and tracking per-node stability and retrievability
 - [ ] Seed graph — simplify the default graph for a broader audience
 - [ ] Design refresh
 - [ ] Translations — Italian and English to start
 - [ ] Voice I/O — speech input and text-to-speech output for the AI mentor
 - [ ] Two-mode system — student (active learning) and professor (build reference graphs, evaluate student maps)
 - [ ] Package extraction — modularise reusable parts as standalone npm libraries
-- [ ] Tauri auto-updates — signing and `latest.json` delivery via GitHub Releases *(pending public repo)*
-- [ ] GH Pages deployment *(pending public repo)*
+- [ ] Tauri auto-updates — signing and `latest.json` delivery via GitHub Releases _(pending public repo)_
+- [ ] GH Pages deployment _(pending public repo)_
 
 ## License
 
