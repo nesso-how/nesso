@@ -12,6 +12,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
+- **Seed graph:** Default demo map is a smaller plant-life-cycle concept graph (replaces the CS/runtime example); Socratic demo prompts updated to match.
 - Light-theme `--conf-4` and `--conf-5` values for clearer distinction on the heatmap.
 
 ### Fixed
