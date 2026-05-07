@@ -48,6 +48,7 @@ export interface NessoSettings {
   edgeEncoding: EdgeEncoding
   showLabels: boolean
   showConfidence: boolean
+  showHeatmap: boolean
   curveStyle: CurveStyle
   categoryPalette: CategoryPalette
   aiMode: 'remote' | 'local'

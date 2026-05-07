@@ -105,6 +105,14 @@ export function TopBar({ onReview, onShortcuts, onSettings, onRelationTypes, onS
           </svg>
         </TopBarBtn>
 
+        <TopBarBtn title="Confidence heatmap" active={settings.showHeatmap} onClick={() => setSetting('showHeatmap', !settings.showHeatmap)}>
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" strokeLinecap="round">
+            <rect x="2" y="10" width="3" height="4" rx="0.8" fill="currentColor" opacity="0.4"/>
+            <rect x="6.5" y="6" width="3" height="8" rx="0.8" fill="currentColor" opacity="0.65"/>
+            <rect x="11" y="2" width="3" height="12" rx="0.8" fill="currentColor"/>
+          </svg>
+        </TopBarBtn>
+
         <TopBarBtn title="Toggle theme" onClick={() => setSetting('dark', !dark)}>
           {dark ? (
             <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -137,7 +145,7 @@ export function TopBar({ onReview, onShortcuts, onSettings, onRelationTypes, onS
   )
 }
 
-function TopBarBtn({ children, title, onClick }: { children: React.ReactNode; title?: string; onClick?: () => void }) {
+function TopBarBtn({ children, title, onClick, active }: { children: React.ReactNode; title?: string; onClick?: () => void; active?: boolean }) {
   return (
     <button
       title={title}
@@ -145,8 +153,8 @@ function TopBarBtn({ children, title, onClick }: { children: React.ReactNode; ti
       style={{
         appearance: 'none',
         border: 0,
-        background: 'transparent',
-        color: 'var(--ink-3)',
+        background: active ? 'var(--paper-deep)' : 'transparent',
+        color: active ? 'var(--ink)' : 'var(--ink-3)',
         width: 30,
         height: 30,
         borderRadius: 999,
@@ -157,7 +165,7 @@ function TopBarBtn({ children, title, onClick }: { children: React.ReactNode; ti
         justifyContent: 'center',
       }}
       onMouseEnter={e => { e.currentTarget.style.background = 'var(--paper-deep)'; e.currentTarget.style.color = 'var(--ink)' }}
-      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--ink-3)' }}
+      onMouseLeave={e => { e.currentTarget.style.background = active ? 'var(--paper-deep)' : 'transparent'; e.currentTarget.style.color = active ? 'var(--ink)' : 'var(--ink-3)' }}
     >
       {children}
     </button>

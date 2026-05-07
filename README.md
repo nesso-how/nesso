@@ -80,7 +80,7 @@ Each relation has a line style (solid, dashed, dotted, double, wavy) and an SVG 
 - [ ] AI response rendering — proper formatting for code blocks and rich output
 - [ ] Chat history — persist and revisit past mentor sessions per graph
 - [ ] Session export — download a JSON snapshot of the graph and chat log
-- [ ] Confidence heatmap — colour-grade the canvas by node confidence
+- [x] Confidence heatmap — colour-grade the canvas by node confidence
 - [ ] FSRS-based review scheduling — replace the current heuristic with the [FSRS algorithm](https://github.com/open-spaced-repetition/fsrs4anki/wiki/The-Algorithm), mapping node confidence (1–5) to Again/Hard/Good/Easy ratings and tracking per-node stability and retrievability
 - [ ] Seed graph — simplify the default graph for a broader audience
 - [ ] Design refresh

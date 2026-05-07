@@ -103,6 +103,7 @@ export const useGraphStore = create<GraphState>()(
         edgeEncoding: 'full',
         showLabels: false,
         showConfidence: true,
+        showHeatmap: false,
         curveStyle: 'arc',
         categoryPalette: 'default',
         aiMode: 'remote',

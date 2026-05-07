@@ -15,6 +15,7 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
   const inputRef = useRef<HTMLInputElement>(null)
   const { updateNodeData, setSelected, settings } = useGraphStore()
   const showConfidence = settings.showConfidence
+  const showHeatmap = settings.showHeatmap
 
   const startEdit = useCallback(() => {
     setDraft(data.text)
@@ -41,8 +42,8 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
         position: 'relative',
         padding: '6px 14px',
         borderRadius: 999,
-        background: selected ? 'var(--bg-card)' : 'transparent',
-        border: selected
+        background: selected || showHeatmap ? 'var(--bg-card)' : 'transparent',
+        border: selected || showHeatmap
           ? `0.5px solid var(--line)`
           : '0.5px solid transparent',
         cursor: editing ? 'text' : 'grab',
@@ -50,6 +51,18 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
         minWidth: 60,
       }}
     >
+      {/* Heatmap overlay — tints background with confidence colour */}
+      {showHeatmap && (
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          borderRadius: 999,
+          background: `var(--conf-${confLevel})`,
+          opacity: 0.14,
+          pointerEvents: 'none',
+        }} />
+      )}
+
       {/* Selection halo */}
       {selected && (
         <div style={{

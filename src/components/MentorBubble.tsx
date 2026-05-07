@@ -291,6 +291,7 @@ export function MentorBubble() {
     <div style={{
       position: 'absolute', right: 22, bottom: 22, zIndex: 35,
       display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 10,
+      pointerEvents: 'none',
     }}>
       {/* Card */}
       <div style={{
@@ -562,6 +563,7 @@ export function MentorBubble() {
         color: 'var(--ink)', border: '0.5px solid var(--line)', boxShadow: 'var(--shadow-lg)',
         cursor: 'default', padding: 0,
         display: 'inline-flex', alignItems: 'center', justifyContent: 'center', position: 'relative',
+        pointerEvents: 'auto',
       }}>
         <SpinRing loading={modelLoading} />
         <SocratesGlyph size={42} />

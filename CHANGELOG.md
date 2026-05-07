@@ -6,6 +6,18 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- **Confidence heatmap:** TopBar toggle tints concept nodes by confidence (`--conf-1` … `--conf-5` overlay); `NessoSettings.showHeatmap` (default off, persisted).
+
+### Changed
+
+- Light-theme `--conf-4` and `--conf-5` values for clearer distinction on the heatmap.
+
+### Fixed
+
+- **Mentor FAB:** Outer `MentorBubble` shell uses `pointer-events: none` and the FAB `pointer-events: auto` so the expanded panel does not block clicks on the canvas.
+
 ## [0.1.0-alpha.5] - 2026-05-06
 
 ### Added

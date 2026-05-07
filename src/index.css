@@ -25,8 +25,8 @@
   --conf-1: #b14a4a;
   --conf-2: #c47a3a;
   --conf-3: #b89a3a;
-  --conf-4: #6a8a3a;
-  --conf-5: #2d6a55;
+  --conf-4: #75752d;
+  --conf-5: #467d2c;
 
   --accent: var(--cat-causal);
   --shadow-sm: 0 1px 2px rgba(26, 24, 20, 0.05);
