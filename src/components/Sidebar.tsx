@@ -100,14 +100,13 @@ export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, onShortcu
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ font: "500 13px 'Inter', ui-sans-serif", color: 'var(--ink)' }}>Nesso</div>
           </div>
-          <button onClick={onCollapse} title="Collapse sidebar" style={sidebarHeaderBtn}
+          <button onClick={onCollapse} title="Collapse sidebar" type="button" style={iconBtn}
             onMouseEnter={e => { e.currentTarget.style.background = 'var(--paper-deep)' }}
             onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
           >
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" style={{ flexShrink: 0 }}>
               <path d="M10 4l-4 4 4 4" />
             </svg>
-            <span style={{ font: "500 12px 'Inter', ui-sans-serif" }}>Hide</span>
           </button>
         </div>
 
@@ -326,16 +325,15 @@ export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, onShortcu
           )}
         </div>
 
-        {/* Footer — Settings + shortcuts (?) */}
+        {/* Footer — Settings (left), shortcuts ? (right) */}
         <div style={{
           padding: '10px 12px',
           borderTop: '0.5px solid var(--line)',
           display: 'flex', alignItems: 'center',
-          justifyContent: 'flex-end',
-          gap: 6,
+          justifyContent: 'space-between',
           flexShrink: 0,
         }}>
-          <button type="button" onClick={onSettings} title="Settings (⌘,)" style={sidebarFooterBtn}
+          <button type="button" onClick={onSettings} title="Settings (⌘,)" style={footerIconBtn}
             onMouseEnter={e => { e.currentTarget.style.background = 'var(--paper-deep)'; e.currentTarget.style.color = 'var(--ink)' }}
             onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--ink-3)' }}
           >
@@ -344,9 +342,8 @@ export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, onShortcu
               <circle cx="5" cy="5" r="2" />
               <circle cx="9" cy="11" r="2" />
             </svg>
-            <span>Settings</span>
           </button>
-          <button type="button" onClick={onShortcuts} title="Keyboard shortcuts (?)" style={shortcutsFooterBtn}
+          <button type="button" onClick={onShortcuts} title="Keyboard shortcuts (?)" style={footerIconBtn}
             onMouseEnter={e => { e.currentTarget.style.background = 'var(--paper-deep)'; e.currentTarget.style.color = 'var(--ink)' }}
             onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--ink-3)' }}
           >
@@ -398,14 +395,6 @@ const iconBtn: React.CSSProperties = {
   color: 'var(--ink-3)', cursor: 'default',
 }
 
-const sidebarHeaderBtn: React.CSSProperties = {
-  ...iconBtn,
-  width: 'auto',
-  height: 28,
-  padding: '0 8px 0 6px',
-  gap: 5,
-}
-
 const graphsNewBtn: React.CSSProperties = {
   appearance: 'none', border: 0, background: 'transparent',
   height: 24, borderRadius: 6,
@@ -414,16 +403,7 @@ const graphsNewBtn: React.CSSProperties = {
   color: 'var(--ink-3)', cursor: 'default',
 }
 
-const sidebarFooterBtn: React.CSSProperties = {
-  appearance: 'none', border: 0, background: 'transparent',
-  height: 28, borderRadius: 6,
-  padding: '0 9px',
-  display: 'flex', alignItems: 'center', gap: 7,
-  color: 'var(--ink-3)', cursor: 'default',
-  font: "500 12px 'Inter', ui-sans-serif",
-}
-
-const shortcutsFooterBtn: React.CSSProperties = {
+const footerIconBtn: React.CSSProperties = {
   appearance: 'none', border: 0, background: 'transparent',
   width: 28, height: 28, borderRadius: 6,
   display: 'flex', alignItems: 'center', justifyContent: 'center',

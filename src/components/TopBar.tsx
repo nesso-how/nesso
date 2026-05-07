@@ -37,7 +37,7 @@ export function TopBar({ sidebarCollapsed, sidebarWidth, onExpandSidebar, onRela
             onClick={onExpandSidebar}
             title="Expand sidebar"
             type="button"
-            style={expandSidebarBtn}
+            style={iconBtn}
             onMouseEnter={e => { e.currentTarget.style.background = 'var(--paper-deep)'; e.currentTarget.style.color = 'var(--ink)' }}
             onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--ink-3)' }}
           >
@@ -45,7 +45,6 @@ export function TopBar({ sidebarCollapsed, sidebarWidth, onExpandSidebar, onRela
               <rect x="2" y="3" width="12" height="10" rx="1.5" />
               <path d="M6 3v10" />
             </svg>
-            <span style={{ font: "500 12px 'Inter', ui-sans-serif" }}>Sidebar</span>
           </button>
         )}
         <h1 style={{
@@ -103,12 +102,4 @@ const iconBtn: React.CSSProperties = {
   width: 30, height: 30, borderRadius: 6,
   display: 'flex', alignItems: 'center', justifyContent: 'center',
   color: 'var(--ink-3)', cursor: 'default',
-}
-
-const expandSidebarBtn: React.CSSProperties = {
-  ...iconBtn,
-  width: 'auto',
-  height: 30,
-  padding: '0 10px',
-  gap: 7,
 }
