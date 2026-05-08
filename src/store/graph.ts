@@ -5,7 +5,9 @@ import { applyNodeChanges, applyEdgeChanges } from '@xyflow/react'
 import type { Node, Edge, NodeChange, EdgeChange } from '@xyflow/react'
 import type { ConceptNodeData, NessoSettings, EdgeTypeName } from '@/types/graph'
 import { CONCEPT_HANDLE_IN, CONCEPT_HANDLE_OUT } from '@/data/conceptHandles'
-import { makeSeedGraph } from '@/data/seedGraph'
+import { SEED_NAME, SEED_NODES, SEED_EDGES } from '@/data/seedGraph'
+
+const SEED_ID = 'seed'
 import { dbSaveGraph, dbLoadGraph, dbListGraphs, dbDeleteGraph } from './db'
 import type { GraphRecord } from './db'
 
@@ -76,18 +78,10 @@ interface GraphState {
   deleteGraph: (id: string) => Promise<void>
 }
 
-const SEED_ID = 'seed'
 
 function makeSeedRecord(): GraphRecord {
-  const { nodes, edges } = makeSeedGraph()
-  return {
-    id: SEED_ID,
-    name: 'Programming concepts',
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-    nodes,
-    edges,
-  }
+  const now = Date.now()
+  return { id: SEED_ID, name: SEED_NAME, createdAt: now, updatedAt: now, nodes: SEED_NODES, edges: SEED_EDGES }
 }
 
 export const useGraphStore = create<GraphState>()(
@@ -102,7 +96,7 @@ export const useGraphStore = create<GraphState>()(
       sidebarDisplayOpen: false,
       viewports: {},
       currentGraphId: SEED_ID,
-      graphList: [{ id: SEED_ID, name: 'Programming concepts', updatedAt: Date.now() }],
+      graphList: [{ id: SEED_ID, name: SEED_NAME, updatedAt: Date.now() }],
       settings: {
         dark: false,
         accent: '#b14a2e',

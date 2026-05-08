@@ -1,0 +1,564 @@
+{
+  "name": "Plant biology",
+  "nodes": [
+    {
+      "id": "n1",
+      "type": "concept",
+      "position": {
+        "x": 342,
+        "y": -89
+      },
+      "data": {
+        "text": "Seed",
+        "conf": 5,
+        "reviewedAt": 1777939200000
+      }
+    },
+    {
+      "id": "n2",
+      "type": "concept",
+      "position": {
+        "x": -75,
+        "y": -12
+      },
+      "data": {
+        "text": "Germination",
+        "conf": 3,
+        "reviewedAt": 1777334400000
+      }
+    },
+    {
+      "id": "n3",
+      "type": "concept",
+      "position": {
+        "x": -77,
+        "y": 176
+      },
+      "data": {
+        "text": "Plant",
+        "conf": 5,
+        "reviewedAt": 1778025600000
+      }
+    },
+    {
+      "id": "n4",
+      "type": "concept",
+      "position": {
+        "x": -315,
+        "y": 515
+      },
+      "data": {
+        "text": "Root",
+        "conf": 4,
+        "reviewedAt": 1777939200000
+      }
+    },
+    {
+      "id": "n5",
+      "type": "concept",
+      "position": {
+        "x": 267,
+        "y": 291
+      },
+      "data": {
+        "text": "Stem",
+        "conf": 4,
+        "reviewedAt": 1777852800000
+      }
+    },
+    {
+      "id": "n6",
+      "type": "concept",
+      "position": {
+        "x": -425,
+        "y": 174
+      },
+      "data": {
+        "text": "Leaf",
+        "conf": 5,
+        "reviewedAt": 1778025600000
+      }
+    },
+    {
+      "id": "n7",
+      "type": "concept",
+      "position": {
+        "x": 259,
+        "y": 442
+      },
+      "data": {
+        "text": "Flower",
+        "conf": 4,
+        "reviewedAt": 1777766400000
+      }
+    },
+    {
+      "id": "n8",
+      "type": "concept",
+      "position": {
+        "x": 414,
+        "y": 209
+      },
+      "data": {
+        "text": "Fruit",
+        "conf": 5,
+        "reviewedAt": 1777852800000
+      }
+    },
+    {
+      "id": "n9",
+      "type": "concept",
+      "position": {
+        "x": 201,
+        "y": -10
+      },
+      "data": {
+        "text": "Water",
+        "conf": 5,
+        "reviewedAt": 1778112000000
+      }
+    },
+    {
+      "id": "n10",
+      "type": "concept",
+      "position": {
+        "x": -333,
+        "y": -72
+      },
+      "data": {
+        "text": "Sunlight",
+        "conf": 5,
+        "reviewedAt": 1778112000000
+      }
+    },
+    {
+      "id": "n11",
+      "type": "concept",
+      "position": {
+        "x": -325,
+        "y": 337
+      },
+      "data": {
+        "text": "Soil",
+        "conf": 4,
+        "reviewedAt": 1777680000000
+      }
+    },
+    {
+      "id": "n12",
+      "type": "concept",
+      "position": {
+        "x": -563,
+        "y": -106
+      },
+      "data": {
+        "text": "Carbon dioxide",
+        "conf": 3,
+        "reviewedAt": 1777507200000
+      }
+    },
+    {
+      "id": "n13",
+      "type": "concept",
+      "position": {
+        "x": -675,
+        "y": 154
+      },
+      "data": {
+        "text": "Photosynthesis",
+        "conf": 3,
+        "reviewedAt": 1776988800000
+      }
+    },
+    {
+      "id": "n14",
+      "type": "concept",
+      "position": {
+        "x": -1013,
+        "y": 411
+      },
+      "data": {
+        "text": "Oxygen",
+        "conf": 4,
+        "reviewedAt": 1777593600000
+      }
+    },
+    {
+      "id": "n15",
+      "type": "concept",
+      "position": {
+        "x": -534,
+        "y": 378
+      },
+      "data": {
+        "text": "Glucose",
+        "conf": 2,
+        "reviewedAt": 1776643200000
+      }
+    },
+    {
+      "id": "n16",
+      "type": "concept",
+      "position": {
+        "x": -900,
+        "y": -42
+      },
+      "data": {
+        "text": "Chlorophyll",
+        "conf": 2,
+        "reviewedAt": 1776384000000
+      }
+    },
+    {
+      "id": "n17",
+      "type": "concept",
+      "position": {
+        "x": 640,
+        "y": 200
+      },
+      "data": {
+        "text": "Pollination",
+        "conf": 3,
+        "reviewedAt": 1777161600000
+      }
+    },
+    {
+      "id": "n18",
+      "type": "concept",
+      "position": {
+        "x": -772,
+        "y": 423
+      },
+      "data": {
+        "text": "Respiration",
+        "conf": 2,
+        "reviewedAt": 1776038400000
+      }
+    },
+    {
+      "id": "n19",
+      "type": "concept",
+      "position": {
+        "x": -129,
+        "y": 528
+      },
+      "data": {
+        "text": "Annual",
+        "conf": 3,
+        "reviewedAt": 1776902400000
+      }
+    },
+    {
+      "id": "n20",
+      "type": "concept",
+      "position": {
+        "x": 104,
+        "y": 493
+      },
+      "data": {
+        "text": "Perennial",
+        "conf": 3,
+        "reviewedAt": 1776902400000
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e0",
+      "source": "n19",
+      "target": "n3",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "subtype-of"
+      }
+    },
+    {
+      "id": "e1",
+      "source": "n20",
+      "target": "n3",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "subtype-of"
+      }
+    },
+    {
+      "id": "e2",
+      "source": "n4",
+      "target": "n3",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "part-of"
+      }
+    },
+    {
+      "id": "e3",
+      "source": "n5",
+      "target": "n3",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "part-of"
+      }
+    },
+    {
+      "id": "e4",
+      "source": "n6",
+      "target": "n3",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "part-of"
+      }
+    },
+    {
+      "id": "e5",
+      "source": "n7",
+      "target": "n3",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "part-of"
+      }
+    },
+    {
+      "id": "e6",
+      "source": "n8",
+      "target": "n3",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "part-of"
+      }
+    },
+    {
+      "id": "e7",
+      "source": "n8",
+      "target": "n1",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "contains"
+      }
+    },
+    {
+      "id": "e8",
+      "source": "n10",
+      "target": "n13",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "enables"
+      }
+    },
+    {
+      "id": "e9",
+      "source": "n12",
+      "target": "n13",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "enables"
+      }
+    },
+    {
+      "id": "e10",
+      "source": "n16",
+      "target": "n13",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "enables"
+      }
+    },
+    {
+      "id": "e11",
+      "source": "n13",
+      "target": "n14",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "produces"
+      }
+    },
+    {
+      "id": "e12",
+      "source": "n13",
+      "target": "n15",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "produces"
+      }
+    },
+    {
+      "id": "e13",
+      "source": "n7",
+      "target": "n17",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "enables"
+      }
+    },
+    {
+      "id": "e14",
+      "source": "n17",
+      "target": "n8",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "produces"
+      }
+    },
+    {
+      "id": "e15",
+      "source": "n3",
+      "target": "n9",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "requires"
+      }
+    },
+    {
+      "id": "e16",
+      "source": "n3",
+      "target": "n10",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "requires"
+      }
+    },
+    {
+      "id": "e17",
+      "source": "n3",
+      "target": "n11",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "requires"
+      }
+    },
+    {
+      "id": "e18",
+      "source": "n13",
+      "target": "n16",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "requires"
+      }
+    },
+    {
+      "id": "e19",
+      "source": "n2",
+      "target": "n9",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "requires"
+      }
+    },
+    {
+      "id": "e20",
+      "source": "n4",
+      "target": "n11",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "uses"
+      }
+    },
+    {
+      "id": "e21",
+      "source": "n6",
+      "target": "n10",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "uses"
+      }
+    },
+    {
+      "id": "e22",
+      "source": "n1",
+      "target": "n2",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "precedes"
+      }
+    },
+    {
+      "id": "e23",
+      "source": "n2",
+      "target": "n3",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "precedes"
+      }
+    },
+    {
+      "id": "e24",
+      "source": "n7",
+      "target": "n8",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "precedes"
+      }
+    },
+    {
+      "id": "e25",
+      "source": "n13",
+      "target": "n18",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "opposite-of"
+      }
+    },
+    {
+      "id": "e26",
+      "source": "n19",
+      "target": "n20",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "opposite-of"
+      }
+    }
+  ]
+}
