@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 import { useGraphStore } from '@/store/graph'
 import { useWebLLM, initWebLLM, LOCAL_MODEL_LABEL, LOCAL_MODEL_SIZE } from '@/llm/webllm'
+import { CloseButton } from './CloseButton'
 
 interface Props {
   open: boolean
@@ -39,7 +40,7 @@ export function SettingsDialog({ open, onClose }: Props) {
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          width: 420, maxWidth: '92vw',
+          width: 520, maxWidth: '92vw',
           background: 'var(--bg-card)',
           border: '0.5px solid var(--line)',
           borderRadius: 18,
@@ -47,8 +48,44 @@ export function SettingsDialog({ open, onClose }: Props) {
           boxShadow: 'var(--shadow-lg)',
         }}
       >
-        <div style={{ font: "500 11px 'JetBrains Mono', ui-monospace", textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--ink-4)', marginBottom: 20 }}>
-          Settings
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+          <div style={{ font: "500 11px 'JetBrains Mono', ui-monospace", textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--ink-4)' }}>
+            Settings
+          </div>
+          <CloseButton onClick={onClose} />
+        </div>
+
+        <div style={{ font: "500 10px 'JetBrains Mono', ui-monospace", textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--ink-4)', marginBottom: 12, borderBottom: '0.5px solid var(--line)', paddingBottom: 6 }}>
+          Appearance
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+          <span style={{ font: "400 13px 'Inter', system-ui", color: 'var(--ink-3)' }}>Theme</span>
+          <div style={{ display: 'flex', gap: 4 }}>
+            {[{ label: 'Light', dark: false }, { label: 'Dark', dark: true }].map(opt => {
+              const active = settings.dark === opt.dark
+              return (
+                <button
+                  key={opt.label}
+                  onClick={() => setSetting('dark', opt.dark)}
+                  style={{
+                    appearance: 'none',
+                    border: `0.5px solid ${active ? 'var(--ink-2)' : 'var(--line)'}`,
+                    background: active ? 'var(--ink-2)' : 'transparent',
+                    color: active ? 'var(--paper)' : 'var(--ink-3)',
+                    font: "500 11px 'JetBrains Mono', ui-monospace",
+                    letterSpacing: '0.04em',
+                    padding: '5px 12px',
+                    borderRadius: 999,
+                    cursor: 'default',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  {opt.label}
+                </button>
+              )
+            })}
+          </div>
         </div>
 
         <div style={{ font: "500 10px 'JetBrains Mono', ui-monospace", textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--ink-4)', marginBottom: 12, borderBottom: '0.5px solid var(--line)', paddingBottom: 6 }}>
@@ -122,23 +159,6 @@ export function SettingsDialog({ open, onClose }: Props) {
           <LocalModelPanel status={llm.status} progress={llm.progress} progressText={llm.progressText} error={llm.error} />
         )}
 
-        <div style={{ marginTop: 20, borderTop: '0.5px solid var(--line)', paddingTop: 16, display: 'flex', justifyContent: 'flex-end' }}>
-          <button
-            onClick={onClose}
-            style={{
-              appearance: 'none',
-              border: '0.5px solid var(--line)',
-              background: 'transparent',
-              color: 'var(--ink-2)',
-              font: "500 12px 'JetBrains Mono', ui-monospace",
-              padding: '8px 16px',
-              borderRadius: 999,
-              cursor: 'default',
-            }}
-          >
-            Close
-          </button>
-        </div>
       </div>
     </div>
   )

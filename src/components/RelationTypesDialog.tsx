@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 import { EDGE_CATEGORIES, EDGE_TYPES } from '@/data/edgeTypes'
 import { GlyphSVG } from './GlyphSVG'
+import { CloseButton } from './CloseButton'
 import { useGraphStore } from '@/store/graph'
 import type { EdgeTypeName } from '@/types/graph'
 
@@ -34,7 +35,7 @@ export function RelationTypesDialog({ open, onClose }: Props) {
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          width: 420,
+          width: 520,
           maxWidth: '92vw',
           maxHeight: '76vh',
           background: 'var(--bg-card)',
@@ -47,8 +48,11 @@ export function RelationTypesDialog({ open, onClose }: Props) {
           minHeight: 0,
         }}
       >
-        <div style={{ font: "500 11px 'JetBrains Mono', ui-monospace", textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--ink-4)', marginBottom: 18 }}>
-          Relation types
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+          <div style={{ font: "500 11px 'JetBrains Mono', ui-monospace", textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--ink-4)' }}>
+            Relation types
+          </div>
+          <CloseButton onClick={onClose} />
         </div>
 
         <div style={{
@@ -136,7 +140,7 @@ export function RelationTypesDialog({ open, onClose }: Props) {
           font: "500 11px 'JetBrains Mono', ui-monospace",
           color: 'var(--ink-4)',
         }}>
-          {Object.keys(EDGE_TYPES).length} relation kinds · rendering follows Settings → edge encoding
+          {Object.keys(EDGE_TYPES).length} relation kinds
         </div>
       </div>
     </div>

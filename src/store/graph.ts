@@ -5,9 +5,7 @@ import { applyNodeChanges, applyEdgeChanges } from '@xyflow/react'
 import type { Node, Edge, NodeChange, EdgeChange } from '@xyflow/react'
 import type { ConceptNodeData, NessoSettings, EdgeTypeName } from '@/types/graph'
 import { CONCEPT_HANDLE_IN, CONCEPT_HANDLE_OUT } from '@/data/conceptHandles'
-import { SEED_NAME, SEED_NODES, SEED_EDGES } from '@/data/seedGraph'
-
-const SEED_ID = 'seed'
+import { SEEDS, type Seed } from '@/data/seedGraph'
 import { dbSaveGraph, dbLoadGraph, dbListGraphs, dbDeleteGraph } from './db'
 import type { GraphRecord } from './db'
 
@@ -29,7 +27,6 @@ interface GraphState {
   edges: Edge[]
   selected: Selection
   settings: NessoSettings
-  tutorialDone: boolean
   mentorPanelExpanded: boolean
 
   // Per-graph viewports (persisted in localStorage for instant restore)
@@ -38,6 +35,10 @@ interface GraphState {
   // Multi-graph
   currentGraphId: string
   graphList: GraphMeta[]
+
+  // Bumped on every loadGraph so useAutoSave can skip the save that would
+  // otherwise fire when nodes/edges are replaced by a load (vs. a real edit).
+  loadedToken: number
 
   // Graph mutations
   onNodesChange: (changes: NodeChange<Node<ConceptNodeData>>[]) => void
@@ -54,9 +55,6 @@ interface GraphState {
 
   // Settings
   setSetting: <K extends keyof NessoSettings>(key: K, value: NessoSettings[K]) => void
-
-  // Tutorial
-  completeTutorial: () => void
 
   // UI chrome (persisted)
   setMentorPanelExpanded: (expanded: boolean) => void
@@ -79,9 +77,9 @@ interface GraphState {
 }
 
 
-function makeSeedRecord(): GraphRecord {
+function makeSeedRecord(seed: Seed): GraphRecord {
   const now = Date.now()
-  return { id: SEED_ID, name: SEED_NAME, createdAt: now, updatedAt: now, nodes: SEED_NODES, edges: SEED_EDGES }
+  return { id: seed.id, name: seed.name, createdAt: now, updatedAt: now, nodes: seed.nodes, edges: seed.edges }
 }
 
 export const useGraphStore = create<GraphState>()(
@@ -90,20 +88,20 @@ export const useGraphStore = create<GraphState>()(
       nodes: [],
       edges: [],
       selected: null,
-      tutorialDone: false,
       mentorPanelExpanded: false,
-      sidebarCollapsed: true,
-      sidebarDisplayOpen: false,
+      sidebarCollapsed: false,
+      sidebarDisplayOpen: true,
       viewports: {},
-      currentGraphId: SEED_ID,
-      graphList: [{ id: SEED_ID, name: SEED_NAME, updatedAt: Date.now() }],
+      currentGraphId: SEEDS[0].id,
+      graphList: SEEDS.map(s => ({ id: s.id, name: s.name, updatedAt: Date.now() })),
+      loadedToken: 0,
       settings: {
         dark: false,
         accent: '#b14a2e',
         edgeEncoding: 'full',
         showLabels: false,
         showConfidence: true,
-        showHeatmap: false,
+        showHeatmap: true,
         curveStyle: 'arc',
         categoryPalette: 'default',
         aiMode: 'remote',
@@ -184,8 +182,6 @@ export const useGraphStore = create<GraphState>()(
       setSetting: (key, value) =>
         set(s => ({ settings: { ...s.settings, [key]: value } })),
 
-      completeTutorial: () => set({ tutorialDone: true }),
-
       setMentorPanelExpanded: (expanded) => set({ mentorPanelExpanded: expanded }),
       setSidebarCollapsed: (v) => set({ sidebarCollapsed: v }),
       setSidebarDisplayOpen: (v) => set({ sidebarDisplayOpen: v }),
@@ -194,8 +190,21 @@ export const useGraphStore = create<GraphState>()(
         set(s => ({ viewports: { ...s.viewports, [id]: vp } })),
 
       loadGraphList: async () => {
-        const records = await dbListGraphs()
-        if (records.length === 0) return []
+        let records = await dbListGraphs()
+
+        // First-launch bootstrap: import all bundled seeds when the DB is empty.
+        // Save in reverse so SEEDS[0] gets the latest updatedAt and appears
+        // first in the sidebar — matching the default currentGraphId.
+        if (records.length === 0) {
+          const seeded: GraphRecord[] = []
+          for (let i = SEEDS.length - 1; i >= 0; i--) {
+            const rec = makeSeedRecord(SEEDS[i])
+            await dbSaveGraph(rec)
+            seeded.unshift(rec)
+          }
+          records = seeded
+        }
+
         const list = records.map(r => ({ id: r.id, name: r.name, updatedAt: r.updatedAt }))
         set({ graphList: list })
         return list
@@ -203,17 +212,21 @@ export const useGraphStore = create<GraphState>()(
 
       loadGraph: async (id) => {
         let record = await dbLoadGraph(id)
-        if (!record && id === SEED_ID) {
-          record = makeSeedRecord()
-          await dbSaveGraph(record)
+        if (!record) {
+          const seed = SEEDS.find(s => s.id === id)
+          if (seed) {
+            record = makeSeedRecord(seed)
+            await dbSaveGraph(record)
+          }
         }
         if (!record) return
-        set({
-          currentGraphId: id,
-          nodes: record.nodes,
-          edges: record.edges,
+        set(s => ({
+          currentGraphId: record!.id,
+          nodes: record!.nodes,
+          edges: record!.edges,
           selected: null,
-        })
+          loadedToken: s.loadedToken + 1,
+        }))
       },
 
       saveCurrentGraph: async (viewport) => {
@@ -284,7 +297,6 @@ export const useGraphStore = create<GraphState>()(
       name: 'nesso',
       partialize: (s) => ({
         settings: s.settings,
-        tutorialDone: s.tutorialDone,
         mentorPanelExpanded: s.mentorPanelExpanded,
         sidebarCollapsed: s.sidebarCollapsed,
         sidebarDisplayOpen: s.sidebarDisplayOpen,

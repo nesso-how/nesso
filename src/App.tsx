@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { ReactFlowProvider, useReactFlow } from '@xyflow/react'
 import { GraphCanvas } from './components/GraphCanvas'
 import { TopBar } from './components/TopBar'
@@ -8,7 +8,6 @@ import { BottomDock } from './components/BottomDock'
 import { RelationTypesDialog } from './components/RelationTypesDialog'
 import { Inspector } from './components/Inspector'
 import { MentorBubble } from './components/MentorBubble'
-import { Onboarding } from './components/Onboarding'
 import { ReviewMode } from './components/ReviewMode'
 import { ShortcutsDialog } from './components/ShortcutsDialog'
 import { SettingsDialog } from './components/SettingsDialog'
@@ -26,14 +25,13 @@ function AppInner() {
   const [showSearch, setShowSearch] = useState(false)
 
   const {
+    nodes,
     settings,
     addNode,
     selected,
     setSelected,
     deleteNode,
     deleteEdge,
-    tutorialDone,
-    completeTutorial,
     loadGraph,
     loadGraphList,
     currentGraphId,
@@ -44,7 +42,7 @@ function AppInner() {
 
   const selectedNode = useGraphStore(selectedNodeSelector)
   const selectedEdge = useGraphStore(selectedEdgeSelector)
-  const { zoomIn, zoomOut, fitView, setViewport, setCenter, getNodes } = useReactFlow()
+  const { zoomIn, zoomOut, setViewport, setCenter, getNodes } = useReactFlow()
   const [zoom, setZoom] = useState(1)
 
   useAutoSave()
@@ -75,75 +73,14 @@ function AppInner() {
     return () => window.removeEventListener('popstate', onPop)
   }, [loadGraph])
 
-  // Restore saved viewport instantly on graph switch (no animation)
-  useEffect(() => {
-    const saved = viewports[currentGraphId]
-    if (saved) {
-      setViewport(saved, { duration: 0 })
-    } else {
-      fitView({ padding: 0.15, duration: 0 })
-    }
-  }, [currentGraphId])
-
-  // Auto-init WebLLM when local mode is active
-  useEffect(() => {
-    if (settings.aiMode === 'local') void initWebLLM()
-  }, [settings.aiMode])
-
-  // Apply theme
-  useEffect(() => {
-    const root = document.documentElement
-    root.setAttribute('data-theme', settings.dark ? 'dark' : 'light')
-    const palette = PALETTES[settings.categoryPalette] ?? PALETTES.default
-    Object.entries(palette).forEach(([k, v]) => root.style.setProperty(`--cat-${k}`, v))
-    root.style.setProperty('--accent', settings.accent)
-  }, [settings.dark, settings.categoryPalette, settings.accent])
-
-  // Keyboard shortcuts
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
-      if (e.key === 'Escape') {
-        completeTutorial()
-        setShowReview(false)
-        setShowShortcuts(false)
-        setShowSettings(false)
-        setShowRelationTypes(false)
-        setShowSearch(false)
-        return
-      }
-      if (e.key === '?') { setShowShortcuts(s => !s); return }
-      if (e.key === ',' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); setShowSettings(s => !s); return }
-      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); setShowSearch(s => !s); return }
-      if (e.key === 'r' && !e.metaKey && !e.ctrlKey) { setShowReview(true) }
-      if (e.key === '/') { e.preventDefault() }
-      if ((e.key === 'Delete' || e.key === 'Backspace') && selected) {
-        e.preventDefault()
-        if (selected.kind === 'node') deleteNode(selected.id)
-        else deleteEdge(selected.id)
-      }
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [selected, deleteNode, deleteEdge, completeTutorial])
-
-  const handleSelectNode = useCallback((node: { id: string; position: { x: number; y: number } }) => {
-    setSelected({ kind: 'node', id: node.id })
-    setCenter(node.position.x + 100, node.position.y + 30, { zoom: 1.2, duration: 500 })
-  }, [setSelected, setCenter])
-
-  const handleAddConcept = useCallback(() => {
-    addNode(-200 + (Math.random() - 0.5) * 120, 280 + (Math.random() - 0.5) * 60)
-  }, [addNode])
-
-  const handleFit = useCallback(() => {
+  const fitView = useCallback((animated = true) => {
     const liveNodes = getNodes()
     if (!liveNodes.length) return
 
     const TOP = 52
     const BOTTOM = 80
     const RIGHT = 30
-    const PADDING = 0.15
+    const PADDING = 0.06
 
     let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity
     for (const n of liveNodes) {
@@ -169,8 +106,77 @@ function AppInner() {
     const vpX = sidebarWidth + canvasW / 2 - ((minX + maxX) / 2) * zoom
     const vpY = TOP + canvasH / 2 - ((minY + maxY) / 2) * zoom
 
-    setViewport({ x: vpX, y: vpY, zoom }, { duration: 400 })
+    setViewport({ x: vpX, y: vpY, zoom }, { duration: animated ? 400 : 0 })
   }, [getNodes, setViewport, sidebarWidth])
+
+  const viewportRestoredFor = useRef<string | null>(null)
+
+  // Restore viewport when graph switches AND nodes are loaded into React Flow
+  useEffect(() => {
+    if (viewportRestoredFor.current === currentGraphId) return
+    if (nodes.length === 0) return
+    const saved = viewports[currentGraphId]
+    viewportRestoredFor.current = currentGraphId
+    if (saved) {
+      setViewport(saved, { duration: 0 })
+    } else {
+      let id2 = 0
+      const id1 = requestAnimationFrame(() => {
+        id2 = requestAnimationFrame(() => fitView(false))
+      })
+      return () => { cancelAnimationFrame(id1); cancelAnimationFrame(id2) }
+    }
+  }, [currentGraphId, nodes.length, fitView])
+
+  // Auto-init WebLLM when local mode is active
+  useEffect(() => {
+    if (settings.aiMode === 'local') void initWebLLM()
+  }, [settings.aiMode])
+
+  // Apply theme
+  useEffect(() => {
+    const root = document.documentElement
+    root.setAttribute('data-theme', settings.dark ? 'dark' : 'light')
+    const palette = PALETTES[settings.categoryPalette] ?? PALETTES.default
+    Object.entries(palette).forEach(([k, v]) => root.style.setProperty(`--cat-${k}`, v))
+    root.style.setProperty('--accent', settings.accent)
+  }, [settings.dark, settings.categoryPalette, settings.accent])
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+      if (e.key === 'Escape') {
+        setShowReview(false)
+        setShowShortcuts(false)
+        setShowSettings(false)
+        setShowRelationTypes(false)
+        setShowSearch(false)
+        return
+      }
+      if (e.key === '?') { setShowShortcuts(s => !s); return }
+      if (e.key === ',' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); setShowSettings(s => !s); return }
+      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); setShowSearch(s => !s); return }
+      if (e.key === 'r' && !e.metaKey && !e.ctrlKey) { setShowReview(true) }
+      if (e.key === '/') { e.preventDefault() }
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selected) {
+        e.preventDefault()
+        if (selected.kind === 'node') deleteNode(selected.id)
+        else deleteEdge(selected.id)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [selected, deleteNode, deleteEdge])
+
+  const handleSelectNode = useCallback((node: { id: string; position: { x: number; y: number } }) => {
+    setSelected({ kind: 'node', id: node.id })
+    setCenter(node.position.x + 100, node.position.y + 30, { zoom: 1.2, duration: 500 })
+  }, [setSelected, setCenter])
+
+  const handleAddConcept = useCallback(() => {
+    addNode(-200 + (Math.random() - 0.5) * 120, 280 + (Math.random() - 0.5) * 60)
+  }, [addNode])
 
   const handleZoomIn = useCallback(() => {
     zoomIn({ duration: 200 })
@@ -197,7 +203,6 @@ function AppInner() {
         onCollapse={() => setSidebarCollapsed(true)}
         onSearch={() => setShowSearch(s => !s)}
         onSettings={() => setShowSettings(s => !s)}
-        onShortcuts={() => setShowShortcuts(s => !s)}
         onSelectConcept={handleSelectNode}
       />
 
@@ -207,6 +212,7 @@ function AppInner() {
         onExpandSidebar={() => setSidebarCollapsed(false)}
         onReview={() => setShowReview(true)}
         onRelationTypes={() => setShowRelationTypes(s => !s)}
+        onShortcuts={() => setShowShortcuts(s => !s)}
       />
 
       <RelationTypesDialog open={showRelationTypes} onClose={() => setShowRelationTypes(false)} />
@@ -214,13 +220,12 @@ function AppInner() {
       <BottomDock
         onZoomIn={handleZoomIn}
         onZoomOut={handleZoomOut}
-        onFit={handleFit}
+        onFit={fitView}
         zoom={zoom}
         onAddConcept={handleAddConcept}
         sidebarWidth={sidebarWidth}
       />
       <MentorBubble />
-      <Onboarding open={!tutorialDone} onClose={completeTutorial} />
       <ReviewMode open={showReview} onClose={() => setShowReview(false)} />
       <ShortcutsDialog open={showShortcuts} onClose={() => setShowShortcuts(false)} />
       <SettingsDialog open={showSettings} onClose={() => setShowSettings(false)} />

@@ -8,17 +8,24 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
-- **Confidence heatmap:** TopBar toggle tints concept nodes by confidence (`--conf-1` … `--conf-5` overlay); `NessoSettings.showHeatmap` (default off, persisted).
+- **Confidence heatmap:** Concept nodes can be tinted by confidence (`--conf-1` … `--conf-5` overlay); `NessoSettings.showHeatmap` (default **on** for new sessions, persisted).
+- **Demo seeds:** Bundled **Plant life cycle** and **Solar system** graphs (`src/data/seeds/*.json`); on first launch, an empty IndexedDB is populated with both. `seedGraph.ts` exports `SEEDS` with stable ids derived from each seed’s display name.
+- **`CloseButton`:** Shared header dismiss control for Settings, shortcuts, and relation-type modals.
 
 ### Changed
 
-- **Sidebar / top bar:** Footer **Settings** and **?** are icon-only (tooltips); sidebar **collapse** and top-bar **expand** are icon-only; **New** uses icon + text; top-right **Review**, **Relations**, and **Backup** are text-only, with **Backup** on a near-black pill. Search (**⌘K**) is opened from the sidebar.
-- **Seed graph:** Default demo map is a smaller plant-life-cycle concept graph (replaces the CS/runtime example); data authored in `src/data/seeds/plant-biology.json` and loaded via `seedGraph.ts`. Sidebar name for the default graph matches the seed title (replaces the stale **Programming concepts** label).
+- **First-run / onboarding:** Removed the tutorial overlay; **?** still toggles keyboard shortcuts.
+- **Top bar:** **Review** is a pill with icon + **R** hint; relation types, JSON export/import, and keyboard shortcuts are grouped under a single **⋯** menu (`GraphIO`, theme tokens instead of a fixed black pill).
+- **Sidebar:** Footer is one full-width **Settings** row (⌘,); theme toggle lives under Settings → **Appearance** (not Display). Shortcuts open via **?** or the top-bar menu.
+- **Modals:** Settings, shortcuts, and relation types are wider (~520px), with a header close control instead of a footer **Close** button.
+- **Defaults:** Sidebar starts expanded with the Display section open.
+- **Fit / viewport:** After switching graphs, the saved viewport applies only once nodes are present; if there is no saved view, fit runs after layout via `requestAnimationFrame`, using UI chrome insets and slightly tighter padding.
 - Light-theme `--conf-4` and `--conf-5` values for clearer distinction on the heatmap.
 
 ### Fixed
 
 - **Mentor FAB:** Outer `MentorBubble` shell uses `pointer-events: none` and the FAB `pointer-events: auto` so the expanded panel does not block clicks on the canvas.
+- **Auto-save / graph list:** Switching graphs no longer bumps `updatedAt` or reorders the sidebar from a spurious save (`loadGraph` increments `loadedToken`; `useAutoSave` skips the debounced run triggered by that load).
 
 ## [0.1.0-alpha.5] - 2026-05-06
 

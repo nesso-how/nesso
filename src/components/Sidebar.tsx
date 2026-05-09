@@ -9,11 +9,10 @@ interface Props {
   onCollapse: () => void
   onSearch: () => void
   onSettings: () => void
-  onShortcuts: () => void
   onSelectConcept: (node: { id: string; position: { x: number; y: number } }) => void
 }
 
-export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, onShortcuts, onSelectConcept }: Props) {
+export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, onSelectConcept }: Props) {
   const {
     graphList, currentGraphId, loadGraph, createGraph, renameGraph, deleteGraph,
     nodes, settings, setSetting,
@@ -123,7 +122,7 @@ export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, onShortcu
               <circle cx="7" cy="7" r="4.5" />
               <path d="M10.5 10.5L13 13" strokeLinecap="round" />
             </svg>
-            Search or jump…
+            Search…
             <span style={{ marginLeft: 'auto', font: "500 10px 'JetBrains Mono', ui-monospace" }}>⌘K</span>
           </button>
         </div>
@@ -293,13 +292,6 @@ export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, onShortcu
           </div>
           {sidebarDisplayOpen && (
             <div style={{ padding: '0 12px 10px' }}>
-              <DisplayRow label="Theme">
-                <Seg
-                  options={['Light', 'Dark']}
-                  value={settings.dark ? 'Dark' : 'Light'}
-                  onChange={v => setSetting('dark', v === 'Dark')}
-                />
-              </DisplayRow>
               <DisplayRow label="Heatmap">
                 <Seg
                   options={['Off', 'On']}
@@ -325,29 +317,36 @@ export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, onShortcu
           )}
         </div>
 
-        {/* Footer — Settings (left), shortcuts ? (right) */}
+        {/* Footer — Settings */}
         <div style={{
-          padding: '10px 12px',
+          padding: '8px 8px',
           borderTop: '0.5px solid var(--line)',
-          display: 'flex', alignItems: 'center',
-          justifyContent: 'space-between',
           flexShrink: 0,
         }}>
-          <button type="button" onClick={onSettings} title="Settings (⌘,)" style={footerIconBtn}
+          <button
+            type="button"
+            onClick={onSettings}
+            title="Settings (⌘,)"
+            style={{
+              appearance: 'none', border: 0, background: 'transparent',
+              display: 'flex', alignItems: 'center', gap: 9,
+              width: '100%',
+              padding: '7px 9px',
+              borderRadius: 6,
+              cursor: 'default',
+              font: "500 13px 'Inter', ui-sans-serif",
+              color: 'var(--ink-3)',
+              textAlign: 'left',
+            }}
             onMouseEnter={e => { e.currentTarget.style.background = 'var(--paper-deep)'; e.currentTarget.style.color = 'var(--ink)' }}
             onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--ink-3)' }}
           >
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" style={{ flexShrink: 0 }}>
-              <path d="M1.5 5h11M1.5 11h11" />
-              <circle cx="5" cy="5" r="2" />
-              <circle cx="9" cy="11" r="2" />
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+              <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+              <circle cx="12" cy="12" r="3" />
             </svg>
-          </button>
-          <button type="button" onClick={onShortcuts} title="Keyboard shortcuts (?)" style={footerIconBtn}
-            onMouseEnter={e => { e.currentTarget.style.background = 'var(--paper-deep)'; e.currentTarget.style.color = 'var(--ink)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--ink-3)' }}
-          >
-            <span style={{ font: "600 14px 'Inter', ui-sans-serif", lineHeight: 1 }}>?</span>
+            Settings
+            <span style={{ marginLeft: 'auto', font: "500 10px 'JetBrains Mono', ui-monospace", color: 'var(--ink-4)' }}>⌘,</span>
           </button>
         </div>
       </div>
@@ -400,13 +399,6 @@ const graphsNewBtn: React.CSSProperties = {
   height: 24, borderRadius: 6,
   padding: '0 7px 0 6px',
   display: 'flex', alignItems: 'center', gap: 5,
-  color: 'var(--ink-3)', cursor: 'default',
-}
-
-const footerIconBtn: React.CSSProperties = {
-  appearance: 'none', border: 0, background: 'transparent',
-  width: 28, height: 28, borderRadius: 6,
-  display: 'flex', alignItems: 'center', justifyContent: 'center',
   color: 'var(--ink-3)', cursor: 'default',
 }
 

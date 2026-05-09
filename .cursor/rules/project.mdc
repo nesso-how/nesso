@@ -28,7 +28,7 @@ src/
     edgeTypes.ts      # EDGE_TYPES and EDGE_CATEGORIES — the semantic relation model
     palettes.ts       # CSS variable colour palettes for edge categories
     seeds/*.json      # Default demo graph snapshots (React Flow nodes/edges + display name)
-    seedGraph.ts      # Re-exports `SEED_NAME`, `SEED_NODES`, `SEED_EDGES` for the active seed
+    seedGraph.ts      # Exports `SEEDS` — bundled demo graphs from `seeds/*.json` (stable ids from names)
   types/graph.ts      # ConceptNodeData, EdgeTypeName, NessoSettings, etc.
 src-tauri/            # Tauri v2 Rust project — tauri.conf.json, capabilities, icons
 ```

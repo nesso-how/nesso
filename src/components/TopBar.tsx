@@ -6,11 +6,12 @@ interface Props {
   sidebarCollapsed: boolean
   sidebarWidth: number
   onExpandSidebar: () => void
-  onRelationTypes: () => void
   onReview: () => void
+  onRelationTypes: () => void
+  onShortcuts: () => void
 }
 
-export function TopBar({ sidebarCollapsed, sidebarWidth, onExpandSidebar, onRelationTypes, onReview }: Props) {
+export function TopBar({ sidebarCollapsed, sidebarWidth, onExpandSidebar, onReview, onRelationTypes, onShortcuts }: Props) {
   const { graphList, currentGraphId, nodes, edges } = useGraphStore()
   const current = graphList.find(g => g.id === currentGraphId)
 
@@ -67,33 +68,30 @@ export function TopBar({ sidebarCollapsed, sidebarWidth, onExpandSidebar, onRela
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-        <LabelBtn onClick={onReview} title="Start review (R)">Review</LabelBtn>
-        <LabelBtn onClick={onRelationTypes} title="Relation types">Relations</LabelBtn>
-        <GraphIO />
+        <button
+          type="button"
+          onClick={onReview}
+          title="Start review (R)"
+          style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            appearance: 'none',
+            border: '0.5px solid var(--line)',
+            background: 'var(--bg-elev)', color: 'var(--ink-2)',
+            borderRadius: 999, padding: '6px 12px', cursor: 'default',
+            font: "500 12px 'Inter', ui-sans-serif",
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'var(--paper-deep)'; e.currentTarget.style.color = 'var(--ink)' }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-elev)'; e.currentTarget.style.color = 'var(--ink-2)' }}
+        >
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="M8 2.5a5.5 5.5 0 1 1-5.5 5.5" /><path d="M2.5 4V2h2" />
+          </svg>
+          Review
+          <span style={{ font: "500 10px 'JetBrains Mono', ui-monospace", color: 'var(--ink-4)', marginLeft: 2 }}>R</span>
+        </button>
+        <GraphIO onRelationTypes={onRelationTypes} onShortcuts={onShortcuts} />
       </div>
     </div>
-  )
-}
-
-function LabelBtn({ onClick, title, children }: { onClick: () => void; title: string; children: React.ReactNode }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      title={title}
-      style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        appearance: 'none', border: '0.5px solid var(--line)',
-        background: 'transparent', borderRadius: 6,
-        padding: '5px 12px', cursor: 'default',
-        font: "500 12px 'Inter', ui-sans-serif",
-        color: 'var(--ink-3)',
-      }}
-      onMouseEnter={e => { e.currentTarget.style.background = 'var(--paper-deep)'; e.currentTarget.style.color = 'var(--ink)' }}
-      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--ink-3)' }}
-    >
-      {children}
-    </button>
   )
 }
 

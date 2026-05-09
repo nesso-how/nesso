@@ -4,11 +4,12 @@ import { useGraphStore } from '@/store/graph'
 import type { Node as FlowNode, Edge } from '@xyflow/react'
 import type { ConceptNodeData } from '@/types/graph'
 
-const BACKUP_BTN_BG = '#0a0a0a'
-const BACKUP_BTN_OPEN = '#141414'
-const BACKUP_BTN_HOVER = '#1c1c1c'
+interface Props {
+  onRelationTypes: () => void
+  onShortcuts: () => void
+}
 
-export function GraphIO() {
+export function GraphIO({ onRelationTypes, onShortcuts }: Props) {
   const { nodes, edges, graphList, currentGraphId, importGraph } = useGraphStore()
   const [open, setOpen] = useState(false)
   const wrapRef = useRef<HTMLDivElement>(null)
@@ -64,34 +65,38 @@ export function GraphIO() {
     <div ref={wrapRef} style={{ position: 'relative' }}>
       <button
         type="button"
-        title="Export / Import graph (JSON)"
+        title="More options"
+        aria-haspopup="menu"
+        aria-expanded={open}
         onClick={() => setOpen(o => !o)}
         style={{
           appearance: 'none',
-          border: 0,
-          background: open ? BACKUP_BTN_OPEN : BACKUP_BTN_BG,
-          color: '#f5f5f5',
-          height: 30,
+          border: '0.5px solid var(--line)',
+          background: open ? 'var(--paper-deep)' : 'var(--bg-elev)',
+          color: open ? 'var(--ink)' : 'var(--ink-2)',
           borderRadius: 999,
-          padding: '0 14px',
+          padding: '6px 10px',
           cursor: 'default',
           display: 'inline-flex',
           alignItems: 'center',
           justifyContent: 'center',
-          font: "500 12px 'Inter', ui-sans-serif",
         }}
-        onMouseEnter={e => { e.currentTarget.style.background = BACKUP_BTN_HOVER }}
-        onMouseLeave={e => { e.currentTarget.style.background = open ? BACKUP_BTN_OPEN : BACKUP_BTN_BG }}
+        onMouseEnter={e => { e.currentTarget.style.background = 'var(--paper-deep)'; e.currentTarget.style.color = 'var(--ink)' }}
+        onMouseLeave={e => { e.currentTarget.style.background = open ? 'var(--paper-deep)' : 'var(--bg-elev)'; e.currentTarget.style.color = open ? 'var(--ink)' : 'var(--ink-2)' }}
       >
-        Backup
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+          <circle cx="3.5" cy="8" r="1.3" />
+          <circle cx="8" cy="8" r="1.3" />
+          <circle cx="12.5" cy="8" r="1.3" />
+        </svg>
       </button>
 
       {open && (
-        <div style={{
+        <div role="menu" style={{
           position: 'absolute',
           top: 'calc(100% + 8px)',
           right: 0,
-          minWidth: 180,
+          minWidth: 220,
           background: 'var(--bg-card)',
           border: '0.5px solid var(--line)',
           borderRadius: 12,
@@ -99,6 +104,17 @@ export function GraphIO() {
           boxShadow: 'var(--shadow-lg)',
           zIndex: 40,
         }}>
+          <MenuItem
+            onClick={() => { onRelationTypes(); setOpen(false) }}
+            icon={
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                <path d="M2 4.5h10M2 8h10M2 11.5h7" />
+              </svg>
+            }
+            label="Relation types"
+            sub="17 types · 6 categories"
+          />
+          <div style={{ height: 1, background: 'var(--line)', margin: '4px 6px' }} />
           <MenuItem
             onClick={handleExport}
             icon={
@@ -118,6 +134,18 @@ export function GraphIO() {
             }
             label="Import graph"
             sub="Open a .json file"
+          />
+          <div style={{ height: 1, background: 'var(--line)', margin: '4px 6px' }} />
+          <MenuItem
+            onClick={() => { onShortcuts(); setOpen(false) }}
+            icon={
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="1.5" y="4.5" width="13" height="8" rx="1.5" />
+                <path d="M4.5 8h1M7.5 8h1M10.5 8h1M5.5 11h5" />
+              </svg>
+            }
+            label="Keyboard shortcuts"
+            sub="Press ? anytime"
           />
         </div>
       )}
