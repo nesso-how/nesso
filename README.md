@@ -87,6 +87,9 @@ Each relation has a line style (solid, dashed, dotted, double, wavy) and an SVG 
 - [ ] Package extraction — modularise reusable parts as standalone npm libraries
 - [ ] Tauri auto-updates — signing and `latest.json` delivery via GitHub Releases _(pending public repo)_
 - [ ] GH Pages deployment _(pending public repo)_
+- [ ] README rewrite — proper project presentation with screenshot, and architecture overview
+- [ ] Per-node elaboration — structured annotations alongside each concept: definition in own words, user-built examples, open questions, informal connections not yet ready to be formalised as edges, and a free-text field as an escape hatch
+- [ ] AI-guided spaced repetition — when surfacing a node for review, feed its edges and neighbours to the AI mentor to generate questions that probe relational understanding rather than isolated recall; replace the current heuristic scheduler with one informed by both FSRS stability scores and graph topology
 
 ## License
 
