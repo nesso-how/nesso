@@ -77,31 +77,38 @@ Each relation has a line style (solid, dashed, dotted, double, wavy) and an SVG 
 ## Roadmap
 
 ### Graph canvas
+
 - [ ] Parallel-edge handling — one edge per directed pair, or offset overlapping arcs when source/target coincide
 
 ### AI mentor
+
 - [ ] AI response rendering — proper formatting for code blocks and rich output
 - [ ] Chat history — persist and revisit past mentor sessions per graph
 - [ ] Voice I/O — speech input and text-to-speech output for the AI mentor
 
 ### Learning & review
+
 - [ ] Per-node elaboration — structured annotations alongside each concept: definition in own words, user-built examples, open questions, informal connections not yet ready to be formalised as edges, and a free-text field as an escape hatch
 - [ ] FSRS-based review scheduling — replace the current heuristic with the [FSRS algorithm](https://github.com/open-spaced-repetition/fsrs4anki/wiki/The-Algorithm), mapping node confidence (1–5) to Again/Hard/Good/Easy ratings and tracking per-node stability and retrievability
 - [ ] AI-guided spaced repetition — when surfacing a node for review, feed its edges and neighbours to the AI mentor to generate questions that probe relational understanding rather than isolated recall; replace the current heuristic scheduler with one informed by both FSRS stability scores and graph topology
 
 ### Core features
+
 - [ ] Two-mode system — student (active learning) and professor (build reference graphs, evaluate student maps)
 
 ### Data & sync
+
 - [ ] Session export — download a JSON snapshot of the graph and chat log
 - [ ] File system sync — on desktop, persist each graph as a `.json` file on disk (via Tauri FS API) and watch for external changes, so graphs are portable and editable outside the app
 
 ### Platform & infrastructure
+
 - [ ] Tauri auto-updates — signing and `latest.json` delivery via GitHub Releases _(pending public repo)_
 - [ ] GH Pages deployment _(pending public repo)_
-- [ ] Package extraction — modularise reusable parts as standalone npm libraries
+- [ ] Package extraction — modularise reusable parts as standalone npm libraries. Requires proper code review from dev.
 
 ### Localization & docs
+
 - [ ] Translations — Italian and English to start
 - [ ] README rewrite — proper project presentation with screenshot, and architecture overview
 
