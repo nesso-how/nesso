@@ -85,6 +85,7 @@ Each relation has a line style (solid, dashed, dotted, double, wavy) and an SVG 
 - [ ] Voice I/O — speech input and text-to-speech output for the AI mentor
 - [ ] Two-mode system — student (active learning) and professor (build reference graphs, evaluate student maps)
 - [ ] Package extraction — modularise reusable parts as standalone npm libraries
+- [ ] File system sync — on desktop, persist each graph as a `.json` file on disk (via Tauri FS API) and watch for external changes, so graphs are portable and editable outside the app
 - [ ] Tauri auto-updates — signing and `latest.json` delivery via GitHub Releases _(pending public repo)_
 - [ ] GH Pages deployment _(pending public repo)_
 - [ ] README rewrite — proper project presentation with screenshot, and architecture overview
