@@ -505,11 +505,19 @@ function ModelStatusBadge({ status, model, baseUrl, pullProgress, onPull }: {
         </>
       )}
       {status === 'error' && (/localhost|127\.0\.0\.1/.test(baseUrl) ? (
-        <>
-          {dot('var(--ink-4)')}
-          <span style={{ color: 'var(--ink-4)' }}>Ollama not running —</span>
-          <code style={{ color: 'var(--ink-2)', fontSize: 10.5 }}>ollama serve</code>
-        </>
+        /localhost|127\.0\.0\.1/.test(window.location.hostname) ? (
+          <>
+            {dot('var(--ink-4)')}
+            <span style={{ color: 'var(--ink-4)' }}>Ollama not running —</span>
+            <code style={{ color: 'var(--ink-2)', fontSize: 10.5 }}>ollama serve</code>
+          </>
+        ) : (
+          <>
+            {dot('var(--conf-2)')}
+            <span style={{ color: 'var(--ink-4)' }}>CORS blocked — set</span>
+            <code style={{ color: 'var(--ink-2)', fontSize: 10.5 }}>OLLAMA_ORIGINS={window.location.origin}</code>
+          </>
+        )
       ) : (
         <>
           {dot('var(--ink-4)')}
