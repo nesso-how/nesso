@@ -115,13 +115,3 @@ Each relation has a line style (solid, dashed, dotted, double, wavy) and an SVG 
 ## License
 
 Copyright © 2026 Omar Desogus. This project is licensed under the [MIT License](https://opensource.org/licenses/MIT) — see [`LICENSE`](LICENSE).
-
-## Keyboard shortcuts
-
-| Key                    | Action                        |
-| ---------------------- | ----------------------------- |
-| `?`                    | Toggle keyboard shortcuts     |
-| `⌘,` / `Ctrl+,`        | Toggle settings (AI endpoint) |
-| `R`                    | Open review mode              |
-| `Delete` / `Backspace` | Delete selected node or edge  |
-| `Escape`               | Close overlays                |
