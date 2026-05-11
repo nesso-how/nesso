@@ -13,3 +13,4 @@ Developer guide for AI assistants working in this repo. Detailed rules live in `
 | [constraints.mdc](.cursor/rules/constraints.mdc) | Hard constraints — what NOT to do                                                 |
 | [changelog.mdc](.cursor/rules/changelog.mdc)     | `CHANGELOG.md` (Keep a Changelog), **`[Unreleased]`** on each merge, release flow |
 | [maintenance.mdc](.cursor/rules/maintenance.mdc) | When and how to keep rules and the README roadmap in sync with the code           |
+| [workflow.mdc](.cursor/rules/workflow.mdc)       | Planning with Claude Code → implementing with Cursor Composer                     |
