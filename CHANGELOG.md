@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.0-alpha.6] - 2026-05-11
+
 ### Added
 
 - **FSRS v6 review scheduling (`ts-fsrs`):** Replaced the day/confidence heuristic with principled spaced repetition. Per-node `stability`, `difficulty`, `lapses`, `reps`, `due`, and `lastRating` are persisted. Rating UI: Again / Hard / Good / Easy in **ReviewMode**. Settings → Review exposes **`fsrsRetention`** and **`maximumInterval`**. `conf` / `reviewedAt` removed from node data.
@@ -115,7 +117,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial alpha: interactive knowledge graph (web + Tauri v2); desktop installers on GitHub Releases (macOS Apple silicon and Intel).
 
-[Unreleased]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.5...HEAD
+[Unreleased]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.6...HEAD
+[0.1.0-alpha.6]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.5...v0.1.0-alpha.6
 [0.1.0-alpha.5]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.4...v0.1.0-alpha.5
 [0.1.0-alpha.4]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.3...v0.1.0-alpha.4
 [0.1.0-alpha.3]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.2...v0.1.0-alpha.3
