@@ -1,7 +1,7 @@
 ---
 description: CHANGELOG and release notes (Keep a Changelog)
 globs: CHANGELOG.md
-alwaysApply: true
+alwaysApply: false
 ---
 
 # Changelog

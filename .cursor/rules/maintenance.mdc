@@ -1,6 +1,6 @@
 ---
 description: Rule for keeping .cursor/rules/ in sync with the codebase
-alwaysApply: true
+alwaysApply: false
 ---
 
 # Keeping rules up to date
