@@ -6,6 +6,24 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.0-alpha.7] - 2026-05-11
+
+### Added
+
+- **AI-guided review:** **ReviewMode** generates a Socratic question from the current card’s semantic edges (outgoing + incoming), then a short explanatory answer; works with remote Ollama or local WebLLM via a shared completion path.
+- **`src/llm/completion.ts`:** `fetchCompletion` and `isAiReady` for OpenAI-compatible `chat/completions` and the in-browser MLC engine.
+- **Settings → AI (remote):** Ollama model preset chips (`gemma3:4b`, `llama3.2:3b`, `qwen2.5:7b`), model availability check (`/models`), and **Pull** with progress when the model is missing locally.
+
+### Changed
+
+- **Default remote model:** `gemma3:4b` (was `gemma2:2b`); README quick-start example updated.
+- **Socrates (mentor):** Graph snapshot prefers weaker / due nodes; node lines show stability, last FSRS rating, and **DUE**; larger reply budget and guidance to open on weak spots when nothing is selected.
+- **Local WebLLM:** **App** no longer auto-runs `initWebLLM()` when local mode is selected; initialise from **Settings** (existing Download / Initialise controls).
+
+### Documentation
+
+- **README** roadmap: AI-guided spaced repetition marked done; Transformers.js / small local models added as future work.
+
 ## [0.1.0-alpha.6] - 2026-05-11
 
 ### Added
@@ -117,7 +135,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial alpha: interactive knowledge graph (web + Tauri v2); desktop installers on GitHub Releases (macOS Apple silicon and Intel).
 
-[Unreleased]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.6...HEAD
+[Unreleased]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.7...HEAD
+[0.1.0-alpha.7]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.6...v0.1.0-alpha.7
 [0.1.0-alpha.6]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.5...v0.1.0-alpha.6
 [0.1.0-alpha.5]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.4...v0.1.0-alpha.5
 [0.1.0-alpha.4]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.3...v0.1.0-alpha.4
