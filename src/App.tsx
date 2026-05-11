@@ -15,7 +15,6 @@ import { SearchDialog } from './components/SearchDialog'
 import { useGraphStore, selectedNodeSelector, selectedEdgeSelector } from './store/graph'
 import { useAutoSave } from './hooks/useAutoSave'
 import { PALETTES } from './data/palettes'
-import { initWebLLM } from './llm/webllm'
 
 function AppInner() {
   const [showReview, setShowReview] = useState(false)
@@ -127,11 +126,6 @@ function AppInner() {
       return () => { cancelAnimationFrame(id1); cancelAnimationFrame(id2) }
     }
   }, [currentGraphId, nodes.length, fitView])
-
-  // Auto-init WebLLM when local mode is active
-  useEffect(() => {
-    if (settings.aiMode === 'local') void initWebLLM()
-  }, [settings.aiMode])
 
   // Apply theme
   useEffect(() => {

@@ -106,7 +106,7 @@ export const useGraphStore = create<GraphState>()(
         categoryPalette: 'default',
         aiMode: 'remote',
         aiBaseUrl: 'http://localhost:11434/v1',
-        aiModel: 'gemma2:2b',
+        aiModel: 'gemma3:4b',
         aiApiKey: '',
         fsrsRetention: 0.9,
         maximumInterval: 365,

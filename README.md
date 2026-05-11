@@ -36,7 +36,7 @@ Nesso is an interactive concept map where nodes are ideas and edges are typed se
 pnpm install
 ```
 
-With defaults, Nesso talks to **Ollama** at `http://localhost:11434/v1` (no API key). Pull a model first, e.g. `ollama pull gemma2:2b`.
+With defaults, Nesso talks to **Ollama** at `http://localhost:11434/v1` (no API key). Pull a model first, e.g. `ollama pull gemma3:4b`.
 
 For a cloud provider instead, set base URL, model, and **API key** in **Settings** (gear or **⌘,** / **Ctrl+,**).
 
@@ -88,12 +88,13 @@ Each relation has a line style (solid, dashed, dotted, double, wavy) and an SVG 
 - [ ] AI response rendering — proper formatting for code blocks and rich output
 - [ ] Chat history — persist and revisit past mentor sessions per graph
 - [ ] Voice I/O — speech input and text-to-speech output for the AI mentor
+- [ ] Specialized local models — investigate small in-browser models via Transformers.js (WASM) for specific tasks: embedding (`all-MiniLM-L6-v2`, ~23 MB) for semantic search and duplicate detection, zero-shot relation classification (`nli-deberta-v3-small`, ~83 MB) for edge-type suggestion, and cross-encoder reranking (`ms-marco-MiniLM-L-6-v2`, ~22 MB) for mentor context retrieval on large graphs
 
 ### Learning & review
 
 - [ ] Per-node elaboration — structured annotations alongside each concept: definition in own words, user-built examples, open questions, informal connections not yet ready to be formalised as edges, and a free-text field as an escape hatch
 - [x] FSRS-based review scheduling — **done:** `ts-fsrs` with per-node stability, difficulty, reps, lapses, due, and last rating; Settings → Review for target retention and max interval
-- [ ] AI-guided spaced repetition — when surfacing a node for review, feed its edges and neighbours to the AI mentor to generate questions that probe relational understanding rather than isolated recall; replace the current heuristic scheduler with one informed by both FSRS stability scores and graph topology
+- [x] AI-guided spaced repetition — when surfacing a node for review, feed its edges and neighbours to the AI mentor to generate questions that probe relational understanding rather than isolated recall; replace the current heuristic scheduler with one informed by both FSRS stability scores and graph topology
 
 ### Core features
 

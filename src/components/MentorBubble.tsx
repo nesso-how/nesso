@@ -20,15 +20,33 @@ function renderMarkdown(text: string): string {
 const MAX_SNAPSHOT_NODES = 60
 /** Linked maps often have more edges than nodes; ~2× node cap keeps structure visible without dumping huge |E|. */
 const MAX_SNAPSHOT_EDGES = MAX_SNAPSHOT_NODES * 2
-/** Output ceiling aligned with ~120-word replies (soft limit in MENTOR_BASE). */
-const MENTOR_MAX_TOKENS = 220
+/** Output ceiling aligned with ~200-word replies (soft limit in MENTOR_BASE). */
+const MENTOR_MAX_TOKENS = 380
 
 const MENTOR_BASE = [
   'You are Socrates in Nesso, a knowledge-graph app for active learning. Be warm, precise, and Socratic: mostly questions, almost no lecturing.',
   'Never tell the user what nodes or edges to add or rename—no graph edits, only dialogue about ideas.',
   'No emojis or flattery. Use *asterisks* sparingly for a key term. No JSON, markup pseudo-graphs, or bracketed labels.',
-  'Default: one short question; explain only to frame the question. Aim under ~120 words.',
+  'Default: one short question; explain only to frame the question. Aim under ~180 words.',
+  'Nodes annotated DUE or last rated Again/Hard are the learner\'s weak spots — when no node is selected, open with a question about one of them.',
 ]
+
+const FSRS_RATING: Record<number, string> = { 1: 'Again', 2: 'Hard', 3: 'Good', 4: 'Easy' }
+
+function nodeStrength(n: Node<ConceptNodeData>): number {
+  if (n.data.reps === 0) return -Infinity
+  const duePenalty = n.data.due > 0 && n.data.due <= Date.now() ? -10000 : 0
+  return n.data.stability + duePenalty
+}
+
+function nodeDesc(n: Node<ConceptNodeData>): string {
+  if (n.data.reps === 0) return `"${n.data.text}"(new)`
+  const isDue = n.data.due > 0 && n.data.due <= Date.now()
+  const parts: string[] = [`s=${n.data.stability.toFixed(1)}d`]
+  if (n.data.lastRating > 0) parts.push(FSRS_RATING[n.data.lastRating] ?? '')
+  if (isDue) parts.push('DUE')
+  return `"${n.data.text}"(${parts.join(',')})`
+}
 
 function buildGraphChatPrompt(
   nodes: Node<ConceptNodeData>[],
@@ -45,12 +63,12 @@ function buildGraphChatPrompt(
     return `${src} → ${String(e.data?.type ?? '?')} → ${tgt}`
   }).join('; ')
   const edgeList = edgeListBody ? `${edgeListBody}${edgeOmit}` : ''
-  const snapNodes = nodes.length > MAX_SNAPSHOT_NODES ? nodes.slice(0, MAX_SNAPSHOT_NODES) : nodes
-  const nodeOmit = nodes.length > snapNodes.length ? ` … (${nodes.length - snapNodes.length} more nodes omitted)` : ''
-  const nodeList =
-    snapNodes.map(n => `"${n.data.text}" (stability ${n.data.stability.toFixed(1)}d)`).join(', ') + nodeOmit || '(no nodes)'
+  const sortedNodes = [...nodes].sort((a, b) => nodeStrength(a) - nodeStrength(b))
+  const snapNodes = sortedNodes.length > MAX_SNAPSHOT_NODES ? sortedNodes.slice(0, MAX_SNAPSHOT_NODES) : sortedNodes
+  const nodeOmit = sortedNodes.length > snapNodes.length ? ` … (${sortedNodes.length - snapNodes.length} more nodes omitted)` : ''
+  const nodeList = snapNodes.map(nodeDesc).join(', ') + nodeOmit || '(no nodes)'
   const selCtx = selectedNode
-    ? `Selection: node "${selectedNode.data.text}" (stability ${selectedNode.data.stability.toFixed(1)}d).`
+    ? `Selection: node ${nodeDesc(selectedNode)}.`
     : selectedEdge
       ? `Selection: edge ${label(selectedEdge.source)} → ${String(selectedEdge.data?.type ?? '?')} → ${label(selectedEdge.target)}.`
       : ''

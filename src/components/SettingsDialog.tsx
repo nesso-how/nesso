@@ -1,8 +1,57 @@
 // SPDX-License-Identifier: MIT
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useGraphStore } from '@/store/graph'
 import { useWebLLM, initWebLLM, LOCAL_MODEL_LABEL, LOCAL_MODEL_SIZE } from '@/llm/webllm'
 import { CloseButton } from './CloseButton'
+
+const OLLAMA_PRESETS = [
+  { id: 'gemma3:4b', note: 'balanced · recommended' },
+  { id: 'llama3.2:3b', note: 'lightweight · fast' },
+  { id: 'qwen2.5:7b', note: 'precise · best reasoning' },
+] as const
+
+type ModelStatus = 'idle' | 'checking' | 'available' | 'unavailable' | 'pulling' | 'error'
+
+function ollamaNativeBase(aiBaseUrl: string): string {
+  return aiBaseUrl.replace(/\/+$/, '').replace(/\/v1$/, '')
+}
+
+async function checkOllamaModel(baseUrl: string, model: string): Promise<'available' | 'unavailable' | 'error'> {
+  try {
+    const url = baseUrl.replace(/\/+$/, '')
+    const res = await fetch(`${url}/models`, { signal: AbortSignal.timeout(5000) })
+    if (!res.ok) return 'error'
+    const data = await res.json() as { data?: { id: string }[] }
+    const ids = (data.data ?? []).map(m => m.id)
+    return ids.includes(model) ? 'available' : 'unavailable'
+  } catch {
+    return 'error'
+  }
+}
+
+async function* streamOllamaModelPull(baseUrl: string, model: string): AsyncGenerator<number> {
+  const res = await fetch(`${ollamaNativeBase(baseUrl)}/api/pull`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: model }),
+  })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  const reader = res.body!.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+    buffer += decoder.decode(value, { stream: true })
+    const lines = buffer.split('\n')
+    buffer = lines.pop() ?? ''
+    for (const line of lines) {
+      if (!line.trim()) continue
+      const obj = JSON.parse(line) as { status: string; total?: number; completed?: number }
+      if (obj.total && obj.completed != null) yield obj.completed / obj.total
+    }
+  }
+}
 
 type Tab = 'appearance' | 'ai' | 'review'
 
@@ -22,6 +71,39 @@ export function SettingsDialog({ open, onClose }: Props) {
   const settings = useGraphStore(s => s.settings)
   const setSetting = useGraphStore(s => s.setSetting)
   const llm = useWebLLM()
+  const [modelStatus, setModelStatus] = useState<ModelStatus>('idle')
+  const [pullProgress, setPullProgress] = useState(0)
+
+  const triggerCheck = useCallback((baseUrl: string, model: string) => {
+    if (!model) { setModelStatus('idle'); return }
+    setModelStatus('checking')
+    checkOllamaModel(baseUrl, model)
+      .then(s => setModelStatus(s))
+      .catch(() => setModelStatus('error'))
+  }, [])
+
+  const handlePull = useCallback(async () => {
+    setModelStatus('pulling')
+    setPullProgress(0)
+    try {
+      for await (const p of streamOllamaModelPull(settings.aiBaseUrl, settings.aiModel)) {
+        setPullProgress(p)
+      }
+      setModelStatus('available')
+    } catch {
+      setModelStatus('error')
+    }
+  }, [settings.aiBaseUrl, settings.aiModel])
+
+  useEffect(() => {
+    if (!open || settings.aiMode !== 'remote') { setModelStatus('idle'); return }
+    let cancelled = false
+    setModelStatus('checking')
+    checkOllamaModel(settings.aiBaseUrl, settings.aiModel)
+      .then(s => { if (!cancelled) setModelStatus(s) })
+      .catch(() => { if (!cancelled) setModelStatus('error') })
+    return () => { cancelled = true }
+  }, [open, settings.aiMode, settings.aiBaseUrl])
 
   if (!open) return null
 
@@ -175,16 +257,46 @@ export function SettingsDialog({ open, onClose }: Props) {
                     />
                   </label>
 
-                  <label style={{ display: 'block', marginBottom: 14 }}>
-                    <span style={{ font: "400 13px 'Inter', system-ui", color: 'var(--ink-3)', display: 'block', marginBottom: 6 }}>Model</span>
+                  <div style={{ marginBottom: 14 }}>
+                    <span style={{ font: "400 13px 'Inter', system-ui", color: 'var(--ink-3)', display: 'block', marginBottom: 8 }}>Model</span>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+                      {OLLAMA_PRESETS.map(p => {
+                        const active = settings.aiModel === p.id
+                        return (
+                          <button
+                            key={p.id}
+                            title={p.note}
+                            onClick={() => {
+                              setSetting('aiModel', p.id)
+                              triggerCheck(settings.aiBaseUrl, p.id)
+                            }}
+                            style={{
+                              appearance: 'none',
+                              border: `0.5px solid ${active ? 'var(--ink-2)' : 'var(--line)'}`,
+                              background: active ? 'var(--paper-deep)' : 'transparent',
+                              color: active ? 'var(--ink)' : 'var(--ink-3)',
+                              font: "500 11px 'JetBrains Mono', ui-monospace",
+                              padding: '5px 10px',
+                              borderRadius: 999,
+                              cursor: 'default',
+                              transition: 'all 0.12s',
+                            }}
+                          >
+                            {p.id}
+                          </button>
+                        )
+                      })}
+                    </div>
                     <input
                       type="text"
                       value={settings.aiModel}
-                      placeholder="gemma2:2b"
-                      onChange={e => setSetting('aiModel', e.target.value)}
+                      placeholder="e.g. gemma3:4b"
+                      onChange={e => { setSetting('aiModel', e.target.value); setModelStatus('idle') }}
+                      onBlur={e => triggerCheck(settings.aiBaseUrl, e.target.value)}
                       style={inputStyle}
                     />
-                  </label>
+                    <ModelStatusBadge status={modelStatus} model={settings.aiModel} baseUrl={settings.aiBaseUrl} pullProgress={pullProgress} onPull={() => void handlePull()} />
+                  </div>
 
                   <label style={{ display: 'block' }}>
                     <span style={{ font: "400 13px 'Inter', system-ui", color: 'var(--ink-3)', display: 'block', marginBottom: 6 }}>API key</span>
@@ -331,6 +443,81 @@ interface LocalModelPanelProps {
   progress: number
   progressText: string
   error: string | null
+}
+
+function ModelStatusBadge({ status, model, baseUrl, pullProgress, onPull }: {
+  status: ModelStatus
+  model: string
+  baseUrl: string
+  pullProgress: number
+  onPull: () => void
+}) {
+  if (status === 'idle' || !model) return null
+  const dot = (color: string) => (
+    <span style={{ width: 6, height: 6, borderRadius: '50%', background: color, display: 'inline-block', flexShrink: 0 }} />
+  )
+
+  if (status === 'pulling') {
+    return (
+      <div style={{ marginTop: 8 }}>
+        <div style={{ height: 3, borderRadius: 999, background: 'var(--line)', overflow: 'hidden', marginBottom: 6 }}>
+          <div style={{
+            height: '100%', borderRadius: 999, background: 'var(--cat-causal)',
+            width: `${Math.round(pullProgress * 100)}%`,
+            transition: 'width 0.3s ease',
+          }} />
+        </div>
+        <span style={{ font: "400 11px 'JetBrains Mono', ui-monospace", color: 'var(--ink-4)' }}>
+          Pulling {model}… {Math.round(pullProgress * 100)}%
+        </span>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, font: "400 11px 'JetBrains Mono', ui-monospace" }}>
+      {status === 'checking' && (
+        <>
+          <span style={{ width: 6, height: 6, borderRadius: '50%', border: '1.5px solid var(--ink-4)', flexShrink: 0, animation: 'nx-spin 1s linear infinite', display: 'inline-block' }} />
+          <span style={{ color: 'var(--ink-4)' }}>Checking…</span>
+        </>
+      )}
+      {status === 'available' && (
+        <>
+          {dot('var(--conf-5)')}
+          <span style={{ color: 'var(--conf-5)' }}>Available</span>
+        </>
+      )}
+      {status === 'unavailable' && (
+        <>
+          {dot('var(--conf-2)')}
+          <span style={{ color: 'var(--ink-3)' }}>Not found locally —</span>
+          <button
+            onClick={onPull}
+            style={{
+              appearance: 'none', border: '0.5px solid var(--cat-causal)', background: 'transparent',
+              color: 'var(--cat-causal)', font: "500 11px 'JetBrains Mono', ui-monospace",
+              padding: '2px 8px', borderRadius: 6, cursor: 'default',
+            }}
+          >
+            Pull
+          </button>
+        </>
+      )}
+      {status === 'error' && (/localhost|127\.0\.0\.1/.test(baseUrl) ? (
+        <>
+          {dot('var(--ink-4)')}
+          <span style={{ color: 'var(--ink-4)' }}>Ollama not running —</span>
+          <code style={{ color: 'var(--ink-2)', fontSize: 10.5 }}>ollama serve</code>
+        </>
+      ) : (
+        <>
+          {dot('var(--ink-4)')}
+          <span style={{ color: 'var(--ink-4)' }}>API unreachable</span>
+        </>
+      ))}
+    </div>
+  )
 }
 
 function LocalModelPanel({ status, progress, progressText, error }: LocalModelPanelProps) {

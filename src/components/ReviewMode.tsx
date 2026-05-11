@@ -1,10 +1,18 @@
 // SPDX-License-Identifier: MIT
-import { useState, useMemo, useLayoutEffect, useRef } from 'react'
+import { useState, useMemo, useLayoutEffect, useRef, useEffect } from 'react'
 import { fsrs, Rating, type Grade } from 'ts-fsrs'
 import { EDGE_TYPES, EDGE_CATEGORIES } from '@/data/edgeTypes'
 import { sortedDueConceptNodes } from '@/data/fsrsDueQueue'
 import { useGraphStore } from '@/store/graph'
 import { nodeToCard, type EdgeTypeName } from '@/types/graph'
+import { fetchCompletion, isAiReady } from '@/llm/completion'
+import { useWebLLM } from '@/llm/webllm'
+
+const REVIEW_QUESTION_SYSTEM =
+  'You are a Socratic tutor. Given a concept from a knowledge graph and its semantic connections, write one concise question that tests the learner\'s relational understanding. Output only the question, nothing else. No preamble, no asterisks, no markdown.'
+
+const REVIEW_ANSWER_SYSTEM =
+  'You are a Socratic tutor. A learner just reviewed a concept. Provide a concise, direct answer to the question you asked, explaining the key insight from the graph relations. Under 80 words. No emojis, no asterisks, no markdown.'
 
 const RATINGS = [Rating.Again, Rating.Hard, Rating.Good, Rating.Easy] as const
 const RATING_LABEL: Record<(typeof RATINGS)[number], string> = {
@@ -26,6 +34,12 @@ export function ReviewMode({ open, onClose }: Props) {
   /** Cards finished this session; idx resets to 0 after each rating so we track progress separately. */
   const [sessionProgress, setSessionProgress] = useState(0)
   const sessionTotalRef = useRef(0)
+  const [question, setQuestion] = useState<string | null>(null)
+  const [questionLoading, setQuestionLoading] = useState(false)
+  const [answer, setAnswer] = useState<string | null>(null)
+  const [answerLoading, setAnswerLoading] = useState(false)
+  const abortRef = useRef<AbortController | null>(null)
+  const webllm = useWebLLM()
 
   const scheduler = useMemo(
     () => fsrs({ request_retention: settings.fsrsRetention, maximum_interval: settings.maximumInterval }),
@@ -45,8 +59,85 @@ export function ReviewMode({ open, onClose }: Props) {
       setRevealed(false)
     } else {
       sessionTotalRef.current = 0
+      abortRef.current?.abort()
     }
   }, [open])
+
+  const currentNode = due.length ? due[idx % due.length] : null
+  const aiReady = settings.aiMode === 'local' ? webllm.status === 'ready' : isAiReady(settings)
+
+  useEffect(() => {
+    if (!open || !currentNode || !aiReady) {
+      setQuestion(null)
+      setQuestionLoading(false)
+      return
+    }
+
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+    setQuestion(null)
+    setQuestionLoading(true)
+    setAnswer(null)
+    setAnswerLoading(false)
+
+    const outEdges = edges.filter(e => e.source === currentNode.id).slice(0, 5)
+    const incEdges = edges.filter(e => e.target === currentNode.id).slice(0, 3)
+    const relStr = [
+      ...outEdges.map(e => {
+        const T = EDGE_TYPES[e.data?.type as EdgeTypeName]
+        const target = nodes.find(n => n.id === e.target)
+        return `${T.label} → "${target?.data.text ?? '?'}"`
+      }),
+      ...incEdges.map(e => {
+        const T = EDGE_TYPES[e.data?.type as EdgeTypeName]
+        const source = nodes.find(n => n.id === e.source)
+        return `← ${T.label} ← "${source?.data.text ?? '?'}"`
+      }),
+    ].join('; ')
+
+    const userMsg = relStr
+      ? `Concept: "${currentNode.data.text}"\nRelations: ${relStr}`
+      : `Concept: "${currentNode.data.text}"`
+
+    const run = async () => {
+      try {
+        const q = await fetchCompletion(
+          settings,
+          [{ role: 'system', content: REVIEW_QUESTION_SYSTEM }, { role: 'user', content: userMsg }],
+          80,
+          controller.signal,
+        )
+        if (controller.signal.aborted) return
+        setQuestion(q.trim())
+        setQuestionLoading(false)
+
+        setAnswerLoading(true)
+        const a = await fetchCompletion(
+          settings,
+          [
+            { role: 'system', content: REVIEW_ANSWER_SYSTEM },
+            { role: 'user', content: `${userMsg}\nQuestion asked: "${q.trim()}"` },
+          ],
+          150,
+          controller.signal,
+        )
+        if (controller.signal.aborted) return
+        setAnswer(a.trim())
+        setAnswerLoading(false)
+      } catch {
+        if (!controller.signal.aborted) {
+          setQuestion(null)
+          setQuestionLoading(false)
+          setAnswer(null)
+          setAnswerLoading(false)
+        }
+      }
+    }
+    void run()
+
+    return () => controller.abort()
+  }, [open, currentNode?.id, aiReady]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!open) return null
 
@@ -105,7 +196,7 @@ export function ReviewMode({ open, onClose }: Props) {
     )
   }
 
-  const node = due[idx % due.length]
+  const node = currentNode!
   const nodeEdges = {
     out: edges.filter(e => e.source === node.id),
     inc: edges.filter(e => e.target === node.id),
@@ -122,8 +213,14 @@ export function ReviewMode({ open, onClose }: Props) {
       <h2 style={{ margin: '16px 0 6px', font: "500 44px/1.05 'Fraunces', serif", letterSpacing: '-0.02em' }}>
         {node.data.text}
       </h2>
-      <div style={{ font: "400 13px/1.4 'Fraunces', serif", fontStyle: 'italic', color: 'var(--ink-3)', marginBottom: 18 }}>
-        Recall its relations before revealing.
+      <div style={{ marginBottom: 18, minHeight: 24 }}>
+        {questionLoading ? (
+          <span style={{ color: 'var(--ink-4)', font: "400 12px 'JetBrains Mono', ui-monospace" }}>Generating question…</span>
+        ) : question ? (
+          <span style={{ font: "400 15px/1.5 'Fraunces', serif", color: 'var(--ink-2)' }}>{question}</span>
+        ) : (
+          <span style={{ font: "400 13px/1.4 'Fraunces', serif", fontStyle: 'italic', color: 'var(--ink-3)' }}>Recall its relations before revealing.</span>
+        )}
       </div>
 
       {!revealed ? (
@@ -154,6 +251,16 @@ export function ReviewMode({ open, onClose }: Props) {
               )
             })}
           </div>
+
+          {(answer || answerLoading) && (
+            <div style={{ borderTop: '0.5px dashed var(--line)', paddingTop: 12, marginBottom: 18 }}>
+              {answerLoading ? (
+                <span style={{ font: "400 12px 'JetBrains Mono', ui-monospace", color: 'var(--ink-4)' }}>…</span>
+              ) : (
+                <p style={{ font: "400 14px/1.55 'Fraunces', serif", color: 'var(--ink-2)', margin: 0 }}>{answer}</p>
+              )}
+            </div>
+          )}
 
           <div style={{ display: 'flex', gap: 6 }}>
             {RATINGS.map(r => (
