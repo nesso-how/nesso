@@ -42,7 +42,7 @@ function AppInner() {
 
   const selectedNode = useGraphStore(selectedNodeSelector)
   const selectedEdge = useGraphStore(selectedEdgeSelector)
-  const { zoomIn, zoomOut, setViewport, setCenter, getNodes } = useReactFlow()
+  const { zoomIn, zoomOut, setViewport, setCenter, getNodes, getViewport, screenToFlowPosition } = useReactFlow()
   const [zoom, setZoom] = useState(1)
 
   useAutoSave()
@@ -169,14 +169,26 @@ function AppInner() {
     return () => window.removeEventListener('keydown', onKey)
   }, [selected, deleteNode, deleteEdge])
 
+  const hasSelection = !!selectedNode || !!selectedEdge
+
   const handleSelectNode = useCallback((node: { id: string; position: { x: number; y: number } }) => {
     setSelected({ kind: 'node', id: node.id })
     setCenter(node.position.x + 100, node.position.y + 30, { zoom: 1.2, duration: 500 })
   }, [setSelected, setCenter])
 
   const handleAddConcept = useCallback(() => {
-    addNode(-200 + (Math.random() - 0.5) * 120, 280 + (Math.random() - 0.5) * 60)
-  }, [addNode])
+    const topInset = 52
+    const bottomInset = 80
+    const leftInset = sidebarWidth + (hasSelection ? 326 : 30)
+    const rightInset = 30
+    const screenCenterX = leftInset + (window.innerWidth - leftInset - rightInset) / 2
+    const screenCenterY = topInset + (window.innerHeight - topInset - bottomInset) / 2
+    const { x: fx, y: fy } = screenToFlowPosition({ x: screenCenterX, y: screenCenterY })
+    // Prevent the viewport-restore effect from overriding our setCenter below.
+    viewportRestoredFor.current = useGraphStore.getState().currentGraphId
+    addNode(fx, fy)
+    setCenter(fx, fy, { zoom: Math.max(getViewport().zoom, 1), duration: 300 })
+  }, [addNode, setCenter, getViewport, screenToFlowPosition, sidebarWidth, hasSelection])
 
   const handleZoomIn = useCallback(() => {
     zoomIn({ duration: 200 })
@@ -185,8 +197,6 @@ function AppInner() {
   const handleZoomOut = useCallback(() => {
     zoomOut({ duration: 200 })
   }, [zoomOut])
-
-  const hasSelection = !!selectedNode || !!selectedEdge
 
   return (
     <div style={{ position: 'fixed', inset: 0 }}>
