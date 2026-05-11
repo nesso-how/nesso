@@ -108,6 +108,8 @@ export const useGraphStore = create<GraphState>()(
         aiBaseUrl: 'http://localhost:11434/v1',
         aiModel: 'gemma2:2b',
         aiApiKey: '',
+        fsrsRetention: 0.9,
+        maximumInterval: 365,
       },
 
       onNodesChange: (changes) =>
@@ -139,7 +141,17 @@ export const useGraphStore = create<GraphState>()(
               id,
               type: 'concept',
               position: { x, y },
-              data: { text: 'New concept', conf: 1, reviewedAt: Date.now() },
+              data: {
+                text: 'New concept',
+                stability: 0,
+                difficulty: 0,
+                reps: 0,
+                lapses: 0,
+                fsrsState: 0,
+                due: 0,
+                lastReview: 0,
+                lastRating: 0,
+              },
             },
           ],
           selected: { kind: 'node', id },
@@ -308,10 +320,16 @@ export const useGraphStore = create<GraphState>()(
         const p = persisted as Partial<GraphState> & { relationTypesPanelOpen?: boolean } | undefined
         if (!p) return current
         const { relationTypesPanelOpen: _removed, ...rest } = p
+        const merged = { ...current.settings, ...p.settings } as typeof current.settings & {
+          reviewBatchMax?: unknown
+          fsrsMaxInterval?: unknown
+        }
+        const { reviewBatchMax: _legacyReviewBatchMax, fsrsMaxInterval: _legacyFsrsMaxInterval, ...settings } =
+          merged
         return {
           ...current,
           ...rest,
-          settings: { ...current.settings, ...p.settings },
+          settings,
         }
       },
     }

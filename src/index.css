@@ -29,7 +29,6 @@
   --conf-5: #467d2c;
 
   --accent: var(--cat-causal);
-  --shadow-sm: 0 1px 2px rgba(26, 24, 20, 0.05);
   --shadow-md: 0 8px 28px -10px rgba(26, 24, 20, 0.18), 0 2px 8px rgba(26, 24, 20, 0.06);
   --shadow-lg: 0 28px 60px -16px rgba(26, 24, 20, 0.22), 0 8px 20px -8px rgba(26, 24, 20, 0.10);
 }
@@ -99,6 +98,41 @@ body::before {
   mix-blend-mode: multiply;
   opacity: 0.6;
 }
+
+/* Settings slider */
+.settings-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 3px;
+  border-radius: 999px;
+  outline: none;
+  cursor: default;
+  border: none;
+}
+.settings-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--ink-2);
+  border: 2px solid var(--bg-card);
+  box-shadow: 0 0 0 1px var(--ink-4);
+  cursor: default;
+}
+.settings-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--ink-2);
+  border: 2px solid var(--bg-card);
+  box-shadow: 0 0 0 1px var(--ink-4);
+  cursor: default;
+}
+
+/* Settings stepper — hide native number spinners */
+.settings-stepper::-webkit-inner-spin-button,
+.settings-stepper::-webkit-outer-spin-button { -webkit-appearance: none; }
+.settings-stepper { -moz-appearance: textfield; }
 
 /* React Flow overrides */
 .react-flow__renderer { z-index: 2; }

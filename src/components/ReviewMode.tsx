@@ -1,8 +1,18 @@
 // SPDX-License-Identifier: MIT
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useLayoutEffect, useRef } from 'react'
+import { fsrs, Rating, type Grade } from 'ts-fsrs'
 import { EDGE_TYPES, EDGE_CATEGORIES } from '@/data/edgeTypes'
+import { sortedDueConceptNodes } from '@/data/fsrsDueQueue'
 import { useGraphStore } from '@/store/graph'
-import { daysAgo, type EdgeTypeName } from '@/types/graph'
+import { nodeToCard, type EdgeTypeName } from '@/types/graph'
+
+const RATINGS = [Rating.Again, Rating.Hard, Rating.Good, Rating.Easy] as const
+const RATING_LABEL: Record<(typeof RATINGS)[number], string> = {
+  [Rating.Again]: 'Again',
+  [Rating.Hard]: 'Hard',
+  [Rating.Good]: 'Good',
+  [Rating.Easy]: 'Easy',
+}
 
 interface Props {
   open: boolean
@@ -10,27 +20,72 @@ interface Props {
 }
 
 export function ReviewMode({ open, onClose }: Props) {
-  const { nodes, edges, updateNodeData } = useGraphStore()
+  const { nodes, edges, updateNodeData, settings } = useGraphStore()
   const [idx, setIdx] = useState(0)
   const [revealed, setRevealed] = useState(false)
+  /** Cards finished this session; idx resets to 0 after each rating so we track progress separately. */
+  const [sessionProgress, setSessionProgress] = useState(0)
+  const sessionTotalRef = useRef(0)
 
-  const due = useMemo(() => {
-    return nodes
-      .map(n => ({ ...n, _score: daysAgo(n.data.reviewedAt) * (6 - (n.data.conf ?? 3)) }))
-      .filter(n => daysAgo(n.data.reviewedAt) > 7 || n.data.conf <= 3)
-      .sort((a, b) => b._score - a._score)
-      .slice(0, 8)
-  }, [nodes])
+  const scheduler = useMemo(
+    () => fsrs({ request_retention: settings.fsrsRetention, maximum_interval: settings.maximumInterval }),
+    [settings.fsrsRetention, settings.maximumInterval],
+  )
+
+  const due = useMemo(
+    () => sortedDueConceptNodes(nodes),
+    [nodes],
+  )
+
+  useLayoutEffect(() => {
+    if (open) {
+      sessionTotalRef.current = sortedDueConceptNodes(useGraphStore.getState().nodes).length
+      setSessionProgress(0)
+      setIdx(0)
+      setRevealed(false)
+    } else {
+      sessionTotalRef.current = 0
+    }
+  }, [open])
 
   if (!open) return null
 
-  const advance = (newConf: number | null) => {
-    if (newConf != null && due[idx]) {
-      updateNodeData(due[idx].id, { conf: newConf, reviewedAt: Date.now() })
+  const advance = (rating: Rating) => {
+    const current = due[idx]
+
+    if (current) {
+      const now = new Date()
+      const { card } = scheduler.next(nodeToCard(current.data), now, rating as Grade)
+      updateNodeData(current.id, {
+        stability: card.stability,
+        difficulty: card.difficulty,
+        reps: card.reps,
+        lapses: card.lapses,
+        fsrsState: card.state,
+        due: card.due.getTime(),
+        lastReview: now.getTime(),
+        lastRating: rating,
+      })
     }
     setRevealed(false)
-    if (idx + 1 >= due.length) onClose()
-    else setIdx(i => i + 1)
+
+    const queueAfter = sortedDueConceptNodes(useGraphStore.getState().nodes)
+
+    if (queueAfter.length === 0) {
+      onClose()
+      return
+    }
+
+    setSessionProgress(p => {
+      const next = p + 1
+      const total = sessionTotalRef.current
+      if (next < total) return next
+
+      sessionTotalRef.current = queueAfter.length
+      return 0
+    })
+
+    setIdx(0)
   }
 
   if (!due.length) {
@@ -39,9 +94,11 @@ export function ReviewMode({ open, onClose }: Props) {
         <div style={{ font: "500 11px 'JetBrains Mono', ui-monospace", textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--cat-temporal)' }}>
           Review · all caught up
         </div>
-        <h2 style={{ margin: '12px 0 8px', font: "500 32px/1.15 'Fraunces', serif" }}>Nothing's stale.</h2>
+        <h2 style={{ margin: '12px 0 8px', font: "500 32px/1.15 'Fraunces', serif" }}>
+          Nothing due.
+        </h2>
         <p style={{ font: "400 15px/1.5 'Fraunces', serif", color: 'var(--ink-2)' }}>
-          Come back tomorrow, or pick a low-confidence concept yourself.
+          Come back when cards are due, or pick a concept from the graph.
         </p>
         <Btn primary onClick={onClose}>Close</Btn>
       </Overlay>
@@ -54,10 +111,13 @@ export function ReviewMode({ open, onClose }: Props) {
     inc: edges.filter(e => e.target === node.id),
   }
 
+  const sessionTotal = sessionTotalRef.current || due.length
+  const sessionPosition = sessionProgress + 1
+
   return (
     <Overlay onClose={onClose}>
       <div style={{ font: "500 11px 'JetBrains Mono', ui-monospace", textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--cat-causal)' }}>
-        Review · {idx + 1} of {due.length}
+        Review · {sessionPosition} of {sessionTotal}
       </div>
       <h2 style={{ margin: '16px 0 6px', font: "500 44px/1.05 'Fraunces', serif", letterSpacing: '-0.02em' }}>
         {node.data.text}
@@ -96,27 +156,21 @@ export function ReviewMode({ open, onClose }: Props) {
           </div>
 
           <div style={{ display: 'flex', gap: 6 }}>
-            {[1, 2, 3, 4, 5].map(c => (
-              <button key={c} onClick={() => advance(c)} style={{
+            {RATINGS.map(r => (
+              <button key={r} onClick={() => advance(r)} style={{
                 flex: 1,
                 appearance: 'none',
                 border: '0.5px solid var(--line)',
-                background: `var(--conf-${c})`,
+                background: `var(--conf-${r})`,
                 color: 'var(--paper)',
-                font: "600 12px 'JetBrains Mono', ui-monospace",
+                font: "600 11px 'JetBrains Mono', ui-monospace",
                 padding: 10,
                 borderRadius: 8,
                 cursor: 'default',
               }}>
-                {c}
+                {RATING_LABEL[r]}
               </button>
             ))}
-          </div>
-          <div style={{
-            display: 'flex', justifyContent: 'space-between', marginTop: 8,
-            font: "400 10px 'JetBrains Mono', ui-monospace", color: 'var(--ink-4)',
-          }}>
-            <span>shaky</span><span>confident</span>
           </div>
         </>
       )}

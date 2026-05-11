@@ -20,12 +20,13 @@ interface GraphState {
   viewports: Record<string, { x: number; y: number; zoom: number }>;
   currentGraphId: string;
   graphList: { id: string; name: string; updatedAt: number }[];
-  loadedToken: number; // incremented on each loadGraph — useAutoSave skips the save triggered by replacing nodes/edges
+  loadedToken: number;
+  dailyStudyCounters: StudyDailyCounters; // local-day tallies for dailyNewLimit (`newRated`)
   // ... mutations below
 }
 ```
 
-Persistence: Zustand `persist` (`nesso`, localStorage) rehydrates `settings`, `mentorPanelExpanded`, `currentGraphId`, `graphList`, and `viewports`. Rehydrated `settings` is shallow-merged onto defaults so new keys (e.g. AI fields) appear for older saved blobs. Graph node/edge payloads live in IndexedDB (`src/store/db.ts`); the app loads the active graph via `loadGraph` and writes with `saveCurrentGraph` (debounced from `useAutoSave`). Legacy blobs may still carry `relationTypesPanelOpen`; it is dropped on merge.
+Persistence: Zustand `persist` (`nesso`, localStorage) rehydrates `settings`, `dailyStudyCounters`, `mentorPanelExpanded`, `currentGraphId`, `graphList`, and `viewports`. Rehydrated `settings` is shallow-merged (`{ ...current.settings, ...p.settings }`) so new keys (AI fields, FSRS and review settings including `dailyNewLimit`) pick up defaults for older blobs; legacy **`reviewBatchMax`** and **`fsrsMaxInterval`** are stripped on merge. **`dailyStudyCounters`** is normalized with `rolloverStudyCounters` on merge so a stale `dayKey` resets at local midnight. Graph node/edge payloads live in IndexedDB (`src/store/db.ts`); the app loads the active graph via `loadGraph` and writes with `saveCurrentGraph` (debounced from `useAutoSave`). Legacy blobs may still carry `relationTypesPanelOpen`; it is dropped on merge.
 
 ## Mutations
 
@@ -40,10 +41,11 @@ Persistence: Zustand `persist` (`nesso`, localStorage) rehydrates `settings`, `m
 | `deleteEdge(id)`                   | Removes edge, clears selection if needed                                                                                                                    |
 | `setSelected(sel)`                 | Sets selection (or `null` to deselect)                                                                                                                      |
 | `setSetting(key, value)`           | Updates a single `NessoSettings` field                                                                                                                      |
+| `recordStudyRating(wasNew)`        | After an FSRS grade in Review mode, increments today's `newRated` when the card was new before the rating (`studyDay.ts` rollover)                          |
 | `setMentorPanelExpanded(expanded)` | Expands or collapses the Socrates mentor card (FAB stays visible; persisted)                                                                                |
 | `saveViewport(id, vp)`             | Stores last React Flow viewport for a graph id (persisted); invoked from `GraphCanvas` `onMoveEnd` and from debounced `useAutoSave` when nodes/edges change |
-| `loadGraphList`                    | Refreshes `graphList` from IndexedDB; if the DB is empty, persists every bundled `SEEDS` entry then refreshes                                                                 |
-| `loadGraph(id)`                    | Switches active graph from IndexedDB; missing id may be hydrated from a bundled seed (`makeSeedRecord`); increments `loadedToken`; clears selection          |
+| `loadGraphList`                    | Refreshes `graphList` from IndexedDB; if the DB is empty, persists every bundled `SEEDS` entry then refreshes                                               |
+| `loadGraph(id)`                    | Switches active graph from IndexedDB; missing id may be hydrated from a bundled seed (`makeSeedRecord`); increments `loadedToken`; clears selection         |
 | `saveCurrentGraph`                 | Writes current nodes/edges for `currentGraphId` to IndexedDB                                                                                                |
 | `createGraph(name)`                | New empty graph; saves, switches to it, returns id                                                                                                          |
 | `importGraph(name, nodes, edges)`  | New graph from provided React Flow nodes/edges; persists, appends to `graphList`, switches to it, returns id                                                |

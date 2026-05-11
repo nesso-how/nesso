@@ -210,7 +210,7 @@ export function SearchDialog({ open, onClose, onSelectNode, onSelectGraph }: Pro
                     }}>
                       {node.data.text}
                     </span>
-                    <ConfDots conf={node.data.conf} />
+                    <RatingDots lastRating={node.data.lastRating ?? 0} />
                   </button>
                 ))}
               </section>
@@ -246,13 +246,15 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   )
 }
 
-function ConfDots({ conf }: { conf: number }) {
+function RatingDots({ lastRating }: { lastRating: number }) {
+  const r = Math.min(4, Math.max(0, lastRating))
+  const fill = r === 0 ? 'var(--paper-deep)' : `var(--conf-${r})`
   return (
     <span style={{ display: 'inline-flex', gap: 2, flexShrink: 0 }}>
-      {[1, 2, 3, 4, 5].map(i => (
+      {[1, 2, 3, 4].map(i => (
         <span key={i} style={{
           width: 5, height: 5, borderRadius: '50%',
-          background: i <= conf ? `var(--conf-${conf})` : 'var(--paper-deep)',
+          background: i <= r ? fill : 'var(--paper-deep)',
         }} />
       ))}
     </span>

@@ -8,6 +8,9 @@ import { useGraphStore } from '@/store/graph'
 
 type ConceptNodeType = Node<ConceptNodeData>
 
+/** Maps 0=unrated → ink; 1–4 → existing conf CSS vars (skip --conf-3) */
+const RATING_COLOR = ['var(--ink)', 'var(--conf-1)', 'var(--conf-2)', 'var(--conf-4)', 'var(--conf-5)'] as const
+
 export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(data.text)
@@ -29,9 +32,10 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
     setEditing(false)
   }, [id, updateNodeData])
 
-  const confLevel = Math.max(1, Math.min(5, data.conf ?? 3))
-  const confColor = showConfidence && data.conf != null ? `var(--conf-${confLevel})` : 'var(--ink)'
-  const isStale = Math.floor((Date.now() - data.reviewedAt) / 86_400_000) > 14
+  const ratingIdx = Math.max(0, Math.min(4, data.lastRating ?? 0))
+  const heatTint = RATING_COLOR[ratingIdx]
+  const confColor = showConfidence ? heatTint : 'var(--ink)'
+  const isStale = data.reps > 0 && data.due <= Date.now()
 
   return (
     <div
@@ -51,13 +55,13 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
         minWidth: 60,
       }}
     >
-      {/* Heatmap overlay — tints background with confidence colour */}
+      {/* Heatmap overlay — tints background with last rating colour */}
       {showHeatmap && (
         <div style={{
           position: 'absolute',
           inset: 0,
           borderRadius: 999,
-          background: `var(--conf-${confLevel})`,
+          background: heatTint,
           opacity: 0.14,
           pointerEvents: 'none',
         }} />
@@ -121,7 +125,7 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
         )}
       </div>
 
-      {/* Underline — color encodes confidence, dashed when stale */}
+      {/* Underline — color encodes last rating, dashed when due */}
       {!editing && (
         <div style={{
           position: 'absolute',

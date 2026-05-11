@@ -10,8 +10,14 @@
       },
       "data": {
         "text": "Seed",
-        "conf": 5,
-        "reviewedAt": 1777939200000
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0
       }
     },
     {
@@ -23,8 +29,14 @@
       },
       "data": {
         "text": "Germination",
-        "conf": 3,
-        "reviewedAt": 1777334400000
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0
       }
     },
     {
@@ -36,8 +48,14 @@
       },
       "data": {
         "text": "Plant",
-        "conf": 5,
-        "reviewedAt": 1778025600000
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0
       }
     },
     {
@@ -49,8 +67,14 @@
       },
       "data": {
         "text": "Root",
-        "conf": 4,
-        "reviewedAt": 1777939200000
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0
       }
     },
     {
@@ -62,8 +86,14 @@
       },
       "data": {
         "text": "Stem",
-        "conf": 4,
-        "reviewedAt": 1777852800000
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0
       }
     },
     {
@@ -75,8 +105,14 @@
       },
       "data": {
         "text": "Leaf",
-        "conf": 5,
-        "reviewedAt": 1778025600000
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0
       }
     },
     {
@@ -88,8 +124,14 @@
       },
       "data": {
         "text": "Flower",
-        "conf": 4,
-        "reviewedAt": 1777766400000
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0
       }
     },
     {
@@ -101,8 +143,14 @@
       },
       "data": {
         "text": "Fruit",
-        "conf": 5,
-        "reviewedAt": 1777852800000
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0
       }
     },
     {
@@ -114,8 +162,14 @@
       },
       "data": {
         "text": "Water",
-        "conf": 5,
-        "reviewedAt": 1778112000000
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0
       }
     },
     {
@@ -127,8 +181,14 @@
       },
       "data": {
         "text": "Sunlight",
-        "conf": 5,
-        "reviewedAt": 1778112000000
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0
       }
     },
     {
@@ -140,8 +200,14 @@
       },
       "data": {
         "text": "Soil",
-        "conf": 4,
-        "reviewedAt": 1777680000000
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0
       }
     },
     {
@@ -153,8 +219,14 @@
       },
       "data": {
         "text": "Carbon dioxide",
-        "conf": 3,
-        "reviewedAt": 1777507200000
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0
       }
     },
     {
@@ -166,8 +238,14 @@
       },
       "data": {
         "text": "Photosynthesis",
-        "conf": 3,
-        "reviewedAt": 1776988800000
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0
       }
     },
     {
@@ -179,8 +257,14 @@
       },
       "data": {
         "text": "Oxygen",
-        "conf": 4,
-        "reviewedAt": 1777593600000
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0
       }
     },
     {
@@ -192,8 +276,14 @@
       },
       "data": {
         "text": "Glucose",
-        "conf": 2,
-        "reviewedAt": 1776643200000
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0
       }
     },
     {
@@ -205,8 +295,14 @@
       },
       "data": {
         "text": "Chlorophyll",
-        "conf": 2,
-        "reviewedAt": 1776384000000
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0
       }
     },
     {
@@ -218,8 +314,14 @@
       },
       "data": {
         "text": "Pollination",
-        "conf": 3,
-        "reviewedAt": 1777161600000
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0
       }
     },
     {
@@ -231,8 +333,14 @@
       },
       "data": {
         "text": "Respiration",
-        "conf": 2,
-        "reviewedAt": 1776038400000
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0
       }
     },
     {
@@ -244,8 +352,14 @@
       },
       "data": {
         "text": "Annual",
-        "conf": 3,
-        "reviewedAt": 1776902400000
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0
       }
     },
     {
@@ -257,8 +371,14 @@
       },
       "data": {
         "text": "Perennial",
-        "conf": 3,
-        "reviewedAt": 1776902400000
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0
       }
     }
   ],

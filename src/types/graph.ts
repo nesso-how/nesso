@@ -1,12 +1,32 @@
 // SPDX-License-Identifier: MIT
+import type { Card, State } from 'ts-fsrs'
+
 export interface ConceptNodeData extends Record<string, unknown> {
   text: string
-  conf: number        // 1–5
-  reviewedAt: number  // Unix timestamp ms of last review
+  stability: number
+  difficulty: number
+  reps: number
+  lapses: number
+  fsrsState: number // State: 0=New 1=Learning 2=Review 3=Relearning
+  due: number // ms timestamp; 0 = due immediately (new card)
+  lastReview: number // ms timestamp; 0 = never reviewed
+  lastRating: number // 0=unrated, 1=Again 2=Hard 3=Good 4=Easy
 }
 
-export function daysAgo(ts: number): number {
-  return Math.floor((Date.now() - ts) / 86_400_000)
+
+export function nodeToCard(data: ConceptNodeData): Card {
+  return {
+    due: new Date(data.due || Date.now()),
+    stability: data.stability,
+    difficulty: data.difficulty,
+    elapsed_days: 0,
+    scheduled_days: 0,
+    learning_steps: 0,
+    reps: data.reps,
+    lapses: data.lapses,
+    state: data.fsrsState as State,
+    last_review: data.lastReview ? new Date(data.lastReview) : undefined,
+  }
 }
 
 export type EdgeCategory =
@@ -57,4 +77,7 @@ export interface NessoSettings {
   aiModel: string
   /** Stored in localStorage (persisted settings). Empty = no Authorization header. */
   aiApiKey: string
+  fsrsRetention: number // 0.70–0.97
+  /** FSRS maximum interval in days; caps how far into the future a card can be scheduled */
+  maximumInterval: number
 }

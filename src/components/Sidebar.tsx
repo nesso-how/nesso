@@ -66,7 +66,7 @@ export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, onSelectC
   }
 
   const recentNodes = [...nodes]
-    .sort((a, b) => b.data.reviewedAt - a.data.reviewedAt)
+    .sort((a, b) => b.data.lastReview - a.data.lastReview)
     .slice(0, 5)
 
   return (

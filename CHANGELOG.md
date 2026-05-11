@@ -8,12 +8,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
+- **FSRS v6 review scheduling (`ts-fsrs`):** Replaced the day/confidence heuristic with principled spaced repetition. Per-node `stability`, `difficulty`, `lapses`, `reps`, `due`, and `lastRating` are persisted. Rating UI: Again / Hard / Good / Easy in **ReviewMode**. Settings → Review exposes **`fsrsRetention`** and **`maximumInterval`**. `conf` / `reviewedAt` removed from node data.
 - **Confidence heatmap:** Concept nodes can be tinted by confidence (`--conf-1` … `--conf-5` overlay); `NessoSettings.showHeatmap` (default **on** for new sessions, persisted).
 - **Demo seeds:** Bundled **Plant life cycle** and **Solar system** graphs (`src/data/seeds/*.json`); on first launch, an empty IndexedDB is populated with both. `seedGraph.ts` exports `SEEDS` with stable ids derived from each seed’s display name.
 - **`CloseButton`:** Shared header dismiss control for Settings, shortcuts, and relation-type modals.
 
 ### Changed
 
+- **Review scheduling:** Removed **Cards per session** (`reviewBatchMax`). The Review overlay lists **all** due concepts allowed by FSRS subject to **New cards / day** (`sortedDueConceptNodes` + `dailyStudyCounters`).
+- **FSRS:** Review scheduling uses **`maximumInterval`** (days) and **`fsrsRetention`** from Settings → Review (`fsrs({ request_retention, maximum_interval })` in **ReviewMode**).
+- **Daily study caps (Anki-style):** Settings → Review adds **New cards / day** (default 20, **0** = unlimited). Due queues (`sortedDueConceptNodes` + `dailyStudyCounters`) cap how many never-rated cards appear **per local calendar day**; counts persist and reset at local midnight.
 - **First-run / onboarding:** Removed the tutorial overlay; **?** still toggles keyboard shortcuts.
 - **Top bar:** **Review** is a pill with icon + **R** hint; relation types, JSON export/import, and keyboard shortcuts are grouped under a single **⋯** menu (`GraphIO`, theme tokens instead of a fixed black pill).
 - **Sidebar:** Footer is one full-width **Settings** row (⌘,); theme toggle lives under Settings → **Appearance** (not Display). Shortcuts open via **?** or the top-bar menu.
@@ -21,6 +25,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - **Defaults:** Sidebar starts expanded with the Display section open.
 - **Fit / viewport:** After switching graphs, the saved viewport applies only once nodes are present; if there is no saved view, fit runs after layout via `requestAnimationFrame`, using UI chrome insets and slightly tighter padding.
 - Light-theme `--conf-4` and `--conf-5` values for clearer distinction on the heatmap.
+- **Socrates (AI panel):** Single graph-focused chat — removed Review/Bootstrap mode tabs and FSRS grading from the mentor card; spaced repetition stays in **Review** (**R**).
+- **Housekeeping:** Removed unused **`GraphSwitcher`** component; dropped persisted **`reviewRated`** (only **`newRated`** drives the daily new-card cap); simplified **`ReviewMode.advance`** (no skip/`null` path); removed unused **`viewport`** field from **`GraphRecord`**; dropped unused CSS **`--shadow-sm`**; **`SocratesGlyph`** no longer exposes a **`mood`** prop.
 
 ### Fixed
 

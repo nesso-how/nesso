@@ -13,7 +13,7 @@ alwaysApply: false
 
 ## Setup
 
-Configure the mentor under **Settings** (gear, **⌘,**). **Remote API** defaults target **Ollama** at `http://localhost:11434/v1` with a local model name (e.g. `gemma2:2b`); no bearer token is required for typical local setups. **Local model** uses a bundled MLC weight id (see `LOCAL_MODEL_*` in `webllm.ts`); requires a WebGPU-capable browser and one-time model download. Keys are client-side by design — do not deploy publicly with secrets embedded.
+Configure under **Settings** (gear, **⌘,**): **Appearance**, **AI**, **Review** (FSRS live in **Review** for the full-screen review overlay only).
 
 ## Persona
 
@@ -24,15 +24,11 @@ Socrates is a Socratic mentor: he asks short, pointed questions rather than expl
 - No emojis, no flattery.
 - Markdown emphasis with `*asterisks*` for key words.
 
-## Modes and system prompt
+## System prompt (single chat)
 
-Three tabs set `mode`: **`gap`** (Review), **`explore`** (Exploration), **`bootstrap`** (Bootstrap). `buildSystemPrompt()` returns the full system string for the active mode.
+There are **no mode tabs**. `buildGraphChatPrompt()` builds one system string: graph snapshot — nodes with stability labels, first ~20 edges, optional selection context — plus Socratic rules. Each send recomputes the prompt from the live store so new edits appear on the next turn.
 
-- **Review** — `priorityNodes()` queues concepts with `conf < 4` or `daysAgo(reviewedAt) > 14`, sorted by weakness. `buildReviewPrompt(node)` focuses the model on one concept. Users rate with in-panel controls; `updateNodeData` sets `reviewedAt: Date.now()` and the assistant continues with the next queued node until the session completes.
-- **Exploration** — Lists nodes (and up to 20 edges) plus optional selection context (selected node or edge type). Free Q&A about the graph; still must not invent nodes/edges for the user.
-- **Bootstrap** — Optional `.txt`/`.md` file loads text into local state (`bootstrapText`, first ~3000 chars in prompt). Helps reason about concepts to map; still no automated graph edits.
-
-On panel open / graph switch / `sessionKey` bump / bootstrap text load, the first mentor line is fetched by **POST**ing a synthetic user seed (“Start the review session…”, “Hello, I want to explore…”, etc.) with the appropriate system prompt — not a static `SOCRATIC_PROMPTS` opening.
+On panel open, graph switch, or local-model-ready transition, the first mentor line is fetched by POSTing a short synthetic user turn (“Hello — I want to discuss…”) with the current system prompt.
 
 ## Rendering
 
@@ -40,7 +36,7 @@ Assistant `Message` text is HTML via **`marked`** (`renderMarkdown()` in `Mentor
 
 ## Selection vs history
 
-`history` remains local component state. Mode or graph changes reset the session (`sessionKey`, queue index). Exploration mode uses `selectedNode` / `selectedEdge` only as optional context inside `buildSystemPrompt`, not as a trigger for static per-selection openers from `seedGraph.ts`.
+`history` remains local component state. Exploration chat uses `selectedNode` / `selectedEdge` only inside `buildGraphChatPrompt` on each message, not as a trigger for selection-driven seed messages.
 
 ## Panel open/closed
 
@@ -48,7 +44,7 @@ Whether the mentor **card** is expanded is `mentorPanelExpanded` on `useGraphSto
 
 ## Message history
 
-`history: Message[]` is local to `MentorBubble` (not in the store). It resets when the mentor session restarts (panel open, mode tab, graph id, bootstrap load, `sessionKey`). Do not persist chat history to the store.
+`history: Message[]` is local to `MentorBubble` (not in the store). It resets when the panel opens again, the graph changes, or local engine readiness changes during the opening sequence. Do not persist chat history to the store.
 
 ## API call
 
@@ -56,7 +52,7 @@ Whether the mentor **card** is expanded is `mentorPanelExpanded` on `useGraphSto
 
 - `model` — `settings.aiModel`
 - `max_tokens` — `300`
-- `messages` — `[{ role: 'system', content: buildSystemPrompt() }, …]` plus full `history` turns mapped to `user` / `assistant` roles (initial mentor reply comes from the same assistant role in the thread).
+- `messages` — `[{ role: 'system', content: buildGraphChatPrompt() }, …]` plus full `history` turns mapped to `user` / `assistant` roles.
 
 `Authorization: Bearer …` is sent when `settings.aiApiKey` is non-empty.
 

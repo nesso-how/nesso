@@ -10,7 +10,6 @@ export interface GraphRecord {
   updatedAt: number
   nodes: Node<ConceptNodeData>[]
   edges: Edge[]
-  viewport?: { x: number; y: number; zoom: number }
 }
 
 const db = openDB<{ graphs: GraphRecord }>('nesso-graphs', 1, {

@@ -10,11 +10,19 @@ alwaysApply: false
 
 ```ts
 interface ConceptNodeData {
-  text: string; // concept label
-  conf: number; // confidence 1–5
-  reviewedAt: number; // Unix ms of last review (use `daysAgo(ts)` for whole days elapsed)
+  text: string;
+  stability: number;
+  difficulty: number;
+  reps: number;
+  lapses: number;
+  fsrsState: number; // ts-fsrs State: New/Learning/Review/Relearning
+  due: number; // Unix ms; due when <= now (0 = new / immediate)
+  lastReview: number; // Unix ms; 0 = never
+  lastRating: number; // 0 = none; 1–4 = Again/Hard/Good/Easy (matches ts-fsrs Rating)
 }
 ```
+
+Use `nodeToCard()` in `src/types/graph.ts` to build a ts-fsrs `Card` from persisted fields.
 
 ## Edge categories and relation types
 

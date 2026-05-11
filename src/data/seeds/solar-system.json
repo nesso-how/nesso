@@ -10,8 +10,14 @@
       },
       "data": {
         "text": "Sun",
-        "conf": 5,
-        "reviewedAt": 1778112000000
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0
       },
       "measured": {
         "width": 60,
@@ -29,8 +35,14 @@
       },
       "data": {
         "text": "Planet",
-        "conf": 5,
-        "reviewedAt": 1778025600000
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0
       },
       "measured": {
         "width": 78,
@@ -48,8 +60,14 @@
       },
       "data": {
         "text": "Mercury",
-        "conf": 3,
-        "reviewedAt": 1777161600000
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0
       },
       "measured": {
         "width": 93,
@@ -67,8 +85,14 @@
       },
       "data": {
         "text": "Venus",
-        "conf": 3,
-        "reviewedAt": 1777334400000
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0
       },
       "measured": {
         "width": 75,
@@ -86,8 +110,14 @@
       },
       "data": {
         "text": "Earth",
-        "conf": 5,
-        "reviewedAt": 1778112000000
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0
       },
       "measured": {
         "width": 71,
@@ -105,8 +135,14 @@
       },
       "data": {
         "text": "Mars",
-        "conf": 4,
-        "reviewedAt": 1777852800000
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0
       },
       "measured": {
         "width": 67,
@@ -124,8 +160,14 @@
       },
       "data": {
         "text": "Jupiter",
-        "conf": 4,
-        "reviewedAt": 1777766400000
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0
       },
       "measured": {
         "width": 83,
@@ -143,8 +185,14 @@
       },
       "data": {
         "text": "Saturn",
-        "conf": 4,
-        "reviewedAt": 1777680000000
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0
       },
       "measured": {
         "width": 80,
@@ -162,8 +210,14 @@
       },
       "data": {
         "text": "Uranus",
-        "conf": 2,
-        "reviewedAt": 1776643200000
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0
       },
       "measured": {
         "width": 84,
@@ -181,8 +235,14 @@
       },
       "data": {
         "text": "Neptune",
-        "conf": 2,
-        "reviewedAt": 1776384000000
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0
       },
       "measured": {
         "width": 93,
@@ -200,8 +260,14 @@
       },
       "data": {
         "text": "Moon",
-        "conf": 4,
-        "reviewedAt": 1777939200000
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0
       },
       "measured": {
         "width": 72,
@@ -219,8 +285,14 @@
       },
       "data": {
         "text": "Asteroid",
-        "conf": 3,
-        "reviewedAt": 1777161600000
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0
       },
       "measured": {
         "width": 93,
@@ -238,8 +310,14 @@
       },
       "data": {
         "text": "Comet",
-        "conf": 2,
-        "reviewedAt": 1776902400000
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0
       },
       "measured": {
         "width": 79,
@@ -257,8 +335,14 @@
       },
       "data": {
         "text": "Orbit",
-        "conf": 3,
-        "reviewedAt": 1777507200000
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0
       },
       "measured": {
         "width": 69,
@@ -276,8 +360,14 @@
       },
       "data": {
         "text": "Gravity",
-        "conf": 3,
-        "reviewedAt": 1777593600000
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0
       },
       "measured": {
         "width": 85,
@@ -295,8 +385,14 @@
       },
       "data": {
         "text": "Star",
-        "conf": 5,
-        "reviewedAt": 1778025600000
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0
       },
       "measured": {
         "width": 60,
@@ -314,8 +410,14 @@
       },
       "data": {
         "text": "Rocky planet",
-        "conf": 3,
-        "reviewedAt": 1777334400000
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0
       },
       "measured": {
         "width": 128,
@@ -333,8 +435,14 @@
       },
       "data": {
         "text": "Gas giant",
-        "conf": 2,
-        "reviewedAt": 1776643200000
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0
       },
       "measured": {
         "width": 99,
@@ -352,8 +460,14 @@
       },
       "data": {
         "text": "Light",
-        "conf": 4,
-        "reviewedAt": 1777852800000
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0
       },
       "measured": {
         "width": 69,
@@ -371,8 +485,14 @@
       },
       "data": {
         "text": "Solar system",
-        "conf": 5,
-        "reviewedAt": 1778112000000
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0
       },
       "measured": {
         "width": 126,

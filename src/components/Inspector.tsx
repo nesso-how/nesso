@@ -4,6 +4,15 @@ import { GlyphSVG } from './GlyphSVG'
 import { useGraphStore, selectedNodeSelector, selectedEdgeSelector } from '@/store/graph'
 import type { EdgeTypeName } from '@/types/graph'
 
+const RATING_NAMES = ['—', 'Again', 'Hard', 'Good', 'Easy']
+
+function formatConceptDue(dueMs: number): string {
+  if (dueMs <= 0 || dueMs <= Date.now()) return 'Due now'
+  const days = Math.ceil((dueMs - Date.now()) / 86_400_000)
+  if (days <= 1) return '< 1d'
+  return `${days}d`
+}
+
 export function Inspector({ leftOffset = 0 }: { leftOffset?: number }) {
   const selectedNode = useGraphStore(selectedNodeSelector)
   const selectedEdge = useGraphStore(selectedEdgeSelector)
@@ -15,7 +24,7 @@ export function Inspector({ leftOffset = 0 }: { leftOffset?: number }) {
 
 function NodeInspector({ leftOffset }: { leftOffset: number }) {
   const node = useGraphStore(selectedNodeSelector)!
-  const { edges, nodes, updateNodeData, deleteNode, setSelected } = useGraphStore()
+  const { edges, nodes, deleteNode, setSelected } = useGraphStore()
 
   const outgoing = edges.filter(e => e.source === node.id)
   const incoming = edges.filter(e => e.target === node.id)
@@ -56,37 +65,25 @@ function NodeInspector({ leftOffset }: { leftOffset: number }) {
         {node.data.text}
       </h3>
 
-      {/* Confidence */}
-      <InspectorRow label="Confidence">
-        <div style={{ display: 'flex', gap: 3 }}>
-          {[1, 2, 3, 4, 5].map(i => (
-            <button
-              key={i}
-              onClick={() => updateNodeData(node.id, { conf: i })}
-              style={{
-                appearance: 'none',
-                border: 0,
-                padding: 0,
-                cursor: 'default',
-                width: 18,
-                height: 18,
-                borderRadius: 4,
-                background: i <= (node.data.conf ?? 0)
-                  ? `var(--conf-${node.data.conf})`
-                  : 'var(--paper-deep)',
-              }}
-            />
-          ))}
-        </div>
-      </InspectorRow>
-
-      {/* Last reviewed */}
-      <InspectorRow label="Last reviewed">
+      {/* FSRS / review */}
+      <InspectorRow label="Due">
         <span style={{
           font: "500 12px 'JetBrains Mono', ui-monospace",
-          color: Math.floor((Date.now() - node.data.reviewedAt) / 86_400_000) > 14 ? 'var(--cat-causal)' : 'var(--ink-2)',
+          color: node.data.due <= Date.now() ? 'var(--cat-causal)' : 'var(--ink-2)',
         }}>
-          {(d => d === 0 ? 'today' : `${d}d ago`)(Math.floor((Date.now() - node.data.reviewedAt) / 86_400_000))}
+          {formatConceptDue(node.data.due)}
+        </span>
+      </InspectorRow>
+
+      <InspectorRow label="Stability">
+        <span style={{ font: "500 12px 'JetBrains Mono', ui-monospace", color: 'var(--ink-2)' }}>
+          {node.data.stability.toFixed(1)}d
+        </span>
+      </InspectorRow>
+
+      <InspectorRow label="Last rating">
+        <span style={{ font: "500 12px 'JetBrains Mono', ui-monospace", color: 'var(--ink-2)' }}>
+          {RATING_NAMES[Math.min(4, Math.max(0, node.data.lastRating ?? 0))]}
         </span>
       </InspectorRow>
 

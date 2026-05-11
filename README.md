@@ -4,15 +4,15 @@
 
 ## What it does
 
-Nesso is an interactive concept map where nodes are ideas and edges are typed semantic relations. You draw connections between concepts, pick the relation type (e.g. `causes`, `requires`, `is-a`), and track your confidence in each node. When you select a node or edge, Socrates opens a dialogue rooted in that concept — asking questions, not giving answers, in the spirit of Socratic enquiry.
+Nesso is an interactive concept map where nodes are ideas and edges are typed semantic relations. You draw connections between concepts, pick the relation type (e.g. `causes`, `requires`, `is-a`), and each concept carries FSRS scheduling state for spaced repetition. Open **Socrates** from the FAB for a Socratic dialogue about your graph (your current selection is included as context); answers favour questions over lectures.
 
 ## Features
 
 - **Knowledge graph canvas** — add, move, and delete concept nodes and typed edges
 - **17 semantic relation types** across 6 categories (taxonomic, structural, causal, dependency, temporal, opposition), each with a distinct line style and glyph
-- **Inspector panel** — edit concept text, set confidence (1–5), and change relation type in-place
+- **Inspector panel** — edit concept text; inspect FSRS due date, stability, and last rating; change relation type in-place
 - **Socratic AI mentor** — opens a context-aware dialogue when you select a node or edge; probes understanding rather than explaining
-- **Spaced-repetition review mode** — surfaces low-confidence or stale nodes for targeted review
+- **Spaced-repetition review mode** — FSRS (`ts-fsrs`) queues due concepts; rate Again / Hard / Good / Easy from the Review overlay (**R**)
 - **Concept search** — ⌘K palette to jump to any node instantly
 - **Multiple graphs** — create, name, and switch between graphs; persisted in IndexedDB
 - **Provider-agnostic AI** — configure any OpenAI-compatible endpoint (Ollama locally, or any cloud provider) from Settings
@@ -92,7 +92,7 @@ Each relation has a line style (solid, dashed, dotted, double, wavy) and an SVG 
 ### Learning & review
 
 - [ ] Per-node elaboration — structured annotations alongside each concept: definition in own words, user-built examples, open questions, informal connections not yet ready to be formalised as edges, and a free-text field as an escape hatch
-- [ ] FSRS-based review scheduling — replace the current heuristic with the [FSRS algorithm](https://github.com/open-spaced-repetition/fsrs4anki/wiki/The-Algorithm), mapping node confidence (1–5) to Again/Hard/Good/Easy ratings and tracking per-node stability and retrievability
+- [x] FSRS-based review scheduling — **done:** `ts-fsrs` with per-node stability, difficulty, reps, lapses, due, and last rating; Settings → Review for target retention and max interval
 - [ ] AI-guided spaced repetition — when surfacing a node for review, feed its edges and neighbours to the AI mentor to generate questions that probe relational understanding rather than isolated recall; replace the current heuristic scheduler with one informed by both FSRS stability scores and graph topology
 
 ### Core features

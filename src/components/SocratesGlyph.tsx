@@ -1,14 +1,12 @@
 // SPDX-License-Identifier: MIT
 interface Props {
   size?: number
-  mood?: 'calm' | 'speaking'
   color?: string
   accent?: string
 }
 
 export function SocratesGlyph({
   size = 32,
-  mood = 'calm',
   color = 'currentColor',
   accent = 'var(--cat-causal)',
 }: Props) {
@@ -37,10 +35,7 @@ export function SocratesGlyph({
       {/* Nose */}
       <path d="M16 17 q-0.4 1.6 0 3" />
       {/* Mouth */}
-      {mood === 'speaking'
-        ? <path d="M14 22 q2 1 4 0" />
-        : <path d="M14.2 22 q1.8 0.5 3.6 0" />
-      }
+      <path d="M14.2 22 q1.8 0.5 3.6 0" />
       {/* Beard */}
       <path d="M11.5 20.5 q-1.5 4 1 7 q3.5 3 7 0 q2.5 -3 1 -7"
         fill="var(--paper-deep)" stroke={color} />

@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MIT
+import { useMemo, useState, useEffect } from 'react'
 import { useGraphStore } from '@/store/graph'
+import { sortedDueConceptNodes } from '@/data/fsrsDueQueue'
 import { GraphIO } from './GraphIO'
 
 interface Props {
@@ -14,6 +16,12 @@ interface Props {
 export function TopBar({ sidebarCollapsed, sidebarWidth, onExpandSidebar, onReview, onRelationTypes, onShortcuts }: Props) {
   const { graphList, currentGraphId, nodes, edges } = useGraphStore()
   const current = graphList.find(g => g.id === currentGraphId)
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 60_000)
+    return () => clearInterval(id)
+  }, [])
+  const dueCount = useMemo(() => sortedDueConceptNodes(nodes).length, [nodes, now])
 
   return (
     <div style={{
@@ -73,6 +81,7 @@ export function TopBar({ sidebarCollapsed, sidebarWidth, onExpandSidebar, onRevi
           onClick={onReview}
           title="Start review (R)"
           style={{
+            position: 'relative',
             display: 'flex', alignItems: 'center', gap: 6,
             appearance: 'none',
             border: '0.5px solid var(--line)',
@@ -87,7 +96,16 @@ export function TopBar({ sidebarCollapsed, sidebarWidth, onExpandSidebar, onRevi
             <path d="M8 2.5a5.5 5.5 0 1 1-5.5 5.5" /><path d="M2.5 4V2h2" />
           </svg>
           Review
-          <span style={{ font: "500 10px 'JetBrains Mono', ui-monospace", color: 'var(--ink-4)', marginLeft: 2 }}>R</span>
+          {dueCount > 0 && (
+            <span style={{
+              position: 'absolute', top: -4, right: -6,
+              minWidth: 16, height: 16,
+              borderRadius: 999, background: 'var(--cat-causal)', color: 'var(--paper)',
+              font: "600 10px 'JetBrains Mono', ui-monospace",
+              padding: '0 4px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              border: '2px solid var(--bg-elev)',
+            }}>{dueCount > 99 ? '99+' : dueCount}</span>
+          )}
         </button>
         <GraphIO onRelationTypes={onRelationTypes} onShortcuts={onShortcuts} />
       </div>
