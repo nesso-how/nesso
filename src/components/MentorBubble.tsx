@@ -16,13 +16,18 @@ function renderMarkdown(text: string): string {
   return marked(text, { async: false }) as string
 }
 
+/** Cap snapshot size so the system prompt stays bounded on large graphs. */
+const MAX_SNAPSHOT_NODES = 60
+/** Linked maps often have more edges than nodes; ~2× node cap keeps structure visible without dumping huge |E|. */
+const MAX_SNAPSHOT_EDGES = MAX_SNAPSHOT_NODES * 2
+/** Output ceiling aligned with ~120-word replies (soft limit in MENTOR_BASE). */
+const MENTOR_MAX_TOKENS = 220
+
 const MENTOR_BASE = [
-  'You are Socrates, a Socratic mentor inside a knowledge graph for active learning called Nesso.',
-  'Strict rules:',
-  '— Never generate graph content for the user. Do not propose new nodes or edges.',
-  '— Speak warmly but precisely. No emojis, no flattery.',
-  '— Markdown emphasis: surround a key word with *asterisks* to highlight it.',
-  '— Do NOT output any structured tokens or brackets.',
+  'You are Socrates in Nesso, a knowledge-graph app for active learning. Be warm, precise, and Socratic: mostly questions, almost no lecturing.',
+  'Never tell the user what nodes or edges to add or rename—no graph edits, only dialogue about ideas.',
+  'No emojis or flattery. Use *asterisks* sparingly for a key term. No JSON, markup pseudo-graphs, or bracketed labels.',
+  'Default: one short question; explain only to frame the question. Aim under ~120 words.',
 ]
 
 function buildGraphChatPrompt(
@@ -31,23 +36,26 @@ function buildGraphChatPrompt(
   selectedNode: Node<ConceptNodeData> | null,
   selectedEdge: Edge | null,
 ): string {
-  const edgeList = edges.slice(0, 20).map(e => {
-    const src = nodes.find(n => n.id === e.source)?.data.text ?? e.source
-    const tgt = nodes.find(n => n.id === e.target)?.data.text ?? e.target
+  const label = (id: string) => nodes.find(n => n.id === id)?.data.text ?? id
+  const snapEdges = edges.length > MAX_SNAPSHOT_EDGES ? edges.slice(0, MAX_SNAPSHOT_EDGES) : edges
+  const edgeOmit = edges.length > snapEdges.length ? ` … (${edges.length - snapEdges.length} more edges omitted)` : ''
+  const edgeListBody = snapEdges.map(e => {
+    const src = label(e.source)
+    const tgt = label(e.target)
     return `${src} → ${String(e.data?.type ?? '?')} → ${tgt}`
   }).join('; ')
-  const nodeList = nodes.map(n => `"${n.data.text}" (stability ${n.data.stability.toFixed(1)}d)`).join(', ') || '(no nodes)'
+  const edgeList = edgeListBody ? `${edgeListBody}${edgeOmit}` : ''
+  const snapNodes = nodes.length > MAX_SNAPSHOT_NODES ? nodes.slice(0, MAX_SNAPSHOT_NODES) : nodes
+  const nodeOmit = nodes.length > snapNodes.length ? ` … (${nodes.length - snapNodes.length} more nodes omitted)` : ''
+  const nodeList =
+    snapNodes.map(n => `"${n.data.text}" (stability ${n.data.stability.toFixed(1)}d)`).join(', ') + nodeOmit || '(no nodes)'
   const selCtx = selectedNode
-    ? `Currently selected node: "${selectedNode.data.text}" (stability ${selectedNode.data.stability.toFixed(1)}d).`
+    ? `Selection: node "${selectedNode.data.text}" (stability ${selectedNode.data.stability.toFixed(1)}d).`
     : selectedEdge
-      ? `Currently selected edge: ${String(selectedEdge.data?.type ?? '?')}.`
+      ? `Selection: edge ${label(selectedEdge.source)} → ${String(selectedEdge.data?.type ?? '?')} → ${label(selectedEdge.target)}.`
       : ''
   return [
     ...MENTOR_BASE,
-    '',
-    'The learner may ask open questions about their knowledge graph.',
-    'Answer briefly; prefer one short question over a long explanation.',
-    '— Keep responses under ~90 words.',
     '',
     `Nodes: ${nodeList}`,
     edgeList ? `Edges: ${edgeList}` : '',
@@ -90,7 +98,7 @@ export function MentorBubble() {
     if (settings.aiMode === 'local') {
       const engine = getEngine()
       if (!engine) throw new Error('Local model not loaded — open Settings and click "Download & use".')
-      const reply = await engine.chat.completions.create({ model: LOCAL_MODEL_ID, max_tokens: 300, messages })
+      const reply = await engine.chat.completions.create({ model: LOCAL_MODEL_ID, max_tokens: MENTOR_MAX_TOKENS, messages })
       return reply.choices[0]?.message?.content ?? '…'
     }
 
@@ -101,7 +109,7 @@ export function MentorBubble() {
         'Content-Type': 'application/json',
         ...(settings.aiApiKey ? { Authorization: `Bearer ${settings.aiApiKey}` } : {}),
       },
-      body: JSON.stringify({ model: settings.aiModel, max_tokens: 300, messages }),
+      body: JSON.stringify({ model: settings.aiModel, max_tokens: MENTOR_MAX_TOKENS, messages }),
     })
     if (!res.ok) throw new Error(await res.text())
     const data = await res.json() as { choices?: { message?: { content?: string | null } }[] }

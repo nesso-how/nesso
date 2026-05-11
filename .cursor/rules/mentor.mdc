@@ -17,16 +17,15 @@ Configure under **Settings** (gear, **⌘,**): **Appearance**, **AI**, **Review*
 
 ## Persona
 
-Socrates is a Socratic mentor: he asks short, pointed questions rather than explaining. Shared rules live in `MENTOR_BASE` inside `MentorBubble.tsx`:
+Socrates is a Socratic mentor: mostly questions, almost no lecturing. Rules live in `MENTOR_BASE` inside `MentorBubble.tsx`:
 
-- Never generate graph content (no proposing new nodes or edges).
-- Prefer one short question over a long explanation; keep replies under ~90 words.
-- No emojis, no flattery.
-- Markdown emphasis with `*asterisks*` for key words.
+- No graph edits in dialogue (do not propose new nodes/edges or renames).
+- Default one short question; explain only to frame it; aim under ~120 words (hard cap via `MENTOR_MAX_TOKENS`).
+- No emojis or flattery; sparse `*asterisks*` on key terms; no JSON or pseudo-graph markup.
 
 ## System prompt (single chat)
 
-There are **no mode tabs**. `buildGraphChatPrompt()` builds one system string: graph snapshot — nodes with stability labels, first ~20 edges, optional selection context — plus Socratic rules. Each send recomputes the prompt from the live store so new edits appear on the next turn.
+There are **no mode tabs**. `buildGraphChatPrompt()` builds one system string: graph snapshot — up to `MAX_SNAPSHOT_NODES` nodes with stability labels (remainder summarized if larger), up to `MAX_SNAPSHOT_EDGES` edges (`2×` the node cap by default), optional selection (node or full edge path) — plus `MENTOR_BASE`. Each send recomputes the prompt from the live store so new edits appear on the next turn.
 
 On panel open, graph switch, or local-model-ready transition, the first mentor line is fetched by POSTing a short synthetic user turn (“Hello — I want to discuss…”) with the current system prompt.
 
@@ -51,9 +50,9 @@ Whether the mentor **card** is expanded is `mentorPanelExpanded` on `useGraphSto
 **Remote:** `fetch(`${aiBaseUrl}/chat/completions`, …)` with JSON body:
 
 - `model` — `settings.aiModel`
-- `max_tokens` — `300`
+- `max_tokens` — `MENTOR_MAX_TOKENS` (`220`, aligned with ~120-word replies)
 - `messages` — `[{ role: 'system', content: buildGraphChatPrompt() }, …]` plus full `history` turns mapped to `user` / `assistant` roles.
 
 `Authorization: Bearer …` is sent when `settings.aiApiKey` is non-empty.
 
-**Local:** After `initWebLLM()` completes, `getEngine()` from `webllm.ts` is non-null. Until then the UI blocks sends. Then `engine.chat.completions.create({ model: LOCAL_MODEL_ID, max_tokens: 300, messages })` with the same `messages` array built for remote mode.
+**Local:** After `initWebLLM()` completes, `getEngine()` from `webllm.ts` is non-null. Until then the UI blocks sends. Then `engine.chat.completions.create({ model: LOCAL_MODEL_ID, max_tokens: MENTOR_MAX_TOKENS, messages })` with the same `messages` array built for remote mode.
