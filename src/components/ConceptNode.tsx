@@ -164,6 +164,32 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
           transition: 'opacity 120ms',
         }}
       />
+      {/* Invisible target handles distributed at 33% and 67% of the node width.
+          pointerEvents:none lets node-drag events pass through.
+          Together with the left/right handles and connectionRadius=35 they cover
+          the full node width without bleeding into nearby nodes. */}
+      <Handle
+        id="in-c1"
+        type="target"
+        position={Position.Left}
+        style={{
+          left: '33%', top: '50%', transform: 'translate(-50%, -50%)',
+          width: 8, height: 8,
+          opacity: 0, pointerEvents: 'none',
+          border: 'none', background: 'transparent',
+        }}
+      />
+      <Handle
+        id="in-c2"
+        type="target"
+        position={Position.Left}
+        style={{
+          left: '67%', top: '50%', transform: 'translate(-50%, -50%)',
+          width: 8, height: 8,
+          opacity: 0, pointerEvents: 'none',
+          border: 'none', background: 'transparent',
+        }}
+      />
     </div>
   )
 }

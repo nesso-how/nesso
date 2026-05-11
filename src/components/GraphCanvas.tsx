@@ -138,6 +138,7 @@ export function GraphCanvas({
         onPaneClick={onPaneClick}
         onMoveEnd={persistViewportOnMoveEnd}
         connectionMode={ConnectionMode.Loose}
+        connectionRadius={35}
         defaultViewport={defaultViewport}
         minZoom={0.15}
         maxZoom={2.5}
