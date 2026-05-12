@@ -6,6 +6,26 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.0-alpha.8] - 2026-05-12
+
+### Added
+
+- **Per-node elaboration** in the Inspector: definition, examples, notes, and optional Wikimedia Commons thumbnail + attribution fields on `ConceptNodeData`.
+- **Resizable Inspector** panel with width persisted in `localStorage`; shared layout constants (`INSPECTOR_CANVAS_LEFT_GUTTER`, clamp/read/write helpers) so fit-to-view, new-node placement, and canvas insets track the live panel width.
+
+### Changed
+
+- **Theme scrollbars:** `.nesso-scrollbar` utility for on-theme thin scrollbars (Inspector body).
+- **Top bar:** exported `TOPBAR_HEIGHT_PX` so layout chrome stays aligned with the Inspector.
+
+### Fixed
+
+- **Settings → AI:** clearer Ollama / CORS guidance when the app is not served from `localhost` (uses the current origin in the `OLLAMA_ORIGINS` hint).
+
+### Documentation
+
+- **README** roadmap: Design section (Inspector + Review dialog), Wikipedia/Wikidata AI item, per-node elaboration marked complete.
+
 ## [0.1.0-alpha.7] - 2026-05-11
 
 ### Added
@@ -135,7 +155,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial alpha: interactive knowledge graph (web + Tauri v2); desktop installers on GitHub Releases (macOS Apple silicon and Intel).
 
-[Unreleased]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.7...HEAD
+[Unreleased]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.8...HEAD
+[0.1.0-alpha.8]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.7...v0.1.0-alpha.8
 [0.1.0-alpha.7]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.6...v0.1.0-alpha.7
 [0.1.0-alpha.6]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.5...v0.1.0-alpha.6
 [0.1.0-alpha.5]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.4...v0.1.0-alpha.5
