@@ -4,6 +4,9 @@ import { useGraphStore } from '@/store/graph'
 import { sortedDueConceptNodes } from '@/data/fsrsDueQueue'
 import { GraphIO } from './GraphIO'
 
+/** Full-height navbar; Inspector and canvas top inset rely on this. */
+export const TOPBAR_HEIGHT_PX = 52
+
 interface Props {
   sidebarCollapsed: boolean
   sidebarWidth: number
@@ -29,7 +32,7 @@ export function TopBar({ sidebarCollapsed, sidebarWidth, onExpandSidebar, onRevi
       top: 0,
       left: sidebarWidth,
       right: 0,
-      height: 52,
+      height: TOPBAR_HEIGHT_PX,
       zIndex: 25,
       display: 'flex',
       alignItems: 'center',

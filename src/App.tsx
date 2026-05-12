@@ -6,7 +6,13 @@ import { TopBar } from './components/TopBar'
 import { Sidebar, SIDEBAR_WIDTH } from './components/Sidebar'
 import { BottomDock } from './components/BottomDock'
 import { RelationTypesDialog } from './components/RelationTypesDialog'
-import { Inspector } from './components/Inspector'
+import {
+  Inspector,
+  INSPECTOR_CANVAS_LEFT_GUTTER,
+  clampInspectorPanelWidth,
+  readInspectorPanelWidth,
+  writeInspectorPanelWidth,
+} from './components/Inspector'
 import { MentorBubble } from './components/MentorBubble'
 import { ReviewMode } from './components/ReviewMode'
 import { ShortcutsDialog } from './components/ShortcutsDialog'
@@ -47,6 +53,12 @@ function AppInner() {
   useAutoSave()
 
   const sidebarWidth = sidebarCollapsed ? 0 : SIDEBAR_WIDTH
+
+  const [inspectorPanelWidth, setInspectorPanelWidth] = useState(readInspectorPanelWidth)
+
+  useEffect(() => {
+    writeInspectorPanelWidth(inspectorPanelWidth)
+  }, [inspectorPanelWidth])
 
   // Initial load: prefer graph from URL hash
   useEffect(() => {
@@ -93,7 +105,9 @@ function AppInner() {
 
     const nodeW = maxX - minX
     const nodeH = maxY - minY
-    const canvasW = window.innerWidth - sidebarWidth - RIGHT
+    const hasInspector = selected !== null
+    const leftPad = sidebarWidth + INSPECTOR_CANVAS_LEFT_GUTTER + (hasInspector ? inspectorPanelWidth : 0)
+    const canvasW = window.innerWidth - leftPad - RIGHT
     const canvasH = window.innerHeight - TOP - BOTTOM
 
     const zoom = Math.max(0.15, Math.min(
@@ -102,11 +116,11 @@ function AppInner() {
       2.5
     ))
 
-    const vpX = sidebarWidth + canvasW / 2 - ((minX + maxX) / 2) * zoom
+    const vpX = leftPad + canvasW / 2 - ((minX + maxX) / 2) * zoom
     const vpY = TOP + canvasH / 2 - ((minY + maxY) / 2) * zoom
 
     setViewport({ x: vpX, y: vpY, zoom }, { duration: animated ? 400 : 0 })
-  }, [getNodes, setViewport, sidebarWidth])
+  }, [getNodes, setViewport, sidebarWidth, inspectorPanelWidth, selected])
 
   const viewportRestoredFor = useRef<string | null>(null)
 
@@ -173,7 +187,7 @@ function AppInner() {
   const handleAddConcept = useCallback(() => {
     const topInset = 52
     const bottomInset = 80
-    const leftInset = sidebarWidth + (hasSelection ? 326 : 30)
+    const leftInset = sidebarWidth + INSPECTOR_CANVAS_LEFT_GUTTER + (hasSelection ? inspectorPanelWidth : 0)
     const rightInset = 30
     const screenCenterX = leftInset + (window.innerWidth - leftInset - rightInset) / 2
     const screenCenterY = topInset + (window.innerHeight - topInset - bottomInset) / 2
@@ -182,7 +196,7 @@ function AppInner() {
     viewportRestoredFor.current = useGraphStore.getState().currentGraphId
     addNode(fx, fy)
     setCenter(fx, fy, { zoom: Math.max(getViewport().zoom, 1), duration: 300 })
-  }, [addNode, setCenter, getViewport, screenToFlowPosition, sidebarWidth, hasSelection])
+  }, [addNode, setCenter, getViewport, screenToFlowPosition, sidebarWidth, hasSelection, inspectorPanelWidth])
 
   const handleZoomIn = useCallback(() => {
     zoomIn({ duration: 200 })
@@ -197,7 +211,7 @@ function AppInner() {
       <GraphCanvas
         topInset={52}
         bottomInset={80}
-        leftInset={sidebarWidth + (hasSelection ? 326 : 30)}
+        leftInset={sidebarWidth + INSPECTOR_CANVAS_LEFT_GUTTER + (hasSelection ? inspectorPanelWidth : 0)}
         rightInset={30}
         onViewportZoomChange={setZoom}
       />
@@ -220,7 +234,11 @@ function AppInner() {
       />
 
       <RelationTypesDialog open={showRelationTypes} onClose={() => setShowRelationTypes(false)} />
-      <Inspector leftOffset={sidebarWidth} />
+      <Inspector
+        leftOffset={sidebarWidth}
+        panelWidth={inspectorPanelWidth}
+        onPanelWidthChange={w => setInspectorPanelWidth(clampInspectorPanelWidth(w))}
+      />
       <BottomDock
         onZoomIn={handleZoomIn}
         onZoomOut={handleZoomOut}

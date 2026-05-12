@@ -134,6 +134,35 @@ body::before {
 .settings-stepper::-webkit-outer-spin-button { -webkit-appearance: none; }
 .settings-stepper { -moz-appearance: textfield; }
 
+/* Muted, on-theme scrollbars (Inspector body, etc.) */
+.nesso-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--ink-4) 55%, transparent) transparent;
+}
+
+.nesso-scrollbar::-webkit-scrollbar {
+  width: 7px;
+}
+
+.nesso-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 6px 0;
+  border-radius: 999px;
+}
+
+.nesso-scrollbar::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--ink-4) 50%, transparent);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.nesso-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--accent) 45%, var(--ink-3) 55%);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
 /* React Flow overrides */
 .react-flow__renderer { z-index: 2; }
 .react-flow__pane { cursor: grab; }

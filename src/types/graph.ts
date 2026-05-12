@@ -1,6 +1,15 @@
 // SPDX-License-Identifier: MIT
 import type { Card, State } from 'ts-fsrs'
 
+export interface ConceptElaboration {
+  definition: string
+  examples: string
+  notes: string
+  imageUrl?: string // Wikimedia thumbnail URL (~200px)
+  imageTitle?: string // File title, e.g. "File:Foo.jpg"
+  imageDescriptionUrl?: string // Link to the Commons page for attribution
+}
+
 export interface ConceptNodeData extends Record<string, unknown> {
   text: string
   stability: number
@@ -11,8 +20,8 @@ export interface ConceptNodeData extends Record<string, unknown> {
   due: number // ms timestamp; 0 = due immediately (new card)
   lastReview: number // ms timestamp; 0 = never reviewed
   lastRating: number // 0=unrated, 1=Again 2=Hard 3=Good 4=Easy
+  elaboration?: ConceptElaboration
 }
-
 
 export function nodeToCard(data: ConceptNodeData): Card {
   return {

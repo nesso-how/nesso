@@ -93,7 +93,7 @@ Each relation has a line style (solid, dashed, dotted, double, wavy) and an SVG 
 
 ### Learning & review
 
-- [ ] Per-node elaboration — structured annotations alongside each concept: definition in own words, user-built examples, open questions, informal connections not yet ready to be formalised as edges, and a free-text field as an escape hatch
+- [x] Per-node elaboration — structured annotations alongside each concept: definition in own words, user-built examples, open questions, informal connections not yet ready to be formalised as edges, and a free-text field as an escape hatch
 - [x] FSRS-based review scheduling — **done:** `ts-fsrs` with per-node stability, difficulty, reps, lapses, due, and last rating; Settings → Review for target retention and max interval
 - [x] AI-guided spaced repetition — when surfacing a node for review, feed its edges and neighbours to the AI mentor to generate questions that probe relational understanding rather than isolated recall; replace the current heuristic scheduler with one informed by both FSRS stability scores and graph topology
 
