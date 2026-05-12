@@ -89,6 +89,7 @@ Each relation has a line style (solid, dashed, dotted, double, wavy) and an SVG 
 - [ ] Chat history — persist and revisit past mentor sessions per graph
 - [ ] Voice I/O — speech input and text-to-speech output for the AI mentor
 - [ ] Specialized local models — investigate small in-browser models via Transformers.js (WASM) for specific tasks: embedding (`all-MiniLM-L6-v2`, ~23 MB) for semantic search and duplicate detection, zero-shot relation classification (`nli-deberta-v3-small`, ~83 MB) for edge-type suggestion, and cross-encoder reranking (`ms-marco-MiniLM-L-6-v2`, ~22 MB) for mentor context retrieval on large graphs
+- [ ] Wikipedia/Wikidata context enrichment — fetch Wikipedia summaries and Wikidata structured relations for concept nodes and inject them as context when the AI generates text
 
 ### Learning & review
 
@@ -99,6 +100,11 @@ Each relation has a line style (solid, dashed, dotted, double, wavy) and an SVG 
 ### Core features
 
 - [ ] Two-mode system — student (active learning) and professor (build reference graphs, evaluate student maps)
+
+### Design
+
+- [ ] Inspector — refresh layout, typography, grouping, and visual hierarchy so the side panel stays easy to scan and consistent with canvas chrome
+- [ ] Review dialog — revamp spacing, typography, and controls so the FSRS overlay feels cohesive with the rest of the chrome
 
 ### Data & sync
 
