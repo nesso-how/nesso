@@ -16,6 +16,18 @@ type Selection =
 
 type Viewport = { x: number; y: number; zoom: number }
 
+type GraphSnapshot = { nodes: Node<ConceptNodeData>[]; edges: Edge[] }
+
+const MAX_UNDO = 50
+const _draggingNodeIds = new Set<string>()
+
+function pushHistory(s: GraphSnapshot & { _history: GraphSnapshot[]; _future: GraphSnapshot[] }) {
+  return {
+    _history: [...s._history, { nodes: s.nodes, edges: s.edges }].slice(-MAX_UNDO),
+    _future: [] as GraphSnapshot[],
+  }
+}
+
 export interface GraphMeta {
   id: string
   name: string
@@ -39,6 +51,11 @@ interface GraphState {
   // Bumped on every loadGraph so useAutoSave can skip the save that would
   // otherwise fire when nodes/edges are replaced by a load (vs. a real edit).
   loadedToken: number
+
+  _history: GraphSnapshot[]
+  _future: GraphSnapshot[]
+  undo: () => void
+  redo: () => void
 
   // Graph mutations
   onNodesChange: (changes: NodeChange<Node<ConceptNodeData>>[]) => void
@@ -95,6 +112,8 @@ export const useGraphStore = create<GraphState>()(
       currentGraphId: SEEDS[0].id,
       graphList: SEEDS.map(s => ({ id: s.id, name: s.name, updatedAt: Date.now() })),
       loadedToken: 0,
+      _history: [],
+      _future: [],
       settings: {
         dark: false,
         accent: '#b14a2e',
@@ -112,14 +131,67 @@ export const useGraphStore = create<GraphState>()(
         maximumInterval: 365,
       },
 
-      onNodesChange: (changes) =>
-        set(s => ({ nodes: applyNodeChanges(changes, s.nodes as any) as Node<ConceptNodeData>[] })),
+      undo: () =>
+        set(s => {
+          if (!s._history.length) return s
+          const prev = s._history[s._history.length - 1]
+          _draggingNodeIds.clear()
+          return {
+            _history: s._history.slice(0, -1),
+            _future: [{ nodes: s.nodes, edges: s.edges }, ...s._future].slice(0, MAX_UNDO),
+            nodes: prev.nodes,
+            edges: prev.edges,
+            selected: null,
+          }
+        }),
+
+      redo: () =>
+        set(s => {
+          if (!s._future.length) return s
+          const next = s._future[0]
+          _draggingNodeIds.clear()
+          return {
+            _future: s._future.slice(1),
+            _history: [...s._history, { nodes: s.nodes, edges: s.edges }].slice(-MAX_UNDO),
+            nodes: next.nodes,
+            edges: next.edges,
+            selected: null,
+          }
+        }),
+
+      onNodesChange: (changes) => {
+        for (const c of changes) {
+          if (c.type === 'position' && c.dragging === false) {
+            _draggingNodeIds.delete(c.id)
+          }
+        }
+        const startsDrag = changes.filter(
+          (c): c is Extract<NodeChange<Node<ConceptNodeData>>, { type: 'position' }> =>
+            c.type === 'position'
+            && c.dragging === true
+            && !_draggingNodeIds.has(c.id)
+        )
+        if (startsDrag.length > 0) {
+          for (const c of startsDrag) {
+            _draggingNodeIds.add(c.id)
+          }
+          set(s => ({
+            ...pushHistory(s),
+            nodes: applyNodeChanges(changes, s.nodes as any) as Node<ConceptNodeData>[],
+          }))
+        } else {
+          set(s => ({
+            nodes: applyNodeChanges(changes, s.nodes as any) as Node<ConceptNodeData>[],
+          }))
+        }
+      },
 
       onEdgesChange: (changes) =>
         set(s => ({ edges: applyEdgeChanges(changes, s.edges) })),
 
       updateNodeData: (id, patch) =>
         set(s => ({
+          ...pushHistory(s),
           nodes: s.nodes.map(n =>
             n.id === id ? { ...n, data: { ...n.data, ...patch } } : n
           ),
@@ -127,6 +199,7 @@ export const useGraphStore = create<GraphState>()(
 
       deleteNode: (id) =>
         set(s => ({
+          ...pushHistory(s),
           nodes: s.nodes.filter(n => n.id !== id),
           edges: s.edges.filter(e => e.source !== id && e.target !== id),
           selected: s.selected?.id === id ? null : s.selected,
@@ -135,6 +208,7 @@ export const useGraphStore = create<GraphState>()(
       addNode: (x = 0, y = 0) => {
         const id = 'n' + Math.random().toString(36).slice(2, 7)
         set(s => ({
+          ...pushHistory(s),
           nodes: [
             ...s.nodes,
             {
@@ -162,6 +236,7 @@ export const useGraphStore = create<GraphState>()(
       addEdge: (source, target, type) => {
         const id = 'e' + Math.random().toString(36).slice(2, 8)
         set(s => ({
+          ...pushHistory(s),
           edges: [...s.edges, {
             id,
             source,
@@ -178,6 +253,7 @@ export const useGraphStore = create<GraphState>()(
 
       updateEdgeType: (id, type) =>
         set(s => ({
+          ...pushHistory(s),
           edges: s.edges.map(e =>
             e.id === id ? { ...e, data: { ...e.data, type } } : e
           ),
@@ -185,6 +261,7 @@ export const useGraphStore = create<GraphState>()(
 
       deleteEdge: (id) =>
         set(s => ({
+          ...pushHistory(s),
           edges: s.edges.filter(e => e.id !== id),
           selected: s.selected?.id === id ? null : s.selected,
         })),
@@ -232,12 +309,15 @@ export const useGraphStore = create<GraphState>()(
           }
         }
         if (!record) return
+        _draggingNodeIds.clear()
         set(s => ({
           currentGraphId: record!.id,
           nodes: record!.nodes,
           edges: record!.edges,
           selected: null,
           loadedToken: s.loadedToken + 1,
+          _history: [],
+          _future: [],
         }))
       },
 
@@ -264,12 +344,15 @@ export const useGraphStore = create<GraphState>()(
         const id = 'g' + Math.random().toString(36).slice(2, 9)
         const now = Date.now()
         await dbSaveGraph({ id, name, createdAt: now, updatedAt: now, nodes: [], edges: [] })
+        _draggingNodeIds.clear()
         set(s => ({
           graphList: [...s.graphList, { id, name, updatedAt: now }],
           currentGraphId: id,
           nodes: [],
           edges: [],
           selected: null,
+          _history: [],
+          _future: [],
         }))
         return id
       },
@@ -278,12 +361,15 @@ export const useGraphStore = create<GraphState>()(
         const id = 'g' + Math.random().toString(36).slice(2, 9)
         const now = Date.now()
         await dbSaveGraph({ id, name, createdAt: now, updatedAt: now, nodes, edges })
+        _draggingNodeIds.clear()
         set(s => ({
           graphList: [...s.graphList, { id, name, updatedAt: now }],
           currentGraphId: id,
           nodes,
           edges,
           selected: null,
+          _history: [],
+          _future: [],
         }))
         return id
       },

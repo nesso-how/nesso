@@ -5,6 +5,7 @@ import { GraphCanvas } from './components/GraphCanvas'
 import { TopBar } from './components/TopBar'
 import { Sidebar, SIDEBAR_WIDTH } from './components/Sidebar'
 import { BottomDock } from './components/BottomDock'
+import { UndoRedoControls } from './components/UndoRedoControls'
 import { RelationTypesDialog } from './components/RelationTypesDialog'
 import {
   Inspector,
@@ -37,6 +38,8 @@ function AppInner() {
     setSelected,
     deleteNode,
     deleteEdge,
+    undo,
+    redo,
     loadGraph,
     loadGraphList,
     currentGraphId,
@@ -44,6 +47,9 @@ function AppInner() {
     sidebarCollapsed,
     setSidebarCollapsed,
   } = useGraphStore()
+
+  const canUndo = useGraphStore(s => s._history.length > 0)
+  const canRedo = useGraphStore(s => s._future.length > 0)
 
   const selectedNode = useGraphStore(selectedNodeSelector)
   const selectedEdge = useGraphStore(selectedEdgeSelector)
@@ -165,6 +171,16 @@ function AppInner() {
       if (e.key === '?') { setShowShortcuts(s => !s); return }
       if (e.key === ',' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); setShowSettings(s => !s); return }
       if (e.key === 'k' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); setShowSearch(s => !s); return }
+      if (e.key === 'z' && (e.metaKey || e.ctrlKey) && !e.shiftKey) {
+        e.preventDefault()
+        undo()
+        return
+      }
+      if (e.key === 'z' && (e.metaKey || e.ctrlKey) && e.shiftKey) {
+        e.preventDefault()
+        redo()
+        return
+      }
       if (e.key === 'r' && !e.metaKey && !e.ctrlKey) { setShowReview(true) }
       if (e.key === '/') { e.preventDefault() }
       if ((e.key === 'Delete' || e.key === 'Backspace') && selected) {
@@ -175,7 +191,7 @@ function AppInner() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [selected, deleteNode, deleteEdge])
+  }, [selected, deleteNode, deleteEdge, undo, redo])
 
   const hasSelection = !!selectedNode || !!selectedEdge
 
@@ -239,6 +255,7 @@ function AppInner() {
         panelWidth={inspectorPanelWidth}
         onPanelWidthChange={w => setInspectorPanelWidth(clampInspectorPanelWidth(w))}
       />
+      <UndoRedoControls onUndo={undo} onRedo={redo} canUndo={canUndo} canRedo={canRedo} />
       <BottomDock
         onZoomIn={handleZoomIn}
         onZoomOut={handleZoomOut}

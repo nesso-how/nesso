@@ -24,6 +24,8 @@ const SECTIONS: { heading: string; rows: { keys: string[]; label: string }[] }[]
       { keys: [mod, 'K'], label: 'Search concepts' },
       { keys: ['R'], label: 'Start spaced-repetition review' },
       { keys: ['Del'], label: 'Delete selected concept or relation' },
+      { keys: [mod, 'Z'], label: 'Undo last graph edit' },
+      { keys: [mod, 'Shift', 'Z'], label: 'Redo' },
     ],
   },
 ]
