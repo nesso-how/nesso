@@ -6,6 +6,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.0-alpha.9] - 2026-05-13
+
+### Added
+
+- **Graph undo/redo:** snapshot history (50 steps) before structural edits and on drag-start; **⌘Z** / **Ctrl+Z** and **⌘⇧Z** / **Ctrl+Shift+Z**; floating **UndoRedoControls**; shortcuts dialog entries. History clears on load, new graph, or import.
+
+### Documentation
+
+- **README** roadmap: undo/redo marked complete.
+
 ## [0.1.0-alpha.8] - 2026-05-12
 
 ### Added
@@ -155,7 +165,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial alpha: interactive knowledge graph (web + Tauri v2); desktop installers on GitHub Releases (macOS Apple silicon and Intel).
 
-[Unreleased]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.8...HEAD
+[Unreleased]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.9...HEAD
+[0.1.0-alpha.9]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.8...v0.1.0-alpha.9
 [0.1.0-alpha.8]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.7...v0.1.0-alpha.8
 [0.1.0-alpha.7]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.6...v0.1.0-alpha.7
 [0.1.0-alpha.6]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.5...v0.1.0-alpha.6
