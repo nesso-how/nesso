@@ -78,7 +78,7 @@ Each relation has a line style (solid, dashed, dotted, double, wavy) and an SVG 
 
 ### Graph canvas
 
-- [ ] Undo/Redo + graph history — step backward and forward through graph edits, with a visible history of node, edge, and layout changes
+- [x] Undo/Redo + graph history — step backward and forward through graph edits, with a visible history of node, edge, and layout changes
 - [ ] Multiple selection — select and move groups of nodes and edges together, with bulk actions in the inspector where useful
 - [ ] Image export — export the current graph canvas as a shareable image for notes, presentations, or documentation
 - [ ] Parallel-edge handling — one edge per directed pair, or offset overlapping arcs when source/target coincide
