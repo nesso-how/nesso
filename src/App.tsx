@@ -182,11 +182,6 @@ function AppInner() {
       }
       if (e.key === 'r' && !e.metaKey && !e.ctrlKey) { setShowReview(true) }
       if (e.key === '/') { e.preventDefault() }
-      if ((e.key === 'Delete' || e.key === 'Backspace') && selected) {
-        e.preventDefault()
-        if (selected.kind === 'node') deleteNode(selected.id)
-        else deleteEdge(selected.id)
-      }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)

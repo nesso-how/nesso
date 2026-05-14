@@ -6,6 +6,18 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- **Graph:** multi-selection (Shift drag rectangle, **⌘/Ctrl** additive click); **`selectedIds`** in the store with **Delete selected** on the bottom dock; **Delete**/**Backspace** remove nodes via React Flow with undo history.
+
+### Changed
+
+- **Bottom dock:** unified icon-only actions (including add concept); larger buttons.
+
+### Documentation
+
+- **README:** roadmap — multiple selection marked complete.
+
 ## [0.1.0-alpha.10] - 2026-05-14
 
 ### Added

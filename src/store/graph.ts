@@ -74,6 +74,9 @@ interface GraphState {
 
   // Selection
   setSelected: (sel: Selection) => void
+  selectedIds: string[]
+  setSelectedIds: (ids: string[]) => void
+  deleteSelectedNodes: () => void
 
   // Settings
   setSetting: <K extends keyof NessoSettings>(key: K, value: NessoSettings[K]) => void
@@ -110,6 +113,7 @@ export const useGraphStore = create<GraphState>()(
       nodes: [],
       edges: [],
       selected: null,
+      selectedIds: [],
       mentorPanelExpanded: false,
       sidebarCollapsed: false,
       sidebarDisplayOpen: true,
@@ -177,10 +181,16 @@ export const useGraphStore = create<GraphState>()(
             && c.dragging === true
             && !_draggingNodeIds.has(c.id)
         )
+        const hasRemove = changes.some(c => c.type === 'remove')
         if (startsDrag.length > 0) {
           for (const c of startsDrag) {
             _draggingNodeIds.add(c.id)
           }
+          set(s => ({
+            ...pushHistory(s),
+            nodes: applyNodeChanges(changes, s.nodes as any) as Node<ConceptNodeData>[],
+          }))
+        } else if (hasRemove) {
           set(s => ({
             ...pushHistory(s),
             nodes: applyNodeChanges(changes, s.nodes as any) as Node<ConceptNodeData>[],
@@ -273,6 +283,21 @@ export const useGraphStore = create<GraphState>()(
         })),
 
       setSelected: (sel) => set({ selected: sel }),
+
+      setSelectedIds: (ids) => set({ selectedIds: ids }),
+
+      deleteSelectedNodes: () =>
+        set(s => {
+          const ids = new Set(s.selectedIds)
+          if (ids.size === 0) return s
+          return {
+            ...pushHistory(s),
+            nodes: s.nodes.filter(n => !ids.has(n.id)),
+            edges: s.edges.filter(e => !ids.has(e.source) && !ids.has(e.target)),
+            selected: s.selected?.kind === 'node' && ids.has(s.selected.id) ? null : s.selected,
+            selectedIds: [],
+          }
+        }),
 
       setSetting: (key, value) =>
         set(s => ({ settings: { ...s.settings, [key]: value } })),

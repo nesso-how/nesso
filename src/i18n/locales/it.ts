@@ -173,6 +173,7 @@ const it: typeof en = {
     redoTitle: 'Ripristina (⌘⇧Z)',
     fitTitle: 'Centra / adatta (F)',
     addConceptTitle: 'Aggiungi concetto',
+    deleteConceptTitle: 'Elimina selezionati',
   },
   topBar: {
     expandSidebar: 'Espandi pannello laterale',

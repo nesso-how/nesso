@@ -171,6 +171,7 @@ const en = {
     redoTitle: 'Redo (⌘⇧Z)',
     fitTitle: 'Center / fit (F)',
     addConceptTitle: 'Add concept',
+    deleteConceptTitle: 'Delete selected',
   },
   topBar: {
     expandSidebar: 'Expand sidebar',

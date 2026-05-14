@@ -8,7 +8,6 @@ import {
   useStore,
   type OnConnect,
   type OnMoveEnd,
-  type NodeMouseHandler,
   type OnConnectStart,
   type OnConnectEnd,
 } from '@xyflow/react'
@@ -54,7 +53,7 @@ export function GraphCanvas({
   const {
     nodes, edges,
     onNodesChange, onEdgesChange,
-    addEdge, setSelected, selected,
+    addEdge, setSelected, setSelectedIds,
     viewports, currentGraphId,
   } = useGraphStore()
 
@@ -81,13 +80,19 @@ export function GraphCanvas({
     setPendingConn({ source: conn.source, target: conn.target, screenX: 0, screenY: 0 })
   }, [])
 
-  const onNodeClick = useCallback<NodeMouseHandler>((_, node) => {
-    setSelected({ kind: 'node', id: node.id })
-  }, [setSelected])
-
-  const onPaneClick = useCallback(() => {
-    setSelected(null)
-  }, [setSelected])
+  const onSelectionChange = useCallback(
+    ({ nodes: sel, edges: selEdges }: { nodes: Array<{ id: string }>, edges: Array<{ id: string }> }) => {
+      setSelectedIds(sel.map(n => n.id))
+      if (sel.length === 1 && selEdges.length === 0) {
+        setSelected({ kind: 'node', id: sel[0].id })
+      } else if (selEdges.length === 1 && sel.length === 0) {
+        setSelected({ kind: 'edge', id: selEdges[0].id })
+      } else {
+        setSelected(null)
+      }
+    },
+    [setSelected, setSelectedIds]
+  )
 
   const persistViewportOnMoveEnd = useCallback<OnMoveEnd>((_event, viewport) => {
     const { currentGraphId: id, saveViewport } = useGraphStore.getState()
@@ -108,23 +113,14 @@ export function GraphCanvas({
       const key = [e.source, e.target].sort().join('—')
       const idx = pairCount[key] ?? 0
       pairCount[key] = idx + 1
-      return {
-        ...e,
-        selected: selected?.kind === 'edge' && selected.id === e.id,
-        data: { ...e.data, siblingIdx: idx },
-      }
+      return { ...e, data: { ...e.data, siblingIdx: idx } }
     })
-  }, [edges, selected])
-
-  const styledNodes = useMemo(() => nodes.map(n => ({
-    ...n,
-    selected: selected?.kind === 'node' && selected.id === n.id,
-  })), [nodes, selected])
+  }, [edges])
 
   return (
     <div style={{ position: 'absolute', inset: 0 }}>
       <ReactFlow
-        nodes={styledNodes}
+        nodes={nodes}
         edges={styledEdges}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
@@ -134,17 +130,16 @@ export function GraphCanvas({
         onConnectStart={onConnectStart}
         onConnectEnd={onConnectEnd}
         connectionLineComponent={NessoConnectionLine}
-        onNodeClick={onNodeClick}
-        onPaneClick={onPaneClick}
+        onSelectionChange={onSelectionChange}
         onMoveEnd={persistViewportOnMoveEnd}
         connectionMode={ConnectionMode.Loose}
         connectionRadius={35}
         defaultViewport={defaultViewport}
         minZoom={0.15}
         maxZoom={2.5}
-        deleteKeyCode={null}
-        selectionKeyCode={null}
-        multiSelectionKeyCode={null}
+        deleteKeyCode={['Delete', 'Backspace']}
+        selectionKeyCode='Shift'
+        multiSelectionKeyCode={['Meta', 'Control']}
         proOptions={{ hideAttribution: true }}
         style={{ background: 'transparent' }}
       >

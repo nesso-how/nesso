@@ -168,3 +168,4 @@ body::before {
 .react-flow__pane { cursor: grab; }
 .react-flow__pane.react-flow__pane--dragging { cursor: grabbing; }
 .react-flow__attribution { display: none; }
+.react-flow__nodesselection-rect { display: none; }
