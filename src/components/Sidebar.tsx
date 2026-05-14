@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { useGraphStore } from '@/store/graph'
 import { useT } from '@/i18n'
 
@@ -11,13 +11,14 @@ interface Props {
   onSearch: () => void
   onSettings: () => void
   onSelectConcept: (node: { id: string; position: { x: number; y: number } }) => void
+  zoom: number
 }
 
-export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, onSelectConcept }: Props) {
+export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, onSelectConcept, zoom }: Props) {
   const t = useT()
   const {
     graphList, currentGraphId, loadGraph, createGraph, renameGraph, deleteGraph,
-    nodes, settings, setSetting,
+    nodes, edges, settings, setSetting,
     sidebarDisplayOpen, setSidebarDisplayOpen,
   } = useGraphStore()
 
@@ -26,6 +27,7 @@ export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, onSelectC
   const [hoveredId, setHoveredId] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const [recentOpen, setRecentOpen] = useState(true)
+  const [mapOpen, setMapOpen] = useState(true)
 
   useEffect(() => {
     if (editingId && inputRef.current) {
@@ -101,7 +103,7 @@ export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, onSelectC
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ font: "500 13px 'Inter', ui-sans-serif", color: 'var(--ink)' }}>Nesso</div>
           </div>
-          <button onClick={onCollapse} title="Collapse sidebar" type="button" style={iconBtn}
+          <button onClick={onCollapse} title={t.sidebar.collapseSidebar} type="button" style={iconBtn}
             onMouseEnter={e => { e.currentTarget.style.background = 'var(--paper-deep)' }}
             onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
           >
@@ -135,7 +137,7 @@ export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, onSelectC
           {/* Graphs */}
           <div style={{ padding: '10px 12px 4px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span style={sectionLabel}>{t.sidebar.graphs}</span>
-            <button title={t.sidebar.newGraph} onClick={handleNew} style={graphsNewBtn}
+            <button title={t.sidebar.newGraphTitle} onClick={handleNew} style={graphsNewBtn}
               onMouseEnter={e => { e.currentTarget.style.background = 'var(--paper-deep)' }}
               onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
             >
@@ -185,7 +187,7 @@ export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, onSelectC
                       <button
                         onClick={() => loadGraph(g.id)}
                         onDoubleClick={() => startRename(g.id, g.name)}
-                        title={`${g.name} — double-click to rename`}
+                        title={`${g.name} — ${t.sidebar.renameHint}`}
                         style={{
                           flex: 1, display: 'flex', alignItems: 'center', gap: 9,
                           appearance: 'none', border: 0, background: 'transparent',
@@ -207,7 +209,7 @@ export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, onSelectC
                     {graphList.length > 1 && hovered && editingId !== g.id && (
                       <button
                         onClick={e => handleDelete(g.id, e)}
-                        title="Delete graph"
+                        title={t.sidebar.deleteGraph}
                         style={{
                           ...iconBtn,
                           marginRight: 4, flexShrink: 0,
@@ -270,6 +272,35 @@ export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, onSelectC
             </div>
           )}
 
+        </div>
+
+        {/* Map section — fixed, above Display */}
+        <div style={{ flexShrink: 0, borderTop: '0.5px solid var(--line)' }}>
+          <div style={{ padding: '10px 12px 8px' }}>
+            <button
+              onClick={() => setMapOpen(o => !o)}
+              style={{
+                appearance: 'none', border: 0, background: 'transparent', cursor: 'default',
+                display: 'flex', alignItems: 'center', gap: 6, padding: 0, width: '100%',
+              }}
+            >
+              <span style={sectionLabel}>{t.sidebar.stats.title}</span>
+              <svg width="9" height="9" viewBox="0 0 10 10" style={{
+                opacity: 0.5,
+                transform: mapOpen ? 'rotate(0deg)' : 'rotate(-90deg)',
+                transition: 'transform 150ms',
+              }}>
+                <path d="M2 4l3 3 3-3" stroke="currentColor" strokeWidth="1.4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          </div>
+          {mapOpen && (
+            <div style={{ padding: '0 12px 10px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <MapRow label={t.sidebar.stats.concepts} value={String(nodes.length)} />
+              <MapRow label={t.sidebar.stats.links} value={String(edges.length)} />
+              <MapRow label={t.sidebar.stats.zoom} value={`${Math.round(zoom * 100)}%`} />
+            </div>
+          )}
         </div>
 
         {/* Display section — fixed above footer, outside scroll */}
@@ -338,7 +369,7 @@ export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, onSelectC
           <button
             type="button"
             onClick={onSettings}
-            title="Settings (⌘,)"
+            title={t.sidebar.settingsTitle}
             style={{
               appearance: 'none', border: 0, background: 'transparent',
               display: 'flex', alignItems: 'center', gap: 9,
@@ -362,6 +393,15 @@ export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, onSelectC
           </button>
         </div>
       </div>
+    </div>
+  )
+}
+
+function MapRow({ label, value, title }: { label: string; value: string; title?: string }) {
+  return (
+    <div title={title} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '3px 0' }}>
+      <span style={{ font: "12px 'Inter', ui-sans-serif", color: 'var(--ink-3)' }}>{label}</span>
+      <span style={{ font: "500 11.5px 'JetBrains Mono', ui-monospace", color: 'var(--ink-2)' }}>{value}</span>
     </div>
   )
 }

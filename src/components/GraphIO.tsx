@@ -67,7 +67,7 @@ export function GraphIO({ onRelationTypes, onShortcuts }: Props) {
     <div ref={wrapRef} style={{ position: 'relative' }}>
       <button
         type="button"
-        title="More options"
+        title={t.graphIO.moreOptions}
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen(o => !o)}

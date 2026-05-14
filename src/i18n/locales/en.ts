@@ -95,6 +95,7 @@ const en = {
       cancel: 'Cancel',
       addImage: 'Add image',
     },
+    resizeHandle: 'Resize inspector',
   },
   sidebar: {
     search: 'Search…',
@@ -105,6 +106,17 @@ const en = {
     display: 'Display',
     settings: 'Settings',
     untitled: 'Untitled',
+    collapseSidebar: 'Collapse sidebar',
+    newGraphTitle: 'New graph',
+    deleteGraph: 'Delete graph',
+    renameHint: 'double-click to rename',
+    settingsTitle: 'Settings (⌘,)',
+    stats: {
+      title: 'Stats',
+      concepts: 'Concepts',
+      links: 'Links',
+      zoom: 'Zoom',
+    },
     displayOptions: {
       heatmap: 'Heatmap',
       edges: 'Edges',
@@ -143,6 +155,7 @@ const en = {
     },
   },
   graphIO: {
+    moreOptions: 'Export · Import · Shortcuts',
     relationTypes: 'Relation types',
     relationTypesSub: '17 types · 6 categories',
     exportGraph: 'Export graph',
@@ -153,14 +166,16 @@ const en = {
     shortcutsSub: 'Press ? anytime',
   },
   bottomDock: {
-    center: 'Center',
     addConcept: '+ concept',
+    undoTitle: 'Undo (⌘Z)',
+    redoTitle: 'Redo (⌘⇧Z)',
+    fitTitle: 'Center / fit (F)',
+    addConceptTitle: 'Add concept',
   },
   topBar: {
     expandSidebar: 'Expand sidebar',
     startReview: 'Start review (R)',
     review: 'Review',
-    stats: (concepts: number, links: number) => `${concepts} concepts · ${links} links`,
   },
   edgeTypes: {
     categories: {
@@ -197,6 +212,7 @@ const en = {
   },
   mentor: {
     name: 'Socrates',
+    toggleTitle: 'Ask Socrates',
     placeholder: (concept: string) => `Ask Socrates about "${concept}"…`,
     placeholderGraph: 'Ask Socrates about your graph…',
     loadingModel: 'Loading local model…',

@@ -345,7 +345,7 @@ export function MentorBubble() {
         </div>
       </div>
 
-      <button type="button" onClick={() => setMentorPanelExpanded(!mentorPanelExpanded)} title={t.mentor.name} style={{
+      <button type="button" onClick={() => setMentorPanelExpanded(!mentorPanelExpanded)} title={t.mentor.toggleTitle} style={{
         width: 64, height: 64, borderRadius: '50%', background: 'var(--bg-elev)',
         color: 'var(--ink)', border: '0.5px solid var(--line)', boxShadow: 'var(--shadow-lg)',
         cursor: 'default', padding: 0,

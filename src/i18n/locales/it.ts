@@ -97,6 +97,7 @@ const it: typeof en = {
       cancel: 'Annulla',
       addImage: 'Aggiungi immagine',
     },
+    resizeHandle: 'Ridimensiona inspector',
   },
   sidebar: {
     search: 'Cerca…',
@@ -107,6 +108,17 @@ const it: typeof en = {
     display: 'Visualizzazione',
     settings: 'Impostazioni',
     untitled: 'Senza titolo',
+    collapseSidebar: 'Comprimi pannello laterale',
+    newGraphTitle: 'Nuovo grafo',
+    deleteGraph: 'Elimina grafo',
+    renameHint: 'doppio clic per rinominare',
+    settingsTitle: 'Impostazioni (⌘,)',
+    stats: {
+      title: 'Statistiche',
+      concepts: 'Concetti',
+      links: 'Link',
+      zoom: 'Zoom',
+    },
     displayOptions: {
       heatmap: 'Mappa calore',
       edges: 'Archi',
@@ -145,6 +157,7 @@ const it: typeof en = {
     },
   },
   graphIO: {
+    moreOptions: 'Esporta · Importa · Scorciatoie',
     relationTypes: 'Tipi di relazione',
     relationTypesSub: '17 tipi · 6 categorie',
     exportGraph: 'Esporta grafo',
@@ -155,14 +168,16 @@ const it: typeof en = {
     shortcutsSub: 'Premi ? in qualsiasi momento',
   },
   bottomDock: {
-    center: 'Centra',
     addConcept: '+ concetto',
+    undoTitle: 'Annulla (⌘Z)',
+    redoTitle: 'Ripristina (⌘⇧Z)',
+    fitTitle: 'Centra / adatta (F)',
+    addConceptTitle: 'Aggiungi concetto',
   },
   topBar: {
     expandSidebar: 'Espandi pannello laterale',
     startReview: 'Avvia revisione (R)',
     review: 'Revisione',
-    stats: (concepts, links) => `${concepts} concetti · ${links} link`,
   },
   edgeTypes: {
     categories: {
@@ -199,6 +214,7 @@ const it: typeof en = {
   },
   mentor: {
     name: 'Socrate',
+    toggleTitle: 'Chiedi a Socrate',
     placeholder: (concept) => `Chiedi a Socrate di "${concept}"…`,
     placeholderGraph: 'Chiedi a Socrate del tuo grafo…',
     loadingModel: 'Caricamento modello locale…',

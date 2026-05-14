@@ -5,7 +5,6 @@ import { GraphCanvas } from './components/GraphCanvas'
 import { TopBar } from './components/TopBar'
 import { Sidebar, SIDEBAR_WIDTH } from './components/Sidebar'
 import { BottomDock } from './components/BottomDock'
-import { UndoRedoControls } from './components/UndoRedoControls'
 import { RelationTypesDialog } from './components/RelationTypesDialog'
 import {
   Inspector,
@@ -53,7 +52,7 @@ function AppInner() {
 
   const selectedNode = useGraphStore(selectedNodeSelector)
   const selectedEdge = useGraphStore(selectedEdgeSelector)
-  const { zoomIn, zoomOut, setViewport, setCenter, getNodes, getViewport, screenToFlowPosition } = useReactFlow()
+  const { setViewport, setCenter, getNodes, getViewport, screenToFlowPosition } = useReactFlow()
   const [zoom, setZoom] = useState(1)
 
   useAutoSave()
@@ -214,14 +213,6 @@ function AppInner() {
     setCenter(fx, fy, { zoom: Math.max(getViewport().zoom, 1), duration: 300 })
   }, [addNode, setCenter, getViewport, screenToFlowPosition, sidebarWidth, hasSelection, inspectorPanelWidth])
 
-  const handleZoomIn = useCallback(() => {
-    zoomIn({ duration: 200 })
-  }, [zoomIn])
-
-  const handleZoomOut = useCallback(() => {
-    zoomOut({ duration: 200 })
-  }, [zoomOut])
-
   return (
     <div style={{ position: 'fixed', inset: 0 }}>
       <GraphCanvas
@@ -238,6 +229,7 @@ function AppInner() {
         onSearch={() => setShowSearch(s => !s)}
         onSettings={() => setShowSettings(s => !s)}
         onSelectConcept={handleSelectNode}
+        zoom={zoom}
       />
 
       <TopBar
@@ -255,12 +247,12 @@ function AppInner() {
         panelWidth={inspectorPanelWidth}
         onPanelWidthChange={w => setInspectorPanelWidth(clampInspectorPanelWidth(w))}
       />
-      <UndoRedoControls onUndo={undo} onRedo={redo} canUndo={canUndo} canRedo={canRedo} />
       <BottomDock
-        onZoomIn={handleZoomIn}
-        onZoomOut={handleZoomOut}
         onFit={fitView}
-        zoom={zoom}
+        onUndo={undo}
+        onRedo={redo}
+        canUndo={canUndo}
+        canRedo={canRedo}
         onAddConcept={handleAddConcept}
         sidebarWidth={sidebarWidth}
       />

@@ -98,6 +98,7 @@ function InspectorPanel({
   onPanelWidthChange: (w: number) => void
   children: ReactNode
 }) {
+  const t = useT()
   function startResize(mouseDownClientX: number) {
     const startX = mouseDownClientX
     const startW = panelWidth
@@ -150,7 +151,7 @@ function InspectorPanel({
         aria-valuemin={INSPECTOR_PANEL_MIN_WIDTH}
         aria-valuemax={INSPECTOR_PANEL_MAX_WIDTH}
         aria-label={`Resize inspector width (${panelWidth}px). Arrow keys adjust width.`}
-        title="Drag to resize inspector"
+        title={t.inspector.resizeHandle}
         onMouseDown={onResizeEdgeMouseDown}
         onKeyDown={(e) => {
           const step = 12

@@ -19,7 +19,7 @@ interface Props {
 
 export function TopBar({ sidebarCollapsed, sidebarWidth, onExpandSidebar, onReview, onRelationTypes, onShortcuts }: Props) {
   const t = useT()
-  const { graphList, currentGraphId, nodes, edges } = useGraphStore()
+  const { graphList, currentGraphId, nodes } = useGraphStore()
   const current = graphList.find(g => g.id === currentGraphId)
   const [now, setNow] = useState(() => Date.now())
   useEffect(() => {
@@ -69,15 +69,6 @@ export function TopBar({ sidebarCollapsed, sidebarWidth, onExpandSidebar, onRevi
         }}>
           {current?.name ?? '…'}
         </h1>
-        <span style={{
-          font: "500 10.5px 'JetBrains Mono', ui-monospace",
-          color: 'var(--ink-4)',
-          padding: '2px 7px',
-          border: '0.5px solid var(--line)',
-          borderRadius: 4,
-        }}>
-          {t.topBar.stats(nodes.length, edges.length)}
-        </span>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>

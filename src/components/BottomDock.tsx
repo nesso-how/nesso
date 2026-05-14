@@ -2,15 +2,16 @@
 import { useT } from '@/i18n'
 
 interface Props {
-  onZoomIn: () => void
-  onZoomOut: () => void
   onFit: () => void
-  zoom: number
+  onUndo: () => void
+  onRedo: () => void
+  canUndo: boolean
+  canRedo: boolean
   onAddConcept: () => void
   sidebarWidth?: number
 }
 
-export function BottomDock({ onZoomIn, onZoomOut, onFit, zoom, onAddConcept, sidebarWidth = 0 }: Props) {
+export function BottomDock({ onFit, onUndo, onRedo, canUndo, canRedo, onAddConcept, sidebarWidth = 0 }: Props) {
   const t = useT()
   return (
     <div style={{
@@ -29,42 +30,30 @@ export function BottomDock({ onZoomIn, onZoomOut, onFit, zoom, onAddConcept, sid
       boxShadow: 'var(--shadow-md)',
       transition: 'left 180ms ease',
     }}>
-      <DockBtn onClick={onFit} title="Center / fit (F)" style={{ width: 'auto', padding: '0 12px', gap: 6, display: 'flex', alignItems: 'center' }}>
-        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M3 6V3h3M13 6V3h-3M3 10v3h3M13 10v3h-3" />
+      <DockBtn onClick={onUndo} title={t.bottomDock.undoTitle} disabled={!canUndo}>
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M3 7H11a3 3 0 0 1 0 6H8" /><path d="M6 4L3 7l3 3" />
         </svg>
-        <span style={{ font: "500 11.5px 'JetBrains Mono', ui-monospace" }}>{t.bottomDock.center}</span>
+      </DockBtn>
+      <DockBtn onClick={onRedo} title={t.bottomDock.redoTitle} disabled={!canRedo}>
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M13 7H5a3 3 0 0 0 0 6h3" /><path d="M10 4l3 3-3 3" />
+        </svg>
       </DockBtn>
 
       <Sep />
 
-      <DockBtn mono onClick={onZoomOut} title="Zoom out">−</DockBtn>
-
-      <button
-        onClick={onFit}
-        title="Reset zoom"
-        style={{
-          appearance: 'none', border: 0, background: 'transparent',
-          height: 28, padding: '0 8px',
-          font: "500 11.5px 'JetBrains Mono', ui-monospace",
-          color: 'var(--ink-3)',
-          cursor: 'default',
-          minWidth: 42,
-          textAlign: 'center',
-        }}
-        onMouseEnter={e => { e.currentTarget.style.color = 'var(--ink)' }}
-        onMouseLeave={e => { e.currentTarget.style.color = 'var(--ink-3)' }}
-      >
-        {Math.round(zoom * 100)}%
-      </button>
-
-      <DockBtn mono onClick={onZoomIn} title="Zoom in">+</DockBtn>
+      <DockBtn onClick={onFit} title={t.bottomDock.fitTitle}>
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M3 6V3h3M13 6V3h-3M3 10v3h3M13 10v3h-3" />
+        </svg>
+      </DockBtn>
 
       <Sep />
 
       <DockBtn
         onClick={onAddConcept}
-        title="Add concept"
+        title={t.bottomDock.addConceptTitle}
         style={{
           background: 'var(--ink)',
           color: 'var(--paper)',
@@ -84,38 +73,38 @@ function Sep() {
 }
 
 function DockBtn({
-  children, active, mono, onClick, style, title,
+  children, onClick, style, title, disabled,
 }: {
   children: React.ReactNode
-  active?: boolean
-  mono?: boolean
   onClick?: () => void
   style?: React.CSSProperties
   title?: string
+  disabled?: boolean
 }) {
   return (
     <button
       type="button"
       title={title}
       onClick={onClick}
+      disabled={disabled}
       style={{
         appearance: 'none',
         border: 0,
-        background: active ? 'var(--paper-deep)' : 'transparent',
-        color: active ? 'var(--ink)' : 'var(--ink-3)',
+        background: 'transparent',
+        color: 'var(--ink-3)',
         height: 28,
         minWidth: 28,
-        padding: mono ? 0 : '0 10px',
+        padding: '0 10px',
         borderRadius: 999,
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
-        cursor: 'default',
-        font: mono ? "500 15px 'Fraunces', serif" : 'inherit',
+        cursor: disabled ? 'not-allowed' : 'default',
+        opacity: disabled ? 0.35 : 1,
         ...style,
       }}
-      onMouseEnter={e => { if (!style?.background) { e.currentTarget.style.background = 'var(--paper-deep)'; e.currentTarget.style.color = 'var(--ink)' } }}
-      onMouseLeave={e => { if (!style?.background) { e.currentTarget.style.background = active ? 'var(--paper-deep)' : 'transparent'; e.currentTarget.style.color = active ? 'var(--ink)' : 'var(--ink-3)' } }}
+      onMouseEnter={e => { if (!disabled && !style?.background) { e.currentTarget.style.background = 'var(--paper-deep)'; e.currentTarget.style.color = 'var(--ink)' } }}
+      onMouseLeave={e => { if (!disabled && !style?.background) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--ink-3)' } }}
     >
       {children}
     </button>
