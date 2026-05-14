@@ -12,7 +12,7 @@
   --bg-card: #fffdf7;
   --line: rgba(26, 24, 20, 0.10);
   --line-strong: rgba(26, 24, 20, 0.20);
-  --grid-dot: rgba(26, 24, 20, 0.12);
+  --grid-dot: rgba(26, 24, 20, 0.18);
 
   /* Category colors — jewel tones tuned to sit on cream */
   --cat-taxonomic: #2f5d8e;
@@ -47,7 +47,7 @@
   --bg-card: #211e19;
   --line: rgba(240, 233, 216, 0.10);
   --line-strong: rgba(240, 233, 216, 0.20);
-  --grid-dot: rgba(240, 233, 216, 0.10);
+  --grid-dot: rgba(240, 233, 216, 0.15);
 
   --cat-taxonomic: #6f9bcb;
   --cat-structural: #b698d4;

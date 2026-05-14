@@ -149,7 +149,7 @@ export function GraphCanvas({
         <Background
           variant={BackgroundVariant.Dots}
           gap={28}
-          size={1.1}
+          size={1.5}
           color="var(--grid-dot)"
         />
       </ReactFlow>
