@@ -183,7 +183,7 @@ export function SettingsDialog({ open, onClose }: Props) {
         </div>
 
         {/* Content */}
-        <div style={{ flex: 1, padding: '24px 28px 24px', overflowY: 'auto', minWidth: 0 }}>
+        <div className="nesso-scrollbar" style={{ flex: 1, padding: '24px 28px 24px', overflowY: 'auto', minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22 }}>
             <span style={{ font: "500 14px 'Inter', system-ui", color: 'var(--ink)' }}>
               {t.settings.tabs[tab]}

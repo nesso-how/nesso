@@ -14,9 +14,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - **Bottom dock:** unified icon-only actions (including add concept); larger buttons.
 
+### Fixed
+
+- **Scroll areas:** themed `.nesso-scrollbar` on Sidebar body, Search palette, Settings content, mentor transcript, and Relation picker (consistent with Inspector and Relation types dialog).
+
 ### Documentation
 
-- **README:** roadmap — multiple selection marked complete.
+- **README:** roadmap — multiple selection marked complete; edge relation model — 21 types, 7 categories (including similarity).
 
 ## [0.1.0-alpha.10] - 2026-05-14
 

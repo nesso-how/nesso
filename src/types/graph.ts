@@ -45,14 +45,16 @@ export type EdgeCategory =
   | 'dependency'
   | 'temporal'
   | 'opposition'
+  | 'similarity'
 
 export type EdgeTypeName =
   | 'is-a' | 'instance-of' | 'subtype-of'
   | 'part-of' | 'made-of' | 'contains'
-  | 'causes' | 'produces' | 'enables' | 'prevents' | 'triggers'
-  | 'requires' | 'uses'
+  | 'causes' | 'produces' | 'enables' | 'prevents' | 'triggers' | 'inhibits'
+  | 'requires' | 'uses' | 'used-for'
   | 'precedes' | 'occurs-in'
   | 'contrasts-with' | 'opposite-of'
+  | 'similar-to' | 'analogous-to'
 
 export interface EdgeTypeDef {
   cat: EdgeCategory
@@ -66,6 +68,7 @@ export type GlyphKind =
   | 'triangle-up' | 'circle-dot' | 'diamond' | 'diamond-open' | 'hash'
   | 'arrow-right' | 'asterisk' | 'key' | 'block' | 'spark'
   | 'anchor' | 'tool' | 'chevron-r' | 'ring' | 'tilde' | 'x'
+  | 'minus' | 'flag' | 'approx' | 'arrows-lr'
 
 export type EdgeEncoding = 'full' | 'category' | 'minimal'
 export type CurveStyle = 'arc' | 'straight'

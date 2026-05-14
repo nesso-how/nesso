@@ -60,7 +60,7 @@ export function RelationPicker({ screenX, screenY, fromText, toText, onPick, onC
           </div>
         </div>
 
-        <div style={{ maxHeight: 380, overflowY: 'auto', padding: '4px 8px' }}>
+        <div className="nesso-scrollbar" style={{ maxHeight: 380, overflowY: 'auto', padding: '4px 8px' }}>
           {groups.map(g => (
             <div key={g.key} style={{ padding: '8px 4px 4px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 4px 4px' }}>

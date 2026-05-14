@@ -132,7 +132,7 @@ export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, onSelectC
         </div>
 
         {/* Scrollable body — block flow so sections stack naturally without flex pushing */}
-        <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+        <div className="nesso-scrollbar" style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
 
           {/* Graphs */}
           <div style={{ padding: '10px 12px 4px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

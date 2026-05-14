@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+import { useState } from 'react'
 import { EDGE_CATEGORIES, EDGE_TYPES } from '@/data/edgeTypes'
 import { GlyphSVG } from './GlyphSVG'
 import { CloseButton } from './CloseButton'
@@ -15,14 +16,30 @@ export function RelationTypesDialog({ open, onClose }: Props) {
   const t = useT()
   const { settings } = useGraphStore()
   const encoding = settings.edgeEncoding
+  const [query, setQuery] = useState('')
+  const [activeCategory, setActiveCategory] = useState<EdgeCategory | null>(null)
 
   if (!open) return null
 
-  const groups = Object.entries(EDGE_CATEGORIES).map(([k, c]) => ({
-    key: k as EdgeCategory,
-    ...c,
-    types: Object.entries(EDGE_TYPES).filter(([, edgeDef]) => edgeDef.cat === k) as [EdgeTypeName, (typeof EDGE_TYPES)[EdgeTypeName]][],
-  }))
+  const q = query.trim().toLowerCase()
+
+  const groups = Object.entries(EDGE_CATEGORIES)
+    .map(([k, c]) => ({
+      key: k as EdgeCategory,
+      ...c,
+      types: (Object.entries(EDGE_TYPES) as [EdgeTypeName, (typeof EDGE_TYPES)[EdgeTypeName]][])
+        .filter(([id, edgeDef]) => {
+          if (edgeDef.cat !== k) return false
+          if (activeCategory !== null && activeCategory !== k) return false
+          if (q) return t.edgeTypes.types[id].toLowerCase().includes(q) || id.includes(q)
+          return true
+        }),
+    }))
+    .filter(g => g.types.length > 0)
+
+  const totalTypes = Object.keys(EDGE_TYPES).length
+  const visibleTypes = groups.reduce((acc, g) => acc + g.types.length, 0)
+  const isFiltered = q !== '' || activeCategory !== null
 
   return (
     <div
@@ -50,11 +67,70 @@ export function RelationTypesDialog({ open, onClose }: Props) {
           minHeight: 0,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
           <div style={{ font: "500 11px 'JetBrains Mono', ui-monospace", textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--ink-4)' }}>
             {t.edgeTypes.dialogTitle}
           </div>
           <CloseButton onClick={onClose} />
+        </div>
+
+        <input
+          type="text"
+          autoComplete="off"
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          placeholder={t.edgeTypes.searchPlaceholder}
+          style={{
+            width: '100%',
+            boxSizing: 'border-box',
+            background: 'var(--paper-deep)',
+            border: '0.5px solid var(--line)',
+            borderRadius: 8,
+            padding: '7px 12px',
+            font: "400 12px 'JetBrains Mono', ui-monospace",
+            color: 'var(--ink-1)',
+            outline: 'none',
+            marginBottom: 10,
+          }}
+        />
+
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 14 }}>
+          <button
+            onClick={() => setActiveCategory(null)}
+            style={{
+              padding: '3px 10px',
+              borderRadius: 20,
+              border: `0.5px solid ${activeCategory === null ? 'var(--ink-2)' : 'var(--line)'}`,
+              background: activeCategory === null ? 'var(--paper-deep)' : 'transparent',
+              font: "500 10.5px 'JetBrains Mono', ui-monospace",
+              color: activeCategory === null ? 'var(--ink-2)' : 'var(--ink-4)',
+              cursor: 'pointer',
+              letterSpacing: '0.04em',
+            }}
+          >
+            {t.edgeTypes.allCategories}
+          </button>
+          {(Object.entries(EDGE_CATEGORIES) as [EdgeCategory, (typeof EDGE_CATEGORIES)[EdgeCategory]][]).map(([k, c]) => {
+            const isActive = activeCategory === k
+            return (
+              <button
+                key={k}
+                onClick={() => setActiveCategory(isActive ? null : k)}
+                style={{
+                  padding: '3px 10px',
+                  borderRadius: 20,
+                  border: `0.5px solid ${isActive ? c.color : 'var(--line)'}`,
+                  background: isActive ? 'var(--paper-deep)' : 'transparent',
+                  font: "500 10.5px 'JetBrains Mono', ui-monospace",
+                  color: isActive ? c.color : 'var(--ink-4)',
+                  cursor: 'pointer',
+                  letterSpacing: '0.04em',
+                }}
+              >
+                {t.edgeTypes.categories[k].label}
+              </button>
+            )
+          })}
         </div>
 
         <div
@@ -67,7 +143,17 @@ export function RelationTypesDialog({ open, onClose }: Props) {
             padding: '0 8px 8px',
           }}
         >
-          {groups.map(g => (
+          {groups.length === 0 ? (
+            <div style={{
+              padding: '32px 0',
+              textAlign: 'center',
+              font: "400 12px 'JetBrains Mono', ui-monospace",
+              color: 'var(--ink-4)',
+              fontStyle: 'italic',
+            }}>
+              {t.edgeTypes.noResults}
+            </div>
+          ) : groups.map(g => (
             <div key={g.key} style={{ padding: '6px 0 10px' }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, padding: '0 4px 8px', borderBottom: '0.5px solid var(--line)' }}>
                 <span style={{ width: 8, height: 8, borderRadius: '50%', background: g.color, display: 'inline-block', flexShrink: 0 }} />
@@ -144,7 +230,9 @@ export function RelationTypesDialog({ open, onClose }: Props) {
           font: "500 11px 'JetBrains Mono', ui-monospace",
           color: 'var(--ink-4)',
         }}>
-          {t.edgeTypes.relationKinds(Object.keys(EDGE_TYPES).length)}
+          {isFiltered
+            ? t.edgeTypes.filteredKinds(visibleTypes, totalTypes)
+            : t.edgeTypes.relationKinds(totalTypes)}
         </div>
       </div>
     </div>

@@ -30,6 +30,10 @@ export function GlyphSVG({ kind, color = 'currentColor', size = 14 }: Props) {
     case 'ring':         return <svg width={s} height={s} viewBox="0 0 14 14"><circle cx="7" cy="7" r="4.5" {...common} /></svg>
     case 'tilde':        return <svg width={s} height={s} viewBox="0 0 14 14"><path d="M2 8 Q4 5 7 7 T12 6" {...common} /></svg>
     case 'x':            return <svg width={s} height={s} viewBox="0 0 14 14"><path d="M3 3l8 8M11 3l-8 8" stroke={c} strokeWidth={1.8} strokeLinecap="round" fill="none" /></svg>
+    case 'minus':        return <svg width={s} height={s} viewBox="0 0 14 14"><path d="M3 7h8" stroke={c} strokeWidth={2} strokeLinecap="round" fill="none" /></svg>
+    case 'flag':         return <svg width={s} height={s} viewBox="0 0 14 14"><path d="M4 12V2M4 2l7 3.5L4 9" {...common} /></svg>
+    case 'approx':       return <svg width={s} height={s} viewBox="0 0 14 14"><path d="M2 5 Q4 3 7 5 T12 5" {...common} /><path d="M2 9 Q4 7 7 9 T12 9" {...common} /></svg>
+    case 'arrows-lr':    return <svg width={s} height={s} viewBox="0 0 14 14"><path d="M2 7h10M3.5 4.5L2 7l1.5 2.5M10.5 4.5L12 7l-1.5 2.5" {...common} /></svg>
     default: return null
   }
 }

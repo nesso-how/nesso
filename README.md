@@ -9,7 +9,7 @@ Nesso is an interactive concept map where nodes are ideas and edges are typed se
 ## Features
 
 - **Knowledge graph canvas** — add, move, and delete concept nodes and typed edges; drag a marquee or hold ⌘/Ctrl to multi-select, then bulk-delete from the dock
-- **17 semantic relation types** across 6 categories (taxonomic, structural, causal, dependency, temporal, opposition), each with a distinct line style and glyph
+- **21 semantic relation types** across 7 categories (taxonomic, structural, causal, dependency, temporal, opposition, similarity), each with a distinct line style and glyph
 - **Inspector panel** — edit concept text; inspect FSRS due date, stability, and last rating; change relation type in-place
 - **Socratic AI mentor** — opens a context-aware dialogue when you select a node or edge; probes understanding rather than explaining
 - **Spaced-repetition review mode** — FSRS (`ts-fsrs`) queues due concepts; rate Again / Hard / Good / Easy from the Review overlay (**R**)
@@ -62,16 +62,17 @@ React + Vite single-page app. `src/components/` holds all UI components, `src/st
 
 ## Edge relation model
 
-Edges carry a semantic `type` from 17 named relations grouped into 6 categories:
+Edges carry a semantic `type` from 21 named relations grouped into 7 categories:
 
-| Category   | Relations                                               |
-| ---------- | ------------------------------------------------------- |
-| Taxonomic  | `is-a`, `instance-of`, `subtype-of`                     |
-| Structural | `part-of`, `made-of`, `contains`                        |
-| Causal     | `causes`, `produces`, `enables`, `prevents`, `triggers` |
-| Dependency | `requires`, `uses`                                      |
-| Temporal   | `precedes`, `occurs-in`                                 |
-| Opposition | `contrasts-with`, `opposite-of`                         |
+| Category   | Relations                                                           |
+| ---------- | ------------------------------------------------------------------- |
+| Taxonomic  | `is-a`, `instance-of`, `subtype-of`                                 |
+| Structural | `part-of`, `made-of`, `contains`                                    |
+| Causal     | `causes`, `produces`, `enables`, `prevents`, `triggers`, `inhibits` |
+| Dependency | `requires`, `uses`, `used-for`                                      |
+| Temporal   | `precedes`, `occurs-in`                                             |
+| Opposition | `contrasts-with`, `opposite-of`                                     |
+| Similarity | `similar-to`, `analogous-to`                                        |
 
 Each relation has a line style (solid, dashed, dotted, double, wavy) and an SVG glyph. Encoding density is controlled by the `edgeEncoding` setting (`full`, `category`, `minimal`).
 

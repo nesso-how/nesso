@@ -274,8 +274,8 @@ export function MentorBubble() {
           </button>
         </div>
 
-        <div ref={scrollRef} style={{
-          padding: '14px 16px 6px', overflowY: 'auto', flex: 1, minHeight: 80, scrollbarWidth: 'thin',
+        <div ref={scrollRef} className="nesso-scrollbar" style={{
+          padding: '14px 16px 6px', overflowY: 'auto', flex: 1, minHeight: 80,
         }}>
           {modelLoading ? (
             <p style={{

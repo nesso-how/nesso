@@ -8,6 +8,7 @@ export const EDGE_CATEGORIES: Record<EdgeCategory, { label: string; color: strin
   dependency: { label: 'Dependency', color: 'var(--cat-dependency)', subtitle: 'What does it need?' },
   temporal:   { label: 'Temporal',   color: 'var(--cat-temporal)',   subtitle: 'When? Where?' },
   opposition: { label: 'Opposition', color: 'var(--cat-opposition)', subtitle: 'What does it contrast with?' },
+  similarity: { label: 'Similarity', color: 'var(--cat-similarity)', subtitle: 'What is it like?' },
 }
 
 export const EDGE_TYPES: Record<EdgeTypeName, EdgeTypeDef> = {
@@ -24,13 +25,18 @@ export const EDGE_TYPES: Record<EdgeTypeName, EdgeTypeDef> = {
   'enables':        { cat: 'causal',     line: 'dotted', glyph: 'key',          symmetric: false, label: 'enables' },
   'prevents':       { cat: 'causal',     line: 'dotted', glyph: 'block',        symmetric: false, label: 'prevents' },
   'triggers':       { cat: 'causal',     line: 'solid',  glyph: 'spark',        symmetric: false, label: 'triggers' },
+  'inhibits':       { cat: 'causal',     line: 'dotted', glyph: 'minus',        symmetric: false, label: 'inhibits' },
 
   'requires':       { cat: 'dependency', line: 'solid',  glyph: 'anchor',       symmetric: false, label: 'requires' },
   'uses':           { cat: 'dependency', line: 'dashed', glyph: 'tool',         symmetric: false, label: 'uses' },
+  'used-for':       { cat: 'dependency', line: 'dashed', glyph: 'flag',         symmetric: false, label: 'used for' },
 
   'precedes':       { cat: 'temporal',   line: 'solid',  glyph: 'chevron-r',    symmetric: false, label: 'precedes' },
   'occurs-in':      { cat: 'temporal',   line: 'dotted', glyph: 'ring',         symmetric: false, label: 'occurs in' },
 
   'contrasts-with': { cat: 'opposition', line: 'wavy',   glyph: 'tilde',        symmetric: true,  label: 'contrasts with' },
   'opposite-of':    { cat: 'opposition', line: 'double', glyph: 'x',            symmetric: true,  label: 'opposite of' },
+
+  'similar-to':     { cat: 'similarity', line: 'dashed', glyph: 'approx',       symmetric: true,  label: 'similar to' },
+  'analogous-to':   { cat: 'similarity', line: 'dotted', glyph: 'arrows-lr',    symmetric: true,  label: 'analogous to' },
 }

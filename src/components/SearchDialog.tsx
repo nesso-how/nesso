@@ -140,7 +140,7 @@ export function SearchDialog({ open, onClose, onSelectNode, onSelectGraph }: Pro
         </div>
 
         {hasResults && (
-          <div style={{ maxHeight: 360, overflowY: 'auto', scrollbarWidth: 'thin' }}>
+          <div className="nesso-scrollbar" style={{ maxHeight: 360, overflowY: 'auto' }}>
             {/* Graphs */}
             {graphResults.length > 0 && (
               <section>
