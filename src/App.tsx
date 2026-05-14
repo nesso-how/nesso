@@ -191,8 +191,28 @@ function AppInner() {
 
   const handleSelectNode = useCallback((node: { id: string; position: { x: number; y: number } }) => {
     setSelected({ kind: 'node', id: node.id })
-    setCenter(node.position.x + 100, node.position.y + 30, { zoom: 1.2, duration: 500 })
-  }, [setSelected, setCenter])
+
+    const liveNode = getNodes().find(n => n.id === node.id)
+    const w = liveNode?.measured?.width ?? 160
+    const h = liveNode?.measured?.height ?? 32
+
+    const TOP = 52
+    const BOTTOM = 80
+    const RIGHT = 30
+    const leftPad = sidebarWidth + INSPECTOR_CANVAS_LEFT_GUTTER + inspectorPanelWidth
+    const canvasW = window.innerWidth - leftPad - RIGHT
+    const canvasH = window.innerHeight - TOP - BOTTOM
+
+    const zoom = 1.2
+    setViewport(
+      {
+        x: leftPad + canvasW / 2 - (node.position.x + w / 2) * zoom,
+        y: TOP + canvasH / 2 - (node.position.y + h / 2) * zoom,
+        zoom,
+      },
+      { duration: 500 }
+    )
+  }, [setSelected, setViewport, getNodes, sidebarWidth, inspectorPanelWidth])
 
   const handleAddConcept = useCallback(() => {
     const topInset = 52

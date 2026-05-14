@@ -282,7 +282,25 @@ export const useGraphStore = create<GraphState>()(
           selected: s.selected?.id === id ? null : s.selected,
         })),
 
-      setSelected: (sel) => set({ selected: sel }),
+      setSelected: (sel) => set(s => {
+        // Guard against re-entrant calls (e.g. onSelectionChange reacting to
+        // a programmatic node.selected update firing back into this action).
+        if (s.selected?.kind === sel?.kind && s.selected?.id === sel?.id) return s
+
+        // When programmatically selecting a single node, mirror the selection
+        // into the nodes array so ConceptNode receives the correct `selected` prop.
+        if (sel?.kind === 'node') {
+          let changed = false
+          const nodes = s.nodes.map(n => {
+            const want = n.id === sel.id
+            if (Boolean(n.selected) !== want) { changed = true; return { ...n, selected: want } }
+            return n
+          })
+          return { selected: sel, nodes: changed ? nodes : s.nodes }
+        }
+
+        return { selected: sel }
+      }),
 
       setSelectedIds: (ids) => set({ selectedIds: ids }),
 
