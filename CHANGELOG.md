@@ -12,6 +12,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
+- **Inspector:** collapsible sections and inline edit pattern; canvas gutter aligned to panel edge inset (12px × 2).
+- **Review mode:** session progress bar and counter; FSRS next-interval hints on rating buttons; elaboration (definition, examples, image) and link layout; keyboard shortcuts via `ReviewKeyHandler`.
+- **Relation picker:** scroll area and horizontal padding for category groups.
+- **Theme / graph:** light paper and card tones; `--grid-dot` for React Flow dots (light/dark); slightly larger dots on the canvas.
+- **i18n (en / it):** review rating labels and related copy.
 - **Bottom dock:** unified icon-only actions (including add concept); larger buttons.
 
 ### Fixed
@@ -20,7 +25,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Documentation
 
-- **README:** roadmap — multiple selection marked complete; edge relation model — 21 types, 7 categories (including similarity).
+- **README:** roadmap — Inspector and Review dialog design items marked complete; multiple selection marked complete; edge relation model — 21 types, 7 categories (including similarity).
 
 ## [0.1.0-alpha.10] - 2026-05-14
 

@@ -39,7 +39,7 @@ export function RelationPicker({ screenX, screenY, fromText, toText, onPick, onC
           border: '0.5px solid var(--line)',
           borderRadius: 14,
           boxShadow: 'var(--shadow-lg)',
-          padding: '12px 0 8px',
+          padding: '12px 0 12px',
           font: "11.5px/1.4 'Inter', system-ui",
         }}
       >
@@ -60,50 +60,52 @@ export function RelationPicker({ screenX, screenY, fromText, toText, onPick, onC
           </div>
         </div>
 
-        <div className="nesso-scrollbar" style={{ maxHeight: 380, overflowY: 'auto', padding: '4px 8px' }}>
-          {groups.map(g => (
-            <div key={g.key} style={{ padding: '8px 4px 4px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 4px 4px' }}>
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: g.color, display: 'inline-block' }} />
-                <span style={{
-                  font: "600 9.5px 'JetBrains Mono', ui-monospace",
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.08em',
-                  color: g.color,
-                }}>
-                  {t.edgeTypes.categories[g.key].label}
-                </span>
+        <div className="nesso-scrollbar" style={{ maxHeight: 380, overflowY: 'auto', padding: '10px 0 14px' }}>
+          <div style={{ padding: '0 14px' }}>
+            {groups.map(g => (
+              <div key={g.key} style={{ padding: '8px 0 4px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 0 6px' }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: g.color, display: 'inline-block' }} />
+                  <span style={{
+                    font: "600 9.5px 'JetBrains Mono', ui-monospace",
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.08em',
+                    color: g.color,
+                  }}>
+                    {t.edgeTypes.categories[g.key].label}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                  {g.types.map(([id]) => (
+                    <button
+                      key={id}
+                      onClick={() => onPick(id)}
+                      style={{
+                        appearance: 'none',
+                        border: '0.5px solid var(--line)',
+                        background: 'transparent',
+                        color: 'var(--ink-2)',
+                        font: "500 11px 'JetBrains Mono', ui-monospace",
+                        padding: '4px 9px',
+                        borderRadius: 999,
+                        cursor: 'default',
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.borderColor = g.color
+                        e.currentTarget.style.color = g.color
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.borderColor = 'var(--line)'
+                        e.currentTarget.style.color = 'var(--ink-2)'
+                      }}
+                    >
+                      {t.edgeTypes.types[id]}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                {g.types.map(([id]) => (
-                  <button
-                    key={id}
-                    onClick={() => onPick(id)}
-                    style={{
-                      appearance: 'none',
-                      border: '0.5px solid var(--line)',
-                      background: 'transparent',
-                      color: 'var(--ink-2)',
-                      font: "500 11px 'JetBrains Mono', ui-monospace",
-                      padding: '4px 9px',
-                      borderRadius: 999,
-                      cursor: 'default',
-                    }}
-                    onMouseEnter={e => {
-                      e.currentTarget.style.borderColor = g.color
-                      e.currentTarget.style.color = g.color
-                    }}
-                    onMouseLeave={e => {
-                      e.currentTarget.style.borderColor = 'var(--line)'
-                      e.currentTarget.style.color = 'var(--ink-2)'
-                    }}
-                  >
-                    {t.edgeTypes.types[id]}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </div>

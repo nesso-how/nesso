@@ -105,8 +105,8 @@ Each relation has a line style (solid, dashed, dotted, double, wavy) and an SVG 
 
 ### Design
 
-- [ ] Inspector — refresh layout, typography, grouping, and visual hierarchy so the side panel stays easy to scan and consistent with canvas chrome
-- [ ] Review dialog — revamp spacing, typography, and controls so the FSRS overlay feels cohesive with the rest of the chrome
+- [x] Inspector — refresh layout, typography, grouping, and visual hierarchy so the side panel stays easy to scan and consistent with canvas chrome
+- [x] Review dialog — revamp spacing, typography, and controls so the FSRS overlay feels cohesive with the rest of the chrome
 
 ### Data & sync
 

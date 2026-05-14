@@ -53,6 +53,8 @@ const en = {
     close: 'Close',
     progress: (pos: number, total: number) => `Review · ${pos} of ${total}`,
     generatingQuestion: 'Generating question…',
+    recallLabel: 'Recall before revealing',
+    revealedLabel: 'How it connects',
     recallPrompt: 'Recall its relations before revealing.',
     reveal: 'Reveal',
     ratings: {
@@ -75,6 +77,7 @@ const en = {
       lastRating: 'Last rating',
     },
     dueNow: 'Due now',
+    relations: 'Relations',
     outgoing: 'Outgoing',
     incoming: 'Incoming',
     sharpen: 'Sharpen the relation',
@@ -86,7 +89,7 @@ const en = {
       examples: 'Examples',
       notes: 'Notes',
       definitionPlaceholder: 'In your own words…',
-      examplesPlaceholder: 'One per line, or write freely…',
+      examplesPlaceholder: 'Click + or press Shift+Enter to add examples.',
       notesPlaceholder: 'Anything else…',
     },
     image: {

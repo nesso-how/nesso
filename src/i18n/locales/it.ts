@@ -55,6 +55,8 @@ const it: typeof en = {
     close: 'Chiudi',
     progress: (pos, total) => `Revisione · ${pos} di ${total}`,
     generatingQuestion: 'Generazione domanda…',
+    recallLabel: 'Ricorda prima di rivelare',
+    revealedLabel: 'Come si collega',
     recallPrompt: 'Ricorda le relazioni prima di rivelare.',
     reveal: 'Rivela',
     ratings: {
@@ -77,6 +79,7 @@ const it: typeof en = {
       lastRating: 'Ultimo voto',
     },
     dueNow: 'In scadenza',
+    relations: 'Relazioni',
     outgoing: 'In uscita',
     incoming: 'In entrata',
     sharpen: 'Precisa la relazione',
@@ -88,7 +91,7 @@ const it: typeof en = {
       examples: 'Esempi',
       notes: 'Note',
       definitionPlaceholder: 'Con parole tue…',
-      examplesPlaceholder: 'Uno per riga, o scrivi liberamente…',
+      examplesPlaceholder: 'Clicca + o vai a capo per scrivere nuovi esempi.',
       notesPlaceholder: 'Qualsiasi altra cosa…',
     },
     image: {
