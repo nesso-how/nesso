@@ -8,7 +8,7 @@ Nesso is an interactive concept map where nodes are ideas and edges are typed se
 
 ## Features
 
-- **Knowledge graph canvas** — add, move, and delete concept nodes and typed edges
+- **Knowledge graph canvas** — add, move, and delete concept nodes and typed edges; drag a marquee or hold ⌘/Ctrl to multi-select, then bulk-delete from the dock
 - **17 semantic relation types** across 6 categories (taxonomic, structural, causal, dependency, temporal, opposition), each with a distinct line style and glyph
 - **Inspector panel** — edit concept text; inspect FSRS due date, stability, and last rating; change relation type in-place
 - **Socratic AI mentor** — opens a context-aware dialogue when you select a node or edge; probes understanding rather than explaining
