@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.0-alpha.11] - 2026-05-14
+
 ### Added
 
 - **Graph:** multi-selection (Shift drag rectangle, **⌘/Ctrl** additive click); **`selectedIds`** in the store with **Delete selected** on the bottom dock; **Delete**/**Backspace** remove nodes via React Flow with undo history.
@@ -204,7 +206,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial alpha: interactive knowledge graph (web + Tauri v2); desktop installers on GitHub Releases (macOS Apple silicon and Intel).
 
-[Unreleased]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.10...HEAD
+[Unreleased]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.11...HEAD
+[0.1.0-alpha.11]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.10...v0.1.0-alpha.11
 [0.1.0-alpha.10]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.9...v0.1.0-alpha.10
 [0.1.0-alpha.9]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.8...v0.1.0-alpha.9
 [0.1.0-alpha.8]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.7...v0.1.0-alpha.8
