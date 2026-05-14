@@ -1,9 +1,33 @@
 // SPDX-License-Identifier: MIT
-import { useState, useRef, useEffect, useMemo } from 'react'
+import { useState, useRef, useEffect, type MouseEvent as ReactMouseEvent } from 'react'
 import { useGraphStore } from '@/store/graph'
 import { useT } from '@/i18n'
 
-export const SIDEBAR_WIDTH = 248
+export const SIDEBAR_MIN_WIDTH = 180
+export const SIDEBAR_MAX_WIDTH = 380
+export const SIDEBAR_DEFAULT_WIDTH = 248
+
+const SIDEBAR_WIDTH_STORAGE_KEY = 'nesso-sidebar-width'
+
+export function clampSidebarWidth(w: number): number {
+  return Math.min(SIDEBAR_MAX_WIDTH, Math.max(SIDEBAR_MIN_WIDTH, Math.round(w)))
+}
+
+export function readSidebarWidth(): number {
+  try {
+    const raw = localStorage.getItem(SIDEBAR_WIDTH_STORAGE_KEY)
+    if (raw == null) return SIDEBAR_DEFAULT_WIDTH
+    return clampSidebarWidth(Number(raw))
+  } catch {
+    return SIDEBAR_DEFAULT_WIDTH
+  }
+}
+
+export function writeSidebarWidth(w: number): void {
+  try {
+    localStorage.setItem(SIDEBAR_WIDTH_STORAGE_KEY, String(clampSidebarWidth(w)))
+  } catch { /* ignore */ }
+}
 
 interface Props {
   collapsed: boolean
@@ -12,9 +36,11 @@ interface Props {
   onSettings: () => void
   onSelectConcept: (node: { id: string; position: { x: number; y: number } }) => void
   zoom: number
+  width: number
+  onWidthChange: (w: number) => void
 }
 
-export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, onSelectConcept, zoom }: Props) {
+export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, onSelectConcept, zoom, width, onWidthChange }: Props) {
   const t = useT()
   const {
     graphList, currentGraphId, loadGraph, createGraph, renameGraph, deleteGraph,
@@ -28,6 +54,7 @@ export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, onSelectC
   const inputRef = useRef<HTMLInputElement>(null)
   const [recentOpen, setRecentOpen] = useState(true)
   const [mapOpen, setMapOpen] = useState(true)
+  const [isResizing, setIsResizing] = useState(false)
 
   useEffect(() => {
     if (editingId && inputRef.current) {
@@ -73,18 +100,47 @@ export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, onSelectC
     .sort((a, b) => b.data.lastReview - a.data.lastReview)
     .slice(0, 5)
 
+  function startResize(mouseDownClientX: number) {
+    const startX = mouseDownClientX
+    const startW = width
+    setIsResizing(true)
+    function onMove(ev: MouseEvent) {
+      onWidthChange(clampSidebarWidth(startW + ev.clientX - startX))
+    }
+    function onUp() {
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+      document.body.style.removeProperty('cursor')
+      document.body.style.removeProperty('user-select')
+      setIsResizing(false)
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+  }
+
+  function onResizeHandleMouseDown(e: ReactMouseEvent) {
+    e.preventDefault()
+    startResize(e.clientX)
+  }
+
   return (
     <div style={{
       position: 'absolute',
       top: 0, left: 0, bottom: 0,
-      width: collapsed ? 0 : SIDEBAR_WIDTH,
+      width: collapsed ? 0 : width,
       zIndex: 30,
-      overflow: 'hidden',
-      transition: 'width 180ms ease',
-      background: 'var(--bg-elev)',
-      borderRight: '0.5px solid var(--line)',
+      transition: isResizing ? 'none' : 'width 180ms ease',
     }}>
-      <div style={{ width: SIDEBAR_WIDTH, height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <div style={{
+        overflow: 'hidden',
+        width: '100%',
+        height: '100%',
+        background: 'var(--bg-elev)',
+        borderRight: '0.5px solid var(--line)',
+      }}>
+      <div style={{ width, height: '100%', display: 'flex', flexDirection: 'column' }}>
 
         {/* Header */}
         <div style={{
@@ -393,6 +449,35 @@ export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, onSelectC
           </button>
         </div>
       </div>
+      </div>
+
+      {/* Resize handle — outside overflow:hidden wrapper so it can straddle the border */}
+      {!collapsed && (
+        <button
+          type="button"
+          aria-label="Resize sidebar"
+          onMouseDown={onResizeHandleMouseDown}
+          onKeyDown={(e) => {
+            const step = 12
+            if (e.key === 'ArrowLeft') { e.preventDefault(); onWidthChange(clampSidebarWidth(width - step)) }
+            if (e.key === 'ArrowRight') { e.preventDefault(); onWidthChange(clampSidebarWidth(width + step)) }
+          }}
+          style={{
+            position: 'absolute',
+            top: 0,
+            bottom: 0,
+            right: -4,
+            width: 8,
+            cursor: 'col-resize',
+            touchAction: 'none',
+            background: 'transparent',
+            border: 'none',
+            padding: 0,
+            margin: 0,
+            boxSizing: 'border-box',
+          }}
+        />
+      )}
     </div>
   )
 }

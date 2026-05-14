@@ -3,7 +3,12 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { ReactFlowProvider, useReactFlow } from '@xyflow/react'
 import { GraphCanvas } from './components/GraphCanvas'
 import { TopBar } from './components/TopBar'
-import { Sidebar, SIDEBAR_WIDTH } from './components/Sidebar'
+import {
+  Sidebar,
+  clampSidebarWidth,
+  readSidebarWidth,
+  writeSidebarWidth,
+} from './components/Sidebar'
 import { BottomDock } from './components/BottomDock'
 import { RelationTypesDialog } from './components/RelationTypesDialog'
 import {
@@ -57,7 +62,10 @@ function AppInner() {
 
   useAutoSave()
 
-  const sidebarWidth = sidebarCollapsed ? 0 : SIDEBAR_WIDTH
+  const [sidebarPanelWidth, setSidebarPanelWidth] = useState(readSidebarWidth)
+  useEffect(() => { writeSidebarWidth(sidebarPanelWidth) }, [sidebarPanelWidth])
+
+  const sidebarWidth = sidebarCollapsed ? 0 : sidebarPanelWidth
 
   const [inspectorPanelWidth, setInspectorPanelWidth] = useState(readInspectorPanelWidth)
 
@@ -245,6 +253,8 @@ function AppInner() {
         onSettings={() => setShowSettings(s => !s)}
         onSelectConcept={handleSelectNode}
         zoom={zoom}
+        width={sidebarPanelWidth}
+        onWidthChange={w => setSidebarPanelWidth(clampSidebarWidth(w))}
       />
 
       <TopBar

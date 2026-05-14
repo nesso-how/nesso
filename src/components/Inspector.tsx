@@ -166,11 +166,10 @@ function InspectorPanel({
         }}
         style={{
           position: 'absolute',
-          top: 10,
-          bottom: 10,
-          right: 4,
-          width: 10,
-          borderRadius: 5,
+          top: 0,
+          bottom: 0,
+          right: -4,
+          width: 8,
           cursor: 'col-resize',
           touchAction: 'none',
           background: 'transparent',
@@ -179,8 +178,6 @@ function InspectorPanel({
           margin: 0,
           boxSizing: 'border-box',
         }}
-        onMouseEnter={e => { e.currentTarget.style.background = 'color-mix(in srgb, var(--line) 55%, transparent)' }}
-        onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
       />
     </div>
   )
