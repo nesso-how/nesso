@@ -6,8 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.0-alpha.10] - 2026-05-14
+
 ### Added
 
+- **i18n:** English and Italian (`src/i18n`, `useT()`), language from Settings; Italian demo seeds (**biologia vegetale**, **sistema solare**); browser language used on first launch when the store is empty.
 - **Sidebar:** collapsible **Stats** (concept count, link count, zoom %).
 - **`avgRetention`:** `src/data/fsrsDueQueue.ts` helper averaging FSRS retrievability across reviewed concepts (evaluated at due vs now).
 
@@ -15,7 +18,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - **Bottom dock:** **Undo** / **Redo** live in the dock (removed floating **UndoRedoControls**); zoom **+**/**−** and percentage readout removed from the dock — **Center / fit (F)** remains.
 - **Top bar:** inline concept / link counts next to the graph title removed (counts moved under Sidebar **Stats**).
-- **i18n (en / it):** tooltips for dock actions, sidebar (collapse, new graph, settings, stats labels), GraphIO overflow menu, Inspector resize handle, mentor FAB toggle.
+- **i18n (en / it):** additional tooltips for dock, sidebar chrome, GraphIO overflow menu, Inspector resize handle, mentor FAB toggle.
+
+### Documentation
+
+- **Cursor rules:** `project.mdc` nudges updating `CHANGELOG.md` → **`[Unreleased]`** for notable changes (details in `changelog.mdc`).
 
 ## [0.1.0-alpha.9] - 2026-05-13
 
@@ -176,7 +183,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial alpha: interactive knowledge graph (web + Tauri v2); desktop installers on GitHub Releases (macOS Apple silicon and Intel).
 
-[Unreleased]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.9...HEAD
+[Unreleased]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.10...HEAD
+[0.1.0-alpha.10]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.9...v0.1.0-alpha.10
 [0.1.0-alpha.9]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.8...v0.1.0-alpha.9
 [0.1.0-alpha.8]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.7...v0.1.0-alpha.8
 [0.1.0-alpha.7]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.6...v0.1.0-alpha.7
