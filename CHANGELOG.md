@@ -6,6 +6,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.0-alpha.12] - 2026-05-14
+
+### Changed
+
+- **Brand:** nexus brandmark (SVG) in the sidebar; favicon and `public/icon/` assets; desktop app icons regenerated from the 512² tile artwork.
+
+### Fixed
+
+- **Favicon:** SVG tab icon follows `prefers-color-scheme` so the mark stays visible on dark browser chrome (e.g. Firefox).
+
 ## [0.1.0-alpha.11] - 2026-05-14
 
 ### Added
@@ -206,7 +216,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial alpha: interactive knowledge graph (web + Tauri v2); desktop installers on GitHub Releases (macOS Apple silicon and Intel).
 
-[Unreleased]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.11...HEAD
+[Unreleased]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.12...HEAD
+[0.1.0-alpha.12]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.11...v0.1.0-alpha.12
 [0.1.0-alpha.11]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.10...v0.1.0-alpha.11
 [0.1.0-alpha.10]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.9...v0.1.0-alpha.10
 [0.1.0-alpha.9]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.8...v0.1.0-alpha.9

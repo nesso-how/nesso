@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect, type MouseEvent as ReactMouseEvent } from 'react'
 import { useGraphStore } from '@/store/graph'
 import { useT } from '@/i18n'
+import { NessoMark } from './NessoMark'
 
 export const SIDEBAR_MIN_WIDTH = 180
 export const SIDEBAR_MAX_WIDTH = 380
@@ -149,13 +150,9 @@ export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, onSelectC
           borderBottom: '0.5px solid var(--line)',
           flexShrink: 0,
         }}>
-          <div style={{
-            width: 26, height: 26, borderRadius: 7,
-            background: 'var(--accent)', color: 'var(--paper)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            font: "600 13px 'Fraunces', ui-serif, Georgia, serif",
-            flexShrink: 0,
-          }}>N</div>
+          <div style={{ flexShrink: 0, color: 'var(--ink)', lineHeight: 0 }} aria-hidden>
+            <NessoMark size={26} />
+          </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ font: "500 13px 'Inter', ui-sans-serif", color: 'var(--ink)' }}>Nesso</div>
           </div>
