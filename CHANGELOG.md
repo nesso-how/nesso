@@ -6,6 +6,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- **Sidebar:** collapsible **Stats** (concept count, link count, zoom %).
+- **`avgRetention`:** `src/data/fsrsDueQueue.ts` helper averaging FSRS retrievability across reviewed concepts (evaluated at due vs now).
+
+### Changed
+
+- **Bottom dock:** **Undo** / **Redo** live in the dock (removed floating **UndoRedoControls**); zoom **+**/**−** and percentage readout removed from the dock — **Center / fit (F)** remains.
+- **Top bar:** inline concept / link counts next to the graph title removed (counts moved under Sidebar **Stats**).
+- **i18n (en / it):** tooltips for dock actions, sidebar (collapse, new graph, settings, stats labels), GraphIO overflow menu, Inspector resize handle, mentor FAB toggle.
+
 ## [0.1.0-alpha.9] - 2026-05-13
 
 ### Added
