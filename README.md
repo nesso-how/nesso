@@ -17,6 +17,7 @@ Nesso is an interactive concept map where nodes are ideas and edges are typed se
 - **Multiple graphs** — create, name, and switch between graphs; persisted in IndexedDB
 - **Provider-agnostic AI** — configure any OpenAI-compatible endpoint (Ollama locally, or any cloud provider) from Settings
 - **Edge encoding modes** — full (glyph + style), category (colour only), or minimal
+- **Localisation** — English and Italian UI; language is auto-detected on first launch and can be changed in Settings → Appearance; seed graphs are served in the detected language; the AI mentor and review prompts instruct the model to reply in the active language
 - **Theming** — dark/light toggle, accent colour, and per-category palette
 - **Desktop app** — macOS (Apple silicon + Intel) via Tauri v2, available on [GitHub Releases](https://github.com/cedoor/nesso/releases)
 
@@ -117,9 +118,9 @@ Each relation has a line style (solid, dashed, dotted, double, wavy) and an SVG 
 - [ ] GH Pages deployment _(pending public repo)_
 - [ ] Package extraction — modularise reusable parts as standalone npm libraries. Requires proper code review from dev.
 
-### Localization & docs
+### Localisation & docs
 
-- [ ] Translations — Italian and English to start
+- [x] Translations — Italian and English; auto-detected on first launch; all UI strings, seed graphs, AI system prompts, and relation type labels are locale-aware; adding a language requires one new locale file typed against `typeof en`
 - [ ] README rewrite — proper project presentation with screenshot, and architecture overview
 
 ## License

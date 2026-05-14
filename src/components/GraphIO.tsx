@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useGraphStore } from '@/store/graph'
 import type { Node as FlowNode, Edge } from '@xyflow/react'
 import type { ConceptNodeData } from '@/types/graph'
+import { useT } from '@/i18n'
 
 interface Props {
   onRelationTypes: () => void
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export function GraphIO({ onRelationTypes, onShortcuts }: Props) {
+  const t = useT()
   const { nodes, edges, graphList, currentGraphId, importGraph } = useGraphStore()
   const [open, setOpen] = useState(false)
   const wrapRef = useRef<HTMLDivElement>(null)
@@ -111,8 +113,7 @@ export function GraphIO({ onRelationTypes, onShortcuts }: Props) {
                 <path d="M2 4.5h10M2 8h10M2 11.5h7" />
               </svg>
             }
-            label="Relation types"
-            sub="17 types · 6 categories"
+            label={t.graphIO.relationTypes}
           />
           <div style={{ height: 1, background: 'var(--line)', margin: '4px 6px' }} />
           <MenuItem
@@ -122,8 +123,7 @@ export function GraphIO({ onRelationTypes, onShortcuts }: Props) {
                 <path d="M8 10V4M5 7l3-3 3 3" /><path d="M3 11v2h10v-2" />
               </svg>
             }
-            label="Export graph"
-            sub="Save as .json"
+            label={t.graphIO.exportGraph}
           />
           <MenuItem
             onClick={handleImport}
@@ -132,8 +132,7 @@ export function GraphIO({ onRelationTypes, onShortcuts }: Props) {
                 <path d="M8 4v6M5 7l3 3 3-3" /><path d="M3 11v2h10v-2" />
               </svg>
             }
-            label="Import graph"
-            sub="Open a .json file"
+            label={t.graphIO.importGraph}
           />
           <div style={{ height: 1, background: 'var(--line)', margin: '4px 6px' }} />
           <MenuItem
@@ -144,8 +143,7 @@ export function GraphIO({ onRelationTypes, onShortcuts }: Props) {
                 <path d="M4.5 8h1M7.5 8h1M10.5 8h1M5.5 11h5" />
               </svg>
             }
-            label="Keyboard shortcuts"
-            sub="Press ? anytime"
+            label={t.graphIO.keyboardShortcuts}
           />
         </div>
       )}
@@ -153,10 +151,9 @@ export function GraphIO({ onRelationTypes, onShortcuts }: Props) {
   )
 }
 
-function MenuItem({ icon, label, sub, onClick }: {
+function MenuItem({ icon, label, onClick }: {
   icon: React.ReactNode
   label: string
-  sub: string
   onClick: () => void
 }) {
   return (
@@ -178,10 +175,7 @@ function MenuItem({ icon, label, sub, onClick }: {
       onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
     >
       <span style={{ color: 'var(--ink-3)', flexShrink: 0 }}>{icon}</span>
-      <div>
-        <div style={{ font: "500 13px 'Fraunces', ui-serif, Georgia, serif", color: 'var(--ink)', letterSpacing: '-0.005em' }}>{label}</div>
-        <div style={{ font: "500 10px 'JetBrains Mono', ui-monospace", color: 'var(--ink-4)', marginTop: 1 }}>{sub}</div>
-      </div>
+      <span style={{ font: "500 13px 'Fraunces', ui-serif, Georgia, serif", color: 'var(--ink)', letterSpacing: '-0.005em' }}>{label}</span>
     </button>
   )
 }

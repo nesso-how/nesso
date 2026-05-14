@@ -3,10 +3,15 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { applyNodeChanges, applyEdgeChanges } from '@xyflow/react'
 import type { Node, Edge, NodeChange, EdgeChange } from '@xyflow/react'
-import type { ConceptNodeData, NessoSettings, EdgeTypeName } from '@/types/graph'
+import type { ConceptNodeData, NessoSettings, EdgeTypeName, Language } from '@/types/graph'
 import { CONCEPT_HANDLE_IN, CONCEPT_HANDLE_OUT } from '@/data/conceptHandles'
-import { SEEDS, type Seed } from '@/data/seedGraph'
+import { SEEDS, ALL_SEEDS, getSeedsForLanguage, type Seed } from '@/data/seedGraph'
 import { dbSaveGraph, dbLoadGraph, dbListGraphs, dbDeleteGraph } from './db'
+
+function detectBrowserLanguage(): Language {
+  const lang = typeof navigator !== 'undefined' ? navigator.language.split('-')[0] : 'en'
+  return lang === 'it' ? 'it' : 'en'
+}
 import type { GraphRecord } from './db'
 
 type Selection =
@@ -117,6 +122,7 @@ export const useGraphStore = create<GraphState>()(
       settings: {
         dark: false,
         accent: '#b14a2e',
+        language: 'en' as const,
         edgeEncoding: 'full',
         showLabels: false,
         showConfidence: true,
@@ -281,17 +287,21 @@ export const useGraphStore = create<GraphState>()(
       loadGraphList: async () => {
         let records = await dbListGraphs()
 
-        // First-launch bootstrap: import all bundled seeds when the DB is empty.
-        // Save in reverse so SEEDS[0] gets the latest updatedAt and appears
-        // first in the sidebar — matching the default currentGraphId.
+        // First-launch bootstrap: import language-appropriate seeds when the DB is empty.
+        // Detect browser language and persist it; save seeds in reverse so seeds[0]
+        // gets the latest updatedAt and appears first in the sidebar.
         if (records.length === 0) {
+          const lang = detectBrowserLanguage()
+          set(s => ({ settings: { ...s.settings, language: lang } }))
+          const seeds = getSeedsForLanguage(lang)
           const seeded: GraphRecord[] = []
-          for (let i = SEEDS.length - 1; i >= 0; i--) {
-            const rec = makeSeedRecord(SEEDS[i])
+          for (let i = seeds.length - 1; i >= 0; i--) {
+            const rec = makeSeedRecord(seeds[i])
             await dbSaveGraph(rec)
             seeded.unshift(rec)
           }
           records = seeded
+          set({ currentGraphId: seeds[0].id })
         }
 
         const list = records.map(r => ({ id: r.id, name: r.name, updatedAt: r.updatedAt }))
@@ -302,7 +312,7 @@ export const useGraphStore = create<GraphState>()(
       loadGraph: async (id) => {
         let record = await dbLoadGraph(id)
         if (!record) {
-          const seed = SEEDS.find(s => s.id === id)
+          const seed = ALL_SEEDS.find(s => s.id === id)
           if (seed) {
             record = makeSeedRecord(seed)
             await dbSaveGraph(record)

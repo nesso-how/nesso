@@ -7,6 +7,7 @@ import { useGraphStore } from '@/store/graph'
 import { nodeToCard, type EdgeTypeName } from '@/types/graph'
 import { fetchCompletion, isAiReady } from '@/llm/completion'
 import { useWebLLM } from '@/llm/webllm'
+import { useT } from '@/i18n'
 
 const REVIEW_QUESTION_SYSTEM =
   'You are a Socratic tutor. Given a concept from a knowledge graph and its semantic connections, write one concise question that tests the learner\'s relational understanding. Output only the question, nothing else. No preamble, no asterisks, no markdown.'
@@ -15,12 +16,6 @@ const REVIEW_ANSWER_SYSTEM =
   'You are a Socratic tutor. A learner just reviewed a concept. Provide a concise, direct answer to the question you asked, explaining the key insight from the graph relations. Under 80 words. No emojis, no asterisks, no markdown.'
 
 const RATINGS = [Rating.Again, Rating.Hard, Rating.Good, Rating.Easy] as const
-const RATING_LABEL: Record<(typeof RATINGS)[number], string> = {
-  [Rating.Again]: 'Again',
-  [Rating.Hard]: 'Hard',
-  [Rating.Good]: 'Good',
-  [Rating.Easy]: 'Easy',
-}
 
 interface Props {
   open: boolean
@@ -28,6 +23,7 @@ interface Props {
 }
 
 export function ReviewMode({ open, onClose }: Props) {
+  const t = useT()
   const { nodes, edges, updateNodeData, settings } = useGraphStore()
   const [idx, setIdx] = useState(0)
   const [revealed, setRevealed] = useState(false)
@@ -101,10 +97,11 @@ export function ReviewMode({ open, onClose }: Props) {
       : `Concept: "${currentNode.data.text}"`
 
     const run = async () => {
+      const langSuffix = settings.language === 'it' ? ' Respond in Italian.' : ''
       try {
         const q = await fetchCompletion(
           settings,
-          [{ role: 'system', content: REVIEW_QUESTION_SYSTEM }, { role: 'user', content: userMsg }],
+          [{ role: 'system', content: REVIEW_QUESTION_SYSTEM + langSuffix }, { role: 'user', content: userMsg }],
           80,
           controller.signal,
         )
@@ -116,7 +113,7 @@ export function ReviewMode({ open, onClose }: Props) {
         const a = await fetchCompletion(
           settings,
           [
-            { role: 'system', content: REVIEW_ANSWER_SYSTEM },
+            { role: 'system', content: REVIEW_ANSWER_SYSTEM + langSuffix },
             { role: 'user', content: `${userMsg}\nQuestion asked: "${q.trim()}"` },
           ],
           150,
@@ -183,15 +180,15 @@ export function ReviewMode({ open, onClose }: Props) {
     return (
       <Overlay onClose={onClose}>
         <div style={{ font: "500 11px 'JetBrains Mono', ui-monospace", textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--cat-temporal)' }}>
-          Review · all caught up
+          {t.review.allCaughtUp}
         </div>
         <h2 style={{ margin: '12px 0 8px', font: "500 32px/1.15 'Fraunces', serif" }}>
-          Nothing due.
+          {t.review.nothingDue}
         </h2>
         <p style={{ font: "400 15px/1.5 'Fraunces', serif", color: 'var(--ink-2)' }}>
-          Come back when cards are due, or pick a concept from the graph.
+          {t.review.nothingDueDesc}
         </p>
-        <Btn primary onClick={onClose}>Close</Btn>
+        <Btn primary onClick={onClose}>{t.review.close}</Btn>
       </Overlay>
     )
   }
@@ -208,23 +205,23 @@ export function ReviewMode({ open, onClose }: Props) {
   return (
     <Overlay onClose={onClose}>
       <div style={{ font: "500 11px 'JetBrains Mono', ui-monospace", textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--cat-causal)' }}>
-        Review · {sessionPosition} of {sessionTotal}
+        {t.review.progress(sessionPosition, sessionTotal)}
       </div>
       <h2 style={{ margin: '16px 0 6px', font: "500 44px/1.05 'Fraunces', serif", letterSpacing: '-0.02em' }}>
         {node.data.text}
       </h2>
       <div style={{ marginBottom: 18, minHeight: 24 }}>
         {questionLoading ? (
-          <span style={{ color: 'var(--ink-4)', font: "400 12px 'JetBrains Mono', ui-monospace" }}>Generating question…</span>
+          <span style={{ color: 'var(--ink-4)', font: "400 12px 'JetBrains Mono', ui-monospace" }}>{t.review.generatingQuestion}</span>
         ) : question ? (
           <span style={{ font: "400 15px/1.5 'Fraunces', serif", color: 'var(--ink-2)' }}>{question}</span>
         ) : (
-          <span style={{ font: "400 13px/1.4 'Fraunces', serif", fontStyle: 'italic', color: 'var(--ink-3)' }}>Recall its relations before revealing.</span>
+          <span style={{ font: "400 13px/1.4 'Fraunces', serif", fontStyle: 'italic', color: 'var(--ink-3)' }}>{t.review.recallPrompt}</span>
         )}
       </div>
 
       {!revealed ? (
-        <Btn primary onClick={() => setRevealed(true)}>Reveal</Btn>
+        <Btn primary onClick={() => setRevealed(true)}>{t.review.reveal}</Btn>
       ) : (
         <>
           <div style={{ borderTop: '0.5px dashed var(--line)', paddingTop: 14, marginBottom: 18 }}>
@@ -234,7 +231,7 @@ export function ReviewMode({ open, onClose }: Props) {
               const target = nodes.find(n => n.id === e.target)
               return (
                 <div key={e.id} style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 6 }}>
-                  <span style={{ font: "500 11px 'JetBrains Mono', ui-monospace", color: C.color, minWidth: 110 }}>{T.label}</span>
+                  <span style={{ font: "500 11px 'JetBrains Mono', ui-monospace", color: C.color, minWidth: 110 }}>{t.edgeTypes.types[e.data?.type as EdgeTypeName]}</span>
                   <span style={{ font: "400 14px 'Fraunces', serif" }}>{target?.data.text}</span>
                 </div>
               )
@@ -245,7 +242,7 @@ export function ReviewMode({ open, onClose }: Props) {
               const source = nodes.find(n => n.id === e.source)
               return (
                 <div key={e.id} style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 6, opacity: 0.7 }}>
-                  <span style={{ font: "500 11px 'JetBrains Mono', ui-monospace", color: C.color, minWidth: 110 }}>← {T.label}</span>
+                  <span style={{ font: "500 11px 'JetBrains Mono', ui-monospace", color: C.color, minWidth: 110 }}>← {t.edgeTypes.types[e.data?.type as EdgeTypeName]}</span>
                   <span style={{ font: "400 14px 'Fraunces', serif" }}>{source?.data.text}</span>
                 </div>
               )
@@ -263,21 +260,29 @@ export function ReviewMode({ open, onClose }: Props) {
           )}
 
           <div style={{ display: 'flex', gap: 6 }}>
-            {RATINGS.map(r => (
-              <button key={r} onClick={() => advance(r)} style={{
-                flex: 1,
-                appearance: 'none',
-                border: '0.5px solid var(--line)',
-                background: `var(--conf-${r})`,
-                color: 'var(--paper)',
-                font: "600 11px 'JetBrains Mono', ui-monospace",
-                padding: 10,
-                borderRadius: 8,
-                cursor: 'default',
-              }}>
-                {RATING_LABEL[r]}
-              </button>
-            ))}
+            {RATINGS.map(r => {
+              const ratingLabels: Record<(typeof RATINGS)[number], string> = {
+                [Rating.Again]: t.review.ratings.again,
+                [Rating.Hard]: t.review.ratings.hard,
+                [Rating.Good]: t.review.ratings.good,
+                [Rating.Easy]: t.review.ratings.easy,
+              }
+              return (
+                <button key={r} onClick={() => advance(r)} style={{
+                  flex: 1,
+                  appearance: 'none',
+                  border: '0.5px solid var(--line)',
+                  background: `var(--conf-${r})`,
+                  color: 'var(--paper)',
+                  font: "600 11px 'JetBrains Mono', ui-monospace",
+                  padding: 10,
+                  borderRadius: 8,
+                  cursor: 'default',
+                }}>
+                  {ratingLabels[r]}
+                </button>
+              )
+            })}
           </div>
         </>
       )}

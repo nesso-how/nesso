@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: MIT
+import { useT } from '@/i18n'
+
 interface Props {
   onZoomIn: () => void
   onZoomOut: () => void
@@ -9,6 +11,7 @@ interface Props {
 }
 
 export function BottomDock({ onZoomIn, onZoomOut, onFit, zoom, onAddConcept, sidebarWidth = 0 }: Props) {
+  const t = useT()
   return (
     <div style={{
       position: 'absolute',
@@ -30,7 +33,7 @@ export function BottomDock({ onZoomIn, onZoomOut, onFit, zoom, onAddConcept, sid
         <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
           <path d="M3 6V3h3M13 6V3h-3M3 10v3h3M13 10v3h-3" />
         </svg>
-        <span style={{ font: "500 11.5px 'JetBrains Mono', ui-monospace" }}>Center</span>
+        <span style={{ font: "500 11.5px 'JetBrains Mono', ui-monospace" }}>{t.bottomDock.center}</span>
       </DockBtn>
 
       <Sep />
@@ -70,7 +73,7 @@ export function BottomDock({ onZoomIn, onZoomOut, onFit, zoom, onAddConcept, sid
           gap: 6,
         }}
       >
-        <span style={{ font: "500 11.5px 'JetBrains Mono', ui-monospace" }}>+ concept</span>
+        <span style={{ font: "500 11.5px 'JetBrains Mono', ui-monospace" }}>{t.bottomDock.addConcept}</span>
       </DockBtn>
     </div>
   )

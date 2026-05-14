@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 import { CloseButton } from './CloseButton'
+import { useT } from '@/i18n'
 
 interface Props {
   open: boolean
@@ -9,28 +10,30 @@ interface Props {
 const isMac = typeof navigator !== 'undefined' && /mac/i.test(navigator.platform)
 const mod = isMac ? '⌘' : 'Ctrl'
 
-const SECTIONS: { heading: string; rows: { keys: string[]; label: string }[] }[] = [
-  {
-    heading: 'General',
-    rows: [
-      { keys: ['?'], label: 'Show keyboard shortcuts' },
-      { keys: [mod, ','], label: 'Settings (AI endpoint)' },
-      { keys: ['Esc'], label: 'Close dialog / deselect' },
-    ],
-  },
-  {
-    heading: 'Graph',
-    rows: [
-      { keys: [mod, 'K'], label: 'Search concepts' },
-      { keys: ['R'], label: 'Start spaced-repetition review' },
-      { keys: ['Del'], label: 'Delete selected concept or relation' },
-      { keys: [mod, 'Z'], label: 'Undo last graph edit' },
-      { keys: [mod, 'Shift', 'Z'], label: 'Redo' },
-    ],
-  },
-]
-
 export function ShortcutsDialog({ open, onClose }: Props) {
+  const t = useT()
+
+  const SECTIONS = [
+    {
+      heading: t.shortcuts.sections.general,
+      rows: [
+        { keys: ['?'], label: t.shortcuts.rows.showShortcuts },
+        { keys: [mod, ','], label: t.shortcuts.rows.settings },
+        { keys: ['Esc'], label: t.shortcuts.rows.close },
+      ],
+    },
+    {
+      heading: t.shortcuts.sections.graph,
+      rows: [
+        { keys: [mod, 'K'], label: t.shortcuts.rows.search },
+        { keys: ['R'], label: t.shortcuts.rows.review },
+        { keys: ['Del'], label: t.shortcuts.rows.delete },
+        { keys: [mod, 'Z'], label: t.shortcuts.rows.undo },
+        { keys: [mod, 'Shift', 'Z'], label: t.shortcuts.rows.redo },
+      ],
+    },
+  ]
+
   if (!open) return null
 
   return (
@@ -56,7 +59,7 @@ export function ShortcutsDialog({ open, onClose }: Props) {
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
           <div style={{ font: "500 11px 'JetBrains Mono', ui-monospace", textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--ink-4)' }}>
-            Keyboard shortcuts
+            {t.shortcuts.title}
           </div>
           <CloseButton onClick={onClose} />
         </div>

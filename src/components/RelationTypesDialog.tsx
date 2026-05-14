@@ -3,7 +3,8 @@ import { EDGE_CATEGORIES, EDGE_TYPES } from '@/data/edgeTypes'
 import { GlyphSVG } from './GlyphSVG'
 import { CloseButton } from './CloseButton'
 import { useGraphStore } from '@/store/graph'
-import type { EdgeTypeName } from '@/types/graph'
+import type { EdgeCategory, EdgeTypeName } from '@/types/graph'
+import { useT } from '@/i18n'
 
 interface Props {
   open: boolean
@@ -11,15 +12,16 @@ interface Props {
 }
 
 export function RelationTypesDialog({ open, onClose }: Props) {
+  const t = useT()
   const { settings } = useGraphStore()
   const encoding = settings.edgeEncoding
 
   if (!open) return null
 
   const groups = Object.entries(EDGE_CATEGORIES).map(([k, c]) => ({
-    key: k,
+    key: k as EdgeCategory,
     ...c,
-    types: Object.entries(EDGE_TYPES).filter(([, t]) => t.cat === k) as [EdgeTypeName, (typeof EDGE_TYPES)[EdgeTypeName]][],
+    types: Object.entries(EDGE_TYPES).filter(([, edgeDef]) => edgeDef.cat === k) as [EdgeTypeName, (typeof EDGE_TYPES)[EdgeTypeName]][],
   }))
 
   return (
@@ -50,19 +52,21 @@ export function RelationTypesDialog({ open, onClose }: Props) {
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
           <div style={{ font: "500 11px 'JetBrains Mono', ui-monospace", textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--ink-4)' }}>
-            Relation types
+            {t.edgeTypes.dialogTitle}
           </div>
           <CloseButton onClick={onClose} />
         </div>
 
-        <div style={{
-          flex: 1,
-          overflowY: 'auto',
-          minHeight: 0,
-          margin: '0 -8px',
-          padding: '0 8px 8px',
-          scrollbarWidth: 'thin',
-        }}>
+        <div
+          className="nesso-scrollbar"
+          style={{
+            flex: 1,
+            overflowY: 'auto',
+            minHeight: 0,
+            margin: '0 -8px',
+            padding: '0 8px 8px',
+          }}
+        >
           {groups.map(g => (
             <div key={g.key} style={{ padding: '6px 0 10px' }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, padding: '0 4px 8px', borderBottom: '0.5px solid var(--line)' }}>
@@ -73,14 +77,14 @@ export function RelationTypesDialog({ open, onClose }: Props) {
                   letterSpacing: '0.08em',
                   color: g.color,
                 }}>
-                  {g.label}
+                  {t.edgeTypes.categories[g.key].label}
                 </span>
                 <small style={{ color: 'var(--ink-4)', fontSize: 10.5, fontStyle: 'italic', fontFamily: 'Fraunces, serif' }}>
-                  {g.subtitle}
+                  {t.edgeTypes.categories[g.key].subtitle}
                 </small>
               </div>
 
-              {g.types.map(([id, t]) => (
+              {g.types.map(([id, edgeDef]) => (
                 <div key={id} style={{
                   display: 'grid',
                   gridTemplateColumns: '36px 1fr auto',
@@ -100,9 +104,9 @@ export function RelationTypesDialog({ open, onClose }: Props) {
                       strokeWidth={1.4}
                       strokeLinecap="round"
                       strokeDasharray={
-                        t.line === 'dashed' ? '6 5' :
-                        t.line === 'dotted' ? '0.1 5' :
-                        t.line === 'wavy' ? '1 4' : '0'
+                        edgeDef.line === 'dashed' ? '6 5' :
+                        edgeDef.line === 'dotted' ? '0.1 5' :
+                        edgeDef.line === 'wavy' ? '1 4' : '0'
                       }
                     />
                     <circle cx="18" cy="7" r="6.5"
@@ -111,7 +115,7 @@ export function RelationTypesDialog({ open, onClose }: Props) {
                       strokeWidth={0.8}
                     />
                     <g transform="translate(11, 0)">
-                      <GlyphSVG kind={t.glyph} color={encoding === 'minimal' ? 'var(--ink-3)' : g.color} size={14} />
+                      <GlyphSVG kind={edgeDef.glyph} color={encoding === 'minimal' ? 'var(--ink-3)' : g.color} size={14} />
                     </g>
                   </svg>
 
@@ -119,12 +123,12 @@ export function RelationTypesDialog({ open, onClose }: Props) {
                     font: "500 12px 'JetBrains Mono', ui-monospace",
                     color: encoding === 'minimal' ? 'var(--ink-2)' : g.color,
                   }}>
-                    {t.label}
+                    {t.edgeTypes.types[id]}
                   </span>
 
-                  {t.symmetric && (
+                  {edgeDef.symmetric && (
                     <span style={{ color: 'var(--ink-4)', fontSize: 10, fontFamily: 'Fraunces, serif', fontStyle: 'italic' }}>
-                      symmetric
+                      {t.edgeTypes.symmetric}
                     </span>
                   )}
                 </div>
@@ -140,7 +144,7 @@ export function RelationTypesDialog({ open, onClose }: Props) {
           font: "500 11px 'JetBrains Mono', ui-monospace",
           color: 'var(--ink-4)',
         }}>
-          {Object.keys(EDGE_TYPES).length} relation kinds
+          {t.edgeTypes.relationKinds(Object.keys(EDGE_TYPES).length)}
         </div>
       </div>
     </div>

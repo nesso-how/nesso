@@ -71,9 +71,12 @@ export type EdgeEncoding = 'full' | 'category' | 'minimal'
 export type CurveStyle = 'arc' | 'straight'
 export type CategoryPalette = 'default' | 'vivid' | 'muted' | 'monoCat'
 
+export type Language = 'en' | 'it'
+
 export interface NessoSettings {
   dark: boolean
   accent: string
+  language: Language
   edgeEncoding: EdgeEncoding
   showLabels: boolean
   showConfidence: boolean

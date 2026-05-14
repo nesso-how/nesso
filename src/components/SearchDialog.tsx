@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import type { Node } from '@xyflow/react'
 import { useGraphStore } from '@/store/graph'
 import type { ConceptNodeData } from '@/types/graph'
+import { useT } from '@/i18n'
 
 interface Props {
   open: boolean
@@ -24,6 +25,7 @@ function timeAgo(ts: number): string {
 }
 
 export function SearchDialog({ open, onClose, onSelectNode, onSelectGraph }: Props) {
+  const t = useT()
   const { nodes, graphList, currentGraphId } = useGraphStore()
   const [query, setQuery] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
@@ -114,7 +116,7 @@ export function SearchDialog({ open, onClose, onSelectNode, onSelectGraph }: Pro
             value={query}
             onChange={e => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Search graphs and concepts…"
+            placeholder={t.search.placeholder}
             style={{
               flex: 1, appearance: 'none', border: 0, outline: 0,
               background: 'transparent', color: 'var(--ink)',
@@ -142,7 +144,7 @@ export function SearchDialog({ open, onClose, onSelectNode, onSelectGraph }: Pro
             {/* Graphs */}
             {graphResults.length > 0 && (
               <section>
-                <SectionLabel>Graphs</SectionLabel>
+                <SectionLabel>{t.search.graphs}</SectionLabel>
                 {graphResults.map(g => {
                   const active = g.id === currentGraphId
                   return (
@@ -171,7 +173,7 @@ export function SearchDialog({ open, onClose, onSelectNode, onSelectGraph }: Pro
                         {g.name}
                       </span>
                       <span style={{ font: "500 10.5px 'JetBrains Mono', ui-monospace", color: 'var(--ink-4)', flexShrink: 0 }}>
-                        {active ? 'open' : timeAgo(g.updatedAt)}
+                        {active ? t.search.open : timeAgo(g.updatedAt)}
                       </span>
                     </button>
                   )
@@ -186,7 +188,7 @@ export function SearchDialog({ open, onClose, onSelectNode, onSelectGraph }: Pro
             {/* Concepts */}
             {conceptResults.length > 0 && (
               <section>
-                <SectionLabel>Concepts</SectionLabel>
+                <SectionLabel>{t.search.concepts}</SectionLabel>
                 {conceptResults.map(node => (
                   <button
                     key={node.id}
@@ -224,7 +226,7 @@ export function SearchDialog({ open, onClose, onSelectNode, onSelectGraph }: Pro
             font: "400 13px 'Inter', system-ui",
             color: 'var(--ink-4)',
           }}>
-            No results for "{query}".
+            {t.search.noResults(query)}
           </p>
         )}
       </div>

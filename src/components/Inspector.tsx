@@ -6,6 +6,7 @@ import { GlyphSVG } from './GlyphSVG'
 import { TOPBAR_HEIGHT_PX } from './TopBar'
 import { useGraphStore, selectedNodeSelector, selectedEdgeSelector } from '@/store/graph'
 import type { ConceptElaboration, EdgeTypeName, ConceptNodeData } from '@/types/graph'
+import { useT } from '@/i18n'
 
 /** Added to inspector width when computing canvas left inset (matches 296px panel → 326px inset). */
 export const INSPECTOR_CANVAS_LEFT_GUTTER = 30
@@ -46,10 +47,8 @@ const INSPECTOR_FOOTER_MARGIN_TOP = 14
 /** Matches App `bottomInset`; keeps inspector clear of BottomDock canvas padding. */
 const INSPECTOR_VIEWPORT_BOTTOM_RESERVE = 80
 
-const RATING_NAMES = ['—', 'Again', 'Hard', 'Good', 'Easy']
-
-function formatConceptDue(dueMs: number): string {
-  if (dueMs <= 0 || dueMs <= Date.now()) return 'Due now'
+function formatConceptDue(dueMs: number, dueNow: string): string {
+  if (dueMs <= 0 || dueMs <= Date.now()) return dueNow
   const days = Math.ceil((dueMs - Date.now()) / 86_400_000)
   if (days <= 1) return '< 1d'
   return `${days}d`
@@ -195,6 +194,7 @@ function NodeInspector({
   panelWidth: number
   onPanelWidthChange: (w: number) => void
 }) {
+  const t = useT()
   const node = useGraphStore(selectedNodeSelector)!
   const { edges, nodes, deleteNode, setSelected } = useGraphStore()
   const [tab, setTab] = useState<'overview' | 'notes'>('overview')
@@ -232,7 +232,7 @@ function NodeInspector({
             justifyContent: 'space-between',
             alignItems: 'baseline',
           }}>
-            <span>Concept</span>
+            <span>{t.inspector.concept}</span>
           </div>
 
           {tab === 'overview' && overviewImageUrl ? (
@@ -289,11 +289,11 @@ function NodeInspector({
           )}
 
           <div style={{ display: 'flex', gap: 4, margin: '12px 0 4px' }}>
-            {(['overview', 'notes'] as const).map(t => (
+            {(['overview', 'notes'] as const).map(tabKey => (
               <button
-                key={t}
+                key={tabKey}
                 type="button"
-                onClick={() => setTab(t)}
+                onClick={() => setTab(tabKey)}
                 style={{
                   flex: 1,
                   font: "500 11px 'JetBrains Mono', ui-monospace",
@@ -302,13 +302,13 @@ function NodeInspector({
                   padding: '5px 0',
                   borderRadius: 7,
                   border: '0.5px solid var(--line)',
-                  background: tab === t ? 'var(--bg-card)' : 'transparent',
-                  color: tab === t ? 'var(--ink)' : 'var(--ink-3)',
+                  background: tab === tabKey ? 'var(--bg-card)' : 'transparent',
+                  color: tab === tabKey ? 'var(--ink)' : 'var(--ink-3)',
                   cursor: 'default',
                   transition: 'all 0.1s',
                 }}
               >
-                {t}
+                {t.inspector.tabs[tabKey]}
               </button>
             ))}
           </div>
@@ -327,45 +327,45 @@ function NodeInspector({
         >
           {tab === 'overview' && (
             <>
-              <InspectorRow label="Due">
+              <InspectorRow label={t.inspector.rows.due}>
                 <span style={{
                   font: "500 12px 'JetBrains Mono', ui-monospace",
                   color: node.data.due <= Date.now() ? 'var(--cat-causal)' : 'var(--ink-2)',
                 }}>
-                  {formatConceptDue(node.data.due)}
+                  {formatConceptDue(node.data.due, t.inspector.dueNow)}
                 </span>
               </InspectorRow>
 
-              <InspectorRow label="Stability">
+              <InspectorRow label={t.inspector.rows.stability}>
                 <span style={{ font: "500 12px 'JetBrains Mono', ui-monospace", color: 'var(--ink-2)' }}>
                   {node.data.stability.toFixed(1)}d
                 </span>
               </InspectorRow>
 
-              <InspectorRow label="Last rating">
+              <InspectorRow label={t.inspector.rows.lastRating}>
                 <span style={{ font: "500 12px 'JetBrains Mono', ui-monospace", color: 'var(--ink-2)' }}>
-                  {RATING_NAMES[Math.min(4, Math.max(0, node.data.lastRating ?? 0))]}
+                  {t.inspector.ratingNames[Math.min(4, Math.max(0, node.data.lastRating ?? 0))]}
                 </span>
               </InspectorRow>
 
               <div style={{ marginTop: 12 }}>
-                {outgoing.length > 0 && <EdgeGroupHeader label="Outgoing" count={outgoing.length} />}
+                {outgoing.length > 0 && <EdgeGroupHeader label={t.inspector.outgoing} count={outgoing.length} />}
                 {outgoing.map(e => {
                   const T = EDGE_TYPES[e.data?.type as EdgeTypeName]
                   const C = EDGE_CATEGORIES[T.cat]
                   const target = nodes.find(n => n.id === e.target)
                   return (
-                    <EdgeRow key={e.id} label={T.label} text={target?.data.text ?? ''} color={C.color} glyph={T.glyph} onClick={() => focusNode(e.target)} />
+                    <EdgeRow key={e.id} label={t.edgeTypes.types[e.data?.type as EdgeTypeName]} text={target?.data.text ?? ''} color={C.color} glyph={T.glyph} onClick={() => focusNode(e.target)} />
                   )
                 })}
 
-                {incoming.length > 0 && <EdgeGroupHeader label="Incoming" count={incoming.length} />}
+                {incoming.length > 0 && <EdgeGroupHeader label={t.inspector.incoming} count={incoming.length} />}
                 {incoming.map(e => {
                   const T = EDGE_TYPES[e.data?.type as EdgeTypeName]
                   const C = EDGE_CATEGORIES[T.cat]
                   const source = nodes.find(n => n.id === e.source)
                   return (
-                    <EdgeRow key={e.id} label={`← ${T.label}`} text={source?.data.text ?? ''} color={C.color} glyph={T.glyph} onClick={() => focusNode(e.source)} />
+                    <EdgeRow key={e.id} label={`← ${t.edgeTypes.types[e.data?.type as EdgeTypeName]}`} text={source?.data.text ?? ''} color={C.color} glyph={T.glyph} onClick={() => focusNode(e.source)} />
                   )
                 })}
               </div>
@@ -384,7 +384,7 @@ function NodeInspector({
             paddingTop: 12,
           }}
         >
-          <ActionBtn danger onClick={() => deleteNode(node.id)}>Delete</ActionBtn>
+          <ActionBtn danger onClick={() => deleteNode(node.id)}>{t.inspector.delete}</ActionBtn>
         </div>
       </div>
     </InspectorPanel>
@@ -392,6 +392,7 @@ function NodeInspector({
 }
 
 function NotesTab({ node }: { node: Node<ConceptNodeData> }) {
+  const t = useT()
   const updateNodeData = useGraphStore(s => s.updateNodeData)
   const elab = node.data.elaboration
 
@@ -403,9 +404,9 @@ function NotesTab({ node }: { node: Node<ConceptNodeData> }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 8 }}>
       <ImagePicker conceptLabel={node.data.text} elab={elab} onUpdate={update} />
-      <ElabField label="Definition" placeholder="In your own words…" value={elab?.definition ?? ''} onChange={v => update({ definition: v })} />
-      <ElabField label="Examples" placeholder="One per line, or write freely…" value={elab?.examples ?? ''} onChange={v => update({ examples: v })} rows={4} />
-      <ElabField label="Notes" placeholder="Anything else…" value={elab?.notes ?? ''} onChange={v => update({ notes: v })} rows={3} />
+      <ElabField label={t.inspector.notes.definition} placeholder={t.inspector.notes.definitionPlaceholder} value={elab?.definition ?? ''} onChange={v => update({ definition: v })} />
+      <ElabField label={t.inspector.notes.examples} placeholder={t.inspector.notes.examplesPlaceholder} value={elab?.examples ?? ''} onChange={v => update({ examples: v })} rows={4} />
+      <ElabField label={t.inspector.notes.notes} placeholder={t.inspector.notes.notesPlaceholder} value={elab?.notes ?? ''} onChange={v => update({ notes: v })} rows={3} />
     </div>
   )
 }
@@ -508,6 +509,7 @@ function ImagePicker({
   elab: ConceptElaboration | undefined
   onUpdate: (patch: Partial<ConceptElaboration>) => void
 }) {
+  const t = useT()
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<WikiImage[]>([])
   const [loading, setLoading] = useState(false)
@@ -607,7 +609,7 @@ function ImagePicker({
           <input
             value={query}
             onChange={e => setQuery(e.target.value)}
-            placeholder="Search Wikimedia Commons…"
+            placeholder={t.inspector.image.searchPlaceholder}
             style={{
               flex: 1,
               minWidth: 0,
@@ -638,7 +640,7 @@ function ImagePicker({
               opacity: loading ? 0.7 : 1,
             }}
           >
-            Search
+            {t.inspector.image.search}
           </button>
         </form>
         {results.length > 0 && (
@@ -697,7 +699,7 @@ function ImagePicker({
             padding: 0,
           }}
         >
-          Cancel
+          {t.inspector.image.cancel}
         </button>
       </div>
     )
@@ -710,7 +712,7 @@ function ImagePicker({
         setOpen(true)
       }}
     >
-      Add image
+      {t.inspector.image.addImage}
     </ActionBtn>
   )
 }
@@ -724,6 +726,7 @@ function EdgeInspector({
   panelWidth: number
   onPanelWidthChange: (w: number) => void
 }) {
+  const t = useT()
   const edge = useGraphStore(selectedEdgeSelector)!
   const { nodes, updateEdgeType, deleteEdge } = useGraphStore()
   const edgeType = edge.data?.type as EdgeTypeName
@@ -731,7 +734,7 @@ function EdgeInspector({
   const C = EDGE_CATEGORIES[T.cat]
   const from = nodes.find(n => n.id === edge.source)
   const to = nodes.find(n => n.id === edge.target)
-  const siblings = Object.entries(EDGE_TYPES).filter(([, t]) => t.cat === T.cat) as [EdgeTypeName, typeof T][]
+  const siblings = Object.entries(EDGE_TYPES).filter(([, edgeDef]) => edgeDef.cat === T.cat) as [EdgeTypeName, typeof T][]
 
   return (
     <InspectorPanel
@@ -747,8 +750,8 @@ function EdgeInspector({
         display: 'flex',
         justifyContent: 'space-between',
       }}>
-        <span>Relation</span>
-        <span style={{ color: C.color }}>{EDGE_CATEGORIES[T.cat].label}</span>
+        <span>{t.inspector.relation}</span>
+        <span style={{ color: C.color }}>{t.edgeTypes.categories[T.cat].label}</span>
       </div>
 
       {/* From → glyph → To */}
@@ -763,7 +766,7 @@ function EdgeInspector({
       </div>
 
       <div style={{ font: "500 18px 'JetBrains Mono', ui-monospace", color: C.color, marginBottom: 12 }}>
-        {T.label}
+        {t.edgeTypes.types[edgeType]}
       </div>
 
       {/* Sharpen */}
@@ -774,10 +777,10 @@ function EdgeInspector({
         letterSpacing: '0.08em',
         color: 'var(--ink-4)',
       }}>
-        Sharpen the relation
+        {t.inspector.sharpen}
       </h5>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-        {siblings.map(([k, t]) => (
+        {siblings.map(([k]) => (
           <button
             key={k}
             onClick={() => updateEdgeType(edge.id, k)}
@@ -791,7 +794,7 @@ function EdgeInspector({
               cursor: 'default',
             }}
           >
-            {t.label}
+            {t.edgeTypes.types[k]}
           </button>
         ))}
       </div>
@@ -802,7 +805,7 @@ function EdgeInspector({
         marginTop: 14,
         paddingTop: 12,
       }}>
-        <ActionBtn danger onClick={() => deleteEdge(edge.id)}>Delete relation</ActionBtn>
+        <ActionBtn danger onClick={() => deleteEdge(edge.id)}>{t.inspector.deleteRelation}</ActionBtn>
       </div>
     </InspectorPanel>
   )

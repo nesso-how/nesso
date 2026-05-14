@@ -1,0 +1,154 @@
+{
+  "name": "Biologia vegetale",
+  "nodes": [
+    {
+      "id": "n1",
+      "type": "concept",
+      "position": { "x": 537, "y": -309 },
+      "data": { "text": "Seme", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0 }
+    },
+    {
+      "id": "n2",
+      "type": "concept",
+      "position": { "x": 120, "y": -232 },
+      "data": { "text": "Germinazione", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0 }
+    },
+    {
+      "id": "n3",
+      "type": "concept",
+      "position": { "x": 118, "y": -44 },
+      "data": { "text": "Pianta", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0 }
+    },
+    {
+      "id": "n4",
+      "type": "concept",
+      "position": { "x": -120, "y": 295 },
+      "data": { "text": "Radice", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0 }
+    },
+    {
+      "id": "n5",
+      "type": "concept",
+      "position": { "x": 462, "y": 71 },
+      "data": { "text": "Fusto", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0 }
+    },
+    {
+      "id": "n6",
+      "type": "concept",
+      "position": { "x": -230, "y": -46 },
+      "data": { "text": "Foglia", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0 }
+    },
+    {
+      "id": "n7",
+      "type": "concept",
+      "position": { "x": 454, "y": 222 },
+      "data": { "text": "Fiore", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0 }
+    },
+    {
+      "id": "n8",
+      "type": "concept",
+      "position": { "x": 609, "y": -11 },
+      "data": { "text": "Frutto", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0 }
+    },
+    {
+      "id": "n9",
+      "type": "concept",
+      "position": { "x": 396, "y": -230 },
+      "data": { "text": "Acqua", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0 }
+    },
+    {
+      "id": "n10",
+      "type": "concept",
+      "position": { "x": -138, "y": -292 },
+      "data": { "text": "Luce solare", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0 }
+    },
+    {
+      "id": "n11",
+      "type": "concept",
+      "position": { "x": -130, "y": 117 },
+      "data": { "text": "Suolo", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0 }
+    },
+    {
+      "id": "n12",
+      "type": "concept",
+      "position": { "x": -368, "y": -326 },
+      "data": { "text": "Biossido di carbonio", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0 }
+    },
+    {
+      "id": "n13",
+      "type": "concept",
+      "position": { "x": -480, "y": -66 },
+      "data": { "text": "Fotosintesi", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0 }
+    },
+    {
+      "id": "n14",
+      "type": "concept",
+      "position": { "x": -818, "y": 191 },
+      "data": { "text": "Ossigeno", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0 }
+    },
+    {
+      "id": "n15",
+      "type": "concept",
+      "position": { "x": -339, "y": 158 },
+      "data": { "text": "Glucosio", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0 }
+    },
+    {
+      "id": "n16",
+      "type": "concept",
+      "position": { "x": -705, "y": -262 },
+      "data": { "text": "Clorofilla", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0 }
+    },
+    {
+      "id": "n17",
+      "type": "concept",
+      "position": { "x": 835, "y": -20 },
+      "data": { "text": "Impollinazione", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0 }
+    },
+    {
+      "id": "n18",
+      "type": "concept",
+      "position": { "x": -577, "y": 203 },
+      "data": { "text": "Respirazione", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0 }
+    },
+    {
+      "id": "n19",
+      "type": "concept",
+      "position": { "x": 66, "y": 308 },
+      "data": { "text": "Annuale", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0 }
+    },
+    {
+      "id": "n20",
+      "type": "concept",
+      "position": { "x": 299, "y": 273 },
+      "data": { "text": "Perenne", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0 }
+    }
+  ],
+  "edges": [
+    { "id": "e0", "source": "n19", "target": "n3", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "subtype-of" } },
+    { "id": "e1", "source": "n20", "target": "n3", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "subtype-of" } },
+    { "id": "e2", "source": "n4", "target": "n3", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "part-of" } },
+    { "id": "e3", "source": "n5", "target": "n3", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "part-of" } },
+    { "id": "e4", "source": "n6", "target": "n3", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "part-of" } },
+    { "id": "e5", "source": "n7", "target": "n3", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "part-of" } },
+    { "id": "e6", "source": "n8", "target": "n3", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "part-of" } },
+    { "id": "e7", "source": "n8", "target": "n1", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "contains" } },
+    { "id": "e8", "source": "n10", "target": "n13", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "enables" } },
+    { "id": "e9", "source": "n12", "target": "n13", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "enables" } },
+    { "id": "e10", "source": "n16", "target": "n13", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "enables" } },
+    { "id": "e11", "source": "n13", "target": "n14", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "produces" } },
+    { "id": "e12", "source": "n13", "target": "n15", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "produces" } },
+    { "id": "e13", "source": "n7", "target": "n17", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "enables" } },
+    { "id": "e14", "source": "n17", "target": "n8", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "produces" } },
+    { "id": "e15", "source": "n3", "target": "n9", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "requires" } },
+    { "id": "e16", "source": "n3", "target": "n10", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "requires" } },
+    { "id": "e17", "source": "n3", "target": "n11", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "requires" } },
+    { "id": "e18", "source": "n13", "target": "n16", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "requires" } },
+    { "id": "e19", "source": "n2", "target": "n9", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "requires" } },
+    { "id": "e20", "source": "n4", "target": "n11", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "uses" } },
+    { "id": "e21", "source": "n6", "target": "n10", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "uses" } },
+    { "id": "e22", "source": "n1", "target": "n2", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "precedes" } },
+    { "id": "e23", "source": "n2", "target": "n3", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "precedes" } },
+    { "id": "e24", "source": "n7", "target": "n8", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "precedes" } },
+    { "id": "e25", "source": "n13", "target": "n18", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "opposite-of" } },
+    { "id": "e26", "source": "n19", "target": "n20", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "opposite-of" } }
+  ]
+}

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 import { EDGE_CATEGORIES, EDGE_TYPES } from '@/data/edgeTypes'
-import type { EdgeTypeName } from '@/types/graph'
+import type { EdgeCategory, EdgeTypeName } from '@/types/graph'
+import { useT } from '@/i18n'
 
 interface Props {
   screenX: number
@@ -12,10 +13,11 @@ interface Props {
 }
 
 export function RelationPicker({ screenX, screenY, fromText, toText, onPick, onCancel }: Props) {
+  const t = useT()
   const groups = Object.entries(EDGE_CATEGORIES).map(([k, c]) => ({
-    key: k as keyof typeof EDGE_CATEGORIES,
+    key: k as EdgeCategory,
     ...c,
-    types: Object.entries(EDGE_TYPES).filter(([, t]) => t.cat === k) as [EdgeTypeName, (typeof EDGE_TYPES)[EdgeTypeName]][],
+    types: Object.entries(EDGE_TYPES).filter(([, edgeDef]) => edgeDef.cat === k) as [EdgeTypeName, (typeof EDGE_TYPES)[EdgeTypeName]][],
   }))
 
   const left = Math.min(screenX + 8, window.innerWidth - 320)
@@ -49,7 +51,7 @@ export function RelationPicker({ screenX, screenY, fromText, toText, onPick, onC
             color: 'var(--ink-4)',
             marginBottom: 4,
           }}>
-            New relation
+            {t.edgeTypes.newRelation}
           </div>
           <div style={{ font: "500 14px 'Fraunces', serif", letterSpacing: '-0.005em' }}>
             <span>{fromText}</span>
@@ -69,11 +71,11 @@ export function RelationPicker({ screenX, screenY, fromText, toText, onPick, onC
                   letterSpacing: '0.08em',
                   color: g.color,
                 }}>
-                  {g.label}
+                  {t.edgeTypes.categories[g.key].label}
                 </span>
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                {g.types.map(([id, t]) => (
+                {g.types.map(([id]) => (
                   <button
                     key={id}
                     onClick={() => onPick(id)}
@@ -96,7 +98,7 @@ export function RelationPicker({ screenX, screenY, fromText, toText, onPick, onC
                       e.currentTarget.style.color = 'var(--ink-2)'
                     }}
                   >
-                    {t.label}
+                    {t.edgeTypes.types[id]}
                   </button>
                 ))}
               </div>

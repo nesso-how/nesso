@@ -3,6 +3,7 @@ import { useMemo, useState, useEffect } from 'react'
 import { useGraphStore } from '@/store/graph'
 import { sortedDueConceptNodes } from '@/data/fsrsDueQueue'
 import { GraphIO } from './GraphIO'
+import { useT } from '@/i18n'
 
 /** Full-height navbar; Inspector and canvas top inset rely on this. */
 export const TOPBAR_HEIGHT_PX = 52
@@ -17,6 +18,7 @@ interface Props {
 }
 
 export function TopBar({ sidebarCollapsed, sidebarWidth, onExpandSidebar, onReview, onRelationTypes, onShortcuts }: Props) {
+  const t = useT()
   const { graphList, currentGraphId, nodes, edges } = useGraphStore()
   const current = graphList.find(g => g.id === currentGraphId)
   const [now, setNow] = useState(() => Date.now())
@@ -47,7 +49,7 @@ export function TopBar({ sidebarCollapsed, sidebarWidth, onExpandSidebar, onRevi
         {sidebarCollapsed && (
           <button
             onClick={onExpandSidebar}
-            title="Expand sidebar"
+            title={t.topBar.expandSidebar}
             type="button"
             style={iconBtn}
             onMouseEnter={e => { e.currentTarget.style.background = 'var(--paper-deep)'; e.currentTarget.style.color = 'var(--ink)' }}
@@ -74,7 +76,7 @@ export function TopBar({ sidebarCollapsed, sidebarWidth, onExpandSidebar, onRevi
           border: '0.5px solid var(--line)',
           borderRadius: 4,
         }}>
-          {nodes.length} concepts · {edges.length} links
+          {t.topBar.stats(nodes.length, edges.length)}
         </span>
       </div>
 
@@ -82,7 +84,7 @@ export function TopBar({ sidebarCollapsed, sidebarWidth, onExpandSidebar, onRevi
         <button
           type="button"
           onClick={onReview}
-          title="Start review (R)"
+          title={t.topBar.startReview}
           style={{
             position: 'relative',
             display: 'flex', alignItems: 'center', gap: 6,
@@ -98,7 +100,7 @@ export function TopBar({ sidebarCollapsed, sidebarWidth, onExpandSidebar, onRevi
           <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
             <path d="M8 2.5a5.5 5.5 0 1 1-5.5 5.5" /><path d="M2.5 4V2h2" />
           </svg>
-          Review
+          {t.topBar.review}
           {dueCount > 0 && (
             <span style={{
               position: 'absolute', top: -4, right: -6,

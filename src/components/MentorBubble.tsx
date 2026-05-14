@@ -3,9 +3,10 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import type { Edge, Node } from '@xyflow/react'
 import { SocratesGlyph } from './SocratesGlyph'
 import { useGraphStore, selectedNodeSelector, selectedEdgeSelector } from '@/store/graph'
-import type { ConceptNodeData } from '@/types/graph'
+import type { ConceptNodeData, Language } from '@/types/graph'
 import { marked } from 'marked'
 import { getEngine, useWebLLM, LOCAL_MODEL_ID, LOCAL_MODEL_LABEL } from '@/llm/webllm'
+import { useT } from '@/i18n'
 
 interface Message {
   role: 'user' | 'mentor'
@@ -23,13 +24,18 @@ const MAX_SNAPSHOT_EDGES = MAX_SNAPSHOT_NODES * 2
 /** Output ceiling aligned with ~200-word replies (soft limit in MENTOR_BASE). */
 const MENTOR_MAX_TOKENS = 380
 
-const MENTOR_BASE = [
-  'You are Socrates in Nesso, a knowledge-graph app for active learning. Be warm, precise, and Socratic: mostly questions, almost no lecturing.',
-  'Never tell the user what nodes or edges to add or rename—no graph edits, only dialogue about ideas.',
-  'No emojis or flattery. Use *asterisks* sparingly for a key term. No JSON, markup pseudo-graphs, or bracketed labels.',
-  'Default: one short question; explain only to frame the question. Aim under ~180 words.',
-  'Nodes annotated DUE or last rated Again/Hard are the learner\'s weak spots — when no node is selected, open with a question about one of them.',
-]
+function getMentorBase(language: Language): string[] {
+  const name = language === 'it' ? 'Socrate' : 'Socrates'
+  const langInstruction = language === 'it' ? 'Respond in Italian.' : 'Respond in English.'
+  return [
+    `You are ${name} in Nesso, a knowledge-graph app for active learning. Be warm, precise, and Socratic: mostly questions, almost no lecturing.`,
+    'Never tell the user what nodes or edges to add or rename—no graph edits, only dialogue about ideas.',
+    'No emojis or flattery. Use *asterisks* sparingly for a key term. No JSON, markup pseudo-graphs, or bracketed labels.',
+    'Default: one short question; explain only to frame the question. Aim under ~180 words.',
+    'Nodes annotated DUE or last rated Again/Hard are the learner\'s weak spots — when no node is selected, open with a question about one of them.',
+    langInstruction,
+  ]
+}
 
 const FSRS_RATING: Record<number, string> = { 1: 'Again', 2: 'Hard', 3: 'Good', 4: 'Easy' }
 
@@ -53,6 +59,7 @@ function buildGraphChatPrompt(
   edges: Edge[],
   selectedNode: Node<ConceptNodeData> | null,
   selectedEdge: Edge | null,
+  language: Language,
 ): string {
   const label = (id: string) => nodes.find(n => n.id === id)?.data.text ?? id
   const snapEdges = edges.length > MAX_SNAPSHOT_EDGES ? edges.slice(0, MAX_SNAPSHOT_EDGES) : edges
@@ -73,7 +80,7 @@ function buildGraphChatPrompt(
       ? `Selection: edge ${label(selectedEdge.source)} → ${String(selectedEdge.data?.type ?? '?')} → ${label(selectedEdge.target)}.`
       : ''
   return [
-    ...MENTOR_BASE,
+    ...getMentorBase(language),
     '',
     `Nodes: ${nodeList}`,
     edgeList ? `Edges: ${edgeList}` : '',
@@ -82,6 +89,7 @@ function buildGraphChatPrompt(
 }
 
 export function MentorBubble() {
+  const t = useT()
   const mentorPanelExpanded = useGraphStore(s => s.mentorPanelExpanded)
   const setMentorPanelExpanded = useGraphStore(s => s.setMentorPanelExpanded)
   const { nodes, edges } = useGraphStore()
@@ -103,8 +111,8 @@ export function MentorBubble() {
   const scrollRef = useRef<HTMLDivElement>(null)
 
   const buildSystemPrompt = useCallback(
-    () => buildGraphChatPrompt(nodes, edges, selectedNode, selectedEdge),
-    [nodes, edges, selectedNode, selectedEdge],
+    () => buildGraphChatPrompt(nodes, edges, selectedNode, selectedEdge, settings.language),
+    [nodes, edges, selectedNode, selectedEdge, settings.language],
   )
 
   const fetchCompletion = useCallback(async (systemPrompt: string, msgs: Message[]): Promise<string> => {
@@ -155,7 +163,7 @@ export function MentorBubble() {
 
     fetchCompletion(systemPrompt, [{ role: 'user', text: seedText }])
       .then(raw => { if (!cancelled) setHistory([{ role: 'mentor', text: raw }]) })
-      .catch(() => { if (!cancelled) setHistory([{ role: 'mentor', text: '*Hmm.* My voice failed me. Try again.' }]) })
+      .catch(() => { if (!cancelled) setHistory([{ role: 'mentor', text: t.mentor.errorRetry }]) })
       .finally(() => { if (!cancelled) setLoadingInitial(false) })
 
     return () => { cancelled = true }
@@ -179,7 +187,7 @@ export function MentorBubble() {
       const raw = await callApi(next)
       setHistory(h => [...h, { role: 'mentor', text: raw }])
     } catch {
-      setHistory(h => [...h, { role: 'mentor', text: '*Hmm.* My voice failed me. Try again — slowly.' }])
+      setHistory(h => [...h, { role: 'mentor', text: t.mentor.errorRetrySlow }])
     } finally {
       setThinking(false)
     }
@@ -191,8 +199,8 @@ export function MentorBubble() {
 
   const inputDisabled = !modelReady || loadingInitial
   const placeholder =
-    modelLoading ? 'Loading local model…' :
-    selectedNode ? `Ask Socrates about "${selectedNode.data.text}"…` : 'Ask Socrates about your graph…'
+    modelLoading ? t.mentor.loadingModel :
+    selectedNode ? t.mentor.placeholder(selectedNode.data.text) : t.mentor.placeholderGraph
 
   return (
     <div style={{
@@ -221,7 +229,7 @@ export function MentorBubble() {
             <SocratesGlyph size={26} />
           </span>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 1, flex: 1 }}>
-            <b style={{ font: "500 13px 'Fraunces', serif", letterSpacing: '-0.005em' }}>Socrates</b>
+            <b style={{ font: "500 13px 'Fraunces', serif", letterSpacing: '-0.005em' }}>{t.mentor.name}</b>
             {modelLoading ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <div style={{
@@ -274,7 +282,7 @@ export function MentorBubble() {
               font: "400 11px/1.4 'JetBrains Mono', ui-monospace",
               color: 'var(--ink-4)', letterSpacing: '0.02em', margin: 0,
             }}>
-              {webllm.progressText || 'Initialising…'}
+              {webllm.progressText || t.mentor.initialising}
             </p>
           ) : loadingInitial && history.length === 0 ? (
             <ThinkingDots />
@@ -337,7 +345,7 @@ export function MentorBubble() {
         </div>
       </div>
 
-      <button type="button" onClick={() => setMentorPanelExpanded(!mentorPanelExpanded)} title="Socrates" style={{
+      <button type="button" onClick={() => setMentorPanelExpanded(!mentorPanelExpanded)} title={t.mentor.name} style={{
         width: 64, height: 64, borderRadius: '50%', background: 'var(--bg-elev)',
         color: 'var(--ink)', border: '0.5px solid var(--line)', boxShadow: 'var(--shadow-lg)',
         cursor: 'default', padding: 0,

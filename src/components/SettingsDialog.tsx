@@ -3,6 +3,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { useGraphStore } from '@/store/graph'
 import { useWebLLM, initWebLLM, LOCAL_MODEL_LABEL, LOCAL_MODEL_SIZE } from '@/llm/webllm'
 import { CloseButton } from './CloseButton'
+import { useT } from '@/i18n'
+import type { Language } from '@/types/graph'
 
 const OLLAMA_PRESETS = [
   { id: 'gemma3:4b', note: 'balanced · recommended' },
@@ -54,11 +56,11 @@ async function* streamOllamaModelPull(baseUrl: string, model: string): AsyncGene
 }
 
 type Tab = 'appearance' | 'ai' | 'review'
+const TABS = ['appearance', 'ai', 'review'] as const
 
-const TABS: { id: Tab; label: string }[] = [
-  { id: 'appearance', label: 'Appearance' },
-  { id: 'ai', label: 'AI' },
-  { id: 'review', label: 'Review' },
+const LANGUAGES: { id: Language; label: string }[] = [
+  { id: 'en', label: 'English' },
+  { id: 'it', label: 'Italiano' },
 ]
 
 interface Props {
@@ -67,6 +69,7 @@ interface Props {
 }
 
 export function SettingsDialog({ open, onClose }: Props) {
+  const t = useT()
   const [tab, setTab] = useState<Tab>('appearance')
   const settings = useGraphStore(s => s.settings)
   const setSetting = useGraphStore(s => s.setSetting)
@@ -154,18 +157,18 @@ export function SettingsDialog({ open, onClose }: Props) {
           gap: 2,
         }}>
           <div style={{ font: "500 10px 'JetBrains Mono', ui-monospace", textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--ink-4)', padding: '0 8px', marginBottom: 10 }}>
-            Settings
+            {t.settings.title}
           </div>
-          {TABS.map(t => (
+          {TABS.map(tabId => (
             <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
+              key={tabId}
+              onClick={() => setTab(tabId)}
               style={{
                 appearance: 'none',
                 border: 'none',
-                background: tab === t.id ? 'var(--bg-card)' : 'transparent',
-                color: tab === t.id ? 'var(--ink)' : 'var(--ink-3)',
-                font: `${tab === t.id ? '500' : '400'} 13px 'Inter', system-ui`,
+                background: tab === tabId ? 'var(--bg-card)' : 'transparent',
+                color: tab === tabId ? 'var(--ink)' : 'var(--ink-3)',
+                font: `${tab === tabId ? '500' : '400'} 13px 'Inter', system-ui`,
                 textAlign: 'left',
                 padding: '7px 10px',
                 borderRadius: 8,
@@ -174,7 +177,7 @@ export function SettingsDialog({ open, onClose }: Props) {
                 width: '100%',
               }}
             >
-              {t.label}
+              {t.settings.tabs[tabId]}
             </button>
           ))}
         </div>
@@ -183,38 +186,69 @@ export function SettingsDialog({ open, onClose }: Props) {
         <div style={{ flex: 1, padding: '24px 28px 24px', overflowY: 'auto', minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22 }}>
             <span style={{ font: "500 14px 'Inter', system-ui", color: 'var(--ink)' }}>
-              {TABS.find(t => t.id === tab)?.label}
+              {t.settings.tabs[tab]}
             </span>
             <CloseButton onClick={onClose} />
           </div>
 
           {tab === 'appearance' && (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ font: "400 13px 'Inter', system-ui", color: 'var(--ink-3)' }}>Theme</span>
-              <div style={{ display: 'flex', gap: 4 }}>
-                {[{ label: 'Light', dark: false }, { label: 'Dark', dark: true }].map(opt => {
-                  const active = settings.dark === opt.dark
-                  return (
-                    <button
-                      key={opt.label}
-                      onClick={() => setSetting('dark', opt.dark)}
-                      style={{
-                        appearance: 'none',
-                        border: `0.5px solid ${active ? 'var(--ink-2)' : 'var(--line)'}`,
-                        background: active ? 'var(--ink-2)' : 'transparent',
-                        color: active ? 'var(--paper)' : 'var(--ink-3)',
-                        font: "500 11px 'JetBrains Mono', ui-monospace",
-                        letterSpacing: '0.04em',
-                        padding: '5px 12px',
-                        borderRadius: 999,
-                        cursor: 'default',
-                        transition: 'all 0.15s',
-                      }}
-                    >
-                      {opt.label}
-                    </button>
-                  )
-                })}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ font: "400 13px 'Inter', system-ui", color: 'var(--ink-3)' }}>{t.settings.appearance.theme}</span>
+                <div style={{ display: 'flex', gap: 4 }}>
+                  {[{ label: t.settings.appearance.light, dark: false }, { label: t.settings.appearance.dark, dark: true }].map(opt => {
+                    const active = settings.dark === opt.dark
+                    return (
+                      <button
+                        key={String(opt.dark)}
+                        onClick={() => setSetting('dark', opt.dark)}
+                        style={{
+                          appearance: 'none',
+                          border: `0.5px solid ${active ? 'var(--ink-2)' : 'var(--line)'}`,
+                          background: active ? 'var(--ink-2)' : 'transparent',
+                          color: active ? 'var(--paper)' : 'var(--ink-3)',
+                          font: "500 11px 'JetBrains Mono', ui-monospace",
+                          letterSpacing: '0.04em',
+                          padding: '5px 12px',
+                          borderRadius: 999,
+                          cursor: 'default',
+                          transition: 'all 0.15s',
+                        }}
+                      >
+                        {opt.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              <div style={{ borderTop: '0.5px solid var(--line)', paddingTop: 18, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ font: "400 13px 'Inter', system-ui", color: 'var(--ink-3)' }}>{t.settings.appearance.language}</span>
+                <div style={{ display: 'flex', gap: 4 }}>
+                  {LANGUAGES.map(lang => {
+                    const active = settings.language === lang.id
+                    return (
+                      <button
+                        key={lang.id}
+                        onClick={() => setSetting('language', lang.id)}
+                        style={{
+                          appearance: 'none',
+                          border: `0.5px solid ${active ? 'var(--ink-2)' : 'var(--line)'}`,
+                          background: active ? 'var(--ink-2)' : 'transparent',
+                          color: active ? 'var(--paper)' : 'var(--ink-3)',
+                          font: "500 11px 'JetBrains Mono', ui-monospace",
+                          letterSpacing: '0.04em',
+                          padding: '5px 12px',
+                          borderRadius: 999,
+                          cursor: 'default',
+                          transition: 'all 0.15s',
+                        }}
+                      >
+                        {lang.label}
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
             </div>
           )}
@@ -239,7 +273,7 @@ export function SettingsDialog({ open, onClose }: Props) {
                       transition: 'all 0.15s',
                     }}
                   >
-                    {mode === 'remote' ? 'Remote API' : 'Local model'}
+                    {mode === 'remote' ? t.settings.ai.remote : t.settings.ai.local}
                   </button>
                 ))}
               </div>
@@ -247,7 +281,7 @@ export function SettingsDialog({ open, onClose }: Props) {
               {settings.aiMode === 'remote' ? (
                 <>
                   <label style={{ display: 'block', marginBottom: 14 }}>
-                    <span style={{ font: "400 13px 'Inter', system-ui", color: 'var(--ink-3)', display: 'block', marginBottom: 6 }}>API base URL</span>
+                    <span style={{ font: "400 13px 'Inter', system-ui", color: 'var(--ink-3)', display: 'block', marginBottom: 6 }}>{t.settings.ai.apiBaseUrl}</span>
                     <input
                       type="text"
                       value={settings.aiBaseUrl}
@@ -258,7 +292,7 @@ export function SettingsDialog({ open, onClose }: Props) {
                   </label>
 
                   <div style={{ marginBottom: 14 }}>
-                    <span style={{ font: "400 13px 'Inter', system-ui", color: 'var(--ink-3)', display: 'block', marginBottom: 8 }}>Model</span>
+                    <span style={{ font: "400 13px 'Inter', system-ui", color: 'var(--ink-3)', display: 'block', marginBottom: 8 }}>{t.settings.ai.model}</span>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
                       {OLLAMA_PRESETS.map(p => {
                         const active = settings.aiModel === p.id
@@ -299,7 +333,7 @@ export function SettingsDialog({ open, onClose }: Props) {
                   </div>
 
                   <label style={{ display: 'block' }}>
-                    <span style={{ font: "400 13px 'Inter', system-ui", color: 'var(--ink-3)', display: 'block', marginBottom: 6 }}>API key</span>
+                    <span style={{ font: "400 13px 'Inter', system-ui", color: 'var(--ink-3)', display: 'block', marginBottom: 6 }}>{t.settings.ai.apiKey}</span>
                     <input
                       type="password"
                       autoComplete="off"
@@ -309,7 +343,7 @@ export function SettingsDialog({ open, onClose }: Props) {
                       style={inputStyle}
                     />
                     <small style={{ font: "400 11px/1.4 'Inter', system-ui", color: 'var(--ink-4)', display: 'block', marginTop: 8 }}>
-                      Usually empty for local Ollama. For hosted APIs, set whatever secret your endpoint expects as <code style={{ fontFamily: "'JetBrains Mono', ui-monospace", fontSize: '10.5px' }}>Authorization: Bearer</code>.
+                      {t.settings.ai.apiKeyHint} <code style={{ fontFamily: "'JetBrains Mono', ui-monospace", fontSize: '10.5px' }}>Authorization: Bearer</code>.
                     </small>
                   </label>
                 </>
@@ -321,7 +355,7 @@ export function SettingsDialog({ open, onClose }: Props) {
 
           {tab === 'review' && (
             <>
-              <SettingRow label="Target retention" description="Probability of recalling a concept at its next review. Higher = more reviews.">
+              <SettingRow label={t.settings.review.retention} description={t.settings.review.retentionDesc}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <input
                     type="range"
@@ -345,7 +379,7 @@ export function SettingsDialog({ open, onClose }: Props) {
                 </div>
               </SettingRow>
 
-              <SettingRow label="Max interval" description="Longest interval FSRS can schedule, in days. Caps how far into the future a concept can be pushed." last>
+              <SettingRow label={t.settings.review.maxInterval} description={t.settings.review.maxIntervalDesc} last>
                 <Stepper
                   value={settings.maximumInterval}
                   min={1}
@@ -452,6 +486,7 @@ function ModelStatusBadge({ status, model, baseUrl, pullProgress, onPull }: {
   pullProgress: number
   onPull: () => void
 }) {
+  const t = useT()
   if (status === 'idle' || !model) return null
   const dot = (color: string) => (
     <span style={{ width: 6, height: 6, borderRadius: '50%', background: color, display: 'inline-block', flexShrink: 0 }} />
@@ -468,7 +503,7 @@ function ModelStatusBadge({ status, model, baseUrl, pullProgress, onPull }: {
           }} />
         </div>
         <span style={{ font: "400 11px 'JetBrains Mono', ui-monospace", color: 'var(--ink-4)' }}>
-          Pulling {model}… {Math.round(pullProgress * 100)}%
+          {t.settings.ai.pulling(model, Math.round(pullProgress * 100))}
         </span>
       </div>
     )
@@ -479,19 +514,19 @@ function ModelStatusBadge({ status, model, baseUrl, pullProgress, onPull }: {
       {status === 'checking' && (
         <>
           <span style={{ width: 6, height: 6, borderRadius: '50%', border: '1.5px solid var(--ink-4)', flexShrink: 0, animation: 'nx-spin 1s linear infinite', display: 'inline-block' }} />
-          <span style={{ color: 'var(--ink-4)' }}>Checking…</span>
+          <span style={{ color: 'var(--ink-4)' }}>{t.settings.ai.status.checking}</span>
         </>
       )}
       {status === 'available' && (
         <>
           {dot('var(--conf-5)')}
-          <span style={{ color: 'var(--conf-5)' }}>Available</span>
+          <span style={{ color: 'var(--conf-5)' }}>{t.settings.ai.status.available}</span>
         </>
       )}
       {status === 'unavailable' && (
         <>
           {dot('var(--conf-2)')}
-          <span style={{ color: 'var(--ink-3)' }}>Not found locally —</span>
+          <span style={{ color: 'var(--ink-3)' }}>{t.settings.ai.status.notFound}</span>
           <button
             onClick={onPull}
             style={{
@@ -500,7 +535,7 @@ function ModelStatusBadge({ status, model, baseUrl, pullProgress, onPull }: {
               padding: '2px 8px', borderRadius: 6, cursor: 'default',
             }}
           >
-            Pull
+            {t.settings.ai.status.pull}
           </button>
         </>
       )}
@@ -508,20 +543,20 @@ function ModelStatusBadge({ status, model, baseUrl, pullProgress, onPull }: {
         /localhost|127\.0\.0\.1/.test(window.location.hostname) ? (
           <>
             {dot('var(--ink-4)')}
-            <span style={{ color: 'var(--ink-4)' }}>Ollama not running —</span>
+            <span style={{ color: 'var(--ink-4)' }}>{t.settings.ai.status.ollamaNotRunning}</span>
             <code style={{ color: 'var(--ink-2)', fontSize: 10.5 }}>ollama serve</code>
           </>
         ) : (
           <>
             {dot('var(--conf-2)')}
-            <span style={{ color: 'var(--ink-4)' }}>CORS blocked — set</span>
+            <span style={{ color: 'var(--ink-4)' }}>{t.settings.ai.status.corsBlocked}</span>
             <code style={{ color: 'var(--ink-2)', fontSize: 10.5 }}>OLLAMA_ORIGINS={window.location.origin}</code>
           </>
         )
       ) : (
         <>
           {dot('var(--ink-4)')}
-          <span style={{ color: 'var(--ink-4)' }}>API unreachable</span>
+          <span style={{ color: 'var(--ink-4)' }}>{t.settings.ai.status.unreachable}</span>
         </>
       ))}
     </div>
@@ -529,6 +564,7 @@ function ModelStatusBadge({ status, model, baseUrl, pullProgress, onPull }: {
 }
 
 function LocalModelPanel({ status, progress, progressText, error }: LocalModelPanelProps) {
+  const t = useT()
   return (
     <div style={{
       border: '0.5px solid var(--line)',
@@ -545,14 +581,14 @@ function LocalModelPanel({ status, progress, progressText, error }: LocalModelPa
             font: "500 10px 'JetBrains Mono', ui-monospace",
             color: 'var(--conf-5)',
             textTransform: 'uppercase', letterSpacing: '0.08em',
-          }}>Ready</span>
+          }}>{t.settings.ai.localModel.ready}</span>
         )}
       </div>
 
       {status === 'idle' && (
         <>
           <p style={{ font: "400 12px/1.5 'Inter', system-ui", color: 'var(--ink-3)', margin: '0 0 12px' }}>
-            Runs entirely in-browser via WebGPU. The model is cached after the first download.
+            {t.settings.ai.localModel.description}
           </p>
           <button
             onClick={() => void initWebLLM()}
@@ -567,7 +603,7 @@ function LocalModelPanel({ status, progress, progressText, error }: LocalModelPa
               cursor: 'default',
             }}
           >
-            Download &amp; use
+            {t.settings.ai.localModel.download}
           </button>
         </>
       )}
@@ -595,7 +631,7 @@ function LocalModelPanel({ status, progress, progressText, error }: LocalModelPa
 
       {status === 'ready' && (
         <p style={{ font: "400 12px/1.5 'Inter', system-ui", color: 'var(--ink-3)', margin: 0 }}>
-          Model loaded in-browser. Socrates will use it instead of the remote API.
+          {t.settings.ai.localModel.loaded}
         </p>
       )}
 
@@ -617,7 +653,7 @@ function LocalModelPanel({ status, progress, progressText, error }: LocalModelPa
               cursor: 'default',
             }}
           >
-            Retry
+            {t.settings.ai.localModel.retry}
           </button>
         </>
       )}

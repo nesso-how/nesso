@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 import { useState, useRef, useEffect } from 'react'
 import { useGraphStore } from '@/store/graph'
+import { useT } from '@/i18n'
 
 export const SIDEBAR_WIDTH = 248
 
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, onSelectConcept }: Props) {
+  const t = useT()
   const {
     graphList, currentGraphId, loadGraph, createGraph, renameGraph, deleteGraph,
     nodes, settings, setSetting,
@@ -52,7 +54,7 @@ export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, onSelectC
   }
 
   const handleNew = async () => {
-    const id = await createGraph('Untitled')
+    const id = await createGraph(t.sidebar.untitled)
     setTimeout(() => {
       const g = useGraphStore.getState().graphList.find(x => x.id === id)
       if (g) startRename(id, g.name)
@@ -122,7 +124,7 @@ export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, onSelectC
               <circle cx="7" cy="7" r="4.5" />
               <path d="M10.5 10.5L13 13" strokeLinecap="round" />
             </svg>
-            Search…
+            {t.sidebar.search}
             <span style={{ marginLeft: 'auto', font: "500 10px 'JetBrains Mono', ui-monospace" }}>⌘K</span>
           </button>
         </div>
@@ -132,15 +134,15 @@ export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, onSelectC
 
           {/* Graphs */}
           <div style={{ padding: '10px 12px 4px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={sectionLabel}>Graphs</span>
-            <button title="New graph" onClick={handleNew} style={graphsNewBtn}
+            <span style={sectionLabel}>{t.sidebar.graphs}</span>
+            <button title={t.sidebar.newGraph} onClick={handleNew} style={graphsNewBtn}
               onMouseEnter={e => { e.currentTarget.style.background = 'var(--paper-deep)' }}
               onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
             >
               <svg width="11" height="11" viewBox="0 0 10 10" style={{ flexShrink: 0 }}>
                 <path d="M5 1v8M1 5h8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
               </svg>
-              <span style={{ font: "500 11.5px 'Inter', ui-sans-serif" }}>New</span>
+              <span style={{ font: "500 11.5px 'Inter', ui-sans-serif" }}>{t.sidebar.newGraph}</span>
             </button>
           </div>
 
@@ -233,7 +235,7 @@ export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, onSelectC
                 display: 'flex', alignItems: 'center', gap: 6, padding: 0,
               }}
             >
-              <span style={sectionLabel}>Recent concepts</span>
+              <span style={sectionLabel}>{t.sidebar.recentConcepts}</span>
               <svg width="9" height="9" viewBox="0 0 10 10" style={{
                 opacity: 0.5,
                 transform: recentOpen ? 'rotate(0deg)' : 'rotate(-90deg)',
@@ -246,7 +248,7 @@ export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, onSelectC
           {recentOpen && (
             <div style={{ padding: '0 8px', display: 'flex', flexDirection: 'column', gap: 1 }}>
               {recentNodes.length === 0 ? (
-                <span style={{ font: "12px 'Inter'", color: 'var(--ink-4)', padding: '4px 9px' }}>No concepts yet</span>
+                <span style={{ font: "12px 'Inter'", color: 'var(--ink-4)', padding: '4px 9px' }}>{t.sidebar.noConcepts}</span>
               ) : recentNodes.map(n => (
                 <button
                   key={n.id}
@@ -280,7 +282,7 @@ export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, onSelectC
                 display: 'flex', alignItems: 'center', gap: 6, padding: 0, width: '100%',
               }}
             >
-              <span style={sectionLabel}>Display</span>
+              <span style={sectionLabel}>{t.sidebar.display}</span>
               <svg width="9" height="9" viewBox="0 0 10 10" style={{
                 opacity: 0.5,
                 transform: sidebarDisplayOpen ? 'rotate(0deg)' : 'rotate(-90deg)',
@@ -292,25 +294,35 @@ export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, onSelectC
           </div>
           {sidebarDisplayOpen && (
             <div style={{ padding: '0 12px 10px' }}>
-              <DisplayRow label="Heatmap">
+              <DisplayRow label={t.sidebar.displayOptions.heatmap}>
                 <Seg
-                  options={['Off', 'On']}
-                  value={settings.showHeatmap ? 'On' : 'Off'}
-                  onChange={v => setSetting('showHeatmap', v === 'On')}
+                  options={[
+                    { id: 'off', label: t.sidebar.displayOptions.off },
+                    { id: 'on', label: t.sidebar.displayOptions.on },
+                  ]}
+                  value={settings.showHeatmap ? 'on' : 'off'}
+                  onChange={v => setSetting('showHeatmap', v === 'on')}
                 />
               </DisplayRow>
-              <DisplayRow label="Edges">
+              <DisplayRow label={t.sidebar.displayOptions.edges}>
                 <Seg
-                  options={['Full', 'Cat.', 'Min.']}
-                  value={settings.edgeEncoding === 'full' ? 'Full' : settings.edgeEncoding === 'category' ? 'Cat.' : 'Min.'}
-                  onChange={v => setSetting('edgeEncoding', v === 'Full' ? 'full' : v === 'Cat.' ? 'category' : 'minimal')}
+                  options={[
+                    { id: 'full', label: t.sidebar.displayOptions.full },
+                    { id: 'category', label: t.sidebar.displayOptions.cat },
+                    { id: 'minimal', label: t.sidebar.displayOptions.min },
+                  ]}
+                  value={settings.edgeEncoding}
+                  onChange={v => setSetting('edgeEncoding', v as 'full' | 'category' | 'minimal')}
                 />
               </DisplayRow>
-              <DisplayRow label="Curve">
+              <DisplayRow label={t.sidebar.displayOptions.curve}>
                 <Seg
-                  options={['Arc', 'Line']}
-                  value={settings.curveStyle === 'arc' ? 'Arc' : 'Line'}
-                  onChange={v => setSetting('curveStyle', v === 'Arc' ? 'arc' : 'straight')}
+                  options={[
+                    { id: 'arc', label: t.sidebar.displayOptions.arc },
+                    { id: 'straight', label: t.sidebar.displayOptions.line },
+                  ]}
+                  value={settings.curveStyle}
+                  onChange={v => setSetting('curveStyle', v as 'arc' | 'straight')}
                 />
               </DisplayRow>
             </div>
@@ -345,7 +357,7 @@ export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, onSelectC
               <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
               <circle cx="12" cy="12" r="3" />
             </svg>
-            Settings
+            {t.sidebar.settings}
             <span style={{ marginLeft: 'auto', font: "500 10px 'JetBrains Mono', ui-monospace", color: 'var(--ink-4)' }}>⌘,</span>
           </button>
         </div>
@@ -366,22 +378,26 @@ function DisplayRow({ label, children }: { label: string; children: React.ReactN
   )
 }
 
-function Seg({ options, value, onChange }: { options: string[]; value: string; onChange: (v: string) => void }) {
+function Seg({ options, value, onChange }: {
+  options: { id: string; label: string }[]
+  value: string
+  onChange: (id: string) => void
+}) {
   return (
     <div style={{ display: 'flex', background: 'var(--paper-deep)', borderRadius: 6, padding: 2 }}>
       {options.map(o => (
         <button
-          key={o}
-          onClick={() => onChange(o)}
+          key={o.id}
+          onClick={() => onChange(o.id)}
           style={{
             appearance: 'none', border: 0,
-            background: o === value ? 'var(--bg-card)' : 'transparent',
-            color: o === value ? 'var(--ink)' : 'var(--ink-4)',
-            font: o === value ? "500 11px 'Inter', ui-sans-serif" : "11px 'Inter', ui-sans-serif",
+            background: o.id === value ? 'var(--bg-card)' : 'transparent',
+            color: o.id === value ? 'var(--ink)' : 'var(--ink-4)',
+            font: o.id === value ? "500 11px 'Inter', ui-sans-serif" : "11px 'Inter', ui-sans-serif",
             padding: '3px 9px', borderRadius: 4, cursor: 'default',
-            boxShadow: o === value ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
+            boxShadow: o.id === value ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
           }}
-        >{o}</button>
+        >{o.label}</button>
       ))}
     </div>
   )

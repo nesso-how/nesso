@@ -7,6 +7,7 @@ import { GlyphSVG } from './GlyphSVG'
 import type { EdgeTypeName, EdgeEncoding } from '@/types/graph'
 import { useGraphStore } from '@/store/graph'
 import { nessoArcPath, rectExit } from '@/geometry/nessoEdgeGeometry'
+import { useT } from '@/i18n'
 
 export interface NessoEdgeData {
   type: EdgeTypeName
@@ -53,6 +54,7 @@ function EdgePathElement({
 }
 
 export function NessoEdge({ id, source, target, data, selected }: EdgeProps) {
+  const t = useT()
   const [hovered, setHovered] = useState(false)
   const { settings, selected: storeSelected, setSelected } = useGraphStore()
 
@@ -163,7 +165,7 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps) {
             whiteSpace: 'nowrap',
             lineHeight: '16px',
           }}>
-            {T.label}
+            {t.edgeTypes.types[edgeType]}
           </div>
         </foreignObject>
       )}
