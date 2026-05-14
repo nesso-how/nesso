@@ -39,3 +39,7 @@ src-tauri/            # Tauri v2 Rust project — tauri.conf.json, capabilities,
 - **Edge** — a React Flow edge of type `'nesso'`, carrying `data.type: EdgeTypeName`.
 - **Selection** — a single `{ kind: 'node' | 'edge', id }` tracked in the store. Drives the Inspector and Socrates opening prompt.
 - **Settings** — `NessoSettings` in the store (dark mode, accent, encoding, palette, AI endpoint fields, etc.). Applied via CSS custom properties on `<html>` where relevant.
+
+## Changelog
+
+User-facing or otherwise notable changes should get bullets under **`CHANGELOG.md` → `## [Unreleased]`** in the **same commit** when practical, or in a follow-up commit right away. Format and releases: [`changelog.mdc`](changelog.mdc).
