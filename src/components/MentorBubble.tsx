@@ -5,6 +5,7 @@ import { SocratesGlyph } from './SocratesGlyph'
 import { useGraphStore, selectedNodeSelector, selectedEdgeSelector } from '@/store/graph'
 import type { ConceptNodeData, Language } from '@/types/graph'
 import { getEngine, useWebLLM, LOCAL_MODEL_ID, LOCAL_MODEL_LABEL } from '@/llm/webllm'
+import { buildFocalNeighborContext, nodeStrength, oneHopNeighborIds } from '@/llm/context'
 import { useT } from '@/i18n'
 import { CloseButton } from './CloseButton'
 import { ThinkingIndicator } from './ThinkingIndicator'
@@ -19,7 +20,7 @@ interface Message {
 const MAX_SNAPSHOT_NODES = 60
 /** Linked maps often have more edges than nodes; ~2× node cap keeps structure visible without dumping huge |E|. */
 const MAX_SNAPSHOT_EDGES = MAX_SNAPSHOT_NODES * 2
-/** Output ceiling aligned with ~200-word replies (soft limit in MENTOR_BASE). */
+/** Output ceiling aligned with ~200-word replies (soft limit in getMentorBase). */
 const MENTOR_MAX_TOKENS = 380
 
 function getMentorBase(language: Language): string[] {
@@ -31,18 +32,15 @@ function getMentorBase(language: Language): string[] {
     'No emojis or flattery. Use *asterisks* sparingly for a key term. No JSON, markup pseudo-graphs, or bracketed labels.',
     'Do not use em dashes (the long dash character). Use commas, periods, or split into two short sentences instead.',
     'Default: one short question; explain only to frame the question. Aim under ~180 words.',
-    'Nodes annotated DUE or last rated Again/Hard are the learner\'s weak spots. When no node is selected, open with a question about one of them.',
+    'Nodes annotated DUE or last rated Again/Hard are the learner\'s weak spots.',
+    'When a node IS selected on open: briefly acknowledge it by name, then ask one Socratic question about it or flag its weakest connected nodes (DUE or low-stability neighbors) as a starting point.',
+    'When an EDGE is selected but no node: name both endpoint concepts and the relation type, then ask one Socratic question about how that link fits what they know.',
+    'When neither a node nor an edge is selected on open: identify the most urgent weak spot in the graph (DUE or last rated Again/Hard) and open with a question targeting it.',
     langInstruction,
   ]
 }
 
 const FSRS_RATING: Record<number, string> = { 1: 'Again', 2: 'Hard', 3: 'Good', 4: 'Easy' }
-
-function nodeStrength(n: Node<ConceptNodeData>): number {
-  if (n.data.reps === 0) return -Infinity
-  const duePenalty = n.data.due > 0 && n.data.due <= Date.now() ? -10000 : 0
-  return n.data.stability + duePenalty
-}
 
 function nodeDesc(n: Node<ConceptNodeData>): string {
   if (n.data.reps === 0) return `"${n.data.text}"(new)`
@@ -51,6 +49,31 @@ function nodeDesc(n: Node<ConceptNodeData>): string {
   if (n.data.lastRating > 0) parts.push(FSRS_RATING[n.data.lastRating] ?? '')
   if (isDue) parts.push('DUE')
   return `"${n.data.text}"(${parts.join(',')})`
+}
+
+function buildMentorSeedText(
+  language: Language,
+  nodes: Node<ConceptNodeData>[],
+  selectedNode: Node<ConceptNodeData> | null,
+  selectedEdge: Edge | null,
+): string {
+  const label = (id: string) => nodes.find(n => n.id === id)?.data.text ?? id
+  if (selectedNode) {
+    return language === 'it'
+      ? `Voglio esplorare il concetto "${selectedNode.data.text}".`
+      : `I want to explore the concept "${selectedNode.data.text}".`
+  }
+  if (selectedEdge) {
+    const a = label(selectedEdge.source)
+    const b = label(selectedEdge.target)
+    const typ = String(selectedEdge.data?.type ?? '?')
+    return language === 'it'
+      ? `Voglio ragionare sulla relazione "${a}" → ${typ} → "${b}".`
+      : `I want to explore the relation "${a}" → ${typ} → "${b}".`
+  }
+  return language === 'it'
+    ? 'Voglio rivedere la mia mappa. Dove dovrei concentrarmi?'
+    : 'I want to review my knowledge map. Where should I focus?'
 }
 
 function buildGraphChatPrompt(
@@ -78,12 +101,23 @@ function buildGraphChatPrompt(
     : selectedEdge
       ? `Selection: edge ${label(selectedEdge.source)} → ${String(selectedEdge.data?.type ?? '?')} → ${label(selectedEdge.target)}.`
       : ''
+  let focusLine = ''
+  let relatedLine = ''
+  if (selectedNode) {
+    const neighborIds = new Set(oneHopNeighborIds(selectedNode.id, edges))
+    const neighbors = nodes.filter(n => neighborIds.has(n.id))
+    const { focus, related } = buildFocalNeighborContext(selectedNode, neighbors)
+    if (focus) focusLine = `Focus: ${focus}`
+    if (related) relatedLine = `Related: ${related}`
+  }
   return [
     ...getMentorBase(language),
     '',
     `Nodes: ${nodeList}`,
     edgeList ? `Edges: ${edgeList}` : '',
     selCtx,
+    focusLine,
+    relatedLine,
   ].filter(Boolean).join('\n')
 }
 
@@ -106,6 +140,7 @@ export function MentorBubble() {
   const [draft, setDraft] = useState('')
   const [thinking, setThinking] = useState(false)
   const [loadingInitial, setLoadingInitial] = useState(false)
+  const [chatKey, setChatKey] = useState(0)
 
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -142,10 +177,6 @@ export function MentorBubble() {
     return data.choices?.[0]?.message?.content ?? '…'
   }, [settings])
 
-  const callApi = useCallback((msgs: Message[]) =>
-    fetchCompletion(buildSystemPrompt(), msgs),
-  [fetchCompletion, buildSystemPrompt])
-
   useEffect(() => {
     if (!mentorPanelExpanded) return
     if (settings.aiMode === 'local' && webllm.status === 'loading') {
@@ -165,7 +196,7 @@ export function MentorBubble() {
     setLoadingInitial(true)
 
     const systemPrompt = buildSystemPrompt()
-    const seedText = 'Hello, I want to discuss my knowledge graph.'
+    const seedText = buildMentorSeedText(settings.language, nodes, selectedNode, selectedEdge)
 
     fetchCompletion(systemPrompt, [{ role: 'user', text: seedText }])
       .then(raw => { if (!cancelled) setHistory([{ role: 'mentor', text: raw }]) })
@@ -173,7 +204,7 @@ export function MentorBubble() {
       .finally(() => { if (!cancelled) setLoadingInitial(false) })
 
     return () => { cancelled = true }
-  }, [mentorPanelExpanded, currentGraphId, webllm.status, settings.aiMode, settings.language]) // eslint-disable-line react-hooks/exhaustive-deps -- opening line tied to graph open/switch; live sends use fresh prompt via buildSystemPrompt
+  }, [mentorPanelExpanded, currentGraphId, webllm.status, settings.aiMode, settings.language, chatKey]) // eslint-disable-line react-hooks/exhaustive-deps -- opening line tied to graph open/switch; live sends use fresh prompt via buildSystemPrompt
 
   useEffect(() => {
     if (mentorPanelExpanded && inputRef.current) inputRef.current.focus()
@@ -202,7 +233,7 @@ export function MentorBubble() {
       if (el) el.scrollTop = el.scrollHeight
     })
     try {
-      const raw = await callApi(next)
+      const raw = await fetchCompletion(buildSystemPrompt(), next)
       setHistory(h => [...h, { role: 'mentor', text: raw }])
     } catch {
       setHistory(h => [...h, { role: 'mentor', text: t.mentor.errorRetrySlow }])
@@ -277,6 +308,26 @@ export function MentorBubble() {
               </small>
             )}
           </div>
+          <button
+            type="button"
+            title={settings.language === 'it' ? 'Nuova chat' : 'New chat'}
+            disabled={loadingInitial || thinking}
+            onClick={() => setChatKey(k => k + 1)}
+            style={{
+              appearance: 'none', border: 0, background: 'transparent',
+              color: 'var(--ink-4)', cursor: 'default',
+              width: 24, height: 24, borderRadius: 999,
+              opacity: loadingInitial || thinking ? 0.3 : 1,
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            }}
+            onMouseEnter={e => { if (!loadingInitial && !thinking) { e.currentTarget.style.color = 'var(--ink-2)'; e.currentTarget.style.background = 'var(--paper-deep)' } }}
+            onMouseLeave={e => { e.currentTarget.style.color = 'var(--ink-4)'; e.currentTarget.style.background = 'transparent' }}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
+              <path d="M21 3v5h-5" />
+            </svg>
+          </button>
           <CloseButton onClick={() => setMentorPanelExpanded(false)} />
         </div>
 

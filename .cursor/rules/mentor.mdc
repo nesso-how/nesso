@@ -1,6 +1,6 @@
 ---
 description: Socratic AI mentor integration — MentorBubble, system prompt, AI API usage
-globs: src/components/MentorBubble.tsx,src/llm/webllm.ts
+globs: src/components/MentorBubble.tsx,src/llm/webllm.ts,src/llm/context.ts
 alwaysApply: false
 ---
 
@@ -18,26 +18,26 @@ Configure under **Settings** (gear, **⌘,**): **Appearance**, **AI**, **Review*
 
 ## Persona
 
-Socrates is a Socratic mentor: mostly questions, almost no lecturing. Rules live in `MENTOR_BASE` inside `MentorBubble.tsx`:
+Socrates is a Socratic mentor: mostly questions, almost no lecturing. Rules live in **`getMentorBase()`** inside `MentorBubble.tsx`:
 
 - No graph edits in dialogue (do not propose new nodes/edges or renames).
-- Default one short question; explain only to frame it; aim under ~120 words (hard cap via `MENTOR_MAX_TOKENS`).
+- Default one short question; explain only to frame it; aim under ~180 words (hard cap via `MENTOR_MAX_TOKENS`).
 - No emojis or flattery; sparse `*asterisks*` on key terms; no JSON or pseudo-graph markup.
 - No em dash (U+2014) in replies; use commas, periods, or short sentences instead.
 
 ## System prompt (single chat)
 
-There are **no mode tabs**. `buildGraphChatPrompt()` builds one system string: graph snapshot — up to `MAX_SNAPSHOT_NODES` nodes with stability labels (remainder summarized if larger), up to `MAX_SNAPSHOT_EDGES` edges (`2×` the node cap by default), optional selection (node or full edge path) — plus `MENTOR_BASE`. Each send recomputes the prompt from the live store so new edits appear on the next turn.
+There are **no mode tabs**. `buildGraphChatPrompt()` builds one system string: graph snapshot — up to `MAX_SNAPSHOT_NODES` nodes with stability labels (remainder summarized if larger), up to `MAX_SNAPSHOT_EDGES` edges (`2×` the node cap by default), optional selection (node or full edge path), optional **`Focus:` / `Related:`** lines from **`buildFocalNeighborContext()`** in `src/llm/context.ts` when a node is selected — plus **`getMentorBase()`**. Each send recomputes the prompt from the live store so new edits appear on the next turn.
 
-On panel open, graph switch, or local-model-ready transition, the first mentor line is fetched by POSTing a short synthetic user turn (“Hello, I want to discuss…”) with the current system prompt.
+On panel open, graph switch, local-model-ready transition, or **`chatKey`** bump (header refresh), the first mentor line is fetched using a short synthetic **user** turn from **`buildMentorSeedText()`**: wording depends on whether a **node**, an **edge only**, or **nothing** is selected.
 
 ## Rendering
 
-Assistant `Message` text is HTML via **`marked`** (`renderMarkdown()` in `MentorBubble`, sync mode). User-authored bubbles remain plain text in a `<span>`.
+Assistant replies render as plain text with subtle emphasis via **`Typewriter`** (`emphasis` prop). User-authored bubbles remain plain text in a `<span>`.
 
 ## Selection vs history
 
-`history` remains local component state. Exploration chat uses `selectedNode` / `selectedEdge` only inside `buildGraphChatPrompt` on each message, not as a trigger for selection-driven seed messages.
+`history` remains local component state. The opening synthetic user message reflects **`selectedNode` / `selectedEdge`** via **`buildMentorSeedText()`**; subsequent turns still rebuild `buildGraphChatPrompt()` from the live selection on each send.
 
 ## Panel open/closed
 
@@ -45,14 +45,14 @@ Whether the mentor **card** is expanded is `mentorPanelExpanded` on `useGraphSto
 
 ## Message history
 
-`history: Message[]` is local to `MentorBubble` (not in the store). It resets when the panel opens again, the graph changes, or local engine readiness changes during the opening sequence. Do not persist chat history to the store.
+`history: Message[]` is local to `MentorBubble` (not in the store). It resets when the panel opens again, the graph changes, local engine readiness changes during the opening sequence, or the user clicks **New chat** (refresh). Do not persist chat history to the store.
 
 ## API call
 
 **Remote:** `fetch(`${aiBaseUrl}/chat/completions`, …)` with JSON body:
 
 - `model` — `settings.aiModel`
-- `max_tokens` — `MENTOR_MAX_TOKENS` (`220`, aligned with ~120-word replies)
+- `max_tokens` — `MENTOR_MAX_TOKENS` (~380, aligned with ~180-word replies)
 - `messages` — `[{ role: 'system', content: buildGraphChatPrompt() }, …]` plus full `history` turns mapped to `user` / `assistant` roles.
 
 `Authorization: Bearer …` is sent when `settings.aiApiKey` is non-empty.

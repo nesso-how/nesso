@@ -8,6 +8,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
+- **Mentor:** Opening message uses context-aware synthetic prompts (selected concept, selected relation only, or whole-graph weak spots); header **New chat** (reload) clears the thread and refetches that opener; persona instructions distinguish node vs edge vs empty selection.
 - **AI (local):** Cached WebLLM weights auto-load when Local mode is selected; Settings shows saved-on-device state and probes the browser cache; first run without cache still uses **Download & use**.
 - **Settings → AI:** Single flow: **Mode** row (Local left, default) matching Appearance controls, then fields for the active mode.
 - **Mentor:** Friendly copy when the local model is missing, loading, or failed; short loading line in chat; system prompt asks the model to avoid em dashes in replies.
