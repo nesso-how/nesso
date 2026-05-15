@@ -80,8 +80,6 @@ Each relation has a line style (solid, dashed, dotted, double, wavy) and an SVG 
 
 ### Graph canvas
 
-- [x] Undo/Redo + graph history — step backward and forward through graph edits, with a visible history of node, edge, and layout changes
-- [x] Multiple selection — select and move groups of nodes and edges together, with bulk actions in the inspector where useful
 - [ ] Image export — export the current graph canvas as a shareable image for notes, presentations, or documentation
 - [ ] Parallel-edge handling — one edge per directed pair, or offset overlapping arcs when source/target coincide
 
@@ -93,20 +91,9 @@ Each relation has a line style (solid, dashed, dotted, double, wavy) and an SVG 
 - [ ] Specialized local models — investigate small in-browser models via Transformers.js (WASM) for specific tasks: embedding (`all-MiniLM-L6-v2`, ~23 MB) for semantic search and duplicate detection, zero-shot relation classification (`nli-deberta-v3-small`, ~83 MB) for edge-type suggestion, and cross-encoder reranking (`ms-marco-MiniLM-L-6-v2`, ~22 MB) for mentor context retrieval on large graphs
 - [ ] Wikipedia/Wikidata context enrichment — fetch Wikipedia summaries and Wikidata structured relations for concept nodes and inject them as context when the AI generates text
 
-### Learning & review
-
-- [x] Per-node elaboration — structured annotations alongside each concept: definition in own words, user-built examples, open questions, informal connections not yet ready to be formalised as edges, and a free-text field as an escape hatch
-- [x] FSRS-based review scheduling — **done:** `ts-fsrs` with per-node stability, difficulty, reps, lapses, due, and last rating; Settings → Review for target retention and max interval
-- [x] AI-guided spaced repetition — when surfacing a node for review, feed its edges and neighbours to the AI mentor to generate questions that probe relational understanding rather than isolated recall; replace the current heuristic scheduler with one informed by both FSRS stability scores and graph topology
-
 ### Core features
 
 - [ ] Two-mode system — student (active learning) and professor (build reference graphs, evaluate student maps)
-
-### Design
-
-- [x] Inspector — refresh layout, typography, grouping, and visual hierarchy so the side panel stays easy to scan and consistent with canvas chrome
-- [x] Review dialog — revamp spacing, typography, and controls so the FSRS overlay feels cohesive with the rest of the chrome
 
 ### Data & sync
 
@@ -117,11 +104,16 @@ Each relation has a line style (solid, dashed, dotted, double, wavy) and an SVG 
 
 - [ ] Tauri auto-updates — signing and `latest.json` delivery via GitHub Releases _(pending public repo)_
 - [ ] GH Pages deployment _(pending public repo)_
-- [ ] Package extraction — modularise reusable parts as standalone npm libraries. Requires proper code review from dev.
+
+### Modularisation & plugins
+
+- [ ] Custom themes — register full theme packs (palette + typography + spacing scale) beyond the current palette switch, so contributors can ship visual identities as drop-in modules
+- [ ] Importer/exporter plugins — pluggable converters for Markdown, Anki decks, Mermaid, OPML, and Cytoscape JSON to ease onboarding from existing notes
+- [ ] Mentor personas — registerable AI personas (Socrates, devil's advocate, summariser, exam tutor) sharing the same transport but with distinct system prompts and UI affordances
+- [ ] Analyzer panels — read-only side panels that surface graph insights (centrality, clusters, missing relations per category) as third-party-contributable components
 
 ### Localisation & docs
 
-- [x] Translations — Italian and English; auto-detected on first launch; all UI strings, seed graphs, AI system prompts, and relation type labels are locale-aware; adding a language requires one new locale file typed against `typeof en`
 - [ ] README rewrite — proper project presentation with screenshot, and architecture overview
 
 ## License
