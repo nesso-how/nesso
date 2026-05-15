@@ -72,7 +72,7 @@ export function ShortcutsDialog({ open, onClose }: Props) {
             </div>
             {section.rows.map(row => (
               <div key={row.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                <span style={{ font: "400 14px/1 'Fraunces', serif", color: 'var(--ink-2)' }}>{row.label}</span>
+                <span style={{ font: "400 13px/1 'Inter', system-ui", color: 'var(--ink-2)' }}>{row.label}</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0, marginLeft: 16 }}>
                   {row.keys.map((k, i) => (
                     <span key={i} style={{ display: 'contents' }}>

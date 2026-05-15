@@ -166,7 +166,7 @@ export function RelationTypesDialog({ open, onClose }: Props) {
                 }}>
                   {t.edgeTypes.categories[g.key].label}
                 </span>
-                <small style={{ color: 'var(--ink-4)', fontSize: 10.5, fontStyle: 'italic', fontFamily: 'Fraunces, serif' }}>
+                <small style={{ color: 'var(--ink-4)', fontSize: 12, fontStyle: 'italic', fontFamily: "'Inter', system-ui" }}>
                   {t.edgeTypes.categories[g.key].subtitle}
                 </small>
               </div>
@@ -214,7 +214,7 @@ export function RelationTypesDialog({ open, onClose }: Props) {
                   </span>
 
                   {edgeDef.symmetric && (
-                    <span style={{ color: 'var(--ink-4)', fontSize: 10, fontFamily: 'Fraunces, serif', fontStyle: 'italic' }}>
+                    <span style={{ color: 'var(--ink-4)', fontSize: 11, fontFamily: "'Inter', system-ui", fontStyle: 'italic' }}>
                       {t.edgeTypes.symmetric}
                     </span>
                   )}

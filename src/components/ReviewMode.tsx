@@ -295,14 +295,14 @@ export function ReviewMode({ open, onClose }: Props) {
             {(hasDef || hasExamples) && (
               <div style={{ marginBottom: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {hasDef && (
-                  <p style={{ margin: 0, font: "450 13px/1.55 'Fraunces', serif", color: 'var(--ink-2)' }}>
+                  <p style={{ margin: 0, font: "400 14.5px/1.55 'Fraunces', serif", color: 'var(--ink-2)' }}>
                     {elab!.definition}
                   </p>
                 )}
                 {hasExamples && (
                   <ul style={{ margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 2 }}>
                     {examplesArr.map((ex, i) => (
-                      <li key={i} style={{ font: "450 13px/1.5 'Fraunces', serif", color: 'var(--ink-2)' }}>{ex}</li>
+                      <li key={i} style={{ font: "400 14.5px/1.55 'Fraunces', serif", color: 'var(--ink-2)' }}>{ex}</li>
                     ))}
                   </ul>
                 )}
@@ -318,7 +318,7 @@ export function ReviewMode({ open, onClose }: Props) {
                 return (
                   <div key={e.id} style={{ display: 'flex', alignItems: 'baseline', gap: 12, padding: '5px 0' }}>
                     <span style={{ font: "500 10.5px 'JetBrains Mono', ui-monospace", color: C.color, textTransform: 'uppercase', letterSpacing: '0.06em', minWidth: 88 }}>{t.edgeTypes.types[e.data?.type as EdgeTypeName]}</span>
-                    <span style={{ font: "500 14px 'Fraunces', serif", color: 'var(--ink)' }}>{target?.data.text}</span>
+                    <span style={{ font: "500 14.5px 'Fraunces', serif", color: 'var(--ink)' }}>{target?.data.text}</span>
                   </div>
                 )
               })}
@@ -329,7 +329,7 @@ export function ReviewMode({ open, onClose }: Props) {
                 return (
                   <div key={e.id} style={{ display: 'flex', alignItems: 'baseline', gap: 12, padding: '5px 0', opacity: 0.7 }}>
                     <span style={{ font: "500 10.5px 'JetBrains Mono', ui-monospace", color: C.color, textTransform: 'uppercase', letterSpacing: '0.06em', minWidth: 88 }}>← {t.edgeTypes.types[e.data?.type as EdgeTypeName]}</span>
-                    <span style={{ font: "500 14px 'Fraunces', serif", color: 'var(--ink)' }}>{source?.data.text}</span>
+                    <span style={{ font: "500 14.5px 'Fraunces', serif", color: 'var(--ink)' }}>{source?.data.text}</span>
                   </div>
                 )
               })}
@@ -346,7 +346,7 @@ export function ReviewMode({ open, onClose }: Props) {
                 {answerLoading ? (
                   <span style={{ font: "400 12px 'JetBrains Mono', ui-monospace", color: 'var(--ink-4)' }}>…</span>
                 ) : (
-                  <p style={{ margin: 0, font: "400 13.5px/1.55 'Fraunces', serif", color: 'var(--ink-2)' }}>{answer}</p>
+                  <p style={{ margin: 0, font: "400 14.5px/1.55 'Fraunces', serif", color: 'var(--ink-2)' }}>{answer}</p>
                 )}
               </div>
             )}

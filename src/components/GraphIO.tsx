@@ -175,7 +175,7 @@ function MenuItem({ icon, label, onClick }: {
       onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
     >
       <span style={{ color: 'var(--ink-3)', flexShrink: 0 }}>{icon}</span>
-      <span style={{ font: "500 13px 'Fraunces', ui-serif, Georgia, serif", color: 'var(--ink)', letterSpacing: '-0.005em' }}>{label}</span>
+      <span style={{ font: "500 13px 'Inter', system-ui", color: 'var(--ink)' }}>{label}</span>
     </button>
   )
 }

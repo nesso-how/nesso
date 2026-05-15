@@ -206,8 +206,8 @@ export function SearchDialog({ open, onClose, onSelectNode, onSelectGraph }: Pro
                       <circle cx="6" cy="6" r="4" />
                     </svg>
                     <span style={{
-                      flex: 1, font: "400 13px 'Inter', system-ui",
-                      color: 'var(--ink)',
+                      flex: 1, font: "400 13px 'Fraunces', ui-serif, Georgia, serif",
+                      color: 'var(--ink)', letterSpacing: '-0.005em',
                       overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                     }}>
                       {node.data.text}

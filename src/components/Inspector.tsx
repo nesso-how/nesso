@@ -743,7 +743,7 @@ function NodeInspector({
             borderedPlaceholder
             maxLength={2000}
             textStyle={{
-              font: "400 13px/1.55 'Inter', system-ui",
+              font: "400 13.5px/1.55 'Fraunces', ui-serif, Georgia, serif",
               color: 'var(--ink-2)',
             }}
           />
@@ -817,7 +817,7 @@ function NodeInspector({
                       maxLength={500}
                       onSave={v => updateExample(i, v)}
                       onShiftEnter={addExample}
-                      textStyle={{ font: "400 13px/1.55 'Inter', system-ui", color: 'var(--ink-2)' }}
+                      textStyle={{ font: "400 13.5px/1.55 'Fraunces', ui-serif, Georgia, serif", color: 'var(--ink-2)' }}
                     />
                     <button
                       type="button"
@@ -852,7 +852,7 @@ function NodeInspector({
                       onSave={savePendingExample}
                       onShiftEnter={addExample}
                       initialEditing
-                      textStyle={{ font: "400 13px/1.55 'Inter', system-ui", color: 'var(--ink-2)' }}
+                      textStyle={{ font: "400 13.5px/1.55 'Fraunces', ui-serif, Georgia, serif", color: 'var(--ink-2)' }}
                     />
                     <button
                       type="button"
@@ -945,7 +945,7 @@ function NodeInspector({
             borderedPlaceholder
             maxLength={2000}
             textStyle={{
-              font: "400 13px/1.55 'Inter', system-ui",
+              font: "400 13.5px/1.55 'Fraunces', ui-serif, Georgia, serif",
               color: 'var(--ink-2)',
             }}
           />
@@ -995,13 +995,13 @@ function EdgeInspector({
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '10px 0 18px' }}>
-        <span style={{ font: "500 14px 'Fraunces', serif" }}>{from?.data.text}</span>
+        <span style={{ font: "500 13.5px 'Fraunces', serif" }}>{from?.data.text}</span>
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 4 }}>
           <span style={{ height: 1, flex: 1, background: C.color, opacity: 0.5, display: 'inline-block' }} />
           <GlyphSVG kind={T.glyph} color={C.color} size={14} />
           <span style={{ height: 1, flex: 1, background: C.color, opacity: 0.5, display: 'inline-block' }} />
         </div>
-        <span style={{ font: "500 14px 'Fraunces', serif" }}>{to?.data.text}</span>
+        <span style={{ font: "500 13.5px 'Fraunces', serif" }}>{to?.data.text}</span>
       </div>
 
       <div style={{ font: "500 18px 'JetBrains Mono', ui-monospace", color: C.color, marginBottom: 12 }}>
@@ -1075,7 +1075,7 @@ function EdgeRow({ label, text, color, glyph, onClick }: {
           {label}
         </span>
         <span style={{
-          font: "500 13px 'Fraunces', serif",
+          font: "500 13.5px 'Fraunces', serif",
           color: 'var(--ink)',
           letterSpacing: '-0.005em',
           whiteSpace: 'nowrap',

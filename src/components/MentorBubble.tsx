@@ -285,7 +285,7 @@ export function MentorBubble() {
               </div>
             ) : (
               <div key={i} style={{
-                font: "400 15px/1.5 'Fraunces', ui-serif, Georgia, serif",
+                font: "400 14.5px/1.55 'Fraunces', ui-serif, Georgia, serif",
                 color: 'var(--ink)', letterSpacing: '-0.005em', margin: '0 0 14px',
               }} dangerouslySetInnerHTML={{ __html: renderMarkdown(m.text) }} />
             ),

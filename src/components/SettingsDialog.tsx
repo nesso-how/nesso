@@ -575,7 +575,7 @@ function LocalModelPanel({ status, progress, progressText, error }: LocalModelPa
       background: 'var(--paper-deep)',
     }}>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 10 }}>
-        <span style={{ font: "500 13px 'Fraunces', serif", color: 'var(--ink)' }}>{LOCAL_MODEL_LABEL}</span>
+        <span style={{ font: "500 13px 'Inter', system-ui", color: 'var(--ink)' }}>{LOCAL_MODEL_LABEL}</span>
         <span style={{ font: "400 11px 'JetBrains Mono', ui-monospace", color: 'var(--ink-4)' }}>{LOCAL_MODEL_SIZE}</span>
         {status === 'ready' && (
           <span style={{
