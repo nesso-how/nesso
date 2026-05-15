@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- **Settings:** **Data** tab — **Delete** + native confirm erases IndexedDB graphs, Zustand persist + layout keys (\`src/data/storageKeys.ts\`), then reloads (desktop offline reset; WebGPU model cache unchanged).
+
 ## [0.1.0-alpha.13] - 2026-05-15
 
 ### Changed

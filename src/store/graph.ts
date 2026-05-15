@@ -6,13 +6,14 @@ import type { Node, Edge, NodeChange, EdgeChange } from '@xyflow/react'
 import type { ConceptNodeData, NessoSettings, EdgeTypeName, Language } from '@/types/graph'
 import { CONCEPT_HANDLE_IN, CONCEPT_HANDLE_OUT } from '@/data/conceptHandles'
 import { SEEDS, ALL_SEEDS, getSeedsForLanguage, type Seed } from '@/data/seedGraph'
+import { ZUSTAND_PERSIST_KEY } from '@/data/storageKeys'
+import type { GraphRecord } from './db'
 import { dbSaveGraph, dbLoadGraph, dbListGraphs, dbDeleteGraph } from './db'
 
 function detectBrowserLanguage(): Language {
   const lang = typeof navigator !== 'undefined' ? navigator.language.split('-')[0] : 'en'
   return lang === 'it' ? 'it' : 'en'
 }
-import type { GraphRecord } from './db'
 
 type Selection =
   | { kind: 'node'; id: string }
@@ -447,7 +448,7 @@ export const useGraphStore = create<GraphState>()(
       },
     }),
     {
-      name: 'nesso',
+      name: ZUSTAND_PERSIST_KEY,
       partialize: (s) => ({
         settings: s.settings,
         mentorPanelExpanded: s.mentorPanelExpanded,

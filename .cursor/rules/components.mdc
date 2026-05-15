@@ -29,7 +29,7 @@ All components live in `src/components/`. They read from the Zustand store via `
 | `MentorBubble`        | FAB + Socratic chat card; `mentorPanelExpanded` persisted. See `mentor.mdc`.                         |
 | `SocratesGlyph`       | SVG avatar for the mentor FAB.                                                                       |
 | `ReviewMode`          | Full-screen FSRS review; queues due nodes; Again/Hard/Good/Easy → `recordStudyRating`.               |
-| `SettingsDialog`      | Tabbed modal: Appearance, AI, Review (FSRS params). Opened via ⌘,.                                   |
+| `SettingsDialog`      | Tabbed modal: Appearance, AI, Review (FSRS), Data (erase local storage + reload). Opened via ⌘,.     |
 | `ShortcutsDialog`     | Keyboard shortcut reference modal. Opened via `?` or `GraphIO`.                                      |
 | `CloseButton`         | Icon dismiss shared by modal headers.                                                                |
 

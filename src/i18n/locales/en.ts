@@ -7,12 +7,21 @@ const en = {
       appearance: 'Appearance',
       ai: 'AI',
       review: 'Review',
+      data: 'Data',
     },
     appearance: {
       theme: 'Theme',
       light: 'Light',
       dark: 'Dark',
       language: 'Language',
+    },
+    data: {
+      localData: 'Local data',
+      localDataDesc:
+        'Deletes graphs, settings, and layout preferences stored on this device, then reloads. Does not remove the downloaded in-browser AI model (WebGPU).',
+      deleteLocal: 'Delete',
+      deleteLocalConfirmPrompt:
+        'Erase all graphs, settings, and layout preferences stored on this device and reload the app? This cannot be undone.',
     },
     ai: {
       remote: 'Remote API',

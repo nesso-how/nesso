@@ -7,6 +7,7 @@ import { TOPBAR_HEIGHT_PX } from './TopBar'
 import { useGraphStore, selectedNodeSelector, selectedEdgeSelector } from '@/store/graph'
 import type { ConceptElaboration, EdgeTypeName } from '@/types/graph'
 import { useT } from '@/i18n'
+import { INSPECTOR_WIDTH_STORAGE_KEY } from '@/data/storageKeys'
 
 /** Inset of the inspector panel from TopBar (below) and sidebar (right); canvas uses 2× this (panel + gap to graph). */
 const INSPECTOR_PANEL_EDGE_INSET = 12
@@ -16,8 +17,6 @@ export const INSPECTOR_CANVAS_LEFT_GUTTER = INSPECTOR_PANEL_EDGE_INSET * 2
 export const INSPECTOR_PANEL_MIN_WIDTH = 220
 export const INSPECTOR_PANEL_MAX_WIDTH = 520
 export const INSPECTOR_PANEL_DEFAULT_WIDTH = 296
-
-const INSPECTOR_WIDTH_STORAGE_KEY = 'nesso-inspector-width'
 
 export function clampInspectorPanelWidth(w: number): number {
   return Math.min(

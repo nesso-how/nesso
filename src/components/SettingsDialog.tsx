@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 import { useState, useEffect, useCallback } from 'react'
 import { useGraphStore } from '@/store/graph'
+import { clearPersistedAppDataAndReload } from '@/lib/clearAppStorage'
 import { useWebLLM, initWebLLM, LOCAL_MODEL_LABEL, LOCAL_MODEL_SIZE } from '@/llm/webllm'
 import { CloseButton } from './CloseButton'
 import { useT } from '@/i18n'
@@ -55,8 +56,8 @@ async function* streamOllamaModelPull(baseUrl: string, model: string): AsyncGene
   }
 }
 
-type Tab = 'appearance' | 'ai' | 'review'
-const TABS = ['appearance', 'ai', 'review'] as const
+type Tab = 'appearance' | 'ai' | 'review' | 'data'
+const TABS = ['appearance', 'ai', 'review', 'data'] as const
 
 const LANGUAGES: { id: Language; label: string }[] = [
   { id: 'en', label: 'English' },
@@ -252,6 +253,31 @@ export function SettingsDialog({ open, onClose }: Props) {
                 </div>
               </div>
             </div>
+          )}
+
+          {tab === 'data' && (
+            <SettingRow label={t.settings.data.localData} description={t.settings.data.localDataDesc} last>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!window.confirm(t.settings.data.deleteLocalConfirmPrompt)) return
+                  void clearPersistedAppDataAndReload().catch(() => {})
+                }}
+                style={{
+                  appearance: 'none',
+                  border: '0.5px solid var(--conf-1)',
+                  background: 'var(--conf-1)',
+                  color: 'var(--paper)',
+                  font: "500 11px 'JetBrains Mono', ui-monospace",
+                  letterSpacing: '0.04em',
+                  padding: '6px 14px',
+                  borderRadius: 999,
+                  cursor: 'default',
+                }}
+              >
+                {t.settings.data.deleteLocal}
+              </button>
+            </SettingRow>
           )}
 
           {tab === 'ai' && (

@@ -3,12 +3,11 @@ import { useState, useRef, useEffect, type MouseEvent as ReactMouseEvent } from 
 import { useGraphStore } from '@/store/graph'
 import { useT } from '@/i18n'
 import { NessoMark } from './NessoMark'
+import { SIDEBAR_WIDTH_STORAGE_KEY } from '@/data/storageKeys'
 
 export const SIDEBAR_MIN_WIDTH = 180
 export const SIDEBAR_MAX_WIDTH = 380
 export const SIDEBAR_DEFAULT_WIDTH = 248
-
-const SIDEBAR_WIDTH_STORAGE_KEY = 'nesso-sidebar-width'
 
 export function clampSidebarWidth(w: number): number {
   return Math.min(SIDEBAR_MAX_WIDTH, Math.max(SIDEBAR_MIN_WIDTH, Math.round(w)))

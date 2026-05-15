@@ -9,12 +9,21 @@ const it: typeof en = {
       appearance: 'Aspetto',
       ai: 'AI',
       review: 'Revisione',
+      data: 'Dati',
     },
     appearance: {
       theme: 'Tema',
       light: 'Chiaro',
       dark: 'Scuro',
       language: 'Lingua',
+    },
+    data: {
+      localData: 'Dati locali',
+      localDataDesc:
+        'Elimina grafi, impostazioni e preferenze di layout salvate su questo dispositivo e ricarica l’app. Non rimuove il modello AI scaricato nel browser (WebGPU).',
+      deleteLocal: 'Elimina',
+      deleteLocalConfirmPrompt:
+        'Eliminare tutti i grafi, le impostazioni e le preferenze di layout salvate su questo dispositivo e ricaricare l’app? Operazione irreversibile.',
     },
     ai: {
       remote: 'API remota',

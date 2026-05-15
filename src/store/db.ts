@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
-import { openDB } from 'idb'
+import { deleteDB, openDB } from 'idb'
 import type { Node, Edge } from '@xyflow/react'
 import type { ConceptNodeData } from '@/types/graph'
+import { GRAPHS_DB_NAME } from '@/data/storageKeys'
 
 export interface GraphRecord {
   id: string
@@ -12,11 +13,18 @@ export interface GraphRecord {
   edges: Edge[]
 }
 
-const db = openDB<{ graphs: GraphRecord }>('nesso-graphs', 1, {
+const db = openDB<{ graphs: GraphRecord }>(GRAPHS_DB_NAME, 1, {
   upgrade(db) {
     db.createObjectStore('graphs', { keyPath: 'id' })
   },
 })
+
+/** Close the open DB handle and remove the IndexedDB database (e.g. factory reset). Caller should reload the page. */
+export async function wipeGraphsIndexedDb(): Promise<void> {
+  const conn = await db
+  conn.close()
+  await deleteDB(GRAPHS_DB_NAME)
+}
 
 export async function dbSaveGraph(record: GraphRecord) {
   return (await db).put('graphs', record)

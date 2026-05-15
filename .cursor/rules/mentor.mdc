@@ -13,7 +13,7 @@ alwaysApply: false
 
 ## Setup
 
-Configure under **Settings** (gear, **⌘,**): **Appearance**, **AI**, **Review** (FSRS live in **Review** for the full-screen review overlay only).
+Configure under **Settings** (gear, **⌘,**): **Appearance**, **AI**, **Review** (FSRS live in **Review** for the full-screen review overlay only), **Data** (erase locally persisted graphs/settings).
 
 ## Persona
 
