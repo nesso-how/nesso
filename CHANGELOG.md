@@ -8,6 +8,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
+- **Inspector:** collapsed/expanded state for **Examples** and **Relations** is saved in app settings (persisted with other preferences).
 - **Typography:** clearer Fraunces (concept copy) vs Inter (menus, dialogs chrome) split; tuned sizes in Inspector, Review mode, Search, Mentor, and Graph IO.
 
 ### Added

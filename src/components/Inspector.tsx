@@ -528,10 +528,10 @@ function NodeInspector({
 }) {
   const t = useT()
   const node = useGraphStore(selectedNodeSelector)!
-  const { edges, nodes, deleteNode, setSelected, updateNodeData } = useGraphStore()
+  const { edges, nodes, deleteNode, setSelected, updateNodeData, settings, setSetting } = useGraphStore()
 
-  const [examplesOpen, setExamplesOpen] = useState(true)
-  const [relationsOpen, setRelationsOpen] = useState(true)
+  const examplesOpen = settings.inspectorExamplesOpen
+  const relationsOpen = settings.inspectorRelationsOpen
   const [imageMode, setImageMode] = useState<'view' | 'search'>('view')
   const [imageQuery, setImageQuery] = useState('')
   const [imageHover, setImageHover] = useState(false)
@@ -539,8 +539,6 @@ function NodeInspector({
   const [pendingKey, setPendingKey] = useState(0)
 
   useEffect(() => {
-    setExamplesOpen(true)
-    setRelationsOpen(true)
     setImageMode('view')
     setImageQuery('')
     setPendingNewExample(false)
@@ -754,7 +752,7 @@ function NodeInspector({
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
             <button
               type="button"
-              onClick={() => setExamplesOpen(o => !o)}
+              onClick={() => setSetting('inspectorExamplesOpen', !examplesOpen)}
               style={{
                 appearance: 'none', border: 0, background: 'transparent', cursor: 'default',
                 display: 'inline-flex', alignItems: 'center', gap: 6, padding: 0,
@@ -878,7 +876,7 @@ function NodeInspector({
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <button
               type="button"
-              onClick={() => setRelationsOpen(o => !o)}
+              onClick={() => setSetting('inspectorRelationsOpen', !relationsOpen)}
               style={{
                 appearance: 'none', border: 0, background: 'transparent', cursor: 'default',
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',

@@ -95,4 +95,8 @@ export interface NessoSettings {
   fsrsRetention: number // 0.70–0.97
   /** FSRS maximum interval in days; caps how far into the future a card can be scheduled */
   maximumInterval: number
+  /** Node inspector: Examples section expanded (false = collapsed) */
+  inspectorExamplesOpen: boolean
+  /** Node inspector: Relations section expanded (false = collapsed) */
+  inspectorRelationsOpen: boolean
 }

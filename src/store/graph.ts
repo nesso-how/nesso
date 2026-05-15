@@ -139,6 +139,8 @@ export const useGraphStore = create<GraphState>()(
         aiApiKey: '',
         fsrsRetention: 0.9,
         maximumInterval: 365,
+        inspectorExamplesOpen: true,
+        inspectorRelationsOpen: true,
       },
 
       undo: () =>
