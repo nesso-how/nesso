@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.0-alpha.14] - 2026-05-15
+
 ### Added
 
 - **Settings:** **Data** tab — **Delete** + native confirm erases IndexedDB graphs, Zustand persist + layout keys (\`src/data/storageKeys.ts\`), then reloads (desktop offline reset; WebGPU model cache unchanged).
@@ -235,7 +237,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial alpha: interactive knowledge graph (web + Tauri v2); desktop installers on GitHub Releases (macOS Apple silicon and Intel).
 
-[Unreleased]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.13...HEAD
+[Unreleased]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.14...HEAD
+[0.1.0-alpha.14]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.13...v0.1.0-alpha.14
 [0.1.0-alpha.13]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.12...v0.1.0-alpha.13
 [0.1.0-alpha.12]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.11...v0.1.0-alpha.12
 [0.1.0-alpha.11]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.10...v0.1.0-alpha.11
