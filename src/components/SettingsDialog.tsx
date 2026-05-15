@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useGraphStore } from '@/store/graph'
 import { clearPersistedAppDataAndReload } from '@/lib/clearAppStorage'
-import { useWebLLM, initWebLLM, LOCAL_MODEL_LABEL, LOCAL_MODEL_SIZE } from '@/llm/webllm'
+import { useWebLLM, initWebLLM, LOCAL_MODEL_LABEL, LOCAL_MODEL_SIZE, localModelWeightsCached } from '@/llm/webllm'
 import { CloseButton } from './CloseButton'
 import { useT } from '@/i18n'
 import type { Language } from '@/types/graph'
@@ -281,103 +281,113 @@ export function SettingsDialog({ open, onClose }: Props) {
           )}
 
           {tab === 'ai' && (
-            <>
-              <div style={{ display: 'flex', gap: 6, marginBottom: 20 }}>
-                {(['remote', 'local'] as const).map(mode => (
-                  <button
-                    key={mode}
-                    onClick={() => setSetting('aiMode', mode)}
-                    style={{
-                      appearance: 'none',
-                      border: `0.5px solid ${settings.aiMode === mode ? 'var(--cat-causal)' : 'var(--line)'}`,
-                      background: settings.aiMode === mode ? 'var(--cat-causal)' : 'transparent',
-                      color: settings.aiMode === mode ? 'var(--paper)' : 'var(--ink-3)',
-                      font: "500 11px 'JetBrains Mono', ui-monospace",
-                      letterSpacing: '0.04em',
-                      padding: '6px 14px',
-                      borderRadius: 999,
-                      cursor: 'default',
-                      transition: 'all 0.15s',
-                    }}
-                  >
-                    {mode === 'remote' ? t.settings.ai.remote : t.settings.ai.local}
-                  </button>
-                ))}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+              {/* Mode selector — same pattern as Light / Dark in Appearance */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ font: "400 13px 'Inter', system-ui", color: 'var(--ink-3)' }}>{t.settings.ai.source}</span>
+                <div style={{ display: 'flex', gap: 4 }}>
+                  {(['local', 'remote'] as const).map(mode => {
+                    const active = settings.aiMode === mode
+                    return (
+                      <button
+                        key={mode}
+                        onClick={() => setSetting('aiMode', mode)}
+                        style={{
+                          appearance: 'none',
+                          border: `0.5px solid ${active ? 'var(--ink-2)' : 'var(--line)'}`,
+                          background: active ? 'var(--ink-2)' : 'transparent',
+                          color: active ? 'var(--paper)' : 'var(--ink-3)',
+                          font: "500 11px 'JetBrains Mono', ui-monospace",
+                          letterSpacing: '0.04em',
+                          padding: '5px 12px',
+                          borderRadius: 999,
+                          cursor: 'default',
+                          transition: 'all 0.15s',
+                        }}
+                      >
+                        {mode === 'remote' ? t.settings.ai.remote : t.settings.ai.local}
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
 
-              {settings.aiMode === 'remote' ? (
-                <>
-                  <label style={{ display: 'block', marginBottom: 14 }}>
-                    <span style={{ font: "400 13px 'Inter', system-ui", color: 'var(--ink-3)', display: 'block', marginBottom: 6 }}>{t.settings.ai.apiBaseUrl}</span>
-                    <input
-                      type="text"
-                      value={settings.aiBaseUrl}
-                      placeholder="http://localhost:11434/v1"
-                      onChange={e => setSetting('aiBaseUrl', e.target.value)}
-                      style={inputStyle}
-                    />
-                  </label>
+              {/* Config area */}
+              <div style={{ borderTop: '0.5px solid var(--line)', paddingTop: 18 }}>
+                {settings.aiMode === 'remote' ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                    <label style={{ display: 'block' }}>
+                      <span style={{ font: "400 13px 'Inter', system-ui", color: 'var(--ink-3)', display: 'block', marginBottom: 6 }}>{t.settings.ai.apiBaseUrl}</span>
+                      <input
+                        type="text"
+                        value={settings.aiBaseUrl}
+                        placeholder="http://localhost:11434/v1"
+                        onChange={e => setSetting('aiBaseUrl', e.target.value)}
+                        style={inputStyle}
+                      />
+                    </label>
 
-                  <div style={{ marginBottom: 14 }}>
-                    <span style={{ font: "400 13px 'Inter', system-ui", color: 'var(--ink-3)', display: 'block', marginBottom: 8 }}>{t.settings.ai.model}</span>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
-                      {OLLAMA_PRESETS.map(p => {
-                        const active = settings.aiModel === p.id
-                        return (
-                          <button
-                            key={p.id}
-                            title={p.note}
-                            onClick={() => {
-                              setSetting('aiModel', p.id)
-                              triggerCheck(settings.aiBaseUrl, p.id)
-                            }}
-                            style={{
-                              appearance: 'none',
-                              border: `0.5px solid ${active ? 'var(--ink-2)' : 'var(--line)'}`,
-                              background: active ? 'var(--paper-deep)' : 'transparent',
-                              color: active ? 'var(--ink)' : 'var(--ink-3)',
-                              font: "500 11px 'JetBrains Mono', ui-monospace",
-                              padding: '5px 10px',
-                              borderRadius: 999,
-                              cursor: 'default',
-                              transition: 'all 0.12s',
-                            }}
-                          >
-                            {p.id}
-                          </button>
-                        )
-                      })}
+                    <div>
+                      <span style={{ font: "400 13px 'Inter', system-ui", color: 'var(--ink-3)', display: 'block', marginBottom: 8 }}>{t.settings.ai.model}</span>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+                        {OLLAMA_PRESETS.map(p => {
+                          const active = settings.aiModel === p.id
+                          return (
+                            <button
+                              key={p.id}
+                              title={p.note}
+                              onClick={() => {
+                                setSetting('aiModel', p.id)
+                                triggerCheck(settings.aiBaseUrl, p.id)
+                              }}
+                              style={{
+                                appearance: 'none',
+                                border: `0.5px solid ${active ? 'var(--ink-2)' : 'var(--line)'}`,
+                                background: active ? 'var(--paper-deep)' : 'transparent',
+                                color: active ? 'var(--ink)' : 'var(--ink-3)',
+                                font: "500 11px 'JetBrains Mono', ui-monospace",
+                                padding: '5px 10px',
+                                borderRadius: 999,
+                                cursor: 'default',
+                                transition: 'all 0.12s',
+                              }}
+                            >
+                              {p.id}
+                            </button>
+                          )
+                        })}
+                      </div>
+                      <input
+                        type="text"
+                        value={settings.aiModel}
+                        placeholder="e.g. gemma3:4b"
+                        onChange={e => { setSetting('aiModel', e.target.value); setModelStatus('idle') }}
+                        onBlur={e => triggerCheck(settings.aiBaseUrl, e.target.value)}
+                        style={inputStyle}
+                      />
+                      <ModelStatusBadge status={modelStatus} model={settings.aiModel} baseUrl={settings.aiBaseUrl} pullProgress={pullProgress} onPull={() => void handlePull()} />
                     </div>
-                    <input
-                      type="text"
-                      value={settings.aiModel}
-                      placeholder="e.g. gemma3:4b"
-                      onChange={e => { setSetting('aiModel', e.target.value); setModelStatus('idle') }}
-                      onBlur={e => triggerCheck(settings.aiBaseUrl, e.target.value)}
-                      style={inputStyle}
-                    />
-                    <ModelStatusBadge status={modelStatus} model={settings.aiModel} baseUrl={settings.aiBaseUrl} pullProgress={pullProgress} onPull={() => void handlePull()} />
-                  </div>
 
-                  <label style={{ display: 'block' }}>
-                    <span style={{ font: "400 13px 'Inter', system-ui", color: 'var(--ink-3)', display: 'block', marginBottom: 6 }}>{t.settings.ai.apiKey}</span>
-                    <input
-                      type="password"
-                      autoComplete="off"
-                      value={settings.aiApiKey}
-                      placeholder="••••••••"
-                      onChange={e => setSetting('aiApiKey', e.target.value)}
-                      style={inputStyle}
-                    />
-                    <small style={{ font: "400 11px/1.4 'Inter', system-ui", color: 'var(--ink-4)', display: 'block', marginTop: 8 }}>
-                      {t.settings.ai.apiKeyHint} <code style={{ fontFamily: "'JetBrains Mono', ui-monospace", fontSize: '10.5px' }}>Authorization: Bearer</code>.
-                    </small>
-                  </label>
-                </>
-              ) : (
-                <LocalModelPanel status={llm.status} progress={llm.progress} progressText={llm.progressText} error={llm.error} />
-              )}
-            </>
+                    <label style={{ display: 'block' }}>
+                      <span style={{ font: "400 13px 'Inter', system-ui", color: 'var(--ink-3)', display: 'block', marginBottom: 6 }}>{t.settings.ai.apiKey}</span>
+                      <input
+                        type="password"
+                        autoComplete="off"
+                        value={settings.aiApiKey}
+                        placeholder="••••••••"
+                        onChange={e => setSetting('aiApiKey', e.target.value)}
+                        style={inputStyle}
+                      />
+                      <small style={{ font: "400 11px/1.4 'Inter', system-ui", color: 'var(--ink-4)', display: 'block', marginTop: 8 }}>
+                        {t.settings.ai.apiKeyHint} <code style={{ fontFamily: "'JetBrains Mono', ui-monospace", fontSize: '10.5px' }}>Authorization: Bearer</code>.
+                      </small>
+                    </label>
+                  </div>
+                ) : (
+                  <LocalModelPanel status={llm.status} progress={llm.progress} progressText={llm.progressText} error={llm.error} />
+                )}
+              </div>
+            </div>
           )}
 
           {tab === 'review' && (
@@ -593,6 +603,21 @@ function ModelStatusBadge({ status, model, baseUrl, pullProgress, onPull }: {
 
 function LocalModelPanel({ status, progress, progressText, error }: LocalModelPanelProps) {
   const t = useT()
+  const [cacheProbe, setCacheProbe] = useState<'unknown' | 'cached' | 'missing'>('unknown')
+
+  useEffect(() => {
+    let cancelled = false
+    setCacheProbe('unknown')
+    localModelWeightsCached()
+      .then(y => { if (!cancelled) setCacheProbe(y ? 'cached' : 'missing') })
+      .catch(() => { if (!cancelled) setCacheProbe('missing') })
+    return () => { cancelled = true }
+  }, [])
+
+  useEffect(() => {
+    if (cacheProbe === 'cached' && status === 'idle') void initWebLLM()
+  }, [cacheProbe, status])
+
   return (
     <div style={{
       border: '0.5px solid var(--line)',
@@ -611,9 +636,34 @@ function LocalModelPanel({ status, progress, progressText, error }: LocalModelPa
             textTransform: 'uppercase', letterSpacing: '0.08em',
           }}>{t.settings.ai.localModel.ready}</span>
         )}
+        {status === 'idle' && cacheProbe === 'cached' && (
+          <span style={{
+            marginLeft: 'auto',
+            font: "500 10px 'JetBrains Mono', ui-monospace",
+            color: 'var(--conf-5)',
+            textTransform: 'uppercase', letterSpacing: '0.08em',
+          }}>{t.settings.ai.localModel.saved}</span>
+        )}
       </div>
 
-      {status === 'idle' && (
+      {status === 'idle' && cacheProbe === 'unknown' && (
+        <p style={{ font: "400 12px/1.5 'Inter', system-ui", color: 'var(--ink-4)', margin: 0 }}>
+          {t.settings.ai.localModel.checkingCache}
+        </p>
+      )}
+
+      {status === 'idle' && cacheProbe === 'cached' && (
+        <>
+          <p style={{ font: "400 12px/1.5 'Inter', system-ui", color: 'var(--ink-3)', margin: '0 0 8px' }}>
+            {t.settings.ai.localModel.alreadyDownloaded}
+          </p>
+          <p style={{ font: "400 11px/1.45 'Inter', system-ui", color: 'var(--ink-4)', margin: 0 }}>
+            {t.settings.ai.localModel.autoLoading}
+          </p>
+        </>
+      )}
+
+      {status === 'idle' && cacheProbe === 'missing' && (
         <>
           <p style={{ font: "400 12px/1.5 'Inter', system-ui", color: 'var(--ink-3)', margin: '0 0 12px' }}>
             {t.settings.ai.localModel.description}

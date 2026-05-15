@@ -134,7 +134,7 @@ export const useGraphStore = create<GraphState>()(
         showHeatmap: true,
         curveStyle: 'arc',
         categoryPalette: 'default',
-        aiMode: 'remote',
+        aiMode: 'local',
         aiBaseUrl: 'http://localhost:11434/v1',
         aiModel: 'gemma3:4b',
         aiApiKey: '',

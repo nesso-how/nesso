@@ -8,8 +8,9 @@ alwaysApply: false
 
 `MentorBubble.tsx` is the AI chat component. Completions depend on **`NessoSettings.aiMode`**:
 
-- **`remote`** (default) — OpenAI-compatible **`POST …/chat/completions`** via `fetch`. Base URL, model, and optional API key come from `aiBaseUrl`, `aiModel`, `aiApiKey`; there is no environment-variable fallback for the key.
-- **`local`** — In-browser **WebGPU** inference via `@mlc-ai/web-llm` in `src/llm/webllm.ts`. `App.tsx` runs `initWebLLM()` when `aiMode === 'local'` so the MLC engine starts loading without opening Settings first. `MentorBubble` subscribes with `useWebLLM()` (status, `progress`, `progressText`) for a loading bar, placeholder, and transcript message; chat input stays disabled until `status === 'ready'`. `getEngine()` exposes `MLCEngine` for `engine.chat.completions.create` with the same message shape as the remote path.
+- **`local`** (default) — In-browser **WebGPU** inference via `@mlc-ai/web-llm` in `src/llm/webllm.ts`. `App.tsx` runs `localModelWeightsCached()` and, when true, `initWebLLM()` when `aiMode === 'local'` so the MLC engine starts loading without opening Settings first. First-time download still uses **Download & use** in Settings when nothing is cached. `MentorBubble` subscribes with `useWebLLM()` (status, `progress`, `progressText`) for a loading bar, placeholder, and transcript message; chat input stays disabled until `status === 'ready'`. `getEngine()` exposes `MLCEngine` for `engine.chat.completions.create` with the same message shape as the remote path.
+
+- **`remote`** — OpenAI-compatible **`POST …/chat/completions`** via `fetch`. Base URL, model, and optional API key come from `aiBaseUrl`, `aiModel`, `aiApiKey`; there is no environment-variable fallback for the key.
 
 ## Setup
 
@@ -22,12 +23,13 @@ Socrates is a Socratic mentor: mostly questions, almost no lecturing. Rules live
 - No graph edits in dialogue (do not propose new nodes/edges or renames).
 - Default one short question; explain only to frame it; aim under ~120 words (hard cap via `MENTOR_MAX_TOKENS`).
 - No emojis or flattery; sparse `*asterisks*` on key terms; no JSON or pseudo-graph markup.
+- No em dash (U+2014) in replies; use commas, periods, or short sentences instead.
 
 ## System prompt (single chat)
 
 There are **no mode tabs**. `buildGraphChatPrompt()` builds one system string: graph snapshot — up to `MAX_SNAPSHOT_NODES` nodes with stability labels (remainder summarized if larger), up to `MAX_SNAPSHOT_EDGES` edges (`2×` the node cap by default), optional selection (node or full edge path) — plus `MENTOR_BASE`. Each send recomputes the prompt from the live store so new edits appear on the next turn.
 
-On panel open, graph switch, or local-model-ready transition, the first mentor line is fetched by POSTing a short synthetic user turn (“Hello — I want to discuss…”) with the current system prompt.
+On panel open, graph switch, or local-model-ready transition, the first mentor line is fetched by POSTing a short synthetic user turn (“Hello, I want to discuss…”) with the current system prompt.
 
 ## Rendering
 

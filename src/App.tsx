@@ -26,6 +26,7 @@ import { SearchDialog } from './components/SearchDialog'
 import { useGraphStore, selectedNodeSelector, selectedEdgeSelector } from './store/graph'
 import { useAutoSave } from './hooks/useAutoSave'
 import { PALETTES } from './data/palettes'
+import { initWebLLM, localModelWeightsCached } from './llm/webllm'
 
 function AppInner() {
   const [showReview, setShowReview] = useState(false)
@@ -153,6 +154,18 @@ function AppInner() {
       return () => { cancelAnimationFrame(id1); cancelAnimationFrame(id2) }
     }
   }, [currentGraphId, nodes.length, fitView])
+
+  // Local WebGPU model: if weights are already cached, load the engine without opening Settings
+  useEffect(() => {
+    if (settings.aiMode !== 'local') return
+    let cancelled = false
+    void (async () => {
+      try {
+        if (await localModelWeightsCached() && !cancelled) void initWebLLM()
+      } catch { /* ignore cache probe failures */ }
+    })()
+    return () => { cancelled = true }
+  }, [settings.aiMode])
 
   // Apply theme
   useEffect(() => {

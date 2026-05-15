@@ -27,10 +27,11 @@ function getMentorBase(language: Language): string[] {
   const langInstruction = language === 'it' ? 'Respond in Italian.' : 'Respond in English.'
   return [
     `You are ${name} in Nesso, a knowledge-graph app for active learning. Be warm, precise, and Socratic: mostly questions, almost no lecturing.`,
-    'Never tell the user what nodes or edges to add or rename—no graph edits, only dialogue about ideas.',
+    'Never tell the user what nodes or edges to add or rename. No graph edits; only dialogue about ideas.',
     'No emojis or flattery. Use *asterisks* sparingly for a key term. No JSON, markup pseudo-graphs, or bracketed labels.',
+    'Do not use em dashes (the long dash character). Use commas, periods, or split into two short sentences instead.',
     'Default: one short question; explain only to frame the question. Aim under ~180 words.',
-    'Nodes annotated DUE or last rated Again/Hard are the learner\'s weak spots — when no node is selected, open with a question about one of them.',
+    'Nodes annotated DUE or last rated Again/Hard are the learner\'s weak spots. When no node is selected, open with a question about one of them.',
     langInstruction,
   ]
 }
@@ -99,6 +100,7 @@ export function MentorBubble() {
   const webllm = useWebLLM()
   const modelLoading = settings.aiMode === 'local' && webllm.status === 'loading'
   const modelReady = settings.aiMode !== 'local' || webllm.status === 'ready'
+  const localModelAwaitingSetup = settings.aiMode === 'local' && webllm.status !== 'ready' && webllm.status !== 'loading'
 
   const [history, setHistory] = useState<Message[]>([])
   const [draft, setDraft] = useState('')
@@ -121,7 +123,7 @@ export function MentorBubble() {
 
     if (settings.aiMode === 'local') {
       const engine = getEngine()
-      if (!engine) throw new Error('Local model not loaded — open Settings and click "Download & use".')
+      if (!engine) throw new Error('Local model not loaded. Open Settings and click "Download & use".')
       const reply = await engine.chat.completions.create({ model: LOCAL_MODEL_ID, max_tokens: MENTOR_MAX_TOKENS, messages })
       return reply.choices[0]?.message?.content ?? '…'
     }
@@ -146,8 +148,14 @@ export function MentorBubble() {
 
   useEffect(() => {
     if (!mentorPanelExpanded) return
-    if (settings.aiMode === 'local' && webllm.status !== 'ready') {
+    if (settings.aiMode === 'local' && webllm.status === 'loading') {
       setHistory([])
+      setLoadingInitial(false)
+      return
+    }
+    if (settings.aiMode === 'local' && webllm.status !== 'ready') {
+      const text = webllm.status === 'error' ? t.mentor.localModelLoadFailed : t.mentor.localModelNeedDownload
+      setHistory([{ role: 'mentor', text }])
       setLoadingInitial(false)
       return
     }
@@ -157,7 +165,7 @@ export function MentorBubble() {
     setLoadingInitial(true)
 
     const systemPrompt = buildSystemPrompt()
-    const seedText = 'Hello — I want to discuss my knowledge graph.'
+    const seedText = 'Hello, I want to discuss my knowledge graph.'
 
     fetchCompletion(systemPrompt, [{ role: 'user', text: seedText }])
       .then(raw => { if (!cancelled) setHistory([{ role: 'mentor', text: raw }]) })
@@ -165,7 +173,7 @@ export function MentorBubble() {
       .finally(() => { if (!cancelled) setLoadingInitial(false) })
 
     return () => { cancelled = true }
-  }, [mentorPanelExpanded, currentGraphId, webllm.status, settings.aiMode]) // eslint-disable-line react-hooks/exhaustive-deps -- opening line tied to graph open/switch; live sends use fresh prompt via buildSystemPrompt
+  }, [mentorPanelExpanded, currentGraphId, webllm.status, settings.aiMode, settings.language]) // eslint-disable-line react-hooks/exhaustive-deps -- opening line tied to graph open/switch; live sends use fresh prompt via buildSystemPrompt
 
   useEffect(() => {
     if (mentorPanelExpanded && inputRef.current) inputRef.current.focus()
@@ -210,6 +218,7 @@ export function MentorBubble() {
   const inputDisabled = !modelReady || loadingInitial
   const placeholder =
     modelLoading ? t.mentor.loadingModel :
+    localModelAwaitingSetup ? t.mentor.placeholderLocalPending :
     selectedNode ? t.mentor.placeholder(selectedNode.data.text) : t.mentor.placeholderGraph
 
   return (
@@ -277,12 +286,14 @@ export function MentorBubble() {
           flexShrink: 1, minHeight: 0,
         }}>
           {modelLoading ? (
-            <p style={{
-              font: "400 11px/1.4 'JetBrains Mono', ui-monospace",
-              color: 'var(--ink-4)', letterSpacing: '0.02em', margin: 0,
+            <div style={{
+              font: "400 14.5px/1.5 'Fraunces', ui-serif, Georgia, serif",
+              color: 'var(--ink)',
+              letterSpacing: '-0.005em',
+              margin: '5px 0',
             }}>
-              {webllm.progressText || t.mentor.initialising}
-            </p>
+              {t.mentor.loadingLocalModelNotice}
+            </div>
           ) : loadingInitial && history.length === 0 ? (
             <ThinkingIndicator />
           ) : history.map((m, i) =>

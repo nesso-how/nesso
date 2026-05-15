@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-import { CreateMLCEngine } from '@mlc-ai/web-llm'
+import { CreateMLCEngine, hasModelInCache } from '@mlc-ai/web-llm'
 import type { MLCEngine, InitProgressReport } from '@mlc-ai/web-llm'
 import { useState, useEffect } from 'react'
 
@@ -62,6 +62,11 @@ export async function initWebLLM(): Promise<void> {
 
 export function getEngine(): MLCEngine | null {
   return state.engine
+}
+
+/** True when MLC has the weights in browser storage (IndexedDB), even if not loaded into WebGPU yet. */
+export function localModelWeightsCached(): Promise<boolean> {
+  return hasModelInCache(LOCAL_MODEL_ID)
 }
 
 export function useWebLLM(): WebLLMState {

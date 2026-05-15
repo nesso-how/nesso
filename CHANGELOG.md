@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Changed
+
+- **AI (local):** Cached WebLLM weights auto-load when Local mode is selected; Settings shows saved-on-device state and probes the browser cache; first run without cache still uses **Download & use**.
+- **Settings → AI:** Single flow: **Mode** row (Local left, default) matching Appearance controls, then fields for the active mode.
+- **Mentor:** Friendly copy when the local model is missing, loading, or failed; short loading line in chat; system prompt asks the model to avoid em dashes in replies.
+
 ## [0.1.0-alpha.14] - 2026-05-15
 
 ### Added
