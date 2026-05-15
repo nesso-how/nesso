@@ -76,7 +76,7 @@ export function GraphCanvas({
   }, [])
 
   const onConnect = useCallback<OnConnect>((conn) => {
-    if (!conn.source || !conn.target) return
+    if (!conn.source || !conn.target || conn.source === conn.target) return
     setPendingConn({ source: conn.source, target: conn.target, screenX: 0, screenY: 0 })
   }, [])
 
