@@ -743,7 +743,7 @@ function NodeInspector({
             borderedPlaceholder
             maxLength={2000}
             textStyle={{
-              font: "450 13px/1.55 'Fraunces', ui-serif, Georgia, serif",
+              font: "400 13px/1.55 'Inter', system-ui",
               color: 'var(--ink-2)',
             }}
           />
@@ -817,7 +817,7 @@ function NodeInspector({
                       maxLength={500}
                       onSave={v => updateExample(i, v)}
                       onShiftEnter={addExample}
-                      textStyle={{ font: "450 13px/1.55 'Fraunces', ui-serif, Georgia, serif", color: 'var(--ink-2)' }}
+                      textStyle={{ font: "400 13px/1.55 'Inter', system-ui", color: 'var(--ink-2)' }}
                     />
                     <button
                       type="button"
@@ -852,7 +852,7 @@ function NodeInspector({
                       onSave={savePendingExample}
                       onShiftEnter={addExample}
                       initialEditing
-                      textStyle={{ font: "450 13px/1.55 'Fraunces', ui-serif, Georgia, serif", color: 'var(--ink-2)' }}
+                      textStyle={{ font: "400 13px/1.55 'Inter', system-ui", color: 'var(--ink-2)' }}
                     />
                     <button
                       type="button"
@@ -945,7 +945,7 @@ function NodeInspector({
             borderedPlaceholder
             maxLength={2000}
             textStyle={{
-              font: "450 13px/1.55 'Fraunces', ui-serif, Georgia, serif",
+              font: "400 13px/1.55 'Inter', system-ui",
               color: 'var(--ink-2)',
             }}
           />
