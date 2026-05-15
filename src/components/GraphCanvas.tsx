@@ -138,7 +138,7 @@ export function GraphCanvas({
         minZoom={0.15}
         maxZoom={2.5}
         deleteKeyCode={['Delete', 'Backspace']}
-        selectionKeyCode='Shift'
+        selectionKeyCode={['Meta', 'Control']}
         multiSelectionKeyCode={['Meta', 'Control']}
         proOptions={{ hideAttribution: true }}
         style={{ background: 'transparent' }}
