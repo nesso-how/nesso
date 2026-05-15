@@ -5,7 +5,9 @@ import { EDGE_TYPES, EDGE_CATEGORIES } from '@/data/edgeTypes'
 import { sortedDueConceptNodes } from '@/data/fsrsDueQueue'
 import { useGraphStore } from '@/store/graph'
 import { nodeToCard, type EdgeTypeName } from '@/types/graph'
+import { buildReviewElaborationPrompt } from '@/llm/context'
 import { fetchCompletion, isAiReady } from '@/llm/completion'
+import { SocratesGlyph } from './SocratesGlyph'
 import { useWebLLM } from '@/llm/webllm'
 import { useT } from '@/i18n'
 import { CloseButton } from './CloseButton'
@@ -13,7 +15,7 @@ import { ThinkingIndicator } from './ThinkingIndicator'
 import { Typewriter } from './Typewriter'
 
 const REVIEW_QUESTION_SYSTEM =
-  'You are a Socratic tutor. Given a concept from a knowledge graph and its semantic connections, write one concise question that tests the learner\'s relational understanding. Output only the question, nothing else. No preamble, no asterisks, no markdown.'
+  'You are a Socratic tutor. Given a concept from a knowledge graph, optional learner notes (definition, examples, notes), and its semantic connections, write one concise question that tests understanding. Use the notes only to aim the question (topic, pitfall, application), without quoting or paraphrasing the definition so the learner can still actively recall. If notes are missing, rely on the title and relations. Output only the question, nothing else. No preamble, no asterisks, no markdown.'
 
 const RATINGS = [Rating.Again, Rating.Hard, Rating.Good, Rating.Easy] as const
 
@@ -109,9 +111,14 @@ export function ReviewMode({ open, onClose }: Props) {
       }),
     ].join('; ')
 
-    const userMsg = relStr
-      ? `Concept: "${currentNode.data.text}"\nRelations: ${relStr}`
-      : `Concept: "${currentNode.data.text}"`
+    const elaboration = buildReviewElaborationPrompt(currentNode)
+    const userMsg = [
+      `Concept: "${currentNode.data.text}"`,
+      elaboration,
+      relStr ? `Relations: ${relStr}` : '',
+    ]
+      .filter(Boolean)
+      .join('\n')
 
     const run = async () => {
       const langSuffix = settings.language === 'it' ? ' Respond in Italian.' : ''
@@ -252,13 +259,24 @@ export function ReviewMode({ open, onClose }: Props) {
 
         {!revealed ? (
           <>
-            <div style={{ marginBottom: 22, minHeight: 44, display: 'flex', alignItems: 'center' }}>
+            <div style={{ marginBottom: 22, minHeight: 44, display: 'flex', alignItems: 'flex-start', gap: 10 }}>
               {questionLoading ? (
                 <ThinkingIndicator />
               ) : question ? (
-                <span style={{ font: "400 14.5px/1.55 'Fraunces', serif", color: 'var(--ink-2)' }}>
-                  <Typewriter text={question} />
-                </span>
+                <>
+                  <div style={{
+                    flexShrink: 0,
+                    width: 36, height: 36,
+                    borderRadius: '50%',
+                    border: '0.5px solid var(--line)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <SocratesGlyph size={24} color="var(--ink-3)" accent="var(--cat-causal)" />
+                  </div>
+                  <span style={{ font: "400 14.5px/1.55 'Fraunces', serif", color: 'var(--ink-2)', paddingTop: 8 }}>
+                    <Typewriter text={question} />
+                  </span>
+                </>
               ) : (
                 <p style={{ margin: 0, font: "400 14.5px/1.55 'Fraunces', serif", color: 'var(--ink-3)', fontStyle: 'italic' }}>
                   {t.review.recallPrompt}
