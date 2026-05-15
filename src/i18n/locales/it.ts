@@ -110,6 +110,7 @@ const it: typeof en = {
     image: {
       searchPlaceholder: 'Cerca su Wikimedia Commons…',
       search: 'Cerca',
+      searching: 'Ricerca in corso',
       cancel: 'Annulla',
       addImage: 'Aggiungi immagine',
     },

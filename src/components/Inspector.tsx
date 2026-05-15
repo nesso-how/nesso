@@ -275,10 +275,24 @@ function ImageSearchPanel({
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    if (!query) setQuery(conceptText || '')
-    const timer = setTimeout(() => inputRef.current?.focus(), 30)
-    return () => clearTimeout(timer)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    let cancelled = false
+    const initialQ = query.trim() || conceptText.trim()
+    if (!query.trim() && conceptText.trim()) setQuery(conceptText.trim())
+
+    const focusTimer = setTimeout(() => inputRef.current?.focus(), 30)
+
+    if (initialQ) {
+      setLoading(true)
+      searchCommonsImages(initialQ)
+        .then(r => { if (!cancelled) setResults(r) })
+        .finally(() => { if (!cancelled) setLoading(false) })
+    }
+
+    return () => {
+      cancelled = true
+      clearTimeout(focusTimer)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- run once when search panel opens; query/conceptText are initial props
   }, [])
 
   async function runSearch(e: FormEvent) {
@@ -344,7 +358,32 @@ function ImageSearchPanel({
           </span>
         )}
         {loading && (
-          <span style={{ font: "500 9px 'JetBrains Mono'", color: 'var(--ink-5)', flexShrink: 0 }}>…</span>
+          <span
+            aria-busy="true"
+            aria-label={t.inspector.image.searching}
+            role="status"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+              flexShrink: 0,
+              height: 15,
+              padding: '0 2px',
+            }}
+          >
+            {[0, 1, 2].map(i => (
+              <span
+                key={i}
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: '50%',
+                  background: 'var(--ink-4)',
+                  animation: `nx-dots-pulse 0.75s ease-in-out ${i * 0.13}s infinite both`,
+                }}
+              />
+            ))}
+          </span>
         )}
         <CloseButton onClick={onClose} />
       </form>

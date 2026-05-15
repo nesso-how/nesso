@@ -108,6 +108,7 @@ const en = {
     image: {
       searchPlaceholder: 'Search Wikimedia Commons…',
       search: 'Search',
+      searching: 'Searching',
       cancel: 'Cancel',
       addImage: 'Add image',
     },
