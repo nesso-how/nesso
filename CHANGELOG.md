@@ -6,9 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.0-alpha.15] - 2026-05-15
+
 ### Changed
 
-- **Review:** AI-generated recall questions include the concept’s elaboration (definition, examples, notes) when filled in the inspector, in addition to the title and graph relations.
+- **Review:** AI recall questions use inspector elaboration (definition, examples, notes) and graph relations; the system prompt steers questions without spoiling active recall; the question is shown beside a circular Socrates avatar so AI-authored text is easy to recognize.
 - **Mentor:** Opening message uses context-aware synthetic prompts (selected concept, selected relation only, or whole-graph weak spots); header **New chat** (reload) clears the thread and refetches that opener; persona instructions distinguish node vs edge vs empty selection.
 - **AI (local):** Cached WebLLM weights auto-load when Local mode is selected; Settings shows saved-on-device state and probes the browser cache; first run without cache still uses **Download & use**.
 - **Settings → AI:** Single flow: **Mode** row (Local left, default) matching Appearance controls, then fields for the active mode.
@@ -245,7 +247,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial alpha: interactive knowledge graph (web + Tauri v2); desktop installers on GitHub Releases (macOS Apple silicon and Intel).
 
-[Unreleased]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.14...HEAD
+[Unreleased]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.15...HEAD
+[0.1.0-alpha.15]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.14...v0.1.0-alpha.15
 [0.1.0-alpha.14]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.13...v0.1.0-alpha.14
 [0.1.0-alpha.13]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.12...v0.1.0-alpha.13
 [0.1.0-alpha.12]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.11...v0.1.0-alpha.12
