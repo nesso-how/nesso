@@ -54,6 +54,7 @@ export function RelationTypesDialog({ open, onClose }: Props) {
       <div
         onClick={e => e.stopPropagation()}
         style={{
+          position: 'relative',
           width: 520,
           maxWidth: '92vw',
           maxHeight: '76vh',
@@ -67,11 +68,11 @@ export function RelationTypesDialog({ open, onClose }: Props) {
           minHeight: 0,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-          <div style={{ font: "500 11px 'JetBrains Mono', ui-monospace", textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--ink-4)' }}>
-            {t.edgeTypes.dialogTitle}
-          </div>
-          <CloseButton onClick={onClose} />
+        <div style={{ font: "500 11px 'JetBrains Mono', ui-monospace", textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--ink-4)', marginBottom: 14 }}>
+          {t.edgeTypes.dialogTitle}
+        </div>
+        <div style={{ position: 'absolute', top: 12, right: 12 }}>
+          <CloseButton large onClick={onClose} />
         </div>
 
         <input

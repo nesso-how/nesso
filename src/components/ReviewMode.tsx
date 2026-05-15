@@ -8,6 +8,7 @@ import { nodeToCard, type EdgeTypeName } from '@/types/graph'
 import { fetchCompletion, isAiReady } from '@/llm/completion'
 import { useWebLLM } from '@/llm/webllm'
 import { useT } from '@/i18n'
+import { CloseButton } from './CloseButton'
 
 const REVIEW_QUESTION_SYSTEM =
   'You are a Socratic tutor. Given a concept from a knowledge graph and its semantic connections, write one concise question that tests the learner\'s relational understanding. Output only the question, nothing else. No preamble, no asterisks, no markdown.'
@@ -253,13 +254,7 @@ export function ReviewMode({ open, onClose }: Props) {
           }}>
             {sessionPosition} / {sessionTotal}
           </span>
-          <button onClick={onClose} title="Close (Esc)" style={{
-            appearance: 'none', border: 0, background: 'transparent',
-            color: 'var(--ink-4)', cursor: 'default', padding: 0,
-            width: 22, height: 22, borderRadius: 999,
-            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            font: "500 13px 'Inter'",
-          }}>✕</button>
+          <CloseButton large onClick={onClose} />
         </div>
 
         {/* Concept title + image (image only after reveal) */}

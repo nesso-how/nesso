@@ -49,6 +49,7 @@ export function ShortcutsDialog({ open, onClose }: Props) {
       <div
         onClick={e => e.stopPropagation()}
         style={{
+          position: 'relative',
           width: 520, maxWidth: '92vw',
           background: 'var(--bg-card)',
           border: '0.5px solid var(--line)',
@@ -57,11 +58,11 @@ export function ShortcutsDialog({ open, onClose }: Props) {
           boxShadow: 'var(--shadow-lg)',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-          <div style={{ font: "500 11px 'JetBrains Mono', ui-monospace", textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--ink-4)' }}>
-            {t.shortcuts.title}
-          </div>
-          <CloseButton onClick={onClose} />
+        <div style={{ font: "500 11px 'JetBrains Mono', ui-monospace", textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--ink-4)', marginBottom: 20 }}>
+          {t.shortcuts.title}
+        </div>
+        <div style={{ position: 'absolute', top: 12, right: 12 }}>
+          <CloseButton large onClick={onClose} />
         </div>
 
         {SECTIONS.map((section, si) => (

@@ -2,6 +2,7 @@
 import { useState, useEffect, useLayoutEffect, useRef, type FormEvent, type ReactNode, type MouseEvent as ReactMouseEvent } from 'react'
 import { EDGE_TYPES, EDGE_CATEGORIES } from '@/data/edgeTypes'
 import { GlyphSVG } from './GlyphSVG'
+import { CloseButton } from './CloseButton'
 import { TOPBAR_HEIGHT_PX } from './TopBar'
 import { useGraphStore, selectedNodeSelector, selectedEdgeSelector } from '@/store/graph'
 import type { ConceptElaboration, EdgeTypeName } from '@/types/graph'
@@ -346,18 +347,7 @@ function ImageSearchPanel({
         {loading && (
           <span style={{ font: "500 9px 'JetBrains Mono'", color: 'var(--ink-5)', flexShrink: 0 }}>…</span>
         )}
-        <button
-          type="button"
-          onClick={onClose}
-          title={t.inspector.image.cancel}
-          style={{
-            appearance: 'none', border: 0, background: 'transparent',
-            color: 'var(--ink-4)', cursor: 'default', padding: 0,
-            width: 18, height: 18, borderRadius: 999,
-            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            font: "500 11px 'Inter'", flexShrink: 0,
-          }}
-        >✕</button>
+        <CloseButton onClick={onClose} />
       </form>
 
       {results.length > 0 && (
@@ -689,32 +679,9 @@ function NodeInspector({
           </div>
 
           {/* Close button */}
-          <button
-            type="button"
-            onClick={() => setSelected(null)}
-            title="Close"
-            style={{
-              position: 'absolute',
-              top: 10,
-              right: 10,
-              appearance: 'none',
-              border: 0,
-              background: 'transparent',
-              color: 'var(--ink-4)',
-              cursor: 'default',
-              width: 22,
-              height: 22,
-              borderRadius: 999,
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              font: "500 12px 'Inter', system-ui",
-            }}
-            onMouseEnter={e => { e.currentTarget.style.color = 'var(--ink-2)'; e.currentTarget.style.background = 'var(--paper-deep)' }}
-            onMouseLeave={e => { e.currentTarget.style.color = 'var(--ink-4)'; e.currentTarget.style.background = 'transparent' }}
-          >
-            ✕
-          </button>
+          <div style={{ position: 'absolute', top: 10, right: 10 }}>
+            <CloseButton onClick={() => setSelected(null)} />
+          </div>
         </div>
       )}
 

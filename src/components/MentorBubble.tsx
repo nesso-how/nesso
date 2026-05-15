@@ -7,6 +7,7 @@ import type { ConceptNodeData, Language } from '@/types/graph'
 import { marked } from 'marked'
 import { getEngine, useWebLLM, LOCAL_MODEL_ID, LOCAL_MODEL_LABEL } from '@/llm/webllm'
 import { useT } from '@/i18n'
+import { CloseButton } from './CloseButton'
 
 interface Message {
   role: 'user' | 'mentor'
@@ -257,21 +258,7 @@ export function MentorBubble() {
               </small>
             )}
           </div>
-          <button
-            type="button"
-            onClick={() => setMentorPanelExpanded(false)}
-            style={{
-              appearance: 'none', border: 0, background: 'transparent',
-              color: 'var(--ink-4)', cursor: 'default', width: 24, height: 24,
-              borderRadius: 6, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'var(--paper-deep)'; e.currentTarget.style.color = 'var(--ink)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--ink-4)' }}
-          >
-            <svg width="11" height="11" viewBox="0 0 12 12">
-              <path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-          </button>
+          <CloseButton onClick={() => setMentorPanelExpanded(false)} />
         </div>
 
         <div ref={scrollRef} className="nesso-scrollbar" style={{

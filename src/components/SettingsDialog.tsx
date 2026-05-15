@@ -132,9 +132,11 @@ export function SettingsDialog({ open, onClose }: Props) {
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}
     >
-      <div
-        onClick={e => e.stopPropagation()}
-        style={{
+      <div onClick={e => e.stopPropagation()} style={{ position: 'relative' }}>
+        <div style={{ position: 'absolute', top: 12, right: 12, zIndex: 1 }}>
+          <CloseButton large onClick={onClose} />
+        </div>
+        <div style={{
           width: 660, maxWidth: '94vw',
           background: 'var(--bg-card)',
           border: '0.5px solid var(--line)',
@@ -184,11 +186,10 @@ export function SettingsDialog({ open, onClose }: Props) {
 
         {/* Content */}
         <div className="nesso-scrollbar" style={{ flex: 1, padding: '24px 28px 24px', overflowY: 'auto', minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22 }}>
+          <div style={{ marginBottom: 22 }}>
             <span style={{ font: "500 14px 'Inter', system-ui", color: 'var(--ink)' }}>
               {t.settings.tabs[tab]}
             </span>
-            <CloseButton onClick={onClose} />
           </div>
 
           {tab === 'appearance' && (
@@ -389,6 +390,7 @@ export function SettingsDialog({ open, onClose }: Props) {
               </SettingRow>
             </>
           )}
+        </div>
         </div>
       </div>
     </div>

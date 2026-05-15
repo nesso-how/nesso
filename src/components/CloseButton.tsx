@@ -1,24 +1,26 @@
 // SPDX-License-Identifier: MIT
 interface Props {
   onClick: () => void
+  large?: boolean
 }
 
-export function CloseButton({ onClick }: Props) {
+export function CloseButton({ onClick, large }: Props) {
+  const size = large ? 28 : 22
   return (
     <button
+      type="button"
       onClick={onClick}
       style={{
-        appearance: 'none', border: 'none', background: 'transparent',
+        appearance: 'none', border: 0, background: 'transparent',
         color: 'var(--ink-4)', cursor: 'default',
-        padding: 4, borderRadius: 6,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        width: size, height: size, borderRadius: 999,
+        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+        font: `500 ${large ? 13 : 12}px 'Inter', system-ui`,
       }}
-      onMouseEnter={e => { e.currentTarget.style.color = 'var(--ink)'; e.currentTarget.style.background = 'var(--paper-deep)' }}
+      onMouseEnter={e => { e.currentTarget.style.color = 'var(--ink-2)'; e.currentTarget.style.background = 'var(--paper-deep)' }}
       onMouseLeave={e => { e.currentTarget.style.color = 'var(--ink-4)'; e.currentTarget.style.background = 'transparent' }}
     >
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-        <path d="M2 2l10 10M12 2L2 12" />
-      </svg>
+      ✕
     </button>
   )
 }
