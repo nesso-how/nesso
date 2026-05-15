@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- **Seeds:** elaboration fields (definition, examples, notes) on every concept in the Plant biology and Italian Biologia vegetale demo graphs.
+
 ## [0.1.0-alpha.12] - 2026-05-14
 
 ### Changed
