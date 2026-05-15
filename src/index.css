@@ -167,6 +167,20 @@ body::before {
   background-clip: padding-box;
 }
 
+/*
+ * Mentor typewriter caret & thinking bars — defined once globally so frequent
+ * transcript re-renders (or scroll layout) don’t reinsert <style> and reset runs.
+ */
+@keyframes nx-tw-caret {
+  0%, 50% { opacity: 1; }
+  50.01%, 100% { opacity: 0; }
+}
+
+@keyframes nx-bars {
+  0%, 100% { transform: scaleY(0.28); opacity: 0.4; }
+  50% { transform: scaleY(1); opacity: 1; }
+}
+
 /* React Flow overrides */
 .react-flow__renderer { z-index: 2; }
 .react-flow__pane { cursor: grab; }

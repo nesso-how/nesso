@@ -50,12 +50,6 @@ export function Typewriter({ text, speed = 7, emphasis = false }: Props) {
           animation: 'nx-tw-caret 0.85s steps(2, end) infinite',
         }} />
       )}
-      <style>{`
-        @keyframes nx-tw-caret {
-          0%, 50% { opacity: 1; }
-          50.01%, 100% { opacity: 0; }
-        }
-      `}</style>
     </>
   )
 }
