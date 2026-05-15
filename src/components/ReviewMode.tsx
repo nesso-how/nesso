@@ -9,12 +9,11 @@ import { fetchCompletion, isAiReady } from '@/llm/completion'
 import { useWebLLM } from '@/llm/webllm'
 import { useT } from '@/i18n'
 import { CloseButton } from './CloseButton'
+import { ThinkingIndicator } from './ThinkingIndicator'
+import { Typewriter } from './Typewriter'
 
 const REVIEW_QUESTION_SYSTEM =
   'You are a Socratic tutor. Given a concept from a knowledge graph and its semantic connections, write one concise question that tests the learner\'s relational understanding. Output only the question, nothing else. No preamble, no asterisks, no markdown.'
-
-const REVIEW_ANSWER_SYSTEM =
-  'You are a Socratic tutor. A learner just reviewed a concept. Provide a concise, direct answer to the question you asked, explaining the key insight from the graph relations. Under 80 words. No emojis, no asterisks, no markdown.'
 
 const RATINGS = [Rating.Again, Rating.Hard, Rating.Good, Rating.Easy] as const
 
@@ -42,8 +41,6 @@ export function ReviewMode({ open, onClose }: Props) {
   const sessionTotalRef = useRef(0)
   const [question, setQuestion] = useState<string | null>(null)
   const [questionLoading, setQuestionLoading] = useState(false)
-  const [answer, setAnswer] = useState<string | null>(null)
-  const [answerLoading, setAnswerLoading] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
   const webllm = useWebLLM()
 
@@ -96,8 +93,6 @@ export function ReviewMode({ open, onClose }: Props) {
     abortRef.current = controller
     setQuestion(null)
     setQuestionLoading(true)
-    setAnswer(null)
-    setAnswerLoading(false)
 
     const outEdges = edges.filter(e => e.source === currentNode.id).slice(0, 5)
     const incEdges = edges.filter(e => e.target === currentNode.id).slice(0, 3)
@@ -130,26 +125,10 @@ export function ReviewMode({ open, onClose }: Props) {
         if (controller.signal.aborted) return
         setQuestion(q.trim())
         setQuestionLoading(false)
-
-        setAnswerLoading(true)
-        const a = await fetchCompletion(
-          settings,
-          [
-            { role: 'system', content: REVIEW_ANSWER_SYSTEM + langSuffix },
-            { role: 'user', content: `${userMsg}\nQuestion asked: "${q.trim()}"` },
-          ],
-          150,
-          controller.signal,
-        )
-        if (controller.signal.aborted) return
-        setAnswer(a.trim())
-        setAnswerLoading(false)
       } catch {
         if (!controller.signal.aborted) {
           setQuestion(null)
           setQuestionLoading(false)
-          setAnswer(null)
-          setAnswerLoading(false)
         }
       }
     }
@@ -273,11 +252,13 @@ export function ReviewMode({ open, onClose }: Props) {
 
         {!revealed ? (
           <>
-            <div style={{ marginBottom: 22, minHeight: 44 }}>
+            <div style={{ marginBottom: 22, minHeight: 44, display: 'flex', alignItems: 'center' }}>
               {questionLoading ? (
-                <span style={{ color: 'var(--ink-4)', font: "400 12px 'JetBrains Mono', ui-monospace" }}>{t.review.generatingQuestion}</span>
+                <ThinkingIndicator />
               ) : question ? (
-                <span style={{ font: "400 14.5px/1.55 'Fraunces', serif", color: 'var(--ink-2)' }}>{question}</span>
+                <span style={{ font: "400 14.5px/1.55 'Fraunces', serif", color: 'var(--ink-2)' }}>
+                  <Typewriter text={question} />
+                </span>
               ) : (
                 <p style={{ margin: 0, font: "400 14.5px/1.55 'Fraunces', serif", color: 'var(--ink-3)', fontStyle: 'italic' }}>
                   {t.review.recallPrompt}
@@ -334,22 +315,6 @@ export function ReviewMode({ open, onClose }: Props) {
                 )
               })}
             </div>
-
-            {/* AI answer as Socratic aside */}
-            {(answer || answerLoading) && (
-              <div style={{
-                padding: '12px 14px',
-                background: 'var(--paper-deep)', borderRadius: 10,
-                border: '0.5px solid var(--line)',
-                marginBottom: 18,
-              }}>
-                {answerLoading ? (
-                  <span style={{ font: "400 12px 'JetBrains Mono', ui-monospace", color: 'var(--ink-4)' }}>…</span>
-                ) : (
-                  <p style={{ margin: 0, font: "400 14.5px/1.55 'Fraunces', serif", color: 'var(--ink-2)' }}>{answer}</p>
-                )}
-              </div>
-            )}
 
             {/* Rating buttons */}
             <div style={{ display: 'flex', gap: 8 }}>

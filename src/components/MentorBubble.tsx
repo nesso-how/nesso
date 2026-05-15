@@ -4,18 +4,15 @@ import type { Edge, Node } from '@xyflow/react'
 import { SocratesGlyph } from './SocratesGlyph'
 import { useGraphStore, selectedNodeSelector, selectedEdgeSelector } from '@/store/graph'
 import type { ConceptNodeData, Language } from '@/types/graph'
-import { marked } from 'marked'
 import { getEngine, useWebLLM, LOCAL_MODEL_ID, LOCAL_MODEL_LABEL } from '@/llm/webllm'
 import { useT } from '@/i18n'
 import { CloseButton } from './CloseButton'
+import { ThinkingIndicator } from './ThinkingIndicator'
+import { Typewriter } from './Typewriter'
 
 interface Message {
   role: 'user' | 'mentor'
   text: string
-}
-
-function renderMarkdown(text: string): string {
-  return marked(text, { async: false }) as string
 }
 
 /** Cap snapshot size so the system prompt stays bounded on large graphs. */
@@ -175,8 +172,16 @@ export function MentorBubble() {
   }, [mentorPanelExpanded])
 
   useEffect(() => {
-    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight
-  }, [history, thinking, loadingInitial])
+    const el = scrollRef.current
+    if (!el) return
+    const stickToBottom = () => {
+      const distance = el.scrollHeight - el.scrollTop - el.clientHeight
+      if (distance < 80) el.scrollTop = el.scrollHeight
+    }
+    const mo = new MutationObserver(stickToBottom)
+    mo.observe(el, { childList: true, subtree: true, characterData: true })
+    return () => mo.disconnect()
+  }, [])
 
   const send = async (text: string) => {
     if (!text.trim() || thinking || loadingInitial) return
@@ -184,6 +189,10 @@ export function MentorBubble() {
     setHistory(next)
     setDraft('')
     setThinking(true)
+    requestAnimationFrame(() => {
+      const el = scrollRef.current
+      if (el) el.scrollTop = el.scrollHeight
+    })
     try {
       const raw = await callApi(next)
       setHistory(h => [...h, { role: 'mentor', text: raw }])
@@ -222,6 +231,7 @@ export function MentorBubble() {
         <div style={{
           display: 'flex', alignItems: 'center', gap: 10,
           padding: '12px 14px 10px', borderBottom: '0.5px solid var(--line)',
+          flexShrink: 0,
         }}>
           <span style={{
             width: 30, height: 30, borderRadius: '50%', background: 'var(--paper-deep)',
@@ -262,7 +272,9 @@ export function MentorBubble() {
         </div>
 
         <div ref={scrollRef} className="nesso-scrollbar" style={{
-          padding: '14px 16px 6px', overflowY: 'auto', flex: 1, minHeight: 80,
+          padding: '12px 16px', overflowY: 'auto',
+          display: 'flex', flexDirection: 'column',
+          flexShrink: 1, minHeight: 0,
         }}>
           {modelLoading ? (
             <p style={{
@@ -272,10 +284,10 @@ export function MentorBubble() {
               {webllm.progressText || t.mentor.initialising}
             </p>
           ) : loadingInitial && history.length === 0 ? (
-            <ThinkingDots />
+            <ThinkingIndicator />
           ) : history.map((m, i) =>
             m.role === 'user' ? (
-              <div key={i} style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 14 }}>
+              <div key={i} style={{ display: 'flex', justifyContent: 'flex-end', margin: '5px 0' }}>
                 <span style={{
                   font: "500 13px/1.45 'Inter', system-ui", color: 'var(--ink-2)',
                   padding: '7px 11px', background: 'var(--paper-deep)',
@@ -285,17 +297,21 @@ export function MentorBubble() {
               </div>
             ) : (
               <div key={i} style={{
-                font: "400 14.5px/1.55 'Fraunces', ui-serif, Georgia, serif",
-                color: 'var(--ink)', letterSpacing: '-0.005em', margin: '0 0 14px',
-              }} dangerouslySetInnerHTML={{ __html: renderMarkdown(m.text) }} />
+                font: "400 14.5px/1.45 'Fraunces', ui-serif, Georgia, serif",
+                color: 'var(--ink)', letterSpacing: '-0.005em', margin: '5px 0',
+                whiteSpace: 'pre-wrap',
+              }}>
+                <Typewriter text={m.text} emphasis />
+              </div>
             ),
           )}
-          {thinking && <ThinkingDots />}
+          {thinking && <ThinkingIndicator />}
         </div>
 
         <div style={{
           display: 'flex', alignItems: 'flex-end', gap: 6,
           padding: '10px 10px 10px 16px', borderTop: '0.5px solid var(--line)',
+          flexShrink: 0,
         }}>
           <textarea
             ref={inputRef}
@@ -353,25 +369,8 @@ export function MentorBubble() {
       </button>
 
       <style>{`
-        @keyframes nx-think {
-          0%, 100% { opacity: 0.25; transform: translateY(0); }
-          50% { opacity: 1; transform: translateY(-2px); }
-        }
         @keyframes nx-spin { to { transform: rotate(360deg); } }
       `}</style>
-    </div>
-  )
-}
-
-function ThinkingDots() {
-  return (
-    <div style={{ display: 'inline-flex', gap: 4, padding: '6px 0' }}>
-      {[0, 150, 300].map(delay => (
-        <span key={delay} style={{
-          width: 5, height: 5, borderRadius: '50%', background: 'var(--ink-4)',
-          animation: `nx-think 1.2s ease-in-out ${delay}ms infinite`,
-        }} />
-      ))}
     </div>
   )
 }
