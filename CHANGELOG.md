@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- **Docs (landing):** Marketing homepage shows release tag (**`vx.y.z…`**) linking to GitHub Releases for that tag (`package.json` version).
+
 ## [0.1.0-alpha.16] - 2026-05-16
 
 ### Changed
