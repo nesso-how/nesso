@@ -11,11 +11,24 @@ function truncate(s: string, n: number): string {
   return s.slice(0, Math.max(0, n - 1)).replace(/\s+\S*$/, '') + '…'
 }
 
-/** FSRS-aware strength for mentor prompts: lower sorts earlier (weakest first). */
+/** FSRS-aware strength for mentor prompts: lower sorts earlier (weakest first).
+ * Stability dominates; Again/Hard and light overdue tighten ordering; scheduler DUE stays a tie-breaker. */
 export function nodeStrength(n: Node<ConceptNodeData>): number {
   if (n.data.reps === 0) return -Infinity
-  const duePenalty = n.data.due > 0 && n.data.due <= Date.now() ? -10000 : 0
-  return n.data.stability + duePenalty
+  let strength = Math.max(n.data.stability, 1e-9)
+  switch (n.data.lastRating) {
+    case 1:
+      strength *= 0.86
+      break
+    case 2:
+      strength *= 0.93
+      break
+    default:
+      break
+  }
+  const overdue = n.data.due > 0 && n.data.due <= Date.now()
+  if (overdue) strength *= 0.965
+  return strength
 }
 
 const FOCUS_MAX_TOKENS = 400

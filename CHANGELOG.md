@@ -8,6 +8,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
+- **Mentor:** Graph snapshot sorting and persona emphasise FSRS **stability** and **last review** (rating + days elapsed); **DUE** stays visible on nodes but only nudges order slightly. System prompt includes an explicit **legend** for how to read node tags (`s=`, `since review`, ratings, `DUE`, `(new)`).
+
 - **MCP (`@nesso-how/mcp`):** Removed **`build_graph`** — URL-based graph handoff was unwieldy for models and users; MCP documents **Import JSON** instead.
 
 - **App:** Removed **`?import=`** query-string graph import; use **Graph menu → Import JSON** (file or paste) only.

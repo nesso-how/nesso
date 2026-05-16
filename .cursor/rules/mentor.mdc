@@ -24,10 +24,11 @@ Socrates is a Socratic mentor: mostly questions, almost no lecturing. Rules live
 - Default one short question; explain only to frame it; aim under ~180 words (hard cap via `MENTOR_MAX_TOKENS`).
 - No emojis or flattery; sparse `*asterisks*` on key terms; no JSON or pseudo-graph markup.
 - No em dash (U+2014) in replies; use commas, periods, or short sentences instead.
+- English **legend** decodes FSRS-shaped node tokens in the snapshot (`(new)`, `s=…d`, days since review, Again/Hard/Good/Easy, `DUE`); reply language stays separate (`Respond in Italian.` when UI is Italian).
 
 ## System prompt (single chat)
 
-There are **no mode tabs**. `buildGraphChatPrompt()` builds one system string: graph snapshot — up to `MAX_SNAPSHOT_NODES` nodes with stability labels (remainder summarized if larger), up to `MAX_SNAPSHOT_EDGES` edges (`2×` the node cap by default), optional selection (node or full edge path), optional **`Focus:` / `Related:`** lines from **`buildFocalNeighborContext()`** in `src/llm/context.ts` when a node is selected — plus **`getMentorBase()`**. Each send recomputes the prompt from the live store so new edits appear on the next turn.
+There are **no mode tabs**. `buildGraphChatPrompt()` builds one system string: graph snapshot — up to `MAX_SNAPSHOT_NODES` nodes tagged with stability, days since last review, FSRS rating, optional DUE (`nodeDesc`), sorted weakest-first via **`nodeStrength()`** (`src/llm/context.ts`; stability‑first with Again/Hard and light overdue tweaks), remainder summarized if larger), up to `MAX_SNAPSHOT_EDGES` edges (`2×` the node cap by default), optional selection (node or full edge path), optional **`Focus:` / `Related:`** lines from **`buildFocalNeighborContext()`** in `src/llm/context.ts` when a node is selected — plus **`getMentorBase()`**. Each send recomputes the prompt from the live store so new edits appear on the next turn.
 
 On panel open, graph switch, local-model-ready transition, or **`chatKey`** bump (header refresh), the first mentor line is fetched using a short synthetic **user** turn from **`buildMentorSeedText()`**: wording depends on whether a **node**, an **edge only**, or **nothing** is selected.
 

@@ -7,7 +7,7 @@ Click the **Socrates** bubble in the bottom-right of the canvas to start a dialo
 
 ## How it works
 
-Every send rebuilds a system prompt from the live store: a snapshot of up to ~60 concept nodes (sorted to favour the most relevant for what's selected) and their typed edges, plus the current selection if any, plus a focal-neighbour context when a node is selected (`Focus:` / `Related:` lines). The conversation history stays in the mentor card and is reset when you switch graphs or click **New chat**.
+Every send rebuilds a system prompt from the live store: a snapshot of up to ~60 concept nodes, sorted weakest-first via **`nodeStrength()`** ([`context.ts`](https://github.com/cedoor/nesso/blob/main/src/llm/context.ts))—**FSRS stability** dominates ordering, **Again/Hard** nudge weaker items up, overdue is only a slight tie-break. Each node line lists stability (`s=` days), days since last review, last FSRS rating, and `DUE` when the scheduler says so, plus typed edges (~2× the node allowance), current selection when any, and focal-neighbour context when a node is selected (`Focus:` / `Related:` lines). The conversation history stays in the mentor card and is reset when you switch graphs or click **New chat**.
 
 Chat history is **not persisted**. It lives only for the current panel session.
 
@@ -32,7 +32,7 @@ The system prompt (`getMentorBase` in [`MentorBubble.tsx`](https://github.com/ce
 - Replies are soft-capped at ~200 words (hard cap via output tokens).
 - No graph edits proposed in dialogue. Socrates probes; the user edits.
 - No emojis, flattery, JSON, or pseudo-graph markup. Sparse `*asterisks*` on key terms.
-- Replies in the active UI language (English or Italian).
+- Replies in the active UI language (English or Italian). Snapshot tokens stay **English-shaped** (`s=…d`, `…d since review`, etc.), with the same spelling in the legend for every locale.
 
 If you want a more permissive coach, fork the persona. It is plain text in the component and easy to swap.
 
@@ -42,13 +42,13 @@ When the panel opens, the mentor sends itself a short synthetic **user** turn so
 
 - **A concept node selected:** opens on that concept and one of its relations.
 - **An edge selected (no node):** opens on the typed relation between its endpoints.
-- **Nothing selected:** opens on a weak spot in the graph (low-stability or unreviewed concept).
+- **Nothing selected:** opens on a weak spot in the graph (low stability plus weak **last reviews** — Again/Hard or a long gap; **DUE** is extra scheduler context).
 
 Click **New chat** in the header to reset history and request a fresh opener.
 
 ## Context size
 
-Large graphs are summarised, not truncated abruptly. The most relevant nodes (by selection proximity and weakness) are kept verbatim; the rest are listed as a short tail count. Edges have a ~2x allowance over node count. These limits live in [`MentorBubble.tsx`](https://github.com/cedoor/nesso/blob/main/src/components/MentorBubble.tsx) as `MAX_SNAPSHOT_NODES` and `MAX_SNAPSHOT_EDGES`.
+Large graphs are summarised, not truncated abruptly. The weakest-reviewed nodes appear first (`nodeStrength`), so the verbatim slice emphasises instability and risky last ratings; tail nodes are omitted with a short count only. Edges have a ~2x allowance over node count. These limits live in [`MentorBubble.tsx`](https://github.com/cedoor/nesso/blob/main/src/components/MentorBubble.tsx) as `MAX_SNAPSHOT_NODES` and `MAX_SNAPSHOT_EDGES`.
 
 ## Privacy
 

@@ -23,6 +23,8 @@ const MAX_SNAPSHOT_EDGES = MAX_SNAPSHOT_NODES * 2
 /** Output ceiling aligned with ~200-word replies (soft limit in getMentorBase). */
 const MENTOR_MAX_TOKENS = 380
 
+const NODE_LEGEND = 'Reading each node after its quoted title: (new)=no spaced-repetition review yet; otherwise comma-separated tokens — s=Y.Yd is FSRS stability in days (higher = stronger recall); Nd since review is calendar days since the last FSRS self-rating; Again/Hard/Good/Easy is that rating; DUE means the scheduler says revisit now (light hint, secondary to s= and rating).'
+
 function getMentorBase(language: Language): string[] {
   const name = language === 'it' ? 'Socrate' : 'Socrates'
   const langInstruction = language === 'it' ? 'Respond in Italian.' : 'Respond in English.'
@@ -32,10 +34,11 @@ function getMentorBase(language: Language): string[] {
     'No emojis or flattery. Use *asterisks* sparingly for a key term. No JSON, markup pseudo-graphs, or bracketed labels.',
     'Do not use em dashes (the long dash character). Use commas, periods, or split into two short sentences instead.',
     'Default: one short question; explain only to frame the question. Aim under ~180 words.',
-    'Nodes annotated DUE or last rated Again/Hard are the learner\'s weak spots.',
-    'When a node IS selected on open: briefly acknowledge it by name, then ask one Socratic question about it or flag its weakest connected nodes (DUE or low-stability neighbors) as a starting point.',
+    NODE_LEGEND,
+    'Lowest s= (stability) plus weak last outcomes (Again/Hard, large gap since review) are the main probes; treat DUE as a light scheduling cue on top.',
+    'When a node IS selected on open: briefly acknowledge it by name, then ask one Socratic question about it or flag its weakest neighbors by stability and last review, using DUE only as secondary context.',
     'When an EDGE is selected but no node: name both endpoint concepts and the relation type, then ask one Socratic question about how that link fits what they know.',
-    'When neither a node nor an edge is selected on open: identify the most urgent weak spot in the graph (DUE or last rated Again/Hard) and open with a question targeting it.',
+    'When neither a node nor an edge is selected on open: pick the graph\'s weakest spot by stability and last review; consider DUE as extra context, then open with one question there.',
     langInstruction,
   ]
 }
@@ -46,6 +49,10 @@ function nodeDesc(n: Node<ConceptNodeData>): string {
   if (n.data.reps === 0) return `"${n.data.text}"(new)`
   const isDue = n.data.due > 0 && n.data.due <= Date.now()
   const parts: string[] = [`s=${n.data.stability.toFixed(1)}d`]
+  if (n.data.lastReview > 0) {
+    const days = Math.floor((Date.now() - n.data.lastReview) / (24 * 60 * 60 * 1000))
+    parts.push(`${Math.max(days, 0)}d since review`)
+  }
   if (n.data.lastRating > 0) parts.push(FSRS_RATING[n.data.lastRating] ?? '')
   if (isDue) parts.push('DUE')
   return `"${n.data.text}"(${parts.join(',')})`
