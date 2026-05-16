@@ -8,8 +8,10 @@
   "scripts": {
     "license-headers": "node scripts/license-header.mjs",
     "license-headers:check": "node scripts/license-header.mjs --check",
+    "build:relation-types": "pnpm --filter @nesso-how/relation-types build",
+    "prepare": "pnpm run build:relation-types",
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "pnpm run build:relation-types && tsc -b && vite build",
     "preview": "vite preview",
     "tauri": "tauri",
     "dev:desktop": "tauri dev",
