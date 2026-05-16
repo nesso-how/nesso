@@ -417,22 +417,6 @@
         margin-bottom: 0.5rem;
       }
 
-      @keyframes tw-blink {
-        50% {
-          opacity: 0;
-        }
-      }
-
-      .tw-cursor {
-        display: inline-block;
-        width: 2px;
-        height: 0.8em;
-        background: var(--ink);
-        vertical-align: middle;
-        margin-left: 1px;
-        animation: tw-blink 0.55s steps(1) infinite;
-      }
-
       .relation-cta {
         text-align: right;
         margin-top: 1.5rem;
@@ -546,6 +530,28 @@
         }
       }
     </style>
+    <style is:global>
+      @keyframes tw-blink {
+        50% {
+          opacity: 0;
+        }
+      }
+
+      .tw-cursor {
+        display: inline-block;
+        width: 2px;
+        min-height: 0.85em;
+        height: 0.85em;
+        background: var(--ink);
+        vertical-align: -0.05em;
+        margin-left: 2px;
+        animation: tw-blink 0.55s steps(1) infinite;
+      }
+
+      .hero-eyebrow .tw-cursor {
+        background: var(--ink-3);
+      }
+    </style>
   </head>
   <body>
     <header>
@@ -620,7 +626,12 @@
           then probes what you&rsquo;ve built. Questions, not summaries.
         </p>
         <div class="cta-row">
-          <a href="https://app.nesso.how" class="btn btn-primary" target="_blank" rel="noopener">
+          <a
+            href="https://app.nesso.how"
+            class="btn btn-primary"
+            target="_blank"
+            rel="noopener"
+          >
             Open Nesso <span class="btn-arrow">→</span>
           </a>
           <a href="/docs/introduction/" class="btn btn-secondary"
@@ -816,7 +827,9 @@
           </div>
         </div>
         <p class="relation-cta">
-          <a href="/docs/reference/relation-types/">Full relation type reference →</a>
+          <a href="/docs/reference/relation-types/"
+            >Full relation type reference →</a
+          >
         </p>
       </section>
 
@@ -844,57 +857,37 @@
 
     <script>
       (function () {
-        const h1 = document.querySelector<HTMLHeadingElement>(".hero h1");
-        if (!h1) return;
-        const heading = h1;
+        const eyebrow =
+          document.querySelector<HTMLSpanElement>(".hero-eyebrow");
+        if (!eyebrow) return;
 
         const SPEED = 30;
-        const PAUSE = 420;
-        type Item = { br?: true; em?: boolean; c?: string };
-        const seq: Item[] = [];
-        for (const c of "Understanding cannot be received.")
-          seq.push({ em: false, c });
-        seq.push({ br: true });
-        for (const c of "It has to be built.") seq.push({ em: true, c });
+        const PAUSE_AFTER_SEP = 420;
+        const START_DELAY = 450;
+        const text = "Active learning · open source";
 
         const cursor = document.createElement("span");
         cursor.className = "tw-cursor";
 
-        let plain: Text | null = null;
-        let emEl: HTMLElement | null = null;
-        h1.textContent = "";
-        h1.appendChild(cursor);
+        eyebrow.textContent = "";
+        eyebrow.appendChild(cursor);
 
+        let plain: Text | null = null;
         let i = 0;
         function tick() {
-          if (i >= seq.length) {
+          if (i >= text.length) {
             setTimeout(() => cursor.remove(), 500);
             return;
           }
-          const item = seq[i++];
-          if (item.br) {
-            heading.insertBefore(document.createElement("br"), cursor);
-            plain = null;
-            emEl = null;
-            setTimeout(tick, PAUSE);
-            return;
-          } else if (!item.em) {
-            if (!plain) {
-              plain = document.createTextNode("");
-              heading.insertBefore(plain, cursor);
-            }
-            plain.textContent += item.c;
-          } else {
-            if (!emEl) {
-              emEl = document.createElement("em");
-              emEl.style.color = "#b14a2e";
-              heading.insertBefore(emEl, cursor);
-            }
-            emEl.textContent += item.c;
+          if (!plain) {
+            plain = document.createTextNode("");
+            eyebrow.insertBefore(plain, cursor);
           }
-          setTimeout(tick, SPEED);
+          const ch = text[i++]!;
+          plain.textContent += ch;
+          setTimeout(tick, ch === "·" ? PAUSE_AFTER_SEP : SPEED);
         }
-        tick();
+        setTimeout(tick, START_DELAY);
       })();
     </script>
   </body>
