@@ -12,6 +12,7 @@
   },
   "scripts": {
     "build": "tsc",
+    "prepublishOnly": "pnpm build",
     "dev": "tsc --watch"
   },
   "devDependencies": {
