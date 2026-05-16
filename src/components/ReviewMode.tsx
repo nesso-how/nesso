@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 import { useState, useMemo, useLayoutEffect, useRef, useEffect } from 'react'
 import { fsrs, Rating, type Grade } from 'ts-fsrs'
-import { EDGE_TYPES, EDGE_CATEGORIES } from '@/data/edgeTypes'
+import { RELATION_TYPES, RELATION_CATEGORIES } from '@/data/relationTypes'
 import { sortedDueConceptNodes } from '@/data/fsrsDueQueue'
 import { useGraphStore } from '@/store/graph'
 import { nodeToCard, type EdgeTypeName } from '@/types/graph'
@@ -100,12 +100,12 @@ export function ReviewMode({ open, onClose }: Props) {
     const incEdges = edges.filter(e => e.target === currentNode.id).slice(0, 3)
     const relStr = [
       ...outEdges.map(e => {
-        const T = EDGE_TYPES[e.data?.type as EdgeTypeName]
+        const T = RELATION_TYPES[e.data?.type as EdgeTypeName]
         const target = nodes.find(n => n.id === e.target)
         return `${T.label} → "${target?.data.text ?? '?'}"`
       }),
       ...incEdges.map(e => {
-        const T = EDGE_TYPES[e.data?.type as EdgeTypeName]
+        const T = RELATION_TYPES[e.data?.type as EdgeTypeName]
         const source = nodes.find(n => n.id === e.source)
         return `← ${T.label} ← "${source?.data.text ?? '?'}"`
       }),
@@ -311,23 +311,23 @@ export function ReviewMode({ open, onClose }: Props) {
             {/* Relations */}
             <div style={{ borderTop: '0.5px dashed var(--line)', paddingTop: 12, marginBottom: 14, display: 'flex', flexDirection: 'column', gap: 1 }}>
               {nodeEdges.out.map(e => {
-                const T = EDGE_TYPES[e.data?.type as EdgeTypeName]
-                const C = EDGE_CATEGORIES[T.cat]
+                const T = RELATION_TYPES[e.data?.type as EdgeTypeName]
+                const C = RELATION_CATEGORIES[T.cat]
                 const target = nodes.find(n => n.id === e.target)
                 return (
                   <div key={e.id} style={{ display: 'flex', alignItems: 'baseline', gap: 12, padding: '5px 0' }}>
-                    <span style={{ font: "500 10.5px 'JetBrains Mono', ui-monospace", color: C.color, textTransform: 'uppercase', letterSpacing: '0.06em', minWidth: 88 }}>{t.edgeTypes.types[e.data?.type as EdgeTypeName]}</span>
+                    <span style={{ font: "500 10.5px 'JetBrains Mono', ui-monospace", color: C.color, textTransform: 'uppercase', letterSpacing: '0.06em', minWidth: 88 }}>{t.relationTypes.types[e.data?.type as EdgeTypeName]}</span>
                     <span style={{ font: "500 14.5px 'Fraunces', serif", color: 'var(--ink)' }}>{target?.data.text}</span>
                   </div>
                 )
               })}
               {nodeEdges.inc.map(e => {
-                const T = EDGE_TYPES[e.data?.type as EdgeTypeName]
-                const C = EDGE_CATEGORIES[T.cat]
+                const T = RELATION_TYPES[e.data?.type as EdgeTypeName]
+                const C = RELATION_CATEGORIES[T.cat]
                 const source = nodes.find(n => n.id === e.source)
                 return (
                   <div key={e.id} style={{ display: 'flex', alignItems: 'baseline', gap: 12, padding: '5px 0', opacity: 0.7 }}>
-                    <span style={{ font: "500 10.5px 'JetBrains Mono', ui-monospace", color: C.color, textTransform: 'uppercase', letterSpacing: '0.06em', minWidth: 88 }}>← {t.edgeTypes.types[e.data?.type as EdgeTypeName]}</span>
+                    <span style={{ font: "500 10.5px 'JetBrains Mono', ui-monospace", color: C.color, textTransform: 'uppercase', letterSpacing: '0.06em', minWidth: 88 }}>← {t.relationTypes.types[e.data?.type as EdgeTypeName]}</span>
                     <span style={{ font: "500 14.5px 'Fraunces', serif", color: 'var(--ink)' }}>{source?.data.text}</span>
                   </div>
                 )

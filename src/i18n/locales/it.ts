@@ -197,7 +197,7 @@ const it: typeof en = {
     startReview: 'Avvia revisione (R)',
     review: 'Revisione',
   },
-  edgeTypes: {
+  relationTypes: {
     categories: {
       taxonomic:  { label: 'Tassonomico', subtitle: 'Di che tipo è?' },
       structural: { label: 'Strutturale', subtitle: 'Di cosa è fatto?' },

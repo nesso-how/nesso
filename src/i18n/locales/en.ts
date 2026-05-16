@@ -195,7 +195,7 @@ const en = {
     startReview: 'Start review (R)',
     review: 'Review',
   },
-  edgeTypes: {
+  relationTypes: {
     categories: {
       taxonomic:  { label: 'Taxonomic',  subtitle: 'What kind of thing?' },
       structural: { label: 'Structural', subtitle: "What's it made of?" },

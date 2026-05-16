@@ -1,0 +1,42 @@
+---
+title: Introduction
+description: What Nesso is, why it exists, and the principles it is built on.
+---
+
+Nesso is an open-source, AI-assisted knowledge graph for active learning. It is built on a specific claim about how understanding works and a specific critique of how most current tools approach it.
+
+## The problem with passive learning tools
+
+The dominant pattern AI is settling into is passive: hand over a source, receive a summary; ask a question, receive an answer; describe what you want to learn, receive a pre-built map. This is convenient, and pedagogically counterproductive. Decades of cognitive science converge on the same conclusion: deep understanding is not received; it is constructed. When the work of deciding how concepts relate is offloaded to a system, the process that produces comprehension is bypassed.
+
+Alongside this, most learning platforms treat user data as a resource. In the context of learning, this data is uniquely sensitive: it reveals not just what someone has read, but how they reason, where they struggle, and how their understanding evolves over time. Capturing it passively, and often opaquely, is at odds with the interests of the people the tools claim to serve.
+
+Finally, most platforms are proprietary silos: closed standards, locked formats, no way to inspect or extend them. Educators, developers, and learners themselves have no meaningful recourse when a platform makes choices they disagree with or stops serving their needs.
+
+## What Nesso does instead
+
+Nesso inverts the flow. The learner constructs their own knowledge structure: a typed concept graph that reflects how *they* understand, not just what they have consumed. The act of deciding which relation holds between two concepts (does X *cause* Y, or merely *enable* it? is A an *instance of* B, or a *subtype of* it?) is where elaborative processing happens. The decision is the learning.
+
+Algorithms work on what the learner has built, not on a generic curriculum. Spaced repetition is driven by graph structure: concepts with low stability or untested connections surface before well-reinforced ones. The review queue is always a function of the learner's own map.
+
+AI is present, but with a constrained role. The AI mentor, Socrates, does not deliver pre-packaged answers. It asks questions calibrated to the learner's current graph, probing understanding, surfacing gaps, and leaving the work of constructing answers to the learner. It is designed to accelerate active thinking, not to replace it.
+
+## Principles
+
+**Constructivist by design.** Every feature is oriented around the learner doing cognitive work: drawing edges, labelling relations, writing definitions in their own words, self-rating recall. The system does not do this work for them.
+
+**Private by architecture.** Graphs are stored locally in the browser (IndexedDB). The local AI mode runs entirely in-browser via WebGPU; no data leaves the device. Privacy is an implementation detail, not a policy promise.
+
+**Open by default.** The code is MIT-licensed. Data formats are documented and importable/exportable as plain JSON. The MCP server makes the graph vocabulary available to any compatible client. Technical work done here is intended to be useful beyond this application.
+
+**Provider-agnostic AI.** Nesso talks to any OpenAI-compatible `chat/completions` endpoint. Users choose whether to run a model locally or connect a remote provider; no vendor is privileged by the architecture.
+
+## What Nesso is not
+
+Nesso is not a note-taking app. It does not replace a text editor, a spaced-repetition deck manager, or a general-purpose LLM interface. It is specifically a tool for the phase of learning where understanding a domain means deciding how its concepts relate to each other, and testing whether you can hold that structure under questioning.
+
+It is also not a finished product. It is an alpha-stage open-source project. Some features are rough, some planned items are not yet built, and the codebase is publicly available for inspection and contribution.
+
+---
+
+The remainder of this documentation covers how to use the app and how to integrate with it programmatically. If you want to start immediately, [Getting started](./guides/getting-started/) has everything you need.

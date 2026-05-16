@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-import { EDGE_CATEGORIES, EDGE_TYPES } from '@/data/edgeTypes'
+import { RELATION_CATEGORIES, RELATION_TYPES } from '@/data/relationTypes'
 import type { EdgeCategory, EdgeTypeName } from '@/types/graph'
 import { useT } from '@/i18n'
 
@@ -14,10 +14,10 @@ interface Props {
 
 export function RelationPicker({ screenX, screenY, fromText, toText, onPick, onCancel }: Props) {
   const t = useT()
-  const groups = Object.entries(EDGE_CATEGORIES).map(([k, c]) => ({
+  const groups = Object.entries(RELATION_CATEGORIES).map(([k, c]) => ({
     key: k as EdgeCategory,
     ...c,
-    types: Object.entries(EDGE_TYPES).filter(([, edgeDef]) => edgeDef.cat === k) as [EdgeTypeName, (typeof EDGE_TYPES)[EdgeTypeName]][],
+    types: Object.entries(RELATION_TYPES).filter(([, edgeDef]) => edgeDef.cat === k) as [EdgeTypeName, (typeof RELATION_TYPES)[EdgeTypeName]][],
   }))
 
   const left = Math.min(screenX + 8, window.innerWidth - 320)
@@ -51,7 +51,7 @@ export function RelationPicker({ screenX, screenY, fromText, toText, onPick, onC
             color: 'var(--ink-4)',
             marginBottom: 4,
           }}>
-            {t.edgeTypes.newRelation}
+            {t.relationTypes.newRelation}
           </div>
           <div style={{ font: "500 14px 'Fraunces', serif", letterSpacing: '-0.005em' }}>
             <span>{fromText}</span>
@@ -72,7 +72,7 @@ export function RelationPicker({ screenX, screenY, fromText, toText, onPick, onC
                     letterSpacing: '0.08em',
                     color: g.color,
                   }}>
-                    {t.edgeTypes.categories[g.key].label}
+                    {t.relationTypes.categories[g.key].label}
                   </span>
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
@@ -99,7 +99,7 @@ export function RelationPicker({ screenX, screenY, fromText, toText, onPick, onC
                         e.currentTarget.style.color = 'var(--ink-2)'
                       }}
                     >
-                      {t.edgeTypes.types[id]}
+                      {t.relationTypes.types[id]}
                     </button>
                   ))}
                 </div>

@@ -1,9 +1,9 @@
 ---
-title: Edge types
+title: Relation types
 description: The 21 semantic relation types across 7 categories in Nesso.
 ---
 
-Edges in Nesso carry a **semantic type** — a named relation that describes how two concepts are connected. There are 21 types grouped into 7 categories. Each category has a distinct colour; each type has a line style and a glyph.
+Edges in Nesso carry a **semantic type**: a named relation that describes how two concepts are connected. There are 21 types grouped into 7 categories. Each category has a distinct colour; each type has a line style and a glyph.
 
 ## Taxonomic
 
@@ -59,7 +59,7 @@ Edges in Nesso carry a **semantic type** — a named relation that describes how
 
 ## Opposition
 
-*What does it contrast with?* — symmetric
+*What does it contrast with?* Symmetric.
 
 | Type | Label | Line | Glyph |
 |------|-------|------|-------|
@@ -68,7 +68,7 @@ Edges in Nesso carry a **semantic type** — a named relation that describes how
 
 ## Similarity
 
-*What is it like?* — symmetric
+*What is it like?* Symmetric.
 
 | Type | Label | Line | Glyph |
 |------|-------|------|-------|
@@ -77,9 +77,9 @@ Edges in Nesso carry a **semantic type** — a named relation that describes how
 
 ---
 
-**Symmetric** relations (opposition and similarity) carry the same meaning in both directions — the edge has no arrow head.
+**Symmetric** relations (opposition and similarity) carry the same meaning in both directions; the edge has no arrowhead.
 
-**Edge encoding** is controlled per-graph via Settings → Appearance → Edge encoding:
-- `full` — glyph and line style
-- `category` — colour only
-- `minimal` — plain line
+**Edge encoding** is controlled per-graph via Settings -> Appearance -> Edge encoding:
+- `full`: glyph and line style
+- `category`: colour only
+- `minimal`: plain line

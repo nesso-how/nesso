@@ -11,12 +11,18 @@ When you modify code in an area covered by a `.cursor/rules/` file, update that 
 | ---------------------------------------------------- | ----------------- |
 | `src/components/**`                                  | `components.mdc`  |
 | `src/store/**`                                       | `store.mdc`       |
-| `src/types/graph.ts`, `src/data/edgeTypes.ts`        | `graph-model.mdc` |
+| `src/types/graph.ts`, `src/data/relationTypes.ts`                     | `graph-model.mdc` |
 | `src/components/MentorBubble.tsx`, AI provider/model | `mentor.mdc`      |
 | Coding patterns, naming, import conventions          | `conventions.mdc` |
 | Architectural constraints, "never do X" rules        | `constraints.mdc` |
 | `CHANGELOG.md`                                       | `changelog.mdc`   |
 | Overall stack, layout, core concepts                 | `project.mdc`     |
+
+## Starlight docs and MCP (`docs/`, `packages/mcp/`)
+
+When MCP tools, stitched doc paths, env vars, or **user-visible behaviour** documented on the site change, update **`docs/`** and rebuild **`packages/mcp`** (`pnpm build`, refreshes **`dist/starlight-docs.pages.json`** via auto-discovery of `docs/src/content/docs/docs/**/*.md`) — see **`docs-sync.mdc`**.
+
+When you revise **guides or reference pages**, keep content aligned with the app.
 
 ## README roadmap (`## Roadmap`)
 

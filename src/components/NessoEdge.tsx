@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import type { EdgeProps } from '@xyflow/react'
 import { useStore } from '@xyflow/react'
-import { EDGE_TYPES, EDGE_CATEGORIES } from '@/data/edgeTypes'
+import { RELATION_TYPES, RELATION_CATEGORIES } from '@/data/relationTypes'
 import { GlyphSVG } from './GlyphSVG'
 import type { EdgeTypeName, EdgeEncoding } from '@/types/graph'
 import { useGraphStore } from '@/store/graph'
@@ -65,8 +65,8 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps) {
 
   const edgeData = (data as unknown) as NessoEdgeData
   const edgeType = edgeData?.type ?? 'causes'
-  const T = EDGE_TYPES[edgeType]
-  const C = EDGE_CATEGORIES[T.cat]
+  const T = RELATION_TYPES[edgeType]
+  const C = RELATION_CATEGORIES[T.cat]
   const encoding: EdgeEncoding = settings.edgeEncoding
 
   const color = encoding === 'minimal' ? 'var(--ink-3)' : C.color
@@ -165,7 +165,7 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps) {
             whiteSpace: 'nowrap',
             lineHeight: '16px',
           }}>
-            {t.edgeTypes.types[edgeType]}
+            {t.relationTypes.types[edgeType]}
           </div>
         </foreignObject>
       )}

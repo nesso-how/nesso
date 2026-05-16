@@ -16,6 +16,7 @@
     "build:desktop": "tauri build"
   },
   "dependencies": {
+    "@nesso-how/relation-types": "workspace:*",
     "@mlc-ai/web-llm": "^0.2.83",
     "@xyflow/react": "^12.6.4",
     "idb": "^8.0.3",

@@ -25,7 +25,7 @@ src/
   components/         # All UI components (see components.mdc)
   store/graph.ts      # Single Zustand store for all app state
   data/
-    edgeTypes.ts      # EDGE_TYPES and EDGE_CATEGORIES — the semantic relation model
+    relationTypes.ts  # merges `@nesso-how/relation-types` + CSS palette vars (`RELATION_CATEGORIES`)
     palettes.ts       # CSS variable colour palettes for edge categories
     seeds/*.json      # Default demo graph snapshots (React Flow nodes/edges + display name)
     seedGraph.ts      # Exports `SEEDS` — bundled demo graphs from `seeds/*.json` (stable ids from names)

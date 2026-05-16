@@ -76,12 +76,19 @@ function AppInner() {
 
   // Initial load: prefer graph from URL hash
   useEffect(() => {
-    loadGraphList().then(list => {
+    let cancelled = false
+
+    void loadGraphList().then(async list => {
+      if (cancelled) return
       const hashId = location.hash.slice(1)
-      const target = list.find(g => g.id === hashId) ? hashId : currentGraphId
-      loadGraph(target)
+      const cid = useGraphStore.getState().currentGraphId
+      const target = list.find(g => g.id === hashId) ? hashId : cid
+      await loadGraph(target)
     })
-  }, [])
+    return () => {
+      cancelled = true
+    }
+  }, [loadGraphList, loadGraph])
 
   // Keep URL hash in sync with current graph
   useEffect(() => {

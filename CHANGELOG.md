@@ -6,6 +6,26 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Changed
+
+- **MCP (`@nesso-how/mcp`):** Removed **`build_graph`** — URL-based graph handoff was unwieldy for models and users; MCP documents **Import JSON** instead.
+
+- **App:** Removed **`?import=`** query-string graph import; use **Graph menu → Import JSON** (file or paste) only.
+
+- **MCP (`@nesso-how/mcp`):** Depend on **`@cfworker/json-schema`** (`^4.1.1`) so **`@modelcontextprotocol/server`** resolves its optional peer under pnpm (fixes Claude Desktop **`ERR_MODULE_NOT_FOUND`** when spawning **`node dist/index.js`**).
+
+- **Workspace:** `@nesso-how/relation-types` holds **`RELATION_CATEGORY_META`** (labels + subtitles); app merges **`RELATION_CATEGORIES`** with **`var(--cat-<category>)`**; MCP imports category meta from the shared package (removed **`packages/mcp/src/data/relation-types.ts`**).
+- **Contributor docs:** Cursor rule `docs-sync.mdc` (`alwaysApply`) plus `maintenance.mdc` cross-reference — MCP changes and Starlight-documented features stay aligned (`docs/` + **`pnpm build`** in `packages/mcp` for **`dist/starlight-docs.pages.json`**).
+- **MCP (`@nesso-how/mcp`):** `get_nesso_docs` reads **`dist/starlight-docs.pages.json`** produced by **`pnpm build`** (auto-discovers Markdown under **`docs/src/content/docs/docs/`**).
+
+### Added
+
+- **Docs:** MCP guide (`docs/guides/mcp-integration`) — setup, **`get_nesso_docs`**, **`get_relation_types`**, and **Import JSON** graph shape.
+
+- **Docs:** new guides — **Concepts & Inspector** (canvas + selection + notes + Wikimedia image search), **AI mentor** (local vs remote, WebGPU, Socratic persona, context window), **Review mode** (FSRS flow, retention/max-interval settings, keyboard shortcuts); Getting started rewritten — local WebLLM (default) vs Remote API, full keyboard shortcuts table; MCP guide adds **Install** section with Claude Desktop config snippet.
+
+- **MCP package** (`packages/mcp`) — `@nesso-how/mcp` MCP server with **`get_nesso_docs`** (Markdown pages bundled at **`pnpm build`** into **`dist/starlight-docs.pages.json`**, one MCP block per page) and **`get_relation_types`**. MCP-specific prose lives in the docs guide above — not duplicated in the package code beyond bundling.
+
 ## [0.1.0-alpha.15] - 2026-05-15
 
 ### Changed

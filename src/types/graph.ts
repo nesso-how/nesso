@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 import type { Card, State } from 'ts-fsrs'
+export type { EdgeCategory, EdgeTypeDef, EdgeTypeName, GlyphKind } from '@nesso-how/relation-types'
 
 export interface ConceptElaboration {
   definition: string
@@ -38,37 +39,6 @@ export function nodeToCard(data: ConceptNodeData): Card {
   }
 }
 
-export type EdgeCategory =
-  | 'taxonomic'
-  | 'structural'
-  | 'causal'
-  | 'dependency'
-  | 'temporal'
-  | 'opposition'
-  | 'similarity'
-
-export type EdgeTypeName =
-  | 'is-a' | 'instance-of' | 'subtype-of'
-  | 'part-of' | 'made-of' | 'contains'
-  | 'causes' | 'produces' | 'enables' | 'prevents' | 'triggers' | 'inhibits'
-  | 'requires' | 'uses' | 'used-for'
-  | 'precedes' | 'occurs-in'
-  | 'contrasts-with' | 'opposite-of'
-  | 'similar-to' | 'analogous-to'
-
-export interface EdgeTypeDef {
-  cat: EdgeCategory
-  line: 'solid' | 'dashed' | 'dotted' | 'double' | 'wavy'
-  glyph: GlyphKind
-  symmetric: boolean
-  label: string
-}
-
-export type GlyphKind =
-  | 'triangle-up' | 'circle-dot' | 'diamond' | 'diamond-open' | 'hash'
-  | 'arrow-right' | 'asterisk' | 'key' | 'block' | 'spark'
-  | 'anchor' | 'tool' | 'chevron-r' | 'ring' | 'tilde' | 'x'
-  | 'minus' | 'flag' | 'approx' | 'arrows-lr'
 
 export type EdgeEncoding = 'full' | 'category' | 'minimal'
 export type CurveStyle = 'arc' | 'straight'

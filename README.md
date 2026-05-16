@@ -107,7 +107,7 @@ Each relation has a line style (solid, dashed, dotted, double, wavy) and an SVG 
 
 ### Modularisation & plugins
 
-- [ ] Nesso MCP package — Model Context Protocol server so MCP-capable LLM clients can search and pull Nesso documentation, generate starter graphs (concepts + typed edges) for a topic, and return deep links that open those graphs in the web or desktop app for further editing
+- [ ] Nesso MCP package — Model Context Protocol server so MCP-capable LLM clients can search and pull Nesso documentation and inspect the relation-type vocabulary (**`get_nesso_docs`**, **`get_relation_types`**)
 - [ ] Custom themes — register full theme packs (palette + typography + spacing scale) beyond the current palette switch, so contributors can ship visual identities as drop-in modules
 - [ ] Importer/exporter plugins — pluggable converters for Markdown, Anki decks, Mermaid, OPML, and Cytoscape JSON to ease onboarding from existing notes
 - [ ] Mentor personas — registerable AI personas (Socrates, devil's advocate, summariser, exam tutor) sharing the same transport but with distinct system prompts and UI affordances

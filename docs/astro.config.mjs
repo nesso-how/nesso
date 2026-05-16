@@ -24,16 +24,21 @@ export default defineConfig({
 				{ tag: 'link', attrs: { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500;1,9..144,600&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;450;500;600&display=swap' } },
 			],
 			sidebar: [
+				{ label: 'Introduction', slug: 'docs/introduction' },
 				{
 					label: 'Guides',
 					items: [
 						{ label: 'Getting started', slug: 'docs/guides/getting-started' },
+						{ label: 'Concepts & Inspector', slug: 'docs/guides/concepts-and-inspector' },
+						{ label: 'AI mentor', slug: 'docs/guides/ai-mentor' },
+						{ label: 'Review mode', slug: 'docs/guides/review-mode' },
+						{ label: 'MCP', slug: 'docs/guides/mcp-integration' },
 					],
 				},
 				{
 					label: 'Reference',
 					items: [
-						{ label: 'Edge types', slug: 'docs/reference/edge-types' },
+						{ label: 'Relation types', slug: 'docs/reference/relation-types' },
 					],
 				},
 			],

@@ -1,0 +1,20 @@
+{
+  "name": "@nesso-how/relation-types",
+  "version": "0.1.0-alpha.15",
+  "description": "Nesso semantic relation type definitions — shared across app and MCP",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "devDependencies": {
+    "typescript": "~5.8.3"
+  }
+}

@@ -1,17 +1,49 @@
 // SPDX-License-Identifier: MIT
-import type { EdgeCategory, EdgeTypeDef, EdgeTypeName } from '@/types/graph'
 
-export const EDGE_CATEGORIES: Record<EdgeCategory, { label: string; color: string; subtitle: string }> = {
-  taxonomic:  { label: 'Taxonomic',  color: 'var(--cat-taxonomic)',  subtitle: 'What kind of thing?' },
-  structural: { label: 'Structural', color: 'var(--cat-structural)', subtitle: "What's it made of?" },
-  causal:     { label: 'Causal',     color: 'var(--cat-causal)',     subtitle: 'What does it do?' },
-  dependency: { label: 'Dependency', color: 'var(--cat-dependency)', subtitle: 'What does it need?' },
-  temporal:   { label: 'Temporal',   color: 'var(--cat-temporal)',   subtitle: 'When? Where?' },
-  opposition: { label: 'Opposition', color: 'var(--cat-opposition)', subtitle: 'What does it contrast with?' },
-  similarity: { label: 'Similarity', color: 'var(--cat-similarity)', subtitle: 'What is it like?' },
+export type EdgeCategory =
+  | 'taxonomic'
+  | 'structural'
+  | 'causal'
+  | 'dependency'
+  | 'temporal'
+  | 'opposition'
+  | 'similarity'
+
+export type EdgeTypeName =
+  | 'is-a' | 'instance-of' | 'subtype-of'
+  | 'part-of' | 'made-of' | 'contains'
+  | 'causes' | 'produces' | 'enables' | 'prevents' | 'triggers' | 'inhibits'
+  | 'requires' | 'uses' | 'used-for'
+  | 'precedes' | 'occurs-in'
+  | 'contrasts-with' | 'opposite-of'
+  | 'similar-to' | 'analogous-to'
+
+export type GlyphKind =
+  | 'triangle-up' | 'circle-dot' | 'diamond' | 'diamond-open' | 'hash'
+  | 'arrow-right' | 'asterisk' | 'key' | 'block' | 'spark'
+  | 'anchor' | 'tool' | 'chevron-r' | 'ring' | 'tilde' | 'x'
+  | 'minus' | 'flag' | 'approx' | 'arrows-lr'
+
+export interface EdgeTypeDef {
+  cat: EdgeCategory
+  line: 'solid' | 'dashed' | 'dotted' | 'double' | 'wavy'
+  glyph: GlyphKind
+  symmetric: boolean
+  label: string
 }
 
-export const EDGE_TYPES: Record<EdgeTypeName, EdgeTypeDef> = {
+/** Canonical category labels and prompts. */
+export const RELATION_CATEGORY_META: Record<EdgeCategory, { label: string; subtitle: string }> = {
+  taxonomic:  { label: 'Taxonomic',  subtitle: 'What kind of thing?' },
+  structural: { label: 'Structural', subtitle: "What's it made of?" },
+  causal:     { label: 'Causal',     subtitle: 'What does it do?' },
+  dependency: { label: 'Dependency', subtitle: 'What does it need?' },
+  temporal:   { label: 'Temporal',   subtitle: 'When? Where?' },
+  opposition: { label: 'Opposition', subtitle: 'What does it contrast with?' },
+  similarity: { label: 'Similarity', subtitle: 'What is it like?' },
+}
+
+export const RELATION_TYPES: Record<EdgeTypeName, EdgeTypeDef> = {
   'is-a':           { cat: 'taxonomic',  line: 'solid',  glyph: 'triangle-up',  symmetric: false, label: 'is a' },
   'instance-of':    { cat: 'taxonomic',  line: 'solid',  glyph: 'circle-dot',   symmetric: false, label: 'instance of' },
   'subtype-of':     { cat: 'taxonomic',  line: 'double', glyph: 'triangle-up',  symmetric: false, label: 'subtype of' },
@@ -40,3 +72,5 @@ export const EDGE_TYPES: Record<EdgeTypeName, EdgeTypeDef> = {
   'similar-to':     { cat: 'similarity', line: 'dashed', glyph: 'approx',       symmetric: true,  label: 'similar to' },
   'analogous-to':   { cat: 'similarity', line: 'dotted', glyph: 'arrows-lr',    symmetric: true,  label: 'analogous to' },
 }
+
+export const RELATION_TYPE_VALUES = Object.keys(RELATION_TYPES) as EdgeTypeName[]

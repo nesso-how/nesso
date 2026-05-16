@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 import { useState } from 'react'
-import { EDGE_CATEGORIES, EDGE_TYPES } from '@/data/edgeTypes'
+import { RELATION_CATEGORIES, RELATION_TYPES } from '@/data/relationTypes'
 import { GlyphSVG } from './GlyphSVG'
 import { CloseButton } from './CloseButton'
 import { useGraphStore } from '@/store/graph'
@@ -23,21 +23,21 @@ export function RelationTypesDialog({ open, onClose }: Props) {
 
   const q = query.trim().toLowerCase()
 
-  const groups = Object.entries(EDGE_CATEGORIES)
+  const groups = Object.entries(RELATION_CATEGORIES)
     .map(([k, c]) => ({
       key: k as EdgeCategory,
       ...c,
-      types: (Object.entries(EDGE_TYPES) as [EdgeTypeName, (typeof EDGE_TYPES)[EdgeTypeName]][])
+      types: (Object.entries(RELATION_TYPES) as [EdgeTypeName, (typeof RELATION_TYPES)[EdgeTypeName]][])
         .filter(([id, edgeDef]) => {
           if (edgeDef.cat !== k) return false
           if (activeCategory !== null && activeCategory !== k) return false
-          if (q) return t.edgeTypes.types[id].toLowerCase().includes(q) || id.includes(q)
+          if (q) return t.relationTypes.types[id].toLowerCase().includes(q) || id.includes(q)
           return true
         }),
     }))
     .filter(g => g.types.length > 0)
 
-  const totalTypes = Object.keys(EDGE_TYPES).length
+  const totalTypes = Object.keys(RELATION_TYPES).length
   const visibleTypes = groups.reduce((acc, g) => acc + g.types.length, 0)
   const isFiltered = q !== '' || activeCategory !== null
 
@@ -69,7 +69,7 @@ export function RelationTypesDialog({ open, onClose }: Props) {
         }}
       >
         <div style={{ font: "500 11px 'JetBrains Mono', ui-monospace", textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--ink-4)', marginBottom: 14 }}>
-          {t.edgeTypes.dialogTitle}
+          {t.relationTypes.dialogTitle}
         </div>
         <div style={{ position: 'absolute', top: 12, right: 12 }}>
           <CloseButton large onClick={onClose} />
@@ -80,7 +80,7 @@ export function RelationTypesDialog({ open, onClose }: Props) {
           autoComplete="off"
           value={query}
           onChange={e => setQuery(e.target.value)}
-          placeholder={t.edgeTypes.searchPlaceholder}
+          placeholder={t.relationTypes.searchPlaceholder}
           style={{
             width: '100%',
             boxSizing: 'border-box',
@@ -109,9 +109,9 @@ export function RelationTypesDialog({ open, onClose }: Props) {
               letterSpacing: '0.04em',
             }}
           >
-            {t.edgeTypes.allCategories}
+            {t.relationTypes.allCategories}
           </button>
-          {(Object.entries(EDGE_CATEGORIES) as [EdgeCategory, (typeof EDGE_CATEGORIES)[EdgeCategory]][]).map(([k, c]) => {
+          {(Object.entries(RELATION_CATEGORIES) as [EdgeCategory, (typeof RELATION_CATEGORIES)[EdgeCategory]][]).map(([k, c]) => {
             const isActive = activeCategory === k
             return (
               <button
@@ -128,7 +128,7 @@ export function RelationTypesDialog({ open, onClose }: Props) {
                   letterSpacing: '0.04em',
                 }}
               >
-                {t.edgeTypes.categories[k].label}
+                {t.relationTypes.categories[k].label}
               </button>
             )
           })}
@@ -152,7 +152,7 @@ export function RelationTypesDialog({ open, onClose }: Props) {
               color: 'var(--ink-4)',
               fontStyle: 'italic',
             }}>
-              {t.edgeTypes.noResults}
+              {t.relationTypes.noResults}
             </div>
           ) : groups.map(g => (
             <div key={g.key} style={{ padding: '6px 0 10px' }}>
@@ -164,10 +164,10 @@ export function RelationTypesDialog({ open, onClose }: Props) {
                   letterSpacing: '0.08em',
                   color: g.color,
                 }}>
-                  {t.edgeTypes.categories[g.key].label}
+                  {t.relationTypes.categories[g.key].label}
                 </span>
                 <small style={{ color: 'var(--ink-4)', fontSize: 12, fontStyle: 'italic', fontFamily: "'Inter', system-ui" }}>
-                  {t.edgeTypes.categories[g.key].subtitle}
+                  {t.relationTypes.categories[g.key].subtitle}
                 </small>
               </div>
 
@@ -210,12 +210,12 @@ export function RelationTypesDialog({ open, onClose }: Props) {
                     font: "500 12px 'JetBrains Mono', ui-monospace",
                     color: encoding === 'minimal' ? 'var(--ink-2)' : g.color,
                   }}>
-                    {t.edgeTypes.types[id]}
+                    {t.relationTypes.types[id]}
                   </span>
 
                   {edgeDef.symmetric && (
                     <span style={{ color: 'var(--ink-4)', fontSize: 11, fontFamily: "'Inter', system-ui", fontStyle: 'italic' }}>
-                      {t.edgeTypes.symmetric}
+                      {t.relationTypes.symmetric}
                     </span>
                   )}
                 </div>
@@ -232,8 +232,8 @@ export function RelationTypesDialog({ open, onClose }: Props) {
           color: 'var(--ink-4)',
         }}>
           {isFiltered
-            ? t.edgeTypes.filteredKinds(visibleTypes, totalTypes)
-            : t.edgeTypes.relationKinds(totalTypes)}
+            ? t.relationTypes.filteredKinds(visibleTypes, totalTypes)
+            : t.relationTypes.relationKinds(totalTypes)}
         </div>
       </div>
     </div>
