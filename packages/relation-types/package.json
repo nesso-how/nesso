@@ -1,6 +1,6 @@
 {
   "name": "@nesso-how/relation-types",
-  "version": "0.1.0-alpha.15",
+  "version": "0.1.0-alpha.16",
   "description": "Nesso semantic relation type definitions — shared across app and MCP",
   "license": "MIT",
   "type": "module",

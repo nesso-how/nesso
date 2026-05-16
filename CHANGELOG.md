@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.0-alpha.16] - 2026-05-16
+
 ### Changed
 
 - **Mentor:** Graph snapshot sorting and persona emphasise FSRS **stability** and **last review** (rating + days elapsed); **DUE** stays visible on nodes but only nudges order slightly. System prompt includes an explicit **legend** for how to read node tags (`s=`, `since review`, ratings, `DUE`, `(new)`).
@@ -269,7 +271,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial alpha: interactive knowledge graph (web + Tauri v2); desktop installers on GitHub Releases (macOS Apple silicon and Intel).
 
-[Unreleased]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.15...HEAD
+[Unreleased]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.16...HEAD
+[0.1.0-alpha.16]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.15...v0.1.0-alpha.16
 [0.1.0-alpha.15]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.14...v0.1.0-alpha.15
 [0.1.0-alpha.14]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.13...v0.1.0-alpha.14
 [0.1.0-alpha.13]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.12...v0.1.0-alpha.13
