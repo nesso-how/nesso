@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.0-alpha.17] - 2026-05-16
+
+### Fixed
+
+- **MCP (`@nesso-how/mcp`):** Published tarball listed **`workspace:*`** for **`@nesso-how/relation-types`**, which **`npm` / `npx`** cannot resolve — declare a **semver** range on **`@nesso-how/relation-types`** so **`npx -y @nesso-how/mcp`** installs cleanly.
+
 ### Changed
 
 - **Workspace packages:** **`@nesso-how/relation-types`** and **`@nesso-how/mcp`** declare **`publishConfig.access: public`** so `npm publish` targets the **public** registry for scoped packages (otherwise npm defaults scoped packages to **restricted / private**).
@@ -279,7 +285,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial alpha: interactive knowledge graph (web + Tauri v2); desktop installers on GitHub Releases (macOS Apple silicon and Intel).
 
-[Unreleased]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.16...HEAD
+[Unreleased]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.17...HEAD
+[0.1.0-alpha.17]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.16...v0.1.0-alpha.17
 [0.1.0-alpha.16]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.15...v0.1.0-alpha.16
 [0.1.0-alpha.15]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.14...v0.1.0-alpha.15
 [0.1.0-alpha.14]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.13...v0.1.0-alpha.14

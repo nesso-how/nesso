@@ -64,8 +64,8 @@ importers:
         specifier: latest
         version: 2.0.0-alpha.2(@cfworker/json-schema@4.1.1)
       '@nesso-how/relation-types':
-        specifier: workspace:*
-        version: link:../relation-types
+        specifier: ^0.1.0-alpha.16
+        version: 0.1.0-alpha.16
       zod:
         specifier: latest
         version: 4.4.3
@@ -354,6 +354,9 @@ packages:
     peerDependenciesMeta:
       '@cfworker/json-schema':
         optional: true
+
+  '@nesso-how/relation-types@0.1.0-alpha.16':
+    resolution: {integrity: sha512-xrQJ95HriPXJHxsPmCW0G/T/aTfceUKwv9chYRhyc+4lbUeoO7FTCMwlGbLeQvXOFegoizgfm5VBwXnysdftKg==}
 
   '@rolldown/pluginutils@1.0.0-beta.27':
     resolution: {integrity: sha512-+d0F4MKMCbeVUJwG96uQ4SgAznZNSq93I3V+9NHA4OpvqG8mRCpGdKmK8l/dl02h2CCDHwW2FqilnTyDcAnqjA==}
@@ -1124,6 +1127,8 @@ snapshots:
       zod: 4.4.3
     optionalDependencies:
       '@cfworker/json-schema': 4.1.1
+
+  '@nesso-how/relation-types@0.1.0-alpha.16': {}
 
   '@rolldown/pluginutils@1.0.0-beta.27': {}
 

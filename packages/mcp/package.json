@@ -1,6 +1,6 @@
 {
   "name": "@nesso-how/mcp",
-  "version": "0.1.0-alpha.16",
+  "version": "0.1.0-alpha.17",
   "description": "MCP server exposing Nesso knowledge graph tools to LLM clients",
   "license": "MIT",
   "type": "module",
@@ -24,7 +24,7 @@
   "dependencies": {
     "@cfworker/json-schema": "^4.1.1",
     "@modelcontextprotocol/server": "latest",
-    "@nesso-how/relation-types": "workspace:*",
+    "@nesso-how/relation-types": "^0.1.0-alpha.16",
     "zod": "latest"
   },
   "devDependencies": {
