@@ -1,0 +1,122 @@
+/* ── Fonts ───────────────────────────────────── */
+:root {
+	--sl-font: 'Inter', ui-sans-serif, system-ui, sans-serif;
+	--sl-font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* ── Dark mode — warm dark paper ────────────── */
+:root {
+	--sl-color-bg: #14130f;
+	--sl-color-bg-nav: #0d0c09;
+	--sl-color-bg-sidebar: #14130f;
+	--sl-color-bg-inline-code: #1c1a16;
+	--sl-color-bg-accent: rgba(224, 138, 106, 0.08);
+
+	--sl-color-text: #f0e9d8;
+	--sl-color-text-accent: #e08a6a;
+	--sl-color-text-invert: #14130f;
+
+	--sl-color-white: #f0e9d8;
+	--sl-color-black: #14130f;
+
+	--sl-color-accent-low: rgba(224, 138, 106, 0.15);
+	--sl-color-accent: #e08a6a;
+	--sl-color-accent-high: #f5c4a8;
+
+	--sl-color-hairline: rgba(240, 233, 216, 0.10);
+	--sl-color-hairline-light: rgba(240, 233, 216, 0.07);
+	--sl-color-hairline-shade: rgba(240, 233, 216, 0.15);
+
+	--sl-color-gray-1: #f0e9d8;
+	--sl-color-gray-2: #d4ccba;
+	--sl-color-gray-3: #a39c8c;
+	--sl-color-gray-4: #6e6859;
+	--sl-color-gray-5: #423e35;
+	--sl-color-gray-6: #1c1a16;
+	--sl-color-gray-7: #0d0c09;
+}
+
+/* ── Light mode — cream paper ───────────────── */
+:root[data-theme='light'] {
+	--sl-color-bg: #f6f2ea;
+	--sl-color-bg-nav: #ece6da;
+	--sl-color-bg-sidebar: #f6f2ea;
+	--sl-color-bg-inline-code: #ece6da;
+	--sl-color-bg-accent: rgba(177, 74, 46, 0.06);
+
+	--sl-color-text: #1a1814;
+	--sl-color-text-accent: #b14a2e;
+	--sl-color-text-invert: #f6f2ea;
+
+	--sl-color-white: #1a1814;
+	--sl-color-black: #f6f2ea;
+
+	--sl-color-accent-low: rgba(177, 74, 46, 0.12);
+	--sl-color-accent: #b14a2e;
+	--sl-color-accent-high: #6e2c18;
+
+	--sl-color-hairline: rgba(26, 24, 20, 0.10);
+	--sl-color-hairline-light: rgba(26, 24, 20, 0.07);
+	--sl-color-hairline-shade: rgba(26, 24, 20, 0.15);
+
+	--sl-color-gray-1: #1a1814;
+	--sl-color-gray-2: #3c3830;
+	--sl-color-gray-3: #6a6356;
+	--sl-color-gray-4: #9a9080;
+	--sl-color-gray-5: #c4b9a4;
+	--sl-color-gray-6: #ece6da;
+	--sl-color-gray-7: #f6f2ea;
+}
+
+/* ── Headings ───────────────────────────────── */
+h1,
+h2,
+h3,
+h4 {
+	font-family: 'Fraunces', Georgia, serif;
+	font-optical-sizing: auto;
+	letter-spacing: -0.02em;
+}
+
+/* Site title in navbar — text color, not accent */
+.site-title {
+	font-family: 'Fraunces', Georgia, serif;
+	font-optical-sizing: auto;
+	font-weight: 600;
+	letter-spacing: -0.01em;
+	gap: 0.6rem;
+	color: var(--sl-color-text);
+}
+.site-title:hover {
+	color: var(--sl-color-text-accent);
+}
+
+/* Logo sizing */
+.site-title img {
+	height: 24px;
+	width: 24px;
+}
+
+/* Social icons in navbar — muted, accent on hover */
+.social-icons a,
+header a[rel='me'] {
+	color: var(--sl-color-text);
+}
+.social-icons a:hover,
+header a[rel='me']:hover {
+	color: var(--sl-color-text-accent);
+}
+
+/* Paper grain on page body (same as landing page) */
+body::before {
+	content: '';
+	position: fixed;
+	inset: 0;
+	pointer-events: none;
+	z-index: 0;
+	background-image:
+		radial-gradient(circle at 20% 30%, rgba(0, 0, 0, 0.025) 0%, transparent 40%),
+		radial-gradient(circle at 80% 70%, rgba(0, 0, 0, 0.02) 0%, transparent 40%);
+	mix-blend-mode: multiply;
+	opacity: 0.6;
+}

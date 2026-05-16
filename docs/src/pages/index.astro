@@ -1,0 +1,901 @@
+---
+
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nesso: knowledge graphs for active learning</title>
+    <meta
+      name="description"
+      content="Build concept maps with typed semantic relations. Let Socrates challenge what you think you know."
+    />
+    <link rel="icon" type="image/svg+xml" href="/icon/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500;1,9..144,600&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;450;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      :root {
+        --paper: #f6f2ea;
+        --paper-deep: #ece6da;
+        --paper-elev: #fcf9f3;
+        --ink: #1a1814;
+        --ink-2: #3c3830;
+        --ink-3: #6a6356;
+        --ink-4: #9a9080;
+        --ink-5: #c4b9a4;
+        --line: rgba(26, 24, 20, 0.1);
+        --line-strong: rgba(26, 24, 20, 0.2);
+
+        --cat-taxonomic: #2f5d8e;
+        --cat-structural: #6b4a8a;
+        --cat-causal: #b14a2e;
+        --cat-dependency: #8a6a1a;
+        --cat-temporal: #2d6a55;
+        --cat-opposition: #8a2e4a;
+        --cat-similarity: #2a6878;
+
+        --accent: var(--cat-causal);
+
+        --font-serif: "Fraunces", Georgia, serif;
+        --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+        --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+        --shadow-paper:
+          0 8px 28px -10px rgba(26, 24, 20, 0.18),
+          0 2px 8px rgba(26, 24, 20, 0.06);
+        --shadow-lift:
+          0 28px 60px -16px rgba(26, 24, 20, 0.22),
+          0 8px 20px -8px rgba(26, 24, 20, 0.1);
+      }
+
+      html,
+      body {
+        background: var(--paper);
+        color: var(--ink);
+        font-family: var(--font-sans);
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+        font-feature-settings: "ss01", "cv11";
+      }
+
+      body {
+        position: relative;
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 1;
+        background-image:
+          radial-gradient(
+            circle at 20% 30%,
+            rgba(0, 0, 0, 0.025) 0%,
+            transparent 40%
+          ),
+          radial-gradient(
+            circle at 80% 70%,
+            rgba(0, 0, 0, 0.02) 0%,
+            transparent 40%
+          );
+        mix-blend-mode: multiply;
+        opacity: 0.6;
+      }
+
+      main,
+      header,
+      footer {
+        position: relative;
+        z-index: 2;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+        transition: color 0.2s;
+      }
+
+      ::selection {
+        background: rgba(177, 74, 46, 0.2);
+        color: var(--ink);
+      }
+
+      /* ── Header ─────────────────────────────── */
+      header {
+        max-width: 1080px;
+        margin: 0 auto;
+        padding: 1.75rem 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        color: var(--ink);
+      }
+
+      .brand-mark {
+        width: 28px;
+        height: 28px;
+        display: block;
+      }
+
+      .brand-name {
+        font-family: var(--font-serif);
+        font-weight: 600;
+        font-size: 1.25rem;
+        letter-spacing: -0.01em;
+        font-optical-sizing: auto;
+      }
+
+      .header-nav {
+        display: flex;
+        align-items: center;
+        gap: 1.75rem;
+      }
+
+      .header-nav a {
+        font-size: 0.875rem;
+        color: var(--ink-3);
+      }
+      .header-nav a:hover {
+        color: var(--ink);
+      }
+
+      /* ── Hero ──────────────────────────────── */
+      .hero {
+        max-width: 880px;
+        margin: 4rem auto 5rem;
+        padding: 0 2rem;
+        text-align: center;
+      }
+
+      .hero-eyebrow {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--ink-3);
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        position: relative;
+      }
+
+      .hero-eyebrow::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 28px;
+        height: 1px;
+        background: var(--accent);
+      }
+
+      .hero h1 {
+        font-family: var(--font-serif);
+        font-weight: 500;
+        font-size: clamp(2.25rem, 6vw, 5rem);
+        line-height: 1.08;
+        letter-spacing: -0.025em;
+        font-optical-sizing: auto;
+        color: var(--ink);
+        margin-bottom: 1.5rem;
+      }
+
+      .hero h1 em {
+        font-style: italic;
+        font-weight: 400;
+        color: var(--accent);
+      }
+
+      .hero-sub {
+        font-size: 1.1rem;
+        color: var(--ink-2);
+        max-width: 520px;
+        margin: 0 auto 2.25rem;
+        line-height: 1.6;
+      }
+
+      .cta-row {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.7rem 1.35rem;
+        border-radius: 8px;
+        font-family: var(--font-sans);
+        font-size: 0.92rem;
+        font-weight: 500;
+        transition: all 0.18s;
+        cursor: pointer;
+        border: none;
+      }
+
+      .btn-primary {
+        background: var(--ink);
+        color: var(--paper);
+        box-shadow: var(--shadow-paper);
+      }
+
+      .btn-primary:hover {
+        background: var(--accent);
+        transform: translateY(-1px);
+      }
+
+      .btn-secondary {
+        background: transparent;
+        color: var(--ink-2);
+        border: 1px solid var(--line-strong);
+      }
+
+      .btn-secondary:hover {
+        color: var(--ink);
+        border-color: var(--ink-3);
+      }
+
+      .btn-arrow {
+        display: inline-block;
+        transition: transform 0.2s;
+      }
+      .btn:hover .btn-arrow {
+        transform: translateX(2px);
+      }
+
+      /* ── Shared section layout ──────────────── */
+      .section {
+        max-width: 880px;
+        margin: 5rem auto;
+        padding: 0 2rem;
+      }
+
+      .section-label {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--ink-3);
+        margin-bottom: 2.5rem;
+      }
+
+      .section-label::before,
+      .section-label::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: var(--line);
+      }
+
+      /* ── Principles ─────────────────────────── */
+      .principles {
+        display: grid;
+        gap: 2.25rem;
+      }
+
+      .principle {
+        display: grid;
+        grid-template-columns: 60px 1fr;
+        gap: 1.5rem;
+        align-items: start;
+      }
+
+      .principle-marker {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding-top: 0.4rem;
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--ink-4);
+      }
+
+      .principle-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+
+      .principle h3 {
+        font-family: var(--font-serif);
+        font-weight: 500;
+        font-size: 1.5rem;
+        letter-spacing: -0.01em;
+        color: var(--ink);
+        margin-bottom: 0.4rem;
+        font-optical-sizing: auto;
+      }
+
+      .principle p {
+        color: var(--ink-2);
+        font-size: 1rem;
+        line-height: 1.65;
+      }
+
+      .principle kbd {
+        font-family: var(--font-mono);
+        font-size: 0.8em;
+        background: var(--paper-deep);
+        padding: 0.1em 0.4em;
+        border-radius: 4px;
+        border: 1px solid var(--line);
+      }
+
+      /* ── Relations table ────────────────────── */
+      .relation-table {
+        margin-top: 2.5rem;
+      }
+
+      .relation-row {
+        display: grid;
+        grid-template-columns: 200px 1fr;
+        gap: 2rem;
+        align-items: start;
+        padding: 1.25rem 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .relation-row:first-child {
+        border-top: 1px solid var(--line);
+      }
+
+      .relation-cat {
+        padding-left: 1rem;
+        border-left: 2px solid var(--cat-color);
+      }
+
+      .relation-cat-name {
+        display: block;
+        font-family: var(--font-serif);
+        font-weight: 500;
+        font-size: 1rem;
+        color: var(--ink);
+        font-optical-sizing: auto;
+      }
+
+      .relation-cat-q {
+        display: block;
+        font-size: 0.78rem;
+        color: var(--ink-4);
+        margin-top: 0.2rem;
+      }
+
+      .relation-types {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        align-items: center;
+        padding-top: 0.2rem;
+      }
+
+      .relation-chip {
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        padding: 0.2em 0.55em;
+        border-radius: 4px;
+        color: var(--cat-color);
+        background: color-mix(in srgb, var(--cat-color) 8%, var(--paper));
+        border: 1px solid color-mix(in srgb, var(--cat-color) 20%, transparent);
+      }
+
+      .relation-intro {
+        font-size: 1rem;
+        color: var(--ink-2);
+        line-height: 1.7;
+        margin-bottom: 0.5rem;
+      }
+
+      @keyframes tw-blink {
+        50% {
+          opacity: 0;
+        }
+      }
+
+      .tw-cursor {
+        display: inline-block;
+        width: 2px;
+        height: 0.8em;
+        background: var(--ink);
+        vertical-align: middle;
+        margin-left: 1px;
+        animation: tw-blink 0.55s steps(1) infinite;
+      }
+
+      .relation-cta {
+        text-align: right;
+        margin-top: 1.5rem;
+        font-size: 0.875rem;
+        color: var(--ink-3);
+      }
+
+      .relation-cta a {
+        color: var(--accent);
+        border-bottom: 1px solid currentColor;
+      }
+
+      /* ── Credo ──────────────────────────────── */
+      .credo {
+        max-width: 720px;
+        margin: 6rem auto 4rem;
+        padding: 0 2rem;
+        text-align: center;
+      }
+
+      .credo-rule {
+        width: 40px;
+        height: 1px;
+        background: var(--accent);
+        margin: 0 auto 2.5rem;
+      }
+      .credo .credo-rule:last-child {
+        margin: 2.5rem auto 0;
+      }
+
+      .credo p {
+        font-family: var(--font-serif);
+        font-weight: 400;
+        font-size: clamp(1.4rem, 3.5vw, 2.25rem);
+        line-height: 1.5;
+        letter-spacing: -0.01em;
+        color: var(--ink);
+        font-optical-sizing: auto;
+      }
+
+      .credo p em {
+        font-style: italic;
+        color: var(--accent);
+        font-weight: 500;
+      }
+
+      /* ── Footer ─────────────────────────────── */
+      footer {
+        border-top: 1px solid var(--line);
+        max-width: 1080px;
+        margin: 4rem auto 0;
+        padding: 2.5rem 2rem 3rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        color: var(--ink-4);
+        letter-spacing: 0.02em;
+      }
+
+      .footer-links {
+        display: flex;
+        gap: 1.5rem;
+      }
+      .footer-links a:hover {
+        color: var(--ink-2);
+      }
+
+      /* ── Responsive ─────────────────────────── */
+      @media (max-width: 640px) {
+        header {
+          padding: 1.25rem 1.25rem;
+        }
+
+        .hero {
+          padding: 0 1.25rem;
+          margin-top: 2.5rem;
+        }
+
+        .section {
+          padding: 0 1.25rem;
+        }
+
+        .principle {
+          grid-template-columns: 1fr;
+          gap: 0.5rem;
+        }
+        .principle-marker {
+          padding-top: 0;
+        }
+
+        .relation-row {
+          grid-template-columns: 1fr;
+          gap: 0.75rem;
+        }
+
+        .relation-cta {
+          text-align: left;
+        }
+
+        footer {
+          flex-direction: column;
+          gap: 1rem;
+          text-align: center;
+          padding: 2rem 1.25rem;
+        }
+
+        .credo {
+          padding: 0 1.25rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <a href="/" class="brand" aria-label="Nesso home">
+        <svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true">
+          <line
+            x1="32"
+            y1="32"
+            x2="32"
+            y2="9"
+            stroke="currentColor"
+            stroke-width="3.5"
+            stroke-linecap="round"></line>
+          <line
+            x1="32"
+            y1="32"
+            x2="55"
+            y2="21"
+            stroke="currentColor"
+            stroke-width="3.5"
+            stroke-linecap="round"></line>
+          <line
+            x1="32"
+            y1="32"
+            x2="49"
+            y2="50"
+            stroke="currentColor"
+            stroke-width="3.5"
+            stroke-linecap="round"></line>
+          <line
+            x1="32"
+            y1="32"
+            x2="16"
+            y2="52"
+            stroke="currentColor"
+            stroke-width="3.5"
+            stroke-linecap="round"></line>
+          <line
+            x1="32"
+            y1="32"
+            x2="10"
+            y2="26"
+            stroke="currentColor"
+            stroke-width="3.5"
+            stroke-linecap="round"></line>
+          <circle cx="32" cy="9" r="5.5" fill="currentColor"></circle>
+          <circle cx="55" cy="21" r="5.5" fill="currentColor"></circle>
+          <circle cx="49" cy="50" r="5.5" fill="currentColor"></circle>
+          <circle cx="16" cy="52" r="5.5" fill="currentColor"></circle>
+          <circle cx="10" cy="26" r="5.5" fill="currentColor"></circle>
+          <circle cx="32" cy="32" r="8" fill="#b14a2e"></circle>
+        </svg>
+        <span class="brand-name">Nesso</span>
+      </a>
+      <nav class="header-nav">
+        <a href="/docs/guides/getting-started/">Docs</a>
+        <a href="https://github.com/cedoor/nesso" target="_blank" rel="noopener"
+          >GitHub</a
+        >
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <span class="hero-eyebrow">Active learning · open source</span>
+        <h1>
+          Understanding cannot be received.<br /><em>It has to be built.</em>
+        </h1>
+        <p class="hero-sub">
+          Most AI tools hand you knowledge pre-packaged. Nesso has you construct
+          a typed concept graph that reflects how you understand. A Socratic AI
+          then probes what you&rsquo;ve built. Questions, not summaries.
+        </p>
+        <div class="cta-row">
+          <a href="https://app.nesso.how" class="btn btn-primary" target="_blank" rel="noopener">
+            Open Nesso <span class="btn-arrow">→</span>
+          </a>
+          <a href="/docs/guides/getting-started/" class="btn btn-secondary"
+            >Read the docs</a
+          >
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-label">Principles</div>
+        <div class="principles">
+          <div class="principle">
+            <div class="principle-marker">
+              <span class="principle-dot" style="background: var(--cat-causal)"
+              ></span>
+              <span>01</span>
+            </div>
+            <div>
+              <h3>You build it. The AI doesn&rsquo;t.</h3>
+              <p>
+                Most tools hand you a finished map. Nesso has you draw your own,
+                edge by typed edge. Each connection is a claim you&rsquo;ve
+                decided to make, and deciding is where understanding actually
+                forms.
+              </p>
+            </div>
+          </div>
+
+          <div class="principle">
+            <div class="principle-marker">
+              <span
+                class="principle-dot"
+                style="background: var(--cat-taxonomic)"></span>
+              <span>02</span>
+            </div>
+            <div>
+              <h3>Socrates, not oracle</h3>
+              <p>
+                The AI mentor doesn&rsquo;t answer, it asks. Open a dialogue on
+                any node or edge and it probes what you&rsquo;ve drawn,
+                surfacing what you know and where the gaps still are.
+              </p>
+            </div>
+          </div>
+
+          <div class="principle">
+            <div class="principle-marker">
+              <span
+                class="principle-dot"
+                style="background: var(--cat-structural)"></span>
+              <span>03</span>
+            </div>
+            <div>
+              <h3>Algorithms work on your structure</h3>
+              <p>
+                Spaced repetition driven by what you&rsquo;ve connected. Weak or
+                untested links surfaced for review. Press <kbd>R</kbd> to start a
+                session built from your own graph, not a generic deck.
+              </p>
+            </div>
+          </div>
+
+          <div class="principle">
+            <div class="principle-marker">
+              <span
+                class="principle-dot"
+                style="background: var(--cat-temporal)"></span>
+              <span>04</span>
+            </div>
+            <div>
+              <h3>Private by architecture, not by policy</h3>
+              <p>
+                Your cognitive graph reveals how you reason. It stays local or
+                end-to-end encrypted by design, not by promise. Local-first AI
+                by default.
+              </p>
+            </div>
+          </div>
+
+          <div class="principle">
+            <div class="principle-marker">
+              <span
+                class="principle-dot"
+                style="background: var(--cat-similarity)"></span>
+              <span>05</span>
+            </div>
+            <div>
+              <h3>Open by design</h3>
+              <p>
+                Open source code, open standards, modular components. The work
+                Nesso produces should improve the open learning ecosystem, even
+                for people who never use the app itself.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-label">Edge vocabulary</div>
+        <p class="relation-intro">
+          An unlabeled arrow records a connection without forcing you to commit
+          to what kind. Novak&rsquo;s concept mapping research shows that
+          labeling each proposition, choosing between <em>causes</em> and <em
+            >enables</em
+          >, or <em>is-a</em> and
+          <em>instance-of</em>, is what activates the elaborative processing
+          that produces lasting understanding. The decision is the learning.
+        </p>
+        <div class="relation-table">
+          <div class="relation-row" style="--cat-color: var(--cat-taxonomic)">
+            <div class="relation-cat">
+              <span class="relation-cat-name">Taxonomic</span>
+              <span class="relation-cat-q">What kind of thing?</span>
+            </div>
+            <div class="relation-types">
+              <span class="relation-chip">is-a</span>
+              <span class="relation-chip">instance-of</span>
+              <span class="relation-chip">subtype-of</span>
+            </div>
+          </div>
+
+          <div class="relation-row" style="--cat-color: var(--cat-structural)">
+            <div class="relation-cat">
+              <span class="relation-cat-name">Structural</span>
+              <span class="relation-cat-q">What is it made of?</span>
+            </div>
+            <div class="relation-types">
+              <span class="relation-chip">part-of</span>
+              <span class="relation-chip">made-of</span>
+              <span class="relation-chip">contains</span>
+            </div>
+          </div>
+
+          <div class="relation-row" style="--cat-color: var(--cat-causal)">
+            <div class="relation-cat">
+              <span class="relation-cat-name">Causal</span>
+              <span class="relation-cat-q">What does it do?</span>
+            </div>
+            <div class="relation-types">
+              <span class="relation-chip">causes</span>
+              <span class="relation-chip">produces</span>
+              <span class="relation-chip">enables</span>
+              <span class="relation-chip">prevents</span>
+              <span class="relation-chip">triggers</span>
+              <span class="relation-chip">inhibits</span>
+            </div>
+          </div>
+
+          <div class="relation-row" style="--cat-color: var(--cat-dependency)">
+            <div class="relation-cat">
+              <span class="relation-cat-name">Dependency</span>
+              <span class="relation-cat-q">What does it need?</span>
+            </div>
+            <div class="relation-types">
+              <span class="relation-chip">requires</span>
+              <span class="relation-chip">uses</span>
+              <span class="relation-chip">used-for</span>
+            </div>
+          </div>
+
+          <div class="relation-row" style="--cat-color: var(--cat-temporal)">
+            <div class="relation-cat">
+              <span class="relation-cat-name">Temporal</span>
+              <span class="relation-cat-q">When? Where?</span>
+            </div>
+            <div class="relation-types">
+              <span class="relation-chip">precedes</span>
+              <span class="relation-chip">occurs-in</span>
+            </div>
+          </div>
+
+          <div class="relation-row" style="--cat-color: var(--cat-opposition)">
+            <div class="relation-cat">
+              <span class="relation-cat-name">Opposition</span>
+              <span class="relation-cat-q">What does it contrast with?</span>
+            </div>
+            <div class="relation-types">
+              <span class="relation-chip">contrasts-with</span>
+              <span class="relation-chip">opposite-of</span>
+            </div>
+          </div>
+
+          <div class="relation-row" style="--cat-color: var(--cat-similarity)">
+            <div class="relation-cat">
+              <span class="relation-cat-name">Similarity</span>
+              <span class="relation-cat-q">What is it like?</span>
+            </div>
+            <div class="relation-types">
+              <span class="relation-chip">similar-to</span>
+              <span class="relation-chip">analogous-to</span>
+            </div>
+          </div>
+        </div>
+        <p class="relation-cta">
+          <a href="/docs/reference/edge-types/">Full edge type reference →</a>
+        </p>
+      </section>
+
+      <section class="credo">
+        <div class="credo-rule"></div>
+        <p>
+          The user <em>at the center</em>.<br />
+          The code <em>open</em>.<br />
+          The knowledge <em>yours</em>.
+        </p>
+        <div class="credo-rule"></div>
+      </section>
+    </main>
+
+    <footer>
+      <span>© 2026 Nesso &nbsp;·&nbsp; MIT License</span>
+      <div class="footer-links">
+        <a href="/docs/guides/getting-started/">Docs</a>
+        <a href="https://github.com/cedoor/nesso" target="_blank" rel="noopener"
+          >GitHub</a
+        >
+        <a href="https://app.nesso.how" target="_blank" rel="noopener">App</a>
+      </div>
+    </footer>
+
+    <script>
+      (function () {
+        const h1 = document.querySelector<HTMLHeadingElement>(".hero h1");
+        if (!h1) return;
+        const heading = h1;
+
+        const SPEED = 30;
+        const PAUSE = 420;
+        type Item = { br?: true; em?: boolean; c?: string };
+        const seq: Item[] = [];
+        for (const c of "Understanding cannot be received.")
+          seq.push({ em: false, c });
+        seq.push({ br: true });
+        for (const c of "It has to be built.") seq.push({ em: true, c });
+
+        const cursor = document.createElement("span");
+        cursor.className = "tw-cursor";
+
+        let plain: Text | null = null;
+        let emEl: HTMLElement | null = null;
+        h1.textContent = "";
+        h1.appendChild(cursor);
+
+        let i = 0;
+        function tick() {
+          if (i >= seq.length) {
+            setTimeout(() => cursor.remove(), 500);
+            return;
+          }
+          const item = seq[i++];
+          if (item.br) {
+            heading.insertBefore(document.createElement("br"), cursor);
+            plain = null;
+            emEl = null;
+            setTimeout(tick, PAUSE);
+            return;
+          } else if (!item.em) {
+            if (!plain) {
+              plain = document.createTextNode("");
+              heading.insertBefore(plain, cursor);
+            }
+            plain.textContent += item.c;
+          } else {
+            if (!emEl) {
+              emEl = document.createElement("em");
+              emEl.style.color = "#b14a2e";
+              heading.insertBefore(emEl, cursor);
+            }
+            emEl.textContent += item.c;
+          }
+          setTimeout(tick, SPEED);
+        }
+        tick();
+      })();
+    </script>
+  </body>
+</html>
