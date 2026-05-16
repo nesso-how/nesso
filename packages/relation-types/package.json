@@ -4,6 +4,9 @@
   "description": "Nesso semantic relation type definitions — shared across app and MCP",
   "license": "MIT",
   "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",

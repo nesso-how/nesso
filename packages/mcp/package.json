@@ -4,6 +4,9 @@
   "description": "MCP server exposing Nesso knowledge graph tools to LLM clients",
   "license": "MIT",
   "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
   "main": "dist/index.js",
   "bin": {
     "nesso-mcp": "dist/index.js"

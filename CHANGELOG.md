@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Changed
+
+- **Workspace packages:** **`@nesso-how/relation-types`** and **`@nesso-how/mcp`** declare **`publishConfig.access: public`** so `npm publish` targets the **public** registry for scoped packages (otherwise npm defaults scoped packages to **restricted / private**).
+
 ### Added
 
 - **Docs (landing):** Marketing homepage shows release tag (**`vx.y.z…`**) linking to GitHub Releases for that tag (`package.json` version).
