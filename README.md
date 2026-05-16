@@ -80,7 +80,6 @@ Each relation has a line style (solid, dashed, dotted, double, wavy) and an SVG 
 
 ### Graph canvas
 
-- [x] Image export — export the current graph canvas as a PNG for notes, presentations, or documentation
 - [ ] Parallel-edge handling — one edge per directed pair, or offset overlapping arcs when source/target coincide
 
 ### AI mentor
@@ -103,7 +102,6 @@ Each relation has a line style (solid, dashed, dotted, double, wavy) and an SVG 
 ### Platform & infrastructure
 
 - [ ] Tauri auto-updates — signing and `latest.json` delivery via GitHub Releases _(pending public repo)_
-- [x] Web deployment — hosted on Vercel
 
 ### Modularisation & plugins
 
