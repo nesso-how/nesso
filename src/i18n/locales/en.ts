@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MIT
 // English locale — source of truth. All other locales must satisfy `typeof en`.
+import type { EdgeCategory, EdgeTypeName } from '@/types/graph'
+
 const en = {
   settings: {
     title: 'Settings',
@@ -204,7 +206,7 @@ const en = {
       temporal:   { label: 'Temporal',   subtitle: 'When? Where?' },
       opposition: { label: 'Opposition', subtitle: 'What does it contrast with?' },
       similarity: { label: 'Similarity', subtitle: 'What is it like?' },
-    },
+    } satisfies Record<EdgeCategory, { label: string; subtitle: string }>,
     types: {
       'is-a':           'is a',
       'instance-of':    'instance of',
@@ -227,7 +229,7 @@ const en = {
       'used-for':       'used for',
       'similar-to':     'similar to',
       'analogous-to':   'analogous to',
-    },
+    } satisfies Record<EdgeTypeName, string>,
     newRelation: 'New relation',
     symmetric: 'symmetric',
     dialogTitle: 'Relation types',

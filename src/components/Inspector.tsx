@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 import { useState, useEffect, useLayoutEffect, useRef, type FormEvent, type ReactNode, type MouseEvent as ReactMouseEvent } from 'react'
-import { RELATION_TYPES, RELATION_CATEGORIES } from '@/data/relationTypes'
+import { RELATION_TYPES, RELATION_CATEGORIES, RELATION_TYPE_VALUES, asEdgeTypeName } from '@/data/relationTypes'
 import { GlyphSVG } from './GlyphSVG'
 import { CloseButton } from './CloseButton'
 import { TOPBAR_HEIGHT_PX } from './TopBar'
 import { useGraphStore, selectedNodeSelector, selectedEdgeSelector } from '@/store/graph'
-import type { ConceptElaboration, EdgeTypeName } from '@/types/graph'
+import type { ConceptElaboration } from '@/types/graph'
 import { useT } from '@/i18n'
 import { INSPECTOR_WIDTH_STORAGE_KEY } from '@/data/storageKeys'
 
@@ -933,13 +933,14 @@ function NodeInspector({
             {relationsOpen && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 {outgoing.map(e => {
-                  const T = RELATION_TYPES[e.data?.type as EdgeTypeName]
+                  const relationId = asEdgeTypeName(e.data?.type)
+                  const T = RELATION_TYPES[relationId]
                   const C = RELATION_CATEGORIES[T.cat]
                   const target = nodes.find(n => n.id === e.target)
                   return (
                     <EdgeRow
                       key={e.id}
-                      label={t.relationTypes.types[e.data?.type as EdgeTypeName]}
+                      label={t.relationTypes.types[relationId]}
                       text={target?.data.text ?? ''}
                       color={C.color}
                       glyph={T.glyph}
@@ -948,13 +949,14 @@ function NodeInspector({
                   )
                 })}
                 {incoming.map(e => {
-                  const T = RELATION_TYPES[e.data?.type as EdgeTypeName]
+                  const relationId = asEdgeTypeName(e.data?.type)
+                  const T = RELATION_TYPES[relationId]
                   const C = RELATION_CATEGORIES[T.cat]
                   const source = nodes.find(n => n.id === e.source)
                   return (
                     <EdgeRow
                       key={e.id}
-                      label={`← ${t.relationTypes.types[e.data?.type as EdgeTypeName]}`}
+                      label={`← ${t.relationTypes.types[relationId]}`}
                       text={source?.data.text ?? ''}
                       color={C.color}
                       glyph={T.glyph}
@@ -1005,12 +1007,12 @@ function EdgeInspector({
   const t = useT()
   const edge = useGraphStore(selectedEdgeSelector)!
   const { nodes, updateEdgeType, deleteEdge } = useGraphStore()
-  const edgeType = edge.data?.type as EdgeTypeName
+  const edgeType = asEdgeTypeName(edge.data?.type)
   const T = RELATION_TYPES[edgeType]
   const C = RELATION_CATEGORIES[T.cat]
   const from = nodes.find(n => n.id === edge.source)
   const to = nodes.find(n => n.id === edge.target)
-  const siblings = Object.entries(RELATION_TYPES).filter(([, edgeDef]) => edgeDef.cat === T.cat) as [EdgeTypeName, typeof T][]
+  const siblings = RELATION_TYPE_VALUES.filter(id => RELATION_TYPES[id].cat === T.cat)
 
   return (
     <InspectorPanel
@@ -1054,7 +1056,7 @@ function EdgeInspector({
         {t.inspector.sharpen}
       </h5>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-        {siblings.map(([k]) => (
+        {siblings.map((k) => (
           <button
             key={k}
             onClick={() => updateEdgeType(edge.id, k)}
