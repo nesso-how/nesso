@@ -103,7 +103,7 @@ Each relation has a line style (solid, dashed, dotted, double, wavy) and an SVG 
 ### Platform & infrastructure
 
 - [ ] Tauri auto-updates — signing and `latest.json` delivery via GitHub Releases _(pending public repo)_
-- [ ] GH Pages deployment _(pending public repo)_
+- [x] Web deployment — hosted on Vercel
 
 ### Modularisation & plugins
 
