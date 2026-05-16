@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 import { useState, useRef, useEffect } from 'react'
 import { useGraphStore } from '@/store/graph'
-import type { Node as FlowNode, Edge } from '@xyflow/react'
+import { getNodesBounds, getViewportForBounds, type Node as FlowNode, type Edge } from '@xyflow/react'
+import { toPng } from 'html-to-image'
 import type { ConceptNodeData } from '@/types/graph'
 import { useT } from '@/i18n'
 
@@ -43,6 +44,48 @@ export function GraphIO({ onRelationTypes, onShortcuts }: Props) {
     a.click()
     URL.revokeObjectURL(url)
     setOpen(false)
+  }
+
+  const handleExportPng = async () => {
+    setOpen(false)
+    const viewport = document.querySelector<HTMLElement>('.react-flow__viewport')
+    if (!viewport || nodes.length === 0) return
+    const meta = graphList.find(g => g.id === currentGraphId)
+    const name = meta?.name ?? 'graph'
+
+    const padding = 64
+    const imageWidth = 1920
+    const imageHeight = 1200
+    const bounds = getNodesBounds(nodes)
+    const fitted = getViewportForBounds(bounds, imageWidth - padding * 2, imageHeight - padding * 2, 0.15, 2.5, 0)
+    const tx = fitted.x + padding
+    const ty = fitted.y + padding
+    const bg = getComputedStyle(document.documentElement).getPropertyValue('--paper').trim() || '#ffffff'
+
+    try {
+      const dataUrl = await toPng(viewport, {
+        backgroundColor: bg,
+        width: imageWidth,
+        height: imageHeight,
+        pixelRatio: 2,
+        style: {
+          width: `${imageWidth}px`,
+          height: `${imageHeight}px`,
+          transform: `translate(${tx}px, ${ty}px) scale(${fitted.zoom})`,
+        },
+        filter: (el) => {
+          // React Flow draws handles/selection chrome that don't belong in an export.
+          if (!(el instanceof Element)) return true
+          if (el.classList.contains('react-flow__handle')) return false
+          if (el.classList.contains('react-flow__edge-handle')) return false
+          return true
+        },
+      })
+      const a = document.createElement('a')
+      a.href = dataUrl
+      a.download = `${name}.png`
+      a.click()
+    } catch {}
   }
 
   const handleImport = () => {
@@ -124,6 +167,17 @@ export function GraphIO({ onRelationTypes, onShortcuts }: Props) {
               </svg>
             }
             label={t.graphIO.exportGraph}
+          />
+          <MenuItem
+            onClick={handleExportPng}
+            icon={
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="3" width="12" height="10" rx="1.5" />
+                <circle cx="5.5" cy="6.5" r="1" />
+                <path d="M2.5 12l3-3 2.5 2.5L11 8.5l2.5 2.5" />
+              </svg>
+            }
+            label={t.graphIO.exportPng}
           />
           <MenuItem
             onClick={handleImport}

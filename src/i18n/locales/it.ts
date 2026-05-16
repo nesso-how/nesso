@@ -176,13 +176,10 @@ const it: typeof en = {
   graphIO: {
     moreOptions: 'Esporta · Importa · Scorciatoie',
     relationTypes: 'Tipi di relazione',
-    relationTypesSub: '21 tipi · 7 categorie',
     exportGraph: 'Esporta grafo',
-    exportSub: 'Salva come .json',
+    exportPng: 'Esporta grafo (png)',
     importGraph: 'Importa grafo',
-    importSub: 'Apri un file .json',
     keyboardShortcuts: 'Scorciatoie da tastiera',
-    shortcutsSub: 'Premi ? in qualsiasi momento',
   },
   bottomDock: {
     addConcept: '+ concetto',

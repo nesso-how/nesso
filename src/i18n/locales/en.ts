@@ -176,13 +176,10 @@ const en = {
   graphIO: {
     moreOptions: 'Export · Import · Shortcuts',
     relationTypes: 'Relation types',
-    relationTypesSub: '21 types · 7 categories',
     exportGraph: 'Export graph',
-    exportSub: 'Save as .json',
+    exportPng: 'Export graph (.png)',
     importGraph: 'Import graph',
-    importSub: 'Open a .json file',
     keyboardShortcuts: 'Keyboard shortcuts',
-    shortcutsSub: 'Press ? anytime',
   },
   bottomDock: {
     addConcept: '+ concept',

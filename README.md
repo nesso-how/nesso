@@ -80,7 +80,7 @@ Each relation has a line style (solid, dashed, dotted, double, wavy) and an SVG 
 
 ### Graph canvas
 
-- [ ] Image export — export the current graph canvas as a shareable image for notes, presentations, or documentation
+- [x] Image export — export the current graph canvas as a PNG for notes, presentations, or documentation
 - [ ] Parallel-edge handling — one edge per directed pair, or offset overlapping arcs when source/target coincide
 
 ### AI mentor

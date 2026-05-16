@@ -18,9 +18,10 @@
     "build:desktop": "tauri build"
   },
   "dependencies": {
-    "@nesso-how/relation-types": "workspace:*",
     "@mlc-ai/web-llm": "^0.2.83",
+    "@nesso-how/relation-types": "workspace:*",
     "@xyflow/react": "^12.6.4",
+    "html-to-image": "^1.11.13",
     "idb": "^8.0.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- **Canvas:** PNG export from the **Graph menu → Export as PNG** — captures the full graph (auto-fit bounds, current theme background, hides handles) and downloads `<graph-name>.png`.
+
 ## [0.1.0-alpha.17] - 2026-05-16
 
 ### Fixed
