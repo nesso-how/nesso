@@ -17,7 +17,10 @@
 
 </div>
 
-![Nesso canvas](docs/public/screenshot.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/public/hero-graph-dark.svg">
+  <img src="docs/public/hero-graph.svg" alt="Concept graph: Understanding and its relations" width="800">
+</picture>
 
 ## What it does
 
@@ -62,10 +65,10 @@ See **[nesso.how](https://nesso.how)** for installation, usage guides, MCP integ
 
 ## Packages
 
-| Package                                                                                  | Purpose                                                                  |
-| ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| [`@nesso-how/relation-types`](https://www.npmjs.com/package/@nesso-how/relation-types)   | Shared semantic relation vocabulary and TypeScript types                 |
-| [`@nesso-how/mcp`](https://www.npmjs.com/package/@nesso-how/mcp)                         | MCP server exposing Nesso's relation vocabulary and docs to LLM clients  |
+| Package                                                                                | Purpose                                                                 |
+| -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| [`@nesso-how/relation-types`](https://www.npmjs.com/package/@nesso-how/relation-types) | Shared semantic relation vocabulary and TypeScript types                |
+| [`@nesso-how/mcp`](https://www.npmjs.com/package/@nesso-how/mcp)                       | MCP server exposing Nesso's relation vocabulary and docs to LLM clients |
 
 ## Roadmap & contributing
 

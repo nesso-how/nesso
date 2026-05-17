@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 440" role="img" aria-label="Concept graph: Understanding and its relations">
+  <style>
+    .nt  { font-family: Georgia, serif; font-weight: 500; font-size: 17px; fill: #e8e3db; text-anchor: middle; }
+    .nts { font-family: Georgia, serif; font-weight: 500; font-size: 15px; fill: #e8e3db; text-anchor: middle; }
+    .nu  { stroke: #e8e3db; stroke-width: 0.8; opacity: 0.55; fill: none; }
+    .nuh { stroke: #c9614a; stroke-width: 1.2; opacity: 0.8;  fill: none; }
+    .el  { font-family: Menlo, "Courier New", monospace; font-size: 9.5px; font-weight: 500; letter-spacing: 0.02em; text-anchor: middle; }
+  </style>
+
+  <!-- E1: produces (causal, solid arrow) -->
+  <line x1="400" y1="190" x2="400" y2="92" stroke="#c9614a" stroke-width="1.6" stroke-linecap="round" opacity="0.9"/>
+  <polygon points="400,92 403.1,98.3 396.9,98.3" fill="#c9614a" opacity="0.9"/>
+
+  <!-- E2: is-a (taxonomic, solid arrow) -->
+  <line x1="447" y1="202" x2="601" y2="145" stroke="#4d7db8" stroke-width="1.6" stroke-linecap="round" opacity="0.9"/>
+  <polygon points="601,145 595.9,149.8 593.7,144.1" fill="#4d7db8" opacity="0.9"/>
+
+  <!-- E3: requires (dependency, solid arrow) -->
+  <line x1="439" y1="251" x2="570" y2="356" stroke="#b08a2a" stroke-width="1.6" stroke-linecap="round" opacity="0.9"/>
+  <polygon points="570,356 563.5,354.7 567.2,350.0" fill="#b08a2a" opacity="0.9"/>
+
+  <!-- E4: contrasts-with (opposition, dashed) -->
+  <line x1="358" y1="248" x2="196" y2="351" stroke="#b84e6a" stroke-width="1.92" stroke-linecap="round" stroke-dasharray="1 4"/>
+
+  <!-- E5: occurs-in (temporal, dotted arrow) -->
+  <line x1="353" y1="204" x2="159" y2="140" stroke="#3d8a70" stroke-width="2.24" stroke-linecap="round" stroke-dasharray="0.1 5" opacity="0.9"/>
+  <polygon points="159,140 165.4,138.6 163.5,144.4" fill="#3d8a70" opacity="0.9"/>
+
+  <!-- chip E1: produces -->
+  <circle cx="400" cy="141" r="11" fill="#1e1c19" stroke="#c9614a" stroke-width="1.2"/>
+  <g transform="translate(393,134)" stroke="#c9614a" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M7 2v10M3 4l8 6M3 10l8-6"/>
+  </g>
+  <rect x="372" y="156" width="56" height="14" rx="3" fill="#1e1c19" stroke="rgba(201,97,74,0.35)" stroke-width="0.5"/>
+  <text class="el" fill="#c9614a" x="400" y="166">produces</text>
+
+  <!-- chip E2: is a -->
+  <circle cx="524" cy="173" r="11" fill="#1e1c19" stroke="#4d7db8" stroke-width="1.2"/>
+  <polygon points="524,168 528,178 520,178" fill="#4d7db8"/>
+  <rect x="506" y="188" width="36" height="14" rx="3" fill="#1e1c19" stroke="rgba(77,125,184,0.35)" stroke-width="0.5"/>
+  <text class="el" fill="#4d7db8" x="524" y="198">is a</text>
+
+  <!-- chip E3: requires -->
+  <circle cx="505" cy="304" r="11" fill="#1e1c19" stroke="#b08a2a" stroke-width="1.2"/>
+  <g transform="translate(498,297)" stroke="#b08a2a" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <circle cx="7" cy="4" r="1.5"/>
+    <path d="M7 5.5v6.5M3 9c0 2 2 3 4 3s4-1 4-3M4.5 8.5h5"/>
+  </g>
+  <rect x="477" y="319" width="56" height="14" rx="3" fill="#1e1c19" stroke="rgba(176,138,42,0.35)" stroke-width="0.5"/>
+  <text class="el" fill="#b08a2a" x="505" y="329">requires</text>
+
+  <!-- chip E4: contrasts with -->
+  <circle cx="277" cy="299" r="11" fill="#1e1c19" stroke="#b84e6a" stroke-width="1.2"/>
+  <g transform="translate(270,292)" stroke="#b84e6a" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M2 8 Q4 5 7 7 T12 6"/>
+  </g>
+  <rect x="237" y="314" width="80" height="14" rx="3" fill="#1e1c19" stroke="rgba(184,78,106,0.35)" stroke-width="0.5"/>
+  <text class="el" fill="#b84e6a" x="277" y="324">contrasts with</text>
+
+  <!-- chip E5: occurs in -->
+  <circle cx="256" cy="172" r="11" fill="#1e1c19" stroke="#3d8a70" stroke-width="1.2"/>
+  <g transform="translate(249,165)" stroke="#3d8a70" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <circle cx="7" cy="7" r="4.5"/>
+  </g>
+  <rect x="228" y="187" width="56" height="14" rx="3" fill="#1e1c19" stroke="rgba(61,138,112,0.35)" stroke-width="0.5"/>
+  <text class="el" fill="#3d8a70" x="256" y="197">occurs in</text>
+
+  <!-- node: Mastery -->
+  <text class="nts" x="400" y="64">Mastery</text>
+  <line class="nu" x1="375" y1="73" x2="425" y2="73"/>
+
+  <!-- node: Knowledge -->
+  <text class="nts" x="640" y="134">Knowledge</text>
+  <line class="nu" x1="608" y1="143" x2="672" y2="143"/>
+
+  <!-- node: Inquiry -->
+  <text class="nts" x="600" y="384">Inquiry</text>
+  <line class="nu" x1="578" y1="393" x2="622" y2="393"/>
+
+  <!-- node: Memorization -->
+  <text class="nts" x="150" y="384">Memorization</text>
+  <line class="nu" x1="103" y1="393" x2="197" y2="393"/>
+
+  <!-- node: Mind -->
+  <text class="nts" x="130" y="134">Mind</text>
+  <line class="nu" x1="113" y1="143" x2="147" y2="143"/>
+
+  <!-- hub node: Understanding -->
+  <text class="nt" x="400" y="227">Understanding</text>
+  <line class="nuh" x1="345" y1="238" x2="455" y2="238"/>
+</svg>

@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Changed
+
+- **README:** Hero concept-graph illustration is shared with the marketing homepage (`docs/public/hero-graph.svg`) instead of a separate screenshot.
+
 ### Added
 
 - **Canvas:** PNG export from the **Graph menu → Export as PNG** — captures the full graph (auto-fit bounds, current theme background, hides handles) and downloads `<graph-name>.png`.
