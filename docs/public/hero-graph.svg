@@ -28,42 +28,42 @@
   <polygon points="159,140 165.4,138.6 163.5,144.4" fill="#2d6a55" opacity="0.85"/>
 
   <!-- chip E1: produces -->
-  <circle cx="400" cy="141" r="11" fill="#f6f2ea" stroke="#b14a2e" stroke-width="1.2"/>
+  <circle cx="400" cy="141" r="11" fill="#ffffff" stroke="#b14a2e" stroke-width="1.2"/>
   <g transform="translate(393,134)" stroke="#b14a2e" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" fill="none">
     <path d="M7 2v10M3 4l8 6M3 10l8-6"/>
   </g>
-  <rect x="372" y="156" width="56" height="14" rx="3" fill="#f6f2ea" stroke="rgba(177,74,46,0.30)" stroke-width="0.5"/>
+  <rect x="372" y="156" width="56" height="14" rx="3" fill="#ffffff" stroke="rgba(177,74,46,0.30)" stroke-width="0.5"/>
   <text class="el" fill="#b14a2e" x="400" y="166">produces</text>
 
   <!-- chip E2: is a -->
-  <circle cx="524" cy="173" r="11" fill="#f6f2ea" stroke="#2f5d8e" stroke-width="1.2"/>
+  <circle cx="524" cy="173" r="11" fill="#ffffff" stroke="#2f5d8e" stroke-width="1.2"/>
   <polygon points="524,168 528,178 520,178" fill="#2f5d8e"/>
-  <rect x="506" y="188" width="36" height="14" rx="3" fill="#f6f2ea" stroke="rgba(47,93,142,0.30)" stroke-width="0.5"/>
+  <rect x="506" y="188" width="36" height="14" rx="3" fill="#ffffff" stroke="rgba(47,93,142,0.30)" stroke-width="0.5"/>
   <text class="el" fill="#2f5d8e" x="524" y="198">is a</text>
 
   <!-- chip E3: requires -->
-  <circle cx="505" cy="304" r="11" fill="#f6f2ea" stroke="#8a6a1a" stroke-width="1.2"/>
+  <circle cx="505" cy="304" r="11" fill="#ffffff" stroke="#8a6a1a" stroke-width="1.2"/>
   <g transform="translate(498,297)" stroke="#8a6a1a" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" fill="none">
     <circle cx="7" cy="4" r="1.5"/>
     <path d="M7 5.5v6.5M3 9c0 2 2 3 4 3s4-1 4-3M4.5 8.5h5"/>
   </g>
-  <rect x="477" y="319" width="56" height="14" rx="3" fill="#f6f2ea" stroke="rgba(138,106,26,0.30)" stroke-width="0.5"/>
+  <rect x="477" y="319" width="56" height="14" rx="3" fill="#ffffff" stroke="rgba(138,106,26,0.30)" stroke-width="0.5"/>
   <text class="el" fill="#8a6a1a" x="505" y="329">requires</text>
 
   <!-- chip E4: contrasts with -->
-  <circle cx="277" cy="299" r="11" fill="#f6f2ea" stroke="#8a2e4a" stroke-width="1.2"/>
+  <circle cx="277" cy="299" r="11" fill="#ffffff" stroke="#8a2e4a" stroke-width="1.2"/>
   <g transform="translate(270,292)" stroke="#8a2e4a" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" fill="none">
     <path d="M2 8 Q4 5 7 7 T12 6"/>
   </g>
-  <rect x="237" y="314" width="80" height="14" rx="3" fill="#f6f2ea" stroke="rgba(138,46,74,0.30)" stroke-width="0.5"/>
+  <rect x="237" y="314" width="80" height="14" rx="3" fill="#ffffff" stroke="rgba(138,46,74,0.30)" stroke-width="0.5"/>
   <text class="el" fill="#8a2e4a" x="277" y="324">contrasts with</text>
 
   <!-- chip E5: occurs in -->
-  <circle cx="256" cy="172" r="11" fill="#f6f2ea" stroke="#2d6a55" stroke-width="1.2"/>
+  <circle cx="256" cy="172" r="11" fill="#ffffff" stroke="#2d6a55" stroke-width="1.2"/>
   <g transform="translate(249,165)" stroke="#2d6a55" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" fill="none">
     <circle cx="7" cy="7" r="4.5"/>
   </g>
-  <rect x="228" y="187" width="56" height="14" rx="3" fill="#f6f2ea" stroke="rgba(45,106,85,0.30)" stroke-width="0.5"/>
+  <rect x="228" y="187" width="56" height="14" rx="3" fill="#ffffff" stroke="rgba(45,106,85,0.30)" stroke-width="0.5"/>
   <text class="el" fill="#2d6a55" x="256" y="197">occurs in</text>
 
   <!-- node: Mastery -->
