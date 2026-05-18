@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Fixed
+
+- **Docs (landing):** Emphasis marked with `<em>` in translations (`set:html`) gets the accent colour again; scoped Astro CSS no longer requires compiler-generated `<em>` nodes for that rule.
+
 ### Changed
 
 - **Docs (landing):** Below the credo lines (“The user…”), the divider stays tight under the quote; the final CTAs sit in a short band below so they stay vertically centred in that space.
