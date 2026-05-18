@@ -962,8 +962,17 @@ const releaseUrl = `https://github.com/cedoor/nesso/releases/tag/${RELEASE_TAG}`
         background: var(--accent);
         margin: 0 auto 2.5rem;
       }
-      .credo .credo-rule:last-of-type {
+
+      .credo > p + .credo-rule {
         margin: 2.5rem auto 0;
+      }
+
+      .credo-tail {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin-top: 2.5rem;
       }
 
       .credo p {
@@ -983,7 +992,6 @@ const releaseUrl = `https://github.com/cedoor/nesso/releases/tag/${RELEASE_TAG}`
       }
 
       .credo-cta {
-        margin-top: 2.5rem;
         display: flex;
         gap: 0.75rem;
         justify-content: center;
@@ -1074,6 +1082,11 @@ const releaseUrl = `https://github.com/cedoor/nesso/releases/tag/${RELEASE_TAG}`
         .credo {
           padding: 0 1.25rem;
           margin-top: 5rem;
+        }
+
+        .credo-tail {
+          min-height: clamp(9rem, 28vh, 22rem);
+          margin-top: 2rem;
         }
       }
 
@@ -2076,21 +2089,23 @@ const releaseUrl = `https://github.com/cedoor/nesso/releases/tag/${RELEASE_TAG}`
           The knowledge <em>yours</em>.
         </p>
         <div class="credo-rule"></div>
-        <div class="credo-cta">
-          <a
-            href="https://app.nesso.how"
-            class="btn btn-primary"
-            target="_blank"
-            rel="noopener"
-          >
-            Open Nesso <span class="btn-arrow">→</span>
-          </a>
-          <a
-            href="https://github.com/cedoor/nesso"
-            class="btn btn-secondary"
-            target="_blank"
-            rel="noopener">Star on GitHub</a
-          >
+        <div class="credo-tail">
+          <div class="credo-cta">
+            <a
+              href="https://app.nesso.how"
+              class="btn btn-primary"
+              target="_blank"
+              rel="noopener"
+            >
+              Open Nesso <span class="btn-arrow">→</span>
+            </a>
+            <a
+              href="https://github.com/cedoor/nesso"
+              class="btn btn-secondary"
+              target="_blank"
+              rel="noopener">Star on GitHub</a
+            >
+          </div>
         </div>
       </section>
     </main>
