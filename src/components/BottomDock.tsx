@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 import { useT } from '@/i18n'
+import { focusFlowNodes } from '@/lib/focusFlowSelection'
 import { useGraphStore } from '@/store/graph'
 
 interface Props {
@@ -14,11 +15,15 @@ interface Props {
 
 export function BottomDock({ onFit, onUndo, onRedo, canUndo, canRedo, onAddConcept, sidebarWidth = 0 }: Props) {
   const t = useT()
-  const { selected, selectedIds, deleteSelection } = useGraphStore()
-  const canDelete =
+  const { edges, selected, selectedIds, deleteSelection, copySelection, pasteSelection, pasteAvailable } =
+    useGraphStore()
+  const hasEdgeSelection = edges.some(e => e.selected)
+  const canCopy =
     selected?.kind === 'edge'
-    || selectedIds.length > 0
     || selected?.kind === 'node'
+    || selectedIds.length > 0
+    || hasEdgeSelection
+  const canDelete = canCopy
   return (
     <div style={{
       position: 'absolute',
@@ -49,6 +54,36 @@ export function BottomDock({ onFit, onUndo, onRedo, canUndo, canRedo, onAddConce
 
       <Sep />
 
+      {/* Edit group: copy · paste · delete */}
+      <DockBtn onClick={copySelection} title={t.bottomDock.copyTitle} disabled={!canCopy}>
+        {/* two overlapping rects: back rect (3 sides), front rect — spans x:2–14, y:3–13 */}
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="6" y="5" width="8" height="8" rx="1" />
+          <path d="M11 5V4a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h2" />
+        </svg>
+      </DockBtn>
+      <DockBtn
+        onClick={() => {
+          const ids = pasteSelection()
+          if (ids?.length) focusFlowNodes(ids)
+        }}
+        title={t.bottomDock.pasteTitle}
+        disabled={!pasteAvailable}
+      >
+        {/* clipboard: wide body + rounded tab — spans x:3–13, y:3–14 */}
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="5" width="10" height="9" rx="1" />
+          <path d="M6 5V4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1" />
+        </svg>
+      </DockBtn>
+      <DockBtn onClick={deleteSelection} title={t.bottomDock.deleteTitle} disabled={!canDelete}>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5M3 4l1 9a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1l1-9" />
+        </svg>
+      </DockBtn>
+
+      <Sep />
+
       <DockBtn onClick={onFit} title={t.bottomDock.fitTitle}>
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
           <path d="M3 6V3h3M13 6V3h-3M3 10v3h3M13 10v3h-3" />
@@ -57,20 +92,7 @@ export function BottomDock({ onFit, onUndo, onRedo, canUndo, canRedo, onAddConce
 
       <Sep />
 
-      <DockBtn
-        onClick={deleteSelection}
-        title={t.bottomDock.deleteTitle}
-        disabled={!canDelete}
-      >
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5M3 4l1 9a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1l1-9" />
-        </svg>
-      </DockBtn>
-
-      <DockBtn
-        onClick={onAddConcept}
-        title={t.bottomDock.addConceptTitle}
-      >
+      <DockBtn onClick={onAddConcept} title={t.bottomDock.addConceptTitle}>
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
           <path d="M8 2v12M2 8h12" />
         </svg>

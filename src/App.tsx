@@ -28,6 +28,7 @@ import { useAutoSave } from './hooks/useAutoSave'
 import { PALETTES } from './data/palettes'
 import { findNewConceptPosition, NEW_CONCEPT_SIZE } from './data/newConceptLayout'
 import { initWebLLM, localModelWeightsCached } from './llm/webllm'
+import { focusFlowNodes } from './lib/focusFlowSelection'
 
 function AppInner() {
   const [showReview, setShowReview] = useState(false)
@@ -44,6 +45,10 @@ function AppInner() {
     setSelected,
     undo,
     redo,
+    copySelection,
+    pasteSelection,
+    deleteSelection,
+    requestEditNode,
     loadGraph,
     loadGraphList,
     currentGraphId,
@@ -251,6 +256,37 @@ function AppInner() {
         redo()
         return
       }
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        e.preventDefault()
+        deleteSelection()
+        return
+      }
+      if (e.key === 'c' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault()
+        copySelection()
+        return
+      }
+      if (e.key === 'v' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault()
+        const ids = pasteSelection()
+        if (ids?.length) focusFlowNodes(ids)
+        return
+      }
+      if (
+        !showReview
+        && e.key === 'Enter'
+        && !e.metaKey
+        && !e.ctrlKey
+        && !e.altKey
+        && !e.shiftKey
+      ) {
+        const sel = useGraphStore.getState().selected
+        if (sel?.kind === 'node') {
+          e.preventDefault()
+          requestEditNode(sel.id)
+          return
+        }
+      }
       if (e.key === 'r' && !e.metaKey && !e.ctrlKey) { setShowReview(true); return }
       if (e.key.toLowerCase() === 'n' && !e.metaKey && !e.ctrlKey && !e.altKey && !showReview) {
         handleAddConcept()
@@ -260,7 +296,7 @@ function AppInner() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [undo, redo, handleAddConcept, showReview])
+  }, [undo, redo, copySelection, pasteSelection, deleteSelection, requestEditNode, handleAddConcept, showReview])
 
   return (
     <div style={{ position: 'fixed', inset: 0 }}>

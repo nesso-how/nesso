@@ -55,7 +55,7 @@ export function GraphCanvas({
   const {
     nodes, edges,
     onNodesChange, onEdgesChange,
-    addEdge, addNode, setSelected, setSelectedIds,
+    addEdge, addNode, syncFlowSelection,
     viewports, currentGraphId,
   } = useGraphStore()
 
@@ -64,6 +64,7 @@ export function GraphCanvas({
 
   const [pendingConn, setPendingConn] = useState<PendingConnection | null>(null)
   const connectingSource = useRef<string | null>(null)
+  const selectionSyncFrame = useRef<number | null>(null)
 
   const onConnectStart = useCallback<OnConnectStart>((_, params) => {
     connectingSource.current = params.nodeId ?? null
@@ -85,17 +86,22 @@ export function GraphCanvas({
 
   const onSelectionChange = useCallback(
     ({ nodes: sel, edges: selEdges }: { nodes: Array<{ id: string }>, edges: Array<{ id: string }> }) => {
-      setSelectedIds(sel.map(n => n.id))
-      if (sel.length === 1 && selEdges.length === 0) {
-        setSelected({ kind: 'node', id: sel[0].id })
-      } else if (selEdges.length === 1 && sel.length === 0) {
-        setSelected({ kind: 'edge', id: selEdges[0].id })
-      } else {
-        setSelected(null)
+      if (selectionSyncFrame.current != null) {
+        cancelAnimationFrame(selectionSyncFrame.current)
       }
+      const nodeIds = sel.map(n => n.id)
+      const edgeIds = selEdges.map(e => e.id)
+      selectionSyncFrame.current = requestAnimationFrame(() => {
+        selectionSyncFrame.current = null
+        syncFlowSelection(nodeIds, edgeIds)
+      })
     },
-    [setSelected, setSelectedIds]
+    [syncFlowSelection]
   )
+
+  useEffect(() => () => {
+    if (selectionSyncFrame.current != null) cancelAnimationFrame(selectionSyncFrame.current)
+  }, [])
 
   const persistViewportOnMoveEnd = useCallback<OnMoveEnd>((_event, viewport) => {
     const { currentGraphId: id, saveViewport } = useGraphStore.getState()
@@ -127,6 +133,8 @@ export function GraphCanvas({
       const key = [e.source, e.target].sort().join('—')
       const idx = pairCount[key] ?? 0
       pairCount[key] = idx + 1
+      // Keep edge identity when only selection (or other props) change — avoids RF update storms.
+      if (e.data?.siblingIdx === idx) return e
       return { ...e, data: { ...e.data, siblingIdx: idx } }
     })
   }, [edges])
@@ -152,9 +160,10 @@ export function GraphCanvas({
         defaultViewport={defaultViewport}
         minZoom={0.15}
         maxZoom={2.5}
-        deleteKeyCode={['Delete', 'Backspace']}
+        deleteKeyCode={null}
         selectionKeyCode={['Meta', 'Control']}
         multiSelectionKeyCode={['Meta', 'Control']}
+        zoomActivationKeyCode="Alt"
         proOptions={{ hideAttribution: true }}
         style={{ background: 'transparent' }}
       >

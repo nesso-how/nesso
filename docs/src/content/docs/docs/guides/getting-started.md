@@ -75,6 +75,8 @@ Settings auto-probes the endpoint and offers a **Pull** button if the model is m
 | `⌘Z` / `Ctrl+Z`        | Undo                           |
 | `⌘⇧Z` / `Ctrl+Shift+Z` | Redo                           |
 | `Del` / `Backspace`    | Delete selection               |
+| `⌘C` / `Ctrl+C`        | Copy selection                 |
+| `⌘V` / `Ctrl+V`        | Paste                          |
 | `↑` `↓` `←` `→`        | Nudge selected concept         |
 | `Shift` + arrows       | Nudge selected concept (large) |
 | `Esc`                  | Close dialog                   |

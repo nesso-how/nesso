@@ -183,12 +183,10 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
             onClick={stopGraphPointer}
             onKeyDown={e => {
               e.stopPropagation()
-              if (e.key === 'Enter') commit(draft)
-              if (e.key === 'Escape') {
+              if (e.key === 'Enter' || e.key === 'Escape') {
+                e.preventDefault()
                 skipBlurCommit.current = true
-                setDraft(data.text)
-                setEditing(false)
-                focusNodeWrapper()
+                commit(e.currentTarget.value)
               }
             }}
             style={{

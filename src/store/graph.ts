@@ -7,6 +7,13 @@ import type { ConceptNodeData, NessoSettings, EdgeTypeName, Language } from '@/t
 import { CONCEPT_HANDLE_IN, CONCEPT_HANDLE_OUT } from '@/data/conceptHandles'
 import { SEEDS, ALL_SEEDS, getSeedsForLanguage, type Seed } from '@/data/seedGraph'
 import { ZUSTAND_PERSIST_KEY } from '@/data/storageKeys'
+import {
+  advanceClipboardAfterPaste,
+  getGraphClipboard,
+  instantiateClipboard,
+  setGraphClipboard,
+  snapshotSelection,
+} from '@/lib/graphClipboard'
 import type { GraphRecord } from './db'
 import { dbSaveGraph, dbLoadGraph, dbListGraphs, dbDeleteGraph } from './db'
 
@@ -75,12 +82,20 @@ interface GraphState {
 
   // Selection
   setSelected: (sel: Selection) => void
+  /** Sync React Flow marquee / multi-select without clearing node.selected flags. */
+  syncFlowSelection: (nodeIds: string[], edgeIds: string[]) => void
   selectedIds: string[]
   setSelectedIds: (ids: string[]) => void
   deleteSelection: () => void
+  /** True after a successful copy; drives paste button enablement. */
+  pasteAvailable: boolean
+  copySelection: () => boolean
+  /** Returns pasted concept ids, or null if clipboard was empty. */
+  pasteSelection: () => string[] | null
 
   /** One-shot: concept node id that should open in edit mode after creation (not persisted). */
   editNodeId: string | null
+  requestEditNode: (id: string) => void
   clearEditNodeId: () => void
 
   // Settings
@@ -119,6 +134,7 @@ export const useGraphStore = create<GraphState>()(
       edges: [],
       selected: null,
       selectedIds: [],
+      pasteAvailable: false,
       editNodeId: null,
       mentorPanelExpanded: false,
       sidebarCollapsed: false,
@@ -275,6 +291,7 @@ export const useGraphStore = create<GraphState>()(
         return id
       },
 
+      requestEditNode: (id) => set({ editNodeId: id }),
       clearEditNodeId: () => set({ editNodeId: null }),
 
       addEdge: (source, target, type) => {
@@ -379,32 +396,125 @@ export const useGraphStore = create<GraphState>()(
         }
       }),
 
+      syncFlowSelection: (nodeIds, edgeIds) =>
+        set(s => {
+          const nodeIdSet = new Set(nodeIds)
+          const edgeIdSet = new Set(edgeIds)
+
+          let selected: Selection = null
+          if (nodeIds.length === 1 && edgeIds.length === 0) {
+            selected = { kind: 'node', id: nodeIds[0] }
+          } else if (edgeIds.length === 1 && nodeIds.length === 0) {
+            selected = { kind: 'edge', id: edgeIds[0] }
+          }
+
+          const selectedIdsMatch =
+            nodeIds.length === s.selectedIds.length
+            && nodeIds.every(id => s.selectedIds.includes(id))
+          const selectedMatch =
+            selected?.kind === s.selected?.kind && selected?.id === s.selected?.id
+            || (selected === null && s.selected === null)
+
+          let nodesChanged = false
+          const nodes = s.nodes.map(n => {
+            const want = nodeIdSet.has(n.id)
+            if (Boolean(n.selected) !== want) {
+              nodesChanged = true
+              return { ...n, selected: want }
+            }
+            return n
+          })
+          let edgesChanged = false
+          const edges = s.edges.map(e => {
+            const want = edgeIdSet.has(e.id)
+            if (Boolean(e.selected) !== want) {
+              edgesChanged = true
+              return { ...e, selected: want }
+            }
+            return e
+          })
+
+          if (!nodesChanged && !edgesChanged && selectedIdsMatch && selectedMatch) return s
+
+          return {
+            selected,
+            selectedIds: nodeIds,
+            nodes: nodesChanged ? nodes : s.nodes,
+            edges: edgesChanged ? edges : s.edges,
+          }
+        }),
+
       setSelectedIds: (ids) => set({ selectedIds: ids }),
 
       deleteSelection: () =>
         set(s => {
-          if (s.selected?.kind === 'edge') {
-            const id = s.selected.id
+          const nodeIds = new Set(s.selectedIds)
+          if (s.selected?.kind === 'node') nodeIds.add(s.selected.id)
+
+          const edgeIds = new Set<string>()
+          if (s.selected?.kind === 'edge') edgeIds.add(s.selected.id)
+          for (const e of s.edges) {
+            if (e.selected) edgeIds.add(e.id)
+          }
+
+          // Prefer deleting concepts when any are selected (marquee also auto-selects edges).
+          if (nodeIds.size > 0) {
             return {
               ...pushHistory(s),
-              edges: s.edges.filter(e => e.id !== id),
+              nodes: s.nodes.filter(n => !nodeIds.has(n.id)),
+              edges: s.edges.filter(e => !nodeIds.has(e.source) && !nodeIds.has(e.target)),
               selected: null,
               selectedIds: [],
             }
           }
 
-          const ids = new Set(s.selectedIds)
-          if (s.selected?.kind === 'node') ids.add(s.selected.id)
-          if (ids.size === 0) return s
-
-          return {
-            ...pushHistory(s),
-            nodes: s.nodes.filter(n => !ids.has(n.id)),
-            edges: s.edges.filter(e => !ids.has(e.source) && !ids.has(e.target)),
-            selected: null,
-            selectedIds: [],
+          if (edgeIds.size > 0) {
+            return {
+              ...pushHistory(s),
+              edges: s.edges.filter(e => !edgeIds.has(e.id)),
+              selected: null,
+              selectedIds: [],
+            }
           }
+
+          return s
         }),
+
+      copySelection: () => {
+        const snap = snapshotSelection(get())
+        if (!snap) return false
+        setGraphClipboard(snap)
+        set({ pasteAvailable: true })
+        return true
+      },
+
+      pasteSelection: () => {
+        const clip = getGraphClipboard()
+        if (!clip?.nodes.length && !clip?.edges.length) return null
+        const { nodes: pastedNodes, edges: pastedEdges } = instantiateClipboard(clip)
+        const pastedNodeIds = pastedNodes.map(n => n.id)
+
+        set(s => ({
+          ...pushHistory(s),
+          nodes: [
+            ...s.nodes.map(n => (n.selected ? { ...n, selected: false } : n)),
+            ...pastedNodes,
+          ],
+          edges: [
+            ...s.edges.map(e => (e.selected ? { ...e, selected: false } : e)),
+            ...pastedEdges,
+          ],
+          selected:
+            pastedNodeIds.length === 1
+              ? { kind: 'node', id: pastedNodeIds[0] }
+              : pastedEdges.length === 1 && pastedNodeIds.length === 0
+                ? { kind: 'edge', id: pastedEdges[0].id }
+                : null,
+          selectedIds: pastedNodeIds,
+        }))
+        advanceClipboardAfterPaste()
+        return pastedNodeIds
+      },
 
       setSetting: (key, value) =>
         set(s => ({ settings: { ...s.settings, [key]: value } })),

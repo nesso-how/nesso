@@ -110,7 +110,6 @@ button, input, textarea {
   cursor: not-allowed;
   opacity: 0.35;
 }
-
 ::selection {
   background: rgba(177, 74, 46, 0.2);
   color: var(--ink);

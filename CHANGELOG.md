@@ -8,6 +8,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Fixed
 
+- **Canvas:** Marquee multi-select no longer crashes — stable edge references during selection and batched `syncFlowSelection`; **⌘** no longer conflicts with zoom (`zoomActivationKeyCode` → **Alt**).
+- **Canvas:** **Del** / dock delete removes selected concepts (and their relations) when nodes are in the selection; edge-only delete when only relations are selected (fixes marquee where React Flow also highlights edges). One undo step for mixed node+relation deletes (no longer split via React Flow’s separate remove handlers).
+- **Canvas:** After paste, arrow-key nudge works immediately (focus on the new node).
+- **Canvas:** **Enter** on a selected concept opens inline edit; **Enter** / **Esc** in edit mode save the label (blur still saves too).
 - **Canvas:** Bottom-dock delete no longer keeps a hover/focus highlight on the trash button after the selection is cleared.
 - **Canvas:** Bottom-dock delete and **Del** / **Backspace** remove selected relations as well as concepts; selecting a relation clears any selected concept (and vice versa).
 - **Canvas:** After canceling or committing inline rename (**Esc** / **Enter**), keyboard focus returns to the selected concept so arrow-key nudge works immediately.
@@ -23,6 +27,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
+- **Canvas:** Copy and paste for selected concepts and relations — bottom-dock buttons and **⌘C** / **⌘V** (**Ctrl+C** / **Ctrl+V**). Supports single and multi-select (marquee or **⌘**/**Ctrl**-click); copying concepts includes interconnecting relations; copying a relation includes its endpoints. Paste offsets the duplicate and supports undo.
 - **Shortcuts:** Arrow keys (and **Shift** + arrows for a larger step) to nudge a selected concept are listed in the keyboard shortcuts dialog and docs.
 - **Canvas:** Double-click empty canvas to add a concept at the pointer (replaces default React Flow double-click zoom); **`N`** adds at viewport centre; new concepts open in edit mode.
 - **Canvas:** PNG export from the **Graph menu → Export as PNG** — captures the full graph (auto-fit bounds, current theme background, hides handles) and downloads `<graph-name>.png`.

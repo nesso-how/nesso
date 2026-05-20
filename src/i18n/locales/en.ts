@@ -172,6 +172,8 @@ const en = {
       moveConceptLarge: 'Nudge selected concept (large step)',
       undo: 'Undo last graph edit',
       redo: 'Redo',
+      copy: 'Copy selection',
+      paste: 'Paste',
     },
   },
   graphIO: {
@@ -190,6 +192,8 @@ const en = {
     fitTitle: 'Center / fit (F)',
     addConceptTitle: 'Add concept (N or double-click canvas)',
     deleteTitle: 'Delete selected concept or relation (Del or Backspace)',
+    copyTitle: 'Copy selection (⌘C / Ctrl+C)',
+    pasteTitle: 'Paste (⌘V / Ctrl+V)',
   },
   topBar: {
     expandSidebar: 'Expand sidebar',

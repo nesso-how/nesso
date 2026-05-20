@@ -172,6 +172,8 @@ const it: typeof en = {
       moveConceptLarge: 'Sposta concetto selezionato (passo grande)',
       undo: 'Annulla ultima modifica',
       redo: 'Ripristina',
+      copy: 'Copia selezione',
+      paste: 'Incolla',
     },
   },
   graphIO: {
@@ -190,6 +192,8 @@ const it: typeof en = {
     fitTitle: 'Centra / adatta (F)',
     addConceptTitle: 'Aggiungi concetto (N o doppio clic sul canvas)',
     deleteTitle: 'Elimina concetto o relazione selezionati (Canc o Backspace)',
+    copyTitle: 'Copia selezione (⌘C / Ctrl+C)',
+    pasteTitle: 'Incolla (⌘V / Ctrl+V)',
   },
   topBar: {
     expandSidebar: 'Espandi pannello laterale',
