@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 import { useState, useRef, useCallback, useEffect, useLayoutEffect } from 'react'
-import { Handle, Position, NodeProps } from '@xyflow/react'
+import { Handle, Position, NodeProps, useConnection } from '@xyflow/react'
 import type { Node } from '@xyflow/react'
 import type { ConceptNodeData } from '@/types/graph'
 import { CONCEPT_HANDLE_IN, CONCEPT_HANDLE_OUT } from '@/data/conceptHandles'
@@ -103,6 +103,9 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
     focusNodeWrapper()
   }, [id, updateNodeData, focusNodeWrapper])
 
+  const connection = useConnection()
+  const isConnectionTarget = connection.inProgress && connection.toNode?.id === id && connection.fromNode?.id !== id
+
   const ratingIdx = Math.max(0, Math.min(4, data.lastRating ?? 0))
   const heatTint = RATING_COLOR[ratingIdx]
   const confColor = showConfidence ? heatTint : 'var(--ink)'
@@ -147,6 +150,17 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
           borderRadius: 999,
           border: `1px dashed ${settings.accent}`,
           opacity: 0.7,
+          pointerEvents: 'none',
+        }} />
+      )}
+
+      {/* Connection target highlight */}
+      {isConnectionTarget && (
+        <div style={{
+          position: 'absolute',
+          inset: -4,
+          borderRadius: 999,
+          border: '1.5px dotted color-mix(in srgb, var(--accent) 65%, transparent)',
           pointerEvents: 'none',
         }} />
       )}
@@ -228,9 +242,10 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
         type="source"
         position={Position.Right}
         style={{
-          width: 8, height: 8,
-          background: 'var(--accent)',
-          border: '1.5px solid var(--bg-card, #fff)',
+          width: 22, height: 22,
+          background: 'radial-gradient(circle, var(--accent) 2.5px, var(--bg-card, #fff) 2.5px 4px, transparent 4px)',
+          border: 'none',
+          borderRadius: '50%',
           opacity: hovered ? 0.85 : 0,
           transition: 'opacity 120ms',
         }}

@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Changed
+
+- **Canvas:** Edge connection preview uses the same arc exit geometry as rendered edges (including curve flip), a dashed accent stroke, and a dotted ring on the hovered target node; source handle hit area is larger with a radial dot.
+
 ## [0.1.0-alpha.18] - 2026-05-20
 
 ### Fixed
