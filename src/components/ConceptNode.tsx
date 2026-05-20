@@ -255,9 +255,10 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
         type="target"
         position={Position.Left}
         style={{
-          width: 8, height: 8,
-          background: 'var(--accent)',
-          border: '1.5px solid var(--bg-card, #fff)',
+          width: 22, height: 22,
+          background: 'radial-gradient(circle, var(--accent) 2.5px, var(--bg-card, #fff) 2.5px 4px, transparent 4px)',
+          border: 'none',
+          borderRadius: '50%',
           opacity: hovered ? 0.85 : 0,
           transition: 'opacity 120ms',
         }}
