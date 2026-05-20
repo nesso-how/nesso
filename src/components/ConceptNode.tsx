@@ -92,7 +92,7 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
 
   const focusNodeWrapper = useCallback(() => {
     requestAnimationFrame(() => {
-      rootRef.current?.closest('.react-flow__node')?.focus()
+      ;(rootRef.current?.closest('.react-flow__node') as HTMLElement | null)?.focus()
     })
   }, [])
 

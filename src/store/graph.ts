@@ -3,7 +3,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { applyNodeChanges, applyEdgeChanges } from '@xyflow/react'
 import type { Node, Edge, NodeChange, EdgeChange } from '@xyflow/react'
-import type { ConceptNodeData, NessoSettings, EdgeTypeName, Language, GraphDisplaySettings } from '@/types/graph'
+import type { ConceptNodeData, NessoSettings, EdgeTypeName, Language, GraphDisplaySettings, NessoEdgeData } from '@/types/graph'
 import { defaultGraphDisplay, mergeGraphDisplay } from '@/types/graph'
 import { CONCEPT_HANDLE_IN, CONCEPT_HANDLE_OUT } from '@/data/conceptHandles'
 import { SEEDS, ALL_SEEDS, getSeedsForLanguage, type Seed } from '@/data/seedGraph'
@@ -384,13 +384,13 @@ export const useGraphStore = create<GraphState>()(
           edges: s.edges.map(e => {
             if (e.id !== id) return e
             if (mode === 'auto') {
-              const data = { ...e.data }
+              const data: NessoEdgeData = { ...(e.data as unknown as NessoEdgeData) }
               delete data.curveFlipPinned
               delete data.curveFlip
               return { ...e, data }
             }
             const auto = s.graphDisplay.autoCurveFlip
-            const data = { ...e.data, curveFlip: mode === 'on' }
+            const data: NessoEdgeData = { ...(e.data as unknown as NessoEdgeData), curveFlip: mode === 'on' }
             if (auto) data.curveFlipPinned = true
             else delete data.curveFlipPinned
             return { ...e, data }

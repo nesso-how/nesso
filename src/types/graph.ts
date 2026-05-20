@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 import type { Card, State } from 'ts-fsrs'
 export type { EdgeCategory, EdgeTypeDef, EdgeTypeName, GlyphKind } from '@nesso-how/relation-types'
+import type { EdgeTypeName } from '@nesso-how/relation-types'
 
 export interface ConceptElaboration {
   definition: string
@@ -42,6 +43,14 @@ export function nodeToCard(data: ConceptNodeData): Card {
 
 export type EdgeEncoding = 'full' | 'category' | 'minimal'
 export type CurveStyle = 'arc' | 'straight'
+
+/** Payload on `nesso` edges (`NessoEdge`, store mutations, seeds). */
+export interface NessoEdgeData extends Record<string, unknown> {
+  type: EdgeTypeName
+  siblingIdx?: number
+  curveFlip?: boolean
+  curveFlipPinned?: boolean
+}
 export type CategoryPalette = 'default' | 'vivid' | 'muted' | 'monoCat'
 
 export type Language = 'en' | 'it'

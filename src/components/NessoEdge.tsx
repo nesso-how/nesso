@@ -4,17 +4,10 @@ import type { EdgeProps } from '@xyflow/react'
 import { useStore } from '@xyflow/react'
 import { RELATION_TYPES, RELATION_CATEGORIES, asEdgeTypeName } from '@/data/relationTypes'
 import { GlyphSVG } from './GlyphSVG'
-import type { EdgeTypeName, EdgeEncoding } from '@/types/graph'
+import type { EdgeTypeName, EdgeEncoding, NessoEdgeData } from '@/types/graph'
 import { useGraphStore } from '@/store/graph'
 import { effectiveCurveFlip, flowNodeCenterX, flowNodeCenterY, nessoArcPath, rectExit } from '@/geometry/nessoEdgeGeometry'
 import { useT } from '@/i18n'
-
-export interface NessoEdgeData {
-  type: EdgeTypeName
-  siblingIdx?: number   // 0-based index among edges sharing the same node pair
-  curveFlip?: boolean   // mirror arc to the opposite side (arc mode only)
-  curveFlipPinned?: boolean // manual flip; skips auto flip while global auto is on
-}
 
 function EdgePathElement({
   d,

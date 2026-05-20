@@ -4,7 +4,8 @@ import plantBiology from '@/data/seeds/plant-biology.json'
 import comprensione from '@/data/seeds/it/comprensione.json'
 import biologiaVegetale from '@/data/seeds/it/biologia-vegetale.json'
 import type { Node, Edge } from '@xyflow/react'
-import type { ConceptNodeData, Language, GraphDisplaySettings } from '@/types/graph'
+import type { ConceptNodeData, Language, GraphDisplaySettings, EdgeEncoding, CurveStyle } from '@/types/graph'
+import { defaultGraphDisplay } from '@/types/graph'
 
 export interface Seed {
   id: string
@@ -18,18 +19,38 @@ function seedIdFromName(name: string): string {
   return name.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
 }
 
-function makeSeed(raw: {
+/** JSON seed files infer string literals as `string`; normalize before use. */
+type SeedSource = {
   name: string
   nodes: unknown[]
   edges: unknown[]
-  display?: GraphDisplaySettings
-}): Seed {
+  display?: {
+    edgeEncoding?: string
+    showHeatmap?: boolean
+    curveStyle?: string
+    autoCurveFlip?: boolean
+  }
+}
+
+function normalizeSeedDisplay(
+  display: NonNullable<SeedSource['display']>,
+): GraphDisplaySettings {
+  const base = defaultGraphDisplay()
+  return {
+    edgeEncoding: (display.edgeEncoding as EdgeEncoding | undefined) ?? base.edgeEncoding,
+    showHeatmap: display.showHeatmap ?? base.showHeatmap,
+    curveStyle: (display.curveStyle as CurveStyle | undefined) ?? base.curveStyle,
+    autoCurveFlip: display.autoCurveFlip ?? base.autoCurveFlip,
+  }
+}
+
+function makeSeed(raw: SeedSource): Seed {
   return {
     id: seedIdFromName(raw.name),
     name: raw.name,
     nodes: raw.nodes as Node<ConceptNodeData>[],
     edges: raw.edges as Edge[],
-    display: raw.display,
+    display: raw.display ? normalizeSeedDisplay(raw.display) : undefined,
   }
 }
 
