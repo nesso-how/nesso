@@ -24,6 +24,8 @@ jobs:
         with:
           node-version: lts/*
           registry-url: "https://registry.npmjs.org"
+          # Release publishes via npm Trusted Publishing (OIDC); do not cache deps here.
+          package-manager-cache: false
 
       - name: Enable pnpm via Corepack
         run: corepack enable
@@ -41,10 +43,10 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      # Auth: npm Trusted Publishing (OIDC). Configure each package on npmjs.com
+      # (Package settings → Trusted Publisher → GitHub Actions: cedoor/nesso, release.yml).
       - name: Publish packages
         run: pnpm -r --filter "./packages/**" publish --no-git-checks --provenance
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   publish:
     permissions:

@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Fixed
+
+- **CI:** npm publish uses **Trusted Publishing** (OIDC) instead of `NPM_TOKEN`, avoiding 2FA / `EOTP` failures in release workflows.
+
 ## [0.1.0-alpha.19] - 2026-05-20
 
 ### Changed
