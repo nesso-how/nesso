@@ -6,10 +6,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.0-alpha.20] - 2026-05-20
+
 ### Added
 
 - **`@nesso-how/types`** — new npm package exporting all shared graph types (`ConceptNodeData`, `NessoSettings`, `NessoEdgeData`, `GraphDisplaySettings`, helpers `nodeToCard`, `defaultGraphDisplay`, `mergeGraphDisplay`). `src/types/graph.ts` is now a re-export shim so no app imports change.
 - **`@nesso-how/formats`** — new npm package with `NessoGraphFile` type, `serializeGraph`, and `deserializeGraph`; `GraphIO.tsx` now uses these instead of inline `JSON.stringify`/`JSON.parse`.
+
+### Changed
+
+- **Canvas:** Concept node target handle is larger (22px) with a radial ring for easier edge drops.
 
 ### Fixed
 
@@ -337,7 +343,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial alpha: interactive knowledge graph (web + Tauri v2); desktop installers on GitHub Releases (macOS Apple silicon and Intel).
 
-[Unreleased]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.19...HEAD
+[Unreleased]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.20...HEAD
+[0.1.0-alpha.20]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.19...v0.1.0-alpha.20
 [0.1.0-alpha.19]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.18...v0.1.0-alpha.19
 [0.1.0-alpha.18]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.17...v0.1.0-alpha.18
 [0.1.0-alpha.17]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.16...v0.1.0-alpha.17
