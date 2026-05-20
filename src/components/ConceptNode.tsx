@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect, useLayoutEffect } from 'react'
 import { Handle, Position, NodeProps } from '@xyflow/react'
 import type { Node } from '@xyflow/react'
 import type { ConceptNodeData } from '@/types/graph'
@@ -11,20 +11,82 @@ type ConceptNodeType = Node<ConceptNodeData>
 /** Maps 0=unrated → ink; 1–4 → existing conf CSS vars (skip --conf-3) */
 const RATING_COLOR = ['var(--ink)', 'var(--conf-1)', 'var(--conf-2)', 'var(--conf-4)', 'var(--conf-5)'] as const
 
+function caretIndexFromCenteredClick(input: HTMLInputElement, clientX: number): number {
+  const style = window.getComputedStyle(input)
+  const canvas = document.createElement('canvas')
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return input.value.length
+
+  ctx.font = style.font
+  const text = input.value
+  if (!text) return 0
+
+  const textWidth = ctx.measureText(text).width
+  const rect = input.getBoundingClientRect()
+  const clickX = clientX - rect.left
+  const textLeft = (rect.width - textWidth) / 2
+
+  let index = text.length
+  let bestDist = Infinity
+  for (let i = 0; i <= text.length; i++) {
+    const x = textLeft + ctx.measureText(text.slice(0, i)).width
+    const dist = Math.abs(x - clickX)
+    if (dist < bestDist) {
+      bestDist = dist
+      index = i
+    }
+  }
+  return index
+}
+
 export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(data.text)
   const [hovered, setHovered] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
-  const { updateNodeData, setSelected, settings } = useGraphStore()
+  const selectAllOnFocus = useRef(false)
+  const { updateNodeData, settings, editNodeId, clearEditNodeId } = useGraphStore()
   const showConfidence = settings.showConfidence
   const showHeatmap = settings.showHeatmap
 
   const startEdit = useCallback(() => {
     setDraft(data.text)
+    selectAllOnFocus.current = true
     setEditing(true)
-    setTimeout(() => inputRef.current?.select(), 10)
   }, [data.text])
+
+  useEffect(() => {
+    if (editNodeId !== id) return
+    clearEditNodeId()
+    startEdit()
+  }, [editNodeId, id, clearEditNodeId, startEdit])
+
+  useLayoutEffect(() => {
+    if (!editing || !selectAllOnFocus.current) return
+    selectAllOnFocus.current = false
+    const input = inputRef.current
+    if (!input) return
+    input.focus()
+    input.select()
+  }, [editing])
+
+  const stopGraphPointer = useCallback((e: React.SyntheticEvent) => {
+    e.stopPropagation()
+  }, [])
+
+  const handleInputMouseDown = useCallback((e: React.MouseEvent<HTMLInputElement>) => {
+    e.stopPropagation()
+    const input = e.currentTarget
+    const fullySelected =
+      input.value.length > 0
+      && input.selectionStart === 0
+      && input.selectionEnd === input.value.length
+    if (!fullySelected) return
+
+    e.preventDefault()
+    const pos = caretIndexFromCenteredClick(input, e.clientX)
+    input.setSelectionRange(pos, pos)
+  }, [])
 
   const commit = useCallback((val: string) => {
     const trimmed = val.trim()
@@ -51,7 +113,7 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
           ? `0.5px solid var(--line)`
           : '0.5px solid transparent',
         cursor: editing ? 'text' : 'grab',
-        userSelect: 'none',
+        userSelect: editing ? 'text' : 'none',
         minWidth: 60,
       }}
     >
@@ -96,16 +158,18 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
         {editing && (
           <input
             ref={inputRef}
+            className="nodrag nopan"
             value={draft}
-            autoFocus
             onChange={e => setDraft(e.target.value)}
             onBlur={e => commit(e.target.value)}
+            onPointerDown={stopGraphPointer}
+            onMouseDown={handleInputMouseDown}
+            onClick={stopGraphPointer}
             onKeyDown={e => {
               e.stopPropagation()
               if (e.key === 'Enter') commit(draft)
               if (e.key === 'Escape') { setEditing(false); setDraft(data.text) }
             }}
-            onMouseDown={e => e.stopPropagation()}
             style={{
               position: 'absolute',
               inset: 0,

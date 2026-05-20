@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react'
 import {
   ReactFlow,
   Background,
   BackgroundVariant,
   ConnectionMode,
+  useReactFlow,
   useStore,
   type OnConnect,
   type OnMoveEnd,
@@ -21,6 +22,9 @@ import type { EdgeTypeName } from '@/types/graph'
 
 const nodeTypes = { concept: ConceptNode }
 const edgeTypes = { nesso: NessoEdge }
+
+/** Default footprint for a new "New concept" label (flow px); centers node on double-click. */
+const NEW_CONCEPT_SIZE = { width: 112, height: 34 }
 
 interface PendingConnection {
   source: string
@@ -53,10 +57,11 @@ export function GraphCanvas({
   const {
     nodes, edges,
     onNodesChange, onEdgesChange,
-    addEdge, setSelected, setSelectedIds,
+    addEdge, addNode, setSelected, setSelectedIds,
     viewports, currentGraphId,
   } = useGraphStore()
 
+  const { screenToFlowPosition } = useReactFlow()
   const defaultViewport = viewports[currentGraphId] ?? { x: 0, y: 0, zoom: 0.75 }
 
   const [pendingConn, setPendingConn] = useState<PendingConnection | null>(null)
@@ -99,6 +104,19 @@ export function GraphCanvas({
     saveViewport(id, viewport)
   }, [])
 
+  const handlePaneDoubleClick = useCallback((event: ReactMouseEvent<HTMLDivElement>) => {
+    const target = event.target as Element
+    if (!target.closest('.react-flow__pane')) return
+    if (target.closest('.react-flow__node') || target.closest('.react-flow__edge')) return
+
+    event.preventDefault()
+    const { x, y } = screenToFlowPosition({ x: event.clientX, y: event.clientY })
+    addNode(
+      x - NEW_CONCEPT_SIZE.width / 2,
+      y - NEW_CONCEPT_SIZE.height / 2,
+    )
+  }, [addNode, screenToFlowPosition])
+
   const onPickRelation = useCallback((type: EdgeTypeName) => {
     if (!pendingConn) return
     addEdge(pendingConn.source, pendingConn.target, type)
@@ -118,7 +136,7 @@ export function GraphCanvas({
   }, [edges])
 
   return (
-    <div style={{ position: 'absolute', inset: 0 }}>
+    <div onDoubleClick={handlePaneDoubleClick} style={{ position: 'absolute', inset: 0 }}>
       <ReactFlow
         nodes={nodes}
         edges={styledEdges}
@@ -132,6 +150,7 @@ export function GraphCanvas({
         connectionLineComponent={NessoConnectionLine}
         onSelectionChange={onSelectionChange}
         onMoveEnd={persistViewportOnMoveEnd}
+        zoomOnDoubleClick={false}
         connectionMode={ConnectionMode.Loose}
         connectionRadius={35}
         defaultViewport={defaultViewport}

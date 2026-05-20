@@ -79,6 +79,10 @@ interface GraphState {
   setSelectedIds: (ids: string[]) => void
   deleteSelectedNodes: () => void
 
+  /** One-shot: concept node id that should open in edit mode after creation (not persisted). */
+  editNodeId: string | null
+  clearEditNodeId: () => void
+
   // Settings
   setSetting: <K extends keyof NessoSettings>(key: K, value: NessoSettings[K]) => void
 
@@ -115,6 +119,7 @@ export const useGraphStore = create<GraphState>()(
       edges: [],
       selected: null,
       selectedIds: [],
+      editNodeId: null,
       mentorPanelExpanded: false,
       sidebarCollapsed: false,
       sidebarDisplayOpen: true,
@@ -229,11 +234,12 @@ export const useGraphStore = create<GraphState>()(
         set(s => ({
           ...pushHistory(s),
           nodes: [
-            ...s.nodes,
+            ...s.nodes.map(n => (n.selected ? { ...n, selected: false } : n)),
             {
               id,
               type: 'concept',
               position: { x, y },
+              selected: true,
               data: {
                 text: 'New concept',
                 stability: 0,
@@ -247,10 +253,15 @@ export const useGraphStore = create<GraphState>()(
               },
             },
           ],
+          edges: s.edges.map(e => (e.selected ? { ...e, selected: false } : e)),
           selected: { kind: 'node', id },
+          selectedIds: [id],
+          editNodeId: id,
         }))
         return id
       },
+
+      clearEditNodeId: () => set({ editNodeId: null }),
 
       addEdge: (source, target, type) => {
         const id = 'e' + Math.random().toString(36).slice(2, 8)

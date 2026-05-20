@@ -183,38 +183,6 @@ function AppInner() {
     root.style.setProperty('--accent', settings.accent)
   }, [settings.dark, settings.categoryPalette, settings.accent])
 
-  // Keyboard shortcuts
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
-      if (e.key === 'Escape') {
-        setShowReview(false)
-        setShowShortcuts(false)
-        setShowSettings(false)
-        setShowRelationTypes(false)
-        setShowSearch(false)
-        return
-      }
-      if (e.key === '?') { setShowShortcuts(s => !s); return }
-      if (e.key === ',' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); setShowSettings(s => !s); return }
-      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); setShowSearch(s => !s); return }
-      if (e.key === 'z' && (e.metaKey || e.ctrlKey) && !e.shiftKey) {
-        e.preventDefault()
-        undo()
-        return
-      }
-      if (e.key === 'z' && (e.metaKey || e.ctrlKey) && e.shiftKey) {
-        e.preventDefault()
-        redo()
-        return
-      }
-      if (e.key === 'r' && !e.metaKey && !e.ctrlKey) { setShowReview(true) }
-      if (e.key === '/') { e.preventDefault() }
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [selected, deleteNode, deleteEdge, undo, redo])
-
   const hasSelection = !!selectedNode || !!selectedEdge
 
   const handleSelectNode = useCallback((node: { id: string; position: { x: number; y: number } }) => {
@@ -255,6 +223,42 @@ function AppInner() {
     addNode(fx, fy)
     setCenter(fx, fy, { zoom: Math.max(getViewport().zoom, 1), duration: 300 })
   }, [addNode, setCenter, getViewport, screenToFlowPosition, sidebarWidth, hasSelection, inspectorPanelWidth])
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+      if (e.key === 'Escape') {
+        setShowReview(false)
+        setShowShortcuts(false)
+        setShowSettings(false)
+        setShowRelationTypes(false)
+        setShowSearch(false)
+        return
+      }
+      if (e.key === '?') { setShowShortcuts(s => !s); return }
+      if (e.key === ',' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); setShowSettings(s => !s); return }
+      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); setShowSearch(s => !s); return }
+      if (e.key === 'z' && (e.metaKey || e.ctrlKey) && !e.shiftKey) {
+        e.preventDefault()
+        undo()
+        return
+      }
+      if (e.key === 'z' && (e.metaKey || e.ctrlKey) && e.shiftKey) {
+        e.preventDefault()
+        redo()
+        return
+      }
+      if (e.key === 'r' && !e.metaKey && !e.ctrlKey) { setShowReview(true); return }
+      if (e.key.toLowerCase() === 'n' && !e.metaKey && !e.ctrlKey && !e.altKey && !showReview) {
+        handleAddConcept()
+        return
+      }
+      if (e.key === '/') { e.preventDefault() }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [undo, redo, handleAddConcept, showReview])
 
   return (
     <div style={{ position: 'fixed', inset: 0 }}>

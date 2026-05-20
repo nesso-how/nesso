@@ -167,6 +167,7 @@ const en = {
       settings: 'Settings (AI endpoint)',
       close: 'Close dialog / deselect',
       search: 'Search concepts',
+      addConcept: 'Add concept at viewport centre',
       review: 'Start spaced-repetition review',
       delete: 'Delete selected concept or relation',
       undo: 'Undo last graph edit',
@@ -186,8 +187,8 @@ const en = {
     undoTitle: 'Undo (⌘Z)',
     redoTitle: 'Redo (⌘⇧Z)',
     fitTitle: 'Center / fit (F)',
-    addConceptTitle: 'Add concept',
-    deleteConceptTitle: 'Delete selected',
+    addConceptTitle: 'Add concept (N or double-click canvas)',
+    deleteConceptTitle: 'Delete selected (Del or Backspace)',
   },
   topBar: {
     expandSidebar: 'Expand sidebar',

@@ -167,6 +167,7 @@ const it: typeof en = {
       settings: 'Impostazioni (endpoint AI)',
       close: 'Chiudi finestra / deseleziona',
       search: 'Cerca concetti',
+      addConcept: 'Aggiungi concetto al centro del viewport',
       review: 'Avvia revisione a ripetizione spaziata',
       delete: 'Elimina concetto o relazione selezionati',
       undo: 'Annulla ultima modifica',
@@ -186,8 +187,8 @@ const it: typeof en = {
     undoTitle: 'Annulla (⌘Z)',
     redoTitle: 'Ripristina (⌘⇧Z)',
     fitTitle: 'Centra / adatta (F)',
-    addConceptTitle: 'Aggiungi concetto',
-    deleteConceptTitle: 'Elimina selezionati',
+    addConceptTitle: 'Aggiungi concetto (N o doppio clic sul canvas)',
+    deleteConceptTitle: 'Elimina selezionati (Canc o Backspace)',
   },
   topBar: {
     expandSidebar: 'Espandi pannello laterale',

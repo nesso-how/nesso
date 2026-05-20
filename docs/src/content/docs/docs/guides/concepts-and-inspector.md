@@ -8,7 +8,10 @@ The canvas is the centre of Nesso. **Concepts** are nodes; **typed relations** a
 ## Adding concepts
 
 - **Bottom dock -> +** adds a new concept near the centre of the viewport.
-- The new node opens in edit mode. Type the label and press `Enter` to commit, `Esc` to cancel.
+- **`N`** adds a concept at the viewport centre (same as the dock `+`).
+- **Double-click** empty canvas to add a concept at the pointer.
+- New concepts open in edit mode. Type the label and press `Enter` to commit, `Esc` to cancel.
+- **Double-click** a concept to rename it inline.
 
 Concepts you add are stored locally in IndexedDB. Switch graphs from the sidebar; create new graphs from the **Graphs** list.
 

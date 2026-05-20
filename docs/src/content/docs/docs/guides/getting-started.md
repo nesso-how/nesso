@@ -65,15 +65,16 @@ Settings auto-probes the endpoint and offers a **Pull** button if the model is m
 
 ## Keyboard shortcuts
 
-| Shortcut | Action |
-| --- | --- |
-| `?` | Show shortcuts dialog |
-| `⌘,` / `Ctrl+,` | Settings |
-| `⌘K` / `Ctrl+K` | Search concepts |
-| `R` | Open review mode |
-| `⌘Z` / `Ctrl+Z` | Undo |
-| `⌘⇧Z` / `Ctrl+Shift+Z` | Redo |
-| `Del` / `Backspace` | Delete selection |
-| `Esc` | Close dialog |
+| Shortcut               | Action                         |
+| ---------------------- | ------------------------------ |
+| `?`                    | Show shortcuts dialog          |
+| `⌘,` / `Ctrl+,`        | Settings                       |
+| `⌘K` / `Ctrl+K`        | Search concepts                |
+| `N`                    | Add concept at viewport centre |
+| `R`                    | Open review mode               |
+| `⌘Z` / `Ctrl+Z`        | Undo                           |
+| `⌘⇧Z` / `Ctrl+Shift+Z` | Redo                           |
+| `Del` / `Backspace`    | Delete selection               |
+| `Esc`                  | Close dialog                   |
 
 Hold `⌘` / `Ctrl` to add to a selection; drag on empty canvas to marquee-select.
