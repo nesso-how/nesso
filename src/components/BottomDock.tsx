@@ -92,26 +92,13 @@ function DockBtn({ children, onClick, title, disabled }: {
   return (
     <button
       type="button"
+      className="dock-btn"
       title={title}
-      onClick={onClick}
       disabled={disabled}
-      style={{
-        appearance: 'none',
-        border: 0,
-        background: 'transparent',
-        color: 'var(--ink-3)',
-        height: 34,
-        width: 34,
-        padding: 0,
-        borderRadius: 999,
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        cursor: disabled ? 'not-allowed' : 'default',
-        opacity: disabled ? 0.35 : 1,
+      onClick={(e) => {
+        onClick?.()
+        e.currentTarget.blur()
       }}
-      onMouseEnter={e => { if (!disabled) { e.currentTarget.style.background = 'var(--paper-deep)'; e.currentTarget.style.color = 'var(--ink)' } }}
-      onMouseLeave={e => { if (!disabled) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--ink-3)' } }}
     >
       {children}
     </button>

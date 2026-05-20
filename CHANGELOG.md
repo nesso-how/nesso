@@ -8,6 +8,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Fixed
 
+- **Canvas:** Bottom-dock delete no longer keeps a hover/focus highlight on the trash button after the selection is cleared.
 - **Canvas:** Bottom-dock delete and **Del** / **Backspace** remove selected relations as well as concepts; selecting a relation clears any selected concept (and vice versa).
 - **Canvas:** After canceling or committing inline rename (**Esc** / **Enter**), keyboard focus returns to the selected concept so arrow-key nudge works immediately.
 - **Canvas:** **N** / **+ concept** place new nodes centred on the visible canvas (matching double-click) and nudge diagonally when the centre spot is already occupied; viewport pan targets the node centre.
