@@ -5,6 +5,7 @@ import { getNodesBounds, getViewportForBounds, type Node as FlowNode, type Edge 
 import { toPng } from 'html-to-image'
 import type { ConceptNodeData } from '@/types/graph'
 import { useT } from '@/i18n'
+import { saveJsonFileForGraph } from '@/lib/saveJsonFile'
 
 interface Props {
   onRelationTypes: () => void
@@ -32,18 +33,18 @@ export function GraphIO({ onRelationTypes, onShortcuts }: Props) {
     }
   }, [open])
 
-  const handleExport = () => {
+  const handleExport = async () => {
+    setOpen(false)
     const meta = graphList.find(g => g.id === currentGraphId)
     const name = meta?.name ?? 'graph'
+    const filename = `${name}.json`
     const payload = JSON.stringify({ name, nodes, edges }, null, 2)
-    const blob = new Blob([payload], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `${name}.json`
-    a.click()
-    URL.revokeObjectURL(url)
-    setOpen(false)
+    await saveJsonFileForGraph(
+      currentGraphId,
+      filename,
+      payload,
+      fn => window.confirm(t.graphIO.exportOverwriteConfirm.replace('{name}', fn)),
+    )
   }
 
   const handleExportPng = async () => {

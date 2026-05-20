@@ -178,6 +178,7 @@ const en = {
     moreOptions: 'Export · Import · Shortcuts',
     relationTypes: 'Relation types',
     exportGraph: 'Export graph',
+    exportOverwriteConfirm: 'A file named "{name}" already exists. Overwrite it?',
     exportPng: 'Export graph (.png)',
     importGraph: 'Import graph',
     keyboardShortcuts: 'Keyboard shortcuts',

@@ -178,6 +178,7 @@ const it: typeof en = {
     moreOptions: 'Esporta · Importa · Scorciatoie',
     relationTypes: 'Tipi di relazione',
     exportGraph: 'Esporta grafo',
+    exportOverwriteConfirm: 'Esiste già un file "{name}". Sovrascriverlo?',
     exportPng: 'Esporta grafo (png)',
     importGraph: 'Importa grafo',
     keyboardShortcuts: 'Scorciatoie da tastiera',
