@@ -98,6 +98,7 @@ const it: typeof en = {
     sharpen: 'Precisa la relazione',
     visualization: 'Visualizzazione',
     flipCurve: 'Inverti curva',
+    flipCurveAuto: 'Auto',
     ratingNames: ['—', 'Ancora', 'Difficile', 'Bene', 'Facile'],
     notes: {
       definition: 'Definizione',
@@ -147,6 +148,7 @@ const it: typeof en = {
       min: 'Min.',
       arc: 'Curva',
       line: 'Linea',
+      autoFlip: 'Flip automatico',
     },
   },
   search: {

@@ -14,7 +14,7 @@ interface Props {
 
 export function GraphIO({ onRelationTypes, onShortcuts }: Props) {
   const t = useT()
-  const { nodes, edges, graphList, currentGraphId, importGraph } = useGraphStore()
+  const { nodes, edges, graphList, currentGraphId, graphDisplay, importGraph } = useGraphStore()
   const [open, setOpen] = useState(false)
   const wrapRef = useRef<HTMLDivElement>(null)
 
@@ -38,7 +38,7 @@ export function GraphIO({ onRelationTypes, onShortcuts }: Props) {
     const meta = graphList.find(g => g.id === currentGraphId)
     const name = meta?.name ?? 'graph'
     const filename = `${name}.json`
-    const payload = JSON.stringify({ name, nodes, edges }, null, 2)
+    const payload = JSON.stringify({ name, nodes, edges, display: graphDisplay }, null, 2)
     await saveJsonFileForGraph(
       currentGraphId,
       filename,
@@ -100,7 +100,12 @@ export function GraphIO({ onRelationTypes, onShortcuts }: Props) {
         const data = JSON.parse(await file.text())
         if (!Array.isArray(data.nodes) || !Array.isArray(data.edges)) return
         const name: string = data.name ?? file.name.replace(/\.json$/i, '')
-        await importGraph(name, data.nodes as FlowNode<ConceptNodeData>[], data.edges as Edge[])
+        await importGraph(
+          name,
+          data.nodes as FlowNode<ConceptNodeData>[],
+          data.edges as Edge[],
+          data.display,
+        )
       } catch {}
     }
     input.click()

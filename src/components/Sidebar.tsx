@@ -44,7 +44,7 @@ export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, onSelectC
   const t = useT()
   const {
     graphList, currentGraphId, loadGraph, createGraph, renameGraph, deleteGraph,
-    nodes, edges, settings, setSetting,
+    nodes, edges, graphDisplay, setGraphDisplay,
     sidebarDisplayOpen, setSidebarDisplayOpen,
   } = useGraphStore()
 
@@ -383,8 +383,8 @@ export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, onSelectC
                     { id: 'off', label: t.sidebar.displayOptions.off },
                     { id: 'on', label: t.sidebar.displayOptions.on },
                   ]}
-                  value={settings.showHeatmap ? 'on' : 'off'}
-                  onChange={v => setSetting('showHeatmap', v === 'on')}
+                  value={graphDisplay.showHeatmap ? 'on' : 'off'}
+                  onChange={v => setGraphDisplay('showHeatmap', v === 'on')}
                 />
               </DisplayRow>
               <DisplayRow label={t.sidebar.displayOptions.edges}>
@@ -394,8 +394,8 @@ export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, onSelectC
                     { id: 'category', label: t.sidebar.displayOptions.cat },
                     { id: 'minimal', label: t.sidebar.displayOptions.min },
                   ]}
-                  value={settings.edgeEncoding}
-                  onChange={v => setSetting('edgeEncoding', v as 'full' | 'category' | 'minimal')}
+                  value={graphDisplay.edgeEncoding}
+                  onChange={v => setGraphDisplay('edgeEncoding', v as 'full' | 'category' | 'minimal')}
                 />
               </DisplayRow>
               <DisplayRow label={t.sidebar.displayOptions.curve}>
@@ -404,10 +404,22 @@ export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, onSelectC
                     { id: 'arc', label: t.sidebar.displayOptions.arc },
                     { id: 'straight', label: t.sidebar.displayOptions.line },
                   ]}
-                  value={settings.curveStyle}
-                  onChange={v => setSetting('curveStyle', v as 'arc' | 'straight')}
+                  value={graphDisplay.curveStyle}
+                  onChange={v => setGraphDisplay('curveStyle', v as 'arc' | 'straight')}
                 />
               </DisplayRow>
+              {graphDisplay.curveStyle === 'arc' && (
+                <DisplayRow label={t.sidebar.displayOptions.autoFlip}>
+                  <Seg
+                    options={[
+                      { id: 'off', label: t.sidebar.displayOptions.off },
+                      { id: 'on', label: t.sidebar.displayOptions.on },
+                    ]}
+                    value={graphDisplay.autoCurveFlip ? 'on' : 'off'}
+                    onChange={v => setGraphDisplay('autoCurveFlip', v === 'on')}
+                  />
+                </DisplayRow>
+              )}
             </div>
           )}
         </div>

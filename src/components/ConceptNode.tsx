@@ -47,9 +47,9 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
   const rootRef = useRef<HTMLDivElement>(null)
   const selectAllOnFocus = useRef(false)
   const skipBlurCommit = useRef(false)
-  const { updateNodeData, settings, editNodeId, clearEditNodeId } = useGraphStore()
+  const { updateNodeData, settings, graphDisplay, editNodeId, clearEditNodeId } = useGraphStore()
   const showConfidence = settings.showConfidence
-  const showHeatmap = settings.showHeatmap
+  const showHeatmap = graphDisplay.showHeatmap
 
   const startEdit = useCallback(() => {
     setDraft(data.text)

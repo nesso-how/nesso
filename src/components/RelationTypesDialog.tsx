@@ -14,8 +14,7 @@ interface Props {
 
 export function RelationTypesDialog({ open, onClose }: Props) {
   const t = useT()
-  const { settings } = useGraphStore()
-  const encoding = settings.edgeEncoding
+  const encoding = useGraphStore(s => s.graphDisplay.edgeEncoding)
   const [query, setQuery] = useState('')
   const [activeCategory, setActiveCategory] = useState<EdgeCategory | null>(null)
 

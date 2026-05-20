@@ -6,13 +6,14 @@ import { RELATION_TYPES, RELATION_CATEGORIES, asEdgeTypeName } from '@/data/rela
 import { GlyphSVG } from './GlyphSVG'
 import type { EdgeTypeName, EdgeEncoding } from '@/types/graph'
 import { useGraphStore } from '@/store/graph'
-import { nessoArcPath, rectExit } from '@/geometry/nessoEdgeGeometry'
+import { effectiveCurveFlip, flowNodeCenterX, flowNodeCenterY, nessoArcPath, rectExit } from '@/geometry/nessoEdgeGeometry'
 import { useT } from '@/i18n'
 
 export interface NessoEdgeData {
   type: EdgeTypeName
   siblingIdx?: number   // 0-based index among edges sharing the same node pair
   curveFlip?: boolean   // mirror arc to the opposite side (arc mode only)
+  curveFlipPinned?: boolean // manual flip; skips auto flip while global auto is on
 }
 
 function EdgePathElement({
@@ -40,13 +41,7 @@ function EdgePathElement({
     )
   }
   if (lineStyle === 'wavy') {
-    return (
-      <g>
-        <path d={d} {...base} strokeDasharray="1 4" strokeWidth={width * 1.2} />
-        <path d={d} {...base} strokeDasharray="1 4" strokeWidth={width * 1.2}
-          transform="translate(0,2)" opacity={(opacity ?? 0.78) * 0.55} />
-      </g>
-    )
+    return <path d={d} {...base} strokeDasharray="1 4" strokeWidth={width * 1.2} />
   }
   if (lineStyle === 'dashed') return <path d={d} {...base} strokeDasharray="6 5" />
   if (lineStyle === 'dotted') return <path d={d} {...base} strokeDasharray="0.1 5" strokeWidth={width * 1.4} />
@@ -56,7 +51,7 @@ function EdgePathElement({
 export function NessoEdge({ id, source, target, data, selected }: EdgeProps) {
   const t = useT()
   const [hovered, setHovered] = useState(false)
-  const { settings, selected: storeSelected } = useGraphStore()
+  const { graphDisplay, selected: storeSelected } = useGraphStore()
 
   // Read live node geometry from the React Flow store so we can compute
   // bounding-box exit points instead of relying on fixed left/right handles.
@@ -67,13 +62,13 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps) {
   const edgeType = asEdgeTypeName(edgeData?.type)
   const T = RELATION_TYPES[edgeType]
   const C = RELATION_CATEGORIES[T.cat]
-  const encoding: EdgeEncoding = settings.edgeEncoding
+  const encoding: EdgeEncoding = graphDisplay.edgeEncoding
 
   const color = encoding === 'minimal' ? 'var(--ink-3)' : C.color
   const lineStyle = encoding === 'minimal' ? 'solid' : T.line
   const isSelected = selected || (storeSelected?.kind === 'edge' && storeSelected.id === id)
   const showLabel = encoding === 'full' || (encoding !== 'minimal' && (hovered || isSelected))
-  const straight = settings.curveStyle === 'straight'
+  const straight = graphDisplay.curveStyle === 'straight'
 
   if (!sourceNode || !targetNode) return null
 
@@ -85,15 +80,26 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps) {
 
   // Node centers in graph coordinates
   const scx = sourceNode.internals.positionAbsolute.x + sw / 2
-  const scy = sourceNode.internals.positionAbsolute.y + sh / 2
+  const scy = flowNodeCenterY(sourceNode)
   const tcx = targetNode.internals.positionAbsolute.x + tw / 2
-  const tcy = targetNode.internals.positionAbsolute.y + th / 2
+  const tcy = flowNodeCenterY(targetNode)
+
+  const autoCurveFlip = graphDisplay.autoCurveFlip
+  const curveFlip = effectiveCurveFlip(
+    autoCurveFlip,
+    edgeData?.curveFlipPinned,
+    edgeData?.curveFlip,
+    flowNodeCenterX(sourceNode),
+    scy,
+    flowNodeCenterX(targetNode),
+    tcy,
+  )
 
   // Exit points: slightly padded so the arrow tip clears the node border.
   // For arcs, compute a preliminary control point from node centers so both
   // exit points face the actual curve approach direction (not the straight line).
   const pad = 6
-  const flipSign = (edgeData?.curveFlip ?? false) ? -1 : 1
+  const flipSign = curveFlip ? -1 : 1
   const { a, b } = (() => {
     if (straight) {
       return {
@@ -119,7 +125,7 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps) {
     b.x, b.y,
     edgeData?.siblingIdx ?? 0,
     straight,
-    edgeData?.curveFlip ?? false,
+    curveFlip,
   )
 
   const arrowSize = 7

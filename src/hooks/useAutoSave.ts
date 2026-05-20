@@ -11,6 +11,7 @@ export function useAutoSave() {
   const edges = useGraphStore(s => s.edges)
   const currentGraphId = useGraphStore(s => s.currentGraphId)
   const loadedToken = useGraphStore(s => s.loadedToken)
+  const graphDisplay = useGraphStore(s => s.graphDisplay)
   const saveCurrentGraph = useGraphStore(s => s.saveCurrentGraph)
   const saveViewport = useGraphStore(s => s.saveViewport)
   const { getViewport } = useReactFlow()
@@ -32,5 +33,5 @@ export function useAutoSave() {
       saveCurrentGraph()
     }, DEBOUNCE_MS)
     return () => { if (timer.current) clearTimeout(timer.current) }
-  }, [nodes, edges, currentGraphId, loadedToken, saveCurrentGraph, saveViewport, getViewport])
+  }, [nodes, edges, graphDisplay, currentGraphId, loadedToken, saveCurrentGraph, saveViewport, getViewport])
 }

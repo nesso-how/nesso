@@ -46,6 +46,39 @@ export type CategoryPalette = 'default' | 'vivid' | 'muted' | 'monoCat'
 
 export type Language = 'en' | 'it'
 
+/** Per-graph canvas display; persisted in IndexedDB with the graph. */
+export interface GraphDisplaySettings {
+  edgeEncoding: EdgeEncoding
+  showHeatmap: boolean
+  curveStyle: CurveStyle
+  autoCurveFlip: boolean
+}
+
+export function defaultGraphDisplay(
+  settings?: Pick<NessoSettings, 'edgeEncoding' | 'showHeatmap' | 'curveStyle' | 'autoCurveFlip'>,
+): GraphDisplaySettings {
+  return {
+    edgeEncoding: settings?.edgeEncoding ?? 'full',
+    showHeatmap: settings?.showHeatmap ?? true,
+    curveStyle: settings?.curveStyle ?? 'arc',
+    autoCurveFlip: settings?.autoCurveFlip !== false,
+  }
+}
+
+export function mergeGraphDisplay(
+  stored: Partial<GraphDisplaySettings> | undefined,
+  settings: NessoSettings,
+): GraphDisplaySettings {
+  const base = defaultGraphDisplay(settings)
+  if (!stored) return base
+  return {
+    edgeEncoding: stored.edgeEncoding ?? base.edgeEncoding,
+    showHeatmap: stored.showHeatmap ?? base.showHeatmap,
+    curveStyle: stored.curveStyle ?? base.curveStyle,
+    autoCurveFlip: stored.autoCurveFlip !== undefined ? stored.autoCurveFlip : base.autoCurveFlip,
+  }
+}
+
 export interface NessoSettings {
   dark: boolean
   accent: string
@@ -55,6 +88,8 @@ export interface NessoSettings {
   showConfidence: boolean
   showHeatmap: boolean
   curveStyle: CurveStyle
+  /** Arc mode: flip curves when the target sits above the source; updates while dragging. */
+  autoCurveFlip: boolean
   categoryPalette: CategoryPalette
   aiMode: 'remote' | 'local'
   /** OpenAI-compatible API base, e.g. http://localhost:11434/v1 (Ollama) or a cloud vendor URL */

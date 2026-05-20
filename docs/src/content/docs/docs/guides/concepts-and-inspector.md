@@ -61,11 +61,15 @@ Press the picture icon to open the **Wikimedia Commons search**. The query auto-
 
 The image link and Commons description URL are persisted with the graph, so attribution is preserved on export.
 
+## Display options (sidebar)
+
+**Sidebar → Display** controls how the **active graph** is rendered: heatmap overlay, edge encoding density, curve style, and auto flip. Choices are saved **with the graph** in IndexedDB (and included in JSON export). New graphs start from the app defaults until you change them.
+
+When **Display → Curve** is set to **Arc**, **Auto flip** (on by default) bends relations toward the side that avoids overlapping nodes — flipping when the target is above the source on the right, or below on the left — and updates live while you drag concepts. **Flip curve** in the Inspector is **Off | Auto | On** while auto flip is on: **Auto** follows layout, **Off** / **On** pin a manual bend on that edge. With auto flip off for that graph, the control is **Off | On** only.
+
 ## When an edge is selected
 
 The Inspector shows the relation as a chip with its category colour and a dropdown of every relation type. Picking a new type updates the edge in place; the graph keeps its endpoints and identity.
-
-When **Display → Curve** is set to **Arc**, an **Flip curve** control mirrors that edge's arc to the opposite side — useful when the default bend overlaps another node or edge. The choice is saved with the graph.
 
 ## Stats and search
 
@@ -74,7 +78,7 @@ When **Display → Curve** is set to **Arc**, an **Flip curve** control mirrors 
 
 ## Edge encoding density
 
-Edges carry three visual channels: colour (category), line style, and glyph. Crank this down for large or printed graphs from **Settings -> Appearance -> Edge encoding**:
+Edges carry three visual channels: colour (category), line style, and glyph. Crank this down for large or printed graphs from **Sidebar → Display → Edges**:
 
 - **Full:** colour + style + glyph (default).
 - **Category:** colour only.

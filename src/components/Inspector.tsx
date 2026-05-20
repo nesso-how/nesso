@@ -1006,15 +1006,19 @@ function EdgeInspector({
 }) {
   const t = useT()
   const edge = useGraphStore(selectedEdgeSelector)!
-  const { nodes, updateEdgeType, toggleEdgeCurveFlip, settings } = useGraphStore()
+  const { nodes, updateEdgeType, setEdgeCurveFlipMode, graphDisplay } = useGraphStore()
   const edgeType = asEdgeTypeName(edge.data?.type)
   const T = RELATION_TYPES[edgeType]
   const C = RELATION_CATEGORIES[T.cat]
   const from = nodes.find(n => n.id === edge.source)
   const to = nodes.find(n => n.id === edge.target)
   const siblings = RELATION_TYPE_VALUES.filter(id => RELATION_TYPES[id].cat === T.cat)
-  const curveFlipped = Boolean(edge.data?.curveFlip)
-  const showCurveFlip = settings.curveStyle === 'arc'
+  const autoCurveFlip = graphDisplay.autoCurveFlip
+  const curveFlipPinned = Boolean(edge.data?.curveFlipPinned)
+  const curveFlipMode = autoCurveFlip
+    ? (curveFlipPinned ? (edge.data?.curveFlip ? 'on' : 'off') : 'auto')
+    : (edge.data?.curveFlip ? 'on' : 'off')
+  const showCurveFlip = graphDisplay.curveStyle === 'arc'
 
   return (
     <InspectorPanel
@@ -1090,12 +1094,20 @@ function EdgeInspector({
           </h5>
           <EdgeDisplayRow label={t.inspector.flipCurve}>
             <EdgeSeg
-              options={[
-                { id: 'off', label: t.sidebar.displayOptions.off },
-                { id: 'on', label: t.sidebar.displayOptions.on },
-              ]}
-              value={curveFlipped ? 'on' : 'off'}
-              onChange={v => { if ((v === 'on') !== curveFlipped) toggleEdgeCurveFlip(edge.id) }}
+              options={autoCurveFlip
+                ? [
+                  { id: 'off', label: t.sidebar.displayOptions.off },
+                  { id: 'auto', label: t.inspector.flipCurveAuto },
+                  { id: 'on', label: t.sidebar.displayOptions.on },
+                ]
+                : [
+                  { id: 'off', label: t.sidebar.displayOptions.off },
+                  { id: 'on', label: t.sidebar.displayOptions.on },
+                ]}
+              value={curveFlipMode}
+              onChange={v => {
+                if (v !== curveFlipMode) setEdgeCurveFlipMode(edge.id, v as 'auto' | 'off' | 'on')
+              }}
             />
           </EdgeDisplayRow>
         </>

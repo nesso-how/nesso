@@ -1,0 +1,182 @@
+{
+  "name": "Understanding",
+  "nodes": [
+    {
+      "id": "n1",
+      "type": "concept",
+      "position": {
+        "x": 330,
+        "y": 200
+      },
+      "data": {
+        "text": "Understanding",
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0
+      }
+    },
+    {
+      "id": "n2",
+      "type": "concept",
+      "position": {
+        "x": 340,
+        "y": 40
+      },
+      "data": {
+        "text": "Mastery",
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0
+      }
+    },
+    {
+      "id": "n3",
+      "type": "concept",
+      "position": {
+        "x": 600,
+        "y": 110
+      },
+      "data": {
+        "text": "Knowledge",
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0
+      }
+    },
+    {
+      "id": "n4",
+      "type": "concept",
+      "position": {
+        "x": 560,
+        "y": 360
+      },
+      "data": {
+        "text": "Inquiry",
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0
+      }
+    },
+    {
+      "id": "n5",
+      "type": "concept",
+      "position": {
+        "x": 119.94704598874094,
+        "y": 356.38745616908164
+      },
+      "data": {
+        "text": "Memorization",
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0
+      }
+    },
+    {
+      "id": "n6",
+      "type": "concept",
+      "position": {
+        "x": 95,
+        "y": 110
+      },
+      "data": {
+        "text": "Mind",
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e0",
+      "source": "n1",
+      "target": "n2",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "produces"
+      }
+    },
+    {
+      "id": "e1",
+      "source": "n1",
+      "target": "n3",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "is-a"
+      }
+    },
+    {
+      "id": "e2",
+      "source": "n1",
+      "target": "n4",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "requires"
+      }
+    },
+    {
+      "id": "e3",
+      "source": "n1",
+      "target": "n5",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "contrasts-with"
+      }
+    },
+    {
+      "id": "e4",
+      "source": "n1",
+      "target": "n6",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "occurs-in"
+      }
+    }
+  ],
+  "display": {
+    "edgeEncoding": "full",
+    "showHeatmap": true,
+    "curveStyle": "straight",
+    "autoCurveFlip": true
+  }
+}

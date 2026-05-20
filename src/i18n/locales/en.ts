@@ -98,6 +98,7 @@ const en = {
     sharpen: 'Sharpen the relation',
     visualization: 'Visualization',
     flipCurve: 'Flip curve',
+    flipCurveAuto: 'Auto',
     ratingNames: ['—', 'Again', 'Hard', 'Good', 'Easy'],
     notes: {
       definition: 'Definition',
@@ -147,6 +148,7 @@ const en = {
       min: 'Min.',
       arc: 'Arc',
       line: 'Line',
+      autoFlip: 'Auto flip',
     },
   },
   search: {

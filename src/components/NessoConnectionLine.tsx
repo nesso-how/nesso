@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 import type { ConnectionLineComponentProps } from '@xyflow/react'
-import { nessoArcPath, rectExit } from '@/geometry/nessoEdgeGeometry'
+import { effectiveCurveFlip, flowNodeCenterX, flowNodeCenterY, nessoArcPath, rectExit } from '@/geometry/nessoEdgeGeometry'
 import { useGraphStore } from '@/store/graph'
 
 const pad = 6
@@ -13,25 +13,35 @@ export function NessoConnectionLine({
   toX,
   toY,
 }: ConnectionLineComponentProps) {
-  const straight = useGraphStore(s => s.settings.curveStyle === 'straight')
+  const straight = useGraphStore(s => s.graphDisplay.curveStyle === 'straight')
+  const autoCurveFlip = useGraphStore(s => s.graphDisplay.autoCurveFlip)
 
   const sw = fromNode.measured?.width ?? 80
-  const sh = fromNode.measured?.height ?? 32
   const scx = fromNode.internals.positionAbsolute.x + sw / 2
-  const scy = fromNode.internals.positionAbsolute.y + sh / 2
+  const scy = flowNodeCenterY(fromNode)
 
   let b: { x: number; y: number }
+  let curveFlip = false
   if (toNode) {
     const tw = toNode.measured?.width ?? 80
     const th = toNode.measured?.height ?? 32
     const tcx = toNode.internals.positionAbsolute.x + tw / 2
-    const tcy = toNode.internals.positionAbsolute.y + th / 2
+    const tcy = flowNodeCenterY(toNode)
     b = rectExit(tcx, tcy, tw + pad * 2, th + pad * 2, scx, scy)
+    curveFlip = effectiveCurveFlip(
+      autoCurveFlip,
+      false,
+      false,
+      flowNodeCenterX(fromNode),
+      scy,
+      flowNodeCenterX(toNode),
+      tcy,
+    )
   } else {
     b = { x: toX, y: toY }
   }
 
-  const { path } = nessoArcPath(fromX, fromY, b.x, b.y, 0, straight)
+  const { path } = nessoArcPath(fromX, fromY, b.x, b.y, 0, straight, curveFlip)
 
   return (
     <path

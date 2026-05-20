@@ -1,6 +1,58 @@
 // SPDX-License-Identifier: MIT
 // Shared path math for Nesso edges and the in-progress connection preview.
 
+/** Flip when the target is above the source (right side) or below (left side). */
+export function defaultCurveFlip(
+  sourceCenterX: number,
+  sourceCenterY: number,
+  targetCenterX: number,
+  targetCenterY: number,
+): boolean {
+  const targetAbove = targetCenterY < sourceCenterY
+  const targetLeft = targetCenterX < sourceCenterX
+  return targetAbove !== targetLeft
+}
+
+export function nodeCenterX(node: { position: { x: number }; measured?: { width?: number } }): number {
+  const w = node.measured?.width ?? 80
+  return node.position.x + w / 2
+}
+
+export function nodeCenterY(node: { position: { y: number }; measured?: { height?: number } }): number {
+  const h = node.measured?.height ?? 32
+  return node.position.y + h / 2
+}
+
+export function flowNodeCenterX(node: {
+  internals: { positionAbsolute: { x: number } }
+  measured?: { width?: number }
+}): number {
+  const w = node.measured?.width ?? 80
+  return node.internals.positionAbsolute.x + w / 2
+}
+
+export function flowNodeCenterY(node: {
+  internals: { positionAbsolute: { y: number } }
+  measured?: { height?: number }
+}): number {
+  const h = node.measured?.height ?? 32
+  return node.internals.positionAbsolute.y + h / 2
+}
+
+/** Live auto flip from positions, or persisted per-edge flip when auto is off or pinned. */
+export function effectiveCurveFlip(
+  auto: boolean,
+  pinned: boolean | undefined,
+  storedFlip: boolean | undefined,
+  sourceCenterX: number,
+  sourceCenterY: number,
+  targetCenterX: number,
+  targetCenterY: number,
+): boolean {
+  if (auto && !pinned) return defaultCurveFlip(sourceCenterX, sourceCenterY, targetCenterX, targetCenterY)
+  return Boolean(storedFlip)
+}
+
 export function rectExit(cx: number, cy: number, w: number, h: number, tx: number, ty: number) {
   const dx = tx - cx, dy = ty - cy
   if (dx === 0 && dy === 0) return { x: cx, y: cy }

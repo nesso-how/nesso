@@ -10,7 +10,7 @@
     {
       "id": "n2",
       "type": "concept",
-      "position": { "x": 120, "y": -232 },
+      "position": { "x": 232.39746507482704, "y": -316.43147745848717 },
       "data": { "text": "Germination", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0, "elaboration": { "definition": "The process by which a seed embryo resumes metabolic activity, breaks dormancy, and develops into a seedling.", "examples": "A bean sprouting after watering; wheat germinating in a field within 4–7 days.", "notes": "Germination requires water, adequate temperature, and in some species light or darkness. Dormancy is an evolutionary mechanism that prevents germination under unfavorable conditions." } }
     },
     {
@@ -22,49 +22,49 @@
     {
       "id": "n4",
       "type": "concept",
-      "position": { "x": -120, "y": 295 },
+      "position": { "x": -157.21216050683938, "y": 235.67145449371012 },
       "data": { "text": "Root", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0, "elaboration": { "definition": "The typically underground vegetative organ that anchors the plant in the soil and absorbs water and dissolved minerals.", "examples": "Taproot of a carrot; fibrous roots of grass; aerial roots of vanilla orchid.", "notes": "Some roots serve special functions: nutrient storage (beet, sweet potato), aerial support (mangrove), or mycorrhizal symbiosis with fungi to extend nutrient uptake." } }
     },
     {
       "id": "n5",
       "type": "concept",
-      "position": { "x": 462, "y": 71 },
+      "position": { "x": 456.2576744587901, "y": -157.44673160013355 },
       "data": { "text": "Stem", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0, "elaboration": { "definition": "The main axis of a plant that supports leaves, flowers, and fruit while transporting raw sap (xylem) and elaborated sap (phloem) between roots and leaves.", "examples": "Tree trunk, rose stalk, bamboo cane, strawberry stolon.", "notes": "Stems can be woody (trees, shrubs) or herbaceous. Modified stems include tubers (potato), rhizomes (ginger), and bulbs (onion)." } }
     },
     {
       "id": "n6",
       "type": "concept",
-      "position": { "x": -230, "y": -46 },
+      "position": { "x": -127.88242184193392, "y": -78.11070834299619 },
       "data": { "text": "Leaf", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0, "elaboration": { "definition": "The flattened lateral organ of vascular plants, the primary site of photosynthesis and gas exchange through stomata.", "examples": "Lobed oak leaf, pine needle, palmate maple leaf, lanceolate olive leaf.", "notes": "Leaf morphology (shape, margin, venation) is a key diagnostic character for plant identification. Leaves are also the primary site of transpiration, driving water uptake from roots." } }
     },
     {
       "id": "n7",
       "type": "concept",
-      "position": { "x": 454, "y": 222 },
+      "position": { "x": 485.8788241537305, "y": 272.0123973266972 },
       "data": { "text": "Flower", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0, "elaboration": { "definition": "The reproductive structure of angiosperms, composed of the calyx (sepals), corolla (petals), androecium (stamens), and gynoecium (pistil).", "examples": "Rose, sunflower, tulip, orchid, apple blossom.", "notes": "Colored petals, fragrances, and nectar are evolutionary adaptations to attract specific pollinators. Some plants such as corn have reduced, petal-less flowers pollinated by wind." } }
     },
     {
       "id": "n8",
       "type": "concept",
-      "position": { "x": 609, "y": -11 },
+      "position": { "x": 646.2179863081205, "y": -44.496187677308555 },
       "data": { "text": "Fruit", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0, "elaboration": { "definition": "The mature ovary of a flowering plant that encloses and protects the seeds and aids in their dispersal.", "examples": "Apple, tomato, bean pod, cherry, coconut.", "notes": "Botanically, a tomato, pepper, and zucchini are all fruits. Fleshy fruits attract animals that disperse seeds; dry fruits like dandelion use wind dispersal." } }
     },
     {
       "id": "n9",
       "type": "concept",
-      "position": { "x": 396, "y": -230 },
+      "position": { "x": 393.2534662342203, "y": -213.65865782674473 },
       "data": { "text": "Water", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0, "elaboration": { "definition": "An inorganic molecule (H₂O) essential for plants: a reactant in photosynthesis, a medium for nutrient transport through xylem, and the driver of cell turgor.", "examples": "Water absorbed by roots and transported in xylem; transpired through leaf stomata; photolyzed in the light reactions of photosynthesis.", "notes": "Water makes up 70–95% of a plant's fresh weight. Water deficit triggers stomata closure, slowing photosynthesis and growth; prolonged drought leads to wilting and death." } }
     },
     {
       "id": "n10",
       "type": "concept",
-      "position": { "x": -138, "y": -292 },
+      "position": { "x": -168.19922703006878, "y": -247.8626681868226 },
       "data": { "text": "Sunlight", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0, "elaboration": { "definition": "Electromagnetic radiation from the Sun that provides the energy driving the light reactions of photosynthesis.", "examples": "Red light (~660 nm) and blue light (~430 nm) absorbed by chlorophyll; green light reflected (giving leaves their color).", "notes": "Plants have evolved responses to light including phototropism (growth toward light) and photoperiodism (regulation of flowering based on day length)." } }
     },
     {
       "id": "n11",
       "type": "concept",
-      "position": { "x": -130, "y": 117 },
+      "position": { "x": -59.987304383648855, "y": 320.75973633503855 },
       "data": { "text": "Soil", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0, "elaboration": { "definition": "The uppermost layer of Earth's crust, composed of minerals, organic matter, water, air, and microorganisms, in which roots anchor and grow.", "examples": "Clay soil (rich in minerals, poor drainage), sandy soil (good drainage, low nutrients), peat soil (high organic content, acidic).", "notes": "Soil pH affects nutrient availability; most plants thrive between pH 6 and 7. Soil microorganisms (bacteria, fungi) are critical for nutrient cycling and plant health." } }
     },
     {
@@ -82,13 +82,13 @@
     {
       "id": "n14",
       "type": "concept",
-      "position": { "x": -818, "y": 191 },
+      "position": { "x": -780.7820136918793, "y": 38.40625613670548 },
       "data": { "text": "Oxygen", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0, "elaboration": { "definition": "Gas (O₂) released as a by-product of photosynthesis through the photolysis of water in the light reactions.", "examples": "Bubbles of O₂ released by aquatic plants (e.g., Elodea) under light; O₂ produced by forests and phytoplankton.", "notes": "Earth's oxygen-rich atmosphere arose ~2.4 billion years ago from photosynthetic cyanobacteria, in an event called the Great Oxidation Event." } }
     },
     {
       "id": "n15",
       "type": "concept",
-      "position": { "x": -339, "y": 158 },
+      "position": { "x": -227.3285636717944, "y": 77.0363152766346 },
       "data": { "text": "Glucose", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0, "elaboration": { "definition": "A monosaccharide (C₆H₁₂O₆) produced by photosynthesis, the primary energy currency and carbon building block for plant biosynthesis.", "examples": "Glucose stored in leaves; converted to sucrose for phloem transport; converted to fructose in sweet fruit pulp.", "notes": "Excess glucose is polymerized into starch (energy storage in seeds and tubers) or cellulose (structural component of cell walls)." } }
     },
     {
@@ -100,25 +100,25 @@
     {
       "id": "n17",
       "type": "concept",
-      "position": { "x": 835, "y": -20 },
+      "position": { "x": 771.7294232761949, "y": 175.3944281176332 },
       "data": { "text": "Pollination", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0, "elaboration": { "definition": "The transfer of pollen from an anther to a stigma of the same species, required for fertilization and seed production in angiosperms.", "examples": "Bees carrying apple pollen; wind dispersing grass or hazel pollen; butterflies pollinating lavender.", "notes": "Pollination can be entomophilous (insects), anemophilous (wind), ornithophilous (birds), or hydrophilous (water). About 87% of flowering plant species depend on animal pollinators." } }
     },
     {
       "id": "n18",
       "type": "concept",
-      "position": { "x": -577, "y": 203 },
+      "position": { "x": -433.92515949915753, "y": 201.1274490820315 },
       "data": { "text": "Respiration", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0, "elaboration": { "definition": "The cellular metabolic process by which the plant oxidizes glucose to produce ATP, releasing CO₂ and water as by-products.", "examples": "Nocturnal leaf respiration (when photosynthesis is inactive); intense respiration in germinating seeds.", "notes": "Unlike photosynthesis, respiration occurs in all plant tissues at all times. Under good light conditions, photosynthesis produces far more O₂ than respiration consumes." } }
     },
     {
       "id": "n19",
       "type": "concept",
-      "position": { "x": 66, "y": 308 },
+      "position": { "x": 120.1804869321968, "y": 300.7708095237978 },
       "data": { "text": "Annual", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0, "elaboration": { "definition": "A plant that completes its entire life cycle (germination, growth, flowering, fruiting, death) within a single year or growing season.", "examples": "Wheat, corn, sunflower, basil, petunia.", "notes": "Annual plants survive winter only as seeds. Many of the world's most important crops are annuals, bred to produce large quantities of seeds or fruits rapidly." } }
     },
     {
       "id": "n20",
       "type": "concept",
-      "position": { "x": 299, "y": 273 },
+      "position": { "x": 308.9710201384208, "y": 326.0152401845876 },
       "data": { "text": "Perennial", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0, "elaboration": { "definition": "A plant that lives for more than two years, flowering and fruiting repeatedly throughout its lifespan.", "examples": "Oak tree, wild rose, lavender, peony, olive tree.", "notes": "Woody perennials form secondary tissue (wood) and grow year after year. Herbaceous perennials may lose their aerial parts in winter and regrow from roots or rhizomes the following season." } }
     }
   ],
@@ -130,9 +130,7 @@
       "sourceHandle": "out",
       "targetHandle": "in",
       "type": "nesso",
-      "data": {
-        "type": "subtype-of"
-      }
+      "data": { "type": "subtype-of" }
     },
     {
       "id": "e1",
@@ -141,9 +139,7 @@
       "sourceHandle": "out",
       "targetHandle": "in",
       "type": "nesso",
-      "data": {
-        "type": "subtype-of"
-      }
+      "data": { "type": "subtype-of" }
     },
     {
       "id": "e2",
@@ -152,9 +148,7 @@
       "sourceHandle": "out",
       "targetHandle": "in",
       "type": "nesso",
-      "data": {
-        "type": "part-of"
-      }
+      "data": { "type": "part-of", "curveFlip": true }
     },
     {
       "id": "e3",
@@ -163,9 +157,7 @@
       "sourceHandle": "out",
       "targetHandle": "in",
       "type": "nesso",
-      "data": {
-        "type": "part-of"
-      }
+      "data": { "type": "part-of" }
     },
     {
       "id": "e4",
@@ -174,9 +166,7 @@
       "sourceHandle": "out",
       "targetHandle": "in",
       "type": "nesso",
-      "data": {
-        "type": "part-of"
-      }
+      "data": { "type": "part-of" }
     },
     {
       "id": "e5",
@@ -185,9 +175,7 @@
       "sourceHandle": "out",
       "targetHandle": "in",
       "type": "nesso",
-      "data": {
-        "type": "part-of"
-      }
+      "data": { "type": "part-of" }
     },
     {
       "id": "e6",
@@ -196,9 +184,7 @@
       "sourceHandle": "out",
       "targetHandle": "in",
       "type": "nesso",
-      "data": {
-        "type": "part-of"
-      }
+      "data": { "type": "part-of", "curveFlip": true }
     },
     {
       "id": "e7",
@@ -207,9 +193,7 @@
       "sourceHandle": "out",
       "targetHandle": "in",
       "type": "nesso",
-      "data": {
-        "type": "contains"
-      }
+      "data": { "type": "contains" }
     },
     {
       "id": "e8",
@@ -218,9 +202,7 @@
       "sourceHandle": "out",
       "targetHandle": "in",
       "type": "nesso",
-      "data": {
-        "type": "enables"
-      }
+      "data": { "type": "enables", "curveFlip": true }
     },
     {
       "id": "e9",
@@ -229,9 +211,7 @@
       "sourceHandle": "out",
       "targetHandle": "in",
       "type": "nesso",
-      "data": {
-        "type": "enables"
-      }
+      "data": { "type": "enables", "curveFlip": true }
     },
     {
       "id": "e10",
@@ -240,9 +220,7 @@
       "sourceHandle": "out",
       "targetHandle": "in",
       "type": "nesso",
-      "data": {
-        "type": "enables"
-      }
+      "data": { "type": "enables" }
     },
     {
       "id": "e11",
@@ -251,9 +229,7 @@
       "sourceHandle": "out",
       "targetHandle": "in",
       "type": "nesso",
-      "data": {
-        "type": "produces"
-      }
+      "data": { "type": "produces", "curveFlip": true }
     },
     {
       "id": "e12",
@@ -262,9 +238,7 @@
       "sourceHandle": "out",
       "targetHandle": "in",
       "type": "nesso",
-      "data": {
-        "type": "produces"
-      }
+      "data": { "type": "produces" }
     },
     {
       "id": "e13",
@@ -273,9 +247,7 @@
       "sourceHandle": "out",
       "targetHandle": "in",
       "type": "nesso",
-      "data": {
-        "type": "enables"
-      }
+      "data": { "type": "enables", "curveFlip": true }
     },
     {
       "id": "e14",
@@ -284,9 +256,7 @@
       "sourceHandle": "out",
       "targetHandle": "in",
       "type": "nesso",
-      "data": {
-        "type": "produces"
-      }
+      "data": { "type": "produces", "curveFlip": false }
     },
     {
       "id": "e15",
@@ -295,9 +265,7 @@
       "sourceHandle": "out",
       "targetHandle": "in",
       "type": "nesso",
-      "data": {
-        "type": "requires"
-      }
+      "data": { "type": "requires", "curveFlip": true }
     },
     {
       "id": "e16",
@@ -306,9 +274,7 @@
       "sourceHandle": "out",
       "targetHandle": "in",
       "type": "nesso",
-      "data": {
-        "type": "requires"
-      }
+      "data": { "type": "requires" }
     },
     {
       "id": "e17",
@@ -317,9 +283,7 @@
       "sourceHandle": "out",
       "targetHandle": "in",
       "type": "nesso",
-      "data": {
-        "type": "requires"
-      }
+      "data": { "type": "requires", "curveFlip": true }
     },
     {
       "id": "e18",
@@ -328,9 +292,7 @@
       "sourceHandle": "out",
       "targetHandle": "in",
       "type": "nesso",
-      "data": {
-        "type": "requires"
-      }
+      "data": { "type": "requires" }
     },
     {
       "id": "e19",
@@ -339,9 +301,7 @@
       "sourceHandle": "out",
       "targetHandle": "in",
       "type": "nesso",
-      "data": {
-        "type": "requires"
-      }
+      "data": { "type": "requires" }
     },
     {
       "id": "e20",
@@ -350,9 +310,7 @@
       "sourceHandle": "out",
       "targetHandle": "in",
       "type": "nesso",
-      "data": {
-        "type": "uses"
-      }
+      "data": { "type": "uses" }
     },
     {
       "id": "e21",
@@ -361,9 +319,7 @@
       "sourceHandle": "out",
       "targetHandle": "in",
       "type": "nesso",
-      "data": {
-        "type": "uses"
-      }
+      "data": { "type": "uses" }
     },
     {
       "id": "e22",
@@ -372,9 +328,7 @@
       "sourceHandle": "out",
       "targetHandle": "in",
       "type": "nesso",
-      "data": {
-        "type": "precedes"
-      }
+      "data": { "type": "precedes", "curveFlip": true }
     },
     {
       "id": "e23",
@@ -383,9 +337,7 @@
       "sourceHandle": "out",
       "targetHandle": "in",
       "type": "nesso",
-      "data": {
-        "type": "precedes"
-      }
+      "data": { "type": "precedes", "curveFlip": false, "curveFlipPinned": true }
     },
     {
       "id": "e24",
@@ -394,9 +346,7 @@
       "sourceHandle": "out",
       "targetHandle": "in",
       "type": "nesso",
-      "data": {
-        "type": "precedes"
-      }
+      "data": { "type": "precedes", "curveFlip": true }
     },
     {
       "id": "e25",
@@ -405,9 +355,7 @@
       "sourceHandle": "out",
       "targetHandle": "in",
       "type": "nesso",
-      "data": {
-        "type": "opposite-of"
-      }
+      "data": { "type": "opposite-of" }
     },
     {
       "id": "e26",
@@ -416,9 +364,13 @@
       "sourceHandle": "out",
       "targetHandle": "in",
       "type": "nesso",
-      "data": {
-        "type": "opposite-of"
-      }
+      "data": { "type": "opposite-of" }
     }
-  ]
+  ],
+  "display": {
+    "edgeEncoding": "full",
+    "showHeatmap": true,
+    "curveStyle": "arc",
+    "autoCurveFlip": true
+  }
 }

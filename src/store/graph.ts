@@ -3,7 +3,8 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { applyNodeChanges, applyEdgeChanges } from '@xyflow/react'
 import type { Node, Edge, NodeChange, EdgeChange } from '@xyflow/react'
-import type { ConceptNodeData, NessoSettings, EdgeTypeName, Language } from '@/types/graph'
+import type { ConceptNodeData, NessoSettings, EdgeTypeName, Language, GraphDisplaySettings } from '@/types/graph'
+import { defaultGraphDisplay, mergeGraphDisplay } from '@/types/graph'
 import { CONCEPT_HANDLE_IN, CONCEPT_HANDLE_OUT } from '@/data/conceptHandles'
 import { SEEDS, ALL_SEEDS, getSeedsForLanguage, type Seed } from '@/data/seedGraph'
 import { ZUSTAND_PERSIST_KEY } from '@/data/storageKeys'
@@ -16,6 +17,24 @@ import {
 } from '@/lib/graphClipboard'
 import type { GraphRecord } from './db'
 import { dbSaveGraph, dbLoadGraph, dbListGraphs, dbDeleteGraph } from './db'
+import { defaultCurveFlip, nodeCenterX, nodeCenterY } from '@/geometry/nessoEdgeGeometry'
+
+function bakeCurveFlipFromPositions(edges: Edge[], nodes: Node<ConceptNodeData>[]): Edge[] {
+  return edges.map(e => {
+    if (e.data?.curveFlipPinned) return e
+    const sourceNode = nodes.find(n => n.id === e.source)
+    const targetNode = nodes.find(n => n.id === e.target)
+    if (!sourceNode || !targetNode) return e
+    const curveFlip = defaultCurveFlip(
+      nodeCenterX(sourceNode),
+      nodeCenterY(sourceNode),
+      nodeCenterX(targetNode),
+      nodeCenterY(targetNode),
+    )
+    if (Boolean(e.data?.curveFlip) === curveFlip) return e
+    return { ...e, data: { ...e.data, curveFlip: curveFlip || undefined } }
+  })
+}
 
 function detectBrowserLanguage(): Language {
   const lang = typeof navigator !== 'undefined' ? navigator.language.split('-')[0] : 'en'
@@ -52,6 +71,8 @@ interface GraphState {
   edges: Edge[]
   selected: Selection
   settings: NessoSettings
+  /** Display options for the active graph (persisted with the graph in IndexedDB). */
+  graphDisplay: GraphDisplaySettings
   mentorPanelExpanded: boolean
 
   // Per-graph viewports (persisted in localStorage for instant restore)
@@ -78,7 +99,7 @@ interface GraphState {
   addNode: (x?: number, y?: number) => string
   addEdge: (source: string, target: string, type: EdgeTypeName) => string
   updateEdgeType: (id: string, type: EdgeTypeName) => void
-  toggleEdgeCurveFlip: (id: string) => void
+  setEdgeCurveFlipMode: (id: string, mode: 'auto' | 'off' | 'on') => void
   deleteEdge: (id: string) => void
 
   // Selection
@@ -101,6 +122,7 @@ interface GraphState {
 
   // Settings
   setSetting: <K extends keyof NessoSettings>(key: K, value: NessoSettings[K]) => void
+  setGraphDisplay: <K extends keyof GraphDisplaySettings>(key: K, value: GraphDisplaySettings[K]) => void
 
   // UI chrome (persisted)
   setMentorPanelExpanded: (expanded: boolean) => void
@@ -117,7 +139,12 @@ interface GraphState {
   loadGraph: (id: string) => Promise<void>
   saveCurrentGraph: (viewport?: Viewport) => Promise<void>
   createGraph: (name: string) => Promise<string>
-  importGraph: (name: string, nodes: Node<ConceptNodeData>[], edges: Edge[]) => Promise<string>
+  importGraph: (
+    name: string,
+    nodes: Node<ConceptNodeData>[],
+    edges: Edge[],
+    display?: Partial<GraphDisplaySettings>,
+  ) => Promise<string>
   renameGraph: (id: string, name: string) => Promise<void>
   deleteGraph: (id: string) => Promise<void>
 }
@@ -125,7 +152,15 @@ interface GraphState {
 
 function makeSeedRecord(seed: Seed): GraphRecord {
   const now = Date.now()
-  return { id: seed.id, name: seed.name, createdAt: now, updatedAt: now, nodes: seed.nodes, edges: seed.edges }
+  return {
+    id: seed.id,
+    name: seed.name,
+    createdAt: now,
+    updatedAt: now,
+    nodes: seed.nodes,
+    edges: seed.edges,
+    display: seed.display,
+  }
 }
 
 export const useGraphStore = create<GraphState>()(
@@ -155,6 +190,7 @@ export const useGraphStore = create<GraphState>()(
         showConfidence: true,
         showHeatmap: true,
         curveStyle: 'arc',
+        autoCurveFlip: true,
         categoryPalette: 'default',
         aiMode: 'local',
         aiBaseUrl: 'http://localhost:11434/v1',
@@ -165,6 +201,7 @@ export const useGraphStore = create<GraphState>()(
         inspectorExamplesOpen: true,
         inspectorRelationsOpen: true,
       },
+      graphDisplay: defaultGraphDisplay(),
 
       undo: () =>
         set(s => {
@@ -297,25 +334,39 @@ export const useGraphStore = create<GraphState>()(
 
       addEdge: (source, target, type) => {
         const id = 'e' + Math.random().toString(36).slice(2, 8)
-        set(s => ({
-          ...pushHistory(s),
-          nodes: s.nodes.map(n => (n.selected ? { ...n, selected: false } : n)),
-          edges: [
-            ...s.edges.map(e => (e.selected ? { ...e, selected: false } : e)),
-            {
-              id,
-              source,
-              target,
-              sourceHandle: CONCEPT_HANDLE_OUT,
-              targetHandle: CONCEPT_HANDLE_IN,
-              type: 'nesso',
-              selected: true,
-              data: { type },
-            },
-          ],
-          selected: { kind: 'edge', id },
-          selectedIds: [],
-        }))
+        set(s => {
+          const sourceNode = s.nodes.find(n => n.id === source)
+          const targetNode = s.nodes.find(n => n.id === target)
+          const autoCurveFlip = s.graphDisplay.autoCurveFlip
+          const curveFlip = !autoCurveFlip && sourceNode && targetNode
+            ? defaultCurveFlip(
+              nodeCenterX(sourceNode),
+              nodeCenterY(sourceNode),
+              nodeCenterX(targetNode),
+              nodeCenterY(targetNode),
+            )
+            : false
+
+          return {
+            ...pushHistory(s),
+            nodes: s.nodes.map(n => (n.selected ? { ...n, selected: false } : n)),
+            edges: [
+              ...s.edges.map(e => (e.selected ? { ...e, selected: false } : e)),
+              {
+                id,
+                source,
+                target,
+                sourceHandle: CONCEPT_HANDLE_OUT,
+                targetHandle: CONCEPT_HANDLE_IN,
+                type: 'nesso',
+                selected: true,
+                data: { type, ...(curveFlip ? { curveFlip: true } : {}) },
+              },
+            ],
+            selected: { kind: 'edge', id },
+            selectedIds: [],
+          }
+        })
         return id
       },
 
@@ -327,14 +378,23 @@ export const useGraphStore = create<GraphState>()(
           ),
         })),
 
-      toggleEdgeCurveFlip: (id) =>
+      setEdgeCurveFlipMode: (id, mode) =>
         set(s => ({
           ...pushHistory(s),
-          edges: s.edges.map(e =>
-            e.id === id
-              ? { ...e, data: { ...e.data, curveFlip: !e.data?.curveFlip } }
-              : e
-          ),
+          edges: s.edges.map(e => {
+            if (e.id !== id) return e
+            if (mode === 'auto') {
+              const data = { ...e.data }
+              delete data.curveFlipPinned
+              delete data.curveFlip
+              return { ...e, data }
+            }
+            const auto = s.graphDisplay.autoCurveFlip
+            const data = { ...e.data, curveFlip: mode === 'on' }
+            if (auto) data.curveFlipPinned = true
+            else delete data.curveFlipPinned
+            return { ...e, data }
+          }),
         })),
 
       deleteEdge: (id) =>
@@ -530,6 +590,19 @@ export const useGraphStore = create<GraphState>()(
       setSetting: (key, value) =>
         set(s => ({ settings: { ...s.settings, [key]: value } })),
 
+      setGraphDisplay: (key, value) =>
+        set(s => {
+          const graphDisplay = { ...s.graphDisplay, [key]: value }
+          if (key === 'autoCurveFlip' && value === false && s.graphDisplay.autoCurveFlip) {
+            return {
+              ...pushHistory(s),
+              graphDisplay,
+              edges: bakeCurveFlipFromPositions(s.edges, s.nodes),
+            }
+          }
+          return { graphDisplay }
+        }),
+
       setMentorPanelExpanded: (expanded) => set({ mentorPanelExpanded: expanded }),
       setSidebarCollapsed: (v) => set({ sidebarCollapsed: v }),
       setSidebarDisplayOpen: (v) => set({ sidebarDisplayOpen: v }),
@@ -577,6 +650,7 @@ export const useGraphStore = create<GraphState>()(
           currentGraphId: record!.id,
           nodes: record!.nodes,
           edges: record!.edges,
+          graphDisplay: mergeGraphDisplay(record!.display, s.settings),
           selected: null,
           loadedToken: s.loadedToken + 1,
           _history: [],
@@ -585,16 +659,18 @@ export const useGraphStore = create<GraphState>()(
       },
 
       saveCurrentGraph: async (viewport) => {
-        const { currentGraphId, nodes, edges, graphList } = get()
+        const { currentGraphId, nodes, edges, graphList, graphDisplay } = get()
         const meta = graphList.find(g => g.id === currentGraphId)
         const now = Date.now()
+        const existing = await dbLoadGraph(currentGraphId)
         await dbSaveGraph({
           id: currentGraphId,
           name: meta?.name ?? 'Untitled',
-          createdAt: meta?.updatedAt ?? now,
+          createdAt: existing?.createdAt ?? meta?.updatedAt ?? now,
           updatedAt: now,
           nodes,
           edges,
+          display: graphDisplay,
         })
         set(s => ({
           graphList: s.graphList.map(g =>
@@ -606,13 +682,15 @@ export const useGraphStore = create<GraphState>()(
       createGraph: async (name) => {
         const id = 'g' + Math.random().toString(36).slice(2, 9)
         const now = Date.now()
-        await dbSaveGraph({ id, name, createdAt: now, updatedAt: now, nodes: [], edges: [] })
+        const display = defaultGraphDisplay(get().settings)
+        await dbSaveGraph({ id, name, createdAt: now, updatedAt: now, nodes: [], edges: [], display })
         _draggingNodeIds.clear()
         set(s => ({
           graphList: [...s.graphList, { id, name, updatedAt: now }],
           currentGraphId: id,
           nodes: [],
           edges: [],
+          graphDisplay: display,
           selected: null,
           _history: [],
           _future: [],
@@ -620,16 +698,18 @@ export const useGraphStore = create<GraphState>()(
         return id
       },
 
-      importGraph: async (name, nodes, edges) => {
+      importGraph: async (name, nodes, edges, display) => {
         const id = 'g' + Math.random().toString(36).slice(2, 9)
         const now = Date.now()
-        await dbSaveGraph({ id, name, createdAt: now, updatedAt: now, nodes, edges })
+        const graphDisplay = mergeGraphDisplay(display, get().settings)
+        await dbSaveGraph({ id, name, createdAt: now, updatedAt: now, nodes, edges, display: graphDisplay })
         _draggingNodeIds.clear()
         set(s => ({
           graphList: [...s.graphList, { id, name, updatedAt: now }],
           currentGraphId: id,
           nodes,
           edges,
+          graphDisplay,
           selected: null,
           _history: [],
           _future: [],
@@ -675,6 +755,7 @@ export const useGraphStore = create<GraphState>()(
         }
         const { reviewBatchMax: _legacyReviewBatchMax, fsrsMaxInterval: _legacyFsrsMaxInterval, ...settings } =
           merged
+        if (settings.autoCurveFlip === undefined) settings.autoCurveFlip = true
         return {
           ...current,
           ...rest,
@@ -695,3 +776,5 @@ export const selectedEdgeSelector = (s: GraphState) => {
   if (s.selected?.kind !== 'edge') return null
   return s.edges.find(e => e.id === s.selected!.id) ?? null
 }
+
+export const graphDisplaySelector = (s: GraphState) => s.graphDisplay

@@ -4,151 +4,919 @@
     {
       "id": "n1",
       "type": "concept",
-      "position": { "x": 537, "y": -309 },
-      "data": { "text": "Seme", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0, "elaboration": { "definition": "Struttura riproduttiva delle piante a seme, contenente l'embrione e una riserva di nutrienti protetti da un tegumento.", "examples": "Fagiolo, mais, ghianda, mandorla, noce.", "notes": "I semi possono restare vitali per anni o decenni in dormienza; il record appartiene a semi di loto rinvenuti in un lago della Cina e germinati dopo 1300 anni." } }
+      "position": {
+        "x": 537,
+        "y": -309
+      },
+      "data": {
+        "text": "Seme",
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0,
+        "elaboration": {
+          "definition": "Struttura riproduttiva delle piante a seme, contenente l'embrione e una riserva di nutrienti protetti da un tegumento.",
+          "examples": "Fagiolo, mais, ghianda, mandorla, noce.",
+          "notes": "I semi possono restare vitali per anni o decenni in dormienza; il record appartiene a semi di loto rinvenuti in un lago della Cina e germinati dopo 1300 anni."
+        }
+      },
+      "measured": {
+        "width": 70,
+        "height": 34
+      }
     },
     {
       "id": "n2",
       "type": "concept",
-      "position": { "x": 120, "y": -232 },
-      "data": { "text": "Germinazione", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0, "elaboration": { "definition": "Processo attraverso cui l'embrione di un seme riprende l'attività metabolica e si sviluppa in una plantula.", "examples": "Il fagiolo che spunta dal terreno dopo l'irrigazione; il grano che germina in campo in 4–7 giorni.", "notes": "La germinazione richiede acqua, temperatura adeguata e, in alcune specie, luce o assenza di luce; la dormienza è un meccanismo evolutivo che evita la germinazione in condizioni sfavorevoli." } }
+      "position": {
+        "x": 232.39746507482704,
+        "y": -316.43147745848717
+      },
+      "data": {
+        "text": "Germinazione",
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0,
+        "elaboration": {
+          "definition": "Processo attraverso cui l'embrione di un seme riprende l'attività metabolica e si sviluppa in una plantula.",
+          "examples": "Il fagiolo che spunta dal terreno dopo l'irrigazione; il grano che germina in campo in 4–7 giorni.",
+          "notes": "La germinazione richiede acqua, temperatura adeguata e, in alcune specie, luce o assenza di luce; la dormienza è un meccanismo evolutivo che evita la germinazione in condizioni sfavorevoli."
+        }
+      },
+      "measured": {
+        "width": 135,
+        "height": 34
+      },
+      "selected": false,
+      "dragging": false
     },
     {
       "id": "n3",
       "type": "concept",
-      "position": { "x": 118, "y": -44 },
-      "data": { "text": "Pianta", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0, "elaboration": { "definition": "Organismo eucariotico multicellulare autotrofo appartenente al regno Plantae, capace di produrre energia attraverso la fotosintesi.", "examples": "Quercia, pomodoro, cactus, felce, muschio.", "notes": "Le piante sono la base della catena alimentare terrestre e producono circa il 70 % dell'ossigeno atmosferico grazie alla fotosintesi." } }
+      "position": {
+        "x": 118,
+        "y": -44
+      },
+      "data": {
+        "text": "Pianta",
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0,
+        "elaboration": {
+          "definition": "Organismo eucariotico multicellulare autotrofo appartenente al regno Plantae, capace di produrre energia attraverso la fotosintesi.",
+          "examples": "Quercia, pomodoro, cactus, felce, muschio.",
+          "notes": "Le piante sono la base della catena alimentare terrestre e producono circa il 70 % dell'ossigeno atmosferico grazie alla fotosintesi."
+        }
+      },
+      "measured": {
+        "width": 78,
+        "height": 34
+      }
     },
     {
       "id": "n4",
       "type": "concept",
-      "position": { "x": -120, "y": 295 },
-      "data": { "text": "Radice", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0, "elaboration": { "definition": "Organo vegetativo generalmente sotterraneo che ancora la pianta al suolo e assorbe acqua e sali minerali.", "examples": "Radice a fittone della carota; radici fascicolate del mais; radici aeree della vaniglia.", "notes": "Alcune radici svolgono funzioni speciali: accumulo di riserve (barbabietola, patata dolce), supporto aereo (mangrovie) o simbiosi con funghi micorrizici per ampliare l'assorbimento." } }
+      "position": {
+        "x": -157.21216050683938,
+        "y": 235.67145449371012
+      },
+      "data": {
+        "text": "Radice",
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0,
+        "elaboration": {
+          "definition": "Organo vegetativo generalmente sotterraneo che ancora la pianta al suolo e assorbe acqua e sali minerali.",
+          "examples": "Radice a fittone della carota; radici fascicolate del mais; radici aeree della vaniglia.",
+          "notes": "Alcune radici svolgono funzioni speciali: accumulo di riserve (barbabietola, patata dolce), supporto aereo (mangrovie) o simbiosi con funghi micorrizici per ampliare l'assorbimento."
+        }
+      },
+      "measured": {
+        "width": 80,
+        "height": 34
+      },
+      "selected": false,
+      "dragging": false
     },
     {
       "id": "n5",
       "type": "concept",
-      "position": { "x": 462, "y": 71 },
-      "data": { "text": "Fusto", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0, "elaboration": { "definition": "Asse vegetativo che sorregge foglie, fiori e frutti e trasporta linfa grezza (xilema) e linfa elaborata (floema) tra radici e foglie.", "examples": "Tronco di una quercia, stelo di una rosa, canna di bambù, stolone della fragola.", "notes": "Il fusto può essere legnoso (alberi, arbusti) o erbaceo; alcune specie presentano fusti modificati in tuberi (patata), rizomi (zenzero) o bulbi (cipolla)." } }
+      "position": {
+        "x": 456.2576744587901,
+        "y": -157.44673160013355
+      },
+      "data": {
+        "text": "Fusto",
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0,
+        "elaboration": {
+          "definition": "Asse vegetativo che sorregge foglie, fiori e frutti e trasporta linfa grezza (xilema) e linfa elaborata (floema) tra radici e foglie.",
+          "examples": "Tronco di una quercia, stelo di una rosa, canna di bambù, stolone della fragola.",
+          "notes": "Il fusto può essere legnoso (alberi, arbusti) o erbaceo; alcune specie presentano fusti modificati in tuberi (patata), rizomi (zenzero) o bulbi (cipolla)."
+        }
+      },
+      "measured": {
+        "width": 71,
+        "height": 34
+      },
+      "selected": false,
+      "dragging": false
     },
     {
       "id": "n6",
       "type": "concept",
-      "position": { "x": -230, "y": -46 },
-      "data": { "text": "Foglia", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0, "elaboration": { "definition": "Organo laminare delle piante vascolari, principale sede della fotosintesi e della traspirazione attraverso gli stomi.", "examples": "Foglia lobata della quercia, ago del pino, foglia palmata dell'acero, foglia lanceolata dell'ulivo.", "notes": "La morfologia fogliare (forma, margine, nervatura) è un carattere diagnostico fondamentale per l'identificazione delle specie botaniche." } }
+      "position": {
+        "x": -127.88242184193392,
+        "y": -78.11070834299619
+      },
+      "data": {
+        "text": "Foglia",
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0,
+        "elaboration": {
+          "definition": "Organo laminare delle piante vascolari, principale sede della fotosintesi e della traspirazione attraverso gli stomi.",
+          "examples": "Foglia lobata della quercia, ago del pino, foglia palmata dell'acero, foglia lanceolata dell'ulivo.",
+          "notes": "La morfologia fogliare (forma, margine, nervatura) è un carattere diagnostico fondamentale per l'identificazione delle specie botaniche."
+        }
+      },
+      "measured": {
+        "width": 75,
+        "height": 34
+      },
+      "selected": false,
+      "dragging": false
     },
     {
       "id": "n7",
       "type": "concept",
-      "position": { "x": 454, "y": 222 },
-      "data": { "text": "Fiore", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0, "elaboration": { "definition": "Organo riproduttivo delle angiosperme, composto da calice (sepali), corolla (petali), androceo (stami) e gineceo (pistillo).", "examples": "Rosa, girasole, tulipano, orchidea, fiore di melo.", "notes": "Petali colorati, profumi e nettare sono adattamenti evolutivi per attirare specifici impollinatori; alcune piante come il mais hanno fiori privi di petali (fiori ridotti)." } }
+      "position": {
+        "x": 485.8788241537305,
+        "y": 272.0123973266972
+      },
+      "data": {
+        "text": "Fiore",
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0,
+        "elaboration": {
+          "definition": "Organo riproduttivo delle angiosperme, composto da calice (sepali), corolla (petali), androceo (stami) e gineceo (pistillo).",
+          "examples": "Rosa, girasole, tulipano, orchidea, fiore di melo.",
+          "notes": "Petali colorati, profumi e nettare sono adattamenti evolutivi per attirare specifici impollinatori; alcune piante come il mais hanno fiori privi di petali (fiori ridotti)."
+        }
+      },
+      "measured": {
+        "width": 68,
+        "height": 34
+      },
+      "selected": false,
+      "dragging": false
     },
     {
       "id": "n8",
       "type": "concept",
-      "position": { "x": 609, "y": -11 },
-      "data": { "text": "Frutto", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0, "elaboration": { "definition": "Struttura derivata dall'ovario fecondato del fiore, che racchiude e protegge i semi e ne favorisce la dispersione.", "examples": "Mela, pomodoro, baccello di fagiolo, ciliegia, noce di cocco.", "notes": "Botanicamente il pomodoro, il peperone e la zucchina sono frutti; la distinzione culinaria frutto/verdura non ha valore tassonomico. I frutti carnosi attraggono animali che disperdono i semi." } }
+      "position": {
+        "x": 646.2179863081205,
+        "y": -44.496187677308555
+      },
+      "data": {
+        "text": "Frutto",
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0,
+        "elaboration": {
+          "definition": "Struttura derivata dall'ovario fecondato del fiore, che racchiude e protegge i semi e ne favorisce la dispersione.",
+          "examples": "Mela, pomodoro, baccello di fagiolo, ciliegia, noce di cocco.",
+          "notes": "Botanicamente il pomodoro, il peperone e la zucchina sono frutti; la distinzione culinaria frutto/verdura non ha valore tassonomico. I frutti carnosi attraggono animali che disperdono i semi."
+        }
+      },
+      "measured": {
+        "width": 77,
+        "height": 34
+      },
+      "selected": false,
+      "dragging": false
     },
     {
       "id": "n9",
       "type": "concept",
-      "position": { "x": 396, "y": -230 },
-      "data": { "text": "Acqua", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0, "elaboration": { "definition": "Molecola inorganica (H₂O) essenziale per le piante: reagente della fotosintesi, mezzo di trasporto dei nutrienti e agente della turgescenza cellulare.", "examples": "Acqua assorbita dalle radici e trasportata nello xilema; acqua traspirata attraverso gli stomi; acqua fotolizzata nella fase luminosa.", "notes": "Il 70–95 % del peso fresco di una pianta è acqua; la carenza idrica provoca avvizzimento, chiusura degli stomi e, se prolungata, morte della pianta." } }
+      "position": {
+        "x": 393.2534662342203,
+        "y": -213.65865782674473
+      },
+      "data": {
+        "text": "Acqua",
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0,
+        "elaboration": {
+          "definition": "Molecola inorganica (H₂O) essenziale per le piante: reagente della fotosintesi, mezzo di trasporto dei nutrienti e agente della turgescenza cellulare.",
+          "examples": "Acqua assorbita dalle radici e trasportata nello xilema; acqua traspirata attraverso gli stomi; acqua fotolizzata nella fase luminosa.",
+          "notes": "Il 70–95 % del peso fresco di una pianta è acqua; la carenza idrica provoca avvizzimento, chiusura degli stomi e, se prolungata, morte della pianta."
+        }
+      },
+      "measured": {
+        "width": 77,
+        "height": 34
+      },
+      "selected": false,
+      "dragging": false
     },
     {
       "id": "n10",
       "type": "concept",
-      "position": { "x": -138, "y": -292 },
-      "data": { "text": "Luce solare", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0, "elaboration": { "definition": "Radiazione elettromagnetica emessa dal Sole che fornisce l'energia necessaria per la fotosintesi clorofilliana.", "examples": "Luce rossa (~660 nm) e blu (~430 nm) assorbite dalla clorofilla; luce verde riflessa (da cui il colore delle foglie).", "notes": "Le piante hanno evoluto diversi sistemi di adattamento alla luce: il fototropismo (crescita verso la luce) e il fotoperiodismo (regolazione della fioritura in base alla durata del giorno)." } }
+      "position": {
+        "x": -168.19922703006878,
+        "y": -247.8626681868226
+      },
+      "data": {
+        "text": "Luce solare",
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0,
+        "elaboration": {
+          "definition": "Radiazione elettromagnetica emessa dal Sole che fornisce l'energia necessaria per la fotosintesi clorofilliana.",
+          "examples": "Luce rossa (~660 nm) e blu (~430 nm) assorbite dalla clorofilla; luce verde riflessa (da cui il colore delle foglie).",
+          "notes": "Le piante hanno evoluto diversi sistemi di adattamento alla luce: il fototropismo (crescita verso la luce) e il fotoperiodismo (regolazione della fioritura in base alla durata del giorno)."
+        }
+      },
+      "measured": {
+        "width": 115,
+        "height": 34
+      },
+      "selected": false,
+      "dragging": false
     },
     {
       "id": "n11",
       "type": "concept",
-      "position": { "x": -130, "y": 117 },
-      "data": { "text": "Suolo", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0, "elaboration": { "definition": "Strato superficiale della crosta terrestre formato da minerali, materia organica, acqua, aria e microorganismi, in cui crescono le radici.", "examples": "Suolo argilloso (ricco di minerali ma drenaggio scarso), sabbioso (buon drenaggio), torboso (ricco di humus acido).", "notes": "Il pH del suolo influenza la disponibilità dei nutrienti: la maggior parte delle piante cresce meglio tra pH 6 e 7. I microorganismi del suolo sono fondamentali per il ciclo dei nutrienti." } }
+      "position": {
+        "x": -59.987304383648855,
+        "y": 320.75973633503855
+      },
+      "data": {
+        "text": "Suolo",
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0,
+        "elaboration": {
+          "definition": "Strato superficiale della crosta terrestre formato da minerali, materia organica, acqua, aria e microorganismi, in cui crescono le radici.",
+          "examples": "Suolo argilloso (ricco di minerali ma drenaggio scarso), sabbioso (buon drenaggio), torboso (ricco di humus acido).",
+          "notes": "Il pH del suolo influenza la disponibilità dei nutrienti: la maggior parte delle piante cresce meglio tra pH 6 e 7. I microorganismi del suolo sono fondamentali per il ciclo dei nutrienti."
+        }
+      },
+      "measured": {
+        "width": 72,
+        "height": 34
+      },
+      "selected": false,
+      "dragging": false
     },
     {
       "id": "n12",
       "type": "concept",
-      "position": { "x": -368, "y": -326 },
-      "data": { "text": "Biossido di carbonio", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0, "elaboration": { "definition": "Gas atmosferico (CO₂) assorbito dalle foglie attraverso gli stomi e usato come unica fonte di carbonio nella fotosintesi.", "examples": "CO₂ atmosferico (~420 ppm) assorbito dalle foglie di mais durante il giorno; CO₂ rilasciato durante la respirazione notturna.", "notes": "L'aumento di CO₂ atmosferico causato dalle attività umane ha un effetto fertilizzante sulle piante C3, ma comporta anche riscaldamento climatico e acidificazione degli oceani." } }
+      "position": {
+        "x": -368,
+        "y": -326
+      },
+      "data": {
+        "text": "Biossido di carbonio",
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0,
+        "elaboration": {
+          "definition": "Gas atmosferico (CO₂) assorbito dalle foglie attraverso gli stomi e usato come unica fonte di carbonio nella fotosintesi.",
+          "examples": "CO₂ atmosferico (~420 ppm) assorbito dalle foglie di mais durante il giorno; CO₂ rilasciato durante la respirazione notturna.",
+          "notes": "L'aumento di CO₂ atmosferico causato dalle attività umane ha un effetto fertilizzante sulle piante C3, ma comporta anche riscaldamento climatico e acidificazione degli oceani."
+        }
+      },
+      "measured": {
+        "width": 182,
+        "height": 34
+      }
     },
     {
       "id": "n13",
       "type": "concept",
-      "position": { "x": -480, "y": -66 },
-      "data": { "text": "Fotosintesi", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0, "elaboration": { "definition": "Processo biochimico attraverso cui le piante convertono energia luminosa, CO₂ e acqua in glucosio e ossigeno usando la clorofilla.", "examples": "6 CO₂ + 6 H₂O + energia luminosa → C₆H₁₂O₆ + 6 O₂. Avviene nelle foglie verdi di una pianta al sole.", "notes": "La fotosintesi si divide in fase luminosa (nei tilacoidi: produzione di ATP, NADPH e O₂) e ciclo di Calvin (nello stroma: fissazione del CO₂ in glucosio)." } }
+      "position": {
+        "x": -480,
+        "y": -66
+      },
+      "data": {
+        "text": "Fotosintesi",
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0,
+        "elaboration": {
+          "definition": "Processo biochimico attraverso cui le piante convertono energia luminosa, CO₂ e acqua in glucosio e ossigeno usando la clorofilla.",
+          "examples": "6 CO₂ + 6 H₂O + energia luminosa → C₆H₁₂O₆ + 6 O₂. Avviene nelle foglie verdi di una pianta al sole.",
+          "notes": "La fotosintesi si divide in fase luminosa (nei tilacoidi: produzione di ATP, NADPH e O₂) e ciclo di Calvin (nello stroma: fissazione del CO₂ in glucosio)."
+        }
+      },
+      "measured": {
+        "width": 112,
+        "height": 34
+      }
     },
     {
       "id": "n14",
       "type": "concept",
-      "position": { "x": -818, "y": 191 },
-      "data": { "text": "Ossigeno", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0, "elaboration": { "definition": "Gas (O₂) prodotto come sottoprodotto della fotosintesi attraverso la fotolisi dell'acqua nella fase luminosa.", "examples": "Bolle di O₂ rilasciate da piante acquatiche (es. Elodea) esposte alla luce; O₂ atmosferico prodotto dalle foreste.", "notes": "L'atmosfera terrestre è diventata ricca di ossigeno circa 2,4 miliardi di anni fa grazie all'attività dei cianobatteri fotosintetici, in un evento noto come Grande Ossidazione." } }
+      "position": {
+        "x": -780.7820136918793,
+        "y": 38.40625613670548
+      },
+      "data": {
+        "text": "Ossigeno",
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0,
+        "elaboration": {
+          "definition": "Gas (O₂) prodotto come sottoprodotto della fotosintesi attraverso la fotolisi dell'acqua nella fase luminosa.",
+          "examples": "Bolle di O₂ rilasciate da piante acquatiche (es. Elodea) esposte alla luce; O₂ atmosferico prodotto dalle foreste.",
+          "notes": "L'atmosfera terrestre è diventata ricca di ossigeno circa 2,4 miliardi di anni fa grazie all'attività dei cianobatteri fotosintetici, in un evento noto come Grande Ossidazione."
+        }
+      },
+      "measured": {
+        "width": 98,
+        "height": 34
+      },
+      "selected": false,
+      "dragging": false
     },
     {
       "id": "n15",
       "type": "concept",
-      "position": { "x": -339, "y": 158 },
-      "data": { "text": "Glucosio", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0, "elaboration": { "definition": "Monosaccaride (C₆H₁₂O₆) prodotto dalla fotosintesi, principale fonte di energia e di carbonio per la biosintesi nella pianta.", "examples": "Glucosio accumulato nelle foglie; convertito in saccarosio per il trasporto nel floema; convertito in fruttosio nella polpa dei frutti dolci.", "notes": "Il glucosio in eccesso viene polimerizzato in amido (riserva energetica nei semi e tuberi) o in cellulosa (componente strutturale della parete cellulare)." } }
+      "position": {
+        "x": -227.3285636717944,
+        "y": 77.0363152766346
+      },
+      "data": {
+        "text": "Glucosio",
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0,
+        "elaboration": {
+          "definition": "Monosaccaride (C₆H₁₂O₆) prodotto dalla fotosintesi, principale fonte di energia e di carbonio per la biosintesi nella pianta.",
+          "examples": "Glucosio accumulato nelle foglie; convertito in saccarosio per il trasporto nel floema; convertito in fruttosio nella polpa dei frutti dolci.",
+          "notes": "Il glucosio in eccesso viene polimerizzato in amido (riserva energetica nei semi e tuberi) o in cellulosa (componente strutturale della parete cellulare)."
+        }
+      },
+      "measured": {
+        "width": 95,
+        "height": 34
+      },
+      "selected": false,
+      "dragging": false
     },
     {
       "id": "n16",
       "type": "concept",
-      "position": { "x": -705, "y": -262 },
-      "data": { "text": "Clorofilla", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0, "elaboration": { "definition": "Pigmento fotosintetico verde contenuto nei cloroplasti, responsabile dell'assorbimento dell'energia luminosa necessaria per la fotosintesi.", "examples": "Clorofilla a (principale, blu-verde) e clorofilla b (accessoria, giallo-verde) nelle piante superiori; batterioclorofilla nei batteri fotosintetici.", "notes": "La clorofilla appare verde perché riflette la luce verde e assorbe principalmente rosso e blu. In autunno, la degradazione della clorofilla nelle foglie ne rivela i pigmenti carotenoidici gialli e arancioni." } }
+      "position": {
+        "x": -705,
+        "y": -262
+      },
+      "data": {
+        "text": "Clorofilla",
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0,
+        "elaboration": {
+          "definition": "Pigmento fotosintetico verde contenuto nei cloroplasti, responsabile dell'assorbimento dell'energia luminosa necessaria per la fotosintesi.",
+          "examples": "Clorofilla a (principale, blu-verde) e clorofilla b (accessoria, giallo-verde) nelle piante superiori; batterioclorofilla nei batteri fotosintetici.",
+          "notes": "La clorofilla appare verde perché riflette la luce verde e assorbe principalmente rosso e blu. In autunno, la degradazione della clorofilla nelle foglie ne rivela i pigmenti carotenoidici gialli e arancioni."
+        }
+      },
+      "measured": {
+        "width": 101,
+        "height": 34
+      }
     },
     {
       "id": "n17",
       "type": "concept",
-      "position": { "x": 835, "y": -20 },
-      "data": { "text": "Impollinazione", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0, "elaboration": { "definition": "Trasferimento del polline dall'antera allo stigma di un fiore della stessa specie, necessario per la fecondazione nelle angiosperme.", "examples": "Api che trasportano polline di melo; vento che disperde polline di graminacee e nocciolo; farfalle che impollinano la lavanda.", "notes": "L'impollinazione può essere entomofila (insetti), anemofila (vento), ornitofila (uccelli) o idrofila (acqua). Circa l'87 % delle specie di piante con fiori dipende dagli impollinatori animali." } }
+      "position": {
+        "x": 771.7294232761949,
+        "y": 175.3944281176332
+      },
+      "data": {
+        "text": "Impollinazione",
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0,
+        "elaboration": {
+          "definition": "Trasferimento del polline dall'antera allo stigma di un fiore della stessa specie, necessario per la fecondazione nelle angiosperme.",
+          "examples": "Api che trasportano polline di melo; vento che disperde polline di graminacee e nocciolo; farfalle che impollinano la lavanda.",
+          "notes": "L'impollinazione può essere entomofila (insetti), anemofila (vento), ornitofila (uccelli) o idrofila (acqua). Circa l'87 % delle specie di piante con fiori dipende dagli impollinatori animali."
+        }
+      },
+      "measured": {
+        "width": 143,
+        "height": 34
+      },
+      "selected": false,
+      "dragging": false
     },
     {
       "id": "n18",
       "type": "concept",
-      "position": { "x": -577, "y": 203 },
-      "data": { "text": "Respirazione", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0, "elaboration": { "definition": "Processo metabolico cellulare attraverso cui la pianta ossida il glucosio per produrre ATP, liberando CO₂ e acqua come prodotti di scarto.", "examples": "Respirazione notturna delle foglie (quando la fotosintesi è ferma); intensa respirazione nei semi in germinazione.", "notes": "A differenza della fotosintesi, la respirazione avviene in tutti i tessuti vegetali e in qualsiasi momento del giorno. In condizioni di buona illuminazione, la fotosintesi produce più O₂ di quanto la respirazione ne consumi." } }
+      "position": {
+        "x": -433.92515949915753,
+        "y": 201.1274490820315
+      },
+      "data": {
+        "text": "Respirazione",
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0,
+        "elaboration": {
+          "definition": "Processo metabolico cellulare attraverso cui la pianta ossida il glucosio per produrre ATP, liberando CO₂ e acqua come prodotti di scarto.",
+          "examples": "Respirazione notturna delle foglie (quando la fotosintesi è ferma); intensa respirazione nei semi in germinazione.",
+          "notes": "A differenza della fotosintesi, la respirazione avviene in tutti i tessuti vegetali e in qualsiasi momento del giorno. In condizioni di buona illuminazione, la fotosintesi produce più O₂ di quanto la respirazione ne consumi."
+        }
+      },
+      "measured": {
+        "width": 127,
+        "height": 34
+      },
+      "selected": false,
+      "dragging": false
     },
     {
       "id": "n19",
       "type": "concept",
-      "position": { "x": 66, "y": 308 },
-      "data": { "text": "Annuale", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0, "elaboration": { "definition": "Pianta che completa l'intero ciclo vitale (germinazione, crescita, fioritura, fruttificazione, morte) nell'arco di un solo anno o stagione.", "examples": "Grano, mais, girasole, basilico, petunia.", "notes": "Le piante annuali sopravvivono all'inverno esclusivamente come semi. Molte colture agricole fondamentali sono annuali, selezionate per produrre rapidamente semi o frutti in abbondanza." } }
+      "position": {
+        "x": 120.1804869321968,
+        "y": 300.7708095237978
+      },
+      "data": {
+        "text": "Annuale",
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0,
+        "elaboration": {
+          "definition": "Pianta che completa l'intero ciclo vitale (germinazione, crescita, fioritura, fruttificazione, morte) nell'arco di un solo anno o stagione.",
+          "examples": "Grano, mais, girasole, basilico, petunia.",
+          "notes": "Le piante annuali sopravvivono all'inverno esclusivamente come semi. Molte colture agricole fondamentali sono annuali, selezionate per produrre rapidamente semi o frutti in abbondanza."
+        }
+      },
+      "measured": {
+        "width": 92,
+        "height": 34
+      },
+      "selected": false,
+      "dragging": false
     },
     {
       "id": "n20",
       "type": "concept",
-      "position": { "x": 299, "y": 273 },
-      "data": { "text": "Perenne", "stability": 0, "difficulty": 0, "reps": 0, "lapses": 0, "fsrsState": 0, "due": 0, "lastReview": 0, "lastRating": 0, "elaboration": { "definition": "Pianta che vive per più di due anni, fiorendo e fruttificando ripetutamente nel corso della sua vita.", "examples": "Quercia, rosa selvatica, lavanda, peonia, ulivo.", "notes": "Le perenni legnose formano tessuto secondario (legno) e crescono ogni anno; quelle erbacee possono perdere la parte aerea in inverno e ricrescere dalla radice o dai rizomi la stagione successiva." } }
+      "position": {
+        "x": 308.9710201384208,
+        "y": 326.0152401845876
+      },
+      "data": {
+        "text": "Perenne",
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0,
+        "elaboration": {
+          "definition": "Pianta che vive per più di due anni, fiorendo e fruttificando ripetutamente nel corso della sua vita.",
+          "examples": "Quercia, rosa selvatica, lavanda, peonia, ulivo.",
+          "notes": "Le perenni legnose formano tessuto secondario (legno) e crescono ogni anno; quelle erbacee possono perdere la parte aerea in inverno e ricrescere dalla radice o dai rizomi la stagione successiva."
+        }
+      },
+      "measured": {
+        "width": 92,
+        "height": 34
+      },
+      "selected": false,
+      "dragging": false
     }
   ],
   "edges": [
-    { "id": "e0", "source": "n19", "target": "n3", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "subtype-of" } },
-    { "id": "e1", "source": "n20", "target": "n3", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "subtype-of" } },
-    { "id": "e2", "source": "n4", "target": "n3", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "part-of" } },
-    { "id": "e3", "source": "n5", "target": "n3", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "part-of" } },
-    { "id": "e4", "source": "n6", "target": "n3", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "part-of" } },
-    { "id": "e5", "source": "n7", "target": "n3", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "part-of" } },
-    { "id": "e6", "source": "n8", "target": "n3", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "part-of" } },
-    { "id": "e7", "source": "n8", "target": "n1", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "contains" } },
-    { "id": "e8", "source": "n10", "target": "n13", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "enables" } },
-    { "id": "e9", "source": "n12", "target": "n13", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "enables" } },
-    { "id": "e10", "source": "n16", "target": "n13", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "enables" } },
-    { "id": "e11", "source": "n13", "target": "n14", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "produces" } },
-    { "id": "e12", "source": "n13", "target": "n15", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "produces" } },
-    { "id": "e13", "source": "n7", "target": "n17", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "enables" } },
-    { "id": "e14", "source": "n17", "target": "n8", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "produces" } },
-    { "id": "e15", "source": "n3", "target": "n9", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "requires" } },
-    { "id": "e16", "source": "n3", "target": "n10", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "requires" } },
-    { "id": "e17", "source": "n3", "target": "n11", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "requires" } },
-    { "id": "e18", "source": "n13", "target": "n16", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "requires" } },
-    { "id": "e19", "source": "n2", "target": "n9", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "requires" } },
-    { "id": "e20", "source": "n4", "target": "n11", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "uses" } },
-    { "id": "e21", "source": "n6", "target": "n10", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "uses" } },
-    { "id": "e22", "source": "n1", "target": "n2", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "precedes" } },
-    { "id": "e23", "source": "n2", "target": "n3", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "precedes" } },
-    { "id": "e24", "source": "n7", "target": "n8", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "precedes" } },
-    { "id": "e25", "source": "n13", "target": "n18", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "opposite-of" } },
-    { "id": "e26", "source": "n19", "target": "n20", "sourceHandle": "out", "targetHandle": "in", "type": "nesso", "data": { "type": "opposite-of" } }
-  ]
+    {
+      "id": "e0",
+      "source": "n19",
+      "target": "n3",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "subtype-of"
+      },
+      "selected": false
+    },
+    {
+      "id": "e1",
+      "source": "n20",
+      "target": "n3",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "subtype-of"
+      },
+      "selected": false
+    },
+    {
+      "id": "e2",
+      "source": "n4",
+      "target": "n3",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "part-of",
+        "curveFlip": true
+      }
+    },
+    {
+      "id": "e3",
+      "source": "n5",
+      "target": "n3",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "part-of"
+      },
+      "selected": false
+    },
+    {
+      "id": "e4",
+      "source": "n6",
+      "target": "n3",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "part-of"
+      }
+    },
+    {
+      "id": "e5",
+      "source": "n7",
+      "target": "n3",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "part-of"
+      }
+    },
+    {
+      "id": "e6",
+      "source": "n8",
+      "target": "n3",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "part-of",
+        "curveFlip": true
+      },
+      "selected": false
+    },
+    {
+      "id": "e7",
+      "source": "n8",
+      "target": "n1",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "contains"
+      }
+    },
+    {
+      "id": "e8",
+      "source": "n10",
+      "target": "n13",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "enables",
+        "curveFlip": true
+      }
+    },
+    {
+      "id": "e9",
+      "source": "n12",
+      "target": "n13",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "enables",
+        "curveFlip": true
+      }
+    },
+    {
+      "id": "e10",
+      "source": "n16",
+      "target": "n13",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "enables"
+      }
+    },
+    {
+      "id": "e11",
+      "source": "n13",
+      "target": "n14",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "produces",
+        "curveFlip": true
+      }
+    },
+    {
+      "id": "e12",
+      "source": "n13",
+      "target": "n15",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "produces"
+      }
+    },
+    {
+      "id": "e13",
+      "source": "n7",
+      "target": "n17",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "enables",
+        "curveFlip": true
+      },
+      "selected": false
+    },
+    {
+      "id": "e14",
+      "source": "n17",
+      "target": "n8",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "produces",
+        "curveFlip": false
+      },
+      "selected": false
+    },
+    {
+      "id": "e15",
+      "source": "n3",
+      "target": "n9",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "requires",
+        "curveFlip": true
+      }
+    },
+    {
+      "id": "e16",
+      "source": "n3",
+      "target": "n10",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "requires"
+      },
+      "selected": false
+    },
+    {
+      "id": "e17",
+      "source": "n3",
+      "target": "n11",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "requires",
+        "curveFlip": true
+      }
+    },
+    {
+      "id": "e18",
+      "source": "n13",
+      "target": "n16",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "requires"
+      }
+    },
+    {
+      "id": "e19",
+      "source": "n2",
+      "target": "n9",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "requires"
+      }
+    },
+    {
+      "id": "e20",
+      "source": "n4",
+      "target": "n11",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "uses"
+      }
+    },
+    {
+      "id": "e21",
+      "source": "n6",
+      "target": "n10",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "uses"
+      }
+    },
+    {
+      "id": "e22",
+      "source": "n1",
+      "target": "n2",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "precedes",
+        "curveFlip": true
+      }
+    },
+    {
+      "id": "e23",
+      "source": "n2",
+      "target": "n3",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "precedes",
+        "curveFlip": false,
+        "curveFlipPinned": true
+      },
+      "selected": false
+    },
+    {
+      "id": "e24",
+      "source": "n7",
+      "target": "n8",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "precedes",
+        "curveFlip": true
+      }
+    },
+    {
+      "id": "e25",
+      "source": "n13",
+      "target": "n18",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "opposite-of"
+      }
+    },
+    {
+      "id": "e26",
+      "source": "n19",
+      "target": "n20",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "type": "nesso",
+      "data": {
+        "type": "opposite-of"
+      },
+      "selected": false
+    }
+  ],
+  "display": {
+    "edgeEncoding": "full",
+    "showHeatmap": true,
+    "curveStyle": "arc",
+    "autoCurveFlip": true
+  }
 }

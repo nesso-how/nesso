@@ -8,6 +8,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Fixed
 
+- **Canvas:** **Contrasts with** (`wavy`) renders as a single dashed stroke (matches the homepage hero; no duplicate offset line).
 - **Canvas:** Marquee multi-select no longer crashes — stable edge references during selection and batched `syncFlowSelection`; **⌘** no longer conflicts with zoom (`zoomActivationKeyCode` → **Alt**).
 - **Canvas:** **Del** / dock delete removes selected concepts (and their relations) when nodes are in the selection; edge-only delete when only relations are selected (fixes marquee where React Flow also highlights edges). One undo step for mixed node+relation deletes (no longer split via React Flow’s separate remove handlers).
 - **Canvas:** After paste, arrow-key nudge works immediately (focus on the new node).
@@ -18,8 +19,19 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - **Canvas:** **N** / **+ concept** place new nodes centred on the visible canvas (matching double-click) and nudge diagonally when the centre spot is already occupied; viewport pan targets the node centre.
 - **Docs (landing):** Emphasis marked with `<em>` in translations (`set:html`) gets the accent colour again; scoped Astro CSS no longer requires compiler-generated `<em>` nodes for that rule.
 
+### Added
+
+- **Demo seeds:** **Understanding** / **Comprensione** — six-concept starter graph matching the marketing homepage hero (hub concept plus five typed relations).
+
+### Removed
+
+- **Demo seeds:** **Solar system** / **Sistema solare** bundled graphs removed for now.
+
 ### Changed
 
+- **Demo seeds:** Bundled graph JSON may include a `display` block (curve, encoding, etc.); seed bootstrap now persists it instead of dropping it.
+- **Canvas:** Sidebar **Display** options (heatmap, edge encoding, curve, auto flip) are **per graph** — saved in IndexedDB with the graph and included in JSON export; new graphs inherit app defaults until changed.
+- **Canvas:** New arc relations auto-flip from source/target layout (above when the target is to the right, below when to the left); **Display → Auto flip** (on by default) keeps curves updated while you move nodes. **Flip curve** in the Inspector is **Off | Auto | On** when auto flip is on ( **Off | On** when off); **Auto** returns a pinned edge to layout-driven bending.
 - **Graph menu:** JSON export opens the native save dialog (Chrome, Edge, and other browsers with the File System Access API); choosing an existing file prompts to overwrite. Re-exporting the same graph reuses the last path and asks before overwriting.
 - **Docs (landing):** Below the credo lines (“The user…”), the divider stays tight under the quote; the final CTAs sit in a short band below so they stay vertically centred in that space.
 

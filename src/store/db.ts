@@ -2,6 +2,7 @@
 import { deleteDB, openDB } from 'idb'
 import type { Node, Edge } from '@xyflow/react'
 import type { ConceptNodeData } from '@/types/graph'
+import type { GraphDisplaySettings } from '@/types/graph'
 import { GRAPHS_DB_NAME } from '@/data/storageKeys'
 
 export interface GraphRecord {
@@ -11,6 +12,7 @@ export interface GraphRecord {
   updatedAt: number
   nodes: Node<ConceptNodeData>[]
   edges: Edge[]
+  display?: GraphDisplaySettings
 }
 
 const db = openDB<{ graphs: GraphRecord }>(GRAPHS_DB_NAME, 1, {
