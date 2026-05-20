@@ -170,6 +170,8 @@ const en = {
       addConcept: 'Add concept at viewport centre',
       review: 'Start spaced-repetition review',
       delete: 'Delete selected concept or relation',
+      moveConcept: 'Nudge selected concept',
+      moveConceptLarge: 'Nudge selected concept (large step)',
       undo: 'Undo last graph edit',
       redo: 'Redo',
     },

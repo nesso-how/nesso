@@ -31,6 +31,7 @@ See the [relation types reference](../../reference/relation-types/) for the full
 - **Hold `⌘` / `Ctrl` and click** to toggle additional items into the selection.
 - **Drag on empty canvas** to marquee-select multiple items.
 - **`Del`** or **`Backspace`** deletes everything in the selection. Edges attached to a deleted node go with it.
+- **Arrow keys** nudge a selected concept; **Shift + arrows** move it in larger steps.
 - **`⌘Z` / `Ctrl+Z`** undoes structural edits; **`⌘⇧Z` / `Ctrl+Shift+Z`** redoes. History has 50 steps and resets when you switch or import a graph.
 
 ## The Inspector
@@ -51,7 +52,7 @@ Three free-text fields that travel with the concept and feed both the AI mentor 
 - **Examples:** one per line. Press `Shift+Enter` or use the `+` button to add a new line.
 - **Notes:** anything else: caveats, sources, mnemonics.
 
-These power the [Review](./review-mode/) recall question. The model is told to *aim* at the topic suggested by your notes without paraphrasing the definition, so active recall still works.
+These power the [Review](./review-mode/) recall question. The model is told to _aim_ at the topic suggested by your notes without paraphrasing the definition, so active recall still works.
 
 ### Concept image
 

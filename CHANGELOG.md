@@ -8,6 +8,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Fixed
 
+- **Canvas:** After canceling or committing inline rename (**Esc** / **Enter**), keyboard focus returns to the selected concept so arrow-key nudge works immediately.
 - **Canvas:** **N** / **+ concept** place new nodes centred on the visible canvas (matching double-click) and nudge diagonally when the centre spot is already occupied; viewport pan targets the node centre.
 - **Docs (landing):** Emphasis marked with `<em>` in translations (`set:html`) gets the accent colour again; scoped Astro CSS no longer requires compiler-generated `<em>` nodes for that rule.
 
@@ -19,6 +20,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
+- **Shortcuts:** Arrow keys (and **Shift** + arrows for a larger step) to nudge a selected concept are listed in the keyboard shortcuts dialog and docs.
 - **Canvas:** Double-click empty canvas to add a concept at the pointer (replaces default React Flow double-click zoom); **`N`** adds at viewport centre; new concepts open in edit mode.
 - **Canvas:** PNG export from the **Graph menu → Export as PNG** — captures the full graph (auto-fit bounds, current theme background, hides handles) and downloads `<graph-name>.png`.
 

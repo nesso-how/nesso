@@ -44,7 +44,9 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
   const [draft, setDraft] = useState(data.text)
   const [hovered, setHovered] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  const rootRef = useRef<HTMLDivElement>(null)
   const selectAllOnFocus = useRef(false)
+  const skipBlurCommit = useRef(false)
   const { updateNodeData, settings, editNodeId, clearEditNodeId } = useGraphStore()
   const showConfidence = settings.showConfidence
   const showHeatmap = settings.showHeatmap
@@ -88,11 +90,18 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
     input.setSelectionRange(pos, pos)
   }, [])
 
+  const focusNodeWrapper = useCallback(() => {
+    requestAnimationFrame(() => {
+      rootRef.current?.closest('.react-flow__node')?.focus()
+    })
+  }, [])
+
   const commit = useCallback((val: string) => {
     const trimmed = val.trim()
     if (trimmed) updateNodeData(id, { text: trimmed })
     setEditing(false)
-  }, [id, updateNodeData])
+    focusNodeWrapper()
+  }, [id, updateNodeData, focusNodeWrapper])
 
   const ratingIdx = Math.max(0, Math.min(4, data.lastRating ?? 0))
   const heatTint = RATING_COLOR[ratingIdx]
@@ -101,6 +110,7 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
 
   return (
     <div
+      ref={rootRef}
       onDoubleClick={(e) => { e.stopPropagation(); startEdit() }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -161,14 +171,25 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
             className="nodrag nopan"
             value={draft}
             onChange={e => setDraft(e.target.value)}
-            onBlur={e => commit(e.target.value)}
+            onBlur={e => {
+              if (skipBlurCommit.current) {
+                skipBlurCommit.current = false
+                return
+              }
+              commit(e.target.value)
+            }}
             onPointerDown={stopGraphPointer}
             onMouseDown={handleInputMouseDown}
             onClick={stopGraphPointer}
             onKeyDown={e => {
               e.stopPropagation()
               if (e.key === 'Enter') commit(draft)
-              if (e.key === 'Escape') { setEditing(false); setDraft(data.text) }
+              if (e.key === 'Escape') {
+                skipBlurCommit.current = true
+                setDraft(data.text)
+                setEditing(false)
+                focusNodeWrapper()
+              }
             }}
             style={{
               position: 'absolute',

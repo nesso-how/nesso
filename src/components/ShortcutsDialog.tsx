@@ -29,6 +29,8 @@ export function ShortcutsDialog({ open, onClose }: Props) {
         { keys: ['N'], label: t.shortcuts.rows.addConcept },
         { keys: ['R'], label: t.shortcuts.rows.review },
         { keys: ['Del'], label: t.shortcuts.rows.delete },
+        { keys: ['↑↓←→'], label: t.shortcuts.rows.moveConcept },
+        { keys: ['Shift', '↑↓←→'], label: t.shortcuts.rows.moveConceptLarge },
         { keys: [mod, 'Z'], label: t.shortcuts.rows.undo },
         { keys: [mod, 'Shift', 'Z'], label: t.shortcuts.rows.redo },
       ],

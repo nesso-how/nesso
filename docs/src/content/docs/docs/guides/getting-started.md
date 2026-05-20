@@ -75,6 +75,8 @@ Settings auto-probes the endpoint and offers a **Pull** button if the model is m
 | `⌘Z` / `Ctrl+Z`        | Undo                           |
 | `⌘⇧Z` / `Ctrl+Shift+Z` | Redo                           |
 | `Del` / `Backspace`    | Delete selection               |
+| `↑` `↓` `←` `→`        | Nudge selected concept         |
+| `Shift` + arrows       | Nudge selected concept (large) |
 | `Esc`                  | Close dialog                   |
 
 Hold `⌘` / `Ctrl` to add to a selection; drag on empty canvas to marquee-select.

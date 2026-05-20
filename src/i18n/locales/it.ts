@@ -170,6 +170,8 @@ const it: typeof en = {
       addConcept: 'Aggiungi concetto al centro del viewport',
       review: 'Avvia revisione a ripetizione spaziata',
       delete: 'Elimina concetto o relazione selezionati',
+      moveConcept: 'Sposta concetto selezionato',
+      moveConceptLarge: 'Sposta concetto selezionato (passo grande)',
       undo: 'Annulla ultima modifica',
       redo: 'Ripristina',
     },
