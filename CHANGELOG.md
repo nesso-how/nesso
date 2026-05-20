@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.0-alpha.18] - 2026-05-20
+
 ### Fixed
 
 - **Canvas:** **Contrasts with** (`wavy`) renders as a single dashed stroke (matches the homepage hero; no duplicate offset line).
@@ -21,6 +23,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
+- **Canvas:** Copy and paste for selected concepts and relations — bottom-dock buttons and **⌘C** / **⌘V** (**Ctrl+C** / **Ctrl+V**). Supports single and multi-select (marquee or **⌘**/**Ctrl**-click); copying concepts includes interconnecting relations; copying a relation includes its endpoints. Paste offsets the duplicate and supports undo.
+- **Inspector:** **Flip curve** on a selected relation when **Display → Curve** is **Arc** — mirrors the arc to the opposite side; persisted per edge.
+- **Shortcuts:** Arrow keys (and **Shift** + arrows for a larger step) to nudge a selected concept are listed in the keyboard shortcuts dialog and docs.
+- **Canvas:** Double-click empty canvas to add a concept at the pointer (replaces default React Flow double-click zoom); **`N`** adds at viewport centre; new concepts open in edit mode.
+- **Canvas:** PNG export from the **Graph menu → Export as PNG** — captures the full graph (auto-fit bounds, current theme background, hides handles) and downloads `<graph-name>.png`.
 - **Demo seeds:** **Understanding** / **Comprensione** — six-concept starter graph matching the marketing homepage hero (hub concept plus five typed relations).
 
 ### Removed
@@ -34,16 +41,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - **Canvas:** New arc relations auto-flip from source/target layout (above when the target is to the right, below when to the left); **Display → Auto flip** (on by default) keeps curves updated while you move nodes. **Flip curve** in the Inspector is **Off | Auto | On** when auto flip is on ( **Off | On** when off); **Auto** returns a pinned edge to layout-driven bending.
 - **Graph menu:** JSON export opens the native save dialog (Chrome, Edge, and other browsers with the File System Access API); choosing an existing file prompts to overwrite. Re-exporting the same graph reuses the last path and asks before overwriting.
 - **Docs (landing):** Below the credo lines (“The user…”), the divider stays tight under the quote; the final CTAs sit in a short band below so they stay vertically centred in that space.
-
 - **README:** Hero concept-graph illustration is shared with the marketing homepage (`docs/public/hero-graph.svg`) instead of a separate screenshot.
-
-### Added
-
-- **Canvas:** Copy and paste for selected concepts and relations — bottom-dock buttons and **⌘C** / **⌘V** (**Ctrl+C** / **Ctrl+V**). Supports single and multi-select (marquee or **⌘**/**Ctrl**-click); copying concepts includes interconnecting relations; copying a relation includes its endpoints. Paste offsets the duplicate and supports undo.
-- **Inspector:** **Flip curve** on a selected relation when **Display → Curve** is **Arc** — mirrors the arc to the opposite side; persisted per edge.
-- **Shortcuts:** Arrow keys (and **Shift** + arrows for a larger step) to nudge a selected concept are listed in the keyboard shortcuts dialog and docs.
-- **Canvas:** Double-click empty canvas to add a concept at the pointer (replaces default React Flow double-click zoom); **`N`** adds at viewport centre; new concepts open in edit mode.
-- **Canvas:** PNG export from the **Graph menu → Export as PNG** — captures the full graph (auto-fit bounds, current theme background, hides handles) and downloads `<graph-name>.png`.
 
 ## [0.1.0-alpha.17] - 2026-05-16
 
@@ -324,7 +322,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial alpha: interactive knowledge graph (web + Tauri v2); desktop installers on GitHub Releases (macOS Apple silicon and Intel).
 
-[Unreleased]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.17...HEAD
+[Unreleased]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.18...HEAD
+[0.1.0-alpha.18]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.17...v0.1.0-alpha.18
 [0.1.0-alpha.17]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.16...v0.1.0-alpha.17
 [0.1.0-alpha.16]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.15...v0.1.0-alpha.16
 [0.1.0-alpha.15]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.14...v0.1.0-alpha.15
