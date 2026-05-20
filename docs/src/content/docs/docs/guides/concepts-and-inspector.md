@@ -65,6 +65,8 @@ The image link and Commons description URL are persisted with the graph, so attr
 
 The Inspector shows the relation as a chip with its category colour and a dropdown of every relation type. Picking a new type updates the edge in place; the graph keeps its endpoints and identity.
 
+When **Display → Curve** is set to **Arc**, an **Flip curve** control mirrors that edge's arc to the opposite side — useful when the default bend overlaps another node or edge. The choice is saved with the graph.
+
 ## Stats and search
 
 - **Sidebar -> Stats** shows concept count, link count, and current zoom (a handy gut-check for graph size).

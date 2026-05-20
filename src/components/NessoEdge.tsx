@@ -12,7 +12,7 @@ import { useT } from '@/i18n'
 export interface NessoEdgeData {
   type: EdgeTypeName
   siblingIdx?: number   // 0-based index among edges sharing the same node pair
-  straight?: boolean    // override per edge (unused, controlled by settings)
+  curveFlip?: boolean   // mirror arc to the opposite side (arc mode only)
 }
 
 function EdgePathElement({
@@ -89,16 +89,37 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps) {
   const tcx = targetNode.internals.positionAbsolute.x + tw / 2
   const tcy = targetNode.internals.positionAbsolute.y + th / 2
 
-  // Exit points: slightly padded so the arrow tip clears the node border
+  // Exit points: slightly padded so the arrow tip clears the node border.
+  // For arcs, compute a preliminary control point from node centers so both
+  // exit points face the actual curve approach direction (not the straight line).
   const pad = 6
-  const a = rectExit(scx, scy, sw + pad * 2, sh + pad * 2, tcx, tcy)
-  const b = rectExit(tcx, tcy, tw + pad * 2, th + pad * 2, scx, scy)
+  const flipSign = (edgeData?.curveFlip ?? false) ? -1 : 1
+  const { a, b } = (() => {
+    if (straight) {
+      return {
+        a: rectExit(scx, scy, sw + pad * 2, sh + pad * 2, tcx, tcy),
+        b: rectExit(tcx, tcy, tw + pad * 2, th + pad * 2, scx, scy),
+      }
+    }
+    const dx = tcx - scx, dy = tcy - scy
+    const dist = Math.sqrt(dx * dx + dy * dy) || 1
+    const nx = -dy / dist, ny = dx / dist
+    const sibOff = (edgeData?.siblingIdx ?? 0) * 14
+    const bend = (Math.min(dist * 0.22, 90) + sibOff * 0.5) * flipSign
+    const cpx = (scx + tcx) / 2 + nx * bend
+    const cpy = (scy + tcy) / 2 + ny * bend
+    return {
+      a: rectExit(scx, scy, sw + pad * 2, sh + pad * 2, cpx, cpy),
+      b: rectExit(tcx, tcy, tw + pad * 2, th + pad * 2, cpx, cpy),
+    }
+  })()
 
   const { path, labelX, labelY, arrowAngle } = nessoArcPath(
     a.x, a.y,
     b.x, b.y,
     edgeData?.siblingIdx ?? 0,
     straight,
+    edgeData?.curveFlip ?? false,
   )
 
   const arrowSize = 7

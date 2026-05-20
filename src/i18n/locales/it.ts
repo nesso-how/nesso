@@ -96,6 +96,8 @@ const it: typeof en = {
     outgoing: 'In uscita',
     incoming: 'In entrata',
     sharpen: 'Precisa la relazione',
+    visualization: 'Visualizzazione',
+    flipCurve: 'Inverti curva',
     ratingNames: ['—', 'Ancora', 'Difficile', 'Bene', 'Facile'],
     notes: {
       definition: 'Definizione',

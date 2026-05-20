@@ -96,6 +96,8 @@ const en = {
     outgoing: 'Outgoing',
     incoming: 'Incoming',
     sharpen: 'Sharpen the relation',
+    visualization: 'Visualization',
+    flipCurve: 'Flip curve',
     ratingNames: ['—', 'Again', 'Hard', 'Good', 'Easy'],
     notes: {
       definition: 'Definition',

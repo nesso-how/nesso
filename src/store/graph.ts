@@ -78,6 +78,7 @@ interface GraphState {
   addNode: (x?: number, y?: number) => string
   addEdge: (source: string, target: string, type: EdgeTypeName) => string
   updateEdgeType: (id: string, type: EdgeTypeName) => void
+  toggleEdgeCurveFlip: (id: string) => void
   deleteEdge: (id: string) => void
 
   // Selection
@@ -323,6 +324,16 @@ export const useGraphStore = create<GraphState>()(
           ...pushHistory(s),
           edges: s.edges.map(e =>
             e.id === id ? { ...e, data: { ...e.data, type } } : e
+          ),
+        })),
+
+      toggleEdgeCurveFlip: (id) =>
+        set(s => ({
+          ...pushHistory(s),
+          edges: s.edges.map(e =>
+            e.id === id
+              ? { ...e, data: { ...e.data, curveFlip: !e.data?.curveFlip } }
+              : e
           ),
         })),
 

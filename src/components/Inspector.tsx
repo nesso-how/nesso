@@ -1006,13 +1006,15 @@ function EdgeInspector({
 }) {
   const t = useT()
   const edge = useGraphStore(selectedEdgeSelector)!
-  const { nodes, updateEdgeType } = useGraphStore()
+  const { nodes, updateEdgeType, toggleEdgeCurveFlip, settings } = useGraphStore()
   const edgeType = asEdgeTypeName(edge.data?.type)
   const T = RELATION_TYPES[edgeType]
   const C = RELATION_CATEGORIES[T.cat]
   const from = nodes.find(n => n.id === edge.source)
   const to = nodes.find(n => n.id === edge.target)
   const siblings = RELATION_TYPE_VALUES.filter(id => RELATION_TYPES[id].cat === T.cat)
+  const curveFlipped = Boolean(edge.data?.curveFlip)
+  const showCurveFlip = settings.curveStyle === 'arc'
 
   return (
     <InspectorPanel
@@ -1075,11 +1077,72 @@ function EdgeInspector({
         ))}
       </div>
 
+      {showCurveFlip && (
+        <>
+          <h5 style={{
+            margin: '18px 0 6px',
+            font: "600 10px 'JetBrains Mono', ui-monospace",
+            textTransform: 'uppercase',
+            letterSpacing: '0.08em',
+            color: 'var(--ink-4)',
+          }}>
+            {t.inspector.visualization}
+          </h5>
+          <EdgeDisplayRow label={t.inspector.flipCurve}>
+            <EdgeSeg
+              options={[
+                { id: 'off', label: t.sidebar.displayOptions.off },
+                { id: 'on', label: t.sidebar.displayOptions.on },
+              ]}
+              value={curveFlipped ? 'on' : 'off'}
+              onChange={v => { if ((v === 'on') !== curveFlipped) toggleEdgeCurveFlip(edge.id) }}
+            />
+          </EdgeDisplayRow>
+        </>
+      )}
+
     </InspectorPanel>
   )
 }
 
 // ─── helper components ────────────────────────────────────────────────────────
+
+function EdgeDisplayRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      padding: '5px 0', gap: 12,
+    }}>
+      <span style={{ font: "12px 'Inter', ui-sans-serif", color: 'var(--ink-3)' }}>{label}</span>
+      {children}
+    </div>
+  )
+}
+
+function EdgeSeg({ options, value, onChange }: {
+  options: { id: string; label: string }[]
+  value: string
+  onChange: (id: string) => void
+}) {
+  return (
+    <div style={{ display: 'flex', background: 'var(--paper-deep)', borderRadius: 6, padding: 2 }}>
+      {options.map(o => (
+        <button
+          key={o.id}
+          onClick={() => onChange(o.id)}
+          style={{
+            appearance: 'none', border: 0,
+            background: o.id === value ? 'var(--bg-card)' : 'transparent',
+            color: o.id === value ? 'var(--ink)' : 'var(--ink-4)',
+            font: o.id === value ? "500 11px 'Inter', ui-sans-serif" : "11px 'Inter', ui-sans-serif",
+            padding: '3px 9px', borderRadius: 4, cursor: 'default',
+            boxShadow: o.id === value ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
+          }}
+        >{o.label}</button>
+      ))}
+    </div>
+  )
+}
 
 function EdgeRow({ label, text, color, glyph, onClick }: {
   label: string; text: string; color: string; glyph: string; onClick: () => void

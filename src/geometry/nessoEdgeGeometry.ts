@@ -16,6 +16,7 @@ export function nessoArcPath(
   tx: number, ty: number,
   siblingIdx = 0,
   straight = false,
+  curveFlip = false,
 ): { path: string; labelX: number; labelY: number; arrowAngle: number } {
   if (straight) {
     const lx = (sx + tx) / 2
@@ -36,7 +37,8 @@ export function nessoArcPath(
   const ny = dx / dist
 
   const off = siblingIdx * 14
-  const bend = Math.min(dist * 0.22, 90) + off * 0.5
+  const sign = curveFlip ? -1 : 1
+  const bend = (Math.min(dist * 0.22, 90) + off * 0.5) * sign
   const cpx = (sx + tx) / 2 + nx * bend
   const cpy = (sy + ty) / 2 + ny * bend
 

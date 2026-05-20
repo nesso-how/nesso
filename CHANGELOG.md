@@ -28,6 +28,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 
 - **Canvas:** Copy and paste for selected concepts and relations — bottom-dock buttons and **⌘C** / **⌘V** (**Ctrl+C** / **Ctrl+V**). Supports single and multi-select (marquee or **⌘**/**Ctrl**-click); copying concepts includes interconnecting relations; copying a relation includes its endpoints. Paste offsets the duplicate and supports undo.
+- **Inspector:** **Flip curve** on a selected relation when **Display → Curve** is **Arc** — mirrors the arc to the opposite side; persisted per edge.
 - **Shortcuts:** Arrow keys (and **Shift** + arrows for a larger step) to nudge a selected concept are listed in the keyboard shortcuts dialog and docs.
 - **Canvas:** Double-click empty canvas to add a concept at the pointer (replaces default React Flow double-click zoom); **`N`** adds at viewport centre; new concepts open in edit mode.
 - **Canvas:** PNG export from the **Graph menu → Export as PNG** — captures the full graph (auto-fit bounds, current theme background, hides handles) and downloads `<graph-name>.png`.
