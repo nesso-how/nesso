@@ -96,8 +96,6 @@ const en = {
     outgoing: 'Outgoing',
     incoming: 'Incoming',
     sharpen: 'Sharpen the relation',
-    delete: 'Delete',
-    deleteRelation: 'Delete relation',
     ratingNames: ['—', 'Again', 'Hard', 'Good', 'Easy'],
     notes: {
       definition: 'Definition',
@@ -190,7 +188,7 @@ const en = {
     redoTitle: 'Redo (⌘⇧Z)',
     fitTitle: 'Center / fit (F)',
     addConceptTitle: 'Add concept (N or double-click canvas)',
-    deleteConceptTitle: 'Delete selected (Del or Backspace)',
+    deleteTitle: 'Delete selected concept or relation (Del or Backspace)',
   },
   topBar: {
     expandSidebar: 'Expand sidebar',

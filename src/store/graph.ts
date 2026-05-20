@@ -77,7 +77,7 @@ interface GraphState {
   setSelected: (sel: Selection) => void
   selectedIds: string[]
   setSelectedIds: (ids: string[]) => void
-  deleteSelectedNodes: () => void
+  deleteSelection: () => void
 
   /** One-shot: concept node id that should open in edit mode after creation (not persisted). */
   editNodeId: string | null
@@ -210,8 +210,22 @@ export const useGraphStore = create<GraphState>()(
         }
       },
 
-      onEdgesChange: (changes) =>
-        set(s => ({ edges: applyEdgeChanges(changes, s.edges) })),
+      onEdgesChange: (changes) => {
+        const hasRemove = changes.some(c => c.type === 'remove')
+        if (hasRemove) {
+          const removedIds = new Set(
+            changes.filter((c): c is { type: 'remove'; id: string } => c.type === 'remove').map(c => c.id),
+          )
+          set(s => ({
+            ...pushHistory(s),
+            edges: applyEdgeChanges(changes, s.edges),
+            selected:
+              s.selected?.kind === 'edge' && removedIds.has(s.selected.id) ? null : s.selected,
+          }))
+        } else {
+          set(s => ({ edges: applyEdgeChanges(changes, s.edges) }))
+        }
+      },
 
       updateNodeData: (id, patch) =>
         set(s => ({
@@ -267,16 +281,22 @@ export const useGraphStore = create<GraphState>()(
         const id = 'e' + Math.random().toString(36).slice(2, 8)
         set(s => ({
           ...pushHistory(s),
-          edges: [...s.edges, {
-            id,
-            source,
-            target,
-            sourceHandle: CONCEPT_HANDLE_OUT,
-            targetHandle: CONCEPT_HANDLE_IN,
-            type: 'nesso',
-            data: { type },
-          }],
+          nodes: s.nodes.map(n => (n.selected ? { ...n, selected: false } : n)),
+          edges: [
+            ...s.edges.map(e => (e.selected ? { ...e, selected: false } : e)),
+            {
+              id,
+              source,
+              target,
+              sourceHandle: CONCEPT_HANDLE_OUT,
+              targetHandle: CONCEPT_HANDLE_IN,
+              type: 'nesso',
+              selected: true,
+              data: { type },
+            },
+          ],
           selected: { kind: 'edge', id },
+          selectedIds: [],
         }))
         return id
       },
@@ -301,32 +321,87 @@ export const useGraphStore = create<GraphState>()(
         // a programmatic node.selected update firing back into this action).
         if (s.selected?.kind === sel?.kind && s.selected?.id === sel?.id) return s
 
-        // When programmatically selecting a single node, mirror the selection
-        // into the nodes array so ConceptNode receives the correct `selected` prop.
         if (sel?.kind === 'node') {
-          let changed = false
+          let nodesChanged = false
           const nodes = s.nodes.map(n => {
             const want = n.id === sel.id
-            if (Boolean(n.selected) !== want) { changed = true; return { ...n, selected: want } }
+            if (Boolean(n.selected) !== want) { nodesChanged = true; return { ...n, selected: want } }
             return n
           })
-          return { selected: sel, nodes: changed ? nodes : s.nodes }
+          let edgesChanged = false
+          const edges = s.edges.map(e => {
+            if (e.selected) { edgesChanged = true; return { ...e, selected: false } }
+            return e
+          })
+          return {
+            selected: sel,
+            selectedIds: [sel.id],
+            nodes: nodesChanged ? nodes : s.nodes,
+            edges: edgesChanged ? edges : s.edges,
+          }
         }
 
-        return { selected: sel }
+        if (sel?.kind === 'edge') {
+          let nodesChanged = false
+          const nodes = s.nodes.map(n => {
+            if (n.selected) { nodesChanged = true; return { ...n, selected: false } }
+            return n
+          })
+          let edgesChanged = false
+          const edges = s.edges.map(e => {
+            const want = e.id === sel.id
+            if (Boolean(e.selected) !== want) { edgesChanged = true; return { ...e, selected: want } }
+            return e
+          })
+          return {
+            selected: sel,
+            selectedIds: [],
+            nodes: nodesChanged ? nodes : s.nodes,
+            edges: edgesChanged ? edges : s.edges,
+          }
+        }
+
+        let nodesChanged = false
+        const nodes = s.nodes.map(n => {
+          if (n.selected) { nodesChanged = true; return { ...n, selected: false } }
+          return n
+        })
+        let edgesChanged = false
+        const edges = s.edges.map(e => {
+          if (e.selected) { edgesChanged = true; return { ...e, selected: false } }
+          return e
+        })
+        return {
+          selected: null,
+          selectedIds: [],
+          nodes: nodesChanged ? nodes : s.nodes,
+          edges: edgesChanged ? edges : s.edges,
+        }
       }),
 
       setSelectedIds: (ids) => set({ selectedIds: ids }),
 
-      deleteSelectedNodes: () =>
+      deleteSelection: () =>
         set(s => {
+          if (s.selected?.kind === 'edge') {
+            const id = s.selected.id
+            return {
+              ...pushHistory(s),
+              edges: s.edges.filter(e => e.id !== id),
+              selected: null,
+              selectedIds: [],
+            }
+          }
+
           const ids = new Set(s.selectedIds)
+          if (s.selected?.kind === 'node') ids.add(s.selected.id)
           if (ids.size === 0) return s
+
           return {
             ...pushHistory(s),
             nodes: s.nodes.filter(n => !ids.has(n.id)),
             edges: s.edges.filter(e => !ids.has(e.source) && !ids.has(e.target)),
-            selected: s.selected?.kind === 'node' && ids.has(s.selected.id) ? null : s.selected,
+            selected: null,
             selectedIds: [],
           }
         }),

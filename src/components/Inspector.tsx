@@ -566,7 +566,7 @@ function NodeInspector({
 }) {
   const t = useT()
   const node = useGraphStore(selectedNodeSelector)!
-  const { edges, nodes, deleteNode, setSelected, updateNodeData, settings, setSetting } = useGraphStore()
+  const { edges, nodes, setSelected, updateNodeData, settings, setSetting } = useGraphStore()
 
   const examplesOpen = settings.inspectorExamplesOpen
   const relationsOpen = settings.inspectorRelationsOpen
@@ -1006,7 +1006,7 @@ function EdgeInspector({
 }) {
   const t = useT()
   const edge = useGraphStore(selectedEdgeSelector)!
-  const { nodes, updateEdgeType, deleteEdge } = useGraphStore()
+  const { nodes, updateEdgeType } = useGraphStore()
   const edgeType = asEdgeTypeName(edge.data?.type)
   const T = RELATION_TYPES[edgeType]
   const C = RELATION_CATEGORIES[T.cat]
@@ -1075,9 +1075,6 @@ function EdgeInspector({
         ))}
       </div>
 
-      <div style={{ display: 'flex', gap: 6, marginTop: 14, paddingTop: 12 }}>
-        <ActionBtn danger onClick={() => deleteEdge(edge.id)}>{t.inspector.deleteRelation}</ActionBtn>
-      </div>
     </InspectorPanel>
   )
 }
@@ -1124,34 +1121,5 @@ function EdgeRow({ label, text, color, glyph, onClick }: {
         </span>
       </div>
     </div>
-  )
-}
-
-function ActionBtn({ children, danger, onClick }: { children: ReactNode; danger?: boolean; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        flex: 1,
-        appearance: 'none',
-        border: '0.5px solid var(--line)',
-        background: 'var(--paper-deep)',
-        color: danger ? 'var(--cat-opposition)' : 'var(--ink-2)',
-        font: "500 11px 'JetBrains Mono', ui-monospace",
-        padding: '7px 8px',
-        borderRadius: 7,
-        cursor: 'default',
-      }}
-      onMouseEnter={e => {
-        e.currentTarget.style.background = danger ? 'rgba(138,46,74,0.06)' : 'var(--bg-card)'
-        e.currentTarget.style.color = danger ? 'var(--cat-opposition)' : 'var(--ink)'
-      }}
-      onMouseLeave={e => {
-        e.currentTarget.style.background = 'var(--paper-deep)'
-        e.currentTarget.style.color = danger ? 'var(--cat-opposition)' : 'var(--ink-2)'
-      }}
-    >
-      {children}
-    </button>
   )
 }

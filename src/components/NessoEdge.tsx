@@ -56,7 +56,7 @@ function EdgePathElement({
 export function NessoEdge({ id, source, target, data, selected }: EdgeProps) {
   const t = useT()
   const [hovered, setHovered] = useState(false)
-  const { settings, selected: storeSelected, setSelected } = useGraphStore()
+  const { settings, selected: storeSelected } = useGraphStore()
 
   // Read live node geometry from the React Flow store so we can compute
   // bounding-box exit points instead of relying on fixed left/right handles.
@@ -117,7 +117,6 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps) {
     <g
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      onClick={e => { e.stopPropagation(); setSelected({ kind: 'edge', id }) }}
       style={{ cursor: 'default' }}
     >
       {/* Wide invisible hit area */}

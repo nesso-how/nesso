@@ -43,7 +43,7 @@ Persistence: Zustand `persist` (`ZUSTAND_PERSIST_KEY` → localStorage key `ness
 | `deleteEdge(id)`                                | Removes edge, clears selection if needed                                                                                                                    |
 | `setSelected(sel)`                              | Sets selection (or `null` to deselect)                                                                                                                      |
 | `setSelectedIds(ids)`                           | Multi-selection for marquee / ⌘-click workflows                                                                                                             |
-| `deleteSelectedNodes()`                         | Removes all nodes in `selectedIds` and their incident edges                                                                                                 |
+| `deleteSelection()`                             | Deletes the selected relation, all nodes in `selectedIds`, or the singly selected concept; clears selection                                                 |
 | `setSetting(key, value)`                        | Updates a single `NessoSettings` field                                                                                                                      |
 | `setMentorPanelExpanded(expanded)`              | Expands or collapses the Socrates mentor card (FAB stays visible; persisted)                                                                                |
 | `setSidebarCollapsed` / `setSidebarDisplayOpen` | Sidebar chrome toggles (persisted)                                                                                                                          |

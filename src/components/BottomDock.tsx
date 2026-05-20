@@ -14,7 +14,11 @@ interface Props {
 
 export function BottomDock({ onFit, onUndo, onRedo, canUndo, canRedo, onAddConcept, sidebarWidth = 0 }: Props) {
   const t = useT()
-  const { selectedIds, deleteSelectedNodes } = useGraphStore()
+  const { selected, selectedIds, deleteSelection } = useGraphStore()
+  const canDelete =
+    selected?.kind === 'edge'
+    || selectedIds.length > 0
+    || selected?.kind === 'node'
   return (
     <div style={{
       position: 'absolute',
@@ -54,9 +58,9 @@ export function BottomDock({ onFit, onUndo, onRedo, canUndo, canRedo, onAddConce
       <Sep />
 
       <DockBtn
-        onClick={deleteSelectedNodes}
-        title={t.bottomDock.deleteConceptTitle}
-        disabled={selectedIds.length === 0}
+        onClick={deleteSelection}
+        title={t.bottomDock.deleteTitle}
+        disabled={!canDelete}
       >
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
           <path d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5M3 4l1 9a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1l1-9" />

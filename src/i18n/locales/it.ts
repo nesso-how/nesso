@@ -96,8 +96,6 @@ const it: typeof en = {
     outgoing: 'In uscita',
     incoming: 'In entrata',
     sharpen: 'Precisa la relazione',
-    delete: 'Elimina',
-    deleteRelation: 'Elimina relazione',
     ratingNames: ['—', 'Ancora', 'Difficile', 'Bene', 'Facile'],
     notes: {
       definition: 'Definizione',
@@ -190,7 +188,7 @@ const it: typeof en = {
     redoTitle: 'Ripristina (⌘⇧Z)',
     fitTitle: 'Centra / adatta (F)',
     addConceptTitle: 'Aggiungi concetto (N o doppio clic sul canvas)',
-    deleteConceptTitle: 'Elimina selezionati (Canc o Backspace)',
+    deleteTitle: 'Elimina concetto o relazione selezionati (Canc o Backspace)',
   },
   topBar: {
     expandSidebar: 'Espandi pannello laterale',

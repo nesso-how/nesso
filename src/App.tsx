@@ -42,8 +42,6 @@ function AppInner() {
     addNode,
     selected,
     setSelected,
-    deleteNode,
-    deleteEdge,
     undo,
     redo,
     loadGraph,
