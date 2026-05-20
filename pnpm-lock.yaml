@@ -11,6 +11,9 @@ importers:
       '@mlc-ai/web-llm':
         specifier: ^0.2.83
         version: 0.2.83
+      '@nesso-how/formats':
+        specifier: workspace:*
+        version: link:packages/formats
       '@nesso-how/relation-types':
         specifier: workspace:*
         version: link:packages/relation-types
@@ -60,6 +63,19 @@ importers:
       vite:
         specifier: ^6.3.5
         version: 6.4.2(@types/node@22.19.19)
+
+  packages/formats:
+    dependencies:
+      '@nesso-how/types':
+        specifier: workspace:*
+        version: link:../types
+      '@xyflow/react':
+        specifier: ^12.6.4
+        version: 12.10.2(@types/react@18.3.28)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+    devDependencies:
+      typescript:
+        specifier: ~5.8.3
+        version: 5.8.3
 
   packages/mcp:
     dependencies:

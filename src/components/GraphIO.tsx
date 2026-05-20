@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 import { useState, useRef, useEffect } from 'react'
 import { useGraphStore } from '@/store/graph'
-import { getNodesBounds, getViewportForBounds, type Node as FlowNode, type Edge } from '@xyflow/react'
+import { getNodesBounds, getViewportForBounds } from '@xyflow/react'
 import { toPng } from 'html-to-image'
-import type { ConceptNodeData } from '@/types/graph'
 import { useT } from '@/i18n'
 import { saveJsonFileForGraph } from '@/lib/saveJsonFile'
+import { serializeGraph, deserializeGraph } from '@nesso-how/formats'
 
 interface Props {
   onRelationTypes: () => void
@@ -38,7 +38,7 @@ export function GraphIO({ onRelationTypes, onShortcuts }: Props) {
     const meta = graphList.find(g => g.id === currentGraphId)
     const name = meta?.name ?? 'graph'
     const filename = `${name}.json`
-    const payload = JSON.stringify({ name, nodes, edges, display: graphDisplay }, null, 2)
+    const payload = serializeGraph({ name, nodes, edges, display: graphDisplay })
     await saveJsonFileForGraph(
       currentGraphId,
       filename,
@@ -97,15 +97,9 @@ export function GraphIO({ onRelationTypes, onShortcuts }: Props) {
       const file = input.files?.[0]
       if (!file) return
       try {
-        const data = JSON.parse(await file.text())
-        if (!Array.isArray(data.nodes) || !Array.isArray(data.edges)) return
-        const name: string = data.name ?? file.name.replace(/\.json$/i, '')
-        await importGraph(
-          name,
-          data.nodes as FlowNode<ConceptNodeData>[],
-          data.edges as Edge[],
-          data.display,
-        )
+        const data = deserializeGraph(await file.text())
+        const name = data.name || file.name.replace(/\.json$/i, '')
+        await importGraph(name, data.nodes, data.edges, data.display)
       } catch {}
     }
     input.click()

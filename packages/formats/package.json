@@ -1,0 +1,28 @@
+{
+  "name": "@nesso-how/formats",
+  "version": "0.1.0-alpha.19",
+  "description": "Nesso graph serialization formats — JSON serialize/deserialize",
+  "license": "MIT",
+  "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "pnpm build",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@nesso-how/types": "workspace:*",
+    "@xyflow/react": "^12.6.4"
+  },
+  "devDependencies": {
+    "typescript": "~5.8.3"
+  }
+}
