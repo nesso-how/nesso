@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- **`@nesso-how/types`** — new npm package exporting all shared graph types (`ConceptNodeData`, `NessoSettings`, `NessoEdgeData`, `GraphDisplaySettings`, helpers `nodeToCard`, `defaultGraphDisplay`, `mergeGraphDisplay`). `src/types/graph.ts` is now a re-export shim so no app imports change.
+
 ### Fixed
 
 - **CI:** npm publish uses **Trusted Publishing** (OIDC) instead of `NPM_TOKEN`, avoiding 2FA / `EOTP` failures in release workflows.
