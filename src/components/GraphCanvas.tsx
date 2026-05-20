@@ -18,13 +18,11 @@ import { NessoConnectionLine } from './NessoConnectionLine'
 import { NessoEdge } from './NessoEdge'
 import { RelationPicker } from './RelationPicker'
 import { useGraphStore } from '@/store/graph'
+import { newConceptTopLeftAtFlowCenter } from '@/data/newConceptLayout'
 import type { EdgeTypeName } from '@/types/graph'
 
 const nodeTypes = { concept: ConceptNode }
 const edgeTypes = { nesso: NessoEdge }
-
-/** Default footprint for a new "New concept" label (flow px); centers node on double-click. */
-const NEW_CONCEPT_SIZE = { width: 112, height: 34 }
 
 interface PendingConnection {
   source: string
@@ -111,10 +109,8 @@ export function GraphCanvas({
 
     event.preventDefault()
     const { x, y } = screenToFlowPosition({ x: event.clientX, y: event.clientY })
-    addNode(
-      x - NEW_CONCEPT_SIZE.width / 2,
-      y - NEW_CONCEPT_SIZE.height / 2,
-    )
+    const pos = newConceptTopLeftAtFlowCenter(x, y)
+    addNode(pos.x, pos.y)
   }, [addNode, screenToFlowPosition])
 
   const onPickRelation = useCallback((type: EdgeTypeName) => {

@@ -26,6 +26,7 @@ import { SearchDialog } from './components/SearchDialog'
 import { useGraphStore, selectedNodeSelector, selectedEdgeSelector } from './store/graph'
 import { useAutoSave } from './hooks/useAutoSave'
 import { PALETTES } from './data/palettes'
+import { findNewConceptPosition, NEW_CONCEPT_SIZE } from './data/newConceptLayout'
 import { initWebLLM, localModelWeightsCached } from './llm/webllm'
 
 function AppInner() {
@@ -217,12 +218,15 @@ function AppInner() {
     const rightInset = 30
     const screenCenterX = leftInset + (window.innerWidth - leftInset - rightInset) / 2
     const screenCenterY = topInset + (window.innerHeight - topInset - bottomInset) / 2
-    const { x: fx, y: fy } = screenToFlowPosition({ x: screenCenterX, y: screenCenterY })
+    const { x: flowCx, y: flowCy } = screenToFlowPosition({ x: screenCenterX, y: screenCenterY })
+    const { x, y } = findNewConceptPosition(nodes, flowCx, flowCy)
+    const nodeCx = x + NEW_CONCEPT_SIZE.width / 2
+    const nodeCy = y + NEW_CONCEPT_SIZE.height / 2
     // Prevent the viewport-restore effect from overriding our setCenter below.
     viewportRestoredFor.current = useGraphStore.getState().currentGraphId
-    addNode(fx, fy)
-    setCenter(fx, fy, { zoom: Math.max(getViewport().zoom, 1), duration: 300 })
-  }, [addNode, setCenter, getViewport, screenToFlowPosition, sidebarWidth, hasSelection, inspectorPanelWidth])
+    addNode(x, y)
+    setCenter(nodeCx, nodeCy, { zoom: Math.max(getViewport().zoom, 1), duration: 300 })
+  }, [addNode, setCenter, getViewport, screenToFlowPosition, sidebarWidth, hasSelection, inspectorPanelWidth, nodes])
 
   // Keyboard shortcuts
   useEffect(() => {
