@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.0-alpha.19] - 2026-05-20
+
 ### Changed
 
 - **Canvas:** Edge connection preview uses the same arc exit geometry as rendered edges (including curve flip), a dashed accent stroke, and a dotted ring on the hovered target node; source handle hit area is larger with a radial dot.
@@ -326,7 +328,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial alpha: interactive knowledge graph (web + Tauri v2); desktop installers on GitHub Releases (macOS Apple silicon and Intel).
 
-[Unreleased]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.18...HEAD
+[Unreleased]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.19...HEAD
+[0.1.0-alpha.19]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.18...v0.1.0-alpha.19
 [0.1.0-alpha.18]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.17...v0.1.0-alpha.18
 [0.1.0-alpha.17]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.16...v0.1.0-alpha.17
 [0.1.0-alpha.16]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.15...v0.1.0-alpha.16

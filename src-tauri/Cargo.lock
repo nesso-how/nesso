@@ -1941,7 +1941,7 @@ dependencies = [
 
 [[package]]
 name = "nesso"
-version = "0.1.0-alpha.18"
+version = "0.1.0-alpha.19"
 dependencies = [
  "log",
  "serde",

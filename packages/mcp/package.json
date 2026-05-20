@@ -1,6 +1,6 @@
 {
   "name": "@nesso-how/mcp",
-  "version": "0.1.0-alpha.18",
+  "version": "0.1.0-alpha.19",
   "description": "MCP server exposing Nesso knowledge graph tools to LLM clients",
   "license": "MIT",
   "type": "module",
