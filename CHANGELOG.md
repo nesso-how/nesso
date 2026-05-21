@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Removed
+
+- **Sidebar:** Recent concepts section (use ⌘K search to jump to nodes).
+
 ## [0.1.0-alpha.20] - 2026-05-20
 
 ### Added

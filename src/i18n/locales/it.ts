@@ -121,8 +121,6 @@ const it: typeof en = {
     search: 'Cerca…',
     graphs: 'Grafi',
     newGraph: 'Nuovo',
-    recentConcepts: 'Concetti recenti',
-    noConcepts: 'Nessun concetto',
     display: 'Visualizzazione',
     settings: 'Impostazioni',
     untitled: 'Senza titolo',

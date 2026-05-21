@@ -121,8 +121,6 @@ const en = {
     search: 'Search…',
     graphs: 'Graphs',
     newGraph: 'New',
-    recentConcepts: 'Recent concepts',
-    noConcepts: 'No concepts yet',
     display: 'Display',
     settings: 'Settings',
     untitled: 'Untitled',

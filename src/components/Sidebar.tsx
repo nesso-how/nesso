@@ -34,13 +34,12 @@ interface Props {
   onCollapse: () => void
   onSearch: () => void
   onSettings: () => void
-  onSelectConcept: (node: { id: string; position: { x: number; y: number } }) => void
   zoom: number
   width: number
   onWidthChange: (w: number) => void
 }
 
-export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, onSelectConcept, zoom, width, onWidthChange }: Props) {
+export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, zoom, width, onWidthChange }: Props) {
   const t = useT()
   const {
     graphList, currentGraphId, loadGraph, createGraph, renameGraph, deleteGraph,
@@ -52,7 +51,6 @@ export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, onSelectC
   const [draft, setDraft] = useState('')
   const [hoveredId, setHoveredId] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
-  const [recentOpen, setRecentOpen] = useState(true)
   const [mapOpen, setMapOpen] = useState(true)
   const [isResizing, setIsResizing] = useState(false)
 
@@ -95,10 +93,6 @@ export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, onSelectC
     if (graphList.length <= 1) return
     deleteGraph(id)
   }
-
-  const recentNodes = [...nodes]
-    .sort((a, b) => b.data.lastReview - a.data.lastReview)
-    .slice(0, 5)
 
   function startResize(mouseDownClientX: number) {
     const startX = mouseDownClientX
@@ -279,50 +273,6 @@ export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, onSelectC
                 )
               })}
           </div>
-
-          {/* Recent concepts */}
-          <div style={{ padding: '14px 12px 4px' }}>
-            <button
-              onClick={() => setRecentOpen(o => !o)}
-              style={{
-                appearance: 'none', border: 0, background: 'transparent', cursor: 'default',
-                display: 'flex', alignItems: 'center', gap: 6, padding: 0,
-              }}
-            >
-              <span style={sectionLabel}>{t.sidebar.recentConcepts}</span>
-              <svg width="9" height="9" viewBox="0 0 10 10" style={{
-                opacity: 0.5,
-                transform: recentOpen ? 'rotate(0deg)' : 'rotate(-90deg)',
-                transition: 'transform 150ms',
-              }}>
-                <path d="M2 4l3 3 3-3" stroke="currentColor" strokeWidth="1.4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-          </div>
-          {recentOpen && (
-            <div style={{ padding: '0 8px', display: 'flex', flexDirection: 'column', gap: 1 }}>
-              {recentNodes.length === 0 ? (
-                <span style={{ font: "12px 'Inter'", color: 'var(--ink-4)', padding: '4px 9px' }}>{t.sidebar.noConcepts}</span>
-              ) : recentNodes.map(n => (
-                <button
-                  key={n.id}
-                  onClick={() => onSelectConcept(n)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 9,
-                    appearance: 'none', border: 0, background: 'transparent',
-                    borderRadius: 6, padding: '5px 9px', cursor: 'default',
-                    font: "12.5px 'Inter', ui-sans-serif", color: 'var(--ink-3)',
-                    textAlign: 'left',
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.background = 'var(--paper-deep)'; e.currentTarget.style.color = 'var(--ink)' }}
-                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--ink-3)' }}
-                >
-                  <span style={{ color: 'var(--ink-5)', flexShrink: 0 }}>·</span>
-                  <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.data.text}</span>
-                </button>
-              ))}
-            </div>
-          )}
 
         </div>
 

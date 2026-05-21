@@ -313,7 +313,6 @@ function AppInner() {
         onCollapse={() => setSidebarCollapsed(true)}
         onSearch={() => setShowSearch(s => !s)}
         onSettings={() => setShowSettings(s => !s)}
-        onSelectConcept={handleSelectNode}
         zoom={zoom}
         width={sidebarPanelWidth}
         onWidthChange={w => setSidebarPanelWidth(clampSidebarWidth(w))}
