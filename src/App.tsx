@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useLayoutEffect, useCallback, useRef, useMemo } from 'react'
 import { ReactFlowProvider, useReactFlow } from '@xyflow/react'
 import { GraphCanvas } from './components/GraphCanvas'
 import { TopBar } from './components/TopBar'
@@ -29,6 +29,7 @@ import { PALETTES } from './data/palettes'
 import { findNewConceptPosition, NEW_CONCEPT_SIZE } from './data/newConceptLayout'
 import { initWebLLM, localModelWeightsCached } from './llm/webllm'
 import { focusFlowNodes } from './lib/focusFlowSelection'
+import { computeFitViewport } from './lib/fitGraphViewport'
 
 function AppInner() {
   const [showReview, setShowReview] = useState(false)
@@ -52,7 +53,9 @@ function AppInner() {
     loadGraph,
     loadGraphList,
     currentGraphId,
+    loadedToken,
     viewports,
+    saveViewport,
     sidebarCollapsed,
     setSidebarCollapsed,
   } = useGraphStore()
@@ -109,62 +112,32 @@ function AppInner() {
     return () => window.removeEventListener('popstate', onPop)
   }, [loadGraph])
 
+  const canvasInsets = useMemo(() => ({
+    top: 52,
+    bottom: 80,
+    left: sidebarWidth + INSPECTOR_CANVAS_LEFT_GUTTER + (selected !== null ? inspectorPanelWidth : 0),
+    right: 30,
+  }), [sidebarWidth, inspectorPanelWidth, selected])
+
   const fitView = useCallback((animated = true) => {
     const liveNodes = getNodes()
     if (!liveNodes.length) return
-
-    const TOP = 52
-    const BOTTOM = 80
-    const RIGHT = 30
-    const PADDING = 0.06
-
-    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity
-    for (const n of liveNodes) {
-      const w = n.measured?.width ?? 80
-      const h = n.measured?.height ?? 32
-      minX = Math.min(minX, n.position.x)
-      maxX = Math.max(maxX, n.position.x + w)
-      minY = Math.min(minY, n.position.y)
-      maxY = Math.max(maxY, n.position.y + h)
-    }
-
-    const nodeW = maxX - minX
-    const nodeH = maxY - minY
-    const hasInspector = selected !== null
-    const leftPad = sidebarWidth + INSPECTOR_CANVAS_LEFT_GUTTER + (hasInspector ? inspectorPanelWidth : 0)
-    const canvasW = window.innerWidth - leftPad - RIGHT
-    const canvasH = window.innerHeight - TOP - BOTTOM
-
-    const zoom = Math.max(0.15, Math.min(
-      canvasW / (nodeW * (1 + 2 * PADDING)),
-      canvasH / (nodeH * (1 + 2 * PADDING)),
-      2.5
-    ))
-
-    const vpX = leftPad + canvasW / 2 - ((minX + maxX) / 2) * zoom
-    const vpY = TOP + canvasH / 2 - ((minY + maxY) / 2) * zoom
-
-    setViewport({ x: vpX, y: vpY, zoom }, { duration: animated ? 400 : 0 })
-  }, [getNodes, setViewport, sidebarWidth, inspectorPanelWidth, selected])
+    const vp = computeFitViewport(liveNodes, canvasInsets)
+    setViewport(vp, { duration: animated ? 400 : 0 })
+  }, [getNodes, setViewport, canvasInsets])
 
   const viewportRestoredFor = useRef<string | null>(null)
 
-  // Restore viewport when graph switches AND nodes are loaded into React Flow
-  useEffect(() => {
+  // Restore viewport before paint when graph data arrives (avoids initial flicker).
+  useLayoutEffect(() => {
     if (viewportRestoredFor.current === currentGraphId) return
-    if (nodes.length === 0) return
+    if (loadedToken === 0) return
     const saved = viewports[currentGraphId]
+    const vp = saved ?? computeFitViewport(nodes, canvasInsets)
     viewportRestoredFor.current = currentGraphId
-    if (saved) {
-      setViewport(saved, { duration: 0 })
-    } else {
-      let id2 = 0
-      const id1 = requestAnimationFrame(() => {
-        id2 = requestAnimationFrame(() => fitView(false))
-      })
-      return () => { cancelAnimationFrame(id1); cancelAnimationFrame(id2) }
-    }
-  }, [currentGraphId, nodes.length, fitView])
+    setViewport(vp, { duration: 0 })
+    if (!saved) saveViewport(currentGraphId, vp)
+  }, [currentGraphId, loadedToken, nodes, viewports, canvasInsets, setViewport, saveViewport])
 
   // Local WebGPU model: if weights are already cached, load the engine without opening Settings
   useEffect(() => {

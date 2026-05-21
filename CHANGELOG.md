@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Fixed
+
+- **Canvas:** Initial graph load no longer flickers — viewport is computed and applied before first paint when no saved viewport exists.
+
 ### Removed
 
 - **Sidebar:** Recent concepts section (use ⌘K search to jump to nodes).

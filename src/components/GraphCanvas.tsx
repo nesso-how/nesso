@@ -18,6 +18,7 @@ import { NessoConnectionLine } from './NessoConnectionLine'
 import { NessoEdge } from './NessoEdge'
 import { RelationPicker } from './RelationPicker'
 import { useGraphStore } from '@/store/graph'
+import { computeFitViewport } from '@/lib/fitGraphViewport'
 import { newConceptTopLeftAtFlowCenter } from '@/data/newConceptLayout'
 import type { EdgeTypeName } from '@/types/graph'
 
@@ -56,11 +57,16 @@ export function GraphCanvas({
     nodes, edges,
     onNodesChange, onEdgesChange,
     addEdge, addNode, syncFlowSelection,
-    viewports, currentGraphId,
+    viewports, currentGraphId, loadedToken,
   } = useGraphStore()
 
   const { screenToFlowPosition } = useReactFlow()
-  const defaultViewport = viewports[currentGraphId] ?? { x: 0, y: 0, zoom: 0.75 }
+  const defaultViewport = viewports[currentGraphId] ?? computeFitViewport(nodes, {
+    top: topInset,
+    bottom: bottomInset,
+    left: leftInset,
+    right: rightInset,
+  })
 
   const [pendingConn, setPendingConn] = useState<PendingConnection | null>(null)
   const connectingSource = useRef<string | null>(null)
@@ -142,6 +148,7 @@ export function GraphCanvas({
   return (
     <div onDoubleClick={handlePaneDoubleClick} style={{ position: 'absolute', inset: 0 }}>
       <ReactFlow
+        key={`${currentGraphId}-${loadedToken}`}
         nodes={nodes}
         edges={styledEdges}
         nodeTypes={nodeTypes}
