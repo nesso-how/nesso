@@ -443,8 +443,8 @@ export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, zoom, wid
 function MapRow({ label, value, title }: { label: string; value: string; title?: string }) {
   return (
     <div title={title} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '3px 0' }}>
-      <span style={{ font: "12px 'Inter', ui-sans-serif", color: 'var(--ink-3)' }}>{label}</span>
-      <span style={{ font: "500 11.5px 'JetBrains Mono', ui-monospace", color: 'var(--ink-2)' }}>{value}</span>
+      <span style={{ font: "12.5px 'Inter', ui-sans-serif", color: 'var(--ink-3)' }}>{label}</span>
+      <span style={{ font: "500 12px 'JetBrains Mono', ui-monospace", color: 'var(--ink-2)' }}>{value}</span>
     </div>
   )
 }
@@ -502,7 +502,7 @@ const graphsNewBtn: React.CSSProperties = {
 }
 
 const sectionLabel: React.CSSProperties = {
-  font: "500 10.5px 'JetBrains Mono', ui-monospace",
+  font: "500 11px 'JetBrains Mono', ui-monospace",
   color: 'var(--ink-4)',
   textTransform: 'uppercase',
   letterSpacing: '0.08em',

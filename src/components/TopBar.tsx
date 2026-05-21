@@ -41,7 +41,7 @@ export function TopBar({ sidebarCollapsed, sidebarWidth, onExpandSidebar, onRevi
       justifyContent: 'space-between',
       padding: '0 22px',
       borderBottom: '0.5px solid var(--line)',
-      background: 'var(--paper)',
+      background: 'var(--bg-elev)',
       transition: 'left 180ms ease',
     }}>
       {/* Left: expand sidebar (when collapsed) + graph title + count */}
@@ -81,12 +81,12 @@ export function TopBar({ sidebarCollapsed, sidebarWidth, onExpandSidebar, onRevi
             display: 'flex', alignItems: 'center', gap: 6,
             appearance: 'none',
             border: '0.5px solid var(--line)',
-            background: 'var(--bg-elev)', color: 'var(--ink-2)',
+            background: 'var(--bg-card)', color: 'var(--ink-2)',
             borderRadius: 999, padding: '6px 12px', cursor: 'default',
             font: "500 12px 'Inter', ui-sans-serif",
           }}
           onMouseEnter={e => { e.currentTarget.style.background = 'var(--paper-deep)'; e.currentTarget.style.color = 'var(--ink)' }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-elev)'; e.currentTarget.style.color = 'var(--ink-2)' }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-card)'; e.currentTarget.style.color = 'var(--ink-2)' }}
         >
           <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
             <path d="M8 2.5a5.5 5.5 0 1 1-5.5 5.5" /><path d="M2.5 4V2h2" />
@@ -99,7 +99,7 @@ export function TopBar({ sidebarCollapsed, sidebarWidth, onExpandSidebar, onRevi
               borderRadius: 999, background: 'var(--cat-causal)', color: 'var(--paper)',
               font: "600 10px 'JetBrains Mono', ui-monospace",
               padding: '0 4px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-              border: '2px solid var(--bg-elev)',
+              border: '2px solid var(--bg-card)',
             }}>{dueCount > 99 ? '99+' : dueCount}</span>
           )}
         </button>

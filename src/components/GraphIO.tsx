@@ -132,7 +132,7 @@ export function GraphIO({ onRelationTypes, onShortcuts }: Props) {
         style={{
           appearance: 'none',
           border: '0.5px solid var(--line)',
-          background: open ? 'var(--paper-deep)' : 'var(--bg-elev)',
+          background: open ? 'var(--paper-deep)' : 'var(--bg-card)',
           color: open ? 'var(--ink)' : 'var(--ink-2)',
           borderRadius: 999,
           padding: '6px 10px',
@@ -142,7 +142,7 @@ export function GraphIO({ onRelationTypes, onShortcuts }: Props) {
           justifyContent: 'center',
         }}
         onMouseEnter={e => { e.currentTarget.style.background = 'var(--paper-deep)'; e.currentTarget.style.color = 'var(--ink)' }}
-        onMouseLeave={e => { e.currentTarget.style.background = open ? 'var(--paper-deep)' : 'var(--bg-elev)'; e.currentTarget.style.color = open ? 'var(--ink)' : 'var(--ink-2)' }}
+        onMouseLeave={e => { e.currentTarget.style.background = open ? 'var(--paper-deep)' : 'var(--bg-card)'; e.currentTarget.style.color = open ? 'var(--ink)' : 'var(--ink-2)' }}
       >
         <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
           <circle cx="3.5" cy="8" r="1.3" />
