@@ -13,6 +13,9 @@
   --line: rgba(26, 24, 20, 0.10);
   --line-strong: rgba(26, 24, 20, 0.20);
   --grid-dot: rgba(26, 24, 20, 0.18);
+  /* Chrome & texture — surface-aware */
+  --chrome-top: var(--paper);
+  --texture-opacity: 0.6;
 
   /* Category colors — jewel tones tuned to sit on cream */
   --cat-taxonomic: #2f5d8e;
@@ -224,6 +227,25 @@ body::before {
 .react-flow__pane.react-flow__pane--dragging { cursor: grabbing; }
 .react-flow__attribution { display: none; }
 .react-flow__nodesselection-rect { display: none; }
+
+/*
+ * WKWebView (Tauri desktop) still selects node/edge labels while dragging
+ * (box select, edge creation, pan). CSS alone is not always enough on macOS.
+ */
+.react-flow,
+.react-flow__pane,
+.react-flow__viewport,
+.react-flow__edges,
+.nesso-node,
+.nesso-node-label {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.react-flow__node input {
+  user-select: text;
+  -webkit-user-select: text;
+}
 
 /* Concept node handles — CSS :hover avoids WKWebView re-render blur on mouse enter */
 .react-flow__handle.nesso-node-handle {

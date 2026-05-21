@@ -71,6 +71,19 @@ export function GraphCanvas({
   const [pendingConn, setPendingConn] = useState<PendingConnection | null>(null)
   const connectingSource = useRef<string | null>(null)
   const selectionSyncFrame = useRef<number | null>(null)
+  const canvasRef = useRef<HTMLDivElement>(null)
+
+  // WKWebView: block native text selection while dragging on the canvas.
+  useEffect(() => {
+    const root = canvasRef.current
+    if (!root) return
+    const onSelectStart = (e: Event) => {
+      if ((e.target as Element).closest('input, textarea')) return
+      e.preventDefault()
+    }
+    root.addEventListener('selectstart', onSelectStart)
+    return () => root.removeEventListener('selectstart', onSelectStart)
+  }, [])
 
   const onConnectStart = useCallback<OnConnectStart>((_, params) => {
     connectingSource.current = params.nodeId ?? null
@@ -146,7 +159,11 @@ export function GraphCanvas({
   }, [edges])
 
   return (
-    <div onDoubleClick={handlePaneDoubleClick} style={{ position: 'absolute', inset: 0 }}>
+    <div
+      ref={canvasRef}
+      onDoubleClick={handlePaneDoubleClick}
+      style={{ position: 'absolute', inset: 0 }}
+    >
       <ReactFlow
         key={`${currentGraphId}-${loadedToken}`}
         nodes={nodes}
