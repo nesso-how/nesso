@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.0-alpha.21] - 2026-05-21
+
 ### Added
 
 - **Desktop:** Graph workspace sync — each graph is dual-written to IndexedDB and a `.json` file under a workspace folder (default app data; optional custom folder in **Settings → Data**), with `.nesso/manifest.json` for filenames and ids.
@@ -21,10 +23,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - **Graph menu:** Export/import JSON is share-safe (no personal review history); desktop export uses a native save dialog.
 - **Import:** Respects `id` when valid; de-duplicates graph names (`Foo-2`, …); import merge no longer creates duplicate sidebar entries for the same id.
 - **Docs / README:** Desktop workspace storage and share-safe import/export described in introduction and MCP guide.
+- **Theme:** Refreshed bone light palette — paper/ink/elevation tokens, softer paper texture, `bg-card` / `bg-elev` on chrome surfaces, slightly larger sidebar metadata type.
 
 ### Fixed
 
 - **Desktop (macOS):** Concept node labels no longer blur or “refocus” on hover in the Tauri app (WKWebView); connection handles use CSS `:hover` instead of React state + opacity transitions.
+- **Desktop (macOS):** Canvas drag no longer selects node labels or edge text (WKWebView); inline edit inputs still allow selection.
 - **Desktop:** **Keep my changes** always writes the canvas to disk (forced save); autosave paused while a file conflict is open.
 - **Desktop:** File-conflict banner only appears when the **active** graph’s file changed on disk, not when another graph in the folder was edited externally.
 - **Canvas:** Initial graph load no longer flickers — viewport is computed and applied before first paint when no saved viewport exists.
@@ -371,7 +375,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial alpha: interactive knowledge graph (web + Tauri v2); desktop installers on GitHub Releases (macOS Apple silicon and Intel).
 
-[Unreleased]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.20...HEAD
+[Unreleased]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.21...HEAD
+[0.1.0-alpha.21]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.20...v0.1.0-alpha.21
 [0.1.0-alpha.20]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.19...v0.1.0-alpha.20
 [0.1.0-alpha.19]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.18...v0.1.0-alpha.19
 [0.1.0-alpha.18]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.17...v0.1.0-alpha.18

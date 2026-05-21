@@ -1,6 +1,6 @@
 {
   "name": "@nesso-how/types",
-  "version": "0.1.0-alpha.20",
+  "version": "0.1.0-alpha.21",
   "description": "Nesso shared TypeScript types — graph, node, edge, settings, FSRS",
   "license": "MIT",
   "type": "module",

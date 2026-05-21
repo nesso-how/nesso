@@ -1,7 +1,7 @@
 {
   "name": "nesso",
   "private": true,
-  "version": "0.1.0-alpha.20",
+  "version": "0.1.0-alpha.21",
   "license": "MIT",
   "packageManager": "pnpm@10.14.0",
   "type": "module",
