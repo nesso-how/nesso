@@ -1,0 +1,31 @@
+name: Graph model / edge type
+description: Propose changes to semantic edge categories, relation types, or visual encoding
+labels: [graph-model]
+body:
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: What concept or learning relationship is currently missing or misrepresented?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: |
+        Describe the new or modified relation type(s). Include:
+        - Suggested name and category (causal, structural, temporal, …)
+        - Direction semantics (A → B means "…")
+        - Suggested color / visual encoding if relevant
+    validations:
+      required: true
+
+  - type: textarea
+    id: examples
+    attributes:
+      label: Concrete examples
+      description: Two or three real concept pairs that would use this edge type.
+    validations:
+      required: false

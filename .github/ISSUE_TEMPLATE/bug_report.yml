@@ -1,0 +1,38 @@
+name: Bug report
+description: Something is broken or behaving unexpectedly
+labels: [bug]
+body:
+  - type: input
+    id: summary
+    attributes:
+      label: Summary
+      description: One sentence describing what went wrong.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected vs actual behavior
+      placeholder: "Expected: ...\nActual: ..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Environment
+      placeholder: "OS, browser or Tauri desktop, Nesso version, AI backend (Ollama / remote)."
+    validations:
+      required: false
