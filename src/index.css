@@ -220,3 +220,22 @@ body::before {
 .react-flow__attribution { display: none; }
 .react-flow__nodesselection-rect { display: none; }
 
+/* Concept node handles — CSS :hover avoids WKWebView re-render blur on mouse enter */
+.react-flow__handle.nesso-node-handle {
+  opacity: 0;
+}
+.nesso-node:hover .react-flow__handle.nesso-node-handle,
+.react-flow__handle.nesso-node-handle.connectingfrom,
+.react-flow__handle.nesso-node-handle.connectingto {
+  opacity: 0.85;
+}
+
+/*
+ * Tauri macOS (WKWebView): labels live inside a scaled viewport transform.
+ * optimizeLegibility + hover-driven layer promotion can look like a focus/blur shift.
+ */
+.react-flow__viewport .nesso-node-label {
+  text-rendering: auto;
+  -webkit-font-smoothing: subpixel-antialiased;
+}
+

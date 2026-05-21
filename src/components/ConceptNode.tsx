@@ -42,7 +42,6 @@ function caretIndexFromCenteredClick(input: HTMLInputElement, clientX: number): 
 export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(data.text)
-  const [hovered, setHovered] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const rootRef = useRef<HTMLDivElement>(null)
   const selectAllOnFocus = useRef(false)
@@ -114,9 +113,8 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
   return (
     <div
       ref={rootRef}
+      className="nesso-node"
       onDoubleClick={(e) => { e.stopPropagation(); startEdit() }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
       style={{
         position: 'relative',
         padding: '6px 14px',
@@ -168,7 +166,7 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
 
       {/* Text / editing — ghost span always holds the width, input overlays when editing */}
       <div style={{ position: 'relative' }}>
-        <span style={{
+        <span className="nesso-node-label" style={{
           font: '500 16px Fraunces, ui-serif, Georgia, serif',
           letterSpacing: '-0.005em',
           color: 'var(--ink)',
@@ -241,26 +239,24 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
         id={CONCEPT_HANDLE_OUT}
         type="source"
         position={Position.Right}
+        className="nesso-node-handle"
         style={{
           width: 22, height: 22,
           background: 'radial-gradient(circle, var(--accent) 2.5px, var(--bg-card, #fff) 2.5px 4px, transparent 4px)',
           border: 'none',
           borderRadius: '50%',
-          opacity: hovered ? 0.85 : 0,
-          transition: 'opacity 120ms',
         }}
       />
       <Handle
         id={CONCEPT_HANDLE_IN}
         type="target"
         position={Position.Left}
+        className="nesso-node-handle"
         style={{
           width: 22, height: 22,
           background: 'radial-gradient(circle, var(--accent) 2.5px, var(--bg-card, #fff) 2.5px 4px, transparent 4px)',
           border: 'none',
           borderRadius: '50%',
-          opacity: hovered ? 0.85 : 0,
-          transition: 'opacity 120ms',
         }}
       />
       {/* Invisible target handles distributed at 33% and 67% of the node width.
