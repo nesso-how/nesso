@@ -213,6 +213,11 @@ body::before {
   40% { transform: scale(1); opacity: 1; }
 }
 
+@keyframes banner-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 /* React Flow overrides */
 .react-flow__renderer { z-index: 2; }
 .react-flow__pane { cursor: grab; }

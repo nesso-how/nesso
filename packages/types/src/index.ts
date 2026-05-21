@@ -25,6 +25,30 @@ export interface ConceptNodeData extends Record<string, unknown> {
   elaboration?: ConceptElaboration
 }
 
+/** Fresh FSRS fields for a new or shared-import concept (no personal review history). */
+export function defaultConceptReviewFields(): Pick<
+  ConceptNodeData,
+  | 'stability'
+  | 'difficulty'
+  | 'reps'
+  | 'lapses'
+  | 'fsrsState'
+  | 'due'
+  | 'lastReview'
+  | 'lastRating'
+> {
+  return {
+    stability: 0,
+    difficulty: 0,
+    reps: 0,
+    lapses: 0,
+    fsrsState: 0,
+    due: 0,
+    lastReview: 0,
+    lastRating: 0,
+  }
+}
+
 export function nodeToCard(data: ConceptNodeData): Card {
   return {
     due: new Date(data.due || Date.now()),
@@ -105,4 +129,6 @@ export interface NessoSettings {
   maximumInterval: number
   inspectorExamplesOpen: boolean
   inspectorRelationsOpen: boolean
+  /** Desktop: custom folder for graph .json files; null = default app data graphs folder. */
+  graphWorkspacePath: string | null
 }

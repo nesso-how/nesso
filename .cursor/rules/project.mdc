@@ -42,4 +42,4 @@ src-tauri/            # Tauri v2 Rust project — tauri.conf.json, capabilities,
 
 ## Changelog
 
-User-facing or otherwise notable changes should get bullets under **`CHANGELOG.md` → `## [Unreleased]`** in the **same commit** when practical, or in a follow-up commit right away. Format and releases: [`changelog.mdc`](changelog.mdc).
+Do **not** edit `CHANGELOG.md` during feature work; update **`## [Unreleased]`** only when the user asks for a **commit** or an explicit **changelog-before-commit** pass. Format and releases: [`changelog.mdc`](changelog.mdc).

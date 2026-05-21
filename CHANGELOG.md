@@ -6,9 +6,27 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- **Desktop:** Graph workspace sync — each graph is dual-written to IndexedDB and a `.json` file under a workspace folder (default app data; optional custom folder in **Settings → Data**), with `.nesso/manifest.json` for filenames and ids.
+- **Desktop:** Recursive file watch reconciles disk ↔ IndexedDB; when the **active** graph file changes externally while you have unsaved edits, an `ActionBanner` offers **Reload from disk** or **Keep my changes**.
+- **Desktop:** Tauri `fs` + `dialog` plugins for folder picker, scoped read/write, and save-dialog export.
+- **Graph ids:** Opaque `g…` ids for new graphs and seeds; workspace autosave persists `id` + `updatedAt` in JSON.
+- **`@nesso-how/formats`:** `nodesForGraphShareExport` / `nodesFromGraphShareImport` strip or reset FSRS fields on manual export/import.
+- **`ActionBanner`:** Shared fixed bottom banner with pill actions (used by file-conflict UI).
+
+### Changed
+
+- **Settings → Data (desktop):** Workspace folder picker, open in Finder, reset to default; **Delete local data** control removed from this tab.
+- **Graph menu:** Export/import JSON is share-safe (no personal review history); desktop export uses a native save dialog.
+- **Import:** Respects `id` when valid; de-duplicates graph names (`Foo-2`, …); import merge no longer creates duplicate sidebar entries for the same id.
+- **Docs / README:** Desktop workspace storage and share-safe import/export described in introduction and MCP guide.
+
 ### Fixed
 
 - **Desktop (macOS):** Concept node labels no longer blur or “refocus” on hover in the Tauri app (WKWebView); connection handles use CSS `:hover` instead of React state + opacity transitions.
+- **Desktop:** **Keep my changes** always writes the canvas to disk (forced save); autosave paused while a file conflict is open.
+- **Desktop:** File-conflict banner only appears when the **active** graph’s file changed on disk, not when another graph in the folder was edited externally.
 - **Canvas:** Initial graph load no longer flickers — viewport is computed and applied before first paint when no saved viewport exists.
 - **Sidebar:** Selecting a node or edge after switching graphs no longer bumps `updatedAt` or reorders the graph list — autosave ignores React Flow selection flags.
 

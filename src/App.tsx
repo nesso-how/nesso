@@ -25,6 +25,8 @@ import { SettingsDialog } from './components/SettingsDialog'
 import { SearchDialog } from './components/SearchDialog'
 import { useGraphStore, selectedNodeSelector, selectedEdgeSelector } from './store/graph'
 import { useAutoSave } from './hooks/useAutoSave'
+import { useGraphFileWatch } from './hooks/useGraphFileWatch'
+import { GraphFileConflictBanner } from './components/GraphFileConflictBanner'
 import { PALETTES } from './data/palettes'
 import { findNewConceptPosition, NEW_CONCEPT_SIZE } from './data/newConceptLayout'
 import { initWebLLM, localModelWeightsCached } from './llm/webllm'
@@ -69,6 +71,7 @@ function AppInner() {
   const [zoom, setZoom] = useState(1)
 
   useAutoSave()
+  useGraphFileWatch()
 
   const [sidebarPanelWidth, setSidebarPanelWidth] = useState(readSidebarWidth)
   useEffect(() => { writeSidebarWidth(sidebarPanelWidth) }, [sidebarPanelWidth])
@@ -320,6 +323,7 @@ function AppInner() {
       <ShortcutsDialog open={showShortcuts} onClose={() => setShowShortcuts(false)} />
       <SettingsDialog open={showSettings} onClose={() => setShowSettings(false)} />
       <SearchDialog open={showSearch} onClose={() => setShowSearch(false)} onSelectNode={handleSelectNode} onSelectGraph={(id) => loadGraph(id)} />
+      <GraphFileConflictBanner />
     </div>
   )
 }

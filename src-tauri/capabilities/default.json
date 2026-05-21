@@ -6,6 +6,44 @@
     "main"
   ],
   "permissions": [
-    "core:default"
+    "core:default",
+    "dialog:default",
+    "fs:default",
+    "fs:allow-appdata-read-recursive",
+    "fs:allow-appdata-write-recursive",
+    "fs:allow-appdata-meta-recursive",
+    "fs:scope-appdata-recursive",
+    "fs:allow-applocaldata-read-recursive",
+    "fs:allow-applocaldata-write-recursive",
+    "fs:allow-applocaldata-meta-recursive",
+    "fs:scope-applocaldata-recursive",
+    "fs:allow-home-read-recursive",
+    "fs:allow-home-write-recursive",
+    "fs:allow-home-meta-recursive",
+    "fs:scope-home-recursive",
+    "fs:allow-download-read-recursive",
+    "fs:allow-download-write-recursive",
+    "fs:allow-download-meta-recursive",
+    "fs:scope-download-recursive",
+    "fs:allow-watch",
+    "fs:allow-unwatch",
+    {
+      "identifier": "fs:scope",
+      "allow": [
+        "$APPDATA/**/.nesso",
+        "$APPDATA/**/.nesso/**",
+        "$APPLOCALDATA/**/.nesso",
+        "$APPLOCALDATA/**/.nesso/**",
+        "$HOME/**/.nesso",
+        "$HOME/**/.nesso/**",
+        "$DOWNLOAD/**/.nesso",
+        "$DOWNLOAD/**/.nesso/**"
+      ]
+    },
+    "opener:default",
+    {
+      "identifier": "opener:allow-open-path",
+      "allow": [{ "path": "**" }]
+    }
   ]
 }

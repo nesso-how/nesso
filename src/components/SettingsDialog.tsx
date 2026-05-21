@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
 import { useState, useEffect, useCallback } from 'react'
 import { useGraphStore } from '@/store/graph'
-import { clearPersistedAppDataAndReload } from '@/lib/clearAppStorage'
 import { useWebLLM, initWebLLM, LOCAL_MODEL_LABEL, LOCAL_MODEL_SIZE, localModelWeightsCached } from '@/llm/webllm'
 import { CloseButton } from './CloseButton'
 import { useT } from '@/i18n'
 import type { Language } from '@/types/graph'
+import { isDesktop } from '@/lib/isDesktop'
+import { getDefaultWorkspacePath, pickWorkspaceFolder, resolveWorkspacePath } from '@/lib/workspace'
 
 const OLLAMA_PRESETS = [
   { id: 'gemma3:4b', note: 'balanced · recommended' },
@@ -57,7 +58,7 @@ async function* streamOllamaModelPull(baseUrl: string, model: string): AsyncGene
 }
 
 type Tab = 'appearance' | 'ai' | 'review' | 'data'
-const TABS = ['appearance', 'ai', 'review', 'data'] as const
+const ALL_TABS = ['appearance', 'ai', 'review', 'data'] as const
 
 const LANGUAGES: { id: Language; label: string }[] = [
   { id: 'en', label: 'English' },
@@ -74,6 +75,8 @@ export function SettingsDialog({ open, onClose }: Props) {
   const [tab, setTab] = useState<Tab>('appearance')
   const settings = useGraphStore(s => s.settings)
   const setSetting = useGraphStore(s => s.setSetting)
+  const switchGraphWorkspace = useGraphStore(s => s.switchGraphWorkspace)
+  const [workspaceLabel, setWorkspaceLabel] = useState('')
   const llm = useWebLLM()
   const [modelStatus, setModelStatus] = useState<ModelStatus>('idle')
   const [pullProgress, setPullProgress] = useState(0)
@@ -109,6 +112,14 @@ export function SettingsDialog({ open, onClose }: Props) {
     return () => { cancelled = true }
   }, [open, settings.aiMode, settings.aiBaseUrl])
 
+  useEffect(() => {
+    if (!open || !isDesktop()) return
+    void (async () => {
+      const path = await resolveWorkspacePath(settings)
+      setWorkspaceLabel(path)
+    })()
+  }, [open, settings.graphWorkspacePath])
+
   if (!open) return null
 
   const inputStyle: React.CSSProperties = {
@@ -121,6 +132,16 @@ export function SettingsDialog({ open, onClose }: Props) {
     background: 'var(--paper-deep)',
     color: 'var(--ink)',
     font: "400 13px 'JetBrains Mono', ui-monospace",
+  }
+
+  const subtleLinkStyle: React.CSSProperties = {
+    appearance: 'none',
+    background: 'none',
+    border: 'none',
+    color: 'var(--ink-4)',
+    font: "400 11px 'Inter', system-ui",
+    cursor: 'default',
+    padding: 0,
   }
 
   return (
@@ -162,7 +183,7 @@ export function SettingsDialog({ open, onClose }: Props) {
           <div style={{ font: "500 10px 'JetBrains Mono', ui-monospace", textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--ink-4)', padding: '0 8px', marginBottom: 10 }}>
             {t.settings.title}
           </div>
-          {TABS.map(tabId => (
+          {ALL_TABS.filter(id => id !== 'data' || isDesktop()).map(tabId => (
             <button
               key={tabId}
               onClick={() => setTab(tabId)}
@@ -256,28 +277,103 @@ export function SettingsDialog({ open, onClose }: Props) {
           )}
 
           {tab === 'data' && (
-            <SettingRow label={t.settings.data.localData} description={t.settings.data.localDataDesc} last>
-              <button
-                type="button"
-                onClick={() => {
-                  if (!window.confirm(t.settings.data.deleteLocalConfirmPrompt)) return
-                  void clearPersistedAppDataAndReload().catch(() => {})
-                }}
-                style={{
-                  appearance: 'none',
-                  border: '0.5px solid var(--conf-1)',
-                  background: 'var(--conf-1)',
-                  color: 'var(--paper)',
-                  font: "500 11px 'JetBrains Mono', ui-monospace",
-                  letterSpacing: '0.04em',
-                  padding: '6px 14px',
-                  borderRadius: 999,
-                  cursor: 'default',
-                }}
-              >
-                {t.settings.data.deleteLocal}
-              </button>
-            </SettingRow>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+              {isDesktop() && (
+                <div>
+                  <div style={{ marginBottom: 12 }}>
+                    <span style={{ font: "400 13px 'Inter', system-ui", color: 'var(--ink-2)' }}>{t.settings.data.graphFolder}</span>
+                    <small style={{ display: 'block', font: "400 11px/1.4 'Inter', system-ui", color: 'var(--ink-4)', marginTop: 3 }}>
+                      {t.settings.data.graphFolderDesc}
+                    </small>
+                  </div>
+
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10,
+                    border: '0.5px solid var(--line)',
+                    borderRadius: 10,
+                    background: 'var(--paper-deep)',
+                    padding: '6px 6px 6px 12px',
+                  }}>
+                    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--ink-4)', flexShrink: 0 }}>
+                      <path d="M2 5.5a1 1 0 0 1 1-1h3.5l1.5 1.5h5a1 1 0 0 1 1 1V12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5.5z" />
+                    </svg>
+                    <span
+                      title={workspaceLabel}
+                      dir={settings.graphWorkspacePath ? 'rtl' : 'ltr'}
+                      style={{
+                        font: "400 12px 'JetBrains Mono', ui-monospace",
+                        color: settings.graphWorkspacePath ? 'var(--ink-3)' : 'var(--ink-4)',
+                        flex: 1,
+                        minWidth: 0,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        textAlign: 'left',
+                      }}
+                    >
+                      {settings.graphWorkspacePath ?? t.settings.data.graphFolderDefault}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void (async () => {
+                          const picked = await pickWorkspaceFolder()
+                          if (!picked) return
+                          await switchGraphWorkspace(picked)
+                        })()
+                      }}
+                      style={{
+                        appearance: 'none',
+                        border: '0.5px solid var(--line)',
+                        background: 'var(--bg-card)',
+                        color: 'var(--ink-2)',
+                        font: "500 11px 'JetBrains Mono', ui-monospace",
+                        letterSpacing: '0.04em',
+                        padding: '5px 12px',
+                        borderRadius: 999,
+                        cursor: 'default',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {t.settings.data.chooseFolder}
+                    </button>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginTop: 8 }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!workspaceLabel) return
+                        void (async () => {
+                          const { openPath } = await import('@tauri-apps/plugin-opener')
+                          await openPath(workspaceLabel).catch(() => {})
+                        })()
+                      }}
+                      style={subtleLinkStyle}
+                    >
+                      {t.settings.data.openFolder}
+                    </button>
+                    {settings.graphWorkspacePath && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          void (async () => {
+                            await switchGraphWorkspace(null)
+                            const path = await getDefaultWorkspacePath()
+                            setWorkspaceLabel(path)
+                          })()
+                        }}
+                        style={subtleLinkStyle}
+                      >
+                        {t.settings.data.resetFolder}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           )}
 
           {tab === 'ai' && (
@@ -317,7 +413,10 @@ export function SettingsDialog({ open, onClose }: Props) {
                 {settings.aiMode === 'remote' ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                     <label style={{ display: 'block' }}>
-                      <span style={{ font: "400 13px 'Inter', system-ui", color: 'var(--ink-3)', display: 'block', marginBottom: 6 }}>{t.settings.ai.apiBaseUrl}</span>
+                      <span style={{ font: "400 13px 'Inter', system-ui", color: 'var(--ink-2)', display: 'block' }}>{t.settings.ai.apiBaseUrl}</span>
+                      <small style={{ display: 'block', font: "400 11px/1.4 'Inter', system-ui", color: 'var(--ink-4)', marginTop: 3, marginBottom: 8 }}>
+                        {t.settings.ai.apiBaseUrlDesc}
+                      </small>
                       <input
                         type="text"
                         value={settings.aiBaseUrl}
@@ -328,7 +427,10 @@ export function SettingsDialog({ open, onClose }: Props) {
                     </label>
 
                     <div>
-                      <span style={{ font: "400 13px 'Inter', system-ui", color: 'var(--ink-3)', display: 'block', marginBottom: 8 }}>{t.settings.ai.model}</span>
+                      <span style={{ font: "400 13px 'Inter', system-ui", color: 'var(--ink-2)', display: 'block' }}>{t.settings.ai.model}</span>
+                      <small style={{ display: 'block', font: "400 11px/1.4 'Inter', system-ui", color: 'var(--ink-4)', marginTop: 3, marginBottom: 10 }}>
+                        {t.settings.ai.modelDesc}
+                      </small>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
                         {OLLAMA_PRESETS.map(p => {
                           const active = settings.aiModel === p.id
@@ -369,7 +471,10 @@ export function SettingsDialog({ open, onClose }: Props) {
                     </div>
 
                     <label style={{ display: 'block' }}>
-                      <span style={{ font: "400 13px 'Inter', system-ui", color: 'var(--ink-3)', display: 'block', marginBottom: 6 }}>{t.settings.ai.apiKey}</span>
+                      <span style={{ font: "400 13px 'Inter', system-ui", color: 'var(--ink-2)', display: 'block' }}>{t.settings.ai.apiKey}</span>
+                      <small style={{ display: 'block', font: "400 11px/1.4 'Inter', system-ui", color: 'var(--ink-4)', marginTop: 3, marginBottom: 8 }}>
+                        {t.settings.ai.apiKeyDesc} <code style={{ fontFamily: "'JetBrains Mono', ui-monospace", fontSize: '10.5px' }}>Authorization: Bearer</code>.
+                      </small>
                       <input
                         type="password"
                         autoComplete="off"
@@ -378,9 +483,6 @@ export function SettingsDialog({ open, onClose }: Props) {
                         onChange={e => setSetting('aiApiKey', e.target.value)}
                         style={inputStyle}
                       />
-                      <small style={{ font: "400 11px/1.4 'Inter', system-ui", color: 'var(--ink-4)', display: 'block', marginTop: 8 }}>
-                        {t.settings.ai.apiKeyHint} <code style={{ fontFamily: "'JetBrains Mono', ui-monospace", fontSize: '10.5px' }}>Authorization: Bearer</code>.
-                      </small>
                     </label>
                   </div>
                 ) : (

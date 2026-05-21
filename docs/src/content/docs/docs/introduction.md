@@ -15,7 +15,7 @@ Finally, most platforms are proprietary silos: closed standards, locked formats,
 
 ## What Nesso does instead
 
-Nesso inverts the flow. The learner constructs their own knowledge structure: a typed concept graph that reflects how *they* understand, not just what they have consumed. The act of deciding which relation holds between two concepts (does X *cause* Y, or merely *enable* it? is A an *instance of* B, or a *subtype of* it?) is where elaborative processing happens. The decision is the learning.
+Nesso inverts the flow. The learner constructs their own knowledge structure: a typed concept graph that reflects how _they_ understand, not just what they have consumed. The act of deciding which relation holds between two concepts (does X _cause_ Y, or merely _enable_ it? is A an _instance of_ B, or a _subtype of_ it?) is where elaborative processing happens. The decision is the learning.
 
 Algorithms work on what the learner has built, not on a generic curriculum. Spaced repetition is driven by graph structure: concepts with low stability or untested connections surface before well-reinforced ones. The review queue is always a function of the learner's own map.
 
@@ -25,7 +25,7 @@ AI is present, but with a constrained role. The AI mentor, Socrates, does not de
 
 **Constructivist by design.** Every feature is oriented around the learner doing cognitive work: drawing edges, labelling relations, writing definitions in their own words, self-rating recall. The system does not do this work for them.
 
-**Private by architecture.** Graphs are stored locally in the browser (IndexedDB). The local AI mode runs entirely in-browser via WebGPU; no data leaves the device. Privacy is an implementation detail, not a policy promise.
+**Private by architecture.** In the web app, graphs are stored locally in the browser (IndexedDB). In the **desktop app** (Tauri), each graph is also mirrored to a `.json` file in a workspace folder you can open in any editor (default: app data; optional custom folder in **Settings → Data**). The local AI mode runs entirely in-browser via WebGPU; no data leaves the device. Privacy is an implementation detail, not a policy promise.
 
 **Open by default.** The code is MIT-licensed. Data formats are documented and importable/exportable as plain JSON. The MCP server makes the graph vocabulary available to any compatible client. Technical work done here is intended to be useful beyond this application.
 

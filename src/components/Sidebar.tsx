@@ -45,13 +45,13 @@ export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, zoom, wid
     graphList, currentGraphId, loadGraph, createGraph, renameGraph, deleteGraph,
     nodes, edges, graphDisplay, setGraphDisplay,
     sidebarDisplayOpen, setSidebarDisplayOpen,
+    sidebarStatsOpen, setSidebarStatsOpen,
   } = useGraphStore()
 
   const [editingId, setEditingId] = useState<string | null>(null)
   const [draft, setDraft] = useState('')
   const [hoveredId, setHoveredId] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
-  const [mapOpen, setMapOpen] = useState(true)
   const [isResizing, setIsResizing] = useState(false)
 
   useEffect(() => {
@@ -280,7 +280,7 @@ export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, zoom, wid
         <div style={{ flexShrink: 0, borderTop: '0.5px solid var(--line)' }}>
           <div style={{ padding: '10px 12px 8px' }}>
             <button
-              onClick={() => setMapOpen(o => !o)}
+              onClick={() => setSidebarStatsOpen(!sidebarStatsOpen)}
               style={{
                 appearance: 'none', border: 0, background: 'transparent', cursor: 'default',
                 display: 'flex', alignItems: 'center', gap: 6, padding: 0, width: '100%',
@@ -289,14 +289,14 @@ export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, zoom, wid
               <span style={sectionLabel}>{t.sidebar.stats.title}</span>
               <svg width="9" height="9" viewBox="0 0 10 10" style={{
                 opacity: 0.5,
-                transform: mapOpen ? 'rotate(0deg)' : 'rotate(-90deg)',
+                transform: sidebarStatsOpen ? 'rotate(0deg)' : 'rotate(-90deg)',
                 transition: 'transform 150ms',
               }}>
                 <path d="M2 4l3 3 3-3" stroke="currentColor" strokeWidth="1.4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
           </div>
-          {mapOpen && (
+          {sidebarStatsOpen && (
             <div style={{ padding: '0 12px 10px', display: 'flex', flexDirection: 'column', gap: 4 }}>
               <MapRow label={t.sidebar.stats.concepts} value={String(nodes.length)} />
               <MapRow label={t.sidebar.stats.links} value={String(edges.length)} />

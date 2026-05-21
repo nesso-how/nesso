@@ -3,6 +3,11 @@
 import type { EdgeCategory, EdgeTypeName } from '@/types/graph'
 
 const en = {
+  fileConflict: {
+    message: 'This graph was changed on disk while you were editing.',
+    reload: 'Reload from disk',
+    keepLocal: 'Keep my changes',
+  },
   settings: {
     title: 'Settings',
     tabs: {
@@ -18,21 +23,24 @@ const en = {
       language: 'Language',
     },
     data: {
-      localData: 'Local data',
-      localDataDesc:
-        'Deletes graphs, settings, and layout preferences stored on this device, then reloads. Does not remove the downloaded in-browser AI model (WebGPU).',
-      deleteLocal: 'Delete',
-      deleteLocalConfirmPrompt:
-        'Erase all graphs, settings, and layout preferences stored on this device and reload the app? This cannot be undone.',
+      graphFolder: 'Graph folder',
+      graphFolderDesc:
+        'Where graphs are saved. Pick a cloud-synced folder to share across devices, or edit files with any text editor.',
+      graphFolderDefault: 'Default (app data)',
+      chooseFolder: 'Choose folder',
+      openFolder: 'Open folder',
+      resetFolder: 'Use default folder',
     },
     ai: {
       source: 'Mode',
       remote: 'Remote API',
       local: 'Local model',
       apiBaseUrl: 'API base URL',
+      apiBaseUrlDesc: 'OpenAI-compatible endpoint. Defaults to local Ollama.',
       model: 'Model',
+      modelDesc: 'Model used by AI features.',
       apiKey: 'API key',
-      apiKeyHint: 'Usually empty for local Ollama. For hosted APIs, set whatever secret your endpoint expects as',
+      apiKeyDesc: 'Usually empty for local Ollama. For hosted APIs, set whatever secret your endpoint expects as',
       pulling: (model: string, pct: number) => `Pulling ${model}… ${pct}%`,
       status: {
         checking: 'Checking…',

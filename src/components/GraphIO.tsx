@@ -4,8 +4,13 @@ import { useGraphStore } from '@/store/graph'
 import { getNodesBounds, getViewportForBounds } from '@xyflow/react'
 import { toPng } from 'html-to-image'
 import { useT } from '@/i18n'
-import { saveJsonFileForGraph } from '@/lib/saveJsonFile'
-import { serializeGraph, deserializeGraph } from '@nesso-how/formats'
+import { exportShareGraphJson } from '@/lib/saveJsonFile'
+import {
+  deserializeGraph,
+  nodesForGraphShareExport,
+  nodesFromGraphShareImport,
+  serializeGraph,
+} from '@nesso-how/formats'
 
 interface Props {
   onRelationTypes: () => void
@@ -38,9 +43,13 @@ export function GraphIO({ onRelationTypes, onShortcuts }: Props) {
     const meta = graphList.find(g => g.id === currentGraphId)
     const name = meta?.name ?? 'graph'
     const filename = `${name}.json`
-    const payload = serializeGraph({ name, nodes, edges, display: graphDisplay })
-    await saveJsonFileForGraph(
-      currentGraphId,
+    const payload = serializeGraph({
+      name,
+      nodes: nodesForGraphShareExport(nodes),
+      edges,
+      display: graphDisplay,
+    })
+    await exportShareGraphJson(
       filename,
       payload,
       fn => window.confirm(t.graphIO.exportOverwriteConfirm.replace('{name}', fn)),
@@ -98,8 +107,14 @@ export function GraphIO({ onRelationTypes, onShortcuts }: Props) {
       if (!file) return
       try {
         const data = deserializeGraph(await file.text())
-        const name = data.name || file.name.replace(/\.json$/i, '')
-        await importGraph(name, data.nodes, data.edges, data.display)
+        const name = data.name?.trim() || file.name.replace(/\.json$/i, '')
+        await importGraph(
+          name,
+          nodesFromGraphShareImport(data.nodes),
+          data.edges,
+          data.display,
+          data.id,
+        )
       } catch {}
     }
     input.click()

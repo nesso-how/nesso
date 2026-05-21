@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+import { isDesktop } from '@/lib/isDesktop'
 
 const exportHandles = new Map<string, FileSystemFileHandleWithPermission>()
 
@@ -51,4 +52,25 @@ export async function saveJsonFileForGraph(
   }
 
   downloadViaAnchor(filename, contents)
+}
+
+/** Share-safe graph JSON: save dialog on desktop, File System Access API or download on web. */
+export async function exportShareGraphJson(
+  filename: string,
+  contents: string,
+  confirmOverwrite: (filename: string) => boolean,
+): Promise<void> {
+  if (isDesktop()) {
+    const { save } = await import('@tauri-apps/plugin-dialog')
+    const path = await save({
+      defaultPath: filename,
+      filters: [{ name: 'JSON', extensions: ['json'] }],
+    })
+    if (!path) return
+    const { writeTextFile } = await import('@tauri-apps/plugin-fs')
+    await writeTextFile(path, contents)
+    return
+  }
+
+  await saveJsonFileForGraph('share-export', filename, contents, confirmOverwrite)
 }

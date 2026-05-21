@@ -3,6 +3,11 @@
 import type en from './en'
 
 const it: typeof en = {
+  fileConflict: {
+    message: 'Questo grafo è stato modificato su disco mentre lo stavi editando.',
+    reload: 'Ricarica da disco',
+    keepLocal: 'Mantieni le mie modifiche',
+  },
   settings: {
     title: 'Impostazioni',
     tabs: {
@@ -18,21 +23,24 @@ const it: typeof en = {
       language: 'Lingua',
     },
     data: {
-      localData: 'Dati locali',
-      localDataDesc:
-        'Elimina grafi, impostazioni e preferenze di layout salvate su questo dispositivo e ricarica l’app. Non rimuove il modello AI scaricato nel browser (WebGPU).',
-      deleteLocal: 'Elimina',
-      deleteLocalConfirmPrompt:
-        'Eliminare tutti i grafi, le impostazioni e le preferenze di layout salvate su questo dispositivo e ricaricare l’app? Operazione irreversibile.',
+      graphFolder: 'Cartella grafi',
+      graphFolderDesc:
+        'Dove vengono salvati i grafi. Scegli una cartella su cloud per condividerli tra dispositivi, o modifica i file con un editor di testo.',
+      graphFolderDefault: 'Predefinita (dati app)',
+      chooseFolder: 'Scegli cartella',
+      openFolder: 'Apri cartella',
+      resetFolder: 'Usa cartella predefinita',
     },
     ai: {
       source: 'Modalità',
       remote: 'API remota',
       local: 'Modello locale',
       apiBaseUrl: 'URL base API',
+      apiBaseUrlDesc: 'Endpoint OpenAI-compatibile. Default: Ollama locale.',
       model: 'Modello',
+      modelDesc: 'Modello usato dalle funzioni AI.',
       apiKey: 'Chiave API',
-      apiKeyHint: 'Di solito vuoto per Ollama locale. Per API remote, imposta il segreto che il tuo endpoint si aspetta come',
+      apiKeyDesc: 'Di solito vuoto per Ollama locale. Per API remote, imposta il segreto che il tuo endpoint si aspetta come',
       pulling: (model, pct) => `Scaricamento di ${model}… ${pct}%`,
       status: {
         checking: 'Controllo in corso…',

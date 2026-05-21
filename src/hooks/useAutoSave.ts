@@ -4,7 +4,7 @@ import { useReactFlow } from '@xyflow/react'
 import { graphPersistFingerprint } from '@/lib/graphPersist'
 import { useGraphStore } from '@/store/graph'
 
-const DEBOUNCE_MS = 500
+const DEBOUNCE_MS = 5000
 
 // Viewport is also saved from GraphCanvas `onMoveEnd` when only pan/zoom/fit changes (no node/edge edits).
 export function useAutoSave() {
@@ -14,10 +14,18 @@ export function useAutoSave() {
   const loadedToken = useGraphStore(s => s.loadedToken)
   const saveCurrentGraph = useGraphStore(s => s.saveCurrentGraph)
   const saveViewport = useGraphStore(s => s.saveViewport)
+  const externalFileConflict = useGraphStore(s => s.externalFileConflict)
   const { getViewport } = useReactFlow()
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastToken = useRef<number | null>(null)
   const lastFingerprint = useRef<string | null>(null)
+
+  useEffect(() => {
+    if (externalFileConflict && timer.current) {
+      clearTimeout(timer.current)
+      timer.current = null
+    }
+  }, [externalFileConflict])
 
   useEffect(() => {
     // Skip mount and any run triggered by a load (which replace nodes/edges
@@ -32,6 +40,7 @@ export function useAutoSave() {
     lastFingerprint.current = fingerprint
     if (timer.current) clearTimeout(timer.current)
     timer.current = setTimeout(() => {
+      if (useGraphStore.getState().externalFileConflict) return
       const vp = getViewport()
       saveViewport(currentGraphId, vp)
       saveCurrentGraph()

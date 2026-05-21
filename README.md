@@ -32,14 +32,14 @@ Nesso is an interactive concept map where nodes are ideas and edges are typed se
 - **Socratic AI mentor** — context-aware dialogue that probes rather than explains; opens on the current node or edge
 - **Local-first AI** — runs **Qwen2.5 1.5B** in-browser on WebGPU via [`@mlc-ai/web-llm`](https://github.com/mlc-ai/web-llm), no API key needed; any OpenAI-compatible cloud endpoint also works
 - **Spaced-repetition review** — FSRS scheduling via [`ts-fsrs`](https://github.com/open-spaced-repetition/ts-fsrs); rate Again / Hard / Good / Easy from a full-screen overlay
-- **Multi-graph workspace** — create, name, and switch between graphs; persisted in IndexedDB
+- **Multi-graph workspace** — create, name, and switch between graphs; persisted in IndexedDB (web) and mirrored to `.json` files on disk (desktop)
 - **Inspector panel** — edit concept text, inspect FSRS state, change relation types in place
 - **Localisation** — English and Italian UI; the mentor responds in the active language
 - **Cross-platform** — web app at [app.nesso.how](https://app.nesso.how) and a Tauri v2 macOS desktop build
 
 ## Architecture
 
-Nesso is a React 18 + Vite + TypeScript single-page app, optionally wrapped by Tauri v2 for a native desktop shell. All app state lives in a single Zustand store ([src/store/graph.ts](src/store/graph.ts)) — components subscribe via selectors with no prop drilling. Graph data persists to **IndexedDB**, UI chrome to **localStorage**.
+Nesso is a React 18 + Vite + TypeScript single-page app, optionally wrapped by Tauri v2 for a native desktop shell. All app state lives in a single Zustand store ([src/store/graph.ts](src/store/graph.ts)) — components subscribe via selectors with no prop drilling. Graph data persists to **IndexedDB** (web) and is **dual-written to a workspace folder of `.json` files** on desktop (with file watch for external edits); UI chrome to **localStorage**.
 
 The canvas is built on [React Flow](https://reactflow.dev/) with custom `ConceptNode` and `NessoEdge` components ([src/components/](src/components/)); each edge renders its semantic relation as a distinct line style plus an SVG glyph. Every node carries FSRS scheduling fields (`stability`, `difficulty`, `due`, `lastRating`) consumed by the Review overlay.
 
