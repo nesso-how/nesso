@@ -9,6 +9,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 
 - **Canvas:** Initial graph load no longer flickers — viewport is computed and applied before first paint when no saved viewport exists.
+- **Sidebar:** Selecting a node or edge after switching graphs no longer bumps `updatedAt` or reorders the graph list — autosave ignores React Flow selection flags.
 
 ### Removed
 

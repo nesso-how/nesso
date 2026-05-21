@@ -2,6 +2,7 @@
 import type { Node, Edge } from '@xyflow/react'
 import type { ConceptNodeData } from '@/types/graph'
 import { CONCEPT_HANDLE_IN, CONCEPT_HANDLE_OUT } from '@/data/conceptHandles'
+import { stripEdgeSelection, stripNodeSelection } from '@/lib/graphPersist'
 
 export type GraphClipboard = {
   nodes: Node<ConceptNodeData>[]
@@ -29,16 +30,6 @@ type SelectionInput = {
   edges: Edge[]
   selected: { kind: 'node' | 'edge'; id: string } | null
   selectedIds: string[]
-}
-
-function stripNodeSelection(n: Node<ConceptNodeData>): Node<ConceptNodeData> {
-  const { selected: _s, ...rest } = n
-  return rest as Node<ConceptNodeData>
-}
-
-function stripEdgeSelection(e: Edge): Edge {
-  const { selected: _s, ...rest } = e
-  return rest
 }
 
 /** Build a copy payload from the current canvas selection. */

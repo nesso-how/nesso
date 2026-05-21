@@ -15,6 +15,7 @@ import {
   setGraphClipboard,
   snapshotSelection,
 } from '@/lib/graphClipboard'
+import { graphPersistEquals, graphPersistPayload } from '@/lib/graphPersist'
 import type { GraphRecord } from './db'
 import { dbSaveGraph, dbLoadGraph, dbListGraphs, dbDeleteGraph } from './db'
 import { defaultCurveFlip, nodeCenterX, nodeCenterY } from '@/geometry/nessoEdgeGeometry'
@@ -137,7 +138,7 @@ interface GraphState {
   // Multi-graph actions
   loadGraphList: () => Promise<GraphMeta[]>
   loadGraph: (id: string) => Promise<void>
-  saveCurrentGraph: (viewport?: Viewport) => Promise<void>
+  saveCurrentGraph: () => Promise<void>
   createGraph: (name: string) => Promise<string>
   importGraph: (
     name: string,
@@ -658,19 +659,31 @@ export const useGraphStore = create<GraphState>()(
         }))
       },
 
-      saveCurrentGraph: async (viewport) => {
-        const { currentGraphId, nodes, edges, graphList, graphDisplay } = get()
+      saveCurrentGraph: async () => {
+        const { currentGraphId, nodes, edges, graphList, graphDisplay, settings } = get()
         const meta = graphList.find(g => g.id === currentGraphId)
-        const now = Date.now()
         const existing = await dbLoadGraph(currentGraphId)
+        if (existing && graphPersistEquals(
+          { nodes, edges, display: graphDisplay },
+          {
+            nodes: existing.nodes,
+            edges: existing.edges,
+            display: mergeGraphDisplay(existing.display, settings),
+          },
+        )) {
+          return
+        }
+        const { nodes: persistNodes, edges: persistEdges, display } =
+          graphPersistPayload(nodes, edges, graphDisplay)
+        const now = Date.now()
         await dbSaveGraph({
           id: currentGraphId,
           name: meta?.name ?? 'Untitled',
           createdAt: existing?.createdAt ?? meta?.updatedAt ?? now,
           updatedAt: now,
-          nodes,
-          edges,
-          display: graphDisplay,
+          nodes: persistNodes,
+          edges: persistEdges,
+          display,
         })
         set(s => ({
           graphList: s.graphList.map(g =>
