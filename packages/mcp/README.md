@@ -1,0 +1,30 @@
+# @nesso-how/mcp
+
+[MCP](https://modelcontextprotocol.io/) server for [Nesso](https://nesso.how) — relation types and docs for LLM clients.
+
+## Install
+
+```bash
+npm install -g @nesso-how/mcp
+# or run without install:
+npx -y @nesso-how/mcp
+```
+
+## Usage
+
+Add to your MCP client (Cursor, Claude Desktop, etc.):
+
+```json
+{
+  "command": "npx",
+  "args": ["-y", "@nesso-how/mcp"]
+}
+```
+
+Tools: `get_relation_types`, `get_nesso_docs`.
+
+Full guide: [MCP integration](https://nesso.how/docs/guides/mcp-integration/).
+
+## License
+
+MIT
