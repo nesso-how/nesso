@@ -51,7 +51,7 @@ Fetches documentation pages from this site. Call it without a `slug` to get a ta
 
 ### `get_relation_types`
 
-Returns the complete list of relation types with their category, line style, and symmetry. Use this whenever you need valid type names for graph JSON or explanations for the learner.
+Returns the complete list of relation types with their category, line style, symmetry, and semantic coefficients (transitive, inverse, strength, polarity, cardinality). Use this whenever you need valid type names for graph JSON or explanations for the learner.
 
 ### Graph JSON (Import JSON)
 

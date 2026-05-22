@@ -1,6 +1,6 @@
 ---
-description: Semantic edge model — categories, relation types, visual encoding
-globs: src/data/relationTypes.ts, src/types/graph.ts, src/components/NessoEdge.tsx, src/components/RelationTypesDialog.tsx
+description: Semantic edge model — categories, relation types, coefficients, visual encoding
+globs: src/data/relationTypes.ts, src/types/graph.ts, src/components/NessoEdge.tsx, src/components/RelationTypesDialog.tsx, packages/relation-types/src/index.ts
 alwaysApply: false
 ---
 
@@ -28,22 +28,34 @@ Use `nodeToCard()` in `src/types/graph.ts` to build a ts-fsrs `Card` from persis
 
 All edges carry a `data.type: EdgeTypeName`. Relation definitions (`RELATION_TYPES`) and category copy (`RELATION_CATEGORY_META`) live in `@nesso-how/relation-types`; UI palette bindings (`RELATION_CATEGORIES`) merge meta with CSS vars in `src/data/relationTypes.ts`.
 
-| Category     | `EdgeTypeName` values                                   |
-| ------------ | ------------------------------------------------------- |
-| `taxonomic`  | `is-a`, `instance-of`, `subtype-of`                     |
-| `structural` | `part-of`, `made-of`, `contains`                        |
-| `causal`     | `causes`, `produces`, `enables`, `prevents`, `triggers` |
-| `dependency` | `requires`, `uses`                                      |
-| `temporal`   | `precedes`, `occurs-in`                                 |
-| `opposition` | `contrasts-with`, `opposite-of`                         |
+The set has **34 types in 7 categories**. Asymmetric relations come in **inverse pairs** so traversal in either direction is first-class.
 
-Each `EdgeTypeDef` has:
+| Category     | Forward types                                           | Inverse types                                                           |
+| ------------ | ------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `taxonomic`  | `subtype-of`, `instance-of`                             | `has-subtype`, `has-instance`                                           |
+| `structural` | `part-of`, `made-of`                                    | `contains`, `composes`                                                  |
+| `causal`     | `causes`, `produces`, `enables`, `prevents`, `triggers`, `inhibits` | `caused-by`, `produced-by`, `enabled-by`, `prevented-by`, `triggered-by`, `inhibited-by` |
+| `dependency` | `requires`, `uses`, `used-for`                          | `required-by`, `used-by`, `purpose-of`                                  |
+| `temporal`   | `precedes`, `occurs-in`                                 | `follows`, `has-occurrence`                                             |
+| `opposition` | `contrasts-with`, `opposite-of`                         | self (symmetric)                                                        |
+| `similarity` | `similar-to`, `analogous-to`                            | self (symmetric)                                                        |
+
+## `EdgeTypeDef` schema
+
+Each definition has:
 
 - `cat: EdgeCategory` — which category it belongs to
+- `label: string` — human-readable label
 - `line: 'solid' | 'dashed' | 'dotted' | 'double' | 'wavy'` — stroke style
 - `glyph: GlyphKind` — SVG icon at the target end
-- `symmetric: boolean` — true for `contrasts-with` and `opposite-of`
-- `label: string` — human-readable label
+- `symmetric: boolean` — true for opposition and similarity categories
+- `transitive: 'Y' | 'N' | 'weak'` — `weak` = transitivity with decay; algorithms may discount per step
+- `inverse: EdgeTypeName` — canonical inverse in the set; self for symmetric types
+- `strength: number` — per-type semantic weight in `0..1`. Intensity, not per-edge confidence (there is no per-edge override). Distinct types may differ by strength alone (e.g. `prevents` 0.85 vs `inhibits` 0.55).
+- `polarity: -1 | 0 | 1` — signed-network polarity: `+1` positive effect, `-1` antagonistic, `0` neutral/structural
+- `cardinality: '1-1' | '1-N' | 'N-1' | 'N-N'` — expected mapping pattern; `N-N` = no a-priori constraint
+
+These coefficients exist to drive future graph-analysis and graph-comparison algorithms; they are studied at the type level, not assigned per edge.
 
 ## Visual encoding
 

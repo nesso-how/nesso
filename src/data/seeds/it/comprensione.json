@@ -162,7 +162,7 @@
       "targetHandle": "in",
       "type": "nesso",
       "data": {
-        "type": "is-a"
+        "type": "subtype-of"
       }
     },
     {

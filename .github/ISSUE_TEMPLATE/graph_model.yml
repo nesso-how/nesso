@@ -2,23 +2,38 @@ name: Graph model / edge type
 description: Propose changes to semantic edge categories, relation types, or visual encoding
 labels: [graph-model]
 body:
+  - type: markdown
+    attributes:
+      value: |
+        Before proposing, please skim the [Relation types reference](https://nesso.how/docs/reference/relation-types/) and the [`EdgeTypeDef` schema](https://github.com/cedoor/nesso/blob/main/packages/relation-types/src/index.ts). Every type must declare both visual encoding **and** semantic coefficients — these drive graph-analysis algorithms, so they need to be studied at the type level.
+
   - type: textarea
     id: motivation
     attributes:
       label: Motivation
-      description: What concept or learning relationship is currently missing or misrepresented?
+      description: What concept or learning relationship is currently missing or misrepresented? Include a few concrete cases where the existing 34 types fall short.
     validations:
       required: true
 
   - type: textarea
     id: proposal
     attributes:
-      label: Proposal
+      label: Proposal — type definition
       description: |
-        Describe the new or modified relation type(s). Include:
-        - Suggested name and category (causal, structural, temporal, …)
-        - Direction semantics (A → B means "…")
-        - Suggested color / visual encoding if relevant
+        Describe the new or modified relation type(s). For each, include:
+
+        **Visual / identity**
+        - Suggested `EdgeTypeName` (kebab-case) and `label`
+        - `cat: EdgeCategory` — taxonomic | structural | causal | dependency | temporal | opposition | similarity (or propose a new category)
+        - `line` (solid | dashed | dotted | double | wavy) and `glyph` if relevant
+
+        **Semantic coefficients**
+        - `symmetric: boolean`
+        - `transitive: 'Y' | 'N' | 'weak'` — if `A r B` and `B r C`, does `A r C` follow?
+        - `inverse: EdgeTypeName` — canonical inverse in the set (self for symmetric). If you propose an asymmetric type, also propose its inverse.
+        - `strength: number` (0..1) — per-type semantic weight; intensity, not per-edge confidence. Briefly justify the value.
+        - `polarity: -1 | 0 | 1` — signed-network polarity: positive effect, antagonistic, or neutral/structural
+        - `cardinality: '1-1' | '1-N' | 'N-1' | 'N-N'` — N-N means no a-priori constraint
     validations:
       required: true
 
@@ -26,6 +41,14 @@ body:
     id: examples
     attributes:
       label: Concrete examples
-      description: Two or three real concept pairs that would use this edge type.
+      description: Two or three real concept pairs that would use this edge type. Cover at least one case showing direction semantics ("A → B means…") and, for asymmetric types, one case in each direction (forward and inverse).
+    validations:
+      required: true
+
+  - type: textarea
+    id: algorithmic-impact
+    attributes:
+      label: Algorithmic impact (optional)
+      description: How would this type interact with traversal, centrality, similarity, or graph-comparison algorithms? Are there compositions with existing types worth noting (e.g. `is-a` ∘ `part-of` → `part-of`)?
     validations:
       required: false

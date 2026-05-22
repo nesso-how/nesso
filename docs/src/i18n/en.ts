@@ -29,7 +29,7 @@ export const en: Locale = {
       mind: "Mind",
       understanding: "Understanding",
       produces: "produces",
-      isA: "is a",
+      subtypeOf: "subtype of",
       requires: "requires",
       contrastsWith: "contrasts with",
       occursIn: "occurs in",
@@ -75,7 +75,7 @@ export const en: Locale = {
   },
   vocab: {
     label: "Edge vocabulary",
-    intro: "An unlabeled arrow records a connection without forcing you to commit to what kind. Novak’s concept mapping research shows that labeling each proposition, choosing between <em>causes</em> and <em>enables</em>, or <em>is-a</em> and <em>instance-of</em>, is what activates the elaborative processing that produces lasting understanding. The decision is the learning.",
+    intro: "An unlabeled arrow records a connection without forcing you to commit to what kind. Novak’s concept mapping research shows that labeling each proposition, choosing between <em>causes</em> and <em>enables</em>, or <em>subtype-of</em> and <em>instance-of</em>, is what activates the elaborative processing that produces lasting understanding. The decision is the learning.",
     ctaLink: "Full relation type reference →",
     categories: {
       taxonomic: { name: "Taxonomic", q: "What kind of thing?", nodeA: "Labrador", nodeB: "Dog" },
@@ -87,7 +87,7 @@ export const en: Locale = {
       similarity: { name: "Similarity", q: "What is it like?", nodeA: "Eye", nodeB: "Camera" },
     },
     edges: {
-      isA: "is a",
+      subtypeOf: "subtype of",
       contains: "contains",
       produces: "produces",
       requires: "requires",
@@ -96,7 +96,7 @@ export const en: Locale = {
       similarTo: "similar to",
     },
     chips: {
-      taxonomic: ["is-a", "instance-of", "subtype-of"],
+      taxonomic: ["subtype-of", "instance-of"],
       structural: ["part-of", "made-of", "contains"],
       causal: ["causes", "produces", "enables", "prevents", "triggers", "inhibits"],
       dependency: ["requires", "uses", "used-for"],

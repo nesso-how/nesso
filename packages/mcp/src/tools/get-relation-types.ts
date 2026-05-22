@@ -8,7 +8,9 @@ export function registerGetRelationTypes(server: McpServer): void {
     'get_relation_types',
     {
       description:
-        'Returns all 21 semantic relation types supported by Nesso, grouped by category. ' +
+        'Returns all 34 semantic relation types supported by Nesso, grouped by 7 categories. ' +
+        'Each type carries semantic coefficients (transitive, inverse, strength, polarity, cardinality) ' +
+        'in addition to its visual encoding. ' +
         'Use this when you need valid relation type names for graph JSON or explanations for the user.',
       inputSchema: z.object({}),
     },
@@ -23,6 +25,11 @@ export function registerGetRelationTypes(server: McpServer): void {
             label: def.label,
             line: def.line,
             symmetric: def.symmetric,
+            transitive: def.transitive,
+            inverse: def.inverse,
+            strength: def.strength,
+            polarity: def.polarity,
+            cardinality: def.cardinality,
           })),
       }))
 

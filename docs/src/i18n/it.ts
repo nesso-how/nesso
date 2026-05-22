@@ -29,7 +29,7 @@ export const it: Locale = {
       mind: "Mente",
       understanding: "Comprensione",
       produces: "produce",
-      isA: "è un",
+      subtypeOf: "sottotipo di",
       requires: "richiede",
       contrastsWith: "contrasta con",
       occursIn: "avviene in",
@@ -75,7 +75,7 @@ export const it: Locale = {
   },
   vocab: {
     label: "Vocabolario degli archi",
-    intro: "Una freccia senza etichetta registra una connessione senza obbligarti a stabilire di che tipo sia. La ricerca di Novak sulle mappe concettuali mostra che etichettare ogni proposizione, scegliere tra <em>causes</em> e <em>enables</em>, o tra <em>is-a</em> e <em>instance-of</em>, è ciò che stimola l'elaborazione profonda e porta a una comprensione duratura. La decisione è l'apprendimento.",
+    intro: "Una freccia senza etichetta registra una connessione senza obbligarti a stabilire di che tipo sia. La ricerca di Novak sulle mappe concettuali mostra che etichettare ogni proposizione, scegliere tra <em>causes</em> e <em>enables</em>, o tra <em>subtype-of</em> e <em>instance-of</em>, è ciò che stimola l'elaborazione profonda e porta a una comprensione duratura. La decisione è l'apprendimento.",
     ctaLink: "Riferimento completo sui tipi di relazione →",
     categories: {
       taxonomic: { name: "Tassonomico", q: "Che tipo di cosa?", nodeA: "Labrador", nodeB: "Cane" },
@@ -87,7 +87,7 @@ export const it: Locale = {
       similarity: { name: "Somiglianza", q: "A cosa assomiglia?", nodeA: "Occhio", nodeB: "Fotocamera" },
     },
     edges: {
-      isA: "è un",
+      subtypeOf: "sottotipo di",
       contains: "contiene",
       produces: "produce",
       requires: "richiede",
@@ -96,7 +96,7 @@ export const it: Locale = {
       similarTo: "simile a",
     },
     chips: {
-      taxonomic: ["è-un", "istanza-di", "sottotipo-di"],
+      taxonomic: ["sottotipo-di", "istanza-di"],
       structural: ["parte-di", "fatto-di", "contiene"],
       causal: ["causa", "produce", "abilita", "impedisce", "innesca", "inibisce"],
       dependency: ["richiede", "usa", "usato-per"],

@@ -26,7 +26,7 @@ export type Locale = {
       mind: string
       understanding: string
       produces: string
-      isA: string
+      subtypeOf: string
       requires: string
       contrastsWith: string
       occursIn: string
@@ -83,7 +83,7 @@ export type Locale = {
       similarity: { name: string; q: string; nodeA: string; nodeB: string }
     }
     edges: {
-      isA: string
+      subtypeOf: string
       contains: string
       produces: string
       requires: string

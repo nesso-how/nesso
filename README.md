@@ -24,11 +24,11 @@
 
 ## What it does
 
-Nesso is an interactive concept map where nodes are ideas and edges are typed semantic relations. You draw connections between concepts, pick the relation (e.g. `causes`, `requires`, `is-a`), and each concept carries spaced-repetition state. **Socrates**, a Socratic AI mentor, reads the current graph and your selection, then probes your understanding through questions rather than explanations.
+Nesso is an interactive concept map where nodes are ideas and edges are typed semantic relations. You draw connections between concepts, pick the relation (e.g. `causes`, `requires`, `subtype-of`), and each concept carries spaced-repetition state. **Socrates**, a Socratic AI mentor, reads the current graph and your selection, then probes your understanding through questions rather than explanations.
 
 ## Features
 
-- **Typed knowledge graph** — 21 semantic relations across 7 categories (taxonomic, structural, causal, dependency, temporal, opposition, similarity), each with a distinct line style and glyph
+- **Typed knowledge graph** — 34 semantic relations across 7 categories (taxonomic, structural, causal, dependency, temporal, opposition, similarity), with inverse pairs; each type has a distinct line style and glyph
 - **Socratic AI mentor** — context-aware dialogue that probes rather than explains; opens on the current node or edge
 - **Local-first AI** — runs **Qwen2.5 1.5B** in-browser on WebGPU via [`@mlc-ai/web-llm`](https://github.com/mlc-ai/web-llm), no API key needed; any OpenAI-compatible cloud endpoint also works
 - **Spaced-repetition review** — FSRS scheduling via [`ts-fsrs`](https://github.com/open-spaced-repetition/ts-fsrs); rate Again / Hard / Good / Easy from a full-screen overlay

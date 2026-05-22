@@ -10,12 +10,29 @@ export type EdgeCategory =
   | 'similarity'
 
 export type EdgeTypeName =
-  | 'is-a' | 'instance-of' | 'subtype-of'
-  | 'part-of' | 'made-of' | 'contains'
-  | 'causes' | 'produces' | 'enables' | 'prevents' | 'triggers' | 'inhibits'
-  | 'requires' | 'uses' | 'used-for'
-  | 'precedes' | 'occurs-in'
+  // taxonomic
+  | 'subtype-of' | 'has-subtype'
+  | 'instance-of' | 'has-instance'
+  // structural
+  | 'part-of' | 'contains'
+  | 'made-of' | 'composes'
+  // causal
+  | 'causes' | 'caused-by'
+  | 'produces' | 'produced-by'
+  | 'enables' | 'enabled-by'
+  | 'prevents' | 'prevented-by'
+  | 'triggers' | 'triggered-by'
+  | 'inhibits' | 'inhibited-by'
+  // dependency
+  | 'requires' | 'required-by'
+  | 'uses' | 'used-by'
+  | 'used-for' | 'purpose-of'
+  // temporal
+  | 'precedes' | 'follows'
+  | 'occurs-in' | 'has-occurrence'
+  // opposition (symmetric)
   | 'contrasts-with' | 'opposite-of'
+  // similarity (symmetric)
   | 'similar-to' | 'analogous-to'
 
 export type GlyphKind =
@@ -24,12 +41,30 @@ export type GlyphKind =
   | 'anchor' | 'tool' | 'chevron-r' | 'ring' | 'tilde' | 'x'
   | 'minus' | 'flag' | 'approx' | 'arrows-lr'
 
+/** Transitivity of a relation: `Y` strict, `N` none, `weak` with decay (algorithms may discount weight per step). */
+export type Transitivity = 'Y' | 'N' | 'weak'
+
+/** Polarity in signed-network terms: `+1` positive effect, `-1` antagonistic, `0` neutral/structural. */
+export type Polarity = -1 | 0 | 1
+
+/** Expected mapping cardinality. `N-N` means no a-priori constraint. */
+export type Cardinality = '1-1' | '1-N' | 'N-1' | 'N-N'
+
 export interface EdgeTypeDef {
   cat: EdgeCategory
+  label: string
+  // visual encoding
   line: 'solid' | 'dashed' | 'dotted' | 'double' | 'wavy'
   glyph: GlyphKind
+  // semantic coefficients
   symmetric: boolean
-  label: string
+  transitive: Transitivity
+  /** Canonical inverse in the set. For symmetric types, points to self. */
+  inverse: EdgeTypeName
+  /** Per-type semantic weight in 0..1; intensity, not per-edge confidence. */
+  strength: number
+  polarity: Polarity
+  cardinality: Cardinality
 }
 
 /** Canonical category labels and prompts. */
@@ -44,33 +79,223 @@ export const RELATION_CATEGORY_META: Record<EdgeCategory, { label: string; subti
 }
 
 export const RELATION_TYPES: Record<EdgeTypeName, EdgeTypeDef> = {
-  'is-a':           { cat: 'taxonomic',  line: 'solid',  glyph: 'triangle-up',  symmetric: false, label: 'is a' },
-  'instance-of':    { cat: 'taxonomic',  line: 'solid',  glyph: 'circle-dot',   symmetric: false, label: 'instance of' },
-  'subtype-of':     { cat: 'taxonomic',  line: 'double', glyph: 'triangle-up',  symmetric: false, label: 'subtype of' },
+  // taxonomic ────────────────────────────────────────────────────────────
+  'subtype-of': {
+    cat: 'taxonomic', label: 'subtype of',
+    line: 'double', glyph: 'triangle-up',
+    symmetric: false, transitive: 'Y', inverse: 'has-subtype',
+    strength: 0.90, polarity: 0, cardinality: 'N-1',
+  },
+  'has-subtype': {
+    cat: 'taxonomic', label: 'has subtype',
+    line: 'double', glyph: 'triangle-up',
+    symmetric: false, transitive: 'Y', inverse: 'subtype-of',
+    strength: 0.90, polarity: 0, cardinality: '1-N',
+  },
+  'instance-of': {
+    cat: 'taxonomic', label: 'instance of',
+    line: 'solid', glyph: 'circle-dot',
+    symmetric: false, transitive: 'N', inverse: 'has-instance',
+    strength: 0.95, polarity: 0, cardinality: 'N-1',
+  },
+  'has-instance': {
+    cat: 'taxonomic', label: 'has instance',
+    line: 'solid', glyph: 'circle-dot',
+    symmetric: false, transitive: 'N', inverse: 'instance-of',
+    strength: 0.95, polarity: 0, cardinality: '1-N',
+  },
 
-  'part-of':        { cat: 'structural', line: 'solid',  glyph: 'diamond',      symmetric: false, label: 'part of' },
-  'made-of':        { cat: 'structural', line: 'dashed', glyph: 'hash',         symmetric: false, label: 'made of' },
-  'contains':       { cat: 'structural', line: 'solid',  glyph: 'diamond-open', symmetric: false, label: 'contains' },
+  // structural ───────────────────────────────────────────────────────────
+  'part-of': {
+    cat: 'structural', label: 'part of',
+    line: 'solid', glyph: 'diamond',
+    symmetric: false, transitive: 'Y', inverse: 'contains',
+    strength: 0.85, polarity: 0, cardinality: 'N-1',
+  },
+  'contains': {
+    cat: 'structural', label: 'contains',
+    line: 'solid', glyph: 'diamond-open',
+    symmetric: false, transitive: 'Y', inverse: 'part-of',
+    strength: 0.85, polarity: 0, cardinality: '1-N',
+  },
+  'made-of': {
+    cat: 'structural', label: 'made of',
+    line: 'dashed', glyph: 'hash',
+    symmetric: false, transitive: 'weak', inverse: 'composes',
+    strength: 0.75, polarity: 0, cardinality: 'N-N',
+  },
+  'composes': {
+    cat: 'structural', label: 'composes',
+    line: 'dashed', glyph: 'hash',
+    symmetric: false, transitive: 'weak', inverse: 'made-of',
+    strength: 0.75, polarity: 0, cardinality: 'N-N',
+  },
 
-  'causes':         { cat: 'causal',     line: 'solid',  glyph: 'arrow-right',  symmetric: false, label: 'causes' },
-  'produces':       { cat: 'causal',     line: 'solid',  glyph: 'asterisk',     symmetric: false, label: 'produces' },
-  'enables':        { cat: 'causal',     line: 'dotted', glyph: 'key',          symmetric: false, label: 'enables' },
-  'prevents':       { cat: 'causal',     line: 'dotted', glyph: 'block',        symmetric: false, label: 'prevents' },
-  'triggers':       { cat: 'causal',     line: 'solid',  glyph: 'spark',        symmetric: false, label: 'triggers' },
-  'inhibits':       { cat: 'causal',     line: 'dotted', glyph: 'minus',        symmetric: false, label: 'inhibits' },
+  // causal ───────────────────────────────────────────────────────────────
+  'causes': {
+    cat: 'causal', label: 'causes',
+    line: 'solid', glyph: 'arrow-right',
+    symmetric: false, transitive: 'N', inverse: 'caused-by',
+    strength: 0.85, polarity: 1, cardinality: 'N-N',
+  },
+  'caused-by': {
+    cat: 'causal', label: 'caused by',
+    line: 'solid', glyph: 'arrow-right',
+    symmetric: false, transitive: 'N', inverse: 'causes',
+    strength: 0.85, polarity: 1, cardinality: 'N-N',
+  },
+  'produces': {
+    cat: 'causal', label: 'produces',
+    line: 'solid', glyph: 'asterisk',
+    symmetric: false, transitive: 'N', inverse: 'produced-by',
+    strength: 0.70, polarity: 1, cardinality: 'N-N',
+  },
+  'produced-by': {
+    cat: 'causal', label: 'produced by',
+    line: 'solid', glyph: 'asterisk',
+    symmetric: false, transitive: 'N', inverse: 'produces',
+    strength: 0.70, polarity: 1, cardinality: 'N-N',
+  },
+  'enables': {
+    cat: 'causal', label: 'enables',
+    line: 'dotted', glyph: 'key',
+    symmetric: false, transitive: 'weak', inverse: 'enabled-by',
+    strength: 0.60, polarity: 1, cardinality: 'N-N',
+  },
+  'enabled-by': {
+    cat: 'causal', label: 'enabled by',
+    line: 'dotted', glyph: 'key',
+    symmetric: false, transitive: 'weak', inverse: 'enables',
+    strength: 0.60, polarity: 1, cardinality: 'N-N',
+  },
+  'prevents': {
+    cat: 'causal', label: 'prevents',
+    line: 'dotted', glyph: 'block',
+    symmetric: false, transitive: 'N', inverse: 'prevented-by',
+    strength: 0.85, polarity: -1, cardinality: 'N-N',
+  },
+  'prevented-by': {
+    cat: 'causal', label: 'prevented by',
+    line: 'dotted', glyph: 'block',
+    symmetric: false, transitive: 'N', inverse: 'prevents',
+    strength: 0.85, polarity: -1, cardinality: 'N-N',
+  },
+  'triggers': {
+    cat: 'causal', label: 'triggers',
+    line: 'solid', glyph: 'spark',
+    symmetric: false, transitive: 'N', inverse: 'triggered-by',
+    strength: 0.70, polarity: 1, cardinality: 'N-N',
+  },
+  'triggered-by': {
+    cat: 'causal', label: 'triggered by',
+    line: 'solid', glyph: 'spark',
+    symmetric: false, transitive: 'N', inverse: 'triggers',
+    strength: 0.70, polarity: 1, cardinality: 'N-N',
+  },
+  'inhibits': {
+    cat: 'causal', label: 'inhibits',
+    line: 'dotted', glyph: 'minus',
+    symmetric: false, transitive: 'N', inverse: 'inhibited-by',
+    strength: 0.55, polarity: -1, cardinality: 'N-N',
+  },
+  'inhibited-by': {
+    cat: 'causal', label: 'inhibited by',
+    line: 'dotted', glyph: 'minus',
+    symmetric: false, transitive: 'N', inverse: 'inhibits',
+    strength: 0.55, polarity: -1, cardinality: 'N-N',
+  },
 
-  'requires':       { cat: 'dependency', line: 'solid',  glyph: 'anchor',       symmetric: false, label: 'requires' },
-  'uses':           { cat: 'dependency', line: 'dashed', glyph: 'tool',         symmetric: false, label: 'uses' },
-  'used-for':       { cat: 'dependency', line: 'dashed', glyph: 'flag',         symmetric: false, label: 'used for' },
+  // dependency ───────────────────────────────────────────────────────────
+  'requires': {
+    cat: 'dependency', label: 'requires',
+    line: 'solid', glyph: 'anchor',
+    symmetric: false, transitive: 'Y', inverse: 'required-by',
+    strength: 0.85, polarity: 0, cardinality: 'N-N',
+  },
+  'required-by': {
+    cat: 'dependency', label: 'required by',
+    line: 'solid', glyph: 'anchor',
+    symmetric: false, transitive: 'Y', inverse: 'requires',
+    strength: 0.85, polarity: 0, cardinality: 'N-N',
+  },
+  'uses': {
+    cat: 'dependency', label: 'uses',
+    line: 'dashed', glyph: 'tool',
+    symmetric: false, transitive: 'weak', inverse: 'used-by',
+    strength: 0.50, polarity: 0, cardinality: 'N-N',
+  },
+  'used-by': {
+    cat: 'dependency', label: 'used by',
+    line: 'dashed', glyph: 'tool',
+    symmetric: false, transitive: 'weak', inverse: 'uses',
+    strength: 0.50, polarity: 0, cardinality: 'N-N',
+  },
+  'used-for': {
+    cat: 'dependency', label: 'used for',
+    line: 'dashed', glyph: 'flag',
+    symmetric: false, transitive: 'N', inverse: 'purpose-of',
+    strength: 0.55, polarity: 1, cardinality: 'N-N',
+  },
+  'purpose-of': {
+    cat: 'dependency', label: 'purpose of',
+    line: 'dashed', glyph: 'flag',
+    symmetric: false, transitive: 'N', inverse: 'used-for',
+    strength: 0.55, polarity: 1, cardinality: 'N-N',
+  },
 
-  'precedes':       { cat: 'temporal',   line: 'solid',  glyph: 'chevron-r',    symmetric: false, label: 'precedes' },
-  'occurs-in':      { cat: 'temporal',   line: 'dotted', glyph: 'ring',         symmetric: false, label: 'occurs in' },
+  // temporal ─────────────────────────────────────────────────────────────
+  'precedes': {
+    cat: 'temporal', label: 'precedes',
+    line: 'solid', glyph: 'chevron-r',
+    symmetric: false, transitive: 'Y', inverse: 'follows',
+    strength: 0.50, polarity: 0, cardinality: 'N-N',
+  },
+  'follows': {
+    cat: 'temporal', label: 'follows',
+    line: 'solid', glyph: 'chevron-r',
+    symmetric: false, transitive: 'Y', inverse: 'precedes',
+    strength: 0.50, polarity: 0, cardinality: 'N-N',
+  },
+  'occurs-in': {
+    cat: 'temporal', label: 'occurs in',
+    line: 'dotted', glyph: 'ring',
+    symmetric: false, transitive: 'Y', inverse: 'has-occurrence',
+    strength: 0.40, polarity: 0, cardinality: 'N-1',
+  },
+  'has-occurrence': {
+    cat: 'temporal', label: 'has occurrence',
+    line: 'dotted', glyph: 'ring',
+    symmetric: false, transitive: 'Y', inverse: 'occurs-in',
+    strength: 0.40, polarity: 0, cardinality: '1-N',
+  },
 
-  'contrasts-with': { cat: 'opposition', line: 'wavy',   glyph: 'tilde',        symmetric: true,  label: 'contrasts with' },
-  'opposite-of':    { cat: 'opposition', line: 'double', glyph: 'x',            symmetric: true,  label: 'opposite of' },
+  // opposition (symmetric, self-inverse) ─────────────────────────────────
+  'contrasts-with': {
+    cat: 'opposition', label: 'contrasts with',
+    line: 'wavy', glyph: 'tilde',
+    symmetric: true, transitive: 'N', inverse: 'contrasts-with',
+    strength: 0.50, polarity: -1, cardinality: 'N-N',
+  },
+  'opposite-of': {
+    cat: 'opposition', label: 'opposite of',
+    line: 'double', glyph: 'x',
+    symmetric: true, transitive: 'N', inverse: 'opposite-of',
+    strength: 0.80, polarity: -1, cardinality: '1-1',
+  },
 
-  'similar-to':     { cat: 'similarity', line: 'dashed', glyph: 'approx',       symmetric: true,  label: 'similar to' },
-  'analogous-to':   { cat: 'similarity', line: 'dotted', glyph: 'arrows-lr',    symmetric: true,  label: 'analogous to' },
+  // similarity (symmetric, self-inverse) ─────────────────────────────────
+  'similar-to': {
+    cat: 'similarity', label: 'similar to',
+    line: 'dashed', glyph: 'approx',
+    symmetric: true, transitive: 'weak', inverse: 'similar-to',
+    strength: 0.40, polarity: 1, cardinality: 'N-N',
+  },
+  'analogous-to': {
+    cat: 'similarity', label: 'analogous to',
+    line: 'dotted', glyph: 'arrows-lr',
+    symmetric: true, transitive: 'N', inverse: 'analogous-to',
+    strength: 0.30, polarity: 1, cardinality: 'N-N',
+  },
 }
 
 export const RELATION_TYPE_VALUES = Object.keys(RELATION_TYPES) as EdgeTypeName[]

@@ -28,3 +28,7 @@ The single `useGraphStore` in `src/store/graph.ts` is the source of truth. Do no
 ## Never mutate React Flow node/edge arrays directly
 
 All graph mutations go through store methods (`addNode`, `deleteEdge`, `updateNodeData`, etc.) which return new arrays. Do not push into `nodes` or `edges` in place.
+
+## No backwards-compatibility code while in alpha
+
+The project is in `0.1.0-alpha`. Do not write migration shims, legacy fallbacks, deprecation aliases, or "old name still works" coercions when renaming/removing fields, types, enum values, or APIs. Update the data (seeds, fixtures) and call sites directly and break cleanly. Once we tag a non-alpha release this constraint relaxes — until then, prefer clean diffs over carrying old names.

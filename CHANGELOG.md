@@ -6,6 +6,20 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- **Relation model:** 13 inverse relation types (e.g. `has-subtype`, `caused-by`, `follows`) so asymmetric edges are first-class in both directions; **34 types** total across 7 categories.
+- **Relation model:** Per-type semantic coefficients on `EdgeTypeDef` — `transitive`, `inverse`, `strength`, `polarity`, `cardinality` — for future graph-analysis algorithms.
+- **MCP (`get_relation_types`):** Tool output includes semantic coefficients alongside visual encoding.
+- **GitHub:** Graph-model issue template asks for coefficient fields and links to the relation-types reference.
+
+### Changed
+
+- **Relation model:** Removed `is-a`; taxonomic hierarchy uses `subtype-of` / `has-subtype` and `instance-of` / `has-instance`.
+- **Seeds, app i18n, docs, landing, README:** Updated for the expanded vocabulary and `subtype-of` in place of `is-a`.
+- **MCP (`@nesso-how/mcp`):** Pin `@modelcontextprotocol/server` and `zod` semver ranges; use `workspace:*` for `@nesso-how/relation-types` in the monorepo (resolved on publish).
+- **Cursor rules:** Document expanded `EdgeTypeDef` schema and alpha no-backwards-compat constraint.
+
 ## [0.1.0-alpha.21] - 2026-05-21
 
 ### Added

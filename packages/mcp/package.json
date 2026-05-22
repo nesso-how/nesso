@@ -23,9 +23,9 @@
   },
   "dependencies": {
     "@cfworker/json-schema": "^4.1.1",
-    "@modelcontextprotocol/server": "latest",
-    "@nesso-how/relation-types": "^0.1.0-alpha.16",
-    "zod": "latest"
+    "@modelcontextprotocol/server": "^2.0.0-alpha.2",
+    "@nesso-how/relation-types": "workspace:*",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
