@@ -1,6 +1,6 @@
 {
   "name": "@nesso-how/formats",
-  "version": "0.1.0-alpha.22",
+  "version": "0.1.0-alpha.23",
   "description": "Nesso graph serialization formats — JSON serialize/deserialize",
   "license": "MIT",
   "type": "module",

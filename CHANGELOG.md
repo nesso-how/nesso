@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.0-alpha.23] - 2026-05-22
+
 ### Changed
 
 - **Relation model:** Drop redundant `symmetric` on `EdgeTypeDef`; symmetric types use `inverse: 'self'` (app, MCP, rules).
@@ -409,7 +411,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial alpha: interactive knowledge graph (web + Tauri v2); desktop installers on GitHub Releases (macOS Apple silicon and Intel).
 
-[Unreleased]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.22...HEAD
+[Unreleased]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.23...HEAD
+[0.1.0-alpha.23]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.22...v0.1.0-alpha.23
 [0.1.0-alpha.22]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.21...v0.1.0-alpha.22
 [0.1.0-alpha.21]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.20...v0.1.0-alpha.21
 [0.1.0-alpha.20]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.19...v0.1.0-alpha.20
