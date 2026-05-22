@@ -3,11 +3,12 @@ import {
   RELATION_TYPES,
   RELATION_TYPE_VALUES,
   RELATION_CATEGORY_META,
+  isPrimaryRelationType,
   type EdgeCategory,
   type EdgeTypeName,
 } from '@nesso-how/relation-types'
 
-export { RELATION_TYPES, RELATION_TYPE_VALUES }
+export { RELATION_TYPES, RELATION_TYPE_VALUES, isPrimaryRelationType }
 
 /** Coerce persisted / React Flow edge `data.type` to a known relation id. */
 export function asEdgeTypeName(value: unknown, fallback: EdgeTypeName = 'causes'): EdgeTypeName {

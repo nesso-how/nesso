@@ -425,3 +425,10 @@ export const RELATION_TYPES: Record<EdgeTypeName, EdgeTypeDef> = {
 }
 
 export const RELATION_TYPE_VALUES = Object.keys(RELATION_TYPES) as EdgeTypeName[]
+
+/** Forward member of each inverse pair (first in `RELATION_TYPE_VALUES`); all symmetric types. */
+export function isPrimaryRelationType(id: EdgeTypeName): boolean {
+  const def = RELATION_TYPES[id]
+  if (def.symmetric) return true
+  return RELATION_TYPE_VALUES.indexOf(id) < RELATION_TYPE_VALUES.indexOf(def.inverse)
+}
