@@ -107,6 +107,13 @@ header a[rel='me']:hover {
 	color: var(--sl-color-text-accent);
 }
 
+/* Aside callouts — remap note blue → warm accent */
+.starlight-aside--note {
+	--sl-color-asides-text-accent: var(--sl-color-accent-high);
+	--sl-color-asides-border: var(--sl-color-accent);
+	background-color: var(--sl-color-bg-accent);
+}
+
 /* Paper grain on page body (same as landing page) */
 body::before {
 	content: '';

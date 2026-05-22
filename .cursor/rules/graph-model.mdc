@@ -49,9 +49,8 @@ Each definition has:
 - `label: string` — human-readable label
 - `line: 'solid' | 'dashed' | 'dotted' | 'double' | 'wavy'` — stroke style
 - `glyph: GlyphKind` — SVG icon at the target end
-- `symmetric: boolean` — true for symmetric types (`contrasts-with`, `opposite-of`, `similar-to`, `analogous-to`, `contradicts`; self-inverse)
 - `transitive: 'Y' | 'N' | 'weak'` — `weak` = transitivity with decay; algorithms may discount per step
-- `inverse: EdgeTypeName` — canonical inverse in the set; self for symmetric types
+- `inverse: EdgeTypeName | 'self'` — canonical inverse in the set; `'self'` for symmetric types (`contrasts-with`, `opposite-of`, `similar-to`, `analogous-to`, `contradicts`, `overlaps-with`)
 - `strength: number` — per-type semantic weight in `0..1`. Intensity, not per-edge confidence (there is no per-edge override). Distinct types may differ by strength alone (e.g. `prevents` 0.85 vs `inhibits` 0.55).
 - `polarity: -1 | 0 | 1` — signed-network polarity: `+1` positive effect, `-1` antagonistic, `0` neutral/structural
 - `cardinality: '1-1' | '1-N' | 'N-1' | 'N-N'` — expected mapping pattern; `N-N` = no a-priori constraint

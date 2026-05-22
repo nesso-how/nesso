@@ -24,7 +24,7 @@ export function registerGetRelationTypes(server: McpServer): void {
             type: name,
             label: def.label,
             line: def.line,
-            symmetric: def.symmetric,
+            symmetric: def.inverse === 'self',
             transitive: def.transitive,
             inverse: def.inverse,
             strength: def.strength,

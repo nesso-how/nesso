@@ -214,7 +214,7 @@ export function RelationTypesDialog({ open, onClose }: Props) {
                     {t.relationTypes.types[id]}
                   </span>
 
-                  {edgeDef.symmetric && (
+                  {edgeDef.inverse === 'self' && (
                     <span style={{ color: 'var(--ink-4)', fontSize: 11, fontFamily: "'Inter', system-ui", fontStyle: 'italic' }}>
                       {t.relationTypes.symmetric}
                     </span>

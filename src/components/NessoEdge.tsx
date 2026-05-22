@@ -145,7 +145,7 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps) {
       <EdgePathElement d={path} color={color} lineStyle={lineStyle} width={w} opacity={op} />
 
       {/* Arrowhead at the bbox exit point of the target node */}
-      {!T.symmetric && encoding !== 'minimal' && (
+      {T.inverse !== 'self' && encoding !== 'minimal' && (
         <polygon
           points={`${b.x},${b.y} ${ax1},${ay1} ${ax2},${ay2}`}
           fill={color}
