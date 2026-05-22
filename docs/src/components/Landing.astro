@@ -57,6 +57,7 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
         --cat-temporal: #2d6a55;
         --cat-opposition: #8a2e4a;
         --cat-similarity: #2a6878;
+        --cat-epistemic: #3a4a8a;
 
         --accent: var(--cat-causal);
 
@@ -2156,6 +2157,52 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
             <div class="relation-types">
               {
                 t.vocab.chips.similarity.map((c) => (
+                  <span class="relation-chip">{c}</span>
+                ))
+              }
+            </div>
+          </div>
+
+          <div class="relation-row" style="--cat-color: var(--cat-epistemic)">
+            <div class="relation-cat">
+              <span class="relation-cat-name"
+                >{t.vocab.categories.epistemic.name}</span
+              >
+              <span class="relation-cat-q"
+                >{t.vocab.categories.epistemic.q}</span
+              >
+            </div>
+            <svg
+              class="relation-mini-svg"
+              viewBox="0 0 220 56"
+              aria-hidden="true"
+            >
+              <line
+                class="rm-edge"
+                x1="60"
+                y1="18"
+                x2="168"
+                y2="18"
+                stroke="#3a4a8a"
+                stroke-dasharray="3 4"></line>
+              <polygon points="168,18 163,15 163,21" fill="#3a4a8a"></polygon>
+              <text class="rm-edge-label" fill="#3a4a8a" x="114" y="12"
+                >{t.vocab.edges.supports}</text
+              >
+              <text class="rm-node-text" x="28" y="38"
+                >{t.vocab.categories.epistemic.nodeA}</text
+              >
+              <line class="rm-node-underline" x1="6" y1="44" x2="50" y2="44"
+              ></line>
+              <text class="rm-node-text" x="190" y="38"
+                >{t.vocab.categories.epistemic.nodeB}</text
+              >
+              <line class="rm-node-underline" x1="170" y1="44" x2="210" y2="44"
+              ></line>
+            </svg>
+            <div class="relation-types">
+              {
+                t.vocab.chips.epistemic.map((c) => (
                   <span class="relation-chip">{c}</span>
                 ))
               }

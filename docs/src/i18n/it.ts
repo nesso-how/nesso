@@ -85,6 +85,7 @@ export const it: Locale = {
       temporal: { name: "Temporale", q: "Quando? Dove?", nodeA: "Primavera", nodeB: "Estate" },
       opposition: { name: "Opposizione", q: "A cosa si contrappone?", nodeA: "Caldo", nodeB: "Freddo" },
       similarity: { name: "Somiglianza", q: "A cosa assomiglia?", nodeA: "Occhio", nodeB: "Fotocamera" },
+      epistemic: { name: "Epistemico", q: "Come lo sappiamo?", nodeA: "Fossili", nodeB: "Evoluzione" },
     },
     edges: {
       subtypeOf: "sottotipo di",
@@ -94,6 +95,7 @@ export const it: Locale = {
       precedes: "precede",
       oppositeOf: "opposto a",
       similarTo: "simile a",
+      supports: "sostiene",
     },
     chips: {
       taxonomic: ["sottotipo-di", "istanza-di"],
@@ -103,6 +105,7 @@ export const it: Locale = {
       temporal: ["precede", "avviene-in"],
       opposition: ["contrasta-con", "opposto-a"],
       similarity: ["simile-a", "analogo-a"],
+      epistemic: ["sostiene", "contraddice", "spiega", "definisce"],
     },
   },
   credo: {

@@ -8,7 +8,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
-- **Relation model:** 13 inverse relation types (e.g. `has-subtype`, `caused-by`, `follows`) so asymmetric edges are first-class in both directions; **34 types** total across 7 categories.
+- **Relation model:** **Epistemic** category — `supports` / `supported-by`, `contradicts`, `explains` / `explained-by`, `defines` / `defined-by` (**41 types** across 8 categories).
+- **Relation model:** 13 inverse relation types (e.g. `has-subtype`, `caused-by`, `follows`) so asymmetric edges are first-class in both directions; **34 types** before epistemic, across 7 categories.
 - **Relation model:** Per-type semantic coefficients on `EdgeTypeDef` — `transitive`, `inverse`, `strength`, `polarity`, `cardinality` — for future graph-analysis algorithms.
 - **MCP (`get_relation_types`):** Tool output includes semantic coefficients alongside visual encoding.
 - **GitHub:** Graph-model issue template asks for coefficient fields and links to the relation-types reference.

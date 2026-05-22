@@ -28,17 +28,18 @@ Use `nodeToCard()` in `src/types/graph.ts` to build a ts-fsrs `Card` from persis
 
 All edges carry a `data.type: EdgeTypeName`. Relation definitions (`RELATION_TYPES`) and category copy (`RELATION_CATEGORY_META`) live in `@nesso-how/relation-types`; UI palette bindings (`RELATION_CATEGORIES`) merge meta with CSS vars in `src/data/relationTypes.ts`.
 
-The set has **34 types in 7 categories**. Asymmetric relations come in **inverse pairs** so traversal in either direction is first-class.
+The set has **41 types in 8 categories**. Asymmetric relations come in **inverse pairs** so traversal in either direction is first-class.
 
-| Category     | Forward types                                           | Inverse types                                                           |
-| ------------ | ------------------------------------------------------- | ----------------------------------------------------------------------- |
-| `taxonomic`  | `subtype-of`, `instance-of`                             | `has-subtype`, `has-instance`                                           |
-| `structural` | `part-of`, `made-of`                                    | `contains`, `composes`                                                  |
+| Category     | Forward types                                                       | Inverse types                                                                            |
+| ------------ | ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `taxonomic`  | `subtype-of`, `instance-of`                                         | `has-subtype`, `has-instance`                                                            |
+| `structural` | `part-of`, `made-of`                                                | `contains`, `composes`                                                                   |
 | `causal`     | `causes`, `produces`, `enables`, `prevents`, `triggers`, `inhibits` | `caused-by`, `produced-by`, `enabled-by`, `prevented-by`, `triggered-by`, `inhibited-by` |
-| `dependency` | `requires`, `uses`, `used-for`                          | `required-by`, `used-by`, `purpose-of`                                  |
-| `temporal`   | `precedes`, `occurs-in`                                 | `follows`, `has-occurrence`                                             |
-| `opposition` | `contrasts-with`, `opposite-of`                         | self (symmetric)                                                        |
-| `similarity` | `similar-to`, `analogous-to`                            | self (symmetric)                                                        |
+| `dependency` | `requires`, `uses`, `used-for`                                      | `required-by`, `used-by`, `purpose-of`                                                   |
+| `temporal`   | `precedes`, `occurs-in`                                             | `follows`, `has-occurrence`                                                              |
+| `opposition` | `contrasts-with`, `opposite-of`                                     | self (symmetric)                                                                         |
+| `similarity` | `similar-to`, `analogous-to`                                        | self (symmetric)                                                                         |
+| `epistemic`  | `supports`, `explains`, `defines`, `contradicts`                    | `supported-by`, `explained-by`, `defined-by`; `contradicts` is self (symmetric)          |
 
 ## `EdgeTypeDef` schema
 
@@ -48,7 +49,7 @@ Each definition has:
 - `label: string` — human-readable label
 - `line: 'solid' | 'dashed' | 'dotted' | 'double' | 'wavy'` — stroke style
 - `glyph: GlyphKind` — SVG icon at the target end
-- `symmetric: boolean` — true for opposition and similarity categories
+- `symmetric: boolean` — true for symmetric types (`contrasts-with`, `opposite-of`, `similar-to`, `analogous-to`, `contradicts`; self-inverse)
 - `transitive: 'Y' | 'N' | 'weak'` — `weak` = transitivity with decay; algorithms may discount per step
 - `inverse: EdgeTypeName` — canonical inverse in the set; self for symmetric types
 - `strength: number` — per-type semantic weight in `0..1`. Intensity, not per-edge confidence (there is no per-edge override). Distinct types may differ by strength alone (e.g. `prevents` 0.85 vs `inhibits` 0.55).

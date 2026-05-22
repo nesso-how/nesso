@@ -22,6 +22,7 @@
   --cat-temporal: #2d6a55;
   --cat-opposition: #8a2e4a;
   --cat-similarity: #2a6878;
+  --cat-epistemic: #3a4a8a;
 
   /* Confidence scale (cool→warm) */
   --conf-1: #b14a4a;
@@ -56,6 +57,7 @@
   --cat-temporal: #6fb09a;
   --cat-opposition: #d68099;
   --cat-similarity: #72b8c4;
+  --cat-epistemic: #8aa0e0;
 
   --shadow-md: 0 8px 28px -10px rgba(0, 0, 0, 0.55), 0 2px 8px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 28px 60px -16px rgba(0, 0, 0, 0.7), 0 8px 20px -8px rgba(0, 0, 0, 0.5);

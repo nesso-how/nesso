@@ -8,6 +8,7 @@ export type EdgeCategory =
   | 'temporal'
   | 'opposition'
   | 'similarity'
+  | 'epistemic'
 
 export type EdgeTypeName =
   // taxonomic
@@ -34,12 +35,18 @@ export type EdgeTypeName =
   | 'contrasts-with' | 'opposite-of'
   // similarity (symmetric)
   | 'similar-to' | 'analogous-to'
+  // epistemic
+  | 'supports' | 'supported-by'
+  | 'contradicts'
+  | 'explains' | 'explained-by'
+  | 'defines' | 'defined-by'
 
 export type GlyphKind =
   | 'triangle-up' | 'circle-dot' | 'diamond' | 'diamond-open' | 'hash'
   | 'arrow-right' | 'asterisk' | 'key' | 'block' | 'spark'
   | 'anchor' | 'tool' | 'chevron-r' | 'ring' | 'tilde' | 'x'
   | 'minus' | 'flag' | 'approx' | 'arrows-lr'
+  | 'check' | 'slash' | 'bulb' | 'equals'
 
 /** Transitivity of a relation: `Y` strict, `N` none, `weak` with decay (algorithms may discount weight per step). */
 export type Transitivity = 'Y' | 'N' | 'weak'
@@ -76,6 +83,7 @@ export const RELATION_CATEGORY_META: Record<EdgeCategory, { label: string; subti
   temporal:   { label: 'Temporal',   subtitle: 'When? Where?' },
   opposition: { label: 'Opposition', subtitle: 'What does it contrast with?' },
   similarity: { label: 'Similarity', subtitle: 'What is it like?' },
+  epistemic:  { label: 'Epistemic',  subtitle: 'How do we know?' },
 }
 
 export const RELATION_TYPES: Record<EdgeTypeName, EdgeTypeDef> = {
@@ -295,6 +303,50 @@ export const RELATION_TYPES: Record<EdgeTypeName, EdgeTypeDef> = {
     line: 'dotted', glyph: 'arrows-lr',
     symmetric: true, transitive: 'N', inverse: 'analogous-to',
     strength: 0.30, polarity: 1, cardinality: 'N-N',
+  },
+
+  // epistemic ────────────────────────────────────────────────────────────
+  'supports': {
+    cat: 'epistemic', label: 'supports',
+    line: 'dotted', glyph: 'check',
+    symmetric: false, transitive: 'weak', inverse: 'supported-by',
+    strength: 0.70, polarity: 1, cardinality: 'N-N',
+  },
+  'supported-by': {
+    cat: 'epistemic', label: 'supported by',
+    line: 'dotted', glyph: 'check',
+    symmetric: false, transitive: 'weak', inverse: 'supports',
+    strength: 0.70, polarity: 1, cardinality: 'N-N',
+  },
+  'contradicts': {
+    cat: 'epistemic', label: 'contradicts',
+    line: 'dotted', glyph: 'slash',
+    symmetric: true, transitive: 'N', inverse: 'contradicts',
+    strength: 0.75, polarity: -1, cardinality: 'N-N',
+  },
+  'explains': {
+    cat: 'epistemic', label: 'explains',
+    line: 'solid', glyph: 'bulb',
+    symmetric: false, transitive: 'weak', inverse: 'explained-by',
+    strength: 0.80, polarity: 0, cardinality: 'N-N',
+  },
+  'explained-by': {
+    cat: 'epistemic', label: 'explained by',
+    line: 'solid', glyph: 'bulb',
+    symmetric: false, transitive: 'weak', inverse: 'explains',
+    strength: 0.80, polarity: 0, cardinality: 'N-N',
+  },
+  'defines': {
+    cat: 'epistemic', label: 'defines',
+    line: 'solid', glyph: 'equals',
+    symmetric: false, transitive: 'N', inverse: 'defined-by',
+    strength: 0.90, polarity: 0, cardinality: '1-1',
+  },
+  'defined-by': {
+    cat: 'epistemic', label: 'defined by',
+    line: 'solid', glyph: 'equals',
+    symmetric: false, transitive: 'N', inverse: 'defines',
+    strength: 0.90, polarity: 0, cardinality: '1-1',
   },
 }
 

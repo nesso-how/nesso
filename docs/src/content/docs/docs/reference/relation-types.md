@@ -1,9 +1,9 @@
 ---
 title: Relation types
-description: The 34 semantic relation types across 7 categories in Nesso.
+description: The 41 semantic relation types across 8 categories in Nesso.
 ---
 
-Edges in Nesso carry a **semantic type**: a named relation that describes how two concepts are connected. There are 34 types grouped into 7 categories. Each category has a distinct colour; each type has a line style, a glyph, and a set of semantic coefficients used by graph-analysis algorithms.
+Edges in Nesso carry a **semantic type**: a named relation that describes how two concepts are connected. There are 41 types grouped into 8 categories. Each category has a distinct colour; each type has a line style, a glyph, and a set of semantic coefficients used by graph-analysis algorithms.
 
 Asymmetric relations come in **inverse pairs** (e.g. `subtype-of` / `has-subtype`) so traversal in either direction is first-class. Symmetric relations (opposition, similarity) are self-inverse.
 
@@ -102,6 +102,24 @@ Each relation type declares:
 |------|-------|---|---|---|------|
 | `similar-to` | similar to | weak | 0.40 | +1 | N-N |
 | `analogous-to` | analogous to | N | 0.30 | +1 | N-N |
+
+## Epistemic
+
+*How do we know?*
+
+| Type | Label | Inverse | T | S | P | Card |
+|------|-------|---------|---|---|---|------|
+| `supports` | supports | `supported-by` | weak | 0.70 | +1 | N-N |
+| `supported-by` | supported by | `supports` | weak | 0.70 | +1 | N-N |
+| `contradicts` | contradicts | self (symmetric) | N | 0.75 | −1 | N-N |
+| `explains` | explains | `explained-by` | weak | 0.80 | 0 | N-N |
+| `explained-by` | explained by | `explains` | weak | 0.80 | 0 | N-N |
+| `defines` | defines | `defined-by` | N | 0.90 | 0 | 1-1 |
+| `defined-by` | defined by | `defines` | N | 0.90 | 0 | 1-1 |
+
+`defines` goes from the defining expression (definiens) to the term being defined (definiendum) — e.g. "F = ma defines force". Cardinality 1-1 enforces one canonical definition per term.
+
+`contradicts` is symmetric (mutual logical incompatibility), unlike `supports` and `explains` which are asymmetric evidence/explanans → claim relations.
 
 ---
 

@@ -219,6 +219,7 @@ const it: typeof en = {
       temporal:   { label: 'Temporale',  subtitle: 'Quando? Dove?' },
       opposition: { label: 'Opposizione', subtitle: 'Con cosa contrasta?' },
       similarity: { label: 'Similarità', subtitle: 'A cosa assomiglia?' },
+      epistemic:  { label: 'Epistemico', subtitle: 'Come lo sappiamo?' },
     },
     types: {
       // taxonomic
@@ -262,6 +263,14 @@ const it: typeof en = {
       // similarity
       'similar-to':     'simile a',
       'analogous-to':   'analogo a',
+      // epistemic
+      'supports':       'sostiene',
+      'supported-by':   'sostenuto da',
+      'contradicts':    'contraddice',
+      'explains':       'spiega',
+      'explained-by':   'spiegato da',
+      'defines':        'definisce',
+      'defined-by':     'definito da',
     },
     newRelation: 'Nuova relazione',
     symmetric: 'simmetrico',

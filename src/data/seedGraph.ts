@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 import understanding from '@/data/seeds/understanding.json'
-import plantBiology from '@/data/seeds/plant-biology.json'
 import comprensione from '@/data/seeds/it/comprensione.json'
-import biologiaVegetale from '@/data/seeds/it/biologia-vegetale.json'
 import type { Node, Edge } from '@xyflow/react'
 import type { ConceptNodeData, Language, GraphDisplaySettings, EdgeEncoding, CurveStyle } from '@/types/graph'
 import { defaultGraphDisplay } from '@/types/graph'
@@ -18,9 +16,7 @@ export interface Seed {
 /** Stable random ids for bundled seeds (not derived from titles). */
 const SEED_IDS = {
   understanding: 'g7k2mp9xqn14v2',
-  plantBiology: 'gr3ht8cyp1nm5j',
   comprensione: 'gn5qw2bkf8sl6x',
-  biologiaVegetale: 'gj4pv9dmh2rt7c',
 } as const
 
 /** JSON seed files infer string literals as `string`; normalize before use. */
@@ -60,11 +56,9 @@ function makeSeed(id: string, raw: SeedSource): Seed {
 
 const enSeeds = [
   makeSeed(SEED_IDS.understanding, understanding),
-  makeSeed(SEED_IDS.plantBiology, plantBiology),
 ]
 const itSeeds = [
   makeSeed(SEED_IDS.comprensione, comprensione),
-  makeSeed(SEED_IDS.biologiaVegetale, biologiaVegetale),
 ]
 
 export const SEEDS = enSeeds

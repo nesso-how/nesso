@@ -219,6 +219,7 @@ const en = {
       temporal:   { label: 'Temporal',   subtitle: 'When? Where?' },
       opposition: { label: 'Opposition', subtitle: 'What does it contrast with?' },
       similarity: { label: 'Similarity', subtitle: 'What is it like?' },
+      epistemic:  { label: 'Epistemic',  subtitle: 'How do we know?' },
     } satisfies Record<EdgeCategory, { label: string; subtitle: string }>,
     types: {
       // taxonomic
@@ -262,6 +263,14 @@ const en = {
       // similarity
       'similar-to':     'similar to',
       'analogous-to':   'analogous to',
+      // epistemic
+      'supports':       'supports',
+      'supported-by':   'supported by',
+      'contradicts':    'contradicts',
+      'explains':       'explains',
+      'explained-by':   'explained by',
+      'defines':        'defines',
+      'defined-by':     'defined by',
     } satisfies Record<EdgeTypeName, string>,
     newRelation: 'New relation',
     symmetric: 'symmetric',

@@ -81,6 +81,7 @@ export type Locale = {
       temporal: { name: string; q: string; nodeA: string; nodeB: string }
       opposition: { name: string; q: string; nodeA: string; nodeB: string }
       similarity: { name: string; q: string; nodeA: string; nodeB: string }
+      epistemic: { name: string; q: string; nodeA: string; nodeB: string }
     }
     edges: {
       subtypeOf: string
@@ -90,6 +91,7 @@ export type Locale = {
       precedes: string
       oppositeOf: string
       similarTo: string
+      supports: string
     }
     chips: {
       taxonomic: string[]
@@ -99,6 +101,7 @@ export type Locale = {
       temporal: string[]
       opposition: string[]
       similarity: string[]
+      epistemic: string[]
     }
   }
   credo: {

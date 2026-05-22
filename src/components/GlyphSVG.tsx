@@ -34,6 +34,10 @@ export function GlyphSVG({ kind, color = 'currentColor', size = 14 }: Props) {
     case 'flag':         return <svg width={s} height={s} viewBox="0 0 14 14"><path d="M4 12V2M4 2l7 3.5L4 9" {...common} /></svg>
     case 'approx':       return <svg width={s} height={s} viewBox="0 0 14 14"><path d="M2 5 Q4 3 7 5 T12 5" {...common} /><path d="M2 9 Q4 7 7 9 T12 9" {...common} /></svg>
     case 'arrows-lr':    return <svg width={s} height={s} viewBox="0 0 14 14"><path d="M2 7h10M3.5 4.5L2 7l1.5 2.5M10.5 4.5L12 7l-1.5 2.5" {...common} /></svg>
+    case 'check':        return <svg width={s} height={s} viewBox="0 0 14 14"><path d="M2.5 7.5l3 3 6-7" {...common} /></svg>
+    case 'slash':        return <svg width={s} height={s} viewBox="0 0 14 14"><path d="M11 3l-8 8" stroke={c} strokeWidth={1.8} strokeLinecap="round" fill="none" /></svg>
+    case 'bulb':         return <svg width={s} height={s} viewBox="0 0 14 14"><path d="M7 2a3.2 3.2 0 0 0-2 5.7c.4.4.7.9.7 1.5v.3h2.6v-.3c0-.6.3-1.1.7-1.5A3.2 3.2 0 0 0 7 2zM5.7 10.5h2.6M6.2 12h1.6" {...common} /></svg>
+    case 'equals':       return <svg width={s} height={s} viewBox="0 0 14 14"><path d="M3 5.5h8M3 8.5h8" stroke={c} strokeWidth={1.8} strokeLinecap="round" fill="none" /></svg>
     default: return null
   }
 }
