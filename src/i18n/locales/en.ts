@@ -294,6 +294,7 @@ const en = {
     frequentInGraph: 'Often in this graph',
     relationKinds: (n: number) => `${n} relation kinds`,
     filteredKinds: (n: number, total: number) => `${n} of ${total} kinds`,
+    docsLink: 'Full reference',
   },
   mentor: {
     name: 'Socrates',

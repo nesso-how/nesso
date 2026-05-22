@@ -294,6 +294,7 @@ const it: typeof en = {
     frequentInGraph: 'Spesso in questo grafo',
     relationKinds: (n) => `${n} tipi di relazione`,
     filteredKinds: (n, total) => `${n} di ${total} tipi`,
+    docsLink: 'Riferimento completo',
   },
   mentor: {
     name: 'Socrate',

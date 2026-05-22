@@ -7,6 +7,8 @@ import { useGraphStore } from '@/store/graph'
 import type { EdgeCategory, EdgeTypeName } from '@/types/graph'
 import { useT } from '@/i18n'
 
+const RELATION_TYPES_DOCS_URL = 'https://nesso.how/docs/reference/relation-types/'
+
 interface Props {
   open: boolean
   onClose: () => void
@@ -227,12 +229,33 @@ export function RelationTypesDialog({ open, onClose }: Props) {
           paddingTop: 14,
           marginTop: 4,
           borderTop: '0.5px solid var(--line)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 12,
           font: "500 11px 'JetBrains Mono', ui-monospace",
           color: 'var(--ink-4)',
         }}>
-          {isFiltered
-            ? t.relationTypes.filteredKinds(visibleTypes, totalTypes)
-            : t.relationTypes.relationKinds(totalTypes)}
+          <span>
+            {isFiltered
+              ? t.relationTypes.filteredKinds(visibleTypes, totalTypes)
+              : t.relationTypes.relationKinds(totalTypes)}
+          </span>
+          <a
+            href={RELATION_TYPES_DOCS_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              color: 'var(--ink-4)',
+              textDecoration: 'underline',
+              textUnderlineOffset: 2,
+              flexShrink: 0,
+            }}
+            onMouseEnter={e => { e.currentTarget.style.color = 'var(--ink-2)' }}
+            onMouseLeave={e => { e.currentTarget.style.color = 'var(--ink-4)' }}
+          >
+            {t.relationTypes.docsLink}
+          </a>
         </div>
       </div>
     </div>
