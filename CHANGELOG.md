@@ -6,23 +6,33 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.0-alpha.22] - 2026-05-22
+
 ### Added
 
 - **Relation model:** **Epistemic** category — `supports` / `supported-by`, `contradicts`, `explains` / `explained-by`, `defines` / `defined-by`.
 - **Relation model:** Causal negative types — `disables` / `disabled-by`, `consumes` / `consumed-by`, `delays` / `delayed-by`; temporal — `during` / `spans`, `overlaps-with`, `derives-from` / `gives-rise-to` (**52 types** across 8 categories).
 - **Relation model:** 13 inverse relation types (e.g. `has-subtype`, `caused-by`, `follows`) so asymmetric edges are first-class in both directions; **34 types** before epistemic, across 7 categories.
 - **Relation model:** Per-type semantic coefficients on `EdgeTypeDef` — `transitive`, `inverse`, `strength`, `polarity`, `cardinality` — for future graph-analysis algorithms.
+- **Relation picker:** Search, primary-direction defaults, and graph-aware frequently-used shortcuts; `isPrimaryRelationType` exported from `@nesso-how/relation-types`.
+- **Relation types dialog:** Footer link to the full relation-types reference on nesso.how (EN/IT).
 - **MCP (`get_relation_types`):** Tool output includes semantic coefficients alongside visual encoding.
-- **GitHub:** Graph-model issue template asks for coefficient fields and links to the relation-types reference.
+- **GitHub:** `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, issue templates (bug, feature, graph model), and PR template with changelog checklist; graph-model issue template asks for coefficient fields and links to the relation-types reference.
+- **npm packages:** Minimal READMEs with install/usage for `@nesso-how/types`, `formats`, `relation-types`, and `mcp`.
 
 ### Changed
 
 - **Relation model:** Removed `is-a`; taxonomic hierarchy uses `subtype-of` / `has-subtype` and `instance-of` / `has-instance`.
 - **Seeds, app i18n, docs, landing, README:** Updated for the expanded vocabulary and `subtype-of` in place of `is-a`.
+- **Understanding demo seed:** Star topology with elaborations (definitions/examples); hero SVG and landing aligned; contrasts Understanding with Passive consumption.
 - **Docs, GitHub:** Hero graph SVGs and graph-model issue template no longer reference removed `is-a` type.
 - **Relation model docs:** Reference clarifies symmetric types and distinctions among `prevents` / `inhibits` / `disables`, `derives-from` / `subtype-of`, and `consumes` vs `uses`; README and graph-model issue template cite **52** types.
 - **MCP (`@nesso-how/mcp`):** Pin `@modelcontextprotocol/server` and `zod` semver ranges; use `workspace:*` for `@nesso-how/relation-types` in the monorepo (resolved on publish).
 - **Cursor rules:** Document expanded `EdgeTypeDef` schema and alpha no-backwards-compat constraint.
+
+### Removed
+
+- **Seeds:** Plant biology demo graphs.
 
 ## [0.1.0-alpha.21] - 2026-05-21
 
@@ -393,7 +403,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial alpha: interactive knowledge graph (web + Tauri v2); desktop installers on GitHub Releases (macOS Apple silicon and Intel).
 
-[Unreleased]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.21...HEAD
+[Unreleased]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.22...HEAD
+[0.1.0-alpha.22]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.21...v0.1.0-alpha.22
 [0.1.0-alpha.21]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.20...v0.1.0-alpha.21
 [0.1.0-alpha.20]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.19...v0.1.0-alpha.20
 [0.1.0-alpha.19]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.18...v0.1.0-alpha.19
