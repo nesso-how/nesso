@@ -11,7 +11,7 @@
   <line x1="400" y1="190" x2="400" y2="92" stroke="#c9614a" stroke-width="1.6" stroke-linecap="round" opacity="0.9"/>
   <polygon points="400,92 403.1,98.3 396.9,98.3" fill="#c9614a" opacity="0.9"/>
 
-  <!-- E2: is-a (taxonomic, solid arrow) -->
+  <!-- E2: subtype-of (taxonomic, solid arrow) -->
   <line x1="447" y1="202" x2="601" y2="145" stroke="#4d7db8" stroke-width="1.6" stroke-linecap="round" opacity="0.9"/>
   <polygon points="601,145 595.9,149.8 593.7,144.1" fill="#4d7db8" opacity="0.9"/>
 
@@ -34,11 +34,11 @@
   <rect x="372" y="156" width="56" height="14" rx="3" fill="#000000" stroke="rgba(201,97,74,0.35)" stroke-width="0.5"/>
   <text class="el" fill="#c9614a" x="400" y="166">produces</text>
 
-  <!-- chip E2: is a -->
+  <!-- chip E2: subtype of -->
   <circle cx="524" cy="173" r="11" fill="#000000" stroke="#4d7db8" stroke-width="1.2"/>
   <polygon points="524,168 528,178 520,178" fill="#4d7db8"/>
-  <rect x="506" y="188" width="36" height="14" rx="3" fill="#000000" stroke="rgba(77,125,184,0.35)" stroke-width="0.5"/>
-  <text class="el" fill="#4d7db8" x="524" y="198">is a</text>
+  <rect x="490" y="188" width="68" height="14" rx="3" fill="#000000" stroke="rgba(77,125,184,0.35)" stroke-width="0.5"/>
+  <text class="el" fill="#4d7db8" x="524" y="198">subtype of</text>
 
   <!-- chip E3: requires -->
   <circle cx="505" cy="304" r="11" fill="#000000" stroke="#b08a2a" stroke-width="1.2"/>

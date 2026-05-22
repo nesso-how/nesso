@@ -19,6 +19,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - **Relation model:** Removed `is-a`; taxonomic hierarchy uses `subtype-of` / `has-subtype` and `instance-of` / `has-instance`.
 - **Seeds, app i18n, docs, landing, README:** Updated for the expanded vocabulary and `subtype-of` in place of `is-a`.
+- **Docs, GitHub:** Hero graph SVGs and graph-model issue template no longer reference removed `is-a` type.
 - **Relation model docs:** Reference clarifies symmetric types and distinctions among `prevents` / `inhibits` / `disables`, `derives-from` / `subtype-of`, and `consumes` vs `uses`; README and graph-model issue template cite **52** types.
 - **MCP (`@nesso-how/mcp`):** Pin `@modelcontextprotocol/server` and `zod` semver ranges; use `workspace:*` for `@nesso-how/relation-types` in the monorepo (resolved on publish).
 - **Cursor rules:** Document expanded `EdgeTypeDef` schema and alpha no-backwards-compat constraint.

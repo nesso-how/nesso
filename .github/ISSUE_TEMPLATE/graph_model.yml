@@ -49,6 +49,6 @@ body:
     id: algorithmic-impact
     attributes:
       label: Algorithmic impact (optional)
-      description: How would this type interact with traversal, centrality, similarity, or graph-comparison algorithms? Are there compositions with existing types worth noting (e.g. `is-a` ∘ `part-of` → `part-of`)?
+      description: How would this type interact with traversal, centrality, similarity, or graph-comparison algorithms? Are there compositions with existing types worth noting (e.g. `subtype-of` ∘ `part-of` → `part-of`)?
     validations:
       required: false
