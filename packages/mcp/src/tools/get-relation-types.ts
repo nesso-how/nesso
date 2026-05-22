@@ -8,7 +8,7 @@ export function registerGetRelationTypes(server: McpServer): void {
     'get_relation_types',
     {
       description:
-        'Returns all 41 semantic relation types supported by Nesso, grouped by 8 categories. ' +
+        'Returns all 52 semantic relation types supported by Nesso, grouped by 8 categories. ' +
         'Each type carries semantic coefficients (transitive, inverse, strength, polarity, cardinality) ' +
         'in addition to its visual encoding. ' +
         'Use this when you need valid relation type names for graph JSON or explanations for the user.',

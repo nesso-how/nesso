@@ -24,6 +24,9 @@ export type EdgeTypeName =
   | 'prevents' | 'prevented-by'
   | 'triggers' | 'triggered-by'
   | 'inhibits' | 'inhibited-by'
+  | 'disables' | 'disabled-by'
+  | 'consumes' | 'consumed-by'
+  | 'delays' | 'delayed-by'
   // dependency
   | 'requires' | 'required-by'
   | 'uses' | 'used-by'
@@ -31,6 +34,9 @@ export type EdgeTypeName =
   // temporal
   | 'precedes' | 'follows'
   | 'occurs-in' | 'has-occurrence'
+  | 'during' | 'spans'
+  | 'overlaps-with'
+  | 'derives-from' | 'gives-rise-to'
   // opposition (symmetric)
   | 'contrasts-with' | 'opposite-of'
   // similarity (symmetric)
@@ -47,6 +53,8 @@ export type GlyphKind =
   | 'anchor' | 'tool' | 'chevron-r' | 'ring' | 'tilde' | 'x'
   | 'minus' | 'flag' | 'approx' | 'arrows-lr'
   | 'check' | 'slash' | 'bulb' | 'equals'
+  | 'lock' | 'flame' | 'hourglass'
+  | 'brackets' | 'overlap' | 'branch'
 
 /** Transitivity of a relation: `Y` strict, `N` none, `weak` with decay (algorithms may discount weight per step). */
 export type Transitivity = 'Y' | 'N' | 'weak'
@@ -212,6 +220,42 @@ export const RELATION_TYPES: Record<EdgeTypeName, EdgeTypeDef> = {
     symmetric: false, transitive: 'N', inverse: 'inhibits',
     strength: 0.55, polarity: -1, cardinality: 'N-N',
   },
+  'disables': {
+    cat: 'causal', label: 'disables',
+    line: 'dotted', glyph: 'lock',
+    symmetric: false, transitive: 'weak', inverse: 'disabled-by',
+    strength: 0.60, polarity: -1, cardinality: 'N-N',
+  },
+  'disabled-by': {
+    cat: 'causal', label: 'disabled by',
+    line: 'dotted', glyph: 'lock',
+    symmetric: false, transitive: 'weak', inverse: 'disables',
+    strength: 0.60, polarity: -1, cardinality: 'N-N',
+  },
+  'consumes': {
+    cat: 'causal', label: 'consumes',
+    line: 'solid', glyph: 'flame',
+    symmetric: false, transitive: 'N', inverse: 'consumed-by',
+    strength: 0.65, polarity: -1, cardinality: 'N-N',
+  },
+  'consumed-by': {
+    cat: 'causal', label: 'consumed by',
+    line: 'solid', glyph: 'flame',
+    symmetric: false, transitive: 'N', inverse: 'consumes',
+    strength: 0.65, polarity: -1, cardinality: 'N-N',
+  },
+  'delays': {
+    cat: 'causal', label: 'delays',
+    line: 'dotted', glyph: 'hourglass',
+    symmetric: false, transitive: 'weak', inverse: 'delayed-by',
+    strength: 0.55, polarity: -1, cardinality: 'N-N',
+  },
+  'delayed-by': {
+    cat: 'causal', label: 'delayed by',
+    line: 'dotted', glyph: 'hourglass',
+    symmetric: false, transitive: 'weak', inverse: 'delays',
+    strength: 0.55, polarity: -1, cardinality: 'N-N',
+  },
 
   // dependency ───────────────────────────────────────────────────────────
   'requires': {
@@ -275,6 +319,36 @@ export const RELATION_TYPES: Record<EdgeTypeName, EdgeTypeDef> = {
     line: 'dotted', glyph: 'ring',
     symmetric: false, transitive: 'Y', inverse: 'occurs-in',
     strength: 0.40, polarity: 0, cardinality: '1-N',
+  },
+  'during': {
+    cat: 'temporal', label: 'during',
+    line: 'solid', glyph: 'brackets',
+    symmetric: false, transitive: 'Y', inverse: 'spans',
+    strength: 0.55, polarity: 0, cardinality: 'N-1',
+  },
+  'spans': {
+    cat: 'temporal', label: 'spans',
+    line: 'solid', glyph: 'brackets',
+    symmetric: false, transitive: 'Y', inverse: 'during',
+    strength: 0.55, polarity: 0, cardinality: '1-N',
+  },
+  'overlaps-with': {
+    cat: 'temporal', label: 'overlaps with',
+    line: 'dashed', glyph: 'overlap',
+    symmetric: true, transitive: 'N', inverse: 'overlaps-with',
+    strength: 0.45, polarity: 0, cardinality: 'N-N',
+  },
+  'derives-from': {
+    cat: 'temporal', label: 'derives from',
+    line: 'solid', glyph: 'branch',
+    symmetric: false, transitive: 'Y', inverse: 'gives-rise-to',
+    strength: 0.70, polarity: 0, cardinality: 'N-1',
+  },
+  'gives-rise-to': {
+    cat: 'temporal', label: 'gives rise to',
+    line: 'solid', glyph: 'branch',
+    symmetric: false, transitive: 'Y', inverse: 'derives-from',
+    strength: 0.70, polarity: 0, cardinality: '1-N',
   },
 
   // opposition (symmetric, self-inverse) ─────────────────────────────────

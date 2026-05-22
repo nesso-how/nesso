@@ -28,7 +28,7 @@ Nesso is an interactive concept map where nodes are ideas and edges are typed se
 
 ## Features
 
-- **Typed knowledge graph** — 41 semantic relations across 8 categories (taxonomic, structural, causal, dependency, temporal, opposition, similarity, epistemic), with inverse pairs; each type has a distinct line style and glyph
+- **Typed knowledge graph** — 52 semantic relations across 8 categories (taxonomic, structural, causal, dependency, temporal, opposition, similarity, epistemic), with inverse pairs; each type has a distinct line style and glyph
 - **Socratic AI mentor** — context-aware dialogue that probes rather than explains; opens on the current node or edge
 - **Local-first AI** — runs **Qwen2.5 1.5B** in-browser on WebGPU via [`@mlc-ai/web-llm`](https://github.com/mlc-ai/web-llm), no API key needed; any OpenAI-compatible cloud endpoint also works
 - **Spaced-repetition review** — FSRS scheduling via [`ts-fsrs`](https://github.com/open-spaced-repetition/ts-fsrs); rate Again / Hard / Good / Easy from a full-screen overlay

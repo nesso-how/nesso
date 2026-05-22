@@ -28,15 +28,15 @@ Use `nodeToCard()` in `src/types/graph.ts` to build a ts-fsrs `Card` from persis
 
 All edges carry a `data.type: EdgeTypeName`. Relation definitions (`RELATION_TYPES`) and category copy (`RELATION_CATEGORY_META`) live in `@nesso-how/relation-types`; UI palette bindings (`RELATION_CATEGORIES`) merge meta with CSS vars in `src/data/relationTypes.ts`.
 
-The set has **41 types in 8 categories**. Asymmetric relations come in **inverse pairs** so traversal in either direction is first-class.
+The set has **52 types in 8 categories**. Asymmetric relations come in **inverse pairs** so traversal in either direction is first-class.
 
 | Category     | Forward types                                                       | Inverse types                                                                            |
 | ------------ | ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
 | `taxonomic`  | `subtype-of`, `instance-of`                                         | `has-subtype`, `has-instance`                                                            |
 | `structural` | `part-of`, `made-of`                                                | `contains`, `composes`                                                                   |
-| `causal`     | `causes`, `produces`, `enables`, `prevents`, `triggers`, `inhibits` | `caused-by`, `produced-by`, `enabled-by`, `prevented-by`, `triggered-by`, `inhibited-by` |
+| `causal`     | `causes`, `produces`, `enables`, `prevents`, `triggers`, `inhibits`, `disables`, `consumes`, `delays` | `caused-by`, `produced-by`, `enabled-by`, `prevented-by`, `triggered-by`, `inhibited-by`, `disabled-by`, `consumed-by`, `delayed-by` |
 | `dependency` | `requires`, `uses`, `used-for`                                      | `required-by`, `used-by`, `purpose-of`                                                   |
-| `temporal`   | `precedes`, `occurs-in`                                             | `follows`, `has-occurrence`                                                              |
+| `temporal`   | `precedes`, `occurs-in`, `during`, `derives-from`, `overlaps-with`  | `follows`, `has-occurrence`, `spans`, `gives-rise-to`; `overlaps-with` is self (symmetric) |
 | `opposition` | `contrasts-with`, `opposite-of`                                     | self (symmetric)                                                                         |
 | `similarity` | `similar-to`, `analogous-to`                                        | self (symmetric)                                                                         |
 | `epistemic`  | `supports`, `explains`, `defines`, `contradicts`                    | `supported-by`, `explained-by`, `defined-by`; `contradicts` is self (symmetric)          |

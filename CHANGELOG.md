@@ -8,7 +8,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
-- **Relation model:** **Epistemic** category — `supports` / `supported-by`, `contradicts`, `explains` / `explained-by`, `defines` / `defined-by` (**41 types** across 8 categories).
+- **Relation model:** **Epistemic** category — `supports` / `supported-by`, `contradicts`, `explains` / `explained-by`, `defines` / `defined-by`.
+- **Relation model:** Causal negative types — `disables` / `disabled-by`, `consumes` / `consumed-by`, `delays` / `delayed-by`; temporal — `during` / `spans`, `overlaps-with`, `derives-from` / `gives-rise-to` (**52 types** across 8 categories).
 - **Relation model:** 13 inverse relation types (e.g. `has-subtype`, `caused-by`, `follows`) so asymmetric edges are first-class in both directions; **34 types** before epistemic, across 7 categories.
 - **Relation model:** Per-type semantic coefficients on `EdgeTypeDef` — `transitive`, `inverse`, `strength`, `polarity`, `cardinality` — for future graph-analysis algorithms.
 - **MCP (`get_relation_types`):** Tool output includes semantic coefficients alongside visual encoding.
@@ -18,6 +19,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - **Relation model:** Removed `is-a`; taxonomic hierarchy uses `subtype-of` / `has-subtype` and `instance-of` / `has-instance`.
 - **Seeds, app i18n, docs, landing, README:** Updated for the expanded vocabulary and `subtype-of` in place of `is-a`.
+- **Relation model docs:** Reference clarifies symmetric types and distinctions among `prevents` / `inhibits` / `disables`, `derives-from` / `subtype-of`, and `consumes` vs `uses`; README and graph-model issue template cite **52** types.
 - **MCP (`@nesso-how/mcp`):** Pin `@modelcontextprotocol/server` and `zod` semver ranges; use `workspace:*` for `@nesso-how/relation-types` in the monorepo (resolved on publish).
 - **Cursor rules:** Document expanded `EdgeTypeDef` schema and alpha no-backwards-compat constraint.
 

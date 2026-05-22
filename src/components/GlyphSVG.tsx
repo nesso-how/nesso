@@ -38,6 +38,12 @@ export function GlyphSVG({ kind, color = 'currentColor', size = 14 }: Props) {
     case 'slash':        return <svg width={s} height={s} viewBox="0 0 14 14"><path d="M11 3l-8 8" stroke={c} strokeWidth={1.8} strokeLinecap="round" fill="none" /></svg>
     case 'bulb':         return <svg width={s} height={s} viewBox="0 0 14 14"><path d="M7 2a3.2 3.2 0 0 0-2 5.7c.4.4.7.9.7 1.5v.3h2.6v-.3c0-.6.3-1.1.7-1.5A3.2 3.2 0 0 0 7 2zM5.7 10.5h2.6M6.2 12h1.6" {...common} /></svg>
     case 'equals':       return <svg width={s} height={s} viewBox="0 0 14 14"><path d="M3 5.5h8M3 8.5h8" stroke={c} strokeWidth={1.8} strokeLinecap="round" fill="none" /></svg>
+    case 'lock':         return <svg width={s} height={s} viewBox="0 0 14 14"><rect x="3.5" y="6.5" width="7" height="5.5" rx="0.8" {...common} /><path d="M5 6.5V4.5a2 2 0 0 1 4 0v2" {...common} /></svg>
+    case 'flame':        return <svg width={s} height={s} viewBox="0 0 14 14"><path d="M7 2c-1 2.2-3 3.4-3 6a3 3 0 0 0 6 0c0-1.2-.6-2-1.4-2.6.2 1.2-.4 2.2-1.4 2C7.4 5.6 7.8 4 7 2z" {...common} /></svg>
+    case 'hourglass':    return <svg width={s} height={s} viewBox="0 0 14 14"><path d="M3.5 2.5h7M3.5 11.5h7M4 2.5v1.5L7 7l3-3V2.5M4 11.5v-1.5L7 7l3 3v1.5" {...common} /></svg>
+    case 'brackets':     return <svg width={s} height={s} viewBox="0 0 14 14"><path d="M4 3h-1.5v8H4M10 3h1.5v8H10" {...common} /></svg>
+    case 'overlap':      return <svg width={s} height={s} viewBox="0 0 14 14"><path d="M2 5.5h7M5 8.5h7" stroke={c} strokeWidth={1.8} strokeLinecap="round" fill="none" /></svg>
+    case 'branch':       return <svg width={s} height={s} viewBox="0 0 14 14"><path d="M7 2v10M7 7l-3 3M7 7l3 3" {...common} /></svg>
     default: return null
   }
 }
