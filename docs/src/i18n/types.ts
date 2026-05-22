@@ -22,11 +22,11 @@ export type Locale = {
       mastery: string
       knowledge: string
       inquiry: string
-      memorization: string
+      passiveConsumption: string
       mind: string
       understanding: string
       produces: string
-      subtypeOf: string
+      supportedBy: string
       requires: string
       contrastsWith: string
       occursIn: string
@@ -34,7 +34,7 @@ export type Locale = {
         mastery: number
         knowledge: number
         inquiry: number
-        memorization: number
+        passiveConsumption: number
         mind: number
         understanding: number
       }

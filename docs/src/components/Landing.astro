@@ -1385,19 +1385,20 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
                 fill="#b14a2e"
                 opacity="0.85"></polygon>
 
-              <!-- E2: is-a → Knowledge -->
+              <!-- E2: supported-by → Knowledge -->
               <line
                 x1="447"
                 y1="202"
                 x2="601"
                 y2="145"
-                stroke="#2f5d8e"
-                stroke-width="1.6"
+                stroke="#3a4a8a"
+                stroke-width="2.24"
                 stroke-linecap="round"
+                stroke-dasharray="0.1 5"
                 opacity="0.82"></line>
               <polygon
                 points="601,145 595.9,149.8 593.7,144.1"
-                fill="#2f5d8e"
+                fill="#3a4a8a"
                 opacity="0.85"></polygon>
 
               <!-- E3: requires → Inquiry -->
@@ -1415,16 +1416,13 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
                 fill="#8a6a1a"
                 opacity="0.85"></polygon>
 
-              <!-- E4: contrasts-with → Memorization (dashed) -->
-              <line
-                x1="358"
-                y1="248"
-                x2="196"
-                y2="351"
+              <!-- E4: contrasts-with → Passive consumption (wavy) -->
+              <path
+                d="M358,248 Q277,300 196,351"
                 stroke="#8a2e4a"
                 stroke-width="1.92"
                 stroke-linecap="round"
-                stroke-dasharray="1 4"></line>
+                fill="none"></path>
 
               <!-- E5: occurs-in → Mind (dotted) -->
               <line
@@ -1475,28 +1473,36 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
                 >
               </g>
 
-              <!-- E2 chip: is-a -->
+              <!-- E2 chip: supported by -->
               <g>
                 <circle
                   cx="524"
                   cy="173"
                   r="11"
                   fill="var(--paper)"
-                  stroke="#2f5d8e"
+                  stroke="#3a4a8a"
                   stroke-width="1.2"></circle>
-                <polygon points="524,168 528,178 520,178" fill="#2f5d8e"
-                ></polygon>
+                <g
+                  transform="translate(517, 166)"
+                  stroke="#3a4a8a"
+                  stroke-width="1.4"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  fill="none"
+                >
+                  <path d="M2.5 7.5l3 3 6-7"></path>
+                </g>
                 <rect
-                  x="506"
+                  x="486"
                   y="188"
-                  width="36"
+                  width="76"
                   height="14"
                   rx="3"
                   fill="var(--paper)"
-                  stroke="rgba(47,93,142,0.30)"
+                  stroke="rgba(58,74,138,0.30)"
                   stroke-width="0.5"></rect>
-                <text class="ng-edge-label-text" fill="#2f5d8e" x="524" y="198"
-                  >{t.hero.graph.subtypeOf}</text
+                <text class="ng-edge-label-text" fill="#3a4a8a" x="524" y="198"
+                  >{t.hero.graph.supportedBy}</text
                 >
               </g>
 
@@ -1633,15 +1639,15 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
                 x2={600 + t.hero.graph.underlineHw.inquiry}
                 y2="393"></line>
 
-              <!-- N4 Memorization -->
+              <!-- N4 Passive consumption -->
               <text class="ng-node-text-sm" x="150" y="384"
-                >{t.hero.graph.memorization}</text
+                >{t.hero.graph.passiveConsumption}</text
               >
               <line
                 class="ng-node-underline"
-                x1={150 - t.hero.graph.underlineHw.memorization}
+                x1={150 - t.hero.graph.underlineHw.passiveConsumption}
                 y1="393"
-                x2={150 + t.hero.graph.underlineHw.memorization}
+                x2={150 + t.hero.graph.underlineHw.passiveConsumption}
                 y2="393"></line>
 
               <!-- N5 Mind -->

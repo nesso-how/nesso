@@ -7,21 +7,20 @@
     .el  { font-family: Menlo, "Courier New", monospace; font-size: 9.5px; font-weight: 500; letter-spacing: 0.02em; text-anchor: middle; }
   </style>
 
-
   <!-- E1: produces (causal, solid arrow) -->
   <line x1="400" y1="190" x2="400" y2="92" stroke="#b14a2e" stroke-width="1.6" stroke-linecap="round" opacity="0.82"/>
   <polygon points="400,92 403.1,98.3 396.9,98.3" fill="#b14a2e" opacity="0.85"/>
 
-  <!-- E2: subtype-of (taxonomic, solid arrow) -->
-  <line x1="447" y1="202" x2="601" y2="145" stroke="#2f5d8e" stroke-width="1.6" stroke-linecap="round" opacity="0.82"/>
-  <polygon points="601,145 595.9,149.8 593.7,144.1" fill="#2f5d8e" opacity="0.85"/>
+  <!-- E2: supported-by → Knowledge (epistemic, dotted arrow) -->
+  <line x1="447" y1="202" x2="601" y2="145" stroke="#3a4a8a" stroke-width="2.24" stroke-linecap="round" stroke-dasharray="0.1 5" opacity="0.82"/>
+  <polygon points="601,145 595.9,149.8 593.7,144.1" fill="#3a4a8a" opacity="0.85"/>
 
   <!-- E3: requires (dependency, solid arrow) -->
   <line x1="439" y1="251" x2="570" y2="356" stroke="#8a6a1a" stroke-width="1.6" stroke-linecap="round" opacity="0.82"/>
   <polygon points="570,356 563.5,354.7 567.2,350.0" fill="#8a6a1a" opacity="0.85"/>
 
-  <!-- E4: contrasts-with (opposition, dashed) -->
-  <line x1="358" y1="248" x2="196" y2="351" stroke="#8a2e4a" stroke-width="1.92" stroke-linecap="round" stroke-dasharray="1 4"/>
+  <!-- E4: contrasts-with → Passive consumption (opposition, wavy) -->
+  <path d="M358,248 Q277,300 196,351" stroke="#8a2e4a" stroke-width="1.92" stroke-linecap="round" fill="none"/>
 
   <!-- E5: occurs-in (temporal, dotted arrow) -->
   <line x1="353" y1="204" x2="159" y2="140" stroke="#2d6a55" stroke-width="2.24" stroke-linecap="round" stroke-dasharray="0.1 5" opacity="0.82"/>
@@ -35,11 +34,13 @@
   <rect x="372" y="156" width="56" height="14" rx="3" fill="#ffffff" stroke="rgba(177,74,46,0.30)" stroke-width="0.5"/>
   <text class="el" fill="#b14a2e" x="400" y="166">produces</text>
 
-  <!-- chip E2: subtype of -->
-  <circle cx="524" cy="173" r="11" fill="#ffffff" stroke="#2f5d8e" stroke-width="1.2"/>
-  <polygon points="524,168 528,178 520,178" fill="#2f5d8e"/>
-  <rect x="490" y="188" width="68" height="14" rx="3" fill="#ffffff" stroke="rgba(47,93,142,0.30)" stroke-width="0.5"/>
-  <text class="el" fill="#2f5d8e" x="524" y="198">subtype of</text>
+  <!-- chip E2: supported by -->
+  <circle cx="524" cy="173" r="11" fill="#ffffff" stroke="#3a4a8a" stroke-width="1.2"/>
+  <g transform="translate(517,166)" stroke="#3a4a8a" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M2.5 7.5l3 3 6-7"/>
+  </g>
+  <rect x="486" y="188" width="76" height="14" rx="3" fill="#ffffff" stroke="rgba(58,74,138,0.30)" stroke-width="0.5"/>
+  <text class="el" fill="#3a4a8a" x="524" y="198">supported by</text>
 
   <!-- chip E3: requires -->
   <circle cx="505" cy="304" r="11" fill="#ffffff" stroke="#8a6a1a" stroke-width="1.2"/>
@@ -78,9 +79,9 @@
   <text class="nts" x="600" y="384">Inquiry</text>
   <line class="nu" x1="578" y1="393" x2="622" y2="393"/>
 
-  <!-- node: Memorization -->
-  <text class="nts" x="150" y="384">Memorization</text>
-  <line class="nu" x1="103" y1="393" x2="197" y2="393"/>
+  <!-- node: Passive consumption -->
+  <text class="nts" x="150" y="384">Passive consumption</text>
+  <line class="nu" x1="90" y1="393" x2="210" y2="393"/>
 
   <!-- node: Mind -->
   <text class="nts" x="130" y="134">Mind</text>

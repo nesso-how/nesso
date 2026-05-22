@@ -17,7 +17,11 @@
         "fsrsState": 0,
         "due": 0,
         "lastReview": 0,
-        "lastRating": 0
+        "lastRating": 0,
+        "elaboration": {
+          "definition": "The active construction of meaning—connecting ideas, explaining why things work, and organizing what you know into a coherent structure, not merely holding isolated facts.",
+          "examples": "Explaining why supply and demand curves slope the way they do, not just memorizing the diagram\nConnecting Newton's laws to predict motion in a scenario you have never seen before\nTeaching a concept to someone else and revising your explanation when they get stuck"
+        }
       }
     },
     {
@@ -36,7 +40,11 @@
         "fsrsState": 0,
         "due": 0,
         "lastReview": 0,
-        "lastRating": 0
+        "lastRating": 0,
+        "elaboration": {
+          "definition": "Demonstrated competence—the ability to apply, perform, or solve reliably in context, beyond knowing that something is true.",
+          "examples": "Playing a piano piece without stopping to recall fingerings\nDebugging unfamiliar code using first principles instead of pattern-matching\nDiagnosing a case when the presentation does not match the textbook example"
+        }
       }
     },
     {
@@ -55,7 +63,11 @@
         "fsrsState": 0,
         "due": 0,
         "lastReview": 0,
-        "lastRating": 0
+        "lastRating": 0,
+        "elaboration": {
+          "definition": "What you hold as true or can state—facts, definitions, propositions, and information accumulated over time.",
+          "examples": "Knowing that Paris is the capital of France\nRecalling the formula for compound interest\nListing the stages of mitosis in order"
+        }
       }
     },
     {
@@ -74,26 +86,11 @@
         "fsrsState": 0,
         "due": 0,
         "lastReview": 0,
-        "lastRating": 0
-      }
-    },
-    {
-      "id": "n5",
-      "type": "concept",
-      "position": {
-        "x": 119.94704598874094,
-        "y": 356.38745616908164
-      },
-      "data": {
-        "text": "Memorization",
-        "stability": 0,
-        "difficulty": 0,
-        "reps": 0,
-        "lapses": 0,
-        "fsrsState": 0,
-        "due": 0,
-        "lastReview": 0,
-        "lastRating": 0
+        "lastRating": 0,
+        "elaboration": {
+          "definition": "The deliberate pursuit of questions—examining assumptions, gathering evidence, and revising beliefs through investigation rather than accepting answers passively.",
+          "examples": "Asking what would disprove a claim before accepting it\nDesigning an experiment to test a hypothesis\nReading primary sources after a lecture to check the summary"
+        }
       }
     },
     {
@@ -112,7 +109,34 @@
         "fsrsState": 0,
         "due": 0,
         "lastReview": 0,
-        "lastRating": 0
+        "lastRating": 0,
+        "elaboration": {
+          "definition": "The set of cognitive capacities—attention, working memory, long-term memory, reasoning—that together make thought and understanding possible.",
+          "examples": "Working memory limits how many ideas you can hold in relation at once\nAttention determines what gets encoded and what is filtered out\nLong-term memory stores conceptual structures that can be retrieved and extended"
+        }
+      }
+    },
+    {
+      "id": "n7",
+      "type": "concept",
+      "position": {
+        "x": 120,
+        "y": 356
+      },
+      "data": {
+        "text": "Passive consumption",
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0,
+        "elaboration": {
+          "definition": "Taking in information without active processing—skimming headlines, scrolling feeds, or watching content without integrating it into your own model of how things work.",
+          "examples": "Reading ten article summaries and remembering none of the theses\nWatching a tutorial, feeling like you learned, then failing to apply it\nHighlighting a PDF without rewriting the ideas in your own words"
+        }
       }
     }
   ],
@@ -136,7 +160,7 @@
       "targetHandle": "in",
       "type": "nesso",
       "data": {
-        "type": "subtype-of"
+        "type": "supported-by"
       }
     },
     {
@@ -153,7 +177,7 @@
     {
       "id": "e3",
       "source": "n1",
-      "target": "n5",
+      "target": "n7",
       "sourceHandle": "out",
       "targetHandle": "in",
       "type": "nesso",

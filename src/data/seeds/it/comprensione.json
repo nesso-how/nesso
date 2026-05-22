@@ -17,11 +17,11 @@
         "fsrsState": 0,
         "due": 0,
         "lastReview": 0,
-        "lastRating": 0
-      },
-      "measured": {
-        "width": 140,
-        "height": 34
+        "lastRating": 0,
+        "elaboration": {
+          "definition": "La costruzione attiva di senso: collegare idee, spiegare perché le cose funzionano e organizzare ciò che sai in una struttura coerente, non il semplice possesso di fatti isolati.",
+          "examples": "Spiegare perché le curve di domanda e offerta hanno quella forma, non solo memorizzare il diagramma\nCollegare le leggi di Newton per predire il moto in uno scenario mai visto prima\nInsegnare un concetto a qualcuno e rivedere la spiegazione quando si blocca"
+        }
       }
     },
     {
@@ -40,11 +40,11 @@
         "fsrsState": 0,
         "due": 0,
         "lastReview": 0,
-        "lastRating": 0
-      },
-      "measured": {
-        "width": 120,
-        "height": 34
+        "lastRating": 0,
+        "elaboration": {
+          "definition": "Competenza dimostrata: saper applicare, eseguire o risolvere in modo affidabile nel contesto, oltre al saper dire che qualcosa è vero.",
+          "examples": "Suonare un pezzo al piano senza fermarsi a ricordare le diteggiature\nDebuggare codice sconosciuto usando i principi di base invece del riconoscimento di pattern\nDiagnosticare un caso quando la presentazione non coincide con l'esempio del manuale"
+        }
       }
     },
     {
@@ -63,11 +63,11 @@
         "fsrsState": 0,
         "due": 0,
         "lastReview": 0,
-        "lastRating": 0
-      },
-      "measured": {
-        "width": 119,
-        "height": 34
+        "lastRating": 0,
+        "elaboration": {
+          "definition": "Ciò che tieni per vero o sai enunciare: fatti, definizioni, proposizioni e informazioni accumulate nel tempo.",
+          "examples": "Sapere che Parigi è la capitale della Francia\nRicordare la formula degli interessi composti\nElencare in ordine le fasi della mitosi"
+        }
       }
     },
     {
@@ -86,37 +86,12 @@
         "fsrsState": 0,
         "due": 0,
         "lastReview": 0,
-        "lastRating": 0
-      },
-      "measured": {
-        "width": 96,
-        "height": 34
+        "lastRating": 0,
+        "elaboration": {
+          "definition": "La ricerca deliberata di domande: esaminare le premesse, raccogliere evidenze e rivedere le proprie credenze con indagine, invece di accettare risposte passivamente.",
+          "examples": "Chiedersi cosa confuterebbe un'affermazione prima di accettarla\nProgettare un esperimento per testare un'ipotesi\nLeggere le fonti primarie dopo una lezione per verificare il riassunto"
+        }
       }
-    },
-    {
-      "id": "n5",
-      "type": "concept",
-      "position": {
-        "x": 119.94704598874094,
-        "y": 356.38745616908164
-      },
-      "data": {
-        "text": "Memorizzazione",
-        "stability": 0,
-        "difficulty": 0,
-        "reps": 0,
-        "lapses": 0,
-        "fsrsState": 0,
-        "due": 0,
-        "lastReview": 0,
-        "lastRating": 0
-      },
-      "measured": {
-        "width": 153,
-        "height": 34
-      },
-      "selected": false,
-      "dragging": false
     },
     {
       "id": "n6",
@@ -134,11 +109,34 @@
         "fsrsState": 0,
         "due": 0,
         "lastReview": 0,
-        "lastRating": 0
+        "lastRating": 0,
+        "elaboration": {
+          "definition": "L'insieme delle capacità cognitive—attenzione, memoria di lavoro, memoria a lungo termine, ragionamento—che rendono possibili il pensiero e la comprensione.",
+          "examples": "La memoria di lavoro limita quante idee si possono tenere in relazione contemporaneamente\nL'attenzione determina cosa viene codificato e cosa viene filtrato\nLa memoria a lungo termine conserva strutture concettuali che possono essere recuperate ed estese"
+        }
+      }
+    },
+    {
+      "id": "n7",
+      "type": "concept",
+      "position": {
+        "x": 120,
+        "y": 356
       },
-      "measured": {
-        "width": 76,
-        "height": 34
+      "data": {
+        "text": "Consumo passivo",
+        "stability": 0,
+        "difficulty": 0,
+        "reps": 0,
+        "lapses": 0,
+        "fsrsState": 0,
+        "due": 0,
+        "lastReview": 0,
+        "lastRating": 0,
+        "elaboration": {
+          "definition": "Assorbire informazioni senza elaborarle: scorrere titoli, feed o video senza integrarli in un modello personale di come funzionano le cose.",
+          "examples": "Leggere dieci riassunti di articoli e non ricordare nessuna tesi\nGuardare un tutorial, sentirsi preparati e poi non saper applicarlo\nEvidenziare un PDF senza riscrivere le idee con parole proprie"
+        }
       }
     }
   ],
@@ -162,7 +160,7 @@
       "targetHandle": "in",
       "type": "nesso",
       "data": {
-        "type": "subtype-of"
+        "type": "supported-by"
       }
     },
     {
@@ -179,7 +177,7 @@
     {
       "id": "e3",
       "source": "n1",
-      "target": "n5",
+      "target": "n7",
       "sourceHandle": "out",
       "targetHandle": "in",
       "type": "nesso",
