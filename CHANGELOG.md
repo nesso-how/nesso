@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Changed
+
+- **Docs:** Light-mode paper/ink/elevation tokens and paper texture aligned with the app bone palette (`src/index.css`).
+
 ## [0.1.0-alpha.22] - 2026-05-22
 
 ### Added
