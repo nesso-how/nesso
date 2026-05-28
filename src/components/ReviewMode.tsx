@@ -230,7 +230,7 @@ export function ReviewMode({ open, onClose }: Props) {
         {/* Progress bar + counter + close */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 22 }}>
           <div style={{ flex: 1, height: 3, borderRadius: 999, background: 'var(--paper-deep)', overflow: 'hidden' }}>
-            <div style={{ width: `${pct}%`, height: '100%', background: 'var(--cat-causal)', transition: 'width 200ms ease' }} />
+            <div style={{ width: `${pct}%`, height: '100%', background: 'var(--accent)', transition: 'width 200ms ease' }} />
           </div>
           <span style={{
             font: "500 10.5px 'JetBrains Mono', ui-monospace",
@@ -271,7 +271,7 @@ export function ReviewMode({ open, onClose }: Props) {
                     border: '0.5px solid var(--line)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}>
-                    <SocratesGlyph size={24} color="var(--ink-3)" accent="var(--cat-causal)" />
+                    <SocratesGlyph size={24} color="var(--ink-3)" />
                   </div>
                   <span style={{ font: "400 14.5px/1.55 'Fraunces', serif", color: 'var(--ink-2)', paddingTop: 8 }}>
                     <Typewriter text={question} />

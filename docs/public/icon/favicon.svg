@@ -2,12 +2,12 @@
   <style>
     svg {
       --ink: #1a1814;
-      --hub: #b14a2e;
+      --hub: #6e2730;
     }
     @media (prefers-color-scheme: dark) {
       svg {
         --ink: #f0e9d8;
-        --hub: #e08a6a;
+        --hub: #c47a82;
       }
     }
   </style>

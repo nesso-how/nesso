@@ -96,7 +96,7 @@ export function TopBar({ sidebarCollapsed, sidebarWidth, onExpandSidebar, onRevi
             <span style={{
               position: 'absolute', top: -4, right: -6,
               minWidth: 16, height: 16,
-              borderRadius: 999, background: 'var(--cat-causal)', color: 'var(--paper)',
+              borderRadius: 999, background: 'var(--accent)', color: 'var(--paper)',
               font: "600 10px 'JetBrains Mono', ui-monospace",
               padding: '0 4px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
               border: '2px solid var(--bg-card)',

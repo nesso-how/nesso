@@ -3,7 +3,7 @@ import type { CSSProperties } from 'react'
 
 /**
  * Nexus brandmark (central node + peripheral connections).
- * Peripheral nodes/lines follow `currentColor`; hub uses `--accent` (causal) from the active theme.
+ * Peripheral nodes/lines follow `currentColor`; hub uses `--accent` from the active theme.
  */
 export function NessoMark({
   size = 24,

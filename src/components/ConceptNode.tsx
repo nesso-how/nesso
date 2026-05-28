@@ -146,7 +146,7 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
           position: 'absolute',
           inset: -6,
           borderRadius: 999,
-          border: `1px dashed ${settings.accent}`,
+          border: '1px dashed var(--accent)',
           opacity: 0.7,
           pointerEvents: 'none',
         }} />

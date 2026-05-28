@@ -294,7 +294,7 @@ export function MentorBubble() {
                   height: 2, borderRadius: 999, background: 'var(--line)', overflow: 'hidden', width: '100%',
                 }}>
                   <div style={{
-                    height: '100%', borderRadius: 999, background: 'var(--cat-causal)',
+                    height: '100%', borderRadius: 999, background: 'var(--accent)',
                     width: `${Math.round(webllm.progress * 100)}%`,
                     transition: 'width 0.4s ease',
                   }} />
@@ -429,7 +429,7 @@ export function MentorBubble() {
         {unread > 0 && (
           <span style={{
             position: 'absolute', top: 0, right: 0, minWidth: 16, height: 16,
-            borderRadius: 999, background: 'var(--cat-causal)', color: 'var(--paper)',
+            borderRadius: 999, background: 'var(--accent)', color: 'var(--paper)',
             font: "600 10px 'JetBrains Mono', ui-monospace",
             padding: '0 4px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
             border: '2px solid var(--bg-elev)',
@@ -450,10 +450,10 @@ function SpinRing({ loading }: { loading: boolean }) {
       position: 'absolute', inset: -3, borderRadius: '50%',
       border: loading
         ? '1.5px solid transparent'
-        : '1px dashed var(--cat-causal)',
-      borderTopColor: loading ? 'var(--cat-causal)' : undefined,
-      borderRightColor: loading ? 'var(--cat-causal)' : undefined,
-      borderBottomColor: loading ? 'var(--cat-causal)' : undefined,
+        : '1px dashed var(--accent)',
+      borderTopColor: loading ? 'var(--accent)' : undefined,
+      borderRightColor: loading ? 'var(--accent)' : undefined,
+      borderBottomColor: loading ? 'var(--accent)' : undefined,
       opacity: loading ? 1 : 0.45,
       animation: `nx-spin ${loading ? '1s' : '28s'} linear infinite`,
       pointerEvents: 'none',

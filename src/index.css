@@ -1,15 +1,15 @@
 /* SPDX-License-Identifier: MIT */
 :root {
   /* Bone palette */
-  --paper: #f5f3ee;
-  --paper-deep: #f0ebe1;
+  --paper: #f6f2ea;
+  --paper-deep: #ece6da;
   --ink: #1a1814;
-  --ink-2: #363229;
-  --ink-3: #615a4d;
-  --ink-4: #8e857a;
-  --ink-5: #cfc7b6;
-  --bg-elev: #fbfaf6;
-  --bg-card: #ffffff;
+  --ink-2: #3c3830;
+  --ink-3: #6a6356;
+  --ink-4: #9a9080;
+  --ink-5: #c4b9a4;
+  --bg-elev: #fcf9f3;
+  --bg-card: #fffdf7;
   --line: rgba(26, 24, 20, 0.10);
   --line-strong: rgba(26, 24, 20, 0.20);
   --grid-dot: rgba(26, 24, 20, 0.18);
@@ -31,7 +31,7 @@
   --conf-4: #75752d;
   --conf-5: #467d2c;
 
-  --accent: var(--cat-causal);
+  --accent: #6e2730;
   --shadow-md: 0 8px 28px -10px rgba(26, 24, 20, 0.18), 0 2px 8px rgba(26, 24, 20, 0.06);
   --shadow-lg: 0 28px 60px -16px rgba(26, 24, 20, 0.22), 0 8px 20px -8px rgba(26, 24, 20, 0.10);
 }
@@ -53,6 +53,8 @@
   --cat-taxonomic: #6f9bcb;
   --cat-structural: #b698d4;
   --cat-causal: #e08a6a;
+
+  --accent: #c47a82;
   --cat-dependency: #d4b066;
   --cat-temporal: #6fb09a;
   --cat-opposition: #d68099;
@@ -114,7 +116,12 @@ button, input, textarea {
   opacity: 0.35;
 }
 ::selection {
-  background: rgba(177, 74, 46, 0.2);
+  background: rgba(110, 39, 48, 0.22);
+  color: var(--ink);
+}
+
+[data-theme="dark"] ::selection {
+  background: rgba(196, 122, 130, 0.28);
   color: var(--ink);
 }
 

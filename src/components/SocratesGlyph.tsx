@@ -8,7 +8,7 @@ interface Props {
 export function SocratesGlyph({
   size = 32,
   color = 'currentColor',
-  accent = 'var(--cat-causal)',
+  accent = 'var(--accent)',
 }: Props) {
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" fill="none"

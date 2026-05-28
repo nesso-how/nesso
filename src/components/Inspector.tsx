@@ -746,7 +746,7 @@ function NodeInspector({
             <span style={LABEL_STYLE}>{t.inspector.rows.due}</span>
             <span style={{
               font: "500 12px 'JetBrains Mono', ui-monospace",
-              color: isDue ? 'var(--cat-causal)' : 'var(--ink-2)',
+              color: isDue ? 'var(--accent)' : 'var(--ink-2)',
             }}>
               {formatConceptDue(node.data.due, t.inspector.dueNow)}
             </span>
@@ -844,7 +844,7 @@ function NodeInspector({
                     alignItems: 'flex-start',
                     padding: '3px 0',
                   }}>
-                    <span style={{ color: 'var(--cat-causal)', font: "500 13px 'JetBrains Mono', ui-monospace", lineHeight: 1.55 }}>·</span>
+                    <span style={{ color: 'var(--accent)', font: "500 13px 'JetBrains Mono', ui-monospace", lineHeight: 1.55 }}>·</span>
                     <InlineEdit
                       value={ex}
                       placeholder="example…"
@@ -877,7 +877,7 @@ function NodeInspector({
                     alignItems: 'flex-start',
                     padding: '3px 0',
                   }}>
-                    <span style={{ color: 'var(--cat-causal)', font: "500 13px 'JetBrains Mono', ui-monospace", lineHeight: 1.55 }}>·</span>
+                    <span style={{ color: 'var(--accent)', font: "500 13px 'JetBrains Mono', ui-monospace", lineHeight: 1.55 }}>·</span>
                     <InlineEdit
                       key={pendingKey}
                       value=""

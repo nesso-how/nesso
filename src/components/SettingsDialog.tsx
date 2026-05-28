@@ -637,7 +637,7 @@ function ModelStatusBadge({ status, model, baseUrl, pullProgress, onPull }: {
       <div style={{ marginTop: 8 }}>
         <div style={{ height: 3, borderRadius: 999, background: 'var(--line)', overflow: 'hidden', marginBottom: 6 }}>
           <div style={{
-            height: '100%', borderRadius: 999, background: 'var(--cat-causal)',
+            height: '100%', borderRadius: 999, background: 'var(--accent)',
             width: `${Math.round(pullProgress * 100)}%`,
             transition: 'width 0.3s ease',
           }} />
@@ -670,8 +670,8 @@ function ModelStatusBadge({ status, model, baseUrl, pullProgress, onPull }: {
           <button
             onClick={onPull}
             style={{
-              appearance: 'none', border: '0.5px solid var(--cat-causal)', background: 'transparent',
-              color: 'var(--cat-causal)', font: "500 11px 'JetBrains Mono', ui-monospace",
+              appearance: 'none', border: '0.5px solid var(--accent)', background: 'transparent',
+              color: 'var(--accent)', font: "500 11px 'JetBrains Mono', ui-monospace",
               padding: '2px 8px', borderRadius: 6, cursor: 'default',
             }}
           >
@@ -774,9 +774,9 @@ function LocalModelPanel({ status, progress, progressText, error }: LocalModelPa
             onClick={() => void initWebLLM()}
             style={{
               appearance: 'none',
-              border: '0.5px solid var(--cat-causal)',
+              border: '0.5px solid var(--accent)',
               background: 'transparent',
-              color: 'var(--cat-causal)',
+              color: 'var(--accent)',
               font: "500 12px 'JetBrains Mono', ui-monospace",
               padding: '8px 14px',
               borderRadius: 8,
@@ -798,7 +798,7 @@ function LocalModelPanel({ status, progress, progressText, error }: LocalModelPa
             <div style={{
               height: '100%',
               width: `${Math.round(progress * 100)}%`,
-              background: 'var(--cat-causal)',
+              background: 'var(--accent)',
               borderRadius: 999,
               transition: 'width 0.3s ease',
             }} />

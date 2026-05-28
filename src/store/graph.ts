@@ -216,7 +216,7 @@ export const useGraphStore = create<GraphState>()(
       _future: [],
       settings: {
         dark: false,
-        accent: '#b14a2e',
+        accent: '#6e2730',
         language: 'en' as const,
         edgeEncoding: 'full',
         showLabels: false,
