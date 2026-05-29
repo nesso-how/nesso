@@ -7,7 +7,7 @@ description: What Nesso is, why it exists, and the principles it is built on.
 This is an early-stage project. Some features are rough, some are not yet built, and this documentation is just getting started too.
 :::
 
-Nesso is an open-source, AI-assisted knowledge graph for active learning. It is built on a specific claim about how understanding works and a specific critique of how most current tools approach it.
+Nesso is an open-source app for building typed, AI-assisted knowledge graphs for active learning. It is built on a specific claim about how understanding works and a specific critique of how most current tools approach it.
 
 ## The problem with passive learning tools
 

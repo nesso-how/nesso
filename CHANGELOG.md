@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Changed
+
+- **Positioning:** Tagline reframed as an app for building typed knowledge graphs (README, docs site, browser title, Tauri description, mentor prompt, Cursor rules).
+
 ## [0.1.0-alpha.24] - 2026-05-29
 
 ### Changed

@@ -2,7 +2,7 @@ import type { Locale } from "./types";
 
 export const en: Locale = {
   meta: {
-    title: "Nesso: knowledge graphs for active learning",
+    title: "Nesso: build typed knowledge graphs for active learning",
     description:
       "Most learning tools feed you passive answers and lock your knowledge away. Nesso lets you build a typed concept graph you own and reinforce how ideas relate.",
   },

@@ -7,7 +7,7 @@
 
 # Nesso
 
-**A typed knowledge graph for active learning.**
+**An app for building typed knowledge graphs for active learning.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![npm @nesso-how/mcp](https://img.shields.io/npm/v/@nesso-how/mcp?label=%40nesso-how%2Fmcp)](https://www.npmjs.com/package/@nesso-how/mcp)
