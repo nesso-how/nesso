@@ -36,10 +36,10 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
       }
 
       :root {
-        --paper: #f6f2ea;
-        --paper-deep: #ece6da;
-        --paper-elev: #fcf9f3;
-        --bg-elev: #fcf9f3;
+        --paper: #fcf9f3;
+        --paper-deep: #f2ede3;
+        --paper-elev: #fffdf7;
+        --bg-elev: #fffdf7;
         --bg-card: #fffdf7;
         --ink: #1a1814;
         --ink-2: #3c3830;
@@ -207,7 +207,7 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
         padding: 0.2rem 0.55rem;
         border-radius: 999px;
         border: 0.5px solid var(--line-strong);
-        background: rgba(252, 249, 243, 0.55);
+        background: rgba(255, 253, 247, 0.55);
         transition: all 0.2s;
         white-space: nowrap;
       }
@@ -424,7 +424,7 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
         color: var(--ink-4);
         letter-spacing: 0.12em;
         text-transform: uppercase;
-        background: rgba(246, 242, 234, 0.7);
+        background: rgba(252, 249, 243, 0.7);
         backdrop-filter: blur(4px);
         padding: 0.3rem 0.6rem;
         border-radius: 4px;
@@ -557,6 +557,13 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
       .principle-visual {
         align-self: start;
         padding-top: 0.2rem;
+      }
+
+      .principle-visual .pv-picker,
+      .principle-visual .pv-review,
+      .principle-visual .pv-aimode,
+      .principle-visual .pv-module {
+        box-shadow: var(--shadow-paper);
       }
 
       /* P1: Chat panel */

@@ -43,18 +43,18 @@
 
 /* ── Light mode — elevated chrome (matches app --bg-elev) ── */
 :root[data-theme='light'] {
-	--sl-color-bg: #fcf9f3;
-	--sl-color-bg-nav: #fcf9f3;
-	--sl-color-bg-sidebar: #fcf9f3;
-	--sl-color-bg-inline-code: #ece6da;
+	--sl-color-bg: #fffdf7;
+	--sl-color-bg-nav: #fffdf7;
+	--sl-color-bg-sidebar: #fffdf7;
+	--sl-color-bg-inline-code: #f2ede3;
 	--sl-color-bg-accent: rgba(110, 39, 48, 0.06);
 
 	--sl-color-text: #1a1814;
 	--sl-color-text-accent: #6e2730;
-	--sl-color-text-invert: #f6f2ea;
+	--sl-color-text-invert: #fcf9f3;
 
 	--sl-color-white: #1a1814;
-	--sl-color-black: #fcf9f3;
+	--sl-color-black: #fffdf7;
 
 	--sl-color-accent-low: rgba(110, 39, 48, 0.12);
 	--sl-color-accent: #6e2730;
@@ -69,8 +69,8 @@
 	--sl-color-gray-3: #6a6356;
 	--sl-color-gray-4: #9a9080;
 	--sl-color-gray-5: #c4b9a4;
-	--sl-color-gray-6: #ece6da;
-	--sl-color-gray-7: #f6f2ea;
+	--sl-color-gray-6: #f2ede3;
+	--sl-color-gray-7: #fcf9f3;
 
 	--sl-color-orange: #a07840;
 	--sl-color-orange-high: #7a5c2e;
@@ -140,7 +140,7 @@ h4 {
 	color: var(--sl-color-text);
 }
 .site-title:hover {
-	color: var(--sl-color-text-accent);
+	color: var(--sl-color-text);
 }
 
 /* Logo sizing */
@@ -149,14 +149,14 @@ h4 {
 	width: 24px;
 }
 
-/* Social icons in navbar — muted, accent on hover */
+/* Social icons in navbar — same text color on hover */
 .social-icons a,
 header a[rel='me'] {
 	color: var(--sl-color-text);
 }
 .social-icons a:hover,
 header a[rel='me']:hover {
-	color: var(--sl-color-text-accent);
+	color: var(--sl-color-text);
 }
 
 /* Search modal shell — Starlight uses --sl-color-gray-6, not --sl-color-black */
