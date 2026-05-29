@@ -20,7 +20,7 @@
   <polygon points="570,356 563.5,354.7 567.2,350.0" fill="#8a6a1a" opacity="0.85"/>
 
   <!-- E4: contrasts-with → Passive consumption (opposition, wavy) -->
-  <path d="M358,248 Q277,300 196,351" stroke="#8a2e4a" stroke-width="1.92" stroke-linecap="round" fill="none"/>
+  <path d="M358,248 Q290,300 200,351" stroke="#8a2e4a" stroke-width="1.92" stroke-linecap="round" fill="none"/>
 
   <!-- E5: occurs-in (temporal, dotted arrow) -->
   <line x1="353" y1="204" x2="159" y2="140" stroke="#2d6a55" stroke-width="2.24" stroke-linecap="round" stroke-dasharray="0.1 5" opacity="0.82"/>
@@ -80,8 +80,8 @@
   <line class="nu" x1="578" y1="393" x2="622" y2="393"/>
 
   <!-- node: Passive consumption -->
-  <text class="nts" x="150" y="384">Passive consumption</text>
-  <line class="nu" x1="90" y1="393" x2="210" y2="393"/>
+  <text class="nts" x="200" y="384">Passive consumption</text>
+  <line class="nu" x1="140" y1="393" x2="260" y2="393"/>
 
   <!-- node: Mind -->
   <text class="nts" x="130" y="134">Mind</text>

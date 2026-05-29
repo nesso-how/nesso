@@ -20,7 +20,7 @@
   <polygon points="570,356 563.5,354.7 567.2,350.0" fill="#b08a2a" opacity="0.9"/>
 
   <!-- E4: contrasts-with (opposition, dashed) -->
-  <line x1="358" y1="248" x2="196" y2="351" stroke="#b84e6a" stroke-width="1.92" stroke-linecap="round" stroke-dasharray="1 4"/>
+  <line x1="358" y1="248" x2="200" y2="351" stroke="#b84e6a" stroke-width="1.92" stroke-linecap="round" stroke-dasharray="1 4"/>
 
   <!-- E5: occurs-in (temporal, dotted arrow) -->
   <line x1="353" y1="204" x2="159" y2="140" stroke="#3d8a70" stroke-width="2.24" stroke-linecap="round" stroke-dasharray="0.1 5" opacity="0.9"/>
@@ -77,9 +77,9 @@
   <text class="nts" x="600" y="384">Inquiry</text>
   <line class="nu" x1="578" y1="393" x2="622" y2="393"/>
 
-  <!-- node: Memorization -->
-  <text class="nts" x="150" y="384">Memorization</text>
-  <line class="nu" x1="103" y1="393" x2="197" y2="393"/>
+  <!-- node: Passive consumption -->
+  <text class="nts" x="200" y="384">Passive consumption</text>
+  <line class="nu" x1="140" y1="393" x2="260" y2="393"/>
 
   <!-- node: Mind -->
   <text class="nts" x="130" y="134">Mind</text>
