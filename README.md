@@ -54,7 +54,7 @@ pnpm build          # web bundle
 pnpm build:desktop  # desktop binary
 ```
 
-See [`CONTRIBUTING.md`](CONTRIBUTING.md) for commit conventions, branch naming, and the PR workflow.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for commit conventions, branch naming, and the PR workflow.
 
 ## Project structure
 
@@ -86,17 +86,17 @@ The repo is a **pnpm workspace** monorepo. Shared semantic vocabulary lives in [
 
 ## Packages
 
-| Package | Purpose |
-| --- | --- |
-| [`@nesso-how/relation-types`](https://www.npmjs.com/package/@nesso-how/relation-types) | Shared semantic relation vocabulary and TypeScript types |
-| [`@nesso-how/types`](https://www.npmjs.com/package/@nesso-how/types) | Shared TypeScript types: graph, node, edge, settings, FSRS |
-| [`@nesso-how/formats`](https://www.npmjs.com/package/@nesso-how/formats) | Graph serialization formats: JSON serialize/deserialize |
-| [`@nesso-how/mcp`](https://www.npmjs.com/package/@nesso-how/mcp) | MCP server exposing Nesso's relation vocabulary and docs to LLM clients |
+| Package                                                                                | Purpose                                                                 |
+| -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| [`@nesso-how/relation-types`](https://www.npmjs.com/package/@nesso-how/relation-types) | Shared semantic relation vocabulary and TypeScript types                |
+| [`@nesso-how/types`](https://www.npmjs.com/package/@nesso-how/types)                   | Shared TypeScript types: graph, node, edge, settings, FSRS              |
+| [`@nesso-how/formats`](https://www.npmjs.com/package/@nesso-how/formats)               | Graph serialization formats: JSON serialize/deserialize                 |
+| [`@nesso-how/mcp`](https://www.npmjs.com/package/@nesso-how/mcp)                       | MCP server exposing Nesso's relation vocabulary and docs to LLM clients |
 
 ## Contributing
 
-Bug reports, feature ideas, and PRs are welcome on [GitHub Issues](https://github.com/cedoor/nesso/issues). Start with [`CONTRIBUTING.md`](CONTRIBUTING.md).
+Bug reports, feature ideas, and PRs are welcome on [GitHub Issues](https://github.com/cedoor/nesso/issues). Start with [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-Copyright © 2026 Omar Desogus. Licensed under the [MIT License](https://opensource.org/licenses/MIT). See [`LICENSE`](LICENSE).
+Copyright © 2026 Omar Desogus. Licensed under the [MIT License](https://opensource.org/licenses/MIT). See [LICENSE](LICENSE).
