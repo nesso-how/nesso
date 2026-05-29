@@ -3,6 +3,11 @@
   "version": "0.1.0-alpha.24",
   "description": "Nesso shared TypeScript types — graph, node, edge, settings, FSRS",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nesso-how/nesso",
+    "directory": "packages/types"
+  },
   "type": "module",
   "publishConfig": {
     "access": "public"

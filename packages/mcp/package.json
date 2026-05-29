@@ -3,6 +3,11 @@
   "version": "0.1.0-alpha.24",
   "description": "MCP server exposing Nesso knowledge graph tools to LLM clients",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nesso-how/nesso",
+    "directory": "packages/mcp"
+  },
   "type": "module",
   "publishConfig": {
     "access": "public"
