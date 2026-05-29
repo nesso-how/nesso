@@ -44,7 +44,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       # Auth: npm Trusted Publishing (OIDC). Configure each package on npmjs.com
-      # (Package settings → Trusted Publisher → GitHub Actions: cedoor/nesso, release.yml).
+      # (Package settings → Trusted Publisher → GitHub Actions: nesso-how/nesso, release.yml).
       - name: Publish packages
         run: pnpm -r --filter "./packages/**" publish --no-git-checks --provenance
 

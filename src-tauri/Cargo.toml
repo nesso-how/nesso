@@ -4,7 +4,7 @@ version = "0.1.0-alpha.23"
 description = "Nesso — a typed knowledge graph for active learning (Tauri shell)"
 authors = ["Nesso contributors"]
 license = "MIT"
-repository = "https://github.com/cedoor/nesso"
+repository = "https://github.com/nesso-how/nesso"
 edition = "2021"
 rust-version = "1.77.2"
 

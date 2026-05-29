@@ -11,9 +11,9 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![npm @nesso-how/mcp](https://img.shields.io/npm/v/@nesso-how/mcp?label=%40nesso-how%2Fmcp)](https://www.npmjs.com/package/@nesso-how/mcp)
-[![GitHub release](https://img.shields.io/github/v/release/cedoor/nesso?include_prereleases&label=desktop)](https://github.com/cedoor/nesso/releases)
+[![GitHub release](https://img.shields.io/github/v/release/nesso-how/nesso?include_prereleases&label=desktop)](https://github.com/nesso-how/nesso/releases)
 
-[Website](https://nesso.how) · [Try it](https://app.nesso.how) · [Docs](https://nesso.how/docs/introduction) · [Releases](https://github.com/cedoor/nesso/releases)
+[Website](https://nesso.how) · [Try it](https://app.nesso.how) · [Docs](https://nesso.how/docs/introduction) · [Releases](https://github.com/nesso-how/nesso/releases)
 
 </div>
 
@@ -95,7 +95,7 @@ The repo is a **pnpm workspace** monorepo. Shared semantic vocabulary lives in [
 
 ## Contributing
 
-Bug reports, feature ideas, and PRs are welcome on [GitHub Issues](https://github.com/cedoor/nesso/issues). Start with [CONTRIBUTING.md](CONTRIBUTING.md).
+Bug reports, feature ideas, and PRs are welcome on [GitHub Issues](https://github.com/nesso-how/nesso/issues). Start with [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 

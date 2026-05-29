@@ -11,7 +11,7 @@ Open [app.nesso.how](https://app.nesso.how) in your browser. The app works offli
 
 ## Desktop app (macOS)
 
-Pre-built alpha installers for Apple silicon and Intel are published on [GitHub Releases](https://github.com/cedoor/nesso/releases). Download the `.dmg` for your architecture and open it.
+Pre-built alpha installers for Apple silicon and Intel are published on [GitHub Releases](https://github.com/nesso-how/nesso/releases). Download the `.dmg` for your architecture and open it.
 
 :::caution
 The app is not signed with an Apple developer certificate. macOS will block it on first launch. After installing, run this command in the terminal to remove the quarantine flag:
@@ -28,7 +28,7 @@ Then open the app normally.
 Requires [Node.js](https://nodejs.org/) and [pnpm](https://pnpm.io/).
 
 ```sh
-git clone https://github.com/cedoor/nesso.git
+git clone https://github.com/nesso-how/nesso.git
 cd nesso
 pnpm install
 pnpm dev

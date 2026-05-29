@@ -4,7 +4,7 @@ import Landing from "../components/Landing.astro";
 import rootPkg from "../../../package.json";
 
 const RELEASE_TAG = `v${rootPkg.version}`;
-const releaseUrl = `https://github.com/cedoor/nesso/releases/tag/${RELEASE_TAG}`;
+const releaseUrl = `https://github.com/nesso-how/nesso/releases/tag/${RELEASE_TAG}`;
 ---
 
 <Landing t={en} lang="en" releaseTag={RELEASE_TAG} releaseUrl={releaseUrl} />

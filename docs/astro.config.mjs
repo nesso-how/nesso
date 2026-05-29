@@ -15,7 +15,7 @@ export default defineConfig({
 				alt: 'Nesso',
 			},
 			social: [
-				{ icon: 'github', label: 'GitHub', href: 'https://github.com/cedoor/nesso' },
+				{ icon: 'github', label: 'GitHub', href: 'https://github.com/nesso-how/nesso' },
 			],
 			customCss: ['./src/styles/custom.css'],
 			components: {

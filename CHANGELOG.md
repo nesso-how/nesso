@@ -8,6 +8,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
+- **Repository:** GitHub org moved to `nesso-how/nesso`; README, docs, Cargo.toml, issue templates, and changelog compare links updated.
+- **Code of Conduct:** Enforcement contact email set to `nesso-how@proton.me`.
+
 - **Demo seed:** Slightly wider auto-fit on first load (Understanding / Comprensione) when no viewport is saved yet; manual Fit unchanged.
 - **README:** Tagline and positioning (`typed knowledge graph for active learning`); alpha mentor caveat; quick start, project structure, and package table; nav links to nesso.how/docs.
 - **CONTRIBUTING:** Slim intro; setup moved to README.
@@ -420,27 +423,27 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial alpha: interactive knowledge graph (web + Tauri v2); desktop installers on GitHub Releases (macOS Apple silicon and Intel).
 
-[Unreleased]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.23...HEAD
-[0.1.0-alpha.23]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.22...v0.1.0-alpha.23
-[0.1.0-alpha.22]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.21...v0.1.0-alpha.22
-[0.1.0-alpha.21]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.20...v0.1.0-alpha.21
-[0.1.0-alpha.20]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.19...v0.1.0-alpha.20
-[0.1.0-alpha.19]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.18...v0.1.0-alpha.19
-[0.1.0-alpha.18]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.17...v0.1.0-alpha.18
-[0.1.0-alpha.17]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.16...v0.1.0-alpha.17
-[0.1.0-alpha.16]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.15...v0.1.0-alpha.16
-[0.1.0-alpha.15]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.14...v0.1.0-alpha.15
-[0.1.0-alpha.14]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.13...v0.1.0-alpha.14
-[0.1.0-alpha.13]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.12...v0.1.0-alpha.13
-[0.1.0-alpha.12]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.11...v0.1.0-alpha.12
-[0.1.0-alpha.11]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.10...v0.1.0-alpha.11
-[0.1.0-alpha.10]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.9...v0.1.0-alpha.10
-[0.1.0-alpha.9]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.8...v0.1.0-alpha.9
-[0.1.0-alpha.8]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.7...v0.1.0-alpha.8
-[0.1.0-alpha.7]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.6...v0.1.0-alpha.7
-[0.1.0-alpha.6]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.5...v0.1.0-alpha.6
-[0.1.0-alpha.5]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.4...v0.1.0-alpha.5
-[0.1.0-alpha.4]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.3...v0.1.0-alpha.4
-[0.1.0-alpha.3]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.2...v0.1.0-alpha.3
-[0.1.0-alpha.2]: https://github.com/cedoor/nesso/compare/v0.1.0-alpha.1...v0.1.0-alpha.2
-[0.1.0-alpha.1]: https://github.com/cedoor/nesso/releases/tag/v0.1.0-alpha.1
+[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.23...HEAD
+[0.1.0-alpha.23]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.22...v0.1.0-alpha.23
+[0.1.0-alpha.22]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.21...v0.1.0-alpha.22
+[0.1.0-alpha.21]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.20...v0.1.0-alpha.21
+[0.1.0-alpha.20]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.19...v0.1.0-alpha.20
+[0.1.0-alpha.19]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.18...v0.1.0-alpha.19
+[0.1.0-alpha.18]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.17...v0.1.0-alpha.18
+[0.1.0-alpha.17]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.16...v0.1.0-alpha.17
+[0.1.0-alpha.16]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.15...v0.1.0-alpha.16
+[0.1.0-alpha.15]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.14...v0.1.0-alpha.15
+[0.1.0-alpha.14]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.13...v0.1.0-alpha.14
+[0.1.0-alpha.13]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.12...v0.1.0-alpha.13
+[0.1.0-alpha.12]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.11...v0.1.0-alpha.12
+[0.1.0-alpha.11]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.10...v0.1.0-alpha.11
+[0.1.0-alpha.10]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.9...v0.1.0-alpha.10
+[0.1.0-alpha.9]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.8...v0.1.0-alpha.9
+[0.1.0-alpha.8]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.7...v0.1.0-alpha.8
+[0.1.0-alpha.7]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.6...v0.1.0-alpha.7
+[0.1.0-alpha.6]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.5...v0.1.0-alpha.6
+[0.1.0-alpha.5]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.4...v0.1.0-alpha.5
+[0.1.0-alpha.4]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.3...v0.1.0-alpha.4
+[0.1.0-alpha.3]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.2...v0.1.0-alpha.3
+[0.1.0-alpha.2]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.1...v0.1.0-alpha.2
+[0.1.0-alpha.1]: https://github.com/nesso-how/nesso/releases/tag/v0.1.0-alpha.1
