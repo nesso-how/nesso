@@ -6,6 +6,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Changed
+
+- **README:** Tagline and positioning (`typed knowledge graph for active learning`); alpha mentor caveat; quick start, project structure, and package table; nav links to nesso.how/docs.
+- **CONTRIBUTING:** Slim intro; setup moved to README.
+- **Docs:** Starlight site description aligned with README tagline; minor punctuation in mentor, concepts, and MCP guides.
+- **App / desktop:** Browser tab title and Tauri crate description use the new tagline; mentor system prompt wording updated.
+- **Cursor rules:** `project.mdc` description, WebGPU-first AI stack, and monorepo layout match README.
+
 ## [0.1.0-alpha.23] - 2026-05-22
 
 ### Changed

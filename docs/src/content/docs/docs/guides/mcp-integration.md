@@ -55,7 +55,7 @@ Returns the complete list of relation types with their category, line style, sym
 
 ### Graph JSON (Import JSON)
 
-Paste this JSON shape into **Graph menu → Import JSON** in the web or desktop app (or construct it elsewhere and import the file). **Import** keeps structure (nodes, edges, display, elaboration) and resets FSRS / review fields to fresh defaults — personal scheduling from another user is not applied. **Export JSON** from the graph menu is share-safe the same way (no review history). Desktop workspace autosave is separate and retains your full progress.
+Paste this JSON shape into **Graph menu → Import JSON** in the web or desktop app (or construct it elsewhere and import the file). **Import** keeps structure (nodes, edges, display, elaboration) and resets FSRS / review fields to fresh defaults; personal scheduling from another user is not applied. **Export JSON** from the graph menu is share-safe the same way (no review history). Desktop workspace autosave is separate and retains your full progress.
 
 ```json
 {

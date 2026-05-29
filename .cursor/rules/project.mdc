@@ -5,17 +5,17 @@ alwaysApply: true
 
 # Project: Nesso
 
-Nesso is an AI-powered knowledge graph for active learning. Users build concept maps by placing nodes (ideas) and drawing typed semantic edges between them. A Socratic AI mentor probes their understanding through dialogue rather than explanation.
+Nesso is a typed knowledge graph for active learning: an interactive concept map where nodes are ideas and edges are typed semantic relations. **Socrates**, a Socratic AI mentor, reads the current graph and the user's selection, then probes their understanding through questions rather than explanations.
 
 ## Stack
 
-| Layer         | Technology                                                                                                                                                      |
-| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Framework     | React 18 + Vite + TypeScript                                                                                                                                    |
-| Desktop shell | Tauri v2 (`src-tauri/`) — optional wrapper; web app still runs with `pnpm dev`                                                                                  |
-| Graph canvas  | React Flow (`@xyflow/react`)                                                                                                                                    |
-| State         | Zustand (`src/store/graph.ts`)                                                                                                                                  |
-| AI mentor     | OpenAI-compatible `chat/completions` via `fetch`; defaults to local Ollama (endpoint / model / key in Settings). Review scheduling uses **FSRS** via `ts-fsrs`. |
+| Layer         | Technology                                                                                                                                                                                                              |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Framework     | React 18 + Vite + TypeScript                                                                                                                                                                                            |
+| Desktop shell | Tauri v2 (`src-tauri/`) — optional wrapper; web app still runs with `pnpm dev`                                                                                                                                          |
+| Graph canvas  | React Flow (`@xyflow/react`)                                                                                                                                                                                            |
+| State         | Zustand (`src/store/graph.ts`)                                                                                                                                                                                          |
+| AI mentor     | Local **WebGPU** engine (Qwen2.5 1.5B via `@mlc-ai/web-llm`) or any OpenAI-compatible `chat/completions` endpoint (Ollama or cloud; endpoint / model / key in Settings). Review scheduling uses **FSRS** via `ts-fsrs`. |
 
 ## Source layout
 
@@ -24,6 +24,7 @@ src/
   App.tsx             # Root: keyboard shortcuts, theme application, layout
   components/         # All UI components (see components.mdc)
   store/graph.ts      # Single Zustand store for all app state
+  llm/                # Mentor transports (web-llm + OpenAI-compatible fetch)
   data/
     relationTypes.ts  # merges `@nesso-how/relation-types` + CSS palette vars (`RELATION_CATEGORIES`)
     palettes.ts       # CSS variable colour palettes for edge categories
@@ -31,6 +32,12 @@ src/
     seedGraph.ts      # Exports `SEEDS` — bundled demo graphs from `seeds/*.json` (stable ids from names)
   types/graph.ts      # ConceptNodeData, EdgeTypeName, NessoSettings, etc.
 src-tauri/            # Tauri v2 Rust project — tauri.conf.json, capabilities, icons
+packages/
+  relation-types/     # @nesso-how/relation-types: shared semantic vocabulary
+  types/              # @nesso-how/types: shared TypeScript types
+  formats/            # @nesso-how/formats: graph JSON serialize/deserialize
+  mcp/                # @nesso-how/mcp: MCP server for LLM clients
+docs/                 # Starlight docs site, published at nesso.how/docs
 ```
 
 ## Core concepts

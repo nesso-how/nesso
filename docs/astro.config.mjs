@@ -7,7 +7,7 @@ export default defineConfig({
 	integrations: [
 		starlight({
 			title: 'Nesso',
-			description: 'An AI-powered knowledge graph for active learning.',
+			description: 'A typed knowledge graph for active learning.',
 			favicon: '/icon/favicon.svg',
 			logo: {
 				light: './src/assets/logo-light.svg',

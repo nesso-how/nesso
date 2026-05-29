@@ -30,7 +30,7 @@ See the [relation types reference](../../reference/relation-types/) for the full
 - **Click** a node or edge to select it. The Inspector reflects the selection.
 - **Hold `⌘` / `Ctrl` and click** to toggle additional items into the selection.
 - **Drag on empty canvas** to marquee-select multiple items.
-- **`Del`** or **`Backspace`** (or the trash icon in the bottom dock) deletes the selection — one relation, one concept, or every concept in a marquee. Edges attached to a deleted concept go with it. Relation delete is only from the dock or keyboard, not from the relation Inspector.
+- **`Del`** or **`Backspace`** (or the trash icon in the bottom dock) deletes the selection (one relation, one concept, or every concept in a marquee). Edges attached to a deleted concept go with it. Relation delete is only from the dock or keyboard, not from the relation Inspector.
 - **`⌘C` / `Ctrl+C`** (copy icon in the bottom dock) copies the selection. Copying concepts also copies relations between them; copying a relation includes its two endpoints. **`⌘V` / `Ctrl+V`** (paste icon) duplicates the clipboard with a small offset and selects the new items.
 - **Arrow keys** nudge a selected concept; **Shift + arrows** move it in larger steps.
 - **`⌘Z` / `Ctrl+Z`** undoes structural edits; **`⌘⇧Z` / `Ctrl+Shift+Z`** redoes. History has 50 steps and resets when you switch or import a graph.
@@ -65,7 +65,7 @@ The image link and Commons description URL are persisted with the graph, so attr
 
 **Sidebar → Display** controls how the **active graph** is rendered: heatmap overlay, edge encoding density, curve style, and auto flip. Choices are saved **with the graph** in IndexedDB (and included in JSON export). New graphs start from the app defaults until you change them.
 
-When **Display → Curve** is set to **Arc**, **Auto flip** (on by default) bends relations toward the side that avoids overlapping nodes — flipping when the target is above the source on the right, or below on the left — and updates live while you drag concepts. **Flip curve** in the Inspector is **Off | Auto | On** while auto flip is on: **Auto** follows layout, **Off** / **On** pin a manual bend on that edge. With auto flip off for that graph, the control is **Off | On** only.
+When **Display → Curve** is set to **Arc**, **Auto flip** (on by default) bends relations toward the side that avoids overlapping nodes, flipping when the target is above the source on the right, or below on the left, and updates live while you drag concepts. **Flip curve** in the Inspector is **Off | Auto | On** while auto flip is on: **Auto** follows layout, **Off** / **On** pin a manual bend on that edge. With auto flip off for that graph, the control is **Off | On** only.
 
 ## When an edge is selected
 

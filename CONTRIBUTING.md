@@ -1,18 +1,6 @@
 # Contributing
 
-Thank you for taking the time to contribute to Nesso, we really appreciate it. Whether you're fixing a bug, proposing a new feature, or improving the docs, every contribution matters.
-
-All contributors are expected to follow our [Code of Conduct](CODE_OF_CONDUCT.md). Please make sure you are welcoming and respectful in all interactions.
-
-Read the sections below to know how to report issues, propose changes, and submit code.
-
-## Setup
-
-```bash
-pnpm install
-pnpm dev          # web app
-pnpm dev:desktop  # Tauri desktop
-```
+Contributions are welcome. Please follow our [Code of Conduct](CODE_OF_CONDUCT.md) in all interactions.
 
 ## Commit style
 
@@ -45,4 +33,4 @@ chore/<name>
 
 ## Graph model changes
 
-Proposals for new edge types or semantic categories should use the **Graph model / edge type** issue template — changes there affect the visual encoding and the AI mentor prompts, so they warrant discussion first.
+Proposals for new edge types or semantic categories should use the **Graph model / edge type** issue template. Changes there affect the visual encoding and the AI mentor prompts, so they warrant discussion first.
