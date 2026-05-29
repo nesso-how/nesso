@@ -6,11 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.0-alpha.24] - 2026-05-29
+
 ### Changed
 
 - **Repository:** GitHub org moved to `nesso-how/nesso`; README, docs, Cargo.toml, issue templates, and changelog compare links updated.
 - **Code of Conduct:** Enforcement contact email set to `nesso-how@proton.me`.
-
 - **Demo seed:** Slightly wider auto-fit on first load (Understanding / Comprensione) when no viewport is saved yet; manual Fit unchanged.
 - **README:** Tagline and positioning (`typed knowledge graph for active learning`); alpha mentor caveat; quick start, project structure, and package table; nav links to nesso.how/docs.
 - **CONTRIBUTING:** Slim intro; setup moved to README.
@@ -423,7 +424,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial alpha: interactive knowledge graph (web + Tauri v2); desktop installers on GitHub Releases (macOS Apple silicon and Intel).
 
-[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.23...HEAD
+[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.24...HEAD
+[0.1.0-alpha.24]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.23...v0.1.0-alpha.24
 [0.1.0-alpha.23]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.22...v0.1.0-alpha.23
 [0.1.0-alpha.22]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.21...v0.1.0-alpha.22
 [0.1.0-alpha.21]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.20...v0.1.0-alpha.21
