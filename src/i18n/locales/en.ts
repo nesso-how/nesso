@@ -133,6 +133,7 @@ const en = {
     settings: 'Settings',
     untitled: 'Untitled',
     collapseSidebar: 'Collapse sidebar',
+    websiteLinkTitle: 'Visit nesso.how',
     newGraphTitle: 'New graph',
     deleteGraph: 'Delete graph',
     renameHint: 'double-click to rename',

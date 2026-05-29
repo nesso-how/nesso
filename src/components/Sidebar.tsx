@@ -5,6 +5,8 @@ import { useT } from '@/i18n'
 import { NessoMark } from './NessoMark'
 import { SIDEBAR_WIDTH_STORAGE_KEY } from '@/data/storageKeys'
 
+const NESSO_WEBSITE_URL = 'https://nesso.how'
+
 export const SIDEBAR_MIN_WIDTH = 180
 export const SIDEBAR_MAX_WIDTH = 380
 export const SIDEBAR_DEFAULT_WIDTH = 248
@@ -143,12 +145,26 @@ export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, zoom, wid
           borderBottom: '0.5px solid var(--line)',
           flexShrink: 0,
         }}>
-          <div style={{ flexShrink: 0, color: 'var(--ink)', lineHeight: 0 }} aria-hidden>
-            <NessoMark size={26} />
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
+          <a
+            href={NESSO_WEBSITE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={t.sidebar.websiteLinkTitle}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              flexShrink: 0,
+              textDecoration: 'none',
+              color: 'inherit',
+            }}
+          >
+            <div style={{ flexShrink: 0, color: 'var(--ink)', lineHeight: 0 }} aria-hidden>
+              <NessoMark size={26} />
+            </div>
             <div style={{ font: "500 13px 'Inter', ui-sans-serif", color: 'var(--ink)' }}>Nesso</div>
-          </div>
+          </a>
+          <div style={{ flex: 1, minWidth: 0 }} aria-hidden />
           <button onClick={onCollapse} title={t.sidebar.collapseSidebar} type="button" style={iconBtn}
             onMouseEnter={e => { e.currentTarget.style.background = 'var(--paper-deep)' }}
             onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}

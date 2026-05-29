@@ -133,6 +133,7 @@ const it: typeof en = {
     settings: 'Impostazioni',
     untitled: 'Senza titolo',
     collapseSidebar: 'Comprimi pannello laterale',
+    websiteLinkTitle: 'Visita nesso.how',
     newGraphTitle: 'Nuovo grafo',
     deleteGraph: 'Elimina grafo',
     renameHint: 'doppio clic per rinominare',
