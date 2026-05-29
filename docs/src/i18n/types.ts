@@ -6,7 +6,6 @@ export type Locale = {
   nav: {
     docs: string
     github: string
-    langSwitch: { label: string; href: string }
   }
   hero: {
     eyebrow: string

@@ -9,7 +9,6 @@ export const en: Locale = {
   nav: {
     docs: "Docs",
     github: "GitHub",
-    langSwitch: { label: "IT", href: "/it/" },
   },
   hero: {
     eyebrow: "Active learning · open source",
