@@ -4,7 +4,7 @@ export const it: Locale = {
   meta: {
     title: "Nesso: grafi della conoscenza per l'apprendimento attivo",
     description:
-      "Costruisci mappe concettuali con relazioni semantiche tipizzate. Lascia che Socrate metta alla prova ciò che pensi di sapere.",
+      "La maggior parte degli strumenti ti propina risposte passive e rinchiude la tua conoscenza. Nesso ti fa costruire un grafo concettuale tipizzato tuo e rinforzare come i concetti si collegano.",
   },
   nav: {
     docs: "Docs",
@@ -15,8 +15,8 @@ export const it: Locale = {
     eyebrow: "Apprendimento attivo · open source",
     h1Line1: "La comprensione non si riceve.",
     h1Em: "Va costruita.",
-    sub: "La maggior parte degli strumenti IA ti consegna una conoscenza già confezionata. Nesso ti fa costruire un grafo concettuale tipizzato che riflette come tu comprendi. Poi un'IA socratica mette alla prova ciò che hai costruito.",
-    tagline: "Domande, non riassunti.",
+    sub: "La maggior parte degli strumenti di apprendimento ti propina risposte da assorbire passivamente, poi rinchiude la tua conoscenza in una piattaforma che non ti appartiene. Nesso, invece, ti fa costruire il <em>tuo</em> grafo e ti sfida a rinforzare <em>come</em> i concetti si collegano.",
+    tagline: "Il come, non solo il cosa.",
     ctaPrimary: "Apri Nesso",
     ctaSecondary: "Leggi la documentazione",
     graphAriaLabel: "Grafo concettuale: Comprensione e le sue relazioni",
@@ -46,31 +46,55 @@ export const it: Locale = {
   principles: {
     label: "Principi",
     p1: {
-      heading: "Lo costruisci tu. Socrate lo esamina.",
-      body: "Chi impara costruisce la propria struttura della conoscenza: un grafo concettuale tipizzato che riflette <em>come</em> l'utente comprende, non solo ciò che ha letto. Il mentor IA non consegna verità preconfezionate. Pone domande calibrate sul tuo grafo attuale e lascia a te il compito di rispondere. La <em>decisione è l'apprendimento.</em>",
-      chat: {
-        userMsg: "Esploriamo la Comprensione",
-        mentorMsg:
-          "Hai indicato che <em>Comprensione</em> contrasta con <em>Consumo passivo</em>. Cosa significa consumare informazioni passivamente? Si può costruire una comprensione genuina in quel modo?",
-        inputPlaceholder: "Rispondi a Socrate…",
+      heading: "Lo costruisci tu",
+      body: "Costruisci la tua struttura della conoscenza: un grafo concettuale tipizzato che riflette <em>come</em> comprendi, non solo ciò che hai letto. Ogni arco impone una scelta, <em>causa</em> o <em>abilita</em>, <em>sottotipo-di</em> o <em>istanza-di</em>. È in quella scelta che si forma la comprensione.",
+      picker: {
+        nodeA: "Fuoco",
+        nodeB: "Fumo",
+        chips: ["causa", "innesca", "abilita", "impedisce"],
+        selectedIndex: 0,
       },
     },
     p2: {
-      heading: "Infrastruttura aperta, non un silo.",
+      heading: "Te lo ricordi",
+      body: "Un grafo che costruisci una volta e poi dimentichi è solo un diagramma. Ogni concetto porta con sé uno stato di ripetizione spaziata, così Nesso te lo ripropone poco prima che tu lo dimentichi. Valuti com'è andato il richiamo e la pianificazione si adatta, grazie all'algoritmo <em>FSRS</em>.",
+      review: {
+        due: "In scadenza oggi",
+        concept: "Comprensione",
+        again: "Di nuovo",
+        hard: "Difficile",
+        good: "Bene",
+        easy: "Facile",
+      },
+    },
+    p3: {
+      heading: "Infrastruttura aperta",
       body: "Nesso è rilasciato come insieme di componenti open-source modulari: l'app, la tassonomia relation-types, il server MCP. Chiunque può adottarli, estenderli o farne un fork. Il lavoro tecnico dovrebbe migliorare l'<em>ecosistema di apprendimento aperto</em>, anche per chi non usa mai l'applicazione.",
       module1: "L'intera app, in pubblico",
       module2: "Vocabolario degli archi, riutilizzabile",
       module3: "Server MCP, qualsiasi client",
     },
-    p3: {
-      heading: "Privato per architettura, non per promessa.",
-      body: "Il tuo grafo cognitivo rivela come ragioni, dove incontri difficoltà, come evolve la tua comprensione. In Nesso rimane sul tuo dispositivo o viene cifrato end-to-end per impostazione predefinita: archiviazione IndexedDB, IA locale su WebGPU. Non una <em>promessa scritta in una policy</em>. Un <em>fatto architetturale</em>.",
+    p4: {
+      heading: "Privato per architettura",
+      body: "Il tuo grafo cognitivo rivela come ragioni, dove incontri difficoltà, come evolve la tua comprensione. Nesso tiene il grafo sul tuo dispositivo. Il mentor gira in locale su WebGPU di default, e raggiunge un endpoint remoto solo se lo configuri tu.",
       aiMode: "Modalità IA",
       settings: "Impostazioni",
       local: "Locale",
-      localMeta: "Qwen2.5 1.5B · pronto",
+      localMeta: "Qwen2.5 1.5B · sul dispositivo",
       remote: "Remoto",
       remoteMeta: "OpenAI · Claude · OpenRouter…",
+    },
+  },
+  mentor: {
+    label: "Mentor socratico",
+    badge: "Sperimentale",
+    heading: "Poi Socrate lo interroga",
+    body: "Sopra il grafo, un'IA socratica legge la tua selezione attuale e risponde con domande, non riassunti. Gira nel browser senza API key, oppure su qualsiasi endpoint compatibile con OpenAI. È ancora agli inizi: il piccolo modello in-browser non è ancora all'altezza, quindi puntalo su un modello più capace via Ollama o un endpoint cloud per una conversazione vera.",
+    chat: {
+      userMsg: "Esploriamo la Comprensione",
+      mentorMsg:
+        "Hai indicato che <em>Comprensione</em> contrasta con <em>Consumo passivo</em>. Cosa significa consumare informazioni passivamente? Si può costruire una comprensione genuina in quel modo?",
+      inputPlaceholder: "Rispondi a Socrate…",
     },
   },
   vocab: {

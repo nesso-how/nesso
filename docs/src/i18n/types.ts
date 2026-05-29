@@ -45,20 +45,33 @@ export type Locale = {
     p1: {
       heading: string
       body: string
-      chat: {
-        userMsg: string
-        mentorMsg: string
-        inputPlaceholder: string
+      picker: {
+        nodeA: string
+        nodeB: string
+        chips: string[]
+        selectedIndex: number
       }
     }
     p2: {
+      heading: string
+      body: string
+      review: {
+        due: string
+        concept: string
+        again: string
+        hard: string
+        good: string
+        easy: string
+      }
+    }
+    p3: {
       heading: string
       body: string
       module1: string
       module2: string
       module3: string
     }
-    p3: {
+    p4: {
       heading: string
       body: string
       aiMode: string
@@ -67,6 +80,17 @@ export type Locale = {
       localMeta: string
       remote: string
       remoteMeta: string
+    }
+  }
+  mentor: {
+    label: string
+    badge: string
+    heading: string
+    body: string
+    chat: {
+      userMsg: string
+      mentorMsg: string
+      inputPlaceholder: string
     }
   }
   vocab: {

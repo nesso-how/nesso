@@ -4,7 +4,7 @@ export const en: Locale = {
   meta: {
     title: "Nesso: knowledge graphs for active learning",
     description:
-      "Build concept maps with typed semantic relations. Let Socrates challenge what you think you know.",
+      "Most learning tools feed you passive answers and lock your knowledge away. Nesso lets you build a typed concept graph you own and reinforce how ideas relate.",
   },
   nav: {
     docs: "Docs",
@@ -15,8 +15,8 @@ export const en: Locale = {
     eyebrow: "Active learning · open source",
     h1Line1: "Understanding cannot be received.",
     h1Em: "It has to be built.",
-    sub: "Most AI tools hand you knowledge pre-packaged. Nesso has you construct a typed concept graph that reflects how you understand. A Socratic AI then probes what you’ve built.",
-    tagline: "Questions, not summaries.",
+    sub: "Most learning tools feed you answers to absorb passively, then lock your knowledge inside a platform you don't own. Nesso lets you build <em>your</em> graph instead, and challenges you to reinforce <em>how</em> concepts relate.",
+    tagline: "Know how, not just what.",
     ctaPrimary: "Open Nesso",
     ctaSecondary: "Read the docs",
     graphAriaLabel: "Concept graph: Understanding and its relations",
@@ -46,31 +46,55 @@ export const en: Locale = {
   principles: {
     label: "Principles",
     p1: {
-      heading: "You build it. Socrates probes it.",
-      body: "The learner constructs their own knowledge structure: a typed concept graph that reflects <em>how</em> they understand, not just what they have read. Layered on top, the AI mentor doesn’t deliver packaged truth. It asks questions calibrated to your current graph, and leaves the work of answering to you. The <em>decision is the learning.</em>",
-      chat: {
-        userMsg: "Let’s explore Understanding",
-        mentorMsg:
-          "You marked <em>Understanding</em> as contrasting with <em>Passive consumption</em>. What does it mean to consume information passively? Can you ever build genuine understanding that way?",
-        inputPlaceholder: "Reply to Socrates…",
+      heading: "You build it",
+      body: "You construct your own knowledge structure: a typed concept graph that reflects <em>how</em> you understand, not just what you have read. Every edge forces a choice, <em>causes</em> or <em>enables</em>, <em>subtype-of</em> or <em>instance-of</em>. That choice is where understanding forms.",
+      picker: {
+        nodeA: "Fire",
+        nodeB: "Smoke",
+        chips: ["causes", "triggers", "enables", "prevents"],
+        selectedIndex: 0,
       },
     },
     p2: {
-      heading: "Open infrastructure, not silo.",
-      body: "Nesso ships as modular open-source components: the app, the relation-types taxonomy, the MCP server. Anyone can adopt, extend, or fork them. The technical work should improve the <em>open learning ecosystem</em>, even for people who never use application.",
+      heading: "You remember it",
+      body: "A graph you build once and forget is just a diagram. Every concept carries spaced-repetition state, so Nesso surfaces each one right before you would forget it. Rate how the recall went and the schedule adapts, powered by the <em>FSRS</em> algorithm.",
+      review: {
+        due: "Due today",
+        concept: "Understanding",
+        again: "Again",
+        hard: "Hard",
+        good: "Good",
+        easy: "Easy",
+      },
+    },
+    p3: {
+      heading: "Open infrastructure",
+      body: "Nesso ships as modular open-source components: the app, the relation-types taxonomy, the MCP server. Anyone can adopt, extend, or fork them. The technical work should improve the <em>open learning ecosystem</em>, even for people who never use the application.",
       module1: "The full app, in public",
       module2: "Edge vocabulary, reusable",
       module3: "MCP server, any client",
     },
-    p3: {
-      heading: "Private by architecture, not policy.",
-      body: "Your cognitive graph reveals how you reason, where you struggle, how your understanding evolves. In Nesso it stays on your device or end-to-end encrypted by default: IndexedDB storage, WebGPU local AI. Not a <em>policy promise</em>. An <em>architectural fact</em>.",
+    p4: {
+      heading: "Private by architecture",
+      body: "Your cognitive graph reveals how you reason, where you struggle, how your understanding evolves. Nesso keeps the graph on your device. The mentor runs on WebGPU locally by default, and only uses a remote endpoint if you configure one.",
       aiMode: "AI mode",
       settings: "Settings",
       local: "Local",
-      localMeta: "Qwen2.5 1.5B · ready",
+      localMeta: "Qwen2.5 1.5B · on-device",
       remote: "Remote",
       remoteMeta: "OpenAI · Claude · OpenRouter…",
+    },
+  },
+  mentor: {
+    label: "Socratic mentor",
+    badge: "Experimental",
+    heading: "Then Socrates questions it",
+    body: "Layered on top of the graph, a Socratic AI reads your current selection and answers with questions, not summaries. It runs in-browser with no API key, or against any OpenAI-compatible endpoint. It is still early: the small in-browser model is not good enough yet, so point it at a stronger model via Ollama or a cloud endpoint for a real conversation.",
+    chat: {
+      userMsg: "Let’s explore Understanding",
+      mentorMsg:
+        "You marked <em>Understanding</em> as contrasting with <em>Passive consumption</em>. What does it mean to consume information passively? Can you ever build genuine understanding that way?",
+      inputPlaceholder: "Reply to Socrates…",
     },
   },
   vocab: {

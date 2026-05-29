@@ -59,6 +59,11 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
         --cat-similarity: #2a6878;
         --cat-epistemic: #3a4a8a;
 
+        --conf-1: #b14a4a;
+        --conf-2: #c47a3a;
+        --conf-3: #b89a3a;
+        --conf-4: #75752d;
+
         --accent: var(--ink);
         --highlight: #6e2730;
         --highlight-soft: rgba(110, 39, 48, 0.08);
@@ -513,7 +518,7 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
         background: var(--line);
       }
 
-      /* ── Principles (3, with right-side visual) ── */
+      /* ── Principles (4, with right-side visual) ── */
       .principles {
         display: grid;
         gap: 3.5rem;
@@ -540,7 +545,7 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
         width: 8px;
         height: 8px;
         border-radius: 50%;
-        background: var(--accent);
+        background: var(--highlight);
         flex-shrink: 0;
       }
 
@@ -862,6 +867,176 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
         color: var(--highlight);
       }
 
+      /* P1: Relation picker */
+      .pv-picker {
+        background: var(--paper-elev);
+        border: 0.5px solid var(--line);
+        border-radius: 12px;
+        padding: 0.95rem 0.9rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+      }
+
+      .pv-picker-edge {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+      }
+
+      .pv-picker-node {
+        font-family: var(--font-serif);
+        font-weight: 500;
+        font-size: 13px;
+        color: var(--ink);
+        border-bottom: 0.8px solid var(--ink);
+        padding-bottom: 1px;
+        font-optical-sizing: auto;
+      }
+
+      .pv-picker-arrow {
+        color: var(--cat-color);
+        font-size: 14px;
+      }
+
+      .pv-picker-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        justify-content: center;
+      }
+
+      .pv-picker-chips .relation-chip:not(.selected) {
+        opacity: 0.55;
+      }
+
+      /* P2: Review card */
+      .pv-review {
+        background: var(--paper-elev);
+        border: 0.5px solid var(--line);
+        border-radius: 12px;
+        padding: 0.95rem 0.9rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.65rem;
+      }
+
+      .pv-review-top {
+        display: flex;
+        justify-content: flex-start;
+      }
+
+      .pv-review-due {
+        font-family: var(--font-mono);
+        font-size: 9px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--highlight);
+        background: var(--highlight-soft);
+        border: 0.5px solid
+          color-mix(in srgb, var(--highlight) 25%, transparent);
+        border-radius: 999px;
+        padding: 0.15rem 0.5rem;
+      }
+
+      .pv-review-concept {
+        font-family: var(--font-serif);
+        font-weight: 500;
+        font-size: 1.3rem;
+        letter-spacing: -0.01em;
+        color: var(--ink);
+        text-align: center;
+        padding: 0.3rem 0;
+        font-optical-sizing: auto;
+      }
+
+      .pv-review-ratings {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.35rem;
+      }
+
+      .pv-review-btn {
+        font-family: var(--font-sans);
+        font-size: 10.5px;
+        font-weight: 500;
+        text-align: center;
+        padding: 0.4rem 0.2rem;
+        border-radius: 6px;
+        border: 0.5px solid var(--line-strong);
+        color: var(--ink-2);
+        background: var(--paper);
+        white-space: nowrap;
+      }
+
+      .pv-review-btn.again {
+        color: var(--conf-1);
+        border-color: color-mix(in srgb, var(--conf-1) 35%, transparent);
+        background: color-mix(in srgb, var(--conf-1) 8%, var(--paper));
+      }
+
+      .pv-review-btn.hard {
+        color: var(--conf-2);
+        border-color: color-mix(in srgb, var(--conf-2) 35%, transparent);
+        background: color-mix(in srgb, var(--conf-2) 8%, var(--paper));
+      }
+
+      .pv-review-btn.good {
+        color: var(--conf-3);
+        border-color: color-mix(in srgb, var(--conf-3) 35%, transparent);
+        background: color-mix(in srgb, var(--conf-3) 8%, var(--paper));
+      }
+
+      .pv-review-btn.easy {
+        color: var(--conf-4);
+        border-color: color-mix(in srgb, var(--conf-4) 35%, transparent);
+        background: color-mix(in srgb, var(--conf-4) 8%, var(--paper));
+      }
+
+      /* ── Socratic mentor (preview) ──────────── */
+      .mentor-inner {
+        display: grid;
+        grid-template-columns: 1fr 300px;
+        gap: 2.5rem;
+        align-items: center;
+      }
+
+      .mentor-badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--ink-4);
+        padding: 0.2rem 0.55rem;
+        border-radius: 999px;
+        border: 0.5px solid var(--line-strong);
+        margin-bottom: 0.9rem;
+      }
+
+      .mentor-heading {
+        font-family: var(--font-serif);
+        font-weight: 500;
+        font-size: 1.55rem;
+        letter-spacing: -0.01em;
+        color: var(--ink);
+        margin-bottom: 0.55rem;
+        font-optical-sizing: auto;
+      }
+
+      .mentor-body {
+        color: var(--ink-2);
+        font-size: 1rem;
+        line-height: 1.65;
+        max-width: 460px;
+      }
+
+      .mentor-body :global(em) {
+        font-style: italic;
+        color: var(--highlight);
+      }
+
       /* ── Edge vocabulary ────────────────────── */
       .relation-intro {
         font-size: 1rem;
@@ -965,6 +1140,12 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
         white-space: nowrap;
       }
 
+      .relation-chip.selected {
+        color: var(--paper);
+        background: var(--cat-color);
+        border-color: var(--cat-color);
+      }
+
       .relation-cta {
         text-align: right;
         margin-top: 1.5rem;
@@ -1060,6 +1241,13 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
         }
         .principle-visual {
           padding-top: 0.8rem;
+          max-width: 380px;
+        }
+        .mentor-inner {
+          grid-template-columns: 1fr;
+          gap: 1.5rem;
+        }
+        .mentor-visual {
           max-width: 380px;
         }
       }
@@ -1318,9 +1506,6 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
         <a href="/docs/introduction/">{t.nav.docs}</a>
         <a href="https://github.com/cedoor/nesso" target="_blank" rel="noopener"
           >{t.nav.github}</a
-        >
-        <a href={t.nav.langSwitch.href} class="lang-switch"
-          >{t.nav.langSwitch.label}</a
         >
       </nav>
     </header>
@@ -1698,59 +1883,36 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
               <p set:html={t.principles.p1.body} />
             </div>
             <div class="principle-visual">
-              <div class="pv-chat" role="presentation">
-                <div class="pv-chat-header">
-                  <span class="pv-chat-avatar">
-                    <svg width="24" height="24"
-                      ><use href="#socrates-glyph"></use></svg
-                    >
-                  </span>
-                  <div class="pv-chat-id">
-                    <span class="pv-chat-name">Socrates</span>
-                    <span class="pv-chat-model">Qwen2.5 1.5B · WebGPU</span>
-                  </div>
-                  <div class="pv-chat-icons">
-                    <svg
-                      width="13"
-                      height="13"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      ><path d="M18 6L6 18M6 6l12 12"></path></svg
-                    >
-                  </div>
-                </div>
-                <div class="pv-chat-body">
-                  <div class="pv-chat-user-row">
-                    <span class="pv-chat-user"
-                      >{t.principles.p1.chat.userMsg}</span
-                    >
-                  </div>
-                  <div
-                    class="pv-chat-mentor"
-                    set:html={t.principles.p1.chat.mentorMsg}
-                  />
-                </div>
-                <div class="pv-chat-input">
-                  <span class="pv-chat-placeholder"
-                    >{t.principles.p1.chat.inputPlaceholder}</span
+              <div
+                class="pv-picker"
+                role="presentation"
+                style="--cat-color: var(--cat-causal)"
+              >
+                <div class="pv-picker-edge">
+                  <span class="pv-picker-node"
+                    >{t.principles.p1.picker.nodeA}</span
                   >
-                  <span class="pv-chat-send">
-                    <svg
-                      width="10"
-                      height="10"
-                      viewBox="0 0 14 14"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="1.6"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      ><path d="M2.5 7h9M7.5 3l4 4-4 4"></path></svg
-                    >
-                  </span>
+                  <span class="pv-picker-arrow">→</span>
+                  <span class="pv-picker-node"
+                    >{t.principles.p1.picker.nodeB}</span
+                  >
+                </div>
+                <div class="pv-picker-chips">
+                  {
+                    t.principles.p1.picker.chips.map((c, i) => (
+                      <span
+                        class:list={[
+                          "relation-chip",
+                          {
+                            selected:
+                              i === t.principles.p1.picker.selectedIndex,
+                          },
+                        ]}
+                      >
+                        {c}
+                      </span>
+                    ))
+                  }
                 </div>
               </div>
             </div>
@@ -1758,12 +1920,46 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
 
           <div class="principle">
             <div class="principle-marker">
-              <span class="dot" style="background: var(--cat-similarity)"
-              ></span><span>02</span>
+              <span class="dot"></span><span>02</span>
             </div>
             <div class="principle-body">
               <h3>{t.principles.p2.heading}</h3>
               <p set:html={t.principles.p2.body} />
+            </div>
+            <div class="principle-visual">
+              <div class="pv-review" role="presentation">
+                <div class="pv-review-top">
+                  <span class="pv-review-due">{t.principles.p2.review.due}</span
+                  >
+                </div>
+                <div class="pv-review-concept">
+                  {t.principles.p2.review.concept}
+                </div>
+                <div class="pv-review-ratings">
+                  <span class="pv-review-btn again"
+                    >{t.principles.p2.review.again}</span
+                  >
+                  <span class="pv-review-btn hard"
+                    >{t.principles.p2.review.hard}</span
+                  >
+                  <span class="pv-review-btn good"
+                    >{t.principles.p2.review.good}</span
+                  >
+                  <span class="pv-review-btn easy"
+                    >{t.principles.p2.review.easy}</span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="principle">
+            <div class="principle-marker">
+              <span class="dot"></span><span>03</span>
+            </div>
+            <div class="principle-body">
+              <h3>{t.principles.p3.heading}</h3>
+              <p set:html={t.principles.p3.body} />
             </div>
             <div class="principle-visual">
               <div class="pv-modules" role="presentation">
@@ -1775,7 +1971,7 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
                 >
                   <div class="pv-module-body">
                     <span class="pv-module-name">cedoor/nesso</span>
-                    <span class="pv-module-desc">{t.principles.p2.module1}</span
+                    <span class="pv-module-desc">{t.principles.p3.module1}</span
                     >
                   </div>
                   <span class="pv-module-arrow">↗</span>
@@ -1789,7 +1985,7 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
                   <div class="pv-module-body">
                     <span class="pv-module-name">@nesso-how/relation-types</span
                     >
-                    <span class="pv-module-desc">{t.principles.p2.module2}</span
+                    <span class="pv-module-desc">{t.principles.p3.module2}</span
                     >
                   </div>
                   <span class="pv-module-arrow">↗</span>
@@ -1802,7 +1998,7 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
                 >
                   <div class="pv-module-body">
                     <span class="pv-module-name">@nesso-how/mcp</span>
-                    <span class="pv-module-desc">{t.principles.p2.module3}</span
+                    <span class="pv-module-desc">{t.principles.p3.module3}</span
                     >
                   </div>
                   <span class="pv-module-arrow">↗</span>
@@ -1813,27 +2009,26 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
 
           <div class="principle">
             <div class="principle-marker">
-              <span class="dot" style="background: var(--cat-temporal)"
-              ></span><span>03</span>
+              <span class="dot"></span><span>04</span>
             </div>
             <div class="principle-body">
-              <h3>{t.principles.p3.heading}</h3>
-              <p set:html={t.principles.p3.body} />
+              <h3>{t.principles.p4.heading}</h3>
+              <p set:html={t.principles.p4.body} />
             </div>
             <div class="principle-visual">
               <div class="pv-aimode" role="presentation">
                 <div class="pv-aimode-header">
-                  <span>{t.principles.p3.aiMode}</span>
-                  <span>{t.principles.p3.settings}</span>
+                  <span>{t.principles.p4.aiMode}</span>
+                  <span>{t.principles.p4.settings}</span>
                 </div>
                 <div class="pv-aimode-options">
                   <div class="pv-aimode-option active">
                     <span class="pv-aimode-radio"></span>
                     <div class="pv-aimode-text">
-                      <span class="pv-aimode-name">{t.principles.p3.local}</span
+                      <span class="pv-aimode-name">{t.principles.p4.local}</span
                       >
                       <span class="pv-aimode-meta"
-                        >{t.principles.p3.localMeta}</span
+                        >{t.principles.p4.localMeta}</span
                       >
                     </div>
                   </div>
@@ -1841,14 +2036,80 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
                     <span class="pv-aimode-radio"></span>
                     <div class="pv-aimode-text">
                       <span class="pv-aimode-name"
-                        >{t.principles.p3.remote}</span
+                        >{t.principles.p4.remote}</span
                       >
                       <span class="pv-aimode-meta"
-                        >{t.principles.p3.remoteMeta}</span
+                        >{t.principles.p4.remoteMeta}</span
                       >
                     </div>
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section mentor">
+        <div class="section-label">{t.mentor.label}</div>
+        <div class="mentor-inner">
+          <div class="mentor-copy">
+            <span class="mentor-badge">{t.mentor.badge}</span>
+            <h3 class="mentor-heading">{t.mentor.heading}</h3>
+            <p class="mentor-body" set:html={t.mentor.body} />
+          </div>
+          <div class="mentor-visual">
+            <div class="pv-chat" role="presentation">
+              <div class="pv-chat-header">
+                <span class="pv-chat-avatar">
+                  <svg width="24" height="24"
+                    ><use href="#socrates-glyph"></use></svg
+                  >
+                </span>
+                <div class="pv-chat-id">
+                  <span class="pv-chat-name">Socrates</span>
+                  <span class="pv-chat-model">{t.principles.p4.localMeta}</span>
+                </div>
+                <div class="pv-chat-icons">
+                  <svg
+                    width="13"
+                    height="13"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    ><path d="M18 6L6 18M6 6l12 12"></path></svg
+                  >
+                </div>
+              </div>
+              <div class="pv-chat-body">
+                <div class="pv-chat-user-row">
+                  <span class="pv-chat-user">{t.mentor.chat.userMsg}</span>
+                </div>
+                <div
+                  class="pv-chat-mentor"
+                  set:html={t.mentor.chat.mentorMsg}
+                />
+              </div>
+              <div class="pv-chat-input">
+                <span class="pv-chat-placeholder"
+                  >{t.mentor.chat.inputPlaceholder}</span
+                >
+                <span class="pv-chat-send">
+                  <svg
+                    width="10"
+                    height="10"
+                    viewBox="0 0 14 14"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    ><path d="M2.5 7h9M7.5 3l4 4-4 4"></path></svg
+                  >
+                </span>
               </div>
             </div>
           </div>
