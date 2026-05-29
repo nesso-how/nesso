@@ -8,6 +8,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
+- **Demo seed:** Slightly wider auto-fit on first load (Understanding / Comprensione) when no viewport is saved yet; manual Fit unchanged.
 - **README:** Tagline and positioning (`typed knowledge graph for active learning`); alpha mentor caveat; quick start, project structure, and package table; nav links to nesso.how/docs.
 - **CONTRIBUTING:** Slim intro; setup moved to README.
 - **Docs:** Starlight site description aligned with README tagline; minor punctuation in mentor, concepts, and MCP guides.

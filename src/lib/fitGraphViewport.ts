@@ -20,6 +20,7 @@ type FitNode = Pick<Node<ConceptNodeData>, 'position' | 'measured'>
 export function computeFitViewport(
   nodes: FitNode[],
   insets: CanvasInsets,
+  zoomScale = 1,
 ): Viewport {
   const canvasW = window.innerWidth - insets.left - insets.right
   const canvasH = window.innerHeight - insets.top - insets.bottom
@@ -55,7 +56,7 @@ export function computeFitViewport(
       canvasW / (nodeW * (1 + 2 * PADDING)),
       canvasH / (nodeH * (1 + 2 * PADDING)),
       2.5,
-    ),
+    ) * zoomScale,
   )
 
   return {

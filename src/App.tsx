@@ -32,6 +32,7 @@ import { findNewConceptPosition, NEW_CONCEPT_SIZE } from './data/newConceptLayou
 import { initWebLLM, localModelWeightsCached } from './llm/webllm'
 import { focusFlowNodes } from './lib/focusFlowSelection'
 import { computeFitViewport } from './lib/fitGraphViewport'
+import { getSeedInitialFitZoom } from './data/seedGraph'
 
 function AppInner() {
   const [showReview, setShowReview] = useState(false)
@@ -136,7 +137,11 @@ function AppInner() {
     if (viewportRestoredFor.current === currentGraphId) return
     if (loadedToken === 0) return
     const saved = viewports[currentGraphId]
-    const vp = saved ?? computeFitViewport(nodes, canvasInsets)
+    const vp = saved ?? computeFitViewport(
+      nodes,
+      canvasInsets,
+      getSeedInitialFitZoom(currentGraphId) ?? 1,
+    )
     viewportRestoredFor.current = currentGraphId
     setViewport(vp, { duration: 0 })
     if (!saved) saveViewport(currentGraphId, vp)

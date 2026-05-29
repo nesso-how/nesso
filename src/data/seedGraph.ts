@@ -11,6 +11,8 @@ export interface Seed {
   nodes: Node<ConceptNodeData>[]
   edges: Edge[]
   display?: GraphDisplaySettings
+  /** Auto-fit zoom multiplier on first load (< 1 zooms out). */
+  initialFitZoom?: number
 }
 
 /** Stable random ids for bundled seeds (not derived from titles). */
@@ -44,22 +46,36 @@ function normalizeSeedDisplay(
   }
 }
 
-function makeSeed(id: string, raw: SeedSource): Seed {
+function makeSeed(
+  id: string,
+  raw: SeedSource,
+  opts?: Pick<Seed, 'initialFitZoom'>,
+): Seed {
   return {
     id,
     name: raw.name,
     nodes: raw.nodes as Node<ConceptNodeData>[],
     edges: raw.edges as Edge[],
     display: raw.display ? normalizeSeedDisplay(raw.display) : undefined,
+    initialFitZoom: opts?.initialFitZoom,
   }
 }
 
+/** Demo graph: slightly zoomed out on first auto-fit so labels breathe. */
+const DEMO_INITIAL_FIT_ZOOM = 0.82
+
 const enSeeds = [
-  makeSeed(SEED_IDS.understanding, understanding),
+  makeSeed(SEED_IDS.understanding, understanding, { initialFitZoom: DEMO_INITIAL_FIT_ZOOM }),
 ]
 const itSeeds = [
-  makeSeed(SEED_IDS.comprensione, comprensione),
+  makeSeed(SEED_IDS.comprensione, comprensione, { initialFitZoom: DEMO_INITIAL_FIT_ZOOM }),
 ]
+
+const seedById = new Map([...enSeeds, ...itSeeds].map(s => [s.id, s]))
+
+export function getSeedInitialFitZoom(graphId: string): number | undefined {
+  return seedById.get(graphId)?.initialFitZoom
+}
 
 export const SEEDS = enSeeds
 

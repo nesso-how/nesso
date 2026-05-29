@@ -19,6 +19,7 @@ import { NessoEdge } from './NessoEdge'
 import { RelationPicker } from './RelationPicker'
 import { useGraphStore } from '@/store/graph'
 import { computeFitViewport } from '@/lib/fitGraphViewport'
+import { getSeedInitialFitZoom } from '@/data/seedGraph'
 import { newConceptTopLeftAtFlowCenter } from '@/data/newConceptLayout'
 import type { EdgeTypeName } from '@/types/graph'
 
@@ -61,12 +62,16 @@ export function GraphCanvas({
   } = useGraphStore()
 
   const { screenToFlowPosition } = useReactFlow()
-  const defaultViewport = viewports[currentGraphId] ?? computeFitViewport(nodes, {
-    top: topInset,
-    bottom: bottomInset,
-    left: leftInset,
-    right: rightInset,
-  })
+  const defaultViewport = viewports[currentGraphId] ?? computeFitViewport(
+    nodes,
+    {
+      top: topInset,
+      bottom: bottomInset,
+      left: leftInset,
+      right: rightInset,
+    },
+    getSeedInitialFitZoom(currentGraphId) ?? 1,
+  )
 
   const [pendingConn, setPendingConn] = useState<PendingConnection | null>(null)
   const connectingSource = useRef<string | null>(null)
