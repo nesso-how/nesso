@@ -95,6 +95,9 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      - name: Generate desktop icons from tile SVG
+        run: pnpm run icons:desktop
+
       - name: Release notes from CHANGELOG.md
         id: changelog
         shell: bash

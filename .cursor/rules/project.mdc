@@ -31,7 +31,7 @@ src/
     seeds/*.json      # Default demo graph snapshots (React Flow nodes/edges + display name)
     seedGraph.ts      # Exports `SEEDS` — bundled demo graphs from `seeds/*.json` (stable ids from names)
   types/graph.ts      # ConceptNodeData, EdgeTypeName, NessoSettings, etc.
-src-tauri/            # Tauri v2 Rust project — tauri.conf.json, capabilities, icons
+src-tauri/            # Tauri v2 Rust project — tauri.conf.json, capabilities; `icons/` generated via `pnpm run icons:desktop` (gitignored)
 packages/
   relation-types/     # @nesso-how/relation-types: shared semantic vocabulary
   types/              # @nesso-how/types: shared TypeScript types

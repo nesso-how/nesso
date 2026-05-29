@@ -9,6 +9,7 @@ pnpm-store
 dist
 dist-ssr
 src-tauri/target
+src-tauri/icons/
 
 # Logs
 logs
