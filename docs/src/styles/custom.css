@@ -117,11 +117,19 @@ header a[rel='me']:hover {
 	color: var(--sl-color-text-accent);
 }
 
-/* Aside callouts — remap note blue → warm accent */
+
+/* Aside callouts — soften note blue */
 .starlight-aside--note {
-	--sl-color-asides-text-accent: var(--sl-color-accent-high);
-	--sl-color-asides-border: var(--sl-color-accent);
-	background-color: var(--sl-color-bg-accent);
+	--sl-color-asides-text-accent: #6b8cae;
+	--sl-color-asides-border: #4a6f94;
+	background-color: rgba(74, 111, 148, 0.10);
+}
+
+/* Aside callouts — soften caution amber */
+.starlight-aside--caution {
+	--sl-color-asides-text-accent: #a07840;
+	--sl-color-asides-border: #7a5c2e;
+	background-color: rgba(200, 140, 40, 0.12);
 }
 
 /* Paper grain on page body (same as landing page) */

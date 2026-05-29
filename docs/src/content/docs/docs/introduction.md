@@ -3,11 +3,15 @@ title: Introduction
 description: What Nesso is, why it exists, and the principles it is built on.
 ---
 
+:::caution
+This is an early-stage project. Some features are rough, some are not yet built, and this documentation is just getting started too.
+:::
+
 Nesso is an open-source, AI-assisted knowledge graph for active learning. It is built on a specific claim about how understanding works and a specific critique of how most current tools approach it.
 
 ## The problem with passive learning tools
 
-The dominant pattern AI is settling into is passive: hand over a source, receive a summary; ask a question, receive an answer; describe what you want to learn, receive a pre-built map. This is convenient, and pedagogically counterproductive. Decades of cognitive science converge on the same conclusion: deep understanding is not received; it is constructed. When the work of deciding how concepts relate is offloaded to a system, the process that produces comprehension is bypassed.
+Passive learning is not a new problem. AI has made it the default and amplified it at scale: You hand over a source and receive a summary, ask a question and receive an answer, or describe what you want to learn and receive a pre-built map. This is convenient, and pedagogically counterproductive. Decades of cognitive science converge on the same conclusion: deep understanding is not received; it is constructed. When the work of deciding how concepts relate is offloaded to a system, the process that produces comprehension is bypassed.
 
 Alongside this, most learning platforms treat user data as a resource. In the context of learning, this data is uniquely sensitive: it reveals not just what someone has read, but how they reason, where they struggle, and how their understanding evolves over time. Capturing it passively, and often opaquely, is at odds with the interests of the people the tools claim to serve.
 
@@ -25,7 +29,7 @@ AI is present, but with a constrained role. The AI mentor, Socrates, does not de
 
 **Constructivist by design.** Every feature is oriented around the learner doing cognitive work: drawing edges, labelling relations, writing definitions in their own words, self-rating recall. The system does not do this work for them.
 
-**Private by architecture.** In the web app, graphs are stored locally in the browser (IndexedDB). In the **desktop app** (Tauri), each graph is also mirrored to a `.json` file in a workspace folder you can open in any editor (default: app data; optional custom folder in **Settings → Data**). The local AI mode runs entirely in-browser via WebGPU; no data leaves the device. Privacy is an implementation detail, not a policy promise.
+**Private by architecture.** In the web app, graphs are stored locally in your browser. In the desktop app, they are also saved as plain JSON files on your machine. The local AI mode runs entirely on your device; no data leaves it. Privacy is an implementation detail, not a policy promise.
 
 **Open by default.** The code is MIT-licensed. Data formats are documented and importable/exportable as plain JSON. The MCP server makes the graph vocabulary available to any compatible client. Technical work done here is intended to be useful beyond this application.
 
@@ -35,7 +39,7 @@ AI is present, but with a constrained role. The AI mentor, Socrates, does not de
 
 Nesso is not a note-taking app. It does not replace a text editor, a spaced-repetition deck manager, or a general-purpose LLM interface. It is specifically a tool for the phase of learning where understanding a domain means deciding how its concepts relate to each other, and testing whether you can hold that structure under questioning.
 
-It is also not a finished product. It is an alpha-stage open-source project. Some features are rough, some planned items are not yet built, and the codebase is publicly available for inspection and contribution.
+It is also not a finished product. The codebase is publicly available for inspection and contribution.
 
 ---
 

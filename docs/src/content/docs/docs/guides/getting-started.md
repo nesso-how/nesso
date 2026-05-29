@@ -13,6 +13,16 @@ Open [app.nesso.how](https://app.nesso.how) in your browser. The app works offli
 
 Pre-built alpha installers for Apple silicon and Intel are published on [GitHub Releases](https://github.com/cedoor/nesso/releases). Download the `.dmg` for your architecture and open it.
 
+:::caution
+The app is not signed with an Apple developer certificate. macOS will block it on first launch. After installing, run this command in the terminal to remove the quarantine flag:
+
+```sh
+xattr -cr /Applications/Nesso.app
+```
+
+Then open the app normally.
+:::
+
 ## Run from source
 
 Requires [Node.js](https://nodejs.org/) and [pnpm](https://pnpm.io/).
@@ -39,13 +49,15 @@ The Socratic mentor uses an LLM. Choose under **Settings -> AI**:
 
 Either mode can be switched at any time from **Settings** (`⌘,` / `Ctrl+,`).
 
-> API keys are stored client-side in `localStorage`. Do not self-host the web app publicly with secrets baked in.
+:::caution
+API keys are stored client-side in `localStorage`. Do not self-host the web app publicly with secrets baked in.
+:::
 
 ### Local mode tips
 
 - WebGPU is required. On macOS, recent Chrome / Edge / Arc work out of the box; Safari support is improving but currently limited.
 - The first download streams progress into the Settings panel. Closing the panel does not cancel the download.
-- **Settings -> Data -> Delete** clears graphs and preferences but leaves the cached model untouched. Clearing browser site data removes everything, including the model weights.
+- To remove the cached model weights, clear the browser site data for the app.
 
 ### Remote mode with Ollama
 

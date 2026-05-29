@@ -33,8 +33,8 @@ export default defineConfig({
 					items: [
 						{ label: 'Getting started', slug: 'docs/guides/getting-started' },
 						{ label: 'Concepts & Inspector', slug: 'docs/guides/concepts-and-inspector' },
-						{ label: 'AI mentor', slug: 'docs/guides/ai-mentor' },
 						{ label: 'Review mode', slug: 'docs/guides/review-mode' },
+						{ label: 'AI mentor', slug: 'docs/guides/ai-mentor' },
 						{ label: 'MCP', slug: 'docs/guides/mcp-integration' },
 					],
 				},

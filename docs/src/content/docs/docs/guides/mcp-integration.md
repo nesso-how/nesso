@@ -41,7 +41,7 @@ Once connected, you can ask your AI client things like:
 - "What relation types does Nesso support?" (uses `get_relation_types`)
 - "Show me the Nesso getting started guide" (uses `get_nesso_docs`)
 
-You can build graphs in [app.nesso.how](https://app.nesso.how) yourself, or paste graph JSON from the model via **Graph menu → Import JSON** when it follows the shape below.
+You can build graphs in [app.nesso.how](https://app.nesso.how) yourself, or ask the model to generate a graph as a JSON file and import it via **Graph menu → Import JSON**. Use `get_relation_types` to make sure the model picks valid relation names.
 
 ## Tools reference
 
@@ -52,44 +52,3 @@ Fetches documentation pages from this site. Call it without a `slug` to get a ta
 ### `get_relation_types`
 
 Returns the complete list of relation types with their category, line style, symmetry, and semantic coefficients (transitive, inverse, strength, polarity, cardinality). Use this whenever you need valid type names for graph JSON or explanations for the learner.
-
-### Graph JSON (Import JSON)
-
-Paste this JSON shape into **Graph menu → Import JSON** in the web or desktop app (or construct it elsewhere and import the file). **Import** keeps structure (nodes, edges, display, elaboration) and resets FSRS / review fields to fresh defaults; personal scheduling from another user is not applied. **Export JSON** from the graph menu is share-safe the same way (no review history). Desktop workspace autosave is separate and retains your full progress.
-
-```json
-{
-  "name": "Graph title",
-  "nodes": [
-    {
-      "id": "n1",
-      "type": "concept",
-      "position": { "x": 0, "y": 0 },
-      "data": {
-        "text": "Concept label",
-        "stability": 0,
-        "difficulty": 0,
-        "reps": 0,
-        "lapses": 0,
-        "fsrsState": 0,
-        "due": 0,
-        "lastReview": 0,
-        "lastRating": 0
-      }
-    }
-  ],
-  "edges": [
-    {
-      "id": "e1",
-      "type": "nesso",
-      "source": "n1",
-      "target": "n2",
-      "sourceHandle": "out",
-      "targetHandle": "in",
-      "data": { "type": "causes" }
-    }
-  ]
-}
-```
-
-Call `get_relation_types` before inventing **`data.type`** values so they match Nesso.

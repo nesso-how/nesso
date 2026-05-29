@@ -3,6 +3,10 @@ title: AI mentor (Socrates)
 description: How the Socratic mentor works, local vs remote, persona, and graph-aware context.
 ---
 
+:::caution
+This is the part of Nesso with the most potential and the most room to grow. Small models tend to drift out of the Socratic role and start explaining rather than questioning. A larger remote model works noticeably better. Improving the mentor is where most of the future work is headed.
+:::
+
 Click the **Socrates** bubble in the bottom-right of the canvas to start a dialogue. The mentor reads your current graph and selection, and replies with **questions rather than explanations**. The goal is to surface what you understand and where the gaps are.
 
 ## How it works
