@@ -76,17 +76,13 @@ async function fs() {
   return import('@tauri-apps/plugin-fs')
 }
 
-function uniqueFilename(
-  base: string,
-  manifest: WorkspaceManifest,
-  excludeId?: string,
-): string {
+function uniqueFilename(base: string, manifest: WorkspaceManifest, excludeId?: string): string {
   let candidate = `${base}.json`
   let n = 2
   const used = new Set(
     Object.values(manifest.entries)
-      .filter(e => e.id !== excludeId)
-      .map(e => e.file),
+      .filter((e) => e.id !== excludeId)
+      .map((e) => e.file),
   )
   while (used.has(candidate)) {
     candidate = `${base}-${n}.json`
@@ -118,11 +114,7 @@ async function alignEntryFileToName(
   entry: GraphManifestEntry,
   fileToId: Map<string, string>,
 ): Promise<void> {
-  const expectedFile = uniqueFilename(
-    filenameBaseFromName(record.name),
-    manifest,
-    record.id,
-  )
+  const expectedFile = uniqueFilename(filenameBaseFromName(record.name), manifest, record.id)
   if (entry.file === expectedFile) return
 
   const { rename } = await fs()
@@ -287,9 +279,7 @@ export async function listWorkspaceJsonFiles(ws: WorkspaceTarget): Promise<strin
   const { readDir } = await fs()
   try {
     const entries = await readDir(ws.path(''))
-    return entries
-      .filter(e => e.isFile && e.name?.endsWith('.json'))
-      .map(e => e.name!)
+    return entries.filter((e) => e.isFile && e.name?.endsWith('.json')).map((e) => e.name!)
   } catch {
     return []
   }

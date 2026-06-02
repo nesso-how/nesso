@@ -28,7 +28,9 @@ export function readSidebarWidth(): number {
 export function writeSidebarWidth(w: number): void {
   try {
     localStorage.setItem(SIDEBAR_WIDTH_STORAGE_KEY, String(clampSidebarWidth(w)))
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 }
 
 interface Props {
@@ -41,13 +43,31 @@ interface Props {
   onWidthChange: (w: number) => void
 }
 
-export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, zoom, width, onWidthChange }: Props) {
+export function Sidebar({
+  collapsed,
+  onCollapse,
+  onSearch,
+  onSettings,
+  zoom,
+  width,
+  onWidthChange,
+}: Props) {
   const t = useT()
   const {
-    graphList, currentGraphId, loadGraph, createGraph, renameGraph, deleteGraph,
-    nodes, edges, graphDisplay, setGraphDisplay,
-    sidebarDisplayOpen, setSidebarDisplayOpen,
-    sidebarStatsOpen, setSidebarStatsOpen,
+    graphList,
+    currentGraphId,
+    loadGraph,
+    createGraph,
+    renameGraph,
+    deleteGraph,
+    nodes,
+    edges,
+    graphDisplay,
+    setGraphDisplay,
+    sidebarDisplayOpen,
+    setSidebarDisplayOpen,
+    sidebarStatsOpen,
+    setSidebarStatsOpen,
   } = useGraphStore()
 
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -70,7 +90,7 @@ export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, zoom, wid
 
   const commitRename = () => {
     if (editingId && draft.trim()) {
-      const g = graphList.find(x => x.id === editingId)
+      const g = graphList.find((x) => x.id === editingId)
       if (g && draft.trim() !== g.name) renameGraph(editingId, draft.trim())
     }
     setEditingId(null)
@@ -85,7 +105,7 @@ export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, zoom, wid
   const handleNew = async () => {
     const id = await createGraph(t.sidebar.untitled)
     setTimeout(() => {
-      const g = useGraphStore.getState().graphList.find(x => x.id === id)
+      const g = useGraphStore.getState().graphList.find((x) => x.id === id)
       if (g) startRename(id, g.name)
     }, 50)
   }
@@ -122,307 +142,487 @@ export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, zoom, wid
   }
 
   return (
-    <div style={{
-      position: 'absolute',
-      top: 0, left: 0, bottom: 0,
-      width: collapsed ? 0 : width,
-      zIndex: 30,
-      transition: isResizing ? 'none' : 'width 180ms ease',
-    }}>
-      <div style={{
-        overflow: 'hidden',
-        width: '100%',
-        height: '100%',
-        background: 'var(--bg-elev)',
-        borderRight: '0.5px solid var(--line)',
-      }}>
-      <div style={{ width, height: '100%', display: 'flex', flexDirection: 'column' }}>
-
-        {/* Header */}
-        <div style={{
-          padding: '14px 16px 12px',
-          display: 'flex', alignItems: 'center', gap: 10,
-          borderBottom: '0.5px solid var(--line)',
-          flexShrink: 0,
-        }}>
-          <a
-            href={NESSO_WEBSITE_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            title={t.sidebar.websiteLinkTitle}
+    <div
+      style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        bottom: 0,
+        width: collapsed ? 0 : width,
+        zIndex: 30,
+        transition: isResizing ? 'none' : 'width 180ms ease',
+      }}
+    >
+      <div
+        style={{
+          overflow: 'hidden',
+          width: '100%',
+          height: '100%',
+          background: 'var(--bg-elev)',
+          borderRight: '0.5px solid var(--line)',
+        }}
+      >
+        <div style={{ width, height: '100%', display: 'flex', flexDirection: 'column' }}>
+          {/* Header */}
+          <div
             style={{
+              padding: '14px 16px 12px',
               display: 'flex',
               alignItems: 'center',
               gap: 10,
+              borderBottom: '0.5px solid var(--line)',
               flexShrink: 0,
-              textDecoration: 'none',
-              color: 'inherit',
             }}
           >
-            <div style={{ flexShrink: 0, color: 'var(--ink)', lineHeight: 0 }} aria-hidden>
-              <NessoMark size={26} />
-            </div>
-            <div style={{ font: "500 13px 'Inter', ui-sans-serif", color: 'var(--ink)' }}>Nesso</div>
-          </a>
-          <div style={{ flex: 1, minWidth: 0 }} aria-hidden />
-          <button onClick={onCollapse} title={t.sidebar.collapseSidebar} type="button" style={iconBtn}
-            onMouseEnter={e => { e.currentTarget.style.background = 'var(--paper-deep)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
-          >
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" style={{ flexShrink: 0 }}>
-              <path d="M10 4l-4 4 4 4" />
-            </svg>
-          </button>
-        </div>
-
-        {/* Search → ⌘K */}
-        <div style={{ padding: '10px 12px 8px', flexShrink: 0 }}>
-          <button onClick={onSearch} style={{
-            display: 'flex', width: '100%', alignItems: 'center', gap: 9,
-            appearance: 'none', border: 0,
-            background: 'var(--paper-deep)', borderRadius: 7,
-            padding: '7px 10px', cursor: 'default',
-            font: "12.5px 'Inter', ui-sans-serif", color: 'var(--ink-4)',
-          }}>
-            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <circle cx="7" cy="7" r="4.5" />
-              <path d="M10.5 10.5L13 13" strokeLinecap="round" />
-            </svg>
-            {t.sidebar.search}
-            <span style={{ marginLeft: 'auto', font: "500 10px 'JetBrains Mono', ui-monospace" }}>⌘K</span>
-          </button>
-        </div>
-
-        {/* Scrollable body — block flow so sections stack naturally without flex pushing */}
-        <div className="nesso-scrollbar" style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
-
-          {/* Graphs */}
-          <div style={{ padding: '10px 12px 4px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={sectionLabel}>{t.sidebar.graphs}</span>
-            <button title={t.sidebar.newGraphTitle} onClick={handleNew} style={graphsNewBtn}
-              onMouseEnter={e => { e.currentTarget.style.background = 'var(--paper-deep)' }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
-            >
-              <svg width="11" height="11" viewBox="0 0 10 10" style={{ flexShrink: 0 }}>
-                <path d="M5 1v8M1 5h8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-              </svg>
-              <span style={{ font: "500 11.5px 'Inter', ui-sans-serif" }}>{t.sidebar.newGraph}</span>
-            </button>
-          </div>
-
-          <div style={{ padding: '0 8px', display: 'flex', flexDirection: 'column', gap: 1 }}>
-            {[...graphList]
-              .sort((a, b) => b.updatedAt - a.updatedAt)
-              .map(g => {
-                const active = g.id === currentGraphId
-                const hovered = hoveredId === g.id
-                return (
-                  <div
-                    key={g.id}
-                    style={{
-                      display: 'flex', alignItems: 'center',
-                      background: active ? 'var(--paper-deep)' : hovered ? 'var(--paper-deep)' : 'transparent',
-                      borderRadius: 6, transition: 'background 100ms',
-                    }}
-                    onMouseEnter={() => setHoveredId(g.id)}
-                    onMouseLeave={() => setHoveredId(null)}
-                  >
-                    {editingId === g.id ? (
-                      <input
-                        ref={inputRef}
-                        value={draft}
-                        onChange={e => setDraft(e.target.value)}
-                        onBlur={commitRename}
-                        onKeyDown={e => {
-                          if (e.key === 'Enter') commitRename()
-                          if (e.key === 'Escape') cancelRename()
-                        }}
-                        style={{
-                          flex: 1, border: 0, outline: 0,
-                          background: 'transparent',
-                          font: "500 13px 'Inter', ui-sans-serif",
-                          color: 'var(--ink)',
-                          padding: '6px 9px',
-                        }}
-                      />
-                    ) : (
-                      <button
-                        onClick={() => loadGraph(g.id)}
-                        onDoubleClick={() => startRename(g.id, g.name)}
-                        title={`${g.name} — ${t.sidebar.renameHint}`}
-                        style={{
-                          flex: 1, display: 'flex', alignItems: 'center', gap: 9,
-                          appearance: 'none', border: 0, background: 'transparent',
-                          borderRadius: 6, padding: '6px 9px', cursor: 'default', minWidth: 0,
-                          font: active ? "500 13px 'Inter', ui-sans-serif" : "13px 'Inter', ui-sans-serif",
-                          color: active ? 'var(--ink)' : 'var(--ink-2)',
-                          textAlign: 'left',
-                        }}
-                      >
-                        <span style={{
-                          width: 6, height: 6, borderRadius: 999, flexShrink: 0,
-                          background: active ? 'var(--accent)' : 'var(--ink-5)',
-                        }} />
-                        <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {g.name}
-                        </span>
-                      </button>
-                    )}
-                    {graphList.length > 1 && hovered && editingId !== g.id && (
-                      <button
-                        onClick={e => handleDelete(g.id, e)}
-                        title={t.sidebar.deleteGraph}
-                        style={{
-                          ...iconBtn,
-                          marginRight: 4, flexShrink: 0,
-                          color: 'var(--ink-4)',
-                        }}
-                        onMouseEnter={e => { e.currentTarget.style.color = 'var(--ink)'; e.currentTarget.style.background = 'var(--bg-elev)' }}
-                        onMouseLeave={e => { e.currentTarget.style.color = 'var(--ink-4)'; e.currentTarget.style.background = 'transparent' }}
-                      >
-                        <svg width="9" height="9" viewBox="0 0 10 10">
-                          <path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-                        </svg>
-                      </button>
-                    )}
-                  </div>
-                )
-              })}
-          </div>
-
-        </div>
-
-        {/* Map section — fixed, above Display */}
-        <div style={{ flexShrink: 0, borderTop: '0.5px solid var(--line)' }}>
-          <div style={{ padding: '10px 12px 8px' }}>
-            <button
-              onClick={() => setSidebarStatsOpen(!sidebarStatsOpen)}
+            <a
+              href={NESSO_WEBSITE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              title={t.sidebar.websiteLinkTitle}
               style={{
-                appearance: 'none', border: 0, background: 'transparent', cursor: 'default',
-                display: 'flex', alignItems: 'center', gap: 6, padding: 0, width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                flexShrink: 0,
+                textDecoration: 'none',
+                color: 'inherit',
               }}
             >
-              <span style={sectionLabel}>{t.sidebar.stats.title}</span>
-              <svg width="9" height="9" viewBox="0 0 10 10" style={{
-                opacity: 0.5,
-                transform: sidebarStatsOpen ? 'rotate(0deg)' : 'rotate(-90deg)',
-                transition: 'transform 150ms',
-              }}>
-                <path d="M2 4l3 3 3-3" stroke="currentColor" strokeWidth="1.4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-          </div>
-          {sidebarStatsOpen && (
-            <div style={{ padding: '0 12px 10px', display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <MapRow label={t.sidebar.stats.concepts} value={String(nodes.length)} />
-              <MapRow label={t.sidebar.stats.links} value={String(edges.length)} />
-              <MapRow label={t.sidebar.stats.zoom} value={`${Math.round(zoom * 100)}%`} />
-            </div>
-          )}
-        </div>
-
-        {/* Display section — fixed above footer, outside scroll */}
-        <div style={{ flexShrink: 0, borderTop: '0.5px solid var(--line)' }}>
-          <div style={{ padding: '10px 12px 8px' }}>
+              <div style={{ flexShrink: 0, color: 'var(--ink)', lineHeight: 0 }} aria-hidden>
+                <NessoMark size={26} />
+              </div>
+              <div style={{ font: "500 13px 'Inter', ui-sans-serif", color: 'var(--ink)' }}>
+                Nesso
+              </div>
+            </a>
+            <div style={{ flex: 1, minWidth: 0 }} aria-hidden />
             <button
-              onClick={() => setSidebarDisplayOpen(!sidebarDisplayOpen)}
-              style={{
-                appearance: 'none', border: 0, background: 'transparent', cursor: 'default',
-                display: 'flex', alignItems: 'center', gap: 6, padding: 0, width: '100%',
+              onClick={onCollapse}
+              title={t.sidebar.collapseSidebar}
+              type="button"
+              style={iconBtn}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'var(--paper-deep)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent'
               }}
             >
-              <span style={sectionLabel}>{t.sidebar.display}</span>
-              <svg width="9" height="9" viewBox="0 0 10 10" style={{
-                opacity: 0.5,
-                transform: sidebarDisplayOpen ? 'rotate(0deg)' : 'rotate(-90deg)',
-                transition: 'transform 150ms',
-              }}>
-                <path d="M2 4l3 3 3-3" stroke="currentColor" strokeWidth="1.4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                style={{ flexShrink: 0 }}
+              >
+                <path d="M10 4l-4 4 4 4" />
               </svg>
             </button>
           </div>
-          {sidebarDisplayOpen && (
-            <div style={{ padding: '0 12px 10px' }}>
-              <DisplayRow label={t.sidebar.displayOptions.heatmap}>
-                <Seg
-                  options={[
-                    { id: 'off', label: t.sidebar.displayOptions.off },
-                    { id: 'on', label: t.sidebar.displayOptions.on },
-                  ]}
-                  value={graphDisplay.showHeatmap ? 'on' : 'off'}
-                  onChange={v => setGraphDisplay('showHeatmap', v === 'on')}
-                />
-              </DisplayRow>
-              <DisplayRow label={t.sidebar.displayOptions.edges}>
-                <Seg
-                  options={[
-                    { id: 'full', label: t.sidebar.displayOptions.full },
-                    { id: 'category', label: t.sidebar.displayOptions.cat },
-                    { id: 'minimal', label: t.sidebar.displayOptions.min },
-                  ]}
-                  value={graphDisplay.edgeEncoding}
-                  onChange={v => setGraphDisplay('edgeEncoding', v as 'full' | 'category' | 'minimal')}
-                />
-              </DisplayRow>
-              <DisplayRow label={t.sidebar.displayOptions.curve}>
-                <Seg
-                  options={[
-                    { id: 'arc', label: t.sidebar.displayOptions.arc },
-                    { id: 'straight', label: t.sidebar.displayOptions.line },
-                  ]}
-                  value={graphDisplay.curveStyle}
-                  onChange={v => setGraphDisplay('curveStyle', v as 'arc' | 'straight')}
-                />
-              </DisplayRow>
-              {graphDisplay.curveStyle === 'arc' && (
-                <DisplayRow label={t.sidebar.displayOptions.autoFlip}>
+
+          {/* Search → ⌘K */}
+          <div style={{ padding: '10px 12px 8px', flexShrink: 0 }}>
+            <button
+              onClick={onSearch}
+              style={{
+                display: 'flex',
+                width: '100%',
+                alignItems: 'center',
+                gap: 9,
+                appearance: 'none',
+                border: 0,
+                background: 'var(--paper-deep)',
+                borderRadius: 7,
+                padding: '7px 10px',
+                cursor: 'default',
+                font: "12.5px 'Inter', ui-sans-serif",
+                color: 'var(--ink-4)',
+              }}
+            >
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              >
+                <circle cx="7" cy="7" r="4.5" />
+                <path d="M10.5 10.5L13 13" strokeLinecap="round" />
+              </svg>
+              {t.sidebar.search}
+              <span style={{ marginLeft: 'auto', font: "500 10px 'JetBrains Mono', ui-monospace" }}>
+                ⌘K
+              </span>
+            </button>
+          </div>
+
+          {/* Scrollable body — block flow so sections stack naturally without flex pushing */}
+          <div className="nesso-scrollbar" style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+            {/* Graphs */}
+            <div
+              style={{
+                padding: '10px 12px 4px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <span style={sectionLabel}>{t.sidebar.graphs}</span>
+              <button
+                title={t.sidebar.newGraphTitle}
+                onClick={handleNew}
+                style={graphsNewBtn}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'var(--paper-deep)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent'
+                }}
+              >
+                <svg width="11" height="11" viewBox="0 0 10 10" style={{ flexShrink: 0 }}>
+                  <path
+                    d="M5 1v8M1 5h8"
+                    stroke="currentColor"
+                    strokeWidth="1.4"
+                    strokeLinecap="round"
+                  />
+                </svg>
+                <span style={{ font: "500 11.5px 'Inter', ui-sans-serif" }}>
+                  {t.sidebar.newGraph}
+                </span>
+              </button>
+            </div>
+
+            <div style={{ padding: '0 8px', display: 'flex', flexDirection: 'column', gap: 1 }}>
+              {[...graphList]
+                .sort((a, b) => b.updatedAt - a.updatedAt)
+                .map((g) => {
+                  const active = g.id === currentGraphId
+                  const hovered = hoveredId === g.id
+                  return (
+                    <div
+                      key={g.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        background: active
+                          ? 'var(--paper-deep)'
+                          : hovered
+                            ? 'var(--paper-deep)'
+                            : 'transparent',
+                        borderRadius: 6,
+                        transition: 'background 100ms',
+                      }}
+                      onMouseEnter={() => setHoveredId(g.id)}
+                      onMouseLeave={() => setHoveredId(null)}
+                    >
+                      {editingId === g.id ? (
+                        <input
+                          ref={inputRef}
+                          value={draft}
+                          onChange={(e) => setDraft(e.target.value)}
+                          onBlur={commitRename}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') commitRename()
+                            if (e.key === 'Escape') cancelRename()
+                          }}
+                          style={{
+                            flex: 1,
+                            border: 0,
+                            outline: 0,
+                            background: 'transparent',
+                            font: "500 13px 'Inter', ui-sans-serif",
+                            color: 'var(--ink)',
+                            padding: '6px 9px',
+                          }}
+                        />
+                      ) : (
+                        <button
+                          onClick={() => loadGraph(g.id)}
+                          onDoubleClick={() => startRename(g.id, g.name)}
+                          title={`${g.name} — ${t.sidebar.renameHint}`}
+                          style={{
+                            flex: 1,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 9,
+                            appearance: 'none',
+                            border: 0,
+                            background: 'transparent',
+                            borderRadius: 6,
+                            padding: '6px 9px',
+                            cursor: 'default',
+                            minWidth: 0,
+                            font: active
+                              ? "500 13px 'Inter', ui-sans-serif"
+                              : "13px 'Inter', ui-sans-serif",
+                            color: active ? 'var(--ink)' : 'var(--ink-2)',
+                            textAlign: 'left',
+                          }}
+                        >
+                          <span
+                            style={{
+                              width: 6,
+                              height: 6,
+                              borderRadius: 999,
+                              flexShrink: 0,
+                              background: active ? 'var(--accent)' : 'var(--ink-5)',
+                            }}
+                          />
+                          <span
+                            style={{
+                              flex: 1,
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {g.name}
+                          </span>
+                        </button>
+                      )}
+                      {graphList.length > 1 && hovered && editingId !== g.id && (
+                        <button
+                          onClick={(e) => handleDelete(g.id, e)}
+                          title={t.sidebar.deleteGraph}
+                          style={{
+                            ...iconBtn,
+                            marginRight: 4,
+                            flexShrink: 0,
+                            color: 'var(--ink-4)',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.color = 'var(--ink)'
+                            e.currentTarget.style.background = 'var(--bg-elev)'
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.color = 'var(--ink-4)'
+                            e.currentTarget.style.background = 'transparent'
+                          }}
+                        >
+                          <svg width="9" height="9" viewBox="0 0 10 10">
+                            <path
+                              d="M2 2l6 6M8 2l-6 6"
+                              stroke="currentColor"
+                              strokeWidth="1.4"
+                              strokeLinecap="round"
+                            />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
+                  )
+                })}
+            </div>
+          </div>
+
+          {/* Map section — fixed, above Display */}
+          <div style={{ flexShrink: 0, borderTop: '0.5px solid var(--line)' }}>
+            <div style={{ padding: '10px 12px 8px' }}>
+              <button
+                onClick={() => setSidebarStatsOpen(!sidebarStatsOpen)}
+                style={{
+                  appearance: 'none',
+                  border: 0,
+                  background: 'transparent',
+                  cursor: 'default',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: 0,
+                  width: '100%',
+                }}
+              >
+                <span style={sectionLabel}>{t.sidebar.stats.title}</span>
+                <svg
+                  width="9"
+                  height="9"
+                  viewBox="0 0 10 10"
+                  style={{
+                    opacity: 0.5,
+                    transform: sidebarStatsOpen ? 'rotate(0deg)' : 'rotate(-90deg)',
+                    transition: 'transform 150ms',
+                  }}
+                >
+                  <path
+                    d="M2 4l3 3 3-3"
+                    stroke="currentColor"
+                    strokeWidth="1.4"
+                    fill="none"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+            </div>
+            {sidebarStatsOpen && (
+              <div
+                style={{ padding: '0 12px 10px', display: 'flex', flexDirection: 'column', gap: 4 }}
+              >
+                <MapRow label={t.sidebar.stats.concepts} value={String(nodes.length)} />
+                <MapRow label={t.sidebar.stats.links} value={String(edges.length)} />
+                <MapRow label={t.sidebar.stats.zoom} value={`${Math.round(zoom * 100)}%`} />
+              </div>
+            )}
+          </div>
+
+          {/* Display section — fixed above footer, outside scroll */}
+          <div style={{ flexShrink: 0, borderTop: '0.5px solid var(--line)' }}>
+            <div style={{ padding: '10px 12px 8px' }}>
+              <button
+                onClick={() => setSidebarDisplayOpen(!sidebarDisplayOpen)}
+                style={{
+                  appearance: 'none',
+                  border: 0,
+                  background: 'transparent',
+                  cursor: 'default',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: 0,
+                  width: '100%',
+                }}
+              >
+                <span style={sectionLabel}>{t.sidebar.display}</span>
+                <svg
+                  width="9"
+                  height="9"
+                  viewBox="0 0 10 10"
+                  style={{
+                    opacity: 0.5,
+                    transform: sidebarDisplayOpen ? 'rotate(0deg)' : 'rotate(-90deg)',
+                    transition: 'transform 150ms',
+                  }}
+                >
+                  <path
+                    d="M2 4l3 3 3-3"
+                    stroke="currentColor"
+                    strokeWidth="1.4"
+                    fill="none"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+            </div>
+            {sidebarDisplayOpen && (
+              <div style={{ padding: '0 12px 10px' }}>
+                <DisplayRow label={t.sidebar.displayOptions.heatmap}>
                   <Seg
                     options={[
                       { id: 'off', label: t.sidebar.displayOptions.off },
                       { id: 'on', label: t.sidebar.displayOptions.on },
                     ]}
-                    value={graphDisplay.autoCurveFlip ? 'on' : 'off'}
-                    onChange={v => setGraphDisplay('autoCurveFlip', v === 'on')}
+                    value={graphDisplay.showHeatmap ? 'on' : 'off'}
+                    onChange={(v) => setGraphDisplay('showHeatmap', v === 'on')}
                   />
                 </DisplayRow>
-              )}
-            </div>
-          )}
-        </div>
+                <DisplayRow label={t.sidebar.displayOptions.edges}>
+                  <Seg
+                    options={[
+                      { id: 'full', label: t.sidebar.displayOptions.full },
+                      { id: 'category', label: t.sidebar.displayOptions.cat },
+                      { id: 'minimal', label: t.sidebar.displayOptions.min },
+                    ]}
+                    value={graphDisplay.edgeEncoding}
+                    onChange={(v) =>
+                      setGraphDisplay('edgeEncoding', v as 'full' | 'category' | 'minimal')
+                    }
+                  />
+                </DisplayRow>
+                <DisplayRow label={t.sidebar.displayOptions.curve}>
+                  <Seg
+                    options={[
+                      { id: 'arc', label: t.sidebar.displayOptions.arc },
+                      { id: 'straight', label: t.sidebar.displayOptions.line },
+                    ]}
+                    value={graphDisplay.curveStyle}
+                    onChange={(v) => setGraphDisplay('curveStyle', v as 'arc' | 'straight')}
+                  />
+                </DisplayRow>
+                {graphDisplay.curveStyle === 'arc' && (
+                  <DisplayRow label={t.sidebar.displayOptions.autoFlip}>
+                    <Seg
+                      options={[
+                        { id: 'off', label: t.sidebar.displayOptions.off },
+                        { id: 'on', label: t.sidebar.displayOptions.on },
+                      ]}
+                      value={graphDisplay.autoCurveFlip ? 'on' : 'off'}
+                      onChange={(v) => setGraphDisplay('autoCurveFlip', v === 'on')}
+                    />
+                  </DisplayRow>
+                )}
+              </div>
+            )}
+          </div>
 
-        {/* Footer — Settings */}
-        <div style={{
-          padding: '8px 8px',
-          borderTop: '0.5px solid var(--line)',
-          flexShrink: 0,
-        }}>
-          <button
-            type="button"
-            onClick={onSettings}
-            title={t.sidebar.settingsTitle}
+          {/* Footer — Settings */}
+          <div
             style={{
-              appearance: 'none', border: 0, background: 'transparent',
-              display: 'flex', alignItems: 'center', gap: 9,
-              width: '100%',
-              padding: '7px 9px',
-              borderRadius: 6,
-              cursor: 'default',
-              font: "500 13px 'Inter', ui-sans-serif",
-              color: 'var(--ink-3)',
-              textAlign: 'left',
+              padding: '8px 8px',
+              borderTop: '0.5px solid var(--line)',
+              flexShrink: 0,
             }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'var(--paper-deep)'; e.currentTarget.style.color = 'var(--ink)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--ink-3)' }}
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-              <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
-              <circle cx="12" cy="12" r="3" />
-            </svg>
-            {t.sidebar.settings}
-            <span style={{ marginLeft: 'auto', font: "500 10px 'JetBrains Mono', ui-monospace", color: 'var(--ink-4)' }}>⌘,</span>
-          </button>
+            <button
+              type="button"
+              onClick={onSettings}
+              title={t.sidebar.settingsTitle}
+              style={{
+                appearance: 'none',
+                border: 0,
+                background: 'transparent',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 9,
+                width: '100%',
+                padding: '7px 9px',
+                borderRadius: 6,
+                cursor: 'default',
+                font: "500 13px 'Inter', ui-sans-serif",
+                color: 'var(--ink-3)',
+                textAlign: 'left',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'var(--paper-deep)'
+                e.currentTarget.style.color = 'var(--ink)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent'
+                e.currentTarget.style.color = 'var(--ink-3)'
+              }}
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={{ flexShrink: 0 }}
+              >
+                <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+              {t.sidebar.settings}
+              <span
+                style={{
+                  marginLeft: 'auto',
+                  font: "500 10px 'JetBrains Mono', ui-monospace",
+                  color: 'var(--ink-4)',
+                }}
+              >
+                ⌘,
+              </span>
+            </button>
+          </div>
         </div>
-      </div>
       </div>
 
       {/* Resize handle — outside overflow:hidden wrapper so it can straddle the border */}
@@ -433,8 +633,14 @@ export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, zoom, wid
           onMouseDown={onResizeHandleMouseDown}
           onKeyDown={(e) => {
             const step = 12
-            if (e.key === 'ArrowLeft') { e.preventDefault(); onWidthChange(clampSidebarWidth(width - step)) }
-            if (e.key === 'ArrowRight') { e.preventDefault(); onWidthChange(clampSidebarWidth(width + step)) }
+            if (e.key === 'ArrowLeft') {
+              e.preventDefault()
+              onWidthChange(clampSidebarWidth(width - step))
+            }
+            if (e.key === 'ArrowRight') {
+              e.preventDefault()
+              onWidthChange(clampSidebarWidth(width + step))
+            }
           }}
           style={{
             position: 'absolute',
@@ -458,63 +664,101 @@ export function Sidebar({ collapsed, onCollapse, onSearch, onSettings, zoom, wid
 
 function MapRow({ label, value, title }: { label: string; value: string; title?: string }) {
   return (
-    <div title={title} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '3px 0' }}>
+    <div
+      title={title}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '3px 0',
+      }}
+    >
       <span style={{ font: "12.5px 'Inter', ui-sans-serif", color: 'var(--ink-3)' }}>{label}</span>
-      <span style={{ font: "500 12px 'JetBrains Mono', ui-monospace", color: 'var(--ink-2)' }}>{value}</span>
+      <span style={{ font: "500 12px 'JetBrains Mono', ui-monospace", color: 'var(--ink-2)' }}>
+        {value}
+      </span>
     </div>
   )
 }
 
 function DisplayRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div style={{
-      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '5px 0', gap: 12,
-    }}>
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '5px 0',
+        gap: 12,
+      }}
+    >
       <span style={{ font: "12px 'Inter', ui-sans-serif", color: 'var(--ink-3)' }}>{label}</span>
       {children}
     </div>
   )
 }
 
-function Seg({ options, value, onChange }: {
+function Seg({
+  options,
+  value,
+  onChange,
+}: {
   options: { id: string; label: string }[]
   value: string
   onChange: (id: string) => void
 }) {
   return (
     <div style={{ display: 'flex', background: 'var(--paper-deep)', borderRadius: 6, padding: 2 }}>
-      {options.map(o => (
+      {options.map((o) => (
         <button
           key={o.id}
           onClick={() => onChange(o.id)}
           style={{
-            appearance: 'none', border: 0,
+            appearance: 'none',
+            border: 0,
             background: o.id === value ? 'var(--bg-card)' : 'transparent',
             color: o.id === value ? 'var(--ink)' : 'var(--ink-4)',
-            font: o.id === value ? "500 11px 'Inter', ui-sans-serif" : "11px 'Inter', ui-sans-serif",
-            padding: '3px 9px', borderRadius: 4, cursor: 'default',
+            font:
+              o.id === value ? "500 11px 'Inter', ui-sans-serif" : "11px 'Inter', ui-sans-serif",
+            padding: '3px 9px',
+            borderRadius: 4,
+            cursor: 'default',
             boxShadow: o.id === value ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
           }}
-        >{o.label}</button>
+        >
+          {o.label}
+        </button>
       ))}
     </div>
   )
 }
 
 const iconBtn: React.CSSProperties = {
-  appearance: 'none', border: 0, background: 'transparent',
-  width: 26, height: 26, borderRadius: 6,
-  display: 'flex', alignItems: 'center', justifyContent: 'center',
-  color: 'var(--ink-3)', cursor: 'default',
+  appearance: 'none',
+  border: 0,
+  background: 'transparent',
+  width: 26,
+  height: 26,
+  borderRadius: 6,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  color: 'var(--ink-3)',
+  cursor: 'default',
 }
 
 const graphsNewBtn: React.CSSProperties = {
-  appearance: 'none', border: 0, background: 'transparent',
-  height: 24, borderRadius: 6,
+  appearance: 'none',
+  border: 0,
+  background: 'transparent',
+  height: 24,
+  borderRadius: 6,
   padding: '0 7px 0 6px',
-  display: 'flex', alignItems: 'center', gap: 5,
-  color: 'var(--ink-3)', cursor: 'default',
+  display: 'flex',
+  alignItems: 'center',
+  gap: 5,
+  color: 'var(--ink-3)',
+  cursor: 'default',
 }
 
 const sectionLabel: React.CSSProperties = {

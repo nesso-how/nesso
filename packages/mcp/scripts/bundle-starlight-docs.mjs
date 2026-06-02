@@ -40,13 +40,18 @@ function extractFrontmatterField(source, field) {
   const line = m[1].match(new RegExp(`^${field}:\\s*(.+)$`, 'm'))
   if (!line) return null
   let v = line[1].trim()
-  if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) v = v.slice(1, -1)
+  if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'")))
+    v = v.slice(1, -1)
   return v
 }
 
 function fallbackTitle(rel) {
   const seg = rel.replace(/\.md$/i, '').split(/[/\\]/).pop() ?? rel
-  return seg.split('-').filter(Boolean).map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+  return seg
+    .split('-')
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ')
 }
 
 function main() {

@@ -64,8 +64,8 @@ function AppInner() {
     setSidebarCollapsed,
   } = useGraphStore()
 
-  const canUndo = useGraphStore(s => s._history.length > 0)
-  const canRedo = useGraphStore(s => s._future.length > 0)
+  const canUndo = useGraphStore((s) => s._history.length > 0)
+  const canRedo = useGraphStore((s) => s._future.length > 0)
 
   const selectedNode = useGraphStore(selectedNodeSelector)
   const selectedEdge = useGraphStore(selectedEdgeSelector)
@@ -76,7 +76,9 @@ function AppInner() {
   useGraphFileWatch()
 
   const [sidebarPanelWidth, setSidebarPanelWidth] = useState(readSidebarWidth)
-  useEffect(() => { writeSidebarWidth(sidebarPanelWidth) }, [sidebarPanelWidth])
+  useEffect(() => {
+    writeSidebarWidth(sidebarPanelWidth)
+  }, [sidebarPanelWidth])
 
   const sidebarWidth = sidebarCollapsed ? 0 : sidebarPanelWidth
 
@@ -90,11 +92,11 @@ function AppInner() {
   useEffect(() => {
     let cancelled = false
 
-    void loadGraphList().then(async list => {
+    void loadGraphList().then(async (list) => {
       if (cancelled) return
       const hashId = location.hash.slice(1)
       const cid = useGraphStore.getState().currentGraphId
-      const target = list.find(g => g.id === hashId) ? hashId : cid
+      const target = list.find((g) => g.id === hashId) ? hashId : cid
       await loadGraph(target)
     })
     return () => {
@@ -117,19 +119,26 @@ function AppInner() {
     return () => window.removeEventListener('popstate', onPop)
   }, [loadGraph])
 
-  const canvasInsets = useMemo(() => ({
-    top: 52,
-    bottom: 80,
-    left: sidebarWidth + INSPECTOR_CANVAS_LEFT_GUTTER + (selected !== null ? inspectorPanelWidth : 0),
-    right: 30,
-  }), [sidebarWidth, inspectorPanelWidth, selected])
+  const canvasInsets = useMemo(
+    () => ({
+      top: 52,
+      bottom: 80,
+      left:
+        sidebarWidth + INSPECTOR_CANVAS_LEFT_GUTTER + (selected !== null ? inspectorPanelWidth : 0),
+      right: 30,
+    }),
+    [sidebarWidth, inspectorPanelWidth, selected],
+  )
 
-  const fitView = useCallback((animated = true) => {
-    const liveNodes = getNodes()
-    if (!liveNodes.length) return
-    const vp = computeFitViewport(liveNodes, canvasInsets)
-    setViewport(vp, { duration: animated ? 400 : 0 })
-  }, [getNodes, setViewport, canvasInsets])
+  const fitView = useCallback(
+    (animated = true) => {
+      const liveNodes = getNodes()
+      if (!liveNodes.length) return
+      const vp = computeFitViewport(liveNodes, canvasInsets)
+      setViewport(vp, { duration: animated ? 400 : 0 })
+    },
+    [getNodes, setViewport, canvasInsets],
+  )
 
   const viewportRestoredFor = useRef<string | null>(null)
 
@@ -138,11 +147,8 @@ function AppInner() {
     if (viewportRestoredFor.current === currentGraphId) return
     if (loadedToken === 0) return
     const saved = viewports[currentGraphId]
-    const vp = saved ?? computeFitViewport(
-      nodes,
-      canvasInsets,
-      getSeedInitialFitZoom(currentGraphId) ?? 1,
-    )
+    const vp =
+      saved ?? computeFitViewport(nodes, canvasInsets, getSeedInitialFitZoom(currentGraphId) ?? 1)
     viewportRestoredFor.current = currentGraphId
     setViewport(vp, { duration: 0 })
     if (!saved) saveViewport(currentGraphId, vp)
@@ -154,10 +160,14 @@ function AppInner() {
     let cancelled = false
     void (async () => {
       try {
-        if (await localModelWeightsCached() && !cancelled) void initWebLLM()
-      } catch { /* ignore cache probe failures */ }
+        if ((await localModelWeightsCached()) && !cancelled) void initWebLLM()
+      } catch {
+        /* ignore cache probe failures */
+      }
     })()
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+    }
   }, [settings.aiMode])
 
   // Apply theme
@@ -171,35 +181,39 @@ function AppInner() {
 
   const hasSelection = !!selectedNode || !!selectedEdge
 
-  const handleSelectNode = useCallback((node: { id: string; position: { x: number; y: number } }) => {
-    setSelected({ kind: 'node', id: node.id })
+  const handleSelectNode = useCallback(
+    (node: { id: string; position: { x: number; y: number } }) => {
+      setSelected({ kind: 'node', id: node.id })
 
-    const liveNode = getNodes().find(n => n.id === node.id)
-    const w = liveNode?.measured?.width ?? 160
-    const h = liveNode?.measured?.height ?? 32
+      const liveNode = getNodes().find((n) => n.id === node.id)
+      const w = liveNode?.measured?.width ?? 160
+      const h = liveNode?.measured?.height ?? 32
 
-    const TOP = 52
-    const BOTTOM = 80
-    const RIGHT = 30
-    const leftPad = sidebarWidth + INSPECTOR_CANVAS_LEFT_GUTTER + inspectorPanelWidth
-    const canvasW = window.innerWidth - leftPad - RIGHT
-    const canvasH = window.innerHeight - TOP - BOTTOM
+      const TOP = 52
+      const BOTTOM = 80
+      const RIGHT = 30
+      const leftPad = sidebarWidth + INSPECTOR_CANVAS_LEFT_GUTTER + inspectorPanelWidth
+      const canvasW = window.innerWidth - leftPad - RIGHT
+      const canvasH = window.innerHeight - TOP - BOTTOM
 
-    const zoom = 1.2
-    setViewport(
-      {
-        x: leftPad + canvasW / 2 - (node.position.x + w / 2) * zoom,
-        y: TOP + canvasH / 2 - (node.position.y + h / 2) * zoom,
-        zoom,
-      },
-      { duration: 500 }
-    )
-  }, [setSelected, setViewport, getNodes, sidebarWidth, inspectorPanelWidth])
+      const zoom = 1.2
+      setViewport(
+        {
+          x: leftPad + canvasW / 2 - (node.position.x + w / 2) * zoom,
+          y: TOP + canvasH / 2 - (node.position.y + h / 2) * zoom,
+          zoom,
+        },
+        { duration: 500 },
+      )
+    },
+    [setSelected, setViewport, getNodes, sidebarWidth, inspectorPanelWidth],
+  )
 
   const handleAddConcept = useCallback(() => {
     const topInset = 52
     const bottomInset = 80
-    const leftInset = sidebarWidth + INSPECTOR_CANVAS_LEFT_GUTTER + (hasSelection ? inspectorPanelWidth : 0)
+    const leftInset =
+      sidebarWidth + INSPECTOR_CANVAS_LEFT_GUTTER + (hasSelection ? inspectorPanelWidth : 0)
     const rightInset = 30
     const screenCenterX = leftInset + (window.innerWidth - leftInset - rightInset) / 2
     const screenCenterY = topInset + (window.innerHeight - topInset - bottomInset) / 2
@@ -211,7 +225,16 @@ function AppInner() {
     viewportRestoredFor.current = useGraphStore.getState().currentGraphId
     addNode(x, y)
     setCenter(nodeCx, nodeCy, { zoom: Math.max(getViewport().zoom, 1), duration: 300 })
-  }, [addNode, setCenter, getViewport, screenToFlowPosition, sidebarWidth, hasSelection, inspectorPanelWidth, nodes])
+  }, [
+    addNode,
+    setCenter,
+    getViewport,
+    screenToFlowPosition,
+    sidebarWidth,
+    hasSelection,
+    inspectorPanelWidth,
+    nodes,
+  ])
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -225,9 +248,20 @@ function AppInner() {
         setShowSearch(false)
         return
       }
-      if (e.key === '?') { setShowShortcuts(s => !s); return }
-      if (e.key === ',' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); setShowSettings(s => !s); return }
-      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); setShowSearch(s => !s); return }
+      if (e.key === '?') {
+        setShowShortcuts((s) => !s)
+        return
+      }
+      if (e.key === ',' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault()
+        setShowSettings((s) => !s)
+        return
+      }
+      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault()
+        setShowSearch((s) => !s)
+        return
+      }
       if (e.key === 'z' && (e.metaKey || e.ctrlKey) && !e.shiftKey) {
         e.preventDefault()
         undo()
@@ -255,12 +289,12 @@ function AppInner() {
         return
       }
       if (
-        !showReview
-        && e.key === 'Enter'
-        && !e.metaKey
-        && !e.ctrlKey
-        && !e.altKey
-        && !e.shiftKey
+        !showReview &&
+        e.key === 'Enter' &&
+        !e.metaKey &&
+        !e.ctrlKey &&
+        !e.altKey &&
+        !e.shiftKey
       ) {
         const sel = useGraphStore.getState().selected
         if (sel?.kind === 'node') {
@@ -269,23 +303,39 @@ function AppInner() {
           return
         }
       }
-      if (e.key === 'r' && !e.metaKey && !e.ctrlKey) { setShowReview(true); return }
+      if (e.key === 'r' && !e.metaKey && !e.ctrlKey) {
+        setShowReview(true)
+        return
+      }
       if (e.key.toLowerCase() === 'n' && !e.metaKey && !e.ctrlKey && !e.altKey && !showReview) {
         handleAddConcept()
         return
       }
-      if (e.key === '/') { e.preventDefault() }
+      if (e.key === '/') {
+        e.preventDefault()
+      }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [undo, redo, copySelection, pasteSelection, deleteSelection, requestEditNode, handleAddConcept, showReview])
+  }, [
+    undo,
+    redo,
+    copySelection,
+    pasteSelection,
+    deleteSelection,
+    requestEditNode,
+    handleAddConcept,
+    showReview,
+  ])
 
   return (
     <div style={{ position: 'fixed', inset: 0 }}>
       <GraphCanvas
         topInset={52}
         bottomInset={80}
-        leftInset={sidebarWidth + INSPECTOR_CANVAS_LEFT_GUTTER + (hasSelection ? inspectorPanelWidth : 0)}
+        leftInset={
+          sidebarWidth + INSPECTOR_CANVAS_LEFT_GUTTER + (hasSelection ? inspectorPanelWidth : 0)
+        }
         rightInset={30}
         onViewportZoomChange={setZoom}
       />
@@ -293,11 +343,11 @@ function AppInner() {
       <Sidebar
         collapsed={sidebarCollapsed}
         onCollapse={() => setSidebarCollapsed(true)}
-        onSearch={() => setShowSearch(s => !s)}
-        onSettings={() => setShowSettings(s => !s)}
+        onSearch={() => setShowSearch((s) => !s)}
+        onSettings={() => setShowSettings((s) => !s)}
         zoom={zoom}
         width={sidebarPanelWidth}
-        onWidthChange={w => setSidebarPanelWidth(clampSidebarWidth(w))}
+        onWidthChange={(w) => setSidebarPanelWidth(clampSidebarWidth(w))}
       />
 
       <TopBar
@@ -305,15 +355,15 @@ function AppInner() {
         sidebarWidth={sidebarWidth}
         onExpandSidebar={() => setSidebarCollapsed(false)}
         onReview={() => setShowReview(true)}
-        onRelationTypes={() => setShowRelationTypes(s => !s)}
-        onShortcuts={() => setShowShortcuts(s => !s)}
+        onRelationTypes={() => setShowRelationTypes((s) => !s)}
+        onShortcuts={() => setShowShortcuts((s) => !s)}
       />
 
       <RelationTypesDialog open={showRelationTypes} onClose={() => setShowRelationTypes(false)} />
       <Inspector
         leftOffset={sidebarWidth}
         panelWidth={inspectorPanelWidth}
-        onPanelWidthChange={w => setInspectorPanelWidth(clampInspectorPanelWidth(w))}
+        onPanelWidthChange={(w) => setInspectorPanelWidth(clampInspectorPanelWidth(w))}
       />
       <BottomDock
         onFit={fitView}
@@ -328,7 +378,12 @@ function AppInner() {
       <ReviewMode open={showReview} onClose={() => setShowReview(false)} />
       <ShortcutsDialog open={showShortcuts} onClose={() => setShowShortcuts(false)} />
       <SettingsDialog open={showSettings} onClose={() => setShowSettings(false)} />
-      <SearchDialog open={showSearch} onClose={() => setShowSearch(false)} onSelectNode={handleSelectNode} onSelectGraph={(id) => loadGraph(id)} />
+      <SearchDialog
+        open={showSearch}
+        onClose={() => setShowSearch(false)}
+        onSelectNode={handleSelectNode}
+        onSelectGraph={(id) => loadGraph(id)}
+      />
       <div
         style={{
           position: 'fixed',

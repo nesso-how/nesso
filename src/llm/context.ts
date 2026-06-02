@@ -59,7 +59,10 @@ function renderFocus(node: Node<ConceptNodeData>): string {
   const parts: string[] = []
   const def = elab.definition?.trim()
   if (def) parts.push(def)
-  const exs = (elab.examples ?? '').split('\n').map(s => s.trim()).filter(Boolean)
+  const exs = (elab.examples ?? '')
+    .split('\n')
+    .map((s) => s.trim())
+    .filter(Boolean)
   if (exs.length > 0) parts.push(`Examples: ${exs.join('; ')}`)
   const notes = elab.notes?.trim()
   if (notes) parts.push(`Notes: ${notes}`)
@@ -91,7 +94,10 @@ export function buildReviewElaborationPrompt(node: Node<ConceptNodeData>): strin
   const parts: string[] = []
   const def = elab.definition?.trim()
   if (def) parts.push(`Definition: ${def}`)
-  const exs = (elab.examples ?? '').split('\n').map(s => s.trim()).filter(Boolean)
+  const exs = (elab.examples ?? '')
+    .split('\n')
+    .map((s) => s.trim())
+    .filter(Boolean)
   if (exs.length > 0) parts.push(`Examples: ${exs.join('; ')}`)
   const notes = elab.notes?.trim()
   if (notes) parts.push(`Notes: ${notes}`)
@@ -101,7 +107,10 @@ export function buildReviewElaborationPrompt(node: Node<ConceptNodeData>): strin
   return body
 }
 
-export function oneHopNeighborIds(focalId: string, edges: { source: string; target: string }[]): string[] {
+export function oneHopNeighborIds(
+  focalId: string,
+  edges: { source: string; target: string }[],
+): string[] {
   const set = new Set<string>()
   for (const e of edges) {
     if (e.source === focalId) set.add(e.target)

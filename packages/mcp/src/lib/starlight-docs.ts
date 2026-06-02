@@ -17,9 +17,8 @@ export function loadStarlightDocPages(): StarlightDocPage[] {
     const raw = readFileSync(join(DIST_DIR, 'starlight-docs.pages.json'), 'utf8')
     return (JSON.parse(raw) as { pages: StarlightDocPage[] }).pages
   } catch (err) {
-    throw new Error(
-      'Missing starlight-docs.pages.json. Run `pnpm build` in packages/mcp.',
-      { cause: err },
-    )
+    throw new Error('Missing starlight-docs.pages.json. Run `pnpm build` in packages/mcp.', {
+      cause: err,
+    })
   }
 }

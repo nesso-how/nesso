@@ -33,6 +33,6 @@ body:
     id: context
     attributes:
       label: Environment
-      placeholder: "OS, browser or Tauri desktop, Nesso version, AI backend (Ollama / remote)."
+      placeholder: 'OS, browser or Tauri desktop, Nesso version, AI backend (Ollama / remote).'
     validations:
       required: false

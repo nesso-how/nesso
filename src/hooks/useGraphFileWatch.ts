@@ -16,7 +16,7 @@ import {
 const DEBOUNCE_MS = 400
 
 export function useGraphFileWatch() {
-  const workspacePath = useGraphStore(s => s.settings.graphWorkspacePath)
+  const workspacePath = useGraphStore((s) => s.settings.graphWorkspacePath)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const unwatchRef = useRef<(() => void) | null>(null)
   // Incremented on every setup; checked after the async watch() resolves to
@@ -89,14 +89,14 @@ export function useGraphFileWatch() {
 
         const records = await dbListGraphs()
         useGraphStore.setState({
-          graphList: records.map(r => ({ id: r.id, name: r.name, updatedAt: r.updatedAt })),
+          graphList: records.map((r) => ({ id: r.id, name: r.name, updatedAt: r.updatedAt })),
         })
 
-        const changedFromDisk = new Set(toPersist.map(r => r.id))
+        const changedFromDisk = new Set(toPersist.map((r) => r.id))
         if (!changedFromDisk.has(state.currentGraphId)) return
 
         const localFp = graphPersistFingerprint(state.nodes, state.edges, state.graphDisplay)
-        const active = records.find(r => r.id === state.currentGraphId)
+        const active = records.find((r) => r.id === state.currentGraphId)
         if (!active) return
 
         if (localFp !== state.savedFingerprint) {

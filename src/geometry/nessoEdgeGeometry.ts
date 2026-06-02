@@ -13,12 +13,18 @@ export function defaultCurveFlip(
   return targetAbove !== targetLeft
 }
 
-export function nodeCenterX(node: { position: { x: number }; measured?: { width?: number } }): number {
+export function nodeCenterX(node: {
+  position: { x: number }
+  measured?: { width?: number }
+}): number {
   const w = node.measured?.width ?? 80
   return node.position.x + w / 2
 }
 
-export function nodeCenterY(node: { position: { y: number }; measured?: { height?: number } }): number {
+export function nodeCenterY(node: {
+  position: { y: number }
+  measured?: { height?: number }
+}): number {
   const h = node.measured?.height ?? 32
   return node.position.y + h / 2
 }
@@ -49,14 +55,17 @@ export function effectiveCurveFlip(
   targetCenterX: number,
   targetCenterY: number,
 ): boolean {
-  if (auto && !pinned) return defaultCurveFlip(sourceCenterX, sourceCenterY, targetCenterX, targetCenterY)
+  if (auto && !pinned)
+    return defaultCurveFlip(sourceCenterX, sourceCenterY, targetCenterX, targetCenterY)
   return Boolean(storedFlip)
 }
 
 export function rectExit(cx: number, cy: number, w: number, h: number, tx: number, ty: number) {
-  const dx = tx - cx, dy = ty - cy
+  const dx = tx - cx,
+    dy = ty - cy
   if (dx === 0 && dy === 0) return { x: cx, y: cy }
-  const hx = w / 2, hy = h / 2
+  const hx = w / 2,
+    hy = h / 2
   const sx = dx === 0 ? Infinity : hx / Math.abs(dx)
   const sy = dy === 0 ? Infinity : hy / Math.abs(dy)
   const s = Math.min(sx, sy)
@@ -64,8 +73,10 @@ export function rectExit(cx: number, cy: number, w: number, h: number, tx: numbe
 }
 
 export function nessoArcPath(
-  sx: number, sy: number,
-  tx: number, ty: number,
+  sx: number,
+  sy: number,
+  tx: number,
+  ty: number,
   siblingIdx = 0,
   straight = false,
   curveFlip = false,

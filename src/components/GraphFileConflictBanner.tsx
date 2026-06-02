@@ -6,9 +6,9 @@ import { isDesktop } from '@/lib/isDesktop'
 
 export function GraphFileConflictBanner() {
   const t = useT()
-  const conflict = useGraphStore(s => s.externalFileConflict)
-  const reload = useGraphStore(s => s.reloadActiveGraphFromDisk)
-  const keep = useGraphStore(s => s.keepLocalGraphChanges)
+  const conflict = useGraphStore((s) => s.externalFileConflict)
+  const reload = useGraphStore((s) => s.reloadActiveGraphFromDisk)
+  const keep = useGraphStore((s) => s.keepLocalGraphChanges)
 
   return (
     <ActionBanner

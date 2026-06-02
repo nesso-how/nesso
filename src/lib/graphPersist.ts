@@ -36,6 +36,8 @@ export function graphPersistEquals(
   a: { nodes: Node<ConceptNodeData>[]; edges: Edge[]; display: GraphDisplaySettings },
   b: { nodes: Node<ConceptNodeData>[]; edges: Edge[]; display: GraphDisplaySettings },
 ): boolean {
-  return graphPersistFingerprint(a.nodes, a.edges, a.display)
-    === graphPersistFingerprint(b.nodes, b.edges, b.display)
+  return (
+    graphPersistFingerprint(a.nodes, a.edges, a.display) ===
+    graphPersistFingerprint(b.nodes, b.edges, b.display)
+  )
 }

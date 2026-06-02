@@ -1,6 +1,12 @@
 // SPDX-License-Identifier: MIT
 import type { ConnectionLineComponentProps } from '@xyflow/react'
-import { effectiveCurveFlip, flowNodeCenterX, flowNodeCenterY, nessoArcPath, rectExit } from '@/geometry/nessoEdgeGeometry'
+import {
+  effectiveCurveFlip,
+  flowNodeCenterX,
+  flowNodeCenterY,
+  nessoArcPath,
+  rectExit,
+} from '@/geometry/nessoEdgeGeometry'
 import { useGraphStore } from '@/store/graph'
 
 const pad = 6
@@ -13,8 +19,8 @@ export function NessoConnectionLine({
   toX,
   toY,
 }: ConnectionLineComponentProps) {
-  const straight = useGraphStore(s => s.graphDisplay.curveStyle === 'straight')
-  const autoCurveFlip = useGraphStore(s => s.graphDisplay.autoCurveFlip)
+  const straight = useGraphStore((s) => s.graphDisplay.curveStyle === 'straight')
+  const autoCurveFlip = useGraphStore((s) => s.graphDisplay.autoCurveFlip)
 
   const sw = fromNode.measured?.width ?? 80
   const sh = fromNode.measured?.height ?? 32
@@ -65,7 +71,15 @@ export function NessoConnectionLine({
   } else {
     // No target node yet: treat cursor as a virtual target so the flip direction
     // and source exit point update dynamically as the user moves the cursor.
-    curveFlip = effectiveCurveFlip(autoCurveFlip, false, false, flowNodeCenterX(fromNode), scy, toX, toY)
+    curveFlip = effectiveCurveFlip(
+      autoCurveFlip,
+      false,
+      false,
+      flowNodeCenterX(fromNode),
+      scy,
+      toX,
+      toY,
+    )
     b = { x: toX, y: toY }
     if (straight) {
       const a = rectExit(scx, scy, sw + pad * 2, sh + pad * 2, toX, toY)

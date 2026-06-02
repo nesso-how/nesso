@@ -4,9 +4,15 @@ import type { EdgeProps } from '@xyflow/react'
 import { useStore } from '@xyflow/react'
 import { RELATION_TYPES, RELATION_CATEGORIES, asEdgeTypeName } from '@/data/relationTypes'
 import { GlyphSVG } from './GlyphSVG'
-import type { EdgeTypeName, EdgeEncoding, NessoEdgeData } from '@/types/graph'
+import type { EdgeEncoding, NessoEdgeData } from '@/types/graph'
 import { useGraphStore } from '@/store/graph'
-import { effectiveCurveFlip, flowNodeCenterX, flowNodeCenterY, nessoArcPath, rectExit } from '@/geometry/nessoEdgeGeometry'
+import {
+  effectiveCurveFlip,
+  flowNodeCenterX,
+  flowNodeCenterY,
+  nessoArcPath,
+  rectExit,
+} from '@/geometry/nessoEdgeGeometry'
 import { useT } from '@/i18n'
 
 function EdgePathElement({
@@ -22,7 +28,13 @@ function EdgePathElement({
   width?: number
   opacity?: number
 }) {
-  const base = { fill: 'none', stroke: color, strokeWidth: width, opacity, strokeLinecap: 'round' as const }
+  const base = {
+    fill: 'none',
+    stroke: color,
+    strokeWidth: width,
+    opacity,
+    strokeLinecap: 'round' as const,
+  }
 
   if (lineStyle === 'double') {
     return (
@@ -37,7 +49,8 @@ function EdgePathElement({
     return <path d={d} {...base} strokeDasharray="1 4" strokeWidth={width * 1.2} />
   }
   if (lineStyle === 'dashed') return <path d={d} {...base} strokeDasharray="6 5" />
-  if (lineStyle === 'dotted') return <path d={d} {...base} strokeDasharray="0.1 5" strokeWidth={width * 1.4} />
+  if (lineStyle === 'dotted')
+    return <path d={d} {...base} strokeDasharray="0.1 5" strokeWidth={width * 1.4} />
   return <path d={d} {...base} />
 }
 
@@ -48,10 +61,10 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps) {
 
   // Read live node geometry from the React Flow store so we can compute
   // bounding-box exit points instead of relying on fixed left/right handles.
-  const sourceNode = useStore(s => s.nodeLookup.get(source))
-  const targetNode = useStore(s => s.nodeLookup.get(target))
+  const sourceNode = useStore((s) => s.nodeLookup.get(source))
+  const targetNode = useStore((s) => s.nodeLookup.get(target))
 
-  const edgeData = (data as unknown) as NessoEdgeData | undefined
+  const edgeData = data as unknown as NessoEdgeData | undefined
   const edgeType = asEdgeTypeName(edgeData?.type)
   const T = RELATION_TYPES[edgeType]
   const C = RELATION_CATEGORIES[T.cat]
@@ -100,9 +113,11 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps) {
         b: rectExit(tcx, tcy, tw + pad * 2, th + pad * 2, scx, scy),
       }
     }
-    const dx = tcx - scx, dy = tcy - scy
+    const dx = tcx - scx,
+      dy = tcy - scy
     const dist = Math.sqrt(dx * dx + dy * dy) || 1
-    const nx = -dy / dist, ny = dx / dist
+    const nx = -dy / dist,
+      ny = dx / dist
     const sibOff = (edgeData?.siblingIdx ?? 0) * 14
     const bend = (Math.min(dist * 0.22, 90) + sibOff * 0.5) * flipSign
     const cpx = (scx + tcx) / 2 + nx * bend
@@ -114,8 +129,10 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps) {
   })()
 
   const { path, labelX, labelY, arrowAngle } = nessoArcPath(
-    a.x, a.y,
-    b.x, b.y,
+    a.x,
+    a.y,
+    b.x,
+    b.y,
     edgeData?.siblingIdx ?? 0,
     straight,
     curveFlip,
@@ -146,17 +163,20 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps) {
 
       {/* Arrowhead at the bbox exit point of the target node */}
       {T.inverse !== 'self' && encoding !== 'minimal' && (
-        <polygon
-          points={`${b.x},${b.y} ${ax1},${ay1} ${ax2},${ay2}`}
-          fill={color}
-          opacity={0.85}
-        />
+        <polygon points={`${b.x},${b.y} ${ax1},${ay1} ${ax2},${ay2}`} fill={color} opacity={0.85} />
       )}
 
       {/* Midpoint glyph chip */}
       {encoding !== 'minimal' && (
         <g style={{ pointerEvents: 'all' }}>
-          <circle cx={labelX} cy={labelY} r={r} fill="var(--paper)" stroke={color} strokeWidth={1.2} />
+          <circle
+            cx={labelX}
+            cy={labelY}
+            r={r}
+            fill="var(--paper)"
+            stroke={color}
+            strokeWidth={1.2}
+          />
           <g transform={`translate(${labelX - 7}, ${labelY - 7})`}>
             <GlyphSVG kind={T.glyph} color={color} size={14} />
           </g>
@@ -172,18 +192,20 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps) {
           height={20}
           style={{ overflow: 'visible', pointerEvents: 'none' }}
         >
-          <div style={{
-            display: 'inline-block',
-            background: 'var(--paper)',
-            border: '0.5px solid var(--line)',
-            borderRadius: 4,
-            padding: '1px 6px',
-            font: "500 10px 'JetBrains Mono', ui-monospace",
-            color,
-            letterSpacing: '0.02em',
-            whiteSpace: 'nowrap',
-            lineHeight: '16px',
-          }}>
+          <div
+            style={{
+              display: 'inline-block',
+              background: 'var(--paper)',
+              border: '0.5px solid var(--line)',
+              borderRadius: 4,
+              padding: '1px 6px',
+              font: "500 10px 'JetBrains Mono', ui-monospace",
+              color,
+              letterSpacing: '0.02em',
+              whiteSpace: 'nowrap',
+              lineHeight: '16px',
+            }}
+          >
             {t.relationTypes.types[edgeType]}
           </div>
         </foreignObject>

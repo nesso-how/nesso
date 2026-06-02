@@ -91,7 +91,7 @@ export async function writeManifest(
 export function isManifestOnlyWatchPaths(paths: string[]): boolean {
   if (paths.length === 0) return false
   const suffix = `/${MANIFEST_DIR}/${MANIFEST_FILE}`
-  return paths.every(p => p.replace(/\\/g, '/').endsWith(suffix))
+  return paths.every((p) => p.replace(/\\/g, '/').endsWith(suffix))
 }
 
 export function buildFileToIdMap(manifest: WorkspaceManifest): Map<string, string> {

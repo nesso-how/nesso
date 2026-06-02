@@ -52,11 +52,8 @@ export function computeFitViewport(
 
   const zoom = Math.max(
     0.15,
-    Math.min(
-      canvasW / (nodeW * (1 + 2 * PADDING)),
-      canvasH / (nodeH * (1 + 2 * PADDING)),
-      2.5,
-    ) * zoomScale,
+    Math.min(canvasW / (nodeW * (1 + 2 * PADDING)), canvasH / (nodeH * (1 + 2 * PADDING)), 2.5) *
+      zoomScale,
   )
 
   return {

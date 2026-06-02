@@ -10,7 +10,7 @@ import it from './locales/it'
 const locales = { en, it } as const
 
 export function useT() {
-  const language = useGraphStore(s => s.settings.language)
+  const language = useGraphStore((s) => s.settings.language)
   return locales[language]
 }
 

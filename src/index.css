@@ -10,8 +10,8 @@
   --ink-5: #c4b9a4;
   --bg-elev: #fffdf7;
   --bg-card: #fffdf7;
-  --line: rgba(26, 24, 20, 0.10);
-  --line-strong: rgba(26, 24, 20, 0.20);
+  --line: rgba(26, 24, 20, 0.1);
+  --line-strong: rgba(26, 24, 20, 0.2);
   --grid-dot: rgba(26, 24, 20, 0.18);
 
   /* Category colors — jewel tones tuned to sit on cream */
@@ -33,10 +33,10 @@
 
   --accent: #6e2730;
   --shadow-md: 0 8px 28px -10px rgba(26, 24, 20, 0.18), 0 2px 8px rgba(26, 24, 20, 0.06);
-  --shadow-lg: 0 28px 60px -16px rgba(26, 24, 20, 0.22), 0 8px 20px -8px rgba(26, 24, 20, 0.10);
+  --shadow-lg: 0 28px 60px -16px rgba(26, 24, 20, 0.22), 0 8px 20px -8px rgba(26, 24, 20, 0.1);
 }
 
-[data-theme="dark"] {
+[data-theme='dark'] {
   --paper: #14130f;
   --paper-deep: #0d0c09;
   --ink: #f0e9d8;
@@ -46,8 +46,8 @@
   --ink-5: #423e35;
   --bg-elev: #1c1a16;
   --bg-card: #211e19;
-  --line: rgba(240, 233, 216, 0.10);
-  --line-strong: rgba(240, 233, 216, 0.20);
+  --line: rgba(240, 233, 216, 0.1);
+  --line-strong: rgba(240, 233, 216, 0.2);
   --grid-dot: rgba(240, 233, 216, 0.15);
 
   --cat-taxonomic: #6f9bcb;
@@ -65,10 +65,15 @@
   --shadow-lg: 0 28px 60px -16px rgba(0, 0, 0, 0.7), 0 8px 20px -8px rgba(0, 0, 0, 0.5);
 }
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
 
-*, *::before, *::after { box-sizing: border-box; }
-
-html, body, #root {
+html,
+body,
+#root {
   margin: 0;
   padding: 0;
   height: 100%;
@@ -84,7 +89,9 @@ body {
   font-feature-settings: 'ss01', 'cv11';
 }
 
-button, input, textarea {
+button,
+input,
+textarea {
   font-family: inherit;
   color: inherit;
 }
@@ -120,21 +127,21 @@ button, input, textarea {
   color: var(--ink);
 }
 
-[data-theme="dark"] ::selection {
+[data-theme='dark'] ::selection {
   background: rgba(196, 122, 130, 0.28);
   color: var(--ink);
 }
 
 /* Paper grain overlay */
 body::before {
-  content: "";
+  content: '';
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 1;
   background-image:
-    radial-gradient(circle at 20% 30%, rgba(0,0,0,0.025) 0%, transparent 40%),
-    radial-gradient(circle at 80% 70%, rgba(0,0,0,0.02) 0%, transparent 40%);
+    radial-gradient(circle at 20% 30%, rgba(0, 0, 0, 0.025) 0%, transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(0, 0, 0, 0.02) 0%, transparent 40%);
   mix-blend-mode: multiply;
   opacity: 0.25;
 }
@@ -171,8 +178,12 @@ body::before {
 
 /* Settings stepper — hide native number spinners */
 .settings-stepper::-webkit-inner-spin-button,
-.settings-stepper::-webkit-outer-spin-button { -webkit-appearance: none; }
-.settings-stepper { -moz-appearance: textfield; }
+.settings-stepper::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+}
+.settings-stepper {
+  -moz-appearance: textfield;
+}
 
 /* Muted, on-theme scrollbars (Inspector body, etc.) */
 .nesso-scrollbar {
@@ -208,32 +219,69 @@ body::before {
  * transcript re-renders (or scroll layout) don’t reinsert <style> and reset runs.
  */
 @keyframes nx-tw-caret {
-  0%, 50% { opacity: 1; }
-  50.01%, 100% { opacity: 0; }
+  0%,
+  50% {
+    opacity: 1;
+  }
+  50.01%,
+  100% {
+    opacity: 0;
+  }
 }
 
 @keyframes nx-bars {
-  0%, 100% { transform: scaleY(0.28); opacity: 0.45; }
-  50% { transform: scaleY(1); opacity: 1; }
+  0%,
+  100% {
+    transform: scaleY(0.28);
+    opacity: 0.45;
+  }
+  50% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
 }
 
 /* Inline loaders (inspector search pill, etc.): rhythmic dots, readable on dark and light palettes */
 @keyframes nx-dots-pulse {
-  0%, 80%, 100% { transform: scale(0.55); opacity: 0.2; }
-  40% { transform: scale(1); opacity: 1; }
+  0%,
+  80%,
+  100% {
+    transform: scale(0.55);
+    opacity: 0.2;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 @keyframes banner-in {
-  from { opacity: 0; transform: translateY(-6px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* React Flow overrides */
-.react-flow__renderer { z-index: 2; }
-.react-flow__pane { cursor: grab; }
-.react-flow__pane.react-flow__pane--dragging { cursor: grabbing; }
-.react-flow__attribution { display: none; }
-.react-flow__nodesselection-rect { display: none; }
+.react-flow__renderer {
+  z-index: 2;
+}
+.react-flow__pane {
+  cursor: grab;
+}
+.react-flow__pane.react-flow__pane--dragging {
+  cursor: grabbing;
+}
+.react-flow__attribution {
+  display: none;
+}
+.react-flow__nodesselection-rect {
+  display: none;
+}
 
 /*
  * WKWebView (Tauri desktop) still selects node/edge labels while dragging
@@ -272,4 +320,3 @@ body::before {
   text-rendering: auto;
   -webkit-font-smoothing: subpixel-antialiased;
 }
-

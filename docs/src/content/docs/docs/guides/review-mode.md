@@ -30,23 +30,23 @@ If the AI backend is unavailable (no WebGPU, model not downloaded, remote endpoi
 
 Under **Settings -> Review**:
 
-| Setting | What it does | Range |
-| --- | --- | --- |
-| **Target retention** | Probability of correctly recalling a concept at its next review. Higher means more frequent reviews. | 70% to 97% |
-| **Max interval** | Longest interval FSRS can schedule, in days. Caps how far into the future a card can be pushed. | 1 to 36,500 |
+| Setting              | What it does                                                                                         | Range       |
+| -------------------- | ---------------------------------------------------------------------------------------------------- | ----------- |
+| **Target retention** | Probability of correctly recalling a concept at its next review. Higher means more frequent reviews. | 70% to 97%  |
+| **Max interval**     | Longest interval FSRS can schedule, in days. Caps how far into the future a card can be pushed.      | 1 to 36,500 |
 
 The defaults (90% retention, 100-year cap) match the FSRS reference defaults. Lower the retention if you're comfortable forgetting more in exchange for fewer reviews; raise the max interval if you want long-term cards to keep stretching out.
 
 ## Keyboard shortcuts
 
-| Key | Action |
-| --- | --- |
-| `Space` / `Enter` | Reveal |
-| `1` | Again |
-| `2` | Hard |
-| `3` | Good |
-| `4` | Easy |
-| `Esc` | Close review |
+| Key               | Action       |
+| ----------------- | ------------ |
+| `Space` / `Enter` | Reveal       |
+| `1`               | Again        |
+| `2`               | Hard         |
+| `3`               | Good         |
+| `4`               | Easy         |
+| `Esc`             | Close review |
 
 Numeric keys only fire after the answer is revealed.
 

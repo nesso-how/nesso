@@ -1,6 +1,19 @@
 // SPDX-License-Identifier: MIT
-import { useState, useEffect, useLayoutEffect, useRef, type FormEvent, type ReactNode, type MouseEvent as ReactMouseEvent } from 'react'
-import { RELATION_TYPES, RELATION_CATEGORIES, RELATION_TYPE_VALUES, asEdgeTypeName } from '@/data/relationTypes'
+import {
+  useState,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  type FormEvent,
+  type ReactNode,
+  type MouseEvent as ReactMouseEvent,
+} from 'react'
+import {
+  RELATION_TYPES,
+  RELATION_CATEGORIES,
+  RELATION_TYPE_VALUES,
+  asEdgeTypeName,
+} from '@/data/relationTypes'
 import { GlyphSVG } from './GlyphSVG'
 import { CloseButton } from './CloseButton'
 import { TOPBAR_HEIGHT_PX } from './TopBar'
@@ -19,10 +32,7 @@ export const INSPECTOR_PANEL_MAX_WIDTH = 520
 export const INSPECTOR_PANEL_DEFAULT_WIDTH = 296
 
 export function clampInspectorPanelWidth(w: number): number {
-  return Math.min(
-    INSPECTOR_PANEL_MAX_WIDTH,
-    Math.max(INSPECTOR_PANEL_MIN_WIDTH, Math.round(w)),
-  )
+  return Math.min(INSPECTOR_PANEL_MAX_WIDTH, Math.max(INSPECTOR_PANEL_MIN_WIDTH, Math.round(w)))
 }
 
 export function readInspectorPanelWidth(): number {
@@ -30,8 +40,7 @@ export function readInspectorPanelWidth(): number {
     const raw = localStorage.getItem(INSPECTOR_WIDTH_STORAGE_KEY)
     if (raw == null) return INSPECTOR_PANEL_DEFAULT_WIDTH
     return clampInspectorPanelWidth(Number(raw))
-  }
-  catch {
+  } catch {
     return INSPECTOR_PANEL_DEFAULT_WIDTH
   }
 }
@@ -39,8 +48,9 @@ export function readInspectorPanelWidth(): number {
 export function writeInspectorPanelWidth(w: number): void {
   try {
     localStorage.setItem(INSPECTOR_WIDTH_STORAGE_KEY, String(clampInspectorPanelWidth(w)))
+  } catch {
+    /* ignore quota / privacy mode */
   }
-  catch { /* ignore quota / privacy mode */ }
 }
 
 /** Matches App `bottomInset`; keeps inspector clear of BottomDock canvas padding. */
@@ -57,13 +67,25 @@ function formatConceptDue(dueMs: number, dueNow: string): string {
 
 function Chevron({ open }: { open: boolean }) {
   return (
-    <svg width="9" height="9" viewBox="0 0 10 10" style={{
-      opacity: 0.55,
-      transform: open ? 'rotate(0deg)' : 'rotate(-90deg)',
-      transition: 'transform 140ms',
-      flexShrink: 0,
-    }}>
-      <path d="M2 4l3 3 3-3" stroke="currentColor" strokeWidth="1.4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    <svg
+      width="9"
+      height="9"
+      viewBox="0 0 10 10"
+      style={{
+        opacity: 0.55,
+        transform: open ? 'rotate(0deg)' : 'rotate(-90deg)',
+        transition: 'transform 140ms',
+        flexShrink: 0,
+      }}
+    >
+      <path
+        d="M2 4l3 3 3-3"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        fill="none"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   )
 }
@@ -95,7 +117,9 @@ function InlineEdit({
   const [draft, setDraft] = useState(value)
   const ref = useRef<HTMLInputElement & HTMLTextAreaElement>(null)
 
-  useEffect(() => { setDraft(value) }, [value])
+  useEffect(() => {
+    setDraft(value)
+  }, [value])
 
   useEffect(() => {
     if (!editing) return
@@ -103,7 +127,11 @@ function InlineEdit({
       const el = ref.current
       if (!el) return
       el.focus()
-      try { el.setSelectionRange(el.value.length, el.value.length) } catch {}
+      try {
+        el.setSelectionRange(el.value.length, el.value.length)
+      } catch {
+        /* setSelectionRange unsupported on some inputs */
+      }
     }, 0)
     return () => clearTimeout(t)
   }, [editing])
@@ -116,8 +144,14 @@ function InlineEdit({
     el.style.height = `${el.scrollHeight}px`
   }, [editing, draft, multiline])
 
-  const commit = () => { onSave(draft); setEditing(false) }
-  const cancel = () => { setDraft(value); setEditing(false) }
+  const commit = () => {
+    onSave(draft)
+    setEditing(false)
+  }
+  const cancel = () => {
+    setDraft(value)
+    setEditing(false)
+  }
 
   const baseStyle: React.CSSProperties = {
     display: 'block',
@@ -133,13 +167,15 @@ function InlineEdit({
     ...textStyle,
   }
 
-  const editWrapper: React.CSSProperties = noEditBorder ? {} : {
-    margin: '-4px -6px',
-    padding: '4px 6px',
-    boxShadow: '0 0 0 1px var(--line)',
-    borderRadius: 6,
-    background: 'var(--bg-card)',
-  }
+  const editWrapper: React.CSSProperties = noEditBorder
+    ? {}
+    : {
+        margin: '-4px -6px',
+        padding: '4px 6px',
+        boxShadow: '0 0 0 1px var(--line)',
+        borderRadius: 6,
+        background: 'var(--bg-card)',
+      }
 
   if (editing) {
     const editEl = multiline ? (
@@ -148,24 +184,46 @@ function InlineEdit({
         rows={1}
         value={draft}
         maxLength={maxLength}
-        onChange={e => setDraft(e.target.value)}
+        onChange={(e) => setDraft(e.target.value)}
         onBlur={commit}
-        onKeyDown={e => {
-          if (e.key === 'Escape') { e.preventDefault(); cancel() }
-          if (e.key === 'Enter' && e.shiftKey && onShiftEnter) { e.preventDefault(); commit(); onShiftEnter() }
-          else if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commit() }
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') {
+            e.preventDefault()
+            cancel()
+          }
+          if (e.key === 'Enter' && e.shiftKey && onShiftEnter) {
+            e.preventDefault()
+            commit()
+            onShiftEnter()
+          } else if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault()
+            commit()
+          }
         }}
-        style={{ ...baseStyle, overflow: 'hidden', resize: 'none', ...(borderedPlaceholder && { padding: '5px 8px' }) } as React.CSSProperties}
+        style={
+          {
+            ...baseStyle,
+            overflow: 'hidden',
+            resize: 'none',
+            ...(borderedPlaceholder && { padding: '5px 8px' }),
+          } as React.CSSProperties
+        }
       />
     ) : (
       <input
         ref={ref}
         value={draft}
-        onChange={e => setDraft(e.target.value)}
+        onChange={(e) => setDraft(e.target.value)}
         onBlur={commit}
-        onKeyDown={e => {
-          if (e.key === 'Enter') { e.preventDefault(); commit() }
-          if (e.key === 'Escape') { e.preventDefault(); cancel() }
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault()
+            commit()
+          }
+          if (e.key === 'Escape') {
+            e.preventDefault()
+            cancel()
+          }
         }}
         style={baseStyle}
       />
@@ -240,18 +298,21 @@ async function searchCommonsImages(query: string): Promise<WikiImage[]> {
   if (!res.ok) throw new Error('Search failed')
   const data: {
     query?: {
-      pages?: Record<string, { title: string; imageinfo?: Array<{ thumburl?: string; descriptionurl?: string }> }>
+      pages?: Record<
+        string,
+        { title: string; imageinfo?: Array<{ thumburl?: string; descriptionurl?: string }> }
+      >
     }
   } = await res.json()
   const pages = data.query?.pages
   if (!pages) return []
   return Object.values(pages)
-    .filter(p => p.imageinfo?.[0]?.thumburl)
-    .map(p => {
+    .filter((p) => p.imageinfo?.[0]?.thumburl)
+    .map((p) => {
       const info = p.imageinfo![0]
       const descriptionUrl =
-        info.descriptionurl
-        ?? `https://commons.wikimedia.org/wiki/${encodeURIComponent(p.title.replace(/ /g, '_'))}`
+        info.descriptionurl ??
+        `https://commons.wikimedia.org/wiki/${encodeURIComponent(p.title.replace(/ /g, '_'))}`
       return { title: p.title, thumbUrl: info.thumburl!, descriptionUrl }
     })
 }
@@ -284,15 +345,19 @@ function ImageSearchPanel({
     if (initialQ) {
       setLoading(true)
       searchCommonsImages(initialQ)
-        .then(r => { if (!cancelled) setResults(r) })
-        .finally(() => { if (!cancelled) setLoading(false) })
+        .then((r) => {
+          if (!cancelled) setResults(r)
+        })
+        .finally(() => {
+          if (!cancelled) setLoading(false)
+        })
     }
 
     return () => {
       cancelled = true
       clearTimeout(focusTimer)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- run once when search panel opens; query/conceptText are initial props
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once when search panel opens; query/conceptText are initial props
   }, [])
 
   async function runSearch(e: FormEvent) {
@@ -300,20 +365,25 @@ function ImageSearchPanel({
     const q = query.trim()
     if (!q) return
     setLoading(true)
-    try { setResults(await searchCommonsImages(q)) }
-    finally { setLoading(false) }
+    try {
+      setResults(await searchCommonsImages(q))
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
-    <div style={{
-      flexShrink: 0,
-      background: 'var(--bg-card)',
-      borderBottom: '0.5px solid var(--line)',
-      padding: '10px 12px 12px',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 10,
-    }}>
+    <div
+      style={{
+        flexShrink: 0,
+        background: 'var(--bg-card)',
+        borderBottom: '0.5px solid var(--line)',
+        padding: '10px 12px 12px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 10,
+      }}
+    >
       <form
         onSubmit={runSearch}
         style={{
@@ -326,13 +396,22 @@ function ImageSearchPanel({
           padding: '6px 9px',
         }}
       >
-        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="var(--ink-4)" strokeWidth="1.6" style={{ flexShrink: 0 }}>
-          <circle cx="7" cy="7" r="4.5" /><path d="M10.5 10.5L13 13" strokeLinecap="round" />
+        <svg
+          width="11"
+          height="11"
+          viewBox="0 0 16 16"
+          fill="none"
+          stroke="var(--ink-4)"
+          strokeWidth="1.6"
+          style={{ flexShrink: 0 }}
+        >
+          <circle cx="7" cy="7" r="4.5" />
+          <path d="M10.5 10.5L13 13" strokeLinecap="round" />
         </svg>
         <input
           ref={inputRef}
           value={query}
-          onChange={e => setQuery(e.target.value)}
+          onChange={(e) => setQuery(e.target.value)}
           placeholder={t.inspector.image.searchPlaceholder}
           style={{
             flex: 1,
@@ -347,13 +426,15 @@ function ImageSearchPanel({
           }}
         />
         {results.length > 0 && (
-          <span style={{
-            font: "500 9px 'JetBrains Mono', ui-monospace",
-            color: 'var(--ink-5)',
-            textTransform: 'uppercase',
-            letterSpacing: '0.06em',
-            flexShrink: 0,
-          }}>
+          <span
+            style={{
+              font: "500 9px 'JetBrains Mono', ui-monospace",
+              color: 'var(--ink-5)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.06em',
+              flexShrink: 0,
+            }}
+          >
             {results.length} hits
           </span>
         )}
@@ -371,7 +452,7 @@ function ImageSearchPanel({
               padding: '0 2px',
             }}
           >
-            {[0, 1, 2].map(i => (
+            {[0, 1, 2].map((i) => (
               <span
                 key={i}
                 style={{
@@ -391,18 +472,27 @@ function ImageSearchPanel({
       {results.length > 0 && (
         <div className="nesso-scrollbar" style={{ maxHeight: 220, overflowY: 'auto' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-            {results.map(img => (
+            {results.map((img) => (
               <button
                 key={img.title}
                 type="button"
                 onClick={() => onPick(img)}
                 style={{
-                  appearance: 'none', border: 0, padding: 0, cursor: 'default',
-                  height: 70, borderRadius: 7, overflow: 'hidden',
+                  appearance: 'none',
+                  border: 0,
+                  padding: 0,
+                  cursor: 'default',
+                  height: 70,
+                  borderRadius: 7,
+                  overflow: 'hidden',
                   boxShadow: 'inset 0 0 0 0.5px var(--line)',
                 }}
               >
-                <img src={img.thumbUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                <img
+                  src={img.thumbUrl}
+                  alt=""
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                />
               </button>
             ))}
           </div>
@@ -488,24 +578,26 @@ function InspectorPanel({
   }
 
   return (
-    <div style={{
-      position: 'absolute',
-      left: leftOffset + INSPECTOR_PANEL_EDGE_INSET,
-      top: TOPBAR_HEIGHT_PX + INSPECTOR_PANEL_EDGE_INSET,
-      width: panelWidth,
-      zIndex: 25,
-      background: 'var(--bg-elev)',
-      border: '0.5px solid var(--line)',
-      borderRadius: 14,
-      padding: noPadding ? 0 : '16px 16px 10px',
-      paddingRight: noPadding ? 0 : 20,
-      boxShadow: 'var(--shadow-md)',
-      boxSizing: 'border-box',
-      display: 'flex',
-      flexDirection: 'column',
-      overflow: noPadding ? 'hidden' : 'visible',
-      maxHeight: `calc(100vh - ${TOPBAR_HEIGHT_PX + INSPECTOR_PANEL_EDGE_INSET}px - ${INSPECTOR_VIEWPORT_BOTTOM_RESERVE}px)`,
-    }}>
+    <div
+      style={{
+        position: 'absolute',
+        left: leftOffset + INSPECTOR_PANEL_EDGE_INSET,
+        top: TOPBAR_HEIGHT_PX + INSPECTOR_PANEL_EDGE_INSET,
+        width: panelWidth,
+        zIndex: 25,
+        background: 'var(--bg-elev)',
+        border: '0.5px solid var(--line)',
+        borderRadius: 14,
+        padding: noPadding ? 0 : '16px 16px 10px',
+        paddingRight: noPadding ? 0 : 20,
+        boxShadow: 'var(--shadow-md)',
+        boxSizing: 'border-box',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: noPadding ? 'hidden' : 'visible',
+        maxHeight: `calc(100vh - ${TOPBAR_HEIGHT_PX + INSPECTOR_PANEL_EDGE_INSET}px - ${INSPECTOR_VIEWPORT_BOTTOM_RESERVE}px)`,
+      }}
+    >
       {children}
 
       <button
@@ -591,22 +683,25 @@ function NodeInspector({
       elaboration: { definition: '', examples: '', notes: '', ...elab, ...p },
     })
 
-  const outgoing = edges.filter(e => e.source === node.id)
-  const incoming = edges.filter(e => e.target === node.id)
+  const outgoing = edges.filter((e) => e.source === node.id)
+  const incoming = edges.filter((e) => e.target === node.id)
   const focusNode = (id: string) => setSelected({ kind: 'node', id })
 
   const isDue = node.data.due <= 0 || node.data.due <= Date.now()
 
   // Examples as a clean array — empty strings are excluded from storage
-  const examplesArr = (elab?.examples ?? '').split('\n').filter(s => s.length > 0)
+  const examplesArr = (elab?.examples ?? '').split('\n').filter((s) => s.length > 0)
 
   const saveExamples = (arr: string[]) => patch({ examples: arr.join('\n') })
   const updateExample = (idx: number, value: string) => {
     const next = [...examplesArr]
     next[idx] = value
-    saveExamples(next.filter(s => s.length > 0))
+    saveExamples(next.filter((s) => s.length > 0))
   }
-  const addExample = () => { setPendingNewExample(true); setPendingKey(k => k + 1) }
+  const addExample = () => {
+    setPendingNewExample(true)
+    setPendingKey((k) => k + 1)
+  }
   const savePendingExample = (v: string) => {
     if (v.trim()) saveExamples([...examplesArr, v.trim()])
     setPendingNewExample(false)
@@ -627,32 +722,45 @@ function NodeInspector({
           setQuery={setImageQuery}
           conceptText={node.data.text}
           onPick={(img) => {
-            patch({ imageUrl: img.thumbUrl, imageTitle: img.title, imageDescriptionUrl: img.descriptionUrl })
+            patch({
+              imageUrl: img.thumbUrl,
+              imageTitle: img.title,
+              imageDescriptionUrl: img.descriptionUrl,
+            })
             setImageMode('view')
             setImageQuery('')
             setImageHover(false)
           }}
-          onClose={() => { setImageMode('view'); setImageQuery(''); setImageHover(false) }}
+          onClose={() => {
+            setImageMode('view')
+            setImageQuery('')
+            setImageHover(false)
+          }}
         />
       )}
 
       {/* Header */}
       {imageMode === 'view' && (
-        <div style={{
-          position: 'relative',
-          flexShrink: 0,
-          padding: '14px 14px 12px 14px',
-          borderBottom: '0.5px solid var(--line)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12,
-        }}>
+        <div
+          style={{
+            position: 'relative',
+            flexShrink: 0,
+            padding: '14px 14px 12px 14px',
+            borderBottom: '0.5px solid var(--line)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+          }}
+        >
           {/* Image icon button */}
           <button
             type="button"
             onMouseEnter={() => setImageHover(true)}
             onMouseLeave={() => setImageHover(false)}
-            onClick={() => { setImageQuery(node.data.text); setImageMode('search') }}
+            onClick={() => {
+              setImageQuery(node.data.text)
+              setImageMode('search')
+            }}
             title={hasImage ? t.inspector.image.search : t.inspector.image.addImage}
             style={{
               appearance: 'none',
@@ -675,23 +783,47 @@ function NodeInspector({
             }}
           >
             {hasImage ? (
-              <img src={imageUrl!} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              <img
+                src={imageUrl!}
+                alt=""
+                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              />
             ) : (
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="var(--ink-4)" strokeWidth="1.5">
-                <circle cx="7" cy="7" r="4.5" /><path d="M10.5 10.5L13 13" strokeLinecap="round" />
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="var(--ink-4)"
+                strokeWidth="1.5"
+              >
+                <circle cx="7" cy="7" r="4.5" />
+                <path d="M10.5 10.5L13 13" strokeLinecap="round" />
               </svg>
             )}
             {hasImage && imageHover && (
-              <div style={{
-                position: 'absolute',
-                inset: 0,
-                background: 'rgba(26,24,20,0.38)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="rgba(244,242,234,0.9)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M11.5 2.5l2 2-8 8-2.5.5.5-2.5 8-8z" /><path d="M10 4l2 2" />
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background: 'rgba(26,24,20,0.38)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  stroke="rgba(244,242,234,0.9)"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M11.5 2.5l2 2-8 8-2.5.5.5-2.5 8-8z" />
+                  <path d="M10 4l2 2" />
                 </svg>
               </div>
             )}
@@ -705,7 +837,9 @@ function NodeInspector({
               multiline
               noEditBorder
               maxLength={120}
-              onSave={v => { if (v.trim()) updateNodeData(node.id, { text: v.trim().replace(/\n+/g, ' ') }) }}
+              onSave={(v) => {
+                if (v.trim()) updateNodeData(node.id, { text: v.trim().replace(/\n+/g, ' ') })
+              }}
               textStyle={{
                 font: "500 22px/1.15 'Fraunces', ui-serif, Georgia, serif",
                 letterSpacing: '-0.012em',
@@ -735,31 +869,55 @@ function NodeInspector({
         }}
       >
         {/* FSRS meta strip */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr 1fr',
-          borderTop: '0.5px dashed var(--line)',
-          borderBottom: '0.5px dashed var(--line)',
-          padding: '8px 0',
-        }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr 1fr',
+            borderTop: '0.5px dashed var(--line)',
+            borderBottom: '0.5px dashed var(--line)',
+            padding: '8px 0',
+          }}
+        >
           <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             <span style={LABEL_STYLE}>{t.inspector.rows.due}</span>
-            <span style={{
-              font: "500 12px 'JetBrains Mono', ui-monospace",
-              color: isDue ? 'var(--accent)' : 'var(--ink-2)',
-            }}>
+            <span
+              style={{
+                font: "500 12px 'JetBrains Mono', ui-monospace",
+                color: isDue ? 'var(--accent)' : 'var(--ink-2)',
+              }}
+            >
               {formatConceptDue(node.data.due, t.inspector.dueNow)}
             </span>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 3, borderLeft: '0.5px dashed var(--line)', paddingLeft: 12 }}>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 3,
+              borderLeft: '0.5px dashed var(--line)',
+              paddingLeft: 12,
+            }}
+          >
             <span style={LABEL_STYLE}>{t.inspector.rows.stability}</span>
-            <span style={{ font: "500 12px 'JetBrains Mono', ui-monospace", color: 'var(--ink-2)' }}>
+            <span
+              style={{ font: "500 12px 'JetBrains Mono', ui-monospace", color: 'var(--ink-2)' }}
+            >
               {node.data.stability.toFixed(1)}d
             </span>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 3, borderLeft: '0.5px dashed var(--line)', paddingLeft: 12 }}>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 3,
+              borderLeft: '0.5px dashed var(--line)',
+              paddingLeft: 12,
+            }}
+          >
             <span style={LABEL_STYLE}>{t.inspector.rows.lastRating}</span>
-            <span style={{ font: "500 12px 'JetBrains Mono', ui-monospace", color: 'var(--ink-2)' }}>
+            <span
+              style={{ font: "500 12px 'JetBrains Mono', ui-monospace", color: 'var(--ink-2)' }}
+            >
               {t.inspector.ratingNames[Math.min(4, Math.max(0, node.data.lastRating ?? 0))]}
             </span>
           </div>
@@ -767,13 +925,11 @@ function NodeInspector({
 
         {/* Definition */}
         <div>
-          <div style={{ ...LABEL_STYLE, marginBottom: 6 }}>
-            {t.inspector.notes.definition}
-          </div>
+          <div style={{ ...LABEL_STYLE, marginBottom: 6 }}>{t.inspector.notes.definition}</div>
           <InlineEdit
             value={elab?.definition ?? ''}
             placeholder={t.inspector.notes.definitionPlaceholder}
-            onSave={v => patch({ definition: v })}
+            onSave={(v) => patch({ definition: v })}
             multiline
             noEditBorder
             borderedPlaceholder
@@ -787,20 +943,40 @@ function NodeInspector({
 
         {/* Examples — collapsible */}
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: 6,
+            }}
+          >
             <button
               type="button"
               onClick={() => setSetting('inspectorExamplesOpen', !examplesOpen)}
               style={{
-                appearance: 'none', border: 0, background: 'transparent', cursor: 'default',
-                display: 'inline-flex', alignItems: 'center', gap: 6, padding: 0,
+                appearance: 'none',
+                border: 0,
+                background: 'transparent',
+                cursor: 'default',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: 0,
                 ...LABEL_STYLE,
               }}
             >
               <Chevron open={examplesOpen} />
               <span>{t.inspector.notes.examples}</span>
               {examplesArr.length > 0 && (
-                <span style={{ font: "450 10px 'JetBrains Mono', ui-monospace", color: 'var(--ink-5)', textTransform: 'none', letterSpacing: 0 }}>
+                <span
+                  style={{
+                    font: "450 10px 'JetBrains Mono', ui-monospace",
+                    color: 'var(--ink-5)',
+                    textTransform: 'none',
+                    letterSpacing: 0,
+                  }}
+                >
                   {examplesArr.length}
                 </span>
               )}
@@ -810,9 +986,15 @@ function NodeInspector({
                 type="button"
                 onClick={addExample}
                 style={{
-                  appearance: 'none', border: 0, background: 'transparent',
-                  font: "450 11px 'Inter', system-ui", color: 'var(--ink-4)', cursor: 'default',
-                  textTransform: 'none', letterSpacing: 0, padding: 0,
+                  appearance: 'none',
+                  border: 0,
+                  background: 'transparent',
+                  font: "450 11px 'Inter', system-ui",
+                  color: 'var(--ink-4)',
+                  cursor: 'default',
+                  textTransform: 'none',
+                  letterSpacing: 0,
+                  padding: 0,
                 }}
               >
                 ＋ Add
@@ -820,16 +1002,22 @@ function NodeInspector({
             )}
           </div>
 
-          {examplesOpen && (
-            examplesArr.length === 0 && !pendingNewExample ? (
+          {examplesOpen &&
+            (examplesArr.length === 0 && !pendingNewExample ? (
               <button
                 type="button"
                 onClick={addExample}
                 style={{
-                  appearance: 'none', border: '0.5px dashed var(--line)',
-                  background: 'transparent', width: '100%',
-                  padding: '8px 10px', borderRadius: 7, cursor: 'default',
-                  font: "450 12px 'Inter', system-ui", color: 'var(--ink-5)', textAlign: 'left',
+                  appearance: 'none',
+                  border: '0.5px dashed var(--line)',
+                  background: 'transparent',
+                  width: '100%',
+                  padding: '8px 10px',
+                  borderRadius: 7,
+                  cursor: 'default',
+                  font: "450 12px 'Inter', system-ui",
+                  color: 'var(--ink-5)',
+                  textAlign: 'left',
                 }}
               >
                 {t.inspector.notes.examplesPlaceholder}
@@ -837,32 +1025,51 @@ function NodeInspector({
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {examplesArr.map((ex, i) => (
-                  <div key={i} style={{
-                    display: 'grid',
-                    gridTemplateColumns: '14px 1fr 18px',
-                    gap: 6,
-                    alignItems: 'flex-start',
-                    padding: '3px 0',
-                  }}>
-                    <span style={{ color: 'var(--accent)', font: "500 13px 'JetBrains Mono', ui-monospace", lineHeight: 1.55 }}>·</span>
+                  <div
+                    key={i}
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: '14px 1fr 18px',
+                      gap: 6,
+                      alignItems: 'flex-start',
+                      padding: '3px 0',
+                    }}
+                  >
+                    <span
+                      style={{
+                        color: 'var(--accent)',
+                        font: "500 13px 'JetBrains Mono', ui-monospace",
+                        lineHeight: 1.55,
+                      }}
+                    >
+                      ·
+                    </span>
                     <InlineEdit
                       value={ex}
                       placeholder="example…"
                       multiline
                       noEditBorder
                       maxLength={500}
-                      onSave={v => updateExample(i, v)}
+                      onSave={(v) => updateExample(i, v)}
                       onShiftEnter={addExample}
-                      textStyle={{ font: "400 13.5px/1.55 'Fraunces', ui-serif, Georgia, serif", color: 'var(--ink-2)' }}
+                      textStyle={{
+                        font: "400 13.5px/1.55 'Fraunces', ui-serif, Georgia, serif",
+                        color: 'var(--ink-2)',
+                      }}
                     />
                     <button
                       type="button"
                       onClick={() => removeExample(i)}
                       title="Remove"
                       style={{
-                        appearance: 'none', border: 0, background: 'transparent',
-                        color: 'var(--ink-5)', cursor: 'default',
-                        font: "500 10px 'Inter', system-ui", padding: 0, lineHeight: 1.55,
+                        appearance: 'none',
+                        border: 0,
+                        background: 'transparent',
+                        color: 'var(--ink-5)',
+                        cursor: 'default',
+                        font: "500 10px 'Inter', system-ui",
+                        padding: 0,
+                        lineHeight: 1.55,
                       }}
                     >
                       ✕
@@ -870,14 +1077,24 @@ function NodeInspector({
                   </div>
                 ))}
                 {pendingNewExample && (
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: '14px 1fr 18px',
-                    gap: 6,
-                    alignItems: 'flex-start',
-                    padding: '3px 0',
-                  }}>
-                    <span style={{ color: 'var(--accent)', font: "500 13px 'JetBrains Mono', ui-monospace", lineHeight: 1.55 }}>·</span>
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: '14px 1fr 18px',
+                      gap: 6,
+                      alignItems: 'flex-start',
+                      padding: '3px 0',
+                    }}
+                  >
+                    <span
+                      style={{
+                        color: 'var(--accent)',
+                        font: "500 13px 'JetBrains Mono', ui-monospace",
+                        lineHeight: 1.55,
+                      }}
+                    >
+                      ·
+                    </span>
                     <InlineEdit
                       key={pendingKey}
                       value=""
@@ -888,16 +1105,24 @@ function NodeInspector({
                       onSave={savePendingExample}
                       onShiftEnter={addExample}
                       initialEditing
-                      textStyle={{ font: "400 13.5px/1.55 'Fraunces', ui-serif, Georgia, serif", color: 'var(--ink-2)' }}
+                      textStyle={{
+                        font: "400 13.5px/1.55 'Fraunces', ui-serif, Georgia, serif",
+                        color: 'var(--ink-2)',
+                      }}
                     />
                     <button
                       type="button"
                       onClick={() => setPendingNewExample(false)}
                       title="Remove"
                       style={{
-                        appearance: 'none', border: 0, background: 'transparent',
-                        color: 'var(--ink-5)', cursor: 'default',
-                        font: "500 10px 'Inter', system-ui", padding: 0, lineHeight: 1.55,
+                        appearance: 'none',
+                        border: 0,
+                        background: 'transparent',
+                        color: 'var(--ink-5)',
+                        cursor: 'default',
+                        font: "500 10px 'Inter', system-ui",
+                        padding: 0,
+                        lineHeight: 1.55,
                       }}
                     >
                       ✕
@@ -905,8 +1130,7 @@ function NodeInspector({
                   </div>
                 )}
               </div>
-            )
-          )}
+            ))}
         </div>
 
         {/* Relations — collapsible */}
@@ -916,27 +1140,42 @@ function NodeInspector({
               type="button"
               onClick={() => setSetting('inspectorRelationsOpen', !relationsOpen)}
               style={{
-                appearance: 'none', border: 0, background: 'transparent', cursor: 'default',
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                width: '100%', padding: 0,
+                appearance: 'none',
+                border: 0,
+                background: 'transparent',
+                cursor: 'default',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                width: '100%',
+                padding: 0,
               }}
             >
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, ...LABEL_STYLE }}>
+              <span
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, ...LABEL_STYLE }}
+              >
                 <Chevron open={relationsOpen} />
                 <span>{t.inspector.relations}</span>
               </span>
-              <span style={{ font: "450 11px 'Inter', system-ui", color: 'var(--ink-5)', textTransform: 'none', letterSpacing: 0 }}>
+              <span
+                style={{
+                  font: "450 11px 'Inter', system-ui",
+                  color: 'var(--ink-5)',
+                  textTransform: 'none',
+                  letterSpacing: 0,
+                }}
+              >
                 {outgoing.length + incoming.length}
               </span>
             </button>
 
             {relationsOpen && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                {outgoing.map(e => {
+                {outgoing.map((e) => {
                   const relationId = asEdgeTypeName(e.data?.type)
                   const T = RELATION_TYPES[relationId]
                   const C = RELATION_CATEGORIES[T.cat]
-                  const target = nodes.find(n => n.id === e.target)
+                  const target = nodes.find((n) => n.id === e.target)
                   return (
                     <EdgeRow
                       key={e.id}
@@ -948,11 +1187,11 @@ function NodeInspector({
                     />
                   )
                 })}
-                {incoming.map(e => {
+                {incoming.map((e) => {
                   const relationId = asEdgeTypeName(e.data?.type)
                   const T = RELATION_TYPES[relationId]
                   const C = RELATION_CATEGORIES[T.cat]
-                  const source = nodes.find(n => n.id === e.source)
+                  const source = nodes.find((n) => n.id === e.source)
                   return (
                     <EdgeRow
                       key={e.id}
@@ -971,13 +1210,11 @@ function NodeInspector({
 
         {/* Notes */}
         <div>
-          <div style={{ ...LABEL_STYLE, marginBottom: 6 }}>
-            {t.inspector.notes.notes}
-          </div>
+          <div style={{ ...LABEL_STYLE, marginBottom: 6 }}>{t.inspector.notes.notes}</div>
           <InlineEdit
             value={elab?.notes ?? ''}
             placeholder={t.inspector.notes.notesPlaceholder}
-            onSave={v => patch({ notes: v })}
+            onSave={(v) => patch({ notes: v })}
             multiline
             noEditBorder
             borderedPlaceholder
@@ -1010,14 +1247,20 @@ function EdgeInspector({
   const edgeType = asEdgeTypeName(edge.data?.type)
   const T = RELATION_TYPES[edgeType]
   const C = RELATION_CATEGORIES[T.cat]
-  const from = nodes.find(n => n.id === edge.source)
-  const to = nodes.find(n => n.id === edge.target)
-  const siblings = RELATION_TYPE_VALUES.filter(id => RELATION_TYPES[id].cat === T.cat)
+  const from = nodes.find((n) => n.id === edge.source)
+  const to = nodes.find((n) => n.id === edge.target)
+  const siblings = RELATION_TYPE_VALUES.filter((id) => RELATION_TYPES[id].cat === T.cat)
   const autoCurveFlip = graphDisplay.autoCurveFlip
   const curveFlipPinned = Boolean(edge.data?.curveFlipPinned)
   const curveFlipMode = autoCurveFlip
-    ? (curveFlipPinned ? (edge.data?.curveFlip ? 'on' : 'off') : 'auto')
-    : (edge.data?.curveFlip ? 'on' : 'off')
+    ? curveFlipPinned
+      ? edge.data?.curveFlip
+        ? 'on'
+        : 'off'
+      : 'auto'
+    : edge.data?.curveFlip
+      ? 'on'
+      : 'off'
   const showCurveFlip = graphDisplay.curveStyle === 'arc'
 
   return (
@@ -1026,14 +1269,16 @@ function EdgeInspector({
       panelWidth={panelWidth}
       onPanelWidthChange={onPanelWidthChange}
     >
-      <div style={{
-        font: "500 10.5px 'JetBrains Mono', ui-monospace",
-        color: 'var(--ink-4)',
-        textTransform: 'uppercase',
-        letterSpacing: '0.08em',
-        display: 'flex',
-        justifyContent: 'space-between',
-      }}>
+      <div
+        style={{
+          font: "500 10.5px 'JetBrains Mono', ui-monospace",
+          color: 'var(--ink-4)',
+          textTransform: 'uppercase',
+          letterSpacing: '0.08em',
+          display: 'flex',
+          justifyContent: 'space-between',
+        }}
+      >
         <span>{t.inspector.relation}</span>
         <span style={{ color: C.color }}>{t.relationTypes.categories[T.cat].label}</span>
       </div>
@@ -1041,24 +1286,48 @@ function EdgeInspector({
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '10px 0 18px' }}>
         <span style={{ font: "500 13.5px 'Fraunces', serif" }}>{from?.data.text}</span>
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 4 }}>
-          <span style={{ height: 1, flex: 1, background: C.color, opacity: 0.5, display: 'inline-block' }} />
+          <span
+            style={{
+              height: 1,
+              flex: 1,
+              background: C.color,
+              opacity: 0.5,
+              display: 'inline-block',
+            }}
+          />
           <GlyphSVG kind={T.glyph} color={C.color} size={14} />
-          <span style={{ height: 1, flex: 1, background: C.color, opacity: 0.5, display: 'inline-block' }} />
+          <span
+            style={{
+              height: 1,
+              flex: 1,
+              background: C.color,
+              opacity: 0.5,
+              display: 'inline-block',
+            }}
+          />
         </div>
         <span style={{ font: "500 13.5px 'Fraunces', serif" }}>{to?.data.text}</span>
       </div>
 
-      <div style={{ font: "500 18px 'JetBrains Mono', ui-monospace", color: C.color, marginBottom: 12 }}>
+      <div
+        style={{
+          font: "500 18px 'JetBrains Mono', ui-monospace",
+          color: C.color,
+          marginBottom: 12,
+        }}
+      >
         {t.relationTypes.types[edgeType]}
       </div>
 
-      <h5 style={{
-        margin: '14px 0 6px',
-        font: "600 10px 'JetBrains Mono', ui-monospace",
-        textTransform: 'uppercase',
-        letterSpacing: '0.08em',
-        color: 'var(--ink-4)',
-      }}>
+      <h5
+        style={{
+          margin: '14px 0 6px',
+          font: "600 10px 'JetBrains Mono', ui-monospace",
+          textTransform: 'uppercase',
+          letterSpacing: '0.08em',
+          color: 'var(--ink-4)',
+        }}
+      >
         {t.inspector.sharpen}
       </h5>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
@@ -1083,36 +1352,39 @@ function EdgeInspector({
 
       {showCurveFlip && (
         <>
-          <h5 style={{
-            margin: '18px 0 6px',
-            font: "600 10px 'JetBrains Mono', ui-monospace",
-            textTransform: 'uppercase',
-            letterSpacing: '0.08em',
-            color: 'var(--ink-4)',
-          }}>
+          <h5
+            style={{
+              margin: '18px 0 6px',
+              font: "600 10px 'JetBrains Mono', ui-monospace",
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              color: 'var(--ink-4)',
+            }}
+          >
             {t.inspector.visualization}
           </h5>
           <EdgeDisplayRow label={t.inspector.flipCurve}>
             <EdgeSeg
-              options={autoCurveFlip
-                ? [
-                  { id: 'off', label: t.sidebar.displayOptions.off },
-                  { id: 'auto', label: t.inspector.flipCurveAuto },
-                  { id: 'on', label: t.sidebar.displayOptions.on },
-                ]
-                : [
-                  { id: 'off', label: t.sidebar.displayOptions.off },
-                  { id: 'on', label: t.sidebar.displayOptions.on },
-                ]}
+              options={
+                autoCurveFlip
+                  ? [
+                      { id: 'off', label: t.sidebar.displayOptions.off },
+                      { id: 'auto', label: t.inspector.flipCurveAuto },
+                      { id: 'on', label: t.sidebar.displayOptions.on },
+                    ]
+                  : [
+                      { id: 'off', label: t.sidebar.displayOptions.off },
+                      { id: 'on', label: t.sidebar.displayOptions.on },
+                    ]
+              }
               value={curveFlipMode}
-              onChange={v => {
+              onChange={(v) => {
                 if (v !== curveFlipMode) setEdgeCurveFlipMode(edge.id, v as 'auto' | 'off' | 'on')
               }}
             />
           </EdgeDisplayRow>
         </>
       )}
-
     </InspectorPanel>
   )
 }
@@ -1121,43 +1393,68 @@ function EdgeInspector({
 
 function EdgeDisplayRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div style={{
-      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '5px 0', gap: 12,
-    }}>
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '5px 0',
+        gap: 12,
+      }}
+    >
       <span style={{ font: "12px 'Inter', ui-sans-serif", color: 'var(--ink-3)' }}>{label}</span>
       {children}
     </div>
   )
 }
 
-function EdgeSeg({ options, value, onChange }: {
+function EdgeSeg({
+  options,
+  value,
+  onChange,
+}: {
   options: { id: string; label: string }[]
   value: string
   onChange: (id: string) => void
 }) {
   return (
     <div style={{ display: 'flex', background: 'var(--paper-deep)', borderRadius: 6, padding: 2 }}>
-      {options.map(o => (
+      {options.map((o) => (
         <button
           key={o.id}
           onClick={() => onChange(o.id)}
           style={{
-            appearance: 'none', border: 0,
+            appearance: 'none',
+            border: 0,
             background: o.id === value ? 'var(--bg-card)' : 'transparent',
             color: o.id === value ? 'var(--ink)' : 'var(--ink-4)',
-            font: o.id === value ? "500 11px 'Inter', ui-sans-serif" : "11px 'Inter', ui-sans-serif",
-            padding: '3px 9px', borderRadius: 4, cursor: 'default',
+            font:
+              o.id === value ? "500 11px 'Inter', ui-sans-serif" : "11px 'Inter', ui-sans-serif",
+            padding: '3px 9px',
+            borderRadius: 4,
+            cursor: 'default',
             boxShadow: o.id === value ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
           }}
-        >{o.label}</button>
+        >
+          {o.label}
+        </button>
       ))}
     </div>
   )
 }
 
-function EdgeRow({ label, text, color, glyph, onClick }: {
-  label: string; text: string; color: string; glyph: string; onClick: () => void
+function EdgeRow({
+  label,
+  text,
+  color,
+  glyph,
+  onClick,
+}: {
+  label: string
+  text: string
+  color: string
+  glyph: string
+  onClick: () => void
 }) {
   return (
     <div
@@ -1171,27 +1468,35 @@ function EdgeRow({ label, text, color, glyph, onClick }: {
         borderRadius: 5,
         cursor: 'default',
       }}
-      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--paper-deep)' }}
-      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+      onMouseEnter={(e) => {
+        ;(e.currentTarget as HTMLElement).style.background = 'var(--paper-deep)'
+      }}
+      onMouseLeave={(e) => {
+        ;(e.currentTarget as HTMLElement).style.background = 'transparent'
+      }}
     >
       <GlyphSVG kind={glyph as Parameters<typeof GlyphSVG>[0]['kind']} color={color} size={14} />
       <div style={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 0 }}>
-        <span style={{
-          font: "500 10px 'JetBrains Mono', ui-monospace",
-          color,
-          textTransform: 'uppercase',
-          letterSpacing: '0.06em',
-        }}>
+        <span
+          style={{
+            font: "500 10px 'JetBrains Mono', ui-monospace",
+            color,
+            textTransform: 'uppercase',
+            letterSpacing: '0.06em',
+          }}
+        >
           {label}
         </span>
-        <span style={{
-          font: "500 13.5px 'Fraunces', serif",
-          color: 'var(--ink)',
-          letterSpacing: '-0.005em',
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-        }}>
+        <span
+          style={{
+            font: "500 13.5px 'Fraunces', serif",
+            color: 'var(--ink)',
+            letterSpacing: '-0.005em',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}
+        >
           {text}
         </span>
       </div>

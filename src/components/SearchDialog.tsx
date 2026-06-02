@@ -41,18 +41,16 @@ export function SearchDialog({ open, onClose, onSelectNode, onSelectGraph }: Pro
 
   const graphResults = useMemo(() => {
     const sorted = [...graphList].sort((a, b) => b.updatedAt - a.updatedAt)
-    return q ? sorted.filter(g => g.name.toLowerCase().includes(q)) : sorted
+    return q ? sorted.filter((g) => g.name.toLowerCase().includes(q)) : sorted
   }, [graphList, q])
 
   const conceptResults = useMemo(() => {
-    return q
-      ? nodes.filter(n => n.data.text.toLowerCase().includes(q))
-      : nodes.slice(0, 6)
+    return q ? nodes.filter((n) => n.data.text.toLowerCase().includes(q)) : nodes.slice(0, 6)
   }, [nodes, q])
 
   const allResults = [
-    ...graphResults.map(g => ({ kind: 'graph' as const, g })),
-    ...conceptResults.map(n => ({ kind: 'concept' as const, n })),
+    ...graphResults.map((g) => ({ kind: 'graph' as const, g })),
+    ...conceptResults.map((n) => ({ kind: 'concept' as const, n })),
   ]
 
   const handleSelectGraph = (id: string) => {
@@ -66,7 +64,10 @@ export function SearchDialog({ open, onClose, onSelectNode, onSelectGraph }: Pro
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') { onClose(); return }
+    if (e.key === 'Escape') {
+      onClose()
+      return
+    }
     if (e.key === 'Enter') {
       const first = allResults[0]
       if (!first) return
@@ -84,17 +85,22 @@ export function SearchDialog({ open, onClose, onSelectNode, onSelectGraph }: Pro
     <div
       onClick={onClose}
       style={{
-        position: 'absolute', inset: 0, zIndex: 75,
+        position: 'absolute',
+        inset: 0,
+        zIndex: 75,
         background: 'rgba(20, 18, 14, 0.45)',
         backdropFilter: 'blur(6px)',
-        display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
+        display: 'flex',
+        alignItems: 'flex-start',
+        justifyContent: 'center',
         paddingTop: 120,
       }}
     >
       <div
-        onClick={e => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
         style={{
-          width: 440, maxWidth: '90vw',
+          width: 440,
+          maxWidth: '90vw',
           background: 'var(--bg-elev)',
           border: '0.5px solid var(--line)',
           borderRadius: 14,
@@ -103,23 +109,40 @@ export function SearchDialog({ open, onClose, onSelectNode, onSelectGraph }: Pro
         }}
       >
         {/* Input */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 10,
-          padding: '12px 16px',
-          borderBottom: hasResults ? '0.5px solid var(--line)' : 'none',
-        }}>
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="var(--ink-4)" strokeWidth="1.5" strokeLinecap="round">
-            <circle cx="6.5" cy="6.5" r="4.5" /><path d="M11.5 11.5l3 3" />
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            padding: '12px 16px',
+            borderBottom: hasResults ? '0.5px solid var(--line)' : 'none',
+          }}
+        >
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="var(--ink-4)"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+          >
+            <circle cx="6.5" cy="6.5" r="4.5" />
+            <path d="M11.5 11.5l3 3" />
           </svg>
           <input
             ref={inputRef}
             value={query}
-            onChange={e => setQuery(e.target.value)}
+            onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={t.search.placeholder}
             style={{
-              flex: 1, appearance: 'none', border: 0, outline: 0,
-              background: 'transparent', color: 'var(--ink)',
+              flex: 1,
+              appearance: 'none',
+              border: 0,
+              outline: 0,
+              background: 'transparent',
+              color: 'var(--ink)',
               font: "400 14px/1 'Inter', system-ui",
             }}
           />
@@ -127,13 +150,24 @@ export function SearchDialog({ open, onClose, onSelectNode, onSelectGraph }: Pro
             <button
               onClick={() => setQuery('')}
               style={{
-                appearance: 'none', border: 0, background: 'transparent',
-                color: 'var(--ink-4)', cursor: 'default', padding: 2,
-                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                appearance: 'none',
+                border: 0,
+                background: 'transparent',
+                color: 'var(--ink-4)',
+                cursor: 'default',
+                padding: 2,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
               <svg width="12" height="12" viewBox="0 0 12 12">
-                <path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                <path
+                  d="M3 3l6 6M9 3l-6 6"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
               </svg>
             </button>
           )}
@@ -145,34 +179,61 @@ export function SearchDialog({ open, onClose, onSelectNode, onSelectGraph }: Pro
             {graphResults.length > 0 && (
               <section>
                 <SectionLabel>{t.search.graphs}</SectionLabel>
-                {graphResults.map(g => {
+                {graphResults.map((g) => {
                   const active = g.id === currentGraphId
                   return (
                     <button
                       key={g.id}
                       onClick={() => handleSelectGraph(g.id)}
                       style={{
-                        width: '100%', appearance: 'none', border: 0,
-                        background: 'transparent', cursor: 'default',
-                        display: 'flex', alignItems: 'center', gap: 10,
-                        padding: '8px 16px', textAlign: 'left',
+                        width: '100%',
+                        appearance: 'none',
+                        border: 0,
+                        background: 'transparent',
+                        cursor: 'default',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 10,
+                        padding: '8px 16px',
+                        textAlign: 'left',
                       }}
-                      onMouseEnter={e => { e.currentTarget.style.background = 'var(--paper-deep)' }}
-                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'var(--paper-deep)'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'transparent'
+                      }}
                     >
-                      <span style={{
-                        width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
-                        background: active ? 'var(--accent)' : 'var(--ink-5)',
-                      }} />
-                      <span style={{
-                        flex: 1,
-                        font: active ? "500 13px 'Fraunces', ui-serif, Georgia, serif" : "13px 'Fraunces', ui-serif, Georgia, serif",
-                        color: 'var(--ink)',
-                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                      }}>
+                      <span
+                        style={{
+                          width: 6,
+                          height: 6,
+                          borderRadius: '50%',
+                          flexShrink: 0,
+                          background: active ? 'var(--accent)' : 'var(--ink-5)',
+                        }}
+                      />
+                      <span
+                        style={{
+                          flex: 1,
+                          font: active
+                            ? "500 13px 'Fraunces', ui-serif, Georgia, serif"
+                            : "13px 'Fraunces', ui-serif, Georgia, serif",
+                          color: 'var(--ink)',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
                         {g.name}
                       </span>
-                      <span style={{ font: "500 10.5px 'JetBrains Mono', ui-monospace", color: 'var(--ink-4)', flexShrink: 0 }}>
+                      <span
+                        style={{
+                          font: "500 10.5px 'JetBrains Mono', ui-monospace",
+                          color: 'var(--ink-4)',
+                          flexShrink: 0,
+                        }}
+                      >
                         {active ? t.search.open : timeAgo(g.updatedAt)}
                       </span>
                     </button>
@@ -189,27 +250,52 @@ export function SearchDialog({ open, onClose, onSelectNode, onSelectGraph }: Pro
             {conceptResults.length > 0 && (
               <section>
                 <SectionLabel>{t.search.concepts}</SectionLabel>
-                {conceptResults.map(node => (
+                {conceptResults.map((node) => (
                   <button
                     key={node.id}
                     onClick={() => handleSelectNode(node)}
                     style={{
-                      width: '100%', appearance: 'none', border: 0,
-                      background: 'transparent', cursor: 'default',
-                      display: 'flex', alignItems: 'center', gap: 10,
-                      padding: '8px 16px', textAlign: 'left',
+                      width: '100%',
+                      appearance: 'none',
+                      border: 0,
+                      background: 'transparent',
+                      cursor: 'default',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 10,
+                      padding: '8px 16px',
+                      textAlign: 'left',
                     }}
-                    onMouseEnter={e => { e.currentTarget.style.background = 'var(--paper-deep)' }}
-                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'var(--paper-deep)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'transparent'
+                    }}
                   >
-                    <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="var(--ink-5)" strokeWidth="1.3" strokeLinecap="round" style={{ flexShrink: 0 }}>
+                    <svg
+                      width="11"
+                      height="11"
+                      viewBox="0 0 12 12"
+                      fill="none"
+                      stroke="var(--ink-5)"
+                      strokeWidth="1.3"
+                      strokeLinecap="round"
+                      style={{ flexShrink: 0 }}
+                    >
                       <circle cx="6" cy="6" r="4" />
                     </svg>
-                    <span style={{
-                      flex: 1, font: "400 13px 'Fraunces', ui-serif, Georgia, serif",
-                      color: 'var(--ink)', letterSpacing: '-0.005em',
-                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                    }}>
+                    <span
+                      style={{
+                        flex: 1,
+                        font: "400 13px 'Fraunces', ui-serif, Georgia, serif",
+                        color: 'var(--ink)',
+                        letterSpacing: '-0.005em',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
                       {node.data.text}
                     </span>
                     <RatingDots lastRating={node.data.lastRating ?? 0} />
@@ -221,11 +307,14 @@ export function SearchDialog({ open, onClose, onSelectNode, onSelectGraph }: Pro
         )}
 
         {q && !hasResults && (
-          <p style={{
-            margin: 0, padding: '14px 16px',
-            font: "400 13px 'Inter', system-ui",
-            color: 'var(--ink-4)',
-          }}>
+          <p
+            style={{
+              margin: 0,
+              padding: '14px 16px',
+              font: "400 13px 'Inter', system-ui",
+              color: 'var(--ink-4)',
+            }}
+          >
             {t.search.noResults(query)}
           </p>
         )}
@@ -236,13 +325,15 @@ export function SearchDialog({ open, onClose, onSelectNode, onSelectGraph }: Pro
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{
-      padding: '6px 16px 3px',
-      font: "500 10px 'JetBrains Mono', ui-monospace",
-      color: 'var(--ink-4)',
-      textTransform: 'uppercase',
-      letterSpacing: '0.08em',
-    }}>
+    <div
+      style={{
+        padding: '6px 16px 3px',
+        font: "500 10px 'JetBrains Mono', ui-monospace",
+        color: 'var(--ink-4)',
+        textTransform: 'uppercase',
+        letterSpacing: '0.08em',
+      }}
+    >
       {children}
     </div>
   )
@@ -253,11 +344,16 @@ function RatingDots({ lastRating }: { lastRating: number }) {
   const fill = r === 0 ? 'var(--paper-deep)' : `var(--conf-${r})`
   return (
     <span style={{ display: 'inline-flex', gap: 2, flexShrink: 0 }}>
-      {[1, 2, 3, 4].map(i => (
-        <span key={i} style={{
-          width: 5, height: 5, borderRadius: '50%',
-          background: i <= r ? fill : 'var(--paper-deep)',
-        }} />
+      {[1, 2, 3, 4].map((i) => (
+        <span
+          key={i}
+          style={{
+            width: 5,
+            height: 5,
+            borderRadius: '50%',
+            background: i <= r ? fill : 'var(--paper-deep)',
+          }}
+        />
       ))}
     </span>
   )

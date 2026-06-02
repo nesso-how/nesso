@@ -2,7 +2,13 @@
 import understanding from '@/data/seeds/understanding.json'
 import comprensione from '@/data/seeds/it/comprensione.json'
 import type { Node, Edge } from '@xyflow/react'
-import type { ConceptNodeData, Language, GraphDisplaySettings, EdgeEncoding, CurveStyle } from '@/types/graph'
+import type {
+  ConceptNodeData,
+  Language,
+  GraphDisplaySettings,
+  EdgeEncoding,
+  CurveStyle,
+} from '@/types/graph'
 import { defaultGraphDisplay } from '@/types/graph'
 
 export interface Seed {
@@ -34,9 +40,7 @@ type SeedSource = {
   }
 }
 
-function normalizeSeedDisplay(
-  display: NonNullable<SeedSource['display']>,
-): GraphDisplaySettings {
+function normalizeSeedDisplay(display: NonNullable<SeedSource['display']>): GraphDisplaySettings {
   const base = defaultGraphDisplay()
   return {
     edgeEncoding: (display.edgeEncoding as EdgeEncoding | undefined) ?? base.edgeEncoding,
@@ -46,11 +50,7 @@ function normalizeSeedDisplay(
   }
 }
 
-function makeSeed(
-  id: string,
-  raw: SeedSource,
-  opts?: Pick<Seed, 'initialFitZoom'>,
-): Seed {
+function makeSeed(id: string, raw: SeedSource, opts?: Pick<Seed, 'initialFitZoom'>): Seed {
   return {
     id,
     name: raw.name,
@@ -71,7 +71,7 @@ const itSeeds = [
   makeSeed(SEED_IDS.comprensione, comprensione, { initialFitZoom: DEMO_INITIAL_FIT_ZOOM }),
 ]
 
-const seedById = new Map([...enSeeds, ...itSeeds].map(s => [s.id, s]))
+const seedById = new Map([...enSeeds, ...itSeeds].map((s) => [s.id, s]))
 
 export function getSeedInitialFitZoom(graphId: string): number | undefined {
   return seedById.get(graphId)?.initialFitZoom
