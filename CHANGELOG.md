@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.0-alpha.26] - 2026-06-02
+
 ### Added
 
 - **Tooling:** Prettier (root config, `format` / `format:check`) and ESLint flat config (`typescript-eslint`, React presets, `eslint-config-prettier`) for `src/` and `packages/*`, with `lint` / `lint:fix` scripts.
@@ -446,7 +448,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial alpha: interactive knowledge graph (web + Tauri v2); desktop installers on GitHub Releases (macOS Apple silicon and Intel).
 
-[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.25...HEAD
+[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.26...HEAD
+[0.1.0-alpha.26]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.25...v0.1.0-alpha.26
 [0.1.0-alpha.25]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.24...v0.1.0-alpha.25
 [0.1.0-alpha.24]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.23...v0.1.0-alpha.24
 [0.1.0-alpha.23]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.22...v0.1.0-alpha.23
