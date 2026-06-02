@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.0-alpha.25] - 2026-06-02
+
 ### Added
 
 - **Desktop:** Auto-updates — on launch the macOS app checks GitHub Releases and, when a newer signed build exists, offers to install it and relaunch (Tauri updater + `latest.json`).
@@ -433,7 +435,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial alpha: interactive knowledge graph (web + Tauri v2); desktop installers on GitHub Releases (macOS Apple silicon and Intel).
 
-[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.24...HEAD
+[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.25...HEAD
+[0.1.0-alpha.25]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.24...v0.1.0-alpha.25
 [0.1.0-alpha.24]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.23...v0.1.0-alpha.24
 [0.1.0-alpha.23]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.22...v0.1.0-alpha.23
 [0.1.0-alpha.22]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.21...v0.1.0-alpha.22
