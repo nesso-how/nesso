@@ -51,16 +51,9 @@ jobs:
   publish:
     permissions:
       contents: write
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - platform: macos-latest
-            args: "--target aarch64-apple-darwin"
-          - platform: macos-latest
-            args: "--target x86_64-apple-darwin"
-
-    runs-on: ${{ matrix.platform }}
+    # Single universal macOS build: one .dmg that runs on both Apple Silicon and
+    # Intel, and one complete latest.json (no matrix race on the updater manifest).
+    runs-on: macos-latest
 
     steps:
       - uses: actions/checkout@v6
@@ -136,6 +129,10 @@ jobs:
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Updater signing keys (minisign). Configure both as repo secrets;
+          # the matching public key lives in src-tauri/tauri.conf.json.
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           projectPath: ./src-tauri
           tagName: v__VERSION__
@@ -143,6 +140,8 @@ jobs:
           releaseBody: ${{ steps.changelog.outputs.body }}
           generateReleaseNotes: false
           releaseDraft: false
-          prerelease: true
-          args: ${{ matrix.args }}
-          includeUpdaterJson: false
+          # Full release (not pre-release) so releases/latest/download/latest.json
+          # — the updater endpoint — resolves to this build.
+          prerelease: false
+          args: "--target universal-apple-darwin"
+          includeUpdaterJson: true

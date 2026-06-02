@@ -32,8 +32,9 @@ All components live in `src/components/`. They read from the Zustand store via `
 | `SettingsDialog`          | Tabbed modal: Appearance, AI, Review (FSRS), Data (erase local storage + reload). Opened via ⌘,.           |
 | `ShortcutsDialog`         | Keyboard shortcut reference modal. Opened via `?` or `GraphIO`.                                            |
 | `CloseButton`             | Icon dismiss shared by modal headers.                                                                      |
-| `ActionBanner`            | Fixed bottom banner with message + pill actions (persistent notices, not auto-dismiss toasts).             |
+| `ActionBanner`            | Banner with message + pill actions (persistent notices, not auto-dismiss toasts). `App.tsx` stacks banners in a top-right fixed container.            |
 | `GraphFileConflictBanner` | Desktop file-watch conflict; wraps `ActionBanner` with reload / keep-local actions.                        |
+| `UpdateBanner`            | Desktop auto-update notice; wraps `ActionBanner` with install / later / retry / restart actions (see `useDesktopUpdater`).                          |
 
 ## Layout
 

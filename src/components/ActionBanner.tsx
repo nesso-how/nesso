@@ -6,6 +6,7 @@ export interface ActionBannerAction {
   onClick: () => void
   /** Filled pill (default action). */
   primary?: boolean
+  disabled?: boolean
 }
 
 export interface ActionBannerProps {
@@ -15,7 +16,10 @@ export interface ActionBannerProps {
   actions: ActionBannerAction[]
 }
 
-export function actionBannerButtonStyle(primary: boolean): CSSProperties {
+export function actionBannerButtonStyle(
+  primary: boolean,
+  disabled = false,
+): CSSProperties {
   return {
     appearance: 'none',
     border: `0.5px solid ${primary ? 'var(--ink-2)' : 'var(--line)'}`,
@@ -25,7 +29,8 @@ export function actionBannerButtonStyle(primary: boolean): CSSProperties {
     letterSpacing: '0.04em',
     padding: '6px 14px',
     borderRadius: 999,
-    cursor: 'default',
+    cursor: disabled ? 'not-allowed' : 'default',
+    opacity: disabled ? 0.55 : 1,
     whiteSpace: 'nowrap',
     width: '100%',
     textAlign: 'center',
@@ -43,10 +48,8 @@ export function ActionBanner({
     <div
       role="alert"
       style={{
-        position: 'fixed',
-        top: 60,
-        right: 16,
-        zIndex: 60,
+        // Positioning is owned by the stacking container in App.tsx so multiple
+        // banners (file conflict + update) stack instead of overlapping.
         display: 'flex',
         flexDirection: 'column',
         gap: 10,
@@ -74,8 +77,12 @@ export function ActionBanner({
           <button
             key={action.label}
             type="button"
+            disabled={action.disabled}
             onClick={() => void action.onClick()}
-            style={actionBannerButtonStyle(action.primary ?? false)}
+            style={actionBannerButtonStyle(
+              action.primary ?? false,
+              action.disabled,
+            )}
           >
             {action.label}
           </button>

@@ -11,7 +11,7 @@ Open [app.nesso.how](https://app.nesso.how) in your browser. The app works offli
 
 ## Desktop app (macOS)
 
-Pre-built alpha installers for Apple silicon and Intel are published on [GitHub Releases](https://github.com/nesso-how/nesso/releases). Download the `.dmg` for your architecture and open it.
+A pre-built alpha installer is published on [GitHub Releases](https://github.com/nesso-how/nesso/releases). Download the universal `.dmg` — it runs on both Apple silicon and Intel Macs — and open it.
 
 :::caution
 The app is not signed with an Apple developer certificate. macOS will block it on first launch. After installing, run this command in the terminal to remove the quarantine flag:
@@ -22,6 +22,8 @@ xattr -cr /Applications/Nesso.app
 
 Then open the app normally.
 :::
+
+The desktop app **updates itself**: on launch it checks GitHub Releases and, when a newer build is available, offers to install it and relaunch. Auto-updates begin once you are on a build that ships the updater (`v0.1.0-alpha.25` or later), so that first version still needs a one-time manual download.
 
 ## Run from source
 

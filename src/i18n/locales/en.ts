@@ -8,6 +8,16 @@ const en = {
     reload: 'Reload from disk',
     keepLocal: 'Keep my changes',
   },
+  update: {
+    available: (version: string) => `Version ${version} is available.`,
+    install: 'Install & restart',
+    installing: 'Installing…',
+    later: 'Later',
+    failed: 'Update failed. Try again?',
+    retry: 'Retry',
+    restartRequired: 'Update installed — restart Nesso to finish.',
+    dismiss: 'Got it',
+  },
   settings: {
     title: 'Settings',
     tabs: {
