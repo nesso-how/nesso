@@ -8,6 +8,16 @@ const it: typeof en = {
     reload: 'Ricarica da disco',
     keepLocal: 'Mantieni le mie modifiche',
   },
+  update: {
+    available: (version: string) => `La versione ${version} è disponibile.`,
+    install: 'Installa e riavvia',
+    installing: 'Installazione…',
+    later: 'Più tardi',
+    failed: 'Aggiornamento non riuscito. Riprovare?',
+    retry: 'Riprova',
+    restartRequired: 'Aggiornamento installato — riavvia Nesso per completare.',
+    dismiss: 'Ho capito',
+  },
   settings: {
     title: 'Impostazioni',
     tabs: {

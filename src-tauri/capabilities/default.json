@@ -44,6 +44,8 @@
     {
       "identifier": "opener:allow-open-path",
       "allow": [{ "path": "**" }]
-    }
+    },
+    "updater:default",
+    "process:default"
   ]
 }

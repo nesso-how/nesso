@@ -27,6 +27,7 @@ import { useGraphStore, selectedNodeSelector, selectedEdgeSelector } from './sto
 import { useAutoSave } from './hooks/useAutoSave'
 import { useGraphFileWatch } from './hooks/useGraphFileWatch'
 import { GraphFileConflictBanner } from './components/GraphFileConflictBanner'
+import { UpdateBanner } from './components/UpdateBanner'
 import { PALETTES } from './data/palettes'
 import { findNewConceptPosition, NEW_CONCEPT_SIZE } from './data/newConceptLayout'
 import { initWebLLM, localModelWeightsCached } from './llm/webllm'
@@ -328,7 +329,21 @@ function AppInner() {
       <ShortcutsDialog open={showShortcuts} onClose={() => setShowShortcuts(false)} />
       <SettingsDialog open={showSettings} onClose={() => setShowSettings(false)} />
       <SearchDialog open={showSearch} onClose={() => setShowSearch(false)} onSelectNode={handleSelectNode} onSelectGraph={(id) => loadGraph(id)} />
-      <GraphFileConflictBanner />
+      <div
+        style={{
+          position: 'fixed',
+          top: 60,
+          right: 16,
+          zIndex: 60,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 10,
+          alignItems: 'flex-end',
+        }}
+      >
+        <GraphFileConflictBanner />
+        <UpdateBanner />
+      </div>
     </div>
   )
 }

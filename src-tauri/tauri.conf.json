@@ -24,8 +24,17 @@
       "csp": null
     }
   },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDlEMzU2MDdCNkFCMEE5MDMKUldRRHFiQnFlMkExblJTUWZPb1NVVmZacGp2OFFHY29QM0ZZQ0F0VFpneVVJRUJZY3U3SVVpb3IK",
+      "endpoints": [
+        "https://github.com/nesso-how/nesso/releases/latest/download/latest.json"
+      ]
+    }
+  },
   "bundle": {
     "active": true,
+    "createUpdaterArtifacts": true,
     "targets": "all",
     "icon": [
       "icons/32x32.png",

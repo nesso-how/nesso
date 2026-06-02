@@ -6,9 +6,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- **Desktop:** Auto-updates — on launch the macOS app checks GitHub Releases and, when a newer signed build exists, offers to install it and relaunch (Tauri updater + `latest.json`).
+
 ### Changed
 
 - **Positioning:** Tagline reframed as an app for building typed knowledge graphs (README, docs site, browser title, Tauri description, mentor prompt, Cursor rules).
+- **Desktop release:** macOS now ships a single universal `.dmg` (Apple Silicon + Intel) published as a full release (no longer pre-release), so the updater endpoint `releases/latest/download/latest.json` resolves.
 
 ## [0.1.0-alpha.24] - 2026-05-29
 
