@@ -55,20 +55,18 @@ export async function reconcileDiskWithIdb(
   await ensureWorkspace(ws)
   let manifest = await readManifest(ws)
   const fileToId = buildFileToIdMap(manifest)
-  const idbById = new Map(idbRecords.map(r => [r.id, r]))
+  const idbById = new Map(idbRecords.map((r) => [r.id, r]))
   const toPersist: GraphRecord[] = []
   let manifestDirty = false
 
-  const diskGraphFiles = (await listWorkspaceJsonFiles(ws)).filter(f => f !== MANIFEST_FILE)
+  const diskGraphFiles = (await listWorkspaceJsonFiles(ws)).filter((f) => f !== MANIFEST_FILE)
 
   for (const filename of diskGraphFiles) {
     const loaded = await loadRecordFromDiskFile(ws, filename, manifest, fileToId)
     if (!loaded) continue
 
     const id = loaded.id
-    const peerNames = [...idbById.values()]
-      .filter(r => r.id !== id)
-      .map(r => r.name)
+    const peerNames = [...idbById.values()].filter((r) => r.id !== id).map((r) => r.name)
     const { file: entryFile, record: diskRecord } = await applyUniqueGraphNameOnDisk(
       ws,
       filename,

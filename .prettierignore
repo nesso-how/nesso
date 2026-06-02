@@ -1,0 +1,12 @@
+node_modules
+.pnpm-store
+pnpm-store
+dist
+dist-ssr
+coverage
+src-tauri/target
+src-tauri/icons
+packages/mcp/dist
+*.min.js
+pnpm-lock.yaml
+CHANGELOG.md

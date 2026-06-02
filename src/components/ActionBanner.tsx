@@ -16,10 +16,7 @@ export interface ActionBannerProps {
   actions: ActionBannerAction[]
 }
 
-export function actionBannerButtonStyle(
-  primary: boolean,
-  disabled = false,
-): CSSProperties {
+export function actionBannerButtonStyle(primary: boolean, disabled = false): CSSProperties {
   return {
     appearance: 'none',
     border: `0.5px solid ${primary ? 'var(--ink-2)' : 'var(--line)'}`,
@@ -37,11 +34,7 @@ export function actionBannerButtonStyle(
   }
 }
 
-export function ActionBanner({
-  open,
-  message,
-  actions,
-}: ActionBannerProps) {
+export function ActionBanner({ open, message, actions }: ActionBannerProps) {
   if (!open || actions.length === 0) return null
 
   return (
@@ -79,10 +72,7 @@ export function ActionBanner({
             type="button"
             disabled={action.disabled}
             onClick={() => void action.onClick()}
-            style={actionBannerButtonStyle(
-              action.primary ?? false,
-              action.disabled,
-            )}
+            style={actionBannerButtonStyle(action.primary ?? false, action.disabled)}
           >
             {action.label}
           </button>

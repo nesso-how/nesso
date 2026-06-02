@@ -11,10 +11,10 @@ npm install @nesso-how/formats
 ## Usage
 
 ```ts
-import { serializeGraph, deserializeGraph } from "@nesso-how/formats";
+import { serializeGraph, deserializeGraph } from '@nesso-how/formats'
 
-const json = serializeGraph({ name: "My graph", nodes, edges });
-const file = deserializeGraph(json);
+const json = serializeGraph({ name: 'My graph', nodes, edges })
+const file = deserializeGraph(json)
 ```
 
 ## License

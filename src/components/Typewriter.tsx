@@ -40,15 +40,17 @@ export function Typewriter({ text, speed = 7, emphasis = false }: Props) {
     <>
       {emphasis ? renderWithEmphasis(shown) : shown}
       {!done && (
-        <span style={{
-          display: 'inline-block',
-          width: 1.5,
-          height: '0.95em',
-          background: 'var(--ink-3)',
-          marginLeft: 2,
-          verticalAlign: 'text-bottom',
-          animation: 'nx-tw-caret 0.85s steps(2, end) infinite',
-        }} />
+        <span
+          style={{
+            display: 'inline-block',
+            width: 1.5,
+            height: '0.95em',
+            background: 'var(--ink-3)',
+            marginLeft: 2,
+            verticalAlign: 'text-bottom',
+            animation: 'nx-tw-caret 0.85s steps(2, end) infinite',
+          }}
+        />
       )}
     </>
   )

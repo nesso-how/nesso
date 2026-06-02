@@ -6,7 +6,7 @@ name: Release
 on:
   push:
     tags:
-      - "v*"
+      - 'v*'
   workflow_dispatch:
 
 jobs:
@@ -23,7 +23,7 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: lts/*
-          registry-url: "https://registry.npmjs.org"
+          registry-url: 'https://registry.npmjs.org'
           # Release publishes via npm Trusted Publishing (OIDC); do not cache deps here.
           package-manager-cache: false
 
@@ -136,12 +136,12 @@ jobs:
         with:
           projectPath: ./src-tauri
           tagName: v__VERSION__
-          releaseName: "Nesso v__VERSION__"
+          releaseName: 'Nesso v__VERSION__'
           releaseBody: ${{ steps.changelog.outputs.body }}
           generateReleaseNotes: false
           releaseDraft: false
           # Full release (not pre-release) so releases/latest/download/latest.json
           # — the updater endpoint — resolves to this build.
           prerelease: false
-          args: "--target universal-apple-darwin"
+          args: '--target universal-apple-darwin'
           includeUpdaterJson: true

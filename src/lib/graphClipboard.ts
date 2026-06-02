@@ -49,7 +49,7 @@ export function snapshotSelection(s: SelectionInput): GraphClipboard | null {
 
   if (edgeOnly) {
     for (const eid of explicitEdgeIds) {
-      const e = s.edges.find(x => x.id === eid)
+      const e = s.edges.find((x) => x.id === eid)
       if (e) {
         nodeIds.add(e.source)
         nodeIds.add(e.target)
@@ -70,8 +70,8 @@ export function snapshotSelection(s: SelectionInput): GraphClipboard | null {
   if (nodeIds.size === 0 && edgeIds.size === 0) return null
 
   return {
-    nodes: s.nodes.filter(n => nodeIds.has(n.id)).map(stripNodeSelection),
-    edges: s.edges.filter(e => edgeIds.has(e.id)).map(stripEdgeSelection),
+    nodes: s.nodes.filter((n) => nodeIds.has(n.id)).map(stripNodeSelection),
+    edges: s.edges.filter((e) => edgeIds.has(e.id)).map(stripEdgeSelection),
   }
 }
 
@@ -84,7 +84,7 @@ export function instantiateClipboard(clip: GraphClipboard): {
     idMap.set(n.id, 'n' + Math.random().toString(36).slice(2, 7))
   }
 
-  const nodes = clip.nodes.map(n => ({
+  const nodes = clip.nodes.map((n) => ({
     ...n,
     id: idMap.get(n.id)!,
     position: {
@@ -94,7 +94,7 @@ export function instantiateClipboard(clip: GraphClipboard): {
     selected: true,
   }))
 
-  const edges = clip.edges.map(e => ({
+  const edges = clip.edges.map((e) => ({
     ...e,
     id: 'e' + Math.random().toString(36).slice(2, 8),
     source: idMap.get(e.source) ?? e.source,
@@ -112,7 +112,7 @@ export function instantiateClipboard(clip: GraphClipboard): {
 export function advanceClipboardAfterPaste(): void {
   if (!clipboard) return
   setGraphClipboard({
-    nodes: clipboard.nodes.map(n => ({
+    nodes: clipboard.nodes.map((n) => ({
       ...n,
       position: {
         x: n.position.x + PASTE_OFFSET.x,

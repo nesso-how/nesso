@@ -11,8 +11,8 @@ npm install @nesso-how/types
 ## Usage
 
 ```ts
-import type { ConceptNodeData, NessoSettings } from "@nesso-how/types";
-import { defaultConceptReviewFields, nodeToCard } from "@nesso-how/types";
+import type { ConceptNodeData, NessoSettings } from '@nesso-how/types'
+import { defaultConceptReviewFields, nodeToCard } from '@nesso-how/types'
 ```
 
 ## License

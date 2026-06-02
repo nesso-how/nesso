@@ -13,7 +13,10 @@ function downloadViaAnchor(filename: string, contents: string): void {
   URL.revokeObjectURL(url)
 }
 
-async function writeToHandle(handle: FileSystemFileHandleWithPermission, contents: string): Promise<void> {
+async function writeToHandle(
+  handle: FileSystemFileHandleWithPermission,
+  contents: string,
+): Promise<void> {
   const writable = await handle.createWritable()
   await writable.write(contents)
   await writable.close()

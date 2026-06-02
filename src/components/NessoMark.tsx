@@ -27,11 +27,51 @@ export function NessoMark({
       aria-label={title}
     >
       {title ? <title>{title}</title> : null}
-      <line x1="32" y1="32" x2="32" y2="9" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" />
-      <line x1="32" y1="32" x2="55" y2="21" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" />
-      <line x1="32" y1="32" x2="49" y2="50" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" />
-      <line x1="32" y1="32" x2="16" y2="52" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" />
-      <line x1="32" y1="32" x2="10" y2="26" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" />
+      <line
+        x1="32"
+        y1="32"
+        x2="32"
+        y2="9"
+        stroke="currentColor"
+        strokeWidth="3.5"
+        strokeLinecap="round"
+      />
+      <line
+        x1="32"
+        y1="32"
+        x2="55"
+        y2="21"
+        stroke="currentColor"
+        strokeWidth="3.5"
+        strokeLinecap="round"
+      />
+      <line
+        x1="32"
+        y1="32"
+        x2="49"
+        y2="50"
+        stroke="currentColor"
+        strokeWidth="3.5"
+        strokeLinecap="round"
+      />
+      <line
+        x1="32"
+        y1="32"
+        x2="16"
+        y2="52"
+        stroke="currentColor"
+        strokeWidth="3.5"
+        strokeLinecap="round"
+      />
+      <line
+        x1="32"
+        y1="32"
+        x2="10"
+        y2="26"
+        stroke="currentColor"
+        strokeWidth="3.5"
+        strokeLinecap="round"
+      />
       <circle cx="32" cy="9" r="5.5" fill="currentColor" />
       <circle cx="55" cy="21" r="5.5" fill="currentColor" />
       <circle cx="49" cy="50" r="5.5" fill="currentColor" />

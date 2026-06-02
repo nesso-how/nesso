@@ -3,7 +3,14 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { applyNodeChanges, applyEdgeChanges } from '@xyflow/react'
 import type { Node, Edge, NodeChange, EdgeChange } from '@xyflow/react'
-import type { ConceptNodeData, NessoSettings, EdgeTypeName, Language, GraphDisplaySettings, NessoEdgeData } from '@/types/graph'
+import type {
+  ConceptNodeData,
+  NessoSettings,
+  EdgeTypeName,
+  Language,
+  GraphDisplaySettings,
+  NessoEdgeData,
+} from '@/types/graph'
 import { defaultGraphDisplay, mergeGraphDisplay } from '@/types/graph'
 import { CONCEPT_HANDLE_IN, CONCEPT_HANDLE_OUT } from '@/data/conceptHandles'
 import { SEEDS, getSeedsForLanguage, type Seed } from '@/data/seedGraph'
@@ -15,7 +22,11 @@ import {
   setGraphClipboard,
   snapshotSelection,
 } from '@/lib/graphClipboard'
-import { graphPersistEquals, graphPersistFingerprint, graphPersistPayload } from '@/lib/graphPersist'
+import {
+  graphPersistEquals,
+  graphPersistFingerprint,
+  graphPersistPayload,
+} from '@/lib/graphPersist'
 import { isGraphId, newGraphId } from '@/lib/graphId'
 import { isDesktop } from '@/lib/isDesktop'
 import {
@@ -34,10 +45,10 @@ import { dbSaveGraph, dbLoadGraph, dbListGraphs, dbDeleteGraph } from './db'
 import { defaultCurveFlip, nodeCenterX, nodeCenterY } from '@/geometry/nessoEdgeGeometry'
 
 function bakeCurveFlipFromPositions(edges: Edge[], nodes: Node<ConceptNodeData>[]): Edge[] {
-  return edges.map(e => {
+  return edges.map((e) => {
     if (e.data?.curveFlipPinned) return e
-    const sourceNode = nodes.find(n => n.id === e.source)
-    const targetNode = nodes.find(n => n.id === e.target)
+    const sourceNode = nodes.find((n) => n.id === e.source)
+    const targetNode = nodes.find((n) => n.id === e.target)
     if (!sourceNode || !targetNode) return e
     const curveFlip = defaultCurveFlip(
       nodeCenterX(sourceNode),
@@ -55,10 +66,7 @@ function detectBrowserLanguage(): Language {
   return lang === 'it' ? 'it' : 'en'
 }
 
-type Selection =
-  | { kind: 'node'; id: string }
-  | { kind: 'edge'; id: string }
-  | null
+type Selection = { kind: 'node'; id: string } | { kind: 'edge'; id: string } | null
 
 type Viewport = { x: number; y: number; zoom: number }
 
@@ -147,7 +155,10 @@ interface GraphState {
 
   // Settings
   setSetting: <K extends keyof NessoSettings>(key: K, value: NessoSettings[K]) => void
-  setGraphDisplay: <K extends keyof GraphDisplaySettings>(key: K, value: GraphDisplaySettings[K]) => void
+  setGraphDisplay: <K extends keyof GraphDisplaySettings>(
+    key: K,
+    value: GraphDisplaySettings[K],
+  ) => void
 
   // UI chrome (persisted)
   setMentorPanelExpanded: (expanded: boolean) => void
@@ -179,7 +190,6 @@ interface GraphState {
   deleteGraph: (id: string) => Promise<void>
 }
 
-
 function makeSeedRecord(seed: Seed): GraphRecord {
   const now = Date.now()
   return {
@@ -208,7 +218,7 @@ export const useGraphStore = create<GraphState>()(
       sidebarStatsOpen: true,
       viewports: {},
       currentGraphId: SEEDS[0].id,
-      graphList: SEEDS.map(s => ({ id: s.id, name: s.name, updatedAt: Date.now() })),
+      graphList: SEEDS.map((s) => ({ id: s.id, name: s.name, updatedAt: Date.now() })),
       loadedToken: 0,
       savedFingerprint: '',
       externalFileConflict: false,
@@ -238,7 +248,7 @@ export const useGraphStore = create<GraphState>()(
       graphDisplay: defaultGraphDisplay(),
 
       undo: () =>
-        set(s => {
+        set((s) => {
           if (!s._history.length) return s
           const prev = s._history[s._history.length - 1]
           _draggingNodeIds.clear()
@@ -252,7 +262,7 @@ export const useGraphStore = create<GraphState>()(
         }),
 
       redo: () =>
-        set(s => {
+        set((s) => {
           if (!s._future.length) return s
           const next = s._future[0]
           _draggingNodeIds.clear()
@@ -273,70 +283,68 @@ export const useGraphStore = create<GraphState>()(
         }
         const startsDrag = changes.filter(
           (c): c is Extract<NodeChange<Node<ConceptNodeData>>, { type: 'position' }> =>
-            c.type === 'position'
-            && c.dragging === true
-            && !_draggingNodeIds.has(c.id)
+            c.type === 'position' && c.dragging === true && !_draggingNodeIds.has(c.id),
         )
-        const hasRemove = changes.some(c => c.type === 'remove')
+        const hasRemove = changes.some((c) => c.type === 'remove')
         if (startsDrag.length > 0) {
           for (const c of startsDrag) {
             _draggingNodeIds.add(c.id)
           }
-          set(s => ({
+          set((s) => ({
             ...pushHistory(s),
-            nodes: applyNodeChanges(changes, s.nodes as any) as Node<ConceptNodeData>[],
+            nodes: applyNodeChanges(changes, s.nodes) as Node<ConceptNodeData>[],
           }))
         } else if (hasRemove) {
-          set(s => ({
+          set((s) => ({
             ...pushHistory(s),
-            nodes: applyNodeChanges(changes, s.nodes as any) as Node<ConceptNodeData>[],
+            nodes: applyNodeChanges(changes, s.nodes) as Node<ConceptNodeData>[],
           }))
         } else {
-          set(s => ({
-            nodes: applyNodeChanges(changes, s.nodes as any) as Node<ConceptNodeData>[],
+          set((s) => ({
+            nodes: applyNodeChanges(changes, s.nodes) as Node<ConceptNodeData>[],
           }))
         }
       },
 
       onEdgesChange: (changes) => {
-        const hasRemove = changes.some(c => c.type === 'remove')
+        const hasRemove = changes.some((c) => c.type === 'remove')
         if (hasRemove) {
           const removedIds = new Set(
-            changes.filter((c): c is { type: 'remove'; id: string } => c.type === 'remove').map(c => c.id),
+            changes
+              .filter((c): c is { type: 'remove'; id: string } => c.type === 'remove')
+              .map((c) => c.id),
           )
-          set(s => ({
+          set((s) => ({
             ...pushHistory(s),
             edges: applyEdgeChanges(changes, s.edges),
             selected:
               s.selected?.kind === 'edge' && removedIds.has(s.selected.id) ? null : s.selected,
           }))
         } else {
-          set(s => ({ edges: applyEdgeChanges(changes, s.edges) }))
+          set((s) => ({ edges: applyEdgeChanges(changes, s.edges) }))
         }
       },
 
       updateNodeData: (id, patch) =>
-        set(s => ({
+        set((s) => ({
           ...pushHistory(s),
-          nodes: s.nodes.map(n =>
-            n.id === id ? { ...n, data: { ...n.data, ...patch } } : n
-          ),
+          nodes: s.nodes.map((n) => (n.id === id ? { ...n, data: { ...n.data, ...patch } } : n)),
         })),
 
       deleteNode: (id) =>
-        set(s => ({
+        set((s) => ({
           ...pushHistory(s),
-          nodes: s.nodes.filter(n => n.id !== id),
-          edges: s.edges.filter(e => e.source !== id && e.target !== id),
+          nodes: s.nodes.filter((n) => n.id !== id),
+          edges: s.edges.filter((e) => e.source !== id && e.target !== id),
           selected: s.selected?.id === id ? null : s.selected,
         })),
 
       addNode: (x = 0, y = 0) => {
         const id = 'n' + Math.random().toString(36).slice(2, 7)
-        set(s => ({
+        set((s) => ({
           ...pushHistory(s),
           nodes: [
-            ...s.nodes.map(n => (n.selected ? { ...n, selected: false } : n)),
+            ...s.nodes.map((n) => (n.selected ? { ...n, selected: false } : n)),
             {
               id,
               type: 'concept',
@@ -355,7 +363,7 @@ export const useGraphStore = create<GraphState>()(
               },
             },
           ],
-          edges: s.edges.map(e => (e.selected ? { ...e, selected: false } : e)),
+          edges: s.edges.map((e) => (e.selected ? { ...e, selected: false } : e)),
           selected: { kind: 'node', id },
           selectedIds: [id],
           editNodeId: id,
@@ -368,24 +376,25 @@ export const useGraphStore = create<GraphState>()(
 
       addEdge: (source, target, type) => {
         const id = 'e' + Math.random().toString(36).slice(2, 8)
-        set(s => {
-          const sourceNode = s.nodes.find(n => n.id === source)
-          const targetNode = s.nodes.find(n => n.id === target)
+        set((s) => {
+          const sourceNode = s.nodes.find((n) => n.id === source)
+          const targetNode = s.nodes.find((n) => n.id === target)
           const autoCurveFlip = s.graphDisplay.autoCurveFlip
-          const curveFlip = !autoCurveFlip && sourceNode && targetNode
-            ? defaultCurveFlip(
-              nodeCenterX(sourceNode),
-              nodeCenterY(sourceNode),
-              nodeCenterX(targetNode),
-              nodeCenterY(targetNode),
-            )
-            : false
+          const curveFlip =
+            !autoCurveFlip && sourceNode && targetNode
+              ? defaultCurveFlip(
+                  nodeCenterX(sourceNode),
+                  nodeCenterY(sourceNode),
+                  nodeCenterX(targetNode),
+                  nodeCenterY(targetNode),
+                )
+              : false
 
           return {
             ...pushHistory(s),
-            nodes: s.nodes.map(n => (n.selected ? { ...n, selected: false } : n)),
+            nodes: s.nodes.map((n) => (n.selected ? { ...n, selected: false } : n)),
             edges: [
-              ...s.edges.map(e => (e.selected ? { ...e, selected: false } : e)),
+              ...s.edges.map((e) => (e.selected ? { ...e, selected: false } : e)),
               {
                 id,
                 source,
@@ -405,17 +414,15 @@ export const useGraphStore = create<GraphState>()(
       },
 
       updateEdgeType: (id, type) =>
-        set(s => ({
+        set((s) => ({
           ...pushHistory(s),
-          edges: s.edges.map(e =>
-            e.id === id ? { ...e, data: { ...e.data, type } } : e
-          ),
+          edges: s.edges.map((e) => (e.id === id ? { ...e, data: { ...e.data, type } } : e)),
         })),
 
       setEdgeCurveFlipMode: (id, mode) =>
-        set(s => ({
+        set((s) => ({
           ...pushHistory(s),
-          edges: s.edges.map(e => {
+          edges: s.edges.map((e) => {
             if (e.id !== id) return e
             if (mode === 'auto') {
               const data: NessoEdgeData = { ...(e.data as unknown as NessoEdgeData) }
@@ -424,7 +431,10 @@ export const useGraphStore = create<GraphState>()(
               return { ...e, data }
             }
             const auto = s.graphDisplay.autoCurveFlip
-            const data: NessoEdgeData = { ...(e.data as unknown as NessoEdgeData), curveFlip: mode === 'on' }
+            const data: NessoEdgeData = {
+              ...(e.data as unknown as NessoEdgeData),
+              curveFlip: mode === 'on',
+            }
             if (auto) data.curveFlipPinned = true
             else delete data.curveFlipPinned
             return { ...e, data }
@@ -432,77 +442,96 @@ export const useGraphStore = create<GraphState>()(
         })),
 
       deleteEdge: (id) =>
-        set(s => ({
+        set((s) => ({
           ...pushHistory(s),
-          edges: s.edges.filter(e => e.id !== id),
+          edges: s.edges.filter((e) => e.id !== id),
           selected: s.selected?.id === id ? null : s.selected,
         })),
 
-      setSelected: (sel) => set(s => {
-        // Guard against re-entrant calls (e.g. onSelectionChange reacting to
-        // a programmatic node.selected update firing back into this action).
-        if (s.selected?.kind === sel?.kind && s.selected?.id === sel?.id) return s
+      setSelected: (sel) =>
+        set((s) => {
+          // Guard against re-entrant calls (e.g. onSelectionChange reacting to
+          // a programmatic node.selected update firing back into this action).
+          if (s.selected?.kind === sel?.kind && s.selected?.id === sel?.id) return s
 
-        if (sel?.kind === 'node') {
-          let nodesChanged = false
-          const nodes = s.nodes.map(n => {
-            const want = n.id === sel.id
-            if (Boolean(n.selected) !== want) { nodesChanged = true; return { ...n, selected: want } }
-            return n
-          })
-          let edgesChanged = false
-          const edges = s.edges.map(e => {
-            if (e.selected) { edgesChanged = true; return { ...e, selected: false } }
-            return e
-          })
-          return {
-            selected: sel,
-            selectedIds: [sel.id],
-            nodes: nodesChanged ? nodes : s.nodes,
-            edges: edgesChanged ? edges : s.edges,
+          if (sel?.kind === 'node') {
+            let nodesChanged = false
+            const nodes = s.nodes.map((n) => {
+              const want = n.id === sel.id
+              if (Boolean(n.selected) !== want) {
+                nodesChanged = true
+                return { ...n, selected: want }
+              }
+              return n
+            })
+            let edgesChanged = false
+            const edges = s.edges.map((e) => {
+              if (e.selected) {
+                edgesChanged = true
+                return { ...e, selected: false }
+              }
+              return e
+            })
+            return {
+              selected: sel,
+              selectedIds: [sel.id],
+              nodes: nodesChanged ? nodes : s.nodes,
+              edges: edgesChanged ? edges : s.edges,
+            }
           }
-        }
 
-        if (sel?.kind === 'edge') {
+          if (sel?.kind === 'edge') {
+            let nodesChanged = false
+            const nodes = s.nodes.map((n) => {
+              if (n.selected) {
+                nodesChanged = true
+                return { ...n, selected: false }
+              }
+              return n
+            })
+            let edgesChanged = false
+            const edges = s.edges.map((e) => {
+              const want = e.id === sel.id
+              if (Boolean(e.selected) !== want) {
+                edgesChanged = true
+                return { ...e, selected: want }
+              }
+              return e
+            })
+            return {
+              selected: sel,
+              selectedIds: [],
+              nodes: nodesChanged ? nodes : s.nodes,
+              edges: edgesChanged ? edges : s.edges,
+            }
+          }
+
           let nodesChanged = false
-          const nodes = s.nodes.map(n => {
-            if (n.selected) { nodesChanged = true; return { ...n, selected: false } }
+          const nodes = s.nodes.map((n) => {
+            if (n.selected) {
+              nodesChanged = true
+              return { ...n, selected: false }
+            }
             return n
           })
           let edgesChanged = false
-          const edges = s.edges.map(e => {
-            const want = e.id === sel.id
-            if (Boolean(e.selected) !== want) { edgesChanged = true; return { ...e, selected: want } }
+          const edges = s.edges.map((e) => {
+            if (e.selected) {
+              edgesChanged = true
+              return { ...e, selected: false }
+            }
             return e
           })
           return {
-            selected: sel,
+            selected: null,
             selectedIds: [],
             nodes: nodesChanged ? nodes : s.nodes,
             edges: edgesChanged ? edges : s.edges,
           }
-        }
-
-        let nodesChanged = false
-        const nodes = s.nodes.map(n => {
-          if (n.selected) { nodesChanged = true; return { ...n, selected: false } }
-          return n
-        })
-        let edgesChanged = false
-        const edges = s.edges.map(e => {
-          if (e.selected) { edgesChanged = true; return { ...e, selected: false } }
-          return e
-        })
-        return {
-          selected: null,
-          selectedIds: [],
-          nodes: nodesChanged ? nodes : s.nodes,
-          edges: edgesChanged ? edges : s.edges,
-        }
-      }),
+        }),
 
       syncFlowSelection: (nodeIds, edgeIds) =>
-        set(s => {
+        set((s) => {
           const nodeIdSet = new Set(nodeIds)
           const edgeIdSet = new Set(edgeIds)
 
@@ -514,14 +543,14 @@ export const useGraphStore = create<GraphState>()(
           }
 
           const selectedIdsMatch =
-            nodeIds.length === s.selectedIds.length
-            && nodeIds.every(id => s.selectedIds.includes(id))
+            nodeIds.length === s.selectedIds.length &&
+            nodeIds.every((id) => s.selectedIds.includes(id))
           const selectedMatch =
-            selected?.kind === s.selected?.kind && selected?.id === s.selected?.id
-            || (selected === null && s.selected === null)
+            (selected?.kind === s.selected?.kind && selected?.id === s.selected?.id) ||
+            (selected === null && s.selected === null)
 
           let nodesChanged = false
-          const nodes = s.nodes.map(n => {
+          const nodes = s.nodes.map((n) => {
             const want = nodeIdSet.has(n.id)
             if (Boolean(n.selected) !== want) {
               nodesChanged = true
@@ -530,7 +559,7 @@ export const useGraphStore = create<GraphState>()(
             return n
           })
           let edgesChanged = false
-          const edges = s.edges.map(e => {
+          const edges = s.edges.map((e) => {
             const want = edgeIdSet.has(e.id)
             if (Boolean(e.selected) !== want) {
               edgesChanged = true
@@ -552,7 +581,7 @@ export const useGraphStore = create<GraphState>()(
       setSelectedIds: (ids) => set({ selectedIds: ids }),
 
       deleteSelection: () =>
-        set(s => {
+        set((s) => {
           const nodeIds = new Set(s.selectedIds)
           if (s.selected?.kind === 'node') nodeIds.add(s.selected.id)
 
@@ -566,8 +595,8 @@ export const useGraphStore = create<GraphState>()(
           if (nodeIds.size > 0) {
             return {
               ...pushHistory(s),
-              nodes: s.nodes.filter(n => !nodeIds.has(n.id)),
-              edges: s.edges.filter(e => !nodeIds.has(e.source) && !nodeIds.has(e.target)),
+              nodes: s.nodes.filter((n) => !nodeIds.has(n.id)),
+              edges: s.edges.filter((e) => !nodeIds.has(e.source) && !nodeIds.has(e.target)),
               selected: null,
               selectedIds: [],
             }
@@ -576,7 +605,7 @@ export const useGraphStore = create<GraphState>()(
           if (edgeIds.size > 0) {
             return {
               ...pushHistory(s),
-              edges: s.edges.filter(e => !edgeIds.has(e.id)),
+              edges: s.edges.filter((e) => !edgeIds.has(e.id)),
               selected: null,
               selectedIds: [],
             }
@@ -597,16 +626,16 @@ export const useGraphStore = create<GraphState>()(
         const clip = getGraphClipboard()
         if (!clip?.nodes.length && !clip?.edges.length) return null
         const { nodes: pastedNodes, edges: pastedEdges } = instantiateClipboard(clip)
-        const pastedNodeIds = pastedNodes.map(n => n.id)
+        const pastedNodeIds = pastedNodes.map((n) => n.id)
 
-        set(s => ({
+        set((s) => ({
           ...pushHistory(s),
           nodes: [
-            ...s.nodes.map(n => (n.selected ? { ...n, selected: false } : n)),
+            ...s.nodes.map((n) => (n.selected ? { ...n, selected: false } : n)),
             ...pastedNodes,
           ],
           edges: [
-            ...s.edges.map(e => (e.selected ? { ...e, selected: false } : e)),
+            ...s.edges.map((e) => (e.selected ? { ...e, selected: false } : e)),
             ...pastedEdges,
           ],
           selected:
@@ -621,11 +650,10 @@ export const useGraphStore = create<GraphState>()(
         return pastedNodeIds
       },
 
-      setSetting: (key, value) =>
-        set(s => ({ settings: { ...s.settings, [key]: value } })),
+      setSetting: (key, value) => set((s) => ({ settings: { ...s.settings, [key]: value } })),
 
       setGraphDisplay: (key, value) =>
-        set(s => {
+        set((s) => {
           const graphDisplay = { ...s.graphDisplay, [key]: value }
           if (key === 'autoCurveFlip' && value === false && s.graphDisplay.autoCurveFlip) {
             return {
@@ -642,8 +670,7 @@ export const useGraphStore = create<GraphState>()(
       setSidebarDisplayOpen: (v) => set({ sidebarDisplayOpen: v }),
       setSidebarStatsOpen: (v) => set({ sidebarStatsOpen: v }),
 
-      saveViewport: (id, vp) =>
-        set(s => ({ viewports: { ...s.viewports, [id]: vp } })),
+      saveViewport: (id, vp) => set((s) => ({ viewports: { ...s.viewports, [id]: vp } })),
 
       loadGraphList: async () => {
         let records = await dbListGraphs()
@@ -653,7 +680,7 @@ export const useGraphStore = create<GraphState>()(
         // gets the latest updatedAt and appears first in the sidebar.
         if (records.length === 0) {
           const lang = detectBrowserLanguage()
-          set(s => ({ settings: { ...s.settings, language: lang } }))
+          set((s) => ({ settings: { ...s.settings, language: lang } }))
           const seeds = getSeedsForLanguage(lang)
           const seeded: GraphRecord[] = []
           for (let i = seeds.length - 1; i >= 0; i--) {
@@ -673,7 +700,7 @@ export const useGraphStore = create<GraphState>()(
           }
         }
 
-        const list = records.map(r => ({ id: r.id, name: r.name, updatedAt: r.updatedAt }))
+        const list = records.map((r) => ({ id: r.id, name: r.name, updatedAt: r.updatedAt }))
         set({ graphList: list })
         return list
       },
@@ -682,13 +709,13 @@ export const useGraphStore = create<GraphState>()(
         const prev = get().settings
         const nextSettings = { ...prev, graphWorkspacePath }
         if (!isDesktop()) {
-          set(s => ({ settings: { ...s.settings, graphWorkspacePath } }))
+          set((s) => ({ settings: { ...s.settings, graphWorkspacePath } }))
           return get().loadGraphList()
         }
         try {
-          let records = await switchGraphWorkspaceFolder(prev, nextSettings)
-          set(s => ({ settings: { ...s.settings, graphWorkspacePath } }))
-          const list = records.map(r => ({ id: r.id, name: r.name, updatedAt: r.updatedAt }))
+          const records = await switchGraphWorkspaceFolder(prev, nextSettings)
+          set((s) => ({ settings: { ...s.settings, graphWorkspacePath } }))
+          const list = records.map((r) => ({ id: r.id, name: r.name, updatedAt: r.updatedAt }))
           set({ graphList: list })
           return list
         } catch (err) {
@@ -703,7 +730,7 @@ export const useGraphStore = create<GraphState>()(
         _draggingNodeIds.clear()
         const graphDisplay = mergeGraphDisplay(record!.display, get().settings)
         const fp = graphPersistFingerprint(record!.nodes, record!.edges, graphDisplay)
-        set(s => ({
+        set((s) => ({
           currentGraphId: record!.id,
           nodes: record!.nodes,
           edges: record!.edges,
@@ -720,20 +747,26 @@ export const useGraphStore = create<GraphState>()(
       saveCurrentGraph: async () => {
         if (get().externalFileConflict) return
         const { currentGraphId, nodes, edges, graphList, graphDisplay, settings } = get()
-        const meta = graphList.find(g => g.id === currentGraphId)
+        const meta = graphList.find((g) => g.id === currentGraphId)
         const existing = await dbLoadGraph(currentGraphId)
-        if (existing && graphPersistEquals(
-          { nodes, edges, display: graphDisplay },
-          {
-            nodes: existing.nodes,
-            edges: existing.edges,
-            display: mergeGraphDisplay(existing.display, settings),
-          },
-        )) {
+        if (
+          existing &&
+          graphPersistEquals(
+            { nodes, edges, display: graphDisplay },
+            {
+              nodes: existing.nodes,
+              edges: existing.edges,
+              display: mergeGraphDisplay(existing.display, settings),
+            },
+          )
+        ) {
           return
         }
-        const { nodes: persistNodes, edges: persistEdges, display } =
-          graphPersistPayload(nodes, edges, graphDisplay)
+        const {
+          nodes: persistNodes,
+          edges: persistEdges,
+          display,
+        } = graphPersistPayload(nodes, edges, graphDisplay)
         const now = Date.now()
         const record: GraphRecord = {
           id: currentGraphId,
@@ -749,9 +782,9 @@ export const useGraphStore = create<GraphState>()(
         if (isDesktop()) {
           await writeGraphRecordToWorkspace(get().settings, record)
         }
-        set(s => ({
-          graphList: s.graphList.map(g =>
-            g.id === currentGraphId ? { ...g, updatedAt: now } : g
+        set((s) => ({
+          graphList: s.graphList.map((g) =>
+            g.id === currentGraphId ? { ...g, updatedAt: now } : g,
           ),
           savedFingerprint: fp,
           externalFileConflict: false,
@@ -778,7 +811,7 @@ export const useGraphStore = create<GraphState>()(
         const graphDisplay = mergeGraphDisplay(record.display, settings)
         const fp = graphPersistFingerprint(record.nodes, record.edges, graphDisplay)
         _draggingNodeIds.clear()
-        set(s => ({
+        set((s) => ({
           nodes: record.nodes,
           edges: record.edges,
           graphDisplay,
@@ -786,10 +819,8 @@ export const useGraphStore = create<GraphState>()(
           loadedToken: s.loadedToken + 1,
           savedFingerprint: fp,
           externalFileConflict: false,
-          graphList: s.graphList.map(g =>
-            g.id === currentGraphId
-              ? { ...g, name: record.name, updatedAt: record.updatedAt }
-              : g
+          graphList: s.graphList.map((g) =>
+            g.id === currentGraphId ? { ...g, name: record.name, updatedAt: record.updatedAt } : g,
           ),
           _history: [],
           _future: [],
@@ -800,13 +831,21 @@ export const useGraphStore = create<GraphState>()(
         const id = newGraphId()
         const now = Date.now()
         const display = defaultGraphDisplay(get().settings)
-        const record: GraphRecord = { id, name, createdAt: now, updatedAt: now, nodes: [], edges: [], display }
+        const record: GraphRecord = {
+          id,
+          name,
+          createdAt: now,
+          updatedAt: now,
+          nodes: [],
+          edges: [],
+          display,
+        }
         await dbSaveGraph(record)
         if (isDesktop()) {
           await writeGraphRecordToWorkspace(get().settings, record)
         }
         _draggingNodeIds.clear()
-        set(s => ({
+        set((s) => ({
           graphList: [...s.graphList, { id, name, updatedAt: now }],
           currentGraphId: id,
           nodes: [],
@@ -825,7 +864,7 @@ export const useGraphStore = create<GraphState>()(
         const now = Date.now()
         const graphDisplay = mergeGraphDisplay(display, get().settings)
         const existing = await dbListGraphs()
-        const peerNames = existing.filter(r => r.id !== graphId).map(r => r.name)
+        const peerNames = existing.filter((r) => r.id !== graphId).map((r) => r.name)
         const graphName = uniqueGraphNameAmong(name.trim() || 'Untitled', peerNames)
         const record: GraphRecord = {
           id: graphId,
@@ -841,10 +880,10 @@ export const useGraphStore = create<GraphState>()(
           await writeGraphRecordToWorkspace(get().settings, record)
         }
         _draggingNodeIds.clear()
-        set(s => {
+        set((s) => {
           const meta = { id: graphId, name: graphName, updatedAt: now }
-          const graphList = s.graphList.some(g => g.id === graphId)
-            ? s.graphList.map(g => (g.id === graphId ? meta : g))
+          const graphList = s.graphList.some((g) => g.id === graphId)
+            ? s.graphList.map((g) => (g.id === graphId ? meta : g))
             : [...s.graphList, meta]
           return {
             graphList,
@@ -868,8 +907,8 @@ export const useGraphStore = create<GraphState>()(
         if (isDesktop()) {
           await writeGraphRecordToWorkspace(get().settings, updated)
         }
-        set(s => ({
-          graphList: s.graphList.map(g => g.id === id ? { ...g, name } : g),
+        set((s) => ({
+          graphList: s.graphList.map((g) => (g.id === id ? { ...g, name } : g)),
         }))
       },
 
@@ -879,8 +918,8 @@ export const useGraphStore = create<GraphState>()(
           await removeGraphFromWorkspace(get().settings, id)
         }
         const { graphList, currentGraphId, loadGraph } = get()
-        const next = graphList.find(g => g.id !== id)
-        set(s => ({ graphList: s.graphList.filter(g => g.id !== id) }))
+        const next = graphList.find((g) => g.id !== id)
+        set((s) => ({ graphList: s.graphList.filter((g) => g.id !== id) }))
         if (currentGraphId === id && next) await loadGraph(next.id)
       },
     }),
@@ -897,15 +936,20 @@ export const useGraphStore = create<GraphState>()(
         viewports: s.viewports,
       }),
       merge: (persisted, current) => {
-        const p = persisted as Partial<GraphState> & { relationTypesPanelOpen?: boolean } | undefined
+        const p = persisted as
+          | (Partial<GraphState> & { relationTypesPanelOpen?: boolean })
+          | undefined
         if (!p) return current
         const { relationTypesPanelOpen: _removed, ...rest } = p
         const merged = { ...current.settings, ...p.settings } as typeof current.settings & {
           reviewBatchMax?: unknown
           fsrsMaxInterval?: unknown
         }
-        const { reviewBatchMax: _legacyReviewBatchMax, fsrsMaxInterval: _legacyFsrsMaxInterval, ...settings } =
-          merged
+        const {
+          reviewBatchMax: _legacyReviewBatchMax,
+          fsrsMaxInterval: _legacyFsrsMaxInterval,
+          ...settings
+        } = merged
         if (settings.autoCurveFlip === undefined) settings.autoCurveFlip = true
         if (settings.graphWorkspacePath === undefined) settings.graphWorkspacePath = null
         return {
@@ -914,19 +958,19 @@ export const useGraphStore = create<GraphState>()(
           settings,
         }
       },
-    }
-  )
+    },
+  ),
 )
 
 // Selectors
 export const selectedNodeSelector = (s: GraphState) => {
   if (s.selected?.kind !== 'node') return null
-  return s.nodes.find(n => n.id === s.selected!.id) ?? null
+  return s.nodes.find((n) => n.id === s.selected!.id) ?? null
 }
 
 export const selectedEdgeSelector = (s: GraphState) => {
   if (s.selected?.kind !== 'edge') return null
-  return s.edges.find(e => e.id === s.selected!.id) ?? null
+  return s.edges.find((e) => e.id === s.selected!.id) ?? null
 }
 
 export const graphDisplaySelector = (s: GraphState) => s.graphDisplay

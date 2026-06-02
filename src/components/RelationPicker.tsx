@@ -39,11 +39,11 @@ function RelationChip({
         borderRadius: 999,
         cursor: 'default',
       }}
-      onMouseEnter={e => {
+      onMouseEnter={(e) => {
         e.currentTarget.style.borderColor = color
         e.currentTarget.style.color = color
       }}
-      onMouseLeave={e => {
+      onMouseLeave={(e) => {
         e.currentTarget.style.borderColor = 'var(--line)'
         e.currentTarget.style.color = 'var(--ink-2)'
       }}
@@ -55,7 +55,7 @@ function RelationChip({
 
 export function RelationPicker({ screenX, screenY, fromText, toText, onPick, onCancel }: Props) {
   const t = useT()
-  const edges = useGraphStore(s => s.edges)
+  const edges = useGraphStore((s) => s.edges)
   const [query, setQuery] = useState('')
   const [showAll, setShowAll] = useState(false)
   const searchRef = useRef<HTMLInputElement>(null)
@@ -72,26 +72,24 @@ export function RelationPicker({ screenX, screenY, fromText, toText, onPick, onC
     .map(([k, c]) => ({
       key: k as EdgeCategory,
       ...c,
-      types: (Object.entries(RELATION_TYPES) as [EdgeTypeName, (typeof RELATION_TYPES)[EdgeTypeName]][])
-        .filter(([id, edgeDef]) => {
-          if (edgeDef.cat !== k) return false
-          if (!q && !showAll && !isPrimaryRelationType(id)) return false
-          if (q) return t.relationTypes.types[id].toLowerCase().includes(q) || id.includes(q)
-          return true
-        }),
+      types: (
+        Object.entries(RELATION_TYPES) as [EdgeTypeName, (typeof RELATION_TYPES)[EdgeTypeName]][]
+      ).filter(([id, edgeDef]) => {
+        if (edgeDef.cat !== k) return false
+        if (!q && !showAll && !isPrimaryRelationType(id)) return false
+        if (q) return t.relationTypes.types[id].toLowerCase().includes(q) || id.includes(q)
+        return true
+      }),
     }))
-    .filter(g => g.types.length > 0)
+    .filter((g) => g.types.length > 0)
 
   const left = Math.min(screenX + 8, window.innerWidth - 320)
   const top = Math.min(screenY + 8, window.innerHeight - 460)
 
   return (
-    <div
-      onClick={onCancel}
-      style={{ position: 'fixed', inset: 0, zIndex: 60 }}
-    >
+    <div onClick={onCancel} style={{ position: 'fixed', inset: 0, zIndex: 60 }}>
       <div
-        onClick={e => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
         style={{
           position: 'absolute',
           left,
@@ -106,13 +104,15 @@ export function RelationPicker({ screenX, screenY, fromText, toText, onPick, onC
         }}
       >
         <div style={{ padding: '0 14px 10px', borderBottom: '0.5px solid var(--line)' }}>
-          <div style={{
-            font: "500 10.5px 'JetBrains Mono', ui-monospace",
-            textTransform: 'uppercase',
-            letterSpacing: '0.08em',
-            color: 'var(--ink-4)',
-            marginBottom: 4,
-          }}>
+          <div
+            style={{
+              font: "500 10.5px 'JetBrains Mono', ui-monospace",
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              color: 'var(--ink-4)',
+              marginBottom: 4,
+            }}
+          >
             {t.relationTypes.newRelation}
           </div>
           <div style={{ font: "500 14px 'Fraunces', serif", letterSpacing: '-0.005em' }}>
@@ -128,7 +128,7 @@ export function RelationPicker({ screenX, screenY, fromText, toText, onPick, onC
             type="text"
             autoComplete="off"
             value={query}
-            onChange={e => setQuery(e.target.value)}
+            onChange={(e) => setQuery(e.target.value)}
             placeholder={t.relationTypes.searchPlaceholder}
             style={{
               width: '100%',
@@ -144,21 +144,32 @@ export function RelationPicker({ screenX, screenY, fromText, toText, onPick, onC
           />
         </div>
 
-        <div className="nesso-scrollbar" style={{ maxHeight: 380, overflowY: 'auto', padding: '10px 0 0' }}>
+        <div
+          className="nesso-scrollbar"
+          style={{ maxHeight: 380, overflowY: 'auto', padding: '10px 0 0' }}
+        >
           <div style={{ padding: '0 14px' }}>
             {showFrequent && (
-              <div style={{ padding: '0 0 10px', marginBottom: 6, borderBottom: '0.5px solid var(--line)' }}>
-                <div style={{
-                  font: "600 9.5px 'JetBrains Mono', ui-monospace",
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.08em',
-                  color: 'var(--ink-4)',
-                  padding: '0 0 6px',
-                }}>
+              <div
+                style={{
+                  padding: '0 0 10px',
+                  marginBottom: 6,
+                  borderBottom: '0.5px solid var(--line)',
+                }}
+              >
+                <div
+                  style={{
+                    font: "600 9.5px 'JetBrains Mono', ui-monospace",
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.08em',
+                    color: 'var(--ink-4)',
+                    padding: '0 0 6px',
+                  }}
+                >
                   {t.relationTypes.frequentInGraph}
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                  {frequentTypes.map(id => {
+                  {frequentTypes.map((id) => {
                     const cat = RELATION_TYPES[id].cat
                     const color = RELATION_CATEGORIES[cat].color
                     return (
@@ -176,49 +187,67 @@ export function RelationPicker({ screenX, screenY, fromText, toText, onPick, onC
             )}
 
             {groups.length === 0 ? (
-              <div style={{
-                padding: '20px 0 8px',
-                textAlign: 'center',
-                font: "400 11px 'JetBrains Mono', ui-monospace",
-                color: 'var(--ink-4)',
-                fontStyle: 'italic',
-              }}>
+              <div
+                style={{
+                  padding: '20px 0 8px',
+                  textAlign: 'center',
+                  font: "400 11px 'JetBrains Mono', ui-monospace",
+                  color: 'var(--ink-4)',
+                  fontStyle: 'italic',
+                }}
+              >
                 {t.relationTypes.noResults}
               </div>
-            ) : groups.map(g => (
-              <div key={g.key} style={{ padding: '8px 0 4px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 0 6px' }}>
-                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: g.color, display: 'inline-block' }} />
-                  <span style={{
-                    font: "600 9.5px 'JetBrains Mono', ui-monospace",
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.08em',
-                    color: g.color,
-                  }}>
-                    {t.relationTypes.categories[g.key].label}
-                  </span>
-                </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                  {g.types.map(([id]) => (
-                    <RelationChip
-                      key={id}
-                      id={id}
-                      color={g.color}
-                      label={t.relationTypes.types[id]}
-                      onPick={onPick}
+            ) : (
+              groups.map((g) => (
+                <div key={g.key} style={{ padding: '8px 0 4px' }}>
+                  <div
+                    style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 0 6px' }}
+                  >
+                    <span
+                      style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        background: g.color,
+                        display: 'inline-block',
+                      }}
                     />
-                  ))}
+                    <span
+                      style={{
+                        font: "600 9.5px 'JetBrains Mono', ui-monospace",
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.08em',
+                        color: g.color,
+                      }}
+                    >
+                      {t.relationTypes.categories[g.key].label}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                    {g.types.map(([id]) => (
+                      <RelationChip
+                        key={id}
+                        id={id}
+                        color={g.color}
+                        label={t.relationTypes.types[id]}
+                        onPick={onPick}
+                      />
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 
         {!q && (
-          <div style={{ padding: '8px 14px 0', borderTop: '0.5px solid var(--line)', marginTop: 10 }}>
+          <div
+            style={{ padding: '8px 14px 0', borderTop: '0.5px solid var(--line)', marginTop: 10 }}
+          >
             <button
               type="button"
-              onClick={() => setShowAll(v => !v)}
+              onClick={() => setShowAll((v) => !v)}
               style={{
                 appearance: 'none',
                 border: 'none',

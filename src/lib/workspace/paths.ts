@@ -29,7 +29,9 @@ async function pathApi() {
   return import('@tauri-apps/api/path')
 }
 
-export async function resolveWorkspace(settings: Pick<NessoSettings, 'graphWorkspacePath'>): Promise<WorkspaceTarget> {
+export async function resolveWorkspace(
+  settings: Pick<NessoSettings, 'graphWorkspacePath'>,
+): Promise<WorkspaceTarget> {
   const { appDataDir } = await pathApi()
   const appDataRoot = normalizePath(await appDataDir())
   const defaultDisplay = joinPath(appDataRoot, GRAPHS_SUBDIR)
@@ -53,7 +55,9 @@ export async function getDefaultWorkspacePath(): Promise<string> {
   return joinPath(await appDataDir(), GRAPHS_SUBDIR)
 }
 
-export async function resolveWorkspacePath(settings: Pick<NessoSettings, 'graphWorkspacePath'>): Promise<string> {
+export async function resolveWorkspacePath(
+  settings: Pick<NessoSettings, 'graphWorkspacePath'>,
+): Promise<string> {
   const ws = await resolveWorkspace(settings)
   return ws.displayPath
 }

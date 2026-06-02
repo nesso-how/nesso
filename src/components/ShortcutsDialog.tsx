@@ -45,17 +45,22 @@ export function ShortcutsDialog({ open, onClose }: Props) {
     <div
       onClick={onClose}
       style={{
-        position: 'absolute', inset: 0, zIndex: 75,
+        position: 'absolute',
+        inset: 0,
+        zIndex: 75,
         background: 'rgba(20, 18, 14, 0.55)',
         backdropFilter: 'blur(6px)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
       }}
     >
       <div
-        onClick={e => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
         style={{
           position: 'relative',
-          width: 520, maxWidth: '92vw',
+          width: 520,
+          maxWidth: '92vw',
           background: 'var(--bg-card)',
           border: '0.5px solid var(--line)',
           borderRadius: 18,
@@ -63,7 +68,15 @@ export function ShortcutsDialog({ open, onClose }: Props) {
           boxShadow: 'var(--shadow-lg)',
         }}
       >
-        <div style={{ font: "500 11px 'JetBrains Mono', ui-monospace", textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--ink-4)', marginBottom: 20 }}>
+        <div
+          style={{
+            font: "500 11px 'JetBrains Mono', ui-monospace",
+            textTransform: 'uppercase',
+            letterSpacing: '0.1em',
+            color: 'var(--ink-4)',
+            marginBottom: 20,
+          }}
+        >
           {t.shortcuts.title}
         </div>
         <div style={{ position: 'absolute', top: 12, right: 12 }}>
@@ -72,17 +85,52 @@ export function ShortcutsDialog({ open, onClose }: Props) {
 
         {SECTIONS.map((section, si) => (
           <div key={section.heading} style={{ marginBottom: si < SECTIONS.length - 1 ? 20 : 0 }}>
-            <div style={{ font: "500 10px 'JetBrains Mono', ui-monospace", textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--ink-4)', marginBottom: 10, borderBottom: '0.5px solid var(--line)', paddingBottom: 6 }}>
+            <div
+              style={{
+                font: "500 10px 'JetBrains Mono', ui-monospace",
+                textTransform: 'uppercase',
+                letterSpacing: '0.12em',
+                color: 'var(--ink-4)',
+                marginBottom: 10,
+                borderBottom: '0.5px solid var(--line)',
+                paddingBottom: 6,
+              }}
+            >
               {section.heading}
             </div>
-            {section.rows.map(row => (
-              <div key={row.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                <span style={{ font: "400 13px/1 'Inter', system-ui", color: 'var(--ink-2)' }}>{row.label}</span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0, marginLeft: 16 }}>
+            {section.rows.map((row) => (
+              <div
+                key={row.label}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: 10,
+                }}
+              >
+                <span style={{ font: "400 13px/1 'Inter', system-ui", color: 'var(--ink-2)' }}>
+                  {row.label}
+                </span>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    flexShrink: 0,
+                    marginLeft: 16,
+                  }}
+                >
                   {row.keys.map((k, i) => (
                     <span key={i} style={{ display: 'contents' }}>
                       {i > 0 && (
-                        <span style={{ font: "400 11px 'JetBrains Mono', ui-monospace", color: 'var(--ink-4)' }}>+</span>
+                        <span
+                          style={{
+                            font: "400 11px 'JetBrains Mono', ui-monospace",
+                            color: 'var(--ink-4)',
+                          }}
+                        >
+                          +
+                        </span>
                       )}
                       <span
                         style={{
@@ -104,7 +152,6 @@ export function ShortcutsDialog({ open, onClose }: Props) {
             ))}
           </div>
         ))}
-
       </div>
     </div>
   )

@@ -18,7 +18,11 @@ export async function fetchCompletion(
   if (settings.aiMode === 'local') {
     const engine = getEngine()
     if (!engine) throw new Error('Local model not ready')
-    const reply = await engine.chat.completions.create({ model: LOCAL_MODEL_ID, max_tokens: maxTokens, messages })
+    const reply = await engine.chat.completions.create({
+      model: LOCAL_MODEL_ID,
+      max_tokens: maxTokens,
+      messages,
+    })
     return reply.choices[0]?.message?.content ?? ''
   }
 
@@ -33,6 +37,6 @@ export async function fetchCompletion(
     body: JSON.stringify({ model: settings.aiModel, max_tokens: maxTokens, messages }),
   })
   if (!res.ok) throw new Error(await res.text())
-  const data = await res.json() as { choices?: { message?: { content?: string | null } }[] }
+  const data = (await res.json()) as { choices?: { message?: { content?: string | null } }[] }
   return data.choices?.[0]?.message?.content ?? ''
 }

@@ -11,12 +11,9 @@ npm install @nesso-how/relation-types
 ## Usage
 
 ```ts
-import {
-  RELATION_TYPES,
-  RELATION_TYPE_VALUES,
-} from "@nesso-how/relation-types";
+import { RELATION_TYPES, RELATION_TYPE_VALUES } from '@nesso-how/relation-types'
 
-const def = RELATION_TYPES["causes"];
+const def = RELATION_TYPES['causes']
 // { cat: 'causal', label: 'causes', inverse: 'caused-by', ... }
 ```
 

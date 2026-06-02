@@ -28,7 +28,7 @@ let state: WebLLMState = {
 const listeners = new Set<() => void>()
 
 function notify() {
-  listeners.forEach(fn => fn())
+  listeners.forEach((fn) => fn())
 }
 
 function setState(patch: Partial<WebLLMState>) {

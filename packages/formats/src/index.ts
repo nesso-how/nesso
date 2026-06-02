@@ -32,11 +32,9 @@ export function deserializeGraph(json: string): NessoGraphFile {
 }
 
 /** Strip personal FSRS / review history for shareable graph export. Keeps text, elaboration, layout. */
-export function nodesForGraphShareExport(
-  nodes: Node<ConceptNodeData>[],
-): Node<ConceptNodeData>[] {
+export function nodesForGraphShareExport(nodes: Node<ConceptNodeData>[]): Node<ConceptNodeData>[] {
   const review = defaultConceptReviewFields()
-  return nodes.map(node => {
+  return nodes.map((node) => {
     const { text, elaboration } = node.data ?? { text: '' }
     return {
       ...node,
@@ -50,8 +48,6 @@ export function nodesForGraphShareExport(
 }
 
 /** Reset review fields on import so shared files never restore someone else's scheduling. */
-export function nodesFromGraphShareImport(
-  nodes: Node<ConceptNodeData>[],
-): Node<ConceptNodeData>[] {
+export function nodesFromGraphShareImport(nodes: Node<ConceptNodeData>[]): Node<ConceptNodeData>[] {
   return nodesForGraphShareExport(nodes)
 }

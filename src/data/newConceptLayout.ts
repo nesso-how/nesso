@@ -19,8 +19,14 @@ function nodeRect(n: Node<ConceptNodeData>) {
 }
 
 function rectsOverlap(
-  ax: number, ay: number, aw: number, ah: number,
-  bx: number, by: number, bw: number, bh: number,
+  ax: number,
+  ay: number,
+  aw: number,
+  ah: number,
+  bx: number,
+  by: number,
+  bw: number,
+  bh: number,
   margin: number,
 ): boolean {
   return !(
@@ -49,7 +55,7 @@ export function findNewConceptPosition(
   const { x: baseX, y: baseY } = newConceptTopLeftAtFlowCenter(flowCenterX, flowCenterY)
 
   const occupied = (x: number, y: number) =>
-    nodes.some(n => {
+    nodes.some((n) => {
       const r = nodeRect(n)
       return rectsOverlap(x, y, w, h, r.x, r.y, r.w, r.h, PLACEMENT_MARGIN)
     })

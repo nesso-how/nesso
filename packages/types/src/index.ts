@@ -28,14 +28,7 @@ export interface ConceptNodeData extends Record<string, unknown> {
 /** Fresh FSRS fields for a new or shared-import concept (no personal review history). */
 export function defaultConceptReviewFields(): Pick<
   ConceptNodeData,
-  | 'stability'
-  | 'difficulty'
-  | 'reps'
-  | 'lapses'
-  | 'fsrsState'
-  | 'due'
-  | 'lastReview'
-  | 'lastRating'
+  'stability' | 'difficulty' | 'reps' | 'lapses' | 'fsrsState' | 'due' | 'lastReview' | 'lastRating'
 > {
   return {
     stability: 0,

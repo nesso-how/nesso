@@ -1,5 +1,12 @@
 // SPDX-License-Identifier: MIT
-import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MouseEvent as ReactMouseEvent,
+} from 'react'
 import {
   ReactFlow,
   Background,
@@ -34,7 +41,7 @@ interface PendingConnection {
 }
 
 function ViewportZoomReporter({ onZoomChange }: { onZoomChange: (zoom: number) => void }) {
-  const zoom = useStore(s => s.transform[2])
+  const zoom = useStore((s) => s.transform[2])
   useEffect(() => {
     onZoomChange(zoom)
   }, [zoom, onZoomChange])
@@ -55,23 +62,31 @@ export function GraphCanvas({
   onViewportZoomChange?: (zoom: number) => void
 }) {
   const {
-    nodes, edges,
-    onNodesChange, onEdgesChange,
-    addEdge, addNode, syncFlowSelection,
-    viewports, currentGraphId, loadedToken,
+    nodes,
+    edges,
+    onNodesChange,
+    onEdgesChange,
+    addEdge,
+    addNode,
+    syncFlowSelection,
+    viewports,
+    currentGraphId,
+    loadedToken,
   } = useGraphStore()
 
   const { screenToFlowPosition } = useReactFlow()
-  const defaultViewport = viewports[currentGraphId] ?? computeFitViewport(
-    nodes,
-    {
-      top: topInset,
-      bottom: bottomInset,
-      left: leftInset,
-      right: rightInset,
-    },
-    getSeedInitialFitZoom(currentGraphId) ?? 1,
-  )
+  const defaultViewport =
+    viewports[currentGraphId] ??
+    computeFitViewport(
+      nodes,
+      {
+        top: topInset,
+        bottom: bottomInset,
+        left: leftInset,
+        right: rightInset,
+      },
+      getSeedInitialFitZoom(currentGraphId) ?? 1,
+    )
 
   const [pendingConn, setPendingConn] = useState<PendingConnection | null>(null)
   const connectingSource = useRef<string | null>(null)
@@ -97,7 +112,10 @@ export function GraphCanvas({
   const onConnectEnd = useCallback<OnConnectEnd>((event) => {
     const target = (event.target as Element).closest('[data-id]')?.getAttribute('data-id')
     const source = connectingSource.current
-    if (!source || !target || source === target) { connectingSource.current = null; return }
+    if (!source || !target || source === target) {
+      connectingSource.current = null
+      return
+    }
     const e = event as MouseEvent
     setPendingConn({ source, target, screenX: e.clientX, screenY: e.clientY })
     connectingSource.current = null
@@ -109,51 +127,66 @@ export function GraphCanvas({
   }, [])
 
   const onSelectionChange = useCallback(
-    ({ nodes: sel, edges: selEdges }: { nodes: Array<{ id: string }>, edges: Array<{ id: string }> }) => {
+    ({
+      nodes: sel,
+      edges: selEdges,
+    }: {
+      nodes: Array<{ id: string }>
+      edges: Array<{ id: string }>
+    }) => {
       if (selectionSyncFrame.current != null) {
         cancelAnimationFrame(selectionSyncFrame.current)
       }
-      const nodeIds = sel.map(n => n.id)
-      const edgeIds = selEdges.map(e => e.id)
+      const nodeIds = sel.map((n) => n.id)
+      const edgeIds = selEdges.map((e) => e.id)
       selectionSyncFrame.current = requestAnimationFrame(() => {
         selectionSyncFrame.current = null
         syncFlowSelection(nodeIds, edgeIds)
       })
     },
-    [syncFlowSelection]
+    [syncFlowSelection],
   )
 
-  useEffect(() => () => {
-    if (selectionSyncFrame.current != null) cancelAnimationFrame(selectionSyncFrame.current)
-  }, [])
+  useEffect(
+    () => () => {
+      if (selectionSyncFrame.current != null) cancelAnimationFrame(selectionSyncFrame.current)
+    },
+    [],
+  )
 
   const persistViewportOnMoveEnd = useCallback<OnMoveEnd>((_event, viewport) => {
     const { currentGraphId: id, saveViewport } = useGraphStore.getState()
     saveViewport(id, viewport)
   }, [])
 
-  const handlePaneDoubleClick = useCallback((event: ReactMouseEvent<HTMLDivElement>) => {
-    const target = event.target as Element
-    if (!target.closest('.react-flow__pane')) return
-    if (target.closest('.react-flow__node') || target.closest('.react-flow__edge')) return
+  const handlePaneDoubleClick = useCallback(
+    (event: ReactMouseEvent<HTMLDivElement>) => {
+      const target = event.target as Element
+      if (!target.closest('.react-flow__pane')) return
+      if (target.closest('.react-flow__node') || target.closest('.react-flow__edge')) return
 
-    event.preventDefault()
-    const { x, y } = screenToFlowPosition({ x: event.clientX, y: event.clientY })
-    const pos = newConceptTopLeftAtFlowCenter(x, y)
-    addNode(pos.x, pos.y)
-  }, [addNode, screenToFlowPosition])
+      event.preventDefault()
+      const { x, y } = screenToFlowPosition({ x: event.clientX, y: event.clientY })
+      const pos = newConceptTopLeftAtFlowCenter(x, y)
+      addNode(pos.x, pos.y)
+    },
+    [addNode, screenToFlowPosition],
+  )
 
-  const onPickRelation = useCallback((type: EdgeTypeName) => {
-    if (!pendingConn) return
-    addEdge(pendingConn.source, pendingConn.target, type)
-    setPendingConn(null)
-  }, [pendingConn, addEdge])
+  const onPickRelation = useCallback(
+    (type: EdgeTypeName) => {
+      if (!pendingConn) return
+      addEdge(pendingConn.source, pendingConn.target, type)
+      setPendingConn(null)
+    },
+    [pendingConn, addEdge],
+  )
 
   // Compute sibling index: edges sharing the same unordered node pair get
   // ascending indices so they can be offset perpendicularly without overlap.
   const styledEdges = useMemo(() => {
     const pairCount: Record<string, number> = {}
-    return edges.map(e => {
+    return edges.map((e) => {
       const key = [e.source, e.target].sort().join('—')
       const idx = pairCount[key] ?? 0
       pairCount[key] = idx + 1
@@ -196,23 +229,16 @@ export function GraphCanvas({
         proOptions={{ hideAttribution: true }}
         style={{ background: 'transparent' }}
       >
-        {onViewportZoomChange && (
-          <ViewportZoomReporter onZoomChange={onViewportZoomChange} />
-        )}
-        <Background
-          variant={BackgroundVariant.Dots}
-          gap={28}
-          size={1.5}
-          color="var(--grid-dot)"
-        />
+        {onViewportZoomChange && <ViewportZoomReporter onZoomChange={onViewportZoomChange} />}
+        <Background variant={BackgroundVariant.Dots} gap={28} size={1.5} color="var(--grid-dot)" />
       </ReactFlow>
 
       {pendingConn && (
         <RelationPicker
           screenX={pendingConn.screenX}
           screenY={pendingConn.screenY}
-          fromText={nodes.find(n => n.id === pendingConn.source)?.data.text ?? ''}
-          toText={nodes.find(n => n.id === pendingConn.target)?.data.text ?? ''}
+          fromText={nodes.find((n) => n.id === pendingConn.source)?.data.text ?? ''}
+          toText={nodes.find((n) => n.id === pendingConn.target)?.data.text ?? ''}
           onPick={onPickRelation}
           onCancel={() => setPendingConn(null)}
         />

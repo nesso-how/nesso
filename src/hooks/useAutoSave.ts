@@ -8,13 +8,14 @@ const DEBOUNCE_MS = 5000
 
 // Viewport is also saved from GraphCanvas `onMoveEnd` when only pan/zoom/fit changes (no node/edge edits).
 export function useAutoSave() {
-  const fingerprint = useGraphStore(s =>
-    graphPersistFingerprint(s.nodes, s.edges, s.graphDisplay))
-  const currentGraphId = useGraphStore(s => s.currentGraphId)
-  const loadedToken = useGraphStore(s => s.loadedToken)
-  const saveCurrentGraph = useGraphStore(s => s.saveCurrentGraph)
-  const saveViewport = useGraphStore(s => s.saveViewport)
-  const externalFileConflict = useGraphStore(s => s.externalFileConflict)
+  const fingerprint = useGraphStore((s) =>
+    graphPersistFingerprint(s.nodes, s.edges, s.graphDisplay),
+  )
+  const currentGraphId = useGraphStore((s) => s.currentGraphId)
+  const loadedToken = useGraphStore((s) => s.loadedToken)
+  const saveCurrentGraph = useGraphStore((s) => s.saveCurrentGraph)
+  const saveViewport = useGraphStore((s) => s.saveViewport)
+  const externalFileConflict = useGraphStore((s) => s.externalFileConflict)
   const { getViewport } = useReactFlow()
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastToken = useRef<number | null>(null)
@@ -45,6 +46,8 @@ export function useAutoSave() {
       saveViewport(currentGraphId, vp)
       saveCurrentGraph()
     }, DEBOUNCE_MS)
-    return () => { if (timer.current) clearTimeout(timer.current) }
+    return () => {
+      if (timer.current) clearTimeout(timer.current)
+    }
   }, [fingerprint, currentGraphId, loadedToken, saveCurrentGraph, saveViewport, getViewport])
 }

@@ -47,14 +47,15 @@ export function ReviewMode({ open, onClose }: Props) {
   const webllm = useWebLLM()
 
   const scheduler = useMemo(
-    () => fsrs({ request_retention: settings.fsrsRetention, maximum_interval: settings.maximumInterval }),
+    () =>
+      fsrs({
+        request_retention: settings.fsrsRetention,
+        maximum_interval: settings.maximumInterval,
+      }),
     [settings.fsrsRetention, settings.maximumInterval],
   )
 
-  const due = useMemo(
-    () => sortedDueConceptNodes(nodes),
-    [nodes],
-  )
+  const due = useMemo(() => sortedDueConceptNodes(nodes), [nodes])
 
   useLayoutEffect(() => {
     if (open) {
@@ -76,7 +77,7 @@ export function ReviewMode({ open, onClose }: Props) {
     const card = nodeToCard(currentNode.data)
     const now = new Date()
     return Object.fromEntries(
-      RATINGS.map(r => {
+      RATINGS.map((r) => {
         const ms = scheduler.next(card, now, r as Grade).card.due.getTime() - now.getTime()
         return [r, formatInterval(ms)]
       }),
@@ -96,17 +97,17 @@ export function ReviewMode({ open, onClose }: Props) {
     setQuestion(null)
     setQuestionLoading(true)
 
-    const outEdges = edges.filter(e => e.source === currentNode.id).slice(0, 5)
-    const incEdges = edges.filter(e => e.target === currentNode.id).slice(0, 3)
+    const outEdges = edges.filter((e) => e.source === currentNode.id).slice(0, 5)
+    const incEdges = edges.filter((e) => e.target === currentNode.id).slice(0, 3)
     const relStr = [
-      ...outEdges.map(e => {
+      ...outEdges.map((e) => {
         const T = RELATION_TYPES[e.data?.type as EdgeTypeName]
-        const target = nodes.find(n => n.id === e.target)
+        const target = nodes.find((n) => n.id === e.target)
         return `${T.label} → "${target?.data.text ?? '?'}"`
       }),
-      ...incEdges.map(e => {
+      ...incEdges.map((e) => {
         const T = RELATION_TYPES[e.data?.type as EdgeTypeName]
-        const source = nodes.find(n => n.id === e.source)
+        const source = nodes.find((n) => n.id === e.source)
         return `← ${T.label} ← "${source?.data.text ?? '?'}"`
       }),
     ].join('; ')
@@ -125,7 +126,10 @@ export function ReviewMode({ open, onClose }: Props) {
       try {
         const q = await fetchCompletion(
           settings,
-          [{ role: 'system', content: REVIEW_QUESTION_SYSTEM + langSuffix }, { role: 'user', content: userMsg }],
+          [
+            { role: 'system', content: REVIEW_QUESTION_SYSTEM + langSuffix },
+            { role: 'user', content: userMsg },
+          ],
           80,
           controller.signal,
         )
@@ -172,7 +176,7 @@ export function ReviewMode({ open, onClose }: Props) {
       return
     }
 
-    setSessionProgress(p => {
+    setSessionProgress((p) => {
       const next = p + 1
       const total = sessionTotalRef.current
       if (next < total) return next
@@ -187,30 +191,45 @@ export function ReviewMode({ open, onClose }: Props) {
   if (!due.length) {
     return (
       <Overlay onClose={onClose}>
-        <div style={{ font: "500 11px 'JetBrains Mono', ui-monospace", textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--cat-temporal)' }}>
+        <div
+          style={{
+            font: "500 11px 'JetBrains Mono', ui-monospace",
+            textTransform: 'uppercase',
+            letterSpacing: '0.1em',
+            color: 'var(--cat-temporal)',
+          }}
+        >
           {t.review.allCaughtUp}
         </div>
         <h2 style={{ margin: '14px 0 8px', font: "500 32px/1.15 'Fraunces', serif" }}>
           {t.review.nothingDue}
         </h2>
-        <p style={{ font: "400 14.5px/1.55 'Fraunces', serif", color: 'var(--ink-3)', margin: '0 0 22px' }}>
+        <p
+          style={{
+            font: "400 14.5px/1.55 'Fraunces', serif",
+            color: 'var(--ink-3)',
+            margin: '0 0 22px',
+          }}
+        >
           {t.review.nothingDueDesc}
         </p>
-        <Btn primary onClick={onClose}>{t.review.close}</Btn>
+        <Btn primary onClick={onClose}>
+          {t.review.close}
+        </Btn>
       </Overlay>
     )
   }
 
   const node = currentNode!
   const nodeEdges = {
-    out: edges.filter(e => e.source === node.id),
-    inc: edges.filter(e => e.target === node.id),
+    out: edges.filter((e) => e.source === node.id),
+    inc: edges.filter((e) => e.target === node.id),
   }
 
   const elab = node.data.elaboration
-  const examplesArr = (elab?.examples ?? '').split('\n').filter(s => s.length > 0)
+  const examplesArr = (elab?.examples ?? '').split('\n').filter((s) => s.length > 0)
   const hasImage = !!elab?.imageUrl
-  const hasDef = !!(elab?.definition?.trim())
+  const hasDef = !!elab?.definition?.trim()
   const hasExamples = examplesArr.length > 0
 
   const sessionTotal = sessionTotalRef.current || due.length
@@ -225,19 +244,44 @@ export function ReviewMode({ open, onClose }: Props) {
   }
 
   return (
-    <ReviewKeyHandler open={open} revealed={revealed} onReveal={() => setRevealed(true)} onRate={advance} ratings={RATINGS}>
+    <ReviewKeyHandler
+      open={open}
+      revealed={revealed}
+      onReveal={() => setRevealed(true)}
+      onRate={advance}
+      ratings={RATINGS}
+    >
       <Overlay onClose={onClose}>
         {/* Progress bar + counter + close */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 22 }}>
-          <div style={{ flex: 1, height: 3, borderRadius: 999, background: 'var(--paper-deep)', overflow: 'hidden' }}>
-            <div style={{ width: `${pct}%`, height: '100%', background: 'var(--accent)', transition: 'width 200ms ease' }} />
+          <div
+            style={{
+              flex: 1,
+              height: 3,
+              borderRadius: 999,
+              background: 'var(--paper-deep)',
+              overflow: 'hidden',
+            }}
+          >
+            <div
+              style={{
+                width: `${pct}%`,
+                height: '100%',
+                background: 'var(--accent)',
+                transition: 'width 200ms ease',
+              }}
+            />
           </div>
-          <span style={{
-            font: "500 10.5px 'JetBrains Mono', ui-monospace",
-            color: 'var(--ink-4)',
-            textTransform: 'uppercase', letterSpacing: '0.08em',
-            minWidth: 52, textAlign: 'right',
-          }}>
+          <span
+            style={{
+              font: "500 10.5px 'JetBrains Mono', ui-monospace",
+              color: 'var(--ink-4)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              minWidth: 52,
+              textAlign: 'right',
+            }}
+          >
             {sessionPosition} / {sessionTotal}
           </span>
           <CloseButton large onClick={onClose} />
@@ -249,43 +293,87 @@ export function ReviewMode({ open, onClose }: Props) {
             <img
               src={elab!.imageUrl}
               alt={node.data.text}
-              style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 10, border: '0.5px solid var(--line)', flexShrink: 0 }}
+              style={{
+                width: 56,
+                height: 56,
+                objectFit: 'cover',
+                borderRadius: 10,
+                border: '0.5px solid var(--line)',
+                flexShrink: 0,
+              }}
             />
           )}
-          <h2 style={{ margin: 0, font: "500 32px/1.12 'Fraunces', serif", letterSpacing: '-0.015em', color: 'var(--ink)' }}>
+          <h2
+            style={{
+              margin: 0,
+              font: "500 32px/1.12 'Fraunces', serif",
+              letterSpacing: '-0.015em',
+              color: 'var(--ink)',
+            }}
+          >
             {node.data.text}
           </h2>
         </div>
 
         {!revealed ? (
           <>
-            <div style={{ marginBottom: 22, minHeight: 44, display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+            <div
+              style={{
+                marginBottom: 22,
+                minHeight: 44,
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: 10,
+              }}
+            >
               {questionLoading ? (
                 <ThinkingIndicator />
               ) : question ? (
                 <>
-                  <div style={{
-                    flexShrink: 0,
-                    width: 36, height: 36,
-                    borderRadius: '50%',
-                    border: '0.5px solid var(--line)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
+                  <div
+                    style={{
+                      flexShrink: 0,
+                      width: 36,
+                      height: 36,
+                      borderRadius: '50%',
+                      border: '0.5px solid var(--line)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
                     <SocratesGlyph size={24} color="var(--ink-3)" />
                   </div>
-                  <span style={{ font: "400 14.5px/1.55 'Fraunces', serif", color: 'var(--ink-2)', paddingTop: 8 }}>
+                  <span
+                    style={{
+                      font: "400 14.5px/1.55 'Fraunces', serif",
+                      color: 'var(--ink-2)',
+                      paddingTop: 8,
+                    }}
+                  >
                     <Typewriter text={question} />
                   </span>
                 </>
               ) : (
-                <p style={{ margin: 0, font: "400 14.5px/1.55 'Fraunces', serif", color: 'var(--ink-3)', fontStyle: 'italic' }}>
+                <p
+                  style={{
+                    margin: 0,
+                    font: "400 14.5px/1.55 'Fraunces', serif",
+                    color: 'var(--ink-3)',
+                    fontStyle: 'italic',
+                  }}
+                >
                   {t.review.recallPrompt}
                 </p>
               )}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <Btn primary onClick={() => setRevealed(true)}>{t.review.reveal}</Btn>
-              <span style={{ font: "400 12px 'Inter'", color: 'var(--ink-4)' }}>or press Space</span>
+              <Btn primary onClick={() => setRevealed(true)}>
+                {t.review.reveal}
+              </Btn>
+              <span style={{ font: "400 12px 'Inter'", color: 'var(--ink-4)' }}>
+                or press Space
+              </span>
             </div>
           </>
         ) : (
@@ -294,14 +382,33 @@ export function ReviewMode({ open, onClose }: Props) {
             {(hasDef || hasExamples) && (
               <div style={{ marginBottom: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {hasDef && (
-                  <p style={{ margin: 0, font: "400 14.5px/1.55 'Fraunces', serif", color: 'var(--ink-2)' }}>
+                  <p
+                    style={{
+                      margin: 0,
+                      font: "400 14.5px/1.55 'Fraunces', serif",
+                      color: 'var(--ink-2)',
+                    }}
+                  >
                     {elab!.definition}
                   </p>
                 )}
                 {hasExamples && (
-                  <ul style={{ margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <ul
+                    style={{
+                      margin: 0,
+                      paddingLeft: 18,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 2,
+                    }}
+                  >
                     {examplesArr.map((ex, i) => (
-                      <li key={i} style={{ font: "400 14.5px/1.55 'Fraunces', serif", color: 'var(--ink-2)' }}>{ex}</li>
+                      <li
+                        key={i}
+                        style={{ font: "400 14.5px/1.55 'Fraunces', serif", color: 'var(--ink-2)' }}
+                      >
+                        {ex}
+                      </li>
                     ))}
                   </ul>
                 )}
@@ -309,26 +416,71 @@ export function ReviewMode({ open, onClose }: Props) {
             )}
 
             {/* Relations */}
-            <div style={{ borderTop: '0.5px dashed var(--line)', paddingTop: 12, marginBottom: 14, display: 'flex', flexDirection: 'column', gap: 1 }}>
-              {nodeEdges.out.map(e => {
+            <div
+              style={{
+                borderTop: '0.5px dashed var(--line)',
+                paddingTop: 12,
+                marginBottom: 14,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 1,
+              }}
+            >
+              {nodeEdges.out.map((e) => {
                 const T = RELATION_TYPES[e.data?.type as EdgeTypeName]
                 const C = RELATION_CATEGORIES[T.cat]
-                const target = nodes.find(n => n.id === e.target)
+                const target = nodes.find((n) => n.id === e.target)
                 return (
-                  <div key={e.id} style={{ display: 'flex', alignItems: 'baseline', gap: 12, padding: '5px 0' }}>
-                    <span style={{ font: "500 10.5px 'JetBrains Mono', ui-monospace", color: C.color, textTransform: 'uppercase', letterSpacing: '0.06em', minWidth: 88 }}>{t.relationTypes.types[e.data?.type as EdgeTypeName]}</span>
-                    <span style={{ font: "500 14.5px 'Fraunces', serif", color: 'var(--ink)' }}>{target?.data.text}</span>
+                  <div
+                    key={e.id}
+                    style={{ display: 'flex', alignItems: 'baseline', gap: 12, padding: '5px 0' }}
+                  >
+                    <span
+                      style={{
+                        font: "500 10.5px 'JetBrains Mono', ui-monospace",
+                        color: C.color,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.06em',
+                        minWidth: 88,
+                      }}
+                    >
+                      {t.relationTypes.types[e.data?.type as EdgeTypeName]}
+                    </span>
+                    <span style={{ font: "500 14.5px 'Fraunces', serif", color: 'var(--ink)' }}>
+                      {target?.data.text}
+                    </span>
                   </div>
                 )
               })}
-              {nodeEdges.inc.map(e => {
+              {nodeEdges.inc.map((e) => {
                 const T = RELATION_TYPES[e.data?.type as EdgeTypeName]
                 const C = RELATION_CATEGORIES[T.cat]
-                const source = nodes.find(n => n.id === e.source)
+                const source = nodes.find((n) => n.id === e.source)
                 return (
-                  <div key={e.id} style={{ display: 'flex', alignItems: 'baseline', gap: 12, padding: '5px 0', opacity: 0.7 }}>
-                    <span style={{ font: "500 10.5px 'JetBrains Mono', ui-monospace", color: C.color, textTransform: 'uppercase', letterSpacing: '0.06em', minWidth: 88 }}>← {t.relationTypes.types[e.data?.type as EdgeTypeName]}</span>
-                    <span style={{ font: "500 14.5px 'Fraunces', serif", color: 'var(--ink)' }}>{source?.data.text}</span>
+                  <div
+                    key={e.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'baseline',
+                      gap: 12,
+                      padding: '5px 0',
+                      opacity: 0.7,
+                    }}
+                  >
+                    <span
+                      style={{
+                        font: "500 10.5px 'JetBrains Mono', ui-monospace",
+                        color: C.color,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.06em',
+                        minWidth: 88,
+                      }}
+                    >
+                      ← {t.relationTypes.types[e.data?.type as EdgeTypeName]}
+                    </span>
+                    <span style={{ font: "500 14.5px 'Fraunces', serif", color: 'var(--ink)' }}>
+                      {source?.data.text}
+                    </span>
                   </div>
                 )
               })}
@@ -336,7 +488,7 @@ export function ReviewMode({ open, onClose }: Props) {
 
             {/* Rating buttons */}
             <div style={{ display: 'flex', gap: 8 }}>
-              {RATINGS.map(r => (
+              {RATINGS.map((r) => (
                 <RatingBtn
                   key={r}
                   label={ratingLabels[r]}
@@ -350,16 +502,26 @@ export function ReviewMode({ open, onClose }: Props) {
         )}
 
         {/* Footer keyboard hint */}
-        <div style={{
-          marginTop: 22, paddingTop: 14,
-          borderTop: '0.5px dashed var(--line)',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          font: "400 11px 'Inter'", color: 'var(--ink-4)',
-        }}>
+        <div
+          style={{
+            marginTop: 22,
+            paddingTop: 14,
+            borderTop: '0.5px dashed var(--line)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            font: "400 11px 'Inter'",
+            color: 'var(--ink-4)',
+          }}
+        >
           <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             {revealed ? (
               <>
-                {['1', '2', '3', '4'].map(k => <kbd key={k} style={hintKbd}>{k}</kbd>)}
+                {['1', '2', '3', '4'].map((k) => (
+                  <kbd key={k} style={hintKbd}>
+                    {k}
+                  </kbd>
+                ))}
                 <span style={{ marginLeft: 2 }}>rate</span>
               </>
             ) : (
@@ -380,7 +542,12 @@ export function ReviewMode({ open, onClose }: Props) {
 }
 
 function ReviewKeyHandler({
-  open, revealed, onReveal, onRate, ratings, children,
+  open,
+  revealed,
+  onReveal,
+  onRate,
+  ratings,
+  children,
 }: {
   open: boolean
   revealed: boolean
@@ -425,68 +592,106 @@ function Overlay({ children, onClose }: { children: React.ReactNode; onClose: ()
     <div
       onClick={onClose}
       style={{
-        position: 'absolute', inset: 0, zIndex: 70,
+        position: 'absolute',
+        inset: 0,
+        zIndex: 70,
         background: 'rgba(20, 18, 14, 0.55)',
         backdropFilter: 'blur(6px)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
       }}
     >
-      <div onClick={e => e.stopPropagation()} style={{
-        width: 560, maxWidth: '92vw',
-        maxHeight: 'calc(90vh - 40px)',
-        overflowY: 'auto',
-        background: 'var(--bg-card)',
-        border: '0.5px solid var(--line)',
-        borderRadius: 18,
-        padding: '28px 32px 22px',
-        boxShadow: 'var(--shadow-lg)',
-      }}>
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width: 560,
+          maxWidth: '92vw',
+          maxHeight: 'calc(90vh - 40px)',
+          overflowY: 'auto',
+          background: 'var(--bg-card)',
+          border: '0.5px solid var(--line)',
+          borderRadius: 18,
+          padding: '28px 32px 22px',
+          boxShadow: 'var(--shadow-lg)',
+        }}
+      >
         {children}
       </div>
     </div>
   )
 }
 
-function Btn({ children, primary, onClick }: { children: React.ReactNode; primary?: boolean; onClick: () => void }) {
+function Btn({
+  children,
+  primary,
+  onClick,
+}: {
+  children: React.ReactNode
+  primary?: boolean
+  onClick: () => void
+}) {
   return (
-    <button onClick={onClick} style={{
-      appearance: 'none',
-      border: primary ? 0 : '0.5px solid var(--line)',
-      background: primary ? 'var(--accent)' : 'transparent',
-      color: primary ? 'var(--paper)' : 'var(--ink-2)',
-      font: "500 12.5px 'Inter'",
-      padding: '9px 16px',
-      borderRadius: 999,
-      cursor: 'default',
-    }}>
+    <button
+      onClick={onClick}
+      style={{
+        appearance: 'none',
+        border: primary ? 0 : '0.5px solid var(--line)',
+        background: primary ? 'var(--accent)' : 'transparent',
+        color: primary ? 'var(--paper)' : 'var(--ink-2)',
+        font: "500 12.5px 'Inter'",
+        padding: '9px 16px',
+        borderRadius: 999,
+        cursor: 'default',
+      }}
+    >
       {children}
     </button>
   )
 }
 
-function RatingBtn({ label, interval, color, onClick }: {
+function RatingBtn({
+  label,
+  interval,
+  color,
+  onClick,
+}: {
   label: string
   interval: string
   color: string
   onClick: () => void
 }) {
   return (
-    <button onClick={onClick} style={{
-      flex: 1,
-      appearance: 'none', border: 0, cursor: 'default',
-      background: color,
-      borderRadius: 10,
-      padding: '11px 12px 10px',
-      display: 'flex', flexDirection: 'column',
-      alignItems: 'flex-start', gap: 2,
-    }}>
-      <span style={{ font: "500 13px 'Inter'", color: 'var(--paper)', lineHeight: 1.1 }}>{label}</span>
-      <span style={{
-        font: "500 10.5px 'JetBrains Mono', ui-monospace",
-        color: 'rgba(244,237,225,0.82)',
-        textTransform: 'uppercase', letterSpacing: '0.06em',
-        lineHeight: 1.1,
-      }}>{interval}</span>
+    <button
+      onClick={onClick}
+      style={{
+        flex: 1,
+        appearance: 'none',
+        border: 0,
+        cursor: 'default',
+        background: color,
+        borderRadius: 10,
+        padding: '11px 12px 10px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'flex-start',
+        gap: 2,
+      }}
+    >
+      <span style={{ font: "500 13px 'Inter'", color: 'var(--paper)', lineHeight: 1.1 }}>
+        {label}
+      </span>
+      <span
+        style={{
+          font: "500 10.5px 'JetBrains Mono', ui-monospace",
+          color: 'rgba(244,237,225,0.82)',
+          textTransform: 'uppercase',
+          letterSpacing: '0.06em',
+          lineHeight: 1.1,
+        }}
+      >
+        {interval}
+      </span>
     </button>
   )
 }

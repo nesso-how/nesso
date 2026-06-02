@@ -1,13 +1,14 @@
 /**
  * Ensures SPDX one-liners in source files matching package.json `"license"` (when present).
- * Usage: node scripts/license-header.mjs [--check]
+ * Usage: node scripts/license-header.mjs [--check] [file...]
+ * Without paths: scans default roots. With paths: only those files (lint-staged).
  * Without --check: inserts missing headers. With --check: exit 1 if any file is missing one.
  */
 
 import { readFile, writeFile } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import { readdir } from 'node:fs/promises'
-import { dirname, extname, join } from 'node:path'
+import { dirname, extname, isAbsolute, join, relative, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)))
@@ -111,11 +112,40 @@ function insertHtml(content, spdxPlain) {
   return `${line}\n${trimmed}`
 }
 
-async function main() {
-  const checkOnly = process.argv.includes('--check')
-  const licenseId = await readLicenseId()
-  const spdxPlain = `SPDX-License-Identifier: ${licenseId}`
+/** @param {string} ext @returns {'js'|'css'|'html'|null} */
+function kindForExt(ext) {
+  if (ext === '.css') return 'css'
+  if (ext === '.html') return 'html'
+  if (['.ts', '.tsx', '.js', '.mjs', '.cjs', '.rs'].includes(ext)) return 'js'
+  return null
+}
 
+const EXTRA_FILES = new Set(['vite.config.ts', join('src-tauri', 'build.rs'), 'index.html'])
+
+/** Same scope as the default scan, so explicit paths (lint-staged) never widen header coverage. */
+function inScope(abs) {
+  const rel = relative(ROOT, abs)
+  if (rel.startsWith('..') || isAbsolute(rel)) return false
+  const ext = extname(abs)
+  if ((rel === 'src' || rel.startsWith(`src${sep}`)) && ['.ts', '.tsx', '.css'].includes(ext))
+    return true
+  if (rel.startsWith(`src-tauri${sep}src${sep}`) && ext === '.rs') return true
+  return EXTRA_FILES.has(rel)
+}
+
+/** @param {string[]} pathArgs @returns {Array<{path: string, kind: 'js'|'css'|'html'}>} */
+function jobsFromPaths(pathArgs) {
+  const jobs = []
+  for (const raw of pathArgs) {
+    const abs = isAbsolute(raw) ? raw : join(ROOT, raw)
+    if (!existsSync(abs) || !inScope(abs)) continue
+    const kind = kindForExt(extname(abs))
+    if (kind) jobs.push({ path: abs, kind })
+  }
+  return jobs
+}
+
+async function collectAllJobs() {
   /** @type {Array<{path: string, kind: 'js'|'css'|'html'}>} */
   const jobs = []
 
@@ -130,8 +160,7 @@ async function main() {
     else jobs.push({ path: abs, kind: 'js' })
   }
 
-  const extra = ['vite.config.ts', join('src-tauri', 'build.rs'), 'index.html']
-  for (const rel of extra) {
+  for (const rel of EXTRA_FILES) {
     const abs = join(ROOT, rel)
     if (!existsSync(abs)) continue
     const ext = extname(abs)
@@ -140,9 +169,17 @@ async function main() {
   }
 
   const dedup = new Map(jobs.map((j) => [j.path, j]))
-  jobs.length = 0
-  jobs.push(...dedup.values())
-  jobs.sort((a, b) => a.path.localeCompare(b.path))
+  return [...dedup.values()].sort((a, b) => a.path.localeCompare(b.path))
+}
+
+async function main() {
+  const argv = process.argv.slice(2)
+  const checkOnly = argv.includes('--check')
+  const pathArgs = argv.filter((a) => a !== '--check')
+  const licenseId = await readLicenseId()
+  const spdxPlain = `SPDX-License-Identifier: ${licenseId}`
+
+  const jobs = pathArgs.length > 0 ? jobsFromPaths(pathArgs) : await collectAllJobs()
 
   let missing = 0
 
@@ -175,7 +212,7 @@ async function main() {
   console.log(
     missing > 0
       ? `Inserted SPDX in ${missing} file(s); ${jobs.length} total scanned.`
-      : `License headers OK (${jobs.length} files; id from package.json when set).`
+      : `License headers OK (${jobs.length} files; id from package.json when set).`,
   )
 }
 
