@@ -6,6 +6,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- **Tooling:** Prettier (root config, `format` / `format:check`) and ESLint flat config (`typescript-eslint`, React presets, `eslint-config-prettier`) for `src/` and `packages/*`, with `lint` / `lint:fix` scripts.
+- **CI:** `.github/workflows/ci.yml` on pull requests and pushes to `main` — `format:check`, `lint`, `tsc -b`, `build`, `license-headers:check`.
+- **Git hooks:** Husky pre-commit with `lint-staged` (Prettier, ESLint `--fix`, in-scope license headers on staged files only).
+
+### Changed
+
+- **Codebase:** Apply Prettier formatting across `src/`, `packages/`, `docs/`, and related config; fix a small set of ESLint errors in `src/`.
+- **Developer:** Cursor rule for AI-authored PR bodies aligned with `.github/PULL_REQUEST_TEMPLATE.md`.
+
 ## [0.1.0-alpha.25] - 2026-06-02
 
 ### Added
