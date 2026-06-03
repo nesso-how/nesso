@@ -145,6 +145,8 @@ const it: typeof en = {
     newGraph: 'Nuovo',
     display: 'Visualizzazione',
     settings: 'Impostazioni',
+    about: 'Informazioni',
+    aboutTitle: 'Informazioni su Nesso',
     untitled: 'Senza titolo',
     collapseSidebar: 'Comprimi pannello laterale',
     websiteLinkTitle: 'Visita nesso.how',
@@ -191,6 +193,7 @@ const it: typeof en = {
       close: 'Chiudi finestra / deseleziona',
       search: 'Cerca concetti',
       addConcept: 'Aggiungi concetto al centro del viewport',
+      fit: 'Centra / adatta il grafo',
       review: 'Avvia revisione a ripetizione spaziata',
       delete: 'Elimina concetto o relazione selezionati',
       moveConcept: 'Sposta concetto selezionato',
@@ -209,6 +212,7 @@ const it: typeof en = {
     exportPng: 'Esporta grafo (png)',
     importGraph: 'Importa grafo',
     keyboardShortcuts: 'Scorciatoie da tastiera',
+    about: 'Informazioni su Nesso',
   },
   bottomDock: {
     addConcept: '+ concetto',
@@ -310,6 +314,18 @@ const it: typeof en = {
     relationKinds: (n) => `${n} tipi di relazione`,
     filteredKinds: (n, total) => `${n} di ${total} tipi`,
     docsLink: 'Riferimento completo',
+  },
+  about: {
+    title: 'Informazioni su Nesso',
+    tagline: "Grafi di conoscenza tipizzati per l'apprendimento attivo.",
+    version: (v) => `v${v}`,
+    links: {
+      github: 'GitHub',
+      website: 'Sito web',
+      documentation: 'Documentazione',
+      changelog: 'Changelog',
+      license: 'Licenza (MIT)',
+    },
   },
   mentor: {
     name: 'Socrate',

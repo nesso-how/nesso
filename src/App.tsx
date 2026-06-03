@@ -22,6 +22,8 @@ import { MentorBubble } from './components/MentorBubble'
 import { ReviewMode } from './components/ReviewMode'
 import { ShortcutsDialog } from './components/ShortcutsDialog'
 import { SettingsDialog } from './components/SettingsDialog'
+import { AboutDialog } from './components/AboutDialog'
+import { isDesktop } from '@/lib/isDesktop'
 import { SearchDialog } from './components/SearchDialog'
 import { useGraphStore, selectedNodeSelector, selectedEdgeSelector } from './store/graph'
 import { useAutoSave } from './hooks/useAutoSave'
@@ -41,6 +43,7 @@ function AppInner() {
   const [showSettings, setShowSettings] = useState(false)
   const [showRelationTypes, setShowRelationTypes] = useState(false)
   const [showSearch, setShowSearch] = useState(false)
+  const [showAbout, setShowAbout] = useState(false)
 
   const {
     nodes,
@@ -74,6 +77,22 @@ function AppInner() {
 
   useAutoSave()
   useGraphFileWatch()
+
+  useEffect(() => {
+    if (!isDesktop()) return
+    let unlisten: (() => void) | undefined
+    let cancelled = false
+    void (async () => {
+      const { listen } = await import('@tauri-apps/api/event')
+      if (cancelled) return
+      unlisten = await listen('menu:about', () => setShowAbout(true))
+      if (cancelled) unlisten()
+    })()
+    return () => {
+      cancelled = true
+      unlisten?.()
+    }
+  }, [])
 
   const [sidebarPanelWidth, setSidebarPanelWidth] = useState(readSidebarWidth)
   useEffect(() => {
@@ -246,6 +265,7 @@ function AppInner() {
         setShowSettings(false)
         setShowRelationTypes(false)
         setShowSearch(false)
+        setShowAbout(false)
         return
       }
       if (e.key === '?') {
@@ -311,6 +331,10 @@ function AppInner() {
         handleAddConcept()
         return
       }
+      if (e.key.toLowerCase() === 'f' && !e.metaKey && !e.ctrlKey && !e.altKey && !showReview) {
+        fitView()
+        return
+      }
       if (e.key === '/') {
         e.preventDefault()
       }
@@ -325,6 +349,7 @@ function AppInner() {
     deleteSelection,
     requestEditNode,
     handleAddConcept,
+    fitView,
     showReview,
   ])
 
@@ -345,6 +370,7 @@ function AppInner() {
         onCollapse={() => setSidebarCollapsed(true)}
         onSearch={() => setShowSearch((s) => !s)}
         onSettings={() => setShowSettings((s) => !s)}
+        onAbout={() => setShowAbout(true)}
         zoom={zoom}
         width={sidebarPanelWidth}
         onWidthChange={(w) => setSidebarPanelWidth(clampSidebarWidth(w))}
@@ -357,6 +383,7 @@ function AppInner() {
         onReview={() => setShowReview(true)}
         onRelationTypes={() => setShowRelationTypes((s) => !s)}
         onShortcuts={() => setShowShortcuts((s) => !s)}
+        onAbout={() => setShowAbout(true)}
       />
 
       <RelationTypesDialog open={showRelationTypes} onClose={() => setShowRelationTypes(false)} />
@@ -378,6 +405,7 @@ function AppInner() {
       <ReviewMode open={showReview} onClose={() => setShowReview(false)} />
       <ShortcutsDialog open={showShortcuts} onClose={() => setShowShortcuts(false)} />
       <SettingsDialog open={showSettings} onClose={() => setShowSettings(false)} />
+      <AboutDialog open={showAbout} onClose={() => setShowAbout(false)} />
       <SearchDialog
         open={showSearch}
         onClose={() => setShowSearch(false)}

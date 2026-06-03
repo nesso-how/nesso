@@ -15,6 +15,7 @@ interface Props {
   onReview: () => void
   onRelationTypes: () => void
   onShortcuts: () => void
+  onAbout: () => void
 }
 
 export function TopBar({
@@ -24,6 +25,7 @@ export function TopBar({
   onReview,
   onRelationTypes,
   onShortcuts,
+  onAbout,
 }: Props) {
   const t = useT()
   const { graphList, currentGraphId, nodes } = useGraphStore()
@@ -160,7 +162,7 @@ export function TopBar({
             </span>
           )}
         </button>
-        <GraphIO onRelationTypes={onRelationTypes} onShortcuts={onShortcuts} />
+        <GraphIO onRelationTypes={onRelationTypes} onShortcuts={onShortcuts} onAbout={onAbout} />
       </div>
     </div>
   )

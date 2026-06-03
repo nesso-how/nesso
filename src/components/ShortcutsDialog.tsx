@@ -27,6 +27,7 @@ export function ShortcutsDialog({ open, onClose }: Props) {
       rows: [
         { keys: [mod, 'K'], label: t.shortcuts.rows.search },
         { keys: ['N'], label: t.shortcuts.rows.addConcept },
+        { keys: ['F'], label: t.shortcuts.rows.fit },
         { keys: ['R'], label: t.shortcuts.rows.review },
         { keys: ['Del'], label: t.shortcuts.rows.delete },
         { keys: [mod, 'C'], label: t.shortcuts.rows.copy },

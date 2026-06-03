@@ -145,6 +145,8 @@ const en = {
     newGraph: 'New',
     display: 'Display',
     settings: 'Settings',
+    about: 'About',
+    aboutTitle: 'About Nesso',
     untitled: 'Untitled',
     collapseSidebar: 'Collapse sidebar',
     websiteLinkTitle: 'Visit nesso.how',
@@ -191,6 +193,7 @@ const en = {
       close: 'Close dialog / deselect',
       search: 'Search concepts',
       addConcept: 'Add concept at viewport centre',
+      fit: 'Center / fit graph',
       review: 'Start spaced-repetition review',
       delete: 'Delete selected concept or relation',
       moveConcept: 'Nudge selected concept',
@@ -209,6 +212,7 @@ const en = {
     exportPng: 'Export graph (.png)',
     importGraph: 'Import graph',
     keyboardShortcuts: 'Keyboard shortcuts',
+    about: 'About Nesso',
   },
   bottomDock: {
     addConcept: '+ concept',
@@ -310,6 +314,18 @@ const en = {
     relationKinds: (n: number) => `${n} relation kinds`,
     filteredKinds: (n: number, total: number) => `${n} of ${total} kinds`,
     docsLink: 'Full reference',
+  },
+  about: {
+    title: 'About Nesso',
+    tagline: 'Typed knowledge graphs for active learning.',
+    version: (v: string) => `v${v}`,
+    links: {
+      github: 'GitHub',
+      website: 'Website',
+      documentation: 'Documentation',
+      changelog: 'Changelog',
+      license: 'License (MIT)',
+    },
   },
   mentor: {
     name: 'Socrates',

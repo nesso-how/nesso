@@ -15,9 +15,10 @@ import {
 interface Props {
   onRelationTypes: () => void
   onShortcuts: () => void
+  onAbout: () => void
 }
 
-export function GraphIO({ onRelationTypes, onShortcuts }: Props) {
+export function GraphIO({ onRelationTypes, onShortcuts, onAbout }: Props) {
   const t = useT()
   const { nodes, edges, graphList, currentGraphId, graphDisplay, importGraph } = useGraphStore()
   const [open, setOpen] = useState(false)
@@ -286,6 +287,29 @@ export function GraphIO({ onRelationTypes, onShortcuts }: Props) {
               </svg>
             }
             label={t.graphIO.keyboardShortcuts}
+          />
+          <MenuItem
+            onClick={() => {
+              onAbout()
+              setOpen(false)
+            }}
+            icon={
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="8" cy="8" r="6.25" />
+                <path d="M8 7.25v3.25" />
+                <circle cx="8" cy="5.2" r="0.1" />
+              </svg>
+            }
+            label={t.graphIO.about}
           />
         </div>
       )}
