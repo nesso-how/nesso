@@ -3,9 +3,8 @@ import { useState, useRef, useEffect, type MouseEvent as ReactMouseEvent } from 
 import { useGraphStore } from '@/store/graph'
 import { useT } from '@/i18n'
 import { NessoMark } from './NessoMark'
+import { WEBSITE_URL } from '@/data/appInfo'
 import { SIDEBAR_WIDTH_STORAGE_KEY } from '@/data/storageKeys'
-
-const NESSO_WEBSITE_URL = 'https://nesso.how'
 
 export const SIDEBAR_MIN_WIDTH = 180
 export const SIDEBAR_MAX_WIDTH = 380
@@ -38,6 +37,7 @@ interface Props {
   onCollapse: () => void
   onSearch: () => void
   onSettings: () => void
+  onAbout: () => void
   zoom: number
   width: number
   onWidthChange: (w: number) => void
@@ -48,6 +48,7 @@ export function Sidebar({
   onCollapse,
   onSearch,
   onSettings,
+  onAbout,
   zoom,
   width,
   onWidthChange,
@@ -175,7 +176,7 @@ export function Sidebar({
             }}
           >
             <a
-              href={NESSO_WEBSITE_URL}
+              href={WEBSITE_URL}
               target="_blank"
               rel="noopener noreferrer"
               title={t.sidebar.websiteLinkTitle}
@@ -560,7 +561,7 @@ export function Sidebar({
             )}
           </div>
 
-          {/* Footer — Settings */}
+          {/* Footer — Settings + About */}
           <div
             style={{
               padding: '8px 8px',
@@ -568,59 +569,88 @@ export function Sidebar({
               flexShrink: 0,
             }}
           >
-            <button
-              type="button"
-              onClick={onSettings}
-              title={t.sidebar.settingsTitle}
+            <div
               style={{
-                appearance: 'none',
-                border: 0,
-                background: 'transparent',
                 display: 'flex',
                 alignItems: 'center',
-                gap: 9,
-                width: '100%',
-                padding: '7px 9px',
-                borderRadius: 6,
-                cursor: 'default',
-                font: "500 13px 'Inter', ui-sans-serif",
-                color: 'var(--ink-3)',
-                textAlign: 'left',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'var(--paper-deep)'
-                e.currentTarget.style.color = 'var(--ink)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'transparent'
-                e.currentTarget.style.color = 'var(--ink-3)'
+                justifyContent: 'space-between',
+                gap: 6,
               }}
             >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                style={{ flexShrink: 0 }}
-              >
-                <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
-                <circle cx="12" cy="12" r="3" />
-              </svg>
-              {t.sidebar.settings}
-              <span
+              <button
+                type="button"
+                onClick={onSettings}
+                title={t.sidebar.settingsTitle}
                 style={{
-                  marginLeft: 'auto',
-                  font: "500 10px 'JetBrains Mono', ui-monospace",
-                  color: 'var(--ink-4)',
+                  appearance: 'none',
+                  border: 0,
+                  background: 'transparent',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 9,
+                  padding: '7px 9px',
+                  borderRadius: 6,
+                  cursor: 'default',
+                  font: "500 13px 'Inter', ui-sans-serif",
+                  color: 'var(--ink-3)',
+                  textAlign: 'left',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'var(--paper-deep)'
+                  e.currentTarget.style.color = 'var(--ink)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent'
+                  e.currentTarget.style.color = 'var(--ink-3)'
                 }}
               >
-                ⌘,
-              </span>
-            </button>
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  style={{ flexShrink: 0 }}
+                >
+                  <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+                {t.sidebar.settings}
+              </button>
+              <button
+                type="button"
+                onClick={onAbout}
+                title={t.sidebar.aboutTitle}
+                style={{ ...iconBtn, width: 32, height: 32, flexShrink: 0 }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'var(--paper-deep)'
+                  e.currentTarget.style.color = 'var(--ink)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent'
+                  e.currentTarget.style.color = 'var(--ink-3)'
+                }}
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  style={{ flexShrink: 0 }}
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M12 16v-4" />
+                  <path d="M12 8h.01" />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       </div>

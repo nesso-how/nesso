@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- **About:** dialog "About Nesso" (versione, descrizione, link a GitHub/sito/changelog/licenza), raggiungibile dal menu nativo desktop (app menu su macOS, Help su Windows/Linux), dal pulsante info nella Sidebar e dal menu ⋯. La versione è iniettata a build-time da `package.json`.
+
 ## [0.1.0-alpha.26] - 2026-06-02
 
 ### Added
