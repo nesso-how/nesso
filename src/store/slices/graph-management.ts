@@ -203,6 +203,7 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
       await writeGraphRecordToWorkspace(get().settings, record)
     }
     _draggingNodeIds.clear()
+    const fp = graphPersistFingerprint([], [], display)
     set((s) => ({
       graphList: [...s.graphList, { id, name, updatedAt: now }],
       currentGraphId: id,
@@ -210,6 +211,9 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
       edges: [],
       graphDisplay: display,
       selected: null,
+      loadedToken: s.loadedToken + 1,
+      savedFingerprint: fp,
+      externalFileConflict: false,
       _history: [],
       _future: [],
     }))
@@ -238,6 +242,7 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
       await writeGraphRecordToWorkspace(get().settings, record)
     }
     _draggingNodeIds.clear()
+    const fp = graphPersistFingerprint(nodes, edges, graphDisplay)
     set((s) => {
       const meta = { id: graphId, name: graphName, updatedAt: now }
       const graphList = s.graphList.some((g) => g.id === graphId)
@@ -250,6 +255,9 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
         edges,
         graphDisplay,
         selected: null,
+        loadedToken: s.loadedToken + 1,
+        savedFingerprint: fp,
+        externalFileConflict: false,
         _history: [],
         _future: [],
       }
