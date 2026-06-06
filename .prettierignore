@@ -6,6 +6,7 @@ dist-ssr
 coverage
 src-tauri/target
 src-tauri/icons
+src-tauri/gen
 packages/mcp/dist
 *.min.js
 pnpm-lock.yaml

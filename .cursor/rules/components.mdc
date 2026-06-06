@@ -6,7 +6,21 @@ alwaysApply: false
 
 # Components
 
-All components live in `src/components/`. They read from the Zustand store via `useGraphStore` and dispatch mutations through store methods — no local state for graph data.
+Components live under `src/components/` in feature folders. They read from the Zustand store via `useGraphStore` and dispatch mutations through store methods — no local state for graph data.
+
+## Folder layout
+
+| Folder       | Contents                                                                                                                                         |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `canvas/`    | `GraphCanvas`, `ConceptNode`, `NessoEdge`, `NessoConnectionLine`, `GlyphSVG`                                                                     |
+| `layout/`    | `TopBar`, `Sidebar`, `BottomDock`, `NessoMark`                                                                                                   |
+| `inspector/` | `NodeInspector`, `EdgeInspector`, `InspectorPanel`, `InlineEdit`, `ImageSearchPanel`, `EdgeRow`, `layout.ts`                                     |
+| `mentor/`    | `MentorBubble`, `Typewriter`, `ThinkingIndicator`, `SocratesGlyph`, `ModelStatusBadge`, `LocalModelPanel`                                        |
+| `review/`    | `ReviewMode`                                                                                                                                     |
+| `dialogs/`   | `SettingsDialog`, `SearchDialog`, `RelationTypesDialog`, `ShortcutsDialog`, `AboutDialog`, `GraphIO`                                             |
+| `banners/`   | `ActionBanner`, `GraphFileConflictBanner`, `UpdateBanner`                                                                                        |
+| `ui/`        | Shared primitives: `ModalOverlay`, `PillToggle`, `SegmentedControl`, `SettingRow`, `Stepper`, `CloseButton`, `SettingsFormRow`, `RelationPicker` |
+| _(root)_     | `Inspector.tsx` — thin router entry point for `App.tsx`                                                                                          |
 
 ## Responsibilities
 

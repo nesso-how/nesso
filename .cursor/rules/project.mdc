@@ -14,7 +14,7 @@ Nesso is an app for building typed knowledge graphs for active learning: an inte
 | Framework     | React 18 + Vite + TypeScript                                                                                                                                                                                            |
 | Desktop shell | Tauri v2 (`src-tauri/`) — optional wrapper; web app still runs with `pnpm dev`                                                                                                                                          |
 | Graph canvas  | React Flow (`@xyflow/react`)                                                                                                                                                                                            |
-| State         | Zustand (`src/store/graph.ts`)                                                                                                                                                                                          |
+| State         | Zustand (`src/store/index.ts` + `src/store/slices/`)                                                                                                                                                                    |
 | AI mentor     | Local **WebGPU** engine (Qwen2.5 1.5B via `@mlc-ai/web-llm`) or any OpenAI-compatible `chat/completions` endpoint (Ollama or cloud; endpoint / model / key in Settings). Review scheduling uses **FSRS** via `ts-fsrs`. |
 
 ## Source layout
@@ -23,7 +23,8 @@ Nesso is an app for building typed knowledge graphs for active learning: an inte
 src/
   App.tsx             # Root: keyboard shortcuts, theme application, layout
   components/         # All UI components (see components.mdc)
-  store/graph.ts      # Single Zustand store for all app state
+  store/              # Zustand store (index.ts composes slices/)
+    slices/           # graph-editing, settings, ui, graph-management, desktop-sync
   llm/                # Mentor transports (web-llm + OpenAI-compatible fetch)
   data/
     relationTypes.ts  # merges `@nesso-how/relation-types` + CSS palette vars (`RELATION_CATEGORIES`)

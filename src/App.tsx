@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: MIT
 import { useState, useEffect, useLayoutEffect, useCallback, useRef, useMemo } from 'react'
 import { ReactFlowProvider, useReactFlow } from '@xyflow/react'
-import { GraphCanvas } from './components/GraphCanvas'
-import { TopBar } from './components/TopBar'
+import { GraphCanvas } from './components/canvas/GraphCanvas'
+import { TopBar } from './components/layout/TopBar'
 import {
   Sidebar,
   clampSidebarWidth,
   readSidebarWidth,
   writeSidebarWidth,
-} from './components/Sidebar'
-import { BottomDock } from './components/BottomDock'
-import { RelationTypesDialog } from './components/RelationTypesDialog'
+} from './components/layout/Sidebar'
+import { BottomDock } from './components/layout/BottomDock'
+import { RelationTypesDialog } from './components/dialogs/RelationTypesDialog'
 import {
   Inspector,
   INSPECTOR_CANVAS_LEFT_GUTTER,
@@ -18,18 +18,18 @@ import {
   readInspectorPanelWidth,
   writeInspectorPanelWidth,
 } from './components/Inspector'
-import { MentorBubble } from './components/MentorBubble'
-import { ReviewMode } from './components/ReviewMode'
-import { ShortcutsDialog } from './components/ShortcutsDialog'
-import { SettingsDialog } from './components/SettingsDialog'
-import { AboutDialog } from './components/AboutDialog'
+import { MentorBubble } from './components/mentor/MentorBubble'
+import { ReviewMode } from './components/review/ReviewMode'
+import { ShortcutsDialog } from './components/dialogs/ShortcutsDialog'
+import { SettingsDialog } from './components/dialogs/SettingsDialog'
+import { AboutDialog } from './components/dialogs/AboutDialog'
 import { isDesktop } from '@/lib/isDesktop'
-import { SearchDialog } from './components/SearchDialog'
-import { useGraphStore, selectedNodeSelector, selectedEdgeSelector } from './store/graph'
+import { SearchDialog } from './components/dialogs/SearchDialog'
+import { useGraphStore, selectedNodeSelector, selectedEdgeSelector } from './store'
 import { useAutoSave } from './hooks/useAutoSave'
 import { useGraphFileWatch } from './hooks/useGraphFileWatch'
-import { GraphFileConflictBanner } from './components/GraphFileConflictBanner'
-import { UpdateBanner } from './components/UpdateBanner'
+import { GraphFileConflictBanner } from './components/banners/GraphFileConflictBanner'
+import { UpdateBanner } from './components/banners/UpdateBanner'
 import { PALETTES } from './data/palettes'
 import { findNewConceptPosition, NEW_CONCEPT_SIZE } from './data/newConceptLayout'
 import { initWebLLM, localModelWeightsCached } from './llm/webllm'
@@ -45,27 +45,25 @@ function AppInner() {
   const [showSearch, setShowSearch] = useState(false)
   const [showAbout, setShowAbout] = useState(false)
 
-  const {
-    nodes,
-    settings,
-    addNode,
-    selected,
-    setSelected,
-    undo,
-    redo,
-    copySelection,
-    pasteSelection,
-    deleteSelection,
-    requestEditNode,
-    loadGraph,
-    loadGraphList,
-    currentGraphId,
-    loadedToken,
-    viewports,
-    saveViewport,
-    sidebarCollapsed,
-    setSidebarCollapsed,
-  } = useGraphStore()
+  const nodes = useGraphStore((s) => s.nodes)
+  const settings = useGraphStore((s) => s.settings)
+  const addNode = useGraphStore((s) => s.addNode)
+  const selected = useGraphStore((s) => s.selected)
+  const setSelected = useGraphStore((s) => s.setSelected)
+  const undo = useGraphStore((s) => s.undo)
+  const redo = useGraphStore((s) => s.redo)
+  const copySelection = useGraphStore((s) => s.copySelection)
+  const pasteSelection = useGraphStore((s) => s.pasteSelection)
+  const deleteSelection = useGraphStore((s) => s.deleteSelection)
+  const requestEditNode = useGraphStore((s) => s.requestEditNode)
+  const loadGraph = useGraphStore((s) => s.loadGraph)
+  const loadGraphList = useGraphStore((s) => s.loadGraphList)
+  const currentGraphId = useGraphStore((s) => s.currentGraphId)
+  const loadedToken = useGraphStore((s) => s.loadedToken)
+  const viewports = useGraphStore((s) => s.viewports)
+  const saveViewport = useGraphStore((s) => s.saveViewport)
+  const sidebarCollapsed = useGraphStore((s) => s.sidebarCollapsed)
+  const setSidebarCollapsed = useGraphStore((s) => s.setSidebarCollapsed)
 
   const canUndo = useGraphStore((s) => s._history.length > 0)
   const canRedo = useGraphStore((s) => s._future.length > 0)

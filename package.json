@@ -16,6 +16,7 @@
     "build:relation-types": "pnpm --filter @nesso-how/relation-types build",
     "build:types": "pnpm --filter @nesso-how/types build",
     "build:formats": "pnpm --filter @nesso-how/formats build",
+    "build:mcp": "pnpm --filter @nesso-how/mcp build",
     "prepare": "husky && pnpm run build:relation-types && pnpm run build:types && pnpm run build:formats",
     "dev": "vite",
     "build": "pnpm run build:relation-types && pnpm run build:types && pnpm run build:formats && tsc -b && vite build",

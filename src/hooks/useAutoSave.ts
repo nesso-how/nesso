@@ -2,9 +2,9 @@
 import { useEffect, useRef } from 'react'
 import { useReactFlow } from '@xyflow/react'
 import { graphPersistFingerprint } from '@/lib/graphPersist'
-import { useGraphStore } from '@/store/graph'
+import { useGraphStore } from '@/store'
 
-const DEBOUNCE_MS = 5000
+const DEBOUNCE_MS = 500
 
 // Viewport is also saved from GraphCanvas `onMoveEnd` when only pan/zoom/fit changes (no node/edge edits).
 export function useAutoSave() {

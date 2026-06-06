@@ -17,13 +17,13 @@ All edges must use `type: 'nesso'`. The custom `NessoEdge` renderer is load-bear
 
 Category colours are CSS custom properties (`--cat-taxonomic`, etc.) set by the active palette. Do not hardcode hex values for edge or node colours — use the variables so palette switching works.
 
-## Never call the AI API outside MentorBubble
+## Never call the AI API outside llm/completion.ts
 
-All AI chat calls are centralised in `MentorBubble.tsx`. Do not instantiate the AI client elsewhere — the API key is client-side and calls should be scoped to the mentor interaction.
+All AI chat completions go through `src/llm/completion.ts` (`fetchCompletion`), used by `MentorBubble` and `ReviewMode`. Do not duplicate fetch or WebLLM client logic elsewhere — the API key is client-side and calls should stay scoped to those interactions.
 
 ## Never add a second global store
 
-The single `useGraphStore` in `src/store/graph.ts` is the source of truth. Do not introduce a second Zustand store, React context for data, or any other global state mechanism.
+The single `useGraphStore` in `src/store/index.ts` is the source of truth. Do not introduce a second Zustand store, React context for data, or any other global state mechanism.
 
 ## Never mutate React Flow node/edge arrays directly
 

@@ -7,16 +7,16 @@ alwaysApply: false
 
 When you modify code in an area covered by a `.cursor/rules/` file, update that file in the same change if the modification makes any rule stale or incomplete. The mapping:
 
-| If you touch…                                        | Update…           |
-| ---------------------------------------------------- | ----------------- |
-| `src/components/**`                                  | `components.mdc`  |
-| `src/store/**`                                       | `store.mdc`       |
-| `src/types/graph.ts`, `src/data/relationTypes.ts`                     | `graph-model.mdc` |
-| `src/components/MentorBubble.tsx`, AI provider/model | `mentor.mdc`      |
-| Coding patterns, naming, import conventions          | `conventions.mdc` |
-| Architectural constraints, "never do X" rules        | `constraints.mdc` |
-| `CHANGELOG.md`                                       | `changelog.mdc`   |
-| Overall stack, layout, core concepts                 | `project.mdc`     |
+| If you touch…                                               | Update…           |
+| ----------------------------------------------------------- | ----------------- |
+| `src/components/**`                                         | `components.mdc`  |
+| `src/store/**`                                              | `store.mdc`       |
+| `src/types/graph.ts`, `src/data/relationTypes.ts`           | `graph-model.mdc` |
+| `src/components/mentor/MentorBubble.tsx`, AI provider/model | `mentor.mdc`      |
+| Coding patterns, naming, import conventions                 | `conventions.mdc` |
+| Architectural constraints, "never do X" rules               | `constraints.mdc` |
+| `CHANGELOG.md`                                              | `changelog.mdc`   |
+| Overall stack, layout, core concepts                        | `project.mdc`     |
 
 ## Starlight docs and MCP (`docs/`, `packages/mcp/`)
 
