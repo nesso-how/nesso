@@ -6,7 +6,19 @@ alwaysApply: false
 
 # Store
 
-`src/store/graph.ts` is a single Zustand store that holds all app state. There is no other global state.
+`src/store/index.ts` composes a single Zustand store from slices in `src/store/slices/`. There is no other global state. Import via `import { useGraphStore } from '@/store'`.
+
+## Slices
+
+| Slice file            | Domain |
+| --------------------- | ------ |
+| `graph-editing.ts`    | `nodes`, `edges`, selection, undo/redo, clipboard, `editNodeId` |
+| `settings.ts`         | `NessoSettings`, `GraphDisplaySettings`, `setSetting`, `setGraphDisplay` |
+| `ui.ts`               | Sidebar chrome, `mentorPanelExpanded`, `viewports`, `saveViewport` |
+| `graph-management.ts` | `graphList`, `currentGraphId`, `loadedToken`, load/save/create/import/rename/delete graph |
+| `desktop-sync.ts`     | `savedFingerprint`, `externalFileConflict`, reload/keep-local disk sync |
+
+Shared types (`GraphMeta`, `Selection`, `Viewport`, `GraphSnapshot`) live in `src/store/types.ts`. The combined `GraphState` type is in `src/store/state.ts`.
 
 ## Shape
 
@@ -17,6 +29,7 @@ interface GraphState {
   selected: { kind: "node" | "edge"; id: string } | null;
   selectedIds: string[];
   settings: NessoSettings;
+  graphDisplay: GraphDisplaySettings;
   mentorPanelExpanded: boolean;
   sidebarCollapsed: boolean;
   sidebarDisplayOpen: boolean;
@@ -25,11 +38,13 @@ interface GraphState {
   currentGraphId: string;
   graphList: { id: string; name: string; updatedAt: number }[];
   loadedToken: number;
+  savedFingerprint: string;
+  externalFileConflict: boolean;
   // ... mutations below
 }
 ```
 
-Persistence: Zustand `persist` (`ZUSTAND_PERSIST_KEY` → localStorage key `nesso`; see `src/data/storageKeys.ts`) rehydrates `settings`, `mentorPanelExpanded`, `sidebarCollapsed`, `sidebarDisplayOpen`, `sidebarStatsOpen`, `currentGraphId`, `graphList`, and `viewports`. On merge, `settings` is shallow-merged so new keys pick up defaults for older blobs; legacy **`reviewBatchMax`** and **`fsrsMaxInterval`** are stripped. Graph node/edge payloads live in IndexedDB (`GRAPHS_DB_NAME`, `src/store/db.ts`); load via `loadGraph`, save via `saveCurrentGraph` (debounced from `useAutoSave`). **Settings → Data** (desktop only) configures the graph workspace folder via `switchGraphWorkspace`. Legacy blobs may still carry `relationTypesPanelOpen`; it is dropped on merge.
+Persistence: Zustand `persist` in `index.ts` (`ZUSTAND_PERSIST_KEY` → localStorage key `nesso`; see `src/data/storageKeys.ts`) rehydrates `settings`, `mentorPanelExpanded`, `sidebarCollapsed`, `sidebarDisplayOpen`, `sidebarStatsOpen`, `currentGraphId`, `graphList`, and `viewports`. On merge, `settings` is shallow-merged so new keys pick up defaults for older blobs; legacy **`reviewBatchMax`** and **`fsrsMaxInterval`** are stripped. Graph node/edge payloads live in IndexedDB (`GRAPHS_DB_NAME`, `src/store/db.ts`); load via `loadGraph`, save via `saveCurrentGraph` (debounced from `useAutoSave`). **Settings → Data** (desktop only) configures the graph workspace folder via `switchGraphWorkspace`. Legacy blobs may still carry `relationTypesPanelOpen`; it is dropped on merge.
 
 ## Mutations
 
@@ -59,12 +74,13 @@ Persistence: Zustand `persist` (`ZUSTAND_PERSIST_KEY` → localStorage key `ness
 
 ## Selectors
 
-Two named selectors are exported from `graph.ts`:
+Named selectors are exported from `index.ts`:
 
 ```ts
 export const selectedNodeSelector = (s: GraphState) =>
   Node<ConceptNodeData> | null;
 export const selectedEdgeSelector = (s: GraphState) => Edge | null;
+export const graphDisplaySelector = (s: GraphState) => GraphDisplaySettings;
 ```
 
 Use these in components — do not inline the selection look-up logic.
@@ -72,5 +88,6 @@ Use these in components — do not inline the selection look-up logic.
 ## Rules
 
 - Do not add local `useState` for data that belongs in the store (node text, edge type, selection).
-- New store fields go in `GraphState`; initialise them in the `create(...)` call.
-- Selectors that are used in more than one component should be exported from `graph.ts`, not defined inline per component.
+- New store fields go in the appropriate slice; add them to `GraphState` via the slice interface in `state.ts`.
+- Selectors that are used in more than one component should be exported from `index.ts`, not defined inline per component.
+- `graph-editing` keeps nodes+edges+selection+history+clipboard together — they share `pushHistory`.

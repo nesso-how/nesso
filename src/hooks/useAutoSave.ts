@@ -2,7 +2,7 @@
 import { useEffect, useRef } from 'react'
 import { useReactFlow } from '@xyflow/react'
 import { graphPersistFingerprint } from '@/lib/graphPersist'
-import { useGraphStore } from '@/store/graph'
+import { useGraphStore } from '@/store'
 
 const DEBOUNCE_MS = 5000
 

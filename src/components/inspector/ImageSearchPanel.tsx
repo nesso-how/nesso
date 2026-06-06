@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 import { useState, useEffect, useRef, type FormEvent } from 'react'
-import { CloseButton } from '@/components/CloseButton'
+import { CloseButton } from '@/components/ui/CloseButton'
 import { searchCommonsImages, type WikiImage } from '@/lib/commonsImageSearch'
 import { useT } from '@/i18n'
 

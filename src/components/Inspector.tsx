@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-import { useGraphStore, selectedNodeSelector, selectedEdgeSelector } from '@/store/graph'
+import { useGraphStore, selectedNodeSelector, selectedEdgeSelector } from '@/store'
 import { EdgeInspector } from './inspector/EdgeInspector'
 import { NodeInspector } from './inspector/NodeInspector'
 

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 import { useEffect, useRef } from 'react'
-import { useGraphStore } from '@/store/graph'
+import { useGraphStore } from '@/store'
 import { graphPersistFingerprint } from '@/lib/graphPersist'
 import { dbListGraphs, dbSaveGraph } from '@/store/db'
 import { isDesktop } from '@/lib/isDesktop'

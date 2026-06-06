@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 import { useT } from '@/i18n'
 import { focusFlowNodes } from '@/lib/focusFlowSelection'
-import { useGraphStore } from '@/store/graph'
+import { useGraphStore } from '@/store'
 
 interface Props {
   onFit: () => void

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 import { useState, useRef, useEffect } from 'react'
-import { useGraphStore } from '@/store/graph'
+import { useGraphStore } from '@/store'
 import { getNodesBounds, getViewportForBounds } from '@xyflow/react'
 import { toPng } from 'html-to-image'
 import { useT } from '@/i18n'

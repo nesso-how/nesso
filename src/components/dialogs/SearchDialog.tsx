@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 import { useState, useEffect, useRef, useMemo } from 'react'
 import type { Node } from '@xyflow/react'
-import { useGraphStore } from '@/store/graph'
+import { useGraphStore } from '@/store'
 import type { ConceptNodeData } from '@/types/graph'
 import { useT } from '@/i18n'
 import { ratingColor } from '@/lib/ratingColor'
-import { ModalOverlay } from './ui/ModalOverlay'
+import { ModalOverlay } from '@/components/ui/ModalOverlay'
 
 interface Props {
   open: boolean

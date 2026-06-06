@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 import { useState } from 'react'
 import { RELATION_CATEGORIES, RELATION_TYPES } from '@/data/relationTypes'
-import { GlyphSVG } from './GlyphSVG'
-import { CloseButton } from './CloseButton'
-import { ModalOverlay } from './ui/ModalOverlay'
-import { useGraphStore } from '@/store/graph'
+import { GlyphSVG } from '@/components/canvas/GlyphSVG'
+import { CloseButton } from '@/components/ui/CloseButton'
+import { ModalOverlay } from '@/components/ui/ModalOverlay'
+import { useGraphStore } from '@/store'
 import type { EdgeCategory, EdgeTypeName } from '@/types/graph'
 import { useT } from '@/i18n'
 

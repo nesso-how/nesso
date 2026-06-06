@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 import { useState, useEffect, type CSSProperties } from 'react'
 import { RELATION_TYPES, RELATION_CATEGORIES, asEdgeTypeName } from '@/data/relationTypes'
-import { CloseButton } from '@/components/CloseButton'
-import { useGraphStore, selectedNodeSelector } from '@/store/graph'
+import { CloseButton } from '@/components/ui/CloseButton'
+import { useGraphStore, selectedNodeSelector } from '@/store'
 import type { ConceptElaboration } from '@/types/graph'
 import { useT } from '@/i18n'
 import { InlineEdit } from './InlineEdit'

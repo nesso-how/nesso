@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { RELATION_CATEGORIES, RELATION_TYPES, isPrimaryRelationType } from '@/data/relationTypes'
 import { frequentRelationTypes } from '@/data/relationUsage'
-import { useGraphStore } from '@/store/graph'
+import { useGraphStore } from '@/store'
 import type { EdgeCategory, EdgeTypeName } from '@/types/graph'
 import { useT } from '@/i18n'
 

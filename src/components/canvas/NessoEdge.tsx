@@ -5,7 +5,7 @@ import { useStore } from '@xyflow/react'
 import { RELATION_TYPES, RELATION_CATEGORIES, asEdgeTypeName } from '@/data/relationTypes'
 import { GlyphSVG } from './GlyphSVG'
 import type { NessoEdgeData } from '@/types/graph'
-import { useGraphStore } from '@/store/graph'
+import { useGraphStore } from '@/store'
 import {
   effectiveCurveFlip,
   flowNodeCenterX,

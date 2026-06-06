@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
-import { CloseButton } from './CloseButton'
-import { ModalOverlay } from './ui/ModalOverlay'
+import { CloseButton } from '@/components/ui/CloseButton'
+import { ModalOverlay } from '@/components/ui/ModalOverlay'
 import { useT } from '@/i18n'
 
 interface Props {

@@ -5,10 +5,10 @@ import {
   RELATION_TYPE_VALUES,
   asEdgeTypeName,
 } from '@/data/relationTypes'
-import { GlyphSVG } from '@/components/GlyphSVG'
+import { GlyphSVG } from '@/components/canvas/GlyphSVG'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { SettingRow } from '@/components/ui/SettingRow'
-import { useGraphStore, selectedEdgeSelector } from '@/store/graph'
+import { useGraphStore, selectedEdgeSelector } from '@/store'
 import { useT } from '@/i18n'
 import { InspectorPanel } from './InspectorPanel'
 

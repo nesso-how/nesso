@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 import type { ReactNode, MouseEvent as ReactMouseEvent } from 'react'
-import { TOPBAR_HEIGHT_PX } from '@/components/TopBar'
+import { TOPBAR_HEIGHT_PX } from '@/components/layout/TopBar'
 import { useT } from '@/i18n'
 import {
   clampInspectorPanelWidth,

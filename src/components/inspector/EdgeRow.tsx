@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-import { GlyphSVG } from '@/components/GlyphSVG'
+import { GlyphSVG } from '@/components/canvas/GlyphSVG'
 import type { GlyphKind } from '@/types/graph'
 
 interface Props {

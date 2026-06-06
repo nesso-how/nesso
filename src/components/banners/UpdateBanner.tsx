@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 import type { ReactNode } from 'react'
-import { ActionBanner, type ActionBannerAction } from '@/components/ActionBanner'
+import { ActionBanner, type ActionBannerAction } from '@/components/banners/ActionBanner'
 import { useDesktopUpdater } from '@/hooks/useDesktopUpdater'
 import { useT } from '@/i18n'
 import { isDesktop } from '@/lib/isDesktop'

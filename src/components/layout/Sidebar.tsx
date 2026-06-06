@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 import { useState, useRef, useEffect, type MouseEvent as ReactMouseEvent } from 'react'
-import { useGraphStore } from '@/store/graph'
+import { useGraphStore } from '@/store'
 import { useT } from '@/i18n'
-import { SegmentedControl } from './ui/SegmentedControl'
-import { SettingRow } from './ui/SettingRow'
+import { SegmentedControl } from '@/components/ui/SegmentedControl'
+import { SettingRow } from '@/components/ui/SettingRow'
 import { NessoMark } from './NessoMark'
 import { WEBSITE_URL } from '@/data/appInfo'
 import { SIDEBAR_WIDTH_STORAGE_KEY } from '@/data/storageKeys'

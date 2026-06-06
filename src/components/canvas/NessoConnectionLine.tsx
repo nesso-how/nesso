@@ -7,7 +7,7 @@ import {
   nessoArcPath,
   rectExit,
 } from '@/geometry/nessoEdgeGeometry'
-import { useGraphStore } from '@/store/graph'
+import { useGraphStore } from '@/store'
 
 const pad = 6
 

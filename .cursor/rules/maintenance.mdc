@@ -12,7 +12,7 @@ When you modify code in an area covered by a `.cursor/rules/` file, update that 
 | `src/components/**`                                  | `components.mdc`  |
 | `src/store/**`                                       | `store.mdc`       |
 | `src/types/graph.ts`, `src/data/relationTypes.ts`                     | `graph-model.mdc` |
-| `src/components/MentorBubble.tsx`, AI provider/model | `mentor.mdc`      |
+| `src/components/mentor/MentorBubble.tsx`, AI provider/model | `mentor.mdc`      |
 | Coding patterns, naming, import conventions          | `conventions.mdc` |
 | Architectural constraints, "never do X" rules        | `constraints.mdc` |
 | `CHANGELOG.md`                                       | `changelog.mdc`   |

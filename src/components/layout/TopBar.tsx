@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 import { useMemo, useState, useEffect } from 'react'
-import { useGraphStore } from '@/store/graph'
+import { useGraphStore } from '@/store'
 import { sortedDueConceptNodes } from '@/data/fsrsDueQueue'
-import { GraphIO } from './GraphIO'
+import { GraphIO } from '@/components/dialogs/GraphIO'
 import { useT } from '@/i18n'
 
 /** Full-height navbar; Inspector and canvas top inset rely on this. */

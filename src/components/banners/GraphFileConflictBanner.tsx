@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
-import { ActionBanner } from '@/components/ActionBanner'
-import { useGraphStore } from '@/store/graph'
+import { ActionBanner } from '@/components/banners/ActionBanner'
+import { useGraphStore } from '@/store'
 import { useT } from '@/i18n'
 import { isDesktop } from '@/lib/isDesktop'
 

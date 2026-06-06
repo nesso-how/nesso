@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 import type { CSSProperties, ReactNode } from 'react'
-import { CloseButton } from './CloseButton'
-import { NessoMark } from './NessoMark'
+import { CloseButton } from '@/components/ui/CloseButton'
+import { NessoMark } from '@/components/layout/NessoMark'
 import {
   APP_VERSION,
   CHANGELOG_URL,
@@ -11,7 +11,7 @@ import {
   REPO_URL,
   WEBSITE_URL,
 } from '@/data/appInfo'
-import { ModalOverlay } from './ui/ModalOverlay'
+import { ModalOverlay } from '@/components/ui/ModalOverlay'
 import { useT } from '@/i18n'
 
 interface Props {
