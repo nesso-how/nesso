@@ -5,10 +5,12 @@ import {
   RELATION_TYPE_VALUES,
   asEdgeTypeName,
 } from '@/data/relationTypes'
+import type { Node } from '@xyflow/react'
 import { GlyphSVG } from '@/components/canvas/GlyphSVG'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { SettingRow } from '@/components/ui/SettingRow'
-import { useGraphStore, selectedEdgeSelector } from '@/store'
+import { useGraphStore, selectedEdgeSelector, type GraphState } from '@/store'
+import type { ConceptNodeData } from '@/types/graph'
 import { useT } from '@/i18n'
 import { InspectorPanel } from './InspectorPanel'
 
@@ -21,7 +23,7 @@ interface Props {
 export function EdgeInspector({ leftOffset, panelWidth, onPanelWidthChange }: Props) {
   const t = useT()
   const edge = useGraphStore(selectedEdgeSelector)!
-  const nodes = useGraphStore((s) => s.nodes)
+  const nodes: Node<ConceptNodeData>[] = useGraphStore((s: GraphState) => s.nodes)
   const updateEdgeType = useGraphStore((s) => s.updateEdgeType)
   const setEdgeCurveFlipMode = useGraphStore((s) => s.setEdgeCurveFlipMode)
   const curveStyle = useGraphStore((s) => s.graphDisplay.curveStyle)
