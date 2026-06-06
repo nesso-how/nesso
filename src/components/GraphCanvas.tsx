@@ -61,18 +61,16 @@ export function GraphCanvas({
   rightInset?: number
   onViewportZoomChange?: (zoom: number) => void
 }) {
-  const {
-    nodes,
-    edges,
-    onNodesChange,
-    onEdgesChange,
-    addEdge,
-    addNode,
-    syncFlowSelection,
-    viewports,
-    currentGraphId,
-    loadedToken,
-  } = useGraphStore()
+  const nodes = useGraphStore((s) => s.nodes)
+  const edges = useGraphStore((s) => s.edges)
+  const onNodesChange = useGraphStore((s) => s.onNodesChange)
+  const onEdgesChange = useGraphStore((s) => s.onEdgesChange)
+  const addEdge = useGraphStore((s) => s.addEdge)
+  const addNode = useGraphStore((s) => s.addNode)
+  const syncFlowSelection = useGraphStore((s) => s.syncFlowSelection)
+  const viewports = useGraphStore((s) => s.viewports)
+  const currentGraphId = useGraphStore((s) => s.currentGraphId)
+  const loadedToken = useGraphStore((s) => s.loadedToken)
 
   const { screenToFlowPosition } = useReactFlow()
   const defaultViewport =

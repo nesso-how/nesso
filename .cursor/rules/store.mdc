@@ -29,7 +29,7 @@ interface GraphState {
 }
 ```
 
-Persistence: Zustand `persist` (`ZUSTAND_PERSIST_KEY` → localStorage key `nesso`; see `src/data/storageKeys.ts`) rehydrates `settings`, `mentorPanelExpanded`, `sidebarCollapsed`, `sidebarDisplayOpen`, `sidebarStatsOpen`, `currentGraphId`, `graphList`, and `viewports`. On merge, `settings` is shallow-merged so new keys pick up defaults for older blobs; legacy **`reviewBatchMax`** and **`fsrsMaxInterval`** are stripped. Graph node/edge payloads live in IndexedDB (`GRAPHS_DB_NAME`, `src/store/db.ts`); load via `loadGraph`, save via `saveCurrentGraph` (debounced from `useAutoSave`). **Settings → Data → Delete** runs `clearPersistedAppDataAndReload()` (`src/lib/clearAppStorage.ts`): closes and deletes the graphs DB, clears the persist key plus inspector/sidebar width keys, reloads. Legacy blobs may still carry `relationTypesPanelOpen`; it is dropped on merge.
+Persistence: Zustand `persist` (`ZUSTAND_PERSIST_KEY` → localStorage key `nesso`; see `src/data/storageKeys.ts`) rehydrates `settings`, `mentorPanelExpanded`, `sidebarCollapsed`, `sidebarDisplayOpen`, `sidebarStatsOpen`, `currentGraphId`, `graphList`, and `viewports`. On merge, `settings` is shallow-merged so new keys pick up defaults for older blobs; legacy **`reviewBatchMax`** and **`fsrsMaxInterval`** are stripped. Graph node/edge payloads live in IndexedDB (`GRAPHS_DB_NAME`, `src/store/db.ts`); load via `loadGraph`, save via `saveCurrentGraph` (debounced from `useAutoSave`). **Settings → Data** (desktop only) configures the graph workspace folder via `switchGraphWorkspace`. Legacy blobs may still carry `relationTypesPanelOpen`; it is dropped on merge.
 
 ## Mutations
 

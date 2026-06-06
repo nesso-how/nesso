@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 import { useState } from 'react'
-import type { EdgeProps } from '@xyflow/react'
+import type { Edge, EdgeProps } from '@xyflow/react'
 import { useStore } from '@xyflow/react'
 import { RELATION_TYPES, RELATION_CATEGORIES, asEdgeTypeName } from '@/data/relationTypes'
 import { GlyphSVG } from './GlyphSVG'
-import type { EdgeEncoding, NessoEdgeData } from '@/types/graph'
+import type { NessoEdgeData } from '@/types/graph'
 import { useGraphStore } from '@/store/graph'
 import {
   effectiveCurveFlip,
@@ -54,27 +54,30 @@ function EdgePathElement({
   return <path d={d} {...base} />
 }
 
-export function NessoEdge({ id, source, target, data, selected }: EdgeProps) {
+type NessoFlowEdge = Edge<NessoEdgeData, 'nesso'>
+
+export function NessoEdge({ id, source, target, data, selected }: EdgeProps<NessoFlowEdge>) {
   const t = useT()
   const [hovered, setHovered] = useState(false)
-  const { graphDisplay, selected: storeSelected } = useGraphStore()
+  const edgeEncoding = useGraphStore((s) => s.graphDisplay.edgeEncoding)
+  const curveStyle = useGraphStore((s) => s.graphDisplay.curveStyle)
+  const autoCurveFlip = useGraphStore((s) => s.graphDisplay.autoCurveFlip)
+  const storeSelected = useGraphStore((s) => s.selected)
 
   // Read live node geometry from the React Flow store so we can compute
   // bounding-box exit points instead of relying on fixed left/right handles.
   const sourceNode = useStore((s) => s.nodeLookup.get(source))
   const targetNode = useStore((s) => s.nodeLookup.get(target))
 
-  const edgeData = data as unknown as NessoEdgeData | undefined
-  const edgeType = asEdgeTypeName(edgeData?.type)
+  const edgeType = asEdgeTypeName(data?.type)
   const T = RELATION_TYPES[edgeType]
   const C = RELATION_CATEGORIES[T.cat]
-  const encoding: EdgeEncoding = graphDisplay.edgeEncoding
-
-  const color = encoding === 'minimal' ? 'var(--ink-3)' : C.color
-  const lineStyle = encoding === 'minimal' ? 'solid' : T.line
+  const color = edgeEncoding === 'minimal' ? 'var(--ink-3)' : C.color
+  const lineStyle = edgeEncoding === 'minimal' ? 'solid' : T.line
   const isSelected = selected || (storeSelected?.kind === 'edge' && storeSelected.id === id)
-  const showLabel = encoding === 'full' || (encoding !== 'minimal' && (hovered || isSelected))
-  const straight = graphDisplay.curveStyle === 'straight'
+  const showLabel =
+    edgeEncoding === 'full' || (edgeEncoding !== 'minimal' && (hovered || isSelected))
+  const straight = curveStyle === 'straight'
 
   if (!sourceNode || !targetNode) return null
 
@@ -90,11 +93,10 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps) {
   const tcx = targetNode.internals.positionAbsolute.x + tw / 2
   const tcy = flowNodeCenterY(targetNode)
 
-  const autoCurveFlip = graphDisplay.autoCurveFlip
   const curveFlip = effectiveCurveFlip(
     autoCurveFlip,
-    edgeData?.curveFlipPinned,
-    edgeData?.curveFlip,
+    data?.curveFlipPinned,
+    data?.curveFlip,
     flowNodeCenterX(sourceNode),
     scy,
     flowNodeCenterX(targetNode),
@@ -118,7 +120,7 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps) {
     const dist = Math.sqrt(dx * dx + dy * dy) || 1
     const nx = -dy / dist,
       ny = dx / dist
-    const sibOff = (edgeData?.siblingIdx ?? 0) * 14
+    const sibOff = (data?.siblingIdx ?? 0) * 14
     const bend = (Math.min(dist * 0.22, 90) + sibOff * 0.5) * flipSign
     const cpx = (scx + tcx) / 2 + nx * bend
     const cpy = (scy + tcy) / 2 + ny * bend
@@ -133,7 +135,7 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps) {
     a.y,
     b.x,
     b.y,
-    edgeData?.siblingIdx ?? 0,
+    data?.siblingIdx ?? 0,
     straight,
     curveFlip,
   )
@@ -162,12 +164,12 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps) {
       <EdgePathElement d={path} color={color} lineStyle={lineStyle} width={w} opacity={op} />
 
       {/* Arrowhead at the bbox exit point of the target node */}
-      {T.inverse !== 'self' && encoding !== 'minimal' && (
+      {T.inverse !== 'self' && edgeEncoding !== 'minimal' && (
         <polygon points={`${b.x},${b.y} ${ax1},${ay1} ${ax2},${ay2}`} fill={color} opacity={0.85} />
       )}
 
       {/* Midpoint glyph chip */}
-      {encoding !== 'minimal' && (
+      {edgeEncoding !== 'minimal' && (
         <g style={{ pointerEvents: 'all' }}>
           <circle
             cx={labelX}

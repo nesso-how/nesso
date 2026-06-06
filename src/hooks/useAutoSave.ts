@@ -8,9 +8,9 @@ const DEBOUNCE_MS = 5000
 
 // Viewport is also saved from GraphCanvas `onMoveEnd` when only pan/zoom/fit changes (no node/edge edits).
 export function useAutoSave() {
-  const fingerprint = useGraphStore((s) =>
-    graphPersistFingerprint(s.nodes, s.edges, s.graphDisplay),
-  )
+  const nodes = useGraphStore((s) => s.nodes)
+  const edges = useGraphStore((s) => s.edges)
+  const graphDisplay = useGraphStore((s) => s.graphDisplay)
   const currentGraphId = useGraphStore((s) => s.currentGraphId)
   const loadedToken = useGraphStore((s) => s.loadedToken)
   const saveCurrentGraph = useGraphStore((s) => s.saveCurrentGraph)
@@ -29,6 +29,8 @@ export function useAutoSave() {
   }, [externalFileConflict])
 
   useEffect(() => {
+    const fingerprint = graphPersistFingerprint(nodes, edges, graphDisplay)
+
     // Skip mount and any run triggered by a load (which replace nodes/edges
     // without representing a real edit) — otherwise updatedAt bumps and the
     // sidebar reorders on graph switch.
@@ -49,5 +51,14 @@ export function useAutoSave() {
     return () => {
       if (timer.current) clearTimeout(timer.current)
     }
-  }, [fingerprint, currentGraphId, loadedToken, saveCurrentGraph, saveViewport, getViewport])
+  }, [
+    nodes,
+    edges,
+    graphDisplay,
+    currentGraphId,
+    loadedToken,
+    saveCurrentGraph,
+    saveViewport,
+    getViewport,
+  ])
 }

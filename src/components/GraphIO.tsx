@@ -20,7 +20,12 @@ interface Props {
 
 export function GraphIO({ onRelationTypes, onShortcuts, onAbout }: Props) {
   const t = useT()
-  const { nodes, edges, graphList, currentGraphId, graphDisplay, importGraph } = useGraphStore()
+  const nodes = useGraphStore((s) => s.nodes)
+  const edges = useGraphStore((s) => s.edges)
+  const graphList = useGraphStore((s) => s.graphList)
+  const currentGraphId = useGraphStore((s) => s.currentGraphId)
+  const graphDisplay = useGraphStore((s) => s.graphDisplay)
+  const importGraph = useGraphStore((s) => s.importGraph)
   const [open, setOpen] = useState(false)
   const wrapRef = useRef<HTMLDivElement>(null)
 

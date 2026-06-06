@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-import { useState, useMemo, useLayoutEffect, useRef, useEffect } from 'react'
+import { useState, useMemo, useLayoutEffect, useRef, useEffect, type CSSProperties } from 'react'
 import { fsrs, Rating, type Grade } from 'ts-fsrs'
 import { RELATION_TYPES, RELATION_CATEGORIES } from '@/data/relationTypes'
 import { sortedDueConceptNodes } from '@/data/fsrsDueQueue'
@@ -7,10 +7,12 @@ import { useGraphStore } from '@/store/graph'
 import { nodeToCard, type EdgeTypeName } from '@/types/graph'
 import { buildReviewElaborationPrompt } from '@/llm/context'
 import { fetchCompletion, isAiReady } from '@/llm/completion'
+import { ratingColor } from '@/lib/ratingColor'
 import { SocratesGlyph } from './SocratesGlyph'
 import { useWebLLM } from '@/llm/webllm'
 import { useT } from '@/i18n'
 import { CloseButton } from './CloseButton'
+import { ModalOverlay } from './ui/ModalOverlay'
 import { ThinkingIndicator } from './ThinkingIndicator'
 import { Typewriter } from './Typewriter'
 
@@ -35,7 +37,10 @@ interface Props {
 
 export function ReviewMode({ open, onClose }: Props) {
   const t = useT()
-  const { nodes, edges, updateNodeData, settings } = useGraphStore()
+  const nodes = useGraphStore((s) => s.nodes)
+  const edges = useGraphStore((s) => s.edges)
+  const updateNodeData = useGraphStore((s) => s.updateNodeData)
+  const settings = useGraphStore((s) => s.settings)
   const [idx, setIdx] = useState(0)
   const [revealed, setRevealed] = useState(false)
   /** Cards finished this session; idx resets to 0 after each rating so we track progress separately. */
@@ -190,7 +195,7 @@ export function ReviewMode({ open, onClose }: Props) {
 
   if (!due.length) {
     return (
-      <Overlay onClose={onClose}>
+      <ReviewOverlay onClose={onClose}>
         <div
           style={{
             font: "500 11px 'JetBrains Mono', ui-monospace",
@@ -216,7 +221,7 @@ export function ReviewMode({ open, onClose }: Props) {
         <Btn primary onClick={onClose}>
           {t.review.close}
         </Btn>
-      </Overlay>
+      </ReviewOverlay>
     )
   }
 
@@ -251,7 +256,7 @@ export function ReviewMode({ open, onClose }: Props) {
       onRate={advance}
       ratings={RATINGS}
     >
-      <Overlay onClose={onClose}>
+      <ReviewOverlay onClose={onClose}>
         {/* Progress bar + counter + close */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 22 }}>
           <div
@@ -493,7 +498,7 @@ export function ReviewMode({ open, onClose }: Props) {
                   key={r}
                   label={ratingLabels[r]}
                   interval={predictedIntervals?.[r] ?? ''}
-                  color={`var(--conf-${r})`}
+                  color={ratingColor(r)}
                   onClick={() => advance(r)}
                 />
               ))}
@@ -536,7 +541,7 @@ export function ReviewMode({ open, onClose }: Props) {
             <span>close</span>
           </span>
         </div>
-      </Overlay>
+      </ReviewOverlay>
     </ReviewKeyHandler>
   )
 }
@@ -587,38 +592,23 @@ function ReviewKeyHandler({
   return <>{children}</>
 }
 
-function Overlay({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
+const reviewCardStyle: CSSProperties = {
+  width: 560,
+  maxWidth: '92vw',
+  maxHeight: 'calc(90vh - 40px)',
+  overflowY: 'auto',
+  background: 'var(--bg-card)',
+  border: '0.5px solid var(--line)',
+  borderRadius: 18,
+  padding: '28px 32px 22px',
+  boxShadow: 'var(--shadow-lg)',
+}
+
+function ReviewOverlay({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
   return (
-    <div
-      onClick={onClose}
-      style={{
-        position: 'absolute',
-        inset: 0,
-        zIndex: 70,
-        background: 'rgba(20, 18, 14, 0.55)',
-        backdropFilter: 'blur(6px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          width: 560,
-          maxWidth: '92vw',
-          maxHeight: 'calc(90vh - 40px)',
-          overflowY: 'auto',
-          background: 'var(--bg-card)',
-          border: '0.5px solid var(--line)',
-          borderRadius: 18,
-          padding: '28px 32px 22px',
-          boxShadow: 'var(--shadow-lg)',
-        }}
-      >
-        {children}
-      </div>
-    </div>
+    <ModalOverlay open onClose={onClose} zIndex={70}>
+      <div style={reviewCardStyle}>{children}</div>
+    </ModalOverlay>
   )
 }
 

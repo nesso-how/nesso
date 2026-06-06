@@ -13,10 +13,6 @@ const PASTE_OFFSET = { x: 48, y: 48 }
 
 let clipboard: GraphClipboard | null = null
 
-export function hasGraphClipboard(): boolean {
-  return clipboard !== null && (clipboard.nodes.length > 0 || clipboard.edges.length > 0)
-}
-
 export function setGraphClipboard(payload: GraphClipboard | null): void {
   clipboard = payload
 }

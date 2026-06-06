@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 import { CloseButton } from './CloseButton'
+import { ModalOverlay } from './ui/ModalOverlay'
 import { useT } from '@/i18n'
 
 interface Props {
@@ -40,24 +41,9 @@ export function ShortcutsDialog({ open, onClose }: Props) {
     },
   ]
 
-  if (!open) return null
-
   return (
-    <div
-      onClick={onClose}
-      style={{
-        position: 'absolute',
-        inset: 0,
-        zIndex: 75,
-        background: 'rgba(20, 18, 14, 0.55)',
-        backdropFilter: 'blur(6px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
+    <ModalOverlay open={open} onClose={onClose}>
       <div
-        onClick={(e) => e.stopPropagation()}
         style={{
           position: 'relative',
           width: 520,
@@ -154,6 +140,6 @@ export function ShortcutsDialog({ open, onClose }: Props) {
           </div>
         ))}
       </div>
-    </div>
+    </ModalOverlay>
   )
 }

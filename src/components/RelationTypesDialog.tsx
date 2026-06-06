@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { RELATION_CATEGORIES, RELATION_TYPES } from '@/data/relationTypes'
 import { GlyphSVG } from './GlyphSVG'
 import { CloseButton } from './CloseButton'
+import { ModalOverlay } from './ui/ModalOverlay'
 import { useGraphStore } from '@/store/graph'
 import type { EdgeCategory, EdgeTypeName } from '@/types/graph'
 import { useT } from '@/i18n'
@@ -19,8 +20,6 @@ export function RelationTypesDialog({ open, onClose }: Props) {
   const encoding = useGraphStore((s) => s.graphDisplay.edgeEncoding)
   const [query, setQuery] = useState('')
   const [activeCategory, setActiveCategory] = useState<EdgeCategory | null>(null)
-
-  if (!open) return null
 
   const q = query.trim().toLowerCase()
 
@@ -44,21 +43,8 @@ export function RelationTypesDialog({ open, onClose }: Props) {
   const isFiltered = q !== '' || activeCategory !== null
 
   return (
-    <div
-      onClick={onClose}
-      style={{
-        position: 'absolute',
-        inset: 0,
-        zIndex: 75,
-        background: 'rgba(20, 18, 14, 0.55)',
-        backdropFilter: 'blur(6px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
+    <ModalOverlay open={open} onClose={onClose}>
       <div
-        onClick={(e) => e.stopPropagation()}
         style={{
           position: 'relative',
           width: 520,
@@ -338,6 +324,6 @@ export function RelationTypesDialog({ open, onClose }: Props) {
           </a>
         </div>
       </div>
-    </div>
+    </ModalOverlay>
   )
 }

@@ -4,7 +4,8 @@ import type { Edge, Node } from '@xyflow/react'
 import { SocratesGlyph } from './SocratesGlyph'
 import { useGraphStore, selectedNodeSelector, selectedEdgeSelector } from '@/store/graph'
 import type { ConceptNodeData, Language } from '@/types/graph'
-import { getEngine, useWebLLM, LOCAL_MODEL_ID, LOCAL_MODEL_LABEL } from '@/llm/webllm'
+import { useWebLLM, LOCAL_MODEL_LABEL } from '@/llm/webllm'
+import { fetchCompletion } from '@/llm/completion'
 import { buildFocalNeighborContext, nodeStrength, oneHopNeighborIds } from '@/llm/context'
 import { useT } from '@/i18n'
 import { CloseButton } from './CloseButton'
@@ -14,6 +15,16 @@ import { Typewriter } from './Typewriter'
 interface Message {
   role: 'user' | 'mentor'
   text: string
+}
+
+function mentorCompletionMessages(systemPrompt: string, msgs: Message[]) {
+  return [
+    { role: 'system' as const, content: systemPrompt },
+    ...msgs.map((m) => ({
+      role: m.role === 'user' ? ('user' as const) : ('assistant' as const),
+      content: m.text,
+    })),
+  ]
 }
 
 /** Cap snapshot size so the system prompt stays bounded on large graphs. */
@@ -144,7 +155,8 @@ export function MentorBubble() {
   const t = useT()
   const mentorPanelExpanded = useGraphStore((s) => s.mentorPanelExpanded)
   const setMentorPanelExpanded = useGraphStore((s) => s.setMentorPanelExpanded)
-  const { nodes, edges } = useGraphStore()
+  const nodes = useGraphStore((s) => s.nodes)
+  const edges = useGraphStore((s) => s.edges)
   const currentGraphId = useGraphStore((s) => s.currentGraphId)
   const settings = useGraphStore((s) => s.settings)
   const selectedNode = useGraphStore(selectedNodeSelector)
@@ -164,48 +176,11 @@ export function MentorBubble() {
 
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const abortRef = useRef<AbortController | null>(null)
 
   const buildSystemPrompt = useCallback(
     () => buildGraphChatPrompt(nodes, edges, selectedNode, selectedEdge, settings.language),
     [nodes, edges, selectedNode, selectedEdge, settings.language],
-  )
-
-  const fetchCompletion = useCallback(
-    async (systemPrompt: string, msgs: Message[]): Promise<string> => {
-      const messages = [
-        { role: 'system' as const, content: systemPrompt },
-        ...msgs.map((m) => ({
-          role: m.role === 'user' ? ('user' as const) : ('assistant' as const),
-          content: m.text,
-        })),
-      ]
-
-      if (settings.aiMode === 'local') {
-        const engine = getEngine()
-        if (!engine)
-          throw new Error('Local model not loaded. Open Settings and click "Download & use".')
-        const reply = await engine.chat.completions.create({
-          model: LOCAL_MODEL_ID,
-          max_tokens: MENTOR_MAX_TOKENS,
-          messages,
-        })
-        return reply.choices[0]?.message?.content ?? '…'
-      }
-
-      const baseUrl = settings.aiBaseUrl.replace(/\/+$/, '')
-      const res = await fetch(`${baseUrl}/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(settings.aiApiKey ? { Authorization: `Bearer ${settings.aiApiKey}` } : {}),
-        },
-        body: JSON.stringify({ model: settings.aiModel, max_tokens: MENTOR_MAX_TOKENS, messages }),
-      })
-      if (!res.ok) throw new Error(await res.text())
-      const data = (await res.json()) as { choices?: { message?: { content?: string | null } }[] }
-      return data.choices?.[0]?.message?.content ?? '…'
-    },
-    [settings],
   )
 
   useEffect(() => {
@@ -223,27 +198,32 @@ export function MentorBubble() {
       return
     }
 
-    let cancelled = false
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
     setHistory([])
     setLoadingInitial(true)
 
     const systemPrompt = buildSystemPrompt()
     const seedText = buildMentorSeedText(settings.language, nodes, selectedNode, selectedEdge)
 
-    fetchCompletion(systemPrompt, [{ role: 'user', text: seedText }])
+    fetchCompletion(
+      settings,
+      mentorCompletionMessages(systemPrompt, [{ role: 'user', text: seedText }]),
+      MENTOR_MAX_TOKENS,
+      controller.signal,
+    )
       .then((raw) => {
-        if (!cancelled) setHistory([{ role: 'mentor', text: raw }])
+        if (!controller.signal.aborted) setHistory([{ role: 'mentor', text: raw || '…' }])
       })
       .catch(() => {
-        if (!cancelled) setHistory([{ role: 'mentor', text: t.mentor.errorRetry }])
+        if (!controller.signal.aborted) setHistory([{ role: 'mentor', text: t.mentor.errorRetry }])
       })
       .finally(() => {
-        if (!cancelled) setLoadingInitial(false)
+        if (!controller.signal.aborted) setLoadingInitial(false)
       })
 
-    return () => {
-      cancelled = true
-    }
+    return () => controller.abort()
     // eslint-disable-next-line react-hooks/exhaustive-deps -- opening line tied to graph open/switch; live sends use fresh prompt via buildSystemPrompt
   }, [
     mentorPanelExpanded,
@@ -281,8 +261,12 @@ export function MentorBubble() {
       if (el) el.scrollTop = el.scrollHeight
     })
     try {
-      const raw = await fetchCompletion(buildSystemPrompt(), next)
-      setHistory((h) => [...h, { role: 'mentor', text: raw }])
+      const raw = await fetchCompletion(
+        settings,
+        mentorCompletionMessages(buildSystemPrompt(), next),
+        MENTOR_MAX_TOKENS,
+      )
+      setHistory((h) => [...h, { role: 'mentor', text: raw || '…' }])
     } catch {
       setHistory((h) => [...h, { role: 'mentor', text: t.mentor.errorRetrySlow }])
     } finally {

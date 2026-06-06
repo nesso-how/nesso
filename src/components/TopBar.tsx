@@ -28,7 +28,9 @@ export function TopBar({
   onAbout,
 }: Props) {
   const t = useT()
-  const { graphList, currentGraphId, nodes } = useGraphStore()
+  const graphList = useGraphStore((s) => s.graphList)
+  const currentGraphId = useGraphStore((s) => s.currentGraphId)
+  const nodes = useGraphStore((s) => s.nodes)
   const current = graphList.find((g) => g.id === currentGraphId)
   const [now, setNow] = useState(() => Date.now())
   useEffect(() => {

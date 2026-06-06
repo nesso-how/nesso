@@ -4,18 +4,10 @@ import { Handle, Position, NodeProps, useConnection } from '@xyflow/react'
 import type { Node } from '@xyflow/react'
 import type { ConceptNodeData } from '@/types/graph'
 import { CONCEPT_HANDLE_IN, CONCEPT_HANDLE_OUT } from '@/data/conceptHandles'
+import { ratingColor } from '@/lib/ratingColor'
 import { useGraphStore } from '@/store/graph'
 
 type ConceptNodeType = Node<ConceptNodeData>
-
-/** Maps 0=unrated → ink; 1–4 → existing conf CSS vars (skip --conf-3) */
-const RATING_COLOR = [
-  'var(--ink)',
-  'var(--conf-1)',
-  'var(--conf-2)',
-  'var(--conf-4)',
-  'var(--conf-5)',
-] as const
 
 function caretIndexFromCenteredClick(input: HTMLInputElement, clientX: number): number {
   const style = window.getComputedStyle(input)
@@ -52,9 +44,11 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
   const rootRef = useRef<HTMLDivElement>(null)
   const selectAllOnFocus = useRef(false)
   const skipBlurCommit = useRef(false)
-  const { updateNodeData, settings, graphDisplay, editNodeId, clearEditNodeId } = useGraphStore()
-  const showConfidence = settings.showConfidence
-  const showHeatmap = graphDisplay.showHeatmap
+  const updateNodeData = useGraphStore((s) => s.updateNodeData)
+  const showConfidence = useGraphStore((s) => s.settings.showConfidence)
+  const showHeatmap = useGraphStore((s) => s.graphDisplay.showHeatmap)
+  const editNodeId = useGraphStore((s) => s.editNodeId)
+  const clearEditNodeId = useGraphStore((s) => s.clearEditNodeId)
 
   const startEdit = useCallback(() => {
     setDraft(data.text)
@@ -115,8 +109,7 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
   const isConnectionTarget =
     connection.inProgress && connection.toNode?.id === id && connection.fromNode?.id !== id
 
-  const ratingIdx = Math.max(0, Math.min(4, data.lastRating ?? 0))
-  const heatTint = RATING_COLOR[ratingIdx]
+  const heatTint = ratingColor(data.lastRating ?? 0)
   const confColor = showConfidence ? heatTint : 'var(--ink)'
   const isStale = data.reps > 0 && data.due <= Date.now()
 

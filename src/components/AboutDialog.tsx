@@ -11,6 +11,7 @@ import {
   REPO_URL,
   WEBSITE_URL,
 } from '@/data/appInfo'
+import { ModalOverlay } from './ui/ModalOverlay'
 import { useT } from '@/i18n'
 
 interface Props {
@@ -37,8 +38,6 @@ const linkRow: CSSProperties = {
 export function AboutDialog({ open, onClose }: Props) {
   const t = useT()
 
-  if (!open) return null
-
   const links: { label: string; url: string; icon: ReactNode }[] = [
     { label: t.about.links.github, url: REPO_URL, icon: <GithubIcon /> },
     { label: t.about.links.website, url: WEBSITE_URL, icon: <GlobeIcon /> },
@@ -48,21 +47,8 @@ export function AboutDialog({ open, onClose }: Props) {
   ]
 
   return (
-    <div
-      onClick={onClose}
-      style={{
-        position: 'absolute',
-        inset: 0,
-        zIndex: 75,
-        background: 'rgba(20, 18, 14, 0.55)',
-        backdropFilter: 'blur(6px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
+    <ModalOverlay open={open} onClose={onClose}>
       <div
-        onClick={(e) => e.stopPropagation()}
         style={{
           position: 'relative',
           filter: 'var(--drop-shadow-lg)',
@@ -169,7 +155,7 @@ export function AboutDialog({ open, onClose }: Props) {
           </div>
         </div>
       </div>
-    </div>
+    </ModalOverlay>
   )
 }
 

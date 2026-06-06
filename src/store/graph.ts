@@ -3,13 +3,14 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { applyNodeChanges, applyEdgeChanges } from '@xyflow/react'
 import type { Node, Edge, NodeChange, EdgeChange } from '@xyflow/react'
-import type {
-  ConceptNodeData,
-  NessoSettings,
-  EdgeTypeName,
-  Language,
-  GraphDisplaySettings,
-  NessoEdgeData,
+import {
+  defaultConceptReviewFields,
+  type ConceptNodeData,
+  type NessoSettings,
+  type EdgeTypeName,
+  type Language,
+  type GraphDisplaySettings,
+  type NessoEdgeData,
 } from '@/types/graph'
 import { defaultGraphDisplay, mergeGraphDisplay } from '@/types/graph'
 import { CONCEPT_HANDLE_IN, CONCEPT_HANDLE_OUT } from '@/data/conceptHandles'
@@ -352,14 +353,7 @@ export const useGraphStore = create<GraphState>()(
               selected: true,
               data: {
                 text: 'New concept',
-                stability: 0,
-                difficulty: 0,
-                reps: 0,
-                lapses: 0,
-                fsrsState: 0,
-                due: 0,
-                lastReview: 0,
-                lastRating: 0,
+                ...defaultConceptReviewFields(),
               },
             },
           ],
@@ -424,20 +418,21 @@ export const useGraphStore = create<GraphState>()(
           ...pushHistory(s),
           edges: s.edges.map((e) => {
             if (e.id !== id) return e
+            const edge = e as Edge<NessoEdgeData, 'nesso'>
+            const d = edge.data!
             if (mode === 'auto') {
-              const data: NessoEdgeData = { ...(e.data as unknown as NessoEdgeData) }
-              delete data.curveFlipPinned
-              delete data.curveFlip
-              return { ...e, data }
+              const data: NessoEdgeData = { type: d.type, siblingIdx: d.siblingIdx }
+              return { ...edge, data }
             }
             const auto = s.graphDisplay.autoCurveFlip
             const data: NessoEdgeData = {
-              ...(e.data as unknown as NessoEdgeData),
+              type: d.type,
+              siblingIdx: d.siblingIdx,
               curveFlip: mode === 'on',
             }
             if (auto) data.curveFlipPinned = true
             else delete data.curveFlipPinned
-            return { ...e, data }
+            return { ...edge, data }
           }),
         })),
 

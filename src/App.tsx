@@ -45,27 +45,25 @@ function AppInner() {
   const [showSearch, setShowSearch] = useState(false)
   const [showAbout, setShowAbout] = useState(false)
 
-  const {
-    nodes,
-    settings,
-    addNode,
-    selected,
-    setSelected,
-    undo,
-    redo,
-    copySelection,
-    pasteSelection,
-    deleteSelection,
-    requestEditNode,
-    loadGraph,
-    loadGraphList,
-    currentGraphId,
-    loadedToken,
-    viewports,
-    saveViewport,
-    sidebarCollapsed,
-    setSidebarCollapsed,
-  } = useGraphStore()
+  const nodes = useGraphStore((s) => s.nodes)
+  const settings = useGraphStore((s) => s.settings)
+  const addNode = useGraphStore((s) => s.addNode)
+  const selected = useGraphStore((s) => s.selected)
+  const setSelected = useGraphStore((s) => s.setSelected)
+  const undo = useGraphStore((s) => s.undo)
+  const redo = useGraphStore((s) => s.redo)
+  const copySelection = useGraphStore((s) => s.copySelection)
+  const pasteSelection = useGraphStore((s) => s.pasteSelection)
+  const deleteSelection = useGraphStore((s) => s.deleteSelection)
+  const requestEditNode = useGraphStore((s) => s.requestEditNode)
+  const loadGraph = useGraphStore((s) => s.loadGraph)
+  const loadGraphList = useGraphStore((s) => s.loadGraphList)
+  const currentGraphId = useGraphStore((s) => s.currentGraphId)
+  const loadedToken = useGraphStore((s) => s.loadedToken)
+  const viewports = useGraphStore((s) => s.viewports)
+  const saveViewport = useGraphStore((s) => s.saveViewport)
+  const sidebarCollapsed = useGraphStore((s) => s.sidebarCollapsed)
+  const setSidebarCollapsed = useGraphStore((s) => s.setSidebarCollapsed)
 
   const canUndo = useGraphStore((s) => s._history.length > 0)
   const canRedo = useGraphStore((s) => s._future.length > 0)

@@ -4,6 +4,8 @@ import type { Node } from '@xyflow/react'
 import { useGraphStore } from '@/store/graph'
 import type { ConceptNodeData } from '@/types/graph'
 import { useT } from '@/i18n'
+import { ratingColor } from '@/lib/ratingColor'
+import { ModalOverlay } from './ui/ModalOverlay'
 
 interface Props {
   open: boolean
@@ -26,7 +28,9 @@ function timeAgo(ts: number): string {
 
 export function SearchDialog({ open, onClose, onSelectNode, onSelectGraph }: Props) {
   const t = useT()
-  const { nodes, graphList, currentGraphId } = useGraphStore()
+  const nodes = useGraphStore((s) => s.nodes)
+  const graphList = useGraphStore((s) => s.graphList)
+  const currentGraphId = useGraphStore((s) => s.currentGraphId)
   const [query, setQuery] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -76,28 +80,17 @@ export function SearchDialog({ open, onClose, onSelectNode, onSelectGraph }: Pro
     }
   }
 
-  if (!open) return null
-
   const hasResults = graphResults.length > 0 || conceptResults.length > 0
   const showDivider = graphResults.length > 0 && conceptResults.length > 0
 
   return (
-    <div
-      onClick={onClose}
-      style={{
-        position: 'absolute',
-        inset: 0,
-        zIndex: 75,
-        background: 'rgba(20, 18, 14, 0.45)',
-        backdropFilter: 'blur(6px)',
-        display: 'flex',
-        alignItems: 'flex-start',
-        justifyContent: 'center',
-        paddingTop: 120,
-      }}
+    <ModalOverlay
+      open={open}
+      onClose={onClose}
+      align="top"
+      backdropStyle={{ background: 'rgba(20, 18, 14, 0.45)' }}
     >
       <div
-        onClick={(e) => e.stopPropagation()}
         style={{
           width: 440,
           maxWidth: '90vw',
@@ -319,7 +312,7 @@ export function SearchDialog({ open, onClose, onSelectNode, onSelectGraph }: Pro
           </p>
         )}
       </div>
-    </div>
+    </ModalOverlay>
   )
 }
 
@@ -341,7 +334,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 function RatingDots({ lastRating }: { lastRating: number }) {
   const r = Math.min(4, Math.max(0, lastRating))
-  const fill = r === 0 ? 'var(--paper-deep)' : `var(--conf-${r})`
+  const fill = ratingColor(r, 'var(--paper-deep)')
   return (
     <span style={{ display: 'inline-flex', gap: 2, flexShrink: 0 }}>
       {[1, 2, 3, 4].map((i) => (

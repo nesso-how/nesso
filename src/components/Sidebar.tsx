@@ -2,6 +2,8 @@
 import { useState, useRef, useEffect, type MouseEvent as ReactMouseEvent } from 'react'
 import { useGraphStore } from '@/store/graph'
 import { useT } from '@/i18n'
+import { SegmentedControl } from './ui/SegmentedControl'
+import { SettingRow } from './ui/SettingRow'
 import { NessoMark } from './NessoMark'
 import { WEBSITE_URL } from '@/data/appInfo'
 import { SIDEBAR_WIDTH_STORAGE_KEY } from '@/data/storageKeys'
@@ -54,22 +56,20 @@ export function Sidebar({
   onWidthChange,
 }: Props) {
   const t = useT()
-  const {
-    graphList,
-    currentGraphId,
-    loadGraph,
-    createGraph,
-    renameGraph,
-    deleteGraph,
-    nodes,
-    edges,
-    graphDisplay,
-    setGraphDisplay,
-    sidebarDisplayOpen,
-    setSidebarDisplayOpen,
-    sidebarStatsOpen,
-    setSidebarStatsOpen,
-  } = useGraphStore()
+  const graphList = useGraphStore((s) => s.graphList)
+  const currentGraphId = useGraphStore((s) => s.currentGraphId)
+  const loadGraph = useGraphStore((s) => s.loadGraph)
+  const createGraph = useGraphStore((s) => s.createGraph)
+  const renameGraph = useGraphStore((s) => s.renameGraph)
+  const deleteGraph = useGraphStore((s) => s.deleteGraph)
+  const nodes = useGraphStore((s) => s.nodes)
+  const edges = useGraphStore((s) => s.edges)
+  const graphDisplay = useGraphStore((s) => s.graphDisplay)
+  const setGraphDisplay = useGraphStore((s) => s.setGraphDisplay)
+  const sidebarDisplayOpen = useGraphStore((s) => s.sidebarDisplayOpen)
+  const setSidebarDisplayOpen = useGraphStore((s) => s.setSidebarDisplayOpen)
+  const sidebarStatsOpen = useGraphStore((s) => s.sidebarStatsOpen)
+  const setSidebarStatsOpen = useGraphStore((s) => s.setSidebarStatsOpen)
 
   const [editingId, setEditingId] = useState<string | null>(null)
   const [draft, setDraft] = useState('')
@@ -512,8 +512,8 @@ export function Sidebar({
             </div>
             {sidebarDisplayOpen && (
               <div style={{ padding: '0 12px 10px' }}>
-                <DisplayRow label={t.sidebar.displayOptions.heatmap}>
-                  <Seg
+                <SettingRow label={t.sidebar.displayOptions.heatmap}>
+                  <SegmentedControl
                     options={[
                       { id: 'off', label: t.sidebar.displayOptions.off },
                       { id: 'on', label: t.sidebar.displayOptions.on },
@@ -521,9 +521,9 @@ export function Sidebar({
                     value={graphDisplay.showHeatmap ? 'on' : 'off'}
                     onChange={(v) => setGraphDisplay('showHeatmap', v === 'on')}
                   />
-                </DisplayRow>
-                <DisplayRow label={t.sidebar.displayOptions.edges}>
-                  <Seg
+                </SettingRow>
+                <SettingRow label={t.sidebar.displayOptions.edges}>
+                  <SegmentedControl
                     options={[
                       { id: 'full', label: t.sidebar.displayOptions.full },
                       { id: 'category', label: t.sidebar.displayOptions.cat },
@@ -534,9 +534,9 @@ export function Sidebar({
                       setGraphDisplay('edgeEncoding', v as 'full' | 'category' | 'minimal')
                     }
                   />
-                </DisplayRow>
-                <DisplayRow label={t.sidebar.displayOptions.curve}>
-                  <Seg
+                </SettingRow>
+                <SettingRow label={t.sidebar.displayOptions.curve}>
+                  <SegmentedControl
                     options={[
                       { id: 'arc', label: t.sidebar.displayOptions.arc },
                       { id: 'straight', label: t.sidebar.displayOptions.line },
@@ -544,10 +544,10 @@ export function Sidebar({
                     value={graphDisplay.curveStyle}
                     onChange={(v) => setGraphDisplay('curveStyle', v as 'arc' | 'straight')}
                   />
-                </DisplayRow>
+                </SettingRow>
                 {graphDisplay.curveStyle === 'arc' && (
-                  <DisplayRow label={t.sidebar.displayOptions.autoFlip}>
-                    <Seg
+                  <SettingRow label={t.sidebar.displayOptions.autoFlip}>
+                    <SegmentedControl
                       options={[
                         { id: 'off', label: t.sidebar.displayOptions.off },
                         { id: 'on', label: t.sidebar.displayOptions.on },
@@ -555,7 +555,7 @@ export function Sidebar({
                       value={graphDisplay.autoCurveFlip ? 'on' : 'off'}
                       onChange={(v) => setGraphDisplay('autoCurveFlip', v === 'on')}
                     />
-                  </DisplayRow>
+                  </SettingRow>
                 )}
               </div>
             )}
@@ -707,58 +707,6 @@ function MapRow({ label, value, title }: { label: string; value: string; title?:
       <span style={{ font: "500 12px 'JetBrains Mono', ui-monospace", color: 'var(--ink-2)' }}>
         {value}
       </span>
-    </div>
-  )
-}
-
-function DisplayRow({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '5px 0',
-        gap: 12,
-      }}
-    >
-      <span style={{ font: "12px 'Inter', ui-sans-serif", color: 'var(--ink-3)' }}>{label}</span>
-      {children}
-    </div>
-  )
-}
-
-function Seg({
-  options,
-  value,
-  onChange,
-}: {
-  options: { id: string; label: string }[]
-  value: string
-  onChange: (id: string) => void
-}) {
-  return (
-    <div style={{ display: 'flex', background: 'var(--paper-deep)', borderRadius: 6, padding: 2 }}>
-      {options.map((o) => (
-        <button
-          key={o.id}
-          onClick={() => onChange(o.id)}
-          style={{
-            appearance: 'none',
-            border: 0,
-            background: o.id === value ? 'var(--bg-card)' : 'transparent',
-            color: o.id === value ? 'var(--ink)' : 'var(--ink-4)',
-            font:
-              o.id === value ? "500 11px 'Inter', ui-sans-serif" : "11px 'Inter', ui-sans-serif",
-            padding: '3px 9px',
-            borderRadius: 4,
-            cursor: 'default',
-            boxShadow: o.id === value ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
-          }}
-        >
-          {o.label}
-        </button>
-      ))}
     </div>
   )
 }

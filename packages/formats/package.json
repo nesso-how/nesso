@@ -12,6 +12,9 @@
   "publishConfig": {
     "access": "public"
   },
+  "files": [
+    "dist"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -24,10 +27,13 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "@nesso-how/types": "workspace:*",
+    "@nesso-how/types": "workspace:*"
+  },
+  "peerDependencies": {
     "@xyflow/react": "^12.6.4"
   },
   "devDependencies": {
+    "@xyflow/react": "^12.6.4",
     "typescript": "~5.8.3"
   }
 }

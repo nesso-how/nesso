@@ -23,15 +23,13 @@ export function BottomDock({
   sidebarWidth = 0,
 }: Props) {
   const t = useT()
-  const {
-    edges,
-    selected,
-    selectedIds,
-    deleteSelection,
-    copySelection,
-    pasteSelection,
-    pasteAvailable,
-  } = useGraphStore()
+  const edges = useGraphStore((s) => s.edges)
+  const selected = useGraphStore((s) => s.selected)
+  const selectedIds = useGraphStore((s) => s.selectedIds)
+  const deleteSelection = useGraphStore((s) => s.deleteSelection)
+  const copySelection = useGraphStore((s) => s.copySelection)
+  const pasteSelection = useGraphStore((s) => s.pasteSelection)
+  const pasteAvailable = useGraphStore((s) => s.pasteAvailable)
   const hasEdgeSelection = edges.some((e) => e.selected)
   const canCopy =
     selected?.kind === 'edge' ||

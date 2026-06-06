@@ -50,7 +50,9 @@ Whether the mentor **card** is expanded is `mentorPanelExpanded` on `useGraphSto
 
 ## API call
 
-**Remote:** `fetch(`${aiBaseUrl}/chat/completions`, …)` with JSON body:
+Completions go through **`fetchCompletion()`** in `src/llm/completion.ts` (shared with `ReviewMode`). Pass an optional `AbortSignal` for remote requests; abort on panel close, graph switch, or card change.
+
+**Remote:** `fetchCompletion` posts to `${aiBaseUrl}/chat/completions` with JSON body:
 
 - `model` — `settings.aiModel`
 - `max_tokens` — `MENTOR_MAX_TOKENS` (~380, aligned with ~180-word replies)
@@ -58,4 +60,4 @@ Whether the mentor **card** is expanded is `mentorPanelExpanded` on `useGraphSto
 
 `Authorization: Bearer …` is sent when `settings.aiApiKey` is non-empty.
 
-**Local:** After `initWebLLM()` completes, `getEngine()` from `webllm.ts` is non-null. Until then the UI blocks sends. Then `engine.chat.completions.create({ model: LOCAL_MODEL_ID, max_tokens: MENTOR_MAX_TOKENS, messages })` with the same `messages` array built for remote mode.
+**Local:** After `initWebLLM()` completes, `fetchCompletion` uses `getEngine()` from `webllm.ts`. Until then the UI blocks sends.
