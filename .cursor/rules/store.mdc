@@ -10,13 +10,13 @@ alwaysApply: false
 
 ## Slices
 
-| Slice file            | Domain |
-| --------------------- | ------ |
-| `graph-editing.ts`    | `nodes`, `edges`, selection, undo/redo, clipboard, `editNodeId` |
-| `settings.ts`         | `NessoSettings`, `GraphDisplaySettings`, `setSetting`, `setGraphDisplay` |
-| `ui.ts`               | Sidebar chrome, `mentorPanelExpanded`, `viewports`, `saveViewport` |
+| Slice file            | Domain                                                                                    |
+| --------------------- | ----------------------------------------------------------------------------------------- |
+| `graph-editing.ts`    | `nodes`, `edges`, selection, undo/redo, clipboard, `editNodeId`                           |
+| `settings.ts`         | `NessoSettings`, `GraphDisplaySettings`, `setSetting`, `setGraphDisplay`                  |
+| `ui.ts`               | Sidebar chrome, `mentorPanelExpanded`, `viewports`, `saveViewport`                        |
 | `graph-management.ts` | `graphList`, `currentGraphId`, `loadedToken`, load/save/create/import/rename/delete graph |
-| `desktop-sync.ts`     | `savedFingerprint`, `externalFileConflict`, reload/keep-local disk sync |
+| `desktop-sync.ts`     | `savedFingerprint`, `externalFileConflict`, reload/keep-local disk sync                   |
 
 Shared types (`GraphMeta`, `Selection`, `Viewport`, `GraphSnapshot`) live in `src/store/types.ts`. The combined `GraphState` type is in `src/store/state.ts`.
 
@@ -24,22 +24,22 @@ Shared types (`GraphMeta`, `Selection`, `Viewport`, `GraphSnapshot`) live in `sr
 
 ```ts
 interface GraphState {
-  nodes: Node<ConceptNodeData>[];
-  edges: Edge[];
-  selected: { kind: "node" | "edge"; id: string } | null;
-  selectedIds: string[];
-  settings: NessoSettings;
-  graphDisplay: GraphDisplaySettings;
-  mentorPanelExpanded: boolean;
-  sidebarCollapsed: boolean;
-  sidebarDisplayOpen: boolean;
-  sidebarStatsOpen: boolean;
-  viewports: Record<string, { x: number; y: number; zoom: number }>;
-  currentGraphId: string;
-  graphList: { id: string; name: string; updatedAt: number }[];
-  loadedToken: number;
-  savedFingerprint: string;
-  externalFileConflict: boolean;
+  nodes: Node<ConceptNodeData>[]
+  edges: Edge[]
+  selected: { kind: 'node' | 'edge'; id: string } | null
+  selectedIds: string[]
+  settings: NessoSettings
+  graphDisplay: GraphDisplaySettings
+  mentorPanelExpanded: boolean
+  sidebarCollapsed: boolean
+  sidebarDisplayOpen: boolean
+  sidebarStatsOpen: boolean
+  viewports: Record<string, { x: number; y: number; zoom: number }>
+  currentGraphId: string
+  graphList: { id: string; name: string; updatedAt: number }[]
+  loadedToken: number
+  savedFingerprint: string
+  externalFileConflict: boolean
   // ... mutations below
 }
 ```
@@ -77,10 +77,9 @@ Persistence: Zustand `persist` in `index.ts` (`ZUSTAND_PERSIST_KEY` → localSto
 Named selectors are exported from `index.ts`:
 
 ```ts
-export const selectedNodeSelector = (s: GraphState) =>
-  Node<ConceptNodeData> | null;
-export const selectedEdgeSelector = (s: GraphState) => Edge | null;
-export const graphDisplaySelector = (s: GraphState) => GraphDisplaySettings;
+export const selectedNodeSelector = (s: GraphState) => Node<ConceptNodeData> | null
+export const selectedEdgeSelector = (s: GraphState) => Edge | null
+export const graphDisplaySelector = (s: GraphState) => GraphDisplaySettings
 ```
 
 Use these in components — do not inline the selection look-up logic.
