@@ -24,14 +24,14 @@ export function EdgeInspector({ leftOffset, panelWidth, onPanelWidthChange }: Pr
   const nodes = useGraphStore((s) => s.nodes)
   const updateEdgeType = useGraphStore((s) => s.updateEdgeType)
   const setEdgeCurveFlipMode = useGraphStore((s) => s.setEdgeCurveFlipMode)
-  const graphDisplay = useGraphStore((s) => s.graphDisplay)
+  const curveStyle = useGraphStore((s) => s.graphDisplay.curveStyle)
+  const autoCurveFlip = useGraphStore((s) => s.graphDisplay.autoCurveFlip)
   const edgeType = asEdgeTypeName(edge.data?.type)
   const T = RELATION_TYPES[edgeType]
   const C = RELATION_CATEGORIES[T.cat]
   const from = nodes.find((n) => n.id === edge.source)
   const to = nodes.find((n) => n.id === edge.target)
   const siblings = RELATION_TYPE_VALUES.filter((id) => RELATION_TYPES[id].cat === T.cat)
-  const autoCurveFlip = graphDisplay.autoCurveFlip
   const curveFlipPinned = Boolean(edge.data?.curveFlipPinned)
   const curveFlipMode = autoCurveFlip
     ? curveFlipPinned
@@ -42,7 +42,7 @@ export function EdgeInspector({ leftOffset, panelWidth, onPanelWidthChange }: Pr
     : edge.data?.curveFlip
       ? 'on'
       : 'off'
-  const showCurveFlip = graphDisplay.curveStyle === 'arc'
+  const showCurveFlip = curveStyle === 'arc'
 
   return (
     <InspectorPanel
