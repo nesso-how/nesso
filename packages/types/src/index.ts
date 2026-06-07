@@ -1,7 +1,13 @@
 // SPDX-License-Identifier: MIT
-export type { EdgeCategory, EdgeTypeDef, EdgeTypeName, GlyphKind } from '@nesso-how/relation-types'
+export type {
+  EdgeCategory,
+  EdgeTypeDef,
+  EdgeTypeName,
+  GlyphKind,
+  CategoryPalette,
+} from '@nesso-how/relation-types'
 import type { Card, State } from 'ts-fsrs'
-import type { EdgeTypeName } from '@nesso-how/relation-types'
+import type { CategoryPalette, EdgeTypeName } from '@nesso-how/relation-types'
 
 export interface ConceptElaboration {
   definition: string
@@ -66,8 +72,6 @@ export interface NessoEdgeData extends Record<string, unknown> {
   curveFlip?: boolean
   curveFlipPinned?: boolean
 }
-
-export type CategoryPalette = 'default' | 'vivid' | 'muted' | 'monoCat'
 
 export type Language = 'en' | 'it'
 

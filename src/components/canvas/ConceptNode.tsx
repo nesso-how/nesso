@@ -2,9 +2,9 @@
 import { useState, useRef, useCallback, useEffect, useLayoutEffect } from 'react'
 import { Handle, Position, NodeProps, useConnection } from '@xyflow/react'
 import type { Node } from '@xyflow/react'
+import { ConceptNodeBody, useGraphDisplay } from '@nesso-how/graph'
 import type { ConceptNodeData } from '@/types/graph'
 import { CONCEPT_HANDLE_IN, CONCEPT_HANDLE_OUT } from '@/data/conceptHandles'
-import { ratingColor } from '@/lib/ratingColor'
 import { useGraphStore } from '@/store'
 
 type ConceptNodeType = Node<ConceptNodeData>
@@ -45,10 +45,9 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
   const selectAllOnFocus = useRef(false)
   const skipBlurCommit = useRef(false)
   const updateNodeData = useGraphStore((s) => s.updateNodeData)
-  const showConfidence = useGraphStore((s) => s.settings.showConfidence)
-  const showHeatmap = useGraphStore((s) => s.graphDisplay.showHeatmap)
   const editNodeId = useGraphStore((s) => s.editNodeId)
   const clearEditNodeId = useGraphStore((s) => s.clearEditNodeId)
+  const { showHeatmap, showConfidence } = useGraphDisplay()
 
   const startEdit = useCallback(() => {
     setDraft(data.text)
@@ -109,146 +108,85 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
   const isConnectionTarget =
     connection.inProgress && connection.toNode?.id === id && connection.fromNode?.id !== id
 
-  const heatTint = ratingColor(data.lastRating ?? 0)
-  const confColor = showConfidence ? heatTint : 'var(--ink)'
-  const isStale = data.reps > 0 && data.due <= Date.now()
-
   return (
-    <div
-      ref={rootRef}
-      className="nesso-node"
-      onDoubleClick={(e) => {
-        e.stopPropagation()
-        startEdit()
-      }}
-      style={{
-        position: 'relative',
-        padding: '6px 14px',
-        borderRadius: 999,
-        background: selected || showHeatmap ? 'var(--bg-card)' : 'transparent',
-        border: selected || showHeatmap ? `0.5px solid var(--line)` : '0.5px solid transparent',
-        cursor: editing ? 'text' : 'grab',
-        userSelect: editing ? 'text' : 'none',
-        minWidth: 60,
-      }}
-    >
-      {/* Heatmap overlay — tints background with last rating colour */}
-      {showHeatmap && (
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            borderRadius: 999,
-            background: heatTint,
-            opacity: 0.14,
-            pointerEvents: 'none',
-          }}
-        />
-      )}
-
-      {/* Selection halo */}
-      {selected && (
-        <div
-          style={{
-            position: 'absolute',
-            inset: -6,
-            borderRadius: 999,
-            border: '1px dashed var(--accent)',
-            opacity: 0.7,
-            pointerEvents: 'none',
-          }}
-        />
-      )}
-
-      {/* Connection target highlight */}
-      {isConnectionTarget && (
-        <div
-          style={{
-            position: 'absolute',
-            inset: -4,
-            borderRadius: 999,
-            border: '1.5px dotted color-mix(in srgb, var(--accent) 65%, transparent)',
-            pointerEvents: 'none',
-          }}
-        />
-      )}
-
-      {/* Text / editing — ghost span always holds the width, input overlays when editing */}
-      <div style={{ position: 'relative' }}>
-        <span
-          className="nesso-node-label"
-          style={{
-            font: '500 16px Fraunces, ui-serif, Georgia, serif',
-            letterSpacing: '-0.005em',
-            color: 'var(--ink)',
-            display: 'block',
-            whiteSpace: 'pre',
-            visibility: editing ? 'hidden' : 'visible',
-          }}
-        >
-          {editing ? draft : data.text}
-        </span>
-
-        {editing && (
-          <input
-            ref={inputRef}
-            className="nodrag nopan"
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            onBlur={(e) => {
-              if (skipBlurCommit.current) {
-                skipBlurCommit.current = false
-                return
-              }
-              commit(e.target.value)
-            }}
-            onPointerDown={stopGraphPointer}
-            onMouseDown={handleInputMouseDown}
-            onClick={stopGraphPointer}
-            onKeyDown={(e) => {
-              e.stopPropagation()
-              if (e.key === 'Enter' || e.key === 'Escape') {
-                e.preventDefault()
-                skipBlurCommit.current = true
-                commit(e.currentTarget.value)
-              }
-            }}
+    <div style={{ position: 'relative' }}>
+      <ConceptNodeBody
+        rootRef={rootRef}
+        className="nesso-node"
+        text={data.text}
+        selected={selected}
+        showHeatmap={showHeatmap}
+        showConfidence={showConfidence}
+        lastRating={data.lastRating ?? 0}
+        reps={data.reps}
+        due={data.due}
+        cursor={editing ? 'text' : 'grab'}
+        userSelect={editing ? 'text' : 'none'}
+        connectionTarget={isConnectionTarget}
+        hideUnderline={editing}
+        onDoubleClick={(e) => {
+          e.stopPropagation()
+          startEdit()
+        }}
+      >
+        <div style={{ position: 'relative' }}>
+          <span
+            className="nesso-node-label"
             style={{
-              position: 'absolute',
-              inset: 0,
-              border: 0,
-              padding: 0,
-              margin: 0,
-              width: '100%',
-              boxSizing: 'border-box',
-              background: 'transparent',
               font: '500 16px Fraunces, ui-serif, Georgia, serif',
               letterSpacing: '-0.005em',
               color: 'var(--ink)',
-              textAlign: 'center',
-              outline: 'none',
+              display: 'block',
+              whiteSpace: 'pre',
+              visibility: editing ? 'hidden' : 'visible',
             }}
-          />
-        )}
-      </div>
+          >
+            {editing ? draft : data.text}
+          </span>
 
-      {/* Underline — color encodes last rating, dashed when due */}
-      {!editing && (
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 5,
-            left: 16,
-            right: 16,
-            height: selected ? 1.4 : 0.8,
-            background:
-              isStale && showConfidence
-                ? `repeating-linear-gradient(90deg, ${confColor} 0, ${confColor} 4px, transparent 4px, transparent 8px)`
-                : confColor,
-            opacity: selected ? 0.9 : 0.55,
-          }}
-        />
-      )}
+          {editing && (
+            <input
+              ref={inputRef}
+              className="nodrag nopan"
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onBlur={(e) => {
+                if (skipBlurCommit.current) {
+                  skipBlurCommit.current = false
+                  return
+                }
+                commit(e.target.value)
+              }}
+              onPointerDown={stopGraphPointer}
+              onMouseDown={handleInputMouseDown}
+              onClick={stopGraphPointer}
+              onKeyDown={(e) => {
+                e.stopPropagation()
+                if (e.key === 'Enter' || e.key === 'Escape') {
+                  e.preventDefault()
+                  skipBlurCommit.current = true
+                  commit(e.currentTarget.value)
+                }
+              }}
+              style={{
+                position: 'absolute',
+                inset: 0,
+                border: 0,
+                padding: 0,
+                margin: 0,
+                width: '100%',
+                boxSizing: 'border-box',
+                background: 'transparent',
+                font: '500 16px Fraunces, ui-serif, Georgia, serif',
+                letterSpacing: '-0.005em',
+                color: 'var(--ink)',
+                textAlign: 'center',
+                outline: 'none',
+              }}
+            />
+          )}
+        </div>
+      </ConceptNodeBody>
 
       <Handle
         id={CONCEPT_HANDLE_OUT}
@@ -278,10 +216,6 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
           borderRadius: '50%',
         }}
       />
-      {/* Invisible target handles distributed at 33% and 67% of the node width.
-          pointerEvents:none lets node-drag events pass through.
-          Together with the left/right handles and connectionRadius=35 they cover
-          the full node width without bleeding into nearby nodes. */}
       <Handle
         id="in-c1"
         type="target"

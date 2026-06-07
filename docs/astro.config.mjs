@@ -1,11 +1,20 @@
 // SPDX-License-Identifier: MIT
 // @ts-check
 import { defineConfig } from 'astro/config'
+import react from '@astrojs/react'
 import starlight from '@astrojs/starlight'
 
 export default defineConfig({
   site: 'https://nesso.how',
+  vite: {
+    // `@nesso-how/graph` is linked from the monorepo (see package.json) and would
+    // otherwise resolve its own react/react-dom/@xyflow/react from the monorepo's
+    // node_modules — a second copy that breaks hooks ("Invalid hook call"). Dedupe
+    // forces every consumer to resolve to docs' single copy instead.
+    resolve: { dedupe: ['react', 'react-dom', '@xyflow/react'] },
+  },
   integrations: [
+    react(),
     starlight({
       title: 'Nesso',
       description: 'An app for building typed knowledge graphs for active learning.',
@@ -44,6 +53,7 @@ export default defineConfig({
             { label: 'Review mode', slug: 'docs/guides/review-mode' },
             { label: 'AI mentor', slug: 'docs/guides/ai-mentor' },
             { label: 'MCP', slug: 'docs/guides/mcp-integration' },
+            { label: 'Embedding graphs', slug: 'docs/guides/embedding-graphs' },
           ],
         },
         {

@@ -1,6 +1,6 @@
 ---
 description: Semantic edge model — categories, relation types, coefficients, visual encoding
-globs: src/data/relationTypes.ts, src/types/graph.ts, src/components/NessoEdge.tsx, src/components/RelationTypesDialog.tsx, packages/relation-types/src/index.ts
+globs: src/data/relationTypes.ts, src/types/graph.ts, packages/graph/src/NessoEdge.tsx, src/components/RelationTypesDialog.tsx, packages/relation-types/src/index.ts
 alwaysApply: false
 ---
 
@@ -10,15 +10,15 @@ alwaysApply: false
 
 ```ts
 interface ConceptNodeData {
-  text: string;
-  stability: number;
-  difficulty: number;
-  reps: number;
-  lapses: number;
-  fsrsState: number; // ts-fsrs State: New/Learning/Review/Relearning
-  due: number; // Unix ms; due when <= now (0 = new / immediate)
-  lastReview: number; // Unix ms; 0 = never
-  lastRating: number; // 0 = none; 1–4 = Again/Hard/Good/Easy (matches ts-fsrs Rating)
+  text: string
+  stability: number
+  difficulty: number
+  reps: number
+  lapses: number
+  fsrsState: number // ts-fsrs State: New/Learning/Review/Relearning
+  due: number // Unix ms; due when <= now (0 = new / immediate)
+  lastReview: number // Unix ms; 0 = never
+  lastRating: number // 0 = none; 1–4 = Again/Hard/Good/Easy (matches ts-fsrs Rating)
 }
 ```
 
@@ -30,16 +30,16 @@ All edges carry a `data.type: EdgeTypeName`. Relation definitions (`RELATION_TYP
 
 The set has **52 types in 8 categories**. Asymmetric relations come in **inverse pairs** so traversal in either direction is first-class.
 
-| Category     | Forward types                                                       | Inverse types                                                                            |
-| ------------ | ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `taxonomic`  | `subtype-of`, `instance-of`                                         | `has-subtype`, `has-instance`                                                            |
-| `structural` | `part-of`, `made-of`                                                | `contains`, `composes`                                                                   |
+| Category     | Forward types                                                                                         | Inverse types                                                                                                                        |
+| ------------ | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `taxonomic`  | `subtype-of`, `instance-of`                                                                           | `has-subtype`, `has-instance`                                                                                                        |
+| `structural` | `part-of`, `made-of`                                                                                  | `contains`, `composes`                                                                                                               |
 | `causal`     | `causes`, `produces`, `enables`, `prevents`, `triggers`, `inhibits`, `disables`, `consumes`, `delays` | `caused-by`, `produced-by`, `enabled-by`, `prevented-by`, `triggered-by`, `inhibited-by`, `disabled-by`, `consumed-by`, `delayed-by` |
-| `dependency` | `requires`, `uses`, `used-for`                                      | `required-by`, `used-by`, `purpose-of`                                                   |
-| `temporal`   | `precedes`, `occurs-in`, `during`, `derives-from`, `overlaps-with`  | `follows`, `has-occurrence`, `spans`, `gives-rise-to`; `overlaps-with` is self (symmetric) |
-| `opposition` | `contrasts-with`, `opposite-of`                                     | self (symmetric)                                                                         |
-| `similarity` | `similar-to`, `analogous-to`                                        | self (symmetric)                                                                         |
-| `epistemic`  | `supports`, `explains`, `defines`, `contradicts`                    | `supported-by`, `explained-by`, `defined-by`; `contradicts` is self (symmetric)          |
+| `dependency` | `requires`, `uses`, `used-for`                                                                        | `required-by`, `used-by`, `purpose-of`                                                                                               |
+| `temporal`   | `precedes`, `occurs-in`, `during`, `derives-from`, `overlaps-with`                                    | `follows`, `has-occurrence`, `spans`, `gives-rise-to`; `overlaps-with` is self (symmetric)                                           |
+| `opposition` | `contrasts-with`, `opposite-of`                                                                       | self (symmetric)                                                                                                                     |
+| `similarity` | `similar-to`, `analogous-to`                                                                          | self (symmetric)                                                                                                                     |
+| `epistemic`  | `supports`, `explains`, `defines`, `contradicts`                                                      | `supported-by`, `explained-by`, `defined-by`; `contradicts` is self (symmetric)                                                      |
 
 ## `EdgeTypeDef` schema
 
@@ -65,8 +65,8 @@ These coefficients exist to drive future graph-analysis and graph-comparison alg
 - `category` — colour only (category colour, no glyph)
 - `minimal` — plain line, no glyph or colour distinction
 
-Category colours are CSS custom properties (`--cat-taxonomic`, `--cat-structural`, etc.) set by the active palette in `src/data/palettes.ts`.
+Category colours are CSS custom properties (`--cat-taxonomic`, `--cat-structural`, etc.) set by the active palette in `App.tsx` from `PALETTES` in `@nesso-how/relation-types`. Embeds use hex from `PALETTES` directly via `categoryColorMode: 'palette'`.
 
 ## React Flow edge type
 
-All edges in the store use `type: 'nesso'`, mapped to `NessoEdge` in `GraphCanvas`. Never use the default React Flow edge types — they do not carry glyph or line-style rendering.
+All edges in the store use `type: 'nesso'`, rendered by `NessoEdge` from `@nesso-how/graph` (default in `NessoGraph`). Never use the default React Flow edge types — they do not carry glyph or line-style rendering.

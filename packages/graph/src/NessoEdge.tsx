@@ -2,18 +2,31 @@
 import { useState } from 'react'
 import type { Edge, EdgeProps } from '@xyflow/react'
 import { useStore } from '@xyflow/react'
-import { RELATION_TYPES, RELATION_CATEGORIES, asEdgeTypeName } from '@/data/relationTypes'
-import { GlyphSVG } from './GlyphSVG'
-import type { NessoEdgeData } from '@/types/graph'
-import { useGraphStore } from '@/store'
+import { PALETTES, RELATION_TYPES } from '@nesso-how/relation-types'
+import type { EdgeCategory, EdgeTypeName } from '@nesso-how/relation-types'
+import type { NessoEdgeData } from '@nesso-how/types'
+import { GlyphSVG } from './GlyphSVG.js'
+import { useGraphDisplay, type NessoGraphDisplayContext } from './context.js'
 import {
   effectiveCurveFlip,
   flowNodeCenterX,
   flowNodeCenterY,
   nessoArcPath,
   rectExit,
-} from '@/geometry/nessoEdgeGeometry'
-import { useT } from '@/i18n'
+} from './geometry.js'
+
+function asEdgeTypeName(value: unknown, fallback: EdgeTypeName = 'causes'): EdgeTypeName {
+  return typeof value === 'string' && value in RELATION_TYPES ? (value as EdgeTypeName) : fallback
+}
+
+function categoryColor(
+  cat: EdgeCategory,
+  mode: 'palette' | 'css',
+  palette: NessoGraphDisplayContext['palette'],
+): string {
+  if (mode === 'css') return `var(--cat-${cat})`
+  return PALETTES[palette]?.[cat] ?? '#666666'
+}
 
 function EdgePathElement({
   d,
@@ -39,9 +52,21 @@ function EdgePathElement({
   if (lineStyle === 'double') {
     return (
       <g>
-        <path d={d} fill="none" stroke="var(--paper)" strokeWidth={width + 3} opacity={1} />
+        <path
+          d={d}
+          fill="none"
+          stroke="var(--paper, #ffffff)"
+          strokeWidth={width + 3}
+          opacity={1}
+        />
         <path d={d} {...base} strokeWidth={width * 2.6} />
-        <path d={d} fill="none" stroke="var(--paper)" strokeWidth={width * 0.7} opacity={1} />
+        <path
+          d={d}
+          fill="none"
+          stroke="var(--paper, #ffffff)"
+          strokeWidth={width * 0.7}
+          opacity={1}
+        />
       </g>
     )
   }
@@ -57,37 +82,40 @@ function EdgePathElement({
 type NessoFlowEdge = Edge<NessoEdgeData, 'nesso'>
 
 export function NessoEdge({ id, source, target, data, selected }: EdgeProps<NessoFlowEdge>) {
-  const t = useT()
   const [hovered, setHovered] = useState(false)
-  const edgeEncoding = useGraphStore((s) => s.graphDisplay.edgeEncoding)
-  const curveStyle = useGraphStore((s) => s.graphDisplay.curveStyle)
-  const autoCurveFlip = useGraphStore((s) => s.graphDisplay.autoCurveFlip)
-  const storeSelected = useGraphStore((s) => s.selected)
+  const {
+    edgeEncoding,
+    curveStyle,
+    autoCurveFlip,
+    palette,
+    categoryColorMode,
+    getRelationLabel,
+    isItemSelected,
+  } = useGraphDisplay()
 
-  // Read live node geometry from the React Flow store so we can compute
-  // bounding-box exit points instead of relying on fixed left/right handles.
   const sourceNode = useStore((s) => s.nodeLookup.get(source))
   const targetNode = useStore((s) => s.nodeLookup.get(target))
 
   const edgeType = asEdgeTypeName(data?.type)
   const T = RELATION_TYPES[edgeType]
-  const C = RELATION_CATEGORIES[T.cat]
-  const color = edgeEncoding === 'minimal' ? 'var(--ink-3)' : C.color
+  const color =
+    edgeEncoding === 'minimal'
+      ? 'var(--ink-3, #888888)'
+      : categoryColor(T.cat, categoryColorMode, palette)
   const lineStyle = edgeEncoding === 'minimal' ? 'solid' : T.line
-  const isSelected = selected || (storeSelected?.kind === 'edge' && storeSelected.id === id)
+  const isSelected = selected || isItemSelected?.('edge', id) === true
   const showLabel =
     edgeEncoding === 'full' || (edgeEncoding !== 'minimal' && (hovered || isSelected))
   const straight = curveStyle === 'straight'
+  const label = getRelationLabel?.(edgeType) ?? T.label
 
   if (!sourceNode || !targetNode) return null
 
-  // Node dimensions (React Flow measures them after first render)
   const sw = sourceNode.measured?.width ?? 80
   const sh = sourceNode.measured?.height ?? 32
   const tw = targetNode.measured?.width ?? 80
   const th = targetNode.measured?.height ?? 32
 
-  // Node centers in graph coordinates
   const scx = sourceNode.internals.positionAbsolute.x + sw / 2
   const scy = flowNodeCenterY(sourceNode)
   const tcx = targetNode.internals.positionAbsolute.x + tw / 2
@@ -103,9 +131,6 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
     tcy,
   )
 
-  // Exit points: slightly padded so the arrow tip clears the node border.
-  // For arcs, compute a preliminary control point from node centers so both
-  // exit points face the actual curve approach direction (not the straight line).
   const pad = 6
   const flipSign = curveFlip ? -1 : 1
   const { a, b } = (() => {
@@ -158,24 +183,21 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
       onMouseLeave={() => setHovered(false)}
       style={{ cursor: 'default' }}
     >
-      {/* Wide invisible hit area */}
       <path d={path} stroke="transparent" strokeWidth={14} fill="none" />
 
       <EdgePathElement d={path} color={color} lineStyle={lineStyle} width={w} opacity={op} />
 
-      {/* Arrowhead at the bbox exit point of the target node */}
       {T.inverse !== 'self' && edgeEncoding !== 'minimal' && (
         <polygon points={`${b.x},${b.y} ${ax1},${ay1} ${ax2},${ay2}`} fill={color} opacity={0.85} />
       )}
 
-      {/* Midpoint glyph chip */}
       {edgeEncoding !== 'minimal' && (
         <g style={{ pointerEvents: 'all' }}>
           <circle
             cx={labelX}
             cy={labelY}
             r={r}
-            fill="var(--paper)"
+            fill="var(--paper, #ffffff)"
             stroke={color}
             strokeWidth={1.2}
           />
@@ -185,7 +207,6 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
         </g>
       )}
 
-      {/* Label */}
       {showLabel && (
         <foreignObject
           x={labelX - 60}
@@ -197,8 +218,8 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
           <div
             style={{
               display: 'inline-block',
-              background: 'var(--paper)',
-              border: '0.5px solid var(--line)',
+              background: 'var(--paper, #ffffff)',
+              border: '0.5px solid var(--line, #d0d0d0)',
               borderRadius: 4,
               padding: '1px 6px',
               font: "500 10px 'JetBrains Mono', ui-monospace",
@@ -208,7 +229,7 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
               lineHeight: '16px',
             }}
           >
-            {t.relationTypes.types[edgeType]}
+            {label}
           </div>
         </foreignObject>
       )}

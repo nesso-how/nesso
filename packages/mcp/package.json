@@ -21,7 +21,7 @@
   ],
   "scripts": {
     "bundle-docs": "node scripts/bundle-starlight-docs.mjs",
-    "build": "tsc && node scripts/bundle-starlight-docs.mjs",
+    "build": "rm -rf dist && tsc && node scripts/bundle-starlight-docs.mjs",
     "prepublishOnly": "pnpm build",
     "dev": "tsc --watch",
     "start": "node dist/index.js"

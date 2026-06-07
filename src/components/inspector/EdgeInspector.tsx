@@ -6,7 +6,7 @@ import {
   asEdgeTypeName,
 } from '@/data/relationTypes'
 import type { Node } from '@xyflow/react'
-import { GlyphSVG } from '@/components/canvas/GlyphSVG'
+import { GlyphSVG } from '@nesso-how/graph'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { SettingRow } from '@/components/ui/SettingRow'
 import { useGraphStore, selectedEdgeSelector, type GraphState } from '@/store'

@@ -8,7 +8,6 @@ import {
   type MouseEvent as ReactMouseEvent,
 } from 'react'
 import {
-  ReactFlow,
   Background,
   BackgroundVariant,
   ConnectionMode,
@@ -16,14 +15,16 @@ import {
   useStore,
   type OnConnect,
   type OnMoveEnd,
+  type OnNodesChange,
   type OnConnectStart,
   type OnConnectEnd,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
+import { NessoGraph } from '@nesso-how/graph'
 import { ConceptNode } from './ConceptNode'
 import { NessoConnectionLine } from './NessoConnectionLine'
-import { NessoEdge } from './NessoEdge'
 import { RelationPicker } from '@/components/ui/RelationPicker'
+import { useT } from '@/i18n'
 import { useGraphStore } from '@/store'
 import { computeFitViewport } from '@/lib/fitGraphViewport'
 import { getSeedInitialFitZoom } from '@/data/seedGraph'
@@ -31,7 +32,6 @@ import { newConceptTopLeftAtFlowCenter } from '@/data/newConceptLayout'
 import type { EdgeTypeName } from '@/types/graph'
 
 const nodeTypes = { concept: ConceptNode }
-const edgeTypes = { nesso: NessoEdge }
 
 interface PendingConnection {
   source: string
@@ -71,6 +71,17 @@ export function GraphCanvas({
   const viewports = useGraphStore((s) => s.viewports)
   const currentGraphId = useGraphStore((s) => s.currentGraphId)
   const loadedToken = useGraphStore((s) => s.loadedToken)
+  const graphDisplay = useGraphStore((s) => s.graphDisplay)
+  const categoryPalette = useGraphStore((s) => s.settings.categoryPalette)
+  const showConfidence = useGraphStore((s) => s.settings.showConfidence)
+  const selected = useGraphStore((s) => s.selected)
+  const t = useT()
+
+  const getRelationLabel = useCallback((type: EdgeTypeName) => t.relationTypes.types[type], [t])
+  const isItemSelected = useCallback(
+    (kind: 'node' | 'edge', id: string) => selected?.kind === kind && selected.id === id,
+    [selected],
+  )
 
   const { screenToFlowPosition } = useReactFlow()
   const defaultViewport =
@@ -180,15 +191,12 @@ export function GraphCanvas({
     [pendingConn, addEdge],
   )
 
-  // Compute sibling index: edges sharing the same unordered node pair get
-  // ascending indices so they can be offset perpendicularly without overlap.
   const styledEdges = useMemo(() => {
     const pairCount: Record<string, number> = {}
     return edges.map((e) => {
       const key = [e.source, e.target].sort().join('—')
       const idx = pairCount[key] ?? 0
       pairCount[key] = idx + 1
-      // Keep edge identity when only selection (or other props) change — avoids RF update storms.
       if (e.data?.siblingIdx === idx) return e
       return { ...e, data: { ...e.data, siblingIdx: idx } }
     })
@@ -200,36 +208,46 @@ export function GraphCanvas({
       onDoubleClick={handlePaneDoubleClick}
       style={{ position: 'absolute', inset: 0 }}
     >
-      <ReactFlow
+      <NessoGraph
         key={`${currentGraphId}-${loadedToken}`}
         nodes={nodes}
         edges={styledEdges}
+        display={graphDisplay}
+        palette={categoryPalette}
+        showConfidence={showConfidence}
+        categoryColorMode="css"
+        getRelationLabel={getRelationLabel}
+        isItemSelected={isItemSelected}
         nodeTypes={nodeTypes}
-        edgeTypes={edgeTypes}
-        onNodesChange={onNodesChange}
+        nodesDraggable={true}
+        nodesConnectable={true}
+        fitView={false}
+        defaultViewport={defaultViewport}
+        minZoom={0.15}
+        maxZoom={2.5}
+        onNodesChange={onNodesChange as OnNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onConnectStart={onConnectStart}
         onConnectEnd={onConnectEnd}
-        connectionLineComponent={NessoConnectionLine}
         onSelectionChange={onSelectionChange}
         onMoveEnd={persistViewportOnMoveEnd}
-        zoomOnDoubleClick={false}
-        connectionMode={ConnectionMode.Loose}
-        connectionRadius={35}
-        defaultViewport={defaultViewport}
-        minZoom={0.15}
-        maxZoom={2.5}
-        deleteKeyCode={null}
-        selectionKeyCode={['Meta', 'Control']}
-        multiSelectionKeyCode={['Meta', 'Control']}
-        zoomActivationKeyCode="Alt"
-        proOptions={{ hideAttribution: true }}
-        style={{ background: 'transparent' }}
+        reactFlowProps={{
+          zoomOnDoubleClick: false,
+          connectionMode: ConnectionMode.Loose,
+          connectionRadius: 35,
+          deleteKeyCode: null,
+          selectionKeyCode: ['Meta', 'Control'],
+          multiSelectionKeyCode: ['Meta', 'Control'],
+          zoomActivationKeyCode: 'Alt',
+          proOptions: { hideAttribution: true },
+          connectionLineComponent: NessoConnectionLine,
+          style: { background: 'transparent' },
+        }}
       >
         {onViewportZoomChange && <ViewportZoomReporter onZoomChange={onViewportZoomChange} />}
         <Background variant={BackgroundVariant.Dots} gap={28} size={1.5} color="var(--grid-dot)" />
-      </ReactFlow>
+      </NessoGraph>
 
       {pendingConn && (
         <RelationPicker

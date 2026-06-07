@@ -4,7 +4,7 @@ import type { Node } from '@xyflow/react'
 import { useGraphStore } from '@/store'
 import type { ConceptNodeData } from '@/types/graph'
 import { useT } from '@/i18n'
-import { ratingColor } from '@/lib/ratingColor'
+import { ratingColor } from '@nesso-how/graph'
 import { ModalOverlay } from '@/components/ui/ModalOverlay'
 
 interface Props {

@@ -9,10 +9,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 
 - **About:** dialog "About Nesso" (versione, descrizione, link a GitHub/sito/changelog/licenza), raggiungibile dal menu nativo desktop (app menu su macOS, Help su Windows/Linux), dal pulsante info nella Sidebar e dal menu ⋯. La versione è iniettata a build-time da `package.json`.
+- **`@nesso-how/graph`:** New package `packages/graph/` — embeddable `<NessoGraph />` React component with shared `NessoEdge`, `ConceptNode`, `ConceptNodeBody`, geometry, and `GlyphSVG`. Read-only by default; controlled/uncontrolled modes; `display`/`palette`/`categoryColorMode` context; optional `getRelationLabel` and `isItemSelected` for host apps. Peer deps: `react`, `react-dom`, `@xyflow/react`.
+- **Docs:** "Embedding graphs" guide; landing hero graph via `HeroGraph` + `@astrojs/react`; `docs/` added to the pnpm workspace; `docs/vercel.json` for monorepo installs on Vercel. Hero graph supports pan and zoom.
 
 ### Changed
 
 - **Codebase:** Reorganize components into feature folders (`canvas/`, `layout/`, `mentor/`, `dialogs/`, etc.), extract shared `inspector/` and `ui/` modules, and split the Zustand store into composable slices. No user-visible behavior changes.
+- **Canvas:** `GraphCanvas` delegates to `NessoGraph`; app `ConceptNode` wraps `ConceptNodeBody` for inline edit and connection handles; duplicate `NessoEdge`/`GlyphSVG`/geometry/palette code removed from `src/`.
+- **`@nesso-how/relation-types`:** `PALETTES` and `GLYPH_PATHS` moved here for sharing with the graph package and app palette switching.
 
 ## [0.1.0-alpha.26] - 2026-06-02
 

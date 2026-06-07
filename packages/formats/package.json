@@ -22,7 +22,7 @@
     }
   },
   "scripts": {
-    "build": "tsc",
+    "build": "rm -rf dist && tsc",
     "prepublishOnly": "pnpm build",
     "dev": "tsc --watch"
   },
