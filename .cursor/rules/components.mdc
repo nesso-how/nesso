@@ -10,46 +10,44 @@ Components live under `src/components/` in feature folders. They read from the Z
 
 ## Folder layout
 
-| Folder       | Contents                                                                                                                                         |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `canvas/`    | `GraphCanvas`, `ConceptNode`, `NessoEdge`, `NessoConnectionLine`, `GlyphSVG`                                                                     |
-| `layout/`    | `TopBar`, `Sidebar`, `BottomDock`, `NessoMark`                                                                                                   |
-| `inspector/` | `NodeInspector`, `EdgeInspector`, `InspectorPanel`, `InlineEdit`, `ImageSearchPanel`, `EdgeRow`, `layout.ts`                                     |
-| `mentor/`    | `MentorBubble`, `Typewriter`, `ThinkingIndicator`, `SocratesGlyph`, `ModelStatusBadge`, `LocalModelPanel`                                        |
-| `review/`    | `ReviewMode`                                                                                                                                     |
-| `dialogs/`   | `SettingsDialog`, `SearchDialog`, `RelationTypesDialog`, `ShortcutsDialog`, `AboutDialog`, `GraphIO`                                             |
-| `banners/`   | `ActionBanner`, `GraphFileConflictBanner`, `UpdateBanner`                                                                                        |
-| `ui/`        | Shared primitives: `ModalOverlay`, `PillToggle`, `SegmentedControl`, `SettingRow`, `Stepper`, `CloseButton`, `SettingsFormRow`, `RelationPicker` |
-| _(root)_     | `Inspector.tsx` — thin router entry point for `App.tsx`                                                                                          |
+| Folder       | Contents                                                                                                                                           |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `canvas/`    | `GraphCanvas`, `ConceptNode` (interactive wrapper), `NessoConnectionLine` — `NessoEdge`, `ConceptNode` base, `GlyphSVG` live in `@nesso-how/graph` |
+| `layout/`    | `TopBar`, `Sidebar`, `BottomDock`, `NessoMark`                                                                                                     |
+| `inspector/` | `NodeInspector`, `EdgeInspector`, `InspectorPanel`, `InlineEdit`, `ImageSearchPanel`, `EdgeRow`, `layout.ts`                                       |
+| `mentor/`    | `MentorBubble`, `Typewriter`, `ThinkingIndicator`, `SocratesGlyph`, `ModelStatusBadge`, `LocalModelPanel`                                          |
+| `review/`    | `ReviewMode`                                                                                                                                       |
+| `dialogs/`   | `SettingsDialog`, `SearchDialog`, `RelationTypesDialog`, `ShortcutsDialog`, `AboutDialog`, `GraphIO`                                               |
+| `banners/`   | `ActionBanner`, `GraphFileConflictBanner`, `UpdateBanner`                                                                                          |
+| `ui/`        | Shared primitives: `ModalOverlay`, `PillToggle`, `SegmentedControl`, `SettingRow`, `Stepper`, `CloseButton`, `SettingsFormRow`, `RelationPicker`   |
+| _(root)_     | `Inspector.tsx` — thin router entry point for `App.tsx`                                                                                            |
 
 ## Responsibilities
 
-| Component                 | Role                                                                                                                                       |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `GraphCanvas`             | React Flow canvas; wires node/edge types, store change handlers, saves viewport on move.                                                   |
-| `ConceptNode`             | Custom node; heatmap overlay, confidence underline, dashed when due, handles `out`/`in`.                                                   |
-| `NessoConnectionLine`     | Dragging preview with same quadratic geometry as `NessoEdge`.                                                                              |
-| `NessoEdge`               | Custom edge; line style + glyph from `EdgeTypeDef`; respects `edgeEncoding` setting.                                                       |
-| `GlyphSVG`                | SVG renderer for the 16 `GlyphKind` icons on edges.                                                                                        |
-| `NessoMark`               | Inline SVG brandmark (nexus graph); `currentColor` + `var(--accent)` hub; sources in `public/icon/`.                                       |
-| `TopBar`                  | Graph title + counts; Review pill; `GraphIO` (⋯) menu.                                                                                     |
-| `Sidebar`                 | Brand, collapse, search (⌘K), graph list, recent concepts, display toggles, Settings, About (info).                                        |
-| `SearchDialog`            | Command-palette (⌘K); selects node and recenters viewport; closes on Enter/Escape.                                                         |
-| `GraphIO`                 | ⋯ menu: relation types, JSON export/import, shortcuts, About. Callbacks via `TopBar`.                                                      |
-| `BottomDock`              | Fit, zoom in/out/%, add concept.                                                                                                           |
-| `Inspector`               | Selected node (edit text, FSRS stats) or edge (type chips).                                                                                |
-| `RelationPicker`          | Dropdown grid for `EdgeTypeName`, grouped by `EdgeCategory`.                                                                               |
-| `RelationTypesDialog`     | Modal reference for all relation types.                                                                                                    |
-| `MentorBubble`            | FAB + Socratic chat card; `mentorPanelExpanded` persisted; header **New chat** (reload). See `mentor.mdc`.                                 |
-| `SocratesGlyph`           | SVG avatar for the mentor FAB.                                                                                                             |
-| `ReviewMode`              | Full-screen FSRS review; queues due nodes; Again/Hard/Good/Easy → `recordStudyRating`.                                                     |
-| `SettingsDialog`          | Tabbed modal: Appearance, AI, Review (FSRS), Data (erase local storage + reload). Opened via ⌘,.                                           |
-| `AboutDialog`             | Modal with app version, tagline, and external links; opened from native menu (`menu:about`), Sidebar info button, or ⋯ menu.               |
-| `ShortcutsDialog`         | Keyboard shortcut reference modal. Opened via `?` or `GraphIO`.                                                                            |
-| `CloseButton`             | Icon dismiss shared by modal headers.                                                                                                      |
-| `ActionBanner`            | Banner with message + pill actions (persistent notices, not auto-dismiss toasts). `App.tsx` stacks banners in a top-right fixed container. |
-| `GraphFileConflictBanner` | Desktop file-watch conflict; wraps `ActionBanner` with reload / keep-local actions.                                                        |
-| `UpdateBanner`            | Desktop auto-update notice; wraps `ActionBanner` with install / later / retry / restart actions (see `useDesktopUpdater`).                 |
+| Component                 | Role                                                                                                                                              |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GraphCanvas`             | React Flow canvas via `NessoGraph`; passes `display`/palette/i18n into graph context; interactive `ConceptNode` override; saves viewport on move. |
+| `ConceptNode`             | App node wrapper: inline edit, connection handles, `ConceptNodeBody` from `@nesso-how/graph`.                                                     |
+| `NessoConnectionLine`     | Dragging preview with same quadratic geometry as `NessoEdge`.                                                                                     |
+| `NessoMark`               | Inline SVG brandmark (nexus graph); `currentColor` + `var(--accent)` hub; sources in `public/icon/`.                                              |
+| `TopBar`                  | Graph title + counts; Review pill; `GraphIO` (⋯) menu.                                                                                            |
+| `Sidebar`                 | Brand, collapse, search (⌘K), graph list, recent concepts, display toggles, Settings, About (info).                                               |
+| `SearchDialog`            | Command-palette (⌘K); selects node and recenters viewport; closes on Enter/Escape.                                                                |
+| `GraphIO`                 | ⋯ menu: relation types, JSON export/import, shortcuts, About. Callbacks via `TopBar`.                                                             |
+| `BottomDock`              | Fit, zoom in/out/%, add concept.                                                                                                                  |
+| `Inspector`               | Selected node (edit text, FSRS stats) or edge (type chips).                                                                                       |
+| `RelationPicker`          | Dropdown grid for `EdgeTypeName`, grouped by `EdgeCategory`.                                                                                      |
+| `RelationTypesDialog`     | Modal reference for all relation types.                                                                                                           |
+| `MentorBubble`            | FAB + Socratic chat card; `mentorPanelExpanded` persisted; header **New chat** (reload). See `mentor.mdc`.                                        |
+| `SocratesGlyph`           | SVG avatar for the mentor FAB.                                                                                                                    |
+| `ReviewMode`              | Full-screen FSRS review; queues due nodes; Again/Hard/Good/Easy → `recordStudyRating`.                                                            |
+| `SettingsDialog`          | Tabbed modal: Appearance, AI, Review (FSRS), Data (erase local storage + reload). Opened via ⌘,.                                                  |
+| `AboutDialog`             | Modal with app version, tagline, and external links; opened from native menu (`menu:about`), Sidebar info button, or ⋯ menu.                      |
+| `ShortcutsDialog`         | Keyboard shortcut reference modal. Opened via `?` or `GraphIO`.                                                                                   |
+| `CloseButton`             | Icon dismiss shared by modal headers.                                                                                                             |
+| `ActionBanner`            | Banner with message + pill actions (persistent notices, not auto-dismiss toasts). `App.tsx` stacks banners in a top-right fixed container.        |
+| `GraphFileConflictBanner` | Desktop file-watch conflict; wraps `ActionBanner` with reload / keep-local actions.                                                               |
+| `UpdateBanner`            | Desktop auto-update notice; wraps `ActionBanner` with install / later / retry / restart actions (see `useDesktopUpdater`).                        |
 
 ## Layout
 

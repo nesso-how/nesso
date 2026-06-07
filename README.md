@@ -63,13 +63,14 @@ src/
   components/     UI components (read state via useGraphStore)
   store/graph.ts  single Zustand store (nodes, edges, selection, settings)
   llm/            mentor transports (web-llm + OpenAI-compatible fetch)
-  data/           edge type registry, palettes, seed graphs
+  data/           edge type registry, seed graphs
   types/graph.ts  shared TypeScript types
 src-tauri/        Tauri v2 Rust shell (conf, capabilities, icons)
 packages/
   relation-types/ @nesso-how/relation-types: shared semantic vocabulary
   types/          @nesso-how/types: shared TypeScript types
   formats/        @nesso-how/formats: graph JSON serialize/deserialize
+  graph/          @nesso-how/graph: embeddable read-only graph React component
   mcp/            @nesso-how/mcp: MCP server for LLM clients
 docs/             Starlight docs site, published at nesso.how/docs
 ```
@@ -78,7 +79,7 @@ docs/             Starlight docs site, published at nesso.how/docs
 
 Nesso is a React 18 + Vite + TypeScript single-page app, optionally wrapped by Tauri v2 for a native desktop shell. All app state lives in a single Zustand store ([src/store/graph.ts](src/store/graph.ts)), and components subscribe via selectors with no prop drilling. Graph data persists to **IndexedDB** (web) and is **dual-written to a workspace folder of `.json` files** on desktop (with file watch for external edits); UI chrome to **localStorage**.
 
-The canvas is built on [React Flow](https://reactflow.dev/) with custom `ConceptNode` and `NessoEdge` components ([src/components/](src/components/)); each edge renders its semantic relation as a distinct line style plus an SVG glyph. Every node carries FSRS scheduling fields (`stability`, `difficulty`, `due`, `lastRating`) consumed by the Review overlay.
+The canvas is built on [React Flow](https://reactflow.dev/) via `@nesso-how/graph` (`NessoEdge`, `ConceptNodeBody`); the app adds an interactive `ConceptNode` wrapper for inline edit and connection handles. Each edge renders its semantic relation as a distinct line style plus an SVG glyph. Every node carries FSRS scheduling fields (`stability`, `difficulty`, `due`, `lastRating`) consumed by the Review overlay.
 
 The AI mentor in [src/llm/](src/llm/) supports two transports behind a unified message shape: a local **WebGPU** engine (Qwen2.5 1.5B) and any **OpenAI-compatible** `chat/completions` endpoint. On every send the system prompt is rebuilt from the live store, so the model always sees the current graph snapshot, selection, and a focal neighbourhood.
 
@@ -91,6 +92,7 @@ The repo is a **pnpm workspace** monorepo. Shared semantic vocabulary lives in [
 | [`@nesso-how/relation-types`](https://www.npmjs.com/package/@nesso-how/relation-types) | Shared semantic relation vocabulary and TypeScript types                |
 | [`@nesso-how/types`](https://www.npmjs.com/package/@nesso-how/types)                   | Shared TypeScript types: graph, node, edge, settings, FSRS              |
 | [`@nesso-how/formats`](https://www.npmjs.com/package/@nesso-how/formats)               | Graph serialization formats: JSON serialize/deserialize                 |
+| [`@nesso-how/graph`](https://www.npmjs.com/package/@nesso-how/graph)                   | Embeddable `<NessoGraph />` React component for docs and external apps  |
 | [`@nesso-how/mcp`](https://www.npmjs.com/package/@nesso-how/mcp)                       | MCP server exposing Nesso's relation vocabulary and docs to LLM clients |
 
 ## Contributing

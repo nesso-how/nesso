@@ -11,7 +11,7 @@ alwaysApply: true
 
 ## Never use default React Flow edge types
 
-All edges must use `type: 'nesso'`. The custom `NessoEdge` renderer is load-bearing for visual encoding (line style, glyph, category colour). Plain React Flow edges skip all of this.
+All edges must use `type: 'nesso'`. The `NessoEdge` renderer from `@nesso-how/graph` is load-bearing for visual encoding (line style, glyph, category colour). Plain React Flow edges skip all of this.
 
 ## Never hardcode edge colours
 

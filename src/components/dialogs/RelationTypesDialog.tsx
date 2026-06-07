@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 import { useState } from 'react'
 import { RELATION_CATEGORIES, RELATION_TYPES } from '@/data/relationTypes'
-import { GlyphSVG } from '@/components/canvas/GlyphSVG'
+import { GlyphSVG } from '@nesso-how/graph'
 import { CloseButton } from '@/components/ui/CloseButton'
 import { ModalOverlay } from '@/components/ui/ModalOverlay'
 import { useGraphStore } from '@/store'

@@ -6,7 +6,7 @@ import {
   flowNodeCenterY,
   nessoArcPath,
   rectExit,
-} from '@/geometry/nessoEdgeGeometry'
+} from '@nesso-how/graph'
 import { useGraphStore } from '@/store'
 
 const pad = 6

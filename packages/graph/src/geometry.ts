@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
-// Shared path math for Nesso edges and the in-progress connection preview.
+// Shared path math for Nesso edges — adapted from src/geometry/nessoEdgeGeometry.ts.
 
-/** Flip when the target is above the source (right side) or below (left side). */
 export function defaultCurveFlip(
   sourceCenterX: number,
   sourceCenterY: number,
@@ -45,7 +44,6 @@ export function flowNodeCenterY(node: {
   return node.internals.positionAbsolute.y + h / 2
 }
 
-/** Live auto flip from positions, or persisted per-edge flip when auto is off or pinned. */
 export function effectiveCurveFlip(
   auto: boolean,
   pinned: boolean | undefined,
@@ -106,10 +104,8 @@ export function nessoArcPath(
   const cpy = (sy + ty) / 2 + ny * bend
 
   const path = `M ${sx} ${sy} Q ${cpx} ${cpy} ${tx} ${ty}`
-
   const labelX = cpx * 0.5 + (sx + tx) * 0.25
   const labelY = cpy * 0.5 + (sy + ty) * 0.25
-
   const arrowAngle = Math.atan2(ty - cpy, tx - cpx)
 
   return { path, labelX, labelY, arrowAngle }

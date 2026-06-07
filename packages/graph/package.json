@@ -1,12 +1,12 @@
 {
-  "name": "@nesso-how/types",
+  "name": "@nesso-how/graph",
   "version": "0.1.0-alpha.26",
-  "description": "Nesso shared TypeScript types — graph, node, edge, settings, FSRS",
+  "description": "Embeddable read-only Nesso knowledge graph React component",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/nesso-how/nesso",
-    "directory": "packages/types"
+    "directory": "packages/graph"
   },
   "type": "module",
   "publishConfig": {
@@ -27,13 +27,18 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "@nesso-how/relation-types": "workspace:*"
+    "@nesso-how/formats": "workspace:*",
+    "@nesso-how/relation-types": "workspace:*",
+    "@nesso-how/types": "workspace:*"
   },
   "peerDependencies": {
-    "ts-fsrs": "^5.3.2"
+    "@xyflow/react": "^12.6.4",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
-    "ts-fsrs": "^5.3.2",
+    "@types/react": "^18.3.23",
+    "@types/react-dom": "^18.3.7",
     "typescript": "~5.8.3"
   }
 }

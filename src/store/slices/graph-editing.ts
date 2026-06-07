@@ -16,7 +16,7 @@ import {
   setGraphClipboard,
   snapshotSelection,
 } from '@/lib/graphClipboard'
-import { defaultCurveFlip, nodeCenterX, nodeCenterY } from '@/geometry/nessoEdgeGeometry'
+import { defaultCurveFlip, nodeCenterX, nodeCenterY } from '@nesso-how/graph'
 import type { GraphSnapshot } from '../types'
 import type { GraphState } from '../state'
 
