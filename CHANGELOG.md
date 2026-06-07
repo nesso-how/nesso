@@ -10,7 +10,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - **About:** dialog "About Nesso" (versione, descrizione, link a GitHub/sito/changelog/licenza), raggiungibile dal menu nativo desktop (app menu su macOS, Help su Windows/Linux), dal pulsante info nella Sidebar e dal menu ⋯. La versione è iniettata a build-time da `package.json`.
 - **`@nesso-how/graph`:** New package `packages/graph/` — embeddable `<NessoGraph />` React component with shared `NessoEdge`, `ConceptNode`, `ConceptNodeBody`, geometry, and `GlyphSVG`. Read-only by default; controlled/uncontrolled modes; `display`/`palette`/`categoryColorMode` context; optional `getRelationLabel` and `isItemSelected` for host apps. Peer deps: `react`, `react-dom`, `@xyflow/react`.
-- **Docs:** "Embedding graphs" guide; landing hero graph via `HeroGraph` + `@astrojs/react`; `docs/` added to the pnpm workspace; `docs/vercel.json` for monorepo installs on Vercel.
+- **Docs:** "Embedding graphs" guide; landing hero graph via `HeroGraph` + `@astrojs/react`; `docs/` added to the pnpm workspace; `docs/vercel.json` for monorepo installs on Vercel. Hero graph supports pan and zoom.
 
 ### Changed
 

@@ -102,8 +102,8 @@ export function HeroGraph({ labels }: { labels: HeroGraphLabels }) {
       nodesDraggable={true}
       nodesConnectable={false}
       elementsSelectable={false}
-      panOnDrag={false}
-      zoomOnScroll={false}
+      panOnDrag={true}
+      zoomOnScroll={true}
       fitView
       minZoom={0.6}
       maxZoom={1.4}
