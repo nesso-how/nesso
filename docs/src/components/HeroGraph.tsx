@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MIT
+import { useEffect, useRef } from 'react'
 import { NessoGraph } from '@nesso-how/graph'
+import { useReactFlow, useStore } from '@xyflow/react'
 import type { Edge, Node } from '@xyflow/react'
 import type { ConceptNodeData, NessoEdgeData } from '@nesso-how/types'
 
@@ -92,6 +94,30 @@ function buildEdges(): Edge<NessoEdgeData>[] {
   ]
 }
 
+/**
+ * Re-fits the viewport whenever the canvas resizes. ReactFlow's `fitView` prop only
+ * fits once on mount; on a responsive page the container keeps changing size, so we
+ * subscribe to the renderer dimensions (driven by ReactFlow's own ResizeObserver) and
+ * re-fit on every change. Rendered inside <ReactFlow>, so the store hooks are in scope.
+ */
+function FitViewOnResize() {
+  const { fitView } = useReactFlow()
+  const width = useStore((s) => s.width)
+  const height = useStore((s) => s.height)
+  const mounted = useRef(false)
+
+  useEffect(() => {
+    // The `fitView` prop already handles the first fit once dimensions are known.
+    if (!mounted.current) {
+      mounted.current = true
+      return
+    }
+    void fitView()
+  }, [width, height, fitView])
+
+  return null
+}
+
 /** Decorative hero graph via @nesso-how/graph — nodes draggable, no connect UI. */
 export function HeroGraph({ labels }: { labels: HeroGraphLabels }) {
   return (
@@ -105,7 +131,7 @@ export function HeroGraph({ labels }: { labels: HeroGraphLabels }) {
       panOnDrag={true}
       zoomOnScroll={true}
       fitView
-      minZoom={0.6}
+      minZoom={0.2}
       maxZoom={1.4}
       reactFlowProps={{
         proOptions: { hideAttribution: true },
@@ -114,7 +140,7 @@ export function HeroGraph({ labels }: { labels: HeroGraphLabels }) {
       }}
       style={{ width: '100%', height: '100%' }}
     >
-      <></>
+      <FitViewOnResize />
     </NessoGraph>
   )
 }
