@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.0-alpha.27] - 2026-06-07
+
 ### Added
 
 - **About:** dialog "About Nesso" (versione, descrizione, link a GitHub/sito/changelog/licenza), raggiungibile dal menu nativo desktop (app menu su macOS, Help su Windows/Linux), dal pulsante info nella Sidebar e dal menu ⋯. La versione è iniettata a build-time da `package.json`.
@@ -460,7 +462,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial alpha: interactive knowledge graph (web + Tauri v2); desktop installers on GitHub Releases (macOS Apple silicon and Intel).
 
-[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.26...HEAD
+[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.27...HEAD
+[0.1.0-alpha.27]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.26...v0.1.0-alpha.27
 [0.1.0-alpha.26]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.25...v0.1.0-alpha.26
 [0.1.0-alpha.25]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.24...v0.1.0-alpha.25
 [0.1.0-alpha.24]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.23...v0.1.0-alpha.24
