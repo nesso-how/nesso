@@ -10,6 +10,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - **Desktop:** Multi-project support — open and switch between any number of project folders, each holding its own `.json` graphs and `.nesso/manifest.json` (VS Code-style explicit "Open Folder…", no auto-discovery). The sidebar brand slot becomes a project switcher (name + chevron, dropdown with known projects, "Open Folder…", "Close Project"); a native File menu mirrors these (⌘O / ⌘W).
 
+### Fixed
+
+- **Canvas:** Connection handles on concept nodes show on hover again — `nesso-node` now wraps the full node (including handles), matching the CSS selector.
+
 ### Changed
 
 - **Desktop:** The on-disk project folder is now the source of truth and IndexedDB acts only as a cache of the active project — inverted from the previous model where IDB was authoritative and disk a reconciled mirror. Saves are disk-first write-through (write to disk, then mirror the persisted record into IDB), so the only possible divergence is "IDB behind disk", always recoverable by reloading. Settings: `graphWorkspacePath` is replaced by `knownProjects` + `activeProjectPath`. The Settings → Data tab is removed — opening, switching, closing, and revealing project folders now lives entirely in the project switcher and File menu.
