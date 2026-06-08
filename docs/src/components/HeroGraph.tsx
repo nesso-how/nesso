@@ -5,8 +5,6 @@ import { useReactFlow, useStore } from '@xyflow/react'
 import type { Edge, Node } from '@xyflow/react'
 import type { ConceptNodeData, NessoEdgeData } from '@nesso-how/types'
 
-import '@xyflow/react/dist/style.css'
-
 export interface HeroGraphLabels {
   understanding: string
   mastery: string

@@ -1,16 +1,17 @@
 ---
-import type { Locale } from "../i18n/types";
-import { HeroGraph } from "./HeroGraph";
+import type { Locale } from '../i18n/types'
+import { HeroGraph } from './HeroGraph'
+import '@xyflow/react/dist/style.css'
 
 interface Props {
-  t: Locale;
-  lang: "en" | "it";
-  releaseTag: string;
-  releaseUrl: string;
+  t: Locale
+  lang: 'en' | 'it'
+  releaseTag: string
+  releaseUrl: string
 }
 
-const { t, lang, releaseTag, releaseUrl } = Astro.props;
-const homeHref = lang === "en" ? "/" : `/${lang}/`;
+const { t, lang, releaseTag, releaseUrl } = Astro.props
+const homeHref = lang === 'en' ? '/' : `/${lang}/`
 ---
 
 <!doctype html>
@@ -70,16 +71,13 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
         --highlight-soft: rgba(110, 39, 48, 0.08);
         --highlight-selection: rgba(110, 39, 48, 0.22);
 
-        --font-serif: "Fraunces", Georgia, serif;
-        --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-        --font-mono: "JetBrains Mono", ui-monospace, monospace;
+        --font-serif: 'Fraunces', Georgia, serif;
+        --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+        --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
-        --shadow-paper:
-          0 8px 28px -10px rgba(26, 24, 20, 0.18),
-          0 2px 8px rgba(26, 24, 20, 0.06);
+        --shadow-paper: 0 8px 28px -10px rgba(26, 24, 20, 0.18), 0 2px 8px rgba(26, 24, 20, 0.06);
         --shadow-lift:
-          0 28px 60px -16px rgba(26, 24, 20, 0.22),
-          0 8px 20px -8px rgba(26, 24, 20, 0.1);
+          0 28px 60px -16px rgba(26, 24, 20, 0.22), 0 8px 20px -8px rgba(26, 24, 20, 0.1);
       }
 
       html,
@@ -90,7 +88,7 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
         line-height: 1.6;
         -webkit-font-smoothing: antialiased;
         text-rendering: optimizeLegibility;
-        font-feature-settings: "ss01", "cv11";
+        font-feature-settings: 'ss01', 'cv11';
       }
 
       body {
@@ -100,22 +98,14 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
       }
 
       body::before {
-        content: "";
+        content: '';
         position: fixed;
         inset: 0;
         pointer-events: none;
         z-index: 1;
         background-image:
-          radial-gradient(
-            circle at 20% 30%,
-            rgba(0, 0, 0, 0.025) 0%,
-            transparent 40%
-          ),
-          radial-gradient(
-            circle at 80% 70%,
-            rgba(0, 0, 0, 0.02) 0%,
-            transparent 40%
-          );
+          radial-gradient(circle at 20% 30%, rgba(0, 0, 0, 0.025) 0%, transparent 40%),
+          radial-gradient(circle at 80% 70%, rgba(0, 0, 0, 0.02) 0%, transparent 40%);
         mix-blend-mode: multiply;
         opacity: 0.25;
       }
@@ -231,7 +221,7 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
       }
 
       .hero-eyebrow::after {
-        content: "";
+        content: '';
         position: absolute;
         bottom: 0;
         left: 50%;
@@ -350,24 +340,14 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
       }
 
       .hero-graph-frame::before {
-        content: "";
+        content: '';
         position: absolute;
         inset: 0;
-        background-image: radial-gradient(
-          circle,
-          var(--grid-dot) 1px,
-          transparent 1.2px
-        );
+        background-image: radial-gradient(circle, var(--grid-dot) 1px, transparent 1.2px);
         background-size: 22px 22px;
         background-position: 11px 11px;
         pointer-events: none;
-        mask-image: linear-gradient(
-          to bottom,
-          transparent 0%,
-          #000 8%,
-          #000 92%,
-          transparent 100%
-        );
+        mask-image: linear-gradient(to bottom, transparent 0%, #000 8%, #000 92%, transparent 100%);
         z-index: 0;
       }
 
@@ -396,7 +376,7 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
       }
 
       .hero-graph-socrates::before {
-        content: "";
+        content: '';
         position: absolute;
         inset: -3px;
         border-radius: 50%;
@@ -457,7 +437,7 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
 
       .section-label::before,
       .section-label::after {
-        content: "";
+        content: '';
         flex: 1;
         height: 1px;
         background: var(--line);
@@ -786,7 +766,7 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
       }
 
       .pv-aimode-option.active .pv-aimode-radio::after {
-        content: "";
+        content: '';
         position: absolute;
         inset: 2px;
         background: var(--highlight);
@@ -886,8 +866,7 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
         text-transform: uppercase;
         color: var(--highlight);
         background: var(--highlight-soft);
-        border: 0.5px solid
-          color-mix(in srgb, var(--highlight) 25%, transparent);
+        border: 0.5px solid color-mix(in srgb, var(--highlight) 25%, transparent);
         border-radius: 999px;
         padding: 0.15rem 0.5rem;
       }
@@ -1051,7 +1030,7 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
       }
 
       .rm-node-text {
-        font-family: "Fraunces", Georgia, serif;
+        font-family: 'Fraunces', Georgia, serif;
         font-weight: 500;
         font-size: 11px;
         letter-spacing: -0.005em;
@@ -1400,8 +1379,15 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
     </svg>
 
     <header>
-      <a href={homeHref} class="brand" aria-label="Nesso home">
-        <svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true">
+      <a href={homeHref} class="brand" aria-label="Nesso home" style="color: #1a1814">
+        <svg
+          class="brand-mark"
+          viewBox="0 0 64 64"
+          width="28"
+          height="28"
+          color="#1a1814"
+          aria-hidden="true"
+        >
           <line
             x1="32"
             y1="32"
@@ -1452,11 +1438,12 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
         <span class="brand-name">Nesso</span>
       </a>
       <nav class="header-nav">
-        <a href="/docs/introduction/">{t.nav.docs}</a>
+        <a href="/docs/introduction/" style="color: #6a6356">{t.nav.docs}</a>
         <a
           href="https://github.com/nesso-how/nesso"
           target="_blank"
-          rel="noopener">{t.nav.github}</a
+          rel="noopener"
+          style="color: #6a6356">{t.nav.github}</a
         >
       </nav>
     </header>
@@ -1464,14 +1451,13 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
     <main>
       <section class="hero">
         <div class="hero-meta">
-          <span class="hero-eyebrow" data-typewriter={t.hero.eyebrow}
-            >{t.hero.eyebrow}</span
-          >
+          <span class="hero-eyebrow" data-typewriter={t.hero.eyebrow}>{t.hero.eyebrow}</span>
           <a
             href={releaseUrl}
             target="_blank"
             rel="noopener noreferrer"
             class="hero-release"
+            style="color: #9a9080"
             aria-label={`${releaseTag} on GitHub Releases`}>{releaseTag}</a
           >
         </div>
@@ -1481,18 +1467,11 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
         <p class="hero-sub" set:html={t.hero.sub} />
         <p class="hero-tagline">{t.hero.tagline}</p>
         <div class="cta-row">
-          <a
-            href="https://app.nesso.how"
-            class="btn btn-primary"
-            target="_blank"
-            rel="noopener"
-          >
+          <a href="https://app.nesso.how" class="btn btn-primary" target="_blank" rel="noopener">
             {t.hero.ctaPrimary}
             <span class="btn-arrow">→</span>
           </a>
-          <a href="/docs/introduction/" class="btn btn-secondary"
-            >{t.hero.ctaSecondary}</a
-          >
+          <a href="/docs/introduction/" class="btn btn-secondary">{t.hero.ctaSecondary}</a>
         </div>
 
         <div class="hero-graph-wrap">
@@ -1508,9 +1487,7 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
             </div>
 
             <div class="hero-graph-socrates" aria-label="Socrates mentor">
-              <svg width="40" height="40"
-                ><use href="#socrates-glyph"></use></svg
-              >
+              <svg width="40" height="40"><use href="#socrates-glyph"></use></svg>
             </div>
           </div>
         </div>
@@ -1528,29 +1505,20 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
               <p set:html={t.principles.p1.body} />
             </div>
             <div class="principle-visual">
-              <div
-                class="pv-picker"
-                role="presentation"
-                style="--cat-color: var(--cat-causal)"
-              >
+              <div class="pv-picker" role="presentation" style="--cat-color: var(--cat-causal)">
                 <div class="pv-picker-edge">
-                  <span class="pv-picker-node"
-                    >{t.principles.p1.picker.nodeA}</span
-                  >
+                  <span class="pv-picker-node">{t.principles.p1.picker.nodeA}</span>
                   <span class="pv-picker-arrow">→</span>
-                  <span class="pv-picker-node"
-                    >{t.principles.p1.picker.nodeB}</span
-                  >
+                  <span class="pv-picker-node">{t.principles.p1.picker.nodeB}</span>
                 </div>
                 <div class="pv-picker-chips">
                   {
                     t.principles.p1.picker.chips.map((c, i) => (
                       <span
                         class:list={[
-                          "relation-chip",
+                          'relation-chip',
                           {
-                            selected:
-                              i === t.principles.p1.picker.selectedIndex,
+                            selected: i === t.principles.p1.picker.selectedIndex,
                           },
                         ]}
                       >
@@ -1574,25 +1542,16 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
             <div class="principle-visual">
               <div class="pv-review" role="presentation">
                 <div class="pv-review-top">
-                  <span class="pv-review-due">{t.principles.p2.review.due}</span
-                  >
+                  <span class="pv-review-due">{t.principles.p2.review.due}</span>
                 </div>
                 <div class="pv-review-concept">
                   {t.principles.p2.review.concept}
                 </div>
                 <div class="pv-review-ratings">
-                  <span class="pv-review-btn again"
-                    >{t.principles.p2.review.again}</span
-                  >
-                  <span class="pv-review-btn hard"
-                    >{t.principles.p2.review.hard}</span
-                  >
-                  <span class="pv-review-btn good"
-                    >{t.principles.p2.review.good}</span
-                  >
-                  <span class="pv-review-btn easy"
-                    >{t.principles.p2.review.easy}</span
-                  >
+                  <span class="pv-review-btn again">{t.principles.p2.review.again}</span>
+                  <span class="pv-review-btn hard">{t.principles.p2.review.hard}</span>
+                  <span class="pv-review-btn good">{t.principles.p2.review.good}</span>
+                  <span class="pv-review-btn easy">{t.principles.p2.review.easy}</span>
                 </div>
               </div>
             </div>
@@ -1616,8 +1575,7 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
                 >
                   <div class="pv-module-body">
                     <span class="pv-module-name">nesso-how/nesso</span>
-                    <span class="pv-module-desc">{t.principles.p3.module1}</span
-                    >
+                    <span class="pv-module-desc">{t.principles.p3.module1}</span>
                   </div>
                   <span class="pv-module-arrow">↗</span>
                 </a>
@@ -1628,10 +1586,8 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
                   rel="noopener"
                 >
                   <div class="pv-module-body">
-                    <span class="pv-module-name">@nesso-how/relation-types</span
-                    >
-                    <span class="pv-module-desc">{t.principles.p3.module2}</span
-                    >
+                    <span class="pv-module-name">@nesso-how/relation-types</span>
+                    <span class="pv-module-desc">{t.principles.p3.module2}</span>
                   </div>
                   <span class="pv-module-arrow">↗</span>
                 </a>
@@ -1643,8 +1599,7 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
                 >
                   <div class="pv-module-body">
                     <span class="pv-module-name">@nesso-how/mcp</span>
-                    <span class="pv-module-desc">{t.principles.p3.module3}</span
-                    >
+                    <span class="pv-module-desc">{t.principles.p3.module3}</span>
                   </div>
                   <span class="pv-module-arrow">↗</span>
                 </a>
@@ -1670,22 +1625,15 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
                   <div class="pv-aimode-option active">
                     <span class="pv-aimode-radio"></span>
                     <div class="pv-aimode-text">
-                      <span class="pv-aimode-name">{t.principles.p4.local}</span
-                      >
-                      <span class="pv-aimode-meta"
-                        >{t.principles.p4.localMeta}</span
-                      >
+                      <span class="pv-aimode-name">{t.principles.p4.local}</span>
+                      <span class="pv-aimode-meta">{t.principles.p4.localMeta}</span>
                     </div>
                   </div>
                   <div class="pv-aimode-option muted">
                     <span class="pv-aimode-radio"></span>
                     <div class="pv-aimode-text">
-                      <span class="pv-aimode-name"
-                        >{t.principles.p4.remote}</span
-                      >
-                      <span class="pv-aimode-meta"
-                        >{t.principles.p4.remoteMeta}</span
-                      >
+                      <span class="pv-aimode-name">{t.principles.p4.remote}</span>
+                      <span class="pv-aimode-meta">{t.principles.p4.remoteMeta}</span>
                     </div>
                   </div>
                 </div>
@@ -1707,9 +1655,7 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
             <div class="pv-chat" role="presentation">
               <div class="pv-chat-header">
                 <span class="pv-chat-avatar">
-                  <svg width="24" height="24"
-                    ><use href="#socrates-glyph"></use></svg
-                  >
+                  <svg width="24" height="24"><use href="#socrates-glyph"></use></svg>
                 </span>
                 <div class="pv-chat-id">
                   <span class="pv-chat-name">Socrates</span>
@@ -1724,8 +1670,7 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
                     stroke="currentColor"
                     stroke-width="2"
                     stroke-linecap="round"
-                    stroke-linejoin="round"
-                    ><path d="M18 6L6 18M6 6l12 12"></path></svg
+                    stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"></path></svg
                   >
                 </div>
               </div>
@@ -1733,15 +1678,10 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
                 <div class="pv-chat-user-row">
                   <span class="pv-chat-user">{t.mentor.chat.userMsg}</span>
                 </div>
-                <div
-                  class="pv-chat-mentor"
-                  set:html={t.mentor.chat.mentorMsg}
-                />
+                <div class="pv-chat-mentor" set:html={t.mentor.chat.mentorMsg} />
               </div>
               <div class="pv-chat-input">
-                <span class="pv-chat-placeholder"
-                  >{t.mentor.chat.inputPlaceholder}</span
-                >
+                <span class="pv-chat-placeholder">{t.mentor.chat.inputPlaceholder}</span>
                 <span class="pv-chat-send">
                   <svg
                     width="10"
@@ -1751,8 +1691,7 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
                     stroke="currentColor"
                     stroke-width="1.6"
                     stroke-linecap="round"
-                    stroke-linejoin="round"
-                    ><path d="M2.5 7h9M7.5 3l4 4-4 4"></path></svg
+                    stroke-linejoin="round"><path d="M2.5 7h9M7.5 3l4 4-4 4"></path></svg
                   >
                 </span>
               </div>
@@ -1767,240 +1706,115 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
         <div class="relation-table">
           <div class="relation-row" style="--cat-color: var(--cat-taxonomic)">
             <div class="relation-cat">
-              <span class="relation-cat-name"
-                >{t.vocab.categories.taxonomic.name}</span
-              >
-              <span class="relation-cat-q"
-                >{t.vocab.categories.taxonomic.q}</span
-              >
+              <span class="relation-cat-name">{t.vocab.categories.taxonomic.name}</span>
+              <span class="relation-cat-q">{t.vocab.categories.taxonomic.q}</span>
             </div>
-            <svg
-              class="relation-mini-svg"
-              viewBox="0 0 220 56"
-              aria-hidden="true"
-            >
-              <line
-                class="rm-edge"
-                x1="60"
-                y1="18"
-                x2="168"
-                y2="18"
-                stroke="#2f5d8e"></line>
+            <svg class="relation-mini-svg" viewBox="0 0 220 56" aria-hidden="true">
+              <line class="rm-edge" x1="60" y1="18" x2="168" y2="18" stroke="#2f5d8e"></line>
               <polygon points="168,18 163,15 163,21" fill="#2f5d8e"></polygon>
               <text class="rm-edge-label" fill="#2f5d8e" x="114" y="12"
                 >{t.vocab.edges.subtypeOf}</text
               >
-              <text class="rm-node-text" x="28" y="38"
-                >{t.vocab.categories.taxonomic.nodeA}</text
-              >
-              <line class="rm-node-underline" x1="6" y1="44" x2="50" y2="44"
-              ></line>
-              <text class="rm-node-text" x="190" y="38"
-                >{t.vocab.categories.taxonomic.nodeB}</text
-              >
-              <line class="rm-node-underline" x1="178" y1="44" x2="202" y2="44"
-              ></line>
+              <text class="rm-node-text" x="28" y="38">{t.vocab.categories.taxonomic.nodeA}</text>
+              <line class="rm-node-underline" x1="6" y1="44" x2="50" y2="44"></line>
+              <text class="rm-node-text" x="190" y="38">{t.vocab.categories.taxonomic.nodeB}</text>
+              <line class="rm-node-underline" x1="178" y1="44" x2="202" y2="44"></line>
             </svg>
             <div class="relation-types">
-              {
-                t.vocab.chips.taxonomic.map((c) => (
-                  <span class="relation-chip">{c}</span>
-                ))
-              }
+              {t.vocab.chips.taxonomic.map((c) => <span class="relation-chip">{c}</span>)}
             </div>
           </div>
 
           <div class="relation-row" style="--cat-color: var(--cat-structural)">
             <div class="relation-cat">
-              <span class="relation-cat-name"
-                >{t.vocab.categories.structural.name}</span
-              >
-              <span class="relation-cat-q"
-                >{t.vocab.categories.structural.q}</span
-              >
+              <span class="relation-cat-name">{t.vocab.categories.structural.name}</span>
+              <span class="relation-cat-q">{t.vocab.categories.structural.q}</span>
             </div>
-            <svg
-              class="relation-mini-svg"
-              viewBox="0 0 220 56"
-              aria-hidden="true"
-            >
-              <line
-                class="rm-edge"
-                x1="40"
-                y1="18"
-                x2="168"
-                y2="18"
-                stroke="#6b4a8a"></line>
+            <svg class="relation-mini-svg" viewBox="0 0 220 56" aria-hidden="true">
+              <line class="rm-edge" x1="40" y1="18" x2="168" y2="18" stroke="#6b4a8a"></line>
               <polygon points="168,18 163,15 163,21" fill="#6b4a8a"></polygon>
               <text class="rm-edge-label" fill="#6b4a8a" x="104" y="12"
                 >{t.vocab.edges.contains}</text
               >
-              <text class="rm-node-text" x="20" y="38"
-                >{t.vocab.categories.structural.nodeA}</text
-              >
-              <line class="rm-node-underline" x1="6" y1="44" x2="34" y2="44"
-              ></line>
-              <text class="rm-node-text" x="190" y="38"
-                >{t.vocab.categories.structural.nodeB}</text
-              >
-              <line class="rm-node-underline" x1="170" y1="44" x2="210" y2="44"
-              ></line>
+              <text class="rm-node-text" x="20" y="38">{t.vocab.categories.structural.nodeA}</text>
+              <line class="rm-node-underline" x1="6" y1="44" x2="34" y2="44"></line>
+              <text class="rm-node-text" x="190" y="38">{t.vocab.categories.structural.nodeB}</text>
+              <line class="rm-node-underline" x1="170" y1="44" x2="210" y2="44"></line>
             </svg>
             <div class="relation-types">
-              {
-                t.vocab.chips.structural.map((c) => (
-                  <span class="relation-chip">{c}</span>
-                ))
-              }
+              {t.vocab.chips.structural.map((c) => <span class="relation-chip">{c}</span>)}
             </div>
           </div>
 
           <div class="relation-row" style="--cat-color: var(--cat-causal)">
             <div class="relation-cat">
-              <span class="relation-cat-name"
-                >{t.vocab.categories.causal.name}</span
-              >
+              <span class="relation-cat-name">{t.vocab.categories.causal.name}</span>
               <span class="relation-cat-q">{t.vocab.categories.causal.q}</span>
             </div>
-            <svg
-              class="relation-mini-svg"
-              viewBox="0 0 220 56"
-              aria-hidden="true"
-            >
-              <line
-                class="rm-edge"
-                x1="58"
-                y1="18"
-                x2="172"
-                y2="18"
-                stroke="#b14a2e"></line>
+            <svg class="relation-mini-svg" viewBox="0 0 220 56" aria-hidden="true">
+              <line class="rm-edge" x1="58" y1="18" x2="172" y2="18" stroke="#b14a2e"></line>
               <polygon points="172,18 167,15 167,21" fill="#b14a2e"></polygon>
               <text class="rm-edge-label" fill="#b14a2e" x="115" y="12"
                 >{t.vocab.edges.produces}</text
               >
-              <text class="rm-node-text" x="28" y="38"
-                >{t.vocab.categories.causal.nodeA}</text
-              >
-              <line class="rm-node-underline" x1="6" y1="44" x2="50" y2="44"
-              ></line>
-              <text class="rm-node-text" x="192" y="38"
-                >{t.vocab.categories.causal.nodeB}</text
-              >
-              <line class="rm-node-underline" x1="178" y1="44" x2="206" y2="44"
-              ></line>
+              <text class="rm-node-text" x="28" y="38">{t.vocab.categories.causal.nodeA}</text>
+              <line class="rm-node-underline" x1="6" y1="44" x2="50" y2="44"></line>
+              <text class="rm-node-text" x="192" y="38">{t.vocab.categories.causal.nodeB}</text>
+              <line class="rm-node-underline" x1="178" y1="44" x2="206" y2="44"></line>
             </svg>
             <div class="relation-types">
-              {
-                t.vocab.chips.causal.map((c) => (
-                  <span class="relation-chip">{c}</span>
-                ))
-              }
+              {t.vocab.chips.causal.map((c) => <span class="relation-chip">{c}</span>)}
             </div>
           </div>
 
           <div class="relation-row" style="--cat-color: var(--cat-dependency)">
             <div class="relation-cat">
-              <span class="relation-cat-name"
-                >{t.vocab.categories.dependency.name}</span
-              >
-              <span class="relation-cat-q"
-                >{t.vocab.categories.dependency.q}</span
-              >
+              <span class="relation-cat-name">{t.vocab.categories.dependency.name}</span>
+              <span class="relation-cat-q">{t.vocab.categories.dependency.q}</span>
             </div>
-            <svg
-              class="relation-mini-svg"
-              viewBox="0 0 220 56"
-              aria-hidden="true"
-            >
-              <line
-                class="rm-edge"
-                x1="48"
-                y1="18"
-                x2="166"
-                y2="18"
-                stroke="#8a6a1a"></line>
+            <svg class="relation-mini-svg" viewBox="0 0 220 56" aria-hidden="true">
+              <line class="rm-edge" x1="48" y1="18" x2="166" y2="18" stroke="#8a6a1a"></line>
               <polygon points="166,18 161,15 161,21" fill="#8a6a1a"></polygon>
               <text class="rm-edge-label" fill="#8a6a1a" x="110" y="12"
                 >{t.vocab.edges.requires}</text
               >
-              <text class="rm-node-text" x="24" y="38"
-                >{t.vocab.categories.dependency.nodeA}</text
-              >
-              <line class="rm-node-underline" x1="6" y1="44" x2="42" y2="44"
-              ></line>
-              <text class="rm-node-text" x="188" y="38"
-                >{t.vocab.categories.dependency.nodeB}</text
-              >
-              <line class="rm-node-underline" x1="168" y1="44" x2="212" y2="44"
-              ></line>
+              <text class="rm-node-text" x="24" y="38">{t.vocab.categories.dependency.nodeA}</text>
+              <line class="rm-node-underline" x1="6" y1="44" x2="42" y2="44"></line>
+              <text class="rm-node-text" x="188" y="38">{t.vocab.categories.dependency.nodeB}</text>
+              <line class="rm-node-underline" x1="168" y1="44" x2="212" y2="44"></line>
             </svg>
             <div class="relation-types">
-              {
-                t.vocab.chips.dependency.map((c) => (
-                  <span class="relation-chip">{c}</span>
-                ))
-              }
+              {t.vocab.chips.dependency.map((c) => <span class="relation-chip">{c}</span>)}
             </div>
           </div>
 
           <div class="relation-row" style="--cat-color: var(--cat-temporal)">
             <div class="relation-cat">
-              <span class="relation-cat-name"
-                >{t.vocab.categories.temporal.name}</span
-              >
-              <span class="relation-cat-q">{t.vocab.categories.temporal.q}</span
-              >
+              <span class="relation-cat-name">{t.vocab.categories.temporal.name}</span>
+              <span class="relation-cat-q">{t.vocab.categories.temporal.q}</span>
             </div>
-            <svg
-              class="relation-mini-svg"
-              viewBox="0 0 220 56"
-              aria-hidden="true"
-            >
-              <line
-                class="rm-edge"
-                x1="54"
-                y1="18"
-                x2="166"
-                y2="18"
-                stroke="#2d6a55"></line>
+            <svg class="relation-mini-svg" viewBox="0 0 220 56" aria-hidden="true">
+              <line class="rm-edge" x1="54" y1="18" x2="166" y2="18" stroke="#2d6a55"></line>
               <polygon points="166,18 161,15 161,21" fill="#2d6a55"></polygon>
               <text class="rm-edge-label" fill="#2d6a55" x="110" y="12"
                 >{t.vocab.edges.precedes}</text
               >
-              <text class="rm-node-text" x="26" y="38"
-                >{t.vocab.categories.temporal.nodeA}</text
-              >
-              <line class="rm-node-underline" x1="6" y1="44" x2="46" y2="44"
-              ></line>
-              <text class="rm-node-text" x="188" y="38"
-                >{t.vocab.categories.temporal.nodeB}</text
-              >
-              <line class="rm-node-underline" x1="166" y1="44" x2="212" y2="44"
-              ></line>
+              <text class="rm-node-text" x="26" y="38">{t.vocab.categories.temporal.nodeA}</text>
+              <line class="rm-node-underline" x1="6" y1="44" x2="46" y2="44"></line>
+              <text class="rm-node-text" x="188" y="38">{t.vocab.categories.temporal.nodeB}</text>
+              <line class="rm-node-underline" x1="166" y1="44" x2="212" y2="44"></line>
             </svg>
             <div class="relation-types">
-              {
-                t.vocab.chips.temporal.map((c) => (
-                  <span class="relation-chip">{c}</span>
-                ))
-              }
+              {t.vocab.chips.temporal.map((c) => <span class="relation-chip">{c}</span>)}
             </div>
           </div>
 
           <div class="relation-row" style="--cat-color: var(--cat-opposition)">
             <div class="relation-cat">
-              <span class="relation-cat-name"
-                >{t.vocab.categories.opposition.name}</span
-              >
-              <span class="relation-cat-q"
-                >{t.vocab.categories.opposition.q}</span
-              >
+              <span class="relation-cat-name">{t.vocab.categories.opposition.name}</span>
+              <span class="relation-cat-q">{t.vocab.categories.opposition.q}</span>
             </div>
-            <svg
-              class="relation-mini-svg"
-              viewBox="0 0 220 56"
-              aria-hidden="true"
-            >
+            <svg class="relation-mini-svg" viewBox="0 0 220 56" aria-hidden="true">
               <line
                 class="rm-edge"
                 x1="36"
@@ -2013,40 +1827,22 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
               <text class="rm-edge-label" fill="#8a2e4a" x="110" y="12"
                 >{t.vocab.edges.oppositeOf}</text
               >
-              <text class="rm-node-text" x="18" y="38"
-                >{t.vocab.categories.opposition.nodeA}</text
-              >
-              <line class="rm-node-underline" x1="6" y1="44" x2="30" y2="44"
-              ></line>
-              <text class="rm-node-text" x="202" y="38"
-                >{t.vocab.categories.opposition.nodeB}</text
-              >
-              <line class="rm-node-underline" x1="186" y1="44" x2="214" y2="44"
-              ></line>
+              <text class="rm-node-text" x="18" y="38">{t.vocab.categories.opposition.nodeA}</text>
+              <line class="rm-node-underline" x1="6" y1="44" x2="30" y2="44"></line>
+              <text class="rm-node-text" x="202" y="38">{t.vocab.categories.opposition.nodeB}</text>
+              <line class="rm-node-underline" x1="186" y1="44" x2="214" y2="44"></line>
             </svg>
             <div class="relation-types">
-              {
-                t.vocab.chips.opposition.map((c) => (
-                  <span class="relation-chip">{c}</span>
-                ))
-              }
+              {t.vocab.chips.opposition.map((c) => <span class="relation-chip">{c}</span>)}
             </div>
           </div>
 
           <div class="relation-row" style="--cat-color: var(--cat-similarity)">
             <div class="relation-cat">
-              <span class="relation-cat-name"
-                >{t.vocab.categories.similarity.name}</span
-              >
-              <span class="relation-cat-q"
-                >{t.vocab.categories.similarity.q}</span
-              >
+              <span class="relation-cat-name">{t.vocab.categories.similarity.name}</span>
+              <span class="relation-cat-q">{t.vocab.categories.similarity.q}</span>
             </div>
-            <svg
-              class="relation-mini-svg"
-              viewBox="0 0 220 56"
-              aria-hidden="true"
-            >
+            <svg class="relation-mini-svg" viewBox="0 0 220 56" aria-hidden="true">
               <line
                 class="rm-edge"
                 x1="40"
@@ -2058,40 +1854,22 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
               <text class="rm-edge-label" fill="#2a6878" x="105" y="12"
                 >{t.vocab.edges.similarTo}</text
               >
-              <text class="rm-node-text" x="22" y="38"
-                >{t.vocab.categories.similarity.nodeA}</text
-              >
-              <line class="rm-node-underline" x1="6" y1="44" x2="38" y2="44"
-              ></line>
-              <text class="rm-node-text" x="190" y="38"
-                >{t.vocab.categories.similarity.nodeB}</text
-              >
-              <line class="rm-node-underline" x1="172" y1="44" x2="210" y2="44"
-              ></line>
+              <text class="rm-node-text" x="22" y="38">{t.vocab.categories.similarity.nodeA}</text>
+              <line class="rm-node-underline" x1="6" y1="44" x2="38" y2="44"></line>
+              <text class="rm-node-text" x="190" y="38">{t.vocab.categories.similarity.nodeB}</text>
+              <line class="rm-node-underline" x1="172" y1="44" x2="210" y2="44"></line>
             </svg>
             <div class="relation-types">
-              {
-                t.vocab.chips.similarity.map((c) => (
-                  <span class="relation-chip">{c}</span>
-                ))
-              }
+              {t.vocab.chips.similarity.map((c) => <span class="relation-chip">{c}</span>)}
             </div>
           </div>
 
           <div class="relation-row" style="--cat-color: var(--cat-epistemic)">
             <div class="relation-cat">
-              <span class="relation-cat-name"
-                >{t.vocab.categories.epistemic.name}</span
-              >
-              <span class="relation-cat-q"
-                >{t.vocab.categories.epistemic.q}</span
-              >
+              <span class="relation-cat-name">{t.vocab.categories.epistemic.name}</span>
+              <span class="relation-cat-q">{t.vocab.categories.epistemic.q}</span>
             </div>
-            <svg
-              class="relation-mini-svg"
-              viewBox="0 0 220 56"
-              aria-hidden="true"
-            >
+            <svg class="relation-mini-svg" viewBox="0 0 220 56" aria-hidden="true">
               <line
                 class="rm-edge"
                 x1="60"
@@ -2104,23 +1882,13 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
               <text class="rm-edge-label" fill="#3a4a8a" x="114" y="12"
                 >{t.vocab.edges.supports}</text
               >
-              <text class="rm-node-text" x="28" y="38"
-                >{t.vocab.categories.epistemic.nodeA}</text
-              >
-              <line class="rm-node-underline" x1="6" y1="44" x2="50" y2="44"
-              ></line>
-              <text class="rm-node-text" x="190" y="38"
-                >{t.vocab.categories.epistemic.nodeB}</text
-              >
-              <line class="rm-node-underline" x1="170" y1="44" x2="210" y2="44"
-              ></line>
+              <text class="rm-node-text" x="28" y="38">{t.vocab.categories.epistemic.nodeA}</text>
+              <line class="rm-node-underline" x1="6" y1="44" x2="50" y2="44"></line>
+              <text class="rm-node-text" x="190" y="38">{t.vocab.categories.epistemic.nodeB}</text>
+              <line class="rm-node-underline" x1="170" y1="44" x2="210" y2="44"></line>
             </svg>
             <div class="relation-types">
-              {
-                t.vocab.chips.epistemic.map((c) => (
-                  <span class="relation-chip">{c}</span>
-                ))
-              }
+              {t.vocab.chips.epistemic.map((c) => <span class="relation-chip">{c}</span>)}
             </div>
           </div>
         </div>
@@ -2142,12 +1910,7 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
         <div class="credo-rule"></div>
         <div class="credo-tail">
           <div class="credo-cta">
-            <a
-              href="https://app.nesso.how"
-              class="btn btn-primary"
-              target="_blank"
-              rel="noopener"
-            >
+            <a href="https://app.nesso.how" class="btn btn-primary" target="_blank" rel="noopener">
               {t.credo.ctaPrimary}
               <span class="btn-arrow">→</span>
             </a>
@@ -2166,58 +1929,50 @@ const homeHref = lang === "en" ? "/" : `/${lang}/`;
       <span>{t.footer.copyright}</span>
       <div class="footer-links">
         <a href="/docs/introduction/">{t.footer.docs}</a>
-        <a
-          href="https://github.com/nesso-how/nesso"
-          target="_blank"
-          rel="noopener">{t.footer.github}</a
+        <a href="https://github.com/nesso-how/nesso" target="_blank" rel="noopener"
+          >{t.footer.github}</a
         >
-        <a href="https://app.nesso.how" target="_blank" rel="noopener"
-          >{t.footer.app}</a
-        >
+        <a href="https://app.nesso.how" target="_blank" rel="noopener">{t.footer.app}</a>
       </div>
     </footer>
 
     <script>
-      (function () {
-        if (
-          window.matchMedia &&
-          window.matchMedia("(prefers-reduced-motion: reduce)").matches
-        )
-          return;
+      ;(function () {
+        if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+          return
 
-        const eyebrowEl =
-          document.querySelector<HTMLSpanElement>(".hero-eyebrow");
-        if (!eyebrowEl) return;
-        const eyebrow: HTMLSpanElement = eyebrowEl;
+        const eyebrowEl = document.querySelector<HTMLSpanElement>('.hero-eyebrow')
+        if (!eyebrowEl) return
+        const eyebrow: HTMLSpanElement = eyebrowEl
 
-        const SPEED = 30;
-        const PAUSE_AFTER_SEP = 420;
-        const START_DELAY = 450;
-        const text = eyebrow.dataset.typewriter ?? "";
+        const SPEED = 30
+        const PAUSE_AFTER_SEP = 420
+        const START_DELAY = 450
+        const text = eyebrow.dataset.typewriter ?? ''
 
-        const cursor = document.createElement("span");
-        cursor.className = "tw-cursor";
+        const cursor = document.createElement('span')
+        cursor.className = 'tw-cursor'
 
-        eyebrow.textContent = "";
-        eyebrow.appendChild(cursor);
+        eyebrow.textContent = ''
+        eyebrow.appendChild(cursor)
 
-        let plain: Text | null = null;
-        let i = 0;
+        let plain: Text | null = null
+        let i = 0
         function tick() {
           if (i >= text.length) {
-            setTimeout(() => cursor.classList.add("tw-cursor--done"), 500);
-            return;
+            setTimeout(() => cursor.classList.add('tw-cursor--done'), 500)
+            return
           }
           if (!plain) {
-            plain = document.createTextNode("");
-            eyebrow.insertBefore(plain, cursor);
+            plain = document.createTextNode('')
+            eyebrow.insertBefore(plain, cursor)
           }
-          const ch = text[i++]!;
-          plain.textContent += ch;
-          setTimeout(tick, ch === "·" ? PAUSE_AFTER_SEP : SPEED);
+          const ch = text[i++]!
+          plain.textContent += ch
+          setTimeout(tick, ch === '·' ? PAUSE_AFTER_SEP : SPEED)
         }
-        setTimeout(tick, START_DELAY);
-      })();
+        setTimeout(tick, START_DELAY)
+      })()
     </script>
   </body>
 </html>
