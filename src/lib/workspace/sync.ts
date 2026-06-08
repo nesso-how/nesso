@@ -55,10 +55,11 @@ export async function reconcileDiskWithIdb(
   const idbById = new Map(idbRecords.map((r) => [r.id, r]))
   const toPersist: GraphRecord[] = []
   let manifestDirty = false
-  // Ids already bound to a file in this scan — lets a duplicated/copied file
-  // that embeds the same id as another on-disk file become its own graph
-  // instead of silently merging into the original (see loadRecordFromDiskFile).
-  const claimedIds = new Set<string>()
+  // Ids already bound to a file (via the manifest, or claimed earlier in this
+  // scan) — lets a duplicated/copied file that embeds the same id as another
+  // on-disk file become its own graph instead of colliding with it regardless
+  // of directory listing order (see loadRecordFromDiskFile).
+  const claimedIds = new Set<string>(fileToId.values())
   // Ids matched to a readable file this scan — anything tracked but absent
   // here (and missing on disk) was deleted externally; see the removal pass below.
   const seenIds = new Set<string>()

@@ -60,9 +60,10 @@ function resolveGraphName(
 /**
  * Graph id: manifest binding → valid `id` in JSON → new random id.
  *
- * `claimedIds` tracks ids already bound to a file earlier in the same disk
- * scan — when a copied/duplicated file embeds an id that's already spoken
- * for, it gets a fresh id instead of silently merging into the original.
+ * `claimedIds` tracks ids already bound to a file — pre-seeded from the
+ * manifest and grown as files are scanned — so a copied/duplicated file that
+ * embeds an id already spoken for gets a fresh id instead of colliding with
+ * (and silently merging into) the original, regardless of scan order.
  */
 function resolveGraphId(
   file: NessoGraphFile,
