@@ -24,22 +24,12 @@ const en = {
       appearance: 'Appearance',
       ai: 'AI',
       review: 'Review',
-      data: 'Data',
     },
     appearance: {
       theme: 'Theme',
       light: 'Light',
       dark: 'Dark',
       language: 'Language',
-    },
-    data: {
-      graphFolder: 'Graph folder',
-      graphFolderDesc:
-        'Where graphs are saved. Pick a cloud-synced folder to share across devices, or edit files with any text editor.',
-      graphFolderDefault: 'Default (app data)',
-      chooseFolder: 'Choose folder',
-      openFolder: 'Open folder',
-      resetFolder: 'Use default folder',
     },
     ai: {
       source: 'Mode',
@@ -150,6 +140,15 @@ const en = {
     untitled: 'Untitled',
     collapseSidebar: 'Collapse sidebar',
     websiteLinkTitle: 'Visit nesso.how',
+    projectSwitcher: {
+      noProject: 'No project',
+      defaultProjectName: 'My graphs',
+      projects: 'Projects',
+      newProject: 'New project',
+      openProject: 'Open project…',
+      revealInFinder: 'Show in Finder',
+      removeProject: 'Remove from list',
+    },
     newGraphTitle: 'New graph',
     deleteGraph: 'Delete graph',
     renameHint: 'double-click to rename',

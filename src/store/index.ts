@@ -42,14 +42,15 @@ export const useGraphStore = create<GraphState>()(
         const merged = { ...current.settings, ...p.settings } as typeof current.settings & {
           reviewBatchMax?: unknown
           fsrsMaxInterval?: unknown
+          graphWorkspacePath?: unknown
         }
         const {
           reviewBatchMax: _legacyReviewBatchMax,
           fsrsMaxInterval: _legacyFsrsMaxInterval,
+          graphWorkspacePath: _legacyGraphWorkspacePath,
           ...settings
         } = merged
         if (settings.autoCurveFlip === undefined) settings.autoCurveFlip = true
-        if (settings.graphWorkspacePath === undefined) settings.graphWorkspacePath = null
         return {
           ...current,
           ...rest,

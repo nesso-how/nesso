@@ -36,3 +36,7 @@ export async function dbListGraphs(): Promise<GraphRecord[]> {
 export async function dbDeleteGraph(id: string) {
   return (await db).delete('graphs', id)
 }
+
+export async function dbClearGraphs() {
+  return (await db).clear('graphs')
+}

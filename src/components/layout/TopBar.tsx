@@ -4,6 +4,7 @@ import { useGraphStore } from '@/store'
 import { sortedDueConceptNodes } from '@/data/fsrsDueQueue'
 import { GraphIO } from '@/components/dialogs/GraphIO'
 import { useT } from '@/i18n'
+import { isDesktop } from '@/lib/isDesktop'
 
 /** Full-height navbar; Inspector and canvas top inset rely on this. */
 export const TOPBAR_HEIGHT_PX = 52
@@ -52,6 +53,7 @@ export function TopBar({
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '0 22px',
+        borderTop: isDesktop() ? '0.5px solid var(--line)' : undefined,
         borderBottom: '0.5px solid var(--line)',
         background: 'var(--bg-elev)',
         transition: 'left 180ms ease',

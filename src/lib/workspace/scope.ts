@@ -19,3 +19,15 @@ export async function pickWorkspaceFolder(): Promise<string | null> {
   await grantFsScope(selected)
   return selected
 }
+
+/** Lets the user name and place a new project folder, creates it empty, and grants it FS scope. */
+export async function createProjectFolder(): Promise<string | null> {
+  const { save } = await import('@tauri-apps/plugin-dialog')
+  const picked = await save({ title: 'New project', defaultPath: 'Untitled' })
+  if (!picked) return null
+  const norm = normalizePath(picked)
+  const { mkdir } = await import('@tauri-apps/plugin-fs')
+  await mkdir(norm, { recursive: true })
+  await grantFsScope(norm)
+  return norm
+}

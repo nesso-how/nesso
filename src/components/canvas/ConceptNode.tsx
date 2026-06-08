@@ -109,10 +109,9 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
     connection.inProgress && connection.toNode?.id === id && connection.fromNode?.id !== id
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div className="nesso-node" style={{ position: 'relative' }}>
       <ConceptNodeBody
         rootRef={rootRef}
-        className="nesso-node"
         text={data.text}
         selected={selected}
         showHeatmap={showHeatmap}

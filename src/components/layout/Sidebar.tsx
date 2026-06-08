@@ -5,7 +5,10 @@ import { useT } from '@/i18n'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { SettingRow } from '@/components/ui/SettingRow'
 import { NessoMark } from './NessoMark'
+import { ProjectSwitcher } from './ProjectSwitcher'
+import { TOPBAR_HEIGHT_PX } from './TopBar'
 import { WEBSITE_URL } from '@/data/appInfo'
+import { isDesktop } from '@/lib/isDesktop'
 import { SIDEBAR_WIDTH_STORAGE_KEY } from '@/data/storageKeys'
 
 export const SIDEBAR_MIN_WIDTH = 180
@@ -161,13 +164,15 @@ export function Sidebar({
           height: '100%',
           background: 'var(--bg-elev)',
           borderRight: '0.5px solid var(--line)',
+          borderTop: isDesktop() ? '0.5px solid var(--line)' : undefined,
         }}
       >
         <div style={{ width, height: '100%', display: 'flex', flexDirection: 'column' }}>
           {/* Header */}
           <div
             style={{
-              padding: '14px 16px 12px',
+              height: TOPBAR_HEIGHT_PX,
+              padding: '0 12px',
               display: 'flex',
               alignItems: 'center',
               gap: 10,
@@ -175,27 +180,31 @@ export function Sidebar({
               flexShrink: 0,
             }}
           >
-            <a
-              href={WEBSITE_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              title={t.sidebar.websiteLinkTitle}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                flexShrink: 0,
-                textDecoration: 'none',
-                color: 'inherit',
-              }}
-            >
-              <div style={{ flexShrink: 0, color: 'var(--ink)', lineHeight: 0 }} aria-hidden>
-                <NessoMark size={26} />
-              </div>
-              <div style={{ font: "500 13px 'Inter', ui-sans-serif", color: 'var(--ink)' }}>
-                Nesso
-              </div>
-            </a>
+            {isDesktop() ? (
+              <ProjectSwitcher />
+            ) : (
+              <a
+                href={WEBSITE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                title={t.sidebar.websiteLinkTitle}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  flexShrink: 0,
+                  textDecoration: 'none',
+                  color: 'inherit',
+                }}
+              >
+                <div style={{ flexShrink: 0, color: 'var(--ink)', lineHeight: 0 }} aria-hidden>
+                  <NessoMark size={26} />
+                </div>
+                <div style={{ font: "500 13px 'Inter', ui-sans-serif", color: 'var(--ink)' }}>
+                  Nesso
+                </div>
+              </a>
+            )}
             <div style={{ flex: 1, minWidth: 0 }} aria-hidden />
             <button
               onClick={onCollapse}
@@ -298,7 +307,7 @@ export function Sidebar({
               </button>
             </div>
 
-            <div style={{ padding: '0 8px', display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <div style={{ padding: '0 12px', display: 'flex', flexDirection: 'column', gap: 1 }}>
               {[...graphList]
                 .sort((a, b) => b.updatedAt - a.updatedAt)
                 .map((g) => {
@@ -398,11 +407,9 @@ export function Sidebar({
                           }}
                           onMouseEnter={(e) => {
                             e.currentTarget.style.color = 'var(--ink)'
-                            e.currentTarget.style.background = 'var(--bg-elev)'
                           }}
                           onMouseLeave={(e) => {
                             e.currentTarget.style.color = 'var(--ink-4)'
-                            e.currentTarget.style.background = 'transparent'
                           }}
                         >
                           <svg width="9" height="9" viewBox="0 0 10 10">

@@ -5,6 +5,9 @@ export {
   resolveWorkspace,
   getDefaultWorkspacePath,
   resolveWorkspacePath,
+  normalizePath,
+  projectNameFromPath,
+  projectDisplayName,
   type WorkspaceTarget,
 } from '@/lib/workspace/paths'
 export {
@@ -26,10 +29,10 @@ export {
   removeGraphFromWorkspace,
   reloadGraphFromDisk,
 } from '@/lib/workspace/graphFiles'
-export { grantFsScope, pickWorkspaceFolder } from '@/lib/workspace/scope'
+export { grantFsScope, pickWorkspaceFolder, createProjectFolder } from '@/lib/workspace/scope'
 export {
   reconcileDiskWithIdb,
   persistWorkspaceSync,
-  switchGraphWorkspaceFolder,
+  loadProjectFromDisk,
   type DiskReconcileResult,
 } from '@/lib/workspace/sync'
