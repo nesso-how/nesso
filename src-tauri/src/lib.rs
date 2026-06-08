@@ -24,6 +24,12 @@ pub fn run() {
                 app.handle().plugin(tauri_plugin_process::init())?;
 
                 let about_i = MenuItemBuilder::with_id("about", "About Nesso").build(app)?;
+                let new_project_i = MenuItemBuilder::with_id("new-project", "New Project…")
+                    .accelerator("CmdOrCtrl+Shift+N")
+                    .build(app)?;
+                let open_project_i = MenuItemBuilder::with_id("open-project", "Open Project…")
+                    .accelerator("CmdOrCtrl+O")
+                    .build(app)?;
 
                 let mut menu = MenuBuilder::new(app);
 
@@ -42,6 +48,12 @@ pub fn run() {
                         .build()?;
                     menu = menu.item(&app_menu);
                 }
+
+                let file_menu = SubmenuBuilder::new(app, "File")
+                    .item(&new_project_i)
+                    .item(&open_project_i)
+                    .build()?;
+                menu = menu.item(&file_menu);
 
                 let edit_menu = SubmenuBuilder::new(app, "Edit")
                     .undo()
@@ -75,11 +87,18 @@ pub fn run() {
                 app.set_menu(menu)?;
 
                 let about_id = about_i.id().clone();
+                let new_project_id = new_project_i.id().clone();
+                let open_project_id = open_project_i.id().clone();
                 app.on_menu_event(move |app, event| {
+                    let Some(w) = app.get_webview_window("main") else {
+                        return;
+                    };
                     if about_id == event.id() {
-                        if let Some(w) = app.get_webview_window("main") {
-                            let _ = w.emit("menu:about", ());
-                        }
+                        let _ = w.emit("menu:about", ());
+                    } else if new_project_id == event.id() {
+                        let _ = w.emit("menu:new-project", ());
+                    } else if open_project_id == event.id() {
+                        let _ = w.emit("menu:open-project", ());
                     }
                 });
             }

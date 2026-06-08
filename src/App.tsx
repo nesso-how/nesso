@@ -64,6 +64,8 @@ function AppInner() {
   const saveViewport = useGraphStore((s) => s.saveViewport)
   const sidebarCollapsed = useGraphStore((s) => s.sidebarCollapsed)
   const setSidebarCollapsed = useGraphStore((s) => s.setSidebarCollapsed)
+  const createProject = useGraphStore((s) => s.createProject)
+  const openProject = useGraphStore((s) => s.openProject)
 
   const canUndo = useGraphStore((s) => s._history.length > 0)
   const canRedo = useGraphStore((s) => s._future.length > 0)
@@ -78,19 +80,21 @@ function AppInner() {
 
   useEffect(() => {
     if (!isDesktop()) return
-    let unlisten: (() => void) | undefined
+    const unlistens: (() => void)[] = []
     let cancelled = false
     void (async () => {
       const { listen } = await import('@tauri-apps/api/event')
       if (cancelled) return
-      unlisten = await listen('menu:about', () => setShowAbout(true))
-      if (cancelled) unlisten()
+      unlistens.push(await listen('menu:about', () => setShowAbout(true)))
+      unlistens.push(await listen('menu:new-project', () => void createProject()))
+      unlistens.push(await listen('menu:open-project', () => void openProject()))
+      if (cancelled) unlistens.forEach((u) => u())
     })()
     return () => {
       cancelled = true
-      unlisten?.()
+      unlistens.forEach((u) => u())
     }
-  }, [])
+  }, [createProject, openProject])
 
   const [sidebarPanelWidth, setSidebarPanelWidth] = useState(readSidebarWidth)
   useEffect(() => {

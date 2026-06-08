@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 import type { GraphRecord } from '@/store/db'
-import { dbListGraphs, dbSaveGraph } from '@/store/db'
+import { dbDeleteGraph, dbListGraphs, dbSaveGraph } from '@/store/db'
 import type { NessoSettings } from '@/types/graph'
 import {
   buildFileToIdMap,
@@ -9,32 +9,29 @@ import {
   upsertManifestEntry,
   writeManifest,
   ensureWorkspace,
-  MANIFEST_DIR,
   MANIFEST_FILE,
   type WorkspaceManifest,
 } from '@/lib/workspace/manifest'
 import {
   applyUniqueGraphNameOnDisk,
+  graphFileExists,
   listWorkspaceJsonFiles,
   loadRecordFromDiskFile,
   saveGraphToDisk,
 } from '@/lib/workspace/graphFiles'
-import { normalizePath, resolveWorkspace, type WorkspaceTarget } from '@/lib/workspace/paths'
-import { beginSuppressWatch, endSuppressWatch } from '@/lib/workspace/watch'
+import { resolveWorkspace, type WorkspaceTarget } from '@/lib/workspace/paths'
 import { grantFsScope } from '@/lib/workspace/scope'
 
 export interface DiskReconcileResult {
   manifest: WorkspaceManifest
   /** Records that should be written to IndexedDB (newer on disk or new files). */
   toPersist: GraphRecord[]
+  /** Ids whose tracked file vanished from disk — should be dropped from IndexedDB. */
+  removed: string[]
 }
 
 async function persistToIdb(records: GraphRecord[]): Promise<void> {
   for (const rec of records) await dbSaveGraph(rec)
-}
-
-async function fs() {
-  return import('@tauri-apps/plugin-fs')
 }
 
 /**
@@ -58,14 +55,22 @@ export async function reconcileDiskWithIdb(
   const idbById = new Map(idbRecords.map((r) => [r.id, r]))
   const toPersist: GraphRecord[] = []
   let manifestDirty = false
+  // Ids already bound to a file in this scan — lets a duplicated/copied file
+  // that embeds the same id as another on-disk file become its own graph
+  // instead of silently merging into the original (see loadRecordFromDiskFile).
+  const claimedIds = new Set<string>()
+  // Ids matched to a readable file this scan — anything tracked but absent
+  // here (and missing on disk) was deleted externally; see the removal pass below.
+  const seenIds = new Set<string>()
 
   const diskGraphFiles = (await listWorkspaceJsonFiles(ws)).filter((f) => f !== MANIFEST_FILE)
 
   for (const filename of diskGraphFiles) {
-    const loaded = await loadRecordFromDiskFile(ws, filename, manifest, fileToId)
+    const loaded = await loadRecordFromDiskFile(ws, filename, manifest, fileToId, claimedIds)
     if (!loaded) continue
 
     const id = loaded.id
+    seenIds.add(id)
     const peerNames = [...idbById.values()].filter((r) => r.id !== id).map((r) => r.name)
     const { file: entryFile, record: diskRecord } = await applyUniqueGraphNameOnDisk(
       ws,
@@ -87,7 +92,22 @@ export async function reconcileDiskWithIdb(
     fileToId.set(entryFile, id)
   }
 
+  // A tracked graph whose file is gone (and no other on-disk file claimed its
+  // id) was deleted outside the app — drop it instead of silently re-creating it.
+  const removed: string[] = []
   for (const record of idbRecords) {
+    if (seenIds.has(record.id)) continue
+    const entry = manifest.entries[record.id]
+    if (!entry || (await graphFileExists(ws, entry.file))) continue
+    delete manifest.entries[record.id]
+    idbById.delete(record.id)
+    removed.push(record.id)
+    manifestDirty = true
+  }
+  const removedIds = new Set(removed)
+
+  for (const record of idbRecords) {
+    if (removedIds.has(record.id)) continue
     const latest = idbById.get(record.id) ?? record
     const entry = manifest.entries[record.id]
     if (!entry) {
@@ -103,70 +123,29 @@ export async function reconcileDiskWithIdb(
     await writeManifest(ws, manifest)
   }
 
-  return { manifest, toPersist }
+  return { manifest, toPersist, removed }
 }
 
 /** IndexedDB ↔ workspace sync; returns graph list after merge. */
 export async function persistWorkspaceSync(
-  settings: Pick<NessoSettings, 'graphWorkspacePath'>,
+  settings: Pick<NessoSettings, 'activeProjectPath'>,
   records: GraphRecord[],
 ): Promise<GraphRecord[]> {
-  if (settings.graphWorkspacePath?.trim()) {
-    await grantFsScope(settings.graphWorkspacePath.trim())
+  if (settings.activeProjectPath?.trim()) {
+    await grantFsScope(settings.activeProjectPath.trim())
   }
   const ws = await resolveWorkspace(settings)
-  const { toPersist, manifest } = await reconcileDiskWithIdb(ws, records)
+  const { toPersist, manifest, removed } = await reconcileDiskWithIdb(ws, records)
   setDiskSyncCache(ws.displayPath, manifest)
   await persistToIdb(toPersist)
+  for (const id of removed) await dbDeleteGraph(id)
   return dbListGraphs()
 }
 
-/** Remove all graph JSON and workspace metadata when leaving a workspace folder. */
-export async function clearWorkspace(ws: WorkspaceTarget): Promise<void> {
-  const { remove, exists } = await fs()
-  for (const filename of await listWorkspaceJsonFiles(ws)) {
-    beginSuppressWatch()
-    try {
-      await remove(ws.path(filename)).catch(() => {})
-    } finally {
-      endSuppressWatch()
-    }
-  }
-  const rel = `${MANIFEST_DIR}/${MANIFEST_FILE}`
-  beginSuppressWatch()
-  try {
-    await remove(ws.path(rel)).catch(() => {})
-    const dirPath = ws.path(MANIFEST_DIR)
-    if (await exists(dirPath)) await remove(dirPath).catch(() => {})
-  } finally {
-    endSuppressWatch()
-  }
-}
-
-/** Change workspace folder: merge old disk → IDB, sync to new folder, clear old folder. */
-export async function switchGraphWorkspaceFolder(
-  previousSettings: Pick<NessoSettings, 'graphWorkspacePath'>,
-  nextSettings: Pick<NessoSettings, 'graphWorkspacePath'>,
-): Promise<GraphRecord[]> {
-  const oldWs = await resolveWorkspace(previousSettings)
-  const nextWs = await resolveWorkspace(nextSettings)
-  if (normalizePath(oldWs.displayPath) === normalizePath(nextWs.displayPath)) {
-    return dbListGraphs()
-  }
-
-  let records = await dbListGraphs()
-  const prevCustom = previousSettings.graphWorkspacePath?.trim()
-  if (prevCustom) await grantFsScope(prevCustom)
-
-  const { toPersist: fromOld } = await reconcileDiskWithIdb(oldWs, records)
-  await persistToIdb(fromOld)
-  records = await dbListGraphs()
-
-  const nextCustom = nextSettings.graphWorkspacePath?.trim()
-  if (nextCustom) await grantFsScope(nextCustom)
-
-  records = await persistWorkspaceSync(nextSettings, records)
-
-  await clearWorkspace(oldWs)
-  return records
+/** Load every graph from a project folder into IDB (disk is the source of truth). */
+export async function loadProjectFromDisk(ws: WorkspaceTarget): Promise<GraphRecord[]> {
+  const { toPersist, manifest } = await reconcileDiskWithIdb(ws, [])
+  setDiskSyncCache(ws.displayPath, manifest)
+  await persistToIdb(toPersist)
+  return dbListGraphs()
 }

@@ -12,14 +12,22 @@ import {
   graphPersistPayload,
 } from '@/lib/graphPersist'
 import {
+  beginSuppressWatch,
+  createProjectFolder,
+  endSuppressWatch,
+  getDefaultWorkspacePath,
+  grantFsScope,
+  loadProjectFromDisk,
+  normalizePath,
   persistWorkspaceSync,
+  pickWorkspaceFolder,
   removeGraphFromWorkspace,
-  switchGraphWorkspaceFolder,
+  resolveWorkspace,
   uniqueGraphNameAmong,
   writeGraphRecordToWorkspace,
 } from '@/lib/workspace'
 import type { GraphRecord } from '../db'
-import { dbSaveGraph, dbLoadGraph, dbListGraphs, dbDeleteGraph } from '../db'
+import { dbSaveGraph, dbLoadGraph, dbListGraphs, dbDeleteGraph, dbClearGraphs } from '../db'
 import { _draggingNodeIds } from './graph-editing'
 import type { GraphMeta } from '../types'
 import type { GraphState } from '../state'
@@ -28,6 +36,28 @@ import type { Language } from '@/types/graph'
 function detectBrowserLanguage(): Language {
   const lang = typeof navigator !== 'undefined' ? navigator.language.split('-')[0] : 'en'
   return lang === 'it' ? 'it' : 'en'
+}
+
+// Guards the clear+reload window during project switches:
+// _switchingProject blocks saveCurrentGraph from writing to the wrong folder;
+// _switchProjectInflight serialises concurrent switchProject invocations.
+let _switchingProject = false
+let _switchProjectInflight: Promise<GraphMeta[]> | null = null
+
+/** Register `path` as the most-recent known project, then switch to it. */
+function registerAndSwitch(
+  path: string,
+  set: (fn: (s: GraphState) => Partial<GraphState>) => void,
+  get: () => GraphState,
+): Promise<GraphMeta[]> {
+  const norm = normalizePath(path)
+  set((s) => ({
+    settings: {
+      ...s.settings,
+      knownProjects: [norm, ...s.settings.knownProjects.filter((p) => normalizePath(p) !== norm)],
+    },
+  }))
+  return get().switchProject(norm)
 }
 
 function makeSeedRecord(seed: Seed): GraphRecord {
@@ -48,7 +78,10 @@ export interface GraphManagementSlice {
   graphList: GraphMeta[]
   loadedToken: number
   loadGraphList: () => Promise<GraphMeta[]>
-  switchGraphWorkspace: (graphWorkspacePath: string | null) => Promise<GraphMeta[]>
+  createProject: () => Promise<GraphMeta[]>
+  openProject: () => Promise<GraphMeta[]>
+  switchProject: (path: string) => Promise<GraphMeta[]>
+  removeProject: (path: string) => Promise<GraphMeta[]>
   loadGraph: (id: string) => Promise<void>
   saveCurrentGraph: () => Promise<void>
   createGraph: (name: string) => Promise<string>
@@ -90,6 +123,20 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
 
     if (isDesktop()) {
       try {
+        // Resolve the active project to a concrete path (the bundled default
+        // folder on first launch / after migrating from the single-workspace
+        // model) and ensure it's registered as a known project.
+        let { knownProjects, activeProjectPath } = get().settings
+        if (!activeProjectPath) {
+          activeProjectPath = await getDefaultWorkspacePath()
+        }
+        const activeNorm = normalizePath(activeProjectPath)
+        if (!knownProjects.some((p) => normalizePath(p) === activeNorm)) {
+          knownProjects = [activeProjectPath, ...knownProjects]
+        }
+        set((s) => ({ settings: { ...s.settings, knownProjects, activeProjectPath } }))
+        for (const p of knownProjects) await grantFsScope(p)
+
         records = await persistWorkspaceSync(get().settings, records)
       } catch (err) {
         console.error('[nesso] workspace sync failed:', err)
@@ -101,23 +148,117 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
     return list
   },
 
-  switchGraphWorkspace: async (graphWorkspacePath) => {
-    const prev = get().settings
-    const nextSettings = { ...prev, graphWorkspacePath }
-    if (!isDesktop()) {
-      set((s) => ({ settings: { ...s.settings, graphWorkspacePath } }))
-      return get().loadGraphList()
+  createProject: async () => {
+    if (!isDesktop()) return get().graphList
+    const created = await createProjectFolder()
+    if (!created) return get().graphList
+    return registerAndSwitch(created, set, get)
+  },
+
+  openProject: async () => {
+    if (!isDesktop()) return get().graphList
+    const picked = await pickWorkspaceFolder()
+    if (!picked) return get().graphList
+    return registerAndSwitch(picked, set, get)
+  },
+
+  switchProject: async (path) => {
+    if (!isDesktop()) return get().graphList
+
+    // Serialise concurrent calls — wait for any ongoing switch to finish first.
+    // _switchProjectInflight is assigned synchronously below (no await between the
+    // while-exit and the assignment), so no two callers can both pass the guard.
+    while (_switchProjectInflight) {
+      await _switchProjectInflight.catch(() => {})
     }
+
+    const norm = normalizePath(path)
+    const current = get().settings.activeProjectPath
+    if (current && normalizePath(current) === norm) return get().graphList
+
+    const run = async (): Promise<GraphMeta[]> => {
+      // Save onto the OUTGOING project before _switchingProject = true so the
+      // guard inside saveCurrentGraph doesn't block it.
+      await get().saveCurrentGraph()
+      _switchingProject = true
+      try {
+        await grantFsScope(norm)
+        // Resolve the target workspace before touching IDB so we can roll back on failure.
+        const ws = await resolveWorkspace({ activeProjectPath: norm })
+        const prevPath = get().settings.activeProjectPath
+
+        let records: GraphRecord[]
+        beginSuppressWatch()
+        try {
+          await dbClearGraphs()
+          records = await loadProjectFromDisk(ws)
+        } catch (err) {
+          // Load failed — IDB is now empty. Best-effort: reload from the outgoing
+          // project so the app stays in a usable state. activeProjectPath is NOT
+          // updated, so the file watcher and next save still target the old folder.
+          console.error('[nesso] project load failed, rolling back to previous workspace', err)
+          const prevWs = await resolveWorkspace({ activeProjectPath: prevPath }).catch(() => null)
+          if (prevWs) await loadProjectFromDisk(prevWs).catch(() => {})
+          throw err
+        } finally {
+          endSuppressWatch()
+        }
+
+        // Commit the path change only after the load succeeded.
+        set((s) => ({ settings: { ...s.settings, activeProjectPath: norm } }))
+
+        if (records.length === 0) {
+          const now = Date.now()
+          const untitled = get().settings.language === 'it' ? 'Senza titolo' : 'Untitled'
+          const seed: GraphRecord = {
+            id: newGraphId(),
+            name: untitled,
+            createdAt: now,
+            updatedAt: now,
+            nodes: [],
+            edges: [],
+            display: defaultGraphDisplay(get().settings),
+          }
+          // settings now has activeProjectPath = norm (committed above)
+          const persisted = await writeGraphRecordToWorkspace(get().settings, seed)
+          await dbSaveGraph(persisted)
+          records = [persisted]
+        }
+
+        const list = records.map((r) => ({ id: r.id, name: r.name, updatedAt: r.updatedAt }))
+        set({ graphList: list })
+
+        const next = [...records].sort((a, b) => b.updatedAt - a.updatedAt)[0]
+        await get().loadGraph(next.id)
+        return list
+      } finally {
+        _switchingProject = false
+      }
+    }
+
+    _switchProjectInflight = run()
     try {
-      const records = await switchGraphWorkspaceFolder(prev, nextSettings)
-      set((s) => ({ settings: { ...s.settings, graphWorkspacePath } }))
-      const list = records.map((r) => ({ id: r.id, name: r.name, updatedAt: r.updatedAt }))
-      set({ graphList: list })
-      return list
-    } catch (err) {
-      console.error('[nesso] workspace folder switch failed:', err)
-      throw err
+      return await _switchProjectInflight
+    } finally {
+      _switchProjectInflight = null
     }
+  },
+
+  removeProject: async (path) => {
+    if (!isDesktop()) return get().graphList
+    const norm = normalizePath(path)
+
+    const { knownProjects, activeProjectPath } = get().settings
+    const remaining = knownProjects.filter((p) => normalizePath(p) !== norm)
+    if (remaining.length === knownProjects.length) return get().graphList // path not in list
+    if (remaining.length === 0) return get().graphList // can't remove the last project
+
+    if (activeProjectPath && normalizePath(activeProjectPath) === norm) {
+      // Switch first — if it throws, the list stays intact.
+      await get().switchProject(remaining[0])
+    }
+    set((s) => ({ settings: { ...s.settings, knownProjects: remaining } }))
+    return get().graphList
   },
 
   loadGraph: async (id) => {
@@ -141,7 +282,7 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
   },
 
   saveCurrentGraph: async () => {
-    if (get().externalFileConflict) return
+    if (get().externalFileConflict || _switchingProject) return
     const { currentGraphId, nodes, edges, graphList, graphDisplay, settings } = get()
     const meta = graphList.find((g) => g.id === currentGraphId)
     const existing = await dbLoadGraph(currentGraphId)
@@ -173,13 +314,20 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
       edges: persistEdges,
       display,
     }
-    await dbSaveGraph(record)
+    // Disk-first: the folder is the source of truth, so the write there is the
+    // commit point. Only on success do we mirror the persisted record (its name
+    // may have been de-duplicated on disk) into IDB. If the disk write fails, IDB
+    // and the in-memory state stay untouched — the only possible divergence is
+    // "IDB behind disk", which is always recoverable by reloading from disk.
+    const persisted = isDesktop() ? await writeGraphRecordToWorkspace(settings, record) : record
+    await dbSaveGraph(persisted)
     const fp = graphPersistFingerprint(persistNodes, persistEdges, display)
-    if (isDesktop()) {
-      await writeGraphRecordToWorkspace(get().settings, record)
-    }
     set((s) => ({
-      graphList: s.graphList.map((g) => (g.id === currentGraphId ? { ...g, updatedAt: now } : g)),
+      graphList: s.graphList.map((g) =>
+        g.id === currentGraphId
+          ? { ...g, name: persisted.name, updatedAt: persisted.updatedAt }
+          : g,
+      ),
       savedFingerprint: fp,
       externalFileConflict: false,
     }))
@@ -198,14 +346,17 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
       edges: [],
       display,
     }
-    await dbSaveGraph(record)
-    if (isDesktop()) {
-      await writeGraphRecordToWorkspace(get().settings, record)
-    }
+    const persisted = isDesktop()
+      ? await writeGraphRecordToWorkspace(get().settings, record)
+      : record
+    await dbSaveGraph(persisted)
     _draggingNodeIds.clear()
     set((s) => ({
-      graphList: [...s.graphList, { id, name, updatedAt: now }],
-      currentGraphId: id,
+      graphList: [
+        ...s.graphList,
+        { id: persisted.id, name: persisted.name, updatedAt: persisted.updatedAt },
+      ],
+      currentGraphId: persisted.id,
       nodes: [],
       edges: [],
       graphDisplay: display,
@@ -213,7 +364,7 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
       _history: [],
       _future: [],
     }))
-    return id
+    return persisted.id
   },
 
   importGraph: async (name, nodes, edges, display, id) => {
@@ -233,13 +384,13 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
       edges,
       display: graphDisplay,
     }
-    await dbSaveGraph(record)
-    if (isDesktop()) {
-      await writeGraphRecordToWorkspace(get().settings, record)
-    }
+    const persisted = isDesktop()
+      ? await writeGraphRecordToWorkspace(get().settings, record)
+      : record
+    await dbSaveGraph(persisted)
     _draggingNodeIds.clear()
     set((s) => {
-      const meta = { id: graphId, name: graphName, updatedAt: now }
+      const meta = { id: graphId, name: persisted.name, updatedAt: persisted.updatedAt }
       const graphList = s.graphList.some((g) => g.id === graphId)
         ? s.graphList.map((g) => (g.id === graphId ? meta : g))
         : [...s.graphList, meta]
@@ -261,12 +412,12 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
     const record = await dbLoadGraph(id)
     if (!record) return
     const updated = { ...record, name }
-    await dbSaveGraph(updated)
-    if (isDesktop()) {
-      await writeGraphRecordToWorkspace(get().settings, updated)
-    }
+    const persisted = isDesktop()
+      ? await writeGraphRecordToWorkspace(get().settings, updated)
+      : updated
+    await dbSaveGraph(persisted)
     set((s) => ({
-      graphList: s.graphList.map((g) => (g.id === id ? { ...g, name } : g)),
+      graphList: s.graphList.map((g) => (g.id === id ? { ...g, name: persisted.name } : g)),
     }))
   },
 

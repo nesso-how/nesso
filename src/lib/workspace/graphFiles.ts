@@ -57,17 +57,24 @@ function resolveGraphName(
   return { name: jsonName || fromFilename, patched: false }
 }
 
-/** Graph id: manifest binding → valid `id` in JSON → new random id. */
+/**
+ * Graph id: manifest binding → valid `id` in JSON → new random id.
+ *
+ * `claimedIds` tracks ids already bound to a file earlier in the same disk
+ * scan — when a copied/duplicated file embeds an id that's already spoken
+ * for, it gets a fresh id instead of silently merging into the original.
+ */
 function resolveGraphId(
   file: NessoGraphFile,
   filename: string,
   fileToId: Map<string, string>,
+  claimedIds: Set<string>,
 ): string {
   const fromManifest = fileToId.get(filename)
   if (fromManifest) return fromManifest
 
   const fileId = file.id?.trim()
-  if (fileId && isGraphId(fileId)) return fileId
+  if (fileId && isGraphId(fileId) && !claimedIds.has(fileId)) return fileId
 
   return newGraphId()
 }
@@ -242,13 +249,15 @@ export async function loadRecordFromDiskFile(
   filename: string,
   manifest: WorkspaceManifest,
   fileToId: Map<string, string>,
+  claimedIds: Set<string> = new Set(),
 ): Promise<GraphRecord | null> {
   const { readTextFile, writeTextFile } = await fs()
   try {
     const text = await readTextFile(ws.path(filename))
     const file = deserializeGraph(text)
     const now = Date.now()
-    const id = resolveGraphId(file, filename, fileToId)
+    const id = resolveGraphId(file, filename, fileToId, claimedIds)
+    const reassignedId = id !== (file.id?.trim() ?? '')
     const { name, patched } = resolveGraphName(file, filename)
     const record: GraphRecord = {
       id,
@@ -260,7 +269,7 @@ export async function loadRecordFromDiskFile(
       edges: file.edges,
       display: file.display as GraphRecord['display'],
     }
-    if (patched) {
+    if (patched || reassignedId) {
       record.updatedAt = Date.now()
       beginSuppressWatch()
       try {
@@ -269,6 +278,7 @@ export async function loadRecordFromDiskFile(
         endSuppressWatch()
       }
     }
+    claimedIds.add(id)
     return record
   } catch {
     return null
@@ -285,7 +295,7 @@ export async function listWorkspaceJsonFiles(ws: WorkspaceTarget): Promise<strin
   }
 }
 
-async function graphFileExists(ws: WorkspaceTarget, filename: string): Promise<boolean> {
+export async function graphFileExists(ws: WorkspaceTarget, filename: string): Promise<boolean> {
   const { exists } = await fs()
   try {
     return await exists(ws.path(filename))
@@ -310,7 +320,7 @@ async function resolveGraphDiskFilename(
     try {
       const text = await readTextFile(ws.path(filename))
       const file = deserializeGraph(text)
-      if (resolveGraphId(file, filename, fileToId) === graphId) return filename
+      if (resolveGraphId(file, filename, fileToId, new Set()) === graphId) return filename
     } catch {
       /* skip unreadable */
     }
@@ -341,28 +351,33 @@ async function cachedManifestForWorkspace(ws: WorkspaceTarget): Promise<Workspac
   return cw === ws.displayPath ? cached : readManifest(ws)
 }
 
-/** Dual-write one graph record to the active workspace (IDB caller saves separately). */
+/**
+ * Commit one graph record to the active project on disk — the source of truth.
+ * Returns the persisted record (name may be de-duplicated); the caller mirrors
+ * this exact record into IDB rather than the one it asked to save.
+ */
 export async function writeGraphRecordToWorkspace(
   settings: NessoSettings,
   record: GraphRecord,
-): Promise<void> {
-  if (settings.graphWorkspacePath?.trim()) {
-    await grantFsScope(settings.graphWorkspacePath.trim())
+): Promise<GraphRecord> {
+  if (settings.activeProjectPath?.trim()) {
+    await grantFsScope(settings.activeProjectPath.trim())
   }
   const ws = await resolveWorkspace(settings)
-  let manifest = await cachedManifestForWorkspace(ws)
+  const manifest = await cachedManifestForWorkspace(ws)
   const fileToId = buildFileToIdMap(manifest)
-  ;({ manifest } = await saveGraphToDisk(ws, record, manifest, fileToId))
-  setDiskSyncCache(ws.displayPath, manifest)
+  const result = await saveGraphToDisk(ws, record, manifest, fileToId)
+  setDiskSyncCache(ws.displayPath, result.manifest)
+  return result.record
 }
 
-/** Remove a graph file and manifest entry from the active workspace. */
+/** Remove a graph file and manifest entry from the active project. */
 export async function removeGraphFromWorkspace(
   settings: NessoSettings,
   graphId: string,
 ): Promise<void> {
-  if (settings.graphWorkspacePath?.trim()) {
-    await grantFsScope(settings.graphWorkspacePath.trim())
+  if (settings.activeProjectPath?.trim()) {
+    await grantFsScope(settings.activeProjectPath.trim())
   }
   const ws = await resolveWorkspace(settings)
   let manifest = await cachedManifestForWorkspace(ws)

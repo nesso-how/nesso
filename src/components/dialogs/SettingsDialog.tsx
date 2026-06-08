@@ -11,8 +11,6 @@ import { PillToggle } from '@/components/ui/PillToggle'
 import { Stepper } from '@/components/ui/Stepper'
 import { useT } from '@/i18n'
 import type { Language } from '@/types/graph'
-import { isDesktop } from '@/lib/isDesktop'
-import { getDefaultWorkspacePath, pickWorkspaceFolder, resolveWorkspacePath } from '@/lib/workspace'
 import { checkOllamaModel, streamOllamaModelPull, type OllamaModelStatus } from '@/lib/ollama'
 
 const OLLAMA_PRESETS = [
@@ -21,8 +19,8 @@ const OLLAMA_PRESETS = [
   { id: 'qwen2.5:7b', note: 'precise · best reasoning' },
 ] as const
 
-type Tab = 'appearance' | 'ai' | 'review' | 'data'
-const ALL_TABS = ['appearance', 'ai', 'review', 'data'] as const
+type Tab = 'appearance' | 'ai' | 'review'
+const ALL_TABS = ['appearance', 'ai', 'review'] as const
 
 const LANGUAGES: { id: Language; label: string }[] = [
   { id: 'en', label: 'English' },
@@ -39,8 +37,6 @@ export function SettingsDialog({ open, onClose }: Props) {
   const [tab, setTab] = useState<Tab>('appearance')
   const settings = useGraphStore((s) => s.settings)
   const setSetting = useGraphStore((s) => s.setSetting)
-  const switchGraphWorkspace = useGraphStore((s) => s.switchGraphWorkspace)
-  const [workspaceLabel, setWorkspaceLabel] = useState('')
   const llm = useWebLLM()
   const [modelStatus, setModelStatus] = useState<OllamaModelStatus>('idle')
   const [pullProgress, setPullProgress] = useState(0)
@@ -88,14 +84,6 @@ export function SettingsDialog({ open, onClose }: Props) {
     }
   }, [open, settings.aiMode, settings.aiBaseUrl])
 
-  useEffect(() => {
-    if (!open || !isDesktop()) return
-    void (async () => {
-      const path = await resolveWorkspacePath(settings)
-      setWorkspaceLabel(path)
-    })()
-  }, [open, settings.graphWorkspacePath])
-
   const inputStyle: React.CSSProperties = {
     width: '100%',
     boxSizing: 'border-box',
@@ -106,16 +94,6 @@ export function SettingsDialog({ open, onClose }: Props) {
     background: 'var(--paper-deep)',
     color: 'var(--ink)',
     font: "400 13px 'JetBrains Mono', ui-monospace",
-  }
-
-  const subtleLinkStyle: React.CSSProperties = {
-    appearance: 'none',
-    background: 'none',
-    border: 'none',
-    color: 'var(--ink-4)',
-    font: "400 11px 'Inter', system-ui",
-    cursor: 'default',
-    padding: 0,
   }
 
   return (
@@ -162,7 +140,7 @@ export function SettingsDialog({ open, onClose }: Props) {
             >
               {t.settings.title}
             </div>
-            {ALL_TABS.filter((id) => id !== 'data' || isDesktop()).map((tabId) => (
+            {ALL_TABS.map((tabId) => (
               <button
                 key={tabId}
                 onClick={() => setTab(tabId)}
@@ -232,135 +210,6 @@ export function SettingsDialog({ open, onClose }: Props) {
                     onChange={(id) => setSetting('language', id)}
                   />
                 </div>
-              </div>
-            )}
-
-            {tab === 'data' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-                {isDesktop() && (
-                  <div>
-                    <div style={{ marginBottom: 12 }}>
-                      <span style={{ font: "400 13px 'Inter', system-ui", color: 'var(--ink-2)' }}>
-                        {t.settings.data.graphFolder}
-                      </span>
-                      <small
-                        style={{
-                          display: 'block',
-                          font: "400 11px/1.4 'Inter', system-ui",
-                          color: 'var(--ink-4)',
-                          marginTop: 3,
-                        }}
-                      >
-                        {t.settings.data.graphFolderDesc}
-                      </small>
-                    </div>
-
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 10,
-                        border: '0.5px solid var(--line)',
-                        borderRadius: 10,
-                        background: 'var(--paper-deep)',
-                        padding: '6px 6px 6px 12px',
-                      }}
-                    >
-                      <svg
-                        width="13"
-                        height="13"
-                        viewBox="0 0 16 16"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.4"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        style={{ color: 'var(--ink-4)', flexShrink: 0 }}
-                      >
-                        <path d="M2 5.5a1 1 0 0 1 1-1h3.5l1.5 1.5h5a1 1 0 0 1 1 1V12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5.5z" />
-                      </svg>
-                      <span
-                        title={workspaceLabel}
-                        dir={settings.graphWorkspacePath ? 'rtl' : 'ltr'}
-                        style={{
-                          font: "400 12px 'JetBrains Mono', ui-monospace",
-                          color: settings.graphWorkspacePath ? 'var(--ink-3)' : 'var(--ink-4)',
-                          flex: 1,
-                          minWidth: 0,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                          textAlign: 'left',
-                        }}
-                      >
-                        {settings.graphWorkspacePath ?? t.settings.data.graphFolderDefault}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          void (async () => {
-                            const picked = await pickWorkspaceFolder()
-                            if (!picked) return
-                            await switchGraphWorkspace(picked)
-                          })()
-                        }}
-                        style={{
-                          appearance: 'none',
-                          border: '0.5px solid var(--line)',
-                          background: 'var(--bg-card)',
-                          color: 'var(--ink-2)',
-                          font: "500 11px 'JetBrains Mono', ui-monospace",
-                          letterSpacing: '0.04em',
-                          padding: '5px 12px',
-                          borderRadius: 999,
-                          cursor: 'default',
-                          flexShrink: 0,
-                        }}
-                      >
-                        {t.settings.data.chooseFolder}
-                      </button>
-                    </div>
-
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        gap: 8,
-                        marginTop: 8,
-                      }}
-                    >
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (!workspaceLabel) return
-                          void (async () => {
-                            const { openPath } = await import('@tauri-apps/plugin-opener')
-                            await openPath(workspaceLabel).catch(() => {})
-                          })()
-                        }}
-                        style={subtleLinkStyle}
-                      >
-                        {t.settings.data.openFolder}
-                      </button>
-                      {settings.graphWorkspacePath && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            void (async () => {
-                              await switchGraphWorkspace(null)
-                              const path = await getDefaultWorkspacePath()
-                              setWorkspaceLabel(path)
-                            })()
-                          }}
-                          style={subtleLinkStyle}
-                        >
-                          {t.settings.data.resetFolder}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                )}
               </div>
             )}
 

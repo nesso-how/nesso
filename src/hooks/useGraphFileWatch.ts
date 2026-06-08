@@ -2,7 +2,7 @@
 import { useEffect, useRef } from 'react'
 import { useGraphStore } from '@/store'
 import { graphPersistFingerprint } from '@/lib/graphPersist'
-import { dbListGraphs, dbSaveGraph } from '@/store/db'
+import { dbDeleteGraph, dbListGraphs, dbSaveGraph } from '@/store/db'
 import { isDesktop } from '@/lib/isDesktop'
 import {
   isManifestOnlyWatchPaths,
@@ -16,7 +16,7 @@ import {
 const DEBOUNCE_MS = 400
 
 export function useGraphFileWatch() {
-  const workspacePath = useGraphStore((s) => s.settings.graphWorkspacePath)
+  const workspacePath = useGraphStore((s) => s.settings.activeProjectPath)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const unwatchRef = useRef<(() => void) | null>(null)
   // Incremented on every setup; checked after the async watch() resolves to
@@ -79,18 +79,27 @@ export function useGraphFileWatch() {
         const state = useGraphStore.getState()
         const ws = await resolveWorkspace(state.settings)
         const idbRecords = await dbListGraphs()
-        const { toPersist, manifest } = await reconcileDiskWithIdb(ws, idbRecords)
+        const { toPersist, manifest, removed } = await reconcileDiskWithIdb(ws, idbRecords)
         setDiskSyncCache(ws.displayPath, manifest)
         for (const rec of toPersist) {
           await dbSaveGraph(rec)
         }
+        for (const id of removed) {
+          await dbDeleteGraph(id)
+        }
 
-        if (toPersist.length === 0) return
+        if (toPersist.length === 0 && removed.length === 0) return
 
         const records = await dbListGraphs()
         useGraphStore.setState({
           graphList: records.map((r) => ({ id: r.id, name: r.name, updatedAt: r.updatedAt })),
         })
+
+        if (removed.includes(state.currentGraphId)) {
+          const next = records[0]
+          if (next) await useGraphStore.getState().loadGraph(next.id)
+          return
+        }
 
         const changedFromDisk = new Set(toPersist.map((r) => r.id))
         if (!changedFromDisk.has(state.currentGraphId)) return

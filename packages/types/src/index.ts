@@ -126,6 +126,8 @@ export interface NessoSettings {
   maximumInterval: number
   inspectorExamplesOpen: boolean
   inspectorRelationsOpen: boolean
-  /** Desktop: custom folder for graph .json files; null = default app data graphs folder. */
-  graphWorkspacePath: string | null
+  /** Desktop: absolute paths of folders the user has explicitly opened, most-recent first. */
+  knownProjects: string[]
+  /** Desktop: absolute path of the active project folder; null until resolved at startup. */
+  activeProjectPath: string | null
 }

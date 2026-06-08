@@ -24,22 +24,12 @@ const it: typeof en = {
       appearance: 'Aspetto',
       ai: 'AI',
       review: 'Revisione',
-      data: 'Dati',
     },
     appearance: {
       theme: 'Tema',
       light: 'Chiaro',
       dark: 'Scuro',
       language: 'Lingua',
-    },
-    data: {
-      graphFolder: 'Cartella grafi',
-      graphFolderDesc:
-        'Dove vengono salvati i grafi. Scegli una cartella su cloud per condividerli tra dispositivi, o modifica i file con un editor di testo.',
-      graphFolderDefault: 'Predefinita (dati app)',
-      chooseFolder: 'Scegli cartella',
-      openFolder: 'Apri cartella',
-      resetFolder: 'Usa cartella predefinita',
     },
     ai: {
       source: 'Modalità',
@@ -150,6 +140,15 @@ const it: typeof en = {
     untitled: 'Senza titolo',
     collapseSidebar: 'Comprimi pannello laterale',
     websiteLinkTitle: 'Visita nesso.how',
+    projectSwitcher: {
+      noProject: 'Nessun progetto',
+      defaultProjectName: 'I miei grafi',
+      projects: 'Progetti',
+      newProject: 'Nuovo progetto',
+      openProject: 'Apri progetto…',
+      revealInFinder: 'Mostra nel Finder',
+      removeProject: 'Rimuovi dalla lista',
+    },
     newGraphTitle: 'Nuovo grafo',
     deleteGraph: 'Elimina grafo',
     renameHint: 'doppio clic per rinominare',
