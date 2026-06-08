@@ -42,22 +42,15 @@ export const useGraphStore = create<GraphState>()(
         const merged = { ...current.settings, ...p.settings } as typeof current.settings & {
           reviewBatchMax?: unknown
           fsrsMaxInterval?: unknown
-          graphWorkspacePath?: string | null
+          graphWorkspacePath?: unknown
         }
         const {
           reviewBatchMax: _legacyReviewBatchMax,
           fsrsMaxInterval: _legacyFsrsMaxInterval,
-          graphWorkspacePath: legacyGraphWorkspacePath,
+          graphWorkspacePath: _legacyGraphWorkspacePath,
           ...settings
         } = merged
         if (settings.autoCurveFlip === undefined) settings.autoCurveFlip = true
-        if (settings.knownProjects === undefined) {
-          // Migrate from the single-workspace model: the legacy custom folder (if any)
-          // becomes the sole known project; resolution to a concrete path (including
-          // the bundled default) finishes async in loadGraphList.
-          settings.knownProjects = legacyGraphWorkspacePath ? [legacyGraphWorkspacePath] : []
-          settings.activeProjectPath = legacyGraphWorkspacePath ?? null
-        }
         return {
           ...current,
           ...rest,

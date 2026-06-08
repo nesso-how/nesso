@@ -124,8 +124,7 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
     if (isDesktop()) {
       try {
         // Resolve the active project to a concrete path (the bundled default
-        // folder on first launch / after migrating from the single-workspace
-        // model) and ensure it's registered as a known project.
+        // folder on first launch) and ensure it's registered as a known project.
         let { knownProjects, activeProjectPath } = get().settings
         if (!activeProjectPath) {
           activeProjectPath = await getDefaultWorkspacePath()
