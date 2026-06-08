@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.0-alpha.28] - 2026-06-08
+
 ### Added
 
 - **Desktop:** Multi-project support — open and switch between any number of project folders, each holding its own `.json` graphs and `.nesso/manifest.json` (VS Code-style explicit "Open Folder…", no auto-discovery). The sidebar brand slot becomes a project switcher (name + chevron, dropdown with known projects, "Open Folder…", "Close Project"); a native File menu mirrors these (⌘O / ⌘W).
@@ -474,7 +476,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial alpha: interactive knowledge graph (web + Tauri v2); desktop installers on GitHub Releases (macOS Apple silicon and Intel).
 
-[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.27...HEAD
+[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.28...HEAD
+[0.1.0-alpha.28]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.27...v0.1.0-alpha.28
 [0.1.0-alpha.27]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.26...v0.1.0-alpha.27
 [0.1.0-alpha.26]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.25...v0.1.0-alpha.26
 [0.1.0-alpha.25]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.24...v0.1.0-alpha.25
