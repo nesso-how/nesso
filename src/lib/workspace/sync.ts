@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
 import type { GraphRecord } from '@/store/db'
 import { dbDeleteGraph, dbListGraphs, dbSaveGraph } from '@/store/db'
+import { graphPersistEquals } from '@/lib/graphPersist'
 import type { NessoSettings } from '@/types/graph'
+import { defaultGraphDisplay } from '@/types/graph'
 import {
   buildFileToIdMap,
   readManifest,
@@ -83,7 +85,23 @@ export async function reconcileDiskWithIdb(
     )
 
     const idb = idbById.get(id)
-    if (!idb || diskRecord.updatedAt > idb.updatedAt || idb.name !== diskRecord.name) {
+    if (
+      !idb ||
+      diskRecord.updatedAt > idb.updatedAt ||
+      idb.name !== diskRecord.name ||
+      // Equal timestamp but different content: the file was edited externally
+      // without bumping its embedded `updatedAt` (e.g. hand-edited in a text
+      // editor). The folder is the source of truth — pick the change up here,
+      // or the next in-app save would silently overwrite it.
+      !graphPersistEquals(
+        {
+          nodes: diskRecord.nodes,
+          edges: diskRecord.edges,
+          display: diskRecord.display ?? defaultGraphDisplay(),
+        },
+        { nodes: idb.nodes, edges: idb.edges, display: idb.display ?? defaultGraphDisplay() },
+      )
+    ) {
       toPersist.push(diskRecord)
     }
     idbById.set(id, diskRecord)

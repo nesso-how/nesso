@@ -28,5 +28,11 @@ export const createUISlice: StateCreator<GraphState, [], [], UISlice> = (set) =>
   setSidebarDisplayOpen: (v) => set({ sidebarDisplayOpen: v }),
   setSidebarStatsOpen: (v) => set({ sidebarStatsOpen: v }),
 
-  saveViewport: (id, vp) => set((s) => ({ viewports: { ...s.viewports, [id]: vp } })),
+  // Viewports observed in a zero-sized window (embedded WebViews before first
+  // layout) are degenerate min-zoom fits — persisting one would keep the graph
+  // invisible on every subsequent launch.
+  saveViewport: (id, vp) => {
+    if (window.innerWidth <= 0 || window.innerHeight <= 0) return
+    set((s) => ({ viewports: { ...s.viewports, [id]: vp } }))
+  },
 })

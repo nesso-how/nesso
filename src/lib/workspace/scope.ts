@@ -26,8 +26,10 @@ export async function createProjectFolder(): Promise<string | null> {
   const picked = await save({ title: 'New project', defaultPath: 'Untitled' })
   if (!picked) return null
   const norm = normalizePath(picked)
+  // Grant before mkdir: without static home-wide fs permissions the create
+  // call itself needs the runtime scope.
+  await grantFsScope(norm)
   const { mkdir } = await import('@tauri-apps/plugin-fs')
   await mkdir(norm, { recursive: true })
-  await grantFsScope(norm)
   return norm
 }

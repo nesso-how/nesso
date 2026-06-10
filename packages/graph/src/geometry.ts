@@ -70,6 +70,26 @@ export function rectExit(cx: number, cy: number, w: number, h: number, tx: numbe
   return { x: cx + dx * s, y: cy + dy * s }
 }
 
+/** Quadratic-curve control point shared by edge rendering and the connection line. */
+export function arcControlPoint(
+  sx: number,
+  sy: number,
+  tx: number,
+  ty: number,
+  siblingIdx = 0,
+  curveFlip = false,
+): { cpx: number; cpy: number } {
+  const dx = tx - sx
+  const dy = ty - sy
+  const dist = Math.sqrt(dx * dx + dy * dy) || 1
+  const nx = -dy / dist
+  const ny = dx / dist
+  const off = siblingIdx * 14
+  const sign = curveFlip ? -1 : 1
+  const bend = (Math.min(dist * 0.22, 90) + off * 0.5) * sign
+  return { cpx: (sx + tx) / 2 + nx * bend, cpy: (sy + ty) / 2 + ny * bend }
+}
+
 export function nessoArcPath(
   sx: number,
   sy: number,
@@ -90,18 +110,7 @@ export function nessoArcPath(
     }
   }
 
-  const dx = tx - sx
-  const dy = ty - sy
-  const dist = Math.sqrt(dx * dx + dy * dy) || 1
-
-  const nx = -dy / dist
-  const ny = dx / dist
-
-  const off = siblingIdx * 14
-  const sign = curveFlip ? -1 : 1
-  const bend = (Math.min(dist * 0.22, 90) + off * 0.5) * sign
-  const cpx = (sx + tx) / 2 + nx * bend
-  const cpy = (sy + ty) / 2 + ny * bend
+  const { cpx, cpy } = arcControlPoint(sx, sy, tx, ty, siblingIdx, curveFlip)
 
   const path = `M ${sx} ${sy} Q ${cpx} ${cpy} ${tx} ${ty}`
   const labelX = cpx * 0.5 + (sx + tx) * 0.25

@@ -13,6 +13,7 @@ export type { NessoGraphDisplayContext, CategoryColorMode } from './context.js'
 export { GlyphSVG } from './GlyphSVG.js'
 export { ratingColor } from './ratingColor.js'
 export {
+  arcControlPoint,
   defaultCurveFlip,
   nodeCenterX,
   nodeCenterY,

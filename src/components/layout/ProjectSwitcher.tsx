@@ -156,8 +156,10 @@ export function ProjectSwitcher() {
                           onClick={(e) => {
                             e.stopPropagation()
                             void (async () => {
-                              const { openPath } = await import('@tauri-apps/plugin-opener')
-                              await openPath(path).catch(() => {})
+                              // revealItemInDir only highlights in the file manager —
+                              // unlike openPath it can never launch an arbitrary app.
+                              const { revealItemInDir } = await import('@tauri-apps/plugin-opener')
+                              await revealItemInDir(path).catch(() => {})
                             })()
                           }}
                           style={rowIconBtn}

@@ -151,6 +151,7 @@ const en = {
     },
     newGraphTitle: 'New graph',
     deleteGraph: 'Delete graph',
+    deleteGraphConfirm: 'Delete "{name}"? This also removes its file from the project folder.',
     renameHint: 'double-click to rename',
     settingsTitle: 'Settings (⌘,)',
     stats: {
@@ -208,6 +209,7 @@ const en = {
     relationTypes: 'Relation types',
     exportGraph: 'Export graph',
     exportOverwriteConfirm: 'A file named "{name}" already exists. Overwrite it?',
+    importError: '"{name}" is not a valid Nesso graph file — nothing was imported.',
     exportPng: 'Export graph (.png)',
     importGraph: 'Import graph',
     keyboardShortcuts: 'Keyboard shortcuts',

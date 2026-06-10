@@ -83,8 +83,15 @@ export function RelationPicker({ screenX, screenY, fromText, toText, onPick, onC
     }))
     .filter((g) => g.types.length > 0)
 
-  const left = Math.min(screenX + 8, window.innerWidth - 320)
-  const top = Math.min(screenY + 8, window.innerHeight - 460)
+  // The onConnect path has no pointer coordinates (0,0) — center the picker
+  // instead of pinning it to the top-left corner.
+  const centered = screenX === 0 && screenY === 0
+  const left = centered
+    ? Math.max(8, (window.innerWidth - 300) / 2)
+    : Math.min(screenX + 8, window.innerWidth - 320)
+  const top = centered
+    ? Math.max(8, (window.innerHeight - 460) / 2)
+    : Math.min(screenY + 8, window.innerHeight - 460)
 
   return (
     <div onClick={onCancel} style={{ position: 'fixed', inset: 0, zIndex: 60 }}>

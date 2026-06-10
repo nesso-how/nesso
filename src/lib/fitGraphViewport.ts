@@ -17,13 +17,21 @@ type Viewport = { x: number; y: number; zoom: number }
 
 type FitNode = Pick<Node<ConceptNodeData>, 'position' | 'measured'>
 
+// Embedded/headless WebViews can report a 0×0 window before first layout;
+// callers must skip fitting (and retry on resize) while this is unusable.
+export function fitCanvasSize(insets: CanvasInsets): { width: number; height: number } {
+  return {
+    width: window.innerWidth - insets.left - insets.right,
+    height: window.innerHeight - insets.top - insets.bottom,
+  }
+}
+
 export function computeFitViewport(
   nodes: FitNode[],
   insets: CanvasInsets,
   zoomScale = 1,
 ): Viewport {
-  const canvasW = window.innerWidth - insets.left - insets.right
-  const canvasH = window.innerHeight - insets.top - insets.bottom
+  const { width: canvasW, height: canvasH } = fitCanvasSize(insets)
 
   if (nodes.length === 0) {
     return {

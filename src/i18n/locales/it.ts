@@ -151,6 +151,8 @@ const it: typeof en = {
     },
     newGraphTitle: 'Nuovo grafo',
     deleteGraph: 'Elimina grafo',
+    deleteGraphConfirm:
+      'Eliminare "{name}"? Verrà rimosso anche il file dalla cartella del progetto.',
     renameHint: 'doppio clic per rinominare',
     settingsTitle: 'Impostazioni (⌘,)',
     stats: {
@@ -208,6 +210,7 @@ const it: typeof en = {
     relationTypes: 'Tipi di relazione',
     exportGraph: 'Esporta grafo',
     exportOverwriteConfirm: 'Esiste già un file "{name}". Sovrascriverlo?',
+    importError: '"{name}" non è un file grafo Nesso valido — nessun import eseguito.',
     exportPng: 'Esporta grafo (png)',
     importGraph: 'Importa grafo',
     keyboardShortcuts: 'Scorciatoie da tastiera',

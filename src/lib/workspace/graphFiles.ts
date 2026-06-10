@@ -20,7 +20,7 @@ import {
 } from '@/lib/workspace/manifest'
 import type { WorkspaceTarget } from '@/lib/workspace/paths'
 import { resolveWorkspace } from '@/lib/workspace/paths'
-import { beginSuppressWatch, endSuppressWatch } from '@/lib/workspace/watch'
+import { beginSuppressWatch, endSuppressWatch, noteSelfWrite } from '@/lib/workspace/watch'
 import { grantFsScope } from '@/lib/workspace/scope'
 
 /** Filename stem from graph title — keeps spaces; strips path-forbidden characters only. */
@@ -130,6 +130,7 @@ async function alignEntryFileToName(
   const newPath = ws.path(expectedFile)
   beginSuppressWatch()
   try {
+    noteSelfWrite(oldPath, newPath)
     await rename(oldPath, newPath).catch(() => {})
   } finally {
     endSuppressWatch()
@@ -171,6 +172,7 @@ async function relocateGraphFile(
   const content = recordToGraphFile({ ...record, name: finalName })
   beginSuppressWatch()
   try {
+    noteSelfWrite(ws.path(currentFile), newPath)
     try {
       // Prefer rename (atomic on most FS) to preserve metadata; fall back to
       // write + remove on cross-device or permission failures.
@@ -215,6 +217,7 @@ export async function saveGraphToDisk(
   const path = ws.path(entry.file)
   beginSuppressWatch()
   try {
+    noteSelfWrite(path)
     await writeTextFile(path, recordToGraphFile(saved))
   } finally {
     endSuppressWatch()
@@ -235,6 +238,7 @@ export async function deleteGraphFromDisk(
   const path = ws.path(entry.file)
   beginSuppressWatch()
   try {
+    noteSelfWrite(path)
     await remove(path).catch(() => {})
   } finally {
     endSuppressWatch()
@@ -274,6 +278,7 @@ export async function loadRecordFromDiskFile(
       record.updatedAt = Date.now()
       beginSuppressWatch()
       try {
+        noteSelfWrite(ws.path(filename))
         await writeTextFile(ws.path(filename), recordToGraphFile(record))
       } finally {
         endSuppressWatch()

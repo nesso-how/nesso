@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 import type { ConnectionLineComponentProps } from '@xyflow/react'
 import {
+  arcControlPoint,
   effectiveCurveFlip,
   flowNodeCenterX,
   flowNodeCenterY,
@@ -54,15 +55,7 @@ export function NessoConnectionLine({
     } else {
       // Mirror NessoEdge: derive the control point from node centers so that
       // both exit points account for the actual curve direction (including flip).
-      const flipSign = curveFlip ? -1 : 1
-      const dx = tcx - scx
-      const dy = tcy - scy
-      const dist = Math.sqrt(dx * dx + dy * dy) || 1
-      const nx = -dy / dist
-      const ny = dx / dist
-      const bend = Math.min(dist * 0.22, 90) * flipSign
-      const cpx = (scx + tcx) / 2 + nx * bend
-      const cpy = (scy + tcy) / 2 + ny * bend
+      const { cpx, cpy } = arcControlPoint(scx, scy, tcx, tcy, 0, curveFlip)
       const a = rectExit(scx, scy, sw + pad * 2, sh + pad * 2, cpx, cpy)
       b = rectExit(tcx, tcy, tw + pad * 2, th + pad * 2, cpx, cpy)
       startX = a.x
@@ -86,15 +79,7 @@ export function NessoConnectionLine({
       startX = a.x
       startY = a.y
     } else {
-      const flipSign = curveFlip ? -1 : 1
-      const dx = toX - scx
-      const dy = toY - scy
-      const dist = Math.sqrt(dx * dx + dy * dy) || 1
-      const nx = -dy / dist
-      const ny = dx / dist
-      const bend = Math.min(dist * 0.22, 90) * flipSign
-      const cpx = (scx + toX) / 2 + nx * bend
-      const cpy = (scy + toY) / 2 + ny * bend
+      const { cpx, cpy } = arcControlPoint(scx, scy, toX, toY, 0, curveFlip)
       const a = rectExit(scx, scy, sw + pad * 2, sh + pad * 2, cpx, cpy)
       startX = a.x
       startY = a.y

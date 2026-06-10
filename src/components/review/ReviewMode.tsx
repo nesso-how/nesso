@@ -35,13 +35,17 @@ interface Props {
   onClose: () => void
 }
 
+const EMPTY_NODES: ReturnType<typeof sortedDueConceptNodes> = []
+const EMPTY_EDGES: never[] = []
+
 export function ReviewMode({ open, onClose }: Props) {
   const t = useT()
-  const nodes = useGraphStore((s) => s.nodes)
-  const edges = useGraphStore((s) => s.edges)
+  // Gate on `open`: the component stays mounted, and subscribing to the arrays
+  // while closed would re-render it (and re-sort the due queue) on every edit.
+  const nodes = useGraphStore((s) => (open ? s.nodes : null)) ?? EMPTY_NODES
+  const edges = useGraphStore((s) => (open ? s.edges : null)) ?? EMPTY_EDGES
   const updateNodeData = useGraphStore((s) => s.updateNodeData)
   const settings = useGraphStore((s) => s.settings)
-  const [idx, setIdx] = useState(0)
   const [revealed, setRevealed] = useState(false)
   /** Cards finished this session; idx resets to 0 after each rating so we track progress separately. */
   const [sessionProgress, setSessionProgress] = useState(0)
@@ -66,7 +70,6 @@ export function ReviewMode({ open, onClose }: Props) {
     if (open) {
       sessionTotalRef.current = sortedDueConceptNodes(useGraphStore.getState().nodes).length
       setSessionProgress(0)
-      setIdx(0)
       setRevealed(false)
     } else {
       sessionTotalRef.current = 0
@@ -74,7 +77,9 @@ export function ReviewMode({ open, onClose }: Props) {
     }
   }, [open])
 
-  const currentNode = due.length ? due[idx % due.length] : null
+  // Rated cards get a future due date and drop out of `due`, so the head of
+  // the queue always advances after each rating.
+  const currentNode = due[0] ?? null
   const aiReady = settings.aiMode === 'local' ? webllm.status === 'ready' : isAiReady(settings)
 
   const predictedIntervals = useMemo(() => {
@@ -156,7 +161,7 @@ export function ReviewMode({ open, onClose }: Props) {
   if (!open) return null
 
   const advance = (rating: Rating) => {
-    const current = due[idx]
+    const current = due[0]
 
     if (current) {
       const now = new Date()
@@ -170,6 +175,7 @@ export function ReviewMode({ open, onClose }: Props) {
         due: card.due.getTime(),
         lastReview: now.getTime(),
         lastRating: rating,
+        learningSteps: card.learning_steps,
       })
     }
     setRevealed(false)
@@ -189,8 +195,6 @@ export function ReviewMode({ open, onClose }: Props) {
       sessionTotalRef.current = queueAfter.length
       return 0
     })
-
-    setIdx(0)
   }
 
   if (!due.length) {

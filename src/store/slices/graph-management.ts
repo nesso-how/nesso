@@ -43,6 +43,9 @@ function detectBrowserLanguage(): Language {
 // _switchProjectInflight serialises concurrent switchProject invocations.
 let _switchingProject = false
 let _switchProjectInflight: Promise<GraphMeta[]> | null = null
+// Set while abandoning a project whose folder was deleted externally — any
+// save in that window would silently recreate the folder from the IDB cache.
+let _suppressOutgoingSave = false
 
 /** Register `path` as the most-recent known project, then switch to it. */
 function registerAndSwitch(
@@ -82,6 +85,8 @@ export interface GraphManagementSlice {
   openProject: () => Promise<GraphMeta[]>
   switchProject: (path: string) => Promise<GraphMeta[]>
   removeProject: (path: string) => Promise<GraphMeta[]>
+  /** Drop a project whose folder vanished from disk; switches away if it was active. */
+  removeMissingProject: (path: string) => Promise<GraphMeta[]>
   loadGraph: (id: string) => Promise<void>
   saveCurrentGraph: () => Promise<void>
   createGraph: (name: string) => Promise<string>
@@ -133,8 +138,26 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
         if (!knownProjects.some((p) => normalizePath(p) === activeNorm)) {
           knownProjects = [activeProjectPath, ...knownProjects]
         }
-        set((s) => ({ settings: { ...s.settings, knownProjects, activeProjectPath } }))
         for (const p of knownProjects) await grantFsScope(p)
+
+        // Folders can be deleted while the app is closed — drop them from the
+        // list instead of resurrecting them from the IDB cache. The bundled
+        // default is kept (auto-created); exists() failures keep the entry.
+        const defaultNorm = normalizePath(await getDefaultWorkspacePath())
+        const { exists } = await import('@tauri-apps/plugin-fs')
+        const present: string[] = []
+        for (const p of knownProjects) {
+          if (normalizePath(p) === defaultNorm || (await exists(p).catch(() => true))) {
+            present.push(p)
+          }
+        }
+        knownProjects = present
+        set((s) => ({ settings: { ...s.settings, knownProjects, activeProjectPath } }))
+
+        if (activeNorm !== defaultNorm && !present.some((p) => normalizePath(p) === activeNorm)) {
+          // The active project vanished while the app was closed.
+          return await get().removeMissingProject(activeProjectPath)
+        }
 
         records = await persistWorkspaceSync(get().settings, records)
       } catch (err) {
@@ -182,6 +205,28 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
       _switchingProject = true
       try {
         await grantFsScope(norm)
+
+        // Clicking a project whose folder was deleted externally: prune it
+        // from the list instead of failing the load (the default workspace is
+        // exempt — it gets created on demand).
+        if (norm !== normalizePath(await getDefaultWorkspacePath())) {
+          const { exists } = await import('@tauri-apps/plugin-fs')
+          if (!(await exists(norm).catch(() => true))) {
+            set((s) => ({
+              settings: {
+                ...s.settings,
+                knownProjects: s.settings.knownProjects.filter((p) => normalizePath(p) !== norm),
+              },
+            }))
+            window.alert(
+              get().settings.language === 'it'
+                ? 'Cartella del progetto non trovata: rimossa dalla lista.'
+                : 'Project folder not found: removed from the list.',
+            )
+            return get().graphList
+          }
+        }
+
         // Resolve the target workspace before touching IDB so we can roll back on failure.
         const ws = await resolveWorkspace({ activeProjectPath: norm })
         const prevPath = get().settings.activeProjectPath
@@ -260,7 +305,50 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
     return get().graphList
   },
 
+  removeMissingProject: async (path) => {
+    if (!isDesktop()) return get().graphList
+    const norm = normalizePath(path)
+    // The bundled default workspace is auto-recreated, never pruned.
+    if (norm === normalizePath(await getDefaultWorkspacePath())) return get().graphList
+
+    set((s) => ({
+      settings: {
+        ...s.settings,
+        knownProjects: s.settings.knownProjects.filter((p) => normalizePath(p) !== norm),
+      },
+    }))
+
+    const { knownProjects, activeProjectPath } = get().settings
+    if (!activeProjectPath || normalizePath(activeProjectPath) !== norm) return get().graphList
+
+    // The active project's folder is gone: switch away through the regular
+    // machinery (clears the stale IDB cache, seeds an empty project if
+    // needed) while suppressing saves — they would recreate the folder.
+    _suppressOutgoingSave = true
+    try {
+      const target = knownProjects[0] ?? (await getDefaultWorkspacePath())
+      return await registerAndSwitch(target, set, get)
+    } finally {
+      _suppressOutgoingSave = false
+    }
+  },
+
   loadGraph: async (id) => {
+    const s = get()
+    // Flush the outgoing graph's debounced autosave so edits made within the
+    // debounce window of a switch aren't lost. Skipped when: nothing loaded yet
+    // (startup — would persist the empty initial state), same-graph reload (the
+    // watcher path intentionally replaces stale memory), a conflict is pending,
+    // or the outgoing graph was just deleted from the list.
+    if (
+      s.loadedToken > 0 &&
+      id !== s.currentGraphId &&
+      !s.externalFileConflict &&
+      s.graphList.some((g) => g.id === s.currentGraphId) &&
+      graphPersistFingerprint(s.nodes, s.edges, s.graphDisplay) !== s.savedFingerprint
+    ) {
+      await s.saveCurrentGraph()
+    }
     const record = await dbLoadGraph(id)
     if (!record) return
     _draggingNodeIds.clear()
@@ -281,8 +369,12 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
   },
 
   saveCurrentGraph: async () => {
-    if (get().externalFileConflict || _switchingProject) return
-    const { currentGraphId, nodes, edges, graphList, graphDisplay, settings } = get()
+    if (get().externalFileConflict || _switchingProject || _suppressOutgoingSave) return
+    const { currentGraphId, nodes, edges, graphList, graphDisplay, settings, loadedToken } = get()
+    const fp = graphPersistFingerprint(nodes, edges, graphDisplay)
+    // Nothing persistable changed since the last save/load — skip the IDB read
+    // and the double serialization below.
+    if (fp === get().savedFingerprint) return
     const meta = graphList.find((g) => g.id === currentGraphId)
     const existing = await dbLoadGraph(currentGraphId)
     if (
@@ -306,7 +398,7 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
     const now = Date.now()
     const record: GraphRecord = {
       id: currentGraphId,
-      name: meta?.name ?? 'Untitled',
+      name: meta?.name ?? (settings.language === 'it' ? 'Senza titolo' : 'Untitled'),
       createdAt: existing?.createdAt ?? meta?.updatedAt ?? now,
       updatedAt: now,
       nodes: persistNodes,
@@ -320,15 +412,20 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
     // "IDB behind disk", which is always recoverable by reloading from disk.
     const persisted = isDesktop() ? await writeGraphRecordToWorkspace(settings, record) : record
     await dbSaveGraph(persisted)
-    const fp = graphPersistFingerprint(persistNodes, persistEdges, display)
+    // `fp` from above equals the persisted payload's fingerprint (selection is
+    // stripped by graphPersistFingerprint either way).
+    // The current graph may have changed while awaiting the disk/IDB writes —
+    // the graphList bump for the saved graph is still valid, but the
+    // per-current-graph fields must not leak onto the newly loaded graph.
+    const stillCurrent =
+      get().currentGraphId === currentGraphId && get().loadedToken === loadedToken
     set((s) => ({
       graphList: s.graphList.map((g) =>
         g.id === currentGraphId
           ? { ...g, name: persisted.name, updatedAt: persisted.updatedAt }
           : g,
       ),
-      savedFingerprint: fp,
-      externalFileConflict: false,
+      ...(stillCurrent ? { savedFingerprint: fp, externalFileConflict: false } : {}),
     }))
   },
 
@@ -360,6 +457,7 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
       edges: [],
       graphDisplay: display,
       selected: null,
+      savedFingerprint: graphPersistFingerprint([], [], display),
       _history: [],
       _future: [],
     }))
@@ -400,6 +498,7 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
         edges,
         graphDisplay,
         selected: null,
+        savedFingerprint: graphPersistFingerprint(nodes, edges, graphDisplay),
         _history: [],
         _future: [],
       }
@@ -427,7 +526,11 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
     }
     const { graphList, currentGraphId, loadGraph } = get()
     const next = graphList.find((g) => g.id !== id)
-    set((s) => ({ graphList: s.graphList.filter((g) => g.id !== id) }))
+    set((s) => {
+      // Drop the saved viewport too — it's persisted and never cleaned otherwise.
+      const { [id]: _removed, ...viewports } = s.viewports
+      return { graphList: s.graphList.filter((g) => g.id !== id), viewports }
+    })
     if (currentGraphId === id && next) await loadGraph(next.id)
   },
 })

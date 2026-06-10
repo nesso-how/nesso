@@ -17,6 +17,7 @@ import {
   snapshotSelection,
 } from '@/lib/graphClipboard'
 import { defaultCurveFlip, nodeCenterX, nodeCenterY } from '@nesso-how/graph'
+import { newElementId } from '@/lib/graphId'
 import type { GraphSnapshot } from '../types'
 import type { GraphState } from '../state'
 
@@ -29,6 +30,41 @@ export function pushHistory(
   return {
     _history: [...s._history, { nodes: s.nodes, edges: s.edges }].slice(-MAX_UNDO),
     _future: [] as GraphSnapshot[],
+  }
+}
+
+/**
+ * Recompute `selected` flags so exactly the given ids are marked, preserving
+ * array/object identity when nothing changes (avoids needless re-renders).
+ */
+function applySelectionFlags(
+  nodes: Node<ConceptNodeData>[],
+  edges: Edge[],
+  nodeIds: ReadonlySet<string>,
+  edgeIds: ReadonlySet<string>,
+): { nodes: Node<ConceptNodeData>[]; edges: Edge[]; changed: boolean } {
+  let nodesChanged = false
+  const nextNodes = nodes.map((n) => {
+    const want = nodeIds.has(n.id)
+    if (Boolean(n.selected) !== want) {
+      nodesChanged = true
+      return { ...n, selected: want }
+    }
+    return n
+  })
+  let edgesChanged = false
+  const nextEdges = edges.map((e) => {
+    const want = edgeIds.has(e.id)
+    if (Boolean(e.selected) !== want) {
+      edgesChanged = true
+      return { ...e, selected: want }
+    }
+    return e
+  })
+  return {
+    nodes: nodesChanged ? nextNodes : nodes,
+    edges: edgesChanged ? nextEdges : edges,
+    changed: nodesChanged || edgesChanged,
   }
 }
 
@@ -103,6 +139,7 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
         nodes: prev.nodes,
         edges: prev.edges,
         selected: null,
+        selectedIds: [],
       }
     }),
 
@@ -117,6 +154,7 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
         nodes: next.nodes,
         edges: next.edges,
         selected: null,
+        selectedIds: [],
       }
     }),
 
@@ -184,7 +222,7 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
     })),
 
   addNode: (x = 0, y = 0) => {
-    const id = 'n' + Math.random().toString(36).slice(2, 7)
+    const id = newElementId('n', new Set(get().nodes.map((n) => n.id)))
     set((s) => ({
       ...pushHistory(s),
       nodes: [
@@ -212,7 +250,7 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
   clearEditNodeId: () => set({ editNodeId: null }),
 
   addEdge: (source, target, type) => {
-    const id = 'e' + Math.random().toString(36).slice(2, 8)
+    const id = newElementId('e', new Set(get().edges.map((e) => e.id)))
     set((s) => {
       const sourceNode = s.nodes.find((n) => n.id === source)
       const targetNode = s.nodes.find((n) => n.id === target)
@@ -290,87 +328,19 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
     set((s) => {
       if (s.selected?.kind === sel?.kind && s.selected?.id === sel?.id) return s
 
-      if (sel?.kind === 'node') {
-        let nodesChanged = false
-        const nodes = s.nodes.map((n) => {
-          const want = n.id === sel.id
-          if (Boolean(n.selected) !== want) {
-            nodesChanged = true
-            return { ...n, selected: want }
-          }
-          return n
-        })
-        let edgesChanged = false
-        const edges = s.edges.map((e) => {
-          if (e.selected) {
-            edgesChanged = true
-            return { ...e, selected: false }
-          }
-          return e
-        })
-        return {
-          selected: sel,
-          selectedIds: [sel.id],
-          nodes: nodesChanged ? nodes : s.nodes,
-          edges: edgesChanged ? edges : s.edges,
-        }
-      }
-
-      if (sel?.kind === 'edge') {
-        let nodesChanged = false
-        const nodes = s.nodes.map((n) => {
-          if (n.selected) {
-            nodesChanged = true
-            return { ...n, selected: false }
-          }
-          return n
-        })
-        let edgesChanged = false
-        const edges = s.edges.map((e) => {
-          const want = e.id === sel.id
-          if (Boolean(e.selected) !== want) {
-            edgesChanged = true
-            return { ...e, selected: want }
-          }
-          return e
-        })
-        return {
-          selected: sel,
-          selectedIds: [],
-          nodes: nodesChanged ? nodes : s.nodes,
-          edges: edgesChanged ? edges : s.edges,
-        }
-      }
-
-      let nodesChanged = false
-      const nodes = s.nodes.map((n) => {
-        if (n.selected) {
-          nodesChanged = true
-          return { ...n, selected: false }
-        }
-        return n
-      })
-      let edgesChanged = false
-      const edges = s.edges.map((e) => {
-        if (e.selected) {
-          edgesChanged = true
-          return { ...e, selected: false }
-        }
-        return e
-      })
+      const nodeIds = new Set(sel?.kind === 'node' ? [sel.id] : [])
+      const edgeIds = new Set(sel?.kind === 'edge' ? [sel.id] : [])
+      const { nodes, edges } = applySelectionFlags(s.nodes, s.edges, nodeIds, edgeIds)
       return {
-        selected: null,
-        selectedIds: [],
-        nodes: nodesChanged ? nodes : s.nodes,
-        edges: edgesChanged ? edges : s.edges,
+        selected: sel,
+        selectedIds: sel?.kind === 'node' ? [sel.id] : [],
+        nodes,
+        edges,
       }
     }),
 
   syncFlowSelection: (nodeIds, edgeIds) =>
     set((s) => {
-      const nodeIdSet = new Set(nodeIds)
-      const edgeIdSet = new Set(edgeIds)
-
       let selected: import('../types').Selection = null
       if (nodeIds.length === 1 && edgeIds.length === 0) {
         selected = { kind: 'node', id: nodeIds[0] }
@@ -384,33 +354,16 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
         (selected?.kind === s.selected?.kind && selected?.id === s.selected?.id) ||
         (selected === null && s.selected === null)
 
-      let nodesChanged = false
-      const nodes = s.nodes.map((n) => {
-        const want = nodeIdSet.has(n.id)
-        if (Boolean(n.selected) !== want) {
-          nodesChanged = true
-          return { ...n, selected: want }
-        }
-        return n
-      })
-      let edgesChanged = false
-      const edges = s.edges.map((e) => {
-        const want = edgeIdSet.has(e.id)
-        if (Boolean(e.selected) !== want) {
-          edgesChanged = true
-          return { ...e, selected: want }
-        }
-        return e
-      })
+      const { nodes, edges, changed } = applySelectionFlags(
+        s.nodes,
+        s.edges,
+        new Set(nodeIds),
+        new Set(edgeIds),
+      )
 
-      if (!nodesChanged && !edgesChanged && selectedIdsMatch && selectedMatch) return s
+      if (!changed && selectedIdsMatch && selectedMatch) return s
 
-      return {
-        selected,
-        selectedIds: nodeIds,
-        nodes: nodesChanged ? nodes : s.nodes,
-        edges: edgesChanged ? edges : s.edges,
-      }
+      return { selected, selectedIds: nodeIds, nodes, edges }
     }),
 
   setSelectedIds: (ids) => set({ selectedIds: ids }),
@@ -426,26 +379,19 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
         if (e.selected) edgeIds.add(e.id)
       }
 
-      if (nodeIds.size > 0) {
-        return {
-          ...pushHistory(s),
-          nodes: s.nodes.filter((n) => !nodeIds.has(n.id)),
-          edges: s.edges.filter((e) => !nodeIds.has(e.source) && !nodeIds.has(e.target)),
-          selected: null,
-          selectedIds: [],
-        }
-      }
+      if (nodeIds.size === 0 && edgeIds.size === 0) return s
 
-      if (edgeIds.size > 0) {
-        return {
-          ...pushHistory(s),
-          edges: s.edges.filter((e) => !edgeIds.has(e.id)),
-          selected: null,
-          selectedIds: [],
-        }
+      // Single pass: drop selected nodes, edges incident to them, AND any
+      // explicitly selected edges — a mixed selection removes both.
+      return {
+        ...pushHistory(s),
+        nodes: nodeIds.size > 0 ? s.nodes.filter((n) => !nodeIds.has(n.id)) : s.nodes,
+        edges: s.edges.filter(
+          (e) => !edgeIds.has(e.id) && !nodeIds.has(e.source) && !nodeIds.has(e.target),
+        ),
+        selected: null,
+        selectedIds: [],
       }
-
-      return s
     }),
 
   copySelection: () => {
@@ -459,7 +405,12 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
   pasteSelection: () => {
     const clip = getGraphClipboard()
     if (!clip?.nodes.length && !clip?.edges.length) return null
-    const { nodes: pastedNodes, edges: pastedEdges } = instantiateClipboard(clip)
+    const s = get()
+    const { nodes: pastedNodes, edges: pastedEdges } = instantiateClipboard(
+      clip,
+      new Set(s.nodes.map((n) => n.id)),
+      new Set(s.edges.map((e) => e.id)),
+    )
     const pastedNodeIds = pastedNodes.map((n) => n.id)
 
     set((s) => ({

@@ -10,7 +10,10 @@ export interface WorkspaceTarget {
 }
 
 export function joinPath(...parts: string[]): string {
-  return parts.filter(Boolean).join('/').replace(/\/+/g, '/')
+  const joined = parts.filter(Boolean).join('/')
+  // Preserve a leading double slash (Windows UNC paths like //server/share).
+  const uncPrefix = joined.startsWith('//') ? '/' : ''
+  return uncPrefix + joined.replace(/\/+/g, '/')
 }
 
 export function normalizePath(p: string): string {

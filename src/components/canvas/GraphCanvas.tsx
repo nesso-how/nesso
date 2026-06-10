@@ -12,7 +12,6 @@ import {
   BackgroundVariant,
   ConnectionMode,
   useReactFlow,
-  useStore,
   type OnConnect,
   type OnMoveEnd,
   type OnNodesChange,
@@ -40,26 +39,16 @@ interface PendingConnection {
   screenY: number
 }
 
-function ViewportZoomReporter({ onZoomChange }: { onZoomChange: (zoom: number) => void }) {
-  const zoom = useStore((s) => s.transform[2])
-  useEffect(() => {
-    onZoomChange(zoom)
-  }, [zoom, onZoomChange])
-  return null
-}
-
 export function GraphCanvas({
   topInset = 0,
   bottomInset = 0,
   leftInset = 0,
   rightInset = 0,
-  onViewportZoomChange,
 }: {
   topInset?: number
   bottomInset?: number
   leftInset?: number
   rightInset?: number
-  onViewportZoomChange?: (zoom: number) => void
 }) {
   const nodes = useGraphStore((s) => s.nodes)
   const edges = useGraphStore((s) => s.edges)
@@ -68,7 +57,6 @@ export function GraphCanvas({
   const addEdge = useGraphStore((s) => s.addEdge)
   const addNode = useGraphStore((s) => s.addNode)
   const syncFlowSelection = useGraphStore((s) => s.syncFlowSelection)
-  const viewports = useGraphStore((s) => s.viewports)
   const currentGraphId = useGraphStore((s) => s.currentGraphId)
   const loadedToken = useGraphStore((s) => s.loadedToken)
   const graphDisplay = useGraphStore((s) => s.graphDisplay)
@@ -84,18 +72,25 @@ export function GraphCanvas({
   )
 
   const { screenToFlowPosition } = useReactFlow()
-  const defaultViewport =
-    viewports[currentGraphId] ??
-    computeFitViewport(
-      nodes,
-      {
-        top: topInset,
-        bottom: bottomInset,
-        left: leftInset,
-        right: rightInset,
-      },
-      getSeedInitialFitZoom(currentGraphId) ?? 1,
+  // Only read at mount of the keyed NessoGraph below — memoized so the O(N)
+  // fit computation doesn't run again on every drag-frame re-render.
+  const defaultViewport = useMemo(() => {
+    const s = useGraphStore.getState()
+    return (
+      s.viewports[currentGraphId] ??
+      computeFitViewport(
+        s.nodes,
+        {
+          top: topInset,
+          bottom: bottomInset,
+          left: leftInset,
+          right: rightInset,
+        },
+        getSeedInitialFitZoom(currentGraphId) ?? 1,
+      )
     )
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- loadedToken forces a re-read when the same graph is reloaded from disk (state is read via getState()).
+  }, [currentGraphId, loadedToken, topInset, bottomInset, leftInset, rightInset])
 
   const [pendingConn, setPendingConn] = useState<PendingConnection | null>(null)
   const connectingSource = useRef<string | null>(null)
@@ -119,7 +114,11 @@ export function GraphCanvas({
   }, [])
 
   const onConnectEnd = useCallback<OnConnectEnd>((event) => {
-    const target = (event.target as Element).closest('[data-id]')?.getAttribute('data-id')
+    // Restrict to node elements: edges and other React Flow chrome also carry
+    // data-id, and an edge id here would persist a ghost edge with no target.
+    const target = (event.target as Element)
+      .closest('.react-flow__node[data-id]')
+      ?.getAttribute('data-id')
     const source = connectingSource.current
     if (!source || !target || source === target) {
       connectingSource.current = null
@@ -245,7 +244,6 @@ export function GraphCanvas({
           style: { background: 'transparent' },
         }}
       >
-        {onViewportZoomChange && <ViewportZoomReporter onZoomChange={onViewportZoomChange} />}
         <Background variant={BackgroundVariant.Dots} gap={28} size={1.5} color="var(--grid-dot)" />
       </NessoGraph>
 

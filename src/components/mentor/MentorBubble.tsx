@@ -155,12 +155,16 @@ export function MentorBubble() {
   const t = useT()
   const mentorPanelExpanded = useGraphStore((s) => s.mentorPanelExpanded)
   const setMentorPanelExpanded = useGraphStore((s) => s.setMentorPanelExpanded)
-  const nodes = useGraphStore((s) => s.nodes)
-  const edges = useGraphStore((s) => s.edges)
   const currentGraphId = useGraphStore((s) => s.currentGraphId)
   const settings = useGraphStore((s) => s.settings)
-  const selectedNode = useGraphStore(selectedNodeSelector)
-  const selectedEdge = useGraphStore(selectedEdgeSelector)
+  // Primitive selector for the placeholder only — graph data for prompts is
+  // read via getState() at send time, so the bubble doesn't re-render on
+  // every node drag frame.
+  const selectedNodeText = useGraphStore((s) =>
+    s.selected?.kind === 'node'
+      ? (s.nodes.find((n) => n.id === s.selected!.id)?.data.text ?? null)
+      : null,
+  )
 
   const webllm = useWebLLM()
   const modelLoading = settings.aiMode === 'local' && webllm.status === 'loading'
@@ -178,10 +182,16 @@ export function MentorBubble() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const abortRef = useRef<AbortController | null>(null)
 
-  const buildSystemPrompt = useCallback(
-    () => buildGraphChatPrompt(nodes, edges, selectedNode, selectedEdge, settings.language),
-    [nodes, edges, selectedNode, selectedEdge, settings.language],
-  )
+  const buildSystemPrompt = useCallback(() => {
+    const s = useGraphStore.getState()
+    return buildGraphChatPrompt(
+      s.nodes,
+      s.edges,
+      selectedNodeSelector(s),
+      selectedEdgeSelector(s),
+      s.settings.language,
+    )
+  }, [])
 
   useEffect(() => {
     if (!mentorPanelExpanded) return
@@ -204,8 +214,14 @@ export function MentorBubble() {
     setHistory([])
     setLoadingInitial(true)
 
+    const storeState = useGraphStore.getState()
     const systemPrompt = buildSystemPrompt()
-    const seedText = buildMentorSeedText(settings.language, nodes, selectedNode, selectedEdge)
+    const seedText = buildMentorSeedText(
+      settings.language,
+      storeState.nodes,
+      selectedNodeSelector(storeState),
+      selectedEdgeSelector(storeState),
+    )
 
     fetchCompletion(
       settings,
@@ -252,6 +268,11 @@ export function MentorBubble() {
 
   const send = async (text: string) => {
     if (!text.trim() || thinking || loadingInitial) return
+    // Abortable, and guarded below: a "new chat" or graph switch aborts via
+    // abortRef, so a stale reply never lands in the wrong conversation.
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
     const next: Message[] = [...history, { role: 'user', text }]
     setHistory(next)
     setDraft('')
@@ -265,10 +286,15 @@ export function MentorBubble() {
         settings,
         mentorCompletionMessages(buildSystemPrompt(), next),
         MENTOR_MAX_TOKENS,
+        controller.signal,
       )
-      setHistory((h) => [...h, { role: 'mentor', text: raw || '…' }])
+      if (!controller.signal.aborted) {
+        setHistory((h) => [...h, { role: 'mentor', text: raw || '…' }])
+      }
     } catch {
-      setHistory((h) => [...h, { role: 'mentor', text: t.mentor.errorRetrySlow }])
+      if (!controller.signal.aborted) {
+        setHistory((h) => [...h, { role: 'mentor', text: t.mentor.errorRetrySlow }])
+      }
     } finally {
       setThinking(false)
     }
@@ -284,8 +310,8 @@ export function MentorBubble() {
     ? t.mentor.loadingModel
     : localModelAwaitingSetup
       ? t.mentor.placeholderLocalPending
-      : selectedNode
-        ? t.mentor.placeholder(selectedNode.data.text)
+      : selectedNodeText
+        ? t.mentor.placeholder(selectedNodeText)
         : t.mentor.placeholderGraph
 
   return (

@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
-import type { ReactNode, MouseEvent as ReactMouseEvent } from 'react'
+import type { ReactNode } from 'react'
 import { TOPBAR_HEIGHT_PX } from '@/components/layout/TopBar'
 import { useT } from '@/i18n'
+import { useHorizontalResize } from '@/hooks/useHorizontalResize'
 import {
   clampInspectorPanelWidth,
   INSPECTOR_PANEL_EDGE_INSET,
@@ -26,29 +27,11 @@ export function InspectorPanel({
   noPadding = false,
 }: Props) {
   const t = useT()
-
-  function startResize(mouseDownClientX: number) {
-    const startX = mouseDownClientX
-    const startW = panelWidth
-    function onMove(ev: MouseEvent) {
-      onPanelWidthChange(clampInspectorPanelWidth(startW + ev.clientX - startX))
-    }
-    function onUp() {
-      window.removeEventListener('mousemove', onMove)
-      window.removeEventListener('mouseup', onUp)
-      document.body.style.removeProperty('cursor')
-      document.body.style.removeProperty('user-select')
-    }
-    window.addEventListener('mousemove', onMove)
-    window.addEventListener('mouseup', onUp)
-    document.body.style.cursor = 'col-resize'
-    document.body.style.userSelect = 'none'
-  }
-
-  function onResizeEdgeMouseDown(e: ReactMouseEvent) {
-    e.preventDefault()
-    startResize(e.clientX)
-  }
+  const { onResizeHandleMouseDown, onResizeHandleKeyDown } = useHorizontalResize(
+    panelWidth,
+    onPanelWidthChange,
+    clampInspectorPanelWidth,
+  )
 
   return (
     <div
@@ -80,18 +63,8 @@ export function InspectorPanel({
         aria-valuemax={INSPECTOR_PANEL_MAX_WIDTH}
         aria-label={`Resize inspector width (${panelWidth}px). Arrow keys adjust width.`}
         title={t.inspector.resizeHandle}
-        onMouseDown={onResizeEdgeMouseDown}
-        onKeyDown={(e) => {
-          const step = 12
-          if (e.key === 'ArrowLeft') {
-            e.preventDefault()
-            onPanelWidthChange(clampInspectorPanelWidth(panelWidth - step))
-          }
-          if (e.key === 'ArrowRight') {
-            e.preventDefault()
-            onPanelWidthChange(clampInspectorPanelWidth(panelWidth + step))
-          }
-        }}
+        onMouseDown={onResizeHandleMouseDown}
+        onKeyDown={onResizeHandleKeyDown}
         style={{
           position: 'absolute',
           top: 0,

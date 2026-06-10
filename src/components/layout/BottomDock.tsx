@@ -23,14 +23,15 @@ export function BottomDock({
   sidebarWidth = 0,
 }: Props) {
   const t = useT()
-  const edges = useGraphStore((s) => s.edges)
+  // Boolean selector: subscribing to the edges array would re-render the dock
+  // on every edge change.
+  const hasEdgeSelection = useGraphStore((s) => s.edges.some((e) => e.selected))
   const selected = useGraphStore((s) => s.selected)
   const selectedIds = useGraphStore((s) => s.selectedIds)
   const deleteSelection = useGraphStore((s) => s.deleteSelection)
   const copySelection = useGraphStore((s) => s.copySelection)
   const pasteSelection = useGraphStore((s) => s.pasteSelection)
   const pasteAvailable = useGraphStore((s) => s.pasteAvailable)
-  const hasEdgeSelection = edges.some((e) => e.selected)
   const canCopy =
     selected?.kind === 'edge' ||
     selected?.kind === 'node' ||

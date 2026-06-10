@@ -5,7 +5,9 @@ import { graphPersistFingerprint } from '@/lib/graphPersist'
 import { dbDeleteGraph, dbListGraphs, dbSaveGraph } from '@/store/db'
 import { isDesktop } from '@/lib/isDesktop'
 import {
+  grantFsScope,
   isManifestOnlyWatchPaths,
+  isSelfWriteEcho,
   isWatchSuppressed,
   reconcileDiskWithIdb,
   resolveWorkspace,
@@ -40,6 +42,11 @@ export function useGraphFileWatch() {
       const ws = await resolveWorkspace(useGraphStore.getState().settings)
       if (gen !== setupGenRef.current) return
 
+      // The watch command needs the runtime FS scope; this effect can run
+      // before loadGraphList has granted the known-project paths.
+      await grantFsScope(ws.displayPath).catch(() => {})
+      if (gen !== setupGenRef.current) return
+
       const { watch } = await import('@tauri-apps/plugin-fs')
       let unwatch!: () => void
       try {
@@ -48,6 +55,9 @@ export function useGraphFileWatch() {
           (event) => {
             if (isWatchSuppressed()) return
             if (isManifestOnlyWatchPaths(event.paths)) return
+            // Delayed echo of the app's own writes — without this every
+            // autosave triggers a full re-read of the workspace.
+            if (isSelfWriteEcho(event.paths)) return
             if (timer.current) clearTimeout(timer.current)
             timer.current = setTimeout(() => {
               void handleWatchEvent()
@@ -78,6 +88,15 @@ export function useGraphFileWatch() {
       try {
         const state = useGraphStore.getState()
         const ws = await resolveWorkspace(state.settings)
+
+        // The whole project folder may have been deleted or moved — without
+        // this check the reconcile below would recreate it from the IDB cache.
+        const { exists } = await import('@tauri-apps/plugin-fs')
+        if (!(await exists(ws.displayPath).catch(() => true))) {
+          await useGraphStore.getState().removeMissingProject(ws.displayPath)
+          return
+        }
+
         const idbRecords = await dbListGraphs()
         const { toPersist, manifest, removed } = await reconcileDiskWithIdb(ws, idbRecords)
         setDiskSyncCache(ws.displayPath, manifest)
@@ -95,24 +114,29 @@ export function useGraphFileWatch() {
           graphList: records.map((r) => ({ id: r.id, name: r.name, updatedAt: r.updatedAt })),
         })
 
-        if (removed.includes(state.currentGraphId)) {
+        // Re-read the store: the user may have edited or switched graphs while
+        // the reconcile above was awaiting — deciding on the stale snapshot
+        // could reload over fresh edits without flagging a conflict.
+        const fresh = useGraphStore.getState()
+
+        if (removed.includes(fresh.currentGraphId)) {
           const next = records[0]
-          if (next) await useGraphStore.getState().loadGraph(next.id)
+          if (next) await fresh.loadGraph(next.id)
           return
         }
 
         const changedFromDisk = new Set(toPersist.map((r) => r.id))
-        if (!changedFromDisk.has(state.currentGraphId)) return
+        if (!changedFromDisk.has(fresh.currentGraphId)) return
 
-        const localFp = graphPersistFingerprint(state.nodes, state.edges, state.graphDisplay)
-        const active = records.find((r) => r.id === state.currentGraphId)
+        const localFp = graphPersistFingerprint(fresh.nodes, fresh.edges, fresh.graphDisplay)
+        const active = records.find((r) => r.id === fresh.currentGraphId)
         if (!active) return
 
-        if (localFp !== state.savedFingerprint) {
-          useGraphStore.getState().setExternalFileConflict(true)
+        if (localFp !== fresh.savedFingerprint) {
+          fresh.setExternalFileConflict(true)
           return
         }
-        await useGraphStore.getState().loadGraph(active.id)
+        await fresh.loadGraph(active.id)
       } finally {
         handlingRef.current = false
         if (pendingRef.current) {

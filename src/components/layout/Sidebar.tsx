@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
-import { useState, useRef, useEffect, type MouseEvent as ReactMouseEvent } from 'react'
+import { useState, useRef, useEffect } from 'react'
+import { useStore as useFlowStore } from '@xyflow/react'
 import { useGraphStore } from '@/store'
+import { useHorizontalResize } from '@/hooks/useHorizontalResize'
 import { useT } from '@/i18n'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { SettingRow } from '@/components/ui/SettingRow'
@@ -43,7 +45,6 @@ interface Props {
   onSearch: () => void
   onSettings: () => void
   onAbout: () => void
-  zoom: number
   width: number
   onWidthChange: (w: number) => void
 }
@@ -54,7 +55,6 @@ export function Sidebar({
   onSearch,
   onSettings,
   onAbout,
-  zoom,
   width,
   onWidthChange,
 }: Props) {
@@ -65,8 +65,10 @@ export function Sidebar({
   const createGraph = useGraphStore((s) => s.createGraph)
   const renameGraph = useGraphStore((s) => s.renameGraph)
   const deleteGraph = useGraphStore((s) => s.deleteGraph)
-  const nodes = useGraphStore((s) => s.nodes)
-  const edges = useGraphStore((s) => s.edges)
+  // Primitive selectors: subscribing to the arrays would re-render the whole
+  // sidebar on every node drag frame just to show two counters.
+  const nodeCount = useGraphStore((s) => s.nodes.length)
+  const edgeCount = useGraphStore((s) => s.edges.length)
   const graphDisplay = useGraphStore((s) => s.graphDisplay)
   const setGraphDisplay = useGraphStore((s) => s.setGraphDisplay)
   const sidebarDisplayOpen = useGraphStore((s) => s.sidebarDisplayOpen)
@@ -78,7 +80,11 @@ export function Sidebar({
   const [draft, setDraft] = useState('')
   const [hoveredId, setHoveredId] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
-  const [isResizing, setIsResizing] = useState(false)
+  const { isResizing, onResizeHandleMouseDown, onResizeHandleKeyDown } = useHorizontalResize(
+    width,
+    onWidthChange,
+    clampSidebarWidth,
+  )
 
   useEffect(() => {
     if (editingId && inputRef.current) {
@@ -117,32 +123,10 @@ export function Sidebar({
   const handleDelete = (id: string, e: React.MouseEvent) => {
     e.stopPropagation()
     if (graphList.length <= 1) return
+    const name = graphList.find((g) => g.id === id)?.name ?? ''
+    // Deleting also removes the file on disk and there is no undo — confirm first.
+    if (!window.confirm(t.sidebar.deleteGraphConfirm.replace('{name}', name))) return
     deleteGraph(id)
-  }
-
-  function startResize(mouseDownClientX: number) {
-    const startX = mouseDownClientX
-    const startW = width
-    setIsResizing(true)
-    function onMove(ev: MouseEvent) {
-      onWidthChange(clampSidebarWidth(startW + ev.clientX - startX))
-    }
-    function onUp() {
-      window.removeEventListener('mousemove', onMove)
-      window.removeEventListener('mouseup', onUp)
-      document.body.style.removeProperty('cursor')
-      document.body.style.removeProperty('user-select')
-      setIsResizing(false)
-    }
-    window.addEventListener('mousemove', onMove)
-    window.addEventListener('mouseup', onUp)
-    document.body.style.cursor = 'col-resize'
-    document.body.style.userSelect = 'none'
-  }
-
-  function onResizeHandleMouseDown(e: ReactMouseEvent) {
-    e.preventDefault()
-    startResize(e.clientX)
   }
 
   return (
@@ -471,9 +455,9 @@ export function Sidebar({
               <div
                 style={{ padding: '0 12px 10px', display: 'flex', flexDirection: 'column', gap: 4 }}
               >
-                <MapRow label={t.sidebar.stats.concepts} value={String(nodes.length)} />
-                <MapRow label={t.sidebar.stats.links} value={String(edges.length)} />
-                <MapRow label={t.sidebar.stats.zoom} value={`${Math.round(zoom * 100)}%`} />
+                <MapRow label={t.sidebar.stats.concepts} value={String(nodeCount)} />
+                <MapRow label={t.sidebar.stats.links} value={String(edgeCount)} />
+                <ZoomMapRow label={t.sidebar.stats.zoom} />
               </div>
             )}
           </div>
@@ -668,17 +652,7 @@ export function Sidebar({
           type="button"
           aria-label="Resize sidebar"
           onMouseDown={onResizeHandleMouseDown}
-          onKeyDown={(e) => {
-            const step = 12
-            if (e.key === 'ArrowLeft') {
-              e.preventDefault()
-              onWidthChange(clampSidebarWidth(width - step))
-            }
-            if (e.key === 'ArrowRight') {
-              e.preventDefault()
-              onWidthChange(clampSidebarWidth(width + step))
-            }
-          }}
+          onKeyDown={onResizeHandleKeyDown}
           style={{
             position: 'absolute',
             top: 0,
@@ -697,6 +671,12 @@ export function Sidebar({
       )}
     </div>
   )
+}
+
+/** Leaf subscriber: only this row re-renders while the viewport zooms. */
+function ZoomMapRow({ label }: { label: string }) {
+  const zoom = useFlowStore((s) => s.transform[2])
+  return <MapRow label={label} value={`${Math.round(zoom * 100)}%`} />
 }
 
 function MapRow({ label, value, title }: { label: string; value: string; title?: string }) {

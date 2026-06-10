@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useGraphStore } from '@/store'
 import { useWebLLM } from '@/llm/webllm'
 import { CloseButton } from '@/components/ui/CloseButton'
@@ -52,18 +52,32 @@ export function SettingsDialog({ open, onClose }: Props) {
       .catch(() => setModelStatus('error'))
   }, [])
 
+  const pullAbortRef = useRef<AbortController | null>(null)
+
   const handlePull = useCallback(async () => {
+    pullAbortRef.current?.abort()
+    const controller = new AbortController()
+    pullAbortRef.current = controller
     setModelStatus('pulling')
     setPullProgress(0)
     try {
-      for await (const p of streamOllamaModelPull(settings.aiBaseUrl, settings.aiModel)) {
+      for await (const p of streamOllamaModelPull(
+        settings.aiBaseUrl,
+        settings.aiModel,
+        controller.signal,
+      )) {
         setPullProgress(p)
       }
       setModelStatus('available')
     } catch {
-      setModelStatus('error')
+      if (!controller.signal.aborted) setModelStatus('error')
     }
   }, [settings.aiBaseUrl, settings.aiModel])
+
+  // Stop watching the pull stream when the dialog closes.
+  useEffect(() => {
+    if (!open) pullAbortRef.current?.abort()
+  }, [open])
 
   useEffect(() => {
     if (!open || settings.aiMode !== 'remote') {

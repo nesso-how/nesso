@@ -30,9 +30,11 @@ export async function checkOllamaModel(
 export async function* streamOllamaModelPull(
   baseUrl: string,
   model: string,
+  signal?: AbortSignal,
 ): AsyncGenerator<number> {
   const res = await fetch(`${ollamaNativeBase(baseUrl)}/api/pull`, {
     method: 'POST',
+    signal,
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name: model }),
   })
@@ -40,16 +42,27 @@ export async function* streamOllamaModelPull(
   const reader = res.body!.getReader()
   const decoder = new TextDecoder()
   let buffer = ''
-  while (true) {
-    const { done, value } = await reader.read()
-    if (done) break
-    buffer += decoder.decode(value, { stream: true })
-    const lines = buffer.split('\n')
-    buffer = lines.pop() ?? ''
-    for (const line of lines) {
-      if (!line.trim()) continue
-      const obj = JSON.parse(line) as { status: string; total?: number; completed?: number }
-      if (obj.total && obj.completed != null) yield obj.completed / obj.total
+  try {
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split('\n')
+      buffer = lines.pop() ?? ''
+      for (const line of lines) {
+        if (!line.trim()) continue
+        let obj: { error?: string; total?: number; completed?: number }
+        try {
+          obj = JSON.parse(line) as typeof obj
+        } catch {
+          continue // malformed/truncated NDJSON line — don't kill the pull
+        }
+        if (obj.error) throw new Error(obj.error)
+        if (obj.total && obj.completed != null) yield obj.completed / obj.total
+      }
     }
+  } finally {
+    // Release the connection when the consumer stops early (dialog closed).
+    await reader.cancel().catch(() => {})
   }
 }

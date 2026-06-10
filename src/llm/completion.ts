@@ -9,6 +9,14 @@ export function isAiReady(settings: NessoSettings): boolean {
   return Boolean(settings.aiBaseUrl && settings.aiModel)
 }
 
+// The WebLLM engine cannot run two generations at once (the review mode and
+// the mentor may request completions concurrently) — chain local calls.
+let localGenChain: Promise<unknown> = Promise.resolve()
+
+function abortError(): DOMException {
+  return new DOMException('Aborted', 'AbortError')
+}
+
 export async function fetchCompletion(
   settings: NessoSettings,
   messages: Message[],
@@ -18,12 +26,26 @@ export async function fetchCompletion(
   if (settings.aiMode === 'local') {
     const engine = getEngine()
     if (!engine) throw new Error('Local model not ready')
-    const reply = await engine.chat.completions.create({
-      model: LOCAL_MODEL_ID,
-      max_tokens: maxTokens,
-      messages,
+    const run = localGenChain.then(async () => {
+      if (signal?.aborted) throw abortError()
+      const onAbort = () => void engine.interruptGenerate()
+      signal?.addEventListener('abort', onAbort)
+      try {
+        const reply = await engine.chat.completions.create({
+          model: LOCAL_MODEL_ID,
+          max_tokens: maxTokens,
+          messages,
+        })
+        // interruptGenerate resolves the call with partial output — surface
+        // the abort to the caller instead of a truncated reply.
+        if (signal?.aborted) throw abortError()
+        return reply.choices[0]?.message?.content ?? ''
+      } finally {
+        signal?.removeEventListener('abort', onAbort)
+      }
     })
-    return reply.choices[0]?.message?.content ?? ''
+    localGenChain = run.catch(() => {})
+    return run
   }
 
   const baseUrl = settings.aiBaseUrl.replace(/\/+$/, '')

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-import type { CSSProperties } from 'react'
+import { useState, type CSSProperties } from 'react'
 
 interface Props {
   value: number
@@ -9,6 +9,9 @@ interface Props {
 }
 
 export function Stepper({ value, min, max, onChange }: Props) {
+  // Local draft so the field can be cleared while retyping — committing the
+  // raw input on every keystroke used to snap an empty field to `min`.
+  const [draft, setDraft] = useState<string | null>(null)
   const btnStyle: CSSProperties = {
     appearance: 'none',
     border: 'none',
@@ -41,12 +44,16 @@ export function Stepper({ value, min, max, onChange }: Props) {
       <input
         type="number"
         className="settings-stepper"
-        value={value}
+        value={draft ?? String(value)}
         min={min}
         max={max}
-        onChange={(e) =>
-          onChange(Math.min(max, Math.max(min, Math.floor(Number(e.target.value)) || 0)))
-        }
+        onChange={(e) => {
+          const raw = e.target.value
+          setDraft(raw)
+          const n = Math.floor(Number(raw))
+          if (raw !== '' && Number.isFinite(n)) onChange(Math.min(max, Math.max(min, n)))
+        }}
+        onBlur={() => setDraft(null)}
         style={{
           width: 44,
           border: 'none',

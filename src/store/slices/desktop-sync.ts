@@ -4,6 +4,7 @@ import { isDesktop } from '@/lib/isDesktop'
 import { graphPersistFingerprint } from '@/lib/graphPersist'
 import { mergeGraphDisplay } from '@/types/graph'
 import {
+  readManifest,
   reloadGraphFromDisk,
   resolveWorkspace,
   getDiskSyncCache,
@@ -41,8 +42,11 @@ export const createDesktopSyncSlice: StateCreator<GraphState, [], [], DesktopSyn
     if (!isDesktop()) return
     const { currentGraphId, settings } = get()
     const ws = await resolveWorkspace(settings)
-    const { manifest: cached } = getDiskSyncCache()
-    const { record, manifest } = await reloadGraphFromDisk(ws, currentGraphId, cached)
+    // The cache may belong to another workspace (e.g. right after a project
+    // switch) — fall back to reading the manifest from disk.
+    const { workspace: cachedWorkspace, manifest: cached } = getDiskSyncCache()
+    const manifestIn = cachedWorkspace === ws.displayPath ? cached : await readManifest(ws)
+    const { record, manifest } = await reloadGraphFromDisk(ws, currentGraphId, manifestIn)
     if (!record) return
     setDiskSyncCache(ws.displayPath, manifest)
     await dbSaveGraph(record)

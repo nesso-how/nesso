@@ -28,13 +28,23 @@ export interface ConceptNodeData extends Record<string, unknown> {
   due: number // ms timestamp; 0 = due immediately (new card)
   lastReview: number // ms timestamp; 0 = never reviewed
   lastRating: number // 0=unrated, 1=Again 2=Hard 3=Good 4=Easy
+  /** FSRS learning-step index; optional for records saved before it existed. */
+  learningSteps?: number
   elaboration?: ConceptElaboration
 }
 
 /** Fresh FSRS fields for a new or shared-import concept (no personal review history). */
 export function defaultConceptReviewFields(): Pick<
   ConceptNodeData,
-  'stability' | 'difficulty' | 'reps' | 'lapses' | 'fsrsState' | 'due' | 'lastReview' | 'lastRating'
+  | 'stability'
+  | 'difficulty'
+  | 'reps'
+  | 'lapses'
+  | 'fsrsState'
+  | 'due'
+  | 'lastReview'
+  | 'lastRating'
+  | 'learningSteps'
 > {
   return {
     stability: 0,
@@ -45,6 +55,7 @@ export function defaultConceptReviewFields(): Pick<
     due: 0,
     lastReview: 0,
     lastRating: 0,
+    learningSteps: 0,
   }
 }
 
@@ -55,7 +66,9 @@ export function nodeToCard(data: ConceptNodeData): Card {
     difficulty: data.difficulty,
     elapsed_days: 0,
     scheduled_days: 0,
-    learning_steps: 0,
+    // Restoring the step keeps Learning/Relearning cards from restarting the
+    // step ladder on every rating.
+    learning_steps: data.learningSteps ?? 0,
     reps: data.reps,
     lapses: data.lapses,
     state: data.fsrsState as State,
@@ -109,10 +122,8 @@ export function mergeGraphDisplay(
 
 export interface NessoSettings {
   dark: boolean
-  accent: string
   language: Language
   edgeEncoding: EdgeEncoding
-  showLabels: boolean
   showConfidence: boolean
   showHeatmap: boolean
   curveStyle: CurveStyle

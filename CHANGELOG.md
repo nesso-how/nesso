@@ -6,6 +6,26 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Fixed
+
+- **Graphs:** Edits made within the autosave debounce window are no longer lost when switching graphs — `loadGraph` flushes the pending save first. A save still in flight during a switch can no longer leak the previous graph's saved-state fingerprint onto the newly loaded one (which faked or masked external-file conflicts).
+- **Desktop sync:** External edits to a graph file that don't bump its embedded `updatedAt` (e.g. hand edits in a text editor) are now detected via content comparison instead of being silently overwritten on the next in-app save. The conflict check also re-reads the live store right before deciding, closing a window where edits made during the reconcile could be reloaded over.
+- **Canvas:** Escape while renaming a concept on the canvas now cancels the edit (it used to commit, unlike the inspector). Releasing a new connection over an edge no longer creates an invisible ghost edge (only nodes are valid drop targets). Node/edge ids are now collision-checked on create and paste. Deleting a mixed selection removes explicitly selected edges too.
+- **Shortcuts:** Editing shortcuts (Backspace/Delete, ⌘C/V/Z, Enter, n, f, r) are disabled while any dialog is open — Backspace during a review no longer deletes the canvas selection underneath.
+- **Sidebar:** Deleting a graph now asks for confirmation (the file on disk is removed too).
+- **Import:** Graph files are structurally validated per element on import and on disk load (a node without id/position used to crash the canvas and get re-persisted); a failed import now shows an error instead of doing nothing. Partial hand-written node data is normalized with fresh review fields.
+- **Mentor/AI:** Replies can no longer land in the wrong conversation after "New chat" or a graph switch; aborting now actually interrupts local WebLLM generation, and concurrent local generations are serialized. Ollama model pulls tolerate malformed progress lines, release the connection, and stop when Settings closes.
+- **Review:** FSRS `learning_steps` is now persisted per concept, so Learning/Relearning cards no longer restart their step ladder on every rating.
+- **Misc:** The max-interval stepper field can be cleared while retyping; saved viewports are removed when their graph is deleted; UNC paths survive `joinPath`; the "Untitled" fallback on save is localized.
+- **Viewport:** A window reporting 0×0 at startup (embedded WebViews before first layout) no longer collapses the initial fit to minimum zoom and persists it, which kept the graph invisible on every later launch. The initial fit now waits for a usable window size, computed fits are no longer persisted (only user pan/zoom is), and `saveViewport` ignores viewports observed in a zero-sized window.
+- **Projects (desktop):** Project folders deleted from the filesystem are now pruned from the project list — at startup, when clicked in the switcher (with a message), and live via the file watcher. Previously the app kept listing them and the disk reconcile silently recreated the active project's folder from the IndexedDB cache. When the active project's folder vanishes, the app switches to the next known project (or the bundled default) without writing to the deleted location.
+
+### Changed
+
+- **Performance:** The autosave fingerprint (full-graph JSON) is computed once per debounced save instead of inside a store selector on every update (including each drag frame). The app shell no longer subscribes to the node array or zoom level, so the sidebar, top bar, dock, and mentor bubble stop re-rendering during drags and zooms. Nodes subscribe to connection state with a selector (no per-mousemove re-render of every node). The file watcher ignores echoes of the app's own writes via a self-write path registry, so autosaves no longer trigger full-workspace re-reads.
+- **Security (desktop):** A Content-Security-Policy replaces `csp: null`; the static `$HOME`/`$DOWNLOAD` recursive filesystem permissions are removed in favour of runtime scope grants for user-chosen folders; the `grant_fs_scope` command validates its input (absolute, no `..`, no filesystem roots, no home dir itself, no hidden directories outside the app's data dirs); "Show in Finder" uses `revealItemInDir` instead of `openPath`.
+- **Settings:** Removed the unused `accent` and `showLabels` settings (never read; the accent color is set by the theme).
+
 ## [0.1.0-alpha.28] - 2026-06-08
 
 ### Added

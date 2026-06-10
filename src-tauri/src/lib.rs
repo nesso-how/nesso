@@ -1,9 +1,56 @@
 // SPDX-License-Identifier: MIT
+use std::path::{Component, Path};
+use tauri::Manager;
 use tauri_plugin_fs::FsExt;
 
+/// Runtime FS-scope grant for user-chosen project folders. The command is
+/// callable from the webview, so it validates its input: a compromised
+/// renderer must not be able to widen the scope to the whole filesystem,
+/// the home directory itself, or dotfile directories like ~/.ssh.
 #[tauri::command]
-fn grant_fs_scope(app: tauri::AppHandle, path: String) {
-    let _ = app.fs_scope().allow_directory(&path, true);
+fn grant_fs_scope(app: tauri::AppHandle, path: String) -> Result<(), String> {
+    let p = Path::new(&path);
+    if !p.is_absolute() {
+        return Err("path must be absolute".into());
+    }
+    if p.components().any(|c| matches!(c, Component::ParentDir)) {
+        return Err("path must not contain ..".into());
+    }
+    if p.parent().is_none() {
+        return Err("cannot grant a filesystem root".into());
+    }
+
+    // The app's own data dirs are always fine (the bundled default workspace
+    // lives there — note it sits under a hidden dir on Linux).
+    let under_app_dirs = [
+        app.path().app_data_dir().ok(),
+        app.path().app_local_data_dir().ok(),
+    ]
+    .into_iter()
+    .flatten()
+    .any(|d| p.starts_with(&d));
+
+    if !under_app_dirs {
+        if let Ok(home) = app.path().home_dir() {
+            if p == home {
+                return Err("cannot grant the home directory itself".into());
+            }
+        }
+        let hidden = p.components().any(|c| match c {
+            Component::Normal(name) => {
+                let n = name.to_string_lossy();
+                n.starts_with('.') && n != ".nesso"
+            }
+            _ => false,
+        });
+        if hidden {
+            return Err("cannot grant hidden directories".into());
+        }
+    }
+
+    app.fs_scope()
+        .allow_directory(p, true)
+        .map_err(|e| e.to_string())
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

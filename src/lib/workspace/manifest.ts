@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 import type { WorkspaceTarget } from '@/lib/workspace/paths'
-import { beginSuppressWatch, endSuppressWatch } from '@/lib/workspace/watch'
+import { beginSuppressWatch, endSuppressWatch, noteSelfWrite } from '@/lib/workspace/watch'
 
 export const MANIFEST_DIR = '.nesso'
 export const MANIFEST_FILE = 'manifest.json'
@@ -81,6 +81,7 @@ export async function writeManifest(
   }
   beginSuppressWatch()
   try {
+    noteSelfWrite(file)
     await writeTextFile(file, content)
   } finally {
     endSuppressWatch()

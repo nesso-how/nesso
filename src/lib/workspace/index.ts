@@ -1,5 +1,11 @@
 // SPDX-License-Identifier: MIT
-export { beginSuppressWatch, endSuppressWatch, isWatchSuppressed } from '@/lib/workspace/watch'
+export {
+  beginSuppressWatch,
+  endSuppressWatch,
+  isSelfWriteEcho,
+  isWatchSuppressed,
+  noteSelfWrite,
+} from '@/lib/workspace/watch'
 export {
   GRAPHS_SUBDIR,
   resolveWorkspace,

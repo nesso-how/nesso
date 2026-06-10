@@ -34,7 +34,7 @@ import { PALETTES } from '@nesso-how/relation-types'
 import { findNewConceptPosition, NEW_CONCEPT_SIZE } from './data/newConceptLayout'
 import { initWebLLM, localModelWeightsCached } from './llm/webllm'
 import { focusFlowNodes } from './lib/focusFlowSelection'
-import { computeFitViewport } from './lib/fitGraphViewport'
+import { computeFitViewport, fitCanvasSize } from './lib/fitGraphViewport'
 import { getSeedInitialFitZoom } from './data/seedGraph'
 
 function AppInner() {
@@ -45,7 +45,6 @@ function AppInner() {
   const [showSearch, setShowSearch] = useState(false)
   const [showAbout, setShowAbout] = useState(false)
 
-  const nodes = useGraphStore((s) => s.nodes)
   const settings = useGraphStore((s) => s.settings)
   const addNode = useGraphStore((s) => s.addNode)
   const selected = useGraphStore((s) => s.selected)
@@ -61,7 +60,6 @@ function AppInner() {
   const currentGraphId = useGraphStore((s) => s.currentGraphId)
   const loadedToken = useGraphStore((s) => s.loadedToken)
   const viewports = useGraphStore((s) => s.viewports)
-  const saveViewport = useGraphStore((s) => s.saveViewport)
   const sidebarCollapsed = useGraphStore((s) => s.sidebarCollapsed)
   const setSidebarCollapsed = useGraphStore((s) => s.setSidebarCollapsed)
   const createProject = useGraphStore((s) => s.createProject)
@@ -73,7 +71,6 @@ function AppInner() {
   const selectedNode = useGraphStore(selectedNodeSelector)
   const selectedEdge = useGraphStore(selectedEdgeSelector)
   const { setViewport, setCenter, getNodes, getViewport, screenToFlowPosition } = useReactFlow()
-  const [zoom, setZoom] = useState(1)
 
   useAutoSave()
   useGraphFileWatch()
@@ -164,16 +161,42 @@ function AppInner() {
   const viewportRestoredFor = useRef<string | null>(null)
 
   // Restore viewport before paint when graph data arrives (avoids initial flicker).
+  // The computed initial fit is intentionally not persisted: only user-driven
+  // viewport changes are saved (GraphCanvas `onMoveEnd`, autosave).
   useLayoutEffect(() => {
     if (viewportRestoredFor.current === currentGraphId) return
     if (loadedToken === 0) return
     const saved = viewports[currentGraphId]
-    const vp =
-      saved ?? computeFitViewport(nodes, canvasInsets, getSeedInitialFitZoom(currentGraphId) ?? 1)
-    viewportRestoredFor.current = currentGraphId
-    setViewport(vp, { duration: 0 })
-    if (!saved) saveViewport(currentGraphId, vp)
-  }, [currentGraphId, loadedToken, nodes, viewports, canvasInsets, setViewport, saveViewport])
+
+    const restore = () => {
+      const vp =
+        saved ??
+        computeFitViewport(
+          useGraphStore.getState().nodes,
+          canvasInsets,
+          getSeedInitialFitZoom(currentGraphId) ?? 1,
+        )
+      viewportRestoredFor.current = currentGraphId
+      setViewport(vp, { duration: 0 })
+    }
+
+    if (!saved) {
+      // Embedded WebViews can report a 0×0 window before first layout; a fit
+      // computed there collapses to minimum zoom. Wait for a usable size.
+      const { width, height } = fitCanvasSize(canvasInsets)
+      if (width <= 0 || height <= 0) {
+        const onResize = () => {
+          const size = fitCanvasSize(canvasInsets)
+          if (size.width <= 0 || size.height <= 0) return
+          window.removeEventListener('resize', onResize)
+          restore()
+        }
+        window.addEventListener('resize', onResize)
+        return () => window.removeEventListener('resize', onResize)
+      }
+    }
+    restore()
+  }, [currentGraphId, loadedToken, viewports, canvasInsets, setViewport])
 
   // Local WebGPU model: if weights are already cached, load the engine without opening Settings
   useEffect(() => {
@@ -239,7 +262,7 @@ function AppInner() {
     const screenCenterX = leftInset + (window.innerWidth - leftInset - rightInset) / 2
     const screenCenterY = topInset + (window.innerHeight - topInset - bottomInset) / 2
     const { x: flowCx, y: flowCy } = screenToFlowPosition({ x: screenCenterX, y: screenCenterY })
-    const { x, y } = findNewConceptPosition(nodes, flowCx, flowCy)
+    const { x, y } = findNewConceptPosition(useGraphStore.getState().nodes, flowCx, flowCy)
     const nodeCx = x + NEW_CONCEPT_SIZE.width / 2
     const nodeCy = y + NEW_CONCEPT_SIZE.height / 2
     // Prevent the viewport-restore effect from overriding our setCenter below.
@@ -254,10 +277,11 @@ function AppInner() {
     sidebarWidth,
     hasSelection,
     inspectorPanelWidth,
-    nodes,
   ])
 
   // Keyboard shortcuts
+  const anyModalOpen =
+    showReview || showShortcuts || showSettings || showRelationTypes || showSearch || showAbout
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
@@ -284,6 +308,9 @@ function AppInner() {
         setShowSearch((s) => !s)
         return
       }
+      // Everything below edits or navigates the canvas — never while a modal
+      // is open (e.g. Backspace during a review must not delete the selection).
+      if (anyModalOpen) return
       if (e.key === 'z' && (e.metaKey || e.ctrlKey) && !e.shiftKey) {
         e.preventDefault()
         undo()
@@ -310,14 +337,7 @@ function AppInner() {
         if (ids?.length) focusFlowNodes(ids)
         return
       }
-      if (
-        !showReview &&
-        e.key === 'Enter' &&
-        !e.metaKey &&
-        !e.ctrlKey &&
-        !e.altKey &&
-        !e.shiftKey
-      ) {
+      if (e.key === 'Enter' && !e.metaKey && !e.ctrlKey && !e.altKey && !e.shiftKey) {
         const sel = useGraphStore.getState().selected
         if (sel?.kind === 'node') {
           e.preventDefault()
@@ -329,11 +349,11 @@ function AppInner() {
         setShowReview(true)
         return
       }
-      if (e.key.toLowerCase() === 'n' && !e.metaKey && !e.ctrlKey && !e.altKey && !showReview) {
+      if (e.key.toLowerCase() === 'n' && !e.metaKey && !e.ctrlKey && !e.altKey) {
         handleAddConcept()
         return
       }
-      if (e.key.toLowerCase() === 'f' && !e.metaKey && !e.ctrlKey && !e.altKey && !showReview) {
+      if (e.key.toLowerCase() === 'f' && !e.metaKey && !e.ctrlKey && !e.altKey) {
         fitView()
         return
       }
@@ -352,7 +372,7 @@ function AppInner() {
     requestEditNode,
     handleAddConcept,
     fitView,
-    showReview,
+    anyModalOpen,
   ])
 
   return (
@@ -364,7 +384,6 @@ function AppInner() {
           sidebarWidth + INSPECTOR_CANVAS_LEFT_GUTTER + (hasSelection ? inspectorPanelWidth : 0)
         }
         rightInset={30}
-        onViewportZoomChange={setZoom}
       />
 
       <Sidebar
@@ -373,7 +392,6 @@ function AppInner() {
         onSearch={() => setShowSearch((s) => !s)}
         onSettings={() => setShowSettings((s) => !s)}
         onAbout={() => setShowAbout(true)}
-        zoom={zoom}
         width={sidebarPanelWidth}
         onWidthChange={(w) => setSidebarPanelWidth(clampSidebarWidth(w))}
       />

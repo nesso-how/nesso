@@ -20,11 +20,8 @@ interface Props {
 
 export function GraphIO({ onRelationTypes, onShortcuts, onAbout }: Props) {
   const t = useT()
-  const nodes = useGraphStore((s) => s.nodes)
-  const edges = useGraphStore((s) => s.edges)
-  const graphList = useGraphStore((s) => s.graphList)
-  const currentGraphId = useGraphStore((s) => s.currentGraphId)
-  const graphDisplay = useGraphStore((s) => s.graphDisplay)
+  // Graph data is only needed inside the export handlers — read it from the
+  // store at click time instead of re-rendering this menu on every edit.
   const importGraph = useGraphStore((s) => s.importGraph)
   const [open, setOpen] = useState(false)
   const wrapRef = useRef<HTMLDivElement>(null)
@@ -48,6 +45,7 @@ export function GraphIO({ onRelationTypes, onShortcuts, onAbout }: Props) {
 
   const handleExport = async () => {
     setOpen(false)
+    const { nodes, edges, graphList, currentGraphId, graphDisplay } = useGraphStore.getState()
     const meta = graphList.find((g) => g.id === currentGraphId)
     const name = meta?.name ?? 'graph'
     const filename = `${name}.json`
@@ -64,6 +62,7 @@ export function GraphIO({ onRelationTypes, onShortcuts, onAbout }: Props) {
 
   const handleExportPng = async () => {
     setOpen(false)
+    const { nodes, graphList, currentGraphId } = useGraphStore.getState()
     const viewport = document.querySelector<HTMLElement>('.react-flow__viewport')
     if (!viewport || nodes.length === 0) return
     const meta = graphList.find((g) => g.id === currentGraphId)
@@ -132,7 +131,7 @@ export function GraphIO({ onRelationTypes, onShortcuts, onAbout }: Props) {
           data.id,
         )
       } catch {
-        /* invalid JSON or import shape */
+        window.alert(t.graphIO.importError.replace('{name}', file.name))
       }
     }
     input.click()

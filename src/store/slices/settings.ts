@@ -18,10 +18,8 @@ export interface SettingsSlice {
 export const createSettingsSlice: StateCreator<GraphState, [], [], SettingsSlice> = (set) => ({
   settings: {
     dark: false,
-    accent: '#6e2730',
     language: 'en' as const,
     edgeEncoding: 'full',
-    showLabels: false,
     showConfidence: true,
     showHeatmap: true,
     curveStyle: 'arc',

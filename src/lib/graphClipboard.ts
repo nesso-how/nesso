@@ -2,6 +2,7 @@
 import type { Node, Edge } from '@xyflow/react'
 import type { ConceptNodeData } from '@/types/graph'
 import { CONCEPT_HANDLE_IN, CONCEPT_HANDLE_OUT } from '@/data/conceptHandles'
+import { newElementId } from '@/lib/graphId'
 import { stripEdgeSelection, stripNodeSelection } from '@/lib/graphPersist'
 
 export type GraphClipboard = {
@@ -71,13 +72,19 @@ export function snapshotSelection(s: SelectionInput): GraphClipboard | null {
   }
 }
 
-export function instantiateClipboard(clip: GraphClipboard): {
+export function instantiateClipboard(
+  clip: GraphClipboard,
+  usedNodeIds: Set<string>,
+  usedEdgeIds: Set<string>,
+): {
   nodes: Node<ConceptNodeData>[]
   edges: Edge[]
 } {
   const idMap = new Map<string, string>()
   for (const n of clip.nodes) {
-    idMap.set(n.id, 'n' + Math.random().toString(36).slice(2, 7))
+    const id = newElementId('n', usedNodeIds)
+    usedNodeIds.add(id)
+    idMap.set(n.id, id)
   }
 
   const nodes = clip.nodes.map((n) => ({
@@ -90,16 +97,20 @@ export function instantiateClipboard(clip: GraphClipboard): {
     selected: true,
   }))
 
-  const edges = clip.edges.map((e) => ({
-    ...e,
-    id: 'e' + Math.random().toString(36).slice(2, 8),
-    source: idMap.get(e.source) ?? e.source,
-    target: idMap.get(e.target) ?? e.target,
-    sourceHandle: e.sourceHandle ?? CONCEPT_HANDLE_OUT,
-    targetHandle: e.targetHandle ?? CONCEPT_HANDLE_IN,
-    type: 'nesso' as const,
-    selected: false,
-  }))
+  const edges = clip.edges.map((e) => {
+    const id = newElementId('e', usedEdgeIds)
+    usedEdgeIds.add(id)
+    return {
+      ...e,
+      id,
+      source: idMap.get(e.source) ?? e.source,
+      target: idMap.get(e.target) ?? e.target,
+      sourceHandle: e.sourceHandle ?? CONCEPT_HANDLE_OUT,
+      targetHandle: e.targetHandle ?? CONCEPT_HANDLE_IN,
+      type: 'nesso' as const,
+      selected: false,
+    }
+  })
 
   return { nodes, edges }
 }

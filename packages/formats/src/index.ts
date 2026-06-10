@@ -18,17 +18,58 @@ export function serializeGraph(file: NessoGraphFile): string {
   return JSON.stringify(file, null, 2)
 }
 
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : null
+}
+
+/**
+ * Parse and structurally validate a graph file. Files are user-editable (and
+ * importable from anywhere), so each element is checked before it can reach
+ * the store: a node without a valid id/position crashes the canvas and would
+ * then be re-persisted. Partial node data (e.g. hand-written files with only
+ * `text`) is normalized with fresh review fields.
+ */
 export function deserializeGraph(json: string): NessoGraphFile {
   const data: unknown = JSON.parse(json)
-  if (
-    typeof data !== 'object' ||
-    data === null ||
-    !Array.isArray((data as Record<string, unknown>).nodes) ||
-    !Array.isArray((data as Record<string, unknown>).edges)
-  ) {
+  const root = asRecord(data)
+  if (!root || !Array.isArray(root.nodes) || !Array.isArray(root.edges)) {
     throw new Error('Invalid Nesso graph file: missing nodes or edges array')
   }
-  return data as NessoGraphFile
+  const review = defaultConceptReviewFields()
+  const nodes = root.nodes.map((value, i) => {
+    const node = asRecord(value)
+    const pos = node ? asRecord(node.position) : null
+    if (
+      !node ||
+      typeof node.id !== 'string' ||
+      node.id === '' ||
+      !pos ||
+      typeof pos.x !== 'number' ||
+      !Number.isFinite(pos.x) ||
+      typeof pos.y !== 'number' ||
+      !Number.isFinite(pos.y)
+    ) {
+      throw new Error(`Invalid Nesso graph file: node ${i} is missing a valid id or position`)
+    }
+    const d = asRecord(node.data) ?? {}
+    return {
+      ...node,
+      data: { ...review, ...d, text: typeof d.text === 'string' ? d.text : '' },
+    }
+  })
+  const edges = root.edges.map((value, i) => {
+    const edge = asRecord(value)
+    if (
+      !edge ||
+      typeof edge.id !== 'string' ||
+      typeof edge.source !== 'string' ||
+      typeof edge.target !== 'string'
+    ) {
+      throw new Error(`Invalid Nesso graph file: edge ${i} is missing id, source or target`)
+    }
+    return edge
+  })
+  return { ...root, nodes, edges } as unknown as NessoGraphFile
 }
 
 /** Strip personal FSRS / review history for shareable graph export. Keeps text, elaboration, layout. */

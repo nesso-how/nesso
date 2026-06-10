@@ -8,6 +8,7 @@ import type { NessoEdgeData } from '@nesso-how/types'
 import { GlyphSVG } from './GlyphSVG.js'
 import { useGraphDisplay, type NessoGraphDisplayContext } from './context.js'
 import {
+  arcControlPoint,
   effectiveCurveFlip,
   flowNodeCenterX,
   flowNodeCenterY,
@@ -132,7 +133,6 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
   )
 
   const pad = 6
-  const flipSign = curveFlip ? -1 : 1
   const { a, b } = (() => {
     if (straight) {
       return {
@@ -140,15 +140,7 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
         b: rectExit(tcx, tcy, tw + pad * 2, th + pad * 2, scx, scy),
       }
     }
-    const dx = tcx - scx,
-      dy = tcy - scy
-    const dist = Math.sqrt(dx * dx + dy * dy) || 1
-    const nx = -dy / dist,
-      ny = dx / dist
-    const sibOff = (data?.siblingIdx ?? 0) * 14
-    const bend = (Math.min(dist * 0.22, 90) + sibOff * 0.5) * flipSign
-    const cpx = (scx + tcx) / 2 + nx * bend
-    const cpy = (scy + tcy) / 2 + ny * bend
+    const { cpx, cpy } = arcControlPoint(scx, scy, tcx, tcy, data?.siblingIdx ?? 0, curveFlip)
     return {
       a: rectExit(scx, scy, sw + pad * 2, sh + pad * 2, cpx, cpy),
       b: rectExit(tcx, tcy, tw + pad * 2, th + pad * 2, cpx, cpy),

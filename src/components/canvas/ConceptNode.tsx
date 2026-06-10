@@ -104,9 +104,11 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
     [id, updateNodeData, focusNodeWrapper],
   )
 
-  const connection = useConnection()
-  const isConnectionTarget =
-    connection.inProgress && connection.toNode?.id === id && connection.fromNode?.id !== id
+  // Boolean selector: without it every node re-renders on each pointer move
+  // while a connection gesture is in progress.
+  const isConnectionTarget = useConnection(
+    (c) => c.inProgress && c.toNode?.id === id && c.fromNode?.id !== id,
+  )
 
   return (
     <div className="nesso-node" style={{ position: 'relative' }}>
@@ -161,10 +163,17 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
               onClick={stopGraphPointer}
               onKeyDown={(e) => {
                 e.stopPropagation()
-                if (e.key === 'Enter' || e.key === 'Escape') {
+                if (e.key === 'Enter') {
                   e.preventDefault()
                   skipBlurCommit.current = true
                   commit(e.currentTarget.value)
+                }
+                if (e.key === 'Escape') {
+                  e.preventDefault()
+                  skipBlurCommit.current = true
+                  setDraft(data.text)
+                  setEditing(false)
+                  focusNodeWrapper()
                 }
               }}
               style={{
