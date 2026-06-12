@@ -1,78 +1,78 @@
 ---
 name: release
-description: Cut a new Nesso release — bump the synced version across all package.json files, tauri.conf.json, and the Tauri Rust crate (Cargo.toml/Cargo.lock), roll the CHANGELOG [Unreleased] section into a dated version with updated link refs, then tag and push to trigger the publish workflow. Use when the user asks to cut, ship, publish, or version-bump a release.
+description: Cut a new Nesso release — run scripts/release.mjs to bump the synced version across all package.json files, tauri.conf.json, and the Tauri Rust crate (Cargo.toml/Cargo.lock), roll the CHANGELOG [Unreleased] section into a dated version, refresh the lockfile and verify, then commit, tag, and push to trigger the publish workflow. Use when the user asks to cut, ship, publish, or version-bump a release.
 disable-model-invocation: true
 ---
 
 # Cut a release
 
-Step-by-step procedure for releasing Nesso. Pushing the `v*` tag triggers [`.github/workflows/release.yml`](../../../.github/workflows/release.yml): npm publish of the workspace packages (Trusted Publishing / OIDC), a signed universal macOS `.dmg` desktop build, and a GitHub Release. **The tag push is the point of no return — it publishes to the public. Confirm with the user before step 5.**
+`scripts/release.mjs` (`pnpm release`) does the deterministic prep — the version bump across all nine files, the CHANGELOG roll, the lockfile refresh, and `build`/`lint`/`format:check`. This skill **drives that script and supervises it**: it owns the judgment the script can't make (which version, what ships, when to publish) and closes the gaps the script deliberately leaves open (the git push, branch protection, worktrees).
+
+Pushing the `v*` tag triggers [`.github/workflows/release.yml`](../../../.github/workflows/release.yml): npm publish of the workspace packages (Trusted Publishing / OIDC), a signed universal macOS `.dmg` desktop build, and a GitHub Release. **The tag push is the point of no return — it publishes to the public. Confirm with the user before step 4.**
 
 For the conventions and the desktop auto-update / minisign signing details, see [`.rules/changelog.md`](../../../.rules/changelog.md); this skill executes that flow, it does not restate it.
 
 ## 0. Preconditions
 
-- Clean working tree, on an up-to-date `main` (or the release branch the user names).
-- `## [Unreleased]` in `CHANGELOG.md` already holds this release's notes — contributors fill it per PR (see CONTRIBUTING.md step 3). If it's empty, ask the user what's shipping before proceeding.
-- Per AGENTS.md → Git: never commit, tag, or push without the user's explicit go-ahead. Invoking `/release` covers the prep; step 5 needs its own confirmation.
+- Clean working tree, on an up-to-date `main` (or the release branch the user names). The script warns on a dirty tree and refuses `--commit` unless it's clean.
+- `## [Unreleased]` in `CHANGELOG.md` already holds this release's notes — contributors fill it per PR (see CONTRIBUTING.md step 3). The script stops if it's empty; if so, ask the user what's shipping before continuing.
+- Per AGENTS.md → Git: never commit, tag, or push without the user's explicit go-ahead. Invoking `/release` covers the prep; the push (step 4) needs its own confirmation.
 
 ## 1. Choose the version
 
 - `PREV` = the current version in root `package.json` (e.g. `0.1.0-alpha.28`).
-- Default `NEW` = increment the alpha counter (`…-alpha.N` → `…-alpha.N+1`). For a different bump (e.g. leaving alpha), confirm the target semver with the user.
+- Default `NEW` = increment the alpha counter (`…-alpha.N` → `…-alpha.N+1`). This is the script's default — no argument needed. For any other bump (e.g. leaving alpha), confirm the target semver with the user and pass it explicitly: `pnpm release 0.2.0`.
 - The tag will be `vNEW`.
 
-## 2. Bump the version everywhere — all nine must stay in sync
+## 2. Run the prep script
 
-Set the `version` field to `NEW` in every one of these (they are all currently identical; CI fails otherwise):
-
-- `package.json` (root)
-- `packages/formats/package.json`
-- `packages/graph/package.json`
-- `packages/mcp/package.json`
-- `packages/relation-types/package.json`
-- `packages/types/package.json`
-- `src-tauri/tauri.conf.json`
-- `src-tauri/Cargo.toml` — the `[package]` `version`
-- `src-tauri/Cargo.lock` — the `name = "nesso"` entry's `version` (mirrors `Cargo.toml`; **not** refreshed by `pnpm install`, so edit it by hand or it drifts and the desktop build's frozen-lockfile check fails)
-
-Inter-package deps use `workspace:*`; pnpm rewrites them to the real version at publish time, so there are no dependency ranges to edit by hand.
-
-Sanity check after editing — every occurrence should now be `NEW`, none left on `PREV`:
+Preview first when unsure, then run for real:
 
 ```bash
-grep -rn 'PREV' package.json packages/*/package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock
+pnpm release --dry-run     # print what would change, write nothing
+pnpm release [NEW]         # bump + roll changelog + pnpm install + build/lint/format, then STOP
 ```
 
-## 3. Roll the CHANGELOG
+What the script does:
 
-In `CHANGELOG.md`:
+- Bumps `version` to `NEW` in all **nine** synced files — the six `package.json`s, `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`, and `src-tauri/Cargo.lock` (the `name = "nesso"` entry; `pnpm install` does **not** refresh it). It aborts on version **drift** — any file not already at `PREV` — so a forgotten file fails loudly instead of shipping out of sync.
+- Rolls `CHANGELOG.md`: moves `## [Unreleased]` into `## [NEW] - YYYY-MM-DD`, leaves a fresh empty `[Unreleased]`, and updates the two link references (URL derived from the existing `[Unreleased]` ref).
+- Runs `pnpm install`, `pnpm build`, `pnpm lint`, `pnpm format:check`.
 
-- Move everything under `## [Unreleased]` into a new `## [NEW] - YYYY-MM-DD` section (today's date), and leave a fresh **empty** `## [Unreleased]` at the top.
-- Update the link references at the bottom:
-  - change `[Unreleased]: …/compare/vPREV...HEAD` → `[Unreleased]: …/compare/vNEW...HEAD`
-  - add `[NEW]: https://github.com/nesso-how/nesso/compare/vPREV...vNEW`
-- The `## [NEW]` heading must match `src-tauri/tauri.conf.json`'s `version` **exactly** — `release.yml` extracts the GitHub Release body from the section whose heading matches that version. A mismatch ships an empty/placeholder release body.
+It then stops before any git mutation and prints the commit/tag/push commands. Flags: `--no-verify` (skip the build/lint pass), `--yes` (don't prompt on warnings), `--commit` (see step 3).
 
-## 4. Refresh the lockfile and verify
+**Supervise — close the gaps:**
 
-- Run `pnpm install` so `pnpm-lock.yaml` picks up the new workspace versions. CI runs `--frozen-lockfile`, so a stale lockfile fails the release.
-- Run `pnpm build`, `pnpm lint`, `pnpm format:check` — fix or report any failure before continuing.
-- Re-check: all nine versions equal `NEW`; the `## [NEW]` heading, the two link refs, and `tauri.conf.json` agree.
+- If the script aborts (drift, empty `[Unreleased]`, a failing build/lint), fix the **root cause** and re-run; don't hand-edit around it.
+- The list of version files lives in `JSON_VERSION_FILES` / `CARGO_VERSION_FILES` in the script. If a published package is added or removed, update the script **and** the list above so they stay the single source of truth.
+- The `## [NEW]` heading must match `tauri.conf.json`'s `version` exactly — `release.yml` extracts the GitHub Release body from the section with that heading, so a mismatch ships an empty release body. The script keeps them aligned; re-check after any manual fixup.
 
-## 5. Commit, tag, push — only after explicit confirmation
+## 3. (optional) Let the script commit and tag
 
-This publishes. Confirm with the user, then:
+Once prep is green and the user has confirmed, the script can create the commit + tag locally (it **never** pushes):
 
 ```bash
-git add -A
-git commit -m "chore(release): vNEW"
-git tag vNEW
-git push origin <branch>
-git push origin vNEW   # this tag push is what triggers release.yml
+pnpm release [NEW] --commit
 ```
 
-## 6. After the workflow
+Equivalently, run the `git add`/`commit`/`tag` commands it printed. Either way the commit message is `chore(release): vNEW` and the tag is `vNEW`.
 
-- Watch the run (`gh run watch`, or the Actions tab). It publishes the npm packages, builds the universal macOS `.dmg`, and creates the GitHub Release plus the signed `latest.json` consumed by the desktop auto-updater.
+## 4. Push — the point of no return, only after explicit confirmation
+
+This publishes. Confirm with the user, then push the release commit to `main` and the tag:
+
+```bash
+git push origin HEAD:main      # the release commit — a fast-forward of main
+git push origin vNEW           # the tag push is what triggers release.yml and publishes
+```
+
+Gap-closing notes from past releases:
+
+- **Branch protection:** `main` requires PRs + a passing status check, but a maintainer with bypass can push the release commit directly. This is a fast-forward, so it needs **no** `--force` — if a tool suggests forcing, it's wrong; plain `git push origin HEAD:main` succeeds and the remote reports `Bypassed rule violations`.
+- **Worktrees:** when releasing from a git worktree, push the worktree's own `HEAD` (`git push origin HEAD:main`). Do **not** `cd` into the main checkout to push — there `HEAD` points at a different commit and the push is a silent no-op (`Everything up-to-date`).
+
+## 5. After the workflow
+
+- Watch the run (`gh run watch <id> --exit-status`, or the Actions tab). It publishes the npm packages, builds the universal macOS `.dmg`, and creates the GitHub Release plus the signed `latest.json` consumed by the desktop auto-updater.
+- The npm job finishes in under a minute; the desktop `.dmg` build is the long pole (~10 min). **`publish-npm` succeeding does not mean the release is done** — and `gh run watch` can exit 0 on a transient API hiccup. Confirm `gh run view <id>` shows `completed / success` **and** `gh release view vNEW` resolves (with the `.dmg` + `latest.json` assets) before reporting success.
 - Confirm the GitHub Release body picked up the `## [NEW]` changelog section, and that `releases/latest/download/latest.json` resolves to this build.
