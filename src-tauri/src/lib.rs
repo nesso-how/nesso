@@ -175,10 +175,13 @@ fn build_app_menu(
         MenuItemBuilder::with_id("report-issue", &labels.report_issue).build(app)?;
     let shortcuts_i = MenuItemBuilder::with_id("shortcuts", &labels.shortcuts).build(app)?;
 
-    let mut menu = MenuBuilder::new(app);
+    let menu = MenuBuilder::new(app);
 
+    // The app menu (with About + Settings) only exists on macOS; elsewhere
+    // `menu` is used as-is, so it is shadowed rather than declared `mut` to
+    // avoid an unused-mut warning on Windows/Linux (CI runs `-D warnings`).
     #[cfg(target_os = "macos")]
-    {
+    let menu = {
         let app_menu = SubmenuBuilder::new(app, "Nesso")
             .item(&about_i)
             .separator()
@@ -192,8 +195,8 @@ fn build_app_menu(
             .separator()
             .quit()
             .build()?;
-        menu = menu.item(&app_menu);
-    }
+        menu.item(&app_menu)
+    };
 
     let file = SubmenuBuilder::new(app, &labels.file)
         .item(&new_graph_i)
