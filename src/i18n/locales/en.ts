@@ -148,6 +148,8 @@ const en = {
       openProject: 'Open project…',
       revealInFinder: 'Show in Finder',
       removeProject: 'Remove from list',
+      missingProject: 'not found',
+      missingProjectHint: 'Folder not found — it may have been moved or renamed.',
     },
     newGraphTitle: 'New graph',
     deleteGraph: 'Delete graph',

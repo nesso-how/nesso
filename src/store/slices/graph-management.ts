@@ -85,8 +85,10 @@ export interface GraphManagementSlice {
   openProject: () => Promise<GraphMeta[]>
   switchProject: (path: string) => Promise<GraphMeta[]>
   removeProject: (path: string) => Promise<GraphMeta[]>
-  /** Drop a project whose folder vanished from disk; switches away if it was active. */
-  removeMissingProject: (path: string) => Promise<GraphMeta[]>
+  /** Normalized paths of known projects whose folder is currently missing from disk. */
+  missingProjects: string[]
+  /** Flag a project whose folder vanished as missing (kept in the list); switches away if it was active. */
+  markProjectMissing: (path: string) => Promise<GraphMeta[]>
   loadGraph: (id: string) => Promise<void>
   saveCurrentGraph: () => Promise<void>
   createGraph: (name: string) => Promise<string>
@@ -108,6 +110,7 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
   currentGraphId: SEEDS[0].id,
   graphList: SEEDS.map((s) => ({ id: s.id, name: s.name, updatedAt: Date.now() })),
   loadedToken: 0,
+  missingProjects: [],
 
   loadGraphList: async () => {
     let records = await dbListGraphs()
@@ -140,23 +143,27 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
         }
         for (const p of knownProjects) await grantFsScope(p)
 
-        // Folders can be deleted while the app is closed — drop them from the
-        // list instead of resurrecting them from the IDB cache. The bundled
-        // default is kept (auto-created); exists() failures keep the entry.
+        // Folders can vanish while the app is closed (deleted, moved, renamed).
+        // Keep the entry and flag it missing rather than pruning it — removing a
+        // project from the list is only ever an explicit user action. The bundled
+        // default is exempt (auto-created); exists() failures are treated as present.
         const defaultNorm = normalizePath(await getDefaultWorkspacePath())
         const { exists } = await import('@tauri-apps/plugin-fs')
-        const present: string[] = []
+        const missing: string[] = []
         for (const p of knownProjects) {
-          if (normalizePath(p) === defaultNorm || (await exists(p).catch(() => true))) {
-            present.push(p)
-          }
+          const norm = normalizePath(p)
+          if (norm === defaultNorm) continue
+          if (!(await exists(p).catch(() => true))) missing.push(norm)
         }
-        knownProjects = present
-        set((s) => ({ settings: { ...s.settings, knownProjects, activeProjectPath } }))
+        set((s) => ({
+          settings: { ...s.settings, knownProjects, activeProjectPath },
+          missingProjects: missing,
+        }))
 
-        if (activeNorm !== defaultNorm && !present.some((p) => normalizePath(p) === activeNorm)) {
-          // The active project vanished while the app was closed.
-          return await get().removeMissingProject(activeProjectPath)
+        if (activeNorm !== defaultNorm && missing.includes(activeNorm)) {
+          // The active project's folder vanished while the app was closed — move
+          // to a present project, keeping the missing one flagged in the list.
+          return await get().markProjectMissing(activeProjectPath)
         }
 
         records = await persistWorkspaceSync(get().settings, records)
@@ -206,24 +213,28 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
       try {
         await grantFsScope(norm)
 
-        // Clicking a project whose folder was deleted externally: prune it
-        // from the list instead of failing the load (the default workspace is
-        // exempt — it gets created on demand).
+        // Clicking a project whose folder vanished externally: keep it in the
+        // list but flag it missing rather than loading or pruning it (the default
+        // workspace is exempt — it gets created on demand). If the folder is
+        // present, clear any stale missing flag — it may have returned (e.g. the
+        // user renamed it back).
         if (norm !== normalizePath(await getDefaultWorkspacePath())) {
           const { exists } = await import('@tauri-apps/plugin-fs')
           if (!(await exists(norm).catch(() => true))) {
             set((s) => ({
-              settings: {
-                ...s.settings,
-                knownProjects: s.settings.knownProjects.filter((p) => normalizePath(p) !== norm),
-              },
+              missingProjects: s.missingProjects.includes(norm)
+                ? s.missingProjects
+                : [...s.missingProjects, norm],
             }))
             window.alert(
               get().settings.language === 'it'
-                ? 'Cartella del progetto non trovata: rimossa dalla lista.'
-                : 'Project folder not found: removed from the list.',
+                ? 'Cartella del progetto non trovata: potrebbe essere stata spostata o rinominata. Resta nella lista finché non la rimuovi.'
+                : 'Project folder not found: it may have been moved or renamed. It stays in the list until you remove it.',
             )
             return get().graphList
+          }
+          if (get().missingProjects.includes(norm)) {
+            set((s) => ({ missingProjects: s.missingProjects.filter((p) => p !== norm) }))
           }
         }
 
@@ -298,35 +309,47 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
     if (remaining.length === 0) return get().graphList // can't remove the last project
 
     if (activeProjectPath && normalizePath(activeProjectPath) === norm) {
-      // Switch first — if it throws, the list stays intact.
-      await get().switchProject(remaining[0])
+      // Switch first — if it throws, the list stays intact. Prefer a present
+      // project so we don't load into another missing folder.
+      const missing = new Set(get().missingProjects)
+      const target = remaining.find((p) => !missing.has(normalizePath(p))) ?? remaining[0]
+      await get().switchProject(target)
     }
-    set((s) => ({ settings: { ...s.settings, knownProjects: remaining } }))
+    set((s) => ({
+      settings: { ...s.settings, knownProjects: remaining },
+      missingProjects: s.missingProjects.filter((p) => p !== norm),
+    }))
     return get().graphList
   },
 
-  removeMissingProject: async (path) => {
+  markProjectMissing: async (path) => {
     if (!isDesktop()) return get().graphList
     const norm = normalizePath(path)
-    // The bundled default workspace is auto-recreated, never pruned.
+    // The bundled default workspace is auto-recreated, never flagged.
     if (norm === normalizePath(await getDefaultWorkspacePath())) return get().graphList
 
+    // Flag it as missing (idempotent) while keeping it in the list — removing a
+    // project is only ever an explicit user action.
     set((s) => ({
-      settings: {
-        ...s.settings,
-        knownProjects: s.settings.knownProjects.filter((p) => normalizePath(p) !== norm),
-      },
+      missingProjects: s.missingProjects.includes(norm)
+        ? s.missingProjects
+        : [...s.missingProjects, norm],
     }))
 
     const { knownProjects, activeProjectPath } = get().settings
     if (!activeProjectPath || normalizePath(activeProjectPath) !== norm) return get().graphList
 
-    // The active project's folder is gone: switch away through the regular
-    // machinery (clears the stale IDB cache, seeds an empty project if
-    // needed) while suppressing saves — they would recreate the folder.
+    // The active project's folder is gone: switch to a present project (or the
+    // bundled default) through the regular machinery — clears the stale IDB
+    // cache and seeds an empty project if needed — while suppressing saves,
+    // which would otherwise recreate the abandoned folder. The missing entry
+    // stays in the list, flagged.
     _suppressOutgoingSave = true
     try {
-      const target = knownProjects[0] ?? (await getDefaultWorkspacePath())
+      const missing = new Set(get().missingProjects)
+      const target =
+        knownProjects.find((p) => normalizePath(p) !== norm && !missing.has(normalizePath(p))) ??
+        (await getDefaultWorkspacePath())
       return await registerAndSwitch(target, set, get)
     } finally {
       _suppressOutgoingSave = false

@@ -89,11 +89,12 @@ export function useGraphFileWatch() {
         const state = useGraphStore.getState()
         const ws = await resolveWorkspace(state.settings)
 
-        // The whole project folder may have been deleted or moved — without
-        // this check the reconcile below would recreate it from the IDB cache.
+        // The whole project folder may have been deleted, moved or renamed —
+        // without this check the reconcile below would recreate it from the IDB
+        // cache. Flag it missing and switch away, keeping it in the list.
         const { exists } = await import('@tauri-apps/plugin-fs')
         if (!(await exists(ws.displayPath).catch(() => true))) {
-          await useGraphStore.getState().removeMissingProject(ws.displayPath)
+          await useGraphStore.getState().markProjectMissing(ws.displayPath)
           return
         }
 

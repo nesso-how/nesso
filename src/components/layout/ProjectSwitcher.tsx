@@ -8,6 +8,7 @@ import { FolderIcon, CloseIcon } from '@/components/ui/icons'
 export function ProjectSwitcher() {
   const t = useT()
   const knownProjects = useGraphStore((s) => s.settings.knownProjects)
+  const missingProjects = useGraphStore((s) => s.missingProjects)
   const activeProjectPath = useGraphStore((s) => s.settings.activeProjectPath)
   const createProject = useGraphStore((s) => s.createProject)
   const openProject = useGraphStore((s) => s.openProject)
@@ -96,6 +97,7 @@ export function ProjectSwitcher() {
               {knownProjects.map((path) => {
                 const norm = normalizePath(path)
                 const isActive = norm === activeNorm
+                const isMissing = missingProjects.includes(norm)
                 const hovered = hoveredPath === path
 
                 return (
@@ -113,6 +115,7 @@ export function ProjectSwitcher() {
                   >
                     <button
                       type="button"
+                      title={isMissing ? t.sidebar.projectSwitcher.missingProjectHint : undefined}
                       onClick={() => {
                         setOpen(false)
                         if (!isActive) void switchProject(path)
@@ -122,6 +125,7 @@ export function ProjectSwitcher() {
                         flex: 1,
                         minWidth: 0,
                         background: 'transparent',
+                        opacity: isMissing ? 0.55 : 1,
                       }}
                     >
                       <span
@@ -146,32 +150,49 @@ export function ProjectSwitcher() {
                       >
                         {projectDisplayName(path, defaultPath, defaultName)}
                       </span>
+                      {isMissing && (
+                        <span
+                          style={{
+                            flexShrink: 0,
+                            font: "500 10.5px 'JetBrains Mono', ui-monospace",
+                            fontStyle: 'italic',
+                            color: 'var(--ink-4)',
+                          }}
+                        >
+                          {t.sidebar.projectSwitcher.missingProject}
+                        </span>
+                      )}
                     </button>
 
                     {hovered && (
                       <>
-                        <button
-                          type="button"
-                          title={t.sidebar.projectSwitcher.revealInFinder}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            void (async () => {
-                              // revealItemInDir only highlights in the file manager —
-                              // unlike openPath it can never launch an arbitrary app.
-                              const { revealItemInDir } = await import('@tauri-apps/plugin-opener')
-                              await revealItemInDir(path).catch(() => {})
-                            })()
-                          }}
-                          style={rowIconBtn}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.color = 'var(--ink-2)'
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.color = 'var(--ink-4)'
-                          }}
-                        >
-                          <FolderIcon />
-                        </button>
+                        {/* No "Show in Finder" for a missing folder — there's
+                            nothing on disk to reveal. */}
+                        {!isMissing && (
+                          <button
+                            type="button"
+                            title={t.sidebar.projectSwitcher.revealInFinder}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              void (async () => {
+                                // revealItemInDir only highlights in the file manager —
+                                // unlike openPath it can never launch an arbitrary app.
+                                const { revealItemInDir } =
+                                  await import('@tauri-apps/plugin-opener')
+                                await revealItemInDir(path).catch(() => {})
+                              })()
+                            }}
+                            style={rowIconBtn}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.color = 'var(--ink-2)'
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.color = 'var(--ink-4)'
+                            }}
+                          >
+                            <FolderIcon />
+                          </button>
+                        )}
                         {removable && (
                           <button
                             type="button"
