@@ -19,6 +19,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "lint-staged": "lint-staged",
+    "release": "node scripts/release.mjs",
     "build:relation-types": "pnpm --filter @nesso-how/relation-types build",
     "build:types": "pnpm --filter @nesso-how/types build",
     "build:formats": "pnpm --filter @nesso-how/formats build",
