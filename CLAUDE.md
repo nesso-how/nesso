@@ -1,17 +1,14 @@
-# CLAUDE.md
+@AGENTS.md
 
-Developer guide for AI assistants working in this repo. Detailed rules live in `.cursor/rules/`:
+## Claude Code
 
-| File                                                 | Contents                                                                                       |
-| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| [project.mdc](.cursor/rules/project.mdc)             | Project purpose, stack, and architecture overview                                              |
-| [components.mdc](.cursor/rules/components.mdc)       | Component responsibilities and data flow                                                       |
-| [graph-model.mdc](.cursor/rules/graph-model.mdc)     | Semantic edge model — categories, relation types, visual encoding                              |
-| [store.mdc](.cursor/rules/store.mdc)                 | Zustand store shape, mutations, and selector patterns                                          |
-| [mentor.mdc](.cursor/rules/mentor.mdc)               | Socratic AI mentor — MentorBubble, system prompt, OpenAI-compatible chat API                   |
-| [conventions.mdc](.cursor/rules/conventions.mdc)     | Coding conventions (TypeScript, React, state, naming)                                          |
-| [constraints.mdc](.cursor/rules/constraints.mdc)     | Hard constraints — what NOT to do                                                              |
-| [changelog.mdc](.cursor/rules/changelog.mdc)         | `CHANGELOG.md` (Keep a Changelog), **`[Unreleased]`** on each merge, release flow              |
-| [maintenance.mdc](.cursor/rules/maintenance.mdc)     | When and how to keep rules and the README roadmap in sync with the code                        |
-| [docs-sync.mdc](.cursor/rules/docs-sync.mdc)         | Keeping Starlight `docs/` and MCP (`packages/mcp/`) stitched sources aligned                   |
-| [pull-requests.mdc](.cursor/rules/pull-requests.mdc) | PR bodies must match `.github/PULL_REQUEST_TEMPLATE.md` (Summary, Changes, Checklist, Testing) |
+Detailed rules use a single source of truth: canonical content in [`.rules/`](.rules/), with thin per-tool wrappers. For Claude Code, the **path-scoped wrappers** in [`.claude/rules/`](.claude/rules/) auto-load the matching `.rules/` file when you open files in that area — store, components, graph model, mentor, conventions, changelog.
+
+Two situational rules have no file trigger; read the canonical file when the task calls for it:
+
+- Opening, drafting, or updating a PR → [`.rules/pull-requests.md`](.rules/pull-requests.md)
+- Keeping the `.rules/` files in sync with the codebase after code changes → [`.rules/maintenance.md`](.rules/maintenance.md)
+
+**Release:** run `/release` to cut a release — the skill at [`.claude/skills/release/SKILL.md`](.claude/skills/release/SKILL.md) bumps the synced version, rolls the changelog, and tags/pushes to trigger publishing. It is manual-only (`disable-model-invocation`), since pushing the tag publishes.
+
+When a rule needs changing, edit the canonical `.rules/*.md` file — never the wrappers. The wrappers in `.cursor/rules/` and `.claude/rules/` carry only tool-specific frontmatter plus an import of the canonical file. The release procedure's single source is the skill's `SKILL.md`; the Cursor rule references it.

@@ -1,0 +1,8 @@
+---
+description: Cutting a Nesso release — bump the synced version across all package.json files and tauri.conf.json, roll the CHANGELOG, then tag and push to trigger the publish workflow. Use when asked to cut, ship, publish, or version-bump a release.
+alwaysApply: false
+---
+
+Canonical procedure lives in the release skill at [`.claude/skills/release/SKILL.md`](../../.claude/skills/release/SKILL.md). Follow it step by step. Edit that file, not this wrapper.
+
+@.claude/skills/release/SKILL.md

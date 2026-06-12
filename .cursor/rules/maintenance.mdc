@@ -1,33 +1,8 @@
 ---
-description: Rule for keeping .cursor/rules/ in sync with the codebase
+description: Keeping the .rules/ files in sync with the codebase
 alwaysApply: false
 ---
 
-# Keeping rules up to date
+Canonical content lives in [`.rules/maintenance.md`](../../.rules/maintenance.md). Edit that file, not this wrapper.
 
-When you modify code in an area covered by a `.cursor/rules/` file, update that file in the same change if the modification makes any rule stale or incomplete. The mapping:
-
-| If you touch…                                               | Update…           |
-| ----------------------------------------------------------- | ----------------- |
-| `src/components/**`                                         | `components.mdc`  |
-| `src/store/**`                                              | `store.mdc`       |
-| `src/types/graph.ts`, `src/data/relationTypes.ts`           | `graph-model.mdc` |
-| `src/components/mentor/MentorBubble.tsx`, AI provider/model | `mentor.mdc`      |
-| Coding patterns, naming, import conventions                 | `conventions.mdc` |
-| Architectural constraints, "never do X" rules               | `constraints.mdc` |
-| `CHANGELOG.md`                                              | `changelog.mdc`   |
-| Overall stack, layout, core concepts                        | `project.mdc`     |
-
-## Starlight docs and MCP (`docs/`, `packages/mcp/`)
-
-When MCP tools, stitched doc paths, env vars, or **user-visible behaviour** documented on the site change, update **`docs/`** and rebuild **`packages/mcp`** (`pnpm build`, refreshes **`dist/starlight-docs.pages.json`** via auto-discovery of `docs/src/content/docs/docs/**/*.md`) — see **`docs-sync.mdc`**.
-
-When you revise **guides or reference pages**, keep content aligned with the app.
-
-## README roadmap (`## Roadmap`)
-
-When you **complete** work that satisfies an unchecked item under `## Roadmap` in `README.md`, update that line to `- [x] ...` in the **same commit or PR** as the implementation.
-
-- If you ship something that clearly matches an existing roadmap line but wording drifted, adjust the line text so it still describes what shipped, then check it off.
-- If you add a significant **new** user-facing capability that belongs on the public roadmap, add a matching `- [ ]` line (keep items one line, consistent with the existing list).
-- If plans change and an item is dropped or replaced, edit or remove that line so the roadmap stays honest — do not leave stale `[ ]` rows for cancelled work without a brief reason or replacement.
+@.rules/maintenance.md
