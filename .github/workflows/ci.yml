@@ -5,6 +5,12 @@ on:
   push:
     branches: [main]
 
+# Cancel superseded runs on the same PR/branch when new commits land. Pushes to
+# main always run to completion (no cancel) so every merged commit gets a full check.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -34,7 +40,8 @@ jobs:
 
       - run: pnpm run format:check
       - run: pnpm run lint
-      - run: pnpm exec tsc -b
+      # `tsc -b` is not run on its own here: `pnpm run build` already runs it
+      # (`… && tsc -b && vite build`), so a standalone step would type-check twice.
       - run: pnpm run build:mcp
       - run: pnpm run build
       - run: pnpm run license-headers:check
