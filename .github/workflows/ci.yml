@@ -12,7 +12,9 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  check:
+  # Web/JS lane: everything driven by pnpm — app + packages + MCP + docs build,
+  # format, lint, license headers. Paired with the `rust` job (cargo lane).
+  js:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -46,7 +48,7 @@ jobs:
       - run: pnpm run build
       - run: pnpm run license-headers:check
 
-  # Native layer (src-tauri/). Runs in parallel with `check`; a red Rust gate
+  # Native layer (src-tauri/). Runs in parallel with `js`; a red Rust gate
   # blocks merge just like lint/build. See .github/workflows/release.yml for the
   # macOS bundle build — this job is the per-PR fmt/lint/compile feedback loop.
   rust:
