@@ -14,5 +14,4 @@ Developer guide for AI assistants working in this repo. Detailed rules live in `
 | [changelog.mdc](.cursor/rules/changelog.mdc)         | `CHANGELOG.md` (Keep a Changelog), **`[Unreleased]`** on each merge, release flow              |
 | [maintenance.mdc](.cursor/rules/maintenance.mdc)     | When and how to keep rules and the README roadmap in sync with the code                        |
 | [docs-sync.mdc](.cursor/rules/docs-sync.mdc)         | Keeping Starlight `docs/` and MCP (`packages/mcp/`) stitched sources aligned                   |
-| [workflow.mdc](.cursor/rules/workflow.mdc)           | Planning with Claude Code → implementing with Cursor Composer                                  |
 | [pull-requests.mdc](.cursor/rules/pull-requests.mdc) | PR bodies must match `.github/PULL_REQUEST_TEMPLATE.md` (Summary, Changes, Checklist, Testing) |
