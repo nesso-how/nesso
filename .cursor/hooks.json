@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [{ "command": ".cursor/hooks/fetch-origin.sh" }],
+    "beforeShellExecution": [{ "command": ".cursor/hooks/block-pnpm.sh" }]
+  }
+}

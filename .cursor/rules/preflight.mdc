@@ -1,0 +1,8 @@
+---
+description: Run CI-parity checks locally (format, lint, types, builds, license headers) before opening or updating a PR. Use before pushing to catch a red CI early.
+alwaysApply: false
+---
+
+Canonical procedure lives in the preflight skill at [`.claude/skills/preflight/SKILL.md`](../../.claude/skills/preflight/SKILL.md). Follow it step by step. Edit that file, not this wrapper.
+
+@.claude/skills/preflight/SKILL.md
