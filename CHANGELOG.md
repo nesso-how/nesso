@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.0-alpha.29] - 2026-06-12
+
 ### Added
 
 - **Settings:** The Appearance tab now exposes the graph display defaults (heatmap, edge encoding, curve style, auto-flip) that were previously hardcoded and unreachable from the UI. These seed new graphs and graphs without their own stored display (via `defaultGraphDisplay`/`mergeGraphDisplay`); existing graphs and per-graph sidebar overrides are unaffected, so a user's baseline preference no longer has to be re-applied on every new graph.
@@ -503,7 +505,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial alpha: interactive knowledge graph (web + Tauri v2); desktop installers on GitHub Releases (macOS Apple silicon and Intel).
 
-[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.28...HEAD
+[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.29...HEAD
+[0.1.0-alpha.29]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.28...v0.1.0-alpha.29
 [0.1.0-alpha.28]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.27...v0.1.0-alpha.28
 [0.1.0-alpha.27]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.26...v0.1.0-alpha.27
 [0.1.0-alpha.26]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.25...v0.1.0-alpha.26

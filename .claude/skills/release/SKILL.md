@@ -1,6 +1,6 @@
 ---
 name: release
-description: Cut a new Nesso release — bump the synced version across all package.json files and tauri.conf.json, roll the CHANGELOG [Unreleased] section into a dated version with updated link refs, then tag and push to trigger the publish workflow. Use when the user asks to cut, ship, publish, or version-bump a release.
+description: Cut a new Nesso release — bump the synced version across all package.json files, tauri.conf.json, and the Tauri Rust crate (Cargo.toml/Cargo.lock), roll the CHANGELOG [Unreleased] section into a dated version with updated link refs, then tag and push to trigger the publish workflow. Use when the user asks to cut, ship, publish, or version-bump a release.
 disable-model-invocation: true
 ---
 
@@ -22,7 +22,7 @@ For the conventions and the desktop auto-update / minisign signing details, see 
 - Default `NEW` = increment the alpha counter (`…-alpha.N` → `…-alpha.N+1`). For a different bump (e.g. leaving alpha), confirm the target semver with the user.
 - The tag will be `vNEW`.
 
-## 2. Bump the version everywhere — all seven must stay in sync
+## 2. Bump the version everywhere — all nine must stay in sync
 
 Set the `version` field to `NEW` in every one of these (they are all currently identical; CI fails otherwise):
 
@@ -33,8 +33,16 @@ Set the `version` field to `NEW` in every one of these (they are all currently i
 - `packages/relation-types/package.json`
 - `packages/types/package.json`
 - `src-tauri/tauri.conf.json`
+- `src-tauri/Cargo.toml` — the `[package]` `version`
+- `src-tauri/Cargo.lock` — the `name = "nesso"` entry's `version` (mirrors `Cargo.toml`; **not** refreshed by `pnpm install`, so edit it by hand or it drifts and the desktop build's frozen-lockfile check fails)
 
 Inter-package deps use `workspace:*`; pnpm rewrites them to the real version at publish time, so there are no dependency ranges to edit by hand.
+
+Sanity check after editing — every occurrence should now be `NEW`, none left on `PREV`:
+
+```bash
+grep -rn 'PREV' package.json packages/*/package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock
+```
 
 ## 3. Roll the CHANGELOG
 
@@ -50,7 +58,7 @@ In `CHANGELOG.md`:
 
 - Run `pnpm install` so `pnpm-lock.yaml` picks up the new workspace versions. CI runs `--frozen-lockfile`, so a stale lockfile fails the release.
 - Run `pnpm build`, `pnpm lint`, `pnpm format:check` — fix or report any failure before continuing.
-- Re-check: all seven versions equal `NEW`; the `## [NEW]` heading, the two link refs, and `tauri.conf.json` agree.
+- Re-check: all nine versions equal `NEW`; the `## [NEW]` heading, the two link refs, and `tauri.conf.json` agree.
 
 ## 5. Commit, tag, push — only after explicit confirmation
 

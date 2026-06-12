@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Nesso",
-  "version": "0.1.0-alpha.28",
+  "version": "0.1.0-alpha.29",
   "identifier": "dev.nesso.desktop",
   "build": {
     "frontendDist": "../dist",
