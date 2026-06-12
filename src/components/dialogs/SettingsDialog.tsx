@@ -182,7 +182,13 @@ export function SettingsDialog({ open, onClose }: Props) {
             className="nesso-scrollbar"
             style={{ flex: 1, padding: '24px 28px 24px', overflowY: 'auto', minWidth: 0 }}
           >
-            <div style={{ marginBottom: 22 }}>
+            <div
+              style={{
+                marginBottom: 20,
+                paddingBottom: 16,
+                borderBottom: '0.5px solid var(--line)',
+              }}
+            >
               <span style={{ font: "500 14px 'Inter', system-ui", color: 'var(--ink)' }}>
                 {t.settings.tabs[tab]}
               </span>
@@ -223,6 +229,121 @@ export function SettingsDialog({ open, onClose }: Props) {
                     value={settings.language}
                     onChange={(id) => setSetting('language', id)}
                   />
+                </div>
+
+                {/* Graph display defaults — seed values for new graphs and graphs
+                    without their own stored display (mergeGraphDisplay / defaultGraphDisplay).
+                    The Sidebar still lets users override these per graph. */}
+                <div style={{ borderTop: '0.5px solid var(--line)', paddingTop: 18 }}>
+                  <div style={{ marginBottom: 14 }}>
+                    <span
+                      style={{
+                        font: "500 11px 'JetBrains Mono', ui-monospace",
+                        color: 'var(--ink-4)',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.08em',
+                      }}
+                    >
+                      {t.settings.appearance.graphDefaults}
+                    </span>
+                    <small
+                      style={{
+                        display: 'block',
+                        font: "400 11px/1.4 'Inter', system-ui",
+                        color: 'var(--ink-4)',
+                        marginTop: 6,
+                      }}
+                    >
+                      {t.settings.appearance.graphDefaultsDesc}
+                    </small>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <span style={{ font: "400 13px 'Inter', system-ui", color: 'var(--ink-3)' }}>
+                        {t.settings.appearance.heatmap}
+                      </span>
+                      <PillToggle
+                        options={[
+                          { id: 'off', label: t.settings.appearance.off },
+                          { id: 'on', label: t.settings.appearance.on },
+                        ]}
+                        value={settings.showHeatmap ? 'on' : 'off'}
+                        onChange={(id) => setSetting('showHeatmap', id === 'on')}
+                      />
+                    </div>
+
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <span style={{ font: "400 13px 'Inter', system-ui", color: 'var(--ink-3)' }}>
+                        {t.settings.appearance.edges}
+                      </span>
+                      <PillToggle
+                        options={[
+                          { id: 'full', label: t.settings.appearance.full },
+                          { id: 'category', label: t.settings.appearance.category },
+                          { id: 'minimal', label: t.settings.appearance.minimal },
+                        ]}
+                        value={settings.edgeEncoding}
+                        onChange={(id) => setSetting('edgeEncoding', id)}
+                      />
+                    </div>
+
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <span style={{ font: "400 13px 'Inter', system-ui", color: 'var(--ink-3)' }}>
+                        {t.settings.appearance.curve}
+                      </span>
+                      <PillToggle
+                        options={[
+                          { id: 'arc', label: t.settings.appearance.arc },
+                          { id: 'straight', label: t.settings.appearance.straight },
+                        ]}
+                        value={settings.curveStyle}
+                        onChange={(id) => setSetting('curveStyle', id)}
+                      />
+                    </div>
+
+                    {settings.curveStyle === 'arc' && (
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                        }}
+                      >
+                        <span
+                          style={{ font: "400 13px 'Inter', system-ui", color: 'var(--ink-3)' }}
+                        >
+                          {t.settings.appearance.autoFlip}
+                        </span>
+                        <PillToggle
+                          options={[
+                            { id: 'off', label: t.settings.appearance.off },
+                            { id: 'on', label: t.settings.appearance.on },
+                          ]}
+                          value={settings.autoCurveFlip ? 'on' : 'off'}
+                          onChange={(id) => setSetting('autoCurveFlip', id === 'on')}
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             )}

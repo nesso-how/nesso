@@ -8,6 +8,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
+- **Settings:** The Appearance tab now exposes the graph display defaults (heatmap, edge encoding, curve style, auto-flip) that were previously hardcoded and unreachable from the UI. These seed new graphs and graphs without their own stored display (via `defaultGraphDisplay`/`mergeGraphDisplay`); existing graphs and per-graph sidebar overrides are unaffected, so a user's baseline preference no longer has to be re-applied on every new graph.
 - **UI:** Two themed, localized in-app primitives replace native browser dialogs. A non-blocking toast (auto-dismissing, stackable, manually dismissible, reduced-motion aware; built on the existing banner design) now surfaces transient messages — a failed graph import and the "project folder not found" notice, both previously `window.alert`. A blocking confirmation dialog now guards destructive actions: deleting a graph (previously `window.confirm`) and removing a project from the list (previously a single click with no prompt). The dead per-app export-overwrite `window.confirm` — unreachable on desktop (native save dialog) and on web (the browser auto-renames) — is removed along with its plumbing. No native `window.alert`/`window.confirm` calls remain.
 
 ### Fixed
