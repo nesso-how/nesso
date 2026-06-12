@@ -9,6 +9,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 
 - **CI:** A dedicated `rust` job now gates the native Tauri layer (`src-tauri/`) on every PR, in parallel with the renamed `js` job (was `check`): `cargo fmt --all --check`, `cargo clippy --all-targets -- -D warnings`, `cargo check --all-targets`, and `cargo test`. It installs the stable toolchain (rustfmt + clippy), caches `~/.cargo`/`target` via `swatinem/rust-cache`, installs the Tauri Linux system deps, and generates the gitignored bundle icons first (`tauri::generate_context!` embeds them). Previously the Rust side was invisible to CI and only failed at desktop-build/release time. The `preflight` skill mirrors the new steps for local parity.
+- **Testing:** Introduced **Vitest** for fast, deterministic unit/integration tests on pure logic — the base of the testing pyramid (complements e2e, #28). Covers graph serialization (`@nesso-how/formats`), edge geometry and rating colors (`@nesso-how/graph`), FSRS/display types (`@nesso-how/types`), id generation, the canvas clipboard, the Zustand `graph-editing` and `graph-management` slices, and the regression-prone workspace disk↔IndexedDB layer (manifest, paths, file naming/dedup, two-phase sync) exercised as real integration against an in-memory Tauri-fs boundary plus `fake-indexeddb`. Added `test` / `test:watch` / `test:coverage` scripts and a required `test` step in CI that gates PRs. Test conventions live in `.rules/testing.md`.
 
 ## [0.1.0-alpha.29] - 2026-06-12
 

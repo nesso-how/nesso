@@ -1,0 +1,9 @@
+---
+description: Vitest unit/integration tests — layout, env split, resolution, CI gate
+globs: '**/*.test.{ts,tsx}'
+alwaysApply: false
+---
+
+Canonical content lives in [`.rules/testing.md`](../../.rules/testing.md). Edit that file, not this wrapper.
+
+@.rules/testing.md
