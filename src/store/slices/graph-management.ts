@@ -226,11 +226,14 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
                 ? s.missingProjects
                 : [...s.missingProjects, norm],
             }))
-            window.alert(
-              get().settings.language === 'it'
-                ? 'Cartella del progetto non trovata: potrebbe essere stata spostata o rinominata. Resta nella lista finché non la rimuovi.'
-                : 'Project folder not found: it may have been moved or renamed. It stays in the list until you remove it.',
-            )
+            get().pushToast({
+              id: `project-missing:${norm}`,
+              variant: 'info',
+              message:
+                get().settings.language === 'it'
+                  ? 'Cartella del progetto non trovata: potrebbe essere stata spostata o rinominata. Resta nella lista finché non la rimuovi.'
+                  : 'Project folder not found: it may have been moved or renamed. It stays in the list until you remove it.',
+            })
             return get().graphList
           }
           if (get().missingProjects.includes(norm)) {

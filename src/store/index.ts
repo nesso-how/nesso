@@ -9,7 +9,7 @@ import { createGraphManagementSlice } from './slices/graph-management'
 import { createDesktopSyncSlice } from './slices/desktop-sync'
 import type { GraphState } from './state'
 
-export type { GraphMeta, Selection, Viewport, GraphSnapshot } from './types'
+export type { GraphMeta, Selection, Viewport, GraphSnapshot, Toast, ConfirmRequest } from './types'
 export type { GraphState } from './state'
 
 export const useGraphStore = create<GraphState>()(
