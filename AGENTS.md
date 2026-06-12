@@ -55,6 +55,7 @@ Area-specific rules (canonical content in `.rules/`, auto-attached per file area
 | Semantic edge model — categories, relation types, encoding      | [`.rules/graph-model.md`](.rules/graph-model.md)     |
 | Zustand store shape, mutations, selector patterns               | [`.rules/store.md`](.rules/store.md)                 |
 | Socratic AI mentor — MentorBubble, system prompt, chat API      | [`.rules/mentor.md`](.rules/mentor.md)               |
+| Vitest tests — layout, env split, module resolution, CI gate    | [`.rules/testing.md`](.rules/testing.md)             |
 | `CHANGELOG.md` (Keep a Changelog), `[Unreleased]`, release flow | [`.rules/changelog.md`](.rules/changelog.md)         |
 | Keeping the `.rules/` files in sync with the codebase           | [`.rules/maintenance.md`](.rules/maintenance.md)     |
 | PR titles/bodies — match `.github/PULL_REQUEST_TEMPLATE.md`     | [`.rules/pull-requests.md`](.rules/pull-requests.md) |

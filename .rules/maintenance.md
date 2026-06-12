@@ -9,6 +9,7 @@ When you modify code in an area covered by a rule, update that rule's canonical 
 | `src/types/graph.ts`, `src/data/relationTypes.ts`           | [`.rules/graph-model.md`](graph-model.md)                       |
 | `src/components/mentor/MentorBubble.tsx`, AI provider/model | [`.rules/mentor.md`](mentor.md)                                 |
 | Coding patterns, naming, import conventions                 | [`.rules/conventions.md`](conventions.md)                       |
+| `*.test.ts`, `vitest.config.ts`, test scripts, CI test gate | [`.rules/testing.md`](testing.md)                               |
 | `CHANGELOG.md`                                              | [`.rules/changelog.md`](changelog.md)                           |
 | Architectural constraints, "never do X" rules               | `AGENTS.md` → **Constraints**                                   |
 | Overall stack, layout, core concepts                        | `AGENTS.md` → **Stack** / **Source layout** / **Core concepts** |
