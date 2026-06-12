@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- **CI:** A dedicated `rust` job now gates the native Tauri layer (`src-tauri/`) on every PR, in parallel with the existing `check` job: `cargo fmt --all --check`, `cargo clippy --all-targets -- -D warnings`, `cargo check --all-targets`, and `cargo test`. It installs the stable toolchain (rustfmt + clippy), caches `~/.cargo`/`target` via `swatinem/rust-cache`, installs the Tauri Linux system deps, and generates the gitignored bundle icons first (`tauri::generate_context!` embeds them). Previously the Rust side was invisible to CI and only failed at desktop-build/release time. The `preflight` skill mirrors the new steps for local parity.
+
 ## [0.1.0-alpha.29] - 2026-06-12
 
 ### Added
