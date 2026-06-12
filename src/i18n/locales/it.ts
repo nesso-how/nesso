@@ -148,6 +148,8 @@ const it: typeof en = {
       openProject: 'Apri progetto…',
       revealInFinder: 'Mostra nel Finder',
       removeProject: 'Rimuovi dalla lista',
+      missingProject: 'non trovata',
+      missingProjectHint: 'Cartella non trovata — potrebbe essere stata spostata o rinominata.',
     },
     newGraphTitle: 'Nuovo grafo',
     deleteGraph: 'Elimina grafo',
