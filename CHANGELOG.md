@@ -9,6 +9,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 
 - **Graphs:** Edits made within the autosave debounce window are no longer lost when switching graphs — `loadGraph` flushes the pending save first. A save still in flight during a switch can no longer leak the previous graph's saved-state fingerprint onto the newly loaded one (which faked or masked external-file conflicts).
+- **Desktop:** The app's display name is now capitalized (`Nesso`) — `productName` was lowercase, so the menu bar, Dock and `.app` bundle showed `nesso`. The window title was already `Nesso`.
 - **Desktop sync:** External edits to a graph file that don't bump its embedded `updatedAt` (e.g. hand edits in a text editor) are now detected via content comparison instead of being silently overwritten on the next in-app save. The conflict check also re-reads the live store right before deciding, closing a window where edits made during the reconcile could be reloaded over.
 - **Canvas:** Escape while renaming a concept on the canvas now cancels the edit (it used to commit, unlike the inspector). Releasing a new connection over an edge no longer creates an invisible ghost edge (only nodes are valid drop targets). Node/edge ids are now collision-checked on create and paste. Deleting a mixed selection removes explicitly selected edges too.
 - **Shortcuts:** Editing shortcuts (Backspace/Delete, ⌘C/V/Z, Enter, n, f, r) are disabled while any dialog is open — Backspace during a review no longer deletes the canvas selection underneath.
