@@ -3,46 +3,6 @@ description: Pull request titles and bodies — match .github/PULL_REQUEST_TEMPL
 alwaysApply: false
 ---
 
-# Pull requests
+Canonical content lives in [`.rules/pull-requests.md`](../../.rules/pull-requests.md). Edit that file, not this wrapper.
 
-When the user asks to **open, draft, or update a PR** (including `gh pr create` / `gh pr edit`), the PR body must follow [`.github/PULL_REQUEST_TEMPLATE.md`](.github/PULL_REQUEST_TEMPLATE.md). Do not substitute a different layout (e.g. a lone “Test plan” section).
-
-## Required sections (exact headings)
-
-Use these four `##` headings in this order. Fill every section; remove HTML comments from the template — do not leave placeholder comments in the posted body.
-
-1. **`## Summary`** — What the PR does and why (1–3 short paragraphs or bullets).
-2. **`## Changes`** — One bullet per logical change (files/features grouped, not a raw file list).
-3. **`## Checklist`** — Copy the checklist from the template; mark items `[x]` only when true for this branch:
-   - Branch name follows [CONTRIBUTING.md](CONTRIBUTING.md) (`feat/`, `fix/`, `refactor/`, `chore/` + short name).
-   - `## [Unreleased]` in `CHANGELOG.md` updated when the PR includes user-facing or release-note-worthy work (see [changelog.mdc](changelog.mdc)).
-4. **`## Testing`** — How you verified the change (commands run, manual steps, screenshots note for UI).
-
-## `gh pr create`
-
-Pass the body via a HEREDOC so markdown and checkboxes survive the shell:
-
-```bash
-gh pr create --title "<conventional short title>" --body "$(cat <<'EOF'
-## Summary
-...
-
-## Changes
-- ...
-
-## Checklist
-- [ ] Branch name follows the naming convention
-- [ ] `## [Unreleased]` in `CHANGELOG.md` updated
-
-## Testing
-...
-EOF
-)"
-```
-
-Use a **conventional-commit-style title** (`feat:`, `fix:`, etc.) aligned with the branch and commits.
-
-## Title vs body
-
-- **Title**: short, conventional commit prefix + scope/description.
-- **Body**: always the four sections above — never collapse “Changes” and “Testing” into a single “Test plan” block.
+@.rules/pull-requests.md

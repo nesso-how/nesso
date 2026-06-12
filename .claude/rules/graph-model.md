@@ -1,0 +1,10 @@
+---
+paths:
+  - 'src/data/relationTypes.ts'
+  - 'src/types/graph.ts'
+  - 'packages/graph/src/NessoEdge.tsx'
+  - 'src/components/RelationTypesDialog.tsx'
+  - 'packages/relation-types/src/index.ts'
+---
+
+@../../.rules/graph-model.md

@@ -1,0 +1,68 @@
+# Graph model
+
+## Node data (`ConceptNodeData`)
+
+```ts
+interface ConceptNodeData extends Record<string, unknown> {
+  text: string
+  stability: number
+  difficulty: number
+  reps: number
+  lapses: number
+  fsrsState: number // ts-fsrs State: New/Learning/Review/Relearning
+  due: number // Unix ms; due when <= now (0 = new / immediate)
+  lastReview: number // Unix ms; 0 = never
+  lastRating: number // 0 = none; 1–4 = Again/Hard/Good/Easy (matches ts-fsrs Rating)
+  learningSteps?: number // FSRS learning-step index; optional for records saved before it existed
+  elaboration?: ConceptElaboration // optional richer concept content
+}
+```
+
+The interface is defined in `@nesso-how/types` (`packages/types/src/index.ts`) and re-exported through `src/types/graph.ts`. Use `nodeToCard()` to build a ts-fsrs `Card` from persisted fields.
+
+## Edge categories and relation types
+
+All edges carry a `data.type: EdgeTypeName`. Relation definitions (`RELATION_TYPES`) and category copy (`RELATION_CATEGORY_META`) live in `@nesso-how/relation-types`; UI palette bindings (`RELATION_CATEGORIES`) merge meta with CSS vars in `src/data/relationTypes.ts`.
+
+The set has **52 types in 8 categories**. Asymmetric relations come in **inverse pairs** so traversal in either direction is first-class.
+
+| Category     | Forward types                                                                                         | Inverse types                                                                                                                        |
+| ------------ | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `taxonomic`  | `subtype-of`, `instance-of`                                                                           | `has-subtype`, `has-instance`                                                                                                        |
+| `structural` | `part-of`, `made-of`                                                                                  | `contains`, `composes`                                                                                                               |
+| `causal`     | `causes`, `produces`, `enables`, `prevents`, `triggers`, `inhibits`, `disables`, `consumes`, `delays` | `caused-by`, `produced-by`, `enabled-by`, `prevented-by`, `triggered-by`, `inhibited-by`, `disabled-by`, `consumed-by`, `delayed-by` |
+| `dependency` | `requires`, `uses`, `used-for`                                                                        | `required-by`, `used-by`, `purpose-of`                                                                                               |
+| `temporal`   | `precedes`, `occurs-in`, `during`, `derives-from`, `overlaps-with`                                    | `follows`, `has-occurrence`, `spans`, `gives-rise-to`; `overlaps-with` is self (symmetric)                                           |
+| `opposition` | `contrasts-with`, `opposite-of`                                                                       | self (symmetric)                                                                                                                     |
+| `similarity` | `similar-to`, `analogous-to`                                                                          | self (symmetric)                                                                                                                     |
+| `epistemic`  | `supports`, `explains`, `defines`, `contradicts`                                                      | `supported-by`, `explained-by`, `defined-by`; `contradicts` is self (symmetric)                                                      |
+
+## `EdgeTypeDef` schema
+
+Each definition has:
+
+- `cat: EdgeCategory` — which category it belongs to
+- `label: string` — human-readable label
+- `line: 'solid' | 'dashed' | 'dotted' | 'double' | 'wavy'` — stroke style
+- `glyph: GlyphKind` — SVG icon at the target end
+- `transitive: 'Y' | 'N' | 'weak'` — `weak` = transitivity with decay; algorithms may discount per step
+- `inverse: EdgeTypeName | 'self'` — canonical inverse in the set; `'self'` for symmetric types (`contrasts-with`, `opposite-of`, `similar-to`, `analogous-to`, `contradicts`, `overlaps-with`)
+- `strength: number` — per-type semantic weight in `0..1`. Intensity, not per-edge confidence (there is no per-edge override). Distinct types may differ by strength alone (e.g. `prevents` 0.85 vs `inhibits` 0.55).
+- `polarity: -1 | 0 | 1` — signed-network polarity: `+1` positive effect, `-1` antagonistic, `0` neutral/structural
+- `cardinality: '1-1' | '1-N' | 'N-1' | 'N-N'` — expected mapping pattern; `N-N` = no a-priori constraint
+
+These coefficients exist to drive future graph-analysis and graph-comparison algorithms; they are studied at the type level, not assigned per edge.
+
+## Visual encoding
+
+`NessoEdge` renders each edge according to its `EdgeTypeDef`. The amount of visual information shown depends on the `edgeEncoding` setting:
+
+- `full` — category colour + per-type line style + glyph + arrowhead + always-on label
+- `category` — same as `full` (colour, line style, glyph, arrowhead) but the label shows only on hover/selection
+- `minimal` — plain solid line in a neutral grey: no glyph, arrowhead, label, or category colour
+
+Category colours are CSS custom properties (`--cat-taxonomic`, `--cat-structural`, etc.) set by the active palette in `App.tsx` from `PALETTES` in `@nesso-how/relation-types`. Embeds use hex from `PALETTES` directly via `categoryColorMode: 'palette'`.
+
+## React Flow edge type
+
+All edges in the store use `type: 'nesso'`, rendered by `NessoEdge` from `@nesso-how/graph` (default in `NessoGraph`). Never use the default React Flow edge types — they do not carry glyph or line-style rendering.
