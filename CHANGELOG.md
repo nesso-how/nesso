@@ -8,8 +8,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
+- **Desktop:** Fleshed out the native menu bar with a coherent structure and a single accelerator strategy (follow-up to #17). Beyond the previous minimal menu it adds Settings (⌘,), New Graph (⌘N), JSON/PNG export and import, graph Undo/Redo/Copy/Paste (⌘Z/⌘⇧Z/⌘C/⌘V, routed to the store), View zoom in/out/fit, live Heatmap/Edges/Curve toggles and full screen, and a Help menu (Documentation, Website, Report an Issue, Keyboard Shortcuts, About on Win/Linux). Menu labels and the View check marks follow the in-app language and display settings: the frontend rebuilds the menu through a new `set_app_menu` Tauri command on every language or display change, and every custom item routes through `menu:*` events into existing store actions and dialogs (reusing the extracted `src/lib/graphIO.ts` export/import helpers). The ⌘Z/⌘C/⌘V "split-brain" is resolved by giving the graph the document accelerators; native Cut/Select All were dropped for now (follow-up #42).
 - **CI:** A dedicated `rust` job now gates the native Tauri layer (`src-tauri/`) on every PR, in parallel with the renamed `js` job (was `check`): `cargo fmt --all --check`, `cargo clippy --all-targets -- -D warnings`, `cargo check --all-targets`, and `cargo test`. It installs the stable toolchain (rustfmt + clippy), caches `~/.cargo`/`target` via `swatinem/rust-cache`, installs the Tauri Linux system deps, and generates the gitignored bundle icons first (`tauri::generate_context!` embeds them). Previously the Rust side was invisible to CI and only failed at desktop-build/release time. The `preflight` skill mirrors the new steps for local parity.
 - **Testing:** Introduced **Vitest** for fast, deterministic unit/integration tests on pure logic — the base of the testing pyramid (complements e2e, #28). Covers graph serialization (`@nesso-how/formats`), edge geometry and rating colors (`@nesso-how/graph`), FSRS/display types (`@nesso-how/types`), id generation, the canvas clipboard, the Zustand `graph-editing` and `graph-management` slices, and the regression-prone workspace disk↔IndexedDB layer (manifest, paths, file naming/dedup, two-phase sync) exercised as real integration against an in-memory Tauri-fs boundary plus `fake-indexeddb`. Added `test` / `test:watch` / `test:coverage` scripts and a required `test` step in CI that gates PRs. Test conventions live in `.rules/testing.md`.
+
+### Changed
+
+- **Sidebar:** Removed the redundant info (About) button from the footer — About stays reachable from the always-visible ⋯ menu and, on desktop, the native Help/app menu.
 
 ## [0.1.0-alpha.29] - 2026-06-12
 
