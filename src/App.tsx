@@ -23,13 +23,13 @@ import { ReviewMode } from './components/review/ReviewMode'
 import { ShortcutsDialog } from './components/dialogs/ShortcutsDialog'
 import { SettingsDialog } from './components/dialogs/SettingsDialog'
 import { AboutDialog } from './components/dialogs/AboutDialog'
-import { isDesktop } from '@/lib/isDesktop'
 import { SearchDialog } from './components/dialogs/SearchDialog'
 import { ConfirmDialog } from './components/ui/ConfirmDialog'
 import { ToastViewport } from './components/ui/ToastViewport'
 import { useGraphStore, selectedNodeSelector, selectedEdgeSelector } from './store'
 import { useAutoSave } from './hooks/useAutoSave'
 import { useGraphFileWatch } from './hooks/useGraphFileWatch'
+import { useDesktopMenu } from './hooks/useDesktopMenu'
 import { GraphFileConflictBanner } from './components/banners/GraphFileConflictBanner'
 import { UpdateBanner } from './components/banners/UpdateBanner'
 import { PALETTES } from '@nesso-how/relation-types'
@@ -64,8 +64,6 @@ function AppInner() {
   const viewports = useGraphStore((s) => s.viewports)
   const sidebarCollapsed = useGraphStore((s) => s.sidebarCollapsed)
   const setSidebarCollapsed = useGraphStore((s) => s.setSidebarCollapsed)
-  const createProject = useGraphStore((s) => s.createProject)
-  const openProject = useGraphStore((s) => s.openProject)
   const confirmOpen = useGraphStore((s) => s.confirmRequest !== null)
 
   const canUndo = useGraphStore((s) => s._history.length > 0)
@@ -77,24 +75,6 @@ function AppInner() {
 
   useAutoSave()
   useGraphFileWatch()
-
-  useEffect(() => {
-    if (!isDesktop()) return
-    const unlistens: (() => void)[] = []
-    let cancelled = false
-    void (async () => {
-      const { listen } = await import('@tauri-apps/api/event')
-      if (cancelled) return
-      unlistens.push(await listen('menu:about', () => setShowAbout(true)))
-      unlistens.push(await listen('menu:new-project', () => void createProject()))
-      unlistens.push(await listen('menu:open-project', () => void openProject()))
-      if (cancelled) unlistens.forEach((u) => u())
-    })()
-    return () => {
-      cancelled = true
-      unlistens.forEach((u) => u())
-    }
-  }, [createProject, openProject])
 
   const [sidebarPanelWidth, setSidebarPanelWidth] = useState(readSidebarWidth)
   useEffect(() => {
@@ -160,6 +140,13 @@ function AppInner() {
     },
     [getNodes, setViewport, canvasInsets],
   )
+
+  useDesktopMenu({
+    onSettings: () => setShowSettings(true),
+    onShortcuts: () => setShowShortcuts(true),
+    onAbout: () => setShowAbout(true),
+    onFit: fitView,
+  })
 
   const viewportRestoredFor = useRef<string | null>(null)
 
@@ -400,7 +387,6 @@ function AppInner() {
         onCollapse={() => setSidebarCollapsed(true)}
         onSearch={() => setShowSearch((s) => !s)}
         onSettings={() => setShowSettings((s) => !s)}
-        onAbout={() => setShowAbout(true)}
         width={sidebarPanelWidth}
         onWidthChange={(w) => setSidebarPanelWidth(clampSidebarWidth(w))}
       />

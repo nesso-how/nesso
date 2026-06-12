@@ -45,7 +45,6 @@ interface Props {
   onCollapse: () => void
   onSearch: () => void
   onSettings: () => void
-  onAbout: () => void
   width: number
   onWidthChange: (w: number) => void
 }
@@ -55,7 +54,6 @@ export function Sidebar({
   onCollapse,
   onSearch,
   onSettings,
-  onAbout,
   width,
   onWidthChange,
 }: Props) {
@@ -560,7 +558,7 @@ export function Sidebar({
             )}
           </div>
 
-          {/* Footer — Settings + About */}
+          {/* Footer — Settings */}
           <div
             style={{
               padding: '8px 8px',
@@ -618,36 +616,6 @@ export function Sidebar({
                   <circle cx="12" cy="12" r="3" />
                 </svg>
                 {t.sidebar.settings}
-              </button>
-              <button
-                type="button"
-                onClick={onAbout}
-                title={t.sidebar.aboutTitle}
-                style={{ ...iconBtn, width: 32, height: 32, flexShrink: 0 }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'var(--paper-deep)'
-                  e.currentTarget.style.color = 'var(--ink)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'transparent'
-                  e.currentTarget.style.color = 'var(--ink-3)'
-                }}
-              >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  style={{ flexShrink: 0 }}
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M12 16v-4" />
-                  <path d="M12 8h.01" />
-                </svg>
               </button>
             </div>
           </div>

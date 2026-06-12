@@ -1,17 +1,7 @@
 // SPDX-License-Identifier: MIT
 import { useState, useRef, useEffect } from 'react'
-import { useGraphStore } from '@/store'
-import { getNodesBounds, getViewportForBounds } from '@xyflow/react'
-import { toPng } from 'html-to-image'
 import { useT } from '@/i18n'
-import { toast } from '@/components/ui/toast'
-import { exportShareGraphJson } from '@/lib/saveJsonFile'
-import {
-  deserializeGraph,
-  nodesForGraphShareExport,
-  nodesFromGraphShareImport,
-  serializeGraph,
-} from '@nesso-how/formats'
+import { exportGraphJson, exportGraphPng, importGraphFile } from '@/lib/graphIO'
 
 interface Props {
   onRelationTypes: () => void
@@ -21,9 +11,6 @@ interface Props {
 
 export function GraphIO({ onRelationTypes, onShortcuts, onAbout }: Props) {
   const t = useT()
-  // Graph data is only needed inside the export handlers — read it from the
-  // store at click time instead of re-rendering this menu on every edit.
-  const importGraph = useGraphStore((s) => s.importGraph)
   const [open, setOpen] = useState(false)
   const wrapRef = useRef<HTMLDivElement>(null)
 
@@ -46,95 +33,17 @@ export function GraphIO({ onRelationTypes, onShortcuts, onAbout }: Props) {
 
   const handleExport = async () => {
     setOpen(false)
-    const { nodes, edges, graphList, currentGraphId, graphDisplay } = useGraphStore.getState()
-    const meta = graphList.find((g) => g.id === currentGraphId)
-    const name = meta?.name ?? 'graph'
-    const filename = `${name}.json`
-    const payload = serializeGraph({
-      name,
-      nodes: nodesForGraphShareExport(nodes),
-      edges,
-      display: graphDisplay,
-    })
-    await exportShareGraphJson(filename, payload)
+    await exportGraphJson()
   }
 
   const handleExportPng = async () => {
     setOpen(false)
-    const { nodes, graphList, currentGraphId } = useGraphStore.getState()
-    const viewport = document.querySelector<HTMLElement>('.react-flow__viewport')
-    if (!viewport || nodes.length === 0) return
-    const meta = graphList.find((g) => g.id === currentGraphId)
-    const name = meta?.name ?? 'graph'
-
-    const padding = 64
-    const imageWidth = 1920
-    const imageHeight = 1200
-    const bounds = getNodesBounds(nodes)
-    const fitted = getViewportForBounds(
-      bounds,
-      imageWidth - padding * 2,
-      imageHeight - padding * 2,
-      0.15,
-      2.5,
-      0,
-    )
-    const tx = fitted.x + padding
-    const ty = fitted.y + padding
-    const bg =
-      getComputedStyle(document.documentElement).getPropertyValue('--paper').trim() || '#ffffff'
-
-    try {
-      const dataUrl = await toPng(viewport, {
-        backgroundColor: bg,
-        width: imageWidth,
-        height: imageHeight,
-        pixelRatio: 2,
-        style: {
-          width: `${imageWidth}px`,
-          height: `${imageHeight}px`,
-          transform: `translate(${tx}px, ${ty}px) scale(${fitted.zoom})`,
-        },
-        filter: (el) => {
-          // React Flow draws handles/selection chrome that don't belong in an export.
-          if (!(el instanceof Element)) return true
-          if (el.classList.contains('react-flow__handle')) return false
-          if (el.classList.contains('react-flow__edge-handle')) return false
-          return true
-        },
-      })
-      const a = document.createElement('a')
-      a.href = dataUrl
-      a.download = `${name}.png`
-      a.click()
-    } catch {
-      /* export cancelled or unsupported */
-    }
+    await exportGraphPng()
   }
 
   const handleImport = () => {
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.accept = '.json,application/json'
-    input.onchange = async () => {
-      const file = input.files?.[0]
-      if (!file) return
-      try {
-        const data = deserializeGraph(await file.text())
-        const name = data.name?.trim() || file.name.replace(/\.json$/i, '')
-        await importGraph(
-          name,
-          nodesFromGraphShareImport(data.nodes),
-          data.edges,
-          data.display,
-          data.id,
-        )
-      } catch {
-        toast.error(t.graphIO.importError.replace('{name}', file.name))
-      }
-    }
-    input.click()
     setOpen(false)
+    importGraphFile()
   }
 
   return (
