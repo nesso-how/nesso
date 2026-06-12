@@ -6,6 +6,7 @@ import { useHorizontalResize } from '@/hooks/useHorizontalResize'
 import { useT } from '@/i18n'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { SettingRow } from '@/components/ui/SettingRow'
+import { confirm } from '@/components/ui/confirm'
 import { NessoMark } from './NessoMark'
 import { ProjectSwitcher } from './ProjectSwitcher'
 import { TOPBAR_HEIGHT_PX } from './TopBar'
@@ -120,12 +121,19 @@ export function Sidebar({
     }, 50)
   }
 
-  const handleDelete = (id: string, e: React.MouseEvent) => {
+  const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation()
     if (graphList.length <= 1) return
     const name = graphList.find((g) => g.id === id)?.name ?? ''
     // Deleting also removes the file on disk and there is no undo — confirm first.
-    if (!window.confirm(t.sidebar.deleteGraphConfirm.replace('{name}', name))) return
+    const confirmed = await confirm({
+      title: t.sidebar.deleteGraph,
+      message: t.sidebar.deleteGraphConfirm.replace('{name}', name),
+      confirmLabel: t.sidebar.deleteGraphConfirmCta,
+      cancelLabel: t.common.cancel,
+      tone: 'danger',
+    })
+    if (!confirmed) return
     deleteGraph(id)
   }
 
@@ -381,7 +389,7 @@ export function Sidebar({
                       )}
                       {graphList.length > 1 && hovered && editingId !== g.id && (
                         <button
-                          onClick={(e) => handleDelete(g.id, e)}
+                          onClick={(e) => void handleDelete(g.id, e)}
                           title={t.sidebar.deleteGraph}
                           style={{
                             ...iconBtn,

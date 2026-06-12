@@ -270,6 +270,16 @@ body::before {
   }
 }
 
+.nx-action-banner {
+  animation: banner-in 140ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nx-action-banner {
+    animation: none;
+  }
+}
+
 /* React Flow overrides */
 .react-flow__renderer {
   z-index: 2;

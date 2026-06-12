@@ -14,4 +14,9 @@ export function useT() {
   return locales[language]
 }
 
+/** Non-reactive locale accessor for use outside React (e.g. store slices). */
+export function getT() {
+  return locales[useGraphStore.getState().settings.language]
+}
+
 export type Locale = typeof en

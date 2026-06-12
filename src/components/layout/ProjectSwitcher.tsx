@@ -4,6 +4,7 @@ import { useGraphStore } from '@/store'
 import { useT } from '@/i18n'
 import { getDefaultWorkspacePath, normalizePath, projectDisplayName } from '@/lib/workspace'
 import { FolderIcon, CloseIcon } from '@/components/ui/icons'
+import { confirm } from '@/components/ui/confirm'
 
 export function ProjectSwitcher() {
   const t = useT()
@@ -199,7 +200,19 @@ export function ProjectSwitcher() {
                             title={t.sidebar.projectSwitcher.removeProject}
                             onClick={(e) => {
                               e.stopPropagation()
-                              void removeProject(path)
+                              void (async () => {
+                                const confirmed = await confirm({
+                                  title: t.sidebar.projectSwitcher.removeProject,
+                                  message: t.sidebar.projectSwitcher.removeProjectConfirm.replace(
+                                    '{name}',
+                                    projectDisplayName(path, defaultPath, defaultName),
+                                  ),
+                                  confirmLabel: t.sidebar.projectSwitcher.removeProjectCta,
+                                  cancelLabel: t.common.cancel,
+                                  tone: 'danger',
+                                })
+                                if (confirmed) await removeProject(path)
+                              })()
                             }}
                             style={{ ...rowIconBtn, marginRight: 4 }}
                             onMouseEnter={(e) => {

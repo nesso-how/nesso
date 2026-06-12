@@ -4,6 +4,7 @@ import { useGraphStore } from '@/store'
 import { getNodesBounds, getViewportForBounds } from '@xyflow/react'
 import { toPng } from 'html-to-image'
 import { useT } from '@/i18n'
+import { toast } from '@/components/ui/toast'
 import { exportShareGraphJson } from '@/lib/saveJsonFile'
 import {
   deserializeGraph,
@@ -55,9 +56,7 @@ export function GraphIO({ onRelationTypes, onShortcuts, onAbout }: Props) {
       edges,
       display: graphDisplay,
     })
-    await exportShareGraphJson(filename, payload, (fn) =>
-      window.confirm(t.graphIO.exportOverwriteConfirm.replace('{name}', fn)),
-    )
+    await exportShareGraphJson(filename, payload)
   }
 
   const handleExportPng = async () => {
@@ -131,7 +130,7 @@ export function GraphIO({ onRelationTypes, onShortcuts, onAbout }: Props) {
           data.id,
         )
       } catch {
-        window.alert(t.graphIO.importError.replace('{name}', file.name))
+        toast.error(t.graphIO.importError.replace('{name}', file.name))
       }
     }
     input.click()
