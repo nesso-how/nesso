@@ -12,7 +12,9 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  check:
+  # Web/JS lane: everything driven by pnpm — app + packages + MCP + docs build,
+  # format, lint, license headers. Paired with the `rust` job (cargo lane).
+  js:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -45,3 +47,71 @@ jobs:
       - run: pnpm run build:mcp
       - run: pnpm run build
       - run: pnpm run license-headers:check
+
+  # Native layer (src-tauri/). Runs in parallel with `js`; a red Rust gate
+  # blocks merge just like lint/build. See .github/workflows/release.yml for the
+  # macOS bundle build — this job is the per-PR fmt/lint/compile feedback loop.
+  rust:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Rust (stable) with rustfmt + clippy
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: ./src-tauri -> target
+
+      # Formatting needs neither the frontend nor system deps — run it first so a
+      # style-only failure fails fast before the heavier compile steps.
+      - run: cargo fmt --all --check
+        working-directory: src-tauri
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+
+      - name: Enable pnpm via Corepack
+        run: corepack enable
+
+      - name: Pnpm store path
+        id: pnpm-store
+        shell: bash
+        run: echo "path=$(pnpm store path)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/cache@v5
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
+      - run: pnpm install --frozen-lockfile
+
+      # `tauri::generate_context!` embeds the bundle icons listed in
+      # tauri.conf.json; they are gitignored and generated from the tile SVG, so
+      # without this step clippy/check/test fail to compile lib.rs. The frontend
+      # `dist/` is not needed for `cargo check`.
+      - name: Generate desktop icons from tile SVG
+        run: pnpm run icons:desktop
+
+      - name: Install Tauri Linux system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libgtk-3-dev \
+            librsvg2-dev \
+            libayatana-appindicator3-dev
+
+      - run: cargo clippy --all-targets -- -D warnings
+        working-directory: src-tauri
+
+      - run: cargo check --all-targets
+        working-directory: src-tauri
+
+      - run: cargo test
+        working-directory: src-tauri

@@ -17,7 +17,18 @@ pnpm run build                   # full app build
 pnpm run license-headers:check   # SPDX headers on src/** and src-tauri/src
 ```
 
+The `rust` CI job covers the native layer (`src-tauri/`). Run it too if the change touches `src-tauri/` (Rust, capabilities, `tauri.conf.json`); skip otherwise:
+
+```bash
+pnpm run icons:desktop                                            # generate gitignored icons that generate_context! embeds
+cargo fmt --all --check --manifest-path src-tauri/Cargo.toml      # rustfmt gate
+cargo clippy --all-targets --manifest-path src-tauri/Cargo.toml -- -D warnings
+cargo check --all-targets --manifest-path src-tauri/Cargo.toml
+cargo test --manifest-path src-tauri/Cargo.toml
+```
+
 - Run the steps individually so a failure is attributable to one step — don't `&&`-chain them into one opaque result.
 - Surface the first failure with its output and stop; do not push when anything is red.
-- `format:check` failures are usually fixed by `pnpm run format` — offer that. `lint` issues often by `pnpm run lint:fix`.
+- `format:check` failures are usually fixed by `pnpm run format` — offer that. `lint` issues often by `pnpm run lint:fix`; `cargo fmt --all --check` failures by `cargo fmt --all`.
+- `icons:desktop` is a prerequisite for the cargo steps: without the bundle icons, `tauri::generate_context!` fails to compile `lib.rs`. Locally they may already exist, but regenerate if unsure.
 - These mirror CI exactly; if `ci.yml` changes, update this list (see `.rules/maintenance.md`).
