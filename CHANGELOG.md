@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.0-alpha.30] - 2026-06-12
+
 ### Added
 
 - **Desktop:** Fleshed out the native menu bar with a coherent structure and a single accelerator strategy (follow-up to #17). Beyond the previous minimal menu it adds Settings (⌘,), New Graph (⌘N), JSON/PNG export and import, graph Undo/Redo/Copy/Paste (⌘Z/⌘⇧Z/⌘C/⌘V, routed to the store), View zoom in/out/fit, live Heatmap/Edges/Curve toggles and full screen, and a Help menu (Documentation, Website, Report an Issue, Keyboard Shortcuts, About on Win/Linux). Menu labels and the View check marks follow the in-app language and display settings: the frontend rebuilds the menu through a new `set_app_menu` Tauri command on every language or display change, and every custom item routes through `menu:*` events into existing store actions and dialogs (reusing the extracted `src/lib/graphIO.ts` export/import helpers). The ⌘Z/⌘C/⌘V "split-brain" is resolved by giving the graph the document accelerators; native Cut/Select All were dropped for now (follow-up #42).
@@ -515,7 +517,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial alpha: interactive knowledge graph (web + Tauri v2); desktop installers on GitHub Releases (macOS Apple silicon and Intel).
 
-[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.29...HEAD
+[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.30...HEAD
+[0.1.0-alpha.30]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.29...v0.1.0-alpha.30
 [0.1.0-alpha.29]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.28...v0.1.0-alpha.29
 [0.1.0-alpha.28]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.27...v0.1.0-alpha.28
 [0.1.0-alpha.27]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.26...v0.1.0-alpha.27
