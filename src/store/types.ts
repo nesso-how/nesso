@@ -13,3 +13,19 @@ export interface GraphMeta {
   name: string
   updatedAt: number
 }
+
+export type ToastVariant = 'info' | 'error'
+
+export interface Toast {
+  id: string
+  variant: ToastVariant
+  message: string
+}
+
+export interface ConfirmRequest {
+  title: string
+  message: string
+  confirmLabel: string
+  cancelLabel: string
+  tone?: 'default' | 'danger'
+}

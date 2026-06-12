@@ -26,7 +26,6 @@ export async function saveJsonFileForGraph(
   graphId: string,
   filename: string,
   contents: string,
-  confirmOverwrite: (filename: string) => boolean,
 ): Promise<void> {
   const saveFilePicker = window.showSaveFilePicker
   if (saveFilePicker) {
@@ -34,7 +33,6 @@ export async function saveJsonFileForGraph(
     if (cached) {
       const permission = await cached.queryPermission({ mode: 'readwrite' })
       if (permission === 'granted') {
-        if (!confirmOverwrite(filename)) return
         await writeToHandle(cached, contents)
         return
       }
@@ -58,11 +56,7 @@ export async function saveJsonFileForGraph(
 }
 
 /** Share-safe graph JSON: save dialog on desktop, File System Access API or download on web. */
-export async function exportShareGraphJson(
-  filename: string,
-  contents: string,
-  confirmOverwrite: (filename: string) => boolean,
-): Promise<void> {
+export async function exportShareGraphJson(filename: string, contents: string): Promise<void> {
   if (isDesktop()) {
     const { save } = await import('@tauri-apps/plugin-dialog')
     const path = await save({
@@ -75,5 +69,5 @@ export async function exportShareGraphJson(
     return
   }
 
-  await saveJsonFileForGraph('share-export', filename, contents, confirmOverwrite)
+  await saveJsonFileForGraph('share-export', filename, contents)
 }

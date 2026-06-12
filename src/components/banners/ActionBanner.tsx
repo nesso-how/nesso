@@ -14,6 +14,8 @@ export interface ActionBannerProps {
   open: boolean
   message: ReactNode
   actions: ActionBannerAction[]
+  /** `error` tints the border with the accent; `default` is neutral. */
+  tone?: 'default' | 'error'
 }
 
 export function actionBannerButtonStyle(primary: boolean, disabled = false): CSSProperties {
@@ -34,12 +36,13 @@ export function actionBannerButtonStyle(primary: boolean, disabled = false): CSS
   }
 }
 
-export function ActionBanner({ open, message, actions }: ActionBannerProps) {
+export function ActionBanner({ open, message, actions, tone = 'default' }: ActionBannerProps) {
   if (!open || actions.length === 0) return null
 
   return (
     <div
       role="alert"
+      className="nx-action-banner"
       style={{
         // Positioning is owned by the stacking container in App.tsx so multiple
         // banners (file conflict + update) stack instead of overlapping.
@@ -49,12 +52,11 @@ export function ActionBanner({ open, message, actions }: ActionBannerProps) {
         padding: '16px 18px',
         borderRadius: 10,
         background: 'color-mix(in srgb, var(--bg-elev) 72%, transparent)',
-        border: '0.5px solid var(--ink-3)',
+        border: `0.5px solid ${tone === 'error' ? 'var(--accent)' : 'var(--ink-3)'}`,
         backdropFilter: 'blur(16px) saturate(1.4)',
         WebkitBackdropFilter: 'blur(16px) saturate(1.4)',
         boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
         width: 220,
-        animation: 'banner-in 140ms ease',
       }}
     >
       <span

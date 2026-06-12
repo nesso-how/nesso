@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- **UI:** Two themed, localized in-app primitives replace native browser dialogs. A non-blocking toast (auto-dismissing, stackable, manually dismissible, reduced-motion aware; built on the existing banner design) now surfaces transient messages — a failed graph import and the "project folder not found" notice, both previously `window.alert`. A blocking confirmation dialog now guards destructive actions: deleting a graph (previously `window.confirm`) and removing a project from the list (previously a single click with no prompt). The dead per-app export-overwrite `window.confirm` — unreachable on desktop (native save dialog) and on web (the browser auto-renames) — is removed along with its plumbing. No native `window.alert`/`window.confirm` calls remain.
+
 ### Fixed
 
 - **Graphs:** Edits made within the autosave debounce window are no longer lost when switching graphs — `loadGraph` flushes the pending save first. A save still in flight during a switch can no longer leak the previous graph's saved-state fingerprint onto the newly loaded one (which faked or masked external-file conflicts).

@@ -3,6 +3,10 @@
 import type en from './en'
 
 const it: typeof en = {
+  common: {
+    cancel: 'Annulla',
+    dismiss: 'Chiudi',
+  },
   fileConflict: {
     message: 'Questo grafo è stato modificato su disco mentre lo stavi editando.',
     reload: 'Ricarica da disco',
@@ -148,6 +152,8 @@ const it: typeof en = {
       openProject: 'Apri progetto…',
       revealInFinder: 'Mostra nel Finder',
       removeProject: 'Rimuovi dalla lista',
+      removeProjectConfirm: 'Rimuovere "{name}" dalla lista? I suoi file restano sul disco.',
+      removeProjectCta: 'Rimuovi',
       missingProject: 'non trovata',
       missingProjectHint: 'Cartella non trovata — potrebbe essere stata spostata o rinominata.',
     },
@@ -155,6 +161,7 @@ const it: typeof en = {
     deleteGraph: 'Elimina grafo',
     deleteGraphConfirm:
       'Eliminare "{name}"? Verrà rimosso anche il file dalla cartella del progetto.',
+    deleteGraphConfirmCta: 'Elimina',
     renameHint: 'doppio clic per rinominare',
     settingsTitle: 'Impostazioni (⌘,)',
     stats: {
@@ -211,7 +218,6 @@ const it: typeof en = {
     moreOptions: 'Esporta · Importa · Scorciatoie',
     relationTypes: 'Tipi di relazione',
     exportGraph: 'Esporta grafo',
-    exportOverwriteConfirm: 'Esiste già un file "{name}". Sovrascriverlo?',
     importError: '"{name}" non è un file grafo Nesso valido — nessun import eseguito.',
     exportPng: 'Esporta grafo (png)',
     importGraph: 'Importa grafo',

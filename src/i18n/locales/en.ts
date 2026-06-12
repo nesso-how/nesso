@@ -3,6 +3,10 @@
 import type { EdgeCategory, EdgeTypeName } from '@/types/graph'
 
 const en = {
+  common: {
+    cancel: 'Cancel',
+    dismiss: 'Dismiss',
+  },
   fileConflict: {
     message: 'This graph was changed on disk while you were editing.',
     reload: 'Reload from disk',
@@ -148,12 +152,15 @@ const en = {
       openProject: 'Open project…',
       revealInFinder: 'Show in Finder',
       removeProject: 'Remove from list',
+      removeProjectConfirm: 'Remove "{name}" from the list? Its files stay on disk.',
+      removeProjectCta: 'Remove',
       missingProject: 'not found',
       missingProjectHint: 'Folder not found — it may have been moved or renamed.',
     },
     newGraphTitle: 'New graph',
     deleteGraph: 'Delete graph',
     deleteGraphConfirm: 'Delete "{name}"? This also removes its file from the project folder.',
+    deleteGraphConfirmCta: 'Delete',
     renameHint: 'double-click to rename',
     settingsTitle: 'Settings (⌘,)',
     stats: {
@@ -210,7 +217,6 @@ const en = {
     moreOptions: 'Export · Import · Shortcuts',
     relationTypes: 'Relation types',
     exportGraph: 'Export graph',
-    exportOverwriteConfirm: 'A file named "{name}" already exists. Overwrite it?',
     importError: '"{name}" is not a valid Nesso graph file — nothing was imported.',
     exportPng: 'Export graph (.png)',
     importGraph: 'Import graph',

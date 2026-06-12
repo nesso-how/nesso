@@ -25,6 +25,8 @@ import { SettingsDialog } from './components/dialogs/SettingsDialog'
 import { AboutDialog } from './components/dialogs/AboutDialog'
 import { isDesktop } from '@/lib/isDesktop'
 import { SearchDialog } from './components/dialogs/SearchDialog'
+import { ConfirmDialog } from './components/ui/ConfirmDialog'
+import { ToastViewport } from './components/ui/ToastViewport'
 import { useGraphStore, selectedNodeSelector, selectedEdgeSelector } from './store'
 import { useAutoSave } from './hooks/useAutoSave'
 import { useGraphFileWatch } from './hooks/useGraphFileWatch'
@@ -64,6 +66,7 @@ function AppInner() {
   const setSidebarCollapsed = useGraphStore((s) => s.setSidebarCollapsed)
   const createProject = useGraphStore((s) => s.createProject)
   const openProject = useGraphStore((s) => s.openProject)
+  const confirmOpen = useGraphStore((s) => s.confirmRequest !== null)
 
   const canUndo = useGraphStore((s) => s._history.length > 0)
   const canRedo = useGraphStore((s) => s._future.length > 0)
@@ -281,7 +284,13 @@ function AppInner() {
 
   // Keyboard shortcuts
   const anyModalOpen =
-    showReview || showShortcuts || showSettings || showRelationTypes || showSearch || showAbout
+    showReview ||
+    showShortcuts ||
+    showSettings ||
+    showRelationTypes ||
+    showSearch ||
+    showAbout ||
+    confirmOpen
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
@@ -446,7 +455,9 @@ function AppInner() {
       >
         <GraphFileConflictBanner />
         <UpdateBanner />
+        <ToastViewport />
       </div>
+      <ConfirmDialog />
     </div>
   )
 }
