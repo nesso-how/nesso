@@ -26,8 +26,10 @@ struct MenuLabels {
     import: String,
     undo: String,
     redo: String,
+    cut: String,
     copy: String,
     paste: String,
+    select_all: String,
     zoom_in: String,
     zoom_out: String,
     zoom_fit: String,
@@ -64,8 +66,10 @@ impl Default for MenuLabels {
             import: s("Import Graph…"),
             undo: s("Undo"),
             redo: s("Redo"),
+            cut: s("Cut"),
             copy: s("Copy"),
             paste: s("Paste"),
+            select_all: s("Select All"),
             zoom_in: s("Zoom In"),
             zoom_out: s("Zoom Out"),
             zoom_fit: s("Zoom to Fit"),
@@ -134,11 +138,17 @@ fn build_app_menu(
     let redo_i = MenuItemBuilder::with_id("redo", &labels.redo)
         .accelerator("CmdOrCtrl+Shift+Z")
         .build(app)?;
+    let cut_i = MenuItemBuilder::with_id("cut", &labels.cut)
+        .accelerator("CmdOrCtrl+X")
+        .build(app)?;
     let copy_i = MenuItemBuilder::with_id("copy", &labels.copy)
         .accelerator("CmdOrCtrl+C")
         .build(app)?;
     let paste_i = MenuItemBuilder::with_id("paste", &labels.paste)
         .accelerator("CmdOrCtrl+V")
+        .build(app)?;
+    let select_all_i = MenuItemBuilder::with_id("select-all", &labels.select_all)
+        .accelerator("CmdOrCtrl+A")
         .build(app)?;
 
     let zoom_in_i = MenuItemBuilder::with_id("zoom-in", &labels.zoom_in)
@@ -215,8 +225,11 @@ fn build_app_menu(
         .item(&undo_i)
         .item(&redo_i)
         .separator()
+        .item(&cut_i)
         .item(&copy_i)
         .item(&paste_i)
+        .separator()
+        .item(&select_all_i)
         .build()?;
 
     let edges_sub = SubmenuBuilder::new(app, &labels.edges)

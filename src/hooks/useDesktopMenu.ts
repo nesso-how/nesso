@@ -60,11 +60,13 @@ export function useDesktopMenu(handlers: DesktopMenuHandlers): void {
 
       await on('undo', () => store().undo())
       await on('redo', () => store().redo())
+      await on('cut', () => store().cutSelection())
       await on('copy', () => store().copySelection())
       await on('paste', () => {
         const ids = store().pasteSelection()
         if (ids?.length) focusFlowNodes(ids)
       })
+      await on('select-all', () => store().selectAll())
 
       await on('heatmap', () =>
         store().setGraphDisplay('showHeatmap', !store().graphDisplay.showHeatmap),

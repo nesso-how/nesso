@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- **Desktop:** Reintroduced graph-level **Cut** (⌘X) and **Select All** (⌘A), the two predefined Edit items dropped in #45, coherently across the native Edit menu, the BottomDock, and the JS keyboard shortcuts (follow-up #42). Two new `graph-editing` store mutations back every surface: `selectAll` marks every node and edge selected (so a follow-up copy/cut captures the whole graph), and `cutSelection` is copy-then-delete. Cut joins the dock's clipboard group (scissors icon); Select All stays menu- and keyboard-only, as toolbars conventionally omit it. These extend the same graph-owned accelerator model as the existing ⌘C/⌘V/⌘Z — making ⌘X/⌘C/⌘V/⌘A/⌘Z context-aware so they fall through to native editing while a text field is focused on desktop remains the open part of #42.
+
 ## [0.1.0-alpha.30] - 2026-06-12
 
 ### Added

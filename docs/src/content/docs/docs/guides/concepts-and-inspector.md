@@ -30,8 +30,9 @@ See the [relation types reference](../../reference/relation-types/) for the full
 - **Click** a node or edge to select it. The Inspector reflects the selection.
 - **Hold `⌘` / `Ctrl` and click** to toggle additional items into the selection.
 - **Drag on empty canvas** to marquee-select multiple items.
+- **`⌘A` / `Ctrl+A`** selects every concept and relation in the graph.
 - **`Del`** or **`Backspace`** (or the trash icon in the bottom dock) deletes the selection (one relation, one concept, or every concept in a marquee). Edges attached to a deleted concept go with it. Relation delete is only from the dock or keyboard, not from the relation Inspector.
-- **`⌘C` / `Ctrl+C`** (copy icon in the bottom dock) copies the selection. Copying concepts also copies relations between them; copying a relation includes its two endpoints. **`⌘V` / `Ctrl+V`** (paste icon) duplicates the clipboard with a small offset and selects the new items.
+- **`⌘C` / `Ctrl+C`** (copy icon in the bottom dock) copies the selection. Copying concepts also copies relations between them; copying a relation includes its two endpoints. **`⌘X` / `Ctrl+X`** (scissors icon) cuts: it copies the selection and removes it in one step. **`⌘V` / `Ctrl+V`** (paste icon) duplicates the clipboard with a small offset and selects the new items.
 - **Arrow keys** nudge a selected concept; **Shift + arrows** move it in larger steps.
 - **`⌘Z` / `Ctrl+Z`** undoes structural edits; **`⌘⇧Z` / `Ctrl+Shift+Z`** redoes. History has 50 steps and resets when you switch or import a graph.
 

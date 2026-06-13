@@ -30,6 +30,7 @@ export function BottomDock({
   const selectedIds = useGraphStore((s) => s.selectedIds)
   const deleteSelection = useGraphStore((s) => s.deleteSelection)
   const copySelection = useGraphStore((s) => s.copySelection)
+  const cutSelection = useGraphStore((s) => s.cutSelection)
   const pasteSelection = useGraphStore((s) => s.pasteSelection)
   const pasteAvailable = useGraphStore((s) => s.pasteAvailable)
   const canCopy =
@@ -90,7 +91,25 @@ export function BottomDock({
 
       <Sep />
 
-      {/* Edit group: copy · paste · delete */}
+      {/* Edit group: cut · copy · paste · delete */}
+      <DockBtn onClick={cutSelection} title={t.bottomDock.cutTitle} disabled={!canCopy}>
+        {/* scissors: two finger loops + crossed blades */}
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 16 16"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <circle cx="4" cy="4" r="2" />
+          <circle cx="4" cy="12" r="2" />
+          <path d="M5.6 5.4L14 12.5" />
+          <path d="M5.6 10.6L14 3.5" />
+        </svg>
+      </DockBtn>
       <DockBtn onClick={copySelection} title={t.bottomDock.copyTitle} disabled={!canCopy}>
         {/* two overlapping rects: back rect (3 sides), front rect — spans x:2–14, y:3–13 */}
         <svg

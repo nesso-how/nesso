@@ -54,7 +54,9 @@ function AppInner() {
   const undo = useGraphStore((s) => s.undo)
   const redo = useGraphStore((s) => s.redo)
   const copySelection = useGraphStore((s) => s.copySelection)
+  const cutSelection = useGraphStore((s) => s.cutSelection)
   const pasteSelection = useGraphStore((s) => s.pasteSelection)
+  const selectAll = useGraphStore((s) => s.selectAll)
   const deleteSelection = useGraphStore((s) => s.deleteSelection)
   const requestEditNode = useGraphStore((s) => s.requestEditNode)
   const loadGraph = useGraphStore((s) => s.loadGraph)
@@ -327,10 +329,20 @@ function AppInner() {
         copySelection()
         return
       }
+      if (e.key === 'x' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault()
+        cutSelection()
+        return
+      }
       if (e.key === 'v' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault()
         const ids = pasteSelection()
         if (ids?.length) focusFlowNodes(ids)
+        return
+      }
+      if (e.key === 'a' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault()
+        selectAll()
         return
       }
       if (e.key === 'Enter' && !e.metaKey && !e.ctrlKey && !e.altKey && !e.shiftKey) {
@@ -363,7 +375,9 @@ function AppInner() {
     undo,
     redo,
     copySelection,
+    cutSelection,
     pasteSelection,
+    selectAll,
     deleteSelection,
     requestEditNode,
     handleAddConcept,

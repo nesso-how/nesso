@@ -58,6 +58,7 @@ Desktop multi-project: `settings.knownProjects` (explicitly opened folders, most
 | `deleteEdge(id)`                                                        | Removes edge, clears selection if needed                                                                                                                    |
 | `setSelected(sel)`                                                      | Sets selection (or `null` to deselect)                                                                                                                      |
 | `setSelectedIds(ids)`                                                   | Multi-selection for marquee / ⌘-click workflows                                                                                                             |
+| `selectAll()`                                                           | Marks every node and edge selected (fills `selectedIds`, clears the single `selected`); no-op on an empty graph; not undoable                               |
 | `deleteSelection()`                                                     | Deletes the selected relation, all nodes in `selectedIds`, or the singly selected concept; clears selection                                                 |
 | `setSetting(key, value)`                                                | Updates a single `NessoSettings` field                                                                                                                      |
 | `setMentorPanelExpanded(expanded)`                                      | Expands or collapses the Socrates mentor card (FAB stays visible; persisted)                                                                                |
@@ -71,7 +72,7 @@ Desktop multi-project: `settings.knownProjects` (explicitly opened folders, most
 | `renameGraph(id, name)`                                                 | Updates graph name in IndexedDB and `graphList`                                                                                                             |
 | `deleteGraph(id)`                                                       | Removes record from IndexedDB; if active, switches to another graph                                                                                         |
 
-This table covers the core editing/graph mutations. The store also exposes `undo`/`redo`, clipboard (`copySelection`/`pasteSelection`), edge-curve flip (`setEdgeCurveFlipMode`), desktop projects (`createProject`/`openProject`/`switchProject`/`removeProject`/`markProjectMissing`), and disk sync (`reloadActiveGraphFromDisk`/`keepLocalGraphChanges` plus the `externalFileConflict` setters) — see the slices for the full set.
+This table covers the core editing/graph mutations. The store also exposes `undo`/`redo`, clipboard (`copySelection`/`cutSelection`/`pasteSelection`), edge-curve flip (`setEdgeCurveFlipMode`), desktop projects (`createProject`/`openProject`/`switchProject`/`removeProject`/`markProjectMissing`), and disk sync (`reloadActiveGraphFromDisk`/`keepLocalGraphChanges` plus the `externalFileConflict` setters) — see the slices for the full set.
 
 ## Selectors
 
