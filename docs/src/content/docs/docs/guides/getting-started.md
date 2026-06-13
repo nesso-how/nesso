@@ -89,6 +89,8 @@ Settings auto-probes the endpoint and offers a **Pull** button if the model is m
 | `⌘Z` / `Ctrl+Z`        | Undo                           |
 | `⌘⇧Z` / `Ctrl+Shift+Z` | Redo                           |
 | `Del` / `Backspace`    | Delete selection               |
+| `⌘A` / `Ctrl+A`        | Select all                     |
+| `⌘X` / `Ctrl+X`        | Cut selection                  |
 | `⌘C` / `Ctrl+C`        | Copy selection                 |
 | `⌘V` / `Ctrl+V`        | Paste                          |
 | `↑` `↓` `←` `→`        | Nudge selected concept         |

@@ -108,8 +108,10 @@ export interface GraphEditingSlice {
   setSelected: (sel: import('../types').Selection) => void
   syncFlowSelection: (nodeIds: string[], edgeIds: string[]) => void
   setSelectedIds: (ids: string[]) => void
+  selectAll: () => void
   deleteSelection: () => void
   copySelection: () => boolean
+  cutSelection: () => boolean
   pasteSelection: () => string[] | null
   requestEditNode: (id: string) => void
   clearEditNodeId: () => void
@@ -368,6 +370,19 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
 
   setSelectedIds: (ids) => set({ selectedIds: ids }),
 
+  selectAll: () =>
+    set((s) => {
+      if (s.nodes.length === 0 && s.edges.length === 0) return s
+      const { nodes, edges, changed } = applySelectionFlags(
+        s.nodes,
+        s.edges,
+        new Set(s.nodes.map((n) => n.id)),
+        new Set(s.edges.map((e) => e.id)),
+      )
+      if (!changed && s.selected === null && s.selectedIds.length === s.nodes.length) return s
+      return { nodes, edges, selected: null, selectedIds: s.nodes.map((n) => n.id) }
+    }),
+
   deleteSelection: () =>
     set((s) => {
       const nodeIds = new Set(s.selectedIds)
@@ -400,6 +415,12 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
     setGraphClipboard(snap)
     set({ pasteAvailable: true })
     return true
+  },
+
+  cutSelection: () => {
+    const copied = get().copySelection()
+    if (copied) get().deleteSelection()
+    return copied
   },
 
   pasteSelection: () => {

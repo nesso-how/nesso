@@ -117,6 +117,70 @@ describe('deleteSelection', () => {
   })
 })
 
+describe('selectAll', () => {
+  it('marks every node and edge selected and fills selectedIds', () => {
+    const s = makeStore()
+    const a = s.getState().addNode(0, 0)
+    const b = s.getState().addNode(100, 0)
+    const id = s.getState().addEdge(a, b, 'causes')
+    s.getState().selectAll()
+    const state = s.getState()
+    expect(state.nodes.every((n) => n.selected)).toBe(true)
+    expect(state.edges.find((e) => e.id === id)?.selected).toBe(true)
+    expect(new Set(state.selectedIds)).toEqual(new Set([a, b]))
+    expect(state.selected).toBeNull()
+  })
+
+  it('is a no-op on an empty graph', () => {
+    const s = makeStore()
+    const before = s.getState()
+    s.getState().selectAll()
+    expect(s.getState()).toBe(before)
+  })
+
+  it('selects everything so a follow-up copy captures the whole graph', () => {
+    const s = makeStore()
+    const a = s.getState().addNode(0, 0)
+    const b = s.getState().addNode(100, 0)
+    s.getState().addEdge(a, b, 'causes')
+    s.getState().setSelected(null)
+    s.getState().selectAll()
+    expect(s.getState().copySelection()).toBe(true)
+    s.getState().pasteSelection()
+    expect(s.getState().nodes).toHaveLength(4)
+    expect(s.getState().edges).toHaveLength(2)
+  })
+})
+
+describe('cutSelection', () => {
+  it('copies the selection to the clipboard and removes it from the graph', () => {
+    const s = makeStore()
+    const a = s.getState().addNode(0, 0)
+    const b = s.getState().addNode(100, 0)
+    s.getState().addEdge(a, b, 'causes')
+    s.getState().setSelected({ kind: 'node', id: a })
+
+    expect(s.getState().cutSelection()).toBe(true)
+    expect(s.getState().pasteAvailable).toBe(true)
+    expect(s.getState().nodes.map((n) => n.id)).toEqual([b])
+    expect(s.getState().edges).toHaveLength(0)
+    expect(s.getState().selected).toBeNull()
+
+    const pasted = s.getState().pasteSelection()
+    expect(pasted).toHaveLength(1)
+    expect(s.getState().nodes).toHaveLength(2)
+  })
+
+  it('does nothing when there is no selection', () => {
+    const s = makeStore()
+    s.getState().addNode()
+    s.getState().setSelected(null)
+    expect(s.getState().cutSelection()).toBe(false)
+    expect(s.getState().nodes).toHaveLength(1)
+    expect(s.getState().pasteAvailable).toBe(false)
+  })
+})
+
 describe('undo / redo', () => {
   it('reverts and reapplies the last mutation', () => {
     const s = makeStore()

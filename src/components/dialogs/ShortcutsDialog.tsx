@@ -31,6 +31,8 @@ export function ShortcutsDialog({ open, onClose }: Props) {
         { keys: ['F'], label: t.shortcuts.rows.fit },
         { keys: ['R'], label: t.shortcuts.rows.review },
         { keys: ['Del'], label: t.shortcuts.rows.delete },
+        { keys: [mod, 'A'], label: t.shortcuts.rows.selectAll },
+        { keys: [mod, 'X'], label: t.shortcuts.rows.cut },
         { keys: [mod, 'C'], label: t.shortcuts.rows.copy },
         { keys: [mod, 'V'], label: t.shortcuts.rows.paste },
         { keys: ['↑↓←→'], label: t.shortcuts.rows.moveConcept },
