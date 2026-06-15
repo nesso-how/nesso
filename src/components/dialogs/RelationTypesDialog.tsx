@@ -52,7 +52,7 @@ export function RelationTypesDialog({ open, onClose }: Props) {
           maxHeight: '76vh',
           background: 'var(--bg-card)',
           border: '0.5px solid var(--line)',
-          borderRadius: 18,
+          borderRadius: 14,
           padding: '28px 32px 20px',
           boxShadow: 'var(--shadow-lg)',
           display: 'flex',

@@ -9,6 +9,7 @@ import { fetchCompletion } from '@/llm/completion'
 import { buildFocalNeighborContext, nodeStrength, oneHopNeighborIds } from '@/llm/context'
 import { useT } from '@/i18n'
 import { CloseButton } from '@/components/ui/CloseButton'
+import { STATUS_BAR_HEIGHT_PX } from '@/components/layout/StatusBar'
 import { ThinkingIndicator } from './ThinkingIndicator'
 import { Typewriter } from './Typewriter'
 
@@ -151,7 +152,7 @@ function buildGraphChatPrompt(
     .join('\n')
 }
 
-export function MentorBubble() {
+export function MentorBubble({ leftInset, rightInset }: { leftInset: number; rightInset: number }) {
   const t = useT()
   const mentorPanelExpanded = useGraphStore((s) => s.mentorPanelExpanded)
   const setMentorPanelExpanded = useGraphStore((s) => s.setMentorPanelExpanded)
@@ -300,11 +301,6 @@ export function MentorBubble() {
     }
   }
 
-  const unread =
-    !mentorPanelExpanded && history.length > 0 && history[history.length - 1].role === 'mentor'
-      ? history.filter((m) => m.role === 'mentor').length
-      : 0
-
   const inputDisabled = !modelReady || loadingInitial
   const placeholder = modelLoading
     ? t.mentor.loadingModel
@@ -318,31 +314,35 @@ export function MentorBubble() {
     <div
       style={{
         position: 'absolute',
-        right: 22,
-        bottom: 22,
-        zIndex: 35,
+        left: leftInset,
+        right: rightInset,
+        bottom: STATUS_BAR_HEIGHT_PX,
+        zIndex: 27,
         display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'flex-end',
-        gap: 10,
+        justifyContent: 'center',
         pointerEvents: 'none',
+        transition: 'left 180ms ease, right 180ms ease',
       }}
     >
       <div
         style={{
-          width: 380,
-          maxWidth: '86vw',
-          maxHeight: '72vh',
+          width: 620,
+          maxWidth: 'calc(100% - 48px)',
+          margin: '0 24px 16px',
+          maxHeight: '58vh',
           background: 'linear-gradient(180deg, var(--bg-card), var(--bg-elev))',
-          border: '0.5px solid var(--line)',
-          borderRadius: 18,
+          border: '0.5px solid var(--line-strong)',
+          borderRadius: 14,
           boxShadow: 'var(--shadow-lg)',
           display: 'flex',
           flexDirection: 'column',
-          transform: mentorPanelExpanded ? 'none' : 'translateY(8px) scale(0.96)',
+          overflow: 'hidden',
+          transform: mentorPanelExpanded
+            ? 'translateY(0) scale(1)'
+            : 'translateY(24px) scale(0.985)',
           opacity: mentorPanelExpanded ? 1 : 0,
           pointerEvents: mentorPanelExpanded ? 'auto' : 'none',
-          transition: 'all 0.32s cubic-bezier(.4,.2,.2,1.05)',
+          transition: 'transform 0.34s cubic-bezier(.34,.2,.2,1.02), opacity 0.24s ease',
         }}
       >
         <div
@@ -603,76 +603,6 @@ export function MentorBubble() {
           </button>
         </div>
       </div>
-
-      <button
-        type="button"
-        onClick={() => setMentorPanelExpanded(!mentorPanelExpanded)}
-        title={t.mentor.toggleTitle}
-        style={{
-          width: 64,
-          height: 64,
-          borderRadius: '50%',
-          background: 'var(--bg-elev)',
-          color: 'var(--ink)',
-          border: '0.5px solid var(--line)',
-          boxShadow: 'var(--shadow-lg)',
-          cursor: 'default',
-          padding: 0,
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          position: 'relative',
-          pointerEvents: 'auto',
-        }}
-      >
-        <SpinRing loading={modelLoading} />
-        <SocratesGlyph size={42} />
-        {unread > 0 && (
-          <span
-            style={{
-              position: 'absolute',
-              top: 0,
-              right: 0,
-              minWidth: 16,
-              height: 16,
-              borderRadius: 999,
-              background: 'var(--accent)',
-              color: 'var(--paper)',
-              font: "600 10px 'JetBrains Mono', ui-monospace",
-              padding: '0 4px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              border: '2px solid var(--bg-elev)',
-            }}
-          >
-            {unread}
-          </span>
-        )}
-      </button>
-
-      <style>{`
-        @keyframes nx-spin { to { transform: rotate(360deg); } }
-      `}</style>
     </div>
-  )
-}
-
-function SpinRing({ loading }: { loading: boolean }) {
-  return (
-    <span
-      style={{
-        position: 'absolute',
-        inset: -3,
-        borderRadius: '50%',
-        border: loading ? '1.5px solid transparent' : '1px dashed var(--accent)',
-        borderTopColor: loading ? 'var(--accent)' : undefined,
-        borderRightColor: loading ? 'var(--accent)' : undefined,
-        borderBottomColor: loading ? 'var(--accent)' : undefined,
-        opacity: loading ? 1 : 0.45,
-        animation: `nx-spin ${loading ? '1s' : '28s'} linear infinite`,
-        pointerEvents: 'none',
-      }}
-    />
   )
 }

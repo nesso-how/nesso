@@ -31,6 +31,7 @@ export const createSettingsSlice: StateCreator<GraphState, [], [], SettingsSlice
     aiApiKey: '',
     fsrsRetention: 0.9,
     maximumInterval: 365,
+    inspectorMemoryOpen: true,
     inspectorExamplesOpen: true,
     inspectorRelationsOpen: true,
     knownProjects: [],

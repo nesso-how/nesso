@@ -113,6 +113,8 @@ export interface GraphEditingSlice {
   copySelection: () => boolean
   cutSelection: () => boolean
   pasteSelection: () => string[] | null
+  duplicateSelection: () => string[] | null
+  reverseEdge: (id: string) => void
   requestEditNode: (id: string) => void
   clearEditNodeId: () => void
 }
@@ -449,4 +451,40 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
     advanceClipboardAfterPaste()
     return pastedNodeIds
   },
+
+  duplicateSelection: () => {
+    const snap = snapshotSelection(get())
+    if (!snap) return null
+    const s = get()
+    const { nodes: dupNodes, edges: dupEdges } = instantiateClipboard(
+      snap,
+      new Set(s.nodes.map((n) => n.id)),
+      new Set(s.edges.map((e) => e.id)),
+    )
+    const dupNodeIds = dupNodes.map((n) => n.id)
+    set((cur) => ({
+      ...pushHistory(cur),
+      nodes: [...cur.nodes.map((n) => (n.selected ? { ...n, selected: false } : n)), ...dupNodes],
+      edges: [...cur.edges.map((e) => (e.selected ? { ...e, selected: false } : e)), ...dupEdges],
+      selected: dupNodeIds.length === 1 ? { kind: 'node', id: dupNodeIds[0] } : null,
+      selectedIds: dupNodeIds,
+    }))
+    return dupNodeIds
+  },
+
+  reverseEdge: (id) =>
+    set((s) => ({
+      ...pushHistory(s),
+      edges: s.edges.map((e) =>
+        e.id === id
+          ? {
+              ...e,
+              source: e.target,
+              target: e.source,
+              sourceHandle: CONCEPT_HANDLE_OUT,
+              targetHandle: CONCEPT_HANDLE_IN,
+            }
+          : e,
+      ),
+    })),
 })

@@ -124,7 +124,7 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
         cursor={editing ? 'text' : 'grab'}
         userSelect={editing ? 'text' : 'none'}
         connectionTarget={isConnectionTarget}
-        hideUnderline={editing}
+        hideUnderline
         onDoubleClick={(e) => {
           e.stopPropagation()
           startEdit()

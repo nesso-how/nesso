@@ -2,6 +2,7 @@
 import { useGraphStore, selectedNodeSelector, selectedEdgeSelector } from '@/store'
 import { EdgeInspector } from './inspector/EdgeInspector'
 import { NodeInspector } from './inspector/NodeInspector'
+import { InspectorRail } from './inspector/inspectorChrome'
 
 export {
   clampInspectorPanelWidth,
@@ -9,36 +10,23 @@ export {
   writeInspectorPanelWidth,
   INSPECTOR_CANVAS_LEFT_GUTTER,
 } from './inspector/layout'
+export { INSPECTOR_RAIL_WIDTH } from './inspector/inspectorChrome'
 
 export function Inspector({
-  leftOffset = 0,
   panelWidth,
   onPanelWidthChange,
 }: {
-  leftOffset?: number
   panelWidth: number
   onPanelWidthChange: (w: number) => void
 }) {
   const selectedNode = useGraphStore(selectedNodeSelector)
   const selectedEdge = useGraphStore(selectedEdgeSelector)
+  const collapsed = useGraphStore((s) => s.inspectorCollapsed)
 
+  if (!selectedNode && !selectedEdge) return null
+  if (collapsed) return <InspectorRail />
   if (selectedNode) {
-    return (
-      <NodeInspector
-        leftOffset={leftOffset}
-        panelWidth={panelWidth}
-        onPanelWidthChange={onPanelWidthChange}
-      />
-    )
+    return <NodeInspector panelWidth={panelWidth} onPanelWidthChange={onPanelWidthChange} />
   }
-  if (selectedEdge) {
-    return (
-      <EdgeInspector
-        leftOffset={leftOffset}
-        panelWidth={panelWidth}
-        onPanelWidthChange={onPanelWidthChange}
-      />
-    )
-  }
-  return null
+  return <EdgeInspector panelWidth={panelWidth} onPanelWidthChange={onPanelWidthChange} />
 }

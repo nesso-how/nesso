@@ -35,6 +35,7 @@ export function ShortcutsDialog({ open, onClose }: Props) {
         { keys: [mod, 'X'], label: t.shortcuts.rows.cut },
         { keys: [mod, 'C'], label: t.shortcuts.rows.copy },
         { keys: [mod, 'V'], label: t.shortcuts.rows.paste },
+        { keys: [mod, 'D'], label: t.shortcuts.rows.duplicate },
         { keys: ['↑↓←→'], label: t.shortcuts.rows.moveConcept },
         { keys: ['Shift', '↑↓←→'], label: t.shortcuts.rows.moveConceptLarge },
         { keys: [mod, 'Z'], label: t.shortcuts.rows.undo },
@@ -52,7 +53,7 @@ export function ShortcutsDialog({ open, onClose }: Props) {
           maxWidth: '92vw',
           background: 'var(--bg-card)',
           border: '0.5px solid var(--line)',
-          borderRadius: 18,
+          borderRadius: 14,
           padding: '28px 32px 24px',
           boxShadow: 'var(--shadow-lg)',
         }}

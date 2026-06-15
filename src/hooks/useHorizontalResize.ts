@@ -3,11 +3,14 @@ import { useState, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent } f
 
 const KEYBOARD_STEP = 12
 
-/** Drag/arrow-key resize for vertical panel edges (sidebar, inspector). */
+/** Drag/arrow-key resize for vertical panel edges (sidebar, inspector).
+ *  `invert` is for handles on the panel's LEFT edge (right-docked panels):
+ *  dragging left then widens the panel. */
 export function useHorizontalResize(
   width: number,
   onWidthChange: (w: number) => void,
   clamp: (w: number) => number,
+  invert = false,
 ) {
   const [isResizing, setIsResizing] = useState(false)
 
@@ -17,7 +20,8 @@ export function useHorizontalResize(
     const startW = width
     setIsResizing(true)
     function onMove(ev: globalThis.MouseEvent) {
-      onWidthChange(clamp(startW + ev.clientX - startX))
+      const delta = ev.clientX - startX
+      onWidthChange(clamp(startW + (invert ? -delta : delta)))
     }
     function onUp() {
       window.removeEventListener('mousemove', onMove)
@@ -33,13 +37,14 @@ export function useHorizontalResize(
   }
 
   function onResizeHandleKeyDown(e: ReactKeyboardEvent) {
+    const step = invert ? -KEYBOARD_STEP : KEYBOARD_STEP
     if (e.key === 'ArrowLeft') {
       e.preventDefault()
-      onWidthChange(clamp(width - KEYBOARD_STEP))
+      onWidthChange(clamp(width - step))
     }
     if (e.key === 'ArrowRight') {
       e.preventDefault()
-      onWidthChange(clamp(width + KEYBOARD_STEP))
+      onWidthChange(clamp(width + step))
     }
   }
 

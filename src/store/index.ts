@@ -28,7 +28,7 @@ export const useGraphStore = create<GraphState>()(
         mentorPanelExpanded: s.mentorPanelExpanded,
         sidebarCollapsed: s.sidebarCollapsed,
         sidebarDisplayOpen: s.sidebarDisplayOpen,
-        sidebarStatsOpen: s.sidebarStatsOpen,
+        inspectorCollapsed: s.inspectorCollapsed,
         currentGraphId: s.currentGraphId,
         graphList: s.graphList,
         viewports: s.viewports,

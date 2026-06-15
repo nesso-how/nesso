@@ -36,7 +36,7 @@ Assistant replies render as plain text with subtle emphasis via **`Typewriter`**
 
 ## Panel open/closed
 
-Whether the mentor **card** is expanded is `mentorPanelExpanded` on `useGraphStore`, updated via `setMentorPanelExpanded`. It is persisted with the rest of UI chrome (`zustand` `persist` → localStorage). The FAB remains visible when collapsed.
+Whether the mentor **sheet** is open is `mentorPanelExpanded` on `useGraphStore`, updated via `setMentorPanelExpanded`. It is persisted with the rest of UI chrome (`zustand` `persist` → localStorage). The entry point is the **Socrates button in the `StatusBar`** (no floating FAB); the sheet slides up above the status bar and dodges the docked inspector via `leftInset`/`rightInset` props.
 
 ## Message history
 

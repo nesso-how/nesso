@@ -5,6 +5,7 @@ import { sortedDueConceptNodes } from '@/data/fsrsDueQueue'
 import { GraphIO } from '@/components/dialogs/GraphIO'
 import { useT } from '@/i18n'
 import { isDesktop } from '@/lib/isDesktop'
+import { useActiveProjectName } from '@/hooks/useActiveProjectName'
 
 /** Full-height navbar; Inspector and canvas top inset rely on this. */
 export const TOPBAR_HEIGHT_PX = 52
@@ -33,6 +34,7 @@ export function TopBar({
   const currentGraphId = useGraphStore((s) => s.currentGraphId)
   const nodes = useGraphStore((s) => s.nodes)
   const current = graphList.find((g) => g.id === currentGraphId)
+  const projectName = useActiveProjectName()
   const [now, setNow] = useState(() => Date.now())
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 60_000)
@@ -48,7 +50,7 @@ export function TopBar({
         left: sidebarWidth,
         right: 0,
         height: TOPBAR_HEIGHT_PX,
-        zIndex: 25,
+        zIndex: 28,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -59,8 +61,8 @@ export function TopBar({
         transition: 'left 180ms ease',
       }}
     >
-      {/* Left: expand sidebar (when collapsed) + graph title + count */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      {/* Left: expand sidebar (when collapsed) + project / graph breadcrumb */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
         {sidebarCollapsed && (
           <button
             onClick={onExpandSidebar}
@@ -91,16 +93,34 @@ export function TopBar({
             </svg>
           </button>
         )}
-        <h1
-          style={{
-            margin: 0,
-            font: "500 16px 'Fraunces', ui-serif, Georgia, serif",
-            letterSpacing: '-0.01em',
-            color: 'var(--ink)',
-          }}
-        >
-          {current?.name ?? '…'}
-        </h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
+          {projectName && (
+            <>
+              <span
+                style={{
+                  font: "14px 'Inter', ui-sans-serif",
+                  color: 'var(--ink-4)',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {projectName}
+              </span>
+              <span style={{ color: 'var(--ink-5)' }}>/</span>
+            </>
+          )}
+          <span
+            style={{
+              font: "500 14px 'Inter', ui-sans-serif",
+              letterSpacing: '-0.005em',
+              color: 'var(--ink)',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+          >
+            {current?.name ?? '…'}
+          </span>
+        </div>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -117,10 +137,10 @@ export function TopBar({
             border: '0.5px solid var(--line)',
             background: 'var(--bg-card)',
             color: 'var(--ink-2)',
-            borderRadius: 999,
-            padding: '6px 12px',
+            borderRadius: 7,
+            padding: '6px 11px',
             cursor: 'default',
-            font: "500 12px 'Inter', ui-sans-serif",
+            font: "500 12.5px 'Inter', ui-sans-serif",
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.background = 'var(--paper-deep)'
@@ -138,9 +158,11 @@ export function TopBar({
             fill="none"
             stroke="currentColor"
             strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           >
-            <path d="M8 2.5a5.5 5.5 0 1 1-5.5 5.5" />
-            <path d="M2.5 4V2h2" />
+            <path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9" />
+            <path d="M12.5 2.2V4.6h-2.4" />
           </svg>
           {t.topBar.review}
           {dueCount > 0 && (
@@ -152,7 +174,7 @@ export function TopBar({
                 minWidth: 16,
                 height: 16,
                 borderRadius: 999,
-                background: 'var(--accent)',
+                background: 'var(--highlight)',
                 color: 'var(--paper)',
                 font: "600 10px 'JetBrains Mono', ui-monospace",
                 padding: '0 4px',

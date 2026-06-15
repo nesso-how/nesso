@@ -6,6 +6,27 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- **Status bar:** A full-width bottom **status bar** replaces the floating BottomDock (`StatusBar`, `STATUS_BAR_HEIGHT_PX`). On the left it anchors the Socrates entry plus the concept/relation counts, swapping to the live selection (`1 concept selected · esc`) when something is selected; on the right it carries undo/redo, zoom −/%/+, and fit. The graph counts and the zoom readout move here from the sidebar (the old Stats section is gone).
+- **Right-click context menu:** New `GraphContextMenu`, wired through React Flow's pane/node/edge context-menu callbacks (`reactFlowProps`). Node → Copy/Cut/Duplicate/Delete; relation → Change type / Flip direction / Delete; empty canvas → Paste (at cursor) / Add concept here / Center·fit. Two new `graph-editing` mutations back it: `duplicateSelection` (also ⌘D) clones the selection with an offset without touching the copy/paste clipboard, and `reverseEdge` swaps an edge's source/target.
+- **Inspector rail + Memory:** The detail panel now docks flush on the **right**, full height between the top bar and status bar, and collapses to a **52px rail** (new `inspectorCollapsed` UI state) that keeps the selection with a bottom action toolbar (copy/cut/duplicate/delete). The node inspector gains a collapsible **Memory** section (Due / Stability / Last rating / Reviews / Last reviewed).
+- **Sidebar Projects (desktop):** The desktop project switcher moved from a header dropdown into a collapsible **Projects** section in the sidebar body (`SidebarProjects`): switch on click, reveal-in-Finder / remove on hover, `+ New` and `Open project…`. The sidebar header is now always the brand.
+- **Empty state & creation:** An empty graph shows a centered **"Your first concept"** hint (`EmptyCanvasHint`, pointer-events through). Double-click the canvas creates a concept at the cursor.
+- **Pan-on-select:** Selecting a node or edge nudges the viewport so the element stays clear of the right-docked inspector (never fights manual panning or search re-centering).
+
+### Changed
+
+- **Visual direction — Notion + Oxblood:** Adopted the Notion surface (warm off-white paper, Fraunces display serif) with the Oxblood accent, and introduced a `--highlight` token decoupled from `--accent`: Oxblood is now reserved for the mentor, live recall, selection, and due states, while **actions use ink** (e.g. the review *Reveal* and local-model *Download & use* buttons are ink-filled). Aligned the border-radius scale (chip 4 · standard 6 · prominent 7 · menu 8 · popover/toast 12 · modals 14) and a hover rule (compact buttons change color only; full-width rows keep the background fill).
+- **Mentor:** Retired the floating Socrates FAB. The mentor now lives as an inline **Socrates entry in the status bar** (with a soft breathing halo) that opens a **slide-up chat sheet** above the bar, which dodges the docked inspector. All completion logic (`fetchCompletion`, history, new-chat) is unchanged.
+- **Top bar:** Shows a **`Project / Graph` breadcrumb** (project segment desktop-only), drops the inline counts, and aligns the Review/⋯ buttons to the design (radius 7, prototype Review glyph, ⋯ as a square icon button); raised above the inspector so its dropdown is no longer clipped.
+- **Settings:** Reworked to the redesign — **switches** for true on/off (Heatmap, Auto-flip), a **dropdown** for Language, and **segmented controls shared with the sidebar** for the rest (Theme, Edges, Curve, AI source); model presets are bordered buttons, inputs use the 6px radius, and the active tab uses the `--paper-deep` fill. New shared `Switch` and `Select` primitives; the now-unused `PillToggle` was removed.
+- **Inspector details:** Concept image is a compact 48px button, the title is smaller (18px), section carets/labels match the sidebar, the relations list shows each connected concept with the relation glyph in a chip and the type on the right (incoming dimmed), and example bullets are small grey dots. The always-on per-node confidence underline was removed (it duplicated the heatmap).
+
+### Removed
+
+- The floating **BottomDock** and the header **ProjectSwitcher** dropdown (their functions moved to the status bar and the sidebar Projects section); the sidebar **Stats** section.
+
 ## [0.1.0-alpha.31] - 2026-06-13
 
 ### Added

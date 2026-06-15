@@ -276,7 +276,7 @@ export function ReviewMode({ open, onClose }: Props) {
               style={{
                 width: `${pct}%`,
                 height: '100%',
-                background: 'var(--accent)',
+                background: 'var(--highlight)',
                 transition: 'width 200ms ease',
               }}
             />
@@ -603,7 +603,7 @@ const reviewCardStyle: CSSProperties = {
   overflowY: 'auto',
   background: 'var(--bg-card)',
   border: '0.5px solid var(--line)',
-  borderRadius: 18,
+  borderRadius: 14,
   padding: '28px 32px 22px',
   boxShadow: 'var(--shadow-lg)',
 }
@@ -631,11 +631,11 @@ function Btn({
       style={{
         appearance: 'none',
         border: primary ? 0 : '0.5px solid var(--line)',
-        background: primary ? 'var(--accent)' : 'transparent',
+        background: primary ? 'var(--ink)' : 'transparent',
         color: primary ? 'var(--paper)' : 'var(--ink-2)',
         font: "500 12.5px 'Inter'",
         padding: '9px 16px',
-        borderRadius: 999,
+        borderRadius: 7,
         cursor: 'default',
       }}
     >
@@ -664,7 +664,7 @@ function RatingBtn({
         border: 0,
         cursor: 'default',
         background: color,
-        borderRadius: 10,
+        borderRadius: 7,
         padding: '11px 12px 10px',
         display: 'flex',
         flexDirection: 'column',

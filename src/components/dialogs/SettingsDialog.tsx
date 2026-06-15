@@ -7,7 +7,9 @@ import { LocalModelPanel } from '@/components/mentor/LocalModelPanel'
 import { ModelStatusBadge } from '@/components/mentor/ModelStatusBadge'
 import { SettingsFormRow } from '@/components/ui/SettingsFormRow'
 import { ModalOverlay } from '@/components/ui/ModalOverlay'
-import { PillToggle } from '@/components/ui/PillToggle'
+import { SegmentedControl } from '@/components/ui/SegmentedControl'
+import { Switch } from '@/components/ui/Switch'
+import { Select } from '@/components/ui/Select'
 import { Stepper } from '@/components/ui/Stepper'
 import { useT } from '@/i18n'
 import type { Language } from '@/types/graph'
@@ -103,7 +105,7 @@ export function SettingsDialog({ open, onClose }: Props) {
     boxSizing: 'border-box',
     appearance: 'none',
     border: '0.5px solid var(--line)',
-    borderRadius: 10,
+    borderRadius: 6,
     padding: '10px 12px',
     background: 'var(--paper-deep)',
     color: 'var(--ink)',
@@ -122,7 +124,7 @@ export function SettingsDialog({ open, onClose }: Props) {
             maxWidth: '94vw',
             background: 'var(--bg-card)',
             border: '0.5px solid var(--line)',
-            borderRadius: 18,
+            borderRadius: 14,
             boxShadow: 'var(--shadow-lg)',
             display: 'flex',
             overflow: 'hidden',
@@ -135,7 +137,7 @@ export function SettingsDialog({ open, onClose }: Props) {
               width: 156,
               flexShrink: 0,
               borderRight: '0.5px solid var(--line)',
-              background: 'var(--paper-deep)',
+              background: 'var(--bg-elev)',
               padding: '20px 12px 20px',
               display: 'flex',
               flexDirection: 'column',
@@ -161,7 +163,7 @@ export function SettingsDialog({ open, onClose }: Props) {
                 style={{
                   appearance: 'none',
                   border: 'none',
-                  background: tab === tabId ? 'var(--bg-card)' : 'transparent',
+                  background: tab === tabId ? 'var(--paper-deep)' : 'transparent',
                   color: tab === tabId ? 'var(--ink)' : 'var(--ink-3)',
                   font: `${tab === tabId ? '500' : '400'} 13px 'Inter', system-ui`,
                   textAlign: 'left',
@@ -202,13 +204,13 @@ export function SettingsDialog({ open, onClose }: Props) {
                   <span style={{ font: "400 13px 'Inter', system-ui", color: 'var(--ink-3)' }}>
                     {t.settings.appearance.theme}
                   </span>
-                  <PillToggle
+                  <SegmentedControl
                     options={[
                       { id: 'light', label: t.settings.appearance.light },
                       { id: 'dark', label: t.settings.appearance.dark },
                     ]}
                     value={settings.dark ? 'dark' : 'light'}
-                    onChange={(id) => setSetting('dark', id === 'dark')}
+                    onChange={(v) => setSetting('dark', v === 'dark')}
                   />
                 </div>
 
@@ -224,7 +226,7 @@ export function SettingsDialog({ open, onClose }: Props) {
                   <span style={{ font: "400 13px 'Inter', system-ui", color: 'var(--ink-3)' }}>
                     {t.settings.appearance.language}
                   </span>
-                  <PillToggle
+                  <Select
                     options={LANGUAGES.map((lang) => ({ id: lang.id, label: lang.label }))}
                     value={settings.language}
                     onChange={(id) => setSetting('language', id)}
@@ -269,13 +271,9 @@ export function SettingsDialog({ open, onClose }: Props) {
                       <span style={{ font: "400 13px 'Inter', system-ui", color: 'var(--ink-3)' }}>
                         {t.settings.appearance.heatmap}
                       </span>
-                      <PillToggle
-                        options={[
-                          { id: 'off', label: t.settings.appearance.off },
-                          { id: 'on', label: t.settings.appearance.on },
-                        ]}
-                        value={settings.showHeatmap ? 'on' : 'off'}
-                        onChange={(id) => setSetting('showHeatmap', id === 'on')}
+                      <Switch
+                        value={settings.showHeatmap}
+                        onChange={(v) => setSetting('showHeatmap', v)}
                       />
                     </div>
 
@@ -289,14 +287,16 @@ export function SettingsDialog({ open, onClose }: Props) {
                       <span style={{ font: "400 13px 'Inter', system-ui", color: 'var(--ink-3)' }}>
                         {t.settings.appearance.edges}
                       </span>
-                      <PillToggle
+                      <SegmentedControl
                         options={[
                           { id: 'full', label: t.settings.appearance.full },
                           { id: 'category', label: t.settings.appearance.category },
                           { id: 'minimal', label: t.settings.appearance.minimal },
                         ]}
                         value={settings.edgeEncoding}
-                        onChange={(id) => setSetting('edgeEncoding', id)}
+                        onChange={(v) =>
+                          setSetting('edgeEncoding', v as 'full' | 'category' | 'minimal')
+                        }
                       />
                     </div>
 
@@ -310,13 +310,13 @@ export function SettingsDialog({ open, onClose }: Props) {
                       <span style={{ font: "400 13px 'Inter', system-ui", color: 'var(--ink-3)' }}>
                         {t.settings.appearance.curve}
                       </span>
-                      <PillToggle
+                      <SegmentedControl
                         options={[
                           { id: 'arc', label: t.settings.appearance.arc },
                           { id: 'straight', label: t.settings.appearance.straight },
                         ]}
                         value={settings.curveStyle}
-                        onChange={(id) => setSetting('curveStyle', id)}
+                        onChange={(v) => setSetting('curveStyle', v as 'arc' | 'straight')}
                       />
                     </div>
 
@@ -333,13 +333,9 @@ export function SettingsDialog({ open, onClose }: Props) {
                         >
                           {t.settings.appearance.autoFlip}
                         </span>
-                        <PillToggle
-                          options={[
-                            { id: 'off', label: t.settings.appearance.off },
-                            { id: 'on', label: t.settings.appearance.on },
-                          ]}
-                          value={settings.autoCurveFlip ? 'on' : 'off'}
-                          onChange={(id) => setSetting('autoCurveFlip', id === 'on')}
+                        <Switch
+                          value={settings.autoCurveFlip}
+                          onChange={(v) => setSetting('autoCurveFlip', v)}
                         />
                       </div>
                     )}
@@ -357,13 +353,13 @@ export function SettingsDialog({ open, onClose }: Props) {
                   <span style={{ font: "400 13px 'Inter', system-ui", color: 'var(--ink-3)' }}>
                     {t.settings.ai.source}
                   </span>
-                  <PillToggle
+                  <SegmentedControl
                     options={[
                       { id: 'local', label: t.settings.ai.local },
                       { id: 'remote', label: t.settings.ai.remote },
                     ]}
                     value={settings.aiMode}
-                    onChange={(mode) => setSetting('aiMode', mode)}
+                    onChange={(v) => setSetting('aiMode', v as 'local' | 'remote')}
                   />
                 </div>
 
@@ -422,20 +418,41 @@ export function SettingsDialog({ open, onClose }: Props) {
                         >
                           {t.settings.ai.modelDesc}
                         </small>
-                        <PillToggle
-                          tone="soft"
-                          style={{ marginBottom: 10 }}
-                          options={OLLAMA_PRESETS.map((p) => ({
-                            id: p.id,
-                            label: p.id,
-                            title: p.note,
-                          }))}
-                          value={settings.aiModel}
-                          onChange={(id) => {
-                            setSetting('aiModel', id)
-                            triggerCheck(settings.aiBaseUrl, id)
+                        <div
+                          style={{
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            gap: 6,
+                            marginBottom: 10,
                           }}
-                        />
+                        >
+                          {OLLAMA_PRESETS.map((p) => {
+                            const active = settings.aiModel === p.id
+                            return (
+                              <button
+                                key={p.id}
+                                type="button"
+                                title={p.note}
+                                onClick={() => {
+                                  setSetting('aiModel', p.id)
+                                  triggerCheck(settings.aiBaseUrl, p.id)
+                                }}
+                                style={{
+                                  appearance: 'none',
+                                  border: `0.5px solid ${active ? 'var(--ink-2)' : 'var(--line)'}`,
+                                  background: active ? 'var(--paper-deep)' : 'transparent',
+                                  color: active ? 'var(--ink)' : 'var(--ink-3)',
+                                  font: "500 11px 'JetBrains Mono', ui-monospace",
+                                  padding: '5px 10px',
+                                  borderRadius: 6,
+                                  cursor: 'default',
+                                }}
+                              >
+                                {p.id}
+                              </button>
+                            )
+                          })}
+                        </div>
                         <input
                           type="text"
                           value={settings.aiModel}
