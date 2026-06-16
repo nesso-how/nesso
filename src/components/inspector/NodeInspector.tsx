@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 import { useState, useEffect, type CSSProperties } from 'react'
 import { RELATION_TYPES, RELATION_CATEGORIES, asEdgeTypeName } from '@/data/relationTypes'
-import { CloseButton } from '@/components/ui/CloseButton'
 import { useGraphStore, selectedNodeSelector } from '@/store'
 import type { ConceptElaboration } from '@/types/graph'
 import { useT } from '@/i18n'
@@ -9,9 +8,10 @@ import { InlineEdit } from './InlineEdit'
 import { ImageSearchPanel } from './ImageSearchPanel'
 import { InspectorPanel } from './InspectorPanel'
 import { EdgeRow } from './EdgeRow'
+import { InspectorActionToolbar, InspectorIconBtn } from './inspectorChrome'
 
 const LABEL_STYLE: CSSProperties = {
-  font: "500 10px 'JetBrains Mono', ui-monospace",
+  font: "500 11px 'JetBrains Mono', ui-monospace",
   color: 'var(--ink-4)',
   textTransform: 'uppercase',
   letterSpacing: '0.08em',
@@ -31,9 +31,10 @@ function Chevron({ open }: { open: boolean }) {
       height="9"
       viewBox="0 0 10 10"
       style={{
-        opacity: 0.55,
+        opacity: 0.5,
+        color: 'var(--ink)',
         transform: open ? 'rotate(0deg)' : 'rotate(-90deg)',
-        transition: 'transform 140ms',
+        transition: 'transform 150ms',
         flexShrink: 0,
       }}
     >
@@ -50,11 +51,9 @@ function Chevron({ open }: { open: boolean }) {
 }
 
 export function NodeInspector({
-  leftOffset,
   panelWidth,
   onPanelWidthChange,
 }: {
-  leftOffset: number
   panelWidth: number
   onPanelWidthChange: (w: number) => void
 }) {
@@ -66,7 +65,9 @@ export function NodeInspector({
   const updateNodeData = useGraphStore((s) => s.updateNodeData)
   const settings = useGraphStore((s) => s.settings)
   const setSetting = useGraphStore((s) => s.setSetting)
+  const setInspectorCollapsed = useGraphStore((s) => s.setInspectorCollapsed)
 
+  const memoryOpen = settings.inspectorMemoryOpen
   const examplesOpen = settings.inspectorExamplesOpen
   const relationsOpen = settings.inspectorRelationsOpen
   const [imageMode, setImageMode] = useState<'view' | 'search'>('view')
@@ -95,6 +96,34 @@ export function NodeInspector({
   const focusNode = (id: string) => setSelected({ kind: 'node', id })
 
   const isDue = node.data.due <= 0 || node.data.due <= Date.now()
+  const reps = node.data.reps ?? 0
+  const lapses = node.data.lapses ?? 0
+  const lastReview = node.data.lastReview ?? 0
+  const lastReviewedLabel =
+    lastReview <= 0
+      ? '—'
+      : (() => {
+          const d = Math.floor((Date.now() - lastReview) / 86_400_000)
+          return d <= 0 ? t.inspector.memory.today : t.inspector.memory.daysAgo(d)
+        })()
+  const memRows: { label: string; value: string; accent?: boolean; warn?: boolean }[] = [
+    {
+      label: t.inspector.rows.due,
+      value: formatConceptDue(node.data.due, t.inspector.dueNow),
+      accent: isDue,
+    },
+    { label: t.inspector.rows.stability, value: `${node.data.stability.toFixed(1)}d` },
+    {
+      label: t.inspector.rows.lastRating,
+      value: t.inspector.ratingNames[Math.min(4, Math.max(0, node.data.lastRating ?? 0))],
+    },
+    {
+      label: t.inspector.memory.reviews,
+      value: lapses > 0 ? `${reps} · ${t.inspector.memory.lapses(lapses)}` : String(reps),
+      warn: lapses > 0,
+    },
+    { label: t.inspector.memory.lastReviewed, value: lastReviewedLabel },
+  ]
 
   // Examples as a clean array — empty strings are excluded from storage
   const examplesArr = (elab?.examples ?? '').split('\n').filter((s) => s.length > 0)
@@ -116,12 +145,7 @@ export function NodeInspector({
   const removeExample = (idx: number) => saveExamples(examplesArr.filter((_, i) => i !== idx))
 
   return (
-    <InspectorPanel
-      leftOffset={leftOffset}
-      panelWidth={panelWidth}
-      onPanelWidthChange={onPanelWidthChange}
-      noPadding
-    >
+    <InspectorPanel panelWidth={panelWidth} onPanelWidthChange={onPanelWidthChange}>
       {/* Image search panel (replaces header when active) */}
       {imageMode === 'search' && (
         <ImageSearchPanel
@@ -150,114 +174,126 @@ export function NodeInspector({
       {imageMode === 'view' && (
         <div
           style={{
-            position: 'relative',
             flexShrink: 0,
-            padding: '14px 14px 12px 14px',
+            padding: '12px 14px',
             borderBottom: '0.5px solid var(--line)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
           }}
         >
-          {/* Image icon button */}
-          <button
-            type="button"
-            onMouseEnter={() => setImageHover(true)}
-            onMouseLeave={() => setImageHover(false)}
-            onClick={() => {
-              setImageQuery(node.data.text)
-              setImageMode('search')
-            }}
-            title={hasImage ? t.inspector.image.search : t.inspector.image.addImage}
+          {/* Top row — collapse + close */}
+          <div
             style={{
-              appearance: 'none',
-              border: 0,
-              padding: 0,
-              cursor: 'default',
-              flexShrink: 0,
-              width: 56,
-              height: 56,
-              borderRadius: 10,
-              background: hasImage
-                ? 'var(--paper-deep)'
-                : `repeating-linear-gradient(45deg, var(--paper-deep) 0 6px, var(--bg-card) 6px 12px)`,
-              boxShadow: 'inset 0 0 0 0.5px var(--line)',
-              position: 'relative',
-              overflow: 'hidden',
-              display: 'inline-flex',
+              display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
+              justifyContent: 'space-between',
+              marginBottom: 10,
+              marginLeft: -6,
+              marginRight: -6,
             }}
           >
-            {hasImage ? (
-              <img
-                src={imageUrl!}
-                alt=""
-                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-              />
-            ) : (
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 16 16"
-                fill="none"
-                stroke="var(--ink-4)"
-                strokeWidth="1.5"
-              >
-                <circle cx="7" cy="7" r="4.5" />
-                <path d="M10.5 10.5L13 13" strokeLinecap="round" />
-              </svg>
-            )}
-            {hasImage && imageHover && (
-              <div
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  background: 'rgba(26,24,20,0.38)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
+            <InspectorIconBtn
+              icon="chevron-right"
+              title={t.inspector.actions.collapse}
+              onClick={() => setInspectorCollapsed(true)}
+            />
+            <InspectorIconBtn icon="close" title="Esc" onClick={() => setSelected(null)} />
+          </div>
+          {/* Identity — image + title */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            {/* Image icon button */}
+            <button
+              type="button"
+              onMouseEnter={() => setImageHover(true)}
+              onMouseLeave={() => setImageHover(false)}
+              onClick={() => {
+                setImageQuery(node.data.text)
+                setImageMode('search')
+              }}
+              title={hasImage ? t.inspector.image.search : t.inspector.image.addImage}
+              style={{
+                appearance: 'none',
+                border: 0,
+                padding: 0,
+                cursor: 'default',
+                flexShrink: 0,
+                width: 48,
+                height: 48,
+                borderRadius: 10,
+                background: hasImage
+                  ? 'var(--paper-deep)'
+                  : `repeating-linear-gradient(45deg, var(--paper-deep) 0 6px, var(--bg-card) 6px 12px)`,
+                boxShadow: 'inset 0 0 0 0.5px var(--line)',
+                position: 'relative',
+                overflow: 'hidden',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              {hasImage ? (
+                <img
+                  src={imageUrl!}
+                  alt=""
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                />
+              ) : (
                 <svg
                   width="14"
                   height="14"
                   viewBox="0 0 16 16"
                   fill="none"
-                  stroke="rgba(244,242,234,0.9)"
+                  stroke="var(--ink-4)"
                   strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
                 >
-                  <path d="M11.5 2.5l2 2-8 8-2.5.5.5-2.5 8-8z" />
-                  <path d="M10 4l2 2" />
+                  <circle cx="7" cy="7" r="4.5" />
+                  <path d="M10.5 10.5L13 13" strokeLinecap="round" />
                 </svg>
-              </div>
-            )}
-          </button>
+              )}
+              {hasImage && imageHover && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    background: 'rgba(26,24,20,0.38)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    stroke="rgba(244,242,234,0.9)"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M11.5 2.5l2 2-8 8-2.5.5.5-2.5 8-8z" />
+                    <path d="M10 4l2 2" />
+                  </svg>
+                </div>
+              )}
+            </button>
 
-          {/* Inline-editable title */}
-          <div style={{ flex: 1, minWidth: 0, paddingRight: 24 }}>
-            <InlineEdit
-              value={node.data.text}
-              placeholder="Untitled"
-              multiline
-              noEditBorder
-              maxLength={120}
-              onSave={(v) => {
-                if (v.trim()) updateNodeData(node.id, { text: v.trim().replace(/\n+/g, ' ') })
-              }}
-              textStyle={{
-                font: "500 22px/1.15 'Fraunces', ui-serif, Georgia, serif",
-                letterSpacing: '-0.012em',
-                color: 'var(--ink)',
-              }}
-            />
-          </div>
-
-          {/* Close button */}
-          <div style={{ position: 'absolute', top: 10, right: 10 }}>
-            <CloseButton onClick={() => setSelected(null)} />
+            {/* Inline-editable title */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <InlineEdit
+                value={node.data.text}
+                placeholder="Untitled"
+                multiline
+                noEditBorder
+                maxLength={120}
+                onSave={(v) => {
+                  if (v.trim()) updateNodeData(node.id, { text: v.trim().replace(/\n+/g, ' ') })
+                }}
+                textStyle={{
+                  font: "500 18px/1.2 'Fraunces', ui-serif, Georgia, serif",
+                  letterSpacing: '-0.01em',
+                  color: 'var(--ink)',
+                }}
+              />
+            </div>
           </div>
         </div>
       )}
@@ -275,59 +311,60 @@ export function NodeInspector({
           gap: 14,
         }}
       >
-        {/* FSRS meta strip */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr 1fr',
-            borderTop: '0.5px dashed var(--line)',
-            borderBottom: '0.5px dashed var(--line)',
-            padding: '8px 0',
-          }}
-        >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-            <span style={LABEL_STYLE}>{t.inspector.rows.due}</span>
-            <span
-              style={{
-                font: "500 12px 'JetBrains Mono', ui-monospace",
-                color: isDue ? 'var(--accent)' : 'var(--ink-2)',
-              }}
-            >
-              {formatConceptDue(node.data.due, t.inspector.dueNow)}
-            </span>
-          </div>
-          <div
+        {/* Memory — recall + schedule, collapsible */}
+        <div>
+          <button
+            type="button"
+            onClick={() => setSetting('inspectorMemoryOpen', !memoryOpen)}
             style={{
+              appearance: 'none',
+              border: 0,
+              background: 'transparent',
+              cursor: 'default',
               display: 'flex',
-              flexDirection: 'column',
-              gap: 3,
-              borderLeft: '0.5px dashed var(--line)',
-              paddingLeft: 12,
+              alignItems: 'center',
+              gap: 6,
+              padding: 0,
+              marginBottom: memoryOpen ? 11 : 0,
+              ...LABEL_STYLE,
             }}
           >
-            <span style={LABEL_STYLE}>{t.inspector.rows.stability}</span>
-            <span
-              style={{ font: "500 12px 'JetBrains Mono', ui-monospace", color: 'var(--ink-2)' }}
-            >
-              {node.data.stability.toFixed(1)}d
-            </span>
-          </div>
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 3,
-              borderLeft: '0.5px dashed var(--line)',
-              paddingLeft: 12,
-            }}
-          >
-            <span style={LABEL_STYLE}>{t.inspector.rows.lastRating}</span>
-            <span
-              style={{ font: "500 12px 'JetBrains Mono', ui-monospace", color: 'var(--ink-2)' }}
-            >
-              {t.inspector.ratingNames[Math.min(4, Math.max(0, node.data.lastRating ?? 0))]}
-            </span>
-          </div>
+            <span>{t.inspector.memory.title}</span>
+            <Chevron open={memoryOpen} />
+          </button>
+          {memoryOpen && (
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              {memRows.map((r, i) => (
+                <div
+                  key={r.label}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 12,
+                    padding: '7px 0',
+                    borderBottom: i === memRows.length - 1 ? 'none' : '0.5px solid var(--line)',
+                  }}
+                >
+                  <span style={{ font: "12px 'Inter', system-ui", color: 'var(--ink-3)' }}>
+                    {r.label}
+                  </span>
+                  <span
+                    style={{
+                      font: "500 12px 'JetBrains Mono', ui-monospace",
+                      color: r.accent
+                        ? 'var(--highlight)'
+                        : r.warn
+                          ? 'var(--cat-opposition)'
+                          : 'var(--ink-2)',
+                    }}
+                  >
+                    {r.value}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Definition */}
@@ -373,38 +410,44 @@ export function NodeInspector({
                 ...LABEL_STYLE,
               }}
             >
-              <Chevron open={examplesOpen} />
               <span>{t.inspector.notes.examples}</span>
-              {examplesArr.length > 0 && (
-                <span
-                  style={{
-                    font: "450 10px 'JetBrains Mono', ui-monospace",
-                    color: 'var(--ink-5)',
-                    textTransform: 'none',
-                    letterSpacing: 0,
-                  }}
-                >
-                  {examplesArr.length}
-                </span>
-              )}
+              <Chevron open={examplesOpen} />
             </button>
             {examplesOpen && (
               <button
                 type="button"
                 onClick={addExample}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = 'var(--ink)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = 'var(--ink-3)'
+                }}
                 style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 5,
                   appearance: 'none',
                   border: 0,
                   background: 'transparent',
-                  font: "450 11px 'Inter', system-ui",
-                  color: 'var(--ink-4)',
                   cursor: 'default',
+                  color: 'var(--ink-3)',
+                  font: "500 11.5px 'Inter', ui-sans-serif",
+                  padding: '2px 5px',
+                  borderRadius: 6,
                   textTransform: 'none',
                   letterSpacing: 0,
-                  padding: 0,
                 }}
               >
-                ＋ Add
+                <svg width="11" height="11" viewBox="0 0 10 10" style={{ flexShrink: 0 }}>
+                  <path
+                    d="M5 1v8M1 5h8"
+                    stroke="currentColor"
+                    strokeWidth="1.4"
+                    strokeLinecap="round"
+                  />
+                </svg>
+                {t.inspector.notes.add}
               </button>
             )}
           </div>
@@ -444,13 +487,13 @@ export function NodeInspector({
                   >
                     <span
                       style={{
-                        color: 'var(--accent)',
-                        font: "500 13px 'JetBrains Mono', ui-monospace",
-                        lineHeight: 1.55,
+                        width: 5,
+                        height: 5,
+                        borderRadius: '50%',
+                        background: 'var(--ink-4)',
+                        marginTop: 8,
                       }}
-                    >
-                      ·
-                    </span>
+                    />
                     <InlineEdit
                       value={ex}
                       placeholder="example…"
@@ -459,6 +502,7 @@ export function NodeInspector({
                       maxLength={500}
                       onSave={(v) => updateExample(i, v)}
                       onShiftEnter={addExample}
+                      onDeleteEmpty={examplesArr.length > 1 ? () => removeExample(i) : undefined}
                       textStyle={{
                         font: "400 13.5px/1.55 'Fraunces', ui-serif, Georgia, serif",
                         color: 'var(--ink-2)',
@@ -495,13 +539,13 @@ export function NodeInspector({
                   >
                     <span
                       style={{
-                        color: 'var(--accent)',
-                        font: "500 13px 'JetBrains Mono', ui-monospace",
-                        lineHeight: 1.55,
+                        width: 5,
+                        height: 5,
+                        borderRadius: '50%',
+                        background: 'var(--ink-4)',
+                        marginTop: 8,
                       }}
-                    >
-                      ·
-                    </span>
+                    />
                     <InlineEdit
                       key={pendingKey}
                       value=""
@@ -511,6 +555,7 @@ export function NodeInspector({
                       maxLength={500}
                       onSave={savePendingExample}
                       onShiftEnter={addExample}
+                      onDeleteEmpty={() => setPendingNewExample(false)}
                       initialEditing
                       textStyle={{
                         font: "400 13.5px/1.55 'Fraunces', ui-serif, Georgia, serif",
@@ -540,6 +585,24 @@ export function NodeInspector({
             ))}
         </div>
 
+        {/* Notes */}
+        <div>
+          <div style={{ ...LABEL_STYLE, marginBottom: 6 }}>{t.inspector.notes.notes}</div>
+          <InlineEdit
+            value={elab?.notes ?? ''}
+            placeholder={t.inspector.notes.notesPlaceholder}
+            onSave={(v) => patch({ notes: v })}
+            multiline
+            noEditBorder
+            borderedPlaceholder
+            maxLength={2000}
+            textStyle={{
+              font: "400 13.5px/1.55 'Fraunces', ui-serif, Georgia, serif",
+              color: 'var(--ink-2)',
+            }}
+          />
+        </div>
+
         {/* Relations — collapsible */}
         {(outgoing.length > 0 || incoming.length > 0) && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -551,29 +614,15 @@ export function NodeInspector({
                 border: 0,
                 background: 'transparent',
                 cursor: 'default',
-                display: 'flex',
+                display: 'inline-flex',
                 alignItems: 'center',
-                justifyContent: 'space-between',
-                width: '100%',
+                gap: 6,
                 padding: 0,
+                ...LABEL_STYLE,
               }}
             >
-              <span
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, ...LABEL_STYLE }}
-              >
-                <Chevron open={relationsOpen} />
-                <span>{t.inspector.relations}</span>
-              </span>
-              <span
-                style={{
-                  font: "450 11px 'Inter', system-ui",
-                  color: 'var(--ink-5)',
-                  textTransform: 'none',
-                  letterSpacing: 0,
-                }}
-              >
-                {outgoing.length + incoming.length}
-              </span>
+              <span>{t.inspector.relations}</span>
+              <Chevron open={relationsOpen} />
             </button>
 
             {relationsOpen && (
@@ -607,6 +656,7 @@ export function NodeInspector({
                       color={C.color}
                       glyph={T.glyph}
                       onClick={() => focusNode(e.source)}
+                      dim
                     />
                   )
                 })}
@@ -614,24 +664,18 @@ export function NodeInspector({
             )}
           </div>
         )}
+      </div>
 
-        {/* Notes */}
-        <div>
-          <div style={{ ...LABEL_STYLE, marginBottom: 6 }}>{t.inspector.notes.notes}</div>
-          <InlineEdit
-            value={elab?.notes ?? ''}
-            placeholder={t.inspector.notes.notesPlaceholder}
-            onSave={(v) => patch({ notes: v })}
-            multiline
-            noEditBorder
-            borderedPlaceholder
-            maxLength={2000}
-            textStyle={{
-              font: "400 13.5px/1.55 'Fraunces', ui-serif, Georgia, serif",
-              color: 'var(--ink-2)',
-            }}
-          />
-        </div>
+      {/* Action toolbar — docked footer */}
+      <div
+        style={{
+          flexShrink: 0,
+          borderTop: '0.5px solid var(--line)',
+          padding: '8px 12px',
+          boxSizing: 'border-box',
+        }}
+      >
+        <InspectorActionToolbar />
       </div>
     </InspectorPanel>
   )

@@ -5,7 +5,6 @@ import type en from './en'
 const it: typeof en = {
   common: {
     cancel: 'Annulla',
-    dismiss: 'Chiudi',
   },
   fileConflict: {
     message: 'Questo grafo è stato modificato su disco mentre lo stavi editando.',
@@ -16,11 +15,9 @@ const it: typeof en = {
     available: (version: string) => `La versione ${version} è disponibile.`,
     install: 'Installa e riavvia',
     installing: 'Installazione…',
-    later: 'Più tardi',
     failed: 'Aggiornamento non riuscito. Riprovare?',
     retry: 'Riprova',
     restartRequired: 'Aggiornamento installato — riavvia Nesso per completare.',
-    dismiss: 'Ho capito',
   },
   settings: {
     title: 'Impostazioni',
@@ -133,6 +130,7 @@ const it: typeof en = {
     notes: {
       definition: 'Definizione',
       examples: 'Esempi',
+      add: 'Aggiungi',
       notes: 'Note',
       definitionPlaceholder: 'Con parole tue…',
       examplesPlaceholder: 'Clicca + o vai a capo per scrivere nuovi esempi.',
@@ -144,6 +142,24 @@ const it: typeof en = {
       searching: 'Ricerca in corso',
       cancel: 'Annulla',
       addImage: 'Aggiungi immagine',
+    },
+    actions: {
+      copy: 'Copia (⌘C)',
+      cut: 'Taglia (⌘X)',
+      duplicate: 'Duplica (⌘D)',
+      deleteConcept: 'Elimina concetto',
+      deleteRelation: 'Elimina relazione',
+      flip: 'Inverti direzione',
+      collapse: 'Comprimi pannello',
+      expand: 'Espandi pannello',
+    },
+    memory: {
+      title: 'Memoria',
+      reviews: 'Ripassi',
+      lastReviewed: 'Ultimo ripasso',
+      lapses: (n) => `${n} ${n === 1 ? 'ricaduta' : 'ricadute'}`,
+      today: 'oggi',
+      daysAgo: (n) => `${n}g fa`,
     },
     resizeHandle: 'Ridimensiona inspector',
   },
@@ -161,6 +177,7 @@ const it: typeof en = {
       defaultProjectName: 'I miei grafi',
       projects: 'Progetti',
       newProject: 'Nuovo progetto',
+      newProjectShort: 'Nuovo',
       openProject: 'Apri progetto…',
       revealInFinder: 'Mostra nel Finder',
       removeProject: 'Rimuovi dalla lista',
@@ -176,12 +193,6 @@ const it: typeof en = {
     deleteGraphConfirmCta: 'Elimina',
     renameHint: 'doppio clic per rinominare',
     settingsTitle: 'Impostazioni (⌘,)',
-    stats: {
-      title: 'Statistiche',
-      concepts: 'Concetti',
-      links: 'Link',
-      zoom: 'Zoom',
-    },
     displayOptions: {
       heatmap: 'Mappa calore',
       edges: 'Archi',
@@ -201,7 +212,6 @@ const it: typeof en = {
     graphs: 'Grafi',
     concepts: 'Concetti',
     noResults: (q) => `Nessun risultato per "${q}".`,
-    open: 'aperto',
   },
   shortcuts: {
     title: 'Scorciatoie da tastiera',
@@ -226,6 +236,7 @@ const it: typeof en = {
       cut: 'Taglia selezione',
       copy: 'Copia selezione',
       paste: 'Incolla',
+      duplicate: 'Duplica selezione',
     },
   },
   graphIO: {
@@ -253,6 +264,32 @@ const it: typeof en = {
     expandSidebar: 'Espandi pannello laterale',
     startReview: 'Avvia revisione (R)',
     review: 'Revisione',
+  },
+  statusBar: {
+    socratesTitle: 'Socrate — il tuo tutor',
+    concepts: 'concetti',
+    relations: 'relazioni',
+    undoTitle: 'Annulla (⌘Z)',
+    redoTitle: 'Ripristina (⌘⇧Z)',
+    zoomOutTitle: 'Riduci zoom',
+    zoomInTitle: 'Aumenta zoom',
+    fitTitle: 'Centra / adatta (F)',
+  },
+  contextMenu: {
+    copy: 'Copia',
+    cut: 'Taglia',
+    duplicate: 'Duplica',
+    delete: 'Elimina',
+    paste: 'Incolla',
+    addHere: 'Aggiungi concetto qui',
+    centerFit: 'Centra / adatta',
+    flip: 'Inverti direzione',
+  },
+  canvas: {
+    emptyTitle: 'Il tuo primo concetto',
+    emptyDesc: 'Doppio clic sul canvas, poi collega le idee con una relazione tipata.',
+    emptyGhost: 'nuovo concetto',
+    newConcept: 'Nuovo concetto',
   },
   relationTypes: {
     categories: {

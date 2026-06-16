@@ -124,7 +124,6 @@ export interface NessoSettings {
   dark: boolean
   language: Language
   edgeEncoding: EdgeEncoding
-  showConfidence: boolean
   showHeatmap: boolean
   curveStyle: CurveStyle
   autoCurveFlip: boolean
@@ -135,6 +134,7 @@ export interface NessoSettings {
   aiApiKey: string
   fsrsRetention: number
   maximumInterval: number
+  inspectorMemoryOpen: boolean
   inspectorExamplesOpen: boolean
   inspectorRelationsOpen: boolean
   /** Desktop: absolute paths of folders the user has explicitly opened, most-recent first. */

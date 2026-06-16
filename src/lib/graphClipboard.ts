@@ -76,6 +76,7 @@ export function instantiateClipboard(
   clip: GraphClipboard,
   usedNodeIds: Set<string>,
   usedEdgeIds: Set<string>,
+  anchor?: { x: number; y: number },
 ): {
   nodes: Node<ConceptNodeData>[]
   edges: Edge[]
@@ -87,12 +88,23 @@ export function instantiateClipboard(
     idMap.set(n.id, id)
   }
 
+  // With an anchor (paste at cursor), translate so the cluster's bounding-box
+  // centre lands on it; otherwise fall back to the cascading fixed offset.
+  let dx = PASTE_OFFSET.x
+  let dy = PASTE_OFFSET.y
+  if (anchor && clip.nodes.length > 0) {
+    const xs = clip.nodes.map((n) => n.position.x)
+    const ys = clip.nodes.map((n) => n.position.y)
+    dx = anchor.x - (Math.min(...xs) + Math.max(...xs)) / 2
+    dy = anchor.y - (Math.min(...ys) + Math.max(...ys)) / 2
+  }
+
   const nodes = clip.nodes.map((n) => ({
     ...n,
     id: idMap.get(n.id)!,
     position: {
-      x: n.position.x + PASTE_OFFSET.x,
-      y: n.position.y + PASTE_OFFSET.y,
+      x: n.position.x + dx,
+      y: n.position.y + dy,
     },
     selected: true,
   }))

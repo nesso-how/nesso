@@ -5,7 +5,6 @@ import type { EdgeCategory, EdgeTypeName } from '@/types/graph'
 const en = {
   common: {
     cancel: 'Cancel',
-    dismiss: 'Dismiss',
   },
   fileConflict: {
     message: 'This graph was changed on disk while you were editing.',
@@ -16,11 +15,9 @@ const en = {
     available: (version: string) => `Version ${version} is available.`,
     install: 'Install & restart',
     installing: 'Installing…',
-    later: 'Later',
     failed: 'Update failed. Try again?',
     retry: 'Retry',
     restartRequired: 'Update installed — restart Nesso to finish.',
-    dismiss: 'Got it',
   },
   settings: {
     title: 'Settings',
@@ -133,6 +130,7 @@ const en = {
     notes: {
       definition: 'Definition',
       examples: 'Examples',
+      add: 'Add',
       notes: 'Notes',
       definitionPlaceholder: 'In your own words…',
       examplesPlaceholder: 'Click + or press Shift+Enter to add examples.',
@@ -144,6 +142,24 @@ const en = {
       searching: 'Searching',
       cancel: 'Cancel',
       addImage: 'Add image',
+    },
+    actions: {
+      copy: 'Copy (⌘C)',
+      cut: 'Cut (⌘X)',
+      duplicate: 'Duplicate (⌘D)',
+      deleteConcept: 'Delete concept',
+      deleteRelation: 'Delete relation',
+      flip: 'Flip direction',
+      collapse: 'Collapse panel',
+      expand: 'Expand panel',
+    },
+    memory: {
+      title: 'Memory',
+      reviews: 'Reviews',
+      lastReviewed: 'Last reviewed',
+      lapses: (n: number) => `${n} lapse${n === 1 ? '' : 's'}`,
+      today: 'today',
+      daysAgo: (n: number) => `${n}d ago`,
     },
     resizeHandle: 'Resize inspector',
   },
@@ -161,6 +177,7 @@ const en = {
       defaultProjectName: 'My graphs',
       projects: 'Projects',
       newProject: 'New project',
+      newProjectShort: 'New',
       openProject: 'Open project…',
       revealInFinder: 'Show in Finder',
       removeProject: 'Remove from list',
@@ -175,12 +192,6 @@ const en = {
     deleteGraphConfirmCta: 'Delete',
     renameHint: 'double-click to rename',
     settingsTitle: 'Settings (⌘,)',
-    stats: {
-      title: 'Stats',
-      concepts: 'Concepts',
-      links: 'Links',
-      zoom: 'Zoom',
-    },
     displayOptions: {
       heatmap: 'Heatmap',
       edges: 'Edges',
@@ -200,7 +211,6 @@ const en = {
     graphs: 'Graphs',
     concepts: 'Concepts',
     noResults: (q: string) => `No results for "${q}".`,
-    open: 'open',
   },
   shortcuts: {
     title: 'Keyboard shortcuts',
@@ -225,6 +235,7 @@ const en = {
       cut: 'Cut selection',
       copy: 'Copy selection',
       paste: 'Paste',
+      duplicate: 'Duplicate selection',
     },
   },
   graphIO: {
@@ -252,6 +263,32 @@ const en = {
     expandSidebar: 'Expand sidebar',
     startReview: 'Start review (R)',
     review: 'Review',
+  },
+  statusBar: {
+    socratesTitle: 'Socrates — your tutor',
+    concepts: 'concepts',
+    relations: 'relations',
+    undoTitle: 'Undo (⌘Z)',
+    redoTitle: 'Redo (⌘⇧Z)',
+    zoomOutTitle: 'Zoom out',
+    zoomInTitle: 'Zoom in',
+    fitTitle: 'Center / fit (F)',
+  },
+  contextMenu: {
+    copy: 'Copy',
+    cut: 'Cut',
+    duplicate: 'Duplicate',
+    delete: 'Delete',
+    paste: 'Paste',
+    addHere: 'Add concept here',
+    centerFit: 'Center / fit',
+    flip: 'Flip direction',
+  },
+  canvas: {
+    emptyTitle: 'Your first concept',
+    emptyDesc: 'Double-click the canvas, then connect ideas with a typed relation.',
+    emptyGhost: 'new concept',
+    newConcept: 'New concept',
   },
   relationTypes: {
     categories: {

@@ -11,7 +11,6 @@ export interface NessoGraphDisplayContext {
   curveStyle: CurveStyle
   autoCurveFlip: boolean
   palette: CategoryPalette
-  showConfidence: boolean
   /** `palette` uses hex from PALETTES; `css` uses `var(--cat-*)` (app with live palette switching). */
   categoryColorMode: CategoryColorMode
   getRelationLabel?: (type: EdgeTypeName) => string
@@ -24,7 +23,6 @@ const defaultContext: NessoGraphDisplayContext = {
   curveStyle: 'arc',
   autoCurveFlip: true,
   palette: 'default',
-  showConfidence: false,
   categoryColorMode: 'palette',
 }
 

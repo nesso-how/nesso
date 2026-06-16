@@ -1,57 +1,49 @@
 // SPDX-License-Identifier: MIT
 import type { ReactNode } from 'react'
 import { TOPBAR_HEIGHT_PX } from '@/components/layout/TopBar'
+import { STATUS_BAR_HEIGHT_PX } from '@/components/layout/StatusBar'
 import { useT } from '@/i18n'
 import { useHorizontalResize } from '@/hooks/useHorizontalResize'
 import {
   clampInspectorPanelWidth,
-  INSPECTOR_PANEL_EDGE_INSET,
   INSPECTOR_PANEL_MAX_WIDTH,
   INSPECTOR_PANEL_MIN_WIDTH,
-  INSPECTOR_VIEWPORT_BOTTOM_RESERVE,
 } from './layout'
 
 interface Props {
-  leftOffset: number
   panelWidth: number
   onPanelWidthChange: (w: number) => void
   children: ReactNode
-  noPadding?: boolean
 }
 
-export function InspectorPanel({
-  leftOffset,
-  panelWidth,
-  onPanelWidthChange,
-  children,
-  noPadding = false,
-}: Props) {
+/** Right-docked, full-height detail shell. Flush to the right edge, between the
+ *  top bar and the status bar; the resize handle lives on its LEFT border. */
+export function InspectorPanel({ panelWidth, onPanelWidthChange, children }: Props) {
   const t = useT()
+  // Right-docked: dragging the left handle LEFT widens the panel — invert.
   const { onResizeHandleMouseDown, onResizeHandleKeyDown } = useHorizontalResize(
     panelWidth,
     onPanelWidthChange,
     clampInspectorPanelWidth,
+    true,
   )
 
   return (
     <div
+      data-chrome
       style={{
         position: 'absolute',
-        left: leftOffset + INSPECTOR_PANEL_EDGE_INSET,
-        top: TOPBAR_HEIGHT_PX + INSPECTOR_PANEL_EDGE_INSET,
+        top: TOPBAR_HEIGHT_PX,
+        right: 0,
+        bottom: STATUS_BAR_HEIGHT_PX,
         width: panelWidth,
         zIndex: 25,
-        background: 'var(--bg-elev)',
-        border: '0.5px solid var(--line)',
-        borderRadius: 14,
-        padding: noPadding ? 0 : '16px 16px 10px',
-        paddingRight: noPadding ? 0 : 20,
-        boxShadow: 'var(--shadow-md)',
+        background: 'var(--bg-card)',
+        borderLeft: '0.5px solid var(--line)',
         boxSizing: 'border-box',
         display: 'flex',
         flexDirection: 'column',
-        overflow: noPadding ? 'hidden' : 'visible',
-        maxHeight: `calc(100vh - ${TOPBAR_HEIGHT_PX + INSPECTOR_PANEL_EDGE_INSET}px - ${INSPECTOR_VIEWPORT_BOTTOM_RESERVE}px)`,
+        overflow: 'hidden',
       }}
     >
       {children}
@@ -69,7 +61,7 @@ export function InspectorPanel({
           position: 'absolute',
           top: 0,
           bottom: 0,
-          right: -4,
+          left: -4,
           width: 8,
           cursor: 'col-resize',
           touchAction: 'none',

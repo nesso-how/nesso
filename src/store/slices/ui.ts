@@ -9,14 +9,14 @@ export interface UISlice {
   mentorPanelExpanded: boolean
   sidebarCollapsed: boolean
   sidebarDisplayOpen: boolean
-  sidebarStatsOpen: boolean
+  inspectorCollapsed: boolean
   viewports: Record<string, Viewport>
   toasts: Toast[]
   confirmRequest: ConfirmRequest | null
   setMentorPanelExpanded: (expanded: boolean) => void
   setSidebarCollapsed: (v: boolean) => void
   setSidebarDisplayOpen: (v: boolean) => void
-  setSidebarStatsOpen: (v: boolean) => void
+  setInspectorCollapsed: (v: boolean) => void
   saveViewport: (id: string, vp: Viewport) => void
   pushToast: (toast: Toast) => void
   dismissToast: (id: string) => void
@@ -28,7 +28,7 @@ export const createUISlice: StateCreator<GraphState, [], [], UISlice> = (set) =>
   mentorPanelExpanded: false,
   sidebarCollapsed: false,
   sidebarDisplayOpen: true,
-  sidebarStatsOpen: true,
+  inspectorCollapsed: false,
   viewports: {},
   toasts: [],
   confirmRequest: null,
@@ -36,7 +36,7 @@ export const createUISlice: StateCreator<GraphState, [], [], UISlice> = (set) =>
   setMentorPanelExpanded: (expanded) => set({ mentorPanelExpanded: expanded }),
   setSidebarCollapsed: (v) => set({ sidebarCollapsed: v }),
   setSidebarDisplayOpen: (v) => set({ sidebarDisplayOpen: v }),
-  setSidebarStatsOpen: (v) => set({ sidebarStatsOpen: v }),
+  setInspectorCollapsed: (v) => set({ inspectorCollapsed: v }),
 
   pushToast: (toast) =>
     set((s) => ({

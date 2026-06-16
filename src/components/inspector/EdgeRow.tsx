@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+import { useState } from 'react'
 import { GlyphSVG } from '@nesso-how/graph'
 import type { GlyphKind } from '@/types/graph'
 
@@ -8,53 +9,72 @@ interface Props {
   color: string
   glyph: GlyphKind
   onClick: () => void
+  /** Incoming relations are shown slightly dimmed. */
+  dim?: boolean
 }
 
-export function EdgeRow({ label, text, color, glyph, onClick }: Props) {
+export function EdgeRow({ label, text, color, glyph, onClick, dim = false }: Props) {
+  const [hover, setHover] = useState(false)
   return (
-    <div
+    <button
+      type="button"
       onClick={onClick}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
       style={{
-        display: 'grid',
-        gridTemplateColumns: '22px 1fr',
-        gap: 8,
-        alignItems: 'center',
-        padding: '5px 4px',
-        borderRadius: 5,
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: 10,
+        width: '100%',
+        textAlign: 'left',
+        appearance: 'none',
+        border: 0,
         cursor: 'default',
-      }}
-      onMouseEnter={(e) => {
-        ;(e.currentTarget as HTMLElement).style.background = 'var(--paper-deep)'
-      }}
-      onMouseLeave={(e) => {
-        ;(e.currentTarget as HTMLElement).style.background = 'transparent'
+        padding: '7px 8px',
+        borderRadius: 7,
+        background: hover ? 'var(--paper-deep)' : 'transparent',
+        opacity: dim ? 0.82 : 1,
       }}
     >
-      <GlyphSVG kind={glyph} color={color} size={14} />
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 0 }}>
+      <span
+        style={{
+          width: 22,
+          height: 22,
+          borderRadius: 6,
+          flexShrink: 0,
+          marginTop: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'var(--paper-deep)',
+        }}
+      >
+        <GlyphSVG kind={glyph} color={color} size={13} />
+      </span>
+      {/* Column so the concept name can wrap on narrow widths instead of
+          truncating, with the relation type as a caption beneath it. */}
+      <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
         <span
           style={{
-            font: "500 10px 'JetBrains Mono', ui-monospace",
-            color,
-            textTransform: 'uppercase',
-            letterSpacing: '0.06em',
-          }}
-        >
-          {label}
-        </span>
-        <span
-          style={{
-            font: "500 13.5px 'Fraunces', serif",
+            font: "500 13px 'Inter', ui-sans-serif",
             color: 'var(--ink)',
-            letterSpacing: '-0.005em',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
+            lineHeight: 1.35,
+            overflowWrap: 'anywhere',
+            wordBreak: 'break-word',
           }}
         >
           {text}
         </span>
-      </div>
-    </div>
+        <span
+          style={{
+            font: "11px 'JetBrains Mono', ui-monospace",
+            color,
+            lineHeight: 1.2,
+          }}
+        >
+          {label}
+        </span>
+      </span>
+    </button>
   )
 }

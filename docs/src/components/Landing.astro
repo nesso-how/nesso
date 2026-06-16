@@ -38,11 +38,11 @@ const homeHref = lang === 'en' ? '/' : `/${lang}/`
       }
 
       :root {
-        --paper: #fcf9f3;
-        --paper-deep: #f2ede3;
-        --paper-elev: #fffdf7;
-        --bg-elev: #fffdf7;
-        --bg-card: #fffdf7;
+        --paper: #ffffff;
+        --paper-deep: #f3f1ed;
+        --paper-elev: #fbfaf8;
+        --bg-elev: #ffffff;
+        --bg-card: #ffffff;
         --ink: #1a1814;
         --ink-2: #3c3830;
         --ink-3: #6a6356;
@@ -146,8 +146,8 @@ const homeHref = lang === 'en' ? '/' : `/${lang}/`
       }
 
       .brand-mark {
-        width: 28px;
-        height: 28px;
+        width: 26px;
+        height: 26px;
         display: block;
       }
 
@@ -294,14 +294,14 @@ const homeHref = lang === 'en' ? '/' : `/${lang}/`
       }
 
       .btn-primary {
-        background: var(--ink);
+        background: var(--ink-2);
         color: var(--paper);
         box-shadow: var(--shadow-paper);
       }
 
       .btn-primary:hover {
-        background: var(--highlight);
         transform: translateY(-1px);
+        box-shadow: var(--shadow-lift);
       }
 
       .btn-secondary {
@@ -357,63 +357,6 @@ const homeHref = lang === 'en' ? '/' : `/${lang}/`
         aspect-ratio: 800 / 440;
         position: relative;
         z-index: 1;
-      }
-
-      .hero-graph-socrates {
-        position: absolute;
-        right: 18px;
-        bottom: 18px;
-        width: 56px;
-        height: 56px;
-        border-radius: 50%;
-        background: var(--bg-elev);
-        border: 0.5px solid var(--line);
-        box-shadow: var(--shadow-paper);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 2;
-      }
-
-      .hero-graph-socrates::before {
-        content: '';
-        position: absolute;
-        inset: -3px;
-        border-radius: 50%;
-        border: 1px dashed var(--highlight);
-        opacity: 0.4;
-        animation: socratesIdleSpin 28s linear infinite;
-        pointer-events: none;
-      }
-
-      @keyframes socratesIdleSpin {
-        to {
-          transform: rotate(360deg);
-        }
-      }
-
-      .hero-graph-meta {
-        position: absolute;
-        left: 18px;
-        top: 18px;
-        z-index: 2;
-        display: flex;
-        gap: 0.5rem;
-        align-items: center;
-        font-family: var(--font-mono);
-        font-size: 0.62rem;
-        color: var(--ink-4);
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
-        background: rgba(252, 249, 243, 0.7);
-        backdrop-filter: blur(4px);
-        padding: 0.3rem 0.6rem;
-        border-radius: 4px;
-        border: 0.5px solid var(--line);
-      }
-
-      .hero-graph-meta .sep {
-        opacity: 0.4;
       }
 
       /* ── Shared section layout ──────────────── */
@@ -1236,23 +1179,6 @@ const homeHref = lang === 'en' ? '/' : `/${lang}/`
           margin-top: 2rem;
         }
       }
-
-      @media (max-width: 480px) {
-        .hero-graph-meta {
-          display: none;
-        }
-
-        .hero-graph-socrates {
-          display: none;
-        }
-      }
-
-      /* ── Reduced motion ─────────────────────── */
-      @media (prefers-reduced-motion: reduce) {
-        .hero-graph-socrates::before {
-          animation: none;
-        }
-      }
     </style>
     <style is:global>
       @keyframes tw-blink {
@@ -1383,8 +1309,8 @@ const homeHref = lang === 'en' ? '/' : `/${lang}/`
         <svg
           class="brand-mark"
           viewBox="0 0 64 64"
-          width="28"
-          height="28"
+          width="26"
+          height="26"
           color="#1a1814"
           aria-hidden="true"
         >
@@ -1476,18 +1402,8 @@ const homeHref = lang === 'en' ? '/' : `/${lang}/`
 
         <div class="hero-graph-wrap">
           <div class="hero-graph-frame">
-            <div class="hero-graph-meta">
-              <span>{t.hero.graphMeta[0]}</span><span class="sep">·</span><span
-                >{t.hero.graphMeta[1]}</span
-              >
-            </div>
-
             <div class="hero-graph-canvas" role="img" aria-label={t.hero.graphAriaLabel}>
               <HeroGraph labels={t.hero.graph} client:visible />
-            </div>
-
-            <div class="hero-graph-socrates" aria-label="Socrates mentor">
-              <svg width="40" height="40"><use href="#socrates-glyph"></use></svg>
             </div>
           </div>
         </div>

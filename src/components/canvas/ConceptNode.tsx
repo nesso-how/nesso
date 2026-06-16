@@ -47,7 +47,7 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
   const updateNodeData = useGraphStore((s) => s.updateNodeData)
   const editNodeId = useGraphStore((s) => s.editNodeId)
   const clearEditNodeId = useGraphStore((s) => s.clearEditNodeId)
-  const { showHeatmap, showConfidence } = useGraphDisplay()
+  const { showHeatmap } = useGraphDisplay()
 
   const startEdit = useCallback(() => {
     setDraft(data.text)
@@ -117,14 +117,10 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
         text={data.text}
         selected={selected}
         showHeatmap={showHeatmap}
-        showConfidence={showConfidence}
         lastRating={data.lastRating ?? 0}
-        reps={data.reps}
-        due={data.due}
         cursor={editing ? 'text' : 'grab'}
         userSelect={editing ? 'text' : 'none'}
         connectionTarget={isConnectionTarget}
-        hideUnderline={editing}
         onDoubleClick={(e) => {
           e.stopPropagation()
           startEdit()

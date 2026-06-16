@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 import { useState, useRef, useEffect } from 'react'
-import { useStore as useFlowStore } from '@xyflow/react'
 import { useGraphStore } from '@/store'
 import { useHorizontalResize } from '@/hooks/useHorizontalResize'
 import { useT } from '@/i18n'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
+import { Switch } from '@/components/ui/Switch'
 import { SettingRow } from '@/components/ui/SettingRow'
 import { confirm } from '@/components/ui/confirm'
 import { NessoMark } from './NessoMark'
-import { ProjectSwitcher } from './ProjectSwitcher'
+import { SidebarProjects } from './SidebarProjects'
 import { TOPBAR_HEIGHT_PX } from './TopBar'
 import { WEBSITE_URL } from '@/data/appInfo'
 import { isDesktop } from '@/lib/isDesktop'
@@ -64,16 +64,10 @@ export function Sidebar({
   const createGraph = useGraphStore((s) => s.createGraph)
   const renameGraph = useGraphStore((s) => s.renameGraph)
   const deleteGraph = useGraphStore((s) => s.deleteGraph)
-  // Primitive selectors: subscribing to the arrays would re-render the whole
-  // sidebar on every node drag frame just to show two counters.
-  const nodeCount = useGraphStore((s) => s.nodes.length)
-  const edgeCount = useGraphStore((s) => s.edges.length)
   const graphDisplay = useGraphStore((s) => s.graphDisplay)
   const setGraphDisplay = useGraphStore((s) => s.setGraphDisplay)
   const sidebarDisplayOpen = useGraphStore((s) => s.sidebarDisplayOpen)
   const setSidebarDisplayOpen = useGraphStore((s) => s.setSidebarDisplayOpen)
-  const sidebarStatsOpen = useGraphStore((s) => s.sidebarStatsOpen)
-  const setSidebarStatsOpen = useGraphStore((s) => s.setSidebarStatsOpen)
 
   const [editingId, setEditingId] = useState<string | null>(null)
   const [draft, setDraft] = useState('')
@@ -170,31 +164,35 @@ export function Sidebar({
               flexShrink: 0,
             }}
           >
-            {isDesktop() ? (
-              <ProjectSwitcher />
-            ) : (
-              <a
-                href={WEBSITE_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                title={t.sidebar.websiteLinkTitle}
+            <a
+              href={WEBSITE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              title={t.sidebar.websiteLinkTitle}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                flexShrink: 0,
+                textDecoration: 'none',
+                color: 'inherit',
+              }}
+            >
+              <div style={{ flexShrink: 0, color: 'var(--ink)', lineHeight: 0 }} aria-hidden>
+                <NessoMark size={26} />
+              </div>
+              <div
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 10,
-                  flexShrink: 0,
-                  textDecoration: 'none',
-                  color: 'inherit',
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 600,
+                  fontSize: 18,
+                  letterSpacing: '-0.01em',
+                  color: 'var(--ink)',
                 }}
               >
-                <div style={{ flexShrink: 0, color: 'var(--ink)', lineHeight: 0 }} aria-hidden>
-                  <NessoMark size={26} />
-                </div>
-                <div style={{ font: "500 13px 'Inter', ui-sans-serif", color: 'var(--ink)' }}>
-                  Nesso
-                </div>
-              </a>
-            )}
+                Nesso
+              </div>
+            </a>
             <div style={{ flex: 1, minWidth: 0 }} aria-hidden />
             <button
               onClick={onCollapse}
@@ -202,10 +200,10 @@ export function Sidebar({
               type="button"
               style={iconBtn}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'var(--paper-deep)'
+                e.currentTarget.style.color = 'var(--ink)'
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'transparent'
+                e.currentTarget.style.color = 'var(--ink-3)'
               }}
             >
               <svg
@@ -262,6 +260,14 @@ export function Sidebar({
 
           {/* Scrollable body — block flow so sections stack naturally without flex pushing */}
           <div className="nesso-scrollbar" style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+            {/* Projects (desktop only) */}
+            {isDesktop() && (
+              <>
+                <SidebarProjects />
+                <div style={{ height: '0.5px', background: 'var(--line)', margin: '6px 12px' }} />
+              </>
+            )}
+
             {/* Graphs */}
             <div
               style={{
@@ -277,10 +283,10 @@ export function Sidebar({
                 onClick={handleNew}
                 style={graphsNewBtn}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'var(--paper-deep)'
+                  e.currentTarget.style.color = 'var(--ink)'
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'transparent'
+                  e.currentTarget.style.color = 'var(--ink-3)'
                 }}
               >
                 <svg width="11" height="11" viewBox="0 0 10 10" style={{ flexShrink: 0 }}>
@@ -396,19 +402,23 @@ export function Sidebar({
                             color: 'var(--ink-4)',
                           }}
                           onMouseEnter={(e) => {
-                            e.currentTarget.style.color = 'var(--ink)'
+                            e.currentTarget.style.color = 'var(--cat-opposition)'
                           }}
                           onMouseLeave={(e) => {
                             e.currentTarget.style.color = 'var(--ink-4)'
                           }}
                         >
-                          <svg width="9" height="9" viewBox="0 0 10 10">
-                            <path
-                              d="M2 2l6 6M8 2l-6 6"
-                              stroke="currentColor"
-                              strokeWidth="1.4"
-                              strokeLinecap="round"
-                            />
+                          <svg
+                            width="13"
+                            height="13"
+                            viewBox="0 0 16 16"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M3 4.5h10M6 4.5V3h4v1.5M5 4.5l.6 8a1 1 0 0 0 1 .9h2.8a1 1 0 0 0 1-.9l.6-8" />
                           </svg>
                         </button>
                       )}
@@ -416,56 +426,6 @@ export function Sidebar({
                   )
                 })}
             </div>
-          </div>
-
-          {/* Map section — fixed, above Display */}
-          <div style={{ flexShrink: 0, borderTop: '0.5px solid var(--line)' }}>
-            <div style={{ padding: '10px 12px 8px' }}>
-              <button
-                onClick={() => setSidebarStatsOpen(!sidebarStatsOpen)}
-                style={{
-                  appearance: 'none',
-                  border: 0,
-                  background: 'transparent',
-                  cursor: 'default',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  padding: 0,
-                  width: '100%',
-                }}
-              >
-                <span style={sectionLabel}>{t.sidebar.stats.title}</span>
-                <svg
-                  width="9"
-                  height="9"
-                  viewBox="0 0 10 10"
-                  style={{
-                    opacity: 0.5,
-                    transform: sidebarStatsOpen ? 'rotate(0deg)' : 'rotate(-90deg)',
-                    transition: 'transform 150ms',
-                  }}
-                >
-                  <path
-                    d="M2 4l3 3 3-3"
-                    stroke="currentColor"
-                    strokeWidth="1.4"
-                    fill="none"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </button>
-            </div>
-            {sidebarStatsOpen && (
-              <div
-                style={{ padding: '0 12px 10px', display: 'flex', flexDirection: 'column', gap: 4 }}
-              >
-                <MapRow label={t.sidebar.stats.concepts} value={String(nodeCount)} />
-                <MapRow label={t.sidebar.stats.links} value={String(edgeCount)} />
-                <ZoomMapRow label={t.sidebar.stats.zoom} />
-              </div>
-            )}
           </div>
 
           {/* Display section — fixed above footer, outside scroll */}
@@ -510,13 +470,9 @@ export function Sidebar({
             {sidebarDisplayOpen && (
               <div style={{ padding: '0 12px 10px' }}>
                 <SettingRow label={t.sidebar.displayOptions.heatmap}>
-                  <SegmentedControl
-                    options={[
-                      { id: 'off', label: t.sidebar.displayOptions.off },
-                      { id: 'on', label: t.sidebar.displayOptions.on },
-                    ]}
-                    value={graphDisplay.showHeatmap ? 'on' : 'off'}
-                    onChange={(v) => setGraphDisplay('showHeatmap', v === 'on')}
+                  <Switch
+                    value={graphDisplay.showHeatmap}
+                    onChange={(v) => setGraphDisplay('showHeatmap', v)}
                   />
                 </SettingRow>
                 <SettingRow label={t.sidebar.displayOptions.edges}>
@@ -544,13 +500,9 @@ export function Sidebar({
                 </SettingRow>
                 {graphDisplay.curveStyle === 'arc' && (
                   <SettingRow label={t.sidebar.displayOptions.autoFlip}>
-                    <SegmentedControl
-                      options={[
-                        { id: 'off', label: t.sidebar.displayOptions.off },
-                        { id: 'on', label: t.sidebar.displayOptions.on },
-                      ]}
-                      value={graphDisplay.autoCurveFlip ? 'on' : 'off'}
-                      onChange={(v) => setGraphDisplay('autoCurveFlip', v === 'on')}
+                    <Switch
+                      value={graphDisplay.autoCurveFlip}
+                      onChange={(v) => setGraphDisplay('autoCurveFlip', v)}
                     />
                   </SettingRow>
                 )}
@@ -585,6 +537,7 @@ export function Sidebar({
                   display: 'flex',
                   alignItems: 'center',
                   gap: 9,
+                  width: '100%',
                   padding: '7px 9px',
                   borderRadius: 6,
                   cursor: 'default',
@@ -593,11 +546,9 @@ export function Sidebar({
                   textAlign: 'left',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'var(--paper-deep)'
                   e.currentTarget.style.color = 'var(--ink)'
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'transparent'
                   e.currentTarget.style.color = 'var(--ink-3)'
                 }}
               >
@@ -616,6 +567,15 @@ export function Sidebar({
                   <circle cx="12" cy="12" r="3" />
                 </svg>
                 {t.sidebar.settings}
+                <span
+                  style={{
+                    marginLeft: 'auto',
+                    font: "500 10px 'JetBrains Mono', ui-monospace",
+                    color: 'var(--ink-4)',
+                  }}
+                >
+                  ⌘,
+                </span>
               </button>
             </div>
           </div>
@@ -645,31 +605,6 @@ export function Sidebar({
           }}
         />
       )}
-    </div>
-  )
-}
-
-/** Leaf subscriber: only this row re-renders while the viewport zooms. */
-function ZoomMapRow({ label }: { label: string }) {
-  const zoom = useFlowStore((s) => s.transform[2])
-  return <MapRow label={label} value={`${Math.round(zoom * 100)}%`} />
-}
-
-function MapRow({ label, value, title }: { label: string; value: string; title?: string }) {
-  return (
-    <div
-      title={title}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '3px 0',
-      }}
-    >
-      <span style={{ font: "12.5px 'Inter', ui-sans-serif", color: 'var(--ink-3)' }}>{label}</span>
-      <span style={{ font: "500 12px 'JetBrains Mono', ui-monospace", color: 'var(--ink-2)' }}>
-        {value}
-      </span>
     </div>
   )
 }

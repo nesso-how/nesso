@@ -7,11 +7,13 @@ The canvas is the centre of Nesso. **Concepts** are nodes; **typed relations** a
 
 ## Adding concepts
 
-- **Bottom dock -> +** adds a new concept near the centre of the viewport.
-- **`N`** adds a concept at the viewport centre (same as the dock `+`).
 - **Double-click** empty canvas to add a concept at the pointer.
+- **`N`** adds a concept at the viewport centre.
+- **Right-click** empty canvas and choose **Add concept here** to add one at the cursor.
 - New concepts open in edit mode. Type the label and press `Enter` to commit, `Esc` to cancel.
 - **Double-click** a concept to rename it inline.
+
+An empty graph shows a centered **"Your first concept"** hint; the double-click still works through it.
 
 Concepts you add are stored locally in IndexedDB. Switch graphs from the sidebar; create new graphs from the **Graphs** list.
 
@@ -31,27 +33,29 @@ See the [relation types reference](../../reference/relation-types/) for the full
 - **Hold `⌘` / `Ctrl` and click** to toggle additional items into the selection.
 - **Drag on empty canvas** to marquee-select multiple items.
 - **`⌘A` / `Ctrl+A`** selects every concept and relation in the graph.
-- **`Del`** or **`Backspace`** (or the trash icon in the bottom dock) deletes the selection (one relation, one concept, or every concept in a marquee). Edges attached to a deleted concept go with it. Relation delete is only from the dock or keyboard, not from the relation Inspector.
-- **`⌘C` / `Ctrl+C`** (copy icon in the bottom dock) copies the selection. Copying concepts also copies relations between them; copying a relation includes its two endpoints. **`⌘X` / `Ctrl+X`** (scissors icon) cuts: it copies the selection and removes it in one step. **`⌘V` / `Ctrl+V`** (paste icon) duplicates the clipboard with a small offset and selects the new items.
+- **Right-click** a concept, relation, or empty canvas for a context menu of the relevant actions (copy/cut/duplicate/delete a concept; flip / delete a relation; paste / add concept / center·fit on the canvas). To change a relation's type, select the edge and pick a new type in the Inspector.
+- **`Del`** or **`Backspace`** deletes the selection (one relation, one concept, or every concept in a marquee). Edges attached to a deleted concept go with it. Delete is also on the right-click menu and the Inspector's action toolbar.
+- **`⌘C` / `Ctrl+C`** copies the selection. Copying concepts also copies relations between them; copying a relation includes its two endpoints. **`⌘X` / `Ctrl+X`** cuts: it copies the selection and removes it in one step. **`⌘V` / `Ctrl+V`** pastes the clipboard with a small offset (right-click **Paste** drops it at the cursor instead). **`⌘D` / `Ctrl+D`** duplicates the selection in place without touching the clipboard. These also live on the right-click menu and the Inspector toolbar.
 - **Arrow keys** nudge a selected concept; **Shift + arrows** move it in larger steps.
 - **`⌘Z` / `Ctrl+Z`** undoes structural edits; **`⌘⇧Z` / `Ctrl+Shift+Z`** redoes. History has 50 steps and resets when you switch or import a graph.
 
 ## The Inspector
 
-When a concept is selected, the Inspector shows two tabs.
+The Inspector docks on the **right**, full height between the top bar and the status bar. Its header has a **collapse** control that shrinks it to a slim **rail** (keeping the selection plus a vertical action toolbar) and a **close** control; a docked bottom **action toolbar** offers copy / cut / duplicate / delete for a concept, or flip / delete for a relation.
 
-### Overview
+When a concept is selected it shows, top to bottom:
 
-- **Title:** edit inline. Pressing `Enter` commits; `Esc` reverts.
-- **FSRS stats:** when due, stability (in days), and last self-rating. Surfaced read-only.
-- **Relations:** outgoing and incoming edges grouped by category. Click a relation chip to jump to the connected node; click the type to swap relation in place.
+- **Image + title:** the title edits inline (`Enter` commits, `Esc` reverts); the image button opens Commons search (see below).
+- **Memory** _(collapsible):_ the FSRS schedule, read-only — when due, stability (in days), last self-rating, review count (with lapses), and time since the last review.
+- **Definition**, **Examples**, **Notes** — see below.
+- **Relations** _(collapsible):_ outgoing and incoming edges, each connected concept shown with the relation glyph in a chip and the type on the right (incoming dimmed). Click a row to jump to that concept; change a relation's type by selecting the edge.
 
-### Notes
+### Notes fields
 
 Three free-text fields that travel with the concept and feed both the AI mentor and Review:
 
 - **Definition:** a one-sentence-ish explanation in your own words.
-- **Examples:** one per line. Press `Shift+Enter` or use the `+` button to add a new line.
+- **Examples:** one per line. Press `Shift+Enter` or use the **Add** button to add a new line; press `Backspace` in an empty example to remove that line (unless it's the only one).
 - **Notes:** anything else: caveats, sources, mnemonics.
 
 These power the [Review](./review-mode/) recall question. The model is told to _aim_ at the topic suggested by your notes without paraphrasing the definition, so active recall still works.
@@ -72,9 +76,9 @@ When **Display → Curve** is set to **Arc**, **Auto flip** (on by default) bend
 
 The Inspector shows the relation as a chip with its category colour and a dropdown of every relation type. Picking a new type updates the edge in place; the graph keeps its endpoints and identity.
 
-## Stats and search
+## Status bar and search
 
-- **Sidebar -> Stats** shows concept count, link count, and current zoom (a handy gut-check for graph size).
+- The **status bar** along the bottom shows the concept and relation counts. Its right side carries undo / redo, zoom out / in, and center·fit; the **Socrates** entry sits on the left.
 - **`⌘K` / `Ctrl+K`** opens a fuzzy search palette over concept titles. `Enter` selects and recenters the viewport; `Esc` closes.
 
 ## Edge encoding density

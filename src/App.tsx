@@ -9,11 +9,12 @@ import {
   readSidebarWidth,
   writeSidebarWidth,
 } from './components/layout/Sidebar'
-import { BottomDock } from './components/layout/BottomDock'
+import { StatusBar, STATUS_BAR_HEIGHT_PX } from './components/layout/StatusBar'
 import { RelationTypesDialog } from './components/dialogs/RelationTypesDialog'
 import {
   Inspector,
   INSPECTOR_CANVAS_LEFT_GUTTER,
+  INSPECTOR_RAIL_WIDTH,
   clampInspectorPanelWidth,
   readInspectorPanelWidth,
   writeInspectorPanelWidth,
@@ -56,6 +57,7 @@ function AppInner() {
   const copySelection = useGraphStore((s) => s.copySelection)
   const cutSelection = useGraphStore((s) => s.cutSelection)
   const pasteSelection = useGraphStore((s) => s.pasteSelection)
+  const duplicateSelection = useGraphStore((s) => s.duplicateSelection)
   const selectAll = useGraphStore((s) => s.selectAll)
   const deleteSelection = useGraphStore((s) => s.deleteSelection)
   const requestEditNode = useGraphStore((s) => s.requestEditNode)
@@ -66,10 +68,8 @@ function AppInner() {
   const viewports = useGraphStore((s) => s.viewports)
   const sidebarCollapsed = useGraphStore((s) => s.sidebarCollapsed)
   const setSidebarCollapsed = useGraphStore((s) => s.setSidebarCollapsed)
+  const inspectorCollapsed = useGraphStore((s) => s.inspectorCollapsed)
   const confirmOpen = useGraphStore((s) => s.confirmRequest !== null)
-
-  const canUndo = useGraphStore((s) => s._history.length > 0)
-  const canRedo = useGraphStore((s) => s._future.length > 0)
 
   const selectedNode = useGraphStore(selectedNodeSelector)
   const selectedEdge = useGraphStore(selectedEdgeSelector)
@@ -125,12 +125,12 @@ function AppInner() {
   const canvasInsets = useMemo(
     () => ({
       top: 52,
-      bottom: 80,
-      left:
-        sidebarWidth + INSPECTOR_CANVAS_LEFT_GUTTER + (selected !== null ? inspectorPanelWidth : 0),
-      right: 30,
+      bottom: STATUS_BAR_HEIGHT_PX,
+      left: sidebarWidth + INSPECTOR_CANVAS_LEFT_GUTTER,
+      right:
+        selected !== null ? (inspectorCollapsed ? INSPECTOR_RAIL_WIDTH : inspectorPanelWidth) : 30,
     }),
-    [sidebarWidth, inspectorPanelWidth, selected],
+    [sidebarWidth, inspectorPanelWidth, inspectorCollapsed, selected],
   )
 
   const fitView = useCallback(
@@ -151,6 +151,11 @@ function AppInner() {
   })
 
   const viewportRestoredFor = useRef<string | null>(null)
+  // Holds the id whose selection programmatically re-centers the viewport (e.g.
+  // search), so the pan-on-select effect skips that one animation. Keyed by id
+  // (not a bare flag) so a no-op re-selection of the current node can't leak the
+  // suppression onto a later, unrelated selection.
+  const suppressSelectPanRef = useRef<string | null>(null)
 
   // Restore viewport before paint when graph data arrives (avoids initial flicker).
   // The computed initial fit is intentionally not persisted: only user-driven
@@ -219,6 +224,7 @@ function AppInner() {
 
   const handleSelectNode = useCallback(
     (node: { id: string; position: { x: number; y: number } }) => {
+      suppressSelectPanRef.current = node.id
       setSelected({ kind: 'node', id: node.id })
 
       const liveNode = getNodes().find((n) => n.id === node.id)
@@ -226,9 +232,9 @@ function AppInner() {
       const h = liveNode?.measured?.height ?? 32
 
       const TOP = 52
-      const BOTTOM = 80
-      const RIGHT = 30
-      const leftPad = sidebarWidth + INSPECTOR_CANVAS_LEFT_GUTTER + inspectorPanelWidth
+      const BOTTOM = STATUS_BAR_HEIGHT_PX
+      const RIGHT = inspectorCollapsed ? INSPECTOR_RAIL_WIDTH : inspectorPanelWidth
+      const leftPad = sidebarWidth + INSPECTOR_CANVAS_LEFT_GUTTER
       const canvasW = window.innerWidth - leftPad - RIGHT
       const canvasH = window.innerHeight - TOP - BOTTOM
 
@@ -242,15 +248,18 @@ function AppInner() {
         { duration: 500 },
       )
     },
-    [setSelected, setViewport, getNodes, sidebarWidth, inspectorPanelWidth],
+    [setSelected, setViewport, getNodes, sidebarWidth, inspectorPanelWidth, inspectorCollapsed],
   )
 
   const handleAddConcept = useCallback(() => {
     const topInset = 52
-    const bottomInset = 80
-    const leftInset =
-      sidebarWidth + INSPECTOR_CANVAS_LEFT_GUTTER + (hasSelection ? inspectorPanelWidth : 0)
-    const rightInset = 30
+    const bottomInset = STATUS_BAR_HEIGHT_PX
+    const leftInset = sidebarWidth + INSPECTOR_CANVAS_LEFT_GUTTER
+    const rightInset = hasSelection
+      ? inspectorCollapsed
+        ? INSPECTOR_RAIL_WIDTH
+        : inspectorPanelWidth
+      : 30
     const screenCenterX = leftInset + (window.innerWidth - leftInset - rightInset) / 2
     const screenCenterY = topInset + (window.innerHeight - topInset - bottomInset) / 2
     const { x: flowCx, y: flowCy } = screenToFlowPosition({ x: screenCenterX, y: screenCenterY })
@@ -269,6 +278,85 @@ function AppInner() {
     sidebarWidth,
     hasSelection,
     inspectorPanelWidth,
+    inspectorCollapsed,
+  ])
+
+  // Pan-on-select: nudge the viewport so the selected node/edge stays clear of the
+  // right-docked inspector (and other chrome). Only fires when the element falls
+  // outside the comfortable visible area; never fights manual panning.
+  useEffect(() => {
+    if (!selected) return
+    // Always consume the suppression token; only skip when it matches the
+    // element being selected now (so a stale token can't suppress a later pan).
+    const suppressId = suppressSelectPanRef.current
+    suppressSelectPanRef.current = null
+    if (suppressId === selected.id) return
+    const liveNodes = getNodes()
+    const NODE_W = 160
+    const NODE_H = 32
+    // World-space bounding box of the selection (the node, or both edge endpoints).
+    let wLeft: number
+    let wTop: number
+    let wRight: number
+    let wBottom: number
+    if (selected.kind === 'node') {
+      const n = liveNodes.find((nd) => nd.id === selected.id)
+      if (!n) return
+      wLeft = n.position.x
+      wTop = n.position.y
+      wRight = n.position.x + (n.measured?.width ?? NODE_W)
+      wBottom = n.position.y + (n.measured?.height ?? NODE_H)
+    } else {
+      const e = useGraphStore.getState().edges.find((ed) => ed.id === selected.id)
+      if (!e) return
+      const s = liveNodes.find((nd) => nd.id === e.source)
+      const tg = liveNodes.find((nd) => nd.id === e.target)
+      if (!s || !tg) return
+      wLeft = Math.min(s.position.x, tg.position.x)
+      wTop = Math.min(s.position.y, tg.position.y)
+      wRight = Math.max(
+        s.position.x + (s.measured?.width ?? NODE_W),
+        tg.position.x + (tg.measured?.width ?? NODE_W),
+      )
+      wBottom = Math.max(
+        s.position.y + (s.measured?.height ?? NODE_H),
+        tg.position.y + (tg.measured?.height ?? NODE_H),
+      )
+    }
+    const v = getViewport()
+    // Screen-space edges: multiplying by zoom makes a zoomed-in element correctly
+    // large, so we pan far enough to clear the inspector instead of only centering.
+    const elLeft = wLeft * v.zoom + v.x
+    const elRight = wRight * v.zoom + v.x
+    const elTop = wTop * v.zoom + v.y
+    const elBottom = wBottom * v.zoom + v.y
+    const M = 56
+    const rightInset = inspectorCollapsed ? INSPECTOR_RAIL_WIDTH : inspectorPanelWidth
+    const left = sidebarWidth + M
+    const right = window.innerWidth - rightInset - M
+    const top = 52 + M
+    const bottom = window.innerHeight - STATUS_BAR_HEIGHT_PX - M
+    let dx = 0
+    let dy = 0
+    // Tuck the overflowing edge back in; the inspector (right) side wins ties.
+    if (right > left) {
+      if (elRight > right) dx = right - elRight
+      else if (elLeft < left) dx = left - elLeft
+    }
+    if (bottom > top) {
+      if (elBottom > bottom) dy = bottom - elBottom
+      else if (elTop < top) dy = top - elTop
+    }
+    if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return
+    setViewport({ x: v.x + dx, y: v.y + dy, zoom: v.zoom }, { duration: 300 })
+  }, [
+    selected,
+    getNodes,
+    getViewport,
+    setViewport,
+    sidebarWidth,
+    inspectorPanelWidth,
+    inspectorCollapsed,
   ])
 
   // Keyboard shortcuts
@@ -340,6 +428,12 @@ function AppInner() {
         if (ids?.length) focusFlowNodes(ids)
         return
       }
+      if (e.key === 'd' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault()
+        const ids = duplicateSelection()
+        if (ids?.length) focusFlowNodes(ids)
+        return
+      }
       if (e.key === 'a' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault()
         selectAll()
@@ -377,6 +471,7 @@ function AppInner() {
     copySelection,
     cutSelection,
     pasteSelection,
+    duplicateSelection,
     selectAll,
     deleteSelection,
     requestEditNode,
@@ -389,11 +484,12 @@ function AppInner() {
     <div style={{ position: 'fixed', inset: 0 }}>
       <GraphCanvas
         topInset={52}
-        bottomInset={80}
-        leftInset={
-          sidebarWidth + INSPECTOR_CANVAS_LEFT_GUTTER + (hasSelection ? inspectorPanelWidth : 0)
+        bottomInset={STATUS_BAR_HEIGHT_PX}
+        leftInset={sidebarWidth + INSPECTOR_CANVAS_LEFT_GUTTER}
+        rightInset={
+          hasSelection ? (inspectorCollapsed ? INSPECTOR_RAIL_WIDTH : inspectorPanelWidth) : 30
         }
-        rightInset={30}
+        onFit={fitView}
       />
 
       <Sidebar
@@ -417,20 +513,16 @@ function AppInner() {
 
       <RelationTypesDialog open={showRelationTypes} onClose={() => setShowRelationTypes(false)} />
       <Inspector
-        leftOffset={sidebarWidth}
         panelWidth={inspectorPanelWidth}
         onPanelWidthChange={(w) => setInspectorPanelWidth(clampInspectorPanelWidth(w))}
       />
-      <BottomDock
-        onFit={fitView}
-        onUndo={undo}
-        onRedo={redo}
-        canUndo={canUndo}
-        canRedo={canRedo}
-        onAddConcept={handleAddConcept}
-        sidebarWidth={sidebarWidth}
+      <StatusBar sidebarWidth={sidebarWidth} onFit={fitView} />
+      <MentorBubble
+        leftInset={sidebarWidth}
+        rightInset={
+          hasSelection ? (inspectorCollapsed ? INSPECTOR_RAIL_WIDTH : inspectorPanelWidth) : 0
+        }
       />
-      <MentorBubble />
       <ReviewMode open={showReview} onClose={() => setShowReview(false)} />
       <ShortcutsDialog open={showShortcuts} onClose={() => setShowShortcuts(false)} />
       <SettingsDialog open={showSettings} onClose={() => setShowSettings(false)} />

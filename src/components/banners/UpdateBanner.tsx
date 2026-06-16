@@ -13,6 +13,9 @@ export function UpdateBanner() {
 
   let message: ReactNode
   let actions: ActionBannerAction[]
+  // The corner X stands in for "Later"/"Dismiss"; install is in progress has no
+  // dismiss (you cannot cancel mid-install), so it keeps just the disabled pill.
+  let onClose: (() => void) | undefined = dismiss
 
   switch (status) {
     case 'installing':
@@ -25,25 +28,20 @@ export function UpdateBanner() {
           onClick: () => {},
         },
       ]
+      onClose = undefined
       break
     case 'error':
       message = t.update.failed
-      actions = [
-        { label: t.update.retry, primary: true, onClick: () => void install() },
-        { label: t.update.later, onClick: dismiss },
-      ]
+      actions = [{ label: t.update.retry, primary: true, onClick: () => void install() }]
       break
     case 'restart-required':
       message = t.update.restartRequired
-      actions = [{ label: t.update.dismiss, primary: true, onClick: dismiss }]
+      actions = []
       break
     default:
       message = version ? t.update.available(version) : null
-      actions = [
-        { label: t.update.install, primary: true, onClick: () => void install() },
-        { label: t.update.later, onClick: dismiss },
-      ]
+      actions = [{ label: t.update.install, primary: true, onClick: () => void install() }]
   }
 
-  return <ActionBanner open message={message} actions={actions} />
+  return <ActionBanner open message={message} actions={actions} onClose={onClose} />
 }

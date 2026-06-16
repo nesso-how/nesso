@@ -44,7 +44,7 @@ export function LocalModelPanel({ status, progress, progressText, error }: Props
         border: '0.5px solid var(--line)',
         borderRadius: 12,
         padding: '16px',
-        background: 'var(--paper-deep)',
+        background: 'transparent',
       }}
     >
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 10 }}>
@@ -121,12 +121,12 @@ export function LocalModelPanel({ status, progress, progressText, error }: Props
             onClick={() => void initWebLLM()}
             style={{
               appearance: 'none',
-              border: '0.5px solid var(--accent)',
-              background: 'transparent',
-              color: 'var(--accent)',
-              font: "500 12px 'JetBrains Mono', ui-monospace",
-              padding: '8px 14px',
-              borderRadius: 8,
+              border: 0,
+              background: 'var(--ink-2)',
+              color: 'var(--paper)',
+              font: "500 12.5px 'Inter', ui-sans-serif",
+              padding: '9px 16px',
+              borderRadius: 7,
               cursor: 'default',
             }}
           >
@@ -189,7 +189,7 @@ export function LocalModelPanel({ status, progress, progressText, error }: Props
               color: 'var(--ink-3)',
               font: "500 12px 'JetBrains Mono', ui-monospace",
               padding: '7px 12px',
-              borderRadius: 8,
+              borderRadius: 7,
               cursor: 'default',
             }}
           >

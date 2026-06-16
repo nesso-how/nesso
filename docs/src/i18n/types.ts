@@ -16,7 +16,6 @@ export type Locale = {
     ctaPrimary: string
     ctaSecondary: string
     graphAriaLabel: string
-    graphMeta: [string, string]
     graph: {
       mastery: string
       knowledge: string

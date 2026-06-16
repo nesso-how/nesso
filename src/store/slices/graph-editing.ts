@@ -17,6 +17,7 @@ import {
   snapshotSelection,
 } from '@/lib/graphClipboard'
 import { defaultCurveFlip, nodeCenterX, nodeCenterY } from '@nesso-how/graph'
+import { locales } from '@/i18n/registry'
 import { newElementId } from '@/lib/graphId'
 import type { GraphSnapshot } from '../types'
 import type { GraphState } from '../state'
@@ -112,7 +113,9 @@ export interface GraphEditingSlice {
   deleteSelection: () => void
   copySelection: () => boolean
   cutSelection: () => boolean
-  pasteSelection: () => string[] | null
+  pasteSelection: (at?: { x: number; y: number }) => string[] | null
+  duplicateSelection: () => string[] | null
+  reverseEdge: (id: string) => void
   requestEditNode: (id: string) => void
   clearEditNodeId: () => void
 }
@@ -235,7 +238,7 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
           position: { x, y },
           selected: true,
           data: {
-            text: 'New concept',
+            text: locales[get().settings.language].canvas.newConcept,
             ...defaultConceptReviewFields(),
           },
         },
@@ -423,7 +426,7 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
     return copied
   },
 
-  pasteSelection: () => {
+  pasteSelection: (at) => {
     const clip = getGraphClipboard()
     if (!clip?.nodes.length && !clip?.edges.length) return null
     const s = get()
@@ -431,6 +434,7 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
       clip,
       new Set(s.nodes.map((n) => n.id)),
       new Set(s.edges.map((e) => e.id)),
+      at,
     )
     const pastedNodeIds = pastedNodes.map((n) => n.id)
 
@@ -449,4 +453,40 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
     advanceClipboardAfterPaste()
     return pastedNodeIds
   },
+
+  duplicateSelection: () => {
+    const snap = snapshotSelection(get())
+    if (!snap) return null
+    const s = get()
+    const { nodes: dupNodes, edges: dupEdges } = instantiateClipboard(
+      snap,
+      new Set(s.nodes.map((n) => n.id)),
+      new Set(s.edges.map((e) => e.id)),
+    )
+    const dupNodeIds = dupNodes.map((n) => n.id)
+    set((cur) => ({
+      ...pushHistory(cur),
+      nodes: [...cur.nodes.map((n) => (n.selected ? { ...n, selected: false } : n)), ...dupNodes],
+      edges: [...cur.edges.map((e) => (e.selected ? { ...e, selected: false } : e)), ...dupEdges],
+      selected: dupNodeIds.length === 1 ? { kind: 'node', id: dupNodeIds[0] } : null,
+      selectedIds: dupNodeIds,
+    }))
+    return dupNodeIds
+  },
+
+  reverseEdge: (id) =>
+    set((s) => ({
+      ...pushHistory(s),
+      edges: s.edges.map((e) =>
+        e.id === id
+          ? {
+              ...e,
+              source: e.target,
+              target: e.source,
+              sourceHandle: CONCEPT_HANDLE_OUT,
+              targetHandle: CONCEPT_HANDLE_IN,
+            }
+          : e,
+      ),
+    })),
 })

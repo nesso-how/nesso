@@ -63,7 +63,7 @@ export function AboutDialog({ open, onClose }: Props) {
             maxWidth: '94vw',
             background: 'var(--bg-card)',
             border: '0.5px solid var(--line)',
-            borderRadius: 18,
+            borderRadius: 14,
             padding: '32px 28px 24px',
             display: 'flex',
             flexDirection: 'column',

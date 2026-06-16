@@ -12,6 +12,7 @@ export function InlineEdit({
   noEditBorder = false,
   borderedPlaceholder = false,
   onShiftEnter,
+  onDeleteEmpty,
 }: {
   value: string
   placeholder: string
@@ -23,10 +24,13 @@ export function InlineEdit({
   noEditBorder?: boolean
   borderedPlaceholder?: boolean
   onShiftEnter?: () => void
+  /** Backspace on an empty field removes the row (caller decides when allowed). */
+  onDeleteEmpty?: () => void
 }) {
   const [editing, setEditing] = useState(initialEditing)
   const [draft, setDraft] = useState(value)
   const ref = useRef<HTMLInputElement & HTMLTextAreaElement>(null)
+  const displayRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     setDraft(value)
@@ -54,6 +58,17 @@ export function InlineEdit({
     el.style.height = 'auto'
     el.style.height = `${el.scrollHeight}px`
   }, [editing, draft, multiline])
+
+  // Snap the display box to the same integer height the textarea computes from
+  // scrollHeight, so toggling between display and edit never nudges siblings by
+  // the fractional line-height remainder.
+  useLayoutEffect(() => {
+    if (editing || !multiline) return
+    const el = displayRef.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = `${el.scrollHeight}px`
+  }, [editing, value, multiline])
 
   const commit = () => {
     onSave(draft)
@@ -101,6 +116,11 @@ export function InlineEdit({
           if (e.key === 'Escape') {
             e.preventDefault()
             cancel()
+          }
+          if (e.key === 'Backspace' && draft.length === 0 && onDeleteEmpty) {
+            e.preventDefault()
+            onDeleteEmpty()
+            return
           }
           if (e.key === 'Enter' && e.shiftKey && onShiftEnter) {
             e.preventDefault()
@@ -167,6 +187,7 @@ export function InlineEdit({
 
   return (
     <div
+      ref={displayRef}
       onClick={() => setEditing(true)}
       style={{
         ...textStyle,

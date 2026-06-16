@@ -213,4 +213,93 @@ describe('copySelection / pasteSelection', () => {
     const original = new Set([a, b])
     for (const id of pasted ?? []) expect(original.has(id)).toBe(false)
   })
+
+  it('anchors the pasted cluster centre on the given position', () => {
+    const s = makeStore()
+    const a = s.getState().addNode(0, 0)
+    const b = s.getState().addNode(100, 0)
+    s.getState().setSelected(null)
+    s.getState().setSelectedIds([a, b])
+    s.getState().copySelection()
+
+    const pasted = s.getState().pasteSelection({ x: 500, y: 500 })
+    const positions = (pasted ?? []).map(
+      (id) => s.getState().nodes.find((n) => n.id === id)!.position,
+    )
+    const xs = positions.map((p) => p.x)
+    const ys = positions.map((p) => p.y)
+    // Source cluster centre is (50, 0); pasting at (500, 500) recentres it there.
+    expect((Math.min(...xs) + Math.max(...xs)) / 2).toBe(500)
+    expect((Math.min(...ys) + Math.max(...ys)) / 2).toBe(500)
+  })
+})
+
+describe('duplicateSelection', () => {
+  it('clones the selected subgraph with fresh, offset ids without touching the clipboard', () => {
+    const s = makeStore()
+    const a = s.getState().addNode(0, 0)
+    const b = s.getState().addNode(100, 0)
+    s.getState().addEdge(a, b, 'causes')
+    s.getState().setSelected(null)
+    s.getState().setSelectedIds([a, b])
+
+    const dup = s.getState().duplicateSelection()
+    expect(dup).toHaveLength(2)
+    expect(s.getState().nodes).toHaveLength(4)
+    expect(s.getState().edges).toHaveLength(2)
+    // Duplicate must not populate the copy/paste clipboard.
+    expect(s.getState().pasteAvailable).toBe(false)
+
+    const original = new Set([a, b])
+    for (const id of dup ?? []) expect(original.has(id)).toBe(false)
+    const dupA = s.getState().nodes.find((n) => n.id === dup![0])!
+    expect(dupA.position).not.toEqual({ x: 0, y: 0 })
+  })
+
+  it('selects the single duplicate and is undoable', () => {
+    const s = makeStore()
+    const a = s.getState().addNode(0, 0)
+    s.getState().setSelected({ kind: 'node', id: a })
+    const dup = s.getState().duplicateSelection()
+    expect(dup).toHaveLength(1)
+    expect(s.getState().selected).toEqual({ kind: 'node', id: dup![0] })
+    s.getState().undo()
+    expect(s.getState().nodes).toHaveLength(1)
+  })
+
+  it('returns null with nothing selected', () => {
+    const s = makeStore()
+    s.getState().addNode()
+    s.getState().setSelected(null)
+    s.getState().setSelectedIds([])
+    expect(s.getState().duplicateSelection()).toBeNull()
+  })
+})
+
+describe('reverseEdge', () => {
+  it('swaps source and target while keeping handles and type', () => {
+    const s = makeStore()
+    const a = s.getState().addNode(0, 0)
+    const b = s.getState().addNode(100, 0)
+    const id = s.getState().addEdge(a, b, 'causes')
+    s.getState().reverseEdge(id)
+    const edge = s.getState().edges.find((e) => e.id === id)!
+    expect(edge.source).toBe(b)
+    expect(edge.target).toBe(a)
+    expect(edge.sourceHandle).toBe('out')
+    expect(edge.targetHandle).toBe('in')
+    expect(edge.data?.type).toBe('causes')
+  })
+
+  it('is undoable', () => {
+    const s = makeStore()
+    const a = s.getState().addNode(0, 0)
+    const b = s.getState().addNode(100, 0)
+    const id = s.getState().addEdge(a, b, 'causes')
+    s.getState().reverseEdge(id)
+    s.getState().undo()
+    const edge = s.getState().edges.find((e) => e.id === id)!
+    expect(edge.source).toBe(a)
+    expect(edge.target).toBe(b)
+  })
 })

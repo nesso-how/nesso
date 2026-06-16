@@ -12,6 +12,8 @@ import {
   BackgroundVariant,
   ConnectionMode,
   useReactFlow,
+  type Node,
+  type Edge,
   type OnConnect,
   type OnMoveEnd,
   type OnNodesChange,
@@ -22,6 +24,8 @@ import '@xyflow/react/dist/style.css'
 import { NessoGraph } from '@nesso-how/graph'
 import { ConceptNode } from './ConceptNode'
 import { NessoConnectionLine } from './NessoConnectionLine'
+import { GraphContextMenu, type ContextMenuState } from './GraphContextMenu'
+import { EmptyCanvasHint } from './EmptyCanvasHint'
 import { RelationPicker } from '@/components/ui/RelationPicker'
 import { useT } from '@/i18n'
 import { useGraphStore } from '@/store'
@@ -44,11 +48,13 @@ export function GraphCanvas({
   bottomInset = 0,
   leftInset = 0,
   rightInset = 0,
+  onFit,
 }: {
   topInset?: number
   bottomInset?: number
   leftInset?: number
   rightInset?: number
+  onFit: () => void
 }) {
   const nodes = useGraphStore((s) => s.nodes)
   const edges = useGraphStore((s) => s.edges)
@@ -57,11 +63,11 @@ export function GraphCanvas({
   const addEdge = useGraphStore((s) => s.addEdge)
   const addNode = useGraphStore((s) => s.addNode)
   const syncFlowSelection = useGraphStore((s) => s.syncFlowSelection)
+  const setSelected = useGraphStore((s) => s.setSelected)
   const currentGraphId = useGraphStore((s) => s.currentGraphId)
   const loadedToken = useGraphStore((s) => s.loadedToken)
   const graphDisplay = useGraphStore((s) => s.graphDisplay)
   const categoryPalette = useGraphStore((s) => s.settings.categoryPalette)
-  const showConfidence = useGraphStore((s) => s.settings.showConfidence)
   const selected = useGraphStore((s) => s.selected)
   const t = useT()
 
@@ -93,6 +99,7 @@ export function GraphCanvas({
   }, [currentGraphId, loadedToken, topInset, bottomInset, leftInset, rightInset])
 
   const [pendingConn, setPendingConn] = useState<PendingConnection | null>(null)
+  const [ctxMenu, setCtxMenu] = useState<ContextMenuState | null>(null)
   const connectingSource = useRef<string | null>(null)
   const selectionSyncFrame = useRef<number | null>(null)
   const canvasRef = useRef<HTMLDivElement>(null)
@@ -181,6 +188,33 @@ export function GraphCanvas({
     [addNode, screenToFlowPosition],
   )
 
+  const onNodeContextMenu = useCallback(
+    (event: ReactMouseEvent, node: Node) => {
+      event.preventDefault()
+      setSelected({ kind: 'node', id: node.id })
+      setCtxMenu({ x: event.clientX, y: event.clientY, kind: 'node' })
+    },
+    [setSelected],
+  )
+
+  const onEdgeContextMenu = useCallback(
+    (event: ReactMouseEvent, edge: Edge) => {
+      event.preventDefault()
+      setSelected({ kind: 'edge', id: edge.id })
+      setCtxMenu({ x: event.clientX, y: event.clientY, kind: 'edge' })
+    },
+    [setSelected],
+  )
+
+  const onPaneContextMenu = useCallback(
+    (event: ReactMouseEvent | MouseEvent) => {
+      event.preventDefault()
+      const { x, y } = screenToFlowPosition({ x: event.clientX, y: event.clientY })
+      setCtxMenu({ x: event.clientX, y: event.clientY, kind: 'canvas', flowX: x, flowY: y })
+    },
+    [screenToFlowPosition],
+  )
+
   const onPickRelation = useCallback(
     (type: EdgeTypeName) => {
       if (!pendingConn) return
@@ -213,7 +247,6 @@ export function GraphCanvas({
         edges={styledEdges}
         display={graphDisplay}
         palette={categoryPalette}
-        showConfidence={showConfidence}
         categoryColorMode="css"
         getRelationLabel={getRelationLabel}
         isItemSelected={isItemSelected}
@@ -242,6 +275,9 @@ export function GraphCanvas({
           proOptions: { hideAttribution: true },
           connectionLineComponent: NessoConnectionLine,
           style: { background: 'transparent' },
+          onNodeContextMenu,
+          onEdgeContextMenu,
+          onPaneContextMenu,
         }}
       >
         <Background variant={BackgroundVariant.Dots} gap={28} size={1.5} color="var(--grid-dot)" />
@@ -256,6 +292,19 @@ export function GraphCanvas({
           onPick={onPickRelation}
           onCancel={() => setPendingConn(null)}
         />
+      )}
+
+      {nodes.length === 0 && (
+        <EmptyCanvasHint
+          topInset={topInset}
+          bottomInset={bottomInset}
+          leftInset={leftInset}
+          rightInset={rightInset}
+        />
+      )}
+
+      {ctxMenu && (
+        <GraphContextMenu menu={ctxMenu} onClose={() => setCtxMenu(null)} onFit={onFit} />
       )}
     </div>
   )

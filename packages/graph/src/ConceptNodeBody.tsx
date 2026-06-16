@@ -6,15 +6,11 @@ export interface ConceptNodeBodyProps {
   text: string
   selected: boolean
   showHeatmap: boolean
-  showConfidence: boolean
   lastRating: number
-  reps: number
-  due: number
   cursor?: CSSProperties['cursor']
   userSelect?: CSSProperties['userSelect']
   className?: string
   connectionTarget?: boolean
-  hideUnderline?: boolean
   rootRef?: Ref<HTMLDivElement>
   onDoubleClick?: MouseEventHandler<HTMLDivElement>
   /** Replaces the default label span (e.g. inline edit overlay). */
@@ -25,22 +21,16 @@ export function ConceptNodeBody({
   text,
   selected,
   showHeatmap,
-  showConfidence,
   lastRating,
-  reps,
-  due,
   cursor = 'default',
   userSelect = 'none',
   className,
   connectionTarget = false,
-  hideUnderline = false,
   rootRef,
   onDoubleClick,
   children,
 }: ConceptNodeBodyProps) {
   const heatTint = ratingColor(lastRating)
-  const confColor = showConfidence ? heatTint : 'var(--ink, #1a1a1a)'
-  const isStale = reps > 0 && due <= Date.now()
 
   return (
     <div
@@ -109,23 +99,6 @@ export function ConceptNodeBody({
         >
           {text}
         </span>
-      )}
-
-      {!hideUnderline && (
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 5,
-            left: 16,
-            right: 16,
-            height: selected ? 1.4 : 0.8,
-            background:
-              isStale && showConfidence
-                ? `repeating-linear-gradient(90deg, ${confColor} 0, ${confColor} 4px, transparent 4px, transparent 8px)`
-                : confColor,
-            opacity: selected ? 0.9 : 0.55,
-          }}
-        />
       )}
     </div>
   )

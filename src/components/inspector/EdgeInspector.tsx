@@ -13,19 +13,21 @@ import { useGraphStore, selectedEdgeSelector, type GraphState } from '@/store'
 import type { ConceptNodeData } from '@/types/graph'
 import { useT } from '@/i18n'
 import { InspectorPanel } from './InspectorPanel'
+import { InspectorActionToolbar, InspectorIconBtn } from './inspectorChrome'
 
 interface Props {
-  leftOffset: number
   panelWidth: number
   onPanelWidthChange: (w: number) => void
 }
 
-export function EdgeInspector({ leftOffset, panelWidth, onPanelWidthChange }: Props) {
+export function EdgeInspector({ panelWidth, onPanelWidthChange }: Props) {
   const t = useT()
   const edge = useGraphStore(selectedEdgeSelector)!
   const nodes: Node<ConceptNodeData>[] = useGraphStore((s: GraphState) => s.nodes)
   const updateEdgeType = useGraphStore((s) => s.updateEdgeType)
   const setEdgeCurveFlipMode = useGraphStore((s) => s.setEdgeCurveFlipMode)
+  const setSelected = useGraphStore((s) => s.setSelected)
+  const setInspectorCollapsed = useGraphStore((s) => s.setInspectorCollapsed)
   const curveStyle = useGraphStore((s) => s.graphDisplay.curveStyle)
   const autoCurveFlip = useGraphStore((s) => s.graphDisplay.autoCurveFlip)
   const edgeType = asEdgeTypeName(edge.data?.type)
@@ -47,128 +49,136 @@ export function EdgeInspector({ leftOffset, panelWidth, onPanelWidthChange }: Pr
   const showCurveFlip = curveStyle === 'arc'
 
   return (
-    <InspectorPanel
-      leftOffset={leftOffset}
-      panelWidth={panelWidth}
-      onPanelWidthChange={onPanelWidthChange}
-    >
-      <div
-        style={{
-          font: "500 10.5px 'JetBrains Mono', ui-monospace",
-          color: 'var(--ink-4)',
-          textTransform: 'uppercase',
-          letterSpacing: '0.08em',
-          display: 'flex',
-          justifyContent: 'space-between',
-        }}
-      >
-        <span>{t.inspector.relation}</span>
-        <span style={{ color: C.color }}>{t.relationTypes.categories[T.cat].label}</span>
-      </div>
-
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '10px 0 18px' }}>
-        <span style={{ font: "500 13.5px 'Fraunces', serif" }}>{from?.data.text}</span>
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 4 }}>
-          <span
-            style={{
-              height: 1,
-              flex: 1,
-              background: C.color,
-              opacity: 0.5,
-              display: 'inline-block',
-            }}
+    <InspectorPanel panelWidth={panelWidth} onPanelWidthChange={onPanelWidthChange}>
+      {/* Header */}
+      <div style={{ flexShrink: 0, padding: '12px 14px', borderBottom: '0.5px solid var(--line)' }}>
+        {/* Top row — collapse + close */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 12,
+            marginLeft: -6,
+            marginRight: -6,
+          }}
+        >
+          <InspectorIconBtn
+            icon="chevron-right"
+            title={t.inspector.actions.collapse}
+            onClick={() => setInspectorCollapsed(true)}
           />
-          <GlyphSVG kind={T.glyph} color={C.color} size={14} />
-          <span
-            style={{
-              height: 1,
-              flex: 1,
-              background: C.color,
-              opacity: 0.5,
-              display: 'inline-block',
-            }}
-          />
+          <InspectorIconBtn icon="close" title="Esc" onClick={() => setSelected(null)} />
         </div>
-        <span style={{ font: "500 13.5px 'Fraunces', serif" }}>{to?.data.text}</span>
+
+        {/* from / relation / to — vertical (concept names are often long) */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <span
+            style={{ font: "500 16px 'Fraunces', ui-serif, Georgia, serif", color: 'var(--ink)' }}
+          >
+            {from?.data.text}
+          </span>
+          <div
+            style={{ display: 'flex', alignItems: 'center', gap: 7, paddingLeft: 1, minWidth: 0 }}
+          >
+            <GlyphSVG kind={T.glyph} color={C.color} size={14} />
+            <span style={{ font: "500 13px 'JetBrains Mono', ui-monospace", color: C.color }}>
+              {t.relationTypes.types[edgeType]}
+            </span>
+          </div>
+          <span
+            style={{ font: "500 16px 'Fraunces', ui-serif, Georgia, serif", color: 'var(--ink)' }}
+          >
+            {to?.data.text}
+          </span>
+        </div>
       </div>
 
+      {/* Scroll body */}
+      <div
+        className="nesso-scrollbar"
+        style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '12px 16px 16px' }}
+      >
+        <h5
+          style={{
+            margin: '0 0 8px',
+            font: "500 11px 'JetBrains Mono', ui-monospace",
+            textTransform: 'uppercase',
+            letterSpacing: '0.08em',
+            color: 'var(--ink-4)',
+          }}
+        >
+          {t.inspector.sharpen}
+        </h5>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+          {siblings.map((k) => (
+            <button
+              key={k}
+              type="button"
+              onClick={() => updateEdgeType(edge.id, k)}
+              style={{
+                font: "500 11px 'JetBrains Mono', ui-monospace",
+                padding: '5px 10px',
+                borderRadius: 999,
+                border: `0.5px solid ${k === edgeType ? C.color : 'var(--line)'}`,
+                background: k === edgeType ? C.color : 'transparent',
+                color: k === edgeType ? 'var(--paper)' : 'var(--ink-2)',
+                cursor: 'default',
+              }}
+            >
+              {t.relationTypes.types[k]}
+            </button>
+          ))}
+        </div>
+
+        {showCurveFlip && (
+          <>
+            <h5
+              style={{
+                margin: '18px 0 6px',
+                font: "600 10px 'JetBrains Mono', ui-monospace",
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
+                color: 'var(--ink-4)',
+              }}
+            >
+              {t.sidebar.display}
+            </h5>
+            <SettingRow label={t.inspector.flipCurve}>
+              <SegmentedControl
+                options={
+                  autoCurveFlip
+                    ? [
+                        { id: 'off', label: t.sidebar.displayOptions.off },
+                        { id: 'auto', label: t.inspector.flipCurveAuto },
+                        { id: 'on', label: t.sidebar.displayOptions.on },
+                      ]
+                    : [
+                        { id: 'off', label: t.sidebar.displayOptions.off },
+                        { id: 'on', label: t.sidebar.displayOptions.on },
+                      ]
+                }
+                value={curveFlipMode}
+                onChange={(v) => {
+                  if (v !== curveFlipMode) setEdgeCurveFlipMode(edge.id, v as 'auto' | 'off' | 'on')
+                }}
+              />
+            </SettingRow>
+          </>
+        )}
+      </div>
+
+      {/* Action toolbar — docked footer */}
       <div
         style={{
-          font: "500 18px 'JetBrains Mono', ui-monospace",
-          color: C.color,
-          marginBottom: 12,
+          flexShrink: 0,
+          borderTop: '0.5px solid var(--line)',
+          padding: '8px 12px',
+          boxSizing: 'border-box',
         }}
       >
-        {t.relationTypes.types[edgeType]}
+        <InspectorActionToolbar />
       </div>
-
-      <h5
-        style={{
-          margin: '14px 0 6px',
-          font: "600 10px 'JetBrains Mono', ui-monospace",
-          textTransform: 'uppercase',
-          letterSpacing: '0.08em',
-          color: 'var(--ink-4)',
-        }}
-      >
-        {t.inspector.sharpen}
-      </h5>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-        {siblings.map((k) => (
-          <button
-            key={k}
-            type="button"
-            onClick={() => updateEdgeType(edge.id, k)}
-            style={{
-              font: "500 11px 'JetBrains Mono', ui-monospace",
-              padding: '4px 9px',
-              borderRadius: 999,
-              border: `0.5px solid ${k === edgeType ? C.color : 'var(--line)'}`,
-              background: k === edgeType ? C.color : 'transparent',
-              color: k === edgeType ? 'var(--paper)' : 'var(--ink-2)',
-              cursor: 'default',
-            }}
-          >
-            {t.relationTypes.types[k]}
-          </button>
-        ))}
-      </div>
-
-      {showCurveFlip && (
-        <>
-          <h5
-            style={{
-              margin: '18px 0 6px',
-              font: "600 10px 'JetBrains Mono', ui-monospace",
-              textTransform: 'uppercase',
-              letterSpacing: '0.08em',
-              color: 'var(--ink-4)',
-            }}
-          >
-            {t.inspector.visualization}
-          </h5>
-          <SettingRow label={t.inspector.flipCurve}>
-            <SegmentedControl
-              options={
-                autoCurveFlip
-                  ? [
-                      { id: 'off', label: t.sidebar.displayOptions.off },
-                      { id: 'auto', label: t.inspector.flipCurveAuto },
-                      { id: 'on', label: t.sidebar.displayOptions.on },
-                    ]
-                  : [
-                      { id: 'off', label: t.sidebar.displayOptions.off },
-                      { id: 'on', label: t.sidebar.displayOptions.on },
-                    ]
-              }
-              value={curveFlipMode}
-              onChange={(v) => {
-                if (v !== curveFlipMode) setEdgeCurveFlipMode(edge.id, v as 'auto' | 'off' | 'on')
-              }}
-            />
-          </SettingRow>
-        </>
-      )}
     </InspectorPanel>
   )
 }
