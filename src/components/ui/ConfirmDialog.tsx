@@ -7,7 +7,7 @@ const buttonBase = {
   appearance: 'none' as const,
   font: "500 13px 'Inter', system-ui",
   padding: '8px 16px',
-  borderRadius: 999,
+  borderRadius: 7,
   cursor: 'default' as const,
 }
 

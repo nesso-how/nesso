@@ -4,7 +4,6 @@ import type { Node } from '@xyflow/react'
 import { useGraphStore } from '@/store'
 import type { ConceptNodeData } from '@/types/graph'
 import { useT } from '@/i18n'
-import { ratingColor } from '@nesso-how/graph'
 import { ModalOverlay } from '@/components/ui/ModalOverlay'
 
 interface Props {
@@ -31,6 +30,7 @@ export function SearchDialog({ open, onClose, onSelectNode, onSelectGraph }: Pro
   const nodes = useGraphStore((s) => s.nodes)
   const graphList = useGraphStore((s) => s.graphList)
   const currentGraphId = useGraphStore((s) => s.currentGraphId)
+  const selectedNodeId = useGraphStore((s) => (s.selected?.kind === 'node' ? s.selected.id : null))
   const [query, setQuery] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -227,7 +227,7 @@ export function SearchDialog({ open, onClose, onSelectNode, onSelectGraph }: Pro
                           flexShrink: 0,
                         }}
                       >
-                        {active ? t.search.open : timeAgo(g.updatedAt)}
+                        {timeAgo(g.updatedAt)}
                       </span>
                     </button>
                   )
@@ -243,57 +243,58 @@ export function SearchDialog({ open, onClose, onSelectNode, onSelectGraph }: Pro
             {conceptResults.length > 0 && (
               <section>
                 <SectionLabel>{t.search.concepts}</SectionLabel>
-                {conceptResults.map((node) => (
-                  <button
-                    key={node.id}
-                    onClick={() => handleSelectNode(node)}
-                    style={{
-                      width: '100%',
-                      appearance: 'none',
-                      border: 0,
-                      background: 'transparent',
-                      cursor: 'default',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 10,
-                      padding: '8px 16px',
-                      textAlign: 'left',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'var(--paper-deep)'
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'transparent'
-                    }}
-                  >
-                    <svg
-                      width="11"
-                      height="11"
-                      viewBox="0 0 12 12"
-                      fill="none"
-                      stroke="var(--ink-5)"
-                      strokeWidth="1.3"
-                      strokeLinecap="round"
-                      style={{ flexShrink: 0 }}
-                    >
-                      <circle cx="6" cy="6" r="4" />
-                    </svg>
-                    <span
+                {conceptResults.map((node) => {
+                  const active = node.id === selectedNodeId
+                  return (
+                    <button
+                      key={node.id}
+                      onClick={() => handleSelectNode(node)}
                       style={{
-                        flex: 1,
-                        font: "400 13px 'Fraunces', ui-serif, Georgia, serif",
-                        color: 'var(--ink)',
-                        letterSpacing: '-0.005em',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
+                        width: '100%',
+                        appearance: 'none',
+                        border: 0,
+                        background: 'transparent',
+                        cursor: 'default',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 10,
+                        padding: '8px 16px',
+                        textAlign: 'left',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'var(--paper-deep)'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'transparent'
                       }}
                     >
-                      {node.data.text}
-                    </span>
-                    <RatingDots lastRating={node.data.lastRating ?? 0} />
-                  </button>
-                ))}
+                      <span
+                        style={{
+                          width: 6,
+                          height: 6,
+                          borderRadius: '50%',
+                          flexShrink: 0,
+                          background: active ? 'var(--accent)' : 'var(--ink-5)',
+                        }}
+                      />
+                      <span
+                        style={{
+                          flex: 1,
+                          font: active
+                            ? "500 13px 'Fraunces', ui-serif, Georgia, serif"
+                            : "400 13px 'Fraunces', ui-serif, Georgia, serif",
+                          color: 'var(--ink)',
+                          letterSpacing: '-0.005em',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {node.data.text}
+                      </span>
+                    </button>
+                  )
+                })}
               </section>
             )}
           </div>
@@ -329,25 +330,5 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
     >
       {children}
     </div>
-  )
-}
-
-function RatingDots({ lastRating }: { lastRating: number }) {
-  const r = Math.min(4, Math.max(0, lastRating))
-  const fill = ratingColor(r, 'var(--paper-deep)')
-  return (
-    <span style={{ display: 'inline-flex', gap: 2, flexShrink: 0 }}>
-      {[1, 2, 3, 4].map((i) => (
-        <span
-          key={i}
-          style={{
-            width: 5,
-            height: 5,
-            borderRadius: '50%',
-            background: i <= r ? fill : 'var(--paper-deep)',
-          }}
-        />
-      ))}
-    </span>
   )
 }

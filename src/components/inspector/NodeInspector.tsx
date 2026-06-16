@@ -502,6 +502,7 @@ export function NodeInspector({
                       maxLength={500}
                       onSave={(v) => updateExample(i, v)}
                       onShiftEnter={addExample}
+                      onDeleteEmpty={examplesArr.length > 1 ? () => removeExample(i) : undefined}
                       textStyle={{
                         font: "400 13.5px/1.55 'Fraunces', ui-serif, Georgia, serif",
                         color: 'var(--ink-2)',
@@ -554,6 +555,7 @@ export function NodeInspector({
                       maxLength={500}
                       onSave={savePendingExample}
                       onShiftEnter={addExample}
+                      onDeleteEmpty={() => setPendingNewExample(false)}
                       initialEditing
                       textStyle={{
                         font: "400 13.5px/1.55 'Fraunces', ui-serif, Georgia, serif",

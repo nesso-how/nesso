@@ -5,7 +5,6 @@ import type { EdgeCategory, EdgeTypeName } from '@/types/graph'
 const en = {
   common: {
     cancel: 'Cancel',
-    dismiss: 'Dismiss',
   },
   fileConflict: {
     message: 'This graph was changed on disk while you were editing.',
@@ -16,11 +15,9 @@ const en = {
     available: (version: string) => `Version ${version} is available.`,
     install: 'Install & restart',
     installing: 'Installing…',
-    later: 'Later',
     failed: 'Update failed. Try again?',
     retry: 'Retry',
     restartRequired: 'Update installed — restart Nesso to finish.',
-    dismiss: 'Got it',
   },
   settings: {
     title: 'Settings',
@@ -180,6 +177,7 @@ const en = {
       defaultProjectName: 'My graphs',
       projects: 'Projects',
       newProject: 'New project',
+      newProjectShort: 'New',
       openProject: 'Open project…',
       revealInFinder: 'Show in Finder',
       removeProject: 'Remove from list',
@@ -194,12 +192,6 @@ const en = {
     deleteGraphConfirmCta: 'Delete',
     renameHint: 'double-click to rename',
     settingsTitle: 'Settings (⌘,)',
-    stats: {
-      title: 'Stats',
-      concepts: 'Concepts',
-      links: 'Links',
-      zoom: 'Zoom',
-    },
     displayOptions: {
       heatmap: 'Heatmap',
       edges: 'Edges',
@@ -219,7 +211,6 @@ const en = {
     graphs: 'Graphs',
     concepts: 'Concepts',
     noResults: (q: string) => `No results for "${q}".`,
-    open: 'open',
   },
   shortcuts: {
     title: 'Keyboard shortcuts',
@@ -277,10 +268,6 @@ const en = {
     socratesTitle: 'Socrates — your tutor',
     concepts: 'concepts',
     relations: 'relations',
-    conceptSelected: '1 concept selected',
-    relationSelected: '1 relation selected',
-    selectedCount: (n: number) => `${n} selected`,
-    escHint: 'esc',
     undoTitle: 'Undo (⌘Z)',
     redoTitle: 'Redo (⌘⇧Z)',
     zoomOutTitle: 'Zoom out',
@@ -295,15 +282,13 @@ const en = {
     paste: 'Paste',
     addHere: 'Add concept here',
     centerFit: 'Center / fit',
-    changeType: 'Change type…',
     flip: 'Flip direction',
   },
   canvas: {
     emptyTitle: 'Your first concept',
-    emptyDesc: 'Double-click the canvas — then connect ideas with a typed relation.',
-    emptyCue: 'Double-click',
-    emptyCueTail: 'to begin',
+    emptyDesc: 'Double-click the canvas, then connect ideas with a typed relation.',
     emptyGhost: 'new concept',
+    newConcept: 'New concept',
   },
   relationTypes: {
     categories: {

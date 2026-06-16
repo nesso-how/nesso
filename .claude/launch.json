@@ -4,8 +4,14 @@
     {
       "name": "nesso-dev",
       "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["dev"],
-      "port": 5173
+      "runtimeArgs": ["dev", "--port", "5180"],
+      "port": 5180
+    },
+    {
+      "name": "nesso-docs",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "docs", "dev", "--port", "4330"],
+      "port": 4330
     }
   ]
 }

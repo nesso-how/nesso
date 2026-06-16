@@ -19,7 +19,7 @@ const HIDDEN_HANDLE: React.CSSProperties = {
 }
 
 export function ConceptNode({ data, selected }: NodeProps<ConceptNodeType>) {
-  const { showHeatmap, showConfidence } = useGraphDisplay()
+  const { showHeatmap } = useGraphDisplay()
 
   return (
     <div style={{ position: 'relative' }}>
@@ -27,10 +27,7 @@ export function ConceptNode({ data, selected }: NodeProps<ConceptNodeType>) {
         text={data.text}
         selected={selected}
         showHeatmap={showHeatmap}
-        showConfidence={showConfidence}
         lastRating={data.lastRating ?? 0}
-        reps={data.reps}
-        due={data.due}
       />
       <Handle id="out" type="source" position={Position.Right} style={HIDDEN_HANDLE} />
       <Handle id="in" type="target" position={Position.Left} style={HIDDEN_HANDLE} />

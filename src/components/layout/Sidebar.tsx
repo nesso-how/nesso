@@ -181,7 +181,15 @@ export function Sidebar({
               <div style={{ flexShrink: 0, color: 'var(--ink)', lineHeight: 0 }} aria-hidden>
                 <NessoMark size={26} />
               </div>
-              <div style={{ font: "500 13px 'Inter', ui-sans-serif", color: 'var(--ink)' }}>
+              <div
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 600,
+                  fontSize: 18,
+                  letterSpacing: '-0.01em',
+                  color: 'var(--ink)',
+                }}
+              >
                 Nesso
               </div>
             </a>

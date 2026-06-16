@@ -124,7 +124,6 @@ export interface NessoSettings {
   dark: boolean
   language: Language
   edgeEncoding: EdgeEncoding
-  showConfidence: boolean
   showHeatmap: boolean
   curveStyle: CurveStyle
   autoCurveFlip: boolean

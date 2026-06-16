@@ -5,7 +5,6 @@ import type en from './en'
 const it: typeof en = {
   common: {
     cancel: 'Annulla',
-    dismiss: 'Chiudi',
   },
   fileConflict: {
     message: 'Questo grafo è stato modificato su disco mentre lo stavi editando.',
@@ -16,11 +15,9 @@ const it: typeof en = {
     available: (version: string) => `La versione ${version} è disponibile.`,
     install: 'Installa e riavvia',
     installing: 'Installazione…',
-    later: 'Più tardi',
     failed: 'Aggiornamento non riuscito. Riprovare?',
     retry: 'Riprova',
     restartRequired: 'Aggiornamento installato — riavvia Nesso per completare.',
-    dismiss: 'Ho capito',
   },
   settings: {
     title: 'Impostazioni',
@@ -180,6 +177,7 @@ const it: typeof en = {
       defaultProjectName: 'I miei grafi',
       projects: 'Progetti',
       newProject: 'Nuovo progetto',
+      newProjectShort: 'Nuovo',
       openProject: 'Apri progetto…',
       revealInFinder: 'Mostra nel Finder',
       removeProject: 'Rimuovi dalla lista',
@@ -195,12 +193,6 @@ const it: typeof en = {
     deleteGraphConfirmCta: 'Elimina',
     renameHint: 'doppio clic per rinominare',
     settingsTitle: 'Impostazioni (⌘,)',
-    stats: {
-      title: 'Statistiche',
-      concepts: 'Concetti',
-      links: 'Link',
-      zoom: 'Zoom',
-    },
     displayOptions: {
       heatmap: 'Mappa calore',
       edges: 'Archi',
@@ -220,7 +212,6 @@ const it: typeof en = {
     graphs: 'Grafi',
     concepts: 'Concetti',
     noResults: (q) => `Nessun risultato per "${q}".`,
-    open: 'aperto',
   },
   shortcuts: {
     title: 'Scorciatoie da tastiera',
@@ -278,10 +269,6 @@ const it: typeof en = {
     socratesTitle: 'Socrate — il tuo tutor',
     concepts: 'concetti',
     relations: 'relazioni',
-    conceptSelected: '1 concetto selezionato',
-    relationSelected: '1 relazione selezionata',
-    selectedCount: (n) => `${n} selezionati`,
-    escHint: 'esc',
     undoTitle: 'Annulla (⌘Z)',
     redoTitle: 'Ripristina (⌘⇧Z)',
     zoomOutTitle: 'Riduci zoom',
@@ -296,15 +283,13 @@ const it: typeof en = {
     paste: 'Incolla',
     addHere: 'Aggiungi concetto qui',
     centerFit: 'Centra / adatta',
-    changeType: 'Cambia tipo…',
     flip: 'Inverti direzione',
   },
   canvas: {
     emptyTitle: 'Il tuo primo concetto',
-    emptyDesc: 'Doppio clic sulla tela — poi collega le idee con una relazione tipata.',
-    emptyCue: 'Doppio clic',
-    emptyCueTail: 'per iniziare',
+    emptyDesc: 'Doppio clic sul canvas, poi collega le idee con una relazione tipata.',
     emptyGhost: 'nuovo concetto',
+    newConcept: 'Nuovo concetto',
   },
   relationTypes: {
     categories: {

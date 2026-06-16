@@ -23,7 +23,7 @@ export function EdgeRow({ label, text, color, glyph, onClick, dim = false }: Pro
       onMouseLeave={() => setHover(false)}
       style={{
         display: 'flex',
-        alignItems: 'center',
+        alignItems: 'flex-start',
         gap: 10,
         width: '100%',
         textAlign: 'left',
@@ -42,6 +42,7 @@ export function EdgeRow({ label, text, color, glyph, onClick, dim = false }: Pro
           height: 22,
           borderRadius: 6,
           flexShrink: 0,
+          marginTop: 1,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -50,27 +51,29 @@ export function EdgeRow({ label, text, color, glyph, onClick, dim = false }: Pro
       >
         <GlyphSVG kind={glyph} color={color} size={13} />
       </span>
-      <span
-        style={{
-          flex: 1,
-          minWidth: 0,
-          font: "500 13px 'Inter', ui-sans-serif",
-          color: 'var(--ink)',
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-        }}
-      >
-        {text}
-      </span>
-      <span
-        style={{
-          font: "11px 'JetBrains Mono', ui-monospace",
-          color,
-          flexShrink: 0,
-        }}
-      >
-        {label}
+      {/* Column so the concept name can wrap on narrow widths instead of
+          truncating, with the relation type as a caption beneath it. */}
+      <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
+        <span
+          style={{
+            font: "500 13px 'Inter', ui-sans-serif",
+            color: 'var(--ink)',
+            lineHeight: 1.35,
+            overflowWrap: 'anywhere',
+            wordBreak: 'break-word',
+          }}
+        >
+          {text}
+        </span>
+        <span
+          style={{
+            font: "11px 'JetBrains Mono', ui-monospace",
+            color,
+            lineHeight: 1.2,
+          }}
+        >
+          {label}
+        </span>
       </span>
     </button>
   )

@@ -20,7 +20,6 @@ export const en: Locale = {
     ctaPrimary: 'Open Nesso',
     ctaSecondary: 'Read the docs',
     graphAriaLabel: 'Concept graph: Understanding and its relations',
-    graphMeta: ['philosophy', 'understanding'],
     graph: {
       mastery: 'Mastery',
       knowledge: 'Knowledge',

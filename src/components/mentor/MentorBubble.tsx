@@ -575,7 +575,7 @@ export function MentorBubble({ leftInset, rightInset }: { leftInset: number; rig
             style={{
               appearance: 'none',
               border: 0,
-              background: 'var(--ink)',
+              background: 'var(--ink-2)',
               color: 'var(--paper)',
               width: 30,
               height: 30,

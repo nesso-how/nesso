@@ -173,22 +173,11 @@ export function StatusBar({ sidebarWidth, onFit }: Props) {
   const t = useT()
   const nodeCount = useGraphStore((s) => s.nodes.length)
   const edgeCount = useGraphStore((s) => s.edges.length)
-  const selected = useGraphStore((s) => s.selected)
-  const selectedCount = useGraphStore((s) => s.selectedIds.length)
   const undo = useGraphStore((s) => s.undo)
   const redo = useGraphStore((s) => s.redo)
   const canUndo = useGraphStore((s) => s._history.length > 0)
   const canRedo = useGraphStore((s) => s._future.length > 0)
   const { zoomIn, zoomOut } = useReactFlow()
-
-  const selLabel =
-    selected?.kind === 'edge'
-      ? t.statusBar.relationSelected
-      : selected?.kind === 'node'
-        ? t.statusBar.conceptSelected
-        : selectedCount > 1
-          ? t.statusBar.selectedCount(selectedCount)
-          : null
 
   return (
     <div
@@ -211,44 +200,19 @@ export function StatusBar({ sidebarWidth, onFit }: Props) {
         userSelect: 'none',
       }}
     >
-      {/* Left — Socrates anchor, then the context it knows (counts / selection) */}
+      {/* Left — Socrates anchor + graph counts */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 9, minWidth: 0 }}>
         <SocratesEntry />
         <span style={sep} />
-        {selLabel ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 9, flexShrink: 0 }}>
-            <span
-              style={{
-                font: "500 11.5px 'Inter', ui-sans-serif",
-                color: 'var(--ink-2)',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {selLabel}
-            </span>
-            <span
-              style={{
-                font: "10px 'JetBrains Mono', ui-monospace",
-                color: 'var(--ink-5)',
-                padding: '1px 5px',
-                border: '0.5px solid var(--line)',
-                borderRadius: 4,
-              }}
-            >
-              {t.statusBar.escHint}
-            </span>
-          </div>
-        ) : (
-          <span
-            style={{
-              font: "10.5px 'JetBrains Mono', ui-monospace",
-              color: 'var(--ink-4)',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {nodeCount} {t.statusBar.concepts} · {edgeCount} {t.statusBar.relations}
-          </span>
-        )}
+        <span
+          style={{
+            font: "10.5px 'JetBrains Mono', ui-monospace",
+            color: 'var(--ink-4)',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {nodeCount} {t.statusBar.concepts} · {edgeCount} {t.statusBar.relations}
+        </span>
       </div>
 
       {/* Right — history + viewport controls */}

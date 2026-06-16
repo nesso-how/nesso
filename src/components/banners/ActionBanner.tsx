@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 import type { CSSProperties, ReactNode } from 'react'
+import { CloseButton } from '@/components/ui/CloseButton'
 
 export interface ActionBannerAction {
   label: string
@@ -16,18 +17,19 @@ export interface ActionBannerProps {
   actions: ActionBannerAction[]
   /** `error` tints the border with the accent; `default` is neutral. */
   tone?: 'default' | 'error'
+  /** When set, shows a corner X (like dialog headers) instead of an action button — used by auto-dismiss toasts. */
+  onClose?: () => void
 }
 
-export function actionBannerButtonStyle(primary: boolean, disabled = false): CSSProperties {
+function actionBannerButtonStyle(primary: boolean, disabled = false): CSSProperties {
   return {
     appearance: 'none',
     border: `0.5px solid ${primary ? 'var(--ink-2)' : 'var(--line)'}`,
     background: primary ? 'var(--ink-2)' : 'transparent',
-    color: primary ? 'var(--paper)' : 'var(--ink-3)',
-    font: "500 11px 'JetBrains Mono', ui-monospace",
-    letterSpacing: '0.04em',
-    padding: '6px 14px',
-    borderRadius: 999,
+    color: primary ? 'var(--paper)' : 'var(--ink-2)',
+    font: "500 13px 'Inter', system-ui",
+    padding: '8px 16px',
+    borderRadius: 7,
     cursor: disabled ? 'not-allowed' : 'default',
     opacity: disabled ? 0.55 : 1,
     whiteSpace: 'nowrap',
@@ -36,8 +38,14 @@ export function actionBannerButtonStyle(primary: boolean, disabled = false): CSS
   }
 }
 
-export function ActionBanner({ open, message, actions, tone = 'default' }: ActionBannerProps) {
-  if (!open || actions.length === 0) return null
+export function ActionBanner({
+  open,
+  message,
+  actions,
+  tone = 'default',
+  onClose,
+}: ActionBannerProps) {
+  if (!open || (actions.length === 0 && !onClose)) return null
 
   return (
     <div
@@ -46,40 +54,47 @@ export function ActionBanner({ open, message, actions, tone = 'default' }: Actio
       style={{
         // Positioning is owned by the stacking container in App.tsx so multiple
         // banners (file conflict + update) stack instead of overlapping.
+        position: 'relative',
         display: 'flex',
         flexDirection: 'column',
-        gap: 10,
+        gap: 12,
         padding: '16px 18px',
-        borderRadius: 10,
-        background: 'color-mix(in srgb, var(--bg-elev) 72%, transparent)',
-        border: `0.5px solid ${tone === 'error' ? 'var(--accent)' : 'var(--ink-3)'}`,
-        backdropFilter: 'blur(16px) saturate(1.4)',
-        WebkitBackdropFilter: 'blur(16px) saturate(1.4)',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
-        width: 220,
+        borderRadius: 14,
+        background: 'var(--bg-card)',
+        border: `0.5px solid ${tone === 'error' ? 'var(--accent)' : 'var(--line)'}`,
+        boxShadow: 'var(--shadow-lg)',
+        width: 240,
       }}
     >
+      {onClose && (
+        <div style={{ position: 'absolute', top: 8, right: 8 }}>
+          <CloseButton onClick={onClose} />
+        </div>
+      )}
       <span
         style={{
-          font: "400 13px/1.4 'Inter', system-ui",
+          font: "400 13px/1.5 'Inter', system-ui",
           color: 'var(--ink-2)',
+          paddingRight: onClose ? 20 : 0,
         }}
       >
         {message}
       </span>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        {actions.map((action) => (
-          <button
-            key={action.label}
-            type="button"
-            disabled={action.disabled}
-            onClick={() => void action.onClick()}
-            style={actionBannerButtonStyle(action.primary ?? false, action.disabled)}
-          >
-            {action.label}
-          </button>
-        ))}
-      </div>
+      {actions.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {actions.map((action) => (
+            <button
+              key={action.label}
+              type="button"
+              disabled={action.disabled}
+              onClick={() => void action.onClick()}
+              style={actionBannerButtonStyle(action.primary ?? false, action.disabled)}
+            >
+              {action.label}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

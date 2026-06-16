@@ -75,7 +75,6 @@ export interface NessoGraphProps {
   // Display settings (merged: reactFlowProps > display prop > graph.display > defaults).
   display?: Partial<GraphDisplaySettings>
   palette?: CategoryPalette
-  showConfidence?: boolean
   /** `palette` (default) for embeds; `css` when `--cat-*` vars are set on the page. */
   categoryColorMode?: CategoryColorMode
   getRelationLabel?: (type: EdgeTypeName) => string
@@ -132,7 +131,6 @@ export function NessoGraph({
   defaultEdges,
   display,
   palette = 'default',
-  showConfidence = false,
   categoryColorMode = 'palette',
   getRelationLabel,
   isItemSelected,
@@ -183,20 +181,11 @@ export function NessoGraph({
       curveStyle: display?.curveStyle ?? graph?.display?.curveStyle ?? 'arc',
       autoCurveFlip: display?.autoCurveFlip ?? graph?.display?.autoCurveFlip ?? true,
       palette,
-      showConfidence,
       categoryColorMode,
       getRelationLabel,
       isItemSelected,
     }),
-    [
-      display,
-      graph?.display,
-      palette,
-      showConfidence,
-      categoryColorMode,
-      getRelationLabel,
-      isItemSelected,
-    ],
+    [display, graph?.display, palette, categoryColorMode, getRelationLabel, isItemSelected],
   )
 
   return (

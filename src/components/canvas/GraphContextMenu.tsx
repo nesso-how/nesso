@@ -3,6 +3,7 @@ import { useState, useLayoutEffect, useEffect, useRef } from 'react'
 import { useGraphStore } from '@/store'
 import { useT } from '@/i18n'
 import { newConceptTopLeftAtFlowCenter } from '@/data/newConceptLayout'
+import { focusFlowNodes } from '@/lib/focusFlowSelection'
 
 export type ContextMenuState = {
   x: number
@@ -12,7 +13,7 @@ export type ContextMenuState = {
   flowY?: number
 }
 
-type CmIcon = 'copy' | 'cut' | 'duplicate' | 'trash' | 'paste' | 'add' | 'fit' | 'flip' | 'type'
+type CmIcon = 'copy' | 'cut' | 'duplicate' | 'trash' | 'paste' | 'add' | 'fit' | 'flip'
 
 function CmGlyph({ name }: { name: CmIcon }) {
   const p = {
@@ -78,12 +79,6 @@ function CmGlyph({ name }: { name: CmIcon }) {
       return (
         <svg {...p}>
           <path d="M3.5 6.2h9l-2.4-2.4M12.5 9.8h-9l2.4 2.4" />
-        </svg>
-      )
-    case 'type':
-      return (
-        <svg {...p}>
-          <path d="M3 5.5h10M3 8h10M3 10.5h6" />
         </svg>
       )
   }
@@ -182,7 +177,6 @@ export function GraphContextMenu({
   const pasteSelection = useGraphStore((s) => s.pasteSelection)
   const reverseEdge = useGraphStore((s) => s.reverseEdge)
   const addNode = useGraphStore((s) => s.addNode)
-  const setInspectorCollapsed = useGraphStore((s) => s.setInspectorCollapsed)
 
   useLayoutEffect(() => {
     const el = ref.current
@@ -246,11 +240,6 @@ export function GraphContextMenu({
   } else if (menu.kind === 'edge') {
     items = [
       {
-        icon: 'type',
-        label: t.contextMenu.changeType,
-        onClick: () => setInspectorCollapsed(false),
-      },
-      {
         icon: 'flip',
         label: t.contextMenu.flip,
         onClick: () => selected && reverseEdge(selected.id),
@@ -271,7 +260,10 @@ export function GraphContextMenu({
         label: t.contextMenu.paste,
         shortcut: '⌘V',
         disabled: !pasteAvailable,
-        onClick: () => pasteSelection(),
+        onClick: () => {
+          const ids = pasteSelection({ x: menu.flowX ?? 0, y: menu.flowY ?? 0 })
+          if (ids?.length) focusFlowNodes(ids)
+        },
       },
       'sep',
       {

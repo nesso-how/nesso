@@ -8,6 +8,7 @@ pnpm-store
 # Build
 dist
 dist-ssr
+*.tsbuildinfo
 src-tauri/target
 src-tauri/icons/
 

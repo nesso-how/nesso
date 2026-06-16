@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 import { useEffect } from 'react'
 import { useGraphStore } from '@/store'
-import { useT } from '@/i18n'
 import { ActionBanner } from '@/components/banners/ActionBanner'
 import type { Toast } from '@/store/types'
 
@@ -29,7 +28,6 @@ export function ToastViewport() {
 }
 
 function ToastItem({ toast }: { toast: Toast }) {
-  const t = useT()
   const dismissToast = useGraphStore((s) => s.dismissToast)
 
   useEffect(() => {
@@ -42,7 +40,8 @@ function ToastItem({ toast }: { toast: Toast }) {
       open
       tone={toast.variant === 'error' ? 'error' : 'default'}
       message={toast.message}
-      actions={[{ label: t.common.dismiss, primary: true, onClick: () => dismissToast(toast.id) }]}
+      actions={[]}
+      onClose={() => dismissToast(toast.id)}
     />
   )
 }

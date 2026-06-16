@@ -68,7 +68,6 @@ export function GraphCanvas({
   const loadedToken = useGraphStore((s) => s.loadedToken)
   const graphDisplay = useGraphStore((s) => s.graphDisplay)
   const categoryPalette = useGraphStore((s) => s.settings.categoryPalette)
-  const showConfidence = useGraphStore((s) => s.settings.showConfidence)
   const selected = useGraphStore((s) => s.selected)
   const t = useT()
 
@@ -248,7 +247,6 @@ export function GraphCanvas({
         edges={styledEdges}
         display={graphDisplay}
         palette={categoryPalette}
-        showConfidence={showConfidence}
         categoryColorMode="css"
         getRelationLabel={getRelationLabel}
         isItemSelected={isItemSelected}

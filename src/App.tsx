@@ -151,9 +151,11 @@ function AppInner() {
   })
 
   const viewportRestoredFor = useRef<string | null>(null)
-  // Set when a selection programmatically re-centers the viewport (e.g. search),
-  // so the pan-on-select effect doesn't fight that animation.
-  const suppressSelectPanRef = useRef(false)
+  // Holds the id whose selection programmatically re-centers the viewport (e.g.
+  // search), so the pan-on-select effect skips that one animation. Keyed by id
+  // (not a bare flag) so a no-op re-selection of the current node can't leak the
+  // suppression onto a later, unrelated selection.
+  const suppressSelectPanRef = useRef<string | null>(null)
 
   // Restore viewport before paint when graph data arrives (avoids initial flicker).
   // The computed initial fit is intentionally not persisted: only user-driven
@@ -222,7 +224,7 @@ function AppInner() {
 
   const handleSelectNode = useCallback(
     (node: { id: string; position: { x: number; y: number } }) => {
-      suppressSelectPanRef.current = true
+      suppressSelectPanRef.current = node.id
       setSelected({ kind: 'node', id: node.id })
 
       const liveNode = getNodes().find((n) => n.id === node.id)
@@ -284,40 +286,50 @@ function AppInner() {
   // outside the comfortable visible area; never fights manual panning.
   useEffect(() => {
     if (!selected) return
-    if (suppressSelectPanRef.current) {
-      suppressSelectPanRef.current = false
-      return
-    }
+    // Always consume the suppression token; only skip when it matches the
+    // element being selected now (so a stale token can't suppress a later pan).
+    const suppressId = suppressSelectPanRef.current
+    suppressSelectPanRef.current = null
+    if (suppressId === selected.id) return
     const liveNodes = getNodes()
-    let wx: number
-    let wy: number
+    const NODE_W = 160
+    const NODE_H = 32
+    // World-space bounding box of the selection (the node, or both edge endpoints).
+    let wLeft: number
+    let wTop: number
+    let wRight: number
+    let wBottom: number
     if (selected.kind === 'node') {
       const n = liveNodes.find((nd) => nd.id === selected.id)
       if (!n) return
-      wx = n.position.x + (n.measured?.width ?? 160) / 2
-      wy = n.position.y + (n.measured?.height ?? 32) / 2
+      wLeft = n.position.x
+      wTop = n.position.y
+      wRight = n.position.x + (n.measured?.width ?? NODE_W)
+      wBottom = n.position.y + (n.measured?.height ?? NODE_H)
     } else {
       const e = useGraphStore.getState().edges.find((ed) => ed.id === selected.id)
       if (!e) return
       const s = liveNodes.find((nd) => nd.id === e.source)
       const tg = liveNodes.find((nd) => nd.id === e.target)
       if (!s || !tg) return
-      wx =
-        (s.position.x +
-          (s.measured?.width ?? 160) / 2 +
-          tg.position.x +
-          (tg.measured?.width ?? 160) / 2) /
-        2
-      wy =
-        (s.position.y +
-          (s.measured?.height ?? 32) / 2 +
-          tg.position.y +
-          (tg.measured?.height ?? 32) / 2) /
-        2
+      wLeft = Math.min(s.position.x, tg.position.x)
+      wTop = Math.min(s.position.y, tg.position.y)
+      wRight = Math.max(
+        s.position.x + (s.measured?.width ?? NODE_W),
+        tg.position.x + (tg.measured?.width ?? NODE_W),
+      )
+      wBottom = Math.max(
+        s.position.y + (s.measured?.height ?? NODE_H),
+        tg.position.y + (tg.measured?.height ?? NODE_H),
+      )
     }
     const v = getViewport()
-    const sx = wx * v.zoom + v.x
-    const sy = wy * v.zoom + v.y
+    // Screen-space edges: multiplying by zoom makes a zoomed-in element correctly
+    // large, so we pan far enough to clear the inspector instead of only centering.
+    const elLeft = wLeft * v.zoom + v.x
+    const elRight = wRight * v.zoom + v.x
+    const elTop = wTop * v.zoom + v.y
+    const elBottom = wBottom * v.zoom + v.y
     const M = 56
     const rightInset = inspectorCollapsed ? INSPECTOR_RAIL_WIDTH : inspectorPanelWidth
     const left = sidebarWidth + M
@@ -326,13 +338,14 @@ function AppInner() {
     const bottom = window.innerHeight - STATUS_BAR_HEIGHT_PX - M
     let dx = 0
     let dy = 0
+    // Tuck the overflowing edge back in; the inspector (right) side wins ties.
     if (right > left) {
-      if (sx < left) dx = left - sx
-      else if (sx > right) dx = right - sx
+      if (elRight > right) dx = right - elRight
+      else if (elLeft < left) dx = left - elLeft
     }
     if (bottom > top) {
-      if (sy < top) dy = top - sy
-      else if (sy > bottom) dy = bottom - sy
+      if (elBottom > bottom) dy = bottom - elBottom
+      else if (elTop < top) dy = top - elTop
     }
     if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return
     setViewport({ x: v.x + dx, y: v.y + dy, zoom: v.zoom }, { duration: 300 })

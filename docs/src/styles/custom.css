@@ -7,9 +7,9 @@
 
 /* ── Dark mode — warm dark paper ────────────── */
 :root {
-  --sl-color-bg: #1c1a16;
-  --sl-color-bg-nav: #1c1a16;
-  --sl-color-bg-sidebar: #1c1a16;
+  --sl-color-bg: #1a1714;
+  --sl-color-bg-nav: #1a1714;
+  --sl-color-bg-sidebar: #1a1714;
   --sl-color-bg-inline-code: #14130f;
   --sl-color-bg-accent: rgba(196, 122, 130, 0.08);
 
@@ -18,7 +18,7 @@
   --sl-color-text-invert: #14130f;
 
   --sl-color-white: #f0e9d8;
-  --sl-color-black: #1c1a16;
+  --sl-color-black: #1a1714;
 
   --sl-color-accent-low: rgba(196, 122, 130, 0.15);
   --sl-color-accent: #c47a82;
@@ -33,7 +33,7 @@
   --sl-color-gray-3: #a39c8c;
   --sl-color-gray-4: #6e6859;
   --sl-color-gray-5: #423e35;
-  --sl-color-gray-6: #1c1a16;
+  --sl-color-gray-6: #221e19;
   --sl-color-gray-7: #0d0c09;
 
   /* Starlight defaults — remap orange away from focus/admonition chrome */
@@ -42,20 +42,20 @@
   --sl-color-orange-low: rgba(200, 140, 40, 0.12);
 }
 
-/* ── Light mode — elevated chrome (matches app --bg-elev) ── */
+/* ── Light mode — white surface (matches app --paper / graph canvas) ── */
 :root[data-theme='light'] {
-  --sl-color-bg: #fffdf7;
-  --sl-color-bg-nav: #fffdf7;
-  --sl-color-bg-sidebar: #fffdf7;
-  --sl-color-bg-inline-code: #f2ede3;
+  --sl-color-bg: #ffffff;
+  --sl-color-bg-nav: #ffffff;
+  --sl-color-bg-sidebar: #ffffff;
+  --sl-color-bg-inline-code: #f3f1ed;
   --sl-color-bg-accent: rgba(110, 39, 48, 0.06);
 
   --sl-color-text: #1a1814;
   --sl-color-text-accent: #6e2730;
-  --sl-color-text-invert: #fcf9f3;
+  --sl-color-text-invert: #fbfaf8;
 
   --sl-color-white: #1a1814;
-  --sl-color-black: #fffdf7;
+  --sl-color-black: #ffffff;
 
   --sl-color-accent-low: rgba(110, 39, 48, 0.12);
   --sl-color-accent: #6e2730;
@@ -70,8 +70,8 @@
   --sl-color-gray-3: #6a6356;
   --sl-color-gray-4: #9a9080;
   --sl-color-gray-5: #c4b9a4;
-  --sl-color-gray-6: #f2ede3;
-  --sl-color-gray-7: #fcf9f3;
+  --sl-color-gray-6: #f3f1ed;
+  --sl-color-gray-7: #fbfaf8;
 
   --sl-color-orange: #a07840;
   --sl-color-orange-high: #7a5c2e;
@@ -121,6 +121,17 @@ site-search button[data-open-modal]:focus-visible {
   border-radius: 0.25rem;
 }
 
+/* ── Sidebar current entry ──────────────────── */
+/* App convention: oxblood is an accent (dot / highlight), never a filled selection.
+   Neutral fill nudged from the deep-surface tone (gray-6) toward gray-5 so the active
+   entry reads clearly: darker than the page in light, lighter in dark. */
+.sidebar-content a[aria-current='page'],
+.sidebar-content a[aria-current='page']:hover,
+.sidebar-content a[aria-current='page']:focus {
+  color: var(--sl-color-text);
+  background-color: color-mix(in srgb, var(--sl-color-gray-6) 72%, var(--sl-color-gray-5));
+}
+
 /* ── Headings ───────────────────────────────── */
 h1,
 h2,
@@ -132,10 +143,13 @@ h4 {
 }
 
 /* Site title in navbar — text color, not accent */
-.site-title {
+/* Pin to 20px (Starlight defaults to --sl-text-h4 = 24px on desktop) to match the
+   landing's icon:wordmark ratio (26px mark : 20px text). */
+a.site-title {
   font-family: 'Fraunces', Georgia, serif;
   font-optical-sizing: auto;
   font-weight: 600;
+  font-size: 1.25rem;
   letter-spacing: -0.01em;
   gap: 0.6rem;
   color: var(--sl-color-text);
@@ -146,8 +160,8 @@ h4 {
 
 /* Logo sizing */
 .site-title img {
-  height: 24px;
-  width: 24px;
+  height: 26px;
+  width: 26px;
 }
 
 /* Social icons in navbar — same text color on hover */

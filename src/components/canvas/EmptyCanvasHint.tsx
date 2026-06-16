@@ -82,36 +82,9 @@ export function EmptyCanvasHint({
             font: '400 14px var(--font-display)',
             lineHeight: 1.5,
             color: 'var(--ink-3)',
-            marginBottom: 18,
           }}
         >
           {t.canvas.emptyDesc}
-        </div>
-        <div
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 8,
-            font: "500 11px 'JetBrains Mono', ui-monospace",
-            letterSpacing: '0.04em',
-            textTransform: 'uppercase',
-            color: 'var(--ink-4)',
-          }}
-        >
-          <span
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '4px 9px',
-              borderRadius: 6,
-              border: '0.5px solid var(--line-strong)',
-              background: 'var(--bg-elev)',
-            }}
-          >
-            <span style={{ fontSize: 13 }}>⊕</span> {t.canvas.emptyCue}
-          </span>
-          <span style={{ opacity: 0.7 }}>{t.canvas.emptyCueTail}</span>
         </div>
       </div>
     </div>

@@ -122,7 +122,7 @@ export function LocalModelPanel({ status, progress, progressText, error }: Props
             style={{
               appearance: 'none',
               border: 0,
-              background: 'var(--ink)',
+              background: 'var(--ink-2)',
               color: 'var(--paper)',
               font: "500 12.5px 'Inter', ui-sans-serif",
               padding: '9px 16px',

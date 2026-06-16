@@ -27,7 +27,7 @@
   --cat-similarity: #2a6878;
   --cat-epistemic: #3a4a8a;
 
-  /* Confidence scale (cool→warm) */
+  /* Rating / recall scale (cool→warm): heatmap tint + model-status dots */
   --conf-1: #b14a4a;
   --conf-2: #c47a3a;
   --conf-3: #b89a3a;
@@ -315,18 +315,6 @@ body::before {
   .nx-socrates-halo::before {
     animation: none;
     opacity: 0.6;
-  }
-}
-
-/* Mentor conversation sheet — rises above the status bar */
-@keyframes nx-mentor-sheet-in {
-  from {
-    opacity: 0;
-    transform: translateY(24px) scale(0.985);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
   }
 }
 

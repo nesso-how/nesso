@@ -631,7 +631,7 @@ function Btn({
       style={{
         appearance: 'none',
         border: primary ? 0 : '0.5px solid var(--line)',
-        background: primary ? 'var(--ink)' : 'transparent',
+        background: primary ? 'var(--ink-2)' : 'transparent',
         color: primary ? 'var(--paper)' : 'var(--ink-2)',
         font: "500 12.5px 'Inter'",
         padding: '9px 16px',

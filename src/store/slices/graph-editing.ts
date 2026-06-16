@@ -17,6 +17,7 @@ import {
   snapshotSelection,
 } from '@/lib/graphClipboard'
 import { defaultCurveFlip, nodeCenterX, nodeCenterY } from '@nesso-how/graph'
+import { locales } from '@/i18n/registry'
 import { newElementId } from '@/lib/graphId'
 import type { GraphSnapshot } from '../types'
 import type { GraphState } from '../state'
@@ -112,7 +113,7 @@ export interface GraphEditingSlice {
   deleteSelection: () => void
   copySelection: () => boolean
   cutSelection: () => boolean
-  pasteSelection: () => string[] | null
+  pasteSelection: (at?: { x: number; y: number }) => string[] | null
   duplicateSelection: () => string[] | null
   reverseEdge: (id: string) => void
   requestEditNode: (id: string) => void
@@ -237,7 +238,7 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
           position: { x, y },
           selected: true,
           data: {
-            text: 'New concept',
+            text: locales[get().settings.language].canvas.newConcept,
             ...defaultConceptReviewFields(),
           },
         },
@@ -425,7 +426,7 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
     return copied
   },
 
-  pasteSelection: () => {
+  pasteSelection: (at) => {
     const clip = getGraphClipboard()
     if (!clip?.nodes.length && !clip?.edges.length) return null
     const s = get()
@@ -433,6 +434,7 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
       clip,
       new Set(s.nodes.map((n) => n.id)),
       new Set(s.edges.map((e) => e.id)),
+      at,
     )
     const pastedNodeIds = pastedNodes.map((n) => n.id)
 

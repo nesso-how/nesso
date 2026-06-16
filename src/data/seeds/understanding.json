@@ -199,7 +199,7 @@
   ],
   "display": {
     "edgeEncoding": "full",
-    "showHeatmap": true,
+    "showHeatmap": false,
     "curveStyle": "straight",
     "autoCurveFlip": true
   }

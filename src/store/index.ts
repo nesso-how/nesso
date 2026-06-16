@@ -35,16 +35,17 @@ export const useGraphStore = create<GraphState>()(
       }),
       merge: (persisted, current) => {
         const p = persisted as
-          | (Partial<GraphState> & { relationTypesPanelOpen?: boolean })
+          | (Partial<GraphState> & { relationTypesPanelOpen?: boolean; sidebarStatsOpen?: boolean })
           | undefined
         if (!p) return current
-        const { relationTypesPanelOpen: _removed, ...rest } = p
+        const { relationTypesPanelOpen: _removed, sidebarStatsOpen: _removedStats, ...rest } = p
         const merged = { ...current.settings, ...p.settings } as typeof current.settings & {
           reviewBatchMax?: unknown
           fsrsMaxInterval?: unknown
           graphWorkspacePath?: unknown
           accent?: unknown
           showLabels?: unknown
+          showConfidence?: unknown
         }
         const {
           reviewBatchMax: _legacyReviewBatchMax,
@@ -52,6 +53,7 @@ export const useGraphStore = create<GraphState>()(
           graphWorkspacePath: _legacyGraphWorkspacePath,
           accent: _legacyAccent,
           showLabels: _legacyShowLabels,
+          showConfidence: _legacyShowConfidence,
           ...settings
         } = merged
         if (settings.autoCurveFlip === undefined) settings.autoCurveFlip = true
