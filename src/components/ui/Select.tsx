@@ -37,15 +37,17 @@ export function Select<T extends string>({ options, value, onChange }: Props<T>)
         style={{
           display: 'inline-flex',
           alignItems: 'center',
-          gap: 6,
+          gap: 'var(--space-3)',
           appearance: 'none',
           cursor: 'default',
           border: '0.5px solid var(--line)',
           background: open ? 'var(--paper-deep)' : 'var(--bg-card)',
           color: 'var(--ink-2)',
-          font: "500 12px 'Inter', system-ui",
+          fontSize: '12px',
+          fontWeight: 500,
+          fontFamily: 'var(--font-sans)',
           padding: '5px 7px 5px 11px',
-          borderRadius: 6,
+          borderRadius: 'var(--radius-sm)',
         }}
       >
         {current?.label ?? ''}
@@ -72,9 +74,9 @@ export function Select<T extends string>({ options, value, onChange }: Props<T>)
             minWidth: '100%',
             background: 'var(--bg-card)',
             border: '0.5px solid var(--line)',
-            borderRadius: 8,
+            borderRadius: 'var(--radius-md)',
             boxShadow: 'var(--shadow-lg)',
-            padding: 4,
+            padding: 'var(--space-2)',
             zIndex: 5,
             whiteSpace: 'nowrap',
           }}
@@ -101,7 +103,7 @@ export function Select<T extends string>({ options, value, onChange }: Props<T>)
                   color: active ? 'var(--ink)' : 'var(--ink-2)',
                   font: `${active ? 500 : 400} 12.5px 'Inter', system-ui`,
                   padding: '6px 10px',
-                  borderRadius: 5,
+                  borderRadius: 'var(--radius-sm)',
                 }}
               >
                 {o.label}

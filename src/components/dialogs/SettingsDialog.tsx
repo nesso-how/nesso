@@ -105,11 +105,13 @@ export function SettingsDialog({ open, onClose }: Props) {
     boxSizing: 'border-box',
     appearance: 'none',
     border: '0.5px solid var(--line)',
-    borderRadius: 6,
+    borderRadius: 'var(--radius-sm)',
     padding: '10px 12px',
     background: 'var(--paper-deep)',
     color: 'var(--ink)',
-    font: "400 13px 'JetBrains Mono', ui-monospace",
+    fontSize: '13px',
+    fontWeight: 400,
+    fontFamily: 'var(--font-mono)',
   }
 
   return (
@@ -124,7 +126,7 @@ export function SettingsDialog({ open, onClose }: Props) {
             maxWidth: '94vw',
             background: 'var(--bg-card)',
             border: '0.5px solid var(--line)',
-            borderRadius: 14,
+            borderRadius: 'var(--radius-lg)',
             boxShadow: 'var(--shadow-lg)',
             display: 'flex',
             overflow: 'hidden',
@@ -141,12 +143,14 @@ export function SettingsDialog({ open, onClose }: Props) {
               padding: '20px 12px 20px',
               display: 'flex',
               flexDirection: 'column',
-              gap: 2,
+              gap: 'var(--space-1)',
             }}
           >
             <div
               style={{
-                font: "500 10px 'JetBrains Mono', ui-monospace",
+                fontSize: '10px',
+                fontWeight: 500,
+                fontFamily: 'var(--font-mono)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.12em',
                 color: 'var(--ink-4)',
@@ -168,7 +172,7 @@ export function SettingsDialog({ open, onClose }: Props) {
                   font: `${tab === tabId ? '500' : '400'} 13px 'Inter', system-ui`,
                   textAlign: 'left',
                   padding: '7px 10px',
-                  borderRadius: 8,
+                  borderRadius: 'var(--radius-md)',
                   cursor: 'default',
                   transition: 'all 0.12s',
                   width: '100%',
@@ -191,7 +195,14 @@ export function SettingsDialog({ open, onClose }: Props) {
                 borderBottom: '0.5px solid var(--line)',
               }}
             >
-              <span style={{ font: "500 14px 'Inter', system-ui", color: 'var(--ink)' }}>
+              <span
+                style={{
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  fontFamily: 'var(--font-sans)',
+                  color: 'var(--ink)',
+                }}
+              >
                 {t.settings.tabs[tab]}
               </span>
             </div>
@@ -201,7 +212,14 @@ export function SettingsDialog({ open, onClose }: Props) {
                 <div
                   style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
                 >
-                  <span style={{ font: "400 13px 'Inter', system-ui", color: 'var(--ink-3)' }}>
+                  <span
+                    style={{
+                      fontSize: '13px',
+                      fontWeight: 400,
+                      fontFamily: 'var(--font-sans)',
+                      color: 'var(--ink-3)',
+                    }}
+                  >
                     {t.settings.appearance.theme}
                   </span>
                   <SegmentedControl
@@ -223,7 +241,14 @@ export function SettingsDialog({ open, onClose }: Props) {
                     justifyContent: 'space-between',
                   }}
                 >
-                  <span style={{ font: "400 13px 'Inter', system-ui", color: 'var(--ink-3)' }}>
+                  <span
+                    style={{
+                      fontSize: '13px',
+                      fontWeight: 400,
+                      fontFamily: 'var(--font-sans)',
+                      color: 'var(--ink-3)',
+                    }}
+                  >
                     {t.settings.appearance.language}
                   </span>
                   <Select
@@ -240,7 +265,9 @@ export function SettingsDialog({ open, onClose }: Props) {
                   <div style={{ marginBottom: 14 }}>
                     <span
                       style={{
-                        font: "500 11px 'JetBrains Mono', ui-monospace",
+                        fontSize: '11px',
+                        fontWeight: 500,
+                        fontFamily: 'var(--font-mono)',
                         color: 'var(--ink-4)',
                         textTransform: 'uppercase',
                         letterSpacing: '0.08em',
@@ -251,7 +278,10 @@ export function SettingsDialog({ open, onClose }: Props) {
                     <small
                       style={{
                         display: 'block',
-                        font: "400 11px/1.4 'Inter', system-ui",
+                        fontSize: '11px',
+                        fontWeight: 400,
+                        lineHeight: 1.4,
+                        fontFamily: 'var(--font-sans)',
                         color: 'var(--ink-4)',
                         marginTop: 6,
                       }}
@@ -268,7 +298,14 @@ export function SettingsDialog({ open, onClose }: Props) {
                         justifyContent: 'space-between',
                       }}
                     >
-                      <span style={{ font: "400 13px 'Inter', system-ui", color: 'var(--ink-3)' }}>
+                      <span
+                        style={{
+                          fontSize: '13px',
+                          fontWeight: 400,
+                          fontFamily: 'var(--font-sans)',
+                          color: 'var(--ink-3)',
+                        }}
+                      >
                         {t.settings.appearance.heatmap}
                       </span>
                       <Switch
@@ -284,7 +321,14 @@ export function SettingsDialog({ open, onClose }: Props) {
                         justifyContent: 'space-between',
                       }}
                     >
-                      <span style={{ font: "400 13px 'Inter', system-ui", color: 'var(--ink-3)' }}>
+                      <span
+                        style={{
+                          fontSize: '13px',
+                          fontWeight: 400,
+                          fontFamily: 'var(--font-sans)',
+                          color: 'var(--ink-3)',
+                        }}
+                      >
                         {t.settings.appearance.edges}
                       </span>
                       <SegmentedControl
@@ -307,7 +351,14 @@ export function SettingsDialog({ open, onClose }: Props) {
                         justifyContent: 'space-between',
                       }}
                     >
-                      <span style={{ font: "400 13px 'Inter', system-ui", color: 'var(--ink-3)' }}>
+                      <span
+                        style={{
+                          fontSize: '13px',
+                          fontWeight: 400,
+                          fontFamily: 'var(--font-sans)',
+                          color: 'var(--ink-3)',
+                        }}
+                      >
                         {t.settings.appearance.curve}
                       </span>
                       <SegmentedControl
@@ -329,7 +380,12 @@ export function SettingsDialog({ open, onClose }: Props) {
                         }}
                       >
                         <span
-                          style={{ font: "400 13px 'Inter', system-ui", color: 'var(--ink-3)' }}
+                          style={{
+                            fontSize: '13px',
+                            fontWeight: 400,
+                            fontFamily: 'var(--font-sans)',
+                            color: 'var(--ink-3)',
+                          }}
                         >
                           {t.settings.appearance.autoFlip}
                         </span>
@@ -350,7 +406,14 @@ export function SettingsDialog({ open, onClose }: Props) {
                 <div
                   style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
                 >
-                  <span style={{ font: "400 13px 'Inter', system-ui", color: 'var(--ink-3)' }}>
+                  <span
+                    style={{
+                      fontSize: '13px',
+                      fontWeight: 400,
+                      fontFamily: 'var(--font-sans)',
+                      color: 'var(--ink-3)',
+                    }}
+                  >
                     {t.settings.ai.source}
                   </span>
                   <SegmentedControl
@@ -370,7 +433,9 @@ export function SettingsDialog({ open, onClose }: Props) {
                       <label style={{ display: 'block' }}>
                         <span
                           style={{
-                            font: "400 13px 'Inter', system-ui",
+                            fontSize: '13px',
+                            fontWeight: 400,
+                            fontFamily: 'var(--font-sans)',
                             color: 'var(--ink-2)',
                             display: 'block',
                           }}
@@ -380,7 +445,10 @@ export function SettingsDialog({ open, onClose }: Props) {
                         <small
                           style={{
                             display: 'block',
-                            font: "400 11px/1.4 'Inter', system-ui",
+                            fontSize: '11px',
+                            fontWeight: 400,
+                            lineHeight: 1.4,
+                            fontFamily: 'var(--font-sans)',
                             color: 'var(--ink-4)',
                             marginTop: 3,
                             marginBottom: 8,
@@ -400,7 +468,9 @@ export function SettingsDialog({ open, onClose }: Props) {
                       <div>
                         <span
                           style={{
-                            font: "400 13px 'Inter', system-ui",
+                            fontSize: '13px',
+                            fontWeight: 400,
+                            fontFamily: 'var(--font-sans)',
                             color: 'var(--ink-2)',
                             display: 'block',
                           }}
@@ -410,7 +480,10 @@ export function SettingsDialog({ open, onClose }: Props) {
                         <small
                           style={{
                             display: 'block',
-                            font: "400 11px/1.4 'Inter', system-ui",
+                            fontSize: '11px',
+                            fontWeight: 400,
+                            lineHeight: 1.4,
+                            fontFamily: 'var(--font-sans)',
                             color: 'var(--ink-4)',
                             marginTop: 3,
                             marginBottom: 10,
@@ -422,7 +495,7 @@ export function SettingsDialog({ open, onClose }: Props) {
                           style={{
                             display: 'flex',
                             flexWrap: 'wrap',
-                            gap: 6,
+                            gap: 'var(--space-3)',
                             marginBottom: 10,
                           }}
                         >
@@ -442,9 +515,11 @@ export function SettingsDialog({ open, onClose }: Props) {
                                   border: `0.5px solid ${active ? 'var(--ink-2)' : 'var(--line)'}`,
                                   background: active ? 'var(--paper-deep)' : 'transparent',
                                   color: active ? 'var(--ink)' : 'var(--ink-3)',
-                                  font: "500 11px 'JetBrains Mono', ui-monospace",
+                                  fontSize: '11px',
+                                  fontWeight: 500,
+                                  fontFamily: 'var(--font-mono)',
                                   padding: '5px 10px',
-                                  borderRadius: 6,
+                                  borderRadius: 'var(--radius-sm)',
                                   cursor: 'default',
                                 }}
                               >
@@ -476,7 +551,9 @@ export function SettingsDialog({ open, onClose }: Props) {
                       <label style={{ display: 'block' }}>
                         <span
                           style={{
-                            font: "400 13px 'Inter', system-ui",
+                            fontSize: '13px',
+                            fontWeight: 400,
+                            fontFamily: 'var(--font-sans)',
                             color: 'var(--ink-2)',
                             display: 'block',
                           }}
@@ -486,7 +563,10 @@ export function SettingsDialog({ open, onClose }: Props) {
                         <small
                           style={{
                             display: 'block',
-                            font: "400 11px/1.4 'Inter', system-ui",
+                            fontSize: '11px',
+                            fontWeight: 400,
+                            lineHeight: 1.4,
+                            fontFamily: 'var(--font-sans)',
                             color: 'var(--ink-4)',
                             marginTop: 3,
                             marginBottom: 8,
@@ -496,7 +576,7 @@ export function SettingsDialog({ open, onClose }: Props) {
                           <code
                             style={{
                               fontFamily: "'JetBrains Mono', ui-monospace",
-                              fontSize: '10.5px',
+                              fontSize: 'var(--text-xs)',
                             }}
                           >
                             Authorization: Bearer
@@ -531,7 +611,7 @@ export function SettingsDialog({ open, onClose }: Props) {
                   label={t.settings.review.retention}
                   description={t.settings.review.retentionDesc}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-5)' }}>
                     <input
                       type="range"
                       className="settings-slider"
@@ -550,7 +630,9 @@ export function SettingsDialog({ open, onClose }: Props) {
                     />
                     <span
                       style={{
-                        font: "500 12px 'JetBrains Mono', ui-monospace",
+                        fontSize: '12px',
+                        fontWeight: 500,
+                        fontFamily: 'var(--font-mono)',
                         color: 'var(--ink-2)',
                         minWidth: 32,
                         textAlign: 'right',

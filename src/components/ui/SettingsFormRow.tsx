@@ -15,18 +15,30 @@ export function SettingsFormRow({ label, description, last, children }: Props) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        gap: 16,
+        gap: 'var(--space-7)',
         paddingBottom: last ? 0 : 18,
         marginBottom: last ? 0 : 18,
         borderBottom: last ? 'none' : '0.5px solid var(--line)',
       }}
     >
       <div style={{ minWidth: 0 }}>
-        <span style={{ font: "400 13px 'Inter', system-ui", color: 'var(--ink-2)' }}>{label}</span>
+        <span
+          style={{
+            fontSize: '13px',
+            fontWeight: 400,
+            fontFamily: 'var(--font-sans)',
+            color: 'var(--ink-2)',
+          }}
+        >
+          {label}
+        </span>
         <small
           style={{
             display: 'block',
-            font: "400 11px/1.4 'Inter', system-ui",
+            fontSize: '11px',
+            fontWeight: 400,
+            lineHeight: 1.4,
+            fontFamily: 'var(--font-sans)',
             color: 'var(--ink-4)',
             marginTop: 3,
           }}

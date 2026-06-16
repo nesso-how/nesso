@@ -42,23 +42,41 @@ export function LocalModelPanel({ status, progress, progressText, error }: Props
     <div
       style={{
         border: '0.5px solid var(--line)',
-        borderRadius: 12,
+        borderRadius: 'var(--radius-lg)',
         padding: '16px',
         background: 'transparent',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 10 }}>
-        <span style={{ font: "500 13px 'Inter', system-ui", color: 'var(--ink)' }}>
+      <div
+        style={{ display: 'flex', alignItems: 'baseline', gap: 'var(--space-5)', marginBottom: 10 }}
+      >
+        <span
+          style={{
+            fontSize: '13px',
+            fontWeight: 500,
+            fontFamily: 'var(--font-sans)',
+            color: 'var(--ink)',
+          }}
+        >
           {LOCAL_MODEL_LABEL}
         </span>
-        <span style={{ font: "400 11px 'JetBrains Mono', ui-monospace", color: 'var(--ink-4)' }}>
+        <span
+          style={{
+            fontSize: '11px',
+            fontWeight: 400,
+            fontFamily: 'var(--font-mono)',
+            color: 'var(--ink-4)',
+          }}
+        >
           {LOCAL_MODEL_SIZE}
         </span>
         {status === 'ready' && (
           <span
             style={{
               marginLeft: 'auto',
-              font: "500 10px 'JetBrains Mono', ui-monospace",
+              fontSize: '10px',
+              fontWeight: 500,
+              fontFamily: 'var(--font-mono)',
               color: 'var(--conf-5)',
               textTransform: 'uppercase',
               letterSpacing: '0.08em',
@@ -71,7 +89,9 @@ export function LocalModelPanel({ status, progress, progressText, error }: Props
           <span
             style={{
               marginLeft: 'auto',
-              font: "500 10px 'JetBrains Mono', ui-monospace",
+              fontSize: '10px',
+              fontWeight: 500,
+              fontFamily: 'var(--font-mono)',
               color: 'var(--conf-5)',
               textTransform: 'uppercase',
               letterSpacing: '0.08em',
@@ -83,7 +103,16 @@ export function LocalModelPanel({ status, progress, progressText, error }: Props
       </div>
 
       {status === 'idle' && cacheProbe === 'unknown' && (
-        <p style={{ font: "400 12px/1.5 'Inter', system-ui", color: 'var(--ink-4)', margin: 0 }}>
+        <p
+          style={{
+            fontSize: '12px',
+            fontWeight: 400,
+            lineHeight: 1.5,
+            fontFamily: 'var(--font-sans)',
+            color: 'var(--ink-4)',
+            margin: 0,
+          }}
+        >
           {t.settings.ai.localModel.checkingCache}
         </p>
       )}
@@ -92,14 +121,26 @@ export function LocalModelPanel({ status, progress, progressText, error }: Props
         <>
           <p
             style={{
-              font: "400 12px/1.5 'Inter', system-ui",
+              fontSize: '12px',
+              fontWeight: 400,
+              lineHeight: 1.5,
+              fontFamily: 'var(--font-sans)',
               color: 'var(--ink-3)',
               margin: '0 0 8px',
             }}
           >
             {t.settings.ai.localModel.alreadyDownloaded}
           </p>
-          <p style={{ font: "400 11px/1.45 'Inter', system-ui", color: 'var(--ink-4)', margin: 0 }}>
+          <p
+            style={{
+              fontSize: '11px',
+              fontWeight: 400,
+              lineHeight: 1.45,
+              fontFamily: 'var(--font-sans)',
+              color: 'var(--ink-4)',
+              margin: 0,
+            }}
+          >
             {t.settings.ai.localModel.autoLoading}
           </p>
         </>
@@ -109,7 +150,10 @@ export function LocalModelPanel({ status, progress, progressText, error }: Props
         <>
           <p
             style={{
-              font: "400 12px/1.5 'Inter', system-ui",
+              fontSize: '12px',
+              fontWeight: 400,
+              lineHeight: 1.5,
+              fontFamily: 'var(--font-sans)',
               color: 'var(--ink-3)',
               margin: '0 0 12px',
             }}
@@ -124,9 +168,11 @@ export function LocalModelPanel({ status, progress, progressText, error }: Props
               border: 0,
               background: 'var(--ink-2)',
               color: 'var(--paper)',
-              font: "500 12.5px 'Inter', ui-sans-serif",
+              fontSize: '12.5px',
+              fontWeight: 500,
+              fontFamily: 'var(--font-sans)',
               padding: '9px 16px',
-              borderRadius: 7,
+              borderRadius: 'var(--radius-md)',
               cursor: 'default',
             }}
           >
@@ -140,7 +186,7 @@ export function LocalModelPanel({ status, progress, progressText, error }: Props
           <div
             style={{
               height: 4,
-              borderRadius: 999,
+              borderRadius: 'var(--radius-pill)',
               background: 'var(--line)',
               marginBottom: 8,
               overflow: 'hidden',
@@ -151,19 +197,35 @@ export function LocalModelPanel({ status, progress, progressText, error }: Props
                 height: '100%',
                 width: `${Math.round(progress * 100)}%`,
                 background: 'var(--accent)',
-                borderRadius: 999,
+                borderRadius: 'var(--radius-pill)',
                 transition: 'width 0.3s ease',
               }}
             />
           </div>
-          <span style={{ font: "400 11px 'JetBrains Mono', ui-monospace", color: 'var(--ink-4)' }}>
+          <span
+            style={{
+              fontSize: '11px',
+              fontWeight: 400,
+              fontFamily: 'var(--font-mono)',
+              color: 'var(--ink-4)',
+            }}
+          >
             {progressText || 'Loading…'}
           </span>
         </>
       )}
 
       {status === 'ready' && (
-        <p style={{ font: "400 12px/1.5 'Inter', system-ui", color: 'var(--ink-3)', margin: 0 }}>
+        <p
+          style={{
+            fontSize: '12px',
+            fontWeight: 400,
+            lineHeight: 1.5,
+            fontFamily: 'var(--font-sans)',
+            color: 'var(--ink-3)',
+            margin: 0,
+          }}
+        >
           {t.settings.ai.localModel.loaded}
         </p>
       )}
@@ -172,7 +234,10 @@ export function LocalModelPanel({ status, progress, progressText, error }: Props
         <>
           <p
             style={{
-              font: "400 12px/1.5 'Inter', system-ui",
+              fontSize: '12px',
+              fontWeight: 400,
+              lineHeight: 1.5,
+              fontFamily: 'var(--font-sans)',
               color: 'var(--conf-1)',
               margin: '0 0 10px',
             }}
@@ -187,9 +252,11 @@ export function LocalModelPanel({ status, progress, progressText, error }: Props
               border: '0.5px solid var(--line)',
               background: 'transparent',
               color: 'var(--ink-3)',
-              font: "500 12px 'JetBrains Mono', ui-monospace",
+              fontSize: '12px',
+              fontWeight: 500,
+              fontFamily: 'var(--font-mono)',
               padding: '7px 12px',
-              borderRadius: 7,
+              borderRadius: 'var(--radius-md)',
               cursor: 'default',
             }}
           >

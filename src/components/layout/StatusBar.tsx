@@ -87,7 +87,7 @@ function StatusBtn({
         height: 22,
         minWidth: 22,
         padding: '0 5px',
-        borderRadius: 6,
+        borderRadius: 'var(--radius-sm)',
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -108,7 +108,9 @@ function ZoomReadout() {
   return (
     <span
       style={{
-        font: "500 10.5px 'JetBrains Mono', ui-monospace",
+        fontSize: '10.5px',
+        fontWeight: 500,
+        fontFamily: 'var(--font-mono)',
         color: 'var(--ink-3)',
         minWidth: 34,
         textAlign: 'center',
@@ -137,10 +139,10 @@ function SocratesEntry() {
         border: 0,
         height: 22,
         padding: '0 8px 0 6px',
-        borderRadius: 999,
+        borderRadius: 'var(--radius-pill)',
         display: 'inline-flex',
         alignItems: 'center',
-        gap: 6,
+        gap: 'var(--space-3)',
         cursor: 'default',
         background: active ? 'var(--paper-deep)' : 'transparent',
       }}
@@ -150,7 +152,9 @@ function SocratesEntry() {
       </span>
       <span
         style={{
-          font: "500 11px 'Inter', ui-sans-serif",
+          fontSize: '11px',
+          fontWeight: 500,
+          fontFamily: 'var(--font-sans)',
           color: active ? 'var(--ink)' : 'var(--ink-3)',
           whiteSpace: 'nowrap',
         }}
@@ -206,7 +210,8 @@ export function StatusBar({ sidebarWidth, onFit }: Props) {
         <span style={sep} />
         <span
           style={{
-            font: "10.5px 'JetBrains Mono', ui-monospace",
+            fontSize: '10.5px',
+            fontFamily: 'var(--font-mono)',
             color: 'var(--ink-4)',
             whiteSpace: 'nowrap',
           }}
@@ -216,7 +221,7 @@ export function StatusBar({ sidebarWidth, onFit }: Props) {
       </div>
 
       {/* Right — history + viewport controls */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-1)', flexShrink: 0 }}>
         <StatusBtn onClick={undo} disabled={!canUndo} title={t.statusBar.undoTitle}>
           <StatusIcon name="undo" />
         </StatusBtn>

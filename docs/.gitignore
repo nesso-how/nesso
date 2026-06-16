@@ -19,3 +19,7 @@ pnpm-debug.log*
 
 # macOS-specific files
 .DS_Store
+
+# generated theme tokens (from @nesso-how/theme — run `pnpm theme:css`)
+src/styles/theme.generated.css
+src/styles/theme.app.generated.css

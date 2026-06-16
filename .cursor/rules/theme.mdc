@@ -1,0 +1,9 @@
+---
+description: Theme tokens — @nesso-how/theme is the single source of truth
+globs: packages/theme/**,src/index.css,vite.config.ts
+alwaysApply: false
+---
+
+Canonical content lives in [`.rules/theme.md`](../../.rules/theme.md). Edit that file, not this wrapper.
+
+@.rules/theme.md

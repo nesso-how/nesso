@@ -18,7 +18,7 @@ export function CloseButton({ onClick, large }: Props) {
         cursor: 'default',
         width: size,
         height: size,
-        borderRadius: 999,
+        borderRadius: 'var(--radius-pill)',
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',

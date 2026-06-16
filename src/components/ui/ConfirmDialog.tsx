@@ -5,9 +5,11 @@ import { settleConfirm } from '@/components/ui/confirm'
 
 const buttonBase = {
   appearance: 'none' as const,
-  font: "500 13px 'Inter', system-ui",
+  fontSize: '13px',
+  fontWeight: 500,
+  fontFamily: 'var(--font-sans)',
   padding: '8px 16px',
-  borderRadius: 7,
+  borderRadius: 'var(--radius-md)',
   cursor: 'default' as const,
 }
 
@@ -25,24 +27,35 @@ export function ConfirmDialog() {
             width: 'min(360px, calc(100vw - 48px))',
             background: 'var(--bg-card)',
             border: '0.5px solid var(--line)',
-            borderRadius: 14,
+            borderRadius: 'var(--radius-lg)',
             boxShadow: 'var(--shadow-lg)',
             padding: 22,
           }}
         >
-          <h2 style={{ margin: 0, font: "600 15px 'Inter', system-ui", color: 'var(--ink)' }}>
+          <h2
+            style={{
+              margin: 0,
+              fontSize: '15px',
+              fontWeight: 600,
+              fontFamily: 'var(--font-sans)',
+              color: 'var(--ink)',
+            }}
+          >
             {request.title}
           </h2>
           <p
             style={{
               margin: '8px 0 20px',
-              font: "400 13px/1.5 'Inter', system-ui",
+              fontSize: '13px',
+              fontWeight: 400,
+              lineHeight: 1.5,
+              fontFamily: 'var(--font-sans)',
               color: 'var(--ink-2)',
             }}
           >
             {request.message}
           </p>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-4)' }}>
             <button
               type="button"
               autoFocus

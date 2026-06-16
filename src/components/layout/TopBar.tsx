@@ -62,7 +62,7 @@ export function TopBar({
       }}
     >
       {/* Left: expand sidebar (when collapsed) + project / graph breadcrumb */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-6)', minWidth: 0 }}>
         {sidebarCollapsed && (
           <button
             onClick={onExpandSidebar}
@@ -98,7 +98,8 @@ export function TopBar({
             <>
               <span
                 style={{
-                  font: "14px 'Inter', ui-sans-serif",
+                  fontSize: '14px',
+                  fontFamily: 'var(--font-sans)',
                   color: 'var(--ink-4)',
                   whiteSpace: 'nowrap',
                 }}
@@ -110,7 +111,9 @@ export function TopBar({
           )}
           <span
             style={{
-              font: "500 14px 'Inter', ui-sans-serif",
+              fontSize: '14px',
+              fontWeight: 500,
+              fontFamily: 'var(--font-sans)',
               letterSpacing: '-0.005em',
               color: 'var(--ink)',
               whiteSpace: 'nowrap',
@@ -123,7 +126,7 @@ export function TopBar({
         </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
         <button
           type="button"
           onClick={onReview}
@@ -132,15 +135,17 @@ export function TopBar({
             position: 'relative',
             display: 'flex',
             alignItems: 'center',
-            gap: 6,
+            gap: 'var(--space-3)',
             appearance: 'none',
             border: '0.5px solid var(--line)',
             background: 'var(--bg-card)',
             color: 'var(--ink-2)',
-            borderRadius: 7,
+            borderRadius: 'var(--radius-md)',
             padding: '6px 11px',
             cursor: 'default',
-            font: "500 12.5px 'Inter', ui-sans-serif",
+            fontSize: '12.5px',
+            fontWeight: 500,
+            fontFamily: 'var(--font-sans)',
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.background = 'var(--paper-deep)'
@@ -173,10 +178,12 @@ export function TopBar({
                 right: -6,
                 minWidth: 16,
                 height: 16,
-                borderRadius: 999,
+                borderRadius: 'var(--radius-pill)',
                 background: 'var(--highlight)',
                 color: 'var(--paper)',
-                font: "600 10px 'JetBrains Mono', ui-monospace",
+                fontSize: '10px',
+                fontWeight: 600,
+                fontFamily: 'var(--font-mono)',
                 padding: '0 4px',
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -200,7 +207,7 @@ const iconBtn: React.CSSProperties = {
   background: 'transparent',
   width: 30,
   height: 30,
-  borderRadius: 6,
+  borderRadius: 'var(--radius-sm)',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',

@@ -11,7 +11,9 @@ import { EdgeRow } from './EdgeRow'
 import { InspectorActionToolbar, InspectorIconBtn } from './inspectorChrome'
 
 const LABEL_STYLE: CSSProperties = {
-  font: "500 11px 'JetBrains Mono', ui-monospace",
+  fontSize: '11px',
+  fontWeight: 500,
+  fontFamily: 'var(--font-mono)',
   color: 'var(--ink-4)',
   textTransform: 'uppercase',
   letterSpacing: '0.08em',
@@ -198,7 +200,7 @@ export function NodeInspector({
             <InspectorIconBtn icon="close" title="Esc" onClick={() => setSelected(null)} />
           </div>
           {/* Identity — image + title */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-6)' }}>
             {/* Image icon button */}
             <button
               type="button"
@@ -217,7 +219,7 @@ export function NodeInspector({
                 flexShrink: 0,
                 width: 48,
                 height: 48,
-                borderRadius: 10,
+                borderRadius: 'var(--radius-md)',
                 background: hasImage
                   ? 'var(--paper-deep)'
                   : `repeating-linear-gradient(45deg, var(--paper-deep) 0 6px, var(--bg-card) 6px 12px)`,
@@ -288,7 +290,10 @@ export function NodeInspector({
                   if (v.trim()) updateNodeData(node.id, { text: v.trim().replace(/\n+/g, ' ') })
                 }}
                 textStyle={{
-                  font: "500 18px/1.2 'Fraunces', ui-serif, Georgia, serif",
+                  fontSize: '18px',
+                  fontWeight: 500,
+                  lineHeight: 1.2,
+                  fontFamily: 'var(--font-display)',
                   letterSpacing: '-0.01em',
                   color: 'var(--ink)',
                 }}
@@ -323,7 +328,7 @@ export function NodeInspector({
               cursor: 'default',
               display: 'flex',
               alignItems: 'center',
-              gap: 6,
+              gap: 'var(--space-3)',
               padding: 0,
               marginBottom: memoryOpen ? 11 : 0,
               ...LABEL_STYLE,
@@ -341,17 +346,25 @@ export function NodeInspector({
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    gap: 12,
+                    gap: 'var(--space-6)',
                     padding: '7px 0',
                     borderBottom: i === memRows.length - 1 ? 'none' : '0.5px solid var(--line)',
                   }}
                 >
-                  <span style={{ font: "12px 'Inter', system-ui", color: 'var(--ink-3)' }}>
+                  <span
+                    style={{
+                      fontSize: '12px',
+                      fontFamily: 'var(--font-sans)',
+                      color: 'var(--ink-3)',
+                    }}
+                  >
                     {r.label}
                   </span>
                   <span
                     style={{
-                      font: "500 12px 'JetBrains Mono', ui-monospace",
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      fontFamily: 'var(--font-mono)',
                       color: r.accent
                         ? 'var(--highlight)'
                         : r.warn
@@ -379,7 +392,10 @@ export function NodeInspector({
             borderedPlaceholder
             maxLength={2000}
             textStyle={{
-              font: "400 13.5px/1.55 'Fraunces', ui-serif, Georgia, serif",
+              fontSize: '13.5px',
+              fontWeight: 400,
+              lineHeight: 1.55,
+              fontFamily: 'var(--font-display)',
               color: 'var(--ink-2)',
             }}
           />
@@ -405,7 +421,7 @@ export function NodeInspector({
                 cursor: 'default',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: 6,
+                gap: 'var(--space-3)',
                 padding: 0,
                 ...LABEL_STYLE,
               }}
@@ -432,9 +448,11 @@ export function NodeInspector({
                   background: 'transparent',
                   cursor: 'default',
                   color: 'var(--ink-3)',
-                  font: "500 11.5px 'Inter', ui-sans-serif",
+                  fontSize: '11.5px',
+                  fontWeight: 500,
+                  fontFamily: 'var(--font-sans)',
                   padding: '2px 5px',
-                  borderRadius: 6,
+                  borderRadius: 'var(--radius-sm)',
                   textTransform: 'none',
                   letterSpacing: 0,
                 }}
@@ -463,9 +481,11 @@ export function NodeInspector({
                   background: 'transparent',
                   width: '100%',
                   padding: '8px 10px',
-                  borderRadius: 7,
+                  borderRadius: 'var(--radius-md)',
                   cursor: 'default',
-                  font: "450 12px 'Inter', system-ui",
+                  fontSize: '12px',
+                  fontWeight: 450,
+                  fontFamily: 'var(--font-sans)',
                   color: 'var(--ink-5)',
                   textAlign: 'left',
                 }}
@@ -473,14 +493,14 @@ export function NodeInspector({
                 {t.inspector.notes.examplesPlaceholder}
               </button>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
                 {examplesArr.map((ex, i) => (
                   <div
                     key={i}
                     style={{
                       display: 'grid',
                       gridTemplateColumns: '14px 1fr 18px',
-                      gap: 6,
+                      gap: 'var(--space-3)',
                       alignItems: 'flex-start',
                       padding: '3px 0',
                     }}
@@ -489,7 +509,7 @@ export function NodeInspector({
                       style={{
                         width: 5,
                         height: 5,
-                        borderRadius: '50%',
+                        borderRadius: 'var(--radius-circle)',
                         background: 'var(--ink-4)',
                         marginTop: 8,
                       }}
@@ -504,7 +524,10 @@ export function NodeInspector({
                       onShiftEnter={addExample}
                       onDeleteEmpty={examplesArr.length > 1 ? () => removeExample(i) : undefined}
                       textStyle={{
-                        font: "400 13.5px/1.55 'Fraunces', ui-serif, Georgia, serif",
+                        fontSize: '13.5px',
+                        fontWeight: 400,
+                        lineHeight: 1.55,
+                        fontFamily: 'var(--font-display)',
                         color: 'var(--ink-2)',
                       }}
                     />
@@ -518,7 +541,9 @@ export function NodeInspector({
                         background: 'transparent',
                         color: 'var(--ink-5)',
                         cursor: 'default',
-                        font: "500 10px 'Inter', system-ui",
+                        fontSize: '10px',
+                        fontWeight: 500,
+                        fontFamily: 'var(--font-sans)',
                         padding: 0,
                         lineHeight: 1.55,
                       }}
@@ -532,7 +557,7 @@ export function NodeInspector({
                     style={{
                       display: 'grid',
                       gridTemplateColumns: '14px 1fr 18px',
-                      gap: 6,
+                      gap: 'var(--space-3)',
                       alignItems: 'flex-start',
                       padding: '3px 0',
                     }}
@@ -541,7 +566,7 @@ export function NodeInspector({
                       style={{
                         width: 5,
                         height: 5,
-                        borderRadius: '50%',
+                        borderRadius: 'var(--radius-circle)',
                         background: 'var(--ink-4)',
                         marginTop: 8,
                       }}
@@ -558,7 +583,10 @@ export function NodeInspector({
                       onDeleteEmpty={() => setPendingNewExample(false)}
                       initialEditing
                       textStyle={{
-                        font: "400 13.5px/1.55 'Fraunces', ui-serif, Georgia, serif",
+                        fontSize: '13.5px',
+                        fontWeight: 400,
+                        lineHeight: 1.55,
+                        fontFamily: 'var(--font-display)',
                         color: 'var(--ink-2)',
                       }}
                     />
@@ -572,7 +600,9 @@ export function NodeInspector({
                         background: 'transparent',
                         color: 'var(--ink-5)',
                         cursor: 'default',
-                        font: "500 10px 'Inter', system-ui",
+                        fontSize: '10px',
+                        fontWeight: 500,
+                        fontFamily: 'var(--font-sans)',
                         padding: 0,
                         lineHeight: 1.55,
                       }}
@@ -597,7 +627,10 @@ export function NodeInspector({
             borderedPlaceholder
             maxLength={2000}
             textStyle={{
-              font: "400 13.5px/1.55 'Fraunces', ui-serif, Georgia, serif",
+              fontSize: '13.5px',
+              fontWeight: 400,
+              lineHeight: 1.55,
+              fontFamily: 'var(--font-display)',
               color: 'var(--ink-2)',
             }}
           />
@@ -605,7 +638,7 @@ export function NodeInspector({
 
         {/* Relations — collapsible */}
         {(outgoing.length > 0 || incoming.length > 0) && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
             <button
               type="button"
               onClick={() => setSetting('inspectorRelationsOpen', !relationsOpen)}
@@ -616,7 +649,7 @@ export function NodeInspector({
                 cursor: 'default',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: 6,
+                gap: 'var(--space-3)',
                 padding: 0,
                 ...LABEL_STYLE,
               }}

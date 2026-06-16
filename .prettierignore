@@ -3,6 +3,7 @@ node_modules
 pnpm-store
 dist
 dist-ssr
+.astro
 coverage
 src-tauri/target
 src-tauri/icons
@@ -11,3 +12,5 @@ packages/mcp/dist
 *.min.js
 pnpm-lock.yaml
 CHANGELOG.md
+docs/src/styles/theme.generated.css
+docs/src/styles/theme.app.generated.css

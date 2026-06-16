@@ -14,10 +14,12 @@ export function SettingRow({ label, children }: Props) {
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '5px 0',
-        gap: 12,
+        gap: 'var(--space-6)',
       }}
     >
-      <span style={{ font: "12px 'Inter', ui-sans-serif", color: 'var(--ink-3)' }}>{label}</span>
+      <span style={{ fontSize: '12px', fontFamily: 'var(--font-sans)', color: 'var(--ink-3)' }}>
+        {label}
+      </span>
       {children}
     </div>
   )

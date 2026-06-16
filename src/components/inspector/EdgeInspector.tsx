@@ -72,9 +72,14 @@ export function EdgeInspector({ panelWidth, onPanelWidthChange }: Props) {
         </div>
 
         {/* from / relation / to — vertical (concept names are often long) */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
           <span
-            style={{ font: "500 16px 'Fraunces', ui-serif, Georgia, serif", color: 'var(--ink)' }}
+            style={{
+              fontSize: '16px',
+              fontWeight: 500,
+              fontFamily: 'var(--font-display)',
+              color: 'var(--ink)',
+            }}
           >
             {from?.data.text}
           </span>
@@ -82,12 +87,24 @@ export function EdgeInspector({ panelWidth, onPanelWidthChange }: Props) {
             style={{ display: 'flex', alignItems: 'center', gap: 7, paddingLeft: 1, minWidth: 0 }}
           >
             <GlyphSVG kind={T.glyph} color={C.color} size={14} />
-            <span style={{ font: "500 13px 'JetBrains Mono', ui-monospace", color: C.color }}>
+            <span
+              style={{
+                fontSize: '13px',
+                fontWeight: 500,
+                fontFamily: 'var(--font-mono)',
+                color: C.color,
+              }}
+            >
               {t.relationTypes.types[edgeType]}
             </span>
           </div>
           <span
-            style={{ font: "500 16px 'Fraunces', ui-serif, Georgia, serif", color: 'var(--ink)' }}
+            style={{
+              fontSize: '16px',
+              fontWeight: 500,
+              fontFamily: 'var(--font-display)',
+              color: 'var(--ink)',
+            }}
           >
             {to?.data.text}
           </span>
@@ -102,7 +119,9 @@ export function EdgeInspector({ panelWidth, onPanelWidthChange }: Props) {
         <h5
           style={{
             margin: '0 0 8px',
-            font: "500 11px 'JetBrains Mono', ui-monospace",
+            fontSize: '11px',
+            fontWeight: 500,
+            fontFamily: 'var(--font-mono)',
             textTransform: 'uppercase',
             letterSpacing: '0.08em',
             color: 'var(--ink-4)',
@@ -117,9 +136,11 @@ export function EdgeInspector({ panelWidth, onPanelWidthChange }: Props) {
               type="button"
               onClick={() => updateEdgeType(edge.id, k)}
               style={{
-                font: "500 11px 'JetBrains Mono', ui-monospace",
+                fontSize: '11px',
+                fontWeight: 500,
+                fontFamily: 'var(--font-mono)',
                 padding: '5px 10px',
-                borderRadius: 999,
+                borderRadius: 'var(--radius-pill)',
                 border: `0.5px solid ${k === edgeType ? C.color : 'var(--line)'}`,
                 background: k === edgeType ? C.color : 'transparent',
                 color: k === edgeType ? 'var(--paper)' : 'var(--ink-2)',
@@ -136,7 +157,9 @@ export function EdgeInspector({ panelWidth, onPanelWidthChange }: Props) {
             <h5
               style={{
                 margin: '18px 0 6px',
-                font: "600 10px 'JetBrains Mono', ui-monospace",
+                fontSize: '10px',
+                fontWeight: 600,
+                fontFamily: 'var(--font-mono)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.08em',
                 color: 'var(--ink-4)',

@@ -19,8 +19,8 @@ export function SegmentedControl({ options, value, onChange, style }: Props) {
       style={{
         display: 'flex',
         background: 'var(--paper-deep)',
-        borderRadius: 6,
-        padding: 2,
+        borderRadius: 'var(--radius-sm)',
+        padding: 'var(--space-1)',
         ...style,
       }}
     >
@@ -37,7 +37,7 @@ export function SegmentedControl({ options, value, onChange, style }: Props) {
             font:
               o.id === value ? "500 11px 'Inter', ui-sans-serif" : "11px 'Inter', ui-sans-serif",
             padding: '3px 9px',
-            borderRadius: 4,
+            borderRadius: 'var(--radius-sm)',
             cursor: 'default',
             boxShadow: o.id === value ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
           }}

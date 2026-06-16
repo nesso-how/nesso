@@ -217,7 +217,6 @@ function AppInner() {
     root.setAttribute('data-theme', settings.dark ? 'dark' : 'light')
     const palette = PALETTES[settings.categoryPalette] ?? PALETTES.default
     Object.entries(palette).forEach(([k, v]) => root.style.setProperty(`--cat-${k}`, v))
-    root.style.setProperty('--accent', settings.dark ? '#c47a82' : '#6e2730')
   }, [settings.dark, settings.categoryPalette])
 
   const hasSelection = !!selectedNode || !!selectedEdge

@@ -20,6 +20,9 @@ importers:
       '@nesso-how/relation-types':
         specifier: workspace:*
         version: link:packages/relation-types
+      '@nesso-how/theme':
+        specifier: workspace:*
+        version: link:packages/theme
       '@nesso-how/types':
         specifier: workspace:*
         version: link:packages/types
@@ -138,6 +141,12 @@ importers:
       '@nesso-how/graph':
         specifier: workspace:*
         version: link:../packages/graph
+      '@nesso-how/relation-types':
+        specifier: workspace:*
+        version: link:../packages/relation-types
+      '@nesso-how/theme':
+        specifier: workspace:*
+        version: link:../packages/theme
       '@nesso-how/types':
         specifier: workspace:*
         version: link:../packages/types
@@ -231,6 +240,16 @@ importers:
         version: 5.8.3
 
   packages/relation-types:
+    devDependencies:
+      typescript:
+        specifier: ~5.8.3
+        version: 5.8.3
+
+  packages/theme:
+    dependencies:
+      '@nesso-how/relation-types':
+        specifier: workspace:*
+        version: link:../relation-types
     devDependencies:
       typescript:
         specifier: ~5.8.3

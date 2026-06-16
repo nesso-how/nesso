@@ -99,7 +99,7 @@ export function InlineEdit({
         margin: '-4px -6px',
         padding: '4px 6px',
         boxShadow: '0 0 0 1px var(--line)',
-        borderRadius: 6,
+        borderRadius: 'var(--radius-sm)',
         background: 'var(--bg-card)',
       }
 
@@ -171,9 +171,11 @@ export function InlineEdit({
         onClick={() => setEditing(true)}
         style={{
           border: '0.5px dashed var(--line)',
-          borderRadius: 7,
+          borderRadius: 'var(--radius-md)',
           padding: '5px 8px',
-          font: "450 12px 'Inter', system-ui",
+          fontSize: '12px',
+          fontWeight: 450,
+          fontFamily: 'var(--font-sans)',
           color: 'var(--ink-5)',
           cursor: 'default',
           boxSizing: 'border-box',

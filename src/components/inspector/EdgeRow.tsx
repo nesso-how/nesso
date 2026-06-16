@@ -24,14 +24,14 @@ export function EdgeRow({ label, text, color, glyph, onClick, dim = false }: Pro
       style={{
         display: 'flex',
         alignItems: 'flex-start',
-        gap: 10,
+        gap: 'var(--space-5)',
         width: '100%',
         textAlign: 'left',
         appearance: 'none',
         border: 0,
         cursor: 'default',
         padding: '7px 8px',
-        borderRadius: 7,
+        borderRadius: 'var(--radius-md)',
         background: hover ? 'var(--paper-deep)' : 'transparent',
         opacity: dim ? 0.82 : 1,
       }}
@@ -40,7 +40,7 @@ export function EdgeRow({ label, text, color, glyph, onClick, dim = false }: Pro
         style={{
           width: 22,
           height: 22,
-          borderRadius: 6,
+          borderRadius: 'var(--radius-sm)',
           flexShrink: 0,
           marginTop: 1,
           display: 'flex',
@@ -56,7 +56,9 @@ export function EdgeRow({ label, text, color, glyph, onClick, dim = false }: Pro
       <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
         <span
           style={{
-            font: "500 13px 'Inter', ui-sans-serif",
+            fontSize: '13px',
+            fontWeight: 500,
+            fontFamily: 'var(--font-sans)',
             color: 'var(--ink)',
             lineHeight: 1.35,
             overflowWrap: 'anywhere',
@@ -67,7 +69,8 @@ export function EdgeRow({ label, text, color, glyph, onClick, dim = false }: Pro
         </span>
         <span
           style={{
-            font: "11px 'JetBrains Mono', ui-monospace",
+            fontSize: '11px',
+            fontFamily: 'var(--font-mono)',
             color,
             lineHeight: 1.2,
           }}

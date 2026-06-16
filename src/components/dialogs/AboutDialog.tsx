@@ -23,14 +23,16 @@ const linkRow: CSSProperties = {
   appearance: 'none',
   display: 'flex',
   alignItems: 'center',
-  gap: 10,
+  gap: 'var(--space-5)',
   width: '100%',
   padding: '11px 14px',
   border: 0,
   background: 'var(--bg-card)',
   cursor: 'default',
   textAlign: 'left',
-  font: "500 13px 'Inter', system-ui",
+  fontSize: '13px',
+  fontWeight: 500,
+  fontFamily: 'var(--font-sans)',
   color: 'var(--ink-2)',
   transition: 'background 0.12s, color 0.12s',
 }
@@ -63,7 +65,7 @@ export function AboutDialog({ open, onClose }: Props) {
             maxWidth: '94vw',
             background: 'var(--bg-card)',
             border: '0.5px solid var(--line)',
-            borderRadius: 14,
+            borderRadius: 'var(--radius-lg)',
             padding: '32px 28px 24px',
             display: 'flex',
             flexDirection: 'column',
@@ -76,7 +78,9 @@ export function AboutDialog({ open, onClose }: Props) {
           <div
             style={{
               marginTop: 14,
-              font: "500 20px 'Inter', ui-sans-serif",
+              fontSize: '20px',
+              fontWeight: 500,
+              fontFamily: 'var(--font-sans)',
               color: 'var(--ink)',
               letterSpacing: '-0.02em',
             }}
@@ -86,7 +90,9 @@ export function AboutDialog({ open, onClose }: Props) {
           <span
             style={{
               marginTop: 8,
-              font: "400 12px 'JetBrains Mono', ui-monospace",
+              fontSize: '12px',
+              fontWeight: 400,
+              fontFamily: 'var(--font-mono)',
               color: 'var(--ink-4)',
             }}
           >
@@ -95,7 +101,9 @@ export function AboutDialog({ open, onClose }: Props) {
           <p
             style={{
               margin: '14px 0 0',
-              font: "400 13px 'Inter', ui-sans-serif",
+              fontSize: '13px',
+              fontWeight: 400,
+              fontFamily: 'var(--font-sans)',
               color: 'var(--ink-3)',
               textAlign: 'center',
               lineHeight: 1.45,
@@ -109,11 +117,11 @@ export function AboutDialog({ open, onClose }: Props) {
               width: '100%',
               marginTop: 22,
               padding: 1,
-              borderRadius: 12,
+              borderRadius: 'var(--radius-lg)',
               background: 'var(--line)',
             }}
           >
-            <div style={{ borderRadius: 11, overflow: 'hidden' }}>
+            <div style={{ borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
               {links.map(({ label, url, icon }, i) => (
                 <button
                   key={url}

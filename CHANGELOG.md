@@ -6,6 +6,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- **`@nesso-how/theme` design-tokens package:** A new workspace package is the single source of truth for theme tokens — surface/ink colours, accent/highlight, the recall heatmap, shadows, fonts, and the type/spacing/radii scales. The app injects them into `<head>` at build time through a `nessoTheme()` Vite plugin (so they exist at first paint); the docs and landing consume them through a generated Starlight adapter (`starlightCss`) and an app-namespace stylesheet. Packs derive from the default via `defineTheme` (light is the full set, dark a diff over it). Category colours stay in `@nesso-how/relation-types` and remain orthogonal to the theme.
+
+### Changed
+
+- **Theme tokens single-sourced:** Surface, ink, accent, shadow, font, spacing and radius values that were duplicated across `src/index.css`, the docs `custom.css`, and the landing page now all resolve from `@nesso-how/theme`. Component inline styles consume the tokens: spacing/radii/size values matching a scale step became `var(--space-*)`/`--radius-*`/`--text-*`, off-scale border radii were snapped to the nearest step, and `font:` shorthands were decomposed into `fontFamily: var(--font-*)` longhands so a missing font variable degrades only the family, never the size. The only visible change is the docs landing surface shifting from pure white to the warm `#fbfaf8` paper tone, matching the app.
+
 ## [0.1.0-alpha.32] - 2026-06-16
 
 ### Added

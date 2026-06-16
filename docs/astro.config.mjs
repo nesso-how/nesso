@@ -25,7 +25,7 @@ export default defineConfig({
         alt: 'Nesso',
       },
       social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/nesso-how/nesso' }],
-      customCss: ['./src/styles/custom.css'],
+      customCss: ['./src/styles/theme.generated.css', './src/styles/custom.css'],
       components: {
         ThemeSelect: './src/components/ThemeSelect.astro',
       },

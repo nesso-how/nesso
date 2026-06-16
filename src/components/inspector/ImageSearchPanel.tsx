@@ -64,7 +64,7 @@ export function ImageSearchPanel({ query, setQuery, conceptText, onPick, onClose
         padding: '10px 12px 12px',
         display: 'flex',
         flexDirection: 'column',
-        gap: 10,
+        gap: 'var(--space-5)',
       }}
     >
       <form
@@ -72,10 +72,10 @@ export function ImageSearchPanel({ query, setQuery, conceptText, onPick, onClose
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: 8,
+          gap: 'var(--space-4)',
           background: 'var(--paper)',
           border: '0.5px solid var(--line)',
-          borderRadius: 7,
+          borderRadius: 'var(--radius-md)',
           padding: '6px 9px',
         }}
       >
@@ -104,14 +104,18 @@ export function ImageSearchPanel({ query, setQuery, conceptText, onPick, onClose
             background: 'transparent',
             outline: 'none',
             padding: 0,
-            font: "450 12.5px 'Inter', system-ui",
+            fontSize: '12.5px',
+            fontWeight: 450,
+            fontFamily: 'var(--font-sans)',
             color: 'var(--ink)',
           }}
         />
         {results.length > 0 && (
           <span
             style={{
-              font: "500 9px 'JetBrains Mono', ui-monospace",
+              fontSize: '9px',
+              fontWeight: 500,
+              fontFamily: 'var(--font-mono)',
               color: 'var(--ink-5)',
               textTransform: 'uppercase',
               letterSpacing: '0.06em',
@@ -129,7 +133,7 @@ export function ImageSearchPanel({ query, setQuery, conceptText, onPick, onClose
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: 4,
+              gap: 'var(--space-2)',
               flexShrink: 0,
               height: 15,
               padding: '0 2px',
@@ -141,7 +145,7 @@ export function ImageSearchPanel({ query, setQuery, conceptText, onPick, onClose
                 style={{
                   width: 6,
                   height: 6,
-                  borderRadius: '50%',
+                  borderRadius: 'var(--radius-circle)',
                   background: 'var(--ink-4)',
                   animation: `nx-dots-pulse 0.75s ease-in-out ${i * 0.13}s infinite both`,
                 }}
@@ -154,7 +158,7 @@ export function ImageSearchPanel({ query, setQuery, conceptText, onPick, onClose
 
       {results.length > 0 && (
         <div className="nesso-scrollbar" style={{ maxHeight: 220, overflowY: 'auto' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
             {results.map((img) => (
               <button
                 key={img.title}
@@ -166,7 +170,7 @@ export function ImageSearchPanel({ query, setQuery, conceptText, onPick, onClose
                   padding: 0,
                   cursor: 'default',
                   height: 70,
-                  borderRadius: 7,
+                  borderRadius: 'var(--radius-md)',
                   overflow: 'hidden',
                   boxShadow: 'inset 0 0 0 0.5px var(--line)',
                 }}
