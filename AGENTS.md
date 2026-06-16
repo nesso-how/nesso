@@ -32,6 +32,7 @@ src-tauri/            # Tauri v2 Rust project — tauri.conf.json, capabilities;
 packages/
   relation-types/     # @nesso-how/relation-types: shared semantic vocabulary
   types/              # @nesso-how/types: shared TypeScript types
+  theme/              # @nesso-how/theme: design tokens (single source of truth for theme packs)
   formats/            # @nesso-how/formats: graph JSON serialize/deserialize
   mcp/                # @nesso-how/mcp: MCP server for LLM clients
 docs/                 # Starlight docs site, published at nesso.how/docs
@@ -53,6 +54,7 @@ Area-specific rules (canonical content in `.rules/`, auto-attached per file area
 | Coding conventions (TypeScript, React, state, naming)           | [`.rules/conventions.md`](.rules/conventions.md)     |
 | Component responsibilities and data flow                        | [`.rules/components.md`](.rules/components.md)       |
 | Semantic edge model — categories, relation types, encoding      | [`.rules/graph-model.md`](.rules/graph-model.md)     |
+| Theme tokens — `@nesso-how/theme` single source of truth        | [`.rules/theme.md`](.rules/theme.md)                 |
 | Zustand store shape, mutations, selector patterns               | [`.rules/store.md`](.rules/store.md)                 |
 | Socratic AI mentor — MentorBubble, system prompt, chat API      | [`.rules/mentor.md`](.rules/mentor.md)               |
 | Vitest tests — layout, env split, module resolution, CI gate    | [`.rules/testing.md`](.rules/testing.md)             |

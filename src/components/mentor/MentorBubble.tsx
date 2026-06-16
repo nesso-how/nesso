@@ -332,7 +332,7 @@ export function MentorBubble({ leftInset, rightInset }: { leftInset: number; rig
           maxHeight: '58vh',
           background: 'linear-gradient(180deg, var(--bg-card), var(--bg-elev))',
           border: '0.5px solid var(--line-strong)',
-          borderRadius: 14,
+          borderRadius: 'var(--radius-lg)',
           boxShadow: 'var(--shadow-lg)',
           display: 'flex',
           flexDirection: 'column',
@@ -349,7 +349,7 @@ export function MentorBubble({ leftInset, rightInset }: { leftInset: number; rig
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 10,
+            gap: 'var(--space-5)',
             padding: '12px 14px 10px',
             borderBottom: '0.5px solid var(--line)',
             flexShrink: 0,
@@ -359,7 +359,7 @@ export function MentorBubble({ leftInset, rightInset }: { leftInset: number; rig
             style={{
               width: 30,
               height: 30,
-              borderRadius: '50%',
+              borderRadius: 'var(--radius-circle)',
               background: 'var(--paper-deep)',
               display: 'inline-flex',
               alignItems: 'center',
@@ -370,15 +370,22 @@ export function MentorBubble({ leftInset, rightInset }: { leftInset: number; rig
             <SocratesGlyph size={26} />
           </span>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 1, flex: 1 }}>
-            <b style={{ font: "500 13px 'Fraunces', serif", letterSpacing: '-0.005em' }}>
+            <b
+              style={{
+                fontSize: '13px',
+                fontWeight: 500,
+                fontFamily: 'var(--font-display)',
+                letterSpacing: '-0.005em',
+              }}
+            >
               {t.mentor.name}
             </b>
             {modelLoading ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
                 <div
                   style={{
                     height: 2,
-                    borderRadius: 999,
+                    borderRadius: 'var(--radius-pill)',
                     background: 'var(--line)',
                     overflow: 'hidden',
                     width: '100%',
@@ -387,7 +394,7 @@ export function MentorBubble({ leftInset, rightInset }: { leftInset: number; rig
                   <div
                     style={{
                       height: '100%',
-                      borderRadius: 999,
+                      borderRadius: 'var(--radius-pill)',
                       background: 'var(--accent)',
                       width: `${Math.round(webllm.progress * 100)}%`,
                       transition: 'width 0.4s ease',
@@ -396,7 +403,9 @@ export function MentorBubble({ leftInset, rightInset }: { leftInset: number; rig
                 </div>
                 <small
                   style={{
-                    font: "400 10px 'JetBrains Mono', ui-monospace",
+                    fontSize: '10px',
+                    fontWeight: 400,
+                    fontFamily: 'var(--font-mono)',
                     color: 'var(--ink-4)',
                     letterSpacing: '0.02em',
                   }}
@@ -407,7 +416,9 @@ export function MentorBubble({ leftInset, rightInset }: { leftInset: number; rig
             ) : (
               <small
                 style={{
-                  font: "400 10px 'JetBrains Mono', ui-monospace",
+                  fontSize: '10px',
+                  fontWeight: 400,
+                  fontFamily: 'var(--font-mono)',
                   color: 'var(--ink-4)',
                   letterSpacing: '0.02em',
                 }}
@@ -429,7 +440,7 @@ export function MentorBubble({ leftInset, rightInset }: { leftInset: number; rig
               cursor: 'default',
               width: 24,
               height: 24,
-              borderRadius: 999,
+              borderRadius: 'var(--radius-pill)',
               opacity: loadingInitial || thinking ? 0.3 : 1,
               display: 'inline-flex',
               alignItems: 'center',
@@ -478,7 +489,10 @@ export function MentorBubble({ leftInset, rightInset }: { leftInset: number; rig
           {modelLoading ? (
             <div
               style={{
-                font: "400 14.5px/1.5 'Fraunces', ui-serif, Georgia, serif",
+                fontSize: '14.5px',
+                fontWeight: 400,
+                lineHeight: 1.5,
+                fontFamily: 'var(--font-display)',
                 color: 'var(--ink)',
                 letterSpacing: '-0.005em',
                 margin: '5px 0',
@@ -497,11 +511,15 @@ export function MentorBubble({ leftInset, rightInset }: { leftInset: number; rig
                 >
                   <span
                     style={{
-                      font: "500 13px/1.45 'Inter', system-ui",
+                      fontSize: '13px',
+                      fontWeight: 500,
+                      lineHeight: 1.45,
+                      fontFamily: 'var(--font-sans)',
                       color: 'var(--ink-2)',
                       padding: '7px 11px',
                       background: 'var(--paper-deep)',
-                      borderRadius: '14px 14px 4px 14px',
+                      borderRadius:
+                        'var(--radius-lg) var(--radius-lg) var(--radius-sm) var(--radius-lg)',
                       marginLeft: 36,
                       border: '0.5px solid var(--line)',
                       display: 'inline-block',
@@ -515,7 +533,10 @@ export function MentorBubble({ leftInset, rightInset }: { leftInset: number; rig
                 <div
                   key={i}
                   style={{
-                    font: "400 14.5px/1.45 'Fraunces', ui-serif, Georgia, serif",
+                    fontSize: '14.5px',
+                    fontWeight: 400,
+                    lineHeight: 1.45,
+                    fontFamily: 'var(--font-display)',
                     color: 'var(--ink)',
                     letterSpacing: '-0.005em',
                     margin: '5px 0',
@@ -534,7 +555,7 @@ export function MentorBubble({ leftInset, rightInset }: { leftInset: number; rig
           style={{
             display: 'flex',
             alignItems: 'flex-end',
-            gap: 6,
+            gap: 'var(--space-3)',
             padding: '10px 10px 10px 16px',
             borderTop: '0.5px solid var(--line)',
             flexShrink: 0,
@@ -561,7 +582,10 @@ export function MentorBubble({ leftInset, rightInset }: { leftInset: number; rig
               resize: 'none',
               background: 'transparent',
               color: 'var(--ink)',
-              font: "400 14px/1.45 'Inter', system-ui",
+              fontSize: '14px',
+              fontWeight: 400,
+              lineHeight: 1.45,
+              fontFamily: 'var(--font-sans)',
               padding: '6px 0',
               maxHeight: 120,
               minHeight: 22,
@@ -579,7 +603,7 @@ export function MentorBubble({ leftInset, rightInset }: { leftInset: number; rig
               color: 'var(--paper)',
               width: 30,
               height: 30,
-              borderRadius: '50%',
+              borderRadius: 'var(--radius-circle)',
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',

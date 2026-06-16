@@ -121,7 +121,7 @@ function MenuRow({ item, onClose }: { item: Item; onClose: () => void }) {
         border: 0,
         cursor: 'default',
         padding: '7px 9px 7px 10px',
-        borderRadius: 8,
+        borderRadius: 'var(--radius-md)',
         background: hover && !item.disabled ? 'var(--paper-deep)' : 'transparent',
         color: ink,
       }}
@@ -138,11 +138,15 @@ function MenuRow({ item, onClose }: { item: Item; onClose: () => void }) {
       >
         <CmGlyph name={item.icon} />
       </span>
-      <span style={{ flex: 1, font: "500 13px 'Inter', system-ui" }}>{item.label}</span>
+      <span style={{ flex: 1, fontSize: '13px', fontWeight: 500, fontFamily: 'var(--font-sans)' }}>
+        {item.label}
+      </span>
       {item.shortcut && (
         <span
           style={{
-            font: "500 11px 'JetBrains Mono', ui-monospace",
+            fontSize: '11px',
+            fontWeight: 500,
+            fontFamily: 'var(--font-mono)',
             color: item.disabled ? 'var(--ink-5)' : 'var(--ink-4)',
             flexShrink: 0,
             marginLeft: 14,
@@ -293,7 +297,7 @@ export function GraphContextMenu({
         zIndex: 1000,
         background: 'var(--bg-card)',
         border: '0.5px solid var(--line)',
-        borderRadius: 12,
+        borderRadius: 'var(--radius-lg)',
         padding: 5,
         boxShadow: 'var(--shadow-lg)',
       }}

@@ -38,7 +38,7 @@ export function EmptyCanvasHint({
           alignItems: 'center',
           textAlign: 'center',
           maxWidth: 340,
-          padding: 24,
+          padding: 'var(--space-9)',
           opacity: 0.92,
         }}
       >
@@ -48,7 +48,7 @@ export function EmptyCanvasHint({
             style={{
               position: 'absolute',
               inset: -7,
-              borderRadius: 999,
+              borderRadius: 'var(--radius-pill)',
               border: '1px dashed var(--highlight)',
               opacity: 0.5,
             }}
@@ -56,10 +56,12 @@ export function EmptyCanvasHint({
           <div
             style={{
               padding: '7px 18px',
-              borderRadius: 999,
+              borderRadius: 'var(--radius-pill)',
               border: '1px dashed var(--line-strong)',
               background: 'var(--bg-card)',
-              font: '500 16px var(--font-display)',
+              fontSize: '16px',
+              fontWeight: 500,
+              fontFamily: 'var(--font-display)',
               letterSpacing: '-0.005em',
               color: 'var(--ink-4)',
             }}
@@ -69,7 +71,9 @@ export function EmptyCanvasHint({
         </div>
         <div
           style={{
-            font: '500 21px var(--font-display)',
+            fontSize: '21px',
+            fontWeight: 500,
+            fontFamily: 'var(--font-display)',
             letterSpacing: '-0.01em',
             color: 'var(--ink)',
             marginBottom: 8,
@@ -79,7 +83,9 @@ export function EmptyCanvasHint({
         </div>
         <div
           style={{
-            font: '400 14px var(--font-display)',
+            fontSize: '14px',
+            fontWeight: 400,
+            fontFamily: 'var(--font-display)',
             lineHeight: 1.5,
             color: 'var(--ink-3)',
           }}

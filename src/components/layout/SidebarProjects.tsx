@@ -7,7 +7,9 @@ import { FolderIcon } from '@/components/ui/icons'
 import { confirm } from '@/components/ui/confirm'
 
 const sectionLabel: React.CSSProperties = {
-  font: "500 11px 'JetBrains Mono', ui-monospace",
+  fontSize: '11px',
+  fontWeight: 500,
+  fontFamily: 'var(--font-mono)',
   color: 'var(--ink-4)',
   textTransform: 'uppercase',
   letterSpacing: '0.08em',
@@ -23,7 +25,7 @@ const rowIconBtn: React.CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
   justifyContent: 'center',
-  borderRadius: 6,
+  borderRadius: 'var(--radius-sm)',
   color: 'var(--ink-4)',
   cursor: 'default',
 }
@@ -34,7 +36,7 @@ const newBtn: React.CSSProperties = {
   border: 0,
   background: 'transparent',
   height: 24,
-  borderRadius: 6,
+  borderRadius: 'var(--radius-sm)',
   padding: '0 7px 0 6px',
   display: 'flex',
   alignItems: 'center',
@@ -51,11 +53,13 @@ const menuItem: React.CSSProperties = {
   appearance: 'none',
   border: 0,
   background: 'transparent',
-  borderRadius: 5,
+  borderRadius: 'var(--radius-sm)',
   padding: '6px 10px',
   cursor: 'default',
   textAlign: 'left',
-  font: "500 12.5px 'Inter', ui-sans-serif",
+  fontSize: '12.5px',
+  fontWeight: 500,
+  fontFamily: 'var(--font-sans)',
   color: 'var(--ink-2)',
 }
 
@@ -128,7 +132,7 @@ export function SidebarProjects() {
             cursor: 'default',
             display: 'flex',
             alignItems: 'center',
-            gap: 6,
+            gap: 'var(--space-3)',
             padding: 0,
           }}
         >
@@ -174,7 +178,7 @@ export function SidebarProjects() {
                 strokeLinecap="round"
               />
             </svg>
-            <span style={{ font: "500 11.5px 'Inter', ui-sans-serif" }}>
+            <span style={{ fontSize: '11.5px', fontWeight: 500, fontFamily: 'var(--font-sans)' }}>
               {t.sidebar.projectSwitcher.newProjectShort}
             </span>
           </button>
@@ -187,9 +191,9 @@ export function SidebarProjects() {
                 minWidth: 168,
                 background: 'var(--bg-card)',
                 border: '0.5px solid var(--line)',
-                borderRadius: 8,
+                borderRadius: 'var(--radius-md)',
                 boxShadow: 'var(--shadow-lg)',
-                padding: 4,
+                padding: 'var(--space-2)',
                 zIndex: 50,
                 whiteSpace: 'nowrap',
               }}
@@ -261,7 +265,7 @@ export function SidebarProjects() {
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                borderRadius: 6,
+                borderRadius: 'var(--radius-sm)',
                 background: isActive || hovered ? 'var(--paper-deep)' : 'transparent',
                 transition: 'background 100ms',
               }}
@@ -281,7 +285,7 @@ export function SidebarProjects() {
                   appearance: 'none',
                   border: 0,
                   background: 'transparent',
-                  borderRadius: 6,
+                  borderRadius: 'var(--radius-sm)',
                   padding: '6px 9px',
                   cursor: 'default',
                   textAlign: 'left',
@@ -297,7 +301,7 @@ export function SidebarProjects() {
                   style={{
                     width: 6,
                     height: 6,
-                    borderRadius: 999,
+                    borderRadius: 'var(--radius-pill)',
                     flexShrink: 0,
                     background: isActive ? 'var(--accent)' : 'var(--ink-5)',
                   }}
@@ -317,7 +321,9 @@ export function SidebarProjects() {
                   <span
                     style={{
                       flexShrink: 0,
-                      font: "500 10.5px 'JetBrains Mono', ui-monospace",
+                      fontSize: '10.5px',
+                      fontWeight: 500,
+                      fontFamily: 'var(--font-mono)',
                       fontStyle: 'italic',
                       color: 'var(--ink-4)',
                     }}

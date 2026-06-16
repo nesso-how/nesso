@@ -1,0 +1,35 @@
+{
+  "name": "@nesso-how/theme",
+  "version": "0.1.0-alpha.32",
+  "description": "Nesso design tokens — the single source of truth for theme packs (colour, typography, spacing, radii) shared across app, graph and docs",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nesso-how/nesso",
+    "directory": "packages/theme"
+  },
+  "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "rm -rf dist && tsc",
+    "prepublishOnly": "pnpm build",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@nesso-how/relation-types": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "~5.8.3"
+  }
+}

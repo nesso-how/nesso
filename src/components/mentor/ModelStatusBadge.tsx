@@ -18,7 +18,7 @@ export function ModelStatusBadge({ status, model, baseUrl, pullProgress, onPull 
       style={{
         width: 6,
         height: 6,
-        borderRadius: '50%',
+        borderRadius: 'var(--radius-circle)',
         background: color,
         display: 'inline-block',
         flexShrink: 0,
@@ -32,7 +32,7 @@ export function ModelStatusBadge({ status, model, baseUrl, pullProgress, onPull 
         <div
           style={{
             height: 3,
-            borderRadius: 999,
+            borderRadius: 'var(--radius-pill)',
             background: 'var(--line)',
             overflow: 'hidden',
             marginBottom: 6,
@@ -41,14 +41,21 @@ export function ModelStatusBadge({ status, model, baseUrl, pullProgress, onPull 
           <div
             style={{
               height: '100%',
-              borderRadius: 999,
+              borderRadius: 'var(--radius-pill)',
               background: 'var(--accent)',
               width: `${Math.round(pullProgress * 100)}%`,
               transition: 'width 0.3s ease',
             }}
           />
         </div>
-        <span style={{ font: "400 11px 'JetBrains Mono', ui-monospace", color: 'var(--ink-4)' }}>
+        <span
+          style={{
+            fontSize: '11px',
+            fontWeight: 400,
+            fontFamily: 'var(--font-mono)',
+            color: 'var(--ink-4)',
+          }}
+        >
           {t.settings.ai.pulling(model, Math.round(pullProgress * 100))}
         </span>
       </div>
@@ -60,9 +67,11 @@ export function ModelStatusBadge({ status, model, baseUrl, pullProgress, onPull 
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: 6,
+        gap: 'var(--space-3)',
         marginTop: 8,
-        font: "400 11px 'JetBrains Mono', ui-monospace",
+        fontSize: '11px',
+        fontWeight: 400,
+        fontFamily: 'var(--font-mono)',
       }}
     >
       {status === 'checking' && (
@@ -71,7 +80,7 @@ export function ModelStatusBadge({ status, model, baseUrl, pullProgress, onPull 
             style={{
               width: 6,
               height: 6,
-              borderRadius: '50%',
+              borderRadius: 'var(--radius-circle)',
               border: '1.5px solid var(--ink-4)',
               flexShrink: 0,
               animation: 'nx-spin 1s linear infinite',
@@ -99,9 +108,11 @@ export function ModelStatusBadge({ status, model, baseUrl, pullProgress, onPull 
               border: '0.5px solid var(--accent)',
               background: 'transparent',
               color: 'var(--accent)',
-              font: "500 11px 'JetBrains Mono', ui-monospace",
+              fontSize: '11px',
+              fontWeight: 500,
+              fontFamily: 'var(--font-mono)',
               padding: '2px 8px',
-              borderRadius: 6,
+              borderRadius: 'var(--radius-sm)',
               cursor: 'default',
             }}
           >
@@ -115,13 +126,15 @@ export function ModelStatusBadge({ status, model, baseUrl, pullProgress, onPull 
             <>
               {dot('var(--ink-4)')}
               <span style={{ color: 'var(--ink-4)' }}>{t.settings.ai.status.ollamaNotRunning}</span>
-              <code style={{ color: 'var(--ink-2)', fontSize: 10.5 }}>ollama serve</code>
+              <code style={{ color: 'var(--ink-2)', fontSize: 'var(--text-xs)' }}>
+                ollama serve
+              </code>
             </>
           ) : (
             <>
               {dot('var(--conf-2)')}
               <span style={{ color: 'var(--ink-4)' }}>{t.settings.ai.status.corsBlocked}</span>
-              <code style={{ color: 'var(--ink-2)', fontSize: 10.5 }}>
+              <code style={{ color: 'var(--ink-2)', fontSize: 'var(--text-xs)' }}>
                 OLLAMA_ORIGINS={window.location.origin}
               </code>
             </>

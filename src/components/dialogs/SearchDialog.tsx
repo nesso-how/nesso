@@ -96,7 +96,7 @@ export function SearchDialog({ open, onClose, onSelectNode, onSelectGraph }: Pro
           maxWidth: '90vw',
           background: 'var(--bg-elev)',
           border: '0.5px solid var(--line)',
-          borderRadius: 14,
+          borderRadius: 'var(--radius-lg)',
           boxShadow: 'var(--shadow-lg)',
           overflow: 'hidden',
         }}
@@ -106,7 +106,7 @@ export function SearchDialog({ open, onClose, onSelectNode, onSelectGraph }: Pro
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 10,
+            gap: 'var(--space-5)',
             padding: '12px 16px',
             borderBottom: hasResults ? '0.5px solid var(--line)' : 'none',
           }}
@@ -136,7 +136,10 @@ export function SearchDialog({ open, onClose, onSelectNode, onSelectGraph }: Pro
               outline: 0,
               background: 'transparent',
               color: 'var(--ink)',
-              font: "400 14px/1 'Inter', system-ui",
+              fontSize: '14px',
+              fontWeight: 400,
+              lineHeight: 1,
+              fontFamily: 'var(--font-sans)',
             }}
           />
           {query && (
@@ -148,7 +151,7 @@ export function SearchDialog({ open, onClose, onSelectNode, onSelectGraph }: Pro
                 background: 'transparent',
                 color: 'var(--ink-4)',
                 cursor: 'default',
-                padding: 2,
+                padding: 'var(--space-1)',
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -186,7 +189,7 @@ export function SearchDialog({ open, onClose, onSelectNode, onSelectGraph }: Pro
                         cursor: 'default',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: 10,
+                        gap: 'var(--space-5)',
                         padding: '8px 16px',
                         textAlign: 'left',
                       }}
@@ -201,7 +204,7 @@ export function SearchDialog({ open, onClose, onSelectNode, onSelectGraph }: Pro
                         style={{
                           width: 6,
                           height: 6,
-                          borderRadius: '50%',
+                          borderRadius: 'var(--radius-circle)',
                           flexShrink: 0,
                           background: active ? 'var(--accent)' : 'var(--ink-5)',
                         }}
@@ -222,7 +225,9 @@ export function SearchDialog({ open, onClose, onSelectNode, onSelectGraph }: Pro
                       </span>
                       <span
                         style={{
-                          font: "500 10.5px 'JetBrains Mono', ui-monospace",
+                          fontSize: '10.5px',
+                          fontWeight: 500,
+                          fontFamily: 'var(--font-mono)',
                           color: 'var(--ink-4)',
                           flexShrink: 0,
                         }}
@@ -257,7 +262,7 @@ export function SearchDialog({ open, onClose, onSelectNode, onSelectGraph }: Pro
                         cursor: 'default',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: 10,
+                        gap: 'var(--space-5)',
                         padding: '8px 16px',
                         textAlign: 'left',
                       }}
@@ -272,7 +277,7 @@ export function SearchDialog({ open, onClose, onSelectNode, onSelectGraph }: Pro
                         style={{
                           width: 6,
                           height: 6,
-                          borderRadius: '50%',
+                          borderRadius: 'var(--radius-circle)',
                           flexShrink: 0,
                           background: active ? 'var(--accent)' : 'var(--ink-5)',
                         }}
@@ -305,7 +310,9 @@ export function SearchDialog({ open, onClose, onSelectNode, onSelectGraph }: Pro
             style={{
               margin: 0,
               padding: '14px 16px',
-              font: "400 13px 'Inter', system-ui",
+              fontSize: '13px',
+              fontWeight: 400,
+              fontFamily: 'var(--font-sans)',
               color: 'var(--ink-4)',
             }}
           >
@@ -322,7 +329,9 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
     <div
       style={{
         padding: '6px 16px 3px',
-        font: "500 10px 'JetBrains Mono', ui-monospace",
+        fontSize: '10px',
+        fontWeight: 500,
+        fontFamily: 'var(--font-mono)',
         color: 'var(--ink-4)',
         textTransform: 'uppercase',
         letterSpacing: '0.08em',

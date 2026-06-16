@@ -61,7 +61,7 @@ export function GraphIO({ onRelationTypes, onShortcuts, onAbout }: Props) {
           color: open ? 'var(--ink)' : 'var(--ink-2)',
           width: 30,
           height: 30,
-          borderRadius: 7,
+          borderRadius: 'var(--radius-md)',
           padding: 0,
           cursor: 'default',
           display: 'inline-flex',
@@ -94,8 +94,8 @@ export function GraphIO({ onRelationTypes, onShortcuts, onAbout }: Props) {
             minWidth: 220,
             background: 'var(--bg-card)',
             border: '0.5px solid var(--line)',
-            borderRadius: 12,
-            padding: 4,
+            borderRadius: 'var(--radius-lg)',
+            padding: 'var(--space-2)',
             boxShadow: 'var(--shadow-lg)',
             zIndex: 40,
           }}
@@ -246,12 +246,12 @@ function MenuItem({
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: 10,
+        gap: 'var(--space-5)',
         width: '100%',
         padding: '8px 10px',
         border: 0,
         background: 'transparent',
-        borderRadius: 8,
+        borderRadius: 'var(--radius-md)',
         cursor: 'default',
         textAlign: 'left',
       }}
@@ -263,7 +263,16 @@ function MenuItem({
       }}
     >
       <span style={{ color: 'var(--ink-3)', flexShrink: 0 }}>{icon}</span>
-      <span style={{ font: "500 13px 'Inter', system-ui", color: 'var(--ink)' }}>{label}</span>
+      <span
+        style={{
+          fontSize: '13px',
+          fontWeight: 500,
+          fontFamily: 'var(--font-sans)',
+          color: 'var(--ink)',
+        }}
+      >
+        {label}
+      </span>
     </button>
   )
 }

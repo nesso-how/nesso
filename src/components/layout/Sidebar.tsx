@@ -159,7 +159,7 @@ export function Sidebar({
               padding: '0 12px',
               display: 'flex',
               alignItems: 'center',
-              gap: 10,
+              gap: 'var(--space-5)',
               borderBottom: '0.5px solid var(--line)',
               flexShrink: 0,
             }}
@@ -172,7 +172,7 @@ export function Sidebar({
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: 10,
+                gap: 'var(--space-5)',
                 flexShrink: 0,
                 textDecoration: 'none',
                 color: 'inherit',
@@ -184,8 +184,8 @@ export function Sidebar({
               <div
                 style={{
                   fontFamily: 'var(--font-display)',
-                  fontWeight: 600,
-                  fontSize: 18,
+                  fontWeight: 'var(--font-weight-semibold)',
+                  fontSize: 'var(--text-xl)',
                   letterSpacing: '-0.01em',
                   color: 'var(--ink)',
                 }}
@@ -233,10 +233,11 @@ export function Sidebar({
                 appearance: 'none',
                 border: 0,
                 background: 'var(--paper-deep)',
-                borderRadius: 7,
+                borderRadius: 'var(--radius-md)',
                 padding: '7px 10px',
                 cursor: 'default',
-                font: "12.5px 'Inter', ui-sans-serif",
+                fontSize: '12.5px',
+                fontFamily: 'var(--font-sans)',
                 color: 'var(--ink-4)',
               }}
             >
@@ -252,7 +253,14 @@ export function Sidebar({
                 <path d="M10.5 10.5L13 13" strokeLinecap="round" />
               </svg>
               {t.sidebar.search}
-              <span style={{ marginLeft: 'auto', font: "500 10px 'JetBrains Mono', ui-monospace" }}>
+              <span
+                style={{
+                  marginLeft: 'auto',
+                  fontSize: '10px',
+                  fontWeight: 500,
+                  fontFamily: 'var(--font-mono)',
+                }}
+              >
                 ⌘K
               </span>
             </button>
@@ -297,7 +305,9 @@ export function Sidebar({
                     strokeLinecap="round"
                   />
                 </svg>
-                <span style={{ font: "500 11.5px 'Inter', ui-sans-serif" }}>
+                <span
+                  style={{ fontSize: '11.5px', fontWeight: 500, fontFamily: 'var(--font-sans)' }}
+                >
                   {t.sidebar.newGraph}
                 </span>
               </button>
@@ -320,7 +330,7 @@ export function Sidebar({
                           : hovered
                             ? 'var(--paper-deep)'
                             : 'transparent',
-                        borderRadius: 6,
+                        borderRadius: 'var(--radius-sm)',
                         transition: 'background 100ms',
                       }}
                       onMouseEnter={() => setHoveredId(g.id)}
@@ -341,7 +351,9 @@ export function Sidebar({
                             border: 0,
                             outline: 0,
                             background: 'transparent',
-                            font: "500 13px 'Inter', ui-sans-serif",
+                            fontSize: '13px',
+                            fontWeight: 500,
+                            fontFamily: 'var(--font-sans)',
                             color: 'var(--ink)',
                             padding: '6px 9px',
                           }}
@@ -359,7 +371,7 @@ export function Sidebar({
                             appearance: 'none',
                             border: 0,
                             background: 'transparent',
-                            borderRadius: 6,
+                            borderRadius: 'var(--radius-sm)',
                             padding: '6px 9px',
                             cursor: 'default',
                             minWidth: 0,
@@ -374,7 +386,7 @@ export function Sidebar({
                             style={{
                               width: 6,
                               height: 6,
-                              borderRadius: 999,
+                              borderRadius: 'var(--radius-pill)',
                               flexShrink: 0,
                               background: active ? 'var(--accent)' : 'var(--ink-5)',
                             }}
@@ -440,7 +452,7 @@ export function Sidebar({
                   cursor: 'default',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 6,
+                  gap: 'var(--space-3)',
                   padding: 0,
                   width: '100%',
                 }}
@@ -523,7 +535,7 @@ export function Sidebar({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                gap: 6,
+                gap: 'var(--space-3)',
               }}
             >
               <button
@@ -539,9 +551,11 @@ export function Sidebar({
                   gap: 9,
                   width: '100%',
                   padding: '7px 9px',
-                  borderRadius: 6,
+                  borderRadius: 'var(--radius-sm)',
                   cursor: 'default',
-                  font: "500 13px 'Inter', ui-sans-serif",
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  fontFamily: 'var(--font-sans)',
                   color: 'var(--ink-3)',
                   textAlign: 'left',
                 }}
@@ -570,7 +584,9 @@ export function Sidebar({
                 <span
                   style={{
                     marginLeft: 'auto',
-                    font: "500 10px 'JetBrains Mono', ui-monospace",
+                    fontSize: '10px',
+                    fontWeight: 500,
+                    fontFamily: 'var(--font-mono)',
                     color: 'var(--ink-4)',
                   }}
                 >
@@ -615,7 +631,7 @@ const iconBtn: React.CSSProperties = {
   background: 'transparent',
   width: 26,
   height: 26,
-  borderRadius: 6,
+  borderRadius: 'var(--radius-sm)',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
@@ -628,7 +644,7 @@ const graphsNewBtn: React.CSSProperties = {
   border: 0,
   background: 'transparent',
   height: 24,
-  borderRadius: 6,
+  borderRadius: 'var(--radius-sm)',
   padding: '0 7px 0 6px',
   display: 'flex',
   alignItems: 'center',
@@ -638,7 +654,9 @@ const graphsNewBtn: React.CSSProperties = {
 }
 
 const sectionLabel: React.CSSProperties = {
-  font: "500 11px 'JetBrains Mono', ui-monospace",
+  fontSize: '11px',
+  fontWeight: 500,
+  fontFamily: 'var(--font-mono)',
   color: 'var(--ink-4)',
   textTransform: 'uppercase',
   letterSpacing: '0.08em',

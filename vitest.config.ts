@@ -17,6 +17,7 @@ export default defineConfig({
       '@': fromRoot('./src'),
       '@nesso-how/types': fromRoot('./packages/types/src/index.ts'),
       '@nesso-how/relation-types': fromRoot('./packages/relation-types/src/index.ts'),
+      '@nesso-how/theme': fromRoot('./packages/theme/src/index.ts'),
     },
   },
   test: {

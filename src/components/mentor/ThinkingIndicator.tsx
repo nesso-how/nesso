@@ -21,7 +21,7 @@ export function ThinkingIndicator() {
             display: 'inline-block',
             width: 2,
             height: '100%',
-            borderRadius: 2,
+            borderRadius: 'var(--radius-sm)',
             background: 'var(--ink-3)',
             transformOrigin: 'center',
             animation: `nx-bars 1.1s cubic-bezier(0.45, 0, 0.55, 1) ${delay}ms infinite`,

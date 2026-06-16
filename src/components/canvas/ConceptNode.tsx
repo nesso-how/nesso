@@ -15,7 +15,7 @@ function caretIndexFromCenteredClick(input: HTMLInputElement, clientX: number): 
   const ctx = canvas.getContext('2d')
   if (!ctx) return input.value.length
 
-  ctx.font = style.font
+  ctx.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`
   const text = input.value
   if (!text) return 0
 
@@ -130,7 +130,9 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
           <span
             className="nesso-node-label"
             style={{
-              font: '500 16px Fraunces, ui-serif, Georgia, serif',
+              fontSize: '16px',
+              fontWeight: 500,
+              fontFamily: 'var(--font-display)',
               letterSpacing: '-0.005em',
               color: 'var(--ink)',
               display: 'block',
@@ -181,7 +183,9 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
                 width: '100%',
                 boxSizing: 'border-box',
                 background: 'transparent',
-                font: '500 16px Fraunces, ui-serif, Georgia, serif',
+                fontSize: '16px',
+                fontWeight: 500,
+                fontFamily: 'var(--font-display)',
                 letterSpacing: '-0.005em',
                 color: 'var(--ink)',
                 textAlign: 'center',
@@ -203,7 +207,7 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
           background:
             'radial-gradient(circle, var(--accent) 2.5px, var(--bg-card, #fff) 2.5px 4px, transparent 4px)',
           border: 'none',
-          borderRadius: '50%',
+          borderRadius: 'var(--radius-circle)',
         }}
       />
       <Handle
@@ -217,7 +221,7 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
           background:
             'radial-gradient(circle, var(--accent) 2.5px, var(--bg-card, #fff) 2.5px 4px, transparent 4px)',
           border: 'none',
-          borderRadius: '50%',
+          borderRadius: 'var(--radius-circle)',
         }}
       />
       <Handle

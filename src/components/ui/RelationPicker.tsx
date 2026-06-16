@@ -34,9 +34,11 @@ function RelationChip({
         border: '0.5px solid var(--line)',
         background: 'transparent',
         color: 'var(--ink-2)',
-        font: "500 11px 'JetBrains Mono', ui-monospace",
+        fontSize: '11px',
+        fontWeight: 500,
+        fontFamily: 'var(--font-mono)',
         padding: '4px 9px',
-        borderRadius: 999,
+        borderRadius: 'var(--radius-pill)',
         cursor: 'default',
       }}
       onMouseEnter={(e) => {
@@ -104,16 +106,20 @@ export function RelationPicker({ screenX, screenY, fromText, toText, onPick, onC
           width: 300,
           background: 'var(--bg-elev)',
           border: '0.5px solid var(--line)',
-          borderRadius: 14,
+          borderRadius: 'var(--radius-lg)',
           boxShadow: 'var(--shadow-lg)',
           padding: '12px 0 12px',
-          font: "11.5px/1.4 'Inter', system-ui",
+          fontSize: '11.5px',
+          lineHeight: 1.4,
+          fontFamily: 'var(--font-sans)',
         }}
       >
         <div style={{ padding: '0 14px 10px', borderBottom: '0.5px solid var(--line)' }}>
           <div
             style={{
-              font: "500 10.5px 'JetBrains Mono', ui-monospace",
+              fontSize: '10.5px',
+              fontWeight: 500,
+              fontFamily: 'var(--font-mono)',
               textTransform: 'uppercase',
               letterSpacing: '0.08em',
               color: 'var(--ink-4)',
@@ -122,7 +128,14 @@ export function RelationPicker({ screenX, screenY, fromText, toText, onPick, onC
           >
             {t.relationTypes.newRelation}
           </div>
-          <div style={{ font: "500 14px 'Fraunces', serif", letterSpacing: '-0.005em' }}>
+          <div
+            style={{
+              fontSize: '14px',
+              fontWeight: 500,
+              fontFamily: 'var(--font-display)',
+              letterSpacing: '-0.005em',
+            }}
+          >
             <span>{fromText}</span>
             <span style={{ color: 'var(--ink-4)', padding: '0 6px' }}>→</span>
             <span>{toText}</span>
@@ -142,9 +155,11 @@ export function RelationPicker({ screenX, screenY, fromText, toText, onPick, onC
               boxSizing: 'border-box',
               background: 'var(--paper-deep)',
               border: '0.5px solid var(--line)',
-              borderRadius: 8,
+              borderRadius: 'var(--radius-md)',
               padding: '5px 10px',
-              font: "400 11px 'JetBrains Mono', ui-monospace",
+              fontSize: '11px',
+              fontWeight: 400,
+              fontFamily: 'var(--font-mono)',
               color: 'var(--ink-1)',
               outline: 'none',
             }}
@@ -166,7 +181,9 @@ export function RelationPicker({ screenX, screenY, fromText, toText, onPick, onC
               >
                 <div
                   style={{
-                    font: "600 9.5px 'JetBrains Mono', ui-monospace",
+                    fontSize: '9.5px',
+                    fontWeight: 600,
+                    fontFamily: 'var(--font-mono)',
                     textTransform: 'uppercase',
                     letterSpacing: '0.08em',
                     color: 'var(--ink-4)',
@@ -175,7 +192,7 @@ export function RelationPicker({ screenX, screenY, fromText, toText, onPick, onC
                 >
                   {t.relationTypes.frequentInGraph}
                 </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
                   {frequentTypes.map((id) => {
                     const cat = RELATION_TYPES[id].cat
                     const color = RELATION_CATEGORIES[cat].color
@@ -198,7 +215,9 @@ export function RelationPicker({ screenX, screenY, fromText, toText, onPick, onC
                 style={{
                   padding: '20px 0 8px',
                   textAlign: 'center',
-                  font: "400 11px 'JetBrains Mono', ui-monospace",
+                  fontSize: '11px',
+                  fontWeight: 400,
+                  fontFamily: 'var(--font-mono)',
                   color: 'var(--ink-4)',
                   fontStyle: 'italic',
                 }}
@@ -209,20 +228,27 @@ export function RelationPicker({ screenX, screenY, fromText, toText, onPick, onC
               groups.map((g) => (
                 <div key={g.key} style={{ padding: '8px 0 4px' }}>
                   <div
-                    style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 0 6px' }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 'var(--space-3)',
+                      padding: '0 0 6px',
+                    }}
                   >
                     <span
                       style={{
                         width: 6,
                         height: 6,
-                        borderRadius: '50%',
+                        borderRadius: 'var(--radius-circle)',
                         background: g.color,
                         display: 'inline-block',
                       }}
                     />
                     <span
                       style={{
-                        font: "600 9.5px 'JetBrains Mono', ui-monospace",
+                        fontSize: '9.5px',
+                        fontWeight: 600,
+                        fontFamily: 'var(--font-mono)',
                         textTransform: 'uppercase',
                         letterSpacing: '0.08em',
                         color: g.color,
@@ -231,7 +257,7 @@ export function RelationPicker({ screenX, screenY, fromText, toText, onPick, onC
                       {t.relationTypes.categories[g.key].label}
                     </span>
                   </div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
                     {g.types.map(([id]) => (
                       <RelationChip
                         key={id}
@@ -260,7 +286,9 @@ export function RelationPicker({ screenX, screenY, fromText, toText, onPick, onC
                 border: 'none',
                 background: 'none',
                 padding: 0,
-                font: "400 10.5px 'JetBrains Mono', ui-monospace",
+                fontSize: '10.5px',
+                fontWeight: 400,
+                fontFamily: 'var(--font-mono)',
                 color: 'var(--ink-4)',
                 cursor: 'pointer',
                 textDecoration: 'underline',

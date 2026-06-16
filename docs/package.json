@@ -3,8 +3,11 @@
   "type": "module",
   "version": "0.0.1",
   "scripts": {
+    "theme:css": "node scripts/gen-theme-css.mjs",
+    "predev": "node scripts/gen-theme-css.mjs",
     "dev": "astro dev",
     "start": "astro dev",
+    "prebuild": "node scripts/gen-theme-css.mjs",
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro"
@@ -13,6 +16,8 @@
     "@astrojs/react": "^5.0.7",
     "@astrojs/starlight": "^0.39.2",
     "@nesso-how/graph": "workspace:*",
+    "@nesso-how/relation-types": "workspace:*",
+    "@nesso-how/theme": "workspace:*",
     "@nesso-how/types": "workspace:*",
     "@xyflow/react": "^12.6.4",
     "astro": "^6.3.1",

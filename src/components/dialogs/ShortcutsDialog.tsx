@@ -53,14 +53,16 @@ export function ShortcutsDialog({ open, onClose }: Props) {
           maxWidth: '92vw',
           background: 'var(--bg-card)',
           border: '0.5px solid var(--line)',
-          borderRadius: 14,
+          borderRadius: 'var(--radius-lg)',
           padding: '28px 32px 24px',
           boxShadow: 'var(--shadow-lg)',
         }}
       >
         <div
           style={{
-            font: "500 11px 'JetBrains Mono', ui-monospace",
+            fontSize: '11px',
+            fontWeight: 500,
+            fontFamily: 'var(--font-mono)',
             textTransform: 'uppercase',
             letterSpacing: '0.1em',
             color: 'var(--ink-4)',
@@ -77,7 +79,9 @@ export function ShortcutsDialog({ open, onClose }: Props) {
           <div key={section.heading} style={{ marginBottom: si < SECTIONS.length - 1 ? 20 : 0 }}>
             <div
               style={{
-                font: "500 10px 'JetBrains Mono', ui-monospace",
+                fontSize: '10px',
+                fontWeight: 500,
+                fontFamily: 'var(--font-mono)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.12em',
                 color: 'var(--ink-4)',
@@ -98,14 +102,22 @@ export function ShortcutsDialog({ open, onClose }: Props) {
                   marginBottom: 10,
                 }}
               >
-                <span style={{ font: "400 13px/1 'Inter', system-ui", color: 'var(--ink-2)' }}>
+                <span
+                  style={{
+                    fontSize: '13px',
+                    fontWeight: 400,
+                    lineHeight: 1,
+                    fontFamily: 'var(--font-sans)',
+                    color: 'var(--ink-2)',
+                  }}
+                >
                   {row.label}
                 </span>
                 <div
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 4,
+                    gap: 'var(--space-2)',
                     flexShrink: 0,
                     marginLeft: 16,
                   }}
@@ -115,7 +127,9 @@ export function ShortcutsDialog({ open, onClose }: Props) {
                       {i > 0 && (
                         <span
                           style={{
-                            font: "400 11px 'JetBrains Mono', ui-monospace",
+                            fontSize: '11px',
+                            fontWeight: 400,
+                            fontFamily: 'var(--font-mono)',
                             color: 'var(--ink-4)',
                           }}
                         >
@@ -124,10 +138,12 @@ export function ShortcutsDialog({ open, onClose }: Props) {
                       )}
                       <span
                         style={{
-                          font: "600 11px 'JetBrains Mono', ui-monospace",
+                          fontSize: '11px',
+                          fontWeight: 600,
+                          fontFamily: 'var(--font-mono)',
                           background: 'var(--paper-deep)',
                           border: '0.5px solid var(--line)',
-                          borderRadius: 5,
+                          borderRadius: 'var(--radius-sm)',
                           padding: '3px 8px',
                           color: 'var(--ink-2)',
                           whiteSpace: 'nowrap',

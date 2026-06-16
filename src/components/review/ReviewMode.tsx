@@ -202,7 +202,9 @@ export function ReviewMode({ open, onClose }: Props) {
       <ReviewOverlay onClose={onClose}>
         <div
           style={{
-            font: "500 11px 'JetBrains Mono', ui-monospace",
+            fontSize: '11px',
+            fontWeight: 500,
+            fontFamily: 'var(--font-mono)',
             textTransform: 'uppercase',
             letterSpacing: '0.1em',
             color: 'var(--cat-temporal)',
@@ -210,12 +212,23 @@ export function ReviewMode({ open, onClose }: Props) {
         >
           {t.review.allCaughtUp}
         </div>
-        <h2 style={{ margin: '14px 0 8px', font: "500 32px/1.15 'Fraunces', serif" }}>
+        <h2
+          style={{
+            margin: '14px 0 8px',
+            fontSize: '32px',
+            fontWeight: 500,
+            lineHeight: 1.15,
+            fontFamily: 'var(--font-display)',
+          }}
+        >
           {t.review.nothingDue}
         </h2>
         <p
           style={{
-            font: "400 14.5px/1.55 'Fraunces', serif",
+            fontSize: '14.5px',
+            fontWeight: 400,
+            lineHeight: 1.55,
+            fontFamily: 'var(--font-display)',
             color: 'var(--ink-3)',
             margin: '0 0 22px',
           }}
@@ -262,12 +275,14 @@ export function ReviewMode({ open, onClose }: Props) {
     >
       <ReviewOverlay onClose={onClose}>
         {/* Progress bar + counter + close */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 22 }}>
+        <div
+          style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-6)', marginBottom: 22 }}
+        >
           <div
             style={{
               flex: 1,
               height: 3,
-              borderRadius: 999,
+              borderRadius: 'var(--radius-pill)',
               background: 'var(--paper-deep)',
               overflow: 'hidden',
             }}
@@ -283,7 +298,9 @@ export function ReviewMode({ open, onClose }: Props) {
           </div>
           <span
             style={{
-              font: "500 10.5px 'JetBrains Mono', ui-monospace",
+              fontSize: '10.5px',
+              fontWeight: 500,
+              fontFamily: 'var(--font-mono)',
               color: 'var(--ink-4)',
               textTransform: 'uppercase',
               letterSpacing: '0.08em',
@@ -297,7 +314,14 @@ export function ReviewMode({ open, onClose }: Props) {
         </div>
 
         {/* Concept title + image (image only after reveal) */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 14 }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: 'var(--space-6)',
+            marginBottom: 14,
+          }}
+        >
           {revealed && hasImage && (
             <img
               src={elab!.imageUrl}
@@ -306,7 +330,7 @@ export function ReviewMode({ open, onClose }: Props) {
                 width: 56,
                 height: 56,
                 objectFit: 'cover',
-                borderRadius: 10,
+                borderRadius: 'var(--radius-md)',
                 border: '0.5px solid var(--line)',
                 flexShrink: 0,
               }}
@@ -315,7 +339,10 @@ export function ReviewMode({ open, onClose }: Props) {
           <h2
             style={{
               margin: 0,
-              font: "500 32px/1.12 'Fraunces', serif",
+              fontSize: '32px',
+              fontWeight: 500,
+              lineHeight: 1.12,
+              fontFamily: 'var(--font-display)',
               letterSpacing: '-0.015em',
               color: 'var(--ink)',
             }}
@@ -332,7 +359,7 @@ export function ReviewMode({ open, onClose }: Props) {
                 minHeight: 44,
                 display: 'flex',
                 alignItems: 'flex-start',
-                gap: 10,
+                gap: 'var(--space-5)',
               }}
             >
               {questionLoading ? (
@@ -344,7 +371,7 @@ export function ReviewMode({ open, onClose }: Props) {
                       flexShrink: 0,
                       width: 36,
                       height: 36,
-                      borderRadius: '50%',
+                      borderRadius: 'var(--radius-circle)',
                       border: '0.5px solid var(--line)',
                       display: 'flex',
                       alignItems: 'center',
@@ -355,7 +382,10 @@ export function ReviewMode({ open, onClose }: Props) {
                   </div>
                   <span
                     style={{
-                      font: "400 14.5px/1.55 'Fraunces', serif",
+                      fontSize: '14.5px',
+                      fontWeight: 400,
+                      lineHeight: 1.55,
+                      fontFamily: 'var(--font-display)',
                       color: 'var(--ink-2)',
                       paddingTop: 8,
                     }}
@@ -367,7 +397,10 @@ export function ReviewMode({ open, onClose }: Props) {
                 <p
                   style={{
                     margin: 0,
-                    font: "400 14.5px/1.55 'Fraunces', serif",
+                    fontSize: '14.5px',
+                    fontWeight: 400,
+                    lineHeight: 1.55,
+                    fontFamily: 'var(--font-display)',
                     color: 'var(--ink-3)',
                     fontStyle: 'italic',
                   }}
@@ -376,11 +409,18 @@ export function ReviewMode({ open, onClose }: Props) {
                 </p>
               )}
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-5)' }}>
               <Btn primary onClick={() => setRevealed(true)}>
                 {t.review.reveal}
               </Btn>
-              <span style={{ font: "400 12px 'Inter'", color: 'var(--ink-4)' }}>
+              <span
+                style={{
+                  fontSize: '12px',
+                  fontWeight: 400,
+                  fontFamily: 'var(--font-sans)',
+                  color: 'var(--ink-4)',
+                }}
+              >
                 or press Space
               </span>
             </div>
@@ -389,12 +429,22 @@ export function ReviewMode({ open, onClose }: Props) {
           <>
             {/* Definition / Examples */}
             {(hasDef || hasExamples) && (
-              <div style={{ marginBottom: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div
+                style={{
+                  marginBottom: 14,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 'var(--space-5)',
+                }}
+              >
                 {hasDef && (
                   <p
                     style={{
                       margin: 0,
-                      font: "400 14.5px/1.55 'Fraunces', serif",
+                      fontSize: '14.5px',
+                      fontWeight: 400,
+                      lineHeight: 1.55,
+                      fontFamily: 'var(--font-display)',
                       color: 'var(--ink-2)',
                     }}
                   >
@@ -408,13 +458,19 @@ export function ReviewMode({ open, onClose }: Props) {
                       paddingLeft: 18,
                       display: 'flex',
                       flexDirection: 'column',
-                      gap: 2,
+                      gap: 'var(--space-1)',
                     }}
                   >
                     {examplesArr.map((ex, i) => (
                       <li
                         key={i}
-                        style={{ font: "400 14.5px/1.55 'Fraunces', serif", color: 'var(--ink-2)' }}
+                        style={{
+                          fontSize: '14.5px',
+                          fontWeight: 400,
+                          lineHeight: 1.55,
+                          fontFamily: 'var(--font-display)',
+                          color: 'var(--ink-2)',
+                        }}
                       >
                         {ex}
                       </li>
@@ -442,11 +498,18 @@ export function ReviewMode({ open, onClose }: Props) {
                 return (
                   <div
                     key={e.id}
-                    style={{ display: 'flex', alignItems: 'baseline', gap: 12, padding: '5px 0' }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'baseline',
+                      gap: 'var(--space-6)',
+                      padding: '5px 0',
+                    }}
                   >
                     <span
                       style={{
-                        font: "500 10.5px 'JetBrains Mono', ui-monospace",
+                        fontSize: '10.5px',
+                        fontWeight: 500,
+                        fontFamily: 'var(--font-mono)',
                         color: C.color,
                         textTransform: 'uppercase',
                         letterSpacing: '0.06em',
@@ -455,7 +518,14 @@ export function ReviewMode({ open, onClose }: Props) {
                     >
                       {t.relationTypes.types[e.data?.type as EdgeTypeName]}
                     </span>
-                    <span style={{ font: "500 14.5px 'Fraunces', serif", color: 'var(--ink)' }}>
+                    <span
+                      style={{
+                        fontSize: '14.5px',
+                        fontWeight: 500,
+                        fontFamily: 'var(--font-display)',
+                        color: 'var(--ink)',
+                      }}
+                    >
                       {target?.data.text}
                     </span>
                   </div>
@@ -471,14 +541,16 @@ export function ReviewMode({ open, onClose }: Props) {
                     style={{
                       display: 'flex',
                       alignItems: 'baseline',
-                      gap: 12,
+                      gap: 'var(--space-6)',
                       padding: '5px 0',
                       opacity: 0.7,
                     }}
                   >
                     <span
                       style={{
-                        font: "500 10.5px 'JetBrains Mono', ui-monospace",
+                        fontSize: '10.5px',
+                        fontWeight: 500,
+                        fontFamily: 'var(--font-mono)',
                         color: C.color,
                         textTransform: 'uppercase',
                         letterSpacing: '0.06em',
@@ -487,7 +559,14 @@ export function ReviewMode({ open, onClose }: Props) {
                     >
                       ← {t.relationTypes.types[e.data?.type as EdgeTypeName]}
                     </span>
-                    <span style={{ font: "500 14.5px 'Fraunces', serif", color: 'var(--ink)' }}>
+                    <span
+                      style={{
+                        fontSize: '14.5px',
+                        fontWeight: 500,
+                        fontFamily: 'var(--font-display)',
+                        color: 'var(--ink)',
+                      }}
+                    >
                       {source?.data.text}
                     </span>
                   </div>
@@ -496,7 +575,7 @@ export function ReviewMode({ open, onClose }: Props) {
             </div>
 
             {/* Rating buttons */}
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div style={{ display: 'flex', gap: 'var(--space-4)' }}>
               {RATINGS.map((r) => (
                 <RatingBtn
                   key={r}
@@ -519,11 +598,13 @@ export function ReviewMode({ open, onClose }: Props) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            font: "400 11px 'Inter'",
+            fontSize: '11px',
+            fontWeight: 400,
+            fontFamily: 'var(--font-sans)',
             color: 'var(--ink-4)',
           }}
         >
-          <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
             {revealed ? (
               <>
                 {['1', '2', '3', '4'].map((k) => (
@@ -540,7 +621,7 @@ export function ReviewMode({ open, onClose }: Props) {
               </>
             )}
           </span>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
             <kbd style={hintKbd}>Esc</kbd>
             <span>close</span>
           </span>
@@ -603,7 +684,7 @@ const reviewCardStyle: CSSProperties = {
   overflowY: 'auto',
   background: 'var(--bg-card)',
   border: '0.5px solid var(--line)',
-  borderRadius: 14,
+  borderRadius: 'var(--radius-lg)',
   padding: '28px 32px 22px',
   boxShadow: 'var(--shadow-lg)',
 }
@@ -633,9 +714,11 @@ function Btn({
         border: primary ? 0 : '0.5px solid var(--line)',
         background: primary ? 'var(--ink-2)' : 'transparent',
         color: primary ? 'var(--paper)' : 'var(--ink-2)',
-        font: "500 12.5px 'Inter'",
+        fontSize: '12.5px',
+        fontWeight: 500,
+        fontFamily: 'var(--font-sans)',
         padding: '9px 16px',
-        borderRadius: 7,
+        borderRadius: 'var(--radius-md)',
         cursor: 'default',
       }}
     >
@@ -664,20 +747,30 @@ function RatingBtn({
         border: 0,
         cursor: 'default',
         background: color,
-        borderRadius: 7,
+        borderRadius: 'var(--radius-md)',
         padding: '11px 12px 10px',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'flex-start',
-        gap: 2,
+        gap: 'var(--space-1)',
       }}
     >
-      <span style={{ font: "500 13px 'Inter'", color: 'var(--paper)', lineHeight: 1.1 }}>
+      <span
+        style={{
+          fontSize: '13px',
+          fontWeight: 500,
+          fontFamily: 'var(--font-sans)',
+          color: 'var(--paper)',
+          lineHeight: 1.1,
+        }}
+      >
         {label}
       </span>
       <span
         style={{
-          font: "500 10.5px 'JetBrains Mono', ui-monospace",
+          fontSize: '10.5px',
+          fontWeight: 500,
+          fontFamily: 'var(--font-mono)',
           color: 'rgba(244,237,225,0.82)',
           textTransform: 'uppercase',
           letterSpacing: '0.06em',
@@ -691,10 +784,12 @@ function RatingBtn({
 }
 
 const hintKbd: React.CSSProperties = {
-  font: "500 10px 'JetBrains Mono', ui-monospace",
+  fontSize: '10px',
+  fontWeight: 500,
+  fontFamily: 'var(--font-mono)',
   color: 'var(--ink-3)',
   background: 'var(--paper-deep)',
   border: '0.5px solid var(--line)',
   padding: '1px 5px',
-  borderRadius: 4,
+  borderRadius: 'var(--radius-sm)',
 }

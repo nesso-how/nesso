@@ -27,9 +27,11 @@ function actionBannerButtonStyle(primary: boolean, disabled = false): CSSPropert
     border: `0.5px solid ${primary ? 'var(--ink-2)' : 'var(--line)'}`,
     background: primary ? 'var(--ink-2)' : 'transparent',
     color: primary ? 'var(--paper)' : 'var(--ink-2)',
-    font: "500 13px 'Inter', system-ui",
+    fontSize: '13px',
+    fontWeight: 500,
+    fontFamily: 'var(--font-sans)',
     padding: '8px 16px',
-    borderRadius: 7,
+    borderRadius: 'var(--radius-md)',
     cursor: disabled ? 'not-allowed' : 'default',
     opacity: disabled ? 0.55 : 1,
     whiteSpace: 'nowrap',
@@ -57,9 +59,9 @@ export function ActionBanner({
         position: 'relative',
         display: 'flex',
         flexDirection: 'column',
-        gap: 12,
+        gap: 'var(--space-6)',
         padding: '16px 18px',
-        borderRadius: 14,
+        borderRadius: 'var(--radius-lg)',
         background: 'var(--bg-card)',
         border: `0.5px solid ${tone === 'error' ? 'var(--accent)' : 'var(--line)'}`,
         boxShadow: 'var(--shadow-lg)',
@@ -73,7 +75,10 @@ export function ActionBanner({
       )}
       <span
         style={{
-          font: "400 13px/1.5 'Inter', system-ui",
+          fontSize: '13px',
+          fontWeight: 400,
+          lineHeight: 1.5,
+          fontFamily: 'var(--font-sans)',
           color: 'var(--ink-2)',
           paddingRight: onClose ? 20 : 0,
         }}
@@ -81,7 +86,7 @@ export function ActionBanner({
         {message}
       </span>
       {actions.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
           {actions.map((action) => (
             <button
               key={action.label}

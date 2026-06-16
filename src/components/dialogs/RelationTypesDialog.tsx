@@ -52,7 +52,7 @@ export function RelationTypesDialog({ open, onClose }: Props) {
           maxHeight: '76vh',
           background: 'var(--bg-card)',
           border: '0.5px solid var(--line)',
-          borderRadius: 14,
+          borderRadius: 'var(--radius-lg)',
           padding: '28px 32px 20px',
           boxShadow: 'var(--shadow-lg)',
           display: 'flex',
@@ -62,7 +62,9 @@ export function RelationTypesDialog({ open, onClose }: Props) {
       >
         <div
           style={{
-            font: "500 11px 'JetBrains Mono', ui-monospace",
+            fontSize: '11px',
+            fontWeight: 500,
+            fontFamily: 'var(--font-mono)',
             textTransform: 'uppercase',
             letterSpacing: '0.1em',
             color: 'var(--ink-4)',
@@ -86,9 +88,11 @@ export function RelationTypesDialog({ open, onClose }: Props) {
             boxSizing: 'border-box',
             background: 'var(--paper-deep)',
             border: '0.5px solid var(--line)',
-            borderRadius: 8,
+            borderRadius: 'var(--radius-md)',
             padding: '7px 12px',
-            font: "400 12px 'JetBrains Mono', ui-monospace",
+            fontSize: '12px',
+            fontWeight: 400,
+            fontFamily: 'var(--font-mono)',
             color: 'var(--ink-1)',
             outline: 'none',
             marginBottom: 10,
@@ -100,10 +104,12 @@ export function RelationTypesDialog({ open, onClose }: Props) {
             onClick={() => setActiveCategory(null)}
             style={{
               padding: '3px 10px',
-              borderRadius: 20,
+              borderRadius: 'var(--radius-xl)',
               border: `0.5px solid ${activeCategory === null ? 'var(--ink-2)' : 'var(--line)'}`,
               background: activeCategory === null ? 'var(--paper-deep)' : 'transparent',
-              font: "500 10.5px 'JetBrains Mono', ui-monospace",
+              fontSize: '10.5px',
+              fontWeight: 500,
+              fontFamily: 'var(--font-mono)',
               color: activeCategory === null ? 'var(--ink-2)' : 'var(--ink-4)',
               cursor: 'pointer',
               letterSpacing: '0.04em',
@@ -124,10 +130,12 @@ export function RelationTypesDialog({ open, onClose }: Props) {
                 onClick={() => setActiveCategory(isActive ? null : k)}
                 style={{
                   padding: '3px 10px',
-                  borderRadius: 20,
+                  borderRadius: 'var(--radius-xl)',
                   border: `0.5px solid ${isActive ? c.color : 'var(--line)'}`,
                   background: isActive ? 'var(--paper-deep)' : 'transparent',
-                  font: "500 10.5px 'JetBrains Mono', ui-monospace",
+                  fontSize: '10.5px',
+                  fontWeight: 500,
+                  fontFamily: 'var(--font-mono)',
                   color: isActive ? c.color : 'var(--ink-4)',
                   cursor: 'pointer',
                   letterSpacing: '0.04em',
@@ -154,7 +162,9 @@ export function RelationTypesDialog({ open, onClose }: Props) {
               style={{
                 padding: '32px 0',
                 textAlign: 'center',
-                font: "400 12px 'JetBrains Mono', ui-monospace",
+                fontSize: '12px',
+                fontWeight: 400,
+                fontFamily: 'var(--font-mono)',
                 color: 'var(--ink-4)',
                 fontStyle: 'italic',
               }}
@@ -168,7 +178,7 @@ export function RelationTypesDialog({ open, onClose }: Props) {
                   style={{
                     display: 'flex',
                     alignItems: 'baseline',
-                    gap: 8,
+                    gap: 'var(--space-4)',
                     padding: '0 4px 8px',
                     borderBottom: '0.5px solid var(--line)',
                   }}
@@ -177,7 +187,7 @@ export function RelationTypesDialog({ open, onClose }: Props) {
                     style={{
                       width: 8,
                       height: 8,
-                      borderRadius: '50%',
+                      borderRadius: 'var(--radius-circle)',
                       background: g.color,
                       display: 'inline-block',
                       flexShrink: 0,
@@ -185,7 +195,9 @@ export function RelationTypesDialog({ open, onClose }: Props) {
                   />
                   <span
                     style={{
-                      font: "600 10.5px 'JetBrains Mono', ui-monospace",
+                      fontSize: '10.5px',
+                      fontWeight: 600,
+                      fontFamily: 'var(--font-mono)',
                       textTransform: 'uppercase',
                       letterSpacing: '0.08em',
                       color: g.color,
@@ -196,7 +208,7 @@ export function RelationTypesDialog({ open, onClose }: Props) {
                   <small
                     style={{
                       color: 'var(--ink-4)',
-                      fontSize: 12,
+                      fontSize: 'var(--text-base)',
                       fontStyle: 'italic',
                       fontFamily: "'Inter', system-ui",
                     }}
@@ -211,10 +223,10 @@ export function RelationTypesDialog({ open, onClose }: Props) {
                     style={{
                       display: 'grid',
                       gridTemplateColumns: '36px 1fr auto',
-                      gap: 8,
+                      gap: 'var(--space-4)',
                       alignItems: 'center',
                       padding: '6px 4px',
-                      borderRadius: 6,
+                      borderRadius: 'var(--radius-sm)',
                     }}
                     onMouseEnter={(e) => {
                       ;(e.currentTarget as HTMLElement).style.background = 'var(--paper-deep)'
@@ -259,7 +271,9 @@ export function RelationTypesDialog({ open, onClose }: Props) {
 
                     <span
                       style={{
-                        font: "500 12px 'JetBrains Mono', ui-monospace",
+                        fontSize: '12px',
+                        fontWeight: 500,
+                        fontFamily: 'var(--font-mono)',
                         color: encoding === 'minimal' ? 'var(--ink-2)' : g.color,
                       }}
                     >
@@ -270,7 +284,7 @@ export function RelationTypesDialog({ open, onClose }: Props) {
                       <span
                         style={{
                           color: 'var(--ink-4)',
-                          fontSize: 11,
+                          fontSize: 'var(--text-sm)',
                           fontFamily: "'Inter', system-ui",
                           fontStyle: 'italic',
                         }}
@@ -293,8 +307,10 @@ export function RelationTypesDialog({ open, onClose }: Props) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: 12,
-            font: "500 11px 'JetBrains Mono', ui-monospace",
+            gap: 'var(--space-6)',
+            fontSize: '11px',
+            fontWeight: 500,
+            fontFamily: 'var(--font-mono)',
             color: 'var(--ink-4)',
           }}
         >
