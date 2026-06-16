@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.0-alpha.32] - 2026-06-16
+
 ### Added
 
 - **Status bar:** A full-width bottom **status bar** replaces the floating BottomDock (`StatusBar`, `STATUS_BAR_HEIGHT_PX`). On the left it anchors the Socrates entry plus the concept/relation counts; on the right it carries undo/redo, zoom −/%/+, and fit. The graph counts and the zoom readout move here from the sidebar (the old Stats section is gone).
@@ -546,7 +548,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial alpha: interactive knowledge graph (web + Tauri v2); desktop installers on GitHub Releases (macOS Apple silicon and Intel).
 
-[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.31...HEAD
+[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.32...HEAD
+[0.1.0-alpha.32]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.31...v0.1.0-alpha.32
 [0.1.0-alpha.31]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.30...v0.1.0-alpha.31
 [0.1.0-alpha.30]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.29...v0.1.0-alpha.30
 [0.1.0-alpha.29]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.28...v0.1.0-alpha.29

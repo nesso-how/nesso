@@ -1,7 +1,7 @@
 {
   "name": "nesso",
   "private": true,
-  "version": "0.1.0-alpha.31",
+  "version": "0.1.0-alpha.32",
   "license": "MIT",
   "packageManager": "pnpm@10.14.0",
   "pnpm": {
