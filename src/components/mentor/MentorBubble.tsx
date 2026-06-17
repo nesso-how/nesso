@@ -194,6 +194,7 @@ export function MentorBubble({ leftInset, rightInset }: { leftInset: number; rig
     )
   }, [])
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: opening line tied to graph open/switch; live sends use fresh prompt via buildSystemPrompt
   useEffect(() => {
     if (!mentorPanelExpanded) return
     if (settings.aiMode === 'local' && webllm.status === 'loading') {
@@ -241,7 +242,6 @@ export function MentorBubble({ leftInset, rightInset }: { leftInset: number; rig
       })
 
     return () => controller.abort()
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- opening line tied to graph open/switch; live sends use fresh prompt via buildSystemPrompt
   }, [
     mentorPanelExpanded,
     currentGraphId,

@@ -9,12 +9,14 @@ Run the checks `.github/workflows/ci.yml` runs, in order, from the repo root, an
 
 ```bash
 pnpm install --frozen-lockfile   # only if deps/lockfile may be stale; skip if node_modules is current
-pnpm run format:check            # prettier --check .
-pnpm run lint                    # eslint
+pnpm run format:check            # Biome (code/json/css) + Prettier (md/yaml/html)
+pnpm run lint                    # Biome lint (replaces ESLint)
 pnpm exec tsc -b                 # typecheck
 pnpm run build:mcp               # MCP bundle (refreshes dist/starlight-docs.pages.json)
 pnpm run build                   # full app build
 pnpm run license-headers:check   # SPDX headers on src/** and src-tauri/src
+pnpm run type-coverage           # strict type-coverage ratchet (app ~99.7%, gates at 99%)
+pnpm run analyze                 # fallow static analysis — advisory/report-only (does not gate)
 ```
 
 The `rust` CI job covers the native layer (`src-tauri/`). Run it too if the change touches `src-tauri/` (Rust, capabilities, `tauri.conf.json`); skip otherwise:
@@ -29,6 +31,7 @@ cargo test --manifest-path src-tauri/Cargo.toml
 
 - Run the steps individually so a failure is attributable to one step — don't `&&`-chain them into one opaque result.
 - Surface the first failure with its output and stop; do not push when anything is red.
+- `pnpm run analyze` (fallow) is **advisory / report-only** — it surfaces dead code, duplication and complexity but does not gate yet (CI runs it `continue-on-error`). A non-zero exit here is expected; don't block a push on it, use the findings to triage.
 - `format:check` failures are usually fixed by `pnpm run format` — offer that. `lint` issues often by `pnpm run lint:fix`; `cargo fmt --all --check` failures by `cargo fmt --all`.
 - `icons:desktop` is a prerequisite for the cargo steps: without the bundle icons, `tauri::generate_context!` fails to compile `lib.rs`. Locally they may already exist, but regenerate if unsure.
 - These mirror CI exactly; if `ci.yml` changes, update this list (see `.rules/maintenance.md`).

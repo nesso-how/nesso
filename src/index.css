@@ -72,7 +72,7 @@ textarea {
 
 /* Paper grain overlay */
 body::before {
-  content: '';
+  content: "";
   position: fixed;
   inset: 0;
   pointer-events: none;
@@ -222,7 +222,7 @@ body::before {
   justify-content: center;
 }
 .nx-socrates-halo::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: -4px;
   border-radius: 50%;

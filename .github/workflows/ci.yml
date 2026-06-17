@@ -52,6 +52,21 @@ jobs:
       - run: pnpm run build
       - run: pnpm run license-headers:check
 
+      # Type-safety ratchet (rollout step 3 of #50): fail if strict type-coverage
+      # of the app (tsconfig.app.json) regresses below the agreed floor (~99.7%
+      # today, gated at 99%). tsc itself already runs via `pnpm run build` (tsc -b),
+      # so there is no separate `tsc --noEmit` step.
+      - run: pnpm run type-coverage
+
+      # Static analysis (rollout step 1 of #50): fallow surfaces dead code,
+      # duplication, complexity and architecture drift as an advisory signal.
+      # Report-only for now (continue-on-error) — promote to a hard gate once
+      # baselines are agreed. Churn-weighted hotspots additionally need full git
+      # history (checkout fetch-depth: 0); the other findings do not.
+      - name: Static analysis (fallow, report-only)
+        run: pnpm run analyze
+        continue-on-error: true
+
   # Native layer (src-tauri/). Runs in parallel with `js`; a red Rust gate
   # blocks merge just like lint/build. See .github/workflows/release.yml for the
   # macOS bundle build — this job is the per-PR fmt/lint/compile feedback loop.

@@ -1,8 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 /* ── Fonts ───────────────────────────────────── */
 :root {
-  --sl-font: 'Inter', ui-sans-serif, system-ui, sans-serif;
-  --sl-font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --sl-font: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --sl-font-mono: "JetBrains Mono", ui-monospace, monospace;
 }
 
 /* ── Dark mode — docs-specific chrome ──────────
@@ -25,7 +25,7 @@
 }
 
 /* ── Light mode — docs-specific chrome ── */
-:root[data-theme='light'] {
+:root[data-theme="light"] {
   --sl-color-bg-inline-code: #f3f1ed;
   --sl-color-bg-accent: rgba(110, 39, 48, 0.06);
   --sl-color-text-invert: #fbfaf8;
@@ -83,9 +83,9 @@ site-search button[data-open-modal]:focus-visible {
 /* App convention: oxblood is an accent (dot / highlight), never a filled selection.
    Neutral fill nudged from the deep-surface tone (gray-6) toward gray-5 so the active
    entry reads clearly: darker than the page in light, lighter in dark. */
-.sidebar-content a[aria-current='page'],
-.sidebar-content a[aria-current='page']:hover,
-.sidebar-content a[aria-current='page']:focus {
+.sidebar-content a[aria-current="page"],
+.sidebar-content a[aria-current="page"]:hover,
+.sidebar-content a[aria-current="page"]:focus {
   color: var(--sl-color-text);
   background-color: color-mix(in srgb, var(--sl-color-gray-6) 72%, var(--sl-color-gray-5));
 }
@@ -124,11 +124,11 @@ a.site-title {
 
 /* Social icons in navbar — same text color on hover */
 .social-icons a,
-header a[rel='me'] {
+header a[rel="me"] {
   color: var(--sl-color-text);
 }
 .social-icons a:hover,
-header a[rel='me']:hover {
+header a[rel="me"]:hover {
   color: var(--sl-color-text);
 }
 
@@ -153,7 +153,7 @@ site-search dialog {
 
 /* Paper grain on page body (same as landing page) */
 body::before {
-  content: '';
+  content: "";
   position: fixed;
   inset: 0;
   pointer-events: none;

@@ -80,6 +80,7 @@ export function GraphCanvas({
   const { screenToFlowPosition } = useReactFlow()
   // Only read at mount of the keyed NessoGraph below — memoized so the O(N)
   // fit computation doesn't run again on every drag-frame re-render.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: loadedToken forces a re-read when the same graph is reloaded from disk (state is read via getState()).
   const defaultViewport = useMemo(() => {
     const s = useGraphStore.getState()
     return (
@@ -95,7 +96,6 @@ export function GraphCanvas({
         getSeedInitialFitZoom(currentGraphId) ?? 1,
       )
     )
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- loadedToken forces a re-read when the same graph is reloaded from disk (state is read via getState()).
   }, [currentGraphId, loadedToken, topInset, bottomInset, leftInset, rightInset])
 
   const [pendingConn, setPendingConn] = useState<PendingConnection | null>(null)

@@ -44,3 +44,6 @@ yarn.lock
 
 # Test / coverage
 coverage
+
+# Code-quality tooling (fallow local cache + baselines)
+.fallow/

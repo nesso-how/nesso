@@ -16,9 +16,7 @@
   "bin": {
     "nesso-mcp": "dist/index.js"
   },
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "scripts": {
     "bundle-docs": "node scripts/bundle-starlight-docs.mjs",
     "build": "rm -rf dist && tsc && node scripts/bundle-starlight-docs.mjs",

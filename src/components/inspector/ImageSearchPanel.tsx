@@ -18,6 +18,7 @@ export function ImageSearchPanel({ query, setQuery, conceptText, onPick, onClose
   const [results, setResults] = useState<WikiImage[]>([])
   const [loading, setLoading] = useState(false)
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: run once when search panel opens; query/conceptText are initial props
   useEffect(() => {
     let cancelled = false
     const initialQ = query.trim() || conceptText.trim()
@@ -40,7 +41,6 @@ export function ImageSearchPanel({ query, setQuery, conceptText, onPick, onClose
       cancelled = true
       clearTimeout(focusTimer)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once when search panel opens; query/conceptText are initial props
   }, [])
 
   async function runSearch(e: FormEvent) {
