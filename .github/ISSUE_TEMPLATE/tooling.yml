@@ -1,0 +1,43 @@
+name: Tooling / developer experience
+description: Propose internal tooling, CI, linting, or developer-experience improvements
+labels: [chore]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or friction
+      description: What developer friction, quality gap, or maintenance cost are you addressing? What can't you catch or do today?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed tooling or change
+      description: Which tool or change, and how it runs (command, config). Link the tool if it is external.
+    validations:
+      required: true
+
+  - type: textarea
+    id: integration
+    attributes:
+      label: Integration points
+      description: Where it hooks in — CI (`.github/workflows`), `preflight`, git/Claude hooks, local scripts. Does it gate (fail the build) or only report?
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives and trade-offs
+      description: Other tools or approaches considered, and why you prefer this one — speed, lock-in, maintenance cost, ecosystem.
+    validations:
+      required: false
+
+  - type: textarea
+    id: rollout
+    attributes:
+      label: Rollout and scope (optional)
+      description: Incremental adoption, baselines/thresholds, and what is explicitly out of scope for a first pass.
+    validations:
+      required: false

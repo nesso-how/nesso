@@ -1,0 +1,24 @@
+{
+  "clone_groups": [
+    "packages/relation-types/src/index.ts:133-142|src/i18n/locales/en.ts:294-303",
+    "src/components/canvas/GraphContextMenu.tsx:22-64|src/components/inspector/inspectorChrome.tsx:26-67",
+    "src/components/canvas/GraphContextMenu.tsx:176-181|src/components/inspector/inspectorChrome.tsx:136-141",
+    "src/components/dialogs/AboutDialog.tsx:134-143|src/components/layout/TopBar.tsx:150-168",
+    "src/components/dialogs/RelationTypesDialog.tsx:24-34|src/components/ui/RelationPicker.tsx:71-81",
+    "src/components/dialogs/RelationTypesDialog.tsx:34-41|src/components/ui/RelationPicker.tsx:81-90",
+    "src/components/dialogs/SearchDialog.tsx:183-217|src/components/dialogs/SearchDialog.tsx:256-290",
+    "src/components/inspector/EdgeInspector.tsx:62-75|src/components/inspector/NodeInspector.tsx:191-203",
+    "src/components/layout/Sidebar.tsx:416-437|src/components/layout/SidebarProjects.tsx:380-401",
+    "src/components/review/ReviewMode.tsx:502-529|src/components/review/ReviewMode.tsx:542-570",
+    "src/llm/context.ts:61-70|src/llm/context.ts:96-105",
+    "src/store/slices/graph-editing.test.ts:49-53|src/store/slices/graph-editing.test.ts:84-88",
+    "src/store/slices/graph-editing.test.ts:107-113|src/store/slices/graph-editing.test.ts:69-75",
+    "src/store/slices/graph-editing.test.ts:121-126|src/store/slices/graph-editing.test.ts:280-285|src/store/slices/graph-editing.test.ts:294-299",
+    "src/store/slices/graph-editing.test.ts:141-147|src/store/slices/graph-editing.test.ts:197-203|src/store/slices/graph-editing.test.ts:238-244",
+    "src/store/slices/graph-editing.test.ts:141-146|src/store/slices/graph-editing.test.ts:156-161|src/store/slices/graph-editing.test.ts:197-202|src/store/slices/graph-editing.test.ts:238-243",
+    "src/store/slices/graph-editing.test.ts:141-145|src/store/slices/graph-editing.test.ts:156-160|src/store/slices/graph-editing.test.ts:197-201|src/store/slices/graph-editing.test.ts:217-221|src/store/slices/graph-editing.test.ts:238-242",
+    "src/store/slices/graph-editing.test.ts:197-203|src/store/slices/graph-editing.test.ts:238-244",
+    "src/store/slices/graph-editing.test.ts:280-285|src/store/slices/graph-editing.test.ts:294-299",
+    "src/store/slices/graph-management.desktop.test.ts:27-40|src/store/slices/graph-management.test.ts:17-30"
+  ]
+}

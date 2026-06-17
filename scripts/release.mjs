@@ -200,8 +200,10 @@ async function main() {
   log(`Bumped ${writes.length} files; CHANGELOG rolled to [${next}] - ${date}.`)
 
   if (!skipVerify) {
-    const fmt = writes.map(([rel]) => rel).filter((r) => r.endsWith('.json') || r.endsWith('.md'))
-    run(`pnpm exec prettier --write ${fmt.join(' ')}`)
+    const json = writes.map(([rel]) => rel).filter((r) => r.endsWith('.json'))
+    const md = writes.map(([rel]) => rel).filter((r) => r.endsWith('.md'))
+    if (json.length) run(`pnpm exec biome format --write ${json.join(' ')}`)
+    if (md.length) run(`pnpm exec prettier --write ${md.join(' ')}`)
     run('pnpm install')
     run('pnpm build')
     run('pnpm lint')

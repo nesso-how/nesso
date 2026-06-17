@@ -66,6 +66,10 @@ Area-specific rules (canonical content in `.rules/`, auto-attached per file area
 
 **Release:** cutting a release is a procedure, not a file-area rule, so it lives in the `release` skill at [`.claude/skills/release/SKILL.md`](.claude/skills/release/SKILL.md). In Claude Code run `/release`; in Cursor the agent-requested rule `.cursor/rules/release.mdc` pulls the same procedure in when a release task matches.
 
+## Code quality
+
+Lint and format run through **Biome** (`biome.json`): JS/TS/JSON/CSS, with **Prettier** kept only for Markdown/YAML/HTML. **`tsc`** type-checks (via `build`), and **`type-coverage`** gates strict type coverage at 99%. **`fallow`** (`pnpm run analyze`) is a deterministic static analyzer for dead code, duplication, cycles, complexity, and architecture — wired into `preflight` and CI as **advisory / report-only** (its non-zero exit does not gate). The `preflight` skill runs all of these in CI order before a PR.
+
 ## Constraints — hard rules, never do this
 
 ### Never store chat history in the global store

@@ -1,0 +1,402 @@
+{
+  "finding_counts": {
+    "packages/formats/src/index.ts": {
+      "crap_moderate": {
+        "count": 1
+      }
+    },
+    "packages/graph/src/ConceptNodeBody.tsx": {
+      "crap_high": {
+        "count": 1
+      }
+    },
+    "packages/graph/src/NessoEdge.tsx": {
+      "complexity_critical": {
+        "count": 1
+      },
+      "crap_critical": {
+        "count": 1
+      },
+      "crap_moderate": {
+        "count": 1
+      }
+    },
+    "packages/graph/src/NessoGraph.tsx": {
+      "complexity_critical": {
+        "count": 1
+      },
+      "crap_critical": {
+        "count": 2
+      }
+    },
+    "packages/mcp/scripts/bundle-starlight-docs.mjs": {
+      "crap_high": {
+        "count": 1
+      }
+    },
+    "scripts/license-header.mjs": {
+      "complexity_critical": {
+        "count": 1
+      },
+      "crap_critical": {
+        "count": 1
+      },
+      "crap_high": {
+        "count": 2
+      },
+      "crap_moderate": {
+        "count": 3
+      }
+    },
+    "scripts/release.mjs": {
+      "complexity_critical": {
+        "count": 1
+      },
+      "crap_critical": {
+        "count": 1
+      }
+    },
+    "src/App.tsx": {
+      "complexity_critical": {
+        "count": 3
+      },
+      "crap_critical": {
+        "count": 3
+      },
+      "crap_moderate": {
+        "count": 2
+      }
+    },
+    "src/components/Inspector.tsx": {
+      "crap_moderate": {
+        "count": 1
+      }
+    },
+    "src/components/banners/ActionBanner.tsx": {
+      "crap_high": {
+        "count": 1
+      },
+      "crap_moderate": {
+        "count": 1
+      }
+    },
+    "src/components/banners/UpdateBanner.tsx": {
+      "crap_high": {
+        "count": 1
+      }
+    },
+    "src/components/canvas/ConceptNode.tsx": {
+      "complexity_high": {
+        "count": 1
+      },
+      "crap_high": {
+        "count": 1
+      },
+      "crap_moderate": {
+        "count": 2
+      }
+    },
+    "src/components/canvas/GraphCanvas.tsx": {
+      "complexity_critical": {
+        "count": 1
+      },
+      "crap_critical": {
+        "count": 1
+      }
+    },
+    "src/components/canvas/GraphContextMenu.tsx": {
+      "complexity_moderate": {
+        "count": 1
+      },
+      "crap_high": {
+        "count": 2
+      },
+      "crap_moderate": {
+        "count": 1
+      }
+    },
+    "src/components/canvas/NessoConnectionLine.tsx": {
+      "complexity_critical": {
+        "count": 1
+      },
+      "crap_critical": {
+        "count": 1
+      }
+    },
+    "src/components/dialogs/RelationTypesDialog.tsx": {
+      "crap_high": {
+        "count": 2
+      },
+      "crap_moderate": {
+        "count": 1
+      }
+    },
+    "src/components/dialogs/SearchDialog.tsx": {
+      "complexity_critical": {
+        "count": 1
+      },
+      "crap_critical": {
+        "count": 1
+      },
+      "crap_moderate": {
+        "count": 2
+      }
+    },
+    "src/components/dialogs/SettingsDialog.tsx": {
+      "complexity_high": {
+        "count": 1
+      },
+      "crap_high": {
+        "count": 1
+      }
+    },
+    "src/components/inspector/EdgeInspector.tsx": {
+      "complexity_critical": {
+        "count": 1
+      },
+      "crap_critical": {
+        "count": 1
+      }
+    },
+    "src/components/inspector/ImageSearchPanel.tsx": {
+      "crap_moderate": {
+        "count": 1
+      }
+    },
+    "src/components/inspector/InlineEdit.tsx": {
+      "complexity_critical": {
+        "count": 1
+      },
+      "crap_critical": {
+        "count": 2
+      }
+    },
+    "src/components/inspector/NodeInspector.tsx": {
+      "complexity_critical": {
+        "count": 1
+      },
+      "crap_critical": {
+        "count": 1
+      }
+    },
+    "src/components/inspector/inspectorChrome.tsx": {
+      "crap_high": {
+        "count": 2
+      },
+      "crap_moderate": {
+        "count": 1
+      }
+    },
+    "src/components/layout/Sidebar.tsx": {
+      "complexity_high": {
+        "count": 1
+      },
+      "crap_critical": {
+        "count": 1
+      },
+      "crap_high": {
+        "count": 1
+      },
+      "crap_moderate": {
+        "count": 2
+      }
+    },
+    "src/components/layout/SidebarProjects.tsx": {
+      "complexity_moderate": {
+        "count": 1
+      },
+      "crap_critical": {
+        "count": 1
+      },
+      "crap_moderate": {
+        "count": 1
+      }
+    },
+    "src/components/layout/StatusBar.tsx": {
+      "crap_moderate": {
+        "count": 2
+      }
+    },
+    "src/components/layout/TopBar.tsx": {
+      "complexity_high": {
+        "count": 1
+      },
+      "crap_high": {
+        "count": 1
+      }
+    },
+    "src/components/mentor/LocalModelPanel.tsx": {
+      "crap_critical": {
+        "count": 1
+      }
+    },
+    "src/components/mentor/MentorBubble.tsx": {
+      "complexity_critical": {
+        "count": 2
+      },
+      "crap_critical": {
+        "count": 2
+      },
+      "crap_high": {
+        "count": 4
+      }
+    },
+    "src/components/mentor/ModelStatusBadge.tsx": {
+      "crap_critical": {
+        "count": 1
+      }
+    },
+    "src/components/review/ReviewMode.tsx": {
+      "complexity_critical": {
+        "count": 1
+      },
+      "crap_critical": {
+        "count": 1
+      },
+      "crap_high": {
+        "count": 1
+      },
+      "crap_moderate": {
+        "count": 3
+      }
+    },
+    "src/components/ui/RelationPicker.tsx": {
+      "complexity_critical": {
+        "count": 1
+      },
+      "crap_critical": {
+        "count": 1
+      },
+      "crap_high": {
+        "count": 1
+      }
+    },
+    "src/components/ui/SegmentedControl.tsx": {
+      "crap_moderate": {
+        "count": 1
+      }
+    },
+    "src/components/ui/Select.tsx": {
+      "crap_moderate": {
+        "count": 1
+      }
+    },
+    "src/data/newConceptLayout.ts": {
+      "crap_moderate": {
+        "count": 1
+      }
+    },
+    "src/hooks/useDesktopUpdater.ts": {
+      "crap_high": {
+        "count": 1
+      },
+      "crap_moderate": {
+        "count": 1
+      }
+    },
+    "src/hooks/useGraphFileWatch.ts": {
+      "crap_critical": {
+        "count": 1
+      },
+      "crap_moderate": {
+        "count": 2
+      }
+    },
+    "src/lib/fitGraphViewport.ts": {
+      "crap_high": {
+        "count": 1
+      }
+    },
+    "src/lib/graphClipboard.ts": {
+      "complexity_high": {
+        "count": 1
+      }
+    },
+    "src/lib/graphIO.ts": {
+      "crap_high": {
+        "count": 1
+      },
+      "crap_moderate": {
+        "count": 1
+      }
+    },
+    "src/lib/ollama.ts": {
+      "complexity_critical": {
+        "count": 1
+      },
+      "crap_critical": {
+        "count": 1
+      },
+      "crap_moderate": {
+        "count": 1
+      }
+    },
+    "src/lib/saveJsonFile.ts": {
+      "crap_high": {
+        "count": 1
+      }
+    },
+    "src/lib/workspace/sync.ts": {
+      "complexity_critical": {
+        "count": 1
+      },
+      "crap_critical": {
+        "count": 1
+      }
+    },
+    "src/llm/completion.ts": {
+      "crap_high": {
+        "count": 2
+      }
+    },
+    "src/llm/context.ts": {
+      "crap_high": {
+        "count": 2
+      },
+      "crap_moderate": {
+        "count": 1
+      }
+    },
+    "src/store/slices/graph-editing.ts": {
+      "crap_high": {
+        "count": 1
+      },
+      "crap_moderate": {
+        "count": 2
+      }
+    },
+    "src/store/slices/graph-management.ts": {
+      "complexity_moderate": {
+        "count": 1
+      },
+      "crap_high": {
+        "count": 1
+      },
+      "crap_moderate": {
+        "count": 1
+      }
+    },
+    "src/test/fakeTauriFs.ts": {
+      "complexity_moderate": {
+        "count": 1
+      },
+      "crap_moderate": {
+        "count": 1
+      }
+    }
+  },
+  "runtime_coverage_findings": [],
+  "target_keys": [
+    "src/App.tsx:complexity",
+    "src/store/slices/graph-editing.ts:high impact",
+    "src/components/canvas/GraphCanvas.tsx:complexity",
+    "src/llm/completion.ts:untested risk",
+    "src/llm/context.ts:untested risk",
+    "src/components/mentor/MentorBubble.tsx:complexity",
+    "src/components/review/ReviewMode.tsx:complexity",
+    "src/components/inspector/NodeInspector.tsx:complexity",
+    "src/components/inspector/InlineEdit.tsx:complexity",
+    "packages/graph/src/NessoGraph.tsx:complexity",
+    "scripts/release.mjs:complexity"
+  ]
+}

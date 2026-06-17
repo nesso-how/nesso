@@ -94,6 +94,7 @@ export function ReviewMode({ open, onClose }: Props) {
     ) as Record<(typeof RATINGS)[number], string>
   }, [currentNode, scheduler])
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: re-runs only on open, card change, and AI readiness
   useEffect(() => {
     if (!open || !currentNode || !aiReady) {
       setQuestion(null)
@@ -156,7 +157,7 @@ export function ReviewMode({ open, onClose }: Props) {
     void run()
 
     return () => controller.abort()
-  }, [open, currentNode?.id, aiReady]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [open, currentNode?.id, aiReady])
 
   if (!open) return null
 

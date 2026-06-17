@@ -5,24 +5,26 @@
   "license": "MIT",
   "packageManager": "pnpm@10.14.0",
   "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "sharp"
-    ]
+    "onlyBuiltDependencies": ["esbuild", "sharp"]
   },
   "type": "module",
   "scripts": {
     "license-headers": "node scripts/license-header.mjs",
     "license-headers:check": "node scripts/license-header.mjs --check",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
+    "format": "biome format --write . && prettier --write \"**/*.{md,yml,yaml,html}\"",
+    "format:check": "biome format . && prettier --check \"**/*.{md,yml,yaml,html}\"",
+    "lint": "biome lint .",
+    "lint:fix": "biome lint --write .",
+    "analyze": "fallow",
+    "analyze:dead-code": "fallow dead-code --fail-on-issues",
+    "analyze:dupes": "fallow dupes --baseline fallow-baselines/dupes.json --fail-on-issues",
+    "analyze:health": "fallow health --baseline fallow-baselines/health.json --fail-on-issues",
     "lint-staged": "lint-staged",
     "release": "node scripts/release.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "type-coverage": "type-coverage -p tsconfig.app.json --strict --at-least 99",
     "build:relation-types": "pnpm --filter @nesso-how/relation-types build",
     "build:types": "pnpm --filter @nesso-how/types build",
     "build:theme": "pnpm --filter @nesso-how/theme build",
@@ -60,39 +62,31 @@
     "zustand": "^5.0.4"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.1",
+    "@biomejs/biome": "^2.5.0",
     "@tauri-apps/cli": "^2.11.0",
     "@types/react": "^18.3.23",
     "@types/react-dom": "^18.3.7",
     "@vitejs/plugin-react": "^4.3.4",
     "@vitest/coverage-v8": "^4.1.8",
-    "eslint": "^9.39.1",
-    "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-react": "^7.37.5",
-    "eslint-plugin-react-hooks": "^5.2.0",
-    "eslint-plugin-react-refresh": "^0.4.24",
     "fake-indexeddb": "^6.2.5",
-    "globals": "^16.5.0",
+    "fallow": "2.98.0",
     "husky": "^9.1.7",
     "jsdom": "^29.1.1",
     "lint-staged": "^17.0.7",
     "prettier": "^3.6.2",
+    "type-coverage": "^2.29.7",
     "typescript": "~5.8.3",
-    "typescript-eslint": "^8.46.4",
     "vite": "^6.3.5",
     "vitest": "^4.1.8"
   },
   "lint-staged": {
-    "*.{ts,tsx,js,mjs,cjs}": [
-      "prettier --write",
-      "eslint --fix",
+    "*.{ts,tsx,js,mjs,cjs,css}": [
+      "biome check --write --no-errors-on-unmatched",
       "node scripts/license-header.mjs"
     ],
-    "*.{json,md,yml,yaml}": "prettier --write",
-    "*.{css,html}": [
-      "prettier --write",
-      "node scripts/license-header.mjs"
-    ],
+    "*.json": "biome check --write --no-errors-on-unmatched",
+    "*.{md,yml,yaml}": "prettier --write",
+    "*.html": ["prettier --write", "node scripts/license-header.mjs"],
     "*.rs": "node scripts/license-header.mjs"
   }
 }

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
+  // Exports referenced within their own file are intentional, not dead surface.
+  "ignoreExportsUsedInFile": true,
+  // Test fakes loaded dynamically via vi.mock(async () => (await import(...))) —
+  // syntactic analysis cannot see imports inside the mock factory.
+  "dynamicallyLoaded": ["src/test/fakeTauriFs.ts"],
+  // sharp is Astro's image-optimization dependency: used implicitly, never imported.
+  "ignoreDependencies": ["sharp"],
+  // Theme CSS is generated at build time by the nessoTheme Vite plugin.
+  "ignoreUnresolvedImports": ["**/*.generated.css"],
+  // Referenced via docs/astro.config.mjs (Starlight `components` override and
+  // `customCss`), which fallow does not parse as entry points.
+  "ignorePatterns": ["docs/src/components/ThemeSelect.astro", "docs/src/styles/custom.css"]
+}

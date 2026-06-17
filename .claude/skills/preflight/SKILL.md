@@ -9,12 +9,16 @@ Run the checks `.github/workflows/ci.yml` runs, in order, from the repo root, an
 
 ```bash
 pnpm install --frozen-lockfile   # only if deps/lockfile may be stale; skip if node_modules is current
-pnpm run format:check            # prettier --check .
-pnpm run lint                    # eslint
+pnpm run format:check            # Biome (code/json/css) + Prettier (md/yaml/html)
+pnpm run lint                    # Biome lint (replaces ESLint)
 pnpm exec tsc -b                 # typecheck
 pnpm run build:mcp               # MCP bundle (refreshes dist/starlight-docs.pages.json)
 pnpm run build                   # full app build
 pnpm run license-headers:check   # SPDX headers on src/** and src-tauri/src
+pnpm run type-coverage           # strict type-coverage ratchet (app ~99.7%, gates at 99%)
+pnpm run analyze:dead-code       # fallow dead-code + architecture-cycles gate (zero-tolerance)
+pnpm run analyze:dupes           # duplication gate — fails on NEW clones vs fallow-baselines/dupes.json
+pnpm run analyze:health          # complexity gate — fails on NEW complex fns vs fallow-baselines/health.json
 ```
 
 The `rust` CI job covers the native layer (`src-tauri/`). Run it too if the change touches `src-tauri/` (Rust, capabilities, `tauri.conf.json`); skip otherwise:
@@ -29,6 +33,7 @@ cargo test --manifest-path src-tauri/Cargo.toml
 
 - Run the steps individually so a failure is attributable to one step — don't `&&`-chain them into one opaque result.
 - Surface the first failure with its output and stop; do not push when anything is red.
+- The three `analyze:*` steps are **hard gates**: `analyze:dead-code` is zero-tolerance (unused code + architecture cycles; documented false positives via `.fallowrc.jsonc`); `analyze:dupes` and `analyze:health` are identity baselines (`fallow-baselines/`) that fail only on **new** clones / complex functions. To accept new debt on purpose, suppress the line (`// fallow-ignore-…`) or re-save the baseline (`fallow <dupes|health> --save-baseline …`). `pnpm run analyze` (full report) is a local convenience, not a CI step.
 - `format:check` failures are usually fixed by `pnpm run format` — offer that. `lint` issues often by `pnpm run lint:fix`; `cargo fmt --all --check` failures by `cargo fmt --all`.
 - `icons:desktop` is a prerequisite for the cargo steps: without the bundle icons, `tauri::generate_context!` fails to compile `lib.rs`. Locally they may already exist, but regenerate if unsure.
 - These mirror CI exactly; if `ci.yml` changes, update this list (see `.rules/maintenance.md`).
