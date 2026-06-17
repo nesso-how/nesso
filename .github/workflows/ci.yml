@@ -58,11 +58,14 @@ jobs:
       # so there is no separate `tsc --noEmit` step.
       - run: pnpm run type-coverage
 
-      # Static analysis (rollout step 1 of #50): fallow surfaces dead code,
-      # duplication, complexity and architecture drift as an advisory signal.
-      # Report-only for now (continue-on-error) — promote to a hard gate once
-      # baselines are agreed. Churn-weighted hotspots additionally need full git
-      # history (checkout fetch-depth: 0); the other findings do not.
+      # Dead-code gate (rollout step 5 of #50): zero-tolerance on unused files,
+      # exports, types, and dependencies — the categories cleaned to 0. Fails the
+      # build on any new dead code; documented false positives live in .fallowrc.jsonc.
+      - run: pnpm run analyze:dead-code
+
+      # Full fallow report (duplication, complexity, architecture) stays advisory /
+      # report-only; promote categories to the gate above as their backlog clears.
+      # Churn-weighted hotspots additionally need full git history (fetch-depth: 0).
       - name: Static analysis (fallow, report-only)
         run: pnpm run analyze
         continue-on-error: true
