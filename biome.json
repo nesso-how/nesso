@@ -24,6 +24,7 @@
       "!**/.astro",
       "!**/*.astro",
       "!**/coverage",
+      "!fallow-baselines",
       "!src-tauri/target",
       "!src-tauri/icons",
       "!src-tauri/gen",

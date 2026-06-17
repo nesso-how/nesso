@@ -17,6 +17,8 @@
     "lint:fix": "biome lint --write .",
     "analyze": "fallow",
     "analyze:dead-code": "fallow dead-code --fail-on-issues",
+    "analyze:dupes": "fallow dupes --baseline fallow-baselines/dupes.json --fail-on-issues",
+    "analyze:health": "fallow health --baseline fallow-baselines/health.json --fail-on-issues",
     "lint-staged": "lint-staged",
     "release": "node scripts/release.mjs",
     "test": "vitest run",

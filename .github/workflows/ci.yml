@@ -58,17 +58,16 @@ jobs:
       # so there is no separate `tsc --noEmit` step.
       - run: pnpm run type-coverage
 
-      # Dead-code gate (rollout step 5 of #50): zero-tolerance on unused files,
-      # exports, types, and dependencies — the categories cleaned to 0. Fails the
-      # build on any new dead code; documented false positives live in .fallowrc.jsonc.
+      # Static-analysis gates (#50 step 5). fallow's dead-code envelope also covers
+      # circular dependencies and re-export cycles, so this is zero-tolerance on
+      # unused code AND architecture cycles (all at 0). False positives: .fallowrc.jsonc.
       - run: pnpm run analyze:dead-code
 
-      # Full fallow report (duplication, complexity, architecture) stays advisory /
-      # report-only; promote categories to the gate above as their backlog clears.
-      # Churn-weighted hotspots additionally need full git history (fetch-depth: 0).
-      - name: Static analysis (fallow, report-only)
-        run: pnpm run analyze
-        continue-on-error: true
+      # Duplication and complexity: identity baselines in fallow-baselines/ freeze
+      # the current backlog and fail only on NEW clones / complex functions. Lower
+      # the baselines (--save-baseline) as the backlog is worked down.
+      - run: pnpm run analyze:dupes
+      - run: pnpm run analyze:health
 
   # Native layer (src-tauri/). Runs in parallel with `js`; a red Rust gate
   # blocks merge just like lint/build. See .github/workflows/release.yml for the
