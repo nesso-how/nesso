@@ -76,10 +76,3 @@ export async function getDefaultWorkspacePath(): Promise<string> {
   const { appDataDir } = await pathApi()
   return joinPath(await appDataDir(), GRAPHS_SUBDIR)
 }
-
-export async function resolveWorkspacePath(
-  settings: Pick<NessoSettings, 'activeProjectPath'>,
-): Promise<string> {
-  const ws = await resolveWorkspace(settings)
-  return ws.displayPath
-}

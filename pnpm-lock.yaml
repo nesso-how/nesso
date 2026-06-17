@@ -204,9 +204,6 @@ importers:
 
   packages/mcp:
     dependencies:
-      '@cfworker/json-schema':
-        specifier: ^4.1.1
-        version: 4.1.1
       '@modelcontextprotocol/server':
         specifier: ^2.0.0-alpha.2
         version: 2.0.0-alpha.2(@cfworker/json-schema@4.1.1)
@@ -3647,7 +3644,8 @@ snapshots:
     dependencies:
       fontkitten: 1.0.3
 
-  '@cfworker/json-schema@4.1.1': {}
+  '@cfworker/json-schema@4.1.1':
+    optional: true
 
   '@clack/core@1.4.1':
     dependencies:

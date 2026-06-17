@@ -6,7 +6,6 @@ export const INSPECTOR_CANVAS_LEFT_GUTTER = INSPECTOR_PANEL_EDGE_INSET * 2
 export const INSPECTOR_PANEL_MIN_WIDTH = 220
 export const INSPECTOR_PANEL_MAX_WIDTH = 520
 export const INSPECTOR_PANEL_DEFAULT_WIDTH = 296
-export const INSPECTOR_VIEWPORT_BOTTOM_RESERVE = 80
 
 export function clampInspectorPanelWidth(w: number): number {
   return Math.min(INSPECTOR_PANEL_MAX_WIDTH, Math.max(INSPECTOR_PANEL_MIN_WIDTH, Math.round(w)))
