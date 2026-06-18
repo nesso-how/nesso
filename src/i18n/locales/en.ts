@@ -47,9 +47,6 @@ const en = {
       straight: 'Straight',
     },
     ai: {
-      source: 'Mode',
-      remote: 'Remote API',
-      local: 'Local model',
       apiBaseUrl: 'API base URL',
       apiBaseUrlDesc: 'OpenAI-compatible endpoint. Defaults to local Ollama.',
       model: 'Model',
@@ -66,18 +63,6 @@ const en = {
         ollamaNotRunning: 'Ollama not running —',
         corsBlocked: 'CORS blocked — set',
         unreachable: 'API unreachable',
-      },
-      localModel: {
-        description:
-          'Runs entirely in-browser via WebGPU. The model is cached after the first download.',
-        checkingCache: 'Checking for a saved copy on this device…',
-        alreadyDownloaded: 'This model is already downloaded in your browser.',
-        autoLoading: 'Loading it into GPU memory now…',
-        saved: 'Saved',
-        download: 'Download & use',
-        ready: 'Ready',
-        loaded: 'Model loaded in-browser. Socrates will use it instead of the remote API.',
-        retry: 'Retry',
       },
     },
     review: {
@@ -393,13 +378,9 @@ const en = {
     toggleTitle: 'Ask Socrates',
     placeholder: (concept: string) => `Ask Socrates about "${concept}"…`,
     placeholderGraph: 'Ask Socrates about your graph…',
-    loadingModel: 'Loading local model…',
-    loadingLocalModelNotice: "Give me a sec! I'm waking up the model on your device...",
-    localModelNeedDownload:
-      "Hey, I'm basically a brain in a jar right now. Give me a model to think with! Head to Settings (⌘,), grab the local model under AI, or point me at a remote API. Then we'll talk.",
-    localModelLoadFailed:
-      'Well, that did not go as planned. The model refused to load, which is rude of it. Try Settings (⌘,), AI, Local model, Retry. Or just switch to a remote API and we can skip this whole thing.',
-    placeholderLocalPending: 'Download the local model in Settings first…',
+    needsSetup:
+      "Hey, I'm basically a brain in a jar right now. Give me a model to think with! Head to Settings (⌘,), AI, and point me at an OpenAI-compatible endpoint (Ollama runs locally). Then we'll talk.",
+    placeholderNeedsSetup: 'Configure an AI endpoint in Settings first…',
     errorRetry: '*Hmm.* My voice failed me. Try again.',
     errorRetrySlow: '*Hmm.* My voice failed me. Try again — slowly.',
   },

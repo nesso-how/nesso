@@ -1,7 +1,7 @@
 ---
 paths:
-  - 'src/components/mentor/MentorBubble.tsx'
-  - 'src/llm/webllm.ts'
+  - 'src/components/mentor/MentorPanel.tsx'
+  - 'src/llm/completion.ts'
   - 'src/llm/context.ts'
 ---
 

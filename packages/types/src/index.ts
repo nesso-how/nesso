@@ -128,7 +128,6 @@ export interface NessoSettings {
   curveStyle: CurveStyle
   autoCurveFlip: boolean
   categoryPalette: CategoryPalette
-  aiMode: 'remote' | 'local'
   aiBaseUrl: string
   aiModel: string
   aiApiKey: string

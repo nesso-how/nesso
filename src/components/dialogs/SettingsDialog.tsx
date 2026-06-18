@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: MIT
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useGraphStore } from '@/store'
-import { useWebLLM } from '@/llm/webllm'
 import { CloseButton } from '@/components/ui/CloseButton'
-import { LocalModelPanel } from '@/components/mentor/LocalModelPanel'
 import { ModelStatusBadge } from '@/components/mentor/ModelStatusBadge'
 import { SettingsFormRow } from '@/components/ui/SettingsFormRow'
 import { ModalOverlay } from '@/components/ui/ModalOverlay'
@@ -16,9 +14,9 @@ import type { Language } from '@/types/graph'
 import { checkOllamaModel, streamOllamaModelPull, type OllamaModelStatus } from '@/lib/ollama'
 
 const OLLAMA_PRESETS = [
-  { id: 'gemma3:4b', note: 'balanced · recommended' },
   { id: 'llama3.2:3b', note: 'lightweight · fast' },
-  { id: 'qwen2.5:7b', note: 'precise · best reasoning' },
+  { id: 'gemma3:4b', note: 'balanced · recommended' },
+  { id: 'qwen3:8b', note: 'newest · best reasoning' },
 ] as const
 
 type Tab = 'appearance' | 'ai' | 'review'
@@ -39,7 +37,6 @@ export function SettingsDialog({ open, onClose }: Props) {
   const [tab, setTab] = useState<Tab>('appearance')
   const settings = useGraphStore((s) => s.settings)
   const setSetting = useGraphStore((s) => s.setSetting)
-  const llm = useWebLLM()
   const [modelStatus, setModelStatus] = useState<OllamaModelStatus>('idle')
   const [pullProgress, setPullProgress] = useState(0)
 
@@ -82,7 +79,7 @@ export function SettingsDialog({ open, onClose }: Props) {
   }, [open])
 
   useEffect(() => {
-    if (!open || settings.aiMode !== 'remote') {
+    if (!open) {
       setModelStatus('idle')
       return
     }
@@ -98,7 +95,7 @@ export function SettingsDialog({ open, onClose }: Props) {
     return () => {
       cancelled = true
     }
-  }, [open, settings.aiMode, settings.aiBaseUrl])
+  }, [open, settings.aiBaseUrl])
 
   const inputStyle: React.CSSProperties = {
     width: '100%',
@@ -401,207 +398,169 @@ export function SettingsDialog({ open, onClose }: Props) {
             )}
 
             {tab === 'ai' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-                {/* Mode selector — same pattern as Light / Dark in Appearance */}
-                <div
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-                >
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <label style={{ display: 'block' }}>
                   <span
                     style={{
                       fontSize: '13px',
                       fontWeight: 400,
                       fontFamily: 'var(--font-sans)',
-                      color: 'var(--ink-3)',
+                      color: 'var(--ink-2)',
+                      display: 'block',
                     }}
                   >
-                    {t.settings.ai.source}
+                    {t.settings.ai.apiBaseUrl}
                   </span>
-                  <SegmentedControl
-                    options={[
-                      { id: 'local', label: t.settings.ai.local },
-                      { id: 'remote', label: t.settings.ai.remote },
-                    ]}
-                    value={settings.aiMode}
-                    onChange={(v) => setSetting('aiMode', v as 'local' | 'remote')}
+                  <small
+                    style={{
+                      display: 'block',
+                      fontSize: '11px',
+                      fontWeight: 400,
+                      lineHeight: 1.4,
+                      fontFamily: 'var(--font-sans)',
+                      color: 'var(--ink-4)',
+                      marginTop: 3,
+                      marginBottom: 8,
+                    }}
+                  >
+                    {t.settings.ai.apiBaseUrlDesc}
+                  </small>
+                  <input
+                    type="text"
+                    value={settings.aiBaseUrl}
+                    placeholder="http://localhost:11434/v1"
+                    onChange={(e) => setSetting('aiBaseUrl', e.target.value)}
+                    style={inputStyle}
+                  />
+                </label>
+
+                <div>
+                  <span
+                    style={{
+                      fontSize: '13px',
+                      fontWeight: 400,
+                      fontFamily: 'var(--font-sans)',
+                      color: 'var(--ink-2)',
+                      display: 'block',
+                    }}
+                  >
+                    {t.settings.ai.model}
+                  </span>
+                  <small
+                    style={{
+                      display: 'block',
+                      fontSize: '11px',
+                      fontWeight: 400,
+                      lineHeight: 1.4,
+                      fontFamily: 'var(--font-sans)',
+                      color: 'var(--ink-4)',
+                      marginTop: 3,
+                      marginBottom: 10,
+                    }}
+                  >
+                    {t.settings.ai.modelDesc}
+                  </small>
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: 'var(--space-3)',
+                      marginBottom: 10,
+                    }}
+                  >
+                    {OLLAMA_PRESETS.map((p) => {
+                      const active = settings.aiModel === p.id
+                      return (
+                        <button
+                          key={p.id}
+                          type="button"
+                          title={p.note}
+                          onClick={() => {
+                            setSetting('aiModel', p.id)
+                            triggerCheck(settings.aiBaseUrl, p.id)
+                          }}
+                          style={{
+                            appearance: 'none',
+                            border: `0.5px solid ${active ? 'var(--ink-2)' : 'var(--line)'}`,
+                            background: active ? 'var(--paper-deep)' : 'transparent',
+                            color: active ? 'var(--ink)' : 'var(--ink-3)',
+                            fontSize: '11px',
+                            fontWeight: 500,
+                            fontFamily: 'var(--font-mono)',
+                            padding: '5px 10px',
+                            borderRadius: 'var(--radius-sm)',
+                            cursor: 'default',
+                          }}
+                        >
+                          {p.id}
+                        </button>
+                      )
+                    })}
+                  </div>
+                  <input
+                    type="text"
+                    value={settings.aiModel}
+                    placeholder="e.g. gemma3:4b"
+                    onChange={(e) => {
+                      setSetting('aiModel', e.target.value)
+                      setModelStatus('idle')
+                    }}
+                    onBlur={(e) => triggerCheck(settings.aiBaseUrl, e.target.value)}
+                    style={inputStyle}
+                  />
+                  <ModelStatusBadge
+                    status={modelStatus}
+                    model={settings.aiModel}
+                    baseUrl={settings.aiBaseUrl}
+                    pullProgress={pullProgress}
+                    onPull={() => void handlePull()}
                   />
                 </div>
 
-                {/* Config area */}
-                <div style={{ borderTop: '0.5px solid var(--line)', paddingTop: 18 }}>
-                  {settings.aiMode === 'remote' ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                      <label style={{ display: 'block' }}>
-                        <span
-                          style={{
-                            fontSize: '13px',
-                            fontWeight: 400,
-                            fontFamily: 'var(--font-sans)',
-                            color: 'var(--ink-2)',
-                            display: 'block',
-                          }}
-                        >
-                          {t.settings.ai.apiBaseUrl}
-                        </span>
-                        <small
-                          style={{
-                            display: 'block',
-                            fontSize: '11px',
-                            fontWeight: 400,
-                            lineHeight: 1.4,
-                            fontFamily: 'var(--font-sans)',
-                            color: 'var(--ink-4)',
-                            marginTop: 3,
-                            marginBottom: 8,
-                          }}
-                        >
-                          {t.settings.ai.apiBaseUrlDesc}
-                        </small>
-                        <input
-                          type="text"
-                          value={settings.aiBaseUrl}
-                          placeholder="http://localhost:11434/v1"
-                          onChange={(e) => setSetting('aiBaseUrl', e.target.value)}
-                          style={inputStyle}
-                        />
-                      </label>
-
-                      <div>
-                        <span
-                          style={{
-                            fontSize: '13px',
-                            fontWeight: 400,
-                            fontFamily: 'var(--font-sans)',
-                            color: 'var(--ink-2)',
-                            display: 'block',
-                          }}
-                        >
-                          {t.settings.ai.model}
-                        </span>
-                        <small
-                          style={{
-                            display: 'block',
-                            fontSize: '11px',
-                            fontWeight: 400,
-                            lineHeight: 1.4,
-                            fontFamily: 'var(--font-sans)',
-                            color: 'var(--ink-4)',
-                            marginTop: 3,
-                            marginBottom: 10,
-                          }}
-                        >
-                          {t.settings.ai.modelDesc}
-                        </small>
-                        <div
-                          style={{
-                            display: 'flex',
-                            flexWrap: 'wrap',
-                            gap: 'var(--space-3)',
-                            marginBottom: 10,
-                          }}
-                        >
-                          {OLLAMA_PRESETS.map((p) => {
-                            const active = settings.aiModel === p.id
-                            return (
-                              <button
-                                key={p.id}
-                                type="button"
-                                title={p.note}
-                                onClick={() => {
-                                  setSetting('aiModel', p.id)
-                                  triggerCheck(settings.aiBaseUrl, p.id)
-                                }}
-                                style={{
-                                  appearance: 'none',
-                                  border: `0.5px solid ${active ? 'var(--ink-2)' : 'var(--line)'}`,
-                                  background: active ? 'var(--paper-deep)' : 'transparent',
-                                  color: active ? 'var(--ink)' : 'var(--ink-3)',
-                                  fontSize: '11px',
-                                  fontWeight: 500,
-                                  fontFamily: 'var(--font-mono)',
-                                  padding: '5px 10px',
-                                  borderRadius: 'var(--radius-sm)',
-                                  cursor: 'default',
-                                }}
-                              >
-                                {p.id}
-                              </button>
-                            )
-                          })}
-                        </div>
-                        <input
-                          type="text"
-                          value={settings.aiModel}
-                          placeholder="e.g. gemma3:4b"
-                          onChange={(e) => {
-                            setSetting('aiModel', e.target.value)
-                            setModelStatus('idle')
-                          }}
-                          onBlur={(e) => triggerCheck(settings.aiBaseUrl, e.target.value)}
-                          style={inputStyle}
-                        />
-                        <ModelStatusBadge
-                          status={modelStatus}
-                          model={settings.aiModel}
-                          baseUrl={settings.aiBaseUrl}
-                          pullProgress={pullProgress}
-                          onPull={() => void handlePull()}
-                        />
-                      </div>
-
-                      <label style={{ display: 'block' }}>
-                        <span
-                          style={{
-                            fontSize: '13px',
-                            fontWeight: 400,
-                            fontFamily: 'var(--font-sans)',
-                            color: 'var(--ink-2)',
-                            display: 'block',
-                          }}
-                        >
-                          {t.settings.ai.apiKey}
-                        </span>
-                        <small
-                          style={{
-                            display: 'block',
-                            fontSize: '11px',
-                            fontWeight: 400,
-                            lineHeight: 1.4,
-                            fontFamily: 'var(--font-sans)',
-                            color: 'var(--ink-4)',
-                            marginTop: 3,
-                            marginBottom: 8,
-                          }}
-                        >
-                          {t.settings.ai.apiKeyDesc}{' '}
-                          <code
-                            style={{
-                              fontFamily: "'JetBrains Mono', ui-monospace",
-                              fontSize: 'var(--text-xs)',
-                            }}
-                          >
-                            Authorization: Bearer
-                          </code>
-                          .
-                        </small>
-                        <input
-                          type="password"
-                          autoComplete="off"
-                          value={settings.aiApiKey}
-                          placeholder="••••••••"
-                          onChange={(e) => setSetting('aiApiKey', e.target.value)}
-                          style={inputStyle}
-                        />
-                      </label>
-                    </div>
-                  ) : (
-                    <LocalModelPanel
-                      status={llm.status}
-                      progress={llm.progress}
-                      progressText={llm.progressText}
-                      error={llm.error}
-                    />
-                  )}
-                </div>
+                <label style={{ display: 'block' }}>
+                  <span
+                    style={{
+                      fontSize: '13px',
+                      fontWeight: 400,
+                      fontFamily: 'var(--font-sans)',
+                      color: 'var(--ink-2)',
+                      display: 'block',
+                    }}
+                  >
+                    {t.settings.ai.apiKey}
+                  </span>
+                  <small
+                    style={{
+                      display: 'block',
+                      fontSize: '11px',
+                      fontWeight: 400,
+                      lineHeight: 1.4,
+                      fontFamily: 'var(--font-sans)',
+                      color: 'var(--ink-4)',
+                      marginTop: 3,
+                      marginBottom: 8,
+                    }}
+                  >
+                    {t.settings.ai.apiKeyDesc}{' '}
+                    <code
+                      style={{
+                        fontFamily: "'JetBrains Mono', ui-monospace",
+                        fontSize: 'var(--text-xs)',
+                      }}
+                    >
+                      Authorization: Bearer
+                    </code>
+                    .
+                  </small>
+                  <input
+                    type="password"
+                    autoComplete="off"
+                    value={settings.aiApiKey}
+                    placeholder="••••••••"
+                    onChange={(e) => setSetting('aiApiKey', e.target.value)}
+                    style={inputStyle}
+                  />
+                </label>
               </div>
             )}
 

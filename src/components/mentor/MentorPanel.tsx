@@ -4,18 +4,23 @@ import type { Edge, Node } from '@xyflow/react'
 import { SocratesGlyph } from './SocratesGlyph'
 import { useGraphStore, selectedNodeSelector, selectedEdgeSelector } from '@/store'
 import type { ConceptNodeData, Language } from '@/types/graph'
-import { useWebLLM, LOCAL_MODEL_LABEL } from '@/llm/webllm'
-import { fetchCompletion } from '@/llm/completion'
+import { fetchCompletion, isAiReady } from '@/llm/completion'
 import { buildFocalNeighborContext, nodeStrength, oneHopNeighborIds } from '@/llm/context'
 import { useT } from '@/i18n'
 import { CloseButton } from '@/components/ui/CloseButton'
 import { STATUS_BAR_HEIGHT_PX } from '@/components/layout/StatusBar'
 import { ThinkingIndicator } from './ThinkingIndicator'
-import { Typewriter } from './Typewriter'
+import { renderWithEmphasis } from './Typewriter'
 
 interface Message {
   role: 'user' | 'mentor'
   text: string
+}
+
+function appendToLastMentor(history: Message[], delta: string): Message[] {
+  const last = history[history.length - 1]
+  if (!last || last.role !== 'mentor') return [...history, { role: 'mentor', text: delta }]
+  return [...history.slice(0, -1), { ...last, text: last.text + delta }]
 }
 
 function mentorCompletionMessages(systemPrompt: string, msgs: Message[]) {
@@ -32,8 +37,13 @@ function mentorCompletionMessages(systemPrompt: string, msgs: Message[]) {
 const MAX_SNAPSHOT_NODES = 60
 /** Linked maps often have more edges than nodes; ~2× node cap keeps structure visible without dumping huge |E|. */
 const MAX_SNAPSHOT_EDGES = MAX_SNAPSHOT_NODES * 2
-/** Output ceiling aligned with ~200-word replies (soft limit in getMentorBase). */
-const MENTOR_MAX_TOKENS = 380
+/**
+ * Output ceiling, not a target: reply length is soft-capped at ~200 words in
+ * getMentorBase. Headroom is generous so reasoning models (e.g. qwen3 thinking
+ * mode) can spend tokens on their hidden reasoning and still emit a full answer
+ * within the same budget.
+ */
+const MENTOR_MAX_TOKENS = 2048
 
 const NODE_LEGEND =
   'Reading each node after its quoted title: (new)=no spaced-repetition review yet; otherwise comma-separated tokens — s=Y.Yd is FSRS stability in days (higher = stronger recall); Nd since review is calendar days since the last FSRS self-rating; Again/Hard/Good/Easy is that rating; DUE means the scheduler says revisit now (light hint, secondary to s= and rating).'
@@ -152,14 +162,14 @@ function buildGraphChatPrompt(
     .join('\n')
 }
 
-export function MentorBubble({ leftInset, rightInset }: { leftInset: number; rightInset: number }) {
+export function MentorPanel({ leftInset, rightInset }: { leftInset: number; rightInset: number }) {
   const t = useT()
   const mentorPanelExpanded = useGraphStore((s) => s.mentorPanelExpanded)
   const setMentorPanelExpanded = useGraphStore((s) => s.setMentorPanelExpanded)
   const currentGraphId = useGraphStore((s) => s.currentGraphId)
   const settings = useGraphStore((s) => s.settings)
   // Primitive selector for the placeholder only — graph data for prompts is
-  // read via getState() at send time, so the bubble doesn't re-render on
+  // read via getState() at send time, so the panel doesn't re-render on
   // every node drag frame.
   const selectedNodeText = useGraphStore((s) =>
     s.selected?.kind === 'node'
@@ -167,15 +177,12 @@ export function MentorBubble({ leftInset, rightInset }: { leftInset: number; rig
       : null,
   )
 
-  const webllm = useWebLLM()
-  const modelLoading = settings.aiMode === 'local' && webllm.status === 'loading'
-  const modelReady = settings.aiMode !== 'local' || webllm.status === 'ready'
-  const localModelAwaitingSetup =
-    settings.aiMode === 'local' && webllm.status !== 'ready' && webllm.status !== 'loading'
+  const aiReady = isAiReady(settings)
 
   const [history, setHistory] = useState<Message[]>([])
   const [draft, setDraft] = useState('')
   const [thinking, setThinking] = useState(false)
+  const [streaming, setStreaming] = useState(false)
   const [loadingInitial, setLoadingInitial] = useState(false)
   const [chatKey, setChatKey] = useState(0)
 
@@ -197,15 +204,8 @@ export function MentorBubble({ leftInset, rightInset }: { leftInset: number; rig
   // biome-ignore lint/correctness/useExhaustiveDependencies: opening line tied to graph open/switch; live sends use fresh prompt via buildSystemPrompt
   useEffect(() => {
     if (!mentorPanelExpanded) return
-    if (settings.aiMode === 'local' && webllm.status === 'loading') {
-      setHistory([])
-      setLoadingInitial(false)
-      return
-    }
-    if (settings.aiMode === 'local' && webllm.status !== 'ready') {
-      const text =
-        webllm.status === 'error' ? t.mentor.localModelLoadFailed : t.mentor.localModelNeedDownload
-      setHistory([{ role: 'mentor', text }])
+    if (!aiReady) {
+      setHistory([{ role: 'mentor', text: t.mentor.needsSetup }])
       setLoadingInitial(false)
       return
     }
@@ -214,6 +214,7 @@ export function MentorBubble({ leftInset, rightInset }: { leftInset: number; rig
     const controller = new AbortController()
     abortRef.current = controller
     setHistory([])
+    setStreaming(false)
     setLoadingInitial(true)
 
     const storeState = useGraphStore.getState()
@@ -225,31 +226,41 @@ export function MentorBubble({ leftInset, rightInset }: { leftInset: number; rig
       selectedEdgeSelector(storeState),
     )
 
+    let started = false
     fetchCompletion(
       settings,
       mentorCompletionMessages(systemPrompt, [{ role: 'user', text: seedText }]),
       MENTOR_MAX_TOKENS,
       controller.signal,
+      (delta) => {
+        if (controller.signal.aborted) return
+        if (!started) {
+          started = true
+          setLoadingInitial(false)
+          setStreaming(true)
+          setHistory([{ role: 'mentor', text: delta }])
+        } else {
+          setHistory((h) => appendToLastMentor(h, delta))
+        }
+      },
     )
-      .then((raw) => {
-        if (!controller.signal.aborted) setHistory([{ role: 'mentor', text: raw || '…' }])
+      .then((full) => {
+        if (!controller.signal.aborted && !started) {
+          setHistory([{ role: 'mentor', text: full || '…' }])
+        }
       })
       .catch(() => {
         if (!controller.signal.aborted) setHistory([{ role: 'mentor', text: t.mentor.errorRetry }])
       })
       .finally(() => {
-        if (!controller.signal.aborted) setLoadingInitial(false)
+        if (!controller.signal.aborted) {
+          setLoadingInitial(false)
+          setStreaming(false)
+        }
       })
 
     return () => controller.abort()
-  }, [
-    mentorPanelExpanded,
-    currentGraphId,
-    webllm.status,
-    settings.aiMode,
-    settings.language,
-    chatKey,
-  ])
+  }, [mentorPanelExpanded, currentGraphId, aiReady, settings.language, chatKey])
 
   useEffect(() => {
     if (mentorPanelExpanded && inputRef.current) inputRef.current.focus()
@@ -282,33 +293,44 @@ export function MentorBubble({ leftInset, rightInset }: { leftInset: number; rig
       const el = scrollRef.current
       if (el) el.scrollTop = el.scrollHeight
     })
+    let started = false
     try {
-      const raw = await fetchCompletion(
+      const full = await fetchCompletion(
         settings,
         mentorCompletionMessages(buildSystemPrompt(), next),
         MENTOR_MAX_TOKENS,
         controller.signal,
+        (delta) => {
+          if (controller.signal.aborted) return
+          if (!started) {
+            started = true
+            setThinking(false)
+            setStreaming(true)
+            setHistory((h) => [...h, { role: 'mentor', text: delta }])
+          } else {
+            setHistory((h) => appendToLastMentor(h, delta))
+          }
+        },
       )
-      if (!controller.signal.aborted) {
-        setHistory((h) => [...h, { role: 'mentor', text: raw || '…' }])
+      if (!controller.signal.aborted && !started) {
+        setHistory((h) => [...h, { role: 'mentor', text: full || '…' }])
       }
     } catch {
       if (!controller.signal.aborted) {
         setHistory((h) => [...h, { role: 'mentor', text: t.mentor.errorRetrySlow }])
       }
     } finally {
+      if (!controller.signal.aborted) setStreaming(false)
       setThinking(false)
     }
   }
 
-  const inputDisabled = !modelReady || loadingInitial
-  const placeholder = modelLoading
-    ? t.mentor.loadingModel
-    : localModelAwaitingSetup
-      ? t.mentor.placeholderLocalPending
-      : selectedNodeText
-        ? t.mentor.placeholder(selectedNodeText)
-        : t.mentor.placeholderGraph
+  const inputDisabled = !aiReady || loadingInitial
+  const placeholder = !aiReady
+    ? t.mentor.placeholderNeedsSetup
+    : selectedNodeText
+      ? t.mentor.placeholder(selectedNodeText)
+      : t.mentor.placeholderGraph
 
   return (
     <div
@@ -380,52 +402,17 @@ export function MentorBubble({ leftInset, rightInset }: { leftInset: number; rig
             >
               {t.mentor.name}
             </b>
-            {modelLoading ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
-                <div
-                  style={{
-                    height: 2,
-                    borderRadius: 'var(--radius-pill)',
-                    background: 'var(--line)',
-                    overflow: 'hidden',
-                    width: '100%',
-                  }}
-                >
-                  <div
-                    style={{
-                      height: '100%',
-                      borderRadius: 'var(--radius-pill)',
-                      background: 'var(--accent)',
-                      width: `${Math.round(webllm.progress * 100)}%`,
-                      transition: 'width 0.4s ease',
-                    }}
-                  />
-                </div>
-                <small
-                  style={{
-                    fontSize: '10px',
-                    fontWeight: 400,
-                    fontFamily: 'var(--font-mono)',
-                    color: 'var(--ink-4)',
-                    letterSpacing: '0.02em',
-                  }}
-                >
-                  {LOCAL_MODEL_LABEL} · {Math.round(webllm.progress * 100)}%
-                </small>
-              </div>
-            ) : (
-              <small
-                style={{
-                  fontSize: '10px',
-                  fontWeight: 400,
-                  fontFamily: 'var(--font-mono)',
-                  color: 'var(--ink-4)',
-                  letterSpacing: '0.02em',
-                }}
-              >
-                {settings.aiMode === 'local' ? LOCAL_MODEL_LABEL : settings.aiModel}
-              </small>
-            )}
+            <small
+              style={{
+                fontSize: '10px',
+                fontWeight: 400,
+                fontFamily: 'var(--font-mono)',
+                color: 'var(--ink-4)',
+                letterSpacing: '0.02em',
+              }}
+            >
+              {settings.aiModel}
+            </small>
           </div>
           <button
             type="button"
@@ -486,21 +473,7 @@ export function MentorBubble({ leftInset, rightInset }: { leftInset: number; rig
             minHeight: 0,
           }}
         >
-          {modelLoading ? (
-            <div
-              style={{
-                fontSize: '14.5px',
-                fontWeight: 400,
-                lineHeight: 1.5,
-                fontFamily: 'var(--font-display)',
-                color: 'var(--ink)',
-                letterSpacing: '-0.005em',
-                margin: '5px 0',
-              }}
-            >
-              {t.mentor.loadingLocalModelNotice}
-            </div>
-          ) : loadingInitial && history.length === 0 ? (
+          {loadingInitial && history.length === 0 ? (
             <ThinkingIndicator />
           ) : (
             history.map((m, i) =>
@@ -543,7 +516,20 @@ export function MentorBubble({ leftInset, rightInset }: { leftInset: number; rig
                     whiteSpace: 'pre-wrap',
                   }}
                 >
-                  <Typewriter text={m.text} emphasis />
+                  {renderWithEmphasis(m.text)}
+                  {streaming && i === history.length - 1 && (
+                    <span
+                      style={{
+                        display: 'inline-block',
+                        width: 1.5,
+                        height: '0.95em',
+                        background: 'var(--ink-3)',
+                        marginLeft: 2,
+                        verticalAlign: 'text-bottom',
+                        animation: 'nx-tw-caret 0.85s steps(2, end) infinite',
+                      }}
+                    />
+                  )}
                 </div>
               ),
             )

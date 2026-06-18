@@ -1,20 +1,53 @@
 // SPDX-License-Identifier: MIT
-import { getEngine, LOCAL_MODEL_ID } from './webllm'
 import type { NessoSettings } from '@/types/graph'
 
 type Message = { role: 'system' | 'user' | 'assistant'; content: string }
 
 export function isAiReady(settings: NessoSettings): boolean {
-  if (settings.aiMode === 'local') return getEngine() !== null
   return Boolean(settings.aiBaseUrl && settings.aiModel)
 }
 
-// The WebLLM engine cannot run two generations at once (the review mode and
-// the mentor may request completions concurrently) — chain local calls.
-let localGenChain: Promise<unknown> = Promise.resolve()
+/** Extracts the assistant text delta from one SSE line, or null for keepalive / `[DONE]` / unparseable lines. */
+function sseLineDelta(line: string): string | null {
+  const trimmed = line.trim()
+  if (!trimmed.startsWith('data:')) return null
+  const payload = trimmed.slice(5).trim()
+  if (payload === '[DONE]') return null
+  try {
+    const json = JSON.parse(payload) as { choices?: { delta?: { content?: string | null } }[] }
+    return json.choices?.[0]?.delta?.content ?? null
+  } catch {
+    return null
+  }
+}
 
-function abortError(): DOMException {
-  return new DOMException('Aborted', 'AbortError')
+async function readSseStream(
+  body: ReadableStream<Uint8Array>,
+  onToken: (delta: string) => void,
+): Promise<string> {
+  const reader = body.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
+  let full = ''
+  try {
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split('\n')
+      buffer = lines.pop() ?? ''
+      for (const line of lines) {
+        const delta = sseLineDelta(line)
+        if (delta) {
+          full += delta
+          onToken(delta)
+        }
+      }
+    }
+  } finally {
+    reader.releaseLock()
+  }
+  return full
 }
 
 export async function fetchCompletion(
@@ -22,32 +55,8 @@ export async function fetchCompletion(
   messages: Message[],
   maxTokens: number,
   signal?: AbortSignal,
+  onToken?: (delta: string) => void,
 ): Promise<string> {
-  if (settings.aiMode === 'local') {
-    const engine = getEngine()
-    if (!engine) throw new Error('Local model not ready')
-    const run = localGenChain.then(async () => {
-      if (signal?.aborted) throw abortError()
-      const onAbort = () => void engine.interruptGenerate()
-      signal?.addEventListener('abort', onAbort)
-      try {
-        const reply = await engine.chat.completions.create({
-          model: LOCAL_MODEL_ID,
-          max_tokens: maxTokens,
-          messages,
-        })
-        // interruptGenerate resolves the call with partial output — surface
-        // the abort to the caller instead of a truncated reply.
-        if (signal?.aborted) throw abortError()
-        return reply.choices[0]?.message?.content ?? ''
-      } finally {
-        signal?.removeEventListener('abort', onAbort)
-      }
-    })
-    localGenChain = run.catch(() => {})
-    return run
-  }
-
   const baseUrl = settings.aiBaseUrl.replace(/\/+$/, '')
   const res = await fetch(`${baseUrl}/chat/completions`, {
     method: 'POST',
@@ -56,9 +65,15 @@ export async function fetchCompletion(
       'Content-Type': 'application/json',
       ...(settings.aiApiKey ? { Authorization: `Bearer ${settings.aiApiKey}` } : {}),
     },
-    body: JSON.stringify({ model: settings.aiModel, max_tokens: maxTokens, messages }),
+    body: JSON.stringify({
+      model: settings.aiModel,
+      max_tokens: maxTokens,
+      messages,
+      ...(onToken ? { stream: true } : {}),
+    }),
   })
   if (!res.ok) throw new Error(await res.text())
+  if (onToken && res.body) return readSseStream(res.body, onToken)
   const data = (await res.json()) as { choices?: { message?: { content?: string | null } }[] }
   return data.choices?.[0]?.message?.content ?? ''
 }

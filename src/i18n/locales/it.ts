@@ -47,9 +47,6 @@ const it: typeof en = {
       straight: 'Linea',
     },
     ai: {
-      source: 'Modalità',
-      remote: 'API remota',
-      local: 'Modello locale',
       apiBaseUrl: 'URL base API',
       apiBaseUrlDesc: 'Endpoint OpenAI-compatibile. Default: Ollama locale.',
       model: 'Modello',
@@ -66,18 +63,6 @@ const it: typeof en = {
         ollamaNotRunning: 'Ollama non in esecuzione —',
         corsBlocked: 'CORS bloccato — imposta',
         unreachable: 'API non raggiungibile',
-      },
-      localModel: {
-        description:
-          'Funziona interamente nel browser tramite WebGPU. Il modello viene salvato in cache dopo il primo download.',
-        checkingCache: 'Ricerca di una copia salvata sul dispositivo…',
-        alreadyDownloaded: 'Questo modello risulta già scaricato nel browser.',
-        autoLoading: 'Caricamento in memoria GPU in corso…',
-        saved: 'Salvato',
-        download: 'Scarica e usa',
-        ready: 'Pronto',
-        loaded: "Modello caricato nel browser. Socrate lo userà al posto dell'API remota.",
-        retry: 'Riprova',
       },
     },
     review: {
@@ -394,14 +379,9 @@ const it: typeof en = {
     toggleTitle: 'Chiedi a Socrate',
     placeholder: (concept) => `Chiedi a Socrate di "${concept}"…`,
     placeholderGraph: 'Chiedi a Socrate del tuo grafo…',
-    loadingModel: 'Caricamento modello locale…',
-    loadingLocalModelNotice:
-      'Dammi qualche secondo! Sto avviando il modello sul tuo dispositivo...',
-    localModelNeedDownload:
-      'Ciao! Sono tipo un cervello senza corpo al momento. Dammi un modello con cui pensare! Vai in Impostazioni (⌘,), scheda AI, scarica il modello locale oppure collegami a una API remota. Poi chiacchieriamo.',
-    localModelLoadFailed:
-      'Beh, non è andata benissimo. Il modello si è rifiutato di caricarsi, che maleducazione. Prova da Impostazioni (⌘,), AI, modello locale, Riprova. Oppure passa a una API remota e saltiamo tutta questa storia.',
-    placeholderLocalPending: 'Scarica prima il modello locale in Impostazioni…',
+    needsSetup:
+      'Ciao! Sono tipo un cervello senza corpo al momento. Dammi un modello con cui pensare! Vai in Impostazioni (⌘,), scheda AI, e collegami a un endpoint OpenAI-compatibile (Ollama gira in locale). Poi chiacchieriamo.',
+    placeholderNeedsSetup: 'Configura prima un endpoint AI in Impostazioni…',
     errorRetry: '*Hmm.* La mia voce mi ha tradito. Riprova.',
     errorRetrySlow: '*Hmm.* La mia voce mi ha tradito. Riprova — lentamente.',
   },

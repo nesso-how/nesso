@@ -50,7 +50,6 @@
     "build:desktop": "pnpm run icons:desktop && tauri build"
   },
   "dependencies": {
-    "@mlc-ai/web-llm": "^0.2.83",
     "@nesso-how/formats": "workspace:*",
     "@nesso-how/graph": "workspace:*",
     "@nesso-how/relation-types": "workspace:*",

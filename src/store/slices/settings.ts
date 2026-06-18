@@ -24,7 +24,6 @@ export const createSettingsSlice: StateCreator<GraphState, [], [], SettingsSlice
     curveStyle: 'arc',
     autoCurveFlip: true,
     categoryPalette: 'default',
-    aiMode: 'local',
     aiBaseUrl: 'http://localhost:11434/v1',
     aiModel: 'gemma3:4b',
     aiApiKey: '',

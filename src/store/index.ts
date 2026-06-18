@@ -45,6 +45,7 @@ export const useGraphStore = create<GraphState>()(
           accent?: unknown
           showLabels?: unknown
           showConfidence?: unknown
+          aiMode?: unknown
         }
         const {
           reviewBatchMax: _legacyReviewBatchMax,
@@ -53,6 +54,7 @@ export const useGraphStore = create<GraphState>()(
           accent: _legacyAccent,
           showLabels: _legacyShowLabels,
           showConfidence: _legacyShowConfidence,
+          aiMode: _legacyAiMode,
           ...settings
         } = merged
         if (settings.autoCurveFlip === undefined) settings.autoCurveFlip = true

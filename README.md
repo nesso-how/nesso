@@ -27,13 +27,13 @@
 Nesso is an interactive concept map where nodes are ideas and edges are typed semantic relations. You draw connections between concepts, pick the relation (e.g. `causes`, `requires`, `subtype-of`), and each concept carries spaced-repetition state. **Socrates**, a Socratic AI mentor, reads the current graph and your selection, then probes your understanding through questions rather than explanations.
 
 > [!WARNING]
-> **Early alpha.** The typed graph and spaced-repetition review work today; the Socratic mentor is still being built and is not usable with the default in-browser model (a stronger model via an OpenAI-compatible endpoint, e.g. Ollama, works far better). Expect breaking changes.
+> **Early alpha.** The typed graph and spaced-repetition review work today; the Socratic mentor is experimental and needs an OpenAI-compatible endpoint (e.g. a local Ollama model or a cloud provider). There is no built-in model. Expect breaking changes.
 
 ## Features
 
 - **Typed knowledge graph**: 52 semantic relations across 8 categories, with inverse pairs; each type renders with a distinct line style and glyph
 - **Spaced-repetition review**: FSRS scheduling via [`ts-fsrs`](https://github.com/open-spaced-repetition/ts-fsrs); rate Again / Hard / Good / Easy
-- **Socratic AI mentor**: context-aware dialogue that probes rather than explains; runs in-browser on WebGPU (no API key) or against any OpenAI-compatible endpoint (Ollama or cloud)
+- **Socratic AI mentor** (experimental): context-aware dialogue that probes rather than explains; connects to any OpenAI-compatible endpoint (local Ollama or a cloud provider)
 - **Multi-graph workspace**: create and switch between graphs; persisted in IndexedDB (web) and mirrored to `.json` files on disk (desktop)
 - **Cross-platform**: web app at [app.nesso.how](https://app.nesso.how) plus a Tauri v2 macOS desktop build
 
@@ -62,7 +62,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for commit conventions, branch naming, an
 src/
   components/     UI components (read state via useGraphStore)
   store/graph.ts  single Zustand store (nodes, edges, selection, settings)
-  llm/            mentor transports (web-llm + OpenAI-compatible fetch)
+  llm/            mentor transport (OpenAI-compatible fetch)
   data/           edge type registry, seed graphs
   types/graph.ts  shared TypeScript types
 src-tauri/        Tauri v2 Rust shell (conf, capabilities, icons)
@@ -81,7 +81,7 @@ Nesso is a React 18 + Vite + TypeScript single-page app, optionally wrapped by T
 
 The canvas is built on [React Flow](https://reactflow.dev/) via `@nesso-how/graph` (`NessoEdge`, `ConceptNodeBody`); the app adds an interactive `ConceptNode` wrapper for inline edit and connection handles. Each edge renders its semantic relation as a distinct line style plus an SVG glyph. Every node carries FSRS scheduling fields (`stability`, `difficulty`, `due`, `lastRating`) consumed by the Review overlay.
 
-The AI mentor in [src/llm/](src/llm/) supports two transports behind a unified message shape: a local **WebGPU** engine (Qwen2.5 1.5B) and any **OpenAI-compatible** `chat/completions` endpoint. On every send the system prompt is rebuilt from the live store, so the model always sees the current graph snapshot, selection, and a focal neighbourhood.
+The AI mentor in [src/llm/](src/llm/) is experimental and talks to any **OpenAI-compatible** `chat/completions` endpoint (a local Ollama model or a cloud provider). On every send the system prompt is rebuilt from the live store, so the model always sees the current graph snapshot, selection, and a focal neighbourhood.
 
 The repo is a **pnpm workspace** monorepo. Shared semantic vocabulary lives in [packages/relation-types](packages/relation-types) and is consumed by both the app and an MCP server in [packages/mcp](packages/mcp) that exposes Nesso's relation types and documentation to MCP-capable LLM clients.
 
