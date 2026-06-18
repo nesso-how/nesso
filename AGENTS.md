@@ -6,13 +6,13 @@ Nesso is an app for building typed knowledge graphs for active learning: an inte
 
 ## Stack
 
-| Layer         | Technology                                                                                                                                                                                                              |
-| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Framework     | React 18 + Vite + TypeScript                                                                                                                                                                                            |
-| Desktop shell | Tauri v2 (`src-tauri/`) — optional wrapper; web app still runs with `pnpm dev`                                                                                                                                          |
-| Graph canvas  | React Flow (`@xyflow/react`)                                                                                                                                                                                            |
-| State         | Zustand (`src/store/index.ts` + `src/store/slices/`)                                                                                                                                                                    |
-| AI mentor     | Local **WebGPU** engine (Qwen2.5 1.5B via `@mlc-ai/web-llm`) or any OpenAI-compatible `chat/completions` endpoint (Ollama or cloud; endpoint / model / key in Settings). Review scheduling uses **FSRS** via `ts-fsrs`. |
+| Layer         | Technology                                                                                                                                                                                                    |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Framework     | React 18 + Vite + TypeScript                                                                                                                                                                                  |
+| Desktop shell | Tauri v2 (`src-tauri/`) — optional wrapper; web app still runs with `pnpm dev`                                                                                                                                |
+| Graph canvas  | React Flow (`@xyflow/react`)                                                                                                                                                                                  |
+| State         | Zustand (`src/store/index.ts` + `src/store/slices/`)                                                                                                                                                          |
+| AI mentor     | **Experimental.** Any OpenAI-compatible `chat/completions` endpoint (local Ollama or cloud; endpoint / model / key in Settings). No built-in in-browser model. Review scheduling uses **FSRS** via `ts-fsrs`. |
 
 ## Source layout
 
@@ -22,7 +22,7 @@ src/
   components/         # All UI components (see .rules/components.md)
   store/              # Zustand store (index.ts composes slices/)
     slices/           # graph-editing, settings, ui, graph-management, desktop-sync
-  llm/                # Mentor transports (web-llm + OpenAI-compatible fetch)
+  llm/                # Mentor transport (OpenAI-compatible fetch)
   data/
     relationTypes.ts  # merges `@nesso-how/relation-types` + CSS palette vars (`RELATION_CATEGORIES`)
     seeds/*.json      # Default demo graph snapshots (React Flow nodes/edges + display name; nested locale dirs, e.g. seeds/it/)
@@ -56,7 +56,7 @@ Area-specific rules (canonical content in `.rules/`, auto-attached per file area
 | Semantic edge model — categories, relation types, encoding      | [`.rules/graph-model.md`](.rules/graph-model.md)     |
 | Theme tokens — `@nesso-how/theme` single source of truth        | [`.rules/theme.md`](.rules/theme.md)                 |
 | Zustand store shape, mutations, selector patterns               | [`.rules/store.md`](.rules/store.md)                 |
-| Socratic AI mentor — MentorBubble, system prompt, chat API      | [`.rules/mentor.md`](.rules/mentor.md)               |
+| Socratic AI mentor — MentorPanel, system prompt, chat API       | [`.rules/mentor.md`](.rules/mentor.md)               |
 | Vitest tests — layout, env split, module resolution, CI gate    | [`.rules/testing.md`](.rules/testing.md)             |
 | `CHANGELOG.md` (Keep a Changelog), `[Unreleased]`, release flow | [`.rules/changelog.md`](.rules/changelog.md)         |
 | Keeping the `.rules/` files in sync with the codebase           | [`.rules/maintenance.md`](.rules/maintenance.md)     |
@@ -74,7 +74,7 @@ Lint and format run through **Biome** (`biome.json`): JS/TS/JSON/CSS, with **Pre
 
 ### Never store chat history in the global store
 
-`MentorBubble` conversation history is local state. It resets on selection change by design — each selection context starts a fresh Socratic dialogue. Do not lift it into the Zustand store.
+`MentorPanel` conversation history is local state. It resets on selection change by design — each selection context starts a fresh Socratic dialogue. Do not lift it into the Zustand store.
 
 ### Never use default React Flow edge types
 
@@ -86,7 +86,7 @@ Category colours are CSS custom properties (`--cat-taxonomic`, etc.) set by the 
 
 ### Never call the AI API outside llm/completion.ts
 
-All AI chat completions go through `src/llm/completion.ts` (`fetchCompletion`), used by `MentorBubble` and `ReviewMode`. Do not duplicate fetch or WebLLM client logic elsewhere — the API key is client-side and calls should stay scoped to those interactions.
+All AI chat completions go through `src/llm/completion.ts` (`fetchCompletion`), used by `MentorPanel` and `ReviewMode`. Do not duplicate the fetch logic elsewhere — the API key is client-side and calls should stay scoped to those interactions.
 
 ### Never add a second global store
 

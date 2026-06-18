@@ -143,10 +143,7 @@
       }
     },
     "src/components/dialogs/SettingsDialog.tsx": {
-      "complexity_high": {
-        "count": 1
-      },
-      "crap_high": {
+      "crap_moderate": {
         "count": 1
       }
     },
@@ -225,12 +222,7 @@
         "count": 1
       }
     },
-    "src/components/mentor/LocalModelPanel.tsx": {
-      "crap_critical": {
-        "count": 1
-      }
-    },
-    "src/components/mentor/MentorBubble.tsx": {
+    "src/components/mentor/MentorPanel.tsx": {
       "complexity_critical": {
         "count": 2
       },
@@ -238,7 +230,7 @@
         "count": 2
       },
       "crap_high": {
-        "count": 4
+        "count": 3
       }
     },
     "src/components/mentor/ModelStatusBadge.tsx": {
@@ -353,8 +345,8 @@
       }
     },
     "src/llm/completion.ts": {
-      "crap_high": {
-        "count": 2
+      "crap_moderate": {
+        "count": 1
       }
     },
     "src/store/slices/graph-editing.ts": {
@@ -391,10 +383,9 @@
     "src/store/slices/graph-editing.ts:high impact",
     "src/lib/shortcuts.ts:complexity",
     "src/components/canvas/GraphCanvas.tsx:complexity",
-    "src/llm/completion.ts:untested risk",
-    "src/components/mentor/MentorBubble.tsx:complexity",
-    "src/components/review/ReviewMode.tsx:complexity",
+    "src/components/mentor/MentorPanel.tsx:complexity",
     "src/components/inspector/NodeInspector.tsx:complexity",
+    "src/components/review/ReviewMode.tsx:complexity",
     "src/components/inspector/InlineEdit.tsx:complexity",
     "packages/graph/src/NessoGraph.tsx:complexity",
     "scripts/release.mjs:complexity"

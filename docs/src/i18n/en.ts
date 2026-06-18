@@ -75,12 +75,12 @@ export const en: Locale = {
     },
     p4: {
       heading: 'Private by architecture',
-      body: 'Your cognitive graph reveals how you reason, where you struggle, how your understanding evolves. Nesso keeps the graph on your device. The mentor runs on WebGPU locally by default, and only uses a remote endpoint if you configure one.',
-      aiMode: 'AI mode',
+      body: 'Your cognitive graph reveals how you reason, where you struggle, how your understanding evolves. Nesso keeps the graph on your device. The mentor is optional: run it on-device through a local model server like Ollama, or point it at a cloud provider. Either way, the graph never leaves your machine.',
+      aiMode: 'AI endpoint',
       settings: 'Settings',
       local: 'Local',
-      localMeta: 'Qwen2.5 1.5B · on-device',
-      remote: 'Remote',
+      localMeta: 'Ollama · on-device',
+      remote: 'Cloud',
       remoteMeta: 'OpenAI · Claude · OpenRouter…',
     },
   },
@@ -88,7 +88,7 @@ export const en: Locale = {
     label: 'Socratic mentor',
     badge: 'Experimental',
     heading: 'Then Socrates questions it',
-    body: 'Layered on top of the graph, a Socratic AI reads your current selection and answers with questions, not summaries. It runs in-browser with no API key, or against any OpenAI-compatible endpoint. It is still early: the small in-browser model is not good enough yet, so point it at a stronger model via Ollama or a cloud endpoint for a real conversation.',
+    body: 'Layered on top of the graph, a Socratic AI reads your current selection and answers with questions, not summaries. It is experimental and connects to any OpenAI-compatible endpoint: a local model via Ollama, or a cloud provider. Point it at a capable model for a real conversation.',
     chat: {
       userMsg: 'Let’s explore Understanding',
       mentorMsg:

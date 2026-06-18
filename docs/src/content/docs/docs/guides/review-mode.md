@@ -24,7 +24,7 @@ For each due concept, Review:
 
 FSRS then updates `stability` and `difficulty`, schedules the next `due` date, and Review advances to the next card. Done with the queue, the overlay closes; you're caught up.
 
-If the AI backend is unavailable (no WebGPU, model not downloaded, remote endpoint unreachable), Review still works. It falls back to showing the concept title without a generated question.
+If the AI backend is unavailable (no endpoint configured or unreachable), Review still works. It falls back to showing the concept title without a generated question.
 
 ## Tuning FSRS
 

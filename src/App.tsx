@@ -19,7 +19,7 @@ import {
   readInspectorPanelWidth,
   writeInspectorPanelWidth,
 } from './components/Inspector'
-import { MentorBubble } from './components/mentor/MentorBubble'
+import { MentorPanel } from './components/mentor/MentorPanel'
 import { ReviewMode } from './components/review/ReviewMode'
 import { ShortcutsDialog } from './components/dialogs/ShortcutsDialog'
 import { SettingsDialog } from './components/dialogs/SettingsDialog'
@@ -35,7 +35,6 @@ import { GraphFileConflictBanner } from './components/banners/GraphFileConflictB
 import { UpdateBanner } from './components/banners/UpdateBanner'
 import { PALETTES } from '@nesso-how/relation-types'
 import { findNewConceptPosition, NEW_CONCEPT_SIZE } from './data/newConceptLayout'
-import { initWebLLM, localModelWeightsCached } from './llm/webllm'
 import { focusFlowNodes } from './lib/focusFlowSelection'
 import { resolveShortcut } from './lib/shortcuts'
 import { computeSelectionPan } from './lib/selectionPan'
@@ -196,22 +195,6 @@ function AppInner() {
     }
     restore()
   }, [currentGraphId, loadedToken, viewports, canvasInsets, setViewport])
-
-  // Local WebGPU model: if weights are already cached, load the engine without opening Settings
-  useEffect(() => {
-    if (settings.aiMode !== 'local') return
-    let cancelled = false
-    void (async () => {
-      try {
-        if ((await localModelWeightsCached()) && !cancelled) void initWebLLM()
-      } catch {
-        /* ignore cache probe failures */
-      }
-    })()
-    return () => {
-      cancelled = true
-    }
-  }, [settings.aiMode])
 
   // Apply theme
   useEffect(() => {
@@ -481,7 +464,7 @@ function AppInner() {
         onPanelWidthChange={(w) => setInspectorPanelWidth(clampInspectorPanelWidth(w))}
       />
       <StatusBar sidebarWidth={sidebarWidth} onFit={fitView} />
-      <MentorBubble
+      <MentorPanel
         leftInset={sidebarWidth}
         rightInset={
           hasSelection ? (inspectorCollapsed ? INSPECTOR_RAIL_WIDTH : inspectorPanelWidth) : 0

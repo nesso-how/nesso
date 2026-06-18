@@ -1,6 +1,6 @@
 ---
-description: Socratic AI mentor integration — MentorBubble, system prompt, AI API usage
-globs: src/components/mentor/MentorBubble.tsx,src/llm/webllm.ts,src/llm/context.ts
+description: Socratic AI mentor integration — MentorPanel, system prompt, AI API usage
+globs: src/components/mentor/MentorPanel.tsx,src/llm/completion.ts,src/llm/context.ts
 alwaysApply: false
 ---
 

@@ -9,7 +9,6 @@ import { buildReviewElaborationPrompt } from '@/llm/context'
 import { fetchCompletion, isAiReady } from '@/llm/completion'
 import { ratingColor } from '@nesso-how/graph'
 import { SocratesGlyph } from '@/components/mentor/SocratesGlyph'
-import { useWebLLM } from '@/llm/webllm'
 import { useT } from '@/i18n'
 import { CloseButton } from '@/components/ui/CloseButton'
 import { ModalOverlay } from '@/components/ui/ModalOverlay'
@@ -102,7 +101,6 @@ export function ReviewMode({ open, onClose }: Props) {
   const [question, setQuestion] = useState<string | null>(null)
   const [questionLoading, setQuestionLoading] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
-  const webllm = useWebLLM()
 
   const scheduler = useMemo(
     () =>
@@ -129,7 +127,7 @@ export function ReviewMode({ open, onClose }: Props) {
   // Rated cards get a future due date and drop out of `due`, so the head of
   // the queue always advances after each rating.
   const currentNode = due[0] ?? null
-  const aiReady = settings.aiMode === 'local' ? webllm.status === 'ready' : isAiReady(settings)
+  const aiReady = isAiReady(settings)
 
   const predictedIntervals = useMemo(() => {
     if (!currentNode) return null

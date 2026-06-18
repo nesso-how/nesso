@@ -7,7 +7,7 @@ Nesso is available as a hosted web app, a macOS desktop app, and as open-source 
 
 ## Web app
 
-Open [app.nesso.how](https://app.nesso.how) in your browser. The app works offline after the first load. Use Chrome, Edge, Arc, or any other browser with **WebGPU** if you want to run the AI mentor locally; for the remote API mode any modern browser is fine.
+Open [app.nesso.how](https://app.nesso.how) in your browser. The app works offline after the first load and runs in any modern browser. The AI mentor is optional and needs an OpenAI-compatible endpoint (see [Picking an AI backend](#picking-an-ai-backend)).
 
 ## Desktop app (macOS)
 
@@ -44,38 +44,29 @@ pnpm build:desktop
 
 ## Picking an AI backend
 
-The Socratic mentor uses an LLM. Choose under **Settings -> AI**:
-
-- **Local model (default):** Qwen2.5 1.5B runs entirely in the browser via WebGPU (powered by [WebLLM](https://github.com/mlc-ai/web-llm)). The first run downloads ~1.1 GB and caches it; subsequent loads are instant. Nothing leaves your machine.
-- **Remote API:** any OpenAI-compatible `chat/completions` endpoint: local [Ollama](https://ollama.com/) at `http://localhost:11434/v1`, an OpenAI-compatible proxy, or a hosted provider. Set base URL, model, and API key if needed.
-
-Either mode can be switched at any time from **Settings** (`⌘,` / `Ctrl+,`).
+The Socratic mentor is **experimental** and uses any OpenAI-compatible `chat/completions` endpoint: a local [Ollama](https://ollama.com/) instance, an OpenAI-compatible proxy, or a hosted provider. There is no built-in in-browser model — configure an endpoint under **Settings -> AI** (`⌘,` / `Ctrl+,`) or the mentor stays disabled.
 
 :::caution
 API keys are stored client-side in `localStorage`. Do not self-host the web app publicly with secrets baked in.
 :::
 
-### Local mode tips
+### Local setup with Ollama
 
-- WebGPU is required. On macOS, recent Chrome / Edge / Arc work out of the box; Safari support is improving but currently limited.
-- The first download streams progress into the Settings panel. Closing the panel does not cancel the download.
-- To remove the cached model weights, clear the browser site data for the app.
-
-### Remote mode with Ollama
-
-Run Ollama locally, then pull a small instruction-tuned model:
+Run [Ollama](https://ollama.com/) locally, then pull a small instruction-tuned model:
 
 ```sh
 ollama pull gemma3:4b
 ```
 
-In **Settings -> AI**, choose **Remote API** and set:
+In **Settings -> AI**, set:
 
 - Base URL: `http://localhost:11434/v1`
-- Model: `gemma3:4b` (or `llama3.2:3b`, `qwen2.5:7b`; presets are shown in Settings)
+- Model: `gemma3:4b` (or `llama3.2:3b`, `qwen3:8b`; presets are shown in Settings)
 - API key: leave empty
 
-Settings auto-probes the endpoint and offers a **Pull** button if the model is missing.
+Settings auto-probes the endpoint and offers a **Pull** button if the model is missing. Prompts and responses stay on your machine.
+
+When using the hosted web app over HTTPS, allow its origin in Ollama so the browser request is not blocked by CORS: start Ollama with `OLLAMA_ORIGINS=https://app.nesso.how`. (Requests to `localhost` are exempt from mixed-content blocking, so only CORS needs configuring.)
 
 ## Keyboard shortcuts
 
