@@ -104,4 +104,83 @@ describe('persistWorkspaceSync', () => {
     // The renamed graph's file follows its de-duplicated name.
     expect(tauriFsState.files.has('/proj/Foo-2.json')).toBe(true)
   })
+
+  it('picks up a disk edit with an equal timestamp but different content', async () => {
+    await dbSaveGraph(record(gid(1), 'Doc', 1000))
+    tauriFsState.writeFile(
+      '/proj/Doc.json',
+      JSON.stringify({
+        id: gid(1),
+        name: 'Doc',
+        updatedAt: 1000,
+        nodes: [{ id: 'n1', position: { x: 0, y: 0 }, data: { text: 'hi' } }],
+        edges: [],
+      }),
+    )
+
+    await persistWorkspaceSync(SETTINGS, await dbListGraphs())
+
+    const [stored] = await dbListGraphs()
+    expect(stored.nodes).toHaveLength(1)
+  })
+})
+
+describe('disk id and name resolution', () => {
+  it('gives a duplicated file embedding an already-claimed id a fresh id', async () => {
+    writeDiskFile('Orig.json', { id: gid(1), name: 'Orig', updatedAt: 1000 })
+    writeDiskFile('Copy.json', { id: gid(1), name: 'Copy', updatedAt: 1000 })
+
+    const list = await loadProjectFromDisk(await ws())
+
+    expect(list).toHaveLength(2)
+    const ids = new Set(list.map((r) => r.id))
+    expect(ids.size).toBe(2)
+    expect(ids.has(gid(1))).toBe(true)
+  })
+
+  it('lets the filename win over a stale JSON name and rewrites the file', async () => {
+    writeDiskFile('Real.json', { id: gid(1), name: 'StaleName', updatedAt: 1000 })
+
+    const list = await loadProjectFromDisk(await ws())
+
+    expect(list.map((r) => r.name)).toEqual(['Real'])
+    expect(JSON.parse(tauriFsState.files.get('/proj/Real.json')!).name).toBe('Real')
+  })
+
+  it('assigns a fresh id to a file whose embedded id is invalid', async () => {
+    writeDiskFile('X.json', { id: 'not-a-valid-id', name: 'X', updatedAt: 1000 })
+
+    const [rec] = await loadProjectFromDisk(await ws())
+
+    expect(rec.id).not.toBe('not-a-valid-id')
+    expect(rec.name).toBe('X')
+  })
+
+  it('binds the file to the manifest id over the JSON id', async () => {
+    writeDiskFile('Bound.json', { id: gid(9), name: 'Bound', updatedAt: 1000 })
+    writeDiskManifest({ [gid(1)]: { ...record(gid(1), 'Bound', 1000), file: 'Bound.json' } })
+
+    const [rec] = await loadProjectFromDisk(await ws())
+
+    expect(rec.id).toBe(gid(1))
+  })
+
+  it('picks up a disk rename (same id and timestamp) over the IDB name', async () => {
+    await dbSaveGraph(record(gid(1), 'Old', 1000))
+    writeDiskFile('New.json', { id: gid(1), name: 'New', updatedAt: 1000 })
+
+    await persistWorkspaceSync(SETTINGS, await dbListGraphs())
+
+    const [stored] = await dbListGraphs()
+    expect(stored.name).toBe('New')
+  })
+
+  it('writes the manifest binding for a freshly loaded disk file', async () => {
+    writeDiskFile('A.json', { id: gid(1), name: 'A', updatedAt: 1000 })
+
+    await loadProjectFromDisk(await ws())
+
+    const manifest = JSON.parse(tauriFsState.files.get('/proj/.nesso/manifest.json')!)
+    expect(manifest.entries[gid(1)]).toMatchObject({ file: 'A.json', name: 'A' })
+  })
 })

@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest'
 import {
   deserializeGraph,
   nodesForGraphShareExport,
+  nodesFromGraphShareImport,
   serializeGraph,
   type NessoGraphFile,
 } from './index.js'
@@ -59,6 +60,17 @@ describe('serializeGraph / deserializeGraph', () => {
     })
     expect(deserializeGraph(json).nodes[0].data.text).toBe('')
   })
+
+  it('ignores a non-object node data blob', () => {
+    const json = JSON.stringify({
+      name: 'X',
+      nodes: [{ id: 'n1', position: { x: 0, y: 0 }, data: 'oops' }],
+      edges: [],
+    })
+    const data = deserializeGraph(json).nodes[0].data
+    expect(data.text).toBe('')
+    expect('0' in data).toBe(false)
+  })
 })
 
 describe('deserializeGraph validation', () => {
@@ -67,9 +79,17 @@ describe('deserializeGraph validation', () => {
     expect(() => deserializeGraph(JSON.stringify({ nodes: [] }))).toThrow(/missing nodes or edges/)
   })
 
+  it('rejects a non-object root', () => {
+    expect(() => deserializeGraph('null')).toThrow(/missing nodes or edges/)
+    expect(() => deserializeGraph('42')).toThrow(/missing nodes or edges/)
+  })
+
   it('rejects a node without a valid id or position', () => {
     const noId = JSON.stringify({ nodes: [{ position: { x: 0, y: 0 } }], edges: [] })
     expect(() => deserializeGraph(noId)).toThrow(/node 0 is missing a valid id or position/)
+
+    const emptyId = JSON.stringify({ nodes: [{ id: '', position: { x: 0, y: 0 } }], edges: [] })
+    expect(() => deserializeGraph(emptyId)).toThrow(/node 0 is missing a valid id or position/)
 
     const nanPos = JSON.stringify({
       nodes: [{ id: 'n1', position: { x: Number.NaN, y: 0 } }],
@@ -78,12 +98,18 @@ describe('deserializeGraph validation', () => {
     expect(() => deserializeGraph(nanPos)).toThrow(/node 0 is missing a valid id or position/)
   })
 
-  it('rejects an edge missing id, source or target', () => {
-    const json = JSON.stringify({
-      nodes: [{ id: 'n1', position: { x: 0, y: 0 } }],
-      edges: [{ id: 'e1', source: 'n1' }],
-    })
-    expect(() => deserializeGraph(json)).toThrow(/edge 0 is missing id, source or target/)
+  it('rejects an edge that is not an object or is missing id, source or target', () => {
+    const base = { nodes: [{ id: 'n1', position: { x: 0, y: 0 } }] }
+    const cases = [
+      [null],
+      [{ source: 'n1', target: 'n1' }],
+      [{ id: 'e1', target: 'n1' }],
+      [{ id: 'e1', source: 'n1' }],
+    ]
+    for (const edges of cases) {
+      const json = JSON.stringify({ ...base, edges })
+      expect(() => deserializeGraph(json)).toThrow(/edge 0 is missing id, source or target/)
+    }
   })
 })
 
@@ -109,5 +135,27 @@ describe('nodesForGraphShareExport', () => {
   it('omits the elaboration key when there is none', () => {
     const [stripped] = nodesForGraphShareExport([makeNode('n1')])
     expect('elaboration' in stripped.data).toBe(false)
+  })
+
+  it('falls back to empty text when the node has no data or no text field', () => {
+    const noData = { id: 'n1', position: { x: 0, y: 0 } } as unknown as Node<ConceptNodeData>
+    expect(nodesForGraphShareExport([noData])[0].data.text).toBe('')
+
+    const noText = {
+      id: 'n2',
+      position: { x: 0, y: 0 },
+      data: { stability: 9 },
+    } as unknown as Node<ConceptNodeData>
+    expect(nodesForGraphShareExport([noText])[0].data.text).toBe('')
+  })
+})
+
+describe('nodesFromGraphShareImport', () => {
+  it('resets review history like the export path', () => {
+    const reviewed = makeNode('n1', { stability: 50, reps: 3, lastRating: 2 })
+    const [reset] = nodesFromGraphShareImport([reviewed])
+    expect(reset.data).toMatchObject({ text: 'n1', ...defaultConceptReviewFields() })
+    expect(reset.data.stability).toBe(0)
+    expect(reset.data.reps).toBe(0)
   })
 })
