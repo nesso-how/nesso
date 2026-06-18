@@ -7,6 +7,20 @@ export function isAiReady(settings: NessoSettings): boolean {
   return Boolean(settings.aiBaseUrl && settings.aiModel)
 }
 
+/** Extracts the assistant text delta from one SSE line, or null for keepalive / `[DONE]` / unparseable lines. */
+function sseLineDelta(line: string): string | null {
+  const trimmed = line.trim()
+  if (!trimmed.startsWith('data:')) return null
+  const payload = trimmed.slice(5).trim()
+  if (payload === '[DONE]') return null
+  try {
+    const json = JSON.parse(payload) as { choices?: { delta?: { content?: string | null } }[] }
+    return json.choices?.[0]?.delta?.content ?? null
+  } catch {
+    return null
+  }
+}
+
 async function readSseStream(
   body: ReadableStream<Uint8Array>,
   onToken: (delta: string) => void,
@@ -23,21 +37,10 @@ async function readSseStream(
       const lines = buffer.split('\n')
       buffer = lines.pop() ?? ''
       for (const line of lines) {
-        const trimmed = line.trim()
-        if (!trimmed.startsWith('data:')) continue
-        const payload = trimmed.slice(5).trim()
-        if (payload === '[DONE]') continue
-        try {
-          const json = JSON.parse(payload) as {
-            choices?: { delta?: { content?: string | null } }[]
-          }
-          const delta = json.choices?.[0]?.delta?.content
-          if (delta) {
-            full += delta
-            onToken(delta)
-          }
-        } catch {
-          // Ignore keepalive lines and partial JSON between chunks.
+        const delta = sseLineDelta(line)
+        if (delta) {
+          full += delta
+          onToken(delta)
         }
       }
     }
