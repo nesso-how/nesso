@@ -1,9 +1,14 @@
 // SPDX-License-Identifier: MIT
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { RELATION_CATEGORIES, RELATION_TYPES, isPrimaryRelationType } from '@/data/relationTypes'
+import {
+  RELATION_CATEGORIES,
+  RELATION_TYPES,
+  isPrimaryRelationType,
+  buildRelationGroups,
+} from '@/data/relationTypes'
 import { frequentRelationTypes } from '@/data/relationUsage'
 import { useGraphStore } from '@/store'
-import type { EdgeCategory, EdgeTypeName } from '@/types/graph'
+import type { EdgeTypeName } from '@/types/graph'
 import { useT } from '@/i18n'
 
 interface Props {
@@ -70,20 +75,11 @@ export function RelationPicker({ screenX, screenY, fromText, toText, onPick, onC
   const frequentTypes = useMemo(() => frequentRelationTypes(edges), [edges])
   const showFrequent = !q && !showAll && frequentTypes.length > 0
 
-  const groups = Object.entries(RELATION_CATEGORIES)
-    .map(([k, c]) => ({
-      key: k as EdgeCategory,
-      ...c,
-      types: (
-        Object.entries(RELATION_TYPES) as [EdgeTypeName, (typeof RELATION_TYPES)[EdgeTypeName]][]
-      ).filter(([id, edgeDef]) => {
-        if (edgeDef.cat !== k) return false
-        if (!q && !showAll && !isPrimaryRelationType(id)) return false
-        if (q) return t.relationTypes.types[id].toLowerCase().includes(q) || id.includes(q)
-        return true
-      }),
-    }))
-    .filter((g) => g.types.length > 0)
+  const groups = buildRelationGroups((id) => {
+    if (!q && !showAll && !isPrimaryRelationType(id)) return false
+    if (q) return t.relationTypes.types[id].toLowerCase().includes(q) || id.includes(q)
+    return true
+  })
 
   // The onConnect path has no pointer coordinates (0,0) — center the picker
   // instead of pinning it to the top-left corner.

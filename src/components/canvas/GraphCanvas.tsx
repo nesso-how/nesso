@@ -1,47 +1,31 @@
 // SPDX-License-Identifier: MIT
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type MouseEvent as ReactMouseEvent,
-} from 'react'
+import { useCallback, useEffect, useMemo, useRef, type MouseEvent as ReactMouseEvent } from 'react'
 import {
   Background,
   BackgroundVariant,
   ConnectionMode,
   useReactFlow,
-  type Node,
-  type Edge,
-  type OnConnect,
   type OnMoveEnd,
   type OnNodesChange,
-  type OnConnectStart,
-  type OnConnectEnd,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { NessoGraph } from '@nesso-how/graph'
 import { ConceptNode } from './ConceptNode'
 import { NessoConnectionLine } from './NessoConnectionLine'
-import { GraphContextMenu, type ContextMenuState } from './GraphContextMenu'
+import { GraphContextMenu } from './GraphContextMenu'
 import { EmptyCanvasHint } from './EmptyCanvasHint'
+import { useGraphContextMenu } from './useGraphContextMenu'
+import { useConnectRelation } from './useConnectRelation'
 import { RelationPicker } from '@/components/ui/RelationPicker'
 import { useT } from '@/i18n'
 import { useGraphStore } from '@/store'
 import { computeFitViewport } from '@/lib/fitGraphViewport'
+import { styleEdges } from '@/lib/styleEdges'
 import { getSeedInitialFitZoom } from '@/data/seedGraph'
 import { newConceptTopLeftAtFlowCenter } from '@/data/newConceptLayout'
 import type { EdgeTypeName } from '@/types/graph'
 
 const nodeTypes = { concept: ConceptNode }
-
-interface PendingConnection {
-  source: string
-  target: string
-  screenX: number
-  screenY: number
-}
 
 export function GraphCanvas({
   topInset = 0,
@@ -60,10 +44,8 @@ export function GraphCanvas({
   const edges = useGraphStore((s) => s.edges)
   const onNodesChange = useGraphStore((s) => s.onNodesChange)
   const onEdgesChange = useGraphStore((s) => s.onEdgesChange)
-  const addEdge = useGraphStore((s) => s.addEdge)
   const addNode = useGraphStore((s) => s.addNode)
   const syncFlowSelection = useGraphStore((s) => s.syncFlowSelection)
-  const setSelected = useGraphStore((s) => s.setSelected)
   const currentGraphId = useGraphStore((s) => s.currentGraphId)
   const loadedToken = useGraphStore((s) => s.loadedToken)
   const graphDisplay = useGraphStore((s) => s.graphDisplay)
@@ -98,9 +80,10 @@ export function GraphCanvas({
     )
   }, [currentGraphId, loadedToken, topInset, bottomInset, leftInset, rightInset])
 
-  const [pendingConn, setPendingConn] = useState<PendingConnection | null>(null)
-  const [ctxMenu, setCtxMenu] = useState<ContextMenuState | null>(null)
-  const connectingSource = useRef<string | null>(null)
+  const { ctxMenu, closeCtxMenu, onNodeContextMenu, onEdgeContextMenu, onPaneContextMenu } =
+    useGraphContextMenu()
+  const { pendingConn, setPendingConn, onConnectStart, onConnectEnd, onConnect, onPickRelation } =
+    useConnectRelation()
   const selectionSyncFrame = useRef<number | null>(null)
   const canvasRef = useRef<HTMLDivElement>(null)
 
@@ -114,31 +97,6 @@ export function GraphCanvas({
     }
     root.addEventListener('selectstart', onSelectStart)
     return () => root.removeEventListener('selectstart', onSelectStart)
-  }, [])
-
-  const onConnectStart = useCallback<OnConnectStart>((_, params) => {
-    connectingSource.current = params.nodeId ?? null
-  }, [])
-
-  const onConnectEnd = useCallback<OnConnectEnd>((event) => {
-    // Restrict to node elements: edges and other React Flow chrome also carry
-    // data-id, and an edge id here would persist a ghost edge with no target.
-    const target = (event.target as Element)
-      .closest('.react-flow__node[data-id]')
-      ?.getAttribute('data-id')
-    const source = connectingSource.current
-    if (!source || !target || source === target) {
-      connectingSource.current = null
-      return
-    }
-    const e = event as MouseEvent
-    setPendingConn({ source, target, screenX: e.clientX, screenY: e.clientY })
-    connectingSource.current = null
-  }, [])
-
-  const onConnect = useCallback<OnConnect>((conn) => {
-    if (!conn.source || !conn.target || conn.source === conn.target) return
-    setPendingConn({ source: conn.source, target: conn.target, screenX: 0, screenY: 0 })
   }, [])
 
   const onSelectionChange = useCallback(
@@ -188,52 +146,7 @@ export function GraphCanvas({
     [addNode, screenToFlowPosition],
   )
 
-  const onNodeContextMenu = useCallback(
-    (event: ReactMouseEvent, node: Node) => {
-      event.preventDefault()
-      setSelected({ kind: 'node', id: node.id })
-      setCtxMenu({ x: event.clientX, y: event.clientY, kind: 'node' })
-    },
-    [setSelected],
-  )
-
-  const onEdgeContextMenu = useCallback(
-    (event: ReactMouseEvent, edge: Edge) => {
-      event.preventDefault()
-      setSelected({ kind: 'edge', id: edge.id })
-      setCtxMenu({ x: event.clientX, y: event.clientY, kind: 'edge' })
-    },
-    [setSelected],
-  )
-
-  const onPaneContextMenu = useCallback(
-    (event: ReactMouseEvent | MouseEvent) => {
-      event.preventDefault()
-      const { x, y } = screenToFlowPosition({ x: event.clientX, y: event.clientY })
-      setCtxMenu({ x: event.clientX, y: event.clientY, kind: 'canvas', flowX: x, flowY: y })
-    },
-    [screenToFlowPosition],
-  )
-
-  const onPickRelation = useCallback(
-    (type: EdgeTypeName) => {
-      if (!pendingConn) return
-      addEdge(pendingConn.source, pendingConn.target, type)
-      setPendingConn(null)
-    },
-    [pendingConn, addEdge],
-  )
-
-  const styledEdges = useMemo(() => {
-    const pairCount: Record<string, number> = {}
-    return edges.map((e) => {
-      const key = [e.source, e.target].sort().join('—')
-      const idx = pairCount[key] ?? 0
-      pairCount[key] = idx + 1
-      if (e.data?.siblingIdx === idx) return e
-      return { ...e, data: { ...e.data, siblingIdx: idx } }
-    })
-  }, [edges])
+  const styledEdges = useMemo(() => styleEdges(edges), [edges])
 
   return (
     <div
@@ -303,9 +216,7 @@ export function GraphCanvas({
         />
       )}
 
-      {ctxMenu && (
-        <GraphContextMenu menu={ctxMenu} onClose={() => setCtxMenu(null)} onFit={onFit} />
-      )}
+      {ctxMenu && <GraphContextMenu menu={ctxMenu} onClose={closeCtxMenu} onFit={onFit} />}
     </div>
   )
 }

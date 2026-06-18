@@ -53,12 +53,14 @@ export function buildFocalNeighborContext(
   return { focus, related }
 }
 
-function renderFocus(node: Node<ConceptNodeData>): string {
-  const elab = node.data.elaboration
-  if (!elab) return ''
+/** Non-empty definition/examples/notes lines from a concept's elaboration. */
+function elaborationParts(
+  elab: NonNullable<ConceptNodeData['elaboration']>,
+  definitionLabel = '',
+): string[] {
   const parts: string[] = []
   const def = elab.definition?.trim()
-  if (def) parts.push(def)
+  if (def) parts.push(`${definitionLabel}${def}`)
   const exs = (elab.examples ?? '')
     .split('\n')
     .map((s) => s.trim())
@@ -66,6 +68,13 @@ function renderFocus(node: Node<ConceptNodeData>): string {
   if (exs.length > 0) parts.push(`Examples: ${exs.join('; ')}`)
   const notes = elab.notes?.trim()
   if (notes) parts.push(`Notes: ${notes}`)
+  return parts
+}
+
+function renderFocus(node: Node<ConceptNodeData>): string {
+  const elab = node.data.elaboration
+  if (!elab) return ''
+  const parts = elaborationParts(elab)
   if (parts.length === 0) return ''
   let body = parts.join(' ')
   if (roughTokens(body) > FOCUS_MAX_TOKENS) body = truncate(body, FOCUS_MAX_TOKENS * 4)
@@ -91,16 +100,7 @@ function renderRelated(neighbors: Node<ConceptNodeData>[]): string {
 export function buildReviewElaborationPrompt(node: Node<ConceptNodeData>): string {
   const elab = node.data.elaboration
   if (!elab) return ''
-  const parts: string[] = []
-  const def = elab.definition?.trim()
-  if (def) parts.push(`Definition: ${def}`)
-  const exs = (elab.examples ?? '')
-    .split('\n')
-    .map((s) => s.trim())
-    .filter(Boolean)
-  if (exs.length > 0) parts.push(`Examples: ${exs.join('; ')}`)
-  const notes = elab.notes?.trim()
-  if (notes) parts.push(`Notes: ${notes}`)
+  const parts = elaborationParts(elab, 'Definition: ')
   if (parts.length === 0) return ''
   let body = parts.join('\n')
   if (roughTokens(body) > REVIEW_ELAB_MAX_TOKENS) body = truncate(body, REVIEW_ELAB_MAX_TOKENS * 4)

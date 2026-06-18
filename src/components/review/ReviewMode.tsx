@@ -35,6 +35,55 @@ interface Props {
   onClose: () => void
 }
 
+function ReviewRelationRow({
+  type,
+  text,
+  incoming,
+}: {
+  type: EdgeTypeName
+  text: string | undefined
+  incoming: boolean
+}) {
+  const t = useT()
+  const C = RELATION_CATEGORIES[RELATION_TYPES[type].cat]
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'baseline',
+        gap: 'var(--space-6)',
+        padding: '5px 0',
+        ...(incoming && { opacity: 0.7 }),
+      }}
+    >
+      <span
+        style={{
+          fontSize: '10.5px',
+          fontWeight: 500,
+          fontFamily: 'var(--font-mono)',
+          color: C.color,
+          textTransform: 'uppercase',
+          letterSpacing: '0.06em',
+          minWidth: 88,
+        }}
+      >
+        {incoming ? '← ' : ''}
+        {t.relationTypes.types[type]}
+      </span>
+      <span
+        style={{
+          fontSize: '14.5px',
+          fontWeight: 500,
+          fontFamily: 'var(--font-display)',
+          color: 'var(--ink)',
+        }}
+      >
+        {text}
+      </span>
+    </div>
+  )
+}
+
 const EMPTY_NODES: ReturnType<typeof sortedDueConceptNodes> = []
 const EMPTY_EDGES: never[] = []
 
@@ -492,87 +541,22 @@ export function ReviewMode({ open, onClose }: Props) {
                 gap: 1,
               }}
             >
-              {nodeEdges.out.map((e) => {
-                const T = RELATION_TYPES[e.data?.type as EdgeTypeName]
-                const C = RELATION_CATEGORIES[T.cat]
-                const target = nodes.find((n) => n.id === e.target)
-                return (
-                  <div
-                    key={e.id}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'baseline',
-                      gap: 'var(--space-6)',
-                      padding: '5px 0',
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontSize: '10.5px',
-                        fontWeight: 500,
-                        fontFamily: 'var(--font-mono)',
-                        color: C.color,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.06em',
-                        minWidth: 88,
-                      }}
-                    >
-                      {t.relationTypes.types[e.data?.type as EdgeTypeName]}
-                    </span>
-                    <span
-                      style={{
-                        fontSize: '14.5px',
-                        fontWeight: 500,
-                        fontFamily: 'var(--font-display)',
-                        color: 'var(--ink)',
-                      }}
-                    >
-                      {target?.data.text}
-                    </span>
-                  </div>
-                )
-              })}
-              {nodeEdges.inc.map((e) => {
-                const T = RELATION_TYPES[e.data?.type as EdgeTypeName]
-                const C = RELATION_CATEGORIES[T.cat]
-                const source = nodes.find((n) => n.id === e.source)
-                return (
-                  <div
-                    key={e.id}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'baseline',
-                      gap: 'var(--space-6)',
-                      padding: '5px 0',
-                      opacity: 0.7,
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontSize: '10.5px',
-                        fontWeight: 500,
-                        fontFamily: 'var(--font-mono)',
-                        color: C.color,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.06em',
-                        minWidth: 88,
-                      }}
-                    >
-                      ← {t.relationTypes.types[e.data?.type as EdgeTypeName]}
-                    </span>
-                    <span
-                      style={{
-                        fontSize: '14.5px',
-                        fontWeight: 500,
-                        fontFamily: 'var(--font-display)',
-                        color: 'var(--ink)',
-                      }}
-                    >
-                      {source?.data.text}
-                    </span>
-                  </div>
-                )
-              })}
+              {nodeEdges.out.map((e) => (
+                <ReviewRelationRow
+                  key={e.id}
+                  type={e.data?.type as EdgeTypeName}
+                  text={nodes.find((n) => n.id === e.target)?.data.text}
+                  incoming={false}
+                />
+              ))}
+              {nodeEdges.inc.map((e) => (
+                <ReviewRelationRow
+                  key={e.id}
+                  type={e.data?.type as EdgeTypeName}
+                  text={nodes.find((n) => n.id === e.source)?.data.text}
+                  incoming
+                />
+              ))}
             </div>
 
             {/* Rating buttons */}

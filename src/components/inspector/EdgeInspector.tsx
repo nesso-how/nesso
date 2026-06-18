@@ -13,7 +13,7 @@ import { useGraphStore, selectedEdgeSelector, type GraphState } from '@/store'
 import type { ConceptNodeData } from '@/types/graph'
 import { useT } from '@/i18n'
 import { InspectorPanel } from './InspectorPanel'
-import { InspectorActionToolbar, InspectorIconBtn } from './inspectorChrome'
+import { InspectorActionToolbar, InspectorCollapseCloseRow } from './inspectorChrome'
 
 interface Props {
   panelWidth: number
@@ -26,8 +26,6 @@ export function EdgeInspector({ panelWidth, onPanelWidthChange }: Props) {
   const nodes: Node<ConceptNodeData>[] = useGraphStore((s: GraphState) => s.nodes)
   const updateEdgeType = useGraphStore((s) => s.updateEdgeType)
   const setEdgeCurveFlipMode = useGraphStore((s) => s.setEdgeCurveFlipMode)
-  const setSelected = useGraphStore((s) => s.setSelected)
-  const setInspectorCollapsed = useGraphStore((s) => s.setInspectorCollapsed)
   const curveStyle = useGraphStore((s) => s.graphDisplay.curveStyle)
   const autoCurveFlip = useGraphStore((s) => s.graphDisplay.autoCurveFlip)
   const edgeType = asEdgeTypeName(edge.data?.type)
@@ -52,24 +50,7 @@ export function EdgeInspector({ panelWidth, onPanelWidthChange }: Props) {
     <InspectorPanel panelWidth={panelWidth} onPanelWidthChange={onPanelWidthChange}>
       {/* Header */}
       <div style={{ flexShrink: 0, padding: '12px 14px', borderBottom: '0.5px solid var(--line)' }}>
-        {/* Top row — collapse + close */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: 12,
-            marginLeft: -6,
-            marginRight: -6,
-          }}
-        >
-          <InspectorIconBtn
-            icon="chevron-right"
-            title={t.inspector.actions.collapse}
-            onClick={() => setInspectorCollapsed(true)}
-          />
-          <InspectorIconBtn icon="close" title="Esc" onClick={() => setSelected(null)} />
-        </div>
+        <InspectorCollapseCloseRow marginBottom={12} />
 
         {/* from / relation / to — vertical (concept names are often long) */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>

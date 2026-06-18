@@ -97,10 +97,10 @@
       }
     },
     "src/components/canvas/GraphCanvas.tsx": {
-      "complexity_critical": {
+      "complexity_high": {
         "count": 1
       },
-      "crap_critical": {
+      "crap_high": {
         "count": 1
       }
     },
@@ -109,7 +109,7 @@
         "count": 1
       },
       "crap_high": {
-        "count": 2
+        "count": 1
       },
       "crap_moderate": {
         "count": 1
@@ -181,7 +181,7 @@
     },
     "src/components/inspector/inspectorChrome.tsx": {
       "crap_high": {
-        "count": 2
+        "count": 1
       },
       "crap_moderate": {
         "count": 1
@@ -267,7 +267,7 @@
       "crap_critical": {
         "count": 1
       },
-      "crap_high": {
+      "crap_moderate": {
         "count": 1
       }
     },
@@ -336,6 +336,14 @@
         "count": 1
       }
     },
+    "src/lib/shortcuts.ts": {
+      "complexity_high": {
+        "count": 1
+      },
+      "crap_high": {
+        "count": 1
+      }
+    },
     "src/lib/workspace/sync.ts": {
       "complexity_critical": {
         "count": 1
@@ -347,14 +355,6 @@
     "src/llm/completion.ts": {
       "crap_high": {
         "count": 2
-      }
-    },
-    "src/llm/context.ts": {
-      "crap_high": {
-        "count": 2
-      },
-      "crap_moderate": {
-        "count": 1
       }
     },
     "src/store/slices/graph-editing.ts": {
@@ -389,9 +389,9 @@
   "target_keys": [
     "src/App.tsx:complexity",
     "src/store/slices/graph-editing.ts:high impact",
+    "src/lib/shortcuts.ts:complexity",
     "src/components/canvas/GraphCanvas.tsx:complexity",
     "src/llm/completion.ts:untested risk",
-    "src/llm/context.ts:untested risk",
     "src/components/mentor/MentorBubble.tsx:complexity",
     "src/components/review/ReviewMode.tsx:complexity",
     "src/components/inspector/NodeInspector.tsx:complexity",

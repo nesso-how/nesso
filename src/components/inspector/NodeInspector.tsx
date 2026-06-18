@@ -8,7 +8,7 @@ import { InlineEdit } from './InlineEdit'
 import { ImageSearchPanel } from './ImageSearchPanel'
 import { InspectorPanel } from './InspectorPanel'
 import { EdgeRow } from './EdgeRow'
-import { InspectorActionToolbar, InspectorIconBtn } from './inspectorChrome'
+import { InspectorActionToolbar, InspectorCollapseCloseRow } from './inspectorChrome'
 
 const LABEL_STYLE: CSSProperties = {
   fontSize: '11px',
@@ -67,7 +67,6 @@ export function NodeInspector({
   const updateNodeData = useGraphStore((s) => s.updateNodeData)
   const settings = useGraphStore((s) => s.settings)
   const setSetting = useGraphStore((s) => s.setSetting)
-  const setInspectorCollapsed = useGraphStore((s) => s.setInspectorCollapsed)
 
   const memoryOpen = settings.inspectorMemoryOpen
   const examplesOpen = settings.inspectorExamplesOpen
@@ -181,24 +180,7 @@ export function NodeInspector({
             borderBottom: '0.5px solid var(--line)',
           }}
         >
-          {/* Top row — collapse + close */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: 10,
-              marginLeft: -6,
-              marginRight: -6,
-            }}
-          >
-            <InspectorIconBtn
-              icon="chevron-right"
-              title={t.inspector.actions.collapse}
-              onClick={() => setInspectorCollapsed(true)}
-            />
-            <InspectorIconBtn icon="close" title="Esc" onClick={() => setSelected(null)} />
-          </div>
+          <InspectorCollapseCloseRow marginBottom={10} />
           {/* Identity — image + title */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-6)' }}>
             {/* Image icon button */}

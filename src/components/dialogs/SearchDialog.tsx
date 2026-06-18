@@ -175,68 +175,15 @@ export function SearchDialog({ open, onClose, onSelectNode, onSelectGraph }: Pro
             {graphResults.length > 0 && (
               <section>
                 <SectionLabel>{t.search.graphs}</SectionLabel>
-                {graphResults.map((g) => {
-                  const active = g.id === currentGraphId
-                  return (
-                    <button
-                      key={g.id}
-                      onClick={() => handleSelectGraph(g.id)}
-                      style={{
-                        width: '100%',
-                        appearance: 'none',
-                        border: 0,
-                        background: 'transparent',
-                        cursor: 'default',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 'var(--space-5)',
-                        padding: '8px 16px',
-                        textAlign: 'left',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'var(--paper-deep)'
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'transparent'
-                      }}
-                    >
-                      <span
-                        style={{
-                          width: 6,
-                          height: 6,
-                          borderRadius: 'var(--radius-circle)',
-                          flexShrink: 0,
-                          background: active ? 'var(--accent)' : 'var(--ink-5)',
-                        }}
-                      />
-                      <span
-                        style={{
-                          flex: 1,
-                          font: active
-                            ? "500 13px 'Fraunces', ui-serif, Georgia, serif"
-                            : "13px 'Fraunces', ui-serif, Georgia, serif",
-                          color: 'var(--ink)',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {g.name}
-                      </span>
-                      <span
-                        style={{
-                          fontSize: '10.5px',
-                          fontWeight: 500,
-                          fontFamily: 'var(--font-mono)',
-                          color: 'var(--ink-4)',
-                          flexShrink: 0,
-                        }}
-                      >
-                        {timeAgo(g.updatedAt)}
-                      </span>
-                    </button>
-                  )
-                })}
+                {graphResults.map((g) => (
+                  <ResultRow
+                    key={g.id}
+                    active={g.id === currentGraphId}
+                    label={g.name}
+                    meta={timeAgo(g.updatedAt)}
+                    onClick={() => handleSelectGraph(g.id)}
+                  />
+                ))}
               </section>
             )}
 
@@ -248,58 +195,15 @@ export function SearchDialog({ open, onClose, onSelectNode, onSelectGraph }: Pro
             {conceptResults.length > 0 && (
               <section>
                 <SectionLabel>{t.search.concepts}</SectionLabel>
-                {conceptResults.map((node) => {
-                  const active = node.id === selectedNodeId
-                  return (
-                    <button
-                      key={node.id}
-                      onClick={() => handleSelectNode(node)}
-                      style={{
-                        width: '100%',
-                        appearance: 'none',
-                        border: 0,
-                        background: 'transparent',
-                        cursor: 'default',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 'var(--space-5)',
-                        padding: '8px 16px',
-                        textAlign: 'left',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'var(--paper-deep)'
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'transparent'
-                      }}
-                    >
-                      <span
-                        style={{
-                          width: 6,
-                          height: 6,
-                          borderRadius: 'var(--radius-circle)',
-                          flexShrink: 0,
-                          background: active ? 'var(--accent)' : 'var(--ink-5)',
-                        }}
-                      />
-                      <span
-                        style={{
-                          flex: 1,
-                          font: active
-                            ? "500 13px 'Fraunces', ui-serif, Georgia, serif"
-                            : "400 13px 'Fraunces', ui-serif, Georgia, serif",
-                          color: 'var(--ink)',
-                          letterSpacing: '-0.005em',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {node.data.text}
-                      </span>
-                    </button>
-                  )
-                })}
+                {conceptResults.map((node) => (
+                  <ResultRow
+                    key={node.id}
+                    active={node.id === selectedNodeId}
+                    label={node.data.text}
+                    letterSpacing="-0.005em"
+                    onClick={() => handleSelectNode(node)}
+                  />
+                ))}
               </section>
             )}
           </div>
@@ -321,6 +225,82 @@ export function SearchDialog({ open, onClose, onSelectNode, onSelectGraph }: Pro
         )}
       </div>
     </ModalOverlay>
+  )
+}
+
+function ResultRow({
+  active,
+  label,
+  meta,
+  letterSpacing,
+  onClick,
+}: {
+  active: boolean
+  label: string
+  meta?: string
+  letterSpacing?: string
+  onClick: () => void
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        width: '100%',
+        appearance: 'none',
+        border: 0,
+        background: 'transparent',
+        cursor: 'default',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 'var(--space-5)',
+        padding: '8px 16px',
+        textAlign: 'left',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = 'var(--paper-deep)'
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = 'transparent'
+      }}
+    >
+      <span
+        style={{
+          width: 6,
+          height: 6,
+          borderRadius: 'var(--radius-circle)',
+          flexShrink: 0,
+          background: active ? 'var(--accent)' : 'var(--ink-5)',
+        }}
+      />
+      <span
+        style={{
+          flex: 1,
+          font: active
+            ? "500 13px 'Fraunces', ui-serif, Georgia, serif"
+            : "400 13px 'Fraunces', ui-serif, Georgia, serif",
+          color: 'var(--ink)',
+          letterSpacing,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {label}
+      </span>
+      {meta !== undefined && (
+        <span
+          style={{
+            fontSize: '10.5px',
+            fontWeight: 500,
+            fontFamily: 'var(--font-mono)',
+            color: 'var(--ink-4)',
+            flexShrink: 0,
+          }}
+        >
+          {meta}
+        </span>
+      )}
+    </button>
   )
 }
 

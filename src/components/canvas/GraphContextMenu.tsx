@@ -4,6 +4,7 @@ import { useGraphStore } from '@/store'
 import { useT } from '@/i18n'
 import { newConceptTopLeftAtFlowCenter } from '@/data/newConceptLayout'
 import { focusFlowNodes } from '@/lib/focusFlowSelection'
+import { Icon } from '@/components/ui/icons'
 
 export type ContextMenuState = {
   x: number
@@ -14,75 +15,6 @@ export type ContextMenuState = {
 }
 
 type CmIcon = 'copy' | 'cut' | 'duplicate' | 'trash' | 'paste' | 'add' | 'fit' | 'flip'
-
-function CmGlyph({ name }: { name: CmIcon }) {
-  const p = {
-    width: 15,
-    height: 15,
-    viewBox: '0 0 16 16',
-    fill: 'none',
-    stroke: 'currentColor',
-    strokeWidth: 1.5,
-    strokeLinecap: 'round' as const,
-    strokeLinejoin: 'round' as const,
-  }
-  switch (name) {
-    case 'copy':
-      return (
-        <svg {...p}>
-          <rect x="5.5" y="5.5" width="7.5" height="7.5" rx="1.6" />
-          <path d="M10 5.5V4a1.2 1.2 0 0 0-1.2-1.2H4A1.2 1.2 0 0 0 2.8 4v4.8A1.2 1.2 0 0 0 4 10h1.5" />
-        </svg>
-      )
-    case 'cut':
-      return (
-        <svg {...p}>
-          <circle cx="4.2" cy="11.4" r="1.9" />
-          <circle cx="4.2" cy="4.6" r="1.9" />
-          <path d="M5.8 5.7L13 11.4M5.8 10.3L13 4.6" />
-        </svg>
-      )
-    case 'duplicate':
-      return (
-        <svg {...p}>
-          <rect x="5.8" y="5.8" width="7.2" height="7.2" rx="1.6" />
-          <rect x="2.9" y="2.9" width="7.2" height="7.2" rx="1.6" />
-        </svg>
-      )
-    case 'trash':
-      return (
-        <svg {...p}>
-          <path d="M3 4.5h10M6 4.5V3h4v1.5M5 4.5l.6 8a1 1 0 0 0 1 .9h2.8a1 1 0 0 0 1-.9l.6-8" />
-        </svg>
-      )
-    case 'paste':
-      return (
-        <svg {...p}>
-          <rect x="3.3" y="3" width="9.4" height="11" rx="1.6" />
-          <rect x="5.6" y="1.8" width="4.8" height="2.6" rx="0.9" />
-        </svg>
-      )
-    case 'add':
-      return (
-        <svg {...p}>
-          <circle cx="8" cy="8" r="5.5" />
-          <path d="M8 5.6v4.8M5.6 8h4.8" />
-        </svg>
-      )
-    case 'fit':
-      return (
-        <svg {...p}>
-          <path d="M3 6V3h3M13 6V3h-3M3 10v3h3M13 10v3h-3" />
-        </svg>
-      )
-    case 'flip':
-      return (
-        <svg {...p}>
-          <path d="M3.5 6.2h9l-2.4-2.4M12.5 9.8h-9l2.4 2.4" />
-        </svg>
-      )
-  }
-}
 
 interface Item {
   icon: CmIcon
@@ -136,7 +68,7 @@ function MenuRow({ item, onClose }: { item: Item; onClose: () => void }) {
           marginRight: 11,
         }}
       >
-        <CmGlyph name={item.icon} />
+        <Icon name={item.icon} size={15} />
       </span>
       <span style={{ flex: 1, fontSize: '13px', fontWeight: 500, fontFamily: 'var(--font-sans)' }}>
         {item.label}

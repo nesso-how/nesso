@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 import { useState } from 'react'
-import { RELATION_CATEGORIES, RELATION_TYPES } from '@/data/relationTypes'
+import { RELATION_CATEGORIES, RELATION_TYPES, buildRelationGroups } from '@/data/relationTypes'
 import { GlyphSVG } from '@nesso-how/graph'
 import { CloseButton } from '@/components/ui/CloseButton'
 import { ModalOverlay } from '@/components/ui/ModalOverlay'
 import { useGraphStore } from '@/store'
-import type { EdgeCategory, EdgeTypeName } from '@/types/graph'
+import type { EdgeCategory } from '@/types/graph'
 import { useT } from '@/i18n'
 
 const RELATION_TYPES_DOCS_URL = 'https://nesso.how/docs/reference/relation-types/'
@@ -23,20 +23,11 @@ export function RelationTypesDialog({ open, onClose }: Props) {
 
   const q = query.trim().toLowerCase()
 
-  const groups = Object.entries(RELATION_CATEGORIES)
-    .map(([k, c]) => ({
-      key: k as EdgeCategory,
-      ...c,
-      types: (
-        Object.entries(RELATION_TYPES) as [EdgeTypeName, (typeof RELATION_TYPES)[EdgeTypeName]][]
-      ).filter(([id, edgeDef]) => {
-        if (edgeDef.cat !== k) return false
-        if (activeCategory !== null && activeCategory !== k) return false
-        if (q) return t.relationTypes.types[id].toLowerCase().includes(q) || id.includes(q)
-        return true
-      }),
-    }))
-    .filter((g) => g.types.length > 0)
+  const groups = buildRelationGroups((id, def) => {
+    if (activeCategory !== null && activeCategory !== def.cat) return false
+    if (q) return t.relationTypes.types[id].toLowerCase().includes(q) || id.includes(q)
+    return true
+  })
 
   const totalTypes = Object.keys(RELATION_TYPES).length
   const visibleTypes = groups.reduce((acc, g) => acc + g.types.length, 0)
