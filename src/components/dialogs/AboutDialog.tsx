@@ -12,6 +12,7 @@ import {
   WEBSITE_URL,
 } from '@/data/appInfo'
 import { ModalOverlay } from '@/components/ui/ModalOverlay'
+import { hoverStyle } from '@/lib/hoverStyle'
 import { useT } from '@/i18n'
 
 interface Props {
@@ -131,14 +132,10 @@ export function AboutDialog({ open, onClose }: Props) {
                     borderTop: i > 0 ? '0.5px solid var(--line)' : 'none',
                   }}
                   onClick={() => void openExternal(url)}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'var(--paper-deep)'
-                    e.currentTarget.style.color = 'var(--ink)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'var(--bg-card)'
-                    e.currentTarget.style.color = 'var(--ink-2)'
-                  }}
+                  {...hoverStyle(
+                    { background: 'var(--paper-deep)', color: 'var(--ink)' },
+                    { background: 'var(--bg-card)', color: 'var(--ink-2)' },
+                  )}
                 >
                   <span style={{ flexShrink: 0, lineHeight: 0 }} aria-hidden>
                     {icon}

@@ -37,6 +37,8 @@ import { PALETTES } from '@nesso-how/relation-types'
 import { findNewConceptPosition, NEW_CONCEPT_SIZE } from './data/newConceptLayout'
 import { initWebLLM, localModelWeightsCached } from './llm/webllm'
 import { focusFlowNodes } from './lib/focusFlowSelection'
+import { resolveShortcut } from './lib/shortcuts'
+import { computeSelectionPan } from './lib/selectionPan'
 import { computeFitViewport, fitCanvasSize } from './lib/fitGraphViewport'
 import { getSeedInitialFitZoom } from './data/seedGraph'
 
@@ -323,31 +325,16 @@ function AppInner() {
       )
     }
     const v = getViewport()
-    // Screen-space edges: multiplying by zoom makes a zoomed-in element correctly
-    // large, so we pan far enough to clear the inspector instead of only centering.
-    const elLeft = wLeft * v.zoom + v.x
-    const elRight = wRight * v.zoom + v.x
-    const elTop = wTop * v.zoom + v.y
-    const elBottom = wBottom * v.zoom + v.y
     const M = 56
     const rightInset = inspectorCollapsed ? INSPECTOR_RAIL_WIDTH : inspectorPanelWidth
-    const left = sidebarWidth + M
-    const right = window.innerWidth - rightInset - M
-    const top = 52 + M
-    const bottom = window.innerHeight - STATUS_BAR_HEIGHT_PX - M
-    let dx = 0
-    let dy = 0
-    // Tuck the overflowing edge back in; the inspector (right) side wins ties.
-    if (right > left) {
-      if (elRight > right) dx = right - elRight
-      else if (elLeft < left) dx = left - elLeft
-    }
-    if (bottom > top) {
-      if (elBottom > bottom) dy = bottom - elBottom
-      else if (elTop < top) dy = top - elTop
-    }
-    if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return
-    setViewport({ x: v.x + dx, y: v.y + dy, zoom: v.zoom }, { duration: 300 })
+    const pan = computeSelectionPan({ left: wLeft, top: wTop, right: wRight, bottom: wBottom }, v, {
+      left: sidebarWidth + M,
+      right: window.innerWidth - rightInset - M,
+      top: 52 + M,
+      bottom: window.innerHeight - STATUS_BAR_HEIGHT_PX - M,
+    })
+    if (!pan) return
+    setViewport({ x: v.x + pan.dx, y: v.y + pan.dy, zoom: v.zoom }, { duration: 300 })
   }, [
     selected,
     getNodes,
@@ -370,96 +357,74 @@ function AppInner() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
-      if (e.key === 'Escape') {
-        setShowReview(false)
-        setShowShortcuts(false)
-        setShowSettings(false)
-        setShowRelationTypes(false)
-        setShowSearch(false)
-        setShowAbout(false)
-        return
-      }
-      if (e.key === '?') {
-        setShowShortcuts((s) => !s)
-        return
-      }
-      if (e.key === ',' && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault()
-        setShowSettings((s) => !s)
-        return
-      }
-      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault()
-        setShowSearch((s) => !s)
-        return
-      }
-      // Everything below edits or navigates the canvas — never while a modal
-      // is open (e.g. Backspace during a review must not delete the selection).
-      if (anyModalOpen) return
-      if (e.key === 'z' && (e.metaKey || e.ctrlKey) && !e.shiftKey) {
-        e.preventDefault()
-        undo()
-        return
-      }
-      if (e.key === 'z' && (e.metaKey || e.ctrlKey) && e.shiftKey) {
-        e.preventDefault()
-        redo()
-        return
-      }
-      if (e.key === 'Delete' || e.key === 'Backspace') {
-        e.preventDefault()
-        deleteSelection()
-        return
-      }
-      if (e.key === 'c' && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault()
-        copySelection()
-        return
-      }
-      if (e.key === 'x' && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault()
-        cutSelection()
-        return
-      }
-      if (e.key === 'v' && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault()
-        const ids = pasteSelection()
-        if (ids?.length) focusFlowNodes(ids)
-        return
-      }
-      if (e.key === 'd' && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault()
-        const ids = duplicateSelection()
-        if (ids?.length) focusFlowNodes(ids)
-        return
-      }
-      if (e.key === 'a' && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault()
-        selectAll()
-        return
-      }
-      if (e.key === 'Enter' && !e.metaKey && !e.ctrlKey && !e.altKey && !e.shiftKey) {
-        const sel = useGraphStore.getState().selected
-        if (sel?.kind === 'node') {
-          e.preventDefault()
-          requestEditNode(sel.id)
-          return
+      const resolved = resolveShortcut(e, {
+        anyModalOpen,
+        hasSelectedNode: useGraphStore.getState().selected?.kind === 'node',
+      })
+      if (!resolved) return
+      if (resolved.preventDefault) e.preventDefault()
+      switch (resolved.action) {
+        case 'close-modals':
+          setShowReview(false)
+          setShowShortcuts(false)
+          setShowSettings(false)
+          setShowRelationTypes(false)
+          setShowSearch(false)
+          setShowAbout(false)
+          break
+        case 'toggle-shortcuts':
+          setShowShortcuts((s) => !s)
+          break
+        case 'toggle-settings':
+          setShowSettings((s) => !s)
+          break
+        case 'toggle-search':
+          setShowSearch((s) => !s)
+          break
+        case 'undo':
+          undo()
+          break
+        case 'redo':
+          redo()
+          break
+        case 'delete-selection':
+          deleteSelection()
+          break
+        case 'copy':
+          copySelection()
+          break
+        case 'cut':
+          cutSelection()
+          break
+        case 'paste': {
+          const ids = pasteSelection()
+          if (ids?.length) focusFlowNodes(ids)
+          break
         }
-      }
-      if (e.key === 'r' && !e.metaKey && !e.ctrlKey) {
-        setShowReview(true)
-        return
-      }
-      if (e.key.toLowerCase() === 'n' && !e.metaKey && !e.ctrlKey && !e.altKey) {
-        handleAddConcept()
-        return
-      }
-      if (e.key.toLowerCase() === 'f' && !e.metaKey && !e.ctrlKey && !e.altKey) {
-        fitView()
-        return
-      }
-      if (e.key === '/') {
-        e.preventDefault()
+        case 'duplicate': {
+          const ids = duplicateSelection()
+          if (ids?.length) focusFlowNodes(ids)
+          break
+        }
+        case 'select-all':
+          selectAll()
+          break
+        case 'edit-selected-node': {
+          const sel = useGraphStore.getState().selected
+          if (sel?.kind === 'node') requestEditNode(sel.id)
+          break
+        }
+        case 'open-review':
+          setShowReview(true)
+          break
+        case 'add-concept':
+          handleAddConcept()
+          break
+        case 'fit-view':
+          fitView()
+          break
+        case 'block':
+          break
       }
     }
     window.addEventListener('keydown', onKey)

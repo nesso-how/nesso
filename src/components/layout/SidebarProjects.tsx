@@ -3,7 +3,8 @@ import { useEffect, useRef, useState } from 'react'
 import { useGraphStore } from '@/store'
 import { useT } from '@/i18n'
 import { getDefaultWorkspacePath, normalizePath, projectDisplayName } from '@/lib/workspace'
-import { FolderIcon } from '@/components/ui/icons'
+import { FolderIcon, Icon } from '@/components/ui/icons'
+import { hoverStyle } from '@/lib/hoverStyle'
 import { confirm } from '@/components/ui/confirm'
 
 const sectionLabel: React.CSSProperties = {
@@ -377,25 +378,9 @@ export function SidebarProjects() {
                         })()
                       }}
                       style={rowIconBtn}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.color = 'var(--cat-opposition)'
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.color = 'var(--ink-4)'
-                      }}
+                      {...hoverStyle({ color: 'var(--cat-opposition)' }, { color: 'var(--ink-4)' })}
                     >
-                      <svg
-                        width="13"
-                        height="13"
-                        viewBox="0 0 16 16"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M3 4.5h10M6 4.5V3h4v1.5M5 4.5l.6 8a1 1 0 0 0 1 .9h2.8a1 1 0 0 0 1-.9l.6-8" />
-                      </svg>
+                      <Icon name="trash" size={13} />
                     </button>
                   )}
                 </div>

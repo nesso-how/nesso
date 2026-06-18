@@ -24,3 +24,30 @@ export const RELATION_CATEGORIES = Object.fromEntries(
     },
   ]),
 ) as Record<EdgeCategory, { label: string; subtitle: string; color: string }>
+
+type RelationCategoryInfo = (typeof RELATION_CATEGORIES)[EdgeCategory]
+type RelationTypeDef = (typeof RELATION_TYPES)[EdgeTypeName]
+
+export interface RelationGroup extends RelationCategoryInfo {
+  key: EdgeCategory
+  types: [EdgeTypeName, RelationTypeDef][]
+}
+
+/**
+ * Group the relation vocabulary by category, keeping only the types for which
+ * `keep` returns true and dropping empty categories. Shared by the relation
+ * picker and the relation-types reference dialog.
+ */
+export function buildRelationGroups(
+  keep: (id: EdgeTypeName, def: RelationTypeDef) => boolean,
+): RelationGroup[] {
+  return (Object.entries(RELATION_CATEGORIES) as [EdgeCategory, RelationCategoryInfo][])
+    .map(([key, info]) => ({
+      key,
+      ...info,
+      types: (Object.entries(RELATION_TYPES) as [EdgeTypeName, RelationTypeDef][]).filter(
+        ([id, def]) => def.cat === key && keep(id, def),
+      ),
+    }))
+    .filter((g) => g.types.length > 0)
+}

@@ -5,6 +5,7 @@ import { sortedDueConceptNodes } from '@/data/fsrsDueQueue'
 import { GraphIO } from '@/components/dialogs/GraphIO'
 import { useT } from '@/i18n'
 import { isDesktop } from '@/lib/isDesktop'
+import { hoverStyle } from '@/lib/hoverStyle'
 import { useActiveProjectName } from '@/hooks/useActiveProjectName'
 
 /** Full-height navbar; Inspector and canvas top inset rely on this. */
@@ -147,14 +148,10 @@ export function TopBar({
             fontWeight: 500,
             fontFamily: 'var(--font-sans)',
           }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'var(--paper-deep)'
-            e.currentTarget.style.color = 'var(--ink)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'var(--bg-card)'
-            e.currentTarget.style.color = 'var(--ink-2)'
-          }}
+          {...hoverStyle(
+            { background: 'var(--paper-deep)', color: 'var(--ink)' },
+            { background: 'var(--bg-card)', color: 'var(--ink-2)' },
+          )}
         >
           <svg
             width="13"
