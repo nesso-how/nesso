@@ -49,6 +49,18 @@ describe('loadGraphList', () => {
     const seeded = await dbLoadGraph(list[0].id)
     expect(seeded?.id).toBe(list[0].id)
   })
+
+  it('adopts the browser language when seeding an empty database', async () => {
+    const original = navigator.language
+    Object.defineProperty(navigator, 'language', { value: 'it-IT', configurable: true })
+    try {
+      const s = makeStore()
+      await s.getState().loadGraphList()
+      expect(s.getState().settings.language).toBe('it')
+    } finally {
+      Object.defineProperty(navigator, 'language', { value: original, configurable: true })
+    }
+  })
 })
 
 describe('createGraph', () => {
@@ -81,6 +93,25 @@ describe('renameGraph', () => {
     expect(s.getState().graphList.find((g) => g.id === id)?.name).toBe('After')
     expect((await dbLoadGraph(id))?.name).toBe('After')
   })
+
+  it('is a no-op for an unknown id', async () => {
+    const s = await freshStore()
+    const before = s.getState().graphList
+    await s.getState().renameGraph('does-not-exist', 'X')
+    expect(s.getState().graphList).toEqual(before)
+  })
+})
+
+describe('importGraph (existing id)', () => {
+  it('updates the matching graph in place instead of appending', async () => {
+    const s = await freshStore()
+    const id = await s.getState().createGraph('Orig')
+    const before = s.getState().graphList.length
+    const ret = await s.getState().importGraph('Updated', [], [], undefined, id)
+    expect(ret).toBe(id)
+    expect(s.getState().graphList).toHaveLength(before)
+    expect(s.getState().graphList.find((g) => g.id === id)?.name).toBe('Updated')
+  })
 })
 
 describe('saveCurrentGraph', () => {
@@ -106,6 +137,25 @@ describe('loadGraph', () => {
     expect(s.getState().currentGraphId).toBe(a)
     expect(s.getState().nodes).toHaveLength(1)
   })
+
+  it('flushes unsaved edits of the outgoing graph before switching', async () => {
+    const s = await freshStore()
+    const a = await s.getState().createGraph('A')
+    const b = await s.getState().createGraph('B')
+    await s.getState().loadGraph(a)
+    s.getState().addNode()
+    await s.getState().loadGraph(b)
+    const storedA = await dbLoadGraph(a)
+    expect(storedA?.nodes).toHaveLength(1)
+  })
+
+  it('ignores an unknown id', async () => {
+    const s = await freshStore()
+    const before = s.getState().currentGraphId
+    await s.getState().loadGraph('does-not-exist')
+    expect(s.getState().currentGraphId).toBe(before)
+    expect(s.getState().nodes).toHaveLength(0)
+  })
 })
 
 describe('deleteGraph', () => {
@@ -119,6 +169,16 @@ describe('deleteGraph', () => {
     expect(await dbLoadGraph(b)).toBeUndefined()
     expect(state.currentGraphId).not.toBe(b)
     expect(state.graphList.some((g) => g.id === a)).toBe(true)
+  })
+
+  it('drops the saved viewport of the deleted graph', async () => {
+    const s = await freshStore()
+    const a = await s.getState().createGraph('A')
+    await s.getState().createGraph('B')
+    s.getState().saveViewport(a, { x: 1, y: 2, zoom: 1 })
+    expect(s.getState().viewports[a]).toBeDefined()
+    await s.getState().deleteGraph(a)
+    expect(s.getState().viewports[a]).toBeUndefined()
   })
 })
 

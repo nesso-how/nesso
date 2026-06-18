@@ -169,3 +169,210 @@ describe('keepLocalGraphChanges', () => {
     expect(stored?.nodes).toHaveLength(1)
   })
 })
+
+describe('switchProject branches', () => {
+  it('returns early when switching to the already-active project', async () => {
+    const s = await boot()
+    const list = await s.getState().switchProject(DEFAULT_WS)
+    expect(list).toEqual(s.getState().graphList)
+    expect(s.getState().settings.activeProjectPath).toBe(DEFAULT_WS)
+  })
+
+  it('flags a vanished target folder missing instead of loading it', async () => {
+    const s = await boot()
+    s.getState().setSetting('knownProjects', ['/gone', DEFAULT_WS])
+
+    await s.getState().switchProject('/gone')
+
+    expect(s.getState().missingProjects).toContain('/gone')
+    expect(s.getState().settings.activeProjectPath).toBe(DEFAULT_WS)
+  })
+
+  it('clears a stale missing flag once the folder is present again', async () => {
+    const s = await boot()
+    s.getState().setSetting('knownProjects', ['/back', DEFAULT_WS])
+    await s.getState().switchProject('/back')
+    expect(s.getState().missingProjects).toContain('/back')
+
+    tauriFsState.dirs.add('/back')
+    await s.getState().switchProject('/back')
+
+    expect(s.getState().missingProjects).not.toContain('/back')
+    expect(s.getState().settings.activeProjectPath).toBe('/back')
+  })
+
+  it('seeds one empty graph when switching into an empty folder', async () => {
+    const s = await boot()
+    tauriFsState.dirs.add('/empty')
+
+    await s.getState().switchProject('/empty')
+
+    expect(s.getState().settings.activeProjectPath).toBe('/empty')
+    expect(s.getState().graphList).toHaveLength(1)
+  })
+
+  it('names the seeded empty-folder graph in Italian when language is it', async () => {
+    const s = await boot()
+    s.getState().setSetting('language', 'it')
+    tauriFsState.dirs.add('/emptyit')
+
+    await s.getState().switchProject('/emptyit')
+
+    expect(s.getState().graphList[0].name).toBe('Senza titolo')
+  })
+
+  it('shows an Italian toast for a vanished folder when language is it', async () => {
+    const s = await boot()
+    s.getState().setSetting('language', 'it')
+    s.getState().setSetting('knownProjects', ['/goneit', DEFAULT_WS])
+
+    await s.getState().switchProject('/goneit')
+
+    const toast = s.getState().toasts.find((t) => t.id === 'project-missing:/goneit')
+    expect(toast?.message).toMatch(/non trovata/)
+  })
+
+  it('loads the most recently updated graph in the target folder', async () => {
+    const s = await boot()
+    tauriFsState.dirs.add('/two')
+    tauriFsState.writeFile(
+      '/two/Old.json',
+      JSON.stringify({ id: gid(1), name: 'Old', updatedAt: 1000, nodes: [], edges: [] }),
+    )
+    tauriFsState.writeFile(
+      '/two/New.json',
+      JSON.stringify({ id: gid(2), name: 'New', updatedAt: 5000, nodes: [], edges: [] }),
+    )
+
+    await s.getState().switchProject('/two')
+
+    expect(s.getState().currentGraphId).toBe(gid(2))
+  })
+})
+
+describe('loadGraphList (desktop) missing projects at startup', () => {
+  it('flags a known project whose folder is absent', async () => {
+    const s = makeStore()
+    s.getState().setSetting('knownProjects', ['/ghost', DEFAULT_WS])
+    s.getState().setSetting('activeProjectPath', DEFAULT_WS)
+
+    await s.getState().loadGraphList()
+
+    expect(s.getState().missingProjects).toContain('/ghost')
+    expect(s.getState().settings.knownProjects).toContain('/ghost')
+  })
+
+  it('moves off an active project whose folder vanished', async () => {
+    const s = makeStore()
+    s.getState().setSetting('knownProjects', ['/ghost', DEFAULT_WS])
+    s.getState().setSetting('activeProjectPath', '/ghost')
+
+    await s.getState().loadGraphList()
+
+    expect(s.getState().missingProjects).toContain('/ghost')
+    expect(s.getState().settings.activeProjectPath).toBe(DEFAULT_WS)
+  })
+})
+
+describe('markProjectMissing', () => {
+  it('flags a non-active project and keeps it in the list', async () => {
+    const s = await boot()
+    s.getState().setSetting('knownProjects', ['/p2', DEFAULT_WS])
+
+    await s.getState().markProjectMissing('/p2')
+
+    expect(s.getState().missingProjects).toContain('/p2')
+    expect(s.getState().settings.knownProjects).toContain('/p2')
+    expect(s.getState().settings.activeProjectPath).toBe(DEFAULT_WS)
+  })
+
+  it('switches away when the active project is flagged missing', async () => {
+    const s = await boot()
+    tauriFsState.setDialogResult('/p2')
+    await s.getState().createProject()
+    expect(s.getState().settings.activeProjectPath).toBe('/p2')
+
+    await s.getState().markProjectMissing('/p2')
+
+    expect(s.getState().missingProjects).toContain('/p2')
+    expect(s.getState().settings.activeProjectPath).toBe(DEFAULT_WS)
+  })
+
+  it('never flags the bundled default workspace', async () => {
+    const s = await boot()
+    const before = s.getState().graphList
+    expect(await s.getState().markProjectMissing(DEFAULT_WS)).toEqual(before)
+    expect(s.getState().missingProjects).not.toContain(DEFAULT_WS)
+  })
+})
+
+describe('removeProject', () => {
+  it('removes a non-active project from the list', async () => {
+    const s = await boot()
+    tauriFsState.setDialogResult('/p2')
+    await s.getState().createProject()
+    await s.getState().switchProject(DEFAULT_WS)
+
+    await s.getState().removeProject('/p2')
+
+    expect(s.getState().settings.knownProjects).not.toContain('/p2')
+  })
+
+  it('switches away when removing the active project', async () => {
+    const s = await boot()
+    tauriFsState.setDialogResult('/p2')
+    await s.getState().createProject()
+
+    await s.getState().removeProject('/p2')
+
+    expect(s.getState().settings.knownProjects).not.toContain('/p2')
+    expect(s.getState().settings.activeProjectPath).toBe(DEFAULT_WS)
+  })
+
+  it('refuses to remove the last remaining project', async () => {
+    const s = await boot()
+    const before = s.getState().settings.knownProjects
+    await s.getState().removeProject(DEFAULT_WS)
+    expect(s.getState().settings.knownProjects).toEqual(before)
+  })
+
+  it('ignores a path that is not in the list', async () => {
+    const s = await boot()
+    const before = s.getState().settings.knownProjects
+    await s.getState().removeProject('/unknown')
+    expect(s.getState().settings.knownProjects).toEqual(before)
+  })
+})
+
+describe('createProject / openProject', () => {
+  it('createProject is a no-op when the dialog is cancelled', async () => {
+    const s = await boot()
+    tauriFsState.setDialogResult(null)
+    const before = s.getState().settings.activeProjectPath
+
+    await s.getState().createProject()
+
+    expect(s.getState().settings.activeProjectPath).toBe(before)
+  })
+
+  it('openProject switches to the picked folder', async () => {
+    const s = await boot()
+    tauriFsState.dirs.add('/picked')
+    tauriFsState.setDialogResult('/picked')
+
+    await s.getState().openProject()
+
+    expect(s.getState().settings.activeProjectPath).toBe('/picked')
+    expect(s.getState().settings.knownProjects).toContain('/picked')
+  })
+
+  it('openProject is a no-op when cancelled', async () => {
+    const s = await boot()
+    tauriFsState.setDialogResult(null)
+    const before = s.getState().settings.activeProjectPath
+
+    await s.getState().openProject()
+
+    expect(s.getState().settings.activeProjectPath).toBe(before)
+  })
+})

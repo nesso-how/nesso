@@ -35,6 +35,10 @@ describe('graphNameFromFilename', () => {
   it('falls back to Untitled for an empty stem', () => {
     expect(graphNameFromFilename('.json')).toBe('Untitled')
   })
+
+  it('trims surrounding whitespace from the stem', () => {
+    expect(graphNameFromFilename(' Spaced .json')).toBe('Spaced')
+  })
 })
 
 describe('uniqueGraphNameAmong', () => {
@@ -50,6 +54,10 @@ describe('uniqueGraphNameAmong', () => {
 
   it('defaults a blank name to `graph`', () => {
     expect(uniqueGraphNameAmong('   ', [])).toBe('graph')
+  })
+
+  it('matches used names after trimming whitespace', () => {
+    expect(uniqueGraphNameAmong('Foo', [' foo '])).toBe('Foo-2')
   })
 })
 

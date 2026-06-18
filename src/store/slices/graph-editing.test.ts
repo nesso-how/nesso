@@ -1,10 +1,17 @@
 // @vitest-environment jsdom
 // SPDX-License-Identifier: MIT
+import type { Edge, EdgeChange, Node, NodeChange } from '@xyflow/react'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createStore } from 'zustand/vanilla'
 import { setGraphClipboard } from '@/lib/graphClipboard'
+import type { ConceptNodeData } from '@/types/graph'
 import type { GraphState } from '../state'
-import { createGraphEditingSlice } from './graph-editing'
+import {
+  _draggingNodeIds,
+  bakeCurveFlipFromPositions,
+  createGraphEditingSlice,
+  MAX_UNDO,
+} from './graph-editing'
 import { createSettingsSlice } from './settings'
 
 // A headless store composed from the editing + settings slices — enough to
@@ -22,7 +29,10 @@ function makeStore() {
 
 type Store = ReturnType<typeof makeStore>
 
-beforeEach(() => setGraphClipboard(null))
+beforeEach(() => {
+  setGraphClipboard(null)
+  _draggingNodeIds.clear()
+})
 
 describe('addNode', () => {
   it('inserts a selected, editing concept and returns its id', () => {
@@ -301,5 +311,498 @@ describe('reverseEdge', () => {
     const edge = s.getState().edges.find((e) => e.id === id)!
     expect(edge.source).toBe(a)
     expect(edge.target).toBe(b)
+  })
+})
+
+describe('onNodesChange', () => {
+  it('pushes history when a drag starts and applies the position', () => {
+    const s = makeStore()
+    const id = s.getState().addNode(0, 0)
+    const histBefore = s.getState()._history.length
+    s.getState().onNodesChange([{ type: 'position', id, position: { x: 5, y: 7 }, dragging: true }])
+    expect(s.getState()._history.length).toBe(histBefore + 1)
+    expect(s.getState().nodes[0].position).toEqual({ x: 5, y: 7 })
+  })
+
+  it('does not push history for a drag continuation already in progress', () => {
+    const s = makeStore()
+    const id = s.getState().addNode(0, 0)
+    s.getState().onNodesChange([{ type: 'position', id, position: { x: 5, y: 0 }, dragging: true }])
+    const histBefore = s.getState()._history.length
+    s.getState().onNodesChange([{ type: 'position', id, position: { x: 9, y: 0 }, dragging: true }])
+    expect(s.getState()._history.length).toBe(histBefore)
+    expect(s.getState().nodes[0].position.x).toBe(9)
+  })
+
+  it('clears the dragging marker on drag end so the next drag pushes history again', () => {
+    const s = makeStore()
+    const id = s.getState().addNode(0, 0)
+    s.getState().onNodesChange([{ type: 'position', id, position: { x: 1, y: 0 }, dragging: true }])
+    s.getState().onNodesChange([
+      { type: 'position', id, position: { x: 1, y: 0 }, dragging: false },
+    ])
+    const histBefore = s.getState()._history.length
+    s.getState().onNodesChange([{ type: 'position', id, position: { x: 2, y: 0 }, dragging: true }])
+    expect(s.getState()._history.length).toBe(histBefore + 1)
+  })
+
+  it('pushes history and removes the node on a remove change', () => {
+    const s = makeStore()
+    const id = s.getState().addNode(0, 0)
+    const histBefore = s.getState()._history.length
+    s.getState().onNodesChange([{ type: 'remove', id }])
+    expect(s.getState().nodes).toHaveLength(0)
+    expect(s.getState()._history.length).toBe(histBefore + 1)
+  })
+
+  it('does not push history for a plain select change', () => {
+    const s = makeStore()
+    const id = s.getState().addNode(0, 0)
+    const histBefore = s.getState()._history.length
+    s.getState().onNodesChange([
+      { type: 'select', id, selected: true } as NodeChange<Node<ConceptNodeData>>,
+    ])
+    expect(s.getState()._history.length).toBe(histBefore)
+  })
+})
+
+describe('onEdgesChange', () => {
+  it('pushes history, removes the edge, and clears its selection on remove', () => {
+    const s = makeStore()
+    const a = s.getState().addNode(0, 0)
+    const b = s.getState().addNode(100, 0)
+    const id = s.getState().addEdge(a, b, 'causes')
+    const histBefore = s.getState()._history.length
+    s.getState().onEdgesChange([{ type: 'remove', id }])
+    expect(s.getState().edges).toHaveLength(0)
+    expect(s.getState().selected).toBeNull()
+    expect(s.getState()._history.length).toBe(histBefore + 1)
+  })
+
+  it('keeps an unrelated selection when a different edge is removed', () => {
+    const s = makeStore()
+    const a = s.getState().addNode(0, 0)
+    const b = s.getState().addNode(100, 0)
+    const c = s.getState().addNode(200, 0)
+    const e1 = s.getState().addEdge(a, b, 'causes')
+    const e2 = s.getState().addEdge(b, c, 'causes')
+    s.getState().onEdgesChange([{ type: 'remove', id: e1 }])
+    expect(s.getState().selected).toEqual({ kind: 'edge', id: e2 })
+  })
+
+  it('does not push history for a non-remove change', () => {
+    const s = makeStore()
+    const a = s.getState().addNode(0, 0)
+    const b = s.getState().addNode(100, 0)
+    const id = s.getState().addEdge(a, b, 'causes')
+    const histBefore = s.getState()._history.length
+    s.getState().onEdgesChange([{ type: 'select', id, selected: false } as EdgeChange])
+    expect(s.getState()._history.length).toBe(histBefore)
+  })
+})
+
+describe('updateEdgeType', () => {
+  it('changes the relation type and is undoable', () => {
+    const s = makeStore()
+    const a = s.getState().addNode(0, 0)
+    const b = s.getState().addNode(100, 0)
+    const id = s.getState().addEdge(a, b, 'causes')
+    s.getState().updateEdgeType(id, 'enables')
+    expect(s.getState().edges.find((e) => e.id === id)?.data?.type).toBe('enables')
+    s.getState().undo()
+    expect(s.getState().edges.find((e) => e.id === id)?.data?.type).toBe('causes')
+  })
+
+  it('leaves other edges untouched', () => {
+    const s = makeStore()
+    const a = s.getState().addNode(0, 0)
+    const b = s.getState().addNode(100, 0)
+    const c = s.getState().addNode(200, 0)
+    const e1 = s.getState().addEdge(a, b, 'causes')
+    const e2 = s.getState().addEdge(b, c, 'requires')
+    s.getState().updateEdgeType(e1, 'enables')
+    expect(s.getState().edges.find((e) => e.id === e2)?.data?.type).toBe('requires')
+  })
+})
+
+describe('setEdgeCurveFlipMode', () => {
+  function edgeStore() {
+    const s = makeStore()
+    const a = s.getState().addNode(0, 0)
+    const b = s.getState().addNode(100, 0)
+    const id = s.getState().addEdge(a, b, 'causes')
+    return { s, id }
+  }
+
+  it("mode 'on' sets curveFlip true and pins it while autoCurveFlip is on", () => {
+    const { s, id } = edgeStore()
+    s.getState().setEdgeCurveFlipMode(id, 'on')
+    const d = s.getState().edges.find((e) => e.id === id)!.data!
+    expect(d.curveFlip).toBe(true)
+    expect(d.curveFlipPinned).toBe(true)
+  })
+
+  it("mode 'off' sets curveFlip false", () => {
+    const { s, id } = edgeStore()
+    s.getState().setEdgeCurveFlipMode(id, 'off')
+    expect(s.getState().edges.find((e) => e.id === id)!.data!.curveFlip).toBe(false)
+  })
+
+  it("mode 'auto' clears curveFlip and the pin", () => {
+    const { s, id } = edgeStore()
+    s.getState().setEdgeCurveFlipMode(id, 'on')
+    s.getState().setEdgeCurveFlipMode(id, 'auto')
+    const d = s.getState().edges.find((e) => e.id === id)!.data!
+    expect(d.curveFlip).toBeUndefined()
+    expect('curveFlipPinned' in d).toBe(false)
+  })
+
+  it('does not pin when autoCurveFlip is off', () => {
+    const { s, id } = edgeStore()
+    s.getState().setGraphDisplay('autoCurveFlip', false)
+    s.getState().setEdgeCurveFlipMode(id, 'on')
+    const d = s.getState().edges.find((e) => e.id === id)!.data!
+    expect(d.curveFlip).toBe(true)
+    expect('curveFlipPinned' in d).toBe(false)
+  })
+})
+
+describe('addEdge curve flip', () => {
+  it('bakes curveFlip into a new edge when autoCurveFlip is off and geometry flips', () => {
+    const s = makeStore()
+    s.getState().setGraphDisplay('autoCurveFlip', false)
+    const a = s.getState().addNode(0, 0)
+    const b = s.getState().addNode(100, -100)
+    const id = s.getState().addEdge(a, b, 'causes')
+    expect(s.getState().edges.find((e) => e.id === id)?.data?.curveFlip).toBe(true)
+  })
+
+  it('omits curveFlip while autoCurveFlip is on', () => {
+    const s = makeStore()
+    const a = s.getState().addNode(0, 0)
+    const b = s.getState().addNode(100, -100)
+    const id = s.getState().addEdge(a, b, 'causes')
+    expect(s.getState().edges.find((e) => e.id === id)?.data?.curveFlip).toBeUndefined()
+  })
+})
+
+describe('setSelected', () => {
+  it('marks the node selected, deselects others, and fills selectedIds', () => {
+    const s = makeStore()
+    const a = s.getState().addNode(0, 0)
+    const b = s.getState().addNode(100, 0)
+    s.getState().setSelected({ kind: 'node', id: a })
+    expect(s.getState().nodes.find((n) => n.id === a)?.selected).toBe(true)
+    expect(s.getState().nodes.find((n) => n.id === b)?.selected).toBe(false)
+    expect(s.getState().selectedIds).toEqual([a])
+    expect(s.getState().selected).toEqual({ kind: 'node', id: a })
+  })
+
+  it('selecting an edge leaves selectedIds empty and flags the edge', () => {
+    const s = makeStore()
+    const a = s.getState().addNode(0, 0)
+    const b = s.getState().addNode(100, 0)
+    const id = s.getState().addEdge(a, b, 'causes')
+    s.getState().setSelected({ kind: 'edge', id })
+    expect(s.getState().selectedIds).toEqual([])
+    expect(s.getState().edges.find((e) => e.id === id)?.selected).toBe(true)
+  })
+
+  it('is a no-op (same state reference) when the selection is unchanged', () => {
+    const s = makeStore()
+    const a = s.getState().addNode(0, 0)
+    s.getState().setSelected({ kind: 'node', id: a })
+    const before = s.getState()
+    s.getState().setSelected({ kind: 'node', id: a })
+    expect(s.getState()).toBe(before)
+  })
+})
+
+describe('syncFlowSelection', () => {
+  it('a single node id becomes the node selection', () => {
+    const s = makeStore()
+    const a = s.getState().addNode(0, 0)
+    s.getState().addNode(100, 0)
+    s.getState().syncFlowSelection([a], [])
+    expect(s.getState().selected).toEqual({ kind: 'node', id: a })
+    expect(s.getState().selectedIds).toEqual([a])
+    expect(s.getState().nodes.find((n) => n.id === a)?.selected).toBe(true)
+  })
+
+  it('a single edge id becomes the edge selection', () => {
+    const s = makeStore()
+    const a = s.getState().addNode(0, 0)
+    const b = s.getState().addNode(100, 0)
+    const id = s.getState().addEdge(a, b, 'causes')
+    s.getState().syncFlowSelection([], [id])
+    expect(s.getState().selected).toEqual({ kind: 'edge', id })
+  })
+
+  it('multiple nodes select all of them with no single selection', () => {
+    const s = makeStore()
+    const a = s.getState().addNode(0, 0)
+    const b = s.getState().addNode(100, 0)
+    s.getState().syncFlowSelection([a, b], [])
+    expect(s.getState().selected).toBeNull()
+    expect(new Set(s.getState().selectedIds)).toEqual(new Set([a, b]))
+  })
+
+  it('is a no-op (same reference) when nothing changed', () => {
+    const s = makeStore()
+    const a = s.getState().addNode(0, 0)
+    s.getState().addNode(100, 0)
+    s.getState().syncFlowSelection([a], [])
+    const before = s.getState()
+    s.getState().syncFlowSelection([a], [])
+    expect(s.getState()).toBe(before)
+  })
+})
+
+describe('setSelectedIds', () => {
+  it('replaces the multi-selection ids', () => {
+    const s = makeStore()
+    const a = s.getState().addNode()
+    const b = s.getState().addNode()
+    s.getState().setSelectedIds([a, b])
+    expect(s.getState().selectedIds).toEqual([a, b])
+  })
+})
+
+describe('deleteSelection (mixed and empty)', () => {
+  it('removes nodes in selectedIds plus a separately selected edge and incident edges', () => {
+    const s = makeStore()
+    const a = s.getState().addNode(0, 0)
+    const b = s.getState().addNode(100, 0)
+    const c = s.getState().addNode(200, 0)
+    s.getState().addEdge(a, b, 'causes')
+    s.getState().addEdge(b, c, 'causes')
+    s.getState().setSelectedIds([a])
+    s.getState().deleteSelection()
+    const st = s.getState()
+    expect(st.nodes.map((n) => n.id).sort()).toEqual([b, c].sort())
+    expect(st.edges).toHaveLength(0)
+  })
+
+  it('is a no-op when nothing is selected', () => {
+    const s = makeStore()
+    s.getState().addNode()
+    s.getState().setSelected(null)
+    s.getState().setSelectedIds([])
+    const before = s.getState()
+    s.getState().deleteSelection()
+    expect(s.getState()).toBe(before)
+  })
+})
+
+describe('addNode selection side effects', () => {
+  it('deselects a previously selected edge', () => {
+    const s = makeStore()
+    const a = s.getState().addNode(0, 0)
+    const b = s.getState().addNode(100, 0)
+    const eid = s.getState().addEdge(a, b, 'causes')
+    s.getState().addNode(200, 0)
+    expect(s.getState().edges.find((e) => e.id === eid)?.selected).toBe(false)
+  })
+})
+
+describe('requestEditNode / clearEditNodeId', () => {
+  it('sets and clears editNodeId', () => {
+    const s = makeStore()
+    s.getState().requestEditNode('x')
+    expect(s.getState().editNodeId).toBe('x')
+    s.getState().clearEditNodeId()
+    expect(s.getState().editNodeId).toBeNull()
+  })
+})
+
+describe('undo / redo edges', () => {
+  it('undo is a no-op (same reference) with empty history', () => {
+    const s = makeStore()
+    const before = s.getState()
+    s.getState().undo()
+    expect(s.getState()).toBe(before)
+  })
+
+  it('redo is a no-op (same reference) with empty future', () => {
+    const s = makeStore()
+    s.getState().addNode()
+    const before = s.getState()
+    s.getState().redo()
+    expect(s.getState()).toBe(before)
+  })
+
+  it('undo clears the current selection', () => {
+    const s = makeStore()
+    const a = s.getState().addNode()
+    s.getState().setSelected({ kind: 'node', id: a })
+    s.getState().updateNodeData(a, { text: 'x' })
+    s.getState().undo()
+    expect(s.getState().selected).toBeNull()
+    expect(s.getState().selectedIds).toEqual([])
+  })
+
+  it('keeps at most MAX_UNDO history entries', () => {
+    const s = makeStore()
+    for (let i = 0; i < MAX_UNDO + 10; i++) s.getState().addNode()
+    expect(s.getState()._history.length).toBe(MAX_UNDO)
+  })
+})
+
+describe('bakeCurveFlipFromPositions', () => {
+  const node = (id: string, x: number, y: number) =>
+    ({ id, position: { x, y }, data: {} }) as unknown as Node<ConceptNodeData>
+  const edge = (extra: Record<string, unknown>) =>
+    ({ id: 'e', source: 'a', target: 'b', data: { type: 'causes', ...extra } }) as unknown as Edge
+
+  it('pins a computed curveFlip onto an unpinned edge when geometry flips', () => {
+    const baked = bakeCurveFlipFromPositions([edge({})], [node('a', 0, 0), node('b', 100, -100)])
+    expect(baked[0].data?.curveFlip).toBe(true)
+  })
+
+  it('leaves a pinned edge untouched (same reference)', () => {
+    const edges = [edge({ curveFlipPinned: true })]
+    const baked = bakeCurveFlipFromPositions(edges, [node('a', 0, 0), node('b', 100, -100)])
+    expect(baked[0]).toBe(edges[0])
+  })
+
+  it('leaves an edge with a missing endpoint untouched (same reference)', () => {
+    const edges = [edge({})]
+    const baked = bakeCurveFlipFromPositions(edges, [node('a', 0, 0)])
+    expect(baked[0]).toBe(edges[0])
+  })
+
+  it('drops curveFlip back to undefined when geometry says no flip', () => {
+    const baked = bakeCurveFlipFromPositions(
+      [edge({ curveFlip: true })],
+      [node('a', 0, 0), node('b', 100, 0)],
+    )
+    expect(baked[0].data?.curveFlip).toBeUndefined()
+  })
+})
+
+describe('initial slice state', () => {
+  it('starts empty', () => {
+    const st = makeStore().getState()
+    expect(st.nodes).toEqual([])
+    expect(st.edges).toEqual([])
+    expect(st.selected).toBeNull()
+    expect(st.selectedIds).toEqual([])
+    expect(st.pasteAvailable).toBe(false)
+    expect(st.editNodeId).toBeNull()
+    expect(st._history).toEqual([])
+    expect(st._future).toEqual([])
+  })
+})
+
+describe('deleteNode / deleteEdge targeting', () => {
+  it('deleteNode removes edges where the node is the target and keeps an unrelated selection', () => {
+    const s = makeStore()
+    const a = s.getState().addNode(0, 0)
+    const b = s.getState().addNode(100, 0)
+    const c = s.getState().addNode(200, 0)
+    s.getState().addEdge(a, b, 'causes')
+    s.getState().setSelected({ kind: 'node', id: c })
+    s.getState().deleteNode(b)
+    expect(s.getState().edges).toHaveLength(0)
+    expect(s.getState().selected).toEqual({ kind: 'node', id: c })
+  })
+
+  it('deleteEdge removes only the target edge and keeps an unrelated selection', () => {
+    const s = makeStore()
+    const a = s.getState().addNode(0, 0)
+    const b = s.getState().addNode(100, 0)
+    const c = s.getState().addNode(200, 0)
+    const e1 = s.getState().addEdge(a, b, 'causes')
+    const e2 = s.getState().addEdge(b, c, 'causes')
+    s.getState().deleteEdge(e1)
+    expect(s.getState().edges.map((e) => e.id)).toEqual([e2])
+    expect(s.getState().selected).toEqual({ kind: 'edge', id: e2 })
+  })
+})
+
+describe('undo / redo internals', () => {
+  it('moves snapshots between history and future', () => {
+    const s = makeStore()
+    s.getState().addNode()
+    s.getState().addNode()
+    s.getState().addNode()
+    const hist = s.getState()._history.length
+    s.getState().undo()
+    expect(s.getState()._history.length).toBe(hist - 1)
+    expect(s.getState()._future.length).toBe(1)
+    s.getState().undo()
+    expect(s.getState()._future.length).toBe(2)
+    s.getState().redo()
+    expect(s.getState()._history.length).toBe(hist - 1)
+    expect(s.getState()._future.length).toBe(1)
+  })
+})
+
+describe('paste / duplicate selection side effects', () => {
+  it('pasting a single node selects the paste and deselects the originals', () => {
+    const s = makeStore()
+    const a = s.getState().addNode(0, 0)
+    const b = s.getState().addNode(100, 0)
+    s.getState().setSelected({ kind: 'node', id: a })
+    s.getState().copySelection()
+    const pasted = s.getState().pasteSelection()
+    expect(pasted).toHaveLength(1)
+    expect(s.getState().selected).toEqual({ kind: 'node', id: pasted![0] })
+    expect(s.getState().nodes.find((n) => n.id === a)?.selected).toBe(false)
+    expect(s.getState().nodes.find((n) => n.id === b)?.selected).toBe(false)
+  })
+
+  it('duplicate deselects the originals', () => {
+    const s = makeStore()
+    const a = s.getState().addNode(0, 0)
+    s.getState().setSelected({ kind: 'node', id: a })
+    s.getState().duplicateSelection()
+    expect(s.getState().nodes.find((n) => n.id === a)?.selected).toBe(false)
+  })
+})
+
+describe('selectAll edges', () => {
+  it('works on a graph with nodes but no edges', () => {
+    const s = makeStore()
+    const a = s.getState().addNode(0, 0)
+    const b = s.getState().addNode(100, 0)
+    s.getState().setSelected(null)
+    s.getState().selectAll()
+    expect(new Set(s.getState().selectedIds)).toEqual(new Set([a, b]))
+    expect(s.getState().nodes.every((n) => n.selected)).toBe(true)
+  })
+
+  it('is a no-op (same reference) the second time', () => {
+    const s = makeStore()
+    s.getState().addNode(0, 0)
+    s.getState().addNode(100, 0)
+    s.getState().setSelected(null)
+    s.getState().selectAll()
+    const before = s.getState()
+    s.getState().selectAll()
+    expect(s.getState()).toBe(before)
+  })
+})
+
+describe('syncFlowSelection branches', () => {
+  it('updates a multi-selection even while the single selection stays null', () => {
+    const s = makeStore()
+    const a = s.getState().addNode(0, 0)
+    const b = s.getState().addNode(100, 0)
+    const c = s.getState().addNode(200, 0)
+    s.getState().syncFlowSelection([a, b], [])
+    s.getState().syncFlowSelection([a, c], [])
+    expect(new Set(s.getState().selectedIds)).toEqual(new Set([a, c]))
+    expect(s.getState().nodes.find((n) => n.id === b)?.selected).toBe(false)
+    expect(s.getState().nodes.find((n) => n.id === c)?.selected).toBe(true)
+  })
+
+  it('selects neither when both a node and an edge are passed', () => {
+    const s = makeStore()
+    const a = s.getState().addNode(0, 0)
+    const b = s.getState().addNode(100, 0)
+    const e = s.getState().addEdge(a, b, 'causes')
+    s.getState().syncFlowSelection([a], [e])
+    expect(s.getState().selected).toBeNull()
   })
 })
