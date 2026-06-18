@@ -69,6 +69,7 @@ export function EdgeInspector({ panelWidth, onPanelWidthChange }: Props) {
           >
             <GlyphSVG kind={T.glyph} color={C.color} size={14} />
             <span
+              data-testid="edge-current-relation"
               style={{
                 fontSize: '13px',
                 fontWeight: 500,
