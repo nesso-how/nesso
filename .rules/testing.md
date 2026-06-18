@@ -1,6 +1,6 @@
 # Testing
 
-Unit/integration tests run on **Vitest**. They cover pure, side-effect-free logic — the base of the pyramid. Browser/e2e flows are a separate concern (issue #28), so this layer never touches Tauri, the network, or real rendering.
+Unit/integration tests run on **Vitest**. They cover pure, side-effect-free logic — the base of the pyramid. Browser/e2e flows are a separate layer ([E2E](#e2e-playwright-web-ui), issue #28), so Vitest never touches Tauri, the network, or real rendering.
 
 ## When to add tests
 
@@ -64,3 +64,20 @@ The workspace layer (`src/lib/workspace/**`, `src/store/db.ts`) is the most regr
 Glob granularity is deliberate. A folder gets a directory floor only when it is pure testable logic end to end. Where a folder mixes tested logic with code this layer cannot reach, the floor targets the **file**, not the folder: `packages/graph/src/geometry.ts` (edge-curve math — the rest of `packages/graph` is React rendering only the e2e layer #28 reaches) and `src/lib/graphClipboard.ts` / `src/lib/graphId.ts` (the rest of `src/lib` is untested desktop/IO glue). An aggregate floor over those folders would be diluted to ~31% / ~33% and guard nothing. Same reason the store glue `src/store/index.ts` sits outside the `src/store/slices/**` floor. Files covered only **incidentally** by other suites (`src/data/seedGraph.ts`, `src/store/db.ts`) get no floor — their numbers move with unrelated tests. Packages with no meaningful unit surface stay global-only: `mcp` (loaders/tooling), `relation-types` (static vocabulary), `types` (type-only).
 
 **Re-baseline habit:** raise the floors as coverage climbs. When a change _intentionally_ lowers a number — deleting tested code, or a measured-surface shift once the e2e layer (#28) lands — re-snapshot from a fresh `pnpm test:coverage` and update `vitest.config.ts` in the **same change**, rather than leaving the gate red. This mirrors `--save-baseline` for the fallow ratchets.
+
+## E2E (Playwright, web UI)
+
+The top of the pyramid: real-rendering browser flows that Vitest cannot reach. Split along the product's own `isDesktop()` boundary (issue #28), there are two disjoint lanes with **no shared spec code** — Playwright owns the web UI, a future tauri-driver lane owns the native layer.
+
+- **Playwright** (`playwright.config.ts`, specs in `e2e/*.spec.ts`) drives the Vite **web build** — every flow that works in a plain browser (`isDesktop() === false`). It boots its own dev server (`webServer: pnpm dev`, reused locally / fresh in CI) and targets `chromium`. Run with `pnpm test:e2e` (or `pnpm test:e2e:ui` for the trace viewer). Shared actions (new empty graph, create concept, drag-connect, select edge) live in `e2e/helpers.ts`; import fixtures in `e2e/fixtures/`.
+- **tauri-driver + WebdriverIO** — native layer only (real fs, dialogs, IPC, file watching, `desktop-sync`); Linux/Windows only. **Not yet implemented** — tracked as the #28 follow-up.
+
+Current coverage: graph editing (create node, drag-connect a relation, change relation type, delete edge), selection + history (undo/redo, multi-select delete), graph management (create/switch/delete, JSON export/import), persistence across reload, and settings (dark mode, language).
+
+Conventions:
+
+- **Selectors:** prefer React Flow's stable DOM classes (`.react-flow__pane`, `.react-flow__node`, `.react-flow__edge`, `.react-flow__handle-right`, and the edge glyph badge `.react-flow__edge circle` for selecting an edge). Add a `data-testid` only where the existing handle is localized/fragile — today `relation-chip-<id>` (`RelationPicker`), `sidebar-new-graph` (`Sidebar`), `graph-io-menu` (`GraphIO`), and `edge-current-relation` (`EdgeInspector`).
+- **Serial:** `playwright.config.ts` sets `workers: 1` / `fullyParallel: false` — the specs share one dev server, which gets flaky under several concurrent React Flow contexts. The suite is small and fast; UI mode (`test:e2e:ui`) is unaffected.
+- **Timing:** the autosave is debounced 500ms (`useAutoSave`) and selection syncs via `requestAnimationFrame`, so a flow that reloads or switches graphs must wait for the flush, and a multi-select delete must wait for `.react-flow__node.selected` to settle. Chromium's File System Access API (`showSaveFilePicker`) blocks driving a real JSON export — the export spec deletes it via `addInitScript` to force the anchor-download fallback.
+- **Naming:** `*.spec.ts` (not `*.test.ts`) so the Vitest runner never picks them up; `e2e/` sits outside `tsconfig.app.json`, the license-header roots, and `coverage.include`, so it does not feed the Vitest coverage ratchet or the build/type gates. It has its own `e2e/tsconfig.json`, and is excluded from fallow via `.fallowrc.jsonc` (`ignorePatterns` + `@playwright/test` in `ignoreDependencies`).
+- **CI:** a dedicated `e2e` job in `.github/workflows/ci.yml` runs in parallel with `js`/`rust` and uploads the HTML report artifact on failure.

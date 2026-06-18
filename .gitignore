@@ -45,5 +45,10 @@ yarn.lock
 # Test / coverage
 coverage
 
+# Playwright e2e
+test-results
+playwright-report
+playwright/.cache
+
 # Code-quality tooling (fallow local cache + baselines)
 .fallow/

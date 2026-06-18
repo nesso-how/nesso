@@ -289,6 +289,7 @@ export function Sidebar({
             >
               <span style={sectionLabel}>{t.sidebar.graphs}</span>
               <button
+                data-testid="sidebar-new-graph"
                 title={t.sidebar.newGraphTitle}
                 onClick={handleNew}
                 style={graphsNewBtn}

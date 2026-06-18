@@ -1,0 +1,28 @@
+{
+  "name": "Imported Fixture",
+  "nodes": [
+    {
+      "id": "fixture-a",
+      "type": "concept",
+      "position": { "x": 0, "y": 0 },
+      "data": { "text": "Imported Alpha" }
+    },
+    {
+      "id": "fixture-b",
+      "type": "concept",
+      "position": { "x": 240, "y": 0 },
+      "data": { "text": "Imported Beta" }
+    }
+  ],
+  "edges": [
+    {
+      "id": "fixture-edge",
+      "type": "nesso",
+      "source": "fixture-a",
+      "target": "fixture-b",
+      "sourceHandle": "out",
+      "targetHandle": "in",
+      "data": { "type": "subtype-of" }
+    }
+  ]
+}

@@ -145,3 +145,51 @@ jobs:
 
       - run: cargo test
         working-directory: src-tauri
+
+  # End-to-end web UI (Playwright). Covers the flows that run in a plain browser
+  # (`isDesktop() === false`); the native layer (fs/dialogs/IPC/file-watch) is a
+  # separate tauri-driver lane (#28 follow-up). Runs in parallel with `js`/`rust`.
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+
+      - name: Enable pnpm via Corepack
+        run: corepack enable
+
+      - name: Pnpm store path
+        id: pnpm-store
+        shell: bash
+        run: echo "path=$(pnpm store path)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/cache@v5
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
+      - run: pnpm install --frozen-lockfile
+
+      # Browser binary + its OS libraries. The Playwright version pins the
+      # browser revision, so this is cached implicitly by the runner image layer
+      # only when versions match — `--with-deps` is the portable path.
+      - name: Install Playwright browser (chromium)
+        run: pnpm exec playwright install --with-deps chromium
+
+      # Playwright boots the Vite dev server itself (webServer in
+      # playwright.config.ts) and tears it down when the run ends.
+      - run: pnpm run test:e2e
+
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report
+          retention-days: 7
+          if-no-files-found: ignore

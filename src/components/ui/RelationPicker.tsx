@@ -33,6 +33,7 @@ function RelationChip({
 }) {
   return (
     <button
+      data-testid={`relation-chip-${id}`}
       onClick={() => onPick(id)}
       style={{
         appearance: 'none',

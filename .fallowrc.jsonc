@@ -6,10 +6,19 @@
   // syntactic analysis cannot see imports inside the mock factory.
   "dynamicallyLoaded": ["src/test/fakeTauriFs.ts"],
   // sharp is Astro's image-optimization dependency: used implicitly, never imported.
-  "ignoreDependencies": ["sharp"],
+  // @playwright/test is consumed only by the e2e specs + config, which are
+  // ignored below (run by the Playwright CLI, not imported by app code).
+  "ignoreDependencies": ["sharp", "@playwright/test"],
   // Theme CSS is generated at build time by the nessoTheme Vite plugin.
   "ignoreUnresolvedImports": ["**/*.generated.css"],
   // Referenced via docs/astro.config.mjs (Starlight `components` override and
-  // `customCss`), which fallow does not parse as entry points.
-  "ignorePatterns": ["docs/src/components/ThemeSelect.astro", "docs/src/styles/custom.css"]
+  // `customCss`), which fallow does not parse as entry points. The e2e specs and
+  // Playwright config are run by the Playwright CLI, not reachable from any app
+  // entry point, so they are not dead surface.
+  "ignorePatterns": [
+    "docs/src/components/ThemeSelect.astro",
+    "docs/src/styles/custom.css",
+    "e2e/**",
+    "playwright.config.ts"
+  ]
 }
