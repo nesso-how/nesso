@@ -27,7 +27,7 @@
 Nesso is an interactive concept map where nodes are ideas and edges are typed semantic relations. You draw connections between concepts, pick the relation (e.g. `causes`, `requires`, `subtype-of`), and each concept carries spaced-repetition state. **Socrates**, a Socratic AI mentor, reads the current graph and your selection, then probes your understanding through questions rather than explanations.
 
 > [!WARNING]
-> **Early alpha.** The typed graph and spaced-repetition review work today; the Socratic mentor is experimental and needs an OpenAI-compatible endpoint (e.g. a local Ollama model or a cloud provider) — there is no built-in model. Expect breaking changes.
+> **Early alpha.** The typed graph and spaced-repetition review work today; the Socratic mentor is experimental and needs an OpenAI-compatible endpoint (e.g. a local Ollama model or a cloud provider). There is no built-in model. Expect breaking changes.
 
 ## Features
 

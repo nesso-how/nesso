@@ -75,7 +75,7 @@ export const en: Locale = {
     },
     p4: {
       heading: 'Private by architecture',
-      body: 'Your cognitive graph reveals how you reason, where you struggle, how your understanding evolves. Nesso keeps the graph on your device. The mentor is optional: run it on-device through a local model server like Ollama, or point it at a cloud provider. Either way, the graph never leaves your machine.',
+      body: 'Your cognitive graph reveals how you reason, where you struggle, how your understanding evolves. Nesso keeps it on your device with local-first storage, no account, and no servers in the loop. When you bring in AI, the endpoint is your choice: keep it fully on-device, or point it at a provider you trust. Your data stays where you put it.',
       aiMode: 'AI endpoint',
       settings: 'Settings',
       local: 'Local',

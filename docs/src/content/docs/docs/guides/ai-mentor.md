@@ -21,7 +21,7 @@ The mentor is **experimental** and runs against any OpenAI-compatible `chat/comp
 
 The default targets a local [Ollama](https://ollama.com/) instance (`http://localhost:11434/v1`, model `gemma3:4b`). Install Ollama, pull a model, and the mentor works with nothing leaving your machine. Any hosted OpenAI-compatible endpoint works too; set the API key it expects.
 
-There is **no built-in in-browser model** — Nesso previously bundled a small WebGPU model, but it was too small and slow to be useful and has been removed. Until a reachable endpoint is configured, the chat input stays disabled and the mentor shows a short setup hint.
+There is **no built-in in-browser model**. Nesso previously bundled a small WebGPU model, but it was too small and slow to be useful and has been removed. Until a reachable endpoint is configured, the chat input stays disabled and the mentor shows a short setup hint.
 
 ### Reaching local Ollama from the hosted app
 

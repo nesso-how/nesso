@@ -44,7 +44,7 @@ pnpm build:desktop
 
 ## Picking an AI backend
 
-The Socratic mentor is **experimental** and uses any OpenAI-compatible `chat/completions` endpoint: a local [Ollama](https://ollama.com/) instance, an OpenAI-compatible proxy, or a hosted provider. There is no built-in in-browser model — configure an endpoint under **Settings -> AI** (`⌘,` / `Ctrl+,`) or the mentor stays disabled.
+The Socratic mentor is **experimental** and uses any OpenAI-compatible `chat/completions` endpoint: a local [Ollama](https://ollama.com/) instance, an OpenAI-compatible proxy, or a hosted provider. There is no built-in in-browser model, so configure an endpoint under **Settings -> AI** (`⌘,` / `Ctrl+,`) or the mentor stays disabled.
 
 :::caution
 API keys are stored client-side in `localStorage`. Do not self-host the web app publicly with secrets baked in.
