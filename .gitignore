@@ -50,5 +50,9 @@ test-results
 playwright-report
 playwright/.cache
 
+# Mutation testing (StrykerJS reports + sandbox)
+reports/mutation
+.stryker-tmp
+
 # Code-quality tooling (fallow local cache + baselines)
 .fallow/

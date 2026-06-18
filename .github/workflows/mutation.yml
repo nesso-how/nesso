@@ -1,0 +1,74 @@
+name: Mutation testing
+
+# StrykerJS mutation testing (issue #55). Deliberately NOT a per-PR gate: the
+# suite reruns once per mutant, so it is too slow for every push. It runs on a
+# schedule and on demand, separate from the `ci.yml` lane, and never blocks a
+# merge — a red run signals that the mutation score dropped below the ratchet
+# (`thresholds.break` in stryker.config.mjs), not that the PR is broken.
+on:
+  schedule:
+    # Mondays 06:00 UTC.
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: mutation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  stryker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+
+      - name: Enable pnpm via Corepack
+        run: corepack enable
+
+      - name: Pnpm store path
+        id: pnpm-store
+        shell: bash
+        run: echo "path=$(pnpm store path)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/cache@v5
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
+      # `prepare` (run by install) rebuilds every workspace package `dist/`, which
+      # the Vitest suite Stryker drives resolves against.
+      - run: pnpm install --frozen-lockfile
+
+      # Each area runs as its own step with an independent ratchet (a red area
+      # must not hide a green one). `if: always()` so every area still runs when
+      # an earlier one breaks its threshold. Each step exits non-zero if its
+      # mutation score falls below the area floor.
+      - name: Mutation — formats
+        run: pnpm run analyze:mutation:formats
+      - name: Mutation — types
+        if: always()
+        run: pnpm run analyze:mutation:types
+      - name: Mutation — store
+        if: always()
+        run: pnpm run analyze:mutation:store
+      - name: Mutation — workspace
+        if: always()
+        run: pnpm run analyze:mutation:workspace
+      - name: Mutation — mentor
+        if: always()
+        run: pnpm run analyze:mutation:mentor
+
+      # Keep the navigable HTML reports even when a run breaks its threshold.
+      - name: Upload mutation reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mutation-report
+          path: reports/mutation
+          if-no-files-found: ignore
