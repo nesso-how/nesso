@@ -44,7 +44,10 @@ jobs:
       - run: pnpm run lint
       # Fast correctness signal: pure-logic unit/integration tests. `pnpm install`
       # already ran `prepare`, so the workspace package `dist/` outputs the tests
-      # resolve against are present. This step gates the PR like the others.
+      # resolve against are present. This step gates the PR like the others, and
+      # also enforces the coverage ratchet in vitest.config.ts (`coverage.thresholds`):
+      # a snapshot floor — global plus stricter per-directory globs — that fails on
+      # any drop. Re-baseline it (same change) when intentionally lowering coverage.
       - run: pnpm run test:coverage
       # `tsc -b` is not run on its own here: `pnpm run build` already runs it
       # (`… && tsc -b && vite build`), so a standalone step would type-check twice.

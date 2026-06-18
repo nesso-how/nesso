@@ -11,6 +11,7 @@ Run the checks `.github/workflows/ci.yml` runs, in order, from the repo root, an
 pnpm install --frozen-lockfile   # only if deps/lockfile may be stale; skip if node_modules is current
 pnpm run format:check            # Biome (code/json/css) + Prettier (md/yaml/html)
 pnpm run lint                    # Biome lint (replaces ESLint)
+pnpm run test:coverage           # vitest + coverage ratchet (thresholds in vitest.config.ts; red on any drop)
 pnpm exec tsc -b                 # typecheck
 pnpm run build:mcp               # MCP bundle (refreshes dist/starlight-docs.pages.json)
 pnpm run build                   # full app build
@@ -33,6 +34,7 @@ cargo test --manifest-path src-tauri/Cargo.toml
 
 - Run the steps individually so a failure is attributable to one step — don't `&&`-chain them into one opaque result.
 - Surface the first failure with its output and stop; do not push when anything is red.
+- `test:coverage` is a **ratchet gate**: `coverage.thresholds` in `vitest.config.ts` is a snapshot floor (global plus stricter per-directory globs) that fails on any drop. When a change intentionally lowers coverage, re-snapshot from a fresh run and update the thresholds in the same change (the coverage analogue of `--save-baseline`).
 - The three `analyze:*` steps are **hard gates**: `analyze:dead-code` is zero-tolerance (unused code + architecture cycles; documented false positives via `.fallowrc.jsonc`); `analyze:dupes` and `analyze:health` are identity baselines (`fallow-baselines/`) that fail only on **new** clones / complex functions. To accept new debt on purpose, suppress the line (`// fallow-ignore-…`) or re-save the baseline (`fallow <dupes|health> --save-baseline …`). `pnpm run analyze` (full report) is a local convenience, not a CI step.
 - `format:check` failures are usually fixed by `pnpm run format` — offer that. `lint` issues often by `pnpm run lint:fix`; `cargo fmt --all --check` failures by `cargo fmt --all`.
 - `icons:desktop` is a prerequisite for the cargo steps: without the bundle icons, `tauri::generate_context!` fails to compile `lib.rs`. Locally they may already exist, but regenerate if unsure.

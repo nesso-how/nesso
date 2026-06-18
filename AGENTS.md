@@ -68,7 +68,7 @@ Area-specific rules (canonical content in `.rules/`, auto-attached per file area
 
 ## Code quality
 
-Lint and format run through **Biome** (`biome.json`): JS/TS/JSON/CSS, with **Prettier** kept only for Markdown/YAML/HTML. **`tsc`** type-checks (via `build`), and **`type-coverage`** gates strict type coverage at 99%. **`fallow`** (`pnpm run analyze`) is a deterministic static analyzer for dead code, duplication, cycles, complexity, and architecture — wired into `preflight` and CI as **advisory / report-only** (its non-zero exit does not gate). The `preflight` skill runs all of these in CI order before a PR.
+Lint and format run through **Biome** (`biome.json`): JS/TS/JSON/CSS, with **Prettier** kept only for Markdown/YAML/HTML. **`tsc`** type-checks (via `build`), and **`type-coverage`** gates strict type coverage at 99%. **`vitest`** (`pnpm test:coverage`) gates test coverage against a **ratchet floor** in `vitest.config.ts` — current numbers snapshotted as the minimum (global plus stricter per-directory globs for the regression-prone logic), green today and red on any drop; re-baseline when intentionally lowering. **`fallow`** (`pnpm run analyze`) is a deterministic static analyzer for dead code, duplication, cycles, complexity, and architecture — wired into `preflight` and CI as **advisory / report-only** (its non-zero exit does not gate). The `preflight` skill runs all of these in CI order before a PR.
 
 ## Constraints — hard rules, never do this
 
