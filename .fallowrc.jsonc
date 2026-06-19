@@ -6,11 +6,24 @@
   // syntactic analysis cannot see imports inside the mock factory.
   "dynamicallyLoaded": ["src/test/fakeTauriFs.ts"],
   // sharp is Astro's image-optimization dependency: used implicitly, never imported.
-  // @playwright/test is consumed only by the e2e specs + config, which are
-  // ignored below (run by the Playwright CLI, not imported by app code).
-  // @stryker-mutator/vitest-runner is a Stryker plugin loaded by name (a string in
-  // `plugins`, stryker.base.mjs), so it is referenced but never imported.
-  "ignoreDependencies": ["sharp", "@playwright/test", "@stryker-mutator/vitest-runner"],
+  // @playwright/test (web lane) and the @wdio/* + expect-webdriverio + tsx stack
+  // (native tauri-driver lane) are consumed only by the e2e specs + configs, run
+  // by their own CLIs, not imported by app code. @stryker-mutator/vitest-runner is
+  // a Stryker plugin loaded by name (a string in `plugins`, stryker.base.mjs), so
+  // it is referenced but never imported.
+  "ignoreDependencies": [
+    "sharp",
+    "@playwright/test",
+    "@stryker-mutator/vitest-runner",
+    "@wdio/cli",
+    "@wdio/local-runner",
+    "@wdio/mocha-framework",
+    "@wdio/spec-reporter",
+    "@wdio/globals",
+    "expect-webdriverio",
+    "tsx",
+    "@types/mocha"
+  ],
   // Theme CSS is generated at build time by the nessoTheme Vite plugin.
   "ignoreUnresolvedImports": ["**/*.generated.css"],
   // Referenced via docs/astro.config.mjs (Starlight `components` override and
@@ -21,6 +34,7 @@
     "docs/src/components/ThemeSelect.astro",
     "docs/src/styles/custom.css",
     "e2e/**",
-    "playwright.config.ts"
+    "playwright.config.ts",
+    "e2e-native/**"
   ]
 }
