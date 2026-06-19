@@ -24,7 +24,7 @@ const en = {
     tabs: {
       appearance: 'Appearance',
       ai: 'AI',
-      review: 'Review',
+      learning: 'Learning',
     },
     appearance: {
       theme: 'Theme',
@@ -65,7 +65,12 @@ const en = {
         unreachable: 'API unreachable',
       },
     },
-    review: {
+    learning: {
+      review: 'Review',
+      reviewDesc:
+        "Review brings each concept back with FSRS, a spaced-repetition algorithm that schedules it right before you're likely to forget it.",
+      reviewMode: 'Review mode',
+      reviewModeDesc: 'When off, the Review button and the R shortcut are hidden.',
       retention: 'Target retention',
       retentionDesc:
         'Probability of recalling a concept at its next review. Higher = more reviews.',

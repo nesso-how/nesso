@@ -131,6 +131,7 @@ export interface NessoSettings {
   aiBaseUrl: string
   aiModel: string
   aiApiKey: string
+  reviewEnabled: boolean
   fsrsRetention: number
   maximumInterval: number
   inspectorMemoryOpen: boolean

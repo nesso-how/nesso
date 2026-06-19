@@ -398,7 +398,7 @@ function AppInner() {
           break
         }
         case 'open-review':
-          setShowReview(true)
+          if (useGraphStore.getState().settings.reviewEnabled) setShowReview(true)
           break
         case 'add-concept':
           handleAddConcept()

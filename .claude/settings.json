@@ -6,7 +6,8 @@
           {
             "type": "command",
             "command": "bash .claude/hooks/session-start.sh",
-            "timeout": 20
+            "timeout": 600,
+            "statusMessage": "Checking deps and remote state..."
           }
         ]
       }

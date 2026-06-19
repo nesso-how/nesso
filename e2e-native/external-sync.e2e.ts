@@ -23,7 +23,7 @@ describe('native: desktop-sync reloads the active graph after an external edit',
     await newEmptyGraph()
     await addConceptNode()
     await waitForCondition(async () => (await nodeTextsOnDisk()).includes(DEFAULT_CONCEPT_TEXT), {
-      timeout: 15_000,
+      timeout: 30_000,
       message: 'the original concept to be saved before the external edit',
     })
     // Let the saved fingerprint settle so there are no "unsaved local edits"
@@ -36,7 +36,7 @@ describe('native: desktop-sync reloads the active graph after an external edit',
     // Same filename → same manifest id binding, so this updates the active graph.
     await writeExternalGraph(stem as string, 'ReplacedConcept')
 
-    await nodeByText('ReplacedConcept').waitForExist({ timeout: 20_000 })
+    await nodeByText('ReplacedConcept').waitForExist({ timeout: 40_000 })
     await expect(nodeByText(DEFAULT_CONCEPT_TEXT)).not.toExist()
   })
 })

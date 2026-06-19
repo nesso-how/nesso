@@ -24,7 +24,7 @@ const it: typeof en = {
     tabs: {
       appearance: 'Aspetto',
       ai: 'AI',
-      review: 'Revisione',
+      learning: 'Apprendimento',
     },
     appearance: {
       theme: 'Tema',
@@ -65,7 +65,13 @@ const it: typeof en = {
         unreachable: 'API non raggiungibile',
       },
     },
-    review: {
+    learning: {
+      review: 'Revisione',
+      reviewDesc:
+        'La revisione ti ripropone ogni concetto con FSRS, un algoritmo di ripetizione spaziata che lo pianifica poco prima che tu lo dimentichi.',
+      reviewMode: 'Modalità di revisione',
+      reviewModeDesc:
+        'Quando è disattivata, il pulsante Revisione e la scorciatoia R sono nascosti.',
       retention: 'Ritenzione target',
       retentionDesc:
         'Probabilità di ricordare un concetto alla prossima revisione. Più alta = più revisioni.',

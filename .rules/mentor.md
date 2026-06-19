@@ -6,7 +6,7 @@ Readiness is `isAiReady(settings)` (truthy `aiBaseUrl` + `aiModel`) in `src/llm/
 
 ## Setup
 
-Configure under **Settings** (gear, **⌘,**): **Appearance**, **AI**, **Review** (FSRS live in **Review** for the full-screen review overlay only), **Data** (erase locally persisted graphs/settings).
+Configure under **Settings** (gear, **⌘,**): **Appearance**, **Learning**, **AI**. The **Learning** tab opens with a **Review** group: a _Review mode_ toggle (on by default, `reviewEnabled`) plus the FSRS _Target retention_ / _Max interval_ settings, shown only while review is on (these drive the full-screen review overlay).
 
 ## Persona
 
