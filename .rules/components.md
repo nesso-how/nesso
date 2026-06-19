@@ -11,7 +11,7 @@ Components live under `src/components/` in feature folders. They read from the Z
 | `inspector/` | `NodeInspector`, `EdgeInspector`, `InspectorPanel`, `inspectorChrome` (collapsed rail + action toolbar), `InlineEdit`, `ImageSearchPanel`, `EdgeRow`, `layout.ts`                         |
 | `mentor/`    | `MentorPanel`, `Typewriter`, `ThinkingIndicator`, `SocratesGlyph`, `ModelStatusBadge`                                                                                                     |
 | `review/`    | `ReviewMode`                                                                                                                                                                              |
-| `dialogs/`   | `SettingsDialog`, `SearchDialog`, `RelationTypesDialog`, `ShortcutsDialog`, `AboutDialog`, `GraphIO`                                                                                      |
+| `dialogs/`   | `SettingsDialog` (+ `LearningSettings` tab body), `SearchDialog`, `RelationTypesDialog`, `ShortcutsDialog`, `AboutDialog`, `GraphIO`                                                      |
 | `banners/`   | `ActionBanner`, `GraphFileConflictBanner`, `UpdateBanner`                                                                                                                                 |
 | `ui/`        | Shared primitives: `ModalOverlay`, `SegmentedControl`, `Switch`, `Select`, `SettingRow`, `Stepper`, `CloseButton`, `SettingsFormRow`, `RelationPicker`, `icons`                           |
 | _(root)_     | `Inspector.tsx` — thin router entry point for `App.tsx`                                                                                                                                   |

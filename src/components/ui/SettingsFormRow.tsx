@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-import type { ReactNode } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 
 interface Props {
   label: string
@@ -11,8 +11,13 @@ interface Props {
   children: ReactNode
 }
 
+const DIVIDER_STYLE: CSSProperties = {
+  paddingBottom: 18,
+  marginBottom: 18,
+  borderBottom: '0.5px solid var(--line)',
+}
+
 export function SettingsFormRow({ label, description, last, divider = true, children }: Props) {
-  const showDivider = divider && !last
   return (
     <div
       style={{
@@ -20,9 +25,7 @@ export function SettingsFormRow({ label, description, last, divider = true, chil
         alignItems: 'center',
         justifyContent: 'space-between',
         gap: 'var(--space-7)',
-        paddingBottom: showDivider ? 18 : 0,
-        marginBottom: showDivider ? 18 : 0,
-        borderBottom: showDivider ? '0.5px solid var(--line)' : 'none',
+        ...(divider && !last ? DIVIDER_STYLE : null),
       }}
     >
       <div style={{ minWidth: 0 }}>
