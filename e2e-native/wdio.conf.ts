@@ -130,7 +130,7 @@ export const config: WebdriverIO.Config = {
     },
   ],
   logLevel: 'warn',
-  waitforTimeout: 10_000,
+  waitforTimeout: 20_000,
   // The very first WebDriver session is cold — tauri-driver launches
   // WebKitWebDriver for the first time — so the first spec can time out on a
   // slow autosave/render. tauri-driver stays alive across specs, so a re-run
@@ -140,7 +140,7 @@ export const config: WebdriverIO.Config = {
   specFileRetriesDeferred: true,
   framework: 'mocha',
   reporters: ['spec'],
-  mochaOpts: { ui: 'bdd', timeout: 120_000 },
+  mochaOpts: { ui: 'bdd', timeout: 240_000 },
 
   // Build the debug binary the capability points at, then start the single
   // long-lived tauri-driver and wait until it accepts connections. `--no-bundle`

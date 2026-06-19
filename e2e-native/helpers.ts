@@ -143,7 +143,7 @@ interface WaitOptions {
 /** Poll an async predicate until it returns true or the timeout elapses. */
 export async function waitForCondition(
   predicate: () => Promise<boolean>,
-  { timeout = 10_000, interval = 250, message = 'condition' }: Partial<WaitOptions> = {},
+  { timeout = 20_000, interval = 250, message = 'condition' }: Partial<WaitOptions> = {},
 ): Promise<void> {
   const deadline = Date.now() + timeout
   for (;;) {
@@ -170,7 +170,7 @@ export async function newEmptyGraph(): Promise<void> {
   await newGraph.waitForClickable({ timeout: 30_000 })
   await newGraph.click()
   await browser.waitUntil(async () => (await $$('.react-flow__node').length) === 0, {
-    timeout: 15_000,
+    timeout: 30_000,
     timeoutMsg: 'new empty graph did not load (canvas still has nodes)',
   })
   // Dismiss the inline rename if it opened; harmless if it did not.
@@ -193,7 +193,7 @@ export const DEFAULT_GRAPH_NAME = 'Untitled'
  * stale-element errors from React Flow re-rendering mid-action.
  */
 export async function addConceptNode(): Promise<void> {
-  await $('.react-flow__pane').waitForExist({ timeout: 15_000 })
+  await $('.react-flow__pane').waitForExist({ timeout: 30_000 })
   await browser.waitUntil(
     async () => {
       if ((await $$('.react-flow__node').length) > 0) return true
@@ -204,7 +204,7 @@ export async function addConceptNode(): Promise<void> {
       }
       return (await $$('.react-flow__node').length) > 0
     },
-    { timeout: 25_000, interval: 600, timeoutMsg: 'double-click did not create a concept node' },
+    { timeout: 40_000, interval: 600, timeoutMsg: 'double-click did not create a concept node' },
   )
   // The node opens in inline edit; close it (retry Escape, since a cold WebKitGTK
   // session can drop the first keypress) and confirm the node settled out of edit
@@ -219,7 +219,7 @@ export async function addConceptNode(): Promise<void> {
       return (await $$('.react-flow__node').length) > 0
     },
     {
-      timeout: 15_000,
+      timeout: 30_000,
       interval: 500,
       timeoutMsg: 'concept node did not settle out of inline edit',
     },

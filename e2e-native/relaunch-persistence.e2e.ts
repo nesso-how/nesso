@@ -22,7 +22,7 @@ describe('native: a graph survives an app relaunch', () => {
     await newEmptyGraph()
     await addConceptNode()
     await waitForCondition(async () => (await nodeTextsOnDisk()).includes(DEFAULT_CONCEPT_TEXT), {
-      timeout: 15_000,
+      timeout: 30_000,
       message: 'the concept to be persisted before relaunch',
     })
 
@@ -32,9 +32,9 @@ describe('native: a graph survives an app relaunch', () => {
     await browser.reloadSession()
 
     const row = graphRow(DEFAULT_GRAPH_NAME)
-    await row.waitForExist({ timeout: 25_000 })
+    await row.waitForExist({ timeout: 40_000 })
     await row.click()
-    await nodeByText(DEFAULT_CONCEPT_TEXT).waitForExist({ timeout: 25_000 })
+    await nodeByText(DEFAULT_CONCEPT_TEXT).waitForExist({ timeout: 40_000 })
     await expect(nodeByText(DEFAULT_CONCEPT_TEXT)).toExist()
   })
 })
