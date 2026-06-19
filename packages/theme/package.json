@@ -1,6 +1,6 @@
 {
   "name": "@nesso-how/theme",
-  "version": "0.1.0-alpha.32",
+  "version": "0.1.0-alpha.33",
   "description": "Nesso design tokens — the single source of truth for theme packs (colour, typography, spacing, radii) shared across app, graph and docs",
   "license": "MIT",
   "repository": {

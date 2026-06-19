@@ -1,5 +1,5 @@
 /**
- * Cut a Nesso release: bump the synced version across all nine version files,
+ * Cut a Nesso release: bump the synced version across all ten version files,
  * roll CHANGELOG [Unreleased] into a dated section, refresh the lockfile, and verify.
  * Stops before publishing — the tag push (the irreversible, public step) stays manual.
  *
@@ -29,6 +29,7 @@ const JSON_VERSION_FILES = [
   'packages/graph/package.json',
   'packages/mcp/package.json',
   'packages/relation-types/package.json',
+  'packages/theme/package.json',
   'packages/types/package.json',
   'src-tauri/tauri.conf.json',
 ]

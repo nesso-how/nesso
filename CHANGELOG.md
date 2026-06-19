@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.0-alpha.33] - 2026-06-19
+
 ### Added
 
 - **End-to-end test lane (Playwright, web UI):** A new Playwright suite drives the real web app in a headless browser, covering the core flows Vitest cannot reach (`isDesktop() === false`): creating and connecting concepts, changing and deleting relations, undo/redo, multi-select delete, graph create/switch/delete, JSON export/import, persistence across a reload, and dark-mode/language settings. Specs live in `e2e/*.spec.ts` with shared helpers and a JSON import fixture, run serially against a Vite dev server, and are gated by a dedicated `e2e` CI job (alongside `js`/`rust`) that uploads the Playwright HTML report on failure. Four small `data-testid` anchors were added to production components for stable, language-independent selectors. This is the web half of the two-lane plan in #28; the native tauri-driver lane (real fs / IPC / file watching) is a follow-up.
@@ -567,7 +569,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial alpha: interactive knowledge graph (web + Tauri v2); desktop installers on GitHub Releases (macOS Apple silicon and Intel).
 
-[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.32...HEAD
+[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.33...HEAD
+[0.1.0-alpha.33]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.32...v0.1.0-alpha.33
 [0.1.0-alpha.32]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.31...v0.1.0-alpha.32
 [0.1.0-alpha.31]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.30...v0.1.0-alpha.31
 [0.1.0-alpha.30]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.29...v0.1.0-alpha.30

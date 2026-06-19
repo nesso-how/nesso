@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # Cut a release
 
-`scripts/release.mjs` (`pnpm release`) does the deterministic prep — the version bump across all nine files, the CHANGELOG roll, the lockfile refresh, and `build`/`lint`/`format:check`. This skill **drives that script and supervises it**: it owns the judgment the script can't make (which version, what ships, when to publish) and closes the gaps the script deliberately leaves open (the git push, branch protection, worktrees).
+`scripts/release.mjs` (`pnpm release`) does the deterministic prep — the version bump across all ten files, the CHANGELOG roll, the lockfile refresh, and `build`/`lint`/`format:check`. This skill **drives that script and supervises it**: it owns the judgment the script can't make (which version, what ships, when to publish) and closes the gaps the script deliberately leaves open (the git push, branch protection, worktrees).
 
 Pushing the `v*` tag triggers [`.github/workflows/release.yml`](../../../.github/workflows/release.yml): npm publish of the workspace packages (Trusted Publishing / OIDC), a signed universal macOS `.dmg` desktop build, and a GitHub Release. **The tag push is the point of no return — it publishes to the public. Confirm with the user before step 4.**
 
@@ -35,7 +35,7 @@ pnpm release [NEW]         # bump + roll changelog + pnpm install + build/lint/f
 
 What the script does:
 
-- Bumps `version` to `NEW` in all **nine** synced files — the six `package.json`s, `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`, and `src-tauri/Cargo.lock` (the `name = "nesso"` entry; `pnpm install` does **not** refresh it). It aborts on version **drift** — any file not already at `PREV` — so a forgotten file fails loudly instead of shipping out of sync.
+- Bumps `version` to `NEW` in all **ten** synced files — the seven `package.json`s, `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`, and `src-tauri/Cargo.lock` (the `name = "nesso"` entry; `pnpm install` does **not** refresh it). It aborts on version **drift** — any file not already at `PREV` — so a forgotten file fails loudly instead of shipping out of sync.
 - Rolls `CHANGELOG.md`: moves `## [Unreleased]` into `## [NEW] - YYYY-MM-DD`, leaves a fresh empty `[Unreleased]`, and updates the two link references (URL derived from the existing `[Unreleased]` ref).
 - Runs `pnpm install`, `pnpm build`, `pnpm lint`, `pnpm format:check`.
 
