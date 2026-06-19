@@ -34,6 +34,7 @@ export function TopBar({
   const graphList = useGraphStore((s) => s.graphList)
   const currentGraphId = useGraphStore((s) => s.currentGraphId)
   const nodes = useGraphStore((s) => s.nodes)
+  const reviewEnabled = useGraphStore((s) => s.settings.reviewEnabled)
   const current = graphList.find((g) => g.id === currentGraphId)
   const projectName = useActiveProjectName()
   const [now, setNow] = useState(() => Date.now())
@@ -128,70 +129,72 @@ export function TopBar({
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
-        <button
-          type="button"
-          onClick={onReview}
-          title={t.topBar.startReview}
-          style={{
-            position: 'relative',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 'var(--space-3)',
-            appearance: 'none',
-            border: '0.5px solid var(--line)',
-            background: 'var(--bg-card)',
-            color: 'var(--ink-2)',
-            borderRadius: 'var(--radius-md)',
-            padding: '6px 11px',
-            cursor: 'default',
-            fontSize: '12.5px',
-            fontWeight: 500,
-            fontFamily: 'var(--font-sans)',
-          }}
-          {...hoverStyle(
-            { background: 'var(--paper-deep)', color: 'var(--ink)' },
-            { background: 'var(--bg-card)', color: 'var(--ink-2)' },
-          )}
-        >
-          <svg
-            width="13"
-            height="13"
-            viewBox="0 0 16 16"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+        {reviewEnabled && (
+          <button
+            type="button"
+            onClick={onReview}
+            title={t.topBar.startReview}
+            style={{
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--space-3)',
+              appearance: 'none',
+              border: '0.5px solid var(--line)',
+              background: 'var(--bg-card)',
+              color: 'var(--ink-2)',
+              borderRadius: 'var(--radius-md)',
+              padding: '6px 11px',
+              cursor: 'default',
+              fontSize: '12.5px',
+              fontWeight: 500,
+              fontFamily: 'var(--font-sans)',
+            }}
+            {...hoverStyle(
+              { background: 'var(--paper-deep)', color: 'var(--ink)' },
+              { background: 'var(--bg-card)', color: 'var(--ink-2)' },
+            )}
           >
-            <path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9" />
-            <path d="M12.5 2.2V4.6h-2.4" />
-          </svg>
-          {t.topBar.review}
-          {dueCount > 0 && (
-            <span
-              style={{
-                position: 'absolute',
-                top: -4,
-                right: -6,
-                minWidth: 16,
-                height: 16,
-                borderRadius: 'var(--radius-pill)',
-                background: 'var(--highlight)',
-                color: 'var(--paper)',
-                fontSize: '10px',
-                fontWeight: 600,
-                fontFamily: 'var(--font-mono)',
-                padding: '0 4px',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                border: '2px solid var(--bg-card)',
-              }}
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             >
-              {dueCount > 99 ? '99+' : dueCount}
-            </span>
-          )}
-        </button>
+              <path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9" />
+              <path d="M12.5 2.2V4.6h-2.4" />
+            </svg>
+            {t.topBar.review}
+            {dueCount > 0 && (
+              <span
+                style={{
+                  position: 'absolute',
+                  top: -4,
+                  right: -6,
+                  minWidth: 16,
+                  height: 16,
+                  borderRadius: 'var(--radius-pill)',
+                  background: 'var(--highlight)',
+                  color: 'var(--paper)',
+                  fontSize: '10px',
+                  fontWeight: 600,
+                  fontFamily: 'var(--font-mono)',
+                  padding: '0 4px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: '2px solid var(--bg-card)',
+                }}
+              >
+                {dueCount > 99 ? '99+' : dueCount}
+              </span>
+            )}
+          </button>
+        )}
         <GraphIO onRelationTypes={onRelationTypes} onShortcuts={onShortcuts} onAbout={onAbout} />
       </div>
     </div>

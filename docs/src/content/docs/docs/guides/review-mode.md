@@ -28,7 +28,7 @@ If the AI backend is unavailable (no endpoint configured or unreachable), Review
 
 ## Tuning FSRS
 
-Under **Settings -> Review**:
+Under **Settings -> Learning -> Review**:
 
 | Setting              | What it does                                                                                         | Range       |
 | -------------------- | ---------------------------------------------------------------------------------------------------- | ----------- |
@@ -36,6 +36,8 @@ Under **Settings -> Review**:
 | **Max interval**     | Longest interval FSRS can schedule, in days. Caps how far into the future a card can be pushed.      | 1 to 36,500 |
 
 The defaults (90% retention, 100-year cap) match the FSRS reference defaults. Lower the retention if you're comfortable forgetting more in exchange for fewer reviews; raise the max interval if you want long-term cards to keep stretching out.
+
+Review is on by default. The **Review mode** toggle at the top of **Settings -> Learning** turns it off entirely: the **Review** pill and the `R` shortcut disappear, and the FSRS settings above hide while it is off.
 
 ## Keyboard shortcuts
 

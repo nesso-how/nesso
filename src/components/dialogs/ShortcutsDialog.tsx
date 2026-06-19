@@ -2,6 +2,7 @@
 import { CloseButton } from '@/components/ui/CloseButton'
 import { ModalOverlay } from '@/components/ui/ModalOverlay'
 import { useT } from '@/i18n'
+import { useGraphStore } from '@/store'
 
 interface Props {
   open: boolean
@@ -13,6 +14,7 @@ const mod = isMac ? '⌘' : 'Ctrl'
 
 export function ShortcutsDialog({ open, onClose }: Props) {
   const t = useT()
+  const reviewEnabled = useGraphStore((s) => s.settings.reviewEnabled)
 
   const SECTIONS = [
     {
@@ -29,7 +31,7 @@ export function ShortcutsDialog({ open, onClose }: Props) {
         { keys: [mod, 'K'], label: t.shortcuts.rows.search },
         { keys: ['N'], label: t.shortcuts.rows.addConcept },
         { keys: ['F'], label: t.shortcuts.rows.fit },
-        { keys: ['R'], label: t.shortcuts.rows.review },
+        ...(reviewEnabled ? [{ keys: ['R'], label: t.shortcuts.rows.review }] : []),
         { keys: ['Del'], label: t.shortcuts.rows.delete },
         { keys: [mod, 'A'], label: t.shortcuts.rows.selectAll },
         { keys: [mod, 'X'], label: t.shortcuts.rows.cut },
