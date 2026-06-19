@@ -54,5 +54,8 @@ playwright/.cache
 reports/mutation
 .stryker-tmp
 
+# Native e2e (tauri-driver) failure diagnostics
+e2e-native/artifacts
+
 # Code-quality tooling (fallow local cache + baselines)
 .fallow/

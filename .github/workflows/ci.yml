@@ -193,3 +193,56 @@ jobs:
           path: playwright-report
           retention-days: 7
           if-no-files-found: ignore
+
+  # Native-layer e2e (WebdriverIO + tauri-driver), run inside a pre-baked Docker
+  # image (full WebKit runtime closure + WebKitWebDriver + xvfb + Rust +
+  # tauri-driver). The image removes the slow, mirror-dependent apt install
+  # entirely and is the SAME image developers run on macOS via
+  # `e2e-native/run-local.sh`, so this lane is reproducible locally instead of
+  # debuggable only through CI. Drives the real Tauri shell to cover what the
+  # Playwright lane cannot: real fs, the file watcher (`useGraphFileWatch`), and
+  # desktop-sync. Linux-only (no macOS Tauri WebDriver). NOT yet a required
+  # check: promote it in the repo ruleset once reliably green across a few runs.
+  e2e-native:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: docker/setup-buildx-action@v3
+
+      # Build the image with a GitHub Actions layer cache — ~10 min on a cold
+      # cache, ~1 min warm. Same Dockerfile as the local runner, so CI and local
+      # stay byte-for-byte identical.
+      - name: Build e2e-native image
+        uses: docker/build-push-action@v6
+        with:
+          context: e2e-native
+          file: e2e-native/Dockerfile
+          load: true
+          tags: nesso-e2e-native:ci
+          cache-from: type=gha,scope=e2e-native
+          cache-to: type=gha,mode=max,scope=e2e-native
+
+      # Run the lane inside the image against the checked-out workspace. The app
+      # is built (cargo, via wdio's onPrepare) and driven (WebKitWebDriver under
+      # xvfb) entirely in the container; HUSKY=0 skips the git-hook install
+      # `prepare` would attempt. Failure diagnostics land in e2e-native/artifacts.
+      - name: Run native e2e lane
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}:/work" -w /work \
+            -e CI=true -e HUSKY=0 \
+            nesso-e2e-native:ci bash -lc '
+              corepack enable
+              pnpm install --frozen-lockfile
+              xvfb-run --auto-servernum pnpm run test:e2e:native
+            '
+
+      - name: Upload native e2e diagnostics
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-native-diagnostics
+          path: e2e-native/artifacts
+          retention-days: 7
+          if-no-files-found: ignore
