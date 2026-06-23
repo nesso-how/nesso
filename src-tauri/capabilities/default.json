@@ -28,6 +28,7 @@
     },
     "opener:default",
     "opener:allow-reveal-item-in-dir",
+    "mcp-bridge:default",
     "updater:default",
     "process:default"
   ]

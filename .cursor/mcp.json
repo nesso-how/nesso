@@ -3,6 +3,10 @@
     "nesso": {
       "command": "node",
       "args": ["packages/mcp/dist/index.js"]
+    },
+    "tauri": {
+      "command": "npx",
+      "args": ["-y", "@hypothesi/tauri-mcp-server"]
     }
   }
 }
