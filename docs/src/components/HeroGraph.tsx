@@ -127,14 +127,13 @@ export function HeroGraph({ labels }: { labels: HeroGraphLabels }) {
       nodesConnectable={false}
       elementsSelectable={false}
       panOnDrag={true}
-      zoomOnScroll={true}
+      zoomOnScroll={false}
       fitView
-      minZoom={0.2}
-      maxZoom={1.4}
       reactFlowProps={{
         proOptions: { hideAttribution: true },
         style: { background: 'transparent' },
         zoomOnDoubleClick: false,
+        zoomOnPinch: false,
       }}
       style={{ width: '100%', height: '100%' }}
     >

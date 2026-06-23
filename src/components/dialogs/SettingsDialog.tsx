@@ -257,12 +257,14 @@ export function SettingsDialog({ open, onClose }: Props) {
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-                  <SettingsFormRow divider={false} label={t.settings.appearance.heatmap}>
-                    <Switch
-                      value={settings.showHeatmap}
-                      onChange={(v) => setSetting('showHeatmap', v)}
-                    />
-                  </SettingsFormRow>
+                  {settings.reviewEnabled && (
+                    <SettingsFormRow divider={false} label={t.settings.appearance.heatmap}>
+                      <Switch
+                        value={settings.showHeatmap}
+                        onChange={(v) => setSetting('showHeatmap', v)}
+                      />
+                    </SettingsFormRow>
+                  )}
 
                   <SettingsFormRow divider={false} label={t.settings.appearance.edges}>
                     <SegmentedControl
