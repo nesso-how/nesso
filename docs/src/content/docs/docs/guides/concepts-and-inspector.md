@@ -52,17 +52,17 @@ When a concept is selected it shows, top to bottom:
 
 ### Notes fields
 
-Three free-text fields that travel with the concept and feed both the AI mentor and Review:
+Three free-text fields that travel with the concept and feed both the AI mentor and [Review](./review-mode/):
 
 - **Definition:** a one-sentence-ish explanation in your own words.
 - **Examples:** one per line. Press `Shift+Enter` or use the **Add** button to add a new line; press `Backspace` in an empty example to remove that line (unless it's the only one).
 - **Notes:** anything else: caveats, sources, mnemonics.
 
-These power the [Review](./review-mode/) recall question. The model is told to _aim_ at the topic suggested by your notes without paraphrasing the definition, so active recall still works.
+In Review, definition and examples appear when you **Reveal** a card so you can check your recall. The AI mentor uses the same fields in its graph snapshot and focal-neighbour context when a concept is selected.
 
 ### Concept image
 
-Press the picture icon to open the **Wikimedia Commons search**. The query auto-fills from the concept title and runs immediately; pick any result to attach a 200-px thumbnail to the concept. The image shows in the Inspector, in Review mode, and is included as context for the AI mentor.
+Press the picture icon to open the **Wikimedia Commons search**. The query auto-fills from the concept title and runs immediately; pick any result to attach a 200-px thumbnail to the concept. The image shows in the Inspector, on reveal in Review mode, and is included as context for the AI mentor.
 
 The image link and Commons description URL are persisted with the graph, so attribution is preserved on export.
 

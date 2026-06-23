@@ -4,7 +4,7 @@ name: Mutation testing
 # suite reruns once per mutant, so it is too slow for every push. It runs on a
 # schedule and on demand, separate from the `ci.yml` lane, and never blocks a
 # merge — a red run signals that the mutation score dropped below the ratchet
-# (`thresholds.break` in stryker.config.mjs), not that the PR is broken.
+# (`thresholds.break` in `scripts/stryker/areas.mjs`), not that the PR is broken.
 on:
   schedule:
     # Mondays 06:00 UTC.

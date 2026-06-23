@@ -3,12 +3,7 @@ import type { Node } from '@xyflow/react'
 import { describe, expect, it } from 'vitest'
 import type { ConceptElaboration, ConceptNodeData } from '@/types/graph'
 import { defaultConceptReviewFields } from '@/types/graph'
-import {
-  buildFocalNeighborContext,
-  buildReviewElaborationPrompt,
-  nodeStrength,
-  oneHopNeighborIds,
-} from './context'
+import { buildFocalNeighborContext, nodeStrength, oneHopNeighborIds } from './context'
 
 type NodeInit = Partial<Omit<ConceptNodeData, 'elaboration'>> & {
   elaboration?: Partial<ConceptElaboration>
@@ -190,41 +185,5 @@ describe('buildFocalNeighborContext', () => {
     const count = (buildFocalNeighborContext(focal, neighbors).related.match(/": x/g) ?? []).length
     expect(count).toBeGreaterThan(0)
     expect(count).toBeLessThan(30)
-  })
-})
-
-describe('buildReviewElaborationPrompt', () => {
-  it('formats definition, examples, and notes as labelled lines', () => {
-    const n = node({ text: 'C', elaboration: { definition: 'd', examples: 'x\ny', notes: 'note' } })
-    expect(buildReviewElaborationPrompt(n)).toBe('Definition: d\nExamples: x; y\nNotes: note')
-  })
-
-  it('returns empty when there is no elaboration', () => {
-    expect(buildReviewElaborationPrompt(node({ text: 'C' }))).toBe('')
-  })
-
-  it('returns empty when every elaboration field is blank', () => {
-    const n = node({ text: 'C', elaboration: { definition: '  ', examples: '\n', notes: '' } })
-    expect(buildReviewElaborationPrompt(n)).toBe('')
-  })
-
-  it('includes only the present fields', () => {
-    expect(
-      buildReviewElaborationPrompt(node({ text: 'C', elaboration: { definition: 'd' } })),
-    ).toBe('Definition: d')
-    expect(
-      buildReviewElaborationPrompt(node({ text: 'C', elaboration: { examples: 'a\nb' } })),
-    ).toBe('Examples: a; b')
-    expect(buildReviewElaborationPrompt(node({ text: 'C', elaboration: { notes: 'n' } }))).toBe(
-      'Notes: n',
-    )
-  })
-
-  it('truncates an over-long review prompt to a non-trivial length with an ellipsis', () => {
-    const big = 'word '.repeat(500)
-    const out = buildReviewElaborationPrompt(node({ text: 'C', elaboration: { definition: big } }))
-    expect(out.endsWith('…')).toBe(true)
-    expect(out.length).toBeGreaterThan(1000)
-    expect(out.length).toBeLessThan(`Definition: ${big}`.length)
   })
 })

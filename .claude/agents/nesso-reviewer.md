@@ -20,7 +20,7 @@ CI deterministically gates the mechanical layer, so don't spend review effort th
 - **No chat history in the store:** `MentorPanel` conversation history stays local component state.
 - **Edges:** every edge uses `type: 'nesso'`. Never the default React Flow edge types.
 - **No hardcoded colours:** edge/node category colours come from CSS variables (`--cat-*`) set by the active palette — never hex literals.
-- **AI calls only via `src/llm/completion.ts`** (`fetchCompletion`), used by `MentorPanel` and `ReviewMode`. No duplicate fetch logic elsewhere.
+- **AI calls only via `src/llm/completion.ts`** (`fetchCompletion`), used by `MentorPanel`. No duplicate fetch logic elsewhere.
 - **No direct array mutation:** graph changes go through store methods that return new arrays; never push into `nodes`/`edges` in place.
 - **No backwards-compat shims while in `0.1.0-alpha`:** renames/removals break cleanly — no legacy aliases, deprecation shims, or migration fallbacks. Update seeds/fixtures/call sites directly.
 

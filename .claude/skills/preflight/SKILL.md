@@ -39,3 +39,15 @@ cargo test --manifest-path src-tauri/Cargo.toml
 - `format:check` failures are usually fixed by `pnpm run format` — offer that. `lint` issues often by `pnpm run lint:fix`; `cargo fmt --all --check` failures by `cargo fmt --all`.
 - `icons:desktop` is a prerequisite for the cargo steps: without the bundle icons, `tauri::generate_context!` fails to compile `lib.rs`. Locally they may already exist, but regenerate if unsure.
 - These mirror CI exactly; if `ci.yml` changes, update this list (see `.rules/maintenance.md`).
+
+## Mutation testing (conditional, not in CI)
+
+Stryker is **not** in `ci.yml` (too slow per push). After the CI-parity steps, run mutation tests when the branch diff touches pure logic in a Stryker area — same idea as the Rust block below.
+
+```bash
+pnpm run analyze:mutation:changed              # diff vs `main` (merge-base..HEAD)
+pnpm run analyze:mutation:changed -- --base origin/main
+pnpm run analyze:mutation:changed -- --working # include unstaged/staged edits too
+```
+
+Area → path mapping lives in [`scripts/stryker/areas.mjs`](../../scripts/stryker/areas.mjs) (shared with `scripts/stryker/<area>.mjs`). The script prints matched areas and runs only those `analyze:mutation:<area>` steps; it exits 0 with “skipping” when the diff is docs/UI/i18n-only. **Do run it** when `src/llm/`, `src/data/fsrsDueQueue`, store slices, workspace, or `packages/formats|types` change. Stryker needs full permissions locally (sandbox EPERM on `.stryker-tmp/.cursor` otherwise).

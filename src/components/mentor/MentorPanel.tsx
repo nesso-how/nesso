@@ -10,7 +10,7 @@ import { useT } from '@/i18n'
 import { CloseButton } from '@/components/ui/CloseButton'
 import { STATUS_BAR_HEIGHT_PX } from '@/components/layout/StatusBar'
 import { ThinkingIndicator } from './ThinkingIndicator'
-import { renderWithEmphasis } from './Typewriter'
+import { renderWithEmphasis } from './emphasis'
 
 interface Message {
   role: 'user' | 'mentor'

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 
-import { area } from './stryker.base.mjs'
+import { area } from './base.mjs'
+import { mutationAreas } from './areas.mjs'
 
 // Workspace disk<->IDB layer (#55 rollout) — `.rules/testing.md` flags this as
 // the most regression-prone area (manifest merge/reconcile, name dedup, path
@@ -14,14 +15,5 @@ import { area } from './stryker.base.mjs'
 // rename-vs-rewrite relocate path, and the internal `uniqueFilename` dedup loop —
 // which the in-memory fake fs cannot easily fault-inject; the e2e layer (#28) is
 // the right place for those. `break` sits a couple points under.
-export default area({
-  mutate: [
-    'src/lib/workspace/**/*.ts',
-    '!src/lib/workspace/**/*.test.ts',
-    '!src/lib/workspace/watch.ts',
-    '!src/lib/workspace/scope.ts',
-    '!src/lib/workspace/index.ts',
-  ],
-  reportDir: 'reports/mutation/workspace',
-  breakAt: 61,
-})
+const { mutate, reportDir, breakAt } = mutationAreas.workspace
+export default area({ mutate, reportDir, breakAt })
