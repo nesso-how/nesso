@@ -26,7 +26,7 @@ On panel open, graph switch, AI-endpoint-readiness change, or **`chatKey`** bump
 
 ## Rendering
 
-Assistant replies render as plain text with subtle emphasis via **`Typewriter`** (`emphasis` prop). User-authored bubbles remain plain text in a `<span>`.
+Assistant replies render as plain text with subtle emphasis via **`renderWithEmphasis()`** in `emphasis.tsx` (`*asterisks*` → `<em>`). User-authored bubbles remain plain text in a `<span>`.
 
 ## Selection vs history
 
@@ -42,7 +42,7 @@ Whether the mentor **sheet** is open is `mentorPanelExpanded` on `useGraphStore`
 
 ## API call
 
-Completions go through **`fetchCompletion()`** in `src/llm/completion.ts`. Pass an optional `AbortSignal`; abort on panel close, graph switch, or card change.
+Completions go through **`fetchCompletion()`** in `src/llm/completion.ts`. Pass an optional `AbortSignal`; abort on panel close or graph switch.
 
 `fetchCompletion` posts to `${aiBaseUrl}/chat/completions` with JSON body:
 

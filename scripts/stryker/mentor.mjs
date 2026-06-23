@@ -5,8 +5,8 @@ import { mutationAreas } from './areas.mjs'
 
 // Mentor / review pure logic (#55 rollout): the FSRS-aware strength + prompt
 // context that feeds Socrates (`src/llm/context.ts`) and the due-queue ordering
-// for review (`src/data/fsrsDueQueue.ts`). The network / WebGPU transports
-// (`completion.ts`, `webllm.ts`) stay out of scope. The `nodeToCard` FSRS field
+// for review (`src/data/fsrsDueQueue.ts`). The network transport (`completion.ts`)
+// stays out of scope. The `nodeToCard` FSRS field
 // mapping lives in `packages/types` and is graded by the `types` area.
 //
 // Baseline: 87.50% (112/128). The survivors are mostly equivalent — the

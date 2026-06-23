@@ -3,7 +3,8 @@
 import { spawnSync } from 'node:child_process'
 import { areasForChangedFiles } from './areas.mjs'
 
-function runGit(args) {
+/** @param {string[]} args @returns {string} */
+function gitOutput(args) {
   const r = spawnSync('git', args, { encoding: 'utf8' })
   if (r.status !== 0) {
     console.error(r.stderr || r.stdout || `git ${args.join(' ')} failed`)
@@ -12,33 +13,44 @@ function runGit(args) {
   return (r.stdout ?? '').trim()
 }
 
+/** @param {string} spec @returns {string[]} */
+function gitLines(spec) {
+  return gitOutput(spec).split('\n').filter(Boolean)
+}
+
 /**
  * @param {string} base Ref to diff against (default `main`).
  * @param {boolean} includeWorking Include unstaged + staged edits on top of commits.
  */
 function changedFiles(base, includeWorking) {
-  const mergeBase = runGit(['merge-base', base, 'HEAD'])
-  const committed = runGit(['diff', '--name-only', mergeBase, 'HEAD']).split('\n').filter(Boolean)
+  const mergeBase = gitOutput(['merge-base', base, 'HEAD'])
+  const committed = gitLines(['diff', '--name-only', mergeBase, 'HEAD'])
   if (!includeWorking) return committed
-  const working = runGit(['diff', '--name-only', 'HEAD']).split('\n').filter(Boolean)
-  const staged = runGit(['diff', '--name-only', '--cached']).split('\n').filter(Boolean)
-  return [...new Set([...committed, ...working, ...staged])]
+  return [
+    ...new Set([
+      ...committed,
+      ...gitLines(['diff', '--name-only', 'HEAD']),
+      ...gitLines(['diff', '--name-only', '--cached']),
+    ]),
+  ]
 }
 
-const args = process.argv.slice(2)
-let base = 'main'
-let includeWorking = false
-for (let i = 0; i < args.length; i++) {
-  if (args[i] === '--base' && args[i + 1]) {
-    base = args[++i]
-  } else if (args[i] === '--working') {
-    includeWorking = true
-  } else {
-    console.error(`Unknown arg: ${args[i]}`)
-    process.exit(1)
+/** @param {string[]} argv */
+function parseArgs(argv) {
+  let base = 'main'
+  let includeWorking = false
+  for (let i = 0; i < argv.length; i++) {
+    if (argv[i] === '--base' && argv[i + 1]) base = argv[++i]
+    else if (argv[i] === '--working') includeWorking = true
+    else {
+      console.error(`Unknown arg: ${argv[i]}`)
+      process.exit(1)
+    }
   }
+  return { base, includeWorking }
 }
 
+const { base, includeWorking } = parseArgs(process.argv.slice(2))
 const files = changedFiles(base, includeWorking)
 const areas = areasForChangedFiles(files)
 
