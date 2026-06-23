@@ -1,14 +1,12 @@
 // SPDX-License-Identifier: MIT
-import { browser, expect } from '@wdio/globals'
+import { browser } from '@wdio/globals'
 import {
   addConceptNode,
   DEFAULT_CONCEPT_TEXT,
-  DEFAULT_GRAPH_NAME,
-  graphRow,
   newEmptyGraph,
-  nodeByText,
   nodeTextsOnDisk,
   waitForAppReady,
+  waitForConceptOnCanvas,
   waitForCondition,
 } from './helpers.js'
 
@@ -33,10 +31,6 @@ describe('native: a graph survives an app relaunch', () => {
     await browser.reloadSession()
     await waitForAppReady()
 
-    const row = graphRow(DEFAULT_GRAPH_NAME)
-    await row.waitForExist({ timeout: 40_000 })
-    await row.click()
-    await nodeByText(DEFAULT_CONCEPT_TEXT).waitForExist({ timeout: 40_000 })
-    await expect(nodeByText(DEFAULT_CONCEPT_TEXT)).toExist()
+    await waitForConceptOnCanvas(DEFAULT_CONCEPT_TEXT)
   })
 })

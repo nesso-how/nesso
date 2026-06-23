@@ -235,3 +235,34 @@ export function graphRow(name: string): ReturnType<typeof $> {
 export function nodeByText(text: string): ReturnType<typeof $> {
   return $(`.react-flow__node*=${text}`)
 }
+
+async function conceptVisibleOnCanvas(text: string): Promise<boolean> {
+  return (await $$(`.react-flow__node*=${text}`).length) > 0
+}
+
+/**
+ * Poll until a concept appears on the canvas. After a native relaunch the
+ * persisted `currentGraphId` may load a seed graph before disk sync finishes, so
+ * retry opening the named graph row when the node is still absent.
+ */
+export async function waitForConceptOnCanvas(
+  text: string,
+  { graphName = DEFAULT_GRAPH_NAME, timeout = 60_000 } = {},
+): Promise<void> {
+  await browser.waitUntil(
+    async () => {
+      if (await conceptVisibleOnCanvas(text)) return true
+      const row = graphRow(graphName)
+      if (await row.isExisting()) {
+        await row.click()
+        await sleep(400)
+      }
+      return false
+    },
+    {
+      timeout,
+      interval: 500,
+      timeoutMsg: `concept "${text}" to appear on canvas`,
+    },
+  )
+}

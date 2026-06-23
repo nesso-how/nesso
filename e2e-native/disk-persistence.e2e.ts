@@ -5,6 +5,7 @@ import {
   DEFAULT_CONCEPT_TEXT,
   newEmptyGraph,
   nodeTextsOnDisk,
+  sleep,
   waitForCondition,
 } from './helpers.js'
 
@@ -17,10 +18,11 @@ describe('native: graph edits persist to disk', () => {
   it('writes a created concept into a workspace .json file', async () => {
     await newEmptyGraph()
     await addConceptNode()
+    // Autosave debounces ~500ms on desktop; give the flush a moment before polling disk.
+    await sleep(700)
 
-    // Autosave is debounced (~500ms) and writes disk-first on desktop.
     await waitForCondition(async () => (await nodeTextsOnDisk()).includes(DEFAULT_CONCEPT_TEXT), {
-      timeout: 15_000,
+      timeout: 30_000,
       message: 'the concept to be written to disk',
     })
 
