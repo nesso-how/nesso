@@ -379,6 +379,11 @@ pub fn run() {
             }
             if cfg!(debug_assertions) {
                 app.handle().plugin(
+                    tauri_plugin_mcp_bridge::Builder::new()
+                        .bind_address("127.0.0.1")
+                        .build(),
+                )?;
+                app.handle().plugin(
                     tauri_plugin_log::Builder::default()
                         .level(log::LevelFilter::Info)
                         .build(),
