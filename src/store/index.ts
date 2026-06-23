@@ -33,35 +33,12 @@ export const useGraphStore = create<GraphState>()(
         viewports: s.viewports,
       }),
       merge: (persisted, current) => {
-        const p = persisted as
-          | (Partial<GraphState> & { relationTypesPanelOpen?: boolean; sidebarStatsOpen?: boolean })
-          | undefined
+        const p = persisted as Partial<GraphState> | undefined
         if (!p) return current
-        const { relationTypesPanelOpen: _removed, sidebarStatsOpen: _removedStats, ...rest } = p
-        const merged = { ...current.settings, ...p.settings } as typeof current.settings & {
-          reviewBatchMax?: unknown
-          fsrsMaxInterval?: unknown
-          graphWorkspacePath?: unknown
-          accent?: unknown
-          showLabels?: unknown
-          showConfidence?: unknown
-          aiMode?: unknown
-        }
-        const {
-          reviewBatchMax: _legacyReviewBatchMax,
-          fsrsMaxInterval: _legacyFsrsMaxInterval,
-          graphWorkspacePath: _legacyGraphWorkspacePath,
-          accent: _legacyAccent,
-          showLabels: _legacyShowLabels,
-          showConfidence: _legacyShowConfidence,
-          aiMode: _legacyAiMode,
-          ...settings
-        } = merged
-        if (settings.autoCurveFlip === undefined) settings.autoCurveFlip = true
         return {
           ...current,
-          ...rest,
-          settings,
+          ...p,
+          settings: { ...current.settings, ...p.settings },
         }
       },
     },
