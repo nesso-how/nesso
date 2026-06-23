@@ -1,6 +1,6 @@
 ---
 name: preflight
-description: Run the same checks as CI (.github/workflows/ci.yml) locally before opening or updating a PR — format, lint, types, builds, license headers. Use before pushing to catch a red CI early.
+description: Run the same checks as CI (.github/workflows/ci.yml) locally before opening or updating a PR — format, lint, types, builds, license headers, Playwright e2e. Use before pushing to catch a red CI early.
 ---
 
 # Preflight (local CI parity)
@@ -32,6 +32,27 @@ cargo check --all-targets --manifest-path src-tauri/Cargo.toml
 cargo test --manifest-path src-tauri/Cargo.toml
 ```
 
+## E2E (Playwright, web UI)
+
+The `e2e` CI job gates merges on the Playwright suite (`e2e/*.spec.ts`). Run it when the diff would trigger that job in CI — broadly: `src/**`, `packages/**`, `e2e/**`, `package.json`, `pnpm-lock.yaml`, `vite.config.ts`, `playwright.config.ts`, `index.html`, or `.github/workflows/ci.yml`. Skip for docs-only / Starlight-only changes that do not touch app code.
+
+```bash
+pnpm exec playwright install --with-deps chromium   # first run or after a Playwright bump
+pnpm run test:e2e
+```
+
+Playwright boots the Vite dev server itself (`webServer` in `playwright.config.ts`); no separate `pnpm dev` needed.
+
+## Native e2e (tauri-driver, local-only)
+
+**Not in CI** — opt-in when the diff touches desktop persistence, fs sync, or the file watcher (`src-tauri/`, `src/lib/workspace/**`, `src/store/slices/desktop-sync.ts`, `useGraphFileWatch`, `useAutoSave`, `graph-management` disk paths, etc.). See [`.rules/testing.md`](../../.rules/testing.md).
+
+```bash
+e2e-native/run-local.sh            # Docker (recommended; streams the tree into the image)
+# or, on Linux with WebKitWebDriver + tauri-driver installed locally:
+pnpm run test:e2e:native
+```
+
 - Run the steps individually so a failure is attributable to one step — don't `&&`-chain them into one opaque result.
 - Surface the first failure with its output and stop; do not push when anything is red.
 - `test:coverage` is a **ratchet gate**: `coverage.thresholds` in `vitest.config.ts` is a snapshot floor (global plus stricter per-directory globs) that fails on any drop. When a change intentionally lowers coverage, re-snapshot from a fresh run and update the thresholds in the same change (the coverage analogue of `--save-baseline`).
@@ -42,7 +63,7 @@ cargo test --manifest-path src-tauri/Cargo.toml
 
 ## Mutation testing (conditional, not in CI)
 
-Stryker is **not** in `ci.yml` (too slow per push). After the CI-parity steps, run mutation tests when the branch diff touches pure logic in a Stryker area — same idea as the Rust block below.
+Stryker is **not** in `ci.yml` (too slow per push). After the CI-parity steps, run mutation tests when the branch diff touches pure logic in a Stryker area — same idea as the conditional Rust block above.
 
 ```bash
 pnpm run analyze:mutation:changed              # diff vs `main` (merge-base..HEAD)

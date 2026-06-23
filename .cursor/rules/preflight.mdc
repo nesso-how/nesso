@@ -1,5 +1,5 @@
 ---
-description: Run CI-parity checks locally (format, lint, types, builds, license headers) before opening or updating a PR. Use before pushing to catch a red CI early. Run conditional mutation tests when the diff touches Stryker areas.
+description: Run CI-parity checks locally (format, lint, types, builds, license headers, Playwright e2e) before opening or updating a PR. Use before pushing to catch a red CI early. Run conditional mutation tests when the diff touches Stryker areas; run native e2e (Docker) opt-in when the diff touches desktop/fs sync.
 alwaysApply: false
 ---
 
