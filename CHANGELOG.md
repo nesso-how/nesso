@@ -19,6 +19,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - **Settings → Learning section:** The _Review_ settings tab was renamed **Learning** (and moved before _AI_) and restructured into a labelled **Review** group that opens with a short spaced-repetition/FSRS description; the _Target retention_ / _Max interval_ controls now appear only when review is on. `SettingsFormRow` gained an optional `description` and a `divider` prop, and the Appearance / Learning / AI tabs were unified onto it — grouped rows are now separated by spacing rather than internal dividers, with dividers reserved for top-level rows.
 
+### Removed
+
+- **Legacy persisted-settings stripping:** Dropped the localStorage `merge` shim that pruned renamed/removed keys from old persisted blobs (`reviewBatchMax`, `fsrsMaxInterval`, `graphWorkspacePath`, `accent`, `showLabels`, `showConfidence`, `aiMode`, and the top-level `relationTypesPanelOpen` / `sidebarStatsOpen`). Per the alpha no-backwards-compatibility policy the merge now only shallow-merges `settings` so new keys still pick up defaults; stale keys from older blobs are simply ignored rather than actively stripped.
+
 ## [0.1.0-alpha.33] - 2026-06-19
 
 ### Added
