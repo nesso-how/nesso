@@ -25,6 +25,7 @@
     "analyze:mutation:store": "stryker run stryker.store.mjs",
     "analyze:mutation:workspace": "stryker run stryker.workspace.mjs",
     "analyze:mutation:mentor": "stryker run stryker.mentor.mjs",
+    "analyze:mutation:changed": "node scripts/analyze-mutation-changed.mjs",
     "lint-staged": "lint-staged",
     "release": "node scripts/release.mjs",
     "test": "vitest run",

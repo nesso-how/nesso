@@ -1,0 +1,79 @@
+// SPDX-License-Identifier: MIT
+
+/** Shared mutation-area metadata — single source for Stryker configs and `analyze:mutation:changed`. */
+
+/** @typedef {{ mutate: string[], reportDir: string, breakAt: number, touch: string[], touchExclude?: string[] }} MutationArea */
+
+/** @type {Record<string, MutationArea>} */
+export const mutationAreas = {
+  formats: {
+    mutate: ['packages/formats/src/**/*.ts', '!packages/formats/src/**/*.test.ts'],
+    reportDir: 'reports/mutation/formats',
+    breakAt: 93,
+    touch: ['packages/formats/src/'],
+  },
+  types: {
+    mutate: ['packages/types/src/index.ts'],
+    reportDir: 'reports/mutation/types',
+    breakAt: 95,
+    touch: ['packages/types/src/index'],
+  },
+  store: {
+    mutate: ['src/store/slices/graph-editing.ts', 'src/store/slices/graph-management.ts'],
+    reportDir: 'reports/mutation/store',
+    breakAt: 69,
+    touch: ['src/store/slices/graph-editing', 'src/store/slices/graph-management'],
+  },
+  workspace: {
+    mutate: [
+      'src/lib/workspace/**/*.ts',
+      '!src/lib/workspace/**/*.test.ts',
+      '!src/lib/workspace/watch.ts',
+      '!src/lib/workspace/scope.ts',
+      '!src/lib/workspace/index.ts',
+    ],
+    reportDir: 'reports/mutation/workspace',
+    breakAt: 61,
+    touch: ['src/lib/workspace/'],
+    touchExclude: [
+      'src/lib/workspace/watch.ts',
+      'src/lib/workspace/scope.ts',
+      'src/lib/workspace/index.ts',
+    ],
+  },
+  mentor: {
+    mutate: ['src/llm/context.ts', 'src/data/fsrsDueQueue.ts'],
+    reportDir: 'reports/mutation/mentor',
+    breakAt: 84,
+    touch: ['src/llm/context', 'src/data/fsrsDueQueue'],
+  },
+}
+
+/** Stable run order — matches `pnpm run analyze:mutation`. */
+export const mutationAreaOrder = ['formats', 'types', 'store', 'workspace', 'mentor']
+
+/**
+ * Map changed repo paths to mutation area ids (includes co-located tests).
+ * @param {string[]} files
+ * @returns {string[]}
+ */
+export function areasForChangedFiles(files) {
+  const hit = new Set()
+  for (const file of files) {
+    if (file === 'mutation-areas.mjs') {
+      for (const id of mutationAreaOrder) hit.add(id)
+      continue
+    }
+    if (file.startsWith('stryker.') && file.endsWith('.mjs') && file !== 'stryker.base.mjs') {
+      const id = file.slice('stryker.'.length, -4)
+      if (mutationAreas[id]) hit.add(id)
+      continue
+    }
+    for (const id of mutationAreaOrder) {
+      const area = mutationAreas[id]
+      if (area.touchExclude?.includes(file)) continue
+      if (area.touch.some((prefix) => file.startsWith(prefix))) hit.add(id)
+    }
+  }
+  return mutationAreaOrder.filter((id) => hit.has(id))
+}

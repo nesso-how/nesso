@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 import { area } from './stryker.base.mjs'
+import { mutationAreas } from './mutation-areas.mjs'
 
 // Store slices (#55 rollout). Scoped to the two slices with dedicated tests —
 // `graph-editing` (in-memory graph mutations, undo/redo, clipboard) and
@@ -15,8 +16,5 @@ import { area } from './stryker.base.mjs'
 // few hard error-rollback / default-workspace branches. `break` sits a couple
 // points under. This is a real ratchet target to climb, not a ceiling like
 // formats — raise it as the slices gain assertions.
-export default area({
-  mutate: ['src/store/slices/graph-editing.ts', 'src/store/slices/graph-management.ts'],
-  reportDir: 'reports/mutation/store',
-  breakAt: 69,
-})
+const { mutate, reportDir, breakAt } = mutationAreas.store
+export default area({ mutate, reportDir, breakAt })
