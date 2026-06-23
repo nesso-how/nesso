@@ -73,7 +73,7 @@ async function waitForDriverPort(timeoutMs = 30_000): Promise<void> {
 // Spawn tauri-driver once for the whole run (not per session): killing and
 // rebinding port 4444 between specs races with the next session's connect and
 // flakes as UND_ERR_SOCKET. One long-lived driver serves every sequential
-// session; the workspace is still reset per spec in `beforeSession`.
+// session; the workspace is still reset per spec in `before`.
 async function startTauriDriver(): Promise<void> {
   // Point tauri-driver at the native WebKitWebDriver explicitly so session
   // creation does not depend on PATH discovery (a UND_ERR_SOCKET source).
@@ -159,10 +159,11 @@ export const config: WebdriverIO.Config = {
     stopTauriDriver()
   },
 
-  // Disk is the source of truth on desktop, so each session starts from a clean
-  // workspace; tauri-driver (already running) then launches a fresh app for the
-  // session against it.
-  beforeSession: async () => {
+  // Disk is the source of truth on desktop. tauri-driver stays alive across specs,
+  // so `beforeSession` runs only once per worker — reset the workspace in `before`
+  // (once per spec file, including deferred retries) so graph files from an earlier
+  // spec cannot leak into a later one.
+  before: async () => {
     await resetWorkspaceDir()
   },
 

@@ -8,6 +8,7 @@ import {
   newEmptyGraph,
   nodeByText,
   nodeTextsOnDisk,
+  waitForAppReady,
   waitForCondition,
 } from './helpers.js'
 
@@ -26,10 +27,11 @@ describe('native: a graph survives an app relaunch', () => {
       message: 'the concept to be persisted before relaunch',
     })
 
-    // Fresh app process; the workspace dir is only reset in beforeSession, not
-    // here. The graph list rehydrates from disk regardless of whether the webview
+    // Fresh app process; the workspace dir is reset in `before` (per spec), not
+    // on reloadSession. The graph list rehydrates from disk regardless of whether
     // kept the active-graph id across relaunch, so open it explicitly.
     await browser.reloadSession()
+    await waitForAppReady()
 
     const row = graphRow(DEFAULT_GRAPH_NAME)
     await row.waitForExist({ timeout: 40_000 })
