@@ -247,15 +247,17 @@ async function conceptVisibleOnCanvas(text: string): Promise<boolean> {
  */
 export async function waitForConceptOnCanvas(
   text: string,
-  { graphName = DEFAULT_GRAPH_NAME, timeout = 60_000 } = {},
+  { graphName = DEFAULT_GRAPH_NAME, timeout = 60_000, retryGraphOpen = true } = {},
 ): Promise<void> {
   await browser.waitUntil(
     async () => {
       if (await conceptVisibleOnCanvas(text)) return true
-      const row = graphRow(graphName)
-      if (await row.isExisting()) {
-        await row.click()
-        await sleep(400)
+      if (retryGraphOpen) {
+        const row = graphRow(graphName)
+        if (await row.isExisting()) {
+          await row.click()
+          await sleep(400)
+        }
       }
       return false
     },
