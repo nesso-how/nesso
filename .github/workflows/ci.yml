@@ -201,8 +201,8 @@ jobs:
   # `e2e-native/run-local.sh`, so this lane is reproducible locally instead of
   # debuggable only through CI. Drives the real Tauri shell to cover what the
   # Playwright lane cannot: real fs, the file watcher (`useGraphFileWatch`), and
-  # desktop-sync. Linux-only (no macOS Tauri WebDriver). NOT yet a required
-  # check: promote it in the repo ruleset once reliably green across a few runs.
+  # desktop-sync. Linux-only (no macOS Tauri WebDriver). Required merge gate
+  # (ruleset "main protection" → required_status_checks includes `e2e-native`).
   e2e-native:
     runs-on: ubuntu-latest
     steps:
