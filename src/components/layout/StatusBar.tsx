@@ -148,7 +148,7 @@ function SocratesEntry() {
       }}
     >
       <span className="nx-socrates-halo" style={{ flexShrink: 0, color: 'var(--highlight)' }}>
-        <SocratesGlyph size={15} color="var(--ink-2)" accent="var(--highlight)" />
+        <SocratesGlyph size={18} />
       </span>
       <span
         style={{

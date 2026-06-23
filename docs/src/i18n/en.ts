@@ -94,6 +94,7 @@ export const en: Locale = {
       mentorMsg:
         'You marked <em>Understanding</em> as contrasting with <em>Passive consumption</em>. What does it mean to consume information passively? Can you ever build genuine understanding that way?',
       inputPlaceholder: 'Reply to Socrates…',
+      modelName: 'gemma3:4b',
     },
   },
   vocab: {

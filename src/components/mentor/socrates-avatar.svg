@@ -1,0 +1,49 @@
+<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+  <title>Socrates</title>
+  <!-- ears -->
+  <ellipse cx="6.1" cy="11.92" rx="1.24" ry="2.04" fill="#D8A878"/>
+  <path d="M6.1 9.9 Q5.3 11.9 6.1 13.9" fill="none" stroke="#C09060" stroke-width="0.15" stroke-linecap="round"/>
+  <ellipse cx="25.9" cy="11.92" rx="1.24" ry="2.04" fill="#D8A878"/>
+  <path d="M25.9 9.9 Q26.7 11.9 25.9 13.9" fill="none" stroke="#C09060" stroke-width="0.15" stroke-linecap="round"/>
+  <!-- head -->
+  <ellipse cx="16" cy="10.46" rx="9.9" ry="9.46" fill="#F0C090"/>
+  <!-- cheek blush -->
+  <ellipse cx="13.45" cy="11.55" rx="1.96" ry="1.38" fill="#C08050" opacity="0.14"/>
+  <ellipse cx="18.55" cy="11.55" rx="1.96" ry="1.38" fill="#C08050" opacity="0.14"/>
+  <!-- side hair left -->
+  <path d="M10.47,3.62 C9.45,4.64 8.29,6.82 7.41,9.44 C6.83,10.9 6.54,12.06 6.39,12.93 L5.23,12.64 C5.38,10.75 5.96,8.28 6.83,6.38 C7.7,4.64 8.87,3.47 9.89,2.89 Z" fill="#909090"/>
+  <path d="M9.89,2.89 C9.3,4.3 8.5,6.8 8,9.4" fill="none" stroke="#C4C4C4" stroke-width="0.11" stroke-linecap="round"/>
+  <path d="M8.87,3.47 C8.1,5.1 7.1,7.7 6.54,10.2" fill="none" stroke="#C4C4C4" stroke-width="0.11" stroke-linecap="round"/>
+  <!-- side hair right -->
+  <path d="M21.53,3.62 C22.55,4.64 23.71,6.82 24.59,9.44 C25.17,10.9 25.46,12.06 25.61,12.93 L26.77,12.64 C26.62,10.75 26.04,8.28 25.17,6.38 C24.3,4.64 23.13,3.47 22.11,2.89 Z" fill="#909090"/>
+  <path d="M22.11,2.89 C22.7,4.3 23.5,6.8 24,9.4" fill="none" stroke="#C4C4C4" stroke-width="0.11" stroke-linecap="round"/>
+  <path d="M23.13,3.47 C23.9,5.1 24.9,7.7 25.46,10.2" fill="none" stroke="#C4C4C4" stroke-width="0.11" stroke-linecap="round"/>
+  <!-- beard body -->
+  <path d="M7.41,12.5 Q12.22,14.39 16,14.1 Q19.78,14.39 24.59,12.5 C27.06,13.95 28.08,18.17 27.5,22.83 Q16,32 4.5,22.83 C3.92,18.17 4.94,13.95 7.41,12.5 Z" fill="#909090"/>
+  <!-- beard texture -->
+  <path d="M9.45,14.39 C9.74,18 9.6,21 9.74,22.54" fill="none" stroke="#BCBCBC" stroke-width="0.11" stroke-linecap="round"/>
+  <path d="M12.36,14.68 C12.65,18.5 12.5,21.5 12.65,23.12" fill="none" stroke="#CACACA" stroke-width="0.11" stroke-linecap="round"/>
+  <path d="M16,16.43 C16,19.5 16,22 16,23.41" fill="none" stroke="#D0D0D0" stroke-width="0.11" stroke-linecap="round"/>
+  <path d="M19.64,14.68 C19.35,18.5 19.5,21.5 19.35,23.12" fill="none" stroke="#CACACA" stroke-width="0.11" stroke-linecap="round"/>
+  <path d="M22.55,14.39 C22.26,18 22.4,21 22.26,22.54" fill="none" stroke="#BCBCBC" stroke-width="0.11" stroke-linecap="round"/>
+  <!-- eyebrows -->
+  <path d="M11.49,9.44 C12.36,8.64 13.74,8.28 14.84,8.79" fill="none" stroke="#686868" stroke-width="0.62" stroke-linecap="round"/>
+  <path d="M17.16,8.79 C18.26,8.28 19.64,8.64 20.51,9.44" fill="none" stroke="#686868" stroke-width="0.62" stroke-linecap="round"/>
+  <!-- left eye -->
+  <ellipse cx="13.45" cy="11.33" rx="1.38" ry="0.95" fill="#F5EEE4"/>
+  <circle cx="13.45" cy="11.33" r="0.73" fill="#1C0E06"/>
+  <circle cx="13.74" cy="11.12" r="0.25" fill="#F5EEE4"/>
+  <path d="M12.07,11.12 C12.36,10.54 13.74,10.4 14.84,11.12" fill="none" stroke="#1C0E06" stroke-width="0.22" stroke-linecap="round"/>
+  <path d="M12.07,11.55 Q13.45,12.1 14.84,11.55" fill="none" stroke="#C09060" stroke-width="0.11" stroke-linecap="round" opacity="0.55"/>
+  <!-- right eye -->
+  <ellipse cx="18.55" cy="11.33" rx="1.38" ry="0.95" fill="#F5EEE4"/>
+  <circle cx="18.55" cy="11.33" r="0.73" fill="#1C0E06"/>
+  <circle cx="18.84" cy="11.12" r="0.25" fill="#F5EEE4"/>
+  <path d="M17.16,11.12 C17.45,10.54 18.84,10.4 19.93,11.12" fill="none" stroke="#1C0E06" stroke-width="0.22" stroke-linecap="round"/>
+  <path d="M17.16,11.55 Q18.55,12.1 19.93,11.55" fill="none" stroke="#C09060" stroke-width="0.11" stroke-linecap="round" opacity="0.55"/>
+  <!-- nose -->
+  <path d="M15.2,14.1 C14.84,14.83 14.7,15.56 16,16.21 C17.3,15.56 17.16,14.83 16.8,14.1 Z" fill="#F0C090" stroke="none"/>
+  <!-- mouth -->
+  <ellipse cx="16" cy="17.96" rx="2.47" ry="1.16" fill="#F0C090"/>
+  <path d="M14.4,17.96 Q16,18.54 17.6,17.96" fill="none" stroke="#8A4020" stroke-width="0.18" stroke-linecap="round"/>
+</svg>
