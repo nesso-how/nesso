@@ -34,8 +34,6 @@ export function nodeStrength(n: Node<ConceptNodeData>): number {
 const FOCUS_MAX_TOKENS = 400
 const RELATED_MAX_TOKENS = 300
 const NEIGHBOR_DEF_CHARS = 120
-/** Caps review-question user prompt elaboration size (definition + examples + notes). */
-const REVIEW_ELAB_MAX_TOKENS = 350
 
 export interface FocalNeighborContext {
   focus: string
@@ -94,17 +92,6 @@ function renderRelated(neighbors: Node<ConceptNodeData>[]): string {
     budget -= cost
   }
   return out.join('; ')
-}
-
-/** Lined context from the node's elaboration for FSRS review question generation. */
-export function buildReviewElaborationPrompt(node: Node<ConceptNodeData>): string {
-  const elab = node.data.elaboration
-  if (!elab) return ''
-  const parts = elaborationParts(elab, 'Definition: ')
-  if (parts.length === 0) return ''
-  let body = parts.join('\n')
-  if (roughTokens(body) > REVIEW_ELAB_MAX_TOKENS) body = truncate(body, REVIEW_ELAB_MAX_TOKENS * 4)
-  return body
 }
 
 export function oneHopNeighborIds(

@@ -85,9 +85,6 @@ const it: typeof en = {
     nothingDue: 'Nessuna scheda in scadenza.',
     nothingDueDesc: 'Torna quando ci sono schede da rivedere, o seleziona un concetto dal grafo.',
     close: 'Chiudi',
-    progress: (pos, total) => `Revisione · ${pos} di ${total}`,
-    recallLabel: 'Ricorda prima di rivelare',
-    revealedLabel: 'Come si collega',
     recallPrompt: 'Ricorda le relazioni prima di rivelare.',
     reveal: 'Rivela',
     ratings: {

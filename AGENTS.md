@@ -86,7 +86,7 @@ Category colours are CSS custom properties (`--cat-taxonomic`, etc.) set by the 
 
 ### Never call the AI API outside llm/completion.ts
 
-All AI chat completions go through `src/llm/completion.ts` (`fetchCompletion`), used by `MentorPanel` and `ReviewMode`. Do not duplicate the fetch logic elsewhere — the API key is client-side and calls should stay scoped to those interactions.
+All AI chat completions go through `src/llm/completion.ts` (`fetchCompletion`), used by `MentorPanel`. Do not duplicate the fetch logic elsewhere — the API key is client-side and calls should stay scoped to those interactions.
 
 ### Never add a second global store
 

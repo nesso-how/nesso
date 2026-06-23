@@ -84,9 +84,6 @@ const en = {
     nothingDue: 'Nothing due.',
     nothingDueDesc: 'Come back when cards are due, or pick a concept from the graph.',
     close: 'Close',
-    progress: (pos: number, total: number) => `Review · ${pos} of ${total}`,
-    recallLabel: 'Recall before revealing',
-    revealedLabel: 'How it connects',
     recallPrompt: 'Recall its relations before revealing.',
     reveal: 'Reveal',
     ratings: {

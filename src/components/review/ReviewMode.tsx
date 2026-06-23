@@ -5,18 +5,10 @@ import { RELATION_TYPES, RELATION_CATEGORIES } from '@/data/relationTypes'
 import { sortedDueConceptNodes } from '@/data/fsrsDueQueue'
 import { useGraphStore } from '@/store'
 import { nodeToCard, type EdgeTypeName } from '@/types/graph'
-import { buildReviewElaborationPrompt } from '@/llm/context'
-import { fetchCompletion, isAiReady } from '@/llm/completion'
 import { ratingColor } from '@nesso-how/graph'
-import { SocratesGlyph } from '@/components/mentor/SocratesGlyph'
 import { useT } from '@/i18n'
 import { CloseButton } from '@/components/ui/CloseButton'
 import { ModalOverlay } from '@/components/ui/ModalOverlay'
-import { ThinkingIndicator } from '@/components/mentor/ThinkingIndicator'
-import { Typewriter } from '@/components/mentor/Typewriter'
-
-const REVIEW_QUESTION_SYSTEM =
-  'You are a Socratic tutor. Given a concept from a knowledge graph, optional learner notes (definition, examples, notes), and its semantic connections, write one concise question that tests understanding. Use the notes only to aim the question (topic, pitfall, application), without quoting or paraphrasing the definition so the learner can still actively recall. If notes are missing, rely on the title and relations. Output only the question, nothing else. No preamble, no asterisks, no markdown.'
 
 const RATINGS = [Rating.Again, Rating.Hard, Rating.Good, Rating.Easy] as const
 
@@ -98,9 +90,6 @@ export function ReviewMode({ open, onClose }: Props) {
   /** Cards finished this session; idx resets to 0 after each rating so we track progress separately. */
   const [sessionProgress, setSessionProgress] = useState(0)
   const sessionTotalRef = useRef(0)
-  const [question, setQuestion] = useState<string | null>(null)
-  const [questionLoading, setQuestionLoading] = useState(false)
-  const abortRef = useRef<AbortController | null>(null)
 
   const scheduler = useMemo(
     () =>
@@ -120,14 +109,12 @@ export function ReviewMode({ open, onClose }: Props) {
       setRevealed(false)
     } else {
       sessionTotalRef.current = 0
-      abortRef.current?.abort()
     }
   }, [open])
 
   // Rated cards get a future due date and drop out of `due`, so the head of
   // the queue always advances after each rating.
   const currentNode = due[0] ?? null
-  const aiReady = isAiReady(settings)
 
   const predictedIntervals = useMemo(() => {
     if (!currentNode) return null
@@ -140,71 +127,6 @@ export function ReviewMode({ open, onClose }: Props) {
       }),
     ) as Record<(typeof RATINGS)[number], string>
   }, [currentNode, scheduler])
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: re-runs only on open, card change, and AI readiness
-  useEffect(() => {
-    if (!open || !currentNode || !aiReady) {
-      setQuestion(null)
-      setQuestionLoading(false)
-      return
-    }
-
-    abortRef.current?.abort()
-    const controller = new AbortController()
-    abortRef.current = controller
-    setQuestion(null)
-    setQuestionLoading(true)
-
-    const outEdges = edges.filter((e) => e.source === currentNode.id).slice(0, 5)
-    const incEdges = edges.filter((e) => e.target === currentNode.id).slice(0, 3)
-    const relStr = [
-      ...outEdges.map((e) => {
-        const T = RELATION_TYPES[e.data?.type as EdgeTypeName]
-        const target = nodes.find((n) => n.id === e.target)
-        return `${T.label} → "${target?.data.text ?? '?'}"`
-      }),
-      ...incEdges.map((e) => {
-        const T = RELATION_TYPES[e.data?.type as EdgeTypeName]
-        const source = nodes.find((n) => n.id === e.source)
-        return `← ${T.label} ← "${source?.data.text ?? '?'}"`
-      }),
-    ].join('; ')
-
-    const elaboration = buildReviewElaborationPrompt(currentNode)
-    const userMsg = [
-      `Concept: "${currentNode.data.text}"`,
-      elaboration,
-      relStr ? `Relations: ${relStr}` : '',
-    ]
-      .filter(Boolean)
-      .join('\n')
-
-    const run = async () => {
-      const langSuffix = settings.language === 'it' ? ' Respond in Italian.' : ''
-      try {
-        const q = await fetchCompletion(
-          settings,
-          [
-            { role: 'system', content: REVIEW_QUESTION_SYSTEM + langSuffix },
-            { role: 'user', content: userMsg },
-          ],
-          80,
-          controller.signal,
-        )
-        if (controller.signal.aborted) return
-        setQuestion(q.trim())
-        setQuestionLoading(false)
-      } catch {
-        if (!controller.signal.aborted) {
-          setQuestion(null)
-          setQuestionLoading(false)
-        }
-      }
-    }
-    void run()
-
-    return () => controller.abort()
-  }, [open, currentNode?.id, aiReady])
 
   if (!open) return null
 
@@ -401,62 +323,19 @@ export function ReviewMode({ open, onClose }: Props) {
 
         {!revealed ? (
           <>
-            <div
+            <p
               style={{
-                marginBottom: 22,
-                minHeight: 44,
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: 'var(--space-5)',
+                margin: '0 0 22px',
+                fontSize: '14.5px',
+                fontWeight: 400,
+                lineHeight: 1.55,
+                fontFamily: 'var(--font-display)',
+                color: 'var(--ink-3)',
+                fontStyle: 'italic',
               }}
             >
-              {questionLoading ? (
-                <ThinkingIndicator />
-              ) : question ? (
-                <>
-                  <div
-                    style={{
-                      flexShrink: 0,
-                      width: 36,
-                      height: 36,
-                      borderRadius: 'var(--radius-circle)',
-                      border: '0.5px solid var(--line)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <SocratesGlyph size={24} color="var(--ink-3)" />
-                  </div>
-                  <span
-                    style={{
-                      fontSize: '14.5px',
-                      fontWeight: 400,
-                      lineHeight: 1.55,
-                      fontFamily: 'var(--font-display)',
-                      color: 'var(--ink-2)',
-                      paddingTop: 8,
-                    }}
-                  >
-                    <Typewriter text={question} />
-                  </span>
-                </>
-              ) : (
-                <p
-                  style={{
-                    margin: 0,
-                    fontSize: '14.5px',
-                    fontWeight: 400,
-                    lineHeight: 1.55,
-                    fontFamily: 'var(--font-display)',
-                    color: 'var(--ink-3)',
-                    fontStyle: 'italic',
-                  }}
-                >
-                  {t.review.recallPrompt}
-                </p>
-              )}
-            </div>
+              {t.review.recallPrompt}
+            </p>
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-5)' }}>
               <Btn primary onClick={() => setRevealed(true)}>
                 {t.review.reveal}

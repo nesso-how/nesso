@@ -42,7 +42,7 @@ Whether the mentor **sheet** is open is `mentorPanelExpanded` on `useGraphStore`
 
 ## API call
 
-Completions go through **`fetchCompletion()`** in `src/llm/completion.ts` (shared with `ReviewMode`). Pass an optional `AbortSignal`; abort on panel close, graph switch, or card change.
+Completions go through **`fetchCompletion()`** in `src/llm/completion.ts`. Pass an optional `AbortSignal`; abort on panel close, graph switch, or card change.
 
 `fetchCompletion` posts to `${aiBaseUrl}/chat/completions` with JSON body:
 
