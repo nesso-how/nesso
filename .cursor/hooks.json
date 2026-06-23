@@ -1,7 +1,13 @@
 {
   "version": 1,
   "hooks": {
-    "sessionStart": [{ "command": ".cursor/hooks/fetch-origin.sh" }],
-    "beforeShellExecution": [{ "command": ".cursor/hooks/block-pnpm.sh" }]
+    "sessionStart": [{ "command": "bash .hooks/session-start.sh cursor" }],
+    "beforeShellExecution": [{ "command": "bash .hooks/block-pnpm.sh" }],
+    "postToolUse": [
+      {
+        "command": "bash .hooks/docs-mcp-reminder.sh",
+        "matcher": "Write|Edit"
+      }
+    ]
   }
 }

@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash .claude/hooks/session-start.sh",
+            "command": "bash .hooks/session-start.sh claude",
             "timeout": 600,
             "statusMessage": "Checking deps and remote state..."
           }
@@ -18,7 +18,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash .claude/hooks/block-pnpm.sh"
+            "command": "bash .hooks/block-pnpm.sh"
           }
         ]
       }
@@ -29,7 +29,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash .claude/hooks/docs-mcp-reminder.sh"
+            "command": "bash .hooks/docs-mcp-reminder.sh"
           }
         ]
       }
