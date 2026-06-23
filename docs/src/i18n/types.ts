@@ -89,6 +89,7 @@ export type Locale = {
       userMsg: string
       mentorMsg: string
       inputPlaceholder: string
+      modelName: string
     }
   }
   vocab: {

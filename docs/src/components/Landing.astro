@@ -430,10 +430,6 @@ const homeHref = lang === 'en' ? '/' : `/${lang}/`
       }
 
       .pv-chat-avatar {
-        width: 28px;
-        height: 28px;
-        border-radius: 50%;
-        background: var(--paper-deep);
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -1175,96 +1171,6 @@ const homeHref = lang === 'en' ? '/' : `/${lang}/`
     </style>
   </head>
   <body>
-    <!-- Socrates glyph as reusable SVG symbol -->
-    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
-      <symbol id="socrates-glyph" viewBox="0 0 32 32">
-        <g
-          stroke="var(--highlight)"
-          stroke-width="1.1"
-          opacity="0.95"
-          fill="none"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <path d="M7 11 q-2 -2 -2.5 -4.5"></path>
-          <path d="M9 9.5 q-1.5 -2 -1.5 -4"></path>
-          <path d="M11.5 8.5 q-0.5 -2 0 -3.8"></path>
-          <path d="M25 11 q2 -2 2.5 -4.5"></path>
-          <path d="M23 9.5 q1.5 -2 1.5 -4"></path>
-          <path d="M20.5 8.5 q0.5 -2 0 -3.8"></path>
-          <path d="M8 11 q8 -3 16 0" fill="none"></path>
-        </g>
-        <path
-          d="M8.5 14 q-0.5 6 3 9.5 q4.5 4 9 0 q3.5 -3.5 3 -9.5"
-          stroke="var(--ink)"
-          stroke-width="1.4"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          fill="var(--bg-elev)"></path>
-        <path
-          d="M11.5 15 q1 -0.6 2.2 0"
-          stroke="var(--ink)"
-          stroke-width="1.4"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          fill="none"></path>
-        <path
-          d="M18.3 15 q1.2 -0.6 2.2 0"
-          stroke="var(--ink)"
-          stroke-width="1.4"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          fill="none"></path>
-        <circle cx="12.6" cy="16.6" r="0.7" fill="var(--ink)"></circle>
-        <circle cx="19.4" cy="16.6" r="0.7" fill="var(--ink)"></circle>
-        <path
-          d="M16 17 q-0.4 1.6 0 3"
-          stroke="var(--ink)"
-          stroke-width="1.4"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          fill="none"></path>
-        <path
-          d="M14.2 22 q1.8 0.5 3.6 0"
-          stroke="var(--ink)"
-          stroke-width="1.4"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          fill="none"></path>
-        <path
-          d="M11.5 20.5 q-1.5 4 1 7 q3.5 3 7 0 q2.5 -3 1 -7"
-          stroke="var(--ink)"
-          stroke-width="1.4"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          fill="var(--paper-deep)"></path>
-        <path
-          d="M14 22.5 q-0.5 3 0 5.5"
-          stroke="var(--ink)"
-          stroke-width="1.4"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          opacity="0.4"
-          fill="none"></path>
-        <path
-          d="M16 22.5 q0 3 0 6"
-          stroke="var(--ink)"
-          stroke-width="1.4"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          opacity="0.4"
-          fill="none"></path>
-        <path
-          d="M18 22.5 q0.5 3 0 5.5"
-          stroke="var(--ink)"
-          stroke-width="1.4"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          opacity="0.4"
-          fill="none"></path>
-      </symbol>
-    </svg>
-
     <header>
       <a href={homeHref} class="brand" aria-label="Nesso home" style="color: #1a1814">
         <svg
@@ -1532,11 +1438,17 @@ const homeHref = lang === 'en' ? '/' : `/${lang}/`
             <div class="pv-chat" role="presentation">
               <div class="pv-chat-header">
                 <span class="pv-chat-avatar">
-                  <svg width="24" height="24"><use href="#socrates-glyph"></use></svg>
+                  <img
+                    src="/icon/socrates-avatar.svg"
+                    width="28"
+                    height="28"
+                    alt=""
+                    aria-hidden="true"
+                  />
                 </span>
                 <div class="pv-chat-id">
                   <span class="pv-chat-name">Socrates</span>
-                  <span class="pv-chat-model">{t.principles.p4.localMeta}</span>
+                  <span class="pv-chat-model">{t.mentor.chat.modelName}</span>
                 </div>
                 <div class="pv-chat-icons">
                   <svg

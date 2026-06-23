@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Changed
+
+- **Socrates mentor avatar:** Replaced the stroke-based `SocratesGlyph` with a 32×32 coloured portrait in the status bar and mentor sheet header. Landing preview and the AI mentor guide entry point updated to match.
+
 ### Added
 
 - **End-to-end test lane (tauri-driver, native):** The desktop half of #28, completing the two-lane e2e plan (the Playwright web lane shipped in 0.1.0-alpha.33). A WebdriverIO + tauri-driver suite drives the real Tauri shell to cover what the browser lane structurally cannot reach (`isDesktop() === true`): the real fs plugin, the file watcher (`useGraphFileWatch`), and `desktop-sync`. Four specs in `e2e-native/*.e2e.ts` assert disk-first autosave, rehydration from disk across an app relaunch, the watcher reconciling an externally added graph, and the active graph reloading after an external edit — talking to the same on-disk workspace the app uses. It runs inside a **pre-baked Docker image** (`e2e-native/Dockerfile`: the full WebKit runtime closure + WebKitWebDriver + xvfb + Rust + tauri-driver); the `e2e-native` CI job builds that image with a GHA layer cache and runs the lane in it, and developers run the identical image on **macOS via `e2e-native/run-local.sh`** (host-safe). Not yet a required check. Native OS dialogs and the menu bar are not WebDriver-drivable, so multi-project/native import-export stay on Vitest; the external-conflict banner branch is a follow-up. Graphs are identified by their on-disk node content (the inline-rename flow is timing-fragile under WebKitGTK), so no new production selectors were needed.

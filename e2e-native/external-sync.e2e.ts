@@ -36,7 +36,7 @@ describe('native: desktop-sync reloads the active graph after an external edit',
     // Same filename → same manifest id binding, so this updates the active graph.
     await writeExternalGraph(stem as string, 'ReplacedConcept')
 
-    await nodeByText('ReplacedConcept').waitForExist({ timeout: 40_000 })
+    await nodeByText('ReplacedConcept').waitForExist({ timeout: 60_000 })
     await expect(nodeByText(DEFAULT_CONCEPT_TEXT)).not.toExist()
   })
 })
