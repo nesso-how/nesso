@@ -13,9 +13,7 @@ concurrency:
 
 jobs:
   # Path filter for PRs: each lane runs only when relevant files change. On push
-  # to main the `if:` bypass below runs every lane anyway (cache warming). The
-  # `ci` job (alls-green) is the sole required merge gate — see ruleset note at
-  # the bottom of this file.
+  # to main the `if:` bypass below runs every lane anyway (cache warming).
   changes:
     runs-on: ubuntu-latest
     outputs:
@@ -299,15 +297,7 @@ jobs:
           retention-days: 7
           if-no-files-found: ignore
 
-  # Sole required merge gate (ruleset "main protection"). Always runs; fails when
-  # any executed lane failed or when `changes` failed. Skipped lanes (path-filter
-  # on PRs) are tolerated via allowed-skips — unlike a bare job-level `if:`, a
-  # skipped required check would otherwise report Success and unblock merge.
-  #
-  # Ruleset migration (manual, repo Settings → Rules → main protection):
-  #   1. Merge the PR that introduces this job so `ci` appears at least once.
-  #   2. Add `ci` to required status checks.
-  #   3. Remove `js`, `rust`, `e2e`, `e2e-native` from required status checks.
+  # Aggregates lane results; skipped lanes (path-filter on PRs) are allowed.
   ci:
     if: always()
     needs: [changes, js, rust, e2e, e2e-native]
