@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.0-alpha.34] - 2026-06-23
+
 ### Changed
 
 - **Socrates mentor avatar:** Replaced the stroke-based `SocratesGlyph` with a 32×32 coloured portrait in the status bar and mentor sheet header. Landing preview and the AI mentor guide entry point updated to match.
@@ -586,7 +588,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial alpha: interactive knowledge graph (web + Tauri v2); desktop installers on GitHub Releases (macOS Apple silicon and Intel).
 
-[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.33...HEAD
+[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.34...HEAD
+[0.1.0-alpha.34]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.33...v0.1.0-alpha.34
 [0.1.0-alpha.33]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.32...v0.1.0-alpha.33
 [0.1.0-alpha.32]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.31...v0.1.0-alpha.32
 [0.1.0-alpha.31]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.30...v0.1.0-alpha.31
