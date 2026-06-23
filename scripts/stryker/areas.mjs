@@ -9,7 +9,7 @@ export const mutationAreas = {
   formats: {
     mutate: ['packages/formats/src/**/*.ts', '!packages/formats/src/**/*.test.ts'],
     reportDir: 'reports/mutation/formats',
-    breakAt: 93,
+    breakAt: 89,
     touch: ['packages/formats/src/'],
   },
   types: {

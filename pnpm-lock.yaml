@@ -14,15 +14,15 @@ importers:
       '@nesso-how/graph':
         specifier: workspace:*
         version: link:packages/graph
-      '@nesso-how/relation-types':
-        specifier: workspace:*
-        version: link:packages/relation-types
       '@nesso-how/theme':
         specifier: workspace:*
         version: link:packages/theme
       '@nesso-how/types':
         specifier: workspace:*
         version: link:packages/types
+      '@nesso-how/vocab-learning':
+        specifier: workspace:*
+        version: link:packages/vocab-learning
       '@tauri-apps/api':
         specifier: ^2.11.0
         version: 2.11.0
@@ -159,15 +159,15 @@ importers:
       '@nesso-how/graph':
         specifier: workspace:*
         version: link:../packages/graph
-      '@nesso-how/relation-types':
-        specifier: workspace:*
-        version: link:../packages/relation-types
       '@nesso-how/theme':
         specifier: workspace:*
         version: link:../packages/theme
       '@nesso-how/types':
         specifier: workspace:*
         version: link:../packages/types
+      '@nesso-how/vocab-learning':
+        specifier: workspace:*
+        version: link:../packages/vocab-learning
       '@xyflow/react':
         specifier: ^12.6.4
         version: 12.10.2(@types/react@18.3.28)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -209,12 +209,12 @@ importers:
       '@nesso-how/formats':
         specifier: workspace:*
         version: link:../formats
-      '@nesso-how/relation-types':
-        specifier: workspace:*
-        version: link:../relation-types
       '@nesso-how/types':
         specifier: workspace:*
         version: link:../types
+      '@nesso-how/vocab-learning':
+        specifier: workspace:*
+        version: link:../vocab-learning
       '@xyflow/react':
         specifier: ^12.6.4
         version: 12.10.2(@types/react@18.3.28)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -240,9 +240,9 @@ importers:
       '@modelcontextprotocol/server':
         specifier: ^2.0.0-alpha.2
         version: 2.0.0-alpha.2(@cfworker/json-schema@4.1.1)
-      '@nesso-how/relation-types':
+      '@nesso-how/vocab-learning':
         specifier: workspace:*
-        version: link:../relation-types
+        version: link:../vocab-learning
       zod:
         specifier: ^4.4.3
         version: 4.4.3
@@ -254,17 +254,11 @@ importers:
         specifier: ~5.8.3
         version: 5.8.3
 
-  packages/relation-types:
-    devDependencies:
-      typescript:
-        specifier: ~5.8.3
-        version: 5.8.3
-
   packages/theme:
     dependencies:
-      '@nesso-how/relation-types':
+      '@nesso-how/vocab-learning':
         specifier: workspace:*
-        version: link:../relation-types
+        version: link:../vocab-learning
     devDependencies:
       typescript:
         specifier: ~5.8.3
@@ -272,13 +266,19 @@ importers:
 
   packages/types:
     dependencies:
-      '@nesso-how/relation-types':
+      '@nesso-how/vocab-learning':
         specifier: workspace:*
-        version: link:../relation-types
+        version: link:../vocab-learning
     devDependencies:
       ts-fsrs:
         specifier: ^5.3.2
         version: 5.3.2
+      typescript:
+        specifier: ~5.8.3
+        version: 5.8.3
+
+  packages/vocab-learning:
+    devDependencies:
       typescript:
         specifier: ~5.8.3
         version: 5.8.3

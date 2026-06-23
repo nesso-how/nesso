@@ -23,9 +23,9 @@ cd "$(dirname "$0")/.."
 case "$mode" in
 docs)
   # Allow-list: the docs site plus the workspace packages it imports. @nesso-how/graph
-  # and @nesso-how/types pull relation-types + formats transitively, so all four count;
+  # and @nesso-how/types pull vocab-learning + formats transitively, so all four count;
   # lockfile/workspace changes can alter the install too.
-  paths=(docs packages/graph packages/types packages/relation-types packages/formats pnpm-lock.yaml pnpm-workspace.yaml)
+  paths=(docs packages/graph packages/types packages/vocab-learning packages/formats pnpm-lock.yaml pnpm-workspace.yaml)
   ;;
 app)
   # Exclude-list: the Vite bundle is affected by almost the whole repo, so build unless

@@ -1,4 +1,6 @@
 {
+  "version": 1,
+  "vocabulary": { "id": "@nesso-how/vocab-learning", "version": "0.1.0" },
   "name": "Comprensione",
   "nodes": [
     {

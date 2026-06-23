@@ -28,7 +28,7 @@ const JSON_VERSION_FILES = [
   'packages/formats/package.json',
   'packages/graph/package.json',
   'packages/mcp/package.json',
-  'packages/relation-types/package.json',
+  'packages/vocab-learning/package.json',
   'packages/theme/package.json',
   'packages/types/package.json',
   'src-tauri/tauri.conf.json',

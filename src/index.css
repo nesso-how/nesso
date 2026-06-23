@@ -3,7 +3,7 @@
  * Theme tokens (surface, ink, accent, shadows, fonts, type/space/radii scales)
  * are injected into <head> at build time from `@nesso-how/theme` by the
  * `nessoTheme()` Vite plugin in `vite.config.ts` — the single source of truth.
- * Category colours (`--cat-*`) come from `@nesso-how/relation-types` `PALETTES`,
+ * Category colours (`--cat-*`) come from `@nesso-how/vocab-learning` `PALETTES`,
  * applied in the same injection and re-applied at runtime by `App.tsx`.
  * Only structural CSS lives here.
  */

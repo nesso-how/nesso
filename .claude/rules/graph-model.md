@@ -4,7 +4,7 @@ paths:
   - 'src/types/graph.ts'
   - 'packages/graph/src/NessoEdge.tsx'
   - 'src/components/RelationTypesDialog.tsx'
-  - 'packages/relation-types/src/index.ts'
+  - 'packages/vocab-learning/src/index.ts'
 ---
 
 @../../.rules/graph-model.md

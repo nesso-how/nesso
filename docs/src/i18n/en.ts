@@ -68,9 +68,9 @@ export const en: Locale = {
     },
     p3: {
       heading: 'Open infrastructure',
-      body: 'Nesso ships as modular open-source components: the app, the relation-types taxonomy, the MCP server. Anyone can adopt, extend, or fork them. The technical work should improve the <em>open learning ecosystem</em>, even for people who never use the application.',
+      body: 'Nesso ships as modular open-source components: the app, the graph vocabulary, the MCP server. Anyone can adopt, extend, or fork them. The technical work should improve the <em>open learning ecosystem</em>, even for people who never use the application.',
       module1: 'Graph component, embeddable',
-      module2: 'Edge vocabulary, reusable',
+      module2: 'Graph vocabulary, reusable',
       module3: 'MCP server, any client',
     },
     p4: {
@@ -98,7 +98,7 @@ export const en: Locale = {
     },
   },
   vocab: {
-    label: 'Edge vocabulary',
+    label: 'Graph vocabulary',
     intro:
       'An unlabeled arrow records a connection without forcing you to commit to what kind. Novak’s concept mapping research shows that labeling each proposition, choosing between <em>causes</em> and <em>enables</em>, or <em>subtype-of</em> and <em>instance-of</em>, is what activates the elaborative processing that produces lasting understanding. The decision is the learning.',
     ctaLink: 'Full relation type reference →',

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 import { writeFileSync } from 'node:fs'
 import { fileURLToPath, URL } from 'node:url'
-import { PALETTES } from '@nesso-how/relation-types'
+import { PALETTES } from '@nesso-how/vocab-learning'
 import { defaultTheme, starlightCss, themeCss } from '@nesso-how/theme'
 
 /**

@@ -29,6 +29,8 @@ const SEED_IDS = {
 
 /** JSON seed files infer string literals as `string`; normalize before use. */
 type SeedSource = {
+  version?: number
+  vocabulary?: { id: string; version: string }
   name: string
   nodes: unknown[]
   edges: unknown[]

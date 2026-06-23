@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 import type { McpServer } from '@modelcontextprotocol/server'
 import * as z from 'zod/v4'
-import { RELATION_TYPES, RELATION_CATEGORY_META } from '@nesso-how/relation-types'
+import { RELATION_TYPES, RELATION_CATEGORY_META } from '@nesso-how/vocab-learning'
 
 export function registerGetRelationTypes(server: McpServer): void {
   server.registerTool(

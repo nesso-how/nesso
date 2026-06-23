@@ -27,7 +27,7 @@
   "dependencies": {
     "zod": "^4.4.3",
     "@modelcontextprotocol/server": "^2.0.0-alpha.2",
-    "@nesso-how/relation-types": "workspace:*"
+    "@nesso-how/vocab-learning": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

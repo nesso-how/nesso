@@ -1,6 +1,6 @@
 # @nesso-how/mcp
 
-[MCP](https://modelcontextprotocol.io/) server for [Nesso](https://nesso.how) — relation types and docs for LLM clients.
+[MCP](https://modelcontextprotocol.io/) server for [Nesso](https://nesso.how) — relation types from the graph vocabulary and bundled docs for LLM clients.
 
 ## Install
 

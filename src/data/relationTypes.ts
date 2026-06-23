@@ -6,7 +6,7 @@ import {
   isPrimaryRelationType,
   type EdgeCategory,
   type EdgeTypeName,
-} from '@nesso-how/relation-types'
+} from '@nesso-how/vocab-learning'
 
 export { RELATION_TYPES, RELATION_TYPE_VALUES, isPrimaryRelationType }
 
@@ -34,7 +34,7 @@ export interface RelationGroup extends RelationCategoryInfo {
 }
 
 /**
- * Group the relation vocabulary by category, keeping only the types for which
+ * Group relation types by category, keeping only the types for which
  * `keep` returns true and dropping empty categories. Shared by the relation
  * picker and the relation-types reference dialog.
  */

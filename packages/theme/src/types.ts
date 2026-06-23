@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
-import type { CategoryPalette } from '@nesso-how/relation-types'
+import type { CategoryPalette } from '@nesso-how/vocab-learning'
 
 /**
  * Tokens that change between light and dark mode. A theme pack ships a full
  * `light` set and a `dark` *diff* (see {@link ThemePack.dark}). Category colours
  * are intentionally absent: they belong to the relation-type vocabulary
- * (`@nesso-how/relation-types` `PALETTES`) and are referenced by name via
+ * (`@nesso-how/vocab-learning` `PALETTES`) and are referenced by name via
  * {@link ThemePack.categoryPalette}, never duplicated here.
  */
 export interface ColorTokens {

@@ -67,7 +67,7 @@ src/
   types/graph.ts  shared TypeScript types
 src-tauri/        Tauri v2 Rust shell (conf, capabilities, icons)
 packages/
-  relation-types/ @nesso-how/relation-types: shared semantic vocabulary
+  vocab-learning/ @nesso-how/vocab-learning: graph vocabulary (relations, node params, palettes)
   types/          @nesso-how/types: shared TypeScript types
   formats/        @nesso-how/formats: graph JSON serialize/deserialize
   graph/          @nesso-how/graph: embeddable read-only graph React component
@@ -83,17 +83,17 @@ The canvas is built on [React Flow](https://reactflow.dev/) via `@nesso-how/grap
 
 The AI mentor in [src/llm/](src/llm/) is experimental and talks to any **OpenAI-compatible** `chat/completions` endpoint (a local Ollama model or a cloud provider). On every send the system prompt is rebuilt from the live store, so the model always sees the current graph snapshot, selection, and a focal neighbourhood.
 
-The repo is a **pnpm workspace** monorepo. Shared semantic vocabulary lives in [packages/relation-types](packages/relation-types) and is consumed by both the app and an MCP server in [packages/mcp](packages/mcp) that exposes Nesso's relation types and documentation to MCP-capable LLM clients.
+The repo is a **pnpm workspace** monorepo. The graph vocabulary lives in [packages/vocab-learning](packages/vocab-learning) and is consumed by both the app and an MCP server in [packages/mcp](packages/mcp) that exposes relation types from the vocabulary and bundled documentation to MCP-capable LLM clients.
 
 ## Packages
 
-| Package                                                                                | Purpose                                                                 |
-| -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| [`@nesso-how/relation-types`](https://www.npmjs.com/package/@nesso-how/relation-types) | Shared semantic relation vocabulary and TypeScript types                |
-| [`@nesso-how/types`](https://www.npmjs.com/package/@nesso-how/types)                   | Shared TypeScript types: graph, node, edge, settings, FSRS              |
-| [`@nesso-how/formats`](https://www.npmjs.com/package/@nesso-how/formats)               | Graph serialization formats: JSON serialize/deserialize                 |
-| [`@nesso-how/graph`](https://www.npmjs.com/package/@nesso-how/graph)                   | Embeddable `<NessoGraph />` React component for docs and external apps  |
-| [`@nesso-how/mcp`](https://www.npmjs.com/package/@nesso-how/mcp)                       | MCP server exposing Nesso's relation vocabulary and docs to LLM clients |
+| Package                                                                                | Purpose                                                                |
+| -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| [`@nesso-how/vocab-learning`](https://www.npmjs.com/package/@nesso-how/vocab-learning) | Graph vocabulary: relation types, FSRS node params, category palettes  |
+| [`@nesso-how/types`](https://www.npmjs.com/package/@nesso-how/types)                   | Shared TypeScript types: graph, node, edge, settings, FSRS             |
+| [`@nesso-how/formats`](https://www.npmjs.com/package/@nesso-how/formats)               | Graph serialization formats: JSON serialize/deserialize                |
+| [`@nesso-how/graph`](https://www.npmjs.com/package/@nesso-how/graph)                   | Embeddable `<NessoGraph />` React component for docs and external apps |
+| [`@nesso-how/mcp`](https://www.npmjs.com/package/@nesso-how/mcp)                       | MCP server exposing relation types and bundled docs to LLM clients     |
 
 ## Contributing
 

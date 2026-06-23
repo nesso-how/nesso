@@ -25,7 +25,7 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "@nesso-how/relation-types": "workspace:*"
+    "@nesso-how/vocab-learning": "workspace:*"
   },
   "devDependencies": {
     "typescript": "~5.8.3"
