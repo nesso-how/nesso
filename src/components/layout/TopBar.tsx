@@ -72,11 +72,9 @@ export function TopBar({
             type="button"
             style={iconBtn}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'var(--paper-deep)'
               e.currentTarget.style.color = 'var(--ink)'
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'transparent'
               e.currentTarget.style.color = 'var(--ink-3)'
             }}
           >

@@ -20,7 +20,6 @@ jobs:
       js: ${{ steps.filter.outputs.js }}
       rust: ${{ steps.filter.outputs.rust }}
       e2e: ${{ steps.filter.outputs.e2e }}
-      native: ${{ steps.filter.outputs.native }}
     steps:
       - uses: actions/checkout@v6
       - uses: dorny/paths-filter@v3
@@ -42,34 +41,6 @@ jobs:
               - 'pnpm-lock.yaml'
               - 'vite.config.ts'
               - 'playwright.config.ts'
-              - 'index.html'
-              - '.github/workflows/ci.yml'
-            native:
-              - 'src-tauri/**'
-              - 'e2e-native/**'
-              - 'src/lib/workspace/**'
-              - 'src/lib/graphPersist.ts'
-              - 'src/lib/isDesktop.ts'
-              - 'src/lib/saveJsonFile.ts'
-              - 'src/lib/desktopMenu.ts'
-              - 'src/hooks/useGraphFileWatch.ts'
-              - 'src/hooks/useAutoSave.ts'
-              - 'src/hooks/useDesktopMenu.ts'
-              - 'src/hooks/useActiveProjectName.ts'
-              - 'src/store/db.ts'
-              - 'src/store/index.ts'
-              - 'src/store/slices/desktop-sync.ts'
-              - 'src/store/slices/graph-management.ts'
-              - 'src/store/slices/graph-editing.ts'
-              - 'src/data/storageKeys.ts'
-              - 'src/App.tsx'
-              - 'src/components/banners/GraphFileConflictBanner.tsx'
-              - 'src/components/layout/Sidebar.tsx'
-              - 'packages/formats/**'
-              - 'packages/types/**'
-              - 'package.json'
-              - 'pnpm-lock.yaml'
-              - 'vite.config.ts'
               - 'index.html'
               - '.github/workflows/ci.yml'
 
@@ -212,8 +183,8 @@ jobs:
         working-directory: src-tauri
 
   # End-to-end web UI (Playwright). Covers the flows that run in a plain browser
-  # (`isDesktop() === false`); the native layer (fs/dialogs/IPC/file-watch) is a
-  # separate tauri-driver lane (#28 follow-up). Runs in parallel with `js`/`rust`.
+  # (`isDesktop() === false`). Native desktop e2e (tauri-driver) is local-only —
+  # see `e2e-native/run-local.sh` and `.rules/testing.md`.
   e2e:
     needs: changes
     if: github.event_name == 'push' || needs.changes.outputs.e2e == 'true'
@@ -261,67 +232,13 @@ jobs:
           retention-days: 7
           if-no-files-found: ignore
 
-  # Native-layer e2e (WebdriverIO + tauri-driver), run inside a pre-baked Docker
-  # image (full WebKit runtime closure + WebKitWebDriver + xvfb + Rust +
-  # tauri-driver). The image removes the slow, mirror-dependent apt install
-  # entirely and is the SAME image developers run on macOS via
-  # `e2e-native/run-local.sh`, so this lane is reproducible locally instead of
-  # debuggable only through CI. Drives the real Tauri shell to cover what the
-  # Playwright lane cannot: real fs, the file watcher (`useGraphFileWatch`), and
-  # desktop-sync. Linux-only (no macOS Tauri WebDriver).
-  e2e-native:
-    needs: changes
-    if: github.event_name == 'push' || needs.changes.outputs.native == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: docker/setup-buildx-action@v3
-
-      # Build the image with a GitHub Actions layer cache — ~10 min on a cold
-      # cache, ~1 min warm. Same Dockerfile as the local runner, so CI and local
-      # stay byte-for-byte identical.
-      - name: Build e2e-native image
-        uses: docker/build-push-action@v6
-        with:
-          context: e2e-native
-          file: e2e-native/Dockerfile
-          load: true
-          tags: nesso-e2e-native:ci
-          cache-from: type=gha,scope=e2e-native
-          cache-to: type=gha,mode=max,scope=e2e-native
-
-      # Run the lane inside the image against the checked-out workspace. The app
-      # is built (cargo, via wdio's onPrepare) and driven (WebKitWebDriver under
-      # xvfb) entirely in the container; HUSKY=0 skips the git-hook install
-      # `prepare` would attempt. Failure diagnostics land in e2e-native/artifacts.
-      - name: Run native e2e lane
-        run: |
-          docker run --rm \
-            -v "${{ github.workspace }}:/work" -w /work \
-            -e CI=true -e HUSKY=0 \
-            nesso-e2e-native:ci bash -lc '
-              corepack enable
-              pnpm install --frozen-lockfile
-              xvfb-run --auto-servernum pnpm run test:e2e:native
-            '
-
-      - name: Upload native e2e diagnostics
-        if: ${{ failure() }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: e2e-native-diagnostics
-          path: e2e-native/artifacts
-          retention-days: 7
-          if-no-files-found: ignore
-
   # Aggregates lane results; skipped lanes (path-filter on PRs) are allowed.
   ci:
     if: always()
-    needs: [changes, js, rust, e2e, e2e-native]
+    needs: [changes, js, rust, e2e]
     runs-on: ubuntu-latest
     steps:
       - uses: re-actors/alls-green@release/v1
         with:
           jobs: ${{ toJSON(needs) }}
-          allowed-skips: js, rust, e2e, e2e-native
+          allowed-skips: js, rust, e2e

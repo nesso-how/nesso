@@ -8,6 +8,7 @@ import { Switch } from '@/components/ui/Switch'
 import { SettingRow } from '@/components/ui/SettingRow'
 import { confirm } from '@/components/ui/confirm'
 import { Icon } from '@/components/ui/icons'
+import { SidebarHeatmapToggle } from '@/components/ui/HeatmapDisplayToggle'
 import { hoverStyle } from '@/lib/hoverStyle'
 import { NessoMark } from './NessoMark'
 import { SidebarProjects } from './SidebarProjects'
@@ -471,12 +472,7 @@ export function Sidebar({
             </div>
             {sidebarDisplayOpen && (
               <div style={{ padding: '0 12px 10px' }}>
-                <SettingRow label={t.sidebar.displayOptions.heatmap}>
-                  <Switch
-                    value={graphDisplay.showHeatmap}
-                    onChange={(v) => setGraphDisplay('showHeatmap', v)}
-                  />
-                </SettingRow>
+                <SidebarHeatmapToggle />
                 <SettingRow label={t.sidebar.displayOptions.edges}>
                   <SegmentedControl
                     options={[

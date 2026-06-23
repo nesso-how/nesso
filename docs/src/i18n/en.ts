@@ -69,7 +69,7 @@ export const en: Locale = {
     p3: {
       heading: 'Open infrastructure',
       body: 'Nesso ships as modular open-source components: the app, the relation-types taxonomy, the MCP server. Anyone can adopt, extend, or fork them. The technical work should improve the <em>open learning ecosystem</em>, even for people who never use the application.',
-      module1: 'The full app, in public',
+      module1: 'Graph component, embeddable',
       module2: 'Edge vocabulary, reusable',
       module3: 'MCP server, any client',
     },
