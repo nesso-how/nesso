@@ -6,13 +6,14 @@ Nesso is an app for building typed knowledge graphs for active learning: an inte
 
 ## Stack
 
-| Layer         | Technology                                                                                                                                                                                                    |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Framework     | React 18 + Vite + TypeScript                                                                                                                                                                                  |
-| Desktop shell | Tauri v2 (`src-tauri/`) — optional wrapper; web app still runs with `pnpm dev`                                                                                                                                |
-| Graph canvas  | React Flow (`@xyflow/react`)                                                                                                                                                                                  |
-| State         | Zustand (`src/store/index.ts` + `src/store/slices/`)                                                                                                                                                          |
-| AI mentor     | **Experimental.** Any OpenAI-compatible `chat/completions` endpoint (local Ollama or cloud; endpoint / model / key in Settings). No built-in in-browser model. Review scheduling uses **FSRS** via `ts-fsrs`. |
+| Layer         | Technology                                                                                                                                                     |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Framework     | React 18 + Vite + TypeScript                                                                                                                                   |
+| Desktop shell | Tauri v2 (`src-tauri/`) — optional wrapper; web app still runs with `pnpm dev`                                                                                 |
+| Graph canvas  | React Flow (`@xyflow/react`)                                                                                                                                   |
+| State         | Zustand (`src/store/index.ts` + `src/store/slices/`)                                                                                                           |
+| AI mentor     | **Experimental.** Any OpenAI-compatible `chat/completions` endpoint (local Ollama or cloud; endpoint / model / key in Settings). No built-in in-browser model. |
+| Review (FSRS) | Spaced-repetition scheduling via `ts-fsrs`; per-node `stability`, `difficulty`, `due`, and ratings persisted. Independent of the AI mentor.                    |
 
 ## Source layout
 
@@ -34,7 +35,11 @@ packages/
   types/              # @nesso-how/types: shared TypeScript types
   theme/              # @nesso-how/theme: design tokens (single source of truth for theme packs)
   formats/            # @nesso-how/formats: graph JSON serialize/deserialize
+  graph/              # @nesso-how/graph: React Flow node/edge renderers, geometry, rating colours
   mcp/                # @nesso-how/mcp: MCP server for LLM clients
+scripts/              # release, license-header, scripts/stryker/ (mutation-test configs)
+e2e/                  # Playwright web UI specs (#28)
+e2e-native/           # tauri-driver native desktop specs (#28)
 docs/                 # Starlight docs site, published at nesso.how/docs
 ```
 
@@ -68,13 +73,13 @@ Area-specific rules (canonical content in `.rules/`, auto-attached per file area
 
 ## Code quality
 
-Lint and format run through **Biome** (`biome.json`): JS/TS/JSON/CSS, with **Prettier** kept only for Markdown/YAML/HTML. **`tsc`** type-checks (via `build`), and **`type-coverage`** gates strict type coverage at 99%. **`vitest`** (`pnpm test:coverage`) gates test coverage against a **ratchet floor** in `vitest.config.ts` — current numbers snapshotted as the minimum (global plus stricter per-directory globs for the regression-prone logic), green today and red on any drop; re-baseline when intentionally lowering. **`fallow`** (`pnpm run analyze`) is a deterministic static analyzer for dead code, duplication, cycles, complexity, and architecture — wired into `preflight` and CI as **advisory / report-only** (its non-zero exit does not gate). The `preflight` skill runs all of these in CI order before a PR. **`StrykerJS`** (`pnpm run analyze:mutation`, configs under `scripts/stryker/`) adds **mutation testing** on top of coverage — it grades whether the tests would actually catch a regression, gated by a per-area `break` ratchet on the mutation score. It is **not** a per-PR gate (too slow): opt-in locally and a non-blocking scheduled CI job (`.github/workflows/mutation.yml`), scoped to pure-logic areas. See [`.rules/testing.md`](.rules/testing.md).
+Lint and format run through **Biome** (`biome.json`): JS/TS/JSON/CSS, with **Prettier** kept only for Markdown/YAML/HTML. **`tsc`** type-checks (via `build`), and **`type-coverage`** gates strict type coverage at 99%. **`vitest`** (`pnpm test:coverage`) gates test coverage against a **ratchet floor** in `vitest.config.ts` — current numbers snapshotted as the minimum (global plus stricter per-directory globs for the regression-prone logic), green today and red on any drop; re-baseline when intentionally lowering. CI also runs **`license-headers:check`**, **`build:mcp`**, and path-filtered **e2e** / **e2e-native** lanes (Playwright web + tauri-driver desktop) — see [`.rules/testing.md`](.rules/testing.md). **`fallow`** (`pnpm run analyze`) is a deterministic static analyzer for dead code, duplication, cycles, complexity, and architecture. CI gates three slices (`.github/workflows/ci.yml` `js` job): **`analyze:dead-code`** (zero-tolerance on unused code and architecture cycles), **`analyze:dupes`** and **`analyze:health`** (identity baselines in `fallow-baselines/` — fail only on _new_ clones or complex functions). The full `analyze` report is a local convenience; the `preflight` skill runs the gated commands in CI order before a PR. **`StrykerJS`** (`pnpm run analyze:mutation`, configs under `scripts/stryker/`) adds **mutation testing** on top of coverage — it grades whether the tests would actually catch a regression, gated by a per-area `break` ratchet on the mutation score. It is **not** a per-PR gate (too slow): opt-in locally (`analyze:mutation:changed` when the diff touches an area) and a non-blocking scheduled CI job (`.github/workflows/mutation.yml`), scoped to pure-logic areas.
 
 ## Constraints — hard rules, never do this
 
 ### Never store chat history in the global store
 
-`MentorPanel` conversation history is local state. It resets on selection change by design — each selection context starts a fresh Socratic dialogue. Do not lift it into the Zustand store.
+`MentorPanel` conversation history is local state. It resets when the mentor sheet reopens, the graph changes, AI-endpoint readiness changes during the opening sequence, or the user clicks **New chat** — not on every selection change. Do not lift it into the Zustand store.
 
 ### Never use default React Flow edge types
 
