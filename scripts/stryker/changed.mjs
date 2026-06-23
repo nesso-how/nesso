@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 import { spawnSync } from 'node:child_process'
-import { areasForChangedFiles, mutationAreaOrder } from '../mutation-areas.mjs'
+import { areasForChangedFiles } from './areas.mjs'
 
 function runGit(args) {
   const r = spawnSync('git', args, { encoding: 'utf8' })

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 
-import { area } from './stryker.base.mjs'
-import { mutationAreas } from './mutation-areas.mjs'
+import { area } from './base.mjs'
+import { mutationAreas } from './areas.mjs'
 
 // @nesso-how/types runtime helpers (#55 rollout): the FSRS field <-> ts-fsrs
 // `Card` mapping (`nodeToCard`), fresh-review defaults, and the graph-display

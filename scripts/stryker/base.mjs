@@ -17,8 +17,8 @@
 // Thresholds are kept *per area* rather than as one aggregate score: a tiny,
 // well-tested package (formats, 95%) would otherwise mask a large, less-tested
 // one (the store slices, 71%) — the same reason `vitest.config.ts` holds
-// per-directory coverage floors. Each area is a config file (stryker.<area>.mjs)
-// built from `area()` below; `pnpm run analyze:mutation:<area>` runs one.
+// per-directory coverage floors. Each area is a config file under
+// `scripts/stryker/` built from `area()` below; `pnpm run analyze:mutation:<area>` runs one.
 
 const base = {
   testRunner: 'vitest',

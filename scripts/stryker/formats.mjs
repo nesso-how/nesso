@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 
-import { area } from './stryker.base.mjs'
-import { mutationAreas } from './mutation-areas.mjs'
+import { area } from './base.mjs'
+import { mutationAreas } from './areas.mjs'
 
 // @nesso-how/formats — the first area (#55 rollout): pure JSON serialize /
 // deserialize / validation logic.

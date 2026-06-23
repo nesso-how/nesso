@@ -52,6 +52,8 @@ export const mutationAreas = {
 /** Stable run order — matches `pnpm run analyze:mutation`. */
 export const mutationAreaOrder = ['formats', 'types', 'store', 'workspace', 'mentor']
 
+const STRYKER_DIR = 'scripts/stryker/'
+
 /**
  * Map changed repo paths to mutation area ids (includes co-located tests).
  * @param {string[]} files
@@ -60,13 +62,13 @@ export const mutationAreaOrder = ['formats', 'types', 'store', 'workspace', 'men
 export function areasForChangedFiles(files) {
   const hit = new Set()
   for (const file of files) {
-    if (file === 'mutation-areas.mjs') {
+    if (file === `${STRYKER_DIR}areas.mjs`) {
       for (const id of mutationAreaOrder) hit.add(id)
       continue
     }
-    if (file.startsWith('stryker.') && file.endsWith('.mjs') && file !== 'stryker.base.mjs') {
-      const id = file.slice('stryker.'.length, -4)
-      if (mutationAreas[id]) hit.add(id)
+    if (file.startsWith(STRYKER_DIR) && file.endsWith('.mjs')) {
+      const name = file.slice(STRYKER_DIR.length, -4)
+      if (name !== 'base' && name !== 'changed' && mutationAreas[name]) hit.add(name)
       continue
     }
     for (const id of mutationAreaOrder) {

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 
-import { area } from './stryker.base.mjs'
-import { mutationAreas } from './mutation-areas.mjs'
+import { area } from './base.mjs'
+import { mutationAreas } from './areas.mjs'
 
 // Mentor / review pure logic (#55 rollout): the FSRS-aware strength + prompt
 // context that feeds Socrates (`src/llm/context.ts`) and the due-queue ordering

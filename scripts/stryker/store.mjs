@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 
-import { area } from './stryker.base.mjs'
-import { mutationAreas } from './mutation-areas.mjs'
+import { area } from './base.mjs'
+import { mutationAreas } from './areas.mjs'
 
 // Store slices (#55 rollout). Scoped to the two slices with dedicated tests —
 // `graph-editing` (in-memory graph mutations, undo/redo, clipboard) and

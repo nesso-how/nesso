@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 
-import { area } from './stryker.base.mjs'
-import { mutationAreas } from './mutation-areas.mjs'
+import { area } from './base.mjs'
+import { mutationAreas } from './areas.mjs'
 
 // Workspace disk<->IDB layer (#55 rollout) — `.rules/testing.md` flags this as
 // the most regression-prone area (manifest merge/reconcile, name dedup, path

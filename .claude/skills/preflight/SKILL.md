@@ -50,4 +50,4 @@ pnpm run analyze:mutation:changed -- --base origin/main
 pnpm run analyze:mutation:changed -- --working # include unstaged/staged edits too
 ```
 
-Area → path mapping lives in [`mutation-areas.mjs`](../../mutation-areas.mjs) (shared with `stryker.<area>.mjs`). The script prints matched areas and runs only those `analyze:mutation:<area>` steps; it exits 0 with “skipping” when the diff is docs/UI/i18n-only. **Do run it** when `src/llm/`, `src/data/fsrsDueQueue`, store slices, workspace, or `packages/formats|types` change. Stryker needs full permissions locally (sandbox EPERM on `.stryker-tmp/.cursor` otherwise).
+Area → path mapping lives in [`scripts/stryker/areas.mjs`](../../scripts/stryker/areas.mjs) (shared with `scripts/stryker/<area>.mjs`). The script prints matched areas and runs only those `analyze:mutation:<area>` steps; it exits 0 with “skipping” when the diff is docs/UI/i18n-only. **Do run it** when `src/llm/`, `src/data/fsrsDueQueue`, store slices, workspace, or `packages/formats|types` change. Stryker needs full permissions locally (sandbox EPERM on `.stryker-tmp/.cursor` otherwise).
