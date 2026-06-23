@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "nesso": {
+      "command": "node",
+      "args": ["packages/mcp/dist/index.js"]
+    }
+  }
+}
