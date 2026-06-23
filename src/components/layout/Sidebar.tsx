@@ -8,6 +8,7 @@ import { Switch } from '@/components/ui/Switch'
 import { SettingRow } from '@/components/ui/SettingRow'
 import { confirm } from '@/components/ui/confirm'
 import { Icon } from '@/components/ui/icons'
+import { SidebarHeatmapToggle } from '@/components/ui/HeatmapDisplayToggle'
 import { hoverStyle } from '@/lib/hoverStyle'
 import { NessoMark } from './NessoMark'
 import { SidebarProjects } from './SidebarProjects'
@@ -68,7 +69,6 @@ export function Sidebar({
   const deleteGraph = useGraphStore((s) => s.deleteGraph)
   const graphDisplay = useGraphStore((s) => s.graphDisplay)
   const setGraphDisplay = useGraphStore((s) => s.setGraphDisplay)
-  const reviewEnabled = useGraphStore((s) => s.settings.reviewEnabled)
   const sidebarDisplayOpen = useGraphStore((s) => s.sidebarDisplayOpen)
   const setSidebarDisplayOpen = useGraphStore((s) => s.setSidebarDisplayOpen)
 
@@ -472,14 +472,7 @@ export function Sidebar({
             </div>
             {sidebarDisplayOpen && (
               <div style={{ padding: '0 12px 10px' }}>
-                {reviewEnabled && (
-                  <SettingRow label={t.sidebar.displayOptions.heatmap}>
-                    <Switch
-                      value={graphDisplay.showHeatmap}
-                      onChange={(v) => setGraphDisplay('showHeatmap', v)}
-                    />
-                  </SettingRow>
-                )}
+                <SidebarHeatmapToggle />
                 <SettingRow label={t.sidebar.displayOptions.edges}>
                   <SegmentedControl
                     options={[

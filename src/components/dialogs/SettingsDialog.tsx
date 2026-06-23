@@ -10,6 +10,7 @@ import { Switch } from '@/components/ui/Switch'
 import { Select } from '@/components/ui/Select'
 import { useT } from '@/i18n'
 import { LearningSettings } from './LearningSettings'
+import { SettingsHeatmapDefault } from '@/components/ui/HeatmapDisplayToggle'
 import type { Language } from '@/types/graph'
 import { checkOllamaModel, streamOllamaModelPull, type OllamaModelStatus } from '@/lib/ollama'
 
@@ -257,14 +258,7 @@ export function SettingsDialog({ open, onClose }: Props) {
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-                  {settings.reviewEnabled && (
-                    <SettingsFormRow divider={false} label={t.settings.appearance.heatmap}>
-                      <Switch
-                        value={settings.showHeatmap}
-                        onChange={(v) => setSetting('showHeatmap', v)}
-                      />
-                    </SettingsFormRow>
-                  )}
+                  <SettingsHeatmapDefault />
 
                   <SettingsFormRow divider={false} label={t.settings.appearance.edges}>
                     <SegmentedControl
