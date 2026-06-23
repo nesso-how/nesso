@@ -6,7 +6,7 @@ Tokens are plain TypeScript objects. Each consumer turns them into CSS variables
 
 ## What lives here, and what doesn't
 
-Category colours (the `--cat-*` variables for edge types) belong to the relation vocabulary, so they stay in `@nesso-how/relation-types`, not here. A theme pack only names the palette it pairs with (`categoryPalette`); the palette switch and the theme switch stay independent.
+Category colours (the `--cat-*` variables for edge types) belong to the graph vocabulary, so they stay in `@nesso-how/vocab-learning`, not here. A theme pack only names the palette it pairs with (`categoryPalette`); the palette switch and the theme switch stay independent.
 
 A token belongs in this package when it both varies by theme or mode and is shared across the app, the graph and the docs. That covers surface and ink colours, accent, shadows, fonts, and the type, spacing and radii scales. It leaves out anything structural rather than visual: z-index, breakpoints and app layout sizes (status bar height, sidebar width) live in the app, and motion is a foundation constant unless a pack needs to tune it.
 
@@ -33,7 +33,7 @@ baseVars(defaultTheme) // { '--font-sans': "...", '--space-6': '12px', ... }
 modeVars(defaultTheme, 'dark') // { '--paper': '#1a1714', '--accent': '#c47a82', ... }
 ```
 
-The app injects `themeCss(defaultTheme)` into the page head at build time, through the `nessoTheme()` Vite plugin in `vite.config.ts`, so the variables exist before the first paint. Category colours are applied separately, from the relation-types palette. The docs site does the same through `docs/scripts/gen-theme-css.mjs`, which also produces a Starlight version with `starlightCss`.
+The app injects `themeCss(defaultTheme)` into the page head at build time, through the `nessoTheme()` Vite plugin in `vite.config.ts`, so the variables exist before the first paint. Category colours are applied separately, from the `@nesso-how/vocab-learning` palette. The docs site does the same through `docs/scripts/gen-theme-css.mjs`, which also produces a Starlight version with `starlightCss`.
 
 ## Changing the default theme
 

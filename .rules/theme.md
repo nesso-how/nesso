@@ -8,9 +8,9 @@
 - **Tokens become CSS variables through the package emitters** (`themeCss`, `modeVars`, `baseVars` in `packages/theme/src/css.ts`), not by writing `:root` blocks by hand. The app injects them into `<head>` at build time via the `nessoTheme` Vite plugin in `vite.config.ts` (so the variables exist at first paint); `index.css` holds only structural CSS.
 - **If you find app-side theme code, move it into the package.** A stray `:root`/`[data-theme]` token block, an inline hex that matches a token, or a re-mapped copy (e.g. Starlight `--sl-color-*` in `docs/`) is a regression — relocate the value to `default.ts` and consume it.
 
-## Boundary with `@nesso-how/relation-types`
+## Boundary with `@nesso-how/vocab-learning`
 
-Category colours (`--cat-*`) are part of the relation-type **vocabulary** and live only in `relation-types` `PALETTES`. The theme package references the active palette by name (`ThemePack.categoryPalette`); the palette switch stays **orthogonal** to the theme switch. Do not move category colours into the theme package, and do not duplicate them in `index.css`.
+Category colours (`--cat-*`) are part of the relation-type **vocabulary** and live only in `@nesso-how/vocab-learning` `PALETTES`. The theme package references the active palette by name (`ThemePack.categoryPalette`); the palette switch stays **orthogonal** to the theme switch. Do not move category colours into the theme package, and do not duplicate them in `index.css`.
 
 ## What belongs here (and what does not)
 

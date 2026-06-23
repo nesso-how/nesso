@@ -1,10 +1,40 @@
 # Graph model
 
+## Vocabulary and graph files
+
+Nesso graphs are built with a declared **vocabulary** — a self-contained package of relation types, semantic coefficients, display parameters, and private node parameters. The first vocabulary is the **Nesso Learning Vocabulary** (`@nesso-how/vocab-learning`), exported as `VOCABULARY`:
+
+```ts
+const VOCABULARY = {
+  id: '@nesso-how/vocab-learning',
+  name: 'Nesso Learning Vocabulary',
+  domain: 'learning',
+  version: '0.1.0', // normative vocabulary version, independent of npm package version
+}
+```
+
+Graph JSON files (`NessoGraphFile` in `@nesso-how/formats`) declare which vocabulary they use, pinning both its `id` and normative `version` so a file stays interpretable across vocabulary revisions. The envelope schema version is owned by the formats package as `GRAPH_FORMAT_VERSION` — callers pass `NessoGraphFileInput` (no `version` field); `serializeGraph` injects it.
+
+```ts
+interface NessoGraphFile {
+  version: typeof GRAPH_FORMAT_VERSION // envelope schema version (the file format)
+  vocabulary?: { id: string; version: string } // e.g. { id: '@nesso-how/vocab-learning', version: '0.1.0' }
+  name: string
+  nodes: Node[]
+  edges: Edge[]
+  display?: Partial<GraphDisplaySettings>
+  id?: string
+  updatedAt?: number
+}
+```
+
+Two version axes, deliberately separate: `version` is the **envelope shape** (gated by `deserializeGraph`), `vocabulary.version` is the **semantic vocabulary** (`VOCABULARY.version`, independent of the npm package version). `@nesso-how/formats` is vocabulary-agnostic: it round-trips the `vocabulary` reference and validates structure only, never inspecting the vocabulary's contents. Vocabulary-specific normalization (filling or resetting private params) happens in the app via `src/data/conceptNodes.ts`.
+
 ## Node data (`ConceptNodeData`)
 
 ```ts
-interface ConceptNodeData extends Record<string, unknown> {
-  text: string
+interface LearningNodeParams {
+  // private dynamic node parameters (Nesso Learning Vocabulary)
   stability: number
   difficulty: number
   reps: number
@@ -14,15 +44,19 @@ interface ConceptNodeData extends Record<string, unknown> {
   lastReview: number // Unix ms; 0 = never
   lastRating: number // 0 = none; 1–4 = Again/Hard/Good/Easy (matches ts-fsrs Rating)
   learningSteps?: number // FSRS learning-step index; optional for records saved before it existed
+}
+
+interface ConceptNodeData extends LearningNodeParams {
+  text: string
   elaboration?: ConceptElaboration // optional richer concept content
 }
 ```
 
-The interface is defined in `@nesso-how/types` (`packages/types/src/index.ts`) and re-exported through `src/types/graph.ts`. Use `nodeToCard()` to build a ts-fsrs `Card` from persisted fields.
+`LearningNodeParams` and `defaultConceptReviewFields()` are defined in `@nesso-how/vocab-learning` (the vocabulary) and re-exported through `@nesso-how/types` / `src/types/graph.ts`. Use `nodeToCard()` to build a ts-fsrs `Card` from persisted fields.
 
 ## Edge categories and relation types
 
-All edges carry a `data.type: EdgeTypeName`. Relation definitions (`RELATION_TYPES`) and category copy (`RELATION_CATEGORY_META`) live in `@nesso-how/relation-types`; UI palette bindings (`RELATION_CATEGORIES`) merge meta with CSS vars in `src/data/relationTypes.ts`.
+All edges carry a `data.type: EdgeTypeName`. Relation definitions (`RELATION_TYPES`) and category copy (`RELATION_CATEGORY_META`) live in `@nesso-how/vocab-learning`; UI palette bindings (`RELATION_CATEGORIES`) merge meta with CSS vars in `src/data/relationTypes.ts`.
 
 The set has **52 types in 8 categories**. Asymmetric relations come in **inverse pairs** so traversal in either direction is first-class.
 
@@ -61,7 +95,7 @@ These coefficients exist to drive future graph-analysis and graph-comparison alg
 - `category` — same as `full` (colour, line style, glyph, arrowhead) but the label shows only on hover/selection
 - `minimal` — plain solid line in a neutral grey: no glyph, arrowhead, label, or category colour
 
-Category colours are CSS custom properties (`--cat-taxonomic`, `--cat-structural`, etc.) set by the active palette in `App.tsx` from `PALETTES` in `@nesso-how/relation-types`. Embeds use hex from `PALETTES` directly via `categoryColorMode: 'palette'`.
+Category colours are CSS custom properties (`--cat-taxonomic`, `--cat-structural`, etc.) set by the active palette in `App.tsx` from `PALETTES` in `@nesso-how/vocab-learning`. Embeds use hex from `PALETTES` directly via `categoryColorMode: 'palette'`.
 
 ## React Flow edge type
 

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 import { createContext, useContext } from 'react'
-import type { EdgeTypeName } from '@nesso-how/relation-types'
+import type { EdgeTypeName } from '@nesso-how/vocab-learning'
 import type { EdgeEncoding, CurveStyle, CategoryPalette } from '@nesso-how/types'
 
 export type CategoryColorMode = 'palette' | 'css'

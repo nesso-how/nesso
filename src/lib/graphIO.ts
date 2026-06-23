@@ -1,12 +1,9 @@
 // SPDX-License-Identifier: MIT
 import { getNodesBounds, getViewportForBounds } from '@xyflow/react'
 import { toPng } from 'html-to-image'
-import {
-  deserializeGraph,
-  nodesForGraphShareExport,
-  nodesFromGraphShareImport,
-  serializeGraph,
-} from '@nesso-how/formats'
+import { deserializeGraph, serializeGraph } from '@nesso-how/formats'
+import { VOCABULARY } from '@nesso-how/vocab-learning'
+import { resetConceptNodeParamsForShare } from '@/data/conceptNodes'
 import { useGraphStore } from '@/store'
 import { getT } from '@/i18n'
 import { toast } from '@/components/ui/toast'
@@ -19,8 +16,9 @@ export async function exportGraphJson(): Promise<void> {
   const name = meta?.name ?? 'graph'
   const filename = `${name}.json`
   const payload = serializeGraph({
+    vocabulary: { id: VOCABULARY.id, version: VOCABULARY.version },
     name,
-    nodes: nodesForGraphShareExport(nodes),
+    nodes: resetConceptNodeParamsForShare(nodes),
     edges,
     display: graphDisplay,
   })
@@ -93,7 +91,13 @@ export function importGraphFile(): void {
       const name = data.name?.trim() || file.name.replace(/\.json$/i, '')
       await useGraphStore
         .getState()
-        .importGraph(name, nodesFromGraphShareImport(data.nodes), data.edges, data.display, data.id)
+        .importGraph(
+          name,
+          resetConceptNodeParamsForShare(data.nodes),
+          data.edges,
+          data.display,
+          data.id,
+        )
     } catch {
       toast.error(getT().graphIO.importError.replace('{name}', file.name))
     }

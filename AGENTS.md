@@ -25,13 +25,13 @@ src/
     slices/           # graph-editing, settings, ui, graph-management, desktop-sync
   llm/                # Mentor transport (OpenAI-compatible fetch)
   data/
-    relationTypes.ts  # merges `@nesso-how/relation-types` + CSS palette vars (`RELATION_CATEGORIES`)
+    relationTypes.ts  # merges `@nesso-how/vocab-learning` + CSS palette vars (`RELATION_CATEGORIES`)
     seeds/*.json      # Default demo graph snapshots (React Flow nodes/edges + display name; nested locale dirs, e.g. seeds/it/)
     seedGraph.ts      # Exports `SEEDS` — bundled demo graphs from `seeds/*.json` (stable ids from names)
   types/graph.ts      # re-exports `@nesso-how/types` (ConceptNodeData, EdgeTypeName, NessoSettings — defined in packages/types/)
 src-tauri/            # Tauri v2 Rust project — tauri.conf.json, capabilities; `icons/` generated via `pnpm run icons:desktop` (gitignored)
 packages/
-  relation-types/     # @nesso-how/relation-types: shared semantic vocabulary
+  vocab-learning/     # @nesso-how/vocab-learning: graph vocabulary (relations, node params, palettes)
   types/              # @nesso-how/types: shared TypeScript types
   theme/              # @nesso-how/theme: design tokens (single source of truth for theme packs)
   formats/            # @nesso-how/formats: graph JSON serialize/deserialize

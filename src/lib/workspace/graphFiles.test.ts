@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
-import { deserializeGraph } from '@nesso-how/formats'
+import { deserializeGraph, GRAPH_FORMAT_VERSION } from '@nesso-how/formats'
+import { VOCABULARY } from '@nesso-how/vocab-learning'
 import { describe, expect, it } from 'vitest'
 import type { GraphRecord } from '@/store/db'
 import { defaultConceptReviewFields } from '@/types/graph'
@@ -80,7 +81,13 @@ describe('recordToGraphFile', () => {
 
   it('serializes to a deserializable Nesso graph file carrying id, name and updatedAt', () => {
     const parsed = deserializeGraph(recordToGraphFile(record))
-    expect(parsed).toMatchObject({ id: 'g0000000000001', name: 'Demo', updatedAt: 42 })
+    expect(parsed).toMatchObject({
+      version: GRAPH_FORMAT_VERSION,
+      vocabulary: { id: VOCABULARY.id, version: VOCABULARY.version },
+      id: 'g0000000000001',
+      name: 'Demo',
+      updatedAt: 42,
+    })
     expect(parsed.nodes).toHaveLength(1)
     expect(parsed.edges).toHaveLength(1)
   })

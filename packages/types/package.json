@@ -25,7 +25,7 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "@nesso-how/relation-types": "workspace:*"
+    "@nesso-how/vocab-learning": "workspace:*"
   },
   "peerDependencies": {
     "ts-fsrs": "^5.3.2"

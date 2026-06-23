@@ -16,7 +16,7 @@ export default defineConfig({
     alias: {
       '@': fromRoot('./src'),
       '@nesso-how/types': fromRoot('./packages/types/src/index.ts'),
-      '@nesso-how/relation-types': fromRoot('./packages/relation-types/src/index.ts'),
+      '@nesso-how/vocab-learning': fromRoot('./packages/vocab-learning/src/index.ts'),
       '@nesso-how/theme': fromRoot('./packages/theme/src/index.ts'),
     },
   },
@@ -52,7 +52,7 @@ export default defineConfig({
       // glue) is out of the slice floor. Files only covered incidentally by other
       // suites (`src/data/seedGraph.ts`, `src/store/db.ts`) get no floor — their
       // numbers move with unrelated tests. Packages with no meaningful unit
-      // surface stay global-only: `mcp` (loaders/tooling), `relation-types`
+      // surface stay global-only: `mcp` (loaders/tooling), `vocab-learning`
       // (static vocabulary), `types` (type-only).
       thresholds: {
         statements: 21,

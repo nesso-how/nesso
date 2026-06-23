@@ -16,7 +16,7 @@
     "@astrojs/react": "^5.0.7",
     "@astrojs/starlight": "^0.40.0",
     "@nesso-how/graph": "workspace:*",
-    "@nesso-how/relation-types": "workspace:*",
+    "@nesso-how/vocab-learning": "workspace:*",
     "@nesso-how/theme": "workspace:*",
     "@nesso-how/types": "workspace:*",
     "@xyflow/react": "^12.6.4",

@@ -1,6 +1,6 @@
 {
   "clone_groups": [
-    "packages/relation-types/src/index.ts:133-142|src/i18n/locales/en.ts:294-303",
+    "packages/vocab-learning/src/index.ts:133-142|src/i18n/locales/en.ts:294-303",
     "src/components/canvas/GraphContextMenu.tsx:108-113|src/components/inspector/inspectorChrome.tsx:86-91",
     "src/store/slices/graph-editing.test.ts:49-53|src/store/slices/graph-editing.test.ts:84-88",
     "src/store/slices/graph-editing.test.ts:107-113|src/store/slices/graph-editing.test.ts:69-75",

@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs'
 import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import { fileURLToPath, URL } from 'node:url'
-import { PALETTES } from '@nesso-how/relation-types'
+import { PALETTES } from '@nesso-how/vocab-learning'
 import { defaultTheme, themeCss } from '@nesso-how/theme'
 
 const host = process.env.TAURI_DEV_HOST

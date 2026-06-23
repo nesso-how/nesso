@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
-import { GLYPH_PATHS } from '@nesso-how/relation-types'
-import type { GlyphKind } from '@nesso-how/relation-types'
+import { GLYPH_PATHS } from '@nesso-how/vocab-learning'
+import type { GlyphKind } from '@nesso-how/vocab-learning'
 
 interface Props {
   kind: GlyphKind
@@ -8,7 +8,7 @@ interface Props {
   size?: number
 }
 
-/** Renders a relation glyph from `@nesso-how/relation-types`' framework-agnostic SVG data. */
+/** Renders a relation glyph from `@nesso-how/vocab-learning`' framework-agnostic SVG data. */
 export function GlyphSVG({ kind, color = 'currentColor', size = 14 }: Props) {
   return (
     <svg

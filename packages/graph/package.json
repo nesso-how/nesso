@@ -26,7 +26,7 @@
   },
   "dependencies": {
     "@nesso-how/formats": "workspace:*",
-    "@nesso-how/relation-types": "workspace:*",
+    "@nesso-how/vocab-learning": "workspace:*",
     "@nesso-how/types": "workspace:*"
   },
   "peerDependencies": {

@@ -16,7 +16,7 @@ import type {
   OnMoveEnd,
 } from '@xyflow/react'
 import type { NessoGraphFile } from '@nesso-how/formats'
-import type { EdgeTypeName } from '@nesso-how/relation-types'
+import type { EdgeTypeName } from '@nesso-how/vocab-learning'
 import type {
   ConceptNodeData,
   NessoEdgeData,

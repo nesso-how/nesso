@@ -5,6 +5,8 @@ import type { NessoSettings } from '@/types/graph'
 import { graphPersistPayload } from '@/lib/graphPersist'
 import { defaultGraphDisplay } from '@/types/graph'
 import { serializeGraph, deserializeGraph } from '@nesso-how/formats'
+import { VOCABULARY } from '@nesso-how/vocab-learning'
+import { fillConceptNodeParams } from '@/data/conceptNodes'
 import { isGraphId, newGraphId } from '@/lib/graphId'
 import {
   buildFileToIdMap,
@@ -106,6 +108,7 @@ export function recordToGraphFile(record: GraphRecord): string {
     record.display ?? defaultGraphDisplay(),
   )
   return serializeGraph({
+    vocabulary: { id: VOCABULARY.id, version: VOCABULARY.version },
     id: record.id,
     updatedAt: record.updatedAt,
     name: record.name,
@@ -270,7 +273,7 @@ export async function loadRecordFromDiskFile(
       // The JSON format does not store createdAt; initialise it from updatedAt.
       createdAt: file.updatedAt ?? now,
       updatedAt: file.updatedAt ?? now,
-      nodes: file.nodes,
+      nodes: fillConceptNodeParams(file.nodes),
       edges: file.edges,
       display: file.display as GraphRecord['display'],
     }

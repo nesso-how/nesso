@@ -5,9 +5,11 @@ export type {
   EdgeTypeName,
   GlyphKind,
   CategoryPalette,
-} from '@nesso-how/relation-types'
+  LearningNodeParams,
+} from '@nesso-how/vocab-learning'
+export { defaultConceptReviewFields, VOCABULARY } from '@nesso-how/vocab-learning'
 import type { Card, State } from 'ts-fsrs'
-import type { CategoryPalette, EdgeTypeName } from '@nesso-how/relation-types'
+import type { CategoryPalette, EdgeTypeName, LearningNodeParams } from '@nesso-how/vocab-learning'
 
 export interface ConceptElaboration {
   definition: string
@@ -18,45 +20,10 @@ export interface ConceptElaboration {
   imageDescriptionUrl?: string
 }
 
-export interface ConceptNodeData extends Record<string, unknown> {
+/** Core semantic content plus private dynamic node params from the Nesso Learning Vocabulary. */
+export interface ConceptNodeData extends LearningNodeParams {
   text: string
-  stability: number
-  difficulty: number
-  reps: number
-  lapses: number
-  fsrsState: number // State: 0=New 1=Learning 2=Review 3=Relearning
-  due: number // ms timestamp; 0 = due immediately (new card)
-  lastReview: number // ms timestamp; 0 = never reviewed
-  lastRating: number // 0=unrated, 1=Again 2=Hard 3=Good 4=Easy
-  /** FSRS learning-step index; optional for records saved before it existed. */
-  learningSteps?: number
   elaboration?: ConceptElaboration
-}
-
-/** Fresh FSRS fields for a new or shared-import concept (no personal review history). */
-export function defaultConceptReviewFields(): Pick<
-  ConceptNodeData,
-  | 'stability'
-  | 'difficulty'
-  | 'reps'
-  | 'lapses'
-  | 'fsrsState'
-  | 'due'
-  | 'lastReview'
-  | 'lastRating'
-  | 'learningSteps'
-> {
-  return {
-    stability: 0,
-    difficulty: 0,
-    reps: 0,
-    lapses: 0,
-    fsrsState: 0,
-    due: 0,
-    lastReview: 0,
-    lastRating: 0,
-    learningSteps: 0,
-  }
 }
 
 export function nodeToCard(data: ConceptNodeData): Card {

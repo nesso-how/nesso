@@ -21,7 +21,7 @@
 
 - Components: PascalCase, one per file, filename matches component name.
 - Store selectors: `<noun>Selector` suffix, exported from `store/index.ts`.
-- Relation type constants: `RELATION_TYPES` + `RELATION_CATEGORY_META` (`@nesso-how/relation-types`); `RELATION_CATEGORIES` merges meta with `color: var(--cat-<category>)` in `data/relationTypes.ts`.
+- Relation type constants: `RELATION_TYPES` + `RELATION_CATEGORY_META` (`@nesso-how/vocab-learning`); `RELATION_CATEGORIES` merges meta with `color: var(--cat-<category>)` in `data/relationTypes.ts`.
 
 ## Imports
 

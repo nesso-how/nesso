@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Before proposing, please skim the [Relation types reference](https://nesso.how/docs/reference/relation-types/) and the [`EdgeTypeDef` schema](https://github.com/nesso-how/nesso/blob/main/packages/relation-types/src/index.ts). Every type must declare both visual encoding **and** semantic coefficients — these drive graph-analysis algorithms, so they need to be studied at the type level.
+        Before proposing, please skim the [Relation types reference](https://nesso.how/docs/reference/relation-types/) and the [`EdgeTypeDef` schema](https://github.com/nesso-how/nesso/blob/main/packages/vocab-learning/src/index.ts). Every type must declare both visual encoding **and** semantic coefficients — these drive graph-analysis algorithms, so they need to be studied at the type level.
 
   - type: textarea
     id: motivation

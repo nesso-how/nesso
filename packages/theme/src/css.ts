@@ -86,7 +86,7 @@ export function declarations(vars: Record<string, string>, indent = '  '): strin
 /**
  * Full stylesheet for a pack: mode-invariant tokens + light tokens under
  * `:root`, dark tokens under `[data-theme='dark']`. Category colours are NOT
- * emitted here — they come from `@nesso-how/relation-types` `PALETTES`, applied
+ * emitted here — they come from `@nesso-how/vocab-learning` `PALETTES`, applied
  * separately so the palette switch stays orthogonal.
  */
 export function themeCss(pack: ThemePack): string {
