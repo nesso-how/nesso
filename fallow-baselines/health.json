@@ -1,6 +1,6 @@
 {
   "finding_counts": {
-    "packages/formats/src/index.ts": {
+    "packages/schema/src/index.ts": {
       "crap_moderate": {
         "count": 1
       }

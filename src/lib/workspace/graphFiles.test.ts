@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-import { deserializeGraph, GRAPH_FORMAT_VERSION } from '@nesso-how/formats'
+import { deserialize, GRAPH_FORMAT_VERSION } from '@nesso-how/schema'
 import { VOCABULARY } from '@nesso-how/vocab-learning'
 import { describe, expect, it } from 'vitest'
 import type { GraphRecord } from '@/store/db'
@@ -76,11 +76,20 @@ describe('recordToGraphFile', () => {
         data: { text: 'A', ...defaultConceptReviewFields() },
       },
     ],
-    edges: [{ id: 'e1', source: 'n1', target: 'n1', type: 'nesso', selected: true }],
+    edges: [
+      {
+        id: 'e1',
+        source: 'n1',
+        target: 'n1',
+        type: 'nesso',
+        selected: true,
+        data: { type: 'causes' },
+      },
+    ],
   }
 
-  it('serializes to a deserializable Nesso graph file carrying id, name and updatedAt', () => {
-    const parsed = deserializeGraph(recordToGraphFile(record))
+  it('serializes to a deserializable Nesso graph document carrying id, name and updatedAt', () => {
+    const parsed = deserialize(recordToGraphFile(record))
     expect(parsed).toMatchObject({
       version: GRAPH_FORMAT_VERSION,
       vocabulary: { id: VOCABULARY.id, version: VOCABULARY.version },
@@ -88,13 +97,13 @@ describe('recordToGraphFile', () => {
       name: 'Demo',
       updatedAt: 42,
     })
-    expect(parsed.nodes).toHaveLength(1)
-    expect(parsed.edges).toHaveLength(1)
+    expect(parsed.concepts).toHaveLength(1)
+    expect(parsed.relations).toHaveLength(1)
   })
 
-  it('strips the transient `selected` flag from nodes and edges', () => {
-    const parsed = deserializeGraph(recordToGraphFile(record))
-    expect('selected' in parsed.nodes[0]).toBe(false)
-    expect('selected' in parsed.edges[0]).toBe(false)
+  it('omits FSRS fields from serialized concept content', () => {
+    const parsed = deserialize(recordToGraphFile(record))
+    expect(parsed.concepts[0]).toMatchObject({ id: 'n1', label: 'A', x: 0, y: 0 })
+    expect(parsed.concepts[0].data?.elaboration).toBeUndefined()
   })
 })

@@ -61,23 +61,23 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for commit conventions, branch naming, an
 ```
 src/
   components/     UI components (read state via useGraphStore)
-  store/graph.ts  single Zustand store (nodes, edges, selection, settings)
+  store/          Zustand store (index.ts + slices/: graph-editing, graph-management, settings, ui)
   llm/            mentor transport (OpenAI-compatible fetch)
-  data/           edge type registry, seed graphs
-  types/graph.ts  shared TypeScript types
+  data/           relation type registry, seed graphs
+  types/graph.ts  facade re-exporting vocab-learning + graph display + app settings
 src-tauri/        Tauri v2 Rust shell (conf, capabilities, icons)
 packages/
+  schema/         @nesso-how/schema: vocabulary-agnostic graph JSON serialize/deserialize
   vocab-learning/ @nesso-how/vocab-learning: graph vocabulary (relations, node params, palettes)
-  types/          @nesso-how/types: shared TypeScript types
-  formats/        @nesso-how/formats: graph JSON serialize/deserialize
-  graph/          @nesso-how/graph: embeddable read-only graph React component
+  theme/          @nesso-how/theme: design tokens (colours, fonts, spacing, radii)
+  graph/          @nesso-how/graph: embeddable graph React component (read-only by default)
   mcp/            @nesso-how/mcp: MCP server for LLM clients
 docs/             Starlight docs site, published at nesso.how/docs
 ```
 
 ## Architecture
 
-Nesso is a React 18 + Vite + TypeScript single-page app, optionally wrapped by Tauri v2 for a native desktop shell. All app state lives in a single Zustand store ([src/store/graph.ts](src/store/graph.ts)), and components subscribe via selectors with no prop drilling. Graph data persists to **IndexedDB** (web) and is **dual-written to a workspace folder of `.json` files** on desktop (with file watch for external edits); UI chrome to **localStorage**.
+Nesso is a React 18 + Vite + TypeScript single-page app, optionally wrapped by Tauri v2 for a native desktop shell. All app state lives in a single Zustand store ([src/store/index.ts](src/store/index.ts)), and components subscribe via selectors with no prop drilling. Graph **content** persists to **IndexedDB** (web) and is **dual-written to a workspace folder of `.json` files** on desktop (with file watch for external edits); **FSRS review progress** stays in a separate IndexedDB `reviewState` store (per browser, not in shared files). UI chrome persists to **localStorage**.
 
 The canvas is built on [React Flow](https://reactflow.dev/) via `@nesso-how/graph` (`NessoEdge`, `ConceptNodeBody`); the app adds an interactive `ConceptNode` wrapper for inline edit and connection handles. Each edge renders its semantic relation as a distinct line style plus an SVG glyph. Every node carries FSRS scheduling fields (`stability`, `difficulty`, `due`, `lastRating`) consumed by the Review overlay.
 
@@ -87,13 +87,13 @@ The repo is a **pnpm workspace** monorepo. The graph vocabulary lives in [packag
 
 ## Packages
 
-| Package                                                                                | Purpose                                                                |
-| -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| [`@nesso-how/vocab-learning`](https://www.npmjs.com/package/@nesso-how/vocab-learning) | Graph vocabulary: relation types, FSRS node params, category palettes  |
-| [`@nesso-how/types`](https://www.npmjs.com/package/@nesso-how/types)                   | Shared TypeScript types: graph, node, edge, settings, FSRS             |
-| [`@nesso-how/formats`](https://www.npmjs.com/package/@nesso-how/formats)               | Graph serialization formats: JSON serialize/deserialize                |
-| [`@nesso-how/graph`](https://www.npmjs.com/package/@nesso-how/graph)                   | Embeddable `<NessoGraph />` React component for docs and external apps |
-| [`@nesso-how/mcp`](https://www.npmjs.com/package/@nesso-how/mcp)                       | MCP server exposing relation types and bundled docs to LLM clients     |
+| Package                                                                                | Purpose                                                                                     |
+| -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| [`@nesso-how/schema`](https://www.npmjs.com/package/@nesso-how/schema)                 | Vocabulary-agnostic graph document: `concepts`/`relations`, serialize/deserialize           |
+| [`@nesso-how/vocab-learning`](https://www.npmjs.com/package/@nesso-how/vocab-learning) | Graph vocabulary: relation types, FSRS node params, category palettes, `NessoGraphDocument` |
+| [`@nesso-how/theme`](https://www.npmjs.com/package/@nesso-how/theme)                   | Shared design tokens for the app, graph embeds, and docs site                               |
+| [`@nesso-how/graph`](https://www.npmjs.com/package/@nesso-how/graph)                   | Embeddable `<NessoGraph />` React component for docs and external apps                      |
+| [`@nesso-how/mcp`](https://www.npmjs.com/package/@nesso-how/mcp)                       | MCP server exposing relation types and bundled docs to LLM clients                          |
 
 ## Contributing
 

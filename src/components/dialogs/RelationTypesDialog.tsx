@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
 import { useState } from 'react'
-import { RELATION_CATEGORIES, RELATION_TYPES, buildRelationGroups } from '@/data/relationTypes'
+import { RELATION_CATEGORY_COLORS, RELATION_TYPES, buildRelationGroups } from '@/data/relationTypes'
+import { RELATION_CATEGORIES } from '@nesso-how/vocab-learning'
 import { GlyphSVG } from '@nesso-how/graph'
 import { CloseButton } from '@/components/ui/CloseButton'
 import { ModalOverlay } from '@/components/ui/ModalOverlay'
 import { useGraphStore } from '@/store'
-import type { EdgeCategory } from '@/types/graph'
+import type { RelationCategory } from '@/types/graph'
 import { useT } from '@/i18n'
 
 const RELATION_TYPES_DOCS_URL = 'https://nesso.how/docs/reference/relation-types/'
@@ -19,7 +20,7 @@ export function RelationTypesDialog({ open, onClose }: Props) {
   const t = useT()
   const encoding = useGraphStore((s) => s.graphDisplay.edgeEncoding)
   const [query, setQuery] = useState('')
-  const [activeCategory, setActiveCategory] = useState<EdgeCategory | null>(null)
+  const [activeCategory, setActiveCategory] = useState<RelationCategory | null>(null)
 
   const q = query.trim().toLowerCase()
 
@@ -108,12 +109,8 @@ export function RelationTypesDialog({ open, onClose }: Props) {
           >
             {t.relationTypes.allCategories}
           </button>
-          {(
-            Object.entries(RELATION_CATEGORIES) as [
-              EdgeCategory,
-              (typeof RELATION_CATEGORIES)[EdgeCategory],
-            ][]
-          ).map(([k, c]) => {
+          {RELATION_CATEGORIES.map((k) => {
+            const c = RELATION_CATEGORY_COLORS[k]
             const isActive = activeCategory === k
             return (
               <button

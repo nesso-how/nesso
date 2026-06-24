@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: MIT
 import type { GraphRecord } from '@/store/db'
-import type { NessoGraphFile } from '@nesso-how/formats'
+import type { NessoGraphDocument } from '@nesso-how/vocab-learning'
 import type { NessoSettings } from '@/types/graph'
-import { graphPersistPayload } from '@/lib/graphPersist'
+import { graphContentPayload } from '@/lib/graphPersist'
 import { defaultGraphDisplay } from '@/types/graph'
-import { serializeGraph, deserializeGraph } from '@nesso-how/formats'
-import { VOCABULARY } from '@nesso-how/vocab-learning'
-import { fillConceptNodeParams } from '@/data/conceptNodes'
+import { serialize, deserialize } from '@nesso-how/vocab-learning'
+import { graphToDocument } from '@/lib/graphDocumentMapping'
 import { isGraphId, newGraphId } from '@/lib/graphId'
 import {
   buildFileToIdMap,
@@ -48,7 +47,7 @@ export function uniqueGraphNameAmong(name: string, usedNames: Iterable<string>):
 
 /** If JSON `name` differs from the file basename, the basename wins (updates JSON on read). */
 function resolveGraphName(
-  file: NessoGraphFile,
+  file: NessoGraphDocument,
   filename: string,
 ): { name: string; patched: boolean } {
   const fromFilename = graphNameFromFilename(filename)
@@ -68,7 +67,7 @@ function resolveGraphName(
  * (and silently merging into) the original, regardless of scan order.
  */
 function resolveGraphId(
-  file: NessoGraphFile,
+  file: NessoGraphDocument,
   filename: string,
   fileToId: Map<string, string>,
   claimedIds: Set<string>,
@@ -102,20 +101,21 @@ function uniqueFilename(base: string, manifest: WorkspaceManifest, excludeId?: s
 }
 
 export function recordToGraphFile(record: GraphRecord): string {
-  const { nodes, edges, display } = graphPersistPayload(
+  const { nodes, edges, display } = graphContentPayload(
     record.nodes,
     record.edges,
     record.display ?? defaultGraphDisplay(),
   )
-  return serializeGraph({
-    vocabulary: { id: VOCABULARY.id, version: VOCABULARY.version },
-    id: record.id,
-    updatedAt: record.updatedAt,
-    name: record.name,
-    nodes,
-    edges,
-    display,
-  })
+  return serialize(
+    graphToDocument({
+      id: record.id,
+      updatedAt: record.updatedAt,
+      name: record.name,
+      nodes,
+      edges,
+      display,
+    }),
+  )
 }
 
 async function alignEntryFileToName(
@@ -262,20 +262,23 @@ export async function loadRecordFromDiskFile(
   const { readTextFile, writeTextFile } = await fs()
   try {
     const text = await readTextFile(ws.path(filename))
-    const file = deserializeGraph(text)
+    const file = deserialize(text)
     const now = Date.now()
     const id = resolveGraphId(file, filename, fileToId, claimedIds)
     const reassignedId = id !== (file.id?.trim() ?? '')
     const { name, patched } = resolveGraphName(file, filename)
+    const { nodes, edges, display } = await (await import('@/lib/graphMapping')).documentToGraph(
+      file,
+      id,
+    )
     const record: GraphRecord = {
       id,
       name,
-      // The JSON format does not store createdAt; initialise it from updatedAt.
       createdAt: file.updatedAt ?? now,
       updatedAt: file.updatedAt ?? now,
-      nodes: fillConceptNodeParams(file.nodes),
-      edges: file.edges,
-      display: file.display as GraphRecord['display'],
+      nodes,
+      edges,
+      display: display as GraphRecord['display'],
     }
     if (patched || reassignedId) {
       record.updatedAt = Date.now()
@@ -328,7 +331,7 @@ async function resolveGraphDiskFilename(
     if (filename === MANIFEST_FILE) continue
     try {
       const text = await readTextFile(ws.path(filename))
-      const file = deserializeGraph(text)
+      const file = deserialize(text)
       if (resolveGraphId(file, filename, fileToId, new Set()) === graphId) return filename
     } catch {
       /* skip unreadable */

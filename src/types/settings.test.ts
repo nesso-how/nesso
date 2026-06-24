@@ -7,7 +7,7 @@ import {
   nodeToCard,
   type ConceptNodeData,
   type NessoSettings,
-} from './index.js'
+} from '@/types/graph'
 
 describe('defaultConceptReviewFields', () => {
   it('returns zeroed FSRS fields for a fresh concept', () => {

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 import { useState, useMemo, useLayoutEffect, useRef, useEffect, type CSSProperties } from 'react'
 import { fsrs, Rating, type Grade } from 'ts-fsrs'
-import { RELATION_TYPES, RELATION_CATEGORIES } from '@/data/relationTypes'
+import { RELATION_TYPES, RELATION_CATEGORY_COLORS } from '@/data/relationTypes'
 import { sortedDueConceptNodes } from '@/data/fsrsDueQueue'
 import { useGraphStore } from '@/store'
-import { nodeToCard, type EdgeTypeName } from '@/types/graph'
+import { nodeToCard, type RelationTypeName } from '@/types/graph'
 import { ratingColor } from '@nesso-how/graph'
 import { useT } from '@/i18n'
 import { CloseButton } from '@/components/ui/CloseButton'
@@ -31,12 +31,12 @@ function ReviewRelationRow({
   text,
   incoming,
 }: {
-  type: EdgeTypeName
+  type: RelationTypeName
   text: string | undefined
   incoming: boolean
 }) {
   const t = useT()
-  const C = RELATION_CATEGORIES[RELATION_TYPES[type].cat]
+  const C = RELATION_CATEGORY_COLORS[RELATION_TYPES[type].cat]
   return (
     <div
       style={{
@@ -85,6 +85,7 @@ export function ReviewMode({ open, onClose }: Props) {
   const nodes = useGraphStore((s) => (open ? s.nodes : null)) ?? EMPTY_NODES
   const edges = useGraphStore((s) => (open ? s.edges : null)) ?? EMPTY_EDGES
   const updateNodeData = useGraphStore((s) => s.updateNodeData)
+  const saveCurrentGraph = useGraphStore((s) => s.saveCurrentGraph)
   const settings = useGraphStore((s) => s.settings)
   const [revealed, setRevealed] = useState(false)
   /** Cards finished this session; idx resets to 0 after each rating so we track progress separately. */
@@ -111,6 +112,15 @@ export function ReviewMode({ open, onClose }: Props) {
       sessionTotalRef.current = 0
     }
   }, [open])
+
+  // Flush ratings to the review store the moment the session closes, so FSRS
+  // state isn't lost if the user reloads or switches graph inside the autosave
+  // debounce window (saveCurrentGraph is a no-op when nothing is dirty).
+  const wasOpen = useRef(false)
+  useEffect(() => {
+    if (wasOpen.current && !open) void saveCurrentGraph()
+    wasOpen.current = open
+  }, [open, saveCurrentGraph])
 
   // Rated cards get a future due date and drop out of `due`, so the head of
   // the queue always advances after each rating.
@@ -421,7 +431,7 @@ export function ReviewMode({ open, onClose }: Props) {
               {nodeEdges.out.map((e) => (
                 <ReviewRelationRow
                   key={e.id}
-                  type={e.data?.type as EdgeTypeName}
+                  type={e.data?.type as RelationTypeName}
                   text={nodes.find((n) => n.id === e.target)?.data.text}
                   incoming={false}
                 />
@@ -429,7 +439,7 @@ export function ReviewMode({ open, onClose }: Props) {
               {nodeEdges.inc.map((e) => (
                 <ReviewRelationRow
                   key={e.id}
-                  type={e.data?.type as EdgeTypeName}
+                  type={e.data?.type as RelationTypeName}
                   text={nodes.find((n) => n.id === e.source)?.data.text}
                   incoming
                 />

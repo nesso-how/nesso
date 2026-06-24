@@ -2,7 +2,7 @@
 import type { Node } from '@xyflow/react'
 import { describe, expect, it } from 'vitest'
 import { defaultConceptReviewFields } from '@/types/graph'
-import { fillConceptNodeParams, resetConceptNodeParamsForShare } from '@/data/conceptNodes'
+import { fillConceptNodeParams } from '@/data/conceptNodes'
 
 describe('fillConceptNodeParams', () => {
   it('fills missing private params while preserving persisted values', () => {
@@ -33,42 +33,5 @@ describe('fillConceptNodeParams', () => {
     const data = fillConceptNodeParams(nodes)[0].data
     expect(data.text).toBe('')
     expect(data).toMatchObject(defaultConceptReviewFields())
-  })
-})
-
-describe('resetConceptNodeParamsForShare', () => {
-  it('resets private params while keeping text and elaboration', () => {
-    const nodes = [
-      {
-        id: 'n1',
-        position: { x: 0, y: 0 },
-        data: {
-          text: 'Concept',
-          ...defaultConceptReviewFields(),
-          stability: 99,
-          reps: 7,
-          lastRating: 4,
-          elaboration: { definition: 'd', examples: 'e', notes: 'n' },
-        },
-      },
-    ]
-    const [reset] = resetConceptNodeParamsForShare(nodes)
-    expect(reset.data).toMatchObject({
-      text: 'Concept',
-      ...defaultConceptReviewFields(),
-      elaboration: { definition: 'd', examples: 'e', notes: 'n' },
-    })
-    expect(reset.data.stability).toBe(0)
-    expect(reset.data.reps).toBe(0)
-  })
-
-  it('coerces a non-object data blob without leaking char-index keys', () => {
-    const nodes = [{ id: 'n1', position: { x: 0, y: 0 }, data: 'oops' }] as unknown as Node<
-      Record<string, unknown>
-    >[]
-    const data = resetConceptNodeParamsForShare(nodes)[0].data
-    expect(data.text).toBe('')
-    expect(data).toMatchObject(defaultConceptReviewFields())
-    expect('0' in data).toBe(false)
   })
 })

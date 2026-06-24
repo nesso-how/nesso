@@ -28,7 +28,7 @@ CI deterministically gates the mechanical layer, so don't spend review effort th
 
 - Functional components only; `useCallback`/`useMemo` only when the dependency is genuinely unstable.
 - Inline styles / CSS custom properties (no Tailwind, no CSS modules).
-- Shared graph types come from `@nesso-how/types` via `src/types/graph.ts`; store-only types (e.g. `Selection`) live in `src/store/types.ts`. No type definitions scattered across components.
+- Shared graph types are distributed across `@nesso-how/vocab-learning`, `@nesso-how/graph`, and app settings; re-exported via `src/types/graph.ts`. Store-only types (e.g. `Selection`) live in `src/store/types.ts`. No type definitions scattered across components.
 - `@/` alias for non-relative imports.
 - No comments unless the reason is genuinely non-obvious.
 - Store selectors named `<noun>Selector`, exported from `store/index.ts`.

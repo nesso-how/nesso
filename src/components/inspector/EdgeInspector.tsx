@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 import {
   RELATION_TYPES,
-  RELATION_CATEGORIES,
+  RELATION_CATEGORY_COLORS,
   RELATION_TYPE_VALUES,
-  asEdgeTypeName,
+  asRelationTypeName,
 } from '@/data/relationTypes'
 import type { Node } from '@xyflow/react'
 import { GlyphSVG } from '@nesso-how/graph'
@@ -28,9 +28,9 @@ export function EdgeInspector({ panelWidth, onPanelWidthChange }: Props) {
   const setEdgeCurveFlipMode = useGraphStore((s) => s.setEdgeCurveFlipMode)
   const curveStyle = useGraphStore((s) => s.graphDisplay.curveStyle)
   const autoCurveFlip = useGraphStore((s) => s.graphDisplay.autoCurveFlip)
-  const edgeType = asEdgeTypeName(edge.data?.type)
+  const edgeType = asRelationTypeName(edge.data?.type)
   const T = RELATION_TYPES[edgeType]
-  const C = RELATION_CATEGORIES[T.cat]
+  const C = RELATION_CATEGORY_COLORS[T.cat]
   const from = nodes.find((n) => n.id === edge.source)
   const to = nodes.find((n) => n.id === edge.target)
   const siblings = RELATION_TYPE_VALUES.filter((id) => RELATION_TYPES[id].cat === T.cat)

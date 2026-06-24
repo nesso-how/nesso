@@ -25,16 +25,16 @@ src/
     slices/           # graph-editing, settings, ui, graph-management, desktop-sync
   llm/                # Mentor transport (OpenAI-compatible fetch)
   data/
-    relationTypes.ts  # merges `@nesso-how/vocab-learning` + CSS palette vars (`RELATION_CATEGORIES`)
-    seeds/*.json      # Default demo graph snapshots (React Flow nodes/edges + display name; nested locale dirs, e.g. seeds/it/)
+    relationTypes.ts  # re-exports `@nesso-how/vocab-learning` + `RELATION_CATEGORY_COLORS` (CSS palette vars)
+    seeds/*.json      # Default demo graph snapshots (concepts/relations JSON; nested locale dirs, e.g. seeds/it/)
     seedGraph.ts      # Exports `SEEDS` — bundled demo graphs from `seeds/*.json` (stable ids from names)
-  types/graph.ts      # re-exports `@nesso-how/types` (ConceptNodeData, EdgeTypeName, NessoSettings — defined in packages/types/)
+  lib/                # graphMapping, graphDocumentMapping, graphIO, graphPersist, workspace sync
+  types/graph.ts      # facade: re-exports vocab-learning + graph display types + app settings
 src-tauri/            # Tauri v2 Rust project — tauri.conf.json, capabilities; `icons/` generated via `pnpm run icons:desktop` (gitignored)
 packages/
-  vocab-learning/     # @nesso-how/vocab-learning: graph vocabulary (relations, node params, palettes)
-  types/              # @nesso-how/types: shared TypeScript types
+  schema/             # @nesso-how/schema: vocabulary-agnostic graph document serialize/deserialize
+  vocab-learning/     # @nesso-how/vocab-learning: graph vocabulary (relations, node params, palettes, NessoGraphDocument)
   theme/              # @nesso-how/theme: design tokens (single source of truth for theme packs)
-  formats/            # @nesso-how/formats: graph JSON serialize/deserialize
   graph/              # @nesso-how/graph: React Flow node/edge renderers, geometry, rating colours
   mcp/                # @nesso-how/mcp: MCP server for LLM clients
 scripts/              # release, license-header, scripts/stryker/ (mutation-test configs)
@@ -45,8 +45,8 @@ docs/                 # Starlight docs site, published at nesso.how/docs
 
 ## Core concepts
 
-- **Node** — a `ConceptNode` with `text` and FSRS fields (`stability`, `difficulty`, `reps`, `lapses`, `fsrsState`, `due`, `lastReview`, `lastRating`, `learningSteps`) persisted for spaced repetition (`ts-fsrs`).
-- **Edge** — a React Flow edge of type `'nesso'`, carrying `data.type: EdgeTypeName`.
+- **Node** — a `ConceptNode` with `text` and FSRS fields (`stability`, `difficulty`, `reps`, `lapses`, `fsrsState`, `due`, `lastReview`, `lastRating`, `learningSteps`) for spaced repetition at runtime (`ts-fsrs`). FSRS is persisted in IndexedDB `reviewState`, not in graph JSON files.
+- **Edge** — a React Flow edge of type `'nesso'`, carrying `data.type: RelationTypeName` (semantic relation id; serialized as `GraphRelation.type` in graph JSON).
 - **Selection** — a single `{ kind: 'node' | 'edge', id }` (or `null`) tracked in the store (`src/store/types.ts`). Drives the Inspector and Socrates opening prompt.
 - **Settings** — `NessoSettings` in the store (dark mode, language, encoding, palette, AI endpoint fields, etc.). Applied via CSS custom properties on `<html>` where relevant.
 

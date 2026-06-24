@@ -9,6 +9,14 @@ export { NessoEdge } from './NessoEdge.js'
 export { useGraphDisplay, GraphDisplayContext } from './context.js'
 export type { NessoGraphDisplayContext, CategoryColorMode } from './context.js'
 
+export type {
+  CurveStyle,
+  EdgeEncoding,
+  GraphDisplaySettings,
+  NessoEdgeData,
+} from './display.js'
+export { documentToRenderGraph } from './documentToRenderGraph.js'
+
 // Shared canvas utilities — import from here to avoid duplication with the main app.
 export { GlyphSVG } from './GlyphSVG.js'
 export { ratingColor } from './ratingColor.js'

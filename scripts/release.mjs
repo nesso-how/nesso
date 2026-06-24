@@ -25,12 +25,11 @@ const ROOT = dirname(dirname(fileURLToPath(import.meta.url)))
 /** Files whose top-level JSON `version` is the synced release version. */
 const JSON_VERSION_FILES = [
   'package.json',
-  'packages/formats/package.json',
+  'packages/schema/package.json',
   'packages/graph/package.json',
   'packages/mcp/package.json',
   'packages/vocab-learning/package.json',
   'packages/theme/package.json',
-  'packages/types/package.json',
   'src-tauri/tauri.conf.json',
 ]
 

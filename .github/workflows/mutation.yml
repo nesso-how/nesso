@@ -49,11 +49,8 @@ jobs:
       # must not hide a green one). `if: always()` so every area still runs when
       # an earlier one breaks its threshold. Each step exits non-zero if its
       # mutation score falls below the area floor.
-      - name: Mutation — formats
-        run: pnpm run analyze:mutation:formats
-      - name: Mutation — types
-        if: always()
-        run: pnpm run analyze:mutation:types
+      - name: Mutation — schema
+        run: pnpm run analyze:mutation:schema
       - name: Mutation — store
         if: always()
         run: pnpm run analyze:mutation:store

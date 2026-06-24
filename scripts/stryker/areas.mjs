@@ -6,17 +6,11 @@
 
 /** @type {Record<string, MutationArea>} */
 export const mutationAreas = {
-  formats: {
-    mutate: ['packages/formats/src/**/*.ts', '!packages/formats/src/**/*.test.ts'],
-    reportDir: 'reports/mutation/formats',
+  schema: {
+    mutate: ['packages/schema/src/**/*.ts', '!packages/schema/src/**/*.test.ts'],
+    reportDir: 'reports/mutation/schema',
     breakAt: 89,
-    touch: ['packages/formats/src/'],
-  },
-  types: {
-    mutate: ['packages/types/src/index.ts'],
-    reportDir: 'reports/mutation/types',
-    breakAt: 95,
-    touch: ['packages/types/src/index.ts', 'packages/types/src/index.test.ts'],
+    touch: ['packages/schema/src/'],
   },
   store: {
     mutate: ['src/store/slices/graph-editing.ts', 'src/store/slices/graph-management.ts'],
@@ -60,7 +54,7 @@ export const mutationAreas = {
 }
 
 /** Stable run order — matches `pnpm run analyze:mutation`. */
-export const mutationAreaOrder = ['formats', 'types', 'store', 'workspace', 'mentor']
+export const mutationAreaOrder = ['schema', 'store', 'workspace', 'mentor']
 
 const STRYKER_DIR = 'scripts/stryker/'
 

@@ -7,7 +7,7 @@ import { mutationAreas } from './areas.mjs'
 // context that feeds Socrates (`src/llm/context.ts`) and the due-queue ordering
 // for review (`src/data/fsrsDueQueue.ts`). The network transport (`completion.ts`)
 // stays out of scope. The `nodeToCard` FSRS field
-// mapping lives in `packages/types` and is graded by the `types` area.
+// mapping lives in `src/types/settings.ts` and is graded by the `mentor` area.
 //
 // Baseline: 87.50% (112/128). The survivors are mostly equivalent — the
 // trailing-word regex and `<=`/`>=` boundary mutants in the token-truncation

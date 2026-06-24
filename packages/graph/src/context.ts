@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 import { createContext, useContext } from 'react'
-import type { EdgeTypeName } from '@nesso-how/vocab-learning'
-import type { EdgeEncoding, CurveStyle, CategoryPalette } from '@nesso-how/types'
+import type { RelationTypeName, CategoryPalette } from '@nesso-how/vocab-learning'
+import type { EdgeEncoding, CurveStyle } from './display.js'
 
 export type CategoryColorMode = 'palette' | 'css'
 
@@ -13,7 +13,7 @@ export interface NessoGraphDisplayContext {
   palette: CategoryPalette
   /** `palette` uses hex from PALETTES; `css` uses `var(--cat-*)` (app with live palette switching). */
   categoryColorMode: CategoryColorMode
-  getRelationLabel?: (type: EdgeTypeName) => string
+  getRelationLabel?: (type: RelationTypeName) => string
   isItemSelected?: (kind: 'node' | 'edge', id: string) => boolean
 }
 

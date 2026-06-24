@@ -1,12 +1,12 @@
 {
-  "name": "@nesso-how/types",
+  "name": "@nesso-how/schema",
   "version": "0.1.0-alpha.34",
-  "description": "Nesso shared TypeScript types — graph, node, edge, settings, FSRS",
+  "description": "Nesso knowledge graph document schema — JSON serialize/deserialize",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/nesso-how/nesso",
-    "directory": "packages/types"
+    "directory": "packages/schema"
   },
   "type": "module",
   "publishConfig": {
@@ -24,14 +24,7 @@
     "prepublishOnly": "pnpm build",
     "dev": "tsc --watch"
   },
-  "dependencies": {
-    "@nesso-how/vocab-learning": "workspace:*"
-  },
-  "peerDependencies": {
-    "ts-fsrs": "^5.3.2"
-  },
   "devDependencies": {
-    "ts-fsrs": "^5.3.2",
     "typescript": "~5.8.3"
   }
 }

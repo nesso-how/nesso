@@ -9,7 +9,9 @@ import type {
   EdgeEncoding,
   CurveStyle,
 } from '@/types/graph'
-import { defaultGraphDisplay } from '@/types/graph'
+import { defaultConceptReviewFields, defaultGraphDisplay } from '@/types/graph'
+import type { NessoGraphDocument } from '@nesso-how/vocab-learning'
+import { documentToRenderGraph } from '@nesso-how/graph'
 
 export interface Seed {
   id: string
@@ -27,23 +29,20 @@ const SEED_IDS = {
   comprensione: 'gn5qw2bkf8sl6x',
 } as const
 
-/** JSON seed files infer string literals as `string`; normalize before use. */
-type SeedSource = {
-  version?: number
-  vocabulary?: { id: string; version: string }
-  name: string
-  nodes: unknown[]
-  edges: unknown[]
+type SeedSource = NessoGraphDocument<{
   display?: {
     edgeEncoding?: string
     showHeatmap?: boolean
     curveStyle?: string
     autoCurveFlip?: boolean
   }
-}
+}>
 
-function normalizeSeedDisplay(display: NonNullable<SeedSource['display']>): GraphDisplaySettings {
+function normalizeSeedDisplay(
+  display: NonNullable<SeedSource['meta']>['display'],
+): GraphDisplaySettings {
   const base = defaultGraphDisplay()
+  if (!display) return base
   return {
     edgeEncoding: (display.edgeEncoding as EdgeEncoding | undefined) ?? base.edgeEncoding,
     showHeatmap: display.showHeatmap ?? base.showHeatmap,
@@ -53,12 +52,21 @@ function normalizeSeedDisplay(display: NonNullable<SeedSource['display']>): Grap
 }
 
 function makeSeed(id: string, raw: SeedSource, opts?: Pick<Seed, 'initialFitZoom'>): Seed {
+  const { nodes, edges, display } = documentToRenderGraph(raw)
+  const fsrsDefaults = defaultConceptReviewFields()
   return {
     id,
     name: raw.name,
-    nodes: raw.nodes as Node<ConceptNodeData>[],
-    edges: raw.edges as Edge[],
-    display: raw.display ? normalizeSeedDisplay(raw.display) : undefined,
+    nodes: nodes.map((n) => ({
+      ...n,
+      data: { ...fsrsDefaults, ...n.data },
+    })),
+    edges,
+    display: raw.meta?.display
+      ? normalizeSeedDisplay(raw.meta.display)
+      : display
+        ? normalizeSeedDisplay(display)
+        : undefined,
     initialFitZoom: opts?.initialFitZoom,
   }
 }
@@ -67,10 +75,14 @@ function makeSeed(id: string, raw: SeedSource, opts?: Pick<Seed, 'initialFitZoom
 const DEMO_INITIAL_FIT_ZOOM = 0.82
 
 const enSeeds = [
-  makeSeed(SEED_IDS.understanding, understanding, { initialFitZoom: DEMO_INITIAL_FIT_ZOOM }),
+  makeSeed(SEED_IDS.understanding, understanding as SeedSource, {
+    initialFitZoom: DEMO_INITIAL_FIT_ZOOM,
+  }),
 ]
 const itSeeds = [
-  makeSeed(SEED_IDS.comprensione, comprensione, { initialFitZoom: DEMO_INITIAL_FIT_ZOOM }),
+  makeSeed(SEED_IDS.comprensione, comprensione as SeedSource, {
+    initialFitZoom: DEMO_INITIAL_FIT_ZOOM,
+  }),
 ]
 
 const seedById = new Map([...enSeeds, ...itSeeds].map((s) => [s.id, s]))

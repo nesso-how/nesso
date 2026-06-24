@@ -61,7 +61,7 @@ async function listGraphFiles(): Promise<string[]> {
 
 interface DiskGraph {
   name?: string
-  nodes?: { data?: { text?: string } }[]
+  concepts?: { label?: string }[]
 }
 
 async function readDiskGraph(file: string): Promise<DiskGraph | null> {
@@ -73,23 +73,23 @@ async function readDiskGraph(file: string): Promise<DiskGraph | null> {
   }
 }
 
-/** Every node text across every graph file on disk — robust to extra seed files. */
+/** Every concept label across every graph file on disk — robust to extra seed files. */
 export async function nodeTextsOnDisk(): Promise<string[]> {
   const texts: string[] = []
   for (const file of await listGraphFiles()) {
     const parsed = await readDiskGraph(file)
-    for (const node of parsed?.nodes ?? []) {
-      if (typeof node.data?.text === 'string') texts.push(node.data.text)
+    for (const concept of parsed?.concepts ?? []) {
+      if (typeof concept.label === 'string') texts.push(concept.label)
     }
   }
   return texts
 }
 
-/** Filename stem (no `.json`) of the graph whose nodes contain `text`, or null. */
+/** Filename stem (no `.json`) of the graph whose concepts contain `text`, or null. */
 export async function graphFileStemContaining(text: string): Promise<string | null> {
   for (const file of await listGraphFiles()) {
     const parsed = await readDiskGraph(file)
-    if (parsed?.nodes?.some((n) => n.data?.text === text)) return file.replace(/\.json$/i, '')
+    if (parsed?.concepts?.some((c) => c.label === text)) return file.replace(/\.json$/i, '')
   }
   return null
 }
@@ -98,26 +98,11 @@ export async function graphFileStemContaining(text: string): Promise<string | nu
 function makeGraphFileJson(name: string, nodeText: string): string {
   return JSON.stringify(
     {
+      version: 1,
+      vocabulary: { id: '@nesso-how/vocab-learning', version: '0.1.0' },
       name,
-      nodes: [
-        {
-          id: 'n1',
-          type: 'concept',
-          position: { x: 240, y: 200 },
-          data: {
-            text: nodeText,
-            stability: 0,
-            difficulty: 0,
-            reps: 0,
-            lapses: 0,
-            fsrsState: 0,
-            due: 0,
-            lastReview: 0,
-            lastRating: 0,
-          },
-        },
-      ],
-      edges: [],
+      concepts: [{ id: 'n1', label: nodeText, x: 240, y: 200 }],
+      relations: [],
     },
     null,
     2,

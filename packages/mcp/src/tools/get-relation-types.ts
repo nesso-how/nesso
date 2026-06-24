@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 import type { McpServer } from '@modelcontextprotocol/server'
 import * as z from 'zod/v4'
-import { RELATION_TYPES, RELATION_CATEGORY_META } from '@nesso-how/vocab-learning'
+import { RELATION_TYPES, RELATION_CATEGORIES } from '@nesso-how/vocab-learning'
 
 export function registerGetRelationTypes(server: McpServer): void {
   server.registerTool(
@@ -9,15 +9,14 @@ export function registerGetRelationTypes(server: McpServer): void {
     {
       description:
         'Returns all 52 semantic relation types supported by Nesso, grouped by 8 categories. ' +
-        'Each type carries semantic coefficients (transitive, inverse, strength, polarity, cardinality) ' +
+        'Each type carries type properties (transitive, inverse, strength, polarity, cardinality) ' +
         'in addition to its visual encoding. ' +
         'Use this when you need valid relation type names for graph JSON or explanations for the user.',
       inputSchema: z.object({}),
     },
     async () => {
-      const result = Object.entries(RELATION_CATEGORY_META).map(([cat, catDef]) => ({
-        category: catDef.label,
-        question: catDef.subtitle,
+      const result = RELATION_CATEGORIES.map((cat) => ({
+        category: cat,
         types: Object.entries(RELATION_TYPES)
           .filter(([, def]) => def.cat === cat)
           .map(([name, def]) => ({

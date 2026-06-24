@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 import type { StateCreator } from 'zustand'
 import { isDesktop } from '@/lib/isDesktop'
-import { graphPersistFingerprint } from '@/lib/graphPersist'
+import { graphContentFingerprint, reviewStateFingerprint } from '@/lib/graphPersist'
 import { mergeGraphDisplay } from '@/types/graph'
 import {
   readManifest,
@@ -16,6 +16,7 @@ import type { GraphState } from '../state'
 
 export interface DesktopSyncSlice {
   savedFingerprint: string
+  savedReviewFingerprint: string
   externalFileConflict: boolean
   setExternalFileConflict: (v: boolean) => void
   clearExternalFileConflict: () => void
@@ -28,6 +29,7 @@ export const createDesktopSyncSlice: StateCreator<GraphState, [], [], DesktopSyn
   get,
 ) => ({
   savedFingerprint: '',
+  savedReviewFingerprint: '',
   externalFileConflict: false,
 
   setExternalFileConflict: (v) => set({ externalFileConflict: v }),
@@ -51,7 +53,7 @@ export const createDesktopSyncSlice: StateCreator<GraphState, [], [], DesktopSyn
     setDiskSyncCache(ws.displayPath, manifest)
     await dbSaveGraph(record)
     const graphDisplay = mergeGraphDisplay(record.display, settings)
-    const fp = graphPersistFingerprint(record.nodes, record.edges, graphDisplay)
+    const fp = graphContentFingerprint(record.nodes, record.edges, graphDisplay)
     _draggingNodeIds.clear()
     set((s) => ({
       nodes: record.nodes,
@@ -60,6 +62,7 @@ export const createDesktopSyncSlice: StateCreator<GraphState, [], [], DesktopSyn
       selected: null,
       loadedToken: s.loadedToken + 1,
       savedFingerprint: fp,
+      savedReviewFingerprint: reviewStateFingerprint(record.nodes),
       externalFileConflict: false,
       graphList: s.graphList.map((g) =>
         g.id === currentGraphId ? { ...g, name: record.name, updatedAt: record.updatedAt } : g,

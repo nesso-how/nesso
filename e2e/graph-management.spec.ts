@@ -66,9 +66,9 @@ test('export the current graph as JSON', async ({ page }) => {
 
   const path = await download.path()
   const parsed = JSON.parse(await readFile(path, 'utf8')) as {
-    nodes: { data?: { text?: string } }[]
+    concepts: { label?: string }[]
   }
-  expect(parsed.nodes.some((n) => n.data?.text === 'ExportedConcept')).toBe(true)
+  expect(parsed.concepts.some((c) => c.label === 'ExportedConcept')).toBe(true)
 })
 
 test('import a graph from a JSON file', async ({ page }) => {

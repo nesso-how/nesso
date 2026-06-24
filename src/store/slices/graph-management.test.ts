@@ -125,6 +125,28 @@ describe('saveCurrentGraph', () => {
   })
 })
 
+describe('saveCurrentGraph (review state)', () => {
+  it('persists a review-only change and rehydrates it after a reload', async () => {
+    const s = await freshStore()
+    const a = await s.getState().createGraph('A')
+    const nodeId = s.getState().addNode()
+    await s.getState().saveCurrentGraph()
+
+    // Review-only change: only FSRS fields, no content edit.
+    s.getState().updateNodeData(nodeId, { stability: 42, reps: 3, due: 9999 })
+    await s.getState().saveCurrentGraph()
+
+    // Round-trip through another graph so nodes are rebuilt from storage.
+    await s.getState().createGraph('B')
+    await s.getState().loadGraph(a)
+
+    const node = s.getState().nodes.find((n) => n.id === nodeId)
+    expect(node?.data.stability).toBe(42)
+    expect(node?.data.reps).toBe(3)
+    expect(node?.data.due).toBe(9999)
+  })
+})
+
 describe('loadGraph', () => {
   it('switches the active graph to the persisted snapshot', async () => {
     const s = await freshStore()

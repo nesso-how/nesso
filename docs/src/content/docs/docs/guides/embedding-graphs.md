@@ -21,7 +21,7 @@ import '@xyflow/react/dist/style.css'
 ;<NessoGraph nodes={nodes} edges={edges} style={{ width: '100%', height: 400 }} />
 ```
 
-By default the graph renders read-only (no drag, connect, or selection) using the same category colors, glyphs, and edge encoding as the app. Pass a full `NessoGraphFile` via `graph` instead of `nodes`/`edges` if you have one (e.g. a graph exported from the app as JSON).
+By default the graph renders read-only (no drag, connect, or selection) using the same category colors, glyphs, and edge encoding as the app. Pass a full `NessoGraphDocument` via `graph` instead of `nodes`/`edges` if you have one (e.g. JSON from `deserialize` in `@nesso-how/vocab-learning`). FSRS review fields are not in the file — embeds show an empty heatmap unless you merge review state yourself.
 
 ## Display options
 

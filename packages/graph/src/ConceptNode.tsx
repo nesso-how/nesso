@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 import { Handle, Position } from '@xyflow/react'
 import type { Node, NodeProps } from '@xyflow/react'
-import type { ConceptNodeData } from '@nesso-how/types'
+import type { ConceptNodeData } from '@nesso-how/vocab-learning'
 import { ConceptNodeBody } from './ConceptNodeBody.js'
 import { useGraphDisplay } from './context.js'
 

@@ -23,7 +23,7 @@ import { computeFitViewport } from '@/lib/fitGraphViewport'
 import { styleEdges } from '@/lib/styleEdges'
 import { getSeedInitialFitZoom } from '@/data/seedGraph'
 import { newConceptTopLeftAtFlowCenter } from '@/data/newConceptLayout'
-import type { EdgeTypeName } from '@/types/graph'
+import type { RelationTypeName } from '@/types/graph'
 
 const nodeTypes = { concept: ConceptNode }
 
@@ -53,7 +53,7 @@ export function GraphCanvas({
   const selected = useGraphStore((s) => s.selected)
   const t = useT()
 
-  const getRelationLabel = useCallback((type: EdgeTypeName) => t.relationTypes.types[type], [t])
+  const getRelationLabel = useCallback((type: RelationTypeName) => t.relationTypes.types[type], [t])
   const isItemSelected = useCallback(
     (kind: 'node' | 'edge', id: string) => selected?.kind === kind && selected.id === id,
     [selected],

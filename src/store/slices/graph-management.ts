@@ -8,9 +8,12 @@ import { isGraphId, newGraphId } from '@/lib/graphId'
 import { isDesktop } from '@/lib/isDesktop'
 import {
   graphPersistEquals,
-  graphPersistFingerprint,
-  graphPersistPayload,
+  graphContentFingerprint,
+  graphContentPayload,
+  reviewStateFingerprint,
 } from '@/lib/graphPersist'
+import { mergeReviewIntoNode } from '@/lib/graphContent'
+import { persistReviewStatesFromNodes } from '@/lib/graphMapping'
 import {
   beginSuppressWatch,
   createProjectFolder,
@@ -27,7 +30,15 @@ import {
   writeGraphRecordToWorkspace,
 } from '@/lib/workspace'
 import type { GraphRecord } from '../db'
-import { dbSaveGraph, dbLoadGraph, dbListGraphs, dbDeleteGraph, dbClearGraphs } from '../db'
+import {
+  dbSaveGraph,
+  dbLoadGraph,
+  dbListGraphs,
+  dbDeleteGraph,
+  dbClearGraphs,
+  dbDeleteReviewForGraph,
+  dbGetReviewStatesForGraph,
+} from '../db'
 import { _draggingNodeIds } from './graph-editing'
 import type { GraphMeta } from '../types'
 import type { GraphState } from '../state'
@@ -74,6 +85,102 @@ function makeSeedRecord(seed: Seed): GraphRecord {
     edges: seed.edges,
     display: seed.display,
   }
+}
+
+type SaveDirtyFlags = {
+  contentFp: string
+  reviewFp: string
+  contentDirty: boolean
+  reviewDirty: boolean
+}
+
+function saveDirtyFlags(
+  nodes: Node<ConceptNodeData>[],
+  edges: Edge[],
+  graphDisplay: GraphDisplaySettings,
+  savedFingerprint: string,
+  savedReviewFingerprint: string,
+): SaveDirtyFlags {
+  const contentFp = graphContentFingerprint(nodes, edges, graphDisplay)
+  const reviewFp = reviewStateFingerprint(nodes)
+  return {
+    contentFp,
+    reviewFp,
+    contentDirty: contentFp !== savedFingerprint,
+    reviewDirty: reviewFp !== savedReviewFingerprint,
+  }
+}
+
+async function persistContentGraphRecord(
+  currentGraphId: string,
+  nodes: Node<ConceptNodeData>[],
+  edges: Edge[],
+  graphDisplay: GraphDisplaySettings,
+  graphList: GraphMeta[],
+  settings: GraphState['settings'],
+): Promise<GraphRecord | null> {
+  const meta = graphList.find((g) => g.id === currentGraphId)
+  const existing = await dbLoadGraph(currentGraphId)
+  const contentMatchesIdb =
+    existing &&
+    graphPersistEquals(
+      { nodes, edges, display: graphDisplay },
+      {
+        nodes: existing.nodes,
+        edges: existing.edges,
+        display: mergeGraphDisplay(existing.display, settings),
+      },
+    )
+  if (contentMatchesIdb) return null
+
+  const {
+    nodes: persistNodes,
+    edges: persistEdges,
+    display,
+  } = graphContentPayload(nodes, edges, graphDisplay)
+  const now = Date.now()
+  const record: GraphRecord = {
+    id: currentGraphId,
+    name: meta?.name ?? (settings.language === 'it' ? 'Senza titolo' : 'Untitled'),
+    createdAt: existing?.createdAt ?? meta?.updatedAt ?? now,
+    updatedAt: now,
+    nodes: persistNodes,
+    edges: persistEdges,
+    display,
+  }
+  // Disk-first: the folder is the source of truth, so the write there is the
+  // commit point. Only on success do we mirror the persisted record (its name
+  // may have been de-duplicated on disk) into IDB.
+  const persisted = isDesktop() ? await writeGraphRecordToWorkspace(settings, record) : record
+  await dbSaveGraph(persisted)
+  return persisted
+}
+
+function patchAfterSaveCurrentGraph(
+  persisted: GraphRecord | null,
+  currentGraphId: string,
+  stillCurrent: boolean,
+  flags: SaveDirtyFlags,
+): (s: GraphState) => Partial<GraphState> {
+  return (s) => ({
+    ...(persisted
+      ? {
+          graphList: s.graphList.map((g) =>
+            g.id === currentGraphId
+              ? { ...g, name: persisted.name, updatedAt: persisted.updatedAt }
+              : g,
+          ),
+        }
+      : {}),
+    ...(stillCurrent
+      ? {
+          ...(flags.contentDirty
+            ? { savedFingerprint: flags.contentFp, externalFileConflict: false }
+            : {}),
+          ...(flags.reviewDirty ? { savedReviewFingerprint: flags.reviewFp } : {}),
+        }
+      : {}),
+  })
 }
 
 export interface GraphManagementSlice {
@@ -371,23 +478,27 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
       id !== s.currentGraphId &&
       !s.externalFileConflict &&
       s.graphList.some((g) => g.id === s.currentGraphId) &&
-      graphPersistFingerprint(s.nodes, s.edges, s.graphDisplay) !== s.savedFingerprint
+      (graphContentFingerprint(s.nodes, s.edges, s.graphDisplay) !== s.savedFingerprint ||
+        reviewStateFingerprint(s.nodes) !== s.savedReviewFingerprint)
     ) {
       await s.saveCurrentGraph()
     }
     const record = await dbLoadGraph(id)
     if (!record) return
     _draggingNodeIds.clear()
+    const reviews = await dbGetReviewStatesForGraph(id)
+    const nodes = record!.nodes.map((n) => mergeReviewIntoNode(n, reviews.get(n.id)))
     const graphDisplay = mergeGraphDisplay(record!.display, get().settings)
-    const fp = graphPersistFingerprint(record!.nodes, record!.edges, graphDisplay)
+    const fp = graphContentFingerprint(nodes, record!.edges, graphDisplay)
     set((s) => ({
       currentGraphId: record!.id,
-      nodes: record!.nodes,
+      nodes,
       edges: record!.edges,
       graphDisplay,
       selected: null,
       loadedToken: s.loadedToken + 1,
       savedFingerprint: fp,
+      savedReviewFingerprint: reviewStateFingerprint(nodes),
       externalFileConflict: false,
       _history: [],
       _future: [],
@@ -397,62 +508,38 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
   saveCurrentGraph: async () => {
     if (get().externalFileConflict || _switchingProject || _suppressOutgoingSave) return
     const { currentGraphId, nodes, edges, graphList, graphDisplay, settings, loadedToken } = get()
-    const fp = graphPersistFingerprint(nodes, edges, graphDisplay)
-    // Nothing persistable changed since the last save/load — skip the IDB read
-    // and the double serialization below.
-    if (fp === get().savedFingerprint) return
-    const meta = graphList.find((g) => g.id === currentGraphId)
-    const existing = await dbLoadGraph(currentGraphId)
-    if (
-      existing &&
-      graphPersistEquals(
-        { nodes, edges, display: graphDisplay },
-        {
-          nodes: existing.nodes,
-          edges: existing.edges,
-          display: mergeGraphDisplay(existing.display, settings),
-        },
-      )
-    ) {
-      return
-    }
-    const {
-      nodes: persistNodes,
-      edges: persistEdges,
-      display,
-    } = graphPersistPayload(nodes, edges, graphDisplay)
-    const now = Date.now()
-    const record: GraphRecord = {
-      id: currentGraphId,
-      name: meta?.name ?? (settings.language === 'it' ? 'Senza titolo' : 'Untitled'),
-      createdAt: existing?.createdAt ?? meta?.updatedAt ?? now,
-      updatedAt: now,
-      nodes: persistNodes,
-      edges: persistEdges,
-      display,
-    }
-    // Disk-first: the folder is the source of truth, so the write there is the
-    // commit point. Only on success do we mirror the persisted record (its name
-    // may have been de-duplicated on disk) into IDB. If the disk write fails, IDB
-    // and the in-memory state stay untouched — the only possible divergence is
-    // "IDB behind disk", which is always recoverable by reloading from disk.
-    const persisted = isDesktop() ? await writeGraphRecordToWorkspace(settings, record) : record
-    await dbSaveGraph(persisted)
-    // `fp` from above equals the persisted payload's fingerprint (selection is
-    // stripped by graphPersistFingerprint either way).
+    const flags = saveDirtyFlags(
+      nodes,
+      edges,
+      graphDisplay,
+      get().savedFingerprint,
+      get().savedReviewFingerprint,
+    )
+    // Nothing persistable changed since the last save/load.
+    if (!flags.contentDirty && !flags.reviewDirty) return
+
+    // Personal review (FSRS) state is its own sink: persist it to the review
+    // store without rewriting the shared content file, so a review-only change
+    // never churns disk (and stays private when a folder is shared).
+    if (flags.reviewDirty) await persistReviewStatesFromNodes(currentGraphId, nodes)
+
+    const persisted = flags.contentDirty
+      ? await persistContentGraphRecord(
+          currentGraphId,
+          nodes,
+          edges,
+          graphDisplay,
+          graphList,
+          settings,
+        )
+      : null
+
     // The current graph may have changed while awaiting the disk/IDB writes —
     // the graphList bump for the saved graph is still valid, but the
-    // per-current-graph fields must not leak onto the newly loaded graph.
+    // per-current-graph fingerprints must not leak onto the newly loaded graph.
     const stillCurrent =
       get().currentGraphId === currentGraphId && get().loadedToken === loadedToken
-    set((s) => ({
-      graphList: s.graphList.map((g) =>
-        g.id === currentGraphId
-          ? { ...g, name: persisted.name, updatedAt: persisted.updatedAt }
-          : g,
-      ),
-      ...(stillCurrent ? { savedFingerprint: fp, externalFileConflict: false } : {}),
-    }))
+    set(patchAfterSaveCurrentGraph(persisted, currentGraphId, stillCurrent, flags))
   },
 
   createGraph: async (name) => {
@@ -483,7 +570,7 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
       edges: [],
       graphDisplay: display,
       selected: null,
-      savedFingerprint: graphPersistFingerprint([], [], display),
+      savedFingerprint: graphContentFingerprint([], [], display),
       _history: [],
       _future: [],
     }))
@@ -498,15 +585,21 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
     const existing = await dbListGraphs()
     const peerNames = existing.filter((r) => r.id !== graphId).map((r) => r.name)
     const graphName = uniqueGraphNameAmong(name.trim() || 'Untitled', peerNames)
+    const {
+      nodes: persistNodes,
+      edges: persistEdges,
+      display: persistDisplay,
+    } = graphContentPayload(nodes, edges, graphDisplay)
     const record: GraphRecord = {
       id: graphId,
       name: graphName,
       createdAt: now,
       updatedAt: now,
-      nodes,
-      edges,
-      display: graphDisplay,
+      nodes: persistNodes,
+      edges: persistEdges,
+      display: persistDisplay,
     }
+    await persistReviewStatesFromNodes(graphId, nodes)
     const persisted = isDesktop()
       ? await writeGraphRecordToWorkspace(get().settings, record)
       : record
@@ -524,7 +617,7 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
         edges,
         graphDisplay,
         selected: null,
-        savedFingerprint: graphPersistFingerprint(nodes, edges, graphDisplay),
+        savedFingerprint: graphContentFingerprint(nodes, edges, graphDisplay),
         _history: [],
         _future: [],
       }
@@ -547,6 +640,7 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
 
   deleteGraph: async (id) => {
     await dbDeleteGraph(id)
+    await dbDeleteReviewForGraph(id)
     if (isDesktop()) {
       await removeGraphFromWorkspace(get().settings, id)
     }

@@ -15,15 +15,16 @@ import type {
   OnConnectEnd,
   OnMoveEnd,
 } from '@xyflow/react'
-import type { NessoGraphFile } from '@nesso-how/formats'
-import type { EdgeTypeName } from '@nesso-how/vocab-learning'
 import type {
+  RelationTypeName,
   ConceptNodeData,
-  NessoEdgeData,
-  GraphDisplaySettings,
+  NessoGraphDocument,
+  NessoGraphDocumentInput,
   CategoryPalette,
-} from '@nesso-how/types'
+} from '@nesso-how/vocab-learning'
+import type { NessoEdgeData, GraphDisplaySettings } from './display.js'
 import { GraphDisplayContext, type CategoryColorMode } from './context.js'
+import { documentToRenderGraph } from './documentToRenderGraph.js'
 import { ConceptNode } from './ConceptNode.js'
 import { NessoEdge } from './NessoEdge.js'
 
@@ -57,7 +58,11 @@ type PassthroughKeys =
   | 'zoomOnScroll'
 
 export interface NessoGraphProps {
-  // Data — provide either a NessoGraphFile or nodes+edges directly.
+  // Data — provide either a NessoGraphDocument or nodes+edges directly.
+  //
+  // `graph` — document input; converted via `documentToRenderGraph`. Without
+  // `onNodesChange`, React Flow runs uncontrolled from the converted nodes/edges
+  // (good for decorative embeds). Pass `onNodesChange` to own positions in your store.
   //
   // `nodes`/`edges` put ReactFlow in *controlled* mode: you own the state and must
   // also pass `onNodesChange`/`onEdgesChange` to apply drag/selection updates back —
@@ -66,7 +71,7 @@ export interface NessoGraphProps {
   // `defaultNodes`/`defaultEdges` put it in *uncontrolled* mode: ReactFlow seeds its
   // internal state from them once and manages drag/selection itself — no wiring
   // needed, the right choice for decorative or one-off embeds (e.g. docs previews).
-  graph?: NessoGraphFile
+  graph?: NessoGraphDocument | NessoGraphDocumentInput
   nodes?: Node[]
   defaultNodes?: Node[]
   edges?: Edge[]
@@ -77,7 +82,7 @@ export interface NessoGraphProps {
   palette?: CategoryPalette
   /** `palette` (default) for embeds; `css` when `--cat-*` vars are set on the page. */
   categoryColorMode?: CategoryColorMode
-  getRelationLabel?: (type: EdgeTypeName) => string
+  getRelationLabel?: (type: RelationTypeName) => string
   isItemSelected?: (kind: 'node' | 'edge', id: string) => boolean
 
   // Node/edge types — override for app-specific interactivity (e.g. inline edit).
@@ -160,32 +165,35 @@ export function NessoGraph({
   onDoubleClick,
   children,
 }: NessoGraphProps) {
-  const controlledNodes = nodesProp ?? graph?.nodes
-  const controlledEdges = (edgesProp ?? graph?.edges) as Edge<NessoEdgeData>[] | undefined
+  const rendered = graph ? documentToRenderGraph(graph) : undefined
+  const graphDisplay = rendered?.display
 
-  // Controlled (`nodes`/`graph`) takes precedence; otherwise fall back to ReactFlow's
-  // own uncontrolled mode via `defaultNodes`/`defaultEdges` — see prop docs above.
-  const nodesProps =
-    controlledNodes !== undefined
-      ? { nodes: controlledNodes }
-      : { defaultNodes: defaultNodes ?? [] }
-  const edgesProps =
-    controlledEdges !== undefined
-      ? { edges: controlledEdges }
-      : { defaultEdges: defaultEdges ?? [] }
+  // `graph` alone → uncontrolled (React Flow owns drag/selection). With `onNodesChange` /
+  // explicit `nodes`, or `nodesProp` without `graph`, use controlled mode instead.
+  const nodeControlled =
+    nodesProp !== undefined || (rendered !== undefined && onNodesChange !== undefined)
+  const edgeControlled =
+    edgesProp !== undefined || (rendered !== undefined && onEdgesChange !== undefined)
+
+  const nodesProps = nodeControlled
+    ? { nodes: nodesProp ?? rendered?.nodes ?? [] }
+    : { defaultNodes: defaultNodes ?? rendered?.nodes ?? [] }
+  const edgesProps = edgeControlled
+    ? { edges: (edgesProp ?? rendered?.edges ?? []) as Edge<NessoEdgeData>[] }
+    : { defaultEdges: defaultEdges ?? rendered?.edges ?? [] }
 
   const ctx = useMemo(
     () => ({
-      edgeEncoding: display?.edgeEncoding ?? graph?.display?.edgeEncoding ?? 'full',
-      showHeatmap: display?.showHeatmap ?? graph?.display?.showHeatmap ?? true,
-      curveStyle: display?.curveStyle ?? graph?.display?.curveStyle ?? 'arc',
-      autoCurveFlip: display?.autoCurveFlip ?? graph?.display?.autoCurveFlip ?? true,
+      edgeEncoding: display?.edgeEncoding ?? graphDisplay?.edgeEncoding ?? 'full',
+      showHeatmap: display?.showHeatmap ?? graphDisplay?.showHeatmap ?? true,
+      curveStyle: display?.curveStyle ?? graphDisplay?.curveStyle ?? 'arc',
+      autoCurveFlip: display?.autoCurveFlip ?? graphDisplay?.autoCurveFlip ?? true,
       palette,
       categoryColorMode,
       getRelationLabel,
       isItemSelected,
     }),
-    [display, graph?.display, palette, categoryColorMode, getRelationLabel, isItemSelected],
+    [display, graphDisplay, palette, categoryColorMode, getRelationLabel, isItemSelected],
   )
 
   return (

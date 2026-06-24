@@ -1,7 +1,7 @@
 {
   "name": "@nesso-how/graph",
   "version": "0.1.0-alpha.34",
-  "description": "Embeddable read-only Nesso knowledge graph React component",
+  "description": "Embeddable Nesso knowledge graph React component (read-only by default)",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -25,9 +25,7 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "@nesso-how/formats": "workspace:*",
-    "@nesso-how/vocab-learning": "workspace:*",
-    "@nesso-how/types": "workspace:*"
+    "@nesso-how/vocab-learning": "workspace:*"
   },
   "peerDependencies": {
     "@xyflow/react": "^12.6.4",

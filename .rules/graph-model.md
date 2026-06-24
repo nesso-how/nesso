@@ -2,7 +2,7 @@
 
 ## Vocabulary and graph files
 
-Nesso graphs are built with a declared **vocabulary** — a self-contained package of relation types, semantic coefficients, display parameters, and private node parameters. The first vocabulary is the **Nesso Learning Vocabulary** (`@nesso-how/vocab-learning`), exported as `VOCABULARY`:
+Nesso graphs are built with a declared **vocabulary** — a self-contained package of relation types, type properties, display settings, and private node parameters. The first vocabulary is the **Nesso Learning Vocabulary** (`@nesso-how/vocab-learning`), exported as `VOCABULARY`:
 
 ```ts
 const VOCABULARY = {
@@ -13,22 +13,34 @@ const VOCABULARY = {
 }
 ```
 
-Graph JSON files (`NessoGraphFile` in `@nesso-how/formats`) declare which vocabulary they use, pinning both its `id` and normative `version` so a file stays interpretable across vocabulary revisions. The envelope schema version is owned by the formats package as `GRAPH_FORMAT_VERSION` — callers pass `NessoGraphFileInput` (no `version` field); `serializeGraph` injects it.
+Graph JSON files (`NessoGraphDocument` from `@nesso-how/vocab-learning`) declare which vocabulary they use, pinning both its `id` and normative `version` so a file stays interpretable across vocabulary revisions. The envelope schema version is owned by `@nesso-how/schema` as `GRAPH_FORMAT_VERSION` — callers pass input **without** `version`; `serialize` injects it.
 
 ```ts
-interface NessoGraphFile {
+interface NessoGraphDocument {
   version: typeof GRAPH_FORMAT_VERSION // envelope schema version (the file format)
   vocabulary?: { id: string; version: string } // e.g. { id: '@nesso-how/vocab-learning', version: '0.1.0' }
   name: string
-  nodes: Node[]
-  edges: Edge[]
-  display?: Partial<GraphDisplaySettings>
+  concepts: Array<{
+    id: string
+    label: string
+    x: number
+    y: number
+    data?: { elaboration?: ConceptElaboration }
+  }>
+  relations: Array<{
+    id: string
+    source: string
+    target: string
+    type?: RelationTypeName
+    data?: { curveFlip?: boolean; curveFlipPinned?: boolean }
+  }>
+  meta?: { display: Partial<GraphDisplaySettings> }
   id?: string
   updatedAt?: number
 }
 ```
 
-Two version axes, deliberately separate: `version` is the **envelope shape** (gated by `deserializeGraph`), `vocabulary.version` is the **semantic vocabulary** (`VOCABULARY.version`, independent of the npm package version). `@nesso-how/formats` is vocabulary-agnostic: it round-trips the `vocabulary` reference and validates structure only, never inspecting the vocabulary's contents. Vocabulary-specific normalization (filling or resetting private params) happens in the app via `src/data/conceptNodes.ts`.
+Two version axes, deliberately separate: `version` is the **envelope shape** (gated by `deserialize` in schema), `vocabulary.version` is the **semantic vocabulary** (`VOCABULARY.version`, independent of the npm package version). `@nesso-how/schema` is vocabulary-agnostic: it round-trips `concepts`/`relations` with opaque `data` and validates structure only. `@nesso-how/vocab-learning` closes the generics and validates `relation.type`. **FSRS fields are not in the file** — they live in the app’s IndexedDB `reviewState` store (keyed `${graphId}:${nodeId}`) and merge at load via `documentToGraph`.
 
 ## Node data (`ConceptNodeData`)
 
@@ -52,11 +64,11 @@ interface ConceptNodeData extends LearningNodeParams {
 }
 ```
 
-`LearningNodeParams` and `defaultConceptReviewFields()` are defined in `@nesso-how/vocab-learning` (the vocabulary) and re-exported through `@nesso-how/types` / `src/types/graph.ts`. Use `nodeToCard()` to build a ts-fsrs `Card` from persisted fields.
+`LearningNodeParams` and `defaultConceptReviewFields()` are defined in `@nesso-how/vocab-learning`. At runtime, `ConceptNodeData` still carries FSRS on each node for ReviewMode; persistence splits content (file) from review (`reviewState` in IndexedDB). Use `nodeToCard()` (app, `src/types/settings.ts`) to build a ts-fsrs `Card` from persisted fields.
 
-## Edge categories and relation types
+## Relation categories and types
 
-All edges carry a `data.type: EdgeTypeName`. Relation definitions (`RELATION_TYPES`) and category copy (`RELATION_CATEGORY_META`) live in `@nesso-how/vocab-learning`; UI palette bindings (`RELATION_CATEGORIES`) merge meta with CSS vars in `src/data/relationTypes.ts`.
+All canvas edges carry a `data.type: RelationTypeName` (the semantic relation id; on disk the same value lives on `GraphRelation.type`). Relation definitions (`RELATION_TYPES`) and the ordered category list (`RELATION_CATEGORIES`) live in `@nesso-how/vocab-learning`; category labels/subtitles live in i18n; UI palette bindings (`RELATION_CATEGORY_COLORS`) map category ids to CSS vars in `src/data/relationTypes.ts`.
 
 The set has **52 types in 8 categories**. Asymmetric relations come in **inverse pairs** so traversal in either direction is first-class.
 
@@ -71,25 +83,25 @@ The set has **52 types in 8 categories**. Asymmetric relations come in **inverse
 | `similarity` | `similar-to`, `analogous-to`                                                                          | self (symmetric)                                                                                                                     |
 | `epistemic`  | `supports`, `explains`, `defines`, `contradicts`                                                      | `supported-by`, `explained-by`, `defined-by`; `contradicts` is self (symmetric)                                                      |
 
-## `EdgeTypeDef` schema
+## `RelationTypeDef` schema
 
 Each definition has:
 
-- `cat: EdgeCategory` — which category it belongs to
+- `cat: RelationCategory` — which category it belongs to
 - `label: string` — human-readable label
 - `line: 'solid' | 'dashed' | 'dotted' | 'double' | 'wavy'` — stroke style
 - `glyph: GlyphKind` — SVG icon at the target end
 - `transitive: 'Y' | 'N' | 'weak'` — `weak` = transitivity with decay; algorithms may discount per step
-- `inverse: EdgeTypeName | 'self'` — canonical inverse in the set; `'self'` for symmetric types (`contrasts-with`, `opposite-of`, `similar-to`, `analogous-to`, `contradicts`, `overlaps-with`)
+- `inverse: RelationTypeName | 'self'` — canonical inverse in the set; `'self'` for symmetric types (`contrasts-with`, `opposite-of`, `similar-to`, `analogous-to`, `contradicts`, `overlaps-with`)
 - `strength: number` — per-type semantic weight in `0..1`. Intensity, not per-edge confidence (there is no per-edge override). Distinct types may differ by strength alone (e.g. `prevents` 0.85 vs `inhibits` 0.55).
 - `polarity: -1 | 0 | 1` — signed-network polarity: `+1` positive effect, `-1` antagonistic, `0` neutral/structural
 - `cardinality: '1-1' | '1-N' | 'N-1' | 'N-N'` — expected mapping pattern; `N-N` = no a-priori constraint
 
-These coefficients exist to drive future graph-analysis and graph-comparison algorithms; they are studied at the type level, not assigned per edge.
+These properties exist to drive future graph-analysis and graph-comparison algorithms; they are studied at the type level, not assigned per edge.
 
 ## Visual encoding
 
-`NessoEdge` renders each edge according to its `EdgeTypeDef`. The amount of visual information shown depends on the `edgeEncoding` setting:
+`NessoEdge` renders each edge according to its `RelationTypeDef`. The amount of visual information shown depends on the `edgeEncoding` setting:
 
 - `full` — category colour + per-type line style + glyph + arrowhead + always-on label
 - `category` — same as `full` (colour, line style, glyph, arrowhead) but the label shows only on hover/selection

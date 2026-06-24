@@ -2,7 +2,7 @@
 
 ## TypeScript
 
-- Shared graph types are defined in `@nesso-how/types` and re-exported via `src/types/graph.ts`; store-only types (e.g. `Selection`) live in `src/store/types.ts`. Do not scatter type definitions across component files.
+- Shared graph types are distributed across packages and re-exported via `src/types/graph.ts` (facade: vocab-learning + graph display types + app settings); store-only types (e.g. `Selection`) live in `src/store/types.ts`. Do not scatter type definitions across component files.
 - Prefer explicit return types on exported functions and hooks.
 - Use `import type` for type-only imports.
 
@@ -21,7 +21,7 @@
 
 - Components: PascalCase, one per file, filename matches component name.
 - Store selectors: `<noun>Selector` suffix, exported from `store/index.ts`.
-- Relation type constants: `RELATION_TYPES` + `RELATION_CATEGORY_META` (`@nesso-how/vocab-learning`); `RELATION_CATEGORIES` merges meta with `color: var(--cat-<category>)` in `data/relationTypes.ts`.
+- Relation type constants: `RELATION_TYPES` + `RELATION_CATEGORIES` (`@nesso-how/vocab-learning`); `RELATION_CATEGORY_COLORS` maps category ids to `color: var(--cat-<category>)` in `data/relationTypes.ts`; labels/subtitles in i18n.
 
 ## Imports
 
