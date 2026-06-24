@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  RELATION_CATEGORIES,
+  RELATION_CATEGORY_COLORS,
   RELATION_TYPES,
   isPrimaryRelationType,
   buildRelationGroups,
 } from '@/data/relationTypes'
 import { frequentRelationTypes } from '@/data/relationUsage'
 import { useGraphStore } from '@/store'
-import type { EdgeTypeName } from '@/types/graph'
+import type { RelationTypeName } from '@/types/graph'
 import { useT } from '@/i18n'
 
 interface Props {
@@ -16,7 +16,7 @@ interface Props {
   screenY: number
   fromText: string
   toText: string
-  onPick: (type: EdgeTypeName) => void
+  onPick: (type: RelationTypeName) => void
   onCancel: () => void
 }
 
@@ -26,10 +26,10 @@ function RelationChip({
   label,
   onPick,
 }: {
-  id: EdgeTypeName
+  id: RelationTypeName
   color: string
   label: string
-  onPick: (type: EdgeTypeName) => void
+  onPick: (type: RelationTypeName) => void
 }) {
   return (
     <button
@@ -192,7 +192,7 @@ export function RelationPicker({ screenX, screenY, fromText, toText, onPick, onC
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
                   {frequentTypes.map((id) => {
                     const cat = RELATION_TYPES[id].cat
-                    const color = RELATION_CATEGORIES[cat].color
+                    const color = RELATION_CATEGORY_COLORS[cat].color
                     return (
                       <RelationChip
                         key={id}

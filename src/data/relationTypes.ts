@@ -2,35 +2,34 @@
 import {
   RELATION_TYPES,
   RELATION_TYPE_VALUES,
-  RELATION_CATEGORY_META,
+  RELATION_CATEGORIES,
   isPrimaryRelationType,
-  type EdgeCategory,
-  type EdgeTypeName,
+  type RelationCategory,
+  type RelationTypeName,
+  type RelationTypeDef,
 } from '@nesso-how/vocab-learning'
 
 export { RELATION_TYPES, RELATION_TYPE_VALUES, isPrimaryRelationType }
 
 /** Coerce persisted / React Flow edge `data.type` to a known relation id. */
-export function asEdgeTypeName(value: unknown, fallback: EdgeTypeName = 'causes'): EdgeTypeName {
-  return typeof value === 'string' && value in RELATION_TYPES ? (value as EdgeTypeName) : fallback
+export function asRelationTypeName(
+  value: unknown,
+  fallback: RelationTypeName = 'causes',
+): RelationTypeName {
+  return typeof value === 'string' && value in RELATION_TYPES
+    ? (value as RelationTypeName)
+    : fallback
 }
 
-export const RELATION_CATEGORIES = Object.fromEntries(
-  (Object.keys(RELATION_CATEGORY_META) as EdgeCategory[]).map((cat) => [
-    cat,
-    {
-      ...RELATION_CATEGORY_META[cat],
-      color: `var(--cat-${cat})`,
-    },
-  ]),
-) as Record<EdgeCategory, { label: string; subtitle: string; color: string }>
+/** Category id → CSS palette var for canvas/UI chrome. Labels live in i18n. */
+export const RELATION_CATEGORY_COLORS = Object.fromEntries(
+  RELATION_CATEGORIES.map((cat) => [cat, { color: `var(--cat-${cat})` }]),
+) as Record<RelationCategory, { color: string }>
 
-type RelationCategoryInfo = (typeof RELATION_CATEGORIES)[EdgeCategory]
-type RelationTypeDef = (typeof RELATION_TYPES)[EdgeTypeName]
-
-export interface RelationGroup extends RelationCategoryInfo {
-  key: EdgeCategory
-  types: [EdgeTypeName, RelationTypeDef][]
+export interface RelationGroup {
+  key: RelationCategory
+  color: string
+  types: [RelationTypeName, RelationTypeDef][]
 }
 
 /**
@@ -39,15 +38,13 @@ export interface RelationGroup extends RelationCategoryInfo {
  * picker and the relation-types reference dialog.
  */
 export function buildRelationGroups(
-  keep: (id: EdgeTypeName, def: RelationTypeDef) => boolean,
+  keep: (id: RelationTypeName, def: RelationTypeDef) => boolean,
 ): RelationGroup[] {
-  return (Object.entries(RELATION_CATEGORIES) as [EdgeCategory, RelationCategoryInfo][])
-    .map(([key, info]) => ({
-      key,
-      ...info,
-      types: (Object.entries(RELATION_TYPES) as [EdgeTypeName, RelationTypeDef][]).filter(
-        ([id, def]) => def.cat === key && keep(id, def),
-      ),
-    }))
-    .filter((g) => g.types.length > 0)
+  return RELATION_CATEGORIES.map((key) => ({
+    key,
+    color: RELATION_CATEGORY_COLORS[key].color,
+    types: (Object.entries(RELATION_TYPES) as [RelationTypeName, RelationTypeDef][]).filter(
+      ([id, def]) => def.cat === key && keep(id, def),
+    ),
+  })).filter((g) => g.types.length > 0)
 }

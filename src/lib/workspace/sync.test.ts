@@ -13,6 +13,7 @@ vi.mock('@tauri-apps/api/core', async () => (await import('@/test/fakeTauriFs'))
 import { resolveWorkspace } from '@/lib/workspace/paths'
 import { setDiskSyncCache } from '@/lib/workspace/manifest'
 import { loadProjectFromDisk, persistWorkspaceSync } from '@/lib/workspace/sync'
+import { graphDocumentJson } from '@/test/graphDocument'
 import { dbClearGraphs, dbListGraphs, dbSaveGraph, type GraphRecord } from '@/store/db'
 
 const SETTINGS = { activeProjectPath: '/proj' }
@@ -25,8 +26,8 @@ function record(id: string, name: string, updatedAt: number): GraphRecord {
   return { id, name, createdAt: updatedAt, updatedAt, nodes: [], edges: [] }
 }
 
-function writeDiskFile(filename: string, file: { id?: string; name: string; updatedAt?: number }) {
-  tauriFsState.writeFile(`/proj/${filename}`, JSON.stringify({ ...file, nodes: [], edges: [] }))
+function writeDiskFile(filename: string, file: Parameters<typeof graphDocumentJson>[0]) {
+  tauriFsState.writeFile(`/proj/${filename}`, graphDocumentJson(file))
 }
 
 function writeDiskManifest(entries: Record<string, GraphRecord & { file: string }>) {
@@ -109,12 +110,11 @@ describe('persistWorkspaceSync', () => {
     await dbSaveGraph(record(gid(1), 'Doc', 1000))
     tauriFsState.writeFile(
       '/proj/Doc.json',
-      JSON.stringify({
+      graphDocumentJson({
         id: gid(1),
         name: 'Doc',
         updatedAt: 1000,
-        nodes: [{ id: 'n1', position: { x: 0, y: 0 }, data: { text: 'hi' } }],
-        edges: [],
+        concepts: [{ id: 'n1', label: 'hi', x: 0, y: 0 }],
       }),
     )
 

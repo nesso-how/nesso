@@ -5,7 +5,7 @@ import type { StateCreator } from 'zustand'
 import {
   defaultConceptReviewFields,
   type ConceptNodeData,
-  type EdgeTypeName,
+  type RelationTypeName,
   type NessoEdgeData,
 } from '@/types/graph'
 import { CONCEPT_HANDLE_IN, CONCEPT_HANDLE_OUT } from '@/data/conceptHandles'
@@ -102,8 +102,8 @@ export interface GraphEditingSlice {
   updateNodeData: (id: string, patch: Partial<ConceptNodeData>) => void
   deleteNode: (id: string) => void
   addNode: (x?: number, y?: number) => string
-  addEdge: (source: string, target: string, type: EdgeTypeName) => string
-  updateEdgeType: (id: string, type: EdgeTypeName) => void
+  addEdge: (source: string, target: string, type: RelationTypeName) => string
+  updateEdgeType: (id: string, type: RelationTypeName) => void
   setEdgeCurveFlipMode: (id: string, mode: 'auto' | 'off' | 'on') => void
   deleteEdge: (id: string) => void
   setSelected: (sel: import('../types').Selection) => void

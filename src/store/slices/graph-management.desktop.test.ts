@@ -11,6 +11,7 @@ vi.mock('@tauri-apps/api/core', async () => (await import('@/test/fakeTauriFs'))
 vi.mock('@tauri-apps/plugin-dialog', async () => (await import('@/test/fakeTauriFs')).fakeDialogApi)
 
 import { setDiskSyncCache } from '@/lib/workspace/manifest'
+import { graphDocumentJson } from '@/test/graphDocument'
 import { dbClearGraphs, dbListGraphs, dbLoadGraph } from '@/store/db'
 import type { GraphState } from '../state'
 import { createDesktopSyncSlice } from './desktop-sync'
@@ -93,7 +94,7 @@ describe('switchProject', () => {
     tauriFsState.dirs.add('/other')
     tauriFsState.writeFile(
       '/other/Imported.json',
-      JSON.stringify({ id: gid(1), name: 'Imported', updatedAt: 1000, nodes: [], edges: [] }),
+      graphDocumentJson({ id: gid(1), name: 'Imported', updatedAt: 1000 }),
     )
 
     await s.getState().switchProject('/other')
@@ -138,12 +139,11 @@ describe('reloadActiveGraphFromDisk', () => {
 
     tauriFsState.writeFile(
       `${DEFAULT_WS}/Doc.json`,
-      JSON.stringify({
+      graphDocumentJson({
         id,
         name: 'Doc',
         updatedAt: 9_999_999_999,
-        nodes: [{ id: 'n1', position: { x: 0, y: 0 }, data: { text: 'external' } }],
-        edges: [],
+        concepts: [{ id: 'n1', label: 'external', x: 0, y: 0 }],
       }),
     )
 
@@ -237,11 +237,11 @@ describe('switchProject branches', () => {
     tauriFsState.dirs.add('/two')
     tauriFsState.writeFile(
       '/two/Old.json',
-      JSON.stringify({ id: gid(1), name: 'Old', updatedAt: 1000, nodes: [], edges: [] }),
+      graphDocumentJson({ id: gid(1), name: 'Old', updatedAt: 1000 }),
     )
     tauriFsState.writeFile(
       '/two/New.json',
-      JSON.stringify({ id: gid(2), name: 'New', updatedAt: 5000, nodes: [], edges: [] }),
+      graphDocumentJson({ id: gid(2), name: 'New', updatedAt: 5000 }),
     )
 
     await s.getState().switchProject('/two')

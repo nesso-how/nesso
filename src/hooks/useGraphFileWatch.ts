@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 import { useEffect, useRef } from 'react'
 import { useGraphStore } from '@/store'
-import { graphPersistFingerprint } from '@/lib/graphPersist'
+import { graphContentFingerprint } from '@/lib/graphPersist'
 import { dbDeleteGraph, dbListGraphs, dbSaveGraph } from '@/store/db'
 import { isDesktop } from '@/lib/isDesktop'
 import {
@@ -129,7 +129,7 @@ export function useGraphFileWatch() {
         const changedFromDisk = new Set(toPersist.map((r) => r.id))
         if (!changedFromDisk.has(fresh.currentGraphId)) return
 
-        const localFp = graphPersistFingerprint(fresh.nodes, fresh.edges, fresh.graphDisplay)
+        const localFp = graphContentFingerprint(fresh.nodes, fresh.edges, fresh.graphDisplay)
         const active = records.find((r) => r.id === fresh.currentGraphId)
         if (!active) return
 

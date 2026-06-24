@@ -1,208 +1,128 @@
 {
   "version": 1,
-  "vocabulary": { "id": "@nesso-how/vocab-learning", "version": "0.1.0" },
+  "vocabulary": {
+    "id": "@nesso-how/vocab-learning",
+    "version": "0.1.0"
+  },
   "name": "Understanding",
-  "nodes": [
+  "concepts": [
     {
       "id": "n1",
-      "type": "concept",
-      "position": {
-        "x": 330,
-        "y": 200
-      },
+      "label": "Understanding",
+      "x": 330,
+      "y": 200,
       "data": {
-        "text": "Understanding",
-        "stability": 0,
-        "difficulty": 0,
-        "reps": 0,
-        "lapses": 0,
-        "fsrsState": 0,
-        "due": 0,
-        "lastReview": 0,
-        "lastRating": 0,
         "elaboration": {
           "definition": "The active construction of meaning—connecting ideas, explaining why things work, and organizing what you know into a coherent structure, not merely holding isolated facts.",
-          "examples": "Explaining why supply and demand curves slope the way they do, not just memorizing the diagram\nConnecting Newton's laws to predict motion in a scenario you have never seen before\nTeaching a concept to someone else and revising your explanation when they get stuck"
+          "examples": "Explaining why supply and demand curves slope the way they do, not just memorizing the diagram\nConnecting Newton's laws to predict motion in a scenario you have never seen before\nTeaching a concept to someone else and revising your explanation when they get stuck",
+          "notes": ""
         }
       }
     },
     {
       "id": "n2",
-      "type": "concept",
-      "position": {
-        "x": 340,
-        "y": 40
-      },
+      "label": "Mastery",
+      "x": 340,
+      "y": 40,
       "data": {
-        "text": "Mastery",
-        "stability": 0,
-        "difficulty": 0,
-        "reps": 0,
-        "lapses": 0,
-        "fsrsState": 0,
-        "due": 0,
-        "lastReview": 0,
-        "lastRating": 0,
         "elaboration": {
           "definition": "Demonstrated competence—the ability to apply, perform, or solve reliably in context, beyond knowing that something is true.",
-          "examples": "Playing a piano piece without stopping to recall fingerings\nDebugging unfamiliar code using first principles instead of pattern-matching\nDiagnosing a case when the presentation does not match the textbook example"
+          "examples": "Playing a piano piece without stopping to recall fingerings\nDebugging unfamiliar code using first principles instead of pattern-matching\nDiagnosing a case when the presentation does not match the textbook example",
+          "notes": ""
         }
       }
     },
     {
       "id": "n3",
-      "type": "concept",
-      "position": {
-        "x": 600,
-        "y": 110
-      },
+      "label": "Knowledge",
+      "x": 600,
+      "y": 110,
       "data": {
-        "text": "Knowledge",
-        "stability": 0,
-        "difficulty": 0,
-        "reps": 0,
-        "lapses": 0,
-        "fsrsState": 0,
-        "due": 0,
-        "lastReview": 0,
-        "lastRating": 0,
         "elaboration": {
           "definition": "What you hold as true or can state—facts, definitions, propositions, and information accumulated over time.",
-          "examples": "Knowing that Paris is the capital of France\nRecalling the formula for compound interest\nListing the stages of mitosis in order"
+          "examples": "Knowing that Paris is the capital of France\nRecalling the formula for compound interest\nListing the stages of mitosis in order",
+          "notes": ""
         }
       }
     },
     {
       "id": "n4",
-      "type": "concept",
-      "position": {
-        "x": 560,
-        "y": 360
-      },
+      "label": "Inquiry",
+      "x": 560,
+      "y": 360,
       "data": {
-        "text": "Inquiry",
-        "stability": 0,
-        "difficulty": 0,
-        "reps": 0,
-        "lapses": 0,
-        "fsrsState": 0,
-        "due": 0,
-        "lastReview": 0,
-        "lastRating": 0,
         "elaboration": {
           "definition": "The deliberate pursuit of questions—examining assumptions, gathering evidence, and revising beliefs through investigation rather than accepting answers passively.",
-          "examples": "Asking what would disprove a claim before accepting it\nDesigning an experiment to test a hypothesis\nReading primary sources after a lecture to check the summary"
+          "examples": "Asking what would disprove a claim before accepting it\nDesigning an experiment to test a hypothesis\nReading primary sources after a lecture to check the summary",
+          "notes": ""
         }
       }
     },
     {
       "id": "n6",
-      "type": "concept",
-      "position": {
-        "x": 95,
-        "y": 110
-      },
+      "label": "Mind",
+      "x": 95,
+      "y": 110,
       "data": {
-        "text": "Mind",
-        "stability": 0,
-        "difficulty": 0,
-        "reps": 0,
-        "lapses": 0,
-        "fsrsState": 0,
-        "due": 0,
-        "lastReview": 0,
-        "lastRating": 0,
         "elaboration": {
           "definition": "The set of cognitive capacities—attention, working memory, long-term memory, reasoning—that together make thought and understanding possible.",
-          "examples": "Working memory limits how many ideas you can hold in relation at once\nAttention determines what gets encoded and what is filtered out\nLong-term memory stores conceptual structures that can be retrieved and extended"
+          "examples": "Working memory limits how many ideas you can hold in relation at once\nAttention determines what gets encoded and what is filtered out\nLong-term memory stores conceptual structures that can be retrieved and extended",
+          "notes": ""
         }
       }
     },
     {
       "id": "n7",
-      "type": "concept",
-      "position": {
-        "x": 120,
-        "y": 356
-      },
+      "label": "Passive consumption",
+      "x": 120,
+      "y": 356,
       "data": {
-        "text": "Passive consumption",
-        "stability": 0,
-        "difficulty": 0,
-        "reps": 0,
-        "lapses": 0,
-        "fsrsState": 0,
-        "due": 0,
-        "lastReview": 0,
-        "lastRating": 0,
         "elaboration": {
           "definition": "Taking in information without active processing—skimming headlines, scrolling feeds, or watching content without integrating it into your own model of how things work.",
-          "examples": "Reading ten article summaries and remembering none of the theses\nWatching a tutorial, feeling like you learned, then failing to apply it\nHighlighting a PDF without rewriting the ideas in your own words"
+          "examples": "Reading ten article summaries and remembering none of the theses\nWatching a tutorial, feeling like you learned, then failing to apply it\nHighlighting a PDF without rewriting the ideas in your own words",
+          "notes": ""
         }
       }
     }
   ],
-  "edges": [
+  "relations": [
     {
       "id": "e0",
       "source": "n1",
       "target": "n2",
-      "sourceHandle": "out",
-      "targetHandle": "in",
-      "type": "nesso",
-      "data": {
-        "type": "produces"
-      }
+      "type": "produces"
     },
     {
       "id": "e1",
       "source": "n1",
       "target": "n3",
-      "sourceHandle": "out",
-      "targetHandle": "in",
-      "type": "nesso",
-      "data": {
-        "type": "supported-by"
-      }
+      "type": "supported-by"
     },
     {
       "id": "e2",
       "source": "n1",
       "target": "n4",
-      "sourceHandle": "out",
-      "targetHandle": "in",
-      "type": "nesso",
-      "data": {
-        "type": "requires"
-      }
+      "type": "requires"
     },
     {
       "id": "e3",
       "source": "n1",
       "target": "n7",
-      "sourceHandle": "out",
-      "targetHandle": "in",
-      "type": "nesso",
-      "data": {
-        "type": "contrasts-with"
-      }
+      "type": "contrasts-with"
     },
     {
       "id": "e4",
       "source": "n1",
       "target": "n6",
-      "sourceHandle": "out",
-      "targetHandle": "in",
-      "type": "nesso",
-      "data": {
-        "type": "occurs-in"
-      }
+      "type": "occurs-in"
     }
   ],
-  "display": {
-    "edgeEncoding": "full",
-    "showHeatmap": false,
-    "curveStyle": "straight",
-    "autoCurveFlip": true
+  "meta": {
+    "display": {
+      "edgeEncoding": "full",
+      "showHeatmap": false,
+      "curveStyle": "straight",
+      "autoCurveFlip": true
+    }
   }
 }

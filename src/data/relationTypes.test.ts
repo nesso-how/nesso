@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from 'vitest'
-import { RELATION_TYPES, RELATION_CATEGORIES, buildRelationGroups } from './relationTypes'
+import { RELATION_TYPES, RELATION_CATEGORY_COLORS, buildRelationGroups } from './relationTypes'
 
 describe('buildRelationGroups', () => {
   it('keeps every relation type when the predicate always passes', () => {
@@ -9,7 +9,7 @@ describe('buildRelationGroups', () => {
     expect(total).toBe(Object.keys(RELATION_TYPES).length)
     for (const g of groups) {
       expect(g.types.length).toBeGreaterThan(0)
-      expect(g.color).toBe(RELATION_CATEGORIES[g.key].color)
+      expect(g.color).toBe(RELATION_CATEGORY_COLORS[g.key].color)
     }
   })
 

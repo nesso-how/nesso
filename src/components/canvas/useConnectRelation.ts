@@ -2,7 +2,7 @@
 import { useCallback, useRef, useState } from 'react'
 import type { OnConnect, OnConnectStart, OnConnectEnd } from '@xyflow/react'
 import { useGraphStore } from '@/store'
-import type { EdgeTypeName } from '@/types/graph'
+import type { RelationTypeName } from '@/types/graph'
 
 export interface PendingConnection {
   source: string
@@ -46,7 +46,7 @@ export function useConnectRelation() {
   }, [])
 
   const onPickRelation = useCallback(
-    (type: EdgeTypeName) => {
+    (type: RelationTypeName) => {
       if (!pendingConn) return
       addEdge(pendingConn.source, pendingConn.target, type)
       setPendingConn(null)

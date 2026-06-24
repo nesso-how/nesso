@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 // English locale — source of truth. All other locales must satisfy `typeof en`.
-import type { EdgeCategory, EdgeTypeName } from '@/types/graph'
+import type { RelationCategory, RelationTypeName } from '@/types/graph'
 
 const en = {
   common: {
@@ -287,7 +287,7 @@ const en = {
       opposition: { label: 'Opposition', subtitle: 'What does it contrast with?' },
       similarity: { label: 'Similarity', subtitle: 'What is it like?' },
       epistemic: { label: 'Epistemic', subtitle: 'How do we know?' },
-    } satisfies Record<EdgeCategory, { label: string; subtitle: string }>,
+    } satisfies Record<RelationCategory, { label: string; subtitle: string }>,
     types: {
       // taxonomic
       'subtype-of': 'subtype of',
@@ -349,7 +349,7 @@ const en = {
       'explained-by': 'explained by',
       defines: 'defines',
       'defined-by': 'defined by',
-    } satisfies Record<EdgeTypeName, string>,
+    } satisfies Record<RelationTypeName, string>,
     newRelation: 'New relation',
     symmetric: 'symmetric',
     dialogTitle: 'Relation types',

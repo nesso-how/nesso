@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 import { useState, useEffect, type CSSProperties } from 'react'
-import { RELATION_TYPES, RELATION_CATEGORIES, asEdgeTypeName } from '@/data/relationTypes'
+import { RELATION_TYPES, RELATION_CATEGORY_COLORS, asRelationTypeName } from '@/data/relationTypes'
 import { useGraphStore, selectedNodeSelector } from '@/store'
 import type { ConceptElaboration } from '@/types/graph'
 import { useT } from '@/i18n'
@@ -643,9 +643,9 @@ export function NodeInspector({
             {relationsOpen && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 {outgoing.map((e) => {
-                  const relationId = asEdgeTypeName(e.data?.type)
+                  const relationId = asRelationTypeName(e.data?.type)
                   const T = RELATION_TYPES[relationId]
-                  const C = RELATION_CATEGORIES[T.cat]
+                  const C = RELATION_CATEGORY_COLORS[T.cat]
                   const target = nodes.find((n) => n.id === e.target)
                   return (
                     <EdgeRow
@@ -659,9 +659,9 @@ export function NodeInspector({
                   )
                 })}
                 {incoming.map((e) => {
-                  const relationId = asEdgeTypeName(e.data?.type)
+                  const relationId = asRelationTypeName(e.data?.type)
                   const T = RELATION_TYPES[relationId]
-                  const C = RELATION_CATEGORIES[T.cat]
+                  const C = RELATION_CATEGORY_COLORS[T.cat]
                   const source = nodes.find((n) => n.id === e.source)
                   return (
                     <EdgeRow

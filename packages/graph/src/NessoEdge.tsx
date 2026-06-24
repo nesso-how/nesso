@@ -3,8 +3,8 @@ import { useState } from 'react'
 import type { Edge, EdgeProps } from '@xyflow/react'
 import { useStore } from '@xyflow/react'
 import { PALETTES, RELATION_TYPES } from '@nesso-how/vocab-learning'
-import type { EdgeCategory, EdgeTypeName } from '@nesso-how/vocab-learning'
-import type { NessoEdgeData } from '@nesso-how/types'
+import type { RelationCategory, RelationTypeName } from '@nesso-how/vocab-learning'
+import type { NessoEdgeData } from './display.js'
 import { GlyphSVG } from './GlyphSVG.js'
 import { useGraphDisplay, type NessoGraphDisplayContext } from './context.js'
 import {
@@ -16,12 +16,17 @@ import {
   rectExit,
 } from './geometry.js'
 
-function asEdgeTypeName(value: unknown, fallback: EdgeTypeName = 'causes'): EdgeTypeName {
-  return typeof value === 'string' && value in RELATION_TYPES ? (value as EdgeTypeName) : fallback
+function asRelationTypeName(
+  value: unknown,
+  fallback: RelationTypeName = 'causes',
+): RelationTypeName {
+  return typeof value === 'string' && value in RELATION_TYPES
+    ? (value as RelationTypeName)
+    : fallback
 }
 
 function categoryColor(
-  cat: EdgeCategory,
+  cat: RelationCategory,
   mode: 'palette' | 'css',
   palette: NessoGraphDisplayContext['palette'],
 ): string {
@@ -97,7 +102,7 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
   const sourceNode = useStore((s) => s.nodeLookup.get(source))
   const targetNode = useStore((s) => s.nodeLookup.get(target))
 
-  const edgeType = asEdgeTypeName(data?.type)
+  const edgeType = asRelationTypeName(data?.type)
   const T = RELATION_TYPES[edgeType]
   const color =
     edgeEncoding === 'minimal'

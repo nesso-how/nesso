@@ -18,7 +18,6 @@
     "@nesso-how/graph": "workspace:*",
     "@nesso-how/vocab-learning": "workspace:*",
     "@nesso-how/theme": "workspace:*",
-    "@nesso-how/types": "workspace:*",
     "@xyflow/react": "^12.6.4",
     "astro": "^6.4.8",
     "react": "^18.3.1",

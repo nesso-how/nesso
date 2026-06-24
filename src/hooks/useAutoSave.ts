@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 import { useEffect, useRef } from 'react'
 import { useReactFlow } from '@xyflow/react'
-import { graphPersistFingerprint } from '@/lib/graphPersist'
+import { graphContentFingerprint, reviewStateFingerprint } from '@/lib/graphPersist'
 import { useGraphStore } from '@/store'
 
 const DEBOUNCE_MS = 500
@@ -42,8 +42,11 @@ export function useAutoSave() {
       if (s.externalFileConflict) return
       // Selection-only changes recreate node/edge objects but strip out of the
       // persisted payload — skip when nothing persistable actually changed.
-      const fp = graphPersistFingerprint(s.nodes, s.edges, s.graphDisplay)
-      if (fp === s.savedFingerprint) return
+      // Review (FSRS) state is its own sink, so a review-only change still needs
+      // to schedule a save even though the content fingerprint is unchanged.
+      const contentFp = graphContentFingerprint(s.nodes, s.edges, s.graphDisplay)
+      const reviewFp = reviewStateFingerprint(s.nodes)
+      if (contentFp === s.savedFingerprint && reviewFp === s.savedReviewFingerprint) return
       s.saveViewport(s.currentGraphId, getViewport())
       void s.saveCurrentGraph()
     }, DEBOUNCE_MS)

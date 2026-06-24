@@ -3,15 +3,15 @@ title: Relation types
 description: The 52 semantic relation types across 8 categories in Nesso.
 ---
 
-In Nesso, every edge carries a **semantic type**: a named relation describing how two concepts are connected, with semantic coefficients reserved for graph-analysis algorithms (future work, no algorithm currently consumes them). The vocabulary is fixed at 52 types across 8 categories, drawn from prior work in knowledge representation, lexical semantics, temporal logic, and signed-network theory.
+In Nesso, every edge carries a **semantic type**: a named relation describing how two concepts are connected, with type properties reserved for graph-analysis algorithms (future work, no algorithm currently consumes them). The vocabulary is fixed at 52 types across 8 categories, drawn from prior work in knowledge representation, lexical semantics, temporal logic, and signed-network theory.
 
-:::note
-This set and its coefficients are a starting point. Both the types and their coefficient values will evolve as real graphs accumulate, edge cases surface, and the analysis algorithms that consume the coefficients get built out. Treat them as a considered first cut, not a final spec.
+:::note[About this vocabulary]
+These 52 relation types are one slice of `@nesso-how/vocab-learning`, which also defines node parameters (FSRS), display settings, and category palettes. Graph JSON files declare their vocabulary via `vocabulary.id` and `vocabulary.version`; the envelope format (`@nesso-how/schema`) is vocabulary-agnostic. The types and their property values are a considered first cut — both will evolve as real graphs accumulate and the analysis algorithms that consume them get built out.
 :::
 
-## Coefficients
+## Properties
 
-Each relation type declares the coefficients below. They define the contract that graph-analysis algorithms will consume; closing the enum guarantees every type comes with them, where a user-defined type would arrive without and stay analytically opaque.
+Each relation type declares the properties below. They define the contract that graph-analysis algorithms will consume; closing the enum guarantees every type comes with them, where a user-defined type would arrive without and stay analytically opaque.
 
 - **Transitive (T)**: `Y` (strict), `N` (none), or `weak` (transitivity with decay; algorithms may discount per step).
 - **Inverse (I)**: the canonical inverse type in the set; `self` for symmetric relations. Asymmetric relations declare it explicitly so traversal is first-class in both directions. The explicit-inverse design follows knowledge-graph embedding work <a id="cite-1" href="#ref-1">[1]</a>, which lists symmetry, antisymmetry, inversion, and composition as the four properties a good relation set should support.

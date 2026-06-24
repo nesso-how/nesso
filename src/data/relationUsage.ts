@@ -1,23 +1,23 @@
 // SPDX-License-Identifier: MIT
 import type { Edge } from '@xyflow/react'
-import type { EdgeTypeName } from '@/types/graph'
-import { asEdgeTypeName } from './relationTypes'
+import type { RelationTypeName } from '@/types/graph'
+import { asRelationTypeName } from './relationTypes'
 
 const MIN_EDGES_FOR_FREQUENT = 4
 const MIN_COUNT_FOR_FREQUENT = 2
 const MAX_FREQUENT = 6
 
-export function relationCountsFromEdges(edges: Edge[]): Map<EdgeTypeName, number> {
-  const counts = new Map<EdgeTypeName, number>()
+export function relationCountsFromEdges(edges: Edge[]): Map<RelationTypeName, number> {
+  const counts = new Map<RelationTypeName, number>()
   for (const edge of edges) {
-    const type = asEdgeTypeName(edge.data?.type)
+    const type = asRelationTypeName(edge.data?.type)
     counts.set(type, (counts.get(type) ?? 0) + 1)
   }
   return counts
 }
 
 /** Types used repeatedly in the current graph; empty until enough signal. */
-export function frequentRelationTypes(edges: Edge[]): EdgeTypeName[] {
+export function frequentRelationTypes(edges: Edge[]): RelationTypeName[] {
   if (edges.length < MIN_EDGES_FOR_FREQUENT) return []
 
   return [...relationCountsFromEdges(edges).entries()]

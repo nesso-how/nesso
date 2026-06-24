@@ -7,16 +7,16 @@ const fromRoot = (rel: string) => fileURLToPath(new URL(rel, import.meta.url))
 // Pure modules run in `node`; files that touch the store/React/DOM opt into
 // jsdom per-file with a `// @vitest-environment jsdom` docblock.
 //
-// Leaf packages with clean source resolution are aliased to `src` so tests run
-// against source without a build. `@nesso-how/graph` keeps the default
-// resolution (its barrel uses built `.js` paths and pulls React) and relies on
-// `dist`, which `prepare` rebuilds on every install.
+// Workspace packages are aliased to their `src` so tests run against source
+// without a build (`prepare` still rebuilds `dist` on every install for the
+// app build).
 export default defineConfig({
   resolve: {
     alias: {
       '@': fromRoot('./src'),
-      '@nesso-how/types': fromRoot('./packages/types/src/index.ts'),
+      '@nesso-how/schema': fromRoot('./packages/schema/src/index.ts'),
       '@nesso-how/vocab-learning': fromRoot('./packages/vocab-learning/src/index.ts'),
+      '@nesso-how/graph': fromRoot('./packages/graph/src/index.ts'),
       '@nesso-how/theme': fromRoot('./packages/theme/src/index.ts'),
     },
   },
@@ -42,7 +42,7 @@ export default defineConfig({
       // files in the global numbers too.
       //
       // The glob granularity is deliberate: directory floors where the whole
-      // package/folder is pure testable logic (formats, theme, the store slices,
+      // package/folder is pure testable logic (schema, theme, the store slices,
       // the workspace layer); single-file floors where a folder mixes tested
       // logic with code this layer cannot reach — `geometry.ts` (the rest of
       // `packages/graph` is React rendering only the e2e layer in #28 reaches),
@@ -59,7 +59,7 @@ export default defineConfig({
         branches: 15,
         functions: 18,
         lines: 22,
-        'packages/formats/**': {
+        'packages/schema/**': {
           statements: 95,
           branches: 90,
           functions: 86,

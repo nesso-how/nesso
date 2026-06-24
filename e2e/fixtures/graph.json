@@ -1,28 +1,27 @@
 {
+  "version": 1,
+  "vocabulary": { "id": "@nesso-how/vocab-learning", "version": "0.1.0" },
   "name": "Imported Fixture",
-  "nodes": [
+  "concepts": [
     {
       "id": "fixture-a",
-      "type": "concept",
-      "position": { "x": 0, "y": 0 },
-      "data": { "text": "Imported Alpha" }
+      "label": "Imported Alpha",
+      "x": 0,
+      "y": 0
     },
     {
       "id": "fixture-b",
-      "type": "concept",
-      "position": { "x": 240, "y": 0 },
-      "data": { "text": "Imported Beta" }
+      "label": "Imported Beta",
+      "x": 240,
+      "y": 0
     }
   ],
-  "edges": [
+  "relations": [
     {
       "id": "fixture-edge",
-      "type": "nesso",
       "source": "fixture-a",
       "target": "fixture-b",
-      "sourceHandle": "out",
-      "targetHandle": "in",
-      "data": { "type": "subtype-of" }
+      "type": "subtype-of"
     }
   ]
 }

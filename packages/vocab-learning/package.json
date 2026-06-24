@@ -24,6 +24,9 @@
     "prepublishOnly": "pnpm build",
     "dev": "tsc --watch"
   },
+  "dependencies": {
+    "@nesso-how/schema": "workspace:*"
+  },
   "devDependencies": {
     "typescript": "~5.8.3"
   }
