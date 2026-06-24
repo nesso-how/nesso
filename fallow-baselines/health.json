@@ -1,10 +1,5 @@
 {
   "finding_counts": {
-    "packages/schema/src/index.ts": {
-      "crap_moderate": {
-        "count": 1
-      }
-    },
     "packages/graph/src/ConceptNodeBody.tsx": {
       "crap_high": {
         "count": 1
@@ -153,7 +148,10 @@
       }
     },
     "src/components/dialogs/SettingsDialog.tsx": {
-      "crap_moderate": {
+      "complexity_high": {
+        "count": 1
+      },
+      "crap_high": {
         "count": 1
       }
     },
@@ -220,8 +218,11 @@
       }
     },
     "src/components/layout/StatusBar.tsx": {
+      "crap_high": {
+        "count": 1
+      },
       "crap_moderate": {
-        "count": 2
+        "count": 1
       }
     },
     "src/components/layout/TopBar.tsx": {
@@ -237,10 +238,10 @@
         "count": 2
       },
       "crap_critical": {
-        "count": 2
+        "count": 3
       },
       "crap_high": {
-        "count": 3
+        "count": 2
       }
     },
     "src/components/mentor/ModelStatusBadge.tsx": {
@@ -366,10 +367,12 @@
       "complexity_moderate": {
         "count": 1
       },
-      "crap_high": {
-        "count": 1
-      },
       "crap_moderate": {
+        "count": 2
+      }
+    },
+    "src/telemetry/index.ts": {
+      "crap_high": {
         "count": 1
       }
     },
@@ -388,10 +391,11 @@
     "src/store/slices/graph-editing.ts:high impact",
     "src/lib/shortcuts.ts:complexity",
     "src/components/canvas/GraphCanvas.tsx:complexity",
+    "packages/graph/src/NessoGraph.tsx:complexity",
     "src/components/mentor/MentorPanel.tsx:complexity",
     "src/components/inspector/NodeInspector.tsx:complexity",
+    "src/components/review/ReviewMode.tsx:complexity",
     "src/components/inspector/InlineEdit.tsx:complexity",
-    "packages/graph/src/NessoGraph.tsx:complexity",
     "scripts/release.mjs:complexity"
   ]
 }

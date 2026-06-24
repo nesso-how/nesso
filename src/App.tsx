@@ -40,6 +40,9 @@ import { resolveShortcut } from './lib/shortcuts'
 import { computeSelectionPan } from './lib/selectionPan'
 import { computeFitViewport, fitCanvasSize } from './lib/fitGraphViewport'
 import { getSeedInitialFitZoom } from './data/seedGraph'
+import { APP_VERSION } from './data/appInfo'
+import { isDesktop } from './lib/isDesktop'
+import { initTelemetry, shutdownTelemetry, track } from './telemetry'
 
 function AppInner() {
   const [showReview, setShowReview] = useState(false)
@@ -50,6 +53,7 @@ function AppInner() {
   const [showAbout, setShowAbout] = useState(false)
 
   const settings = useGraphStore((s) => s.settings)
+  const telemetry = settings.telemetry
   const addNode = useGraphStore((s) => s.addNode)
   const selected = useGraphStore((s) => s.selected)
   const setSelected = useGraphStore((s) => s.setSelected)
@@ -78,6 +82,30 @@ function AppInner() {
 
   useAutoSave()
   useGraphFileWatch()
+
+  useEffect(() => {
+    if (telemetry) void initTelemetry(true)
+    else void shutdownTelemetry()
+  }, [telemetry])
+
+  const appStartedRef = useRef(false)
+  useEffect(() => {
+    if (appStartedRef.current) return
+    appStartedRef.current = true
+    track({
+      name: 'app_started',
+      props: {
+        version: APP_VERSION,
+        platform: isDesktop() ? 'desktop' : 'web',
+        language: useGraphStore.getState().settings.language,
+      },
+    })
+  }, [])
+
+  const openReview = useCallback(() => {
+    track({ name: 'review_session_started' })
+    setShowReview(true)
+  }, [])
 
   const [sidebarPanelWidth, setSidebarPanelWidth] = useState(readSidebarWidth)
   useEffect(() => {
@@ -253,6 +281,7 @@ function AppInner() {
     // Prevent the viewport-restore effect from overriding our setCenter below.
     viewportRestoredFor.current = useGraphStore.getState().currentGraphId
     addNode(x, y)
+    track({ name: 'node_created' })
     setCenter(nodeCx, nodeCy, { zoom: Math.max(getViewport().zoom, 1), duration: 300 })
   }, [
     addNode,
@@ -398,7 +427,7 @@ function AppInner() {
           break
         }
         case 'open-review':
-          if (useGraphStore.getState().settings.reviewEnabled) setShowReview(true)
+          if (useGraphStore.getState().settings.reviewEnabled) openReview()
           break
         case 'add-concept':
           handleAddConcept()
@@ -423,6 +452,7 @@ function AppInner() {
     deleteSelection,
     requestEditNode,
     handleAddConcept,
+    openReview,
     fitView,
     anyModalOpen,
   ])
@@ -452,7 +482,7 @@ function AppInner() {
         sidebarCollapsed={sidebarCollapsed}
         sidebarWidth={sidebarWidth}
         onExpandSidebar={() => setSidebarCollapsed(false)}
-        onReview={() => setShowReview(true)}
+        onReview={openReview}
         onRelationTypes={() => setShowRelationTypes((s) => !s)}
         onShortcuts={() => setShowShortcuts((s) => !s)}
         onAbout={() => setShowAbout(true)}

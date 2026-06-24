@@ -8,6 +8,7 @@ import { useGraphStore } from '@/store'
 import { getT } from '@/i18n'
 import { toast } from '@/components/ui/toast'
 import { exportShareGraphJson } from '@/lib/saveJsonFile'
+import { track } from '@/telemetry'
 
 /** Serializes the active graph to JSON and triggers a file download / save dialog. */
 export async function exportGraphJson(): Promise<void> {
@@ -17,6 +18,7 @@ export async function exportGraphJson(): Promise<void> {
   const filename = `${name}.json`
   const payload = serialize(graphToDocument({ name, nodes, edges, display: graphDisplay }))
   await exportShareGraphJson(filename, payload)
+  track({ name: 'graph_exported', props: { format: 'json' } })
 }
 
 /** Renders the current React Flow viewport to a PNG and downloads it. */
@@ -67,6 +69,7 @@ export async function exportGraphPng(): Promise<void> {
     a.href = dataUrl
     a.download = `${name}.png`
     a.click()
+    track({ name: 'graph_exported', props: { format: 'png' } })
   } catch {
     /* export cancelled or unsupported */
   }
@@ -85,6 +88,7 @@ export function importGraphFile(): void {
       const name = doc.name?.trim() || file.name.replace(/\.json$/i, '')
       const { nodes, edges, display } = await documentToGraph(doc, '')
       await useGraphStore.getState().importGraph(name, nodes, edges, display, doc.id)
+      track({ name: 'graph_imported' })
     } catch {
       toast.error(getT().graphIO.importError.replace('{name}', file.name))
     }

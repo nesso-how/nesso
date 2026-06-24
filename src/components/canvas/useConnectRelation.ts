@@ -3,6 +3,7 @@ import { useCallback, useRef, useState } from 'react'
 import type { OnConnect, OnConnectStart, OnConnectEnd } from '@xyflow/react'
 import { useGraphStore } from '@/store'
 import type { RelationTypeName } from '@/types/graph'
+import { track } from '@/telemetry'
 
 export interface PendingConnection {
   source: string
@@ -49,6 +50,7 @@ export function useConnectRelation() {
     (type: RelationTypeName) => {
       if (!pendingConn) return
       addEdge(pendingConn.source, pendingConn.target, type)
+      track({ name: 'edge_created', props: { relation_type: type } })
       setPendingConn(null)
     },
     [pendingConn, addEdge],

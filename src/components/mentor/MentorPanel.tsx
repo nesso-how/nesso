@@ -11,10 +11,16 @@ import { CloseButton } from '@/components/ui/CloseButton'
 import { STATUS_BAR_HEIGHT_PX } from '@/components/layout/StatusBar'
 import { ThinkingIndicator } from './ThinkingIndicator'
 import { renderWithEmphasis } from './emphasis'
+import { track } from '@/telemetry'
 
 interface Message {
   role: 'user' | 'mentor'
   text: string
+}
+
+/** Coarse failure category for telemetry: a fetch network/CORS failure throws TypeError; an HTTP error does not. */
+function mentorFailureReason(err: unknown): 'network' | 'response' {
+  return err instanceof TypeError ? 'network' : 'response'
 }
 
 function appendToLastMentor(history: Message[], delta: string): Message[] {
@@ -249,8 +255,11 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
           setHistory([{ role: 'mentor', text: full || '…' }])
         }
       })
-      .catch(() => {
-        if (!controller.signal.aborted) setHistory([{ role: 'mentor', text: t.mentor.errorRetry }])
+      .catch((err) => {
+        if (!controller.signal.aborted) {
+          setHistory([{ role: 'mentor', text: t.mentor.errorRetry }])
+          track({ name: 'mentor_request_failed', props: { reason: mentorFailureReason(err) } })
+        }
       })
       .finally(() => {
         if (!controller.signal.aborted) {
@@ -289,6 +298,7 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
     setHistory(next)
     setDraft('')
     setThinking(true)
+    track({ name: 'mentor_message_sent' })
     requestAnimationFrame(() => {
       const el = scrollRef.current
       if (el) el.scrollTop = el.scrollHeight
@@ -315,9 +325,11 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
       if (!controller.signal.aborted && !started) {
         setHistory((h) => [...h, { role: 'mentor', text: full || '…' }])
       }
-    } catch {
+      if (!controller.signal.aborted) track({ name: 'mentor_response_received' })
+    } catch (err) {
       if (!controller.signal.aborted) {
         setHistory((h) => [...h, { role: 'mentor', text: t.mentor.errorRetrySlow }])
+        track({ name: 'mentor_request_failed', props: { reason: mentorFailureReason(err) } })
       }
     } finally {
       if (!controller.signal.aborted) setStreaming(false)

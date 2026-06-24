@@ -5,6 +5,7 @@ import { useT } from '@/i18n'
 import { newConceptTopLeftAtFlowCenter } from '@/data/newConceptLayout'
 import { focusFlowNodes } from '@/lib/focusFlowSelection'
 import { Icon } from '@/components/ui/icons'
+import { track } from '@/telemetry'
 
 export type ContextMenuState = {
   x: number
@@ -209,6 +210,7 @@ export function GraphContextMenu({
         onClick: () => {
           const p = newConceptTopLeftAtFlowCenter(menu.flowX ?? 0, menu.flowY ?? 0)
           addNode(p.x, p.y)
+          track({ name: 'node_created' })
         },
       },
       'sep',

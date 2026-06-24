@@ -7,7 +7,7 @@ import { isDesktop } from '@/lib/isDesktop'
 import { applyDesktopMenu } from '@/lib/desktopMenu'
 import { exportGraphJson, exportGraphPng, importGraphFile } from '@/lib/graphIO'
 import { focusFlowNodes } from '@/lib/focusFlowSelection'
-import { openExternal, DOCS_URL, WEBSITE_URL, REPO_URL } from '@/data/appInfo'
+import { openExternal, DOCS_URL, WEBSITE_URL, FEEDBACK_URL } from '@/data/appInfo'
 
 interface DesktopMenuHandlers {
   onSettings: () => void
@@ -79,7 +79,7 @@ export function useDesktopMenu(handlers: DesktopMenuHandlers): void {
 
       await on('docs', () => void openExternal(DOCS_URL))
       await on('website', () => void openExternal(WEBSITE_URL))
-      await on('report-issue', () => void openExternal(`${REPO_URL}/issues`))
+      await on('report-issue', () => void openExternal(FEEDBACK_URL))
 
       if (cancelled) unlistens.forEach((u) => u())
     })()

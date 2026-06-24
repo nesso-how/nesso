@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 import { useState, useRef, useEffect } from 'react'
 import { useGraphStore } from '@/store'
+import { track } from '@/telemetry'
 import { useHorizontalResize } from '@/hooks/useHorizontalResize'
 import { useT } from '@/i18n'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
@@ -110,6 +111,7 @@ export function Sidebar({
 
   const handleNew = async () => {
     const id = await createGraph(t.sidebar.untitled)
+    track({ name: 'graph_created' })
     setTimeout(() => {
       const g = useGraphStore.getState().graphList.find((x) => x.id === id)
       if (g) startRename(id, g.name)
