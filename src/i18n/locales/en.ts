@@ -25,6 +25,7 @@ const en = {
       appearance: 'Appearance',
       ai: 'AI',
       learning: 'Learning',
+      privacy: 'Privacy',
     },
     appearance: {
       theme: 'Theme',
@@ -64,6 +65,13 @@ const en = {
         corsBlocked: 'CORS blocked — set',
         unreachable: 'API unreachable',
       },
+    },
+    privacy: {
+      telemetry: 'Telemetry',
+      telemetryDesc:
+        'When enabled, Nesso sends anonymous crash reports and aggregated usage events to help improve the app. No graph content, chat, or API keys are ever sent. No IP address is collected.',
+      telemetryDetails:
+        'What we collect: crash stack traces and coarse usage signals (e.g. a node was created). What we never collect: node text, graph structure, Socrates conversations, file paths, or API keys. Legal basis: your consent. Revoke anytime with this toggle.',
     },
     learning: {
       review: 'Review',
@@ -260,6 +268,7 @@ const en = {
     zoomOutTitle: 'Zoom out',
     zoomInTitle: 'Zoom in',
     fitTitle: 'Center / fit (F)',
+    feedbackTitle: 'Send feedback',
   },
   contextMenu: {
     copy: 'Copy',

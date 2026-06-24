@@ -29,7 +29,7 @@ AI is present, but with a constrained role. The AI mentor, Socrates, does not de
 
 **Constructivist by design.** Every feature is oriented around the learner doing cognitive work: drawing edges, labelling relations, writing definitions in their own words, self-rating recall. The system does not do this work for them.
 
-**Private by architecture.** In the web app, graphs are stored locally in your browser. In the desktop app, they are also saved as plain JSON files on your machine. The local AI mode runs entirely on your device; no data leaves it. Privacy is an implementation detail, not a policy promise.
+**Private by architecture.** In the web app, graphs are stored locally in your browser. In the desktop app, they are also saved as plain JSON files on your machine. Your graph content, definitions, and Socrates conversations never leave your device unless you connect a remote AI endpoint yourself. Optional telemetry (anonymous crash reports and aggregated usage events) is off by default and opt-in from Settings, Privacy; it never includes graph content, chat, or keys. Privacy is an implementation detail, not a policy promise.
 
 **Open by default.** The code is MIT-licensed. Data formats are documented and importable/exportable as plain JSON. The MCP server makes the graph vocabulary available to any compatible client. Technical work done here is intended to be useful beyond this application.
 

@@ -9,8 +9,16 @@ import { ratingColor } from '@nesso-how/graph'
 import { useT } from '@/i18n'
 import { CloseButton } from '@/components/ui/CloseButton'
 import { ModalOverlay } from '@/components/ui/ModalOverlay'
+import { track } from '@/telemetry'
 
 const RATINGS = [Rating.Again, Rating.Hard, Rating.Good, Rating.Easy] as const
+
+const RATING_EVENT_NAMES = {
+  [Rating.Again]: 'again',
+  [Rating.Hard]: 'hard',
+  [Rating.Good]: 'good',
+  [Rating.Easy]: 'easy',
+} as const satisfies Record<(typeof RATINGS)[number], 'again' | 'hard' | 'good' | 'easy'>
 
 function formatInterval(ms: number): string {
   if (ms < 60_000) return '< 1m'
@@ -156,6 +164,10 @@ export function ReviewMode({ open, onClose }: Props) {
         lastReview: now.getTime(),
         lastRating: rating,
         learningSteps: card.learning_steps,
+      })
+      track({
+        name: 'review_card_rated',
+        props: { rating: RATING_EVENT_NAMES[rating as (typeof RATINGS)[number]] },
       })
     }
     setRevealed(false)

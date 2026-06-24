@@ -20,8 +20,8 @@ const OLLAMA_PRESETS = [
   { id: 'qwen3:8b', note: 'newest · best reasoning' },
 ] as const
 
-type Tab = 'appearance' | 'learning' | 'ai'
-const ALL_TABS = ['appearance', 'learning', 'ai'] as const
+type Tab = 'appearance' | 'learning' | 'ai' | 'privacy'
+const ALL_TABS = ['appearance', 'learning', 'ai', 'privacy'] as const
 
 const LANGUAGES: { id: Language; label: string }[] = [
   { id: 'en', label: 'English' },
@@ -465,6 +465,39 @@ export function SettingsDialog({ open, onClose }: Props) {
             )}
 
             {tab === 'learning' && <LearningSettings />}
+
+            {tab === 'privacy' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+                <SettingsFormRow divider={false} label={t.settings.privacy.telemetry}>
+                  <Switch value={settings.telemetry} onChange={(v) => setSetting('telemetry', v)} />
+                </SettingsFormRow>
+                <small
+                  style={{
+                    display: 'block',
+                    fontSize: '11px',
+                    fontWeight: 400,
+                    lineHeight: 1.5,
+                    fontFamily: 'var(--font-sans)',
+                    color: 'var(--ink-4)',
+                    marginTop: -8,
+                  }}
+                >
+                  {t.settings.privacy.telemetryDesc}
+                </small>
+                <small
+                  style={{
+                    display: 'block',
+                    fontSize: '11px',
+                    fontWeight: 400,
+                    lineHeight: 1.5,
+                    fontFamily: 'var(--font-sans)',
+                    color: 'var(--ink-4)',
+                  }}
+                >
+                  {t.settings.privacy.telemetryDetails}
+                </small>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -4,6 +4,7 @@ import { isDesktop } from '@/lib/isDesktop'
 export const APP_VERSION = __APP_VERSION__
 
 export const REPO_URL = 'https://github.com/nesso-how/nesso'
+export const FEEDBACK_URL = `${REPO_URL}/issues/new/choose`
 export const WEBSITE_URL = 'https://nesso.how'
 export const DOCS_URL = 'https://nesso.how/docs/introduction'
 export const CHANGELOG_URL = `${REPO_URL}/blob/main/CHANGELOG.md`

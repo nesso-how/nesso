@@ -27,6 +27,8 @@ export interface NessoSettings {
   knownProjects: string[]
   /** Desktop: absolute path of the active project folder; null until resolved at startup. */
   activeProjectPath: string | null
+  /** Opt-in: anonymous crash reports (Sentry) and usage events (PostHog). Default false. */
+  telemetry: boolean
 }
 
 export function nodeToCard(data: ConceptNodeData): Card {

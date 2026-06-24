@@ -25,6 +25,7 @@ const it: typeof en = {
       appearance: 'Aspetto',
       ai: 'AI',
       learning: 'Apprendimento',
+      privacy: 'Privacy',
     },
     appearance: {
       theme: 'Tema',
@@ -64,6 +65,13 @@ const it: typeof en = {
         corsBlocked: 'CORS bloccato — imposta',
         unreachable: 'API non raggiungibile',
       },
+    },
+    privacy: {
+      telemetry: 'Telemetria',
+      telemetryDesc:
+        "Quando attiva, Nesso invia report di crash anonimi e eventi d'uso aggregati per migliorare l'app. Nessun contenuto del grafo, chat o chiavi API viene mai inviato. Nessun indirizzo IP viene raccolto.",
+      telemetryDetails:
+        "Cosa raccogliamo: stack trace di crash e segnali d'uso grossolani (es. un nodo creato). Cosa non raccogliamo mai: testi dei nodi, struttura del grafo, conversazioni con Socrate, percorsi file o chiavi API. Base giuridica: il tuo consenso. Revoca in qualsiasi momento con questo interruttore.",
     },
     learning: {
       review: 'Revisione',
@@ -262,6 +270,7 @@ const it: typeof en = {
     zoomOutTitle: 'Riduci zoom',
     zoomInTitle: 'Aumenta zoom',
     fitTitle: 'Centra / adatta (F)',
+    feedbackTitle: 'Invia feedback',
   },
   contextMenu: {
     copy: 'Copia',

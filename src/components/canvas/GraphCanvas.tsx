@@ -18,6 +18,7 @@ import { useGraphContextMenu } from './useGraphContextMenu'
 import { useConnectRelation } from './useConnectRelation'
 import { RelationPicker } from '@/components/ui/RelationPicker'
 import { useT } from '@/i18n'
+import { track } from '@/telemetry'
 import { useGraphStore } from '@/store'
 import { computeFitViewport } from '@/lib/fitGraphViewport'
 import { styleEdges } from '@/lib/styleEdges'
@@ -142,6 +143,7 @@ export function GraphCanvas({
       const { x, y } = screenToFlowPosition({ x: event.clientX, y: event.clientY })
       const pos = newConceptTopLeftAtFlowCenter(x, y)
       addNode(pos.x, pos.y)
+      track({ name: 'node_created' })
     },
     [addNode, screenToFlowPosition],
   )

@@ -48,7 +48,7 @@ docs/                 # Starlight docs site, published at nesso.how/docs
 - **Node** — a `ConceptNode` with `text` and FSRS fields (`stability`, `difficulty`, `reps`, `lapses`, `fsrsState`, `due`, `lastReview`, `lastRating`, `learningSteps`) for spaced repetition at runtime (`ts-fsrs`). FSRS is persisted in IndexedDB `reviewState`, not in graph JSON files.
 - **Edge** — a React Flow edge of type `'nesso'`, carrying `data.type: RelationTypeName` (semantic relation id; serialized as `GraphRelation.type` in graph JSON).
 - **Selection** — a single `{ kind: 'node' | 'edge', id }` (or `null`) tracked in the store (`src/store/types.ts`). Drives the Inspector and Socrates opening prompt.
-- **Settings** — `NessoSettings` in the store (dark mode, language, encoding, palette, AI endpoint fields, etc.). Applied via CSS custom properties on `<html>` where relevant.
+- **Settings** — `NessoSettings` in the store (dark mode, language, encoding, palette, AI endpoint fields, `telemetry` opt-in, etc.). Applied via CSS custom properties on `<html>` where relevant.
 
 ## Detailed rules index
 

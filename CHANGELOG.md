@@ -6,6 +6,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- **Opt-in telemetry:** Settings → **Privacy** adds a telemetry toggle (default off). When enabled, Nesso sends anonymous crash reports (Sentry) and coarse usage events (PostHog, EU region) — no graph content, Socrates chat, file paths, or API keys. Release builds pick up `VITE_SENTRY_DSN` / `VITE_POSTHOG_KEY` from repo secrets; local dev works without them.
+- **Feedback shortcut:** Status bar button opens GitHub issue chooser for user feedback.
+
+### Changed
+
+- **Docs — privacy:** Introduction page clarifies that graph data stays local and telemetry is opt-in.
+
 ## [0.1.0-alpha.35] - 2026-06-24
 
 ### Added
