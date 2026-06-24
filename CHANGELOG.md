@@ -6,6 +6,22 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.0-alpha.35] - 2026-06-24
+
+### Added
+
+- **`@nesso-how/schema` package:** Vocabulary-agnostic graph document envelope (`GRAPH_FORMAT_VERSION`, serialize/deserialize, structural validation). Learning-specific validation (relation catalog, concept params) lives in `@nesso-how/vocab-learning` via `NessoGraphDocument`.
+
+### Changed
+
+- **Graph document model:** Graph JSON files now persist as `concepts`/`relations` (replacing the old `nodes`/`edges` shape). React Flow state is mapped at load/save through `graphDocumentMapping` / `documentToRenderGraph`. Shared graph files no longer carry FSRS fields — review progress persists in a separate IndexedDB `reviewState` store with independent content/review fingerprints, fixing review-only autosave.
+- **Strict deserialize validation:** Unknown relation types and structural issues on concepts/relations are rejected at the trust boundary in `schema` + `vocab-learning` (closes #20).
+- **Relation naming:** `Edge*` types renamed to `Relation*`; `RELATION_CATEGORY_META` dropped in favour of `RELATION_CATEGORIES`. `@nesso-how/graph` embed mode is now uncontrolled via a `graph` prop.
+
+### Removed
+
+- **`@nesso-how/types` and `@nesso-how/formats`:** Superseded by `@nesso-how/schema` and the expanded `@nesso-how/vocab-learning` package.
+
 ## [0.1.0-alpha.34] - 2026-06-23
 
 ### Changed
@@ -588,7 +604,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial alpha: interactive knowledge graph (web + Tauri v2); desktop installers on GitHub Releases (macOS Apple silicon and Intel).
 
-[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.34...HEAD
+[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.35...HEAD
+[0.1.0-alpha.35]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.34...v0.1.0-alpha.35
 [0.1.0-alpha.34]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.33...v0.1.0-alpha.34
 [0.1.0-alpha.33]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.32...v0.1.0-alpha.33
 [0.1.0-alpha.32]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.31...v0.1.0-alpha.32
