@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.0-alpha.36] - 2026-06-24
+
 ### Added
 
 - **Opt-in telemetry:** Settings → **Privacy** adds a telemetry toggle (default off). When enabled, Nesso sends anonymous crash reports (Sentry) and coarse usage events (PostHog, EU region) — no graph content, Socrates chat, file paths, or API keys. Release builds pick up `VITE_SENTRY_DSN` / `VITE_POSTHOG_KEY` from repo secrets; local dev works without them.
@@ -613,7 +615,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial alpha: interactive knowledge graph (web + Tauri v2); desktop installers on GitHub Releases (macOS Apple silicon and Intel).
 
-[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.35...HEAD
+[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.36...HEAD
+[0.1.0-alpha.36]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.35...v0.1.0-alpha.36
 [0.1.0-alpha.35]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.34...v0.1.0-alpha.35
 [0.1.0-alpha.34]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.33...v0.1.0-alpha.34
 [0.1.0-alpha.33]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.32...v0.1.0-alpha.33
