@@ -1,18 +1,10 @@
 {
   "finding_counts": {
-    "packages/graph/src/ConceptNodeBody.tsx": {
-      "crap_high": {
-        "count": 1
-      }
-    },
     "packages/graph/src/NessoEdge.tsx": {
-      "complexity_critical": {
+      "complexity_high": {
         "count": 1
       },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_moderate": {
+      "crap_high": {
         "count": 1
       }
     },
@@ -21,7 +13,10 @@
         "count": 1
       },
       "crap_critical": {
-        "count": 2
+        "count": 1
+      },
+      "crap_high": {
+        "count": 1
       }
     },
     "packages/mcp/scripts/bundle-starlight-docs.mjs": {
@@ -91,10 +86,10 @@
       }
     },
     "src/components/canvas/ConceptNode.tsx": {
-      "complexity_high": {
+      "complexity_critical": {
         "count": 1
       },
-      "crap_high": {
+      "crap_critical": {
         "count": 1
       },
       "crap_moderate": {
@@ -226,10 +221,10 @@
       }
     },
     "src/components/layout/TopBar.tsx": {
-      "complexity_high": {
+      "complexity_critical": {
         "count": 1
       },
-      "crap_high": {
+      "crap_critical": {
         "count": 1
       }
     },
@@ -246,6 +241,14 @@
     },
     "src/components/mentor/ModelStatusBadge.tsx": {
       "crap_critical": {
+        "count": 1
+      }
+    },
+    "src/components/onboarding/CoachmarkOverlay.tsx": {
+      "crap_high": {
+        "count": 1
+      },
+      "crap_moderate": {
         "count": 1
       }
     },
@@ -299,6 +302,14 @@
     },
     "src/hooks/useGraphFileWatch.ts": {
       "crap_critical": {
+        "count": 1
+      },
+      "crap_moderate": {
+        "count": 2
+      }
+    },
+    "src/hooks/useOnboardingFlow.ts": {
+      "complexity_moderate": {
         "count": 1
       },
       "crap_moderate": {
@@ -389,10 +400,11 @@
   "target_keys": [
     "src/App.tsx:complexity",
     "src/store/slices/graph-editing.ts:high impact",
-    "src/lib/shortcuts.ts:complexity",
     "src/components/canvas/GraphCanvas.tsx:complexity",
+    "src/lib/shortcuts.ts:complexity",
     "packages/graph/src/NessoGraph.tsx:complexity",
     "src/components/mentor/MentorPanel.tsx:complexity",
+    "src/components/canvas/ConceptNode.tsx:complexity",
     "src/components/inspector/NodeInspector.tsx:complexity",
     "src/components/review/ReviewMode.tsx:complexity",
     "src/components/inspector/InlineEdit.tsx:complexity",

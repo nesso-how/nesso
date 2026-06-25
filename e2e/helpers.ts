@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 import { expect, type Locator, type Page } from '@playwright/test'
 
+const ZUSTAND_PERSIST_KEY = 'nesso'
+
 export function nodeByText(page: Page, text: string): Locator {
   return page.locator('.react-flow__node', { hasText: text })
 }
@@ -9,11 +11,22 @@ export const edges = (page: Page): Locator => page.locator('.react-flow__edge')
 export const nodes = (page: Page): Locator => page.locator('.react-flow__node')
 
 export async function gotoApp(page: Page): Promise<void> {
+  await page.addInitScript((key) => {
+    const raw = localStorage.getItem(key)
+    const parsed = raw ? JSON.parse(raw) : { state: {}, version: 0 }
+    parsed.state = parsed.state ?? {}
+    parsed.state.settings = {
+      ...(parsed.state.settings ?? {}),
+      onboardingCompleted: true,
+      telemetryPromptShown: true,
+    }
+    localStorage.setItem(key, JSON.stringify(parsed))
+  }, ZUSTAND_PERSIST_KEY)
   await page.goto('/')
   await expect(page.locator('.react-flow__pane')).toBeVisible()
 }
 
-/** Switch to a fresh empty graph (the demo seed loads by default) and dismiss the inline rename. */
+/** Switch to a fresh empty graph and dismiss the inline rename. */
 export async function newEmptyGraph(page: Page): Promise<void> {
   await page.getByTestId('sidebar-new-graph').click()
   await expect(nodes(page)).toHaveCount(0)
