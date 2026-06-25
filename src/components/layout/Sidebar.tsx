@@ -345,6 +345,7 @@ export function Sidebar({
                       {editingId === g.id ? (
                         <input
                           ref={inputRef}
+                          data-testid="sidebar-graph-rename"
                           value={draft}
                           onChange={(e) => setDraft(e.target.value)}
                           onBlur={commitRename}
