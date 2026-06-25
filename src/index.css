@@ -217,37 +217,19 @@ body::before {
   }
 }
 
-/* Socrates status-bar entry — soft breathing halo (mentor presence) */
-.nx-socrates-halo {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+/* Socrates avatar — warm portrait tones; hair/eyes track theme ink where it helps */
+[data-theme="light"] {
+  --mentor-avatar-skin: #f5c8a0;
+  --mentor-avatar-hair: #928678;
+  --mentor-avatar-eye: var(--ink-2);
+  --mentor-avatar-eye-highlight: var(--paper);
 }
-.nx-socrates-halo::before {
-  content: "";
-  position: absolute;
-  inset: -4px;
-  border-radius: 50%;
-  background: radial-gradient(circle, var(--highlight-soft) 40%, transparent 70%);
-  animation: nx-socrates-breathe 4.5s ease-in-out infinite;
-}
-@keyframes nx-socrates-breathe {
-  0%,
-  100% {
-    opacity: 0.35;
-    transform: scale(0.92);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.06);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .nx-socrates-halo::before {
-    animation: none;
-    opacity: 0.6;
-  }
+
+[data-theme="dark"] {
+  --mentor-avatar-skin: #ddb088;
+  --mentor-avatar-hair: #6a5f52;
+  --mentor-avatar-eye: var(--ink-5);
+  --mentor-avatar-eye-highlight: var(--ink-1);
 }
 
 /* React Flow overrides */
