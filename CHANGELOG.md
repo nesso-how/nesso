@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.0-alpha.37] - 2026-06-25
+
 ### Changed
 
 - **Socrates avatar:** Simplified portrait with warmer skin tones, softer beard, and theme-aware inline SVG in the app (status bar and mentor panel). Removed the status-bar breathing halo; landing docs icon updated to match.
@@ -619,7 +621,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial alpha: interactive knowledge graph (web + Tauri v2); desktop installers on GitHub Releases (macOS Apple silicon and Intel).
 
-[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.36...HEAD
+[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.37...HEAD
+[0.1.0-alpha.37]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.36...v0.1.0-alpha.37
 [0.1.0-alpha.36]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.35...v0.1.0-alpha.36
 [0.1.0-alpha.35]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.34...v0.1.0-alpha.35
 [0.1.0-alpha.34]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.33...v0.1.0-alpha.34

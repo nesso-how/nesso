@@ -1,6 +1,6 @@
 [package]
 name = "nesso"
-version = "0.1.0-alpha.36"
+version = "0.1.0-alpha.37"
 description = "Nesso — an app for building typed knowledge graphs for active learning (Tauri shell)"
 authors = ["Nesso contributors"]
 license = "MIT"
