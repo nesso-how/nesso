@@ -15,7 +15,7 @@ export function Switch({ value, onChange }: Props) {
       onClick={() => onChange(!value)}
       style={{
         appearance: 'none',
-        cursor: 'default',
+        cursor: 'pointer',
         padding: 0,
         position: 'relative',
         flexShrink: 0,

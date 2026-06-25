@@ -47,6 +47,8 @@ Turn on `nodesDraggable`/`nodesConnectable`/`elementsSelectable` as needed. How 
 - `nodes`/`edges` — _controlled_: you own the state and must also pass `onNodesChange`/`onEdgesChange`/`onConnect` to apply updates (e.g. the main app, where positions live in its own store).
 - `defaultNodes`/`defaultEdges` — _uncontrolled_: React Flow seeds its internal state once and manages drag/connect/selection itself — no wiring needed, the right choice for decorative or one-off embeds.
 
+When `zoomOnScroll` is off (typical for decorative embeds in a scrollable page), `NessoGraph` sets `preventScrolling` to false so the page keeps scrolling over the canvas. Override via `reactFlowProps.preventScrolling` if needed.
+
 ```tsx
 <NessoGraph
   defaultNodes={nodes}

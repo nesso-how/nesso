@@ -67,7 +67,7 @@ function FitViewOnResize() {
   return null
 }
 
-/** Decorative hero graph via @nesso-how/graph — nodes draggable, no connect UI. */
+/** Decorative hero graph via @nesso-how/graph — read-only preview, no connect UI. */
 export function HeroGraph({ labels }: { labels: HeroGraphLabels }) {
   const graph = useMemo(() => buildGraph(labels), [labels])
 
@@ -76,10 +76,10 @@ export function HeroGraph({ labels }: { labels: HeroGraphLabels }) {
       key={graphLabelsKey(labels)}
       graph={graph}
       display={{ showHeatmap: false, edgeEncoding: 'full', curveStyle: 'straight' }}
-      nodesDraggable={true}
+      nodesDraggable={false}
       nodesConnectable={false}
       elementsSelectable={false}
-      panOnDrag={true}
+      panOnDrag={false}
       zoomOnScroll={false}
       fitView
       reactFlowProps={{

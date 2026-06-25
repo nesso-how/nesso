@@ -64,7 +64,7 @@ export function GraphIO({ onRelationTypes, onShortcuts, onAbout }: Props) {
           height: 30,
           borderRadius: 'var(--radius-md)',
           padding: 0,
-          cursor: 'default',
+          cursor: 'pointer',
           display: 'inline-flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -253,7 +253,7 @@ function MenuItem({
         border: 0,
         background: 'transparent',
         borderRadius: 'var(--radius-md)',
-        cursor: 'default',
+        cursor: 'pointer',
         textAlign: 'left',
       }}
       onMouseEnter={(e) => {

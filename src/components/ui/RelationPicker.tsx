@@ -45,7 +45,7 @@ function RelationChip({
         fontFamily: 'var(--font-mono)',
         padding: '4px 9px',
         borderRadius: 'var(--radius-pill)',
-        cursor: 'default',
+        cursor: 'pointer',
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.borderColor = color

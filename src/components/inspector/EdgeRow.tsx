@@ -29,7 +29,7 @@ export function EdgeRow({ label, text, color, glyph, onClick, dim = false }: Pro
         textAlign: 'left',
         appearance: 'none',
         border: 0,
-        cursor: 'default',
+        cursor: 'pointer',
         padding: '7px 8px',
         borderRadius: 'var(--radius-md)',
         background: hover ? 'var(--paper-deep)' : 'transparent',

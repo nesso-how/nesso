@@ -31,6 +31,15 @@ import { NessoEdge } from './NessoEdge.js'
 const DEFAULT_NODE_TYPES: NodeTypes = { concept: ConceptNode as NodeTypes[string] }
 const DEFAULT_EDGE_TYPES: EdgeTypes = { nesso: NessoEdge as EdgeTypes[string] }
 
+/** React Flow defaults `preventScrolling` to true, which blocks page scroll over the canvas even when wheel zoom/pan are off. */
+export function resolvePreventScrolling(
+  zoomOnScroll: boolean,
+  reactFlowProps?: Pick<ReactFlowProps, 'preventScrolling' | 'panOnScroll'>,
+): boolean {
+  if (reactFlowProps?.preventScrolling !== undefined) return reactFlowProps.preventScrolling
+  return zoomOnScroll || Boolean(reactFlowProps?.panOnScroll)
+}
+
 type PassthroughKeys =
   | 'nodes'
   | 'defaultNodes'
@@ -196,6 +205,12 @@ export function NessoGraph({
     [display, graphDisplay, palette, categoryColorMode, getRelationLabel, isItemSelected],
   )
 
+  const { preventScrolling: preventScrollingOverride, ...restReactFlowProps } = reactFlowProps ?? {}
+  const preventScrolling = resolvePreventScrolling(zoomOnScroll, {
+    preventScrolling: preventScrollingOverride,
+    panOnScroll: restReactFlowProps.panOnScroll,
+  })
+
   return (
     <div
       style={{ width: '100%', height: '100%', ...style }}
@@ -213,6 +228,7 @@ export function NessoGraph({
           elementsSelectable={elementsSelectable}
           panOnDrag={panOnDrag}
           zoomOnScroll={zoomOnScroll}
+          preventScrolling={preventScrolling}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
@@ -232,7 +248,7 @@ export function NessoGraph({
           onEdgeClick={
             onEdgeClick ? (_, edge) => onEdgeClick(edge.id, edge.data as NessoEdgeData) : undefined
           }
-          {...reactFlowProps}
+          {...restReactFlowProps}
         >
           {children ?? (
             <>

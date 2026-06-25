@@ -32,7 +32,7 @@ function actionBannerButtonStyle(primary: boolean, disabled = false): CSSPropert
     fontFamily: 'var(--font-sans)',
     padding: '8px 16px',
     borderRadius: 'var(--radius-md)',
-    cursor: disabled ? 'not-allowed' : 'default',
+    cursor: disabled ? 'not-allowed' : 'pointer',
     opacity: disabled ? 0.55 : 1,
     whiteSpace: 'nowrap',
     width: '100%',

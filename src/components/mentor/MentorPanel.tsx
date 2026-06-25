@@ -23,6 +23,11 @@ function mentorFailureReason(err: unknown): 'network' | 'response' {
   return err instanceof TypeError ? 'network' : 'response'
 }
 
+function mentorFailureMessage(err: unknown, t: ReturnType<typeof useT>): string {
+  if (err instanceof TypeError) return t.mentor.errorConnection
+  return t.mentor.errorRetrySlow
+}
+
 function appendToLastMentor(history: Message[], delta: string): Message[] {
   const last = history[history.length - 1]
   if (!last || last.role !== 'mentor') return [...history, { role: 'mentor', text: delta }]
@@ -257,7 +262,7 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
       })
       .catch((err) => {
         if (!controller.signal.aborted) {
-          setHistory([{ role: 'mentor', text: t.mentor.errorRetry }])
+          setHistory([{ role: 'mentor', text: mentorFailureMessage(err, t) }])
           track({ name: 'mentor_request_failed', props: { reason: mentorFailureReason(err) } })
         }
       })
@@ -328,7 +333,7 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
       if (!controller.signal.aborted) track({ name: 'mentor_response_received' })
     } catch (err) {
       if (!controller.signal.aborted) {
-        setHistory((h) => [...h, { role: 'mentor', text: t.mentor.errorRetrySlow }])
+        setHistory((h) => [...h, { role: 'mentor', text: mentorFailureMessage(err, t) }])
         track({ name: 'mentor_request_failed', props: { reason: mentorFailureReason(err) } })
       }
     } finally {
@@ -423,7 +428,7 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
               border: 0,
               background: 'transparent',
               color: 'var(--ink-4)',
-              cursor: 'default',
+              cursor: 'pointer',
               width: 24,
               height: 24,
               borderRadius: 'var(--radius-pill)',
@@ -592,7 +597,7 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
-              cursor: 'default',
+              cursor: 'pointer',
               flexShrink: 0,
               opacity: !draft.trim() || thinking || loadingInitial ? 0.3 : 1,
             }}

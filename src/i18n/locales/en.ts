@@ -390,10 +390,12 @@ const en = {
     placeholder: (concept: string) => `Ask Socrates about "${concept}"…`,
     placeholderGraph: 'Ask Socrates about your graph…',
     needsSetup:
-      "Hey, I'm basically a brain in a jar right now. Give me a model to think with! Head to Settings (⌘,), AI, and point me at an OpenAI-compatible endpoint (Ollama runs locally). Then we'll talk.",
+      'No AI endpoint configured. Open Settings (⌘,) → AI and connect Ollama or an OpenAI-compatible API.',
     placeholderNeedsSetup: 'Configure an AI endpoint in Settings first…',
+    errorConnection:
+      "Can't reach the AI endpoint. Check Settings (⌘,) → AI. For local Ollama, run `ollama serve`.",
     errorRetry: '*Hmm.* My voice failed me. Try again.',
-    errorRetrySlow: '*Hmm.* My voice failed me. Try again — slowly.',
+    errorRetrySlow: '*Hmm.* My voice failed me. Try again, slowly.',
   },
   menu: {
     file: 'File',

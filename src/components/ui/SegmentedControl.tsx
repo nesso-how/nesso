@@ -38,7 +38,7 @@ export function SegmentedControl({ options, value, onChange, style }: Props) {
               o.id === value ? "500 11px 'Inter', ui-sans-serif" : "11px 'Inter', ui-sans-serif",
             padding: '3px 9px',
             borderRadius: 'var(--radius-sm)',
-            cursor: 'default',
+            cursor: 'pointer',
             boxShadow: o.id === value ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
           }}
         >

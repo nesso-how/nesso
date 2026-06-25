@@ -392,10 +392,12 @@ const it: typeof en = {
     placeholder: (concept) => `Chiedi a Socrate di "${concept}"…`,
     placeholderGraph: 'Chiedi a Socrate del tuo grafo…',
     needsSetup:
-      'Ciao! Sono tipo un cervello senza corpo al momento. Dammi un modello con cui pensare! Vai in Impostazioni (⌘,), scheda AI, e collegami a un endpoint OpenAI-compatibile (Ollama gira in locale). Poi chiacchieriamo.',
+      "Nessun endpoint AI configurato. Apri Impostazioni (⌘,) → AI e collega Ollama o un'API OpenAI-compatibile.",
     placeholderNeedsSetup: 'Configura prima un endpoint AI in Impostazioni…',
+    errorConnection:
+      "Non riesco a raggiungere l'endpoint AI. Controlla Impostazioni (⌘,) → AI. In locale, avvia `ollama serve`.",
     errorRetry: '*Hmm.* La mia voce mi ha tradito. Riprova.',
-    errorRetrySlow: '*Hmm.* La mia voce mi ha tradito. Riprova — lentamente.',
+    errorRetrySlow: '*Hmm.* La mia voce mi ha tradito. Riprova, lentamente.',
   },
   menu: {
     file: 'File',

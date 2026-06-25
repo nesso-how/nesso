@@ -15,7 +15,7 @@ export function CloseButton({ onClick, large }: Props) {
         border: 0,
         background: 'transparent',
         color: 'var(--ink-4)',
-        cursor: 'default',
+        cursor: 'pointer',
         width: size,
         height: size,
         borderRadius: 'var(--radius-pill)',

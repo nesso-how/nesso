@@ -240,7 +240,7 @@ export function Sidebar({
                 background: 'var(--paper-deep)',
                 borderRadius: 'var(--radius-md)',
                 padding: '7px 10px',
-                cursor: 'default',
+                cursor: 'pointer',
                 fontSize: '12.5px',
                 fontFamily: 'var(--font-sans)',
                 color: 'var(--ink-4)',
@@ -379,7 +379,7 @@ export function Sidebar({
                             background: 'transparent',
                             borderRadius: 'var(--radius-sm)',
                             padding: '6px 9px',
-                            cursor: 'default',
+                            cursor: 'pointer',
                             minWidth: 0,
                             font: active
                               ? "500 13px 'Inter', ui-sans-serif"
@@ -442,7 +442,7 @@ export function Sidebar({
                   appearance: 'none',
                   border: 0,
                   background: 'transparent',
-                  cursor: 'default',
+                  cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   gap: 'var(--space-3)',
@@ -540,7 +540,7 @@ export function Sidebar({
                   width: '100%',
                   padding: '7px 9px',
                   borderRadius: 'var(--radius-sm)',
-                  cursor: 'default',
+                  cursor: 'pointer',
                   fontSize: '13px',
                   fontWeight: 500,
                   fontFamily: 'var(--font-sans)',
@@ -624,7 +624,7 @@ const iconBtn: React.CSSProperties = {
   alignItems: 'center',
   justifyContent: 'center',
   color: 'var(--ink-3)',
-  cursor: 'default',
+  cursor: 'pointer',
 }
 
 const graphsNewBtn: React.CSSProperties = {
@@ -638,7 +638,7 @@ const graphsNewBtn: React.CSSProperties = {
   alignItems: 'center',
   gap: 5,
   color: 'var(--ink-3)',
-  cursor: 'default',
+  cursor: 'pointer',
 }
 
 const sectionLabel: React.CSSProperties = {
