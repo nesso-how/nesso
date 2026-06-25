@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- **MCP graph tools:** `@nesso-how/mcp` exposes `validate_graph` (non-throwing document validation with errors/warnings) and `build_graph` (structured concepts/relations → importable JSON with dagre layout). Docs updated in the MCP integration guide.
+
 ## [0.1.0-alpha.37] - 2026-06-25
 
 ### Changed
