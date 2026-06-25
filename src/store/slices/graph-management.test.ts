@@ -31,8 +31,7 @@ type Store = ReturnType<typeof makeStore>
 
 async function freshStore(): Promise<Store> {
   const s = makeStore()
-  // Seed IndexedDB from the bundled seeds so every graphList meta has a backing
-  // record (the app does this on startup).
+  // Mirror app startup: load graph list (creates the Tutorial graph when IDB is empty).
   await s.getState().loadGraphList()
   return s
 }
@@ -42,12 +41,14 @@ beforeEach(async () => {
 })
 
 describe('loadGraphList', () => {
-  it('seeds IndexedDB from the bundled graphs when empty', async () => {
+  it('creates an empty Tutorial graph when IndexedDB is empty', async () => {
     const s = makeStore()
     const list = await s.getState().loadGraphList()
-    expect(list.length).toBeGreaterThan(0)
-    const seeded = await dbLoadGraph(list[0].id)
-    expect(seeded?.id).toBe(list[0].id)
+    expect(list).toHaveLength(1)
+    expect(list[0].name).toBe('Tutorial')
+    const stored = await dbLoadGraph(list[0].id)
+    expect(stored?.nodes).toEqual([])
+    expect(stored?.edges).toEqual([])
   })
 
   it('adopts the browser language when seeding an empty database', async () => {

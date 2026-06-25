@@ -13,6 +13,8 @@ export interface UISlice {
   viewports: Record<string, Viewport>
   toasts: Toast[]
   confirmRequest: ConfirmRequest | null
+  /** Active onboarding tour step index, or null when the tour is not running. */
+  onboardingStep: number | null
   setMentorPanelExpanded: (expanded: boolean) => void
   setSidebarCollapsed: (v: boolean) => void
   setSidebarDisplayOpen: (v: boolean) => void
@@ -22,6 +24,7 @@ export interface UISlice {
   dismissToast: (id: string) => void
   openConfirm: (request: ConfirmRequest) => void
   closeConfirm: () => void
+  setOnboardingStep: (step: number | null) => void
 }
 
 export const createUISlice: StateCreator<GraphState, [], [], UISlice> = (set) => ({
@@ -32,6 +35,7 @@ export const createUISlice: StateCreator<GraphState, [], [], UISlice> = (set) =>
   viewports: {},
   toasts: [],
   confirmRequest: null,
+  onboardingStep: null,
 
   setMentorPanelExpanded: (expanded) => set({ mentorPanelExpanded: expanded }),
   setSidebarCollapsed: (v) => set({ sidebarCollapsed: v }),
@@ -45,6 +49,7 @@ export const createUISlice: StateCreator<GraphState, [], [], UISlice> = (set) =>
   dismissToast: (id) => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
   openConfirm: (request) => set({ confirmRequest: request }),
   closeConfirm: () => set({ confirmRequest: null }),
+  setOnboardingStep: (step) => set({ onboardingStep: step }),
 
   // Viewports observed in a zero-sized window (embedded WebViews before first
   // layout) are degenerate min-zoom fits — persisting one would keep the graph

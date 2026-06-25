@@ -376,6 +376,7 @@ const en = {
     title: 'About Nesso',
     tagline: 'Typed knowledge graphs for active learning.',
     version: (v: string) => `v${v}`,
+    showIntroAgain: 'Show intro again',
     links: {
       github: 'GitHub',
       website: 'Website',
@@ -432,6 +433,65 @@ const en = {
     website: 'Website',
     reportIssue: 'Report an Issue',
     shortcuts: 'Keyboard Shortcuts',
+  },
+  onboarding: {
+    welcome: {
+      headlineLine1: "Understanding can't be received.",
+      headlineLine2Before: 'It has to be ',
+      headlineLine2Em: 'built',
+      headlineLine2After: '.',
+      intro:
+        'Nesso is an app for typed knowledge graphs. Ideas are nodes, and the relations between those nodes are what allow you to actually learn.',
+      showMeHow: 'Show me how',
+      skipIntro: 'Skip intro',
+    },
+    tour: {
+      skipTour: 'Skip tour',
+      steps: {
+        addConcept: {
+          eyebrow: 'Step 01 · Concepts',
+          title: 'Drop your first concept',
+          body: 'Double-click the canvas to place an idea. A node is one concept.',
+          cta: 'Got it',
+        },
+        writeLabel: {
+          eyebrow: 'Step 02 · Name',
+          title: 'Name the concept',
+          body: 'Type a short label: what is this idea called?',
+          cta: 'Got it',
+        },
+        addDefinition: {
+          eyebrow: 'Step 03 · Definition',
+          title: 'Add a definition',
+          body: 'In the inspector, write what this concept means in your own words.',
+          cta: 'Got it',
+        },
+        secondConcept: {
+          eyebrow: 'Step 04 · Concepts',
+          title: 'Add a second idea',
+          body: 'Double-click again to place another concept you can connect.',
+          cta: 'Got it',
+        },
+        typedRelation: {
+          eyebrow: 'Step 05 · Typed relations',
+          title: 'Say how they relate',
+          body: 'Drag from one node to another, then pick the relation type. The relation is what you learn.',
+          cta: 'Got it',
+        },
+        review: {
+          eyebrow: 'Step 06 · Review',
+          title: 'Spaced repetition',
+          body: 'Review schedules each concept right before you forget it. Open Review when you are ready.',
+          cta: 'Got it',
+        },
+      },
+    },
+    telemetry: {
+      message:
+        'Share anonymous usage data to help improve Nesso? No graph content is ever sent. You can change this anytime in Settings.',
+      accept: 'Share data',
+      decline: 'Not now',
+    },
   },
 }
 

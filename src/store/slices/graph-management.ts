@@ -3,7 +3,7 @@ import type { Node, Edge } from '@xyflow/react'
 import type { StateCreator } from 'zustand'
 import type { ConceptNodeData, GraphDisplaySettings } from '@/types/graph'
 import { defaultGraphDisplay, mergeGraphDisplay } from '@/types/graph'
-import { SEEDS, getSeedsForLanguage, type Seed } from '@/data/seedGraph'
+import { SEEDS } from '@/data/seedGraph'
 import { isGraphId, newGraphId } from '@/lib/graphId'
 import { isDesktop } from '@/lib/isDesktop'
 import {
@@ -72,19 +72,6 @@ function registerAndSwitch(
     },
   }))
   return get().switchProject(norm)
-}
-
-function makeSeedRecord(seed: Seed): GraphRecord {
-  const now = Date.now()
-  return {
-    id: seed.id,
-    name: seed.name,
-    createdAt: now,
-    updatedAt: now,
-    nodes: seed.nodes,
-    edges: seed.edges,
-    display: seed.display,
-  }
 }
 
 type SaveDirtyFlags = {
@@ -224,16 +211,23 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
 
     if (records.length === 0) {
       const lang = detectBrowserLanguage()
-      set((s) => ({ settings: { ...s.settings, language: lang } }))
-      const seeds = getSeedsForLanguage(lang)
-      const seeded: GraphRecord[] = []
-      for (let i = seeds.length - 1; i >= 0; i--) {
-        const rec = makeSeedRecord(seeds[i])
-        await dbSaveGraph(rec)
-        seeded.unshift(rec)
+      const id = newGraphId()
+      const now = Date.now()
+      const record: GraphRecord = {
+        id,
+        name: 'Tutorial',
+        createdAt: now,
+        updatedAt: now,
+        nodes: [],
+        edges: [],
+        display: defaultGraphDisplay(),
       }
-      records = seeded
-      set({ currentGraphId: seeds[0].id })
+      await dbSaveGraph(record)
+      records = [record]
+      set((s) => ({
+        currentGraphId: id,
+        settings: { ...s.settings, language: lang },
+      }))
     }
 
     if (isDesktop()) {

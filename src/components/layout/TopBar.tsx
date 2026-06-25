@@ -19,6 +19,7 @@ interface Props {
   onRelationTypes: () => void
   onShortcuts: () => void
   onAbout: () => void
+  onboardingStep?: number | null
 }
 
 export function TopBar({
@@ -29,6 +30,7 @@ export function TopBar({
   onRelationTypes,
   onShortcuts,
   onAbout,
+  onboardingStep,
 }: Props) {
   const t = useT()
   const graphList = useGraphStore((s) => s.graphList)
@@ -130,6 +132,7 @@ export function TopBar({
         {reviewEnabled && (
           <button
             type="button"
+            data-onboarding={onboardingStep === 5 ? 'review-button' : undefined}
             onClick={onReview}
             title={t.topBar.startReview}
             style={{

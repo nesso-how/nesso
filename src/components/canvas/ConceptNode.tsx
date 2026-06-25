@@ -46,6 +46,8 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
   const skipBlurCommit = useRef(false)
   const updateNodeData = useGraphStore((s) => s.updateNodeData)
   const editNodeId = useGraphStore((s) => s.editNodeId)
+  const onboardingStep = useGraphStore((s) => s.onboardingStep)
+  const firstNodeId = useGraphStore((s) => s.nodes[0]?.id ?? null)
   const clearEditNodeId = useGraphStore((s) => s.clearEditNodeId)
   const { showHeatmap } = useGraphDisplay()
 
@@ -120,7 +122,11 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
   )
 
   return (
-    <div className="nesso-node" style={{ position: 'relative' }}>
+    <div
+      className="nesso-node"
+      data-onboarding={onboardingStep === 1 && id === firstNodeId ? 'concept-label' : undefined}
+      style={{ position: 'relative' }}
+    >
       <ConceptNodeBody
         rootRef={rootRef}
         text={data.text}
@@ -209,6 +215,7 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
         type="source"
         position={Position.Right}
         className="nesso-node-handle"
+        data-onboarding={onboardingStep === 4 && id === firstNodeId ? 'connect-handle' : undefined}
         style={{
           width: 22,
           height: 22,

@@ -18,6 +18,7 @@ import { useT } from '@/i18n'
 interface Props {
   open: boolean
   onClose: () => void
+  onShowIntroAgain?: () => void
 }
 
 const linkRow: CSSProperties = {
@@ -38,7 +39,7 @@ const linkRow: CSSProperties = {
   transition: 'background 0.12s, color 0.12s',
 }
 
-export function AboutDialog({ open, onClose }: Props) {
+export function AboutDialog({ open, onClose, onShowIntroAgain }: Props) {
   const t = useT()
 
   const links: { label: string; url: string; icon: ReactNode }[] = [
@@ -113,6 +114,27 @@ export function AboutDialog({ open, onClose }: Props) {
           >
             {t.about.tagline}
           </p>
+          {onShowIntroAgain && (
+            <button
+              type="button"
+              onClick={onShowIntroAgain}
+              style={{
+                marginTop: 16,
+                appearance: 'none',
+                border: 0,
+                background: 'transparent',
+                color: 'var(--ink-4)',
+                fontSize: '12.5px',
+                fontWeight: 500,
+                fontFamily: 'var(--font-sans)',
+                cursor: 'pointer',
+                padding: '4px 8px',
+              }}
+              {...hoverStyle({ color: 'var(--ink-2)' }, { color: 'var(--ink-4)' })}
+            >
+              {t.about.showIntroAgain}
+            </button>
+          )}
           <div
             style={{
               width: '100%',

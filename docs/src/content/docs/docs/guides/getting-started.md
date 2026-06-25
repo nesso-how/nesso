@@ -9,6 +9,18 @@ Nesso is available as a hosted web app, a macOS desktop app, and as open-source 
 
 Open [app.nesso.how](https://app.nesso.how) in your browser. The app works offline after the first load and runs in any modern browser. The AI mentor is optional and needs an OpenAI-compatible endpoint (see [Picking an AI backend](#picking-an-ai-backend)).
 
+## First run
+
+On a fresh install, Nesso opens with an empty **Tutorial** graph and walks you through the essentials:
+
+1. **Welcome** — a short overview of typed knowledge graphs and spaced repetition.
+2. **Guided tour** — coachmarks on the real UI: add and name concepts, add a definition in the inspector, connect two ideas with a typed relation, then open **Review**.
+3. **Telemetry** (optional) — a one-time banner in the top-right asks whether to share anonymous usage events. Declining is remembered; you can change the choice anytime under **Settings → Privacy**.
+
+You can skip the welcome screen or the tour at any step. Skipping removes the Tutorial graph and opens a demo seed map instead. Completing the tour keeps your Tutorial graph and also opens a demo seed map. To replay the tour later, open **⋯ → About Nesso** and choose **Show intro again**.
+
+Demo seed graphs are no longer loaded automatically on first launch — you build your first graph during the tour.
+
 ## Desktop app (macOS)
 
 A pre-built alpha installer is published on [GitHub Releases](https://github.com/nesso-how/nesso/releases). Download the universal `.dmg` — it runs on both Apple silicon and Intel Macs — and open it.

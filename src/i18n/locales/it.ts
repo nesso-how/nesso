@@ -378,6 +378,7 @@ const it: typeof en = {
     title: 'Informazioni su Nesso',
     tagline: "Grafi di conoscenza tipizzati per l'apprendimento attivo.",
     version: (v) => `v${v}`,
+    showIntroAgain: "Mostra di nuovo l'introduzione",
     links: {
       github: 'GitHub',
       website: 'Sito web',
@@ -434,6 +435,65 @@ const it: typeof en = {
     website: 'Sito web',
     reportIssue: 'Segnala un problema',
     shortcuts: 'Scorciatoie da tastiera',
+  },
+  onboarding: {
+    welcome: {
+      headlineLine1: 'La comprensione non si riceve.',
+      headlineLine2Before: 'Si deve ',
+      headlineLine2Em: 'costruire',
+      headlineLine2After: '.',
+      intro:
+        "Nesso è un'app per costruire grafi di conoscenza tipizzati. Le idee sono nodi, e le relazioni tra quei nodi sono ciò che ti permette di imparare davvero.",
+      showMeHow: 'Mostrami come',
+      skipIntro: 'Salta intro',
+    },
+    tour: {
+      skipTour: 'Salta tour',
+      steps: {
+        addConcept: {
+          eyebrow: 'Passo 01 · Concetti',
+          title: 'Inserisci il primo concetto',
+          body: "Fai doppio clic sulla tela per posizionare un'idea. Un nodo è un concetto.",
+          cta: 'Capito',
+        },
+        writeLabel: {
+          eyebrow: 'Passo 02 · Nome',
+          title: 'Dai un nome al concetto',
+          body: "Scrivi un'etichetta breve: come si chiama questa idea?",
+          cta: 'Capito',
+        },
+        addDefinition: {
+          eyebrow: 'Passo 03 · Definizione',
+          title: 'Aggiungi una definizione',
+          body: "Nell'ispettore, scrivi con parole tue cosa significa questo concetto.",
+          cta: 'Capito',
+        },
+        secondConcept: {
+          eyebrow: 'Passo 04 · Concetti',
+          title: 'Aggiungi una seconda idea',
+          body: 'Fai di nuovo doppio clic per posizionare un altro concetto da collegare.',
+          cta: 'Capito',
+        },
+        typedRelation: {
+          eyebrow: 'Passo 05 · Relazioni tipizzate',
+          title: "Di' come si relazionano",
+          body: "Trascina da un nodo all'altro, poi scegli il tipo di relazione. La relazione è ciò che impari.",
+          cta: 'Capito',
+        },
+        review: {
+          eyebrow: 'Passo 06 · Ripasso',
+          title: 'Ripetizione dilazionata',
+          body: 'Il ripasso programma ogni concetto poco prima che lo dimentichi. Apri Ripasso quando sei pronto.',
+          cta: 'Capito',
+        },
+      },
+    },
+    telemetry: {
+      message:
+        "Condividere dati d'uso anonimi per migliorare Nesso? Nessun contenuto del grafo viene mai inviato. Puoi cambiarlo in qualsiasi momento in Impostazioni.",
+      accept: 'Condividi dati',
+      decline: 'Non ora',
+    },
   },
 }
 

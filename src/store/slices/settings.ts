@@ -36,6 +36,8 @@ export const createSettingsSlice: StateCreator<GraphState, [], [], SettingsSlice
     knownProjects: [],
     activeProjectPath: null,
     telemetry: false,
+    onboardingCompleted: false,
+    telemetryPromptShown: false,
   },
   graphDisplay: defaultGraphDisplay(),
 

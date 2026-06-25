@@ -29,6 +29,10 @@ export interface NessoSettings {
   activeProjectPath: string | null
   /** Opt-in: anonymous crash reports (Sentry) and usage events (PostHog). Default false. */
   telemetry: boolean
+  /** First-run welcome + tour finished or skipped. */
+  onboardingCompleted: boolean
+  /** One-shot telemetry consent banner was shown (accept or decline). */
+  telemetryPromptShown: boolean
 }
 
 export function nodeToCard(data: ConceptNodeData): Card {

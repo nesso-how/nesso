@@ -52,6 +52,7 @@ export function GraphCanvas({
   const graphDisplay = useGraphStore((s) => s.graphDisplay)
   const categoryPalette = useGraphStore((s) => s.settings.categoryPalette)
   const selected = useGraphStore((s) => s.selected)
+  const onboardingStep = useGraphStore((s) => s.onboardingStep)
   const t = useT()
 
   const getRelationLabel = useCallback((type: RelationTypeName) => t.relationTypes.types[type], [t])
@@ -215,6 +216,7 @@ export function GraphCanvas({
           bottomInset={bottomInset}
           leftInset={leftInset}
           rightInset={rightInset}
+          dataOnboarding={onboardingStep === 0 ? 'add-concept' : undefined}
         />
       )}
 

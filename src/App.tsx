@@ -33,16 +33,22 @@ import { useGraphFileWatch } from './hooks/useGraphFileWatch'
 import { useDesktopMenu } from './hooks/useDesktopMenu'
 import { GraphFileConflictBanner } from './components/banners/GraphFileConflictBanner'
 import { UpdateBanner } from './components/banners/UpdateBanner'
+import { TelemetryConsentBanner } from './components/banners/TelemetryConsentBanner'
+import { WelcomeDialog } from './components/onboarding/WelcomeDialog'
+import { CoachmarkOverlay } from './components/onboarding/CoachmarkOverlay'
+import { ONBOARDING_STEPS } from './components/onboarding/onboardingSteps'
 import { PALETTES } from '@nesso-how/vocab-learning'
 import { findNewConceptPosition, NEW_CONCEPT_SIZE } from './data/newConceptLayout'
 import { focusFlowNodes } from './lib/focusFlowSelection'
 import { resolveShortcut } from './lib/shortcuts'
 import { computeSelectionPan } from './lib/selectionPan'
 import { computeFitViewport, fitCanvasSize } from './lib/fitGraphViewport'
-import { getSeedInitialFitZoom } from './data/seedGraph'
+import { getSeedInitialFitZoom, getSeedsForLanguage } from './data/seedGraph'
 import { APP_VERSION } from './data/appInfo'
 import { isDesktop } from './lib/isDesktop'
 import { initTelemetry, shutdownTelemetry, track } from './telemetry'
+
+type OnboardingPhase = 'idle' | 'welcome' | 'tour' | 'consent'
 
 function AppInner() {
   const [showReview, setShowReview] = useState(false)
@@ -51,9 +57,16 @@ function AppInner() {
   const [showRelationTypes, setShowRelationTypes] = useState(false)
   const [showSearch, setShowSearch] = useState(false)
   const [showAbout, setShowAbout] = useState(false)
+  const [onboardingPhase, setOnboardingPhase] = useState<OnboardingPhase>('idle')
+  const [tourStep, setTourStep] = useState(0)
+  const [reviewOpenedDuringTour, setReviewOpenedDuringTour] = useState(false)
 
   const settings = useGraphStore((s) => s.settings)
   const telemetry = settings.telemetry
+  const telemetryPromptShown = settings.telemetryPromptShown
+  const setSetting = useGraphStore((s) => s.setSetting)
+  const setOnboardingStep = useGraphStore((s) => s.setOnboardingStep)
+  const setInspectorCollapsed = useGraphStore((s) => s.setInspectorCollapsed)
   const addNode = useGraphStore((s) => s.addNode)
   const selected = useGraphStore((s) => s.selected)
   const setSelected = useGraphStore((s) => s.setSelected)
@@ -68,6 +81,8 @@ function AppInner() {
   const requestEditNode = useGraphStore((s) => s.requestEditNode)
   const loadGraph = useGraphStore((s) => s.loadGraph)
   const loadGraphList = useGraphStore((s) => s.loadGraphList)
+  const importGraph = useGraphStore((s) => s.importGraph)
+  const deleteGraph = useGraphStore((s) => s.deleteGraph)
   const currentGraphId = useGraphStore((s) => s.currentGraphId)
   const loadedToken = useGraphStore((s) => s.loadedToken)
   const viewports = useGraphStore((s) => s.viewports)
@@ -104,7 +119,74 @@ function AppInner() {
 
   const openReview = useCallback(() => {
     track({ name: 'review_session_started' })
+    if (onboardingPhase === 'tour' && tourStep === 5) {
+      setReviewOpenedDuringTour(true)
+    }
     setShowReview(true)
+  }, [onboardingPhase, tourStep])
+
+  const finishOnboarding = useCallback(() => {
+    setOnboardingStep(null)
+    setSetting('onboardingCompleted', true)
+    setOnboardingPhase('idle')
+  }, [setOnboardingStep, setSetting])
+
+  // Replace the empty "Tutorial" graph as the active map with a fresh seed demo
+  // so the user lands on something explorable once onboarding ends.
+  const openSeedMap = useCallback(async () => {
+    const seed = getSeedsForLanguage(useGraphStore.getState().settings.language)[0]
+    if (!seed) return
+    await importGraph(seed.name, seed.nodes, seed.edges, seed.display)
+  }, [importGraph])
+
+  const goToConsentOrFinish = useCallback(
+    async (skipped = false) => {
+      setOnboardingStep(null)
+      // Only on first completion — replaying the tour from About must not spawn
+      // duplicate seed maps (onboardingCompleted is already true by then).
+      if (!useGraphStore.getState().settings.onboardingCompleted) {
+        await openSeedMap()
+        if (skipped) {
+          const tutorial = useGraphStore.getState().graphList.find((g) => g.name === 'Tutorial')
+          if (tutorial) await deleteGraph(tutorial.id)
+        }
+      }
+      if (telemetryPromptShown) {
+        finishOnboarding()
+      } else {
+        setOnboardingPhase('consent')
+      }
+    },
+    [telemetryPromptShown, finishOnboarding, setOnboardingStep, openSeedMap, deleteGraph],
+  )
+
+  const startTour = useCallback(() => {
+    setTourStep(0)
+    setReviewOpenedDuringTour(false)
+    setOnboardingPhase('tour')
+  }, [])
+
+  const skipWelcome = useCallback(() => {
+    void goToConsentOrFinish(true)
+  }, [goToConsentOrFinish])
+
+  const skipTour = useCallback(() => {
+    void goToConsentOrFinish(true)
+  }, [goToConsentOrFinish])
+
+  const advanceTour = useCallback(() => {
+    if (tourStep >= ONBOARDING_STEPS.length - 1) {
+      void goToConsentOrFinish(false)
+      return
+    }
+    setTourStep((s) => s + 1)
+  }, [tourStep, goToConsentOrFinish])
+
+  const relaunchTour = useCallback(() => {
+    setShowAbout(false)
+    setTourStep(0)
+    setReviewOpenedDuringTour(false)
+    setOnboardingPhase('tour')
   }, [])
 
   const [sidebarPanelWidth, setSidebarPanelWidth] = useState(readSidebarWidth)
@@ -130,11 +212,30 @@ function AppInner() {
       const cid = useGraphStore.getState().currentGraphId
       const target = list.find((g) => g.id === hashId) ? hashId : cid
       await loadGraph(target)
+      if (cancelled) return
+      if (!useGraphStore.getState().settings.onboardingCompleted) {
+        setOnboardingPhase('welcome')
+      }
     })
     return () => {
       cancelled = true
     }
   }, [loadGraphList, loadGraph])
+
+  useEffect(() => {
+    if (onboardingPhase === 'tour') setOnboardingStep(tourStep)
+    else setOnboardingStep(null)
+  }, [onboardingPhase, tourStep, setOnboardingStep])
+
+  // Definition step: make sure the inspector is open and pointed at the first
+  // concept so its definition field (the spotlight anchor) is on screen.
+  useEffect(() => {
+    if (onboardingPhase === 'tour' && tourStep === 2) {
+      setInspectorCollapsed(false)
+      const firstId = useGraphStore.getState().nodes[0]?.id
+      if (firstId) setSelected({ kind: 'node', id: firstId })
+    }
+  }, [onboardingPhase, tourStep, setInspectorCollapsed, setSelected])
 
   // Keep URL hash in sync with current graph
   useEffect(() => {
@@ -365,6 +466,8 @@ function AppInner() {
     showRelationTypes ||
     showSearch ||
     showAbout ||
+    onboardingPhase === 'welcome' ||
+    onboardingPhase === 'tour' ||
     confirmOpen
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -486,6 +589,7 @@ function AppInner() {
         onRelationTypes={() => setShowRelationTypes((s) => !s)}
         onShortcuts={() => setShowShortcuts((s) => !s)}
         onAbout={() => setShowAbout(true)}
+        onboardingStep={onboardingPhase === 'tour' ? tourStep : null}
       />
 
       <RelationTypesDialog open={showRelationTypes} onClose={() => setShowRelationTypes(false)} />
@@ -503,13 +607,30 @@ function AppInner() {
       <ReviewMode open={showReview} onClose={() => setShowReview(false)} />
       <ShortcutsDialog open={showShortcuts} onClose={() => setShowShortcuts(false)} />
       <SettingsDialog open={showSettings} onClose={() => setShowSettings(false)} />
-      <AboutDialog open={showAbout} onClose={() => setShowAbout(false)} />
+      <AboutDialog
+        open={showAbout}
+        onClose={() => setShowAbout(false)}
+        onShowIntroAgain={relaunchTour}
+      />
       <SearchDialog
         open={showSearch}
         onClose={() => setShowSearch(false)}
         onSelectNode={handleSelectNode}
         onSelectGraph={(id) => loadGraph(id)}
       />
+      <WelcomeDialog
+        open={onboardingPhase === 'welcome'}
+        onShowMeHow={startTour}
+        onSkipIntro={skipWelcome}
+      />
+      {onboardingPhase === 'tour' && !showReview && (
+        <CoachmarkOverlay
+          stepIndex={tourStep}
+          reviewOpened={reviewOpenedDuringTour}
+          onSkip={skipTour}
+          onNext={advanceTour}
+        />
+      )}
       <div
         style={{
           position: 'fixed',
@@ -524,6 +645,7 @@ function AppInner() {
       >
         <GraphFileConflictBanner />
         <UpdateBanner />
+        <TelemetryConsentBanner open={onboardingPhase === 'consent'} onDismiss={finishOnboarding} />
         <ToastViewport />
       </div>
       <ConfirmDialog />
