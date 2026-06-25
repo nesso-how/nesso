@@ -378,7 +378,6 @@ const it: typeof en = {
     title: 'Informazioni su Nesso',
     tagline: "Grafi di conoscenza tipizzati per l'apprendimento attivo.",
     version: (v) => `v${v}`,
-    showIntroAgain: "Mostra di nuovo l'introduzione",
     links: {
       github: 'GitHub',
       website: 'Sito web',

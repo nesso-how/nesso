@@ -3,7 +3,7 @@
 import 'fake-indexeddb/auto'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createStore } from 'zustand/vanilla'
-import { dbClearGraphs, dbLoadGraph } from '@/store/db'
+import { dbClearGraphs, dbListGraphs, dbLoadGraph } from '@/store/db'
 import type { GraphState } from '../state'
 import { createDesktopSyncSlice } from './desktop-sync'
 import { createGraphEditingSlice } from './graph-editing'
@@ -49,6 +49,17 @@ describe('loadGraphList', () => {
     const stored = await dbLoadGraph(list[0].id)
     expect(stored?.nodes).toEqual([])
     expect(stored?.edges).toEqual([])
+  })
+
+  it('is idempotent under a concurrent double bootstrap (StrictMode init effect)', async () => {
+    const s = makeStore()
+    // React StrictMode runs the init effect twice; both passes can enter the
+    // empty-DB branch before either write commits. A stable Tutorial id must
+    // collapse the two writes into a single record.
+    await Promise.all([s.getState().loadGraphList(), s.getState().loadGraphList()])
+    const records = await dbListGraphs()
+    expect(records.filter((r) => r.name === 'Tutorial')).toHaveLength(1)
+    expect(s.getState().graphList.filter((g) => g.name === 'Tutorial')).toHaveLength(1)
   })
 
   it('adopts the browser language when seeding an empty database', async () => {

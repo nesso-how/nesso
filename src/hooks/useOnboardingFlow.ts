@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 import { useCallback, useEffect, useState } from 'react'
-import { ONBOARDING_STEPS } from '@/components/onboarding/onboardingSteps'
-import { getSeedsForLanguage } from '@/data/seedGraph'
+import { applyOnboardingExit, shouldStartOnboarding } from '@/components/onboarding/onboardingFlow'
+import { ONBOARDING_STEPS, isOnboardingStep } from '@/components/onboarding/onboardingSteps'
 import { useGraphStore } from '@/store'
 
 export type OnboardingPhase = 'idle' | 'welcome' | 'tour' | 'consent'
@@ -11,13 +11,10 @@ export function useOnboardingFlow() {
   const [tourStep, setTourStep] = useState(0)
   const [reviewOpenedDuringTour, setReviewOpenedDuringTour] = useState(false)
 
-  const telemetryPromptShown = useGraphStore((s) => s.settings.telemetryPromptShown)
   const setSetting = useGraphStore((s) => s.setSetting)
   const setOnboardingStep = useGraphStore((s) => s.setOnboardingStep)
   const setInspectorCollapsed = useGraphStore((s) => s.setInspectorCollapsed)
   const setSelected = useGraphStore((s) => s.setSelected)
-  const importGraph = useGraphStore((s) => s.importGraph)
-  const deleteGraph = useGraphStore((s) => s.deleteGraph)
 
   const finishOnboarding = useCallback(() => {
     setOnboardingStep(null)
@@ -25,29 +22,13 @@ export function useOnboardingFlow() {
     setPhase('idle')
   }, [setOnboardingStep, setSetting])
 
-  const openSeedMap = useCallback(async () => {
-    const seed = getSeedsForLanguage(useGraphStore.getState().settings.language)[0]
-    if (!seed) return
-    await importGraph(seed.name, seed.nodes, seed.edges, seed.display)
-  }, [importGraph])
-
   const goToConsentOrFinish = useCallback(
     async (skipped = false) => {
-      setOnboardingStep(null)
-      if (!useGraphStore.getState().settings.onboardingCompleted) {
-        await openSeedMap()
-        if (skipped) {
-          const tutorial = useGraphStore.getState().graphList.find((g) => g.name === 'Tutorial')
-          if (tutorial) await deleteGraph(tutorial.id)
-        }
-      }
-      if (telemetryPromptShown) {
-        finishOnboarding()
-      } else {
-        setPhase('consent')
-      }
+      const next = await applyOnboardingExit(useGraphStore, skipped)
+      if (next === 'finish') finishOnboarding()
+      else setPhase('consent')
     },
-    [telemetryPromptShown, finishOnboarding, setOnboardingStep, openSeedMap, deleteGraph],
+    [finishOnboarding],
   )
 
   const startTour = useCallback(() => {
@@ -72,21 +53,14 @@ export function useOnboardingFlow() {
     setTourStep((s) => s + 1)
   }, [tourStep, goToConsentOrFinish])
 
-  const relaunchTour = useCallback((closeAbout: () => void) => {
-    closeAbout()
-    setTourStep(0)
-    setReviewOpenedDuringTour(false)
-    setPhase('tour')
-  }, [])
-
   const onGraphListLoaded = useCallback(() => {
-    if (!useGraphStore.getState().settings.onboardingCompleted) {
+    if (shouldStartOnboarding(useGraphStore.getState())) {
       setPhase('welcome')
     }
   }, [])
 
   const noteReviewOpenedDuringTour = useCallback(() => {
-    if (phase === 'tour' && tourStep === 5) {
+    if (phase === 'tour' && isOnboardingStep(tourStep, 'review-button')) {
       setReviewOpenedDuringTour(true)
     }
   }, [phase, tourStep])
@@ -97,7 +71,7 @@ export function useOnboardingFlow() {
   }, [phase, tourStep, setOnboardingStep])
 
   useEffect(() => {
-    if (phase === 'tour' && tourStep === 2) {
+    if (phase === 'tour' && isOnboardingStep(tourStep, 'inspector-definition')) {
       setInspectorCollapsed(false)
       const firstId = useGraphStore.getState().nodes[0]?.id
       if (firstId) setSelected({ kind: 'node', id: firstId })
@@ -116,6 +90,5 @@ export function useOnboardingFlow() {
     skipWelcome,
     skipTour,
     advanceTour,
-    relaunchTour,
   }
 }

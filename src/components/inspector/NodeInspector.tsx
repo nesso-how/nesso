@@ -9,6 +9,7 @@ import { ImageSearchPanel } from './ImageSearchPanel'
 import { InspectorPanel } from './InspectorPanel'
 import { EdgeRow } from './EdgeRow'
 import { InspectorActionToolbar, InspectorCollapseCloseRow } from './inspectorChrome'
+import { isOnboardingStep } from '@/components/onboarding/onboardingSteps'
 
 const LABEL_STYLE: CSSProperties = {
   fontSize: '11px',
@@ -367,7 +368,9 @@ export function NodeInspector({
         {/* Definition */}
         <div
           data-onboarding={
-            onboardingStep === 2 && node.id === firstNodeId ? 'inspector-definition' : undefined
+            isOnboardingStep(onboardingStep, 'inspector-definition') && node.id === firstNodeId
+              ? 'inspector-definition'
+              : undefined
           }
         >
           <div style={{ ...LABEL_STYLE, marginBottom: 6 }}>{t.inspector.notes.definition}</div>

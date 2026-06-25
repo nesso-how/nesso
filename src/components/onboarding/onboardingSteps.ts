@@ -2,8 +2,6 @@
 import { locales } from '@/i18n/registry'
 import type { GraphState } from '@/store/state'
 
-export const ONBOARDING_STEP_COUNT = 6
-
 export type OnboardingStepId =
   | 'add-concept'
   | 'concept-label'
@@ -70,3 +68,10 @@ export const ONBOARDING_STEPS: OnboardingStepDef[] = [
     isComplete: (_s, reviewOpened) => reviewOpened,
   },
 ]
+
+export const ONBOARDING_STEP_COUNT = ONBOARDING_STEPS.length
+
+/** True when the active tour step (store `onboardingStep`) is the one with `id`. */
+export function isOnboardingStep(step: number | null, id: OnboardingStepId): boolean {
+  return step != null && ONBOARDING_STEPS[step]?.id === id
+}

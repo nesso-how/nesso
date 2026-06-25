@@ -13,13 +13,13 @@ Open [app.nesso.how](https://app.nesso.how) in your browser. The app works offli
 
 On a fresh install, Nesso opens with an empty **Tutorial** graph and walks you through the essentials:
 
-1. **Welcome** — a short overview of typed knowledge graphs and spaced repetition.
-2. **Guided tour** — coachmarks on the real UI: add and name concepts, add a definition in the inspector, connect two ideas with a typed relation, then open **Review**.
-3. **Telemetry** (optional) — a one-time banner in the top-right asks whether to share anonymous usage events. Declining is remembered; you can change the choice anytime under **Settings → Privacy**.
+1. **Welcome**: a short overview of typed knowledge graphs and spaced repetition.
+2. **Guided tour**: coachmarks on the real UI that walk you through adding and naming concepts, adding a definition in the inspector, connecting two ideas with a typed relation, then opening **Review**.
+3. **Telemetry** (optional): a one-time banner in the top-right asks whether to share anonymous usage events. Declining is remembered; you can change the choice anytime under **Settings → Privacy**.
 
-You can skip the welcome screen or the tour at any step. Skipping removes the Tutorial graph and opens a demo seed map instead. Completing the tour keeps your Tutorial graph and also opens a demo seed map. To replay the tour later, open **⋯ → About Nesso** and choose **Show intro again**.
+You can skip the welcome screen or the tour at any step. Skipping removes the Tutorial graph and opens a demo seed map instead. Completing the tour keeps your Tutorial graph and also opens a demo seed map.
 
-Demo seed graphs are no longer loaded automatically on first launch — you build your first graph during the tour.
+Demo seed graphs are no longer loaded automatically on first launch; you build your first graph during the tour.
 
 ## Desktop app (macOS)
 

@@ -376,7 +376,6 @@ const en = {
     title: 'About Nesso',
     tagline: 'Typed knowledge graphs for active learning.',
     version: (v: string) => `v${v}`,
-    showIntroAgain: 'Show intro again',
     links: {
       github: 'GitHub',
       website: 'Website',

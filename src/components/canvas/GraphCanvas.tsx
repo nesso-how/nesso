@@ -17,6 +17,7 @@ import { EmptyCanvasHint } from './EmptyCanvasHint'
 import { useGraphContextMenu } from './useGraphContextMenu'
 import { useConnectRelation } from './useConnectRelation'
 import { RelationPicker } from '@/components/ui/RelationPicker'
+import { isOnboardingStep } from '@/components/onboarding/onboardingSteps'
 import { useT } from '@/i18n'
 import { track } from '@/telemetry'
 import { useGraphStore } from '@/store'
@@ -216,7 +217,9 @@ export function GraphCanvas({
           bottomInset={bottomInset}
           leftInset={leftInset}
           rightInset={rightInset}
-          dataOnboarding={onboardingStep === 0 ? 'add-concept' : undefined}
+          dataOnboarding={
+            isOnboardingStep(onboardingStep, 'add-concept') ? 'add-concept' : undefined
+          }
         />
       )}
 

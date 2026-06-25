@@ -5,6 +5,7 @@ import type { Node } from '@xyflow/react'
 import { ConceptNodeBody, useGraphDisplay } from '@nesso-how/graph'
 import type { ConceptNodeData } from '@/types/graph'
 import { CONCEPT_HANDLE_IN, CONCEPT_HANDLE_OUT } from '@/data/conceptHandles'
+import { isOnboardingStep } from '@/components/onboarding/onboardingSteps'
 import { useGraphStore } from '@/store'
 
 type ConceptNodeType = Node<ConceptNodeData>
@@ -124,7 +125,11 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
   return (
     <div
       className="nesso-node"
-      data-onboarding={onboardingStep === 1 && id === firstNodeId ? 'concept-label' : undefined}
+      data-onboarding={
+        isOnboardingStep(onboardingStep, 'concept-label') && id === firstNodeId
+          ? 'concept-label'
+          : undefined
+      }
       style={{ position: 'relative' }}
     >
       <ConceptNodeBody
@@ -215,7 +220,11 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
         type="source"
         position={Position.Right}
         className="nesso-node-handle"
-        data-onboarding={onboardingStep === 4 && id === firstNodeId ? 'connect-handle' : undefined}
+        data-onboarding={
+          isOnboardingStep(onboardingStep, 'connect-handle') && id === firstNodeId
+            ? 'connect-handle'
+            : undefined
+        }
         style={{
           width: 22,
           height: 22,

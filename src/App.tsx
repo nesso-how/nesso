@@ -495,7 +495,6 @@ function AppInner() {
         onRelationTypes={() => setShowRelationTypes((s) => !s)}
         onShortcuts={() => setShowShortcuts((s) => !s)}
         onAbout={() => setShowAbout(true)}
-        onboardingStep={onboarding.phase === 'tour' ? onboarding.tourStep : null}
       />
 
       <RelationTypesDialog open={showRelationTypes} onClose={() => setShowRelationTypes(false)} />
@@ -513,11 +512,7 @@ function AppInner() {
       <ReviewMode open={showReview} onClose={() => setShowReview(false)} />
       <ShortcutsDialog open={showShortcuts} onClose={() => setShowShortcuts(false)} />
       <SettingsDialog open={showSettings} onClose={() => setShowSettings(false)} />
-      <AboutDialog
-        open={showAbout}
-        onClose={() => setShowAbout(false)}
-        onShowIntroAgain={() => onboarding.relaunchTour(() => setShowAbout(false))}
-      />
+      <AboutDialog open={showAbout} onClose={() => setShowAbout(false)} />
       <SearchDialog
         open={showSearch}
         onClose={() => setShowSearch(false)}

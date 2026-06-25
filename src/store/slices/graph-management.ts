@@ -44,6 +44,18 @@ import type { GraphMeta } from '../types'
 import type { GraphState } from '../state'
 import type { Language } from '@/types/graph'
 
+/** Name of the empty graph created on first run, before the tour. */
+export const TUTORIAL_GRAPH_NAME = 'Tutorial'
+
+/**
+ * Stable id for the first-run Tutorial graph. A fixed id (not `newGraphId()`)
+ * keeps the bootstrap idempotent: under React StrictMode the init effect runs
+ * `loadGraphList` twice, and both passes can enter the empty-DB branch before
+ * either write commits. A constant id makes the second `dbSaveGraph` overwrite
+ * the first instead of creating a duplicate Tutorial record.
+ */
+export const TUTORIAL_GRAPH_ID = 'gtutorial00000'
+
 function detectBrowserLanguage(): Language {
   const lang = typeof navigator !== 'undefined' ? navigator.language.split('-')[0] : 'en'
   return lang === 'it' ? 'it' : 'en'
@@ -211,11 +223,11 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
 
     if (records.length === 0) {
       const lang = detectBrowserLanguage()
-      const id = newGraphId()
+      const id = TUTORIAL_GRAPH_ID
       const now = Date.now()
       const record: GraphRecord = {
         id,
-        name: 'Tutorial',
+        name: TUTORIAL_GRAPH_NAME,
         createdAt: now,
         updatedAt: now,
         nodes: [],

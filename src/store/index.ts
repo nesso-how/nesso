@@ -10,6 +10,7 @@ import { createDesktopSyncSlice } from './slices/desktop-sync'
 import type { GraphState } from './state'
 
 export type { GraphState } from './state'
+export { TUTORIAL_GRAPH_NAME } from './slices/graph-management'
 
 export const useGraphStore = create<GraphState>()(
   persist(
