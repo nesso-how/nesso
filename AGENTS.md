@@ -66,6 +66,7 @@ Area-specific rules (canonical content in `.rules/`, auto-attached per file area
 | `CHANGELOG.md` (Keep a Changelog), `[Unreleased]`, release flow | [`.rules/changelog.md`](.rules/changelog.md)         |
 | Keeping the `.rules/` files in sync with the codebase           | [`.rules/maintenance.md`](.rules/maintenance.md)     |
 | PR titles/bodies — match `.github/PULL_REQUEST_TEMPLATE.md`     | [`.rules/pull-requests.md`](.rules/pull-requests.md) |
+| Persisted-data compatibility — envelope/vocabulary migration    | [`.rules/compatibility.md`](.rules/compatibility.md) |
 
 **Changelog:** do **not** edit `CHANGELOG.md` during feature work; update **`## [Unreleased]`** only when the user asks for a **commit** or an explicit **changelog-before-commit** pass. Format and releases: [`.rules/changelog.md`](.rules/changelog.md).
 

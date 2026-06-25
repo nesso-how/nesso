@@ -19,11 +19,14 @@ export function reviewStateKey(graphId: string, nodeId: string): string {
 }
 
 const db = openDB<{ graphs: GraphRecord; reviewState: LearningNodeParams }>(GRAPHS_DB_NAME, 2, {
-  upgrade(db, oldVersion) {
-    if (oldVersion < 1) {
+  // Idempotent schema bootstrap: ensure the current object stores exist.
+  // Not a version ladder — IndexedDB requires a version + upgrade tx to create
+  // stores, and the version cannot go below existing alpha installs (2).
+  upgrade(db) {
+    if (!db.objectStoreNames.contains('graphs')) {
       db.createObjectStore('graphs', { keyPath: 'id' })
     }
-    if (oldVersion < 2) {
+    if (!db.objectStoreNames.contains('reviewState')) {
       db.createObjectStore('reviewState')
     }
   },
