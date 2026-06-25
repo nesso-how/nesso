@@ -25,11 +25,13 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
+    "dagre": "^0.8.5",
     "zod": "^4.4.3",
     "@modelcontextprotocol/server": "^2.0.0-alpha.2",
     "@nesso-how/vocab-learning": "workspace:*"
   },
   "devDependencies": {
+    "@types/dagre": "^0.7.53",
     "@types/node": "^22.0.0",
     "typescript": "~5.8.3"
   }

@@ -21,7 +21,7 @@ Add to your MCP client (Cursor, Claude Desktop, etc.):
 }
 ```
 
-Tools: `get_relation_types`, `get_nesso_docs`.
+Tools: `get_relation_types`, `get_nesso_docs`, `validate_graph`, `build_graph`.
 
 Full guide: [MCP integration](https://nesso.how/docs/guides/mcp-integration/).
 
