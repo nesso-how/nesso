@@ -171,7 +171,7 @@ export function SettingsDialog({ open, onClose }: Props) {
                   textAlign: 'left',
                   padding: '7px 10px',
                   borderRadius: 'var(--radius-md)',
-                  cursor: 'default',
+                  cursor: 'pointer',
                   transition: 'all 0.12s',
                   width: '100%',
                 }}
@@ -389,7 +389,7 @@ export function SettingsDialog({ open, onClose }: Props) {
                             fontFamily: 'var(--font-mono)',
                             padding: '5px 10px',
                             borderRadius: 'var(--radius-sm)',
-                            cursor: 'default',
+                            cursor: 'pointer',
                           }}
                         >
                           {p.id}

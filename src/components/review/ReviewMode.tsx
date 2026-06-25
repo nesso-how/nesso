@@ -603,7 +603,7 @@ function Btn({
         fontFamily: 'var(--font-sans)',
         padding: '9px 16px',
         borderRadius: 'var(--radius-md)',
-        cursor: 'default',
+        cursor: 'pointer',
       }}
     >
       {children}
@@ -629,7 +629,7 @@ function RatingBtn({
         flex: 1,
         appearance: 'none',
         border: 0,
-        cursor: 'default',
+        cursor: 'pointer',
         background: color,
         borderRadius: 'var(--radius-md)',
         padding: '11px 12px 10px',

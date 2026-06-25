@@ -126,7 +126,7 @@ export function EdgeInspector({ panelWidth, onPanelWidthChange }: Props) {
                 border: `0.5px solid ${k === edgeType ? C.color : 'var(--line)'}`,
                 background: k === edgeType ? C.color : 'transparent',
                 color: k === edgeType ? 'var(--paper)' : 'var(--ink-2)',
-                cursor: 'default',
+                cursor: 'pointer',
               }}
             >
               {t.relationTypes.types[k]}

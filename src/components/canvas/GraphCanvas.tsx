@@ -209,7 +209,7 @@ export function GraphCanvas({
         />
       )}
 
-      {nodes.length === 0 && (
+      {loadedToken > 0 && nodes.length === 0 && (
         <EmptyCanvasHint
           topInset={topInset}
           bottomInset={bottomInset}

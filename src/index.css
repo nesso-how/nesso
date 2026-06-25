@@ -39,6 +39,10 @@ textarea {
   color: inherit;
 }
 
+button:not(:disabled) {
+  cursor: pointer;
+}
+
 .dock-btn {
   appearance: none;
   border: 0;
@@ -51,7 +55,6 @@ textarea {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  cursor: default;
   outline: none;
 }
 .dock-btn:hover:not(:disabled) {

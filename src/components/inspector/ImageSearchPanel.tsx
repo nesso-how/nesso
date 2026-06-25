@@ -168,7 +168,7 @@ export function ImageSearchPanel({ query, setQuery, conceptText, onPick, onClose
                   appearance: 'none',
                   border: 0,
                   padding: 0,
-                  cursor: 'default',
+                  cursor: 'pointer',
                   height: 70,
                   borderRadius: 'var(--radius-md)',
                   overflow: 'hidden',

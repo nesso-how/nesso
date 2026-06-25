@@ -113,7 +113,7 @@ export function ModelStatusBadge({ status, model, baseUrl, pullProgress, onPull 
               fontFamily: 'var(--font-mono)',
               padding: '2px 8px',
               borderRadius: 'var(--radius-sm)',
-              cursor: 'default',
+              cursor: 'pointer',
             }}
           >
             {t.settings.ai.status.pull}

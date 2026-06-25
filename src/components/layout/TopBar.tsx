@@ -143,7 +143,7 @@ export function TopBar({
               color: 'var(--ink-2)',
               borderRadius: 'var(--radius-md)',
               padding: '6px 11px',
-              cursor: 'default',
+              cursor: 'pointer',
               fontSize: '12.5px',
               fontWeight: 500,
               fontFamily: 'var(--font-sans)',
@@ -210,5 +210,5 @@ const iconBtn: React.CSSProperties = {
   alignItems: 'center',
   justifyContent: 'center',
   color: 'var(--ink-3)',
-  cursor: 'default',
+  cursor: 'pointer',
 }

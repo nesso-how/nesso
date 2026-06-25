@@ -28,7 +28,7 @@ const rowIconBtn: React.CSSProperties = {
   justifyContent: 'center',
   borderRadius: 'var(--radius-sm)',
   color: 'var(--ink-4)',
-  cursor: 'default',
+  cursor: 'pointer',
 }
 
 /** Mirrors the Graphs section "New" button (Sidebar.tsx `graphsNewBtn`). */
@@ -43,7 +43,7 @@ const newBtn: React.CSSProperties = {
   alignItems: 'center',
   gap: 5,
   color: 'var(--ink-3)',
-  cursor: 'default',
+  cursor: 'pointer',
 }
 
 const menuItem: React.CSSProperties = {
@@ -56,7 +56,7 @@ const menuItem: React.CSSProperties = {
   background: 'transparent',
   borderRadius: 'var(--radius-sm)',
   padding: '6px 10px',
-  cursor: 'default',
+  cursor: 'pointer',
   textAlign: 'left',
   fontSize: '12.5px',
   fontWeight: 500,
@@ -130,7 +130,7 @@ export function SidebarProjects() {
             appearance: 'none',
             border: 0,
             background: 'transparent',
-            cursor: 'default',
+            cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
             gap: 'var(--space-3)',
@@ -288,7 +288,7 @@ export function SidebarProjects() {
                   background: 'transparent',
                   borderRadius: 'var(--radius-sm)',
                   padding: '6px 9px',
-                  cursor: 'default',
+                  cursor: 'pointer',
                   textAlign: 'left',
                   opacity: isMissing ? 0.55 : 1,
                   font: isActive

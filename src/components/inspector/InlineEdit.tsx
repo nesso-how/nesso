@@ -177,7 +177,7 @@ export function InlineEdit({
           fontWeight: 450,
           fontFamily: 'var(--font-sans)',
           color: 'var(--ink-5)',
-          cursor: 'default',
+          cursor: 'pointer',
           boxSizing: 'border-box',
           width: '100%',
         }}

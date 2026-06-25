@@ -52,7 +52,7 @@ function MenuRow({ item, onClose }: { item: Item; onClose: () => void }) {
         textAlign: 'left',
         appearance: 'none',
         border: 0,
-        cursor: 'default',
+        cursor: 'pointer',
         padding: '7px 9px 7px 10px',
         borderRadius: 'var(--radius-md)',
         background: hover && !item.disabled ? 'var(--paper-deep)' : 'transparent',

@@ -101,7 +101,7 @@ function StatusBtn({
         justifyContent: 'center',
         background: 'transparent',
         color: !disabled && hover ? 'var(--ink)' : 'var(--ink-3)',
-        cursor: disabled ? 'not-allowed' : 'default',
+        cursor: disabled ? 'not-allowed' : 'pointer',
         opacity: disabled ? 0.3 : 1,
       }}
     >
@@ -154,7 +154,7 @@ function SocratesEntry() {
         display: 'inline-flex',
         alignItems: 'center',
         gap: 'var(--space-3)',
-        cursor: 'default',
+        cursor: 'pointer',
         background: active ? 'var(--paper-deep)' : 'transparent',
       }}
     >

@@ -10,7 +10,7 @@ const buttonBase = {
   fontFamily: 'var(--font-sans)',
   padding: '8px 16px',
   borderRadius: 'var(--radius-md)',
-  cursor: 'default' as const,
+  cursor: 'pointer' as const,
 }
 
 /** Blocking confirmation dialog for destructive actions. Mounted once at the app shell. */

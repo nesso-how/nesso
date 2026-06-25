@@ -25,7 +25,7 @@ export function Stepper({ value, min, max, onChange }: Props) {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    cursor: 'default',
+    cursor: 'pointer',
     flexShrink: 0,
     lineHeight: 1,
   }

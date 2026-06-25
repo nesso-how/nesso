@@ -17,6 +17,10 @@ export async function gotoApp(page: Page): Promise<void> {
 export async function newEmptyGraph(page: Page): Promise<void> {
   await page.getByTestId('sidebar-new-graph').click()
   await expect(nodes(page)).toHaveCount(0)
+  // Sidebar.tsx opens the rename input after a short delay; wait for it before
+  // pressing Escape so the dismiss is reliable and the input doesn't steal focus
+  // from the canvas later.
+  await expect(page.getByTestId('sidebar-graph-rename')).toBeVisible()
   await page.keyboard.press('Escape')
 }
 
@@ -39,8 +43,10 @@ export async function createConceptAt(
   if (!box) throw new Error('canvas pane has no bounding box')
   await pane.dblclick({ position: { x: box.width * xRatio, y: box.height * yRatio } })
 
-  const input = page.locator('.react-flow__node input')
-  await input.waitFor({ state: 'visible' })
+  const node = nodes(page).last()
+  await expect(node).toBeVisible()
+  const input = node.locator('input')
+  await expect(input).toBeVisible()
   await input.fill(text)
   await input.press('Enter')
   await expect(nodeByText(page, text)).toBeVisible()

@@ -55,6 +55,19 @@ Optional `getRelationLabel` localizes edge labels; `isItemSelected` syncs select
 />
 ```
 
+Decorative embeds in a scrollable page (e.g. a landing hero) should turn off wheel zoom and drag pan so the page keeps scrolling over the canvas:
+
+```tsx
+<NessoGraph
+  graph={doc}
+  panOnDrag={false}
+  zoomOnScroll={false}
+  style={{ width: '100%', height: 400 }}
+/>
+```
+
+`NessoGraph` sets React Flow's `preventScrolling` from those flags: when neither `zoomOnScroll` nor `panOnScroll` consumes the wheel, page scroll is not blocked. Override with `reactFlowProps.preventScrolling` if you need different behaviour.
+
 ## Escape hatch
 
 Any [`ReactFlow`](https://reactflow.dev/api-reference/react-flow) prop not listed above can be passed through `reactFlowProps`, for example to hide the attribution badge or disable double-click-to-zoom:

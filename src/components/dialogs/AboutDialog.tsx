@@ -29,7 +29,7 @@ const linkRow: CSSProperties = {
   padding: '11px 14px',
   border: 0,
   background: 'var(--bg-card)',
-  cursor: 'default',
+  cursor: 'pointer',
   textAlign: 'left',
   fontSize: '13px',
   fontWeight: 500,

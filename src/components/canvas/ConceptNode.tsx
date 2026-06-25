@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-import { useState, useRef, useCallback, useEffect, useLayoutEffect } from 'react'
+import { useState, useRef, useCallback, useLayoutEffect } from 'react'
 import { Handle, Position, NodeProps, useConnection } from '@xyflow/react'
 import type { Node } from '@xyflow/react'
 import { ConceptNodeBody, useGraphDisplay } from '@nesso-how/graph'
@@ -55,11 +55,27 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
     setEditing(true)
   }, [data.text])
 
-  useEffect(() => {
-    if (editNodeId !== id) return
-    clearEditNodeId()
-    startEdit()
-  }, [editNodeId, id, clearEditNodeId, startEdit])
+  const focusNodeWrapper = useCallback(() => {
+    requestAnimationFrame(() => {
+      ;(rootRef.current?.closest('.react-flow__node') as HTMLElement | null)?.focus()
+    })
+  }, [])
+
+  const finishEdit = useCallback(() => {
+    if (useGraphStore.getState().editNodeId === id) clearEditNodeId()
+    setEditing(false)
+    focusNodeWrapper()
+  }, [id, clearEditNodeId, focusNodeWrapper])
+
+  // Keep editNodeId until the user finishes editing — clearing it in this effect
+  // breaks under StrictMode remount (dev / Playwright), which drops inline edit.
+  useLayoutEffect(() => {
+    if (editNodeId === id) {
+      if (!editing) startEdit()
+      return
+    }
+    if (editing) setEditing(false)
+  }, [editNodeId, id, editing, startEdit])
 
   useLayoutEffect(() => {
     if (!editing || !selectAllOnFocus.current) return
@@ -88,20 +104,13 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
     input.setSelectionRange(pos, pos)
   }, [])
 
-  const focusNodeWrapper = useCallback(() => {
-    requestAnimationFrame(() => {
-      ;(rootRef.current?.closest('.react-flow__node') as HTMLElement | null)?.focus()
-    })
-  }, [])
-
   const commit = useCallback(
     (val: string) => {
       const trimmed = val.trim()
       if (trimmed) updateNodeData(id, { text: trimmed })
-      setEditing(false)
-      focusNodeWrapper()
+      finishEdit()
     },
-    [id, updateNodeData, focusNodeWrapper],
+    [id, updateNodeData, finishEdit],
   )
 
   // Boolean selector: without it every node re-renders on each pointer move
@@ -170,8 +179,7 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
                   e.preventDefault()
                   skipBlurCommit.current = true
                   setDraft(data.text)
-                  setEditing(false)
-                  focusNodeWrapper()
+                  finishEdit()
                 }
               }}
               style={{
