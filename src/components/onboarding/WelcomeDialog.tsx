@@ -128,10 +128,7 @@ export function WelcomeDialog({ open, onShowMeHow, onSkipIntro }: Props) {
               background: 'var(--ink-2)',
               color: 'var(--paper)',
             }}
-            {...hoverStyle(
-              { background: 'var(--ink)', borderColor: 'var(--ink)' },
-              { background: 'var(--ink-2)', borderColor: 'var(--ink-2)' },
-            )}
+            {...hoverStyle({ background: 'var(--ink)' }, { background: 'var(--ink-2)' })}
           >
             {w.showMeHow}
           </button>

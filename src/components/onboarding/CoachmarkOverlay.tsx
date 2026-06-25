@@ -254,10 +254,7 @@ export function CoachmarkOverlay({ stepIndex, reviewOpened, onSkip, onNext }: Pr
                 opacity: complete ? 1 : 0.45,
               }}
               {...(complete
-                ? hoverStyle(
-                    { background: 'var(--ink)', borderColor: 'var(--ink)' },
-                    { background: 'var(--ink-2)', borderColor: 'var(--ink-2)' },
-                  )
+                ? hoverStyle({ background: 'var(--ink)' }, { background: 'var(--ink-2)' })
                 : {})}
             >
               {copy.cta}
