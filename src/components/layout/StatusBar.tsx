@@ -158,7 +158,7 @@ function SocratesEntry() {
         background: active ? 'var(--paper-deep)' : 'transparent',
       }}
     >
-      <span className="nx-socrates-halo" style={{ flexShrink: 0, color: 'var(--highlight)' }}>
+      <span style={{ flexShrink: 0 }}>
         <SocratesGlyph size={18} />
       </span>
       <span

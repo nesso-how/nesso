@@ -394,7 +394,7 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
             flexShrink: 0,
           }}
         >
-          <SocratesGlyph size={28} />
+          <SocratesGlyph size={32} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 1, flex: 1 }}>
             <b
               style={{

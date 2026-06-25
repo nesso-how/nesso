@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Changed
+
+- **Socrates avatar:** Simplified portrait with warmer skin tones, softer beard, and theme-aware inline SVG in the app (status bar and mentor panel). Removed the status-bar breathing halo; landing docs icon updated to match.
+
 ## [0.1.0-alpha.36] - 2026-06-24
 
 ### Added
