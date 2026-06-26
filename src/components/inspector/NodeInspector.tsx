@@ -9,6 +9,7 @@ import { ImageSearchPanel } from './ImageSearchPanel'
 import { InspectorPanel } from './InspectorPanel'
 import { EdgeRow } from './EdgeRow'
 import { InspectorActionToolbar, InspectorCollapseCloseRow } from './inspectorChrome'
+import { isOnboardingStep } from '@/components/onboarding/onboardingSteps'
 
 const LABEL_STYLE: CSSProperties = {
   fontSize: '11px',
@@ -67,6 +68,8 @@ export function NodeInspector({
   const updateNodeData = useGraphStore((s) => s.updateNodeData)
   const settings = useGraphStore((s) => s.settings)
   const setSetting = useGraphStore((s) => s.setSetting)
+  const onboardingStep = useGraphStore((s) => s.onboardingStep)
+  const firstNodeId = useGraphStore((s) => s.nodes[0]?.id ?? null)
 
   const memoryOpen = settings.inspectorMemoryOpen
   const examplesOpen = settings.inspectorExamplesOpen
@@ -363,7 +366,13 @@ export function NodeInspector({
         </div>
 
         {/* Definition */}
-        <div>
+        <div
+          data-onboarding={
+            isOnboardingStep(onboardingStep, 'inspector-definition') && node.id === firstNodeId
+              ? 'inspector-definition'
+              : undefined
+          }
+        >
           <div style={{ ...LABEL_STYLE, marginBottom: 6 }}>{t.inspector.notes.definition}</div>
           <InlineEdit
             value={elab?.definition ?? ''}

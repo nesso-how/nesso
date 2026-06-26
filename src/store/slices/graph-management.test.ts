@@ -3,7 +3,7 @@
 import 'fake-indexeddb/auto'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createStore } from 'zustand/vanilla'
-import { dbClearGraphs, dbLoadGraph } from '@/store/db'
+import { dbClearGraphs, dbListGraphs, dbLoadGraph } from '@/store/db'
 import type { GraphState } from '../state'
 import { createDesktopSyncSlice } from './desktop-sync'
 import { createGraphEditingSlice } from './graph-editing'
@@ -31,8 +31,7 @@ type Store = ReturnType<typeof makeStore>
 
 async function freshStore(): Promise<Store> {
   const s = makeStore()
-  // Seed IndexedDB from the bundled seeds so every graphList meta has a backing
-  // record (the app does this on startup).
+  // Mirror app startup: seeds the demo graph(s) when IDB is empty.
   await s.getState().loadGraphList()
   return s
 }
@@ -42,12 +41,25 @@ beforeEach(async () => {
 })
 
 describe('loadGraphList', () => {
-  it('seeds IndexedDB from the bundled graphs when empty', async () => {
+  it('seeds the demo graph(s) when IndexedDB is empty', async () => {
     const s = makeStore()
     const list = await s.getState().loadGraphList()
     expect(list.length).toBeGreaterThan(0)
-    const seeded = await dbLoadGraph(list[0].id)
-    expect(seeded?.id).toBe(list[0].id)
+    // Unlike the old empty Tutorial, the seeded demo carries content.
+    const stored = await dbLoadGraph(list[0].id)
+    expect(stored?.nodes.length).toBeGreaterThan(0)
+  })
+
+  it('is idempotent under a concurrent double bootstrap (StrictMode init effect)', async () => {
+    const s = makeStore()
+    // React StrictMode runs the init effect twice; both passes can enter the
+    // empty-DB branch before either write commits. Stable seed ids must collapse
+    // the two writes into one record per seed (no duplicates).
+    await Promise.all([s.getState().loadGraphList(), s.getState().loadGraphList()])
+    const records = await dbListGraphs()
+    expect(records.length).toBeGreaterThan(0)
+    const ids = records.map((r) => r.id)
+    expect(new Set(ids).size).toBe(ids.length)
   })
 
   it('adopts the browser language when seeding an empty database', async () => {

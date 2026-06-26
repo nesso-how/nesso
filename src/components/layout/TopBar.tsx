@@ -7,6 +7,7 @@ import { useT } from '@/i18n'
 import { isDesktop } from '@/lib/isDesktop'
 import { hoverStyle } from '@/lib/hoverStyle'
 import { useActiveProjectName } from '@/hooks/useActiveProjectName'
+import { isOnboardingStep } from '@/components/onboarding/onboardingSteps'
 
 /** Full-height navbar; Inspector and canvas top inset rely on this. */
 export const TOPBAR_HEIGHT_PX = 52
@@ -35,6 +36,7 @@ export function TopBar({
   const currentGraphId = useGraphStore((s) => s.currentGraphId)
   const nodes = useGraphStore((s) => s.nodes)
   const reviewEnabled = useGraphStore((s) => s.settings.reviewEnabled)
+  const onboardingStep = useGraphStore((s) => s.onboardingStep)
   const current = graphList.find((g) => g.id === currentGraphId)
   const projectName = useActiveProjectName()
   const [now, setNow] = useState(() => Date.now())
@@ -43,6 +45,7 @@ export function TopBar({
     return () => clearInterval(id)
   }, [])
   const dueCount = useMemo(() => sortedDueConceptNodes(nodes).length, [nodes, now])
+  const onReviewTourStep = isOnboardingStep(onboardingStep, 'review-button')
 
   return (
     <div
@@ -127,9 +130,10 @@ export function TopBar({
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
-        {reviewEnabled && (
+        {(reviewEnabled || onReviewTourStep) && (
           <button
             type="button"
+            data-onboarding={onReviewTourStep ? 'review-button' : undefined}
             onClick={onReview}
             title={t.topBar.startReview}
             style={{

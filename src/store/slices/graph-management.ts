@@ -3,7 +3,7 @@ import type { Node, Edge } from '@xyflow/react'
 import type { StateCreator } from 'zustand'
 import type { ConceptNodeData, GraphDisplaySettings } from '@/types/graph'
 import { defaultGraphDisplay, mergeGraphDisplay } from '@/types/graph'
-import { SEEDS, getSeedsForLanguage, type Seed } from '@/data/seedGraph'
+import { SEEDS, getSeedsForLanguage } from '@/data/seedGraph'
 import { isGraphId, newGraphId } from '@/lib/graphId'
 import { isDesktop } from '@/lib/isDesktop'
 import {
@@ -72,19 +72,6 @@ function registerAndSwitch(
     },
   }))
   return get().switchProject(norm)
-}
-
-function makeSeedRecord(seed: Seed): GraphRecord {
-  const now = Date.now()
-  return {
-    id: seed.id,
-    name: seed.name,
-    createdAt: now,
-    updatedAt: now,
-    nodes: seed.nodes,
-    edges: seed.edges,
-    display: seed.display,
-  }
 }
 
 type SaveDirtyFlags = {
@@ -223,17 +210,35 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
     let records = await dbListGraphs()
 
     if (records.length === 0) {
+      // First run: seed the locale demo graphs so the app always has a current
+      // graph and a populated sidebar. The tour has the user create their own
+      // graph on top — there is no auto-created Tutorial. Seed ids are stable,
+      // so React StrictMode's double init overwrites rather than duplicating.
       const lang = detectBrowserLanguage()
-      set((s) => ({ settings: { ...s.settings, language: lang } }))
+      const now = Date.now()
       const seeds = getSeedsForLanguage(lang)
-      const seeded: GraphRecord[] = []
-      for (let i = seeds.length - 1; i >= 0; i--) {
-        const rec = makeSeedRecord(seeds[i])
-        await dbSaveGraph(rec)
-        seeded.unshift(rec)
+      const seedRecords: GraphRecord[] = []
+      for (const seed of seeds) {
+        const display = seed.display ?? defaultGraphDisplay(get().settings)
+        const payload = graphContentPayload(seed.nodes, seed.edges, display)
+        const record: GraphRecord = {
+          id: seed.id,
+          name: seed.name,
+          createdAt: now,
+          updatedAt: now,
+          nodes: payload.nodes,
+          edges: payload.edges,
+          display: payload.display,
+        }
+        await persistReviewStatesFromNodes(seed.id, seed.nodes)
+        await dbSaveGraph(record)
+        seedRecords.push(record)
       }
-      records = seeded
-      set({ currentGraphId: seeds[0].id })
+      records = seedRecords
+      set((s) => ({
+        currentGraphId: seeds[0]?.id ?? s.currentGraphId,
+        settings: { ...s.settings, language: lang },
+      }))
     }
 
     if (isDesktop()) {

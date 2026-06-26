@@ -383,6 +383,7 @@ const en = {
       changelog: 'Changelog',
       license: 'License (MIT)',
     },
+    showTutorial: 'Show tutorial again',
   },
   mentor: {
     name: 'Socrates',
@@ -432,6 +433,84 @@ const en = {
     website: 'Website',
     reportIssue: 'Report an Issue',
     shortcuts: 'Keyboard Shortcuts',
+  },
+  onboarding: {
+    welcome: {
+      headlineLine1: "Understanding can't be received.",
+      headlineLine2Before: 'It has to be ',
+      headlineLine2Em: 'built',
+      headlineLine2After: '.',
+      intro:
+        'Nesso is an app for typed knowledge graphs. Ideas are nodes, and the relations between those nodes are what allow you to actually learn.',
+      showMeHow: 'Show me how',
+      skipIntro: 'Skip intro',
+    },
+    tour: {
+      skipTour: 'Skip tour',
+      steps: {
+        createGraph: {
+          eyebrow: 'Step 01 · Graphs',
+          title: 'Create your first graph',
+          body: 'Click + New in the sidebar to start a fresh graph.',
+        },
+        nameGraph: {
+          eyebrow: 'Step 02 · Graphs',
+          title: 'Name your graph',
+          body: 'Double-click the new graph in the sidebar, type a name like "Tutorial", then press Enter.',
+        },
+        addConcept: {
+          eyebrow: 'Step 03 · Concepts',
+          title: 'Drop your first concept',
+          body: 'Double-click the canvas to place an idea. A node is one concept.',
+        },
+        writeLabel: {
+          eyebrow: 'Step 04 · Name',
+          title: 'Name the concept',
+          body: 'Double-click the concept text, type a short label like "Learning", then press Enter.',
+        },
+        addDefinition: {
+          eyebrow: 'Step 05 · Definition',
+          title: 'Add a definition',
+          body: 'Click the definition field in the inspector, write what the concept means in your own words, then press Enter.',
+        },
+        secondConcept: {
+          eyebrow: 'Step 06 · Concepts',
+          title: 'Add a second idea',
+          body: 'Double-click again to place a second concept you can connect.',
+        },
+        secondLabel: {
+          eyebrow: 'Step 07 · Name',
+          title: 'Name the second concept',
+          body: 'Double-click the second concept, type a label like "Work", then press Enter.',
+        },
+        typedRelation: {
+          eyebrow: 'Step 08 · Typed relations',
+          title: 'Say how they relate',
+          body: 'Drag from the highlighted handle to the other concept, then pick a relation type like "requires". The relation is what you learn.',
+        },
+        review: {
+          eyebrow: 'Step 09 · Review',
+          title: 'Spaced repetition',
+          body: 'Each concept comes back after a while, depending on how you answer during review. Open Review when you are ready.',
+        },
+        deleteNode: {
+          eyebrow: 'Step 10 · Cleanup',
+          title: 'Remove a concept',
+          body: 'Right-click a concept and choose Delete to remove it from the graph.',
+        },
+        deleteGraph: {
+          eyebrow: 'Step 11 · Cleanup',
+          title: 'Delete the graph',
+          body: 'Hover the graph in the sidebar, click the trash icon, then confirm to delete it.',
+        },
+      },
+    },
+    telemetry: {
+      message:
+        'Share anonymous usage data to help improve Nesso? No graph content is ever sent. You can change this anytime in Settings.',
+      accept: 'Share data',
+      decline: 'Not now',
+    },
   },
 }
 

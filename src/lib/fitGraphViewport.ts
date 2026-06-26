@@ -34,10 +34,12 @@ export function computeFitViewport(
   const { width: canvasW, height: canvasH } = fitCanvasSize(insets)
 
   if (nodes.length === 0) {
+    // 1:1 so the first concept dropped on a new graph matches the empty-canvas
+    // ghost preview (both rendered at the same scale).
     return {
       x: insets.left + canvasW / 2,
       y: insets.top + canvasH / 2,
-      zoom: 0.75,
+      zoom: 1,
     }
   }
 

@@ -386,7 +386,8 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
       return { nodes, edges, selected: null, selectedIds: s.nodes.map((n) => n.id) }
     }),
 
-  deleteSelection: () =>
+  deleteSelection: () => {
+    let removedNode = false
     set((s) => {
       const nodeIds = new Set(s.selectedIds)
       if (s.selected?.kind === 'node') nodeIds.add(s.selected.id)
@@ -399,6 +400,8 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
 
       if (nodeIds.size === 0 && edgeIds.size === 0) return s
 
+      if (nodeIds.size > 0) removedNode = true
+
       // Single pass: drop selected nodes, edges incident to them, AND any
       // explicitly selected edges — a mixed selection removes both.
       return {
@@ -410,7 +413,9 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
         selected: null,
         selectedIds: [],
       }
-    }),
+    })
+    if (removedNode) get().noteOnboardingNodeDeleted?.()
+  },
 
   copySelection: () => {
     const snap = snapshotSelection(get())

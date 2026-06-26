@@ -31,8 +31,12 @@ import { useGraphStore, selectedNodeSelector, selectedEdgeSelector } from './sto
 import { useAutoSave } from './hooks/useAutoSave'
 import { useGraphFileWatch } from './hooks/useGraphFileWatch'
 import { useDesktopMenu } from './hooks/useDesktopMenu'
+import { useOnboardingFlow } from './hooks/useOnboardingFlow'
 import { GraphFileConflictBanner } from './components/banners/GraphFileConflictBanner'
 import { UpdateBanner } from './components/banners/UpdateBanner'
+import { TelemetryConsentBanner } from './components/banners/TelemetryConsentBanner'
+import { WelcomeDialog } from './components/onboarding/WelcomeDialog'
+import { CoachmarkOverlay } from './components/onboarding/CoachmarkOverlay'
 import { PALETTES } from '@nesso-how/vocab-learning'
 import { findNewConceptPosition, NEW_CONCEPT_SIZE } from './data/newConceptLayout'
 import { focusFlowNodes } from './lib/focusFlowSelection'
@@ -51,6 +55,7 @@ function AppInner() {
   const [showRelationTypes, setShowRelationTypes] = useState(false)
   const [showSearch, setShowSearch] = useState(false)
   const [showAbout, setShowAbout] = useState(false)
+  const onboarding = useOnboardingFlow()
 
   const settings = useGraphStore((s) => s.settings)
   const telemetry = settings.telemetry
@@ -104,8 +109,9 @@ function AppInner() {
 
   const openReview = useCallback(() => {
     track({ name: 'review_session_started' })
+    onboarding.noteReviewOpenedDuringTour()
     setShowReview(true)
-  }, [])
+  }, [onboarding.noteReviewOpenedDuringTour])
 
   const [sidebarPanelWidth, setSidebarPanelWidth] = useState(readSidebarWidth)
   useEffect(() => {
@@ -130,11 +136,13 @@ function AppInner() {
       const cid = useGraphStore.getState().currentGraphId
       const target = list.find((g) => g.id === hashId) ? hashId : cid
       await loadGraph(target)
+      if (cancelled) return
+      onboarding.onGraphListLoaded()
     })
     return () => {
       cancelled = true
     }
-  }, [loadGraphList, loadGraph])
+  }, [loadGraphList, loadGraph, onboarding.onGraphListLoaded])
 
   // Keep URL hash in sync with current graph
   useEffect(() => {
@@ -365,6 +373,7 @@ function AppInner() {
     showRelationTypes ||
     showSearch ||
     showAbout ||
+    onboarding.anyModalOpen ||
     confirmOpen
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -503,13 +512,32 @@ function AppInner() {
       <ReviewMode open={showReview} onClose={() => setShowReview(false)} />
       <ShortcutsDialog open={showShortcuts} onClose={() => setShowShortcuts(false)} />
       <SettingsDialog open={showSettings} onClose={() => setShowSettings(false)} />
-      <AboutDialog open={showAbout} onClose={() => setShowAbout(false)} />
+      <AboutDialog
+        open={showAbout}
+        onClose={() => setShowAbout(false)}
+        onShowTutorial={() => {
+          setShowAbout(false)
+          onboarding.startTour()
+        }}
+      />
       <SearchDialog
         open={showSearch}
         onClose={() => setShowSearch(false)}
         onSelectNode={handleSelectNode}
         onSelectGraph={(id) => loadGraph(id)}
       />
+      <WelcomeDialog
+        open={onboarding.phase === 'welcome'}
+        onShowMeHow={onboarding.startTour}
+        onSkipIntro={onboarding.skipOnboarding}
+      />
+      {onboarding.phase === 'tour' && !showReview && (
+        <CoachmarkOverlay
+          stepIndex={onboarding.tourStep}
+          onSkip={onboarding.skipOnboarding}
+          onNext={onboarding.advanceTour}
+        />
+      )}
       <div
         style={{
           position: 'fixed',
@@ -524,6 +552,10 @@ function AppInner() {
       >
         <GraphFileConflictBanner />
         <UpdateBanner />
+        <TelemetryConsentBanner
+          open={onboarding.phase === 'consent'}
+          onDismiss={onboarding.finishOnboarding}
+        />
         <ToastViewport />
       </div>
       <ConfirmDialog />

@@ -31,6 +31,11 @@ export const useGraphStore = create<GraphState>()(
         currentGraphId: s.currentGraphId,
         graphList: s.graphList,
         viewports: s.viewports,
+        onboardingStep: s.onboardingStep,
+        onboardingPhase: s.onboardingPhase,
+        onboardingTourGraphId: s.onboardingTourGraphId,
+        onboardingReviewOpened: s.onboardingReviewOpened,
+        onboardingDeleteNodeDone: s.onboardingDeleteNodeDone,
       }),
       merge: (persisted, current) => {
         const p = persisted as Partial<GraphState> | undefined

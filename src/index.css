@@ -217,6 +217,70 @@ body::before {
   }
 }
 
+@keyframes nx-welcome-icon-wave {
+  0% {
+    transform: scale(0.68);
+    opacity: 0;
+  }
+  14% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: scale(1.26);
+    opacity: 0;
+  }
+}
+
+.nx-welcome-icon {
+  position: relative;
+  overflow: visible;
+}
+
+.nx-welcome-icon::before,
+.nx-welcome-icon::after,
+.nx-welcome-icon-wave {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--highlight-soft);
+  pointer-events: none;
+  transform-origin: center;
+  z-index: 0;
+  animation: nx-welcome-icon-wave 10.5s ease-out infinite;
+}
+
+.nx-welcome-icon::before {
+  content: "";
+  animation-delay: 0s;
+}
+
+.nx-welcome-icon::after {
+  content: "";
+  animation-delay: 3.5s;
+}
+
+.nx-welcome-icon-wave {
+  animation-delay: 7s;
+}
+
+.nx-welcome-icon > svg {
+  position: relative;
+  z-index: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nx-welcome-icon::before,
+  .nx-welcome-icon::after {
+    animation: none;
+    content: none;
+  }
+
+  .nx-welcome-icon-wave {
+    animation: none;
+    display: none;
+  }
+}
+
 /* Socrates avatar — warm portrait tones; hair/eyes track theme ink where it helps */
 [data-theme="light"] {
   --mentor-avatar-skin: #f5c8a0;

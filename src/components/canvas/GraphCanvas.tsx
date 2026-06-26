@@ -17,6 +17,8 @@ import { EmptyCanvasHint } from './EmptyCanvasHint'
 import { useGraphContextMenu } from './useGraphContextMenu'
 import { useConnectRelation } from './useConnectRelation'
 import { RelationPicker } from '@/components/ui/RelationPicker'
+import { isOnboardingStep } from '@/components/onboarding/onboardingSteps'
+import { INSPECTOR_CANVAS_LEFT_GUTTER } from '@/components/inspector/layout'
 import { useT } from '@/i18n'
 import { track } from '@/telemetry'
 import { useGraphStore } from '@/store'
@@ -46,12 +48,14 @@ export function GraphCanvas({
   const onNodesChange = useGraphStore((s) => s.onNodesChange)
   const onEdgesChange = useGraphStore((s) => s.onEdgesChange)
   const addNode = useGraphStore((s) => s.addNode)
+  const clearEditNodeId = useGraphStore((s) => s.clearEditNodeId)
   const syncFlowSelection = useGraphStore((s) => s.syncFlowSelection)
   const currentGraphId = useGraphStore((s) => s.currentGraphId)
   const loadedToken = useGraphStore((s) => s.loadedToken)
   const graphDisplay = useGraphStore((s) => s.graphDisplay)
   const categoryPalette = useGraphStore((s) => s.settings.categoryPalette)
   const selected = useGraphStore((s) => s.selected)
+  const onboardingStep = useGraphStore((s) => s.onboardingStep)
   const t = useT()
 
   const getRelationLabel = useCallback((type: RelationTypeName) => t.relationTypes.types[type], [t])
@@ -144,11 +148,28 @@ export function GraphCanvas({
       const pos = newConceptTopLeftAtFlowCenter(x, y)
       addNode(pos.x, pos.y)
       track({ name: 'node_created' })
+      // During the create steps the tour teaches double-click-to-edit, so the
+      // node must not open in edit mode the moment it is dropped.
+      const step = useGraphStore.getState().onboardingStep
+      if (isOnboardingStep(step, 'add-concept') || isOnboardingStep(step, 'second-concept')) {
+        clearEditNodeId()
+      }
     },
-    [addNode, screenToFlowPosition],
+    [addNode, clearEditNodeId, screenToFlowPosition],
   )
 
   const styledEdges = useMemo(() => styleEdges(edges), [edges])
+
+  // Tour steps that spotlight the whole visible canvas (drop a concept, or
+  // right-click to delete one). The hole is the inset region so the scrim's
+  // dashed outline hugs the canvas without bleeding into the bars.
+  const canvasRegionAnchor = isOnboardingStep(onboardingStep, 'add-concept')
+    ? 'add-concept'
+    : isOnboardingStep(onboardingStep, 'second-concept')
+      ? 'second-concept'
+      : isOnboardingStep(onboardingStep, 'delete-node')
+        ? 'delete-node'
+        : null
 
   return (
     <div
@@ -197,6 +218,23 @@ export function GraphCanvas({
       >
         <Background variant={BackgroundVariant.Dots} gap={28} size={1.5} color="var(--grid-dot)" />
       </NessoGraph>
+
+      {canvasRegionAnchor && (
+        <div
+          data-onboarding={canvasRegionAnchor}
+          style={{
+            position: 'absolute',
+            top: topInset,
+            // Span the full visible canvas: the chrome insets carry placement
+            // gutters (left) and a no-selection right gutter that the spotlight
+            // must not inherit, or it would leave a strip uncovered.
+            left: Math.max(0, leftInset - INSPECTOR_CANVAS_LEFT_GUTTER),
+            right: 0,
+            bottom: bottomInset,
+            pointerEvents: 'none',
+          }}
+        />
+      )}
 
       {pendingConn && (
         <RelationPicker

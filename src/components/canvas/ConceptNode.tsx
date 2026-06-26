@@ -5,6 +5,7 @@ import type { Node } from '@xyflow/react'
 import { ConceptNodeBody, useGraphDisplay } from '@nesso-how/graph'
 import type { ConceptNodeData } from '@/types/graph'
 import { CONCEPT_HANDLE_IN, CONCEPT_HANDLE_OUT } from '@/data/conceptHandles'
+import { isOnboardingStep } from '@/components/onboarding/onboardingSteps'
 import { useGraphStore } from '@/store'
 
 type ConceptNodeType = Node<ConceptNodeData>
@@ -46,7 +47,11 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
   const skipBlurCommit = useRef(false)
   const updateNodeData = useGraphStore((s) => s.updateNodeData)
   const editNodeId = useGraphStore((s) => s.editNodeId)
+  const onboardingStep = useGraphStore((s) => s.onboardingStep)
+  const firstNodeId = useGraphStore((s) => s.nodes[0]?.id ?? null)
+  const secondNodeId = useGraphStore((s) => s.nodes[1]?.id ?? null)
   const clearEditNodeId = useGraphStore((s) => s.clearEditNodeId)
+  const requestEditNode = useGraphStore((s) => s.requestEditNode)
   const { showHeatmap } = useGraphDisplay()
 
   const startEdit = useCallback(() => {
@@ -120,7 +125,19 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
   )
 
   return (
-    <div className="nesso-node" style={{ position: 'relative' }}>
+    <div
+      className="nesso-node"
+      data-onboarding={
+        isOnboardingStep(onboardingStep, 'concept-label') && id === firstNodeId
+          ? 'concept-label'
+          : isOnboardingStep(onboardingStep, 'second-concept-label') && id === secondNodeId
+            ? 'second-concept-label'
+            : isOnboardingStep(onboardingStep, 'connect-handle') && id === secondNodeId
+              ? 'connect-target'
+              : undefined
+      }
+      style={{ position: 'relative' }}
+    >
       <ConceptNodeBody
         rootRef={rootRef}
         text={data.text}
@@ -132,7 +149,7 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
         connectionTarget={isConnectionTarget}
         onDoubleClick={(e) => {
           e.stopPropagation()
-          startEdit()
+          requestEditNode(id)
         }}
       >
         <div style={{ position: 'relative' }}>
@@ -209,6 +226,11 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
         type="source"
         position={Position.Right}
         className="nesso-node-handle"
+        data-onboarding={
+          isOnboardingStep(onboardingStep, 'connect-handle') && id === firstNodeId
+            ? 'connect-handle'
+            : undefined
+        }
         style={{
           width: 22,
           height: 22,
