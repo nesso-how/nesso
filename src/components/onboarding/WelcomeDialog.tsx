@@ -43,11 +43,11 @@ export function WelcomeDialog({ open, onShowMeHow, onSkipIntro }: Props) {
         }}
       >
         <div
+          className="nx-welcome-icon"
           style={{
             width: 64,
             height: 64,
             borderRadius: 999,
-            background: 'var(--highlight-soft)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -55,6 +55,7 @@ export function WelcomeDialog({ open, onShowMeHow, onSkipIntro }: Props) {
             color: 'var(--ink)',
           }}
         >
+          <span className="nx-welcome-icon-wave" aria-hidden="true" />
           <NessoMark size={36} />
         </div>
 
@@ -84,9 +85,11 @@ export function WelcomeDialog({ open, onShowMeHow, onSkipIntro }: Props) {
         >
           {w.headlineLine1}
           <br />
-          {w.headlineLine2Before}
-          <em style={{ fontStyle: 'italic' }}>{w.headlineLine2Em}</em>
-          {w.headlineLine2After}
+          <em style={{ fontStyle: 'italic', fontWeight: 400, color: 'var(--highlight)' }}>
+            {w.headlineLine2Before}
+            {w.headlineLine2Em}
+            {w.headlineLine2After}
+          </em>
         </h2>
 
         <p

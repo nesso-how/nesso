@@ -49,7 +49,9 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
   const editNodeId = useGraphStore((s) => s.editNodeId)
   const onboardingStep = useGraphStore((s) => s.onboardingStep)
   const firstNodeId = useGraphStore((s) => s.nodes[0]?.id ?? null)
+  const secondNodeId = useGraphStore((s) => s.nodes[1]?.id ?? null)
   const clearEditNodeId = useGraphStore((s) => s.clearEditNodeId)
+  const requestEditNode = useGraphStore((s) => s.requestEditNode)
   const { showHeatmap } = useGraphDisplay()
 
   const startEdit = useCallback(() => {
@@ -128,7 +130,11 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
       data-onboarding={
         isOnboardingStep(onboardingStep, 'concept-label') && id === firstNodeId
           ? 'concept-label'
-          : undefined
+          : isOnboardingStep(onboardingStep, 'second-concept-label') && id === secondNodeId
+            ? 'second-concept-label'
+            : isOnboardingStep(onboardingStep, 'connect-handle') && id === secondNodeId
+              ? 'connect-target'
+              : undefined
       }
       style={{ position: 'relative' }}
     >
@@ -143,7 +149,7 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
         connectionTarget={isConnectionTarget}
         onDoubleClick={(e) => {
           e.stopPropagation()
-          startEdit()
+          requestEditNode(id)
         }}
       >
         <div style={{ position: 'relative' }}>

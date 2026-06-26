@@ -97,10 +97,13 @@
       }
     },
     "src/components/canvas/GraphCanvas.tsx": {
-      "complexity_high": {
+      "complexity_critical": {
         "count": 1
       },
-      "crap_high": {
+      "crap_critical": {
+        "count": 1
+      },
+      "crap_moderate": {
         "count": 1
       }
     },
@@ -188,14 +191,11 @@
       }
     },
     "src/components/layout/Sidebar.tsx": {
-      "complexity_high": {
+      "complexity_critical": {
         "count": 1
       },
       "crap_critical": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 1
+        "count": 2
       },
       "crap_moderate": {
         "count": 2
@@ -245,8 +245,11 @@
       }
     },
     "src/components/onboarding/CoachmarkOverlay.tsx": {
-      "crap_high": {
+      "complexity_high": {
         "count": 1
+      },
+      "crap_high": {
+        "count": 2
       },
       "crap_moderate": {
         "count": 1
@@ -309,7 +312,7 @@
       }
     },
     "src/hooks/useOnboardingFlow.ts": {
-      "complexity_moderate": {
+      "complexity_high": {
         "count": 1
       },
       "crap_moderate": {
@@ -375,11 +378,14 @@
       }
     },
     "src/store/slices/graph-management.ts": {
-      "complexity_moderate": {
+      "complexity_high": {
+        "count": 1
+      },
+      "crap_high": {
         "count": 1
       },
       "crap_moderate": {
-        "count": 2
+        "count": 1
       }
     },
     "src/telemetry/index.ts": {
@@ -402,9 +408,10 @@
     "src/store/slices/graph-editing.ts:high impact",
     "src/components/canvas/GraphCanvas.tsx:complexity",
     "src/lib/shortcuts.ts:complexity",
+    "src/hooks/useOnboardingFlow.ts:complexity",
     "packages/graph/src/NessoGraph.tsx:complexity",
-    "src/components/mentor/MentorPanel.tsx:complexity",
     "src/components/canvas/ConceptNode.tsx:complexity",
+    "src/components/mentor/MentorPanel.tsx:complexity",
     "src/components/inspector/NodeInspector.tsx:complexity",
     "src/components/review/ReviewMode.tsx:complexity",
     "src/components/inspector/InlineEdit.tsx:complexity",

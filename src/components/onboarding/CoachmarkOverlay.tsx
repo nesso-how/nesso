@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
-import { useEffect, useState, type CSSProperties } from 'react'
-import { ONBOARDING_STEP_COUNT, ONBOARDING_STEPS } from './onboardingSteps'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
+import { ONBOARDING_STEP_COUNT, ONBOARDING_STEPS, type OnboardingStepId } from './onboardingSteps'
 import { useT } from '@/i18n'
 import { useGraphStore } from '@/store'
 import { hoverStyle } from '@/lib/hoverStyle'
 
 interface Hole {
+  id: string
   x: number
   y: number
   w: number
@@ -15,8 +16,6 @@ interface Hole {
 
 interface Props {
   stepIndex: number
-  /** Review was opened during the tour — completes the final step. */
-  reviewOpened: boolean
   onSkip: () => void
   onNext: () => void
 }
@@ -25,51 +24,99 @@ const SCRIM = 'rgba(26, 24, 20, 0.46)'
 const CARD_W = 300
 const CARD_EST_H = 168
 
+/** Anchors lit (and kept interactive) for each step. Most steps spotlight a
+ *  single element; the connect step lights both the source handle and the whole
+ *  destination node so the drag has a visible start and end. */
+function anchorIdsForStep(id: OnboardingStepId): string[] {
+  if (id === 'connect-handle') return ['connect-handle', 'connect-target']
+  return [id]
+}
+
 /** Steps whose anchor is a small round control get a tighter, pill-shaped hole. */
 function isRoundTarget(id: string): boolean {
   return id === 'review-button' || id === 'connect-handle'
 }
 
-function sameHole(a: Hole | null, b: Hole): boolean {
-  return (
-    a != null &&
-    Math.abs(a.x - b.x) < 0.5 &&
-    Math.abs(a.y - b.y) < 0.5 &&
-    Math.abs(a.w - b.w) < 0.5 &&
-    Math.abs(a.h - b.h) < 0.5 &&
-    a.r === b.r
-  )
+/** Full-canvas anchors are already inset to the visible canvas; padding them
+ *  would bleed the hole into the navbar and status bar. */
+function isCanvasRegion(id: string): boolean {
+  return id === 'add-concept' || id === 'second-concept' || id === 'delete-node'
 }
 
-export function CoachmarkOverlay({ stepIndex, reviewOpened, onSkip, onNext }: Props) {
+function roundedRectPath({ x, y, w, h, r }: Hole): string {
+  const rr = Math.min(r, w / 2, h / 2)
+  return [
+    `M${x + rr},${y}`,
+    `h${w - 2 * rr}`,
+    `a${rr},${rr} 0 0 1 ${rr},${rr}`,
+    `v${h - 2 * rr}`,
+    `a${rr},${rr} 0 0 1 ${-rr},${rr}`,
+    `h${-(w - 2 * rr)}`,
+    `a${rr},${rr} 0 0 1 ${-rr},${-rr}`,
+    `v${-(h - 2 * rr)}`,
+    `a${rr},${rr} 0 0 1 ${rr},${-rr}`,
+    'z',
+  ].join(' ')
+}
+
+function holesEqual(a: Hole[], b: Hole[]): boolean {
+  if (a.length !== b.length) return false
+  return a.every((h, i) => {
+    const o = b[i]
+    return (
+      h.id === o.id &&
+      Math.abs(h.x - o.x) < 0.5 &&
+      Math.abs(h.y - o.y) < 0.5 &&
+      Math.abs(h.w - o.w) < 0.5 &&
+      Math.abs(h.h - o.h) < 0.5 &&
+      h.r === o.r
+    )
+  })
+}
+
+export function CoachmarkOverlay({ stepIndex, onSkip, onNext }: Props) {
   const t = useT()
   const step = ONBOARDING_STEPS[stepIndex]
-  // Reactive: the CTA stays disabled until the real action for this step is done.
-  const complete = useGraphStore((s) => (step ? step.isComplete(s, reviewOpened) : false))
-  const [hole, setHole] = useState<Hole | null>(null)
+  // Reactive: the step auto-advances the moment its real action is done.
+  const complete = useGraphStore((s) => (step ? step.isComplete(s) : false))
+  const [holes, setHoles] = useState<Hole[]>([])
 
-  // Continuously track the anchor: React Flow pans/zooms and inspector layout
-  // shifts don't fire scroll/resize, and the target can appear a few frames late.
+  // The action itself drives the tour: as soon as the step's action is done,
+  // advance. The ref keys on stepIndex so a step advances at most once (and
+  // React StrictMode's double-invoked effect cannot skip a step).
+  const advancedFor = useRef<number | null>(null)
+  useEffect(() => {
+    if (complete && advancedFor.current !== stepIndex) {
+      advancedFor.current = stepIndex
+      onNext()
+    }
+  }, [complete, stepIndex, onNext])
+
+  // Continuously track the anchors: React Flow pans/zooms and inspector layout
+  // shifts don't fire scroll/resize, and a target can appear a few frames late.
   useEffect(() => {
     if (!step) return
+    const ids = anchorIdsForStep(step.id)
     let raf = 0
     const tick = () => {
-      const el = document.querySelector(`[data-onboarding="${step.id}"]`)
-      if (el) {
+      const next: Hole[] = []
+      for (const id of ids) {
+        const el = document.querySelector(`[data-onboarding="${id}"]`)
+        if (!el) continue
         const rect = el.getBoundingClientRect()
-        const round = isRoundTarget(step.id)
-        const pad = round ? 7 : 10
-        const next: Hole = {
+        if (rect.width === 0 && rect.height === 0) continue
+        const round = isRoundTarget(id)
+        const pad = isCanvasRegion(id) ? 0 : round ? 7 : 10
+        next.push({
+          id,
           x: rect.left - pad,
           y: rect.top - pad,
           w: rect.width + pad * 2,
           h: rect.height + pad * 2,
           r: round ? 999 : 12,
-        }
-        setHole((prev) => (sameHole(prev, next) ? prev : next))
-      } else {
-        setHole((prev) => (prev === null ? prev : null))
+        })
       }
+      setHoles((prev) => (holesEqual(prev, next) ? prev : next))
       raf = requestAnimationFrame(tick)
     }
     raf = requestAnimationFrame(tick)
@@ -81,18 +128,41 @@ export function CoachmarkOverlay({ stepIndex, reviewOpened, onSkip, onNext }: Pr
   const stepNum = String(stepIndex + 1).padStart(2, '0')
   const totalNum = String(ONBOARDING_STEP_COUNT).padStart(2, '0')
 
+  // Bounding box of all holes, used to place the tip card clear of the lit area.
+  let union: { x: number; y: number; w: number; h: number } | null = null
+  if (holes.length) {
+    const left = Math.min(...holes.map((h) => h.x))
+    const top = Math.min(...holes.map((h) => h.y))
+    const right = Math.max(...holes.map((h) => h.x + h.w))
+    const bottom = Math.max(...holes.map((h) => h.y + h.h))
+    union = { x: left, y: top, w: right - left, h: bottom - top }
+  }
+
+  // A focus area covering most of the screen (canvas steps) can't be dodged by
+  // placing the card beside it — float it bottom-center instead.
+  const big = union != null && union.w * union.h > window.innerWidth * window.innerHeight * 0.3
+
   let tipStyle: CSSProperties
-  if (hole) {
-    const belowTop = hole.y + hole.h + 14
+  if (union && !big) {
+    const belowTop = union.y + union.h + 14
     const placeAbove = belowTop + CARD_EST_H > window.innerHeight
-    const left = Math.min(Math.max(16, hole.x), window.innerWidth - CARD_W - 16)
+    const left = Math.min(Math.max(16, union.x), window.innerWidth - CARD_W - 16)
     tipStyle = {
       position: 'fixed',
       width: CARD_W,
       zIndex: 67,
       left,
-      top: placeAbove ? hole.y - 14 : belowTop,
+      top: placeAbove ? union.y - 14 : belowTop,
       transform: placeAbove ? 'translateY(-100%)' : 'none',
+    }
+  } else if (big) {
+    tipStyle = {
+      position: 'fixed',
+      width: CARD_W,
+      zIndex: 67,
+      left: '50%',
+      bottom: 96,
+      transform: 'translateX(-50%)',
     }
   } else {
     tipStyle = {
@@ -105,52 +175,34 @@ export function CoachmarkOverlay({ stepIndex, reviewOpened, onSkip, onNext }: Pr
     }
   }
 
+  const w = window.innerWidth
+  const h = window.innerHeight
+  // Single evenodd path: fills the screen minus the holes, so it darkens
+  // everything except the lit areas and — via `pointer-events: auto` on the
+  // filled region only — captures (blocks) every interaction outside them.
+  const scrimPath = `M0,0 H${w} V${h} H0 Z ${holes.map(roundedRectPath).join(' ')}`
+
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 65, pointerEvents: 'none' }}>
-      {hole ? (
-        <>
-          <div
-            style={{
-              position: 'fixed',
-              left: hole.x,
-              top: hole.y,
-              width: hole.w,
-              height: hole.h,
-              borderRadius: hole.r,
-              boxShadow: `0 0 0 9999px ${SCRIM}`,
-              transition:
-                'left 0.18s var(--ease), top 0.18s var(--ease), width 0.18s var(--ease), height 0.18s var(--ease)',
-              pointerEvents: 'none',
-              zIndex: 65,
-            }}
+      <svg
+        width={w}
+        height={h}
+        aria-hidden
+        style={{ position: 'fixed', inset: 0, pointerEvents: 'none' }}
+      >
+        <path d={scrimPath} fillRule="evenodd" fill={SCRIM} style={{ pointerEvents: 'auto' }} />
+        {holes.map((hole) => (
+          <path
+            key={hole.id}
+            d={roundedRectPath(hole)}
+            fill="none"
+            stroke="var(--accent)"
+            strokeWidth={1.5}
+            strokeDasharray="5 4"
+            style={{ pointerEvents: 'none' }}
           />
-          <div
-            style={{
-              position: 'fixed',
-              left: hole.x,
-              top: hole.y,
-              width: hole.w,
-              height: hole.h,
-              borderRadius: hole.r,
-              border: '1.5px dashed var(--accent)',
-              transition:
-                'left 0.18s var(--ease), top 0.18s var(--ease), width 0.18s var(--ease), height 0.18s var(--ease)',
-              pointerEvents: 'none',
-              zIndex: 66,
-            }}
-          />
-        </>
-      ) : (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: SCRIM,
-            pointerEvents: 'none',
-            zIndex: 65,
-          }}
-        />
-      )}
+        ))}
+      </svg>
 
       <div style={{ ...tipStyle, pointerEvents: 'auto' }}>
         <div
@@ -216,7 +268,7 @@ export function CoachmarkOverlay({ stepIndex, reviewOpened, onSkip, onNext }: Pr
           >
             {copy.body}
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
             <button
               type="button"
               onClick={onSkip}
@@ -235,29 +287,6 @@ export function CoachmarkOverlay({ stepIndex, reviewOpened, onSkip, onNext }: Pr
               {...hoverStyle({ color: 'var(--ink-2)' }, { color: 'var(--ink-4)' })}
             >
               {t.onboarding.tour.skipTour}
-            </button>
-            <button
-              type="button"
-              onClick={onNext}
-              disabled={!complete}
-              style={{
-                appearance: 'none',
-                border: '0.5px solid var(--ink-2)',
-                background: 'var(--ink-2)',
-                color: 'var(--paper)',
-                fontSize: '13px',
-                fontWeight: 500,
-                fontFamily: 'var(--font-sans)',
-                padding: '8px 14px',
-                borderRadius: 'var(--radius-md)',
-                cursor: complete ? 'pointer' : 'not-allowed',
-                opacity: complete ? 1 : 0.45,
-              }}
-              {...(complete
-                ? hoverStyle({ background: 'var(--ink)' }, { background: 'var(--ink-2)' })
-                : {})}
-            >
-              {copy.cta}
             </button>
           </div>
         </div>

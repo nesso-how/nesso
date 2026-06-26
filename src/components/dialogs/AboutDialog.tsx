@@ -18,6 +18,7 @@ import { useT } from '@/i18n'
 interface Props {
   open: boolean
   onClose: () => void
+  onShowTutorial: () => void
 }
 
 const linkRow: CSSProperties = {
@@ -38,7 +39,7 @@ const linkRow: CSSProperties = {
   transition: 'background 0.12s, color 0.12s',
 }
 
-export function AboutDialog({ open, onClose }: Props) {
+export function AboutDialog({ open, onClose, onShowTutorial }: Props) {
   const t = useT()
 
   const links: { label: string; url: string; icon: ReactNode }[] = [
@@ -122,7 +123,12 @@ export function AboutDialog({ open, onClose }: Props) {
               background: 'var(--line)',
             }}
           >
-            <div style={{ borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
+            <div
+              style={{
+                borderRadius: 'calc(var(--radius-lg) - 1px)',
+                overflow: 'hidden',
+              }}
+            >
               {links.map(({ label, url, icon }, i) => (
                 <button
                   key={url}
@@ -158,6 +164,25 @@ export function AboutDialog({ open, onClose }: Props) {
               ))}
             </div>
           </div>
+          <button
+            type="button"
+            onClick={onShowTutorial}
+            style={{
+              marginTop: 16,
+              appearance: 'none',
+              border: 0,
+              background: 'transparent',
+              color: 'var(--ink-4)',
+              fontSize: '12.5px',
+              fontWeight: 500,
+              fontFamily: 'var(--font-sans)',
+              cursor: 'pointer',
+              padding: '4px 6px',
+            }}
+            {...hoverStyle({ color: 'var(--ink-2)' }, { color: 'var(--ink-4)' })}
+          >
+            {t.about.showTutorial}
+          </button>
         </div>
       </div>
     </ModalOverlay>

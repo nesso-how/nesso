@@ -93,7 +93,7 @@ export function RelationPicker({ screenX, screenY, fromText, toText, onPick, onC
     : Math.min(screenY + 8, window.innerHeight - 460)
 
   return (
-    <div onClick={onCancel} style={{ position: 'fixed', inset: 0, zIndex: 60 }}>
+    <div onClick={onCancel} style={{ position: 'fixed', inset: 0, zIndex: 70 }}>
       <div
         onClick={(e) => e.stopPropagation()}
         style={{

@@ -9,13 +9,11 @@ export function EmptyCanvasHint({
   bottomInset,
   leftInset,
   rightInset,
-  dataOnboarding,
 }: {
   topInset: number
   bottomInset: number
   leftInset: number
   rightInset: number
-  dataOnboarding?: string
 }) {
   const t = useT()
   return (
@@ -34,7 +32,6 @@ export function EmptyCanvasHint({
       }}
     >
       <div
-        data-onboarding={dataOnboarding}
         style={{
           display: 'flex',
           flexDirection: 'column',

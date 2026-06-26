@@ -31,7 +31,7 @@ type Store = ReturnType<typeof makeStore>
 
 async function freshStore(): Promise<Store> {
   const s = makeStore()
-  // Mirror app startup: load graph list (creates the Tutorial graph when IDB is empty).
+  // Mirror app startup: seeds the demo graph(s) when IDB is empty.
   await s.getState().loadGraphList()
   return s
 }
@@ -41,25 +41,25 @@ beforeEach(async () => {
 })
 
 describe('loadGraphList', () => {
-  it('creates an empty Tutorial graph when IndexedDB is empty', async () => {
+  it('seeds the demo graph(s) when IndexedDB is empty', async () => {
     const s = makeStore()
     const list = await s.getState().loadGraphList()
-    expect(list).toHaveLength(1)
-    expect(list[0].name).toBe('Tutorial')
+    expect(list.length).toBeGreaterThan(0)
+    // Unlike the old empty Tutorial, the seeded demo carries content.
     const stored = await dbLoadGraph(list[0].id)
-    expect(stored?.nodes).toEqual([])
-    expect(stored?.edges).toEqual([])
+    expect(stored?.nodes.length).toBeGreaterThan(0)
   })
 
   it('is idempotent under a concurrent double bootstrap (StrictMode init effect)', async () => {
     const s = makeStore()
     // React StrictMode runs the init effect twice; both passes can enter the
-    // empty-DB branch before either write commits. A stable Tutorial id must
-    // collapse the two writes into a single record.
+    // empty-DB branch before either write commits. Stable seed ids must collapse
+    // the two writes into one record per seed (no duplicates).
     await Promise.all([s.getState().loadGraphList(), s.getState().loadGraphList()])
     const records = await dbListGraphs()
-    expect(records.filter((r) => r.name === 'Tutorial')).toHaveLength(1)
-    expect(s.getState().graphList.filter((g) => g.name === 'Tutorial')).toHaveLength(1)
+    expect(records.length).toBeGreaterThan(0)
+    const ids = records.map((r) => r.id)
+    expect(new Set(ids).size).toBe(ids.length)
   })
 
   it('adopts the browser language when seeding an empty database', async () => {

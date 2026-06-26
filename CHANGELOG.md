@@ -9,7 +9,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 
 - **MCP graph tools:** `@nesso-how/mcp` exposes `validate_graph` (non-throwing document validation with errors/warnings) and `build_graph` (structured concepts/relations → importable JSON with dagre layout). Docs updated in the MCP integration guide.
-- **First-run onboarding:** Fresh installs open an empty **Tutorial** graph and walk through a welcome dialog, a six-step coachmark tour on the real UI (each step gated by the matching action), and a one-time telemetry consent banner. Documented in the getting-started guide.
+- **First-run onboarding:** Fresh installs open an empty **Tutorial** graph and walk through a welcome dialog, an eleven-step coachmark tour on the real UI (each step gated by the matching action), and a one-time telemetry consent banner. Tour progress survives reload; **About → Show tutorial again** replays from the welcome dialog. Documented in the getting-started guide.
 
 ### Changed
 

@@ -45,6 +45,7 @@ export function TopBar({
     return () => clearInterval(id)
   }, [])
   const dueCount = useMemo(() => sortedDueConceptNodes(nodes).length, [nodes, now])
+  const onReviewTourStep = isOnboardingStep(onboardingStep, 'review-button')
 
   return (
     <div
@@ -129,12 +130,10 @@ export function TopBar({
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
-        {reviewEnabled && (
+        {(reviewEnabled || onReviewTourStep) && (
           <button
             type="button"
-            data-onboarding={
-              isOnboardingStep(onboardingStep, 'review-button') ? 'review-button' : undefined
-            }
+            data-onboarding={onReviewTourStep ? 'review-button' : undefined}
             onClick={onReview}
             title={t.topBar.startReview}
             style={{

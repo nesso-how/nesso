@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 import { useState, useRef, useEffect } from 'react'
 import { useGraphStore } from '@/store'
+import { isOnboardingStep } from '@/components/onboarding/onboardingSteps'
 import { track } from '@/telemetry'
 import { useHorizontalResize } from '@/hooks/useHorizontalResize'
 import { useT } from '@/i18n'
@@ -72,6 +73,7 @@ export function Sidebar({
   const setGraphDisplay = useGraphStore((s) => s.setGraphDisplay)
   const sidebarDisplayOpen = useGraphStore((s) => s.sidebarDisplayOpen)
   const setSidebarDisplayOpen = useGraphStore((s) => s.setSidebarDisplayOpen)
+  const onboardingStep = useGraphStore((s) => s.onboardingStep)
 
   const [editingId, setEditingId] = useState<string | null>(null)
   const [draft, setDraft] = useState('')
@@ -110,8 +112,12 @@ export function Sidebar({
   }
 
   const handleNew = async () => {
+    // During the tour, naming is its own step (double-click the graph), so don't
+    // auto-open the rename here.
+    const duringTourCreate = isOnboardingStep(useGraphStore.getState().onboardingStep, 'new-graph')
     const id = await createGraph(t.sidebar.untitled)
     track({ name: 'graph_created' })
+    if (duringTourCreate) return
     setTimeout(() => {
       const g = useGraphStore.getState().graphList.find((x) => x.id === id)
       if (g) startRename(id, g.name)
@@ -293,6 +299,9 @@ export function Sidebar({
               <span style={sectionLabel}>{t.sidebar.graphs}</span>
               <button
                 data-testid="sidebar-new-graph"
+                data-onboarding={
+                  isOnboardingStep(onboardingStep, 'new-graph') ? 'new-graph' : undefined
+                }
                 title={t.sidebar.newGraphTitle}
                 onClick={handleNew}
                 style={graphsNewBtn}
@@ -329,6 +338,7 @@ export function Sidebar({
                     <div
                       key={g.id}
                       style={{
+                        position: 'relative',
                         display: 'flex',
                         alignItems: 'center',
                         background: active
@@ -342,6 +352,24 @@ export function Sidebar({
                       onMouseEnter={() => setHoveredId(g.id)}
                       onMouseLeave={() => setHoveredId(null)}
                     >
+                      {g.id === currentGraphId &&
+                        (isOnboardingStep(onboardingStep, 'name-graph') ||
+                          isOnboardingStep(onboardingStep, 'delete-graph')) && (
+                          <div
+                            data-onboarding={
+                              isOnboardingStep(onboardingStep, 'name-graph')
+                                ? 'name-graph'
+                                : 'delete-graph'
+                            }
+                            aria-hidden
+                            style={{
+                              position: 'absolute',
+                              inset: 0,
+                              pointerEvents: 'none',
+                              borderRadius: 'var(--radius-sm)',
+                            }}
+                          />
+                        )}
                       {editingId === g.id ? (
                         <input
                           ref={inputRef}

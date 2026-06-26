@@ -74,22 +74,21 @@ const it: typeof en = {
         "Cosa raccogliamo: stack trace di crash e segnali d'uso grossolani (es. un nodo creato). Cosa non raccogliamo mai: testi dei nodi, struttura del grafo, conversazioni con Socrate, percorsi file o chiavi API. Base giuridica: il tuo consenso. Revoca in qualsiasi momento con questo interruttore.",
     },
     learning: {
-      review: 'Revisione',
+      review: 'Ripasso',
       reviewDesc:
-        'La revisione ti ripropone ogni concetto con FSRS, un algoritmo di ripetizione spaziata che lo pianifica poco prima che tu lo dimentichi.',
-      reviewMode: 'Modalità di revisione',
-      reviewModeDesc:
-        'Quando è disattivata, il pulsante Revisione e la scorciatoia R sono nascosti.',
+        'Il ripasso ti ripropone ogni concetto con FSRS, un algoritmo di ripetizione spaziata che lo pianifica poco prima che tu lo dimentichi.',
+      reviewMode: 'Modalità di ripasso',
+      reviewModeDesc: 'Quando è disattivata, il pulsante Ripasso e la scorciatoia R sono nascosti.',
       retention: 'Ritenzione target',
       retentionDesc:
-        'Probabilità di ricordare un concetto alla prossima revisione. Più alta = più revisioni.',
+        'Probabilità di ricordare un concetto al prossimo ripasso. Più alta = più ripassi.',
       maxInterval: 'Intervallo massimo',
       maxIntervalDesc:
         "L'intervallo più lungo pianificabile da FSRS, in giorni. Limita quanto lontano nel futuro può essere programmata una scheda.",
     },
   },
   review: {
-    allCaughtUp: 'Revisione · tutto fatto',
+    allCaughtUp: 'Ripasso · tutto fatto',
     nothingDue: 'Nessuna scheda in scadenza.',
     nothingDueDesc: 'Torna quando ci sono schede da rivedere, o seleziona un concetto dal grafo.',
     close: 'Chiudi',
@@ -222,7 +221,7 @@ const it: typeof en = {
       search: 'Cerca concetti',
       addConcept: 'Aggiungi concetto al centro del viewport',
       fit: 'Centra / adatta il grafo',
-      review: 'Avvia revisione a ripetizione spaziata',
+      review: 'Avvia ripasso a ripetizione spaziata',
       delete: 'Elimina concetto o relazione selezionati',
       selectAll: 'Seleziona tutti i concetti e le relazioni',
       moveConcept: 'Sposta concetto selezionato',
@@ -250,7 +249,7 @@ const it: typeof en = {
     undoTitle: 'Annulla (⌘Z)',
     redoTitle: 'Ripristina (⌘⇧Z)',
     fitTitle: 'Centra / adatta (F)',
-    addConceptTitle: 'Aggiungi concetto (N o doppio clic sul canvas)',
+    addConceptTitle: "Aggiungi concetto (N o doppio clic sull'area del grafo)",
     deleteTitle: 'Elimina concetto o relazione selezionati (Canc o Backspace)',
     cutTitle: 'Taglia selezione (⌘X / Ctrl+X)',
     copyTitle: 'Copia selezione (⌘C / Ctrl+C)',
@@ -258,8 +257,8 @@ const it: typeof en = {
   },
   topBar: {
     expandSidebar: 'Espandi pannello laterale',
-    startReview: 'Avvia revisione (R)',
-    review: 'Revisione',
+    startReview: 'Avvia ripasso (R)',
+    review: 'Ripasso',
   },
   statusBar: {
     socratesTitle: 'Socrate — il tuo tutor',
@@ -284,7 +283,7 @@ const it: typeof en = {
   },
   canvas: {
     emptyTitle: 'Il tuo primo concetto',
-    emptyDesc: 'Doppio clic sul canvas, poi collega le idee con una relazione tipata.',
+    emptyDesc: "Doppio clic sull'area del grafo, poi collega le idee con una relazione tipata.",
     emptyGhost: 'nuovo concetto',
     newConcept: 'Nuovo concetto',
   },
@@ -385,6 +384,7 @@ const it: typeof en = {
       changelog: 'Changelog',
       license: 'Licenza (MIT)',
     },
+    showTutorial: 'Mostra di nuovo il tutorial',
   },
   mentor: {
     name: 'Socrate',
@@ -449,41 +449,60 @@ const it: typeof en = {
     tour: {
       skipTour: 'Salta tour',
       steps: {
+        createGraph: {
+          eyebrow: 'Passo 01 · Grafi',
+          title: 'Crea il tuo primo grafo',
+          body: 'Clicca + Nuovo nella barra laterale per creare un grafo vuoto.',
+        },
+        nameGraph: {
+          eyebrow: 'Passo 02 · Grafi',
+          title: 'Dai un nome al grafo',
+          body: 'Fai doppio clic sul nuovo grafo nella barra laterale, scrivi un nome come "Tutorial", poi premi Invio.',
+        },
         addConcept: {
-          eyebrow: 'Passo 01 · Concetti',
+          eyebrow: 'Passo 03 · Concetti',
           title: 'Inserisci il primo concetto',
-          body: "Fai doppio clic sulla tela per posizionare un'idea. Un nodo è un concetto.",
-          cta: 'Capito',
+          body: "Fai doppio clic sull'area del grafo per posizionare un'idea. Un nodo è un concetto.",
         },
         writeLabel: {
-          eyebrow: 'Passo 02 · Nome',
+          eyebrow: 'Passo 04 · Nome',
           title: 'Dai un nome al concetto',
-          body: "Scrivi un'etichetta breve: come si chiama questa idea?",
-          cta: 'Capito',
+          body: 'Fai doppio clic sul testo del concetto, scrivi un\'etichetta breve come "Apprendimento", poi premi Invio.',
         },
         addDefinition: {
-          eyebrow: 'Passo 03 · Definizione',
+          eyebrow: 'Passo 05 · Definizione',
           title: 'Aggiungi una definizione',
-          body: "Nell'ispettore, scrivi con parole tue cosa significa questo concetto.",
-          cta: 'Capito',
+          body: "Clicca sul campo definizione nell'ispettore, scrivi con parole tue cosa significa il concetto, poi premi Invio.",
         },
         secondConcept: {
-          eyebrow: 'Passo 04 · Concetti',
+          eyebrow: 'Passo 06 · Concetti',
           title: 'Aggiungi una seconda idea',
-          body: 'Fai di nuovo doppio clic per posizionare un altro concetto da collegare.',
-          cta: 'Capito',
+          body: 'Fai di nuovo doppio clic per posizionare un secondo concetto da collegare.',
+        },
+        secondLabel: {
+          eyebrow: 'Passo 07 · Nome',
+          title: 'Dai un nome al secondo concetto',
+          body: 'Fai doppio clic sul secondo concetto, scrivi un\'etichetta come "Lavoro", poi premi Invio.',
         },
         typedRelation: {
-          eyebrow: 'Passo 05 · Relazioni tipizzate',
+          eyebrow: 'Passo 08 · Relazioni tipizzate',
           title: "Di' come si relazionano",
-          body: "Trascina da un nodo all'altro, poi scegli il tipo di relazione. La relazione è ciò che impari.",
-          cta: 'Capito',
+          body: 'Trascina dal punto evidenziato all\'altro concetto, poi scegli un tipo di relazione come "richiede". Riflettere sul tipo di relazione è ciò che ti permette di comprendere meglio.',
         },
         review: {
-          eyebrow: 'Passo 06 · Ripasso',
+          eyebrow: 'Passo 09 · Ripasso',
           title: 'Ripetizione dilazionata',
-          body: 'Il ripasso programma ogni concetto poco prima che lo dimentichi. Apri Ripasso quando sei pronto.',
-          cta: 'Capito',
+          body: "Ogni concetto viene riproposto dopo un po' di tempo, a seconda delle tue risposte durante il ripasso. Apri Ripasso quando sei pronto.",
+        },
+        deleteNode: {
+          eyebrow: 'Passo 10 · Pulizia',
+          title: 'Rimuovi un concetto',
+          body: 'Fai clic destro su un concetto e scegli Elimina per rimuoverlo dal grafo.',
+        },
+        deleteGraph: {
+          eyebrow: 'Passo 11 · Pulizia',
+          title: 'Elimina il grafo',
+          body: "Passa il mouse sul grafo nella barra laterale, clicca l'icona del cestino, poi conferma per eliminarlo.",
         },
       },
     },

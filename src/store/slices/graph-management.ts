@@ -3,7 +3,7 @@ import type { Node, Edge } from '@xyflow/react'
 import type { StateCreator } from 'zustand'
 import type { ConceptNodeData, GraphDisplaySettings } from '@/types/graph'
 import { defaultGraphDisplay, mergeGraphDisplay } from '@/types/graph'
-import { SEEDS } from '@/data/seedGraph'
+import { SEEDS, getSeedsForLanguage } from '@/data/seedGraph'
 import { isGraphId, newGraphId } from '@/lib/graphId'
 import { isDesktop } from '@/lib/isDesktop'
 import {
@@ -43,18 +43,6 @@ import { _draggingNodeIds } from './graph-editing'
 import type { GraphMeta } from '../types'
 import type { GraphState } from '../state'
 import type { Language } from '@/types/graph'
-
-/** Name of the empty graph created on first run, before the tour. */
-export const TUTORIAL_GRAPH_NAME = 'Tutorial'
-
-/**
- * Stable id for the first-run Tutorial graph. A fixed id (not `newGraphId()`)
- * keeps the bootstrap idempotent: under React StrictMode the init effect runs
- * `loadGraphList` twice, and both passes can enter the empty-DB branch before
- * either write commits. A constant id makes the second `dbSaveGraph` overwrite
- * the first instead of creating a duplicate Tutorial record.
- */
-export const TUTORIAL_GRAPH_ID = 'gtutorial00000'
 
 function detectBrowserLanguage(): Language {
   const lang = typeof navigator !== 'undefined' ? navigator.language.split('-')[0] : 'en'
@@ -222,22 +210,33 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
     let records = await dbListGraphs()
 
     if (records.length === 0) {
+      // First run: seed the locale demo graphs so the app always has a current
+      // graph and a populated sidebar. The tour has the user create their own
+      // graph on top — there is no auto-created Tutorial. Seed ids are stable,
+      // so React StrictMode's double init overwrites rather than duplicating.
       const lang = detectBrowserLanguage()
-      const id = TUTORIAL_GRAPH_ID
       const now = Date.now()
-      const record: GraphRecord = {
-        id,
-        name: TUTORIAL_GRAPH_NAME,
-        createdAt: now,
-        updatedAt: now,
-        nodes: [],
-        edges: [],
-        display: defaultGraphDisplay(),
+      const seeds = getSeedsForLanguage(lang)
+      const seedRecords: GraphRecord[] = []
+      for (const seed of seeds) {
+        const display = seed.display ?? defaultGraphDisplay(get().settings)
+        const payload = graphContentPayload(seed.nodes, seed.edges, display)
+        const record: GraphRecord = {
+          id: seed.id,
+          name: seed.name,
+          createdAt: now,
+          updatedAt: now,
+          nodes: payload.nodes,
+          edges: payload.edges,
+          display: payload.display,
+        }
+        await persistReviewStatesFromNodes(seed.id, seed.nodes)
+        await dbSaveGraph(record)
+        seedRecords.push(record)
       }
-      await dbSaveGraph(record)
-      records = [record]
+      records = seedRecords
       set((s) => ({
-        currentGraphId: id,
+        currentGraphId: seeds[0]?.id ?? s.currentGraphId,
         settings: { ...s.settings, language: lang },
       }))
     }

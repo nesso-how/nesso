@@ -512,7 +512,14 @@ function AppInner() {
       <ReviewMode open={showReview} onClose={() => setShowReview(false)} />
       <ShortcutsDialog open={showShortcuts} onClose={() => setShowShortcuts(false)} />
       <SettingsDialog open={showSettings} onClose={() => setShowSettings(false)} />
-      <AboutDialog open={showAbout} onClose={() => setShowAbout(false)} />
+      <AboutDialog
+        open={showAbout}
+        onClose={() => setShowAbout(false)}
+        onShowTutorial={() => {
+          setShowAbout(false)
+          onboarding.startTour()
+        }}
+      />
       <SearchDialog
         open={showSearch}
         onClose={() => setShowSearch(false)}
@@ -522,13 +529,12 @@ function AppInner() {
       <WelcomeDialog
         open={onboarding.phase === 'welcome'}
         onShowMeHow={onboarding.startTour}
-        onSkipIntro={onboarding.skipWelcome}
+        onSkipIntro={onboarding.skipOnboarding}
       />
       {onboarding.phase === 'tour' && !showReview && (
         <CoachmarkOverlay
           stepIndex={onboarding.tourStep}
-          reviewOpened={onboarding.reviewOpenedDuringTour}
-          onSkip={onboarding.skipTour}
+          onSkip={onboarding.skipOnboarding}
           onNext={onboarding.advanceTour}
         />
       )}
