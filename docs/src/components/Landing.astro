@@ -406,7 +406,7 @@ const homeHref = lang === 'en' ? '/' : `/${lang}/`
 
       .principle-visual .pv-picker,
       .principle-visual .pv-review,
-      .principle-visual .pv-aimode,
+      .principle-visual .pv-storage,
       .principle-visual .pv-module {
         box-shadow: var(--shadow-md);
       }
@@ -599,8 +599,8 @@ const homeHref = lang === 'en' ? '/' : `/${lang}/`
         transform: translate(2px, -2px);
       }
 
-      /* P3: AI mode toggle */
-      .pv-aimode {
+      /* P4: Local storage */
+      .pv-storage {
         background: var(--bg-elev);
         border: 0.5px solid var(--line);
         border-radius: 12px;
@@ -610,7 +610,7 @@ const homeHref = lang === 'en' ? '/' : `/${lang}/`
         gap: 0.65rem;
       }
 
-      .pv-aimode-header {
+      .pv-storage-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -622,81 +622,62 @@ const homeHref = lang === 'en' ? '/' : `/${lang}/`
         white-space: nowrap;
       }
 
-      .pv-aimode-header > span {
-        white-space: nowrap;
+      .pv-storage-header > span:last-child {
+        color: var(--highlight);
       }
 
-      .pv-aimode-options {
+      .pv-storage-folder {
         display: flex;
-        flex-direction: column;
-        gap: 0.4rem;
-      }
-
-      .pv-aimode-option {
-        display: flex;
-        align-items: flex-start;
-        gap: 0.55rem;
-        padding: 0.5rem 0.55rem;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.45rem 0.55rem;
         border: 0.5px solid var(--line);
         border-radius: 7px;
         background: var(--paper);
       }
 
-      .pv-aimode-option.active {
-        background: var(--highlight-soft);
-        border-color: color-mix(in srgb, var(--highlight) 35%, transparent);
-      }
-
-      .pv-aimode-option.muted {
-        opacity: 0.65;
-      }
-
-      .pv-aimode-radio {
-        width: 12px;
-        height: 12px;
-        border: 1px solid var(--ink-4);
-        border-radius: 50%;
+      .pv-storage-folder-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         flex-shrink: 0;
-        margin-top: 1px;
-        position: relative;
+        color: var(--ink-3);
       }
 
-      .pv-aimode-option.active .pv-aimode-radio {
-        border-color: var(--highlight);
+      .pv-storage-path {
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+        color: var(--ink-2);
+        letter-spacing: 0.01em;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
 
-      .pv-aimode-option.active .pv-aimode-radio::after {
-        content: '';
-        position: absolute;
-        inset: 2px;
-        background: var(--highlight);
-        border-radius: 50%;
-      }
-
-      .pv-aimode-text {
-        flex: 1;
+      .pv-storage-files {
         display: flex;
         flex-direction: column;
-        gap: 1px;
-        min-width: 0;
+        gap: 0.3rem;
+        padding-left: 0.15rem;
       }
 
-      .pv-aimode-name {
-        font-family: var(--font-sans);
-        font-weight: 500;
-        font-size: 12px;
-        color: var(--ink);
-      }
-
-      .pv-aimode-meta {
+      .pv-storage-file {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
         font-family: var(--font-mono);
-        font-size: 9.5px;
-        color: var(--ink-4);
-        letter-spacing: 0.02em;
+        font-size: 10px;
+        color: var(--ink-3);
+        letter-spacing: 0.01em;
       }
 
-      .pv-aimode-option.active .pv-aimode-meta {
-        color: var(--highlight);
+      .pv-storage-file::before {
+        content: '';
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: var(--ink-4);
+        flex-shrink: 0;
       }
 
       /* P1: Relation picker */
@@ -1399,26 +1380,30 @@ const homeHref = lang === 'en' ? '/' : `/${lang}/`
               <p set:html={t.principles.p4.body} />
             </div>
             <div class="principle-visual">
-              <div class="pv-aimode" role="presentation">
-                <div class="pv-aimode-header">
-                  <span>{t.principles.p4.aiMode}</span>
-                  <span>{t.principles.p4.settings}</span>
+              <div class="pv-storage" role="presentation">
+                <div class="pv-storage-header">
+                  <span>{t.principles.p4.storage}</span>
+                  <span>{t.principles.p4.noAccount}</span>
                 </div>
-                <div class="pv-aimode-options">
-                  <div class="pv-aimode-option active">
-                    <span class="pv-aimode-radio"></span>
-                    <div class="pv-aimode-text">
-                      <span class="pv-aimode-name">{t.principles.p4.local}</span>
-                      <span class="pv-aimode-meta">{t.principles.p4.localMeta}</span>
-                    </div>
-                  </div>
-                  <div class="pv-aimode-option muted">
-                    <span class="pv-aimode-radio"></span>
-                    <div class="pv-aimode-text">
-                      <span class="pv-aimode-name">{t.principles.p4.remote}</span>
-                      <span class="pv-aimode-meta">{t.principles.p4.remoteMeta}</span>
-                    </div>
-                  </div>
+                <div class="pv-storage-folder">
+                  <span class="pv-storage-folder-icon" aria-hidden="true">
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 16 16"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.3"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M1.5 4.5h4.2l1.3 1.5H14.5v7.5H1.5z"></path>
+                    </svg>
+                  </span>
+                  <span class="pv-storage-path">~/Documents/{t.principles.p4.folder}/</span>
+                </div>
+                <div class="pv-storage-files">
+                  {t.principles.p4.files.map((file) => <span class="pv-storage-file">{file}</span>)}
                 </div>
               </div>
             </div>

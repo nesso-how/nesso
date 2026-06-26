@@ -17,6 +17,7 @@ export interface NessoSettings {
   aiBaseUrl: string
   aiModel: string
   aiApiKey: string
+  mentorEnabled: boolean
   reviewEnabled: boolean
   fsrsRetention: number
   maximumInterval: number

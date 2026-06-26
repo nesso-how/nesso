@@ -3,11 +3,11 @@ title: Getting started
 description: How to run Nesso locally or on the web.
 ---
 
-Nesso is available as a hosted web app, a macOS desktop app, and as open-source code you can run locally. All data is stored in your browser or on your machine; nothing is sent to external servers unless you configure a remote AI endpoint.
+Nesso is available as a hosted web app, a macOS desktop app, and as open-source code you can run locally. Graphs are stored in your browser or on your machine (local-first, no account). Optional telemetry and desktop update checks may contact external services; using the AI mentor with a remote endpoint sends prompts to that provider.
 
 ## Web app
 
-Open [app.nesso.how](https://app.nesso.how) in your browser. The app works offline after the first load and runs in any modern browser. The AI mentor is optional and needs an OpenAI-compatible endpoint (see [Picking an AI backend](#picking-an-ai-backend)).
+Open [app.nesso.how](https://app.nesso.how) in your browser. The app works offline after the first load and runs in any modern browser.
 
 ## First run
 
@@ -56,13 +56,7 @@ pnpm build:desktop
 
 ## Picking an AI backend
 
-The Socratic mentor is **experimental** and uses any OpenAI-compatible `chat/completions` endpoint: a local [Ollama](https://ollama.com/) instance, an OpenAI-compatible proxy, or a hosted provider. There is no built-in in-browser model, so configure an endpoint under **Settings -> AI** (`⌘,` / `Ctrl+,`) or the mentor stays disabled.
-
-:::caution
-API keys are stored client-side in `localStorage`. Do not self-host the web app publicly with secrets baked in.
-:::
-
-### Local setup with Ollama
+See [AI mentor (Socrates)](./ai-mentor/) for setup, persona, context, and privacy. Quick path with local Ollama:
 
 Run [Ollama](https://ollama.com/) locally, then pull a small instruction-tuned model:
 
@@ -70,7 +64,7 @@ Run [Ollama](https://ollama.com/) locally, then pull a small instruction-tuned m
 ollama pull gemma3:4b
 ```
 
-In **Settings -> AI**, set:
+In **Settings → AI**, turn on **Mentor**, then set:
 
 - Base URL: `http://localhost:11434/v1`
 - Model: `gemma3:4b` (or `llama3.2:3b`, `qwen3:8b`; presets are shown in Settings)
@@ -79,6 +73,10 @@ In **Settings -> AI**, set:
 Settings auto-probes the endpoint and offers a **Pull** button if the model is missing. Prompts and responses stay on your machine.
 
 When using the hosted web app over HTTPS, allow its origin in Ollama so the browser request is not blocked by CORS: start Ollama with `OLLAMA_ORIGINS=https://app.nesso.how`. (Requests to `localhost` are exempt from mixed-content blocking, so only CORS needs configuring.)
+
+:::caution
+API keys are stored client-side in `localStorage`. Do not self-host the web app publicly with secrets baked in.
+:::
 
 ## Keyboard shortcuts
 

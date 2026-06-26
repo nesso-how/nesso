@@ -58,6 +58,8 @@ function AppInner() {
   const onboarding = useOnboardingFlow()
 
   const settings = useGraphStore((s) => s.settings)
+  const mentorEnabled = settings.mentorEnabled
+  const setMentorPanelExpanded = useGraphStore((s) => s.setMentorPanelExpanded)
   const telemetry = settings.telemetry
   const addNode = useGraphStore((s) => s.addNode)
   const selected = useGraphStore((s) => s.selected)
@@ -92,6 +94,10 @@ function AppInner() {
     if (telemetry) void initTelemetry(true)
     else void shutdownTelemetry()
   }, [telemetry])
+
+  useEffect(() => {
+    if (!mentorEnabled) setMentorPanelExpanded(false)
+  }, [mentorEnabled, setMentorPanelExpanded])
 
   const appStartedRef = useRef(false)
   useEffect(() => {
@@ -503,12 +509,14 @@ function AppInner() {
         onPanelWidthChange={(w) => setInspectorPanelWidth(clampInspectorPanelWidth(w))}
       />
       <StatusBar sidebarWidth={sidebarWidth} onFit={fitView} />
-      <MentorPanel
-        leftInset={sidebarWidth}
-        rightInset={
-          hasSelection ? (inspectorCollapsed ? INSPECTOR_RAIL_WIDTH : inspectorPanelWidth) : 0
-        }
-      />
+      {mentorEnabled && (
+        <MentorPanel
+          leftInset={sidebarWidth}
+          rightInset={
+            hasSelection ? (inspectorCollapsed ? INSPECTOR_RAIL_WIDTH : inspectorPanelWidth) : 0
+          }
+        />
+      )}
       <ReviewMode open={showReview} onClose={() => setShowReview(false)} />
       <ShortcutsDialog open={showShortcuts} onClose={() => setShowShortcuts(false)} />
       <SettingsDialog open={showSettings} onClose={() => setShowSettings(false)} />

@@ -186,6 +186,7 @@ const sep: React.CSSProperties = {
 
 export function StatusBar({ sidebarWidth, onFit }: Props) {
   const t = useT()
+  const mentorEnabled = useGraphStore((s) => s.settings.mentorEnabled)
   const nodeCount = useGraphStore((s) => s.nodes.length)
   const edgeCount = useGraphStore((s) => s.edges.length)
   const undo = useGraphStore((s) => s.undo)
@@ -217,8 +218,12 @@ export function StatusBar({ sidebarWidth, onFit }: Props) {
     >
       {/* Left — Socrates anchor + graph counts */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 9, minWidth: 0 }}>
-        <SocratesEntry />
-        <span style={sep} />
+        {mentorEnabled && (
+          <>
+            <SocratesEntry />
+            <span style={sep} />
+          </>
+        )}
         <span
           style={{
             fontSize: '10.5px',

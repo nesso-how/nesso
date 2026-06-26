@@ -48,6 +48,11 @@ const en = {
       straight: 'Straight',
     },
     ai: {
+      mentor: 'Mentor',
+      mentorDesc:
+        'Socrates reads your graph and probes your understanding through questions rather than explanations. Experimental feature.',
+      mentorMode: 'Mentor',
+      mentorModeDesc: 'When off, Socrates is hidden from the status bar.',
       apiBaseUrl: 'API base URL',
       apiBaseUrlDesc: 'OpenAI-compatible endpoint. Defaults to local Ollama.',
       model: 'Model',
@@ -387,6 +392,7 @@ const en = {
   },
   mentor: {
     name: 'Socrates',
+    experimental: 'Experimental',
     toggleTitle: 'Ask Socrates',
     placeholder: (concept: string) => `Ask Socrates about "${concept}"…`,
     placeholderGraph: 'Ask Socrates about your graph…',

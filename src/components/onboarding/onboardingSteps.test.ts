@@ -16,6 +16,7 @@ function baseState(overrides: Partial<GraphState> = {}): GraphState {
       aiBaseUrl: '',
       aiModel: '',
       aiApiKey: '',
+      mentorEnabled: false,
       reviewEnabled: true,
       fsrsRetention: 0.9,
       maximumInterval: 365,

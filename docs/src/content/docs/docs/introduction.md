@@ -23,17 +23,17 @@ Nesso inverts the flow. The learner constructs their own knowledge structure: a 
 
 Algorithms work on what the learner has built, not on a generic curriculum. Spaced repetition is driven by graph structure: concepts with low stability or untested connections surface before well-reinforced ones. The review queue is always a function of the learner's own map.
 
-AI is present, but with a constrained role. The AI mentor, Socrates, does not deliver pre-packaged answers. It asks questions calibrated to the learner's current graph, probing understanding, surfacing gaps, and leaving the work of constructing answers to the learner. It is designed to accelerate active thinking, not to replace it.
+An optional AI mentor, Socrates, can probe what you have built. It asks questions calibrated to your current graph rather than delivering answers. See [AI mentor (Socrates)](./guides/ai-mentor/) for setup and behaviour.
 
 ## Principles
 
 **Constructivist by design.** Every feature is oriented around the learner doing cognitive work: drawing edges, labelling relations, writing definitions in their own words, self-rating recall. The system does not do this work for them.
 
-**Private by architecture.** In the web app, graphs are stored locally in your browser. In the desktop app, they are also saved as plain JSON files on your machine. Your graph content, definitions, and Socrates conversations never leave your device unless you connect a remote AI endpoint yourself. Optional telemetry (anonymous crash reports and aggregated usage events) is off by default and opt-in from Settings, Privacy; it never includes graph content, chat, or keys. Privacy is an implementation detail, not a policy promise.
+**Private by architecture.** In the web app, graphs are stored locally in your browser. In the desktop app, they are also saved as plain JSON files on your machine. Your graph content and definitions stay on your device. Mentor chat is session-only in the app; if you enable the mentor and use a remote AI endpoint, prompts are sent to that provider each turn. Optional telemetry (anonymous crash reports and aggregated usage events) is off by default and opt-in from **Settings → Privacy**; it never includes graph content, chat, or keys. Privacy is an implementation detail, not a policy promise.
 
 **Open by default.** The code is MIT-licensed. Data formats are documented and importable/exportable as plain JSON. The MCP server makes the graph vocabulary available to any compatible client. Technical work done here is intended to be useful beyond this application.
 
-**Provider-agnostic AI.** Nesso talks to any OpenAI-compatible `chat/completions` endpoint. Users choose whether to run a model locally or connect a remote provider; no vendor is privileged by the architecture.
+**Provider-agnostic AI.** The mentor talks to any OpenAI-compatible `chat/completions` endpoint. You choose whether to run a model locally or connect a remote provider; no vendor is privileged by the architecture.
 
 ## What Nesso is not
 

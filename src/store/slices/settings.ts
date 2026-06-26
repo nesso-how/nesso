@@ -27,6 +27,7 @@ export const createSettingsSlice: StateCreator<GraphState, [], [], SettingsSlice
     aiBaseUrl: 'http://localhost:11434/v1',
     aiModel: 'gemma3:4b',
     aiApiKey: '',
+    mentorEnabled: false,
     reviewEnabled: true,
     fsrsRetention: 0.9,
     maximumInterval: 365,
