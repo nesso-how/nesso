@@ -72,12 +72,10 @@ export type Locale = {
     p4: {
       heading: string
       body: string
-      aiMode: string
-      settings: string
-      local: string
-      localMeta: string
-      remote: string
-      remoteMeta: string
+      storage: string
+      noAccount: string
+      folder: string
+      files: [string, string, string]
     }
   }
   mentor: {

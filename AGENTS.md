@@ -6,14 +6,14 @@ Nesso is an app for building typed knowledge graphs for active learning: an inte
 
 ## Stack
 
-| Layer         | Technology                                                                                                                                                     |
-| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Framework     | React 18 + Vite + TypeScript                                                                                                                                   |
-| Desktop shell | Tauri v2 (`src-tauri/`) — optional wrapper; web app still runs with `pnpm dev`                                                                                 |
-| Graph canvas  | React Flow (`@xyflow/react`)                                                                                                                                   |
-| State         | Zustand (`src/store/index.ts` + `src/store/slices/`)                                                                                                           |
-| AI mentor     | **Experimental.** Any OpenAI-compatible `chat/completions` endpoint (local Ollama or cloud; endpoint / model / key in Settings). No built-in in-browser model. |
-| Review (FSRS) | Spaced-repetition scheduling via `ts-fsrs`; per-node `stability`, `difficulty`, `due`, and ratings persisted. Independent of the AI mentor.                    |
+| Layer         | Technology                                                                                                                                  |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Framework     | React 18 + Vite + TypeScript                                                                                                                |
+| Desktop shell | Tauri v2 (`src-tauri/`) — optional wrapper; web app still runs with `pnpm dev`                                                              |
+| Graph canvas  | React Flow (`@xyflow/react`)                                                                                                                |
+| State         | Zustand (`src/store/index.ts` + `src/store/slices/`)                                                                                        |
+| AI mentor     | **Experimental.** OpenAI-compatible `chat/completions` endpoint (local Ollama or cloud; Settings → AI).                                     |
+| Review (FSRS) | Spaced-repetition scheduling via `ts-fsrs`; per-node `stability`, `difficulty`, `due`, and ratings persisted. Independent of the AI mentor. |
 
 ## Source layout
 

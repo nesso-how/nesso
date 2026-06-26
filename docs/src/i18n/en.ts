@@ -75,20 +75,18 @@ export const en: Locale = {
     },
     p4: {
       heading: 'Private by architecture',
-      body: 'Your cognitive graph reveals how you reason, where you struggle, how your understanding evolves. Nesso keeps it on your device with local-first storage, no account, and no servers in the loop. When you bring in AI, the endpoint is your choice: keep it fully on-device, or point it at a provider you trust. Your data stays where you put it.',
-      aiMode: 'AI endpoint',
-      settings: 'Settings',
-      local: 'Local',
-      localMeta: 'Ollama · on-device',
-      remote: 'Cloud',
-      remoteMeta: 'OpenAI · Claude · OpenRouter…',
+      body: 'Your cognitive graph reveals how you reason, where you struggle, how your understanding evolves. Nesso keeps it on your device with local-first storage and no account. Your data stays where you put it.',
+      storage: 'Local storage',
+      noAccount: 'No account',
+      folder: 'My graphs',
+      files: ['tutorial.json', 'epistemology.json', 'notes.json'],
     },
   },
   mentor: {
     label: 'Socratic mentor',
     badge: 'Experimental',
     heading: 'Then Socrates questions it',
-    body: 'Layered on top of the graph, a Socratic AI reads your current selection and answers with questions, not summaries. It is experimental and connects to any OpenAI-compatible endpoint: a local model via Ollama, or a cloud provider. Point it at a capable model for a real conversation.',
+    body: 'Layered on top of the graph, a Socratic AI reads your current selection and answers with questions, not summaries. Connect any OpenAI-compatible endpoint: a local model via Ollama, or a cloud provider. Point it at a capable model for a real conversation.',
     chat: {
       userMsg: 'Let’s explore Understanding',
       mentorMsg:

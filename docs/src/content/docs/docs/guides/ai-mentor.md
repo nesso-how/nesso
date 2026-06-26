@@ -3,11 +3,9 @@ title: AI mentor (Socrates)
 description: How the Socratic mentor works, connecting a model, persona, and graph-aware context.
 ---
 
-:::caution
-This is the part of Nesso with the most potential and the most room to grow. Small models tend to drift out of the Socratic role and start explaining rather than questioning. A larger remote model works noticeably better. Improving the mentor is where most of the future work is headed.
-:::
+The Socratic mentor is **experimental** and **off by default**. Enable it under **Settings → AI** with the **Mentor** toggle (marked _Experimental_). While off, **Socrates** is hidden from the status bar.
 
-Click the **Socrates** entry in the **status bar** (bottom-left) to start a dialogue. The mentor reads your current graph and selection, and replies with **questions rather than explanations**. The goal is to surface what you understand and where the gaps are.
+When enabled, click **Socrates** in the **status bar** (bottom-left) to start a dialogue. The mentor reads your current graph and selection, and replies with **questions rather than explanations**. The goal is to surface what you understand and where the gaps are.
 
 ## How it works
 
@@ -17,11 +15,11 @@ Chat history is **not persisted**. It lives only for the current panel session.
 
 ## Connecting a model
 
-The mentor is **experimental** and runs against any OpenAI-compatible `chat/completions` endpoint. Configure it under **Settings -> AI**: base URL, model, and an optional API key.
+Configure any OpenAI-compatible `chat/completions` endpoint under **Settings → AI**: base URL, model, and an optional API key. Endpoint fields appear only while the mentor toggle is on.
 
 The default targets a local [Ollama](https://ollama.com/) instance (`http://localhost:11434/v1`, model `gemma3:4b`). Install Ollama, pull a model, and the mentor works with nothing leaving your machine. Any hosted OpenAI-compatible endpoint works too; set the API key it expects.
 
-There is **no built-in in-browser model**. Nesso previously bundled a small WebGPU model, but it was too small and slow to be useful and has been removed. Until a reachable endpoint is configured, the chat input stays disabled and the mentor shows a short setup hint.
+Until a reachable endpoint is configured, the chat input stays disabled and the mentor shows a short setup hint.
 
 ### Reaching local Ollama from the hosted app
 

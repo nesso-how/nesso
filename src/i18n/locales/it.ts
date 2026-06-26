@@ -48,6 +48,11 @@ const it: typeof en = {
       straight: 'Linea',
     },
     ai: {
+      mentor: 'Mentore',
+      mentorDesc:
+        'Socrate legge il tuo grafo e verifica la tua comprensione con domande, non spiegazioni. Funzione sperimentale.',
+      mentorMode: 'Mentore',
+      mentorModeDesc: 'Quando è disattivato, Socrate non compare nella barra di stato.',
       apiBaseUrl: 'URL base API',
       apiBaseUrlDesc: 'Endpoint OpenAI-compatibile. Default: Ollama locale.',
       model: 'Modello',
@@ -388,6 +393,7 @@ const it: typeof en = {
   },
   mentor: {
     name: 'Socrate',
+    experimental: 'Sperimentale',
     toggleTitle: 'Chiedi a Socrate',
     placeholder: (concept) => `Chiedi a Socrate di "${concept}"…`,
     placeholderGraph: 'Chiedi a Socrate del tuo grafo…',

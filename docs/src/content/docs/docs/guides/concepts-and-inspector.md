@@ -78,7 +78,7 @@ The Inspector shows the relation as a chip with its category colour and a dropdo
 
 ## Status bar and search
 
-- The **status bar** along the bottom shows the concept and relation counts. Its right side carries undo / redo, zoom out / in, and center·fit; the **Socrates** entry sits on the left.
+- The **status bar** along the bottom shows the concept and relation counts. Its right side carries undo / redo, zoom out / in, and center·fit. When the mentor is enabled in **Settings → AI**, the **Socrates** entry appears on the left (see [AI mentor](./ai-mentor/)).
 - **`⌘K` / `Ctrl+K`** opens a fuzzy search palette over concept titles. `Enter` selects and recenters the viewport; `Esc` closes.
 
 ## Edge encoding density
