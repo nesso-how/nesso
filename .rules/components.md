@@ -6,14 +6,15 @@ Components live under `src/components/` in feature folders. They read from the Z
 
 | Folder       | Contents                                                                                                                                                                                  |
 | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `canvas/`    | `GraphCanvas`, `ConceptNode` (interactive wrapper), `NessoConnectionLine`, `GraphContextMenu`, `EmptyCanvasHint` — `NessoEdge`, `ConceptNode` base, `GlyphSVG` live in `@nesso-how/graph` |
+| `canvas/`    | `GraphCanvas`, `ConceptNode` (interactive wrapper), `NessoConnectionLine`, `GraphContextMenu`, `EmptyCanvasHint`, `useConnectRelation`, `useGraphContextMenu` — `NessoEdge`, `ConceptNode` base, `GlyphSVG` live in `@nesso-how/graph` |
 | `layout/`    | `TopBar`, `Sidebar`, `SidebarProjects`, `StatusBar`, `NessoMark`                                                                                                                          |
 | `inspector/` | `NodeInspector`, `EdgeInspector`, `InspectorPanel`, `inspectorChrome` (collapsed rail + action toolbar), `InlineEdit`, `ImageSearchPanel`, `EdgeRow`, `layout.ts`                         |
 | `mentor/`    | `MentorPanel`, `emphasis` (`renderWithEmphasis`), `ThinkingIndicator`, `SocratesGlyph`, `ModelStatusBadge`                                                                                |
 | `review/`    | `ReviewMode`                                                                                                                                                                              |
 | `dialogs/`   | `SettingsDialog` (+ `LearningSettings` tab body), `SearchDialog`, `RelationTypesDialog`, `ShortcutsDialog`, `AboutDialog`, `GraphIO`                                                      |
-| `banners/`   | `ActionBanner`, `GraphFileConflictBanner`, `UpdateBanner`                                                                                                                                 |
-| `ui/`        | Shared primitives: `ModalOverlay`, `SegmentedControl`, `Switch`, `Select`, `SettingRow`, `Stepper`, `CloseButton`, `SettingsFormRow`, `RelationPicker`, `icons`                           |
+| `onboarding/` | `WelcomeDialog`, `CoachmarkOverlay`, `onboardingFlow.ts`, `onboardingSteps.ts` — first-run welcome tour + coachmark                                                                      |
+| `banners/`   | `ActionBanner`, `GraphFileConflictBanner`, `UpdateBanner`, `TelemetryConsentBanner`                                                                                                       |
+| `ui/`        | Shared primitives: `ModalOverlay`, `SegmentedControl`, `Switch`, `Select`, `SettingRow`, `Stepper`, `CloseButton`, `SettingsFormRow`, `RelationPicker`, `icons`, `ConfirmDialog`, `ExperimentalBadge`, `HeatmapDisplayToggle`, `ToastViewport`, `confirm.ts` (imperative confirm), `toast.ts` (imperative toast) |
 | _(root)_     | `Inspector.tsx` — thin router entry point for `App.tsx`                                                                                                                                   |
 
 ## Responsibilities

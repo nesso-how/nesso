@@ -1,6 +1,6 @@
 ---
 description: Semantic edge model — categories, relation types, coefficients, visual encoding
-globs: src/data/relationTypes.ts, src/types/graph.ts, packages/graph/src/NessoEdge.tsx, src/components/RelationTypesDialog.tsx, packages/vocab-learning/src/index.ts
+globs: src/data/relationTypes.ts, src/types/graph.ts, packages/graph/src/NessoEdge.tsx, src/components/dialogs/RelationTypesDialog.tsx, packages/vocab-learning/src/index.ts
 alwaysApply: false
 ---
 
