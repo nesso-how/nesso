@@ -15,13 +15,17 @@ npm install @nesso-how/graph @xyflow/react react react-dom
 
 ## Basic usage
 
+Pass a `NessoGraphDocument` via `graph`, the same JSON you export from the app or build with the MCP server:
+
+<!-- prettier-ignore -->
 ```tsx
-import { NessoGraph } from '@nesso-how/graph'
-import '@xyflow/react/dist/style.css'
-;<NessoGraph nodes={nodes} edges={edges} style={{ width: '100%', height: 400 }} />
+import { NessoGraph } from '@nesso-how/graph';
+import '@xyflow/react/dist/style.css';
+
+<NessoGraph graph={doc} style={{ width: '100%', height: 400 }} />
 ```
 
-By default the graph renders read-only (no drag, connect, or selection) using the same category colors, glyphs, and edge encoding as the app. Pass a full `NessoGraphDocument` via `graph` instead of `nodes`/`edges` if you have one (e.g. JSON from `deserialize` in `@nesso-how/vocab-learning`). FSRS review fields are not in the file — embeds show an empty heatmap unless you merge review state yourself.
+By default the graph renders read-only (no drag, connect, or selection) using the same category colors, glyphs, and edge encoding as the app.
 
 ## Display options
 
@@ -29,31 +33,16 @@ By default the graph renders read-only (no drag, connect, or selection) using th
 
 ```tsx
 <NessoGraph
-  nodes={nodes}
-  edges={edges}
+  graph={doc}
   display={{ edgeEncoding: 'full', curveStyle: 'straight', showHeatmap: false }}
 />
 ```
 
-`palette` selects one of the category color palettes available in the app's settings. Embeds use hex colors from `PALETTES` (`categoryColorMode: 'palette'`, the default). Host apps that set `--cat-*` CSS variables (like Nesso itself) pass `categoryColorMode="css"`.
-
-Optional `getRelationLabel` localizes edge labels; `isItemSelected` syncs selection with an external store.
+FSRS review fields are not in the file, so embeds show an empty heatmap unless you merge review state yourself.
 
 ## Interactivity
 
-`nodesDraggable`, `nodesConnectable`, and `elementsSelectable` are all `false`/read-only by default, so turn on what you need. How you provide nodes determines who owns their state:
-
-- **`nodes`/`edges`** (_controlled_): you own the state, so also pass `onNodesChange`/`onEdgesChange`/`onConnect` to apply the resulting changes (e.g. when positions live in your own store, like the main app does).
-- **`defaultNodes`/`defaultEdges`** (_uncontrolled_): React Flow seeds its state once from these and manages drag, connect, and selection internally, with nothing else to wire up. The right choice for a self-contained embed.
-
-```tsx
-<NessoGraph
-  defaultNodes={nodes}
-  defaultEdges={edges}
-  nodesDraggable
-  style={{ width: '100%', height: 400 }}
-/>
-```
+`nodesDraggable`, `nodesConnectable`, and `elementsSelectable` are all `false`/read-only by default, so turn on what you need.
 
 Decorative embeds in a scrollable page (e.g. a landing hero) should turn off wheel zoom and drag pan so the page keeps scrolling over the canvas:
 
@@ -68,14 +57,25 @@ Decorative embeds in a scrollable page (e.g. a landing hero) should turn off whe
 
 `NessoGraph` sets React Flow's `preventScrolling` from those flags: when neither `zoomOnScroll` nor `panOnScroll` consumes the wheel, page scroll is not blocked. Override with `reactFlowProps.preventScrolling` if you need different behaviour.
 
+For fully controlled maps where you manage node positions in your own state, pass `nodes`/`edges` with `onNodesChange`/`onEdgesChange` instead of `graph`:
+
+<!-- prettier-ignore -->
+```tsx
+<NessoGraph
+  nodes={nodes}
+  edges={edges}
+  onNodesChange={onNodesChange}
+  onEdgesChange={onEdgesChange}
+/>
+```
+
 ## Escape hatch
 
 Any [`ReactFlow`](https://reactflow.dev/api-reference/react-flow) prop not listed above can be passed through `reactFlowProps`, for example to hide the attribution badge or disable double-click-to-zoom:
 
 ```tsx
 <NessoGraph
-  nodes={nodes}
-  edges={edges}
+  graph={doc}
   reactFlowProps={{ proOptions: { hideAttribution: true }, zoomOnDoubleClick: false }}
 />
 ```

@@ -45,20 +45,31 @@ export default defineConfig({
       ],
       sidebar: [
         { label: 'Introduction', slug: 'docs/introduction' },
+        { label: 'Getting started', slug: 'docs/guides/getting-started' },
         {
           label: 'Guides',
           items: [
-            { label: 'Getting started', slug: 'docs/guides/getting-started' },
-            { label: 'Concepts & Inspector', slug: 'docs/guides/concepts-and-inspector' },
+            { label: 'Building a graph', slug: 'docs/guides/building-a-graph' },
+            { label: 'Graph management', slug: 'docs/guides/graph-management' },
             { label: 'Review mode', slug: 'docs/guides/review-mode' },
             { label: 'AI mentor', slug: 'docs/guides/ai-mentor' },
-            { label: 'MCP', slug: 'docs/guides/mcp-integration' },
-            { label: 'Embedding graphs', slug: 'docs/guides/embedding-graphs' },
           ],
         },
         {
+          label: 'Integrations',
+          items: [
+            { label: 'MCP', slug: 'docs/guides/mcp' },
+            { label: 'Embedding graphs', slug: 'docs/guides/embedding-graphs' },
+          ],
+        },
+        { label: 'FAQ', slug: 'docs/faq' },
+        { label: 'Troubleshooting', slug: 'docs/troubleshooting' },
+        {
           label: 'Reference',
-          items: [{ label: 'Relation types', slug: 'docs/reference/relation-types' }],
+          items: [
+            { label: 'Relation types', slug: 'docs/reference/relation-types' },
+            { label: 'MCP tools', slug: 'docs/reference/mcp-tools' },
+          ],
         },
       ],
     }),

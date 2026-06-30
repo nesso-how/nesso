@@ -3,9 +3,13 @@ title: AI mentor (Socrates)
 description: How the Socratic mentor works, connecting a model, persona, and graph-aware context.
 ---
 
-The Socratic mentor is **experimental** and **off by default**. Enable it under **Settings → AI** with the **Mentor** toggle (marked _Experimental_). While off, **Socrates** is hidden from the status bar.
+The Socratic mentor is **experimental** and **off by default**. Enable it under **Settings → AI** with the **Mentor** toggle. While off, **Socrates** is hidden from the status bar.
 
 When enabled, click **Socrates** in the **status bar** (bottom-left) to start a dialogue. The mentor reads your current graph and selection, and replies with **questions rather than explanations**. The goal is to surface what you understand and where the gaps are.
+
+:::note
+For good results, use at least a 7–8B model. `qwen3:14b` is a strong default; `llama3.3:70b` for higher quality if your hardware allows. For hosted endpoints, model names change fast, so pick any capable instruction-following model from your preferred provider.
+:::
 
 ## How it works
 
@@ -17,9 +21,9 @@ Chat history is **not persisted**. It lives only for the current panel session.
 
 Configure any OpenAI-compatible `chat/completions` endpoint under **Settings → AI**: base URL, model, and an optional API key. Endpoint fields appear only while the mentor toggle is on.
 
-The default targets a local [Ollama](https://ollama.com/) instance (`http://localhost:11434/v1`, model `gemma3:4b`). Install Ollama, pull a model, and the mentor works with nothing leaving your machine. Any hosted OpenAI-compatible endpoint works too; set the API key it expects.
+The default targets a local [Ollama](https://ollama.com/) instance (`http://localhost:11434/v1`, model `gemma3:4b`). Install Ollama, pull a model, and the mentor works with nothing leaving your machine. Any hosted OpenAI-compatible endpoint works too. Set the API key it expects.
 
-Until a reachable endpoint is configured, the chat input stays disabled and the mentor shows a short setup hint.
+Until a reachable endpoint is configured, the chat input stays disabled and the mentor shows a short setup hint. If the mentor stops responding once a turn fails, see [Troubleshooting](../../troubleshooting/#mentor-not-responding).
 
 ### Reaching local Ollama from the hosted app
 
@@ -29,7 +33,7 @@ If you use the hosted web app over HTTPS, requests to `http://localhost:11434` a
 
 The system prompt (`getMentorBase` in [`MentorPanel.tsx`](https://github.com/nesso-how/nesso/blob/main/src/components/mentor/MentorPanel.tsx)) shapes Socrates:
 
-- One short question per turn by default; explain only enough to frame the question.
+- One short question per turn by default, explaining only enough to frame it.
 - Replies are soft-capped at ~200 words (hard cap via output tokens).
 - No graph edits proposed in dialogue. Socrates probes; the user edits.
 - No emojis, flattery, JSON, or pseudo-graph markup. Sparse `*asterisks*` on key terms.
@@ -50,10 +54,3 @@ Click **New chat** in the header to reset history and request a fresh opener.
 ## Context size
 
 Large graphs are summarised, not truncated abruptly. The weakest-reviewed nodes appear first (`nodeStrength`), so the verbatim slice emphasises instability and risky last ratings; tail nodes are omitted with a short count only. Edges have a ~2x allowance over node count. These limits live in [`MentorPanel.tsx`](https://github.com/nesso-how/nesso/blob/main/src/components/mentor/MentorPanel.tsx) as `MAX_SNAPSHOT_NODES` and `MAX_SNAPSHOT_EDGES`.
-
-## Privacy
-
-- **Local Ollama:** prompts and responses go only to your own machine; nothing leaves the device.
-- **Hosted endpoint:** the system prompt (graph snapshot) and chat history are sent to whichever endpoint you configured, each turn. The usual provider-side logging applies.
-
-Your graph itself always stays on your device regardless of the endpoint.

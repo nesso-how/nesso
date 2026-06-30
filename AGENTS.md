@@ -67,6 +67,7 @@ Area-specific rules (canonical content in `.rules/`, auto-attached per file area
 | Keeping the `.rules/` files in sync with the codebase           | [`.rules/maintenance.md`](.rules/maintenance.md)     |
 | PR titles/bodies — match `.github/PULL_REQUEST_TEMPLATE.md`     | [`.rules/pull-requests.md`](.rules/pull-requests.md) |
 | Persisted-data compatibility — envelope/vocabulary migration    | [`.rules/compatibility.md`](.rules/compatibility.md) |
+| Writing Starlight docs pages — voice, style, when to update     | [`.rules/docs.md`](.rules/docs.md)                   |
 
 **Changelog:** do **not** edit `CHANGELOG.md` during feature work; update **`## [Unreleased]`** only when the user asks for a **commit** or an explicit **changelog-before-commit** pass. Format and releases: [`.rules/changelog.md`](.rules/changelog.md).
 
@@ -122,7 +123,7 @@ Whenever you ship or revise something that touches **documentation or the MCP se
 
 ### MCP (`packages/mcp/`)
 
-- **Tools, payloads, documented behaviour** described to users → keep **`docs/src/content/docs/docs/guides/mcp-integration.md`** accurate.
+- **Tools, payloads, documented behaviour** described to users → keep **`docs/src/content/docs/docs/guides/mcp.md`** accurate.
 - **New / renamed / dropped doc sources** stitched by `get_nesso_docs` → add/remove the page under **`docs/src/content/docs/docs/`** plus **`docs/astro.config.mjs`** sidebar when needed, then run **`pnpm build`** in `packages/mcp`. The build script auto-discovers all `.md` files — no manifest to maintain.
 - Prefer **no long-form prose-only** in `packages/mcp/`; put user-facing explanations in **`docs/`** and keep the MCP package as loaders + tooling. After editing stitched Markdown paths or doc bodies, run **`pnpm build`** in `packages/mcp` so **`dist/starlight-docs.pages.json`** refreshes (`pnpm dev` / `tsc --watch` alone does not rebuild it).
 
