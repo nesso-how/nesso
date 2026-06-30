@@ -6,7 +6,7 @@ description: The 52 semantic relation types across 8 categories in Nesso.
 In Nesso, every edge carries a **semantic type**: a named relation describing how two concepts are connected, with type properties reserved for graph-analysis algorithms (future work, no algorithm currently consumes them). The vocabulary is fixed at 52 types across 8 categories, drawn from prior work in knowledge representation, lexical semantics, temporal logic, and signed-network theory.
 
 :::note[About this vocabulary]
-These 52 relation types are one slice of `@nesso-how/vocab-learning`, which also defines node parameters (FSRS), display settings, and category palettes. Graph JSON files declare their vocabulary via `vocabulary.id` and `vocabulary.version`; the envelope format (`@nesso-how/schema`) is vocabulary-agnostic. The types and their property values are a considered first cut — both will evolve as real graphs accumulate and the analysis algorithms that consume them get built out.
+These 52 relation types are one slice of `@nesso-how/vocab-learning`, which also defines node parameters (FSRS), display settings, and category palettes. Graph JSON files declare their vocabulary via `vocabulary.id` and `vocabulary.version`; the envelope schema (`@nesso-how/schema`) is vocabulary-agnostic. The types and their property values are a considered first cut, and both will evolve as real graphs accumulate and the analysis algorithms that consume them get built out.
 :::
 
 ## Properties
