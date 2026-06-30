@@ -10,8 +10,10 @@
 **An app for building typed knowledge graphs for active learning.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![npm @nesso-how/mcp](https://img.shields.io/npm/v/@nesso-how/mcp?label=%40nesso-how%2Fmcp)](https://www.npmjs.com/package/@nesso-how/mcp)
 [![GitHub release](https://img.shields.io/github/v/release/nesso-how/nesso?include_prereleases&label=desktop)](https://github.com/nesso-how/nesso/releases)
+[![CI](https://github.com/nesso-how/nesso/actions/workflows/ci.yml/badge.svg)](https://github.com/nesso-how/nesso/actions/workflows/ci.yml)
+[![Checked with Biome](https://img.shields.io/badge/Checked_with-Biome-60A5FA?logo=biome&logoColor=white)](https://biomejs.dev)
+[![Analyzed with fallow](https://img.shields.io/badge/analyzed_with-fallow-0d7377)](https://github.com/fallow-rs/fallow)
 
 [Website](https://nesso.how) · [Try it](https://app.nesso.how) · [Docs](https://nesso.how/docs/introduction) · [Releases](https://github.com/nesso-how/nesso/releases)
 
@@ -24,18 +26,10 @@
 
 ## What it does
 
-Nesso is an interactive concept map where nodes are ideas and edges are typed semantic relations. You draw connections between concepts, pick the relation (e.g. `causes`, `requires`, `subtype-of`), and each concept carries spaced-repetition state. **Socrates**, a Socratic AI mentor, can read the current graph and your selection, then probe your understanding through questions rather than explanations.
+Nesso is an interactive concept map where nodes are ideas and edges are [typed semantic relations](https://nesso.how/docs/reference/relation-types) (52 types across 8 categories, e.g. `causes`, `requires`, `subtype-of`). Each concept carries spaced-repetition state scheduled by [FSRS](https://github.com/open-spaced-repetition/ts-fsrs). Available as a web app at [app.nesso.how](https://app.nesso.how) and as a native macOS desktop build.
 
-> [!WARNING]
-> **Early alpha.** The typed graph and spaced-repetition review work today; the Socratic mentor is experimental and needs an OpenAI-compatible endpoint (e.g. a local Ollama model or a cloud provider). Expect breaking changes.
-
-## Features
-
-- **Typed knowledge graph**: 52 semantic relations across 8 categories, with inverse pairs; each type renders with a distinct line style and glyph
-- **Spaced-repetition review**: FSRS scheduling via [`ts-fsrs`](https://github.com/open-spaced-repetition/ts-fsrs); rate Again / Hard / Good / Easy
-- **Socratic AI mentor**: context-aware dialogue that probes rather than explains; connects to any OpenAI-compatible endpoint (local Ollama or a cloud provider)
-- **Multi-graph workspace**: create and switch between graphs; persisted in IndexedDB (web) and mirrored to `.json` files on disk (desktop)
-- **Cross-platform**: web app at [app.nesso.how](https://app.nesso.how) plus a Tauri v2 macOS desktop build
+> [!NOTE]
+> An experimental AI mentor (Socrates) is also available: opt-in under **Settings → AI**, requires an OpenAI-compatible endpoint (local Ollama or a cloud provider).
 
 ## Quick start
 
@@ -53,8 +47,6 @@ pnpm dev:desktop  # Tauri v2 desktop shell
 pnpm build          # web bundle
 pnpm build:desktop  # desktop binary
 ```
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for commit conventions, branch naming, and the PR workflow.
 
 ## Project structure
 
@@ -77,15 +69,17 @@ docs/             Starlight docs site, published at nesso.how/docs
 
 ## Architecture
 
-Nesso is a React 18 + Vite + TypeScript single-page app, optionally wrapped by Tauri v2 for a native desktop shell. All app state lives in a single Zustand store ([src/store/index.ts](src/store/index.ts)), and components subscribe via selectors with no prop drilling. Graph **content** persists to **IndexedDB** (web) and is **dual-written to a workspace folder of `.json` files** on desktop (with file watch for external edits); **FSRS review progress** stays in a separate IndexedDB `reviewState` store (per browser, not in shared files). UI chrome persists to **localStorage**.
+Nesso is a React 18 + Vite + TypeScript single-page app, optionally wrapped by Tauri v2 for a native desktop shell. All state lives in a single [Zustand](https://github.com/pmndrs/zustand) store, with components subscribing via selectors and no prop drilling.
 
-The canvas is built on [React Flow](https://reactflow.dev/) via `@nesso-how/graph` (`NessoEdge`, `ConceptNodeBody`); the app adds an interactive `ConceptNode` wrapper for inline edit and connection handles. Each edge renders its semantic relation as a distinct line style plus an SVG glyph. Every node carries FSRS scheduling fields (`stability`, `difficulty`, `due`, `lastRating`) consumed by the Review overlay.
+The canvas is built on [React Flow](https://reactflow.dev/) with a custom edge renderer that encodes each relation type as a distinct line style and SVG glyph. Graph content persists to IndexedDB on web and is also written to a folder of `.json` files on desktop, with a file watcher that picks up external edits. FSRS review progress lives in a separate IndexedDB store and is never mixed into the shared graph files.
 
-The AI mentor in [src/llm/](src/llm/) talks to any **OpenAI-compatible** `chat/completions` endpoint (a local Ollama model or a cloud provider). On every send the system prompt is rebuilt from the live store, so the model always sees the current graph snapshot, selection, and a focal neighbourhood.
+The AI mentor talks to any OpenAI-compatible `chat/completions` endpoint. On every send the system prompt is rebuilt from the live store, so the model always sees the current graph, the active selection, and a focal neighbourhood of related concepts.
 
-The repo is a **pnpm workspace** monorepo. The graph vocabulary lives in [packages/vocab-learning](packages/vocab-learning) and is consumed by both the app and an MCP server in [packages/mcp](packages/mcp) that exposes relation types from the vocabulary and bundled documentation to MCP-capable LLM clients.
+The repo is a pnpm workspace monorepo. The graph vocabulary lives in [packages/vocab-learning](packages/vocab-learning) and is consumed by both the app and an MCP server in [packages/mcp](packages/mcp) that lets LLM clients query relation types, read the bundled docs, build valid graph documents, and validate graph JSON.
 
 ## Packages
+
+Nesso is built as a monorepo of focused packages so that its graph vocabulary, visual components, and tooling can be used independently of the full app. The MCP server, embeddable graph component, and schema layer are all separate entry points into the same underlying model.
 
 | Package                                                                                | Purpose                                                                                     |
 | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
@@ -93,7 +87,7 @@ The repo is a **pnpm workspace** monorepo. The graph vocabulary lives in [packag
 | [`@nesso-how/vocab-learning`](https://www.npmjs.com/package/@nesso-how/vocab-learning) | Graph vocabulary: relation types, FSRS node params, category palettes, `NessoGraphDocument` |
 | [`@nesso-how/theme`](https://www.npmjs.com/package/@nesso-how/theme)                   | Shared design tokens for the app, graph embeds, and docs site                               |
 | [`@nesso-how/graph`](https://www.npmjs.com/package/@nesso-how/graph)                   | Embeddable `<NessoGraph />` React component for docs and external apps                      |
-| [`@nesso-how/mcp`](https://www.npmjs.com/package/@nesso-how/mcp)                       | MCP server exposing relation types and bundled docs to LLM clients                          |
+| [`@nesso-how/mcp`](https://www.npmjs.com/package/@nesso-how/mcp)                       | MCP server: query relation types, read docs, build and validate graph documents             |
 
 ## Contributing
 
