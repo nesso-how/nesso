@@ -17,7 +17,8 @@ export const en: Locale = {
     h1Em: 'It has to be built.',
     sub: "Most learning tools feed you answers to absorb passively, then lock your knowledge inside a platform you don't own. Nesso lets you build <em>your</em> graph instead, and challenges you to reinforce <em>how</em> concepts relate.",
     tagline: 'Know how, not just what.',
-    ctaPrimary: 'Open Nesso',
+    ctaPrimary: 'Open web app',
+    ctaMacDownload: 'Download for macOS',
     ctaSecondary: 'Read the docs',
     graphAriaLabel: 'Concept graph: Understanding and its relations',
     graph: {
@@ -149,6 +150,7 @@ export const en: Locale = {
     line3: 'The knowledge',
     line3Em: 'yours',
     ctaPrimary: 'Open Nesso',
+    ctaMacDownload: 'Download for macOS',
     ctaSecondary: 'Star on GitHub',
   },
   footer: {

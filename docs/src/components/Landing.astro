@@ -9,9 +9,10 @@ interface Props {
   lang: 'en' | 'it'
   releaseTag: string
   releaseUrl: string
+  macDownloadUrl: string
 }
 
-const { t, lang, releaseTag, releaseUrl } = Astro.props
+const { t, lang, releaseTag, releaseUrl, macDownloadUrl } = Astro.props
 const homeHref = lang === 'en' ? '/' : `/${lang}/`
 ---
 
@@ -238,6 +239,27 @@ const homeHref = lang === 'en' ? '/' : `/${lang}/`
         gap: 0.75rem;
         flex-wrap: wrap;
         justify-content: center;
+      }
+
+      .hero-mac-download {
+        margin-top: 0.85rem;
+        font-size: 0.875rem;
+        color: var(--ink-3);
+      }
+
+      .hero-mac-download a:hover {
+        color: var(--highlight);
+      }
+
+      .credo-mac-download {
+        margin-top: 0.85rem;
+        font-size: 0.875rem;
+        color: var(--ink-3);
+        text-align: center;
+      }
+
+      .credo-mac-download a:hover {
+        color: var(--highlight);
       }
 
       .btn {
@@ -1247,6 +1269,14 @@ const homeHref = lang === 'en' ? '/' : `/${lang}/`
           </a>
           <a href="/docs/introduction/" class="btn btn-secondary">{t.hero.ctaSecondary}</a>
         </div>
+        <p class="hero-mac-download" hidden>
+          <a
+            href={macDownloadUrl}
+            download
+            aria-label={`${t.hero.ctaMacDownload} (${releaseTag} universal .dmg)`}
+            >{t.hero.ctaMacDownload}</a
+          >
+        </p>
 
         <div class="hero-graph-wrap">
           <div class="hero-graph-frame">
@@ -1695,6 +1725,14 @@ const homeHref = lang === 'en' ? '/' : `/${lang}/`
               rel="noopener">{t.credo.ctaSecondary}</a
             >
           </div>
+          <p class="credo-mac-download" hidden>
+            <a
+              href={macDownloadUrl}
+              download
+              aria-label={`${t.credo.ctaMacDownload} (${releaseTag} universal .dmg)`}
+              >{t.credo.ctaMacDownload}</a
+            >
+          </p>
         </div>
       </section>
     </main>
@@ -1709,6 +1747,25 @@ const homeHref = lang === 'en' ? '/' : `/${lang}/`
         <a href="https://app.nesso.how" target="_blank" rel="noopener">{t.footer.app}</a>
       </div>
     </footer>
+
+    <script>
+      ;(function () {
+        function isMacDesktop() {
+          const ua = navigator.userAgent
+          if (/iPhone|iPad|iPod/.test(ua)) return false
+          if (navigator.userAgentData?.platform === 'macOS') return true
+          return /Macintosh|Mac OS X/.test(ua) || navigator.platform?.startsWith('Mac') === true
+        }
+
+        if (isMacDesktop()) {
+          for (const el of document.querySelectorAll<HTMLElement>(
+            '.hero-mac-download, .credo-mac-download',
+          )) {
+            el.hidden = false
+          }
+        }
+      })()
+    </script>
 
     <script>
       ;(function () {

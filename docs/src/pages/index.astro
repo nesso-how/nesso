@@ -1,10 +1,18 @@
 ---
-import { en } from "../i18n/en";
-import Landing from "../components/Landing.astro";
-import rootPkg from "../../../package.json";
+import { en } from '../i18n/en'
+import Landing from '../components/Landing.astro'
+import rootPkg from '../../../package.json'
 
-const RELEASE_TAG = `v${rootPkg.version}`;
-const releaseUrl = `https://github.com/nesso-how/nesso/releases/tag/${RELEASE_TAG}`;
+const VERSION = rootPkg.version
+const RELEASE_TAG = `v${VERSION}`
+const releaseUrl = `https://github.com/nesso-how/nesso/releases/tag/${RELEASE_TAG}`
+const macDownloadUrl = `https://github.com/nesso-how/nesso/releases/download/${RELEASE_TAG}/Nesso_${VERSION}_universal.dmg`
 ---
 
-<Landing t={en} lang="en" releaseTag={RELEASE_TAG} releaseUrl={releaseUrl} />
+<Landing
+  t={en}
+  lang="en"
+  releaseTag={RELEASE_TAG}
+  releaseUrl={releaseUrl}
+  macDownloadUrl={macDownloadUrl}
+/>

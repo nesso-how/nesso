@@ -14,6 +14,7 @@ export type Locale = {
     sub: string
     tagline: string
     ctaPrimary: string
+    ctaMacDownload: string
     ctaSecondary: string
     graphAriaLabel: string
     graph: {
@@ -133,6 +134,7 @@ export type Locale = {
     line3: string
     line3Em: string
     ctaPrimary: string
+    ctaMacDownload: string
     ctaSecondary: string
   }
   footer: {
