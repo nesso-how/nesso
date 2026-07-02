@@ -401,8 +401,8 @@ const en = {
     placeholderNeedsSetup: 'Configure an AI endpoint in Settings first…',
     errorConnection:
       "Can't reach the AI endpoint. Check Settings (⌘,) → AI. For local Ollama, run `ollama serve`.",
-    errorRetry: '*Hmm.* My voice failed me. Try again.',
-    errorRetrySlow: '*Hmm.* My voice failed me. Try again, slowly.',
+    newChat: 'New chat',
+    thinking: 'thinking…',
   },
   menu: {
     file: 'File',

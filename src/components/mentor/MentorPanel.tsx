@@ -4,7 +4,13 @@ import type { Edge, Node } from '@xyflow/react'
 import { SocratesGlyph } from './SocratesGlyph'
 import { useGraphStore, selectedNodeSelector, selectedEdgeSelector } from '@/store'
 import type { ConceptNodeData, Language } from '@/types/graph'
-import { fetchCompletion, isAiReady } from '@/llm/completion'
+import type { ChatMessage } from '@/llm/completion'
+import {
+  describeCompletionError,
+  fetchCompletion,
+  isAiReady,
+  isNetworkFailure,
+} from '@/llm/completion'
 import { buildFocalNeighborContext, nodeStrength, oneHopNeighborIds } from '@/llm/context'
 import { useT } from '@/i18n'
 import { CloseButton } from '@/components/ui/CloseButton'
@@ -16,32 +22,32 @@ import { track } from '@/telemetry'
 interface Message {
   role: 'user' | 'mentor'
   text: string
+  /** Rendered as a technical error rather than a Socrates reply. */
+  error?: boolean
 }
 
-/** Coarse failure category for telemetry: a fetch network/CORS failure throws TypeError; an HTTP error does not. */
-function mentorFailureReason(err: unknown): 'network' | 'response' {
-  return err instanceof TypeError ? 'network' : 'response'
-}
-
+/**
+ * The mentor is experimental and its users are technical, so surface the real error.
+ * A connection failure keeps the actionable hint (check Settings, run `ollama serve`)
+ * with the raw detail appended; other failures show the detail alone.
+ */
 function mentorFailureMessage(err: unknown, t: ReturnType<typeof useT>): string {
-  if (err instanceof TypeError) return t.mentor.errorConnection
-  return t.mentor.errorRetrySlow
+  const detail = describeCompletionError(err)
+  return isNetworkFailure(err) ? `${t.mentor.errorConnection}\n\n${detail}` : detail
 }
 
+/** Grows the last mentor bubble (or starts one) with an answer delta. */
 function appendToLastMentor(history: Message[], delta: string): Message[] {
   const last = history[history.length - 1]
   if (!last || last.role !== 'mentor') return [...history, { role: 'mentor', text: delta }]
   return [...history.slice(0, -1), { ...last, text: last.text + delta }]
 }
 
-function mentorCompletionMessages(systemPrompt: string, msgs: Message[]) {
-  return [
-    { role: 'system' as const, content: systemPrompt },
-    ...msgs.map((m) => ({
-      role: m.role === 'user' ? ('user' as const) : ('assistant' as const),
-      content: m.text,
-    })),
-  ]
+function toConversation(msgs: Message[]): ChatMessage[] {
+  return msgs.map((m) => ({
+    role: m.role === 'user' ? ('user' as const) : ('assistant' as const),
+    content: m.text,
+  }))
 }
 
 /** Cap snapshot size so the system prompt stays bounded on large graphs. */
@@ -195,6 +201,8 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
   const [thinking, setThinking] = useState(false)
   const [streaming, setStreaming] = useState(false)
   const [loadingInitial, setLoadingInitial] = useState(false)
+  /** True once reasoning deltas are streaming in but the answer hasn't started yet. */
+  const [reasoningActive, setReasoningActive] = useState(false)
   const [chatKey, setChatKey] = useState(0)
 
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -227,6 +235,7 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
     setHistory([])
     setStreaming(false)
     setLoadingInitial(true)
+    setReasoningActive(false)
 
     const storeState = useGraphStore.getState()
     const systemPrompt = buildSystemPrompt()
@@ -237,33 +246,42 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
       selectedEdgeSelector(storeState),
     )
 
-    let started = false
+    let answered = false
     fetchCompletion(
       settings,
-      mentorCompletionMessages(systemPrompt, [{ role: 'user', text: seedText }]),
+      { instructions: systemPrompt, messages: [{ role: 'user', content: seedText }] },
       MENTOR_MAX_TOKENS,
       controller.signal,
-      (delta) => {
-        if (controller.signal.aborted) return
-        if (!started) {
-          started = true
-          setLoadingInitial(false)
-          setStreaming(true)
-          setHistory([{ role: 'mentor', text: delta }])
-        } else {
+      {
+        onToken: (delta) => {
+          if (controller.signal.aborted) return
+          if (!answered) {
+            answered = true
+            setLoadingInitial(false)
+            setReasoningActive(false)
+            setStreaming(true)
+          }
           setHistory((h) => appendToLastMentor(h, delta))
-        }
+        },
+        onReasoning: () => {
+          if (controller.signal.aborted) return
+          setReasoningActive(true)
+        },
       },
     )
       .then((full) => {
-        if (!controller.signal.aborted && !started) {
-          setHistory([{ role: 'mentor', text: full || '…' }])
+        if (!controller.signal.aborted && !answered) {
+          setReasoningActive(false)
+          setHistory((h) => appendToLastMentor(h, full || '…'))
         }
       })
       .catch((err) => {
         if (!controller.signal.aborted) {
-          setHistory([{ role: 'mentor', text: mentorFailureMessage(err, t) }])
-          track({ name: 'mentor_request_failed', props: { reason: mentorFailureReason(err) } })
+          setHistory([{ role: 'mentor', text: mentorFailureMessage(err, t), error: true }])
+          track({
+            name: 'mentor_request_failed',
+            props: { reason: isNetworkFailure(err) ? 'network' : 'response' },
+          })
         }
       })
       .finally(() => {
@@ -303,38 +321,51 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
     setHistory(next)
     setDraft('')
     setThinking(true)
+    setReasoningActive(false)
     track({ name: 'mentor_message_sent' })
     requestAnimationFrame(() => {
       const el = scrollRef.current
       if (el) el.scrollTop = el.scrollHeight
     })
-    let started = false
+    let answered = false
     try {
       const full = await fetchCompletion(
         settings,
-        mentorCompletionMessages(buildSystemPrompt(), next),
+        { instructions: buildSystemPrompt(), messages: toConversation(next) },
         MENTOR_MAX_TOKENS,
         controller.signal,
-        (delta) => {
-          if (controller.signal.aborted) return
-          if (!started) {
-            started = true
-            setThinking(false)
-            setStreaming(true)
-            setHistory((h) => [...h, { role: 'mentor', text: delta }])
-          } else {
+        {
+          onToken: (delta) => {
+            if (controller.signal.aborted) return
+            if (!answered) {
+              answered = true
+              setThinking(false)
+              setReasoningActive(false)
+              setStreaming(true)
+            }
             setHistory((h) => appendToLastMentor(h, delta))
-          }
+          },
+          onReasoning: () => {
+            if (controller.signal.aborted) return
+            setReasoningActive(true)
+          },
         },
       )
-      if (!controller.signal.aborted && !started) {
-        setHistory((h) => [...h, { role: 'mentor', text: full || '…' }])
+      if (!controller.signal.aborted && !answered) {
+        setReasoningActive(false)
+        setHistory((h) => appendToLastMentor(h, full || '…'))
       }
       if (!controller.signal.aborted) track({ name: 'mentor_response_received' })
     } catch (err) {
       if (!controller.signal.aborted) {
-        setHistory((h) => [...h, { role: 'mentor', text: mentorFailureMessage(err, t) }])
-        track({ name: 'mentor_request_failed', props: { reason: mentorFailureReason(err) } })
+        setHistory((h) => [
+          ...h,
+          { role: 'mentor', text: mentorFailureMessage(err, t), error: true },
+        ])
+        track({
+          name: 'mentor_request_failed',
+          props: { reason: isNetworkFailure(err) ? 'network' : 'response' },
+        })
       }
     } finally {
       if (!controller.signal.aborted) setStreaming(false)
@@ -420,7 +451,7 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
           </div>
           <button
             type="button"
-            title={settings.language === 'it' ? 'Nuova chat' : 'New chat'}
+            title={t.mentor.newChat}
             disabled={loadingInitial || thinking}
             onClick={() => setChatKey((k) => k + 1)}
             style={{
@@ -478,7 +509,7 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
           }}
         >
           {loadingInitial && history.length === 0 ? (
-            <ThinkingIndicator />
+            <ThinkingIndicator label={reasoningActive ? t.mentor.thinking : undefined} />
           ) : (
             history.map((m, i) =>
               m.role === 'user' ? (
@@ -505,6 +536,25 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
                   >
                     {m.text}
                   </span>
+                </div>
+              ) : m.error ? (
+                <div
+                  key={i}
+                  style={{
+                    fontSize: '12px',
+                    fontWeight: 400,
+                    lineHeight: 1.5,
+                    fontFamily: 'var(--font-mono)',
+                    color: 'var(--ink-3)',
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-word',
+                    margin: '5px 0',
+                    padding: '8px 10px',
+                    background: 'var(--paper-deep)',
+                    borderRadius: 'var(--radius-md)',
+                  }}
+                >
+                  {m.text}
                 </div>
               ) : (
                 <div
@@ -538,7 +588,9 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
               ),
             )
           )}
-          {thinking && <ThinkingIndicator />}
+          {thinking && (
+            <ThinkingIndicator label={reasoningActive ? t.mentor.thinking : undefined} />
+          )}
         </div>
 
         <div

@@ -1,79 +1,90 @@
 // SPDX-License-Identifier: MIT
+import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
+import { APICallError, extractReasoningMiddleware, streamText, wrapLanguageModel } from 'ai'
 import type { NessoSettings } from '@/types/graph'
 
-type Message = { role: 'system' | 'user' | 'assistant'; content: string }
+/** A chat turn. The system prompt is passed separately as `instructions`, never as a role here. */
+export type ChatMessage = { role: 'user' | 'assistant'; content: string }
+
+/** A completion request: the system prompt (`instructions`) plus the user/assistant turns. */
+export interface CompletionRequest {
+  instructions?: string
+  messages: ChatMessage[]
+}
+
+/** Callbacks for the streamed response: `onToken` gets the clean answer, `onReasoning` the model's thinking. */
+export interface CompletionHandlers {
+  onToken?: (delta: string) => void
+  onReasoning?: (delta: string) => void
+}
 
 export function isAiReady(settings: NessoSettings): boolean {
   return Boolean(settings.aiBaseUrl && settings.aiModel)
 }
 
-/** Extracts the assistant text delta from one SSE line, or null for keepalive / `[DONE]` / unparseable lines. */
-function sseLineDelta(line: string): string | null {
-  const trimmed = line.trim()
-  if (!trimmed.startsWith('data:')) return null
-  const payload = trimmed.slice(5).trim()
-  if (payload === '[DONE]') return null
-  try {
-    const json = JSON.parse(payload) as { choices?: { delta?: { content?: string | null } }[] }
-    return json.choices?.[0]?.delta?.content ?? null
-  } catch {
-    return null
-  }
+/**
+ * Wraps the configured OpenAI-compatible endpoint with reasoning extraction so
+ * inline `<think>…</think>` (Ollama qwen3, deepseek-r1, …) is split out of the
+ * answer into a separate `reasoning-delta` stream instead of leaking into the reply.
+ */
+function mentorModel(settings: NessoSettings) {
+  const provider = createOpenAICompatible({
+    name: 'nesso-mentor',
+    baseURL: settings.aiBaseUrl.replace(/\/+$/, ''),
+    ...(settings.aiApiKey ? { apiKey: settings.aiApiKey } : {}),
+  })
+  return wrapLanguageModel({
+    model: provider.chatModel(settings.aiModel),
+    middleware: extractReasoningMiddleware({ tagName: 'think' }),
+  })
 }
 
-async function readSseStream(
-  body: ReadableStream<Uint8Array>,
-  onToken: (delta: string) => void,
-): Promise<string> {
-  const reader = body.getReader()
-  const decoder = new TextDecoder()
-  let buffer = ''
-  let full = ''
-  try {
-    while (true) {
-      const { done, value } = await reader.read()
-      if (done) break
-      buffer += decoder.decode(value, { stream: true })
-      const lines = buffer.split('\n')
-      buffer = lines.pop() ?? ''
-      for (const line of lines) {
-        const delta = sseLineDelta(line)
-        if (delta) {
-          full += delta
-          onToken(delta)
-        }
-      }
-    }
-  } finally {
-    reader.releaseLock()
+/** True when the failure is a connection/CORS error rather than an HTTP response error. */
+export function isNetworkFailure(err: unknown): boolean {
+  if (APICallError.isInstance(err)) return err.statusCode === undefined
+  return err instanceof TypeError
+}
+
+/**
+ * Human-readable technical detail for a failed completion, shown verbatim to the
+ * (technical) user as `<type>: <message>`. For an API error the SDK already parses
+ * the endpoint's JSON error body into `message` (e.g. `model 'x' not found`), so this
+ * uses that directly rather than the raw response body.
+ */
+export function describeCompletionError(err: unknown): string {
+  if (APICallError.isInstance(err)) {
+    const type = err.statusCode ? `HTTP ${err.statusCode}` : err.name
+    return `${type}: ${err.message}`
   }
-  return full
+  if (err instanceof Error) return `${err.name}: ${err.message}`
+  return String(err)
 }
 
 export async function fetchCompletion(
   settings: NessoSettings,
-  messages: Message[],
+  request: CompletionRequest,
   maxTokens: number,
   signal?: AbortSignal,
-  onToken?: (delta: string) => void,
+  handlers?: CompletionHandlers,
 ): Promise<string> {
-  const baseUrl = settings.aiBaseUrl.replace(/\/+$/, '')
-  const res = await fetch(`${baseUrl}/chat/completions`, {
-    method: 'POST',
-    signal,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(settings.aiApiKey ? { Authorization: `Bearer ${settings.aiApiKey}` } : {}),
-    },
-    body: JSON.stringify({
-      model: settings.aiModel,
-      max_tokens: maxTokens,
-      messages,
-      ...(onToken ? { stream: true } : {}),
-    }),
+  // The SDK takes the system prompt as `instructions`, not a `system` role in `messages`.
+  const result = streamText({
+    model: mentorModel(settings),
+    ...(request.instructions ? { instructions: request.instructions } : {}),
+    messages: request.messages,
+    maxOutputTokens: maxTokens,
+    abortSignal: signal,
   })
-  if (!res.ok) throw new Error(await res.text())
-  if (onToken && res.body) return readSseStream(res.body, onToken)
-  const data = (await res.json()) as { choices?: { message?: { content?: string | null } }[] }
-  return data.choices?.[0]?.message?.content ?? ''
+  let text = ''
+  for await (const part of result.stream) {
+    if (part.type === 'text-delta') {
+      text += part.text
+      handlers?.onToken?.(part.text)
+    } else if (part.type === 'reasoning-delta') {
+      handlers?.onReasoning?.(part.text)
+    } else if (part.type === 'error') {
+      throw part.error
+    }
+  }
+  return text
 }

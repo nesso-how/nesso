@@ -402,8 +402,8 @@ const it: typeof en = {
     placeholderNeedsSetup: 'Configura prima un endpoint AI in Impostazioni…',
     errorConnection:
       "Non riesco a raggiungere l'endpoint AI. Controlla Impostazioni (⌘,) → AI. In locale, avvia `ollama serve`.",
-    errorRetry: '*Hmm.* La mia voce mi ha tradito. Riprova.',
-    errorRetrySlow: '*Hmm.* La mia voce mi ha tradito. Riprova, lentamente.',
+    newChat: 'Nuova chat',
+    thinking: 'sto pensando…',
   },
   menu: {
     file: 'File',
