@@ -17,17 +17,7 @@ You can skip the welcome screen or the tour at any step. To restart it later, op
 
 ## Desktop app (macOS)
 
-A pre-built alpha installer is published on [GitHub Releases](https://github.com/nesso-how/nesso/releases). Download the universal `.dmg` (it runs on both Apple silicon and Intel Macs) and open it.
-
-:::caution
-The app is not signed with an Apple developer certificate. macOS will block it on first launch. After installing, run this command in the terminal to remove the quarantine flag:
-
-```sh
-xattr -cr /Applications/Nesso.app
-```
-
-Then open the app normally.
-:::
+A pre-built alpha installer is published on [GitHub Releases](https://github.com/nesso-how/nesso/releases). Download the universal `.dmg` (it runs on both Apple silicon and Intel Macs), drag **Nesso** to **Applications**, and open it.
 
 The desktop app **updates itself**: on launch it checks GitHub Releases and, when a newer build is available, offers to install it and relaunch.
 
