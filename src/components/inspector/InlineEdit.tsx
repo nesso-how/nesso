@@ -1,6 +1,11 @@
 // SPDX-License-Identifier: MIT
 import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 
+function syncScrollHeight(el: HTMLElement) {
+  el.style.height = 'auto'
+  el.style.height = `${el.scrollHeight}px`
+}
+
 export function InlineEdit({
   value,
   placeholder,
@@ -55,19 +60,24 @@ export function InlineEdit({
     if (!editing || !multiline) return
     const el = ref.current as HTMLTextAreaElement | null
     if (!el) return
-    el.style.height = 'auto'
-    el.style.height = `${el.scrollHeight}px`
+    syncScrollHeight(el)
+    const ro = new ResizeObserver(() => syncScrollHeight(el))
+    ro.observe(el)
+    return () => ro.disconnect()
   }, [editing, draft, multiline])
 
   // Snap the display box to the same integer height the textarea computes from
   // scrollHeight, so toggling between display and edit never nudges siblings by
-  // the fractional line-height remainder.
+  // the fractional line-height remainder. ResizeObserver keeps height in sync when
+  // the inspector (or any ancestor) changes width and wrapped line count shifts.
   useLayoutEffect(() => {
     if (editing || !multiline) return
     const el = displayRef.current
     if (!el) return
-    el.style.height = 'auto'
-    el.style.height = `${el.scrollHeight}px`
+    syncScrollHeight(el)
+    const ro = new ResizeObserver(() => syncScrollHeight(el))
+    ro.observe(el)
+    return () => ro.disconnect()
   }, [editing, value, multiline])
 
   const commit = () => {
@@ -136,6 +146,7 @@ export function InlineEdit({
             ...baseStyle,
             overflow: 'hidden',
             resize: 'none',
+            minWidth: 0,
             ...(borderedPlaceholder && { padding: '5px 8px' }),
           } as React.CSSProperties
         }
@@ -199,6 +210,7 @@ export function InlineEdit({
         whiteSpace: multiline ? 'pre-wrap' : 'normal',
         wordBreak: 'break-word',
         minHeight: '1.4em',
+        ...(multiline && { minWidth: 0 }),
         ...(borderedPlaceholder && { padding: '5px 8px' }),
       }}
     >
