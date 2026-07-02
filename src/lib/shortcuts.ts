@@ -40,8 +40,16 @@ export interface ResolvedShortcut {
   preventDefault: boolean
 }
 
+/** True when a text control has focus and graph shortcuts should not run. */
+export function isTextControlFocused(): boolean {
+  const el = document.activeElement
+  if (!el) return false
+  if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) return true
+  return Boolean(el instanceof HTMLElement && el.isContentEditable)
+}
+
 /**
- * Map a keydown to a canvas action. Pure: the caller guards editable targets,
+ * Map a keydown to a canvas action. Pure: the caller guards text-control focus,
  * applies `preventDefault`, and dispatches the returned action against the store.
  * Returns null when the key is not a shortcut (or is suppressed by a modal).
  */

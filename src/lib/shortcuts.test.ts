@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
+/** @vitest-environment jsdom */
 import { describe, expect, it } from 'vitest'
-import { resolveShortcut, type ShortcutKey } from './shortcuts'
+import { resolveShortcut, isTextControlFocused, type ShortcutKey } from './shortcuts'
 
 const key = (over: Partial<ShortcutKey> & { key: string }): ShortcutKey => ({
   metaKey: false,
@@ -89,5 +90,29 @@ describe('resolveShortcut', () => {
 
   it('returns null for unmapped keys', () => {
     expect(resolveShortcut(key({ key: 'q' }), NO_MODAL)).toBeNull()
+  })
+})
+
+describe('isTextControlFocused', () => {
+  it('is true for focused input and textarea elements', () => {
+    const input = document.createElement('input')
+    document.body.appendChild(input)
+    input.focus()
+    expect(isTextControlFocused()).toBe(true)
+    input.remove()
+  })
+
+  it('is true for readonly inputs', () => {
+    const input = document.createElement('input')
+    input.readOnly = true
+    document.body.appendChild(input)
+    input.focus()
+    expect(isTextControlFocused()).toBe(true)
+    input.remove()
+  })
+
+  it('is false when focus is on the document body', () => {
+    document.body.focus()
+    expect(isTextControlFocused()).toBe(false)
   })
 })

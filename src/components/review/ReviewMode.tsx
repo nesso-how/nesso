@@ -7,6 +7,7 @@ import { useGraphStore } from '@/store'
 import { nodeToCard, type RelationTypeName } from '@/types/graph'
 import { ratingColor } from '@nesso-how/graph'
 import { useT } from '@/i18n'
+import { isTextControlFocused } from '@/lib/shortcuts'
 import { CloseButton } from '@/components/ui/CloseButton'
 import { ModalOverlay } from '@/components/ui/ModalOverlay'
 import { track } from '@/telemetry'
@@ -540,7 +541,7 @@ function ReviewKeyHandler({
   useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+      if (isTextControlFocused()) return
       if (!revealedRef.current && (e.key === ' ' || e.key === 'Enter')) {
         e.preventDefault()
         onRevealRef.current()

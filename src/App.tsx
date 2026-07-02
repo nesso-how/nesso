@@ -40,7 +40,7 @@ import { CoachmarkOverlay } from './components/onboarding/CoachmarkOverlay'
 import { PALETTES } from '@nesso-how/vocab-learning'
 import { findNewConceptPosition, NEW_CONCEPT_SIZE } from './data/newConceptLayout'
 import { focusFlowNodes } from './lib/focusFlowSelection'
-import { resolveShortcut } from './lib/shortcuts'
+import { resolveShortcut, isTextControlFocused } from './lib/shortcuts'
 import { computeSelectionPan } from './lib/selectionPan'
 import { computeFitViewport, fitCanvasSize } from './lib/fitGraphViewport'
 import { getSeedInitialFitZoom } from './data/seedGraph'
@@ -185,6 +185,16 @@ function AppInner() {
     },
     [getNodes, setViewport, canvasInsets],
   )
+
+  const anyModalOpen =
+    showReview ||
+    showShortcuts ||
+    showSettings ||
+    showRelationTypes ||
+    showSearch ||
+    showAbout ||
+    onboarding.anyModalOpen ||
+    confirmOpen
 
   useDesktopMenu({
     onSettings: () => setShowSettings(true),
@@ -372,18 +382,9 @@ function AppInner() {
   ])
 
   // Keyboard shortcuts
-  const anyModalOpen =
-    showReview ||
-    showShortcuts ||
-    showSettings ||
-    showRelationTypes ||
-    showSearch ||
-    showAbout ||
-    onboarding.anyModalOpen ||
-    confirmOpen
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+      if (isTextControlFocused()) return
       const resolved = resolveShortcut(e, {
         anyModalOpen,
         hasSelectedNode: useGraphStore.getState().selected?.kind === 'node',

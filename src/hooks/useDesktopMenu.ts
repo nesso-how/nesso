@@ -6,7 +6,6 @@ import { useT, getT } from '@/i18n'
 import { isDesktop } from '@/lib/isDesktop'
 import { applyDesktopMenu } from '@/lib/desktopMenu'
 import { exportGraphJson, exportGraphPng, importGraphFile } from '@/lib/graphIO'
-import { focusFlowNodes } from '@/lib/focusFlowSelection'
 import { openExternal, DOCS_URL, WEBSITE_URL, FEEDBACK_URL } from '@/data/appInfo'
 
 interface DesktopMenuHandlers {
@@ -57,16 +56,6 @@ export function useDesktopMenu(handlers: DesktopMenuHandlers): void {
       await on('export-json', () => void exportGraphJson())
       await on('export-png', () => void exportGraphPng())
       await on('import', () => importGraphFile())
-
-      await on('undo', () => store().undo())
-      await on('redo', () => store().redo())
-      await on('cut', () => store().cutSelection())
-      await on('copy', () => store().copySelection())
-      await on('paste', () => {
-        const ids = store().pasteSelection()
-        if (ids?.length) focusFlowNodes(ids)
-      })
-      await on('select-all', () => store().selectAll())
 
       await on('heatmap', () =>
         store().setGraphDisplay('showHeatmap', !store().graphDisplay.showHeatmap),

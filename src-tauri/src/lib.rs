@@ -132,25 +132,6 @@ fn build_app_menu(
     let export_png_i = MenuItemBuilder::with_id("export-png", &labels.export_png).build(app)?;
     let import_i = MenuItemBuilder::with_id("import", &labels.import).build(app)?;
 
-    let undo_i = MenuItemBuilder::with_id("undo", &labels.undo)
-        .accelerator("CmdOrCtrl+Z")
-        .build(app)?;
-    let redo_i = MenuItemBuilder::with_id("redo", &labels.redo)
-        .accelerator("CmdOrCtrl+Shift+Z")
-        .build(app)?;
-    let cut_i = MenuItemBuilder::with_id("cut", &labels.cut)
-        .accelerator("CmdOrCtrl+X")
-        .build(app)?;
-    let copy_i = MenuItemBuilder::with_id("copy", &labels.copy)
-        .accelerator("CmdOrCtrl+C")
-        .build(app)?;
-    let paste_i = MenuItemBuilder::with_id("paste", &labels.paste)
-        .accelerator("CmdOrCtrl+V")
-        .build(app)?;
-    let select_all_i = MenuItemBuilder::with_id("select-all", &labels.select_all)
-        .accelerator("CmdOrCtrl+A")
-        .build(app)?;
-
     let zoom_in_i = MenuItemBuilder::with_id("zoom-in", &labels.zoom_in)
         .accelerator("CmdOrCtrl+Plus")
         .build(app)?;
@@ -221,15 +202,20 @@ fn build_app_menu(
     let file = file.separator().item(&settings_i);
     let file = file.build()?;
 
-    let edit = SubmenuBuilder::new(app, &labels.edit)
-        .item(&undo_i)
-        .item(&redo_i)
+    let mut edit = SubmenuBuilder::new(app, &labels.edit);
+    #[cfg(target_os = "macos")]
+    {
+        edit = edit
+            .undo_with_text(&labels.undo)
+            .redo_with_text(&labels.redo)
+            .separator();
+    }
+    let edit = edit
+        .cut_with_text(&labels.cut)
+        .copy_with_text(&labels.copy)
+        .paste_with_text(&labels.paste)
         .separator()
-        .item(&cut_i)
-        .item(&copy_i)
-        .item(&paste_i)
-        .separator()
-        .item(&select_all_i)
+        .select_all_with_text(&labels.select_all)
         .build()?;
 
     let edges_sub = SubmenuBuilder::new(app, &labels.edges)
