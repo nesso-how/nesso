@@ -133,9 +133,6 @@ export type Locale = {
     line2Em: string
     line3: string
     line3Em: string
-    ctaPrimary: string
-    ctaMacDownload: string
-    ctaSecondary: string
   }
   footer: {
     copyright: string

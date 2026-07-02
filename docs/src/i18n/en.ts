@@ -149,9 +149,6 @@ export const en: Locale = {
     line2Em: 'open',
     line3: 'The knowledge',
     line3Em: 'yours',
-    ctaPrimary: 'Open Nesso',
-    ctaMacDownload: 'Download for macOS',
-    ctaSecondary: 'Star on GitHub',
   },
   footer: {
     copyright: '© 2026 Nesso  ·  MIT License',

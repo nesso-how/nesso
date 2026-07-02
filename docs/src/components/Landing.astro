@@ -243,22 +243,14 @@ const homeHref = lang === 'en' ? '/' : `/${lang}/`
 
       .hero-mac-download {
         margin-top: 0.85rem;
+        font-family: var(--font-sans);
         font-size: 0.875rem;
+        font-weight: 400;
+        line-height: 1.6;
         color: var(--ink-3);
       }
 
       .hero-mac-download a:hover {
-        color: var(--highlight);
-      }
-
-      .credo-mac-download {
-        margin-top: 0.85rem;
-        font-size: 0.875rem;
-        color: var(--ink-3);
-        text-align: center;
-      }
-
-      .credo-mac-download a:hover {
         color: var(--highlight);
       }
 
@@ -1010,14 +1002,6 @@ const homeHref = lang === 'en' ? '/' : `/${lang}/`
         margin: 2.5rem auto 0;
       }
 
-      .credo-tail {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        margin-top: 2.5rem;
-      }
-
       .credo p {
         font-family: var(--font-display);
         font-weight: 400;
@@ -1032,13 +1016,6 @@ const homeHref = lang === 'en' ? '/' : `/${lang}/`
         font-style: italic;
         color: var(--highlight);
         font-weight: 500;
-      }
-
-      .credo-cta {
-        display: flex;
-        gap: 0.75rem;
-        justify-content: center;
-        flex-wrap: wrap;
       }
 
       /* ── Footer ─────────────────────────────── */
@@ -1132,11 +1109,6 @@ const homeHref = lang === 'en' ? '/' : `/${lang}/`
         .credo {
           padding: 0 1.25rem;
           margin-top: 5rem;
-        }
-
-        .credo-tail {
-          min-height: clamp(9rem, 28vh, 22rem);
-          margin-top: 2rem;
         }
       }
     </style>
@@ -1712,28 +1684,6 @@ const homeHref = lang === 'en' ? '/' : `/${lang}/`
           <em>{t.credo.line3Em}</em>.
         </p>
         <div class="credo-rule"></div>
-        <div class="credo-tail">
-          <div class="credo-cta">
-            <a href="https://app.nesso.how" class="btn btn-primary" target="_blank" rel="noopener">
-              {t.credo.ctaPrimary}
-              <span class="btn-arrow">→</span>
-            </a>
-            <a
-              href="https://github.com/nesso-how/nesso"
-              class="btn btn-secondary"
-              target="_blank"
-              rel="noopener">{t.credo.ctaSecondary}</a
-            >
-          </div>
-          <p class="credo-mac-download" hidden>
-            <a
-              href={macDownloadUrl}
-              download
-              aria-label={`${t.credo.ctaMacDownload} (${releaseTag} universal .dmg)`}
-              >{t.credo.ctaMacDownload}</a
-            >
-          </p>
-        </div>
       </section>
     </main>
 
@@ -1758,11 +1708,8 @@ const homeHref = lang === 'en' ? '/' : `/${lang}/`
         }
 
         if (isMacDesktop()) {
-          for (const el of document.querySelectorAll<HTMLElement>(
-            '.hero-mac-download, .credo-mac-download',
-          )) {
-            el.hidden = false
-          }
+          const el = document.querySelector<HTMLElement>('.hero-mac-download')
+          if (el) el.hidden = false
         }
       })()
     </script>
