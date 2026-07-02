@@ -4,7 +4,6 @@ import { useReactFlow, useStore as useFlowStore } from '@xyflow/react'
 import { useGraphStore } from '@/store'
 import { useT } from '@/i18n'
 import { SocratesGlyph } from '@/components/mentor/SocratesGlyph'
-import { FEEDBACK_URL, openExternal } from '@/data/appInfo'
 import { track } from '@/telemetry'
 
 export const STATUS_BAR_HEIGHT_PX = 30
@@ -14,7 +13,7 @@ interface Props {
   onFit: () => void
 }
 
-type IconName = 'undo' | 'redo' | 'minus' | 'plus' | 'fit' | 'feedback'
+type IconName = 'undo' | 'redo' | 'minus' | 'plus' | 'fit'
 
 function StatusIcon({ name }: { name: IconName }) {
   const p = {
@@ -58,12 +57,6 @@ function StatusIcon({ name }: { name: IconName }) {
       return (
         <svg {...p}>
           <path d="M3 6V3h3M13 6V3h-3M3 10v3h3M13 10v3h-3" />
-        </svg>
-      )
-    case 'feedback':
-      return (
-        <svg {...p}>
-          <path d="M3 4.5h10a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H6l-3 2.5V5.5a1 1 0 0 1 1-1z" />
         </svg>
       )
   }
@@ -184,6 +177,37 @@ const sep: React.CSSProperties = {
   margin: '0 4px',
 }
 
+function ViewportControls({
+  onFit,
+  zoomIn,
+  zoomOut,
+  t,
+}: {
+  onFit: () => void
+  zoomIn: (opts: { duration: number }) => void
+  zoomOut: (opts: { duration: number }) => void
+  t: ReturnType<typeof useT>
+}) {
+  const zoomInAnimated = () => zoomIn({ duration: 200 })
+  const zoomOutAnimated = () => zoomOut({ duration: 200 })
+
+  return (
+    <>
+      <StatusBtn onClick={zoomOutAnimated} title={t.statusBar.zoomOutTitle}>
+        <StatusIcon name="minus" />
+      </StatusBtn>
+      <ZoomReadout />
+      <StatusBtn onClick={zoomInAnimated} title={t.statusBar.zoomInTitle}>
+        <StatusIcon name="plus" />
+      </StatusBtn>
+      <span style={sep} />
+      <StatusBtn onClick={onFit} title={t.statusBar.fitTitle}>
+        <StatusIcon name="fit" />
+      </StatusBtn>
+    </>
+  )
+}
+
 export function StatusBar({ sidebarWidth, onFit }: Props) {
   const t = useT()
   const mentorEnabled = useGraphStore((s) => s.settings.mentorEnabled)
@@ -236,15 +260,8 @@ export function StatusBar({ sidebarWidth, onFit }: Props) {
         </span>
       </div>
 
-      {/* Right — feedback + history + viewport controls */}
+      {/* Right — history + viewport controls */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-1)', flexShrink: 0 }}>
-        <StatusBtn
-          onClick={() => void openExternal(FEEDBACK_URL)}
-          title={t.statusBar.feedbackTitle}
-        >
-          <StatusIcon name="feedback" />
-        </StatusBtn>
-        <span style={sep} />
         <StatusBtn onClick={undo} disabled={!canUndo} title={t.statusBar.undoTitle}>
           <StatusIcon name="undo" />
         </StatusBtn>
@@ -252,17 +269,7 @@ export function StatusBar({ sidebarWidth, onFit }: Props) {
           <StatusIcon name="redo" />
         </StatusBtn>
         <span style={sep} />
-        <StatusBtn onClick={() => zoomOut({ duration: 200 })} title={t.statusBar.zoomOutTitle}>
-          <StatusIcon name="minus" />
-        </StatusBtn>
-        <ZoomReadout />
-        <StatusBtn onClick={() => zoomIn({ duration: 200 })} title={t.statusBar.zoomInTitle}>
-          <StatusIcon name="plus" />
-        </StatusBtn>
-        <span style={sep} />
-        <StatusBtn onClick={onFit} title={t.statusBar.fitTitle}>
-          <StatusIcon name="fit" />
-        </StatusBtn>
+        <ViewportControls onFit={onFit} zoomIn={zoomIn} zoomOut={zoomOut} t={t} />
       </div>
     </div>
   )

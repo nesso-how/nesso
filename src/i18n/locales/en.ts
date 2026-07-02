@@ -273,7 +273,6 @@ const en = {
     zoomOutTitle: 'Zoom out',
     zoomInTitle: 'Zoom in',
     fitTitle: 'Center / fit (F)',
-    feedbackTitle: 'Send feedback',
   },
   contextMenu: {
     copy: 'Copy',
@@ -383,6 +382,7 @@ const en = {
     version: (v: string) => `v${v}`,
     links: {
       github: 'GitHub',
+      feedback: 'Send feedback',
       website: 'Website',
       documentation: 'Documentation',
       changelog: 'Changelog',
@@ -401,8 +401,8 @@ const en = {
     placeholderNeedsSetup: 'Configure an AI endpoint in Settings first…',
     errorConnection:
       "Can't reach the AI endpoint. Check Settings (⌘,) → AI. For local Ollama, run `ollama serve`.",
-    errorRetry: '*Hmm.* My voice failed me. Try again.',
-    errorRetrySlow: '*Hmm.* My voice failed me. Try again, slowly.',
+    newChat: 'New chat',
+    thinking: 'thinking…',
   },
   menu: {
     file: 'File',

@@ -274,7 +274,6 @@ const it: typeof en = {
     zoomOutTitle: 'Riduci zoom',
     zoomInTitle: 'Aumenta zoom',
     fitTitle: 'Centra / adatta (F)',
-    feedbackTitle: 'Invia feedback',
   },
   contextMenu: {
     copy: 'Copia',
@@ -384,6 +383,7 @@ const it: typeof en = {
     version: (v) => `v${v}`,
     links: {
       github: 'GitHub',
+      feedback: 'Invia feedback',
       website: 'Sito web',
       documentation: 'Documentazione',
       changelog: 'Changelog',
@@ -402,8 +402,8 @@ const it: typeof en = {
     placeholderNeedsSetup: 'Configura prima un endpoint AI in Impostazioni…',
     errorConnection:
       "Non riesco a raggiungere l'endpoint AI. Controlla Impostazioni (⌘,) → AI. In locale, avvia `ollama serve`.",
-    errorRetry: '*Hmm.* La mia voce mi ha tradito. Riprova.',
-    errorRetrySlow: '*Hmm.* La mia voce mi ha tradito. Riprova, lentamente.',
+    newChat: 'Nuova chat',
+    thinking: 'sto pensando…',
   },
   menu: {
     file: 'File',

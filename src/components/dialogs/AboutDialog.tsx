@@ -6,6 +6,7 @@ import {
   APP_VERSION,
   CHANGELOG_URL,
   DOCS_URL,
+  FEEDBACK_URL,
   LICENSE_URL,
   openExternal,
   REPO_URL,
@@ -44,6 +45,7 @@ export function AboutDialog({ open, onClose, onShowTutorial }: Props) {
 
   const links: { label: string; url: string; icon: ReactNode }[] = [
     { label: t.about.links.github, url: REPO_URL, icon: <GithubIcon /> },
+    { label: t.about.links.feedback, url: FEEDBACK_URL, icon: <FeedbackIcon /> },
     { label: t.about.links.website, url: WEBSITE_URL, icon: <GlobeIcon /> },
     { label: t.about.links.documentation, url: DOCS_URL, icon: <BookIcon /> },
     { label: t.about.links.changelog, url: CHANGELOG_URL, icon: <ChangelogIcon /> },
@@ -186,6 +188,23 @@ export function AboutDialog({ open, onClose, onShowTutorial }: Props) {
         </div>
       </div>
     </ModalOverlay>
+  )
+}
+
+function FeedbackIcon() {
+  return (
+    <svg
+      width="15"
+      height="15"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M3 4.5h10a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H6l-3 2.5V5.5a1 1 0 0 1 1-1z" />
+    </svg>
   )
 }
 

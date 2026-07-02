@@ -50,6 +50,7 @@
     "build:desktop": "pnpm run icons:desktop && tauri build"
   },
   "dependencies": {
+    "@ai-sdk/openai-compatible": "^3.0.3",
     "@nesso-how/graph": "workspace:*",
     "@nesso-how/schema": "workspace:*",
     "@nesso-how/theme": "workspace:*",
@@ -62,6 +63,7 @@
     "@tauri-apps/plugin-process": "^2.3.1",
     "@tauri-apps/plugin-updater": "^2.10.1",
     "@xyflow/react": "^12.6.4",
+    "ai": "^7.0.11",
     "html-to-image": "^1.11.13",
     "idb": "^8.0.3",
     "posthog-js": "^1.393.3",

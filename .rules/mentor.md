@@ -1,6 +1,6 @@
 # Mentor (Socrates)
 
-`MentorPanel.tsx` is the AI chat component. The mentor is **experimental** and has a **single transport**: an OpenAI-compatible **`POST …/chat/completions`** via `fetch`. Base URL, model, and optional API key come from `aiBaseUrl`, `aiModel`, `aiApiKey`; there is no environment-variable fallback for the key.
+`MentorPanel.tsx` is the AI chat component. The mentor is **experimental** and has a **single transport**: an OpenAI-compatible endpoint driven through the **Vercel AI SDK** (`ai` + `@ai-sdk/openai-compatible`) in `src/llm/completion.ts`. Base URL, model, and optional API key come from `aiBaseUrl`, `aiModel`, `aiApiKey`; there is no environment-variable fallback for the key.
 
 Readiness is `isAiReady(settings)` (truthy `aiBaseUrl` + `aiModel`) in `src/llm/completion.ts`. The mentor UI mounts only when `settings.mentorEnabled` is true (`App.tsx`); when off, **Socrates** is hidden from the status bar and `mentorPanelExpanded` is forced closed. When enabled but not ready, `MentorPanel` shows a short setup hint (`t.mentor.needsSetup`) and disables the input until an endpoint is configured. The default points at a local Ollama instance (`http://localhost:11434/v1`, `gemma3:4b`).
 
@@ -28,7 +28,7 @@ On panel open, graph switch, AI-endpoint-readiness change, or **`chatKey`** bump
 
 ## Rendering
 
-Assistant replies render as plain text with subtle emphasis via **`renderWithEmphasis()`** in `emphasis.tsx` (`*asterisks*` → `<em>`). User-authored bubbles remain plain text in a `<span>`.
+Assistant replies render as plain text with subtle emphasis via **`renderWithEmphasis()`** in `emphasis.tsx` (`*asterisks*` → `<em>`). User-authored bubbles remain plain text in a `<span>`. Extracted reasoning is not rendered as content: while `reasoning-delta` is streaming in and no answer text has started, `ThinkingIndicator`'s optional `label` prop shows `t.mentor.thinking` ("thinking…", lowercase, in the body font `var(--font-display)`) next to the loading bars instead of the plain dots. There is no expand affordance for the reasoning text itself yet.
 
 ## Selection vs history
 
@@ -44,12 +44,11 @@ Whether the mentor **sheet** is open is `mentorPanelExpanded` on `useGraphStore`
 
 ## API call
 
-Completions go through **`fetchCompletion()`** in `src/llm/completion.ts`. Pass an optional `AbortSignal`; abort on panel close or graph switch.
+Completions go through **`fetchCompletion()`** in `src/llm/completion.ts`, which calls the SDK's **`streamText`** against a model built by `createOpenAICompatible({ baseURL, apiKey }).chatModel(aiModel)`. It takes a `CompletionRequest` (`{ instructions?, messages }`) as its second argument, plus an optional `AbortSignal` (wired to `streamText`'s `abortSignal`); abort on panel close or graph switch.
 
-`fetchCompletion` posts to `${aiBaseUrl}/chat/completions` with JSON body:
+- `model` — `settings.aiModel`; `apiKey` (→ `Authorization: Bearer …`) only when `settings.aiApiKey` is non-empty.
+- `maxOutputTokens` — `MENTOR_MAX_TOKENS` (~2048; a ceiling, not a target — reply length is soft-capped at ~180 words by the prompt, with headroom for reasoning-model thinking)
+- `instructions` — the system prompt (`buildGraphChatPrompt()`), passed to `streamText`'s `instructions` since the SDK rejects `system` roles inside `messages`.
+- `messages` — the `history` turns mapped to `user` / `assistant` roles (`toConversation`).
 
-- `model` — `settings.aiModel`
-- `max_tokens` — `MENTOR_MAX_TOKENS` (~2048; a ceiling, not a target — reply length is soft-capped at ~180 words by the prompt, with headroom for reasoning-model thinking)
-- `messages` — `[{ role: 'system', content: buildGraphChatPrompt() }, …]` plus full `history` turns mapped to `user` / `assistant` roles.
-
-`Authorization: Bearer …` is sent when `settings.aiApiKey` is non-empty.
+The model is wrapped with **`extractReasoningMiddleware({ tagName: 'think' })`**, so inline `<think>…</think>` (Ollama qwen3, deepseek-r1, …) is split out of the answer. `fetchCompletion` iterates `result.stream` and routes `text-delta` parts to `onToken` and `reasoning-delta` parts to `onReasoning` (an `error` part is rethrown). `isNetworkFailure()` classifies a failure as connection vs HTTP response (`APICallError` without a `statusCode`, or a bare `TypeError`), and `describeCompletionError()` extracts the raw detail (HTTP status + endpoint response body) shown verbatim to the user.
