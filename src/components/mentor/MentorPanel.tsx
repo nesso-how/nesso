@@ -43,6 +43,103 @@ function appendToLastMentor(history: Message[], delta: string): Message[] {
   return [...history.slice(0, -1), { ...last, text: last.text + delta }]
 }
 
+function MentorUserBubble({ text }: { text: string }) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'flex-end', margin: '5px 0' }}>
+      <span
+        style={{
+          fontSize: '13px',
+          fontWeight: 500,
+          lineHeight: 1.45,
+          fontFamily: 'var(--font-sans)',
+          color: 'var(--ink-2)',
+          padding: '7px 11px',
+          background: 'var(--paper-deep)',
+          borderRadius: 'var(--radius-lg) var(--radius-lg) var(--radius-sm) var(--radius-lg)',
+          marginLeft: 36,
+          border: '0.5px solid var(--line)',
+          display: 'inline-block',
+          maxWidth: '100%',
+        }}
+      >
+        {text}
+      </span>
+    </div>
+  )
+}
+
+function MentorErrorBubble({ text }: { text: string }) {
+  return (
+    <div
+      style={{
+        fontSize: '12px',
+        fontWeight: 400,
+        lineHeight: 1.5,
+        fontFamily: 'var(--font-mono)',
+        color: 'var(--ink-3)',
+        whiteSpace: 'pre-wrap',
+        wordBreak: 'break-word',
+        margin: '5px 0',
+        padding: '8px 10px',
+        background: 'var(--paper-deep)',
+        borderRadius: 'var(--radius-md)',
+      }}
+    >
+      {text}
+    </div>
+  )
+}
+
+function MentorReplyBubble({ text, showCaret }: { text: string; showCaret: boolean }) {
+  return (
+    <div
+      style={{
+        fontSize: '14.5px',
+        fontWeight: 400,
+        lineHeight: 1.45,
+        fontFamily: 'var(--font-display)',
+        color: 'var(--ink)',
+        letterSpacing: '-0.005em',
+        margin: '5px 0',
+        whiteSpace: 'pre-wrap',
+      }}
+    >
+      {renderWithEmphasis(text)}
+      {showCaret && (
+        <span
+          style={{
+            display: 'inline-block',
+            width: 1.5,
+            height: '0.95em',
+            background: 'var(--ink-3)',
+            marginLeft: 2,
+            verticalAlign: 'text-bottom',
+            animation: 'nx-tw-caret 0.85s steps(2, end) infinite',
+          }}
+        />
+      )}
+    </div>
+  )
+}
+
+function MentorChatMessage({
+  message,
+  index,
+  historyLength,
+  streaming,
+}: {
+  message: Message
+  index: number
+  historyLength: number
+  streaming: boolean
+}) {
+  if (message.role === 'user') return <MentorUserBubble text={message.text} />
+  if (message.error) return <MentorErrorBubble text={message.text} />
+  return (
+    <MentorReplyBubble text={message.text} showCaret={streaming && index === historyLength - 1} />
+  )
+}
+
 function toConversation(msgs: Message[]): ChatMessage[] {
   return msgs.map((m) => ({
     role: m.role === 'user' ? ('user' as const) : ('assistant' as const),
@@ -511,82 +608,15 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
           {loadingInitial && history.length === 0 ? (
             <ThinkingIndicator label={reasoningActive ? t.mentor.thinking : undefined} />
           ) : (
-            history.map((m, i) =>
-              m.role === 'user' ? (
-                <div
-                  key={i}
-                  style={{ display: 'flex', justifyContent: 'flex-end', margin: '5px 0' }}
-                >
-                  <span
-                    style={{
-                      fontSize: '13px',
-                      fontWeight: 500,
-                      lineHeight: 1.45,
-                      fontFamily: 'var(--font-sans)',
-                      color: 'var(--ink-2)',
-                      padding: '7px 11px',
-                      background: 'var(--paper-deep)',
-                      borderRadius:
-                        'var(--radius-lg) var(--radius-lg) var(--radius-sm) var(--radius-lg)',
-                      marginLeft: 36,
-                      border: '0.5px solid var(--line)',
-                      display: 'inline-block',
-                      maxWidth: '100%',
-                    }}
-                  >
-                    {m.text}
-                  </span>
-                </div>
-              ) : m.error ? (
-                <div
-                  key={i}
-                  style={{
-                    fontSize: '12px',
-                    fontWeight: 400,
-                    lineHeight: 1.5,
-                    fontFamily: 'var(--font-mono)',
-                    color: 'var(--ink-3)',
-                    whiteSpace: 'pre-wrap',
-                    wordBreak: 'break-word',
-                    margin: '5px 0',
-                    padding: '8px 10px',
-                    background: 'var(--paper-deep)',
-                    borderRadius: 'var(--radius-md)',
-                  }}
-                >
-                  {m.text}
-                </div>
-              ) : (
-                <div
-                  key={i}
-                  style={{
-                    fontSize: '14.5px',
-                    fontWeight: 400,
-                    lineHeight: 1.45,
-                    fontFamily: 'var(--font-display)',
-                    color: 'var(--ink)',
-                    letterSpacing: '-0.005em',
-                    margin: '5px 0',
-                    whiteSpace: 'pre-wrap',
-                  }}
-                >
-                  {renderWithEmphasis(m.text)}
-                  {streaming && i === history.length - 1 && (
-                    <span
-                      style={{
-                        display: 'inline-block',
-                        width: 1.5,
-                        height: '0.95em',
-                        background: 'var(--ink-3)',
-                        marginLeft: 2,
-                        verticalAlign: 'text-bottom',
-                        animation: 'nx-tw-caret 0.85s steps(2, end) infinite',
-                      }}
-                    />
-                  )}
-                </div>
-              ),
-            )
+            history.map((m, i) => (
+              <MentorChatMessage
+                key={i}
+                message={m}
+                index={i}
+                historyLength={history.length}
+                streaming={streaming}
+              />
+            ))
           )}
           {thinking && (
             <ThinkingIndicator label={reasoningActive ? t.mentor.thinking : undefined} />

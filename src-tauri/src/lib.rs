@@ -202,15 +202,13 @@ fn build_app_menu(
     let file = file.separator().item(&settings_i);
     let file = file.build()?;
 
-    let mut edit = SubmenuBuilder::new(app, &labels.edit);
+    let edit_builder = SubmenuBuilder::new(app, &labels.edit);
     #[cfg(target_os = "macos")]
-    {
-        edit = edit
-            .undo_with_text(&labels.undo)
-            .redo_with_text(&labels.redo)
-            .separator();
-    }
-    let edit = edit
+    let edit_builder = edit_builder
+        .undo_with_text(&labels.undo)
+        .redo_with_text(&labels.redo)
+        .separator();
+    let edit = edit_builder
         .cut_with_text(&labels.cut)
         .copy_with_text(&labels.copy)
         .paste_with_text(&labels.paste)

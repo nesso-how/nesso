@@ -177,6 +177,37 @@ const sep: React.CSSProperties = {
   margin: '0 4px',
 }
 
+function ViewportControls({
+  onFit,
+  zoomIn,
+  zoomOut,
+  t,
+}: {
+  onFit: () => void
+  zoomIn: (opts: { duration: number }) => void
+  zoomOut: (opts: { duration: number }) => void
+  t: ReturnType<typeof useT>
+}) {
+  const zoomInAnimated = () => zoomIn({ duration: 200 })
+  const zoomOutAnimated = () => zoomOut({ duration: 200 })
+
+  return (
+    <>
+      <StatusBtn onClick={zoomOutAnimated} title={t.statusBar.zoomOutTitle}>
+        <StatusIcon name="minus" />
+      </StatusBtn>
+      <ZoomReadout />
+      <StatusBtn onClick={zoomInAnimated} title={t.statusBar.zoomInTitle}>
+        <StatusIcon name="plus" />
+      </StatusBtn>
+      <span style={sep} />
+      <StatusBtn onClick={onFit} title={t.statusBar.fitTitle}>
+        <StatusIcon name="fit" />
+      </StatusBtn>
+    </>
+  )
+}
+
 export function StatusBar({ sidebarWidth, onFit }: Props) {
   const t = useT()
   const mentorEnabled = useGraphStore((s) => s.settings.mentorEnabled)
@@ -238,17 +269,7 @@ export function StatusBar({ sidebarWidth, onFit }: Props) {
           <StatusIcon name="redo" />
         </StatusBtn>
         <span style={sep} />
-        <StatusBtn onClick={() => zoomOut({ duration: 200 })} title={t.statusBar.zoomOutTitle}>
-          <StatusIcon name="minus" />
-        </StatusBtn>
-        <ZoomReadout />
-        <StatusBtn onClick={() => zoomIn({ duration: 200 })} title={t.statusBar.zoomInTitle}>
-          <StatusIcon name="plus" />
-        </StatusBtn>
-        <span style={sep} />
-        <StatusBtn onClick={onFit} title={t.statusBar.fitTitle}>
-          <StatusIcon name="fit" />
-        </StatusBtn>
+        <ViewportControls onFit={onFit} zoomIn={zoomIn} zoomOut={zoomOut} t={t} />
       </div>
     </div>
   )
