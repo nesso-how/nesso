@@ -4,7 +4,6 @@ import { useReactFlow, useStore as useFlowStore } from '@xyflow/react'
 import { useGraphStore } from '@/store'
 import { useT } from '@/i18n'
 import { SocratesGlyph } from '@/components/mentor/SocratesGlyph'
-import { FEEDBACK_URL, openExternal } from '@/data/appInfo'
 import { track } from '@/telemetry'
 
 export const STATUS_BAR_HEIGHT_PX = 30
@@ -14,7 +13,7 @@ interface Props {
   onFit: () => void
 }
 
-type IconName = 'undo' | 'redo' | 'minus' | 'plus' | 'fit' | 'feedback'
+type IconName = 'undo' | 'redo' | 'minus' | 'plus' | 'fit'
 
 function StatusIcon({ name }: { name: IconName }) {
   const p = {
@@ -58,12 +57,6 @@ function StatusIcon({ name }: { name: IconName }) {
       return (
         <svg {...p}>
           <path d="M3 6V3h3M13 6V3h-3M3 10v3h3M13 10v3h-3" />
-        </svg>
-      )
-    case 'feedback':
-      return (
-        <svg {...p}>
-          <path d="M3 4.5h10a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H6l-3 2.5V5.5a1 1 0 0 1 1-1z" />
         </svg>
       )
   }
@@ -236,15 +229,8 @@ export function StatusBar({ sidebarWidth, onFit }: Props) {
         </span>
       </div>
 
-      {/* Right — feedback + history + viewport controls */}
+      {/* Right — history + viewport controls */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-1)', flexShrink: 0 }}>
-        <StatusBtn
-          onClick={() => void openExternal(FEEDBACK_URL)}
-          title={t.statusBar.feedbackTitle}
-        >
-          <StatusIcon name="feedback" />
-        </StatusBtn>
-        <span style={sep} />
         <StatusBtn onClick={undo} disabled={!canUndo} title={t.statusBar.undoTitle}>
           <StatusIcon name="undo" />
         </StatusBtn>

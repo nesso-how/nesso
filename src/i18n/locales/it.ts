@@ -274,7 +274,6 @@ const it: typeof en = {
     zoomOutTitle: 'Riduci zoom',
     zoomInTitle: 'Aumenta zoom',
     fitTitle: 'Centra / adatta (F)',
-    feedbackTitle: 'Invia feedback',
   },
   contextMenu: {
     copy: 'Copia',
@@ -384,6 +383,7 @@ const it: typeof en = {
     version: (v) => `v${v}`,
     links: {
       github: 'GitHub',
+      feedback: 'Invia feedback',
       website: 'Sito web',
       documentation: 'Documentazione',
       changelog: 'Changelog',

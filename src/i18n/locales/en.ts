@@ -273,7 +273,6 @@ const en = {
     zoomOutTitle: 'Zoom out',
     zoomInTitle: 'Zoom in',
     fitTitle: 'Center / fit (F)',
-    feedbackTitle: 'Send feedback',
   },
   contextMenu: {
     copy: 'Copy',
@@ -383,6 +382,7 @@ const en = {
     version: (v: string) => `v${v}`,
     links: {
       github: 'GitHub',
+      feedback: 'Send feedback',
       website: 'Website',
       documentation: 'Documentation',
       changelog: 'Changelog',
