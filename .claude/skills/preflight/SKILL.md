@@ -8,7 +8,7 @@ description: Run the same checks as CI (.github/workflows/ci.yml) locally before
 Run the checks `.github/workflows/ci.yml` runs, in order, from the repo root, and report pass/fail per step. This is read-only verification (plus build artifacts) — it does not commit, push, or change source.
 
 ```bash
-pnpm install --frozen-lockfile   # only if deps/lockfile may be stale; skip if node_modules is current
+CI=true pnpm install --frozen-lockfile   # non-interactive; only if deps/lockfile may be stale
 pnpm run format:check            # Biome (code/json/css) + Prettier (md/yaml/html)
 pnpm run lint                    # Biome lint (replaces ESLint)
 pnpm run test:coverage           # vitest + coverage ratchet (thresholds in vitest.config.ts; red on any drop)

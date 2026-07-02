@@ -1,6 +1,6 @@
 {
   "name": "@nesso-how/graph",
-  "version": "0.1.0-alpha.38",
+  "version": "0.1.0-alpha.39",
   "description": "Embeddable Nesso knowledge graph React component (read-only by default)",
   "license": "MIT",
   "repository": {

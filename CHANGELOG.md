@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.0-alpha.39] - 2026-07-02
+
 ### Changed
 
 - **Desktop (macOS):** GitHub Releases builds are now code-signed with a Developer ID certificate and notarized by Apple, so Gatekeeper no longer blocks first launch after install.
@@ -636,7 +638,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial alpha: interactive knowledge graph (web + Tauri v2); desktop installers on GitHub Releases (macOS Apple silicon and Intel).
 
-[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.38...HEAD
+[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.39...HEAD
+[0.1.0-alpha.39]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.38...v0.1.0-alpha.39
 [0.1.0-alpha.38]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.37...v0.1.0-alpha.38
 [0.1.0-alpha.37]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.36...v0.1.0-alpha.37
 [0.1.0-alpha.36]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.35...v0.1.0-alpha.36

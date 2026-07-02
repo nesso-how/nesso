@@ -204,7 +204,7 @@ async function main() {
     const md = writes.map(([rel]) => rel).filter((r) => r.endsWith('.md'))
     if (json.length) run(`pnpm exec biome format --write ${json.join(' ')}`)
     if (md.length) run(`pnpm exec prettier --write ${md.join(' ')}`)
-    run('pnpm install')
+    run('CI=true pnpm install --frozen-lockfile')
     run('pnpm build')
     run('pnpm lint')
     run('pnpm format:check')

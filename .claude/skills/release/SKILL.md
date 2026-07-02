@@ -37,7 +37,7 @@ What the script does:
 
 - Bumps `version` to `NEW` in all **nine** synced files — the six `package.json`s, `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`, and `src-tauri/Cargo.lock` (the `name = "nesso"` entry; `pnpm install` does **not** refresh it). It aborts on version **drift** — any file not already at `PREV` — so a forgotten file fails loudly instead of shipping out of sync.
 - Rolls `CHANGELOG.md`: moves `## [Unreleased]` into `## [NEW] - YYYY-MM-DD`, leaves a fresh empty `[Unreleased]`, and updates the two link references (URL derived from the existing `[Unreleased]` ref).
-- Runs `pnpm install`, `pnpm build`, `pnpm lint`, `pnpm format:check`.
+- Runs `CI=true pnpm install --frozen-lockfile` (non-interactive), `pnpm build`, `pnpm lint`, `pnpm format:check`.
 
 It then stops before any git mutation and prints the commit/tag/push commands. Flags: `--no-verify` (skip the build/lint pass), `--yes` (don't prompt on warnings), `--commit` (see step 3).
 

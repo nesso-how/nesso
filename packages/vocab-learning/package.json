@@ -1,6 +1,6 @@
 {
   "name": "@nesso-how/vocab-learning",
-  "version": "0.1.0-alpha.38",
+  "version": "0.1.0-alpha.39",
   "description": "Nesso Learning Vocabulary — graph vocabulary (relation types, node params, palettes) shared across app and MCP",
   "license": "MIT",
   "repository": {
