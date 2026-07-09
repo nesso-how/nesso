@@ -1,6 +1,6 @@
 name: Tooling / developer experience
 description: Propose internal tooling, CI, linting, or developer-experience improvements
-labels: [chore]
+type: Chore
 body:
   - type: textarea
     id: problem

@@ -1,6 +1,6 @@
 name: Bug report
 description: Something is broken or behaving unexpectedly
-labels: [bug]
+type: Bug
 body:
   - type: input
     id: summary

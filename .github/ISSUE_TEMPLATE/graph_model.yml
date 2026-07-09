@@ -1,5 +1,6 @@
 name: Graph model / edge type
 description: Propose changes to semantic edge categories, relation types, or visual encoding
+type: Feature
 labels: [graph-model]
 body:
   - type: markdown
