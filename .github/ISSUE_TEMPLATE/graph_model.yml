@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Before proposing, please skim the [Relation types reference](https://nesso.how/docs/reference/relation-types/) and the [`RelationTypeDef` schema](https://github.com/nesso-how/nesso/blob/main/packages/vocab-learning/src/index.ts). Every type must declare both visual encoding **and** semantic coefficients — these drive graph-analysis algorithms, so they need to be studied at the type level.
+        Before proposing, please skim the [Relation types reference](https://nesso.how/docs/reference/relation-types/) and the [`RelationTypeDef` schema](https://github.com/nesso-how/nesso/blob/main/packages/vocab-learning/src/relationTypes.ts). Every type must declare both visual encoding **and** semantic coefficients — these drive graph-analysis algorithms, so they need to be studied at the type level.
 
   - type: textarea
     id: motivation
@@ -28,7 +28,6 @@ body:
         - `line` (solid | dashed | dotted | double | wavy) and `glyph` if relevant
 
         **Semantic coefficients**
-        - `symmetric: boolean`
         - `transitive: 'Y' | 'N' | 'weak'` — if `A r B` and `B r C`, does `A r C` follow?
         - `inverse: RelationTypeName` — canonical inverse in the set (self for symmetric). If you propose an asymmetric type, also propose its inverse.
         - `strength: number` (0..1) — per-type semantic weight; intensity, not per-edge confidence. Briefly justify the value.
