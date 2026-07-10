@@ -38,7 +38,7 @@ flowchart LR
 | Phase            | Skill                                 | Output              | Context                                           | Gate                                                   |
 | ---------------- | ------------------------------------- | ------------------- | ------------------------------------------------- | ------------------------------------------------------ |
 | 1. Brainstorming | `brainstorming` + `create-issue`      | GitHub issue        | task description, codebase structure, graph model | Human (user approves design)                           |
-| 2. Planning      | `writing-plans`                       | Implementation plan | approved issue, codebase, conventions             | Human (user approves plan)                             |
+| 2. Planning      | `planning`                            | Implementation plan | approved issue, codebase, conventions             | Human (user approves plan)                             |
 | 3. Execution     | `tdd` + `subagent-driven-development` | Code + tests        | plan, codebase, test patterns                     | Agent verdict (TDD green) + automated (lint/typecheck) |
 | 4. Review        | `nesso-review`                        | Verdict             | diff, plan, constraints                           | Agent verdict (nesso-reviewer) + automated (preflight) |
 | 5. Documentation | `verification`                        | Updated docs        | diff, rules, docs/MCP parity                      | Automated (hooks + checks)                             |
@@ -46,6 +46,17 @@ flowchart LR
 ### When a review fails → back to Planning
 
 Never patch execution directly. A failed review means the plan needs revision, not the code needs a quick fix. This prevents agentic entropy — drift that accumulates from patch-after-patch without re-examining the design.
+
+### Fix the workflow itself
+
+If you discover a problem with the workflow skills during use — a missing step, a contradiction between skills, a gap in the process, a rule that doesn't hold — **stop and fix it before continuing**.
+
+1. **Show the problem** — which skill, what's wrong, and how it affected the current work
+2. **Propose a fix** — the specific change to the skill file
+3. **Ask for confirmation** — get approval before editing the skill
+4. **Apply the fix** — update the `.claude/skills/` file and continue
+
+The workflow is not frozen. It evolves as we learn what works. But every change goes through the user — no silent edits to the harness.
 
 ## Phase Routing
 
@@ -58,7 +69,7 @@ The output of brainstorming is always a **GitHub issue**, created with the `crea
 Brainstorming is also a natural **session boundary**. It can:
 
 - **End here** — design the task, create the issue, then stop. The user picks up in a new session and the flow resumes at planning with that issue.
-- **Flow into planning** — if the user wants to keep going, the brainstorming skill creates the issue and then hands off to `writing-plans`.
+- **Flow into planning** — if the user wants to keep going, the brainstorming skill creates the issue and then hands off to `planning`.
 
 Do not assume brainstorming always leads to immediate implementation. A design session that produces a solid issue is a complete unit of work.
 
@@ -125,7 +136,7 @@ Area rules are in [`.rules/`](../../.rules/) — load on demand when the task to
 
 When multiple skills apply, process skills come first — they set the approach, then implementation skills carry it out:
 
-- "Let's build X" → `brainstorming` first, then `writing-plans`, then `tdd`.
+- "Let's build X" → `brainstorming` first, then `planning`, then `tdd`.
 - "Fix this bug" → `systematic-debugging` first, then domain skills.
 - "Review my changes" → `nesso-review` (which dispatches preflight + nesso-reviewer + code-review).
 
