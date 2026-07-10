@@ -2,86 +2,35 @@
 
 Nesso is an app for building typed knowledge graphs for active learning: an interactive concept map where nodes are ideas and edges are typed semantic relations. **Socrates**, a Socratic AI mentor, reads the current graph and the user's selection, then probes their understanding through questions rather than explanations.
 
-> **How rules are organized.** Always-on context lives in this file. Area-specific rules are canonical in [`.rules/`](.rules/) (index below) — **edit `.rules/*.md`, never per-tool wrappers.** Load area rules on demand; see **External file loading**.
+Monorepo: `src/` (app) + `packages/` (`@nesso-how/*`). Desktop shell is optional Tauri v2 (`src-tauri/`); web runs with `pnpm dev`. **FSRS** review (`ts-fsrs`) is independent of the **experimental** AI mentor.
 
-## Stack
-
-| Layer         | Technology                                                                                                                                  |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| Framework     | React 18 + Vite + TypeScript                                                                                                                |
-| Desktop shell | Tauri v2 (`src-tauri/`) — optional wrapper; web app still runs with `pnpm dev`                                                              |
-| Graph canvas  | React Flow (`@xyflow/react`)                                                                                                                |
-| State         | Zustand (`src/store/index.ts` + `src/store/slices/`)                                                                                        |
-| AI mentor     | **Experimental.** OpenAI-compatible `chat/completions` endpoint (local Ollama or cloud; Settings → AI).                                     |
-| Review (FSRS) | Spaced-repetition scheduling via `ts-fsrs`; per-node `stability`, `difficulty`, `due`, and ratings persisted. Independent of the AI mentor. |
-
-## Source layout
-
-```
-src/
-  App.tsx             # Root: keyboard shortcuts, theme application, layout
-  components/         # All UI components (see .rules/components.md)
-  store/              # Zustand store (index.ts composes slices/)
-    slices/           # graph-editing, settings, ui, graph-management, desktop-sync
-  llm/                # Mentor transport (OpenAI-compatible fetch)
-  data/
-    relationTypes.ts  # re-exports `@nesso-how/vocab-learning` + `RELATION_CATEGORY_COLORS` (CSS palette vars)
-    seeds/*.json      # Default demo graph snapshots (concepts/relations JSON; nested locale dirs, e.g. seeds/it/)
-    seedGraph.ts      # Exports `SEEDS` — bundled demo graphs from `seeds/*.json` (stable ids from names)
-  lib/                # graphMapping, graphDocumentMapping, graphIO, graphPersist, workspace sync
-  types/graph.ts      # facade: re-exports vocab-learning + graph display types + app settings
-src-tauri/            # Tauri v2 Rust project — tauri.conf.json, capabilities; `icons/` generated via `pnpm run icons:desktop` (gitignored)
-packages/
-  schema/             # @nesso-how/schema: vocabulary-agnostic graph document serialize/deserialize
-  vocab-learning/     # @nesso-how/vocab-learning: graph vocabulary (relations, node params, palettes, NessoGraphDocument)
-  theme/              # @nesso-how/theme: design tokens (single source of truth for theme packs)
-  graph/              # @nesso-how/graph: React Flow node/edge renderers, geometry, rating colours
-  mcp/                # @nesso-how/mcp: MCP server for LLM clients
-scripts/              # release, license-header, scripts/stryker/ (mutation-test configs)
-e2e/                  # Playwright web UI specs (#28)
-e2e-native/           # tauri-driver native desktop specs — local-only (#28)
-docs/                 # Starlight docs site, published at nesso.how/docs
-```
+> Area rules in [`.rules/`](.rules/) — load on demand when the task touches that area (**Touch → update** below); do not load all upfront. Before **commit** or **release**, load [`.rules/changelog.md`](.rules/changelog.md).
 
 ## Core concepts
 
-- **Node** — a `ConceptNode` with `text` and FSRS fields for spaced repetition at runtime (`ts-fsrs`). FSRS is persisted in IndexedDB `reviewState`, not in graph JSON — see [`.rules/graph-model.md`](.rules/graph-model.md) and [`.rules/store.md`](.rules/store.md).
-- **Edge** — typed semantic relation (`data.type: RelationTypeName`); canvas edges always use `type: 'nesso'` — see **Constraints** and [`.rules/graph-model.md`](.rules/graph-model.md).
-- **Selection** — a single `{ kind: 'node' | 'edge', id }` (or `null`) tracked in the store (`src/store/types.ts`). Drives the Inspector and Socrates opening prompt.
-- **Settings** — `NessoSettings` in the store (dark mode, language, encoding, palette, AI endpoint fields, `telemetry` opt-in, etc.). Applied via CSS custom properties on `<html>` where relevant.
+- **Node** — `ConceptNode` with `text` + FSRS at runtime; FSRS in IndexedDB `reviewState`, not graph JSON — see [`.rules/graph-model.md`](.rules/graph-model.md), [`.rules/store.md`](.rules/store.md).
+- **Edge** — `data.type: RelationTypeName` — see [`.rules/graph-model.md`](.rules/graph-model.md).
+- **Selection** — `{ kind: 'node' | 'edge', id } | null` in the store (`src/store/types.ts`); drives Inspector and Socrates.
+- **Settings** — `NessoSettings` in the store; palette/theme via CSS vars on `<html>`.
 
-## Detailed rules index
+## Area rules
 
-Area-specific rules (canonical content in `.rules/`):
+Canonical in `.rules/` — read the full file when relevant:
 
-| Area                                                            | File                                                 |
-| --------------------------------------------------------------- | ---------------------------------------------------- |
-| Coding conventions (TypeScript, React, state, naming)           | [`.rules/conventions.md`](.rules/conventions.md)     |
-| Component responsibilities and data flow                        | [`.rules/components.md`](.rules/components.md)       |
-| Semantic edge model — categories, relation types, encoding      | [`.rules/graph-model.md`](.rules/graph-model.md)     |
-| Theme tokens — `@nesso-how/theme` single source of truth        | [`.rules/theme.md`](.rules/theme.md)                 |
-| Zustand store shape, mutations, selector patterns               | [`.rules/store.md`](.rules/store.md)                 |
-| Socratic AI mentor — MentorPanel, system prompt, chat API       | [`.rules/mentor.md`](.rules/mentor.md)               |
-| Vitest tests — layout, env split, module resolution, CI gate    | [`.rules/testing.md`](.rules/testing.md)             |
-| `CHANGELOG.md` (Keep a Changelog), `[Unreleased]`, release flow | [`.rules/changelog.md`](.rules/changelog.md)         |
-| Persisted-data compatibility — envelope/vocabulary migration    | [`.rules/compatibility.md`](.rules/compatibility.md) |
-| Writing Starlight docs pages — voice, style, when to update     | [`.rules/docs.md`](.rules/docs.md)                   |
-
-## Skills
-
-Workflow procedures in [`.claude/skills/`](.claude/skills/) — load when the task matches (lazy, like area rules):
-
-| Skill          | Use when                                                           |
-| -------------- | ------------------------------------------------------------------ |
-| `preflight`    | Local CI parity before push or PR                                  |
-| `create-pr`    | Open, draft, or update a pull request                              |
-| `create-issue` | Publish a drafted GitHub issue to the org board                    |
-| `release`      | Cut, ship, or version-bump a release                               |
-| `nesso-review` | Pre-PR orchestrated review (preflight + constraints + code review) |
+- [`.rules/conventions.md`](.rules/conventions.md)
+- [`.rules/components.md`](.rules/components.md)
+- [`.rules/graph-model.md`](.rules/graph-model.md)
+- [`.rules/theme.md`](.rules/theme.md)
+- [`.rules/store.md`](.rules/store.md)
+- [`.rules/mentor.md`](.rules/mentor.md)
+- [`.rules/testing.md`](.rules/testing.md)
+- [`.rules/changelog.md`](.rules/changelog.md)
+- [`.rules/compatibility.md`](.rules/compatibility.md)
+- [`.rules/docs.md`](.rules/docs.md)
 
 ## Keeping rules up to date
 
-Update the canonical `.rules/*.md` in the same change when your edit makes a rule stale. Triggers match `.cursor/rules/` and `.claude/rules/` wrappers — **edit `.rules/`, never wrappers.** Update **Constraints** / **Stack** / **Source layout** / **Core concepts** in this file when those change.
+Update the canonical `.rules/*.md` in the same change when your edit makes a rule stale. Triggers match `.cursor/rules/` and `.claude/rules/` wrappers — **edit `.rules/`, never wrappers.** Update **Constraints** / **Core concepts** / the intro above when those change.
 
 **Touch → update** (paths under `.rules/`):
 
@@ -95,19 +44,6 @@ Update the canonical `.rules/*.md` in the same change when your edit makes a rul
 - `docs.md` — `docs/src/content/docs/**/*.md`
 - `compatibility.md` — `packages/schema/**`, `packages/vocab-learning/**`, `src/lib/workspace/**`, `src/lib/graphDocumentMapping.ts`, `src/lib/graphMapping.ts`, `src/store/**`, `src/data/conceptNodes.ts`
 - `changelog.md` — `CHANGELOG.md`
-
-## External file loading
-
-**Do not load all `.rules/` files upfront.**
-
-- Read a file from the index only when the task touches that area (use **Touch → update** above).
-- When loaded, treat its content as mandatory for that work.
-- Follow references inside a rule file when the sub-topic is relevant; do not recurse into unrelated files.
-- Before **commit** or **release**, load [`.rules/changelog.md`](.rules/changelog.md).
-
-## Code quality
-
-Lint/format (**Biome**), types (**`tsc`**, **type-coverage** at 99%), tests (**vitest** coverage ratchet), **fallow** gates, **e2e**, and **Stryker** (opt-in) — see [`.rules/testing.md`](.rules/testing.md).
 
 ## Constraints — hard rules, never do this
 
