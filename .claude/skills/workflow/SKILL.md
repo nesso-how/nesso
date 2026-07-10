@@ -19,7 +19,9 @@ This is not negotiable. You cannot rationalize your way out of this.
 
 ```mermaid
 flowchart LR
-  B[Brainstorming] -->|design approved| P[Planning]
+  B[Brainstorming] -->|create issue| I[GitHub Issue]
+  I -->|plan from issue| P[Planning]
+  B -.->|session ends| I
   P -->|plan approved| E[Execution]
   E -->|tasks complete| R[Review]
   R -->|verdict: pass| D[Documentation]
@@ -27,19 +29,32 @@ flowchart LR
   R -->|critical findings| P
 ```
 
-| Phase            | Skill                                 | Context                                           | Gate                                                   |
-| ---------------- | ------------------------------------- | ------------------------------------------------- | ------------------------------------------------------ |
-| 1. Brainstorming | `brainstorming`                       | task description, codebase structure, graph model | Human (user approves design)                           |
-| 2. Planning      | `writing-plans`                       | approved design, codebase, conventions            | Human (user approves plan)                             |
-| 3. Execution     | `tdd` + `subagent-driven-development` | plan, codebase, test patterns                     | Agent verdict (TDD green) + automated (lint/typecheck) |
-| 4. Review        | `nesso-review`                        | diff, plan, constraints                           | Agent verdict (nesso-reviewer) + automated (preflight) |
-| 5. Documentation | `verification`                        | diff, rules, docs/MCP parity                      | Automated (hooks + checks)                             |
+| Phase            | Skill                                 | Output              | Context                                           | Gate                                                   |
+| ---------------- | ------------------------------------- | ------------------- | ------------------------------------------------- | ------------------------------------------------------ |
+| 1. Brainstorming | `brainstorming` + `create-issue`      | GitHub issue        | task description, codebase structure, graph model | Human (user approves design)                           |
+| 2. Planning      | `writing-plans`                       | Implementation plan | approved issue, codebase, conventions             | Human (user approves plan)                             |
+| 3. Execution     | `tdd` + `subagent-driven-development` | Code + tests        | plan, codebase, test patterns                     | Agent verdict (TDD green) + automated (lint/typecheck) |
+| 4. Review        | `nesso-review`                        | Verdict             | diff, plan, constraints                           | Agent verdict (nesso-reviewer) + automated (preflight) |
+| 5. Documentation | `verification`                        | Updated docs        | diff, rules, docs/MCP parity                      | Automated (hooks + checks)                             |
 
 ### When a review fails → back to Planning
 
 Never patch execution directly. A failed review means the plan needs revision, not the code needs a quick fix. This prevents agentic entropy — drift that accumulates from patch-after-patch without re-examining the design.
 
 ## Phase Routing
+
+### Brainstorming is always interactive
+
+Brainstorming **must run in the main agent**, never as a subagent. It requires back-and-forth with the user — clarifying questions, design alternatives, approval gates. A subagent cannot hold this conversation.
+
+The output of brainstorming is always a **GitHub issue**, created with the `create-issue` skill. The issue captures the design, scope, and acceptance criteria — it becomes the task description for the planning phase and beyond.
+
+Brainstorming is also a natural **session boundary**. It can:
+
+- **End here** — design the task, create the issue, then stop. The user picks up in a new session and the flow resumes at planning with that issue.
+- **Flow into planning** — if the user wants to keep going, the brainstorming skill creates the issue and then hands off to `writing-plans`.
+
+Do not assume brainstorming always leads to immediate implementation. A design session that produces a solid issue is a complete unit of work.
 
 ### Non-trivial feature or change
 
@@ -64,7 +79,8 @@ Skip brainstorming and planning. Go to **execution**, then **review**. Load `.ru
 3. **If the skill does not exist yet** — follow the phase description inline. Check the available skills in AGENTS.md; only invoke skills that are listed as created.
 4. **Follow the skill exactly** — if it has a checklist, create a todo per item.
 5. **Respect the gate** — do not proceed to the next phase until the gate passes.
-6. **After review passes** — run verification, then stop. Do not commit or push without explicit consent (AGENTS.md → Git).
+6. **Brainstorming always produces an issue** — after the design is approved, invoke `create-issue` to publish it on GitHub. The issue is the handoff artifact. The session can end here or continue to planning.
+7. **After review passes** — run verification, then stop. Do not commit or push without explicit consent (AGENTS.md → Git).
 
 ## Nesso Constraints
 
