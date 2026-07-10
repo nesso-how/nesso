@@ -13,6 +13,24 @@ Monorepo: `src/` (app) + `packages/` (`@nesso-how/*`). Desktop shell is optional
 - **Selection** — `{ kind: 'node' | 'edge', id } | null` in the store (`src/store/types.ts`); drives Inspector and Socrates.
 - **Settings** — `NessoSettings` in the store; palette/theme via CSS vars on `<html>`.
 
+## Development workflow
+
+For any non-trivial task, load the **`workflow`** skill first — it defines the 5-phase flow (brainstorming → planning → execution → review → documentation), routes each phase to the right skill, and enforces Nesso's constraints throughout. Not every task needs all five phases; the skill sizes the flow to the task.
+
+Available skills (all in `.claude/skills/`, discovered by Claude, Cursor, and OpenCode):
+
+| Skill           | Purpose                                                         |
+| --------------- | --------------------------------------------------------------- |
+| `workflow`      | Bootstrap — 5-phase flow routing and constraint checklist       |
+| `nesso-review`  | Pre-PR orchestrator (preflight + semantic review + code review) |
+| `preflight`     | Local CI parity checks                                          |
+| `create-pr`     | Publish a prepared PR on GitHub                                 |
+| `create-issue`  | Draft and publish a GitHub issue                                |
+| `release`       | Cut a new release                                               |
+| `harness-check` | Coherence sweep of the agent harness                            |
+
+Skills referenced by `workflow` that are not yet created: `brainstorming`, `writing-plans`, `tdd`, `systematic-debugging`, `verification`. The workflow skill degrades gracefully — when a referenced skill is missing, it falls back to describing the phase inline.
+
 ## Area rules
 
 Canonical in `.rules/` — read the full file when relevant:
