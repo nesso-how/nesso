@@ -27,10 +27,11 @@ Canonical in `.rules/` — read the full file when relevant:
 - [`.rules/changelog.md`](.rules/changelog.md)
 - [`.rules/compatibility.md`](.rules/compatibility.md)
 - [`.rules/docs.md`](.rules/docs.md)
+- [`.rules/harness.md`](.rules/harness.md)
 
 ## Keeping rules up to date
 
-Update the canonical `.rules/*.md` in the same change when your edit makes a rule stale. Triggers match `.cursor/rules/` and `.claude/rules/` wrappers — **edit `.rules/`, never wrappers.** Update **Constraints** / **Core concepts** / the intro above when those change.
+Update the canonical `.rules/*.md` in the same change when your edit makes a rule stale. Triggers match the `.cursor/rules/` and `.claude/rules/` wrappers (OpenCode reads `.rules/` on demand via the table below) — **edit `.rules/`, never wrappers.** Update **Constraints** / **Core concepts** / the intro above when those change. When your edit touches the harness itself (rules, wrappers, AGENTS.md, hooks, skills, agents, MCP), see [`.rules/harness.md`](.rules/harness.md).
 
 **Touch → update** (paths under `.rules/`):
 
@@ -44,6 +45,7 @@ Update the canonical `.rules/*.md` in the same change when your edit makes a rul
 - `docs.md` — `docs/src/content/docs/**/*.md`
 - `compatibility.md` — `packages/schema/**`, `packages/vocab-learning/**`, `src/lib/workspace/**`, `src/lib/graphDocumentMapping.ts`, `src/lib/graphMapping.ts`, `src/store/**`, `src/data/conceptNodes.ts`
 - `changelog.md` — `CHANGELOG.md`
+- `harness.md` — `.rules/**`, `.claude/rules/**`, `.cursor/rules/**`, `.claude/skills/**`, `.claude/agents/**`, `.opencode/**`, `.hooks/**`, `AGENTS.md`, `CLAUDE.md`, `.cursor/hooks.json`, `.claude/settings.json`, `.cursor/mcp.json`, `opencode.json`
 
 ## Constraints — hard rules, never do this
 

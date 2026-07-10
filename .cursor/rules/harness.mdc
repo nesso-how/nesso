@@ -1,0 +1,9 @@
+---
+description: Harness coherence — invariants keeping rules, wrappers, AGENTS.md, hooks, skills, agents, and MCP in sync across Claude, Cursor, and OpenCode
+globs: .rules/**, .claude/rules/**, .cursor/rules/**, .claude/skills/**, .claude/agents/**, .opencode/**, .hooks/**, AGENTS.md, CLAUDE.md, .cursor/hooks.json, .claude/settings.json, .cursor/mcp.json, opencode.json
+alwaysApply: false
+---
+
+Canonical content lives in [`.rules/harness.md`](../../.rules/harness.md). Edit that file, not this wrapper.
+
+@.rules/harness.md
