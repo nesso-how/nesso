@@ -59,7 +59,7 @@ pnpm run test:e2e:native
 - The three `analyze:*` steps are **hard gates**: `analyze:dead-code` is zero-tolerance (unused code + architecture cycles; documented false positives via `.fallowrc.jsonc`); `analyze:dupes` and `analyze:health` are identity baselines (`fallow-baselines/`) that fail only on **new** clones / complex functions. To accept new debt on purpose, suppress the line (`// fallow-ignore-…`) or re-save the baseline (`fallow <dupes|health> --save-baseline …`). `pnpm run analyze` (full report) is a local convenience, not a CI step.
 - `format:check` failures are usually fixed by `pnpm run format` — offer that. `lint` issues often by `pnpm run lint:fix`; `cargo fmt --all --check` failures by `cargo fmt --all`.
 - `icons:desktop` is a prerequisite for the cargo steps: without the bundle icons, `tauri::generate_context!` fails to compile `lib.rs`. Locally they may already exist, but regenerate if unsure.
-- These mirror CI exactly; if `ci.yml` changes, update this list (see `.rules/maintenance.md`).
+- These mirror CI exactly; if `ci.yml` changes, update this list (see `AGENTS.md` → **Keeping rules up to date** → `testing.md`).
 
 ## Mutation testing (conditional, not in CI)
 

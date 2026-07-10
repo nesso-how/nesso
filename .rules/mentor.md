@@ -40,7 +40,7 @@ Whether the mentor **sheet** is open is `mentorPanelExpanded` on `useGraphStore`
 
 ## Message history
 
-`history: Message[]` is local to `MentorPanel` (not in the store). It resets when the panel opens again, the graph changes, AI-endpoint readiness changes during the opening sequence, or the user clicks **New chat** (refresh). Do not persist chat history to the store.
+`history: Message[]` is local to `MentorPanel` (per AGENTS.md → Constraints). Resets when the panel opens again, the graph changes, AI-endpoint readiness changes during the opening sequence, or the user clicks **New chat**.
 
 ## API call
 

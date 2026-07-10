@@ -64,7 +64,7 @@ Merge the three layers into a single report; deduplicate findings that the subag
 - **Blocking** — hard-constraint violations (from `nesso-reviewer`) and any correctness bug `code-review` rates blocking. Each: `file:line` + one-line fix.
 - **Bugs / risks** — `code-review` correctness findings.
 - **Suggestions** — conventions (`nesso-reviewer`) + reuse/simplification/efficiency (`code-review`), deduped.
-- **Missed obligations** — `.rules/` maintenance and docs/MCP parity gaps (`nesso-reviewer`).
+- **Missed obligations** — rules sync (`AGENTS.md` → **Keeping rules up to date**) and docs/MCP parity gaps (`nesso-reviewer`).
 
 If a section is empty, say so in one line. Do not restate the diff.
 

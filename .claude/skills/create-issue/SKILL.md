@@ -1,28 +1,32 @@
 ---
 name: create-issue
-description: Publish an already-drafted bug, feedback, or feature as a GitHub issue on the nesso-how "Nesso" org project board, with the correct native Issue Type, area label, board Status, and Priority (including the org-level Priority field, which is not a project field). Use once a bug/feedback item has been investigated and drafted (title, body, type, labels, status, priority all decided) — this skill only publishes, it does not decide what should become an issue or triage severity.
+description: Use when the user asks to create or publish a GitHub issue on the nesso-how Nesso org board (gh issue create, "crea issue") and the draft is ready — investigation and triage are already done.
 ---
 
 # Create a Nesso GitHub issue
 
-This skill takes a **fully drafted** issue (title, body, Type, area label, target board Status, target Priority already decided) and publishes it: creates the GitHub issue, adds it to the org project board, and sets Status + Priority. It does not investigate root causes or decide priority for you — do that first (read the relevant source, reproduce the bug, check `.rules/*.md` for the affected area) and present the draft for confirmation before running anything in this skill.
+Publishes a **fully drafted** issue (title, body, Type, area label, board Status, Priority decided) — does not investigate, triage, or decide priority. Read source, reproduce, check `.rules/*.md` for the affected area first.
 
-**Never skip the confirmation gate.** Show the user the final title, Type, label(s), full body, target Status, and target Priority, and get an explicit go-ahead before running `gh issue create` or any mutation below. This applies even when the user asked you to "create the issues" in general — confirm each one's fields, not just the batch.
+**Never skip the confirmation gate.** Recap title, Type, label(s), full body, Status, Priority; get explicit go-ahead before `gh issue create` or any mutation — confirm each issue in a batch, not just the batch itself.
 
-Before creating, a quick `gh issue list --search "<keywords>" --state all --limit 5` is worth running to catch an obvious duplicate — not exhaustive, just a sanity check.
+Before creating:
+
+```bash
+gh issue list --search "<keywords>" --state all --limit 5
+```
+
+Quick duplicate sanity check — not exhaustive.
 
 ## Gotchas
 
-- **Type is not a label.** `.github/ISSUE_TEMPLATE/*.yml` used to set `labels: [bug]` / `[feature]` / `[chore]`, but those labels don't exist in the repo anymore — the project moved to native GitHub Issue Types (Bug, Feature, Refactor, Docs, Chore; see the project board's README for the exact meaning of each, especially that **Refactor means no user-visible behavior change** — a UX change is a Feature even if the code also gets simpler). Set it with `gh issue create --type <Name>`, never as a label.
-- **Priority is an org-level Issue Field, not a project field.** `gh project field-list` / `gh project item-edit` only see project-scoped `ProjectV2*` fields. The Priority field with the real Now/Next/Later options lives at `organization.issueFields` (GitHub's newer org-wide Issue Fields, same family as Issue Types) and needs the GraphQL `setIssueFieldValue` mutation — see step 4. `gh project item-edit` cannot set it and will not error loudly if you try the wrong field id, it just silently does nothing useful.
-- **Discover field/option ids fresh, don't hardcode them.** Org Issue Fields aren't version-controlled and can be renamed/reordered from the GitHub UI outside this repo. Run the discovery query in step 4 every time rather than reusing ids from a previous session or from this file.
-- **Status vs Priority use different mutations.** Status (`Inbox`/`Ready`/`In Progress`/`In Review`/`Done`) is a normal project field — `gh project item-edit` works. Priority needs the GraphQL mutation in step 4. Don't try to set both the same way.
+- **Type is not a label.** Use `gh issue create --type <Name>` (Bug, Feature, Refactor, Docs, Chore). **Refactor** = no user-visible behavior change; UX changes are Feature.
+- **Priority is an org Issue Field, not a project field.** `gh project item-edit` cannot set it (fails silently). Use GraphQL `setIssueFieldValue` in step 4. **Status** is a project field — `gh project item-edit` in step 3. Different APIs; don't mix them.
+- **Discover Priority field/option ids fresh** every run — org Issue Fields drift in the GitHub UI; don't reuse stale ids.
+- **`clientMutationId: null`** on the Priority mutation is normal; GraphQL `errors` is the failure signal.
 
 ## 1. Confirm the draft
 
-Recap for the user: title, Type, label(s), full body, target Status, target Priority. Wait for explicit confirmation.
-
-Status: use **Ready** if the issue is specified enough to start (clear repro/root cause, or a clear proposal for a feature), **Inbox** if it still needs triage or more scoping — matches the board's own definition (see the project README, `gh project view 1 --owner nesso-how`).
+Recap all fields. **Status:** **Ready** if specified enough to start; **Inbox** if still needs triage (`gh project view 1 --owner nesso-how`).
 
 ## 2. Create the issue
 
@@ -32,21 +36,17 @@ gh issue create \
   --type <Bug|Feature|Refactor|Docs|Chore> \
   --label "<area: xyz>" \
   --body "$(cat <<'EOF'
-<body, following the matching .github/ISSUE_TEMPLATE/*.yml structure — see below>
+<body — mirror matching .github/ISSUE_TEMPLATE/*.yml as ## sections>
 EOF
 )"
 ```
 
-Capture the printed issue URL (`https://github.com/nesso-how/nesso/issues/N`).
+Capture the issue URL. Body shape by Type:
 
-### Body structure by Type
-
-Mirror the fields from the matching template rather than inventing a new shape:
-
-- **Bug** (`bug_report.yml`): `## Summary`, `## Steps to reproduce`, `## Expected vs actual behavior`, `## Environment`. Add `## Root cause` and `## Suggested fix direction` sections if the investigation found one — cite `file:line`, don't just describe in prose.
-- **Feature** (`feature_request.yml`): `## Problem or motivation`, `## Proposed solution`, `## Alternatives considered`.
-- **Chore** (`tooling.yml`): `## Problem or friction`, `## Proposed tooling or change`, `## Integration points`, `## Alternatives and trade-offs`.
-- **Graph model proposals** specifically use `graph_model.yml`'s richer structure (motivation, type definition with visual + semantic coefficients, concrete examples) — read that template directly if the issue is a relation-type proposal, it's more involved than the others.
+- **Bug** (`bug_report.yml`) — add `## Root cause` / `## Suggested fix direction` with `file:line` when known
+- **Feature** (`feature_request.yml`)
+- **Chore** (`tooling.yml`)
+- **Graph model** (`graph_model.yml`) — read template; richer structure
 
 ## 3. Add to the project board and set Status
 
@@ -60,11 +60,11 @@ gh project item-edit \
   --single-select-option-id <status-option-id>
 ```
 
-Status field id `PVTSSF_lADOETTSk84Bc6MyzhXfk9k` is stable (project-scoped fields don't drift the way org Issue Fields do), but re-verify option ids with `gh project field-list 1 --owner nesso-how --format json` if this file feels stale — last known: Inbox `b33f88dd`, Ready `566a9694`, In Progress `98e3405f`, In Review `7630fa6c`, Done `bb1f65af`.
+Re-verify Status option ids with `gh project field-list 1 --owner nesso-how --format json` if stale — last known: Inbox `b33f88dd`, Ready `566a9694`, In Progress `98e3405f`, In Review `7630fa6c`, Done `bb1f65af`.
 
 ## 4. Set Priority (org-level Issue Field)
 
-Plan-validate-execute: discover the field and option ids, then set, then verify.
+Discover → set → verify.
 
 **Discover:**
 
@@ -81,9 +81,7 @@ query {
 }'
 ```
 
-Find the `Priority` field's `id` and the option `id` matching the target level (Now / Next / Later).
-
-**Get the issue's node id** (different from the project item id from step 3):
+**Get issue node id** (not the project item id):
 
 ```bash
 gh api graphql -f query='query { repository(owner: "nesso-how", name: "nesso") { issue(number: <N>) { id } } }'
@@ -121,13 +119,9 @@ query {
 }'
 ```
 
-`clientMutationId: null` on the mutation response is normal (no client id was sent) — a GraphQL `errors` array is the actual failure signal, not a null field.
-
 ## Checklist
 
-- [ ] Draft confirmed with the user (title, Type, label, body, Status, Priority)
-- [ ] Quick duplicate check run
+- [ ] Duplicate check run
 - [ ] Issue created with `--type` (not a legacy label)
-- [ ] Added to project 1, Status set
-- [ ] Priority discovered fresh and set via `setIssueFieldValue`
-- [ ] Verified Priority actually applied
+- [ ] Added to project 1; Status set
+- [ ] Priority set via `setIssueFieldValue`; verified on issue

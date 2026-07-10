@@ -35,7 +35,7 @@ CI deterministically gates the mechanical layer, so don't spend review effort th
 
 ## Cross-cutting obligations — flag if the diff touches the area but misses the obligation
 
-- Editing a rule's subject area (`src/store/**`, `src/components/**`, `src/types/graph.ts`, `src/data/relationTypes.ts`, mentor files) without updating the matching canonical `.rules/*.md` (see `.rules/maintenance.md`).
+- Editing a rule's subject area without updating the matching canonical `.rules/*.md` (see `AGENTS.md` → **Keeping rules up to date**).
 - Touching docs or the MCP server without keeping docs/MCP parity — rebuild `packages/mcp` (see AGENTS.md → Documentation and MCP parity).
 - **Misused fallow escape hatches.** A change that deliberately keeps a fallow finding must use a _scoped_ hatch — `// fallow-ignore-next-line <rule>` with a reason, or (for the ratcheted categories) a re-saved `fallow-baselines/*.json` committed in the same change. Flag blanket `.fallowrc.jsonc` ignores that silence real issues, and baseline edits that _raise_ the count (sneaking new debt past the ratchet) instead of lowering it.
 

@@ -1,6 +1,6 @@
 # Components
 
-Components live under `src/components/` in feature folders. They read from the Zustand store via `useGraphStore` and dispatch mutations through store methods — no local state for graph data.
+Components live under `src/components/` in feature folders. They read from `useGraphStore` and dispatch mutations through store methods — per [conventions.md](conventions.md) → State (graph data in the store, not local `useState`).
 
 ## Folder layout
 

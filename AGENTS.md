@@ -2,7 +2,7 @@
 
 Nesso is an app for building typed knowledge graphs for active learning: an interactive concept map where nodes are ideas and edges are typed semantic relations. **Socrates**, a Socratic AI mentor, reads the current graph and the user's selection, then probes their understanding through questions rather than explanations.
 
-> **How rules are organized.** This file holds the always-on, tool-agnostic context (stack, layout, core concepts, hard constraints, git, docs/MCP parity) and is read natively by Cursor and imported by Claude Code via `CLAUDE.md`. Detailed, area-specific rules live as canonical content in [`.rules/`](.rules/) and are surfaced to each tool through thin wrappers that carry only tool-specific frontmatter plus an import: `.cursor/rules/*.mdc` for Cursor, `.claude/rules/*.md` for Claude Code. **Edit the canonical `.rules/*.md` file, never the wrappers.**
+> **How rules are organized.** Always-on context lives in this file. Area-specific rules are canonical in [`.rules/`](.rules/) (index below) — **edit `.rules/*.md`, never per-tool wrappers.** Load area rules on demand; see **External file loading**.
 
 ## Stack
 
@@ -45,14 +45,14 @@ docs/                 # Starlight docs site, published at nesso.how/docs
 
 ## Core concepts
 
-- **Node** — a `ConceptNode` with `text` and FSRS fields (`stability`, `difficulty`, `reps`, `lapses`, `fsrsState`, `due`, `lastReview`, `lastRating`, `learningSteps`) for spaced repetition at runtime (`ts-fsrs`). FSRS is persisted in IndexedDB `reviewState`, not in graph JSON files.
-- **Edge** — a React Flow edge of type `'nesso'`, carrying `data.type: RelationTypeName` (semantic relation id; serialized as `GraphRelation.type` in graph JSON).
+- **Node** — a `ConceptNode` with `text` and FSRS fields for spaced repetition at runtime (`ts-fsrs`). FSRS is persisted in IndexedDB `reviewState`, not in graph JSON — see [`.rules/graph-model.md`](.rules/graph-model.md) and [`.rules/store.md`](.rules/store.md).
+- **Edge** — typed semantic relation (`data.type: RelationTypeName`); canvas edges always use `type: 'nesso'` — see **Constraints** and [`.rules/graph-model.md`](.rules/graph-model.md).
 - **Selection** — a single `{ kind: 'node' | 'edge', id }` (or `null`) tracked in the store (`src/store/types.ts`). Drives the Inspector and Socrates opening prompt.
 - **Settings** — `NessoSettings` in the store (dark mode, language, encoding, palette, AI endpoint fields, `telemetry` opt-in, etc.). Applied via CSS custom properties on `<html>` where relevant.
 
 ## Detailed rules index
 
-Area-specific rules (canonical content in `.rules/`, auto-attached per file area by each tool):
+Area-specific rules (canonical content in `.rules/`):
 
 | Area                                                            | File                                                 |
 | --------------------------------------------------------------- | ---------------------------------------------------- |
@@ -64,18 +64,50 @@ Area-specific rules (canonical content in `.rules/`, auto-attached per file area
 | Socratic AI mentor — MentorPanel, system prompt, chat API       | [`.rules/mentor.md`](.rules/mentor.md)               |
 | Vitest tests — layout, env split, module resolution, CI gate    | [`.rules/testing.md`](.rules/testing.md)             |
 | `CHANGELOG.md` (Keep a Changelog), `[Unreleased]`, release flow | [`.rules/changelog.md`](.rules/changelog.md)         |
-| Keeping the `.rules/` files in sync with the codebase           | [`.rules/maintenance.md`](.rules/maintenance.md)     |
-| PR titles/bodies — match `.github/PULL_REQUEST_TEMPLATE.md`     | [`.rules/pull-requests.md`](.rules/pull-requests.md) |
 | Persisted-data compatibility — envelope/vocabulary migration    | [`.rules/compatibility.md`](.rules/compatibility.md) |
 | Writing Starlight docs pages — voice, style, when to update     | [`.rules/docs.md`](.rules/docs.md)                   |
 
-**Changelog:** do **not** edit `CHANGELOG.md` during feature work; update **`## [Unreleased]`** only when the user asks for a **commit** or an explicit **changelog-before-commit** pass. Format and releases: [`.rules/changelog.md`](.rules/changelog.md).
+## Skills
 
-**Release:** cutting a release is a procedure, not a file-area rule, so it lives in the `release` skill at [`.claude/skills/release/SKILL.md`](.claude/skills/release/SKILL.md). In Claude Code run `/release`; in Cursor the agent-requested rule `.cursor/rules/release.mdc` pulls the same procedure in when a release task matches.
+Workflow procedures in [`.claude/skills/`](.claude/skills/) — load when the task matches (lazy, like area rules):
+
+| Skill          | Use when                                                           |
+| -------------- | ------------------------------------------------------------------ |
+| `preflight`    | Local CI parity before push or PR                                  |
+| `create-pr`    | Open, draft, or update a pull request                              |
+| `create-issue` | Publish a drafted GitHub issue to the org board                    |
+| `release`      | Cut, ship, or version-bump a release                               |
+| `nesso-review` | Pre-PR orchestrated review (preflight + constraints + code review) |
+
+## Keeping rules up to date
+
+Update the canonical `.rules/*.md` in the same change when your edit makes a rule stale. Triggers match `.cursor/rules/` and `.claude/rules/` wrappers — **edit `.rules/`, never wrappers.** Update **Constraints** / **Stack** / **Source layout** / **Core concepts** in this file when those change.
+
+**Touch → update** (paths under `.rules/`):
+
+- `components.md` — `src/components/**/*.tsx`
+- `store.md` — `src/store/**/*.ts`
+- `graph-model.md` — `src/data/relationTypes.ts`, `src/types/graph.ts`, `packages/graph/src/NessoEdge.tsx`, `src/components/dialogs/RelationTypesDialog.tsx`, `packages/vocab-learning/src/index.ts`
+- `mentor.md` — `src/components/mentor/MentorPanel.tsx`, `src/llm/completion.ts`, `src/llm/context.ts`
+- `conventions.md` — `src/**/*.{ts,tsx}` (only when conventions change, not every src edit)
+- `testing.md` — `**/*.test.{ts,tsx}`; also `vitest.config.ts`, `playwright.config.ts`, `e2e/**`, CI test steps
+- `theme.md` — `packages/theme/**`, `src/index.css`, `vite.config.ts`
+- `docs.md` — `docs/src/content/docs/**/*.md`
+- `compatibility.md` — `packages/schema/**`, `packages/vocab-learning/**`, `src/lib/workspace/**`, `src/lib/graphDocumentMapping.ts`, `src/lib/graphMapping.ts`, `src/store/**`, `src/data/conceptNodes.ts`
+- `changelog.md` — `CHANGELOG.md`
+
+## External file loading
+
+**Do not load all `.rules/` files upfront.**
+
+- Read a file from the index only when the task touches that area (use **Touch → update** above).
+- When loaded, treat its content as mandatory for that work.
+- Follow references inside a rule file when the sub-topic is relevant; do not recurse into unrelated files.
+- Before **commit** or **release**, load [`.rules/changelog.md`](.rules/changelog.md).
 
 ## Code quality
 
-Lint and format run through **Biome** (`biome.json`): JS/TS/JSON/CSS, with **Prettier** kept only for Markdown/YAML/HTML. **`tsc`** type-checks (via `build`), and **`type-coverage`** gates strict type coverage at 99%. **`vitest`** (`pnpm test:coverage`) gates test coverage against a **ratchet floor** in `vitest.config.ts` — current numbers snapshotted as the minimum (global plus stricter per-directory globs for the regression-prone logic), green today and red on any drop; re-baseline when intentionally lowering. CI also runs **`license-headers:check`**, **`build:mcp`**, and a path-filtered **e2e** lane (Playwright web); native desktop e2e (`e2e-native/`) is **local-only** — see [`.rules/testing.md`](.rules/testing.md). **`fallow`** (`pnpm run analyze`) is a deterministic static analyzer for dead code, duplication, cycles, complexity, and architecture. CI gates three slices (`.github/workflows/ci.yml` `js` job): **`analyze:dead-code`** (zero-tolerance on unused code and architecture cycles), **`analyze:dupes`** and **`analyze:health`** (identity baselines in `fallow-baselines/` — fail only on _new_ clones or complex functions). The full `analyze` report is a local convenience; the `preflight` skill runs the gated commands in CI order before a PR. **`StrykerJS`** (`pnpm run analyze:mutation`, configs under `scripts/stryker/`) adds **mutation testing** on top of coverage — it grades whether the tests would actually catch a regression, gated by a per-area `break` ratchet on the mutation score. It is **not** a per-PR gate (too slow): opt-in locally (`analyze:mutation:changed` when the diff touches an area) and a non-blocking scheduled CI job (`.github/workflows/mutation.yml`), scoped to pure-logic areas.
+Lint/format (**Biome**), types (**`tsc`**, **type-coverage** at 99%), tests (**vitest** coverage ratchet), **fallow** gates, **e2e**, and **Stryker** (opt-in) — see [`.rules/testing.md`](.rules/testing.md).
 
 ## Constraints — hard rules, never do this
 

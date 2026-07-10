@@ -1,8 +1,0 @@
----
-description: Pull request titles and bodies — match .github/PULL_REQUEST_TEMPLATE.md
-alwaysApply: false
----
-
-Canonical content lives in [`.rules/pull-requests.md`](../../.rules/pull-requests.md). Edit that file, not this wrapper.
-
-@.rules/pull-requests.md

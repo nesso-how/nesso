@@ -1,8 +1,0 @@
----
-description: Keeping the .rules/ files in sync with the codebase
-alwaysApply: false
----
-
-Canonical content lives in [`.rules/maintenance.md`](../../.rules/maintenance.md). Edit that file, not this wrapper.
-
-@.rules/maintenance.md

@@ -30,7 +30,7 @@ fi
 behind=$(git rev-list --count "HEAD..$upstream" 2>/dev/null || echo 0)
 if [ "${behind:-0}" -gt 0 ]; then
   emit_additional_context \
-    "This branch is $behind commit(s) behind $upstream. Consider rebasing onto it before opening a PR (see .rules/pull-requests.md)." \
+    "This branch is $behind commit(s) behind $upstream. Consider rebasing onto it before opening a PR (see .claude/skills/create-pr/SKILL.md)." \
     SessionStart
 else
   emit_empty
