@@ -15,6 +15,12 @@ IF A SKILL APPLIES TO YOUR TASK, YOU DO NOT HAVE A CHOICE. YOU MUST USE IT.
 This is not negotiable. You cannot rationalize your way out of this.
 </EXTREMELY-IMPORTANT>
 
+## Skill Contract
+
+This skill owns the **what** and **when**: which phases apply, when to skip, when to stop, session boundaries, routing between phases. Each phase skill owns the **how**: the internal process, checklist, and quality bar for that specific phase.
+
+This separation keeps workflow focused on orchestration and each skill focused on its domain. Do not duplicate routing or boundary logic inside phase skills — reference this skill instead.
+
 ## The Five Phases
 
 ```mermaid

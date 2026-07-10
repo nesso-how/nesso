@@ -22,6 +22,7 @@ Available skills (all in `.claude/skills/`, discovered by Claude, Cursor, and Op
 | Skill           | Purpose                                                         |
 | --------------- | --------------------------------------------------------------- |
 | `workflow`      | Bootstrap — 5-phase flow routing and constraint checklist       |
+| `brainstorming` | Design exploration before any implementation                    |
 | `nesso-review`  | Pre-PR orchestrator (preflight + semantic review + code review) |
 | `preflight`     | Local CI parity checks                                          |
 | `create-pr`     | Publish a prepared PR on GitHub                                 |
@@ -29,7 +30,7 @@ Available skills (all in `.claude/skills/`, discovered by Claude, Cursor, and Op
 | `release`       | Cut a new release                                               |
 | `harness-check` | Coherence sweep of the agent harness                            |
 
-Skills referenced by `workflow` that are not yet created: `brainstorming`, `writing-plans`, `tdd`, `systematic-debugging`, `verification`. The workflow skill degrades gracefully — when a referenced skill is missing, it falls back to describing the phase inline.
+Skills referenced by `workflow` that are not yet created: `writing-plans`, `tdd`, `systematic-debugging`, `verification`. The workflow skill degrades gracefully — when a referenced skill is missing, it falls back to describing the phase inline.
 
 ## Area rules
 
