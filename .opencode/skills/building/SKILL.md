@@ -23,7 +23,7 @@ TDD is non-negotiable for logic and behavior. It is not required (and often not 
 | API calls, completion logic                       | Layout-only visual changes                          |
 | Bug fixes with reproducible behavior              | Tauri native code (when test harness not available) |
 
-When TDD doesn't apply, still verify manually and run `pnpm run lint && pnpm exec tsc -b`.
+When TDD doesn't apply, still verify manually and run `pnpm run lint && pnpm run type:check`.
 
 ## RED-GREEN-REFACTOR
 
@@ -65,11 +65,11 @@ pnpm test:coverage           # With coverage ratchet
 pnpm test:e2e                # Playwright e2e (web UI)
 ```
 
-**Quality** (see `preflight` skill for the full CI checklist):
+**Quality** (see `.rules/static-analysis.md`):
 
 ```bash
-pnpm exec tsc -b             # Typecheck
 pnpm run lint                # Biome lint
+pnpm run type:check            # Typecheck
 ```
 
 Test levels: **unit** (pure logic, store slices, FSRS), **component** (React with interaction), **e2e** (Playwright, full user flows).
@@ -80,7 +80,7 @@ Test levels: **unit** (pure logic, store slices, FSRS), **component** (React wit
 2. RED — write failing test, watch it fail
 3. GREEN — write minimal code, watch it pass
 4. REFACTOR — clean up if needed, keep green
-5. Run `pnpm run lint && pnpm exec tsc -b`
+5. Run `pnpm run lint && pnpm run type:check`
 6. Move to next task
 
 ## When Stuck

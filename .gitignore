@@ -28,11 +28,6 @@ pnpm-debug.log*
 *.local
 .DS_Store
 Thumbs.db
-# Personal/local Claude Code config and machine-local worktrees stay out of git;
-# shared .claude/rules/, .claude/skills/ and launch.json are committed.
-.claude/settings.local.json
-.claude/worktrees/
-
 # Editors
 .idea
 .vscode/*

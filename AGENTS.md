@@ -2,7 +2,7 @@
 
 Nesso is an app for building typed knowledge graphs for active learning: an interactive concept map where nodes are ideas and edges are typed semantic relations. **Socrates**, a Socratic AI mentor, reads the current graph and the user's selection, then probes their understanding through questions rather than explanations.
 
-Monorepo: `src/` (app) + `packages/` (`@nesso-how/*`). Desktop shell is optional Tauri v2 (`src-tauri/`); web runs with `pnpm dev`. **FSRS** review (`ts-fsrs`) is independent of the **experimental** AI mentor.
+Monorepo: `src/` (app) + `packages/` (`@nesso-how/*`). Desktop shell is optional Tauri v2 (`src-tauri/`). **pnpm-only** — never use npm or yarn. **FSRS** review (`ts-fsrs`) is independent of the **experimental** AI mentor.
 
 > Area rules in [`.rules/`](.rules/) — load on demand when the task touches that area (**Touch → update** below); do not load all upfront. Before **commit** or **release**, load [`.rules/changelog.md`](.rules/changelog.md).
 
@@ -17,7 +17,7 @@ Monorepo: `src/` (app) + `packages/` (`@nesso-how/*`). Desktop shell is optional
 
 For any non-trivial task, load the **`workflow`** skill first — it defines the 5-phase flow (brainstorming → planning → execution → review → documentation), routes each phase to the right skill, and enforces Nesso's constraints throughout. Not every task needs all five phases; the skill sizes the flow to the task.
 
-Available skills (all in `.claude/skills/`, discovered by Claude and OpenCode):
+Available skills (`.opencode/skills/`):
 
 | Skill           | Purpose                                                         |
 | --------------- | --------------------------------------------------------------- |
@@ -48,11 +48,12 @@ Canonical in `.rules/` — read the full file when relevant:
 - [`.rules/changelog.md`](.rules/changelog.md)
 - [`.rules/compatibility.md`](.rules/compatibility.md)
 - [`.rules/docs.md`](.rules/docs.md)
+- [`.rules/static-analysis.md`](.rules/static-analysis.md)
 - [`.rules/harness.md`](.rules/harness.md)
 
 ## Keeping rules up to date
 
-Update the canonical `.rules/*.md` in the same change when your edit makes a rule stale. Triggers match the `.claude/rules/` wrappers (OpenCode reads `.rules/` on demand via the table below) — **edit `.rules/`, never wrappers.** Update **Constraints** / **Core concepts** / the intro above when those change. When your edit touches the harness itself (rules, wrappers, AGENTS.md, hooks, skills, agents, MCP), see [`.rules/harness.md`](.rules/harness.md).
+Update the canonical `.rules/*.md` in the same change when your edit makes a rule stale. The **Touch → update** table below maps file paths to the rules they affect — load the relevant rule when touching those paths. Update **Constraints** / **Core concepts** / the intro above when those change. When your edit touches the harness itself (rules, AGENTS.md, skills, agents, MCP), see [`.rules/harness.md`](.rules/harness.md).
 
 **Touch → update** (paths under `.rules/`):
 
@@ -64,9 +65,10 @@ Update the canonical `.rules/*.md` in the same change when your edit makes a rul
 - `testing.md` — `**/*.test.{ts,tsx}`; also `vitest.config.ts`, `playwright.config.ts`, `e2e/**`, CI test steps
 - `theme.md` — `packages/theme/**`, `src/index.css`, `vite.config.ts`
 - `docs.md` — `docs/src/content/docs/**/*.md`
+- `static-analysis.md` — `src/**/*.{ts,tsx,js,mjs,cjs,css}`, `biome.json`, `prettier.config.js`, `scripts/license-header.mjs`, `src-tauri/src/**/*.rs`, `src-tauri/build.rs`, `tsconfig.json`, `tsconfig.app.json`, `tsconfig.node.json`, `packages/*/tsconfig.json`, `packages/*/src/**/*.{ts,tsx}`, `.fallowrc.jsonc`, `fallow-baselines/*.json`, `scripts/stryker/**`
 - `compatibility.md` — `packages/schema/**`, `packages/vocab-learning/**`, `src/lib/workspace/**`, `src/lib/graphDocumentMapping.ts`, `src/lib/graphMapping.ts`, `src/store/**`, `src/data/conceptNodes.ts`
 - `changelog.md` — `CHANGELOG.md`
-- `harness.md` — `.rules/**`, `.claude/rules/**`, `.claude/skills/**`, `.claude/agents/**`, `.opencode/**`, `.hooks/**`, `AGENTS.md`, `CLAUDE.md`, `.claude/settings.json`, `opencode.json`
+- `harness.md` — `.rules/**`, `.opencode/**`, `AGENTS.md`, `opencode.json`
 
 ## Constraints — hard rules, never do this
 

@@ -5,15 +5,11 @@ on:
   push:
     branches: [main]
 
-# Cancel superseded runs on the same PR/branch when new commits land. Pushes to
-# main always run to completion (no cancel) so every merged commit gets a full check.
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  # Path filter for PRs: each lane runs only when relevant files change. On push
-  # to main the `if:` bypass below runs every lane anyway (cache warming).
   changes:
     runs-on: ubuntu-latest
     outputs:
@@ -44,71 +40,40 @@ jobs:
               - 'index.html'
               - '.github/workflows/ci.yml'
 
-  # Web/JS lane: everything driven by pnpm — app + packages + MCP + docs build,
-  # format, lint, license headers. Paired with the `rust` job (cargo lane).
   js:
     needs: changes
     if: github.event_name == 'push' || needs.changes.outputs.js == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-
       - uses: actions/setup-node@v6
         with:
           node-version: lts/*
-
-      - name: Enable pnpm via Corepack
-        run: corepack enable
-
-      - name: Pnpm store path
+      - run: corepack enable
+      - name: Pnpm store cache
         id: pnpm-store
         shell: bash
         run: echo "path=$(pnpm store path)" >> "$GITHUB_OUTPUT"
-
       - uses: actions/cache@v5
         with:
           path: ${{ steps.pnpm-store.outputs.path }}
           key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-
-
+          restore-keys: ${{ runner.os }}-pnpm-
       - run: pnpm install --frozen-lockfile
 
       - run: pnpm run format:check
       - run: pnpm run lint
-      # Fast correctness signal: pure-logic unit/integration tests. `pnpm install`
-      # already ran `prepare`, so the workspace package `dist/` outputs the tests
-      # resolve against are present. This step gates the PR like the others, and
-      # also enforces the coverage ratchet in vitest.config.ts (`coverage.thresholds`):
-      # a snapshot floor — global plus stricter per-directory globs — that fails on
-      # any drop. Re-baseline it (same change) when intentionally lowering coverage.
+      - run: pnpm run license-headers:check
       - run: pnpm run test:coverage
-      # `tsc -b` is not run on its own here: `pnpm run build` already runs it
-      # (`… && tsc -b && vite build`), so a standalone step would type-check twice.
+      - run: pnpm run type:coverage
+
       - run: pnpm run build:mcp
       - run: pnpm run build
-      - run: pnpm run license-headers:check
 
-      # Type-safety ratchet (rollout step 3 of #50): fail if strict type-coverage
-      # of the app (tsconfig.app.json) regresses below the agreed floor (~99.7%
-      # today, gated at 99%). tsc itself already runs via `pnpm run build` (tsc -b),
-      # so there is no separate `tsc --noEmit` step.
-      - run: pnpm run type-coverage
-
-      # Static-analysis gates (#50 step 5). fallow's dead-code envelope also covers
-      # circular dependencies and re-export cycles, so this is zero-tolerance on
-      # unused code AND architecture cycles (all at 0). False positives: .fallowrc.jsonc.
       - run: pnpm run analyze:dead-code
-
-      # Duplication and complexity: identity baselines in fallow-baselines/ freeze
-      # the current backlog and fail only on NEW clones / complex functions. Lower
-      # the baselines (--save-baseline) as the backlog is worked down.
       - run: pnpm run analyze:dupes
       - run: pnpm run analyze:health
 
-  # Native layer (src-tauri/). Runs in parallel with `js`; a red Rust gate
-  # blocks merge just like lint/build. See .github/workflows/release.yml for the
-  # macOS bundle build — this job is the per-PR fmt/lint/compile feedback loop.
   rust:
     needs: changes
     if: github.event_name == 'push' || needs.changes.outputs.rust == 'true'
@@ -116,55 +81,33 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Install Rust (stable) with rustfmt + clippy
-        uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
-
       - uses: swatinem/rust-cache@v2
         with:
           workspaces: ./src-tauri -> target
 
-      # Formatting needs neither the frontend nor system deps — run it first so a
-      # style-only failure fails fast before the heavier compile steps.
       - run: cargo fmt --all --check
         working-directory: src-tauri
 
       - uses: actions/setup-node@v6
         with:
           node-version: lts/*
-
-      - name: Enable pnpm via Corepack
-        run: corepack enable
-
-      - name: Pnpm store path
+      - run: corepack enable
+      - name: Pnpm store cache
         id: pnpm-store
         shell: bash
         run: echo "path=$(pnpm store path)" >> "$GITHUB_OUTPUT"
-
       - uses: actions/cache@v5
         with:
           path: ${{ steps.pnpm-store.outputs.path }}
           key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-
-
+          restore-keys: ${{ runner.os }}-pnpm-
       - run: pnpm install --frozen-lockfile
 
-      # `tauri::generate_context!` embeds the bundle icons listed in
-      # tauri.conf.json; they are gitignored and generated from the tile SVG, so
-      # without this step clippy/check/test fail to compile lib.rs. The frontend
-      # `dist/` is not needed for `cargo check`.
-      - name: Generate desktop icons from tile SVG
-        run: pnpm run icons:desktop
-
-      # Cache the resolved .deb set instead of re-fetching ~62 MB from the Azure
-      # Ubuntu mirror every run: the download is the slowest part of this job and
-      # the mirror occasionally stalls for minutes on a single package. On a cache
-      # hit the packages restore from the Actions cache with no network. Bump
-      # `version` to invalidate the cache after changing the package list.
-      - name: Install Tauri Linux system dependencies (cached)
-        uses: awalsh128/cache-apt-pkgs-action@v1
+      - run: pnpm run icons:desktop
+      - uses: awalsh128/cache-apt-pkgs-action@v1
         with:
           packages: >-
             libwebkit2gtk-4.1-dev
@@ -175,64 +118,43 @@ jobs:
 
       - run: cargo clippy --all-targets -- -D warnings
         working-directory: src-tauri
-
       - run: cargo check --all-targets
         working-directory: src-tauri
-
       - run: cargo test
         working-directory: src-tauri
 
-  # End-to-end web UI (Playwright). Covers the flows that run in a plain browser
-  # (`isDesktop() === false`). Native desktop e2e (tauri-driver) is local-only —
-  # see `e2e-native/run-local.sh` and `.rules/testing.md`.
   e2e:
     needs: changes
     if: github.event_name == 'push' || needs.changes.outputs.e2e == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-
       - uses: actions/setup-node@v6
         with:
           node-version: lts/*
-
-      - name: Enable pnpm via Corepack
-        run: corepack enable
-
-      - name: Pnpm store path
+      - run: corepack enable
+      - name: Pnpm store cache
         id: pnpm-store
         shell: bash
         run: echo "path=$(pnpm store path)" >> "$GITHUB_OUTPUT"
-
       - uses: actions/cache@v5
         with:
           path: ${{ steps.pnpm-store.outputs.path }}
           key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-
-
+          restore-keys: ${{ runner.os }}-pnpm-
       - run: pnpm install --frozen-lockfile
 
-      # Browser binary + its OS libraries. The Playwright version pins the
-      # browser revision, so this is cached implicitly by the runner image layer
-      # only when versions match — `--with-deps` is the portable path.
-      - name: Install Playwright browser (chromium)
-        run: pnpm exec playwright install --with-deps chromium
-
-      # Playwright boots the Vite dev server itself (webServer in
-      # playwright.config.ts) and tears it down when the run ends.
+      - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm run test:e2e
 
-      - name: Upload Playwright report
+      - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v4
         with:
           name: playwright-report
           path: playwright-report
           retention-days: 7
           if-no-files-found: ignore
 
-  # Aggregates lane results; skipped lanes (path-filter on PRs) are allowed.
   ci:
     if: always()
     needs: [changes, js, rust, e2e]
