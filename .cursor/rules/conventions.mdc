@@ -1,9 +1,0 @@
----
-description: Coding conventions for Nesso
-globs: src/**/*.{ts,tsx}
-alwaysApply: false
----
-
-Canonical content lives in [`.rules/conventions.md`](../../.rules/conventions.md). Edit that file, not this wrapper.
-
-@.rules/conventions.md

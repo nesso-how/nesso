@@ -17,7 +17,7 @@ Monorepo: `src/` (app) + `packages/` (`@nesso-how/*`). Desktop shell is optional
 
 For any non-trivial task, load the **`workflow`** skill first — it defines the 5-phase flow (brainstorming → planning → execution → review → documentation), routes each phase to the right skill, and enforces Nesso's constraints throughout. Not every task needs all five phases; the skill sizes the flow to the task.
 
-Available skills (all in `.claude/skills/`, discovered by Claude, Cursor, and OpenCode):
+Available skills (all in `.claude/skills/`, discovered by Claude and OpenCode):
 
 | Skill           | Purpose                                                         |
 | --------------- | --------------------------------------------------------------- |
@@ -52,7 +52,7 @@ Canonical in `.rules/` — read the full file when relevant:
 
 ## Keeping rules up to date
 
-Update the canonical `.rules/*.md` in the same change when your edit makes a rule stale. Triggers match the `.cursor/rules/` and `.claude/rules/` wrappers (OpenCode reads `.rules/` on demand via the table below) — **edit `.rules/`, never wrappers.** Update **Constraints** / **Core concepts** / the intro above when those change. When your edit touches the harness itself (rules, wrappers, AGENTS.md, hooks, skills, agents, MCP), see [`.rules/harness.md`](.rules/harness.md).
+Update the canonical `.rules/*.md` in the same change when your edit makes a rule stale. Triggers match the `.claude/rules/` wrappers (OpenCode reads `.rules/` on demand via the table below) — **edit `.rules/`, never wrappers.** Update **Constraints** / **Core concepts** / the intro above when those change. When your edit touches the harness itself (rules, wrappers, AGENTS.md, hooks, skills, agents, MCP), see [`.rules/harness.md`](.rules/harness.md).
 
 **Touch → update** (paths under `.rules/`):
 
@@ -66,7 +66,7 @@ Update the canonical `.rules/*.md` in the same change when your edit makes a rul
 - `docs.md` — `docs/src/content/docs/**/*.md`
 - `compatibility.md` — `packages/schema/**`, `packages/vocab-learning/**`, `src/lib/workspace/**`, `src/lib/graphDocumentMapping.ts`, `src/lib/graphMapping.ts`, `src/store/**`, `src/data/conceptNodes.ts`
 - `changelog.md` — `CHANGELOG.md`
-- `harness.md` — `.rules/**`, `.claude/rules/**`, `.cursor/rules/**`, `.claude/skills/**`, `.claude/agents/**`, `.opencode/**`, `.hooks/**`, `AGENTS.md`, `CLAUDE.md`, `.cursor/hooks.json`, `.claude/settings.json`, `.cursor/mcp.json`, `opencode.json`
+- `harness.md` — `.rules/**`, `.claude/rules/**`, `.claude/skills/**`, `.claude/agents/**`, `.opencode/**`, `.hooks/**`, `AGENTS.md`, `CLAUDE.md`, `.claude/settings.json`, `opencode.json`
 
 ## Constraints — hard rules, never do this
 

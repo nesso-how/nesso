@@ -1,6 +1,6 @@
 ---
 name: harness-check
-description: Deliberate coherence sweep of the Nesso agent harness against `.rules/harness.md` — verifies the rule/wrapper, editor-specific, reachability, link, and registry invariants hold across Claude, Cursor, and OpenCode. Manual-only; read-only by default, `--fix` applies mechanical fixes to the working tree. Use after restructuring the harness or before a PR that touches it.
+description: Deliberate coherence sweep of the Nesso agent harness against `.rules/harness.md` — verifies the rule/wrapper, editor-specific, reachability, link, and registry invariants hold across Claude and OpenCode. Manual-only; read-only by default, `--fix` applies mechanical fixes to the working tree. Use after restructuring the harness or before a PR that touches it.
 disable-model-invocation: true
 ---
 
@@ -19,7 +19,7 @@ Read-only by default; never commits or pushes (see AGENTS.md → Git). `--fix` a
 1. **Read [`.rules/harness.md`](../../.rules/harness.md) in full.** It is the checklist. If reality and the rule disagree, the rule wins; if the rule and this skill disagree, that is itself a finding (update one of them).
 2. **Enumerate the git-tracked surfaces** — the Scope invariant means tracked files only; anything gitignored (`.claude/worktrees/`, `*.local`) is out by construction:
    ```bash
-   git ls-files .rules .claude .cursor .hooks opencode.json AGENTS.md CLAUDE.md
+   git ls-files .rules .claude .hooks opencode.json AGENTS.md CLAUDE.md
    ```
 3. **Walk each tier of the rule in order** and verify its invariants against that evidence — Tier 1 (rule ↔ wrapper parity), Tier 2 (editor-specific validity, never parity), Tier 3 (reachability), then the link-resolution and AGENTS.md-registry invariants. Read the actual files; do not assume.
 
@@ -27,7 +27,7 @@ Read-only by default; never commits or pushes (see AGENTS.md → Git). `--fix` a
 
 Several invariants read as mechanical but need judgment. A naive string-diff false-positives on every one of these, which is why the check is an agent, not a regex:
 
-- **Glob-set agreement compares _sets_, not strings.** Order and formatting differ by design (Cursor inline comma-joined or a YAML list; Claude a YAML list). A glob like `src/**/*.{ts,tsx}` contains a literal comma — do not split it into two.
+- **Glob-set agreement compares _sets_, not strings.** Order and formatting differ by design (Claude uses a YAML list). A glob like `src/**/*.{ts,tsx}` contains a literal comma — do not split it into two.
 - **AGENTS.md Touch → update may carry prose-only extras** beyond the wrapper globs (e.g. `testing.md`'s `vitest.config.ts`, `playwright.config.ts`, `e2e/**`). Those are allowed, not drift — wrapper globs need only be a subset.
 - **A markdown link inside a code span is an example, not a live link** — e.g. `harness.md` writes `[foo](foo.md)` to illustrate the invariant. Don't flag it.
 - **A reference to a renamed or moved symbol still reads as valid text.** Only judgment catches it: a path like `src/llm/foo.ts` or an exported-symbol name in a rule looks fine even after the code moved. This is the driftiest tier and the sweep's highest-value output — spot-check references in rules whose subject code changed recently, and report suspects even when unsure.

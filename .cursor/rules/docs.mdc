@@ -1,9 +1,0 @@
----
-description: How to write Starlight docs pages — voice, style, frontmatter, and when to update them
-globs: docs/src/content/docs/**/*.md
-alwaysApply: false
----
-
-Canonical content lives in [`.rules/docs.md`](../../.rules/docs.md). Edit that file, not this wrapper.
-
-@.rules/docs.md

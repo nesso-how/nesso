@@ -1,9 +1,0 @@
----
-description: Zustand store shape, mutations, and selector patterns
-globs: src/store/**/*.ts
-alwaysApply: false
----
-
-Canonical content lives in [`.rules/store.md`](../../.rules/store.md). Edit that file, not this wrapper.
-
-@.rules/store.md

@@ -151,7 +151,7 @@ When this skill (or any skill it routes to) needs to dispatch subagents:
 
 ## Platform Notes
 
-This skill works identically on Claude, Cursor, and OpenCode. All three discover it from `.claude/skills/workflow/SKILL.md`. Tool mapping:
+This skill works identically on Claude and OpenCode. Both discover it from `.claude/skills/workflow/SKILL.md`. Tool mapping:
 
 - "Create a todo" → `todowrite`
 - "Dispatch a subagent" → `task` tool

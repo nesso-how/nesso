@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Shared helpers for Nesso agent hooks (Cursor + Claude Code).
+# Shared helpers for Nesso agent hooks (Claude Code).
 
 read_hook_input() {
   HOOK_INPUT=$(cat)
@@ -7,18 +7,14 @@ read_hook_input() {
 
 # Prefer an explicit first argument (sessionStart); otherwise infer from stdin shape.
 detect_platform() {
-  if [ "${1:-}" = cursor ] || [ "${1:-}" = claude ]; then
+  if [ "${1:-}" = claude ]; then
     HOOK_PLATFORM=$1
     return
   fi
-  if printf '%s' "$HOOK_INPUT" | jq -e '.hook_event_name != null' >/dev/null 2>&1; then
-    HOOK_PLATFORM=cursor
-  elif printf '%s' "$HOOK_INPUT" | jq -e '.tool_input != null' >/dev/null 2>&1; then
+  if printf '%s' "$HOOK_INPUT" | jq -e '.tool_input != null' >/dev/null 2>&1; then
     HOOK_PLATFORM=claude
-  elif printf '%s' "$HOOK_INPUT" | jq -e '.command != null' >/dev/null 2>&1; then
-    HOOK_PLATFORM=cursor
   else
-    HOOK_PLATFORM=cursor
+    HOOK_PLATFORM=claude
   fi
 }
 
