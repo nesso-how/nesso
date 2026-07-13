@@ -25,7 +25,7 @@ Available skills (`.opencode/skills/`):
 | `brainstorming` | Design exploration before any implementation                    |
 | `planning`      | Bite-sized implementation plans from approved designs           |
 | `building`      | RED-GREEN-REFACTOR TDD with Nesso test patterns                 |
-| `nesso-review`  | Pre-PR orchestrator (preflight + semantic review + code review) |
+| `reviewing`     | Pre-PR orchestrator (preflight + semantic review + code review) |
 | `preflight`     | Local CI parity checks                                          |
 | `create-pr`     | Publish a prepared PR on GitHub                                 |
 | `create-issue`  | Draft and publish a GitHub issue                                |

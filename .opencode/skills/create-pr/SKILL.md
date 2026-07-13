@@ -5,7 +5,7 @@ description: Use when the user asks to open, draft, update, or push a Nesso pull
 
 # Create a Nesso pull request
 
-Publishes or updates a **fully prepared** PR on GitHub — not implementation or review. **REQUIRED SUB-SKILL:** **`preflight`** (or **`nesso-review`**) unless equivalent CI checks already passed.
+Publishes or updates a **fully prepared** PR on GitHub — not implementation or review. **REQUIRED SUB-SKILL:** **`preflight`** (or **`reviewing`**) unless equivalent CI checks already passed.
 
 **Never skip the confirmation gate.** Recap title, four-section body, branch name, and any `Closes #N` lines; get explicit go-ahead before `git push`, `git push --force-with-lease`, or `gh pr create` / `gh pr edit` — even when the user said "open the PR". Per AGENTS.md → Git.
 
@@ -21,7 +21,7 @@ If a PR exists, use `gh pr edit` instead of `gh pr create`.
 
 - **Never a lone "Test plan" block** — four `##` sections from [`.github/PULL_REQUEST_TEMPLATE.md`](../../../.github/PULL_REQUEST_TEMPLATE.md), in template order.
 - **One closing keyword per issue** (`Closes #31, #26` closes only `#31`). Keyword must directly precede `#N`. Commit-message keywords do not populate the PR linked-issues panel — put them in the **body**.
-- **Rename branch only before the PR exists** — after open, rename+push auto-closes the PR. Rename worktree branches (`claude/<random>` → `feat/<name>`) before first push.
+- **Rename branch only before the PR exists** — after open, rename+push auto-closes the PR. Rename worktree branches (`opencode/<random>` → `feat/<name>`) before first push.
 
 ## 1. Confirm the draft
 

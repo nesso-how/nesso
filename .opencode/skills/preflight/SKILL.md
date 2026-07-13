@@ -1,6 +1,6 @@
 ---
 name: preflight
-description: Run the same checks as CI (.github/workflows/ci.yml) locally before opening or updating a PR — format, lint, types, builds, license headers, Playwright e2e. Use before pushing to catch a red CI early.
+description: Use before pushing to catch a red CI early. Run the same checks as `.github/workflows/ci.yml` locally — format, lint, types, builds, license headers, Playwright e2e.
 ---
 
 # Preflight (local CI parity)
@@ -71,4 +71,4 @@ pnpm run analyze:mutation:changed -- --base origin/main
 pnpm run analyze:mutation:changed -- --working # include unstaged/staged edits too
 ```
 
-Area → path mapping lives in [`scripts/stryker/areas.mjs`](../../scripts/stryker/areas.mjs) (shared with `scripts/stryker/<area>.mjs`). The script prints matched areas and runs only those `analyze:mutation:<area>` steps; it exits 0 with “skipping” when the diff is docs/UI/i18n-only. **Do run it** when `src/llm/`, `src/data/fsrsDueQueue`, store slices, workspace, or `packages/schema` change. Stryker needs full permissions locally (sandbox EPERM on `.stryker-tmp/.cursor` otherwise).
+Area → path mapping lives in [`scripts/stryker/areas.mjs`](../../scripts/stryker/areas.mjs) (shared with `scripts/stryker/<area>.mjs`). The script prints matched areas and runs only those `analyze:mutation:<area>` steps; it exits 0 with “skipping” when the diff is docs/UI/i18n-only. **Do run it** when `src/llm/`, `src/data/fsrsDueQueue`, store slices, workspace, or `packages/schema` change. Stryker needs full filesystem permissions locally (sandbox EPERM otherwise).

@@ -40,7 +40,7 @@ flowchart LR
 | 1. Brainstorming | `brainstorming` + `create-issue` | GitHub issue        | task description, codebase structure, graph model | Human (user approves design)                            |
 | 2. Planning      | `planning`                       | Implementation plan | approved issue, codebase, conventions             | Human (user approves plan)                              |
 | 3. Execution     | `building`                       | Code + tests        | plan, codebase, test patterns                     | Agent verdict (TDD green) + automated (lint/type:check) |
-| 4. Review        | `nesso-review`                   | Verdict             | diff, plan, constraints                           | Agent verdict (nesso-reviewer) + automated (preflight)  |
+| 4. Review        | `reviewing`                      | Verdict             | diff, plan, constraints                           | Agent verdict (nesso-reviewer) + automated (preflight)  |
 | 5. Documentation | `verification`                   | Updated docs        | diff, rules, docs/MCP parity                      | Automated (hooks + checks)                              |
 
 ### When a review fails → back to Planning
@@ -54,7 +54,7 @@ If you discover a problem with the workflow skills during use — a missing step
 1. **Show the problem** — which skill, what's wrong, and how it affected the current work
 2. **Propose a fix** — the specific change to the skill file
 3. **Ask for confirmation** — get approval before editing the skill
-4. **Apply the fix** — update the `.claude/skills/` file and continue
+4. **Apply the fix** — update the `.opencode/skills/` file and continue
 
 The workflow is not frozen. It evolves as we learn what works. But every change goes through the user — no silent edits to the harness.
 
@@ -138,7 +138,7 @@ When multiple skills apply, process skills come first — they set the approach,
 
 - "Let's build X" → `brainstorming` first, then `planning`, then `building`.
 - "Fix this bug" → `systematic-debugging` first, then domain skills.
-- "Review my changes" → `nesso-review` (which dispatches preflight + nesso-reviewer + code-review).
+- "Review my changes" → `reviewing` (which dispatches preflight + nesso-reviewer + code-review).
 
 ## Subagent Dispatch
 
@@ -151,7 +151,7 @@ When this skill (or any skill it routes to) needs to dispatch subagents:
 
 ## Platform Notes
 
-This skill works identically on Claude and OpenCode. Both discover it from `.claude/skills/workflow/SKILL.md`. Tool mapping:
+OpenCode discovers this skill from `.opencode/skills/workflow/SKILL.md`. Tool mapping:
 
 - "Create a todo" → `todowrite`
 - "Dispatch a subagent" → `task` tool

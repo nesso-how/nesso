@@ -1,6 +1,6 @@
 ---
 name: building
-description: Use when implementing any feature, bugfix, or refactoring from an approved plan. Enforces RED-GREEN-REFACTOR TDD with Nesso test patterns. The execution phase of the workflow.
+description: Use when implementing any feature, bugfix, or refactoring from an approved plan.
 ---
 
 # Building
@@ -8,7 +8,13 @@ description: Use when implementing any feature, bugfix, or refactoring from an a
 Implement code from the plan using TDD. The core cycle is RED → GREEN → REFACTOR.
 
 <EXTREMELY-IMPORTANT>
-When building testable logic: no production code without a failing test first. If you wrote code before the test, delete it and start from the test.
+No production code without a failing test first. If you wrote code before the test, delete it and start from the test.
+
+**No exceptions:**
+- Don't keep it as "reference"
+- Don't "adapt" it while writing tests
+- Don't look at it
+- Delete means delete
 </EXTREMELY-IMPORTANT>
 
 ## When TDD Applies
@@ -23,7 +29,7 @@ TDD is non-negotiable for logic and behavior. It is not required (and often not 
 | API calls, completion logic                       | Layout-only visual changes                          |
 | Bug fixes with reproducible behavior              | Tauri native code (when test harness not available) |
 
-When TDD doesn't apply, still verify manually and run `pnpm run lint && pnpm run type:check`.
+When TDD doesn't apply, still verify manually and run `pnpm run format:check && pnpm run lint && pnpm run type:check`.
 
 ## RED-GREEN-REFACTOR
 
@@ -32,17 +38,17 @@ When TDD doesn't apply, still verify manually and run `pnpm run lint && pnpm run
 Write one minimal test showing what should happen. Clear name, one behavior, real code (mocks only when unavoidable).
 
 ```bash
-pnpm test -- --filter <package> <test-file>
+pnpm test path/to/test.test.ts
 ```
 
-The test must fail because the feature is missing — not because of a typo. Test passes? You're testing existing behavior. Test errors? Fix the error and re-run.
+The test must fail because the feature is missing — not because of a typo. Test passes? Delete it and write one that tests the new behavior. Test errors? Fix the error and re-run.
 
 ### GREEN — Minimal Code
 
 Write the simplest code to pass the test. Nothing more. No extra features, no "improvements", no refactoring unrelated code.
 
 ```bash
-pnpm test -- --filter <package> <test-file>
+pnpm test path/to/test.test.ts
 ```
 
 All tests must pass, including existing ones. No warnings. Fix any failures now.
@@ -55,24 +61,9 @@ After green only: remove duplication, improve names, extract helpers. Keep tests
 
 Same cycle. Write a failing test that reproduces the bug first. The test proves the fix and prevents regression.
 
-## Nesso Commands
+### Choosing the Test Level
 
-**Tests** (see `.rules/testing.md` for strategy):
-
-```bash
-pnpm test                    # Vitest unit/component tests
-pnpm test:coverage           # With coverage ratchet
-pnpm test:e2e                # Playwright e2e (web UI)
-```
-
-**Quality** (see `.rules/static-analysis.md`):
-
-```bash
-pnpm run lint                # Biome lint
-pnpm run type:check            # Typecheck
-```
-
-Test levels: **unit** (pure logic, store slices, FSRS), **component** (React with interaction), **e2e** (Playwright, full user flows).
+See `.rules/testing.md` for the full decision framework: unit for pure logic/store/FSRS, integration for workspace/IDB, e2e for full user flows.
 
 ## Per-Task Flow
 
@@ -80,8 +71,12 @@ Test levels: **unit** (pure logic, store slices, FSRS), **component** (React wit
 2. RED — write failing test, watch it fail
 3. GREEN — write minimal code, watch it pass
 4. REFACTOR — clean up if needed, keep green
-5. Run `pnpm run lint && pnpm run type:check`
+5. Fast checks: `pnpm run format:check && pnpm run lint && pnpm run type:check`, plus the test suite matching the task's level — `pnpm test` for unit/integration, `pnpm test:e2e` for e2e, both when the task spans levels.
 6. Move to next task
+
+## After All Tasks
+
+When the plan is fully implemented, run **`preflight`** — **REQUIRED** before pushing. It runs every check in `.github/workflows/ci.yml`: format, lint, coverage ratchet, typecheck, builds, license headers, static-analysis gates, and e2e. Do not push until preflight is green.
 
 ## When Stuck
 

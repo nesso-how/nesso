@@ -1,6 +1,6 @@
 ---
 name: release
-description: Cut a new Nesso release — run scripts/release.mjs to bump the synced version across all package.json files, tauri.conf.json, and the Tauri Rust crate (Cargo.toml/Cargo.lock), roll the CHANGELOG [Unreleased] section into a dated version, refresh the lockfile and verify, then commit, tag, and push to trigger the publish workflow. Use when the user asks to cut, ship, publish, or version-bump a release.
+description: Use when the user asks to cut, ship, publish, or version-bump a release.
 disable-model-invocation: true
 ---
 
@@ -16,7 +16,7 @@ For the conventions and the desktop auto-update / minisign signing details, see 
 
 - Clean working tree, on an up-to-date `main` (or the release branch the user names). The script warns on a dirty tree and refuses `--commit` unless it's clean.
 - `## [Unreleased]` in `CHANGELOG.md` already holds this release's notes — contributors fill it per PR (see CONTRIBUTING.md step 3). The script stops if it's empty; if so, ask the user what's shipping before continuing.
-- Per AGENTS.md → Git: never commit, tag, or push without the user's explicit go-ahead. Invoking `/release` covers the prep; the push (step 4) needs its own confirmation.
+- Per AGENTS.md → Git: never commit, tag, or push without the user's explicit go-ahead. Invoking this skill covers the prep; the push (step 4) needs its own confirmation.
 
 ## 1. Choose the version
 

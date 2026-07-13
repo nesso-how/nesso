@@ -1,6 +1,6 @@
 ---
-name: nesso-review
-description: Pre-PR review orchestrator for Nesso. Runs preflight (mechanical CI parity), dispatches the nesso-reviewer subagent (semantic constraints), and runs code-review at an auto-picked effort, then synthesizes one consolidated verdict. Manual-only. Pass --fix to let code-review apply its fixes.
+name: reviewing
+description: Use when the implementation is complete and ready for pre-PR review. Manual-only. Pass --fix to let code-review apply its fixes.
 disable-model-invocation: true
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: planning
-description: Use when you have an approved design (GitHub issue) for a multi-step task, before touching code. Breaks work into bite-sized tasks with exact file paths, complete code, and verification steps.
+description: Use when you have an approved design (GitHub issue) for a multi-step task, before touching code.
 ---
 
 # Planning
@@ -70,7 +70,7 @@ Every task must include:
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `pnpm test -- --filter <package> <test-file>`
+Run: `pnpm test path/to/test.test.ts`
 Expected: FAIL
 
 - [ ] **Step 3: Write minimal implementation**
@@ -81,7 +81,7 @@ Expected: FAIL
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `pnpm test -- --filter <package> <test-file>`
+Run: `pnpm test path/to/test.test.ts`
 Expected: PASS
 ````
 
