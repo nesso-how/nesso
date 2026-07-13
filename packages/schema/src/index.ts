@@ -71,8 +71,8 @@ export function serialize<
   )
 }
 
-function asRecord(value: unknown): Record<string, unknown> | null {
-  return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : null
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
 }
 
 /**
@@ -87,47 +87,81 @@ export function deserialize<
   M extends Record<string, unknown> = Record<string, unknown>,
 >(json: string): GraphDocument<NC, RE, M> {
   const data: unknown = JSON.parse(json)
-  const root = asRecord(data)
-  if (!root || !Array.isArray(root.concepts) || !Array.isArray(root.relations)) {
+  if (!isRecord(data) || !Array.isArray(data.concepts) || !Array.isArray(data.relations)) {
     throw new Error('Invalid Nesso graph document: missing concepts or relations array')
   }
-  if (typeof root.version === 'number' && root.version !== GRAPH_FORMAT_VERSION) {
-    throw new Error(`Unsupported Nesso graph document version: ${root.version}`)
+  if (typeof data.version === 'number' && data.version !== GRAPH_FORMAT_VERSION) {
+    throw new Error(`Unsupported Nesso graph document version: ${data.version}`)
   }
-  const concepts = root.concepts.map((value, i) => {
-    const concept = asRecord(value)
+  const rawConcepts: unknown[] = data.concepts
+  const concepts: GraphConcept<NC>[] = rawConcepts.map((value: unknown, i: number) => {
     if (
-      !concept ||
-      typeof concept.id !== 'string' ||
-      concept.id === '' ||
-      typeof concept.label !== 'string' ||
-      typeof concept.x !== 'number' ||
-      !Number.isFinite(concept.x) ||
-      typeof concept.y !== 'number' ||
-      !Number.isFinite(concept.y)
+      !isRecord(value) ||
+      typeof value.id !== 'string' ||
+      value.id === '' ||
+      typeof value.label !== 'string' ||
+      typeof value.x !== 'number' ||
+      !Number.isFinite(value.x) ||
+      typeof value.y !== 'number' ||
+      !Number.isFinite(value.y)
     ) {
       throw new Error(
         `Invalid Nesso graph document: concept ${i} is missing a valid id, label, or position`,
       )
     }
-    return concept
+    const conceptData: NC | undefined = value.data as NC | undefined
+    return {
+      id: value.id,
+      label: value.label,
+      x: value.x,
+      y: value.y,
+      ...(conceptData !== undefined && { data: conceptData }),
+    } as GraphConcept<NC>
   })
-  const relations = root.relations.map((value, i) => {
-    const relation = asRecord(value)
+  const rawRelations: unknown[] = data.relations
+  const relations: GraphRelation<RE>[] = rawRelations.map((value: unknown, i: number) => {
     if (
-      !relation ||
-      typeof relation.id !== 'string' ||
-      typeof relation.source !== 'string' ||
-      typeof relation.target !== 'string'
+      !isRecord(value) ||
+      typeof value.id !== 'string' ||
+      typeof value.source !== 'string' ||
+      typeof value.target !== 'string'
     ) {
       throw new Error(`Invalid Nesso graph document: relation ${i} is missing id, source or target`)
     }
-    return relation
+    const relationData: RE | undefined = value.data as RE | undefined
+    return {
+      id: value.id,
+      source: value.source,
+      target: value.target,
+      ...(relationData !== undefined && { data: relationData }),
+    } as GraphRelation<RE>
   })
+  const name: string = typeof data.name === 'string' ? data.name : ''
+  const docId: string | undefined = typeof data.id === 'string' ? data.id : undefined
+  const updatedAt: number | undefined =
+    typeof data.updatedAt === 'number' ? data.updatedAt : undefined
+  let vocabulary: { id: string; version: string } | undefined
+  const vocabValue: unknown = data.vocabulary
+  if (
+    isRecord(vocabValue) &&
+    typeof vocabValue.id === 'string' &&
+    typeof vocabValue.version === 'string'
+  ) {
+    vocabulary = { id: vocabValue.id, version: vocabValue.version }
+  }
+  let meta: M | undefined
+  const metaValue: unknown = data.meta
+  if (metaValue !== undefined) {
+    meta = metaValue as M
+  }
   return {
-    ...root,
     version: GRAPH_FORMAT_VERSION,
+    ...(vocabulary !== undefined && { vocabulary }),
+    ...(docId !== undefined && { id: docId }),
+    ...(updatedAt !== undefined && { updatedAt }),
+    name,
     concepts,
     relations,
-  } as unknown as GraphDocument<NC, RE, M>
+    ...(meta !== undefined && { meta }),
+  }
 }
