@@ -16,7 +16,7 @@ The canonical rules under [`.rules/`](.) are the single source of truth. OpenCod
 
 ### Skills and subagents
 
-Skills live at `.opencode/skills/<name>/SKILL.md`; subagents at `.opencode/agents/<name>.md`. Each carries valid frontmatter. A skill and a subagent may cover related ground (e.g. the `reviewing` skill dispatches the `nesso-reviewer` subagent); that is composition, not duplication.
+Skills live at `.opencode/skills/<name>/SKILL.md`; subagents at `.opencode/agents/<name>.md`. Each carries valid frontmatter. A skill and a subagent may cover related ground (e.g. the `reviewing` skill dispatches the `guard-reviewer` and `quality-reviewer` subagents); that is composition, not duplication. Primary agents (e.g. `brainstorm`, `fix`, `work`) are also defined in `.opencode/agents/`.
 
 When creating or editing a skill, always load **`writing-skills`** first. When creating or editing a subagent, always load **`writing-agents`** first (when available in context). These skills enforce the structure and quality rules that keep the harness coherent.
 

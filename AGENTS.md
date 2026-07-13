@@ -15,24 +15,32 @@ Monorepo: `src/` (app) + `packages/` (`@nesso-how/*`). Desktop shell is optional
 
 ## Development workflow
 
-For any non-trivial task, load the **`workflow`** skill first — it defines the 5-phase flow (brainstorming → planning → execution → review → documentation), routes each phase to the right skill, and enforces Nesso's constraints throughout. Not every task needs all five phases; the skill sizes the flow to the task.
+For any non-trivial task, switch to the **`work`** agent — it orchestrates the 5-phase flow (brainstorm/plan → build → review → documentation), dispatches subagents for each phase, and enforces Nesso's constraints. Starting points: `brainstorm` for features, `fix` for bugs, then `work` for everything else.
 
 Available skills (`.opencode/skills/`):
 
 | Skill           | Purpose                                                         |
 | --------------- | --------------------------------------------------------------- |
-| `workflow`      | Bootstrap — 5-phase flow routing and constraint checklist       |
-| `brainstorming` | Design exploration before any implementation                    |
-| `planning`      | Bite-sized implementation plans from approved designs           |
-| `building`      | RED-GREEN-REFACTOR TDD with Nesso test patterns                 |
-| `reviewing`     | Pre-PR orchestrator (preflight + semantic review + code review) |
+| `reviewing`     | Pre-PR orchestrator (guard-reviewer + quality-reviewer parallel) |
 | `preflight`     | Local CI parity checks                                          |
 | `create-pr`     | Publish a prepared PR on GitHub                                 |
 | `create-issue`  | Draft and publish a GitHub issue                                |
 | `release`       | Cut a new release                                               |
-| `harness-check` | Coherence sweep of the agent harness                            |
+| `check-harness` | Coherence sweep of the agent harness                            |
 
-Skills referenced by `workflow` that are not yet created: `systematic-debugging`, `verification`. The workflow skill degrades gracefully — when a referenced skill is missing, it falls back to describing the phase inline.
+Skills referenced by `work` that are not yet created: `verification`. The work agent degrades gracefully — when a referenced component is missing, it describes the phase inline.
+
+Available agents (`.opencode/agents/`):
+
+| Agent              | Mode     | Purpose                                                    |
+| ------------------ | -------- | ---------------------------------------------------------- |
+| `brainstorm`       | primary  | Interactive design exploration (replaces brainstorming skill) |
+| `fix`              | primary  | Bug root-cause forensic analysis (replaces bug-triage skill)  |
+| `work`             | primary  | Post-issue orchestrator — planning through PR (replaces workflow skill) |
+| `plan`             | subagent | Implementation plan from approved issue (dispatched by work)  |
+| `build`            | subagent | TDD execution per task (dispatched by work)                |
+| `guard-reviewer`   | subagent | Nesso semantic constraint guard (dispatched by reviewing)  |
+| `quality-reviewer` | subagent | Universal code quality review (dispatched by reviewing)    |
 
 ## Area rules
 

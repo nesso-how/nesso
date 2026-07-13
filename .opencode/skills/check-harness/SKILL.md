@@ -1,5 +1,5 @@
 ---
-name: harness-check
+name: check-harness
 description: Use after restructuring the harness or before a PR that touches it. Deliberate coherence sweep against `.rules/harness.md` — verifies the invariants hold (rules ↔ AGENTS.md agreement, link resolution, skill validity). Manual-only; read-only by default, `--fix` applies mechanical fixes to the working tree.
 disable-model-invocation: true
 ---

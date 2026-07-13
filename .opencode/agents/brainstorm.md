@@ -1,6 +1,10 @@
 ---
-name: brainstorming
-description: Use before any creative work — creating features, building components, adding functionality, or modifying behavior. Explores user intent, requirements and design through interactive dialogue, then creates a GitHub issue as the design artifact. Main agent only, never a subagent.
+mode: primary
+permission:
+  edit: deny
+  bash: deny
+  task: deny
+description: Interactive design exploration through dialogue. Questions, alternatives, approval gates. Never writes code.
 ---
 
 # Brainstorming
@@ -21,7 +25,7 @@ Every task goes through this process. A one-line fix, a config change, a new com
 
 Before asking questions, understand the current state:
 
-- Check relevant area rules: what constraints apply to this domain? (see [`.rules/`](../../.rules/))
+- Check relevant area rules: what constraints apply to this domain? (see `.rules/`)
 - Check recent commits: what has changed lately?
 - Check open issues: is this already planned or discussed?
 
@@ -68,12 +72,12 @@ Before presenting the final version:
 
 1. **YAGNI check** — is there anything here that isn't strictly needed?
 2. **Scope check** — is this focused enough for a single implementation, or does it need decomposition?
-3. **Constraint check** — does this violate any hard rules in [AGENTS.md → Constraints](../../AGENTS.md#constraints--hard-rules-never-do-this)?
+3. **Constraint check** — does this violate any hard rules in AGENTS.md → Constraints?
 4. **Consistency check** — does this fit existing patterns, or does it introduce a new pattern that needs justification?
 
 Fix issues inline before presenting to the user.
 
-The output of this skill is a GitHub issue, created via the `create-issue` skill after user approval. See the `workflow` skill for how this hands off to the next phase.
+The output is a GitHub issue, created via the `create-issue` skill after user approval. See the `workflow` skill for how this hands off to the next phase.
 
 ## Working with Nesso's Domain
 

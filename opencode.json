@@ -13,5 +13,28 @@
       "type": "remote",
       "url": "https://mcp.context7.com/mcp"
     }
+  },
+  "agent": {
+    "brainstorm": {
+      "model": "opencode-go/glm-5.2"
+    },
+    "fix": {
+      "model": "opencode-go/deepseek-v4-pro"
+    },
+    "guard-reviewer": {
+      "model": "opencode-go/deepseek-v4-pro"
+    },
+    "quality-reviewer": {
+      "model": "opencode-go/glm-5.2"
+    },
+    "work": {
+      "model": "opencode-go/deepseek-v4-pro"
+    },
+    "plan": {
+      "model": "opencode-go/glm-5.2"
+    },
+    "build": {
+      "model": "opencode-go/deepseek-v4-flash"
+    }
   }
 }
