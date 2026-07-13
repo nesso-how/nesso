@@ -102,7 +102,7 @@ Fix issues inline.
 Present the plan to the user. After approval, the session can:
 
 - **End here** — the plan is the handoff artifact. Pick up in a new session at execution.
-- **Flow into execution** — hand off to the `tdd` skill for task-by-task implementation.
+- **Flow into execution** — hand off to the `building` skill for task-by-task implementation.
 
 ## Nesso-Specific Patterns
 

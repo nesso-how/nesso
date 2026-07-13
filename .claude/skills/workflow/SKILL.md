@@ -35,13 +35,13 @@ flowchart LR
   R -->|critical findings| P
 ```
 
-| Phase            | Skill                                 | Output              | Context                                           | Gate                                                   |
-| ---------------- | ------------------------------------- | ------------------- | ------------------------------------------------- | ------------------------------------------------------ |
-| 1. Brainstorming | `brainstorming` + `create-issue`      | GitHub issue        | task description, codebase structure, graph model | Human (user approves design)                           |
-| 2. Planning      | `planning`                            | Implementation plan | approved issue, codebase, conventions             | Human (user approves plan)                             |
-| 3. Execution     | `tdd` + `subagent-driven-development` | Code + tests        | plan, codebase, test patterns                     | Agent verdict (TDD green) + automated (lint/typecheck) |
-| 4. Review        | `nesso-review`                        | Verdict             | diff, plan, constraints                           | Agent verdict (nesso-reviewer) + automated (preflight) |
-| 5. Documentation | `verification`                        | Updated docs        | diff, rules, docs/MCP parity                      | Automated (hooks + checks)                             |
+| Phase            | Skill                            | Output              | Context                                           | Gate                                                   |
+| ---------------- | -------------------------------- | ------------------- | ------------------------------------------------- | ------------------------------------------------------ |
+| 1. Brainstorming | `brainstorming` + `create-issue` | GitHub issue        | task description, codebase structure, graph model | Human (user approves design)                           |
+| 2. Planning      | `planning`                       | Implementation plan | approved issue, codebase, conventions             | Human (user approves plan)                             |
+| 3. Execution     | `building`                       | Code + tests        | plan, codebase, test patterns                     | Agent verdict (TDD green) + automated (lint/typecheck) |
+| 4. Review        | `nesso-review`                   | Verdict             | diff, plan, constraints                           | Agent verdict (nesso-reviewer) + automated (preflight) |
+| 5. Documentation | `verification`                   | Updated docs        | diff, rules, docs/MCP parity                      | Automated (hooks + checks)                             |
 
 ### When a review fails → back to Planning
 
@@ -136,7 +136,7 @@ Area rules are in [`.rules/`](../../.rules/) — load on demand when the task to
 
 When multiple skills apply, process skills come first — they set the approach, then implementation skills carry it out:
 
-- "Let's build X" → `brainstorming` first, then `planning`, then `tdd`.
+- "Let's build X" → `brainstorming` first, then `planning`, then `building`.
 - "Fix this bug" → `systematic-debugging` first, then domain skills.
 - "Review my changes" → `nesso-review` (which dispatches preflight + nesso-reviewer + code-review).
 
