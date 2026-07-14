@@ -22,12 +22,12 @@ When creating or editing a skill, always load **`writing-skills`** first. When c
 
 ### Construct selection
 
-| Construct | When to use | When NOT to use |
-|---|---|---|
-| **Rule** (`.rules/*.md`) | Constraints, invariants, domain knowledge that must hold across every edit in an area. Loaded on demand via the Touch → update table in AGENTS.md. Rules define "what must be true," not "how to do it." | Step-by-step procedures (→ skill), persistent personas (→ agent), deterministic checks (→ script). |
-| **Skill** (`.opencode/skills/`) | Reusable procedure that needs AI judgment — a workflow loaded into any agent's context on demand. Portable: no own permissions or model. | Always-on constraints (→ rule), work needing its own permissions/model (→ agent), deterministic work (→ script). |
-| **Agent** (`.opencode/agents/`) | Persistent persona with its own permissions, model, and mode (`primary` / `subagent` / `all`). Primary: user selects. Subagent: dispatched by a primary. | One-off procedures (→ skill), constraints that apply everywhere (→ rule). |
-| **Script** (`scripts/`) | Deterministic, repeatable work — no AI judgment needed. Runs identically every time, zero token cost. | Anything needing interpretation, judgment, or context-aware decisions. |
+| Construct                       | When to use                                                                                                                                                                                              | When NOT to use                                                                                                  |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| **Rule** (`.rules/*.md`)        | Constraints, invariants, domain knowledge that must hold across every edit in an area. Loaded on demand via the Touch → update table in AGENTS.md. Rules define "what must be true," not "how to do it." | Step-by-step procedures (→ skill), persistent personas (→ agent), deterministic checks (→ script).               |
+| **Skill** (`.opencode/skills/`) | Reusable procedure that needs AI judgment — a workflow loaded into any agent's context on demand. Portable: no own permissions or model.                                                                 | Always-on constraints (→ rule), work needing its own permissions/model (→ agent), deterministic work (→ script). |
+| **Agent** (`.opencode/agents/`) | Persistent persona with its own permissions, model, and mode (`primary` / `subagent` / `all`). Primary: user selects. Subagent: dispatched by a primary.                                                 | One-off procedures (→ skill), constraints that apply everywhere (→ rule).                                        |
+| **Script** (`scripts/`)         | Deterministic, repeatable work — no AI judgment needed. Runs identically every time, zero token cost.                                                                                                    | Anything needing interpretation, judgment, or context-aware decisions.                                           |
 
 Rules are not optional. Every harness surface is governed by a rule. When you create a new surface, you create or update the corresponding rule.
 

@@ -18,6 +18,7 @@ When a bug is reported with an unclear root cause, this agent replaces brainstor
 ### 1. Collect — Reproduce and bound the problem
 
 Reproduce the bug reliably. Capture:
+
 - Exact steps to trigger
 - Expected vs actual behaviour
 - Console errors, stack traces, screenshots
@@ -30,6 +31,7 @@ Bound the problem: which files, components, store slices, or API calls are invol
 ### 2. Trace — Map from symptom to root cause
 
 Follow the evidence backward from the symptom:
+
 - Start at the visible failure (the symptom)
 - Trace data flow and control flow backward through the delimited surface
 - Question every assumption — the bug exists because one of them is wrong
@@ -43,6 +45,7 @@ Follow the evidence backward from the symptom:
 ### 3. Explain — Formulate a verified explanation
 
 Write a one-paragraph explanation of the root cause:
+
 - What went wrong (the defect)
 - Why it went wrong (the mechanism)
 - Why it wasn't caught (missed by tests? no guard? implicit assumption?)
@@ -54,6 +57,7 @@ Validate the explanation against the evidence. If the evidence doesn't fully sup
 ### 4. Fix direction — Propose the fix, don't apply it
 
 Describe the fix at a high level:
+
 - What line/file/function needs to change
 - What the change should accomplish
 - What test should guard against regression

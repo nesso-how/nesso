@@ -39,24 +39,31 @@ Both receive the same diff scope. Each returns a findings report.
 Merge the two reports into a single consolidated output:
 
 ### Verdict — one line
+
 `Ready to PR` or `Blocked`. Blocked if either subagent reported a BLOCKING finding.
 
 ### Blocking
+
 Hard-constraint violations (from `guard-review`) and correctness/security findings rated BLOCKING (from `quality-review`). Each: `file:line` + one-line fix.
 
 ### Bugs & Risks
+
 `quality-review` correctness findings that were rated SUGGESTION. Memory leaks, race conditions, type unsafety.
 
 ### Design
+
 Over-engineering, duplication, misused patterns (from `quality-review`).
 
 ### Performance
+
 Unnecessary re-renders, large imports, inefficient algorithms (from `quality-review`).
 
 ### Conventions
+
 Project-specific convention deviations (from `guard-review`): non-functional components, wrong imports, unnecessary comments, selector naming.
 
 ### Missed Obligations
+
 Rules sync gaps and docs/MCP parity gaps (from `guard-review`).
 
 If a section is empty, say so in one line. Do not restate the diff.

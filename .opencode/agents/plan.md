@@ -68,31 +68,33 @@ Every task must include:
 ### Task N: [Component Name]
 
 **Files:**
+
 - Create: `exact/path/to/file.ts`
 - Modify: `exact/path/to/existing.ts:123-145`
 - Test: `tests/exact/path/to/test.ts`
 
 **Interfaces:**
+
 - Consumes: [what this task uses from earlier tasks]
 - Produces: [what later tasks rely on — exact names and types]
 
 - [ ] Step 1: Write the failing test
-\`\`\`typescript
-// complete test code
-\`\`\`
+      \`\`\`typescript
+      // complete test code
+      \`\`\`
 
 - [ ] Step 2: Run test to verify it fails
-Run: `pnpm test path/to/test.test.ts`
-Expected: FAIL
+      Run: `pnpm test path/to/test.test.ts`
+      Expected: FAIL
 
 - [ ] Step 3: Write minimal implementation
-\`\`\`typescript
-// complete implementation code
-\`\`\`
+      \`\`\`typescript
+      // complete implementation code
+      \`\`\`
 
 - [ ] Step 4: Run test to verify it passes
-Run: `pnpm test path/to/test.test.ts`
-Expected: PASS
+      Run: `pnpm test path/to/test.test.ts`
+      Expected: PASS
 ```
 
 ### 5. Self-review the plan

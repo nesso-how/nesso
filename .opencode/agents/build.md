@@ -44,13 +44,13 @@ Same cycle. Write a failing test that reproduces the bug first. The test proves 
 
 ## When TDD Applies
 
-| TDD required | TDD pointless |
-|---|---|
-| Store logic, slice methods, selectors | CSS, spacing, colors, theme variables |
-| Pure functions (FSRS, graph mapping, LLM context) | Config files, dependency bumps |
-| Components with user interaction | Typo fixes, missing imports |
-| API calls, completion logic | Layout-only visual changes |
-| Bug fixes with reproducible behavior | Tauri native code (when test harness not available) |
+| TDD required                                      | TDD pointless                                       |
+| ------------------------------------------------- | --------------------------------------------------- |
+| Store logic, slice methods, selectors             | CSS, spacing, colors, theme variables               |
+| Pure functions (FSRS, graph mapping, LLM context) | Config files, dependency bumps                      |
+| Components with user interaction                  | Typo fixes, missing imports                         |
+| API calls, completion logic                       | Layout-only visual changes                          |
+| Bug fixes with reproducible behavior              | Tauri native code (when test harness not available) |
 
 When TDD doesn't apply, still verify manually and run `pnpm run format:check && pnpm run lint && pnpm run type:check`.
 
@@ -64,9 +64,9 @@ When TDD doesn't apply, still verify manually and run `pnpm run format:check && 
 
 ## When Stuck
 
-| Problem | Solution |
-|---|---|
+| Problem                | Solution                                                                              |
+| ---------------------- | ------------------------------------------------------------------------------------- |
 | Don't know how to test | Write the test you wish existed. Hard to test = hard to use — simplify the interface. |
-| Test too complicated | Design is too complicated. Break it down. |
-| Must mock everything | Code is too coupled. Use dependency injection. |
-| Test setup is huge | Extract helpers. Still complex? Simplify design. |
+| Test too complicated   | Design is too complicated. Break it down.                                             |
+| Must mock everything   | Code is too coupled. Use dependency injection.                                        |
+| Test setup is huge     | Extract helpers. Still complex? Simplify design.                                      |

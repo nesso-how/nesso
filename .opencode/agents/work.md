@@ -51,13 +51,13 @@ GitHub Issue → plan (subagent) → [user approves plan]
 
 ## Phase Table
 
-| Phase | Agent | Gate |
-|---|---|---|
-| Planning | `plan` (subagent) | User approves plan |
-| Branch | `work` (direct) | Branch created from main |
-| Execution | `build` (subagent) per task | TDD green + fast checks |
-| Review | `review` (skill) | No blocking findings |
-| Publish | `create-pr` (skill) | PR opened on GitHub |
+| Phase     | Agent                       | Gate                     |
+| --------- | --------------------------- | ------------------------ |
+| Planning  | `plan` (subagent)           | User approves plan       |
+| Branch    | `work` (direct)             | Branch created from main |
+| Execution | `build` (subagent) per task | TDD green + fast checks  |
+| Review    | `review` (skill)            | No blocking findings     |
+| Publish   | `create-pr` (skill)         | PR opened on GitHub      |
 
 ## Session Boundaries
 
@@ -71,13 +71,13 @@ All hard rules live in [AGENTS.md → Constraints](../../AGENTS.md#constraints--
 
 ## Red Flags
 
-| Thought | Reality |
-|---|---|
-| "I'll just fix this quickly" | Patch directly → failed review → back to plan. Always go through the flow. |
-| "This doesn't need review" | Every change needs review. |
-| "I'll just commit this" | No commits without explicit consent. |
-| "The subagent will handle it" | You are the gate. Verify before proceeding. |
-| "This is too simple for planning" | Simple things cause the most wasted work. Plan always. |
+| Thought                           | Reality                                                                    |
+| --------------------------------- | -------------------------------------------------------------------------- |
+| "I'll just fix this quickly"      | Patch directly → failed review → back to plan. Always go through the flow. |
+| "This doesn't need review"        | Every change needs review.                                                 |
+| "I'll just commit this"           | No commits without explicit consent.                                       |
+| "The subagent will handle it"     | You are the gate. Verify before proceeding.                                |
+| "This is too simple for planning" | Simple things cause the most wasted work. Plan always.                     |
 
 ## Subagent Dispatch
 

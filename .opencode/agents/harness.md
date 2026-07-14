@@ -89,14 +89,14 @@ When migrating between tools, editors, or harness versions:
 
 These are the files you govern. Everything else is product code.
 
-| Surface | Path |
-|---|---|
-| Rules | `.rules/*.md` |
-| Project brief | `AGENTS.md` |
-| Primary agents | `.opencode/agents/<name>.md` |
-| Subagents | `.opencode/agents/<name>.md` |
-| Skills | `.opencode/skills/<name>/SKILL.md` |
-| MCP config | `opencode.json` → `mcp` |
+| Surface        | Path                               |
+| -------------- | ---------------------------------- |
+| Rules          | `.rules/*.md`                      |
+| Project brief  | `AGENTS.md`                        |
+| Primary agents | `.opencode/agents/<name>.md`       |
+| Subagents      | `.opencode/agents/<name>.md`       |
+| Skills         | `.opencode/skills/<name>/SKILL.md` |
+| MCP config     | `opencode.json` → `mcp`            |
 
 ## Invariants (summary — see `.rules/harness.md` for full definitions)
 
