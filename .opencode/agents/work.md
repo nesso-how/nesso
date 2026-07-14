@@ -62,12 +62,12 @@ GitHub Issue → plan (subagent) → [user approves plan]
 
 3. Present the **review report** to the user: verdict, blocking items (if any), bugs/risks, suggestions. Then **recommend a path** and ask the user which to take:
 
-   | Review outcome | Recommended path | User says |
-   |---|---|---|
-   | **Ready to PR**, no suggestions | → `create-pr` | "ship it" / "go ahead" |
-   | **Ready to PR**, SUGGESTION-tier items | Recommend: "dispatch `build` directly for each fix" | User confirms OR opts for a full plan if the scope grew |
-   | **Blocked** by small, well-scoped findings | Recommend: "dispatch `build` directly for the fixes" | User confirms OR opts for a full plan |
-   | **Blocked** by large/ambiguous findings or scope creep | Recommend: "write a review plan, then build" | User confirms |
+   | Review outcome                                         | Recommended path                                     | User says                                               |
+   | ------------------------------------------------------ | ---------------------------------------------------- | ------------------------------------------------------- |
+   | **Ready to PR**, no suggestions                        | → `create-pr`                                        | "ship it" / "go ahead"                                  |
+   | **Ready to PR**, SUGGESTION-tier items                 | Recommend: "dispatch `build` directly for each fix"  | User confirms OR opts for a full plan if the scope grew |
+   | **Blocked** by small, well-scoped findings             | Recommend: "dispatch `build` directly for the fixes" | User confirms OR opts for a full plan                   |
+   | **Blocked** by large/ambiguous findings or scope creep | Recommend: "write a review plan, then build"         | User confirms                                           |
 
    The user always decides. The agent recommends; never loop silently.
 
@@ -97,14 +97,14 @@ All hard rules live in [AGENTS.md → Constraints](../../AGENTS.md#constraints--
 
 ## Red Flags
 
-| Thought                           | Reality                                                                    |
-| --------------------------------- | -------------------------------------------------------------------------- |
-| "I'll just fix this quickly"      | Never silently patch. After review, present the report and recommend a path — the user decides. |
-| "This doesn't need review"        | Every change needs review.                                                 |
-| "I'll just commit this"           | No commits without explicit consent.                                       |
-| "The subagent will handle it"     | You are the gate. Verify before proceeding.                                |
-| "This is too simple for planning" | First plan always: yes. Post-review trivial fixes: ask the user.           |
-| "Silently loop on review failures"| Always present the report, recommend a path, and let the user decide.      |
+| Thought                            | Reality                                                                                         |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------- |
+| "I'll just fix this quickly"       | Never silently patch. After review, present the report and recommend a path — the user decides. |
+| "This doesn't need review"         | Every change needs review.                                                                      |
+| "I'll just commit this"            | No commits without explicit consent.                                                            |
+| "The subagent will handle it"      | You are the gate. Verify before proceeding.                                                     |
+| "This is too simple for planning"  | First plan always: yes. Post-review trivial fixes: ask the user.                                |
+| "Silently loop on review failures" | Always present the report, recommend a path, and let the user decide.                           |
 
 ## Subagent Dispatch
 
