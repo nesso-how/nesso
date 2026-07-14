@@ -81,14 +81,7 @@ The output is a GitHub issue, created via the `create-issue` skill after user ap
 
 ## Working with Nesso's Domain
 
-When brainstorming features for Nesso, consider:
-
-- **Graph model** — does this add new concept types, relation types, or edge categories? Check `.rules/graph-model.md`.
-- **Store** — does this change state shape, add slices, or modify persistence? Check `.rules/store.md`.
-- **Components** — does this add new UI patterns or modify existing ones? Check `.rules/components.md`.
-- **Theme** — does this affect visual encoding, palettes, or CSS variables? Check `.rules/theme.md`.
-- **Mentor** — does this change how Socrates reads the graph or generates questions? Check `.rules/mentor.md`.
-- **Workspace** — does this affect file sync, import/export, or persistence? Check `.rules/compatibility.md`.
+When brainstorming features for Nesso, load the relevant `.rules/` files for the domain you're touching. Use the **Touch → update** table in `AGENTS.md` to decide which rules apply. Do not hardcode rule content here.
 
 ## Key Principles
 

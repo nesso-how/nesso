@@ -37,6 +37,9 @@ Thumbs.db
 package-lock.json
 yarn.lock
 
+# Plans (ephemeral, per-session)
+.plans/
+
 # Test / coverage
 coverage
 

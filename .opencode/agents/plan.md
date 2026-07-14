@@ -12,6 +12,12 @@ Turn an approved GitHub issue into an implementation plan that a developer with 
 
 You are dispatched by the `work` agent. You receive a GitHub issue as input and return a plan. You do not interact with the user and you do not edit code.
 
+## Output
+
+Write the plan to `.plans/<issue-number>.md` (e.g. `.plans/42.md`). If the issue has no number, use a kebab-case slug derived from the title (e.g. `.plans/add-dark-mode.md`). Create `.plans/` if it doesn't exist. The file is gitignored — it's ephemeral, per-session.
+
+After writing, return a short summary: the file path, task count, and anything the user should decide before proceeding.
+
 ## Input
 
 A GitHub issue (provided by the work agent). Read it in full before planning. If the issue covers multiple independent subsystems, break into separate plans — one per subsystem. Each plan should produce working, testable software on its own.
@@ -92,14 +98,9 @@ Before returning to the work agent:
 
 Fix issues inline.
 
-## Nesso-Specific Patterns
+## Area rules
 
-- **State** — all mutations go through `useGraphStore` methods. Never push into arrays in place.
-- **Components** — functional components with inline styles. See `.rules/components.md`.
-- **Types** — centralized in `src/types/`. See `.rules/conventions.md`.
-- **Tests** — Vitest for unit/component, Playwright for e2e. See `.rules/testing.md`.
-- **Edges** — always `type: 'nesso'`. Never use default React Flow edge types.
-- **Colours** — CSS custom properties (`--cat-taxonomic`, etc.). Never hardcoded hex.
+When a task touches a domain, load the matching `.rules/` file for that domain before writing the task. The **Touch → update** table in `AGENTS.md` maps file paths to rules. Do not hardcode rules here — read them from source.
 
 ## Key Principles
 

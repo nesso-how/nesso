@@ -5,7 +5,7 @@ description: Use when the user asks to open, draft, update, or push a Nesso pull
 
 # Create a Nesso pull request
 
-Publishes or updates a **fully prepared** PR on GitHub — not implementation or review. **REQUIRED SUB-SKILL:** **`preflight`** (or **`reviewing`**) unless equivalent CI checks already passed.
+Publishes or updates a **fully prepared** PR on GitHub — not implementation or review. Assumes `preflight` and `review` have already passed; this skill only publishes.
 
 **Never skip the confirmation gate.** Recap title, four-section body, branch name, and any `Closes #N` lines; get explicit go-ahead before `git push`, `git push --force-with-lease`, or `gh pr create` / `gh pr edit` — even when the user said "open the PR". Per AGENTS.md → Git.
 

@@ -1,7 +1,6 @@
 ---
 name: release
 description: Use when the user asks to cut, ship, publish, or version-bump a release.
-disable-model-invocation: true
 ---
 
 # Cut a release

@@ -21,10 +21,10 @@
     "fix": {
       "model": "opencode-go/deepseek-v4-pro"
     },
-    "guard-reviewer": {
+    "guard-review": {
       "model": "opencode-go/deepseek-v4-pro"
     },
-    "quality-reviewer": {
+    "quality-review": {
       "model": "opencode-go/glm-5.2"
     },
     "work": {
@@ -37,9 +37,7 @@
       "model": "opencode-go/deepseek-v4-flash"
     },
     "harness": {
-      "model": "opencode-go/glm-5.2",
-      "top_p": 0.8,
-      "reasoningEffort": "high"
+      "model": "opencode/big-pickle"
     }
   }
 }
