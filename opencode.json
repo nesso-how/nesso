@@ -3,11 +3,18 @@
   "mcp": {
     "nesso": {
       "type": "local",
-      "command": ["node", "packages/mcp/dist/index.js"]
+      "command": [
+        "node",
+        "packages/mcp/dist/index.js"
+      ]
     },
     "tauri": {
       "type": "local",
-      "command": ["npx", "-y", "@hypothesi/tauri-mcp-server"]
+      "command": [
+        "npx",
+        "-y",
+        "@hypothesi/tauri-mcp-server"
+      ]
     },
     "context7": {
       "type": "remote",
@@ -28,7 +35,7 @@
       "model": "opencode-go/deepseek-v4-pro"
     },
     "work": {
-      "model": "opencode-go/glm-5.2"
+      "model": "opencode-go/deepseek-v4-pro"
     },
     "plan": {
       "model": "opencode-go/deepseek-v4-pro"
