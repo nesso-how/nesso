@@ -32,6 +32,15 @@ Read the files that will be affected. Understand existing patterns, naming conve
 - Existing similar implementations to follow patterns
 - Test infrastructure (`.rules/testing.md`) for the right test level
 
+### 1b. Derive maintenance tasks
+
+After identifying which files will change:
+
+- **Harness** — consult the **Touch → update** table in `AGENTS.md`. For each file path that matches a rule, generate a corresponding task to update that `.rules/*.md` file so its contents stay accurate.
+- **Documentation** — check if any task changes user-facing behaviour, flows, or concepts already covered in `docs/`, `README.md`, or package-level READMEs. If so, generate an update task for the specific page or file. Run `pnpm build` in `packages/mcp` if MCP stitching paths changed.
+
+These are regular tasks — same format, same verification. They run after the code tasks that produce the changes they document.
+
 ### 2. Map file structure
 
 Before defining tasks, map which files will be created or modified and what each is responsible for.
