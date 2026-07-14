@@ -87,12 +87,14 @@ export async function reconcileDiskWithIdb(
     const idb = idbById.get(id)
     if (
       !idb ||
-      diskRecord.updatedAt > idb.updatedAt ||
       idb.name !== diskRecord.name ||
-      // Equal timestamp but different content: the file was edited externally
-      // without bumping its embedded `updatedAt` (e.g. hand-edited in a text
-      // editor). The folder is the source of truth — pick the change up here,
-      // or the next in-app save would silently overwrite it.
+      // Content differs: the file was edited externally either with a bumped
+      // timestamp or without (e.g. hand-edited in a text editor). The folder
+      // is the source of truth — pick the change up here, or the next in-app
+      // save would silently overwrite it. A newer timestamp with identical
+      // content (self-healing name/id rewrite, or the app's own save before
+      // savedFingerprint updates) is NOT enough — it would cause false
+      // conflict detections in handleWatchEvent.
       !graphPersistEquals(
         {
           nodes: diskRecord.nodes,

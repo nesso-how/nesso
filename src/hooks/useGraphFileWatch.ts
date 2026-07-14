@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 import { useEffect, useRef } from 'react'
+import { mergeGraphDisplay } from '@/types/graph'
 import { useGraphStore } from '@/store'
 import { graphContentFingerprint } from '@/lib/graphPersist'
 import { dbDeleteGraph, dbListGraphs, dbSaveGraph } from '@/store/db'
@@ -129,14 +130,28 @@ export function useGraphFileWatch() {
         const changedFromDisk = new Set(toPersist.map((r) => r.id))
         if (!changedFromDisk.has(fresh.currentGraphId)) return
 
-        const localFp = graphContentFingerprint(fresh.nodes, fresh.edges, fresh.graphDisplay)
         const active = records.find((r) => r.id === fresh.currentGraphId)
         if (!active) return
 
+        // Compare the freshly-synced disk fingerprint against what we last
+        // saved/loaded. If they match, this is a spurious notification —
+        // e.g. a self-healing name/id rewrite that bumped updatedAt without
+        // changing content, or a name-only change. Skip it entirely.
+        const diskFingerprint = graphContentFingerprint(
+          active.nodes,
+          active.edges,
+          mergeGraphDisplay(active.display, fresh.settings),
+        )
+        if (diskFingerprint === fresh.savedFingerprint) return
+
+        // Disk content actually diverges from what we last saved/loaded.
+        // If the user also has unsaved local changes, it's a real conflict.
+        const localFp = graphContentFingerprint(fresh.nodes, fresh.edges, fresh.graphDisplay)
         if (localFp !== fresh.savedFingerprint) {
           fresh.setExternalFileConflict(true)
           return
         }
+        // Local is clean — safe to auto-reload the disk content.
         await fresh.loadGraph(active.id)
       } finally {
         handlingRef.current = false
