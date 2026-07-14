@@ -16,9 +16,20 @@ The canonical rules under [`.rules/`](.) are the single source of truth. OpenCod
 
 ### Skills and subagents
 
-Skills live at `.opencode/skills/<name>/SKILL.md`; subagents at `.opencode/agents/<name>.md`. Each carries valid frontmatter. A skill and a subagent may cover related ground (e.g. the `reviewing` skill dispatches the `guard-reviewer` and `quality-reviewer` subagents); that is composition, not duplication. Primary agents (e.g. `brainstorm`, `fix`, `work`) are also defined in `.opencode/agents/`.
+Skills live at `.opencode/skills/<name>/SKILL.md`; subagents at `.opencode/agents/<name>.md`. Each carries valid frontmatter. A skill and a subagent may cover related ground — that is composition, not duplication. Primary agents (e.g. `brainstorm`, `fix`, `harness`, `work`) are also defined in `.opencode/agents/`.
 
-When creating or editing a skill, always load **`writing-skills`** first. When creating or editing a subagent, always load **`writing-agents`** first (when available in context). These skills enforce the structure and quality rules that keep the harness coherent.
+When creating or editing a skill, always load **`writing-skills`** first. When creating or editing a subagent or primary agent, always load **`writing-agents`** first. These skills enforce the structure and quality rules that keep the harness coherent.
+
+### Construct selection
+
+| Construct | When to use | When NOT to use |
+|---|---|---|
+| **Rule** (`.rules/*.md`) | Constraints, invariants, domain knowledge that must hold across every edit in an area. Loaded on demand via the Touch → update table in AGENTS.md. Rules define "what must be true," not "how to do it." | Step-by-step procedures (→ skill), persistent personas (→ agent), deterministic checks (→ script). |
+| **Skill** (`.opencode/skills/`) | Reusable procedure that needs AI judgment — a workflow loaded into any agent's context on demand. Portable: no own permissions or model. | Always-on constraints (→ rule), work needing its own permissions/model (→ agent), deterministic work (→ script). |
+| **Agent** (`.opencode/agents/`) | Persistent persona with its own permissions, model, and mode (`primary` / `subagent` / `all`). Primary: user selects. Subagent: dispatched by a primary. | One-off procedures (→ skill), constraints that apply everywhere (→ rule). |
+| **Script** (`scripts/`) | Deterministic, repeatable work — no AI judgment needed. Runs identically every time, zero token cost. | Anything needing interpretation, judgment, or context-aware decisions. |
+
+Rules are not optional. Every harness surface is governed by a rule. When you create a new surface, you create or update the corresponding rule.
 
 ### MCP is declared in `opencode.json`
 
@@ -26,7 +37,7 @@ OpenCode declares MCP servers under `mcp` in `opencode.json`. A repo-shipped ser
 
 ### Prefer scripts over skills for deterministic work
 
-If a recurring task can run as a plain deterministic script (no AI judgment needed), write a script — not a skill. Skills burn tokens and produce ambiguous results on work that a script does exactly once. Skills are for tasks that need judgment: choosing, weighing, routing, reviewing. Scripts are for tasks that are already decided: bumping versions, formatting, running fixed checklists. `scripts/release.mjs` and `scripts/stryker/areas.mjs` are examples of this principle.
+If a task needs no AI judgment, write a script — not a skill. Skills burn tokens and produce ambiguous results on work that a script does exactly once.
 
 ### Links and source references (resolution invariant)
 

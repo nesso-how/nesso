@@ -35,6 +35,11 @@
     },
     "build": {
       "model": "opencode-go/deepseek-v4-flash"
+    },
+    "harness": {
+      "model": "opencode-go/glm-5.2",
+      "top_p": 0.8,
+      "reasoningEffort": "high"
     }
   }
 }

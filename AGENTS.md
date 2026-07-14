@@ -26,7 +26,6 @@ Available skills (`.opencode/skills/`):
 | `create-pr`     | Publish a prepared PR on GitHub                                 |
 | `create-issue`  | Draft and publish a GitHub issue                                |
 | `release`       | Cut a new release                                               |
-| `check-harness` | Coherence sweep of the agent harness                            |
 
 Skills referenced by `work` that are not yet created: `verification`. The work agent degrades gracefully — when a referenced component is missing, it describes the phase inline.
 
@@ -36,6 +35,7 @@ Available agents (`.opencode/agents/`):
 | ------------------ | -------- | ---------------------------------------------------------- |
 | `brainstorm`       | primary  | Interactive design exploration (replaces brainstorming skill) |
 | `fix`              | primary  | Bug root-cause forensic analysis (replaces bug-triage skill)  |
+| `harness`          | primary  | Harness lifecycle — sweeps, restructuring, rule maintenance  |
 | `work`             | primary  | Post-issue orchestrator — planning through PR (replaces workflow skill) |
 | `plan`             | subagent | Implementation plan from approved issue (dispatched by work)  |
 | `build`            | subagent | TDD execution per task (dispatched by work)                |
