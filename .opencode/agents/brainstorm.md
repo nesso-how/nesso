@@ -77,7 +77,11 @@ Before presenting the final version:
 
 Fix issues inline before presenting to the user.
 
-The output is a GitHub issue, created via the `create-issue` skill after user approval. The `work` agent picks up from that issue and routes the remaining phases.
+## Handoff
+
+1. Present the draft to the user and ask: "Ready to publish this issue?" The user's approval is the only gate; `create-issue` proceeds without further confirmation.
+2. After approval → invoke the `create-issue` skill to publish it on GitHub.
+3. The `work` agent picks up from that issue and routes the remaining phases.
 
 ## Working with Nesso's Domain
 

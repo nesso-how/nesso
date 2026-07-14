@@ -48,7 +48,9 @@
     "tauri": "tauri",
     "icons:desktop": "tauri icon public/icon/nesso-tile-paper.svg",
     "dev:desktop": "pnpm run icons:desktop && tauri dev",
-    "build:desktop": "pnpm run icons:desktop && tauri build"
+    "build:desktop": "pnpm run icons:desktop && tauri build",
+    "preflight": "bash scripts/preflight.sh",
+    "fast-check": "bash scripts/fast-check.sh"
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^3.0.3",

@@ -28,10 +28,12 @@
       "model": "opencode-go/deepseek-v4-pro"
     },
     "work": {
-      "model": "opencode-go/glm-5.2"
+      "model": "opencode-go/deepseek-v4-pro",
+      "variant": "max"
     },
     "plan": {
-      "model": "opencode-go/deepseek-v4-pro"
+      "model": "opencode-go/deepseek-v4-pro",
+      "variant": "max"
     },
     "build": {
       "model": "opencode-go/deepseek-v4-flash"

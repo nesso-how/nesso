@@ -90,9 +90,10 @@ A root cause report structured as a GitHub issue:
 
 Fix is the bug equivalent of brainstorm: both are pre-planning entry points that feed `planning` through a GitHub issue.
 
-1. The report is complete → invoke `create-issue` to publish it on GitHub.
-2. The issue is the handoff to `planning`.
-3. The session can end here or continue to planning with that issue.
+1. The report is complete → present it to the user and ask: "Ready to publish this issue?" The user's approval is the only gate; `create-issue` proceeds without further confirmation.
+2. After approval → invoke `create-issue` to publish it on GitHub.
+3. The issue is the handoff to `planning`.
+4. The session can end here or continue to planning with that issue.
 
 ```
 Feature: brainstorm → create-issue → planning
