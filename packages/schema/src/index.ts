@@ -128,8 +128,7 @@ export function deserialize<
     ) {
       throw new Error(`Invalid Nesso graph document: relation ${i} is missing id, source or target`)
     }
-    const relationType: string | undefined =
-      typeof value.type === 'string' ? value.type : undefined
+    const relationType: string | undefined = typeof value.type === 'string' ? value.type : undefined
     const relationData: RE | undefined = value.data as RE | undefined
     return {
       id: value.id,
