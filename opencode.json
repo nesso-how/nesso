@@ -3,18 +3,11 @@
   "mcp": {
     "nesso": {
       "type": "local",
-      "command": [
-        "node",
-        "packages/mcp/dist/index.js"
-      ]
+      "command": ["node", "packages/mcp/dist/index.js"]
     },
     "tauri": {
       "type": "local",
-      "command": [
-        "npx",
-        "-y",
-        "@hypothesi/tauri-mcp-server"
-      ]
+      "command": ["npx", "-y", "@hypothesi/tauri-mcp-server"]
     },
     "context7": {
       "type": "remote",
