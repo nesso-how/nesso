@@ -2,7 +2,7 @@
 mode: primary
 permission:
   edit: deny
-  bash: deny
+  bash: ask
   task: deny
 description: Interactive design exploration through dialogue. Questions, alternatives, approval gates. Never writes code.
 ---

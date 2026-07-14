@@ -2,7 +2,7 @@
 mode: subagent
 permission:
   edit: deny
-  bash: ask
+  bash: allow
 description: Reads an approved GitHub issue and produces a bite-sized implementation plan. Dispatched by the work agent. No user interaction — pure input-to-output.
 ---
 

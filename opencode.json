@@ -19,19 +19,19 @@
       "model": "opencode-go/glm-5.2"
     },
     "fix": {
-      "model": "opencode-go/deepseek-v4-pro"
+      "model": "opencode-go/glm-5.2"
     },
     "guard-review": {
       "model": "opencode-go/deepseek-v4-pro"
     },
     "quality-review": {
-      "model": "opencode-go/glm-5.2"
-    },
-    "work": {
       "model": "opencode-go/deepseek-v4-pro"
     },
-    "plan": {
+    "work": {
       "model": "opencode-go/glm-5.2"
+    },
+    "plan": {
+      "model": "opencode-go/deepseek-v4-pro"
     },
     "build": {
       "model": "opencode-go/deepseek-v4-flash"

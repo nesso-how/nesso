@@ -17,31 +17,6 @@ Monorepo: `src/` (app) + `packages/` (`@nesso-how/*`). Desktop shell is optional
 
 For any non-trivial task, switch to the **`work`** agent — it orchestrates the 5-phase flow (brainstorm/plan → build → review → documentation), dispatches subagents for each phase, and enforces Nesso's constraints. Starting points: `brainstorm` for features, `fix` for bugs, then `work` for everything else.
 
-Available skills (`.opencode/skills/`):
-
-| Skill           | Purpose                                                         |
-| --------------- | --------------------------------------------------------------- |
-| `review`         | Pre-PR orchestrator (guard-review + quality-review parallel) |
-| `preflight`     | Local CI parity checks                                          |
-| `create-pr`     | Publish a prepared PR on GitHub                                 |
-| `create-issue`  | Draft and publish a GitHub issue                                |
-| `release`       | Cut a new release                                               |
-
-Skills referenced by `work` that are not yet created: `verification`. The work agent degrades gracefully — when a referenced component is missing, it describes the phase inline.
-
-Available agents (`.opencode/agents/`):
-
-| Agent              | Mode     | Purpose                                                    |
-| ------------------ | -------- | ---------------------------------------------------------- |
-| `brainstorm`       | primary  | Interactive design exploration (replaces brainstorming skill) |
-| `fix`              | primary  | Bug root-cause forensic analysis (replaces bug-triage skill)  |
-| `harness`          | all      | Harness lifecycle — sweeps, restructuring, rule maintenance  |
-| `work`             | primary  | Post-issue orchestrator — planning through PR (replaces workflow skill) |
-| `plan`             | subagent | Implementation plan from approved issue (dispatched by work)  |
-| `build`            | subagent | TDD execution per task (dispatched by work)                |
-| `guard-review`     | subagent | Nesso semantic constraint guard (dispatched by review)  |
-| `quality-review`   | subagent | Universal code quality review (dispatched by review)    |
-
 ## Area rules
 
 Canonical in `.rules/` — read the full file when relevant:
