@@ -14,8 +14,8 @@
 
 ## State
 
-- Graph data (nodes, edges, selection, settings) belongs in the Zustand store, not in local `useState`.
-- Local state is fine for purely UI concerns: panel open/close, draft input text, animation triggers.
+- Graph data (nodes, edges, selection, settings) belongs in the Zustand store, not in local `useState`. [components.md](components.md) and [store.md](store.md) defer here.
+- Local state is fine for purely UI concerns: panel open/close, draft input text, animation triggers. Mentor chat history is also local — per AGENTS.md → Constraints.
 
 ## Naming
 

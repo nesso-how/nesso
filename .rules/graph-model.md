@@ -40,7 +40,7 @@ interface NessoGraphDocument {
 }
 ```
 
-Two version axes, deliberately separate: `version` is the **envelope shape** (gated by `deserialize` in schema), `vocabulary.version` is the **semantic vocabulary** (`VOCABULARY.version`, independent of the npm package version). `@nesso-how/schema` is vocabulary-agnostic: it round-trips `concepts`/`relations` with opaque `data` and validates structure only. `@nesso-how/vocab-learning` closes the generics and validates `relation.type`. **FSRS fields are not in the file** — they live in the app’s IndexedDB `reviewState` store (keyed `${graphId}:${nodeId}`) and merge at load via `documentToGraph`.
+Two version axes, deliberately separate: `version` is the **envelope shape** (gated by `deserialize` in schema), `vocabulary.version` is the **semantic vocabulary** (`VOCABULARY.version`, independent of the npm package version). `@nesso-how/schema` is vocabulary-agnostic: it round-trips `concepts`/`relations` with opaque `data` and validates structure only. `@nesso-how/vocab-learning` closes the generics and validates `relation.type`. FSRS is runtime-only on nodes — not in graph files; persistence split — see [store.md](store.md) → Persistence.
 
 ## Node data (`ConceptNodeData`)
 
@@ -64,7 +64,7 @@ interface ConceptNodeData extends LearningNodeParams {
 }
 ```
 
-`LearningNodeParams` and `defaultConceptReviewFields()` are defined in `@nesso-how/vocab-learning`. At runtime, `ConceptNodeData` still carries FSRS on each node for ReviewMode; persistence splits content (file) from review (`reviewState` in IndexedDB). Use `nodeToCard()` (app, `src/types/settings.ts`) to build a ts-fsrs `Card` from persisted fields.
+`LearningNodeParams` and `defaultConceptReviewFields()` are defined in `@nesso-how/vocab-learning`. Use `nodeToCard()` (app, `src/types/settings.ts`) to build a ts-fsrs `Card` from persisted fields.
 
 ## Relation categories and types
 
@@ -111,4 +111,4 @@ Category colours are CSS custom properties (`--cat-taxonomic`, `--cat-structural
 
 ## React Flow edge type
 
-All edges in the store use `type: 'nesso'`, rendered by `NessoEdge` from `@nesso-how/graph` (default in `NessoGraph`). Never use the default React Flow edge types — they do not carry glyph or line-style rendering.
+Per AGENTS.md → Constraints (**Never use default React Flow edge types**). All edges use `type: 'nesso'`, rendered by `NessoEdge` from `@nesso-how/graph` (default in `NessoGraph`).

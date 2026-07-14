@@ -102,6 +102,6 @@ Use these in components — do not inline the selection look-up logic.
 
 ## Rules
 
-- Do not add local `useState` for data that belongs in the store (node text, edge type, selection).
+- Per [conventions.md](conventions.md) → State — no local `useState` for graph data (node text, edge type, selection).
 - New store fields go in the appropriate slice; add them to `GraphState` via the slice interface in `state.ts`.
 - `graph-editing` keeps nodes+edges+selection+history+clipboard together — they share `pushHistory`.

@@ -1,5 +1,5 @@
 /**
- * Cut a Nesso release: bump the synced version across all ten version files,
+ * Cut a Nesso release: bump the synced version across all nine version files,
  * roll CHANGELOG [Unreleased] into a dated section, refresh the lockfile, and verify.
  * Stops before publishing — the tag push (the irreversible, public step) stays manual.
  *

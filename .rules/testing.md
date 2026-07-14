@@ -54,7 +54,7 @@ The workspace layer (`src/lib/workspace/**`, `src/store/db.ts`) is the most regr
 
 ## CI
 
-`pnpm test:coverage` runs as a required step in `.github/workflows/ci.yml`, gating PRs alongside `format:check`, `lint`, and `build`. Package `dist` is in place because the prior `pnpm install --frozen-lockfile` step runs `prepare`.
+`pnpm test:coverage` runs as a required step in `.github/workflows/ci.yml`, gating PRs alongside the checks described in [static-analysis](static-analysis.md). Package `dist` is in place because the prior `pnpm install --frozen-lockfile` step runs `prepare`.
 
 ### Coverage thresholds (ratchet)
 

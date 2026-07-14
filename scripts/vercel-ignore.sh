@@ -40,7 +40,6 @@ app)
     ':(exclude)src-tauri'
     ':(exclude)packages/mcp'
     ':(exclude).github'
-    ':(exclude).cursor'
     ':(exclude).husky'
     ':(exclude,glob)*.md'
     ':(exclude)LICENSE'

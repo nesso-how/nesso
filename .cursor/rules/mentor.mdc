@@ -1,9 +1,0 @@
----
-description: Socratic AI mentor integration — MentorPanel, system prompt, AI API usage
-globs: src/components/mentor/MentorPanel.tsx,src/llm/completion.ts,src/llm/context.ts
-alwaysApply: false
----
-
-Canonical content lives in [`.rules/mentor.md`](../../.rules/mentor.md). Edit that file, not this wrapper.
-
-@.rules/mentor.md

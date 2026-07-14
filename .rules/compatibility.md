@@ -1,8 +1,8 @@
 # Compatibility
 
-Nesso is in alpha (`0.1.x`). The hard rule **no backwards-compatibility code while in alpha** is in force: persisted data created by older alpha builds may break, and that is acceptable. Do not add migration shims, legacy fallbacks, or `oldName ?? newName` coercions for data at rest. Update seeds/fixtures and call sites directly and break cleanly.
+Alpha stance: per AGENTS.md → Constraints (**No backwards-compatibility code while in alpha**). Persisted data from older alpha builds may break.
 
-This file documents the **contracts** that compatibility work will eventually formalize — the migration ladders themselves are deferred to the first beta tag.
+This file documents the **contracts** compatibility work will eventually formalize — migration ladders are deferred to the first beta tag.
 
 ## Three contracts
 
@@ -34,16 +34,13 @@ Two distinctions that matter:
 - **IDB schema vs IDB content.** `db.ts` declares the current _object stores_ via `idb`'s `upgrade` callback. This is **idempotent bootstrap** ("ensure these stores exist"), **not** a migration ladder: IndexedDB mandates a version number + upgrade transaction to create stores, but the callback carries no version history and migrates no data. It does **not** version the _shape_ of `GraphRecord` or `reviewState` records — a record-shape change is not covered.
 - **File ≠ what the user loaded.** On web, IndexedDB `graphs` is authoritative, not the file. A vocabulary change at beta must migrate **three** runtime entry points that bypass `deserialize`: IDB load (`graph-management` `loadGraph`), bundled seeds (`seedGraph`), and the file path (`documentToGraph`). Those three are not funnelled through one normalizer today — unifying them is the beta-time refactor (no migration logic is built in alpha).
 
-## Two version axes on graph files
+## Version axes on graph files
 
-- **`version` (`GRAPH_FORMAT_VERSION`)** — envelope shape (`concepts`/`relations`, top-level keys), owned by `@nesso-how/schema`. `deserialize` currently throws on any version mismatch (no ladder yet). Bump only when the envelope shape changes.
-- **`vocabulary.version`** — semantic vocabulary (`@nesso-how/vocab-learning` relation ids, node params, display). Independent of npm package version. Currently round-tripped but not re-read.
-
-`@nesso-how/schema` is vocabulary-agnostic. `@nesso-how/vocab-learning` validates relation types and elaboration after envelope parse.
+See [graph-model.md](graph-model.md) (`GRAPH_FORMAT_VERSION` envelope vs `vocabulary.version` semantics). `@nesso-how/schema` is vocabulary-agnostic; `@nesso-how/vocab-learning` validates relation types after envelope parse.
 
 ## Content / review split
 
-Shared graph JSON carries **content only** (`text`, `elaboration`, relations, display). FSRS review fields live in IndexedDB **`reviewState`** (`${graphId}:${nodeId}`). Load merges via `documentToGraph` → `mergeReviewIntoNode`. Content and review fingerprints are independent (`graphContentFingerprint` / `reviewStateFingerprint`), so a review-only change never rewrites the shared content file.
+See [store.md](store.md) → Persistence (graph content in files/IDB `graphs`; FSRS in `reviewState`; independent fingerprints).
 
 ## When this relaxes (beta)
 

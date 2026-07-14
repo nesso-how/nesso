@@ -2,80 +2,56 @@
 
 Nesso is an app for building typed knowledge graphs for active learning: an interactive concept map where nodes are ideas and edges are typed semantic relations. **Socrates**, a Socratic AI mentor, reads the current graph and the user's selection, then probes their understanding through questions rather than explanations.
 
-> **How rules are organized.** This file holds the always-on, tool-agnostic context (stack, layout, core concepts, hard constraints, git, docs/MCP parity) and is read natively by Cursor and imported by Claude Code via `CLAUDE.md`. Detailed, area-specific rules live as canonical content in [`.rules/`](.rules/) and are surfaced to each tool through thin wrappers that carry only tool-specific frontmatter plus an import: `.cursor/rules/*.mdc` for Cursor, `.claude/rules/*.md` for Claude Code. **Edit the canonical `.rules/*.md` file, never the wrappers.**
+Monorepo: `src/` (app) + `packages/` (`@nesso-how/*`). Desktop shell is optional Tauri v2 (`src-tauri/`). **pnpm-only** — never use npm or yarn. **FSRS** review (`ts-fsrs`) is independent of the **experimental** AI mentor.
 
-## Stack
-
-| Layer         | Technology                                                                                                                                  |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| Framework     | React 18 + Vite + TypeScript                                                                                                                |
-| Desktop shell | Tauri v2 (`src-tauri/`) — optional wrapper; web app still runs with `pnpm dev`                                                              |
-| Graph canvas  | React Flow (`@xyflow/react`)                                                                                                                |
-| State         | Zustand (`src/store/index.ts` + `src/store/slices/`)                                                                                        |
-| AI mentor     | **Experimental.** OpenAI-compatible `chat/completions` endpoint (local Ollama or cloud; Settings → AI).                                     |
-| Review (FSRS) | Spaced-repetition scheduling via `ts-fsrs`; per-node `stability`, `difficulty`, `due`, and ratings persisted. Independent of the AI mentor. |
-
-## Source layout
-
-```
-src/
-  App.tsx             # Root: keyboard shortcuts, theme application, layout
-  components/         # All UI components (see .rules/components.md)
-  store/              # Zustand store (index.ts composes slices/)
-    slices/           # graph-editing, settings, ui, graph-management, desktop-sync
-  llm/                # Mentor transport (OpenAI-compatible fetch)
-  data/
-    relationTypes.ts  # re-exports `@nesso-how/vocab-learning` + `RELATION_CATEGORY_COLORS` (CSS palette vars)
-    seeds/*.json      # Default demo graph snapshots (concepts/relations JSON; nested locale dirs, e.g. seeds/it/)
-    seedGraph.ts      # Exports `SEEDS` — bundled demo graphs from `seeds/*.json` (stable ids from names)
-  lib/                # graphMapping, graphDocumentMapping, graphIO, graphPersist, workspace sync
-  types/graph.ts      # facade: re-exports vocab-learning + graph display types + app settings
-src-tauri/            # Tauri v2 Rust project — tauri.conf.json, capabilities; `icons/` generated via `pnpm run icons:desktop` (gitignored)
-packages/
-  schema/             # @nesso-how/schema: vocabulary-agnostic graph document serialize/deserialize
-  vocab-learning/     # @nesso-how/vocab-learning: graph vocabulary (relations, node params, palettes, NessoGraphDocument)
-  theme/              # @nesso-how/theme: design tokens (single source of truth for theme packs)
-  graph/              # @nesso-how/graph: React Flow node/edge renderers, geometry, rating colours
-  mcp/                # @nesso-how/mcp: MCP server for LLM clients
-scripts/              # release, license-header, scripts/stryker/ (mutation-test configs)
-e2e/                  # Playwright web UI specs (#28)
-e2e-native/           # tauri-driver native desktop specs — local-only (#28)
-docs/                 # Starlight docs site, published at nesso.how/docs
-```
+> Area rules in [`.rules/`](.rules/) — load on demand when the task touches that area (**Touch → update** below); do not load all upfront. Before **commit** or **release**, load [`.rules/changelog.md`](.rules/changelog.md).
 
 ## Core concepts
 
-- **Node** — a `ConceptNode` with `text` and FSRS fields (`stability`, `difficulty`, `reps`, `lapses`, `fsrsState`, `due`, `lastReview`, `lastRating`, `learningSteps`) for spaced repetition at runtime (`ts-fsrs`). FSRS is persisted in IndexedDB `reviewState`, not in graph JSON files.
-- **Edge** — a React Flow edge of type `'nesso'`, carrying `data.type: RelationTypeName` (semantic relation id; serialized as `GraphRelation.type` in graph JSON).
-- **Selection** — a single `{ kind: 'node' | 'edge', id }` (or `null`) tracked in the store (`src/store/types.ts`). Drives the Inspector and Socrates opening prompt.
-- **Settings** — `NessoSettings` in the store (dark mode, language, encoding, palette, AI endpoint fields, `telemetry` opt-in, etc.). Applied via CSS custom properties on `<html>` where relevant.
+- **Node** — `ConceptNode` with `text` + FSRS at runtime; FSRS in IndexedDB `reviewState`, not graph JSON — see [`.rules/graph-model.md`](.rules/graph-model.md), [`.rules/store.md`](.rules/store.md).
+- **Edge** — `data.type: RelationTypeName` — see [`.rules/graph-model.md`](.rules/graph-model.md).
+- **Selection** — `{ kind: 'node' | 'edge', id } | null` in the store (`src/store/types.ts`); drives Inspector and Socrates.
+- **Settings** — `NessoSettings` in the store; palette/theme via CSS vars on `<html>`.
 
-## Detailed rules index
+## Development workflow
 
-Area-specific rules (canonical content in `.rules/`, auto-attached per file area by each tool):
+For any non-trivial task, switch to the **`work`** agent — it orchestrates the 5-phase flow (brainstorm/plan → build → review → documentation), dispatches subagents for each phase, and enforces Nesso's constraints. Starting points: `brainstorm` for features, `fix` for bugs, then `work` for everything else.
 
-| Area                                                            | File                                                 |
-| --------------------------------------------------------------- | ---------------------------------------------------- |
-| Coding conventions (TypeScript, React, state, naming)           | [`.rules/conventions.md`](.rules/conventions.md)     |
-| Component responsibilities and data flow                        | [`.rules/components.md`](.rules/components.md)       |
-| Semantic edge model — categories, relation types, encoding      | [`.rules/graph-model.md`](.rules/graph-model.md)     |
-| Theme tokens — `@nesso-how/theme` single source of truth        | [`.rules/theme.md`](.rules/theme.md)                 |
-| Zustand store shape, mutations, selector patterns               | [`.rules/store.md`](.rules/store.md)                 |
-| Socratic AI mentor — MentorPanel, system prompt, chat API       | [`.rules/mentor.md`](.rules/mentor.md)               |
-| Vitest tests — layout, env split, module resolution, CI gate    | [`.rules/testing.md`](.rules/testing.md)             |
-| `CHANGELOG.md` (Keep a Changelog), `[Unreleased]`, release flow | [`.rules/changelog.md`](.rules/changelog.md)         |
-| Keeping the `.rules/` files in sync with the codebase           | [`.rules/maintenance.md`](.rules/maintenance.md)     |
-| PR titles/bodies — match `.github/PULL_REQUEST_TEMPLATE.md`     | [`.rules/pull-requests.md`](.rules/pull-requests.md) |
-| Persisted-data compatibility — envelope/vocabulary migration    | [`.rules/compatibility.md`](.rules/compatibility.md) |
-| Writing Starlight docs pages — voice, style, when to update     | [`.rules/docs.md`](.rules/docs.md)                   |
+## Area rules
 
-**Changelog:** do **not** edit `CHANGELOG.md` during feature work; update **`## [Unreleased]`** only when the user asks for a **commit** or an explicit **changelog-before-commit** pass. Format and releases: [`.rules/changelog.md`](.rules/changelog.md).
+Canonical in `.rules/` — read the full file when relevant:
 
-**Release:** cutting a release is a procedure, not a file-area rule, so it lives in the `release` skill at [`.claude/skills/release/SKILL.md`](.claude/skills/release/SKILL.md). In Claude Code run `/release`; in Cursor the agent-requested rule `.cursor/rules/release.mdc` pulls the same procedure in when a release task matches.
+- [`.rules/conventions.md`](.rules/conventions.md)
+- [`.rules/components.md`](.rules/components.md)
+- [`.rules/graph-model.md`](.rules/graph-model.md)
+- [`.rules/theme.md`](.rules/theme.md)
+- [`.rules/store.md`](.rules/store.md)
+- [`.rules/mentor.md`](.rules/mentor.md)
+- [`.rules/testing.md`](.rules/testing.md)
+- [`.rules/changelog.md`](.rules/changelog.md)
+- [`.rules/compatibility.md`](.rules/compatibility.md)
+- [`.rules/docs.md`](.rules/docs.md)
+- [`.rules/static-analysis.md`](.rules/static-analysis.md)
+- [`.rules/harness.md`](.rules/harness.md)
 
-## Code quality
+## Keeping rules up to date
 
-Lint and format run through **Biome** (`biome.json`): JS/TS/JSON/CSS, with **Prettier** kept only for Markdown/YAML/HTML. **`tsc`** type-checks (via `build`), and **`type-coverage`** gates strict type coverage at 99%. **`vitest`** (`pnpm test:coverage`) gates test coverage against a **ratchet floor** in `vitest.config.ts` — current numbers snapshotted as the minimum (global plus stricter per-directory globs for the regression-prone logic), green today and red on any drop; re-baseline when intentionally lowering. CI also runs **`license-headers:check`**, **`build:mcp`**, and a path-filtered **e2e** lane (Playwright web); native desktop e2e (`e2e-native/`) is **local-only** — see [`.rules/testing.md`](.rules/testing.md). **`fallow`** (`pnpm run analyze`) is a deterministic static analyzer for dead code, duplication, cycles, complexity, and architecture. CI gates three slices (`.github/workflows/ci.yml` `js` job): **`analyze:dead-code`** (zero-tolerance on unused code and architecture cycles), **`analyze:dupes`** and **`analyze:health`** (identity baselines in `fallow-baselines/` — fail only on _new_ clones or complex functions). The full `analyze` report is a local convenience; the `preflight` skill runs the gated commands in CI order before a PR. **`StrykerJS`** (`pnpm run analyze:mutation`, configs under `scripts/stryker/`) adds **mutation testing** on top of coverage — it grades whether the tests would actually catch a regression, gated by a per-area `break` ratchet on the mutation score. It is **not** a per-PR gate (too slow): opt-in locally (`analyze:mutation:changed` when the diff touches an area) and a non-blocking scheduled CI job (`.github/workflows/mutation.yml`), scoped to pure-logic areas.
+Update the canonical `.rules/*.md` in the same change when your edit makes a rule stale. The **Touch → update** table below maps file paths to the rules they affect — load the relevant rule when touching those paths. Update **Constraints** / **Core concepts** / the intro above when those change. When your edit touches the harness itself (rules, AGENTS.md, skills, agents, MCP), see [`.rules/harness.md`](.rules/harness.md).
+
+**Touch → update** (paths under `.rules/`):
+
+- `components.md` — `src/components/**/*.tsx`
+- `store.md` — `src/store/**/*.ts`
+- `graph-model.md` — `src/data/relationTypes.ts`, `src/types/graph.ts`, `packages/graph/src/NessoEdge.tsx`, `src/components/dialogs/RelationTypesDialog.tsx`, `packages/vocab-learning/src/index.ts`
+- `mentor.md` — `src/components/mentor/MentorPanel.tsx`, `src/llm/completion.ts`, `src/llm/context.ts`
+- `conventions.md` — `src/**/*.{ts,tsx}` (only when conventions change, not every src edit)
+- `testing.md` — `**/*.test.{ts,tsx}`; also `vitest.config.ts`, `playwright.config.ts`, `e2e/**`, CI test steps
+- `theme.md` — `packages/theme/**`, `src/index.css`, `vite.config.ts`
+- `docs.md` — `docs/src/content/docs/**/*.md`
+- `static-analysis.md` — `src/**/*.{ts,tsx,js,mjs,cjs,css}`, `biome.json`, `prettier.config.js`, `scripts/license-header.mjs`, `src-tauri/src/**/*.rs`, `src-tauri/build.rs`, `tsconfig.json`, `tsconfig.app.json`, `tsconfig.node.json`, `packages/*/tsconfig.json`, `packages/*/src/**/*.{ts,tsx}`, `.fallowrc.jsonc`, `fallow-baselines/*.json`, `scripts/stryker/**`
+- `compatibility.md` — `packages/schema/**`, `packages/vocab-learning/**`, `src/lib/workspace/**`, `src/lib/graphDocumentMapping.ts`, `src/lib/graphMapping.ts`, `src/store/**`, `src/data/conceptNodes.ts`
+- `changelog.md` — `CHANGELOG.md`
+- `harness.md` — `.rules/**`, `.opencode/**`, `AGENTS.md`, `opencode.json`
 
 ## Constraints — hard rules, never do this
 

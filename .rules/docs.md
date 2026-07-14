@@ -1,6 +1,6 @@
 # Writing docs
 
-This file is about **how** to write pages on the Starlight docs site (`docs/src/content/docs/docs/`), not where they go. For sidebar structure, new-page placement, and MCP doc-bundle parity, see `AGENTS.md` → **Documentation and MCP parity** and `.rules/maintenance.md`.
+This file is about **how** to write pages on the Starlight docs site (`docs/src/content/docs/docs/`), not where they go. For sidebar structure, new-page placement, and MCP doc-bundle parity, see `AGENTS.md` → **Documentation and MCP parity** and **Keeping rules up to date**.
 
 ## Voice and style
 

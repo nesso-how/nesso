@@ -1,9 +1,0 @@
----
-description: Component responsibilities and data flow for Nesso
-globs: src/components/**/*.tsx
-alwaysApply: false
----
-
-Canonical content lives in [`.rules/components.md`](../../.rules/components.md). Edit that file, not this wrapper.
-
-@.rules/components.md
