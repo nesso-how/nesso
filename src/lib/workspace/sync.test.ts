@@ -75,14 +75,23 @@ describe('persistWorkspaceSync', () => {
     expect(manifest.entries[gid(1)]).toMatchObject({ file: 'Solo.json', name: 'Solo' })
   })
 
-  it('picks up a disk file that is newer than its IndexedDB copy', async () => {
+  it('picks up a disk file with newer content', async () => {
     await dbSaveGraph(record(gid(1), 'Doc', 1000))
-    writeDiskFile('Doc.json', { id: gid(1), name: 'Doc', updatedAt: 5000 })
+    tauriFsState.writeFile(
+      '/proj/Doc.json',
+      graphDocumentJson({
+        id: gid(1),
+        name: 'Doc',
+        updatedAt: 5000,
+        concepts: [{ id: 'n1', label: 'fresh edit', x: 0, y: 0 }],
+      }),
+    )
 
     await persistWorkspaceSync(SETTINGS, await dbListGraphs())
 
     const [stored] = await dbListGraphs()
     expect(stored.updatedAt).toBe(5000)
+    expect(stored.nodes).toHaveLength(1)
   })
 
   it('drops a tracked graph whose file was deleted outside the app', async () => {
@@ -122,6 +131,19 @@ describe('persistWorkspaceSync', () => {
 
     const [stored] = await dbListGraphs()
     expect(stored.nodes).toHaveLength(1)
+  })
+
+  it('ignores a disk file whose content is unchanged despite a newer timestamp', async () => {
+    await dbSaveGraph(record(gid(1), 'Doc', 1000))
+    // Same empty content, just a bumped timestamp
+    writeDiskFile('Doc.json', { id: gid(1), name: 'Doc', updatedAt: 5000 })
+
+    await persistWorkspaceSync(SETTINGS, await dbListGraphs())
+
+    const [stored] = await dbListGraphs()
+    // Content is unchanged — the record should NOT have been pushed to toPersist,
+    // so IDB keeps the original updatedAt (1000).
+    expect(stored.updatedAt).toBe(1000)
   })
 })
 
