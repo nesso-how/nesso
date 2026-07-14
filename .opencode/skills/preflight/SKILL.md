@@ -37,22 +37,22 @@ pnpm run analyze:mutation:changed -- --base origin/main
 
 When a step fails, fix and re-run individually:
 
-| Step | Fix |
-|---|---|
-| `format:check` | `pnpm run format` |
-| `lint` | `pnpm run lint:fix` |
-| `license-headers:check` | `pnpm run license-headers` |
-| `test:coverage` | see [`.rules/testing.md`](../../.rules/testing.md) — ratchet gate |
-| `type:coverage` | fix type errors; thresholds in tsconfig |
-| `build` | fix compile errors |
-| `analyze:dead-code` | remove unused files/exports |
-| `analyze:dupes` | see [`.rules/static-analysis.md`](../../.rules/static-analysis.md) — baseline-gated |
-| `analyze:health` | see [`.rules/static-analysis.md`](../../.rules/static-analysis.md) — baseline-gated |
-| `test:e2e` | check Playwright output; `pnpm exec playwright install --with-deps chromium` if first run |
-| `icons:desktop` | `pnpm run icons:desktop` |
-| `cargo:fmt` | `cargo fmt --all --manifest-path src-tauri/Cargo.toml` |
-| `cargo:clippy` | fix warnings flagged by clippy |
-| `cargo:check` | fix compile errors |
-| `cargo:test` | fix failing tests |
+| Step                    | Fix                                                                                       |
+| ----------------------- | ----------------------------------------------------------------------------------------- |
+| `format:check`          | `pnpm run format`                                                                         |
+| `lint`                  | `pnpm run lint:fix`                                                                       |
+| `license-headers:check` | `pnpm run license-headers`                                                                |
+| `test:coverage`         | see [`.rules/testing.md`](../../.rules/testing.md) — ratchet gate                         |
+| `type:coverage`         | fix type errors; thresholds in tsconfig                                                   |
+| `build`                 | fix compile errors                                                                        |
+| `analyze:dead-code`     | remove unused files/exports                                                               |
+| `analyze:dupes`         | see [`.rules/static-analysis.md`](../../.rules/static-analysis.md) — baseline-gated       |
+| `analyze:health`        | see [`.rules/static-analysis.md`](../../.rules/static-analysis.md) — baseline-gated       |
+| `test:e2e`              | check Playwright output; `pnpm exec playwright install --with-deps chromium` if first run |
+| `icons:desktop`         | `pnpm run icons:desktop`                                                                  |
+| `cargo:fmt`             | `cargo fmt --all --manifest-path src-tauri/Cargo.toml`                                    |
+| `cargo:clippy`          | fix warnings flagged by clippy                                                            |
+| `cargo:check`           | fix compile errors                                                                        |
+| `cargo:test`            | fix failing tests                                                                         |
 
 Do not push when anything is red. These mirror CI exactly — if `ci.yml` changes, update this file.

@@ -52,7 +52,7 @@ Same cycle. Write a failing test that reproduces the bug first. The test proves 
 | API calls, completion logic                       | Layout-only visual changes                          |
 | Bug fixes with reproducible behavior              | Tauri native code (when test harness not available) |
 
-When TDD doesn't apply, still verify manually and run `pnpm run format:check && pnpm run lint && pnpm run type:check`.
+When TDD doesn't apply, still verify manually and run `pnpm run fast-check`.
 
 ## Per-Task Flow
 
@@ -60,7 +60,7 @@ When TDD doesn't apply, still verify manually and run `pnpm run format:check && 
 2. RED — write failing test, watch it fail
 3. GREEN — write minimal code, watch it pass
 4. REFACTOR — clean up if needed, keep green
-5. Fast checks: `pnpm run format:check && pnpm run lint && pnpm run type:check`, plus the test suite matching the task's level — `pnpm test` for unit/integration, `pnpm test:e2e` for e2e, both when the task spans levels.
+5. Fast checks: `pnpm run fast-check` (format, lint, type-check, test). If the task spans e2e, run `pnpm run fast-check -- --e2e`.
 
 ## When Stuck
 
