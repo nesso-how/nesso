@@ -20,6 +20,7 @@ If a PR exists, use `gh pr edit` instead of `gh pr create`.
 ## Gotchas
 
 - **Never a lone "Test plan" block** — four `##` sections from [`.github/PULL_REQUEST_TEMPLATE.md`](../../../.github/PULL_REQUEST_TEMPLATE.md), in template order.
+- **Changes must describe the diff against `main`**, not a summary of PR commits. Run `git diff main...HEAD --stat` to see what changed; describe logical units, not commit messages.
 - **One closing keyword per issue** (`Closes #31, #26` closes only `#31`). Keyword must directly precede `#N`. Commit-message keywords do not populate the PR linked-issues panel — put them in the **body**.
 - **Rename branch only before the PR exists** — after open, rename+push auto-closes the PR. Rename worktree branches (`opencode/<random>` → `feat/<name>`) before first push.
 
