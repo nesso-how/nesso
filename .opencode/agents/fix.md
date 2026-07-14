@@ -62,7 +62,7 @@ Describe the fix at a high level:
 - What the change should accomplish
 - What test should guard against regression
 
-**Do not apply the fix.** The implementation happens in the execution phase, guided by the planning skill's plan.
+**Do not apply the fix.** The implementation happens in the execution phase, guided by the `plan` subagent's plan.
 
 ## Output
 

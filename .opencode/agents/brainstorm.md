@@ -77,7 +77,7 @@ Before presenting the final version:
 
 Fix issues inline before presenting to the user.
 
-The output is a GitHub issue, created via the `create-issue` skill after user approval. See the `workflow` skill for how this hands off to the next phase.
+The output is a GitHub issue, created via the `create-issue` skill after user approval. The `work` agent picks up from that issue and routes the remaining phases.
 
 ## Working with Nesso's Domain
 

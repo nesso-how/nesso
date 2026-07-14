@@ -2,6 +2,8 @@
 mode: primary
 permission:
   edit: deny
+  bash: allow
+  task: allow
 description: Post-issue orchestrator. Routes the development flow from planning to PR. Dispatches plan, build subagents and loads the review skill at the review phase. Creates PR via skill after review passes. Asks for user approval at gates. Never writes code directly.
 ---
 
