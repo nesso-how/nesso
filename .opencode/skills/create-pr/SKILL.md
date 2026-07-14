@@ -5,9 +5,9 @@ description: Use when the user asks to open, draft, update, or push a Nesso pull
 
 # Create a Nesso pull request
 
-Publishes or updates a **fully prepared** PR on GitHub — not implementation or review. Assumes `preflight` and `review` have already passed; this skill only publishes.
+Publishes or updates a **fully prepared** PR on GitHub — not implementation or review. Assumes `preflight` and `review` have already passed, and the user has approved the PR summary; this skill only publishes.
 
-**Never skip the confirmation gate.** Recap title, four-section body, branch name, and any `Closes #N` lines; get explicit go-ahead before `git push`, `git push --force-with-lease`, or `gh pr create` / `gh pr edit` — even when the user said "open the PR". Per AGENTS.md → Git.
+No confirmation gate here — the orchestrator (work agent) already gated. Proceed directly.
 
 Before creating:
 
@@ -24,7 +24,7 @@ If a PR exists, use `gh pr edit` instead of `gh pr create`.
 - **One closing keyword per issue** (`Closes #31, #26` closes only `#31`). Keyword must directly precede `#N`. Commit-message keywords do not populate the PR linked-issues panel — put them in the **body**.
 - **Rename branch only before the PR exists** — after open, rename+push auto-closes the PR. Rename worktree branches (`opencode/<random>` → `feat/<name>`) before first push.
 
-## 1. Confirm the draft
+## 1. Prepare the draft
 
 Branch: [CONTRIBUTING.md](../../../CONTRIBUTING.md) prefix (`feat/`, `fix/`, `refactor/`, `chore/`) + kebab-case. Body: fill template (strip HTML comments); mark checklist `[x]` only when true — [`.rules/changelog.md`](../../../.rules/changelog.md) for `[Unreleased]`. Title: conventional-commit style.
 

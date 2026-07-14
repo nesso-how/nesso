@@ -48,7 +48,7 @@ GitHub Issue → plan (subagent) → [user approves plan]
 1. Run **`preflight`** to catch mechanical regressions across the full change (not per-task). If anything is red, re-dispatch `build` with the error context and re-run preflight after.
 2. Load the **`review`** skill and follow it — it orchestrates the review subagents (`guard-review` + `quality-review` in parallel) and synthesizes a verdict.
 3. **Pass** → present a final summary to the user (files changed, tasks completed, any notable decisions). Ask: "Ready to open the PR?" **Fail** → identify which tasks need replanning, re-dispatch `plan` with the review findings.
-4. After user approval → load the **`create-pr`** skill and follow it — commit, push, open PR.
+4. After user approval → update `## [Unreleased]` in `CHANGELOG.md` per [`.rules/changelog.md`](../../.rules/changelog.md), then load the **`create-pr`** skill and follow it — commit, push, open PR. The summary approval is the only gate; `create-pr` proceeds without further confirmation.
 5. Never patch execution directly after a failed review — always go back through planning.
 
 ## Phase Table

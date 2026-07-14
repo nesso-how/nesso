@@ -7,7 +7,7 @@ description: Use when the user asks to create or publish a GitHub issue on the n
 
 Publishes a **fully drafted** issue (title, body, Type, area label, board Status, Priority decided) — does not investigate, triage, or decide priority. Read source, reproduce, check `.rules/*.md` for the affected area first.
 
-**Never skip the confirmation gate.** Recap title, Type, label(s), full body, Status, Priority; get explicit go-ahead before `gh issue create` or any mutation — confirm each issue in a batch, not just the batch itself.
+No confirmation gate here — the caller (brainstorm / fix / work agent) already gated. Proceed directly.
 
 Before creating:
 
@@ -24,7 +24,7 @@ Quick duplicate sanity check — not exhaustive.
 - **Discover Priority field/option ids fresh** every run — org Issue Fields drift in the GitHub UI; don't reuse stale ids.
 - **`clientMutationId: null`** on the Priority mutation is normal; GraphQL `errors` is the failure signal.
 
-## 1. Confirm the draft
+## 1. Prepare the draft
 
 Recap all fields. **Status:** **Ready** if specified enough to start; **Inbox** if still needs triage (`gh project view 1 --owner nesso-how`).
 
