@@ -85,7 +85,27 @@ Nesso uses [OpenCode](https://opencode.ai) as its development environment, a mod
 
 This lets us match model capability to cost per phase without locking into a single model or provider.
 
-The harness lives in `.opencode/` and `.rules/`: agent definitions, skill workflows, and area-specific rules (graph model, store conventions, theme tokens). All tracked in the repo so every contributor sees the same guardrails.
+The harness lives in `opencode.json` (model/config settings), `.opencode/` (agents, skills), and `.rules/` (area-specific rules for graph model, store conventions, theme tokens). All tracked in the repo so every contributor sees the same guardrails.
+
+```mermaid
+flowchart TD
+  B["brainstorm"]:::plan -->|"design brief"| P["plan"]:::plan
+  P -->|"task list"| T["build<br>RED-GREEN-REFACTOR"]:::exec
+  T --> GR["guard-review"]:::quality
+  T --> QR["quality-review"]:::quality
+  GR --> S["review · synthesize"]:::review
+  QR --> S
+  S -->|"✓ approve"| DONE((" ")):::done
+  S -->|"issues found"| P
+
+  classDef plan fill:#dbeafe,stroke:#3b82f6,color:#1e3a5f
+  classDef exec fill:#dcfce7,stroke:#22c55e,color:#14532d
+  classDef quality fill:#fef9c3,stroke:#eab308,color:#713f12
+  classDef review fill:#f3e8ff,stroke:#a855f7,color:#3b0764
+  classDef done fill:#bbf7d0,stroke:#16a34a,color:#14532d,stroke-width:3px
+```
+
+_The `work` orchestrator dispatches each phase and gates on user approval between them._
 
 The project is managed with a [kanban board](https://github.com/orgs/nesso-how/projects/1/views/2) tracking active issues and a [roadmap](https://github.com/orgs/nesso-how/projects/1/views/3) for longer-term direction. We follow a continuous flow model rather than sprints or classic agile iterations: work is pulled from the backlog as capacity allows, sized so each unit maps to one agentic pipeline run. This cadence matches the tooling: agents work best on focused, sequential tasks, not time-boxed batches of unrelated work.
 
