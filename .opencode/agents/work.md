@@ -28,7 +28,7 @@ GitHub Issue → plan (subagent) → [user approves plan]
                                  /                    \
                       pass / trivial fix         failures need more work
                              ↓                         ↓
-                    create-pr (skill)       dispatch plan-review <N>
+                     create-pr (skill) --auto       dispatch plan-review <N>
                            or                         ↓
                    dispatch build for          [user approves]
                    trivial fixes                        ↓
@@ -73,7 +73,7 @@ GitHub Issue → plan (subagent) → [user approves plan]
 
 4. **If the user opts for a plan**: dispatch `plan` to write `.plans/<issue-number>-review-<N>.md` (where N counts review cycles: `94-review-1.md`, `94-review-2.md`, …). The original `.plans/<issue-number>.md` is never overwritten — it stays as the first-draft record. The review plan receives the review findings and the current diff as input. After user approves the review plan → dispatch `build` per task → preflight → review → loop at step 3.
 5. **If the user confirms build directly**: dispatch `build` for each suggested fix, then re-run preflight and re-run review. If the new review still has findings, loop at step 3 again (increment N).
-6. **If ready to PR** → update `## [Unreleased]` in `CHANGELOG.md` per [`.rules/changelog.md`](../../.rules/changelog.md), then load the **`create-pr`** skill and follow it — commit, push, open PR. The summary approval is the only gate; `create-pr` proceeds without further confirmation.
+6. **If ready to PR** → update `## [Unreleased]` in `CHANGELOG.md` per [`.rules/changelog.md`](../../.rules/changelog.md), then load the **`create-pr`** skill with `--auto` and follow it — commit, push, open PR, enable auto-merge. The summary approval is the only gate; `create-pr` proceeds without further confirmation.
 
 ## Phase Table
 
