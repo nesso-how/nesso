@@ -84,11 +84,34 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
 
   useLayoutEffect(() => {
     if (!editing || !selectAllOnFocus.current) return
-    selectAllOnFocus.current = false
     const input = inputRef.current
     if (!input) return
-    input.focus()
-    input.select()
+    const el = input
+    let cancelled = false
+    let attempts = 0
+    const MAX_ATTEMPTS = 10
+    // React Flow may steal focus to its pane during concurrent layout effects,
+    // viewport animations (setCenter), or after a context-menu close. Retry
+    // across frames until focus lands, the input is unmounted, or the limit is
+    // reached.
+    const tryFocus = () => {
+      if (cancelled || !el.isConnected || attempts >= MAX_ATTEMPTS) {
+        selectAllOnFocus.current = false
+        return
+      }
+      attempts++
+      el.focus()
+      if (document.activeElement === el) {
+        el.select()
+        selectAllOnFocus.current = false
+        return
+      }
+      requestAnimationFrame(tryFocus)
+    }
+    requestAnimationFrame(tryFocus)
+    return () => {
+      cancelled = true
+    }
   }, [editing])
 
   const stopGraphPointer = useCallback((e: React.SyntheticEvent) => {

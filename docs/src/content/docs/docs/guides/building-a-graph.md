@@ -10,7 +10,7 @@ The canvas is the centre of Nesso. **Concepts** are nodes and **typed relations*
 - **Double-click** empty canvas to add a concept at the pointer.
 - **`N`** adds a concept at the viewport centre.
 - **Right-click** empty canvas and choose **Add concept here** to add one at the cursor.
-- New concepts open in edit mode. Type the label and press `Enter` to commit, `Esc` to cancel.
+- New concepts open in edit mode with the text input focused. Start typing immediately. Press `Enter` to commit, `Esc` to cancel.
 - **Double-click** a concept to rename it inline.
 
 An empty graph shows a centered **"Your first concept"** hint, but the double-click still works through it.

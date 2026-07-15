@@ -22,7 +22,7 @@ Components live under `src/components/` in feature folders. They read from `useG
 | Component                 | Role                                                                                                                                                                                                                                                         |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `GraphCanvas`             | React Flow canvas via `NessoGraph`; passes `display`/palette/i18n into graph context; interactive `ConceptNode` override; saves viewport on move.                                                                                                            |
-| `ConceptNode`             | App node wrapper: inline edit, connection handles, `ConceptNodeBody` from `@nesso-how/graph`.                                                                                                                                                                |
+| `ConceptNode`             | App node wrapper: inline edit, connection handles, `ConceptNodeBody` from `@nesso-how/graph`. On creation, auto-focuses the text input so the user can type immediately — see Focus lifecycle below.                                                         |
 | `NessoConnectionLine`     | Dragging preview with same quadratic geometry as `NessoEdge`.                                                                                                                                                                                                |
 | `NessoMark`               | Inline SVG brandmark (nexus graph); `currentColor` + `var(--accent)` hub; sources in `public/icon/`.                                                                                                                                                         |
 | `TopBar`                  | `Project / Graph` breadcrumb (project segment desktop-only via `useActiveProjectName`); Review pill (due badge); `GraphIO` (⋯) menu.                                                                                                                         |
@@ -56,3 +56,18 @@ Components live under `src/components/` in feature folders. They read from `useG
 ## No prop drilling
 
 Read global state directly from `useGraphStore`. Do not add props for data already in the store — add a selector instead.
+
+## Focus lifecycle (ConceptNode)
+
+When a new concept node is created (any path: toolbar, double-click, context menu, `N` shortcut), the text input must receive keyboard focus automatically so the user can type the label without an extra click. Exception: during onboarding creation steps, `editNodeId` is explicitly cleared so the node does not enter edit mode — the tour teaches double-click-to-edit instead.
+
+**Mechanism** (`src/components/canvas/ConceptNode.tsx`):
+
+1. `addNode()` in the store sets `editNodeId` to the new node's ID.
+2. First `useLayoutEffect` (lines 77-83): when `editNodeId === id`, calls `startEdit()` → sets `selectAllOnFocus.current = true` + `setEditing(true)`.
+3. React re-renders with `editing=true` → the `<input>` element renders.
+4. Second `useLayoutEffect` (lines 85-92): when `editing=true` and `selectAllOnFocus.current` is set → defers `input.focus()` + `input.select()` into a `requestAnimationFrame` retry loop.
+
+**Why rAF retry:** React StrictMode double-mounts components in development. The StrictMode unmount destroys the focused DOM, and the remount would skip re-focusing because `selectAllOnFocus` had already been cleared. Deferring into a rAF retry loop with a `document.activeElement` check survives both StrictMode remount and React Flow pane focus-stealing. The `selectAllOnFocus` flag is cleared when focus is confirmed, or when the retry loop stops: component unmount (cleanup `cancelled` flag), input element disconnected from DOM, or retry limit exhausted (10 attempts).
+
+**Inline editing** (double-click existing node): follows the same path via `requestEditNode(id)` → `editNodeId` → the same effects. `startEdit()` always sets `selectAllOnFocus.current = true` for both creation and inline editing. For creation, the text is auto-selected so the user can overwrite the placeholder immediately. For inline editing, the user double-clicked so the text is auto-selected by the focus effect, but the cursor placement is refined by `handleInputMouseDown` (caret-index from centred click position).

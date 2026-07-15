@@ -99,3 +99,18 @@ Coverage proves a line _runs_ under test; it cannot tell whether the assertions 
   - `mentor` (`context.ts` + `fsrsDueQueue.ts` + app `nodeToCard` / display merge) — **87.50%** (112/128), residual mostly equivalent truncation regex/boundary; `break` 84.
   - `store` (`graph-editing` + `graph-management`) — **71.40%** (669/937), a real climb target; `break` 69.
   - `workspace` (`src/lib/workspace/**` minus the Tauri glue) — **63.13%** (250/396), residual in fault-injection / fs-error paths the e2e layer (#28) owns; `break` 61.
+
+## E2E focus assertions (Playwright)
+
+When testing node creation focus, use `page.keyboard.type()` — never `input.fill()`. The `fill()` method internally calls `.focus()` on the target before filling, so it always succeeds — making it unable to detect focus failures. Use `keyboard.type()` instead, which preserves the existing focus state. The correct pattern:
+
+```ts
+// Create a node, then wait for the async focus retry loop to complete
+await page.waitForFunction(() => document.activeElement?.tagName === 'INPUT')
+// Type without explicitly clicking the input
+await page.keyboard.type('hello')
+// Add the guard-wait so the expectation is race-free
+await expect(page.locator('.nesso-node-label')).toContainText('hello')
+```
+
+The `waitForFunction` guard is necessary because focus is deferred through `requestAnimationFrame` retries — the `.focus()` call runs asynchronously after React Flow finishes its internal layout effects.
