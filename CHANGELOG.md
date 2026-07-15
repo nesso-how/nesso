@@ -6,6 +6,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- **README:** New "Development workflow" section documenting the OpenCode harness, agent pipeline, and continuous flow model.
+- **Worktree support:** `.worktrees/` added to `.gitignore` so worktree working directories are not accidentally tracked.
+
+### Changed
+
+- **Agent models:** Upgraded Nesso's agent model configuration (`opencode.json`) to GPT-5.6 family (Luna for planning/reviews/brainstorming, Sol for forensic debugging) and DeepSeek v4 Pro for orchestration and implementation, matching capability to cost per phase.
 
 ### Fixed
 
