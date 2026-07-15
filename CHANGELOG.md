@@ -8,7 +8,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
-- **README:** New "Development workflow" section documenting the OpenCode harness, agent pipeline, and continuous flow model.
+- **README:** New "Development workflow" section documenting the OpenCode harness, agent pipeline, and continuous flow model, with a colour-coded top-down flowchart replacing the previous left-to-right layout.
 - **Worktree support:** `.worktrees/` added to `.gitignore` so worktree working directories are not accidentally tracked.
 
 ### Changed
