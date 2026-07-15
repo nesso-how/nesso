@@ -25,6 +25,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - **Canvas:** Dragging a connection from a node's left-side (target) handles no longer silently reverses the relation's source/target direction. Target handles now have `isConnectableStart={false}`, preventing a connection drag from starting there.
 
 - **Inspector:** Multiline `InlineEdit` fields (definition, notes, examples) no longer crash with a `ResizeObserver loop` error or clip the last line of text when they grow past one line. `syncScrollHeight` now short-circuits the write when the measured height already matches, preventing the self-observation loop that triggered the browser's loop limit warning.
+- **Graph:** Newly created concept nodes now immediately receive keyboard focus on their text input. The focus mechanism uses a bounded `requestAnimationFrame` retry loop that survives React StrictMode double-mount and React Flow pane focus-stealing, so users can type the label without an extra click. Added Playwright e2e coverage for all four creation paths (double-click, `N` shortcut, context menu, sequential creation).
 
 ## [0.1.0-alpha.39] - 2026-07-02
 
