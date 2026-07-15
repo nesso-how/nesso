@@ -89,7 +89,6 @@ Each definition has:
 
 - `cat: RelationCategory` — which category it belongs to
 - `label: string` — human-readable label
-- `line: 'solid' | 'dashed' | 'dotted' | 'double' | 'wavy'` — stroke style
 - `glyph: GlyphKind` — SVG icon at the target end
 - `transitive: 'Y' | 'N' | 'weak'` — `weak` = transitivity with decay; algorithms may discount per step
 - `inverse: RelationTypeName | 'self'` — canonical inverse in the set; `'self'` for symmetric types (`contrasts-with`, `opposite-of`, `similar-to`, `analogous-to`, `contradicts`, `overlaps-with`)
@@ -103,9 +102,9 @@ These properties exist to drive future graph-analysis and graph-comparison algor
 
 `NessoEdge` renders each edge according to its `RelationTypeDef`. The amount of visual information shown depends on the `edgeEncoding` setting:
 
-- `full` — category colour + per-type line style + glyph + arrowhead + always-on label
-- `category` — same as `full` (colour, line style, glyph, arrowhead) but the label shows only on hover/selection
-- `minimal` — plain solid line in a neutral grey: no glyph, arrowhead, label, or category colour
+- `full` — category colour + glyph + arrowhead + always-on label
+- `category` — category colour + glyph + arrowhead; label only on hover/selection
+- `minimal` — plain solid neutral line — no glyph, arrowhead, label, or category colour
 
 Category colours are CSS custom properties (`--cat-taxonomic`, `--cat-structural`, etc.) set by the active palette in `App.tsx` from `PALETTES` in `@nesso-how/vocab-learning`. Embeds use hex from `PALETTES` directly via `categoryColorMode: 'palette'`.
 

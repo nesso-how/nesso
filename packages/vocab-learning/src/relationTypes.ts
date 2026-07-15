@@ -2,7 +2,7 @@
 //
 // Semantic relation vocabulary: ordered categories, 52 typed relation ids, and
 // per-type properties (transitive, inverse, strength, polarity, cardinality)
-// plus visual encoding hints (line, glyph). UI labels live in app i18n, not here.
+// plus visual encoding (category colour + glyph). UI labels live in app i18n, not here.
 
 export const RELATION_CATEGORIES = [
   'taxonomic',
@@ -124,7 +124,6 @@ export interface RelationTypeDef {
   cat: RelationCategory
   label: string
   // visual encoding
-  line: 'solid' | 'dashed' | 'dotted' | 'double' | 'wavy'
   glyph: GlyphKind
   // type properties
   transitive: Transitivity
@@ -141,7 +140,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   'subtype-of': {
     cat: 'taxonomic',
     label: 'subtype of',
-    line: 'double',
     glyph: 'triangle-up',
     transitive: 'Y',
     inverse: 'has-subtype',
@@ -152,7 +150,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   'has-subtype': {
     cat: 'taxonomic',
     label: 'has subtype',
-    line: 'double',
     glyph: 'triangle-up',
     transitive: 'Y',
     inverse: 'subtype-of',
@@ -163,7 +160,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   'instance-of': {
     cat: 'taxonomic',
     label: 'instance of',
-    line: 'solid',
     glyph: 'circle-dot',
     transitive: 'N',
     inverse: 'has-instance',
@@ -174,7 +170,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   'has-instance': {
     cat: 'taxonomic',
     label: 'has instance',
-    line: 'solid',
     glyph: 'circle-dot',
     transitive: 'N',
     inverse: 'instance-of',
@@ -187,7 +182,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   'part-of': {
     cat: 'structural',
     label: 'part of',
-    line: 'solid',
     glyph: 'diamond',
     transitive: 'Y',
     inverse: 'contains',
@@ -198,7 +192,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   contains: {
     cat: 'structural',
     label: 'contains',
-    line: 'solid',
     glyph: 'diamond-open',
     transitive: 'Y',
     inverse: 'part-of',
@@ -209,7 +202,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   'made-of': {
     cat: 'structural',
     label: 'made of',
-    line: 'dashed',
     glyph: 'hash',
     transitive: 'weak',
     inverse: 'composes',
@@ -220,7 +212,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   composes: {
     cat: 'structural',
     label: 'composes',
-    line: 'dashed',
     glyph: 'hash',
     transitive: 'weak',
     inverse: 'made-of',
@@ -233,7 +224,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   causes: {
     cat: 'causal',
     label: 'causes',
-    line: 'solid',
     glyph: 'arrow-right',
     transitive: 'N',
     inverse: 'caused-by',
@@ -244,7 +234,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   'caused-by': {
     cat: 'causal',
     label: 'caused by',
-    line: 'solid',
     glyph: 'arrow-right',
     transitive: 'N',
     inverse: 'causes',
@@ -255,7 +244,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   produces: {
     cat: 'causal',
     label: 'produces',
-    line: 'solid',
     glyph: 'asterisk',
     transitive: 'N',
     inverse: 'produced-by',
@@ -266,7 +254,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   'produced-by': {
     cat: 'causal',
     label: 'produced by',
-    line: 'solid',
     glyph: 'asterisk',
     transitive: 'N',
     inverse: 'produces',
@@ -277,7 +264,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   enables: {
     cat: 'causal',
     label: 'enables',
-    line: 'dotted',
     glyph: 'key',
     transitive: 'weak',
     inverse: 'enabled-by',
@@ -288,7 +274,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   'enabled-by': {
     cat: 'causal',
     label: 'enabled by',
-    line: 'dotted',
     glyph: 'key',
     transitive: 'weak',
     inverse: 'enables',
@@ -299,7 +284,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   prevents: {
     cat: 'causal',
     label: 'prevents',
-    line: 'dotted',
     glyph: 'block',
     transitive: 'N',
     inverse: 'prevented-by',
@@ -310,7 +294,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   'prevented-by': {
     cat: 'causal',
     label: 'prevented by',
-    line: 'dotted',
     glyph: 'block',
     transitive: 'N',
     inverse: 'prevents',
@@ -321,7 +304,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   triggers: {
     cat: 'causal',
     label: 'triggers',
-    line: 'solid',
     glyph: 'spark',
     transitive: 'N',
     inverse: 'triggered-by',
@@ -332,7 +314,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   'triggered-by': {
     cat: 'causal',
     label: 'triggered by',
-    line: 'solid',
     glyph: 'spark',
     transitive: 'N',
     inverse: 'triggers',
@@ -343,7 +324,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   inhibits: {
     cat: 'causal',
     label: 'inhibits',
-    line: 'dotted',
     glyph: 'minus',
     transitive: 'N',
     inverse: 'inhibited-by',
@@ -354,7 +334,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   'inhibited-by': {
     cat: 'causal',
     label: 'inhibited by',
-    line: 'dotted',
     glyph: 'minus',
     transitive: 'N',
     inverse: 'inhibits',
@@ -365,7 +344,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   disables: {
     cat: 'causal',
     label: 'disables',
-    line: 'dotted',
     glyph: 'lock',
     transitive: 'weak',
     inverse: 'disabled-by',
@@ -376,7 +354,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   'disabled-by': {
     cat: 'causal',
     label: 'disabled by',
-    line: 'dotted',
     glyph: 'lock',
     transitive: 'weak',
     inverse: 'disables',
@@ -387,7 +364,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   consumes: {
     cat: 'causal',
     label: 'consumes',
-    line: 'solid',
     glyph: 'flame',
     transitive: 'N',
     inverse: 'consumed-by',
@@ -398,7 +374,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   'consumed-by': {
     cat: 'causal',
     label: 'consumed by',
-    line: 'solid',
     glyph: 'flame',
     transitive: 'N',
     inverse: 'consumes',
@@ -409,7 +384,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   delays: {
     cat: 'causal',
     label: 'delays',
-    line: 'dotted',
     glyph: 'hourglass',
     transitive: 'weak',
     inverse: 'delayed-by',
@@ -420,7 +394,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   'delayed-by': {
     cat: 'causal',
     label: 'delayed by',
-    line: 'dotted',
     glyph: 'hourglass',
     transitive: 'weak',
     inverse: 'delays',
@@ -433,7 +406,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   requires: {
     cat: 'dependency',
     label: 'requires',
-    line: 'solid',
     glyph: 'anchor',
     transitive: 'Y',
     inverse: 'required-by',
@@ -444,7 +416,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   'required-by': {
     cat: 'dependency',
     label: 'required by',
-    line: 'solid',
     glyph: 'anchor',
     transitive: 'Y',
     inverse: 'requires',
@@ -455,7 +426,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   uses: {
     cat: 'dependency',
     label: 'uses',
-    line: 'dashed',
     glyph: 'tool',
     transitive: 'weak',
     inverse: 'used-by',
@@ -466,7 +436,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   'used-by': {
     cat: 'dependency',
     label: 'used by',
-    line: 'dashed',
     glyph: 'tool',
     transitive: 'weak',
     inverse: 'uses',
@@ -477,7 +446,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   'used-for': {
     cat: 'dependency',
     label: 'used for',
-    line: 'dashed',
     glyph: 'flag',
     transitive: 'N',
     inverse: 'purpose-of',
@@ -488,7 +456,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   'purpose-of': {
     cat: 'dependency',
     label: 'purpose of',
-    line: 'dashed',
     glyph: 'flag',
     transitive: 'N',
     inverse: 'used-for',
@@ -501,7 +468,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   precedes: {
     cat: 'temporal',
     label: 'precedes',
-    line: 'solid',
     glyph: 'chevron-r',
     transitive: 'Y',
     inverse: 'follows',
@@ -512,7 +478,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   follows: {
     cat: 'temporal',
     label: 'follows',
-    line: 'solid',
     glyph: 'chevron-r',
     transitive: 'Y',
     inverse: 'precedes',
@@ -523,7 +488,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   'occurs-in': {
     cat: 'temporal',
     label: 'occurs in',
-    line: 'dotted',
     glyph: 'ring',
     transitive: 'Y',
     inverse: 'has-occurrence',
@@ -534,7 +498,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   'has-occurrence': {
     cat: 'temporal',
     label: 'has occurrence',
-    line: 'dotted',
     glyph: 'ring',
     transitive: 'Y',
     inverse: 'occurs-in',
@@ -545,7 +508,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   during: {
     cat: 'temporal',
     label: 'during',
-    line: 'solid',
     glyph: 'brackets',
     transitive: 'Y',
     inverse: 'spans',
@@ -556,7 +518,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   spans: {
     cat: 'temporal',
     label: 'spans',
-    line: 'solid',
     glyph: 'brackets',
     transitive: 'Y',
     inverse: 'during',
@@ -567,7 +528,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   'overlaps-with': {
     cat: 'temporal',
     label: 'overlaps with',
-    line: 'dashed',
     glyph: 'overlap',
     transitive: 'N',
     inverse: 'self',
@@ -578,7 +538,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   'derives-from': {
     cat: 'temporal',
     label: 'derives from',
-    line: 'solid',
     glyph: 'branch',
     transitive: 'Y',
     inverse: 'gives-rise-to',
@@ -589,7 +548,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   'gives-rise-to': {
     cat: 'temporal',
     label: 'gives rise to',
-    line: 'solid',
     glyph: 'branch',
     transitive: 'Y',
     inverse: 'derives-from',
@@ -602,7 +560,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   'contrasts-with': {
     cat: 'opposition',
     label: 'contrasts with',
-    line: 'wavy',
     glyph: 'tilde',
     transitive: 'N',
     inverse: 'self',
@@ -613,7 +570,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   'opposite-of': {
     cat: 'opposition',
     label: 'opposite of',
-    line: 'double',
     glyph: 'x',
     transitive: 'N',
     inverse: 'self',
@@ -626,7 +582,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   'similar-to': {
     cat: 'similarity',
     label: 'similar to',
-    line: 'dashed',
     glyph: 'approx',
     transitive: 'weak',
     inverse: 'self',
@@ -637,7 +592,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   'analogous-to': {
     cat: 'similarity',
     label: 'analogous to',
-    line: 'dotted',
     glyph: 'arrows-lr',
     transitive: 'N',
     inverse: 'self',
@@ -650,7 +604,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   supports: {
     cat: 'epistemic',
     label: 'supports',
-    line: 'dotted',
     glyph: 'check',
     transitive: 'weak',
     inverse: 'supported-by',
@@ -661,7 +614,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   'supported-by': {
     cat: 'epistemic',
     label: 'supported by',
-    line: 'dotted',
     glyph: 'check',
     transitive: 'weak',
     inverse: 'supports',
@@ -672,7 +624,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   contradicts: {
     cat: 'epistemic',
     label: 'contradicts',
-    line: 'dotted',
     glyph: 'slash',
     transitive: 'N',
     inverse: 'self',
@@ -683,7 +634,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   explains: {
     cat: 'epistemic',
     label: 'explains',
-    line: 'solid',
     glyph: 'bulb',
     transitive: 'weak',
     inverse: 'explained-by',
@@ -694,7 +644,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   'explained-by': {
     cat: 'epistemic',
     label: 'explained by',
-    line: 'solid',
     glyph: 'bulb',
     transitive: 'weak',
     inverse: 'explains',
@@ -705,7 +654,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   defines: {
     cat: 'epistemic',
     label: 'defines',
-    line: 'solid',
     glyph: 'equals',
     transitive: 'N',
     inverse: 'defined-by',
@@ -716,7 +664,6 @@ export const RELATION_TYPES: Record<RelationTypeName, RelationTypeDef> = {
   'defined-by': {
     cat: 'epistemic',
     label: 'defined by',
-    line: 'solid',
     glyph: 'equals',
     transitive: 'N',
     inverse: 'defines',

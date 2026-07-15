@@ -19,6 +19,10 @@ Each relation type declares the properties below. They define the contract that 
 - **Polarity (P)**: `+1` positive effect, `-1` antagonistic, `0` neutral/structural. From signed-network theory <a id="cite-4" href="#ref-4">[4]</a>: with polarity, the graph becomes a signed network where balance and cycle-sign analyses can apply.
 - **Cardinality (C)**: expected mapping pattern, always declared. One of `1-1`, `1-N`, `N-1`, `N-N` (no a-priori constraint). Setting this consistently lets algorithms flag structural anomalies (e.g. two competing `defines` edges into the same term).
 
+## Visual encoding
+
+- **Visual encoding**: category colour gives a coarse signal across the 8 categories; each type also has a glyph for a finer, near-type-level signal. Edge strokes are solid in every encoding mode.
+
 ## Categories
 
 Each category answers a specific question about the relation. Grouping the types by question makes the vocabulary easier to navigate when authoring a graph, and lets graph-analysis algorithms compare and aggregate at category level instead of only per individual type.

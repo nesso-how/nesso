@@ -16,6 +16,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - **Agent models:** Upgraded Nesso's agent model configuration (`opencode.json`) to GPT-5.6 family (Luna for planning/reviews/brainstorming, Sol for forensic debugging) and DeepSeek v4 Pro for orchestration and implementation, matching capability to cost per phase.
 - **Work agent:** PRs created through the orchestration flow now have GitHub auto-merge enabled by default (`gh pr merge --auto --squash`), so they merge automatically once all required checks pass.
 
+- **Edge encoding:** Dropped the per-type line style channel from `RelationTypeDef` (52 relation types). Edges now render with solid strokes in all encoding modes, using category colour + glyph as the two remaining visual channels. Touched `NessoEdge`, `RelationTypesDialog`, MCP payload, rules, and docs.
+
 ### Fixed
 
 - **Desktop:** The external file-conflict banner no longer fires when nothing actually changed on disk. `reconcileDiskWithIdb` previously pushed a record into its persist queue on a timestamp-only bump (e.g. self-healing name/id normalisation, or the app's own save during the disk-before-fingerprint window); it now requires actual content or name divergence. `handleWatchEvent` additionally compares the freshly-synced disk fingerprint against `savedFingerprint` (using `mergeGraphDisplay` for settings parity) and skips spurious notifications entirely.

@@ -42,7 +42,7 @@ Update the canonical `.rules/*.md` in the same change when your edit makes a rul
 
 - `components.md` — `src/components/**/*.tsx`
 - `store.md` — `src/store/**/*.ts`
-- `graph-model.md` — `src/data/relationTypes.ts`, `src/types/graph.ts`, `packages/graph/src/NessoEdge.tsx`, `src/components/dialogs/RelationTypesDialog.tsx`, `packages/vocab-learning/src/index.ts`
+- `graph-model.md` — `src/data/relationTypes.ts`, `src/types/graph.ts`, `packages/graph/src/NessoEdge.tsx`, `src/components/dialogs/RelationTypesDialog.tsx`, `packages/vocab-learning/src/index.ts`, `packages/vocab-learning/src/relationTypes.ts`
 - `mentor.md` — `src/components/mentor/MentorPanel.tsx`, `src/llm/completion.ts`, `src/llm/context.ts`
 - `conventions.md` — `src/**/*.{ts,tsx}` (only when conventions change, not every src edit)
 - `testing.md` — `**/*.test.{ts,tsx}`; also `vitest.config.ts`, `playwright.config.ts`, `e2e/**`, CI test steps
@@ -61,7 +61,7 @@ Update the canonical `.rules/*.md` in the same change when your edit makes a rul
 
 ### Never use default React Flow edge types
 
-All edges must use `type: 'nesso'`. The `NessoEdge` renderer from `@nesso-how/graph` is load-bearing for visual encoding (line style, glyph, category colour). Plain React Flow edges skip all of this.
+All edges must use `type: 'nesso'`. The `NessoEdge` renderer from `@nesso-how/graph` is load-bearing for visual encoding (glyph, category colour). Plain React Flow edges skip all of this.
 
 ### Never hardcode edge colours
 
