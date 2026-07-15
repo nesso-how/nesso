@@ -19,6 +19,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - **Desktop:** The external file-conflict banner no longer fires when nothing actually changed on disk. `reconcileDiskWithIdb` previously pushed a record into its persist queue on a timestamp-only bump (e.g. self-healing name/id normalisation, or the app's own save during the disk-before-fingerprint window); it now requires actual content or name divergence. `handleWatchEvent` additionally compares the freshly-synced disk fingerprint against `savedFingerprint` (using `mergeGraphDisplay` for settings parity) and skips spurious notifications entirely.
 
+- **Canvas:** Dragging a connection from a node's left-side (target) handles no longer silently reverses the relation's source/target direction. Target handles now have `isConnectableStart={false}`, preventing a connection drag from starting there.
+
 ## [0.1.0-alpha.39] - 2026-07-02
 
 ### Changed
