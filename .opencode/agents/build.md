@@ -62,6 +62,12 @@ When TDD doesn't apply, still verify manually and run `pnpm run fast-check`.
 4. REFACTOR — clean up if needed, keep green
 5. Fast checks: `pnpm run fast-check` (format, lint, type-check, test). If the task spans e2e, run `pnpm run fast-check -- --e2e`.
 
+## Safety Checks
+
+Before returning, scan your own diff for these patterns:
+
+- **Unbounded async loops:** any `requestAnimationFrame`, `setInterval`, or `setTimeout` recursion must have a bounded stop condition (retry limit, deadline) and a cleanup path (cancelled flag, unmount teardown). An infinite retry loop at 60fps is a BLOCKING correctness bug.
+
 ## When Stuck
 
 | Problem                | Solution                                                                              |
