@@ -14,6 +14,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Changed
 
 - **Agent models:** Upgraded Nesso's agent model configuration (`opencode.json`) to GPT-5.6 family (Luna for planning/reviews/brainstorming, Sol for forensic debugging) and DeepSeek v4 Pro for orchestration and implementation, matching capability to cost per phase.
+- **Work agent:** PRs created through the orchestration flow now have GitHub auto-merge enabled by default (`gh pr merge --auto --squash`), so they merge automatically once all required checks pass.
 
 ### Fixed
 

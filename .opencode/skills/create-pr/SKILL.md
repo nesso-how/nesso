@@ -65,3 +65,16 @@ gh pr view <n> --json closingIssuesReferences
 ```
 
 Fix body wording if any intended issue is missing.
+
+## 5. Enable auto-merge (optional)
+
+When the user passes `--auto` (or asks to auto-close / auto-merge the PR), enable GitHub's auto-merge after creation. This queues the PR to merge automatically once all required checks pass:
+
+```bash
+gh pr merge <n> --auto
+```
+
+- Requires branch protection with required status checks enabled on `main`.
+- The PR stays open with checks pending; GitHub merges it once all required checks succeed.
+- Cannot be combined with draft PRs — un-draft first (`gh pr ready <n>`).
+- If the user wants squash merge strategy, pass `--squash` as well: `gh pr merge <n> --auto --squash`.
