@@ -11,7 +11,7 @@ Fetches documentation pages from this site. Call it without a `slug` to get a ta
 
 ### `get_relation_types`
 
-Returns the complete list of relation types grouped by category id (`taxonomic`, `structural`, and so on from `RELATION_CATEGORIES` in `@nesso-how/vocab-learning`), with line style, symmetry, and type properties (transitive, inverse, strength, polarity, cardinality). Use this whenever you need valid type names for graph JSON or explanations for the learner.
+Returns the complete list of relation types grouped by category id (`taxonomic`, `structural`, and so on from `RELATION_CATEGORIES` in `@nesso-how/vocab-learning`), with glyph, symmetry, and type properties (transitive, inverse, strength, polarity, cardinality). Use this whenever you need valid type names for graph JSON or explanations for the learner.
 
 ### `validate_graph`
 

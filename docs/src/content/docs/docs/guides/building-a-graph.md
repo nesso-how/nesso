@@ -22,7 +22,7 @@ Drag from a node's right edge (`out` handle) to another node's left edge (`in` h
 - The connection line previews with the same quadratic geometry the final edge uses.
 - Edge type can be changed any time from the Inspector when an edge is selected.
 
-See the [relation types reference](../../reference/relation-types/) for the full list, semantic meaning, and type properties. Per-type line style and glyph come from `@nesso-how/vocab-learning`. Edge encoding density is under [Display options](#display-options-sidebar) below.
+See the [relation types reference](../../reference/relation-types/) for the full list, semantic meaning, and type properties. Each type has a category colour and an SVG glyph, both defined in `@nesso-how/vocab-learning`. Edge encoding density is under [Display options](#display-options-sidebar) below.
 
 ## Selecting and editing
 

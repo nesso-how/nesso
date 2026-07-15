@@ -34,57 +34,6 @@ function categoryColor(
   return PALETTES[palette]?.[cat] ?? '#666666'
 }
 
-function EdgePathElement({
-  d,
-  color,
-  lineStyle,
-  width = 1.5,
-  opacity = 0.78,
-}: {
-  d: string
-  color: string
-  lineStyle: string
-  width?: number
-  opacity?: number
-}) {
-  const base = {
-    fill: 'none',
-    stroke: color,
-    strokeWidth: width,
-    opacity,
-    strokeLinecap: 'round' as const,
-  }
-
-  if (lineStyle === 'double') {
-    return (
-      <g>
-        <path
-          d={d}
-          fill="none"
-          stroke="var(--paper, #ffffff)"
-          strokeWidth={width + 3}
-          opacity={1}
-        />
-        <path d={d} {...base} strokeWidth={width * 2.6} />
-        <path
-          d={d}
-          fill="none"
-          stroke="var(--paper, #ffffff)"
-          strokeWidth={width * 0.7}
-          opacity={1}
-        />
-      </g>
-    )
-  }
-  if (lineStyle === 'wavy') {
-    return <path d={d} {...base} strokeDasharray="1 4" strokeWidth={width * 1.2} />
-  }
-  if (lineStyle === 'dashed') return <path d={d} {...base} strokeDasharray="6 5" />
-  if (lineStyle === 'dotted')
-    return <path d={d} {...base} strokeDasharray="0.1 5" strokeWidth={width * 1.4} />
-  return <path d={d} {...base} />
-}
-
 type NessoFlowEdge = Edge<NessoEdgeData, 'nesso'>
 
 export function NessoEdge({ id, source, target, data, selected }: EdgeProps<NessoFlowEdge>) {
@@ -108,7 +57,6 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
     edgeEncoding === 'minimal'
       ? 'var(--ink-3, #888888)'
       : categoryColor(T.cat, categoryColorMode, palette)
-  const lineStyle = edgeEncoding === 'minimal' ? 'solid' : T.line
   const isSelected = selected || isItemSelected?.('edge', id) === true
   const showLabel =
     edgeEncoding === 'full' || (edgeEncoding !== 'minimal' && (hovered || isSelected))
@@ -182,7 +130,14 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
     >
       <path d={path} stroke="transparent" strokeWidth={14} fill="none" />
 
-      <EdgePathElement d={path} color={color} lineStyle={lineStyle} width={w} opacity={op} />
+      <path
+        d={path}
+        fill="none"
+        stroke={color}
+        strokeWidth={w}
+        opacity={op}
+        strokeLinecap="round"
+      />
 
       {T.inverse !== 'self' && edgeEncoding !== 'minimal' && (
         <polygon points={`${b.x},${b.y} ${ax1},${ay1} ${ax2},${ay2}`} fill={color} opacity={0.85} />

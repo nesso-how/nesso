@@ -230,15 +230,6 @@ export function RelationTypesDialog({ open, onClose }: Props) {
                         stroke={encoding === 'minimal' ? 'var(--ink-3)' : g.color}
                         strokeWidth={1.4}
                         strokeLinecap="round"
-                        strokeDasharray={
-                          edgeDef.line === 'dashed'
-                            ? '6 5'
-                            : edgeDef.line === 'dotted'
-                              ? '0.1 5'
-                              : edgeDef.line === 'wavy'
-                                ? '1 4'
-                                : '0'
-                        }
                       />
                       <circle
                         cx="18"
