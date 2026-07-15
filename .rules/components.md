@@ -47,6 +47,8 @@ Components live under `src/components/` in feature folders. They read from `useG
 | `GraphFileConflictBanner` | Desktop file-watch conflict; wraps `ActionBanner` with reload / keep-local actions.                                                                                                                                                                          |
 | `UpdateBanner`            | Desktop auto-update notice; wraps `ActionBanner` with install / retry actions and the corner X for dismiss (install-in-progress has no X; see `useDesktopUpdater`).                                                                                          |
 
+> **InlineEdit multiline resize** — `syncScrollHeight` is idempotent (skips write when `scrollHeight` already matches `style.height`). Never observe the element you mutate from within a `ResizeObserver` callback — decouple the observer target from the mutation target, or guard the write. The editing-observer effect depends on `draft` to re-sync on content change; the idempotent guard prevents the re-creation from looping.
+
 ## Layout
 
 `App.tsx` renders all panels over a `position: fixed; inset: 0` root. `GraphCanvas` receives inset props to avoid panel overlap: `leftInset` is the sidebar; `bottomInset` is the `StatusBar` (`STATUS_BAR_HEIGHT_PX`); `rightInset` widens when the `Inspector` is open (full panel width, or `INSPECTOR_RAIL_WIDTH` when collapsed). The inspector docks flush to the right edge between the top bar and status bar.
