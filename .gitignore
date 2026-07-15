@@ -57,3 +57,6 @@ e2e-native/artifacts
 
 # Code-quality tooling (fallow local cache + baselines)
 .fallow/
+
+# Git worktrees — separate working directories, not part of the main repo
+.worktrees/

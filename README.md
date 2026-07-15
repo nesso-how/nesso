@@ -77,6 +77,18 @@ The AI mentor talks to any OpenAI-compatible `chat/completions` endpoint. On eve
 
 The repo is a pnpm workspace monorepo. The graph vocabulary lives in [packages/vocab-learning](packages/vocab-learning) and is consumed by both the app and an MCP server in [packages/mcp](packages/mcp) that lets LLM clients query relation types, read the bundled docs, build valid graph documents, and validate graph JSON.
 
+## Development workflow
+
+Nesso uses [OpenCode](https://opencode.ai) as its development environment, a modular, multi-provider AI coding tool that aligns with Nesso's own philosophy. We chose it over vendor-locked alternatives because it runs locally against any provider (currently OpenAI, open-weight models via a Go subscription, or local models), supporting a structured workflow built around typed agents, skills, and subagent pipelines:
+
+**The pipeline** (from issue to PR) routes through specialized agents: `fix` forensic traces bugs, `brainstorm` explores design, `plan` produces bite-sized TDD tasks, `build` executes RED-GREEN-REFACTOR per task, `guard-review` checks semantic constraints, and `quality-review` catches bugs and regressions. An orchestrator agent (`work`) dispatches each phase and gates on user approval.
+
+This lets us match model capability to cost per phase without locking into a single model or provider.
+
+The harness lives in `.opencode/` and `.rules/`: agent definitions, skill workflows, and area-specific rules (graph model, store conventions, theme tokens). All tracked in the repo so every contributor sees the same guardrails.
+
+The project is managed with a [kanban board](https://github.com/orgs/nesso-how/projects/1/views/2) tracking active issues and a [roadmap](https://github.com/orgs/nesso-how/projects/1/views/3) for longer-term direction. We follow a continuous flow model rather than sprints or classic agile iterations: work is pulled from the backlog as capacity allows, sized so each unit maps to one agentic pipeline run. This cadence matches the tooling: agents work best on focused, sequential tasks, not time-boxed batches of unrelated work.
+
 ## Packages
 
 Nesso is built as a monorepo of focused packages so that its graph vocabulary, visual components, and tooling can be used independently of the full app. The MCP server, embeddable graph component, and schema layer are all separate entry points into the same underlying model.
