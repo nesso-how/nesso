@@ -57,6 +57,9 @@ let _switchProjectInflight: Promise<GraphMeta[]> | null = null
 // Set while abandoning a project whose folder was deleted externally — any
 // save in that window would silently recreate the folder from the IDB cache.
 let _suppressOutgoingSave = false
+// Monotonic counter for loadGraph race prevention — the most recently started
+// call wins, older ones are discarded. Has no semantic meaning beyond this.
+let _loadRequestId = 0
 
 /** Register `path` as the most-recent known project, then switch to it. */
 function registerAndSwitch(
@@ -488,10 +491,21 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
     ) {
       await s.saveCurrentGraph()
     }
+    // Capture a monotonic request id so the most-recently-started loadGraph
+    // wins and older ones are discarded across every async gap below.
+    const requestId = ++_loadRequestId
     const record = await dbLoadGraph(id)
-    if (!record) return
+    if (requestId !== _loadRequestId) return
+    if (!record) {
+      const showHeatmap = defaultGraphDisplay(get().settings).showHeatmap
+      set((s) => ({
+        graphDisplay: { ...s.graphDisplay, showHeatmap },
+      }))
+      return
+    }
     _draggingNodeIds.clear()
     const reviews = await dbGetReviewStatesForGraph(id)
+    if (requestId !== _loadRequestId) return
     const nodes = record!.nodes.map((n) => mergeReviewIntoNode(n, reviews.get(n.id)))
     const graphDisplay = mergeGraphDisplay(record!.display, get().settings)
     const fp = graphContentFingerprint(nodes, record!.edges, graphDisplay)

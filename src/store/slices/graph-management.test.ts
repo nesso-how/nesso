@@ -1,15 +1,38 @@
 // @vitest-environment jsdom
 // SPDX-License-Identifier: MIT
 import 'fake-indexeddb/auto'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createStore } from 'zustand/vanilla'
-import { dbClearGraphs, dbListGraphs, dbLoadGraph } from '@/store/db'
+import { dbClearGraphs, dbListGraphs, dbLoadGraph, dbSaveGraph } from '@/store/db'
+import type { GraphRecord } from '@/store/db'
 import type { GraphState } from '../state'
 import { createDesktopSyncSlice } from './desktop-sync'
 import { createGraphEditingSlice } from './graph-editing'
 import { createGraphManagementSlice } from './graph-management'
 import { createSettingsSlice } from './settings'
 import { createUISlice } from './ui'
+
+// Controlled override for dbLoadGraph — set per-test to intercept load timing.
+// Use vi.hoisted so the references are available in the hoisted vi.mock factory.
+const { dbLoadGraphOverrideRef, realDbLoadGraphRef } = vi.hoisted(() => ({
+  dbLoadGraphOverrideRef: {
+    current: null as ((id: string) => Promise<GraphRecord | undefined>) | null,
+  },
+  realDbLoadGraphRef: { current: null as typeof dbLoadGraph | null },
+}))
+
+vi.mock('@/store/db', async (importOriginal) => {
+  const original = await importOriginal<typeof import('@/store/db')>()
+  realDbLoadGraphRef.current = original.dbLoadGraph
+  return {
+    ...original,
+    dbLoadGraph: vi.fn((id: string) => {
+      const override = dbLoadGraphOverrideRef.current
+      if (override) return override(id)
+      return original.dbLoadGraph(id)
+    }),
+  }
+})
 
 // Web mode: `isDesktop()` is false under jsdom, so graph management persists
 // through IndexedDB only — no disk/Tauri involved. Graphs live in a real
@@ -28,6 +51,15 @@ function makeStore() {
 }
 
 type Store = ReturnType<typeof makeStore>
+
+describe('store display initialization', () => {
+  it('starts the active graph display with the app heatmap default', () => {
+    const s = makeStore()
+
+    expect(s.getState().settings.showHeatmap).toBe(false)
+    expect(s.getState().graphDisplay.showHeatmap).toBe(false)
+  })
+})
 
 async function freshStore(): Promise<Store> {
   const s = makeStore()
@@ -83,6 +115,7 @@ describe('createGraph', () => {
     expect(state.currentGraphId).toBe(id)
     expect(state.graphList.some((g) => g.id === id && g.name === 'Fresh')).toBe(true)
     expect(state.nodes).toHaveLength(0)
+    expect(state.graphDisplay.showHeatmap).toBe(false)
     const stored = await dbLoadGraph(id)
     expect(stored).toMatchObject({ id, name: 'Fresh' })
   })
@@ -189,6 +222,88 @@ describe('loadGraph', () => {
     await s.getState().loadGraph('does-not-exist')
     expect(s.getState().currentGraphId).toBe(before)
     expect(s.getState().nodes).toHaveLength(0)
+  })
+
+  it('uses the current app heatmap default when a stored graph has no display', async () => {
+    const s = makeStore()
+    const id = 'g-no-display'
+
+    s.getState().setSetting('showHeatmap', true)
+    await dbSaveGraph({
+      id,
+      name: 'No display',
+      createdAt: 1,
+      updatedAt: 1,
+      nodes: [],
+      edges: [],
+    })
+
+    await s.getState().loadGraph(id)
+
+    expect(s.getState().graphDisplay.showHeatmap).toBe(true)
+  })
+
+  it('resets the heatmap to the current app default when the graph is missing', async () => {
+    const s = makeStore()
+
+    s.getState().setSetting('showHeatmap', true)
+    s.getState().setGraphDisplay('showHeatmap', false)
+
+    await s.getState().loadGraph('does-not-exist')
+
+    expect(s.getState().graphDisplay.showHeatmap).toBe(true)
+  })
+
+  it('does not overwrite the active graph when a missing-graph load resolves after a successful one', async () => {
+    const s = makeStore()
+    await s.getState().loadGraphList()
+
+    const validId = await s.getState().createGraph('Valid')
+    s.getState().addNode(50, 50)
+    // Persist the graph with showHeatmap differing from the app default.
+    s.getState().setGraphDisplay('showHeatmap', false)
+    await s.getState().saveCurrentGraph()
+
+    // Switch the app default to the opposite value so the missing-graph path
+    // would clobber the loaded graph's display if it races.
+    s.getState().setSetting('showHeatmap', true)
+
+    // Create a deferred promise so we control when the "missing" call resolves.
+    let resolveMissing!: (value: GraphRecord | undefined) => void
+    const missingPromise = new Promise<GraphRecord | undefined>((resolve) => {
+      resolveMissing = resolve
+    })
+
+    // Intercept dbLoadGraph: delay the missing-graph call, pass through for valid ids.
+    dbLoadGraphOverrideRef.current = async (id: string) => {
+      if (id === 'fake-missing') return missingPromise
+      return realDbLoadGraphRef.current!(id)
+    }
+
+    // Start the missing load (NOT awaited — it's blocked on the deferred promise).
+    const missingLoad = s.getState().loadGraph('fake-missing')
+
+    // Start and await the valid load. It should complete first.
+    await s.getState().loadGraph(validId)
+
+    // The state must reflect the successfully loaded valid graph.
+    expect(s.getState().currentGraphId).toBe(validId)
+    expect(s.getState().nodes).toHaveLength(1)
+    expect(s.getState().graphDisplay.showHeatmap).toBe(false)
+
+    // Now let the missing-graph call resolve. Without the token guard, this
+    // would reset showHeatmap to the app default (true), clobbering the loaded
+    // graph's stored display.
+    resolveMissing(undefined)
+    await missingLoad
+
+    // State must still reflect the valid graph — the stale missing-graph
+    // response must be discarded.
+    expect(s.getState().currentGraphId).toBe(validId)
+    expect(s.getState().nodes).toHaveLength(1)
+    expect(s.getState().graphDisplay.showHeatmap).toBe(false)
+
+    dbLoadGraphOverrideRef.current = null
   })
 })
 
