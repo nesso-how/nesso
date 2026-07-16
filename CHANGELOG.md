@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.0-alpha.40] - 2026-07-16
+
 ### Added
 
 - **README:** New "Development workflow" section documenting the OpenCode harness, agent pipeline, and continuous flow model, with a colour-coded top-down flowchart replacing the previous left-to-right layout.
@@ -735,7 +737,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial alpha: interactive knowledge graph (web + Tauri v2); desktop installers on GitHub Releases (macOS Apple silicon and Intel).
 
-[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.39...HEAD
+[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.40...HEAD
+[0.1.0-alpha.40]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.39...v0.1.0-alpha.40
 [0.1.0-alpha.39]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.38...v0.1.0-alpha.39
 [0.1.0-alpha.38]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.37...v0.1.0-alpha.38
 [0.1.0-alpha.37]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.36...v0.1.0-alpha.37
