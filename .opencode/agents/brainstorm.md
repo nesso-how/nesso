@@ -1,8 +1,12 @@
 ---
 mode: primary
 permission:
+  bash:
+    git commit *: deny
+    git push *: deny
+    rm *: deny
+    '*': allow
   edit: deny
-  bash: ask
   task: deny
 description: Interactive design exploration through dialogue. Questions, alternatives, approval gates. Never writes code.
 ---

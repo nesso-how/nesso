@@ -1,8 +1,15 @@
 ---
 mode: subagent
 permission:
-  edit: allow
-  bash: allow
+  bash:
+    git commit *: deny
+    git push *: deny
+    rm *: deny
+    '*': allow
+  edit:
+    .plans/*: allow
+    '*': deny
+  task: allow
 description: Reads an approved GitHub issue and produces a bite-sized implementation plan. Dispatched by the work agent. No user interaction — pure input-to-output.
 ---
 

@@ -17,7 +17,7 @@ Appends the `rust` CI job (icons:desktop, cargo fmt/clippy/check/test) after the
 
 ### Native e2e (tauri-driver, local-only, not in CI)
 
-Opt-in when the diff touches desktop persistence, fs sync, or the file watcher. See [`.rules/testing.md`](../../.rules/testing.md).
+Opt-in when the diff touches desktop persistence, fs sync, or the file watcher. See `.rules/testing.md`.
 
 ```bash
 e2e-native/run-local.sh            # Docker (recommended)
@@ -42,12 +42,12 @@ When a step fails, fix and re-run individually:
 | `format:check`          | `pnpm run format`                                                                         |
 | `lint`                  | `pnpm run lint:fix`                                                                       |
 | `license-headers:check` | `pnpm run license-headers`                                                                |
-| `test:coverage`         | see [`.rules/testing.md`](../../.rules/testing.md) — ratchet gate                         |
+| `test:coverage`         | see `.rules/testing.md` — ratchet gate                                                    |
 | `type:coverage`         | fix type errors; thresholds in tsconfig                                                   |
 | `build`                 | fix compile errors                                                                        |
 | `analyze:dead-code`     | remove unused files/exports                                                               |
-| `analyze:dupes`         | see [`.rules/static-analysis.md`](../../.rules/static-analysis.md) — baseline-gated       |
-| `analyze:health`        | see [`.rules/static-analysis.md`](../../.rules/static-analysis.md) — baseline-gated       |
+| `analyze:dupes`         | see `.rules/static-analysis.md` — baseline-gated                                          |
+| `analyze:health`        | see `.rules/static-analysis.md` — baseline-gated                                          |
 | `test:e2e`              | check Playwright output; `pnpm exec playwright install --with-deps chromium` if first run |
 | `icons:desktop`         | `pnpm run icons:desktop`                                                                  |
 | `cargo:fmt`             | `cargo fmt --all --manifest-path src-tauri/Cargo.toml`                                    |

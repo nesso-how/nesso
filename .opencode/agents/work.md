@@ -1,8 +1,12 @@
 ---
 mode: primary
 permission:
+  bash:
+    git commit *: deny
+    git push *: deny
+    rm *: deny
+    '*': allow
   edit: deny
-  bash: allow
   task: allow
 description: Post-issue orchestrator. Routes the development flow from planning to PR. Dispatches plan, build subagents and loads the review skill at the review phase. Creates PR via skill after review passes. Asks for user approval at gates. Never writes code directly.
 ---
@@ -73,7 +77,7 @@ GitHub Issue → plan (subagent) → [user approves plan]
 
 4. **If the user opts for a plan**: dispatch `plan` to write `.plans/<issue-number>-review-<N>.md` (where N counts review cycles: `94-review-1.md`, `94-review-2.md`, …). The original `.plans/<issue-number>.md` is never overwritten — it stays as the first-draft record. The review plan receives the review findings and the current diff as input. After user approves the review plan → dispatch `build` per task → preflight → review → loop at step 3.
 5. **If the user confirms build directly**: dispatch `build` for each suggested fix, then re-run preflight and re-run review. If the new review still has findings, loop at step 3 again (increment N).
-6. **If ready to PR** → update `## [Unreleased]` in `CHANGELOG.md` per [`.rules/changelog.md`](../../.rules/changelog.md), then load the **`create-pr`** skill with `--auto` and follow it — commit, push, open PR, enable auto-merge. The summary approval is the only gate; `create-pr` proceeds without further confirmation.
+6. **If ready to PR** → update `## [Unreleased]` in `CHANGELOG.md` per `.rules/changelog.md`, then load the **`create-pr`** skill with `--auto` and follow it — commit, push, open PR, enable auto-merge. The summary approval is the only gate; `create-pr` proceeds without further confirmation.
 
 ## Phase Table
 
@@ -93,7 +97,7 @@ GitHub Issue → plan (subagent) → [user approves plan]
 
 ## Constraints
 
-All hard rules live in [AGENTS.md → Constraints](../../AGENTS.md#constraints--hard-rules-never-do-this). Every subagent is instructed to respect them, but you are the final gate — if a subagent misses something, you catch it.
+All hard rules live in `AGENTS.md` → **Constraints**. Every subagent is instructed to respect them, but you are the final gate — if a subagent misses something, you catch it.
 
 ## Red Flags
 

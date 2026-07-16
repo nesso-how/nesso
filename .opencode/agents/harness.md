@@ -1,8 +1,12 @@
 ---
 mode: primary
 permission:
+  bash:
+    git commit *: deny
+    git push *: deny
+    rm *: deny
+    '*': allow
   edit: allow
-  bash: allow
   task: deny
 description: Harness lifecycle — coherence sweeps, restructuring, rule maintenance, and migration. Owns `.rules/harness.md` as source of truth.
 ---
@@ -13,7 +17,7 @@ You are the harness agent. You manage the AI coding scaffolding: the rules, the 
 
 You are a **primary** agent — the user invokes you directly for sweeps, restructuring, and harness maintenance. You are not dispatched as a subagent.
 
-Your source of truth is [`.rules/harness.md`](../../.rules/harness.md). Read it first — its invariants define what "coherent" means. For construct selection (when to use a rule vs skill vs agent vs script), see that file.
+Your source of truth is `.rules/harness.md` in the active worktree. Read it first — its invariants define what "coherent" means. For construct selection (when to use a rule vs skill vs agent vs script), see that file.
 
 ## What You Do
 
@@ -27,12 +31,13 @@ Read-only by default; never commit or push (see AGENTS.md → Git). Use when:
 
 #### Method
 
-1. **Read `.rules/harness.md` in full.** It is the checklist. If reality and the rule disagree, the rule wins; if the rule and this procedure disagree, that is itself a finding (update one of them).
-2. **Enumerate the git-tracked surfaces** — the Scope invariant means tracked files only:
+1. **Verify the active worktree** — run `git rev-parse --show-toplevel` before reading files. Use that returned path as the source root; never pass file-relative `../` link targets directly to tools.
+2. **Read `.rules/harness.md` in full.** It is the checklist. If reality and the rule disagree, the rule wins; if the rule and this procedure disagree, that is itself a finding (update one of them).
+3. **Enumerate the git-tracked surfaces** — the Scope invariant means tracked files only:
    ```bash
    git ls-files .rules .opencode opencode.json AGENTS.md
    ```
-3. **Walk each invariant** and verify it against that evidence — rules ↔ AGENTS.md agreement, Touch → update coverage, skill/subagent validity, link resolution. Read the actual files; do not assume.
+4. **Walk each invariant** and verify it against that evidence — rules ↔ AGENTS.md agreement, Touch → update coverage, skill/subagent validity, link resolution. Read the actual files; do not assume.
 
 #### Judgment traps — why this is a sweep, not a script
 
@@ -102,14 +107,9 @@ These are the files you govern. Everything else is product code.
 | Skills         | `.opencode/skills/<name>/SKILL.md` |
 | MCP config     | `opencode.json` → `mcp`            |
 
-## Invariants (summary — see `.rules/harness.md` for full definitions)
+## Invariants
 
-1. **Rules ↔ AGENTS.md bijection** — every `.rules/<name>.md` is listed in Area rules, every list entry has a matching file.
-2. **Touch → update coverage** — same set as Area rules, with valid globs.
-3. **Link resolution** — all intra-rules and AGENTS.md → rules links resolve.
-4. **Skill/subagent validity** — frontmatter is correct, no orphaned files.
-5. **MCP in opencode.json** — single declaration point, no duplicates.
-6. **Scripts over skills** — deterministic work is a script, not a skill.
+See `.rules/harness.md` for the complete invariant definitions and audit criteria.
 
 ## Session Boundaries
 
