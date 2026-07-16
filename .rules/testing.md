@@ -75,7 +75,7 @@ Web coverage (Playwright): graph editing (create node, drag-connect a relation, 
 
 Native coverage (tauri-driver): disk-first autosave (concept lands in a workspace `.json`), rehydration from disk across an app relaunch, the real fs watcher reconciling an externally added graph, and desktop-sync reloading the active graph after an external edit.
 
-**WebDriver cannot drive native OS windows** — the folder/save **dialogs** (`pickWorkspaceFolder`, `createProjectFolder`) and the **native menu bar** are not DOM, so multi-project switching, native import/export, and menu commands stay covered by Vitest (`graph-management.desktop.test.ts`, `useDesktopMenu`), not this lane. The external-conflict **banner** branch (unsaved local edits + an external write) needs deterministic timing control and is a follow-up; the no-local-edits reload branch is covered.
+**WebDriver cannot drive native OS windows** — the folder/save **dialogs** (`pickWorkspaceFolder`) and the **native menu bar** are not DOM, so multi-project switching, native import/export, and menu commands stay covered by Vitest (`graph-management.desktop.test.ts`, `useDesktopMenu`), not this lane. The external-conflict **banner** branch (unsaved local edits + an external write) needs deterministic timing control and is a follow-up; the no-local-edits reload branch is covered.
 
 Conventions:
 

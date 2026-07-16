@@ -16,7 +16,6 @@ import { mergeReviewIntoNode } from '@/lib/graphContent'
 import { persistReviewStatesFromNodes } from '@/lib/graphMapping'
 import {
   beginSuppressWatch,
-  createProjectFolder,
   endSuppressWatch,
   getDefaultWorkspacePath,
   grantFsScope,
@@ -178,8 +177,7 @@ export interface GraphManagementSlice {
   graphList: GraphMeta[]
   loadedToken: number
   loadGraphList: () => Promise<GraphMeta[]>
-  createProject: () => Promise<GraphMeta[]>
-  openProject: () => Promise<GraphMeta[]>
+  openOrCreateProject: () => Promise<GraphMeta[]>
   switchProject: (path: string) => Promise<GraphMeta[]>
   removeProject: (path: string) => Promise<GraphMeta[]>
   /** Normalized paths of known projects whose folder is currently missing from disk. */
@@ -292,14 +290,7 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
     return list
   },
 
-  createProject: async () => {
-    if (!isDesktop()) return get().graphList
-    const created = await createProjectFolder()
-    if (!created) return get().graphList
-    return registerAndSwitch(created, set, get)
-  },
-
-  openProject: async () => {
+  openOrCreateProject: async () => {
     if (!isDesktop()) return get().graphList
     const picked = await pickWorkspaceFolder()
     if (!picked) return get().graphList

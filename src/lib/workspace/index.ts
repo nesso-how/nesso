@@ -23,7 +23,7 @@ export {
   removeGraphFromWorkspace,
   reloadGraphFromDisk,
 } from '@/lib/workspace/graphFiles'
-export { grantFsScope, pickWorkspaceFolder, createProjectFolder } from '@/lib/workspace/scope'
+export { grantFsScope, pickWorkspaceFolder } from '@/lib/workspace/scope'
 export {
   reconcileDiskWithIdb,
   persistWorkspaceSync,

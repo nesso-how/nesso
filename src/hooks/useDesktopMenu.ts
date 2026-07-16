@@ -51,8 +51,7 @@ export function useDesktopMenu(handlers: DesktopMenuHandlers): void {
       await on('zoom-out', () => void zoomOut())
 
       await on('new-graph', () => void store().createGraph(getT().sidebar.untitled))
-      await on('new-project', () => void store().createProject())
-      await on('open-project', () => void store().openProject())
+      await on('open-project', () => void store().openOrCreateProject())
       await on('export-json', () => void exportGraphJson())
       await on('export-png', () => void exportGraphPng())
       await on('import', () => importGraphFile())
