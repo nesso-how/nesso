@@ -13,6 +13,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
+- **Desktop:** "Open Project" and "Create Project" are now unified into a single "Add Project" flow. The sidebar "+" button and the native File → "Open or Create Project…" menu item both open the same native folder picker, where users can pick an existing project or create a new folder in one interaction. Removed the separate `createProjectFolder` dialog, the `new-project` native menu item with `CmdOrCtrl+Shift+N`, and the two-item dropdown in the sidebar. i18n keys consolidated from three to two.
+
 - **Agent models:** Upgraded Nesso's agent model configuration (`opencode.json`) to GPT-5.6 family (Luna for planning/reviews/brainstorming, Sol for forensic debugging) and DeepSeek v4 Pro for orchestration and implementation, matching capability to cost per phase.
 - **Work agent:** PRs created through the orchestration flow now have GitHub auto-merge enabled by default (`gh pr merge --auto --squash`), so they merge automatically once all required checks pass.
 
@@ -33,6 +35,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
+- **Desktop:** "Open Project" and "Create Project" are now unified into a single "Add Project" flow. The sidebar "+" button and the native File → "Open or Create Project…" menu item both open the same native folder picker, where users can pick an existing project or create a new folder in one interaction. Removed the separate `createProjectFolder` dialog, the `new-project` native menu item with `CmdOrCtrl+Shift+N`, and the two-item dropdown in the sidebar. i18n keys consolidated from three to two.
+
 - **Desktop (macOS):** GitHub Releases builds are now code-signed with a Developer ID certificate and notarized by Apple, so Gatekeeper no longer blocks first launch after install.
 
 ## [0.1.0-alpha.38] - 2026-06-26
@@ -44,11 +48,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
+- **Desktop:** "Open Project" and "Create Project" are now unified into a single "Add Project" flow. The sidebar "+" button and the native File → "Open or Create Project…" menu item both open the same native folder picker, where users can pick an existing project or create a new folder in one interaction. Removed the separate `createProjectFolder` dialog, the `new-project` native menu item with `CmdOrCtrl+Shift+N`, and the two-item dropdown in the sidebar. i18n keys consolidated from three to two.
+
 - **First launch:** Demo seed graphs are no longer auto-loaded on first launch; a locale-appropriate seed map opens when onboarding ends (skipping removes the Tutorial graph, completing keeps it).
 
 ## [0.1.0-alpha.37] - 2026-06-25
 
 ### Changed
+
+- **Desktop:** "Open Project" and "Create Project" are now unified into a single "Add Project" flow. The sidebar "+" button and the native File → "Open or Create Project…" menu item both open the same native folder picker, where users can pick an existing project or create a new folder in one interaction. Removed the separate `createProjectFolder` dialog, the `new-project` native menu item with `CmdOrCtrl+Shift+N`, and the two-item dropdown in the sidebar. i18n keys consolidated from three to two.
 
 - **Socrates avatar:** Simplified portrait with warmer skin tones, softer beard, and theme-aware inline SVG in the app (status bar and mentor panel). Removed the status-bar breathing halo; landing docs icon updated to match.
 
@@ -61,6 +69,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
+- **Desktop:** "Open Project" and "Create Project" are now unified into a single "Add Project" flow. The sidebar "+" button and the native File → "Open or Create Project…" menu item both open the same native folder picker, where users can pick an existing project or create a new folder in one interaction. Removed the separate `createProjectFolder` dialog, the `new-project` native menu item with `CmdOrCtrl+Shift+N`, and the two-item dropdown in the sidebar. i18n keys consolidated from three to two.
+
 - **Docs — privacy:** Introduction page clarifies that graph data stays local and telemetry is opt-in.
 
 ## [0.1.0-alpha.35] - 2026-06-24
@@ -70,6 +80,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - **`@nesso-how/schema` package:** Vocabulary-agnostic graph document envelope (`GRAPH_FORMAT_VERSION`, serialize/deserialize, structural validation). Learning-specific validation (relation catalog, concept params) lives in `@nesso-how/vocab-learning` via `NessoGraphDocument`.
 
 ### Changed
+
+- **Desktop:** "Open Project" and "Create Project" are now unified into a single "Add Project" flow. The sidebar "+" button and the native File → "Open or Create Project…" menu item both open the same native folder picker, where users can pick an existing project or create a new folder in one interaction. Removed the separate `createProjectFolder` dialog, the `new-project` native menu item with `CmdOrCtrl+Shift+N`, and the two-item dropdown in the sidebar. i18n keys consolidated from three to two.
 
 - **Graph document model:** Graph JSON files now persist as `concepts`/`relations` (replacing the old `nodes`/`edges` shape). React Flow state is mapped at load/save through `graphDocumentMapping` / `documentToRenderGraph`. Shared graph files no longer carry FSRS fields — review progress persists in a separate IndexedDB `reviewState` store with independent content/review fingerprints, fixing review-only autosave.
 - **Strict deserialize validation:** Unknown relation types and structural issues on concepts/relations are rejected at the trust boundary in `schema` + `vocab-learning` (closes #20).
@@ -83,6 +95,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
+- **Desktop:** "Open Project" and "Create Project" are now unified into a single "Add Project" flow. The sidebar "+" button and the native File → "Open or Create Project…" menu item both open the same native folder picker, where users can pick an existing project or create a new folder in one interaction. Removed the separate `createProjectFolder` dialog, the `new-project` native menu item with `CmdOrCtrl+Shift+N`, and the two-item dropdown in the sidebar. i18n keys consolidated from three to two.
+
 - **Socrates mentor avatar:** Replaced the stroke-based `SocratesGlyph` with a 32×32 coloured portrait in the status bar and mentor sheet header. Landing preview and the AI mentor guide entry point updated to match.
 
 ### Added
@@ -91,6 +105,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - **Disable review mode:** A new _Review mode_ toggle (on by default, backed by a `reviewEnabled` setting) in **Settings → Learning** turns spaced-repetition review on or off. When off, the **Review** pill in the top bar, the `R` shortcut, and the review row in the shortcuts dialog are all hidden. Older persisted settings default to on via the shallow settings merge.
 
 ### Changed
+
+- **Desktop:** "Open Project" and "Create Project" are now unified into a single "Add Project" flow. The sidebar "+" button and the native File → "Open or Create Project…" menu item both open the same native folder picker, where users can pick an existing project or create a new folder in one interaction. Removed the separate `createProjectFolder` dialog, the `new-project` native menu item with `CmdOrCtrl+Shift+N`, and the two-item dropdown in the sidebar. i18n keys consolidated from three to two.
 
 - **Settings → Learning section:** The _Review_ settings tab was renamed **Learning** (and moved before _AI_) and restructured into a labelled **Review** group that opens with a short spaced-repetition/FSRS description; the _Target retention_ / _Max interval_ controls now appear only when review is on. `SettingsFormRow` gained an optional `description` and a `divider` prop, and the Appearance / Learning / AI tabs were unified onto it — grouped rows are now separated by spacing rather than internal dividers, with dividers reserved for top-level rows.
 
@@ -108,6 +124,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - **Mentor reply streaming:** The Socratic mentor streams replies token-by-token over the OpenAI-compatible SSE endpoint. `fetchCompletion` gained an optional `onToken`; `MentorPanel` appends the deltas live with a blinking caret (the real stream replaces the fixed-speed typewriter in chat — `ReviewMode` keeps its single-shot question fetch). A new co-located test covers the SSE parser (delta accumulation, lines split across chunks, `[DONE]`, and the non-streaming path). Also added a `qwen3:8b` model preset.
 
 ### Changed
+
+- **Desktop:** "Open Project" and "Create Project" are now unified into a single "Add Project" flow. The sidebar "+" button and the native File → "Open or Create Project…" menu item both open the same native folder picker, where users can pick an existing project or create a new folder in one interaction. Removed the separate `createProjectFolder` dialog, the `new-project` native menu item with `CmdOrCtrl+Shift+N`, and the two-item dropdown in the sidebar. i18n keys consolidated from three to two.
 
 - **Theme tokens single-sourced:** Surface, ink, accent, shadow, font, spacing and radius values that were duplicated across `src/index.css`, the docs `custom.css`, and the landing page now all resolve from `@nesso-how/theme`. Component inline styles consume the tokens: spacing/radii/size values matching a scale step became `var(--space-*)`/`--radius-*`/`--text-*`, off-scale border radii were snapped to the nearest step, and `font:` shorthands were decomposed into `fontFamily: var(--font-*)` longhands so a missing font variable degrades only the family, never the size. The only visible change is the docs landing surface shifting from pure white to the warm `#fbfaf8` paper tone, matching the app.
 - **Code-quality tooling:** Linting and formatting moved to **Biome** (JS/TS/JSON/CSS), with **Prettier** retained for Markdown/YAML/HTML; ESLint and its plugins were removed (the four intentional `react-hooks/exhaustive-deps` suppressions became `biome-ignore`). Added a strict **type-coverage** ratchet (gates at 99%, app currently ~99.7%) and **fallow** static analysis wired into `preflight` and CI as gates — dead code and architecture cycles are zero-tolerance, while duplication and complexity ratchet against committed identity baselines (`fallow-baselines/`).
@@ -131,6 +149,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - **Pan-on-select:** Selecting a node or edge nudges the viewport so the element stays clear of the right-docked inspector (never fights manual panning or search re-centering).
 
 ### Changed
+
+- **Desktop:** "Open Project" and "Create Project" are now unified into a single "Add Project" flow. The sidebar "+" button and the native File → "Open or Create Project…" menu item both open the same native folder picker, where users can pick an existing project or create a new folder in one interaction. Removed the separate `createProjectFolder` dialog, the `new-project` native menu item with `CmdOrCtrl+Shift+N`, and the two-item dropdown in the sidebar. i18n keys consolidated from three to two.
 
 - **Visual direction — Notion + Oxblood:** Adopted the Notion surface (warm off-white paper, Fraunces display serif) with the Oxblood accent, and introduced a `--highlight` token decoupled from `--accent`: Oxblood is now reserved for the mentor, live recall, selection, and due states, while **actions use ink** (e.g. the review *Reveal* and local-model *Download & use* buttons are ink-filled). Aligned the border-radius scale (chip 4 · standard 6 · prominent 7 · menu 8 · popover/toast 12 · modals 14) and a hover rule (compact buttons change color only; full-width rows keep the background fill).
 - **Mentor:** Retired the floating Socrates FAB. The mentor now lives as an inline **Socrates entry in the status bar** (with a soft breathing halo) that opens a **slide-up chat sheet** above the bar, which dodges the docked inspector. All completion logic (`fetchCompletion`, history, new-chat) is unchanged.
@@ -160,6 +180,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
+- **Desktop:** "Open Project" and "Create Project" are now unified into a single "Add Project" flow. The sidebar "+" button and the native File → "Open or Create Project…" menu item both open the same native folder picker, where users can pick an existing project or create a new folder in one interaction. Removed the separate `createProjectFolder` dialog, the `new-project` native menu item with `CmdOrCtrl+Shift+N`, and the two-item dropdown in the sidebar. i18n keys consolidated from three to two.
+
 - **Sidebar:** Removed the redundant info (About) button from the footer — About stays reachable from the always-visible ⋯ menu and, on desktop, the native Help/app menu.
 
 ## [0.1.0-alpha.29] - 2026-06-12
@@ -186,6 +208,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
+- **Desktop:** "Open Project" and "Create Project" are now unified into a single "Add Project" flow. The sidebar "+" button and the native File → "Open or Create Project…" menu item both open the same native folder picker, where users can pick an existing project or create a new folder in one interaction. Removed the separate `createProjectFolder` dialog, the `new-project` native menu item with `CmdOrCtrl+Shift+N`, and the two-item dropdown in the sidebar. i18n keys consolidated from three to two.
+
 - **Performance:** The autosave fingerprint (full-graph JSON) is computed once per debounced save instead of inside a store selector on every update (including each drag frame). The app shell no longer subscribes to the node array or zoom level, so the sidebar, top bar, dock, and mentor bubble stop re-rendering during drags and zooms. Nodes subscribe to connection state with a selector (no per-mousemove re-render of every node). The file watcher ignores echoes of the app's own writes via a self-write path registry, so autosaves no longer trigger full-workspace re-reads.
 - **Security (desktop):** A Content-Security-Policy replaces `csp: null`; the static `$HOME`/`$DOWNLOAD` recursive filesystem permissions are removed in favour of runtime scope grants for user-chosen folders; the `grant_fs_scope` command validates its input (absolute, no `..`, no filesystem roots, no home dir itself, no hidden directories outside the app's data dirs); "Show in Finder" uses `revealItemInDir` instead of `openPath`.
 - **Settings:** Removed the unused `accent` and `showLabels` settings (never read; the accent color is set by the theme).
@@ -203,6 +227,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
+- **Desktop:** "Open Project" and "Create Project" are now unified into a single "Add Project" flow. The sidebar "+" button and the native File → "Open or Create Project…" menu item both open the same native folder picker, where users can pick an existing project or create a new folder in one interaction. Removed the separate `createProjectFolder` dialog, the `new-project` native menu item with `CmdOrCtrl+Shift+N`, and the two-item dropdown in the sidebar. i18n keys consolidated from three to two.
+
 - **Desktop:** The on-disk project folder is now the source of truth and IndexedDB acts only as a cache of the active project — inverted from the previous model where IDB was authoritative and disk a reconciled mirror. Saves are disk-first write-through (write to disk, then mirror the persisted record into IDB), so the only possible divergence is "IDB behind disk", always recoverable by reloading. Settings: `graphWorkspacePath` is replaced by `knownProjects` + `activeProjectPath`. The Settings → Data tab is removed — opening, switching, closing, and revealing project folders now lives entirely in the project switcher and File menu.
 
 ## [0.1.0-alpha.27] - 2026-06-07
@@ -214,6 +240,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - **Docs:** "Embedding graphs" guide; landing hero graph via `HeroGraph` + `@astrojs/react`; `docs/` added to the pnpm workspace; `docs/vercel.json` for monorepo installs on Vercel. Hero graph supports pan and zoom.
 
 ### Changed
+
+- **Desktop:** "Open Project" and "Create Project" are now unified into a single "Add Project" flow. The sidebar "+" button and the native File → "Open or Create Project…" menu item both open the same native folder picker, where users can pick an existing project or create a new folder in one interaction. Removed the separate `createProjectFolder` dialog, the `new-project` native menu item with `CmdOrCtrl+Shift+N`, and the two-item dropdown in the sidebar. i18n keys consolidated from three to two.
 
 - **Codebase:** Reorganize components into feature folders (`canvas/`, `layout/`, `mentor/`, `dialogs/`, etc.), extract shared `inspector/` and `ui/` modules, and split the Zustand store into composable slices. No user-visible behavior changes.
 - **Canvas:** `GraphCanvas` delegates to `NessoGraph`; app `ConceptNode` wraps `ConceptNodeBody` for inline edit and connection handles; duplicate `NessoEdge`/`GlyphSVG`/geometry/palette code removed from `src/`.
@@ -229,6 +257,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
+- **Desktop:** "Open Project" and "Create Project" are now unified into a single "Add Project" flow. The sidebar "+" button and the native File → "Open or Create Project…" menu item both open the same native folder picker, where users can pick an existing project or create a new folder in one interaction. Removed the separate `createProjectFolder` dialog, the `new-project` native menu item with `CmdOrCtrl+Shift+N`, and the two-item dropdown in the sidebar. i18n keys consolidated from three to two.
+
 - **Codebase:** Apply Prettier formatting across `src/`, `packages/`, `docs/`, and related config; fix a small set of ESLint errors in `src/`.
 - **Developer:** Cursor rule for AI-authored PR bodies aligned with `.github/PULL_REQUEST_TEMPLATE.md`.
 
@@ -240,12 +270,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
+- **Desktop:** "Open Project" and "Create Project" are now unified into a single "Add Project" flow. The sidebar "+" button and the native File → "Open or Create Project…" menu item both open the same native folder picker, where users can pick an existing project or create a new folder in one interaction. Removed the separate `createProjectFolder` dialog, the `new-project` native menu item with `CmdOrCtrl+Shift+N`, and the two-item dropdown in the sidebar. i18n keys consolidated from three to two.
+
 - **Positioning:** Tagline reframed as an app for building typed knowledge graphs (README, docs site, browser title, Tauri description, mentor prompt, Cursor rules).
 - **Desktop release:** macOS now ships a single universal `.dmg` (Apple Silicon + Intel) published as a full release (no longer pre-release), so the updater endpoint `releases/latest/download/latest.json` resolves.
 
 ## [0.1.0-alpha.24] - 2026-05-29
 
 ### Changed
+
+- **Desktop:** "Open Project" and "Create Project" are now unified into a single "Add Project" flow. The sidebar "+" button and the native File → "Open or Create Project…" menu item both open the same native folder picker, where users can pick an existing project or create a new folder in one interaction. Removed the separate `createProjectFolder` dialog, the `new-project` native menu item with `CmdOrCtrl+Shift+N`, and the two-item dropdown in the sidebar. i18n keys consolidated from three to two.
 
 - **Repository:** GitHub org moved to `nesso-how/nesso`; README, docs, Cargo.toml, issue templates, and changelog compare links updated.
 - **Code of Conduct:** Enforcement contact email set to `nesso-how@proton.me`.
@@ -259,6 +293,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ## [0.1.0-alpha.23] - 2026-05-22
 
 ### Changed
+
+- **Desktop:** "Open Project" and "Create Project" are now unified into a single "Add Project" flow. The sidebar "+" button and the native File → "Open or Create Project…" menu item both open the same native folder picker, where users can pick an existing project or create a new folder in one interaction. Removed the separate `createProjectFolder` dialog, the `new-project` native menu item with `CmdOrCtrl+Shift+N`, and the two-item dropdown in the sidebar. i18n keys consolidated from three to two.
 
 - **Relation model:** Drop redundant `symmetric` on `EdgeTypeDef`; symmetric types use `inverse: 'self'` (app, MCP, rules).
 - **Docs:** Relation-types reference expanded with category narratives, coefficient rationale, citations, and alpha note; concepts guide cross-link softened; note callouts use warm accent.
@@ -279,6 +315,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - **npm packages:** Minimal READMEs with install/usage for `@nesso-how/types`, `formats`, `relation-types`, and `mcp`.
 
 ### Changed
+
+- **Desktop:** "Open Project" and "Create Project" are now unified into a single "Add Project" flow. The sidebar "+" button and the native File → "Open or Create Project…" menu item both open the same native folder picker, where users can pick an existing project or create a new folder in one interaction. Removed the separate `createProjectFolder` dialog, the `new-project` native menu item with `CmdOrCtrl+Shift+N`, and the two-item dropdown in the sidebar. i18n keys consolidated from three to two.
 
 - **Relation model:** Removed `is-a`; taxonomic hierarchy uses `subtype-of` / `has-subtype` and `instance-of` / `has-instance`.
 - **Seeds, app i18n, docs, landing, README:** Updated for the expanded vocabulary and `subtype-of` in place of `is-a`.
@@ -304,6 +342,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - **`ActionBanner`:** Shared fixed bottom banner with pill actions (used by file-conflict UI).
 
 ### Changed
+
+- **Desktop:** "Open Project" and "Create Project" are now unified into a single "Add Project" flow. The sidebar "+" button and the native File → "Open or Create Project…" menu item both open the same native folder picker, where users can pick an existing project or create a new folder in one interaction. Removed the separate `createProjectFolder` dialog, the `new-project` native menu item with `CmdOrCtrl+Shift+N`, and the two-item dropdown in the sidebar. i18n keys consolidated from three to two.
 
 - **Settings → Data (desktop):** Workspace folder picker, open in Finder, reset to default; **Delete local data** control removed from this tab.
 - **Graph menu:** Export/import JSON is share-safe (no personal review history); desktop export uses a native save dialog.
@@ -333,6 +373,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
+- **Desktop:** "Open Project" and "Create Project" are now unified into a single "Add Project" flow. The sidebar "+" button and the native File → "Open or Create Project…" menu item both open the same native folder picker, where users can pick an existing project or create a new folder in one interaction. Removed the separate `createProjectFolder` dialog, the `new-project` native menu item with `CmdOrCtrl+Shift+N`, and the two-item dropdown in the sidebar. i18n keys consolidated from three to two.
+
 - **Canvas:** Concept node target handle is larger (22px) with a radial ring for easier edge drops.
 
 ### Fixed
@@ -342,6 +384,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ## [0.1.0-alpha.19] - 2026-05-20
 
 ### Changed
+
+- **Desktop:** "Open Project" and "Create Project" are now unified into a single "Add Project" flow. The sidebar "+" button and the native File → "Open or Create Project…" menu item both open the same native folder picker, where users can pick an existing project or create a new folder in one interaction. Removed the separate `createProjectFolder` dialog, the `new-project` native menu item with `CmdOrCtrl+Shift+N`, and the two-item dropdown in the sidebar. i18n keys consolidated from three to two.
 
 - **Canvas:** Edge connection preview uses the same arc exit geometry as rendered edges (including curve flip), a dashed accent stroke, and a dotted ring on the hovered target node; source handle hit area is larger with a radial dot.
 
@@ -375,6 +419,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
+- **Desktop:** "Open Project" and "Create Project" are now unified into a single "Add Project" flow. The sidebar "+" button and the native File → "Open or Create Project…" menu item both open the same native folder picker, where users can pick an existing project or create a new folder in one interaction. Removed the separate `createProjectFolder` dialog, the `new-project` native menu item with `CmdOrCtrl+Shift+N`, and the two-item dropdown in the sidebar. i18n keys consolidated from three to two.
+
 - **Demo seeds:** Bundled graph JSON may include a `display` block (curve, encoding, etc.); seed bootstrap now persists it instead of dropping it.
 - **Canvas:** Sidebar **Display** options (heatmap, edge encoding, curve, auto flip) are **per graph** — saved in IndexedDB with the graph and included in JSON export; new graphs inherit app defaults until changed.
 - **Canvas:** New arc relations auto-flip from source/target layout (above when the target is to the right, below when to the left); **Display → Auto flip** (on by default) keeps curves updated while you move nodes. **Flip curve** in the Inspector is **Off | Auto | On** when auto flip is on ( **Off | On** when off); **Auto** returns a pinned edge to layout-driven bending.
@@ -390,6 +436,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
+- **Desktop:** "Open Project" and "Create Project" are now unified into a single "Add Project" flow. The sidebar "+" button and the native File → "Open or Create Project…" menu item both open the same native folder picker, where users can pick an existing project or create a new folder in one interaction. Removed the separate `createProjectFolder` dialog, the `new-project` native menu item with `CmdOrCtrl+Shift+N`, and the two-item dropdown in the sidebar. i18n keys consolidated from three to two.
+
 - **Workspace packages:** **`@nesso-how/relation-types`** and **`@nesso-how/mcp`** declare **`publishConfig.access: public`** so `npm publish` targets the **public** registry for scoped packages (otherwise npm defaults scoped packages to **restricted / private**).
 
 ### Added
@@ -399,6 +447,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ## [0.1.0-alpha.16] - 2026-05-16
 
 ### Changed
+
+- **Desktop:** "Open Project" and "Create Project" are now unified into a single "Add Project" flow. The sidebar "+" button and the native File → "Open or Create Project…" menu item both open the same native folder picker, where users can pick an existing project or create a new folder in one interaction. Removed the separate `createProjectFolder` dialog, the `new-project` native menu item with `CmdOrCtrl+Shift+N`, and the two-item dropdown in the sidebar. i18n keys consolidated from three to two.
 
 - **Mentor:** Graph snapshot sorting and persona emphasise FSRS **stability** and **last review** (rating + days elapsed); **DUE** stays visible on nodes but only nudges order slightly. System prompt includes an explicit **legend** for how to read node tags (`s=`, `since review`, ratings, `DUE`, `(new)`).
 
@@ -424,6 +474,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
+- **Desktop:** "Open Project" and "Create Project" are now unified into a single "Add Project" flow. The sidebar "+" button and the native File → "Open or Create Project…" menu item both open the same native folder picker, where users can pick an existing project or create a new folder in one interaction. Removed the separate `createProjectFolder` dialog, the `new-project` native menu item with `CmdOrCtrl+Shift+N`, and the two-item dropdown in the sidebar. i18n keys consolidated from three to two.
+
 - **Review:** AI recall questions use inspector elaboration (definition, examples, notes) and graph relations; the system prompt steers questions without spoiling active recall; the question is shown beside a circular Socrates avatar so AI-authored text is easy to recognize.
 - **Mentor:** Opening message uses context-aware synthetic prompts (selected concept, selected relation only, or whole-graph weak spots); header **New chat** (reload) clears the thread and refetches that opener; persona instructions distinguish node vs edge vs empty selection.
 - **AI (local):** Cached WebLLM weights auto-load when Local mode is selected; Settings shows saved-on-device state and probes the browser cache; first run without cache still uses **Download & use**.
@@ -440,6 +492,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
+- **Desktop:** "Open Project" and "Create Project" are now unified into a single "Add Project" flow. The sidebar "+" button and the native File → "Open or Create Project…" menu item both open the same native folder picker, where users can pick an existing project or create a new folder in one interaction. Removed the separate `createProjectFolder` dialog, the `new-project` native menu item with `CmdOrCtrl+Shift+N`, and the two-item dropdown in the sidebar. i18n keys consolidated from three to two.
+
 - **Inspector:** collapsed/expanded state for **Examples** and **Relations** is saved in app settings (persisted with other preferences).
 - **Typography:** clearer Fraunces (concept copy) vs Inter (menus, dialogs chrome) split; tuned sizes in Inspector, Review mode, Search, Mentor, and Graph IO.
 
@@ -455,6 +509,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
+- **Desktop:** "Open Project" and "Create Project" are now unified into a single "Add Project" flow. The sidebar "+" button and the native File → "Open or Create Project…" menu item both open the same native folder picker, where users can pick an existing project or create a new folder in one interaction. Removed the separate `createProjectFolder` dialog, the `new-project` native menu item with `CmdOrCtrl+Shift+N`, and the two-item dropdown in the sidebar. i18n keys consolidated from three to two.
+
 - **Brand:** nexus brandmark (SVG) in the sidebar; favicon and `public/icon/` assets; desktop app icons regenerated from the 512² tile artwork.
 
 ### Fixed
@@ -468,6 +524,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - **Graph:** multi-selection (Shift drag rectangle, **⌘/Ctrl** additive click); **`selectedIds`** in the store with **Delete selected** on the bottom dock; **Delete**/**Backspace** remove nodes via React Flow with undo history.
 
 ### Changed
+
+- **Desktop:** "Open Project" and "Create Project" are now unified into a single "Add Project" flow. The sidebar "+" button and the native File → "Open or Create Project…" menu item both open the same native folder picker, where users can pick an existing project or create a new folder in one interaction. Removed the separate `createProjectFolder` dialog, the `new-project` native menu item with `CmdOrCtrl+Shift+N`, and the two-item dropdown in the sidebar. i18n keys consolidated from three to two.
 
 - **Inspector:** collapsible sections and inline edit pattern; canvas gutter aligned to panel edge inset (12px × 2).
 - **Review mode:** session progress bar and counter; FSRS next-interval hints on rating buttons; elaboration (definition, examples, image) and link layout; keyboard shortcuts via `ReviewKeyHandler`.
@@ -493,6 +551,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - **`avgRetention`:** `src/data/fsrsDueQueue.ts` helper averaging FSRS retrievability across reviewed concepts (evaluated at due vs now).
 
 ### Changed
+
+- **Desktop:** "Open Project" and "Create Project" are now unified into a single "Add Project" flow. The sidebar "+" button and the native File → "Open or Create Project…" menu item both open the same native folder picker, where users can pick an existing project or create a new folder in one interaction. Removed the separate `createProjectFolder` dialog, the `new-project` native menu item with `CmdOrCtrl+Shift+N`, and the two-item dropdown in the sidebar. i18n keys consolidated from three to two.
 
 - **Bottom dock:** **Undo** / **Redo** live in the dock (removed floating **UndoRedoControls**); zoom **+**/**−** and percentage readout removed from the dock — **Center / fit (F)** remains.
 - **Top bar:** inline concept / link counts next to the graph title removed (counts moved under Sidebar **Stats**).
@@ -521,6 +581,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
+- **Desktop:** "Open Project" and "Create Project" are now unified into a single "Add Project" flow. The sidebar "+" button and the native File → "Open or Create Project…" menu item both open the same native folder picker, where users can pick an existing project or create a new folder in one interaction. Removed the separate `createProjectFolder` dialog, the `new-project` native menu item with `CmdOrCtrl+Shift+N`, and the two-item dropdown in the sidebar. i18n keys consolidated from three to two.
+
 - **Theme scrollbars:** `.nesso-scrollbar` utility for on-theme thin scrollbars (Inspector body).
 - **Top bar:** exported `TOPBAR_HEIGHT_PX` so layout chrome stays aligned with the Inspector.
 
@@ -542,6 +604,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
+- **Desktop:** "Open Project" and "Create Project" are now unified into a single "Add Project" flow. The sidebar "+" button and the native File → "Open or Create Project…" menu item both open the same native folder picker, where users can pick an existing project or create a new folder in one interaction. Removed the separate `createProjectFolder` dialog, the `new-project` native menu item with `CmdOrCtrl+Shift+N`, and the two-item dropdown in the sidebar. i18n keys consolidated from three to two.
+
 - **Default remote model:** `gemma3:4b` (was `gemma2:2b`); README quick-start example updated.
 - **Socrates (mentor):** Graph snapshot prefers weaker / due nodes; node lines show stability, last FSRS rating, and **DUE**; larger reply budget and guidance to open on weak spots when nothing is selected.
 - **Local WebLLM:** **App** no longer auto-runs `initWebLLM()` when local mode is selected; initialise from **Settings** (existing Download / Initialise controls).
@@ -560,6 +624,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - **`CloseButton`:** Shared header dismiss control for Settings, shortcuts, and relation-type modals.
 
 ### Changed
+
+- **Desktop:** "Open Project" and "Create Project" are now unified into a single "Add Project" flow. The sidebar "+" button and the native File → "Open or Create Project…" menu item both open the same native folder picker, where users can pick an existing project or create a new folder in one interaction. Removed the separate `createProjectFolder` dialog, the `new-project` native menu item with `CmdOrCtrl+Shift+N`, and the two-item dropdown in the sidebar. i18n keys consolidated from three to two.
 
 - **Review scheduling:** Removed **Cards per session** (`reviewBatchMax`). The Review overlay lists **all** due concepts allowed by FSRS subject to **New cards / day** (`sortedDueConceptNodes` + `dailyStudyCounters`).
 - **FSRS:** Review scheduling uses **`maximumInterval`** (days) and **`fsrsRetention`** from Settings → Review (`fsrs({ request_retention, maximum_interval })` in **ReviewMode**).
@@ -587,6 +653,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
+- **Desktop:** "Open Project" and "Create Project" are now unified into a single "Add Project" flow. The sidebar "+" button and the native File → "Open or Create Project…" menu item both open the same native folder picker, where users can pick an existing project or create a new folder in one interaction. Removed the separate `createProjectFolder` dialog, the `new-project` native menu item with `CmdOrCtrl+Shift+N`, and the two-item dropdown in the sidebar. i18n keys consolidated from three to two.
+
 - Relicense from **GNU AGPL v3.0** to **MIT** (`LICENSE`, `package.json`, `src-tauri/Cargo.toml`, SPDX headers in sources, README).
 - **WebLLM (local AI):** `App` calls `initWebLLM()` when **Local model** is selected; `MentorBubble` uses `useWebLLM()` to show download/init progress, disable input until the engine is ready, and reset the session while loading.
 - **Concept nodes:** Removed **pinned** (`ConceptNodeData.pinned`, seed data, canvas indicator, and Inspector pin control / “drifting” label).
@@ -601,6 +669,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - GitHub Actions workflow **Deploy to GitHub Pages** (push to `main` or manual): builds the Vite app with the correct `base` for project sites (`/<repo>/`) or root user/org pages (`<owner>.github.io`), uploads `dist`, and publishes via **GitHub Actions** Pages.
 
 ### Changed
+
+- **Desktop:** "Open Project" and "Create Project" are now unified into a single "Add Project" flow. The sidebar "+" button and the native File → "Open or Create Project…" menu item both open the same native folder picker, where users can pick an existing project or create a new folder in one interaction. Removed the separate `createProjectFolder` dialog, the `new-project` native menu item with `CmdOrCtrl+Shift+N`, and the two-item dropdown in the sidebar. i18n keys consolidated from three to two.
 
 - **Mentor:** Assistant replies render **Markdown** (`marked`) instead of minimal `*italic*` / `_italic_` HTML escaping.
 - **README roadmap:** Mark dynamic system prompts / AI multi-mode complete; add items for persisting AI chats and richer output rendering (code blocks, etc.).
@@ -621,6 +691,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - **Graph I/O:** export current graph as JSON from the top bar; import creates a new graph from a Nesso JSON file (`importGraph` in the store).
 
 ### Changed
+
+- **Desktop:** "Open Project" and "Create Project" are now unified into a single "Add Project" flow. The sidebar "+" button and the native File → "Open or Create Project…" menu item both open the same native folder picker, where users can pick an existing project or create a new folder in one interaction. Removed the separate `createProjectFolder` dialog, the `new-project` native menu item with `CmdOrCtrl+Shift+N`, and the two-item dropdown in the sidebar. i18n keys consolidated from three to two.
 
 - **Relation types:** reference is a centered modal (`RelationTypesDialog`, same UX as shortcuts/settings), opened from the **lines icon** in the top-right toolbar; removed the persistent left edge-legend strip and persisted `relationTypesPanelOpen`.
 - **Bottom dock:** replaces the legend toggle with primary **center** control (fit graph in view); zoom block unchanged.
@@ -644,6 +716,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Keep a Changelog–style `CHANGELOG.md`; GitHub Releases use the matching version section as the release description.
 
 ### Changed
+
+- **Desktop:** "Open Project" and "Create Project" are now unified into a single "Add Project" flow. The sidebar "+" button and the native File → "Open or Create Project…" menu item both open the same native folder picker, where users can pick an existing project or create a new folder in one interaction. Removed the separate `createProjectFolder` dialog, the `new-project` native menu item with `CmdOrCtrl+Shift+N`, and the two-item dropdown in the sidebar. i18n keys consolidated from three to two.
 
 - CI desktop builds are **macOS only** (Apple silicon and Intel); Linux and Windows release jobs removed for now.
 - GitHub Actions: `actions/checkout` v6, `actions/setup-node` v6, `actions/cache` v5 (Node 24–ready action runtimes).

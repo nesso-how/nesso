@@ -73,12 +73,13 @@ describe('loadGraphList (desktop)', () => {
   })
 })
 
-describe('createProject', () => {
-  it('creates the folder, switches to it, and seeds one empty graph on disk', async () => {
+describe('openOrCreateProject', () => {
+  it('switches to the picked folder and seeds one empty graph on disk', async () => {
     const s = await boot()
+    tauriFsState.dirs.add('/newproj')
     tauriFsState.setDialogResult('/newproj')
 
-    await s.getState().createProject()
+    await s.getState().openOrCreateProject()
 
     expect(s.getState().settings.activeProjectPath).toBe('/newproj')
     expect(s.getState().settings.knownProjects).toContain('/newproj')
@@ -288,8 +289,9 @@ describe('markProjectMissing', () => {
 
   it('switches away when the active project is flagged missing', async () => {
     const s = await boot()
+    tauriFsState.dirs.add('/p2')
     tauriFsState.setDialogResult('/p2')
-    await s.getState().createProject()
+    await s.getState().openOrCreateProject()
     expect(s.getState().settings.activeProjectPath).toBe('/p2')
 
     await s.getState().markProjectMissing('/p2')
@@ -309,8 +311,9 @@ describe('markProjectMissing', () => {
 describe('removeProject', () => {
   it('removes a non-active project from the list', async () => {
     const s = await boot()
+    tauriFsState.dirs.add('/p2')
     tauriFsState.setDialogResult('/p2')
-    await s.getState().createProject()
+    await s.getState().openOrCreateProject()
     await s.getState().switchProject(DEFAULT_WS)
 
     await s.getState().removeProject('/p2')
@@ -320,8 +323,9 @@ describe('removeProject', () => {
 
   it('switches away when removing the active project', async () => {
     const s = await boot()
+    tauriFsState.dirs.add('/p2')
     tauriFsState.setDialogResult('/p2')
-    await s.getState().createProject()
+    await s.getState().openOrCreateProject()
 
     await s.getState().removeProject('/p2')
 
@@ -344,34 +348,24 @@ describe('removeProject', () => {
   })
 })
 
-describe('createProject / openProject', () => {
-  it('createProject is a no-op when the dialog is cancelled', async () => {
-    const s = await boot()
-    tauriFsState.setDialogResult(null)
-    const before = s.getState().settings.activeProjectPath
-
-    await s.getState().createProject()
-
-    expect(s.getState().settings.activeProjectPath).toBe(before)
-  })
-
-  it('openProject switches to the picked folder', async () => {
+describe('openOrCreateProject', () => {
+  it('switches to the picked folder', async () => {
     const s = await boot()
     tauriFsState.dirs.add('/picked')
     tauriFsState.setDialogResult('/picked')
 
-    await s.getState().openProject()
+    await s.getState().openOrCreateProject()
 
     expect(s.getState().settings.activeProjectPath).toBe('/picked')
     expect(s.getState().settings.knownProjects).toContain('/picked')
   })
 
-  it('openProject is a no-op when cancelled', async () => {
+  it('is a no-op when cancelled', async () => {
     const s = await boot()
     tauriFsState.setDialogResult(null)
     const before = s.getState().settings.activeProjectPath
 
-    await s.getState().openProject()
+    await s.getState().openOrCreateProject()
 
     expect(s.getState().settings.activeProjectPath).toBe(before)
   })

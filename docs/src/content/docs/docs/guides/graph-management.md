@@ -36,8 +36,7 @@ Exported JSON carries graph **content** only: concepts, relations, and display s
 
 On the desktop app, graphs live inside **project folders**: plain directories on disk holding one JSON file per graph plus a small manifest. The **Projects** section in the sidebar (desktop only) lists every folder you've opened and lets you switch between them.
 
-- **New project**: the **+** menu's "New project" opens a native save dialog. Name and place a new folder. It's created empty and becomes the active project.
-- **Open project**: the same menu's "Open project…" opens a native folder picker for an existing project folder elsewhere on disk.
+- **Add project**: the **+** button opens a native folder picker. Pick an existing project folder, or create a new one from the dialog's "New Folder" button (macOS). The selected folder becomes the active project.
 - **Switch project**: click any project in the list. The current graph is saved first, then the target folder's graphs load.
 - **Remove project**: hover a project and click the trash icon, then confirm. This only removes it from Nesso's list. Its files stay on disk untouched. You can't remove the last project in the list.
 - **Reveal in Finder**: hover a project and click the folder icon to reveal it in the system file manager.

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useGraphStore } from '@/store'
 import { useT } from '@/i18n'
 import { getDefaultWorkspacePath, normalizePath, projectDisplayName } from '@/lib/workspace'
@@ -46,64 +46,25 @@ const newBtn: React.CSSProperties = {
   cursor: 'pointer',
 }
 
-const menuItem: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: 9,
-  width: '100%',
-  appearance: 'none',
-  border: 0,
-  background: 'transparent',
-  borderRadius: 'var(--radius-sm)',
-  padding: '6px 10px',
-  cursor: 'pointer',
-  textAlign: 'left',
-  fontSize: '12.5px',
-  fontWeight: 500,
-  fontFamily: 'var(--font-sans)',
-  color: 'var(--ink-2)',
-}
-
-const menuIcon: React.CSSProperties = {
-  width: 16,
-  flexShrink: 0,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  color: 'var(--ink-4)',
-}
-
-/** Desktop-only Projects section: switch / reveal / remove folders; the New
- *  button opens a menu to create or open a project. Collapsed, it keeps only
- *  the current project visible. */
+/** Desktop-only Projects section: switch / reveal / remove folders; the
+ *  "+" button opens the native folder picker directly. Collapsed, it keeps
+ *  only the current project visible. */
 export function SidebarProjects() {
   const t = useT()
   const knownProjects = useGraphStore((s) => s.settings.knownProjects)
   const missingProjects = useGraphStore((s) => s.missingProjects)
   const activeProjectPath = useGraphStore((s) => s.settings.activeProjectPath)
-  const createProject = useGraphStore((s) => s.createProject)
-  const openProject = useGraphStore((s) => s.openProject)
+  const openOrCreateProject = useGraphStore((s) => s.openOrCreateProject)
   const switchProject = useGraphStore((s) => s.switchProject)
   const removeProject = useGraphStore((s) => s.removeProject)
 
   const [open, setOpen] = useState(true)
-  const [menuOpen, setMenuOpen] = useState(false)
   const [hoveredPath, setHoveredPath] = useState<string | null>(null)
   const [defaultPath, setDefaultPath] = useState<string | null>(null)
-  const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     void getDefaultWorkspacePath().then((p) => setDefaultPath(normalizePath(p)))
   }, [])
-
-  useEffect(() => {
-    if (!menuOpen) return
-    const onDown = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false)
-    }
-    document.addEventListener('mousedown', onDown)
-    return () => document.removeEventListener('mousedown', onDown)
-  }, [menuOpen])
 
   const defaultName = t.sidebar.projectSwitcher.defaultProjectName
   const activeNorm = activeProjectPath ? normalizePath(activeProjectPath) : null
@@ -158,98 +119,25 @@ export function SidebarProjects() {
           <span style={sectionLabel}>{t.sidebar.projectSwitcher.projects}</span>
         </button>
 
-        <div ref={menuRef} style={{ position: 'relative' }}>
-          <button
-            type="button"
-            title={t.sidebar.projectSwitcher.newProject}
-            onClick={() => setMenuOpen((v) => !v)}
-            style={{ ...newBtn, color: menuOpen ? 'var(--ink)' : 'var(--ink-3)' }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = 'var(--ink)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = menuOpen ? 'var(--ink)' : 'var(--ink-3)'
-            }}
-          >
-            <svg width="11" height="11" viewBox="0 0 10 10" style={{ flexShrink: 0 }}>
-              <path
-                d="M5 1v8M1 5h8"
-                stroke="currentColor"
-                strokeWidth="1.4"
-                strokeLinecap="round"
-              />
-            </svg>
-            <span style={{ fontSize: '11.5px', fontWeight: 500, fontFamily: 'var(--font-sans)' }}>
-              {t.sidebar.projectSwitcher.newProjectShort}
-            </span>
-          </button>
-          {menuOpen && (
-            <div
-              style={{
-                position: 'absolute',
-                top: 'calc(100% + 4px)',
-                right: 0,
-                minWidth: 168,
-                background: 'var(--bg-card)',
-                border: '0.5px solid var(--line)',
-                borderRadius: 'var(--radius-md)',
-                boxShadow: 'var(--shadow-lg)',
-                padding: 'var(--space-2)',
-                zIndex: 50,
-                whiteSpace: 'nowrap',
-              }}
-            >
-              <button
-                type="button"
-                style={menuItem}
-                onClick={() => {
-                  setMenuOpen(false)
-                  void createProject()
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'var(--paper-deep)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'transparent'
-                }}
-              >
-                <span style={menuIcon} aria-hidden>
-                  <svg
-                    width="13"
-                    height="13"
-                    viewBox="0 0 16 16"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                  >
-                    <path d="M8 3v10M3 8h10" />
-                  </svg>
-                </span>
-                {t.sidebar.projectSwitcher.newProject}
-              </button>
-              <button
-                type="button"
-                style={menuItem}
-                onClick={() => {
-                  setMenuOpen(false)
-                  void openProject()
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'var(--paper-deep)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'transparent'
-                }}
-              >
-                <span style={menuIcon} aria-hidden>
-                  <FolderIcon />
-                </span>
-                {t.sidebar.projectSwitcher.openProject}
-              </button>
-            </div>
-          )}
-        </div>
+        <button
+          type="button"
+          title={t.sidebar.projectSwitcher.openOrCreateProject}
+          onClick={() => void openOrCreateProject()}
+          style={{ ...newBtn, color: 'var(--ink-3)' }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = 'var(--ink)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = 'var(--ink-3)'
+          }}
+        >
+          <svg width="11" height="11" viewBox="0 0 10 10" style={{ flexShrink: 0 }}>
+            <path d="M5 1v8M1 5h8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+          </svg>
+          <span style={{ fontSize: '11.5px', fontWeight: 500, fontFamily: 'var(--font-sans)' }}>
+            {t.sidebar.projectSwitcher.openOrCreateProjectShort}
+          </span>
+        </button>
       </div>
 
       <div style={{ padding: '0 12px', display: 'flex', flexDirection: 'column', gap: 1 }}>

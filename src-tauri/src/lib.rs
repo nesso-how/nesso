@@ -19,7 +19,6 @@ struct MenuLabels {
     about: String,
     settings: String,
     new_graph: String,
-    new_project: String,
     open_project: String,
     export_json: String,
     export_png: String,
@@ -59,8 +58,7 @@ impl Default for MenuLabels {
             about: s("About Nesso"),
             settings: s("Settings…"),
             new_graph: s("New Graph"),
-            new_project: s("New Project…"),
-            open_project: s("Open Project…"),
+            open_project: s("Open or Create Project…"),
             export_json: s("Export Graph (JSON)"),
             export_png: s("Export Graph (PNG)"),
             import: s("Import Graph…"),
@@ -119,9 +117,6 @@ fn build_app_menu(
 
     let new_graph_i = MenuItemBuilder::with_id("new-graph", &labels.new_graph)
         .accelerator("CmdOrCtrl+N")
-        .build(app)?;
-    let new_project_i = MenuItemBuilder::with_id("new-project", &labels.new_project)
-        .accelerator("CmdOrCtrl+Shift+N")
         .build(app)?;
     let open_project_i = MenuItemBuilder::with_id("open-project", &labels.open_project)
         .accelerator("CmdOrCtrl+O")
@@ -191,7 +186,6 @@ fn build_app_menu(
 
     let file = SubmenuBuilder::new(app, &labels.file)
         .item(&new_graph_i)
-        .item(&new_project_i)
         .item(&open_project_i)
         .separator()
         .item(&export_json_i)

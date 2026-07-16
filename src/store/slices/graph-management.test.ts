@@ -335,8 +335,7 @@ describe('desktop project actions in web mode', () => {
   it('are no-ops that just return the current graph list', async () => {
     const s = await freshStore()
     const before = s.getState().graphList
-    expect(await s.getState().createProject()).toEqual(before)
-    expect(await s.getState().openProject()).toEqual(before)
+    expect(await s.getState().openOrCreateProject()).toEqual(before)
     expect(await s.getState().switchProject('/whatever')).toEqual(before)
   })
 })
