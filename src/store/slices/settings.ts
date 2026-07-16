@@ -15,8 +15,8 @@ export interface SettingsSlice {
   ) => void
 }
 
-export const createSettingsSlice: StateCreator<GraphState, [], [], SettingsSlice> = (set) => ({
-  settings: {
+export const createSettingsSlice: StateCreator<GraphState, [], [], SettingsSlice> = (set) => {
+  const settings: NessoSettings = {
     dark: false,
     language: 'en' as const,
     edgeEncoding: 'full',
@@ -39,21 +39,25 @@ export const createSettingsSlice: StateCreator<GraphState, [], [], SettingsSlice
     telemetry: false,
     onboardingCompleted: false,
     telemetryPromptShown: false,
-  },
-  graphDisplay: defaultGraphDisplay(),
+  }
 
-  setSetting: (key, value) => set((s) => ({ settings: { ...s.settings, [key]: value } })),
+  return {
+    settings,
+    graphDisplay: defaultGraphDisplay(settings),
 
-  setGraphDisplay: (key, value) =>
-    set((s) => {
-      const graphDisplay = { ...s.graphDisplay, [key]: value }
-      if (key === 'autoCurveFlip' && value === false && s.graphDisplay.autoCurveFlip) {
-        return {
-          ...pushHistory(s),
-          graphDisplay,
-          edges: bakeCurveFlipFromPositions(s.edges, s.nodes),
+    setSetting: (key, value) => set((s) => ({ settings: { ...s.settings, [key]: value } })),
+
+    setGraphDisplay: (key, value) =>
+      set((s) => {
+        const graphDisplay = { ...s.graphDisplay, [key]: value }
+        if (key === 'autoCurveFlip' && value === false && s.graphDisplay.autoCurveFlip) {
+          return {
+            ...pushHistory(s),
+            graphDisplay,
+            edges: bakeCurveFlipFromPositions(s.edges, s.nodes),
+          }
         }
-      }
-      return { graphDisplay }
-    }),
-})
+        return { graphDisplay }
+      }),
+  }
+}
