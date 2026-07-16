@@ -7,9 +7,9 @@ description: Use when the user asks to cut, ship, publish, or version-bump a rel
 
 `scripts/release.mjs` (`pnpm release`) does the deterministic prep — the version bump across all nine files, the CHANGELOG roll, the lockfile refresh, and `build`/`lint`/`format:check`. This skill **drives that script and supervises it**: it owns the judgment the script can't make (which version, what ships, when to publish) and closes the gaps the script deliberately leaves open (the git push, branch protection, worktrees).
 
-Pushing the `v*` tag triggers [`.github/workflows/release.yml`](../../../.github/workflows/release.yml): npm publish of the workspace packages (Trusted Publishing / OIDC), a signed universal macOS `.dmg` desktop build, and a GitHub Release. **The tag push is the point of no return — it publishes to the public. Confirm with the user before step 4.**
+Pushing the `v*` tag triggers `.github/workflows/release.yml`: npm publish of the workspace packages (Trusted Publishing / OIDC), a signed universal macOS `.dmg` desktop build, and a GitHub Release. **The tag push is the point of no return — it publishes to the public. Confirm with the user before step 4.**
 
-For the conventions and the desktop auto-update / minisign signing details, see [`.rules/changelog.md`](../../../.rules/changelog.md); this skill executes that flow, it does not restate it.
+For the conventions and the desktop auto-update / minisign signing details, see `.rules/changelog.md`; this skill executes that flow, it does not restate it.
 
 ## 0. Preconditions
 
