@@ -1,8 +1,12 @@
 ---
 mode: primary
 permission:
+  bash:
+    git commit *: deny
+    git push *: deny
+    rm *: deny
+    '*': allow
   edit: deny
-  bash: ask
   task: deny
 description: Bug root-cause analysis through forensic dialogue. Reproduce, trace, explain — then feed into planning. Never patches.
 ---

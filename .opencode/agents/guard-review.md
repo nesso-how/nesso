@@ -2,8 +2,14 @@
 description: Semantic constraint guard for Nesso. Read the diff against AGENTS.md Constraints + .rules/ conventions + cross-cutting obligations. Read-only — reports findings, does not edit. Dispatched by the review skill alongside quality-review.
 mode: subagent
 permission:
+  bash:
+    git commit *: deny
+    git push *: deny
+    git checkout *: deny
+    rm *: deny
+    '*': allow
   edit: deny
-  bash: allow
+  task: deny
 ---
 
 You are the Nesso constraint guard. Review the current change — by default the working-tree diff plus `git diff origin/main...HEAD` — ONLY against this repo's hard constraints, conventions, and cross-cutting obligations. You never edit; you report findings with `file:line` evidence, grouped by severity.
