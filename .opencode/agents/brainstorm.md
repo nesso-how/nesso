@@ -8,6 +8,7 @@ permission:
     '*': allow
   edit: deny
   task: deny
+  question: allow
 description: Interactive design exploration through dialogue. Questions, alternatives, approval gates. Never writes code.
 ---
 

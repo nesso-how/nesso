@@ -8,6 +8,7 @@ permission:
     '*': allow
   edit: deny
   task: deny
+  question: allow
 description: Bug root-cause analysis through forensic dialogue. Reproduce, trace, explain — then feed into planning. Never patches.
 ---
 
