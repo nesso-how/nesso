@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 // SPDX-License-Identifier: MIT
 import type { Edge, EdgeChange, Node, NodeChange } from '@xyflow/react'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createStore } from 'zustand/vanilla'
 import { setGraphClipboard } from '@/lib/graphClipboard'
 import type { ConceptNodeData } from '@/types/graph'
@@ -13,6 +13,15 @@ import {
   MAX_UNDO,
 } from './graph-editing'
 import { createSettingsSlice } from './settings'
+import { track } from '@/telemetry'
+
+vi.mock('@/telemetry', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/telemetry')>()
+  return {
+    ...actual,
+    track: vi.fn(),
+  }
+})
 
 // A headless store composed from the editing + settings slices — enough to
 // exercise every graph mutation without the persist middleware, IndexedDB, or
@@ -32,6 +41,7 @@ type Store = ReturnType<typeof makeStore>
 beforeEach(() => {
   setGraphClipboard(null)
   _draggingNodeIds.clear()
+  vi.clearAllMocks()
 })
 
 describe('addNode', () => {
@@ -781,6 +791,137 @@ describe('selectAll edges', () => {
     const before = s.getState()
     s.getState().selectAll()
     expect(s.getState()).toBe(before)
+  })
+})
+
+describe('deletion telemetry', () => {
+  describe('deleteNode', () => {
+    it('emits node_deleted when a node is actually removed', () => {
+      const s = makeStore()
+      const id = s.getState().addNode()
+      s.getState().deleteNode(id)
+      expect(track).toHaveBeenCalledWith({ name: 'node_deleted' })
+    })
+
+    it('does not emit node_deleted when the node ID does not exist', () => {
+      const s = makeStore()
+      s.getState().deleteNode('nonexistent')
+      expect(track).not.toHaveBeenCalledWith({ name: 'node_deleted' })
+    })
+  })
+
+  describe('deleteEdge', () => {
+    it('emits edge_deleted when an edge is actually removed', () => {
+      const s = makeStore()
+      const a = s.getState().addNode()
+      const b = s.getState().addNode()
+      const id = s.getState().addEdge(a, b, 'causes')
+      s.getState().deleteEdge(id)
+      expect(track).toHaveBeenCalledWith({ name: 'edge_deleted' })
+    })
+
+    it('does not emit edge_deleted when the edge ID does not exist', () => {
+      const s = makeStore()
+      s.getState().deleteEdge('nonexistent')
+      expect(track).not.toHaveBeenCalledWith({ name: 'edge_deleted' })
+    })
+  })
+
+  describe('onNodesChange remove', () => {
+    it('emits node_deleted when a remove change targets an existing node', () => {
+      const s = makeStore()
+      const id = s.getState().addNode()
+      s.getState().onNodesChange([{ type: 'remove', id }])
+      expect(track).toHaveBeenCalledWith({ name: 'node_deleted' })
+    })
+
+    it('does not emit node_deleted when a remove change targets a nonexistent node', () => {
+      const s = makeStore()
+      s.getState().onNodesChange([{ type: 'remove', id: 'nonexistent' }])
+      expect(track).not.toHaveBeenCalledWith({ name: 'node_deleted' })
+    })
+  })
+
+  describe('onEdgesChange remove', () => {
+    it('emits edge_deleted when a remove change targets an existing edge', () => {
+      const s = makeStore()
+      const a = s.getState().addNode()
+      const b = s.getState().addNode()
+      const id = s.getState().addEdge(a, b, 'causes')
+      s.getState().onEdgesChange([{ type: 'remove', id }])
+      expect(track).toHaveBeenCalledWith({ name: 'edge_deleted' })
+    })
+
+    it('does not emit edge_deleted when a remove change targets a nonexistent edge', () => {
+      const s = makeStore()
+      s.getState().onEdgesChange([{ type: 'remove', id: 'nonexistent' }])
+      expect(track).not.toHaveBeenCalledWith({ name: 'edge_deleted' })
+    })
+  })
+
+  describe('deleteSelection', () => {
+    it('emits node_deleted when a node is removed via selection delete', () => {
+      const s = makeStore()
+      const a = s.getState().addNode()
+      s.getState().setSelected({ kind: 'node', id: a })
+      s.getState().deleteSelection()
+      expect(track).toHaveBeenCalledWith({ name: 'node_deleted' })
+    })
+
+    it('emits edge_deleted when only an edge is removed via selection delete', () => {
+      const s = makeStore()
+      const a = s.getState().addNode()
+      const b = s.getState().addNode()
+      const id = s.getState().addEdge(a, b, 'causes')
+      s.getState().setSelected({ kind: 'edge', id })
+      s.getState().deleteSelection()
+      expect(track).toHaveBeenCalledWith({ name: 'edge_deleted' })
+    })
+
+    it('emits both events when a mixed selection is deleted (nodes + edges)', () => {
+      const s = makeStore()
+      const a = s.getState().addNode(0, 0)
+      const b = s.getState().addNode(100, 0)
+      s.getState().addNode(200, 0)
+      const eid = s.getState().addEdge(a, b, 'causes')
+      s.getState().setSelectedIds([a])
+      // Also select the edge so both nodes and edges are in the selection
+      s.getState().onEdgesChange([{ type: 'select', id: eid, selected: true } as EdgeChange])
+      s.getState().deleteSelection()
+      expect(track).toHaveBeenCalledWith({ name: 'node_deleted' })
+      expect(track).toHaveBeenCalledWith({ name: 'edge_deleted' })
+    })
+
+    it('does not emit when deleteSelection has nothing to delete', () => {
+      const s = makeStore()
+      s.getState().deleteSelection()
+      expect(track).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('payload safety', () => {
+    it('never includes node IDs, edge IDs, or graph content in node_deleted track calls', () => {
+      const s = makeStore()
+      const nodeId = s.getState().addNode(10, 20)
+      s.getState().deleteNode(nodeId)
+      expect(track).toHaveBeenCalledTimes(1)
+      const args = vi.mocked(track).mock.calls[0][0]
+      expect(args).toEqual({ name: 'node_deleted' })
+      // Only name should be present — no extra props
+      expect(Object.keys(args)).toEqual(['name'])
+    })
+
+    it('never includes node IDs, edge IDs, or graph content in edge_deleted track calls', () => {
+      const s = makeStore()
+      const a = s.getState().addNode()
+      const b = s.getState().addNode()
+      const id = s.getState().addEdge(a, b, 'causes')
+      s.getState().deleteEdge(id)
+      expect(track).toHaveBeenCalledTimes(1)
+      const args = vi.mocked(track).mock.calls[0][0]
+      expect(args).toEqual({ name: 'edge_deleted' })
+      expect(Object.keys(args)).toEqual(['name'])
+    })
   })
 })
 

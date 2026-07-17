@@ -10,7 +10,7 @@ import { useT } from '@/i18n'
 import { isTextControlFocused } from '@/lib/shortcuts'
 import { CloseButton } from '@/components/ui/CloseButton'
 import { ModalOverlay } from '@/components/ui/ModalOverlay'
-import { track } from '@/telemetry'
+import { track, toCountBucket } from '@/telemetry'
 
 const RATINGS = [Rating.Again, Rating.Hard, Rating.Good, Rating.Easy] as const
 
@@ -100,6 +100,8 @@ export function ReviewMode({ open, onClose }: Props) {
   /** Cards finished this session; idx resets to 0 after each rating so we track progress separately. */
   const [sessionProgress, setSessionProgress] = useState(0)
   const sessionTotalRef = useRef(0)
+  const ratedCardsCountRef = useRef(0)
+  const completedRef = useRef(false)
 
   const scheduler = useMemo(
     () =>
@@ -115,6 +117,8 @@ export function ReviewMode({ open, onClose }: Props) {
   useLayoutEffect(() => {
     if (open) {
       sessionTotalRef.current = sortedDueConceptNodes(useGraphStore.getState().nodes).length
+      ratedCardsCountRef.current = 0
+      completedRef.current = false
       setSessionProgress(0)
       setRevealed(false)
     } else {
@@ -127,7 +131,15 @@ export function ReviewMode({ open, onClose }: Props) {
   // debounce window (saveCurrentGraph is a no-op when nothing is dirty).
   const wasOpen = useRef(false)
   useEffect(() => {
-    if (wasOpen.current && !open) void saveCurrentGraph()
+    if (wasOpen.current && !open) {
+      void saveCurrentGraph()
+      if (!completedRef.current) {
+        track({
+          name: 'review_session_abandoned',
+          props: { rated_cards_bucket: toCountBucket(ratedCardsCountRef.current) },
+        })
+      }
+    }
     wasOpen.current = open
   }, [open, saveCurrentGraph])
 
@@ -170,12 +182,18 @@ export function ReviewMode({ open, onClose }: Props) {
         name: 'review_card_rated',
         props: { rating: RATING_EVENT_NAMES[rating as (typeof RATINGS)[number]] },
       })
+      ratedCardsCountRef.current += 1
     }
     setRevealed(false)
 
     const queueAfter = sortedDueConceptNodes(useGraphStore.getState().nodes)
 
     if (queueAfter.length === 0) {
+      completedRef.current = true
+      track({
+        name: 'review_session_completed',
+        props: { rated_cards_bucket: toCountBucket(ratedCardsCountRef.current) },
+      })
       onClose()
       return
     }

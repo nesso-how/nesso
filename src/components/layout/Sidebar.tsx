@@ -116,7 +116,7 @@ export function Sidebar({
     // auto-open the rename here.
     const duringTourCreate = isOnboardingStep(useGraphStore.getState().onboardingStep, 'new-graph')
     const id = await createGraph(t.sidebar.untitled)
-    track({ name: 'graph_created' })
+    track({ name: 'graph_created', props: { source: duringTourCreate ? 'onboarding' : 'sidebar' } })
     if (duringTourCreate) return
     setTimeout(() => {
       const g = useGraphStore.getState().graphList.find((x) => x.id === id)

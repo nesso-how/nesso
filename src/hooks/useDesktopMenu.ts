@@ -7,6 +7,7 @@ import { isDesktop } from '@/lib/isDesktop'
 import { applyDesktopMenu } from '@/lib/desktopMenu'
 import { exportGraphJson, exportGraphPng, importGraphFile } from '@/lib/graphIO'
 import { openExternal, DOCS_URL, WEBSITE_URL, FEEDBACK_URL } from '@/data/appInfo'
+import { track } from '@/telemetry'
 
 interface DesktopMenuHandlers {
   onSettings: () => void
@@ -50,7 +51,14 @@ export function useDesktopMenu(handlers: DesktopMenuHandlers): void {
       await on('zoom-in', () => void zoomIn())
       await on('zoom-out', () => void zoomOut())
 
-      await on('new-graph', () => void store().createGraph(getT().sidebar.untitled))
+      await on('new-graph', async () => {
+        try {
+          await store().createGraph(getT().sidebar.untitled)
+          track({ name: 'graph_created', props: { source: 'desktop_menu' } })
+        } catch {
+          // creation failed — no telemetry emitted
+        }
+      })
       await on('open-project', () => void store().openOrCreateProject())
       await on('export-json', () => void exportGraphJson())
       await on('export-png', () => void exportGraphPng())

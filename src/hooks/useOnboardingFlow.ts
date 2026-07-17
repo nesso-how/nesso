@@ -9,6 +9,7 @@ import {
 } from '@/components/onboarding/onboardingFlow'
 import { ONBOARDING_STEPS, isOnboardingStep } from '@/components/onboarding/onboardingSteps'
 import { useGraphStore } from '@/store'
+import { track } from '@/telemetry'
 
 export function useOnboardingFlow() {
   const boot = resolveBootState(useGraphStore.getState())
@@ -50,11 +51,13 @@ export function useOnboardingFlow() {
   }, [setOnboardingReviewOpened, setOnboardingTourGraphId, setOnboardingDeleteNodeDone])
 
   const skipOnboarding = useCallback(() => {
+    track({ name: 'onboarding_skipped', props: { source: 'onboarding' } })
     goToConsentOrFinish()
   }, [goToConsentOrFinish])
 
   const advanceTour = useCallback(() => {
     if (tourStep >= ONBOARDING_STEPS.length - 1) {
+      track({ name: 'onboarding_completed', props: { source: 'onboarding' } })
       goToConsentOrFinish()
       return
     }

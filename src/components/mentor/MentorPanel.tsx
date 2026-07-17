@@ -17,7 +17,7 @@ import { CloseButton } from '@/components/ui/CloseButton'
 import { STATUS_BAR_HEIGHT_PX } from '@/components/layout/StatusBar'
 import { ThinkingIndicator } from './ThinkingIndicator'
 import { renderWithEmphasis } from './emphasis'
-import { track } from '@/telemetry'
+import { track, toCountBucket } from '@/telemetry'
 
 interface Message {
   role: 'user' | 'mentor'
@@ -305,6 +305,9 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const abortRef = useRef<AbortController | null>(null)
+  const userMessageCountRef = useRef(0)
+  const historyRef = useRef(history)
+  historyRef.current = history
 
   const buildSystemPrompt = useCallback(() => {
     const s = useGraphStore.getState()
@@ -391,6 +394,24 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
     return () => controller.abort()
   }, [mentorPanelExpanded, currentGraphId, aiReady, settings.language, chatKey])
 
+  // Emit mentor_session_completed when the session ends naturally (last
+  // message was a successful mentor reply) or mentor_session_abandoned
+  // otherwise. Resets the user-message count on each new session.
+  useEffect(() => {
+    if (!mentorPanelExpanded) return
+    userMessageCountRef.current = 0
+    return () => {
+      if (userMessageCountRef.current <= 0) return
+      const bucket = toCountBucket(userMessageCountRef.current)
+      const last = historyRef.current[historyRef.current.length - 1]
+      if (last?.role === 'mentor' && !last.error) {
+        track({ name: 'mentor_session_completed', props: { message_count_bucket: bucket } })
+      } else {
+        track({ name: 'mentor_session_abandoned', props: { message_count_bucket: bucket } })
+      }
+    }
+  }, [mentorPanelExpanded, currentGraphId, aiReady, settings.language, chatKey])
+
   useEffect(() => {
     if (mentorPanelExpanded && inputRef.current) inputRef.current.focus()
   }, [mentorPanelExpanded])
@@ -420,6 +441,7 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
     setThinking(true)
     setReasoningActive(false)
     track({ name: 'mentor_message_sent' })
+    userMessageCountRef.current += 1
     requestAnimationFrame(() => {
       const el = scrollRef.current
       if (el) el.scrollTop = el.scrollHeight

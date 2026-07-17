@@ -4,6 +4,9 @@ import type { RelationTypeName } from '@/types/graph'
 
 export { readTelemetryConsent } from './consent'
 
+export type CountBucket = '0' | '1-2' | '3-5' | '6-10' | '11+'
+export type FailureReason = 'invalid_file' | 'unsupported' | 'network' | 'response'
+
 type TelemetryEvent =
   | {
       name: 'app_started'
@@ -17,9 +20,28 @@ type TelemetryEvent =
   | { name: 'mentor_request_failed'; props: { reason: 'network' | 'response' } }
   | { name: 'review_session_started' }
   | { name: 'review_card_rated'; props: { rating: 'again' | 'hard' | 'good' | 'easy' } }
-  | { name: 'graph_created' }
+  | { name: 'onboarding_completed'; props: { source: 'onboarding' } }
+  | { name: 'onboarding_skipped'; props: { source: 'onboarding' } }
+  | { name: 'graph_opened' }
+  | { name: 'graph_created'; props: { source: 'sidebar' | 'desktop_menu' | 'onboarding' } }
   | { name: 'graph_imported' }
   | { name: 'graph_exported'; props: { format: 'json' | 'png' } }
+  | { name: 'node_deleted' }
+  | { name: 'edge_deleted' }
+  | { name: 'review_session_completed'; props: { rated_cards_bucket: CountBucket } }
+  | { name: 'review_session_abandoned'; props: { rated_cards_bucket: CountBucket } }
+  | { name: 'mentor_session_completed'; props: { message_count_bucket: CountBucket } }
+  | { name: 'mentor_session_abandoned'; props: { message_count_bucket: CountBucket } }
+  | { name: 'graph_import_failed'; props: { format: 'json'; reason: FailureReason } }
+  | { name: 'graph_export_failed'; props: { format: 'json' | 'png'; reason: FailureReason } }
+
+export function toCountBucket(count: number): CountBucket {
+  if (count <= 0) return '0'
+  if (count <= 2) return '1-2'
+  if (count <= 5) return '3-5'
+  if (count <= 10) return '6-10'
+  return '11+'
+}
 
 let active = false
 let initializing = false
