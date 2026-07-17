@@ -21,7 +21,7 @@ Agent and skill definitions, dispatch, and harness maintenance are governed by [
 
 ## Worktree and path safety
 
-When OpenCode runs in a Git worktree, treat the path returned by `git rev-parse --show-toplevel` as the only source checkout for the session. Before planning, reviewing, or dispatching a subagent, verify that root and use paths relative to it. Markdown links in agent, skill, and rule files are relative to their source Markdown file; never pass a raw `../` or `../../` link target to a tool from the session directory. If a source path resolves outside the active worktree, stop and report the mismatch instead of reading the parent `nesso` checkout.
+At the start of each agent session, run `git rev-parse --show-toplevel` and use only that worktree for source files. If a requested path resolves outside it, stop and report the mismatch.
 
 ## Area rules
 

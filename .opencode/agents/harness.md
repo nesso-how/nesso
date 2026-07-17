@@ -35,13 +35,12 @@ Read-only by default; never commit or push (see AGENTS.md → Git). Use when:
 
 #### Method
 
-1. **Verify the active worktree** — run `git rev-parse --show-toplevel` before reading files. Use that returned path as the source root; never pass file-relative `../` link targets directly to tools.
-2. **Read `.rules/harness.md` in full.** It is the checklist. If reality and the rule disagree, the rule wins; if the rule and this procedure disagree, that is itself a finding (update one of them).
-3. **Enumerate the git-tracked surfaces** — the Scope invariant means tracked files only:
+1. **Read `.rules/harness.md` in full.** It is the checklist. If reality and the rule disagree, the rule wins; if the rule and this procedure disagree, that is itself a finding (update one of them).
+2. **Enumerate the git-tracked surfaces** — the Scope invariant means tracked files only:
    ```bash
    git ls-files .rules .opencode opencode.json AGENTS.md
    ```
-4. **Walk each invariant** and verify it against that evidence — rules ↔ AGENTS.md agreement, Touch → update coverage, skill/subagent validity, link resolution. Read the actual files; do not assume.
+3. **Walk each invariant** and verify it against that evidence — rules ↔ AGENTS.md agreement, Touch → update coverage, skill/subagent validity, link resolution. Read the actual files; do not assume.
 
 #### Judgment traps — why this is a sweep, not a script
 

@@ -40,7 +40,7 @@
     "build:theme": "pnpm --filter @nesso-how/theme build",
     "build:graph": "pnpm --filter @nesso-how/graph build",
     "build:mcp": "pnpm --filter @nesso-how/mcp build",
-    "prepare": "husky && pnpm run build:schema && pnpm run build:vocab-learning && pnpm run build:theme && pnpm run build:graph",
+    "prepare": "husky && pnpm build && pnpm run build:mcp",
     "dev": "vite",
     "type:check": "tsc -b && pnpm --filter @nesso-how/* exec tsc -b",
     "build": "pnpm run build:schema && pnpm run build:vocab-learning && pnpm run build:theme && pnpm run build:graph && pnpm run type:check && vite build",

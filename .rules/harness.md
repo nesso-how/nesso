@@ -57,10 +57,6 @@ If a task needs no AI judgment, write a script — not a skill. Skills burn toke
 - Links from `AGENTS.md` into `.rules/` resolve.
 - Source references named in rules (paths like `src/…`, package files, exported symbols) point to things that still exist. This is the part most exposed to drift during a restructuring, and the one only judgment can catch — a moved or renamed symbol still reads as a valid link.
 
-### Worktree-rooted tool paths
-
-The active Git worktree is the only source checkout agents should inspect or modify. Before planning, review, or subagent dispatch, verify it with `git rev-parse --show-toplevel` and resolve tool paths from that returned root. A Markdown link target such as `../../AGENTS.md` is relative to the Markdown file that contains it; it must not be passed verbatim to a tool whose current directory is the worktree. If a requested source path resolves outside the active worktree, stop and report the mismatch rather than inspecting the parent checkout.
-
 ## Scope — only git-tracked scaffolding
 
 A file is a harness surface only if it is **tracked in git**. Whatever is gitignored is out of scope by construction — machine-local worktrees, `*.local` config — so there is no exclusion list to keep current; git already draws the line.
