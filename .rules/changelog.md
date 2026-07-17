@@ -2,6 +2,10 @@
 
 The repo keeps a root [`CHANGELOG.md`](../CHANGELOG.md) in [Keep a Changelog](https://keepachangelog.com/) style.
 
+## Scope
+
+Record user-facing or otherwise release-notable changes only. Changes exclusively to the AI harness — `.rules/`, `.opencode/`, `AGENTS.md`, or `opencode.json` — do not belong in `CHANGELOG.md` unless they alter shipped user-visible behavior.
+
 ## When to edit `CHANGELOG.md`
 
 **Do not** update `CHANGELOG.md` while implementing or iterating on a feature. Leave `[Unreleased]` unchanged until commit time.
