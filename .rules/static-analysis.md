@@ -25,6 +25,8 @@ cargo fmt --all --check --manifest-path src-tauri/Cargo.toml
 cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
 ```
 
+Tauri plugin integrations span `src-tauri/Cargo.toml`, `src-tauri/src/lib.rs`, and `src-tauri/capabilities/default.json`. When adding or changing one, run the four Rust quality gates — `cargo fmt --all --check --manifest-path src-tauri/Cargo.toml`, `cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings`, `cargo check --manifest-path src-tauri/Cargo.toml --all-targets`, and `cargo test --manifest-path src-tauri/Cargo.toml` — then build the desktop binary so capability URL patterns are validated. Keep native HTTP scopes explicit: HTTPS may be broad for user-configured providers, while HTTP must remain limited to loopback.
+
 ## Type Safety
 
 `tsc -b` (build mode) checks `src/` + all workspace packages:

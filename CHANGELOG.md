@@ -19,6 +19,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - **ConceptElaboration:** Reduced from six fields (`definition`, `examples`, `notes`, `imageUrl`, `imageTitle`, `imageDescriptionUrl`) to just `definition` — a breaking alpha-only simplification ahead of Writing Mode. All UI (Inspector, Review Mode), serialization, validation, LLM context, MCP schema, seeds, docs, and tests updated accordingly. Old graph files with extended elaboration fields are unsupported.
 
+- **Desktop:** Mentor requests now use Tauri's native HTTP transport, which reaches hosted HTTPS OpenAI-compatible endpoints and loopback Ollama without browser CORS restrictions; the browser transport is unchanged.
+
 ## [0.1.0-alpha.40] - 2026-07-16
 
 ### Added

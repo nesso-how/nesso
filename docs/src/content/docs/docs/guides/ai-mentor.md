@@ -21,13 +21,17 @@ Chat history is **not persisted**. It lives only for the current panel session.
 
 Configure any OpenAI-compatible `chat/completions` endpoint under **Settings → AI**: base URL, model, and an optional API key. Endpoint fields appear only while the mentor toggle is on.
 
-The default targets a local [Ollama](https://ollama.com/) instance (`http://localhost:11434/v1`, model `gemma3:4b`). Install Ollama, pull a model, and the mentor works with nothing leaving your machine. Any hosted OpenAI-compatible endpoint works too. Set the API key it expects.
+The desktop app uses Tauri's native HTTP client for mentor requests. It supports any `https://` endpoint, including hosted providers such as OpenCode Zen at `https://opencode.ai/zen/v1` with model `big-pickle`. It also supports loopback HTTP endpoints at `localhost`, `127.0.0.1`, and `::1` for local Ollama. Arbitrary non-loopback `http://` endpoints are not permitted by the desktop capability.
+
+The browser app keeps using the browser's normal `fetch`. Hosted endpoints must allow the app's origin, and browser requests to local Ollama still need the Ollama CORS setting described below. Nesso sends an optional API key as `Authorization: Bearer …` only to the configured endpoint and does not log it.
+
+The default targets a local [Ollama](https://ollama.com/) instance (`http://localhost:11434/v1`, model `gemma3:4b`). Install Ollama, pull a model, and the mentor works with nothing leaving your machine. Set the API key expected by a hosted endpoint when one is required.
 
 Until a reachable endpoint is configured, the chat input stays disabled and the mentor shows a short setup hint. If the mentor stops responding once a turn fails, see [Troubleshooting](../../troubleshooting/#mentor-not-responding).
 
 ### Reaching local Ollama from the hosted app
 
-If you use the hosted web app over HTTPS, requests to `http://localhost:11434` are allowed (localhost is exempt from mixed-content blocking), but Ollama still rejects the cross-origin request unless you allow the app's origin: start it with `OLLAMA_ORIGINS=https://app.nesso.how` (or run the desktop build, where this does not apply).
+If you use the hosted web app over HTTPS, requests to `http://localhost:11434` are allowed by the browser, but Ollama still rejects the cross-origin request unless you allow the app's origin. Start it with `OLLAMA_ORIGINS=https://app.nesso.how` or use the desktop build, whose native transport does not require this browser CORS setting.
 
 ## The Socratic persona
 

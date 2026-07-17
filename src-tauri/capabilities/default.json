@@ -5,6 +5,19 @@
   "windows": ["main"],
   "permissions": [
     "core:default",
+    {
+      "identifier": "http:default",
+      "allow": [
+        { "url": "https://*:*/*" },
+        { "url": "https://*" },
+        { "url": "http://localhost:*/*" },
+        { "url": "http://localhost" },
+        { "url": "http://127.0.0.1:*/*" },
+        { "url": "http://127.0.0.1" },
+        { "url": "http://[::1]:*/*" },
+        { "url": "http://[::1]" }
+      ]
+    },
     "dialog:default",
     "fs:default",
     "fs:allow-appdata-read-recursive",

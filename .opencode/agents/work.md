@@ -33,9 +33,13 @@ GitHub Issue → plan (read-only subagent) → work persists plan → [user appr
                                        ↓
                                  create branch
                                        ↓
-                        build (subagent) per task → [TDD green checks pass]
-                                                       ↓
-                                 review (skill) → [verdict]
+                         build (subagent) per task → [TDD green checks pass]
+                                                        ↓
+                                  preflight → [green]
+                                                        ↓
+                    review (skill), unless explicitly skipped
+                                                        ↓
+                                  [verdict / summary]
                                                        ↓
                           summary → [user decides path]
                                  /                    \
@@ -71,11 +75,17 @@ GitHub Issue → plan (read-only subagent) → work persists plan → [user appr
 ### After all build tasks pass
 
 1. Run **`preflight`** to catch mechanical regressions across the full change (not per-task). If anything is red, re-dispatch `build` with the error context and re-run preflight after.
-2. Load the **`review`** skill and follow it — it orchestrates the review subagents (`guard-review` + `quality-review` in parallel) and synthesizes a verdict.
+2. Decide whether the review gate applies:
+   - Review is required for every non-trivial change.
+   - A change is trivial only when it is narrowly scoped to documentation, rules, formatting, or another mechanical edit with no runtime, security, dependency, data, or API behavior impact, and preflight is green.
+   - For a potentially trivial change, explain the criteria and **suggest** that the user may skip review. Do not skip silently; wait for the user's explicit choice.
+   - If the user chooses review, load the **`review`** skill and follow it — it orchestrates `guard-review` and `quality-review` in parallel and synthesizes a verdict.
+   - If the user explicitly chooses to skip review, record that decision in the summary and continue to the publish approval gate. Skipping review never implies approval to commit, push, or open a PR.
+   - If a review has already started, its fix loop remains in force: user-approved review fixes require preflight and another review before publishing.
 
 ### After review — present and ask
 
-3. Present the **review report** to the user: verdict, blocking items (if any), bugs/risks, suggestions. Then **recommend a path** and ask the user which to take:
+3. If review ran, present the **review report** to the user: verdict, blocking items (if any), bugs/risks, suggestions. Then **recommend a path** and ask the user which to take. If review was explicitly skipped for a trivial change, present the verification summary and ask whether to publish or make further changes:
 
    | Review outcome                                         | Recommended path                                     | User says              |
    | ------------------------------------------------------ | ---------------------------------------------------- | ---------------------- |
@@ -86,18 +96,18 @@ GitHub Issue → plan (read-only subagent) → work persists plan → [user appr
 
    The user always decides. The agent recommends; never loop silently.
 
-4. **If the user confirms build directly**: dispatch `build` for each suggested fix, then re-run preflight and re-run review. Do not commit during this fix loop. If the new review still has findings, loop at step 3 again.
+4. **If the user confirms build directly**: dispatch `build` for each suggested fix, then re-run preflight and re-run review. Do not commit during this fix loop. If the new review still has findings, loop at step 3 again. This applies whenever a review has run; a skipped review does not create a silent review loop.
 5. **If ready to PR** and the user explicitly says "ship it" / "go ahead": update `## [Unreleased]` in `CHANGELOG.md` per `.rules/changelog.md`, commit the complete working tree with a concise conventional commit message, then load the **`create-pr`** skill with `--auto` and follow it to push, open the PR, and enable auto-merge. Never commit or push before this approval gate; `create-pr` proceeds without further confirmation.
 
 ## Phase Table
 
-| Phase     | Agent                       | Gate                     |
-| --------- | --------------------------- | ------------------------ |
-| Planning  | `plan` (subagent)           | User approves plan       |
-| Branch    | `work` (direct)             | Branch created from main |
-| Execution | `build` (subagent) per task | TDD green + fast checks  |
-| Review    | `review` (skill)            | No blocking findings     |
-| Publish   | `create-pr` (skill)         | PR opened on GitHub      |
+| Phase     | Agent                                                            | Gate                                                 |
+| --------- | ---------------------------------------------------------------- | ---------------------------------------------------- |
+| Planning  | `plan` (subagent)                                                | User approves plan                                   |
+| Branch    | `work` (direct)                                                  | Branch created from main                             |
+| Execution | `build` (subagent) per task                                      | TDD green + fast checks                              |
+| Review    | `review` (skill, unless explicitly skipped for a trivial change) | No blocking findings, or explicit user-approved skip |
+| Publish   | `create-pr` (skill)                                              | PR opened on GitHub                                  |
 
 ## Session Boundaries
 
@@ -111,14 +121,14 @@ All hard rules live in `AGENTS.md` → **Constraints**. Every subagent is instru
 
 ## Red Flags
 
-| Thought                            | Reality                                                                                         |
-| ---------------------------------- | ----------------------------------------------------------------------------------------------- |
-| "I'll just fix this quickly"       | Never silently patch. After review, present the report and recommend a path — the user decides. |
-| "This doesn't need review"         | Every change needs review.                                                                      |
-| "I'll just commit this"            | No commits without explicit consent.                                                            |
-| "The subagent will handle it"      | You are the gate. Verify before proceeding.                                                     |
-| "This is too simple for planning"  | First plan always: yes. Post-review trivial fixes: ask the user.                                |
-| "Silently loop on review failures" | Always present the report, recommend a path, and let the user decide.                           |
+| Thought                            | Reality                                                                                                                              |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| "I'll just fix this quickly"       | Never silently patch. After review, present the report and recommend a path — the user decides.                                      |
+| "This doesn't need review"         | Review is required by default. For a genuinely trivial change, explain why and ask the user whether to skip it; never skip silently. |
+| "I'll just commit this"            | No commits without explicit consent.                                                                                                 |
+| "The subagent will handle it"      | You are the gate. Verify before proceeding.                                                                                          |
+| "This is too simple for planning"  | First plan always: yes. Post-review trivial fixes: ask the user.                                                                     |
+| "Silently loop on review failures" | Always present the report, recommend a path, and let the user decide.                                                                |
 
 ## Subagent Dispatch
 
