@@ -373,3 +373,99 @@ pub fn run() {
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
+
+#[cfg(test)]
+mod http_capability_tests {
+    use serde::Deserialize;
+    use tauri::{
+        utils::acl::{
+            capability::{CapabilityFile, PermissionEntry},
+            RemoteUrlPattern,
+        },
+        Url,
+    };
+
+    #[derive(Deserialize)]
+    struct HttpAllowEntry {
+        url: String,
+    }
+
+    fn http_scope_patterns() -> Vec<RemoteUrlPattern> {
+        let capability: CapabilityFile =
+            serde_json::from_str(include_str!("../capabilities/default.json"))
+                .expect("default capability must deserialize");
+
+        let capability = match capability {
+            CapabilityFile::Capability(capability) => capability,
+            CapabilityFile::List(_) | CapabilityFile::NamedList { .. } => {
+                panic!("default capability must be a single capability")
+            }
+        };
+
+        let allow = capability
+            .permissions
+            .into_iter()
+            .find_map(|permission| match permission {
+                PermissionEntry::ExtendedPermission { identifier, scope }
+                    if identifier.get() == "http:default" =>
+                {
+                    scope.allow
+                }
+                _ => None,
+            })
+            .expect("default capability must define an http:default allow scope");
+
+        allow
+            .into_iter()
+            .map(|value| {
+                let entry: HttpAllowEntry = serde_json::from_value(
+                    serde_json::to_value(value).expect("HTTP scope value must serialize"),
+                )
+                .expect("HTTP allow entry must contain a url string");
+                let raw_pattern = entry.url;
+
+                raw_pattern
+                    .parse::<RemoteUrlPattern>()
+                    .unwrap_or_else(|error| {
+                        panic!("invalid HTTP URL pattern `{raw_pattern}`: {error}")
+                    })
+            })
+            .collect()
+    }
+
+    fn scope_allows(patterns: &[RemoteUrlPattern], raw_url: &str) -> bool {
+        let url = raw_url.parse::<Url>().expect("test URL must be valid");
+        patterns.iter().any(|pattern| pattern.test(&url))
+    }
+
+    #[test]
+    fn default_http_scope_deserializes_and_matches_supported_endpoints() {
+        let patterns = http_scope_patterns();
+
+        for raw_url in [
+            "https://opencode.ai/zen/v1/chat/completions",
+            "https://api.openai.com/v1/chat/completions",
+            "http://localhost:11434/v1/chat/completions",
+            "http://localhost/v1/chat/completions",
+            "http://127.0.0.1:11434/v1/chat/completions",
+            "http://127.0.0.1/v1/chat/completions",
+            "http://[::1]:11434/v1/chat/completions",
+            "http://[::1]/v1/chat/completions",
+        ] {
+            assert!(
+                scope_allows(&patterns, raw_url),
+                "expected {raw_url} to be allowed"
+            );
+        }
+
+        for raw_url in [
+            "http://example.com/v1/chat/completions",
+            "http://192.168.1.10:11434/v1/chat/completions",
+        ] {
+            assert!(
+                !scope_allows(&patterns, raw_url),
+                "expected {raw_url} to be denied"
+            );
+        }
+    }
+}

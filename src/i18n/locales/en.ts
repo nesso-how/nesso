@@ -68,6 +68,7 @@ const en = {
         pull: 'Pull',
         ollamaNotRunning: 'Ollama not running:',
         corsBlocked: 'CORS blocked. Set',
+        unauthorized: 'Unauthorized',
         unreachable: 'API unreachable',
       },
     },

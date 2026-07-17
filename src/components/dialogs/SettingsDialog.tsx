@@ -13,7 +13,8 @@ import { useT } from '@/i18n'
 import { LearningSettings } from './LearningSettings'
 import { SettingsHeatmapDefault } from '@/components/ui/HeatmapDisplayToggle'
 import type { Language } from '@/types/graph'
-import { checkOllamaModel, streamOllamaModelPull, type OllamaModelStatus } from '@/lib/ollama'
+import { checkEndpoint, executeModelPull } from '@/llm/completion'
+import type { OllamaModelStatus } from '@/lib/ollama'
 
 const OLLAMA_PRESETS = [
   { id: 'llama3.2:3b', note: 'lightweight · fast' },
@@ -42,36 +43,53 @@ export function SettingsDialog({ open, onClose }: Props) {
   const [modelStatus, setModelStatus] = useState<OllamaModelStatus>('idle')
   const [pullProgress, setPullProgress] = useState(0)
 
-  const triggerCheck = useCallback((baseUrl: string, model: string) => {
+  const healthCheckAbortRef = useRef<AbortController | null>(null)
+
+  const triggerCheck = useCallback((baseUrl: string, model: string, apiKey?: string) => {
     if (!model) {
       setModelStatus('idle')
       return
     }
+    healthCheckAbortRef.current?.abort()
+    const controller = new AbortController()
+    healthCheckAbortRef.current = controller
     setModelStatus('checking')
-    checkOllamaModel(baseUrl, model)
-      .then((s) => setModelStatus(s))
-      .catch(() => setModelStatus('error'))
+    checkEndpoint(baseUrl, model, apiKey ?? '', controller.signal)
+      .then((s) => {
+        if (!controller.signal.aborted) setModelStatus(s)
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setModelStatus('error')
+      })
   }, [])
 
   const pullAbortRef = useRef<AbortController | null>(null)
+  /** Monotonic counter — bumped on each new pull or settings invalidation. */
+  const pullRequestIdRef = useRef(0)
 
   const handlePull = useCallback(async () => {
     pullAbortRef.current?.abort()
+    pullRequestIdRef.current += 1
+    const requestId = pullRequestIdRef.current
+
     const controller = new AbortController()
     pullAbortRef.current = controller
     setModelStatus('pulling')
     setPullProgress(0)
-    try {
-      for await (const p of streamOllamaModelPull(
-        settings.aiBaseUrl,
-        settings.aiModel,
-        controller.signal,
-      )) {
-        setPullProgress(p)
-      }
-      setModelStatus('available')
-    } catch {
-      if (!controller.signal.aborted) setModelStatus('error')
+
+    const guardedProgress = (fraction: number) => {
+      if (pullRequestIdRef.current === requestId) setPullProgress(fraction)
+    }
+
+    const ok = await executeModelPull(
+      settings.aiBaseUrl,
+      settings.aiModel,
+      controller.signal,
+      guardedProgress,
+    )
+    // Only update state if this is still the latest pull request AND not aborted.
+    if (!controller.signal.aborted && pullRequestIdRef.current === requestId) {
+      setModelStatus(ok ? 'available' : 'error')
     }
   }, [settings.aiBaseUrl, settings.aiModel])
 
@@ -82,22 +100,34 @@ export function SettingsDialog({ open, onClose }: Props) {
 
   useEffect(() => {
     if (!open || !settings.mentorEnabled) {
+      healthCheckAbortRef.current?.abort()
+      pullAbortRef.current?.abort()
+      pullRequestIdRef.current = 0
       setModelStatus('idle')
       return
     }
-    let cancelled = false
+    // Settings changed while dialog is open and mentor is enabled — abort
+    // any in-flight pull and invalidate stale requests so an old pull cannot
+    // mark a freshly-selected model as available.
+    pullAbortRef.current?.abort()
+    pullRequestIdRef.current = 0
+
+    const controller = new AbortController()
+    // Abort any in-flight check from the previous effect invocation.
+    healthCheckAbortRef.current?.abort()
+    healthCheckAbortRef.current = controller
     setModelStatus('checking')
-    checkOllamaModel(settings.aiBaseUrl, settings.aiModel)
+    checkEndpoint(settings.aiBaseUrl, settings.aiModel, settings.aiApiKey, controller.signal)
       .then((s) => {
-        if (!cancelled) setModelStatus(s)
+        if (!controller.signal.aborted) setModelStatus(s)
       })
       .catch(() => {
-        if (!cancelled) setModelStatus('error')
+        if (!controller.signal.aborted) setModelStatus('error')
       })
     return () => {
-      cancelled = true
+      controller.abort()
     }
-  }, [open, settings.aiBaseUrl, settings.mentorEnabled])
+  }, [open, settings.aiBaseUrl, settings.aiModel, settings.aiApiKey, settings.mentorEnabled])
 
   const inputStyle: React.CSSProperties = {
     width: '100%',
@@ -423,7 +453,7 @@ export function SettingsDialog({ open, onClose }: Props) {
                                 title={p.note}
                                 onClick={() => {
                                   setSetting('aiModel', p.id)
-                                  triggerCheck(settings.aiBaseUrl, p.id)
+                                  triggerCheck(settings.aiBaseUrl, p.id, settings.aiApiKey)
                                 }}
                                 style={{
                                   appearance: 'none',
@@ -451,7 +481,9 @@ export function SettingsDialog({ open, onClose }: Props) {
                             setSetting('aiModel', e.target.value)
                             setModelStatus('idle')
                           }}
-                          onBlur={(e) => triggerCheck(settings.aiBaseUrl, e.target.value)}
+                          onBlur={(e) =>
+                            triggerCheck(settings.aiBaseUrl, e.target.value, settings.aiApiKey)
+                          }
                           style={inputStyle}
                         />
                         <ModelStatusBadge
