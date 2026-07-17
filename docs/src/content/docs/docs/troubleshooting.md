@@ -41,3 +41,15 @@ Closing the mentor panel, switching graphs, or clicking **New chat** aborts any 
 ## "No AI endpoint configured"
 
 This isn't a failure: it's the mentor's resting state until you've set up an endpoint. It appears whenever **Mentor** is enabled in **Settings → AI** but the base URL or model field is empty. The input stays disabled until both are filled in. See [AI mentor](../guides/ai-mentor/#connecting-a-model) for setup.
+
+## Model pull stalls or shows stale results
+
+Model pulling is available only for local Ollama endpoints. When you click **Pull** in **Settings → AI**, Nesso streams the download progress from Ollama's `/api/pull` endpoint.
+
+If a pull appears stuck:
+
+- **Changing settings cancels the pull.** Switching the model, base URL, or API key, disabling the mentor toggle, or closing the **Settings** dialog all abort the in-flight pull so stale progress cannot interfere with a new model selection.
+- **Ollama must be reachable on the native port.** Nesso strips the `/v1` suffix from your base URL to reach Ollama's native `/api/pull` endpoint. If you configured a non-standard port, make sure Ollama's native API is running on that same port.
+- **Progress is purely cosmetic.** The pull runs to completion regardless of whether the progress bar is visible. If the pull completes while you are on a different settings tab, the status badge updates when you return to the AI tab.
+
+If the status shows **Unauthorized**, check your API key. The endpoint rejected the request with HTTP `401` or `403`. For hosted providers, make sure the key is valid and has not expired. Local Ollama instances do not require an API key — leave the field empty.

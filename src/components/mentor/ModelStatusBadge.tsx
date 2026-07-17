@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 import { useT } from '@/i18n'
+import { isDesktop } from '@/lib/isDesktop'
 import type { OllamaModelStatus } from '@/lib/ollama'
+import { isLocalhostUrl } from '@/lib/ollama'
+import { getErrorHint } from './modelStatusDisplay'
 
 interface Props {
   status: OllamaModelStatus
@@ -62,6 +65,8 @@ export function ModelStatusBadge({ status, model, baseUrl, pullProgress, onPull 
     )
   }
 
+  const isLocal = isLocalhostUrl(baseUrl)
+
   return (
     <div
       style={{
@@ -100,37 +105,60 @@ export function ModelStatusBadge({ status, model, baseUrl, pullProgress, onPull 
         <>
           {dot('var(--conf-2)')}
           <span style={{ color: 'var(--ink-3)' }}>{t.settings.ai.status.notFound}</span>
-          <button
-            type="button"
-            onClick={onPull}
-            style={{
-              appearance: 'none',
-              border: '0.5px solid var(--accent)',
-              background: 'transparent',
-              color: 'var(--accent)',
-              fontSize: '11px',
-              fontWeight: 500,
-              fontFamily: 'var(--font-mono)',
-              padding: '2px 8px',
-              borderRadius: 'var(--radius-sm)',
-              cursor: 'pointer',
-            }}
-          >
-            {t.settings.ai.status.pull}
-          </button>
+          {isLocal && (
+            <button
+              type="button"
+              onClick={onPull}
+              style={{
+                appearance: 'none',
+                border: '0.5px solid var(--accent)',
+                background: 'transparent',
+                color: 'var(--accent)',
+                fontSize: '11px',
+                fontWeight: 500,
+                fontFamily: 'var(--font-mono)',
+                padding: '2px 8px',
+                borderRadius: 'var(--radius-sm)',
+                cursor: 'pointer',
+              }}
+            >
+              {t.settings.ai.status.pull}
+            </button>
+          )}
+        </>
+      )}
+      {status === 'unauthorized' && (
+        <>
+          {dot('var(--conf-2)')}
+          <span style={{ color: 'var(--ink-4)' }}>{t.settings.ai.status.unauthorized}</span>
         </>
       )}
       {status === 'error' &&
-        (/localhost|127\.0\.0\.1/.test(baseUrl) ? (
-          /localhost|127\.0\.0\.1/.test(window.location.hostname) ? (
-            <>
-              {dot('var(--ink-4)')}
-              <span style={{ color: 'var(--ink-4)' }}>{t.settings.ai.status.ollamaNotRunning}</span>
-              <code style={{ color: 'var(--ink-2)', fontSize: 'var(--text-xs)' }}>
-                ollama serve
-              </code>
-            </>
-          ) : (
+        (() => {
+          const hint = getErrorHint(baseUrl, isDesktop(), window.location.hostname)
+          if (hint === 'unreachable') {
+            return (
+              <>
+                {dot('var(--ink-4)')}
+                <span style={{ color: 'var(--ink-4)' }}>{t.settings.ai.status.unreachable}</span>
+              </>
+            )
+          }
+          if (hint === 'ollama-not-running') {
+            return (
+              <>
+                {dot('var(--ink-4)')}
+                <span style={{ color: 'var(--ink-4)' }}>
+                  {t.settings.ai.status.ollamaNotRunning}
+                </span>
+                <code style={{ color: 'var(--ink-2)', fontSize: 'var(--text-xs)' }}>
+                  ollama serve
+                </code>
+              </>
+            )
+          }
+          // cors-blocked
+          return (
             <>
               {dot('var(--conf-2)')}
               <span style={{ color: 'var(--ink-4)' }}>{t.settings.ai.status.corsBlocked}</span>
@@ -139,12 +167,7 @@ export function ModelStatusBadge({ status, model, baseUrl, pullProgress, onPull 
               </code>
             </>
           )
-        ) : (
-          <>
-            {dot('var(--ink-4)')}
-            <span style={{ color: 'var(--ink-4)' }}>{t.settings.ai.status.unreachable}</span>
-          </>
-        ))}
+        })()}
     </div>
   )
 }

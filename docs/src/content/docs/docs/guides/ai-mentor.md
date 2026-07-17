@@ -29,6 +29,29 @@ The default targets a local [Ollama](https://ollama.com/) instance (`http://loca
 
 Until a reachable endpoint is configured, the chat input stays disabled and the mentor shows a short setup hint. If the mentor stops responding once a turn fails, see [Troubleshooting](../../troubleshooting/#mentor-not-responding).
 
+### Endpoint status
+
+While the AI tab is open in **Settings**, Nesso calls the `/models` endpoint of your configured base URL and shows the result inline:
+
+| Status                | Meaning                                                                                            |
+| --------------------- | -------------------------------------------------------------------------------------------------- |
+| **Checking…**         | Nesso is querying `/models` — shows a spinner until the first response arrives.                    |
+| **Available**         | The model is present in the endpoint's model list. The mentor can start.                           |
+| **Not found locally** | The endpoint is reachable but the model is not installed. On localhost, a **Pull** button appears. |
+| **Pulling `NN`%**     | A native Ollama pull is in progress for the current model (local endpoints only).                  |
+| **Unauthorized**      | The endpoint returned HTTP `401` or `403` — wrong or missing API key.                              |
+| **API unreachable**   | The endpoint did not respond (wrong URL, server down, or network failure).                         |
+
+The status resets to idle when the dialog closes or the mentor toggle is turned off. Changing the base URL, model, or API key triggers a fresh check and cancels any in-flight pull.
+
+### Pulling a model from Ollama
+
+When the endpoint is a `localhost`-based Ollama instance and the model is **Not found locally**, click **Pull** to download it. Progress is streamed in real time, and the status switches to **Available** on success. If the pull fails mid-way, the status shows **API unreachable**.
+
+Pulls are local-only: the pull button appears only for loopback URLs (`localhost`, `127.0.0.1`, `::1`) because it calls the Ollama-native `/api/pull` endpoint. For hosted providers, pull models through their own tools or dashboard.
+
+Closing the **Settings** dialog, disabling the **Mentor** toggle, or changing the model while a pull is running aborts it immediately.
+
 ### Reaching local Ollama from the hosted app
 
 If you use the hosted web app over HTTPS, requests to `http://localhost:11434` are allowed by the browser, but Ollama still rejects the cross-origin request unless you allow the app's origin. Start it with `OLLAMA_ORIGINS=https://app.nesso.how` or use the desktop build, whose native transport does not require this browser CORS setting.

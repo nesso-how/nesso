@@ -11,7 +11,16 @@ vi.mock('@tauri-apps/plugin-http', () => ({
 
 import { APICallError } from 'ai'
 import type { NessoSettings } from '@/types/graph'
-import { describeCompletionError, fetchCompletion, isAiReady, isNetworkFailure } from './completion'
+import {
+  checkEndpoint,
+  describeCompletionError,
+  fetchCompletion,
+  getConfiguredFetch,
+  isAiReady,
+  isLocalhostUrl,
+  isNetworkFailure,
+  pullModel,
+} from './completion'
 
 const settings = {
   aiBaseUrl: 'http://localhost:11434/v1',
@@ -312,5 +321,426 @@ describe('fetchCompletion streaming', () => {
 
     // Browser fetch must not be called on desktop.
     expect(browserFetch).not.toHaveBeenCalled()
+  })
+})
+
+// ---------------------------------------------------------------------------
+// getConfiguredFetch
+// ---------------------------------------------------------------------------
+
+describe('getConfiguredFetch', () => {
+  it('returns global fetch in browser mode', () => {
+    vi.stubGlobal('window', {})
+    const browserFetch = vi.fn()
+    vi.stubGlobal('fetch', browserFetch)
+
+    const fetcher = getConfiguredFetch()
+    expect(fetcher).toBe(browserFetch)
+  })
+
+  it('returns a Tauri-delegating function in desktop mode', () => {
+    vi.stubGlobal('window', { __TAURI_INTERNALS__: {} })
+    vi.stubGlobal('fetch', vi.fn())
+
+    const fetcher = getConfiguredFetch()
+    expect(typeof fetcher).toBe('function')
+    // It must not be the global fetch.
+    expect(fetcher).not.toBe(globalThis.fetch)
+  })
+
+  it('the desktop fetcher forwards to @tauri-apps/plugin-http with maxRedirections=0', async () => {
+    vi.stubGlobal('window', { __TAURI_INTERNALS__: {} })
+    vi.stubGlobal('fetch', vi.fn())
+    mockNativeFetch.mockResolvedValue(new Response('ok', { status: 200 }))
+
+    const fetcher = getConfiguredFetch()
+    await fetcher('http://localhost:11434/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    })
+
+    expect(mockNativeFetch).toHaveBeenCalledTimes(1)
+    const [url, init] = mockNativeFetch.mock.calls[0] as [
+      string,
+      { method?: string; headers?: Record<string, string>; maxRedirections?: number },
+    ]
+    expect(url).toBe('http://localhost:11434/v1/chat/completions')
+    expect(init.method).toBe('POST')
+    expect(init.maxRedirections).toBe(0)
+    expect(init.headers).toEqual({ 'Content-Type': 'application/json' })
+  })
+})
+
+// ---------------------------------------------------------------------------
+// isLocalhostUrl
+// ---------------------------------------------------------------------------
+
+describe('isLocalhostUrl', () => {
+  it('recognizes localhost, 127.0.0.1, [::1], and ::1', () => {
+    expect(isLocalhostUrl('http://localhost:11434/v1')).toBe(true)
+    expect(isLocalhostUrl('http://localhost/v1')).toBe(true)
+    expect(isLocalhostUrl('https://localhost:8080')).toBe(true)
+    expect(isLocalhostUrl('http://127.0.0.1:11434/v1')).toBe(true)
+    expect(isLocalhostUrl('http://127.0.0.1/v1')).toBe(true)
+    expect(isLocalhostUrl('http://[::1]:11434/v1')).toBe(true)
+    expect(isLocalhostUrl('http://[::1]/v1')).toBe(true)
+  })
+
+  it('rejects non-loopback hostnames', () => {
+    expect(isLocalhostUrl('https://opencode.ai/zen/v1')).toBe(false)
+    expect(isLocalhostUrl('https://api.openai.com/v1')).toBe(false)
+    expect(isLocalhostUrl('http://192.168.1.10:11434/v1')).toBe(false)
+    expect(isLocalhostUrl('http://example.com/v1')).toBe(false)
+  })
+
+  it('handles invalid URLs gracefully', () => {
+    expect(isLocalhostUrl('not-a-url')).toBe(false)
+    expect(isLocalhostUrl('')).toBe(false)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// checkEndpoint
+// ---------------------------------------------------------------------------
+
+describe('checkEndpoint', () => {
+  it('uses browser fetch in non-desktop mode', async () => {
+    vi.stubGlobal('window', {})
+    const browserFetch = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ data: [{ id: 'gemma3:4b' }] }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+    )
+    vi.stubGlobal('fetch', browserFetch)
+
+    const result = await checkEndpoint('http://localhost:11434', 'gemma3:4b', '')
+
+    expect(result).toBe('available')
+    expect(browserFetch).toHaveBeenCalledTimes(1)
+    const [url] = browserFetch.mock.calls[0] as [string]
+    expect(url).toBe('http://localhost:11434/models')
+    expect(mockNativeFetch).not.toHaveBeenCalled()
+  })
+
+  it('uses Tauri fetch on desktop', async () => {
+    vi.stubGlobal('window', { __TAURI_INTERNALS__: {} })
+    vi.stubGlobal('fetch', vi.fn())
+    mockNativeFetch.mockResolvedValue(
+      new Response(JSON.stringify({ data: [{ id: 'gemma3:4b' }] }), {
+        status: 200,
+      }),
+    )
+
+    const result = await checkEndpoint('http://localhost:11434', 'gemma3:4b', '')
+
+    expect(result).toBe('available')
+    expect(mockNativeFetch).toHaveBeenCalledTimes(1)
+    expect(globalThis.fetch).not.toHaveBeenCalled?.()
+  })
+
+  it('sends bearer auth when apiKey is provided', async () => {
+    vi.stubGlobal('window', {})
+    const browserFetch = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ data: [{ id: 'big-pickle' }] }), {
+        status: 200,
+      }),
+    )
+    vi.stubGlobal('fetch', browserFetch)
+
+    await checkEndpoint('https://opencode.ai/zen/v1', 'big-pickle', 'test-key')
+
+    const [, init] = browserFetch.mock.calls[0] as [string, RequestInit]
+    expect(new Headers(init.headers).get('authorization')).toBe('Bearer test-key')
+  })
+
+  it('does not send auth header when apiKey is empty', async () => {
+    vi.stubGlobal('window', {})
+    const browserFetch = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ data: [{ id: 'gemma3:4b' }] }), {
+        status: 200,
+      }),
+    )
+    vi.stubGlobal('fetch', browserFetch)
+
+    await checkEndpoint('http://localhost:11434', 'gemma3:4b', '')
+
+    const [, init] = browserFetch.mock.calls[0] as [string, RequestInit]
+    expect(new Headers(init.headers).get('authorization')).toBeNull()
+  })
+
+  it('returns available when model is in the /models list', async () => {
+    vi.stubGlobal('window', {})
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ data: [{ id: 'gemma3:4b' }, { id: 'llama3.2:3b' }] }), {
+          status: 200,
+        }),
+      ),
+    )
+
+    const result = await checkEndpoint('http://localhost:11434', 'gemma3:4b', '')
+    expect(result).toBe('available')
+  })
+
+  it('returns unavailable when model is not in the /models list', async () => {
+    vi.stubGlobal('window', {})
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValue(
+          new Response(JSON.stringify({ data: [{ id: 'llama3.2:3b' }] }), { status: 200 }),
+        ),
+    )
+
+    const result = await checkEndpoint('http://localhost:11434', 'gemma3:4b', '')
+    expect(result).toBe('unavailable')
+  })
+
+  it('returns unauthorized for 401', async () => {
+    vi.stubGlobal('window', {})
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('unauthorized', { status: 401 })))
+
+    const result = await checkEndpoint('https://opencode.ai/zen/v1', 'big-pickle', 'wrong-key')
+    expect(result).toBe('unauthorized')
+  })
+
+  it('returns unauthorized for 403', async () => {
+    vi.stubGlobal('window', {})
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('forbidden', { status: 403 })))
+
+    const result = await checkEndpoint('https://opencode.ai/zen/v1', 'big-pickle', 'bad-key')
+    expect(result).toBe('unauthorized')
+  })
+
+  it('returns error for 500 server error', async () => {
+    vi.stubGlobal('window', {})
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('server error', { status: 500 })))
+
+    const result = await checkEndpoint('https://opencode.ai/zen/v1', 'big-pickle', 'test-key')
+    expect(result).toBe('error')
+  })
+
+  it('returns error for 404 not found', async () => {
+    vi.stubGlobal('window', {})
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('not found', { status: 404 })))
+
+    const result = await checkEndpoint('https://opencode.ai/zen/v1', 'big-pickle', 'test-key')
+    expect(result).toBe('error')
+  })
+
+  it('returns error for network failures (fetch throws TypeError)', async () => {
+    vi.stubGlobal('window', {})
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')))
+
+    const result = await checkEndpoint('http://localhost:11434', 'gemma3:4b', '')
+    expect(result).toBe('error')
+  })
+
+  it('strips trailing slashes from the base URL', async () => {
+    vi.stubGlobal('window', {})
+    const browserFetch = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ data: [{ id: 'gemma3:4b' }] }), {
+        status: 200,
+      }),
+    )
+    vi.stubGlobal('fetch', browserFetch)
+
+    await checkEndpoint('http://localhost:11434/v1/', 'gemma3:4b', '')
+
+    const [url] = browserFetch.mock.calls[0] as [string]
+    expect(url).toBe('http://localhost:11434/v1/models')
+  })
+
+  it('sends a composed signal to fetch when a caller signal is provided', async () => {
+    vi.stubGlobal('window', { __TAURI_INTERNALS__: {} })
+    vi.stubGlobal('fetch', vi.fn())
+    mockNativeFetch.mockResolvedValue(
+      new Response(JSON.stringify({ data: [{ id: 'gemma3:4b' }] }), { status: 200 }),
+    )
+
+    const controller = new AbortController()
+    await checkEndpoint('http://localhost:11434', 'gemma3:4b', '', controller.signal)
+
+    const [, init] = mockNativeFetch.mock.calls[0] as [string, RequestInit]
+    // The signal is composed (caller signal + 5s timeout), not the raw caller signal.
+    expect(init.signal).not.toBe(controller.signal)
+    expect(init.signal).toBeInstanceOf(AbortSignal)
+    // A non-aborted composed signal must not appear pre-aborted.
+    expect(init.signal?.aborted).toBe(false)
+  })
+
+  it('applies a 5-second timeout when no signal is provided', async () => {
+    vi.stubGlobal('window', {})
+    const browserFetch = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(JSON.stringify({ data: [{ id: 'gemma3:4b' }] }), { status: 200 }),
+      )
+    vi.stubGlobal('fetch', browserFetch)
+
+    await checkEndpoint('http://localhost:11434', 'gemma3:4b', '')
+
+    const [, init] = browserFetch.mock.calls[0] as [string, RequestInit]
+    // When no signal is provided, the function should create a timeout signal.
+    expect(init.signal).toBeInstanceOf(AbortSignal)
+    // The timeout signal should not be the same as a fresh controller's signal
+    // (it was created internally with AbortSignal.timeout).
+    const freshCtrl = new AbortController()
+    expect(init.signal).not.toBe(freshCtrl.signal)
+  })
+
+  it('composes a caller-provided signal with the 5-second timeout so the check cannot stay stuck', async () => {
+    vi.stubGlobal('window', {})
+    const browserFetch = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(JSON.stringify({ data: [{ id: 'gemma3:4b' }] }), { status: 200 }),
+      )
+    vi.stubGlobal('fetch', browserFetch)
+
+    const controller = new AbortController()
+    await checkEndpoint('http://localhost:11434', 'gemma3:4b', '', controller.signal)
+
+    const [, init] = browserFetch.mock.calls[0] as [string, RequestInit]
+    // The composed signal is not the caller's raw signal — it bundles both
+    // the caller's controller and an internal 5-second timeout so the check
+    // cannot stay stuck in "checking" indefinitely even with a caller signal.
+    expect(init.signal).not.toBe(controller.signal)
+    expect(init.signal).toBeInstanceOf(AbortSignal)
+    // The fresh controller's signal is a different object.
+    const freshCtrl = new AbortController()
+    expect(init.signal).not.toBe(freshCtrl.signal)
+  })
+
+  it('caller abort still propagates through the composed signal', async () => {
+    vi.stubGlobal('window', {})
+    const controller = new AbortController()
+    controller.abort() // abort before call
+
+    // fetch should throw AbortError when called with an already-aborted signal
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockRejectedValue(new DOMException('The operation was aborted.', 'AbortError')),
+    )
+
+    const result = await checkEndpoint('http://localhost:11434', 'gemma3:4b', '', controller.signal)
+    expect(result).toBe('error')
+  })
+
+  it('resolves to error when the caller aborts the signal before fetch completes', async () => {
+    vi.stubGlobal('window', {})
+    const controller = new AbortController()
+    controller.abort() // abort before call
+
+    // fetch should throw AbortError when called with an already-aborted signal
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockRejectedValue(new DOMException('The operation was aborted.', 'AbortError')),
+    )
+
+    const result = await checkEndpoint('http://localhost:11434', 'gemma3:4b', '', controller.signal)
+    expect(result).toBe('error')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// pullModel
+// ---------------------------------------------------------------------------
+
+describe('pullModel', () => {
+  function ndjsonChunks(lines: string[]): Response {
+    const encoder = new TextEncoder()
+    const body = lines.map((l) => encoder.encode(l + '\n'))
+    const stream = new ReadableStream<Uint8Array>({
+      start(ctrl) {
+        for (const chunk of body) ctrl.enqueue(chunk)
+        ctrl.close()
+      },
+    })
+    return new Response(stream, { status: 200 })
+  }
+
+  it('yields progress from NDJSON stream lines', async () => {
+    vi.stubGlobal('window', {})
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValue(
+          ndjsonChunks([
+            JSON.stringify({ total: 100, completed: 25 }),
+            JSON.stringify({ total: 100, completed: 50 }),
+          ]),
+        ),
+    )
+
+    const progress: number[] = []
+    for await (const p of pullModel('http://localhost:11434', 'gemma3:4b')) {
+      progress.push(p)
+    }
+    expect(progress).toEqual([0.25, 0.5])
+  })
+
+  it('passes AbortSignal to the underlying fetch', async () => {
+    vi.stubGlobal('window', { __TAURI_INTERNALS__: {} })
+    vi.stubGlobal('fetch', vi.fn())
+    mockNativeFetch.mockResolvedValue(ndjsonChunks([]))
+
+    const controller = new AbortController()
+    const gen = pullModel('http://localhost:11434', 'gemma3:4b', controller.signal)
+    // consume the generator
+    for await (const _ of gen) {
+      void _
+    }
+
+    expect(mockNativeFetch).toHaveBeenCalledTimes(1)
+    const [, init] = mockNativeFetch.mock.calls[0] as [string, RequestInit]
+    expect(init.signal).toBe(controller.signal)
+  })
+
+  it('throws on non-2xx response', async () => {
+    vi.stubGlobal('window', {})
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('not found', { status: 404 })))
+
+    await expect(async () => {
+      for await (const _ of pullModel('http://localhost:11434', 'gemma3:4b')) {
+        void _
+      }
+    }).rejects.toThrow('HTTP 404')
+  })
+
+  it('throws on error in NDJSON line', async () => {
+    vi.stubGlobal('window', {})
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(ndjsonChunks([JSON.stringify({ error: 'something broke' })])),
+    )
+
+    await expect(async () => {
+      for await (const _ of pullModel('http://localhost:11434', 'gemma3:4b')) {
+        void _
+      }
+    }).rejects.toThrow('something broke')
+  })
+
+  it('skips malformed NDJSON lines gracefully', async () => {
+    vi.stubGlobal('window', {})
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValue(
+          ndjsonChunks(['not-json{{{', JSON.stringify({ total: 200, completed: 100 })]),
+        ),
+    )
+
+    const progress: number[] = []
+    for await (const p of pullModel('http://localhost:11434', 'gemma3:4b')) {
+      progress.push(p)
+    }
+    expect(progress).toEqual([0.5]) // malformed line skipped, valid one parsed
   })
 })

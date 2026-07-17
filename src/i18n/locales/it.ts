@@ -68,6 +68,7 @@ const it: typeof en = {
         pull: 'Scarica',
         ollamaNotRunning: 'Ollama non in esecuzione:',
         corsBlocked: 'CORS bloccato. Imposta',
+        unauthorized: 'Non autorizzato',
         unreachable: 'API non raggiungibile',
       },
     },
