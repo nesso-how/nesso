@@ -11,6 +11,9 @@ const fromRoot = (rel: string) => fileURLToPath(new URL(rel, import.meta.url))
 // without a build (`prepare` still rebuilds `dist` on every install for the
 // app build).
 export default defineConfig({
+  define: {
+    __APP_VERSION__: JSON.stringify('0.0.0-test'),
+  },
   resolve: {
     alias: {
       '@': fromRoot('./src'),

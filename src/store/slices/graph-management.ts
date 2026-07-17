@@ -2,6 +2,7 @@
 import type { Node, Edge } from '@xyflow/react'
 import type { StateCreator } from 'zustand'
 import type { ConceptNodeData, GraphDisplaySettings } from '@/types/graph'
+import { track } from '@/telemetry'
 import { defaultGraphDisplay, mergeGraphDisplay } from '@/types/graph'
 import { SEEDS, getSeedsForLanguage } from '@/data/seedGraph'
 import { isGraphId, newGraphId } from '@/lib/graphId'
@@ -513,6 +514,7 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
       _history: [],
       _future: [],
     }))
+    track({ name: 'graph_opened' })
   },
 
   saveCurrentGraph: async () => {

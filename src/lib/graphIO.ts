@@ -9,6 +9,20 @@ import { getT } from '@/i18n'
 import { toast } from '@/components/ui/toast'
 import { exportShareGraphJson } from '@/lib/saveJsonFile'
 import { track } from '@/telemetry'
+import type { FailureReason } from '@/telemetry'
+
+function mapErrorToFailureReason(err: unknown): FailureReason {
+  if (err instanceof SyntaxError) return 'invalid_file'
+  if (err instanceof TypeError) {
+    const msg = err.message.toLowerCase()
+    if (msg.includes('fetch') || msg.includes('network')) return 'network'
+  }
+  if (typeof err === 'object' && err !== null) {
+    const obj = err as Record<string, number | undefined>
+    if (typeof obj.status === 'number' && obj.status >= 400) return 'response'
+  }
+  return 'unsupported'
+}
 
 /** Serializes the active graph to JSON and triggers a file download / save dialog. */
 export async function exportGraphJson(): Promise<void> {
@@ -16,9 +30,17 @@ export async function exportGraphJson(): Promise<void> {
   const meta = graphList.find((g) => g.id === currentGraphId)
   const name = meta?.name ?? 'graph'
   const filename = `${name}.json`
-  const payload = serialize(graphToDocument({ name, nodes, edges, display: graphDisplay }))
-  await exportShareGraphJson(filename, payload)
-  track({ name: 'graph_exported', props: { format: 'json' } })
+  try {
+    const payload = serialize(graphToDocument({ name, nodes, edges, display: graphDisplay }))
+    await exportShareGraphJson(filename, payload)
+    track({ name: 'graph_exported', props: { format: 'json' } })
+  } catch (err) {
+    track({
+      name: 'graph_export_failed',
+      props: { format: 'json', reason: mapErrorToFailureReason(err) },
+    })
+    throw err
+  }
 }
 
 /** Renders the current React Flow viewport to a PNG and downloads it. */
@@ -70,8 +92,28 @@ export async function exportGraphPng(): Promise<void> {
     a.download = `${name}.png`
     a.click()
     track({ name: 'graph_exported', props: { format: 'png' } })
-  } catch {
-    /* export cancelled or unsupported */
+  } catch (err) {
+    track({
+      name: 'graph_export_failed',
+      props: { format: 'png', reason: mapErrorToFailureReason(err) },
+    })
+  }
+}
+
+/** Imports a graph from a file object — parse, validate, persist, and track telemetry. */
+export async function importGraphFromFile(file: File): Promise<void> {
+  try {
+    const doc = deserialize(await file.text())
+    const name = doc.name?.trim() || file.name.replace(/\.json$/i, '')
+    const { nodes, edges, display } = await documentToGraph(doc, '')
+    await useGraphStore.getState().importGraph(name, nodes, edges, display, doc.id)
+    track({ name: 'graph_imported' })
+  } catch (err) {
+    track({
+      name: 'graph_import_failed',
+      props: { format: 'json', reason: mapErrorToFailureReason(err) },
+    })
+    throw err
   }
 }
 
@@ -84,11 +126,7 @@ export function importGraphFile(): void {
     const file = input.files?.[0]
     if (!file) return
     try {
-      const doc = deserialize(await file.text())
-      const name = doc.name?.trim() || file.name.replace(/\.json$/i, '')
-      const { nodes, edges, display } = await documentToGraph(doc, '')
-      await useGraphStore.getState().importGraph(name, nodes, edges, display, doc.id)
-      track({ name: 'graph_imported' })
+      await importGraphFromFile(file)
     } catch {
       toast.error(getT().graphIO.importError.replace('{name}', file.name))
     }

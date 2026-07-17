@@ -19,6 +19,7 @@ import {
 import { defaultCurveFlip, nodeCenterX, nodeCenterY } from '@nesso-how/graph'
 import { locales } from '@/i18n/registry'
 import { newElementId } from '@/lib/graphId'
+import { track } from '@/telemetry'
 import type { GraphSnapshot } from '../types'
 import type { GraphState } from '../state'
 
@@ -183,6 +184,15 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
         nodes: applyNodeChanges(changes, s.nodes) as Node<ConceptNodeData>[],
       }))
     } else if (hasRemove) {
+      const state = get()
+      const removeIds = new Set(
+        changes
+          .filter((c): c is { type: 'remove'; id: string } => c.type === 'remove')
+          .map((c) => c.id),
+      )
+      for (const id of removeIds) {
+        if (state.nodes.some((n) => n.id === id)) track({ name: 'node_deleted' })
+      }
       set((s) => ({
         ...pushHistory(s),
         nodes: applyNodeChanges(changes, s.nodes) as Node<ConceptNodeData>[],
@@ -202,6 +212,10 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
           .filter((c): c is { type: 'remove'; id: string } => c.type === 'remove')
           .map((c) => c.id),
       )
+      const state = get()
+      for (const id of removedIds) {
+        if (state.edges.some((e) => e.id === id)) track({ name: 'edge_deleted' })
+      }
       set((s) => ({
         ...pushHistory(s),
         edges: applyEdgeChanges(changes, s.edges),
@@ -218,13 +232,15 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
       nodes: s.nodes.map((n) => (n.id === id ? { ...n, data: { ...n.data, ...patch } } : n)),
     })),
 
-  deleteNode: (id) =>
+  deleteNode: (id) => {
+    if (get().nodes.some((n) => n.id === id)) track({ name: 'node_deleted' })
     set((s) => ({
       ...pushHistory(s),
       nodes: s.nodes.filter((n) => n.id !== id),
       edges: s.edges.filter((e) => e.source !== id && e.target !== id),
       selected: s.selected?.id === id ? null : s.selected,
-    })),
+    }))
+  },
 
   addNode: (x = 0, y = 0) => {
     const id = newElementId('n', new Set(get().nodes.map((n) => n.id)))
@@ -322,12 +338,14 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
       }),
     })),
 
-  deleteEdge: (id) =>
+  deleteEdge: (id) => {
+    if (get().edges.some((e) => e.id === id)) track({ name: 'edge_deleted' })
     set((s) => ({
       ...pushHistory(s),
       edges: s.edges.filter((e) => e.id !== id),
       selected: s.selected?.id === id ? null : s.selected,
-    })),
+    }))
+  },
 
   setSelected: (sel) =>
     set((s) => {
@@ -388,6 +406,7 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
 
   deleteSelection: () => {
     let removedNode = false
+    let removedEdge = false
     set((s) => {
       const nodeIds = new Set(s.selectedIds)
       if (s.selected?.kind === 'node') nodeIds.add(s.selected.id)
@@ -401,6 +420,7 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
       if (nodeIds.size === 0 && edgeIds.size === 0) return s
 
       if (nodeIds.size > 0) removedNode = true
+      if (edgeIds.size > 0) removedEdge = true
 
       // Single pass: drop selected nodes, edges incident to them, AND any
       // explicitly selected edges — a mixed selection removes both.
@@ -414,7 +434,11 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
         selectedIds: [],
       }
     })
-    if (removedNode) get().noteOnboardingNodeDeleted?.()
+    if (removedNode) {
+      track({ name: 'node_deleted' })
+      get().noteOnboardingNodeDeleted?.()
+    }
+    if (removedEdge) track({ name: 'edge_deleted' })
   },
 
   copySelection: () => {

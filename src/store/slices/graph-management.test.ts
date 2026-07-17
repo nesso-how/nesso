@@ -14,11 +14,12 @@ import { createUISlice } from './ui'
 
 // Controlled override for dbLoadGraph — set per-test to intercept load timing.
 // Use vi.hoisted so the references are available in the hoisted vi.mock factory.
-const { dbLoadGraphOverrideRef, realDbLoadGraphRef } = vi.hoisted(() => ({
+const { dbLoadGraphOverrideRef, realDbLoadGraphRef, mockTrack } = vi.hoisted(() => ({
   dbLoadGraphOverrideRef: {
     current: null as ((id: string) => Promise<GraphRecord | undefined>) | null,
   },
   realDbLoadGraphRef: { current: null as typeof dbLoadGraph | null },
+  mockTrack: vi.fn(),
 }))
 
 vi.mock('@/store/db', async (importOriginal) => {
@@ -33,6 +34,10 @@ vi.mock('@/store/db', async (importOriginal) => {
     }),
   }
 })
+
+vi.mock('@/telemetry', () => ({
+  track: mockTrack,
+}))
 
 // Web mode: `isDesktop()` is false under jsdom, so graph management persists
 // through IndexedDB only — no disk/Tauri involved. Graphs live in a real
@@ -304,6 +309,16 @@ describe('loadGraph', () => {
     expect(s.getState().graphDisplay.showHeatmap).toBe(false)
 
     dbLoadGraphOverrideRef.current = null
+  })
+
+  it('emits graph_opened after a successful load', async () => {
+    const s = await freshStore()
+    const a = await s.getState().createGraph('A')
+    mockTrack.mockClear()
+
+    await s.getState().loadGraph(a)
+
+    expect(mockTrack).toHaveBeenCalledWith({ name: 'graph_opened' })
   })
 })
 
