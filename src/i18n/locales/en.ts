@@ -111,7 +111,6 @@ const en = {
     relation: 'Relation',
     tabs: {
       overview: 'Overview',
-      notes: 'Notes',
     },
     rows: {
       due: 'Due',
@@ -129,19 +128,7 @@ const en = {
     ratingNames: ['—', 'Again', 'Hard', 'Good', 'Easy'],
     notes: {
       definition: 'Definition',
-      examples: 'Examples',
-      add: 'Add',
-      notes: 'Notes',
       definitionPlaceholder: 'In your own words…',
-      examplesPlaceholder: 'Click + or press Shift+Enter to add examples.',
-      notesPlaceholder: 'Anything else…',
-    },
-    image: {
-      searchPlaceholder: 'Search Wikimedia Commons…',
-      search: 'Search',
-      searching: 'Searching',
-      cancel: 'Cancel',
-      addImage: 'Add image',
     },
     actions: {
       copy: 'Copy (⌘C)',

@@ -34,7 +34,7 @@ Runs envelope and vocabulary validation plus structural checks the deserializer 
     "Sunlight",
     {
       "text": "Chloroplast",
-      "elaboration": { "definition": "...", "examples": "...", "notes": "" }
+      "elaboration": { "definition": "..." }
     }
   ],
   "relations": [{ "from": "Sunlight", "to": "Chloroplast", "relation": "enables" }]

@@ -9,10 +9,9 @@ type NodeInit = Partial<Omit<ConceptNodeData, 'elaboration'>> & {
   elaboration?: Partial<ConceptElaboration>
 }
 
-// Elaboration fields are typed as required, but the renderers defend against
-// malformed data with optional chaining (hand-edited JSON, older records). Tests
-// pass partial elaboration on purpose to exercise those "field missing" branches,
-// so the partial is cast rather than filled.
+// Elaboration is `{ definition: string }`. Tests pass partial elaboration
+// to exercise edge cases like blank or missing definitions, so the partial
+// is cast rather than filled.
 function node({ elaboration, ...rest }: NodeInit): Node<ConceptNodeData> {
   return {
     id: 'n',
@@ -93,50 +92,46 @@ describe('buildFocalNeighborContext', () => {
     expect(buildFocalNeighborContext(null, [])).toEqual({ focus: '', related: '' })
   })
 
-  it('renders the focal elaboration as definition, examples, and notes', () => {
+  it('renders the focal elaboration with its definition', () => {
     const focal = node({
       text: 'F',
-      elaboration: { definition: 'def of F', examples: 'e1\ne2', notes: 'n' },
+      elaboration: { definition: 'def of F' },
     })
-    expect(buildFocalNeighborContext(focal, []).focus).toBe(
-      '"F": def of F Examples: e1; e2 Notes: n',
-    )
+    expect(buildFocalNeighborContext(focal, []).focus).toBe('"F": def of F')
   })
 
   it('omits focus when the focal node has no elaboration', () => {
     expect(buildFocalNeighborContext(node({ text: 'F' }), []).focus).toBe('')
   })
 
-  it('includes only the elaboration fields that are present', () => {
+  it('includes only the definition field', () => {
     expect(
       buildFocalNeighborContext(node({ text: 'F', elaboration: { definition: 'just def' } }), [])
         .focus,
     ).toBe('"F": just def')
+  })
+
+  it('trims whitespace in focus definition', () => {
     expect(
-      buildFocalNeighborContext(node({ text: 'F', elaboration: { examples: 'a\nb' } }), []).focus,
-    ).toBe('"F": Examples: a; b')
-    expect(
-      buildFocalNeighborContext(node({ text: 'F', elaboration: { notes: 'just notes' } }), [])
+      buildFocalNeighborContext(node({ text: 'F', elaboration: { definition: '  spaced  ' } }), [])
         .focus,
-    ).toBe('"F": Notes: just notes')
+    ).toBe('"F": spaced')
   })
 
-  it('trims whitespace and drops blank example lines in focus', () => {
+  it('returns empty focus when definition is blank', () => {
     expect(
-      buildFocalNeighborContext(
-        node({ text: 'F', elaboration: { definition: '  spaced  ', examples: 'a\n\n  \nb' } }),
-        [],
-      ).focus,
-    ).toBe('"F": spaced Examples: a; b')
-  })
-
-  it('returns empty focus when every elaboration field is blank', () => {
-    expect(
-      buildFocalNeighborContext(
-        node({ text: 'F', elaboration: { definition: ' ', examples: '\n', notes: '' } }),
-        [],
-      ).focus,
+      buildFocalNeighborContext(node({ text: 'F', elaboration: { definition: ' ' } }), []).focus,
     ).toBe('')
+  })
+
+  it('returns empty focus when definition is an empty string', () => {
+    expect(
+      buildFocalNeighborContext(node({ text: 'F', elaboration: { definition: '' } }), []).focus,
+    ).toBe('')
+  })
+
+  it('returns empty focus when elaboration object has no definition key', () => {
+    expect(buildFocalNeighborContext(node({ text: 'F', elaboration: {} }), []).focus).toBe('')
   })
 
   it('sorts related neighbors strongest-first and skips ones without a definition', () => {

@@ -1,11 +1,9 @@
 // SPDX-License-Identifier: MIT
-import { useState, useEffect, type CSSProperties } from 'react'
+import { type CSSProperties } from 'react'
 import { RELATION_TYPES, RELATION_CATEGORY_COLORS, asRelationTypeName } from '@/data/relationTypes'
 import { useGraphStore, selectedNodeSelector } from '@/store'
-import type { ConceptElaboration } from '@/types/graph'
 import { useT } from '@/i18n'
 import { InlineEdit } from './InlineEdit'
-import { ImageSearchPanel } from './ImageSearchPanel'
 import { InspectorPanel } from './InspectorPanel'
 import { EdgeRow } from './EdgeRow'
 import { InspectorActionToolbar, InspectorCollapseCloseRow } from './inspectorChrome'
@@ -72,27 +70,13 @@ export function NodeInspector({
   const firstNodeId = useGraphStore((s) => s.nodes[0]?.id ?? null)
 
   const memoryOpen = settings.inspectorMemoryOpen
-  const examplesOpen = settings.inspectorExamplesOpen
   const relationsOpen = settings.inspectorRelationsOpen
-  const [imageMode, setImageMode] = useState<'view' | 'search'>('view')
-  const [imageQuery, setImageQuery] = useState('')
-  const [imageHover, setImageHover] = useState(false)
-  const [pendingNewExample, setPendingNewExample] = useState(false)
-  const [pendingKey, setPendingKey] = useState(0)
-
-  useEffect(() => {
-    setImageMode('view')
-    setImageQuery('')
-    setPendingNewExample(false)
-  }, [node.id])
 
   const elab = node.data.elaboration
-  const imageUrl = elab?.imageUrl?.trim()
-  const hasImage = Boolean(imageUrl)
 
-  const patch = (p: Partial<ConceptElaboration>) =>
+  const patch = (definition: string) =>
     updateNodeData(node.id, {
-      elaboration: { definition: '', examples: '', notes: '', ...elab, ...p },
+      elaboration: { definition },
     })
 
   const outgoing = edges.filter((e) => e.source === node.id)
@@ -129,164 +113,39 @@ export function NodeInspector({
     { label: t.inspector.memory.lastReviewed, value: lastReviewedLabel },
   ]
 
-  // Examples as a clean array — empty strings are excluded from storage
-  const examplesArr = (elab?.examples ?? '').split('\n').filter((s) => s.length > 0)
-
-  const saveExamples = (arr: string[]) => patch({ examples: arr.join('\n') })
-  const updateExample = (idx: number, value: string) => {
-    const next = [...examplesArr]
-    next[idx] = value
-    saveExamples(next.filter((s) => s.length > 0))
-  }
-  const addExample = () => {
-    setPendingNewExample(true)
-    setPendingKey((k) => k + 1)
-  }
-  const savePendingExample = (v: string) => {
-    if (v.trim()) saveExamples([...examplesArr, v.trim()])
-    setPendingNewExample(false)
-  }
-  const removeExample = (idx: number) => saveExamples(examplesArr.filter((_, i) => i !== idx))
-
   return (
     <InspectorPanel panelWidth={panelWidth} onPanelWidthChange={onPanelWidthChange}>
-      {/* Image search panel (replaces header when active) */}
-      {imageMode === 'search' && (
-        <ImageSearchPanel
-          query={imageQuery}
-          setQuery={setImageQuery}
-          conceptText={node.data.text}
-          onPick={(img) => {
-            patch({
-              imageUrl: img.thumbUrl,
-              imageTitle: img.title,
-              imageDescriptionUrl: img.descriptionUrl,
-            })
-            setImageMode('view')
-            setImageQuery('')
-            setImageHover(false)
-          }}
-          onClose={() => {
-            setImageMode('view')
-            setImageQuery('')
-            setImageHover(false)
-          }}
-        />
-      )}
-
       {/* Header */}
-      {imageMode === 'view' && (
-        <div
-          style={{
-            flexShrink: 0,
-            padding: '12px 14px',
-            borderBottom: '0.5px solid var(--line)',
-          }}
-        >
-          <InspectorCollapseCloseRow marginBottom={10} />
-          {/* Identity — image + title */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-6)' }}>
-            {/* Image icon button */}
-            <button
-              type="button"
-              onMouseEnter={() => setImageHover(true)}
-              onMouseLeave={() => setImageHover(false)}
-              onClick={() => {
-                setImageQuery(node.data.text)
-                setImageMode('search')
-              }}
-              title={hasImage ? t.inspector.image.search : t.inspector.image.addImage}
-              style={{
-                appearance: 'none',
-                border: 0,
-                padding: 0,
-                cursor: 'pointer',
-                flexShrink: 0,
-                width: 48,
-                height: 48,
-                borderRadius: 'var(--radius-md)',
-                background: hasImage
-                  ? 'var(--paper-deep)'
-                  : `repeating-linear-gradient(45deg, var(--paper-deep) 0 6px, var(--bg-card) 6px 12px)`,
-                boxShadow: 'inset 0 0 0 0.5px var(--line)',
-                position: 'relative',
-                overflow: 'hidden',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              {hasImage ? (
-                <img
-                  src={imageUrl!}
-                  alt=""
-                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                />
-              ) : (
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                  stroke="var(--ink-4)"
-                  strokeWidth="1.5"
-                >
-                  <circle cx="7" cy="7" r="4.5" />
-                  <path d="M10.5 10.5L13 13" strokeLinecap="round" />
-                </svg>
-              )}
-              {hasImage && imageHover && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    background: 'rgba(26,24,20,0.38)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 16 16"
-                    fill="none"
-                    stroke="rgba(244,242,234,0.9)"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M11.5 2.5l2 2-8 8-2.5.5.5-2.5 8-8z" />
-                    <path d="M10 4l2 2" />
-                  </svg>
-                </div>
-              )}
-            </button>
-
-            {/* Inline-editable title */}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <InlineEdit
-                value={node.data.text}
-                placeholder="Untitled"
-                multiline
-                noEditBorder
-                maxLength={120}
-                onSave={(v) => {
-                  if (v.trim()) updateNodeData(node.id, { text: v.trim().replace(/\n+/g, ' ') })
-                }}
-                textStyle={{
-                  fontSize: '18px',
-                  fontWeight: 500,
-                  lineHeight: 1.2,
-                  fontFamily: 'var(--font-display)',
-                  letterSpacing: '-0.01em',
-                  color: 'var(--ink)',
-                }}
-              />
-            </div>
-          </div>
+      <div
+        style={{
+          flexShrink: 0,
+          padding: '12px 14px',
+          borderBottom: '0.5px solid var(--line)',
+        }}
+      >
+        <InspectorCollapseCloseRow marginBottom={10} />
+        {/* Inline-editable title */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <InlineEdit
+            value={node.data.text}
+            placeholder="Untitled"
+            multiline
+            noEditBorder
+            maxLength={120}
+            onSave={(v) => {
+              if (v.trim()) updateNodeData(node.id, { text: v.trim().replace(/\n+/g, ' ') })
+            }}
+            textStyle={{
+              fontSize: '18px',
+              fontWeight: 500,
+              lineHeight: 1.2,
+              fontFamily: 'var(--font-display)',
+              letterSpacing: '-0.01em',
+              color: 'var(--ink)',
+            }}
+          />
         </div>
-      )}
+      </div>
 
       {/* Scrollable body */}
       <div
@@ -377,242 +236,7 @@ export function NodeInspector({
           <InlineEdit
             value={elab?.definition ?? ''}
             placeholder={t.inspector.notes.definitionPlaceholder}
-            onSave={(v) => patch({ definition: v })}
-            multiline
-            noEditBorder
-            borderedPlaceholder
-            maxLength={2000}
-            textStyle={{
-              fontSize: '13.5px',
-              fontWeight: 400,
-              lineHeight: 1.55,
-              fontFamily: 'var(--font-display)',
-              color: 'var(--ink-2)',
-            }}
-          />
-        </div>
-
-        {/* Examples — collapsible */}
-        <div>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: 6,
-            }}
-          >
-            <button
-              type="button"
-              onClick={() => setSetting('inspectorExamplesOpen', !examplesOpen)}
-              style={{
-                appearance: 'none',
-                border: 0,
-                background: 'transparent',
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 'var(--space-3)',
-                padding: 0,
-                ...LABEL_STYLE,
-              }}
-            >
-              <span>{t.inspector.notes.examples}</span>
-              <Chevron open={examplesOpen} />
-            </button>
-            {examplesOpen && (
-              <button
-                type="button"
-                onClick={addExample}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.color = 'var(--ink)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.color = 'var(--ink-3)'
-                }}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 5,
-                  appearance: 'none',
-                  border: 0,
-                  background: 'transparent',
-                  cursor: 'pointer',
-                  color: 'var(--ink-3)',
-                  fontSize: '11.5px',
-                  fontWeight: 500,
-                  fontFamily: 'var(--font-sans)',
-                  padding: '2px 5px',
-                  borderRadius: 'var(--radius-sm)',
-                  textTransform: 'none',
-                  letterSpacing: 0,
-                }}
-              >
-                <svg width="11" height="11" viewBox="0 0 10 10" style={{ flexShrink: 0 }}>
-                  <path
-                    d="M5 1v8M1 5h8"
-                    stroke="currentColor"
-                    strokeWidth="1.4"
-                    strokeLinecap="round"
-                  />
-                </svg>
-                {t.inspector.notes.add}
-              </button>
-            )}
-          </div>
-
-          {examplesOpen &&
-            (examplesArr.length === 0 && !pendingNewExample ? (
-              <button
-                type="button"
-                onClick={addExample}
-                style={{
-                  appearance: 'none',
-                  border: '0.5px dashed var(--line)',
-                  background: 'transparent',
-                  width: '100%',
-                  padding: '8px 10px',
-                  borderRadius: 'var(--radius-md)',
-                  cursor: 'pointer',
-                  fontSize: '12px',
-                  fontWeight: 450,
-                  fontFamily: 'var(--font-sans)',
-                  color: 'var(--ink-5)',
-                  textAlign: 'left',
-                }}
-              >
-                {t.inspector.notes.examplesPlaceholder}
-              </button>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
-                {examplesArr.map((ex, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: '14px 1fr 18px',
-                      gap: 'var(--space-3)',
-                      alignItems: 'flex-start',
-                      padding: '3px 0',
-                    }}
-                  >
-                    <span
-                      style={{
-                        width: 5,
-                        height: 5,
-                        borderRadius: 'var(--radius-circle)',
-                        background: 'var(--ink-4)',
-                        marginTop: 8,
-                      }}
-                    />
-                    <InlineEdit
-                      value={ex}
-                      placeholder="example…"
-                      multiline
-                      noEditBorder
-                      maxLength={500}
-                      onSave={(v) => updateExample(i, v)}
-                      onShiftEnter={addExample}
-                      onDeleteEmpty={examplesArr.length > 1 ? () => removeExample(i) : undefined}
-                      textStyle={{
-                        fontSize: '13.5px',
-                        fontWeight: 400,
-                        lineHeight: 1.55,
-                        fontFamily: 'var(--font-display)',
-                        color: 'var(--ink-2)',
-                      }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeExample(i)}
-                      title="Remove"
-                      style={{
-                        appearance: 'none',
-                        border: 0,
-                        background: 'transparent',
-                        color: 'var(--ink-5)',
-                        cursor: 'pointer',
-                        fontSize: '10px',
-                        fontWeight: 500,
-                        fontFamily: 'var(--font-sans)',
-                        padding: 0,
-                        lineHeight: 1.55,
-                      }}
-                    >
-                      ✕
-                    </button>
-                  </div>
-                ))}
-                {pendingNewExample && (
-                  <div
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: '14px 1fr 18px',
-                      gap: 'var(--space-3)',
-                      alignItems: 'flex-start',
-                      padding: '3px 0',
-                    }}
-                  >
-                    <span
-                      style={{
-                        width: 5,
-                        height: 5,
-                        borderRadius: 'var(--radius-circle)',
-                        background: 'var(--ink-4)',
-                        marginTop: 8,
-                      }}
-                    />
-                    <InlineEdit
-                      key={pendingKey}
-                      value=""
-                      placeholder="example…"
-                      multiline
-                      noEditBorder
-                      maxLength={500}
-                      onSave={savePendingExample}
-                      onShiftEnter={addExample}
-                      onDeleteEmpty={() => setPendingNewExample(false)}
-                      initialEditing
-                      textStyle={{
-                        fontSize: '13.5px',
-                        fontWeight: 400,
-                        lineHeight: 1.55,
-                        fontFamily: 'var(--font-display)',
-                        color: 'var(--ink-2)',
-                      }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setPendingNewExample(false)}
-                      title="Remove"
-                      style={{
-                        appearance: 'none',
-                        border: 0,
-                        background: 'transparent',
-                        color: 'var(--ink-5)',
-                        cursor: 'pointer',
-                        fontSize: '10px',
-                        fontWeight: 500,
-                        fontFamily: 'var(--font-sans)',
-                        padding: 0,
-                        lineHeight: 1.55,
-                      }}
-                    >
-                      ✕
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))}
-        </div>
-
-        {/* Notes */}
-        <div>
-          <div style={{ ...LABEL_STYLE, marginBottom: 6 }}>{t.inspector.notes.notes}</div>
-          <InlineEdit
-            value={elab?.notes ?? ''}
-            placeholder={t.inspector.notes.notesPlaceholder}
-            onSave={(v) => patch({ notes: v })}
+            onSave={(v) => patch(v)}
             multiline
             noEditBorder
             borderedPlaceholder

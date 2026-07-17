@@ -22,7 +22,6 @@ export interface NessoSettings {
   fsrsRetention: number
   maximumInterval: number
   inspectorMemoryOpen: boolean
-  inspectorExamplesOpen: boolean
   inspectorRelationsOpen: boolean
   /** Desktop: absolute paths of folders the user has explicitly opened, most-recent first. */
   knownProjects: string[]

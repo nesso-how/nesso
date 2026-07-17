@@ -260,10 +260,7 @@ export function ReviewMode({ open, onClose }: Props) {
   }
 
   const elab = node.data.elaboration
-  const examplesArr = (elab?.examples ?? '').split('\n').filter((s) => s.length > 0)
-  const hasImage = !!elab?.imageUrl
   const hasDef = !!elab?.definition?.trim()
-  const hasExamples = examplesArr.length > 0
 
   const sessionTotal = sessionTotalRef.current || due.length
   const sessionPosition = sessionProgress + 1
@@ -324,29 +321,12 @@ export function ReviewMode({ open, onClose }: Props) {
           <CloseButton large onClick={onClose} />
         </div>
 
-        {/* Concept title + image (image only after reveal) */}
+        {/* Concept title */}
         <div
           style={{
-            display: 'flex',
-            alignItems: 'flex-start',
-            gap: 'var(--space-6)',
             marginBottom: 14,
           }}
         >
-          {revealed && hasImage && (
-            <img
-              src={elab!.imageUrl}
-              alt={node.data.text}
-              style={{
-                width: 56,
-                height: 56,
-                objectFit: 'cover',
-                borderRadius: 'var(--radius-md)',
-                border: '0.5px solid var(--line)',
-                flexShrink: 0,
-              }}
-            />
-          )}
           <h2
             style={{
               margin: 0,
@@ -395,56 +375,25 @@ export function ReviewMode({ open, onClose }: Props) {
           </>
         ) : (
           <>
-            {/* Definition / Examples */}
-            {(hasDef || hasExamples) && (
+            {/* Definition */}
+            {hasDef && (
               <div
                 style={{
                   marginBottom: 14,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 'var(--space-5)',
                 }}
               >
-                {hasDef && (
-                  <p
-                    style={{
-                      margin: 0,
-                      fontSize: '14.5px',
-                      fontWeight: 400,
-                      lineHeight: 1.55,
-                      fontFamily: 'var(--font-display)',
-                      color: 'var(--ink-2)',
-                    }}
-                  >
-                    {elab!.definition}
-                  </p>
-                )}
-                {hasExamples && (
-                  <ul
-                    style={{
-                      margin: 0,
-                      paddingLeft: 18,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: 'var(--space-1)',
-                    }}
-                  >
-                    {examplesArr.map((ex, i) => (
-                      <li
-                        key={i}
-                        style={{
-                          fontSize: '14.5px',
-                          fontWeight: 400,
-                          lineHeight: 1.55,
-                          fontFamily: 'var(--font-display)',
-                          color: 'var(--ink-2)',
-                        }}
-                      >
-                        {ex}
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: '14.5px',
+                    fontWeight: 400,
+                    lineHeight: 1.55,
+                    fontFamily: 'var(--font-display)',
+                    color: 'var(--ink-2)',
+                  }}
+                >
+                  {elab!.definition}
+                </p>
               </div>
             )}
 

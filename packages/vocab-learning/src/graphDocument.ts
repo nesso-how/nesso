@@ -7,11 +7,6 @@ import type { GraphDocument, GraphDocumentInput } from '@nesso-how/schema'
 
 export interface ConceptElaboration {
   definition: string
-  examples: string
-  notes: string
-  imageUrl?: string
-  imageTitle?: string
-  imageDescriptionUrl?: string
 }
 
 /** Shared concept content in a Nesso graph document (no label, no FSRS). */

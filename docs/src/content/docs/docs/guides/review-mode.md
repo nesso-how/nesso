@@ -17,9 +17,9 @@ The session queue is built fresh every time you open the overlay: all due nodes,
 
 For each due concept, Review:
 
-1. **Shows the concept title** and a short recall prompt. Try to remember its definition, examples, and typed relations before revealing.
+1. **Shows the concept title** and a short recall prompt. Try to remember its definition and typed relations before revealing.
 2. **Waits for you to think**, then click **Reveal** (or press `Space`).
-3. **Reveals** the concept's typed relations, examples, and image (the same panel you see in the Inspector).
+3. **Reveals** the concept's definition and typed relations.
 4. **You rate** how it felt: `Again`, `Hard`, `Good`, `Easy`. Each button shows the **predicted next interval** under it (e.g. `< 1d`, `4d`, `2mo`).
 
 FSRS then updates `stability` and `difficulty`, schedules the next `due` date, and Review advances to the next card. Done with the queue, the overlay closes. You're caught up.
@@ -39,6 +39,6 @@ Review is on by default. The **Review mode** toggle at the top of **Settings -> 
 
 ## Tips
 
-- Add a **definition** and **examples** in the Inspector's Notes tab. They appear on reveal and give you something concrete to check your recall against.
+- Add a **definition** in the Inspector. It appears on reveal and gives you something concrete to check your recall against.
 - Pair concepts with **at least one typed edge** before reviewing them. Relations are part of what you reveal and what makes the graph worth remembering.
 - The session count in the top bar reflects the original queue size. Cards rated `Again` that come back later increase the count past 100%. That is expected.

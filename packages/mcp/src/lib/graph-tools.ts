@@ -24,11 +24,6 @@ export interface GraphValidationResult {
 
 const elaborationSchema = z.object({
   definition: z.string(),
-  examples: z.string(),
-  notes: z.string(),
-  imageUrl: z.string().optional(),
-  imageTitle: z.string().optional(),
-  imageDescriptionUrl: z.string().optional(),
 })
 
 export const relationTypeEnum = z.enum(

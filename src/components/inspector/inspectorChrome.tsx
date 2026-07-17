@@ -3,7 +3,7 @@ import { useState, type ReactNode } from 'react'
 import { GlyphSVG } from '@nesso-how/graph'
 import { Icon, type IconName } from '@/components/ui/icons'
 import { RELATION_TYPES, RELATION_CATEGORY_COLORS, asRelationTypeName } from '@/data/relationTypes'
-import { useGraphStore, selectedNodeSelector, selectedEdgeSelector } from '@/store'
+import { useGraphStore, selectedEdgeSelector } from '@/store'
 import { TOPBAR_HEIGHT_PX } from '@/components/layout/TopBar'
 import { STATUS_BAR_HEIGHT_PX } from '@/components/layout/StatusBar'
 import { useT } from '@/i18n'
@@ -143,23 +143,13 @@ export function InspectorActionToolbar({
 /** Collapsed 52px rail — keeps the selection alive, gives the canvas its width back. */
 export function InspectorRail() {
   const t = useT()
-  const node = useGraphStore(selectedNodeSelector)
   const edge = useGraphStore(selectedEdgeSelector)
   const setInspectorCollapsed = useGraphStore((s) => s.setInspectorCollapsed)
 
-  const imageUrl = node?.data.elaboration?.imageUrl?.trim()
-  // Node: only show the image thumbnail when one exists (no placeholder).
   // Edge: always show the relation glyph.
+  // Node: show nothing in the collapsed rail (just the chevron to re-expand).
   let identity: ReactNode = null
-  if (node && imageUrl) {
-    identity = (
-      <img
-        src={imageUrl}
-        alt=""
-        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-      />
-    )
-  } else if (edge) {
+  if (edge) {
     const T = RELATION_TYPES[asRelationTypeName(edge.data?.type)]
     const C = RELATION_CATEGORY_COLORS[T.cat]
     identity = <GlyphSVG kind={T.glyph} color={C.color} size={16} />

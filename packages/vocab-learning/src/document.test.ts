@@ -13,7 +13,7 @@ describe('vocab-learning serialize / deserialize', () => {
           label: 'Idea',
           x: 0,
           y: 0,
-          data: { elaboration: { definition: 'd', examples: 'e', notes: '' } },
+          data: { elaboration: { definition: 'd' } },
         },
       ],
       relations: [{ id: 'e1', source: 'n1', target: 'n1', type: 'causes' as const }],
@@ -21,6 +21,7 @@ describe('vocab-learning serialize / deserialize', () => {
     const parsed = deserialize(serialize(doc))
     expect(parsed.concepts[0].label).toBe('Idea')
     expect(parsed.relations[0].type).toBe('causes')
+    expect(parsed.concepts[0].data?.elaboration).toEqual({ definition: 'd' })
   })
 
   it('rejects an unknown relation type', () => {
@@ -30,5 +31,22 @@ describe('vocab-learning serialize / deserialize', () => {
       relations: [{ id: 'e1', source: 'n1', target: 'n1', type: 'not-a-real-type' }],
     })
     expect(() => deserialize(json)).toThrow(/unknown relation type/)
+  })
+
+  it('rejects an elaboration with a missing definition field', () => {
+    const json = JSON.stringify({
+      name: 'X',
+      concepts: [
+        {
+          id: 'n1',
+          label: 'n1',
+          x: 0,
+          y: 0,
+          data: { elaboration: {} },
+        },
+      ],
+      relations: [{ id: 'e1', source: 'n1', target: 'n1', type: 'causes' }],
+    })
+    expect(() => deserialize(json)).toThrow(/elaboration.definition must be a string/)
   })
 })
