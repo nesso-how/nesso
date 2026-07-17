@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.0-alpha.41] - 2026-07-17
+
 ### Added
 
 - **Telemetry:** Funnel-oriented events for onboarding completion/skip, graph lifecycle (creation with source, open), node/edge deletion, review and mentor session completion/abandonment with low-cardinality count buckets, and I/O import/export failures with bounded failure reasons. All events are privacy-safe — no graph IDs, names, content, chat messages, file paths, API keys, or raw errors are included in any payload. The existing opt-in and anonymous-only identity model remains unchanged.
@@ -754,7 +756,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial alpha: interactive knowledge graph (web + Tauri v2); desktop installers on GitHub Releases (macOS Apple silicon and Intel).
 
-[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.40...HEAD
+[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.41...HEAD
+[0.1.0-alpha.41]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.40...v0.1.0-alpha.41
 [0.1.0-alpha.40]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.39...v0.1.0-alpha.40
 [0.1.0-alpha.39]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.38...v0.1.0-alpha.39
 [0.1.0-alpha.38]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.37...v0.1.0-alpha.38
