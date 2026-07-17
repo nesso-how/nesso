@@ -2,6 +2,10 @@
 description: Universal code quality review. Read the diff for bugs, security issues, over-engineering, duplication, and performance problems. Read-only — reports findings, does not edit. Dispatched by the review skill alongside guard-review.
 mode: subagent
 permission:
+  read: allow
+  glob: allow
+  grep: allow
+  list: allow
   bash:
     '*': allow
     git commit *: deny

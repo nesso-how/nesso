@@ -2,6 +2,10 @@
 description: Semantic constraint guard for Nesso. Read the diff against AGENTS.md Constraints + .rules/ conventions + cross-cutting obligations. Read-only — reports findings, does not edit. Dispatched by the review skill alongside quality-review.
 mode: subagent
 permission:
+  read: allow
+  glob: allow
+  grep: allow
+  list: allow
   bash:
     '*': allow
     git commit *: deny

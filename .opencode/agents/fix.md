@@ -1,6 +1,14 @@
 ---
 mode: primary
 permission:
+  read: allow
+  glob: allow
+  grep: allow
+  list: allow
+  websearch: allow
+  webfetch: allow
+  skill: allow
+  todowrite: allow
   bash:
     '*': allow
     git commit *: deny

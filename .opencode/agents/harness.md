@@ -1,11 +1,15 @@
 ---
 mode: primary
 permission:
-  bash:
-    '*': allow
-    git commit *: deny
-    git push *: deny
-    rm *: deny
+  read: allow
+  glob: allow
+  grep: allow
+  list: allow
+  skill: allow
+  webfetch: allow
+  todowrite: allow
+  question: allow
+  bash: allow
   edit: allow
   task: deny
 description: Harness lifecycle — coherence sweeps, restructuring, rule maintenance, and migration. Owns `.rules/harness.md` as source of truth.
@@ -96,16 +100,7 @@ When migrating between tools, editors, or harness versions:
 
 ## Harness Surfaces
 
-These are the files you govern. Everything else is product code.
-
-| Surface        | Path                               |
-| -------------- | ---------------------------------- |
-| Rules          | `.rules/*.md`                      |
-| Project brief  | `AGENTS.md`                        |
-| Primary agents | `.opencode/agents/<name>.md`       |
-| Subagents      | `.opencode/agents/<name>.md`       |
-| Skills         | `.opencode/skills/<name>/SKILL.md` |
-| MCP config     | `opencode.json` → `mcp`            |
+The canonical harness surface inventory is in [`.rules/harness.md`](../../.rules/harness.md). Use it as the source of truth; everything else is product code.
 
 ## Invariants
 

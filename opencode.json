@@ -17,27 +17,33 @@
   "agent": {
     "brainstorm": {
       "model": "openai/gpt-5.6-luna",
-      "reasoningEffort": "xhigh"
+      "reasoningEffort": "xhigh",
+      "variant": "xhigh"
     },
     "fix": {
       "model": "openai/gpt-5.6-sol",
-      "reasoningEffort": "high"
+      "reasoningEffort": "high",
+      "variant": "high"
     },
     "guard-review": {
       "model": "openai/gpt-5.6-luna",
-      "reasoningEffort": "xhigh"
+      "reasoningEffort": "xhigh",
+      "variant": "xhigh"
     },
     "quality-review": {
       "model": "openai/gpt-5.6-luna",
-      "reasoningEffort": "xhigh"
+      "reasoningEffort": "xhigh",
+      "variant": "xhigh"
     },
     "work": {
-      "model": "opencode-go/deepseek-v4-pro",
-      "variant": "max"
+      "model": "openai/gpt-5.6-luna",
+      "reasoningEffort": "xhigh",
+      "variant": "xhigh"
     },
     "plan": {
       "model": "openai/gpt-5.6-luna",
-      "reasoningEffort": "max"
+      "reasoningEffort": "max",
+      "variant": "max"
     },
     "build": {
       "model": "opencode-go/deepseek-v4-pro",
@@ -45,7 +51,8 @@
     },
     "harness": {
       "model": "openai/gpt-5.6-luna",
-      "reasoningEffort": "high"
+      "reasoningEffort": "high",
+      "variant": "high"
     }
   }
 }

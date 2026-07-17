@@ -5,7 +5,7 @@ description: Use when the user asks to open, draft, update, or push a Nesso pull
 
 # Create a Nesso pull request
 
-Publishes or updates a **fully prepared** PR on GitHub — not implementation or review. Assumes `preflight` and `review` have already passed, and the user has approved the PR summary; this skill only publishes.
+Publishes or updates a **fully prepared** PR on GitHub — not implementation, review, or committing. Assumes `preflight` and `review` have already passed, the final changes are committed by `work`, and the user has approved the PR summary; this skill only pushes and publishes.
 
 No confirmation gate here — the orchestrator (work agent) already gated. Proceed directly.
 
@@ -37,6 +37,12 @@ git fetch origin && git rebase origin/main
 Resolve conflicts; spot-check if needed. Prefer rebase over merging `main`.
 
 ## 3. Create or update the PR
+
+Push the committed branch before creating or updating the PR:
+
+```bash
+git push --set-upstream origin "$(git branch --show-current)"
+```
 
 ```bash
 gh pr create --title "<conventional short title>" --body "$(cat <<'EOF'

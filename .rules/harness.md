@@ -4,6 +4,18 @@ The **harness** is the scaffolding this repo ships to steer the AI coding agent.
 
 This rule defines the **invariants** that keep the harness coherent: conditions that must stay true no matter how the scaffolding is moved or renamed. If an invariant is violated, the harness is out of sync. A deliberate end-to-end audit against every invariant here is a separate step you invoke (see **Enforcement** below); this file is the definition of "coherent" that such an audit checks.
 
+## Harness surfaces
+
+These are the harness surfaces governed by this rule:
+
+| Surface       | Path                               |
+| ------------- | ---------------------------------- |
+| Rules         | `.rules/*.md`                      |
+| Project brief | `AGENTS.md`                        |
+| Agents        | `.opencode/agents/<name>.md`       |
+| Skills        | `.opencode/skills/<name>/SKILL.md` |
+| MCP config    | `opencode.json` → `mcp`            |
+
 ## Invariants
 
 ### Rules ↔ AGENTS.md agreement
