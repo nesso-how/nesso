@@ -31,8 +31,10 @@ You can dismiss the available/error states for the rest of the session with the 
 
 If a mentor message fails, the reply bubble shows one of two messages, depending on what went wrong:
 
-- **Can't reach the AI endpoint. Check Settings (`⌘,`) → AI. For local Ollama, run `ollama serve`.** A network-level failure: the endpoint is unreachable, the wrong port, or (on the hosted web app) a CORS rejection from a local Ollama instance. Confirm the base URL in **Settings → AI**, that Ollama (or your server) is actually running, and, if you're on the hosted web app talking to local Ollama, that you started it with `OLLAMA_ORIGINS` set to the app's origin (see [AI mentor](../guides/ai-mentor/#reaching-local-ollama-from-the-hosted-app)).
-- **_Hmm._ My voice failed me. Try again, slowly.** The endpoint was reachable but returned an error or a response Nesso couldn't parse (a model name that doesn't exist, a malformed response, a server-side error). Check the model name and that the endpoint actually speaks the OpenAI-compatible `chat/completions` format.
+- **Can't reach the AI endpoint. Check Settings (`⌘,`) → AI. For local Ollama, run `ollama serve`.** A network-level failure: the endpoint is unreachable, the wrong port, or, on the hosted web app, a CORS rejection from a local Ollama instance. Confirm the base URL in **Settings → AI**, that Ollama or your server is actually running, and, if you're on the hosted web app talking to local Ollama, that you started it with `OLLAMA_ORIGINS` set to the app's origin (see [AI mentor](../guides/ai-mentor/#reaching-local-ollama-from-the-hosted-app)).
+- **_Hmm._ My voice failed me. Try again, slowly.** The endpoint was reachable but returned an error or a response Nesso couldn't parse. Check the model name and that the endpoint speaks the OpenAI-compatible `chat/completions` format.
+
+Desktop mentor requests use the native HTTP client. The desktop capability allows HTTPS and loopback HTTP only. If a desktop endpoint uses non-loopback `http://`, switch it to `https://` or configure a local service on `localhost`, `127.0.0.1`, or `::1`. Browser requests continue to follow normal browser CORS rules.
 
 Closing the mentor panel, switching graphs, or clicking **New chat** aborts any in-flight request without showing an error.
 

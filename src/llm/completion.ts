@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { APICallError, extractReasoningMiddleware, streamText, wrapLanguageModel } from 'ai'
+import { isDesktop } from '@/lib/isDesktop'
 import type { NessoSettings } from '@/types/graph'
 
 /** A chat turn. The system prompt is passed separately as `instructions`, never as a role here. */
@@ -22,6 +23,11 @@ export function isAiReady(settings: NessoSettings): boolean {
   return Boolean(settings.aiBaseUrl && settings.aiModel)
 }
 
+const desktopFetch: typeof globalThis.fetch = async (input, init) => {
+  const { fetch } = await import('@tauri-apps/plugin-http')
+  return fetch(input, { ...init, maxRedirections: 0 })
+}
+
 /**
  * Wraps the configured OpenAI-compatible endpoint with reasoning extraction so
  * inline `<think>…</think>` (Ollama qwen3, deepseek-r1, …) is split out of the
@@ -32,6 +38,7 @@ function mentorModel(settings: NessoSettings) {
     name: 'nesso-mentor',
     baseURL: settings.aiBaseUrl.replace(/\/+$/, ''),
     ...(settings.aiApiKey ? { apiKey: settings.aiApiKey } : {}),
+    ...(isDesktop() ? { fetch: desktopFetch } : {}),
   })
   return wrapLanguageModel({
     model: provider.chatModel(settings.aiModel),

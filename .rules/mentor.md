@@ -1,6 +1,6 @@
 # Mentor (Socrates)
 
-`MentorPanel.tsx` is the AI chat component. The mentor is **experimental** and has a **single transport**: an OpenAI-compatible endpoint driven through the **Vercel AI SDK** (`ai` + `@ai-sdk/openai-compatible`) in `src/llm/completion.ts`. Base URL, model, and optional API key come from `aiBaseUrl`, `aiModel`, `aiApiKey`; there is no environment-variable fallback for the key.
+`MentorPanel.tsx` is the AI chat component. The mentor is **experimental** and uses one OpenAI-compatible protocol through the **Vercel AI SDK** (`ai` + `@ai-sdk/openai-compatible`) in `src/llm/completion.ts`. Browser builds use the SDK's normal global `fetch`. Desktop Tauri builds pass a dynamically loaded `@tauri-apps/plugin-http` fetch implementation to the same provider. Base URL, model, and optional API key come from `aiBaseUrl`, `aiModel`, and `aiApiKey`; there is no environment-variable fallback for the key.
 
 Readiness is `isAiReady(settings)` (truthy `aiBaseUrl` + `aiModel`) in `src/llm/completion.ts`. The mentor UI mounts only when `settings.mentorEnabled` is true (`App.tsx`); when off, **Socrates** is hidden from the status bar and `mentorPanelExpanded` is forced closed. When enabled but not ready, `MentorPanel` shows a short setup hint (`t.mentor.needsSetup`) and disables the input until an endpoint is configured. The default points at a local Ollama instance (`http://localhost:11434/v1`, `gemma3:4b`).
 
@@ -44,11 +44,14 @@ Whether the mentor **sheet** is open is `mentorPanelExpanded` on `useGraphStore`
 
 ## API call
 
-Completions go through **`fetchCompletion()`** in `src/llm/completion.ts`, which calls the SDK's **`streamText`** against a model built by `createOpenAICompatible({ baseURL, apiKey }).chatModel(aiModel)`. It takes a `CompletionRequest` (`{ instructions?, messages }`) as its second argument, plus an optional `AbortSignal` (wired to `streamText`'s `abortSignal`); abort on panel close or graph switch.
+Completions go through **`fetchCompletion()`** in `src/llm/completion.ts`, which calls the SDK's `streamText` against a model built by `createOpenAICompatible({ baseURL, apiKey })`. When `isDesktop()` is true, the provider also receives `fetch: desktopFetch`; that function dynamically imports `@tauri-apps/plugin-http`, forwards the original request and `AbortSignal`, and passes `maxRedirections: 0` so that no redirect chains are followed. Browser builds omit the override and use the normal global fetch. It takes a `CompletionRequest` (`{ instructions?, messages }`) as its second argument, plus an optional `AbortSignal`; abort on panel close or graph switch.
 
-- `model` — `settings.aiModel`; `apiKey` (→ `Authorization: Bearer …`) only when `settings.aiApiKey` is non-empty.
-- `maxOutputTokens` — `MENTOR_MAX_TOKENS` (~2048; a ceiling, not a target — reply length is soft-capped at ~180 words by the prompt, with headroom for reasoning-model thinking)
-- `instructions` — the system prompt (`buildGraphChatPrompt()`), passed to `streamText`'s `instructions` since the SDK rejects `system` roles inside `messages`.
+- `model` — `settings.aiModel`; `apiKey` adds `Authorization: Bearer …` only when `settings.aiApiKey` is non-empty.
+- `maxOutputTokens` — `MENTOR_MAX_TOKENS` (~2048; a ceiling, not a target).
+- `instructions` — the system prompt (`buildGraphChatPrompt()`), passed through `streamText`.
 - `messages` — the `history` turns mapped to `user` / `assistant` roles (`toConversation`).
+- Desktop capability scope — all HTTPS URLs plus loopback HTTP URLs for `localhost`, `127.0.0.1`, and `::1`; arbitrary non-loopback HTTP is not allowed.
+- Desktop transport does not follow redirects — `desktopFetch` passes `maxRedirections: 0`, preserving the configured HTTPS/loopback scope and keeping the bearer key bound to the original endpoint URL.
+- API keys are not logged, included in URLs, or sent anywhere except the configured endpoint's bearer header.
 
-The model is wrapped with **`extractReasoningMiddleware({ tagName: 'think' })`**, so inline `<think>…</think>` (Ollama qwen3, deepseek-r1, …) is split out of the answer. `fetchCompletion` iterates `result.stream` and routes `text-delta` parts to `onToken` and `reasoning-delta` parts to `onReasoning` (an `error` part is rethrown). `isNetworkFailure()` classifies a failure as connection vs HTTP response (`APICallError` without a `statusCode`, or a bare `TypeError`), and `describeCompletionError()` extracts the raw detail (HTTP status + endpoint response body) shown verbatim to the user.
+The model is wrapped with **`extractReasoningMiddleware({ tagName: 'think' })`**, so inline `<think>…</think>` is split out of the answer. `fetchCompletion` iterates `result.stream` and routes `text-delta` parts to `onToken` and `reasoning-delta` parts to `onReasoning`; an `error` part is rethrown. `isNetworkFailure()` and `describeCompletionError()` continue to classify and describe failures without transport-specific branches.

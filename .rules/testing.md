@@ -52,6 +52,170 @@ The workspace layer (`src/lib/workspace/**`, `src/store/db.ts`) is the most regr
 - **Store IO in web mode** — `isDesktop()` is false under jsdom, so graph-management mutations persist through IndexedDB only and need no fs mock. Seed `loadGraphList()` first so every `graphList` meta has a backing record.
 - **Store IO in desktop mode** — set `window.__TAURI_INTERNALS__ = {}` in `beforeEach` to flip `isDesktop()` true; the store then drives the real workspace layer against the fake fs + fake-indexeddb (disk is the source of truth). See `src/store/slices/graph-management.desktop.test.ts`.
 
+## Mentor transport (`src/llm/completion.ts`)
+
+The mentor's network transport (`fetchCompletion`) lives in `src/llm/completion.ts` and is tested against a **fully stubbed transport layer** — no real HTTP calls ever leave Vitest. The transport has exactly two paths (`isDesktop()` → Tauri `@tauri-apps/plugin-http` vs browser global `fetch`); each transport test pins that the right one fires with the right shape.
+
+### Desktop/browser mode switch
+
+`isDesktop()` reads `window.__TAURI_INTERNALS__`, so the test stub controls which path runs:
+
+```ts
+// Browser mode (isDesktop() → false)
+vi.stubGlobal('window', {})
+
+// Desktop mode (isDesktop() → true)
+vi.stubGlobal('window', { __TAURI_INTERNALS__: {} })
+```
+
+Use `vi.stubGlobal` (not `vi.mock`) so the real `isDesktop()` module runs against the stubbed `window`. Restore in `afterEach` with `vi.unstubAllGlobals()`.
+
+### Browser fetch stub
+
+For the browser path, stub the global `fetch` with a mock that returns a SSE `Response`:
+
+```ts
+vi.stubGlobal('fetch', vi.fn().mockResolvedValue(sseResponse(['Hel', 'lo'])))
+```
+
+Assert that browser `fetch` was called and the Tauri mock was not:
+
+```ts
+expect(browserFetch).toHaveBeenCalledTimes(1)
+expect(mockNativeFetch).not.toHaveBeenCalled()
+```
+
+### Tauri `@tauri-apps/plugin-http` mock
+
+Mock at module resolution (top-level `vi.mock`) so every test sees the same mock instance:
+
+```ts
+const { mockNativeFetch } = vi.hoisted(() => ({
+  mockNativeFetch: vi.fn(),
+}))
+
+vi.mock('@tauri-apps/plugin-http', () => ({
+  fetch: mockNativeFetch,
+}))
+```
+
+`vi.hoisted` hoists the mock reference above the mock factory so both resolve to the same identity. The real `completion.ts` uses a dynamic `import('@tauri-apps/plugin-http')`, but `vi.mock` intercepts static and dynamic imports alike. Reset in `afterEach` with `mockNativeFetch.mockReset()`.
+
+### SSE response fixture
+
+The completion stream is standard OpenAI-compatible SSE. Build mock responses with two helpers:
+
+```ts
+function chunk(content: string): string {
+  return `data: ${JSON.stringify({
+    id: '1',
+    object: 'chat.completion.chunk',
+    choices: [{ index: 0, delta: { content } }],
+  })}\n\n`
+}
+
+function sseResponse(contents: string[]): Response {
+  const encoder = new TextEncoder()
+  const stop = `data: ${JSON.stringify({
+    id: '1',
+    object: 'chat.completion.chunk',
+    choices: [{ index: 0, delta: {}, finish_reason: 'stop' }],
+  })}\n\n`
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      for (const c of contents) controller.enqueue(encoder.encode(chunk(c)))
+      controller.enqueue(encoder.encode(stop))
+      controller.enqueue(encoder.encode('data: [DONE]\n\n'))
+      controller.close()
+    },
+  })
+  return new Response(stream, {
+    status: 200,
+    headers: { 'content-type': 'text/event-stream' },
+  })
+}
+```
+
+The mock response type is `text/event-stream`, and the stream ends with the standard `data: [DONE]` sentinel.
+
+### Request shape assertions
+
+On the desktop path, assert against the mock's call arguments to verify the transport layer shapes every request correctly — these assertions catch regressions in URL construction, auth plumbing, body shape, and stream flag:
+
+**URL and method.** The SDK appends `/chat/completions` to the base URL; assert the full URL is correct and the method is `POST`:
+
+```ts
+const [url, init] = mockNativeFetch.mock.calls[0] as [string, RequestInit]
+expect(url).toBe('https://opencode.ai/zen/v1/chat/completions')
+expect(init.method).toBe('POST')
+```
+
+**Bearer auth.** The API key (when non-empty) appears only in the `Authorization` header, never in the URL or body:
+
+```ts
+expect(new Headers(init.headers).get('authorization')).toBe('Bearer test-key')
+expect(url).not.toContain('test-key')
+expect(String(init.body)).not.toContain('test-key')
+```
+
+**Request body.** The body encodes model, max output tokens, streaming mode, and messages (system prompt as a `system`-role message). Assert with `toMatchObject` so future SDK-injected fields don't break the test:
+
+```ts
+const body = JSON.parse(String(init.body)) as {
+  model: string
+  messages: { role: string; content: string }[]
+  max_tokens: number
+  stream: boolean
+}
+expect(body).toMatchObject({
+  model: 'big-pickle',
+  max_tokens: 321,
+  stream: true,
+  messages: [
+    { role: 'system', content: 'You are Socrates.' },
+    { role: 'user', content: 'hi' },
+  ],
+})
+```
+
+### AbortSignal passthrough
+
+The `AbortSignal` passed to `fetchCompletion` must reach the underlying `fetch` as the **exact same object**, not a clone or wrapper. Create an `AbortController`, pass its signal, and assert referential identity:
+
+```ts
+const controller = new AbortController()
+// ... call fetchCompletion(..., controller.signal, ...)
+const [, init] = mockNativeFetch.mock.calls[0] as [string, RequestInit]
+expect(init.signal).toBe(controller.signal)
+```
+
+For an abort-while-streaming test: gate the mock stream's `pull` on a manually-released promise, call `controller.abort()` after the first token, then release the gate and assert no late tokens arrived:
+
+```ts
+// Before abort
+expect(tokens).toEqual(['Hel'])
+controller.abort()
+releaseGate()
+await resultPromise.catch(() => {})
+// After abort — no late tokens
+expect(tokens).toEqual(['Hel'])
+```
+
+### No real network in Vitest
+
+The combination of `vi.mock('@tauri-apps/plugin-http')` + `vi.stubGlobal('fetch')` guarantees zero outbound HTTP calls. Every transport test asserts that exactly one transport fired and the other stayed silent. The `afterEach` block resets both (`mockNativeFetch.mockReset()` + `vi.restoreAllMocks()` + `vi.unstubAllGlobals()`) so no state leaks between tests.
+
+### Native/manual verification boundary
+
+Vitest proves the **transport wiring** — which fetch fires, what URL/method/body/auth/signal it receives, and how stream tokens surface. It does **not** prove:
+
+- Actual HTTPS/TLS handshake correctness (cert validation, ALPN)
+- Tauri's native HTTP stack (`reqwest` under `@tauri-apps/plugin-http`)
+- Real SSE parsing from a live endpoint with real network latency
+- Rate limiting, redirects, or HTTP/2 multiplexing
+
+Those belong to the **native e2e lane** (`e2e-native/`, tauri-driver) or manual verification against a real Ollama / OpenAI-compatible endpoint. `completion.ts` is excluded from Stryker mutation testing for the same reason — the transport itself is a thin glue layer, and the real behaviour lives in the SDK and the native HTTP stack (`@ai-sdk/openai-compatible` + `@tauri-apps/plugin-http`), which Stryker cannot meaningfully mutate.
+
 ## CI
 
 `pnpm test:coverage` runs as a required step in `.github/workflows/ci.yml`, gating PRs alongside the checks described in [static-analysis](static-analysis.md). Package `dist` is in place because the prior `pnpm install --frozen-lockfile` step runs `prepare`.
