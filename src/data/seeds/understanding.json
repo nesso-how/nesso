@@ -13,9 +13,7 @@
       "y": 200,
       "data": {
         "elaboration": {
-          "definition": "The active construction of meaning—connecting ideas, explaining why things work, and organizing what you know into a coherent structure, not merely holding isolated facts.",
-          "examples": "Explaining why supply and demand curves slope the way they do, not just memorizing the diagram\nConnecting Newton's laws to predict motion in a scenario you have never seen before\nTeaching a concept to someone else and revising your explanation when they get stuck",
-          "notes": ""
+          "definition": "The active construction of meaning—connecting ideas, explaining why things work, and organizing what you know into a coherent structure, not merely holding isolated facts."
         }
       }
     },
@@ -26,9 +24,7 @@
       "y": 40,
       "data": {
         "elaboration": {
-          "definition": "Demonstrated competence—the ability to apply, perform, or solve reliably in context, beyond knowing that something is true.",
-          "examples": "Playing a piano piece without stopping to recall fingerings\nDebugging unfamiliar code using first principles instead of pattern-matching\nDiagnosing a case when the presentation does not match the textbook example",
-          "notes": ""
+          "definition": "Demonstrated competence—the ability to apply, perform, or solve reliably in context, beyond knowing that something is true."
         }
       }
     },
@@ -39,9 +35,7 @@
       "y": 110,
       "data": {
         "elaboration": {
-          "definition": "What you hold as true or can state—facts, definitions, propositions, and information accumulated over time.",
-          "examples": "Knowing that Paris is the capital of France\nRecalling the formula for compound interest\nListing the stages of mitosis in order",
-          "notes": ""
+          "definition": "What you hold as true or can state—facts, definitions, propositions, and information accumulated over time."
         }
       }
     },
@@ -52,9 +46,7 @@
       "y": 360,
       "data": {
         "elaboration": {
-          "definition": "The deliberate pursuit of questions—examining assumptions, gathering evidence, and revising beliefs through investigation rather than accepting answers passively.",
-          "examples": "Asking what would disprove a claim before accepting it\nDesigning an experiment to test a hypothesis\nReading primary sources after a lecture to check the summary",
-          "notes": ""
+          "definition": "The deliberate pursuit of questions—examining assumptions, gathering evidence, and revising beliefs through investigation rather than accepting answers passively."
         }
       }
     },
@@ -65,9 +57,7 @@
       "y": 110,
       "data": {
         "elaboration": {
-          "definition": "The set of cognitive capacities—attention, working memory, long-term memory, reasoning—that together make thought and understanding possible.",
-          "examples": "Working memory limits how many ideas you can hold in relation at once\nAttention determines what gets encoded and what is filtered out\nLong-term memory stores conceptual structures that can be retrieved and extended",
-          "notes": ""
+          "definition": "The set of cognitive capacities—attention, working memory, long-term memory, reasoning—that together make thought and understanding possible."
         }
       }
     },
@@ -78,9 +68,7 @@
       "y": 356,
       "data": {
         "elaboration": {
-          "definition": "Taking in information without active processing—skimming headlines, scrolling feeds, or watching content without integrating it into your own model of how things work.",
-          "examples": "Reading ten article summaries and remembering none of the theses\nWatching a tutorial, feeling like you learned, then failing to apply it\nHighlighting a PDF without rewriting the ideas in your own words",
-          "notes": ""
+          "definition": "Taking in information without active processing—skimming headlines, scrolling feeds, or watching content without integrating it into your own model of how things work."
         }
       }
     }

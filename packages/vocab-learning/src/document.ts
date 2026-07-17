@@ -25,12 +25,6 @@ function validateElaboration(value: unknown, path: string): void {
   if (typeof elab.definition !== 'string') {
     throw new Error(`Invalid Nesso graph document: ${path}.elaboration.definition must be a string`)
   }
-  if (typeof elab.examples !== 'string') {
-    throw new Error(`Invalid Nesso graph document: ${path}.elaboration.examples must be a string`)
-  }
-  if (typeof elab.notes !== 'string') {
-    throw new Error(`Invalid Nesso graph document: ${path}.elaboration.notes must be a string`)
-  }
 }
 
 function validateNessoDocument<M extends Record<string, unknown>>(

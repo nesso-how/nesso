@@ -5,7 +5,7 @@ description: Common conceptual questions about privacy, the web/desktop split, a
 
 ## Is my data private?
 
-Graph content (concepts, definitions, examples, notes, relation structure) and review progress (FSRS stability, ratings, due dates) are stored locally, in IndexedDB on the web app or as plain JSON files on disk for the desktop app, and never leave your device. Mentor chat history lives only in memory for the current panel session, and AI endpoint API keys are stored locally and sent only to the endpoint you configured.
+Graph content (concepts, definitions, relation structure) and review progress (FSRS stability, ratings, due dates) are stored locally, in IndexedDB on the web app or as plain JSON files on disk for the desktop app, and never leave your device. Mentor chat history lives only in memory for the current panel session, and AI endpoint API keys are stored locally and sent only to the endpoint you configured.
 
 The only things that can leave your device:
 

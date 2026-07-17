@@ -1,6 +1,6 @@
 ---
 title: Building a graph
-description: How to add concepts, draw typed relations, and use the Inspector to enrich nodes with definitions, examples, notes, and images.
+description: How to add concepts, draw typed relations, and use the Inspector to enrich nodes with definitions.
 ---
 
 The canvas is the centre of Nesso. **Concepts** are nodes and **typed relations** are edges. The **Inspector** is the right-hand panel where you enrich whatever you've got selected.
@@ -42,28 +42,19 @@ The Inspector docks on the **right**, full height between the top bar and the st
 
 When a concept is selected it shows, top to bottom:
 
-- **Image + title:** the title edits inline (`Enter` commits, `Esc` reverts). The image button opens Commons search (see below).
 - **Memory** _(collapsible):_ the FSRS schedule, read-only: when due, stability (in days), last self-rating, review count (with lapses), and time since the last review.
-- **Definition**, **Examples**, **Notes**: see below.
+- **Definition**: see below.
 - **Relations** _(collapsible):_ outgoing and incoming edges, each connected concept shown with the relation glyph in a chip and the type on the right (incoming dimmed). Click a row to jump to that concept. Change a relation's type by selecting the edge.
 
 When an edge is selected, the Inspector shows the relation as a chip with its category colour and a dropdown of every relation type. Picking a new type updates the edge in place. The graph keeps its endpoints and identity.
 
-### Notes fields
+### Definition field
 
-Three free-text fields that travel with the concept and feed both the AI mentor and [Review](../../guides/review-mode/):
+A single free-text field that travels with the concept and feeds both the AI mentor and [Review](../../guides/review-mode/):
 
 - **Definition:** a one-sentence-ish explanation in your own words.
-- **Examples:** one per line. Press `Shift+Enter` or use the **Add** button to add a new line; press `Backspace` in an empty example to remove that line (unless it's the only one).
-- **Notes:** anything else: caveats, sources, mnemonics.
 
-In Review, definition and examples appear when you **Reveal** a card so you can check your recall. The AI mentor uses the same fields in its graph snapshot and focal-neighbour context when a concept is selected.
-
-### Concept image
-
-Press the picture icon to open the **Wikimedia Commons search**. The query auto-fills from the concept title and runs immediately. Pick any result to attach a 200-px thumbnail to the concept. The image shows in the Inspector, on reveal in Review mode, and is included as context for the AI mentor.
-
-The image link and Commons description URL are persisted with the graph, so attribution is preserved on export.
+In Review, the definition appears when you **Reveal** a card so you can check your recall. The AI mentor uses the definition in its graph snapshot and focal-neighbour context when a concept is selected.
 
 ## Display options (sidebar)
 

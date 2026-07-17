@@ -166,11 +166,6 @@
         "count": 1
       }
     },
-    "src/components/inspector/ImageSearchPanel.tsx": {
-      "crap_moderate": {
-        "count": 1
-      }
-    },
     "src/components/inspector/InlineEdit.tsx": {
       "complexity_critical": {
         "count": 1

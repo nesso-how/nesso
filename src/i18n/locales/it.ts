@@ -111,7 +111,6 @@ const it: typeof en = {
     relation: 'Relazione',
     tabs: {
       overview: 'Panoramica',
-      notes: 'Note',
     },
     rows: {
       due: 'Scadenza',
@@ -129,19 +128,7 @@ const it: typeof en = {
     ratingNames: ['—', 'Ancora', 'Difficile', 'Bene', 'Facile'],
     notes: {
       definition: 'Definizione',
-      examples: 'Esempi',
-      add: 'Aggiungi',
-      notes: 'Note',
       definitionPlaceholder: 'Con parole tue…',
-      examplesPlaceholder: 'Clicca + o vai a capo per scrivere nuovi esempi.',
-      notesPlaceholder: 'Qualsiasi altra cosa…',
-    },
-    image: {
-      searchPlaceholder: 'Cerca su Wikimedia Commons…',
-      search: 'Cerca',
-      searching: 'Ricerca in corso',
-      cancel: 'Annulla',
-      addImage: 'Aggiungi immagine',
     },
     actions: {
       copy: 'Copia (⌘C)',

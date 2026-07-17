@@ -14,6 +14,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - **Canvas:** The left-side connection handle on concept nodes now starts relation creation again. The underlying fix normalizes connection direction in  so that the drag-start node always becomes the semantic source, regardless of which handle the gesture originated from. Both connection dots remain visually identical and fully usable. Regression from [0.1.0-alpha.40].
 
+
+### Changed
+
+- **ConceptElaboration:** Reduced from six fields (`definition`, `examples`, `notes`, `imageUrl`, `imageTitle`, `imageDescriptionUrl`) to just `definition` — a breaking alpha-only simplification ahead of Writing Mode. All UI (Inspector, Review Mode), serialization, validation, LLM context, MCP schema, seeds, docs, and tests updated accordingly. Old graph files with extended elaboration fields are unsupported.
+
 ## [0.1.0-alpha.40] - 2026-07-16
 
 ### Added

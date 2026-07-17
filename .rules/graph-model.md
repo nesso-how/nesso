@@ -60,7 +60,7 @@ interface LearningNodeParams {
 
 interface ConceptNodeData extends LearningNodeParams {
   text: string
-  elaboration?: ConceptElaboration // optional richer concept content
+  elaboration?: ConceptElaboration // optional definition for the concept (`{ definition: string }`)
 }
 ```
 

@@ -13,9 +13,7 @@
       "y": 200,
       "data": {
         "elaboration": {
-          "definition": "La costruzione attiva di senso: collegare idee, spiegare perché le cose funzionano e organizzare ciò che sai in una struttura coerente, non il semplice possesso di fatti isolati.",
-          "examples": "Spiegare perché le curve di domanda e offerta hanno quella forma, non solo memorizzare il diagramma\nCollegare le leggi di Newton per predire il moto in uno scenario mai visto prima\nInsegnare un concetto a qualcuno e rivedere la spiegazione quando si blocca",
-          "notes": ""
+          "definition": "La costruzione attiva di senso: collegare idee, spiegare perché le cose funzionano e organizzare ciò che sai in una struttura coerente, non il semplice possesso di fatti isolati."
         }
       }
     },
@@ -26,9 +24,7 @@
       "y": 40,
       "data": {
         "elaboration": {
-          "definition": "Competenza dimostrata: saper applicare, eseguire o risolvere in modo affidabile nel contesto, oltre al saper dire che qualcosa è vero.",
-          "examples": "Suonare un pezzo al piano senza fermarsi a ricordare le diteggiature\nDebuggare codice sconosciuto usando i principi di base invece del riconoscimento di pattern\nDiagnosticare un caso quando la presentazione non coincide con l'esempio del manuale",
-          "notes": ""
+          "definition": "Competenza dimostrata: saper applicare, eseguire o risolvere in modo affidabile nel contesto, oltre al saper dire che qualcosa è vero."
         }
       }
     },
@@ -39,9 +35,7 @@
       "y": 110,
       "data": {
         "elaboration": {
-          "definition": "Ciò che tieni per vero o sai enunciare: fatti, definizioni, proposizioni e informazioni accumulate nel tempo.",
-          "examples": "Sapere che Parigi è la capitale della Francia\nRicordare la formula degli interessi composti\nElencare in ordine le fasi della mitosi",
-          "notes": ""
+          "definition": "Ciò che tieni per vero o sai enunciare: fatti, definizioni, proposizioni e informazioni accumulate nel tempo."
         }
       }
     },
@@ -52,9 +46,7 @@
       "y": 360,
       "data": {
         "elaboration": {
-          "definition": "La ricerca deliberata di domande: esaminare le premesse, raccogliere evidenze e rivedere le proprie credenze con indagine, invece di accettare risposte passivamente.",
-          "examples": "Chiedersi cosa confuterebbe un'affermazione prima di accettarla\nProgettare un esperimento per testare un'ipotesi\nLeggere le fonti primarie dopo una lezione per verificare il riassunto",
-          "notes": ""
+          "definition": "La ricerca deliberata di domande: esaminare le premesse, raccogliere evidenze e rivedere le proprie credenze con indagine, invece di accettare risposte passivamente."
         }
       }
     },
@@ -65,9 +57,7 @@
       "y": 110,
       "data": {
         "elaboration": {
-          "definition": "L'insieme delle capacità cognitive—attenzione, memoria di lavoro, memoria a lungo termine, ragionamento—che rendono possibili il pensiero e la comprensione.",
-          "examples": "La memoria di lavoro limita quante idee si possono tenere in relazione contemporaneamente\nL'attenzione determina cosa viene codificato e cosa viene filtrato\nLa memoria a lungo termine conserva strutture concettuali che possono essere recuperate ed estese",
-          "notes": ""
+          "definition": "L'insieme delle capacità cognitive—attenzione, memoria di lavoro, memoria a lungo termine, ragionamento—che rendono possibili il pensiero e la comprensione."
         }
       }
     },
@@ -78,9 +68,7 @@
       "y": 356,
       "data": {
         "elaboration": {
-          "definition": "Assorbire informazioni senza elaborarle: scorrere titoli, feed o video senza integrarli in un modello personale di come funzionano le cose.",
-          "examples": "Leggere dieci riassunti di articoli e non ricordare nessuna tesi\nGuardare un tutorial, sentirsi preparati e poi non saper applicarlo\nEvidenziare un PDF senza riscrivere le idee con parole proprie",
-          "notes": ""
+          "definition": "Assorbire informazioni senza elaborarle: scorrere titoli, feed o video senza integrarli in un modello personale di come funzionano le cose."
         }
       }
     }

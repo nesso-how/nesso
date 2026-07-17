@@ -35,11 +35,7 @@ describe('graphContentFingerprint', () => {
     const base = graphContentFingerprint([node()], [], display)
     expect(graphContentFingerprint([node({ text: 'B' })], [], display)).not.toBe(base)
     expect(
-      graphContentFingerprint(
-        [node({ elaboration: { definition: 'd', examples: '', notes: '' } })],
-        [],
-        display,
-      ),
+      graphContentFingerprint([node({ elaboration: { definition: 'd' } })], [], display),
     ).not.toBe(base)
     expect(graphContentFingerprint([node({ x: 50 })], [], display)).not.toBe(base)
   })
