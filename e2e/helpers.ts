@@ -72,10 +72,24 @@ export async function seedTwoConcepts(page: Page): Promise<void> {
   await expect(nodes(page)).toHaveCount(2)
 }
 
-export async function dragConnect(page: Page, from: Locator, to: Locator): Promise<void> {
-  const handle = await from.locator('.react-flow__handle-right').boundingBox()
-  const target = await to.boundingBox()
+type HandleSide = 'left' | 'right'
+
+export async function dragConnect(
+  page: Page,
+  from: Locator,
+  to: Locator,
+  fromSide: HandleSide = 'right',
+  toSide?: HandleSide,
+): Promise<void> {
+  const handle = await from
+    .locator(`.react-flow__handle-${fromSide}.nesso-node-handle`)
+    .boundingBox()
+  const target = toSide
+    ? await to.locator(`.react-flow__handle-${toSide}.nesso-node-handle`).boundingBox()
+    : await to.boundingBox()
+
   if (!handle || !target) throw new Error('node handle or target has no bounding box')
+
   const start = { x: handle.x + handle.width / 2, y: handle.y + handle.height / 2 }
   const end = { x: target.x + target.width / 2, y: target.y + target.height / 2 }
 

@@ -24,6 +24,7 @@ This file is about **how** to write pages on the Starlight docs site (`docs/src/
 - **Update the relevant page in the same change** that alters the behavior it describes. A docs change that lags the code is worse than no docs change, because it actively misleads.
 - **Add or update a Troubleshooting entry in the same change** that ships a new error state, banner, or failure mode (see `docs/troubleshooting.md`).
 - **Rewrite stale paragraphs to describe current behavior.** Don't append "as of vX.Y" caveats or historical asides to keep an old paragraph technically true — that's what `CHANGELOG.md` is for. A docs page always describes the present, not a changelog of itself.
+- **Rebuild the MCP bundle** (`packages/mcp/dist/starlight-docs.pages.json`) when a Starlight page changes. From `packages/mcp/` run `pnpm build` — the build script auto-discovers `.md` files. No manifest to maintain.
 
 ## How to act
 

@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Fixed
+
+- **Canvas:** The left-side connection handle on concept nodes now starts relation creation again. The underlying fix normalizes connection direction in  so that the drag-start node always becomes the semantic source, regardless of which handle the gesture originated from. Both connection dots remain visually identical and fully usable. Regression from [0.1.0-alpha.40].
+
 ## [0.1.0-alpha.40] - 2026-07-16
 
 ### Added

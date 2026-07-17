@@ -2,10 +2,10 @@
 mode: subagent
 permission:
   bash:
+    '*': allow
     git commit *: deny
     git push *: deny
     rm *: deny
-    '*': allow
   edit: allow
   task: allow
 description: Executes one task from an implementation plan using RED-GREEN-REFACTOR TDD. Dispatched by the work agent per task. No user interaction.

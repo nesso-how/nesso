@@ -12,6 +12,29 @@ export interface PendingConnection {
   screenY: number
 }
 
+type ConnectionHandleType = 'source' | 'target'
+
+interface ConnectingStart {
+  nodeId: string | null
+  handleType: ConnectionHandleType | null
+}
+
+/**
+ * Under ConnectionMode.Loose, React Flow silently swaps source/target in onConnect
+ * when a connection starts from a target handle. Undo that swap so the user's
+ * drag direction is preserved: source = drag start node, target = drag end node.
+ */
+function normalizeConnection(
+  source: string,
+  target: string,
+  handleType: ConnectionHandleType | null,
+): { source: string; target: string } {
+  if (handleType === 'target') {
+    return { source: target, target: source }
+  }
+  return { source, target }
+}
+
 /**
  * Drag-to-connect state for the canvas: tracks the in-flight connection and the
  * pending source→target pair awaiting a relation type, then commits the edge.
@@ -19,31 +42,54 @@ export interface PendingConnection {
 export function useConnectRelation() {
   const addEdge = useGraphStore((s) => s.addEdge)
   const [pendingConn, setPendingConn] = useState<PendingConnection | null>(null)
-  const connectingSource = useRef<string | null>(null)
+  const connectingStart = useRef<ConnectingStart>({ nodeId: null, handleType: null })
+  const connectionAccepted = useRef(false)
 
   const onConnectStart = useCallback<OnConnectStart>((_, params) => {
-    connectingSource.current = params.nodeId ?? null
+    connectionAccepted.current = false
+    connectingStart.current = {
+      nodeId: params.nodeId ?? null,
+      handleType: (params.handleType as ConnectionHandleType | null) ?? null,
+    }
   }, [])
 
   const onConnectEnd = useCallback<OnConnectEnd>((event) => {
-    // Restrict to node elements: edges and other React Flow chrome also carry
-    // data-id, and an edge id here would persist a ghost edge with no target.
+    // If onConnect already handled this, skip the fallback.
+    if (connectionAccepted.current) {
+      connectionAccepted.current = false
+      return
+    }
     const target = (event.target as Element)
       .closest('.react-flow__node[data-id]')
       ?.getAttribute('data-id')
-    const source = connectingSource.current
-    if (!source || !target || source === target) {
-      connectingSource.current = null
+    const start = connectingStart.current
+    if (!start.nodeId || !target || start.nodeId === target) {
+      connectingStart.current = { nodeId: null, handleType: null }
       return
     }
+    const normalized = normalizeConnection(start.nodeId, target, start.handleType)
     const e = event as MouseEvent
-    setPendingConn({ source, target, screenX: e.clientX, screenY: e.clientY })
-    connectingSource.current = null
+    setPendingConn({
+      source: normalized.source,
+      target: normalized.target,
+      screenX: e.clientX,
+      screenY: e.clientY,
+    })
+    connectingStart.current = { nodeId: null, handleType: null }
   }, [])
 
   const onConnect = useCallback<OnConnect>((conn) => {
     if (!conn.source || !conn.target || conn.source === conn.target) return
-    setPendingConn({ source: conn.source, target: conn.target, screenX: 0, screenY: 0 })
+    const start = connectingStart.current
+    const normalized = normalizeConnection(conn.source, conn.target, start.handleType)
+    connectionAccepted.current = true
+    setPendingConn({
+      source: normalized.source,
+      target: normalized.target,
+      screenX: 0,
+      screenY: 0,
+    })
+    connectingStart.current = { nodeId: null, handleType: null }
   }, [])
 
   const onPickRelation = useCallback(

@@ -402,6 +402,14 @@
       "crap_moderate": {
         "count": 1
       }
+    },
+    "src/components/canvas/useConnectRelation.ts": {
+      "complexity_moderate": {
+        "count": 1
+      },
+      "crap_moderate": {
+        "count": 1
+      }
     }
   },
   "runtime_coverage_findings": [],

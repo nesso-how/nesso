@@ -17,6 +17,8 @@ Monorepo: `src/` (app) + `packages/` (`@nesso-how/*`). Desktop shell is optional
 
 For any non-trivial task, switch to the **`work`** agent — it orchestrates the 5-phase flow (brainstorm/plan → build → review → documentation), dispatches subagents for each phase, and enforces Nesso's constraints. Starting points: `brainstorm` for features, `fix` for bugs, then `work` for everything else.
 
+Agent and skill definitions live in [`.opencode/agents/`](.opencode/agents/) and [`.opencode/skills/`](.opencode/skills/) respectively. When debugging dispatch issues or extending the harness, start there. The `work` agent is the top-level orchestrator; subagents (`plan`, `build`, `guard-review`, `quality-review`) and skills (`review`, `preflight`, `create-pr`) are dispatched from it.
+
 ## Worktree and path safety
 
 When OpenCode runs in a Git worktree, treat the path returned by `git rev-parse --show-toplevel` as the only source checkout for the session. Before planning, reviewing, or dispatching a subagent, verify that root and use paths relative to it. Markdown links in agent, skill, and rule files are relative to their source Markdown file; never pass a raw `../` or `../../` link target to a tool from the session directory. If a source path resolves outside the active worktree, stop and report the mismatch instead of reading the parent `nesso` checkout.

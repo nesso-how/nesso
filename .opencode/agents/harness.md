@@ -2,10 +2,10 @@
 mode: primary
 permission:
   bash:
+    '*': allow
     git commit *: deny
     git push *: deny
     rm *: deny
-    '*': allow
   edit: allow
   task: deny
 description: Harness lifecycle — coherence sweeps, restructuring, rule maintenance, and migration. Owns `.rules/harness.md` as source of truth.
