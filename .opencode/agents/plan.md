@@ -2,13 +2,13 @@
 mode: subagent
 permission:
   bash:
+    '*': allow
     git commit *: deny
     git push *: deny
     rm *: deny
-    '*': allow
   edit:
-    .plans/*: allow
     '*': deny
+    .plans/*: allow
   task: allow
 description: Reads an approved GitHub issue and produces a bite-sized implementation plan. Dispatched by the work agent. No user interaction — pure input-to-output.
 ---
@@ -66,6 +66,8 @@ Each task is the smallest unit that carries its own test cycle. Task granularity
 - "Run the tests and make sure they pass" — step
 
 Fold setup, configuration, and scaffolding into the task that needs them. Split only where a reviewer could meaningfully reject one task while approving its neighbor.
+
+**Parallelism:** prefer splitting tasks so that **disjoint-file tasks** can be dispatched in parallel. A test-only task (e.g., E2E regression) and an implementation task that touch different source files can run simultaneously. When tasks share files, run them sequentially and document the dependency.
 
 ### 4. Write each task
 

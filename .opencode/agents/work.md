@@ -2,10 +2,10 @@
 mode: primary
 permission:
   bash:
+    '*': allow
     git commit *: deny
     git push *: deny
     rm *: deny
-    '*': allow
   edit: deny
   task: allow
 description: Post-issue orchestrator. Routes the development flow from planning to PR. Dispatches plan, build subagents and loads the review skill at the review phase. Creates PR via skill after review passes. Asks for user approval at gates. Never writes code directly.
@@ -55,7 +55,8 @@ GitHub Issue → plan (subagent) → [user approves plan]
 
 ### Per build task
 
-1. Dispatch `build` subagent with one task from the plan. It runs TDD and its per-task checks (see `build.md` → Per-Task Flow).
+1. Check the plan for tasks that touch **disjoint files** (no shared source files between tasks). Dispatch those `build` subagents **in parallel** using multiple `task` tool calls in the same message. Tasks that share files must run sequentially.
+2. Each `build` subagent receives exactly one task from the plan, runs TDD, and performs its per-task checks (see `build.md` → Per-Task Flow).
 
 ### After all build tasks pass
 

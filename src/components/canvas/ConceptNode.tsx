@@ -267,7 +267,6 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
         id={CONCEPT_HANDLE_IN}
         type="target"
         position={Position.Left}
-        isConnectableStart={false}
         className="nesso-node-handle"
         style={{
           width: 22,
@@ -282,7 +281,6 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
         id="in-c1"
         type="target"
         position={Position.Left}
-        isConnectableStart={false}
         style={{
           left: '33%',
           top: '50%',
@@ -299,7 +297,6 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
         id="in-c2"
         type="target"
         position={Position.Left}
-        isConnectableStart={false}
         style={{
           left: '67%',
           top: '50%',

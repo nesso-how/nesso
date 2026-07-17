@@ -52,3 +52,13 @@ pnpm run analyze:health      # baseline-gated on fallow-baselines/health.json (f
 ```
 
 Baselines ratchet: re-baseline when improving, never raise the ceiling. Documented false positives go in `.fallowrc.jsonc`.
+
+## E2E quick verification
+
+For canvas interaction changes (handles, drag-connect, inline edit), run the focused spec first:
+
+```bash
+pnpm test:e2e e2e/graph-editing.spec.ts
+```
+
+Then the full E2E suite (`pnpm test:e2e`). The graph-editing spec covers both connection directions (right→left and left→right) and verifies the inspector shows the correct source→target orientation.

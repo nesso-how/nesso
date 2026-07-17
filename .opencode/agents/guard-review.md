@@ -3,11 +3,11 @@ description: Semantic constraint guard for Nesso. Read the diff against AGENTS.m
 mode: subagent
 permission:
   bash:
+    '*': allow
     git commit *: deny
     git push *: deny
     git checkout *: deny
     rm *: deny
-    '*': allow
   edit: deny
   task: deny
 ---

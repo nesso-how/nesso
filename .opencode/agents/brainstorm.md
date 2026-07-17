@@ -2,10 +2,10 @@
 mode: primary
 permission:
   bash:
+    '*': allow
     git commit *: deny
     git push *: deny
     rm *: deny
-    '*': allow
   edit: deny
   task: deny
   question: allow

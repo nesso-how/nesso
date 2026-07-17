@@ -3,11 +3,11 @@ description: Universal code quality review. Read the diff for bugs, security iss
 mode: subagent
 permission:
   bash:
+    '*': allow
     git commit *: deny
     git push *: deny
     git checkout *: deny
     rm *: deny
-    '*': allow
   edit: deny
   task: deny
 ---
