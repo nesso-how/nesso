@@ -51,11 +51,11 @@ Update the canonical `.rules/*.md` in the same change when your edit makes a rul
 - `graph-model.md` — `src/data/relationTypes.ts`, `src/types/graph.ts`, `packages/graph/src/NessoEdge.tsx`, `src/components/dialogs/RelationTypesDialog.tsx`, `packages/vocab-learning/src/index.ts`, `packages/vocab-learning/src/relationTypes.ts`
 - `mentor.md` — `src/components/mentor/MentorPanel.tsx`, `src/llm/completion.ts`, `src/llm/context.ts`
 - `conventions.md` — `src/**/*.{ts,tsx}` (only when conventions change, not every src edit)
-- `testing.md` — `**/*.test.{ts,tsx}`; also `vitest.config.ts`, `playwright.config.ts`, `e2e/**`, CI test steps
+- `testing.md` — `**/*.test.{ts,tsx}`; also `**/*.test.mjs`, `vitest.config.ts`, `playwright.config.ts`, `e2e/**`, CI test steps
 - `theme.md` — `packages/theme/**`, `src/index.css`, `vite.config.ts`
 - `docs.md` — `docs/src/content/docs/**/*.md`
-- `static-analysis.md` — `src/**/*.{ts,tsx,js,mjs,cjs,css}`, `biome.json`, `prettier.config.js`, `scripts/license-header.mjs`, `scripts/preflight.sh`, `scripts/fast-check.sh`, `src-tauri/src/**/*.rs`, `src-tauri/build.rs`, `tsconfig.json`, `tsconfig.app.json`, `tsconfig.node.json`, `packages/*/tsconfig.json`, `packages/*/src/**/*.{ts,tsx}`, `.fallowrc.jsonc`, `fallow-baselines/*.json`, `scripts/stryker/**`
-- `compatibility.md` — `packages/schema/**`, `packages/vocab-learning/**`, `src/lib/workspace/**`, `src/lib/graphDocumentMapping.ts`, `src/lib/graphMapping.ts`, `src/store/**`, `src/data/conceptNodes.ts`
+- `static-analysis.md` — `src/**/*.{ts,tsx,js,mjs,cjs,css}`, `biome.json`, `prettier.config.js`, `scripts/license-header.mjs`, `scripts/check-security-headers.mjs`, `scripts/preflight.sh`, `scripts/fast-check.sh`, `src-tauri/src/**/*.rs`, `src-tauri/build.rs`, `src-tauri/capabilities/**/*.json`, `src-tauri/tauri.conf.json`, `tsconfig.json`, `tsconfig.app.json`, `tsconfig.node.json`, `packages/*/tsconfig.json`, `packages/*/src/**/*.{ts,tsx}`, `.fallowrc.jsonc`, `fallow-baselines/*.json`, `scripts/stryker/**`, `vercel.json`, `docs/vercel.json`
+- `compatibility.md` — `packages/schema/**`, `packages/vocab-learning/**`, `src/lib/workspace/**`, `src/lib/graphDocumentMapping.ts`, `src/lib/graphMapping.ts`, `src/store/**`, `src/data/conceptNodes.ts`, `src-tauri/src/lib.rs`
 - `changelog.md` — `CHANGELOG.md`
 - `harness.md` — `.rules/**`, `.opencode/**`, `AGENTS.md`, `opencode.json`
 

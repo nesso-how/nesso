@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Security
+
+- **Web CSP/security headers:** Added a Content-Security-Policy for the web build and hardened the deploy headers so the browser build enforces script-src, object-src, and connect-src restrictions at the network boundary.
+- **Loopback-only HTTP policy:** The desktop native HTTP transport (`src-tauri/`) now restricts outbound AI requests to loopback addresses only, preventing the app from connecting to arbitrary remote hosts through the Tauri IPC bridge.
+- **Tauri filesystem/path-granting hardening:** Filesystem capabilities and path-scope grants were tightened — static recursive permissions removed and runtime grants validated against traversal escapes.
+
 ## [0.1.0-alpha.41] - 2026-07-17
 
 ### Added

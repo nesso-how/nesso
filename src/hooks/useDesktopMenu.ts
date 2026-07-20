@@ -7,6 +7,7 @@ import { isDesktop } from '@/lib/isDesktop'
 import { applyDesktopMenu } from '@/lib/desktopMenu'
 import { exportGraphJson, exportGraphPng, importGraphFile } from '@/lib/graphIO'
 import { openExternal, DOCS_URL, WEBSITE_URL, FEEDBACK_URL } from '@/data/appInfo'
+import { toast } from '@/components/ui/toast'
 import { track } from '@/telemetry'
 
 interface DesktopMenuHandlers {
@@ -60,8 +61,22 @@ export function useDesktopMenu(handlers: DesktopMenuHandlers): void {
         }
       })
       await on('open-project', () => void store().openOrCreateProject())
-      await on('export-json', () => void exportGraphJson())
-      await on('export-png', () => void exportGraphPng())
+      await on('export-json', async () => {
+        try {
+          await exportGraphJson()
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err)
+          toast.error(msg || 'Export failed')
+        }
+      })
+      await on('export-png', async () => {
+        try {
+          await exportGraphPng()
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err)
+          toast.error(msg || 'Export failed')
+        }
+      })
       await on('import', () => importGraphFile())
 
       await on('heatmap', () =>

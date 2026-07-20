@@ -222,13 +222,31 @@ describe('exportGraphPng', () => {
 
     mockToPng.mockRejectedValueOnce(new Error('unsupported'))
 
-    await exportGraphPng()
+    await expect(exportGraphPng()).rejects.toThrow('unsupported')
 
     expect(mockTrack).toHaveBeenCalledWith({
       name: 'graph_export_failed',
       props: { format: 'png', reason: 'unsupported' },
     })
     expect(mockTrack).not.toHaveBeenCalledWith(expect.objectContaining({ name: 'graph_exported' }))
+
+    document.body.removeChild(viewport)
+  })
+
+  it('re-throws the error so callers can surface the failure', async () => {
+    mockGetState.mockReturnValueOnce(storeState)
+    const viewport = document.createElement('div')
+    viewport.className = 'react-flow__viewport'
+    document.body.appendChild(viewport)
+
+    mockToPng.mockRejectedValueOnce(new Error('canvas error'))
+
+    await expect(exportGraphPng()).rejects.toThrow('canvas error')
+
+    expect(mockTrack).toHaveBeenCalledWith({
+      name: 'graph_export_failed',
+      props: { format: 'png', reason: 'unsupported' },
+    })
 
     document.body.removeChild(viewport)
   })
@@ -249,7 +267,7 @@ describe('exportGraphPng', () => {
 
     mockToPng.mockRejectedValueOnce(new Error('canvas rendering failed: out of memory'))
 
-    await exportGraphPng()
+    await expect(exportGraphPng()).rejects.toThrow('canvas rendering failed')
 
     const calls = mockTrack.mock.calls.filter(
       (c: unknown[]) => (c[0] as { name?: string } | undefined)?.name === 'graph_export_failed',

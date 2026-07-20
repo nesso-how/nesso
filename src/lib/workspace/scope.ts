@@ -12,10 +12,15 @@ export async function grantFsScope(path: string): Promise<void> {
   }
 }
 
+/**
+ * Opens the native folder-picker dialog **on the Rust side** and grants
+ * filesystem scope for the selected folder.  The renderer never provides
+ * the path — the Rust side owns the dialog, so the returned path is
+ * human-verified.
+ *
+ * Returns the selected absolute path, or `null` when the user cancels.
+ */
 export async function pickWorkspaceFolder(): Promise<string | null> {
-  const { open } = await import('@tauri-apps/plugin-dialog')
-  const selected = await open({ directory: true, multiple: false })
-  if (selected === null || Array.isArray(selected)) return null
-  await grantFsScope(selected)
-  return selected
+  const { invoke } = await import('@tauri-apps/api/core')
+  return (await invoke('pick_workspace_folder')) as string | null
 }

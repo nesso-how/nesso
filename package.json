@@ -49,6 +49,7 @@
     "icons:desktop": "tauri icon public/icon/nesso-tile-paper.svg",
     "dev:desktop": "pnpm run icons:desktop && tauri dev",
     "build:desktop": "pnpm run icons:desktop && tauri build",
+    "security:headers": "node scripts/check-security-headers.mjs",
     "preflight": "bash scripts/preflight.sh",
     "fast-check": "bash scripts/fast-check.sh"
   },
@@ -60,7 +61,6 @@
     "@nesso-how/vocab-learning": "workspace:*",
     "@sentry/react": "^10.60.0",
     "@tauri-apps/api": "^2.11.0",
-    "@tauri-apps/plugin-dialog": "^2.6.0",
     "@tauri-apps/plugin-fs": "^2.5.0",
     "@tauri-apps/plugin-http": "^2.5.9",
     "@tauri-apps/plugin-opener": "^2.5.4",

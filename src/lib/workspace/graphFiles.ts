@@ -372,10 +372,8 @@ export async function writeGraphRecordToWorkspace(
   settings: NessoSettings,
   record: GraphRecord,
 ): Promise<GraphRecord> {
-  if (settings.activeProjectPath?.trim()) {
-    await grantFsScope(settings.activeProjectPath.trim())
-  }
   const ws = await resolveWorkspace(settings)
+  await grantFsScope(ws.displayPath)
   const manifest = await cachedManifestForWorkspace(ws)
   const fileToId = buildFileToIdMap(manifest)
   const result = await saveGraphToDisk(ws, record, manifest, fileToId)
@@ -388,10 +386,8 @@ export async function removeGraphFromWorkspace(
   settings: NessoSettings,
   graphId: string,
 ): Promise<void> {
-  if (settings.activeProjectPath?.trim()) {
-    await grantFsScope(settings.activeProjectPath.trim())
-  }
   const ws = await resolveWorkspace(settings)
+  await grantFsScope(ws.displayPath)
   let manifest = await cachedManifestForWorkspace(ws)
   const fileToId = buildFileToIdMap(manifest)
   manifest = await deleteGraphFromDisk(ws, graphId, manifest, fileToId)

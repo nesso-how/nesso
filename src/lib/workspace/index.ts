@@ -7,6 +7,7 @@ export {
 } from '@/lib/workspace/watch'
 export {
   resolveWorkspace,
+  resolveWorkspacePath,
   getDefaultWorkspacePath,
   normalizePath,
   projectDisplayName,

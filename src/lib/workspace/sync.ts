@@ -152,10 +152,8 @@ export async function persistWorkspaceSync(
   settings: Pick<NessoSettings, 'activeProjectPath'>,
   records: GraphRecord[],
 ): Promise<GraphRecord[]> {
-  if (settings.activeProjectPath?.trim()) {
-    await grantFsScope(settings.activeProjectPath.trim())
-  }
   const ws = await resolveWorkspace(settings)
+  await grantFsScope(ws.displayPath)
   const { toPersist, manifest, removed } = await reconcileDiskWithIdb(ws, records)
   setDiskSyncCache(ws.displayPath, manifest)
   await persistToIdb(toPersist)

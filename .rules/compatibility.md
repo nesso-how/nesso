@@ -28,6 +28,7 @@ Only **data at rest** will get migration ladders (at beta). Package semver and M
 | Zustand persist blob (localStorage `nesso`)                  | none                   | additive `merge` only                                             | `version` + `migrate`                       |
 | Workspace manifest (`.nesso` on disk)                        | `MANIFEST_VERSION`     | default-on-missing, no ladder                                     | ladder if shape changes                     |
 | Width keys (`nesso-inspector-width`, `nesso-sidebar-width`)  | none                   | none                                                              | break cleanly (trivial scalars)             |
+| Trust store (`.nesso-trusted-paths.json`)                    | none                   | JSON array of canonical paths, persisted by `add_to_trust_store`  | ladder if shape changes                     |
 
 Two distinctions that matter:
 

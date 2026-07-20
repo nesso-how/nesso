@@ -76,3 +76,23 @@ export async function getDefaultWorkspacePath(): Promise<string> {
   const { appDataDir } = await pathApi()
   return joinPath(await appDataDir(), GRAPHS_SUBDIR)
 }
+
+/**
+ * Resolve a project path to its effective workspace path.
+ *
+ * The app-data root (e.g. `$APPDATA`) is an alias for the default workspace
+ * (`$APPDATA/graphs`).  This function normalizes the alias so that callers
+ * like `grantFsScope` always operate on the concrete workspace path rather
+ * than the raw app-data root — the Rust backend rejects the app-data root
+ * because it contains the trust-store file.
+ */
+export async function resolveWorkspacePath(path: string): Promise<string> {
+  const { appDataDir } = await pathApi()
+  const appDataRoot = normalizePath(await appDataDir())
+  const defaultDisplay = joinPath(appDataRoot, GRAPHS_SUBDIR)
+  const norm = normalizePath(path)
+  if (norm === appDataRoot || norm === normalizePath(defaultDisplay)) {
+    return defaultDisplay
+  }
+  return norm
+}

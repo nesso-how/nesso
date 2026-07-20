@@ -4,7 +4,7 @@
   "ignoreExportsUsedInFile": true,
   // Test fakes loaded dynamically via vi.mock(async () => (await import(...))) —
   // syntactic analysis cannot see imports inside the mock factory.
-  "dynamicallyLoaded": ["src/test/fakeTauriFs.ts"],
+  "dynamicallyLoaded": ["src/test/fakeTauriFs/index.ts"],
   // sharp is Astro's image-optimization dependency: used implicitly, never imported.
   // @playwright/test (web lane) and the @wdio/* + expect-webdriverio + tsx stack
   // (native tauri-driver lane) are consumed only by the e2e specs + configs, run
