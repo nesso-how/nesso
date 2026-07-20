@@ -131,6 +131,11 @@
         "count": 1
       }
     },
+    "src/components/canvas/useConnectRelation.ts": {
+      "crap_moderate": {
+        "count": 1
+      }
+    },
     "src/components/dialogs/RelationTypesDialog.tsx": {
       "crap_high": {
         "count": 1
@@ -185,9 +190,6 @@
     "src/components/inspector/inspectorChrome.tsx": {
       "crap_high": {
         "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
       }
     },
     "src/components/layout/Sidebar.tsx": {
@@ -202,19 +204,8 @@
       }
     },
     "src/components/layout/SidebarProjects.tsx": {
-      "complexity_moderate": {
-        "count": 1
-      },
       "crap_critical": {
         "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "src/components/layout/StatusBar.tsx": {
-      "crap_moderate": {
-        "count": 2
       }
     },
     "src/components/layout/TopBar.tsx": {
@@ -227,17 +218,15 @@
     },
     "src/components/mentor/MentorPanel.tsx": {
       "complexity_critical": {
-        "count": 2
+        "count": 1
       },
-      "crap_critical": {
-        "count": 3
+      "complexity_high": {
+        "count": 1
       },
       "crap_high": {
-        "count": 2
-      }
-    },
-    "src/components/mentor/ModelStatusBadge.tsx": {
-      "crap_critical": {
+        "count": 1
+      },
+      "crap_moderate": {
         "count": 1
       }
     },
@@ -253,16 +242,7 @@
       }
     },
     "src/components/review/ReviewMode.tsx": {
-      "complexity_critical": {
-        "count": 1
-      },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
+      "complexity_high": {
         "count": 1
       }
     },
@@ -311,9 +291,6 @@
     "src/hooks/useOnboardingFlow.ts": {
       "complexity_high": {
         "count": 1
-      },
-      "crap_moderate": {
-        "count": 2
       }
     },
     "src/lib/fitGraphViewport.ts": {
@@ -323,30 +300,6 @@
     },
     "src/lib/graphClipboard.ts": {
       "complexity_high": {
-        "count": 1
-      }
-    },
-    "src/lib/graphIO.ts": {
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "src/lib/ollama.ts": {
-      "complexity_critical": {
-        "count": 1
-      },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "src/lib/saveJsonFile.ts": {
-      "crap_high": {
         "count": 1
       }
     },
@@ -384,33 +337,12 @@
       "crap_moderate": {
         "count": 2
       }
-    },
-    "src/telemetry/index.ts": {
-      "crap_high": {
-        "count": 1
-      }
-    },
-    "src/test/fakeTauriFs.ts": {
-      "complexity_moderate": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "src/components/canvas/useConnectRelation.ts": {
-      "complexity_moderate": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
-      }
     }
   },
   "runtime_coverage_findings": [],
   "target_keys": [
-    "src/App.tsx:complexity",
     "src/store/slices/graph-editing.ts:high impact",
+    "src/App.tsx:complexity",
     "src/lib/shortcuts.ts:complexity",
     "src/components/canvas/GraphCanvas.tsx:complexity",
     "src/hooks/useOnboardingFlow.ts:complexity",
@@ -418,8 +350,6 @@
     "src/components/canvas/ConceptNode.tsx:complexity",
     "src/components/mentor/MentorPanel.tsx:complexity",
     "src/components/inspector/InlineEdit.tsx:complexity",
-    "src/components/inspector/NodeInspector.tsx:complexity",
-    "src/components/review/ReviewMode.tsx:complexity",
     "scripts/release.mjs:complexity"
   ]
 }

@@ -40,6 +40,7 @@ When a step fails, fix and re-run individually:
 | Step                    | Fix                                                                                       |
 | ----------------------- | ----------------------------------------------------------------------------------------- |
 | `format:check`          | `pnpm run format`                                                                         |
+| `security:headers`      | `pnpm run security:headers` — fix CSP violations in `vercel.json` / `docs/vercel.json`    |
 | `lint`                  | `pnpm run lint:fix`                                                                       |
 | `license-headers:check` | `pnpm run license-headers`                                                                |
 | `test:coverage`         | see `.rules/testing.md` — ratchet gate                                                    |
@@ -54,5 +55,6 @@ When a step fails, fix and re-run individually:
 | `cargo:clippy`          | fix warnings flagged by clippy                                                            |
 | `cargo:check`           | fix compile errors                                                                        |
 | `cargo:test`            | fix failing tests                                                                         |
+| `cargo:build-smoke`     | fix linking errors; `cargo build --manifest-path src-tauri/Cargo.toml`                    |
 
 Do not push when anything is red. These mirror CI exactly — if `ci.yml` changes, update this file.

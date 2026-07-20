@@ -2,6 +2,13 @@
 import { useState, useRef, useEffect } from 'react'
 import { useT } from '@/i18n'
 import { exportGraphJson, exportGraphPng, importGraphFile } from '@/lib/graphIO'
+import { toast } from '@/components/ui/toast'
+
+/** Surface an export error through the toast system with a locale-aware fallback. */
+function toastExportError(err: unknown, fallback: () => string): void {
+  const msg = err instanceof Error ? err.message : String(err)
+  toast.error(msg || fallback())
+}
 
 interface Props {
   onRelationTypes: () => void
@@ -33,12 +40,26 @@ export function GraphIO({ onRelationTypes, onShortcuts, onAbout }: Props) {
 
   const handleExport = async () => {
     setOpen(false)
-    await exportGraphJson()
+    try {
+      await exportGraphJson()
+    } catch (err) {
+      // exportGraphJson already emits telemetry with the failure reason.
+      // Surface the native error through the toast system.
+      toastExportError(
+        err,
+        () => t.graphIO.importError.split('.').slice(0, -1).join('.') || 'Export failed',
+      )
+    }
   }
 
   const handleExportPng = async () => {
     setOpen(false)
-    await exportGraphPng()
+    try {
+      await exportGraphPng()
+    } catch (err) {
+      // exportGraphPng already emits failure telemetry internally.
+      toastExportError(err, () => t.graphIO.importError || 'Export failed')
+    }
   }
 
   const handleImport = () => {

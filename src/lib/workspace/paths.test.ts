@@ -1,6 +1,40 @@
 // SPDX-License-Identifier: MIT
-import { describe, expect, it } from 'vitest'
-import { joinPath, normalizePath, projectDisplayName, projectNameFromPath } from './paths'
+import { describe, expect, it, vi } from 'vitest'
+import {
+  joinPath,
+  normalizePath,
+  projectDisplayName,
+  projectNameFromPath,
+  resolveWorkspace,
+  resolveWorkspacePath,
+} from './paths'
+
+vi.mock('@tauri-apps/api/path', async () => (await import('@/test/fakeTauriFs')).fakePathApi)
+
+describe('resolveWorkspace', () => {
+  it('maps app-data root to the default workspace "graphs" subdir', async () => {
+    const ws = await resolveWorkspace({ activeProjectPath: '/appdata' })
+    expect(ws.displayPath).toBe('/appdata/graphs')
+    expect(ws.path('')).toBe('/appdata/graphs')
+  })
+
+  it('maps default workspace path to itself', async () => {
+    const ws = await resolveWorkspace({ activeProjectPath: '/appdata/graphs' })
+    expect(ws.displayPath).toBe('/appdata/graphs')
+    expect(ws.path('')).toBe('/appdata/graphs')
+  })
+
+  it('preserves external workspace paths', async () => {
+    const ws = await resolveWorkspace({ activeProjectPath: '/home/user/projects/my-graph' })
+    expect(ws.displayPath).toBe('/home/user/projects/my-graph')
+    expect(ws.path('')).toBe('/home/user/projects/my-graph')
+  })
+
+  it('returns default workspace when no activeProjectPath is set', async () => {
+    const ws = await resolveWorkspace({ activeProjectPath: null })
+    expect(ws.displayPath).toBe('/appdata/graphs')
+  })
+})
 
 describe('joinPath', () => {
   it('joins parts with a single slash and drops empty segments', () => {
@@ -54,5 +88,27 @@ describe('projectDisplayName', () => {
   it('falls back to the folder basename for any other path', () => {
     expect(projectDisplayName('/home/user/other', '/app/data/graphs', 'My Graphs')).toBe('other')
     expect(projectDisplayName('/home/user/other', null, 'My Graphs')).toBe('other')
+  })
+})
+
+describe('resolveWorkspacePath', () => {
+  it('maps app-data root to default workspace "graphs" subdir', async () => {
+    const result = await resolveWorkspacePath('/appdata')
+    expect(result).toBe('/appdata/graphs')
+  })
+
+  it('preserves the default workspace path as-is', async () => {
+    const result = await resolveWorkspacePath('/appdata/graphs')
+    expect(result).toBe('/appdata/graphs')
+  })
+
+  it('preserves external workspace paths unchanged', async () => {
+    const result = await resolveWorkspacePath('/home/user/projects/my-graph')
+    expect(result).toBe('/home/user/projects/my-graph')
+  })
+
+  it('strips trailing slashes before comparison', async () => {
+    const result = await resolveWorkspacePath('/appdata/')
+    expect(result).toBe('/appdata/graphs')
   })
 })

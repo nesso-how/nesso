@@ -3,12 +3,11 @@
 import 'fake-indexeddb/auto'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createStore } from 'zustand/vanilla'
-import { tauriFsState } from '@/test/fakeTauriFs'
+import { tauriFsState, seedTrustedPath } from '@/test/fakeTauriFs'
 
 vi.mock('@tauri-apps/plugin-fs', async () => (await import('@/test/fakeTauriFs')).fakeFsPlugin)
 vi.mock('@tauri-apps/api/path', async () => (await import('@/test/fakeTauriFs')).fakePathApi)
 vi.mock('@tauri-apps/api/core', async () => (await import('@/test/fakeTauriFs')).fakeCoreApi)
-vi.mock('@tauri-apps/plugin-dialog', async () => (await import('@/test/fakeTauriFs')).fakeDialogApi)
 
 import { setDiskSyncCache } from '@/lib/workspace/manifest'
 import { graphDocumentJson } from '@/test/graphDocument'
@@ -54,6 +53,7 @@ async function boot(): Promise<Store> {
 
 beforeEach(async () => {
   tauriFsState.reset()
+  seedTrustedPath(DEFAULT_WS)
   await dbClearGraphs()
   setDiskSyncCache('', { version: 1, entries: {} })
   ;(window as unknown as { __TAURI_INTERNALS__?: object }).__TAURI_INTERNALS__ = {}

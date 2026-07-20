@@ -26,6 +26,7 @@ import {
   pickWorkspaceFolder,
   removeGraphFromWorkspace,
   resolveWorkspace,
+  resolveWorkspacePath,
   uniqueGraphNameAmong,
   writeGraphRecordToWorkspace,
 } from '@/lib/workspace'
@@ -255,7 +256,7 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
         if (!knownProjects.some((p) => normalizePath(p) === activeNorm)) {
           knownProjects = [activeProjectPath, ...knownProjects]
         }
-        for (const p of knownProjects) await grantFsScope(p)
+        for (const p of knownProjects) await grantFsScope(await resolveWorkspacePath(p))
 
         // Folders can vanish while the app is closed (deleted, moved, renamed).
         // Keep the entry and flag it missing rather than pruning it — removing a
@@ -318,7 +319,7 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
       await get().saveCurrentGraph()
       _switchingProject = true
       try {
-        await grantFsScope(norm)
+        await grantFsScope(await resolveWorkspacePath(norm))
 
         // Clicking a project whose folder vanished externally: keep it in the
         // list but flag it missing rather than loading or pruning it (the default

@@ -97,6 +97,7 @@ export async function exportGraphPng(): Promise<void> {
       name: 'graph_export_failed',
       props: { format: 'png', reason: mapErrorToFailureReason(err) },
     })
+    throw err
   }
 }
 

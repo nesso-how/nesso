@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Preflight — local CI parity.
 # Mirrors `.github/workflows/ci.yml` (js + e2e jobs) by default.
-# Add --rust to also run the rust job (cargo fmt, clippy, check, test).
+# Add --rust to also run the rust job (cargo fmt, clippy, check, test, build-smoke).
 # See .opencode/skills/preflight/SKILL.md for full docs.
 #
 # Usage:  pnpm run preflight [--rust]
@@ -34,6 +34,7 @@ trap 'rm -rf "$OUT_DIR"' EXIT
 # Steps in CI order. Each entry: "label|command"
 STEPS=(
   "format:check|CI=true pnpm run format:check"
+  "security:headers|CI=true pnpm run security:headers"
   "lint|CI=true pnpm run lint"
   "license-headers:check|CI=true pnpm run license-headers:check"
   "test:coverage|CI=true pnpm run test:coverage"
@@ -53,6 +54,7 @@ if [ "$RUST" -eq 1 ]; then
     "cargo:clippy|cargo clippy --all-targets --manifest-path src-tauri/Cargo.toml -- -D warnings"
     "cargo:check|cargo check --all-targets --manifest-path src-tauri/Cargo.toml"
     "cargo:test|cargo test --manifest-path src-tauri/Cargo.toml"
+    "cargo:build-smoke|cargo build --manifest-path src-tauri/Cargo.toml"
   )
 fi
 
