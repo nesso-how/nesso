@@ -16,6 +16,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - **Loopback-only HTTP policy:** The desktop native HTTP transport (`src-tauri/`) now restricts outbound AI requests to loopback addresses only, preventing the app from connecting to arbitrary remote hosts through the Tauri IPC bridge.
 - **Tauri filesystem/path-granting hardening:** Filesystem capabilities and path-scope grants were tightened — static recursive permissions removed and runtime grants validated against traversal escapes.
 
+### Fixed
+
+- **Graph schema deserialization:** The deserialize trust boundary now rejects arrays and primitive values for record-shaped metadata fields, aligning runtime values with the public schema types. Mutation-testing coverage for optional fields and validation boundaries was strengthened.
+
 ## [0.1.0-alpha.41] - 2026-07-17
 
 ### Added
