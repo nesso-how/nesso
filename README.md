@@ -81,7 +81,7 @@ The repo is a pnpm workspace monorepo. The graph vocabulary lives in [packages/v
 
 Nesso uses [OpenCode](https://opencode.ai) as its development environment, a modular, multi-provider AI coding tool that aligns with Nesso's own philosophy. We chose it over vendor-locked alternatives because it runs locally against any provider (currently OpenAI, open-weight models via a Go subscription, or local models), supporting a structured workflow built around typed agents, skills, and subagent pipelines:
 
-**The pipeline** (from issue to PR) routes through specialized agents: `fix` forensic traces bugs, `brainstorm` explores design, `plan` produces bite-sized TDD tasks, `build` executes RED-GREEN-REFACTOR per task, `guard-review` checks semantic constraints, and `quality-review` catches bugs and regressions. An orchestrator agent (`work`) dispatches each phase and gates on user approval.
+**The pipeline** (from issue to PR) routes through specialized agents: `nesso-fix` forensic traces bugs, `nesso-brainstorm` explores design, `nesso-plan` produces bite-sized TDD tasks, `nesso-build` executes RED-GREEN-REFACTOR per task, `nesso-guard-review` checks semantic constraints, and `nesso-quality-review` catches bugs and regressions. An orchestrator agent (`nesso-work`) dispatches each phase and gates on user approval.
 
 This lets us match model capability to cost per phase without locking into a single model or provider.
 
@@ -89,10 +89,10 @@ The harness lives in `opencode.json` (model/config settings), `.opencode/` (agen
 
 ```mermaid
 flowchart TD
-  B["brainstorm"]:::plan -->|"design brief"| P["plan"]:::plan
-  P -->|"task list"| T["build<br>RED-GREEN-REFACTOR"]:::exec
-  T --> GR["guard-review"]:::quality
-  T --> QR["quality-review"]:::quality
+  B["nesso-brainstorm"]:::plan -->|"design brief"| P["nesso-plan"]:::plan
+  P -->|"task list"| T["nesso-build<br>RED-GREEN-REFACTOR"]:::exec
+  T --> GR["nesso-guard-review"]:::quality
+  T --> QR["nesso-quality-review"]:::quality
   GR --> S["review · synthesize"]:::review
   QR --> S
   S -->|"✓ approve"| DONE((" ")):::done
@@ -105,7 +105,7 @@ flowchart TD
   classDef done fill:#bbf7d0,stroke:#16a34a,color:#14532d,stroke-width:3px
 ```
 
-_The `work` orchestrator dispatches each phase and gates on user approval between them._
+_The `nesso-work` orchestrator dispatches each phase and gates on user approval between them._
 
 The project is managed with a [kanban board](https://github.com/orgs/nesso-how/projects/1/views/2) tracking active issues and a [roadmap](https://github.com/orgs/nesso-how/projects/1/views/3) for longer-term direction. We follow a continuous flow model rather than sprints or classic agile iterations: work is pulled from the backlog as capacity allows, sized so each unit maps to one agentic pipeline run. This cadence matches the tooling: agents work best on focused, sequential tasks, not time-boxed batches of unrelated work.
 

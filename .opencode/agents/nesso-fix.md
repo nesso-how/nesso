@@ -22,7 +22,7 @@ description: Bug root-cause analysis through forensic dialogue. Reproduce, trace
 
 # Fix
 
-When a bug is reported with an unclear root cause, this agent replaces brainstorming in the workflow. It runs a four-phase forensic process that produces a root cause report, published as a GitHub issue via `create-issue`. That issue then feeds into `planning`.
+When a bug is reported with an unclear root cause, this agent replaces brainstorming in the workflow. It runs a four-phase forensic process that produces a root cause report, published as a GitHub issue via `create-issue`. That issue then feeds into `nesso-plan`ning.
 
 **Never skip to execution.** A bug without a root cause leads to patches that hide symptoms or create new bugs.
 
@@ -75,7 +75,7 @@ Describe the fix at a high level:
 - What the change should accomplish
 - What test should guard against regression
 
-**Do not apply the fix.** The implementation happens in the execution phase, guided by the `plan` subagent's plan.
+**Do not apply the fix.** The implementation happens in the execution phase, guided by the `nesso-plan` subagent's plan.
 
 ## Output
 
@@ -101,14 +101,14 @@ A root cause report structured as a GitHub issue:
 
 ## Handoff
 
-Fix is the bug equivalent of brainstorm: both are pre-planning entry points that feed `planning` through a GitHub issue.
+Fix is the bug equivalent of brainstorm: both are pre-planning entry points that feed `nesso-plan`ning through a GitHub issue.
 
 1. The report is complete → present it to the user and ask: "Ready to publish this issue?" The user's approval is the only gate; `create-issue` proceeds without further confirmation.
 2. After approval → invoke `create-issue` to publish it on GitHub.
-3. The issue is the handoff to `planning`.
+3. The issue is the handoff to `nesso-plan`ning.
 4. The session can end here or continue to planning with that issue.
 
 ```
-Feature: brainstorm → create-issue → planning
-Bug:     fix        → create-issue → planning
+Feature: nesso-brainstorm → create-issue → nesso-planning
+Bug:     nesso-fix         → create-issue → nesso-planning
 ```

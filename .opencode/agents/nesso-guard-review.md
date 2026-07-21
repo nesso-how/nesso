@@ -1,5 +1,5 @@
 ---
-description: Semantic constraint guard for Nesso. Read the diff against AGENTS.md Constraints + .rules/ conventions + cross-cutting obligations. Read-only — reports findings, does not edit. Dispatched by the review skill alongside quality-review.
+description: Semantic constraint guard for Nesso. Read the diff against AGENTS.md Constraints + .rules/ conventions + cross-cutting obligations. Read-only — reports findings, does not edit. Dispatched by the review skill alongside nesso-quality-review.
 mode: subagent
 permission:
   read: allow

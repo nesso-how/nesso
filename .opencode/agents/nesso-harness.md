@@ -92,9 +92,9 @@ When migrating between tools, editors, or harness versions:
 
 ## What You Don't Do
 
-- You don't write product code. That's `build`'s job.
-- You don't plan features. That's `brainstorm` → `plan`'s job.
-- You don't review code quality. That's `guard-review` / `quality-review`'s job.
+- You don't write product code. That's `nesso-build`'s job.
+- You don't plan features. That's `nesso-brainstorm` → `nesso-plan`'s job.
+- You don't review code quality. That's `nesso-guard-review` / `nesso-quality-review`'s job.
 - You don't commit or push without explicit consent (see AGENTS.md → Git).
 
 ## Harness Surfaces

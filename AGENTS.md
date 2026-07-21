@@ -15,9 +15,9 @@ Monorepo: `src/` (app) + `packages/` (`@nesso-how/*`). Desktop shell is optional
 
 ## Development workflow
 
-For any non-trivial task, switch to the **`work`** agent — it orchestrates the 5-phase flow (brainstorm/plan → build → review → documentation), dispatches subagents for each phase, and enforces Nesso's constraints. Starting points: `brainstorm` for features, `fix` for bugs, then `work` for everything else.
+For any non-trivial task, switch to the **`nesso-work`** agent — it orchestrates the 5-phase flow (brainstorm/plan → build → review → documentation), dispatches subagents for each phase, and enforces Nesso's constraints. Starting points: `nesso-brainstorm` for features, `nesso-fix` for bugs, then `nesso-work` for everything else.
 
-Agent and skill definitions, dispatch, and harness maintenance are governed by [`.rules/harness.md`](.rules/harness.md). When debugging dispatch issues or extending the harness, start there. The `work` agent is the top-level orchestrator; subagents (`plan`, `build`, `guard-review`, `quality-review`) and skills (`review`, `preflight`, `create-pr`) are dispatched from it.
+Agent and skill definitions, dispatch, and harness maintenance are governed by [`.rules/harness.md`](.rules/harness.md). When debugging dispatch issues or extending the harness, start there. The `nesso-work` agent is the top-level orchestrator; subagents (`nesso-plan`, `nesso-build`, `nesso-guard-review`, `nesso-quality-review`) and skills (`review`, `preflight`, `create-pr`) are dispatched from it.
 
 ## Worktree and path safety
 

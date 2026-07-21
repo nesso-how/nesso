@@ -18,41 +18,41 @@
     }
   },
   "agent": {
-    "brainstorm": {
+    "nesso-brainstorm": {
       "model": "openai/gpt-5.6-sol",
       "reasoningEffort": "high",
       "variant": "high"
     },
-    "fix": {
+    "nesso-fix": {
       "model": "openai/gpt-5.6-sol",
       "reasoningEffort": "high",
       "variant": "high"
     },
-    "guard-review": {
+    "nesso-guard-review": {
       "model": "openai/gpt-5.6-luna",
       "reasoningEffort": "high",
       "variant": "high"
     },
-    "quality-review": {
+    "nesso-quality-review": {
       "model": "openai/gpt-5.6-luna",
       "reasoningEffort": "high",
       "variant": "high"
     },
-    "work": {
+    "nesso-work": {
       "model": "openai/gpt-5.6-sol",
       "reasoningEffort": "low",
       "variant": "low"
     },
-    "plan": {
+    "nesso-plan": {
       "model": "openai/gpt-5.6-sol",
       "reasoningEffort": "low",
       "variant": "low"
     },
-    "build": {
+    "nesso-build": {
       "model": "opencode-go/deepseek-v4-pro",
       "variant": "high"
     },
-    "harness": {
+    "nesso-harness": {
       "model": "opencode-go/deepseek-v4-pro",
       "reasoningEffort": "high",
       "variant": "high"

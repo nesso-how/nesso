@@ -13,14 +13,14 @@ permission:
     rm *: deny
   edit: allow
   task: deny
-description: Executes one task from an implementation plan using RED-GREEN-REFACTOR TDD. Dispatched by the work agent per task. No user interaction.
+description: Executes one task from an implementation plan using RED-GREEN-REFACTOR TDD. Dispatched by the nesso-work agent per task. No user interaction.
 ---
 
 # Build
 
 Execute one task from the implementation plan using TDD. The core cycle is RED → GREEN → REFACTOR. You receive a task, write tests and code, and return when all checks pass.
 
-You are dispatched by the `work` agent, one invocation per task. You do not interact with the user.
+You are dispatched by the `nesso-work` agent, one invocation per task. You do not interact with the user.
 
 ## Before Writing New Code
 
