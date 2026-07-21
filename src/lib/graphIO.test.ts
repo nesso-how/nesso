@@ -88,10 +88,10 @@ describe('importGraphFromFile', () => {
 
   it('emits graph_import_failed with reason invalid_file when deserialize throws SyntaxError', async () => {
     mockDeserialize.mockImplementationOnce(() => {
-      throw new SyntaxError('Invalid JSON')
+      throw new SyntaxError('Unexpected token at line 42')
     })
 
-    const file = new File(['{bad}'], 'test.json', { type: 'application/json' })
+    const file = new File(['corrupt content'], 'test.json', { type: 'application/json' })
 
     await expect(importGraphFromFile(file)).rejects.toThrow()
 
@@ -100,6 +100,10 @@ describe('importGraphFromFile', () => {
       props: { format: 'json', reason: 'invalid_file' },
     })
     expect(mockTrack).not.toHaveBeenCalledWith(expect.objectContaining({ name: 'graph_imported' }))
+    // Track payload must not include error details or file content.
+    const payload = JSON.stringify(mockTrack.mock.calls.at(-1)![0])
+    expect(payload).not.toContain('Unexpected token')
+    expect(payload).not.toContain('corrupt')
   })
 
   it('emits graph_import_failed with reason unsupported when documentToGraph throws', async () => {
@@ -114,25 +118,6 @@ describe('importGraphFromFile', () => {
       name: 'graph_import_failed',
       props: { format: 'json', reason: 'unsupported' },
     })
-  })
-
-  it('does not include error message or file content in track payload', async () => {
-    mockDeserialize.mockImplementationOnce(() => {
-      throw new SyntaxError('Unexpected token at line 42')
-    })
-
-    const file = new File(['corrupt content'], 'test.json', { type: 'application/json' })
-
-    await expect(importGraphFromFile(file)).rejects.toThrow()
-
-    const calls = mockTrack.mock.calls.filter(
-      (c: unknown[]) => (c[0] as { name?: string } | undefined)?.name === 'graph_import_failed',
-    )
-    for (const call of calls) {
-      const payload = JSON.stringify(call[0])
-      expect(payload).not.toContain('Unexpected token')
-      expect(payload).not.toContain('corrupt')
-    }
   })
 })
 
@@ -164,7 +149,7 @@ describe('exportGraphJson', () => {
 
   it('emits graph_export_failed with format json on exportShareGraphJson failure', async () => {
     mockGetState.mockReturnValueOnce(storeState)
-    mockExportShareGraphJson.mockRejectedValueOnce(new Error('disk full'))
+    mockExportShareGraphJson.mockRejectedValueOnce(new Error('Permission denied: /path/to/file'))
 
     await expect(exportGraphJson()).rejects.toThrow()
 
@@ -173,6 +158,10 @@ describe('exportGraphJson', () => {
       props: { format: 'json', reason: 'unsupported' },
     })
     expect(mockTrack).not.toHaveBeenCalledWith(expect.objectContaining({ name: 'graph_exported' }))
+    // Track payload must not include error messages or paths.
+    const payload = JSON.stringify(mockTrack.mock.calls.at(-1)![0])
+    expect(payload).not.toContain('Permission denied')
+    expect(payload).not.toContain('/path/to/file')
   })
 
   it('emits graph_export_failed when serialize throws', async () => {
@@ -189,22 +178,6 @@ describe('exportGraphJson', () => {
     })
     expect(mockTrack).not.toHaveBeenCalledWith(expect.objectContaining({ name: 'graph_exported' }))
   })
-
-  it('does not include error message in track payload on export failure', async () => {
-    mockGetState.mockReturnValueOnce(storeState)
-    mockExportShareGraphJson.mockRejectedValueOnce(new Error('Permission denied: /path/to/file'))
-
-    await expect(exportGraphJson()).rejects.toThrow()
-
-    const calls = mockTrack.mock.calls.filter(
-      (c: unknown[]) => (c[0] as { name?: string } | undefined)?.name === 'graph_export_failed',
-    )
-    for (const call of calls) {
-      const payload = JSON.stringify(call[0])
-      expect(payload).not.toContain('Permission denied')
-      expect(payload).not.toContain('/path/to/file')
-    }
-  })
 })
 
 describe('exportGraphPng', () => {
@@ -220,15 +193,19 @@ describe('exportGraphPng', () => {
     viewport.className = 'react-flow__viewport'
     document.body.appendChild(viewport)
 
-    mockToPng.mockRejectedValueOnce(new Error('unsupported'))
+    mockToPng.mockRejectedValueOnce(new Error('canvas rendering failed: out of memory'))
 
-    await expect(exportGraphPng()).rejects.toThrow('unsupported')
+    await expect(exportGraphPng()).rejects.toThrow('canvas rendering failed')
 
     expect(mockTrack).toHaveBeenCalledWith({
       name: 'graph_export_failed',
       props: { format: 'png', reason: 'unsupported' },
     })
     expect(mockTrack).not.toHaveBeenCalledWith(expect.objectContaining({ name: 'graph_exported' }))
+    // Track payload must not include error details.
+    const payload = JSON.stringify(mockTrack.mock.calls.at(-1)![0])
+    expect(payload).not.toContain('canvas rendering')
+    expect(payload).not.toContain('out of memory')
 
     document.body.removeChild(viewport)
   })
@@ -257,48 +234,5 @@ describe('exportGraphPng', () => {
     await exportGraphPng()
 
     expect(mockTrack).not.toHaveBeenCalled()
-  })
-
-  it('does not include error message in track payload on export failure', async () => {
-    mockGetState.mockReturnValueOnce(storeState)
-    const viewport = document.createElement('div')
-    viewport.className = 'react-flow__viewport'
-    document.body.appendChild(viewport)
-
-    mockToPng.mockRejectedValueOnce(new Error('canvas rendering failed: out of memory'))
-
-    await expect(exportGraphPng()).rejects.toThrow('canvas rendering failed')
-
-    const calls = mockTrack.mock.calls.filter(
-      (c: unknown[]) => (c[0] as { name?: string } | undefined)?.name === 'graph_export_failed',
-    )
-    for (const call of calls) {
-      const payload = JSON.stringify(call[0])
-      expect(payload).not.toContain('canvas rendering')
-      expect(payload).not.toContain('out of memory')
-    }
-
-    document.body.removeChild(viewport)
-  })
-})
-
-describe('cancellation does not emit failure events', () => {
-  it('importGraphFromFile is not called when file picker is cancelled', () => {
-    // importGraphFromFile requires a File parameter, so it cannot be called
-    // with a null/undefined file. The cancellation check in importGraphFile
-    // (`if (!file) return`) prevents any call to importGraphFromFile,
-    // so no failure telemetry is emitted when the user cancels the file picker.
-    // This is validated by the fact that importGraphFromFile only tracks
-    // failures inside its own try/catch, and it's never invoked with a null file.
-    expect(typeof importGraphFromFile).toBe('function')
-  })
-
-  it('exportShareGraphJson handles cancellation internally without throwing', () => {
-    // exportShareGraphJson returns early (not throwing) when:
-    // - Desktop: save() returns null (user cancelled save dialog)
-    // - Web: AbortError from showSaveFilePicker (user cancelled save dialog)
-    // When it returns without throwing, track is not called with failure events.
-    // This is validated in the success test where mockExportShareGraphJson resolves.
-    expect(typeof mockExportShareGraphJson).toBe('function')
   })
 })

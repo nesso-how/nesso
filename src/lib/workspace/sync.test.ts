@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 import 'fake-indexeddb/auto'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { tauriFsState, seedTrustedPath } from '@/test/fakeTauriFs'
+import { tauriFsState } from '@/test/fakeTauriFs'
 
 // Workspace logic (sync, graphFiles, manifest) runs for real against an
 // in-memory filesystem; only the Tauri boundary is mocked. These are true
@@ -47,7 +47,6 @@ async function ws() {
 
 beforeEach(async () => {
   tauriFsState.reset()
-  seedTrustedPath('/proj')
   await dbClearGraphs()
   setDiskSyncCache('', { version: 1, entries: {} })
 })

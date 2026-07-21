@@ -9,13 +9,5 @@
 // The static import and the dynamic imports above resolve to the same module
 // instance, so `tauriFsState` reads/asserts the same filesystem the mocks mutate.
 
-export {
-  tauriFsState,
-  grantFsScopeAccept,
-  getGrantedPaths,
-  seedTrustedPath,
-  getTrustedPaths,
-} from './state'
-export { fakePathApi } from './path'
-export { fakeCoreApi } from './core'
+export { tauriFsState, fakeCoreApi, fakePathApi } from './state'
 export { fakeFsPlugin } from './fs'
