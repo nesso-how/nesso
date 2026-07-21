@@ -38,21 +38,23 @@ GitHub Issue → plan (read-only subagent) → work persists plan → [user appr
                                                         ↓
                                   preflight → [green]
                                                         ↓
-                    review (skill), unless explicitly skipped
-                                                        ↓
-                                  [verdict / summary]
-                                                       ↓
-                          summary → [user decides path]
-                                 /                    \
-                      pass / trivial fix         failures need more work
-                             ↓                         ↓
-                      create-pr (skill) --auto       dispatch build for fixes
-                            or                         ↓
-                    dispatch build for          [user approves]
-                    trivial fixes                        ↓
-                                              build (subagent) per task
-                                                       ↓
-                                              ... loop at review
+                       [agent: trivial change?]
+                              /                \
+                        yes                    no
+                           ↓                     ↓
+               agent suggests skip          review (skill)
+                  ↓           ↓                 ↓
+             user skips   user wants       [verdict / summary]
+               ↓          review                 ↓
+               ↓             ↓            [user decides path]
+               ↓        [review report]       /              \
+               ↓             ↓            pass          fix → build → preflight
+               └─────────────┴────── summary                 ↓
+                                                   [user: re-review?]
+                                                     /            \
+                                                skip re-review   re-review
+                                                     ↓               ↓
+                                                 create-pr      ... loop
 ```
 
 ## How to Route
@@ -76,13 +78,11 @@ GitHub Issue → plan (read-only subagent) → work persists plan → [user appr
 ### After all build tasks pass
 
 1. Run **`preflight`** to catch mechanical regressions across the full change (not per-task). If anything is red, re-dispatch `build` with the error context and re-run preflight after.
-2. Decide whether the review gate applies:
-   - Review is required for every non-trivial change.
-   - A change is trivial only when it is narrowly scoped to documentation, rules, formatting, or another mechanical edit with no runtime, security, dependency, data, or API behavior impact, and preflight is green.
-   - For a potentially trivial change, explain the criteria and **suggest** that the user may skip review. Do not skip silently; wait for the user's explicit choice.
+2. **Evaluate whether review applies.** A change is trivial only when it is narrowly scoped to documentation, rules, formatting, or another mechanical edit with no runtime, security, dependency, data, or API behavior impact, and preflight is green.
+   - If the change is **non-trivial**, proceed to review.
+   - If the change is **potentially trivial**, explain the criteria to the user and **suggest** they may skip review. Do not skip silently — wait for the user's explicit choice.
    - If the user chooses review, load the **`review`** skill and follow it — it orchestrates `guard-review` and `quality-review` in parallel and synthesizes a verdict. After the skill returns, persist the report to `.reviews/<issue-number>-review-<N>.md` (N = 1 for the first review, incrementing on each re-review).
    - If the user explicitly chooses to skip review, record that decision in the summary and continue to the publish approval gate. Skipping review never implies approval to commit, push, or open a PR.
-   - If a review has already started, its fix loop remains in force: user-approved review fixes require preflight and another review before publishing.
 
 ### After review — present and ask
 
@@ -97,7 +97,7 @@ GitHub Issue → plan (read-only subagent) → work persists plan → [user appr
 
    The user always decides. The agent recommends; never loop silently.
 
-4. **If the user confirms build directly**: dispatch `build` for each suggested fix, then re-run preflight and re-run review. When re-running review, pass the most recent review report path (`.reviews/<issue-number>-review-<N>.md`) so sub-agents verify previous findings were fixed and do not re-report resolved issues. Do not commit during this fix loop. If the new review still has findings, loop at step 3 again. This applies whenever a review has run; a skipped review does not create a silent review loop.
+4. **If the user confirms build directly**: dispatch `build` for each suggested fix, then re-run preflight. At this point, ask the user whether to re-run review or skip it — the user decides. If the user chooses re-review, pass the most recent review report path (`.reviews/<issue-number>-review-<N>.md`) so sub-agents verify previous findings were fixed and do not re-report resolved issues. Do not commit during this fix loop. If the new review still has findings, loop at step 3 again.
 5. **If ready to PR** and the user explicitly says "ship it" / "go ahead": update `## [Unreleased]` in `CHANGELOG.md` per `.rules/changelog.md`, commit the complete working tree with a concise conventional commit message, then load the **`create-pr`** skill with `--auto` and follow it to push, open the PR, and enable auto-merge. Never commit or push before this approval gate; `create-pr` proceeds without further confirmation.
 
 ## Phase Table
