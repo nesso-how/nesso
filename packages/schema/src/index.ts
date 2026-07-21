@@ -54,17 +54,16 @@ export function serialize<
   RE extends Record<string, unknown>,
   M extends Record<string, unknown>,
 >(doc: GraphDocumentInput<NC, RE, M>): string {
-  const { vocabulary, id, updatedAt, name, concepts, relations, meta } = doc
   return JSON.stringify(
     {
       version: GRAPH_FORMAT_VERSION,
-      ...(vocabulary !== undefined && { vocabulary }),
-      ...(id !== undefined && { id }),
-      ...(updatedAt !== undefined && { updatedAt }),
-      name,
-      concepts,
-      relations,
-      ...(meta !== undefined && { meta }),
+      vocabulary: doc.vocabulary,
+      id: doc.id,
+      updatedAt: doc.updatedAt,
+      name: doc.name,
+      concepts: doc.concepts,
+      relations: doc.relations,
+      meta: doc.meta,
     },
     null,
     2,
@@ -72,7 +71,7 @@ export function serialize<
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
 /**
@@ -100,9 +99,7 @@ export function deserialize<
       typeof value.id !== 'string' ||
       value.id === '' ||
       typeof value.label !== 'string' ||
-      typeof value.x !== 'number' ||
       !Number.isFinite(value.x) ||
-      typeof value.y !== 'number' ||
       !Number.isFinite(value.y)
     ) {
       throw new Error(
@@ -152,9 +149,8 @@ export function deserialize<
     vocabulary = { id: vocabValue.id, version: vocabValue.version }
   }
   let meta: M | undefined
-  const metaValue: unknown = data.meta
-  if (metaValue !== undefined) {
-    meta = metaValue as M
+  if (isRecord(data.meta)) {
+    meta = data.meta as M
   }
   return {
     version: GRAPH_FORMAT_VERSION,
