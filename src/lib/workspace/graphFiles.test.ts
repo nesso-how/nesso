@@ -11,6 +11,19 @@ import {
   uniqueGraphNameAmong,
 } from './graphFiles'
 
+vi.mock('@tauri-apps/api/path', async () => (await import('@/test/fakeTauriFs')).fakePathApi)
+vi.mock('@tauri-apps/api/core', async () => (await import('@/test/fakeTauriFs')).fakeCoreApi)
+vi.mock('@tauri-apps/plugin-fs', () => ({
+  writeTextFile: vi.fn(async () => {}),
+  readTextFile: async () =>
+    '{"version":"0.1.0","vocabulary":{"id":"nesso-vocab","version":"0.1.0"},"concepts":[],"relations":[]}',
+  exists: vi.fn(async () => true),
+  readDir: vi.fn(async () => []),
+  mkdir: vi.fn(async () => {}),
+  remove: vi.fn(async () => {}),
+  rename: vi.fn(async () => {}),
+}))
+
 describe('filenameBaseFromName', () => {
   it('keeps spaces but strips path-forbidden characters', () => {
     expect(filenameBaseFromName('My Graph')).toBe('My Graph')
@@ -21,7 +34,6 @@ describe('filenameBaseFromName', () => {
   it('falls back to `graph` only when the result would be empty', () => {
     expect(filenameBaseFromName('')).toBe('graph')
     expect(filenameBaseFromName('   ')).toBe('graph')
-    // All-forbidden chars become dashes, which is non-empty, so no fallback.
     expect(filenameBaseFromName('???')).toBe('---')
   })
 })
@@ -88,7 +100,7 @@ describe('recordToGraphFile', () => {
     ],
   }
 
-  it('serializes to a deserializable Nesso graph document carrying id, name and updatedAt', () => {
+  it('serializes to a Nesso graph document carrying id, name and updatedAt', () => {
     const parsed = deserialize(recordToGraphFile(record))
     expect(parsed).toMatchObject({
       version: GRAPH_FORMAT_VERSION,
@@ -114,102 +126,56 @@ describe('writeGraphRecordToWorkspace — workspace alias resolution', () => {
     tauriFsState.reset()
   })
 
-  vi.mock('@tauri-apps/api/path', async () => (await import('@/test/fakeTauriFs')).fakePathApi)
-  vi.mock('@tauri-apps/api/core', async () => (await import('@/test/fakeTauriFs')).fakeCoreApi)
+  const record: GraphRecord = {
+    id: 'g0000000000001',
+    name: 'Test',
+    createdAt: 1,
+    updatedAt: 2,
+    nodes: [],
+    edges: [],
+  }
 
-  vi.mock('@tauri-apps/plugin-fs', () => ({
-    writeTextFile: vi.fn(async () => {}),
-    readTextFile: async () =>
-      '{"version":"0.1.0","vocabulary":{"id":"nesso-vocab","version":"0.1.0"},"concepts":[],"relations":[]}',
-    exists: vi.fn(async () => true),
-    readDir: vi.fn(async () => []),
-    mkdir: vi.fn(async () => {}),
-    remove: vi.fn(async () => {}),
-    rename: vi.fn(async () => {}),
-  }))
+  const lastGrantPaths = (calls: Array<{ command: string; args?: Record<string, unknown> }>) =>
+    calls.filter((c) => c.command === 'grant_fs_scope').map((c) => c.args?.path as string)
 
-  it('resolves app-data root alias to concrete /graphs path before granting scope', async () => {
-    const { writeGraphRecordToWorkspace } = await import('./graphFiles')
-    const { getGrantedPaths, seedTrustedPath } = await import('@/test/fakeTauriFs')
-
-    // The resolved workspace (app-data/graphs) and its .nesso must be trusted.
-    seedTrustedPath('/appdata/graphs')
-    seedTrustedPath('/appdata/graphs/.nesso')
-
-    const record: GraphRecord = {
-      id: 'g0000000000001',
-      name: 'Test',
-      createdAt: 1,
-      updatedAt: 2,
-      nodes: [],
-      edges: [],
-    }
-
-    const settings = {
-      activeProjectPath: '/appdata', // raw app-data root — must NOT be granted
-    } as Parameters<typeof writeGraphRecordToWorkspace>[0]
-
-    await writeGraphRecordToWorkspace(settings, record)
-
-    const granted = getGrantedPaths()
-    // The raw app-data root must never be granted.
-    expect(granted.has('/appdata')).toBe(false)
-    // The concrete default workspace and its .nesso must be granted.
-    expect(granted.has('/appdata/graphs')).toBe(true)
-    expect(granted.has('/appdata/graphs/.nesso')).toBe(true)
-  })
-
-  it('resolves default alias (no activeProjectPath) to concrete /graphs path', async () => {
-    const { writeGraphRecordToWorkspace } = await import('./graphFiles')
-    const { getGrantedPaths, seedTrustedPath } = await import('@/test/fakeTauriFs')
-
-    seedTrustedPath('/appdata/graphs')
-    seedTrustedPath('/appdata/graphs/.nesso')
-
-    const record: GraphRecord = {
-      id: 'g0000000000001',
-      name: 'Default',
-      createdAt: 1,
-      updatedAt: 2,
-      nodes: [],
-      edges: [],
-    }
-
-    const settings = {
+  it.each([
+    {
+      label: 'app-data root alias resolves to concrete /graphs path',
+      activeProjectPath: '/appdata',
+      expectedGrants: ['/appdata/graphs', '/appdata/graphs/.nesso'],
+    },
+    {
+      label: 'null activeProjectPath resolves to default workspace',
       activeProjectPath: null,
-    } as Parameters<typeof writeGraphRecordToWorkspace>[0]
+      expectedGrants: ['/appdata/graphs', '/appdata/graphs/.nesso'],
+    },
+    {
+      label: 'external workspace path is preserved unchanged',
+      activeProjectPath: '/home/user/projects/my-graph',
+      expectedGrants: ['/home/user/projects/my-graph', '/home/user/projects/my-graph/.nesso'],
+    },
+  ])('$label', async ({ activeProjectPath, expectedGrants }) => {
+    const { writeGraphRecordToWorkspace } = await import('./graphFiles')
+    const { tauriFsState } = await import('@/test/fakeTauriFs')
+
+    const settings = { activeProjectPath } as Parameters<typeof writeGraphRecordToWorkspace>[0]
 
     await writeGraphRecordToWorkspace(settings, record)
 
-    const granted = getGrantedPaths()
-    expect(granted.has('/appdata/graphs')).toBe(true)
-    expect(granted.has('/appdata/graphs/.nesso')).toBe(true)
+    expect(lastGrantPaths(tauriFsState.calls)).toEqual(expectedGrants)
   })
 
-  it('preserves external workspace paths unchanged', async () => {
+  it('never grants the raw app-data root', async () => {
     const { writeGraphRecordToWorkspace } = await import('./graphFiles')
-    const { getGrantedPaths, seedTrustedPath } = await import('@/test/fakeTauriFs')
-
-    seedTrustedPath('/home/user/projects/my-graph')
-    seedTrustedPath('/home/user/projects/my-graph/.nesso')
-
-    const record: GraphRecord = {
-      id: 'g0000000000001',
-      name: 'External',
-      createdAt: 1,
-      updatedAt: 2,
-      nodes: [],
-      edges: [],
-    }
+    const { tauriFsState } = await import('@/test/fakeTauriFs')
 
     const settings = {
-      activeProjectPath: '/home/user/projects/my-graph',
+      activeProjectPath: '/appdata',
     } as Parameters<typeof writeGraphRecordToWorkspace>[0]
 
     await writeGraphRecordToWorkspace(settings, record)
 
-    const granted = getGrantedPaths()
-    expect(granted.has('/home/user/projects/my-graph')).toBe(true)
-    expect(granted.has('/home/user/projects/my-graph/.nesso')).toBe(true)
+    const grantedRoots = lastGrantPaths(tauriFsState.calls).filter((p) => p === '/appdata')
+    expect(grantedRoots).toHaveLength(0)
   })
 })

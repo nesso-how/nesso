@@ -3,7 +3,7 @@
 import 'fake-indexeddb/auto'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createStore } from 'zustand/vanilla'
-import { tauriFsState, seedTrustedPath } from '@/test/fakeTauriFs'
+import { tauriFsState } from '@/test/fakeTauriFs'
 
 vi.mock('@tauri-apps/plugin-fs', async () => (await import('@/test/fakeTauriFs')).fakeFsPlugin)
 vi.mock('@tauri-apps/api/path', async () => (await import('@/test/fakeTauriFs')).fakePathApi)
@@ -53,7 +53,6 @@ async function boot(): Promise<Store> {
 
 beforeEach(async () => {
   tauriFsState.reset()
-  seedTrustedPath(DEFAULT_WS)
   await dbClearGraphs()
   setDiskSyncCache('', { version: 1, entries: {} })
   ;(window as unknown as { __TAURI_INTERNALS__?: object }).__TAURI_INTERNALS__ = {}
@@ -71,6 +70,28 @@ describe('loadGraphList (desktop)', () => {
     )
     expect(wroteSeed).toBe(true)
   })
+
+  it('flags a known project whose folder is absent', async () => {
+    const s = makeStore()
+    s.getState().setSetting('knownProjects', ['/ghost', DEFAULT_WS])
+    s.getState().setSetting('activeProjectPath', DEFAULT_WS)
+
+    await s.getState().loadGraphList()
+
+    expect(s.getState().missingProjects).toContain('/ghost')
+    expect(s.getState().settings.knownProjects).toContain('/ghost')
+  })
+
+  it('moves off an active project whose folder vanished', async () => {
+    const s = makeStore()
+    s.getState().setSetting('knownProjects', ['/ghost', DEFAULT_WS])
+    s.getState().setSetting('activeProjectPath', '/ghost')
+
+    await s.getState().loadGraphList()
+
+    expect(s.getState().missingProjects).toContain('/ghost')
+    expect(s.getState().settings.activeProjectPath).toBe(DEFAULT_WS)
+  })
 })
 
 describe('openOrCreateProject', () => {
@@ -87,22 +108,15 @@ describe('openOrCreateProject', () => {
     expect(list).toHaveLength(1)
     expect(tauriFsState.files.has(`/newproj/${list[0].name}.json`)).toBe(true)
   })
-})
 
-describe('switchProject', () => {
-  it('loads the graphs already present in the target folder', async () => {
+  it('is a no-op when cancelled', async () => {
     const s = await boot()
-    tauriFsState.dirs.add('/other')
-    tauriFsState.writeFile(
-      '/other/Imported.json',
-      graphDocumentJson({ id: gid(1), name: 'Imported', updatedAt: 1000 }),
-    )
+    tauriFsState.setDialogResult(null)
+    const before = s.getState().settings.activeProjectPath
 
-    await s.getState().switchProject('/other')
+    await s.getState().openOrCreateProject()
 
-    expect(s.getState().settings.activeProjectPath).toBe('/other')
-    expect(s.getState().graphList.map((g) => g.name)).toEqual(['Imported'])
-    expect((await dbLoadGraph(gid(1)))?.name).toBe('Imported')
+    expect(s.getState().settings.activeProjectPath).toBe(before)
   })
 })
 
@@ -171,7 +185,22 @@ describe('keepLocalGraphChanges', () => {
   })
 })
 
-describe('switchProject branches', () => {
+describe('switchProject', () => {
+  it('loads the graphs already present in the target folder', async () => {
+    const s = await boot()
+    tauriFsState.dirs.add('/other')
+    tauriFsState.writeFile(
+      '/other/Imported.json',
+      graphDocumentJson({ id: gid(1), name: 'Imported', updatedAt: 1000 }),
+    )
+
+    await s.getState().switchProject('/other')
+
+    expect(s.getState().settings.activeProjectPath).toBe('/other')
+    expect(s.getState().graphList.map((g) => g.name)).toEqual(['Imported'])
+    expect((await dbLoadGraph(gid(1)))?.name).toBe('Imported')
+  })
+
   it('returns early when switching to the already-active project', async () => {
     const s = await boot()
     const list = await s.getState().switchProject(DEFAULT_WS)
@@ -251,30 +280,6 @@ describe('switchProject branches', () => {
   })
 })
 
-describe('loadGraphList (desktop) missing projects at startup', () => {
-  it('flags a known project whose folder is absent', async () => {
-    const s = makeStore()
-    s.getState().setSetting('knownProjects', ['/ghost', DEFAULT_WS])
-    s.getState().setSetting('activeProjectPath', DEFAULT_WS)
-
-    await s.getState().loadGraphList()
-
-    expect(s.getState().missingProjects).toContain('/ghost')
-    expect(s.getState().settings.knownProjects).toContain('/ghost')
-  })
-
-  it('moves off an active project whose folder vanished', async () => {
-    const s = makeStore()
-    s.getState().setSetting('knownProjects', ['/ghost', DEFAULT_WS])
-    s.getState().setSetting('activeProjectPath', '/ghost')
-
-    await s.getState().loadGraphList()
-
-    expect(s.getState().missingProjects).toContain('/ghost')
-    expect(s.getState().settings.activeProjectPath).toBe(DEFAULT_WS)
-  })
-})
-
 describe('markProjectMissing', () => {
   it('flags a non-active project and keeps it in the list', async () => {
     const s = await boot()
@@ -345,28 +350,5 @@ describe('removeProject', () => {
     const before = s.getState().settings.knownProjects
     await s.getState().removeProject('/unknown')
     expect(s.getState().settings.knownProjects).toEqual(before)
-  })
-})
-
-describe('openOrCreateProject', () => {
-  it('switches to the picked folder', async () => {
-    const s = await boot()
-    tauriFsState.dirs.add('/picked')
-    tauriFsState.setDialogResult('/picked')
-
-    await s.getState().openOrCreateProject()
-
-    expect(s.getState().settings.activeProjectPath).toBe('/picked')
-    expect(s.getState().settings.knownProjects).toContain('/picked')
-  })
-
-  it('is a no-op when cancelled', async () => {
-    const s = await boot()
-    tauriFsState.setDialogResult(null)
-    const before = s.getState().settings.activeProjectPath
-
-    await s.getState().openOrCreateProject()
-
-    expect(s.getState().settings.activeProjectPath).toBe(before)
   })
 })

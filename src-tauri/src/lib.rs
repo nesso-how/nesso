@@ -7,24 +7,14 @@ use tauri::Manager;
 use tauri_plugin_fs::FsExt;
 
 // ── Symlink hardening ─────────────────────────────────────────────────────────
+// Reject-symlink strategy: any symlink component in a picked/granted path is
+// rejected outright. resolve_existing_prefix provides defense-in-depth by
+// verifying the canonical resolved path is still within the trust boundary.
 //
-// Symlinks and junctions allow a directory tree to escape the filesystem
-// boundary that `starts_with` checks assume.  Before trusting, persisting, or
-// recursively granting a picked/granted path, Nesso checks every component of
-// the existing path prefix for symlinks.  If any component is a symlink, the
-// path is rejected — the caller must provide a direct (non-symlinked) path.
-//
-// This is the "reject symlink components" strategy from the trust-boundary
-// hardening: it avoids the complexity of resolving and re-validating canonical
-// paths while still preventing symlink escapes (e.g. a trusted directory
-// containing a symlink to /etc or /home).
+// NOTE: A TOCTOU window exists between path validation and use — this is
+// documented, not expanded into new work.
 
-/// Returns `true` if any component of the existing path prefix is a symlink.
-/// Walks the path component by component from the root; stops at the first
-/// non-existing component (symlinks can only exist for paths that exist on
-/// disk).  Returns `false` if the entire path exists and contains no symlinks,
-/// or if the examined prefix contains no symlinks before a non-existing
-/// component is reached.
+/// Returns true if any existing component of `p` is a symlink.
 #[allow(dead_code)]
 fn prefix_has_symlink(p: &Path) -> bool {
     let mut current = PathBuf::new();
@@ -35,43 +25,23 @@ fn prefix_has_symlink(p: &Path) -> bool {
                 if meta.file_type().is_symlink() {
                     return true;
                 }
-                // Directory or file — continue walking.
             }
-            Err(_) => {
-                // Component doesn't exist — no symlink possible beyond here.
-                break;
-            }
+            Err(_) => break, // non-existing component — no symlink possible beyond here
         }
     }
     false
 }
 
-/// Resolve the existing prefix of a path and return its canonical form.
-/// If the entire path exists it is canonicalized.  If only some prefix
-/// exists, that prefix is canonicalized and the remaining non-existing
-/// components are appended verbatim.  Returns `None` on I/O errors.
-///
-/// This is used as a defense-in-depth check in grant flows to verify that
-/// the resolved canonical path is still within the trust boundary after
-/// symlink resolution.  The primary symlink defense is `prefix_has_symlink`
-/// (which rejects any path with a symlink component outright), but this
-/// function provides an additional verification for paths where resolution
-/// succeeds.
-#[allow(dead_code)]
+/// Canonicalize the existing prefix of `p`; append non-existing components verbatim.
 fn resolve_existing_prefix(p: &Path) -> Option<PathBuf> {
-    // If the path exists, just canonicalize it.
     if let Ok(resolved) = std::fs::canonicalize(p) {
         return Some(resolved);
     }
-
-    // Walk backward to find the longest existing prefix.
     let mut current = p.to_path_buf();
     let mut suffix: Vec<std::ffi::OsString> = Vec::new();
-
     loop {
         match std::fs::canonicalize(&current) {
             Ok(resolved) => {
-                // Append the non-existing suffix components verbatim.
                 let mut result = resolved;
                 for comp in suffix.into_iter().rev() {
                     result.push(comp);
@@ -79,45 +49,25 @@ fn resolve_existing_prefix(p: &Path) -> Option<PathBuf> {
                 return Some(result);
             }
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
-                // Current prefix doesn't exist — pop the last component
-                // and try the parent.
                 let file_name = current.file_name().map(|n| n.to_os_string());
                 current = current.parent()?.to_path_buf();
                 if let Some(name) = file_name {
                     suffix.push(name);
                 }
             }
-            Err(_) => return None, // real I/O error (permission denied, broken symlink)
+            Err(_) => return None,
         }
     }
 }
 
 // ── Trust store ──────────────────────────────────────────────────────────────
-//
-// Nesso grants runtime filesystem scope in two ways:
-// 1. **Trusted picker** — the user explicitly selects a folder via the native
-//    OS dialog (`pick_workspace_folder`).  The Rust side owns the dialog, so
-//    the returned path is human-verified.  We persist it in a trust-store file
-//    inside the app-data directory so re-grants survive restarts.
-// 2. **App-data `.nesso` subtrees** — paths under the platform app-data
-//    directory that contain `.nesso` as a component are always trusted without
-//    explicit pick.  The project root itself (e.g. `$APPDATA/graphs`) is NOT
-//    auto-trusted — it must be in the trust store, seeded on startup for the
-//    default workspace or approved via the native picker.
-//
-// The `grant_fs_scope` command only approves a path when it is under an
-// app-data `.nesso` subtree OR was previously recorded in the trust store.
-// Hidden components (other than `.nesso`) are always rejected, which keeps
-// the trust-store file itself outside any grantable fs root.  A compromised
-// renderer that calls `grant_fs_scope` with an arbitrary path outside these
-// two categories is rejected.
+// Two grant paths: (1) user-picked folders persisted in a trust-store file,
+// (2) app-data `.nesso` subtrees (auto-trusted). Project roots under app-data
+// require explicit trust-store entry. Hidden components (except `.nesso`) are
+// always rejected. A compromised renderer cannot widen scope.
 
 const TRUST_STORE_FILENAME: &str = ".nesso-trusted-paths.json";
 
-/// In-memory cache of the on-disk trust store, keyed by canonical app-data
-/// path so that data from one app-data root is never reused for another.
-/// Tauri commands are serialised by the runtime (they run on the main thread
-/// in the default setup), so a plain `Option` behind a `Mutex` is sufficient.
 static TRUST_STORE: std::sync::Mutex<Option<HashMap<String, Vec<String>>>> =
     std::sync::Mutex::new(None);
 
@@ -127,8 +77,6 @@ fn trust_store_path(app_data: &Path) -> PathBuf {
 
 fn load_trust_store(app_data: &Path) -> Vec<String> {
     let key = canonical_path_str(app_data);
-
-    // Check the in-memory cache first (keyed by app-data path).
     {
         let guard = TRUST_STORE.lock().unwrap();
         if let Some(ref cache) = *guard {
@@ -137,13 +85,11 @@ fn load_trust_store(app_data: &Path) -> Vec<String> {
             }
         }
     }
-
     let path = trust_store_path(app_data);
     let data: Vec<String> = std::fs::read_to_string(&path)
         .ok()
         .and_then(|raw| serde_json::from_str(&raw).ok())
         .unwrap_or_default();
-
     let mut guard = TRUST_STORE.lock().unwrap();
     let cache = guard.get_or_insert_with(HashMap::new);
     cache.insert(key, data.clone());
@@ -159,7 +105,6 @@ fn persist_trust_store(app_data: &Path, data: &[String]) -> Result<(), String> {
     let json =
         serde_json::to_string(data).map_err(|e| format!("failed to serialize trust store: {e}"))?;
     std::fs::write(&path, json).map_err(|e| format!("failed to write trust store: {e}"))?;
-    // Update the in-memory cache only after durable write succeeds.
     let key = canonical_path_str(app_data);
     let mut guard = TRUST_STORE.lock().unwrap();
     let cache = guard.get_or_insert_with(HashMap::new);
@@ -172,7 +117,6 @@ fn add_to_trust_store(app_data: &Path, approved: &str) -> Result<(), String> {
     let norm = canonical_path_str(Path::new(approved));
     if !data.contains(&norm) {
         data.push(norm);
-        // Keep the list bounded — no reasonable user picks thousands of project folders.
         if data.len() > 100 {
             data.remove(0);
         }
@@ -181,7 +125,6 @@ fn add_to_trust_store(app_data: &Path, approved: &str) -> Result<(), String> {
     Ok(())
 }
 
-/// Returns the app-data directories to consider as always-trusted.
 fn app_data_dirs(app: &tauri::AppHandle) -> Vec<PathBuf> {
     [
         app.path().app_data_dir().ok(),
@@ -192,8 +135,21 @@ fn app_data_dirs(app: &tauri::AppHandle) -> Vec<PathBuf> {
     .collect()
 }
 
+/// Shared structural checks: absolute, no `..`, not root, no hidden except `.nesso`.
+fn has_valid_structure(p: &Path) -> bool {
+    p.is_absolute()
+        && !p.components().any(|c| matches!(c, Component::ParentDir))
+        && p.parent().is_some()
+        && !p.components().any(|c| {
+            matches!(c, Component::Normal(name) if {
+                let n = name.to_string_lossy();
+                n.starts_with('.') && n != ".nesso"
+            })
+        })
+}
+
 fn is_path_trusted(p: &Path, app_dirs: &[&Path], trust_store: &HashSet<String>) -> bool {
-    // App-data auto-grant: only .nesso subtrees (the rest goes through trust store).
+    // App-data `.nesso` subtrees are auto-trusted.
     if let Some(app_dir) = app_dirs.iter().find(|d| p.starts_with(d)) {
         if let Ok(rest) = p.strip_prefix(app_dir) {
             if rest
@@ -203,58 +159,25 @@ fn is_path_trusted(p: &Path, app_dirs: &[&Path], trust_store: &HashSet<String>) 
                 return true;
             }
         }
-        // Fall through to trust-store check — the project root itself must be
-        // explicitly trusted (seeded on startup for the default workspace, or
-        // approved via the native picker for user-chosen folders).
     }
-
     let norm = canonical_path_str(p);
-    // Exact match first, then ancestor match (so /trusted/child passes).
     if trust_store.contains(&norm) {
         return true;
     }
     trust_store.iter().any(|trusted_path| {
         norm.starts_with(trusted_path) && {
-            // Prefix match must be at a component boundary to avoid
-            // /home/user2 matching /home/user.
             let rest = &norm[trusted_path.len()..];
             rest.is_empty() || rest.starts_with('/')
         }
     })
 }
 
-/// Full-path validation for `grant_fs_scope`: only authorizes paths that are
-/// under an app-data directory or under a previously-trusted picker-approved
-/// project folder.  The generic non-hidden check is deliberately absent —
-/// arbitrary paths like /home, /tmp, /etc, or any /.nesso outside trusted
-/// roots must be rejected by the caller who owns the trust context.
-///
-/// App-data root directories themselves are always rejected even if they
-/// appear in the trust store — they contain the trust-store file, and a
-/// compromised renderer must never be able to grant scope for them.
+/// Full validation for `grant_fs_scope`. Rejects app-data roots even if they
+/// appear in the trust store (they contain the trust-store file).
 fn is_path_safe_for_grant(p: &Path, app_dirs: &[&Path], trust_store: &HashSet<String>) -> bool {
-    if !p.is_absolute() {
+    if !has_valid_structure(p) {
         return false;
     }
-    if p.components().any(|c| matches!(c, Component::ParentDir)) {
-        return false;
-    }
-    if p.parent().is_none() {
-        return false; // filesystem root
-    }
-    // Reject hidden components except `.nesso`.  This prevents a compromised
-    // renderer from granting scope for dotfiles like the trust-store path
-    // (`.nesso-trusted-paths.json`) — even if the trust store somehow lists it.
-    if p.components().any(|c| {
-        matches!(c, Component::Normal(name) if {
-            let n = name.to_string_lossy();
-            n.starts_with('.') && n != ".nesso"
-        })
-    }) {
-        return false;
-    }
-    // Reject app-data roots themselves — they contain the trust-store file
-    // and must never be grantable.
     let canon_p = canonical_path_str(p);
     if app_dirs.iter().any(|d| canonical_path_str(d) == canon_p) {
         return false;
@@ -262,69 +185,29 @@ fn is_path_safe_for_grant(p: &Path, app_dirs: &[&Path], trust_store: &HashSet<St
     is_path_trusted(p, app_dirs, trust_store)
 }
 
-/// Structural validation for a newly-selected native folder-picker result.
-/// This is separate from `is_path_safe_for_grant` — it enforces basic
-/// path safety (absolute, no traversal, not root, no hidden components
-/// except `.nesso`) without requiring prior trust-store membership.
-/// The picker path is human-verified; we guard against obviously-dangerous
-/// choices but don't restrict to already-trusted roots here.
+/// Structural validation for native folder-picker results (no trust context needed).
 fn validate_picked_folder(p: &Path) -> bool {
-    if !p.is_absolute() {
-        return false;
-    }
-    if p.components().any(|c| matches!(c, Component::ParentDir)) {
-        return false;
-    }
-    if p.parent().is_none() {
-        return false; // filesystem root
-    }
-    // Reject hidden components except `.nesso`.
-    !p.components().any(|c| match c {
-        Component::Normal(name) => {
-            let n = name.to_string_lossy();
-            n.starts_with('.') && n != ".nesso"
-        }
-        _ => false,
-    })
+    has_valid_structure(p)
 }
 
-/// Canonicalize a path string for trust-store persistence and comparison.
-///
-/// Normalizes:
-/// - Windows backslash separators → forward slashes
-/// - Trailing slashes are trimmed
-/// - `\\?\C:\...` extended drive paths → `C:/...` (strips the NT namespace prefix)
-/// - `\\?\UNC\server\share\...` extended UNC paths → `//server/share/...`
-/// - Normal UNC paths (`\\server\share`) preserved with normalized separators
-///
-/// On Windows the result is lowercased so trust-store comparisons are
-/// case-insensitive (the Windows filesystem is case-insensitive but
-/// case-preserving, and OS dialogs may return mixed-case paths).
+/// Canonicalize a path string for trust-store persistence/comparison.
+/// Normalizes: backslash→slash, trims trailing `/`, strips NT `\\?\` prefixes,
+/// and lowercases on Windows for case-insensitive matching.
 fn canonical_path_str(p: &Path) -> String {
-    let s = p.to_string_lossy();
-    // Normalize all separators to forward slashes.
-    let s = s.replace('\\', "/");
-    // Trim trailing slashes.
-    let mut s = s.trim_end_matches('/').to_string();
-
-    // Strip Windows extended-path prefixes so picker paths (which may
-    // use \\?\ forms) and normal/store paths compare identically.
-    //
-    // \\?\UNC\server\share  →  //server/share  (extended UNC → normal UNC)
-    // \\?\C:\Users          →  C:/Users       (extended drive → normal drive)
+    let mut s = p
+        .to_string_lossy()
+        .replace('\\', "/")
+        .trim_end_matches('/')
+        .to_string();
     if let Some(rest) = s.strip_prefix("//?/UNC/") {
         s = format!("//{rest}");
     } else if let Some(rest) = s.strip_prefix("//?/") {
         s = rest.to_string();
     }
-
-    // On Windows, filesystem paths are case-insensitive.  Lowercase so
-    // trust-store entries written by one OS path form match the other.
     #[cfg(target_os = "windows")]
     {
         s = s.to_lowercase();
     }
-
     s
 }
 
@@ -926,13 +809,9 @@ pub fn run() {
 #[cfg(test)]
 mod http_capability_tests {
     use serde::Deserialize;
-    use tauri::{
-        utils::acl::{
-            capability::{CapabilityFile, PermissionEntry},
-            RemoteUrlPattern,
-        },
-        Url,
-    };
+    use tauri::utils::acl::capability::{CapabilityFile, PermissionEntry};
+    use tauri::utils::acl::RemoteUrlPattern;
+    use tauri::Url;
 
     #[derive(Deserialize)]
     struct HttpAllowEntry {
@@ -943,18 +822,16 @@ mod http_capability_tests {
         let capability: CapabilityFile =
             serde_json::from_str(include_str!("../capabilities/default.json"))
                 .expect("default capability must deserialize");
-
         let capability = match capability {
-            CapabilityFile::Capability(capability) => capability,
+            CapabilityFile::Capability(c) => c,
             CapabilityFile::List(_) | CapabilityFile::NamedList { .. } => {
                 panic!("default capability must be a single capability")
             }
         };
-
-        let allow = capability
+        capability
             .permissions
             .into_iter()
-            .find_map(|permission| match permission {
+            .find_map(|p| match p {
                 PermissionEntry::ExtendedPermission { identifier, scope }
                     if identifier.get() == "http:default" =>
                 {
@@ -962,36 +839,26 @@ mod http_capability_tests {
                 }
                 _ => None,
             })
-            .expect("default capability must define an http:default allow scope");
-
-        allow
+            .expect("default capability must define an http:default allow scope")
             .into_iter()
-            .map(|value| {
+            .map(|v| {
                 let entry: HttpAllowEntry = serde_json::from_value(
-                    serde_json::to_value(value).expect("HTTP scope value must serialize"),
+                    serde_json::to_value(v).expect("HTTP scope value must serialize"),
                 )
                 .expect("HTTP allow entry must contain a url string");
-                let raw_pattern = entry.url;
-
-                raw_pattern
+                entry
+                    .url
                     .parse::<RemoteUrlPattern>()
-                    .unwrap_or_else(|error| {
-                        panic!("invalid HTTP URL pattern `{raw_pattern}`: {error}")
-                    })
+                    .unwrap_or_else(|e| panic!("invalid HTTP URL pattern `{}`: {e}", entry.url))
             })
             .collect()
-    }
-
-    fn scope_allows(patterns: &[RemoteUrlPattern], raw_url: &str) -> bool {
-        let url = raw_url.parse::<Url>().expect("test URL must be valid");
-        patterns.iter().any(|pattern| pattern.test(&url))
     }
 
     #[test]
     fn default_http_scope_deserializes_and_matches_supported_endpoints() {
         let patterns = http_scope_patterns();
-
-        for raw_url in [
+        let allows = |u: &str| patterns.iter().any(|p| p.test(&u.parse::<Url>().unwrap()));
+        for url in [
             "https://opencode.ai/zen/v1/chat/completions",
             "https://api.openai.com/v1/chat/completions",
             "http://localhost:11434/v1/chat/completions",
@@ -1001,20 +868,13 @@ mod http_capability_tests {
             "http://[::1]:11434/v1/chat/completions",
             "http://[::1]/v1/chat/completions",
         ] {
-            assert!(
-                scope_allows(&patterns, raw_url),
-                "expected {raw_url} to be allowed"
-            );
+            assert!(allows(url), "expected {url} to be allowed");
         }
-
-        for raw_url in [
+        for url in [
             "http://example.com/v1/chat/completions",
             "http://192.168.1.10:11434/v1/chat/completions",
         ] {
-            assert!(
-                !scope_allows(&patterns, raw_url),
-                "expected {raw_url} to be denied"
-            );
+            assert!(!allows(url), "expected {url} to be denied");
         }
     }
 }
@@ -1024,672 +884,239 @@ mod grant_fs_scope_tests {
     use super::*;
     use std::collections::HashSet;
 
-    // --- Trust-store path approval ---
-
-    fn dummy_store(paths: &[&str]) -> HashSet<String> {
+    fn ts(paths: &[&str]) -> HashSet<String> {
         paths
             .iter()
             .map(|s| canonical_path_str(Path::new(s)))
             .collect()
     }
 
+    fn ad() -> &'static Path {
+        Path::new("/appdata")
+    }
+
+    // ── is_path_trusted ────────────────────────────────────────────────
+
     #[test]
-    fn nesso_paths_under_app_data_are_trusted_without_store() {
-        // When a path lives under an app data directory AND contains .nesso
-        // as a component, it passes without needing prior entry in the trust
-        // store.  Non-.nesso paths under app-data must fall through to the
-        // trust store check (tested in the rejection tests below).
-        let store = HashSet::new();
-        let app_data = Path::new("/appdata");
-        let under = Path::new("/appdata/graphs/.nesso");
-        assert!(is_path_trusted(under, &[app_data], &store));
-        let nested = Path::new("/appdata/.nesso/subdir/file.json");
-        assert!(is_path_trusted(nested, &[app_data], &store));
+    fn path_trust_contract() {
+        let e = HashSet::new();
+        let s = ts(&["/appdata/graphs", "/home/user/projects/my-graph"]);
+        let s2 = ts(&["C:/Users/me/projects/my-graph"]);
+
+        let cases: &[(&str, &HashSet<String>, bool)] = &[
+            // .nesso auto-trust under app-data
+            ("/appdata/graphs/.nesso", &e, true),
+            ("/appdata/.nesso/subdir/file.json", &e, true),
+            ("/appdata/.nesso", &e, true),
+            ("/appdata/projects/my-graph/.nesso", &e, true),
+            ("/appdata/.nesso/meta", &e, true),
+            // non-.nesso under app-data falls through to trust store
+            ("/appdata/graphs", &e, false),
+            ("/appdata/graphs", &s, true),
+            ("/appdata/some-file", &e, false),
+            ("/appdata/foo/bar", &e, false),
+            // trust-store file not auto-trusted
+            ("/appdata/.nesso-trusted-paths.json", &e, false),
+            // external paths
+            ("/home/user/projects/my-graph", &e, false),
+            ("/home/user/projects/my-graph", &s, true),
+            ("/home/user/projects/my-graph/.nesso", &s, true),
+            ("/home/user/projects/unknown", &e, false),
+            ("/home/user/projects/some-graph", &e, false),
+            // cross-platform separators
+            ("\\home\\user\\projects\\my-graph", &s, true),
+            ("\\home\\user\\projects\\my-graph\\.nesso", &s, true),
+            ("C:\\Users\\me\\projects\\my-graph", &s2, true),
+        ];
+        for &(path, store, expected) in cases {
+            assert_eq!(
+                is_path_trusted(Path::new(path), &[ad()], store),
+                expected,
+                "is_path_trusted({path:?}) != {expected}"
+            );
+        }
+    }
+
+    // ── is_path_safe_for_grant ─────────────────────────────────────────
+
+    #[test]
+    fn grant_safety_contract() {
+        let e = HashSet::new();
+        let s = ts(&["/home/user/projects/my-graph", "/appdata"]);
+        let ad2 = Path::new("/applocaldata");
+
+        let cases: &[(&str, &[&Path], &HashSet<String>, bool)] = &[
+            ("/home/user/../etc", &[ad()], &s, false),
+            ("/home", &[ad()], &e, false),
+            ("/tmp", &[ad()], &e, false),
+            ("/etc", &[ad()], &e, false),
+            ("/.nesso", &[ad()], &e, false),
+            ("/some/random/.nesso", &[ad()], &e, false),
+            ("/home/user/.nesso", &[ad()], &e, false),
+            ("/appdata/.nesso-trusted-paths.json", &[ad()], &e, false),
+            (
+                "/appdata/.nesso-trusted-paths.json",
+                &[ad()],
+                &ts(&["/appdata/.nesso-trusted-paths.json"]),
+                false,
+            ),
+            ("/appdata", &[ad()], &s, false), // app-data root rejected even if in store
+            ("/applocaldata", &[ad(), ad2], &e, false),
+            ("/home/user/projects/my-graph/.nesso", &[ad()], &s, true),
+            ("/appdata/.nesso", &[ad()], &e, true),
+        ];
+        for &(path, dirs, store, expected) in cases {
+            assert_eq!(
+                is_path_safe_for_grant(Path::new(path), dirs, store),
+                expected,
+                "is_path_safe_for_grant({path:?}) != {expected}"
+            );
+        }
+    }
+
+    // ── validate_picked_folder ─────────────────────────────────────────
+
+    #[test]
+    fn picker_structure_contract() {
+        let cases: &[(&str, bool)] = &[
+            ("/home/user/projects/ok", true),
+            ("/home/user/projects/.nesso", true),
+            ("/", false),
+            ("relative/path", false),
+            ("/home/../etc", false),
+            ("/home/user/.ssh", false),
+            ("/home/user/.config/nvim", false),
+        ];
+        for &(path, expected) in cases {
+            assert_eq!(
+                validate_picked_folder(Path::new(path)),
+                expected,
+                "validate_picked_folder({path:?}) != {expected}"
+            );
+        }
+    }
+
+    // ── canonical_path_str ─────────────────────────────────────────────
+
+    fn win_lower(s: &str) -> String {
+        let s = canonical_path_str(Path::new(s));
+        if cfg!(target_os = "windows") {
+            s.to_lowercase()
+        } else {
+            s
+        }
     }
 
     #[test]
-    fn non_nesso_paths_under_app_data_fall_through_to_trust_store() {
-        // A path under app-data that does NOT contain .nesso must NOT be
-        // auto-trusted.  It falls through to the trust store check.
-        let store = HashSet::new();
-        let app_data = Path::new("/appdata");
-        let non_nesso = Path::new("/appdata/graphs");
-        assert!(!is_path_trusted(non_nesso, &[app_data], &store));
-
-        // The same path passes when the trust store has it (seeded on startup or
-        // approved via the native picker).
-        let seeded = dummy_store(&["/appdata/graphs"]);
-        assert!(is_path_trusted(non_nesso, &[app_data], &seeded));
+    fn canonicalization_contract() {
+        let cases: &[(&str, &str)] = &[
+            (
+                "C:\\Users\\me\\projects\\my-graph",
+                &win_lower("C:/Users/me/projects/my-graph"),
+            ),
+            (
+                "C:\\Users/me\\projects\\my-graph/",
+                &win_lower("C:/Users/me/projects/my-graph"),
+            ),
+            (
+                "/home/user/projects/my-graph/",
+                "/home/user/projects/my-graph",
+            ),
+            (
+                "/home/user/projects/my-graph///",
+                "/home/user/projects/my-graph",
+            ),
+            ("\\\\?\\C:\\Users\\me", &win_lower("C:/Users/me")),
+            (
+                "\\\\?\\C:\\Users\\me\\projects\\my-graph\\.nesso",
+                &win_lower("C:/Users/me/projects/my-graph/.nesso"),
+            ),
+            ("\\\\?\\UNC\\server\\share\\folder", "//server/share/folder"),
+            ("\\\\server\\share\\folder", "//server/share/folder"),
+        ];
+        for &(input, expected) in cases {
+            let got = canonical_path_str(Path::new(input));
+            assert_eq!(got, expected, "canonical_path_str({input:?})");
+        }
     }
 
     #[test]
-    fn rejects_app_data_root_paths_without_nesso_component() {
-        let store = HashSet::new();
-        let app_data = Path::new("/appdata");
-        assert!(!is_path_trusted(
-            Path::new("/appdata/some-file"),
-            &[app_data],
-            &store,
-        ));
-        assert!(!is_path_trusted(
-            Path::new("/appdata/foo/bar"),
-            &[app_data],
-            &store,
-        ));
+    fn canonical_forms_are_consistent() {
+        let unc_n = canonical_path_str(Path::new("\\\\server\\share\\folder"));
+        let unc_x = canonical_path_str(Path::new("\\\\?\\UNC\\server\\share\\folder"));
+        assert_eq!(unc_n, unc_x, "normal and extended UNC must match");
+        let drv_n = canonical_path_str(Path::new("C:\\Users\\me\\projects"));
+        let drv_x = canonical_path_str(Path::new("\\\\?\\C:\\Users\\me\\projects"));
+        assert_eq!(drv_n, drv_x, "normal and extended drive must match");
     }
 
     #[test]
-    fn rejects_trust_store_file_path_under_app_data() {
-        // The trust-store file (.nesso-trusted-paths.json) must remain
-        // outside any grantable fs root.  A compromised renderer must not
-        // be able to inject it through grant_fs_scope.
-        let store = HashSet::new();
-        let app_data = Path::new("/appdata");
-        assert!(!is_path_trusted(
-            Path::new("/appdata/.nesso-trusted-paths.json"),
-            &[app_data],
-            &store,
-        ));
-        // Even if an attacker tricks the trust store into listing it directly,
-        // is_path_safe_for_grant catches hidden-component paths.
-        let seeded = dummy_store(&["/appdata/.nesso-trusted-paths.json"]);
-        assert!(!is_path_safe_for_grant(
-            Path::new("/appdata/.nesso-trusted-paths.json"),
-            &[app_data],
-            &seeded,
-        ));
+    fn trust_store_matches_canonical_variants() {
+        let s = ts(&["C:/Users/me/projects/my-graph", "//server/share"]);
+        let a = ad();
+        let cases: &[(&str, bool)] = &[
+            ("\\\\?\\C:\\Users\\me\\projects\\my-graph", true),
+            ("\\\\?\\C:\\Users\\me\\projects\\my-graph\\", true),
+            ("\\\\?\\UNC\\server\\share", true),
+            ("\\\\server\\share", true),
+        ];
+        for &(path, expected) in cases {
+            assert_eq!(
+                is_path_trusted(Path::new(path), &[a], &s),
+                expected,
+                "trust store + canonical match for {path:?}"
+            );
+        }
     }
 
-    #[test]
-    fn accepts_nesso_descendants_under_app_data() {
-        let store = HashSet::new();
-        let app_data = Path::new("/appdata");
-        assert!(is_path_trusted(
-            Path::new("/appdata/.nesso"),
-            &[app_data],
-            &store,
-        ));
-        assert!(is_path_trusted(
-            Path::new("/appdata/projects/my-graph/.nesso"),
-            &[app_data],
-            &store,
-        ));
-        assert!(is_path_trusted(
-            Path::new("/appdata/.nesso/meta"),
-            &[app_data],
-            &store,
-        ));
-    }
+    // ── validate_picked_folder_full ────────────────────────────────────
 
     #[test]
-    fn non_app_dir_path_must_be_in_trust_store() {
-        let store = dummy_store(&["/home/user/projects/my-graph"]);
-        let app_data = Path::new("/appdata");
-        let trusted = Path::new("/home/user/projects/my-graph");
-
-        // Without the trust store this path would be rejected.
-        assert!(is_path_trusted(trusted, &[app_data], &store));
-    }
-
-    #[test]
-    fn descendants_of_trust_store_entry_are_authorized() {
-        // When the trust store has /home/user/projects/my-graph, its
-        // .nesso child must also pass — the frontend calls grant_fs_scope
-        // separately for <project> and <project>/.nesso.
-        let store = dummy_store(&["/home/user/projects/my-graph"]);
-        let app_data = Path::new("/appdata");
-        let descendant = Path::new("/home/user/projects/my-graph/.nesso");
-        assert!(is_path_trusted(descendant, &[app_data], &store));
-    }
-
-    #[test]
-    fn non_app_dir_path_not_in_store_is_rejected() {
-        let store = HashSet::new();
-        let app_data = Path::new("/appdata");
-        let unknown = Path::new("/home/user/projects/unknown");
-
-        assert!(!is_path_trusted(unknown, &[app_data], &store));
-    }
-
-    #[test]
-    fn parent_dir_traversal_is_always_rejected() {
-        let store = dummy_store(&["/home/user/projects/ok"]);
-        let app_data = Path::new("/appdata");
-
-        assert!(!is_path_safe_for_grant(
-            Path::new("/home/user/../etc"),
-            &[app_data],
-            &store
-        ));
-    }
-
-    #[test]
-    fn empty_trust_store_rejects_external_paths() {
-        let store = HashSet::new();
-        let app_data = Path::new("/appdata");
-
-        assert!(!is_path_trusted(
-            Path::new("/home/user/projects/some-graph"),
-            &[app_data],
-            &store,
-        ));
-    }
-
-    // ── Rejection of arbitrary external paths ──────────────────────────────
-
-    #[test]
-    fn rejects_home_directory_itself() {
-        let store = HashSet::new();
-        let app_data = Path::new("/appdata");
-        assert!(!is_path_safe_for_grant(
-            Path::new("/home"),
-            &[app_data],
-            &store
-        ));
-    }
-
-    #[test]
-    fn rejects_tmp_directory() {
-        let store = HashSet::new();
-        let app_data = Path::new("/appdata");
-        assert!(!is_path_safe_for_grant(
-            Path::new("/tmp"),
-            &[app_data],
-            &store
-        ));
-    }
-
-    #[test]
-    fn rejects_etc_directory() {
-        let store = HashSet::new();
-        let app_data = Path::new("/appdata");
-        assert!(!is_path_safe_for_grant(
-            Path::new("/etc"),
-            &[app_data],
-            &store
-        ));
-    }
-
-    #[test]
-    fn rejects_arbitrary_nesso_directory_outside_trust_store() {
-        // An arbitrary /.nesso or /some/random/.nesso must NOT be authorized
-        // unless it is under an app-data dir or a trust-store entry.
-        let store = HashSet::new();
-        let app_data = Path::new("/appdata");
-        assert!(!is_path_safe_for_grant(
-            Path::new("/.nesso"),
-            &[app_data],
-            &store
-        ));
-        assert!(!is_path_safe_for_grant(
-            Path::new("/some/random/.nesso"),
-            &[app_data],
-            &store,
-        ));
-    }
-
-    #[test]
-    fn rejects_nesso_under_home_when_home_not_trusted() {
-        let store = HashSet::new();
-        let app_data = Path::new("/appdata");
-        assert!(!is_path_safe_for_grant(
-            Path::new("/home/user/.nesso"),
-            &[app_data],
-            &store,
-        ));
-    }
-
-    #[test]
-    fn accepts_nesso_under_trusted_picker_path() {
-        let store = dummy_store(&["/home/user/projects/my-graph"]);
-        let app_data = Path::new("/appdata");
-        // .nesso under a trusted project folder is fine.
-        assert!(is_path_safe_for_grant(
-            Path::new("/home/user/projects/my-graph/.nesso"),
-            &[app_data],
-            &store,
-        ));
-    }
-
-    #[test]
-    fn accepts_nesso_under_app_data() {
-        let store = HashSet::new();
-        let app_data = Path::new("/appdata");
-        assert!(is_path_safe_for_grant(
-            Path::new("/appdata/.nesso"),
-            &[app_data],
-            &store,
-        ));
-    }
-
-    // ── Picker validation (structural only, no trust context) ─────────────
-
-    #[test]
-    fn validates_picked_folder_accepts_normal_project_path() {
-        assert!(validate_picked_folder(Path::new("/home/user/projects/ok")));
-    }
-
-    #[test]
-    fn validates_picked_folder_rejects_root() {
-        assert!(!validate_picked_folder(Path::new("/")));
-    }
-
-    #[test]
-    fn validates_picked_folder_rejects_relative() {
-        assert!(!validate_picked_folder(Path::new("relative/path")));
-    }
-
-    #[test]
-    fn validates_picked_folder_rejects_traversal() {
-        assert!(!validate_picked_folder(Path::new("/home/../etc")));
-    }
-
-    #[test]
-    fn validates_picked_folder_rejects_hidden_components_except_nesso() {
-        assert!(!validate_picked_folder(Path::new("/home/user/.ssh")));
-        assert!(!validate_picked_folder(Path::new(
-            "/home/user/.config/nvim"
-        )));
-    }
-
-    #[test]
-    fn validates_picked_folder_allows_nesso_as_component() {
-        // The picker may return a path that contains .nesso — that's
-        // structurally fine for the human-verified dialog path.
-        assert!(validate_picked_folder(Path::new(
-            "/home/user/projects/.nesso"
-        )));
-    }
-
-    // ── Path canonicalization ──────────────────────────────────────────
-
-    #[test]
-    fn canonical_path_normalizes_windows_separators() {
-        // Windows backslash separators must be normalized to forward
-        // slashes so trust-store comparisons work regardless of platform
-        // or mixed frontend input.
-        #[cfg(target_os = "windows")]
-        let expected = "c:/users/me/projects/my-graph";
-        #[cfg(not(target_os = "windows"))]
-        let expected = "C:/Users/me/projects/my-graph";
-
-        assert_eq!(
-            canonical_path_str(Path::new("C:\\Users\\me\\projects\\my-graph")),
-            expected
-        );
-    }
-
-    #[test]
-    fn canonical_path_trims_trailing_slashes() {
-        assert_eq!(
-            canonical_path_str(Path::new("/home/user/projects/my-graph/")),
-            "/home/user/projects/my-graph"
-        );
-        assert_eq!(
-            canonical_path_str(Path::new("/home/user/projects/my-graph///")),
-            "/home/user/projects/my-graph"
-        );
-    }
-
-    #[test]
-    fn canonical_path_handles_mixed_separators() {
-        #[cfg(target_os = "windows")]
-        let expected = "c:/users/me/projects/my-graph";
-        #[cfg(not(target_os = "windows"))]
-        let expected = "C:/Users/me/projects/my-graph";
-
-        assert_eq!(
-            canonical_path_str(Path::new("C:\\Users/me\\projects/my-graph")),
-            expected
-        );
-    }
-
-    #[test]
-    fn trust_store_matches_windows_path_on_unix_store() {
-        // A path stored with Unix separators must match when checked
-        // with Windows separators (e.g. frontend passing backslash paths).
-        let store = dummy_store(&["/home/user/projects/my-graph"]);
-        let app_data = Path::new("/appdata");
-        // Checked path uses backslashes — should still match.
-        assert!(is_path_trusted(
-            Path::new("\\home\\user\\projects\\my-graph"),
-            &[app_data],
-            &store,
-        ));
-        // Descendant with backslashes.
-        assert!(is_path_trusted(
-            Path::new("\\home\\user\\projects\\my-graph\\.nesso"),
-            &[app_data],
-            &store,
-        ));
-    }
-
-    #[test]
-    fn trust_store_matches_mixed_separator_input() {
-        let store = dummy_store(&["C:/Users/me/projects/my-graph"]);
-        let app_data = Path::new("/appdata");
-        assert!(is_path_trusted(
-            Path::new("C:\\Users\\me\\projects\\my-graph"),
-            &[app_data],
-            &store,
-        ));
-    }
-
-    // ── Extended-path normalization ───────────────────────────────────
-
-    #[test]
-    fn canonical_path_strips_extended_drive_prefix() {
-        // \\?\C:\Users\me  →  C:/Users/me  (extended drive → normal)
-        #[cfg(target_os = "windows")]
-        let expected = "c:/users/me";
-        #[cfg(not(target_os = "windows"))]
-        let expected = "C:/Users/me";
-
-        assert_eq!(
-            canonical_path_str(Path::new("\\\\?\\C:\\Users\\me")),
-            expected
-        );
-    }
-
-    #[test]
-    fn canonical_path_strips_extended_drive_prefix_with_file() {
-        #[cfg(target_os = "windows")]
-        let expected = "c:/users/me/projects/my-graph/.nesso";
-        #[cfg(not(target_os = "windows"))]
-        let expected = "C:/Users/me/projects/my-graph/.nesso";
-
-        assert_eq!(
-            canonical_path_str(Path::new(
-                "\\\\?\\C:\\Users\\me\\projects\\my-graph\\.nesso"
-            )),
-            expected
-        );
-    }
-
-    #[test]
-    fn canonical_path_normalizes_extended_unc_to_normal_unc() {
-        // \\?\UNC\server\share\folder  →  //server/share/folder
-        let result = canonical_path_str(Path::new("\\\\?\\UNC\\server\\share\\folder"));
-        // UNC server and share names are not lowercased on non-Windows
-        // because they are not filesystem paths there.
-        #[cfg(target_os = "windows")]
-        assert_eq!(result, "//server/share/folder");
-        #[cfg(not(target_os = "windows"))]
-        assert_eq!(result, "//server/share/folder");
-    }
-
-    #[test]
-    fn canonical_path_preserves_normal_unc_paths() {
-        // Normal UNC  \\server\share\folder  →  //server/share/folder
-        let result = canonical_path_str(Path::new("\\\\server\\share\\folder"));
-        // Extended prefix not present, so only separator normalization applies.
-        assert_eq!(result, "//server/share/folder");
-    }
-
-    #[test]
-    fn canonical_path_normal_unc_and_extended_unc_produce_same_form() {
-        let normal = canonical_path_str(Path::new("\\\\server\\share\\folder"));
-        let extended = canonical_path_str(Path::new("\\\\?\\UNC\\server\\share\\folder"));
-        assert_eq!(normal, extended);
-    }
-
-    #[test]
-    fn canonical_path_normal_drive_and_extended_drive_produce_same_form() {
-        let normal = canonical_path_str(Path::new("C:\\Users\\me\\projects"));
-        let extended = canonical_path_str(Path::new("\\\\?\\C:\\Users\\me\\projects"));
-        assert_eq!(normal, extended);
-    }
-
-    #[test]
-    fn trust_store_matches_extended_path_against_normal_store_entry() {
-        // Store has normal drive path.  Checked path is extended drive
-        // form (as the Windows picker might return).  They must match.
-        let store = dummy_store(&["C:/Users/me/projects/my-graph"]);
-        let app_data = Path::new("/appdata");
-        assert!(is_path_trusted(
-            Path::new("\\\\?\\C:\\Users\\me\\projects\\my-graph"),
-            &[app_data],
-            &store,
-        ));
-    }
-
-    #[test]
-    fn trust_store_matches_extended_unc_against_normal_unc_store_entry() {
-        let store = dummy_store(&["//server/share"]);
-        let app_data = Path::new("/appdata");
-        assert!(is_path_trusted(
-            Path::new("\\\\?\\UNC\\server\\share"),
-            &[app_data],
-            &store,
-        ));
-    }
-
-    #[test]
-    fn trust_store_matches_normal_unc_against_extended_unc_store_entry() {
-        // Reverse: store was seeded with an extended UNC path (as might
-        // happen via the picker on Windows); a normal UNC check must match.
-        let app_data = Path::new("/appdata");
-        let store = dummy_store(&["//server/share"]);
-        assert!(is_path_trusted(
-            Path::new("\\\\server\\share"),
-            &[app_data],
-            &store,
-        ));
-    }
-
-    #[test]
-    fn trust_store_trims_trailing_slashes_for_extended_paths() {
-        let store = dummy_store(&["C:/Users/me/projects/my-graph"]);
-        let app_data = Path::new("/appdata");
-        // Extended path with trailing slashes.
-        assert!(is_path_trusted(
-            Path::new("\\\\?\\C:\\Users\\me\\projects\\my-graph\\"),
-            &[app_data],
-            &store,
-        ));
-    }
-
-    // ── Picker validation with home / app-data context ─────────────────
-
-    #[test]
-    fn picker_rejects_home_directory_itself() {
+    fn picker_full_context_contract() {
         let home = Path::new("/home/user");
-        let app_data = Path::new("/appdata");
-        assert!(!validate_picked_folder_full(
-            Path::new("/home/user"),
-            home,
-            app_data,
-            None,
-            TRUST_STORE_FILENAME,
-        ));
+        let adp = Path::new("/appdata");
+        let adl = Path::new("/applocaldata");
+        let ts_file = TRUST_STORE_FILENAME;
+
+        let cases: &[(&str, &Path, &Path, Option<&Path>, bool)] = &[
+            ("/home/user", home, adp, None, false),
+            ("/home", home, adp, None, false),
+            ("/", home, adp, None, false),
+            ("/appdata", home, adp, None, false),
+            ("/var/lib", home, Path::new("/var/lib/app"), None, false),
+            ("/applocaldata", home, adp, Some(adl), false),
+            ("/home/user/projects/my-graph", home, adp, None, true),
+            ("/appdata/graphs", home, adp, None, true),
+            ("/appdata/graphs/.nesso", home, adp, None, true),
+        ];
+        for &(picked, h, ad, al, expected) in cases {
+            assert_eq!(
+                validate_picked_folder_full(Path::new(picked), h, ad, al, ts_file),
+                expected,
+                "validate_picked_folder_full({picked:?}) != {expected}"
+            );
+        }
     }
 
-    #[test]
-    fn picker_rejects_ancestor_of_home() {
-        // /home is an ancestor of $HOME=/home/user — picking it would
-        // grant scope over the entire home directory.
-        let home = Path::new("/home/user");
-        let app_data = Path::new("/appdata");
-        assert!(!validate_picked_folder_full(
-            Path::new("/home"),
-            home,
-            app_data,
-            None,
-            TRUST_STORE_FILENAME,
-        ));
-        // Root (/) is also an ancestor of home.
-        assert!(!validate_picked_folder_full(
-            Path::new("/"),
-            home,
-            app_data,
-            None,
-            TRUST_STORE_FILENAME,
-        ));
-    }
-
-    #[test]
-    fn picker_rejects_app_data_root() {
-        let home = Path::new("/home/user");
-        let app_data = Path::new("/appdata");
-        assert!(!validate_picked_folder_full(
-            Path::new("/appdata"),
-            home,
-            app_data,
-            None,
-            TRUST_STORE_FILENAME,
-        ));
-    }
-
-    #[test]
-    fn picker_rejects_ancestor_of_app_data() {
-        let home = Path::new("/home/user");
-        let app_data = Path::new("/var/lib/app");
-        assert!(!validate_picked_folder_full(
-            Path::new("/var/lib"),
-            home,
-            app_data,
-            None,
-            TRUST_STORE_FILENAME,
-        ));
-    }
-
-    #[test]
-    fn picker_rejects_path_containing_trust_store_file() {
-        // The trust-store file (.nesso-trusted-paths.json) lives in the
-        // app-data root.  Picking a directory that contains it (including
-        // the app-data root itself) must be rejected so the trust store
-        // stays outside every grantable fs root.
-        let home = Path::new("/home/user");
-        let app_data = Path::new("/appdata");
-        // App-data root contains the trust-store file.
-        assert!(!validate_picked_folder_full(
-            Path::new("/appdata"),
-            home,
-            app_data,
-            None,
-            TRUST_STORE_FILENAME,
-        ));
-        // Root contains app-data → also contains the trust store.
-        assert!(!validate_picked_folder_full(
-            Path::new("/"),
-            home,
-            app_data,
-            None,
-            TRUST_STORE_FILENAME,
-        ));
-    }
-
-    #[test]
-    fn picker_accepts_legitimate_external_project() {
-        let home = Path::new("/home/user");
-        let app_data = Path::new("/appdata");
-        assert!(validate_picked_folder_full(
-            Path::new("/home/user/projects/my-graph"),
-            home,
-            app_data,
-            None,
-            TRUST_STORE_FILENAME,
-        ));
-    }
-
-    #[test]
-    fn picker_accepts_default_workspace_under_app_data() {
-        // The default workspace (app-data/graphs) is NOT the app-data
-        // root itself — it's a child.  The trust-store file is in the
-        // root, not under graphs/, so this path does not contain the
-        // trust-store file.
-        let home = Path::new("/home/user");
-        let app_data = Path::new("/appdata");
-        assert!(validate_picked_folder_full(
-            Path::new("/appdata/graphs"),
-            home,
-            app_data,
-            None,
-            TRUST_STORE_FILENAME,
-        ));
-    }
-
-    #[test]
-    fn picker_accepts_nesso_subdir_under_app_data() {
-        let home = Path::new("/home/user");
-        let app_data = Path::new("/appdata");
-        assert!(validate_picked_folder_full(
-            Path::new("/appdata/graphs/.nesso"),
-            home,
-            app_data,
-            None,
-            TRUST_STORE_FILENAME,
-        ));
-    }
-
-    #[test]
-    fn picker_rejects_app_local_data_root() {
-        let home = Path::new("/home/user");
-        let app_data = Path::new("/appdata");
-        let app_local = Path::new("/applocaldata");
-        assert!(!validate_picked_folder_full(
-            Path::new("/applocaldata"),
-            home,
-            app_data,
-            Some(app_local),
-            TRUST_STORE_FILENAME,
-        ));
-    }
-
-    // ── grant_fs_scope rejects app-data root ───────────────────────────
-
-    #[test]
-    fn grant_rejects_app_data_root_even_if_in_trust_store() {
-        // Defense in depth: even if the app-data root somehow ended up
-        // in the trust store, grant_fs_scope must still reject it
-        // because it contains the trust-store file.
-        let store = dummy_store(&["/appdata"]);
-        let app_data = Path::new("/appdata");
-        assert!(!is_path_safe_for_grant(
-            Path::new("/appdata"),
-            &[app_data],
-            &store,
-        ));
-    }
-
-    #[test]
-    fn grant_rejects_app_local_data_root() {
-        let store = HashSet::new();
-        let app_data = Path::new("/appdata");
-        let app_local = Path::new("/applocaldata");
-        assert!(!is_path_safe_for_grant(
-            Path::new("/applocaldata"),
-            &[app_data, app_local],
-            &store,
-        ));
-    }
-
-    // ── Trust store serialization round-trip ────────────────────────────
+    // ── Trust store serialization ──────────────────────────────────────
 
     #[test]
     fn trust_store_round_trip_as_json_array_of_path_strings() {
         let dir = tempfile::tempdir().expect("tempdir");
         let app_data = dir.path();
-
-        // Persist a couple of paths.
         let paths = vec![
             "/home/user/projects/my-graph".to_string(),
             "/home/user/projects/other-project".to_string(),
         ];
         persist_trust_store(app_data, &paths).expect("persist");
-
-        // Read back and verify it's a direct JSON array (not an object wrapper).
         let raw = std::fs::read_to_string(app_data.join(TRUST_STORE_FILENAME)).expect("read");
         let parsed: Vec<String> = serde_json::from_str(&raw).expect("deserialize");
         assert_eq!(parsed, paths);
-
-        // Round-trip through load_trust_store (clears the static cache first).
         {
             let mut guard = TRUST_STORE.lock().unwrap();
             *guard = None;
         }
-        let loaded = load_trust_store(app_data);
-        assert_eq!(loaded, paths);
+        assert_eq!(load_trust_store(app_data), paths);
     }
 
     #[test]
@@ -1699,39 +1126,26 @@ mod grant_fs_scope_tests {
             let mut guard = TRUST_STORE.lock().unwrap();
             *guard = None;
         }
-        let loaded = load_trust_store(dir.path());
-        assert!(loaded.is_empty());
+        assert!(load_trust_store(dir.path()).is_empty());
     }
 
-    /// Regression test: the trust-store in-memory cache must be keyed by
-    /// app-data path so loading from one directory does not return data
-    /// persisted for a different directory.
     #[test]
     fn trust_store_cache_is_keyed_by_app_data_path() {
-        let dir_a = tempfile::tempdir().expect("tempdir A");
-        let dir_b = tempfile::tempdir().expect("tempdir B");
-
-        // Persist different data to each directory.
-        let paths_a = vec!["/home/user/projects/a".to_string()];
-        let paths_b = vec!["/home/user/projects/b".to_string()];
-        persist_trust_store(dir_a.path(), &paths_a).expect("persist A");
-        persist_trust_store(dir_b.path(), &paths_b).expect("persist B");
-
-        // Clear the global cache completely.
+        let dir_a = tempfile::tempdir().expect("A");
+        let dir_b = tempfile::tempdir().expect("B");
+        let pa = vec!["/home/user/projects/a".to_string()];
+        let pb = vec!["/home/user/projects/b".to_string()];
+        persist_trust_store(dir_a.path(), &pa).expect("persist A");
+        persist_trust_store(dir_b.path(), &pb).expect("persist B");
         {
             let mut guard = TRUST_STORE.lock().unwrap();
             *guard = None;
         }
-
-        // Load from A first (populates cache for A).
-        let loaded_a = load_trust_store(dir_a.path());
-        assert_eq!(loaded_a, paths_a, "load from A must return A's data");
-
-        // Load from B — must return B's data, NOT the cached data from A.
-        let loaded_b = load_trust_store(dir_b.path());
+        assert_eq!(load_trust_store(dir_a.path()), pa);
         assert_eq!(
-            loaded_b, paths_b,
-            "load from B must return B's data, not cached A data"
+            load_trust_store(dir_b.path()),
+            pb,
+            "cache must be keyed by app-data path"
         );
     }
 }
@@ -1740,33 +1154,15 @@ mod grant_fs_scope_tests {
 mod symlink_tests {
     use super::*;
 
-    /// Tests for symlink hardening in the trust boundary.
-    /// These tests create real temporary directories and symlinks where
-    /// the platform permits, then verify that the symlink detection and
-    /// resolution primitives work correctly.
-    ///
-    /// Integration-level hardening (canonical-path checks in `grant_fs_scope`
-    /// and `pick_workspace_folder`) is tested at the command level via the
-    /// unit tests above — these tests focus on the building-block functions.
-
-    // ── prefix_has_symlink ──────────────────────────────────────────────
-
     #[test]
     fn prefix_has_symlink_detects_symlink_component() {
         let dir = tempfile::tempdir().expect("tempdir");
         let real = dir.path().join("real_dir");
         std::fs::create_dir(&real).expect("mkdir");
-
-        // Create a symlink inside the tempdir pointing to the real dir.
-        // This avoids macOS system symlinks (/var, /tmp, /home) because
-        // we create the link inside a tempdir whose path may or may not
-        // cross system symlinks — but the symlink we create is local.
         #[cfg(unix)]
         {
             let sym = dir.path().join("link_dir");
             std::os::unix::fs::symlink(&real, &sym).expect("symlink");
-            // The symlink component IS detected regardless of whether
-            // the tempdir path itself crosses system symlinks.
             assert!(prefix_has_symlink(&sym));
             assert!(prefix_has_symlink(&sym.join("child.txt")));
         }
@@ -1774,50 +1170,20 @@ mod symlink_tests {
 
     #[test]
     fn prefix_has_symlink_handles_nonexistent_paths() {
-        // Find a path where at least some prefix exists on the filesystem.
-        // We use std::env::current_dir() as a known-existing prefix, then
-        // append a non-existing sub-path.
         let existing = std::env::current_dir().expect("cwd");
-        let nonexistent = existing
-            .join("does_not_exist_92734")
-            .join("deep")
-            .join("file.txt");
-        // The existing prefix (cwd) might or might not contain symlinks
-        // depending on the environment, but the non-existing suffix has none.
-        // The function stops at the first non-existing component, so it
-        // doesn't check beyond the cwd prefix.
-        let result = prefix_has_symlink(&nonexistent);
-        // We don't assert true/false — the result depends on whether cwd
-        // itself contains symlinks.  On macOS with a symlinked home directory,
-        // cwd might have a symlink component.  The test documents that
-        // the function returns without panic for non-existing suffixes.
-        let _ = result;
+        let nonexistent = existing.join("noexist_92734").join("deep").join("file.txt");
+        let _ = prefix_has_symlink(&nonexistent); // must not panic
     }
 
-    /// Regression test: a picker symlink targeting an outside path must be
-    /// detected by `prefix_has_symlink` before any canonicalization or scope
-    /// grant.  The "reject symlink components" strategy prevents symlink
-    /// escapes: if a user picks a directory whose path contains any symlink
-    /// component (including a symlink pointing to an outside directory like
-    /// /etc or /tmp), the picker must reject it outright without even
-    /// attempting to canonicalize.
     #[test]
     #[cfg(unix)]
     fn prefix_has_symlink_rejects_symlink_to_outside_target() {
         let dir = tempfile::tempdir().expect("tempdir");
-        // Create a symlink inside the tempdir that points OUTSIDE the
-        // tempdir (e.g. to /tmp).  This simulates a user creating a
-        // symlink inside their project folder that targets a sensitive
-        // system directory — the picker must reject the symlinked path.
-        let outside_target = std::path::Path::new("/tmp");
         let sym = dir.path().join("escape_to_tmp");
-        std::os::unix::fs::symlink(outside_target, &sym).expect("symlink");
+        std::os::unix::fs::symlink(Path::new("/tmp"), &sym).expect("symlink");
         assert!(prefix_has_symlink(&sym));
-        // A child path under the symlink must also be detected.
         assert!(prefix_has_symlink(&sym.join("subdir")));
     }
-
-    // ── resolve_existing_prefix ─────────────────────────────────────────
 
     #[test]
     fn resolve_existing_prefix_returns_canonical_path_for_existing_file() {
@@ -1834,7 +1200,6 @@ mod symlink_tests {
         let dir = tempfile::tempdir().expect("tempdir");
         let nested = dir.path().join("a").join("b").join("c.txt");
         let resolved = resolve_existing_prefix(&nested).expect("resolve");
-        // The resolved path should be absolute and end with a/b/c.txt.
         assert!(resolved.is_absolute());
         assert!(resolved.ends_with("a/b/c.txt"));
     }
@@ -1847,15 +1212,8 @@ mod symlink_tests {
         std::fs::create_dir(&real).expect("mkdir");
         let sym = dir.path().join("symlink_dir");
         std::os::unix::fs::symlink(&real, &sym).expect("symlink");
-        // The resolved path should be the canonical (real) form, not the
-        // symlink name.  However, if the tempdir itself crosses a system
-        // symlink, the canonical path prefix may differ.  We only verify
-        // that the resolved path exists and is different from the symlink.
         let resolved = resolve_existing_prefix(&sym).expect("resolve");
         assert!(resolved.is_absolute());
-        // The resolved path's file_name should NOT be "symlink_dir" if the
-        // symlink was properly resolved.  However, due to tempdir system
-        // symlinks, we can only assert it's absolute.
     }
 }
 
@@ -1870,10 +1228,6 @@ mod fs_capability_tests {
         "$APPLOCALDATA/**/.nesso/**",
     ];
 
-    /// Every fs operation the runtime exercises must be listed here with an
-    /// exact `.nesso` path allowlist.  `fs:default` is deliberately absent —
-    /// it grants read + mkdir over the entire app-data tree, which is broader
-    /// than Nesso needs (it only touches `.nesso` directories).
     const SCOPED_PERMISSIONS: [&str; 10] = [
         "fs:allow-read-file",
         "fs:allow-read-text-file",
@@ -1890,69 +1244,39 @@ mod fs_capability_tests {
     fn permissions() -> Vec<Value> {
         let capability: Value = serde_json::from_str(include_str!("../capabilities/default.json"))
             .expect("default capability must be valid JSON");
-
         capability
             .get("permissions")
-            .and_then(|value| value.as_array())
+            .and_then(|v| v.as_array())
             .expect("default capability must define permissions")
             .clone()
-    }
-
-    fn permission<'a>(permissions: &'a [Value], identifier: &str) -> Option<&'a Value> {
-        permissions.iter().find(|entry| {
-            entry.get("identifier").and_then(|value| value.as_str()) == Some(identifier)
-        })
     }
 
     fn allowed_paths(permission: &Value) -> Vec<String> {
         permission
             .get("allow")
-            .and_then(|value| value.as_array())
+            .and_then(|v| v.as_array())
             .expect("scoped permission must define allow entries")
             .iter()
-            .map(|entry| {
-                entry
-                    .get("path")
-                    .and_then(|value| value.as_str())
-                    .or_else(|| entry.as_str())
-                    .expect("filesystem allow entries must be strings or {path} objects")
+            .map(|e| {
+                e.get("path")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or_else(|| e.as_str().unwrap())
                     .to_string()
             })
             .collect()
     }
 
-    /// Primary capability gate: every required fs operation is scoped to the
-    /// `.nesso` allowlist.  `fs:default` must NOT be present — it grants too
-    /// much.  `fs:allow-watch` and `fs:allow-unwatch` are kept as scalars
-    /// (they are validated at runtime, not by static path patterns).
     #[test]
     fn fs_permissions_are_minimal_scoped_reject_broad_defaults() {
-        let permissions = permissions();
-        let scalar_permissions = permissions
-            .iter()
-            .filter_map(|entry| entry.as_str())
-            .collect::<Vec<_>>();
-        let expected_paths = NESSO_PATHS
-            .iter()
-            .map(|path| (*path).to_string())
-            .collect::<Vec<_>>();
+        let perms = permissions();
+        let scalar: Vec<&str> = perms.iter().filter_map(|e| e.as_str()).collect();
+        let expected: Vec<String> = NESSO_PATHS.iter().map(|p| (*p).to_string()).collect();
 
-        // --- fs:default must be absent ---
-        assert!(
-            !scalar_permissions.contains(&"fs:default"),
-            "`fs:default` must be removed — it grants read + mkdir over the entire app-data tree"
-        );
-
-        // --- watcher permissions must be retained as scalars ---
-        for identifier in ["fs:allow-watch", "fs:allow-unwatch"] {
-            assert!(
-                scalar_permissions.contains(&identifier),
-                "expected retained permission `{identifier}`"
-            );
+        assert!(!scalar.contains(&"fs:default"), "fs:default must be absent");
+        for id in ["fs:allow-watch", "fs:allow-unwatch"] {
+            assert!(scalar.contains(&id), "expected retained permission `{id}`");
         }
-
-        // --- broad app-data recursive permissions must be absent ---
-        for identifier in [
+        for id in [
             "fs:allow-appdata-read-recursive",
             "fs:allow-appdata-write-recursive",
             "fs:allow-appdata-meta-recursive",
@@ -1963,52 +1287,44 @@ mod fs_capability_tests {
             "fs:scope-applocaldata-recursive",
         ] {
             assert!(
-                !scalar_permissions.contains(&identifier),
-                "broad permission `{identifier}` must be removed"
+                !scalar.contains(&id),
+                "broad permission `{id}` must be removed"
             );
         }
-
-        // --- every scoped permission must use the .nesso allowlist ---
-        for identifier in SCOPED_PERMISSIONS {
-            let p = permission(&permissions, identifier)
-                .unwrap_or_else(|| panic!("missing scoped permission `{identifier}`"));
+        for id in SCOPED_PERMISSIONS {
+            let p = perms
+                .iter()
+                .find(|e| e.get("identifier").and_then(|v| v.as_str()) == Some(id))
+                .unwrap_or_else(|| panic!("missing scoped permission `{id}`"));
             assert_eq!(
                 allowed_paths(p),
-                expected_paths,
-                "permission `{identifier}` must use the .nesso allowlist"
+                expected,
+                "permission `{id}` must use .nesso allowlist"
             );
         }
-
-        // --- runtime fs scope must retain the .nesso allowlist ---
+        let scope = perms
+            .iter()
+            .find(|e| e.get("identifier").and_then(|v| v.as_str()) == Some("fs:scope"))
+            .expect("missing fs:scope permission");
         assert_eq!(
-            allowed_paths(
-                permission(&permissions, "fs:scope").expect("missing fs:scope permission")
-            ),
-            expected_paths,
-            "runtime fs scope must retain the .nesso allowlist"
+            allowed_paths(scope),
+            expected,
+            "fs:scope must retain .nesso allowlist"
         );
     }
 
-    /// The `fs:default` permission set expands to `create-app-specific-dirs`,
-    /// `read-app-specific-dirs-recursive`, and `deny-default`.  We explicitly
-    /// list the Tauri-scope-related identifiers that must not appear because
-    /// they implicitly widen the scope to all app directories.
     #[test]
     fn no_scope_widening_default_components() {
-        let permissions = permissions();
-        let scalar = permissions
-            .iter()
-            .filter_map(|entry| entry.as_str())
-            .collect::<Vec<_>>();
-
-        for forbidden in [
+        let perms = permissions();
+        let scalar: Vec<&str> = perms.iter().filter_map(|e| e.as_str()).collect();
+        for id in [
             "fs:create-app-specific-dirs",
             "fs:read-app-specific-dirs-recursive",
             "fs:deny-default",
         ] {
             assert!(
-                !scalar.contains(&forbidden),
-                "permission `{forbidden}` is part of `fs:default` and must be absent"
+                !scalar.contains(&id),
+                "permission `{id}` is part of fs:default and must be absent"
             );
         }
     }
@@ -2019,12 +1335,8 @@ mod csp_tests {
     use serde_json::Value;
     use std::collections::HashMap;
 
-    /// Parses a CSP string into a map of lowercase directive name → lowercase source tokens.
-    /// Quoted keywords ('self', 'none', 'unsafe-inline', 'wasm-unsafe-eval') are preserved
-    /// verbatim (they are matched exactly elsewhere).  All other tokens (URLs, schemes, host-sources)
-    /// are normalized to lowercase for case-insensitive CSP matching.
     fn parse_csp(csp: &str) -> HashMap<String, Vec<String>> {
-        let mut directives: HashMap<String, Vec<String>> = HashMap::new();
+        let mut d = HashMap::new();
         for part in csp.split(';') {
             let trimmed = part.trim();
             if trimmed.is_empty() {
@@ -2035,275 +1347,146 @@ mod csp_tests {
                 Some(d) => d.to_lowercase(),
                 None => continue,
             };
-            let sources: Vec<String> = tokens
-                .map(|s| {
-                    if s.starts_with('\'') && s.ends_with('\'') {
-                        s.to_string()
-                    } else {
-                        s.to_lowercase()
-                    }
-                })
-                .collect();
-            directives.insert(directive, sources);
+            d.insert(
+                directive,
+                tokens
+                    .map(|s| {
+                        if s.starts_with('\'') && s.ends_with('\'') {
+                            s.to_string()
+                        } else {
+                            s.to_lowercase()
+                        }
+                    })
+                    .collect(),
+            );
         }
-        directives
+        d
     }
 
-    /// Check whether a CSP source token matches a required loopback-host pattern.
-    /// Pattern may be a bare host (`http://localhost`), host with wildcard port
-    /// (`http://localhost:*`), or exact host with port (`http://localhost:11434`).
-    /// Returns true if `source` matches `pattern` using exact token matching rules:
-    /// - Exact string match
-    /// - Scheme-only pattern ending in `:` matches any source with that prefix
-    /// - Wildcard-port pattern `host:*` matches `host` or `host:DIGITS`
-    /// - Bare host pattern matches `host` or `host:DIGITS` (exact host prefix + colon + digits)
-    fn loopback_source_matches(source: &str, pattern: &str) -> bool {
+    /// Exact-token check: `source` matches `pattern` where pattern may use
+    /// `:*` wildcard port (matches bare host or host:digits).
+    fn csp_match(source: &str, pattern: &str) -> bool {
         if source == pattern {
             return true;
         }
-
-        // Scheme-only pattern: `https:` matches any `https://...` source.
         if pattern.ends_with(':') && !pattern.contains("://") {
             return source.starts_with(pattern);
         }
-
-        // Wildcard port: `http://localhost:*` matches `http://localhost` or `http://localhost:DIGITS`.
-        if let Some(host_only) = pattern.strip_suffix(":*") {
-            if source == host_only {
+        if let Some(base) = pattern.strip_suffix(":*") {
+            if source == base {
                 return true;
             }
-            if let Some(suffix) = source.strip_prefix(host_only) {
-                if suffix.is_empty() {
-                    return true;
-                }
-                if let Some(num) = suffix.strip_prefix(':') {
-                    return !num.is_empty() && num.chars().all(|c| c.is_ascii_digit());
+            if let Some(suffix) = source.strip_prefix(base) {
+                if let Some(port) = suffix.strip_prefix(':') {
+                    return !port.is_empty() && port.chars().all(|c| c.is_ascii_digit());
                 }
             }
             return false;
         }
-
-        // Bare host pattern: `http://localhost` matches `http://localhost` or `http://localhost:DIGITS`.
         if let Some(suffix) = source.strip_prefix(pattern) {
             if suffix.is_empty() {
                 return true;
             }
-            if let Some(num) = suffix.strip_prefix(':') {
-                return !num.is_empty() && num.chars().all(|c| c.is_ascii_digit());
+            if let Some(port) = suffix.strip_prefix(':') {
+                return !port.is_empty() && port.chars().all(|c| c.is_ascii_digit());
             }
         }
-
         false
     }
 
-    /// Validates that the Tauri CSP does not contain unrestricted `http:`
-    /// scheme sources.  The `connect-src` directive must use explicit loopback
-    /// host sources instead of the broad `http:` scheme token, which would
-    /// allow connections to any HTTP server on the internet.  HTTPS is
-    /// deliberately kept broad so users can configure any remote AI provider.
-    ///
-    /// This test normalizes directive names and source tokens to lowercase
-    /// (CSP is case-insensitive) and validates exact source tokens — it does
-    /// NOT use substring matching, which would miss lookalikes like
-    /// `http://localhost.evil`.
     #[test]
-    fn csp_rejects_unrestricted_http_source() {
+    fn csp_contract() {
         let config: Value = serde_json::from_str(include_str!("../tauri.conf.json"))
             .expect("tauri.conf.json must be valid JSON");
 
         for field in ["csp", "devCsp"] {
-            let csp = config["app"]["security"][field]
+            let csp_str = config["app"]["security"][field]
                 .as_str()
                 .unwrap_or_else(|| panic!("tauri.conf.json must define app.security.{field}"));
+            let dirs = parse_csp(csp_str);
+            let connect = dirs
+                .get("connect-src")
+                .unwrap_or_else(|| panic!("{field}: missing connect-src"));
 
-            let directives = parse_csp(csp);
-
-            // Every directive that contains sources must not include the
-            // bare `http:` scheme token (case-insensitive).
-            for (directive, sources) in &directives {
+            // No bare http: in any directive
+            for (directive, sources) in &dirs {
                 for src in sources {
                     assert_ne!(
                         src.as_str(),
                         "http:",
-                        "directive \"{directive}\" in {field} contains unrestricted \"http:\" source"
+                        "{field} directive \"{directive}\" contains http:"
                     );
                 }
             }
 
-            // The `connect-src` directive must allow each loopback HTTP host.
-            let connect_sources = directives
-                .get("connect-src")
-                .unwrap_or_else(|| panic!("{field}: missing connect-src directive"));
-
-            // HTTPS must be broad for remote AI providers.
+            // https: must be broad
             assert!(
-                connect_sources
-                    .iter()
-                    .any(|s| loopback_source_matches(s, "https:")),
-                "{field}: connect-src must allow https: for remote AI endpoints",
+                connect.iter().any(|s| csp_match(s, "https:")),
+                "{field}: missing https:"
             );
 
-            // Each loopback host (with wildcard port) must be present as an exact token.
-            for host in ["http://localhost:*", "http://127.0.0.1:*", "http://[::1]:*"] {
+            // Required loopback hosts
+            for host in &["http://localhost:*", "http://127.0.0.1:*", "http://[::1]:*"] {
                 assert!(
-                    connect_sources
-                        .iter()
-                        .any(|s| loopback_source_matches(s, host)),
-                    "{field}: connect-src must contain exact source token \"{host}\"",
-                );
-            }
-        }
-    }
-
-    /// Verifies that substring lookalikes would NOT pass the loopback host
-    /// check in `loopback_source_matches`.  This test exercises the matching
-    /// function directly with malicious inputs, independent of the actual CSP
-    /// content.
-    #[test]
-    fn loopback_source_matches_rejects_lookalikes() {
-        // Exact matches pass.
-        assert!(loopback_source_matches(
-            "http://localhost:*",
-            "http://localhost:*"
-        ));
-        assert!(loopback_source_matches(
-            "http://localhost",
-            "http://localhost:*"
-        ));
-        assert!(loopback_source_matches(
-            "http://localhost:11434",
-            "http://localhost:*"
-        ));
-        assert!(loopback_source_matches(
-            "http://127.0.0.1:*",
-            "http://127.0.0.1:*"
-        ));
-        assert!(loopback_source_matches("http://[::1]:*", "http://[::1]:*"));
-        assert!(loopback_source_matches("https://api.openai.com", "https:"));
-
-        // Lookalikes are rejected.
-        assert!(!loopback_source_matches(
-            "http://localhost.evil",
-            "http://localhost:*"
-        ));
-        assert!(!loopback_source_matches(
-            "http://localhost.evil:11434",
-            "http://localhost:*"
-        ));
-        assert!(!loopback_source_matches(
-            "http://localhost-hack",
-            "http://localhost:*"
-        ));
-        assert!(!loopback_source_matches(
-            "http://127.0.0.2",
-            "http://127.0.0.1:*"
-        ));
-        assert!(!loopback_source_matches("http://[::2]", "http://[::1]:*"));
-        assert!(!loopback_source_matches(
-            "http://sub.localhost",
-            "http://localhost:*"
-        ));
-        assert!(!loopback_source_matches(
-            "http://localhost:",
-            "http://localhost:*"
-        ));
-
-        // Generic http: scheme does NOT match loopback hosts.
-        assert!(!loopback_source_matches("http:", "http://localhost:*"));
-    }
-
-    /// Ensures the CSP parser normalizes case correctly.
-    #[test]
-    fn parse_csp_normalizes_case() {
-        let directives = parse_csp(
-            "DEFAULT-SRC 'SELF'; CONNECT-SRC HTTPS: HTTP://LOCALHOST:* HTTP://127.0.0.1:11434",
-        );
-        assert!(directives.contains_key("default-src"));
-        assert_eq!(
-            directives.get("default-src").unwrap(),
-            &vec!["'SELF'".to_string()]
-        );
-        let connect = directives.get("connect-src").unwrap();
-        assert!(connect.contains(&"https:".to_string()));
-        assert!(connect.contains(&"http://localhost:*".to_string()));
-        assert!(connect.contains(&"http://127.0.0.1:11434".to_string()));
-    }
-
-    /// Audits every explicit HTTP source in `connect-src` of both the
-    /// production and dev CSP against the approved allowlist.  Rejects:
-    ///  - non-loopback HTTP hosts (including lookalikes like `localhost.evil`),
-    ///  - duplicate source tokens in the same directive,
-    ///  - the bare `http:` scheme token.
-    ///
-    /// Allowed HTTP sources are the three loopback hosts with wildcard ports
-    /// plus `http://ipc.localhost` (required by Tauri IPC).
-    #[test]
-    fn connect_src_audits_all_http_sources() {
-        let config: Value = serde_json::from_str(include_str!("../tauri.conf.json"))
-            .expect("tauri.conf.json must be valid JSON");
-
-        /// HTTP sources explicitly allowed in connect-src.
-        const ALLOWED_HTTP_SOURCES: &[&str] = &[
-            "http://localhost:*",
-            "http://127.0.0.1:*",
-            "http://[::1]:*",
-            "http://ipc.localhost",
-        ];
-
-        for field in ["csp", "devCsp"] {
-            let csp = config["app"]["security"][field]
-                .as_str()
-                .unwrap_or_else(|| panic!("tauri.conf.json must define app.security.{field}"));
-
-            let directives = parse_csp(csp);
-            let connect_sources = directives
-                .get("connect-src")
-                .unwrap_or_else(|| panic!("{field}: missing connect-src"));
-
-            // ── Bare http: must be absent ────────────────────────────────
-            for src in connect_sources {
-                assert_ne!(
-                    src.as_str(),
-                    "http:",
-                    "{field}: connect-src contains unrestricted \"http:\" source"
+                    connect.iter().any(|s| csp_match(s, host)),
+                    "{field}: missing {host}"
                 );
             }
 
-            // ── Every http:// source must match the allowlist ─────────────
-            let http_sources: Vec<&String> = connect_sources
-                .iter()
-                .filter(|s| s.starts_with("http://"))
-                .collect();
-
-            for src in &http_sources {
-                let is_allowed = ALLOWED_HTTP_SOURCES
-                    .iter()
-                    .any(|allowed| loopback_source_matches(src, allowed));
+            // Audit all http:// sources against allowlist
+            let allowlist = &[
+                "http://localhost:*",
+                "http://127.0.0.1:*",
+                "http://[::1]:*",
+                "http://ipc.localhost",
+            ];
+            for src in connect.iter().filter(|s| s.starts_with("http://")) {
                 assert!(
-                    is_allowed,
-                    "{field}: connect-src contains unexpected HTTP source \"{src}\" — \
-                     only loopback hosts and Tauri IPC are allowed",
+                    allowlist.iter().any(|a| csp_match(src, a)),
+                    "{field}: unexpected HTTP source \"{src}\""
                 );
             }
 
-            // ── No duplicate sources ─────────────────────────────────────
+            // No duplicates
             let mut seen = std::collections::HashSet::new();
-            for src in connect_sources {
+            for src in connect {
                 assert!(
                     seen.insert(src.as_str()),
-                    "{field}: connect-src contains duplicate source \"{src}\""
-                );
-            }
-
-            // ── Required loopback hosts must be present ──────────────────
-            for required in &["http://localhost:*", "http://127.0.0.1:*", "http://[::1]:*"] {
-                assert!(
-                    http_sources
-                        .iter()
-                        .any(|s| loopback_source_matches(s, required)),
-                    "{field}: connect-src must contain \"{required}\"",
+                    "{field}: duplicate source \"{src}\""
                 );
             }
         }
+    }
+
+    #[test]
+    fn csp_match_rejects_lookalikes() {
+        assert!(csp_match("http://localhost:*", "http://localhost:*"));
+        assert!(csp_match("http://localhost", "http://localhost:*"));
+        assert!(csp_match("http://localhost:11434", "http://localhost:*"));
+        assert!(csp_match("https://api.openai.com", "https:"));
+        for (src, pat) in [
+            ("http://localhost.evil", "http://localhost:*"),
+            ("http://localhost.evil:11434", "http://localhost:*"),
+            ("http://localhost-hack", "http://localhost:*"),
+            ("http://127.0.0.2", "http://127.0.0.1:*"),
+            ("http://[::2]", "http://[::1]:*"),
+            ("http://sub.localhost", "http://localhost:*"),
+            ("http://localhost:", "http://localhost:*"),
+            ("http:", "http://localhost:*"),
+        ] {
+            assert!(!csp_match(src, pat), "{src:?} must not match {pat:?}");
+        }
+    }
+
+    #[test]
+    fn parse_csp_normalizes_case() {
+        let dirs = parse_csp("DEFAULT-SRC 'SELF'; CONNECT-SRC HTTPS: HTTP://LOCALHOST:*");
+        assert_eq!(
+            dirs.get("default-src").unwrap(),
+            &vec!["'SELF'".to_string()]
+        );
+        let c = dirs.get("connect-src").unwrap();
+        assert!(c.contains(&"https:".to_string()));
+        assert!(c.contains(&"http://localhost:*".to_string()));
     }
 }

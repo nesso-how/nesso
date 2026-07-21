@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Changed
+
+- **Security test and validation simplification:** CSP validation, desktop trust-boundary tests, and frontend Tauri test infrastructure were simplified. Existing web and filesystem security behavior remains unchanged.
+
 ### Security
 
 - **Web CSP/security headers:** Added a Content-Security-Policy for the web build and hardened the deploy headers so the browser build enforces script-src, object-src, and connect-src restrictions at the network boundary.
