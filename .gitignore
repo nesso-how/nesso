@@ -40,6 +40,9 @@ yarn.lock
 # Plans (ephemeral, per-session)
 .plans/
 
+# Reviews (ephemeral, per-session)
+.reviews/
+
 # Test / coverage
 coverage
 

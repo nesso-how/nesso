@@ -24,6 +24,14 @@ You do not need to know project-specific constraints — that is the `guard-revi
 
 Use `git diff`, `git diff origin/main...HEAD`, and read changed files as needed. Stay within the changed surface.
 
+## Previous findings (re-review only)
+
+If the calling agent includes findings from a previous review cycle, verify each one against the current diff:
+
+- **Fixed correctly** → do not re-report.
+- **Not fixed or fixed incorrectly** → report as BLOCKING. Include the original `file:line` and note what's wrong with the fix.
+- **New issues** → report as usual per rubric below.
+
 ## Review rubric
 
 ### Correctness — any finding is BLOCKING

@@ -16,6 +16,7 @@ permission:
   edit:
     '*': deny
     .plans/*: allow
+    .reviews/*: allow
   task: allow
 description: Post-issue orchestrator. Routes the development flow from planning to PR. Dispatches plan, build subagents and loads the review skill at the review phase. Creates PR via skill after review passes. Asks for user approval at gates. May persist generated plans under .plans/ but never writes production code directly.
 ---
@@ -79,7 +80,7 @@ GitHub Issue → plan (read-only subagent) → work persists plan → [user appr
    - Review is required for every non-trivial change.
    - A change is trivial only when it is narrowly scoped to documentation, rules, formatting, or another mechanical edit with no runtime, security, dependency, data, or API behavior impact, and preflight is green.
    - For a potentially trivial change, explain the criteria and **suggest** that the user may skip review. Do not skip silently; wait for the user's explicit choice.
-   - If the user chooses review, load the **`review`** skill and follow it — it orchestrates `guard-review` and `quality-review` in parallel and synthesizes a verdict.
+   - If the user chooses review, load the **`review`** skill and follow it — it orchestrates `guard-review` and `quality-review` in parallel and synthesizes a verdict. After the skill returns, persist the report to `.reviews/<issue-number>-review-<N>.md` (N = 1 for the first review, incrementing on each re-review).
    - If the user explicitly chooses to skip review, record that decision in the summary and continue to the publish approval gate. Skipping review never implies approval to commit, push, or open a PR.
    - If a review has already started, its fix loop remains in force: user-approved review fixes require preflight and another review before publishing.
 
@@ -96,7 +97,7 @@ GitHub Issue → plan (read-only subagent) → work persists plan → [user appr
 
    The user always decides. The agent recommends; never loop silently.
 
-4. **If the user confirms build directly**: dispatch `build` for each suggested fix, then re-run preflight and re-run review. Do not commit during this fix loop. If the new review still has findings, loop at step 3 again. This applies whenever a review has run; a skipped review does not create a silent review loop.
+4. **If the user confirms build directly**: dispatch `build` for each suggested fix, then re-run preflight and re-run review. When re-running review, pass the most recent review report path (`.reviews/<issue-number>-review-<N>.md`) so sub-agents verify previous findings were fixed and do not re-report resolved issues. Do not commit during this fix loop. If the new review still has findings, loop at step 3 again. This applies whenever a review has run; a skipped review does not create a silent review loop.
 5. **If ready to PR** and the user explicitly says "ship it" / "go ahead": update `## [Unreleased]` in `CHANGELOG.md` per `.rules/changelog.md`, commit the complete working tree with a concise conventional commit message, then load the **`create-pr`** skill with `--auto` and follow it to push, open the PR, and enable auto-merge. Never commit or push before this approval gate; `create-pr` proceeds without further confirmation.
 
 ## Phase Table
