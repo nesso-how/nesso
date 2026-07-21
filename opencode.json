@@ -39,14 +39,14 @@
       "variant": "high"
     },
     "work": {
-      "model": "openai/gpt-5.6-luna",
-      "reasoningEffort": "xhigh",
-      "variant": "xhigh"
+      "model": "openai/gpt-5.6-sol",
+      "reasoningEffort": "low",
+      "variant": "low"
     },
     "plan": {
-      "model": "openai/gpt-5.6-terra",
-      "reasoningEffort": "high",
-      "variant": "high"
+      "model": "openai/gpt-5.6-sol",
+      "reasoningEffort": "low",
+      "variant": "low"
     },
     "build": {
       "model": "opencode-go/deepseek-v4-pro",
