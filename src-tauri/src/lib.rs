@@ -71,18 +71,20 @@ const TRUST_STORE_FILENAME: &str = ".nesso-trusted-paths.json";
 static TRUST_STORE: std::sync::Mutex<Option<HashMap<String, Vec<String>>>> =
     std::sync::Mutex::new(None);
 
+/// Serializes trust-store modifications so concurrent approvals cannot
+/// race through the read-modify-write cycle and lose entries.
+static TRUST_STORE_MUTATION: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
 fn trust_store_path(app_data: &Path) -> PathBuf {
     app_data.join(TRUST_STORE_FILENAME)
 }
 
 fn load_trust_store(app_data: &Path) -> Vec<String> {
     let key = canonical_path_str(app_data);
-    {
-        let guard = TRUST_STORE.lock().unwrap();
-        if let Some(ref cache) = *guard {
-            if let Some(data) = cache.get(&key) {
-                return data.clone();
-            }
+    let mut guard = TRUST_STORE.lock().unwrap();
+    if let Some(ref cache) = *guard {
+        if let Some(data) = cache.get(&key) {
+            return data.clone();
         }
     }
     let path = trust_store_path(app_data);
@@ -90,7 +92,6 @@ fn load_trust_store(app_data: &Path) -> Vec<String> {
         .ok()
         .and_then(|raw| serde_json::from_str(&raw).ok())
         .unwrap_or_default();
-    let mut guard = TRUST_STORE.lock().unwrap();
     let cache = guard.get_or_insert_with(HashMap::new);
     cache.insert(key, data.clone());
     data
@@ -113,6 +114,9 @@ fn persist_trust_store(app_data: &Path, data: &[String]) -> Result<(), String> {
 }
 
 fn add_to_trust_store(app_data: &Path, approved: &str) -> Result<(), String> {
+    let _guard = TRUST_STORE_MUTATION
+        .lock()
+        .map_err(|e| format!("trust store lock poisoned: {e}"))?;
     let mut data = load_trust_store(app_data);
     let norm = canonical_path_str(Path::new(approved));
     if !data.contains(&norm) {
@@ -266,29 +270,198 @@ fn validate_picked_folder_full(
 
 // ── Trusted folder picker ────────────────────────────────────────────────────
 
+/// Extracted folder-approval helper: validates a picked path, resolves symlinks,
+/// grants fs scope, and persists trust — in that exact order.  Separated from
+/// the Tauri command so it can be tested without a real dialog or runtime.
+///
+/// `selected` is the raw path from the native dialog (`None` = cancelled).
+/// `grant_fn` receives the resolved canonical path for fs-scope grant.
+/// `persist_fn` receives the canonical-path string for trust-store persistence.
+///
+/// Returns `Ok(Some(canonical_utf8_string))` on success, `Ok(None)` on
+/// cancellation, or `Err(...)` when validation or any step fails.  The
+/// returned string is the same canonical UTF-8 path used for scope grant
+/// and trust persistence, so the renderer, scope, and trust store all
+/// agree on path identity.
+///
+/// Security invariants enforced before any side effect:
+///   - structural validation (no `..`, absolute, not root, no hidden except `.nesso`)
+///   - full context validation (home/app-data/trust-store boundaries)
+///   - symlink rejection (`prefix_has_symlink`)
+///   - canonical resolution + re-validation when resolved path differs
+///   - UTF-8 validation (`to_str()` — rejects non-UTF-8 before grant/persist)
+///   - grant before persist (atomicity: if grant fails, trust is not persisted)
+fn try_approve_folder<F, G>(
+    selected: Option<&Path>,
+    home_dir: &Path,
+    app_data_dir: &Path,
+    app_local_data_dir: Option<&Path>,
+    trust_store_filename: &str,
+    grant_fn: F,
+    persist_fn: G,
+) -> Result<Option<String>, String>
+where
+    F: FnOnce(&Path) -> Result<(), String>,
+    G: FnOnce(&str) -> Result<(), String>,
+{
+    let Some(path) = selected else {
+        return Ok(None);
+    };
+
+    // Reject non-UTF-8 paths before entering validation.  The trust
+    // store and the renderer's IPC layer both require valid UTF-8
+    // strings; using `to_string_lossy()` inside validation would
+    // silently corrupt path identity and create mismatches between
+    // the scope-granted path and the persisted trust entry.  The
+    // later gate on `resolved.to_str()` remains as defense in depth.
+    if path.to_str().is_none() {
+        return Err(format!(
+            "cannot grant scope: picked path is not valid UTF-8: \"{}\"",
+            path.display(),
+        ));
+    }
+
+    // Structural + home/app-data/trust-store context validation.
+    if !validate_picked_folder_full(
+        path,
+        home_dir,
+        app_data_dir,
+        app_local_data_dir,
+        trust_store_filename,
+    ) {
+        return Err(format!(
+            "cannot grant scope for picked path \"{}\": path validation failed",
+            path.display(),
+        ));
+    }
+
+    // Symlink hardening: reject any picked path whose existing prefix
+    // contains a symlink component BEFORE any canonicalization.
+    if prefix_has_symlink(path) {
+        return Err(format!(
+            "cannot grant scope for picked path \"{}\": path contains a symlink",
+            path.display(),
+        ));
+    }
+
+    // Symlink hardening: resolve symlinks BEFORE granting fs scope.
+    // If the resolved path differs from the picked path, verify the
+    // resolved path still passes the full context validation.
+    let resolved = resolve_existing_prefix(path)
+        .ok_or_else(|| format!("cannot resolve picked path \"{}\"", path.display()))?;
+    if resolved != path
+        && !validate_picked_folder_full(
+            &resolved,
+            home_dir,
+            app_data_dir,
+            app_local_data_dir,
+            trust_store_filename,
+        )
+    {
+        return Err(format!(
+            "picked path \"{}\" resolves to \"{}\" which is not a valid project folder",
+            path.display(),
+            resolved.display(),
+        ));
+    }
+
+    // Reject non-UTF-8 paths before any side effect.  The trust store and
+    // the renderer's IPC layer both require valid UTF-8 strings; using
+    // `to_string_lossy()` would corrupt path identity and create mismatches
+    // between the scope-granted path and the persisted trust entry.
+    let canonical_str = resolved.to_str().ok_or_else(|| {
+        format!(
+            "picked path \"{}\" resolves to a non-UTF-8 path; only UTF-8 paths are supported",
+            path.display(),
+        )
+    })?;
+
+    // Grant the runtime fs scope for the resolved canonical path.
+    grant_fn(&resolved)?;
+
+    // Persist the canonical path so future `grant_fs_scope` calls for
+    // descendants (e.g. `<project>/.nesso`) succeed.  Called only after
+    // grant succeeds to prevent a dangling trust entry.
+    persist_fn(canonical_str)?;
+
+    Ok(Some(canonical_str.to_string()))
+}
+
+/// Generic callback bridging a native dialog into an async future.
+/// The callback receives `Result<T, String>` where `T` is the dialog's
+/// success payload (e.g. `Option<PathBuf>` for both folder picker and
+/// save-file dialog callers).
+#[cfg(desktop)]
+type NativePathDialogCallback<T> = Box<dyn FnOnce(Result<T, String>) + Send>;
+
+/// Bridges a callback-based native dialog into an async future using the
+/// Tauri async-runtime mpsc channel.
+///
+/// `launch` receives a callback to invoke when the dialog completes.
+/// `dialog_type` is a human-readable label ("folder picker", "save dialog",
+/// etc.) included in error messages so callers can distinguish which dialog
+/// failed.
+///
+/// The generic parameter `T` is the dialog's success payload:
+/// - folder picker   → `T = Option<PathBuf>` (Some(path) = picked, None = cancelled)
+/// - save-file dialog → `T = Option<PathBuf>` (Some(path) = chosen, None = cancelled)
+#[cfg(desktop)]
+async fn await_native_path_dialog<T, F>(launch: F, dialog_type: &str) -> Result<T, String>
+where
+    F: FnOnce(NativePathDialogCallback<T>),
+    T: Send + 'static,
+{
+    let (tx, mut rx) = tauri::async_runtime::channel::<Result<T, String>>(1);
+
+    let cb: NativePathDialogCallback<T> = Box::new(move |result: Result<T, String>| {
+        let _ = tx.try_send(result);
+    });
+
+    launch(cb);
+
+    match rx.recv().await {
+        Some(Ok(value)) => Ok(value),
+        Some(Err(e)) => Err(format!("{dialog_type} failed: {e}")),
+        None => Err(format!("{dialog_type} was dropped without completing")),
+    }
+}
+
 /// Combines the native OS folder-picker dialog with a fs-scope grant so the
 /// renderer never provides the path for a *new* project folder.  The Rust side
 /// owns the dialog; the returned path is therefore human-verified.
 ///
-/// Returns `null` when the user cancels the dialog.
+/// Uses the callback-based `pick_folder` via [`await_native_path_dialog`] so
+/// the Tauri runtime stays unblocked while the native dialog is open.  Returns
+/// `null` when the user cancels the dialog.
 #[cfg(desktop)]
 #[tauri::command]
-fn pick_workspace_folder(app: tauri::AppHandle) -> Result<Option<String>, String> {
+async fn pick_workspace_folder(app: tauri::AppHandle) -> Result<Option<String>, String> {
     use tauri_plugin_dialog::DialogExt;
 
-    let selected = app
-        .dialog()
-        .file()
-        .blocking_pick_folder()
-        .map(|p| p.to_string());
+    let selected: Option<PathBuf> = await_native_path_dialog(
+        |cb| {
+            app.dialog()
+                .file()
+                .pick_folder(move |selected_path| match selected_path {
+                    None => {
+                        cb(Ok(None));
+                    }
+                    Some(fp) => match fp.into_path() {
+                        Ok(pb) => {
+                            cb(Ok(Some(pb)));
+                        }
+                        Err(e) => {
+                            cb(Err(format!("failed to convert picked path: {e}")));
+                        }
+                    },
+                });
+        },
+        "folder picker",
+    )
+    .await?;
 
-    let Some(ref path) = selected else {
-        return Ok(None);
-    };
+    let selected = selected.as_deref();
 
-    let p = Path::new(path);
-
-    // Structural + home/app-data/trust-store context validation.
     // home_dir() and app_data_dir() can fail in edge cases; if they
     // do, we must not silently approve — reject.
     let home = app
@@ -301,77 +474,64 @@ fn pick_workspace_folder(app: tauri::AppHandle) -> Result<Option<String>, String
         .map_err(|e| format!("cannot resolve app data dir: {e}"))?;
     let app_local = app.path().app_local_data_dir().ok();
 
-    if !validate_picked_folder_full(
-        p,
+    try_approve_folder(
+        selected,
         &home,
         &app_data,
         app_local.as_deref(),
         TRUST_STORE_FILENAME,
-    ) {
-        return Err(format!(
-            "cannot grant scope for picked path \"{path}\": path validation failed"
-        ));
-    }
-
-    // Symlink hardening: reject any picked path whose existing prefix
-    // contains a symlink component BEFORE any canonicalization.  This
-    // prevents symlink escapes (e.g. a trusted directory containing a
-    // symlink to /etc) and covers the case where a picker symlink
-    // targeting an outside path would otherwise pass structural
-    // validation.  The `resolve_existing_prefix` canonicalization below
-    // provides a defense-in-depth check on top of this rejection.
-    if prefix_has_symlink(p) {
-        return Err(format!(
-            "cannot grant scope for picked path \"{path}\": path contains a symlink"
-        ));
-    }
-
-    // Symlink hardening: resolve symlinks BEFORE granting fs scope.
-    // If the resolved path differs from the picked path, verify the
-    // resolved path still passes the full context validation.  Grant
-    // only the validated canonical (resolved) path.
-    let resolved = match resolve_existing_prefix(p) {
-        Some(r) => r,
-        None => return Err(format!("cannot resolve picked path \"{path}\"")),
-    };
-    if resolved != p
-        && !validate_picked_folder_full(
-            &resolved,
-            &home,
-            &app_data,
-            app_local.as_deref(),
-            TRUST_STORE_FILENAME,
-        )
-    {
-        return Err(format!(
-            "picked path \"{path}\" resolves to \"{}\" which is not a valid project folder",
-            resolved.display(),
-        ));
-    }
-
-    // Grant the runtime fs scope for the resolved canonical path, then
-    // persist it so future `grant_fs_scope` calls for descendants
-    // (e.g. `<project>/.nesso`) succeed.
-    app.fs_scope()
-        .allow_directory(&resolved, true)
-        .map_err(|e| e.to_string())?;
-
-    add_to_trust_store(
-        app.path()
-            .app_data_dir()
-            .map_err(|e| e.to_string())?
-            .as_path(),
-        &resolved.to_string_lossy(),
-    )?;
-
-    Ok(selected)
+        |p| {
+            app.fs_scope()
+                .allow_directory(p, true)
+                .map_err(|e| e.to_string())
+        },
+        |canon| {
+            add_to_trust_store(
+                app.path()
+                    .app_data_dir()
+                    .map_err(|e| e.to_string())?
+                    .as_path(),
+                canon,
+            )
+        },
+    )
 }
 
 /// Non-desktop stub: `pick_workspace_folder` returns `null` (no dialog available).
 #[cfg(not(desktop))]
 #[tauri::command]
-fn pick_workspace_folder(_app: tauri::AppHandle) -> Result<Option<String>, String> {
+async fn pick_workspace_folder(_app: tauri::AppHandle) -> Result<Option<String>, String> {
     Ok(None)
+}
+
+/// Writes `contents` to `selected` and returns the chosen path.
+/// Returns `Ok(Some(path))` when a path was selected and the write succeeded,
+/// `Ok(None)` when no path was selected (cancellation), or `Err(...)` when
+/// the write failed.  The error message includes both the selected path and
+/// the underlying IO cause.
+///
+/// Extracted so the write logic can be tested in isolation from the dialog.
+/// The caller is responsible for running this through
+/// [`tauri::async_runtime::spawn_blocking`] to keep the async runtime free.
+fn write_selected_export<P: AsRef<Path>>(
+    selected: Option<P>,
+    contents: &str,
+) -> Result<Option<String>, String> {
+    let Some(path) = selected else {
+        return Ok(None);
+    };
+    let path = path.as_ref();
+    // Validate UTF-8 before writing so a non-UTF-8 path is never
+    // persisted to disk and then reported with `to_string_lossy()`.
+    let path_str = path.to_str().ok_or_else(|| {
+        format!(
+            "cannot export: selected path is not valid UTF-8: \"{}\"",
+            path.display(),
+        )
+    })?;
+    std::fs::write(path, contents)
+        .map_err(|e| format!("failed to write export file \"{path_str}\": {e}",))?;
+    Ok(Some(path_str.to_string()))
 }
 
 /// Opens a native save-file dialog **on the Rust side** and writes the
@@ -380,30 +540,48 @@ fn pick_workspace_folder(_app: tauri::AppHandle) -> Result<Option<String>, Strin
 /// directories while still allowing user-initiated exports to arbitrary
 /// locations — the Rust side owns both the dialog and the write, so no
 /// renderer-supplied path is trusted.
+///
+/// Uses the callback-based [`DialogExt::save_file`] via
+/// [`await_native_path_dialog`] so the Tauri runtime stays unblocked while
+/// the native dialog is open.  File I/O is dispatched through
+/// [`tauri::async_runtime::spawn_blocking`] — never inside the dialog
+/// callback — because `std::fs::write` is synchronous.
 #[cfg(desktop)]
 #[tauri::command]
-fn save_file_dialog(
+async fn save_file_dialog(
     app: tauri::AppHandle,
     default_name: String,
     contents: String,
 ) -> Result<Option<String>, String> {
     use tauri_plugin_dialog::DialogExt;
 
-    let selected = app
-        .dialog()
-        .file()
-        .add_filter("JSON", &["json"])
-        .set_file_name(&default_name)
-        .blocking_save_file();
+    let selected: Option<PathBuf> = await_native_path_dialog(
+        |cb| {
+            app.dialog()
+                .file()
+                .add_filter("JSON", &["json"])
+                .set_file_name(&default_name)
+                .save_file(move |selected_path| match selected_path {
+                    None => {
+                        cb(Ok(None));
+                    }
+                    Some(fp) => match fp.into_path() {
+                        Ok(pb) => {
+                            cb(Ok(Some(pb)));
+                        }
+                        Err(e) => {
+                            cb(Err(format!("failed to convert save path: {e}")));
+                        }
+                    },
+                });
+        },
+        "save dialog",
+    )
+    .await?;
 
-    let Some(path) = selected.map(|p| p.to_string()) else {
-        return Ok(None);
-    };
-
-    std::fs::write(&path, &contents)
-        .map_err(|e| format!("failed to write export file \"{path}\": {e}"))?;
-
-    Ok(Some(path))
+    tauri::async_runtime::spawn_blocking(move || write_selected_export(selected, &contents))
+        .await
+        .map_err(|e| format!("save dialog task failed: {e}"))?
 }
 
 /// Non-desktop stub: `save_file_dialog` is not available.  The frontend
@@ -411,7 +589,7 @@ fn save_file_dialog(
 /// anchor-download).
 #[cfg(not(desktop))]
 #[tauri::command]
-fn save_file_dialog(
+async fn save_file_dialog(
     _app: tauri::AppHandle,
     _default_name: String,
     _contents: String,
@@ -1148,6 +1326,47 @@ mod grant_fs_scope_tests {
             "cache must be keyed by app-data path"
         );
     }
+
+    #[test]
+    fn concurrent_trust_store_updates_do_not_lose_entries() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let app_data = dir.path();
+        // Reset the global cache so every thread loads fresh from disk.
+        {
+            let mut guard = TRUST_STORE.lock().unwrap();
+            *guard = None;
+        }
+
+        let entries: Vec<String> = (0..10)
+            .map(|i| format!("/home/user/projects/project-{i}"))
+            .collect();
+
+        std::thread::scope(|s| {
+            for entry in &entries {
+                let entry = entry.clone();
+                let app_data = app_data.to_path_buf();
+                s.spawn(move || {
+                    add_to_trust_store(&app_data, &entry).expect("concurrent add must succeed");
+                });
+            }
+        });
+
+        // Reset cache to force a re-read from disk.
+        {
+            let mut guard = TRUST_STORE.lock().unwrap();
+            *guard = None;
+        }
+
+        let stored = load_trust_store(app_data);
+        for entry in &entries {
+            let norm = canonical_path_str(Path::new(entry));
+            assert!(
+                stored.contains(&norm),
+                "entry {entry} must be in trust store after concurrent adds"
+            );
+        }
+        assert_eq!(stored.len(), entries.len(), "no duplicate entries expected");
+    }
 }
 
 #[cfg(test)]
@@ -1326,6 +1545,550 @@ mod fs_capability_tests {
                 !scalar.contains(&id),
                 "permission `{id}` is part of fs:default and must be absent"
             );
+        }
+    }
+}
+
+// ── Picker approval regression tests ─────────────────────────────────────────
+// Tests for the extracted `try_approve_folder` helper that encapsulates the
+// post-dialog validation → grant → persist chain.  Each test models a
+// scenario from the issue #141 approval flow without a real Tauri runtime.
+
+#[cfg(test)]
+mod picker_approval_tests {
+    use super::*;
+
+    /// Create a temporary directory whose name does NOT start with `.`,
+    /// so it passes `has_valid_structure` (hidden-component rejection).
+    /// Also resolves symlinks in the system temp-dir prefix (on macOS
+    /// `/var` and `/tmp` are symlinks) so `prefix_has_symlink` doesn't
+    /// reject the test path.
+    fn temp_dir_no_dot() -> tempfile::TempDir {
+        let sys_tmp = std::env::temp_dir();
+        let base = resolve_existing_prefix(&sys_tmp).unwrap_or(sys_tmp);
+        tempfile::Builder::new()
+            .prefix("nesso-test-")
+            .tempdir_in(&base)
+            .expect("tempdir")
+    }
+
+    #[test]
+    fn successful_selection_validates_grants_persists_in_order() {
+        let dir = temp_dir_no_dot();
+        let home = dir.path().join("home").join("user");
+        std::fs::create_dir_all(&home).expect("mkdir home");
+        let project = home.join("projects").join("my-graph");
+        std::fs::create_dir_all(&project).expect("mkdir project");
+        let app_data = dir.path().join("appdata");
+        std::fs::create_dir_all(&app_data).expect("mkdir appdata");
+
+        // Use RefCell so both closures can record their call order through
+        // interior mutability without conflicting mutable borrows.
+        let calls: std::cell::RefCell<Vec<&str>> = std::cell::RefCell::new(Vec::new());
+
+        let result = try_approve_folder(
+            Some(project.as_path()),
+            &home,
+            &app_data,
+            None,
+            TRUST_STORE_FILENAME,
+            |p: &Path| {
+                calls.borrow_mut().push("grant");
+                assert!(p.is_absolute(), "grant must receive canonical path");
+                Ok(())
+            },
+            |s: &str| {
+                calls.borrow_mut().push("persist");
+                assert!(!s.is_empty(), "persist must receive canonical string");
+                Ok(())
+            },
+        );
+
+        assert!(
+            result.is_ok(),
+            "approval must succeed for valid path: {result:?}"
+        );
+        let recorded = calls.borrow();
+        assert!(recorded.contains(&"grant"), "grant must have been called");
+        assert!(
+            recorded.contains(&"persist"),
+            "persist must have been called"
+        );
+        assert_eq!(
+            *recorded,
+            vec!["grant", "persist"],
+            "grant must be called before persist"
+        );
+    }
+
+    #[test]
+    fn cancellation_has_no_side_effects() {
+        let home = Path::new("/home/user");
+        let app_data = Path::new("/appdata");
+
+        let grant_called = std::sync::atomic::AtomicBool::new(false);
+        let persist_called = std::sync::atomic::AtomicBool::new(false);
+
+        let result = try_approve_folder(
+            None,
+            home,
+            app_data,
+            None,
+            TRUST_STORE_FILENAME,
+            |_p: &Path| {
+                grant_called.store(true, std::sync::atomic::Ordering::SeqCst);
+                Ok(())
+            },
+            |_s: &str| {
+                persist_called.store(true, std::sync::atomic::Ordering::SeqCst);
+                Ok(())
+            },
+        );
+
+        assert!(result.is_ok(), "cancellation must not produce an error");
+        assert_eq!(result.unwrap(), None, "cancellation must return None");
+        assert!(
+            !grant_called.load(std::sync::atomic::Ordering::SeqCst),
+            "grant must NOT be called on cancellation"
+        );
+        assert!(
+            !persist_called.load(std::sync::atomic::Ordering::SeqCst),
+            "persist must NOT be called on cancellation"
+        );
+    }
+
+    #[test]
+    fn invalid_selection_has_no_side_effects() {
+        let home = Path::new("/home/user");
+        let app_data = Path::new("/appdata");
+
+        let grant_called = std::sync::atomic::AtomicBool::new(false);
+        let persist_called = std::sync::atomic::AtomicBool::new(false);
+
+        // Root path is invalid — `has_valid_structure` rejects paths with no parent.
+        let result = try_approve_folder(
+            Some(Path::new("/")),
+            home,
+            app_data,
+            None,
+            TRUST_STORE_FILENAME,
+            |_p: &Path| {
+                grant_called.store(true, std::sync::atomic::Ordering::SeqCst);
+                Ok(())
+            },
+            |_s: &str| {
+                persist_called.store(true, std::sync::atomic::Ordering::SeqCst);
+                Ok(())
+            },
+        );
+
+        assert!(
+            result.is_err(),
+            "approval must fail for invalid (root) path"
+        );
+        assert!(
+            !grant_called.load(std::sync::atomic::Ordering::SeqCst),
+            "grant must NOT be called when validation fails"
+        );
+        assert!(
+            !persist_called.load(std::sync::atomic::Ordering::SeqCst),
+            "persist must NOT be called when validation fails"
+        );
+    }
+
+    #[test]
+    fn scope_grant_failure_does_not_persist_trust() {
+        let dir = temp_dir_no_dot();
+        let home = dir.path().join("home").join("user");
+        std::fs::create_dir_all(&home).expect("mkdir home");
+        let project = home.join("projects").join("my-graph");
+        std::fs::create_dir_all(&project).expect("mkdir project");
+        let app_data = dir.path().join("appdata");
+        std::fs::create_dir_all(&app_data).expect("mkdir appdata");
+
+        let persist_called = std::sync::atomic::AtomicBool::new(false);
+
+        let result = try_approve_folder(
+            Some(project.as_path()),
+            &home,
+            &app_data,
+            None,
+            TRUST_STORE_FILENAME,
+            |_p: &Path| Err("simulated scope grant failure".to_string()),
+            |_s: &str| {
+                persist_called.store(true, std::sync::atomic::Ordering::SeqCst);
+                Ok(())
+            },
+        );
+
+        assert!(
+            result.is_err(),
+            "approval must fail when scope grant fails: {result:?}"
+        );
+        assert!(
+            !persist_called.load(std::sync::atomic::Ordering::SeqCst),
+            "persist must NOT be called when scope grant fails"
+        );
+    }
+
+    /// Non-UTF-8 paths must be rejected before any side effect (grant or
+    /// persist).  The trust store and the renderer's IPC layer both require
+    /// valid UTF-8 strings; using `to_string_lossy()` would corrupt path
+    /// identity and create mismatches between the scope-granted path and
+    /// the persisted trust entry.
+    ///
+    /// The test creates a valid UTF-8 project-parent directory on disk,
+    /// then appends an invalid UTF-8 byte suffix to the path.  On macOS
+    /// (APFS) the suffix cannot live on the filesystem, but
+    /// `resolve_existing_prefix` walks up to the existing parent, appends
+    /// it verbatim, and `to_str()` still rejects it — the same path
+    /// resolution the other picker fixtures exercise.
+    #[test]
+    #[cfg(unix)]
+    fn non_utf8_path_rejected_before_any_side_effect() {
+        use std::os::unix::ffi::OsStrExt;
+
+        let dir = temp_dir_no_dot();
+        let home = dir.path().join("home").join("user");
+        std::fs::create_dir_all(&home).expect("mkdir home");
+
+        // Create the project parent with valid UTF-8 so
+        // resolve_existing_prefix can walk up to it on both Linux and macOS.
+        let project_parent = home.join("projects").join("my-graph");
+        std::fs::create_dir_all(&project_parent).expect("mkdir project parent");
+
+        // 0xC3 is a UTF-8 lead byte; 0x28 ('(') is not a valid
+        // continuation byte, so the whole sequence is invalid UTF-8.
+        let non_utf8_name = std::ffi::OsStr::from_bytes(b"proj\xc3\x28");
+        let project = project_parent.join(non_utf8_name);
+
+        let app_data = dir.path().join("appdata");
+        std::fs::create_dir_all(&app_data).expect("mkdir appdata");
+
+        let grant_called = std::sync::atomic::AtomicBool::new(false);
+        let persist_called = std::sync::atomic::AtomicBool::new(false);
+
+        let result = try_approve_folder(
+            Some(project.as_path()),
+            &home,
+            &app_data,
+            None,
+            TRUST_STORE_FILENAME,
+            |_p: &Path| {
+                grant_called.store(true, std::sync::atomic::Ordering::SeqCst);
+                Ok(())
+            },
+            |_s: &str| {
+                persist_called.store(true, std::sync::atomic::Ordering::SeqCst);
+                Ok(())
+            },
+        );
+
+        assert!(
+            result.is_err(),
+            "non-UTF-8 resolved path must be rejected: got {result:?}"
+        );
+        let err = result.unwrap_err();
+        assert!(
+            err.to_lowercase().contains("utf-8"),
+            "error must mention UTF-8 issue: {err}"
+        );
+        assert!(
+            !grant_called.load(std::sync::atomic::Ordering::SeqCst),
+            "grant must NOT be called for non-UTF-8 path"
+        );
+        assert!(
+            !persist_called.load(std::sync::atomic::Ordering::SeqCst),
+            "persist must NOT be called for non-UTF-8 path"
+        );
+    }
+
+    /// When the callback is invoked with `Err(...)`, the error returned
+    /// by `await_native_path_dialog` must wrap the original error with
+    /// the dialog-type context string so callers can distinguish which
+    /// dialog failed without inspecting the inner message.
+    #[test]
+    #[cfg(desktop)]
+    fn await_native_path_dialog_wraps_callback_error_with_context() {
+        use tauri::async_runtime::TokioRuntime;
+
+        let rt = TokioRuntime::new().expect("create test runtime");
+
+        rt.block_on(async {
+            let result = await_native_path_dialog(
+                |cb: NativePathDialogCallback<Option<String>>| {
+                    cb(Err("inner conversion error".to_string()));
+                },
+                "folder picker",
+            )
+            .await;
+
+            match result {
+                Err(e) => {
+                    assert!(
+                        e.contains("folder picker"),
+                        "error must include dialog-type context: {e}"
+                    );
+                    assert!(
+                        e.contains("inner conversion error"),
+                        "error must include original callback error: {e}"
+                    );
+                }
+                other => panic!("expected Err, got {other:?}"),
+            }
+        });
+    }
+
+    /// Regression: the `await_native_path_dialog` bridge must not block the
+    /// Tauri async runtime while the native dialog is open.  This test
+    /// exercises the production helper directly on a real `TokioRuntime`:
+    /// a heartbeat task ticks while the helper future is pending, the main
+    /// task deterministically receives a notification (no wall-clock
+    /// threshold), and the spawned heartbeat terminates on its own.
+    #[test]
+    #[cfg(desktop)]
+    fn await_native_path_dialog_yields_while_pending() {
+        use std::sync::atomic::{AtomicU32, Ordering};
+        use std::sync::{Arc, Mutex};
+        use tauri::async_runtime::TokioRuntime;
+
+        let rt = TokioRuntime::new().expect("create test runtime");
+
+        rt.block_on(async {
+            let heartbeat = Arc::new(AtomicU32::new(0));
+
+            // Channel: heartbeat notifies after ticking.
+            let (tick_tx, mut tick_rx) = tauri::async_runtime::channel::<()>(1);
+
+            // Channel: callback-ready signal from the picker closure.
+            let (ready_tx, mut ready_rx) = tauri::async_runtime::channel::<()>(1);
+
+            // Capture the callback that `await_native_path_dialog` gives us.
+            let cb_cell: Arc<Mutex<Option<NativePathDialogCallback<Option<String>>>>> =
+                Arc::new(Mutex::new(None));
+            let cc = cb_cell.clone();
+
+            // Spawn the picker helper — it will be pending until the
+            // captured callback is invoked.
+            let picker_handle = rt.spawn(async move {
+                await_native_path_dialog(
+                    move |cb| {
+                        *cc.lock().unwrap() = Some(cb);
+                        let _ = ready_tx.try_send(());
+                    },
+                    "folder picker",
+                )
+                .await
+            });
+
+            // Wait until the callback is stored before spawning the
+            // heartbeat — avoids a race where the heartbeat signals
+            // before the picker task has executed the closure.
+            ready_rx.recv().await.expect("callback store must notify");
+
+            // Heartbeat task: ticks once, notifies, then terminates.
+            {
+                let hb = heartbeat.clone();
+                rt.spawn(async move {
+                    hb.fetch_add(1, Ordering::SeqCst);
+                    let _ = tick_tx.send(()).await;
+                });
+            }
+
+            // Wait for the heartbeat to tick — deterministically,
+            // without depending on a fixed wall-clock threshold.
+            tick_rx.recv().await.expect("heartbeat must notify");
+
+            let mid_count = heartbeat.load(Ordering::SeqCst);
+            assert!(
+                mid_count >= 1,
+                "heartbeat must progress while picker is pending: \
+                 heartbeat only ticked {mid_count} times (expected ≥ 1)"
+            );
+
+            // Invoke the captured callback — simulate the user picking
+            // a folder.
+            let cb = cb_cell
+                .lock()
+                .unwrap()
+                .take()
+                .expect("callback must be captured by await_native_path_dialog");
+            cb(Ok(Some("/picked/path".to_string())));
+
+            // The picker future should now resolve.
+            let result = picker_handle.await.expect("picker task must not panic");
+
+            assert_eq!(
+                result,
+                Ok(Some("/picked/path".to_string())),
+                "picker must return the selected path"
+            );
+        });
+    }
+
+    /// Distinguishes callback cancellation (Ok(None)) from a dropped
+    /// callback (channel closed without invoking), and verifies a PathBuf
+    /// payload round-trips correctly.  The test exercises every resolution
+    /// path of [`await_native_path_dialog`] in one compact function.
+    #[test]
+    #[cfg(desktop)]
+    fn await_native_path_dialog_callback_cancellation_vs_drop() {
+        use tauri::async_runtime::TokioRuntime;
+
+        let rt = TokioRuntime::new().expect("create test runtime");
+
+        rt.block_on(async {
+            // 1. Callback returns cancellation — the channel carries Ok(None).
+            let result = await_native_path_dialog(
+                |cb: NativePathDialogCallback<Option<PathBuf>>| {
+                    cb(Ok(None));
+                },
+                "save dialog",
+            )
+            .await;
+            assert_eq!(
+                result,
+                Ok(None),
+                "Ok(None) callback payload must surface as Ok(None)"
+            );
+
+            // 2. Callback is dropped without invoking — the channel send-
+            //    half is dropped, so rx.recv().await returns None and the
+            //    helper returns an Err mentioning "dropped".
+            let result = await_native_path_dialog(
+                |_cb: NativePathDialogCallback<Option<PathBuf>>| {
+                    // drop the callback without sending
+                },
+                "save dialog",
+            )
+            .await;
+            assert!(
+                result.is_err(),
+                "dropped callback must produce Err, got {result:?}"
+            );
+            let err = result.unwrap_err();
+            assert!(
+                err.contains("dropped without completing"),
+                "dropped callback error must mention 'dropped', got: {err}"
+            );
+
+            // 3. Successful PathBuf round-trip — the payload survives
+            //    the channel unmodified.
+            let result = await_native_path_dialog(
+                |cb: NativePathDialogCallback<Option<PathBuf>>| {
+                    cb(Ok(Some(PathBuf::from("/export/data.json"))));
+                },
+                "save dialog",
+            )
+            .await;
+            assert_eq!(
+                result,
+                Ok(Some(PathBuf::from("/export/data.json"))),
+                "PathBuf payload must round-trip through the bridge unchanged"
+            );
+        });
+    }
+}
+
+// ── Save export regression tests ──────────────────────────────────────────────
+// Tests for the extracted `write_selected_export` helper that encapsulates
+// the "write contents to user-chosen path" logic independent of the dialog.
+
+#[cfg(test)]
+mod save_export_tests {
+    use super::*;
+
+    #[test]
+    fn selected_path_writes_exact_bytes_and_returns_path() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let file_path = dir.path().join("export.json");
+        let contents = "{\"version\":1}";
+
+        let result = write_selected_export(Some(file_path.clone()), contents);
+        assert!(
+            result.is_ok(),
+            "write must succeed for valid path: {result:?}"
+        );
+        let returned = result.unwrap();
+        assert!(
+            returned.is_some(),
+            "must return Some(path) when a path is selected"
+        );
+
+        let written = std::fs::read_to_string(&file_path).expect("file must exist after write");
+        assert_eq!(written, contents, "file must contain exact bytes");
+    }
+
+    #[test]
+    fn cancellation_returns_none_without_writing() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let original_file_count = std::fs::read_dir(dir.path()).expect("read dir").count();
+
+        let result = write_selected_export::<PathBuf>(None, "should not be written");
+        assert!(
+            result.is_ok(),
+            "cancellation must not produce an error: {result:?}"
+        );
+        assert_eq!(result.unwrap(), None, "cancellation must return None");
+
+        let after_file_count = std::fs::read_dir(dir.path()).expect("read dir").count();
+        assert_eq!(
+            after_file_count, original_file_count,
+            "no file must be created on cancellation"
+        );
+    }
+
+    /// Non-UTF-8 paths must be rejected before any I/O.  The helper must
+    /// never call `std::fs::write` with a non-UTF-8 path and must return a
+    /// descriptive error.
+    #[test]
+    #[cfg(unix)]
+    fn non_utf8_path_rejected_before_write() {
+        use std::os::unix::ffi::OsStrExt;
+
+        let dir = tempfile::tempdir().expect("tempdir");
+        // 0xC3 is a UTF-8 lead byte; 0x28 is not a valid continuation byte.
+        let non_utf8_name = std::ffi::OsStr::from_bytes(b"export\xc3\x28.json");
+        let file_path = dir.path().join(non_utf8_name);
+
+        let result = write_selected_export(Some(file_path.clone()), "data");
+        assert!(
+            result.is_err(),
+            "non-UTF-8 path must be rejected: got {result:?}"
+        );
+        let err = result.unwrap_err();
+        assert!(
+            err.to_lowercase().contains("utf-8"),
+            "error must mention UTF-8: {err}"
+        );
+        assert!(
+            !file_path.exists(),
+            "no file must be written for non-UTF-8 path"
+        );
+    }
+
+    #[test]
+    fn write_error_contains_selected_path_and_underlying_cause() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        // A directory is not a writable file path — write must fail.
+        let result = write_selected_export(Some(dir.path().to_path_buf()), "data");
+        match result {
+            Err(e) => {
+                let path_str = dir.path().to_string_lossy();
+                assert!(
+                    e.contains(&*path_str),
+                    "error must contain selected path \"{path_str}\": got \"{e}\""
+                );
+                // The underlying OS error on most platforms will be something like
+                // "Is a directory" or "Access is denied".  Verify some error text
+                // is present beyond just the path.
+                let after_path = &e[e.find(&*path_str).unwrap_or(0) + path_str.len()..];
+                assert!(
+                    !after_path.trim().is_empty(),
+                    "error must contain underlying cause after the path: got \"{e}\""
+                );
+            }
+            Ok(v) => panic!("expected Err, got Ok({v:?})"),
         }
     }
 }
