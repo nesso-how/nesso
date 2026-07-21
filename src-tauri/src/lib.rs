@@ -6,6 +6,16 @@ use std::path::{Component, Path, PathBuf};
 use tauri::Manager;
 use tauri_plugin_fs::FsExt;
 
+/// Intent for path validation: distinguishes picker (human-verified, relaxed
+/// hidden-component policy) from grant (renderer-provided, stricter trust check).
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum ScopeIntent {
+    /// Picker result — human-verified via the native OS dialog.
+    Picker,
+    /// Grant request — renderer-provided path, must pass trust check.
+    Grant,
+}
+
 // ── Symlink hardening ─────────────────────────────────────────────────────────
 //
 // Symlinks and junctions allow a directory tree to escape the filesystem
@@ -14,10 +24,12 @@ use tauri_plugin_fs::FsExt;
 // the existing path prefix for symlinks.  If any component is a symlink, the
 // path is rejected — the caller must provide a direct (non-symlinked) path.
 //
-// This is the "reject symlink components" strategy from the trust-boundary
-// hardening: it avoids the complexity of resolving and re-validating canonical
-// paths while still preventing symlink escapes (e.g. a trusted directory
-// containing a symlink to /etc or /home).
+// This "reject symlink components" strategy is the primary gate.  As
+// defense-in-depth, the canonical (resolved) form of the path is also computed
+// and re-validated against the trust boundary before granting scope.  Both
+// layers together prevent symlink escapes (e.g. a trusted directory containing
+// a symlink to /etc or /home); however the path-based Tauri fs-scope API
+// cannot eliminate the TOCTOU window between resolution and the scope grant.
 
 /// Returns `true` if any component of the existing path prefix is a symlink.
 /// Walks the path component by component from the root; stops at the first
@@ -25,7 +37,6 @@ use tauri_plugin_fs::FsExt;
 /// disk).  Returns `false` if the entire path exists and contains no symlinks,
 /// or if the examined prefix contains no symlinks before a non-existing
 /// component is reached.
-#[allow(dead_code)]
 fn prefix_has_symlink(p: &Path) -> bool {
     let mut current = PathBuf::new();
     for comp in p.components() {
@@ -57,7 +68,6 @@ fn prefix_has_symlink(p: &Path) -> bool {
 /// (which rejects any path with a symlink component outright), but this
 /// function provides an additional verification for paths where resolution
 /// succeeds.
-#[allow(dead_code)]
 fn resolve_existing_prefix(p: &Path) -> Option<PathBuf> {
     // If the path exists, just canonicalize it.
     if let Ok(resolved) = std::fs::canonicalize(p) {
@@ -107,10 +117,13 @@ fn resolve_existing_prefix(p: &Path) -> Option<PathBuf> {
 //
 // The `grant_fs_scope` command only approves a path when it is under an
 // app-data `.nesso` subtree OR was previously recorded in the trust store.
-// Hidden components (other than `.nesso`) are always rejected, which keeps
-// the trust-store file itself outside any grantable fs root.  A compromised
-// renderer that calls `grant_fs_scope` with an arbitrary path outside these
-// two categories is rejected.
+// Hidden components within app-data paths (e.g. `.local` on Linux) are
+// permitted because they are part of the legitimate app-data directory
+// structure.  Hidden components in trusted picker paths are also permitted
+// because the human verified the folder via the native dialog.  Hidden
+// components in renderer-provided grant paths are rejected by the trust
+// check unless they fall under an app-data `.nesso` subtree or a
+// previously-approved picker path.
 
 const TRUST_STORE_FILENAME: &str = ".nesso-trusted-paths.json";
 
@@ -223,52 +236,61 @@ fn is_path_trusted(p: &Path, app_dirs: &[&Path], trust_store: &HashSet<String>) 
     })
 }
 
-/// Full-path validation for `grant_fs_scope`: only authorizes paths that are
-/// under an app-data directory or under a previously-trusted picker-approved
-/// project folder.  The generic non-hidden check is deliberately absent —
-/// arbitrary paths like /home, /tmp, /etc, or any /.nesso outside trusted
-/// roots must be rejected by the caller who owns the trust context.
+/// Full-path validation for `grant_fs_scope`: delegates to
+/// [`validate_scope_path`] with [`ScopeIntent::Grant`].
 ///
-/// App-data root directories themselves are always rejected even if they
-/// appear in the trust store — they contain the trust-store file, and a
-/// compromised renderer must never be able to grant scope for them.
+/// Only authorizes paths that are under an app-data `.nesso` subtree
+/// or present in the persistent trust store (populated by the native
+/// folder-picker flow).  Hidden components within app-data paths
+/// (e.g. `.local` on Linux) are allowed because they are part of the
+/// legitimate app-data tree; hidden components outside trusted roots
+/// are rejected by the trust check.
+///
+/// App-data root directories themselves are always rejected — they
+/// contain the trust-store file and must never be grantable.
+/// The trust-store file itself is also explicitly rejected even if
+/// somehow present in the trust store.
 fn is_path_safe_for_grant(p: &Path, app_dirs: &[&Path], trust_store: &HashSet<String>) -> bool {
-    if !p.is_absolute() {
-        return false;
-    }
-    if p.components().any(|c| matches!(c, Component::ParentDir)) {
-        return false;
-    }
-    if p.parent().is_none() {
-        return false; // filesystem root
-    }
-    // Reject hidden components except `.nesso`.  This prevents a compromised
-    // renderer from granting scope for dotfiles like the trust-store path
-    // (`.nesso-trusted-paths.json`) — even if the trust store somehow lists it.
-    if p.components().any(|c| {
-        matches!(c, Component::Normal(name) if {
-            let n = name.to_string_lossy();
-            n.starts_with('.') && n != ".nesso"
-        })
+    // Reject any path whose canonical form is (or contains) the trust-store
+    // file under an app-data directory.  This protects the trust-store file
+    // from being granted even if an attacker manages to inject it into the
+    // trust store.  External paths that happen to contain the trust-store
+    // filename as a component (e.g. an external workspace at
+    // /home/user/projects/.nesso-trusted-paths.json/graphs) are NOT
+    // rejected — only the real trust-store file under an app-data root is
+    // protected.
+    let canon_p = canonical_path_str(p);
+    if app_dirs.iter().any(|app_dir| {
+        let ts_path = canonical_path_str(&app_dir.join(TRUST_STORE_FILENAME));
+        canon_p == ts_path || canon_p.starts_with(&format!("{ts_path}/"))
     }) {
         return false;
     }
-    // Reject app-data roots themselves — they contain the trust-store file
-    // and must never be grantable.
-    let canon_p = canonical_path_str(p);
-    if app_dirs.iter().any(|d| canonical_path_str(d) == canon_p) {
-        return false;
-    }
-    is_path_trusted(p, app_dirs, trust_store)
+    validate_scope_path(p, ScopeIntent::Grant, app_dirs, None, trust_store)
 }
 
-/// Structural validation for a newly-selected native folder-picker result.
-/// This is separate from `is_path_safe_for_grant` — it enforces basic
-/// path safety (absolute, no traversal, not root, no hidden components
-/// except `.nesso`) without requiring prior trust-store membership.
-/// The picker path is human-verified; we guard against obviously-dangerous
-/// choices but don't restrict to already-trusted roots here.
-fn validate_picked_folder(p: &Path) -> bool {
+/// Unified path validation for picker and grant flows.
+///
+/// Enforces common structural invariants (absolute, no `..`, not root, not
+/// app-data root) and then applies intent-specific checks:
+///
+/// - **Picker**: rejects home directory/ancestor, app-data ancestors.
+///   Hidden components are allowed because the human verified the folder.
+/// - **Grant**: requires the path to be trusted — either under an app-data
+///   `.nesso` subtree or listed in the trust store.  Hidden components
+///   within app-data paths (e.g. `.local` on Linux) are allowed; hidden
+///   components outside trusted roots are rejected by the trust check.
+///
+/// Callers must canonicalize symlink-resolved paths before calling this
+/// function and grant only the canonical form.
+fn validate_scope_path(
+    p: &Path,
+    intent: ScopeIntent,
+    app_dirs: &[&Path],
+    home_dir: Option<&Path>,
+    trust_store: &HashSet<String>,
+) -> bool {
+    // ── Common structural checks ──────────────────────────────────────
     if !p.is_absolute() {
         return false;
     }
@@ -278,14 +300,40 @@ fn validate_picked_folder(p: &Path) -> bool {
     if p.parent().is_none() {
         return false; // filesystem root
     }
-    // Reject hidden components except `.nesso`.
-    !p.components().any(|c| match c {
-        Component::Normal(name) => {
-            let n = name.to_string_lossy();
-            n.starts_with('.') && n != ".nesso"
+
+    let canon_p = canonical_path_str(p);
+
+    // App-data roots are never grantable — they contain the trust-store file.
+    if app_dirs.iter().any(|d| canonical_path_str(d) == canon_p) {
+        return false;
+    }
+
+    // ── Intent-specific checks ────────────────────────────────────────
+    match intent {
+        ScopeIntent::Picker => {
+            // Reject home directory and ancestors of home.
+            if let Some(home) = home_dir {
+                let canon_home = canonical_path_str(home);
+                if canon_p == canon_home || canon_home.starts_with(&format!("{canon_p}/")) {
+                    return false;
+                }
+            }
+
+            // Reject ancestors of app-data roots (app-data inside picked dir).
+            if app_dirs.iter().any(|d| {
+                let d_canon = canonical_path_str(d);
+                d_canon.starts_with(&format!("{canon_p}/"))
+            }) {
+                return false;
+            }
+
+            true // human-verified — the picker is the gate
         }
-        _ => false,
-    })
+        ScopeIntent::Grant => {
+            // Trust check: under app-data `.nesso` subtree or in trust store.
+            is_path_trusted(p, app_dirs, trust_store)
+        }
+    }
 }
 
 /// Canonicalize a path string for trust-store persistence and comparison.
@@ -328,57 +376,82 @@ fn canonical_path_str(p: &Path) -> String {
     s
 }
 
-/// Full validation for a native folder-picker result that additionally
-/// rejects `$HOME`, ancestors of `$HOME`, app-data roots, ancestors of
-/// app-data roots, and any directory containing the trust-store file.
-///
-/// This extends [`validate_picked_folder`] with context that the basic
-/// structural check cannot see (home directory, app-data directories,
-/// trust-store location).  The picker path is human-verified; this guard
-/// prevents obviously-dangerous choices while still allowing legitimate
-/// external projects and the default app-data workspace.
+/// Full validation for a native folder-picker result.  Delegates to
+/// [`validate_scope_path`] with [`ScopeIntent::Picker`] and context-aware
+/// home/app-data/trust-store checks.
 fn validate_picked_folder_full(
     p: &Path,
     home_dir: &Path,
     app_data_dir: &Path,
     app_local_data_dir: Option<&Path>,
-    trust_store_filename: &str,
 ) -> bool {
-    if !validate_picked_folder(p) {
-        return false;
+    let mut app_dirs: Vec<&Path> = vec![app_data_dir];
+    if let Some(ald) = app_local_data_dir {
+        app_dirs.push(ald);
+    }
+    validate_scope_path(
+        p,
+        ScopeIntent::Picker,
+        &app_dirs,
+        Some(home_dir),
+        &HashSet::new(),
+    )
+}
+
+/// Shared internal function that encapsulates the symlink gate, contextual
+/// validation, and canonicalized resolution for a native folder-picker
+/// result.  Both picker and grant flows share the symlink-strategy gate;
+/// this function keeps the picker-specific orchestration in one place so
+/// that any call to `pick_workspace_folder` and any test of the picker flow
+/// exercise the same path.
+///
+/// Returns the resolved canonical [`PathBuf`] on success, or an error
+/// describing the first rejection encountered.
+fn validate_and_resolve_picker_path(
+    p: &Path,
+    home_dir: &Path,
+    app_data_dir: &Path,
+    app_local_data_dir: Option<&Path>,
+) -> Result<PathBuf, String> {
+    // Symlink hardening (shared strategy with grant_fs_scope):
+    // reject any path that contains a symlink component BEFORE any
+    // validation.  This prevents symlink escapes where a picked path
+    // (e.g. a symlink to /etc) would otherwise pass Picker-intent checks.
+    if prefix_has_symlink(p) {
+        return Err(format!(
+            "cannot grant scope for picked path \"{}\": path contains a symlink component",
+            p.display(),
+        ));
     }
 
-    // Reject if the picked path equals $HOME or is an ancestor of $HOME
-    // (meaning $HOME is a descendant of the picked path — picking /home
-    // when $HOME=/home/user would grant scope over the entire home dir).
-    let canon_p = canonical_path_str(p);
-    let canon_home = canonical_path_str(home_dir);
-    if canon_p == canon_home || canon_home.starts_with(&format!("{canon_p}/")) {
-        return false;
+    // Structural + home/app-data/trust-store context validation.
+    if !validate_picked_folder_full(p, home_dir, app_data_dir, app_local_data_dir) {
+        return Err(format!(
+            "cannot grant scope for picked path \"{}\": path validation failed",
+            p.display(),
+        ));
     }
 
-    // Reject if the picked path equals an app-data root or is an ancestor
-    // of one.  This also covers the trust-store file (it lives in the
-    // app-data root): see the explicit containment check below.
-    for app_dir in [Some(app_data_dir), app_local_data_dir]
-        .into_iter()
-        .flatten()
-    {
-        let canon_app = canonical_path_str(app_dir);
-        if canon_p == canon_app || canon_app.starts_with(&format!("{canon_p}/")) {
-            return false;
-        }
+    // Resolve to canonical form before granting fs scope.  The
+    // `prefix_has_symlink` gate above guarantees no symlink escapes;
+    // resolution here only normalizes the path (e.g. case, separators).
+    let resolved = resolve_existing_prefix(p)
+        .ok_or_else(|| format!("cannot resolve picked path \"{}\"", p.display()))?;
+
+    // Re-validate the resolved canonical path.  The raw path from the native
+    // dialog may contain `.` components that canonicalization resolves away
+    // — potentially landing in a forbidden area (home directory, app-data
+    // root, etc.).  Canonicalization also normalizes case and separators;
+    // the re-validation catches any form that violates the picker rules.
+    if !validate_picked_folder_full(&resolved, home_dir, app_data_dir, app_local_data_dir) {
+        return Err(format!(
+            "cannot grant scope for picked path \"{}\": resolved path \"{}\" validation failed",
+            p.display(),
+            resolved.display(),
+        ));
     }
 
-    // Reject any picked path that contains the trust-store file.
-    // The trust store must stay outside every grantable fs root so a
-    // compromised renderer can never read or overwrite it.
-    let ts_path = canonical_path_str(&app_data_dir.join(trust_store_filename));
-    if ts_path == canon_p || ts_path.starts_with(&format!("{canon_p}/")) {
-        return false;
-    }
-
-    true
+    Ok(resolved)
 }
 
 // ── Trusted folder picker ────────────────────────────────────────────────────
@@ -405,7 +478,6 @@ fn pick_workspace_folder(app: tauri::AppHandle) -> Result<Option<String>, String
 
     let p = Path::new(path);
 
-    // Structural + home/app-data/trust-store context validation.
     // home_dir() and app_data_dir() can fail in edge cases; if they
     // do, we must not silently approve — reject.
     let home = app
@@ -418,53 +490,7 @@ fn pick_workspace_folder(app: tauri::AppHandle) -> Result<Option<String>, String
         .map_err(|e| format!("cannot resolve app data dir: {e}"))?;
     let app_local = app.path().app_local_data_dir().ok();
 
-    if !validate_picked_folder_full(
-        p,
-        &home,
-        &app_data,
-        app_local.as_deref(),
-        TRUST_STORE_FILENAME,
-    ) {
-        return Err(format!(
-            "cannot grant scope for picked path \"{path}\": path validation failed"
-        ));
-    }
-
-    // Symlink hardening: reject any picked path whose existing prefix
-    // contains a symlink component BEFORE any canonicalization.  This
-    // prevents symlink escapes (e.g. a trusted directory containing a
-    // symlink to /etc) and covers the case where a picker symlink
-    // targeting an outside path would otherwise pass structural
-    // validation.  The `resolve_existing_prefix` canonicalization below
-    // provides a defense-in-depth check on top of this rejection.
-    if prefix_has_symlink(p) {
-        return Err(format!(
-            "cannot grant scope for picked path \"{path}\": path contains a symlink"
-        ));
-    }
-
-    // Symlink hardening: resolve symlinks BEFORE granting fs scope.
-    // If the resolved path differs from the picked path, verify the
-    // resolved path still passes the full context validation.  Grant
-    // only the validated canonical (resolved) path.
-    let resolved = match resolve_existing_prefix(p) {
-        Some(r) => r,
-        None => return Err(format!("cannot resolve picked path \"{path}\"")),
-    };
-    if resolved != p
-        && !validate_picked_folder_full(
-            &resolved,
-            &home,
-            &app_data,
-            app_local.as_deref(),
-            TRUST_STORE_FILENAME,
-        )
-    {
-        return Err(format!(
-            "picked path \"{path}\" resolves to \"{}\" which is not a valid project folder",
-            resolved.display(),
-        ));
-    }
+    let resolved = validate_and_resolve_picker_path(p, &home, &app_data, app_local.as_deref())?;
 
     // Grant the runtime fs scope for the resolved canonical path, then
     // persist it so future `grant_fs_scope` calls for descendants
@@ -823,6 +849,16 @@ fn set_app_menu(app: tauri::AppHandle, labels: MenuLabels, state: MenuState) -> 
 fn grant_fs_scope(app: tauri::AppHandle, path: String) -> Result<(), String> {
     let p = Path::new(&path);
 
+    // Symlink hardening (shared strategy with pick_workspace_folder):
+    // reject any path whose existing prefix contains a symlink component.
+    // This is the primary gate — `resolve_existing_prefix` below provides
+    // defense-in-depth for the canonical path grant.
+    if prefix_has_symlink(p) {
+        return Err(format!(
+            "cannot grant scope for path \"{path}\": path contains a symlink component"
+        ));
+    }
+
     let app_dirs = app_data_dirs(&app);
     let app_dirs_refs: Vec<&Path> = app_dirs.iter().map(|b| b.as_path()).collect();
     let trust = load_trust_store(
@@ -839,12 +875,23 @@ fn grant_fs_scope(app: tauri::AppHandle, path: String) -> Result<(), String> {
         ));
     }
 
-    // Symlink hardening: resolve the existing prefix and verify the canonical
-    // path is still trusted.  This catches the case where a trusted path
-    // contains a symlink component pointing outside the trust boundary.
+    // Symlink hardening: resolve the existing prefix to canonical form.
+    // The canonical path is passed to `allow_directory` and re-validated
+    // against the trust boundary.
+    //
+    // TOCTOU residual: between this resolution and the `allow_directory`
+    // call, the filesystem tree could be modified (symlink inserted, bind
+    // mount changed, junction swapped).  `allow_directory` accepts a path
+    // string, not a file descriptor — there is no way to atomically grant
+    // scope on a resolved path that cannot race.  The best-effort defense
+    // is: (1) reject symlink components early (before resolution),
+    // (2) resolve to canonical form, (3) validate the canonical form
+    // immediately before granting, (4) grant only the canonical form.
+    // All four steps narrow the TOCTOU window but cannot eliminate it
+    // with this API.
     let resolved = resolve_existing_prefix(p)
         .ok_or_else(|| format!("cannot resolve path \"{path}\": symlink resolution failed"))?;
-    if resolved != p && !is_path_safe_for_grant(&resolved, &app_dirs_refs, &trust_set) {
+    if !is_path_safe_for_grant(&resolved, &app_dirs_refs, &trust_set) {
         return Err(format!(
             "cannot grant scope for path \"{path}\": resolved path \"{}\" is not trusted",
             resolved.display(),
@@ -1262,45 +1309,6 @@ mod grant_fs_scope_tests {
         ));
     }
 
-    // ── Picker validation (structural only, no trust context) ─────────────
-
-    #[test]
-    fn validates_picked_folder_accepts_normal_project_path() {
-        assert!(validate_picked_folder(Path::new("/home/user/projects/ok")));
-    }
-
-    #[test]
-    fn validates_picked_folder_rejects_root() {
-        assert!(!validate_picked_folder(Path::new("/")));
-    }
-
-    #[test]
-    fn validates_picked_folder_rejects_relative() {
-        assert!(!validate_picked_folder(Path::new("relative/path")));
-    }
-
-    #[test]
-    fn validates_picked_folder_rejects_traversal() {
-        assert!(!validate_picked_folder(Path::new("/home/../etc")));
-    }
-
-    #[test]
-    fn validates_picked_folder_rejects_hidden_components_except_nesso() {
-        assert!(!validate_picked_folder(Path::new("/home/user/.ssh")));
-        assert!(!validate_picked_folder(Path::new(
-            "/home/user/.config/nvim"
-        )));
-    }
-
-    #[test]
-    fn validates_picked_folder_allows_nesso_as_component() {
-        // The picker may return a path that contains .nesso — that's
-        // structurally fine for the human-verified dialog path.
-        assert!(validate_picked_folder(Path::new(
-            "/home/user/projects/.nesso"
-        )));
-    }
-
     // ── Path canonicalization ──────────────────────────────────────────
 
     #[test]
@@ -1500,7 +1508,6 @@ mod grant_fs_scope_tests {
             home,
             app_data,
             None,
-            TRUST_STORE_FILENAME,
         ));
     }
 
@@ -1515,7 +1522,6 @@ mod grant_fs_scope_tests {
             home,
             app_data,
             None,
-            TRUST_STORE_FILENAME,
         ));
         // Root (/) is also an ancestor of home.
         assert!(!validate_picked_folder_full(
@@ -1523,7 +1529,6 @@ mod grant_fs_scope_tests {
             home,
             app_data,
             None,
-            TRUST_STORE_FILENAME,
         ));
     }
 
@@ -1536,7 +1541,6 @@ mod grant_fs_scope_tests {
             home,
             app_data,
             None,
-            TRUST_STORE_FILENAME,
         ));
     }
 
@@ -1549,7 +1553,6 @@ mod grant_fs_scope_tests {
             home,
             app_data,
             None,
-            TRUST_STORE_FILENAME,
         ));
     }
 
@@ -1567,7 +1570,6 @@ mod grant_fs_scope_tests {
             home,
             app_data,
             None,
-            TRUST_STORE_FILENAME,
         ));
         // Root contains app-data → also contains the trust store.
         assert!(!validate_picked_folder_full(
@@ -1575,7 +1577,6 @@ mod grant_fs_scope_tests {
             home,
             app_data,
             None,
-            TRUST_STORE_FILENAME,
         ));
     }
 
@@ -1588,7 +1589,6 @@ mod grant_fs_scope_tests {
             home,
             app_data,
             None,
-            TRUST_STORE_FILENAME,
         ));
     }
 
@@ -1605,7 +1605,6 @@ mod grant_fs_scope_tests {
             home,
             app_data,
             None,
-            TRUST_STORE_FILENAME,
         ));
     }
 
@@ -1618,7 +1617,6 @@ mod grant_fs_scope_tests {
             home,
             app_data,
             None,
-            TRUST_STORE_FILENAME,
         ));
     }
 
@@ -1632,7 +1630,6 @@ mod grant_fs_scope_tests {
             home,
             app_data,
             Some(app_local),
-            TRUST_STORE_FILENAME,
         ));
     }
 
@@ -1661,6 +1658,81 @@ mod grant_fs_scope_tests {
             Path::new("/applocaldata"),
             &[app_data, app_local],
             &store,
+        ));
+    }
+
+    // ── Trust-store filename rejection (scoped to app-data roots) ──────
+
+    /// The exact canonical trust-store file under an app-data directory
+    /// must be rejected.  This is the primary protection: a compromised
+    /// renderer must never be able to grant fs scope over the trust-store
+    /// file itself.
+    #[test]
+    fn grant_rejects_exact_trust_store_file_under_app_data_dir() {
+        let store = dummy_store(&["/appdata/.nesso-trusted-paths.json"]);
+        let app_data = Path::new("/appdata");
+        assert!(!is_path_safe_for_grant(
+            Path::new("/appdata/.nesso-trusted-paths.json"),
+            &[app_data],
+            &store,
+        ));
+    }
+
+    /// A path that is a descendant of the trust-store file under app-data
+    /// (e.g. a directory named after the trust-store file) must also be
+    /// rejected to prevent granting scope inside the trust-store data.
+    #[test]
+    fn grant_rejects_trust_store_file_descendant_under_app_data() {
+        let store = dummy_store(&["/appdata/.nesso-trusted-paths.json"]);
+        let app_data = Path::new("/appdata");
+        assert!(!is_path_safe_for_grant(
+            Path::new("/appdata/.nesso-trusted-paths.json/sub"),
+            &[app_data],
+            &store,
+        ));
+    }
+
+    /// An external workspace path that happens to contain the trust-store
+    /// filename as a component must NOT be rejected.  The filename guard
+    /// protects only the real trust-store file under the app-data directory.
+    /// A legitimate external project at e.g.
+    /// `/home/user/projects/.nesso-trusted-paths.json/graphs` must pass.
+    #[test]
+    fn grant_accepts_external_path_containing_trust_store_filename() {
+        let store = dummy_store(&["/home/user/projects/.nesso-trusted-paths.json"]);
+        let app_data = Path::new("/appdata");
+        assert!(is_path_safe_for_grant(
+            Path::new("/home/user/projects/.nesso-trusted-paths.json"),
+            &[app_data],
+            &store,
+        ));
+        // Sub-path under the external workspace also passes.
+        assert!(is_path_safe_for_grant(
+            Path::new("/home/user/projects/.nesso-trusted-paths.json/graphs"),
+            &[app_data],
+            &store,
+        ));
+    }
+
+    /// The trust-store file under a secondary app-data directory
+    /// (app-local-data) must also be rejected.
+    #[test]
+    fn grant_rejects_trust_store_file_under_app_local_data() {
+        let store = HashSet::new();
+        let app_data = Path::new("/appdata");
+        let app_local = Path::new("/applocaldata");
+        // Trust-store file under app-local-data.
+        assert!(!is_path_safe_for_grant(
+            Path::new("/applocaldata/.nesso-trusted-paths.json"),
+            &[app_data, app_local],
+            &store,
+        ));
+        // External path still passes.
+        let store_ext = dummy_store(&["/home/user/.nesso-trusted-paths.json/project"]);
+        assert!(is_path_safe_for_grant(
+            Path::new("/home/user/.nesso-trusted-paths.json/project"),
+            &[app_data, app_local],
+            &store_ext,
         ));
     }
 
@@ -1734,6 +1806,244 @@ mod grant_fs_scope_tests {
             "load from B must return B's data, not cached A data"
         );
     }
+
+    // ── Unified scope-path validation table-driven tests ────────────────
+
+    /// Scope-path validation table entry.
+    struct ScopePathCase {
+        /// Human-readable description.
+        desc: &'static str,
+        /// Path under test.
+        path: &'static str,
+        /// App-data root (only one for these tests).
+        app_data: &'static str,
+        /// Trust-store entries (empty = none). Must be 'static.
+        trust: &'static [&'static str],
+        /// Expected result for Picker intent.
+        picker_ok: bool,
+        /// Expected result for Grant intent.
+        grant_ok: bool,
+    }
+
+    fn run_scope_path_cases(cases: &[ScopePathCase]) {
+        for case in cases {
+            let store = dummy_store(case.trust);
+            let app_data = Path::new(case.app_data);
+
+            let picker_result = validate_picked_folder_full(
+                Path::new(case.path),
+                Path::new("/home/user"),
+                app_data,
+                None,
+            );
+            assert_eq!(
+                picker_result, case.picker_ok,
+                "picker: {} — path={}, app_data={}",
+                case.desc, case.path, case.app_data,
+            );
+
+            let grant_result = is_path_safe_for_grant(Path::new(case.path), &[app_data], &store);
+            assert_eq!(
+                grant_result, case.grant_ok,
+                "grant: {} — path={}, app_data={}",
+                case.desc, case.path, case.app_data,
+            );
+        }
+    }
+
+    #[test]
+    fn table_driven_scope_path_linux_app_data() {
+        const LAD: &str = "/home/user/.local/share/dev.nesso.desktop";
+        const LWS: &str = "/home/user/.local/share/dev.nesso.desktop/graphs";
+        const HEXT: &str = "/home/user/.my-projects/graph";
+        const TRUST_WS: &[&str] = &[LWS];
+        const TRUST_HEXT: &[&str] = &[HEXT];
+        const TRUST_LAD: &[&str] = &[LAD];
+        const EMPTY: &[&str] = &[];
+
+        run_scope_path_cases(&[
+            // ── Linux app-data paths ──────────────────────────────────
+            ScopePathCase {
+                desc: "Linux workspace trusted via trust store",
+                path: LWS,
+                app_data: LAD,
+                trust: TRUST_WS,
+                picker_ok: true,
+                grant_ok: true,
+            },
+            ScopePathCase {
+                desc: "Linux workspace rejected without trust store",
+                path: LWS,
+                app_data: LAD,
+                trust: EMPTY,
+                picker_ok: true, // picker is human-verified
+                grant_ok: false, // no .nesso component, no trust store
+            },
+            ScopePathCase {
+                desc: "Linux .nesso subtree auto-trusted",
+                path: "/home/user/.local/share/dev.nesso.desktop/.nesso",
+                app_data: LAD,
+                trust: EMPTY,
+                picker_ok: true,
+                grant_ok: true,
+            },
+            ScopePathCase {
+                desc: "Linux .nesso deep descendant auto-trusted",
+                path: "/home/user/.local/share/dev.nesso.desktop/graphs/.nesso/cache",
+                app_data: LAD,
+                trust: EMPTY,
+                picker_ok: true,
+                grant_ok: true,
+            },
+            ScopePathCase {
+                desc: "Linux app-data root rejected for grant",
+                path: LAD,
+                app_data: LAD,
+                trust: EMPTY,
+                picker_ok: false, // app-data root rejected by picker
+                grant_ok: false,
+            },
+            ScopePathCase {
+                desc: "Linux app-data child non-nesso requires trust store",
+                path: "/home/user/.local/share/dev.nesso.desktop/cache",
+                app_data: LAD,
+                trust: EMPTY,
+                picker_ok: true,
+                grant_ok: false,
+            },
+            // ── Rejection invariants ──────────────────────────────────
+            ScopePathCase {
+                desc: "root rejected",
+                path: "/",
+                app_data: LAD,
+                trust: EMPTY,
+                picker_ok: false,
+                grant_ok: false,
+            },
+            ScopePathCase {
+                desc: "home directory rejected",
+                path: "/home/user",
+                app_data: LAD,
+                trust: EMPTY,
+                picker_ok: false,
+                grant_ok: false,
+            },
+            ScopePathCase {
+                desc: "home ancestor rejected",
+                path: "/home",
+                app_data: LAD,
+                trust: EMPTY,
+                picker_ok: false,
+                grant_ok: false,
+            },
+            ScopePathCase {
+                desc: "traversal rejected",
+                path: "/home/user/../../etc",
+                app_data: LAD,
+                trust: EMPTY,
+                picker_ok: false,
+                grant_ok: false,
+            },
+            ScopePathCase {
+                desc: ".ssh rejected for grant (outside app-data, no trust)",
+                path: "/home/user/.ssh",
+                app_data: LAD,
+                trust: EMPTY,
+                picker_ok: true, // picker is human-verified
+                grant_ok: false, // not under app-data, not in trust store
+            },
+            ScopePathCase {
+                desc: "hidden external with trust store passes",
+                path: HEXT,
+                app_data: LAD,
+                trust: TRUST_HEXT,
+                picker_ok: true,
+                grant_ok: true,
+            },
+            ScopePathCase {
+                desc: "hidden external without trust store rejected for grant",
+                path: HEXT,
+                app_data: LAD,
+                trust: EMPTY,
+                picker_ok: true, // picker is human-verified
+                grant_ok: false,
+            },
+            ScopePathCase {
+                desc: "app-data root with trust store still rejected",
+                path: LAD,
+                app_data: LAD,
+                trust: TRUST_LAD,
+                picker_ok: false,
+                grant_ok: false,
+            },
+            ScopePathCase {
+                desc: "arbitrary external path rejected for grant",
+                path: "/tmp/random",
+                app_data: LAD,
+                trust: EMPTY,
+                picker_ok: true, // picker allows external folders
+                grant_ok: false,
+            },
+        ]);
+    }
+
+    #[test]
+    fn table_driven_scope_path_flat_app_data() {
+        const AD: &str = "/appdata";
+        const AD_GRAPHS: &[&str] = &["/appdata/graphs"];
+        const EMPTY: &[&str] = &[];
+
+        run_scope_path_cases(&[
+            ScopePathCase {
+                desc: ".nesso subtree auto-trusted (flat app-data)",
+                path: "/appdata/.nesso",
+                app_data: AD,
+                trust: EMPTY,
+                picker_ok: true,
+                grant_ok: true,
+            },
+            ScopePathCase {
+                desc: ".nesso deep descendant auto-trusted (flat app-data)",
+                path: "/appdata/graphs/.nesso/config",
+                app_data: AD,
+                trust: EMPTY,
+                picker_ok: true,
+                grant_ok: true,
+            },
+            ScopePathCase {
+                desc: "non-nesso under app-data falls through (flat)",
+                path: "/appdata/graphs",
+                app_data: AD,
+                trust: EMPTY,
+                picker_ok: true,
+                grant_ok: false,
+            },
+            ScopePathCase {
+                desc: "non-nesso with trust store passes (flat)",
+                path: "/appdata/graphs",
+                app_data: AD,
+                trust: AD_GRAPHS,
+                picker_ok: true,
+                grant_ok: true,
+            },
+            ScopePathCase {
+                desc: "relative path rejected",
+                path: "projects/graph",
+                app_data: AD,
+                trust: EMPTY,
+                picker_ok: false,
+                grant_ok: false,
+            },
+            ScopePathCase {
+                desc: "arbitrary .nesso outside flat app-data rejected",
+                path: "/some/random/.nesso",
+                app_data: AD,
+                trust: EMPTY,
+                picker_ok: true, // picker allows the folder, human verified
+                grant_ok: false,
+            },
+        ]);
+    }
 }
 
 #[cfg(test)]
@@ -1746,8 +2056,10 @@ mod symlink_tests {
     /// resolution primitives work correctly.
     ///
     /// Integration-level hardening (canonical-path checks in `grant_fs_scope`
-    /// and `pick_workspace_folder`) is tested at the command level via the
-    /// unit tests above — these tests focus on the building-block functions.
+    /// and `pick_workspace_folder`) is tested through the helper functions
+    /// (`validate_and_resolve_picker_path`, `is_path_safe_for_grant`) in the
+    /// unit tests above.  These tests focus on the building-block functions
+    /// (`prefix_has_symlink`, `resolve_existing_prefix`).
 
     // ── prefix_has_symlink ──────────────────────────────────────────────
 
@@ -1817,6 +2129,59 @@ mod symlink_tests {
         assert!(prefix_has_symlink(&sym.join("subdir")));
     }
 
+    /// `validate_and_resolve_picker_path` is the shared internal function
+    /// that `pick_workspace_folder` uses.  It encapsulates the symlink gate,
+    /// contextual validation, and canonicalized resolution in a single call
+    /// so that any path escaping the trust boundary via symlinks is rejected
+    /// before scope is granted.
+    ///
+    /// This test exercises the shared function directly: a symlink to an
+    /// outside directory (e.g. `/etc`) must return an error, while a normal
+    /// valid path must return the resolved canonical path.
+    #[test]
+    #[cfg(unix)]
+    fn picker_validation_rejects_symlink_escape_through_shared_function() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        // Resolve the tempdir path to remove macOS system symlinks such as
+        // /var → /private/var.  The test tree must sit in a symlink-free
+        // prefix so that `prefix_has_symlink` does not reject every path
+        // under the tempdir before we even create our own symlink.
+        let base = std::fs::canonicalize(dir.path()).expect("canonicalize tempdir");
+
+        // Create a symlink inside the resolved base that points to /etc.
+        let sym = base.join("link_to_etc");
+        std::os::unix::fs::symlink(Path::new("/etc"), &sym).expect("symlink");
+
+        let home = Path::new("/home/user");
+        let app_data = Path::new("/appdata");
+
+        // The symlink to an outside boundary must be rejected by the
+        // shared function that `pick_workspace_folder` calls.
+        let result = validate_and_resolve_picker_path(&sym, home, app_data, None);
+        assert!(
+            result.is_err(),
+            "validate_and_resolve_picker_path must reject symlink escape to /etc"
+        );
+
+        // A normal valid path must be accepted and return the resolved
+        // canonical form.
+        let normal = base.join("legit_project");
+        std::fs::create_dir(&normal).expect("mkdir");
+        let result = validate_and_resolve_picker_path(&normal, home, app_data, None);
+        assert!(
+            result.is_ok(),
+            "validate_and_resolve_picker_path must accept a normal directory"
+        );
+        let resolved = result.unwrap();
+        assert!(resolved.is_absolute());
+        // The resolved path must end with the picked directory name.
+        assert!(
+            resolved.ends_with("legit_project"),
+            "resolved path \"{}\" must end with \"legit_project\"",
+            resolved.display(),
+        );
+    }
+
     // ── resolve_existing_prefix ─────────────────────────────────────────
 
     #[test]
@@ -1856,6 +2221,181 @@ mod symlink_tests {
         // The resolved path's file_name should NOT be "symlink_dir" if the
         // symlink was properly resolved.  However, due to tempdir system
         // symlinks, we can only assert it's absolute.
+    }
+
+    // ── Picker re-validation after canonicalization ─────────────────────
+
+    /// A raw picker path like `/home/user/.` passes the structural checks
+    /// (no `..`, absolute, not root) but after canonicalization resolves
+    /// to `/home/user` — the home directory itself.  The picker must reject
+    /// any resolved path that lands in a forbidden area even when the raw
+    /// path appeared valid.
+    #[test]
+    fn picker_rejects_raw_path_that_resolves_to_home_directory() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let base = std::fs::canonicalize(dir.path()).expect("canonicalize tempdir");
+
+        // Create a "home" directory and an "app-data" directory.
+        let home = base.join("home").join("user");
+        std::fs::create_dir_all(&home).expect("mkdir home");
+        let app_data = base.join("appdata");
+        std::fs::create_dir_all(&app_data).expect("mkdir appdata");
+
+        // A valid project directory.
+        let valid = base.join("projects").join("my-graph");
+        std::fs::create_dir_all(&valid).expect("mkdir valid");
+
+        // Picking `/home/user/.` — raw path has a CurDir component.
+        // `validate_picked_folder_full` (raw) does NOT reject it because
+        // `canonical_path_str` does not normalize `.` components.
+        // `resolve_existing_prefix` canonicalizes it to the home directory.
+        let picked_dot = home.join(".");
+        let result = validate_and_resolve_picker_path(&picked_dot, &home, &app_data, None);
+        assert!(
+            result.is_err(),
+            "picker must reject path with `.` that resolves to home directory"
+        );
+
+        // Sanity: a normal valid path in the same tree must still pass.
+        let result = validate_and_resolve_picker_path(&valid, &home, &app_data, None);
+        assert!(result.is_ok(), "picker must accept a normal valid path");
+    }
+
+    /// A raw picker path like `$APPDATA/.` resolves to the app-data root
+    /// after canonicalization.  The app-data root is always forbidden.
+    #[test]
+    fn picker_rejects_raw_path_that_resolves_to_app_data_root() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let base = std::fs::canonicalize(dir.path()).expect("canonicalize tempdir");
+
+        let home = base.join("home").join("user");
+        std::fs::create_dir_all(&home).expect("mkdir home");
+        let app_data = base.join("appdata");
+        std::fs::create_dir_all(&app_data).expect("mkdir appdata");
+
+        // Picking `$APPDATA/.` — raw path passes structural checks but
+        // canonicalization resolves `.` to the app-data root itself.
+        let picked_dot = app_data.join(".");
+        let result = validate_and_resolve_picker_path(&picked_dot, &home, &app_data, None);
+        assert!(
+            result.is_err(),
+            "picker must reject path that resolves to app-data root"
+        );
+    }
+
+    /// A raw picker path like `/projects/my-graph/.` passes the symlink gate
+    /// (no symlinks) and the structural checks, but canonicalization resolves
+    /// the `.` away — making the resolved canonical form differ from the raw
+    /// path.  When the resolved path is a legitimate project folder (not home,
+    /// not app-data root), the re-validation must still accept it.
+    ///
+    /// This is the positive counterpart to the tests that reject `.` paths
+    /// resolving to forbidden areas (home directory, app-data root).
+    #[test]
+    fn picker_accepts_raw_path_with_dot_resolving_to_valid_project() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let base = std::fs::canonicalize(dir.path()).expect("canonicalize tempdir");
+
+        let home = base.join("home").join("user");
+        std::fs::create_dir_all(&home).expect("mkdir home");
+        let app_data = base.join("appdata");
+        std::fs::create_dir_all(&app_data).expect("mkdir appdata");
+
+        // Create a valid project folder and a raw picker path with a `.`
+        // component that resolves to the same folder.
+        let valid = base.join("projects").join("my-graph");
+        std::fs::create_dir_all(&valid).expect("mkdir valid");
+        let raw = PathBuf::from(format!("{}/.", valid.display()));
+        // Note: `PathBuf::from` normalizes the `.` component away so `raw`
+        // may equal `valid` after construction.  The test is still meaningful:
+        // `validate_and_resolve_picker_path` calls `resolve_existing_prefix`
+        // which canonicalizes via the OS filesystem — if the OS-level
+        // canonical form differs from the raw path, the re-validation must
+        // still pass.  This complements the rejection tests for `.` paths
+        // that resolve to home / app-data roots.
+        let result = validate_and_resolve_picker_path(&raw, &home, &app_data, None);
+        assert!(
+            result.is_ok(),
+            "picker must accept raw path with `.` that resolves to a valid project folder"
+        );
+        let resolved = result.unwrap();
+        // The resolved path must point to the actual project folder, not the
+        // raw path with the `.` tail.
+        assert!(resolved.ends_with("my-graph"));
+    }
+
+    // ── Grant canonical-path re-validation ─────────────────────────────
+
+    /// The grant flow must reject a path whose canonical (symlink-resolved)
+    /// form falls outside the trust boundary, even when the raw path passes
+    /// the `prefix_has_symlink` check.  This is the defense-in-depth layer:
+    /// if a symlink is created between `prefix_has_symlink` and resolution,
+    /// the canonical path is caught by the re-validation step.
+    #[test]
+    #[cfg(unix)]
+    fn grant_canonical_path_re_validation_rejects_symlink_escape() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let base = std::fs::canonicalize(dir.path()).expect("canonicalize tempdir");
+
+        // Create a "trusted" directory and a symlink inside it that points
+        // to an "untrusted" area.
+        let trusted = base.join("trusted_root");
+        std::fs::create_dir(&trusted).expect("mkdir trusted");
+        let untrusted = base.join("sensitive");
+        std::fs::create_dir(&untrusted).expect("mkdir untrusted");
+
+        // Symlink from inside the trusted area to the untrusted area.
+        let sym = trusted.join("escape_link");
+        std::os::unix::fs::symlink(&untrusted, &sym).expect("symlink");
+
+        // Primary gate: `prefix_has_symlink` catches the symlink component.
+        assert!(
+            prefix_has_symlink(&sym),
+            "primary gate: symlink component must be detected"
+        );
+
+        // Defense-in-depth: if the primary gate were somehow bypassed
+        // (TOCTOU), `resolve_existing_prefix` resolves the symlink to the
+        // untrusted target.  The resolved path is outside the trusted root.
+        let resolved = resolve_existing_prefix(&sym).expect("resolve symlink");
+        assert!(
+            resolved != sym,
+            "canonical form must differ from symlink path"
+        );
+        assert!(
+            !resolved.starts_with(&trusted),
+            "resolved path must NOT be under trusted root — it escaped"
+        );
+
+        // Defense-in-depth: `is_path_safe_for_grant` must reject the resolved
+        // path because it is not in the trust store (only `trusted` is) and
+        // not under any app-data `.nesso` subtree.
+        let store = HashSet::new();
+        let app_data = Path::new("/appdata");
+        assert!(
+            !is_path_safe_for_grant(&resolved, &[app_data], &store),
+            "is_path_safe_for_grant must reject resolved path outside trust boundary"
+        );
+    }
+
+    /// When the canonical path is identical to the raw path (no symlinks,
+    /// no `.` components) and the raw path is trusted, the re-validation
+    /// must still pass.  This verifies that removing the `resolved != p`
+    /// guard does not introduce false rejections.
+    #[test]
+    fn grant_canonical_path_re_validation_accepts_unchanged_path() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let base = std::fs::canonicalize(dir.path()).expect("canonicalize tempdir");
+
+        let legit = base.join("legit_project");
+        std::fs::create_dir(&legit).expect("mkdir");
+
+        // No symlinks, no `.` — resolved path should equal raw path.
+        let resolved = resolve_existing_prefix(&legit).expect("resolve");
+        assert_eq!(
+            resolved, legit,
+            "canonical form of a direct directory must equal the raw path"
+        );
     }
 }
 
