@@ -71,18 +71,20 @@ const TRUST_STORE_FILENAME: &str = ".nesso-trusted-paths.json";
 static TRUST_STORE: std::sync::Mutex<Option<HashMap<String, Vec<String>>>> =
     std::sync::Mutex::new(None);
 
+/// Serializes trust-store modifications so concurrent approvals cannot
+/// race through the read-modify-write cycle and lose entries.
+static TRUST_STORE_MUTATION: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
 fn trust_store_path(app_data: &Path) -> PathBuf {
     app_data.join(TRUST_STORE_FILENAME)
 }
 
 fn load_trust_store(app_data: &Path) -> Vec<String> {
     let key = canonical_path_str(app_data);
-    {
-        let guard = TRUST_STORE.lock().unwrap();
-        if let Some(ref cache) = *guard {
-            if let Some(data) = cache.get(&key) {
-                return data.clone();
-            }
+    let mut guard = TRUST_STORE.lock().unwrap();
+    if let Some(ref cache) = *guard {
+        if let Some(data) = cache.get(&key) {
+            return data.clone();
         }
     }
     let path = trust_store_path(app_data);
@@ -90,7 +92,6 @@ fn load_trust_store(app_data: &Path) -> Vec<String> {
         .ok()
         .and_then(|raw| serde_json::from_str(&raw).ok())
         .unwrap_or_default();
-    let mut guard = TRUST_STORE.lock().unwrap();
     let cache = guard.get_or_insert_with(HashMap::new);
     cache.insert(key, data.clone());
     data
@@ -113,6 +114,9 @@ fn persist_trust_store(app_data: &Path, data: &[String]) -> Result<(), String> {
 }
 
 fn add_to_trust_store(app_data: &Path, approved: &str) -> Result<(), String> {
+    let _guard = TRUST_STORE_MUTATION
+        .lock()
+        .map_err(|e| format!("trust store lock poisoned: {e}"))?;
     let mut data = load_trust_store(app_data);
     let norm = canonical_path_str(Path::new(approved));
     if !data.contains(&norm) {
@@ -266,29 +270,166 @@ fn validate_picked_folder_full(
 
 // ── Trusted folder picker ────────────────────────────────────────────────────
 
+/// Extracted folder-approval helper: validates a picked path, resolves symlinks,
+/// grants fs scope, and persists trust — in that exact order.  Separated from
+/// the Tauri command so it can be tested without a real dialog or runtime.
+///
+/// `selected` is the raw path from the native dialog (`None` = cancelled).
+/// `grant_fn` receives the resolved canonical path for fs-scope grant.
+/// `persist_fn` receives the canonical-path string for trust-store persistence.
+///
+/// Returns `Ok(Some(original_picked_string))` on success, `Ok(None)` on
+/// cancellation, or `Err(...)` when validation or any step fails.
+///
+/// Security invariants enforced before any side effect:
+///   - structural validation (no `..`, absolute, not root, no hidden except `.nesso`)
+///   - full context validation (home/app-data/trust-store boundaries)
+///   - symlink rejection (`prefix_has_symlink`)
+///   - canonical resolution + re-validation when resolved path differs
+///   - grant before persist (atomicity: if grant fails, trust is not persisted)
+fn try_approve_folder<F, G>(
+    selected: Option<&Path>,
+    home_dir: &Path,
+    app_data_dir: &Path,
+    app_local_data_dir: Option<&Path>,
+    trust_store_filename: &str,
+    grant_fn: F,
+    persist_fn: G,
+) -> Result<Option<String>, String>
+where
+    F: FnOnce(&Path) -> Result<(), String>,
+    G: FnOnce(&str) -> Result<(), String>,
+{
+    let Some(path) = selected else {
+        return Ok(None);
+    };
+
+    // Structural + home/app-data/trust-store context validation.
+    if !validate_picked_folder_full(
+        path,
+        home_dir,
+        app_data_dir,
+        app_local_data_dir,
+        trust_store_filename,
+    ) {
+        return Err(format!(
+            "cannot grant scope for picked path \"{}\": path validation failed",
+            path.display(),
+        ));
+    }
+
+    // Symlink hardening: reject any picked path whose existing prefix
+    // contains a symlink component BEFORE any canonicalization.
+    if prefix_has_symlink(path) {
+        return Err(format!(
+            "cannot grant scope for picked path \"{}\": path contains a symlink",
+            path.display(),
+        ));
+    }
+
+    // Symlink hardening: resolve symlinks BEFORE granting fs scope.
+    // If the resolved path differs from the picked path, verify the
+    // resolved path still passes the full context validation.
+    let resolved = resolve_existing_prefix(path)
+        .ok_or_else(|| format!("cannot resolve picked path \"{}\"", path.display()))?;
+    if resolved != path
+        && !validate_picked_folder_full(
+            &resolved,
+            home_dir,
+            app_data_dir,
+            app_local_data_dir,
+            trust_store_filename,
+        )
+    {
+        return Err(format!(
+            "picked path \"{}\" resolves to \"{}\" which is not a valid project folder",
+            path.display(),
+            resolved.display(),
+        ));
+    }
+
+    // Grant the runtime fs scope for the resolved canonical path.
+    grant_fn(&resolved)?;
+
+    // Persist the canonical path so future `grant_fs_scope` calls for
+    // descendants (e.g. `<project>/.nesso`) succeed.  Called only after
+    // grant succeeds to prevent a dangling trust entry.
+    let canonical_str = resolved.to_string_lossy().to_string();
+    persist_fn(&canonical_str)?;
+
+    Ok(Some(path.to_string_lossy().to_string()))
+}
+
+/// Callback invoked by the native folder-picker dialog.
+/// - `Ok(Some(path))` — user picked a folder successfully.
+/// - `Ok(None)`      — user cancelled the dialog.
+/// - `Err(reason)`   — a path-conversion or other internal error occurred.
+#[cfg(desktop)]
+type FolderPickerCallback = Box<dyn FnOnce(Result<Option<String>, String>) + Send>;
+
+/// Bridges a callback-based folder-picker dialog into an async future
+/// using the Tauri async-runtime mpsc channel.
+///
+/// `launch` receives a callback to invoke when the dialog completes.
+/// - `Ok(Some(path))` — user picked a folder.
+/// - `Ok(None)`      — user cancelled the dialog (callback invoked with `Ok(None)`).
+/// - `Err(...)`      — path-conversion failure (callback invoked with `Err(...)`),
+///   or the channel was closed unexpectedly (callback never invoked or the sender
+///   was dropped without sending).
+#[cfg(desktop)]
+async fn await_folder_picker<F>(launch: F) -> Result<Option<String>, String>
+where
+    F: FnOnce(FolderPickerCallback),
+{
+    let (tx, mut rx) = tauri::async_runtime::channel::<Result<Option<String>, String>>(1);
+
+    let cb: FolderPickerCallback = Box::new(move |result: Result<Option<String>, String>| {
+        let _ = tx.try_send(result);
+    });
+
+    launch(cb);
+
+    match rx.recv().await {
+        Some(Ok(Some(path))) => Ok(Some(path)),
+        Some(Ok(None)) => Ok(None),
+        Some(Err(e)) => Err(format!("folder picker failed: {e}")),
+        None => Err("folder picker was dropped without selecting a path".to_string()),
+    }
+}
+
 /// Combines the native OS folder-picker dialog with a fs-scope grant so the
 /// renderer never provides the path for a *new* project folder.  The Rust side
 /// owns the dialog; the returned path is therefore human-verified.
 ///
-/// Returns `null` when the user cancels the dialog.
+/// Uses the callback-based `pick_folder` via [`await_folder_picker`] so the
+/// Tauri runtime stays unblocked while the native dialog is open.  Returns
+/// `null` when the user cancels the dialog.
 #[cfg(desktop)]
 #[tauri::command]
-fn pick_workspace_folder(app: tauri::AppHandle) -> Result<Option<String>, String> {
+async fn pick_workspace_folder(app: tauri::AppHandle) -> Result<Option<String>, String> {
     use tauri_plugin_dialog::DialogExt;
 
-    let selected = app
-        .dialog()
-        .file()
-        .blocking_pick_folder()
-        .map(|p| p.to_string());
+    let selected = await_folder_picker(|cb| {
+        app.dialog()
+            .file()
+            .pick_folder(move |selected_path| match selected_path {
+                None => {
+                    cb(Ok(None));
+                }
+                Some(fp) => match fp.into_path() {
+                    Ok(pb) => {
+                        cb(Ok(Some(pb.to_string_lossy().to_string())));
+                    }
+                    Err(e) => {
+                        cb(Err(format!("failed to convert picked path: {e}")));
+                    }
+                },
+            });
+    })
+    .await?;
 
-    let Some(ref path) = selected else {
-        return Ok(None);
-    };
+    let selected = selected.as_deref().map(Path::new);
 
-    let p = Path::new(path);
-
-    // Structural + home/app-data/trust-store context validation.
     // home_dir() and app_data_dir() can fail in edge cases; if they
     // do, we must not silently approve — reject.
     let home = app
@@ -301,76 +442,33 @@ fn pick_workspace_folder(app: tauri::AppHandle) -> Result<Option<String>, String
         .map_err(|e| format!("cannot resolve app data dir: {e}"))?;
     let app_local = app.path().app_local_data_dir().ok();
 
-    if !validate_picked_folder_full(
-        p,
+    try_approve_folder(
+        selected,
         &home,
         &app_data,
         app_local.as_deref(),
         TRUST_STORE_FILENAME,
-    ) {
-        return Err(format!(
-            "cannot grant scope for picked path \"{path}\": path validation failed"
-        ));
-    }
-
-    // Symlink hardening: reject any picked path whose existing prefix
-    // contains a symlink component BEFORE any canonicalization.  This
-    // prevents symlink escapes (e.g. a trusted directory containing a
-    // symlink to /etc) and covers the case where a picker symlink
-    // targeting an outside path would otherwise pass structural
-    // validation.  The `resolve_existing_prefix` canonicalization below
-    // provides a defense-in-depth check on top of this rejection.
-    if prefix_has_symlink(p) {
-        return Err(format!(
-            "cannot grant scope for picked path \"{path}\": path contains a symlink"
-        ));
-    }
-
-    // Symlink hardening: resolve symlinks BEFORE granting fs scope.
-    // If the resolved path differs from the picked path, verify the
-    // resolved path still passes the full context validation.  Grant
-    // only the validated canonical (resolved) path.
-    let resolved = match resolve_existing_prefix(p) {
-        Some(r) => r,
-        None => return Err(format!("cannot resolve picked path \"{path}\"")),
-    };
-    if resolved != p
-        && !validate_picked_folder_full(
-            &resolved,
-            &home,
-            &app_data,
-            app_local.as_deref(),
-            TRUST_STORE_FILENAME,
-        )
-    {
-        return Err(format!(
-            "picked path \"{path}\" resolves to \"{}\" which is not a valid project folder",
-            resolved.display(),
-        ));
-    }
-
-    // Grant the runtime fs scope for the resolved canonical path, then
-    // persist it so future `grant_fs_scope` calls for descendants
-    // (e.g. `<project>/.nesso`) succeed.
-    app.fs_scope()
-        .allow_directory(&resolved, true)
-        .map_err(|e| e.to_string())?;
-
-    add_to_trust_store(
-        app.path()
-            .app_data_dir()
-            .map_err(|e| e.to_string())?
-            .as_path(),
-        &resolved.to_string_lossy(),
-    )?;
-
-    Ok(selected)
+        |p| {
+            app.fs_scope()
+                .allow_directory(p, true)
+                .map_err(|e| e.to_string())
+        },
+        |canon| {
+            add_to_trust_store(
+                app.path()
+                    .app_data_dir()
+                    .map_err(|e| e.to_string())?
+                    .as_path(),
+                canon,
+            )
+        },
+    )
 }
 
 /// Non-desktop stub: `pick_workspace_folder` returns `null` (no dialog available).
 #[cfg(not(desktop))]
 #[tauri::command]
-fn pick_workspace_folder(_app: tauri::AppHandle) -> Result<Option<String>, String> {
+async fn pick_workspace_folder(_app: tauri::AppHandle) -> Result<Option<String>, String> {
     Ok(None)
 }
 
@@ -1148,6 +1246,47 @@ mod grant_fs_scope_tests {
             "cache must be keyed by app-data path"
         );
     }
+
+    #[test]
+    fn concurrent_trust_store_updates_do_not_lose_entries() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let app_data = dir.path();
+        // Reset the global cache so every thread loads fresh from disk.
+        {
+            let mut guard = TRUST_STORE.lock().unwrap();
+            *guard = None;
+        }
+
+        let entries: Vec<String> = (0..10)
+            .map(|i| format!("/home/user/projects/project-{i}"))
+            .collect();
+
+        std::thread::scope(|s| {
+            for entry in &entries {
+                let entry = entry.clone();
+                let app_data = app_data.to_path_buf();
+                s.spawn(move || {
+                    add_to_trust_store(&app_data, &entry).expect("concurrent add must succeed");
+                });
+            }
+        });
+
+        // Reset cache to force a re-read from disk.
+        {
+            let mut guard = TRUST_STORE.lock().unwrap();
+            *guard = None;
+        }
+
+        let stored = load_trust_store(app_data);
+        for entry in &entries {
+            let norm = canonical_path_str(Path::new(entry));
+            assert!(
+                stored.contains(&norm),
+                "entry {entry} must be in trust store after concurrent adds"
+            );
+        }
+        assert_eq!(stored.len(), entries.len(), "no duplicate entries expected");
+    }
 }
 
 #[cfg(test)]
@@ -1327,6 +1466,272 @@ mod fs_capability_tests {
                 "permission `{id}` is part of fs:default and must be absent"
             );
         }
+    }
+}
+
+// ── Picker approval regression tests ─────────────────────────────────────────
+// Tests for the extracted `try_approve_folder` helper that encapsulates the
+// post-dialog validation → grant → persist chain.  Each test models a
+// scenario from the issue #141 approval flow without a real Tauri runtime.
+
+#[cfg(test)]
+mod picker_approval_tests {
+    use super::*;
+
+    /// Create a temporary directory whose name does NOT start with `.`,
+    /// so it passes `has_valid_structure` (hidden-component rejection).
+    /// Also resolves symlinks in the system temp-dir prefix (on macOS
+    /// `/var` and `/tmp` are symlinks) so `prefix_has_symlink` doesn't
+    /// reject the test path.
+    fn temp_dir_no_dot() -> tempfile::TempDir {
+        let sys_tmp = std::env::temp_dir();
+        let base = resolve_existing_prefix(&sys_tmp).unwrap_or(sys_tmp);
+        tempfile::Builder::new()
+            .prefix("nesso-test-")
+            .tempdir_in(&base)
+            .expect("tempdir")
+    }
+
+    #[test]
+    fn successful_selection_validates_grants_persists_in_order() {
+        let dir = temp_dir_no_dot();
+        let home = dir.path().join("home").join("user");
+        std::fs::create_dir_all(&home).expect("mkdir home");
+        let project = home.join("projects").join("my-graph");
+        std::fs::create_dir_all(&project).expect("mkdir project");
+        let app_data = dir.path().join("appdata");
+        std::fs::create_dir_all(&app_data).expect("mkdir appdata");
+
+        // Use RefCell so both closures can record their call order through
+        // interior mutability without conflicting mutable borrows.
+        let calls: std::cell::RefCell<Vec<&str>> = std::cell::RefCell::new(Vec::new());
+
+        let result = try_approve_folder(
+            Some(project.as_path()),
+            &home,
+            &app_data,
+            None,
+            TRUST_STORE_FILENAME,
+            |p: &Path| {
+                calls.borrow_mut().push("grant");
+                assert!(p.is_absolute(), "grant must receive canonical path");
+                Ok(())
+            },
+            |s: &str| {
+                calls.borrow_mut().push("persist");
+                assert!(!s.is_empty(), "persist must receive canonical string");
+                Ok(())
+            },
+        );
+
+        assert!(
+            result.is_ok(),
+            "approval must succeed for valid path: {result:?}"
+        );
+        let recorded = calls.borrow();
+        assert!(recorded.contains(&"grant"), "grant must have been called");
+        assert!(
+            recorded.contains(&"persist"),
+            "persist must have been called"
+        );
+        assert_eq!(
+            *recorded,
+            vec!["grant", "persist"],
+            "grant must be called before persist"
+        );
+    }
+
+    #[test]
+    fn cancellation_has_no_side_effects() {
+        let home = Path::new("/home/user");
+        let app_data = Path::new("/appdata");
+
+        let grant_called = std::sync::atomic::AtomicBool::new(false);
+        let persist_called = std::sync::atomic::AtomicBool::new(false);
+
+        let result = try_approve_folder(
+            None,
+            home,
+            app_data,
+            None,
+            TRUST_STORE_FILENAME,
+            |_p: &Path| {
+                grant_called.store(true, std::sync::atomic::Ordering::SeqCst);
+                Ok(())
+            },
+            |_s: &str| {
+                persist_called.store(true, std::sync::atomic::Ordering::SeqCst);
+                Ok(())
+            },
+        );
+
+        assert!(result.is_ok(), "cancellation must not produce an error");
+        assert_eq!(result.unwrap(), None, "cancellation must return None");
+        assert!(
+            !grant_called.load(std::sync::atomic::Ordering::SeqCst),
+            "grant must NOT be called on cancellation"
+        );
+        assert!(
+            !persist_called.load(std::sync::atomic::Ordering::SeqCst),
+            "persist must NOT be called on cancellation"
+        );
+    }
+
+    #[test]
+    fn invalid_selection_has_no_side_effects() {
+        let home = Path::new("/home/user");
+        let app_data = Path::new("/appdata");
+
+        let grant_called = std::sync::atomic::AtomicBool::new(false);
+        let persist_called = std::sync::atomic::AtomicBool::new(false);
+
+        // Root path is invalid — `has_valid_structure` rejects paths with no parent.
+        let result = try_approve_folder(
+            Some(Path::new("/")),
+            home,
+            app_data,
+            None,
+            TRUST_STORE_FILENAME,
+            |_p: &Path| {
+                grant_called.store(true, std::sync::atomic::Ordering::SeqCst);
+                Ok(())
+            },
+            |_s: &str| {
+                persist_called.store(true, std::sync::atomic::Ordering::SeqCst);
+                Ok(())
+            },
+        );
+
+        assert!(
+            result.is_err(),
+            "approval must fail for invalid (root) path"
+        );
+        assert!(
+            !grant_called.load(std::sync::atomic::Ordering::SeqCst),
+            "grant must NOT be called when validation fails"
+        );
+        assert!(
+            !persist_called.load(std::sync::atomic::Ordering::SeqCst),
+            "persist must NOT be called when validation fails"
+        );
+    }
+
+    #[test]
+    fn scope_grant_failure_does_not_persist_trust() {
+        let dir = temp_dir_no_dot();
+        let home = dir.path().join("home").join("user");
+        std::fs::create_dir_all(&home).expect("mkdir home");
+        let project = home.join("projects").join("my-graph");
+        std::fs::create_dir_all(&project).expect("mkdir project");
+        let app_data = dir.path().join("appdata");
+        std::fs::create_dir_all(&app_data).expect("mkdir appdata");
+
+        let persist_called = std::sync::atomic::AtomicBool::new(false);
+
+        let result = try_approve_folder(
+            Some(project.as_path()),
+            &home,
+            &app_data,
+            None,
+            TRUST_STORE_FILENAME,
+            |_p: &Path| Err("simulated scope grant failure".to_string()),
+            |_s: &str| {
+                persist_called.store(true, std::sync::atomic::Ordering::SeqCst);
+                Ok(())
+            },
+        );
+
+        assert!(
+            result.is_err(),
+            "approval must fail when scope grant fails: {result:?}"
+        );
+        assert!(
+            !persist_called.load(std::sync::atomic::Ordering::SeqCst),
+            "persist must NOT be called when scope grant fails"
+        );
+    }
+
+    /// Regression: the `await_folder_picker` bridge must not block the
+    /// Tauri async runtime while the native dialog is open.  This test
+    /// exercises the production helper directly on a real `TokioRuntime`:
+    /// a heartbeat task ticks while the helper future is pending, the main
+    /// task deterministically receives a notification (no wall-clock
+    /// threshold), and the spawned heartbeat terminates on its own.
+    #[test]
+    #[cfg(desktop)]
+    fn await_folder_picker_yields_while_pending() {
+        use std::sync::atomic::{AtomicU32, Ordering};
+        use std::sync::{Arc, Mutex};
+        use tauri::async_runtime::TokioRuntime;
+
+        let rt = TokioRuntime::new().expect("create test runtime");
+
+        rt.block_on(async {
+            let heartbeat = Arc::new(AtomicU32::new(0));
+
+            // Channel: heartbeat notifies after ticking.
+            let (tick_tx, mut tick_rx) = tauri::async_runtime::channel::<()>(1);
+
+            // Channel: callback-ready signal from the picker closure.
+            let (ready_tx, mut ready_rx) = tauri::async_runtime::channel::<()>(1);
+
+            // Capture the callback that `await_folder_picker` gives us.
+            let cb_cell: Arc<Mutex<Option<FolderPickerCallback>>> = Arc::new(Mutex::new(None));
+            let cc = cb_cell.clone();
+
+            // Spawn the picker helper — it will be pending until the
+            // captured callback is invoked.
+            let picker_handle = rt.spawn(async move {
+                await_folder_picker(move |cb| {
+                    *cc.lock().unwrap() = Some(cb);
+                    let _ = ready_tx.try_send(());
+                })
+                .await
+            });
+
+            // Wait until the callback is stored before spawning the
+            // heartbeat — avoids a race where the heartbeat signals
+            // before the picker task has executed the closure.
+            ready_rx.recv().await.expect("callback store must notify");
+
+            // Heartbeat task: ticks once, notifies, then terminates.
+            {
+                let hb = heartbeat.clone();
+                rt.spawn(async move {
+                    hb.fetch_add(1, Ordering::SeqCst);
+                    let _ = tick_tx.send(()).await;
+                });
+            }
+
+            // Wait for the heartbeat to tick — deterministically,
+            // without depending on a fixed wall-clock threshold.
+            tick_rx.recv().await.expect("heartbeat must notify");
+
+            let mid_count = heartbeat.load(Ordering::SeqCst);
+            assert!(
+                mid_count >= 1,
+                "heartbeat must progress while picker is pending: \
+                 heartbeat only ticked {mid_count} times (expected ≥ 1)"
+            );
+
+            // Invoke the captured callback — simulate the user picking
+            // a folder.
+            let cb = cb_cell
+                .lock()
+                .unwrap()
+                .take()
+                .expect("callback must be captured by await_folder_picker");
+            cb(Ok(Some("/picked/path".to_string())));
+
+            // The picker future should now resolve.
+            let result = picker_handle.await.expect("picker task must not panic");
+
+            assert_eq!(
+                result,
+                Ok(Some("/picked/path".to_string())),
+                "picker must return the selected path"
+            );
+        });
     }
 }
 

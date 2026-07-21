@@ -18,6 +18,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Fixed
 
+- **Desktop:** Opening the native project-folder picker no longer freezes macOS because it now uses Tauri's non-blocking callback API, while preserving Rust-side path validation, filesystem scope grants, and trusted-path persistence.
 - **Graph schema deserialization:** The deserialize trust boundary now rejects arrays and primitive values for record-shaped metadata fields, aligning runtime values with the public schema types. Mutation-testing coverage for optional fields and validation boundaries was strengthened.
 
 ## [0.1.0-alpha.41] - 2026-07-17
