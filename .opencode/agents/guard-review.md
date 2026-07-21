@@ -39,6 +39,14 @@ Use `git diff`, `git diff origin/main...HEAD`, and read changed files as needed.
 
 CI deterministically gates the mechanical layer, so don't spend review effort there: **Biome** (format + lint; Prettier only formats Markdown/YAML/HTML), **`tsc`** + **`type-coverage`** (strict, gated at 99%), and **fallow** — `analyze:dead-code` is zero-tolerance on unused files/exports/types/dependencies **and** architecture cycles (circular deps, re-export cycles); `analyze:dupes` and `analyze:health` are identity-baseline ratchets (`fallow-baselines/`) that fail on **new** clones / complex functions. Don't re-review formatting, lint, dead code, duplication, complexity, or type regressions — focus on the **semantic** constraints below, which no tool sees.
 
+## Previous findings (re-review only)
+
+If the calling agent includes findings from a previous review cycle, verify each one against the current diff:
+
+- **Fixed correctly** → do not re-report.
+- **Not fixed or fixed incorrectly** → report as BLOCKING (was previously found, still broken). Include the original `file:line` and note what's wrong with the fix.
+- **New issues** → report as usual per severity mapping below.
+
 ## Severity mapping
 
 - **BLOCKING** — any violation of a hard constraint from `AGENTS.md` → **Constraints**. These are non-negotiable; every hard rule in that section is BLOCKING.

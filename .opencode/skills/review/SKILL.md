@@ -16,6 +16,8 @@ Any agent can load this skill to run a pre-PR review. `work` loads it at the rev
 
 This skill orchestrates; it never commits or pushes (see AGENTS.md → Git).
 
+If the calling agent provides a path to a previous review report (e.g. `.reviews/<issue>-review-1.md`), read it and pass each finding to the sub-agents so they can verify fixes were applied and avoid re-reporting resolved issues.
+
 ## 1. Gather the diff
 
 ```bash
@@ -32,7 +34,7 @@ Use the `task` tool to dispatch both subagents simultaneously:
 - `subagent_type: "guard-review"` — reads AGENTS.md Constraints, `.rules/` conventions, cross-cutting obligations
 - `subagent_type: "quality-review"` — reviews the diff for correctness, security, design, performance
 
-Both receive the same diff scope. Each returns a findings report.
+Both receive the same diff scope. If previous findings were provided, include them in each subagent's prompt so they verify fixes and skip resolved issues. Each returns a findings report.
 
 ## 3. Synthesize one verdict
 
@@ -67,3 +69,5 @@ Project-specific convention deviations (from `guard-review`): non-functional com
 Rules sync gaps and docs/MCP parity gaps (from `guard-review`).
 
 If a section is empty, say so in one line. Do not restate the diff.
+
+Wrap the entire consolidated report in `<!-- REVIEW_START -->` / `<!-- REVIEW_END -->` markers so the calling agent can extract and persist it.
