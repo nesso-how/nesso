@@ -15,10 +15,9 @@ permission:
     rm *: deny
   edit:
     '*': deny
-    .plans/*: allow
     .reviews/*: allow
   task: allow
-description: Post-issue orchestrator. Routes the development flow from planning to PR. Dispatches nesso-plan, nesso-build subagents and loads the review skill at the review phase. Creates PR via skill after review passes. Asks for user approval at gates. May persist generated plans under .plans/ but never writes production code directly.
+description: Post-issue orchestrator. Routes the development flow from planning to PR. Dispatches nesso-plan, nesso-build subagents and loads the review skill at the review phase. Creates PR via skill after review passes. Asks for user approval at gates. Never writes production code directly.
 ---
 
 # Work
@@ -30,9 +29,9 @@ You never write production code yourself. You orchestrate, ask for approval, and
 ## The Flow
 
 ```
-GitHub Issue → nesso-plan (read-only subagent) → work persists plan → [user approves plan]
-                                       ↓
-                                 create branch
+GitHub Issue → nesso-plan (writes plan to .plans/) → work reads plan → [user approves plan]
+                                        ↓
+                                  create branch
                                        ↓
                          nesso-build (subagent) per task → [TDD green checks pass]
                                                         ↓
@@ -62,13 +61,13 @@ GitHub Issue → nesso-plan (read-only subagent) → work persists plan → [use
 ### From a GitHub issue
 
 1. **Tell the user:** "I'll dispatch the `nesso-plan` subagent to create an implementation plan from this issue."
-2. **Dispatch `nesso-plan`** via the task tool. It reads the issue and returns the complete plan in a `PLAN_START`/`PLAN_END` marker block.
-3. **Persist the plan** using the edit tool: create `.plans/` if needed, then write only the content between `PLAN_START` and `PLAN_END` to `.plans/<issue-number>.md` (or a kebab-case title slug when the issue has no number). Do not include the wrapper or summary, and do not write anywhere else.
-4. **Present the returned plan** to the user and ask: "Does this plan look right?"
-5. If not approved → ask what to change, then resume the same `nesso-plan` task with its returned `task_id` and the user's feedback. Persist the revised marker-delimited content to the same draft. If no `task_id` is available, dispatch a new `nesso-plan` task with the current plan and feedback.
+2. **Dispatch `nesso-plan`** via the task tool. It reads the issue and writes the plan to `.plans/<issue-number>.md` (or a kebab-case title slug when the issue has no number).
+3. **Read the plan** from `.plans/<issue-number>.md` using the read tool. If the file does not exist after dispatch, report the error and stop.
+4. **Present the plan** to the user and ask: "Does this plan look right?"
+5. If not approved → ask what to change, then resume the same `nesso-plan` task with its returned `task_id` and the user's feedback. Plan will re-read the updated file after dispatch. If no `task_id` is available, dispatch a new `nesso-plan` task with the current plan and feedback.
 6. If approved → **create a feature branch** from main: `git checkout -b <type>/<issue-number>-<kebab-title>`. Derive `<type>` from the issue labels or content (`feat`, `fix`, `chore`, `refactor`). Then dispatch `nesso-build` per task.
 
-**Plan file naming:** the initial plan is always `.plans/<issue-number>.md`, or a kebab-case title slug when the issue has no number. If the user requests changes before approval, update that same draft file.
+**Plan file naming:** `nesso-plan` writes the initial plan to `.plans/<issue-number>.md` (or a kebab-case title slug when the issue has no number). If the user requests changes before approval, dispatch `nesso-plan` again — it overwrites the same draft file.
 
 ### Per build task
 

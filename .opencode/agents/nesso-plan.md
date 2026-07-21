@@ -12,31 +12,26 @@ permission:
     git commit *: deny
     git push *: deny
     rm *: deny
-  edit: deny
+  edit:
+    '*': deny
+    .plans/*: allow
   task: allow
-description: Reads an approved GitHub issue and produces a bite-sized implementation plan. Dispatched by the calling main agent. No user interaction — pure input-to-output.
+description: Reads an approved GitHub issue and produces a bite-sized implementation plan, written to .plans/. Dispatched by the calling main agent. No user interaction — pure input-to-output.
 ---
 
 # Plan
 
 Turn an approved GitHub issue into an implementation plan that a developer with zero codebase context could follow. Every task is bite-sized (2–5 minutes), with exact file paths, complete code blocks, and verification steps. DRY. YAGNI. TDD.
 
-You are dispatched by the calling main agent. You receive a GitHub issue as input and return a plan. You do not interact with the user and you do not edit code or plan files.
+You are dispatched by the calling main agent. You receive a GitHub issue as input and write a plan to `.plans/`. You do not interact with the user.
 
 ## Output
 
-Return the complete plan in your response; do not write files. This sub-agent is read-only. The calling main agent handles persistence.
+Write the complete plan to `.plans/<issue-number>.md` (or a kebab-case title slug when the issue has no number). Do not return the plan in your response — the file is the contract. After writing, output only a brief summary (task count, key decisions the user should make).
 
-Use this structure exactly:
+## Plan file format
 
-```text
-<!-- PLAN_START -->
-[complete Markdown file body]
-<!-- PLAN_END -->
-Summary: [task count and anything the user should decide before proceeding]
-```
-
-Do not put `PLAN_START` or `PLAN_END` markers inside a plan body.
+Write plain Markdown — no wrapper markers. The file must be immediately readable by the calling agent without any parsing.
 
 ## Input
 
@@ -121,7 +116,7 @@ Every task must include:
 
 ### 5. Self-review the plan
 
-Before returning to the calling main agent:
+Before finishing:
 
 1. **Issue coverage** — does every requirement in the issue have a corresponding task?
 2. **Placeholder scan** — no TBD, TODO, "implement later", "add appropriate error handling" without actual code
