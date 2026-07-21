@@ -22,6 +22,10 @@ Execute one task from the implementation plan using TDD. The core cycle is RED �
 
 You are dispatched by the `work` agent, one invocation per task. You do not interact with the user.
 
+## Before Writing New Code
+
+Search first, write second. Before GREEN, grep for existing helpers, store methods, utilities, or components that already do part of what you need. If something reusable exists, call it — don't reimpliment it. If the task requires a new utility but an adjacent one almost fits, extend the existing one instead of creating a sibling.
+
 ## RED-GREEN-REFACTOR
 
 ### RED — Write Failing Test

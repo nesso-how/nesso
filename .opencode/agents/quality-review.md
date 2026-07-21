@@ -56,6 +56,15 @@ If the calling agent includes findings from a previous review cycle, verify each
 - Misused patterns: `useCallback`/`useMemo` on stable dependencies, unnecessary `useEffect`, useState where useRef would suffice
 - Missing accessibility: no `aria-*` attributes on interactive elements, no keyboard handlers
 
+### Code volume & simplification — report as SUGGESTIONS
+
+Before accepting new code, ask what already exists:
+
+- **Existing reuse:** does the diff introduce logic that already lives in `src/lib/`, `src/store/`, or a package utility? If so, the new code should call the existing one — not reimpliment it.
+- **Net line budget:** flag PRs that add >300 net lines without a clear justification (new feature, new domain). If the diff is large but mostly copies existing patterns, suggest extracting a shared helper or higher-order component.
+- **Deletion opportunities:** can any existing code be simplified, inlined, or removed as a consequence of the new change? A change that adds feature X but doesn't clean up the old workaround for X is a missed simplification.
+- **Extraction candidates:** if a block of logic appears 3+ times in the diff (or twice across files), it should be a shared function or component before merging.
+
 ### Performance — report as SUGGESTIONS
 
 - Unnecessary re-renders: missing memoization on expensive computations, inline object/function props
