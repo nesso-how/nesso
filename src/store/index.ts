@@ -36,6 +36,7 @@ export const useGraphStore = create<GraphState>()(
         onboardingTourGraphId: s.onboardingTourGraphId,
         onboardingReviewOpened: s.onboardingReviewOpened,
         onboardingDeleteNodeDone: s.onboardingDeleteNodeDone,
+        reviewReminderLastShownByGraph: s.reviewReminderLastShownByGraph,
       }),
       merge: (persisted, current) => {
         const p = persisted as Partial<GraphState> | undefined

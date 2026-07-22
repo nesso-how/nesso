@@ -112,3 +112,52 @@ export async function connectAlphaBeta(page: Page, relationId = 'subtype-of'): P
 export async function selectEdge(page: Page): Promise<void> {
   await page.locator('.react-flow__edge circle').first().click()
 }
+
+/** Seed the current graph's first concept as a previously reviewed due card. */
+export async function makeCurrentGraphConceptStudiedAndDue(page: Page): Promise<void> {
+  await page.evaluate(async () => {
+    const persisted = JSON.parse(localStorage.getItem('nesso') ?? '{}') as {
+      state?: { currentGraphId?: string }
+    }
+    const graphId = persisted.state?.currentGraphId
+    if (!graphId) throw new Error('current graph id is unavailable')
+
+    const request = indexedDB.open('nesso-graphs')
+    const database = await new Promise<IDBDatabase>((resolve, reject) => {
+      request.onsuccess = () => resolve(request.result)
+      request.onerror = () => reject(request.error)
+    })
+    const graph = await new Promise<{ nodes: { id: string }[] }>((resolve, reject) => {
+      const get = database.transaction('graphs', 'readonly').objectStore('graphs').get(graphId)
+      get.onsuccess = () => resolve(get.result as { nodes: { id: string }[] })
+      get.onerror = () => reject(get.error)
+    })
+    const nodeId = graph.nodes[0]?.id
+    if (!nodeId) throw new Error('current graph has no concept')
+    await new Promise<void>((resolve, reject) => {
+      const transaction = database.transaction('reviewState', 'readwrite')
+      transaction.objectStore('reviewState').put(
+        {
+          key: `${graphId}:${nodeId}`,
+          graphId,
+          nodeId,
+          due: Date.now() - 60_000,
+          stability: 1,
+          difficulty: 5,
+          reps: 1,
+          lapses: 0,
+          fsrsState: 2,
+          lastReview: Date.now() - 86_400_000,
+          lastRating: 3,
+          learningSteps: 0,
+        },
+        `${graphId}:${nodeId}`,
+      )
+      transaction.oncomplete = () => resolve()
+      transaction.onerror = () => reject(transaction.error)
+    })
+    database.close()
+  })
+  await page.reload()
+  await expect(page.locator('.react-flow__pane')).toBeVisible()
+}

@@ -34,6 +34,7 @@ import { useDesktopMenu } from './hooks/useDesktopMenu'
 import { useOnboardingFlow } from './hooks/useOnboardingFlow'
 import { GraphFileConflictBanner } from './components/banners/GraphFileConflictBanner'
 import { UpdateBanner } from './components/banners/UpdateBanner'
+import { ReviewReminderBanner } from './components/banners/ReviewReminderBanner'
 import { TelemetryConsentBanner } from './components/banners/TelemetryConsentBanner'
 import { WelcomeDialog } from './components/onboarding/WelcomeDialog'
 import { CoachmarkOverlay } from './components/onboarding/CoachmarkOverlay'
@@ -561,6 +562,10 @@ function AppInner() {
       >
         <GraphFileConflictBanner />
         <UpdateBanner />
+        <ReviewReminderBanner
+          onStartReview={openReview}
+          onboardingActive={onboarding.phase !== 'idle'}
+        />
         <TelemetryConsentBanner
           open={onboarding.phase === 'consent'}
           onDismiss={onboarding.finishOnboarding}

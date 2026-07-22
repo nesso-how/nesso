@@ -29,6 +29,7 @@ export const createSettingsSlice: StateCreator<GraphState, [], [], SettingsSlice
     aiApiKey: '',
     mentorEnabled: false,
     reviewEnabled: true,
+    reviewReminderEnabled: true,
     fsrsRetention: 0.9,
     maximumInterval: 365,
     inspectorMemoryOpen: true,

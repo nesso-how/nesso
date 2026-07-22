@@ -27,6 +27,7 @@ export interface UISlice {
   onboardingReviewOpened: boolean
   /** A node was deleted during the delete-node step. */
   onboardingDeleteNodeDone: boolean
+  reviewReminderLastShownByGraph: Record<string, string>
   setMentorPanelExpanded: (expanded: boolean) => void
   setSidebarCollapsed: (v: boolean) => void
   setSidebarDisplayOpen: (v: boolean) => void
@@ -43,6 +44,7 @@ export interface UISlice {
   setOnboardingDeleteNodeDone: (done: boolean) => void
   noteOnboardingNodeDeleted: () => void
   clearOnboardingPersist: () => void
+  markReviewReminderShown: (graphId: string, localDay: string) => void
 }
 
 export const createUISlice: StateCreator<GraphState, [], [], UISlice> = (set, get) => ({
@@ -58,6 +60,7 @@ export const createUISlice: StateCreator<GraphState, [], [], UISlice> = (set, ge
   onboardingTourGraphId: null,
   onboardingReviewOpened: false,
   onboardingDeleteNodeDone: false,
+  reviewReminderLastShownByGraph: {},
 
   setMentorPanelExpanded: (expanded) => set({ mentorPanelExpanded: expanded }),
   setSidebarCollapsed: (v) => set({ sidebarCollapsed: v }),
@@ -89,6 +92,13 @@ export const createUISlice: StateCreator<GraphState, [], [], UISlice> = (set, ge
       onboardingReviewOpened: false,
       onboardingDeleteNodeDone: false,
     }),
+  markReviewReminderShown: (graphId, localDay) =>
+    set((state) => ({
+      reviewReminderLastShownByGraph: {
+        ...state.reviewReminderLastShownByGraph,
+        [graphId]: localDay,
+      },
+    })),
 
   // Viewports observed in a zero-sized window (embedded WebViews before first
   // layout) are degenerate min-zoom fits — persisting one would keep the graph

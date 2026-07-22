@@ -5,7 +5,9 @@ import { createRoot, type Root } from 'react-dom/client'
 import { act, useState } from 'react'
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
 import { useGraphStore } from '@/store'
-import { ReviewMode } from './ReviewMode'
+import en from '@/i18n/locales/en'
+import italian from '@/i18n/locales/it'
+import { ReviewMode, formatInterval } from './ReviewMode'
 
 const { mockTrack } = vi.hoisted(() => ({
   mockTrack: vi.fn(),
@@ -152,5 +154,36 @@ describe('ReviewMode telemetry', () => {
     expect(mockTrack).not.toHaveBeenCalledWith(
       expect.objectContaining({ name: 'review_session_completed' }),
     )
+  })
+})
+
+describe('formatInterval', () => {
+  it('formats intervals with readable English labels', () => {
+    expect(formatInterval(1 * 60_000, en.review.interval)).toBe('1 min')
+    expect(formatInterval(2 * 60 * 60_000, en.review.interval)).toBe('2 hours')
+    expect(formatInterval(8 * 24 * 60 * 60_000, en.review.interval)).toBe('8 days')
+    expect(formatInterval(12 * 30 * 24 * 60 * 60_000, en.review.interval)).toBe('12 months')
+  })
+
+  it('uses singular and plural labels for English and Italian', () => {
+    expect(formatInterval(6 * 60_000, en.review.interval)).toBe('6 min')
+    expect(formatInterval(60 * 60_000, en.review.interval)).toBe('1 hour')
+    expect(formatInterval(2 * 60 * 60_000, en.review.interval)).toBe('2 hours')
+    expect(formatInterval(24 * 60 * 60_000, en.review.interval)).toBe('1 day')
+    expect(formatInterval(8 * 24 * 60 * 60_000, en.review.interval)).toBe('8 days')
+    expect(formatInterval(30 * 24 * 60 * 60_000, en.review.interval)).toBe('1 month')
+    expect(formatInterval(12 * 30 * 24 * 60 * 60_000, en.review.interval)).toBe('12 months')
+    expect(formatInterval(365 * 24 * 60 * 60_000, en.review.interval)).toBe('1 year')
+    expect(formatInterval(2 * 365 * 24 * 60 * 60_000, en.review.interval)).toBe('2 years')
+    expect(formatInterval(1 * 60_000, italian.review.interval)).toBe('1 min')
+    expect(formatInterval(10 * 60_000, italian.review.interval)).toBe('10 min')
+    expect(formatInterval(60 * 60_000, italian.review.interval)).toBe('1 ora')
+    expect(formatInterval(2 * 60 * 60_000, italian.review.interval)).toBe('2 ore')
+    expect(formatInterval(24 * 60 * 60_000, italian.review.interval)).toBe('1 giorno')
+    expect(formatInterval(8 * 24 * 60 * 60_000, italian.review.interval)).toBe('8 giorni')
+    expect(formatInterval(30 * 24 * 60 * 60_000, italian.review.interval)).toBe('1 mese')
+    expect(formatInterval(12 * 30 * 24 * 60 * 60_000, italian.review.interval)).toBe('12 mesi')
+    expect(formatInterval(365 * 24 * 60 * 60_000, italian.review.interval)).toBe('1 anno')
+    expect(formatInterval(2 * 365 * 24 * 60 * 60_000, italian.review.interval)).toBe('2 anni')
   })
 })
