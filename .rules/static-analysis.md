@@ -24,6 +24,8 @@ pnpm run license-headers         # inserts missing headers
 pnpm run security:headers   # CI gate
 ```
 
+**Release deployment guards:** `scripts/validate-release-tag.mjs` compares `GITHUB_REF` with the root `package.json` and `src-tauri/tauri.conf.json` versions, then `scripts/wait-for-current-release.mjs` polls the authoritative GitHub Releases `latest` signal through `scripts/validate-current-release.mjs` with a bounded retry budget. Both guards fail closed before any Vercel credentials are exposed. `.github/workflows/release.yml` must check out `github.sha`, serialize web promotions, and call both guards before all Vercel CLI steps; the Vercel CLI is an exact root dev dependency and is invoked with `pnpm exec`, never downloaded as `latest` during a release.
+
 **Rust** (`src-tauri/`):
 
 ```bash

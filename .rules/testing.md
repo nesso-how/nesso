@@ -218,7 +218,9 @@ Those belong to the **native e2e lane** (`e2e-native/`, tauri-driver) or manual 
 
 ## CI
 
-`pnpm test:coverage` runs as a required step in `.github/workflows/ci.yml`, gating PRs alongside the checks described in [static-analysis](static-analysis.md). Package `dist` is in place because the prior `pnpm install --frozen-lockfile` step runs `prepare`.
+`pnpm test:coverage` runs as a required step in `.github/workflows/ci.yml`, gating PRs alongside the checks described in [static-analysis](static-analysis.md). Package `dist` is in place because the prior `pnpm install --frozen-lockfile` step runs `prepare`; the release web job skips only the duplicate root prepare build because `vercel build` owns the production build.
+
+Release tag validation is pure Node logic in `scripts/validate-release-tag.mjs`, covered by `scripts/validate-release-tag.test.mjs`. Tests must pin the exact accepted `refs/tags/v<package-version>` shape and reject branch refs, malformed/nested tag refs, missing inputs, root/Tauri version drift, and tag/version drift without contacting external services. Subprocess tests must also cover the real CLI's repository JSON loading, environment input, diagnostics, and exit status. The stale-release guard in `scripts/validate-current-release.mjs` is tested separately with the same fail-closed and retry-current-latest cases; `scripts/wait-for-current-release.mjs` keeps its GitHub API polling deterministic through injected latest-tag and sleep functions and tests both propagation-lag recovery and bounded exhaustion. Its workflow input is the GitHub Releases `latest` tag, not a mutable ref or a Vercel API response.
 
 ### Coverage thresholds (ratchet)
 
