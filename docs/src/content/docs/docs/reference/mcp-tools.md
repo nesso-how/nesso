@@ -19,9 +19,13 @@ Returns the complete list of relation types grouped by category id (`taxonomic`,
 
 **Output:** `{ "valid": boolean, "errors": [{ "path", "message" }], "warnings": [{ "path", "message" }] }`
 
-Runs envelope and vocabulary validation plus structural checks the deserializer does not cover today: duplicate ids, dangling relation endpoints, unknown relation types. Warnings flag missing `vocabulary` or relation `type` (the app falls back to `causes` at render time).
+Runs the same envelope and vocabulary validation used by the app: it accepts the
+current protected baseline, rejects newer unsupported envelope versions, and
+rejects unsupported alpha elaboration fields. Also performs structural checks:
+duplicate ids, dangling relation endpoints, and unknown relation types.
 
-`valid` is `true` only when `errors` is empty.
+`valid` is `true` only when `errors` is empty. The tool returns diagnostics
+only; it does not produce rewritten or migrated JSON.
 
 ### `build_graph`
 

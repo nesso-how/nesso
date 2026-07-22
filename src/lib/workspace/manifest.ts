@@ -23,14 +23,38 @@ export interface WorkspaceManifest {
 // session. Invalidated whenever the active workspace path changes.
 let cachedWorkspace: string | null = null
 let cachedManifest: WorkspaceManifest = { version: MANIFEST_VERSION, entries: {} }
+/** Filenames (relative to workspace root) that exist on disk but cannot be
+ *  loaded because their vocabulary or format is unsupported. All write paths
+ *  must avoid overwriting these files. */
+let cachedReservedPaths: string[] = []
 
-export function getDiskSyncCache(): { workspace: string | null; manifest: WorkspaceManifest } {
-  return { workspace: cachedWorkspace, manifest: cachedManifest }
+export function getDiskSyncCache(): {
+  workspace: string | null
+  manifest: WorkspaceManifest
+  reservedPaths: string[]
+} {
+  return {
+    workspace: cachedWorkspace,
+    manifest: cachedManifest,
+    reservedPaths: cachedReservedPaths,
+  }
 }
 
-export function setDiskSyncCache(workspace: string, manifest: WorkspaceManifest): void {
+export function setDiskSyncCache(
+  workspace: string,
+  manifest: WorkspaceManifest,
+  reservedPaths?: string[],
+): void {
+  const workspaceChanged = cachedWorkspace !== null && cachedWorkspace !== workspace
   cachedWorkspace = workspace
   cachedManifest = manifest
+  if (reservedPaths !== undefined) {
+    cachedReservedPaths = reservedPaths
+  } else if (workspaceChanged) {
+    // Clear stale reservations from the previous workspace when the caller
+    // omits them (the new workspace hasn't loaded its reserved paths yet).
+    cachedReservedPaths = []
+  }
 }
 
 async function fs() {

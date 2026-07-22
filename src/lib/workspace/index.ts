@@ -29,4 +29,5 @@ export {
   reconcileDiskWithIdb,
   persistWorkspaceSync,
   loadProjectFromDisk,
+  checkWorkspaceCompatibility,
 } from '@/lib/workspace/sync'

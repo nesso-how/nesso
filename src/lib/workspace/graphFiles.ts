@@ -4,8 +4,12 @@ import type { NessoGraphDocument } from '@nesso-how/vocab-learning'
 import type { NessoSettings } from '@/types/graph'
 import { graphContentPayload } from '@/lib/graphPersist'
 import { defaultGraphDisplay } from '@/types/graph'
-import { serialize, deserialize } from '@nesso-how/vocab-learning'
+import { deserializeEnvelope, serialize } from '@nesso-how/vocab-learning'
 import { graphToDocument } from '@/lib/graphDocumentMapping'
+import {
+  normalizeParsedGraphDocument,
+  tryResolveGraphIdentityFromEnvelope,
+} from '@/lib/graphLoadNormalizer'
 import { isGraphId, newGraphId } from '@/lib/graphId'
 import {
   buildFileToIdMap,
@@ -23,6 +27,19 @@ import type { WorkspaceTarget } from '@/lib/workspace/paths'
 import { resolveWorkspace } from '@/lib/workspace/paths'
 import { beginSuppressWatch, endSuppressWatch, noteSelfWrite } from '@/lib/workspace/watch'
 import { grantFsScope } from '@/lib/workspace/scope'
+
+/** Thrown when a graph file is present on disk but cannot be loaded because its
+ *  format, vocabulary, or version is unsupported by the current app. Distinct
+ *  from filesystem errors (file missing, unreadable) which return null. */
+export class UnsupportedGraphFileError extends Error {
+  constructor(
+    message: string,
+    public readonly filename: string,
+  ) {
+    super(message)
+    this.name = 'UnsupportedGraphFileError'
+  }
+}
 
 /** Filename stem from graph title — keeps spaces; strips path-forbidden characters only. */
 export function filenameBaseFromName(name: string): string {
@@ -85,7 +102,12 @@ async function fs() {
   return import('@tauri-apps/plugin-fs')
 }
 
-function uniqueFilename(base: string, manifest: WorkspaceManifest, excludeId?: string): string {
+function uniqueFilename(
+  base: string,
+  manifest: WorkspaceManifest,
+  excludeId?: string,
+  reservedPaths?: ReadonlySet<string>,
+): string {
   let candidate = `${base}.json`
   let n = 2
   const used = new Set(
@@ -93,6 +115,10 @@ function uniqueFilename(base: string, manifest: WorkspaceManifest, excludeId?: s
       .filter((e) => e.id !== excludeId)
       .map((e) => e.file),
   )
+  // Also avoid reserved (unsupported) paths that exist on disk.
+  if (reservedPaths) {
+    for (const p of reservedPaths) used.add(p)
+  }
   while (used.has(candidate)) {
     candidate = `${base}-${n}.json`
     n++
@@ -124,8 +150,14 @@ async function alignEntryFileToName(
   manifest: WorkspaceManifest,
   entry: GraphManifestEntry,
   fileToId: Map<string, string>,
+  reservedPaths?: ReadonlySet<string>,
 ): Promise<void> {
-  const expectedFile = uniqueFilename(filenameBaseFromName(record.name), manifest, record.id)
+  const expectedFile = uniqueFilename(
+    filenameBaseFromName(record.name),
+    manifest,
+    record.id,
+    reservedPaths,
+  )
   if (entry.file === expectedFile) return
 
   const { rename } = await fs()
@@ -151,11 +183,12 @@ export async function applyUniqueGraphNameOnDisk(
   peerNames: Iterable<string>,
   manifest: WorkspaceManifest,
   fileToId: Map<string, string>,
+  reservedPaths?: ReadonlySet<string>,
 ): Promise<{ file: string; record: GraphRecord }> {
   const unique = uniqueGraphNameAmong(record.name, peerNames)
   if (unique === record.name) return { file: filename, record }
   const updated: GraphRecord = { ...record, name: unique, updatedAt: Date.now() }
-  const file = await relocateGraphFile(ws, filename, updated, manifest, fileToId)
+  const file = await relocateGraphFile(ws, filename, updated, manifest, fileToId, reservedPaths)
   return { file, record: { ...updated, name: graphNameFromFilename(file) } }
 }
 
@@ -165,8 +198,14 @@ async function relocateGraphFile(
   record: GraphRecord,
   manifest: WorkspaceManifest,
   fileToId: Map<string, string>,
+  reservedPaths?: ReadonlySet<string>,
 ): Promise<string> {
-  const targetFile = uniqueFilename(filenameBaseFromName(record.name), manifest, record.id)
+  const targetFile = uniqueFilename(
+    filenameBaseFromName(record.name),
+    manifest,
+    record.id,
+    reservedPaths,
+  )
   const finalName = graphNameFromFilename(targetFile)
   if (targetFile === currentFile) return currentFile
 
@@ -198,13 +237,19 @@ export async function saveGraphToDisk(
   record: GraphRecord,
   manifest: WorkspaceManifest,
   fileToId: Map<string, string>,
+  reservedPaths?: ReadonlySet<string>,
 ): Promise<{ manifest: WorkspaceManifest; record: GraphRecord }> {
   const { writeTextFile } = await fs()
   await ensureWorkspace(ws)
   let entry = manifest.entries[record.id]
   let saved = record
   if (!entry) {
-    const file = uniqueFilename(filenameBaseFromName(record.name), manifest, record.id)
+    const file = uniqueFilename(
+      filenameBaseFromName(record.name),
+      manifest,
+      record.id,
+      reservedPaths,
+    )
     const name = graphNameFromFilename(file)
     entry = { id: record.id, file, name, updatedAt: record.updatedAt }
     manifest.entries[record.id] = entry
@@ -215,7 +260,26 @@ export async function saveGraphToDisk(
   } else {
     entry.name = record.name
     entry.updatedAt = record.updatedAt
-    await alignEntryFileToName(ws, record, manifest, entry, fileToId)
+    // When the manifest entry points to a reserved (unsupported) file, rebind
+    // to a fresh filename rather than renaming/moving the unsupported file.
+    if (reservedPaths?.has(entry.file)) {
+      const file = uniqueFilename(
+        filenameBaseFromName(record.name),
+        manifest,
+        record.id,
+        reservedPaths,
+      )
+      const name = graphNameFromFilename(file)
+      fileToId.delete(entry.file)
+      entry.file = file
+      entry.name = name
+      fileToId.set(file, record.id)
+      // Propagate the de-duplicated filename-derived name so the returned
+      // record and the on-disk JSON both carry it — no later self-healing rewrite.
+      if (name !== saved.name) saved = { ...saved, name }
+    } else {
+      await alignEntryFileToName(ws, record, manifest, entry, fileToId, reservedPaths)
+    }
   }
   const path = ws.path(entry.file)
   beginSuppressWatch()
@@ -260,26 +324,37 @@ export async function loadRecordFromDiskFile(
   claimedIds: Set<string> = new Set(),
 ): Promise<GraphRecord | null> {
   const { readTextFile, writeTextFile } = await fs()
+  let text: string
   try {
-    const text = await readTextFile(ws.path(filename))
-    const file = deserialize(text)
+    text = await readTextFile(ws.path(filename))
+  } catch {
+    // File vanished or is unreadable — treat as absent.
+    return null
+  }
+
+  let file: NessoGraphDocument
+  try {
+    file = deserializeEnvelope(text)
+  } catch (err) {
+    throw new UnsupportedGraphFileError(
+      `Cannot parse "${filename}": ${err instanceof Error ? err.message : String(err)}`,
+      filename,
+    )
+  }
+
+  try {
     const now = Date.now()
     const id = resolveGraphId(file, filename, fileToId, claimedIds)
     const reassignedId = id !== (file.id?.trim() ?? '')
     const { name, patched } = resolveGraphName(file, filename)
-    const { nodes, edges, display } = await (await import('@/lib/graphMapping')).documentToGraph(
-      file,
-      id,
-    )
-    const record: GraphRecord = {
+
+    const record = normalizeParsedGraphDocument(file, {
       id,
       name,
       createdAt: file.updatedAt ?? now,
       updatedAt: file.updatedAt ?? now,
-      nodes,
-      edges,
-      display: display as GraphRecord['display'],
-    }
+    })
+
     if (patched || reassignedId) {
       record.updatedAt = Date.now()
       beginSuppressWatch()
@@ -292,8 +367,12 @@ export async function loadRecordFromDiskFile(
     }
     claimedIds.add(id)
     return record
-  } catch {
-    return null
+  } catch (err) {
+    if (err instanceof UnsupportedGraphFileError) throw err
+    throw new UnsupportedGraphFileError(
+      `Cannot load "${filename}": ${err instanceof Error ? err.message : String(err)}`,
+      filename,
+    )
   }
 }
 
@@ -316,6 +395,33 @@ export async function graphFileExists(ws: WorkspaceTarget, filename: string): Pr
   }
 }
 
+/** Try to match a single workspace JSON file to the requested graph id.
+ *  Returns the filename if the file contains a graph whose id or manifest
+ *  binding matches `graphId`, or `null` otherwise (including unreadable
+ *  or unsupported files). */
+async function tryMatchGraphFileById(
+  ws: WorkspaceTarget,
+  filename: string,
+  graphId: string,
+  fileToId: Map<string, string>,
+): Promise<string | null> {
+  if (filename === MANIFEST_FILE) return null
+  try {
+    const { readTextFile } = await fs()
+    const text = await readTextFile(ws.path(filename))
+    const identity = tryResolveGraphIdentityFromEnvelope(text)
+    if (identity === null) return null // unsupported vocabulary — skip
+    // Manifest binding takes priority over the embedded id.
+    const fromManifest = fileToId.get(filename)
+    if (fromManifest === graphId) return filename
+    // Embedded id match (only for well-formed graph ids).
+    if (identity.id && isGraphId(identity.id) && identity.id === graphId) return filename
+  } catch {
+    /* skip unreadable */
+  }
+  return null
+}
+
 /** Resolve on-disk filename after external renames (manifest may still point at the old path). */
 async function resolveGraphDiskFilename(
   ws: WorkspaceTarget,
@@ -326,16 +432,9 @@ async function resolveGraphDiskFilename(
   const entry = manifest.entries[graphId]
   if (entry && (await graphFileExists(ws, entry.file))) return entry.file
 
-  const { readTextFile } = await fs()
   for (const filename of await listWorkspaceJsonFiles(ws)) {
-    if (filename === MANIFEST_FILE) continue
-    try {
-      const text = await readTextFile(ws.path(filename))
-      const file = deserialize(text)
-      if (resolveGraphId(file, filename, fileToId, new Set()) === graphId) return filename
-    } catch {
-      /* skip unreadable */
-    }
+    const match = await tryMatchGraphFileById(ws, filename, graphId, fileToId)
+    if (match !== null) return match
   }
   return entry?.file ?? null
 }
@@ -376,7 +475,12 @@ export async function writeGraphRecordToWorkspace(
   await grantFsScope(ws.displayPath)
   const manifest = await cachedManifestForWorkspace(ws)
   const fileToId = buildFileToIdMap(manifest)
-  const result = await saveGraphToDisk(ws, record, manifest, fileToId)
+  const { workspace: cw, reservedPaths } = getDiskSyncCache()
+  // Only use cached reservedPaths when they belong to the target workspace.
+  // Stale reservations from a different workspace must not influence naming.
+  const effectiveReserved =
+    cw === ws.displayPath && reservedPaths.length > 0 ? new Set(reservedPaths) : undefined
+  const result = await saveGraphToDisk(ws, record, manifest, fileToId, effectiveReserved)
   setDiskSyncCache(ws.displayPath, result.manifest)
   return result.record
 }

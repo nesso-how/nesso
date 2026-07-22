@@ -31,6 +31,7 @@
     "@nesso-how/vocab-learning": "workspace:*"
   },
   "devDependencies": {
+    "@nesso-how/schema": "workspace:*",
     "@types/dagre": "^0.7.53",
     "@types/node": "^22.0.0",
     "typescript": "~5.8.3"

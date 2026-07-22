@@ -1,0 +1,32 @@
+{
+  "settings": {
+    "dark": true,
+    "language": "en",
+    "categoryPalette": "default",
+    "telemetry": false
+  },
+  "mentorPanelExpanded": false,
+  "sidebarCollapsed": true,
+  "sidebarDisplayOpen": false,
+  "inspectorCollapsed": false,
+  "currentGraphId": "graph-1",
+  "graphList": [
+    {
+      "id": "graph-1",
+      "name": "Persisted graph",
+      "updatedAt": 1
+    }
+  ],
+  "viewports": {
+    "graph-1": {
+      "x": 10,
+      "y": 20,
+      "zoom": 1.25
+    }
+  },
+  "onboardingStep": null,
+  "onboardingPhase": null,
+  "onboardingTourGraphId": null,
+  "onboardingReviewOpened": false,
+  "onboardingDeleteNodeDone": false
+}

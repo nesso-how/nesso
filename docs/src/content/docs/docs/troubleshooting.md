@@ -27,6 +27,20 @@ Once an update is found, the banner can show:
 
 You can dismiss the available/error states for the rest of the session with the banner's close button; the install-in-progress state has no dismiss, since the install can't be cancelled once started.
 
+## Unsupported project files (desktop)
+
+If you open a project folder whose graph files come from a newer Nesso version or use an unknown vocabulary, Nesso blocks the project and shows a yellow info banner:
+
+> This project contains N file(s) not supported by this version of Nesso. Please update the app or remove the files manually.
+
+**What happens**: the project folder stays intact on disk. Nesso does not create new graphs inside it, does not overwrite any of the unsupported files, and does not switch to that project; the current (previously loaded) project remains active.
+
+**How to recover**:
+
+- **Update Nesso** if a newer release supports those files.
+- **Remove the unsupported files manually** from the project folder (Finder / File Explorer), then switch back to the project. Nesso will treat it as an empty project and seed one starter graph.
+- **Open a different project** from the sidebar; the blocked project stays in your list, greyed out, until you resolve it.
+
 ## Mentor not responding
 
 If a mentor message fails, the reply bubble shows one of two messages, depending on what went wrong:
@@ -52,4 +66,4 @@ If a pull appears stuck:
 - **Ollama must be reachable on the native port.** Nesso strips the `/v1` suffix from your base URL to reach Ollama's native `/api/pull` endpoint. If you configured a non-standard port, make sure Ollama's native API is running on that same port.
 - **Progress is purely cosmetic.** The pull runs to completion regardless of whether the progress bar is visible. If the pull completes while you are on a different settings tab, the status badge updates when you return to the AI tab.
 
-If the status shows **Unauthorized**, check your API key. The endpoint rejected the request with HTTP `401` or `403`. For hosted providers, make sure the key is valid and has not expired. Local Ollama instances do not require an API key — leave the field empty.
+If the status shows **Unauthorized**, check your API key. The endpoint rejected the request with HTTP `401` or `403`. For hosted providers, make sure the key is valid and has not expired. Local Ollama instances do not require an API key; leave the field empty.

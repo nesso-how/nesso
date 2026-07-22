@@ -3,7 +3,9 @@ import type { Node, Edge } from '@xyflow/react'
 import type { StateCreator } from 'zustand'
 import type { ConceptNodeData, GraphDisplaySettings } from '@/types/graph'
 import { track } from '@/telemetry'
-import { defaultGraphDisplay, mergeGraphDisplay } from '@/types/graph'
+import { defaultConceptReviewFields, defaultGraphDisplay, mergeGraphDisplay } from '@/types/graph'
+import { VOCABULARY } from '@nesso-how/vocab-learning'
+import { normalizeGraphDocument, normalizeGraphRecord } from '@/lib/graphLoadNormalizer'
 import { SEEDS, getSeedsForLanguage } from '@/data/seedGraph'
 import { isGraphId, newGraphId } from '@/lib/graphId'
 import { isDesktop } from '@/lib/isDesktop'
@@ -29,9 +31,11 @@ import {
   resolveWorkspacePath,
   uniqueGraphNameAmong,
   writeGraphRecordToWorkspace,
+  checkWorkspaceCompatibility,
 } from '@/lib/workspace'
 import type { GraphRecord } from '../db'
 import {
+  GRAPH_RECORD_VERSION,
   dbSaveGraph,
   dbLoadGraph,
   dbListGraphs,
@@ -45,9 +49,110 @@ import type { GraphMeta } from '../types'
 import type { GraphState } from '../state'
 import type { Language } from '@/types/graph'
 
+async function loadNormalizedRecords(): Promise<GraphRecord[]> {
+  const raw = await dbListGraphs()
+  const records: GraphRecord[] = []
+  for (const r of raw) {
+    try {
+      records.push(normalizeGraphRecord(r))
+    } catch {
+      // Preserve the raw record in IDB without reading its fields before
+      // validation (normalizeGraphRecord already threw). Do not delete —
+      // corrupt data must remain recoverable from IndexedDB.
+      console.warn(
+        '[nesso] skipping corrupt graph record:',
+        typeof (r as { id?: unknown })?.id === 'string' ? (r as { id: string }).id : '?',
+      )
+    }
+  }
+  return records
+}
+
+function toastUnsupportedProject(
+  pushToast: GraphState['pushToast'],
+  language: Language,
+  norm: string,
+  count: number,
+): void {
+  pushToast({
+    id: `unsupported-project:${norm}`,
+    variant: 'info',
+    message:
+      language === 'it'
+        ? `Il progetto contiene ${count} file non supportati da questa versione di Nesso. Aggiorna l'app o rimuovi manualmente i file.`
+        : `This project contains ${count} file(s) not supported by this version of Nesso. Please update the app or remove the files manually.`,
+  })
+}
+
+function normalizeStoredRecord(r: GraphRecord | undefined): GraphRecord | undefined {
+  if (r === undefined) return undefined
+  return normalizeGraphRecord(r)
+}
+
+async function seedOrWarnEmptyProject(
+  records: GraphRecord[],
+  unsupportedFiles: string[],
+  get: () => GraphState,
+  norm: string,
+): Promise<GraphRecord[] | null> {
+  if (records.length > 0) return records
+
+  if (unsupportedFiles.length > 0) {
+    toastUnsupportedProject(get().pushToast, get().settings.language, norm, unsupportedFiles.length)
+    return null
+  }
+
+  const now = Date.now()
+  const untitled = get().settings.language === 'it' ? 'Senza titolo' : 'Untitled'
+  const seed: GraphRecord = {
+    recordVersion: GRAPH_RECORD_VERSION,
+    vocabulary: { id: VOCABULARY.id, version: VOCABULARY.version },
+    id: newGraphId(),
+    name: untitled,
+    createdAt: now,
+    updatedAt: now,
+    nodes: [],
+    edges: [],
+    display: defaultGraphDisplay(get().settings),
+  }
+  const persisted = await writeGraphRecordToWorkspace(get().settings, seed)
+  await dbSaveGraph(persisted)
+  return [persisted]
+}
+
 function detectBrowserLanguage(): Language {
   const lang = typeof navigator !== 'undefined' ? navigator.language.split('-')[0] : 'en'
   return lang === 'it' ? 'it' : 'en'
+}
+
+/** On desktop, resolve the active workspace and check compatibility.
+ *  Shows a toast and returns true when the workspace is unsupported-only,
+ *  blocking the caller from seeding or syncing into it. */
+async function blockIfWorkspaceUnsupported(get: () => GraphState): Promise<boolean> {
+  if (!isDesktop()) return false
+  const ws = await resolveWorkspace(get().settings)
+  const compat = await checkWorkspaceCompatibility(ws)
+  if (compat.status !== 'unsupported-only') return false
+  const norm = normalizePath(get().settings.activeProjectPath ?? (await getDefaultWorkspacePath()))
+  toastUnsupportedProject(get().pushToast, get().settings.language, norm, compat.unsupportedCount)
+  return true
+}
+
+/** Commit records as the graph list, falling back to the first record if the
+ *  currentGraphId no longer exists among valid records. Returns the list. */
+function commitRecordsAsGraphList(
+  records: GraphRecord[],
+  get: () => GraphState,
+  set: (patch: Partial<GraphState>) => void,
+): GraphMeta[] {
+  const list = records.map((r) => ({ id: r.id, name: r.name, updatedAt: r.updatedAt }))
+  const validIds = new Set(records.map((r) => r.id))
+  const patch: Partial<GraphState> = { graphList: list }
+  if (!validIds.has(get().currentGraphId) && records[0]) {
+    patch.currentGraphId = records[0].id
+  }
+  set(patch)
+  return list
 }
 
 // Guards the clear+reload window during project switches:
@@ -111,7 +216,7 @@ async function persistContentGraphRecord(
   settings: GraphState['settings'],
 ): Promise<GraphRecord | null> {
   const meta = graphList.find((g) => g.id === currentGraphId)
-  const existing = await dbLoadGraph(currentGraphId)
+  const existing = normalizeStoredRecord(await dbLoadGraph(currentGraphId))
   const contentMatchesIdb =
     existing &&
     graphPersistEquals(
@@ -131,6 +236,8 @@ async function persistContentGraphRecord(
   } = graphContentPayload(nodes, edges, graphDisplay)
   const now = Date.now()
   const record: GraphRecord = {
+    recordVersion: GRAPH_RECORD_VERSION,
+    vocabulary: { id: VOCABULARY.id, version: VOCABULARY.version },
     id: currentGraphId,
     name: meta?.name ?? (settings.language === 'it' ? 'Senza titolo' : 'Untitled'),
     createdAt: existing?.createdAt ?? meta?.updatedAt ?? now,
@@ -210,9 +317,21 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
   missingProjects: [],
 
   loadGraphList: async () => {
-    let records = await dbListGraphs()
+    // Normalize every IDB record individually: preserve (do not delete)
+    // any record that fails normalization so corrupt data doesn't prevent
+    // startup or silently re-enter through the watcher path.
+    let records = await loadNormalizedRecords()
 
     if (records.length === 0) {
+      // Before seeding into the active project, check workspace compatibility
+      // on desktop. An unsupported-only project must not receive seeds — the
+      // app stays blocked until the user switches to a compatible project or
+      // removes the unsupported files manually.
+      if (await blockIfWorkspaceUnsupported(get)) {
+        set({ graphList: [] })
+        return []
+      }
+
       // First run: seed the locale demo graphs so the app always has a current
       // graph and a populated sidebar. The tour has the user create their own
       // graph on top — there is no auto-created Tutorial. Seed ids are stable,
@@ -221,19 +340,22 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
       const now = Date.now()
       const seeds = getSeedsForLanguage(lang)
       const seedRecords: GraphRecord[] = []
+      const fsrsDefaults = defaultConceptReviewFields()
       for (const seed of seeds) {
-        const display = seed.display ?? defaultGraphDisplay(get().settings)
-        const payload = graphContentPayload(seed.nodes, seed.edges, display)
-        const record: GraphRecord = {
+        const record = normalizeGraphDocument(seed.document, {
           id: seed.id,
           name: seed.name,
           createdAt: now,
           updatedAt: now,
-          nodes: payload.nodes,
-          edges: payload.edges,
-          display: payload.display,
-        }
-        await persistReviewStatesFromNodes(seed.id, seed.nodes)
+        })
+        // Merge FSRS defaults into every seed node so the first review cycle
+        // begins from a known initial state. The defaults come before the
+        // node's own data so elaboration always wins (no conflict).
+        record.nodes = record.nodes.map((n) => ({
+          ...n,
+          data: { ...fsrsDefaults, ...n.data },
+        }))
+        await persistReviewStatesFromNodes(seed.id, record.nodes)
         await dbSaveGraph(record)
         seedRecords.push(record)
       }
@@ -242,6 +364,14 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
         currentGraphId: seeds[0]?.id ?? s.currentGraphId,
         settings: { ...s.settings, language: lang },
       }))
+    }
+
+    // When IDB already holds valid records (non-empty) but the workspace on
+    // disk is unsupported-only, block the desktop sync so no writes reach a
+    // project whose files this app version cannot load. Existing IDB data and
+    // unsupported disk files are both preserved intact.
+    if (records.length > 0 && (await blockIfWorkspaceUnsupported(get))) {
+      return commitRecordsAsGraphList(records, get, set)
     }
 
     if (isDesktop()) {
@@ -287,9 +417,7 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
       }
     }
 
-    const list = records.map((r) => ({ id: r.id, name: r.name, updatedAt: r.updatedAt }))
-    set({ graphList: list })
-    return list
+    return commitRecordsAsGraphList(records, get, set)
   },
 
   openOrCreateProject: async () => {
@@ -353,11 +481,28 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
         const ws = await resolveWorkspace({ activeProjectPath: norm })
         const prevPath = get().settings.activeProjectPath
 
+        // Pre-check: if every file in the workspace is unsupported, block the
+        // switch before clearing IDB or committing the path. This keeps the
+        // current project's data intact.
+        const compat = await checkWorkspaceCompatibility(ws)
+        if (compat.status === 'unsupported-only') {
+          toastUnsupportedProject(
+            get().pushToast,
+            get().settings.language,
+            norm,
+            compat.unsupportedCount,
+          )
+          return get().graphList
+        }
+
         let records: GraphRecord[]
+        let unsupportedFiles: string[] = []
         beginSuppressWatch()
         try {
           await dbClearGraphs()
-          records = await loadProjectFromDisk(ws)
+          const result = await loadProjectFromDisk(ws)
+          records = result.records
+          unsupportedFiles = result.unsupportedFiles
         } catch (err) {
           // Load failed — IDB is now empty. Best-effort: reload from the outgoing
           // project so the app stays in a usable state. activeProjectPath is NOT
@@ -373,23 +518,9 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
         // Commit the path change only after the load succeeded.
         set((s) => ({ settings: { ...s.settings, activeProjectPath: norm } }))
 
-        if (records.length === 0) {
-          const now = Date.now()
-          const untitled = get().settings.language === 'it' ? 'Senza titolo' : 'Untitled'
-          const seed: GraphRecord = {
-            id: newGraphId(),
-            name: untitled,
-            createdAt: now,
-            updatedAt: now,
-            nodes: [],
-            edges: [],
-            display: defaultGraphDisplay(get().settings),
-          }
-          // settings now has activeProjectPath = norm (committed above)
-          const persisted = await writeGraphRecordToWorkspace(get().settings, seed)
-          await dbSaveGraph(persisted)
-          records = [persisted]
-        }
+        const finalRecords = await seedOrWarnEmptyProject(records, unsupportedFiles, get, norm)
+        if (finalRecords === null) return get().graphList
+        records = finalRecords
 
         const list = records.map((r) => ({ id: r.id, name: r.name, updatedAt: r.updatedAt }))
         set({ graphList: list })
@@ -487,8 +618,9 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
     // Capture a monotonic request id so the most-recently-started loadGraph
     // wins and older ones are discarded across every async gap below.
     const requestId = ++_loadRequestId
-    const record = await dbLoadGraph(id)
+    const storedRecord = await dbLoadGraph(id)
     if (requestId !== _loadRequestId) return
+    const record = normalizeStoredRecord(storedRecord)
     if (!record) {
       const showHeatmap = defaultGraphDisplay(get().settings).showHeatmap
       set((s) => ({
@@ -499,13 +631,13 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
     _draggingNodeIds.clear()
     const reviews = await dbGetReviewStatesForGraph(id)
     if (requestId !== _loadRequestId) return
-    const nodes = record!.nodes.map((n) => mergeReviewIntoNode(n, reviews.get(n.id)))
-    const graphDisplay = mergeGraphDisplay(record!.display, get().settings)
-    const fp = graphContentFingerprint(nodes, record!.edges, graphDisplay)
+    const nodes = record.nodes.map((n) => mergeReviewIntoNode(n, reviews.get(n.id)))
+    const graphDisplay = mergeGraphDisplay(record.display, get().settings)
+    const fp = graphContentFingerprint(nodes, record.edges, graphDisplay)
     set((s) => ({
-      currentGraphId: record!.id,
+      currentGraphId: record.id,
       nodes,
-      edges: record!.edges,
+      edges: record.edges,
       graphDisplay,
       selected: null,
       loadedToken: s.loadedToken + 1,
@@ -560,6 +692,8 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
     const now = Date.now()
     const display = defaultGraphDisplay(get().settings)
     const record: GraphRecord = {
+      recordVersion: GRAPH_RECORD_VERSION,
+      vocabulary: { id: VOCABULARY.id, version: VOCABULARY.version },
       id,
       name,
       createdAt: now,
@@ -595,7 +729,8 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
     const graphId = trimmed && isGraphId(trimmed) ? trimmed : newGraphId()
     const now = Date.now()
     const graphDisplay = mergeGraphDisplay(display, get().settings)
-    const existing = await dbListGraphs()
+    const rawExisting = await dbListGraphs()
+    const existing = rawExisting.map((r) => normalizeGraphRecord(r))
     const peerNames = existing.filter((r) => r.id !== graphId).map((r) => r.name)
     const graphName = uniqueGraphNameAmong(name.trim() || 'Untitled', peerNames)
     const {
@@ -604,6 +739,8 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
       display: persistDisplay,
     } = graphContentPayload(nodes, edges, graphDisplay)
     const record: GraphRecord = {
+      recordVersion: GRAPH_RECORD_VERSION,
+      vocabulary: { id: VOCABULARY.id, version: VOCABULARY.version },
       id: graphId,
       name: graphName,
       createdAt: now,
@@ -639,7 +776,7 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
   },
 
   renameGraph: async (id, name) => {
-    const record = await dbLoadGraph(id)
+    const record = normalizeStoredRecord(await dbLoadGraph(id))
     if (!record) return
     const updated = { ...record, name }
     const persisted = isDesktop()

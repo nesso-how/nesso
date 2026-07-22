@@ -2,6 +2,27 @@
 import { expect, type Locator, type Page } from '@playwright/test'
 
 const ZUSTAND_PERSIST_KEY = 'nesso'
+/** Must match {@link ../src/store/persistence.ts!ZUSTAND_PERSIST_VERSION}. */
+const CURRENT = 1 as const
+
+/** Minimal valid {@link ../src/store/persistence.ts!PersistedGraphState} v1 shape for
+ *  the E2E init-script to overlay onto whatever partial state exists before
+ *  navigation.  All fields are required by the store's merge validation. */
+const MINIMAL_V1_DEFAULTS = {
+  settings: {},
+  mentorPanelExpanded: false,
+  sidebarCollapsed: false,
+  sidebarDisplayOpen: true,
+  inspectorCollapsed: false,
+  currentGraphId: '',
+  graphList: [],
+  viewports: {},
+  onboardingStep: null,
+  onboardingPhase: null,
+  onboardingTourGraphId: null,
+  onboardingReviewOpened: false,
+  onboardingDeleteNodeDone: false,
+} as const
 
 export function nodeByText(page: Page, text: string): Locator {
   return page.locator('.react-flow__node', { hasText: text })
@@ -11,17 +32,28 @@ export const edges = (page: Page): Locator => page.locator('.react-flow__edge')
 export const nodes = (page: Page): Locator => page.locator('.react-flow__node')
 
 export async function gotoApp(page: Page): Promise<void> {
-  await page.addInitScript((key) => {
-    const raw = localStorage.getItem(key)
-    const parsed = raw ? JSON.parse(raw) : { state: {}, version: 0 }
-    parsed.state = parsed.state ?? {}
-    parsed.state.settings = {
-      ...(parsed.state.settings ?? {}),
-      onboardingCompleted: true,
-      telemetryPromptShown: true,
-    }
-    localStorage.setItem(key, JSON.stringify(parsed))
-  }, ZUSTAND_PERSIST_KEY)
+  await page.addInitScript(
+    ({ key, version, defaults }) => {
+      const raw = localStorage.getItem(key)
+      const parsed = raw ? JSON.parse(raw) : { state: {}, version }
+      parsed.version = version
+      // Deep-merge existing partial state onto minimal defaults so the
+      // resulting payload is always a valid PersistedGraphState v1 blob.
+      const existing = parsed.state && typeof parsed.state === 'object' ? parsed.state : {}
+      parsed.state = { ...defaults, ...existing }
+      // Force onboarding past the interstitial and telemetry prompt so
+      // test flows see the canvas immediately.
+      parsed.state.settings = {
+        ...(parsed.state.settings && typeof parsed.state.settings === 'object'
+          ? parsed.state.settings
+          : {}),
+        onboardingCompleted: true,
+        telemetryPromptShown: true,
+      }
+      localStorage.setItem(key, JSON.stringify(parsed))
+    },
+    { key: ZUSTAND_PERSIST_KEY, version: CURRENT, defaults: MINIMAL_V1_DEFAULTS },
+  )
   await page.goto('/')
   await expect(page.locator('.react-flow__pane')).toBeVisible()
 }

@@ -48,14 +48,14 @@ Update the canonical `.rules/*.md` in the same change when your edit makes a rul
 
 - `components.md` — `src/components/**/*.tsx`
 - `store.md` — `src/store/**/*.ts`
-- `graph-model.md` — `src/data/relationTypes.ts`, `src/types/graph.ts`, `packages/graph/src/NessoEdge.tsx`, `src/components/dialogs/RelationTypesDialog.tsx`, `packages/vocab-learning/src/index.ts`, `packages/vocab-learning/src/relationTypes.ts`
+- `graph-model.md` — `src/data/relationTypes.ts`, `src/types/graph.ts`, `packages/graph/src/NessoEdge.tsx`, `src/components/dialogs/RelationTypesDialog.tsx`, `packages/vocab-learning/src/index.ts`, `packages/vocab-learning/src/document.ts`, `packages/vocab-learning/src/relationTypes.ts`
 - `mentor.md` — `src/components/mentor/MentorPanel.tsx`, `src/llm/completion.ts`, `src/llm/context.ts`
 - `conventions.md` — `src/**/*.{ts,tsx}` (only when conventions change, not every src edit)
-- `testing.md` — `**/*.test.{ts,tsx}`; also `**/*.test.mjs`, `vitest.config.ts`, `playwright.config.ts`, `e2e/**`, CI test steps
+- `testing.md` — `**/*.test.{ts,tsx}`; also `**/*.test.mjs`, `vitest.config.ts`, `playwright.config.ts`, `e2e/**`, `packages/schema/src/fixtures/envelope/**`, `src/store/fixtures/persist/**`, `src/lib/fixtures/graph-load/**`, CI test steps
 - `theme.md` — `packages/theme/**`, `src/index.css`, `vite.config.ts`
 - `docs.md` — `docs/src/content/docs/**/*.md`
 - `static-analysis.md` — `src/**/*.{ts,tsx,js,mjs,cjs,css}`, `biome.json`, `prettier.config.js`, `scripts/license-header.mjs`, `scripts/check-security-headers.mjs`, `scripts/preflight.sh`, `scripts/fast-check.sh`, `src-tauri/src/**/*.rs`, `src-tauri/build.rs`, `src-tauri/capabilities/**/*.json`, `src-tauri/tauri.conf.json`, `tsconfig.json`, `tsconfig.app.json`, `tsconfig.node.json`, `packages/*/tsconfig.json`, `packages/*/src/**/*.{ts,tsx}`, `.fallowrc.jsonc`, `fallow-baselines/*.json`, `scripts/stryker/**`, `vercel.json`, `docs/vercel.json`
-- `compatibility.md` — `packages/schema/**`, `packages/vocab-learning/**`, `src/lib/workspace/**`, `src/lib/graphDocumentMapping.ts`, `src/lib/graphMapping.ts`, `src/store/**`, `src/data/conceptNodes.ts`, `src-tauri/src/lib.rs`
+- `compatibility.md` — `packages/schema/**`, `packages/vocab-learning/**`, `src/lib/workspace/**`, `src/lib/graphLoadNormalizer.ts`, `src/lib/graphIO.ts`, `src/lib/graphDocumentMapping.ts`, `src/lib/graphMapping.ts`, `src/lib/fixtures/graph-load/**`, `src/store/**`, `src/data/conceptNodes.ts`, `src/data/seedGraph.ts`, `src/test/graphDocument.ts`, `src-tauri/src/lib.rs`
 - `changelog.md` — `CHANGELOG.md`
 - `harness.md` — `.rules/**`, `.opencode/**`, `AGENTS.md`, `opencode.json`
 
@@ -85,9 +85,13 @@ The single `useGraphStore` in `src/store/index.ts` is the source of truth. Do no
 
 All graph mutations go through store methods (`addNode`, `deleteEdge`, `updateNodeData`, etc.) which return new arrays. Do not push into `nodes` or `edges` in place.
 
-### No backwards-compatibility code while in alpha
+### Compatibility follows the release lifecycle
 
-The project is in `0.1.0-alpha`. Do not write migration shims, legacy fallbacks, deprecation aliases, or "old name still works" coercions when renaming/removing fields, types, enum values, or APIs. Update the data (seeds, fixtures) and call sites directly and break cleanly. Once we tag a non-alpha release this constraint relaxes — until then, prefer clean diffs over carrying old names.
+Before first-beta preparation, alpha-only persisted data may break cleanly: do not add migration shims, legacy fallbacks, deprecation aliases, or old-name coercions merely to preserve an earlier alpha shape.
+
+Compatibility work explicitly preparing `0.2.0-beta.0` is allowed and required. The first protected data-at-rest baseline is envelope format `1` with `@nesso-how/vocab-learning` vocabulary `0.1.0`, using the post-#129 definition-only elaboration shape. Do not migrate, strip, preserve, or alias removed alpha-only `examples`, `notes`, or image fields; reject those documents as outside the baseline.
+
+From `0.2.0-beta.0` onward, persisted app data uses the sequential migration ladders documented in `.rules/compatibility.md`. Package deprecation aliases may serve npm consumers when required by package semver, but are not migrations for app data at rest. Runtime in-memory state remains outside the compatibility contract.
 
 ## Git — never commit or push without explicit consent
 

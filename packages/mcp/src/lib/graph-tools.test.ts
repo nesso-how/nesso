@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from 'vitest'
+import { GRAPH_FORMAT_VERSION } from '@nesso-how/schema'
 import { serialize } from '@nesso-how/vocab-learning'
 import {
   buildGraphDocument,
@@ -45,6 +46,8 @@ describe('validateGraphJson', () => {
   it('rejects unknown relation types', () => {
     const result = validateGraphJson(
       JSON.stringify({
+        version: GRAPH_FORMAT_VERSION,
+        vocabulary: { id: '@nesso-how/vocab-learning', version: '0.1.0' },
         name: 'X',
         concepts: [{ id: 'n1', label: 'A', x: 0, y: 0 }],
         relations: [{ id: 'e1', source: 'n1', target: 'n1', type: 'not-real' }],
@@ -57,6 +60,8 @@ describe('validateGraphJson', () => {
   it('rejects duplicate concept ids', () => {
     const result = validateGraphJson(
       JSON.stringify({
+        version: GRAPH_FORMAT_VERSION,
+        vocabulary: { id: '@nesso-how/vocab-learning', version: '0.1.0' },
         name: 'X',
         concepts: [
           { id: 'n1', label: 'A', x: 0, y: 0 },
@@ -72,6 +77,8 @@ describe('validateGraphJson', () => {
   it('rejects dangling relation endpoints', () => {
     const result = validateGraphJson(
       JSON.stringify({
+        version: GRAPH_FORMAT_VERSION,
+        vocabulary: { id: '@nesso-how/vocab-learning', version: '0.1.0' },
         name: 'X',
         concepts: [{ id: 'n1', label: 'A', x: 0, y: 0 }],
         relations: [{ id: 'e1', source: 'n1', target: 'missing', type: 'causes' }],
@@ -84,6 +91,8 @@ describe('validateGraphJson', () => {
   it('warns when relation type is omitted', () => {
     const result = validateGraphJson(
       JSON.stringify({
+        version: GRAPH_FORMAT_VERSION,
+        vocabulary: { id: '@nesso-how/vocab-learning', version: '0.1.0' },
         name: 'X',
         concepts: [
           { id: 'n1', label: 'A', x: 0, y: 0 },
@@ -99,13 +108,14 @@ describe('validateGraphJson', () => {
   it('warns when vocabulary is missing', () => {
     const result = validateGraphJson(
       JSON.stringify({
+        version: GRAPH_FORMAT_VERSION,
         name: 'X',
         concepts: [{ id: 'n1', label: 'A', x: 0, y: 0 }],
         relations: [],
       }),
     )
-    expect(result.valid).toBe(true)
-    expect(result.warnings.some((w) => w.path === 'vocabulary')).toBe(true)
+    expect(result.valid).toBe(false)
+    expect(result.errors.some((e) => e.message.includes('vocabulary'))).toBe(true)
   })
 })
 

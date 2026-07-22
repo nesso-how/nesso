@@ -267,6 +267,26 @@ Coverage proves a line _runs_ under test; it cannot tell whether the assertions 
   - `store` (`graph-editing` + `graph-management`) — **71.40%** (669/937), a real climb target; `break` 69.
   - `workspace` (`src/lib/workspace/**` minus the Tauri glue) — **63.13%** (250/396), residual in fault-injection / fs-error paths the e2e layer (#28) owns; `break` 61.
 
+## Compatibility replay fixtures
+
+Released data-at-rest formats have immutable JSON fixtures co-located with
+their compatibility tests. A format or vocabulary version bump must add a
+fixture for the previous released source version and a test that replays it
+through the public migration chokepoint.
+
+Never rewrite a released fixture to match current output. Add a new fixture
+and sequential migration step instead. Fixtures begin at the post-#129
+definition-only beta baseline and must not encode removed alpha-only `examples`,
+`notes`, or image fields as supported input.
+
+Fixture locations:
+
+| Format                | Fixture path                                           | Migration chokepoint              |
+| --------------------- | ------------------------------------------------------ | --------------------------------- |
+| Envelope              | `packages/schema/src/fixtures/envelope/v1.json`        | `deserialize` → `migrateEnvelope` |
+| Zustand persist       | `src/store/fixtures/persist/v1.json`                   | `migratePersistedState`           |
+| Graph load (combined) | `src/lib/fixtures/graph-load/v1-vocabulary-0.1.0.json` | `normalizeGraphDocument`          |
+
 ## E2E focus assertions (Playwright)
 
 When testing node creation focus, use `page.keyboard.type()` — never `input.fill()`. The `fill()` method internally calls `.focus()` on the target before filling, so it always succeeds — making it unable to detect focus failures. Use `keyboard.type()` instead, which preserves the existing focus state. The correct pattern:

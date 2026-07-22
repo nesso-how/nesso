@@ -8,6 +8,12 @@ import { createUISlice } from './slices/ui'
 import { createGraphManagementSlice } from './slices/graph-management'
 import { createDesktopSyncSlice } from './slices/desktop-sync'
 import type { GraphState } from './state'
+import {
+  ZUSTAND_PERSIST_VERSION,
+  migratePersistedState,
+  validateMergePayload,
+  type PersistedGraphState,
+} from './persistence'
 
 export type { GraphState } from './state'
 
@@ -22,7 +28,7 @@ export const useGraphStore = create<GraphState>()(
     }),
     {
       name: ZUSTAND_PERSIST_KEY,
-      partialize: (s) => ({
+      partialize: (s): PersistedGraphState => ({
         settings: s.settings,
         mentorPanelExpanded: s.mentorPanelExpanded,
         sidebarCollapsed: s.sidebarCollapsed,
@@ -38,13 +44,17 @@ export const useGraphStore = create<GraphState>()(
         onboardingDeleteNodeDone: s.onboardingDeleteNodeDone,
         reviewReminderLastShownByGraph: s.reviewReminderLastShownByGraph,
       }),
+      version: ZUSTAND_PERSIST_VERSION,
+      migrate: migratePersistedState,
       merge: (persisted, current) => {
-        const p = persisted as Partial<GraphState> | undefined
-        if (!p) return current
+        const valid = validateMergePayload(persisted)
+        if (!valid) return current
         return {
           ...current,
-          ...p,
-          settings: { ...current.settings, ...p.settings },
+          ...valid,
+          settings: { ...current.settings, ...valid.settings },
+          reviewReminderLastShownByGraph:
+            valid.reviewReminderLastShownByGraph ?? current.reviewReminderLastShownByGraph,
         }
       },
     },

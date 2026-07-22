@@ -137,15 +137,19 @@ function AppInner() {
   useEffect(() => {
     let cancelled = false
 
-    void loadGraphList().then(async (list) => {
-      if (cancelled) return
-      const hashId = location.hash.slice(1)
-      const cid = useGraphStore.getState().currentGraphId
-      const target = list.find((g) => g.id === hashId) ? hashId : cid
-      await loadGraph(target)
-      if (cancelled) return
-      onboarding.onGraphListLoaded()
-    })
+    void loadGraphList()
+      .then(async (list) => {
+        if (cancelled) return
+        const hashId = location.hash.slice(1)
+        const cid = useGraphStore.getState().currentGraphId
+        const target = list.find((g) => g.id === hashId) ? hashId : cid
+        await loadGraph(target)
+        if (cancelled) return
+        onboarding.onGraphListLoaded()
+      })
+      .catch((err) => {
+        console.error('[nesso] startup graph list load failed:', err)
+      })
     return () => {
       cancelled = true
     }

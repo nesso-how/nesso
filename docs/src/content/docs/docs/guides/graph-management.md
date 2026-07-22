@@ -32,6 +32,19 @@ Importing a file that isn't a valid Nesso graph shows an error toast and imports
 
 Exported JSON carries graph **content** only: concepts, relations, and display settings. Personal review progress (FSRS data) is never included, so sharing or re-importing a file never carries someone else's recall history.
 
+## File compatibility
+
+Nesso graph files carry separate envelope and vocabulary versions. When you
+import a file or open a desktop project, released older beta formats are
+upgraded through sequential compatibility steps. A file created by a newer
+unsupported Nesso version is rejected so its data is not interpreted
+incorrectly.
+
+The first supported baseline is the definition-only graph shape introduced
+before `0.2.0-beta.0`. Earlier alpha-only `examples`, `notes`, and image
+fields are not migrated. Review scheduling state is stored separately and is
+not included in exported graph files.
+
 ## Desktop projects
 
 On the desktop app, graphs live inside **project folders**: plain directories on disk holding one JSON file per graph plus a small manifest. The **Projects** section in the sidebar (desktop only) lists every folder you've opened and lets you switch between them.
@@ -42,6 +55,8 @@ On the desktop app, graphs live inside **project folders**: plain directories on
 - **Reveal in Finder**: hover a project and click the folder icon to reveal it in the system file manager.
 
 If a project folder is moved, renamed, or deleted outside the app, it stays in the list marked as missing (greyed out, with a "not found" label) rather than disappearing. Switching away from a missing project happens automatically. Switching back works again once the folder reappears at the same path. Only the trash icon removes it from the list for good.
+
+If every file in a project folder uses a vocabulary or format version that this release of Nesso cannot read, the project is blocked: Nesso does not switch to it, does not create new files inside it, and does not overwrite any of the unsupported files. A banner explains what happened, and the previous project stays active. See [Troubleshooting](../../troubleshooting/#unsupported-project-files-desktop) for recovery steps.
 
 :::caution
 Native folder pickers and the system menu bar are desktop-only Tauri APIs. None of this section applies to the web app, which has a single implicit workspace backed by IndexedDB. See [FAQ](../../faq/#what-changes-between-the-web-app-and-the-desktop-app) for the full web/desktop comparison.
