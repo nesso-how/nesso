@@ -49,6 +49,17 @@ export function LearningSettings() {
           <Switch value={settings.reviewEnabled} onChange={(v) => setSetting('reviewEnabled', v)} />
         </SettingsFormRow>
 
+        <SettingsFormRow
+          divider={false}
+          label={t.settings.learning.reviewReminder}
+          description={t.settings.learning.reviewReminderDesc}
+        >
+          <Switch
+            value={settings.reviewReminderEnabled}
+            onChange={(value) => setSetting('reviewReminderEnabled', value)}
+          />
+        </SettingsFormRow>
+
         {settings.reviewEnabled && (
           <>
             <SettingsFormRow

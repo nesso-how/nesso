@@ -85,6 +85,9 @@ const it: typeof en = {
         'Il ripasso ti ripropone ogni concetto con FSRS, un algoritmo di ripetizione spaziata che lo pianifica poco prima che tu lo dimentichi.',
       reviewMode: 'Modalità di ripasso',
       reviewModeDesc: 'Quando è disattivata, il pulsante Ripasso e la scorciatoia R sono nascosti.',
+      reviewReminder: 'Promemoria di ripasso',
+      reviewReminderDesc:
+        'Mostra un promemoria giornaliero quando ci sono concetti studiati da ripassare.',
       retention: 'Ritenzione target',
       retentionDesc:
         'Probabilità di ricordare un concetto al prossimo ripasso. Più alta = più ripassi.',
@@ -98,8 +101,21 @@ const it: typeof en = {
     nothingDue: 'Nessuna scheda in scadenza.',
     nothingDueDesc: 'Torna quando ci sono schede da rivedere, o seleziona un concetto dal grafo.',
     close: 'Chiudi',
+    reminder: (count: number) =>
+      count === 1
+        ? '1 concetto che hai studiato è pronto per il ripasso.'
+        : `${count} concetti che hai studiato sono pronti per il ripasso.`,
+    startReview: 'Inizia il ripasso',
     recallPrompt: 'Ricorda le relazioni prima di rivelare.',
     reveal: 'Rivela',
+    interval: {
+      lessThanMinute: '< 1 min',
+      minute: (count: number) => `${count} min`,
+      hour: (count: number) => `${count} ${count === 1 ? 'ora' : 'ore'}`,
+      day: (count: number) => `${count} ${count === 1 ? 'giorno' : 'giorni'}`,
+      month: (count: number) => `${count} ${count === 1 ? 'mese' : 'mesi'}`,
+      year: (count: number) => `${count} ${count === 1 ? 'anno' : 'anni'}`,
+    },
     ratings: {
       again: 'Ancora',
       hard: 'Difficile',

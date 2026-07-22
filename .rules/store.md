@@ -16,6 +16,8 @@ Shared types (`GraphMeta`, `Selection`, `Viewport`, `GraphSnapshot`, `Toast`, `C
 
 ## Shape
 
+The `ui.ts` slice also exposes `reviewReminderLastShownByGraph: Record<string, string>` and `markReviewReminderShown(graphId, localDay)`. The map stores UI localStorage metadata for the daily reminder, not graph content or FSRS review state.
+
 ```ts
 interface GraphState {
   nodes: Node<ConceptNodeData>[]
@@ -38,6 +40,7 @@ interface GraphState {
   onboardingTourGraphId: string | null
   onboardingReviewOpened: boolean
   onboardingDeleteNodeDone: boolean
+  reviewReminderLastShownByGraph: Record<string, string>
   currentGraphId: string
   graphList: { id: string; name: string; updatedAt: number }[]
   missingProjects: string[]
@@ -49,11 +52,13 @@ interface GraphState {
 }
 ```
 
-Persistence: Zustand `persist` in `index.ts` (`ZUSTAND_PERSIST_KEY` → localStorage key `nesso`; see `src/data/storageKeys.ts`) rehydrates `settings`, `mentorPanelExpanded`, `sidebarCollapsed`, `sidebarDisplayOpen`, `inspectorCollapsed`, `currentGraphId`, `graphList`, `viewports`, and the five `onboarding*` fields (`onboardingStep`, `onboardingPhase`, `onboardingTourGraphId`, `onboardingReviewOpened`, `onboardingDeleteNodeDone`) so a reload mid-tour or mid-consent resumes where it left off. On merge, `settings` is shallow-merged so new keys pick up defaults for older blobs. Graph **content** (nodes/edges without FSRS in the on-disk JSON) lives in IndexedDB `graphs` (`GRAPHS_DB_NAME`, `src/store/db.ts`) and on desktop in project `.json` files; **FSRS review progress** lives in a separate IndexedDB object store `reviewState` (keyed `${graphId}:${nodeId}`), not cleared by `dbClearGraphs()` on project switch. Load via `loadGraph` (`documentToGraph` merges review store), save via `saveCurrentGraph` (content to disk/IDB, FSRS to `reviewState`; debounced from `useAutoSave`). Dirty-check for shared files uses a content-only fingerprint (`graphContentFingerprint`) so review-only changes do not rewrite disk.
+Persistence: Zustand `persist` in `index.ts` (`ZUSTAND_PERSIST_KEY` → localStorage key `nesso`; see `src/data/storageKeys.ts`) rehydrates `settings`, `mentorPanelExpanded`, `sidebarCollapsed`, `sidebarDisplayOpen`, `inspectorCollapsed`, `currentGraphId`, `graphList`, `viewports`, the five `onboarding*` fields (`onboardingStep`, `onboardingPhase`, `onboardingTourGraphId`, `onboardingReviewOpened`, `onboardingDeleteNodeDone`), and `reviewReminderLastShownByGraph` so a reload mid-tour or mid-consent resumes where it left off and a reminder stays suppressed for the shown local day. On merge, `settings` is shallow-merged so new keys pick up defaults for older blobs. The reminder map is UI localStorage metadata, not graph content or FSRS review state. Graph **content** (nodes/edges without FSRS in the on-disk JSON) lives in IndexedDB `graphs` (`GRAPHS_DB_NAME`, `src/store/db.ts`) and on desktop in project `.json` files; **FSRS review progress** lives in a separate IndexedDB object store `reviewState` (keyed `${graphId}:${nodeId}`), not cleared by `dbClearGraphs()` on project switch. Load via `loadGraph` (`documentToGraph` merges review store), save via `saveCurrentGraph` (content to disk/IDB, FSRS to `reviewState`; debounced from `useAutoSave`). Dirty-check for shared files uses a content-only fingerprint (`graphContentFingerprint`) so review-only changes do not rewrite disk.
 
 Desktop multi-project: `settings.knownProjects` (explicitly opened folders, most-recent first) and `settings.activeProjectPath` drive the workspace. **Disk is the source of truth and IndexedDB caches only the active project** — `saveCurrentGraph` writes disk-first and mirrors the persisted (post-dedup) record into IDB; `switchProject`/`openOrCreateProject`/`removeProject` flush, clear IDB, and reload from disk under `beginSuppressWatch`/`_switchingProject` guards. The sidebar **Projects section** (`SidebarProjects`, desktop-only) and the native File menu (`menu:open-project`) drive these actions — there is no Settings tab for it.
 
 ## Mutations
+
+`markReviewReminderShown(graphId, localDay)` immutably records the local calendar day shown for a graph in the persisted UI metadata.
 
 | Method                                                                                                                                | Effect                                                                                                                                                      |
 | ------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |

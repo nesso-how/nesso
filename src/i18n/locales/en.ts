@@ -85,6 +85,8 @@ const en = {
         "Review brings each concept back with FSRS, a spaced-repetition algorithm that schedules it right before you're likely to forget it.",
       reviewMode: 'Review mode',
       reviewModeDesc: 'When off, the Review button and the R shortcut are hidden.',
+      reviewReminder: 'Review reminder',
+      reviewReminderDesc: 'Show a daily reminder when studied concepts are due.',
       retention: 'Target retention',
       retentionDesc:
         'Probability of recalling a concept at its next review. Higher = more reviews.',
@@ -98,8 +100,21 @@ const en = {
     nothingDue: 'Nothing due.',
     nothingDueDesc: 'Come back when cards are due, or pick a concept from the graph.',
     close: 'Close',
+    reminder: (count: number) =>
+      count === 1
+        ? '1 concept you have studied is ready for review.'
+        : `${count} concepts you have studied are ready for review.`,
+    startReview: 'Start review',
     recallPrompt: 'Recall its relations before revealing.',
     reveal: 'Reveal',
+    interval: {
+      lessThanMinute: '< 1 min',
+      minute: (count: number) => `${count} min`,
+      hour: (count: number) => `${count} ${count === 1 ? 'hour' : 'hours'}`,
+      day: (count: number) => `${count} ${count === 1 ? 'day' : 'days'}`,
+      month: (count: number) => `${count} ${count === 1 ? 'month' : 'months'}`,
+      year: (count: number) => `${count} ${count === 1 ? 'year' : 'years'}`,
+    },
     ratings: {
       again: 'Again',
       hard: 'Hard',

@@ -8,6 +8,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
+- **Review ratings:** Rating-button intervals now use localized, readable minute, hour, day, month, and year labels instead of ambiguous abbreviations.
+- **Review reminders:** Optional, dismissible per-graph reminders now appear once per local day for previously studied concepts that are due. Each reminder includes **Start review**, and reminder display is controlled independently by the **Learning** setting.
 - **Security test and validation simplification:** CSP validation, desktop trust-boundary tests, and frontend Tauri test infrastructure were simplified. Existing web and filesystem security behavior remains unchanged.
 
 ### Security

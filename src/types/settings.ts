@@ -19,6 +19,7 @@ export interface NessoSettings {
   aiApiKey: string
   mentorEnabled: boolean
   reviewEnabled: boolean
+  reviewReminderEnabled: boolean
   fsrsRetention: number
   maximumInterval: number
   inspectorMemoryOpen: boolean

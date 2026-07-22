@@ -21,13 +21,25 @@ const RATING_EVENT_NAMES = {
   [Rating.Easy]: 'easy',
 } as const satisfies Record<(typeof RATINGS)[number], 'again' | 'hard' | 'good' | 'easy'>
 
-function formatInterval(ms: number): string {
-  if (ms < 60_000) return '< 1m'
+type IntervalLabels = {
+  lessThanMinute: string
+  minute: (count: number) => string
+  hour: (count: number) => string
+  day: (count: number) => string
+  month: (count: number) => string
+  year: (count: number) => string
+}
+
+export function formatInterval(ms: number, labels: IntervalLabels): string {
+  if (ms < 60_000) return labels.lessThanMinute
+  const minutes = ms / 60_000
+  if (minutes < 60) return labels.minute(Math.round(minutes))
+  const hours = ms / 3_600_000
+  if (hours < 24) return labels.hour(Math.round(hours))
   const days = ms / 86_400_000
-  if (days < 1) return '< 1d'
-  if (days < 30) return `${Math.round(days)}d`
-  if (days < 365) return `${Math.round(days / 30)}mo`
-  return `${Math.round(days / 365)}y`
+  if (days < 30) return labels.day(Math.round(days))
+  if (days < 365) return labels.month(Math.round(days / 30))
+  return labels.year(Math.round(days / 365))
 }
 
 interface Props {
@@ -154,10 +166,10 @@ export function ReviewMode({ open, onClose }: Props) {
     return Object.fromEntries(
       RATINGS.map((r) => {
         const ms = scheduler.next(card, now, r as Grade).card.due.getTime() - now.getTime()
-        return [r, formatInterval(ms)]
+        return [r, formatInterval(ms, t.review.interval)]
       }),
     ) as Record<(typeof RATINGS)[number], string>
-  }, [currentNode, scheduler])
+  }, [currentNode, scheduler, t.review.interval])
 
   if (!open) return null
 
