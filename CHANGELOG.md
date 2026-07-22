@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.2.0-beta.0] - 2026-07-22
+
 ### Added
 
 - **Beta data-at-rest compatibility baseline:** Introduced versioned migration ladders and immutable replay fixtures for all persisted surfaces — envelope (`GRAPH_FORMAT_VERSION 1`, `@nesso-how/schema`), vocabulary (`VOCABULARY.version 0.1.0`, `graphLoadNormalizer`), IndexedDB `GraphRecord` (`GRAPH_RECORD_VERSION 1`), and Zustand persist (`ZUSTAND_PERSIST_VERSION 1`) — establishing the first protected data baseline ahead of the `0.2.0-beta.0` release.
@@ -780,7 +782,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial alpha: interactive knowledge graph (web + Tauri v2); desktop installers on GitHub Releases (macOS Apple silicon and Intel).
 
-[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.41...HEAD
+[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.2.0-beta.0...HEAD
+[0.2.0-beta.0]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.41...v0.2.0-beta.0
 [0.1.0-alpha.41]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.40...v0.1.0-alpha.41
 [0.1.0-alpha.40]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.39...v0.1.0-alpha.40
 [0.1.0-alpha.39]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.38...v0.1.0-alpha.39
