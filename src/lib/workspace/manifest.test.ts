@@ -68,4 +68,46 @@ describe('disk-sync cache', () => {
     expect(cache.workspace).toBe('/ws')
     expect(cache.manifest).toBe(m)
   })
+
+  it('persists and returns reserved paths so subsequent saves avoid unsupported files', () => {
+    const m = manifest()
+    const reserved = ['Foreign.json', 'Broken.json']
+    setDiskSyncCache('/ws', m, reserved)
+    const cache = getDiskSyncCache()
+    expect(cache.workspace).toBe('/ws')
+    expect(cache.reservedPaths).toEqual(reserved)
+  })
+
+  it('preserves existing reserved paths when setDiskSyncCache is called without the parameter on the same workspace', () => {
+    const m = manifest()
+    const reserved = ['Foreign.json']
+    setDiskSyncCache('/ws', m, reserved)
+    // Same-workspace update without reservedPaths — preserve existing.
+    setDiskSyncCache('/ws', { version: 1, entries: {} })
+    const cache = getDiskSyncCache()
+    expect(cache.reservedPaths).toEqual(reserved)
+  })
+
+  it('clears reserved paths when workspace changes and reservedPaths is omitted', () => {
+    // Populate cache for workspace A with reserved paths.
+    setDiskSyncCache('/ws-a', manifest(), ['Foreign.json'])
+    expect(getDiskSyncCache().reservedPaths).toEqual(['Foreign.json'])
+
+    // Switch to workspace B WITHOUT supplying reservedPaths.
+    // The stale reservations from workspace A must be cleared.
+    setDiskSyncCache('/ws-b', { version: 1, entries: {} })
+    const cache = getDiskSyncCache()
+    expect(cache.workspace).toBe('/ws-b')
+    expect(cache.reservedPaths).toEqual([])
+  })
+
+  it('carries over reserved paths when workspace changes and reservedPaths is supplied', () => {
+    setDiskSyncCache('/ws-a', manifest(), ['Foreign.json'])
+
+    // Switching to workspace B with explicit reservedPaths — use the new ones.
+    setDiskSyncCache('/ws-b', { version: 1, entries: {} }, ['Other.json'])
+    const cache = getDiskSyncCache()
+    expect(cache.workspace).toBe('/ws-b')
+    expect(cache.reservedPaths).toEqual(['Other.json'])
+  })
 })

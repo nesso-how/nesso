@@ -1,21 +1,8 @@
 // SPDX-License-Identifier: MIT
-import type { Node, Edge } from '@xyflow/react'
-import type { ConceptNodeData, NessoGraphDocument } from '@/types/graph'
-import { documentToGraphFromReviews } from '@/lib/graphDocumentMapping'
+import type { Node } from '@xyflow/react'
+import type { ConceptNodeData } from '@/types/graph'
 import { extractReviewParams } from '@/lib/graphContent'
-import {
-  dbGetReviewStatesForGraph,
-  dbPutReviewStatesForGraph,
-  dbPruneReviewStates,
-} from '@/store/db'
-
-export async function documentToGraph(
-  doc: NessoGraphDocument,
-  graphId: string,
-): Promise<ReturnType<typeof documentToGraphFromReviews>> {
-  const reviews = await dbGetReviewStatesForGraph(graphId)
-  return documentToGraphFromReviews(doc, reviews)
-}
+import { dbPutReviewStatesForGraph, dbPruneReviewStates } from '@/store/db'
 
 export async function persistReviewStatesFromNodes(
   graphId: string,

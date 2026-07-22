@@ -4,7 +4,14 @@ import type { Node, Edge } from '@xyflow/react'
 import type { ConceptNodeData, GraphDisplaySettings, LearningNodeParams } from '@/types/graph'
 import { GRAPHS_DB_NAME } from '@/data/storageKeys'
 
+export const GRAPH_RECORD_VERSION = 1 as const
+
 export interface GraphRecord {
+  recordVersion: typeof GRAPH_RECORD_VERSION
+  vocabulary: {
+    id: string
+    version: string
+  }
   id: string
   name: string
   createdAt: number
@@ -18,45 +25,54 @@ export function reviewStateKey(graphId: string, nodeId: string): string {
   return `${graphId}:${nodeId}`
 }
 
-const db = openDB<{ graphs: GraphRecord; reviewState: LearningNodeParams }>(GRAPHS_DB_NAME, 2, {
-  // Idempotent schema bootstrap: ensure the current object stores exist.
-  // Not a version ladder — IndexedDB requires a version + upgrade tx to create
-  // stores, and the version cannot go below existing alpha installs (2).
-  upgrade(db) {
-    if (!db.objectStoreNames.contains('graphs')) {
-      db.createObjectStore('graphs', { keyPath: 'id' })
-    }
-    if (!db.objectStoreNames.contains('reviewState')) {
-      db.createObjectStore('reviewState')
-    }
-  },
-})
+type NessoDB = { graphs: GraphRecord; reviewState: LearningNodeParams }
+
+let _dbPromise: ReturnType<typeof openDB<NessoDB>> | undefined
+
+function getDB(): ReturnType<typeof openDB<NessoDB>> {
+  if (!_dbPromise) {
+    _dbPromise = openDB<NessoDB>(GRAPHS_DB_NAME, 2, {
+      // Idempotent schema bootstrap: ensure the current object stores exist.
+      // Not a version ladder — IndexedDB requires a version + upgrade tx to create
+      // stores, and the version cannot go below existing alpha installs (2).
+      upgrade(db) {
+        if (!db.objectStoreNames.contains('graphs')) {
+          db.createObjectStore('graphs', { keyPath: 'id' })
+        }
+        if (!db.objectStoreNames.contains('reviewState')) {
+          db.createObjectStore('reviewState')
+        }
+      },
+    })
+  }
+  return _dbPromise
+}
 
 export async function dbSaveGraph(record: GraphRecord) {
-  return (await db).put('graphs', record)
+  return (await getDB()).put('graphs', record)
 }
 
 export async function dbLoadGraph(id: string): Promise<GraphRecord | undefined> {
-  return (await db).get('graphs', id)
+  return (await getDB()).get('graphs', id)
 }
 
 export async function dbListGraphs(): Promise<GraphRecord[]> {
-  return (await db).getAll('graphs')
+  return (await getDB()).getAll('graphs')
 }
 
 export async function dbDeleteGraph(id: string) {
-  return (await db).delete('graphs', id)
+  return (await getDB()).delete('graphs', id)
 }
 
 export async function dbClearGraphs() {
-  return (await db).clear('graphs')
+  return (await getDB()).clear('graphs')
 }
 
 export async function dbGetReviewState(
   graphId: string,
   nodeId: string,
 ): Promise<LearningNodeParams | undefined> {
-  return (await db).get('reviewState', reviewStateKey(graphId, nodeId))
+  return (await getDB()).get('reviewState', reviewStateKey(graphId, nodeId))
 }
 
 export async function dbPutReviewState(
@@ -64,13 +80,13 @@ export async function dbPutReviewState(
   nodeId: string,
   params: LearningNodeParams,
 ): Promise<void> {
-  await (await db).put('reviewState', params, reviewStateKey(graphId, nodeId))
+  await (await getDB()).put('reviewState', params, reviewStateKey(graphId, nodeId))
 }
 
 export async function dbGetReviewStatesForGraph(
   graphId: string,
 ): Promise<Map<string, LearningNodeParams>> {
-  const tx = (await db).transaction('reviewState', 'readonly')
+  const tx = (await getDB()).transaction('reviewState', 'readonly')
   const store = tx.objectStore('reviewState')
   const prefix = `${graphId}:`
   const out = new Map<string, LearningNodeParams>()
@@ -88,7 +104,7 @@ export async function dbPutReviewStatesForGraph(
   graphId: string,
   entries: Map<string, LearningNodeParams>,
 ): Promise<void> {
-  const tx = (await db).transaction('reviewState', 'readwrite')
+  const tx = (await getDB()).transaction('reviewState', 'readwrite')
   const store = tx.objectStore('reviewState')
   for (const [nodeId, params] of entries) {
     await store.put(params, reviewStateKey(graphId, nodeId))
@@ -97,7 +113,7 @@ export async function dbPutReviewStatesForGraph(
 }
 
 export async function dbDeleteReviewForGraph(graphId: string): Promise<void> {
-  const tx = (await db).transaction('reviewState', 'readwrite')
+  const tx = (await getDB()).transaction('reviewState', 'readwrite')
   const store = tx.objectStore('reviewState')
   const prefix = `${graphId}:`
   const keysToDelete: string[] = []
@@ -114,7 +130,7 @@ export async function dbDeleteReviewForGraph(graphId: string): Promise<void> {
 /** Remove review entries for node ids no longer present in the graph. */
 export async function dbPruneReviewStates(graphId: string, nodeIds: Set<string>): Promise<void> {
   const existing = await dbGetReviewStatesForGraph(graphId)
-  const tx = (await db).transaction('reviewState', 'readwrite')
+  const tx = (await getDB()).transaction('reviewState', 'readwrite')
   const store = tx.objectStore('reviewState')
   for (const nodeId of existing.keys()) {
     if (!nodeIds.has(nodeId)) {

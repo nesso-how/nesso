@@ -11,7 +11,14 @@ vi.mock('@tauri-apps/api/core', async () => (await import('@/test/fakeTauriFs'))
 
 import { setDiskSyncCache } from '@/lib/workspace/manifest'
 import { graphDocumentJson } from '@/test/graphDocument'
-import { dbClearGraphs, dbListGraphs, dbLoadGraph } from '@/store/db'
+import {
+  dbClearGraphs,
+  dbListGraphs,
+  dbLoadGraph,
+  dbSaveGraph,
+  GRAPH_RECORD_VERSION,
+  type GraphRecord,
+} from '@/store/db'
 import type { GraphState } from '../state'
 import { createDesktopSyncSlice } from './desktop-sync'
 import { createGraphEditingSlice } from './graph-editing'
@@ -56,6 +63,27 @@ beforeEach(async () => {
   await dbClearGraphs()
   setDiskSyncCache('', { version: 1, entries: {} })
   ;(window as unknown as { __TAURI_INTERNALS__?: object }).__TAURI_INTERNALS__ = {}
+})
+
+describe('graph record versioning (desktop)', () => {
+  it('createGraph saves current versioned metadata to IDB', async () => {
+    const s = makeStore()
+    // Don't use boot() — it goes through loadProjectFromDisk which Task 7
+    // normalizes. Instead, create directly so we only test the store's own
+    // GraphRecord constructor.
+    const id = await s.getState().createGraph('Versioned')
+    const stored = await dbLoadGraph(id)
+    expect(stored?.recordVersion).toBe(GRAPH_RECORD_VERSION)
+    expect(stored?.vocabulary).toEqual({ id: '@nesso-how/vocab-learning', version: '0.1.0' })
+  })
+
+  it('importGraph saves current versioned metadata to IDB', async () => {
+    const s = makeStore()
+    const id = await s.getState().importGraph('Imported', [], [])
+    const stored = await dbLoadGraph(id)
+    expect(stored?.recordVersion).toBe(GRAPH_RECORD_VERSION)
+    expect(stored?.vocabulary).toEqual({ id: '@nesso-how/vocab-learning', version: '0.1.0' })
+  })
 })
 
 describe('loadGraphList (desktop)', () => {
@@ -350,5 +378,221 @@ describe('removeProject', () => {
     const before = s.getState().settings.knownProjects
     await s.getState().removeProject('/unknown')
     expect(s.getState().settings.knownProjects).toEqual(before)
+  })
+})
+
+describe('unsupported-only project', () => {
+  it('rejects switching to a project whose only files are unsupported', async () => {
+    const s = await boot()
+    tauriFsState.dirs.add('/unsupported')
+    // Write a single file with a foreign vocabulary — unsupported.
+    tauriFsState.writeFile(
+      '/unsupported/Foreign.json',
+      JSON.stringify({
+        version: 1,
+        vocabulary: { id: '@other/vocab', version: '1.0.0' },
+        name: 'Foreign',
+        concepts: [],
+        relations: [],
+      }),
+    )
+
+    const before = s.getState().graphList
+    const prevPath = s.getState().settings.activeProjectPath
+
+    await s.getState().switchProject('/unsupported')
+
+    // Path must NOT change — the switch was blocked.
+    expect(s.getState().settings.activeProjectPath).toBe(prevPath)
+    // Previous graph list must be preserved — IDB was not cleared.
+    expect(s.getState().graphList.length).toBe(before.length)
+    // A toast must inform the user.
+    const toast = s.getState().toasts.find((t) => t.id.startsWith('unsupported-project:'))
+    expect(toast).toBeDefined()
+    expect(toast!.message).toMatch(/not supported/)
+  })
+
+  it('rejects switching to a project with mixed supported and unsupported files but correctly loads supported ones', async () => {
+    const s = await boot()
+    tauriFsState.dirs.add('/mixed')
+    // Write a supported file.
+    tauriFsState.writeFile(
+      '/mixed/Valid.json',
+      graphDocumentJson({ id: gid(1), name: 'Valid', updatedAt: 1000 }),
+    )
+    // Also write an unsupported file.
+    tauriFsState.writeFile(
+      '/mixed/Foreign.json',
+      JSON.stringify({
+        version: 1,
+        vocabulary: { id: '@other/vocab', version: '1.0.0' },
+        name: 'Foreign',
+        concepts: [],
+        relations: [],
+      }),
+    )
+
+    await s.getState().switchProject('/mixed')
+
+    // Path should change — the project has at least one valid file.
+    expect(s.getState().settings.activeProjectPath).toBe('/mixed')
+    expect(s.getState().graphList.map((g) => g.name)).toEqual(['Valid'])
+  })
+
+  it('does not seed into a project whose only files are unsupported', async () => {
+    // Simulate startup into an unsupported-only project:
+    // IDB is empty, the active project has only unsupported files.
+    const s = makeStore()
+    tauriFsState.dirs.add('/unsupported-start')
+    // Write an unsupported file.
+    tauriFsState.writeFile(
+      '/unsupported-start/Foreign.json',
+      JSON.stringify({
+        version: 1,
+        vocabulary: { id: '@other/vocab', version: '1.0.0' },
+        name: 'Foreign',
+        concepts: [],
+        relations: [],
+      }),
+    )
+    s.getState().setSetting('activeProjectPath', '/unsupported-start')
+    s.getState().setSetting('knownProjects', ['/unsupported-start'])
+
+    await s.getState().loadGraphList()
+
+    // No seeds were written — the project is unsupported-only.
+    const idbRecords = await dbListGraphs()
+    expect(idbRecords).toHaveLength(0)
+    // The unsupported file on disk is untouched.
+    const raw = tauriFsState.files.get('/unsupported-start/Foreign.json')!
+    expect(raw).toContain('@other/vocab')
+    // A toast must be shown.
+    const toast = s.getState().toasts.find((t) => t.id.startsWith('unsupported-project:'))
+    expect(toast).toBeDefined()
+  })
+
+  it('blocks desktop sync without destroying stale IDB records when project is unsupported-only', async () => {
+    // Simulate startup with stale IDB records from a previous session
+    // while the active project on disk has only unsupported files.
+    // The app must check workspace compatibility before syncing and
+    // preserve the existing IDB data rather than clearing it.
+
+    // Pre-populate IDB with a valid record from a previous session.
+    const prevRecord: GraphRecord = {
+      recordVersion: 1,
+      vocabulary: { id: '@nesso-how/vocab-learning', version: '0.1.0' },
+      id: 'prev-session-graph',
+      name: 'PrevGraph',
+      createdAt: 1000,
+      updatedAt: 2000,
+      nodes: [],
+      edges: [],
+    }
+    await dbSaveGraph(prevRecord)
+
+    // The active project folder has only unsupported files.
+    tauriFsState.dirs.add('/unsupported-stale')
+    tauriFsState.writeFile(
+      '/unsupported-stale/Foreign.json',
+      JSON.stringify({
+        version: 1,
+        vocabulary: { id: '@other/vocab', version: '1.0.0' },
+        name: 'Foreign',
+        concepts: [],
+        relations: [],
+      }),
+    )
+
+    const s = makeStore()
+    s.getState().setSetting('activeProjectPath', '/unsupported-stale')
+    s.getState().setSetting('knownProjects', ['/unsupported-stale'])
+
+    await s.getState().loadGraphList()
+
+    // Stale IDB record must NOT be deleted.
+    const idbRecords = await dbListGraphs()
+    expect(idbRecords.some((r) => r.id === 'prev-session-graph')).toBe(true)
+
+    // The unsupported file on disk must NOT be overwritten.
+    const raw = tauriFsState.files.get('/unsupported-stale/Foreign.json')!
+    expect(JSON.parse(raw).vocabulary.id).toBe('@other/vocab')
+
+    // NO new supported files should have been written to the workspace
+    // (the sync was blocked).
+    const files = [...tauriFsState.files.keys()]
+    const supportedFiles = files.filter(
+      (p) =>
+        p.startsWith('/unsupported-stale/') &&
+        p.endsWith('.json') &&
+        p !== '/unsupported-stale/Foreign.json',
+    )
+    expect(supportedFiles).toHaveLength(0)
+
+    // A toast must inform the user.
+    const toast = s.getState().toasts.find((t) => t.id.startsWith('unsupported-project:'))
+    expect(toast).toBeDefined()
+    expect(toast!.message).toMatch(/not supported/)
+  })
+})
+
+describe('disk-sync cache isolation across project switches', () => {
+  it('does not leak reserved paths from a previous project after switching', async () => {
+    const { getDiskSyncCache } = await import('@/lib/workspace/manifest')
+
+    // Project A: has an unsupported file and a valid file.
+    tauriFsState.dirs.add('/project-a')
+    tauriFsState.writeFile(
+      '/project-a/ForeignA.json',
+      JSON.stringify({
+        version: 1,
+        vocabulary: { id: '@other/vocab', version: '1.0.0' },
+        name: 'ForeignA',
+        concepts: [],
+        relations: [],
+      }),
+    )
+    tauriFsState.writeFile(
+      '/project-a/ValidA.json',
+      graphDocumentJson({ id: gid(1), name: 'ValidA', updatedAt: 1000 }),
+    )
+
+    // Project B: has a DIFFERENT unsupported file and a valid file.
+    tauriFsState.dirs.add('/project-b')
+    tauriFsState.writeFile(
+      '/project-b/ForeignB.json',
+      JSON.stringify({
+        version: 1,
+        vocabulary: { id: '@another/vocab', version: '2.0.0' },
+        name: 'ForeignB',
+        concepts: [],
+        relations: [],
+      }),
+    )
+    tauriFsState.writeFile(
+      '/project-b/ValidB.json',
+      graphDocumentJson({ id: gid(2), name: 'ValidB', updatedAt: 2000 }),
+    )
+
+    // Switch into project A, which populates the cache with its reserved paths.
+    const s = makeStore()
+    s.getState().setSetting('activeProjectPath', '/project-a')
+    s.getState().setSetting('knownProjects', ['/project-a', '/project-b'])
+    await s.getState().loadGraphList()
+
+    // Cache must contain project A's reserved path.
+    let cache = getDiskSyncCache()
+    expect(cache.reservedPaths).toContain('ForeignA.json')
+    expect(cache.reservedPaths).not.toContain('ForeignB.json')
+
+    // Switch to project B — a full project load from disk.
+    await s.getState().switchProject('/project-b')
+
+    // Cache must now reflect project B, not project A.
+    cache = getDiskSyncCache()
+    expect(cache.reservedPaths).toContain('ForeignB.json')
+    expect(cache.reservedPaths).not.toContain('ForeignA.json')
+
+    // The store's graph list must contain only project B's graphs.
+    expect(s.getState().graphList.map((g) => g.name)).toEqual(['ValidB'])
   })
 })

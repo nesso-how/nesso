@@ -3,6 +3,82 @@
 /** Current on-disk graph document schema version. Bump only when the envelope shape changes. */
 export const GRAPH_FORMAT_VERSION = 1 as const
 
+type RawGraphDocument = Record<string, unknown>
+type EnvelopeMigration = (document: RawGraphDocument) => RawGraphDocument
+
+const ENVELOPE_MIGRATIONS: Partial<Record<number, EnvelopeMigration>> = {}
+
+export class NewerGraphFormatError extends Error {
+  readonly version: number
+
+  constructor(version: number) {
+    super(`This graph uses newer Nesso graph format version ${version}`)
+    this.name = 'NewerGraphFormatError'
+    this.version = version
+  }
+}
+
+export class UnsupportedGraphFormatError extends Error {
+  readonly version: number | undefined
+
+  constructor(version: number | undefined) {
+    super(
+      version === undefined
+        ? 'This graph does not declare a supported Nesso graph format version'
+        : `Unsupported Nesso graph format version: ${version}`,
+    )
+    this.name = 'UnsupportedGraphFormatError'
+    this.version = version
+  }
+}
+
+function readEnvelopeVersion(document: RawGraphDocument): number {
+  const version = document.version
+
+  // Stryker disable next-line ConditionalExpression: typeof guard subsumed by !Number.isInteger and version < 0 — equivalent mutant
+  if (typeof version !== 'number' || !Number.isInteger(version) || version < 0) {
+    throw new UnsupportedGraphFormatError(undefined)
+  }
+
+  return version
+}
+
+function migrateEnvelope(document: RawGraphDocument): RawGraphDocument {
+  let current = document
+  let version = readEnvelopeVersion(current)
+
+  if (version > GRAPH_FORMAT_VERSION) {
+    throw new NewerGraphFormatError(version)
+  }
+
+  while (version < GRAPH_FORMAT_VERSION) {
+    const migrate = ENVELOPE_MIGRATIONS[version]
+
+    // Stryker disable next-line ConditionalExpression,EqualityOperator: ENVELOPE_MIGRATIONS is empty at baseline; migrate is always undefined — equivalent mutant
+    if (migrate === undefined) {
+      throw new UnsupportedGraphFormatError(version)
+    }
+
+    /* c8 ignore start */ // migration-step-advance is unreachable while ENVELOPE_MIGRATIONS is empty
+    // Stryker disable next-line all: migration-step-advance is unreachable while ENVELOPE_MIGRATIONS is empty
+    current = migrate(current)
+    // Stryker disable next-line all: unreachable
+    const nextVersion = readEnvelopeVersion(current)
+
+    // Stryker disable next-line all: unreachable
+    if (nextVersion !== version + 1) {
+      // Stryker disable next-line all: unreachable
+      throw new Error(`Envelope migration ${version} must produce version ${version + 1}`)
+    }
+
+    // Stryker disable next-line all: unreachable
+    version = nextVersion
+    /* c8 ignore stop */
+  }
+
+  return current
+}
+
 export interface GraphConcept<D extends Record<string, unknown> = Record<string, unknown>> {
   id: string
   label: string
@@ -54,16 +130,21 @@ export function serialize<
   RE extends Record<string, unknown>,
   M extends Record<string, unknown>,
 >(doc: GraphDocumentInput<NC, RE, M>): string {
+  const { vocabulary, id, updatedAt, name, concepts, relations, meta } = doc
   return JSON.stringify(
     {
       version: GRAPH_FORMAT_VERSION,
-      vocabulary: doc.vocabulary,
-      id: doc.id,
-      updatedAt: doc.updatedAt,
-      name: doc.name,
-      concepts: doc.concepts,
-      relations: doc.relations,
-      meta: doc.meta,
+      // Stryker disable next-line ConditionalExpression: JSON.stringify drops undefined values, so always spreading {vocabulary:undefined} is equivalent
+      ...(vocabulary !== undefined && { vocabulary }),
+      // Stryker disable next-line ConditionalExpression: JSON.stringify drops undefined values, so always spreading {id:undefined} is equivalent
+      ...(id !== undefined && { id }),
+      // Stryker disable next-line ConditionalExpression: JSON.stringify drops undefined values, so always spreading {updatedAt:undefined} is equivalent
+      ...(updatedAt !== undefined && { updatedAt }),
+      name,
+      concepts,
+      relations,
+      // Stryker disable next-line ConditionalExpression: JSON.stringify drops undefined values, so always spreading {meta:undefined} is equivalent
+      ...(meta !== undefined && { meta }),
     },
     null,
     2,
@@ -85,12 +166,16 @@ export function deserialize<
   RE extends Record<string, unknown> = Record<string, unknown>,
   M extends Record<string, unknown> = Record<string, unknown>,
 >(json: string): GraphDocument<NC, RE, M> {
-  const data: unknown = JSON.parse(json)
-  if (!isRecord(data) || !Array.isArray(data.concepts) || !Array.isArray(data.relations)) {
-    throw new Error('Invalid Nesso graph document: missing concepts or relations array')
+  const parsed: unknown = JSON.parse(json)
+
+  if (!isRecord(parsed)) {
+    throw new Error('Invalid Nesso graph document')
   }
-  if (typeof data.version === 'number' && data.version !== GRAPH_FORMAT_VERSION) {
-    throw new Error(`Unsupported Nesso graph document version: ${data.version}`)
+
+  const data = migrateEnvelope(parsed)
+
+  if (!Array.isArray(data.concepts) || !Array.isArray(data.relations)) {
+    throw new Error('Invalid Nesso graph document: missing concepts or relations array')
   }
   const rawConcepts: unknown[] = data.concepts
   const concepts: GraphConcept<NC>[] = rawConcepts.map((value: unknown, i: number) => {
@@ -99,7 +184,11 @@ export function deserialize<
       typeof value.id !== 'string' ||
       value.id === '' ||
       typeof value.label !== 'string' ||
+      // Stryker disable next-line ConditionalExpression: typeof x guard subsumed by !Number.isFinite — equivalent mutant
+      typeof value.x !== 'number' ||
       !Number.isFinite(value.x) ||
+      // Stryker disable next-line ConditionalExpression: typeof y guard subsumed by !Number.isFinite — equivalent mutant
+      typeof value.y !== 'number' ||
       !Number.isFinite(value.y)
     ) {
       throw new Error(

@@ -1,55 +1,56 @@
 # Compatibility
 
-Alpha stance: per AGENTS.md → Constraints (**No backwards-compatibility code while in alpha**). Persisted data from older alpha builds may break.
+Compatibility begins with the first beta baseline: graph envelope format `1`,
+learning vocabulary `0.1.0`, graph-record format `1`, and Zustand persist
+format `1`.
 
-This file documents the **contracts** compatibility work will eventually formalize — migration ladders are deferred to the first beta tag.
+Each data-at-rest format uses an explicit sequential ladder. Every future
+version bump adds exactly one source-version migration and one immutable
+replay fixture. A newer stored version is rejected rather than interpreted
+by an older app.
+
+Pre-baseline alpha data is unsupported. In particular, migration code must
+not restore, strip, preserve, or alias removed `examples`, `notes`, or image
+fields. The current definition-only validator rejects them.
 
 ## Three contracts
 
-| Contract               | What it covers                                                                                                                | Version axis                                                                         |
-| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| **Data at rest**       | Graph `.json` files, IndexedDB (`graphs` + `reviewState`), Zustand persist blob, workspace manifest (see surface table below) | `GRAPH_FORMAT_VERSION`, `vocabulary.version`, internal persist/IDB/manifest versions |
-| **Published packages** | `@nesso-how/*` on npm, MCP tool payloads                                                                                      | npm semver                                                                           |
-| **Runtime in-memory**  | React Flow state, UI, mentor chat                                                                                             | No compat — break cleanly                                                            |
-
-Only **data at rest** will get migration ladders (at beta). Package semver and MCP parity follow their own rules (see `AGENTS.md` docs/MCP section).
+| Contract               | What it covers                                                                           | Version axis                                                                                    |
+| ---------------------- | ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| **Data at rest**       | Graph `.json` files, IndexedDB `graph-records`, Zustand persist blob, workspace manifest | `GRAPH_FORMAT_VERSION`, `vocabulary.version`, `ZUSTAND_PERSIST_VERSION`, `GRAPH_RECORD_VERSION` |
+| **Published packages** | `@nesso-how/*` on npm, MCP tool payloads                                                 | npm semver                                                                                      |
+| **Runtime in-memory**  | React Flow state, UI, mentor chat                                                        | No compat — break cleanly                                                                       |
 
 ## Data-at-rest surfaces
 
-"Data at rest" is not one thing — it is several persisted surfaces, each with its own version axis and current state. Migration is not only about graph JSON.
+| Surface                                                     | Version axis              | Mechanism                                                                | Migration ladder                                   |
+| ----------------------------------------------------------- | ------------------------- | ------------------------------------------------------------------------ | -------------------------------------------------- |
+| Graph `.json` envelope                                      | `GRAPH_FORMAT_VERSION`    | `deserialize` → `migrateEnvelope` (schema package)                       | `ENVELOPE_MIGRATIONS` in `@nesso-how/schema`       |
+| Vocabulary semantics in files                               | `VOCABULARY.version`      | `normalizeGraphDocument` → `migrateVocabulary` (app)                     | `VOCABULARY_MIGRATIONS` in `graphLoadNormalizer`   |
+| IDB graph records (`GraphRecord`)                           | `recordVersion`           | `normalizeGraphRecord` on every IDB load/list                            | `GRAPH_RECORD_MIGRATIONS` in `graphLoadNormalizer` |
+| IDB `reviewState` (FSRS per node)                           | none                      | separate persisted surface; merged after graph-content normalization     | tied to vocabulary ladder                          |
+| IDB **schema** (object stores)                              | idb `v2` (unchanged)      | idempotent `upgrade()` bootstrap (ensure-store-exists, no ladder)        | extend `upgrade()` callback if shape changes       |
+| Zustand persist blob (localStorage `nesso`)                 | `ZUSTAND_PERSIST_VERSION` | `version` + `migrate` in Zustand persist config; `migratePersistedState` | `PERSIST_MIGRATIONS` in `store/persistence.ts`     |
+| Workspace manifest (`.nesso` on disk)                       | `MANIFEST_VERSION` (1)    | default-on-missing                                                       | ladder if shape changes                            |
+| Width keys (`nesso-inspector-width`, `nesso-sidebar-width`) | none                      | trivial scalars                                                          | break cleanly                                      |
+| Trust store (`.nesso-trusted-paths.json`)                   | none                      | JSON array of canonical paths                                            | ladder if shape changes                            |
 
-| Surface                                                      | Versioned?             | Mechanism today                                                   | Beta migration                              |
-| ------------------------------------------------------------ | ---------------------- | ----------------------------------------------------------------- | ------------------------------------------- |
-| Graph `.json` envelope (`concepts`/`relations`)              | `GRAPH_FORMAT_VERSION` | `deserialize` throws on mismatch                                  | ladder in `deserialize` (single chokepoint) |
-| Vocabulary semantics in files (`relation.type`, node params) | `vocabulary.version`   | written, **not re-read**                                          | app-side ladder                             |
-| IDB `graphs` store (`GraphRecord`: runtime nodes/edges)      | none                   | none — already runtime shape                                      | runtime normalizer                          |
-| IDB `reviewState` store (FSRS per node)                      | none                   | none                                                              | tied to vocabulary ladder                   |
-| IDB **schema** (object stores)                               | idb `v2`               | idempotent `upgrade()` bootstrap (ensure-store-exists, no ladder) | extend `upgrade()` callback                 |
-| Zustand persist blob (localStorage `nesso`)                  | none                   | additive `merge` only                                             | `version` + `migrate`                       |
-| Workspace manifest (`.nesso` on disk)                        | `MANIFEST_VERSION`     | default-on-missing, no ladder                                     | ladder if shape changes                     |
-| Width keys (`nesso-inspector-width`, `nesso-sidebar-width`)  | none                   | none                                                              | break cleanly (trivial scalars)             |
-| Trust store (`.nesso-trusted-paths.json`)                    | none                   | JSON array of canonical paths, persisted by `add_to_trust_store`  | ladder if shape changes                     |
-
-Two distinctions that matter:
-
-- **IDB schema vs IDB content.** `db.ts` declares the current _object stores_ via `idb`'s `upgrade` callback. This is **idempotent bootstrap** ("ensure these stores exist"), **not** a migration ladder: IndexedDB mandates a version number + upgrade transaction to create stores, but the callback carries no version history and migrates no data. It does **not** version the _shape_ of `GraphRecord` or `reviewState` records — a record-shape change is not covered.
-- **File ≠ what the user loaded.** On web, IndexedDB `graphs` is authoritative, not the file. A vocabulary change at beta must migrate **three** runtime entry points that bypass `deserialize`: IDB load (`graph-management` `loadGraph`), bundled seeds (`seedGraph`), and the file path (`documentToGraph`). Those three are not funnelled through one normalizer today — unifying them is the beta-time refactor (no migration logic is built in alpha).
+Runtime and mentor chat remain out of scope.
 
 ## Version axes on graph files
 
-See [graph-model.md](graph-model.md) (`GRAPH_FORMAT_VERSION` envelope vs `vocabulary.version` semantics). `@nesso-how/schema` is vocabulary-agnostic; `@nesso-how/vocab-learning` validates relation types after envelope parse.
+Two separate version axes: `version` is the **envelope shape** (gated by `deserialize` in `@nesso-how/schema`); `vocabulary.version` is the **semantic vocabulary** (validated by `@nesso-how/vocab-learning` and migrated by `graphLoadNormalizer`). `@nesso-how/schema` is vocabulary-agnostic — it manages envelope structure only. `@nesso-how/vocab-learning` validates vocabulary identity and enforces the definition-only elaboration shape.
+
+## Forward guards
+
+Every versioned chokepoint includes a forward guard: a newer stored version is rejected with a distinct error rather than interpreted by an older app. The graph-load normalizer (`src/lib/graphLoadNormalizer.ts`) is the single app-side compatibility boundary for files, seeds, and IDB records.
 
 ## Content / review split
 
-See [store.md](store.md) → Persistence (graph content in files/IDB `graphs`; FSRS in `reviewState`; independent fingerprints).
+Graph content lives in files/IDB `graphs`; FSRS review progress lives in the separate `reviewState` object store (keyed `${graphId}:${nodeId}`). They carry independent fingerprints so review-only changes do not rewrite disk.
 
-## When this relaxes (beta)
+## Fixtures and version bumps
 
-At the first non-alpha tag (`0.2.0-beta.0`), the formal contract begins:
+Released data-at-rest formats have immutable JSON fixtures co-located with their compatibility tests. Every future format or vocabulary version bump adds a fixture for the previous released source version and a sequential migration step. Never rewrite a released fixture to match current output.
 
-- Add an envelope migration ladder in `@nesso-how/schema` keyed on `version`, plus a distinct forward guard for files from newer app versions.
-- Add a vocabulary migration ladder app-side keyed on `vocabulary.version`.
-- Freeze a replay fixture per released format/vocabulary version; every future bump adds a fixture + migration step.
-- Deprecation aliases become allowed for **package consumers** (one minor cycle), never for app data at rest.
-
-Until beta, this file is the **stance**, not an implemented ladder. Beta implementation is tracked in [#82](https://github.com/nesso-how/nesso/issues/82).
+See also: [graph-model.md](graph-model.md) (envelope/vocabulary ownership), [store.md](store.md) (persistence split and ladder wiring), [testing.md](testing.md) (replay-fixture conventions).

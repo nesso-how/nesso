@@ -10,6 +10,10 @@ export function graphDocumentJson(file: {
 }): string {
   return JSON.stringify({
     version: 1,
+    vocabulary: {
+      id: '@nesso-how/vocab-learning',
+      version: '0.1.0',
+    },
     name: file.name,
     ...(file.id !== undefined && { id: file.id }),
     ...(file.updatedAt !== undefined && { updatedAt: file.updatedAt }),

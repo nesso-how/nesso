@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 import { getNodesBounds, getViewportForBounds } from '@xyflow/react'
 import { toPng } from 'html-to-image'
-import { deserialize, serialize } from '@nesso-how/vocab-learning'
+import { serialize } from '@nesso-how/vocab-learning'
 import { graphToDocument } from '@/lib/graphDocumentMapping'
-import { documentToGraph } from '@/lib/graphMapping'
+import { normalizeGraphDocument } from '@/lib/graphLoadNormalizer'
 import { useGraphStore } from '@/store'
 import { getT } from '@/i18n'
 import { toast } from '@/components/ui/toast'
@@ -104,10 +104,19 @@ export async function exportGraphPng(): Promise<void> {
 /** Imports a graph from a file object — parse, validate, persist, and track telemetry. */
 export async function importGraphFromFile(file: File): Promise<void> {
   try {
-    const doc = deserialize(await file.text())
-    const name = doc.name?.trim() || file.name.replace(/\.json$/i, '')
-    const { nodes, edges, display } = await documentToGraph(doc, '')
-    await useGraphStore.getState().importGraph(name, nodes, edges, display, doc.id)
+    const text = await file.text()
+    const now = Date.now()
+    const record = normalizeGraphDocument(text, {
+      id: '',
+      createdAt: now,
+      updatedAt: now,
+    })
+
+    const name = record.name.trim() || file.name.replace(/\.json$/i, '')
+
+    await useGraphStore
+      .getState()
+      .importGraph(name, record.nodes, record.edges, record.display, record.id || undefined)
     track({ name: 'graph_imported' })
   } catch (err) {
     track({

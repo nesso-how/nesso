@@ -237,6 +237,9 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
     devDependencies:
+      '@nesso-how/schema':
+        specifier: workspace:*
+        version: link:../schema
       '@types/dagre':
         specifier: ^0.7.53
         version: 0.7.54

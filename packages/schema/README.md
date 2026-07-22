@@ -27,6 +27,15 @@ const doc: GraphDocument = deserialize(json)
 
 Vocabulary-specific serialization (e.g. Nesso Learning Vocabulary) lives in [`@nesso-how/vocab-learning`](../vocab-learning/README.md).
 
+## Compatibility
+
+`deserialize` requires an explicit envelope `version`. It replays sequential
+migrations for released older formats and rejects files from newer formats
+with `NewerGraphFormatError`.
+
+Envelope format `1` is the first protected beta baseline. Unversioned alpha
+documents are outside the compatibility contract.
+
 ## License
 
 MIT

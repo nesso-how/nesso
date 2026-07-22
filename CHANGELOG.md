@@ -6,11 +6,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- **Beta data-at-rest compatibility baseline:** Introduced versioned migration ladders and immutable replay fixtures for all persisted surfaces — envelope (`GRAPH_FORMAT_VERSION 1`, `@nesso-how/schema`), vocabulary (`VOCABULARY.version 0.1.0`, `graphLoadNormalizer`), IndexedDB `GraphRecord` (`GRAPH_RECORD_VERSION 1`), and Zustand persist (`ZUSTAND_PERSIST_VERSION 1`) — establishing the first protected data baseline ahead of the `0.2.0-beta.0` release.
+
 ### Changed
 
 - **Review ratings:** Rating-button intervals now use localized, readable minute, hour, day, month, and year labels instead of ambiguous abbreviations.
 - **Review reminders:** Optional, dismissible per-graph reminders now appear once per local day for previously studied concepts that are due. Each reminder includes **Start review**, and reminder display is controlled independently by the **Learning** setting.
 - **Security test and validation simplification:** CSP validation, desktop trust-boundary tests, and frontend Tauri test infrastructure were simplified. Existing web and filesystem security behavior remains unchanged.
+
+- **Shared graph-load compatibility validation:** `graphLoadNormalizer` is now the single app-side compatibility boundary for files, seeds, IDB records, and the desktop workspace. Every versioned chokepoint rejects a newer stored version with a distinct error (`NewerGraphFormatError`, `UnsupportedGraphFormatError`) rather than interpreting it. Non-overwrite of unsupported files is enforced at the compatibility boundary — pre-baseline alpha documents with removed `examples`, `notes`, or image elaboration fields are rejected rather than silently migrated.
 
 ### Security
 

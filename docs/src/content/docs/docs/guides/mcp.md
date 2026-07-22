@@ -50,7 +50,7 @@ The MCP server is **stateless** and does not read or write files. Your client us
 A typical end-to-end flow when the client has filesystem access:
 
 1. **Read** the target graph `.json` from the project folder (client filesystem tool).
-2. **Validate** with `validate_graph`. Fix any `errors` before saving. Review `warnings` (e.g. missing `vocabulary` or relation `type`).
+2. **Validate** with `validate_graph`. Fix any `errors` before saving; missing or foreign `vocabulary` is a hard error that rejects the file. Review `warnings` (e.g. a missing relation `type`).
 3. **Build or extend** with `build_graph` when creating a new graph from structured concepts and relations: the tool assigns ids, vocabulary metadata, valid relation types, and layout positions.
 4. **Re-validate** the output with `validate_graph` if the client edited the JSON by hand.
 5. **Write** the JSON back to disk (client filesystem tool). Open or sync the graph in Nesso.

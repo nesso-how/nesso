@@ -3,7 +3,13 @@
 import 'fake-indexeddb/auto'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createStore } from 'zustand/vanilla'
-import { dbClearGraphs, dbListGraphs, dbLoadGraph, dbSaveGraph } from '@/store/db'
+import {
+  dbClearGraphs,
+  dbListGraphs,
+  dbLoadGraph,
+  dbSaveGraph,
+  GRAPH_RECORD_VERSION,
+} from '@/store/db'
 import type { GraphRecord } from '@/store/db'
 import type { GraphState } from '../state'
 import { createDesktopSyncSlice } from './desktop-sync'
@@ -133,6 +139,38 @@ describe('importGraph', () => {
     const id = await s.getState().importGraph('Foo', [], [])
     expect(s.getState().graphList.find((g) => g.id === id)?.name).toBe('Foo-2')
   })
+
+  it('normalizes existing IDB records when building the peer name list', async () => {
+    const s = makeStore()
+    // Seed a valid graph.
+    await s.getState().createGraph('Valid')
+    // Seed a corrupt record directly into IDB.
+    const corruptId = 'corrupt-import-peers'
+    const corrupt = {
+      recordVersion: GRAPH_RECORD_VERSION,
+      vocabulary: { id: '@nesso-how/vocab-learning', version: '0.1.0' },
+      id: corruptId,
+      name: 'Corrupt',
+      createdAt: 1,
+      updatedAt: 1,
+      nodes: [
+        {
+          id: 'n1',
+          type: 'concept',
+          position: { x: 0, y: 0 },
+          data: {
+            text: 'Bad',
+            elaboration: { definition: 'ok', examples: ['alpha'] },
+          },
+        },
+      ],
+      edges: [],
+    }
+    await dbSaveGraph(corrupt as unknown as GraphRecord)
+
+    // importGraph should throw because normalization rejects the corrupt peer record.
+    await expect(() => s.getState().importGraph('Import', [], [])).rejects.toThrow()
+  })
 })
 
 describe('renameGraph', () => {
@@ -149,6 +187,42 @@ describe('renameGraph', () => {
     const before = s.getState().graphList
     await s.getState().renameGraph('does-not-exist', 'X')
     expect(s.getState().graphList).toEqual(before)
+  })
+
+  it('normalizes the IDB record before renaming and preserves the corrupt raw data', async () => {
+    const s = makeStore()
+    // Seed a graph through the store so it's in the list.
+    const id = await s.getState().createGraph('Pre-rename')
+    // Directly corrupt the IDB record: add a malformed node with removed alpha fields.
+    const corrupt = {
+      recordVersion: GRAPH_RECORD_VERSION,
+      vocabulary: { id: '@nesso-how/vocab-learning', version: '0.1.0' },
+      id,
+      name: 'Pre-rename',
+      createdAt: 1,
+      updatedAt: 1,
+      nodes: [
+        {
+          id: 'n1',
+          type: 'concept',
+          position: { x: 0, y: 0 },
+          data: {
+            text: 'Bad',
+            elaboration: { definition: 'ok', notes: 'alpha cruft' },
+          },
+        },
+      ],
+      edges: [],
+    }
+    await dbSaveGraph(corrupt as unknown as GraphRecord)
+
+    // renameGraph should throw because normalization rejects the corrupt node.
+    await expect(() => s.getState().renameGraph(id, 'NewName')).rejects.toThrow()
+
+    // The raw corrupt record is still preserved in IDB.
+    const preserved = await dbLoadGraph(id)
+    expect(preserved).toBeDefined()
+    expect(preserved!.name).toBe('Pre-rename')
   })
 })
 
@@ -235,6 +309,8 @@ describe('loadGraph', () => {
 
     s.getState().setSetting('showHeatmap', true)
     await dbSaveGraph({
+      recordVersion: GRAPH_RECORD_VERSION,
+      vocabulary: { id: '@nesso-how/vocab-learning', version: '0.1.0' },
       id,
       name: 'No display',
       createdAt: 1,
@@ -346,11 +422,144 @@ describe('deleteGraph', () => {
   })
 })
 
+describe('graph record versioning', () => {
+  it('persists bundled seeds as current versioned graph records', async () => {
+    const s = makeStore()
+    await s.getState().loadGraphList()
+
+    const records = await dbListGraphs()
+    expect(records.length).toBeGreaterThan(0)
+    expect(records.every((record) => record.recordVersion === 1)).toBe(true)
+    expect(
+      records.every(
+        (record) =>
+          record.vocabulary.id === '@nesso-how/vocab-learning' &&
+          record.vocabulary.version === '0.1.0',
+      ),
+    ).toBe(true)
+  })
+
+  it('normalizes a versioned IDB record before loading it', async () => {
+    const s = makeStore()
+    await s.getState().loadGraphList()
+    const [record] = await dbListGraphs()
+    expect(record).toBeDefined()
+    await s.getState().loadGraph(record!.id)
+    expect(s.getState().currentGraphId).toBe(record!.id)
+    expect(s.getState().nodes).toEqual(record!.nodes)
+  })
+
+  it('rejects a newer graph record from IDB', async () => {
+    const s = makeStore()
+    // Seed a record with recordVersion: 2 (newer than current app)
+    await dbSaveGraph({
+      recordVersion: 2,
+      vocabulary: { id: '@nesso-how/vocab-learning', version: '0.1.0' },
+      id: 'newer-graph',
+      name: 'Newer',
+      createdAt: 1,
+      updatedAt: 1,
+      nodes: [],
+      edges: [],
+    } as unknown as GraphRecord)
+    await expect(s.getState().loadGraph('newer-graph')).rejects.toThrow(
+      'Graph record is from a newer app version',
+    )
+  })
+})
+
 describe('desktop project actions in web mode', () => {
   it('are no-ops that just return the current graph list', async () => {
     const s = await freshStore()
     const before = s.getState().graphList
     expect(await s.getState().openOrCreateProject()).toEqual(before)
     expect(await s.getState().switchProject('/whatever')).toEqual(before)
+  })
+})
+
+describe('loadGraphList corrupt IDB recovery', () => {
+  it('preserves a corrupt IDB record without deleting — does not quarantine destructively', async () => {
+    const s = makeStore()
+
+    // Seed a valid record so the list is not empty.
+    const validId = 'g0000000000001'
+    await dbSaveGraph({
+      recordVersion: GRAPH_RECORD_VERSION,
+      vocabulary: { id: '@nesso-how/vocab-learning', version: '0.1.0' },
+      id: validId,
+      name: 'Valid',
+      createdAt: 1,
+      updatedAt: 1,
+      nodes: [],
+      edges: [],
+    })
+
+    // Seed a corrupt record — missing recordVersion (unversioned alpha shape).
+    const corruptId = 'corrupt-graph'
+    const corruptRecord = {
+      vocabulary: { id: '@nesso-how/vocab-learning', version: '0.1.0' },
+      id: corruptId,
+      name: 'Corrupt',
+      createdAt: 1,
+      updatedAt: 1,
+      nodes: [],
+      edges: [],
+    } as unknown as GraphRecord
+    await dbSaveGraph(corruptRecord)
+
+    const list = await s.getState().loadGraphList()
+
+    // The valid record must be in the list.
+    expect(list.some((g) => g.id === validId)).toBe(true)
+
+    // The corrupt record must NOT be deleted from IDB — data is preserved.
+    const remaining = await dbListGraphs()
+    expect(remaining.some((r) => r.id === corruptId)).toBe(true)
+
+    // The raw corrupt record's fields are still intact (e.g. id is preserved).
+    const preserved = remaining.find((r) => r.id === corruptId)
+    expect(preserved?.id).toBe(corruptId)
+    expect(preserved?.name).toBe('Corrupt')
+  })
+
+  it('falls back to the first valid graph when persisted currentGraphId points to a skipped corrupt record', async () => {
+    const s = makeStore()
+
+    // Seed a valid record.
+    const validId = 'g0000000000001'
+    await dbSaveGraph({
+      recordVersion: GRAPH_RECORD_VERSION,
+      vocabulary: { id: '@nesso-how/vocab-learning', version: '0.1.0' },
+      id: validId,
+      name: 'Valid',
+      createdAt: 1,
+      updatedAt: 1,
+      nodes: [],
+      edges: [],
+    })
+
+    // Seed a corrupt record and set it as currentGraphId (simulating
+    // a persisted Zustand merge where currentGraphId points to a record
+    // that the branch's normalization will skip).
+    const corruptId = 'corrupt-graph'
+    await dbSaveGraph({
+      vocabulary: { id: '@nesso-how/vocab-learning', version: '0.1.0' },
+      id: corruptId,
+      name: 'Corrupt',
+      createdAt: 1,
+      updatedAt: 1,
+      nodes: [],
+      edges: [],
+    } as unknown as GraphRecord)
+    s.setState({ currentGraphId: corruptId })
+
+    // loadGraphList must detect that currentGraphId is not in the normalized
+    // list and fall back to the first valid graph.
+    const list = await s.getState().loadGraphList()
+
+    expect(list.some((g) => g.id === validId)).toBe(true)
+    // currentGraphId must now point to the valid graph, not the stale corrupt one.
+    expect(s.getState().currentGraphId).not.toBe(corruptId)
+    expect(s.getState().currentGraphId).toBe(validId)
   })
 })

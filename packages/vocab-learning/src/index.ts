@@ -11,13 +11,7 @@ export type {
   NessoGraphDocumentInput,
 } from './graphDocument.js'
 
-/** OKG vocabulary identity — version bumps only on normative vocabulary changes, not npm releases. */
-export const VOCABULARY = {
-  id: '@nesso-how/vocab-learning',
-  name: 'Nesso Learning Vocabulary',
-  domain: 'learning',
-  version: '0.1.0',
-} as const
+export { VOCABULARY } from './vocabularyIdentity.js'
 
 export {
   defaultConceptReviewFields,
@@ -41,4 +35,4 @@ export {
 
 export { CategoryPalette, GLYPH_PATHS, PALETTES } from './visual.js'
 
-export { deserialize, serialize } from './document.js'
+export { deserialize, deserializeEnvelope, serialize, validateNessoDocument } from './document.js'

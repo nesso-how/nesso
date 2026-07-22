@@ -37,8 +37,9 @@ const freshNode = defaultConceptReviewFields()
 import { deserialize, serialize, type NessoGraphDocument } from '@nesso-how/vocab-learning'
 
 const json = serialize({
+  vocabulary: { id: '@nesso-how/vocab-learning', version: '0.1.0' },
   name: 'My graph',
-  concepts: [{ id: 'n1', label: 'Idea', x: 0, y: 0, data: { elaboration: { ... } } }],
+  concepts: [{ id: 'n1', label: 'Idea', x: 0, y: 0, data: { elaboration: { definition: '...' } } }],
   relations: [{ id: 'e1', source: 'n1', target: 'n2', type: 'causes' }],
 })
 const doc: NessoGraphDocument = deserialize(json)
@@ -47,6 +48,16 @@ const doc: NessoGraphDocument = deserialize(json)
 **Shared content vs review state.** `serialize` / `deserialize` handle the portable graph file: concept labels, positions, `elaboration`, relation types, and layout hints. FSRS fields (`stability`, `difficulty`, `due`, etc.) are runtime node parameters for spaced repetition — they are typed here via `defaultConceptReviewFields()` but are **not** written into shared graph JSON; the Nesso app persists them separately.
 
 Relation types reference: [Relation types](https://nesso.how/docs/reference/relation-types/).
+
+## Persisted vocabulary compatibility
+
+Learning-vocabulary documents must declare
+`@nesso-how/vocab-learning` and a supported normative vocabulary version.
+The first protected baseline is vocabulary `0.1.0` with definition-only
+concept elaboration.
+
+Removed alpha-only `examples`, `notes`, and image fields are not migrated or
+discarded. Documents containing them are rejected.
 
 ## License
 
