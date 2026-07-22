@@ -40,7 +40,7 @@
     "build:theme": "pnpm --filter @nesso-how/theme build",
     "build:graph": "pnpm --filter @nesso-how/graph build",
     "build:mcp": "pnpm --filter @nesso-how/mcp build",
-    "prepare": "husky && pnpm build && pnpm run build:mcp",
+    "prepare": "husky && if [ \"$NESSO_SKIP_PREPARE_BUILD\" != \"1\" ]; then pnpm build && pnpm run build:mcp; fi",
     "dev": "vite",
     "type:check": "tsc -b && pnpm --filter @nesso-how/* exec tsc -b",
     "build": "pnpm run build:schema && pnpm run build:vocab-learning && pnpm run build:theme && pnpm run build:graph && pnpm run type:check && vite build",
@@ -103,6 +103,7 @@
     "tsx": "^4.22.4",
     "type-coverage": "^2.29.7",
     "typescript": "~5.8.3",
+    "vercel": "56.5.0",
     "vite": "^6.3.5",
     "vitest": "^4.1.8"
   },

@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Changed
+
+- **Web production deployments:** Vercel production now follows validated `v<version>` tags after successful desktop publishing, while pull requests and non-`main` branches retain previews.
+
 ## [0.2.0-beta.0] - 2026-07-22
 
 ### Added
