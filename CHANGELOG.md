@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Fixed
+
+- **Release automation:** Release-tag validation tests now derive expected versions from the live repository files instead of pinning a specific release, so a version bump can no longer break CI. The Rust CI lane installs GTK/webkit dev packages directly instead of restoring a stale apt cache that left `gobject-2.0`/`glib-2.0` missing.
+
 ## [0.2.0-beta.1] - 2026-08-01
 
 ### Changed
