@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.2.0-beta.1] - 2026-08-01
+
 ### Changed
 
 - **Web production deployments:** Vercel production now follows validated `v<version>` tags after successful desktop publishing, while pull requests and non-`main` branches retain previews.
@@ -786,7 +788,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial alpha: interactive knowledge graph (web + Tauri v2); desktop installers on GitHub Releases (macOS Apple silicon and Intel).
 
-[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.2.0-beta.0...HEAD
+[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.2.0-beta.1...HEAD
+[0.2.0-beta.1]: https://github.com/nesso-how/nesso/compare/v0.2.0-beta.0...v0.2.0-beta.1
 [0.2.0-beta.0]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.41...v0.2.0-beta.0
 [0.1.0-alpha.41]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.40...v0.1.0-alpha.41
 [0.1.0-alpha.40]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.39...v0.1.0-alpha.40
