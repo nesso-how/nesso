@@ -102,3 +102,98 @@ export function searchConcepts(state: MentorGraphState, query: string) {
     omitted: Math.max(0, ranked.length - matches.length),
   }
 }
+
+const FSRS_STATE_LABELS = ['New', 'Learning', 'Review', 'Relearning'] as const
+const MAX_DATE_VALUE = 8_640_000_000_000_000
+
+function isoDate(value: number): string | null {
+  return value > 0 && Number.isFinite(value) && value <= MAX_DATE_VALUE
+    ? new Date(value).toISOString()
+    : null
+}
+
+function endpointSummary(state: MentorGraphState, id: string) {
+  const node = state.nodes.find((candidate) => candidate.id === id)
+  if (!node) return { found: false as const, id, title: null }
+  return {
+    found: true as const,
+    id,
+    title: boundedText(node.data.text, PREVIEW_MAX_CHARS).text,
+    definitionPreview: boundedText(node.data.elaboration?.definition, PREVIEW_MAX_CHARS),
+  }
+}
+
+function edgeType(edge: Edge): string {
+  return typeof edge.data?.type === 'string' ? edge.data.type : 'unknown'
+}
+
+export function inspectConcept(state: MentorGraphState, id: string, now = Date.now()) {
+  const node = state.nodes.find((candidate) => candidate.id === id)
+  if (!node) return { found: false as const, id }
+  return {
+    found: true as const,
+    contentProvenance: CONTENT_PROVENANCE,
+    id,
+    title: node.data.text,
+    definition: boundedText(node.data.elaboration?.definition, DEFINITION_MAX_CHARS),
+    memory: {
+      reps: node.data.reps,
+      stability: node.data.stability,
+      difficulty: node.data.difficulty,
+      lapses: node.data.lapses,
+      state: {
+        value: node.data.fsrsState,
+        label: FSRS_STATE_LABELS[node.data.fsrsState] ?? 'Unknown',
+      },
+      lastRating:
+        node.data.lastRating > 0
+          ? {
+              value: node.data.lastRating,
+              label: RATING_LABELS[node.data.lastRating] ?? 'Unknown',
+            }
+          : null,
+      lastReview: isoDate(node.data.lastReview),
+      due: isoDate(node.data.due),
+      isDue: isDue(node, now),
+    },
+  }
+}
+
+export function inspectRelation(state: MentorGraphState, id: string) {
+  const edge = state.edges.find((candidate) => candidate.id === id)
+  if (!edge) return { found: false as const, id }
+  const type = edgeType(edge)
+  return {
+    found: true as const,
+    contentProvenance: CONTENT_PROVENANCE,
+    id,
+    type,
+    direction: { sourceId: edge.source, type, targetId: edge.target },
+    source: endpointSummary(state, edge.source),
+    target: endpointSummary(state, edge.target),
+  }
+}
+
+export function listNeighbors(state: MentorGraphState, id: string) {
+  if (!state.nodes.some((node) => node.id === id)) return { found: false as const, id }
+  const incident = state.edges.filter((edge) => edge.source === id || edge.target === id)
+  const relations = incident.slice(0, NEIGHBOR_LIMIT).map((edge) => {
+    const source = endpointSummary(state, edge.source)
+    const target = endpointSummary(state, edge.target)
+    return {
+      id: edge.id,
+      source,
+      type: edgeType(edge),
+      target,
+      neighbor: edge.source === id ? target : source,
+    }
+  })
+  return {
+    found: true as const,
+    contentProvenance: CONTENT_PROVENANCE,
+    id,
+    total: incident.length,
+    relations,
+    omitted: Math.max(0, incident.length - relations.length),
+  }
+}
