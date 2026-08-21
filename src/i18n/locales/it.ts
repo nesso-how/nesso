@@ -407,6 +407,14 @@ const it: typeof en = {
       "Non riesco a raggiungere l'endpoint AI. Controlla Impostazioni (⌘,) → AI. In locale, avvia `ollama serve`.",
     newChat: 'Nuova chat',
     thinking: 'sto pensando…',
+    toolActions: {
+      getGraphOverview: 'Esamino il grafo…',
+      searchConcepts: 'Cerco concetti…',
+      inspectConcept: 'Leggo il concetto…',
+      inspectRelation: 'Esamino la relazione…',
+      listNeighbors: 'Seguo le relazioni…',
+      getRelationTypes: 'Controllo i tipi di relazione…',
+    },
   },
   menu: {
     file: 'File',
