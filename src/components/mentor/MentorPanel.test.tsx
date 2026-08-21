@@ -9,6 +9,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { act } from 'react'
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
 import { useGraphStore } from '@/store'
+import { defaultConceptReviewFields } from '@/types/graph'
 import { MentorPanel } from './MentorPanel'
 
 const { mockTrack } = vi.hoisted(() => ({
@@ -23,6 +24,15 @@ vi.mock('@/telemetry', async (importOriginal) => {
 const { mockFetchCompletion } = vi.hoisted(() => ({
   mockFetchCompletion: vi.fn(),
 }))
+
+const { mockBuildLegacyMentorPrompt } = vi.hoisted(() => ({
+  mockBuildLegacyMentorPrompt: vi.fn(),
+}))
+
+vi.mock('@/llm/context', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/llm/context')>()
+  return { ...actual, buildLegacyMentorPrompt: mockBuildLegacyMentorPrompt }
+})
 
 vi.mock('@/llm/completion', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/llm/completion')>()
@@ -58,9 +68,33 @@ function setupStore() {
   })
 }
 
+async function sendMessage(text: string): Promise<void> {
+  const textarea = container!.querySelector('textarea')!
+  const nativeSetter = Object.getOwnPropertyDescriptor(
+    window.HTMLTextAreaElement.prototype,
+    'value',
+  )!.set!
+  await act(async () => {
+    nativeSetter.call(textarea, text)
+    textarea.dispatchEvent(new Event('input', { bubbles: true }))
+  })
+  await act(async () => {
+    textarea.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+  })
+}
+
+function concept(id: string, text: string, definition: string) {
+  return {
+    id,
+    position: { x: 0, y: 0 },
+    data: { text, ...defaultConceptReviewFields(), elaboration: { definition } },
+  }
+}
+
 beforeEach(() => {
   mockTrack.mockClear()
   mockFetchCompletion.mockClear()
+  mockBuildLegacyMentorPrompt.mockClear()
   setupStore()
 
   // Mock fetchCompletion to resolve immediately so the LLM effect doesn't hang.
@@ -229,5 +263,202 @@ describe('MentorPanel telemetry', () => {
     expect(mockTrack).not.toHaveBeenCalledWith(
       expect.objectContaining({ name: 'mentor_session_completed' }),
     )
+  })
+})
+
+describe('MentorPanel graph tools', () => {
+  it('does not construct the legacy snapshot prompt', async () => {
+    await act(async () => {
+      root!.render(<MentorPanel leftInset={0} rightInset={0} />)
+    })
+
+    expect(mockBuildLegacyMentorPrompt).not.toHaveBeenCalled()
+  })
+
+  it('sends compact opener instructions with exactly the six graph tools', async () => {
+    useGraphStore.setState({
+      nodes: [concept('n-1', 'Secret title', 'Secret definition')],
+      selected: { kind: 'node', id: 'n-1' },
+    })
+
+    await act(async () => {
+      root!.render(<MentorPanel leftInset={0} rightInset={0} />)
+    })
+
+    const request = mockFetchCompletion.mock.calls[0][1] as {
+      instructions: string
+      tools: Record<string, unknown>
+    }
+    expect(request.instructions).toContain('Graph counts: 1 concept; 0 relations.')
+    expect(request.instructions).toContain('Selection: {"kind":"node","id":"n-1"}.')
+    expect(request.instructions).not.toContain('Secret title')
+    expect(request.instructions).not.toContain('Secret definition')
+    expect(Object.keys(request.tools)).toEqual([
+      'getGraphOverview',
+      'searchConcepts',
+      'inspectConcept',
+      'inspectRelation',
+      'listNeighbors',
+      'getRelationTypes',
+    ])
+  })
+
+  it('sends only visible text history after the opener', async () => {
+    await act(async () => {
+      root!.render(<MentorPanel leftInset={0} rightInset={0} />)
+    })
+
+    await sendMessage('What is knowledge?')
+
+    const request = mockFetchCompletion.mock.calls[1][1] as {
+      messages: { role: string; content: string }[]
+    }
+    expect(request.messages).toEqual([
+      { role: 'assistant', content: 'Hello' },
+      { role: 'user', content: 'What is knowledge?' },
+    ])
+    expect(
+      request.messages.every(
+        ({ role, content }) => ['user', 'assistant'].includes(role) && typeof content === 'string',
+      ),
+    ).toBe(true)
+  })
+
+  it('captures selection in the prompt while tools read the edited live graph', async () => {
+    useGraphStore.setState({
+      nodes: [concept('n-1', 'Original title', 'Original definition')],
+      selected: { kind: 'node', id: 'n-1' },
+    })
+
+    await act(async () => {
+      root!.render(<MentorPanel leftInset={0} rightInset={0} />)
+    })
+
+    const request = mockFetchCompletion.mock.calls[0][1] as {
+      instructions: string
+      tools: Record<
+        string,
+        {
+          execute?: (input: { id: string }, options: never) => Promise<unknown>
+        }
+      >
+    }
+    useGraphStore.setState({
+      nodes: [concept('n-1', 'Edited title', 'Edited definition')],
+      selected: null,
+    })
+
+    const result = await request.tools.inspectConcept.execute!({ id: 'n-1' }, {} as never)
+    expect(result).toMatchObject({ found: true, id: 'n-1', title: 'Edited title' })
+    expect(request.instructions).toContain('Selection: {"kind":"node","id":"n-1"}.')
+  })
+
+  it('aborts an active send when the panel closes', async () => {
+    let sendSignal: AbortSignal | undefined
+    let resolveSend!: (value: string) => void
+    mockFetchCompletion.mockImplementationOnce(
+      async (
+        _settings: unknown,
+        _request: unknown,
+        _maxTokens: unknown,
+        _signal: AbortSignal,
+        handlers: { onToken?: (delta: string) => void },
+      ) => {
+        handlers.onToken?.('Hello')
+        return 'Hello'
+      },
+    )
+    mockFetchCompletion.mockImplementationOnce(
+      async (_settings: unknown, _request: unknown, _maxTokens: unknown, signal: AbortSignal) => {
+        sendSignal = signal
+        return new Promise<string>((resolve) => {
+          resolveSend = resolve
+        })
+      },
+    )
+
+    await act(async () => {
+      root!.render(<MentorPanel leftInset={0} rightInset={0} />)
+    })
+    await sendMessage('Stop this request')
+
+    await act(async () => {
+      useGraphStore.getState().setMentorPanelExpanded(false)
+    })
+
+    expect(mockFetchCompletion).toHaveBeenCalledTimes(2)
+    expect(sendSignal).toBeDefined()
+    expect(sendSignal?.aborted).toBe(true)
+    await act(async () => {
+      resolveSend('late reply')
+    })
+
+    await act(async () => {
+      useGraphStore.getState().setMentorPanelExpanded(true)
+    })
+    const [newChatButton] = Array.from(container!.querySelectorAll('button'))
+    expect(newChatButton?.disabled).toBe(false)
+  })
+
+  it('does not let an older request clear a newer request thinking state', async () => {
+    let firstHandlers: { onToken?: (delta: string) => void } | undefined
+    let resolveFirst!: (value: string) => void
+    let resolveSecond!: (value: string) => void
+    mockFetchCompletion.mockImplementationOnce(
+      async (
+        _settings: unknown,
+        _request: unknown,
+        _maxTokens: unknown,
+        _signal: AbortSignal,
+        handlers: { onToken?: (delta: string) => void },
+      ) => {
+        handlers.onToken?.('Hello')
+        return 'Hello'
+      },
+    )
+    mockFetchCompletion.mockImplementationOnce(
+      async (
+        _settings: unknown,
+        _request: unknown,
+        _maxTokens: unknown,
+        _signal: AbortSignal,
+        handlers: { onToken?: (delta: string) => void },
+      ) => {
+        firstHandlers = handlers
+        return new Promise<string>((resolve) => {
+          resolveFirst = resolve
+        })
+      },
+    )
+    mockFetchCompletion.mockImplementationOnce(
+      async () =>
+        new Promise<string>((resolve) => {
+          resolveSecond = resolve
+        }),
+    )
+
+    await act(async () => {
+      root!.render(<MentorPanel leftInset={0} rightInset={0} />)
+    })
+    await sendMessage('First request')
+
+    expect(mockFetchCompletion).toHaveBeenCalledTimes(2)
+    expect(firstHandlers).toBeDefined()
+    await act(async () => {
+      firstHandlers?.onToken?.('partial')
+    })
+    await sendMessage('Second request')
+    expect(mockFetchCompletion).toHaveBeenCalledTimes(3)
+
+    await act(async () => {
+      resolveFirst('late first reply')
+    })
+
+    const [newChatButton] = Array.from(container!.querySelectorAll('button'))
+    expect(newChatButton?.disabled).toBe(true)
+
+    await act(async () => {
+      resolveSecond('second reply')
+    })
   })
 })

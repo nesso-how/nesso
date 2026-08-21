@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: MIT
 import { useState, useEffect, useCallback, useRef } from 'react'
-import type { Edge, Node } from '@xyflow/react'
 import { SocratesGlyph } from './SocratesGlyph'
-import { useGraphStore, selectedNodeSelector, selectedEdgeSelector } from '@/store'
-import type { ConceptNodeData, Language } from '@/types/graph'
+import { useGraphStore } from '@/store'
 import type { ChatMessage } from '@/llm/completion'
 import {
   describeCompletionError,
@@ -11,7 +9,8 @@ import {
   isAiReady,
   isNetworkFailure,
 } from '@/llm/completion'
-import { buildFocalNeighborContext, nodeStrength, oneHopNeighborIds } from '@/llm/context'
+import { buildMentorPrompt, buildMentorSeedText } from '@/llm/context'
+import { createMentorTools } from '@/llm/tools'
 import { useT } from '@/i18n'
 import { CloseButton } from '@/components/ui/CloseButton'
 import { STATUS_BAR_HEIGHT_PX } from '@/components/layout/StatusBar'
@@ -41,6 +40,10 @@ function appendToLastMentor(history: Message[], delta: string): Message[] {
   const last = history[history.length - 1]
   if (!last || last.role !== 'mentor') return [...history, { role: 'mentor', text: delta }]
   return [...history.slice(0, -1), { ...last, text: last.text + delta }]
+}
+
+function isActiveController(current: AbortController | null, controller: AbortController): boolean {
+  return current === controller && !controller.signal.aborted
 }
 
 function MentorUserBubble({ text }: { text: string }) {
@@ -147,134 +150,15 @@ function toConversation(msgs: Message[]): ChatMessage[] {
   }))
 }
 
-/** Cap snapshot size so the system prompt stays bounded on large graphs. */
-const MAX_SNAPSHOT_NODES = 60
-/** Linked maps often have more edges than nodes; ~2× node cap keeps structure visible without dumping huge |E|. */
-const MAX_SNAPSHOT_EDGES = MAX_SNAPSHOT_NODES * 2
 /**
  * Output ceiling, not a target: reply length is soft-capped at ~200 words in
- * getMentorBase. Headroom is generous so reasoning models (e.g. qwen3 thinking
+ * the mentor persona. Headroom is generous so reasoning models (e.g. qwen3 thinking
  * mode) can spend tokens on their hidden reasoning and still emit a full answer
  * within the same budget.
  */
 const MENTOR_MAX_TOKENS = 2048
 
-const NODE_LEGEND =
-  'Reading each node after its quoted title: (new)=no spaced-repetition review yet; otherwise comma-separated tokens — s=Y.Yd is FSRS stability in days (higher = stronger recall); Nd since review is calendar days since the last FSRS self-rating; Again/Hard/Good/Easy is that rating; DUE means the scheduler says revisit now (light hint, secondary to s= and rating).'
-
-function getMentorBase(language: Language): string[] {
-  const name = language === 'it' ? 'Socrate' : 'Socrates'
-  const langInstruction = language === 'it' ? 'Respond in Italian.' : 'Respond in English.'
-  return [
-    `You are ${name} in Nesso, an app for building typed knowledge graphs for active learning. Be warm, precise, and Socratic: mostly questions, almost no lecturing.`,
-    'Never tell the user what nodes or edges to add or rename. No graph edits; only dialogue about ideas.',
-    'No emojis or flattery. Use *asterisks* sparingly for a key term. No JSON, markup pseudo-graphs, or bracketed labels.',
-    'Do not use em dashes (the long dash character). Use commas, periods, or split into two short sentences instead.',
-    'Default: one short question; explain only to frame the question. Aim under ~180 words.',
-    NODE_LEGEND,
-    'Lowest s= (stability) plus weak last outcomes (Again/Hard, large gap since review) are the main probes; treat DUE as a light scheduling cue on top.',
-    'When a node IS selected on open: briefly acknowledge it by name, then ask one Socratic question about it or flag its weakest neighbors by stability and last review, using DUE only as secondary context.',
-    'When an EDGE is selected but no node: name both endpoint concepts and the relation type, then ask one Socratic question about how that link fits what they know.',
-    "When neither a node nor an edge is selected on open: pick the graph's weakest spot by stability and last review; consider DUE as extra context, then open with one question there.",
-    langInstruction,
-  ]
-}
-
-const FSRS_RATING: Record<number, string> = { 1: 'Again', 2: 'Hard', 3: 'Good', 4: 'Easy' }
-
-function nodeDesc(n: Node<ConceptNodeData>): string {
-  if (n.data.reps === 0) return `"${n.data.text}"(new)`
-  const isDue = n.data.due > 0 && n.data.due <= Date.now()
-  const parts: string[] = [`s=${n.data.stability.toFixed(1)}d`]
-  if (n.data.lastReview > 0) {
-    const days = Math.floor((Date.now() - n.data.lastReview) / (24 * 60 * 60 * 1000))
-    parts.push(`${Math.max(days, 0)}d since review`)
-  }
-  if (n.data.lastRating > 0) parts.push(FSRS_RATING[n.data.lastRating] ?? '')
-  if (isDue) parts.push('DUE')
-  return `"${n.data.text}"(${parts.join(',')})`
-}
-
-function buildMentorSeedText(
-  language: Language,
-  nodes: Node<ConceptNodeData>[],
-  selectedNode: Node<ConceptNodeData> | null,
-  selectedEdge: Edge | null,
-): string {
-  const label = (id: string) => nodes.find((n) => n.id === id)?.data.text ?? id
-  if (selectedNode) {
-    return language === 'it'
-      ? `Voglio esplorare il concetto "${selectedNode.data.text}".`
-      : `I want to explore the concept "${selectedNode.data.text}".`
-  }
-  if (selectedEdge) {
-    const a = label(selectedEdge.source)
-    const b = label(selectedEdge.target)
-    const typ = String(selectedEdge.data?.type ?? '?')
-    return language === 'it'
-      ? `Voglio ragionare sulla relazione "${a}" → ${typ} → "${b}".`
-      : `I want to explore the relation "${a}" → ${typ} → "${b}".`
-  }
-  return language === 'it'
-    ? 'Voglio rivedere la mia mappa. Dove dovrei concentrarmi?'
-    : 'I want to review my knowledge map. Where should I focus?'
-}
-
-function buildGraphChatPrompt(
-  nodes: Node<ConceptNodeData>[],
-  edges: Edge[],
-  selectedNode: Node<ConceptNodeData> | null,
-  selectedEdge: Edge | null,
-  language: Language,
-): string {
-  const label = (id: string) => nodes.find((n) => n.id === id)?.data.text ?? id
-  const snapEdges = edges.length > MAX_SNAPSHOT_EDGES ? edges.slice(0, MAX_SNAPSHOT_EDGES) : edges
-  const edgeOmit =
-    edges.length > snapEdges.length
-      ? ` … (${edges.length - snapEdges.length} more edges omitted)`
-      : ''
-  const edgeListBody = snapEdges
-    .map((e) => {
-      const src = label(e.source)
-      const tgt = label(e.target)
-      return `${src} → ${String(e.data?.type ?? '?')} → ${tgt}`
-    })
-    .join('; ')
-  const edgeList = edgeListBody ? `${edgeListBody}${edgeOmit}` : ''
-  const sortedNodes = [...nodes].sort((a, b) => nodeStrength(a) - nodeStrength(b))
-  const snapNodes =
-    sortedNodes.length > MAX_SNAPSHOT_NODES ? sortedNodes.slice(0, MAX_SNAPSHOT_NODES) : sortedNodes
-  const nodeOmit =
-    sortedNodes.length > snapNodes.length
-      ? ` … (${sortedNodes.length - snapNodes.length} more nodes omitted)`
-      : ''
-  const nodeList = snapNodes.map(nodeDesc).join(', ') + nodeOmit || '(no nodes)'
-  const selCtx = selectedNode
-    ? `Selection: node ${nodeDesc(selectedNode)}.`
-    : selectedEdge
-      ? `Selection: edge ${label(selectedEdge.source)} → ${String(selectedEdge.data?.type ?? '?')} → ${label(selectedEdge.target)}.`
-      : ''
-  let focusLine = ''
-  let relatedLine = ''
-  if (selectedNode) {
-    const neighborIds = new Set(oneHopNeighborIds(selectedNode.id, edges))
-    const neighbors = nodes.filter((n) => neighborIds.has(n.id))
-    const { focus, related } = buildFocalNeighborContext(selectedNode, neighbors)
-    if (focus) focusLine = `Focus: ${focus}`
-    if (related) relatedLine = `Related: ${related}`
-  }
-  return [
-    ...getMentorBase(language),
-    '',
-    `Nodes: ${nodeList}`,
-    edgeList ? `Edges: ${edgeList}` : '',
-    selCtx,
-    focusLine,
-    relatedLine,
-  ]
-    .filter(Boolean)
-    .join('\n')
-}
+const MENTOR_TOOLS = createMentorTools(useGraphStore.getState)
 
 export function MentorPanel({ leftInset, rightInset }: { leftInset: number; rightInset: number }) {
   const t = useT()
@@ -309,18 +193,21 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
   const historyRef = useRef(history)
   historyRef.current = history
 
-  const buildSystemPrompt = useCallback(() => {
-    const s = useGraphStore.getState()
-    return buildGraphChatPrompt(
-      s.nodes,
-      s.edges,
-      selectedNodeSelector(s),
-      selectedEdgeSelector(s),
-      s.settings.language,
-    )
+  const captureTurn = useCallback(() => {
+    const state = useGraphStore.getState()
+    const selection = state.selected ? { ...state.selected } : null
+    return {
+      seedText: buildMentorSeedText(state.settings.language, state.nodes, state.edges, selection),
+      compactInstructions: buildMentorPrompt(
+        state.nodes,
+        state.edges,
+        selection,
+        state.settings.language,
+      ),
+    }
   }, [])
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: opening line tied to graph open/switch; live sends use fresh prompt via buildSystemPrompt
+  // biome-ignore lint/correctness/useExhaustiveDependencies: opening line tied to graph open/switch; live sends use fresh prompts via captureTurn
   useEffect(() => {
     if (!mentorPanelExpanded) return
     if (!aiReady) {
@@ -334,27 +221,25 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
     abortRef.current = controller
     setHistory([])
     setStreaming(false)
+    setThinking(false)
     setLoadingInitial(true)
     setReasoningActive(false)
 
-    const storeState = useGraphStore.getState()
-    const systemPrompt = buildSystemPrompt()
-    const seedText = buildMentorSeedText(
-      settings.language,
-      storeState.nodes,
-      selectedNodeSelector(storeState),
-      selectedEdgeSelector(storeState),
-    )
+    const prompts = captureTurn()
 
     let answered = false
     fetchCompletion(
       settings,
-      { instructions: systemPrompt, messages: [{ role: 'user', content: seedText }] },
+      {
+        instructions: prompts.compactInstructions,
+        messages: [{ role: 'user', content: prompts.seedText }],
+        tools: MENTOR_TOOLS,
+      },
       MENTOR_MAX_TOKENS,
       controller.signal,
       {
         onToken: (delta) => {
-          if (controller.signal.aborted) return
+          if (!isActiveController(abortRef.current, controller)) return
           if (!answered) {
             answered = true
             setLoadingInitial(false)
@@ -364,19 +249,19 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
           setHistory((h) => appendToLastMentor(h, delta))
         },
         onReasoning: () => {
-          if (controller.signal.aborted) return
+          if (!isActiveController(abortRef.current, controller)) return
           setReasoningActive(true)
         },
       },
     )
       .then((full) => {
-        if (!controller.signal.aborted && !answered) {
+        if (isActiveController(abortRef.current, controller) && !answered) {
           setReasoningActive(false)
           setHistory((h) => appendToLastMentor(h, full || '…'))
         }
       })
       .catch((err) => {
-        if (!controller.signal.aborted) {
+        if (isActiveController(abortRef.current, controller)) {
           setHistory([{ role: 'mentor', text: mentorFailureMessage(err, t), error: true }])
           track({
             name: 'mentor_request_failed',
@@ -385,14 +270,18 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
         }
       })
       .finally(() => {
-        if (!controller.signal.aborted) {
+        if (isActiveController(abortRef.current, controller)) {
           setLoadingInitial(false)
           setStreaming(false)
         }
       })
 
-    return () => controller.abort()
-  }, [mentorPanelExpanded, currentGraphId, aiReady, settings.language, chatKey])
+    return () => {
+      controller.abort()
+      abortRef.current?.abort()
+      if (abortRef.current === controller) abortRef.current = null
+    }
+  }, [mentorPanelExpanded, currentGraphId, aiReady, settings.language, chatKey, captureTurn])
 
   // Emit mentor_session_completed when the session ends naturally (last
   // message was a successful mentor reply) or mentor_session_abandoned
@@ -446,16 +335,21 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
       const el = scrollRef.current
       if (el) el.scrollTop = el.scrollHeight
     })
+    const prompts = captureTurn()
     let answered = false
     try {
       const full = await fetchCompletion(
         settings,
-        { instructions: buildSystemPrompt(), messages: toConversation(next) },
+        {
+          instructions: prompts.compactInstructions,
+          messages: toConversation(next),
+          tools: MENTOR_TOOLS,
+        },
         MENTOR_MAX_TOKENS,
         controller.signal,
         {
           onToken: (delta) => {
-            if (controller.signal.aborted) return
+            if (!isActiveController(abortRef.current, controller)) return
             if (!answered) {
               answered = true
               setThinking(false)
@@ -465,18 +359,20 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
             setHistory((h) => appendToLastMentor(h, delta))
           },
           onReasoning: () => {
-            if (controller.signal.aborted) return
+            if (!isActiveController(abortRef.current, controller)) return
             setReasoningActive(true)
           },
         },
       )
-      if (!controller.signal.aborted && !answered) {
+      if (isActiveController(abortRef.current, controller) && !answered) {
         setReasoningActive(false)
         setHistory((h) => appendToLastMentor(h, full || '…'))
       }
-      if (!controller.signal.aborted) track({ name: 'mentor_response_received' })
+      if (isActiveController(abortRef.current, controller)) {
+        track({ name: 'mentor_response_received' })
+      }
     } catch (err) {
-      if (!controller.signal.aborted) {
+      if (isActiveController(abortRef.current, controller)) {
         setHistory((h) => [
           ...h,
           { role: 'mentor', text: mentorFailureMessage(err, t), error: true },
@@ -487,8 +383,10 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
         })
       }
     } finally {
-      if (!controller.signal.aborted) setStreaming(false)
-      setThinking(false)
+      if (isActiveController(abortRef.current, controller)) {
+        setStreaming(false)
+        setThinking(false)
+      }
     }
   }
 
