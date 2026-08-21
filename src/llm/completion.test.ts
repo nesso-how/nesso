@@ -9,7 +9,7 @@ vi.mock('@tauri-apps/plugin-http', () => ({
   fetch: mockNativeFetch,
 }))
 
-import { APICallError } from 'ai'
+import { APICallError, jsonSchema, tool } from 'ai'
 import type { NessoSettings } from '@/types/graph'
 import {
   checkEndpoint,
@@ -63,6 +63,45 @@ function sseResponse(contents: string[]): Response {
     status: 200,
     headers: { 'content-type': 'text/event-stream' },
   })
+}
+
+function toolCallResponse(name: string, input: string, id: string): Response {
+  const encoder = new TextEncoder()
+  const call = `data: ${JSON.stringify({
+    id: '1',
+    object: 'chat.completion.chunk',
+    choices: [
+      {
+        index: 0,
+        delta: {
+          tool_calls: [
+            {
+              index: 0,
+              id,
+              type: 'function',
+              function: { name, arguments: input },
+            },
+          ],
+        },
+      },
+    ],
+  })}\n\n`
+  const stop = `data: ${JSON.stringify({
+    id: '1',
+    object: 'chat.completion.chunk',
+    choices: [{ index: 0, delta: {}, finish_reason: 'tool_calls' }],
+  })}\n\n`
+  return new Response(
+    new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(encoder.encode(call))
+        controller.enqueue(encoder.encode(stop))
+        controller.enqueue(encoder.encode('data: [DONE]\n\n'))
+        controller.close()
+      },
+    }),
+    { status: 200, headers: { 'content-type': 'text/event-stream' } },
+  )
 }
 
 afterEach(() => {
@@ -321,6 +360,84 @@ describe('fetchCompletion streaming', () => {
 
     // Browser fetch must not be called on desktop.
     expect(browserFetch).not.toHaveBeenCalled()
+  })
+
+  it('sends tool schemas, executes a streamed call, reports it, and streams the answer step', async () => {
+    vi.stubGlobal('window', {})
+    const execute = vi.fn().mockResolvedValue({ conceptCount: 0 })
+    const tools = {
+      getGraphOverview: tool({
+        description: 'Read graph counts',
+        inputSchema: jsonSchema<Record<string, never>>({
+          type: 'object',
+          properties: {},
+          additionalProperties: false,
+        }),
+        execute,
+      }),
+    }
+    const browserFetch = vi
+      .fn()
+      .mockResolvedValueOnce(toolCallResponse('getGraphOverview', '{}', 'call-1'))
+      .mockResolvedValueOnce(sseResponse(['Answer']))
+    vi.stubGlobal('fetch', browserFetch)
+    const calls: string[] = []
+    const answer = await fetchCompletion(
+      settings,
+      {
+        instructions: 'Use tools.',
+        messages: [{ role: 'user', content: 'Where should I focus?' }],
+        tools,
+      },
+      100,
+      undefined,
+      { onToolCall: (name) => calls.push(name) },
+    )
+
+    expect(answer).toBe('Answer')
+    expect(calls).toEqual(['getGraphOverview'])
+    expect(execute).toHaveBeenCalledTimes(1)
+    expect(browserFetch).toHaveBeenCalledTimes(2)
+    const firstBody = JSON.parse(String((browserFetch.mock.calls[0][1] as RequestInit).body))
+    expect(firstBody.tools).toEqual([
+      expect.objectContaining({
+        type: 'function',
+        function: expect.objectContaining({
+          name: 'getGraphOverview',
+          description: 'Read graph counts',
+          parameters: expect.objectContaining({ type: 'object' }),
+        }),
+      }),
+    ])
+    const secondBody = JSON.parse(String((browserFetch.mock.calls[1][1] as RequestInit).body))
+    expect(secondBody.messages).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ role: 'assistant', tool_calls: expect.any(Array) }),
+        expect.objectContaining({ role: 'tool', tool_call_id: 'call-1' }),
+      ]),
+    )
+  })
+
+  it('stops after four total tool steps', async () => {
+    vi.stubGlobal('window', {})
+    const tools = {
+      getGraphOverview: tool({
+        description: 'Read graph counts',
+        inputSchema: jsonSchema<Record<string, never>>({ type: 'object', properties: {} }),
+        execute: async () => ({ conceptCount: 0 }),
+      }),
+    }
+    const browserFetch = vi
+      .fn()
+      .mockResolvedValueOnce(toolCallResponse('getGraphOverview', '{}', 'call-1'))
+      .mockResolvedValueOnce(toolCallResponse('getGraphOverview', '{}', 'call-2'))
+      .mockResolvedValueOnce(toolCallResponse('getGraphOverview', '{}', 'call-3'))
+      .mockResolvedValueOnce(toolCallResponse('getGraphOverview', '{}', 'call-4'))
+    vi.stubGlobal('fetch', browserFetch)
+
+    await fetchCompletion(settings, { messages: [{ role: 'user', content: 'loop' }], tools }, 100)
+
+    expect(browserFetch).toHaveBeenCalledTimes(4)
   })
 })
 

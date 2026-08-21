@@ -1,6 +1,13 @@
 // SPDX-License-Identifier: MIT
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
-import { APICallError, extractReasoningMiddleware, streamText, wrapLanguageModel } from 'ai'
+import {
+  APICallError,
+  extractReasoningMiddleware,
+  isStepCount,
+  streamText,
+  wrapLanguageModel,
+  type ToolSet,
+} from 'ai'
 import { isDesktop } from '@/lib/isDesktop'
 import type { NessoSettings } from '@/types/graph'
 
@@ -11,12 +18,14 @@ export type ChatMessage = { role: 'user' | 'assistant'; content: string }
 export interface CompletionRequest {
   instructions?: string
   messages: ChatMessage[]
+  tools?: ToolSet
 }
 
-/** Callbacks for the streamed response: `onToken` gets the clean answer, `onReasoning` the model's thinking. */
+/** Callbacks for the streamed response: `onToken` gets the clean answer, `onReasoning` the model's thinking, and `onToolCall` reports tool execution. */
 export interface CompletionHandlers {
   onToken?: (delta: string) => void
   onReasoning?: (delta: string) => void
+  onToolCall?: (toolName: string) => void
 }
 
 export function isAiReady(settings: NessoSettings): boolean {
@@ -270,6 +279,8 @@ export async function fetchCompletion(
     model: mentorModel(settings),
     ...(request.instructions ? { instructions: request.instructions } : {}),
     messages: request.messages,
+    ...(request.tools ? { tools: request.tools } : {}),
+    stopWhen: isStepCount(4),
     maxOutputTokens: maxTokens,
     abortSignal: signal,
   })
@@ -280,6 +291,9 @@ export async function fetchCompletion(
       handlers?.onToken?.(part.text)
     } else if (part.type === 'reasoning-delta') {
       handlers?.onReasoning?.(part.text)
+    } else if (part.type === 'tool-call') {
+      if (part.invalid) throw part.error
+      handlers?.onToolCall?.(part.toolName)
     } else if (part.type === 'error') {
       throw part.error
     }
