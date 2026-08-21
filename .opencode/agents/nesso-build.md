@@ -75,6 +75,11 @@ When TDD doesn't apply, still verify manually and run `pnpm run fast-check`.
 3. GREEN — write minimal code, watch it pass
 4. REFACTOR — clean up if needed, keep green
 5. Fast checks: `pnpm run fast-check` (format, lint, type-check, test). If the task spans e2e, run `pnpm run fast-check -- --e2e`.
+6. Return the result: the **exact list of created/modified files** (one path per line) plus a one-line summary. `nesso-work` scopes the task review and the pathspec commit from this list — it must be complete and exact. Do not commit yourself.
+
+## Fix-loop re-dispatch
+
+When `nesso-work` re-dispatches you for the same task after a review, the prompt includes the blocking findings (`file:line` + expected fix) and the previous review report path. Fix exactly those findings and any code they directly implicate — do not widen the task's scope. Run the same per-task flow and fast checks before returning.
 
 ## Safety Checks
 
