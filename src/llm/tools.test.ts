@@ -1,15 +1,18 @@
 // SPDX-License-Identifier: MIT
 import type { Edge, Node } from '@xyflow/react'
-import { describe, expect, it } from 'vitest'
+import { asSchema } from 'ai'
+import { describe, expect, it, vi } from 'vitest'
 import { defaultConceptReviewFields, type ConceptNodeData } from '@/types/graph'
 import type { MentorGraphState } from './tools'
 import {
   getGraphOverview,
+  getRelationTypes,
   inspectConcept,
   inspectRelation,
   listNeighbors,
   PREVIEW_MAX_CHARS,
   searchConcepts,
+  createMentorTools,
 } from './tools'
 
 function concept(
@@ -289,5 +292,112 @@ describe('listNeighbors', () => {
 
   it('returns found false for an unknown focal concept', () => {
     expect(listNeighbors(graph([]), 'missing')).toEqual({ found: false, id: 'missing' })
+  })
+})
+
+describe('getRelationTypes', () => {
+  it('returns all 52 relation types grouped in vocabulary category order', () => {
+    const result = getRelationTypes()
+    expect(result.mode).toBe('all')
+    expect(result.total).toBe(52)
+    expect(result.groups.map((group) => group.category)).toEqual([
+      'taxonomic',
+      'structural',
+      'causal',
+      'dependency',
+      'temporal',
+      'opposition',
+      'similarity',
+      'epistemic',
+    ])
+    expect(result.groups.flatMap((group) => group.types)).toHaveLength(52)
+  })
+
+  it('filters, deduplicates, and reports unknown type ids', () => {
+    const result = getRelationTypes(['causes', 'opposite-of', 'causes', 'missing'])
+    expect(result.mode).toBe('selected')
+    expect(result.total).toBe(2)
+    expect(result.unknownTypes).toEqual(['missing'])
+    expect(result.groups.flatMap((group) => group.types).map((type) => type.id)).toEqual([
+      'causes',
+      'opposite-of',
+    ])
+    expect(result.groups.flatMap((group) => group.types)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'opposite-of',
+          inverse: 'self',
+          symmetric: true,
+          polarity: -1,
+          cardinality: '1-1',
+        }),
+      ]),
+    )
+  })
+
+  it('preserves canonical vocabulary properties, including self inverses', () => {
+    const result = getRelationTypes(['causes', 'opposite-of'])
+    const types = result.groups.flatMap((group) => group.types)
+
+    expect(types).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'causes',
+          transitive: 'N',
+          inverse: 'caused-by',
+        }),
+        expect.objectContaining({
+          id: 'opposite-of',
+          transitive: 'N',
+          inverse: 'self',
+          symmetric: true,
+        }),
+      ]),
+    )
+    expect(types.find((type) => type.id === 'causes')).not.toHaveProperty('transitivity')
+  })
+
+  it('does not treat inherited object names as relation types', () => {
+    expect(getRelationTypes(['toString'])).toMatchObject({
+      total: 0,
+      unknownTypes: ['toString'],
+      groups: [],
+    })
+  })
+})
+
+describe('createMentorTools', () => {
+  it('reads the getter at execution time and exposes only six read-only tools', async () => {
+    let state = graph([concept('a', 'Before')])
+    const getState = vi.fn(() => state)
+    const tools = createMentorTools(getState)
+    expect(Object.keys(tools)).toEqual([
+      'getGraphOverview',
+      'searchConcepts',
+      'inspectConcept',
+      'inspectRelation',
+      'listNeighbors',
+      'getRelationTypes',
+    ])
+    state = graph([concept('b', 'After')])
+    const execute = tools.inspectConcept.execute!
+    const result = await execute({ id: 'b' }, {} as never)
+    expect(result).toMatchObject({ found: true, id: 'b', title: 'After' })
+    expect(getState).toHaveBeenCalledTimes(1)
+  })
+
+  it('bounds every requested relation type id', () => {
+    const tools = createMentorTools(() => graph([]))
+    const schema = asSchema(tools.getRelationTypes.inputSchema).jsonSchema
+
+    expect(schema).toMatchObject({
+      properties: {
+        types: {
+          items: { minLength: 1, maxLength: 200 },
+          maxItems: 52,
+          uniqueItems: true,
+        },
+      },
+    })
   })
 })

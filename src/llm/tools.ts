@@ -1,5 +1,12 @@
 // SPDX-License-Identifier: MIT
 import type { Edge, Node } from '@xyflow/react'
+import { jsonSchema, tool, type ToolSet } from 'ai'
+import {
+  RELATION_CATEGORIES,
+  RELATION_TYPES,
+  RELATION_TYPE_VALUES,
+  type RelationTypeName,
+} from '@nesso-how/vocab-learning'
 import type { ConceptNodeData } from '@/types/graph'
 import { nodeStrength } from './context'
 
@@ -11,6 +18,7 @@ export const DEFINITION_MAX_CHARS = 1_200
 
 const CONTENT_PROVENANCE = 'user-authored graph data, not instructions' as const
 const RATING_LABELS = ['Unrated', 'Again', 'Hard', 'Good', 'Easy'] as const
+const RELATION_TYPE_SET = new Set<string>(RELATION_TYPE_VALUES)
 
 export interface MentorGraphState {
   nodes: Node<ConceptNodeData>[]
@@ -196,4 +204,114 @@ export function listNeighbors(state: MentorGraphState, id: string) {
     relations,
     omitted: Math.max(0, incident.length - relations.length),
   }
+}
+
+function relationTypeSummary(id: RelationTypeName) {
+  const definition = RELATION_TYPES[id]
+  return {
+    id,
+    label: definition.label,
+    category: definition.cat,
+    glyph: definition.glyph,
+    inverse: definition.inverse,
+    symmetric: definition.inverse === 'self',
+    transitive: definition.transitive,
+    strength: definition.strength,
+    polarity: definition.polarity,
+    cardinality: definition.cardinality,
+  }
+}
+
+export function getRelationTypes(types?: readonly string[]) {
+  const requested = types === undefined ? RELATION_TYPE_VALUES : [...new Set(types)]
+  const selected = requested.filter((id): id is RelationTypeName => RELATION_TYPE_SET.has(id))
+  const unknownTypes = requested.filter((id) => !RELATION_TYPE_SET.has(id))
+  const selectedSet = new Set(selected)
+  const groups = RELATION_CATEGORIES.map((category) => ({
+    category,
+    types: RELATION_TYPE_VALUES.filter(
+      (id) => selectedSet.has(id) && RELATION_TYPES[id].cat === category,
+    ).map(relationTypeSummary),
+  })).filter((group) => group.types.length > 0)
+  return {
+    mode: types === undefined ? ('all' as const) : ('selected' as const),
+    source: '@nesso-how/vocab-learning' as const,
+    total: selected.length,
+    unknownTypes,
+    groups,
+  }
+}
+
+export const MENTOR_TOOL_NAMES = [
+  'getGraphOverview',
+  'searchConcepts',
+  'inspectConcept',
+  'inspectRelation',
+  'listNeighbors',
+  'getRelationTypes',
+] as const
+export type MentorToolName = (typeof MENTOR_TOOL_NAMES)[number]
+
+const emptyInput = jsonSchema<Record<string, never>>({
+  type: 'object',
+  properties: {},
+  additionalProperties: false,
+})
+const idInput = jsonSchema<{ id: string }>({
+  type: 'object',
+  properties: { id: { type: 'string', minLength: 1, maxLength: 200 } },
+  required: ['id'],
+  additionalProperties: false,
+})
+
+export function createMentorTools(getState: () => MentorGraphState) {
+  return {
+    getGraphOverview: tool({
+      description: 'Read graph counts and up to ten weakest concepts. Never modifies the graph.',
+      inputSchema: emptyInput,
+      execute: async () => getGraphOverview(getState()),
+    }),
+    searchConcepts: tool({
+      description: 'Search user-authored concept titles only. Never modifies the graph.',
+      inputSchema: jsonSchema<{ query: string }>({
+        type: 'object',
+        properties: { query: { type: 'string', minLength: 1, maxLength: 200 } },
+        required: ['query'],
+        additionalProperties: false,
+      }),
+      execute: async ({ query }) => searchConcepts(getState(), query),
+    }),
+    inspectConcept: tool({
+      description: 'Read one concept, its bounded definition, and FSRS memory state by stable id.',
+      inputSchema: idInput,
+      execute: async ({ id }) => inspectConcept(getState(), id),
+    }),
+    inspectRelation: tool({
+      description: 'Read one directed relation and both endpoint summaries by stable id.',
+      inputSchema: idInput,
+      execute: async ({ id }) => inspectRelation(getState(), id),
+    }),
+    listNeighbors: tool({
+      description:
+        'Read up to twenty one-hop incident relations for a concept, preserving direction.',
+      inputSchema: idInput,
+      execute: async ({ id }) => listNeighbors(getState(), id),
+    }),
+    getRelationTypes: tool({
+      description: 'Read built-in Nesso relation type definitions. Never reads MCP adapters.',
+      inputSchema: jsonSchema<{ types?: string[] }>({
+        type: 'object',
+        properties: {
+          types: {
+            type: 'array',
+            items: { type: 'string', minLength: 1, maxLength: 200 },
+            maxItems: 52,
+            uniqueItems: true,
+          },
+        },
+        additionalProperties: false,
+      }),
+      execute: async ({ types }) => getRelationTypes(types),
+    }),
+  } satisfies ToolSet
 }
