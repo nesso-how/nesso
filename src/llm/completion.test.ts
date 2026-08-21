@@ -9,7 +9,7 @@ vi.mock('@tauri-apps/plugin-http', () => ({
   fetch: mockNativeFetch,
 }))
 
-import { APICallError, jsonSchema, tool } from 'ai'
+import { APICallError, InvalidToolInputError, jsonSchema, NoSuchToolError, tool } from 'ai'
 import type { NessoSettings } from '@/types/graph'
 import {
   checkEndpoint,
@@ -19,6 +19,7 @@ import {
   isAiReady,
   isLocalhostUrl,
   isNetworkFailure,
+  isToolCompatibilityFailure,
   pullModel,
 } from './completion'
 
@@ -143,6 +144,169 @@ describe('isNetworkFailure', () => {
   it('treats a bare TypeError as network and other errors as non-network', () => {
     expect(isNetworkFailure(new TypeError('Failed to fetch'))).toBe(true)
     expect(isNetworkFailure(new Error('parse'))).toBe(false)
+  })
+})
+
+describe('isToolCompatibilityFailure', () => {
+  it('recognizes SDK unknown-tool and malformed-input errors', () => {
+    expect(isToolCompatibilityFailure(new NoSuchToolError({ toolName: 'madeUp' }))).toBe(true)
+    expect(
+      isToolCompatibilityFailure(
+        new InvalidToolInputError({
+          toolName: 'inspectConcept',
+          toolInput: '{',
+          cause: new Error('invalid JSON'),
+        }),
+      ),
+    ).toBe(true)
+  })
+
+  it('recognizes explicit HTTP rejection of the tools or functions surface', () => {
+    expect(
+      isToolCompatibilityFailure(
+        new APICallError({
+          message: 'Bad Request',
+          url: 'http://x/v1/chat/completions',
+          requestBodyValues: { tools: [] },
+          statusCode: 400,
+          responseBody: 'tools are not supported',
+          isRetryable: false,
+        }),
+      ),
+    ).toBe(true)
+    expect(
+      isToolCompatibilityFailure(
+        new APICallError({
+          message: 'functions are not supported',
+          url: 'http://x/v1/chat/completions',
+          requestBodyValues: { functions: [] },
+          statusCode: 404,
+          isRetryable: false,
+        }),
+      ),
+    ).toBe(true)
+    expect(
+      isToolCompatibilityFailure(
+        new APICallError({
+          message: 'unknown field functions',
+          url: 'http://x/v1/chat/completions',
+          requestBodyValues: { functions: [] },
+          statusCode: 422,
+          isRetryable: false,
+        }),
+      ),
+    ).toBe(true)
+  })
+
+  it('recognizes every explicit tool-calling request field case-insensitively', () => {
+    const requestFields = ['tools', 'functions', 'tool_calls', 'tool_choice', 'function_call']
+
+    for (const field of requestFields) {
+      const error = new APICallError({
+        message: `UNSUPPORTED FIELD ${field.toUpperCase()}`,
+        url: 'http://x/v1/chat/completions',
+        requestBodyValues: { [field.toUpperCase()]: true },
+        statusCode: 400,
+        isRetryable: false,
+      })
+
+      expect(isToolCompatibilityFailure(error)).toBe(true)
+    }
+
+    expect(
+      isToolCompatibilityFailure(
+        new APICallError({
+          message: 'This model does not support tool calling',
+          url: 'http://x/v1/chat/completions',
+          requestBodyValues: {},
+          statusCode: 400,
+          isRetryable: false,
+        }),
+      ),
+    ).toBe(true)
+  })
+
+  it('does not match suffixed request fields as explicit tool fields', () => {
+    const requestFields = ['tools', 'functions', 'tool_calls', 'tool_choice', 'function_call']
+
+    for (const field of requestFields) {
+      const error = new APICallError({
+        message: `UNSUPPORTED FIELD ${field}_extra`,
+        url: 'http://x/v1/chat/completions',
+        requestBodyValues: { [field]: true },
+        statusCode: 400,
+        isRetryable: false,
+      })
+
+      expect(isToolCompatibilityFailure(error)).toBe(false)
+    }
+  })
+
+  it('does not confuse unrelated model names with tool incompatibility', () => {
+    const error = new APICallError({
+      message: "model 'tool-calling' is unsupported",
+      url: 'http://x/v1/chat/completions',
+      requestBodyValues: { model: 'tool-calling' },
+      statusCode: 400,
+      isRetryable: false,
+    })
+
+    expect(isToolCompatibilityFailure(error)).toBe(false)
+  })
+
+  it('does not confuse an unquoted model name containing tool-calling terms with incompatibility', () => {
+    const error = new APICallError({
+      message: 'model qwen-tool-calling is unsupported',
+      url: 'http://x/v1/chat/completions',
+      requestBodyValues: { model: 'qwen-tool-calling' },
+      statusCode: 400,
+      isRetryable: false,
+    })
+
+    expect(isToolCompatibilityFailure(error)).toBe(false)
+  })
+
+  it('does not classify auth, network, abort, server, generic HTTP, or execution failures', () => {
+    const apiError = (statusCode: number, message: string) =>
+      new APICallError({
+        message,
+        url: 'http://x/v1/chat/completions',
+        requestBodyValues: {},
+        statusCode,
+        isRetryable: false,
+      })
+
+    expect(isToolCompatibilityFailure(apiError(401, 'unauthorized'))).toBe(false)
+    expect(isToolCompatibilityFailure(apiError(403, 'forbidden'))).toBe(false)
+    expect(isToolCompatibilityFailure(apiError(500, 'tools are not supported'))).toBe(false)
+    expect(isToolCompatibilityFailure(apiError(400, 'invalid model'))).toBe(false)
+    expect(
+      isToolCompatibilityFailure(
+        new APICallError({
+          message: "unsupported argument 'temperature'",
+          url: 'http://x/v1/chat/completions',
+          requestBodyValues: { tools: [] },
+          statusCode: 400,
+          isRetryable: false,
+        }),
+      ),
+    ).toBe(false)
+    expect(
+      isToolCompatibilityFailure(
+        new APICallError({
+          message: 'unsupported tool execution',
+          url: 'http://x/v1/chat/completions',
+          requestBodyValues: { tools: [] },
+          statusCode: 422,
+          isRetryable: false,
+        }),
+      ),
+    ).toBe(false)
+    expect(isToolCompatibilityFailure(new TypeError('Failed to fetch'))).toBe(false)
+    expect(
+      isToolCompatibilityFailure(new DOMException('The operation was aborted.', 'AbortError')),
+    ).toBe(false)
+    expect(isToolCompatibilityFailure(new Error('tool execution failed'))).toBe(false)
   })
 })
 
