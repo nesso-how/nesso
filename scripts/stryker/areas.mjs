@@ -41,6 +41,9 @@ export const mutationAreas = {
     ],
   },
   mentor: {
+    // Keep the legacy mentor context and its untrusted-data/injection-safety
+    // boundaries under the retained mutation floor. Graph queries have their
+    // own area below, so the new tool surface cannot dilute this ratchet.
     mutate: ['src/llm/context.ts', 'src/data/fsrsDueQueue.ts'],
     reportDir: 'reports/mutation/mentor',
     breakAt: 84,
@@ -51,10 +54,18 @@ export const mutationAreas = {
       'src/data/fsrsDueQueue.test.ts',
     ],
   },
+  graphTools: {
+    // Pure graph queries only. The SDK adapter wrappers are intentionally
+    // outside this area because they are thin integration glue.
+    mutate: ['src/llm/tools.ts:33-242'],
+    reportDir: 'reports/mutation/graph-tools',
+    breakAt: 91,
+    touch: ['src/llm/tools.ts', 'src/llm/tools.test.ts'],
+  },
 }
 
-/** Stable run order — matches `pnpm run analyze:mutation`. */
-export const mutationAreaOrder = ['schema', 'store', 'workspace', 'mentor']
+/** Stable run order for changed-file mutation selection. */
+export const mutationAreaOrder = ['schema', 'store', 'workspace', 'mentor', 'graphTools']
 
 const STRYKER_DIR = 'scripts/stryker/'
 
@@ -71,6 +82,7 @@ function areasFromStrykerConfig(file) {
   if (!file.startsWith(STRYKER_DIR) || !file.endsWith('.mjs')) return []
   const name = file.slice(STRYKER_DIR.length, -4)
   if (name === 'base' || name === 'changed' || !mutationAreas[name]) return []
+  if (name === 'mentor') return ['mentor', 'graphTools']
   return [name]
 }
 
