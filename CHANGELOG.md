@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.2.0-beta.2] - 2026-08-22
+
 ### Added
 
 - **Socrates graph inspection:** Socrates can inspect the live graph on demand through bounded, read-only tools.
@@ -802,7 +804,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial alpha: interactive knowledge graph (web + Tauri v2); desktop installers on GitHub Releases (macOS Apple silicon and Intel).
 
-[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.2.0-beta.1...HEAD
+[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.2.0-beta.2...HEAD
+[0.2.0-beta.2]: https://github.com/nesso-how/nesso/compare/v0.2.0-beta.1...v0.2.0-beta.2
 [0.2.0-beta.1]: https://github.com/nesso-how/nesso/compare/v0.2.0-beta.0...v0.2.0-beta.1
 [0.2.0-beta.0]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.41...v0.2.0-beta.0
 [0.1.0-alpha.41]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.40...v0.1.0-alpha.41
