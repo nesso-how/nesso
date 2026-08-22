@@ -11,7 +11,7 @@ import {
   isToolCompatibilityFailure,
 } from '@/llm/completion'
 import { buildLegacyMentorPrompt, buildMentorPrompt, buildMentorSeedText } from '@/llm/context'
-import { createMentorTools } from '@/llm/tools'
+import { createMentorTools, MENTOR_TOOL_NAMES, type MentorToolName } from '@/llm/tools'
 import { useT } from '@/i18n'
 import { CloseButton } from '@/components/ui/CloseButton'
 import { STATUS_BAR_HEIGHT_PX } from '@/components/layout/StatusBar'
@@ -45,6 +45,12 @@ function appendToLastMentor(history: Message[], delta: string): Message[] {
 
 function isActiveController(current: AbortController | null, controller: AbortController): boolean {
   return current === controller && !controller.signal.aborted
+}
+
+const MENTOR_TOOL_NAME_SET = new Set<string>(MENTOR_TOOL_NAMES)
+
+function isMentorToolName(value: string): value is MentorToolName {
+  return MENTOR_TOOL_NAME_SET.has(value)
 }
 
 function MentorUserBubble({ text }: { text: string }) {
@@ -126,6 +132,14 @@ function MentorReplyBubble({ text, showCaret }: { text: string; showCaret: boole
   )
 }
 
+function MentorActivityStatus({ label }: { label?: string }) {
+  return (
+    <div role="status" aria-live="polite" aria-atomic="true">
+      <ThinkingIndicator label={label} />
+    </div>
+  )
+}
+
 function MentorChatMessage({
   message,
   index,
@@ -185,6 +199,7 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
   const [loadingInitial, setLoadingInitial] = useState(false)
   /** True once reasoning deltas are streaming in but the answer hasn't started yet. */
   const [reasoningActive, setReasoningActive] = useState(false)
+  const [toolAction, setToolAction] = useState<MentorToolName | null>(null)
   const [chatKey, setChatKey] = useState(0)
 
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -241,6 +256,7 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
         }
         legacyModeRef.current = true
         setReasoningActive(false)
+        setToolAction(null)
         return attempt(true)
       }
     },
@@ -251,6 +267,7 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
   useEffect(() => {
     if (!mentorPanelExpanded) return
     legacyModeRef.current = false
+    setToolAction(null)
     if (!aiReady) {
       setHistory([{ role: 'mentor', text: t.mentor.needsSetup }])
       setLoadingInitial(false)
@@ -276,6 +293,7 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
       {
         onToken: (delta) => {
           if (!isActiveController(abortRef.current, controller)) return
+          setToolAction(null)
           if (!answered) {
             answered = true
             setLoadingInitial(false)
@@ -283,6 +301,11 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
             setStreaming(true)
           }
           setHistory((h) => appendToLastMentor(h, delta))
+        },
+        onToolCall: (toolName) => {
+          if (!isActiveController(abortRef.current, controller)) return
+          if (!isMentorToolName(toolName)) return
+          setToolAction(toolName)
         },
         onReasoning: () => {
           if (!isActiveController(abortRef.current, controller)) return
@@ -299,6 +322,7 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
       })
       .catch((err) => {
         if (isActiveController(abortRef.current, controller)) {
+          setToolAction(null)
           setHistory([{ role: 'mentor', text: mentorFailureMessage(err, t), error: true }])
           track({
             name: 'mentor_request_failed',
@@ -310,6 +334,7 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
         if (isActiveController(abortRef.current, controller)) {
           setLoadingInitial(false)
           setStreaming(false)
+          setToolAction(null)
         }
       })
 
@@ -375,6 +400,7 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
     if (!text.trim() || thinking || loadingInitial) return
     // Abortable, and guarded below: a "new chat" or graph switch aborts via
     // abortRef, so a stale reply never lands in the wrong conversation.
+    setToolAction(null)
     abortRef.current?.abort()
     const controller = new AbortController()
     abortRef.current = controller
@@ -399,6 +425,7 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
         {
           onToken: (delta) => {
             if (!isActiveController(abortRef.current, controller)) return
+            setToolAction(null)
             if (!answered) {
               answered = true
               setThinking(false)
@@ -406,6 +433,11 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
               setStreaming(true)
             }
             setHistory((h) => appendToLastMentor(h, delta))
+          },
+          onToolCall: (toolName) => {
+            if (!isActiveController(abortRef.current, controller)) return
+            if (!isMentorToolName(toolName)) return
+            setToolAction(toolName)
           },
           onReasoning: () => {
             if (!isActiveController(abortRef.current, controller)) return
@@ -423,6 +455,7 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
       }
     } catch (err) {
       if (isActiveController(abortRef.current, controller)) {
+        setToolAction(null)
         setHistory((h) => [
           ...h,
           { role: 'mentor', text: mentorFailureMessage(err, t), error: true },
@@ -436,10 +469,16 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
       if (isActiveController(abortRef.current, controller)) {
         setStreaming(false)
         setThinking(false)
+        setToolAction(null)
       }
     }
   }
 
+  const thinkingLabel = toolAction
+    ? t.mentor.toolActions[toolAction]
+    : reasoningActive
+      ? t.mentor.thinking
+      : undefined
   const inputDisabled = !aiReady || loadingInitial
   const placeholder = !aiReady
     ? t.mentor.placeholderNeedsSetup
@@ -520,6 +559,7 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
             type="button"
             title={t.mentor.newChat}
             onClick={() => {
+              setToolAction(null)
               abortRef.current?.abort()
               legacyModeRef.current = false
               setChatKey((k) => k + 1)
@@ -564,6 +604,7 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
           </button>
           <CloseButton
             onClick={() => {
+              setToolAction(null)
               abortRef.current?.abort()
               legacyModeRef.current = false
               setMentorPanelExpanded(false)
@@ -584,7 +625,7 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
           }}
         >
           {loadingInitial && history.length === 0 ? (
-            <ThinkingIndicator label={reasoningActive ? t.mentor.thinking : undefined} />
+            <MentorActivityStatus label={thinkingLabel} />
           ) : (
             history.map((m, i) => (
               <MentorChatMessage
@@ -596,9 +637,7 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
               />
             ))
           )}
-          {thinking && (
-            <ThinkingIndicator label={reasoningActive ? t.mentor.thinking : undefined} />
-          )}
+          {thinking && <MentorActivityStatus label={thinkingLabel} />}
         </div>
 
         <div

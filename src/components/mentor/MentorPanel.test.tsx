@@ -279,6 +279,333 @@ describe('MentorPanel telemetry', () => {
 })
 
 describe('MentorPanel graph tools', () => {
+  it('shows only the latest localized tool action until the first answer token', async () => {
+    let handlers:
+      | { onToken?: (delta: string) => void; onToolCall?: (name: string) => void }
+      | undefined
+    let resolveRequest!: (value: string) => void
+    mockFetchCompletion.mockImplementationOnce(
+      async (
+        _settings: unknown,
+        _request: unknown,
+        _maxTokens: unknown,
+        _signal: unknown,
+        requestHandlers: typeof handlers,
+      ) => {
+        handlers = requestHandlers
+        return new Promise<string>((resolve) => {
+          resolveRequest = resolve
+        })
+      },
+    )
+
+    await act(async () => {
+      root!.render(<MentorPanel leftInset={0} rightInset={0} />)
+    })
+
+    await act(async () => {
+      handlers?.onToolCall?.('searchConcepts')
+    })
+    expect(container!.textContent).toContain('Searching concepts…')
+
+    await act(async () => {
+      handlers?.onToolCall?.('listNeighbors')
+    })
+    expect(container!.textContent).toContain('Following relations…')
+    expect(container!.textContent).not.toContain('Searching concepts…')
+
+    await act(async () => {
+      handlers?.onToken?.('Answer')
+    })
+    expect(container!.textContent).not.toContain('Following relations…')
+
+    await act(async () => {
+      resolveRequest('Answer')
+    })
+  })
+
+  it('uses the current locale for transient tool actions', async () => {
+    let onToolCall: ((name: string) => void) | undefined
+    let resolveRequest!: (value: string) => void
+    useGraphStore.setState({
+      settings: { ...useGraphStore.getState().settings, language: 'it' },
+    })
+    mockFetchCompletion.mockImplementationOnce(
+      async (
+        _settings: unknown,
+        _request: unknown,
+        _maxTokens: unknown,
+        _signal: unknown,
+        handlers: { onToolCall?: (name: string) => void } | undefined,
+      ) => {
+        onToolCall = handlers?.onToolCall
+        return new Promise<string>((resolve) => {
+          resolveRequest = resolve
+        })
+      },
+    )
+
+    await act(async () => {
+      root!.render(<MentorPanel leftInset={0} rightInset={0} />)
+    })
+    await act(async () => {
+      onToolCall?.('searchConcepts')
+    })
+
+    expect(container!.textContent).toContain('Cerco concetti…')
+
+    await act(async () => {
+      resolveRequest('Risposta')
+    })
+  })
+
+  it('ignores unknown tool activity names instead of replacing a known action', async () => {
+    let onToolCall: ((name: string) => void) | undefined
+    let resolveRequest!: (value: string) => void
+    mockFetchCompletion.mockImplementationOnce(
+      async (
+        _settings: unknown,
+        _request: unknown,
+        _maxTokens: unknown,
+        _signal: unknown,
+        handlers: { onToolCall?: (name: string) => void } | undefined,
+      ) => {
+        onToolCall = handlers?.onToolCall
+        return new Promise<string>((resolve) => {
+          resolveRequest = resolve
+        })
+      },
+    )
+
+    await act(async () => {
+      root!.render(<MentorPanel leftInset={0} rightInset={0} />)
+    })
+    await act(async () => {
+      onToolCall?.('searchConcepts')
+    })
+    await act(async () => {
+      onToolCall?.('unknownTool')
+    })
+    await act(async () => {
+      onToolCall?.('__proto__')
+    })
+
+    expect(container!.textContent).toContain('Searching concepts…')
+    expect(container!.textContent).not.toContain('unknownTool')
+
+    await act(async () => {
+      resolveRequest('Answer')
+    })
+  })
+
+  it('exposes current tool activity as a polite status and removes it when answering starts', async () => {
+    let onToolCall: ((name: string) => void) | undefined
+    let onToken: ((delta: string) => void) | undefined
+    let resolveRequest!: (value: string) => void
+    mockFetchCompletion.mockImplementationOnce(
+      async (
+        _settings: unknown,
+        _request: unknown,
+        _maxTokens: unknown,
+        _signal: unknown,
+        handlers:
+          | {
+              onToken?: (delta: string) => void
+              onToolCall?: (name: string) => void
+            }
+          | undefined,
+      ) => {
+        onToolCall = handlers?.onToolCall
+        onToken = handlers?.onToken
+        return new Promise<string>((resolve) => {
+          resolveRequest = resolve
+        })
+      },
+    )
+
+    await act(async () => {
+      root!.render(<MentorPanel leftInset={0} rightInset={0} />)
+    })
+    await act(async () => {
+      onToolCall?.('searchConcepts')
+    })
+
+    const status = container!.querySelector('[role="status"]')
+    expect(status).not.toBeNull()
+    expect(status?.getAttribute('aria-live')).toBe('polite')
+    expect(status?.getAttribute('aria-atomic')).toBe('true')
+    expect(status?.textContent).toContain('Searching concepts…')
+
+    await act(async () => {
+      onToken?.('Answer')
+    })
+    expect(container!.querySelector('[role="status"]')).toBeNull()
+
+    await act(async () => {
+      resolveRequest('Answer')
+    })
+  })
+
+  it('keeps tool names, inputs, and results out of visible chat history', async () => {
+    let handlers:
+      | { onToken?: (delta: string) => void; onToolCall?: (name: string) => void }
+      | undefined
+    let resolveRequest!: (value: string) => void
+    mockFetchCompletion.mockImplementationOnce(
+      async (
+        _settings: unknown,
+        _request: unknown,
+        _maxTokens: unknown,
+        _signal: unknown,
+        requestHandlers: typeof handlers,
+      ) => {
+        handlers = requestHandlers
+        return new Promise<string>((resolve) => {
+          resolveRequest = resolve
+        })
+      },
+    )
+
+    await act(async () => {
+      root!.render(<MentorPanel leftInset={0} rightInset={0} />)
+    })
+    await act(async () => {
+      handlers?.onToolCall?.('searchConcepts')
+    })
+    expect(container!.textContent).not.toContain('searchConcepts')
+    expect(container!.textContent).not.toContain('{"query":"memory"}')
+
+    await act(async () => {
+      handlers?.onToken?.('Answer only')
+      resolveRequest('Answer only')
+    })
+
+    expect(container!.textContent).toContain('Answer only')
+    expect(container!.textContent).not.toContain('searchConcepts')
+    expect(container!.textContent).not.toContain('{"query":"memory"}')
+    expect(container!.textContent).not.toContain('{"matches":')
+  })
+
+  it('does not let an aborted request clear a newer request action', async () => {
+    let firstHandlers:
+      | { onToken?: (delta: string) => void; onToolCall?: (name: string) => void }
+      | undefined
+    let secondHandlers:
+      | { onToken?: (delta: string) => void; onToolCall?: (name: string) => void }
+      | undefined
+    let resolveFirst!: (value: string) => void
+    let resolveSecond!: (value: string) => void
+    mockFetchCompletion.mockImplementationOnce(
+      async (
+        _settings: unknown,
+        _request: unknown,
+        _maxTokens: unknown,
+        _signal: unknown,
+        handlers: typeof firstHandlers,
+      ) => {
+        firstHandlers = handlers
+        return new Promise<string>((resolve) => {
+          resolveFirst = resolve
+        })
+      },
+    )
+    mockFetchCompletion.mockImplementationOnce(
+      async (
+        _settings: unknown,
+        _request: unknown,
+        _maxTokens: unknown,
+        _signal: unknown,
+        handlers: typeof secondHandlers,
+      ) => {
+        secondHandlers = handlers
+        return new Promise<string>((resolve) => {
+          resolveSecond = resolve
+        })
+      },
+    )
+
+    await act(async () => {
+      root!.render(<MentorPanel leftInset={0} rightInset={0} />)
+    })
+    await sendMessage('First request')
+    await act(async () => {
+      firstHandlers?.onToolCall?.('searchConcepts')
+      firstHandlers?.onToken?.('partial')
+    })
+    await sendMessage('Second request')
+    await act(async () => {
+      secondHandlers?.onToolCall?.('listNeighbors')
+      firstHandlers?.onToolCall?.('searchConcepts')
+      firstHandlers?.onToken?.('late text')
+    })
+
+    expect(container!.textContent).toContain('Following relations…')
+    expect(container!.textContent).not.toContain('Searching concepts…')
+    expect(container!.textContent).not.toContain('late text')
+
+    await act(async () => {
+      resolveFirst('late first reply')
+      resolveSecond('second reply')
+    })
+  })
+
+  it('clears the action before fallback and aborts the shared primary/fallback signal', async () => {
+    let primarySignal: AbortSignal | undefined
+    let fallbackSignal: AbortSignal | undefined
+    let rejectPrimary!: (error: unknown) => void
+    let resolveFallback!: (value: string) => void
+    mockFetchCompletion.mockImplementationOnce(
+      async (
+        _settings: unknown,
+        _request: unknown,
+        _maxTokens: unknown,
+        signal: AbortSignal,
+        handlers: { onToolCall?: (name: string) => void } | undefined,
+      ) => {
+        primarySignal = signal
+        handlers?.onToolCall?.('searchConcepts')
+        return new Promise<string>((_resolve, reject) => {
+          rejectPrimary = reject
+        })
+      },
+    )
+    mockFetchCompletion.mockImplementationOnce(
+      async (_settings: unknown, _request: unknown, _maxTokens: unknown, signal: AbortSignal) => {
+        fallbackSignal = signal
+        return new Promise<string>((resolve) => {
+          resolveFallback = resolve
+        })
+      },
+    )
+
+    await act(async () => {
+      root!.render(<MentorPanel leftInset={0} rightInset={0} />)
+    })
+    await sendMessage('Try the fallback')
+    expect(container!.textContent).toContain('Searching concepts…')
+
+    await act(async () => {
+      rejectPrimary(new NoSuchToolError({ toolName: 'getGraphOverview' }))
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+
+    expect(container!.textContent).not.toContain('Searching concepts…')
+    expect(fallbackSignal).toBe(primarySignal)
+
+    const closeButton = container!.querySelectorAll('button')[1]!
+    await act(async () => {
+      closeButton.click()
+    })
+    expect(primarySignal?.aborted).toBe(true)
+
+    await act(async () => {
+      resolveFallback('late fallback reply')
+      await Promise.resolve()
+    })
+    expect(container!.textContent).not.toContain('late fallback reply')
+  })
+
   it('retries an incompatible opener once in legacy mode and keeps later turns legacy', async () => {
     mockBuildLegacyMentorPrompt.mockReturnValue('Nodes: legacy snapshot')
     mockFetchCompletion.mockImplementationOnce(async () => {
