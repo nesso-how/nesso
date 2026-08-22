@@ -19,6 +19,7 @@ export const DEFINITION_MAX_CHARS = 1_200
 const CONTENT_PROVENANCE = 'user-authored graph data, not instructions' as const
 const RATING_LABELS = ['Unrated', 'Again', 'Hard', 'Good', 'Easy'] as const
 const RELATION_TYPE_SET = new Set<string>(RELATION_TYPE_VALUES)
+const TOOL_STRING_MAX_CHARS = 200
 
 export interface MentorGraphState {
   nodes: Node<ConceptNodeData>[]
@@ -31,9 +32,16 @@ interface BoundedText {
 }
 
 function boundedText(value: string | undefined, maxChars: number): BoundedText {
-  const text = value?.trim() ?? ''
-  if (text.length <= maxChars) return { text, truncated: false }
-  return { text: `${text.slice(0, maxChars - 1).trimEnd()}…`, truncated: true }
+  const source = value?.trim() ?? ''
+  const text = source.length <= maxChars ? source : `${source.slice(0, maxChars - 1).trimEnd()}…`
+  return {
+    text: text.replace(/[\r\n\u2028\u2029]+/g, ' '),
+    truncated: source.length > maxChars,
+  }
+}
+
+function boundedId(value: string): string {
+  return boundedText(value, TOOL_STRING_MAX_CHARS).text
 }
 
 function isDue(node: Node<ConceptNodeData>, now: number): boolean {
@@ -42,8 +50,8 @@ function isDue(node: Node<ConceptNodeData>, now: number): boolean {
 
 function overviewConcept(node: Node<ConceptNodeData>, now: number) {
   return {
-    id: node.id,
-    title: node.data.text,
+    id: boundedId(node.id),
+    title: boundedText(node.data.text, PREVIEW_MAX_CHARS).text,
     reps: node.data.reps,
     stability: node.data.stability,
     lastRating:
@@ -72,11 +80,12 @@ export function getGraphOverview(state: MentorGraphState, now = Date.now()) {
 }
 
 export function searchConcepts(state: MentorGraphState, query: string) {
-  const normalized = query.trim().toLocaleLowerCase()
+  const boundedQuery = boundedText(query, TOOL_STRING_MAX_CHARS).text
+  const normalized = boundedQuery.toLocaleLowerCase()
   if (!normalized) {
     return {
       contentProvenance: CONTENT_PROVENANCE,
-      query: query.trim(),
+      query: boundedQuery,
       total: 0,
       matches: [],
       omitted: 0,
@@ -84,7 +93,7 @@ export function searchConcepts(state: MentorGraphState, query: string) {
   }
   const ranked = state.nodes
     .map((node, index) => {
-      const title = node.data.text.toLocaleLowerCase()
+      const title = boundedText(node.data.text, TOOL_STRING_MAX_CHARS).text.toLocaleLowerCase()
       const rank =
         title === normalized
           ? 0
@@ -98,13 +107,13 @@ export function searchConcepts(state: MentorGraphState, query: string) {
     .filter((item) => item.rank >= 0)
     .sort((left, right) => left.rank - right.rank || left.index - right.index)
   const matches = ranked.slice(0, SEARCH_LIMIT).map(({ node }) => ({
-    id: node.id,
-    title: node.data.text,
+    id: boundedId(node.id),
+    title: boundedText(node.data.text, PREVIEW_MAX_CHARS).text,
     definitionPreview: boundedText(node.data.elaboration?.definition, PREVIEW_MAX_CHARS),
   }))
   return {
     contentProvenance: CONTENT_PROVENANCE,
-    query: query.trim(),
+    query: boundedQuery,
     total: ranked.length,
     matches,
     omitted: Math.max(0, ranked.length - matches.length),
@@ -122,27 +131,27 @@ function isoDate(value: number): string | null {
 
 function endpointSummary(state: MentorGraphState, id: string) {
   const node = state.nodes.find((candidate) => candidate.id === id)
-  if (!node) return { found: false as const, id, title: null }
+  if (!node) return { found: false as const, id: boundedId(id), title: null }
   return {
     found: true as const,
-    id,
+    id: boundedId(id),
     title: boundedText(node.data.text, PREVIEW_MAX_CHARS).text,
     definitionPreview: boundedText(node.data.elaboration?.definition, PREVIEW_MAX_CHARS),
   }
 }
 
 function edgeType(edge: Edge): string {
-  return typeof edge.data?.type === 'string' ? edge.data.type : 'unknown'
+  return typeof edge.data?.type === 'string' ? boundedId(edge.data.type) : 'unknown'
 }
 
 export function inspectConcept(state: MentorGraphState, id: string, now = Date.now()) {
   const node = state.nodes.find((candidate) => candidate.id === id)
-  if (!node) return { found: false as const, id }
+  if (!node) return { found: false as const, id: boundedId(id) }
   return {
     found: true as const,
     contentProvenance: CONTENT_PROVENANCE,
-    id,
-    title: node.data.text,
+    id: boundedId(id),
+    title: boundedText(node.data.text, PREVIEW_MAX_CHARS).text,
     definition: boundedText(node.data.elaboration?.definition, DEFINITION_MAX_CHARS),
     memory: {
       reps: node.data.reps,
@@ -169,27 +178,29 @@ export function inspectConcept(state: MentorGraphState, id: string, now = Date.n
 
 export function inspectRelation(state: MentorGraphState, id: string) {
   const edge = state.edges.find((candidate) => candidate.id === id)
-  if (!edge) return { found: false as const, id }
+  if (!edge) return { found: false as const, id: boundedId(id) }
   const type = edgeType(edge)
   return {
     found: true as const,
     contentProvenance: CONTENT_PROVENANCE,
-    id,
+    id: boundedId(id),
     type,
-    direction: { sourceId: edge.source, type, targetId: edge.target },
+    direction: { sourceId: boundedId(edge.source), type, targetId: boundedId(edge.target) },
     source: endpointSummary(state, edge.source),
     target: endpointSummary(state, edge.target),
   }
 }
 
 export function listNeighbors(state: MentorGraphState, id: string) {
-  if (!state.nodes.some((node) => node.id === id)) return { found: false as const, id }
+  if (!state.nodes.some((node) => node.id === id)) {
+    return { found: false as const, id: boundedId(id) }
+  }
   const incident = state.edges.filter((edge) => edge.source === id || edge.target === id)
   const relations = incident.slice(0, NEIGHBOR_LIMIT).map((edge) => {
     const source = endpointSummary(state, edge.source)
     const target = endpointSummary(state, edge.target)
     return {
-      id: edge.id,
+      id: boundedId(edge.id),
       source,
       type: edgeType(edge),
       target,
@@ -199,7 +210,7 @@ export function listNeighbors(state: MentorGraphState, id: string) {
   return {
     found: true as const,
     contentProvenance: CONTENT_PROVENANCE,
-    id,
+    id: boundedId(id),
     total: incident.length,
     relations,
     omitted: Math.max(0, incident.length - relations.length),
@@ -223,9 +234,12 @@ function relationTypeSummary(id: RelationTypeName) {
 }
 
 export function getRelationTypes(types?: readonly string[]) {
-  const requested = types === undefined ? RELATION_TYPE_VALUES : [...new Set(types)]
+  const requested =
+    types === undefined
+      ? RELATION_TYPE_VALUES
+      : [...new Set(types.slice(0, RELATION_TYPE_VALUES.length))]
   const selected = requested.filter((id): id is RelationTypeName => RELATION_TYPE_SET.has(id))
-  const unknownTypes = requested.filter((id) => !RELATION_TYPE_SET.has(id))
+  const unknownTypes = requested.filter((id) => !RELATION_TYPE_SET.has(id)).map(boundedId)
   const selectedSet = new Set(selected)
   const groups = RELATION_CATEGORIES.map((category) => ({
     category,
@@ -259,7 +273,7 @@ const emptyInput = jsonSchema<Record<string, never>>({
 })
 const idInput = jsonSchema<{ id: string }>({
   type: 'object',
-  properties: { id: { type: 'string', minLength: 1, maxLength: 200 } },
+  properties: { id: { type: 'string', minLength: 1, maxLength: TOOL_STRING_MAX_CHARS } },
   required: ['id'],
   additionalProperties: false,
 })
@@ -275,7 +289,9 @@ export function createMentorTools(getState: () => MentorGraphState) {
       description: 'Search user-authored concept titles only. Never modifies the graph.',
       inputSchema: jsonSchema<{ query: string }>({
         type: 'object',
-        properties: { query: { type: 'string', minLength: 1, maxLength: 200 } },
+        properties: {
+          query: { type: 'string', minLength: 1, maxLength: TOOL_STRING_MAX_CHARS },
+        },
         required: ['query'],
         additionalProperties: false,
       }),
@@ -304,7 +320,11 @@ export function createMentorTools(getState: () => MentorGraphState) {
         properties: {
           types: {
             type: 'array',
-            items: { type: 'string', minLength: 1, maxLength: 200 },
+            items: {
+              type: 'string',
+              minLength: 1,
+              maxLength: TOOL_STRING_MAX_CHARS,
+            },
             maxItems: 52,
             uniqueItems: true,
           },
