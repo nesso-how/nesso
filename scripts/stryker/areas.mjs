@@ -44,12 +44,14 @@ export const mutationAreas = {
     // Keep the legacy mentor context and its untrusted-data/injection-safety
     // boundaries under the retained mutation floor. Graph queries have their
     // own area below, so the new tool surface cannot dilute this ratchet.
-    mutate: ['src/llm/context.ts', 'src/data/fsrsDueQueue.ts'],
+    mutate: ['src/llm/context.ts', 'src/llm/graphHandles.ts', 'src/data/fsrsDueQueue.ts'],
     reportDir: 'reports/mutation/mentor',
     breakAt: 84,
     touch: [
       'src/llm/context.ts',
       'src/llm/context.test.ts',
+      'src/llm/graphHandles.ts',
+      'src/llm/graphHandles.test.ts',
       'src/data/fsrsDueQueue.ts',
       'src/data/fsrsDueQueue.test.ts',
     ],
