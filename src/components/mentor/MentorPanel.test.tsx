@@ -11,6 +11,7 @@ import { NoSuchToolError } from 'ai'
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
 import { useGraphStore } from '@/store'
 import { defaultConceptReviewFields } from '@/types/graph'
+import { isAiReady } from '@/llm/completion'
 import { MentorPanel } from './MentorPanel'
 
 const { mockTrack } = vi.hoisted(() => ({
@@ -106,6 +107,7 @@ beforeEach(() => {
   mockTrack.mockClear()
   mockFetchCompletion.mockClear()
   mockBuildLegacyMentorPrompt.mockClear()
+  vi.mocked(isAiReady).mockReturnValue(true)
   mockBuildLegacyMentorPrompt.mockReturnValue('Nodes: legacy snapshot')
   setupStore()
 
@@ -279,6 +281,73 @@ describe('MentorPanel telemetry', () => {
 })
 
 describe('MentorPanel graph tools', () => {
+  it('aborts and clears all transient activity when AI readiness becomes false', async () => {
+    let openerSignal: AbortSignal | undefined
+    let openerToken: ((delta: string) => void) | undefined
+    let sendSignal: AbortSignal | undefined
+    let sendHandlers:
+      | {
+          onToolCall?: (name: string) => void
+          onReasoning?: (delta: string) => void
+        }
+      | undefined
+    mockFetchCompletion.mockImplementationOnce(
+      async (
+        _settings: unknown,
+        _request: unknown,
+        _maxTokens: unknown,
+        signal: AbortSignal,
+        handlers: { onToken?: (delta: string) => void } | undefined,
+      ) => {
+        openerSignal = signal
+        openerToken = handlers?.onToken
+        return new Promise<string>(() => {})
+      },
+    )
+    mockFetchCompletion.mockImplementationOnce(
+      async (
+        _settings: unknown,
+        _request: unknown,
+        _maxTokens: unknown,
+        signal: AbortSignal,
+        handlers: typeof sendHandlers,
+      ) => {
+        sendSignal = signal
+        sendHandlers = handlers
+        return new Promise<string>(() => {})
+      },
+    )
+
+    await act(async () => {
+      root!.render(<MentorPanel leftInset={0} rightInset={0} />)
+    })
+    await act(async () => {
+      openerToken?.('Partial answer')
+    })
+    await sendMessage('Follow up')
+    await act(async () => {
+      sendHandlers?.onReasoning?.('thinking')
+      sendHandlers?.onToolCall?.('searchConcepts')
+    })
+
+    expect(container!.textContent).toContain('Searching concepts…')
+
+    vi.mocked(isAiReady).mockReturnValue(false)
+    await act(async () => {
+      useGraphStore.setState({
+        settings: { ...useGraphStore.getState().settings, aiBaseUrl: '' },
+      })
+    })
+
+    expect(openerSignal?.aborted).toBe(true)
+    expect(sendSignal?.aborted).toBe(true)
+    expect(container!.textContent).toContain('No AI endpoint configured.')
+    expect(container!.querySelector('[role="status"]')).toBeNull()
+    expect(container!.querySelector('span[style*="nx-tw-caret"]')).toBeNull()
+    expect(container!.textContent).not.toContain('Searching concepts…')
+    expect(container!.textContent).not.toContain('Partial answer')
+  })
+
   it('shows only the latest localized tool action until the first answer token', async () => {
     let handlers:
       | { onToken?: (delta: string) => void; onToolCall?: (name: string) => void }

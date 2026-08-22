@@ -269,8 +269,13 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
     legacyModeRef.current = false
     setToolAction(null)
     if (!aiReady) {
+      abortRef.current?.abort()
+      abortRef.current = null
       setHistory([{ role: 'mentor', text: t.mentor.needsSetup }])
+      setStreaming(false)
+      setThinking(false)
       setLoadingInitial(false)
+      setReasoningActive(false)
       return
     }
 
