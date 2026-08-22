@@ -45,9 +45,7 @@ An API-key-only edit does **not** reset the chat or tool-capability mode. It upd
 
 ### Tool compatibility fallback
 
-If any classified tool-compatibility failure occurs before visible answer text, Nesso retries that turn once with a legacy prompt. This includes SDK `NoSuchToolError` and `InvalidToolInputError`, plus a narrow set of HTTP `400`, `404`, or `422` endpoint responses that explicitly reject one of the `tools`, `functions`, `tool_calls`, `tool_choice`, or `function_call` fields, or the tool/function calling capability. A network failure, authentication error, generic server error, ordinary tool execution error, abort, or failure after answer text starts does not trigger the retry.
-
-After a successful retry, the current chat stays in legacy mode. Any of the reset triggers above restores tool mode. Legacy mode is a compatibility path, not the normal context: it sends a weakest-first snapshot of up to 60 concepts and 120 relations, with selected and focal context included only when it fits the final 12,000-character prompt budget.
+If the endpoint rejects tool calling before any answer text appears, Nesso retries that turn once with a legacy prompt that sends a weakest-first snapshot of up to 60 concepts and 120 relations. After a successful retry the chat stays in legacy mode until one of the reset triggers above; legacy mode is a compatibility path, not the normal context, and the snapshot includes selected and focal context only when it fits the final 12,000-character prompt budget.
 
 ## Connecting a model
 
