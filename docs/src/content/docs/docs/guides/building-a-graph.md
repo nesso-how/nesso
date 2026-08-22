@@ -54,7 +54,7 @@ A single free-text field that travels with the concept and feeds both the AI men
 
 - **Definition:** a one-sentence-ish explanation in your own words.
 
-In Review, the definition appears when you **Reveal** a card so you can check your recall. The AI mentor uses the definition in its graph snapshot and focal-neighbour context when a concept is selected.
+In Review, the definition appears when you **Reveal** a card so you can check your recall. The AI mentor can retrieve it when it searches or inspects a relevant concept, but it is not always embedded in the normal compact context. A compatibility fallback may send the bounded legacy snapshot instead.
 
 ## Display options (sidebar)
 
