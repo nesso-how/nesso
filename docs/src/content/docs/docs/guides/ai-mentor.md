@@ -30,13 +30,24 @@ The queries cannot edit your graph. They return user-authored graph data as cont
 
 While a query runs, the mentor shows one localized transient status such as **Reviewing graph…**, **Searching concepts…**, or **Reading concept…**. Nesso does not render the tool input or result, log it, persist it, or resend it after the turn. The status disappears when the answer starts or the turn ends.
 
-Within Nesso, chat history is **not persisted**. It lives only for the current panel session and resets when you switch graphs, reopen the panel, or click **New chat**.
+Within Nesso, chat history is **not persisted**. It lives only for the current panel session. Chat history resets when you:
+
+- switch graphs;
+- reopen the panel;
+- click **New chat**;
+- change the UI language;
+- change the base URL; or
+- change the model.
+
+The tool-capability mode resets on those same triggers. Clicking the panel's close button also aborts the active turn and clears its compatibility mode; reopening it starts a fresh chat and opener. Disabling and re-enabling **Mentor** follows the same fresh-reopen behavior.
+
+An API-key-only edit does **not** reset the chat or tool-capability mode. It updates endpoint checks and later requests without starting a new conversation.
 
 ### Tool compatibility fallback
 
 If any classified tool-compatibility failure occurs before visible answer text, Nesso retries that turn once with a legacy prompt. This includes SDK `NoSuchToolError` and `InvalidToolInputError`, plus a narrow set of HTTP `400`, `404`, or `422` endpoint responses that explicitly reject one of the `tools`, `functions`, `tool_calls`, `tool_choice`, or `function_call` fields, or the tool/function calling capability. A network failure, authentication error, generic server error, ordinary tool execution error, abort, or failure after answer text starts does not trigger the retry.
 
-After a successful retry, the current chat stays in legacy mode. New chats, reopening the panel, switching graphs, or changing the base URL or model restore tool mode. Legacy mode is a compatibility path, not the normal context: it sends a weakest-first snapshot of up to 60 concepts and 120 relations, with selected and focal context included only when it fits the final 12,000-character prompt budget.
+After a successful retry, the current chat stays in legacy mode. Any of the reset triggers above restores tool mode. Legacy mode is a compatibility path, not the normal context: it sends a weakest-first snapshot of up to 60 concepts and 120 relations, with selected and focal context included only when it fits the final 12,000-character prompt budget.
 
 ## Connecting a model
 

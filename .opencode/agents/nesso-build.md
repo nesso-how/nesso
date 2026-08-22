@@ -75,7 +75,7 @@ When TDD doesn't apply, still verify manually and run `pnpm run fast-check`.
 3. GREEN — write minimal code, watch it pass
 4. REFACTOR — clean up if needed, keep green
 5. Fast checks: `pnpm run fast-check` (format, lint, type-check, test). If the task spans e2e, run `pnpm run fast-check -- --e2e`.
-6. Return the result: the **exact list of created/modified files** (one path per line) plus a one-line summary. `nesso-work` scopes the task review and the pathspec commit from this list — it must be complete and exact. Do not commit yourself.
+6. Return the result: the **exact list of every created, modified, or deleted path** (one path per line) plus a one-line summary. Include deleted paths even though they no longer exist, and include rules, docs, config, and generated/bundle files when touched. `nesso-work` scopes the task review and the pathspec commit from this list — it must be complete and exact. Do not commit yourself.
 
 ## Fix-loop re-dispatch
 

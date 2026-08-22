@@ -56,17 +56,17 @@ GitHub Issue → nesso-plan (writes plan to .plans/) → create branch
 
 For every task in the plan, in order:
 
-1. **Ordering — parallel where possible.** Read each task's `Files:` list. Group tasks into batches:
-   - **Parallel batch:** tasks with **disjoint file sets** (no shared source or test files). Dispatch all their `nesso-build` subagents **in parallel** — multiple `task` tool calls in one message. Wait for the whole batch to return before reviewing.
+1. **Ordering — parallel where possible.** Read each task's **complete declared `Files:` list** before grouping tasks. The set must include every source, test, rule, documentation, configuration, generated/bundle, and deleted path the task may touch. Never infer disjointness from source or test files alone. If a task's declaration is incomplete or uncertain, run it sequentially until the file set is complete.
+   - **Parallel batch:** tasks with pairwise **disjoint complete file sets**. Dispatch all their `nesso-build` subagents **in parallel** — multiple `task` tool calls in one message. Wait for the whole batch to return before reviewing.
    - **Sequential:** tasks that share files. Run them one at a time, in plan order.
-2. **Build.** Each `nesso-build` subagent receives exactly one task (plus, on fix loops, the review findings and the previous report path). It runs TDD + fast checks and returns the **exact list of created/modified files** plus a one-line summary.
+2. **Build.** Each `nesso-build` subagent receives exactly one task (plus, on fix loops, the review findings and the previous report path). It runs TDD + fast checks and returns the **exact list of every created, modified, or deleted path** plus a one-line summary.
 3. **Brief task review.** For each completed task, load the **`task-review`** skill with: task number and title, the exact file list, the issue number, and the loop counter M (1 for the first review). The review is **scoped strictly to that task's files** — never the whole working tree, because a parallel batch leaves other tasks' uncommitted changes around. The report is persisted locally to `.reviews/<issue>-task-<N>-review-<M>.md` for re-review context — it is never committed.
-4. **Verdict PASS → commit.** Commits are automatic in this workflow (AGENTS.md → Git: launching the workflow is standing consent for commits):
+4. **Verdict PASS → commit.** Before **every automatic commit**, including per-task commits, fix-loop commits, preflight-fix commits, and the final changelog commit, explicitly load/read `.rules/changelog.md`. This is a required gate immediately before staging and committing, not optional context. Commits are automatic in this workflow (AGENTS.md → Git: launching the workflow is standing consent for commits):
    ```bash
    git add <task files...>
    git commit -m "<type>(<scope>): <task title> (#<issue>)"
    ```
-   Add **exactly the task's files** with pathspecs — never `git add -A` (other tasks in the batch may still have uncommitted files). `<type>` comes from the branch prefix; `<scope>` is the task's main area (`store`, `graph`, `mentor`, `theme`, `docs`, `harness`, …).
+   Add **exactly the task's complete declared files** with pathspecs — including deleted paths, and never `git add -A` (other tasks in the batch may still have uncommitted files). `<type>` comes from the branch prefix; `<scope>` is the task's main area (`store`, `graph`, `mentor`, `theme`, `docs`, `harness`, …).
 5. **Verdict NEEDS FIX → fix loop.** Re-dispatch `nesso-build` for the same task with the blocking findings and the previous report path, then re-review with M + 1, passing the previous report so the subagents verify fixes instead of re-reporting them. **At most 5 build/review loops per task** (M = 1…5). After the 5th review without PASS: stop the task, mark it failed in your todo list, and escalate to the user with the accumulated reports — never loop silently past the cap.
 6. Track per-task state (`pending → building → in review → committed / failed`) in a todo list.
 
@@ -123,7 +123,7 @@ Git: commits inside this workflow (per-task, fix-loop, final changelog) are auto
 ## Subagent Dispatch
 
 - Use the `task` tool for every subagent dispatch.
-- Dispatch independent `nesso-build` subagents in parallel (disjoint-file tasks) where the plan allows.
+- Dispatch independent `nesso-build` subagents in parallel only when their complete declared file sets, including rules/docs/config and deletions, are pairwise disjoint.
 - Each subagent gets a focused prompt — the issue, the task, the diff scope. Not the full codebase.
 - Track progress in a todo list.
 
