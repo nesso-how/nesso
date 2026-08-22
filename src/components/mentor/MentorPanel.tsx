@@ -2,14 +2,15 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { SocratesGlyph } from './SocratesGlyph'
 import { useGraphStore } from '@/store'
-import type { ChatMessage } from '@/llm/completion'
+import type { ChatMessage, CompletionHandlers } from '@/llm/completion'
 import {
   describeCompletionError,
   fetchCompletion,
   isAiReady,
   isNetworkFailure,
+  isToolCompatibilityFailure,
 } from '@/llm/completion'
-import { buildMentorPrompt, buildMentorSeedText } from '@/llm/context'
+import { buildLegacyMentorPrompt, buildMentorPrompt, buildMentorSeedText } from '@/llm/context'
 import { createMentorTools } from '@/llm/tools'
 import { useT } from '@/i18n'
 import { CloseButton } from '@/components/ui/CloseButton'
@@ -189,6 +190,7 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const abortRef = useRef<AbortController | null>(null)
+  const legacyModeRef = useRef(false)
   const userMessageCountRef = useRef(0)
   const historyRef = useRef(history)
   historyRef.current = history
@@ -204,12 +206,51 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
         selection,
         state.settings.language,
       ),
+      buildLegacyInstructions: () =>
+        buildLegacyMentorPrompt(state.nodes, state.edges, selection, state.settings.language),
     }
   }, [])
+
+  const completeTurn = useCallback(
+    async (
+      messages: ChatMessage[],
+      prompts: ReturnType<typeof captureTurn>,
+      controller: AbortController,
+      handlers: CompletionHandlers,
+      hasVisibleText: () => boolean,
+    ): Promise<string> => {
+      const attempt = (legacy: boolean) =>
+        fetchCompletion(
+          settings,
+          {
+            instructions: legacy ? prompts.buildLegacyInstructions() : prompts.compactInstructions,
+            messages,
+            ...(legacy ? {} : { tools: MENTOR_TOOLS }),
+          },
+          MENTOR_MAX_TOKENS,
+          controller.signal,
+          handlers,
+        )
+
+      if (legacyModeRef.current) return attempt(true)
+      try {
+        return await attempt(false)
+      } catch (error) {
+        if (controller.signal.aborted || hasVisibleText() || !isToolCompatibilityFailure(error)) {
+          throw error
+        }
+        legacyModeRef.current = true
+        setReasoningActive(false)
+        return attempt(true)
+      }
+    },
+    [settings, captureTurn],
+  )
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: opening line tied to graph open/switch; live sends use fresh prompts via captureTurn
   useEffect(() => {
     if (!mentorPanelExpanded) return
+    legacyModeRef.current = false
     if (!aiReady) {
       setHistory([{ role: 'mentor', text: t.mentor.needsSetup }])
       setLoadingInitial(false)
@@ -228,15 +269,10 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
     const prompts = captureTurn()
 
     let answered = false
-    fetchCompletion(
-      settings,
-      {
-        instructions: prompts.compactInstructions,
-        messages: [{ role: 'user', content: prompts.seedText }],
-        tools: MENTOR_TOOLS,
-      },
-      MENTOR_MAX_TOKENS,
-      controller.signal,
+    completeTurn(
+      [{ role: 'user', content: prompts.seedText }],
+      prompts,
+      controller,
       {
         onToken: (delta) => {
           if (!isActiveController(abortRef.current, controller)) return
@@ -253,6 +289,7 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
           setReasoningActive(true)
         },
       },
+      () => answered,
     )
       .then((full) => {
         if (isActiveController(abortRef.current, controller) && !answered) {
@@ -281,7 +318,16 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
       abortRef.current?.abort()
       if (abortRef.current === controller) abortRef.current = null
     }
-  }, [mentorPanelExpanded, currentGraphId, aiReady, settings.language, chatKey, captureTurn])
+  }, [
+    mentorPanelExpanded,
+    currentGraphId,
+    aiReady,
+    settings.language,
+    settings.aiBaseUrl,
+    settings.aiModel,
+    chatKey,
+    captureTurn,
+  ])
 
   // Emit mentor_session_completed when the session ends naturally (last
   // message was a successful mentor reply) or mentor_session_abandoned
@@ -299,7 +345,15 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
         track({ name: 'mentor_session_abandoned', props: { message_count_bucket: bucket } })
       }
     }
-  }, [mentorPanelExpanded, currentGraphId, aiReady, settings.language, chatKey])
+  }, [
+    mentorPanelExpanded,
+    currentGraphId,
+    aiReady,
+    settings.language,
+    settings.aiBaseUrl,
+    settings.aiModel,
+    chatKey,
+  ])
 
   useEffect(() => {
     if (mentorPanelExpanded && inputRef.current) inputRef.current.focus()
@@ -338,15 +392,10 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
     const prompts = captureTurn()
     let answered = false
     try {
-      const full = await fetchCompletion(
-        settings,
-        {
-          instructions: prompts.compactInstructions,
-          messages: toConversation(next),
-          tools: MENTOR_TOOLS,
-        },
-        MENTOR_MAX_TOKENS,
-        controller.signal,
+      const full = await completeTurn(
+        toConversation(next),
+        prompts,
+        controller,
         {
           onToken: (delta) => {
             if (!isActiveController(abortRef.current, controller)) return
@@ -363,6 +412,7 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
             setReasoningActive(true)
           },
         },
+        () => answered,
       )
       if (isActiveController(abortRef.current, controller) && !answered) {
         setReasoningActive(false)
@@ -469,8 +519,11 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
           <button
             type="button"
             title={t.mentor.newChat}
-            disabled={loadingInitial || thinking}
-            onClick={() => setChatKey((k) => k + 1)}
+            onClick={() => {
+              abortRef.current?.abort()
+              legacyModeRef.current = false
+              setChatKey((k) => k + 1)
+            }}
             style={{
               appearance: 'none',
               border: 0,
@@ -480,7 +533,6 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
               width: 24,
               height: 24,
               borderRadius: 'var(--radius-pill)',
-              opacity: loadingInitial || thinking ? 0.3 : 1,
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -510,7 +562,13 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
               <path d="M21 3v5h-5" />
             </svg>
           </button>
-          <CloseButton onClick={() => setMentorPanelExpanded(false)} />
+          <CloseButton
+            onClick={() => {
+              abortRef.current?.abort()
+              legacyModeRef.current = false
+              setMentorPanelExpanded(false)
+            }}
+          />
         </div>
 
         <div
