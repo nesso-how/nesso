@@ -67,6 +67,12 @@ pnpm run analyze:health      # baseline-gated on fallow-baselines/health.json (f
 
 Baselines ratchet: re-baseline when improving, never raise the ceiling. Documented false positives go in `.fallowrc.jsonc`.
 
+### Mentor quality gates
+
+The branch-heavy pure graph queries in `src/llm/tools.ts` have their own Vitest file floor (`93/90/86/92` for statements/branches/functions/lines). `src/llm/context.ts` and `src/data/fsrsDueQueue.ts` retain their existing file floors. Mutation testing keeps the areas separate: the legacy `mentor` area mutates prompt context and due-queue logic at `break` 84, while `graphTools` mutates only `src/llm/tools.ts:33-242` at `break` 91. The SDK adapter tail of `tools.ts` and `src/llm/completion.ts` are transport/integration glue and are outside mutation testing.
+
+The direct scripts are `pnpm run analyze:mutation:mentor` and `pnpm run analyze:mutation:graphTools`; the aggregate `pnpm run analyze:mutation` runs both alongside schema/store/workspace. `pnpm run analyze:mutation:changed` routes changed files through `scripts/stryker/areas.mjs`: tool source/tests select `graphTools`, while context and due-queue paths select `mentor`. Mutation testing is an opt-in/preflight or scheduled non-blocking check, not a required per-PR CI job. The required JS CI gates remain format, security headers, lint, license headers, `pnpm test:coverage`, type coverage, package/app builds, and the three Fallow gates. `pnpm run fast-check` is the lighter task loop of format, lint, type-check, and tests.
+
 ## E2E quick verification
 
 For canvas interaction changes (handles, drag-connect, inline edit), run the focused spec first:

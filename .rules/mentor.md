@@ -12,46 +12,63 @@ The **AI** tab opens with a **Mentor** group (marked _Experimental_): a _Mentor_
 
 ## Persona
 
-Socrates is a Socratic mentor: mostly questions, almost no lecturing. Rules live in **`getMentorBase()`** inside `MentorPanel.tsx`:
+Socrates is a Socratic mentor: mostly questions, almost no lecturing. The shared persona rules live in **`getMentorBase()`** inside `src/llm/context.ts`:
 
 - No graph edits in dialogue (do not propose new nodes/edges or renames).
-- Default one short question; explain only to frame it; aim under ~180 words. This is a **soft** target enforced by the prompt; the hard ceiling `MENTOR_MAX_TOKENS` (≈ 2048) only caps output and leaves headroom for reasoning models (e.g. qwen3 thinking) to think and still answer.
-- No emojis or flattery; sparse `*asterisks*` on key terms; no JSON or pseudo-graph markup.
-- No em dash (U+2014) in replies; use commas, periods, or short sentences instead.
-- English **legend** decodes FSRS-shaped node tokens in the snapshot (`(new)`, `s=…d`, days since review, Again/Hard/Good/Easy, `DUE`); reply language stays separate (`Respond in Italian.` when UI is Italian).
+- Default one short question; explain only to frame it; aim under ~180 words. This is a **soft** target enforced by the prompt; the hard ceiling `MENTOR_MAX_TOKENS` (2,048) only caps output and leaves headroom for reasoning models.
+- No emojis or flattery; sparse `*asterisks` on key terms; no JSON or pseudo-graph markup.
+- No em dash (U+2014) in replies; use commas, periods, or short sentences.
+- Reply language follows the UI language (`Respond in Italian.` when the UI is Italian).
 
-## System prompt (single chat)
+## Prompt modes and graph context
 
-There are **no mode tabs**. `buildGraphChatPrompt()` builds one system string: graph snapshot — up to `MAX_SNAPSHOT_NODES` nodes tagged with stability, days since last review, FSRS rating, optional DUE (`nodeDesc`), sorted weakest-first via **`nodeStrength()`** (`src/llm/context.ts`; stability‑first with Again/Hard and light overdue tweaks), remainder summarized if larger), up to `MAX_SNAPSHOT_EDGES` edges (`2×` the node cap by default), optional selection (node or full edge path), optional **`Focus:` / `Related:`** lines from **`buildFocalNeighborContext()`** in `src/llm/context.ts` when a node is selected — plus **`getMentorBase()`**. Each send recomputes the prompt from the live store so new edits appear on the next turn.
+There are **no mode tabs**. `MentorPanel` captures `{ kind, id } | null` when each request starts. `buildMentorPrompt()` in `src/llm/context.ts` is the normal compact system prompt. It contains only the common persona, the compact FSRS legend, concept/relation counts, the captured selection JSON (or `none`), read-only tool guidance, and user-authored-data trust guidance. It does not eagerly include concept titles, definitions, edge paths, or focal-neighbour snapshots.
 
-On panel open, graph switch, AI-endpoint-readiness change, or **`chatKey`** bump (header refresh), the first mentor line is fetched using a short synthetic **user** turn from **`buildMentorSeedText()`**: wording depends on whether a **node**, an **edge only**, or **nothing** is selected.
+`buildLegacyMentorPrompt()` is the compatibility-only prompt. It preserves the bounded weakest-first snapshot: at most 60 concepts, 120 relations, and a final 12,000-character prompt budget, with selected/focal context included only when it fits. `nodeStrength()` still orders the legacy concept snapshot weakest-first. The snapshot is marked as untrusted user-authored graph data, and instructions inside it must never be followed. `buildMentorSeedText()` remains a short synthetic user turn for the opener: it names the captured concept, the captured edge endpoints/type, or asks where to focus when nothing is selected.
 
-## Rendering
+The five graph-reading tools and their injectable adapters live in `src/llm/tools.ts`. The mentor wiring creates them with `createMentorTools(useGraphStore.getState)`, not with a second store or a captured graph snapshot. Every graph-reading tool execution calls the getter at execution time, so its results read the current live nodes/edges even when the graph changes during a turn. The separate `getRelationTypes` tool reads the canonical built-in vocabulary directly and does not call `getState`; no tool calls a graph mutation.
 
-Assistant replies render as plain text with subtle emphasis via **`renderWithEmphasis()`** in `emphasis.tsx` (`*asterisks*` → `<em>`). User-authored bubbles remain plain text in a `<span>`. Extracted reasoning is not rendered as content: while `reasoning-delta` is streaming in and no answer text has started, `ThinkingIndicator`'s optional `label` prop shows `t.mentor.thinking` ("thinking…", lowercase, in the body font `var(--font-display)`) next to the loading bars instead of the plain dots. There is no expand affordance for the reasoning text itself yet.
+| Tool               | Read surface and bound                                                                         |
+| ------------------ | ---------------------------------------------------------------------------------------------- |
+| `getGraphOverview` | Counts plus the 10 weakest concepts                                                            |
+| `searchConcepts`   | Title-only search, 10 matches, 160-character definition previews                               |
+| `inspectConcept`   | One concept, FSRS memory, and a 1,200-character definition                                     |
+| `inspectRelation`  | One directed relation and endpoint summaries with 160-character previews                       |
+| `listNeighbors`    | Up to 20 one-hop incoming/outgoing relations with 160-character previews                       |
+| `getRelationTypes` | The 52 built-in `@nesso-how/vocab-learning` definitions, optionally filtered to at most 52 ids |
 
-## Selection vs history
+Tool schemas also bound string ids/queries to 200 characters. Results from graph-reading tools identify their content as user-authored graph data, never instructions. The vocabulary query reads the package's canonical definitions directly; it does not use an MCP adapter or the graph-state getter.
 
-`history` remains local component state. The opening synthetic user message reflects **`selectedNode` / `selectedEdge`** via **`buildMentorSeedText()`**; subsequent turns still rebuild `buildGraphChatPrompt()` from the live selection on each send.
+## Tool execution and compatibility
+
+`fetchCompletion()` accepts optional AI SDK `ToolSet` tools and uses `streamText` with `isStepCount(4)`. Four is the maximum number of **model steps per attempt**, including tool-call and answer steps, not four tool calls plus an answer. The SDK owns tool execution and the assistant/tool messages inside that invocation. `MentorPanel` receives only the `onToolCall(toolName)` callback; tool traces are not manually appended to visible history or later requests.
+
+If the tool-capable attempt fails before its first visible answer token, `MentorPanel` makes at most one legacy retry with the same `AbortSignal` and captured prompts. A compatibility failure is an SDK `NoSuchToolError` or `InvalidToolInputError`, or an HTTP 400/404/422 response that explicitly rejects a tool/function request field (`tools`, `functions`, `tool_calls`, `tool_choice`, or `function_call`) or the tool/function-calling capability. Aborts, 401/403 responses, network failures, generic server errors, ordinary tool-execution failures, and failures after visible answer text do not retry. A successful retry changes only the current chat to local legacy mode; a failed legacy retry is not probed again. Thus a normal attempt has at most four model steps, and a qualifying fallback turn has two attempts capped independently at four steps.
+
+`legacyModeRef` is local to `MentorPanel`. A successful fallback keeps later turns in that chat on the legacy prompt without tools. Panel reopen, graph switch, AI readiness/language/base-URL/model changes that restart the opening effect, and **New chat** reset capability to tool mode and start a fresh opener. The same lifecycle resets local visible history. An API-key edit alone is not an opening-effect dependency and must not be described as a capability reset.
+
+## Local state, transient activity, and cancellation
+
+`history: Message[]`, capability mode, `toolAction`, draft, loading/streaming/reasoning flags, and abort controllers are local to `MentorPanel`; none are Zustand fields or persisted data. History contains only visible user text, assistant text, and technical error text. Tool names, inputs, and results never render as chat messages, enter `history`, or get resent after the turn.
+
+The activity label is also local and transient. Only the latest recognized `MentorToolName` replaces the previous action. The action label takes precedence over the reasoning label; the first answer token clears both the tool action and reasoning state, and fallback, error, stream completion, panel lifecycle cleanup, and **New chat** clear the action. Unknown callback names are ignored. While activity is shown, `MentorActivityStatus` exposes one `role="status"` with `aria-live="polite"` and `aria-atomic="true"`; it disappears when answer text starts or the turn ends. Tool inputs and results are never rendered.
+
+Panel close, graph switch, and **New chat** abort the active controller. Primary and compatibility attempts share that controller, and callbacks check that their controller is still current before updating local state, so stale tokens or actions cannot reach a newer chat.
 
 ## Panel open/closed
 
 Whether the mentor **sheet** is open is `mentorPanelExpanded` on `useGraphStore`, updated via `setMentorPanelExpanded`. It is persisted with the rest of UI chrome (`zustand` `persist` → localStorage). When `mentorEnabled` is true, the entry point is the **Socrates button in the `StatusBar`** (no floating FAB); the sheet slides up above the status bar and dodges the docked inspector via `leftInset`/`rightInset` props. When `mentorEnabled` is false, the button and `MentorPanel` are not rendered.
 
-## Message history
+The opening synthetic user turn and visible history are local React state. Reopening the sheet, changing graphs, changing AI readiness/language/base URL/model, or clicking **New chat** starts a fresh local chat. Selection changes alone do not reset history; the selection is captured per request, while graph-reading tools continue to use the live getter and `getRelationTypes` continues to use the canonical vocabulary.
 
-`history: Message[]` is local to `MentorPanel` (per AGENTS.md → Constraints). Resets when the panel opens again, the graph changes, AI-endpoint readiness changes during the opening sequence, or the user clicks **New chat**.
+## API call and transport boundary
 
-## API call
+All completions go through **`fetchCompletion()`** in `src/llm/completion.ts`, which calls the SDK's `streamText` against a model built by `createOpenAICompatible({ baseURL, apiKey })`. It accepts `{ instructions?, messages, tools? }` plus an optional `AbortSignal` and completion handlers. Browser builds use global `fetch`; desktop builds inject the dynamically loaded `@tauri-apps/plugin-http` fetch, pass the original signal, and set `maxRedirections: 0`. Desktop capability scope is all HTTPS URLs plus loopback HTTP URLs for `localhost`, `127.0.0.1`, and `::1`; arbitrary non-loopback HTTP is not allowed.
 
-Completions go through **`fetchCompletion()`** in `src/llm/completion.ts`, which calls the SDK's `streamText` against a model built by `createOpenAICompatible({ baseURL, apiKey })`. When `isDesktop()` is true, the provider also receives `fetch: desktopFetch`; that function dynamically imports `@tauri-apps/plugin-http`, forwards the original request and `AbortSignal`, and passes `maxRedirections: 0` so that no redirect chains are followed. Browser builds omit the override and use the normal global fetch. It takes a `CompletionRequest` (`{ instructions?, messages }`) as its second argument, plus an optional `AbortSignal`; abort on panel close or graph switch.
+- `model` — `settings.aiModel`; `aiApiKey` adds `Authorization: Bearer …` only when non-empty.
+- `maxOutputTokens` — `MENTOR_MAX_TOKENS` (2,048; a ceiling, not a target).
+- `instructions` — the compact or legacy system prompt, passed through `streamText`.
+- `messages` — visible history mapped to `user` / `assistant` roles (`toConversation`).
+- `tools` — only on normal tool-mode attempts; the SDK owns within-call tool messages.
 
-- `model` — `settings.aiModel`; `apiKey` adds `Authorization: Bearer …` only when `settings.aiApiKey` is non-empty.
-- `maxOutputTokens` — `MENTOR_MAX_TOKENS` (~2048; a ceiling, not a target).
-- `instructions` — the system prompt (`buildGraphChatPrompt()`), passed through `streamText`.
-- `messages` — the `history` turns mapped to `user` / `assistant` roles (`toConversation`).
-- Desktop capability scope — all HTTPS URLs plus loopback HTTP URLs for `localhost`, `127.0.0.1`, and `::1`; arbitrary non-loopback HTTP is not allowed.
-- Desktop transport does not follow redirects — `desktopFetch` passes `maxRedirections: 0`, preserving the configured HTTPS/loopback scope and keeping the bearer key bound to the original endpoint URL.
-- API keys are not logged, included in URLs, or sent anywhere except the configured endpoint's bearer header.
-
-The model is wrapped with **`extractReasoningMiddleware({ tagName: 'think' })`**, so inline `<think>…</think>` is split out of the answer. `fetchCompletion` iterates `result.stream` and routes `text-delta` parts to `onToken` and `reasoning-delta` parts to `onReasoning`; an `error` part is rethrown. `isNetworkFailure()` and `describeCompletionError()` continue to classify and describe failures without transport-specific branches.
+API keys are not logged, included in URLs, or sent anywhere except the configured endpoint's bearer header. The model is wrapped with `extractReasoningMiddleware({ tagName: 'think' })`; `fetchCompletion` routes `text-delta` to `onToken`, `reasoning-delta` to `onReasoning`, and completed valid `tool-call` parts to `onToolCall`. Reasoning is not rendered as chat content. Existing `isNetworkFailure()` and `describeCompletionError()` behavior, telemetry events, browser/Tauri split, redirect policy, and abort behavior remain unchanged.

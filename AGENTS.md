@@ -49,7 +49,7 @@ Update the canonical `.rules/*.md` in the same change when your edit makes a rul
 - `components.md` — `src/components/**/*.tsx`
 - `store.md` — `src/store/**/*.ts`
 - `graph-model.md` — `src/data/relationTypes.ts`, `src/types/graph.ts`, `packages/graph/src/NessoEdge.tsx`, `src/components/dialogs/RelationTypesDialog.tsx`, `packages/vocab-learning/src/index.ts`, `packages/vocab-learning/src/document.ts`, `packages/vocab-learning/src/relationTypes.ts`
-- `mentor.md` — `src/components/mentor/MentorPanel.tsx`, `src/llm/completion.ts`, `src/llm/context.ts`
+- `mentor.md` — `src/components/mentor/MentorPanel.tsx`, `src/llm/completion.ts`, `src/llm/context.ts`, `src/llm/tools.ts`
 - `conventions.md` — `src/**/*.{ts,tsx}` (only when conventions change, not every src edit)
 - `testing.md` — `**/*.test.{ts,tsx}`; also `**/*.test.mjs`, `vitest.config.ts`, `playwright.config.ts`, `e2e/**`, `packages/schema/src/fixtures/envelope/**`, `src/store/fixtures/persist/**`, `src/lib/fixtures/graph-load/**`, CI test steps
 - `theme.md` — `packages/theme/**`, `src/index.css`, `vite.config.ts`
@@ -63,7 +63,7 @@ Update the canonical `.rules/*.md` in the same change when your edit makes a rul
 
 ### Never store chat history in the global store
 
-`MentorPanel` conversation history is local state. It resets when the mentor sheet reopens, the graph changes, AI-endpoint readiness changes during the opening sequence, or the user clicks **New chat** — not on every selection change. Do not lift it into the Zustand store.
+`MentorPanel` conversation history is local state. It resets when the mentor sheet reopens, the graph changes, AI readiness, UI language, base URL, or model changes (the opening-effect lifecycle), or the user clicks **New chat**. It does not reset on selection changes or an API-key edit alone. Do not lift it into the Zustand store.
 
 ### Never use default React Flow edge types
 
