@@ -9,7 +9,7 @@ vi.mock('@tauri-apps/plugin-http', () => ({
   fetch: mockNativeFetch,
 }))
 
-import { APICallError } from 'ai'
+import { APICallError, InvalidToolInputError, jsonSchema, NoSuchToolError, tool } from 'ai'
 import type { NessoSettings } from '@/types/graph'
 import {
   checkEndpoint,
@@ -19,6 +19,7 @@ import {
   isAiReady,
   isLocalhostUrl,
   isNetworkFailure,
+  isToolCompatibilityFailure,
   pullModel,
 } from './completion'
 
@@ -65,6 +66,45 @@ function sseResponse(contents: string[]): Response {
   })
 }
 
+function toolCallResponse(name: string, input: string, id: string): Response {
+  const encoder = new TextEncoder()
+  const call = `data: ${JSON.stringify({
+    id: '1',
+    object: 'chat.completion.chunk',
+    choices: [
+      {
+        index: 0,
+        delta: {
+          tool_calls: [
+            {
+              index: 0,
+              id,
+              type: 'function',
+              function: { name, arguments: input },
+            },
+          ],
+        },
+      },
+    ],
+  })}\n\n`
+  const stop = `data: ${JSON.stringify({
+    id: '1',
+    object: 'chat.completion.chunk',
+    choices: [{ index: 0, delta: {}, finish_reason: 'tool_calls' }],
+  })}\n\n`
+  return new Response(
+    new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(encoder.encode(call))
+        controller.enqueue(encoder.encode(stop))
+        controller.enqueue(encoder.encode('data: [DONE]\n\n'))
+        controller.close()
+      },
+    }),
+    { status: 200, headers: { 'content-type': 'text/event-stream' } },
+  )
+}
+
 afterEach(() => {
   mockNativeFetch.mockReset()
   vi.restoreAllMocks()
@@ -104,6 +144,169 @@ describe('isNetworkFailure', () => {
   it('treats a bare TypeError as network and other errors as non-network', () => {
     expect(isNetworkFailure(new TypeError('Failed to fetch'))).toBe(true)
     expect(isNetworkFailure(new Error('parse'))).toBe(false)
+  })
+})
+
+describe('isToolCompatibilityFailure', () => {
+  it('recognizes SDK unknown-tool and malformed-input errors', () => {
+    expect(isToolCompatibilityFailure(new NoSuchToolError({ toolName: 'madeUp' }))).toBe(true)
+    expect(
+      isToolCompatibilityFailure(
+        new InvalidToolInputError({
+          toolName: 'inspectConcept',
+          toolInput: '{',
+          cause: new Error('invalid JSON'),
+        }),
+      ),
+    ).toBe(true)
+  })
+
+  it('recognizes explicit HTTP rejection of the tools or functions surface', () => {
+    expect(
+      isToolCompatibilityFailure(
+        new APICallError({
+          message: 'Bad Request',
+          url: 'http://x/v1/chat/completions',
+          requestBodyValues: { tools: [] },
+          statusCode: 400,
+          responseBody: 'tools are not supported',
+          isRetryable: false,
+        }),
+      ),
+    ).toBe(true)
+    expect(
+      isToolCompatibilityFailure(
+        new APICallError({
+          message: 'functions are not supported',
+          url: 'http://x/v1/chat/completions',
+          requestBodyValues: { functions: [] },
+          statusCode: 404,
+          isRetryable: false,
+        }),
+      ),
+    ).toBe(true)
+    expect(
+      isToolCompatibilityFailure(
+        new APICallError({
+          message: 'unknown field functions',
+          url: 'http://x/v1/chat/completions',
+          requestBodyValues: { functions: [] },
+          statusCode: 422,
+          isRetryable: false,
+        }),
+      ),
+    ).toBe(true)
+  })
+
+  it('recognizes every explicit tool-calling request field case-insensitively', () => {
+    const requestFields = ['tools', 'functions', 'tool_calls', 'tool_choice', 'function_call']
+
+    for (const field of requestFields) {
+      const error = new APICallError({
+        message: `UNSUPPORTED FIELD ${field.toUpperCase()}`,
+        url: 'http://x/v1/chat/completions',
+        requestBodyValues: { [field.toUpperCase()]: true },
+        statusCode: 400,
+        isRetryable: false,
+      })
+
+      expect(isToolCompatibilityFailure(error)).toBe(true)
+    }
+
+    expect(
+      isToolCompatibilityFailure(
+        new APICallError({
+          message: 'This model does not support tool calling',
+          url: 'http://x/v1/chat/completions',
+          requestBodyValues: {},
+          statusCode: 400,
+          isRetryable: false,
+        }),
+      ),
+    ).toBe(true)
+  })
+
+  it('does not match suffixed request fields as explicit tool fields', () => {
+    const requestFields = ['tools', 'functions', 'tool_calls', 'tool_choice', 'function_call']
+
+    for (const field of requestFields) {
+      const error = new APICallError({
+        message: `UNSUPPORTED FIELD ${field}_extra`,
+        url: 'http://x/v1/chat/completions',
+        requestBodyValues: { [field]: true },
+        statusCode: 400,
+        isRetryable: false,
+      })
+
+      expect(isToolCompatibilityFailure(error)).toBe(false)
+    }
+  })
+
+  it('does not confuse unrelated model names with tool incompatibility', () => {
+    const error = new APICallError({
+      message: "model 'tool-calling' is unsupported",
+      url: 'http://x/v1/chat/completions',
+      requestBodyValues: { model: 'tool-calling' },
+      statusCode: 400,
+      isRetryable: false,
+    })
+
+    expect(isToolCompatibilityFailure(error)).toBe(false)
+  })
+
+  it('does not confuse an unquoted model name containing tool-calling terms with incompatibility', () => {
+    const error = new APICallError({
+      message: 'model qwen-tool-calling is unsupported',
+      url: 'http://x/v1/chat/completions',
+      requestBodyValues: { model: 'qwen-tool-calling' },
+      statusCode: 400,
+      isRetryable: false,
+    })
+
+    expect(isToolCompatibilityFailure(error)).toBe(false)
+  })
+
+  it('does not classify auth, network, abort, server, generic HTTP, or execution failures', () => {
+    const apiError = (statusCode: number, message: string) =>
+      new APICallError({
+        message,
+        url: 'http://x/v1/chat/completions',
+        requestBodyValues: {},
+        statusCode,
+        isRetryable: false,
+      })
+
+    expect(isToolCompatibilityFailure(apiError(401, 'unauthorized'))).toBe(false)
+    expect(isToolCompatibilityFailure(apiError(403, 'forbidden'))).toBe(false)
+    expect(isToolCompatibilityFailure(apiError(500, 'tools are not supported'))).toBe(false)
+    expect(isToolCompatibilityFailure(apiError(400, 'invalid model'))).toBe(false)
+    expect(
+      isToolCompatibilityFailure(
+        new APICallError({
+          message: "unsupported argument 'temperature'",
+          url: 'http://x/v1/chat/completions',
+          requestBodyValues: { tools: [] },
+          statusCode: 400,
+          isRetryable: false,
+        }),
+      ),
+    ).toBe(false)
+    expect(
+      isToolCompatibilityFailure(
+        new APICallError({
+          message: 'unsupported tool execution',
+          url: 'http://x/v1/chat/completions',
+          requestBodyValues: { tools: [] },
+          statusCode: 422,
+          isRetryable: false,
+        }),
+      ),
+    ).toBe(false)
+    expect(isToolCompatibilityFailure(new TypeError('Failed to fetch'))).toBe(false)
+    expect(
+      isToolCompatibilityFailure(new DOMException('The operation was aborted.', 'AbortError')),
+    ).toBe(false)
+    expect(isToolCompatibilityFailure(new Error('tool execution failed'))).toBe(false)
   })
 })
 
@@ -321,6 +524,84 @@ describe('fetchCompletion streaming', () => {
 
     // Browser fetch must not be called on desktop.
     expect(browserFetch).not.toHaveBeenCalled()
+  })
+
+  it('sends tool schemas, executes a streamed call, reports it, and streams the answer step', async () => {
+    vi.stubGlobal('window', {})
+    const execute = vi.fn().mockResolvedValue({ conceptCount: 0 })
+    const tools = {
+      getGraphOverview: tool({
+        description: 'Read graph counts',
+        inputSchema: jsonSchema<Record<string, never>>({
+          type: 'object',
+          properties: {},
+          additionalProperties: false,
+        }),
+        execute,
+      }),
+    }
+    const browserFetch = vi
+      .fn()
+      .mockResolvedValueOnce(toolCallResponse('getGraphOverview', '{}', 'call-1'))
+      .mockResolvedValueOnce(sseResponse(['Answer']))
+    vi.stubGlobal('fetch', browserFetch)
+    const calls: string[] = []
+    const answer = await fetchCompletion(
+      settings,
+      {
+        instructions: 'Use tools.',
+        messages: [{ role: 'user', content: 'Where should I focus?' }],
+        tools,
+      },
+      100,
+      undefined,
+      { onToolCall: (name) => calls.push(name) },
+    )
+
+    expect(answer).toBe('Answer')
+    expect(calls).toEqual(['getGraphOverview'])
+    expect(execute).toHaveBeenCalledTimes(1)
+    expect(browserFetch).toHaveBeenCalledTimes(2)
+    const firstBody = JSON.parse(String((browserFetch.mock.calls[0][1] as RequestInit).body))
+    expect(firstBody.tools).toEqual([
+      expect.objectContaining({
+        type: 'function',
+        function: expect.objectContaining({
+          name: 'getGraphOverview',
+          description: 'Read graph counts',
+          parameters: expect.objectContaining({ type: 'object' }),
+        }),
+      }),
+    ])
+    const secondBody = JSON.parse(String((browserFetch.mock.calls[1][1] as RequestInit).body))
+    expect(secondBody.messages).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ role: 'assistant', tool_calls: expect.any(Array) }),
+        expect.objectContaining({ role: 'tool', tool_call_id: 'call-1' }),
+      ]),
+    )
+  })
+
+  it('stops after four total tool steps', async () => {
+    vi.stubGlobal('window', {})
+    const tools = {
+      getGraphOverview: tool({
+        description: 'Read graph counts',
+        inputSchema: jsonSchema<Record<string, never>>({ type: 'object', properties: {} }),
+        execute: async () => ({ conceptCount: 0 }),
+      }),
+    }
+    const browserFetch = vi
+      .fn()
+      .mockResolvedValueOnce(toolCallResponse('getGraphOverview', '{}', 'call-1'))
+      .mockResolvedValueOnce(toolCallResponse('getGraphOverview', '{}', 'call-2'))
+      .mockResolvedValueOnce(toolCallResponse('getGraphOverview', '{}', 'call-3'))
+      .mockResolvedValueOnce(toolCallResponse('getGraphOverview', '{}', 'call-4'))
+    vi.stubGlobal('fetch', browserFetch)
+
+    await fetchCompletion(settings, { messages: [{ role: 'user', content: 'loop' }], tools }, 100)
+
+    expect(browserFetch).toHaveBeenCalledTimes(4)
   })
 })
 

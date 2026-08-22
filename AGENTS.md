@@ -15,9 +15,9 @@ Monorepo: `src/` (app) + `packages/` (`@nesso-how/*`). Desktop shell is optional
 
 ## Development workflow
 
-For any non-trivial task, switch to the **`nesso-work`** agent — it orchestrates the 5-phase flow (brainstorm/plan → build → review → documentation), dispatches subagents for each phase, and enforces Nesso's constraints. Starting points: `nesso-brainstorm` for features, `nesso-fix` for bugs, then `nesso-work` for everything else.
+For any non-trivial task, switch to the **`nesso-work`** agent — it orchestrates the flow (plan → per-task build + brief review + commit → preflight → final review → PR), dispatches subagents for each phase, and enforces Nesso's constraints. The flow runs autonomously until the publish gate: every plan task gets a brief task-scoped review and is committed as soon as it passes (≤ 5 build/review loops per task; disjoint-file tasks run in parallel batches); push and PR still require explicit user consent. Starting points: `nesso-brainstorm` for features, `nesso-fix` for bugs, then `nesso-work` for everything else.
 
-Agent and skill definitions, dispatch, and harness maintenance are governed by [`.rules/harness.md`](.rules/harness.md). When debugging dispatch issues or extending the harness, start there. The `nesso-work` agent is the top-level orchestrator; subagents (`nesso-plan`, `nesso-build`, `nesso-guard-review`, `nesso-quality-review`) and skills (`review`, `preflight`, `create-pr`) are dispatched from it.
+Agent and skill definitions, dispatch, and harness maintenance are governed by [`.rules/harness.md`](.rules/harness.md). When debugging dispatch issues or extending the harness, start there. The `nesso-work` agent is the top-level orchestrator; subagents (`nesso-plan`, `nesso-build`, `nesso-guard-review`, `nesso-quality-review`) and skills (`task-review`, `review`, `preflight`, `create-pr`) are dispatched from it.
 
 ## Worktree and path safety
 
@@ -49,7 +49,7 @@ Update the canonical `.rules/*.md` in the same change when your edit makes a rul
 - `components.md` — `src/components/**/*.tsx`
 - `store.md` — `src/store/**/*.ts`
 - `graph-model.md` — `src/data/relationTypes.ts`, `src/types/graph.ts`, `packages/graph/src/NessoEdge.tsx`, `src/components/dialogs/RelationTypesDialog.tsx`, `packages/vocab-learning/src/index.ts`, `packages/vocab-learning/src/document.ts`, `packages/vocab-learning/src/relationTypes.ts`
-- `mentor.md` — `src/components/mentor/MentorPanel.tsx`, `src/llm/completion.ts`, `src/llm/context.ts`
+- `mentor.md` — `src/components/mentor/MentorPanel.tsx`, `src/llm/completion.ts`, `src/llm/context.ts`, `src/llm/graphHandles.ts`, `src/llm/tools.ts`
 - `conventions.md` — `src/**/*.{ts,tsx}` (only when conventions change, not every src edit)
 - `testing.md` — `**/*.test.{ts,tsx}`; also `**/*.test.mjs`, `vitest.config.ts`, `playwright.config.ts`, `e2e/**`, `packages/schema/src/fixtures/envelope/**`, `src/store/fixtures/persist/**`, `src/lib/fixtures/graph-load/**`, CI test steps
 - `theme.md` — `packages/theme/**`, `src/index.css`, `vite.config.ts`
@@ -63,7 +63,7 @@ Update the canonical `.rules/*.md` in the same change when your edit makes a rul
 
 ### Never store chat history in the global store
 
-`MentorPanel` conversation history is local state. It resets when the mentor sheet reopens, the graph changes, AI-endpoint readiness changes during the opening sequence, or the user clicks **New chat** — not on every selection change. Do not lift it into the Zustand store.
+`MentorPanel` conversation history is local state. It resets when the mentor sheet reopens, the graph changes, AI readiness, UI language, base URL, or model changes (the opening-effect lifecycle), or the user clicks **New chat**. It does not reset on selection changes or an API-key edit alone. Do not lift it into the Zustand store.
 
 ### Never use default React Flow edge types
 
@@ -97,8 +97,9 @@ From `0.2.0-beta.0` onward, persisted app data uses the sequential migration lad
 
 **Never** run `git commit`, `git push`, or open/update a pull request unless the user **explicitly asks** in the current message (e.g. "commit", "push", "crea la PR").
 
-- Implementing a plan or fixing bugs does **not** imply permission to commit or push.
-- After code changes, stop at the working tree — do not commit proactively, even if a plan or checklist mentions it.
+- **Exception — inside the `nesso-work` workflow.** Launching the workflow is standing consent for **commits only**: the per-task commits (each task, once its brief review passes), fix-loop commits, and the final changelog commit happen automatically. Review reports stay local (`.reviews/` is gitignored) and are never committed. `git push`, PR creation/update, amend, and force-push still require explicit consent, even inside the workflow.
+- Implementing a plan or fixing bugs does **not** imply permission to commit or push — outside the workflow.
+- Outside the workflow, after code changes, stop at the working tree — do not commit proactively, even if a plan or checklist mentions it.
 - If unsure, ask first.
 
 Amend, force-push, and other destructive git operations follow the same rule: only when explicitly requested.

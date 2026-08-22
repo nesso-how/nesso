@@ -110,9 +110,21 @@ export default defineConfig({
         },
         'src/llm/context.ts': {
           statements: 95,
+          // Preserve the existing prompt and injection-safety branch ratchet;
+          // graph-tool coverage gets its own file-level gate below.
           branches: 92,
           functions: 95,
           lines: 95,
+        },
+        'src/llm/tools.ts': {
+          // The tool query suite currently exercises 93.97% statements, 100%
+          // branches, 86.48% functions, and 92.75% lines. Keep the measured
+          // floor honest until the thin SDK adapters gain their own execution
+          // tests; do not turn this into an aspirational 95% gate.
+          statements: 93,
+          branches: 90,
+          functions: 86,
+          lines: 92,
         },
         'src/data/fsrsDueQueue.ts': {
           statements: 95,

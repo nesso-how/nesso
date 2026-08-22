@@ -71,9 +71,9 @@ docs/             Starlight docs site, published at nesso.how/docs
 
 Nesso is a React 18 + Vite + TypeScript single-page app, optionally wrapped by Tauri v2 for a native desktop shell. All state lives in a single [Zustand](https://github.com/pmndrs/zustand) store, with components subscribing via selectors and no prop drilling.
 
-The canvas is built on [React Flow](https://reactflow.dev/) with a custom edge renderer that encodes each relation type as a category colour and SVG glyph. Graph content persists to IndexedDB on web and is also written to a folder of `.json` files on desktop, with a file watcher that picks up external edits. FSRS review progress lives in a separate IndexedDB store and is never mixed into the shared graph files.
+The canvas is built on [React Flow](https://reactflow.dev/) with a custom edge renderer that encodes each relation type as a category colour and SVG glyph. On the web, graph content persists to IndexedDB. On desktop, the shared graph document is written as plain `.json` files in the active project folder, while IndexedDB mirrors the graph locally; a file watcher picks up external edits. FSRS review progress remains in a separate IndexedDB store on both platforms and is never mixed into the shared graph files.
 
-The AI mentor talks to any OpenAI-compatible `chat/completions` endpoint. On every send the system prompt is rebuilt from the live store, so the model always sees the current graph, the active selection, and a focal neighbourhood of related concepts.
+The AI mentor talks to any OpenAI-compatible `chat/completions` endpoint. Each turn sends compact persona context with the FSRS legend, graph counts, selected kind and stable ID when present, and visible conversation history. The opening synthetic user turn also includes the selected concept title, or a selected edge's endpoint titles and relation type. Tool-capable models can then request bounded, read-only queries against the current graph, such as title search, concept or relation inspection, one-hop neighbours, and the built-in relation vocabulary. Within Nesso, tool inputs and results are transient: they are not rendered, logged, persisted, or resent after the turn. The configured endpoint receives request content and may retain it under its own provider policy. If any classified tool-compatibility failure occurs before visible answer text, Nesso makes one second attempt with a legacy snapshot of up to 60 concepts and 120 relations. This includes SDK `NoSuchToolError` and `InvalidToolInputError`, plus only HTTP `400`, `404`, or `422` responses that explicitly reject one of the `tools`, `functions`, `tool_calls`, `tool_choice`, or `function_call` fields, or the tool/function calling capability. Network, authentication, generic server, ordinary tool-execution, abort, and post-text failures do not trigger the fallback. The two four-step attempts allow up to eight total model steps.
 
 The repo is a pnpm workspace monorepo. The graph vocabulary lives in [packages/vocab-learning](packages/vocab-learning) and is consumed by both the app and an MCP server in [packages/mcp](packages/mcp) that lets LLM clients query relation types, read the bundled docs, build valid graph documents, and validate graph JSON.
 
@@ -81,7 +81,7 @@ The repo is a pnpm workspace monorepo. The graph vocabulary lives in [packages/v
 
 Nesso uses [OpenCode](https://opencode.ai) as its development environment, a modular, multi-provider AI coding tool that aligns with Nesso's own philosophy. We chose it over vendor-locked alternatives because it runs locally against any provider (currently OpenAI, open-weight models via a Go subscription, or local models), supporting a structured workflow built around typed agents, skills, and subagent pipelines:
 
-**The pipeline** (from issue to PR) routes through specialized agents: `nesso-fix` forensic traces bugs, `nesso-brainstorm` explores design, `nesso-plan` produces bite-sized TDD tasks, `nesso-build` executes RED-GREEN-REFACTOR per task, `nesso-guard-review` checks semantic constraints, and `nesso-quality-review` catches bugs and regressions. An orchestrator agent (`nesso-work`) dispatches each phase and gates on user approval.
+**The pipeline** (from issue to PR) routes through specialized agents: `nesso-fix` forensic traces bugs, `nesso-brainstorm` explores design, `nesso-plan` produces bite-sized TDD tasks, `nesso-build` executes RED-GREEN-REFACTOR per task, `nesso-guard-review` checks semantic constraints, and `nesso-quality-review` catches bugs and regressions. An orchestrator agent (`nesso-work`) dispatches the phases, runs task-scoped reviews, and commits each passing task automatically. The workflow is autonomous through preflight and final review; user consent is required only at the publish gate for the changelog commit, push, and PR.
 
 This lets us match model capability to cost per phase without locking into a single model or provider.
 
@@ -90,13 +90,22 @@ The harness lives in `opencode.json` (model/config settings), `.opencode/` (agen
 ```mermaid
 flowchart TD
   B["nesso-brainstorm"]:::plan -->|"design brief"| P["nesso-plan"]:::plan
-  P -->|"task list"| T["nesso-build<br>RED-GREEN-REFACTOR"]:::exec
+  P -->|"task list"| W["nesso-work<br>autonomous orchestration"]:::exec
+  W --> T["nesso-build<br>RED-GREEN-REFACTOR"]:::exec
   T --> GR["nesso-guard-review"]:::quality
   T --> QR["nesso-quality-review"]:::quality
-  GR --> S["review · synthesize"]:::review
+  GR --> S["task-review · synthesize"]:::review
   QR --> S
-  S -->|"✓ approve"| DONE((" ")):::done
-  S -->|"issues found"| P
+  S -->|"✓ pass"| C["automatic task commit"]:::done
+  S -->|"issues found"| T
+  C -->|"more tasks"| T
+  C -->|"all tasks done"| PF["preflight"]:::quality
+  PF --> FR["final review"]:::review
+  FR -->|"issues found"| FX["nesso-build fix loop"]:::exec
+  FX --> PF
+  FR -->|"✓ ready"| PG["publish gate<br>user consent"]:::done
+  PG --> CH["changelog commit"]:::done
+  CH --> PR["push + PR"]:::done
 
   classDef plan fill:#dbeafe,stroke:#3b82f6,color:#1e3a5f
   classDef exec fill:#dcfce7,stroke:#22c55e,color:#14532d
@@ -105,7 +114,7 @@ flowchart TD
   classDef done fill:#bbf7d0,stroke:#16a34a,color:#14532d,stroke-width:3px
 ```
 
-_The `nesso-work` orchestrator dispatches each phase and gates on user approval between them._
+_The `nesso-work` orchestrator runs planning, task builds, task reviews, commits, preflight, and final review without intermediate user approval. The only user-consent gate is publishing._
 
 The project is managed with a [kanban board](https://github.com/orgs/nesso-how/projects/1/views/2) tracking active issues and a [roadmap](https://github.com/orgs/nesso-how/projects/1/views/3) for longer-term direction. We follow a continuous flow model rather than sprints or classic agile iterations: work is pulled from the backlog as capacity allows, sized so each unit maps to one agentic pipeline run. This cadence matches the tooling: agents work best on focused, sequential tasks, not time-boxed batches of unrelated work.
 

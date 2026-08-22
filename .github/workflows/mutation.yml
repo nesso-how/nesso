@@ -60,6 +60,9 @@ jobs:
       - name: Mutation — mentor
         if: always()
         run: pnpm run analyze:mutation:mentor
+      - name: Mutation — graphTools
+        if: always()
+        run: pnpm run analyze:mutation:graphTools
 
       # Keep the navigable HTML reports even when a run breaks its threshold.
       - name: Upload mutation reports

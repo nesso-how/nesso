@@ -405,6 +405,14 @@ const en = {
       "Can't reach the AI endpoint. Check Settings (⌘,) → AI. For local Ollama, run `ollama serve`.",
     newChat: 'New chat',
     thinking: 'thinking…',
+    toolActions: {
+      getGraphOverview: 'Reviewing graph…',
+      searchConcepts: 'Searching concepts…',
+      inspectConcept: 'Reading concept…',
+      inspectRelation: 'Inspecting relation…',
+      listNeighbors: 'Following relations…',
+      getRelationTypes: 'Checking relation types…',
+    },
   },
   menu: {
     file: 'File',

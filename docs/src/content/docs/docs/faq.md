@@ -5,11 +5,12 @@ description: Common conceptual questions about privacy, the web/desktop split, a
 
 ## Is my data private?
 
-Graph content (concepts, definitions, relation structure) and review progress (FSRS stability, ratings, due dates) are stored locally, in IndexedDB on the web app or as plain JSON files on disk for the desktop app, and never leave your device. Mentor chat history lives only in memory for the current panel session, and AI endpoint API keys are stored locally and sent only to the endpoint you configured.
+Graph content (concepts, definitions, relation structure) is stored locally: graph records use IndexedDB on the web, while the desktop app writes the shared graph document as plain `.json` files in the active project folder and mirrors it in IndexedDB. FSRS review progress (stability, ratings, due dates) remains in a separate IndexedDB `reviewState` store on both platforms and is not written to those desktop JSON files. Nesso does not upload graph data for storage or synchronisation. The AI mentor is an explicit exception when you use a remote endpoint.
 
 The only things that can leave your device:
 
-- **AI mentor prompts and chat history**, if you enable the mentor with a remote endpoint. A local Ollama endpoint sends nothing off your machine.
+- **AI mentor prompts and chat history**, if you enable the mentor with a remote endpoint. Requests include the compact prompt's FSRS legend, graph counts, selected kind and stable ID, and visible text history. The opening synthetic turn includes the selected concept title or selected edge endpoint titles and relation type. Tool-returned graph fields are sent only when requested. A compatibility fallback may send the bounded snapshot instead. A local Ollama endpoint sends this data only to the local service on your machine.
+- **Transient tool activity** is not added to the chat. Within Nesso, tool inputs and results are not rendered, logged, persisted, or resent after the turn. A remote provider receives request content while completing it and may retain it under that provider's policy.
 - **Opt-in telemetry**, off by default.
 - **The desktop app's version check** against GitHub Releases, a plain request that carries no graph or usage data.
 

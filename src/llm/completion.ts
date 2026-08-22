@@ -1,6 +1,15 @@
 // SPDX-License-Identifier: MIT
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
-import { APICallError, extractReasoningMiddleware, streamText, wrapLanguageModel } from 'ai'
+import {
+  APICallError,
+  extractReasoningMiddleware,
+  InvalidToolInputError,
+  isStepCount,
+  NoSuchToolError,
+  streamText,
+  wrapLanguageModel,
+  type ToolSet,
+} from 'ai'
 import { isDesktop } from '@/lib/isDesktop'
 import type { NessoSettings } from '@/types/graph'
 
@@ -11,12 +20,14 @@ export type ChatMessage = { role: 'user' | 'assistant'; content: string }
 export interface CompletionRequest {
   instructions?: string
   messages: ChatMessage[]
+  tools?: ToolSet
 }
 
-/** Callbacks for the streamed response: `onToken` gets the clean answer, `onReasoning` the model's thinking. */
+/** Callbacks for the streamed response: `onToken` gets the clean answer, `onReasoning` the model's thinking, and `onToolCall` reports tool execution. */
 export interface CompletionHandlers {
   onToken?: (delta: string) => void
   onReasoning?: (delta: string) => void
+  onToolCall?: (toolName: string) => void
 }
 
 export function isAiReady(settings: NessoSettings): boolean {
@@ -243,6 +254,46 @@ export function isNetworkFailure(err: unknown): boolean {
   return err instanceof TypeError
 }
 
+const TOOL_REQUEST_FIELDS = new Set([
+  'tools',
+  'functions',
+  'tool_calls',
+  'tool_choice',
+  'function_call',
+])
+
+/** True when the endpoint or SDK cannot handle the tool-calling surface. */
+export function isToolCompatibilityFailure(error: unknown): boolean {
+  if (NoSuchToolError.isInstance(error) || InvalidToolInputError.isInstance(error)) return true
+  if (!APICallError.isInstance(error)) return false
+  if (![400, 404, 422].includes(error.statusCode ?? 0)) return false
+  const detail = `${error.message}\n${error.responseBody ?? ''}`.toLowerCase()
+  const detailWithoutModelNames = detail.replace(
+    /\bmodel(?:\s*[:=]\s*|\s+)(?:(['"])[^'"]*\1|[^\s,;()[\]{}]+)/g,
+    'model',
+  )
+  const requestBody = error.requestBodyValues
+  const requestFields =
+    requestBody && typeof requestBody === 'object' ? Object.keys(requestBody) : []
+  const namesToolRequestField = requestFields.some((field) => {
+    const normalizedField = field.toLowerCase()
+    if (!TOOL_REQUEST_FIELDS.has(normalizedField)) return false
+    const escapedField = normalizedField.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    const boundary = '[^a-z0-9_-]'
+    return new RegExp(`(?:^|${boundary})${escapedField}(?=$|${boundary})`).test(
+      detailWithoutModelNames,
+    )
+  })
+  const namesToolCapability = /\b(?:tool|function)[ -]?call(?:ing|s)?\b/.test(
+    detailWithoutModelNames,
+  )
+  const explicitlyRejects =
+    /not supported|does not support|doesn't support|unsupported|disabled|unknown (field|parameter|property)|unrecognized (field|parameter|property)|unexpected (field|parameter|property)|extra (field|parameter|property)/.test(
+      detail,
+    )
+  return explicitlyRejects && (namesToolRequestField || namesToolCapability)
+}
+
 /**
  * Human-readable technical detail for a failed completion, shown verbatim to the
  * (technical) user as `<type>: <message>`. For an API error the SDK already parses
@@ -270,6 +321,8 @@ export async function fetchCompletion(
     model: mentorModel(settings),
     ...(request.instructions ? { instructions: request.instructions } : {}),
     messages: request.messages,
+    ...(request.tools ? { tools: request.tools } : {}),
+    stopWhen: isStepCount(4),
     maxOutputTokens: maxTokens,
     abortSignal: signal,
   })
@@ -280,6 +333,9 @@ export async function fetchCompletion(
       handlers?.onToken?.(part.text)
     } else if (part.type === 'reasoning-delta') {
       handlers?.onReasoning?.(part.text)
+    } else if (part.type === 'tool-call') {
+      if (part.invalid) throw part.error
+      handlers?.onToolCall?.(part.toolName)
     } else if (part.type === 'error') {
       throw part.error
     }

@@ -1,5 +1,5 @@
 ---
-description: Universal code quality review. Read the diff for bugs, security issues, over-engineering, duplication, and performance problems. Read-only — reports findings, does not edit. Dispatched by the review skill alongside nesso-guard-review.
+description: Universal code quality review. Read the diff for bugs, security issues, over-engineering, duplication, and performance problems. Read-only — reports findings, does not edit. Dispatched by the review and task-review skills alongside nesso-guard-review.
 mode: subagent
 permission:
   read: allow
@@ -23,6 +23,14 @@ You do not need to know project-specific constraints — that is the `nesso-guar
 ## Gather the diff
 
 Use `git diff`, `git diff origin/main...HEAD`, and read changed files as needed. Stay within the changed surface.
+
+## Task-scoped brief mode (per-task review)
+
+When the `task-review` skill dispatches you for a per-task review, the prompt carries the task's file list and a loop counter. Then:
+
+- Restrict the diff to **exactly those files**: `git diff -- <files>` (and `git diff --cached -- <files>`), reading newly created files in full. Ignore every other change in the working tree — a parallel batch contains other tasks' uncommitted work, and it is out of your scope.
+- Keep the report **brief**: BLOCKING findings first, then only suggestions worth a fix loop. Drop nit-level notes.
+- The rubric and previous-findings verification above still apply.
 
 ## Previous findings (re-review only)
 

@@ -13,9 +13,41 @@ For good results, use at least a 7–8B model. `qwen3:14b` is a strong default; 
 
 ## How it works
 
-Every send rebuilds a system prompt from the live store: a snapshot of up to ~60 concept nodes, sorted weakest-first via **`nodeStrength()`** ([`context.ts`](https://github.com/nesso-how/nesso/blob/main/src/llm/context.ts)): **FSRS stability** dominates ordering, **Again/Hard** nudge weaker items up, overdue is only a slight tie-break. Each node line lists stability (`s=` days), days since last review, last FSRS rating, and `DUE` when the scheduler says so, plus typed edges (~2× the node allowance), current selection when any, and focal-neighbour context when a node is selected (`Focus:` / `Related:` lines). The conversation history stays in the mentor card and is reset when you switch graphs or click **New chat**.
+Each turn starts with a compact system prompt. It contains the Socratic persona, an FSRS legend, concept and relation counts, and the selection captured when the turn started as its `kind` and stable `id` (or `none`). The visible conversation history is sent as the turn's messages. On opening, the synthetic user turn also includes the selected concept title, or the selected edge's endpoint titles and relation type. Definitions, full nodes, and full edges are not eagerly placed in this normal context.
 
-Chat history is **not persisted**. It lives only for the current panel session.
+A tool-capable model can request one of six bounded, read-only queries. The graph queries execute against the current live graph, so they can reflect edits made while a turn is running. Relation-type results come from Nesso's built-in vocabulary:
+
+| Query               | What it can read                                 | Bound                                  |
+| ------------------- | ------------------------------------------------ | -------------------------------------- |
+| Overview            | Counts and the weakest concepts by FSRS strength | 10 concepts                            |
+| Title search        | Title matches with short definition previews     | 10 matches, 160 characters per preview |
+| Concept inspection  | One concept, its definition, and review memory   | 1,200 characters for the definition    |
+| Relation inspection | One directed relation and endpoint summaries     | One relation, 160-character previews   |
+| Neighbours          | One-hop incoming and outgoing relations          | 20 relations, 160-character previews   |
+| Relation types      | The built-in Nesso vocabulary                    | 52 definitions                         |
+
+The queries cannot edit your graph. They return user-authored graph data as context, not as instructions. A normal attempt can use at most four model steps. If compatibility fallback is needed, Nesso makes a second attempt with its own four-step limit, for up to eight total model steps for that turn. A model may also answer in plain text without requesting a tool.
+
+While a query runs, the mentor shows one localized transient status such as **Reviewing graph…**, **Searching concepts…**, or **Reading concept…**. Nesso does not render the tool input or result, log it, persist it, or resend it after the turn. The status disappears when the answer starts or the turn ends.
+
+Within Nesso, chat history is **not persisted**. It lives only for the current panel session. Chat history resets when you:
+
+- switch graphs;
+- reopen the panel;
+- click **New chat**;
+- change the UI language;
+- change the base URL; or
+- change the model.
+
+The tool-capability mode resets on those same triggers. Clicking the panel's close button also aborts the active turn and clears its compatibility mode; reopening it starts a fresh chat and opener. Disabling and re-enabling **Mentor** follows the same fresh-reopen behavior.
+
+An API-key-only edit does **not** reset the chat or tool-capability mode. It updates endpoint checks and later requests without starting a new conversation.
+
+### Tool compatibility fallback
+
+If any classified tool-compatibility failure occurs before visible answer text, Nesso retries that turn once with a legacy prompt. This includes SDK `NoSuchToolError` and `InvalidToolInputError`, plus a narrow set of HTTP `400`, `404`, or `422` endpoint responses that explicitly reject one of the `tools`, `functions`, `tool_calls`, `tool_choice`, or `function_call` fields, or the tool/function calling capability. A network failure, authentication error, generic server error, ordinary tool execution error, abort, or failure after answer text starts does not trigger the retry.
+
+After a successful retry, the current chat stays in legacy mode. Any of the reset triggers above restores tool mode. Legacy mode is a compatibility path, not the normal context: it sends a weakest-first snapshot of up to 60 concepts and 120 relations, with selected and focal context included only when it fits the final 12,000-character prompt budget.
 
 ## Connecting a model
 
@@ -58,26 +90,28 @@ If you use the hosted web app over HTTPS, requests to `http://localhost:11434` a
 
 ## The Socratic persona
 
-The system prompt (`getMentorBase` in [`MentorPanel.tsx`](https://github.com/nesso-how/nesso/blob/main/src/components/mentor/MentorPanel.tsx)) shapes Socrates:
+The shared persona and prompt composition in [`context.ts`](https://github.com/nesso-how/nesso/blob/main/src/llm/context.ts) shape Socrates. The graph query definitions live in [`tools.ts`](https://github.com/nesso-how/nesso/blob/main/src/llm/tools.ts). Socrates follows these rules:
 
 - One short question per turn by default, explaining only enough to frame it.
-- Replies are soft-capped at ~200 words (hard cap via output tokens).
+- Replies aim under ~180 words, with a `2,048`-token output ceiling.
 - No graph edits proposed in dialogue. Socrates probes; the user edits.
 - No emojis, flattery, JSON, or pseudo-graph markup. Sparse `*asterisks*` on key terms.
-- Replies in the active UI language (English or Italian). Snapshot tokens stay **English-shaped** (`s=…d`, `…d since review`, etc.), with the same spelling in the legend for every locale.
+- Replies in the active UI language (English or Italian). FSRS values returned by tools use stable labels such as `stability`, `difficulty`, `state`, `lastRating`, and `isDue`.
 
-If you want a more permissive coach, fork the persona. It is plain text in the component and easy to swap.
+If you want a more permissive coach, fork the persona. It is plain text in `context.ts` and easy to swap.
 
 ## Opening message
 
 When the panel opens, the mentor sends itself a short synthetic **user** turn so its first message reflects what's selected:
 
-- **A concept node selected:** opens on that concept and one of its relations.
-- **An edge selected (no node):** opens on the typed relation between its endpoints.
-- **Nothing selected:** opens on a weak spot in the graph (low stability plus weak **last reviews** (Again/Hard or a long gap); **DUE** is extra scheduler context).
+- **A concept node selected:** includes that concept's title in the seed turn. A tool-capable model can inspect it and optionally list its neighbours.
+- **An edge selected (no node):** includes both endpoint titles and the typed relation in the seed turn. A tool-capable model can inspect the relation.
+- **Nothing selected:** asks where to focus. A tool-capable model can request `getGraphOverview`, whose weakest-first results use stability and review state as context.
+
+With graph tools available, a selected concept can guide `inspectConcept` or `listNeighbors`, and a selected relation can guide `inspectRelation`. The opening turn does not receive an eager full graph dump. If the model answers without a tool call, that plain-text answer is still valid.
 
 Click **New chat** in the header to reset history and request a fresh opener.
 
-## Context size
+## What leaves your device
 
-Large graphs are summarised, not truncated abruptly. The weakest-reviewed nodes appear first (`nodeStrength`), so the verbatim slice emphasises instability and risky last ratings; tail nodes are omitted with a short count only. Edges have a ~2x allowance over node count. These limits live in [`MentorPanel.tsx`](https://github.com/nesso-how/nesso/blob/main/src/components/mentor/MentorPanel.tsx) as `MAX_SNAPSHOT_NODES` and `MAX_SNAPSHOT_EDGES`.
+With a local Ollama endpoint, mentor prompts, chat history, and any graph data returned by a query stay on your machine. With a remote endpoint, Nesso sends the compact prompt, including counts and selection metadata, visible text history, and the opening seed's selected title or edge endpoints and type. Graph fields returned by tools are sent only when requested. A compatibility fallback may instead send the bounded legacy snapshot. The configured API key is sent only as a bearer token to that endpoint. Within Nesso, tool traces and chat history are not retained, but a remote provider may retain request content under its own policy, so check that provider's terms.

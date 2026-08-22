@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- **Socrates graph inspection:** Socrates can inspect the live graph on demand through bounded, read-only tools.
+- **Provider compatibility:** Mentor requests fall back gracefully for providers without tool support.
+- **Tool activity:** Localized, transient tool activity is shown during inspection without persisting tool internals.
+
 ### Fixed
 
 - **Release automation:** Release-tag validation tests now derive expected versions from the live repository files instead of pinning a specific release, so a version bump can no longer break CI. The Rust CI lane installs GTK/webkit dev packages directly instead of restoring a stale apt cache that left `gobject-2.0`/`glib-2.0` missing.
