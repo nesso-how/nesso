@@ -9,6 +9,7 @@ import {
 } from '@nesso-how/vocab-learning'
 import type { ConceptNodeData } from '@/types/graph'
 import { nodeStrength } from './context'
+import { createGraphIdHandles, type GraphIdHandles } from './graphHandles'
 
 export const OVERVIEW_LIMIT = 10
 export const SEARCH_LIMIT = 10
@@ -40,17 +41,13 @@ function boundedText(value: string | undefined, maxChars: number): BoundedText {
   }
 }
 
-function boundedId(value: string): string {
-  return boundedText(value, TOOL_STRING_MAX_CHARS).text
-}
-
 function isDue(node: Node<ConceptNodeData>, now: number): boolean {
   return node.data.due > 0 && node.data.due <= now
 }
 
-function overviewConcept(node: Node<ConceptNodeData>, now: number) {
+function overviewConcept(node: Node<ConceptNodeData>, now: number, handles: GraphIdHandles) {
   return {
-    id: boundedId(node.id),
+    id: handles.nodeHandle(node.id),
     title: boundedText(node.data.text, PREVIEW_MAX_CHARS).text,
     reps: node.data.reps,
     stability: node.data.stability,
@@ -66,10 +63,11 @@ function overviewConcept(node: Node<ConceptNodeData>, now: number) {
 }
 
 export function getGraphOverview(state: MentorGraphState, now = Date.now()) {
+  const handles = createGraphIdHandles(state.nodes, state.edges)
   const concepts = [...state.nodes]
     .sort((left, right) => nodeStrength(left) - nodeStrength(right))
     .slice(0, OVERVIEW_LIMIT)
-    .map((node) => overviewConcept(node, now))
+    .map((node) => overviewConcept(node, now, handles))
   return {
     contentProvenance: CONTENT_PROVENANCE,
     conceptCount: state.nodes.length,
@@ -80,6 +78,7 @@ export function getGraphOverview(state: MentorGraphState, now = Date.now()) {
 }
 
 export function searchConcepts(state: MentorGraphState, query: string) {
+  const handles = createGraphIdHandles(state.nodes, state.edges)
   const boundedQuery = boundedText(query, TOOL_STRING_MAX_CHARS).text
   const normalized = boundedQuery.toLocaleLowerCase()
   if (!normalized) {
@@ -107,7 +106,7 @@ export function searchConcepts(state: MentorGraphState, query: string) {
     .filter((item) => item.rank >= 0)
     .sort((left, right) => left.rank - right.rank || left.index - right.index)
   const matches = ranked.slice(0, SEARCH_LIMIT).map(({ node }) => ({
-    id: boundedId(node.id),
+    id: handles.nodeHandle(node.id),
     title: boundedText(node.data.text, PREVIEW_MAX_CHARS).text,
     definitionPreview: boundedText(node.data.elaboration?.definition, PREVIEW_MAX_CHARS),
   }))
@@ -129,28 +128,35 @@ function isoDate(value: number): string | null {
     : null
 }
 
-function endpointSummary(state: MentorGraphState, id: string) {
+function endpointSummary(state: MentorGraphState, id: string, handles: GraphIdHandles) {
   const node = state.nodes.find((candidate) => candidate.id === id)
-  if (!node) return { found: false as const, id: boundedId(id), title: null }
+  if (!node) return { found: false as const, id: handles.nodeHandle(id), title: null }
   return {
     found: true as const,
-    id: boundedId(id),
+    id: handles.nodeHandle(id),
     title: boundedText(node.data.text, PREVIEW_MAX_CHARS).text,
     definitionPreview: boundedText(node.data.elaboration?.definition, PREVIEW_MAX_CHARS),
   }
 }
 
 function edgeType(edge: Edge): string {
-  return typeof edge.data?.type === 'string' ? boundedId(edge.data.type) : 'unknown'
+  return typeof edge.data?.type === 'string'
+    ? boundedText(edge.data.type, TOOL_STRING_MAX_CHARS).text
+    : 'unknown'
 }
 
 export function inspectConcept(state: MentorGraphState, id: string, now = Date.now()) {
-  const node = state.nodes.find((candidate) => candidate.id === id)
-  if (!node) return { found: false as const, id: boundedId(id) }
+  const handles = createGraphIdHandles(state.nodes, state.edges)
+  const resolvedId = handles.resolveNodeHandle(id)
+  const node =
+    resolvedId !== undefined
+      ? state.nodes.find((candidate) => candidate.id === resolvedId)
+      : undefined
+  if (!node) return { found: false as const, id: handles.nodeHandle(id) }
   return {
     found: true as const,
     contentProvenance: CONTENT_PROVENANCE,
-    id: boundedId(id),
+    id: handles.nodeHandle(node.id),
     title: boundedText(node.data.text, PREVIEW_MAX_CHARS).text,
     definition: boundedText(node.data.elaboration?.definition, DEFINITION_MAX_CHARS),
     memory: {
@@ -177,40 +183,53 @@ export function inspectConcept(state: MentorGraphState, id: string, now = Date.n
 }
 
 export function inspectRelation(state: MentorGraphState, id: string) {
-  const edge = state.edges.find((candidate) => candidate.id === id)
-  if (!edge) return { found: false as const, id: boundedId(id) }
+  const handles = createGraphIdHandles(state.nodes, state.edges)
+  const resolvedId = handles.resolveEdgeHandle(id)
+  const edge =
+    resolvedId !== undefined
+      ? state.edges.find((candidate) => candidate.id === resolvedId)
+      : undefined
+  if (!edge) return { found: false as const, id: handles.edgeHandle(id) }
   const type = edgeType(edge)
   return {
     found: true as const,
     contentProvenance: CONTENT_PROVENANCE,
-    id: boundedId(id),
+    id: handles.edgeHandle(edge.id),
     type,
-    direction: { sourceId: boundedId(edge.source), type, targetId: boundedId(edge.target) },
-    source: endpointSummary(state, edge.source),
-    target: endpointSummary(state, edge.target),
+    direction: {
+      sourceId: handles.nodeHandle(edge.source),
+      type,
+      targetId: handles.nodeHandle(edge.target),
+    },
+    source: endpointSummary(state, edge.source, handles),
+    target: endpointSummary(state, edge.target, handles),
   }
 }
 
 export function listNeighbors(state: MentorGraphState, id: string) {
-  if (!state.nodes.some((node) => node.id === id)) {
-    return { found: false as const, id: boundedId(id) }
+  const handles = createGraphIdHandles(state.nodes, state.edges)
+  const resolvedId = handles.resolveNodeHandle(id)
+  if (resolvedId === undefined) {
+    return { found: false as const, id: handles.nodeHandle(id) }
   }
-  const incident = state.edges.filter((edge) => edge.source === id || edge.target === id)
+  const incident = state.edges.filter(
+    (edge) => edge.source === resolvedId || edge.target === resolvedId,
+  )
   const relations = incident.slice(0, NEIGHBOR_LIMIT).map((edge) => {
-    const source = endpointSummary(state, edge.source)
-    const target = endpointSummary(state, edge.target)
+    const source = endpointSummary(state, edge.source, handles)
+    const target = endpointSummary(state, edge.target, handles)
     return {
-      id: boundedId(edge.id),
+      id: handles.edgeHandle(edge.id),
       source,
       type: edgeType(edge),
       target,
-      neighbor: edge.source === id ? target : source,
+      neighbor: edge.source === resolvedId ? target : source,
     }
   })
   return {
     found: true as const,
     contentProvenance: CONTENT_PROVENANCE,
-    id: boundedId(id),
+    id: handles.nodeHandle(resolvedId),
     total: incident.length,
     relations,
     omitted: Math.max(0, incident.length - relations.length),
@@ -239,7 +258,9 @@ export function getRelationTypes(types?: readonly string[]) {
       ? RELATION_TYPE_VALUES
       : [...new Set(types.slice(0, RELATION_TYPE_VALUES.length))]
   const selected = requested.filter((id): id is RelationTypeName => RELATION_TYPE_SET.has(id))
-  const unknownTypes = requested.filter((id) => !RELATION_TYPE_SET.has(id)).map(boundedId)
+  const unknownTypes = requested
+    .filter((id) => !RELATION_TYPE_SET.has(id))
+    .map((id) => boundedText(id, TOOL_STRING_MAX_CHARS).text)
   const selectedSet = new Set(selected)
   const groups = RELATION_CATEGORIES.map((category) => ({
     category,
