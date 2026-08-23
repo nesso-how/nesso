@@ -49,7 +49,7 @@ Tool schemas also bound string ids/queries to 200 characters. Results from graph
 
 If the tool-capable attempt fails before its first visible answer token, `MentorPanel` makes at most one legacy retry with the same `AbortSignal` and captured prompts. A compatibility failure is an SDK `NoSuchToolError` or `InvalidToolInputError`, or an HTTP 400/404/422 response that explicitly rejects a tool/function request field (`tools`, `functions`, `tool_calls`, `tool_choice`, or `function_call`) or the tool/function-calling capability. Aborts, 401/403 responses, network failures, generic server errors, ordinary tool-execution failures, and failures after visible answer text do not retry. A successful retry changes only the current chat to local legacy mode; a failed legacy retry is not probed again. Thus a normal attempt has at most four model steps, and a qualifying fallback turn has two attempts capped independently at four steps.
 
-`legacyModeRef` is local to `MentorPanel`. A successful fallback keeps later turns in that chat on the legacy prompt without tools. Panel reopen, graph switch, AI readiness/language/base-URL/model changes that restart the opening effect, and **New chat** reset capability to tool mode and start a fresh opener. The same lifecycle resets local visible history. An API-key edit alone is not an opening-effect dependency and must not be described as a capability reset.
+`legacyModeRef` is local to `MentorPanel`. A successful fallback keeps later turns in that chat on the legacy prompt without tools. Panel reopen, graph switch, AI readiness/language/base-URL/model/persona (`mentorSystemPrompt`) changes that restart the opening effect, and **New chat** reset capability to tool mode and start a fresh opener. The same lifecycle resets local visible history. An API-key edit alone is not an opening-effect dependency and must not be described as a capability reset.
 
 ## Local state, transient activity, and cancellation
 
@@ -63,7 +63,7 @@ Panel close, graph switch, and **New chat** abort the active controller. Primary
 
 Whether the mentor **sheet** is open is `mentorPanelExpanded` on `useGraphStore`, updated via `setMentorPanelExpanded`. It is persisted with the rest of UI chrome (`zustand` `persist` → localStorage). When `mentorEnabled` is true, the entry point is the **Socrates button in the `StatusBar`** (no floating FAB); the sheet slides up above the status bar and dodges the docked inspector via `leftInset`/`rightInset` props. When `mentorEnabled` is false, the button and `MentorPanel` are not rendered.
 
-The opening synthetic user turn and visible history are local React state. Reopening the sheet, changing graphs, changing AI readiness/language/base URL/model, or clicking **New chat** starts a fresh local chat. Selection changes alone do not reset history; the selection is captured per request, while graph-reading tools continue to use the live getter and `getRelationTypes` continues to use the canonical vocabulary.
+The opening synthetic user turn and visible history are local React state. Reopening the sheet, changing graphs, changing AI readiness/language/base URL/model/the custom system prompt, or clicking **New chat** starts a fresh local chat. Selection changes alone do not reset history; the selection is captured per request, while graph-reading tools continue to use the live getter and `getRelationTypes` continues to use the canonical vocabulary.
 
 ## API call and transport boundary
 

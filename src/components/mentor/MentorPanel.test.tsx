@@ -918,6 +918,35 @@ describe('MentorPanel graph tools', () => {
     expect(mockFetchCompletion.mock.calls[2][1]).toHaveProperty('tools')
   })
 
+  it('resets tool capability when the custom system prompt changes', async () => {
+    await renderLegacyChat()
+
+    await act(async () => {
+      const settings = useGraphStore.getState().settings
+      useGraphStore.setState({ settings: { ...settings, mentorSystemPrompt: 'New persona.' } })
+    })
+
+    expect(mockFetchCompletion).toHaveBeenCalledTimes(3)
+    expect(mockFetchCompletion.mock.calls[2][1]).toHaveProperty('tools')
+  })
+
+  it('sends the custom persona as the prefix of the opener instructions', async () => {
+    useGraphStore.setState({
+      settings: {
+        ...useGraphStore.getState().settings,
+        mentorSystemPrompt: 'You are a quiz master.',
+      },
+    })
+
+    await act(async () => {
+      root!.render(<MentorPanel leftInset={0} rightInset={0} />)
+    })
+
+    const request = mockFetchCompletion.mock.calls[0][1] as { instructions: string }
+    expect(request.instructions.startsWith('You are a quiz master.\n')).toBe(true)
+    expect(request.instructions).toContain('FSRS legend:')
+  })
+
   it('keeps the legacy snapshot out of the normal tool-enabled request', async () => {
     await act(async () => {
       root!.render(<MentorPanel leftInset={0} rightInset={0} />)
