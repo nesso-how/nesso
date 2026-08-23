@@ -4,6 +4,10 @@
     "external_directory": "deny"
   },
   "mcp": {
+    "fallow": {
+      "type": "local",
+      "command": ["npx", "-y", "-p", "fallow", "fallow-mcp"]
+    },
     "nesso": {
       "type": "local",
       "command": ["node", "packages/mcp/dist/index.js"]
