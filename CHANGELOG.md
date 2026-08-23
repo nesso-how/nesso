@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.2.0-beta.3] - 2026-08-23
+
 ### Added
 
 - **Custom mentor persona:** Added an optional custom system prompt under Settings → AI for changing the mentor's tone, goals, and reply language. Blank prompts retain the built-in Socratic persona, while Nesso's graph context, FSRS legend, and safety guidance remain active.
@@ -812,7 +814,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial alpha: interactive knowledge graph (web + Tauri v2); desktop installers on GitHub Releases (macOS Apple silicon and Intel).
 
-[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.2.0-beta.2...HEAD
+[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.2.0-beta.3...HEAD
+[0.2.0-beta.3]: https://github.com/nesso-how/nesso/compare/v0.2.0-beta.2...v0.2.0-beta.3
 [0.2.0-beta.2]: https://github.com/nesso-how/nesso/compare/v0.2.0-beta.1...v0.2.0-beta.2
 [0.2.0-beta.1]: https://github.com/nesso-how/nesso/compare/v0.2.0-beta.0...v0.2.0-beta.1
 [0.2.0-beta.0]: https://github.com/nesso-how/nesso/compare/v0.1.0-alpha.41...v0.2.0-beta.0
