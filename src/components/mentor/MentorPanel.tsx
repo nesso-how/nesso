@@ -220,9 +220,16 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
         state.edges,
         selection,
         state.settings.language,
+        state.settings.mentorSystemPrompt,
       ),
       buildLegacyInstructions: () =>
-        buildLegacyMentorPrompt(state.nodes, state.edges, selection, state.settings.language),
+        buildLegacyMentorPrompt(
+          state.nodes,
+          state.edges,
+          selection,
+          state.settings.language,
+          state.settings.mentorSystemPrompt,
+        ),
     }
   }, [])
 
@@ -355,6 +362,7 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
     settings.language,
     settings.aiBaseUrl,
     settings.aiModel,
+    settings.mentorSystemPrompt,
     chatKey,
     captureTurn,
   ])
@@ -382,6 +390,7 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
     settings.language,
     settings.aiBaseUrl,
     settings.aiModel,
+    settings.mentorSystemPrompt,
     chatKey,
   ])
 

@@ -13,7 +13,7 @@ For good results, use at least a 7–8B model. `qwen3:14b` is a strong default; 
 
 ## How it works
 
-Each turn starts with a compact system prompt. It contains the Socratic persona, an FSRS legend, concept and relation counts, and the selection captured when the turn started as its `kind` and stable `id` (or `none`). The visible conversation history is sent as the turn's messages. On opening, the synthetic user turn also includes the selected concept title, or the selected edge's endpoint titles and relation type. Definitions, full nodes, and full edges are not eagerly placed in this normal context.
+Each turn starts with a compact system prompt. Its persona layer comes from your **Custom system prompt** under Settings → AI when one is set; otherwise Nesso uses the built-in Socratic persona. Either way, the prompt always carries the same fixed Nesso context: an FSRS legend, concept and relation counts, selection metadata captured when the turn started as its `kind` and stable `id` (or `none`), and Nesso's safety rules. The visible conversation history is sent as the turn's messages. On opening, the synthetic user turn also includes the selected concept title, or the selected edge's endpoint titles and relation type. Definitions, full nodes, and full edges are not eagerly placed in this normal context.
 
 A tool-capable model can request one of six bounded, read-only queries. The graph queries execute against the current live graph, so they can reflect edits made while a turn is running. Relation-type results come from Nesso's built-in vocabulary:
 
@@ -36,8 +36,9 @@ Within Nesso, chat history is **not persisted**. It lives only for the current p
 - reopen the panel;
 - click **New chat**;
 - change the UI language;
-- change the base URL; or
-- change the model.
+- change the base URL;
+- change the model; or
+- change the custom system prompt.
 
 The tool-capability mode resets on those same triggers. Clicking the panel's close button also aborts the active turn and clears its compatibility mode; reopening it starts a fresh chat and opener. Disabling and re-enabling **Mentor** follows the same fresh-reopen behavior.
 
@@ -49,7 +50,7 @@ If the endpoint rejects tool calling before any answer text appears, Nesso retri
 
 ## Connecting a model
 
-Configure any OpenAI-compatible `chat/completions` endpoint under **Settings → AI**: base URL, model, and an optional API key. Endpoint fields appear only while the mentor toggle is on.
+Configure any OpenAI-compatible `chat/completions` endpoint under **Settings → AI**: base URL, model, an optional API key, and an optional **Custom system prompt**. Endpoint fields appear only while the mentor toggle is on.
 
 The desktop app uses Tauri's native HTTP client for mentor requests. It supports any `https://` endpoint, including hosted providers such as OpenCode Zen at `https://opencode.ai/zen/v1` with model `big-pickle`. It also supports loopback HTTP endpoints at `localhost`, `127.0.0.1`, and `::1` for local Ollama. Arbitrary non-loopback `http://` endpoints are not permitted by the desktop capability.
 
@@ -96,7 +97,7 @@ The shared persona and prompt composition in [`context.ts`](https://github.com/n
 - No emojis, flattery, JSON, or pseudo-graph markup. Sparse `*asterisks*` on key terms.
 - Replies in the active UI language (English or Italian). FSRS values returned by tools use stable labels such as `stability`, `difficulty`, `state`, `lastRating`, and `isDue`.
 
-If you want a more permissive coach, fork the persona. It is plain text in `context.ts` and easy to swap.
+To change tone, goals, or reply language, set **Settings → AI → Custom system prompt**. Your text replaces the persona above, including the reply-language instruction, while Nesso keeps appending its fixed graph context and safety rules. Leave the field empty to restore Socrates exactly as described here.
 
 ## Opening message
 
@@ -112,4 +113,4 @@ Click **New chat** in the header to reset history and request a fresh opener.
 
 ## What leaves your device
 
-With a local Ollama endpoint, mentor prompts, chat history, and any graph data returned by a query stay on your machine. With a remote endpoint, Nesso sends the compact prompt, including counts and selection metadata, visible text history, and the opening seed's selected title or edge endpoints and type. Graph fields returned by tools are sent only when requested. A compatibility fallback may instead send the bounded legacy snapshot. The configured API key is sent only as a bearer token to that endpoint. Within Nesso, tool traces and chat history are not retained, but a remote provider may retain request content under its own policy, so check that provider's terms.
+With a local Ollama endpoint, mentor prompts, chat history, and any graph data returned by a query stay on your machine. With a remote endpoint, Nesso sends the compact prompt, including counts and selection metadata, visible text history, and the opening seed's selected title or edge endpoints and type. Graph fields returned by tools are sent only when requested. A compatibility fallback may instead send the bounded legacy snapshot. The configured API key is sent only as a bearer token to that endpoint. A custom system prompt is sent to the configured endpoint too: it becomes part of the request's system prompt. Within Nesso, tool traces and chat history are not retained, but a remote provider may retain request content under its own policy, so check that provider's terms.

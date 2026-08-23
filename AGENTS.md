@@ -63,7 +63,7 @@ Update the canonical `.rules/*.md` in the same change when your edit makes a rul
 
 ### Never store chat history in the global store
 
-`MentorPanel` conversation history is local state. It resets when the mentor sheet reopens, the graph changes, AI readiness, UI language, base URL, or model changes (the opening-effect lifecycle), or the user clicks **New chat**. It does not reset on selection changes or an API-key edit alone. Do not lift it into the Zustand store.
+`MentorPanel` conversation history is local state. It resets when the mentor sheet reopens, the graph changes, AI readiness, UI language, base URL, model, or the custom mentor system prompt changes (the opening-effect lifecycle), or the user clicks **New chat**. It does not reset on selection changes or an API-key edit alone. Do not lift it into the Zustand store.
 
 ### Never use default React Flow edge types
 

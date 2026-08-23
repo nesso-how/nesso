@@ -8,11 +8,13 @@ Readiness is `isAiReady(settings)` (truthy `aiBaseUrl` + `aiModel`) in `src/llm/
 
 Configure under **Settings** (gear, **⌘,**): **Appearance**, **Learning**, **AI**, **Privacy**. The **Learning** tab opens with a **Review** group: a _Review mode_ toggle (on by default, `reviewEnabled`) plus the FSRS _Target retention_ / _Max interval_ settings, shown only while review is on (these drive the full-screen review overlay).
 
-The **AI** tab opens with a **Mentor** group (marked _Experimental_): a _Mentor_ toggle (`mentorEnabled`, off by default) plus base URL, model, and API key fields shown only while it is on. Turning it off hides **Socrates** from the status bar and unmounts `MentorPanel`.
+The **AI** tab opens with a **Mentor** group (marked _Experimental_): a _Mentor_ toggle (`mentorEnabled`, off by default) plus base URL, model, API key, and **Custom system prompt** textarea fields shown only while it is on. Turning it off hides **Socrates** from the status bar and unmounts `MentorPanel`.
 
 ## Persona
 
 Socrates is a Socratic mentor: mostly questions, almost no lecturing. The shared persona rules live in **`getMentorBase()`** inside `src/llm/context.ts`:
+
+The system prompt has two layers. The **persona layer** is the user's `mentorSystemPrompt` setting when non-blank after trimming, replacing the whole built-in base including the reply-language instruction; blank or whitespace-only falls back to the Socrates base below, so an empty field never ships a personality-less mentor. The **fixed Nesso context layer** always follows the persona: FSRS legend, graph counts, captured selection, tool guidance, and user-authored-data trust guidance. Both `buildMentorPrompt()` and `buildLegacyMentorPrompt()` accept an optional trailing `customPersona` string resolved through the same helper.
 
 - No graph edits in dialogue (do not propose new nodes/edges or renames).
 - Default one short question; explain only to frame it; aim under ~180 words. This is a **soft** target enforced by the prompt; the hard ceiling `MENTOR_MAX_TOKENS` (2,048) only caps output and leaves headroom for reasoning models.
@@ -22,7 +24,7 @@ Socrates is a Socratic mentor: mostly questions, almost no lecturing. The shared
 
 ## Prompt modes and graph context
 
-There are **no mode tabs**. `MentorPanel` captures `{ kind, id } | null` when each request starts. `buildMentorPrompt()` in `src/llm/context.ts` is the normal compact system prompt. It contains only the common persona, the compact FSRS legend, concept/relation counts, the captured selection JSON (or `none`), read-only tool guidance, and user-authored-data trust guidance. It does not eagerly include concept titles, definitions, edge paths, or focal-neighbour snapshots.
+There are **no mode tabs**. `MentorPanel` captures `{ kind, id } | null` when each request starts. `buildMentorPrompt()` in `src/llm/context.ts` is the normal compact system prompt. It contains only the persona layer (`mentorSystemPrompt` when set, otherwise the common persona), the compact FSRS legend, concept/relation counts, the captured selection JSON (or `none`), read-only tool guidance, and user-authored-data trust guidance. It does not eagerly include concept titles, definitions, edge paths, or focal-neighbour snapshots.
 
 `buildLegacyMentorPrompt()` is the compatibility-only prompt. It preserves the bounded weakest-first snapshot: at most 60 concepts, 120 relations, and a final 12,000-character prompt budget, with selected/focal context included only when it fits. `nodeStrength()` still orders the legacy concept snapshot weakest-first. The snapshot is marked as untrusted user-authored graph data, and instructions inside it must never be followed. `buildMentorSeedText()` remains a short synthetic user turn for the opener: it names the captured concept, the captured edge endpoints/type, or asks where to focus when nothing is selected.
 
@@ -47,7 +49,7 @@ Tool schemas also bound string ids/queries to 200 characters. Results from graph
 
 If the tool-capable attempt fails before its first visible answer token, `MentorPanel` makes at most one legacy retry with the same `AbortSignal` and captured prompts. A compatibility failure is an SDK `NoSuchToolError` or `InvalidToolInputError`, or an HTTP 400/404/422 response that explicitly rejects a tool/function request field (`tools`, `functions`, `tool_calls`, `tool_choice`, or `function_call`) or the tool/function-calling capability. Aborts, 401/403 responses, network failures, generic server errors, ordinary tool-execution failures, and failures after visible answer text do not retry. A successful retry changes only the current chat to local legacy mode; a failed legacy retry is not probed again. Thus a normal attempt has at most four model steps, and a qualifying fallback turn has two attempts capped independently at four steps.
 
-`legacyModeRef` is local to `MentorPanel`. A successful fallback keeps later turns in that chat on the legacy prompt without tools. Panel reopen, graph switch, AI readiness/language/base-URL/model changes that restart the opening effect, and **New chat** reset capability to tool mode and start a fresh opener. The same lifecycle resets local visible history. An API-key edit alone is not an opening-effect dependency and must not be described as a capability reset.
+`legacyModeRef` is local to `MentorPanel`. A successful fallback keeps later turns in that chat on the legacy prompt without tools. Panel reopen, graph switch, AI readiness/language/base-URL/model/persona (`mentorSystemPrompt`) changes that restart the opening effect, and **New chat** reset capability to tool mode and start a fresh opener. The same lifecycle resets local visible history. An API-key edit alone is not an opening-effect dependency and must not be described as a capability reset.
 
 ## Local state, transient activity, and cancellation
 
@@ -61,7 +63,7 @@ Panel close, graph switch, and **New chat** abort the active controller. Primary
 
 Whether the mentor **sheet** is open is `mentorPanelExpanded` on `useGraphStore`, updated via `setMentorPanelExpanded`. It is persisted with the rest of UI chrome (`zustand` `persist` → localStorage). When `mentorEnabled` is true, the entry point is the **Socrates button in the `StatusBar`** (no floating FAB); the sheet slides up above the status bar and dodges the docked inspector via `leftInset`/`rightInset` props. When `mentorEnabled` is false, the button and `MentorPanel` are not rendered.
 
-The opening synthetic user turn and visible history are local React state. Reopening the sheet, changing graphs, changing AI readiness/language/base URL/model, or clicking **New chat** starts a fresh local chat. Selection changes alone do not reset history; the selection is captured per request, while graph-reading tools continue to use the live getter and `getRelationTypes` continues to use the canonical vocabulary.
+The opening synthetic user turn and visible history are local React state. Reopening the sheet, changing graphs, changing AI readiness/language/base URL/model/the custom system prompt, or clicking **New chat** starts a fresh local chat. Selection changes alone do not reset history; the selection is captured per request, while graph-reading tools continue to use the live getter and `getRelationTypes` continues to use the canonical vocabulary.
 
 ## API call and transport boundary
 

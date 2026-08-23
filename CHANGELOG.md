@@ -6,6 +6,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- **Custom mentor persona:** Added an optional custom system prompt under Settings → AI for changing the mentor's tone, goals, and reply language. Blank prompts retain the built-in Socratic persona, while Nesso's graph context, FSRS legend, and safety guidance remain active.
+
+### Fixed
+
+- **Settings dialog:** Capped the dialog height so longer sections use the existing vertical scrollbar instead of extending beyond the viewport.
+
 ## [0.2.0-beta.2] - 2026-08-22
 
 ### Added

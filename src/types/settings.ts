@@ -17,6 +17,8 @@ export interface NessoSettings {
   aiBaseUrl: string
   aiModel: string
   aiApiKey: string
+  /** Custom mentor persona; empty string keeps the built-in Socrates base. */
+  mentorSystemPrompt: string
   mentorEnabled: boolean
   reviewEnabled: boolean
   reviewReminderEnabled: boolean

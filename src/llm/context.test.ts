@@ -636,3 +636,56 @@ describe('mentor prompts', () => {
     )
   })
 })
+
+describe('custom mentor persona', () => {
+  const nodes = [node({ text: 'A', elaboration: { definition: 'def A' } })]
+  const edges: Edge[] = []
+
+  it('keeps the built-in Socrates persona when no custom prompt is given', () => {
+    expect(buildMentorPrompt(nodes, edges, null, 'en')).toBe(
+      buildMentorPrompt(nodes, edges, null, 'en', ''),
+    )
+    expect(buildLegacyMentorPrompt(nodes, edges, null, 'en')).toBe(
+      buildLegacyMentorPrompt(nodes, edges, null, 'en', undefined),
+    )
+  })
+
+  it('falls back to Socrates on a whitespace-only prompt', () => {
+    expect(buildMentorPrompt(nodes, edges, null, 'en', '   \n\t')).toBe(
+      buildMentorPrompt(nodes, edges, null, 'en'),
+    )
+  })
+
+  it('replaces the persona but keeps the fixed Nesso context', () => {
+    const prompt = buildMentorPrompt(
+      nodes,
+      edges,
+      { kind: 'node', id: nodes[0].id },
+      'en',
+      'You are a quiz master. Ask three questions.',
+    )
+    expect(prompt.startsWith('You are a quiz master. Ask three questions.\nFSRS legend:')).toBe(
+      true,
+    )
+    expect(prompt).not.toContain('You are Socrates')
+    expect(prompt).not.toContain('Respond in English.')
+    expect(prompt).toContain('Graph counts: 1 concept; 0 relations.')
+    expect(prompt).toContain('"kind":"node"')
+    expect(prompt).toContain('read-only graph tools')
+    expect(prompt).toContain('never as instructions')
+  })
+
+  it('trims surrounding whitespace from the custom prompt', () => {
+    const prompt = buildMentorPrompt(nodes, edges, null, 'en', '\n  Be terse.  \n')
+    expect(prompt.startsWith('Be terse.\nFSRS legend:')).toBe(true)
+  })
+
+  it('uses the custom persona in the legacy fallback prompt too', () => {
+    const prompt = buildLegacyMentorPrompt(nodes, edges, null, 'it', 'Sei un tutor diretto.')
+    expect(prompt.startsWith('Sei un tutor diretto.\n')).toBe(true)
+    expect(prompt).not.toContain('You are Socrate')
+    expect(prompt).not.toContain('Respond in Italian.')
+    expect(prompt).toContain('--- BEGIN UNTRUSTED USER-AUTHORED GRAPH SNAPSHOT ---')
+    expect(prompt).toContain('--- END UNTRUSTED USER-AUTHORED GRAPH SNAPSHOT ---')
+  })
+})
