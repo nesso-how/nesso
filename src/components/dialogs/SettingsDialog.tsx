@@ -160,6 +160,7 @@ export function SettingsDialog({ open, onClose }: Props) {
             display: 'flex',
             overflow: 'hidden',
             minHeight: 340,
+            maxHeight: '76vh',
           }}
         >
           {/* Sidebar */}
