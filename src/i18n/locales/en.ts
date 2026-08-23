@@ -60,6 +60,10 @@ const en = {
       apiKey: 'API key',
       apiKeyDesc:
         'Usually empty for local Ollama. For hosted APIs, set whatever secret your endpoint expects as',
+      systemPrompt: 'Custom system prompt',
+      systemPromptDesc:
+        'Replaces the built-in Socrates persona, including the reply-language instruction. Graph context, the FSRS legend, and safety rules always stay active.',
+      systemPromptPlaceholder: 'Leave empty to use the built-in Socrates persona.',
       pulling: (model: string, pct: number) => `Pulling ${model}… ${pct}%`,
       status: {
         checking: 'Checking…',

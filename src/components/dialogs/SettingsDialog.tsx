@@ -539,6 +539,45 @@ export function SettingsDialog({ open, onClose }: Props) {
                           style={inputStyle}
                         />
                       </label>
+                      <label style={{ display: 'block' }}>
+                        <span
+                          style={{
+                            fontSize: '13px',
+                            fontWeight: 400,
+                            fontFamily: 'var(--font-sans)',
+                            color: 'var(--ink-2)',
+                            display: 'block',
+                          }}
+                        >
+                          {t.settings.ai.systemPrompt}
+                        </span>
+                        <small
+                          style={{
+                            display: 'block',
+                            fontSize: '11px',
+                            fontWeight: 400,
+                            lineHeight: 1.4,
+                            fontFamily: 'var(--font-sans)',
+                            color: 'var(--ink-4)',
+                            marginTop: 3,
+                            marginBottom: 8,
+                          }}
+                        >
+                          {t.settings.ai.systemPromptDesc}
+                        </small>
+                        <textarea
+                          value={settings.mentorSystemPrompt}
+                          placeholder={t.settings.ai.systemPromptPlaceholder}
+                          onChange={(e) => setSetting('mentorSystemPrompt', e.target.value)}
+                          rows={5}
+                          style={{
+                            ...inputStyle,
+                            resize: 'vertical',
+                            minHeight: 96,
+                            lineHeight: 1.45,
+                          }}
+                        />
+                      </label>
                     </>
                   )}
                 </div>
