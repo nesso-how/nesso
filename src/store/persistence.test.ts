@@ -280,6 +280,24 @@ describe('validateMergePayload', () => {
     expect(validateMergePayload(bad)).toBeNull()
   })
 
+  it('returns null when mentorSystemPrompt is not a string', () => {
+    const bad = clone(persistedV1)
+    ;(bad as Record<string, unknown>).settings = {
+      ...((bad as Record<string, unknown>).settings as Record<string, unknown>),
+      mentorSystemPrompt: 42,
+    }
+    expect(validateMergePayload(bad)).toBeNull()
+  })
+
+  it('accepts a custom mentor system prompt string', () => {
+    const good = clone(persistedV1)
+    ;(good as Record<string, unknown>).settings = {
+      ...((good as Record<string, unknown>).settings as Record<string, unknown>),
+      mentorSystemPrompt: 'You are a direct tutor.',
+    }
+    expect(validateMergePayload(good)).not.toBeNull()
+  })
+
   it('returns null when fsrsRetention is not a finite number', () => {
     const bad = clone(persistedV1)
     ;(bad as Record<string, unknown>).settings = {

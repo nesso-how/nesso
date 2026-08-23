@@ -144,6 +144,7 @@ const SETTINGS_FIELD_VALIDATORS: Record<string, SettingsFieldValidator> = {
   aiBaseUrl: isString,
   aiModel: isString,
   aiApiKey: isString,
+  mentorSystemPrompt: isString,
   // constrained strings
   language: isValidLanguage,
   // finite numbers
