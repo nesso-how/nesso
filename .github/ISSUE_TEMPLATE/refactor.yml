@@ -1,0 +1,47 @@
+name: Refactor
+description: Improve internal structure without changing user-visible behavior
+type: Refactor
+body:
+  - type: markdown
+    attributes:
+      value: Use this form for internal changes that preserve behavior. Report incorrect behavior as a Bug; request new behavior as a Feature.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Maintenance problem
+      description: What structure, duplication, coupling, or maintenance cost needs improvement?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed refactor
+      description: Describe the focused internal change and the boundaries it should respect.
+    validations:
+      required: true
+
+  - type: textarea
+    id: behavior-preservation
+    attributes:
+      label: Behavior-preservation plan
+      description: Which externally observable behavior must remain unchanged, and how will you verify it?
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered (optional)
+      description: Other approaches considered and why this refactor is preferable.
+    validations:
+      required: false
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope (optional)
+      description: Relevant files, dependencies, follow-ups, or explicit exclusions.
+    validations:
+      required: false
