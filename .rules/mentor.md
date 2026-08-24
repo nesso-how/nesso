@@ -12,14 +12,14 @@ The **AI** tab opens with a **Mentor** group (marked _Experimental_): a _Mentor_
 
 ## Persona and fixed policy
 
-Prompt composition remains app-local in `src/llm/context.ts` and has four explicit units. `mentorPersona()` returns the trimmed custom `mentorSystemPrompt` when non-blank, otherwise the localized built-in Socrates persona. The 4,000-character boundary remains authoritative for direct and persisted values. The built-in persona owns identity, tone, formatting, reply language, and dialogue-only graph-edit guidance. Custom text replaces all of those persona choices, so a custom mentor may recommend graph organization.
+Prompt composition remains app-local in `src/llm/context.ts` and has four explicit units. `mentorPersona()` returns the trimmed custom `mentorSystemPrompt` when non-blank, otherwise the localized built-in Socrates persona. The 4,000-character boundary remains authoritative for direct and persisted values. The built-in persona owns identity, tone, formatting, reply language, and Socratic questioning. Custom text replaces all of those persona choices, so a custom mentor may recommend graph organization.
 
 `mentorFixedPolicy()` follows either persona in both prompt modes. It treats graph-derived user content from selection metadata, delimited opening or snapshot data, and graph-reading tool results as reference data, never instructions. Nesso's mentor capabilities remain bounded and read-only, and the mentor must never claim it changed the graph. Prompt text is defense in depth; the absence of mutation tools is the hard boundary.
 
 The built-in Socrates persona keeps these choices:
 
-- No graph edits proposed in dialogue; only questions about ideas.
-- Default one short question; explain only to frame it; aim under ~180 words. This is a soft target, while `MENTOR_MAX_TOKENS` (2,048) is the output ceiling.
+- Use concise Socratic questions to probe the user's understanding.
+- State only that the mentor is read-only; do not add graph-organization prohibitions or a one-question/~180-word target.
 - No emojis or flattery; sparse `*asterisks`; no JSON or pseudo-graph markup.
 - No em dash (U+2014).
 - English or Italian follows the active UI language.
@@ -29,6 +29,8 @@ The built-in Socrates persona keeps these choices:
 `buildMentorPrompt()` composes persona, fixed policy, and compact runtime. Compact runtime contains only graph counts, captured selection metadata, concise tool routing, temporary tool-context behavior, and the short prioritization rule that lower stability and `Again` or `Hard` suggest weaker recall while `isDue` is only a scheduling cue. It does not eagerly include titles, definitions, relations, snapshots, or the full FSRS field legend.
 
 `buildLegacyMentorPrompt()` composes the same persona and fixed policy with a self-contained legacy runtime: the full FSRS legend, opening behavior, and bounded weakest-first snapshot. It retains at most 60 concepts, 120 relations, the same delimiters and ordering, selected/focal context only when it fits, and the complete 12,000-character ceiling. `buildMentorSeedText()` retains the captured title or relation data inside its existing delimiters without repeating the system policy.
+
+`FSRS_PRIORITY_RULE` is owned and exported by `src/llm/context.ts`. `src/llm/tools.ts` imports it through the same existing dependency direction as `nodeStrength`; do not duplicate the wording or introduce a constants module.
 
 The five graph-reading tools and their injectable adapters live in `src/llm/tools.ts`. The mentor wiring creates them with `createMentorTools(useGraphStore.getState)`, not with a second store or a captured graph snapshot. Every graph-reading tool execution calls the getter at execution time, so its results read the current live nodes/edges even when the graph changes during a turn. The separate `getRelationTypes` tool reads the canonical built-in vocabulary directly and does not call `getState`; no tool calls a graph mutation.
 

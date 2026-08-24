@@ -26,7 +26,7 @@ This file is about **how** to write pages on the Starlight docs site (`docs/src/
 - **Rewrite stale paragraphs to describe current behavior.** Don't append "as of vX.Y" caveats or historical asides to keep an old paragraph technically true — that's what `CHANGELOG.md` is for. A docs page always describes the present, not a changelog of itself.
 - **AI feature documentation must state** what graph and chat content leaves the device, whether context is eager or on demand, where it is sent, whether tool traces and history persist, and any user-configurable prompt input bounds.
 
-When an AI feature accepts a replaceable persona, its guide must distinguish persona-owned behavior from fixed product policy that remains active for custom text and every runtime mode.
+When an AI feature accepts a replaceable persona, explain the user-visible replacement and invariant capability limits without exposing internal prompt-layer ownership. Keep implementation ownership in the relevant canonical area rule.
 
 - **Rebuild the MCP bundle** (`packages/mcp/dist/starlight-docs.pages.json`) when a Starlight page changes. From `packages/mcp/` run `pnpm build` — the build script auto-discovers `.md` files. No manifest to maintain.
 
