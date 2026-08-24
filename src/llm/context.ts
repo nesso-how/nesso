@@ -112,6 +112,7 @@ export function oneHopNeighborIds(
 const MAX_SNAPSHOT_NODES = 60
 const MAX_SNAPSHOT_EDGES = MAX_SNAPSHOT_NODES * 2
 const MAX_LEGACY_PROMPT_CHARS = 12_000
+export const MENTOR_PERSONA_MAX_CHARS = 4_000
 const MAX_TITLE_CHARS = 160
 const MAX_RELATION_CHARS = 80
 const MAX_SELECTION_ID_CHARS = 200
@@ -169,7 +170,7 @@ function getMentorBase(language: Language): string[] {
  */
 function mentorPersona(customPersona: string | undefined, language: Language): string {
   const trimmed = (customPersona ?? '').trim()
-  return trimmed || getMentorBase(language).join('\n')
+  return trimmed ? trimmed.slice(0, MENTOR_PERSONA_MAX_CHARS) : getMentorBase(language).join('\n')
 }
 
 const FSRS_RATING: Record<number, string> = { 1: 'Again', 2: 'Hard', 3: 'Good', 4: 'Easy' }

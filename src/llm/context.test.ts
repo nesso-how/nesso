@@ -9,6 +9,7 @@ import {
   buildLegacySnapshot,
   buildMentorPrompt,
   buildMentorSeedText,
+  MENTOR_PERSONA_MAX_CHARS,
   nodeStrength,
   oneHopNeighborIds,
 } from './context'
@@ -650,9 +651,12 @@ describe('custom mentor persona', () => {
     )
   })
 
-  it('falls back to Socrates on a whitespace-only prompt', () => {
+  it('falls back to Socrates on a whitespace-only prompt in both modes', () => {
     expect(buildMentorPrompt(nodes, edges, null, 'en', '   \n\t')).toBe(
       buildMentorPrompt(nodes, edges, null, 'en'),
+    )
+    expect(buildLegacyMentorPrompt(nodes, edges, null, 'en', '   \n\t')).toBe(
+      buildLegacyMentorPrompt(nodes, edges, null, 'en'),
     )
   })
 
@@ -678,6 +682,31 @@ describe('custom mentor persona', () => {
   it('trims surrounding whitespace from the custom prompt', () => {
     const prompt = buildMentorPrompt(nodes, edges, null, 'en', '\n  Be terse.  \n')
     expect(prompt.startsWith('Be terse.\nFSRS legend:')).toBe(true)
+  })
+
+  it('accepts exactly the maximum persona length in compact and legacy modes', () => {
+    const exactPersona = 'p'.repeat(MENTOR_PERSONA_MAX_CHARS)
+    const compact = buildMentorPrompt(nodes, edges, null, 'en', exactPersona)
+    const legacy = buildLegacyMentorPrompt(nodes, edges, null, 'en', exactPersona)
+
+    expect(compact.slice(0, MENTOR_PERSONA_MAX_CHARS)).toBe(exactPersona)
+    expect(compact[MENTOR_PERSONA_MAX_CHARS]).toBe('\n')
+    expect(legacy.slice(0, MENTOR_PERSONA_MAX_CHARS)).toBe(exactPersona)
+    expect(legacy[MENTOR_PERSONA_MAX_CHARS]).toBe('\n')
+  })
+
+  it('bounds oversized direct or persisted personas before composing both prompt modes', () => {
+    const boundedPersona = 'p'.repeat(MENTOR_PERSONA_MAX_CHARS)
+    const oversizedPersona = `  ${boundedPersona}discarded-tail  `
+    const compact = buildMentorPrompt(nodes, edges, null, 'en', oversizedPersona)
+    const legacy = buildLegacyMentorPrompt(nodes, edges, null, 'en', oversizedPersona)
+
+    expect(compact.startsWith(`${boundedPersona}\nFSRS legend:`)).toBe(true)
+    expect(legacy.startsWith(`${boundedPersona}\nReading each node`)).toBe(true)
+    expect(compact).not.toContain('discarded-tail')
+    expect(legacy).not.toContain('discarded-tail')
+    expect(legacy).toContain('Nodes: "A"(new)')
+    expect(legacy.length).toBeLessThanOrEqual(12_000)
   })
 
   it('uses the custom persona in the legacy fallback prompt too', () => {
