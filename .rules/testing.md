@@ -60,7 +60,9 @@ The same transport suite covers optional AI SDK tools. Its OpenAI-compatible SSE
 
 `src/llm/tools.test.ts` stays in the default **node** environment because `src/llm/tools.ts` is pure graph-query logic plus thin AI SDK adapters. Cover empty/missing/deleted ids, result and text limits, weakest-first ordering, incoming/outgoing direction, missing endpoints, unknown relation types, canonical vocabulary grouping/filtering, and the graph-reading live getter execution path. Keep adapter tests focused on schema bounds and read-only execution; the UI owns transient activity assertions.
 
-`src/llm/context.test.ts` owns mentor persona-boundary coverage. It pins blank and whitespace-only fallback, acceptance at exactly `MENTOR_PERSONA_MAX_CHARS` (4,000), defensive truncation of oversized direct or persisted values in both compact and legacy modes, retained legacy graph context, and the complete 12,000-character legacy ceiling. `e2e/settings.spec.ts` separately proves the rendered textarea exposes the same native `maxLength`, accepts the exact boundary, and refuses additional typed input.
+`src/llm/context.test.ts` owns exact persona/fixed-policy/runtime composition. It covers built-in and custom personas in compact and legacy modes, blank and whitespace fallback, the 4,000-character persona boundary, the single consolidated provenance instruction, delimiter neutralization, compact omission of eager graph content and the full FSRS legend, legacy self-containment, snapshot bounds, and the complete 12,000-character ceiling. `src/components/mentor/MentorPanel.test.tsx` continues to own compatibility retry and captured-turn behavior.
+
+`src/llm/tools.test.ts` pins the exact `getGraphOverview` and `inspectConcept` descriptions, weakest-first/FSRS interpretation, successful `contentProvenance`, unchanged result shapes, bounds, schemas, six-tool read-only surface, and live getter execution. It stays in the default Node environment.
 
 ### Desktop/browser mode switch
 

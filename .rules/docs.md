@@ -25,6 +25,9 @@ This file is about **how** to write pages on the Starlight docs site (`docs/src/
 - **Add or update a Troubleshooting entry in the same change** that ships a new error state, banner, or failure mode (see `docs/troubleshooting.md`).
 - **Rewrite stale paragraphs to describe current behavior.** Don't append "as of vX.Y" caveats or historical asides to keep an old paragraph technically true — that's what `CHANGELOG.md` is for. A docs page always describes the present, not a changelog of itself.
 - **AI feature documentation must state** what graph and chat content leaves the device, whether context is eager or on demand, where it is sent, whether tool traces and history persist, and any user-configurable prompt input bounds.
+
+When an AI feature accepts a replaceable persona, its guide must distinguish persona-owned behavior from fixed product policy that remains active for custom text and every runtime mode.
+
 - **Rebuild the MCP bundle** (`packages/mcp/dist/starlight-docs.pages.json`) when a Starlight page changes. From `packages/mcp/` run `pnpm build` — the build script auto-discovers `.md` files. No manifest to maintain.
 
 ## How to act
