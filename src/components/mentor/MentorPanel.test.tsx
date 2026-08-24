@@ -944,7 +944,9 @@ describe('MentorPanel graph tools', () => {
 
     const request = mockFetchCompletion.mock.calls[0][1] as { instructions: string }
     expect(request.instructions.startsWith('You are a quiz master.\n')).toBe(true)
-    expect(request.instructions).toContain('FSRS legend:')
+    expect(request.instructions).toContain(
+      'Lower stability and Again or Hard suggest weaker recall, while isDue is a scheduling cue rather than proof of conceptual misunderstanding.',
+    )
   })
 
   it('keeps the legacy snapshot out of the normal tool-enabled request', async () => {
