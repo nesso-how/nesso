@@ -4,6 +4,7 @@ import { asSchema } from 'ai'
 import { describe, expect, it, vi } from 'vitest'
 import { defaultConceptReviewFields, type ConceptNodeData } from '@/types/graph'
 import type { MentorGraphState } from './tools'
+import { FSRS_PRIORITY_RULE } from './context'
 import { createGraphIdHandles } from './graphHandles'
 import {
   getGraphOverview,
@@ -687,6 +688,7 @@ describe('createMentorTools', () => {
   it('pins weakest-first and FSRS semantics in the two memory-aware tool descriptions', () => {
     const tools = createMentorTools(() => graph([]))
 
+    expect(FSRS_PRIORITY_RULE).toBe(fsrsPriorityRule)
     expect(tools.getGraphOverview.description).toBe(overviewDescription)
     expect(tools.inspectConcept.description).toBe(inspectConceptDescription)
     expect(tools.searchConcepts.description).toBe(

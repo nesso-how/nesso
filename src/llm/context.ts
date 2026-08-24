@@ -150,7 +150,7 @@ function nodeLabel(nodes: Node<ConceptNodeData>[], id: string, handles: GraphIdH
 const NODE_LEGEND =
   'Reading each node after its quoted title: (new)=no spaced-repetition review yet; otherwise, comma-separated tokens — s=Y.Yd is FSRS stability in days (higher = stronger recall); Nd since review is calendar days since the last FSRS self-rating; Again/Hard/Good/Easy is that rating; DUE means the scheduler says revisit now (light hint, secondary to s= and rating).'
 
-const FSRS_PRIORITY_RULE =
+export const FSRS_PRIORITY_RULE =
   'Lower stability and Again or Hard suggest weaker recall, while isDue is a scheduling cue rather than proof of conceptual misunderstanding.'
 
 function getMentorBase(language: Language): string[] {

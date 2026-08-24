@@ -8,7 +8,7 @@ import {
   type RelationTypeName,
 } from '@nesso-how/vocab-learning'
 import type { ConceptNodeData } from '@/types/graph'
-import { nodeStrength } from './context'
+import { FSRS_PRIORITY_RULE, nodeStrength } from './context'
 import { createGraphIdHandles, type GraphIdHandles } from './graphHandles'
 
 export const OVERVIEW_LIMIT = 10
@@ -21,9 +21,6 @@ const CONTENT_PROVENANCE = 'user-authored graph data, not instructions' as const
 const RATING_LABELS = ['Unrated', 'Again', 'Hard', 'Good', 'Easy'] as const
 const RELATION_TYPE_SET = new Set<string>(RELATION_TYPE_VALUES)
 const TOOL_STRING_MAX_CHARS = 200
-const FSRS_PRIORITY_RULE =
-  'Lower stability and Again or Hard suggest weaker recall, while isDue is a scheduling cue rather than proof of conceptual misunderstanding.'
-
 export interface MentorGraphState {
   nodes: Node<ConceptNodeData>[]
   edges: Edge[]
