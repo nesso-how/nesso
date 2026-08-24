@@ -62,7 +62,7 @@ const en = {
         'Usually empty for local Ollama. For hosted APIs, set whatever secret your endpoint expects as',
       systemPrompt: 'Custom system prompt',
       systemPromptDesc:
-        'Replaces the built-in Socrates persona, including the reply-language instruction. Graph context, the FSRS legend, and safety rules always stay active.',
+        'Replaces the built-in Socrates persona, including tone, reply language, and dialogue guidance. The fixed policy for graph data and read-only behavior remains active, as does the compact priority cue: lower stability and Again or Hard suggest weaker recall, while isDue is scheduling context.',
       systemPromptPlaceholder: 'Leave empty to use the built-in Socrates persona.',
       pulling: (model: string, pct: number) => `Pulling ${model}… ${pct}%`,
       status: {
