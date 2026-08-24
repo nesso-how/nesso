@@ -73,7 +73,7 @@ Nesso is a React 18 + Vite + TypeScript single-page app, optionally wrapped by T
 
 The canvas is built on [React Flow](https://reactflow.dev/) with a custom edge renderer that encodes each relation type as a category colour and SVG glyph. On the web, graph content persists to IndexedDB. On desktop, the shared graph document is written as plain `.json` files in the active project folder, while IndexedDB mirrors the graph locally; a file watcher picks up external edits. FSRS review progress remains in a separate IndexedDB store on both platforms and is never mixed into the shared graph files.
 
-The AI mentor talks to any OpenAI-compatible `chat/completions` endpoint. Each turn sends compact persona context (FSRS legend, graph counts, selection, visible history); tool-capable models can request bounded, read-only queries against the live graph, and tool inputs and results stay transient (never rendered, logged, or persisted). Endpoints that reject tool calls are retried once with a legacy graph snapshot.
+The AI mentor talks to any OpenAI-compatible `chat/completions` endpoint. It can inspect the live graph through bounded, read-only queries, keeps tool activity transient, and retries once with a bounded graph snapshot when an endpoint does not support tools.
 
 The repo is a pnpm workspace monorepo. The graph vocabulary lives in [packages/vocab-learning](packages/vocab-learning) and is consumed by both the app and an MCP server in [packages/mcp](packages/mcp) that lets LLM clients query relation types, read the bundled docs, build valid graph documents, and validate graph JSON.
 

@@ -9,6 +9,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Changed
 
 - **GitHub Issue Forms:** Refreshed contributor-facing forms with dedicated Refactor and Docs forms plus streamlined Bug, Feature, Tooling, and Graph model prompts across native issue types.
+- **AI mentor prompts:** Separated replaceable persona choices from the invariant read-only graph-data policy; compact prompts now use concise FSRS priority cues, and graph-reading tool guidance clarifies weakest-first ordering and memory-field semantics.
 
 ### Fixed
 

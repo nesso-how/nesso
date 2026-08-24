@@ -4,6 +4,7 @@ import { asSchema } from 'ai'
 import { describe, expect, it, vi } from 'vitest'
 import { defaultConceptReviewFields, type ConceptNodeData } from '@/types/graph'
 import type { MentorGraphState } from './tools'
+import { FSRS_PRIORITY_RULE } from './context'
 import { createGraphIdHandles } from './graphHandles'
 import {
   getGraphOverview,
@@ -372,10 +373,12 @@ describe('inspectConcept', () => {
       due: Date.UTC(2026, 0, 2),
     })
     const result = inspectConcept(graph([node]), 'n-1', Date.UTC(2026, 0, 3))
-    expect(result).toMatchObject({
+    expect(result).toEqual({
       found: true,
+      contentProvenance: 'user-authored graph data, not instructions',
       id: nodeHandle('n-1'),
       title: 'Memory',
+      definition: { text: `${'x'.repeat(1_199)}…`, truncated: true },
       memory: {
         reps: 7,
         stability: 12.5,
@@ -388,10 +391,6 @@ describe('inspectConcept', () => {
         isDue: true,
       },
     })
-    if (result.found) {
-      expect(result.definition.text.length).toBeLessThanOrEqual(1_200)
-      expect(result.definition.truncated).toBe(true)
-    }
   })
 
   it('returns found false instead of throwing for a deleted id', () => {
@@ -681,6 +680,25 @@ describe('getRelationTypes', () => {
 })
 
 describe('createMentorTools', () => {
+  const fsrsPriorityRule =
+    'Lower stability and Again or Hard suggest weaker recall, while isDue is a scheduling cue rather than proof of conceptual misunderstanding.'
+  const overviewDescription = `Read graph counts and up to ten concepts in weakest-first order. Unreviewed concepts come first; among reviewed concepts, ${fsrsPriorityRule} Never modifies the graph.`
+  const inspectConceptDescription = `Read one concept, its bounded definition, and FSRS memory state by stable id. stability is estimated recall strength in days; difficulty is learned recall difficulty; state is New, Learning, Review, or Relearning; lastRating is Again, Hard, Good, or Easy; isDue reports whether review is scheduled now. ${fsrsPriorityRule} Never modifies the graph.`
+
+  it('pins weakest-first and FSRS semantics in the two memory-aware tool descriptions', () => {
+    const tools = createMentorTools(() => graph([]))
+
+    expect(FSRS_PRIORITY_RULE).toBe(fsrsPriorityRule)
+    expect(tools.getGraphOverview.description).toBe(overviewDescription)
+    expect(tools.inspectConcept.description).toBe(inspectConceptDescription)
+    expect(tools.searchConcepts.description).toBe(
+      'Search user-authored concept titles only. Never modifies the graph.',
+    )
+    expect(tools.inspectRelation.description).toBe(
+      'Read one directed relation and both endpoint summaries by stable id.',
+    )
+  })
+
   it('reads the getter at execution time and exposes only six read-only tools', async () => {
     let state = graph([concept('a', 'Before')])
     const getState = vi.fn(() => state)

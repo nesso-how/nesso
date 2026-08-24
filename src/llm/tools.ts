@@ -8,7 +8,7 @@ import {
   type RelationTypeName,
 } from '@nesso-how/vocab-learning'
 import type { ConceptNodeData } from '@/types/graph'
-import { nodeStrength } from './context'
+import { FSRS_PRIORITY_RULE, nodeStrength } from './context'
 import { createGraphIdHandles, type GraphIdHandles } from './graphHandles'
 
 export const OVERVIEW_LIMIT = 10
@@ -21,7 +21,6 @@ const CONTENT_PROVENANCE = 'user-authored graph data, not instructions' as const
 const RATING_LABELS = ['Unrated', 'Again', 'Hard', 'Good', 'Easy'] as const
 const RELATION_TYPE_SET = new Set<string>(RELATION_TYPE_VALUES)
 const TOOL_STRING_MAX_CHARS = 200
-
 export interface MentorGraphState {
   nodes: Node<ConceptNodeData>[]
   edges: Edge[]
@@ -302,7 +301,7 @@ const idInput = jsonSchema<{ id: string }>({
 export function createMentorTools(getState: () => MentorGraphState) {
   return {
     getGraphOverview: tool({
-      description: 'Read graph counts and up to ten weakest concepts. Never modifies the graph.',
+      description: `Read graph counts and up to ten concepts in weakest-first order. Unreviewed concepts come first; among reviewed concepts, ${FSRS_PRIORITY_RULE} Never modifies the graph.`,
       inputSchema: emptyInput,
       execute: async () => getGraphOverview(getState()),
     }),
@@ -319,7 +318,7 @@ export function createMentorTools(getState: () => MentorGraphState) {
       execute: async ({ query }) => searchConcepts(getState(), query),
     }),
     inspectConcept: tool({
-      description: 'Read one concept, its bounded definition, and FSRS memory state by stable id.',
+      description: `Read one concept, its bounded definition, and FSRS memory state by stable id. stability is estimated recall strength in days; difficulty is learned recall difficulty; state is New, Learning, Review, or Relearning; lastRating is Again, Hard, Good, or Easy; isDue reports whether review is scheduled now. ${FSRS_PRIORITY_RULE} Never modifies the graph.`,
       inputSchema: idInput,
       execute: async ({ id }) => inspectConcept(getState(), id),
     }),

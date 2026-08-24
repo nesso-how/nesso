@@ -61,8 +61,7 @@ const it: typeof en = {
       apiKeyDesc:
         'Di solito vuoto per Ollama locale. Per API remote, imposta il segreto che il tuo endpoint si aspetta come',
       systemPrompt: 'Prompt di sistema personalizzato',
-      systemPromptDesc:
-        "Sostituisce la personalità predefinita di Socrate, inclusa l'istruzione sulla lingua di risposta. Contesto del grafo, legenda FSRS e regole di sicurezza restano sempre attivi.",
+      systemPromptDesc: 'Sostituisce la personalità di Socrate. Nesso resta in sola lettura.',
       systemPromptPlaceholder: 'Lascia vuoto per usare la personalità predefinita di Socrate.',
       pulling: (model, pct) => `Scaricamento di ${model}… ${pct}%`,
       status: {

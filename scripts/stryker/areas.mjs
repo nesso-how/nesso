@@ -59,7 +59,7 @@ export const mutationAreas = {
   graphTools: {
     // Pure graph queries only. The SDK adapter wrappers are intentionally
     // outside this area because they are thin integration glue.
-    mutate: ['src/llm/tools.ts:33-242'],
+    mutate: ['src/llm/tools.ts:31-240'],
     reportDir: 'reports/mutation/graph-tools',
     breakAt: 91,
     touch: ['src/llm/tools.ts', 'src/llm/tools.test.ts'],
