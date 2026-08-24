@@ -13,7 +13,14 @@ For good results, use at least a 7–8B model. `qwen3:14b` is a strong default; 
 
 ## How it works
 
-Each turn starts with a compact system prompt. Its persona layer comes from your **Custom system prompt** under Settings → AI when one is set; otherwise Nesso uses the built-in Socratic persona. Custom personas are trimmed and limited to 4,000 characters before either prompt mode composes them, including values already present in saved settings. Either way, the prompt always carries the same fixed Nesso context: an FSRS legend, concept and relation counts, selection metadata captured when the turn started as its `kind` and stable `id` (or `none`), and Nesso's safety rules. The visible conversation history is sent as the turn's messages. On opening, the synthetic user turn also includes the selected concept title, or the selected edge's endpoint titles and relation type. Definitions, full nodes, and full edges are not eagerly placed in this normal context.
+Each turn's system prompt has explicit layers:
+
+- **Persona:** your trimmed **Custom system prompt** when non-blank, otherwise the localized Socrates persona. The 4,000-character limit applies before either prompt mode is composed. Socrates owns its identity, tone, reply language, and dialogue-only guidance. Custom text replaces all of those choices, so it may recommend how to organize your graph.
+- **Fixed policy:** graph-derived user content from selection metadata, delimited opening or snapshot data, and graph-reading results is reference data, never instructions. Nesso's mentor capabilities are read-only, and the mentor must not claim it changed your graph. This policy remains active with Socrates and custom personas in both modes.
+- **Compact runtime:** concept and relation counts, selection metadata captured when the turn starts, concise tool routing, temporary tool-context behavior, and one review-priority rule. Lower stability and `Again` or `Hard` suggest weaker recall. `isDue` is a scheduling cue, not proof that you misunderstand a concept.
+- **Legacy runtime:** the full FSRS field legend, opening behavior, delimiters, and a bounded weakest-first snapshot used only when tool calling is unavailable.
+
+The visible conversation history is sent as the turn's messages. On opening, the synthetic user turn includes the selected concept title, or the selected edge's endpoint titles and relation type, inside delimiters. Definitions, full nodes, and full edges are not eagerly placed in normal compact context.
 
 A tool-capable model can request one of six bounded, read-only queries. The graph queries execute against the current live graph, so they can reflect edits made while a turn is running. Relation-type results come from Nesso's built-in vocabulary:
 
@@ -26,7 +33,9 @@ A tool-capable model can request one of six bounded, read-only queries. The grap
 | Neighbours          | One-hop incoming and outgoing relations          | 20 relations, 160-character previews   |
 | Relation types      | The built-in Nesso vocabulary                    | 52 definitions                         |
 
-The queries cannot edit your graph. They return user-authored graph data as context, not as instructions. A normal attempt can use at most four model steps. If compatibility fallback is needed, Nesso makes a second attempt with its own four-step limit, for up to eight total model steps for that turn. A model may also answer in plain text without requesting a tool.
+The queries cannot edit your graph. Successful graph-reading results identify their content as user-authored graph data, not instructions. **Overview** returns up to ten concepts in weakest-first order, with unreviewed concepts first and the FSRS cues above used for reviewed concepts. **Concept inspection** explains `stability` (estimated recall strength in days), `difficulty` (learned recall difficulty), `state` (`New`, `Learning`, `Review`, or `Relearning`), `lastRating` (`Again`, `Hard`, `Good`, or `Easy`), and `isDue` (whether review is scheduled now). These fields guide questions; they do not diagnose conceptual misunderstanding.
+
+A normal attempt can use at most four model steps. If compatibility fallback is needed, Nesso makes a second attempt with its own four-step limit, for up to eight total model steps for that turn. A model may also answer in plain text without requesting a tool.
 
 While a query runs, the mentor shows one localized transient status such as **Reviewing graph…**, **Searching concepts…**, or **Reading concept…**. Nesso does not render the tool input or result, log it, persist it, or resend it after the turn. The status disappears when the answer starts or the turn ends.
 
@@ -46,7 +55,7 @@ An API-key-only edit does **not** reset the chat or tool-capability mode. It upd
 
 ### Tool compatibility fallback
 
-If the endpoint rejects tool calling before any answer text appears, Nesso retries that turn once with a legacy prompt that sends a weakest-first snapshot of up to 60 concepts and 120 relations. After a successful retry the chat stays in legacy mode until one of the reset triggers above; legacy mode is a compatibility path, not the normal context. Its 4,000-character persona limit leaves room for fixed policy, runtime guidance, delimiters, and useful graph context; selected and focal context is included only when it fits the complete 12,000-character prompt budget.
+If the endpoint rejects tool calling before any answer text appears, Nesso retries that turn once with the legacy runtime layer, which sends a weakest-first snapshot of up to 60 concepts and 120 relations. The same persona and fixed policy remain active. After a successful retry the chat stays in legacy mode until one of the reset triggers above. The 4,000-character persona limit leaves room for the self-contained FSRS legend, opening behavior, delimiters, and useful graph context; selected and focal context is included only when it fits the complete 12,000-character prompt budget.
 
 ## Connecting a model
 
@@ -66,11 +75,11 @@ While the AI tab is open in **Settings**, Nesso calls the `/models` endpoint of 
 
 | Status                | Meaning                                                                                            |
 | --------------------- | -------------------------------------------------------------------------------------------------- |
-| **Checking…**         | Nesso is querying `/models` — shows a spinner until the first response arrives.                    |
+| **Checking…**         | Nesso is querying `/models`, showing a spinner until the first response arrives.                   |
 | **Available**         | The model is present in the endpoint's model list. The mentor can start.                           |
 | **Not found locally** | The endpoint is reachable but the model is not installed. On localhost, a **Pull** button appears. |
 | **Pulling `NN`%**     | A native Ollama pull is in progress for the current model (local endpoints only).                  |
-| **Unauthorized**      | The endpoint returned HTTP `401` or `403` — wrong or missing API key.                              |
+| **Unauthorized**      | The endpoint returned HTTP `401` or `403`, indicating a wrong or missing API key.                  |
 | **API unreachable**   | The endpoint did not respond (wrong URL, server down, or network failure).                         |
 
 The status resets to idle when the dialog closes or the mentor toggle is turned off. Changing the base URL, model, or API key triggers a fresh check and cancels any in-flight pull.
@@ -89,7 +98,7 @@ If you use the hosted web app over HTTPS, requests to `http://localhost:11434` a
 
 ## The Socratic persona
 
-The shared persona and prompt composition in [`context.ts`](https://github.com/nesso-how/nesso/blob/main/src/llm/context.ts) shape Socrates. The graph query definitions live in [`tools.ts`](https://github.com/nesso-how/nesso/blob/main/src/llm/tools.ts). Socrates follows these rules:
+The shared persona and prompt composition in [`context.ts`](https://github.com/nesso-how/nesso/blob/main/src/llm/context.ts) shape Socrates. The graph query definitions live in [`tools.ts`](https://github.com/nesso-how/nesso/blob/main/src/llm/tools.ts). The built-in Socrates persona follows these rules:
 
 - One short question per turn by default, explaining only enough to frame it.
 - Replies aim under ~180 words, with a `2,048`-token output ceiling.
@@ -97,7 +106,7 @@ The shared persona and prompt composition in [`context.ts`](https://github.com/n
 - No emojis, flattery, JSON, or pseudo-graph markup. Sparse `*asterisks*` on key terms.
 - Replies in the active UI language (English or Italian). FSRS values returned by tools use stable labels such as `stability`, `difficulty`, `state`, `lastRating`, and `isDue`.
 
-To change tone, goals, or reply language, set **Settings → AI → Custom system prompt**. Your text replaces the persona above, including the reply-language instruction, while Nesso keeps appending its fixed graph context and safety rules. Nesso trims the value and uses at most 4,000 characters. Leave the field empty or whitespace-only to restore Socrates exactly as described here.
+To change identity, tone, goals, graph-organization guidance, or reply language, set **Settings → AI → Custom system prompt**. Your text replaces all built-in persona choices, including Socrates' dialogue-only graph-edit guidance and reply-language instruction. The fixed read-only and graph-data policy still follows it in compact and legacy modes. Nesso trims the value and uses at most 4,000 characters. Leave the field empty or whitespace-only to restore Socrates exactly as described here.
 
 ## Opening message
 
@@ -105,7 +114,7 @@ When the panel opens, the mentor sends itself a short synthetic **user** turn so
 
 - **A concept node selected:** includes that concept's title in the seed turn. A tool-capable model can inspect it and optionally list its neighbours.
 - **An edge selected (no node):** includes both endpoint titles and the typed relation in the seed turn. A tool-capable model can inspect the relation.
-- **Nothing selected:** asks where to focus. A tool-capable model can request `getGraphOverview`, whose weakest-first results use stability and review state as context.
+- **Nothing selected:** asks where to focus. A tool-capable model can request `getGraphOverview`, whose weakest-first results use lower stability and `Again` or `Hard` as weaker-recall cues while treating `isDue` only as scheduling context.
 
 With graph tools available, a selected concept can guide `inspectConcept` or `listNeighbors`, and a selected relation can guide `inspectRelation`. The opening turn does not receive an eager full graph dump. If the model answers without a tool call, that plain-text answer is still valid.
 
