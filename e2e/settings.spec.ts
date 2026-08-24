@@ -29,3 +29,24 @@ test('switching language re-renders the UI', async ({ page }) => {
 
   await expect(dialog.getByText('Impostazioni', { exact: true })).toBeVisible()
 })
+
+test('custom mentor persona accepts 4,000 characters and blocks further input', async ({
+  page,
+}) => {
+  await gotoApp(page)
+  await page.keyboard.press('ControlOrMeta+,')
+
+  const dialog = page.getByRole('dialog')
+  await dialog.getByRole('button', { name: 'AI', exact: true }).click()
+  await dialog.getByRole('switch').click()
+
+  const textarea = dialog.getByRole('textbox', { name: /Custom system prompt/ })
+  const exactPersona = 'p'.repeat(4_000)
+
+  await expect(textarea).toHaveAttribute('maxlength', '4000')
+  await textarea.fill(exactPersona)
+  await expect(textarea).toHaveValue(exactPersona)
+  await textarea.press('End')
+  await textarea.press('x')
+  await expect(textarea).toHaveValue(exactPersona)
+})

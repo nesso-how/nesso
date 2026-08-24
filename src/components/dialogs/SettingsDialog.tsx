@@ -14,6 +14,7 @@ import { LearningSettings } from './LearningSettings'
 import { SettingsHeatmapDefault } from '@/components/ui/HeatmapDisplayToggle'
 import type { Language } from '@/types/graph'
 import { checkEndpoint, executeModelPull } from '@/llm/completion'
+import { MENTOR_PERSONA_MAX_CHARS } from '@/llm/context'
 import type { OllamaModelStatus } from '@/lib/ollama'
 
 const OLLAMA_PRESETS = [
@@ -569,6 +570,7 @@ export function SettingsDialog({ open, onClose }: Props) {
                         <textarea
                           value={settings.mentorSystemPrompt}
                           placeholder={t.settings.ai.systemPromptPlaceholder}
+                          maxLength={MENTOR_PERSONA_MAX_CHARS}
                           onChange={(e) => setSetting('mentorSystemPrompt', e.target.value)}
                           rows={5}
                           style={{

@@ -10,6 +10,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - **GitHub Issue Forms:** Refreshed contributor-facing forms with dedicated Refactor and Docs forms plus streamlined Bug, Feature, Tooling, and Graph model prompts across native issue types.
 
+### Fixed
+
+- **Custom mentor prompts:** Limited custom system prompts to 4,000 characters in Settings and prompt composition, keeping compact requests bounded while preserving graph context for legacy fallback prompts within the 12,000-character budget.
+
 ## [0.2.0-beta.3] - 2026-08-23
 
 ### Added
