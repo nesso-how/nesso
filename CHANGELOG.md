@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Changed
+
+- **GitHub Issue Forms:** Refreshed contributor-facing forms with dedicated Refactor and Docs forms plus streamlined Bug, Feature, Tooling, and Graph model prompts across native issue types.
+
 ## [0.2.0-beta.3] - 2026-08-23
 
 ### Added

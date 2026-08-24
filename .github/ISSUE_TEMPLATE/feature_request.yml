@@ -1,27 +1,39 @@
 name: Feature request
-description: Propose a new feature or improvement
+description: Propose new or changed user-visible behavior
 type: Feature
 body:
+  - type: markdown
+    attributes:
+      value: Use this form when Nesso should gain or change behavior. Report incorrect existing behavior as a Bug; use Refactor for internal changes that preserve behavior.
+
   - type: textarea
     id: problem
     attributes:
       label: Problem or motivation
-      description: What are you trying to do that you can't do today?
+      description: What are you trying to do that Nesso does not support today, and who is affected?
     validations:
       required: true
 
   - type: textarea
     id: proposal
     attributes:
-      label: Proposed solution
-      description: Describe the behavior you'd like. Sketches or mockups are welcome.
+      label: Proposed change
+      description: Describe the behavior you would like. Sketches or mockups are welcome when useful.
     validations:
       required: true
 
   - type: textarea
     id: alternatives
     attributes:
-      label: Alternatives considered
-      description: Other approaches you thought about, and why you prefer the one above.
+      label: Alternatives considered (optional)
+      description: Other approaches considered and why this proposal is preferable.
+    validations:
+      required: false
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope (optional)
+      description: Dependencies, follow-ups, rollout constraints, or explicit exclusions.
     validations:
       required: false

@@ -1,19 +1,16 @@
 name: Bug report
-description: Something is broken or behaving unexpectedly
+description: Report existing behavior that is broken or unexpected
 type: Bug
 body:
-  - type: input
-    id: summary
+  - type: markdown
     attributes:
-      label: Summary
-      description: One sentence describing what went wrong.
-    validations:
-      required: true
+      value: Use this form when existing behavior is incorrect. Request new behavior with a Feature; use Refactor for internal changes that preserve behavior.
 
   - type: textarea
-    id: steps
+    id: observed
     attributes:
-      label: Steps to reproduce
+      label: Observed behavior and reproduction
+      description: What happened, and what is the smallest reliable way to reproduce it?
       placeholder: |
         1.
         2.
@@ -24,15 +21,15 @@ body:
   - type: textarea
     id: expected
     attributes:
-      label: Expected vs actual behavior
-      placeholder: "Expected: ...\nActual: ..."
+      label: Expected behavior
+      description: What should have happened instead?
     validations:
       required: true
 
   - type: textarea
     id: context
     attributes:
-      label: Environment
-      placeholder: 'OS, browser or Tauri desktop, Nesso version, AI backend (Ollama / remote).'
+      label: Environment and context (optional)
+      description: Include the OS, browser or Tauri desktop, Nesso version, screenshots, logs, or other relevant context.
     validations:
       required: false

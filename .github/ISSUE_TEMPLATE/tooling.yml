@@ -6,7 +6,7 @@ body:
     id: problem
     attributes:
       label: Problem or friction
-      description: What developer friction, quality gap, or maintenance cost are you addressing? What can't you catch or do today?
+      description: What developer friction, quality gap, or maintenance cost needs attention?
     validations:
       required: true
 
@@ -14,30 +14,30 @@ body:
     id: proposal
     attributes:
       label: Proposed tooling or change
-      description: Which tool or change, and how it runs (command, config). Link the tool if it is external.
+      description: Which focused tool or change do you propose? Include commands, configuration, or links when relevant.
     validations:
       required: true
 
   - type: textarea
     id: integration
     attributes:
-      label: Integration points
-      description: Where it hooks in — CI (`.github/workflows`), `preflight`, git/Claude hooks, local scripts. Does it gate (fail the build) or only report?
-    validations:
-      required: true
-
-  - type: textarea
-    id: alternatives
-    attributes:
-      label: Alternatives and trade-offs
-      description: Other tools or approaches considered, and why you prefer this one — speed, lock-in, maintenance cost, ecosystem.
+      label: Integration and validation (optional)
+      description: Where should this connect, and how should it be verified? Note CI, preflight, or rollout effects when relevant.
     validations:
       required: false
 
   - type: textarea
-    id: rollout
+    id: alternatives
     attributes:
-      label: Rollout and scope (optional)
-      description: Incremental adoption, baselines/thresholds, and what is explicitly out of scope for a first pass.
+      label: Alternatives and trade-offs (optional)
+      description: Other approaches considered and why this one is preferable.
+    validations:
+      required: false
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope (optional)
+      description: Dependencies, adoption constraints, follow-ups, or explicit exclusions.
     validations:
       required: false

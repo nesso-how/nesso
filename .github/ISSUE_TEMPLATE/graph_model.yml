@@ -11,7 +11,7 @@ body:
   - type: textarea
     id: motivation
     attributes:
-      label: Motivation
+      label: Problem or motivation
       description: What concept or learning relationship is currently missing or misrepresented? Include a few concrete cases where the existing 52 types fall short.
     validations:
       required: true
@@ -19,7 +19,7 @@ body:
   - type: textarea
     id: proposal
     attributes:
-      label: Proposal — type definition
+      label: Proposed type definition
       description: |
         Describe the new or modified relation type(s). For each, include:
 

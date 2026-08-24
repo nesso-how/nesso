@@ -1,0 +1,43 @@
+name: Documentation
+description: Report a documentation gap or propose a focused docs improvement
+type: Docs
+body:
+  - type: textarea
+    id: gap
+    attributes:
+      label: Documentation gap
+      description: What is missing, unclear, inaccurate, or difficult to find, and who is affected?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed documentation change
+      description: Describe the content or structure that would close the gap.
+    validations:
+      required: true
+
+  - type: textarea
+    id: source-of-truth
+    attributes:
+      label: Source of truth (optional)
+      description: Which implementation, behavior, rule, or external reference should the docs match?
+    validations:
+      required: false
+
+  - type: textarea
+    id: affected-pages
+    attributes:
+      label: Affected pages (optional)
+      description: Known file paths, URLs, or sections that should change.
+    validations:
+      required: false
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope and context (optional)
+      description: Related issues, audience constraints, follow-ups, or explicit exclusions.
+    validations:
+      required: false
