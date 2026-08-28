@@ -119,6 +119,7 @@ jobs:
           if [[ ! -s "$TMP" ]]; then
             printf '%s\n' "No \`## [${VERSION}]\` section found in [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/${{ github.sha }}/CHANGELOG.md) for this tag. Add it before releasing." > "$TMP"
           fi
+          printf '\nWindows installer: currently unsigned and may trigger Microsoft Defender SmartScreen.\n' >> "$TMP"
           {
             echo 'body<<CHANGELOGEOF'
             cat "$TMP"
@@ -184,6 +185,64 @@ jobs:
           # — the updater endpoint — resolves to this build.
           prerelease: false
           args: '--target universal-apple-darwin'
+          includeUpdaterJson: true
+
+  publish-windows:
+    needs: publish
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    # A failed Windows job can be rerun independently; serialization prevents concurrent latest.json writes.
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+
+      - name: Enable pnpm via Corepack (uses packageManager in package.json)
+        run: corepack enable
+
+      - name: Pnpm store path
+        id: pnpm-store
+        shell: pwsh
+        run: |
+          "path=$(pnpm store path)" >> $env:GITHUB_OUTPUT
+
+      - uses: actions/cache@v5
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: ./src-tauri -> target
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Generate desktop icons from tile SVG
+        run: pnpm run icons:desktop
+
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
+          VITE_POSTHOG_KEY: ${{ secrets.VITE_POSTHOG_KEY }}
+          VITE_POSTHOG_HOST: https://eu.i.posthog.com
+        with:
+          projectPath: ./src-tauri
+          tagName: v__VERSION__
+          releaseName: 'Nesso v__VERSION__'
+          args: '--target x86_64-pc-windows-msvc --bundles nsis'
           includeUpdaterJson: true
 
   deploy-web:
