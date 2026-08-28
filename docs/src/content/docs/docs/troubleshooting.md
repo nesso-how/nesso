@@ -27,6 +27,18 @@ Once an update is found, the banner can show:
 
 You can dismiss the available/error states for the rest of the session with the banner's close button; the install-in-progress state has no dismiss, since the install can't be cancelled once started.
 
+## Microsoft Defender SmartScreen
+
+Windows may show a Microsoft Defender SmartScreen warning when you open the Nesso installer because it is not Authenticode-signed. An unsigned installer has no verified publisher signature for Windows to check, so the warning does not by itself mean that the installer is malicious.
+
+Only follow these steps when you downloaded the installer from the [official Nesso GitHub Release](https://github.com/nesso-how/nesso/releases):
+
+1. Open the installer and wait for the SmartScreen warning.
+2. Select **More info**.
+3. Select **Run anyway**.
+
+Do not bypass SmartScreen for an installer from an unofficial site, a message, or an untrusted download. Close the warning and download Nesso again from the official release instead.
+
 ## Unsupported project files (desktop)
 
 If you open a project folder whose graph files come from a newer Nesso version or use an unknown vocabulary, Nesso blocks the project and shows a yellow info banner:

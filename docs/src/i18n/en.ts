@@ -19,6 +19,7 @@ export const en: Locale = {
     tagline: 'Know how, not just what.',
     ctaPrimary: 'Open web app',
     ctaMacDownload: 'Download for macOS',
+    ctaWindowsDownload: 'Download for Windows',
     ctaSecondary: 'Read the docs',
     graphAriaLabel: 'Concept graph: Understanding and its relations',
     graph: {

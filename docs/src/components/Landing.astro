@@ -10,9 +10,10 @@ interface Props {
   releaseTag: string
   releaseUrl: string
   macDownloadUrl: string
+  windowsDownloadUrl: string
 }
 
-const { t, lang, releaseTag, releaseUrl, macDownloadUrl } = Astro.props
+const { t, lang, releaseTag, releaseUrl, macDownloadUrl, windowsDownloadUrl } = Astro.props
 const homeHref = lang === 'en' ? '/' : `/${lang}/`
 ---
 
@@ -241,7 +242,7 @@ const homeHref = lang === 'en' ? '/' : `/${lang}/`
         justify-content: center;
       }
 
-      .hero-mac-download {
+      .hero-download {
         margin-top: 0.85rem;
         font-family: var(--font-sans);
         font-size: 0.875rem;
@@ -250,7 +251,7 @@ const homeHref = lang === 'en' ? '/' : `/${lang}/`
         color: var(--ink-3);
       }
 
-      .hero-mac-download a:hover {
+      .hero-download a:hover {
         color: var(--highlight);
       }
 
@@ -1241,12 +1242,20 @@ const homeHref = lang === 'en' ? '/' : `/${lang}/`
           </a>
           <a href="/docs/introduction/" class="btn btn-secondary">{t.hero.ctaSecondary}</a>
         </div>
-        <p class="hero-mac-download" hidden>
+        <p class="hero-download" data-platform="mac" hidden>
           <a
             href={macDownloadUrl}
             download
             aria-label={`${t.hero.ctaMacDownload} (${releaseTag} universal .dmg)`}
             >{t.hero.ctaMacDownload}</a
+          >
+        </p>
+        <p class="hero-download" data-platform="windows" hidden>
+          <a
+            href={windowsDownloadUrl}
+            download
+            aria-label={`${t.hero.ctaWindowsDownload} (${releaseTag} x64 setup .exe)`}
+            >{t.hero.ctaWindowsDownload}</a
           >
         </p>
 
@@ -1700,15 +1709,25 @@ const homeHref = lang === 'en' ? '/' : `/${lang}/`
 
     <script>
       ;(function () {
-        function isMacDesktop() {
+        function detectDesktopPlatform(): 'mac' | 'windows' | null {
           const ua = navigator.userAgent
-          if (/iPhone|iPad|iPod/.test(ua)) return false
-          if (navigator.userAgentData?.platform === 'macOS') return true
-          return /Macintosh|Mac OS X/.test(ua) || navigator.platform?.startsWith('Mac') === true
+          if (/iPhone|iPad|iPod/.test(ua)) return null
+          const uaPlatform = (navigator as { userAgentData?: { platform?: string } })
+            .userAgentData?.platform
+          if (uaPlatform === 'macOS') return 'mac'
+          if (uaPlatform === 'Windows') return 'windows'
+          if (/Macintosh|Mac OS X/.test(ua) || navigator.platform?.startsWith('Mac') === true)
+            return 'mac'
+          if (/Windows/.test(ua) || navigator.platform?.startsWith('Win') === true)
+            return 'windows'
+          return null
         }
 
-        if (isMacDesktop()) {
-          const el = document.querySelector<HTMLElement>('.hero-mac-download')
+        const platform = detectDesktopPlatform()
+        if (platform) {
+          const el = document.querySelector<HTMLElement>(
+            `.hero-download[data-platform="${platform}"]`
+          )
           if (el) el.hidden = false
         }
       })()

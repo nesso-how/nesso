@@ -3,7 +3,7 @@ title: Getting started
 description: How to run Nesso locally or on the web.
 ---
 
-Nesso is available as a hosted web app, a macOS desktop app, and as open-source code you can run locally. All three share the same graph model. The desktop app adds project folders and a file-system-backed workspace. See [FAQ](../../faq/#what-changes-between-the-web-app-and-the-desktop-app) for the full comparison.
+Nesso is available as a hosted web app, native desktop apps for macOS and x64 Windows, and as open-source code you can run locally. The web and desktop apps share the same graph model. Desktop apps add project folders and a file-system-backed workspace. See [FAQ](../../faq/#what-changes-between-the-web-app-and-the-desktop-app) for the full comparison.
 
 ## Tutorial
 
@@ -15,11 +15,21 @@ The simplest way to get started is the web app at [app.nesso.how](https://app.ne
 
 You can skip the welcome screen or the tour at any step. To restart it later, open the **About** dialog from the menu bar.
 
-## Desktop app (macOS)
+## Desktop apps (macOS and x64 Windows)
 
-A pre-built alpha installer is published on [GitHub Releases](https://github.com/nesso-how/nesso/releases). Download the universal `.dmg` (it runs on both Apple silicon and Intel Macs), drag **Nesso** to **Applications**, and open it.
+### macOS
 
-The desktop app **updates itself**: on launch it checks GitHub Releases and, when a newer build is available, offers to install it and relaunch.
+A pre-built installer is published on [GitHub Releases](https://github.com/nesso-how/nesso/releases). Download the universal `.dmg` (it runs on both Apple silicon and Intel Macs), drag **Nesso** to **Applications**, and open it.
+
+### Windows (x64)
+
+A pre-built installer is published on [GitHub Releases](https://github.com/nesso-how/nesso/releases). Download `Nesso_<version>_x64-setup.exe`, run it, and follow the installation prompts. This build is for x64 Windows.
+
+:::caution[Windows installer warning]
+The Windows installer is not Authenticode-signed, so Microsoft Defender SmartScreen may warn when you open it. Continue only if you downloaded it from the [official Nesso GitHub Release](https://github.com/nesso-how/nesso/releases). See [Microsoft Defender SmartScreen](../../troubleshooting/#microsoft-defender-smartscreen) for recovery steps.
+:::
+
+Both desktop apps **update themselves**: on launch they check GitHub Releases and, when a newer build is available, offer to download and install it, then relaunch. If you update manually, use the universal `.dmg` for macOS or `Nesso_<version>_x64-setup.exe` for x64 Windows.
 
 ## Run from source
 

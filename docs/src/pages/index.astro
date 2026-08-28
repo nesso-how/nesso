@@ -7,6 +7,7 @@ const VERSION = rootPkg.version
 const RELEASE_TAG = `v${VERSION}`
 const releaseUrl = `https://github.com/nesso-how/nesso/releases/tag/${RELEASE_TAG}`
 const macDownloadUrl = `https://github.com/nesso-how/nesso/releases/download/${RELEASE_TAG}/Nesso_${VERSION}_universal.dmg`
+const windowsDownloadUrl = `https://github.com/nesso-how/nesso/releases/download/${RELEASE_TAG}/Nesso_${VERSION}_x64-setup.exe`
 ---
 
 <Landing
@@ -15,4 +16,5 @@ const macDownloadUrl = `https://github.com/nesso-how/nesso/releases/download/${R
   releaseTag={RELEASE_TAG}
   releaseUrl={releaseUrl}
   macDownloadUrl={macDownloadUrl}
+  windowsDownloadUrl={windowsDownloadUrl}
 />
