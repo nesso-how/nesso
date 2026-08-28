@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 // SPDX-License-Identifier: MIT
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const {
   mockTrack,
@@ -10,6 +10,9 @@ const {
   mockGetState,
   mockToPng,
   mockNormalizeGraphDocument,
+  mockToastError,
+  mockToastInfo,
+  mockIsDesktop,
 } = vi.hoisted(() => ({
   mockTrack: vi.fn(),
   mockSerialize: vi.fn(),
@@ -18,6 +21,9 @@ const {
   mockGetState: vi.fn(),
   mockToPng: vi.fn(),
   mockNormalizeGraphDocument: vi.fn(),
+  mockToastError: vi.fn(),
+  mockToastInfo: vi.fn(),
+  mockIsDesktop: vi.fn(),
 }))
 
 vi.mock('@/telemetry', () => ({ track: mockTrack }))
@@ -39,12 +45,20 @@ vi.mock('@/store', () => ({
 }))
 
 vi.mock('@/i18n', () => ({
-  getT: vi.fn(() => ({ graphIO: { importError: 'Failed to import {name}' } })),
+  getT: vi.fn(() => ({
+    graphIO: {
+      importError: 'Failed to import {name}',
+      exportPngError: 'Could not export the graph as PNG. Try again.',
+      pngSaved: 'Saved {name} to Downloads.',
+    },
+  })),
 }))
 
 vi.mock('@/components/ui/toast', () => ({
-  toast: { error: vi.fn() },
+  toast: { error: mockToastError, info: mockToastInfo },
 }))
+
+vi.mock('@/lib/isDesktop', () => ({ isDesktop: mockIsDesktop }))
 
 vi.mock('@xyflow/react', () => ({
   getNodesBounds: vi.fn(() => ({ x: 0, y: 0, width: 100, height: 100 })),
@@ -63,7 +77,20 @@ import { importGraphFromFile, exportGraphJson, exportGraphPng } from './graphIO'
 
 beforeEach(() => {
   vi.clearAllMocks()
+  mockIsDesktop.mockReturnValue(false)
+  document.body.innerHTML = ''
 })
+
+afterEach(() => {
+  vi.restoreAllMocks()
+})
+
+function mountViewport(): HTMLElement {
+  const viewport = document.createElement('div')
+  viewport.className = 'react-flow__viewport'
+  document.body.appendChild(viewport)
+  return viewport
+}
 
 describe('importGraphFromFile', () => {
   it('emits graph_imported on success', async () => {
@@ -192,9 +219,7 @@ describe('exportGraphPng', () => {
 
   it('emits graph_export_failed with format png when toPng throws', async () => {
     mockGetState.mockReturnValueOnce(storeState)
-    const viewport = document.createElement('div')
-    viewport.className = 'react-flow__viewport'
-    document.body.appendChild(viewport)
+    mountViewport()
 
     mockToPng.mockRejectedValueOnce(new Error('canvas rendering failed: out of memory'))
 
@@ -209,15 +234,11 @@ describe('exportGraphPng', () => {
     const payload = JSON.stringify(mockTrack.mock.calls.at(-1)![0])
     expect(payload).not.toContain('canvas rendering')
     expect(payload).not.toContain('out of memory')
-
-    document.body.removeChild(viewport)
   })
 
   it('re-throws the error so callers can surface the failure', async () => {
     mockGetState.mockReturnValueOnce(storeState)
-    const viewport = document.createElement('div')
-    viewport.className = 'react-flow__viewport'
-    document.body.appendChild(viewport)
+    mountViewport()
 
     mockToPng.mockRejectedValueOnce(new Error('canvas error'))
 
@@ -227,8 +248,64 @@ describe('exportGraphPng', () => {
       name: 'graph_export_failed',
       props: { format: 'png', reason: 'unsupported' },
     })
+  })
 
-    document.body.removeChild(viewport)
+  it('turns a raw rendering Event into a readable Error', async () => {
+    mockGetState.mockReturnValueOnce(storeState)
+    mountViewport()
+    mockToPng.mockRejectedValueOnce(new Event('error'))
+
+    await expect(exportGraphPng()).rejects.toThrow('Could not export the graph as PNG. Try again.')
+
+    expect(mockTrack).toHaveBeenCalledWith({
+      name: 'graph_export_failed',
+      props: { format: 'png', reason: 'unsupported' },
+    })
+  })
+
+  it('confirms the PNG filename and Downloads location on desktop', async () => {
+    mockGetState.mockReturnValueOnce(storeState)
+    mockIsDesktop.mockReturnValueOnce(true)
+    mockToPng.mockResolvedValueOnce('data:image/png;base64,cG5n')
+    mountViewport()
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+
+    await exportGraphPng()
+
+    expect(click).toHaveBeenCalledOnce()
+    expect((click.mock.instances[0] as HTMLAnchorElement).download).toBe('test.png')
+    expect(mockToastInfo).toHaveBeenCalledWith('Saved test.png to Downloads.')
+    expect(mockTrack).toHaveBeenCalledWith({
+      name: 'graph_exported',
+      props: { format: 'png' },
+    })
+  })
+
+  it('keeps replacement tokens literal in desktop save feedback', async () => {
+    const graphName = "$&-$`-$'"
+    mockGetState.mockReturnValueOnce({
+      ...storeState,
+      graphList: [{ id: 'g-1', name: graphName }],
+    })
+    mockIsDesktop.mockReturnValueOnce(true)
+    mockToPng.mockResolvedValueOnce('data:image/png;base64,cG5n')
+    mountViewport()
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+
+    await exportGraphPng()
+
+    expect(mockToastInfo).toHaveBeenCalledWith(`Saved ${graphName}.png to Downloads.`)
+  })
+
+  it('does not show desktop save feedback in a browser', async () => {
+    mockGetState.mockReturnValueOnce(storeState)
+    mockToPng.mockResolvedValueOnce('data:image/png;base64,cG5n')
+    mountViewport()
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+
+    await exportGraphPng()
+
+    expect(mockToastInfo).not.toHaveBeenCalled()
   })
 
   it('returns early without tracking when viewport is missing', async () => {
