@@ -7,7 +7,8 @@ import { validateConfig } from './check-security-headers.mjs'
 const APP_CSP =
   "default-src 'self'; object-src 'none'; frame-ancestors 'none'; " +
   "worker-src 'self' blob:; script-src 'self' 'wasm-unsafe-eval'; " +
-  "style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; " +
+  "style-src 'self' https://fonts.googleapis.com; " +
+  "font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob:; " +
   "connect-src 'self' https: http://localhost:* http://127.0.0.1:* http://[::1]:*"
 
 const DOCS_CSP =
@@ -114,6 +115,28 @@ describe('validateConfig', () => {
     expect(r).toContainEqual(expect.stringContaining('must include "https://fonts.googleapis.com"'))
   })
 
+  it.each([
+    ["'self'", "img-src 'self' data: blob:", 'img-src data: blob:'],
+    ['data:', "img-src 'self' data: blob:", "img-src 'self' blob:"],
+    ['blob:', "img-src 'self' data: blob:", "img-src 'self' data:"],
+  ])('rejects app img-src without %s', (source, directive, replacement) => {
+    const r = validateConfig(app(APP_CSP.replace(directive, replacement)), 'vercel.json')
+    expect(r).toContainEqual(expect.stringContaining(`CSP "img-src" must include "${source}"`))
+  })
+
+  it('rejects app font-src without data:', () => {
+    const r = validateConfig(
+      app(
+        APP_CSP.replace(
+          "font-src 'self' data: https://fonts.gstatic.com",
+          "font-src 'self' https://fonts.gstatic.com",
+        ),
+      ),
+      'vercel.json',
+    )
+    expect(r).toContainEqual(expect.stringContaining('CSP "font-src" must include "data:"'))
+  })
+
   it('rejects http: in app connect-src', () => {
     const r = validateConfig(app(APP_CSP + ' http:'), 'vercel.json')
     expect(r).toContainEqual(expect.stringContaining('must NOT contain "http:"'))
@@ -208,7 +231,8 @@ describe('validateConfig', () => {
     const csp =
       "default-src 'self'; object-src 'none'; frame-ancestors 'none'; " +
       "worker-src 'self' blob:; script-src 'self' 'wasm-unsafe-eval'; " +
-      "style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; " +
+      "style-src 'self' https://fonts.googleapis.com; " +
+      "font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob:; " +
       "connect-src 'self' https: http://localhost:11434 http://127.0.0.1:8080 http://[::1]:3000"
     expect(validateConfig(app(csp), 'vercel.json')).toEqual([])
   })

@@ -30,7 +30,8 @@ const COMMON_CSP = [
 const APP_CSP = [
   { d: 'script-src', inc: ["'wasm-unsafe-eval'"] },
   { d: 'style-src', inc: ['https://fonts.googleapis.com'] },
-  { d: 'font-src', inc: ['https://fonts.gstatic.com'] },
+  { d: 'font-src', inc: ['data:', 'https://fonts.gstatic.com'] },
+  { d: 'img-src', inc: ["'self'", 'data:', 'blob:'] },
   { d: 'connect-src', excl: ['http:'] },
   { d: 'connect-src', inc: ['http://localhost:*'] },
   { d: 'connect-src', inc: ['http://127.0.0.1:*'] },
