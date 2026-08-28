@@ -1,9 +1,9 @@
 ---
 title: Graph management
-description: Working with multiple graphs, exporting and importing JSON, and desktop project folders.
+description: Working with multiple graphs, exporting JSON and PNG files, importing graph JSON, and desktop project folders.
 ---
 
-A **graph** is one map: its concepts, relations, and display settings. You can keep several graphs and switch between them, export or import any of them as JSON, and, on desktop, group graphs into project folders.
+A **graph** is one map: its concepts, relations, and display settings. You can keep several graphs and switch between them, export JSON or PNG files, import graph JSON, and, on desktop, group graphs into project folders.
 
 ## Multiple graphs
 
@@ -15,7 +15,7 @@ The **Sidebar** lists every graph in the current project. Click a graph to switc
 
 Switching graphs flushes any pending autosave on the one you're leaving, so edits made just before a switch aren't lost.
 
-## Export and import (JSON)
+## Export and import
 
 Open the **⋯** menu in the top bar (tooltip: "Export · Import · Shortcuts") for:
 
@@ -23,12 +23,14 @@ Open the **⋯** menu in the top bar (tooltip: "Export · Import · Shortcuts") 
 - **Export graph (.png)**: renders the canvas at 1920×1200 and saves it as an image, with React Flow's selection handles excluded from the render.
 - **Import graph**: opens a file picker for a `.json` file and adds it as a new graph.
 
-Export behaves differently depending on platform:
+Export destinations depend on the format and platform:
 
-- **Desktop**: a native save dialog lets you pick the destination.
-- **Web**: if your browser supports the File System Access API, you get a save dialog and can overwrite the same file on repeat exports. Otherwise it falls back to a normal browser download.
+- **JSON on desktop**: a native save dialog lets you pick the destination.
+- **JSON on web**: if your browser supports the File System Access API, you get a save dialog and can overwrite the same file on repeat exports. Otherwise it falls back to a normal browser download.
+- **PNG on web**: your browser downloads `<graph name>.png` through its normal download flow.
+- **PNG on desktop**: the webview starts a download for `<graph name>.png`, then Nesso shows a toast with the filename and a reminder to check your `Downloads` folder. The browser controls where the download is ultimately saved.
 
-Importing a file that isn't a valid Nesso graph shows an error toast and imports nothing. A successful import creates a new graph (de-duplicating its name against your existing graphs) and switches to it.
+If PNG rendering fails, Nesso shows a readable error toast and does not download a file. Importing a file that isn't a valid Nesso graph also shows an error toast and imports nothing. A successful import creates a new graph, de-duplicates its name against your existing graphs, and switches to it.
 
 Exported JSON carries graph **content** only: concepts, relations, and display settings. Personal review progress (FSRS data) is never included, so sharing or re-importing a file never carries someone else's recall history.
 

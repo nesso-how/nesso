@@ -14,6 +14,14 @@ The banner offers two actions:
 
 There's no automatic merge: pick whichever side of the conflict you want to keep.
 
+## PNG export fails
+
+If Nesso shows `Could not export the graph as PNG. Try again.` and no PNG appears in your browser or **Downloads** folder, the export did not complete.
+
+1. Make sure the graph is open and visible, then open the **⋯** menu and choose **Export graph (.png)** again.
+2. If it fails again, reload the web app or quit and reopen the desktop app. Open the graph again and retry the export.
+3. If PNG export still fails, choose **Export graph** to save a JSON backup, then [report the issue on GitHub](https://github.com/nesso-how/nesso/issues) with your operating system and whether the failure affects every graph.
+
 ## Auto-update problems (desktop)
 
 The desktop app checks GitHub Releases once on launch. If checking fails (offline, GitHub unreachable), it stays silent: no banner, no error, just no update for now.

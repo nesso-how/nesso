@@ -8,6 +8,7 @@ import { useGraphStore } from '@/store'
 import { getT } from '@/i18n'
 import { toast } from '@/components/ui/toast'
 import { exportShareGraphJson } from '@/lib/saveJsonFile'
+import { isDesktop } from '@/lib/isDesktop'
 import { track } from '@/telemetry'
 import type { FailureReason } from '@/telemetry'
 
@@ -22,6 +23,11 @@ function mapErrorToFailureReason(err: unknown): FailureReason {
     if (typeof obj.status === 'number' && obj.status >= 400) return 'response'
   }
   return 'unsupported'
+}
+
+function normalizePngExportError(err: unknown): Error {
+  if (err instanceof Error && err.message.trim()) return err
+  return new Error(getT().graphIO.exportPngError)
 }
 
 /** Serializes the active graph to JSON and triggers a file download / save dialog. */
@@ -50,6 +56,7 @@ export async function exportGraphPng(): Promise<void> {
   if (!viewport || nodes.length === 0) return
   const meta = graphList.find((g) => g.id === currentGraphId)
   const name = meta?.name ?? 'graph'
+  const filename = `${name}.png`
 
   const padding = 64
   const imageWidth = 1920
@@ -89,15 +96,16 @@ export async function exportGraphPng(): Promise<void> {
     })
     const a = document.createElement('a')
     a.href = dataUrl
-    a.download = `${name}.png`
+    a.download = filename
     a.click()
     track({ name: 'graph_exported', props: { format: 'png' } })
+    if (isDesktop()) toast.info(getT().graphIO.pngDownloadStarted.replace('{name}', () => filename))
   } catch (err) {
     track({
       name: 'graph_export_failed',
       props: { format: 'png', reason: mapErrorToFailureReason(err) },
     })
-    throw err
+    throw normalizePngExportError(err)
   }
 }
 

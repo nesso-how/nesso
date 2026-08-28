@@ -18,7 +18,7 @@ pnpm run license-headers:check   # CI gate
 pnpm run license-headers         # inserts missing headers
 ```
 
-**Security headers** (`vercel.json`, `docs/vercel.json`): validates CSP directive values against the project's security policy — ensures loopback-only `connect-src` HTTP sources, required common directives (`default-src 'self'`, `object-src 'none'`, `frame-ancestors 'none'`, `worker-src 'self' blob:`), and config-specific rules (app vs docs). Rejects permissive `startsWith` matching for loopback hosts so lookalikes like `localhost.evil` are caught.
+**Security headers** (`vercel.json`, `docs/vercel.json`): validates CSP directive values against the project's security policy, ensures loopback-only `connect-src` HTTP sources, required common directives (`default-src 'self'`, `object-src 'none'`, `frame-ancestors 'none'`, `worker-src 'self' blob:`), and config-specific rules (app vs docs). The app policy must include `img-src 'self' data: blob:` for html-to-image rasterization and `data:` in `font-src` for its inlined webfonts. Reject permissive `startsWith` matching for loopback hosts so lookalikes like `localhost.evil` are caught.
 
 ```bash
 pnpm run security:headers   # CI gate

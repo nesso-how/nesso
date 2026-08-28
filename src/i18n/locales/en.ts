@@ -249,6 +249,8 @@ const en = {
     exportGraph: 'Export graph',
     importError: '"{name}" is not a valid Nesso graph file. Nothing was imported.',
     exportPng: 'Export graph (.png)',
+    exportPngError: 'Could not export the graph as PNG. Try again.',
+    pngDownloadStarted: 'Download started for {name}. Check your Downloads folder.',
     importGraph: 'Import graph',
     keyboardShortcuts: 'Keyboard shortcuts',
     about: 'About Nesso',

@@ -251,6 +251,8 @@ const it: typeof en = {
     exportGraph: 'Esporta grafo',
     importError: '"{name}" non è un file grafo Nesso valido. Nessun import eseguito.',
     exportPng: 'Esporta grafo (png)',
+    exportPngError: 'Impossibile esportare il grafo come PNG. Riprova.',
+    pngDownloadStarted: 'Download avviato per {name}. Controlla la cartella Download.',
     importGraph: 'Importa grafo',
     keyboardShortcuts: 'Scorciatoie da tastiera',
     about: 'Informazioni su Nesso',

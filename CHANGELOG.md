@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Fixed
+
+- **PNG export on web:** PNG export no longer fails behind the production Content Security Policy: the deployed CSP now allows the data-URL image and font resources html-to-image needs, so Export graph (.png) downloads successfully from the deployed web app instead of showing an error toast. Rendering failures surface a readable, localized error message, and on desktop a toast confirms the download started.
+
 ## [0.2.0-beta.4] - 2026-08-28
 
 ### Added
