@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- **Windows desktop builds:** The release pipeline now ships an unsigned x64 NSIS installer (`Nesso_<version>_x64-setup.exe`) alongside the macOS DMG and merges a `windows-x86_64` entry into the updater manifest. The landing page reveals the platform-matching download link, and the docs cover Windows installation plus SmartScreen recovery while the installer remains unsigned.
+
 ### Changed
 
 - **GitHub Issue Forms:** Refreshed contributor-facing forms with dedicated Refactor and Docs forms plus streamlined Bug, Feature, Tooling, and Graph model prompts across native issue types.
