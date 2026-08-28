@@ -11,6 +11,21 @@ interface VercelHeaderConfig {
   }>
 }
 
+interface BlockedExportResource {
+  blockedURI: string
+  effectiveDirective: string
+}
+
+function parseCspDirectives(policy: string): Map<string, Set<string>> {
+  const directives = new Map<string, Set<string>>()
+  for (const directive of policy.split(';')) {
+    const [name, ...sources] = directive.trim().split(/\s+/)
+    if (!name) continue
+    directives.set(name.toLowerCase(), new Set(sources))
+  }
+  return directives
+}
+
 async function installProductionCsp(page: Page): Promise<string> {
   const config = JSON.parse(
     await readFile(fileURLToPath(new URL('../vercel.json', import.meta.url)), 'utf8'),
@@ -32,6 +47,26 @@ async function installProductionCsp(page: Page): Promise<string> {
     win.$RefreshReg$ = () => {}
     win.$RefreshSig$ = () => (type) => type
     win.__vite_plugin_react_preamble_installed__ = true
+  })
+  await page.addInitScript(() => {
+    const blockedExportResources: Array<{
+      blockedURI: string
+      effectiveDirective: string
+    }> = []
+    document.addEventListener('securitypolicyviolation', (event) => {
+      // Chromium redacts blocked `data:` URLs to the literal "data" in
+      // blockedURI, so filter on the effective directive instead.
+      if (event.effectiveDirective === 'img-src' || event.effectiveDirective === 'font-src') {
+        blockedExportResources.push({
+          blockedURI: event.blockedURI,
+          effectiveDirective: event.effectiveDirective,
+        })
+      }
+    })
+    Object.defineProperty(window, '__nessoExportCspViolations', {
+      configurable: true,
+      value: blockedExportResources,
+    })
   })
 
   await page.route('http://localhost:5173/', async (route) => {
@@ -116,15 +151,6 @@ test('export the current graph as JSON', async ({ page }) => {
 
 test('export the current graph as PNG under the production CSP', async ({ page }) => {
   const csp = await installProductionCsp(page)
-  const blockedExportResources: string[] = []
-  page.on('console', (message) => {
-    const text = message.text()
-    const blockedImage = text.includes("image 'data:image")
-    const blockedFont = text.includes("font 'data:font")
-    if (text.includes('Content Security Policy') && (blockedImage || blockedFont)) {
-      blockedExportResources.push(text)
-    }
-  })
 
   await gotoApp(page)
   await newEmptyGraph(page)
@@ -136,12 +162,21 @@ test('export the current graph as PNG under the production CSP', async ({ page }
     page.getByRole('button', { name: 'Export graph (.png)', exact: true }).click(),
   ])
 
-  expect(csp).toContain("img-src 'self' data: blob:")
-  expect(csp).toContain("font-src 'self' data: https://fonts.gstatic.com")
+  const cspDirectives = parseCspDirectives(csp)
+  expect(cspDirectives.get('img-src')).toEqual(new Set(["'self'", 'data:', 'blob:']))
+  expect(cspDirectives.get('font-src')).toEqual(
+    new Set(["'self'", 'data:', 'https://fonts.gstatic.com']),
+  )
   expect(download.suggestedFilename()).toMatch(/\.png$/)
   expect(await download.failure()).toBeNull()
   const png = await readFile(await download.path())
   expect(png.subarray(0, 8)).toEqual(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))
+  const blockedExportResources = await page.evaluate(() => {
+    const win = window as typeof window & {
+      __nessoExportCspViolations?: BlockedExportResource[]
+    }
+    return win.__nessoExportCspViolations ?? []
+  })
   expect(blockedExportResources).toEqual([])
 })
 
