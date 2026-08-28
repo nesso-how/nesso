@@ -15,6 +15,7 @@ export type Locale = {
     tagline: string
     ctaPrimary: string
     ctaMacDownload: string
+    ctaWindowsDownload: string
     ctaSecondary: string
     graphAriaLabel: string
     graph: {
