@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.2.0-beta.4] - 2026-08-28
+
 ### Added
 
 - **Windows desktop builds:** The release pipeline now ships an unsigned x64 NSIS installer (`Nesso_<version>_x64-setup.exe`) alongside the macOS DMG and merges a `windows-x86_64` entry into the updater manifest. The landing page reveals the platform-matching download link, and the docs cover Windows installation plus SmartScreen recovery while the installer remains unsigned.
@@ -827,7 +829,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial alpha: interactive knowledge graph (web + Tauri v2); desktop installers on GitHub Releases (macOS Apple silicon and Intel).
 
-[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.2.0-beta.3...HEAD
+[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.2.0-beta.4...HEAD
+[0.2.0-beta.4]: https://github.com/nesso-how/nesso/compare/v0.2.0-beta.3...v0.2.0-beta.4
 [0.2.0-beta.3]: https://github.com/nesso-how/nesso/compare/v0.2.0-beta.2...v0.2.0-beta.3
 [0.2.0-beta.2]: https://github.com/nesso-how/nesso/compare/v0.2.0-beta.1...v0.2.0-beta.2
 [0.2.0-beta.1]: https://github.com/nesso-how/nesso/compare/v0.2.0-beta.0...v0.2.0-beta.1
