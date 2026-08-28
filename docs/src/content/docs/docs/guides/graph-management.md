@@ -28,7 +28,7 @@ Export destinations depend on the format and platform:
 - **JSON on desktop**: a native save dialog lets you pick the destination.
 - **JSON on web**: if your browser supports the File System Access API, you get a save dialog and can overwrite the same file on repeat exports. Otherwise it falls back to a normal browser download.
 - **PNG on web**: your browser downloads `<graph name>.png` through its normal download flow.
-- **PNG on desktop**: the webview saves `<graph name>.png` to your `Downloads` folder, then Nesso confirms the filename and location in a toast.
+- **PNG on desktop**: the webview starts a download for `<graph name>.png`, then Nesso shows a toast with the filename and a reminder to check your `Downloads` folder. The browser controls where the download is ultimately saved.
 
 If PNG rendering fails, Nesso shows a readable error toast and does not download a file. Importing a file that isn't a valid Nesso graph also shows an error toast and imports nothing. A successful import creates a new graph, de-duplicates its name against your existing graphs, and switches to it.
 

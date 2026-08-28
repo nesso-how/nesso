@@ -99,7 +99,7 @@ export async function exportGraphPng(): Promise<void> {
     a.download = filename
     a.click()
     track({ name: 'graph_exported', props: { format: 'png' } })
-    if (isDesktop()) toast.info(getT().graphIO.pngSaved.replace('{name}', () => filename))
+    if (isDesktop()) toast.info(getT().graphIO.pngDownloadStarted.replace('{name}', () => filename))
   } catch (err) {
     track({
       name: 'graph_export_failed',

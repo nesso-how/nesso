@@ -49,7 +49,7 @@ vi.mock('@/i18n', () => ({
     graphIO: {
       importError: 'Failed to import {name}',
       exportPngError: 'Could not export the graph as PNG. Try again.',
-      pngSaved: 'Saved {name} to Downloads.',
+      pngDownloadStarted: 'Download started for {name}. Check your Downloads folder.',
     },
   })),
 }))
@@ -263,7 +263,7 @@ describe('exportGraphPng', () => {
     })
   })
 
-  it('confirms the PNG filename and Downloads location on desktop', async () => {
+  it('reports that the PNG download started with its filename on desktop', async () => {
     mockGetState.mockReturnValueOnce(storeState)
     mockIsDesktop.mockReturnValueOnce(true)
     mockToPng.mockResolvedValueOnce('data:image/png;base64,cG5n')
@@ -274,14 +274,16 @@ describe('exportGraphPng', () => {
 
     expect(click).toHaveBeenCalledOnce()
     expect((click.mock.instances[0] as HTMLAnchorElement).download).toBe('test.png')
-    expect(mockToastInfo).toHaveBeenCalledWith('Saved test.png to Downloads.')
+    expect(mockToastInfo).toHaveBeenCalledWith(
+      'Download started for test.png. Check your Downloads folder.',
+    )
     expect(mockTrack).toHaveBeenCalledWith({
       name: 'graph_exported',
       props: { format: 'png' },
     })
   })
 
-  it('keeps replacement tokens literal in desktop save feedback', async () => {
+  it('keeps replacement tokens literal in desktop download feedback', async () => {
     const graphName = "$&-$`-$'"
     mockGetState.mockReturnValueOnce({
       ...storeState,
@@ -294,10 +296,12 @@ describe('exportGraphPng', () => {
 
     await exportGraphPng()
 
-    expect(mockToastInfo).toHaveBeenCalledWith(`Saved ${graphName}.png to Downloads.`)
+    expect(mockToastInfo).toHaveBeenCalledWith(
+      `Download started for ${graphName}.png. Check your Downloads folder.`,
+    )
   })
 
-  it('does not show desktop save feedback in a browser', async () => {
+  it('does not show desktop download feedback in a browser', async () => {
     mockGetState.mockReturnValueOnce(storeState)
     mockToPng.mockResolvedValueOnce('data:image/png;base64,cG5n')
     mountViewport()
