@@ -26,7 +26,7 @@
 
 ## What it does
 
-Nesso is an interactive concept map where nodes are ideas and edges are [typed semantic relations](https://nesso.how/docs/reference/relation-types) (52 types across 8 categories, e.g. `causes`, `requires`, `subtype-of`). Each concept carries spaced-repetition state scheduled by [FSRS](https://github.com/open-spaced-repetition/ts-fsrs). Available as a web app at [app.nesso.how](https://app.nesso.how) and as a native macOS desktop build.
+Nesso is an interactive concept map where nodes are ideas and edges are [typed semantic relations](https://nesso.how/docs/reference/relation-types) (52 types across 8 categories, e.g. `causes`, `requires`, `subtype-of`). Each concept carries spaced-repetition state scheduled by [FSRS](https://github.com/open-spaced-repetition/ts-fsrs). Available as a web app at [app.nesso.how](https://app.nesso.how) and as native desktop builds for macOS and Windows x64.
 
 > [!NOTE]
 > An experimental AI mentor (Socrates) is also available: opt-in under **Settings → AI**, requires an OpenAI-compatible endpoint (local Ollama or a cloud provider).

@@ -14,7 +14,7 @@ This file is about **how** to write pages on the Starlight docs site (`docs/src/
 ## Form
 
 - **Frontmatter**: every page needs `title` (short) and a one-sentence `description`. Both are user-facing (search, social previews) — write them as such, not as internal notes.
-- **`:::caution`** for limitations and experimental-feature warnings (e.g. the mentor being off by default, the desktop build being unsigned).
+- **`:::caution`** for limitations and experimental-feature warnings (e.g. the mentor being off by default, the Windows installer being unsigned).
 - **`:::note[Title]`** for supplementary context that isn't essential to follow the main flow (e.g. the vocabulary-versioning aside on the relation-types page).
 - **Tables** once a list of parameters or settings has more than ~3 fields. Below that, a bullet list reads faster.
 - **Numbered lists** only for steps that must happen in sequence (an install flow, a setup walkthrough). Use bullets for unordered facts or options, even when there are several.
