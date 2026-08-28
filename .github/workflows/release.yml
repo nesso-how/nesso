@@ -225,7 +225,15 @@ jobs:
         with:
           workspaces: ./src-tauri -> target
 
-      - run: pnpm install --frozen-lockfile
+      - name: Install dependencies
+        env:
+          # pnpm 10 executes the `prepare` script (POSIX `if [ ... ]`) via cmd.exe on
+          # Windows unless script-shell is set; npm_config_script_shell routes it to
+          # bash (Git for Windows), and the skip flag makes the POSIX branch a no-op
+          # (tauri's beforeBuildCommand builds the frontend anyway).
+          NESSO_SKIP_PREPARE_BUILD: '1'
+          npm_config_script_shell: bash
+        run: pnpm install --frozen-lockfile
 
       - name: Generate desktop icons from tile SVG
         run: pnpm run icons:desktop
