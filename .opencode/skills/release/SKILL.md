@@ -7,7 +7,7 @@ description: Use when the user asks to cut, ship, publish, or version-bump a rel
 
 `scripts/release.mjs` (`pnpm release`) does the deterministic prep — the version bump across all nine files, the CHANGELOG roll, the lockfile refresh, and `build`/`lint`/`format:check`. This skill **drives that script and supervises it**: it owns the judgment the script can't make (which version, what ships, when to publish) and closes the gaps the script deliberately leaves open (the git push, branch protection, worktrees).
 
-Pushing the `v*` tag triggers `.github/workflows/release.yml`: npm publish of the workspace packages (Trusted Publishing / OIDC), a signed universal macOS `.dmg` desktop build, and a GitHub Release. **The tag push is the point of no return — it publishes to the public. Confirm with the user before step 4.**
+Pushing the `v*` tag triggers `.github/workflows/release.yml`: npm publish of the workspace packages (Trusted Publishing / OIDC), a signed and notarized universal macOS `.dmg` desktop build, a serialized unsigned x64 NSIS Windows build (the `publish-windows` job runs after macOS and merges into the same `latest.json`), and a GitHub Release. **The tag push is the point of no return — it publishes to the public. Confirm with the user before step 4.**
 
 For the conventions and the desktop auto-update / minisign signing details, see `.rules/changelog.md`; this skill executes that flow, it does not restate it.
 
@@ -72,6 +72,8 @@ Gap-closing notes from past releases:
 
 ## 5. After the workflow
 
-- Watch the run (`gh run watch <id> --exit-status`, or the Actions tab). It publishes the npm packages, builds the universal macOS `.dmg`, and creates the GitHub Release plus the signed `latest.json` consumed by the desktop auto-updater.
-- The npm job finishes in under a minute; the desktop `.dmg` build is the long pole (~10 min). **`publish-npm` succeeding does not mean the release is done** — and `gh run watch` can exit 0 on a transient API hiccup. Confirm `gh run view <id>` shows `completed / success` **and** `gh release view vNEW` resolves (with the `.dmg` + `latest.json` assets) before reporting success.
-- Confirm the GitHub Release body picked up the `## [NEW]` changelog section, and that `releases/latest/download/latest.json` resolves to this build.
+- Watch the run (`gh run watch <id> --exit-status`, or the Actions tab). It publishes the npm packages, builds the signed universal macOS `.dmg` and creates the GitHub Release plus the initial signed `latest.json` (`publish`), then builds the unsigned x64 NSIS Windows installer and merges a `windows-x86_64` entry into the same `latest.json` (`publish-windows`).
+- The npm job finishes in under a minute; the desktop builds are the long pole (~10 min each, macOS first, then Windows). **`publish` succeeding does not mean the release is done** — and `gh run watch` can exit 0 on a transient API hiccup. Confirm `gh run view <id>` shows `completed / success` **and** `gh release view vNEW` resolves with all expected assets before reporting success.
+- Expected assets on the release: the universal macOS `.dmg`, the Windows installer `Nesso_<version>_x64-setup.exe`, the updater artifacts (macOS `.app.tar.gz` + `.sig`, Windows `.exe` + `.sig`, all minisign-signed with the same keys), and the merged `latest.json` covering both macOS and `windows-x86_64`.
+- **Windows-only failure:** if `publish-windows` fails after `publish` succeeded, the macOS release is already usable — do not recreate or retag the release. Rerun only the failed job (e.g. `gh run rerun <id> --failed`); it rebuilds the Windows installer and re-merges into the existing `latest.json`.
+- Confirm the GitHub Release body picked up the `## [NEW]` changelog section (and ends with the unsigned-Windows/SmartScreen note), and that `releases/latest/download/latest.json` resolves to this build.
