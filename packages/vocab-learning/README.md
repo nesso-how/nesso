@@ -47,6 +47,21 @@ const doc: NessoGraphDocument = deserialize(json)
 
 **Shared content vs review state.** `serialize` / `deserialize` handle the portable graph file: concept labels, positions, `elaboration`, relation types, and layout hints. FSRS fields (`stability`, `difficulty`, `due`, etc.) are runtime node parameters for spaced repetition — they are typed here via `defaultConceptReviewFields()` but are **not** written into shared graph JSON; the Nesso app persists them separately.
 
+### Notes documents (elaboration)
+
+The current `0.1.0` `ConceptElaboration` is definition-only. Its notes-aware
+shape is enabled automatically when the vocabulary advances to `0.2.0` through
+the app's migration ladder. `notes` is a native TipTap JSON document
+(`{ type: 'doc', content: [...] }`) persisted verbatim, including custom block
+types. The vocabulary guards it **block-agnostically**: unknown block types pass,
+so newer documents still load in older apps.
+
+- `NOTES_MAX_DEPTH` / `NOTES_MAX_SERIALIZED_CHARS` bound nesting and serialized size.
+- `notesToPlainText` flattens any document (blocks joined with newlines); unknown
+  blocks degrade to their text, never destroyed.
+- `paragraphNotesFromPlainText(text)` builds the minimal paragraph document used by
+  plain-text boundaries (MCP).
+
 Relation types reference: [Relation types](https://nesso.how/docs/reference/relation-types/).
 
 ## Persisted vocabulary compatibility
