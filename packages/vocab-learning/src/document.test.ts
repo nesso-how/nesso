@@ -2,7 +2,7 @@
 import { GRAPH_FORMAT_VERSION } from '@nesso-how/schema'
 import { describe, expect, it } from 'vitest'
 import { deserialize, serialize } from './document.js'
-import { VOCABULARY } from './index.js'
+import { VOCABULARY, validateDefinitionOnlyElaboration } from './index.js'
 
 function documentWith(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
@@ -21,7 +21,7 @@ function documentWith(overrides: Record<string, unknown> = {}): Record<string, u
 describe('vocab-learning serialize / deserialize', () => {
   it('round-trips a learning vocabulary graph document', () => {
     const doc = {
-      vocabulary: { id: '@nesso-how/vocab-learning', version: '0.1.0' },
+      vocabulary: { id: '@nesso-how/vocab-learning', version: VOCABULARY.version },
       name: 'Demo',
       concepts: [
         {
@@ -68,6 +68,108 @@ describe('vocab-learning serialize / deserialize', () => {
       relations: [{ id: 'e1', source: 'n1', target: 'n1', type: 'causes' }],
     })
     expect(() => deserialize(json)).toThrow('Concept elaboration must contain only definition')
+  })
+
+  it('accepts a valid notes document only after the vocabulary enables notes', () => {
+    const json = JSON.stringify({
+      version: GRAPH_FORMAT_VERSION,
+      vocabulary: { id: VOCABULARY.id, version: VOCABULARY.version },
+      name: 'X',
+      concepts: [
+        {
+          id: 'n1',
+          label: 'n1',
+          x: 0,
+          y: 0,
+          data: {
+            elaboration: {
+              definition: 'd',
+              notes: {
+                type: 'doc',
+                content: [
+                  {
+                    type: 'callout',
+                    content: [{ type: 'paragraph', content: [{ type: 'text', text: 'note' }] }],
+                  },
+                ],
+              },
+            },
+          },
+        },
+      ],
+      relations: [],
+    })
+    if (VOCABULARY.version === '0.1.0') {
+      expect(() => deserialize(json)).toThrow(/Concept elaboration must contain only definition$/)
+      return
+    }
+
+    const parsed = deserialize(json)
+    expect(parsed.concepts[0].data?.elaboration).toEqual({
+      definition: 'd',
+      notes: {
+        type: 'doc',
+        content: [
+          {
+            type: 'callout',
+            content: [{ type: 'paragraph', content: [{ type: 'text', text: 'note' }] }],
+          },
+        ],
+      },
+    })
+  })
+
+  it('rejects a notes field that is not a bounded doc document', () => {
+    const json = JSON.stringify({
+      version: GRAPH_FORMAT_VERSION,
+      vocabulary: { id: VOCABULARY.id, version: VOCABULARY.version },
+      name: 'X',
+      concepts: [
+        {
+          id: 'n1',
+          label: 'n1',
+          x: 0,
+          y: 0,
+          data: { elaboration: { definition: 'd', notes: 'alpha string notes' } },
+        },
+      ],
+      relations: [],
+    })
+    if (VOCABULARY.version === '0.1.0') {
+      expect(() => deserialize(json)).toThrow(/Concept elaboration must contain only definition$/)
+    } else {
+      expect(() => deserialize(json)).toThrow(/must be a bounded/)
+    }
+  })
+
+  it('rejects elaboration keys other than definition and notes', () => {
+    const json = JSON.stringify({
+      version: GRAPH_FORMAT_VERSION,
+      vocabulary: { id: VOCABULARY.id, version: VOCABULARY.version },
+      name: 'X',
+      concepts: [
+        {
+          id: 'n1',
+          label: 'n1',
+          x: 0,
+          y: 0,
+          data: { elaboration: { definition: 'd', imageUrl: 'unsupported' } },
+        },
+      ],
+      relations: [],
+    })
+    if (VOCABULARY.version === '0.1.0') {
+      expect(() => deserialize(json)).toThrow(/Concept elaboration must contain only definition$/)
+    } else {
+      expect(() => deserialize(json)).toThrow(/must contain only definition and notes/)
+    }
+  })
+
+  it('validateDefinitionOnlyElaboration rejects any notes key (migration source shape)', () => {
+    expect(() =>
+      validateDefinitionOnlyElaboration({ definition: 'd', notes: { type: 'doc', content: [] } }),
+    ).toThrow('Concept elaboration must contain only definition')
+    expect(() => validateDefinitionOnlyElaboration({ definition: 'd' })).not.toThrow()
   })
 })
 
@@ -116,13 +218,12 @@ describe('vocabulary compatibility boundary', () => {
     const doc = deserialize(json)
     expect(doc.vocabulary).toEqual({
       id: '@nesso-how/vocab-learning',
-      version: '0.1.0',
+      version: VOCABULARY.version,
     })
   })
 
   it.each([
     'examples',
-    'notes',
     'imageUrl',
     'imageTitle',
     'imageDescriptionUrl',
@@ -144,8 +245,14 @@ describe('vocabulary compatibility boundary', () => {
       ],
     })
 
-    expect(() => deserialize(JSON.stringify(input))).toThrow(
-      'Concept elaboration must contain only definition',
-    )
+    if (VOCABULARY.version === '0.1.0') {
+      expect(() => deserialize(JSON.stringify(input))).toThrow(
+        /Concept elaboration must contain only definition$/,
+      )
+    } else {
+      expect(() => deserialize(JSON.stringify(input))).toThrow(
+        /must contain only definition and notes/,
+      )
+    }
   })
 })

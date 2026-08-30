@@ -37,7 +37,13 @@ export {
 
 export { CategoryPalette, GLYPH_PATHS, PALETTES } from './visual.js'
 
-export { deserialize, deserializeEnvelope, serialize, validateNessoDocument } from './document.js'
+export {
+  deserialize,
+  deserializeEnvelope,
+  serialize,
+  validateDefinitionOnlyElaboration,
+  validateNessoDocument,
+} from './document.js'
 
 export {
   NOTES_MAX_DEPTH,

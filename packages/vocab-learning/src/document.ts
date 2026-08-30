@@ -9,6 +9,7 @@ import type {
   NessoGraphDocumentInput,
   NessoRelationData,
 } from './graphDocument.js'
+import { validateNotesDocument } from './notes.js'
 import { RELATION_TYPES } from './relationTypes.js'
 import { VOCABULARY } from './vocabularyIdentity.js'
 
@@ -54,7 +55,36 @@ function validateVocabularyIdentity(
   }
 }
 
+/**
+ * Current-version elaboration shape: `definition` plus an optional bounded
+ * notes document. Any other key is rejected.
+ */
 function validateElaboration(value: unknown): void {
+  if (VOCABULARY.version === '0.1.0') {
+    validateDefinitionOnlyElaboration(value)
+    return
+  }
+
+  const elab = asRecord(value)
+  if (!elab || typeof elab.definition !== 'string' || !Object.hasOwn(elab, 'definition')) {
+    throw new Error('Concept elaboration must contain only definition')
+  }
+  for (const key of Object.keys(elab)) {
+    if (key === 'definition') continue
+    if (key === 'notes') {
+      validateNotesDocument(elab.notes)
+      continue
+    }
+    throw new Error('Concept elaboration must contain only definition and notes')
+  }
+}
+
+/**
+ * Strict definition-only shape — the vocabulary `0.1.0` source contract used
+ * by the app's migration step before relabeling. Alpha/string/rich `notes`
+ * attributed to `0.1.0` stay rejected here.
+ */
+export function validateDefinitionOnlyElaboration(value: unknown): void {
   const elab = asRecord(value)
   if (
     !elab ||
