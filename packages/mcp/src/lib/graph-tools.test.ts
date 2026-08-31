@@ -188,6 +188,64 @@ describe('buildGraphDocument', () => {
   })
 })
 
+describe('notes plain-text boundary', () => {
+  it('build_graph converts a plain-string note to a minimal paragraph document', () => {
+    const doc = buildGraphDocument({
+      name: 'Notes',
+      concepts: [{ text: 'A', elaboration: { definition: 'd', notes: 'Plain text note' } }],
+      relations: [],
+    })
+    const elab = doc.concepts[0]?.data?.elaboration
+    expect(elab?.notes).toEqual({
+      type: 'doc',
+      content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Plain text note' }] }],
+    })
+    expect(validateGraphJson(serialize(doc)).valid).toBe(true)
+  })
+
+  it('build_graph omits notes for empty or whitespace-only strings', () => {
+    const doc = buildGraphDocument({
+      name: 'Notes',
+      concepts: [{ text: 'A', elaboration: { definition: 'd', notes: '   ' } }],
+      relations: [],
+    })
+    expect(doc.concepts[0]?.data?.elaboration).toEqual({ definition: 'd' })
+  })
+
+  it('validate_graph accepts rich notes documents and rejects alpha string notes', () => {
+    const base = {
+      version: GRAPH_FORMAT_VERSION,
+      vocabulary: { id: VOCABULARY.id, version: VOCABULARY.version },
+      name: 'X',
+      concepts: [
+        {
+          id: 'n1',
+          label: 'A',
+          x: 0,
+          y: 0,
+          data: {
+            elaboration: {
+              definition: 'd',
+              notes: {
+                type: 'doc',
+                content: [{ type: 'paragraph', content: [{ type: 'text', text: 'rich' }] }],
+              },
+            },
+          },
+        },
+      ],
+      relations: [],
+    }
+    expect(validateGraphJson(JSON.stringify(base)).valid).toBe(true)
+
+    const alpha = structuredClone(base)
+    ;(alpha.concepts[0].data.elaboration as Record<string, unknown>).notes = 'legacy string'
+    const result = validateGraphJson(JSON.stringify(alpha))
+    expect(result.valid).toBe(false)
+    expect(result.errors[0]?.message).toMatch(/must be a bounded/)
+  })
+})
+
 describe('newElementId', () => {
   it('generates unique ids with the expected prefix', () => {
     const used = new Set<string>()

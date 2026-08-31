@@ -6,6 +6,7 @@ import {
   serialize,
   VOCABULARY,
   RELATION_TYPE_VALUES,
+  paragraphNotesFromPlainText,
   type ConceptElaboration,
   type NessoGraphDocumentInput,
   type RelationTypeName,
@@ -22,8 +23,16 @@ export interface GraphValidationResult {
   warnings: GraphValidationIssue[]
 }
 
+/** Cap for plain-text notes arriving at the MCP tool boundary. */
+const MCP_NOTES_MAX_CHARS = 20_000
+
 const elaborationSchema = z.object({
   definition: z.string(),
+  notes: z
+    .string()
+    .max(MCP_NOTES_MAX_CHARS)
+    .optional()
+    .describe('Plain-text notes; converted to a minimal paragraph document at this boundary'),
 })
 
 export const relationTypeEnum = z.enum(
@@ -200,6 +209,13 @@ type ResolvedConcept = {
   elaboration?: ConceptElaboration
 }
 
+/** Convert MCP plain-string notes input to the canonical elaboration shape,
+ *  omitting notes when the text is empty or whitespace-only. */
+function toElaboration(input: { definition: string; notes?: string }): ConceptElaboration {
+  const notes = paragraphNotesFromPlainText(input.notes ?? '')
+  return { definition: input.definition, ...(notes !== undefined ? { notes } : {}) }
+}
+
 function normalizeConceptInputs(input: BuildGraphInput['concepts']): ResolvedConcept[] {
   const usedIds = new Set<string>()
   return input.map((item) => {
@@ -213,7 +229,10 @@ function normalizeConceptInputs(input: BuildGraphInput['concepts']): ResolvedCon
       throw new Error(`Duplicate concept id "${id}" in build_graph input`)
     }
     usedIds.add(id)
-    return { id, label: item.text, elaboration: item.elaboration }
+    const elaboration: ConceptElaboration | undefined = item.elaboration
+      ? toElaboration(item.elaboration)
+      : undefined
+    return { id, label: item.text, elaboration }
   })
 }
 
