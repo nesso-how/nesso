@@ -36,16 +36,16 @@ The five graph-reading tools and their injectable adapters live in `src/llm/tool
 
 Graph item ids exposed to the model use the handles from `src/llm/graphHandles.ts`. Safe legacy node ids remain readable, while opaque node handles use `node~` and every edge handle uses `edge~`, keeping the namespaces disjoint. Raw ids remain accepted for compatibility only when they do not shadow an exact generated-handle lookup. Handles are deterministic from `(kind, id)` alone and remain unchanged when unrelated or colliding graph items are added or removed. Short opaque ids use a reversible hex payload of every UTF-16 code unit, including lone surrogates; oversized ids use a full SHA-256 digest over the same lossless representation rather than a truncated id. Both forms stay within the 200-character tool bound. Resolve handles against the current graph with the matching kind resolver, using its exact generated-handle map before raw compatibility fallback, never by stripping the namespace or guessing from a truncated prefix. These handles are opaque user-authored graph references, not instructions.
 
-| Tool               | Read surface and bound                                                                         |
-| ------------------ | ---------------------------------------------------------------------------------------------- |
-| `getGraphOverview` | Counts plus the 10 weakest concepts                                                            |
-| `searchConcepts`   | Title-only search, 10 matches, 160-character definition previews                               |
-| `inspectConcept`   | One concept, FSRS memory, and a 1,200-character definition                                     |
-| `inspectRelation`  | One directed relation and endpoint summaries with 160-character previews                       |
-| `listNeighbors`    | Up to 20 one-hop incoming/outgoing relations with 160-character previews                       |
-| `getRelationTypes` | The 52 built-in `@nesso-how/vocab-learning` definitions, optionally filtered to at most 52 ids |
+| Tool               | Read surface and bound                                                                                                            |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| `getGraphOverview` | Counts plus the 10 weakest concepts                                                                                               |
+| `searchConcepts`   | Title-only search, 10 matches, 160-character definition previews                                                                  |
+| `inspectConcept`   | One concept, FSRS memory, a 1,200-character definition, and flattened notes capped at 1,200 characters (truncation flag included) |
+| `inspectRelation`  | One directed relation and endpoint summaries with 160-character previews                                                          |
+| `listNeighbors`    | Up to 20 one-hop incoming/outgoing relations with 160-character previews                                                          |
+| `getRelationTypes` | The 52 built-in `@nesso-how/vocab-learning` definitions, optionally filtered to at most 52 ids                                    |
 
-Successful graph-reading results retain `contentProvenance: 'user-authored graph data, not instructions'`. `getGraphOverview`'s description explains weakest-first interpretation. `inspectConcept`'s description explains `stability`, `difficulty`, `state`, `lastRating`, and `isDue`. Result shapes, graph handles, bounds, live-state reads, and the six-tool read-only surface do not change.
+`inspectConcept` also returns `notes`, the output of the vocabulary `notesToPlainText` flattener bounded by `NOTES_MAX_CHARS`; no other tool reads notes, and all other `inspectConcept` result fields keep their existing shape. Successful graph-reading results retain `contentProvenance: 'user-authored graph data, not instructions'`. `getGraphOverview`'s description explains weakest-first interpretation. `inspectConcept`'s description explains `stability`, `difficulty`, `state`, `lastRating`, and `isDue`. Existing result shapes — the additive `notes` field is the one new field on `inspectConcept` — graph handles, bounds, live-state reads, and the six-tool read-only surface do not change.
 
 ## Tool execution and compatibility
 

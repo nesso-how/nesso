@@ -2,7 +2,9 @@
 
 Compatibility begins with the first beta baseline: graph envelope format `1`,
 learning vocabulary `0.1.0`, graph-record format `1`, and Zustand persist
-format `1`.
+format `1`. Vocabulary starts at `0.1.0`; the first sequential step moves it
+to `0.2.0` (optional rich notes — the source shape is validated before
+relabeling).
 
 Each data-at-rest format uses an explicit sequential ladder. Every future
 version bump adds exactly one source-version migration and one immutable
@@ -10,8 +12,13 @@ replay fixture. A newer stored version is rejected rather than interpreted
 by an older app.
 
 Pre-baseline alpha data is unsupported. In particular, migration code must
-not restore, strip, preserve, or alias removed `examples`, `notes`, or image
-fields. The current definition-only validator rejects them.
+not restore, strip, preserve, or alias removed `examples`, alpha **string**
+`notes`, or image fields — alpha string `notes` stay rejected everywhere.
+The bounded rich `NotesDocument` is the current `0.2.0` shape: documents
+already declaring `0.2.0` are validated as current input, not migrated. The
+ladder's `0.1.0 → 0.2.0` step migrates only definition-only `0.1.0`
+sources, each gated by the strict `validateDefinitionOnlyElaboration`
+validator (`@nesso-how/vocab-learning`) before the migration relabels it.
 
 ## Three contracts
 
@@ -23,23 +30,23 @@ fields. The current definition-only validator rejects them.
 
 ## Data-at-rest surfaces
 
-| Surface                                                     | Version axis              | Mechanism                                                                | Migration ladder                                   |
-| ----------------------------------------------------------- | ------------------------- | ------------------------------------------------------------------------ | -------------------------------------------------- |
-| Graph `.json` envelope                                      | `GRAPH_FORMAT_VERSION`    | `deserialize` → `migrateEnvelope` (schema package)                       | `ENVELOPE_MIGRATIONS` in `@nesso-how/schema`       |
-| Vocabulary semantics in files                               | `VOCABULARY.version`      | `normalizeGraphDocument` → `migrateVocabulary` (app)                     | `VOCABULARY_MIGRATIONS` in `graphLoadNormalizer`   |
-| IDB graph records (`GraphRecord`)                           | `recordVersion`           | `normalizeGraphRecord` on every IDB load/list                            | `GRAPH_RECORD_MIGRATIONS` in `graphLoadNormalizer` |
-| IDB `reviewState` (FSRS per node)                           | none                      | separate persisted surface; merged after graph-content normalization     | tied to vocabulary ladder                          |
-| IDB **schema** (object stores)                              | idb `v2` (unchanged)      | idempotent `upgrade()` bootstrap (ensure-store-exists, no ladder)        | extend `upgrade()` callback if shape changes       |
-| Zustand persist blob (localStorage `nesso`)                 | `ZUSTAND_PERSIST_VERSION` | `version` + `migrate` in Zustand persist config; `migratePersistedState` | `PERSIST_MIGRATIONS` in `store/persistence.ts`     |
-| Workspace manifest (`.nesso` on disk)                       | `MANIFEST_VERSION` (1)    | default-on-missing                                                       | ladder if shape changes                            |
-| Width keys (`nesso-inspector-width`, `nesso-sidebar-width`) | none                      | trivial scalars                                                          | break cleanly                                      |
-| Trust store (`.nesso-trusted-paths.json`)                   | none                      | JSON array of canonical paths                                            | ladder if shape changes                            |
+| Surface                                                     | Version axis              | Mechanism                                                                | Migration ladder                                                             |
+| ----------------------------------------------------------- | ------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------------------------------- |
+| Graph `.json` envelope                                      | `GRAPH_FORMAT_VERSION`    | `deserialize` → `migrateEnvelope` (schema package)                       | `ENVELOPE_MIGRATIONS` in `@nesso-how/schema`                                 |
+| Vocabulary semantics in files                               | `VOCABULARY.version`      | `normalizeGraphDocument` → `migrateVocabulary` (app)                     | `VOCABULARY_MIGRATIONS` in `graphLoadNormalizer` — contains the `0.1.0` step |
+| IDB graph records (`GraphRecord`)                           | `recordVersion`           | `normalizeGraphRecord` on every IDB load/list                            | `GRAPH_RECORD_MIGRATIONS` in `graphLoadNormalizer`                           |
+| IDB `reviewState` (FSRS per node)                           | none                      | separate persisted surface; merged after graph-content normalization     | tied to vocabulary ladder                                                    |
+| IDB **schema** (object stores)                              | idb `v2` (unchanged)      | idempotent `upgrade()` bootstrap (ensure-store-exists, no ladder)        | extend `upgrade()` callback if shape changes                                 |
+| Zustand persist blob (localStorage `nesso`)                 | `ZUSTAND_PERSIST_VERSION` | `version` + `migrate` in Zustand persist config; `migratePersistedState` | `PERSIST_MIGRATIONS` in `store/persistence.ts`                               |
+| Workspace manifest (`.nesso` on disk)                       | `MANIFEST_VERSION` (1)    | default-on-missing                                                       | ladder if shape changes                                                      |
+| Width keys (`nesso-inspector-width`, `nesso-sidebar-width`) | none                      | trivial scalars                                                          | break cleanly                                                                |
+| Trust store (`.nesso-trusted-paths.json`)                   | none                      | JSON array of canonical paths                                            | ladder if shape changes                                                      |
 
 Runtime and mentor chat remain out of scope.
 
 ## Version axes on graph files
 
-Two separate version axes: `version` is the **envelope shape** (gated by `deserialize` in `@nesso-how/schema`); `vocabulary.version` is the **semantic vocabulary** (validated by `@nesso-how/vocab-learning` and migrated by `graphLoadNormalizer`). `@nesso-how/schema` is vocabulary-agnostic — it manages envelope structure only. `@nesso-how/vocab-learning` validates vocabulary identity and enforces the definition-only elaboration shape.
+Two separate version axes: `version` is the **envelope shape** (gated by `deserialize` in `@nesso-how/schema`); `vocabulary.version` is the **semantic vocabulary** (validated by `@nesso-how/vocab-learning` and migrated by `graphLoadNormalizer`). `@nesso-how/schema` is vocabulary-agnostic — it manages envelope structure only. `@nesso-how/vocab-learning` validates vocabulary identity and enforces the elaboration shape: the `0.2.0` elaboration may carry `notes` as a bounded TipTap JSON document, while alpha string-`notes`/`examples`/image shapes remain rejected.
 
 ## Forward guards
 

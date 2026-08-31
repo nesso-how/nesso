@@ -9,7 +9,7 @@ const VOCABULARY = {
   id: '@nesso-how/vocab-learning',
   name: 'Nesso Learning Vocabulary',
   domain: 'learning',
-  version: '0.1.0', // normative vocabulary version, independent of npm package version
+  version: '0.2.0', // normative vocabulary version, independent of npm package version
 }
 ```
 
@@ -44,15 +44,15 @@ interface NessoGraphDocument {
 
 Two version axes, deliberately separate: `version` is the **envelope shape** (gated by `deserialize` in schema), `vocabulary.version` is the **semantic vocabulary** (`VOCABULARY.version`, independent of the npm package version). `@nesso-how/schema` is vocabulary-agnostic: it round-trips `concepts`/`relations` with opaque `data` and validates structure only. `@nesso-how/vocab-learning` closes the generics and validates `relation.type`. FSRS is runtime-only on nodes — not in graph files; persistence split — see [store.md](store.md) → Persistence.
 
-**First beta baseline.** Envelope format `1` with vocabulary `0.1.0` using the post-#129 definition-only elaboration shape. `GRAPH_FORMAT_VERSION` (in `@nesso-how/schema`, currently `1`) and `VOCABULARY.version` (in `@nesso-how/vocab-learning`, currently `0.1.0`) are versioned independently — the first protected baseline pins them together.
+**First beta baseline.** Envelope format `1` with vocabulary `0.1.0` using the post-#129 definition-only elaboration shape. The first ladder step moves vocabulary `0.1.0 → 0.2.0` (optional bounded notes documents), and `VOCABULARY.version` is now `0.2.0`. `GRAPH_FORMAT_VERSION` (in `@nesso-how/schema`, currently `1`) and `VOCABULARY.version` (in `@nesso-how/vocab-learning`) are versioned independently — the first protected baseline pins them together.
 
 **Ownership boundaries for compatibility:**
 
 - `@nesso-how/schema` (`GRAPH_FORMAT_VERSION = 1`): owns the envelope ladder (`ENVELOPE_MIGRATIONS`). Rejects unversioned documents, malformed versions, and newer envelopes.
-- `@nesso-how/vocab-learning` (`VOCABULARY.version = '0.1.0'`): owns strict vocabulary-identity and elaboration-shape validation. Rejects foreign vocabulary IDs, unsupported versions, and extra elaboration keys (`examples`, `notes`, image fields). Does not migrate vocabulary versions — that belongs to the app normalizer.
+- `@nesso-how/vocab-learning` (`VOCABULARY.version = '0.2.0'`): owns strict vocabulary-identity and elaboration-shape validation. Elaboration is `{ definition, notes? }` where `notes` passes a **block-agnostic** guard (unknown block types pass) and extra keys are still rejected. Rejects foreign vocabulary IDs, unsupported versions, and extra elaboration keys. Exported helpers: `validateNotesDocument`, `validateDefinitionOnlyElaboration`, `notesToPlainText`. Does not migrate vocabulary versions — that belongs to the app normalizer.
 - App `graphLoadNormalizer` (`src/lib/graphLoadNormalizer.ts`): owns vocabulary and graph-record ladders. Calls `deserialize` (envelope) → `migrateVocabulary` → `documentToRenderGraph`. This is the single compatibility boundary for files, seeds, and IDB records.
 
-**Sequential ladders.** Every version bump adds one source-version migration step plus one immutable replay fixture. The initial ladders are empty — the first protected baseline needs no historical steps. Future bumps fill them. See [compatibility.md](compatibility.md) for the full surface table and forward-guard contract.
+**Sequential ladders.** Every version bump adds one source-version migration step plus one immutable replay fixture. The envelope and record ladders are still empty; the vocabulary ladder's first step is `0.1.0 → 0.2.0`. Future bumps fill them. See [compatibility.md](compatibility.md) for the full surface table and forward-guard contract.
 
 ## Node data (`ConceptNodeData`)
 
@@ -72,7 +72,7 @@ interface LearningNodeParams {
 
 interface ConceptNodeData extends LearningNodeParams {
   text: string
-  elaboration?: ConceptElaboration // optional definition for the concept (`{ definition: string }`)
+  elaboration?: ConceptElaboration // optional elaboration (`{ definition: string; notes?: NotesDocument }` — native TipTap JSON, block-agnostic guard)
 }
 ```
 
