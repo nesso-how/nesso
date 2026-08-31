@@ -4,6 +4,7 @@ import { documentToRenderGraph } from '@nesso-how/graph'
 import {
   VOCABULARY,
   deserializeEnvelope,
+  validateDefinitionOnlyElaboration,
   validateNessoDocument,
   type NessoGraphDocument,
 } from '@nesso-how/vocab-learning'
@@ -15,7 +16,28 @@ export { GRAPH_RECORD_VERSION }
 
 type VocabularyMigration = (document: NessoGraphDocument) => NessoGraphDocument
 
-const VOCABULARY_MIGRATIONS: Partial<Record<string, VocabularyMigration>> = {}
+/**
+ * Vocabulary `0.1.0 → 0.2.0`: notes become optional on elaboration. The source
+ * shape is validated BEFORE relabeling so alpha/string/rich `notes` attributed
+ * to `0.1.0` stay rejected (definition-only baseline). No alpha shims.
+ */
+function migrateVocabulary010To020(document: NessoGraphDocument): NessoGraphDocument {
+  if (document.vocabulary === undefined) {
+    throw new Error('Graph document must declare a vocabulary')
+  }
+  for (const concept of document.concepts) {
+    if (concept.data?.elaboration !== undefined) {
+      validateDefinitionOnlyElaboration(concept.data.elaboration)
+    }
+  }
+  return { ...document, vocabulary: { ...document.vocabulary, version: '0.2.0' } }
+}
+
+export const VOCABULARY_MIGRATIONS: Partial<Record<string, VocabularyMigration>> = {
+  '0.1.0': migrateVocabulary010To020,
+}
+
+const MAX_VOCABULARY_MIGRATION_STEPS = 32
 
 type GraphRecordMigration = (record: Record<string, unknown>) => unknown
 
@@ -48,6 +70,8 @@ function isNewerVersion(a: string, b: string): boolean {
 
 function migrateVocabulary(document: NessoGraphDocument): NessoGraphDocument {
   let current = document
+  const visitedVersions = new Set<string>()
+  let migrationSteps = 0
 
   if (current.vocabulary === undefined) {
     throw new Error('Graph document must declare a vocabulary')
@@ -57,6 +81,14 @@ function migrateVocabulary(document: NessoGraphDocument): NessoGraphDocument {
 
   while (true) {
     if (vocab.version === VOCABULARY.version) break
+    if (visitedVersions.has(vocab.version)) {
+      throw new Error(`Vocabulary migration cycle detected at version: ${vocab.version}`)
+    }
+    if (migrationSteps >= MAX_VOCABULARY_MIGRATION_STEPS) {
+      throw new Error('Vocabulary migration exceeded the maximum number of steps')
+    }
+    visitedVersions.add(vocab.version)
+    migrationSteps += 1
 
     const migrate = VOCABULARY_MIGRATIONS[vocab.version]
 
@@ -208,6 +240,19 @@ function validateRecordVocabulary(record: Record<string, unknown>): void {
   }
 }
 
+/** Relabel IDB records carrying vocabulary `0.1.0` metadata to the current
+ * vocabulary, validating the definition-only source shape first. */
+function migrateRecordVocabulary(record: Record<string, unknown>): void {
+  const vocab = asRecord(record.vocabulary)
+  if (!vocab || vocab.version !== '0.1.0') return
+  const nodes = Array.isArray(record.nodes) ? record.nodes : []
+  for (const node of nodes) {
+    const data = asRecord((node as { data?: unknown }).data)
+    if (data?.elaboration !== undefined) validateDefinitionOnlyElaboration(data.elaboration)
+  }
+  vocab.version = VOCABULARY.version
+}
+
 type GraphRecordNode = GraphRecord['nodes'][number]
 type GraphRecordEdge = GraphRecord['edges'][number]
 
@@ -356,8 +401,9 @@ export function normalizeGraphRecord(input: unknown): GraphRecord {
   if (typeof version !== 'number') throw new Error('Unsupported graph-record version: missing')
   if (version > GRAPH_RECORD_VERSION) throw new Error('Graph record is from a newer app version')
 
-  const current = migrateRecordToVersion(input, version)
+  const current = migrateRecordToVersion(structuredClone(input), version)
 
+  migrateRecordVocabulary(current)
   validateRecordVocabulary(current)
 
   if (!isValidGraphRecordShape(current)) throw new Error('Invalid graph record shape')

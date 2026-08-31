@@ -5,6 +5,7 @@ import { VOCABULARY } from '@nesso-how/vocab-learning'
 import baseline from './fixtures/graph-load/v1-vocabulary-0.1.0.json'
 import {
   GRAPH_RECORD_VERSION,
+  VOCABULARY_MIGRATIONS,
   normalizeGraphDocument,
   normalizeGraphRecord,
   normalizeParsedGraphDocument,
@@ -34,7 +35,7 @@ describe('graph load normalization', () => {
     expect(record.recordVersion).toBe(GRAPH_RECORD_VERSION)
     expect(record.vocabulary).toEqual({
       id: '@nesso-how/vocab-learning',
-      version: '0.1.0',
+      version: '0.2.0',
     })
     expect(record.nodes[0]?.data.elaboration).toEqual({
       definition: 'The first protected vocabulary shape.',
@@ -91,11 +92,11 @@ describe('vocabulary compatibility boundary', () => {
 
   it('rejects a document with a newer vocabulary version (forward guard)', () => {
     const json = minimalDoc({
-      vocabulary: { id: VOCABULARY.id, version: '0.2.0' },
+      vocabulary: { id: VOCABULARY.id, version: '99.0.0' },
     })
 
     expect(() => normalizeGraphDocument(json, identity)).toThrow(
-      'Graph document is from a newer vocabulary version: 0.2.0',
+      'Graph document is from a newer vocabulary version: 99.0.0',
     )
   })
 
@@ -121,7 +122,6 @@ describe('vocabulary compatibility boundary', () => {
 
   it.each([
     'examples',
-    'notes',
     'imageUrl',
     'imageTitle',
     'imageDescriptionUrl',
@@ -147,6 +147,161 @@ describe('vocabulary compatibility boundary', () => {
     expect(() => normalizeGraphDocument(json, identity)).toThrow(
       'Concept elaboration must contain only definition',
     )
+  })
+})
+
+describe('vocabulary 0.1.0 → 0.2.0 migration', () => {
+  it('accepts rich notes on a current 0.2.0 document', () => {
+    const notes = {
+      type: 'doc',
+      content: [
+        {
+          type: 'callout',
+          content: [{ type: 'paragraph', content: [{ type: 'text', text: 'note' }] }],
+        },
+      ],
+    }
+    const record = normalizeGraphDocument(
+      minimalDoc({
+        concepts: [
+          {
+            id: 'n1',
+            label: 'C',
+            x: 0,
+            y: 0,
+            data: { elaboration: { definition: 'ok', notes } },
+          },
+        ],
+      }),
+      identity,
+    )
+
+    expect(record.nodes[0]?.data.elaboration).toEqual({ definition: 'ok', notes })
+  })
+
+  it('migrates a 0.1.0 document with definition-only elaboration to 0.2.0', () => {
+    const json = minimalDoc({
+      vocabulary: { id: VOCABULARY.id, version: '0.1.0' },
+      concepts: [{ id: 'n1', label: 'C', x: 0, y: 0, data: { elaboration: { definition: 'ok' } } }],
+    })
+    const record = normalizeGraphDocument(json, identity)
+    expect(record.vocabulary).toEqual({ id: VOCABULARY.id, version: '0.2.0' })
+  })
+
+  it.each([
+    ['alpha string notes', 'legacy plain string'],
+    ['rich notes doc', { type: 'doc', content: [] }],
+  ])('rejects a 0.1.0 document whose elaboration carries %s', (_name, notes) => {
+    const json = minimalDoc({
+      vocabulary: { id: VOCABULARY.id, version: '0.1.0' },
+      concepts: [
+        {
+          id: 'n1',
+          label: 'C',
+          x: 0,
+          y: 0,
+          data: { elaboration: { definition: 'ok', notes } },
+        },
+      ],
+    })
+    expect(() => normalizeGraphDocument(json, identity)).toThrow(
+      'Concept elaboration must contain only definition',
+    )
+  })
+
+  it('relabels a 0.1.0 IDB record and keeps definition-only content', () => {
+    const record = normalizeGraphDocument(minimalDoc(), identity)
+    const input = {
+      ...record,
+      vocabulary: { id: VOCABULARY.id, version: '0.1.0' },
+      nodes: [
+        {
+          id: 'n1',
+          type: 'concept',
+          position: { x: 0, y: 0 },
+          data: { text: 'A', elaboration: { definition: 'kept' } },
+        },
+      ],
+    }
+    const original = structuredClone(input)
+    const relabeled = normalizeGraphRecord(input)
+
+    expect(relabeled.vocabulary.version).toBe('0.2.0')
+    expect(relabeled.nodes[0]?.data.elaboration).toEqual({ definition: 'kept' })
+    expect(input).toEqual(original)
+  })
+
+  it('rejects a 0.1.0-labeled IDB record carrying rich notes', () => {
+    const record = normalizeGraphDocument(minimalDoc(), identity)
+    const input = {
+      ...record,
+      vocabulary: { id: VOCABULARY.id, version: '0.1.0' },
+      nodes: [
+        {
+          id: 'n1',
+          type: 'concept',
+          position: { x: 0, y: 0 },
+          data: {
+            text: 'A',
+            elaboration: { definition: 'ok', notes: { type: 'doc', content: [] } },
+          },
+        },
+      ],
+    }
+    const original = structuredClone(input)
+
+    expect(() => normalizeGraphRecord(input)).toThrow(
+      'Concept elaboration must contain only definition',
+    )
+    expect(input).toEqual(original)
+  })
+
+  it('leaves a malformed 0.1.0 IDB record unchanged when deep validation fails', () => {
+    const record = normalizeGraphDocument(minimalDoc(), identity)
+    const input = {
+      ...record,
+      vocabulary: { id: VOCABULARY.id, version: '0.1.0' },
+      nodes: [
+        {
+          id: 'n1',
+          type: 'concept',
+          position: { x: 0, y: 0 },
+          data: {},
+        },
+      ],
+    }
+    const original = structuredClone(input)
+
+    expect(() => normalizeGraphRecord(input)).toThrow('node missing text')
+    expect(input).toEqual(original)
+  })
+
+  it('rejects a cyclic vocabulary migration ladder', () => {
+    const original010 = VOCABULARY_MIGRATIONS['0.1.0']
+    const original030 = VOCABULARY_MIGRATIONS['0.3.0']
+
+    VOCABULARY_MIGRATIONS['0.1.0'] = (document) => ({
+      ...document,
+      vocabulary: { ...document.vocabulary!, version: '0.3.0' },
+    })
+    VOCABULARY_MIGRATIONS['0.3.0'] = (document) => ({
+      ...document,
+      vocabulary: { ...document.vocabulary!, version: '0.1.0' },
+    })
+
+    try {
+      expect(() =>
+        normalizeGraphDocument(
+          minimalDoc({ vocabulary: { id: VOCABULARY.id, version: '0.1.0' } }),
+          identity,
+        ),
+      ).toThrow('Vocabulary migration cycle detected at version: 0.1.0')
+    } finally {
+      if (original010 === undefined) delete VOCABULARY_MIGRATIONS['0.1.0']
+      else VOCABULARY_MIGRATIONS['0.1.0'] = original010
+      if (original030 === undefined) delete VOCABULARY_MIGRATIONS['0.3.0']
+      else VOCABULARY_MIGRATIONS['0.3.0'] = original030
+    }
   })
 })
 
@@ -253,7 +408,7 @@ describe('normalizeGraphRecord strict shape validation', () => {
     expect(() => normalizeGraphRecord(bad)).toThrow('elaboration')
   })
 
-  it('rejects a record with node elaboration containing removed alpha "notes" field', () => {
+  it('rejects a record with node elaboration containing an invalid notes document', () => {
     const bad = validRecord({
       nodes: [
         {
@@ -267,7 +422,7 @@ describe('normalizeGraphRecord strict shape validation', () => {
         },
       ],
     })
-    expect(() => normalizeGraphRecord(bad)).toThrow('elaboration')
+    expect(() => normalizeGraphRecord(bad)).toThrow('must be a bounded')
   })
 
   it('rejects a record with node elaboration containing removed alpha "imageUrl" field', () => {
