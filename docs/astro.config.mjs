@@ -50,6 +50,7 @@ export default defineConfig({
           label: 'Guides',
           items: [
             { label: 'Building a graph', slug: 'docs/guides/building-a-graph' },
+            { label: 'Writing mode', slug: 'docs/guides/writing-mode' },
             { label: 'Graph management', slug: 'docs/guides/graph-management' },
             { label: 'Review mode', slug: 'docs/guides/review-mode' },
             { label: 'AI mentor', slug: 'docs/guides/ai-mentor' },

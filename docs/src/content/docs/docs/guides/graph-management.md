@@ -42,10 +42,12 @@ upgraded through sequential compatibility steps. A file created by a newer
 unsupported Nesso version is rejected so its data is not interpreted
 incorrectly.
 
-The first supported baseline is the definition-only graph shape introduced
-before `0.2.0-beta.0`. Earlier alpha-only `examples`, `notes`, and image
-fields are not migrated. Review scheduling state is stored separately and is
-not included in exported graph files.
+The first supported baseline is vocabulary `0.1.0`, the definition-only graph
+shape introduced before `0.2.0-beta.0`. The current vocabulary `0.2.0` adds
+optional rich notes to concept elaborations. Files declaring vocabulary
+`0.1.0` migrate automatically on load. Removed alpha-only `examples`, string
+`notes`, and image fields stay rejected, never migrated. Review scheduling
+state is stored separately and is not included in exported graph files.
 
 ## Desktop projects
 
