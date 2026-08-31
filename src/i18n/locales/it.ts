@@ -127,10 +127,9 @@ const it: typeof en = {
     },
   },
   writing: {
-    pill: 'Modalità scrittura',
     close: 'Chiudi modalità scrittura',
     placeholder: 'Spiegalo con parole tue…',
-    words: (n: number) => `${n} ${n === 1 ? 'parola' : 'parole'}`,
+    snippetsMenu: 'Snippet',
     snippets: {
       heading2: 'Titolo 2',
       heading2Desc: 'Titolo di sezione',
@@ -174,7 +173,6 @@ const it: typeof en = {
       definition: 'Definizione',
       definitionPlaceholder: 'Con parole tue…',
       section: 'Note',
-      empty: 'Ancora nessuna nota',
       write: 'Scrivi',
     },
     actions: {

@@ -126,10 +126,9 @@ const en = {
     },
   },
   writing: {
-    pill: 'Writing mode',
     close: 'Close writing mode',
     placeholder: 'Explain this in your own words…',
-    words: (n: number) => `${n} ${n === 1 ? 'word' : 'words'}`,
+    snippetsMenu: 'Snippets',
     snippets: {
       heading2: 'Heading 2',
       heading2Desc: 'Section title',
@@ -173,7 +172,6 @@ const en = {
       definition: 'Definition',
       definitionPlaceholder: 'In your own words…',
       section: 'Notes',
-      empty: 'No notes yet',
       write: 'Write',
     },
     actions: {

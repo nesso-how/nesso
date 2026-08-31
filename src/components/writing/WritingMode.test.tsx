@@ -34,7 +34,7 @@ const notes = (text: string): NotesDocument => ({
   content: [{ type: 'paragraph', content: [{ type: 'text', text }] }],
 })
 
-function conceptNode(id: string) {
+function conceptNode(id: string, definition = 'The active construction of meaning.') {
   return {
     id,
     type: 'concept',
@@ -50,7 +50,7 @@ function conceptNode(id: string) {
       lastReview: 0,
       lastRating: 0,
       elaboration: {
-        definition: 'The active construction of meaning.',
+        definition,
         notes: notes('some words'),
       },
     },
@@ -104,7 +104,7 @@ function typeIntoEditor(text: string) {
 }
 
 describe('WritingMode', () => {
-  it('renders the pill, breadcrumb, and live word count; close returns control', async () => {
+  it('renders an X-only header with the node-name title; close returns control', async () => {
     const onClose = vi.fn()
     root!.render(<WritingMode nodeId="n1" onClose={onClose} />)
     await tick()
@@ -114,26 +114,36 @@ describe('WritingMode', () => {
     // the writing surface, the Inspector stays visible docked on the right.
     expect(dialog?.getAttribute('role')).toBe('dialog')
     expect(dialog?.getAttribute('aria-modal')).toBe('true')
-    expect(document.body.textContent).toContain(en.writing.pill)
-    expect(document.body.textContent).toContain('Understanding')
-    expect(document.querySelector('[data-testid="writing-mode-words"]')?.textContent).toContain('2')
+    // Header keeps ONLY the close X: no pill, no breadcrumb, no word count.
+    expect(document.querySelector('[data-testid="writing-mode-words"]')).toBeNull()
+    expect(document.body.textContent).not.toContain(en.writing.snippetsMenu)
+    // The H1 title carries the node name.
+    const title = document.querySelector('[data-testid="writing-mode-title"]')
+    expect(title?.tagName).toBe('H1')
+    expect(title?.textContent).toBe('Understanding')
     // CloseButton renders its own <button> inside the testid wrapper span.
     document.querySelector<HTMLButtonElement>('[data-testid="writing-mode-close"] button')!.click()
     expect(onClose).toHaveBeenCalled()
   })
 
+  it('shows the node definition as read-only context below the title', async () => {
+    root!.render(<WritingMode nodeId="n1" onClose={() => {}} />)
+    await tick()
+    const context = document.querySelector('[data-testid="writing-mode-definition"]')
+    expect(context).not.toBeNull()
+    expect(context?.textContent).toBe('The active construction of meaning.')
+  })
+
+  it('hides the definition context when the node has no definition', async () => {
+    useGraphStore.setState({ nodes: [conceptNode('n1', '')] })
+    root!.render(<WritingMode nodeId="n1" onClose={() => {}} />)
+    await tick()
+    expect(document.querySelector('[data-testid="writing-mode-definition"]')).toBeNull()
+  })
+
   it('renders nothing when the node no longer exists (deleted while writing)', () => {
     root!.render(<WritingMode nodeId="ghost" onClose={() => {}} />)
     expect(document.querySelector('[data-testid="writing-mode"]')).toBeNull()
-  })
-
-  it('updates the word count live as the user types', async () => {
-    root!.render(<WritingMode nodeId="n1" onClose={() => {}} />)
-    await tick()
-    expect(document.querySelector('[data-testid="writing-mode-words"]')?.textContent).toContain('2')
-    typeIntoEditor(' more')
-    await tick()
-    expect(document.querySelector('[data-testid="writing-mode-words"]')?.textContent).toContain('3')
   })
 
   it('closes on Escape', async () => {

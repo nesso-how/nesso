@@ -11,12 +11,15 @@ test('writing mode: open from inspector, write, insert callout via /, close, per
   await expect(nodes(page).first()).toBeVisible()
   await createConceptAt(page, 0.3, 0.5, 'Alpha')
 
-  // Open Writing Mode from the Inspector NOTES section.
+  // Open Writing Mode from the Inspector NOTES section (entry point only —
+  // the Inspector shows no notes preview).
   await nodeByText(page, 'Alpha').click()
   await expect(page.getByTestId('inspector-notes-write')).toBeVisible()
-  await expect(page.getByTestId('inspector-notes-preview')).toContainText(/No notes yet/i)
+  await expect(page.getByTestId('inspector-notes-preview')).toHaveCount(0)
   await page.getByTestId('inspector-notes-write').click()
   await expect(page.getByTestId('writing-mode')).toBeVisible()
+  // The content column opens with an H1 of the node name as context.
+  await expect(page.getByTestId('writing-mode-title')).toHaveText('Alpha')
   // The TipTap editor mounts asynchronously after the overlay; wait for the
   // editable surface before typing so keystrokes land in the document.
   await expect(page.locator('.writing-editor .ProseMirror')).toBeVisible()
@@ -39,13 +42,18 @@ test('writing mode: open from inspector, write, insert callout via /, close, per
   // IndexedDB before reloading.
   await page.keyboard.press('Escape')
   await expect(page.getByTestId('writing-mode')).toHaveCount(0)
-  await expect(page.getByTestId('inspector-notes-preview')).toContainText('Key takeaway')
   await page.waitForTimeout(1000)
 
-  // Reload → notes persist through the existing autosave path.
+  // Reload → notes persist through the existing autosave path. The Inspector
+  // has no notes preview, so persistence is verified by REOPENING Writing
+  // Mode and reading the text and callout inside the editor.
   await page.reload()
   await expect(page.locator('.react-flow__pane')).toBeVisible()
   await nodeByText(page, 'Alpha').click()
-  await expect(page.getByTestId('inspector-notes-preview')).toContainText('Key takeaway')
   await expect(page.getByTestId('inspector-notes-write')).toBeVisible()
+  await page.getByTestId('inspector-notes-write').click()
+  await expect(page.getByTestId('writing-mode')).toBeVisible()
+  await expect(page.getByTestId('writing-mode-title')).toHaveText('Alpha')
+  await expect(page.locator('.writing-editor .ProseMirror')).toContainText('First thought')
+  await expect(page.locator('.writing-callout')).toContainText('Key takeaway')
 })

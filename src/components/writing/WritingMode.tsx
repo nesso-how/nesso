@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MIT
-import { useCallback, useEffect, useState } from 'react'
-import { countNotesWords } from '@nesso-how/vocab-learning'
+import { useCallback, useEffect } from 'react'
 import { useGraphStore } from '@/store'
 import { useT } from '@/i18n'
 import { CloseButton } from '@/components/ui/CloseButton'
@@ -13,6 +12,11 @@ interface Props {
   onClose: () => void
 }
 
+// WritingEditor requires an onWordCountChange callback, but the header no
+// longer shows a word count: a stable no-op keeps the editor's contract intact
+// without state or re-renders here.
+const noop = () => {}
+
 /**
  * Canvas-area Writing Mode (ReviewMode pattern): a translucent modal overlay
  * with the writing surface as the dialog card, so the node Inspector stays
@@ -24,11 +28,7 @@ interface Props {
 export function WritingMode({ nodeId, onClose }: Props) {
   const t = useT()
   const node = useGraphStore((s) => s.nodes.find((n) => n.id === nodeId) ?? null)
-  const graphName = useGraphStore(
-    (s) => s.graphList.find((g) => g.id === s.currentGraphId)?.name ?? '',
-  )
   const updateNodeData = useGraphStore((s) => s.updateNodeData)
-  const [words, setWords] = useState(() => countNotesWords(node?.data.elaboration?.notes))
 
   // Memoized so word-count re-renders never churn the editor's props. Reads the
   // node's CURRENT definition from the store at commit time — the definition may
@@ -120,73 +120,15 @@ export function WritingMode({ nodeId, onClose }: Props) {
             flexShrink: 0,
             display: 'flex',
             alignItems: 'center',
-            gap: 'var(--space-4)',
+            justifyContent: 'flex-end',
             padding: '10px 18px',
             borderBottom: '0.5px solid var(--line)',
           }}
         >
-          <span
-            style={{
-              fontSize: '10px',
-              fontWeight: 600,
-              fontFamily: 'var(--font-mono)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.1em',
-              color: 'var(--paper)',
-              background: 'var(--ink-2)',
-              padding: '3px 8px',
-              borderRadius: 'var(--radius-pill)',
-            }}
-          >
-            {t.writing.pill}
-          </span>
-          <span
-            style={{
-              fontSize: '12px',
-              fontFamily: 'var(--font-sans)',
-              color: 'var(--ink-3)',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {graphName ? `${graphName} / ` : ''}
-            {node.data.text}
-          </span>
-          <span
-            data-testid="writing-mode-words"
-            style={{
-              marginLeft: 'auto',
-              fontSize: '11px',
-              fontFamily: 'var(--font-mono)',
-              color: 'var(--ink-4)',
-            }}
-          >
-            {t.writing.words(words)}
-          </span>
           <span data-testid="writing-mode-close">
-            <CloseButton onClick={onClose} />
+            <CloseButton onClick={onClose} label={t.writing.close} />
           </span>
         </div>
-
-        {definition.trim() !== '' && (
-          <div
-            style={{
-              flexShrink: 0,
-              width: '100%',
-              maxWidth: 680,
-              margin: '0 auto',
-              padding: '18px 24px 0',
-              fontSize: '12.5px',
-              lineHeight: 1.5,
-              fontFamily: 'var(--font-display)',
-              color: 'var(--ink-4)',
-              fontStyle: 'italic',
-            }}
-          >
-            {definition}
-          </div>
-        )}
 
         <div
           className="nesso-scrollbar"
@@ -199,17 +141,47 @@ export function WritingMode({ nodeId, onClose }: Props) {
           }}
         >
           <div style={{ width: '100%', maxWidth: 680, padding: '18px 24px 48px' }}>
-            <WritingEditor
-              key={nodeId}
-              identityKey={nodeId}
-              definition={definition}
-              placeholder={t.writing.placeholder}
-              initialNotes={node.data.elaboration?.notes}
-              onCommit={commit}
-              onWordCountChange={setWords}
-              snippets={t.writing.snippets}
-              menuLabel={t.writing.pill}
-            />
+            <h1
+              data-testid="writing-mode-title"
+              style={{
+                margin: 0,
+                fontSize: '24px',
+                fontWeight: 500,
+                lineHeight: 1.25,
+                fontFamily: 'var(--font-display)',
+                letterSpacing: '-0.01em',
+                color: 'var(--ink)',
+              }}
+            >
+              {node.data.text}
+            </h1>
+            {definition.trim() !== '' && (
+              <div
+                data-testid="writing-mode-definition"
+                style={{
+                  marginTop: 10,
+                  fontSize: '13px',
+                  lineHeight: 1.55,
+                  fontFamily: 'var(--font-display)',
+                  color: 'var(--ink-4)',
+                }}
+              >
+                {definition}
+              </div>
+            )}
+            <div style={{ marginTop: 18 }}>
+              <WritingEditor
+                key={nodeId}
+                identityKey={nodeId}
+                definition={definition}
+                placeholder={t.writing.placeholder}
+                initialNotes={node.data.elaboration?.notes}
+                onCommit={commit}
+                onWordCountChange={noop}
+                snippets={t.writing.snippets}
+                menuLabel={t.writing.snippetsMenu}
+              />
+            </div>
           </div>
         </div>
       </div>

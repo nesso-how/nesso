@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MIT
 import { type CSSProperties } from 'react'
-import { countNotesWords, notesToPlainText } from '@nesso-how/vocab-learning'
 import { RELATION_TYPES, RELATION_CATEGORY_COLORS, asRelationTypeName } from '@/data/relationTypes'
 import { withDefinition } from '@/lib/elaboration'
 import { useGraphStore, selectedNodeSelector } from '@/store'
@@ -252,21 +251,17 @@ export function NodeInspector({
           />
         </div>
 
-        {/* Notes — read-only preview; editing happens in Writing Mode */}
+        {/* Notes — entry point only; reading and editing happen in Writing Mode */}
         <div data-testid="inspector-notes-section">
           <div
             style={{
               ...LABEL_STYLE,
-              marginBottom: 6,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
             }}
           >
-            <span>
-              {t.inspector.notes.section}
-              {elab?.notes !== undefined ? ` · ${countNotesWords(elab.notes)}` : ''}
-            </span>
+            <span>{t.inspector.notes.section}</span>
             <button
               type="button"
               data-testid="inspector-notes-write"
@@ -286,23 +281,6 @@ export function NodeInspector({
             >
               {t.inspector.notes.write}
             </button>
-          </div>
-          <div
-            data-testid="inspector-notes-preview"
-            style={{
-              fontSize: '12.5px',
-              lineHeight: 1.5,
-              fontFamily: 'var(--font-display)',
-              color: 'var(--ink-4)',
-              fontStyle: 'italic',
-              whiteSpace: 'pre-wrap',
-            }}
-          >
-            {(() => {
-              const preview = notesToPlainText(elab?.notes)
-              if (!preview) return t.inspector.notes.empty
-              return preview.length > 140 ? `${preview.slice(0, 139)}…` : preview
-            })()}
           </div>
         </div>
 
