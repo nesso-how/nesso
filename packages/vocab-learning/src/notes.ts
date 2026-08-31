@@ -4,26 +4,35 @@ import type { NotesDocument } from './graphDocument.js'
 export const NOTES_MAX_DEPTH = 8
 export const NOTES_MAX_SERIALIZED_CHARS = 100_000
 
-function depthAtMost(value: unknown, depth: number, ancestors: Set<object>): boolean {
-  if (depth > NOTES_MAX_DEPTH) return false
-  if (
+/** Note payloads may never carry these values: undefined, functions, symbols,
+ *  bigints (they serialize lossily or not at all). */
+function isDisallowedValue(value: unknown): boolean {
+  return (
     typeof value === 'undefined' ||
     typeof value === 'function' ||
     typeof value === 'symbol' ||
     typeof value === 'bigint'
-  ) {
-    return false
+  )
+}
+
+/** Recurse into array/object children at `depth` with cycle tracking. */
+function childrenAtMost(value: object, depth: number, ancestors: Set<object>): boolean {
+  if (Array.isArray(value)) {
+    return value.every((item) => depthAtMost(item, depth, ancestors))
   }
-  if (typeof value === 'number' && !Number.isFinite(value)) return false
+  return Object.values(value).every((child) => depthAtMost(child, depth, ancestors))
+}
+
+function depthAtMost(value: unknown, depth: number, ancestors: Set<object>): boolean {
+  if (depth > NOTES_MAX_DEPTH) return false
+  if (isDisallowedValue(value)) return false
+  if (typeof value === 'number') return Number.isFinite(value)
   if (typeof value !== 'object' || value === null) return true
   if (ancestors.has(value)) return false
 
   ancestors.add(value)
   try {
-    if (Array.isArray(value)) {
-      return value.every((item) => depthAtMost(item, depth + 1, ancestors))
-    }
-    return Object.values(value).every((child) => depthAtMost(child, depth + 1, ancestors))
+    return childrenAtMost(value, depth + 1, ancestors)
   } finally {
     ancestors.delete(value)
   }

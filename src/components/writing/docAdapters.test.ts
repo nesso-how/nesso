@@ -3,9 +3,15 @@ import type { JSONContent } from '@tiptap/core'
 import { describe, expect, it } from 'vitest'
 import { asNotesDocument, commitDoc, toEditableDoc } from './docAdapters'
 
+// The degradation boundary is exercised exactly as production enters it:
+// editor-shaped JSON (which may contain block types the current vocabulary
+// does not know yet) goes through the structural `asNotesDocument` adapter
+// before `toEditableDoc`. Fixtures are typed `JSONContent`, so no casts.
+const toEditable = (doc: JSONContent) => toEditableDoc(asNotesDocument(doc))
+
 describe('toEditableDoc', () => {
   it('degrades unknown block types to paragraphs with their text', () => {
-    const doc = toEditableDoc({
+    const doc = toEditable({
       type: 'doc',
       content: [
         {
@@ -14,14 +20,14 @@ describe('toEditableDoc', () => {
         },
         { type: 'paragraph', content: [{ type: 'text', text: 'after' }] },
       ],
-    } as never)
+    })
     expect(doc.content?.[0]?.type).toBe('paragraph')
     expect(JSON.stringify(doc)).toContain('keep me')
     expect(JSON.stringify(doc)).not.toContain('futureBlock')
   })
 
   it('keeps known block types untouched', () => {
-    const doc = toEditableDoc({
+    const doc = toEditable({
       type: 'doc',
       content: [
         {
@@ -29,14 +35,14 @@ describe('toEditableDoc', () => {
           content: [{ type: 'paragraph', content: [{ type: 'text', text: 'c' }] }],
         },
       ],
-    } as never)
+    })
     expect(doc.content?.[0]?.type).toBe('callout')
   })
 })
 
 describe('toEditableDoc — lossless degradation', () => {
   it('preserves adjacent marked text verbatim inside unknown blocks (no join, no trim)', () => {
-    const doc = toEditableDoc({
+    const doc = toEditable({
       type: 'doc',
       content: [
         {
@@ -48,7 +54,7 @@ describe('toEditableDoc — lossless degradation', () => {
           ],
         },
       ],
-    } as never)
+    })
     expect(doc.content).toEqual([
       {
         type: 'paragraph',
@@ -62,7 +68,7 @@ describe('toEditableDoc — lossless degradation', () => {
   })
 
   it('does not insert spaces between adjacent inline text nodes', () => {
-    const doc = toEditableDoc({
+    const doc = toEditable({
       type: 'doc',
       content: [
         {
@@ -73,7 +79,7 @@ describe('toEditableDoc — lossless degradation', () => {
           ],
         },
       ],
-    } as never)
+    })
     expect(doc.content?.[0]?.content).toEqual([
       { type: 'text', text: 'ab' },
       { type: 'text', text: 'cd' },
@@ -81,17 +87,17 @@ describe('toEditableDoc — lossless degradation', () => {
   })
 
   it('preserves direct text on unknown leaf nodes without trimming', () => {
-    const doc = toEditableDoc({
+    const doc = toEditable({
       type: 'doc',
       content: [{ type: 'futureStamp', text: '  padded  ' }],
-    } as never)
+    })
     expect(doc.content).toEqual([
       { type: 'paragraph', content: [{ type: 'text', text: '  padded  ' }] },
     ])
   })
 
   it('splits unknown block content into separate paragraphs at block boundaries', () => {
-    const doc = toEditableDoc({
+    const doc = toEditable({
       type: 'doc',
       content: [
         {
@@ -103,7 +109,7 @@ describe('toEditableDoc — lossless degradation', () => {
           ],
         },
       ],
-    } as never)
+    })
     expect(doc.content).toEqual([
       { type: 'paragraph', content: [{ type: 'text', text: 'one' }] },
       { type: 'paragraph', content: [{ type: 'text', text: 'two' }] },
@@ -112,7 +118,7 @@ describe('toEditableDoc — lossless degradation', () => {
   })
 
   it('keeps inline runs and nested blocks as distinct paragraphs inside unknown blocks', () => {
-    const doc = toEditableDoc({
+    const doc = toEditable({
       type: 'doc',
       content: [
         {
@@ -123,7 +129,7 @@ describe('toEditableDoc — lossless degradation', () => {
           ],
         },
       ],
-    } as never)
+    })
     expect(doc.content).toEqual([
       { type: 'paragraph', content: [{ type: 'text', text: 'intro' }] },
       { type: 'paragraph', content: [{ type: 'text', text: 'body' }] },
@@ -131,7 +137,7 @@ describe('toEditableDoc — lossless degradation', () => {
   })
 
   it('degrades nested unknown blocks at their boundaries', () => {
-    const doc = toEditableDoc({
+    const doc = toEditable({
       type: 'doc',
       content: [
         {
@@ -139,12 +145,12 @@ describe('toEditableDoc — lossless degradation', () => {
           content: [{ type: 'futureInner', content: [{ type: 'text', text: 'deep' }] }],
         },
       ],
-    } as never)
+    })
     expect(doc.content).toEqual([{ type: 'paragraph', content: [{ type: 'text', text: 'deep' }] }])
   })
 
   it('passes known paragraph inline content through verbatim (hardBreak, spacing, marks)', () => {
-    const doc = toEditableDoc({
+    const doc = toEditable({
       type: 'doc',
       content: [
         {
@@ -156,7 +162,7 @@ describe('toEditableDoc — lossless degradation', () => {
           ],
         },
       ],
-    } as never)
+    })
     expect(doc.content?.[0]).toEqual({
       type: 'paragraph',
       content: [
@@ -168,12 +174,12 @@ describe('toEditableDoc — lossless degradation', () => {
   })
 
   it('degrades an empty unknown block to nothing', () => {
-    const doc = toEditableDoc({ type: 'doc', content: [{ type: 'futureEmpty' }] } as never)
+    const doc = toEditable({ type: 'doc', content: [{ type: 'futureEmpty' }] })
     expect(doc.content).toEqual([])
   })
 
   it('carries marks through when degrading unknown leaves with direct text', () => {
-    const doc = toEditableDoc({
+    const doc = toEditable({
       type: 'doc',
       content: [
         { type: 'futureStamp', text: 'hi', marks: [{ type: 'bold' }] },
@@ -182,7 +188,7 @@ describe('toEditableDoc — lossless degradation', () => {
           content: [{ type: 'futureMention', text: ' yo', marks: [{ type: 'italic' }] }],
         },
       ],
-    } as never)
+    })
     expect(doc.content).toEqual([
       {
         type: 'paragraph',
@@ -196,8 +202,8 @@ describe('toEditableDoc — lossless degradation', () => {
   })
 
   it('deep-copies marks so degraded output never aliases the input document', () => {
-    const marks: JSONContent[] = [{ type: 'bold', attrs: { level: 1 } }]
-    const doc = toEditableDoc({
+    const marks: NonNullable<JSONContent['marks']> = [{ type: 'bold', attrs: { level: 1 } }]
+    const doc = toEditable({
       type: 'doc',
       content: [
         { type: 'futureStamp', text: 'hi', marks },
@@ -206,7 +212,7 @@ describe('toEditableDoc — lossless degradation', () => {
           content: [{ type: 'futureMention', text: ' yo', marks }],
         },
       ],
-    } as never)
+    })
 
     // Array identity: the degraded copy is a fresh array, not the source's.
     const degraded = doc.content?.[0]?.content?.[0]?.marks
@@ -225,10 +231,26 @@ describe('toEditableDoc — lossless degradation', () => {
     expect(marks[0]?.type).toBe('bold')
     expect((marks[0]?.attrs as { level: number }).level).toBe(1)
     expect(marks).toHaveLength(1)
+  })
+
+  it('gives the nested unknown leaf its own independent marks copy', () => {
+    const marks: NonNullable<JSONContent['marks']> = [{ type: 'bold', attrs: { level: 1 } }]
+    const doc = toEditable({
+      type: 'doc',
+      content: [
+        { type: 'futureStamp', text: 'hi', marks },
+        {
+          type: 'futureBlock',
+          content: [{ type: 'futureMention', text: ' yo', marks }],
+        },
+      ],
+    })
 
     // The nested unknown leaf inside the block gets its own copy of the same
-    // shared source array, independent of both it and the first leaf.
+    // shared source array, independent of both it and the first leaf's copy.
+    const degraded = doc.content?.[0]?.content?.[0]?.marks
     const nested = doc.content?.[1]?.content?.[0]?.marks
+    if (!degraded) throw new Error('expected degraded marks')
     if (!nested) throw new Error('expected nested marks')
     expect(nested).not.toBe(marks)
     expect(nested).not.toBe(degraded)
@@ -237,8 +259,8 @@ describe('toEditableDoc — lossless degradation', () => {
   })
 
   it('deep-copies marks on pass-through text nodes sharing one source array', () => {
-    const marks: JSONContent[] = [{ type: 'bold', attrs: { level: 1 } }]
-    const doc = toEditableDoc({
+    const marks: NonNullable<JSONContent['marks']> = [{ type: 'bold', attrs: { level: 1 } }]
+    const doc = toEditable({
       type: 'doc',
       content: [
         {
@@ -249,7 +271,7 @@ describe('toEditableDoc — lossless degradation', () => {
           ],
         },
       ],
-    } as never)
+    })
 
     const first = doc.content?.[0]?.content?.[0]
     const second = doc.content?.[0]?.content?.[1]
@@ -285,17 +307,17 @@ describe('commitDoc', () => {
   })
 
   it('keeps documents with text', () => {
-    const doc = {
+    const doc: JSONContent = {
       type: 'doc',
       content: [{ type: 'paragraph', content: [{ type: 'text', text: 'x' }] }],
     }
-    expect(commitDoc(doc as never)).toEqual(doc)
+    expect(commitDoc(doc)).toEqual(doc)
   })
 })
 
 describe('asNotesDocument', () => {
   it('casts editor JSONContent into the vocabulary NotesDocument shape', () => {
-    const json = { type: 'doc', content: [] }
-    expect(asNotesDocument(json as never)).toEqual({ type: 'doc', content: [] })
+    const json: JSONContent = { type: 'doc', content: [] }
+    expect(asNotesDocument(json)).toEqual({ type: 'doc', content: [] })
   })
 })

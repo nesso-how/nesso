@@ -49,6 +49,57 @@ function writingModeAfterRestore(
   return nodes.some((n) => n.id === writingModeNodeId) ? writingModeNodeId : null
 }
 
+/** Writing Mode target after a selection delete: the overlay closes only when
+ *  the concept being written is among the deleted nodes. */
+function writingModeAfterNodeDeletion(
+  writingModeNodeId: string | null,
+  deletedNodeIds: ReadonlySet<string>,
+): string | null {
+  return writingModeNodeId !== null && deletedNodeIds.has(writingModeNodeId)
+    ? null
+    : writingModeNodeId
+}
+
+/** The single-anchor selection implied by a React Flow selection, or null. */
+function flowAnchorSelection(
+  nodeIds: readonly string[],
+  edgeIds: readonly string[],
+): import('../types').Selection {
+  if (nodeIds.length === 1 && edgeIds.length === 0) return { kind: 'node', id: nodeIds[0] }
+  if (edgeIds.length === 1 && nodeIds.length === 0) return { kind: 'edge', id: edgeIds[0] }
+  return null
+}
+
+/** True when two selections anchor the same node/edge (both null counts). */
+function sameAnchorSelection(
+  a: import('../types').Selection,
+  b: import('../types').Selection,
+): boolean {
+  return (a?.kind === b?.kind && a?.id === b?.id) || (a === null && b === null)
+}
+
+/** True when the flow's selected ids match the store's exactly. */
+function sameMembers(ids: readonly string[], current: readonly string[]): boolean {
+  return ids.length === current.length && ids.every((id) => current.includes(id))
+}
+
+/** Ids a delete should remove: the multi-selection ids, the single-anchor
+ *  selection, and any edge whose React Flow `selected` flag is set. */
+function collectDeleteIds(s: {
+  selectedIds: string[]
+  selected: import('../types').Selection
+  edges: Edge[]
+}): { nodeIds: Set<string>; edgeIds: Set<string> } {
+  const nodeIds = new Set(s.selectedIds)
+  if (s.selected?.kind === 'node') nodeIds.add(s.selected.id)
+  const edgeIds = new Set<string>()
+  if (s.selected?.kind === 'edge') edgeIds.add(s.selected.id)
+  for (const e of s.edges) {
+    if (e.selected) edgeIds.add(e.id)
+  }
+  return { nodeIds, edgeIds }
+}
+
 /**
  * Recompute `selected` flags so exactly the given ids are marked, preserving
  * array/object identity when nothing changes (avoids needless re-renders).
@@ -382,18 +433,7 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
 
   syncFlowSelection: (nodeIds, edgeIds) =>
     set((s) => {
-      let selected: import('../types').Selection = null
-      if (nodeIds.length === 1 && edgeIds.length === 0) {
-        selected = { kind: 'node', id: nodeIds[0] }
-      } else if (edgeIds.length === 1 && nodeIds.length === 0) {
-        selected = { kind: 'edge', id: edgeIds[0] }
-      }
-
-      const selectedIdsMatch =
-        nodeIds.length === s.selectedIds.length && nodeIds.every((id) => s.selectedIds.includes(id))
-      const selectedMatch =
-        (selected?.kind === s.selected?.kind && selected?.id === s.selected?.id) ||
-        (selected === null && s.selected === null)
+      const selected = flowAnchorSelection(nodeIds, edgeIds)
 
       const { nodes, edges, changed } = applySelectionFlags(
         s.nodes,
@@ -402,7 +442,12 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
         new Set(edgeIds),
       )
 
-      if (!changed && selectedIdsMatch && selectedMatch) return s
+      if (
+        !changed &&
+        sameMembers(nodeIds, s.selectedIds) &&
+        sameAnchorSelection(selected, s.selected)
+      )
+        return s
 
       return { selected, selectedIds: nodeIds, nodes, edges }
     }),
@@ -426,19 +471,12 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
     let removedNode = false
     let removedEdge = false
     set((s) => {
-      const nodeIds = new Set(s.selectedIds)
-      if (s.selected?.kind === 'node') nodeIds.add(s.selected.id)
-
-      const edgeIds = new Set<string>()
-      if (s.selected?.kind === 'edge') edgeIds.add(s.selected.id)
-      for (const e of s.edges) {
-        if (e.selected) edgeIds.add(e.id)
-      }
+      const { nodeIds, edgeIds } = collectDeleteIds(s)
 
       if (nodeIds.size === 0 && edgeIds.size === 0) return s
 
-      if (nodeIds.size > 0) removedNode = true
-      if (edgeIds.size > 0) removedEdge = true
+      removedNode = nodeIds.size > 0
+      removedEdge = edgeIds.size > 0
 
       // Single pass: drop selected nodes, edges incident to them, AND any
       // explicitly selected edges — a mixed selection removes both.
@@ -450,10 +488,7 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
         ),
         selected: null,
         selectedIds: [],
-        writingModeNodeId:
-          s.writingModeNodeId !== null && nodeIds.has(s.writingModeNodeId)
-            ? null
-            : s.writingModeNodeId,
+        writingModeNodeId: writingModeAfterNodeDeletion(s.writingModeNodeId, nodeIds),
       }
     })
     if (removedNode) {

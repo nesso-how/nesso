@@ -4,13 +4,26 @@ import { describe, expect, it } from 'vitest'
 import { createStore } from 'zustand/vanilla'
 import { ZUSTAND_PERSIST_KEY } from '@/data/storageKeys'
 import { useGraphStore } from '../index'
-import { createUISlice, type UISlice } from './ui'
+import type { GraphState } from '../state'
+import { createUISlice } from './ui'
+
+// Slice-behavior tests run against a headless vanilla store composed from the
+// UI slice alone (same pattern as graph-editing.test.ts) — no persist
+// middleware, localStorage, or the other slices. Slice creators are typed over
+// the full GraphState, so the composition carries one explicit `as GraphState`
+// assertion; the slice only ever sets UI fields.
+function makeHeadlessStore() {
+  return createStore<GraphState>()(
+    (...a) =>
+      ({
+        ...createUISlice(...a),
+      }) as GraphState,
+  )
+}
 
 describe('review reminder UI state', () => {
   it('records local days immutably and independently by graph', () => {
-    const store = createStore<UISlice>()((set, get, api) =>
-      createUISlice(set as never, get as never, api as never),
-    )
+    const store = makeHeadlessStore()
     const initial = store.getState().reviewReminderLastShownByGraph
 
     store.getState().markReviewReminderShown('graph-a', '2026-07-22')
@@ -26,9 +39,7 @@ describe('review reminder UI state', () => {
 
 describe('writing mode ui state', () => {
   it('opens and closes transiently', () => {
-    const store = createStore<UISlice>()((set, get, api) =>
-      createUISlice(set as never, get as never, api as never),
-    )
+    const store = makeHeadlessStore()
     expect(store.getState().writingModeNodeId).toBeNull()
     store.getState().openWritingMode('n1')
     expect(store.getState().writingModeNodeId).toBe('n1')
@@ -36,11 +47,14 @@ describe('writing mode ui state', () => {
     expect(store.getState().writingModeNodeId).toBeNull()
   })
 
+  // Persistence is a property of the real composed store (persist middleware
+  // partialization), so this assertion alone uses `useGraphStore`.
   it('is never written to the persisted store blob', () => {
     useGraphStore.getState().openWritingMode('n1')
     const raw = window.localStorage.getItem(ZUSTAND_PERSIST_KEY)
     expect(raw).not.toBeNull()
-    const persisted = JSON.parse(raw!) as {
+    if (raw === null) throw new Error('expected a persisted store blob')
+    const persisted = JSON.parse(raw) as {
       version: number
       state: Record<string, unknown>
     }
