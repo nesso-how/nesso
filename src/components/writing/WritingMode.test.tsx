@@ -14,11 +14,16 @@ let root: Root | null = null
 const originalSaveCurrentGraph = useGraphStore.getState().saveCurrentGraph
 const tick = () => new Promise<void>((r) => setTimeout(r, 0))
 
-// jsdom lacks client-rect geometry on text nodes/ranges; ProseMirror's paste
-// path (tr.scrollIntoView → coordsAtPos) reads them. Zero rects are fine here.
+// jsdom lacks client-rect geometry on text nodes/ranges/elements; ProseMirror's
+// paste path (tr.scrollIntoView → coordsAtPos) reads them. Zero rects are fine
+// here. Patched at prototype level so async paste work landing during a later
+// tick (any dispatch in this file) can never hit the unpatched native throw.
 {
   const zeroRect = () => [{ left: 0, right: 0, top: 0, bottom: 0, width: 0, height: 0 }] as never
-  for (const proto of [Text.prototype, Range.prototype] as unknown as Record<string, unknown>[]) {
+  for (const proto of [Text.prototype, Range.prototype, Element.prototype] as unknown as Record<
+    string,
+    unknown
+  >[]) {
     proto.getClientRects ??= zeroRect
     proto.getBoundingClientRect ??= zeroRect
   }
@@ -103,7 +108,12 @@ describe('WritingMode', () => {
     const onClose = vi.fn()
     root!.render(<WritingMode nodeId="n1" onClose={onClose} />)
     await tick()
-    expect(document.querySelector('[data-testid="writing-mode"]')).not.toBeNull()
+    const dialog = document.querySelector('[data-testid="writing-mode"]')
+    expect(dialog).not.toBeNull()
+    // Canvas-area modal semantics mirroring ReviewMode: the dialog element is
+    // the writing surface, the Inspector stays visible docked on the right.
+    expect(dialog?.getAttribute('role')).toBe('dialog')
+    expect(dialog?.getAttribute('aria-modal')).toBe('true')
     expect(document.body.textContent).toContain(en.writing.pill)
     expect(document.body.textContent).toContain('Understanding')
     expect(document.querySelector('[data-testid="writing-mode-words"]')?.textContent).toContain('2')
@@ -132,6 +142,38 @@ describe('WritingMode', () => {
     await tick()
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
     expect(onClose).toHaveBeenCalledTimes(1)
+  })
+
+  it('closes on Escape while the editor is focused (capture phase, before ProseMirror consumes it)', async () => {
+    const onClose = vi.fn()
+    root!.render(<WritingMode nodeId="n1" onClose={onClose} />)
+    await tick()
+    const pm = document.querySelector('.writing-editor .ProseMirror') as HTMLElement
+    // ProseMirror's own keydown handling preventDefaults Escape (keyCode 27)
+    // in the bubble phase; the capture-phase listener must decide first.
+    const event = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })
+    pm.dispatchEvent(event)
+    expect(onClose).toHaveBeenCalledTimes(1)
+    expect(event.defaultPrevented).toBe(true)
+  })
+
+  it('does not close on Escape while the slash menu is open', async () => {
+    const onClose = vi.fn()
+    root!.render(<WritingMode nodeId="n1" onClose={onClose} />)
+    await tick()
+    // The suggestion matcher requires the `/` to start a query (preceded by
+    // whitespace), mirroring the e2e flow: type a word, then the slash.
+    typeIntoEditor(' /')
+    await tick()
+    const pm = document.querySelector('.writing-editor .ProseMirror') as HTMLElement
+    expect(document.querySelector('[role="listbox"]')).not.toBeNull()
+    const event = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })
+    pm.dispatchEvent(event)
+    expect(onClose).not.toHaveBeenCalled()
+    // The popup consumed the Escape and dismissed itself.
+    expect(document.querySelector('[role="listbox"]')).toBeNull()
+    // Let the paste's async ProseMirror work settle before the env tears down.
+    await tick()
   })
 
   it('ignores Escape when the event was already consumed (defaultPrevented)', async () => {

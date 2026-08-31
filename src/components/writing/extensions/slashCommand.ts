@@ -16,6 +16,19 @@ export interface SlashCommandOptions {
   snippets?: SnippetStrings
 }
 
+// Open-popup count across the app. WritingMode's Escape handling runs in the
+// window CAPTURE phase — before ProseMirror's bubble-phase keydown handler
+// (and thus before the popup's own preventDefault below) — so the popup-open
+// state must be observable out-of-band for the capture listener to leave the
+// Escape to the menu. The app mounts at most one editor at a time; the count
+// is lifecycle-safe (suggestion's plugin destroy fires onExit, see below).
+let openPopups = 0
+
+/** Whether a slash-command popup is currently open. */
+export function isSlashMenuOpen(): boolean {
+  return openPopups > 0
+}
+
 /**
  * Pure items filter over the snippet registry — shared by the suggestion
  * plugin and tests. Matches on label text or snippet id, case-insensitively.
@@ -46,10 +59,12 @@ export const SlashCommand = Extension.create<SlashCommandOptions>({
     let popup: HTMLDivElement | null = null
 
     const destroyPopup = () => {
+      if (!popup && !component) return
       popup?.remove()
       popup = null
       component?.destroy()
       component = null
+      openPopups -= 1
     }
 
     const position = (rect: DOMRect | null) => {
@@ -78,6 +93,7 @@ export const SlashCommand = Extension.create<SlashCommandOptions>({
             popup.style.zIndex = '80'
             popup.appendChild(component.element)
             document.body.appendChild(popup)
+            openPopups += 1
             position(props.clientRect?.() ?? null)
           },
           onUpdate: (props) => {
@@ -86,6 +102,10 @@ export const SlashCommand = Extension.create<SlashCommandOptions>({
           },
           onKeyDown: (props) => {
             if (props.event.key === 'Escape') {
+              // Mark the Escape consumed so outer listeners (app shortcuts,
+              // WritingMode's bubble fallbacks) can detect it. The capture-phase
+              // WritingMode listener additionally consults `isSlashMenuOpen()`.
+              props.event.preventDefault()
               destroyPopup()
               return true
             }

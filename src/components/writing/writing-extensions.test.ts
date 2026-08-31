@@ -4,7 +4,7 @@ import { Editor } from '@tiptap/core'
 import StarterKit from '@tiptap/starter-kit'
 import { describe, expect, it } from 'vitest'
 import en from '@/i18n/locales/en'
-import { SlashCommand, slashMenuItems } from './extensions/slashCommand'
+import { SlashCommand, slashMenuItems, isSlashMenuOpen } from './extensions/slashCommand'
 import { Callout } from './extensions/callout'
 import { Example } from './extensions/example'
 
@@ -61,5 +61,48 @@ describe('SlashCommand options contract', () => {
     const configured = SlashCommand.configure({ snippets: en.writing.snippets })
     expect(configured.options.snippets).toEqual(en.writing.snippets)
     expect(SlashCommand.options.snippets).toBeUndefined()
+  })
+})
+
+describe('SlashCommand Escape + popup lifecycle contract', () => {
+  function makeSlashEditor() {
+    const editor = new Editor({
+      extensions: [
+        StarterKit,
+        Callout,
+        Example,
+        SlashCommand.configure({ snippets: en.writing.snippets }),
+      ],
+      content: '<p></p>',
+    })
+    editor.commands.focus('end')
+    return editor
+  }
+
+  const escapeOn = (editor: Editor) => {
+    const event = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })
+    editor.view.dom.dispatchEvent(event)
+    return event
+  }
+
+  it('flags the popup open on start, preventDefaults Escape, and closes the popup', () => {
+    const editor = makeSlashEditor()
+    expect(isSlashMenuOpen()).toBe(false)
+    editor.commands.insertContent('/')
+    expect(isSlashMenuOpen()).toBe(true)
+    const event = escapeOn(editor)
+    // The popup consumed the Escape: outer (capture-phase) listeners must be
+    // able to detect that consumption via defaultPrevented.
+    expect(event.defaultPrevented).toBe(true)
+    expect(isSlashMenuOpen()).toBe(false)
+    editor.destroy()
+  })
+
+  it('resets the popup state when the editor is destroyed while the popup is open', () => {
+    const editor = makeSlashEditor()
+    editor.commands.insertContent('/')
+    expect(isSlashMenuOpen()).toBe(true)
+    editor.destroy()
+    expect(isSlashMenuOpen()).toBe(false)
   })
 })
