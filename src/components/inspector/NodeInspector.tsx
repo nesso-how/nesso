@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 import { type CSSProperties } from 'react'
+import { countNotesWords, notesToPlainText } from '@nesso-how/vocab-learning'
 import { RELATION_TYPES, RELATION_CATEGORY_COLORS, asRelationTypeName } from '@/data/relationTypes'
+import { withDefinition } from '@/lib/elaboration'
 import { useGraphStore, selectedNodeSelector } from '@/store'
 import { useT } from '@/i18n'
 import { InlineEdit } from './InlineEdit'
@@ -67,6 +69,7 @@ export function NodeInspector({
   const settings = useGraphStore((s) => s.settings)
   const setSetting = useGraphStore((s) => s.setSetting)
   const onboardingStep = useGraphStore((s) => s.onboardingStep)
+  const openWritingMode = useGraphStore((s) => s.openWritingMode)
   const firstNodeId = useGraphStore((s) => s.nodes[0]?.id ?? null)
 
   const memoryOpen = settings.inspectorMemoryOpen
@@ -75,9 +78,7 @@ export function NodeInspector({
   const elab = node.data.elaboration
 
   const patch = (definition: string) =>
-    updateNodeData(node.id, {
-      elaboration: { definition },
-    })
+    updateNodeData(node.id, { elaboration: withDefinition(elab, definition) })
 
   const outgoing = edges.filter((e) => e.source === node.id)
   const incoming = edges.filter((e) => e.target === node.id)
@@ -249,6 +250,60 @@ export function NodeInspector({
               color: 'var(--ink-2)',
             }}
           />
+        </div>
+
+        {/* Notes — read-only preview; editing happens in Writing Mode */}
+        <div data-testid="inspector-notes-section">
+          <div
+            style={{
+              ...LABEL_STYLE,
+              marginBottom: 6,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <span>
+              {t.inspector.notes.section}
+              {elab?.notes !== undefined ? ` · ${countNotesWords(elab.notes)}` : ''}
+            </span>
+            <button
+              type="button"
+              data-testid="inspector-notes-write"
+              onClick={() => openWritingMode(node.id)}
+              style={{
+                appearance: 'none',
+                border: '0.5px solid var(--line)',
+                background: 'transparent',
+                color: 'var(--ink-2)',
+                fontSize: '11px',
+                fontWeight: 500,
+                fontFamily: 'var(--font-sans)',
+                padding: '3px 10px',
+                borderRadius: 'var(--radius-pill)',
+                cursor: 'pointer',
+              }}
+            >
+              {t.inspector.notes.write}
+            </button>
+          </div>
+          <div
+            data-testid="inspector-notes-preview"
+            style={{
+              fontSize: '12.5px',
+              lineHeight: 1.5,
+              fontFamily: 'var(--font-display)',
+              color: 'var(--ink-4)',
+              fontStyle: 'italic',
+              whiteSpace: 'pre-wrap',
+            }}
+          >
+            {(() => {
+              const preview = notesToPlainText(elab?.notes)
+              if (!preview) return t.inspector.notes.empty
+              return preview.length > 140 ? `${preview.slice(0, 139)}…` : preview
+            })()}
+          </div>
         </div>
 
         {/* Relations — collapsible */}
