@@ -36,6 +36,20 @@ export function pushHistory(
 }
 
 /**
+ * Writing Mode overlay target after a history restore: snapshots carry only
+ * nodes/edges, so `undo`/`redo` are otherwise transparent to the overlay. Keep
+ * it only when the restored nodes still contain its target — a missing field
+ * (stores composed without the UI slice) counts as absent.
+ */
+function writingModeAfterRestore(
+  writingModeNodeId: string | null | undefined,
+  nodes: Node<ConceptNodeData>[],
+): string | null {
+  if (!writingModeNodeId) return null
+  return nodes.some((n) => n.id === writingModeNodeId) ? writingModeNodeId : null
+}
+
+/**
  * Recompute `selected` flags so exactly the given ids are marked, preserving
  * array/object identity when nothing changes (avoids needless re-renders).
  */
@@ -146,6 +160,7 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
         edges: prev.edges,
         selected: null,
         selectedIds: [],
+        writingModeNodeId: writingModeAfterRestore(s.writingModeNodeId, prev.nodes),
       }
     }),
 
@@ -161,6 +176,7 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
         edges: next.edges,
         selected: null,
         selectedIds: [],
+        writingModeNodeId: writingModeAfterRestore(s.writingModeNodeId, next.nodes),
       }
     }),
 
@@ -196,6 +212,7 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
       set((s) => ({
         ...pushHistory(s),
         nodes: applyNodeChanges(changes, s.nodes) as Node<ConceptNodeData>[],
+        writingModeNodeId: removeIds.has(s.writingModeNodeId ?? '') ? null : s.writingModeNodeId,
       }))
     } else {
       set((s) => ({
@@ -239,6 +256,7 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
       nodes: s.nodes.filter((n) => n.id !== id),
       edges: s.edges.filter((e) => e.source !== id && e.target !== id),
       selected: s.selected?.id === id ? null : s.selected,
+      writingModeNodeId: s.writingModeNodeId === id ? null : s.writingModeNodeId,
     }))
   },
 
@@ -432,6 +450,10 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
         ),
         selected: null,
         selectedIds: [],
+        writingModeNodeId:
+          s.writingModeNodeId !== null && nodeIds.has(s.writingModeNodeId)
+            ? null
+            : s.writingModeNodeId,
       }
     })
     if (removedNode) {

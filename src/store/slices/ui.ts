@@ -28,6 +28,11 @@ export interface UISlice {
   /** A node was deleted during the delete-node step. */
   onboardingDeleteNodeDone: boolean
   reviewReminderLastShownByGraph: Record<string, string>
+  /** Concept being written in the full-screen Writing Mode overlay. Transient:
+   *  never persisted; closes on node deletion, graph switch/reload, or Escape. */
+  writingModeNodeId: string | null
+  openWritingMode: (id: string) => void
+  closeWritingMode: () => void
   setMentorPanelExpanded: (expanded: boolean) => void
   setSidebarCollapsed: (v: boolean) => void
   setSidebarDisplayOpen: (v: boolean) => void
@@ -61,6 +66,7 @@ export const createUISlice: StateCreator<GraphState, [], [], UISlice> = (set, ge
   onboardingReviewOpened: false,
   onboardingDeleteNodeDone: false,
   reviewReminderLastShownByGraph: {},
+  writingModeNodeId: null,
 
   setMentorPanelExpanded: (expanded) => set({ mentorPanelExpanded: expanded }),
   setSidebarCollapsed: (v) => set({ sidebarCollapsed: v }),
@@ -99,6 +105,9 @@ export const createUISlice: StateCreator<GraphState, [], [], UISlice> = (set, ge
         [graphId]: localDay,
       },
     })),
+
+  openWritingMode: (id) => set({ writingModeNodeId: id }),
+  closeWritingMode: () => set({ writingModeNodeId: null }),
 
   // Viewports observed in a zero-sized window (embedded WebViews before first
   // layout) are degenerate min-zoom fits — persisting one would keep the graph

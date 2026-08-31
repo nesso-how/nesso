@@ -202,6 +202,14 @@ describe('reloadActiveGraphFromDisk', () => {
     expect(s.getState().nodes).toHaveLength(1)
     expect(s.getState().nodes[0].data.text).toBe('external')
   })
+
+  it('reloadActiveGraphFromDisk closes writing mode', async () => {
+    const s = makeStore()
+    await s.getState().loadGraphList()
+    s.setState({ writingModeNodeId: 'n-any' })
+    await s.getState().reloadActiveGraphFromDisk()
+    expect(s.getState().writingModeNodeId).toBeNull()
+  })
 })
 
 describe('keepLocalGraphChanges', () => {

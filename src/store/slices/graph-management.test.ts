@@ -564,3 +564,30 @@ describe('loadGraphList corrupt IDB recovery', () => {
     expect(s.getState().currentGraphId).toBe(validId)
   })
 })
+
+describe('writing mode close lifecycle (management)', () => {
+  it('loadGraph closes writing mode on graph switch', async () => {
+    const s = await freshStore()
+    const idA = await s.getState().createGraph('A')
+    const idB = await s.getState().createGraph('B')
+    expect(s.getState().currentGraphId).toBe(idB)
+    s.setState({ writingModeNodeId: 'n-any' })
+    await s.getState().loadGraph(idA)
+    expect(s.getState().currentGraphId).toBe(idA)
+    expect(s.getState().writingModeNodeId).toBeNull()
+  })
+
+  it('createGraph closes writing mode when it replaces the active graph', async () => {
+    const s = await freshStore()
+    s.setState({ writingModeNodeId: 'n-any' })
+    await s.getState().createGraph('C')
+    expect(s.getState().writingModeNodeId).toBeNull()
+  })
+
+  it('importGraph closes writing mode when it replaces the active graph', async () => {
+    const s = await freshStore()
+    s.setState({ writingModeNodeId: 'n-any' })
+    await s.getState().importGraph('D', [], [])
+    expect(s.getState().writingModeNodeId).toBeNull()
+  })
+})
