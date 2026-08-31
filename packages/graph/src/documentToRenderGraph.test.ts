@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from 'vitest'
-import type { NessoGraphDocument } from '@nesso-how/vocab-learning'
+import type { NessoGraphDocument, NotesDocument } from '@nesso-how/vocab-learning'
 import { documentToRenderGraph } from './documentToRenderGraph.js'
 
 const doc: NessoGraphDocument = {
@@ -23,5 +23,26 @@ describe('documentToRenderGraph', () => {
       type: 'nesso',
       data: { type: 'causes', curveFlip: true },
     })
+  })
+
+  it('preserves a full elaboration with notes verbatim on nodes', () => {
+    const notes: NotesDocument = {
+      type: 'doc',
+      content: [
+        {
+          type: 'callout',
+          content: [{ type: 'paragraph', content: [{ type: 'text', text: 'n' }] }],
+        },
+      ],
+    }
+    const expectedElaboration = structuredClone({ definition: 'd', notes })
+    const docWithNotes = {
+      ...doc,
+      concepts: [
+        { id: 'n1', label: 'A', x: 0, y: 0, data: { elaboration: { definition: 'd', notes } } },
+      ],
+    }
+    const { nodes } = documentToRenderGraph(docWithNotes)
+    expect(nodes[0].data.elaboration).toEqual(expectedElaboration)
   })
 })

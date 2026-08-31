@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from 'vitest'
 import { defaultConceptReviewFields, VOCABULARY } from '@/types/graph'
-import type { NessoGraphDocument } from '@nesso-how/vocab-learning'
+import { deserialize, serialize } from '@nesso-how/vocab-learning'
+import type { NessoGraphDocument, NotesDocument } from '@nesso-how/vocab-learning'
 import { documentToGraphFromReviews, graphToDocument } from './graphDocumentMapping'
 
 const doc: NessoGraphDocument = {
@@ -87,5 +88,33 @@ describe('graphToDocument', () => {
       type: 'causes',
       data: { curveFlip: true, curveFlipPinned: false },
     })
+  })
+
+  it('round-trips elaboration notes without restructuring them', () => {
+    const notes: NotesDocument = {
+      type: 'doc',
+      content: [{ type: 'paragraph', content: [{ type: 'text', text: 'x' }] }],
+    }
+    const expectedElaboration = structuredClone({ definition: 'd', notes })
+    const file = graphToDocument({
+      name: 'Notes',
+      display,
+      nodes: [
+        {
+          id: 'n1',
+          position: { x: 0, y: 0 },
+          data: {
+            text: 'A',
+            ...defaultConceptReviewFields(),
+            elaboration: { definition: 'd', notes },
+          },
+        },
+      ],
+      edges: [],
+    })
+    expect(file.concepts[0].data?.elaboration).toEqual(expectedElaboration)
+
+    const roundTripped = deserialize(serialize(file))
+    expect(roundTripped.concepts[0].data?.elaboration).toEqual(expectedElaboration)
   })
 })
