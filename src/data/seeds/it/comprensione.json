@@ -2,7 +2,7 @@
   "version": 1,
   "vocabulary": {
     "id": "@nesso-how/vocab-learning",
-    "version": "0.1.0"
+    "version": "0.2.0"
   },
   "name": "Comprensione",
   "concepts": [
@@ -13,7 +13,40 @@
       "y": 200,
       "data": {
         "elaboration": {
-          "definition": "La costruzione attiva di senso: collegare idee, spiegare perché le cose funzionano e organizzare ciò che sai in una struttura coerente, non il semplice possesso di fatti isolati."
+          "definition": "La costruzione attiva di senso: collegare idee, spiegare perché le cose funzionano e organizzare ciò che sai in una struttura coerente, non il semplice possesso di fatti isolati.",
+          "notes": {
+            "type": "doc",
+            "content": [
+              {
+                "type": "callout",
+                "content": [
+                  {
+                    "type": "paragraph",
+                    "content": [
+                      {
+                        "type": "text",
+                        "text": "Prova a spiegarlo a qualcuno senza guardare gli appunti."
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "example",
+                "content": [
+                  {
+                    "type": "paragraph",
+                    "content": [
+                      {
+                        "type": "text",
+                        "text": "Esempio: dopo un capitolo, ridisegna il suo argomento come un piccolo grafo a memoria."
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
         }
       }
     },
