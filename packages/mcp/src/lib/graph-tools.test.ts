@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from 'vitest'
 import { GRAPH_FORMAT_VERSION } from '@nesso-how/schema'
-import { serialize } from '@nesso-how/vocab-learning'
+import { serialize, VOCABULARY } from '@nesso-how/vocab-learning'
 import {
   buildGraphDocument,
   buildGraphJson,
@@ -10,7 +10,7 @@ import {
 } from './graph-tools.js'
 
 const validDoc = {
-  vocabulary: { id: '@nesso-how/vocab-learning', version: '0.1.0' },
+  vocabulary: { id: '@nesso-how/vocab-learning', version: VOCABULARY.version },
   name: 'Demo',
   concepts: [
     { id: 'n1', label: 'Cause', x: 0, y: 0 },
@@ -47,7 +47,7 @@ describe('validateGraphJson', () => {
     const result = validateGraphJson(
       JSON.stringify({
         version: GRAPH_FORMAT_VERSION,
-        vocabulary: { id: '@nesso-how/vocab-learning', version: '0.1.0' },
+        vocabulary: { id: '@nesso-how/vocab-learning', version: VOCABULARY.version },
         name: 'X',
         concepts: [{ id: 'n1', label: 'A', x: 0, y: 0 }],
         relations: [{ id: 'e1', source: 'n1', target: 'n1', type: 'not-real' }],
@@ -61,7 +61,7 @@ describe('validateGraphJson', () => {
     const result = validateGraphJson(
       JSON.stringify({
         version: GRAPH_FORMAT_VERSION,
-        vocabulary: { id: '@nesso-how/vocab-learning', version: '0.1.0' },
+        vocabulary: { id: '@nesso-how/vocab-learning', version: VOCABULARY.version },
         name: 'X',
         concepts: [
           { id: 'n1', label: 'A', x: 0, y: 0 },
@@ -78,7 +78,7 @@ describe('validateGraphJson', () => {
     const result = validateGraphJson(
       JSON.stringify({
         version: GRAPH_FORMAT_VERSION,
-        vocabulary: { id: '@nesso-how/vocab-learning', version: '0.1.0' },
+        vocabulary: { id: '@nesso-how/vocab-learning', version: VOCABULARY.version },
         name: 'X',
         concepts: [{ id: 'n1', label: 'A', x: 0, y: 0 }],
         relations: [{ id: 'e1', source: 'n1', target: 'missing', type: 'causes' }],
@@ -92,7 +92,7 @@ describe('validateGraphJson', () => {
     const result = validateGraphJson(
       JSON.stringify({
         version: GRAPH_FORMAT_VERSION,
-        vocabulary: { id: '@nesso-how/vocab-learning', version: '0.1.0' },
+        vocabulary: { id: '@nesso-how/vocab-learning', version: VOCABULARY.version },
         name: 'X',
         concepts: [
           { id: 'n1', label: 'A', x: 0, y: 0 },
@@ -164,7 +164,7 @@ describe('buildGraphDocument', () => {
       concepts: ['Only'],
       relations: [],
     })
-    expect(doc.vocabulary).toEqual({ id: '@nesso-how/vocab-learning', version: '0.1.0' })
+    expect(doc.vocabulary).toEqual({ id: '@nesso-how/vocab-learning', version: VOCABULARY.version })
   })
 
   it('rejects ambiguous label references', () => {

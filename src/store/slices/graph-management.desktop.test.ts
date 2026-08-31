@@ -3,6 +3,7 @@
 import 'fake-indexeddb/auto'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createStore } from 'zustand/vanilla'
+import { VOCABULARY } from '@nesso-how/vocab-learning'
 import { tauriFsState } from '@/test/fakeTauriFs'
 
 vi.mock('@tauri-apps/plugin-fs', async () => (await import('@/test/fakeTauriFs')).fakeFsPlugin)
@@ -74,7 +75,10 @@ describe('graph record versioning (desktop)', () => {
     const id = await s.getState().createGraph('Versioned')
     const stored = await dbLoadGraph(id)
     expect(stored?.recordVersion).toBe(GRAPH_RECORD_VERSION)
-    expect(stored?.vocabulary).toEqual({ id: '@nesso-how/vocab-learning', version: '0.1.0' })
+    expect(stored?.vocabulary).toEqual({
+      id: '@nesso-how/vocab-learning',
+      version: VOCABULARY.version,
+    })
   })
 
   it('importGraph saves current versioned metadata to IDB', async () => {
@@ -82,7 +86,10 @@ describe('graph record versioning (desktop)', () => {
     const id = await s.getState().importGraph('Imported', [], [])
     const stored = await dbLoadGraph(id)
     expect(stored?.recordVersion).toBe(GRAPH_RECORD_VERSION)
-    expect(stored?.vocabulary).toEqual({ id: '@nesso-how/vocab-learning', version: '0.1.0' })
+    expect(stored?.vocabulary).toEqual({
+      id: '@nesso-how/vocab-learning',
+      version: VOCABULARY.version,
+    })
   })
 })
 
@@ -480,7 +487,7 @@ describe('unsupported-only project', () => {
     // Pre-populate IDB with a valid record from a previous session.
     const prevRecord: GraphRecord = {
       recordVersion: 1,
-      vocabulary: { id: '@nesso-how/vocab-learning', version: '0.1.0' },
+      vocabulary: { id: '@nesso-how/vocab-learning', version: VOCABULARY.version },
       id: 'prev-session-graph',
       name: 'PrevGraph',
       createdAt: 1000,

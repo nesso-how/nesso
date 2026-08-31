@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 // SPDX-License-Identifier: MIT
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { VOCABULARY } from '@nesso-how/vocab-learning'
 
 const {
   mockTrack,
@@ -28,7 +29,10 @@ const {
 
 vi.mock('@/telemetry', () => ({ track: mockTrack }))
 
-vi.mock('@nesso-how/vocab-learning', () => ({
+vi.mock('@nesso-how/vocab-learning', async () => ({
+  ...(await vi.importActual<typeof import('@nesso-how/vocab-learning')>(
+    '@nesso-how/vocab-learning',
+  )),
   serialize: mockSerialize,
 }))
 
@@ -96,7 +100,7 @@ describe('importGraphFromFile', () => {
   it('emits graph_imported on success', async () => {
     mockNormalizeGraphDocument.mockReturnValueOnce({
       recordVersion: 1,
-      vocabulary: { id: '@nesso-how/vocab-learning', version: '0.1.0' },
+      vocabulary: { id: '@nesso-how/vocab-learning', version: VOCABULARY.version },
       id: 'g-1',
       name: 'test',
       createdAt: 1,
