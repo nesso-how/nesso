@@ -188,6 +188,54 @@ describe('updateNodeData', () => {
   })
 })
 
+describe('updateNodeNotes', () => {
+  it('updates only notes while preserving the definition without adding history', () => {
+    const s = makeStore()
+    const id = s.getState().addNode()
+    s.getState().updateNodeData(id, { elaboration: { definition: 'Meaning' } })
+    const historyLength = s.getState()._history.length
+    const nextNotes = {
+      type: 'doc' as const,
+      content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Draft' }] }],
+    }
+
+    s.getState().updateNodeNotes(id, nextNotes)
+
+    expect(s.getState().nodes[0]?.data.elaboration).toEqual({
+      definition: 'Meaning',
+      notes: nextNotes,
+    })
+    expect(s.getState()._history).toHaveLength(historyLength)
+  })
+
+  it('removes undefined notes without leaving an undefined notes key', () => {
+    const s = makeStore()
+    const id = s.getState().addNode()
+    const currentNotes = {
+      type: 'doc' as const,
+      content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Saved' }] }],
+    }
+    s.getState().updateNodeData(id, {
+      elaboration: { definition: 'Meaning', notes: currentNotes },
+    })
+    const historyLength = s.getState()._history.length
+
+    s.getState().updateNodeNotes(id, undefined)
+
+    expect(s.getState().nodes[0]?.data.elaboration).toEqual({ definition: 'Meaning' })
+    expect(s.getState()._history).toHaveLength(historyLength)
+  })
+
+  it('is a no-op when the node does not exist', () => {
+    const s = makeStore()
+    const before = s.getState()
+
+    s.getState().updateNodeNotes('missing', undefined)
+
+    expect(s.getState()).toBe(before)
+  })
+})
+
 describe('deleteSelection', () => {
   it('drops the selected node together with edges touching it', () => {
     const s = makeStore()

@@ -72,4 +72,6 @@ With local Ollama, mentor requests stay between Nesso and the local service on y
 
 With a remote endpoint, Nesso sends the mentor prompt, visible chat history, graph counts, the captured selection, and the selected title or relation details used to open the chat. Additional graph fields are sent only when the model requests them. A compatibility fallback may instead send the bounded graph snapshot described above. The configured API key is sent only to that endpoint as a bearer token.
 
+When Socrates inspects a concept, its rich notes are flattened and bounded to at most **1,200 characters** before they are added to the tool result. With a remote model, that excerpt may leave your device and the provider may retain it under its own policy. Choose local Ollama, or avoid storing sensitive text in graph notes, when that matters.
+
 Nesso does not persist mentor chat history or tool traces. A remote provider receives request content and may retain it under its own policy, so check the provider's terms before sending a private graph.

@@ -68,6 +68,12 @@ button:not(:disabled) {
   cursor: not-allowed;
   opacity: 0.35;
 }
+.inspector-notes-write {
+  background: var(--bg-card);
+}
+.inspector-notes-write:hover {
+  background: var(--paper-deep);
+}
 ::selection {
   background: var(--highlight-selection);
   color: var(--ink);
@@ -355,8 +361,8 @@ body::before {
 .writing-editor .ProseMirror {
   outline: none;
   font-family: var(--font-display);
-  font-size: 16px;
-  line-height: 1.65;
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
   color: var(--ink);
   min-height: 40vh;
 }
@@ -382,6 +388,23 @@ body::before {
   margin: 0 0 0.9em;
   padding-left: 0.9em;
   color: var(--ink-2);
+}
+
+.writing-editor .ProseMirror pre {
+  background: var(--paper-deep);
+  border: 0.5px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: var(--space-5) var(--space-7);
+  margin: 0 0 var(--space-6);
+  font-family: var(--font-mono);
+  font-size: var(--text-md);
+  line-height: var(--leading-normal);
+  color: var(--ink);
+  white-space: pre-wrap;
+}
+
+.writing-editor .ProseMirror code {
+  font-family: var(--font-mono);
 }
 
 .writing-callout {

@@ -2,55 +2,22 @@
 // SPDX-License-Identifier: MIT
 import 'fake-indexeddb/auto'
 import type { Node } from '@xyflow/react'
-import { createRoot, type Root } from 'react-dom/client'
+import type { Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useGraphStore } from '@/store'
 import type { ConceptNodeData, NotesDocument } from '@/types/graph'
 import en from '@/i18n/locales/en'
 import type { ReactElement } from 'react'
+import { installProseMirrorGeometryStubs } from '@/test/prosemirrorGeometry'
+import { createReactTestRoot } from '@/test/reactTestUtils'
 import { WritingMode } from './WritingMode'
 
 let container: HTMLDivElement | null = null
 let root: Root | null = null
 
-const originalSaveCurrentGraph = useGraphStore.getState().saveCurrentGraph
 const tick = () => new Promise<void>((r) => setTimeout(r, 0))
 
-// jsdom lacks client-rect geometry on text nodes/ranges/elements; ProseMirror's
-// paste path (tr.scrollIntoView → coordsAtPos) reads them. Zero rects are fine
-// here. Patched at prototype level so async paste work landing during a later
-// tick (any dispatch in this file) can never hit the unpatched native throw.
-{
-  const zeroRect = (): DOMRect => ({
-    x: 0,
-    y: 0,
-    width: 0,
-    height: 0,
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    toJSON: () => ({ x: 0, y: 0, width: 0, height: 0, top: 0, right: 0, bottom: 0, left: 0 }),
-  })
-  const zeroRects = (): DOMRectList => {
-    const rects = [zeroRect()]
-    return {
-      length: rects.length,
-      item: (index) => rects[index] ?? null,
-      0: rects[0],
-      [Symbol.iterator]: () => rects[Symbol.iterator](),
-    }
-  }
-  // Element/Range expose these natively (jsdom returns degenerate rects for
-  // elements but nothing for ranges); Text never carries them, so those are
-  // installed via defineProperty to stay fully typed.
-  for (const proto of [Element.prototype, Range.prototype]) {
-    proto.getClientRects ??= zeroRects
-    proto.getBoundingClientRect ??= zeroRect
-  }
-  Object.defineProperty(Text.prototype, 'getClientRects', { value: zeroRects })
-  Object.defineProperty(Text.prototype, 'getBoundingClientRect', { value: zeroRect })
-}
+installProseMirrorGeometryStubs()
 
 const notes = (text: string): NotesDocument => ({
   type: 'doc',
@@ -104,6 +71,11 @@ function queryProseMirror(): HTMLElement {
   return pm
 }
 
+function currentNotesJson(): string {
+  const stored = useGraphStore.getState().nodes.find((node) => node.id === 'n1')
+  return JSON.stringify(stored?.data.elaboration?.notes)
+}
+
 function typeIntoEditor(text: string) {
   const pm = queryProseMirror()
   // No pm.focus(): the focused-editor scroll path (focus → scrollIntoView →
@@ -126,13 +98,13 @@ beforeEach(() => {
     edges: [],
     selected: { kind: 'node', id: 'n1' },
     currentGraphId: 'g1',
+    loadedToken: 1,
     graphList: [{ id: 'g1', name: 'Understanding', updatedAt: 1 }],
     writingModeNodeId: 'n1',
   })
-  const el = document.createElement('div')
-  document.body.appendChild(el)
-  container = el
-  root = createRoot(el)
+  const mounted = createReactTestRoot()
+  container = mounted.container
+  root = mounted.root
 })
 
 afterEach(async () => {
@@ -144,11 +116,7 @@ afterEach(async () => {
     edges: [],
     selected: null,
     writingModeNodeId: null,
-    saveCurrentGraph: originalSaveCurrentGraph,
   })
-  // Drain any deferred (setTimeout 0) save scheduled by a cleanup above so it
-  // cannot leak into the next test.
-  await tick()
 })
 
 describe('WritingMode', () => {
@@ -157,24 +125,78 @@ describe('WritingMode', () => {
     await renderUI(<WritingMode nodeId="n1" onClose={onClose} />)
     const dialog = document.querySelector('[data-testid="writing-mode"]')
     expect(dialog).not.toBeNull()
-    // Canvas-area modal semantics mirroring ReviewMode: the dialog element is
-    // the writing surface, the Inspector stays visible docked on the right.
+    // Canvas-area dialog semantics: the Inspector stays visible and interactive
+    // beside the writing surface.
     expect(dialog?.getAttribute('role')).toBe('dialog')
-    expect(dialog?.getAttribute('aria-modal')).toBe('true')
+    expect(dialog?.getAttribute('aria-modal')).toBeNull()
+    expect(dialog?.getAttribute('aria-labelledby')).toBe('writing-mode-title')
     // Header keeps ONLY the close X: no pill, no breadcrumb, no word count.
     expect(document.querySelector('[data-testid="writing-mode-words"]')).toBeNull()
     expect(document.body.textContent).not.toContain(en.writing.snippetsMenu)
     // The H1 title carries the node name.
     const title = document.querySelector('[data-testid="writing-mode-title"]')
     expect(title?.tagName).toBe('H1')
+    expect(title?.id).toBe('writing-mode-title')
     expect(title?.textContent).toBe('Understanding')
     // CloseButton renders its own <button> inside the testid wrapper span.
     const closeButton = document.querySelector<HTMLButtonElement>(
       '[data-testid="writing-mode-close"] button',
     )
     if (closeButton === null) throw new Error('close button not rendered')
+    const header = closeButton.parentElement?.parentElement
+    expect(header?.style.padding).toBe('var(--space-3) var(--space-7)')
+    expect(header?.style.borderBottom).toBe('')
     closeButton.click()
     expect(onClose).toHaveBeenCalled()
+  })
+
+  it('confines the overlay to the visible canvas instead of covering app chrome', async () => {
+    await renderUI(
+      <WritingMode
+        nodeId="n1"
+        onClose={() => {}}
+        canvasInsets={{ top: 52, right: 280, bottom: 24, left: 220 }}
+      />,
+    )
+    const backdrop = document.querySelector<HTMLElement>('[data-testid="writing-mode-backdrop"]')
+    expect(backdrop?.style.top).toBe('52px')
+    expect(backdrop?.style.right).toBe('280px')
+    expect(backdrop?.style.bottom).toBe('24px')
+    expect(backdrop?.style.left).toBe('220px')
+  })
+
+  it('leaves Tab available to the Inspector and restores its trigger on explicit close', async () => {
+    const trigger = document.createElement('button')
+    trigger.type = 'button'
+    trigger.dataset.testid = 'inspector-notes-write'
+    document.body.appendChild(trigger)
+    trigger.focus()
+
+    try {
+      const onClose = vi.fn()
+      await renderUI(<WritingMode nodeId="n1" onClose={onClose} />)
+      const closeButton = document.querySelector<HTMLButtonElement>(
+        '[data-testid="writing-mode-close"] button',
+      )
+      queryProseMirror()
+      if (closeButton === null) throw new Error('close button not rendered')
+
+      trigger.focus()
+      const entered = new KeyboardEvent('keydown', {
+        key: 'Tab',
+        bubbles: true,
+        cancelable: true,
+      })
+      window.dispatchEvent(entered)
+      expect(entered.defaultPrevented).toBe(false)
+
+      closeButton.click()
+      expect(onClose).toHaveBeenCalledTimes(1)
+      await unmountUI()
+      expect(document.activeElement).toBe(trigger)
+    } finally {
+      trigger.remove()
+    }
   })
 
   it('shows the node definition as read-only context below the title', async () => {
@@ -198,7 +220,8 @@ describe('WritingMode', () => {
   it('closes on Escape', async () => {
     const onClose = vi.fn()
     await renderUI(<WritingMode nodeId="n1" onClose={onClose} />)
-    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
+    const dialog = document.querySelector<HTMLElement>('[data-testid="writing-mode"]')
+    dialog?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
     expect(onClose).toHaveBeenCalledTimes(1)
   })
 
@@ -232,102 +255,73 @@ describe('WritingMode', () => {
     await tick()
   })
 
+  it('uses the popup wrapper as the only slash-menu scroll container', async () => {
+    await renderUI(<WritingMode nodeId="n1" onClose={() => {}} />)
+    typeIntoEditor(' /')
+    await tick()
+    await tick()
+
+    const listbox = document.querySelector<HTMLElement>('[role="listbox"]')
+    const popup = listbox?.parentElement?.parentElement
+    if (listbox === null || popup === null || listbox === undefined || popup === undefined) {
+      throw new Error('slash popup not rendered')
+    }
+    expect(popup.classList.contains('nesso-scrollbar')).toBe(true)
+    expect(popup.style.overflowY).toBe('auto')
+    expect(listbox.classList.contains('nesso-scrollbar')).toBe(false)
+    expect(listbox.style.overflowY).toBe('')
+  })
+
+  it('Escape with focus on the popup closes ONLY the menu; a second Escape closes the overlay', async () => {
+    const onClose = vi.fn()
+    await renderUI(<WritingMode nodeId="n1" onClose={onClose} />)
+    typeIntoEditor(' /')
+    await tick()
+    await tick()
+    // Focus moved onto a popup item (click/tab): the keydown never reaches
+    // ProseMirror, so the popup container's own Escape listener must close
+    // ONLY the menu — the overlay stays open.
+    const option = document.querySelector<HTMLElement>('[role="option"]')
+    if (!option) throw new Error('popup option not rendered')
+    option.focus()
+    const event = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })
+    option.dispatchEvent(event)
+    expect(document.querySelector('[role="listbox"]')).toBeNull()
+    expect(onClose).not.toHaveBeenCalled()
+    await tick()
+    expect(document.activeElement).toBe(queryProseMirror())
+    // With the menu closed, the next Escape closes the overlay.
+    queryProseMirror().dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }),
+    )
+    expect(onClose).toHaveBeenCalledTimes(1)
+  })
+
   it('ignores Escape when the event was already consumed (defaultPrevented)', async () => {
     const onClose = vi.fn()
     await renderUI(<WritingMode nodeId="n1" onClose={onClose} />)
     const event = new KeyboardEvent('keydown', { key: 'Escape', cancelable: true })
     event.preventDefault()
-    window.dispatchEvent(event)
+    const dialog = document.querySelector<HTMLElement>('[data-testid="writing-mode"]')
+    dialog?.dispatchEvent(event)
     expect(onClose).not.toHaveBeenCalled()
   })
 
-  it('flushes pending notes to the store BEFORE saveCurrentGraph snapshots it', async () => {
-    // Capture the store's notes at the moment the save fires.
-    const seenAtSave: string[] = []
-    const saveSpy = vi.fn(async () => {
-      const n = useGraphStore.getState().nodes.find((x) => x.id === 'n1')
-      seenAtSave.push(JSON.stringify(n?.data.elaboration?.notes ?? null))
-    })
-    useGraphStore.setState({ saveCurrentGraph: saveSpy })
+  it('commits notes directly to the store and preserves the definition', async () => {
     await renderUI(<WritingMode nodeId="n1" onClose={() => {}} />)
     typeIntoEditor(' flushed text')
-    await unmountUI()
-    // The flush landed in the store...
-    const stored = useGraphStore.getState().nodes.find((x) => x.id === 'n1')
-    expect(JSON.stringify(stored?.data.elaboration?.notes)).toContain('flushed text')
-    // ...and the save ran exactly once, snapshotting the flushed notes.
-    expect(saveSpy).toHaveBeenCalledTimes(1)
-    expect(seenAtSave[0]).toContain('flushed text')
+    expect(currentNotesJson()).toContain('flushed text')
+    expect(useGraphStore.getState().nodes[0]?.data.elaboration?.definition).toBe(
+      'The active construction of meaning.',
+    )
   })
 
-  it('commits flushed notes with the definition current in the store at commit time', async () => {
-    // Snapshot the FULL node in the store at the moment the save fires.
-    let nodeAtSave: unknown = null
-    const saveSpy = vi.fn(async () => {
-      nodeAtSave = structuredClone(
-        useGraphStore.getState().nodes.find((x) => x.id === 'n1') ?? null,
-      )
-    })
-    useGraphStore.setState({ saveCurrentGraph: saveSpy })
+  it('does not recreate a deleted node when the editor unmounts', async () => {
     await renderUI(<WritingMode nodeId="n1" onClose={() => {}} />)
-    typeIntoEditor(' more')
-    // The definition changes (e.g. synced edit) immediately before unmount —
-    // with NO rerender in between, so a definition captured at render time
-    // would commit the stale value; only a commit-time store read can see it.
-    useGraphStore.setState({
-      nodes: useGraphStore.getState().nodes.map((n) =>
-        n.id === 'n1'
-          ? {
-              ...n,
-              data: {
-                ...n.data,
-                elaboration: { definition: 'updated elsewhere', notes: notes('some words') },
-              },
-            }
-          : n,
-      ),
-    })
-    await unmountUI()
-    const expectedNode = {
-      id: 'n1',
-      type: 'concept',
-      position: { x: 0, y: 0 },
-      data: {
-        text: 'Understanding',
-        stability: 0,
-        difficulty: 0,
-        reps: 0,
-        lapses: 0,
-        fsrsState: 0,
-        due: 0,
-        lastReview: 0,
-        lastRating: 0,
-        elaboration: {
-          definition: 'updated elsewhere',
-          notes: {
-            type: 'doc',
-            content: [{ type: 'paragraph', content: [{ type: 'text', text: 'some words more' }] }],
-          },
-        },
-      },
-    }
-    // The save ran exactly once, snapshotting the updated definition AND the
-    // flushed notes.
-    expect(saveSpy).toHaveBeenCalledTimes(1)
-    expect(nodeAtSave).toEqual(expectedNode)
-    expect(useGraphStore.getState().nodes).toEqual([expectedNode])
-  })
-
-  it('drops the pending flush when the node is deleted while writing', async () => {
-    const onClose = vi.fn()
-    await renderUI(<WritingMode nodeId="n1" onClose={onClose} />)
     typeIntoEditor(' doomed')
     useGraphStore.setState({ nodes: [] })
     await tick()
-    // The overlay disappears with the node...
     expect(document.querySelector('[data-testid="writing-mode"]')).toBeNull()
-    // ...and the unmount flush must not resurrect it: the node array stays
-    // completely empty after the flush/save cycle.
     await unmountUI()
     expect(useGraphStore.getState().nodes).toEqual([])
   })

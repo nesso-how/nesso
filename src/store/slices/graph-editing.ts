@@ -5,6 +5,7 @@ import type { StateCreator } from 'zustand'
 import {
   defaultConceptReviewFields,
   type ConceptNodeData,
+  type NotesDocument,
   type RelationTypeName,
   type NessoEdgeData,
 } from '@/types/graph'
@@ -166,6 +167,7 @@ export interface GraphEditingSlice {
   onNodesChange: (changes: NodeChange<Node<ConceptNodeData>>[]) => void
   onEdgesChange: (changes: EdgeChange[]) => void
   updateNodeData: (id: string, patch: Partial<ConceptNodeData>) => void
+  updateNodeNotes: (id: string, notes: NotesDocument | undefined) => void
   deleteNode: (id: string) => void
   addNode: (x?: number, y?: number) => string
   addEdge: (source: string, target: string, type: RelationTypeName) => string
@@ -299,6 +301,31 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
       ...pushHistory(s),
       nodes: s.nodes.map((n) => (n.id === id ? { ...n, data: { ...n.data, ...patch } } : n)),
     })),
+
+  updateNodeNotes: (id, notes) =>
+    set((s) => {
+      const node = s.nodes.find((n) => n.id === id)
+      if (!node) return s
+
+      const elaboration = node.data.elaboration
+      let nextElaboration = elaboration
+      if (notes === undefined) {
+        if (!elaboration || !Object.keys(elaboration).includes('notes')) return s
+        const { notes: _notes, ...withoutNotes } = elaboration
+        nextElaboration = withoutNotes
+      } else {
+        nextElaboration = {
+          ...(elaboration ?? { definition: '' }),
+          notes,
+        }
+      }
+
+      return {
+        nodes: s.nodes.map((n) =>
+          n.id === id ? { ...n, data: { ...n.data, elaboration: nextElaboration } } : n,
+        ),
+      }
+    }),
 
   deleteNode: (id) => {
     if (get().nodes.some((n) => n.id === id)) track({ name: 'node_deleted' })

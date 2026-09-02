@@ -129,6 +129,8 @@ const it: typeof en = {
   writing: {
     close: 'Chiudi modalità scrittura',
     placeholder: 'Spiegalo con parole tue…',
+    invalidNotes:
+      'Questa nota è troppo grande o contiene una formattazione non supportata e non verrà salvata',
     snippetsMenu: 'Snippet',
     snippets: {
       heading2: 'Titolo 2',

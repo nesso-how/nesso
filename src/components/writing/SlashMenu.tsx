@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import type { SuggestionProps } from '@tiptap/suggestion'
 import type { SnippetDefinition } from './snippets/registry'
 
@@ -25,14 +25,15 @@ export const SlashMenu = forwardRef<SlashMenuRef, SuggestionProps<SnippetDefinit
     const items = props.items
     const command = props.command
 
-    const setIndex = (next: number) => {
+    const setIndex = useCallback((next: number) => {
       indexRef.current = next
       setIndexState(next)
-    }
+    }, [])
 
+    // biome-ignore lint/correctness/useExhaustiveDependencies: suggestion item identity intentionally resets the selected option.
     useEffect(() => {
       setIndex(0)
-    }, [items])
+    }, [items, setIndex])
 
     useImperativeHandle(
       ref,
@@ -59,7 +60,7 @@ export const SlashMenu = forwardRef<SlashMenuRef, SuggestionProps<SnippetDefinit
           return false
         },
       }),
-      [items, command],
+      [items, command, setIndex],
     )
 
     if (items.length === 0) return null
@@ -74,7 +75,6 @@ export const SlashMenu = forwardRef<SlashMenuRef, SuggestionProps<SnippetDefinit
 
     return (
       <div
-        className="nesso-scrollbar"
         role="listbox"
         aria-label={menuLabel}
         style={{
@@ -82,10 +82,8 @@ export const SlashMenu = forwardRef<SlashMenuRef, SuggestionProps<SnippetDefinit
           border: '0.5px solid var(--line)',
           borderRadius: 'var(--radius-md)',
           boxShadow: 'var(--shadow-lg)',
-          maxHeight: 280,
-          overflowY: 'auto',
           minWidth: 220,
-          padding: 4,
+          padding: 'var(--space-2)',
         }}
       >
         {items.map((item, i) => (
@@ -100,14 +98,14 @@ export const SlashMenu = forwardRef<SlashMenuRef, SuggestionProps<SnippetDefinit
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 10,
+              gap: 'var(--space-5)',
               width: '100%',
               textAlign: 'left',
               appearance: 'none',
               border: 0,
               background: i === selectedIndex ? 'var(--paper-deep)' : 'transparent',
               color: 'var(--ink)',
-              padding: '7px 10px',
+              padding: 'var(--space-2) var(--space-5)',
               borderRadius: 'var(--radius-sm)',
               cursor: 'pointer',
             }}
@@ -125,12 +123,18 @@ export const SlashMenu = forwardRef<SlashMenuRef, SuggestionProps<SnippetDefinit
               <path d={item.icon} />
             </svg>
             <span style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: '12.5px', fontWeight: 500, fontFamily: 'var(--font-sans)' }}>
+              <span
+                style={{
+                  fontSize: 'var(--text-base)',
+                  fontWeight: 'var(--font-weight-medium)',
+                  fontFamily: 'var(--font-sans)',
+                }}
+              >
                 {item.label}
               </span>
               <span
                 style={{
-                  fontSize: '10.5px',
+                  fontSize: 'var(--text-xs)',
                   fontFamily: 'var(--font-sans)',
                   color: 'var(--ink-4)',
                 }}

@@ -31,11 +31,10 @@ way you expect. Type `/` on an empty spot to open the snippet menu:
 - **Callout**: a highlighted note box
 - **Example**: a worked-example box
 
-Your edits are committed after a short pause and saved with the graph's
-autosave. While Writing Mode is open, canvas shortcuts
+Valid edits are committed immediately to the graph and then persisted by the
+graph's existing autosave. While Writing Mode is open, canvas shortcuts
 (including undo on the graph) are suppressed; the editor owns its own undo while
-you are inside it. After you close, the app's undo reverts notes in coarser
-steps, one per writing pause.
+you are inside it. Notes edits do not add entries to the graph undo history.
 
 ## How notes are stored
 

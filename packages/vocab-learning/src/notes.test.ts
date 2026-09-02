@@ -25,7 +25,20 @@ describe('isValidNotesDocument', () => {
     ).toBe(true)
   })
 
-  it('rejects non-objects, wrong type, and missing content array', () => {
+  it('accepts empty editor blocks and supported atom leaves', () => {
+    expect(isValidNotesDocument(doc([{ type: 'paragraph' }]))).toBe(true)
+    expect(isValidNotesDocument(doc([{ type: 'heading' }]))).toBe(true)
+    expect(isValidNotesDocument(doc([{ type: 'codeBlock' }]))).toBe(true)
+    expect(isValidNotesDocument(doc([{ type: 'hardBreak' }]))).toBe(true)
+    expect(isValidNotesDocument(doc([{ type: 'horizontalRule' }]))).toBe(true)
+    expect(
+      isValidNotesDocument(
+        doc([{ type: 'callout', content: [paragraph('body')] }, { type: 'paragraph' }]),
+      ),
+    ).toBe(true)
+  })
+
+  it('rejects non-objects, wrong type, and non-array content', () => {
     expect(isValidNotesDocument(null)).toBe(false)
     expect(isValidNotesDocument('doc')).toBe(false)
     expect(isValidNotesDocument({ type: 'paragraph', content: [] })).toBe(false)
@@ -39,6 +52,131 @@ describe('isValidNotesDocument', () => {
       node = { type: 'wrapper', content: [node] }
     }
     expect(isValidNotesDocument(doc([node]))).toBe(false)
+  })
+
+  it('rejects null, array, or primitive elements inside any content array', () => {
+    expect(isValidNotesDocument(doc([null]))).toBe(false)
+    expect(isValidNotesDocument(doc(['x']))).toBe(false)
+    expect(isValidNotesDocument(doc([42]))).toBe(false)
+    expect(isValidNotesDocument(doc([[paragraph('nested array')]]))).toBe(false)
+    // Mixed: one valid element cannot rescue a malformed sibling.
+    expect(isValidNotesDocument(doc([paragraph('ok'), null]))).toBe(false)
+    // The check applies at every nesting level, not just the root.
+    expect(isValidNotesDocument(doc([{ type: 'callout', content: [null] }]))).toBe(false)
+  })
+
+  it('accepts unknown typed blocks with optional attrs, marks, and nested content', () => {
+    expect(
+      isValidNotesDocument(
+        doc([
+          paragraph('a'),
+          {
+            type: 'futureBlock',
+            attrs: { tone: 'quiet' },
+            content: [{ type: 'text', text: 'b', marks: [{ type: 'bold' }] }],
+          },
+        ]),
+      ),
+    ).toBe(true)
+  })
+
+  it('accepts every mark provided by the editor StarterKit schema', () => {
+    expect(
+      isValidNotesDocument(
+        doc([
+          paragraph('bold'),
+          {
+            type: 'paragraph',
+            content: [
+              {
+                type: 'text',
+                text: 'all marks',
+                marks: [
+                  { type: 'bold' },
+                  { type: 'italic' },
+                  { type: 'strike' },
+                  { type: 'code' },
+                  { type: 'underline' },
+                  { type: 'link', attrs: { href: 'https://example.com' } },
+                ],
+              },
+            ],
+          },
+        ]),
+      ),
+    ).toBe(true)
+  })
+
+  it('rejects unknown, malformed, or misplaced marks', () => {
+    const markedText = (mark: unknown) =>
+      paragraph('marked').content.map((node) => ({ ...node, marks: [mark] }))
+
+    expect(isValidNotesDocument(doc([paragraph('ok')]))).toBe(true)
+    expect(
+      isValidNotesDocument(
+        doc([{ type: 'paragraph', content: markedText({ type: 'futureMark' }) }]),
+      ),
+    ).toBe(false)
+    expect(
+      isValidNotesDocument(doc([{ type: 'paragraph', content: markedText({ type: 42 }) }])),
+    ).toBe(false)
+    expect(
+      isValidNotesDocument(
+        doc([{ type: 'paragraph', content: markedText({ type: 'bold', attrs: null }) }]),
+      ),
+    ).toBe(false)
+    expect(
+      isValidNotesDocument(
+        doc([{ type: 'paragraph', content: markedText({ type: 'bold', attrs: [] }) }]),
+      ),
+    ).toBe(false)
+    expect(
+      isValidNotesDocument(
+        doc([{ type: 'paragraph', marks: [{ type: 'bold' }], content: [paragraph('block')] }]),
+      ),
+    ).toBe(false)
+  })
+
+  it('rejects unknown leaves without content', () => {
+    expect(isValidNotesDocument(doc([{ type: 'futureLeaf' }]))).toBe(false)
+  })
+
+  it('rejects nested documents and empty text nodes', () => {
+    expect(isValidNotesDocument(doc([{ type: 'doc', content: [] }]))).toBe(false)
+    expect(isValidNotesDocument(doc([paragraph('')]))).toBe(false)
+  })
+
+  it('rejects malformed root and content-node fields recursively', () => {
+    expect(isValidNotesDocument({ type: 'doc', text: 'root text' })).toBe(false)
+    expect(isValidNotesDocument({ type: 'doc', content: undefined })).toBe(false)
+    expect(isValidNotesDocument({ type: 'doc', content: [{ type: '' }] })).toBe(false)
+    expect(isValidNotesDocument({ type: 'doc', content: [{ type: 42 }] })).toBe(false)
+    expect(isValidNotesDocument({ type: 'doc', content: [{ type: undefined }] })).toBe(false)
+    expect(isValidNotesDocument({ type: 'doc', content: [{}] })).toBe(false)
+    expect(isValidNotesDocument({ type: 'doc', content: [{ type: 'text' }] })).toBe(false)
+    expect(isValidNotesDocument({ type: 'doc', content: [{ type: 'text', text: 42 }] })).toBe(false)
+    expect(
+      isValidNotesDocument({ type: 'doc', content: [{ type: 'text', text: 'x', content: [] }] }),
+    ).toBe(false)
+    expect(
+      isValidNotesDocument({ type: 'doc', content: [{ type: 'paragraph', text: 'inline' }] }),
+    ).toBe(false)
+    expect(
+      isValidNotesDocument({
+        type: 'doc',
+        content: [{ type: 'paragraph', content: 'not an array' }],
+      }),
+    ).toBe(false)
+    expect(
+      isValidNotesDocument({ type: 'doc', content: [{ type: 'paragraph', content: [null] }] }),
+    ).toBe(false)
+    expect(
+      isValidNotesDocument({
+        type: 'doc',
+        content: [{ type: 'paragraph', content: [{ type: 'text', text: 'ok' }, { type: 'text' }] }],
+      }),
+    ).toBe(false)
+    expect(isValidNotesDocument({ type: 'doc', content: [new Date()] })).toBe(false)
   })
 
   it('rejects documents serialized beyond NOTES_MAX_SERIALIZED_CHARS', () => {

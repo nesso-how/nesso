@@ -128,6 +128,7 @@ const en = {
   writing: {
     close: 'Close writing mode',
     placeholder: 'Explain this in your own words…',
+    invalidNotes: 'This note is too large or contains unsupported formatting and won’t be saved',
     snippetsMenu: 'Snippets',
     snippets: {
       heading2: 'Heading 2',

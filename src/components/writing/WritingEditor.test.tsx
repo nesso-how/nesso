@@ -5,10 +5,12 @@ import { Editor } from '@tiptap/core'
 import StarterKit from '@tiptap/starter-kit'
 import type { SuggestionProps } from '@tiptap/suggestion'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { createRoot, type Root } from 'react-dom/client'
+import type { Root } from 'react-dom/client'
 import en from '@/i18n/locales/en'
+import { installProseMirrorGeometryStubs } from '@/test/prosemirrorGeometry'
+import { createReactTestRoot } from '@/test/reactTestUtils'
 import type { NotesDocument } from '@/types/graph'
-import type { ReactElement } from 'react'
+import type { ComponentProps, ReactElement } from 'react'
 import type { SnippetDefinition } from './snippets/registry'
 import { SLASH_MENU_LABEL_KEY, SlashMenu, type SlashMenuRef } from './SlashMenu'
 import { WritingEditor } from './WritingEditor'
@@ -25,6 +27,33 @@ const notes = (text: string): NotesDocument => ({
   content: [{ type: 'paragraph', content: [{ type: 'text', text }] }],
 })
 
+type WritingEditorProps = ComponentProps<typeof WritingEditor>
+
+function editorProps(
+  onCommit: WritingEditorProps['onCommit'],
+  initialNotes: WritingEditorProps['initialNotes'],
+  overrides: Partial<WritingEditorProps> = {},
+): WritingEditorProps {
+  return {
+    identityKey: 'n1',
+    definition: 'def',
+    placeholder: en.writing.placeholder,
+    initialNotes,
+    onCommit,
+    onWordCountChange: () => {},
+    snippets: en.writing.snippets,
+    ...overrides,
+  }
+}
+
+async function renderEditor(
+  onCommit: WritingEditorProps['onCommit'],
+  initialNotes: WritingEditorProps['initialNotes'],
+  overrides: Partial<WritingEditorProps> = {},
+): Promise<void> {
+  await renderUI(<WritingEditor {...editorProps(onCommit, initialNotes, overrides)} />)
+}
+
 const keydown = (key: string) =>
   new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true })
 
@@ -35,6 +64,8 @@ const snippetItem = (id: string): SnippetDefinition => ({
   icon: 'M3 12h18',
   command: () => {},
 })
+
+installProseMirrorGeometryStubs()
 
 // jsdom has no MessageChannel, so React's scheduler (and passive-effect flush)
 // falls back to delayed timers; act() makes render/effect timing deterministic.
@@ -61,12 +92,43 @@ function queryProseMirror(): HTMLElement {
   return pm
 }
 
+function replaceEditorText(text: string): void {
+  const pm = queryProseMirror()
+  pm.focus()
+  const selectAll = new KeyboardEvent('keydown', {
+    key: 'a',
+    bubbles: true,
+    cancelable: true,
+    ctrlKey: true,
+  })
+  pm.dispatchEvent(selectAll)
+  const paste = new Event('paste', { bubbles: true, cancelable: true })
+  Object.defineProperty(paste, 'clipboardData', {
+    value: { getData: (type: string) => (type === 'text/plain' ? text : '') },
+  })
+  pm.dispatchEvent(paste)
+}
+
+async function dispatchEditorEdit(pm: HTMLElement): Promise<void> {
+  // jsdom has no `document.execCommand`; dispatching a printable keydown runs
+  // the edit through ProseMirror's real keymap (splitBlock → onUpdate).
+  await act(async () => {
+    pm.dispatchEvent(keydown('Enter'))
+  })
+}
+
+async function commitOnce(onCommit: WritingEditorProps['onCommit']): Promise<HTMLElement> {
+  const pm = queryProseMirror()
+  await dispatchEditorEdit(pm)
+  expect(onCommit).toHaveBeenCalledTimes(1)
+  return pm
+}
+
 beforeEach(() => {
   ;(globalThis as Record<string, unknown>).IS_REACT_ACT_ENVIRONMENT = true
-  const el = document.createElement('div')
-  document.body.appendChild(el)
-  container = el
-  root = createRoot(el)
+  const mounted = createReactTestRoot()
+  container = mounted.container
+  root = mounted.root
 })
 
 afterEach(async () => {
@@ -84,176 +146,153 @@ describe('WritingEditor', () => {
   it('renders the editor with initial notes and reports the word count', async () => {
     const onWordCountChange = vi.fn()
     const onCommit = vi.fn<(notes: NotesDocument | undefined) => void>()
-    await renderUI(
-      <WritingEditor
-        identityKey="n1"
-        definition="def"
-        placeholder={en.writing.placeholder}
-        initialNotes={notes('hello world')}
-        onCommit={onCommit}
-        onWordCountChange={onWordCountChange}
-        snippets={en.writing.snippets}
-      />,
-    )
+    await renderEditor(onCommit, notes('hello world'), { onWordCountChange })
     expect(document.querySelector('.writing-editor .ProseMirror')).not.toBeNull()
     expect(onWordCountChange).toHaveBeenCalledWith(expect.any(Number))
   })
 
   it('falls back to the placeholder for the menu label when menuLabel is absent', async () => {
     const onCommit = vi.fn<(notes: NotesDocument | undefined) => void>()
-    const props = {
-      identityKey: 'n1',
-      definition: 'def',
-      placeholder: en.writing.placeholder,
-      onCommit,
-      onWordCountChange: () => {},
-      snippets: en.writing.snippets,
-    }
-    await renderUI(<WritingEditor {...props} initialNotes={undefined} />)
+    await renderEditor(onCommit, undefined)
     expect(document.querySelector('.writing-editor')?.getAttribute('data-menu-label')).toBe(
       en.writing.placeholder,
     )
-    await renderUI(<WritingEditor {...props} initialNotes={undefined} menuLabel="Writing mode" />)
+    await renderEditor(onCommit, undefined, { menuLabel: 'Writing mode' })
     expect(document.querySelector('.writing-editor')?.getAttribute('data-menu-label')).toBe(
       'Writing mode',
     )
   })
 
-  it('commits the pending edit through the trailing debounce (~800 ms), canonicalized', async () => {
-    // Fake timers from the start so the debounce timer itself is faked.
-    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+  it('commits a valid edit immediately and canonicalizes it', async () => {
     const onCommit = vi.fn<(notes: NotesDocument | undefined) => void>()
-    await renderUI(
-      <WritingEditor
-        identityKey="n1"
-        definition="def"
-        placeholder={en.writing.placeholder}
-        initialNotes={notes('pending text')}
-        onCommit={onCommit}
-        onWordCountChange={() => {}}
-        snippets={en.writing.snippets}
-      />,
-    )
-    const pm = queryProseMirror()
-    pm.focus()
-    // jsdom has no `document.execCommand`; dispatching a printable keydown runs
-    // the edit through ProseMirror's real keymap (splitBlock → onUpdate).
+    await renderEditor(onCommit, notes('pending text'))
+    await commitOnce(onCommit)
+    const committed = onCommit.mock.calls[0][0]
+    expect(committed === undefined || committed.type === 'doc').toBe(true)
+    await unmountUI()
+    expect(onCommit).toHaveBeenCalledTimes(1)
+  })
+
+  it('shows a visible warning for invalid content without committing it', async () => {
+    const onCommit = vi.fn<(notes: NotesDocument | undefined) => void>()
+    await renderEditor(onCommit, notes('saved baseline'))
+
     await act(async () => {
-      pm.dispatchEvent(keydown('Enter'))
+      replaceEditorText('x'.repeat(100_000))
     })
+
+    expect(document.querySelector('[role="alert"]')?.textContent).toBe(
+      'This note is too large or contains unsupported formatting and won’t be saved',
+    )
     expect(onCommit).not.toHaveBeenCalled()
+  })
+
+  it('clears the warning and commits after valid content replaces it', async () => {
+    const onCommit = vi.fn<(notes: NotesDocument | undefined) => void>()
+    await renderEditor(onCommit, undefined)
+
     await act(async () => {
-      vi.advanceTimersByTime(800)
+      replaceEditorText('x'.repeat(100_000))
     })
+    expect(document.querySelector('[role="alert"]')).not.toBeNull()
+    onCommit.mockClear()
+
+    await act(async () => {
+      replaceEditorText('recovered note')
+    })
+    expect(document.querySelector('[role="alert"]')).toBeNull()
+
     expect(onCommit).toHaveBeenCalledTimes(1)
-    const committed = onCommit.mock.calls[0][0]
-    expect(committed === undefined || committed.type === 'doc').toBe(true)
-    // The timer already fired: unmount must not commit again.
+    expect(JSON.stringify(onCommit.mock.calls[0][0])).toContain('recovered note')
+  })
+
+  it('does not commit invalid content when the editor unmounts', async () => {
+    const onCommit = vi.fn<(notes: NotesDocument | undefined) => void>()
+    await renderEditor(onCommit, notes('saved baseline'))
+
+    await act(async () => {
+      replaceEditorText('x'.repeat(100_000))
+    })
+    await unmountUI()
+
+    expect(onCommit).not.toHaveBeenCalled()
+  })
+
+  it('does not commit again when a committed editor unmounts', async () => {
+    const onCommit = vi.fn<(notes: NotesDocument | undefined) => void>()
+    await renderEditor(onCommit, notes('pending text'))
+    await commitOnce(onCommit)
     await unmountUI()
     expect(onCommit).toHaveBeenCalledTimes(1)
   })
 
-  it('flushes a pending edit through onCommit on unmount and cancels the debounce', async () => {
-    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+  it('commits exactly `undefined` when a valid edit canonicalizes to empty', async () => {
     const onCommit = vi.fn<(notes: NotesDocument | undefined) => void>()
-    await renderUI(
-      <WritingEditor
-        identityKey="n1"
-        definition="def"
-        placeholder={en.writing.placeholder}
-        initialNotes={notes('pending text')}
-        onCommit={onCommit}
-        onWordCountChange={() => {}}
-        snippets={en.writing.snippets}
-      />,
-    )
+    await renderEditor(onCommit, undefined)
     const pm = queryProseMirror()
     pm.focus()
     await act(async () => {
       pm.dispatchEvent(keydown('Enter'))
     })
-    await unmountUI()
-    expect(onCommit).toHaveBeenCalledTimes(1)
-    const committed = onCommit.mock.calls[0][0]
-    expect(committed === undefined || committed.type === 'doc').toBe(true)
-    // The debounced timer was canceled by the flush: no double commit.
-    await act(async () => {
-      vi.advanceTimersByTime(2_000)
-    })
-    expect(onCommit).toHaveBeenCalledTimes(1)
-  })
-
-  it('commits exactly `undefined` when the pending edit canonicalizes to empty', async () => {
-    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
-    const onCommit = vi.fn<(notes: NotesDocument | undefined) => void>()
-    await renderUI(
-      <WritingEditor
-        identityKey="n1"
-        definition="def"
-        placeholder={en.writing.placeholder}
-        initialNotes={undefined}
-        onCommit={onCommit}
-        onWordCountChange={() => {}}
-        snippets={en.writing.snippets}
-      />,
-    )
-    const pm = queryProseMirror()
-    pm.focus()
-    await act(async () => {
-      pm.dispatchEvent(keydown('Enter'))
-    })
-    await unmountUI()
     expect(onCommit).toHaveBeenCalledTimes(1)
     expect(onCommit.mock.calls[0][0]).toBeUndefined()
-    await act(async () => {
-      vi.advanceTimersByTime(2_000)
-    })
+    await unmountUI()
     expect(onCommit).toHaveBeenCalledTimes(1)
   })
 
   it('absorbs a post-save prop refresh that is deep-equal to the last commit', async () => {
-    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
     const onCommit = vi.fn<(notes: NotesDocument | undefined) => void>()
-    await renderUI(
-      <WritingEditor
-        identityKey="n1"
-        definition="def"
-        placeholder={en.writing.placeholder}
-        initialNotes={notes('draft one')}
-        onCommit={onCommit}
-        onWordCountChange={() => {}}
-        snippets={en.writing.snippets}
-      />,
-    )
+    await renderEditor(onCommit, notes('draft one'))
     const pm = queryProseMirror()
     await act(async () => {
       pm.dispatchEvent(keydown('Enter'))
     })
-    await act(async () => {
-      vi.advanceTimersByTime(800)
-    })
     expect(onCommit).toHaveBeenCalledTimes(1)
     // The store saved; the parent refreshes with a fresh deep-equal notes
-    // object while a newer edit is pending.
-    const committed = structuredClone(onCommit.mock.calls[0][0])
+    // object while a newer edit is already visible in the editor.
+    await new Promise((resolve) => setTimeout(resolve, 600))
     await act(async () => {
       pm.dispatchEvent(keydown('Enter'))
     })
-    await renderUI(
-      <WritingEditor
-        identityKey="n1"
-        definition="def"
-        placeholder={en.writing.placeholder}
-        initialNotes={committed}
-        onCommit={onCommit}
-        onWordCountChange={() => {}}
-        snippets={en.writing.snippets}
-      />,
-    )
-    // Suppression: the refresh must not cancel the pending debounce.
+    const committed = structuredClone(onCommit.mock.calls[1][0])
+    const visibleBeforeEcho = pm.innerHTML
+    await renderEditor(onCommit, committed)
+    expect(onCommit).toHaveBeenCalledTimes(2)
+    expect(pm.innerHTML).toBe(visibleBeforeEcho)
     await act(async () => {
-      vi.advanceTimersByTime(2_000)
+      pm.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'z',
+          bubbles: true,
+          cancelable: true,
+          ctrlKey: true,
+        }),
+      )
     })
+    expect(pm.querySelectorAll('p')).toHaveLength(2)
+    await unmountUI()
+    expect(onCommit).toHaveBeenCalledTimes(3)
+  })
+
+  it('resets when a prop refresh matches an older commit after a newer commit', async () => {
+    const onCommit = vi.fn<(notes: NotesDocument | undefined) => void>()
+    await renderEditor(onCommit, notes('draft one'))
+    const pm = queryProseMirror()
+    await act(async () => {
+      replaceEditorText('commit A')
+    })
+    const commitA = structuredClone(onCommit.mock.calls[0][0])
+    await act(async () => {
+      replaceEditorText('commit B')
+    })
+    expect(onCommit).toHaveBeenCalledTimes(2)
+    const visibleAfterCommitB = pm.innerHTML
+    expect(pm.textContent).toBe('commit B')
+
+    await renderEditor(onCommit, commitA)
+
+    expect(pm.innerHTML).not.toBe(visibleAfterCommitB)
+    expect(pm.textContent).toBe('commit A')
     expect(onCommit).toHaveBeenCalledTimes(2)
     await unmountUI()
     expect(onCommit).toHaveBeenCalledTimes(2)
@@ -261,16 +300,8 @@ describe('WritingEditor', () => {
 
   it('resets content in place when initialNotes identity changes, without committing', async () => {
     const onCommit = vi.fn<(notes: NotesDocument | undefined) => void>()
-    const props = {
-      identityKey: 'n1',
-      definition: 'def',
-      placeholder: en.writing.placeholder,
-      onCommit,
-      onWordCountChange: () => {},
-      snippets: en.writing.snippets,
-    }
-    await renderUI(<WritingEditor {...props} initialNotes={notes('v1')} />)
-    await renderUI(<WritingEditor {...props} initialNotes={notes('v2')} />)
+    await renderEditor(onCommit, notes('v1'))
+    await renderEditor(onCommit, notes('v2'))
     const pm = queryProseMirror()
     expect(pm.textContent).toContain('v2')
     expect(pm.textContent).not.toContain('v1')
@@ -278,20 +309,10 @@ describe('WritingEditor', () => {
     expect(onCommit).not.toHaveBeenCalled()
   })
 
-  it('cancels a pending edit when identityKey switches, even with equal notes', async () => {
-    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+  it('resets update-free when identityKey switches, even with equal notes', async () => {
     const onCommit = vi.fn<(notes: NotesDocument | undefined) => void>()
     const sharedNotes = notes('shared text')
-    const base = {
-      identityKey: 'n1',
-      definition: 'def',
-      placeholder: en.writing.placeholder,
-      onCommit,
-      onWordCountChange: () => {},
-      snippets: en.writing.snippets,
-      initialNotes: sharedNotes,
-    }
-    await renderUI(<WritingEditor {...base} />)
+    await renderEditor(onCommit, sharedNotes)
     const pm = queryProseMirror()
     // No pm.focus() here: the focused-editor path of the later setContent
     // (focus → scrollIntoView → coordsAtPos) is unsupported in jsdom, and the
@@ -299,16 +320,14 @@ describe('WritingEditor', () => {
     await act(async () => {
       pm.dispatchEvent(keydown('Enter'))
     })
+    expect(onCommit).toHaveBeenCalledTimes(1)
     // Switch concept: same notes object, different identity key.
-    await renderUI(<WritingEditor {...base} identityKey="n2" />)
+    await renderEditor(onCommit, sharedNotes, { identityKey: 'n2' })
     expect(document.querySelector('.writing-editor')?.getAttribute('data-identity')).toBe('n2')
-    // The stale debounce is canceled and its pending edit dropped.
-    await act(async () => {
-      vi.advanceTimersByTime(2_000)
-    })
-    expect(onCommit).not.toHaveBeenCalled()
+    expect(pm.querySelectorAll('p')).toHaveLength(1)
+    expect(onCommit).toHaveBeenCalledTimes(1)
     await unmountUI()
-    expect(onCommit).not.toHaveBeenCalled()
+    expect(onCommit).toHaveBeenCalledTimes(1)
   })
 })
 

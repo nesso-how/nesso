@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { GRAPH_FORMAT_VERSION } from '@nesso-how/schema'
 import { serialize, VOCABULARY } from '@nesso-how/vocab-learning'
 import {
   buildGraphDocument,
+  buildGraphInputSchema,
   buildGraphJson,
   newElementId,
   validateGraphJson,
@@ -189,6 +190,39 @@ describe('buildGraphDocument', () => {
 })
 
 describe('notes plain-text boundary', () => {
+  it('accepts the documented elaboration shape (definition + plain-text notes)', () => {
+    const result = buildGraphInputSchema.safeParse({
+      name: 'Notes',
+      concepts: [{ text: 'A', elaboration: { definition: 'd', notes: 'Plain text note' } }],
+      relations: [],
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('rejects legacy elaboration keys (examples, image) instead of silently stripping them', () => {
+    const legacy = buildGraphInputSchema.safeParse({
+      name: 'Notes',
+      concepts: [
+        { text: 'A', elaboration: { definition: 'd', notes: 'n', examples: ['legacy example'] } },
+      ],
+      relations: [],
+    })
+    expect(legacy.success).toBe(false)
+    if (!legacy.success) {
+      expect(JSON.stringify(legacy.error.issues)).toMatch(/examples/)
+    }
+
+    const image = buildGraphInputSchema.safeParse({
+      name: 'Notes',
+      concepts: [{ text: 'A', elaboration: { definition: 'd', image: 'data:image/png;base64,x' } }],
+      relations: [],
+    })
+    expect(image.success).toBe(false)
+    if (!image.success) {
+      expect(JSON.stringify(image.error.issues)).toMatch(/image/)
+    }
+  })
+
   it('build_graph converts a plain-string note to a minimal paragraph document', () => {
     const doc = buildGraphDocument({
       name: 'Notes',
@@ -246,6 +280,28 @@ describe('notes plain-text boundary', () => {
   })
 })
 
+describe('concept id boundary', () => {
+  it.each(['', '   '])('rejects an explicit %j concept id', (id) => {
+    const result = buildGraphInputSchema.safeParse({
+      name: 'Ids',
+      concepts: [{ id, text: 'A' }],
+      relations: [],
+    })
+
+    expect(result.success).toBe(false)
+  })
+
+  it.each(['', '   '])('rejects an explicit %j concept id while building', (id) => {
+    expect(() =>
+      buildGraphDocument({
+        name: 'Ids',
+        concepts: [{ id, text: 'A' }],
+        relations: [],
+      }),
+    ).toThrow(/concept id/i)
+  })
+})
+
 describe('newElementId', () => {
   it('generates unique ids with the expected prefix', () => {
     const used = new Set<string>()
@@ -255,5 +311,34 @@ describe('newElementId', () => {
     used.add(id)
     const next = newElementId('n', used)
     expect(next).not.toBe(id)
+  })
+})
+
+describe('buildGraphDocument relation ids', () => {
+  afterEach(() => vi.restoreAllMocks())
+
+  it('keeps generated edge ids unique across many colliding random candidates', () => {
+    let randomCalls = 0
+    vi.spyOn(Math, 'random').mockImplementation(() => {
+      const candidate = Math.floor(randomCalls / 2) + 1
+      randomCalls += 1
+      return candidate / 1_000
+    })
+
+    const relations = Array.from({ length: 128 }, () => ({
+      from: 'A',
+      to: 'B',
+      relation: 'causes' as const,
+    }))
+    const document = buildGraphDocument({
+      name: 'Many relations',
+      concepts: [
+        { id: 'n1', text: 'A' },
+        { id: 'n2', text: 'B' },
+      ],
+      relations,
+    })
+
+    expect(new Set(document.relations.map((relation) => relation.id)).size).toBe(relations.length)
   })
 })
