@@ -17,7 +17,7 @@ Appends the `rust` CI job (icons:desktop, cargo fmt/clippy/check/test) after the
 
 ### Native e2e (tauri-driver, local-only, not in CI)
 
-Opt-in when the diff touches desktop persistence, fs sync, or the file watcher. See `.rules/testing.md`.
+Opt-in when the diff touches desktop persistence, fs sync, or the file watcher. See `.rules/desktop-security.md` and the focused native tests.
 
 ```bash
 e2e-native/run-local.sh            # Docker (recommended)
@@ -43,12 +43,12 @@ When a step fails, fix and re-run individually:
 | `security:headers`      | `pnpm run security:headers` — fix CSP violations in `vercel.json` / `docs/vercel.json`    |
 | `lint`                  | `pnpm run lint:fix`                                                                       |
 | `license-headers:check` | `pnpm run license-headers`                                                                |
-| `test:coverage`         | see `.rules/testing.md` — ratchet gate                                                    |
+| `test:coverage`         | coverage thresholds are defined in `vitest.config.ts`                                     |
 | `type:coverage`         | fix type errors; thresholds in tsconfig                                                   |
 | `build`                 | fix compile errors                                                                        |
 | `analyze:dead-code`     | remove unused files/exports                                                               |
-| `analyze:dupes`         | see `.rules/static-analysis.md` — baseline-gated                                          |
-| `analyze:health`        | see `.rules/static-analysis.md` — baseline-gated                                          |
+| `analyze:dupes`         | baseline-gated by `fallow-baselines/dupes.json`                                           |
+| `analyze:health`        | baseline-gated by `fallow-baselines/health.json`                                          |
 | `test:e2e`              | check Playwright output; `pnpm exec playwright install --with-deps chromium` if first run |
 | `icons:desktop`         | `pnpm run icons:desktop`                                                                  |
 | `cargo:fmt`             | `cargo fmt --all --manifest-path src-tauri/Cargo.toml`                                    |

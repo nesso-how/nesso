@@ -37,11 +37,11 @@ Thumbs.db
 package-lock.json
 yarn.lock
 
-# Plans (ephemeral, per-session)
-.plans/
+# Atlante generated artifacts and workflow state
+.atlante/
 
-# Reviews (ephemeral, per-session)
-.reviews/
+# Local OpenCode model overrides
+.opencode/models.json
 
 # Test / coverage
 coverage

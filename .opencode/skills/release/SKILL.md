@@ -9,12 +9,21 @@ description: Use when the user asks to cut, ship, publish, or version-bump a rel
 
 Pushing the `v*` tag triggers `.github/workflows/release.yml`: npm publish of the workspace packages (Trusted Publishing / OIDC), a signed and notarized universal macOS `.dmg` desktop build, a serialized unsigned x64 NSIS Windows build (the `publish-windows` job runs after macOS and merges into the same `latest.json`), and a GitHub Release. **The tag push is the point of no return — it publishes to the public. Confirm with the user before step 4.**
 
-For the conventions and the desktop auto-update / minisign signing details, see `.rules/changelog.md`; this skill executes that flow, it does not restate it.
+Release policy is part of this skill: `CHANGELOG.md` contains user-facing or
+release-notable changes only, and harness-only changes stay out unless they
+alter shipped behavior. Keep the root and Tauri versions, release tag, and
+matching changelog heading aligned. The release workflow publishes production
+web only from the exact `v*` tag after its fail-closed guards, creates the full
+release, and serializes the Windows updater merge after the signed macOS
+artifacts. The macOS build is signed and notarized; the Windows installer is
+unsigned but its updater artifacts use the shared minisign keys. Verify all
+expected release assets and the changelog body after the workflow; if only the
+Windows job fails, rerun that job instead of retagging.
 
 ## 0. Preconditions
 
 - Clean working tree, on an up-to-date `main` (or the release branch the user names). The script warns on a dirty tree and refuses `--commit` unless it's clean.
-- `## [Unreleased]` in `CHANGELOG.md` already holds this release's notes — contributors fill it per PR (see CONTRIBUTING.md step 3). The script stops if it's empty; if so, ask the user what's shipping before continuing.
+- `## [Unreleased]` in `CHANGELOG.md` already holds this release's notes — contributors fill it per PR (see CONTRIBUTING.md). The script stops if it's empty; if so, ask the user what's shipping before continuing.
 - Per AGENTS.md → Git: never commit, tag, or push without the user's explicit go-ahead. Invoking this skill covers the prep; the push (step 4) needs its own confirmation.
 
 ## 1. Choose the version
