@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- **Writing Mode:** Concept notes now open in a dedicated canvas-area TipTap editor with headings, lists, callouts, examples, slash commands, accessible keyboard handling, and an Inspector entry point. Valid edits update the graph immediately while disk persistence continues through the existing autosave.
+- **Typed concept notes:** Vocabulary `0.2.0` stores bounded TipTap JSON notes, migrates compatible `0.1.0` documents, exposes plain-text note input through the MCP graph builder, and gives Socrates a bounded flattened note summary during concept inspection.
+
 ### Fixed
 
 - **PNG export on web:** PNG export no longer fails behind the production Content Security Policy: the deployed CSP now allows the data-URL image and font resources html-to-image needs, so Export graph (.png) downloads successfully from the deployed web app instead of showing an error toast. Rendering failures surface a readable, localized error message, and on desktop a toast confirms the download started.
