@@ -6,6 +6,7 @@ import {
   serialize,
   VOCABULARY,
   RELATION_TYPE_VALUES,
+  paragraphNotesFromPlainText,
   type ConceptElaboration,
   type NessoGraphDocumentInput,
   type RelationTypeName,
@@ -22,9 +23,21 @@ export interface GraphValidationResult {
   warnings: GraphValidationIssue[]
 }
 
-const elaborationSchema = z.object({
-  definition: z.string(),
-})
+/** Cap for plain-text notes arriving at the MCP tool boundary. */
+const MCP_NOTES_MAX_CHARS = 20_000
+
+// Strict: legacy `examples`/image keys must be REJECTED at the tool boundary,
+// not silently stripped — alpha documents carrying them stay invalid everywhere.
+const elaborationSchema = z
+  .object({
+    definition: z.string(),
+    notes: z
+      .string()
+      .max(MCP_NOTES_MAX_CHARS)
+      .optional()
+      .describe('Plain-text notes; converted to a minimal paragraph document at this boundary'),
+  })
+  .strict()
 
 export const relationTypeEnum = z.enum(
   RELATION_TYPE_VALUES as [RelationTypeName, ...RelationTypeName[]],
@@ -33,7 +46,11 @@ export const relationTypeEnum = z.enum(
 const conceptInputSchema = z.union([
   z.string().describe('Concept label text'),
   z.object({
-    id: z.string().optional().describe('Optional stable concept id (n-prefix recommended)'),
+    id: z
+      .string()
+      .refine((id) => id.trim().length > 0, 'Concept id must not be empty')
+      .optional()
+      .describe('Optional stable concept id (n-prefix recommended)'),
     text: z.string().describe('Concept label'),
     elaboration: elaborationSchema.optional(),
   }),
@@ -200,6 +217,13 @@ type ResolvedConcept = {
   elaboration?: ConceptElaboration
 }
 
+/** Convert MCP plain-string notes input to the canonical elaboration shape,
+ *  omitting notes when the text is empty or whitespace-only. */
+function toElaboration(input: { definition: string; notes?: string }): ConceptElaboration {
+  const notes = paragraphNotesFromPlainText(input.notes ?? '')
+  return { definition: input.definition, ...(notes !== undefined ? { notes } : {}) }
+}
+
 function normalizeConceptInputs(input: BuildGraphInput['concepts']): ResolvedConcept[] {
   const usedIds = new Set<string>()
   return input.map((item) => {
@@ -208,21 +232,47 @@ function normalizeConceptInputs(input: BuildGraphInput['concepts']): ResolvedCon
       usedIds.add(id)
       return { id, label: item }
     }
+    if (item.id !== undefined && item.id.trim() === '') {
+      throw new Error('Concept id must not be empty')
+    }
     const id = item.id ?? newElementId('n', usedIds)
     if (usedIds.has(id)) {
       throw new Error(`Duplicate concept id "${id}" in build_graph input`)
     }
     usedIds.add(id)
-    return { id, label: item.text, elaboration: item.elaboration }
+    const elaboration: ConceptElaboration | undefined = item.elaboration
+      ? toElaboration(item.elaboration)
+      : undefined
+    return { id, label: item.text, elaboration }
   })
 }
 
-function resolveConceptRef(ref: string, concepts: ResolvedConcept[]): string {
-  const byId = concepts.find((c) => c.id === ref)
+type ConceptIndex = {
+  byId: ReadonlyMap<string, ResolvedConcept>
+  byLabel: ReadonlyMap<string, readonly string[]>
+}
+
+function indexConcepts(concepts: ResolvedConcept[]): ConceptIndex {
+  const byId = new Map<string, ResolvedConcept>()
+  const byLabel = new Map<string, string[]>()
+  for (const concept of concepts) {
+    byId.set(concept.id, concept)
+    const ids = byLabel.get(concept.label)
+    if (ids) {
+      ids.push(concept.id)
+    } else {
+      byLabel.set(concept.label, [concept.id])
+    }
+  }
+  return { byId, byLabel }
+}
+
+function resolveConceptRef(ref: string, concepts: ConceptIndex): string {
+  const byId = concepts.byId.get(ref)
   if (byId) return byId.id
 
-  const byLabel = concepts.filter((c) => c.label === ref)
-  if (byLabel.length === 1) return byLabel[0].id
+  const byLabel = concepts.byLabel.get(ref) ?? []
+  if (byLabel.length === 1) return byLabel[0]
   if (byLabel.length > 1) {
     throw new Error(`Ambiguous concept reference "${ref}" — multiple concepts share that label`)
   }
@@ -287,20 +337,25 @@ function layoutConceptPositions(
 /** Build a valid Nesso graph document from structured agent input. */
 export function buildGraphDocument(input: BuildGraphInput): NessoGraphDocumentInput {
   const resolvedConcepts = normalizeConceptInputs(input.concepts)
+  const conceptIndex = indexConcepts(resolvedConcepts)
 
   const relations = input.relations.map((rel) => ({
-    source: resolveConceptRef(rel.from, resolvedConcepts),
-    target: resolveConceptRef(rel.to, resolvedConcepts),
+    source: resolveConceptRef(rel.from, conceptIndex),
+    target: resolveConceptRef(rel.to, conceptIndex),
     type: rel.relation,
   }))
 
   const usedEdgeIds = new Set<string>()
-  const documentRelations = relations.map((rel) => ({
-    id: newElementId('e', usedEdgeIds),
-    source: rel.source,
-    target: rel.target,
-    type: rel.type,
-  }))
+  const documentRelations = relations.map((rel) => {
+    const id = newElementId('e', usedEdgeIds)
+    usedEdgeIds.add(id)
+    return {
+      id,
+      source: rel.source,
+      target: rel.target,
+      type: rel.type,
+    }
+  })
 
   const positions = layoutConceptPositions(resolvedConcepts, relations)
 

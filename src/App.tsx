@@ -21,6 +21,7 @@ import {
 } from './components/Inspector'
 import { MentorPanel } from './components/mentor/MentorPanel'
 import { ReviewMode } from './components/review/ReviewMode'
+import { WritingMode } from './components/writing/WritingMode'
 import { ShortcutsDialog } from './components/dialogs/ShortcutsDialog'
 import { SettingsDialog } from './components/dialogs/SettingsDialog'
 import { AboutDialog } from './components/dialogs/AboutDialog'
@@ -83,6 +84,8 @@ function AppInner() {
   const setSidebarCollapsed = useGraphStore((s) => s.setSidebarCollapsed)
   const inspectorCollapsed = useGraphStore((s) => s.inspectorCollapsed)
   const confirmOpen = useGraphStore((s) => s.confirmRequest !== null)
+  const writingModeNodeId = useGraphStore((s) => s.writingModeNodeId)
+  const closeWritingMode = useGraphStore((s) => s.closeWritingMode)
 
   const selectedNode = useGraphStore(selectedNodeSelector)
   const selectedEdge = useGraphStore(selectedEdgeSelector)
@@ -198,6 +201,7 @@ function AppInner() {
     showRelationTypes ||
     showSearch ||
     showAbout ||
+    writingModeNodeId !== null ||
     onboarding.anyModalOpen ||
     confirmOpen
 
@@ -524,6 +528,9 @@ function AppInner() {
         />
       )}
       <ReviewMode open={showReview} onClose={() => setShowReview(false)} />
+      {writingModeNodeId !== null && (
+        <WritingMode nodeId={writingModeNodeId} onClose={closeWritingMode} />
+      )}
       <ShortcutsDialog open={showShortcuts} onClose={() => setShowShortcuts(false)} />
       <SettingsDialog open={showSettings} onClose={() => setShowSettings(false)} />
       <AboutDialog

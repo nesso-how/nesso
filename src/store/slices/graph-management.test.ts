@@ -3,6 +3,7 @@
 import 'fake-indexeddb/auto'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createStore } from 'zustand/vanilla'
+import { VOCABULARY } from '@nesso-how/vocab-learning'
 import {
   dbClearGraphs,
   dbListGraphs,
@@ -310,7 +311,7 @@ describe('loadGraph', () => {
     s.getState().setSetting('showHeatmap', true)
     await dbSaveGraph({
       recordVersion: GRAPH_RECORD_VERSION,
-      vocabulary: { id: '@nesso-how/vocab-learning', version: '0.1.0' },
+      vocabulary: { id: '@nesso-how/vocab-learning', version: VOCABULARY.version },
       id,
       name: 'No display',
       createdAt: 1,
@@ -434,7 +435,7 @@ describe('graph record versioning', () => {
       records.every(
         (record) =>
           record.vocabulary.id === '@nesso-how/vocab-learning' &&
-          record.vocabulary.version === '0.1.0',
+          record.vocabulary.version === VOCABULARY.version,
       ),
     ).toBe(true)
   })
@@ -485,7 +486,7 @@ describe('loadGraphList corrupt IDB recovery', () => {
     const validId = 'g0000000000001'
     await dbSaveGraph({
       recordVersion: GRAPH_RECORD_VERSION,
-      vocabulary: { id: '@nesso-how/vocab-learning', version: '0.1.0' },
+      vocabulary: { id: '@nesso-how/vocab-learning', version: VOCABULARY.version },
       id: validId,
       name: 'Valid',
       createdAt: 1,
@@ -529,7 +530,7 @@ describe('loadGraphList corrupt IDB recovery', () => {
     const validId = 'g0000000000001'
     await dbSaveGraph({
       recordVersion: GRAPH_RECORD_VERSION,
-      vocabulary: { id: '@nesso-how/vocab-learning', version: '0.1.0' },
+      vocabulary: { id: '@nesso-how/vocab-learning', version: VOCABULARY.version },
       id: validId,
       name: 'Valid',
       createdAt: 1,
@@ -543,7 +544,7 @@ describe('loadGraphList corrupt IDB recovery', () => {
     // that the branch's normalization will skip).
     const corruptId = 'corrupt-graph'
     await dbSaveGraph({
-      vocabulary: { id: '@nesso-how/vocab-learning', version: '0.1.0' },
+      vocabulary: { id: '@nesso-how/vocab-learning', version: VOCABULARY.version },
       id: corruptId,
       name: 'Corrupt',
       createdAt: 1,
@@ -561,5 +562,32 @@ describe('loadGraphList corrupt IDB recovery', () => {
     // currentGraphId must now point to the valid graph, not the stale corrupt one.
     expect(s.getState().currentGraphId).not.toBe(corruptId)
     expect(s.getState().currentGraphId).toBe(validId)
+  })
+})
+
+describe('writing mode close lifecycle (management)', () => {
+  it('loadGraph closes writing mode on graph switch', async () => {
+    const s = await freshStore()
+    const idA = await s.getState().createGraph('A')
+    const idB = await s.getState().createGraph('B')
+    expect(s.getState().currentGraphId).toBe(idB)
+    s.setState({ writingModeNodeId: 'n-any' })
+    await s.getState().loadGraph(idA)
+    expect(s.getState().currentGraphId).toBe(idA)
+    expect(s.getState().writingModeNodeId).toBeNull()
+  })
+
+  it('createGraph closes writing mode when it replaces the active graph', async () => {
+    const s = await freshStore()
+    s.setState({ writingModeNodeId: 'n-any' })
+    await s.getState().createGraph('C')
+    expect(s.getState().writingModeNodeId).toBeNull()
+  })
+
+  it('importGraph closes writing mode when it replaces the active graph', async () => {
+    const s = await freshStore()
+    s.setState({ writingModeNodeId: 'n-any' })
+    await s.getState().importGraph('D', [], [])
+    expect(s.getState().writingModeNodeId).toBeNull()
   })
 })

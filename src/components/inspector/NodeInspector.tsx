@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: MIT
 import { type CSSProperties } from 'react'
+import type { Edge, Node } from '@xyflow/react'
+import type { RelationTypeName } from '@nesso-how/vocab-learning'
+import type { ConceptNodeData } from '@/types/graph'
 import { RELATION_TYPES, RELATION_CATEGORY_COLORS, asRelationTypeName } from '@/data/relationTypes'
+import { withDefinition } from '@/lib/elaboration'
 import { useGraphStore, selectedNodeSelector } from '@/store'
 import { useT } from '@/i18n'
 import { InlineEdit } from './InlineEdit'
@@ -51,13 +55,185 @@ function Chevron({ open }: { open: boolean }) {
   )
 }
 
-export function NodeInspector({
-  panelWidth,
-  onPanelWidthChange,
+type MemoryRow = { label: string; value: string; accent?: boolean; warn?: boolean }
+
+function MemorySection({
+  open,
+  rows,
+  title,
+  onToggle,
 }: {
-  panelWidth: number
-  onPanelWidthChange: (w: number) => void
+  open: boolean
+  rows: MemoryRow[]
+  title: string
+  onToggle: () => void
 }) {
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={onToggle}
+        style={{
+          appearance: 'none',
+          border: 0,
+          background: 'transparent',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 'var(--space-3)',
+          padding: 0,
+          marginBottom: open ? 11 : 0,
+          ...LABEL_STYLE,
+        }}
+      >
+        <span>{title}</span>
+        <Chevron open={open} />
+      </button>
+      {open && (
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          {rows.map((row, index) => (
+            <div
+              key={row.label}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 'var(--space-6)',
+                padding: '7px 0',
+                borderBottom: index === rows.length - 1 ? 'none' : '0.5px solid var(--line)',
+              }}
+            >
+              <span
+                style={{
+                  fontSize: '12px',
+                  fontFamily: 'var(--font-sans)',
+                  color: 'var(--ink-3)',
+                }}
+              >
+                {row.label}
+              </span>
+              <span
+                style={{
+                  fontSize: '12px',
+                  fontWeight: 500,
+                  fontFamily: 'var(--font-mono)',
+                  color: row.accent
+                    ? 'var(--highlight)'
+                    : row.warn
+                      ? 'var(--cat-opposition)'
+                      : 'var(--ink-2)',
+                }}
+              >
+                {row.value}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function RelationRows({
+  edges,
+  incoming,
+  nodes,
+  relationLabel,
+  onFocus,
+}: {
+  edges: Edge[]
+  incoming?: boolean
+  nodes: Node<ConceptNodeData>[]
+  relationLabel: (id: RelationTypeName) => string
+  onFocus: (id: string) => void
+}) {
+  return (
+    <>
+      {edges.map((edge) => {
+        const relationId = asRelationTypeName(edge.data?.type)
+        const relation = RELATION_TYPES[relationId]
+        const color = RELATION_CATEGORY_COLORS[relation.cat].color
+        const relatedNodeId = incoming ? edge.source : edge.target
+        const relatedNode = nodes.find((node) => node.id === relatedNodeId)
+        return (
+          <EdgeRow
+            key={edge.id}
+            label={`${incoming ? '← ' : ''}${relationLabel(relationId)}`}
+            text={relatedNode?.data.text ?? ''}
+            color={color}
+            glyph={relation.glyph}
+            onClick={() => onFocus(relatedNodeId)}
+            dim={incoming}
+          />
+        )
+      })}
+    </>
+  )
+}
+
+function RelationsSection({
+  outgoing,
+  incoming,
+  nodes,
+  open,
+  title,
+  relationLabel,
+  onFocus,
+  onToggle,
+}: {
+  outgoing: Edge[]
+  incoming: Edge[]
+  nodes: Node<ConceptNodeData>[]
+  open: boolean
+  title: string
+  relationLabel: (id: RelationTypeName) => string
+  onFocus: (id: string) => void
+  onToggle: () => void
+}) {
+  if (outgoing.length === 0 && incoming.length === 0) return null
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+      <button
+        type="button"
+        onClick={onToggle}
+        style={{
+          appearance: 'none',
+          border: 0,
+          background: 'transparent',
+          cursor: 'pointer',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 'var(--space-3)',
+          padding: 0,
+          ...LABEL_STYLE,
+        }}
+      >
+        <span>{title}</span>
+        <Chevron open={open} />
+      </button>
+
+      {open && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <RelationRows
+            edges={outgoing}
+            nodes={nodes}
+            relationLabel={relationLabel}
+            onFocus={onFocus}
+          />
+          <RelationRows
+            edges={incoming}
+            incoming
+            nodes={nodes}
+            relationLabel={relationLabel}
+            onFocus={onFocus}
+          />
+        </div>
+      )}
+    </div>
+  )
+}
+
+function useNodeInspectorState() {
   const t = useT()
   const node = useGraphStore(selectedNodeSelector)!
   const edges = useGraphStore((s) => s.edges)
@@ -67,7 +243,44 @@ export function NodeInspector({
   const settings = useGraphStore((s) => s.settings)
   const setSetting = useGraphStore((s) => s.setSetting)
   const onboardingStep = useGraphStore((s) => s.onboardingStep)
+  const openWritingMode = useGraphStore((s) => s.openWritingMode)
   const firstNodeId = useGraphStore((s) => s.nodes[0]?.id ?? null)
+
+  return {
+    t,
+    node,
+    edges,
+    nodes,
+    setSelected,
+    updateNodeData,
+    settings,
+    setSetting,
+    onboardingStep,
+    openWritingMode,
+    firstNodeId,
+  }
+}
+
+export function NodeInspector({
+  panelWidth,
+  onPanelWidthChange,
+}: {
+  panelWidth: number
+  onPanelWidthChange: (w: number) => void
+}) {
+  const {
+    t,
+    node,
+    edges,
+    nodes,
+    setSelected,
+    updateNodeData,
+    settings,
+    setSetting,
+    onboardingStep,
+    openWritingMode,
+    firstNodeId,
+  } = useNodeInspectorState()
 
   const memoryOpen = settings.inspectorMemoryOpen
   const relationsOpen = settings.inspectorRelationsOpen
@@ -75,9 +288,7 @@ export function NodeInspector({
   const elab = node.data.elaboration
 
   const patch = (definition: string) =>
-    updateNodeData(node.id, {
-      elaboration: { definition },
-    })
+    updateNodeData(node.id, { elaboration: withDefinition(elab, definition) })
 
   const outgoing = edges.filter((e) => e.source === node.id)
   const incoming = edges.filter((e) => e.target === node.id)
@@ -94,7 +305,7 @@ export function NodeInspector({
           const d = Math.floor((Date.now() - lastReview) / 86_400_000)
           return d <= 0 ? t.inspector.memory.today : t.inspector.memory.daysAgo(d)
         })()
-  const memRows: { label: string; value: string; accent?: boolean; warn?: boolean }[] = [
+  const memRows: MemoryRow[] = [
     {
       label: t.inspector.rows.due,
       value: formatConceptDue(node.data.due, t.inspector.dueNow),
@@ -161,68 +372,12 @@ export function NodeInspector({
         }}
       >
         {/* Memory — recall + schedule, collapsible */}
-        <div>
-          <button
-            type="button"
-            onClick={() => setSetting('inspectorMemoryOpen', !memoryOpen)}
-            style={{
-              appearance: 'none',
-              border: 0,
-              background: 'transparent',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 'var(--space-3)',
-              padding: 0,
-              marginBottom: memoryOpen ? 11 : 0,
-              ...LABEL_STYLE,
-            }}
-          >
-            <span>{t.inspector.memory.title}</span>
-            <Chevron open={memoryOpen} />
-          </button>
-          {memoryOpen && (
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              {memRows.map((r, i) => (
-                <div
-                  key={r.label}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: 'var(--space-6)',
-                    padding: '7px 0',
-                    borderBottom: i === memRows.length - 1 ? 'none' : '0.5px solid var(--line)',
-                  }}
-                >
-                  <span
-                    style={{
-                      fontSize: '12px',
-                      fontFamily: 'var(--font-sans)',
-                      color: 'var(--ink-3)',
-                    }}
-                  >
-                    {r.label}
-                  </span>
-                  <span
-                    style={{
-                      fontSize: '12px',
-                      fontWeight: 500,
-                      fontFamily: 'var(--font-mono)',
-                      color: r.accent
-                        ? 'var(--highlight)'
-                        : r.warn
-                          ? 'var(--cat-opposition)'
-                          : 'var(--ink-2)',
-                    }}
-                  >
-                    {r.value}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        <MemorySection
+          open={memoryOpen}
+          rows={memRows}
+          title={t.inspector.memory.title}
+          onToggle={() => setSetting('inspectorMemoryOpen', !memoryOpen)}
+        />
 
         {/* Definition */}
         <div
@@ -251,67 +406,59 @@ export function NodeInspector({
           />
         </div>
 
-        {/* Relations — collapsible */}
-        {(outgoing.length > 0 || incoming.length > 0) && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-            <button
-              type="button"
-              onClick={() => setSetting('inspectorRelationsOpen', !relationsOpen)}
+        {/* Notes — entry point only; reading and editing happen in Writing Mode */}
+        <div data-testid="inspector-notes-section">
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <span
+              data-testid="inspector-notes-label"
               style={{
-                appearance: 'none',
-                border: 0,
-                background: 'transparent',
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 'var(--space-3)',
-                padding: 0,
-                ...LABEL_STYLE,
+                fontSize: 'var(--text-sm)',
+                fontWeight: 'var(--font-weight-medium)',
+                fontFamily: 'var(--font-sans)',
+                color: 'var(--ink-2)',
               }}
             >
-              <span>{t.inspector.relations}</span>
-              <Chevron open={relationsOpen} />
+              {t.inspector.notes.section}
+            </span>
+            <button
+              type="button"
+              data-testid="inspector-notes-write"
+              className="inspector-notes-write"
+              onClick={() => openWritingMode(node.id)}
+              style={{
+                appearance: 'none',
+                border: '0.5px solid var(--line)',
+                color: 'var(--ink-2)',
+                fontSize: 'var(--text-sm)',
+                fontWeight: 'var(--font-weight-medium)',
+                fontFamily: 'var(--font-sans)',
+                padding: 'var(--space-2) var(--space-5)',
+                borderRadius: 'var(--radius-sm)',
+                cursor: 'pointer',
+              }}
+            >
+              {t.inspector.notes.write}
             </button>
-
-            {relationsOpen && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                {outgoing.map((e) => {
-                  const relationId = asRelationTypeName(e.data?.type)
-                  const T = RELATION_TYPES[relationId]
-                  const C = RELATION_CATEGORY_COLORS[T.cat]
-                  const target = nodes.find((n) => n.id === e.target)
-                  return (
-                    <EdgeRow
-                      key={e.id}
-                      label={t.relationTypes.types[relationId]}
-                      text={target?.data.text ?? ''}
-                      color={C.color}
-                      glyph={T.glyph}
-                      onClick={() => focusNode(e.target)}
-                    />
-                  )
-                })}
-                {incoming.map((e) => {
-                  const relationId = asRelationTypeName(e.data?.type)
-                  const T = RELATION_TYPES[relationId]
-                  const C = RELATION_CATEGORY_COLORS[T.cat]
-                  const source = nodes.find((n) => n.id === e.source)
-                  return (
-                    <EdgeRow
-                      key={e.id}
-                      label={`← ${t.relationTypes.types[relationId]}`}
-                      text={source?.data.text ?? ''}
-                      color={C.color}
-                      glyph={T.glyph}
-                      onClick={() => focusNode(e.source)}
-                      dim
-                    />
-                  )
-                })}
-              </div>
-            )}
           </div>
-        )}
+        </div>
+
+        {/* Relations — collapsible */}
+        <RelationsSection
+          outgoing={outgoing}
+          incoming={incoming}
+          nodes={nodes}
+          open={relationsOpen}
+          title={t.inspector.relations}
+          relationLabel={(id) => t.relationTypes.types[id]}
+          onFocus={focusNode}
+          onToggle={() => setSetting('inspectorRelationsOpen', !relationsOpen)}
+        />
       </div>
 
       {/* Action toolbar — docked footer */}

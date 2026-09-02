@@ -5,6 +5,8 @@
 
 export type {
   ConceptElaboration,
+  NotesDocument,
+  NotesNode,
   NessoConceptData,
   NessoRelationData,
   NessoGraphDocument,
@@ -35,4 +37,21 @@ export {
 
 export { CategoryPalette, GLYPH_PATHS, PALETTES } from './visual.js'
 
-export { deserialize, deserializeEnvelope, serialize, validateNessoDocument } from './document.js'
+export {
+  deserialize,
+  deserializeEnvelope,
+  serialize,
+  validateDefinitionOnlyElaboration,
+  validateNessoDocument,
+} from './document.js'
+
+export {
+  NOTES_MAX_DEPTH,
+  NOTES_MAX_SERIALIZED_CHARS,
+  countNotesWords,
+  isEmptyNotesDocument,
+  isValidNotesDocument,
+  notesToPlainText,
+  paragraphNotesFromPlainText,
+  validateNotesDocument,
+} from './notes.js'

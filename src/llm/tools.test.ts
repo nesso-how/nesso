@@ -2,6 +2,7 @@
 import type { Edge, Node } from '@xyflow/react'
 import { asSchema } from 'ai'
 import { describe, expect, it, vi } from 'vitest'
+import type { NotesDocument } from '@nesso-how/vocab-learning'
 import { defaultConceptReviewFields, type ConceptNodeData } from '@/types/graph'
 import type { MentorGraphState } from './tools'
 import { FSRS_PRIORITY_RULE } from './context'
@@ -379,6 +380,7 @@ describe('inspectConcept', () => {
       id: nodeHandle('n-1'),
       title: 'Memory',
       definition: { text: `${'x'.repeat(1_199)}…`, truncated: true },
+      notes: { text: '', truncated: false },
       memory: {
         reps: 7,
         stability: 12.5,
@@ -449,6 +451,35 @@ describe('inspectConcept', () => {
       found: false,
       id: nodeHandle('missing'),
     })
+  })
+})
+
+describe('inspectConcept notes', () => {
+  it('flattens notes, removes newlines, and caps at 1,200 characters with a truncation flag', () => {
+    const longText = 'n'.repeat(1_400)
+    const notes: NotesDocument = {
+      type: 'doc',
+      content: [
+        { type: 'paragraph', content: [{ type: 'text', text: 'line one' }] },
+        { type: 'paragraph', content: [{ type: 'text', text: longText }] },
+      ],
+    }
+    const node = concept('n-notes', 'Noted', {
+      elaboration: { definition: 'd', notes },
+    })
+    const result = inspectConcept(graph([node]), 'n-notes')
+    if (!result.found) throw new Error('expected found')
+    expect(result.notes.text).not.toMatch(/\n/)
+    expect(result.notes.text.startsWith('line one nnnn')).toBe(true)
+    expect(result.notes.text.length).toBeLessThanOrEqual(1_200)
+    expect(result.notes.truncated).toBe(true)
+  })
+
+  it('returns empty notes for definition-only concepts', () => {
+    const node = concept('n-plain', 'Plain', { elaboration: { definition: 'd' } })
+    const result = inspectConcept(graph([node]), 'n-plain')
+    if (!result.found) throw new Error('expected found')
+    expect(result.notes).toEqual({ text: '', truncated: false })
   })
 })
 
@@ -683,7 +714,7 @@ describe('createMentorTools', () => {
   const fsrsPriorityRule =
     'Lower stability and Again or Hard suggest weaker recall, while isDue is a scheduling cue rather than proof of conceptual misunderstanding.'
   const overviewDescription = `Read graph counts and up to ten concepts in weakest-first order. Unreviewed concepts come first; among reviewed concepts, ${fsrsPriorityRule} Never modifies the graph.`
-  const inspectConceptDescription = `Read one concept, its bounded definition, and FSRS memory state by stable id. stability is estimated recall strength in days; difficulty is learned recall difficulty; state is New, Learning, Review, or Relearning; lastRating is Again, Hard, Good, or Easy; isDue reports whether review is scheduled now. ${fsrsPriorityRule} Never modifies the graph.`
+  const inspectConceptDescription = `Read one concept, its bounded definition, and FSRS memory state by stable id. stability is estimated recall strength in days; difficulty is learned recall difficulty; state is New, Learning, Review, or Relearning; lastRating is Again, Hard, Good, or Easy; isDue reports whether review is scheduled now. ${fsrsPriorityRule} Never modifies the graph. notes is the flattened concept notes capped at 1,200 characters.`
 
   it('pins weakest-first and FSRS semantics in the two memory-aware tool descriptions', () => {
     const tools = createMentorTools(() => graph([]))

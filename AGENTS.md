@@ -8,7 +8,7 @@ Monorepo: `src/` (app) + `packages/` (`@nesso-how/*`). Desktop shell is optional
 
 ## Core concepts
 
-- **Node** — `ConceptNode` with `text` + FSRS at runtime; FSRS in IndexedDB `reviewState`, not graph JSON — see [`.rules/graph-model.md`](.rules/graph-model.md), [`.rules/store.md`](.rules/store.md).
+- **Node** — `ConceptNode` with `text` + FSRS at runtime; elaboration is `{ definition, notes? }` where `notes` is a native TipTap JSON document (Writing Mode); FSRS in IndexedDB `reviewState`, not graph JSON — see [`.rules/graph-model.md`](.rules/graph-model.md), [`.rules/store.md`](.rules/store.md).
 - **Edge** — `data.type: RelationTypeName` — see [`.rules/graph-model.md`](.rules/graph-model.md).
 - **Selection** — `{ kind: 'node' | 'edge', id } | null` in the store (`src/store/types.ts`); drives Inspector and Socrates.
 - **Settings** — `NessoSettings` in the store; palette/theme via CSS vars on `<html>`.
@@ -48,9 +48,9 @@ Update the canonical `.rules/*.md` in the same change when your edit makes a rul
 
 - `components.md` — `src/components/**/*.tsx`
 - `store.md` — `src/store/**/*.ts`
-- `graph-model.md` — `src/data/relationTypes.ts`, `src/types/graph.ts`, `packages/graph/src/NessoEdge.tsx`, `src/components/dialogs/RelationTypesDialog.tsx`, `packages/vocab-learning/src/index.ts`, `packages/vocab-learning/src/document.ts`, `packages/vocab-learning/src/relationTypes.ts`
+- `graph-model.md` — `src/data/relationTypes.ts`, `src/types/graph.ts`, `packages/graph/src/NessoEdge.tsx`, `src/components/dialogs/RelationTypesDialog.tsx`, `packages/vocab-learning/src/index.ts`, `packages/vocab-learning/src/document.ts`, `packages/vocab-learning/src/notes.ts`, `packages/vocab-learning/src/graphDocument.ts`, `packages/vocab-learning/src/vocabularyIdentity.ts`, `packages/vocab-learning/src/relationTypes.ts`
 - `mentor.md` — `src/components/mentor/MentorPanel.tsx`, `src/llm/completion.ts`, `src/llm/context.ts`, `src/llm/graphHandles.ts`, `src/llm/tools.ts`
-- `conventions.md` — `src/**/*.{ts,tsx}` (only when conventions change, not every src edit)
+- `conventions.md` — `src/**/*.{ts,tsx}` (only when conventions change, not every src edit); always for the writing `.ts` helpers: `src/components/writing/docAdapters.ts`, `src/components/writing/debounce.ts`, `src/components/writing/snippets/registry.ts`, `src/components/writing/extensions/*.ts`
 - `testing.md` — `**/*.test.{ts,tsx}`; also `**/*.test.mjs`, `vitest.config.ts`, `playwright.config.ts`, `e2e/**`, `packages/schema/src/fixtures/envelope/**`, `src/store/fixtures/persist/**`, `src/lib/fixtures/graph-load/**`, CI test steps
 - `theme.md` — `packages/theme/**`, `src/index.css`, `vite.config.ts`
 - `docs.md` — `docs/src/content/docs/**/*.md`
@@ -89,7 +89,7 @@ All graph mutations go through store methods (`addNode`, `deleteEdge`, `updateNo
 
 Before first-beta preparation, alpha-only persisted data may break cleanly: do not add migration shims, legacy fallbacks, deprecation aliases, or old-name coercions merely to preserve an earlier alpha shape.
 
-Compatibility work explicitly preparing `0.2.0-beta.0` is allowed and required. The first protected data-at-rest baseline is envelope format `1` with `@nesso-how/vocab-learning` vocabulary `0.1.0`, using the post-#129 definition-only elaboration shape. Do not migrate, strip, preserve, or alias removed alpha-only `examples`, `notes`, or image fields; reject those documents as outside the baseline.
+The first protected data-at-rest baseline is envelope format `1` with `@nesso-how/vocab-learning` vocabulary `0.1.0` (definition-only), and the sequential ladder starts at vocabulary `0.1.0 → 0.2.0` (optional bounded notes documents, source shape validated before relabeling). Alpha-only `examples`, string `notes`, and image fields stay rejected everywhere — never migrated, stripped, preserved, or aliased.
 
 From `0.2.0-beta.0` onward, persisted app data uses the sequential migration ladders documented in `.rules/compatibility.md`. Package deprecation aliases may serve npm consumers when required by package semver, but are not migrations for app data at rest. Runtime in-memory state remains outside the compatibility contract.
 

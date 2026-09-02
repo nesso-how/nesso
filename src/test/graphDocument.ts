@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+import { VOCABULARY } from '@nesso-how/vocab-learning'
 
 /** Minimal on-disk graph document JSON for workspace integration tests. */
 export function graphDocumentJson(file: {
@@ -12,7 +13,7 @@ export function graphDocumentJson(file: {
     version: 1,
     vocabulary: {
       id: '@nesso-how/vocab-learning',
-      version: '0.1.0',
+      version: VOCABULARY.version,
     },
     name: file.name,
     ...(file.id !== undefined && { id: file.id }),

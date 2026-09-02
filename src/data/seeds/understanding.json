@@ -2,7 +2,7 @@
   "version": 1,
   "vocabulary": {
     "id": "@nesso-how/vocab-learning",
-    "version": "0.1.0"
+    "version": "0.2.0"
   },
   "name": "Understanding",
   "concepts": [
@@ -13,7 +13,40 @@
       "y": 200,
       "data": {
         "elaboration": {
-          "definition": "The active construction of meaning—connecting ideas, explaining why things work, and organizing what you know into a coherent structure, not merely holding isolated facts."
+          "definition": "The active construction of meaning—connecting ideas, explaining why things work, and organizing what you know into a coherent structure, not merely holding isolated facts.",
+          "notes": {
+            "type": "doc",
+            "content": [
+              {
+                "type": "callout",
+                "content": [
+                  {
+                    "type": "paragraph",
+                    "content": [
+                      {
+                        "type": "text",
+                        "text": "Try explaining this to someone without looking at your notes."
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "example",
+                "content": [
+                  {
+                    "type": "paragraph",
+                    "content": [
+                      {
+                        "type": "text",
+                        "text": "Example: after reading a chapter, redraw its argument as a small graph from memory."
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
         }
       }
     },

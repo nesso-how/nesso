@@ -72,7 +72,7 @@ describe('recordToGraphFile', () => {
     recordVersion: 1,
     vocabulary: {
       id: '@nesso-how/vocab-learning',
-      version: '0.1.0',
+      version: VOCABULARY.version,
     },
     id: 'g0000000000001',
     name: 'Demo',
@@ -126,7 +126,7 @@ describe('writeGraphRecordToWorkspace — workspace alias resolution', () => {
 
   const record: GraphRecord = {
     recordVersion: 1,
-    vocabulary: { id: '@nesso-how/vocab-learning', version: '0.1.0' },
+    vocabulary: { id: '@nesso-how/vocab-learning', version: VOCABULARY.version },
     id: 'g0000000000001',
     name: 'Test',
     createdAt: 1,
@@ -293,7 +293,7 @@ describe('graph file normalization', () => {
     expect(record!.recordVersion).toBe(1)
     expect(record!.vocabulary).toEqual({
       id: '@nesso-how/vocab-learning',
-      version: '0.1.0',
+      version: VOCABULARY.version,
     })
     expect(record!.id).toBe('g0000000000001')
     expect(record!.name).toBe('Baseline')
@@ -406,7 +406,7 @@ describe('writeGraphRecordToWorkspace reserved paths', () => {
 
     const record: GraphRecord = {
       recordVersion: 1,
-      vocabulary: { id: '@nesso-how/vocab-learning', version: '0.1.0' },
+      vocabulary: { id: '@nesso-how/vocab-learning', version: VOCABULARY.version },
       id: 'g0000000000001',
       name: 'Foreign',
       createdAt: 1,
@@ -446,7 +446,7 @@ describe('writeGraphRecordToWorkspace reserved paths', () => {
     // from workspace A must not prevent using this filename in workspace B.
     const record: GraphRecord = {
       recordVersion: 1,
-      vocabulary: { id: '@nesso-how/vocab-learning', version: '0.1.0' },
+      vocabulary: { id: '@nesso-how/vocab-learning', version: VOCABULARY.version },
       id: 'g0000000000001',
       name: 'Target',
       createdAt: 1,
@@ -501,7 +501,7 @@ describe('writeGraphRecordToWorkspace reserved paths', () => {
 
     const record: GraphRecord = {
       recordVersion: 1,
-      vocabulary: { id: '@nesso-how/vocab-learning', version: '0.1.0' },
+      vocabulary: { id: '@nesso-how/vocab-learning', version: VOCABULARY.version },
       id: 'g0000000000001',
       name: 'Collide',
       createdAt: 1,

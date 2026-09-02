@@ -126,6 +126,31 @@ const it: typeof en = {
       easy: 'Facile',
     },
   },
+  writing: {
+    close: 'Chiudi modalità scrittura',
+    placeholder: 'Spiegalo con parole tue…',
+    invalidNotes:
+      'Questa nota è troppo grande o contiene una formattazione non supportata e non verrà salvata',
+    snippetsMenu: 'Snippet',
+    snippets: {
+      heading2: 'Titolo 2',
+      heading2Desc: 'Titolo di sezione',
+      heading3: 'Titolo 3',
+      heading3Desc: 'Titolo di sottosezione',
+      bulletList: 'Elenco puntato',
+      bulletListDesc: 'Elenco non ordinato',
+      orderedList: 'Elenco numerato',
+      orderedListDesc: 'Elenco ordinato',
+      blockquote: 'Citazione',
+      blockquoteDesc: 'Blocco citato',
+      divider: 'Separatore',
+      dividerDesc: 'Linea orizzontale',
+      callout: 'Riquadro',
+      calloutDesc: 'Nota evidenziata',
+      example: 'Esempio',
+      exampleDesc: 'Casella di esempio svolto',
+    },
+  },
   inspector: {
     concept: 'Concetto',
     relation: 'Relazione',
@@ -149,6 +174,8 @@ const it: typeof en = {
     notes: {
       definition: 'Definizione',
       definitionPlaceholder: 'Con parole tue…',
+      section: 'Note',
+      write: 'Scrivi',
     },
     actions: {
       copy: 'Copia (⌘C)',

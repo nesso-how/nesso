@@ -60,6 +60,7 @@ export const createDesktopSyncSlice: StateCreator<GraphState, [], [], DesktopSyn
       edges: record.edges,
       graphDisplay,
       selected: null,
+      writingModeNodeId: null,
       loadedToken: s.loadedToken + 1,
       savedFingerprint: fp,
       savedReviewFingerprint: reviewStateFingerprint(record.nodes),

@@ -27,6 +27,12 @@
 
 Path alias `@/` maps to `src/`. Use it for all non-relative imports (e.g. `import { useGraphStore } from '@/store'`).
 
+## Writing Mode editor
+
+- `WritingEditor` commits valid documents synchronously on every update; it does not debounce or flush through a second save coordinator. Invalid documents remain visible with an accessible warning and are not committed. Only a store echo deep-equal to the latest synchronous commit is absorbed without resetting editor selection or history; older prop values reset content. A changed `identityKey` resets content with `emitUpdate: false`.
+- `toEditableDoc` normalizes persisted notes to the current TipTap content model and preserves text and supported marks where possible; unknown containers become paragraphs, and text nested under atom-shaped nodes is salvaged into safe sibling content rather than passed through the atom.
+- Escape handling is scoped to the editor instance and popup DOM: the official suggestion exit runs before WritingMode handles editor Escape, while popup-focused Escape closes only the menu and restores focus to that same editor after popup cleanup. Do not add global popup state.
+
 ## No comments
 
 Follow the project default: no comments unless the reason is genuinely non-obvious to a future reader. Identifiers should be self-describing.

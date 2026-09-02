@@ -45,6 +45,8 @@ Once connected, you can ask your AI client things like:
 
 The MCP server is **stateless** and does not read or write files. Your client uses its own filesystem tools to read `.json` graph files, passes the contents inline to `validate_graph` or `build_graph`, and writes the result back. Nesso picks up external edits through its normal workspace sync.
 
+Nesso MCP does not select or contact an AI provider. If your MCP client sends graph text to a remote model, that text can leave the device under the provider's retention policy. Prefer a local model or omit sensitive graph content when needed.
+
 ### Agent workflow for graph files
 
 A typical end-to-end flow when the client has filesystem access:
@@ -52,6 +54,7 @@ A typical end-to-end flow when the client has filesystem access:
 1. **Read** the target graph `.json` from the project folder (client filesystem tool).
 2. **Validate** with `validate_graph`. Fix any `errors` before saving; missing or foreign `vocabulary` is a hard error that rejects the file. Review `warnings` (e.g. a missing relation `type`).
 3. **Build or extend** with `build_graph` when creating a new graph from structured concepts and relations: the tool assigns ids, vocabulary metadata, valid relation types, and layout positions.
+   - Concept elaborations may carry `notes` as **plain text**: the tool converts it into the graph's native notes document shape, so external clients never need to construct the rich document. The `notes` input is capped at 20,000 characters; longer input is rejected.
 4. **Re-validate** the output with `validate_graph` if the client edited the JSON by hand.
 5. **Write** the JSON back to disk (client filesystem tool). Open or sync the graph in Nesso.
 

@@ -100,6 +100,71 @@ describe('deleteNode', () => {
   })
 })
 
+describe('writing mode close lifecycle (editing)', () => {
+  it('deleteNode closes writing mode for the removed node and keeps it otherwise', () => {
+    const s = makeStore()
+    const n1 = s.getState().addNode()
+    const n2 = s.getState().addNode()
+    s.setState({ writingModeNodeId: n1 })
+    s.getState().deleteNode(n2)
+    expect(s.getState().writingModeNodeId).toBe(n1)
+    s.getState().deleteNode(n1)
+    expect(s.getState().writingModeNodeId).toBeNull()
+  })
+
+  it('onNodesChange removal closes the overlay for the removed node and keeps it otherwise', () => {
+    const s = makeStore()
+    const n1 = s.getState().addNode()
+    const n2 = s.getState().addNode()
+    const removal = (id: string): NodeChange<Node<ConceptNodeData>>[] => [{ type: 'remove', id }]
+    s.setState({ writingModeNodeId: n2 })
+    s.getState().onNodesChange(removal(n1))
+    expect(s.getState().writingModeNodeId).toBe(n2)
+    s.getState().onNodesChange(removal(n2))
+    expect(s.getState().writingModeNodeId).toBeNull()
+  })
+
+  it('deleteSelection closes the overlay when the writing node is deleted', () => {
+    const s = makeStore()
+    const n1 = s.getState().addNode()
+    s.getState().addNode()
+    s.getState().setSelected({ kind: 'node', id: n1 })
+    s.setState({ writingModeNodeId: n1 })
+    s.getState().deleteSelection()
+    expect(s.getState().writingModeNodeId).toBeNull()
+  })
+
+  it('undo clears the overlay when the restored snapshot lacks the writing node', () => {
+    const s = makeStore()
+    s.getState().addNode()
+    const n2 = s.getState().addNode()
+    s.setState({ writingModeNodeId: n2 })
+    s.getState().undo()
+    expect(s.getState().writingModeNodeId).toBeNull()
+  })
+
+  it('undo keeps the overlay when the writing node survives the restore', () => {
+    const s = makeStore()
+    const n1 = s.getState().addNode()
+    s.getState().addNode()
+    s.setState({ writingModeNodeId: n1 })
+    s.getState().undo()
+    expect(s.getState().writingModeNodeId).toBe(n1)
+  })
+
+  it('redo clears the overlay when the restored snapshot lacks the writing node', () => {
+    const s = makeStore()
+    s.getState().addNode()
+    const n2 = s.getState().addNode()
+    s.getState().deleteNode(n2)
+    s.setState({ writingModeNodeId: n2 })
+    s.getState().undo()
+    expect(s.getState().writingModeNodeId).toBe(n2)
+    s.getState().redo()
+    expect(s.getState().writingModeNodeId).toBeNull()
+  })
+})
+
 describe('deleteEdge', () => {
   it('removes the edge and clears its selection', () => {
     const s = makeStore()
@@ -120,6 +185,54 @@ describe('updateNodeData', () => {
     const data = s.getState().nodes[0].data
     expect(data.text).toBe('Renamed')
     expect(data.stability).toBe(5)
+  })
+})
+
+describe('updateNodeNotes', () => {
+  it('updates only notes while preserving the definition without adding history', () => {
+    const s = makeStore()
+    const id = s.getState().addNode()
+    s.getState().updateNodeData(id, { elaboration: { definition: 'Meaning' } })
+    const historyLength = s.getState()._history.length
+    const nextNotes = {
+      type: 'doc' as const,
+      content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Draft' }] }],
+    }
+
+    s.getState().updateNodeNotes(id, nextNotes)
+
+    expect(s.getState().nodes[0]?.data.elaboration).toEqual({
+      definition: 'Meaning',
+      notes: nextNotes,
+    })
+    expect(s.getState()._history).toHaveLength(historyLength)
+  })
+
+  it('removes undefined notes without leaving an undefined notes key', () => {
+    const s = makeStore()
+    const id = s.getState().addNode()
+    const currentNotes = {
+      type: 'doc' as const,
+      content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Saved' }] }],
+    }
+    s.getState().updateNodeData(id, {
+      elaboration: { definition: 'Meaning', notes: currentNotes },
+    })
+    const historyLength = s.getState()._history.length
+
+    s.getState().updateNodeNotes(id, undefined)
+
+    expect(s.getState().nodes[0]?.data.elaboration).toEqual({ definition: 'Meaning' })
+    expect(s.getState()._history).toHaveLength(historyLength)
+  })
+
+  it('is a no-op when the node does not exist', () => {
+    const s = makeStore()
+    const before = s.getState()
+
+    s.getState().updateNodeNotes('missing', undefined)
+
+    expect(s.getState()).toBe(before)
   })
 })
 

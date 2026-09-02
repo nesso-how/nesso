@@ -1,16 +1,17 @@
 // SPDX-License-Identifier: MIT
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { GRAPH_FORMAT_VERSION } from '@nesso-how/schema'
-import { serialize } from '@nesso-how/vocab-learning'
+import { serialize, VOCABULARY } from '@nesso-how/vocab-learning'
 import {
   buildGraphDocument,
+  buildGraphInputSchema,
   buildGraphJson,
   newElementId,
   validateGraphJson,
 } from './graph-tools.js'
 
 const validDoc = {
-  vocabulary: { id: '@nesso-how/vocab-learning', version: '0.1.0' },
+  vocabulary: { id: '@nesso-how/vocab-learning', version: VOCABULARY.version },
   name: 'Demo',
   concepts: [
     { id: 'n1', label: 'Cause', x: 0, y: 0 },
@@ -47,7 +48,7 @@ describe('validateGraphJson', () => {
     const result = validateGraphJson(
       JSON.stringify({
         version: GRAPH_FORMAT_VERSION,
-        vocabulary: { id: '@nesso-how/vocab-learning', version: '0.1.0' },
+        vocabulary: { id: '@nesso-how/vocab-learning', version: VOCABULARY.version },
         name: 'X',
         concepts: [{ id: 'n1', label: 'A', x: 0, y: 0 }],
         relations: [{ id: 'e1', source: 'n1', target: 'n1', type: 'not-real' }],
@@ -61,7 +62,7 @@ describe('validateGraphJson', () => {
     const result = validateGraphJson(
       JSON.stringify({
         version: GRAPH_FORMAT_VERSION,
-        vocabulary: { id: '@nesso-how/vocab-learning', version: '0.1.0' },
+        vocabulary: { id: '@nesso-how/vocab-learning', version: VOCABULARY.version },
         name: 'X',
         concepts: [
           { id: 'n1', label: 'A', x: 0, y: 0 },
@@ -78,7 +79,7 @@ describe('validateGraphJson', () => {
     const result = validateGraphJson(
       JSON.stringify({
         version: GRAPH_FORMAT_VERSION,
-        vocabulary: { id: '@nesso-how/vocab-learning', version: '0.1.0' },
+        vocabulary: { id: '@nesso-how/vocab-learning', version: VOCABULARY.version },
         name: 'X',
         concepts: [{ id: 'n1', label: 'A', x: 0, y: 0 }],
         relations: [{ id: 'e1', source: 'n1', target: 'missing', type: 'causes' }],
@@ -92,7 +93,7 @@ describe('validateGraphJson', () => {
     const result = validateGraphJson(
       JSON.stringify({
         version: GRAPH_FORMAT_VERSION,
-        vocabulary: { id: '@nesso-how/vocab-learning', version: '0.1.0' },
+        vocabulary: { id: '@nesso-how/vocab-learning', version: VOCABULARY.version },
         name: 'X',
         concepts: [
           { id: 'n1', label: 'A', x: 0, y: 0 },
@@ -164,7 +165,7 @@ describe('buildGraphDocument', () => {
       concepts: ['Only'],
       relations: [],
     })
-    expect(doc.vocabulary).toEqual({ id: '@nesso-how/vocab-learning', version: '0.1.0' })
+    expect(doc.vocabulary).toEqual({ id: '@nesso-how/vocab-learning', version: VOCABULARY.version })
   })
 
   it('rejects ambiguous label references', () => {
@@ -188,6 +189,119 @@ describe('buildGraphDocument', () => {
   })
 })
 
+describe('notes plain-text boundary', () => {
+  it('accepts the documented elaboration shape (definition + plain-text notes)', () => {
+    const result = buildGraphInputSchema.safeParse({
+      name: 'Notes',
+      concepts: [{ text: 'A', elaboration: { definition: 'd', notes: 'Plain text note' } }],
+      relations: [],
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('rejects legacy elaboration keys (examples, image) instead of silently stripping them', () => {
+    const legacy = buildGraphInputSchema.safeParse({
+      name: 'Notes',
+      concepts: [
+        { text: 'A', elaboration: { definition: 'd', notes: 'n', examples: ['legacy example'] } },
+      ],
+      relations: [],
+    })
+    expect(legacy.success).toBe(false)
+    if (!legacy.success) {
+      expect(JSON.stringify(legacy.error.issues)).toMatch(/examples/)
+    }
+
+    const image = buildGraphInputSchema.safeParse({
+      name: 'Notes',
+      concepts: [{ text: 'A', elaboration: { definition: 'd', image: 'data:image/png;base64,x' } }],
+      relations: [],
+    })
+    expect(image.success).toBe(false)
+    if (!image.success) {
+      expect(JSON.stringify(image.error.issues)).toMatch(/image/)
+    }
+  })
+
+  it('build_graph converts a plain-string note to a minimal paragraph document', () => {
+    const doc = buildGraphDocument({
+      name: 'Notes',
+      concepts: [{ text: 'A', elaboration: { definition: 'd', notes: 'Plain text note' } }],
+      relations: [],
+    })
+    const elab = doc.concepts[0]?.data?.elaboration
+    expect(elab?.notes).toEqual({
+      type: 'doc',
+      content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Plain text note' }] }],
+    })
+    expect(validateGraphJson(serialize(doc)).valid).toBe(true)
+  })
+
+  it('build_graph omits notes for empty or whitespace-only strings', () => {
+    const doc = buildGraphDocument({
+      name: 'Notes',
+      concepts: [{ text: 'A', elaboration: { definition: 'd', notes: '   ' } }],
+      relations: [],
+    })
+    expect(doc.concepts[0]?.data?.elaboration).toEqual({ definition: 'd' })
+  })
+
+  it('validate_graph accepts rich notes documents and rejects alpha string notes', () => {
+    const base = {
+      version: GRAPH_FORMAT_VERSION,
+      vocabulary: { id: VOCABULARY.id, version: VOCABULARY.version },
+      name: 'X',
+      concepts: [
+        {
+          id: 'n1',
+          label: 'A',
+          x: 0,
+          y: 0,
+          data: {
+            elaboration: {
+              definition: 'd',
+              notes: {
+                type: 'doc',
+                content: [{ type: 'paragraph', content: [{ type: 'text', text: 'rich' }] }],
+              },
+            },
+          },
+        },
+      ],
+      relations: [],
+    }
+    expect(validateGraphJson(JSON.stringify(base)).valid).toBe(true)
+
+    const alpha = structuredClone(base)
+    ;(alpha.concepts[0].data.elaboration as Record<string, unknown>).notes = 'legacy string'
+    const result = validateGraphJson(JSON.stringify(alpha))
+    expect(result.valid).toBe(false)
+    expect(result.errors[0]?.message).toMatch(/must be a bounded/)
+  })
+})
+
+describe('concept id boundary', () => {
+  it.each(['', '   '])('rejects an explicit %j concept id', (id) => {
+    const result = buildGraphInputSchema.safeParse({
+      name: 'Ids',
+      concepts: [{ id, text: 'A' }],
+      relations: [],
+    })
+
+    expect(result.success).toBe(false)
+  })
+
+  it.each(['', '   '])('rejects an explicit %j concept id while building', (id) => {
+    expect(() =>
+      buildGraphDocument({
+        name: 'Ids',
+        concepts: [{ id, text: 'A' }],
+        relations: [],
+      }),
+    ).toThrow(/concept id/i)
+  })
+})
+
 describe('newElementId', () => {
   it('generates unique ids with the expected prefix', () => {
     const used = new Set<string>()
@@ -197,5 +311,34 @@ describe('newElementId', () => {
     used.add(id)
     const next = newElementId('n', used)
     expect(next).not.toBe(id)
+  })
+})
+
+describe('buildGraphDocument relation ids', () => {
+  afterEach(() => vi.restoreAllMocks())
+
+  it('keeps generated edge ids unique across many colliding random candidates', () => {
+    let randomCalls = 0
+    vi.spyOn(Math, 'random').mockImplementation(() => {
+      const candidate = Math.floor(randomCalls / 2) + 1
+      randomCalls += 1
+      return candidate / 1_000
+    })
+
+    const relations = Array.from({ length: 128 }, () => ({
+      from: 'A',
+      to: 'B',
+      relation: 'causes' as const,
+    }))
+    const document = buildGraphDocument({
+      name: 'Many relations',
+      concepts: [
+        { id: 'n1', text: 'A' },
+        { id: 'n2', text: 'B' },
+      ],
+      relations,
+    })
+
+    expect(new Set(document.relations.map((relation) => relation.id)).size).toBe(relations.length)
   })
 })

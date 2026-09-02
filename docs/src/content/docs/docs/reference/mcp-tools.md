@@ -38,14 +38,14 @@ only; it does not produce rewritten or migrated JSON.
     "Sunlight",
     {
       "text": "Chloroplast",
-      "elaboration": { "definition": "..." }
+      "elaboration": { "definition": "...", "notes": "plain text notes (optional)" }
     }
   ],
   "relations": [{ "from": "Sunlight", "to": "Chloroplast", "relation": "enables" }]
 }
 ```
 
-- `concepts`: label strings or objects with optional `id`, `text`, and `elaboration`.
+- `concepts`: label strings or objects with optional `id`, `text`, and `elaboration`. A plain-text `notes` string on an elaboration is converted into the graph's native notes document; empty or whitespace-only strings are omitted. The `notes` input is capped at 20,000 characters; longer input is rejected.
 - `relations`: `from` / `to` match concept `id` or label (must be unambiguous); `relation` must be a valid type id from `get_relation_types`.
 
 **Output:** Pretty-printed graph document JSON ready to write to disk (includes `vocabulary`, generated ids, and dagre layout positions). FSRS review fields and React Flow edge shape (`type: "nesso"`, handles) are applied by the app on import, not stored in the file.

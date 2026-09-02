@@ -37,7 +37,7 @@ const freshNode = defaultConceptReviewFields()
 import { deserialize, serialize, type NessoGraphDocument } from '@nesso-how/vocab-learning'
 
 const json = serialize({
-  vocabulary: { id: '@nesso-how/vocab-learning', version: '0.1.0' },
+  vocabulary: { id: '@nesso-how/vocab-learning', version: '0.2.0' },
   name: 'My graph',
   concepts: [{ id: 'n1', label: 'Idea', x: 0, y: 0, data: { elaboration: { definition: '...' } } }],
   relations: [{ id: 'e1', source: 'n1', target: 'n2', type: 'causes' }],
@@ -47,17 +47,36 @@ const doc: NessoGraphDocument = deserialize(json)
 
 **Shared content vs review state.** `serialize` / `deserialize` handle the portable graph file: concept labels, positions, `elaboration`, relation types, and layout hints. FSRS fields (`stability`, `difficulty`, `due`, etc.) are runtime node parameters for spaced repetition — they are typed here via `defaultConceptReviewFields()` but are **not** written into shared graph JSON; the Nesso app persists them separately.
 
+### Notes documents (elaboration)
+
+The current `0.2.0` `ConceptElaboration` is `{ definition, notes? }`. `notes` is
+a native TipTap JSON document
+(`{ type: 'doc', content: [...] }`) persisted verbatim, including custom block
+types. Unknown block types pass the guard within this supported `0.2.0`
+vocabulary because validation is block-agnostic. This does not make newer
+vocabulary versions supported: documents declaring a version newer than
+`0.2.0` are rejected by the forward guard.
+
+- `NOTES_MAX_DEPTH` / `NOTES_MAX_SERIALIZED_CHARS` bound nesting and serialized size.
+- `notesToPlainText` flattens any document (blocks joined with newlines); unknown
+  blocks degrade to their text, never destroyed.
+- `paragraphNotesFromPlainText(text)` builds the minimal paragraph document used by
+  plain-text boundaries (MCP).
+
 Relation types reference: [Relation types](https://nesso.how/docs/reference/relation-types/).
 
 ## Persisted vocabulary compatibility
 
 Learning-vocabulary documents must declare
 `@nesso-how/vocab-learning` and a supported normative vocabulary version.
-The first protected baseline is vocabulary `0.1.0` with definition-only
-concept elaboration.
+The current version is `0.2.0`: concept elaboration is
+`{ definition, notes? }` where `notes` is an optional bounded TipTap JSON
+document (block-agnostic guard).
 
-Removed alpha-only `examples`, `notes`, and image fields are not migrated or
-discarded. Documents containing them are rejected.
+Legacy vocabulary `0.1.0` (definition-only elaboration) is migrated by the app's
+`graphLoadNormalizer` sequential ladder; the source shape is validated before
+relabeling. Removed alpha-only `examples`, string `notes`, and image fields are
+not migrated or discarded — documents containing them are rejected.
 
 ## License
 

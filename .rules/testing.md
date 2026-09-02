@@ -255,7 +255,7 @@ The top of the pyramid: real-rendering flows that Vitest cannot reach. Split alo
 - **Playwright** (`playwright.config.ts`, specs in `e2e/*.spec.ts`) drives the Vite **web build** — every flow that works in a plain browser (`isDesktop() === false`). It boots its own dev server (`webServer: pnpm dev`, reused locally / fresh in CI) and targets `chromium`. Run with `pnpm test:e2e` (or `pnpm test:e2e:ui` for the trace viewer). Shared actions (new empty graph, create concept, drag-connect, select edge) live in `e2e/helpers.ts`; import fixtures in `e2e/fixtures/`.
 - **tauri-driver + WebdriverIO** (`e2e-native/wdio.conf.ts`, specs in `e2e-native/*.e2e.ts`) drives the **native Tauri shell** — what the browser lane structurally cannot reach (`isDesktop() === true`): the real fs plugin, the fs watcher (`useGraphFileWatch`), and `desktop-sync`. **Local-only** (not a CI gate): run via `e2e-native/run-local.sh` on macOS (streams the working tree into a pre-baked Docker image — full WebKit runtime + WebKitWebDriver + xvfb + Rust + tauri-driver) or `pnpm test:e2e:native` on a Linux host with the deps installed. Failure diagnostics land in `e2e-native/artifacts/`. `wdio.conf.ts` builds the debug binary in `onPrepare` (`tauri build --debug --no-bundle`), starts **one long-lived `tauri-driver`** (waits on its port; `--native-driver` passed explicitly; path resolved via `TAURI_DRIVER_BIN` → `~/.cargo/bin` → PATH) and resets the workspace per spec; helpers (`e2e-native/helpers.ts`) talk to the same on-disk workspace (`~/.local/share/dev.nesso.desktop/graphs/`) the app reads and writes.
 
-Web coverage (Playwright): graph editing (create node, drag-connect a relation, change relation type, delete edge), selection + history (undo/redo, multi-select delete), graph management (create/switch/delete, JSON export/import, and PNG export under the production `vercel.json` CSP), persistence across reload, settings (dark mode, language, and the custom mentor-persona input boundary), daily review reminder behavior (display, start/close actions, reload suppression, and independent setting), and inline-edit (multiline auto-grow + ResizeObserver).
+Web coverage (Playwright): graph editing (create node, drag-connect a relation, change relation type, delete edge), selection + history (undo/redo, multi-select delete), graph management (create/switch/delete, JSON export/import, and PNG export under the production `vercel.json` CSP), persistence across reload, settings (dark mode, language, and the custom mentor-persona input boundary), daily review reminder behavior (display, start/close actions, reload suppression, and independent setting), inline-edit (multiline auto-grow + ResizeObserver), and the canvas-area writing mode (`e2e/writing-mode.spec.ts`: open from the Inspector NOTES section, write, insert a callout via `/`, close, persist across reload).
 
 Native coverage (tauri-driver): disk-first autosave (concept lands in a workspace `.json`), rehydration from disk across an app relaunch, the real fs watcher reconciling an externally added graph, and desktop-sync reloading the active graph after an external edit.
 
@@ -298,8 +298,14 @@ through the public migration chokepoint.
 
 Never rewrite a released fixture to match current output. Add a new fixture
 and sequential migration step instead. Fixtures begin at the post-#129
-definition-only beta baseline and must not encode removed alpha-only `examples`,
-`notes`, or image fields as supported input.
+definition-only beta baseline and must not encode removed alpha-only
+`examples`, alpha **string** `notes`, or image fields as supported input —
+alpha string `notes` stays rejected everywhere. The bounded `NotesDocument`
+is the current shape validated at vocabulary `0.2.0`; the
+`0.1.0 → 0.2.0` ladder migrates definition-only `0.1.0` sources into it.
+The graph-load fixture
+`v1-vocabulary-0.1.0.json` is replayed through the `0.1.0 → 0.2.0` vocabulary
+migration; fixtures must still never encode alpha fields as supported input.
 
 Fixture locations:
 

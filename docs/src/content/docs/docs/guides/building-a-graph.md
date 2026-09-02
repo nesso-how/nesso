@@ -1,6 +1,6 @@
 ---
 title: Building a graph
-description: How to add concepts, draw typed relations, and use the Inspector to enrich nodes with definitions.
+description: How to add concepts, draw typed relations, and use the Inspector to enrich nodes with definitions and notes.
 ---
 
 The canvas is the centre of Nesso. **Concepts** are nodes and **typed relations** are edges. The **Inspector** is the right-hand panel where you enrich whatever you've got selected.
@@ -44,6 +44,7 @@ When a concept is selected it shows, top to bottom:
 
 - **Memory** _(collapsible):_ the FSRS schedule, read-only: when due, stability (in days), last self-rating, review count (with lapses), and time since the last review.
 - **Definition**: see below.
+- **Notes**: the entry point to [Writing mode](../../guides/writing-mode/), which you open with its **Write** button; the notes themselves are not shown here.
 - **Relations** _(collapsible):_ outgoing and incoming edges, each connected concept shown with the relation glyph in a chip and the type on the right (incoming dimmed). Click a row to jump to that concept. Change a relation's type by selecting the edge.
 
 When an edge is selected, the Inspector shows the relation as a chip with its category colour and a dropdown of every relation type. Picking a new type updates the edge in place. The graph keeps its endpoints and identity.
@@ -55,6 +56,8 @@ A single free-text field that travels with the concept and feeds both the AI men
 - **Definition:** a one-sentence-ish explanation in your own words.
 
 In Review, the definition appears when you **Reveal** a card so you can check your recall. The AI mentor can retrieve it when it searches or inspects a relevant concept, but it is not always embedded in the normal compact context. A compatibility fallback may send the bounded legacy snapshot instead.
+
+Longer writing happens in **Writing Mode**: under **Notes**, click **Write** and the canvas gives way to a focused writing area while the Inspector stays docked on the right. See [Writing mode](../../guides/writing-mode/).
 
 ## Display options (sidebar)
 

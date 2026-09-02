@@ -2,14 +2,17 @@
 interface Props {
   onClick: () => void
   large?: boolean
+  /** Optional accessible name; the ✕ glyph alone carries no meaning to screen readers. */
+  label?: string
 }
 
-export function CloseButton({ onClick, large }: Props) {
+export function CloseButton({ onClick, large, label }: Props) {
   const size = large ? 28 : 22
   return (
     <button
       type="button"
       onClick={onClick}
+      aria-label={label}
       style={{
         appearance: 'none',
         border: 0,
