@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.2.0-beta.5] - 2026-09-03
+
 ### Added
 
 - **Writing Mode:** Concept notes now open in a dedicated canvas-area TipTap editor with headings, lists, callouts, examples, slash commands, accessible keyboard handling, and an Inspector entry point. Valid edits update the graph immediately while disk persistence continues through the existing autosave.
@@ -838,7 +840,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial alpha: interactive knowledge graph (web + Tauri v2); desktop installers on GitHub Releases (macOS Apple silicon and Intel).
 
-[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.2.0-beta.4...HEAD
+[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.2.0-beta.5...HEAD
+[0.2.0-beta.5]: https://github.com/nesso-how/nesso/compare/v0.2.0-beta.4...v0.2.0-beta.5
 [0.2.0-beta.4]: https://github.com/nesso-how/nesso/compare/v0.2.0-beta.3...v0.2.0-beta.4
 [0.2.0-beta.3]: https://github.com/nesso-how/nesso/compare/v0.2.0-beta.2...v0.2.0-beta.3
 [0.2.0-beta.2]: https://github.com/nesso-how/nesso/compare/v0.2.0-beta.1...v0.2.0-beta.2
