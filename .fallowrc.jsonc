@@ -21,6 +21,8 @@
     "@wdio/spec-reporter",
     "@wdio/globals",
     "expect-webdriverio",
+    // agent-browser is a local CLI used through pnpm exec, not imported by app code.
+    "agent-browser",
     "tsx",
     "@types/mocha"
   ],
