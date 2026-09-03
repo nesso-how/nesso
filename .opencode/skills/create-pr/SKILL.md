@@ -5,9 +5,9 @@ description: Use when the user asks to open, draft, update, or push a Nesso pull
 
 # Create a Nesso pull request
 
-Publishes or updates a **fully prepared** PR on GitHub — not implementation, review, or committing. Assumes `preflight` and `review` have already passed, the final changes are committed by `nesso-work`, and the user has approved the PR summary; this skill only pushes and publishes.
+Publishes or updates a **fully prepared** PR on GitHub — not implementation, review, or committing. Assumes `preflight` and Atlante's `review` phase have passed, the final changes are committed at task boundaries, and the user has approved the PR summary; this skill only pushes and publishes.
 
-No confirmation gate here — the orchestrator (work agent) already gated. Proceed directly.
+No confirmation gate here — the calling workflow already gated publication. Proceed directly.
 
 Before creating:
 
@@ -26,7 +26,7 @@ If a PR exists, use `gh pr edit` instead of `gh pr create`.
 
 ## 1. Prepare the draft
 
-Branch: `CONTRIBUTING.md` prefix (`feat/`, `fix/`, `refactor/`, `chore/`) + kebab-case. Body: fill template (strip HTML comments); mark checklist `[x]` only when true — `.rules/changelog.md` for `[Unreleased]`. Title: conventional-commit style.
+Branch: `CONTRIBUTING.md` prefix (`feat/`, `fix/`, `refactor/`, `chore/`) + kebab-case. Body: fill template (strip HTML comments); mark checklist `[x]` only when true. `CHANGELOG.md` follows the policy in `AGENTS.md` and `CONTRIBUTING.md`. Title: conventional-commit style.
 
 ## 2. Rebase onto `main`
 

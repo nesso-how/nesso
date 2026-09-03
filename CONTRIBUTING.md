@@ -30,8 +30,10 @@ chore/<name>
 
 1. Open an issue before starting non-trivial work.
 2. Branch off `main` using the naming convention above, keep commits focused.
-3. Update `## [Unreleased]` in `CHANGELOG.md` before committing.
-4. Rebase onto the latest `main`, then open a PR using the provided template. To auto-close the issue, put a closing keyword in the PR body, one per issue — e.g. `Closes #31` (a list like `Closes #31, #26` closes only `#31`).
+3. Use Atlante's `architect` workflow: `brainstorm` → `plan` → `build` → `review`.
+4. Each implementation task ends with one focused commit after its checks and review. Keep task commits limited to that task; use separate worktrees for explicitly planned parallel tasks.
+5. Record user-facing or release-notable changes in `## [Unreleased]` when preparing a release or merge commit, or when explicitly requested. Harness-only changes do not belong there unless they alter shipped behavior.
+6. Rebase onto the latest `main`, then open a PR using the provided template. To auto-close the issue, put a closing keyword in the PR body, one per issue — e.g. `Closes #31` (a list like `Closes #31, #26` closes only `#31`).
 
 ## Graph model changes
 

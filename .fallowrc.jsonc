@@ -31,6 +31,7 @@
   // Playwright config are run by the Playwright CLI, not reachable from any app
   // entry point, so they are not dead surface.
   "ignorePatterns": [
+    ".opencode/plugin/**",
     "docs/src/components/ThemeSelect.astro",
     "docs/src/styles/custom.css",
     "e2e/**",

@@ -1,0 +1,7 @@
+{
+  "$schema": "https://atlante.sh/schema/v0.1/schema.json",
+  "extends": "@atlante/pack",
+  "values": {
+    "project": "Nesso"
+  }
+}

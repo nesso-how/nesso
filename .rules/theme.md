@@ -1,23 +1,24 @@
 # Theme tokens
 
-`@nesso-how/theme` (`packages/theme/`) is the **single source of truth** for theme tokens — surface/ink colours, accent/highlight, recall heatmap, shadows, fonts, and the type/space/radii scales. Every theme change happens there.
+`@nesso-how/theme` (`packages/theme/`) is the single source of truth for shared
+surface and ink colours, accents, heatmaps, shadows, fonts, and type, spacing,
+and radius scales. Never duplicate theme values in `src/**`, `packages/graph/**`,
+or `docs/**`; consume the emitted CSS variables.
 
-## Hard rules
+Tokens become CSS variables through the package emitters `themeCss`, `modeVars`,
+and `baseVars`. The `nessoTheme` Vite plugin injects them at first paint;
+`index.css` contains structural CSS only. A stray token block or matching
+literal is a regression and belongs back in the theme package.
 
-- **Never hardcode or duplicate a theme value elsewhere.** No hex, shadow, font, spacing, or radius literals in `src/**`, `packages/graph/**`, or `docs/**` for something that is a theme token. Add or edit the token in `packages/theme/src/default.ts` and consume the emitted CSS variable (`var(--paper)`, `var(--accent)`, `var(--space-6)`, `var(--radius-lg)`, …).
-- **Tokens become CSS variables through the package emitters** (`themeCss`, `modeVars`, `baseVars` in `packages/theme/src/css.ts`), not by writing `:root` blocks by hand. The app injects them into `<head>` at build time via the `nessoTheme` Vite plugin in `vite.config.ts` (so the variables exist at first paint); `index.css` holds only structural CSS.
-- **If you find app-side theme code, move it into the package.** A stray `:root`/`[data-theme]` token block, an inline hex that matches a token, or a re-mapped copy (e.g. Starlight `--sl-color-*` in `docs/`) is a regression — relocate the value to `default.ts` and consume it.
+Category colours are relation-vocabulary semantics owned by
+`@nesso-how/vocab-learning` `PALETTES`. The theme package references the active
+category palette by name, and must not duplicate or absorb those colours.
 
-## Boundary with `@nesso-how/vocab-learning`
+A token belongs in the shared package only when it varies by theme or mode and
+is shared across app, graph, and docs. Structural constants such as z-indexes,
+breakpoints, layout dimensions, and motion remain local unless a pack needs to
+tune them.
 
-Category colours (`--cat-*`) are part of the relation-type **vocabulary** and live only in `@nesso-how/vocab-learning` `PALETTES`. The theme package references the active palette by name (`ThemePack.categoryPalette`); the palette switch stays **orthogonal** to the theme switch. Do not move category colours into the theme package, and do not duplicate them in `index.css`.
-
-## What belongs here (and what does not)
-
-A token enters the package only if it **(a) varies by theme or mode** _and_ **(b) is shared across app + graph + docs/landing**. That admits colour/shadow (mode-varying) and font/type/space/radii (theme-varying, mode-invariant).
-
-It excludes, by design: z-index and breakpoints (structural constants → app-side, e.g. `src/lib/`), app layout dimensions (`STATUS_BAR_HEIGHT_PX`, `INSPECTOR_RAIL_WIDTH`, sidebar width → component constants), and motion (a foundation constant unless a pack needs to tune feel).
-
-## Light/dark and new packs
-
-`light` is full; `dark` is a **diff** over it (specify only what changes). Mode-invariant axes are not repeated per mode. New packs derive from the default via `defineTheme(defaultTheme, override)` and register in `packages/theme/src/registry.ts`. See `packages/theme/README.md` for the authoring guide.
+`light` is the complete mode and `dark` is a diff. New packs derive from the
+default with `defineTheme(defaultTheme, override)` and register in the theme
+registry. See the package README for authoring details.
