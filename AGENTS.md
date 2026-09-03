@@ -43,16 +43,16 @@ mutation area. Use the Rust preflight when the diff touches `src-tauri/`.
 
 ## Browser verification (agent-browser)
 
-`agent-browser` (installed globally via npm) drives a persistent headless Chrome
+The project `agent-browser` dev dependency drives a persistent headless Chrome
 for visual checks of UI changes:
 
 ```sh
 pnpm run dev                                               # vite on http://localhost:5173
-agent-browser open http://localhost:5173 && agent-browser screenshot
+pnpm exec agent-browser open http://localhost:5173 && pnpm exec agent-browser screenshot
 ```
 
-- `agent-browser snapshot -i` lists interactive elements as `@refs`; act with `click`/`fill`/`press @ref`, inspect with `get text`/`get styles`, and read page logs with `console`/`errors`.
-- Commands run against a background daemon, so the browser persists between calls; `--headed` shows the window and `agent-browser close` stops it.
+- `pnpm exec agent-browser snapshot -i` lists interactive elements as `@refs`; act with `click`/`fill`/`press @ref`, inspect with `get text`/`get styles`, and read page logs with `console`/`errors`.
+- Commands run against a background daemon, so the browser persists between calls; `--headed` shows the window and `pnpm exec agent-browser close` stops it.
 
 ## Hard constraints
 

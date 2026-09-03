@@ -135,6 +135,9 @@ importers:
       '@wdio/spec-reporter':
         specifier: ^9.28.0
         version: 9.29.0
+      agent-browser:
+        specifier: 0.27.0
+        version: 0.27.0
       expect-webdriverio:
         specifier: ^5.6.8
         version: 5.6.8(@wdio/globals@9.29.0)(@wdio/logger@9.18.0)(webdriverio@9.29.0)
@@ -2871,6 +2874,10 @@ packages:
   agent-base@7.1.4:
     resolution: {integrity: sha512-MnA+YT8fwfJPgBx3m60MNqakm30XOkyIoH1y6huTQvC0PwZG7ki8NacLBcrPbNoo8vEZy7Jpuk7+jMO+CUovTQ==}
     engines: {node: '>= 14'}
+
+  agent-browser@0.27.0:
+    resolution: {integrity: sha512-mmHzVsYFVA6nshNNGJzg83aVMgKpf4h98ytY3pvtJB1Cot0ZyA2bfnkbSngGD56Azkj+GlhVH6qx9DfKOVE0yg==}
+    hasBin: true
 
   ai@7.0.11:
     resolution: {integrity: sha512-ecCtume1NKJG/8oIkV8G26KL9jmFJRx6+Gjx2260FcDZqIUGPiF1uBoNeGy4S1vxbHmFxUul4D7axqiXZZ1XuA==}
@@ -8884,6 +8891,8 @@ snapshots:
   acorn@8.16.0: {}
 
   agent-base@7.1.4: {}
+
+  agent-browser@0.27.0: {}
 
   ai@7.0.11(zod@4.4.3):
     dependencies:
