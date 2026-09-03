@@ -41,6 +41,31 @@ pnpm run analyze:mutation:changed -- --base origin/main
 Use the mutation command when changed pure logic belongs to a registered
 mutation area. Use the Rust preflight when the diff touches `src-tauri/`.
 
+## Verification strategy
+
+Choose checks based on the change's scope and risk:
+
+- **Quick iteration / each implementation task:** run `pnpm run fast-check`.
+  This runs format, lint, type-check, and the full unit test suite. Use
+  `pnpm run fast-check -- --e2e` when the change crosses the browser integration
+  boundary.
+- **Heavyweight final verification before declaring work ready or pushing:** run
+  `pnpm run preflight`. It mirrors CI's JavaScript and E2E jobs, including
+  coverage, builds, Fallow analysis, and Playwright. Do not push with failures.
+- **Tauri changes:** run `pnpm run preflight -- --rust`; this adds desktop
+  assets, Rust formatting, Clippy, checks, tests, and the build smoke test.
+- **Starlight documentation changes:** run `pnpm run build:mcp` after editing
+  authored docs. The full preflight also includes this build.
+- **Pure logic in a registered mutation area:** run
+  `pnpm run analyze:mutation:changed -- --base origin/main` when mutation
+  feedback is relevant.
+- **Native persistence, filesystem, or sync changes:** run
+  `e2e-native/run-local.sh` (or `pnpm run test:e2e:native`) in addition to the
+  relevant checks.
+
+Use the quickest check that gives useful feedback while iterating, then use the
+appropriate heavyweight and scope-specific checks before handing work off.
+
 ## Browser verification (agent-browser)
 
 The project `agent-browser` dev dependency drives a persistent headless Chrome
