@@ -12,6 +12,11 @@ interface Props {
   canvasInsets?: { top: number; right: number; bottom: number; left: number }
 }
 
+/** Text column width; the card wraps it plus uniform CONTENT_INSET gutters. */
+const CONTENT_WIDTH = 680
+/** Uniform gutter between the card edge and the text column. */
+const CONTENT_INSET = 32
+
 /**
  * Canvas-area Writing Mode (ReviewMode pattern): a translucent modal overlay
  * with the writing surface as the dialog card, so the node Inspector stays
@@ -98,7 +103,8 @@ export function WritingMode({ nodeId, onClose, canvasInsets }: Props) {
         onClick={(e) => e.stopPropagation()}
         onKeyDown={handleDialogKeyDown}
         style={{
-          width: 'min(92vw, 860px)',
+          position: 'relative',
+          width: `min(92vw, ${CONTENT_WIDTH + CONTENT_INSET * 2}px)`,
           maxWidth: 'calc(100% - (var(--space-9) * 2))',
           maxHeight: 'calc(90vh - (var(--space-8) * 2))',
           background: 'var(--bg-card)',
@@ -110,18 +116,13 @@ export function WritingMode({ nodeId, onClose, canvasInsets }: Props) {
           overflow: 'hidden',
         }}
       >
+        {/* Close affordance mirrors SettingsDialog: 28px `large` CloseButton,
+            absolutely offset 12px from the card's top-right. */}
         <div
-          style={{
-            flexShrink: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'flex-end',
-            padding: 'var(--space-3) var(--space-7)',
-          }}
+          data-testid="writing-mode-close"
+          style={{ position: 'absolute', top: 12, right: 12, zIndex: 1 }}
         >
-          <span data-testid="writing-mode-close">
-            <CloseButton onClick={handleClose} label={t.writing.close} />
-          </span>
+          <CloseButton large onClick={handleClose} label={t.writing.close} />
         </div>
 
         <div
@@ -136,41 +137,49 @@ export function WritingMode({ nodeId, onClose, canvasInsets }: Props) {
         >
           <div
             style={{
+              /* Full width: the card itself is sized to the text measure
+                 (CONTENT_WIDTH + gutters), so no maxWidth cap here —
+                 capping would re-center the column and double the gutters.
+                 Uniform CONTENT_INSET padding on every side. */
               width: '100%',
-              maxWidth: 680,
-              padding: 'var(--space-8) var(--space-9) calc(var(--space-9) * 2)',
+              padding: CONTENT_INSET,
             }}
           >
-            <h1
-              id="writing-mode-title"
-              data-testid="writing-mode-title"
-              style={{
-                margin: 0,
-                fontSize: 'var(--text-xl)',
-                fontWeight: 'var(--font-weight-medium)',
-                lineHeight: 'var(--leading-tight)',
-                fontFamily: 'var(--font-display)',
-                letterSpacing: '-0.01em',
-                color: 'var(--ink)',
-              }}
+            <div
+              style={{ paddingBottom: 'var(--space-8)', borderBottom: '0.5px solid var(--line)' }}
             >
-              {node.data.text}
-            </h1>
-            {definition.trim() !== '' && (
-              <div
-                data-testid="writing-mode-definition"
+              <h1
+                id="writing-mode-title"
+                data-testid="writing-mode-title"
                 style={{
-                  marginTop: 'var(--space-5)',
-                  fontSize: 'var(--text-md)',
-                  lineHeight: 'var(--leading-normal)',
+                  margin: 0,
+                  fontSize: 28,
+                  fontWeight: 'var(--font-weight-medium)',
+                  lineHeight: 'var(--leading-tight)',
                   fontFamily: 'var(--font-display)',
-                  color: 'var(--ink-4)',
+                  letterSpacing: '-0.01em',
+                  color: 'var(--ink)',
                 }}
               >
-                {definition}
-              </div>
-            )}
-            <div style={{ marginTop: 'var(--space-8)' }}>
+                {node.data.text}
+              </h1>
+              {definition.trim() !== '' && (
+                <div
+                  data-testid="writing-mode-definition"
+                  style={{
+                    marginTop: 'var(--space-5)',
+                    fontSize: '14.5px',
+                    fontWeight: 400,
+                    lineHeight: 1.55,
+                    fontFamily: 'var(--font-display)',
+                    color: 'var(--ink-2)',
+                  }}
+                >
+                  {definition}
+                </div>
+              )}
+            </div>
+            <div style={{ marginTop: 'var(--space-9)' }}>
               <WritingEditor
                 key={nodeId}
                 identityKey={nodeId}

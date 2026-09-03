@@ -57,7 +57,7 @@ A single free-text field that travels with the concept and feeds both the AI men
 
 In Review, the definition appears when you **Reveal** a card so you can check your recall. The AI mentor can retrieve it when it searches or inspects a relevant concept, but it is not always embedded in the normal compact context. A compatibility fallback may send the bounded legacy snapshot instead.
 
-Longer writing happens in **Writing Mode**: under **Notes**, click **Write** and the canvas gives way to a focused writing area while the Inspector stays docked on the right. See [Writing mode](../../guides/writing-mode/).
+Longer writing happens in **Writing Mode**: in the Inspector, click the full-width **Write** button and the canvas gives way to a focused writing area while the Inspector stays docked on the right. See [Writing mode](../../guides/writing-mode/).
 
 ## Display options (sidebar)
 

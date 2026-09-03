@@ -342,7 +342,7 @@ export function ReviewMode({ open, onClose }: Props) {
           <h2
             style={{
               margin: 0,
-              fontSize: '32px',
+              fontSize: '28px',
               fontWeight: 500,
               lineHeight: 1.12,
               fontFamily: 'var(--font-display)',

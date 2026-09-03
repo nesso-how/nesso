@@ -63,7 +63,7 @@ afterEach(() => {
 })
 
 describe('NodeInspector notes action', () => {
-  it('renders Notes as a compact action row with a themed Write button', async () => {
+  it('renders a full-width themed Write button', async () => {
     await act(async () => {
       root?.render(<NodeInspector panelWidth={320} onPanelWidthChange={vi.fn()} />)
     })
@@ -72,14 +72,10 @@ describe('NodeInspector notes action', () => {
     if (!section) throw new Error('notes section not rendered')
     expect(section.children).toHaveLength(1)
 
-    const label = section.querySelector('[data-testid="inspector-notes-label"]')
-    expect(label?.textContent).toBe(en.inspector.notes.section)
-    expect(label?.getAttribute('style')).not.toContain('text-transform: uppercase')
-    expect(label?.getAttribute('style')).toContain('var(--font-sans)')
-
     const button = section.querySelector<HTMLButtonElement>('[data-testid="inspector-notes-write"]')
     if (!button) throw new Error('write button not rendered')
     expect(button.textContent).toBe(en.inspector.notes.write)
+    expect(button.style.width).toBe('100%')
     expect(button.style.borderRadius).toBe('var(--radius-sm)')
     expect(button.style.border).toBe('0.5px solid var(--line)')
     expect(button.style.padding).toBe('var(--space-2) var(--space-5)')

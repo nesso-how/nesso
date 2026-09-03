@@ -11,7 +11,7 @@ is where longer thinking happens.
 ## Opening and closing
 
 1. Select a concept so the Inspector shows it.
-2. Under **Notes**, click **Write**.
+2. In the Inspector, click the full-width **Write** button.
 
 The canvas gives way to a centered serif column headed by the concept's name,
 with its definition shown read-only underneath as brief context; the Inspector

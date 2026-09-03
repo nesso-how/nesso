@@ -379,6 +379,18 @@ export function NodeInspector({
           onToggle={() => setSetting('inspectorMemoryOpen', !memoryOpen)}
         />
 
+        {/* Relations — collapsible */}
+        <RelationsSection
+          outgoing={outgoing}
+          incoming={incoming}
+          nodes={nodes}
+          open={relationsOpen}
+          title={t.inspector.relations}
+          relationLabel={(id) => t.relationTypes.types[id]}
+          onFocus={focusNode}
+          onToggle={() => setSetting('inspectorRelationsOpen', !relationsOpen)}
+        />
+
         {/* Definition */}
         <div
           data-onboarding={
@@ -408,57 +420,27 @@ export function NodeInspector({
 
         {/* Notes — entry point only; reading and editing happen in Writing Mode */}
         <div data-testid="inspector-notes-section">
-          <div
+          <button
+            type="button"
+            data-testid="inspector-notes-write"
+            className="inspector-notes-write"
+            onClick={() => openWritingMode(node.id)}
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
+              appearance: 'none',
+              border: '0.5px solid var(--line)',
+              color: 'var(--ink-2)',
+              fontSize: 'var(--text-sm)',
+              fontWeight: 'var(--font-weight-medium)',
+              fontFamily: 'var(--font-sans)',
+              padding: 'var(--space-2) var(--space-5)',
+              borderRadius: 'var(--radius-sm)',
+              cursor: 'pointer',
+              width: '100%',
             }}
           >
-            <span
-              data-testid="inspector-notes-label"
-              style={{
-                fontSize: 'var(--text-sm)',
-                fontWeight: 'var(--font-weight-medium)',
-                fontFamily: 'var(--font-sans)',
-                color: 'var(--ink-2)',
-              }}
-            >
-              {t.inspector.notes.section}
-            </span>
-            <button
-              type="button"
-              data-testid="inspector-notes-write"
-              className="inspector-notes-write"
-              onClick={() => openWritingMode(node.id)}
-              style={{
-                appearance: 'none',
-                border: '0.5px solid var(--line)',
-                color: 'var(--ink-2)',
-                fontSize: 'var(--text-sm)',
-                fontWeight: 'var(--font-weight-medium)',
-                fontFamily: 'var(--font-sans)',
-                padding: 'var(--space-2) var(--space-5)',
-                borderRadius: 'var(--radius-sm)',
-                cursor: 'pointer',
-              }}
-            >
-              {t.inspector.notes.write}
-            </button>
-          </div>
+            {t.inspector.notes.write}
+          </button>
         </div>
-
-        {/* Relations — collapsible */}
-        <RelationsSection
-          outgoing={outgoing}
-          incoming={incoming}
-          nodes={nodes}
-          open={relationsOpen}
-          title={t.inspector.relations}
-          relationLabel={(id) => t.relationTypes.types[id]}
-          onFocus={focusNode}
-          onToggle={() => setSetting('inspectorRelationsOpen', !relationsOpen)}
-        />
       </div>
 
       {/* Action toolbar — docked footer */}
