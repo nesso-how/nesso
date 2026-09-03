@@ -330,6 +330,143 @@
     {
       "includes": ["packages/**/*.{ts,tsx,js,mjs}", "scripts/**/*.{js,mjs}", "vite.config.ts"],
       "javascript": { "globals": ["exports"] }
+    },
+    {
+      "includes": ["packages/schema/**/*.{ts,tsx,mts,cts}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": { "patterns": [{ "group": ["@nesso-how/*"] }] }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/vocab-learning/**/*.{ts,tsx,mts,cts}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": { "patterns": [{ "group": ["@nesso-how/*", "!@nesso-how/schema"] }] }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/graph/**/*.{ts,tsx,mts,cts}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [{ "group": ["@nesso-how/*", "!@nesso-how/vocab-learning"] }]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/theme/**/*.{ts,tsx,mts,cts}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [{ "group": ["@nesso-how/*", "!@nesso-how/vocab-learning"] }]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/mcp/**/*.{ts,tsx,mts,cts}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  { "group": ["@nesso-how/*", "!@nesso-how/schema", "!@nesso-how/vocab-learning"] }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@nesso-how/*",
+                      "!@nesso-how/schema",
+                      "!@nesso-how/vocab-learning",
+                      "!@nesso-how/graph",
+                      "!@nesso-how/theme"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["e2e/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": { "patterns": [{ "group": ["@nesso-how/*"] }] }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["e2e-native/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": { "patterns": [{ "group": ["@nesso-how/*"] }] }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["scripts/**/*.{js,mjs,ts,mts}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": { "patterns": [{ "group": ["@nesso-how/*"] }] }
+            }
+          }
+        }
+      }
     }
   ],
   "assist": { "enabled": false }
