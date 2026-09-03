@@ -138,14 +138,19 @@ describe('WritingMode', () => {
     expect(title?.tagName).toBe('H1')
     expect(title?.id).toBe('writing-mode-title')
     expect(title?.textContent).toBe('Understanding')
-    // CloseButton renders its own <button> inside the testid wrapper span.
+    // CloseButton renders its own 28px <button> inside the settings-style
+    // absolute wrapper.
     const closeButton = document.querySelector<HTMLButtonElement>(
       '[data-testid="writing-mode-close"] button',
     )
     if (closeButton === null) throw new Error('close button not rendered')
-    const header = closeButton.parentElement?.parentElement
-    expect(header?.style.padding).toBe('var(--space-3) var(--space-7)')
-    expect(header?.style.borderBottom).toBe('')
+    const closeWrapper = closeButton.parentElement
+    if (closeWrapper === null) throw new Error('close button wrapper not rendered')
+    expect(closeWrapper.style.position).toBe('absolute')
+    expect(closeWrapper.style.top).toBe('12px')
+    expect(closeWrapper.style.right).toBe('12px')
+    expect(closeButton.style.width).toBe('28px')
+    expect(closeButton.style.height).toBe('28px')
     closeButton.click()
     expect(onClose).toHaveBeenCalled()
   })
