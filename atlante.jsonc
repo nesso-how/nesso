@@ -1,5 +1,8 @@
 {
   "$schema": "https://atlante.sh/schema/v0.1/schema.json",
+
+  // Extend the first-party package preset. You can override any value or agent
+  // below; your local configuration takes precedence over the inherited one.
   "extends": "@atlante/pack",
   "values": {
     "project": "Nesso"

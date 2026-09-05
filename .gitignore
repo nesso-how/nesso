@@ -63,3 +63,6 @@ e2e-native/artifacts
 
 # Git worktrees — separate working directories, not part of the main repo
 .worktrees/
+
+.opencode/agents/
+.opencode/skills/
