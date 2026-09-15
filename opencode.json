@@ -2,35 +2,60 @@
   "$schema": "https://opencode.ai/config.json",
   "default_agent": "architect",
   "mcp": {
-    "fallow": {
-      "type": "local",
-      "command": ["npx", "-y", "-p", "fallow", "fallow-mcp"]
-    },
-    "nesso": {
-      "type": "local",
-      "command": ["node", "packages/mcp/dist/index.js"]
-    },
-    "tauri": {
-      "type": "local",
-      "command": ["npx", "-y", "@hypothesi/tauri-mcp-server"]
-    },
-    "context7": {
-      "type": "remote",
-      "url": "https://mcp.context7.com/mcp"
+    "servers": {
+      "fallow": {
+        "type": "local",
+        "command": ["npx", "-y", "-p", "fallow", "fallow-mcp"]
+      },
+      "nesso": {
+        "type": "local",
+        "command": ["node", "packages/mcp/dist/index.js"]
+      },
+      "tauri": {
+        "type": "local",
+        "command": ["npx", "-y", "@hypothesi/tauri-mcp-server"]
+      },
+      "context7": {
+        "type": "remote",
+        "url": "https://mcp.context7.com/mcp"
+      },
+      "atlante": {
+        "type": "local",
+        "command": ["npx", "--yes", "atlante@0.7.0", "mcp"],
+        "disabled": false
+      }
     }
   },
-  "agent": {
+  "agents": {
     "architect": {
       "mode": "primary",
-      "permission": {
-        "external_directory": "ask",
-        "bash": {
-          "*": "allow",
-          "git push*": "ask",
-          "git tag*": "ask",
-          "gh pr *": "ask"
+      "permissions": [
+        {
+          "action": "external_directory",
+          "resource": "*",
+          "effect": "ask"
+        },
+        {
+          "action": "shell",
+          "resource": "*",
+          "effect": "allow"
+        },
+        {
+          "action": "shell",
+          "resource": "git push*",
+          "effect": "ask"
+        },
+        {
+          "action": "shell",
+          "resource": "git tag*",
+          "effect": "ask"
+        },
+        {
+          "action": "shell",
+          "resource": "gh pr *",
+          "effect": "ask"
         }
-      }
+      ]
     }
   }
 }
