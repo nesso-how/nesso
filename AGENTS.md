@@ -14,16 +14,28 @@ The repository is a pnpm-only monorepo:
 - `docs/`, `e2e/`, and `e2e-native/` — product documentation and web/native verification lanes.
 
 FSRS review (`ts-fsrs`) is independent of the experimental AI mentor. TypeScript
-sources, package source, static configuration, and authored Markdown are
-authoritative. Never edit generated output such as package `dist/`, the MCP
-bundle, or `.atlante/artifacts/`; reproduce it through the owning build.
+sources, package source, static configuration, authored Markdown, `atlante.jsonc`,
+and the deep contracts under `.rules/` are authoritative. Never edit generated
+output directly: this includes package `dist/`, the MCP bundle,
+`.opencode/agents/`, `.opencode/skills/`, `.atlante/opencode-native.json`,
+`.atlante/artifacts/`, `docs/src/styles/theme*.generated.css`, and
+`src-tauri/icons/`. Reproduce generated output through the owning build or
+materialization command.
 
 ## Core boundaries
 
-- `useGraphStore` is the single source of truth for graph data, selection, settings, and UI persistence.
+- `useGraphStore` is the single source of truth for graph data, selection, settings, and store-owned UI state. Panel widths are persisted separately in `localStorage`.
 - Graph content and FSRS review state are separate persisted surfaces; mentor chat is transient local state.
 - Graph edges use the `nesso` renderer and vocabulary-owned relation semantics; theme and category colours come from CSS variables and their canonical packages.
 - All mentor completions go through `src/llm/completion.ts`.
+- Package dependency layering is enforced by Biome: `schema` has no `@nesso-how/*` imports, `vocab-learning` may use `schema`, `graph` and `theme` may use `vocab-learning`, `mcp` may use `schema` and `vocab-learning`, and the app consumes the public packages. Keep changes within those layers.
+
+## Prerequisites
+
+- Use Node 20+, Corepack, and pnpm 10 (`package.json` pins pnpm 10.14.0).
+- Install the Playwright browser and system dependencies before browser E2E checks: `pnpm exec playwright install --with-deps chromium`.
+- Tauri checks require the Rust toolchain and platform-specific Tauri prerequisites. The CI Linux lane additionally installs GTK/WebKit development packages.
+- Native E2E requires `tauri-driver` and a native WebDriver on Linux/Windows. On macOS, use the Docker wrapper described below because macOS has no native Tauri WebDriver.
 
 ## Common commands
 
@@ -34,8 +46,10 @@ pnpm run preflight -- --rust
 pnpm test
 pnpm run type:check
 pnpm run build
+pnpm exec atlante validate
+pnpm --filter docs build
 pnpm run build:mcp
-pnpm run analyze:mutation:changed -- --base origin/main
+pnpm run analyze:mutation:changed -- --base origin/main --working
 ```
 
 Use the mutation command when changed pure logic belongs to a registered
@@ -50,18 +64,23 @@ Choose checks based on the change's scope and risk:
   `pnpm run fast-check -- --e2e` when the change crosses the browser integration
   boundary.
 - **Heavyweight final verification before declaring work ready or pushing:** run
-  `pnpm run preflight`. It mirrors CI's JavaScript and E2E jobs, including
-  coverage, builds, Fallow analysis, and Playwright. Do not push with failures.
+  `pnpm run preflight`. It mirrors CI's JavaScript and E2E check sequence, but
+  does not provision CI dependencies and does not build the docs site. It runs
+  format, security headers, lint, license headers, coverage, type coverage,
+  builds, Fallow analysis, and Playwright. Do not push with failures.
 - **Tauri changes:** run `pnpm run preflight -- --rust`; this adds desktop
   assets, Rust formatting, Clippy, checks, tests, and the build smoke test.
-- **Starlight documentation changes:** run `pnpm run build:mcp` after editing
-  authored docs. The full preflight also includes this build.
+- **Starlight documentation changes:** run both `pnpm --filter docs build` to
+  validate the Astro site and `pnpm run build:mcp` to refresh the MCP docs
+  bundle. The full preflight does not include the docs-site build.
 - **Pure logic in a registered mutation area:** run
-  `pnpm run analyze:mutation:changed -- --base origin/main` when mutation
-  feedback is relevant.
+  `pnpm run analyze:mutation:changed -- --base origin/main --working` when
+  mutation feedback is relevant. `--working` includes tracked staged and
+  unstaged changes; untracked files are not detected by the selector.
 - **Native persistence, filesystem, or sync changes:** run
-  `e2e-native/run-local.sh` (or `pnpm run test:e2e:native`) in addition to the
-  relevant checks.
+  `e2e-native/run-local.sh` on macOS, or `pnpm run test:e2e:native` on
+  Linux/Windows with native WebDriver prerequisites, in addition to the
+  relevant checks. Native E2E is local-only and is not covered by CI.
 
 Use the quickest check that gives useful feedback while iterating, then use the
 appropriate heavyweight and scope-specific checks before handing work off.
@@ -91,13 +110,14 @@ pnpm exec agent-browser open http://localhost:5173 && pnpm exec agent-browser sc
 
 ## Workflow and repository conventions
 
-- Use Atlante's built-in `architect` workflow: `brainstorm` → `plan` → `build` → `review`. Use the retained project skills for issue creation, preflight, pull requests, and releases.
+- Follow [`CONTRIBUTING.md`](CONTRIBUTING.md) for issue-first non-trivial work, branch naming, Conventional Commits, rebasing, and pull-request requirements.
+- Use Atlante's configured workflow: `brainstorm` → `plan` → `build` → `review`. Use the retained project skills for issue creation, preflight, pull requests, and releases.
 - At session start, run `git rev-parse --show-toplevel`; keep edits, Git commands, and checks inside that worktree. A requested path outside it requires explicit approval and the external-directory permission.
 - Tasks are sequential by default. Parallel tasks require an explicit plan marking them independent and separate worktrees for every task.
 - Each implementation task is one reviewable boundary and ends with exactly one focused commit after its checks and review. An approved Atlante workflow grants consent for those task-checkpoint commits; standalone commits require explicit approval.
 - Push, pull-request creation or updates, tags, amend, and force-push always require explicit developer approval.
 - `CHANGELOG.md` records release-notable user-facing changes, not harness-only changes. Update `[Unreleased]` while preparing a release or merge commit, or when explicitly requested.
-- When behavior or MCP documentation changes, update its source documentation in the same change. If a Starlight page changes, run `pnpm run build:mcp`; never edit the generated bundle.
+- When behavior or MCP documentation changes, update its source documentation in the same change. If a Starlight page changes, run both `pnpm --filter docs build` and `pnpm run build:mcp`; never edit generated CSS or the MCP bundle.
 - Load only the deep contract governing the touched area. Update a contract when its invariant changes, not merely because an implementation file changed.
 
 ## Deep contracts
@@ -107,3 +127,4 @@ pnpm exec agent-browser open http://localhost:5173 && pnpm exec agent-browser sc
 - [`mentor.md`](.rules/mentor.md) — Socrates policy, context boundaries, tools, lifecycle, and transport privacy.
 - [`theme.md`](.rules/theme.md) — token ownership, emitters, palettes, and theme extension.
 - [`desktop-security.md`](.rules/desktop-security.md) — Tauri capabilities, filesystem trust, dialogs, and CSP.
+- [`testing.md`](.rules/testing.md) — Vitest layout and environments, coverage, E2E, CI, and mutation testing.

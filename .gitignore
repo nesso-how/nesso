@@ -40,9 +40,6 @@ yarn.lock
 # Atlante generated artifacts and workflow state
 .atlante/
 
-# Local OpenCode model overrides
-.opencode/models.json
-
 # Test / coverage
 coverage
 

@@ -69,7 +69,7 @@ docs/             Starlight docs site, published at nesso.how/docs
 
 ## Architecture
 
-Nesso is a React 18 + Vite + TypeScript single-page app, optionally wrapped by Tauri v2 for a native desktop shell. All state lives in a single [Zustand](https://github.com/pmndrs/zustand) store, with components subscribing via selectors and no prop drilling.
+Nesso is a React 18 + Vite + TypeScript single-page app, optionally wrapped by Tauri v2 for a native desktop shell. Graph data, selection, settings, and store-owned UI state live in a single [Zustand](https://github.com/pmndrs/zustand) store, with components subscribing via selectors and no prop drilling; transient mentor state and panel-width persistence remain outside the store.
 
 The canvas is built on [React Flow](https://reactflow.dev/) with a custom edge renderer that encodes each relation type as a category colour and SVG glyph. On the web, graph content persists to IndexedDB. On desktop, the shared graph document is written as plain `.json` files in the active project folder, while IndexedDB mirrors the graph locally; a file watcher picks up external edits. FSRS review progress remains in a separate IndexedDB store on both platforms and is never mixed into the shared graph files.
 
