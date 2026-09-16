@@ -19,7 +19,7 @@
             "name": "Confirm and prepare",
             "instructions": [
               "Ensure `CHANGELOG.md` has this release's user-facing notes under `## [Unreleased]`; if it is empty, ask what is shipping before continuing. Present the proposed version, rationale, and commits, then ask the user to confirm or provide another valid version greater than `PREV` and the latest release tag; the script normalizes an optional `v` prefix and rejects malformed or non-increasing versions before writing.",
-              "After confirmation, preview with `pnpm release --dry-run` when useful, then run `pnpm release [NEW]`. It updates the synchronized version files listed in `scripts/release.mjs` (authoritative; update that list if a published package is added or removed).",
+              "After confirmation, preview with `pnpm release --dry-run` when useful, then run `pnpm release [NEW]`. It updates the synchronized version files listed in `scripts/release.mjs`.",
               "The script rolls `## [Unreleased]` into `## [NEW] - YYYY-MM-DD`, creates a fresh empty Unreleased section, updates both comparison links, formats the touched files, then runs the install/build/lint/format verification before any git mutation.",
               "Use `--no-verify` only when explicitly justified and `--yes` only to suppress the empty-changelog or non-main warnings. On drift, a failed verification, or any other error, fix the root cause and rerun; release files and `pnpm-lock.yaml` are restored automatically when preparation fails before commit/tag creation. Do not hand-edit around an error. Verify that the changelog heading and `src-tauri/tauri.conf.json` both equal `NEW`."
             ]
@@ -50,9 +50,8 @@
     },
     {
       "invariants": [
-        "Do not commit, tag, or push without explicit user approval; the `v*` tag push publishes to the public.",
-        "Keep `CHANGELOG.md` limited to user-facing or release-notable changes, and keep root/Tauri versions, the tag, and the matching changelog heading aligned.",
-        "Do not use `--force`; when operating from a worktree, push that worktree's `HEAD` rather than the main checkout."
+        "Keep root/Tauri versions, the tag, and the matching changelog heading aligned.",
+        "Do not use `--force`."
       ]
     },
     {
