@@ -113,7 +113,7 @@ pnpm exec agent-browser open http://localhost:5173 && pnpm exec agent-browser sc
 
 - Follow [`CONTRIBUTING.md`](CONTRIBUTING.md) for issue-first non-trivial work, branch naming, Conventional Commits, rebasing, and pull-request requirements.
 - Use Atlante's configured workflow: `brainstorm` → `plan` → `build` → `review`. Use the retained project skills for issue creation, preflight, pull requests, and releases.
-- While working inside a `.worktrees/` worktree — issue-driven or not — all work MUST stay inside that worktree: edits, Git commands, and checks run there and nowhere else. The root checkout is off-limits during worktree work; its only permitted operation is updating `main` after the PR has merged.
+- While working inside a `.worktrees/` worktree — issue-driven or not — all work MUST stay inside that worktree: edits, Git commands, and checks run there and nowhere else. The root checkout is off-limits during worktree work. After the PR has merged, return to the root checkout: move the OpenCode session to the repository root when it is not already there, fast-forward `main` to `origin/main`, then remove the used worktree and delete its local branch.
 - At session start, run `git rev-parse --show-toplevel`; keep edits, Git commands, and checks inside that worktree. A requested path outside it requires explicit approval and the external-directory permission.
 - Tasks are sequential by default. Parallel tasks require an explicit plan marking them independent and separate worktrees for every task.
 - Each implementation task is one reviewable boundary and ends with exactly one focused commit after its checks and review. An approved Atlante workflow grants consent for those task-checkpoint commits; standalone commits require explicit approval.
