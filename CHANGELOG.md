@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.2.0-beta.6] - 2026-09-16
+
+### Added
+
+- **Linux desktop builds:** The release pipeline now ships a signed x86_64 AppImage (`Nesso_<version>_amd64.AppImage`) alongside the macOS DMG and Windows installer, with updater support and self-update on launch. Docs cover the Ubuntu 24.04 baseline, installation steps, and currently unavailable package formats (.deb, RPM, Flatpak, Snap, ARM64).
+
 ## [0.2.0-beta.5] - 2026-09-03
 
 ### Added
@@ -840,7 +846,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial alpha: interactive knowledge graph (web + Tauri v2); desktop installers on GitHub Releases (macOS Apple silicon and Intel).
 
-[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.2.0-beta.5...HEAD
+[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.2.0-beta.6...HEAD
+[0.2.0-beta.6]: https://github.com/nesso-how/nesso/compare/v0.2.0-beta.5...v0.2.0-beta.6
 [0.2.0-beta.5]: https://github.com/nesso-how/nesso/compare/v0.2.0-beta.4...v0.2.0-beta.5
 [0.2.0-beta.4]: https://github.com/nesso-how/nesso/compare/v0.2.0-beta.3...v0.2.0-beta.4
 [0.2.0-beta.3]: https://github.com/nesso-how/nesso/compare/v0.2.0-beta.2...v0.2.0-beta.3
