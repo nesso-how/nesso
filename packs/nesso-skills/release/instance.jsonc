@@ -19,8 +19,8 @@
             "name": "Confirm and prepare",
             "instructions": [
               "Ensure `CHANGELOG.md` has this release's user-facing notes under `## [Unreleased]`; if it is empty, ask what is shipping before continuing. Present the proposed version, rationale, and commits, then ask the user to confirm or provide another valid version greater than `PREV` and the latest release tag; the script normalizes an optional `v` prefix and rejects malformed or non-increasing versions before writing.",
-              "After confirmation, preview with `pnpm release --dry-run` when useful, then run `pnpm release [NEW]`. It updates these nine synchronized files: `package.json`, `packages/schema/package.json`, `packages/graph/package.json`, `packages/mcp/package.json`, `packages/vocab-learning/package.json`, `packages/theme/package.json`, `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`, and `src-tauri/Cargo.lock`.",
-              "The script rolls `## [Unreleased]` into `## [NEW] - YYYY-MM-DD`, creates a fresh empty Unreleased section, updates both comparison links, formats the changed JSON/Markdown, then runs `CI=true pnpm install --frozen-lockfile`, `pnpm build`, `pnpm lint`, and `pnpm format:check` before any git mutation.",
+              "After confirmation, preview with `pnpm release --dry-run` when useful, then run `pnpm release [NEW]`. It updates the synchronized version files listed in `scripts/release.mjs` (authoritative; update that list if a published package is added or removed).",
+              "The script rolls `## [Unreleased]` into `## [NEW] - YYYY-MM-DD`, creates a fresh empty Unreleased section, updates both comparison links, formats the touched files, then runs the install/build/lint/format verification before any git mutation.",
               "Use `--no-verify` only when explicitly justified and `--yes` only to suppress the empty-changelog or non-main warnings. On drift, a failed verification, or any other error, fix the root cause and rerun; release files and `pnpm-lock.yaml` are restored automatically when preparation fails before commit/tag creation. Do not hand-edit around an error. Verify that the changelog heading and `src-tauri/tauri.conf.json` both equal `NEW`."
             ]
           },
@@ -34,7 +34,7 @@
             "name": "Publish and verify",
             "instructions": [
               "After a separate explicit publication confirmation, push the release commit with `git push origin HEAD:main`, then push the tag with `git push origin vNEW`; the tag push is the irreversible public step and triggers `.github/workflows/release.yml`.",
-              "Watch the run with `gh run watch <id> --exit-status`, then confirm `gh run view <id>` is `completed / success`. Use `gh release view vNEW` to verify the body and all expected assets: the signed/notarized universal macOS `.dmg`, `Nesso_<version>_x64-setup.exe`, macOS `.app.tar.gz` plus `.sig`, Windows `.exe` plus `.sig` (all updater signatures use the shared minisign keys), and `latest.json` covering macOS and `windows-x86_64`.",
+              "Watch the run with `gh run watch <id> --exit-status`, then confirm `gh run view <id>` is `completed / success`. Use `gh release view vNEW` to verify the body and all expected assets and updater signatures listed in `.github/workflows/release.yml`.",
               "Confirm the release body contains the `## [NEW]` changelog section and the unsigned-Windows/SmartScreen note, and confirm `https://github.com/nesso-how/nesso/releases/latest/download/latest.json` resolves to this release. If only `publish-windows` fails after `publish` succeeds, rerun only the failed job with `gh run rerun <id> --failed`; do not recreate or retag."
             ]
           }
