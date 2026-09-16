@@ -18,10 +18,10 @@
           {
             "name": "Confirm and prepare",
             "instructions": [
-              "Ensure `CHANGELOG.md` has this release's user-facing notes under `## [Unreleased]`; if it is empty, ask what is shipping before continuing. Present the proposed version, rationale, and commits, then ask the user to confirm or provide another valid version greater than `PREV`.",
+              "Ensure `CHANGELOG.md` has this release's user-facing notes under `## [Unreleased]`; if it is empty, ask what is shipping before continuing. Present the proposed version, rationale, and commits, then ask the user to confirm or provide another valid version greater than `PREV` and the latest release tag; the script normalizes an optional `v` prefix and rejects malformed or non-increasing versions before writing.",
               "After confirmation, preview with `pnpm release --dry-run` when useful, then run `pnpm release [NEW]`. It updates these nine synchronized files: `package.json`, `packages/schema/package.json`, `packages/graph/package.json`, `packages/mcp/package.json`, `packages/vocab-learning/package.json`, `packages/theme/package.json`, `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`, and `src-tauri/Cargo.lock`.",
               "The script rolls `## [Unreleased]` into `## [NEW] - YYYY-MM-DD`, creates a fresh empty Unreleased section, updates both comparison links, formats the changed JSON/Markdown, then runs `CI=true pnpm install --frozen-lockfile`, `pnpm build`, `pnpm lint`, and `pnpm format:check` before any git mutation.",
-              "Use `--no-verify` only when explicitly justified and `--yes` only to suppress the empty-changelog or non-main warnings. On drift, a failed verification, or any other error, fix the root cause and rerun; do not hand-edit around it. Verify that the changelog heading and `src-tauri/tauri.conf.json` both equal `NEW`."
+              "Use `--no-verify` only when explicitly justified and `--yes` only to suppress the empty-changelog or non-main warnings. On drift, a failed verification, or any other error, fix the root cause and rerun; release files and `pnpm-lock.yaml` are restored automatically when preparation fails before commit/tag creation. Do not hand-edit around an error. Verify that the changelog heading and `src-tauri/tauri.conf.json` both equal `NEW`."
             ]
           },
           {
