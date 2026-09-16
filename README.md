@@ -25,7 +25,7 @@
 </picture>
 
 > [!WARNING]
-> The native desktop app has not been tested yet. Bugs are expected.
+> Only the macOS desktop app has been tested so far. Bugs are expected, especially on other platforms.
 
 ## What it does
 
