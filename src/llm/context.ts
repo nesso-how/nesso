@@ -4,10 +4,11 @@ import type { Selection } from '@/store/types'
 import type { ConceptNodeData, Language } from '@/types/graph'
 import { createGraphIdHandles, type GraphIdHandles } from './graphHandles'
 
-function truncate(s: string, n: number): string {
-  if (n <= 0) return ''
-  if (s.length <= n) return s
-  return s.slice(0, Math.max(0, n - 1)).replace(/\s+\S*$/, '') + '…'
+/** Handles are already bounded to 200 chars by graphHandles; slice keeps the bound local. */
+function boundedUserText(value: unknown, maxChars: number): string {
+  return String(value)
+    .replace(/[\r\n\u2028\u2029]+/g, ' ')
+    .slice(0, maxChars)
 }
 
 /** FSRS-aware strength for mentor prompts: lower sorts earlier (weakest first).
@@ -35,11 +36,6 @@ const MAX_SELECTION_ID_CHARS = 200
 
 /** Fixed, graph-free opening request. Selection routing happens via tools. */
 export const MENTOR_OPENING_REQUEST = 'Start the mentoring session from the captured selection.'
-
-function boundedUserText(value: unknown, maxChars: number): string {
-  const text = String(value).replace(/[\r\n\u2028\u2029]+/g, ' ')
-  return truncate(text, maxChars)
-}
 
 function boundedSelection(
   selection: Selection,
