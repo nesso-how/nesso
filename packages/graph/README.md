@@ -48,4 +48,4 @@ When `zoomOnScroll` is off (typical for decorative embeds in a scrollable page),
 
 ## License
 
-MIT
+Copyright © 2026 Omar Desogus, Paolo Manfredotti. Licensed under the [MIT License](https://opensource.org/licenses/MIT). See [LICENSE](LICENSE).

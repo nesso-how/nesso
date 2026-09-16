@@ -58,3 +58,7 @@ export const ledger = defineTheme(defaultTheme, {
 ```
 
 Then add it to the `themes` map in `src/registry.ts`. `defineTheme` deep-merges and never touches the base, so a pack states only what it changes.
+
+## License
+
+Copyright © 2026 Omar Desogus, Paolo Manfredotti. Licensed under the [MIT License](https://opensource.org/licenses/MIT). See [LICENSE](LICENSE).

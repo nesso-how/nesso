@@ -38,4 +38,4 @@ documents are outside the compatibility contract.
 
 ## License
 
-MIT
+Copyright © 2026 Omar Desogus, Paolo Manfredotti. Licensed under the [MIT License](https://opensource.org/licenses/MIT). See [LICENSE](LICENSE).
