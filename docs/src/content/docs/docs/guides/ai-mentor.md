@@ -19,7 +19,9 @@ Nesso does not send the whole graph by default. A compatible model can request b
 
 The mentor's visible chat history lives only in the open panel session. Chat history resets when you switch graphs, reopen the panel, click **New chat**, change the UI language, base URL, model, or custom system prompt, or when AI readiness changes, such as when the configured mentor becomes available or unavailable. Changing only the API key does not reset the chat. Changing the selection alone does not reset existing history; the current selection is captured with each request.
 
-Socrates requires a tool-capable endpoint. If an endpoint rejects graph-reading tools, that turn fails once through the normal error path; there is no snapshot fallback.
+:::caution
+Socrates requires a tool-capable endpoint (for example `qwen3:8b`). If an endpoint rejects graph-reading tools, that turn fails once through the normal error path; there is no snapshot fallback.
+:::
 
 ## Connecting a model
 
