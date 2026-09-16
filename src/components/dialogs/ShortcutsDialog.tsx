@@ -53,11 +53,15 @@ export function ShortcutsDialog({ open, onClose }: Props) {
           position: 'relative',
           width: 520,
           maxWidth: '92vw',
+          maxHeight: '76vh',
           background: 'var(--bg-card)',
           border: '0.5px solid var(--line)',
           borderRadius: 'var(--radius-lg)',
           padding: '28px 32px 24px',
           boxShadow: 'var(--shadow-lg)',
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: 0,
         }}
       >
         <div
@@ -77,89 +81,100 @@ export function ShortcutsDialog({ open, onClose }: Props) {
           <CloseButton large onClick={onClose} />
         </div>
 
-        {SECTIONS.map((section, si) => (
-          <div key={section.heading} style={{ marginBottom: si < SECTIONS.length - 1 ? 20 : 0 }}>
-            <div
-              style={{
-                fontSize: '10px',
-                fontWeight: 500,
-                fontFamily: 'var(--font-mono)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.12em',
-                color: 'var(--ink-4)',
-                marginBottom: 10,
-                borderBottom: '0.5px solid var(--line)',
-                paddingBottom: 6,
-              }}
-            >
-              {section.heading}
-            </div>
-            {section.rows.map((row) => (
+        <div
+          className="nesso-scrollbar"
+          style={{
+            flex: 1,
+            overflowY: 'auto',
+            minHeight: 0,
+            margin: '0 -8px',
+            padding: '0 8px 8px',
+          }}
+        >
+          {SECTIONS.map((section, si) => (
+            <div key={section.heading} style={{ marginBottom: si < SECTIONS.length - 1 ? 20 : 0 }}>
               <div
-                key={row.label}
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
+                  fontSize: '10px',
+                  fontWeight: 500,
+                  fontFamily: 'var(--font-mono)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.12em',
+                  color: 'var(--ink-4)',
                   marginBottom: 10,
+                  borderBottom: '0.5px solid var(--line)',
+                  paddingBottom: 6,
                 }}
               >
-                <span
-                  style={{
-                    fontSize: '13px',
-                    fontWeight: 400,
-                    lineHeight: 1,
-                    fontFamily: 'var(--font-sans)',
-                    color: 'var(--ink-2)',
-                  }}
-                >
-                  {row.label}
-                </span>
+                {section.heading}
+              </div>
+              {section.rows.map((row) => (
                 <div
+                  key={row.label}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 'var(--space-2)',
-                    flexShrink: 0,
-                    marginLeft: 16,
+                    justifyContent: 'space-between',
+                    marginBottom: 10,
                   }}
                 >
-                  {row.keys.map((k, i) => (
-                    <span key={i} style={{ display: 'contents' }}>
-                      {i > 0 && (
+                  <span
+                    style={{
+                      fontSize: '13px',
+                      fontWeight: 400,
+                      lineHeight: 1,
+                      fontFamily: 'var(--font-sans)',
+                      color: 'var(--ink-2)',
+                    }}
+                  >
+                    {row.label}
+                  </span>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 'var(--space-2)',
+                      flexShrink: 0,
+                      marginLeft: 16,
+                    }}
+                  >
+                    {row.keys.map((k, i) => (
+                      <span key={i} style={{ display: 'contents' }}>
+                        {i > 0 && (
+                          <span
+                            style={{
+                              fontSize: '11px',
+                              fontWeight: 400,
+                              fontFamily: 'var(--font-mono)',
+                              color: 'var(--ink-4)',
+                            }}
+                          >
+                            +
+                          </span>
+                        )}
                         <span
                           style={{
                             fontSize: '11px',
-                            fontWeight: 400,
+                            fontWeight: 600,
                             fontFamily: 'var(--font-mono)',
-                            color: 'var(--ink-4)',
+                            background: 'var(--paper-deep)',
+                            border: '0.5px solid var(--line)',
+                            borderRadius: 'var(--radius-sm)',
+                            padding: '3px 8px',
+                            color: 'var(--ink-2)',
+                            whiteSpace: 'nowrap',
                           }}
                         >
-                          +
+                          {k}
                         </span>
-                      )}
-                      <span
-                        style={{
-                          fontSize: '11px',
-                          fontWeight: 600,
-                          fontFamily: 'var(--font-mono)',
-                          background: 'var(--paper-deep)',
-                          border: '0.5px solid var(--line)',
-                          borderRadius: 'var(--radius-sm)',
-                          padding: '3px 8px',
-                          color: 'var(--ink-2)',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {k}
                       </span>
-                    </span>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        ))}
+              ))}
+            </div>
+          ))}
+        </div>
       </div>
     </ModalOverlay>
   )

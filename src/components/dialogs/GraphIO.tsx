@@ -109,11 +109,14 @@ export function GraphIO({ onRelationTypes, onShortcuts, onAbout }: Props) {
       {open && (
         <div
           role="menu"
+          className="nesso-scrollbar"
           style={{
             position: 'absolute',
             top: 'calc(100% + 8px)',
             right: 0,
             minWidth: 220,
+            maxHeight: '70vh',
+            overflowY: 'auto',
             background: 'var(--bg-card)',
             border: '0.5px solid var(--line)',
             borderRadius: 'var(--radius-lg)',

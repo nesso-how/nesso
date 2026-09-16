@@ -64,9 +64,13 @@ export function AboutDialog({ open, onClose, onShowTutorial }: Props) {
           <CloseButton large onClick={onClose} />
         </div>
         <div
+          className="nesso-scrollbar"
           style={{
             width: 380,
             maxWidth: '94vw',
+            maxHeight: '76vh',
+            overflowY: 'auto',
+            minHeight: 0,
             background: 'var(--bg-card)',
             border: '0.5px solid var(--line)',
             borderRadius: 'var(--radius-lg)',
