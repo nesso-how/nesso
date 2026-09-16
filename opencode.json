@@ -21,7 +21,7 @@
       },
       "atlante": {
         "type": "local",
-        "command": ["npx", "--yes", "atlante@0.7.0", "mcp"],
+        "command": ["npx", "--yes", "atlante@0.8.0", "mcp"],
         "disabled": false
       }
     }

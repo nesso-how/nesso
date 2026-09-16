@@ -63,3 +63,6 @@ e2e-native/artifacts
 
 .opencode/agents/
 .opencode/skills/
+
+.opencode/skills/atlante/
+.opencode/agents/atlante.md
