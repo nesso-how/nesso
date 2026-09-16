@@ -98,4 +98,4 @@ Bug reports, feature ideas, and PRs are welcome on [GitHub Issues](https://githu
 
 ## License
 
-Copyright © 2026 Omar Desogus. Licensed under the [MIT License](https://opensource.org/licenses/MIT). See [LICENSE](LICENSE).
+Copyright © 2026 Omar Desogus, Paolo Manfredotti. Licensed under the [MIT License](https://opensource.org/licenses/MIT). See [LICENSE](LICENSE).
