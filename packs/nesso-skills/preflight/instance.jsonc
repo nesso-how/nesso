@@ -17,8 +17,7 @@
           {
             "name": "Run conditional native E2E",
             "instructions": [
-              "Opt in when the diff touches desktop persistence, filesystem sync, or the file watcher. Read `.rules/desktop-security.md` and the focused native tests first.",
-              "Run `e2e-native/run-local.sh` (Docker, recommended) or `pnpm run test:e2e:native` locally. Native E2E uses tauri-driver, is local-only, and is not in CI."
+              "Opt in when the diff touches desktop persistence, filesystem sync, or the file watcher. Read `.rules/desktop-security.md` and the focused native tests first, then follow the native E2E lane in `AGENTS.md`."
             ]
           },
           {
@@ -55,7 +54,6 @@
     },
     {
       "invariants": [
-        "Do not push when anything is red.",
         "These checks mirror CI exactly; if `.github/workflows/ci.yml` changes, update this skill."
       ]
     }
