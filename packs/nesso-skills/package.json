@@ -1,0 +1,10 @@
+{
+  "name": "nesso-skills",
+  "version": "0.0.0",
+  "atlante": {
+    "format": 1
+  },
+  "dependencies": {
+    "@atlante/pack": "0.7.1"
+  }
+}

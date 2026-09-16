@@ -1,0 +1,63 @@
+{
+  "$template": "@atlante/pack/skill",
+  "description": "Use before pushing to catch a red CI early. Run the same checks as `.github/workflows/ci.yml` locally — format, lint, types, builds, license headers, Playwright e2e.",
+  "title": "Preflight (local CI parity)",
+  "overview": "Run `pnpm run preflight` for the JavaScript and browser CI jobs in order, with per-step failure output and a final summary; exit 0 means all green. When the diff touches `src-tauri/`, run `pnpm run preflight -- --rust` to append the Rust job after the JavaScript steps.",
+  "sections": [
+    {
+      "workflow": {
+        "phases": [
+          {
+            "name": "Run the CI-equivalent checks",
+            "instructions": [
+              "Run the primary check with `pnpm run preflight`.",
+              "When the diff touches `src-tauri/`, run `pnpm run preflight -- --rust`; it appends `icons:desktop` and the Cargo format, Clippy, check, and test steps after the JavaScript steps."
+            ]
+          },
+          {
+            "name": "Run conditional native E2E",
+            "instructions": [
+              "Opt in when the diff touches desktop persistence, filesystem sync, or the file watcher. Read `.rules/desktop-security.md` and the focused native tests first.",
+              "Run `e2e-native/run-local.sh` (Docker, recommended) or `pnpm run test:e2e:native` locally. Native E2E uses tauri-driver, is local-only, and is not in CI."
+            ]
+          },
+          {
+            "name": "Run conditional mutation testing",
+            "instructions": [
+              "Run mutation testing when the diff touches pure logic in a Stryker area such as `src/llm/`, `src/data/fsrsDueQueue`, store slices, workspace, or `packages/schema`.",
+              "Run `pnpm run analyze:mutation:changed -- --base origin/main`; this check is conditional and not in CI."
+            ]
+          },
+          {
+            "name": "Debug failures",
+            "instructions": [
+              "For `format:check`, run `pnpm run format`.",
+              "For `security:headers`, run `pnpm run security:headers` and fix CSP violations in `vercel.json` or `docs/vercel.json`.",
+              "For `lint`, run `pnpm run lint:fix`.",
+              "For `license-headers:check`, run `pnpm run license-headers`.",
+              "For `test:coverage`, inspect the thresholds in `vitest.config.ts`.",
+              "For `type:coverage`, fix type errors and inspect the thresholds in `tsconfig`.",
+              "For `build`, fix the compile errors.",
+              "For `analyze:dead-code`, remove unused files or exports.",
+              "For `analyze:dupes`, inspect the baseline-gated result in `fallow-baselines/dupes.json`.",
+              "For `analyze:health`, inspect the baseline-gated result in `fallow-baselines/health.json`.",
+              "For `test:e2e`, inspect Playwright output and run `pnpm exec playwright install --with-deps chromium` on the first run.",
+              "For `icons:desktop`, run `pnpm run icons:desktop`.",
+              "For `cargo:fmt`, run `cargo fmt --all --manifest-path src-tauri/Cargo.toml`.",
+              "For `cargo:clippy`, fix the warnings reported by Clippy.",
+              "For `cargo:check`, fix the compile errors.",
+              "For `cargo:test`, fix the failing tests.",
+              "For `cargo:build-smoke`, fix linking errors and retry `cargo build --manifest-path src-tauri/Cargo.toml`."
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "invariants": [
+        "Do not push when anything is red.",
+        "These checks mirror CI exactly; if `.github/workflows/ci.yml` changes, update this skill."
+      ]
+    }
+  ]
+}

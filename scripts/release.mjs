@@ -6,7 +6,7 @@
  * Usage:
  *   node scripts/release.mjs [version] [--commit] [--no-verify] [--dry-run] [--yes]
  *
- *   version      explicit NEW version (e.g. 0.1.0-alpha.30, 0.2.0). Default: bump the -alpha.N counter.
+ *   version      explicit NEW version (e.g. 0.1.0-alpha.30, 0.2.0). Default: bump the numbered prerelease counter.
  *   --commit     also create the release commit and tag locally (never pushes).
  *   --no-verify  skip pnpm install / build / lint / format:check.
  *   --dry-run    print what would change; write nothing.
@@ -17,7 +17,7 @@ import { readFile, writeFile } from 'node:fs/promises'
 import { execSync } from 'node:child_process'
 import { createInterface } from 'node:readline/promises'
 import { stdin, stdout } from 'node:process'
-import { dirname, join } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)))
@@ -61,13 +61,15 @@ async function confirm(question) {
 }
 
 /** @param {string} prev @param {string | undefined} explicit @returns {string} */
-function nextVersion(prev, explicit) {
+export function nextVersion(prev, explicit) {
   if (explicit) return explicit.replace(/^v/, '')
-  const m = prev.match(/^(.*-alpha\.)(\d+)$/)
+  const m = prev.match(/^(.*-[0-9A-Za-z-]+\.)(\d+)$/)
   if (!m) {
-    throw new Error(`cannot auto-increment "${prev}" (not -alpha.N); pass an explicit version`)
+    throw new Error(
+      `cannot auto-increment "${prev}" (not a numbered prerelease); pass an explicit version`,
+    )
   }
-  return `${m[1]}${Number(m[2]) + 1}`
+  return `${m[1]}${BigInt(m[2]) + 1n}`
 }
 
 /** @param {string} rel @param {string} content @returns {string | null} */
@@ -222,7 +224,10 @@ async function main() {
   printNextSteps(next, doCommit)
 }
 
-main().catch((err) => {
-  console.error(`release: ${err.message}`)
-  process.exitCode = 1
-})
+const isMain = process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])
+if (isMain) {
+  main().catch((err) => {
+    console.error(`release: ${err.message}`)
+    process.exitCode = 1
+  })
+}

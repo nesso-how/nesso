@@ -1,0 +1,62 @@
+{
+  "$template": "@atlante/pack/skill",
+  "description": "Use when the user asks to create or publish a GitHub issue on the nesso-how Nesso org board (gh issue create, \"crea issue\") and the draft is ready — investigation and triage are already done.",
+  "title": "Create a Nesso GitHub issue",
+  "overview": "Publishes a **fully drafted** issue (title, body, Type, area label, board Status, Priority decided) — it does not investigate, triage, or decide priority. Read source, reproduce, and check `.rules/*.md` for the affected area first. No confirmation gate here: the caller (brainstorm / fix / work agent) already gated; proceed directly.",
+  "sections": [
+    {
+      "gotchas": [
+        "**Type is not a label.** Use `gh issue create --type <Name>` (Bug, Feature, Refactor, Docs, Chore). **Refactor** means no user-visible behavior change; UX changes are Feature.",
+        "**Priority is an org Issue Field, not a project field.** `gh project item-edit` cannot set it and may fail silently. Use GraphQL `setIssueFieldValue` in step 4. **Status** is a project field set with `gh project item-edit` in step 3; do not mix the APIs.",
+        "Discover Priority field and option IDs fresh every run because org Issue Fields drift in the GitHub UI; do not reuse stale IDs.",
+        "`clientMutationId: null` on the Priority mutation is normal; GraphQL `errors` is the failure signal."
+      ]
+    },
+    {
+      "workflow": {
+        "phases": [
+          {
+            "name": "Prepare the draft",
+            "instructions": [
+              "Recap the title, body, Type, area label, Status, and decided Priority. Use **Ready** when the issue is specified enough to start and **Inbox** when it still needs triage (`gh project view 1 --owner nesso-how`).",
+              "Run a quick, non-exhaustive duplicate check with `gh issue list --search \"<keywords>\" --state all --limit 5`."
+            ]
+          },
+          {
+            "name": "Create the issue",
+            "instructions": [
+              "Run `gh issue create --title \"<title>\" --type <Bug|Feature|Refactor|Docs|Chore> --label \"<area: xyz>\" --body \"<draft body>\"`, matching the body to the applicable issue template, and capture the issue URL.",
+              "For a Bug (`bug_report.yml`), add `## Root cause` and `## Suggested fix direction` with `file:line` when known; use `feature_request.yml` for a Feature, `tooling.yml` for a Chore, and read `graph_model.yml` for the richer Graph model structure."
+            ]
+          },
+          {
+            "name": "Add to the project board and set Status",
+            "instructions": [
+              "Assign the project item ID with `ITEM_ID=$(gh project item-add 1 --owner nesso-how --url <issue-url> --format json | python3 -c \"import json,sys;print(json.load(sys.stdin)['id'])\")`.",
+              "Set Status with `gh project item-edit --project-id PVT_kwDOETTSk84Bc6My --id \"$ITEM_ID\" --field-id PVTSSF_lADOETTSk84Bc6MyzhXfk9k --single-select-option-id <status-option-id>`.",
+              "If Status option IDs are stale, reverify them with `gh project field-list 1 --owner nesso-how --format json`; the last known IDs are Inbox `b33f88dd`, Ready `566a9694`, In Progress `98e3405f`, In Review `7630fa6c`, and Done `bb1f65af`."
+            ]
+          },
+          {
+            "name": "Set Priority",
+            "instructions": [
+              "Discover the Priority field and options with `gh api graphql -f query='query { organization(login: \"nesso-how\") { issueFields(first: 20) { nodes { ... on IssueFieldSingleSelect { id name options { id name } } } } } }'`.",
+              "Get the issue node ID, not the project item ID, with `gh api graphql -f query='query { repository(owner: \"nesso-how\", name: \"nesso\") { issue(number: <N>) { id } } }'`.",
+              "Set Priority with `gh api graphql -f query='mutation { setIssueFieldValue(input: { issueId: \"<issue node id>\", issueFields: [{ fieldId: \"<Priority field id>\", singleSelectOptionId: \"<option id>\" }] }) { clientMutationId } }'`.",
+              "Verify Priority with `gh api graphql -f query='query { repository(owner: \"nesso-how\", name: \"nesso\") { issue(number: <N>) { issueFieldValues(first: 10) { nodes { ... on IssueFieldSingleSelectValue { field { ... on IssueFieldSingleSelect { name } } value } } } } } }'`."
+            ]
+          },
+          {
+            "name": "Final checklist",
+            "instructions": [
+              "Confirm that the duplicate check ran.",
+              "Confirm that the issue was created with `--type`, not a legacy label.",
+              "Confirm that the issue was added to project 1 and Status was set.",
+              "Confirm that Priority was set via `setIssueFieldValue` and verified on the issue."
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

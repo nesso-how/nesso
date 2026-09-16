@@ -1,0 +1,57 @@
+{
+  "$template": "@atlante/pack/skill",
+  "description": "Use when the user asks to open, draft, update, or push a Nesso pull request (gh pr create, gh pr edit, \"crea la PR\") and the branch is ready to publish on GitHub.",
+  "title": "Create a Nesso pull request",
+  "overview": "Publishes or updates a **fully prepared** PR on GitHub — not implementation, review, or committing. Assume `preflight` and Atlante's `review` phase have passed, final changes are committed at task boundaries, and the user approved the PR summary; this skill only pushes and publishes. No confirmation gate here: the calling workflow already gated publication; proceed directly.",
+  "sections": [
+    {
+      "gotchas": [
+        "Never submit only a `Test plan` block: use the four `##` sections from `.github/PULL_REQUEST_TEMPLATE.md`, in template order.",
+        "Describe the diff against `main`, not a summary of PR commits. Run `git diff main...HEAD --stat` to see the change and describe logical units, not commit messages.",
+        "Use one closing keyword per issue (`Closes #31, #26` closes only `#31`); put each keyword directly before `#N` in the PR body because commit-message keywords do not populate GitHub's linked-issues panel.",
+        "Rename a branch only before its PR exists: renaming and pushing after opening a PR auto-closes it. Rename worktree branches such as `opencode/<random>` to `feat/<name>` before the first push."
+      ]
+    },
+    {
+      "workflow": {
+        "phases": [
+          {
+            "name": "Prepare the draft",
+            "instructions": [
+              "Use the `CONTRIBUTING.md` branch prefix (`feat/`, `fix/`, `refactor/`, or `chore/`) with a kebab-case name. Use a conventional-commit-style title.",
+              "Fill `.github/PULL_REQUEST_TEMPLATE.md` in order, strip HTML comments, and mark a checklist item `[x]` only when true. Apply the `CHANGELOG.md` policy from `AGENTS.md` and `CONTRIBUTING.md`."
+            ]
+          },
+          {
+            "name": "Rebase onto main",
+            "instructions": [
+              "Run `git fetch origin && git rebase origin/main`.",
+              "Resolve conflicts and spot-check if needed; prefer rebasing over merging `main`."
+            ]
+          },
+          {
+            "name": "Create or update the PR",
+            "instructions": [
+              "Check for an existing PR with `gh pr list --head \"$(git branch --show-current)\" --state all --limit 1`; use `gh pr edit` when one exists instead of `gh pr create`.",
+              "Push the committed branch with `git push --set-upstream origin \"$(git branch --show-current)\"`.",
+              "Create the PR with `gh pr create --title \"<conventional short title>\" --body \"<Summary, Changes, Checklist, and Testing sections from the template>\"`; put one `Closes #N` line per issue in the body."
+            ]
+          },
+          {
+            "name": "Verify closing links",
+            "instructions": [
+              "Run `gh pr view <n> --json closingIssuesReferences` and fix the body wording if any intended issue is missing."
+            ]
+          },
+          {
+            "name": "Enable auto-merge (optional)",
+            "instructions": [
+              "When the user passes `--auto` or asks to auto-close / auto-merge, enable it with `gh pr merge <n> --auto` after creation.",
+              "Auto-merge requires branch protection with required checks on `main`; the PR remains open until checks pass. It cannot be combined with a draft PR, so un-draft first with `gh pr ready <n>`. Add `--squash` when the user requests squash merging: `gh pr merge <n> --auto --squash`."
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

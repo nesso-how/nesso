@@ -1,0 +1,9 @@
+{
+  "$schema": "https://atlante.sh/schema/v0.1/schema.json",
+  "skills": {
+    "create-issue": "./create-issue",
+    "create-pr": "./create-pr",
+    "preflight": "./preflight",
+    "release": "./release"
+  }
+}

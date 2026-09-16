@@ -1,0 +1,78 @@
+{
+  "$template": "@atlante/pack/skill",
+  "description": "Use when the user asks to cut, ship, publish, or version-bump a release.",
+  "title": "Cut a release",
+  "overview": "Use `scripts/release.mjs` through `pnpm release` as the source of truth for synchronized versions, the changelog, the lockfile, and local verification. Inspect the commits, propose a version, obtain approval at each mutation boundary, and verify publication without duplicating the script's implementation.",
+  "sections": [
+    {
+      "workflow": {
+        "phases": [
+          {
+            "name": "Inspect and propose",
+            "instructions": [
+              "Require a clean, up-to-date working tree on `main` (or the release branch explicitly named by the user); the script warns on dirty changes and refuses `--commit` unless the base is clean.",
+              "Find the latest release tag with `git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || echo \"none\"`, then list commits with `git log vX.Y.Z..HEAD --oneline --no-decorate` (or inspect the full history for a first release). Summarize Conventional Commit signals and included changes.",
+              "Read `PREV` from the root `package.json`. The default increments a numbered prerelease suffix (`...-alpha.N`, `...-beta.N`, or `...-rc.N`); propose an explicit valid `NEW` version for another bump. The tag is `vNEW`."
+            ]
+          },
+          {
+            "name": "Confirm and prepare",
+            "instructions": [
+              "Ensure `CHANGELOG.md` has this release's user-facing notes under `## [Unreleased]`; if it is empty, ask what is shipping before continuing. Present the proposed version, rationale, and commits, then ask the user to confirm or provide another valid version greater than `PREV`.",
+              "After confirmation, preview with `pnpm release --dry-run` when useful, then run `pnpm release [NEW]`. It updates these nine synchronized files: `package.json`, `packages/schema/package.json`, `packages/graph/package.json`, `packages/mcp/package.json`, `packages/vocab-learning/package.json`, `packages/theme/package.json`, `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`, and `src-tauri/Cargo.lock`.",
+              "The script rolls `## [Unreleased]` into `## [NEW] - YYYY-MM-DD`, creates a fresh empty Unreleased section, updates both comparison links, formats the changed JSON/Markdown, then runs `CI=true pnpm install --frozen-lockfile`, `pnpm build`, `pnpm lint`, and `pnpm format:check` before any git mutation.",
+              "Use `--no-verify` only when explicitly justified and `--yes` only to suppress the empty-changelog or non-main warnings. On drift, a failed verification, or any other error, fix the root cause and rerun; do not hand-edit around it. Verify that the changelog heading and `src-tauri/tauri.conf.json` both equal `NEW`."
+            ]
+          },
+          {
+            "name": "Commit and tag locally",
+            "instructions": [
+              "After preparation is green and the user explicitly approves the local mutation, use the printed `git add -A`, `git commit -m \"chore(release): vNEW\"`, and `git tag vNEW` commands. Alternatively, from the original clean base, run `pnpm release [NEW] --commit` instead of the no-commit preparation command. This creates the commit and tag locally and never pushes."
+            ]
+          },
+          {
+            "name": "Publish and verify",
+            "instructions": [
+              "After a separate explicit publication confirmation, push the release commit with `git push origin HEAD:main`, then push the tag with `git push origin vNEW`; the tag push is the irreversible public step and triggers `.github/workflows/release.yml`.",
+              "Watch the run with `gh run watch <id> --exit-status`, then confirm `gh run view <id>` is `completed / success`. Use `gh release view vNEW` to verify the body and all expected assets: the signed/notarized universal macOS `.dmg`, `Nesso_<version>_x64-setup.exe`, macOS `.app.tar.gz` plus `.sig`, Windows `.exe` plus `.sig` (all updater signatures use the shared minisign keys), and `latest.json` covering macOS and `windows-x86_64`.",
+              "Confirm the release body contains the `## [NEW]` changelog section and the unsigned-Windows/SmartScreen note, and confirm `https://github.com/nesso-how/nesso/releases/latest/download/latest.json` resolves to this release. If only `publish-windows` fails after `publish` succeeds, rerun only the failed job with `gh run rerun <id> --failed`; do not recreate or retag."
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "gotchas": [
+        "The version file list in `scripts/release.mjs` is authoritative; update it if a published package is added or removed.",
+        "A successful `publish` job is not a complete release: Windows runs afterward and merges its updater entry into the existing `latest.json`.",
+        "The npm packages publish through Trusted Publishing/OIDC; production web deploys only from the exact `v*` tag after the release guards pass."
+      ]
+    },
+    {
+      "invariants": [
+        "Do not commit, tag, or push without explicit user approval; the `v*` tag push publishes to the public.",
+        "Keep `CHANGELOG.md` limited to user-facing or release-notable changes, and keep root/Tauri versions, the tag, and the matching changelog heading aligned.",
+        "Do not use `--force`; when operating from a worktree, push that worktree's `HEAD` rather than the main checkout."
+      ]
+    },
+    {
+      "references": [
+        {
+          "name": "Release script",
+          "location": "scripts/release.mjs",
+          "readWhen": "Checking the authoritative version files, changelog roll, flags, and verification behavior."
+        },
+        {
+          "name": "Release workflow",
+          "location": ".github/workflows/release.yml",
+          "readWhen": "Checking publication jobs, guards, and expected release artifacts."
+        },
+        {
+          "name": "Changelog",
+          "location": "CHANGELOG.md",
+          "readWhen": "Preparing release notes and verifying the GitHub Release body."
+        }
+      ]
+    }
+  ]
+}
