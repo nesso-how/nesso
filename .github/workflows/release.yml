@@ -364,7 +364,7 @@ jobs:
           set -euo pipefail
           version=$(jq -r .version src-tauri/tauri.conf.json)
           gh release view "v$version" --json assets --jq '.assets[].name' | grep -Fxq latest.json
-          gh release download "v$version" --pattern latest.json --output latest.json
+          gh release download "v$version" --pattern latest.json --output latest.json --clobber
           jq -e '.platforms["linux-x86_64"] | (.url | strings | length > 0) and (.signature | strings | length > 0)' latest.json >/dev/null
 
   deploy-web:
