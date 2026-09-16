@@ -306,6 +306,7 @@ jobs:
             librsvg2-dev \
             patchelf \
             pkg-config \
+            xvfb \
             wget
 
       - name: Install dependencies
@@ -337,8 +338,34 @@ jobs:
         run: |
           set -euo pipefail
           appimage=$(find src-tauri/target/x86_64-unknown-linux-gnu/release/bundle/appimage -maxdepth 1 -type f -name '*.AppImage' -print -quit)
+          signature=$(find src-tauri/target/x86_64-unknown-linux-gnu/release/bundle/appimage -maxdepth 1 -type f -name '*.AppImage.sig' -print -quit)
           test -n "$appimage"
           test -x "$appimage"
+          test -s "$signature"
+
+      - name: Smoke-test AppImage startup
+        shell: bash
+        run: |
+          appimage=$(find src-tauri/target/x86_64-unknown-linux-gnu/release/bundle/appimage -maxdepth 1 -type f -name '*.AppImage' -print -quit)
+          set +e
+          timeout --signal=TERM 15s xvfb-run --auto-servernum "$appimage" > appimage.log 2>&1
+          status=$?
+          set -e
+          if [ "$status" -ne 0 ] && [ "$status" -ne 124 ]; then
+            cat appimage.log
+            exit "$status"
+          fi
+
+      - name: Verify updater metadata
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          version=$(jq -r .version src-tauri/tauri.conf.json)
+          gh release view "v$version" --json assets --jq '.assets[].name' | grep -Fxq latest.json
+          gh release download "v$version" --pattern latest.json --output latest.json
+          jq -e '.platforms["linux-x86_64"] | (.url | strings | length > 0) and (.signature | strings | length > 0)' latest.json >/dev/null
 
   deploy-web:
     name: Deploy web production
