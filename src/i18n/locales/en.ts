@@ -50,7 +50,7 @@ const en = {
     ai: {
       mentor: 'Mentor',
       mentorDesc:
-        'Socrates reads your graph and probes your understanding through questions rather than explanations. Experimental feature.',
+        'Socrates reads your graph and helps you build understanding, explaining clearly and asking focused questions. Experimental feature.',
       mentorMode: 'Mentor',
       mentorModeDesc: 'When off, Socrates is hidden from the status bar.',
       apiBaseUrl: 'API base URL',

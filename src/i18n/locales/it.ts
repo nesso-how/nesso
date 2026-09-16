@@ -50,7 +50,7 @@ const it: typeof en = {
     ai: {
       mentor: 'Mentore',
       mentorDesc:
-        'Socrate legge il tuo grafo e verifica la tua comprensione con domande, non spiegazioni. Funzione sperimentale.',
+        'Socrate legge il tuo grafo e ti aiuta a costruire comprensione, spiegando chiaramente e ponendo domande mirate. Funzione sperimentale.',
       mentorMode: 'Mentore',
       mentorModeDesc: 'Quando è disattivato, Socrate non compare nella barra di stato.',
       apiBaseUrl: 'URL base API',

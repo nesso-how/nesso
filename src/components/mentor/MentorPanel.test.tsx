@@ -55,7 +55,7 @@ function setupStore() {
     settings: {
       ...s.settings,
       aiBaseUrl: 'http://localhost:11434/v1',
-      aiModel: 'gemma3:4b',
+      aiModel: 'qwen3:8b',
       language: 'en',
     },
   })
