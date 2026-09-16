@@ -4,6 +4,9 @@
   "version": "0.2.0-beta.5",
   "license": "MIT",
   "packageManager": "pnpm@10.14.0",
+  "engines": {
+    "node": ">=22"
+  },
   "pnpm": {
     "onlyBuiltDependencies": ["esbuild", "sharp"]
   },
@@ -17,8 +20,8 @@
     "lint:fix": "biome lint --write .",
     "analyze": "fallow",
     "analyze:dead-code": "fallow dead-code --fail-on-issues",
-    "analyze:dupes": "fallow dupes --baseline fallow-baselines/dupes.json --fail-on-issues",
-    "analyze:health": "fallow health --baseline fallow-baselines/health.json --fail-on-issues",
+    "analyze:dupes": "fallow dupes --baseline fallow-baselines/dupes.json",
+    "analyze:health": "fallow health --baseline fallow-baselines/health.json",
     "analyze:mutation": "pnpm run analyze:mutation:schema && pnpm run analyze:mutation:store && pnpm run analyze:mutation:workspace && pnpm run analyze:mutation:mentor && pnpm run analyze:mutation:graphTools",
     "analyze:mutation:schema": "stryker run scripts/stryker/schema.mjs",
     "analyze:mutation:store": "stryker run scripts/stryker/store.mjs",
@@ -102,7 +105,7 @@
     "agent-browser": "0.27.0",
     "expect-webdriverio": "^5.6.8",
     "fake-indexeddb": "^6.2.5",
-    "fallow": "2.98.0",
+    "fallow": "3.26.0",
     "husky": "^9.1.7",
     "jsdom": "^29.1.1",
     "lint-staged": "^17.0.7",

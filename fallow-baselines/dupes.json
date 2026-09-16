@@ -1,15 +1,41 @@
 {
   "clone_groups": [
-    "packages/vocab-learning/src/index.ts:133-142|src/i18n/locales/en.ts:294-303",
-    "src/components/canvas/GraphContextMenu.tsx:108-113|src/components/inspector/inspectorChrome.tsx:86-91",
-    "src/store/slices/graph-editing.test.ts:49-53|src/store/slices/graph-editing.test.ts:84-88",
-    "src/store/slices/graph-editing.test.ts:107-113|src/store/slices/graph-editing.test.ts:69-75",
-    "src/store/slices/graph-editing.test.ts:121-126|src/store/slices/graph-editing.test.ts:280-285|src/store/slices/graph-editing.test.ts:294-299",
-    "src/store/slices/graph-editing.test.ts:141-147|src/store/slices/graph-editing.test.ts:197-203|src/store/slices/graph-editing.test.ts:238-244",
-    "src/store/slices/graph-editing.test.ts:141-146|src/store/slices/graph-editing.test.ts:156-161|src/store/slices/graph-editing.test.ts:197-202|src/store/slices/graph-editing.test.ts:238-243",
-    "src/store/slices/graph-editing.test.ts:141-145|src/store/slices/graph-editing.test.ts:156-160|src/store/slices/graph-editing.test.ts:197-201|src/store/slices/graph-editing.test.ts:217-221|src/store/slices/graph-editing.test.ts:238-242",
-    "src/store/slices/graph-editing.test.ts:197-203|src/store/slices/graph-editing.test.ts:238-244",
-    "src/store/slices/graph-editing.test.ts:280-285|src/store/slices/graph-editing.test.ts:294-299",
-    "src/store/slices/graph-management.desktop.test.ts:27-40|src/store/slices/graph-management.test.ts:17-30"
+    "src/components/mentor/MentorPanel.tsx:311-328|src/components/mentor/MentorPanel.tsx:445-462",
+    "packages/vocab-learning/src/document.ts:24-29|src/lib/graphLoadNormalizer.ts:59-64",
+    "docs/src/components/Landing.astro:60-74|src/index.css:79-94",
+    "src/components/canvas/GraphContextMenu.tsx:109-114|src/components/inspector/inspectorChrome.tsx:86-91",
+    "src/components/layout/Sidebar.tsx:308-326|src/components/layout/SidebarProjects.tsx:127-138",
+    "scripts/validate-current-release.mjs:25-36|scripts/validate-release-tag.mjs:63-75",
+    "packages/mcp/src/lib/graph-tools.ts:86-90|src/lib/graphId.ts:29-33",
+    "src/components/canvas/ConceptNode.tsx:50-53|src/hooks/useOnboardingFlow.ts:29-37",
+    "src/components/dialogs/SettingsDialog.tsx:121-127|src/components/dialogs/SettingsDialog.tsx:58-64",
+    "src/components/inspector/InlineEdit.tsx:63-69|src/components/inspector/InlineEdit.tsx:77-83",
+    "src/store/slices/graph-editing.ts:257-261|src/store/slices/graph-editing.ts:280-284"
+  ],
+  "clone_fingerprints": [
+    "dup:62f0a88d:2",
+    "dup:67786351:2",
+    "dup:a845cd4f:2",
+    "dup:ebbacc46:2",
+    "dup:b299d6af:2",
+    "dup:a3945e84:2",
+    "dup:54678b23:2",
+    "dup:116af2c0:2",
+    "dup:a10bc2ff:2",
+    "dup:b0ef3216:2",
+    "dup:40814f95:2"
+  ],
+  "normalized_clone_fingerprints": [
+    "dup:c77b3abb6f87acd9-r2:2",
+    "dup:c77b3abb6f87acd9-r1:2",
+    "dup:b2faf0a2:2",
+    "dup:c77b3abb6f87acd9-r3:2",
+    "dup:c77b3abb6f87acd9-r8:2",
+    "dup:c77b3abb6f87acd9-r6:2",
+    "dup:c77b3abb6f87acd9-r7:2",
+    "dup:c77b3abb6f87acd9-r9:2",
+    "dup:c77b3abb6f87acd9-r5:2",
+    "dup:c77b3abb6f87acd9-r4:2",
+    "dup:21bdeaf8:2"
   ]
 }
