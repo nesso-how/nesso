@@ -253,6 +253,93 @@ jobs:
           args: '--target x86_64-pc-windows-msvc --bundles nsis'
           includeUpdaterJson: true
 
+  publish-linux:
+    needs: publish-windows
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    # Run after the Windows publisher so the release and updater manifest have
+    # a single serialized upload path for all desktop platforms.
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+
+      - name: Enable pnpm via Corepack
+        run: corepack enable
+
+      - name: Pnpm store path
+        id: pnpm-store
+        shell: bash
+        run: echo "path=$(pnpm store path)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/cache@v5
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-unknown-linux-gnu
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: ./src-tauri -> target
+
+      - name: Install Tauri Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential \
+            curl \
+            file \
+            libayatana-appindicator3-dev \
+            libfuse2 \
+            libgtk-3-dev \
+            libssl-dev \
+            libwebkit2gtk-4.1-dev \
+            libxdo-dev \
+            librsvg2-dev \
+            patchelf \
+            pkg-config \
+            wget
+
+      - name: Install dependencies
+        env:
+          NESSO_SKIP_PREPARE_BUILD: '1'
+          npm_config_script_shell: bash
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate desktop icons from tile SVG
+        run: pnpm run icons:desktop
+
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
+          VITE_POSTHOG_KEY: ${{ secrets.VITE_POSTHOG_KEY }}
+          VITE_POSTHOG_HOST: https://eu.i.posthog.com
+        with:
+          projectPath: ./src-tauri
+          tagName: v__VERSION__
+          releaseName: 'Nesso v__VERSION__'
+          args: '--target x86_64-unknown-linux-gnu --bundles appimage'
+          includeUpdaterJson: true
+
+      - name: Verify AppImage output
+        shell: bash
+        run: |
+          set -euo pipefail
+          appimage=$(find src-tauri/target/x86_64-unknown-linux-gnu/release/bundle/appimage -maxdepth 1 -type f -name '*.AppImage' -print -quit)
+          test -n "$appimage"
+          test -x "$appimage"
+
   deploy-web:
     name: Deploy web production
     needs: publish
