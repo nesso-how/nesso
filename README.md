@@ -96,6 +96,10 @@ Nesso is built as a monorepo of focused packages so that its graph vocabulary, v
 
 Bug reports, feature ideas, and PRs are welcome on [GitHub Issues](https://github.com/nesso-how/nesso/issues). Start with [CONTRIBUTING.md](CONTRIBUTING.md).
 
+## Contact
+
+Questions, feedback, or support: [nesso-how@proton.me](mailto:nesso-how@proton.me).
+
 ## License
 
 Copyright © 2026 Omar Desogus, Paolo Manfredotti. Licensed under the [MIT License](https://opensource.org/licenses/MIT). See [LICENSE](LICENSE).
