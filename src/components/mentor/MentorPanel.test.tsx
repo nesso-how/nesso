@@ -7,11 +7,11 @@ import 'fake-indexeddb/auto'
 
 import { createRoot, type Root } from 'react-dom/client'
 import { act } from 'react'
-import { NoSuchToolError } from 'ai'
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
 import { useGraphStore } from '@/store'
 import { defaultConceptReviewFields } from '@/types/graph'
 import { isAiReady } from '@/llm/completion'
+import { MENTOR_OPENING_REQUEST } from '@/llm/context'
 import { MentorPanel } from './MentorPanel'
 
 const { mockTrack } = vi.hoisted(() => ({
@@ -26,15 +26,6 @@ vi.mock('@/telemetry', async (importOriginal) => {
 const { mockFetchCompletion } = vi.hoisted(() => ({
   mockFetchCompletion: vi.fn(),
 }))
-
-const { mockBuildLegacyMentorPrompt } = vi.hoisted(() => ({
-  mockBuildLegacyMentorPrompt: vi.fn(),
-}))
-
-vi.mock('@/llm/context', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/llm/context')>()
-  return { ...actual, buildLegacyMentorPrompt: mockBuildLegacyMentorPrompt }
-})
 
 vi.mock('@/llm/completion', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/llm/completion')>()
@@ -85,14 +76,10 @@ async function sendMessage(text: string): Promise<void> {
   })
 }
 
-async function renderLegacyChat(): Promise<void> {
-  mockFetchCompletion.mockImplementationOnce(async () => {
-    throw new NoSuchToolError({ toolName: 'getGraphOverview' })
-  })
+async function renderPanel(): Promise<void> {
   await act(async () => {
     root!.render(<MentorPanel leftInset={0} rightInset={0} />)
   })
-  expect(mockFetchCompletion).toHaveBeenCalledTimes(2)
 }
 
 function concept(id: string, text: string, definition: string) {
@@ -106,9 +93,7 @@ function concept(id: string, text: string, definition: string) {
 beforeEach(() => {
   mockTrack.mockClear()
   mockFetchCompletion.mockClear()
-  mockBuildLegacyMentorPrompt.mockClear()
   vi.mocked(isAiReady).mockReturnValue(true)
-  mockBuildLegacyMentorPrompt.mockReturnValue('Nodes: legacy snapshot')
   setupStore()
 
   // Mock fetchCompletion to resolve immediately so the LLM effect doesn't hang.
@@ -618,86 +603,30 @@ describe('MentorPanel graph tools', () => {
     })
   })
 
-  it('clears the action before fallback and aborts the shared primary/fallback signal', async () => {
-    let primarySignal: AbortSignal | undefined
-    let fallbackSignal: AbortSignal | undefined
-    let rejectPrimary!: (error: unknown) => void
-    let resolveFallback!: (value: string) => void
+  it('surfaces a tool-incompatible failure once without a snapshot retry', async () => {
     mockFetchCompletion.mockImplementationOnce(
       async (
         _settings: unknown,
         _request: unknown,
         _maxTokens: unknown,
-        signal: AbortSignal,
-        handlers: { onToolCall?: (name: string) => void } | undefined,
+        _signal: unknown,
+        handlers: { onToken?: (delta: string) => void } | undefined,
       ) => {
-        primarySignal = signal
-        handlers?.onToolCall?.('searchConcepts')
-        return new Promise<string>((_resolve, reject) => {
-          rejectPrimary = reject
-        })
+        handlers?.onToken?.('Hello')
+        return 'Hello'
       },
     )
-    mockFetchCompletion.mockImplementationOnce(
-      async (_settings: unknown, _request: unknown, _maxTokens: unknown, signal: AbortSignal) => {
-        fallbackSignal = signal
-        return new Promise<string>((resolve) => {
-          resolveFallback = resolve
-        })
-      },
-    )
-
-    await act(async () => {
-      root!.render(<MentorPanel leftInset={0} rightInset={0} />)
-    })
-    await sendMessage('Try the fallback')
-    expect(container!.textContent).toContain('Searching concepts…')
-
-    await act(async () => {
-      rejectPrimary(new NoSuchToolError({ toolName: 'getGraphOverview' }))
-      await Promise.resolve()
-      await Promise.resolve()
-    })
-
-    expect(container!.textContent).not.toContain('Searching concepts…')
-    expect(fallbackSignal).toBe(primarySignal)
-
-    const closeButton = container!.querySelectorAll('button')[1]!
-    await act(async () => {
-      closeButton.click()
-    })
-    expect(primarySignal?.aborted).toBe(true)
-
-    await act(async () => {
-      resolveFallback('late fallback reply')
-      await Promise.resolve()
-    })
-    expect(container!.textContent).not.toContain('late fallback reply')
-  })
-
-  it('retries an incompatible opener once in legacy mode and keeps later turns legacy', async () => {
-    mockBuildLegacyMentorPrompt.mockReturnValue('Nodes: legacy snapshot')
     mockFetchCompletion.mockImplementationOnce(async () => {
-      throw new NoSuchToolError({ toolName: 'getGraphOverview' })
+      throw new Error('tool calling is not supported')
     })
 
     await act(async () => {
       root!.render(<MentorPanel leftInset={0} rightInset={0} />)
     })
+    await sendMessage('Continue')
 
     expect(mockFetchCompletion).toHaveBeenCalledTimes(2)
-    expect(mockFetchCompletion.mock.calls[1][3]).toBe(mockFetchCompletion.mock.calls[0][3])
-    expect(mockFetchCompletion.mock.calls[1][1]).toMatchObject({
-      instructions: 'Nodes: legacy snapshot',
-    })
-    expect(mockFetchCompletion.mock.calls[1][1]).not.toHaveProperty('tools')
-
-    await sendMessage('Keep using the snapshot')
-
-    expect(mockFetchCompletion.mock.calls[2][1]).toMatchObject({
-      instructions: 'Nodes: legacy snapshot',
-    })
-    expect(mockFetchCompletion.mock.calls[2][1]).not.toHaveProperty('tools')
+    expect(container!.textContent).toContain('Test error')
   })
 
   it('does not retry after the first visible token', async () => {
@@ -722,7 +651,7 @@ describe('MentorPanel graph tools', () => {
         handlers: { onToken?: (delta: string) => void } | undefined,
       ) => {
         handlers?.onToken?.('partial')
-        throw new NoSuchToolError({ toolName: 'getGraphOverview' })
+        throw new Error('tool calling is not supported')
       },
     )
 
@@ -759,175 +688,20 @@ describe('MentorPanel graph tools', () => {
     expect(mockFetchCompletion).toHaveBeenCalledTimes(2)
   })
 
-  it('does not probe again after a failed legacy retry', async () => {
-    mockFetchCompletion.mockImplementationOnce(
-      async (
-        _settings: unknown,
-        _request: unknown,
-        _maxTokens: unknown,
-        _signal: unknown,
-        handlers: { onToken?: (delta: string) => void } | undefined,
-      ) => {
-        handlers?.onToken?.('Hello')
-        return 'Hello'
-      },
-    )
-    mockFetchCompletion.mockImplementationOnce(async () => {
-      throw new NoSuchToolError({ toolName: 'getGraphOverview' })
-    })
-    mockFetchCompletion.mockImplementationOnce(async () => {
-      throw new Error('legacy failed')
-    })
-
-    await act(async () => {
-      root!.render(<MentorPanel leftInset={0} rightInset={0} />)
-    })
-    await sendMessage('Continue')
-
-    expect(mockFetchCompletion).toHaveBeenCalledTimes(3)
-
-    await sendMessage('Try a second turn')
-
-    expect(mockFetchCompletion).toHaveBeenCalledTimes(4)
-    expect(mockFetchCompletion.mock.calls[3][1]).not.toHaveProperty('tools')
-  })
-
-  it('uses the captured selection for a legacy retry', async () => {
-    useGraphStore.setState({
-      nodes: [concept('n-1', 'Original title', 'Original definition')],
-      selected: { kind: 'node', id: 'n-1' },
-    })
-    mockBuildLegacyMentorPrompt.mockImplementation(
-      (_nodes: unknown, _edges: unknown, selection: unknown) =>
-        `Nodes: selection ${JSON.stringify(selection)}`,
-    )
-    mockFetchCompletion.mockImplementationOnce(async () => {
-      useGraphStore.setState({ selected: null })
-      throw new NoSuchToolError({ toolName: 'getGraphOverview' })
-    })
-
-    await act(async () => {
-      root!.render(<MentorPanel leftInset={0} rightInset={0} />)
-    })
-
-    expect(mockFetchCompletion.mock.calls[1][1]).toMatchObject({
-      instructions: 'Nodes: selection {"kind":"node","id":"n-1"}',
-    })
-  })
-
-  it('does not retry an aborted compatibility failure', async () => {
-    let rejectPrimary!: (error: unknown) => void
-    let primarySignal: AbortSignal | undefined
-    mockFetchCompletion.mockImplementationOnce(
-      async (
-        _settings: unknown,
-        _request: unknown,
-        _maxTokens: unknown,
-        _signal: unknown,
-        handlers: { onToken?: (delta: string) => void } | undefined,
-      ) => {
-        handlers?.onToken?.('Hello')
-        return 'Hello'
-      },
-    )
-    mockFetchCompletion.mockImplementationOnce(
-      async (_settings: unknown, _request: unknown, _maxTokens: unknown, signal: AbortSignal) => {
-        primarySignal = signal
-        return new Promise<string>((_resolve, reject) => {
-          rejectPrimary = reject
-        })
-      },
-    )
-
-    await act(async () => {
-      root!.render(<MentorPanel leftInset={0} rightInset={0} />)
-    })
-    await sendMessage('Stop this')
-
-    await act(async () => {
-      useGraphStore.getState().setMentorPanelExpanded(false)
-    })
-    expect(primarySignal?.aborted).toBe(true)
-
-    await act(async () => {
-      rejectPrimary(new NoSuchToolError({ toolName: 'getGraphOverview' }))
-    })
-    expect(mockFetchCompletion).toHaveBeenCalledTimes(2)
-  })
-
-  it('resets tool capability when starting a new chat', async () => {
-    await renderLegacyChat()
+  it('starts a new chat with the tools-only opener', async () => {
+    await renderPanel()
 
     const [newChatButton] = Array.from(container!.querySelectorAll('button'))
     await act(async () => {
       newChatButton!.click()
     })
 
-    expect(mockFetchCompletion).toHaveBeenCalledTimes(3)
-    expect(mockFetchCompletion.mock.calls[2][1]).toHaveProperty('tools')
-  })
-
-  it('resets tool capability when the panel is closed and reopened', async () => {
-    await renderLegacyChat()
-
-    await act(async () => {
-      useGraphStore.getState().setMentorPanelExpanded(false)
-    })
-    await act(async () => {
-      useGraphStore.getState().setMentorPanelExpanded(true)
-    })
-
-    expect(mockFetchCompletion).toHaveBeenCalledTimes(3)
-    expect(mockFetchCompletion.mock.calls[2][1]).toHaveProperty('tools')
-  })
-
-  it('resets tool capability when the graph changes', async () => {
-    await renderLegacyChat()
-
-    await act(async () => {
-      useGraphStore.setState({ currentGraphId: 'test-graph-2' })
-    })
-
-    expect(mockFetchCompletion).toHaveBeenCalledTimes(3)
-    expect(mockFetchCompletion.mock.calls[2][1]).toHaveProperty('tools')
-  })
-
-  it('resets tool capability when the base URL changes', async () => {
-    await renderLegacyChat()
-
-    await act(async () => {
-      const settings = useGraphStore.getState().settings
-      useGraphStore.setState({
-        settings: { ...settings, aiBaseUrl: 'http://localhost:11435/v1' },
-      })
-    })
-
-    expect(mockFetchCompletion).toHaveBeenCalledTimes(3)
-    expect(mockFetchCompletion.mock.calls[2][1]).toHaveProperty('tools')
-  })
-
-  it('resets tool capability when the model changes', async () => {
-    await renderLegacyChat()
-
-    await act(async () => {
-      const settings = useGraphStore.getState().settings
-      useGraphStore.setState({ settings: { ...settings, aiModel: 'other-model' } })
-    })
-
-    expect(mockFetchCompletion).toHaveBeenCalledTimes(3)
-    expect(mockFetchCompletion.mock.calls[2][1]).toHaveProperty('tools')
-  })
-
-  it('resets tool capability when the custom system prompt changes', async () => {
-    await renderLegacyChat()
-
-    await act(async () => {
-      const settings = useGraphStore.getState().settings
-      useGraphStore.setState({ settings: { ...settings, mentorSystemPrompt: 'New persona.' } })
-    })
-
-    expect(mockFetchCompletion).toHaveBeenCalledTimes(3)
-    expect(mockFetchCompletion.mock.calls[2][1]).toHaveProperty('tools')
+    expect(mockFetchCompletion).toHaveBeenCalledTimes(2)
+    expect(mockFetchCompletion.mock.calls[1][1]).toHaveProperty('tools')
+    const opener = mockFetchCompletion.mock.calls[1][1] as {
+      messages: { role: string; content: string }[]
+    }
+    expect(opener.messages).toEqual([{ role: 'user', content: MENTOR_OPENING_REQUEST }])
   })
 
   it('sends the custom persona as the prefix of the opener instructions', async () => {
@@ -949,16 +723,25 @@ describe('MentorPanel graph tools', () => {
     )
   })
 
-  it('keeps the legacy snapshot out of the normal tool-enabled request', async () => {
+  it('sends every turn with tools and the fixed graph-free opener', async () => {
     await act(async () => {
       root!.render(<MentorPanel leftInset={0} rightInset={0} />)
     })
 
-    expect(mockBuildLegacyMentorPrompt).not.toHaveBeenCalled()
-    expect(mockFetchCompletion.mock.calls[0][1]).not.toHaveProperty(
-      'instructions',
-      'Nodes: legacy snapshot',
-    )
+    const opener = mockFetchCompletion.mock.calls[0][1] as {
+      instructions: string
+      messages: { role: string; content: string }[]
+      tools: Record<string, unknown>
+    }
+    expect(opener.messages).toEqual([{ role: 'user', content: MENTOR_OPENING_REQUEST }])
+    expect(opener).toHaveProperty('tools')
+
+    await sendMessage('What is knowledge?')
+
+    const followUp = mockFetchCompletion.mock.calls[1][1] as {
+      tools: Record<string, unknown>
+    }
+    expect(followUp).toHaveProperty('tools')
   })
 
   it('sends compact opener instructions with exactly the six graph tools', async () => {
