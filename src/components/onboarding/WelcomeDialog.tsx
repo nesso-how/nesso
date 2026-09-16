@@ -30,9 +30,15 @@ export function WelcomeDialog({ open, onShowMeHow, onSkipIntro }: Props) {
       <div
         role="dialog"
         aria-labelledby="onboarding-welcome-title"
+        className="nesso-scrollbar"
         style={{
           width: 468,
           maxWidth: '92vw',
+          maxHeight: '76vh',
+          overflowY: 'auto',
+          minHeight: 0,
+          display: 'flex',
+          flexDirection: 'column',
           background: 'var(--bg-card)',
           border: '0.5px solid var(--line)',
           borderRadius: 18,
