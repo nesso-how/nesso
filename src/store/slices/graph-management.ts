@@ -7,6 +7,7 @@ import { defaultConceptReviewFields, defaultGraphDisplay, mergeGraphDisplay } fr
 import { VOCABULARY } from '@nesso-how/vocab-learning'
 import { normalizeGraphDocument, normalizeGraphRecord } from '@/lib/graphLoadNormalizer'
 import { SEEDS, getSeedsForLanguage } from '@/data/seedGraph'
+import { locales } from '@/i18n/registry'
 import { isGraphId, newGraphId } from '@/lib/graphId'
 import { isDesktop } from '@/lib/isDesktop'
 import {
@@ -78,10 +79,7 @@ function toastUnsupportedProject(
   pushToast({
     id: `unsupported-project:${norm}`,
     variant: 'info',
-    message:
-      language === 'it'
-        ? `Il progetto contiene ${count} file non supportati da questa versione di Nesso. Aggiorna l'app o rimuovi manualmente i file.`
-        : `This project contains ${count} file(s) not supported by this version of Nesso. Please update the app or remove the files manually.`,
+    message: locales[language].sidebar.projectSwitcher.unsupportedProject(count),
   })
 }
 
@@ -115,7 +113,7 @@ async function seedOrWarnEmptyProject(
   }
 
   const now = Date.now()
-  const untitled = get().settings.language === 'it' ? 'Senza titolo' : 'Untitled'
+  const untitled = locales[get().settings.language].sidebar.untitled
   const seed: GraphRecord = {
     recordVersion: GRAPH_RECORD_VERSION,
     vocabulary: { id: VOCABULARY.id, version: VOCABULARY.version },
@@ -251,7 +249,7 @@ async function persistContentGraphRecord(
     recordVersion: GRAPH_RECORD_VERSION,
     vocabulary: { id: VOCABULARY.id, version: VOCABULARY.version },
     id: currentGraphId,
-    name: meta?.name ?? (settings.language === 'it' ? 'Senza titolo' : 'Untitled'),
+    name: meta?.name ?? locales[settings.language].sidebar.untitled,
     createdAt: existing?.createdAt ?? meta?.updatedAt ?? now,
     updatedAt: now,
     nodes: persistNodes,
@@ -522,10 +520,7 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
             get().pushToast({
               id: `project-missing:${norm}`,
               variant: 'info',
-              message:
-                get().settings.language === 'it'
-                  ? 'Cartella del progetto non trovata: potrebbe essere stata spostata o rinominata. Resta nella lista finché non la rimuovi.'
-                  : 'Project folder not found: it may have been moved or renamed. It stays in the list until you remove it.',
+              message: locales[get().settings.language].sidebar.projectSwitcher.projectMissing,
             })
             return get().graphList
           }

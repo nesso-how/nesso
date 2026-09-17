@@ -220,6 +220,10 @@ const it: typeof en = {
       removeProjectCta: 'Rimuovi',
       missingProject: 'non trovata',
       missingProjectHint: 'Cartella non trovata. Potrebbe essere stata spostata o rinominata.',
+      unsupportedProject: (count: number) =>
+        `Il progetto contiene ${count} file non supportati da questa versione di Nesso. Aggiorna l'app o rimuovi manualmente i file.`,
+      projectMissing:
+        'Cartella del progetto non trovata: potrebbe essere stata spostata o rinominata. Resta nella lista finché non la rimuovi.',
     },
     newGraphTitle: 'Nuovo grafo',
     deleteGraph: 'Elimina grafo',
