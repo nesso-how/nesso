@@ -15,6 +15,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - **Localized desktop menus show the correct "Open Project" label** — it rendered empty in non-English menus.
 - **Creating or importing a graph resets file-conflict tracking**, so a stale conflict flag can no longer silently block subsequent saves.
+- **Importing an unnamed graph uses the localized fallback name** instead of the hardcoded English "Untitled".
 
 ## [0.2.0-beta.7] - 2026-09-17
 

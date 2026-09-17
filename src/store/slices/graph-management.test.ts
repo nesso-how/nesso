@@ -161,6 +161,13 @@ describe('importGraph', () => {
     expect(s.getState().graphList.find((g) => g.id === id)?.name).toBe('Foo-2')
   })
 
+  it('localizes the fallback name for an unnamed import', async () => {
+    const s = await freshStore()
+    s.getState().setSetting('language', 'it')
+    const id = await s.getState().importGraph('   ', [], [])
+    expect(s.getState().graphList.find((g) => g.id === id)?.name).toBe('Senza titolo')
+  })
+
   it('normalizes existing IDB records when building the peer name list', async () => {
     const s = makeStore()
     // Seed a valid graph.

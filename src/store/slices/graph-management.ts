@@ -767,7 +767,10 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
     const rawExisting = await dbListGraphs()
     const existing = rawExisting.map((r) => normalizeGraphRecord(r))
     const peerNames = existing.filter((r) => r.id !== graphId).map((r) => r.name)
-    const graphName = uniqueGraphNameAmong(name.trim() || 'Untitled', peerNames)
+    const graphName = uniqueGraphNameAmong(
+      name.trim() || locales[get().settings.language].sidebar.untitled,
+      peerNames,
+    )
     const {
       nodes: persistNodes,
       edges: persistEdges,
