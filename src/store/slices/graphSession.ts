@@ -19,11 +19,6 @@ let _loadRequestId = 0
 // (load, create, import, reload-from-disk).
 const _draggingNodeIds = new Set<string>()
 
-/** True while a project switch holds the clear+reload window. */
-export function isSwitchingProject(): boolean {
-  return _switchingProject
-}
-
 /** Enter the switch window; must precede any store update the switch makes. */
 export function beginSwitchProject(): void {
   _switchingProject = true
@@ -42,11 +37,6 @@ export function getSwitchProjectInflight(): Promise<GraphMeta[]> | null {
 /** Assigned synchronously — no await between the guard exit and this call. */
 export function setSwitchProjectInflight(p: Promise<GraphMeta[]> | null): void {
   _switchProjectInflight = p
-}
-
-/** True while saves must be dropped to avoid recreating an abandoned folder. */
-export function isSuppressOutgoingSave(): boolean {
-  return _suppressOutgoingSave
 }
 
 export function setSuppressOutgoingSave(v: boolean): void {

@@ -2,8 +2,6 @@
 import { isPlainObject } from '@nesso-how/vocab-learning'
 import type { DeepPartial } from './types.js'
 
-export { isPlainObject }
-
 /** Recursively merge `override` onto `base`; `undefined` values are skipped. */
 export function deepMerge<T>(base: T, override: DeepPartial<T>): T {
   if (!isPlainObject(base) || !isPlainObject(override)) {

@@ -3,7 +3,6 @@ import {
   RELATION_TYPES,
   RELATION_TYPE_VALUES,
   RELATION_CATEGORIES,
-  DEFAULT_RELATION_TYPE,
   asRelationTypeName,
   isPrimaryRelationType,
   type RelationCategory,
@@ -11,13 +10,7 @@ import {
   type RelationTypeDef,
 } from '@nesso-how/vocab-learning'
 
-export {
-  RELATION_TYPES,
-  RELATION_TYPE_VALUES,
-  DEFAULT_RELATION_TYPE,
-  asRelationTypeName,
-  isPrimaryRelationType,
-}
+export { RELATION_TYPES, RELATION_TYPE_VALUES, asRelationTypeName, isPrimaryRelationType }
 
 /** Category id → CSS palette var for canvas/UI chrome. Labels live in i18n. */
 export const RELATION_CATEGORY_COLORS = Object.fromEntries(

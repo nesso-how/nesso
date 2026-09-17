@@ -6,9 +6,6 @@
 export type {
   ConceptElaboration,
   NotesDocument,
-  NotesNode,
-  NessoConceptData,
-  NessoRelationData,
   NessoGraphDocument,
   NessoGraphDocumentInput,
 } from './graphDocument.js'

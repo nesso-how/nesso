@@ -68,21 +68,6 @@ export async function dbClearGraphs() {
   return (await getDB()).clear('graphs')
 }
 
-export async function dbGetReviewState(
-  graphId: string,
-  nodeId: string,
-): Promise<LearningNodeParams | undefined> {
-  return (await getDB()).get('reviewState', reviewStateKey(graphId, nodeId))
-}
-
-export async function dbPutReviewState(
-  graphId: string,
-  nodeId: string,
-  params: LearningNodeParams,
-): Promise<void> {
-  await (await getDB()).put('reviewState', params, reviewStateKey(graphId, nodeId))
-}
-
 export async function dbGetReviewStatesForGraph(
   graphId: string,
 ): Promise<Map<string, LearningNodeParams>> {

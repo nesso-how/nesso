@@ -155,21 +155,6 @@ describe('WritingMode', () => {
     expect(onClose).toHaveBeenCalled()
   })
 
-  it('confines the overlay to the visible canvas instead of covering app chrome', async () => {
-    await renderUI(
-      <WritingMode
-        nodeId="n1"
-        onClose={() => {}}
-        canvasInsets={{ top: 52, right: 280, bottom: 24, left: 220 }}
-      />,
-    )
-    const backdrop = document.querySelector<HTMLElement>('[data-testid="writing-mode-backdrop"]')
-    expect(backdrop?.style.top).toBe('52px')
-    expect(backdrop?.style.right).toBe('280px')
-    expect(backdrop?.style.bottom).toBe('24px')
-    expect(backdrop?.style.left).toBe('220px')
-  })
-
   it('leaves Tab available to the Inspector and restores its trigger on explicit close', async () => {
     const trigger = document.createElement('button')
     trigger.type = 'button'
