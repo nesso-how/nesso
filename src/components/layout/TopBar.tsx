@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 import { useState, useEffect } from 'react'
 import { useGraphStore } from '@/store'
-import { sortedDueConceptNodes } from '@/data/fsrsDueQueue'
+import { studiedDueCount } from '@/data/fsrsDueQueue'
 import { GraphIO } from '@/components/dialogs/GraphIO'
 import { useT } from '@/i18n'
 import { isDesktop } from '@/lib/isDesktop'
@@ -45,11 +45,8 @@ export function TopBar({
   }, [])
   // Primitive subscription: re-render only when the due count itself changes,
   // not on every unrelated graph update. `now` ticks each minute so newly-due
-  // concepts refresh the badge; the predicate is unchanged (follow-up owns it).
-  const dueCount = useGraphStore((s) => {
-    void now
-    return sortedDueConceptNodes(s.nodes).length
-  })
+  // concepts refresh the badge; the badge counts studied-only concepts.
+  const dueCount = useGraphStore((s) => studiedDueCount(s.nodes, now))
   const onReviewTourStep = isOnboardingStep(onboardingStep, 'review-button')
 
   return (

@@ -9,3 +9,8 @@ export function sortedDueConceptNodes(nodes: Node<ConceptNodeData>[]): Node<Conc
   const t = Date.now()
   return [...nodes].filter((n) => n.data.due <= t).sort((a, b) => a.data.due - b.data.due)
 }
+
+/** Studied concepts with due ≤ now; never-studied cards (reps = 0) are excluded. */
+export function studiedDueCount(nodes: Node<ConceptNodeData>[], nowMs: number): number {
+  return nodes.filter((node) => node.data.reps > 0 && node.data.due <= nowMs).length
+}
