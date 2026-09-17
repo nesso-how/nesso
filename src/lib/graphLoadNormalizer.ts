@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
 import { documentToRenderGraph } from '@nesso-how/graph'
-import { isPlainObject } from '@nesso-how/schema'
+import { isPlainObject, migrateLadder } from '@nesso-how/schema'
 import {
   VOCABULARY,
   checkVocabularyIdentity,
@@ -42,7 +42,7 @@ export const VOCABULARY_MIGRATIONS: Partial<Record<string, VocabularyMigration>>
 
 const MAX_VOCABULARY_MIGRATION_STEPS = 32
 
-type GraphRecordMigration = (record: Record<string, unknown>) => unknown
+type GraphRecordMigration = (record: unknown) => unknown
 
 const GRAPH_RECORD_MIGRATIONS: Partial<Record<number, GraphRecordMigration>> = {}
 
@@ -54,44 +54,24 @@ interface RecordIdentity {
 }
 
 function migrateVocabulary(document: NessoGraphDocument): NessoGraphDocument {
-  let current = document
-  const visitedVersions = new Set<string>()
-  let migrationSteps = 0
-
-  if (current.vocabulary === undefined) {
-    throw new Error('Graph document must declare a vocabulary')
-  }
-
-  let vocab = current.vocabulary
-
-  while (true) {
-    if (vocab.version === VOCABULARY.version) break
-    if (visitedVersions.has(vocab.version)) {
-      throw new Error(`Vocabulary migration cycle detected at version: ${vocab.version}`)
-    }
-    if (migrationSteps >= MAX_VOCABULARY_MIGRATION_STEPS) {
-      throw new Error('Vocabulary migration exceeded the maximum number of steps')
-    }
-    visitedVersions.add(vocab.version)
-    migrationSteps += 1
-
-    const migrate = VOCABULARY_MIGRATIONS[vocab.version]
-
-    if (migrate === undefined) {
-      throw new Error(`Unsupported learning vocabulary version: ${vocab.version}`)
-    }
-
-    const migrated = migrate(current)
-
-    if (migrated.vocabulary?.version === vocab.version) {
-      throw new Error(`Vocabulary migration ${vocab.version} did not advance the version`)
-    }
-
-    current = migrated
-    vocab = migrated.vocabulary!
-  }
-
-  return current
+  return migrateLadder(document, {
+    targetVersion: VOCABULARY.version,
+    migrations: VOCABULARY_MIGRATIONS,
+    readVersion: (current) => {
+      if (current.vocabulary === undefined) {
+        throw new Error('Graph document must declare a vocabulary')
+      }
+      return current.vocabulary.version
+    },
+    isComplete: (version, target) => version === target,
+    maxSteps: MAX_VOCABULARY_MIGRATION_STEPS,
+    onMissingMigration: (version) =>
+      new Error(`Unsupported learning vocabulary version: ${version}`),
+    onStalledMigration: (version) =>
+      new Error(`Vocabulary migration ${version} did not advance the version`),
+    onCycle: (version) => new Error(`Vocabulary migration cycle detected at version: ${version}`),
+    onTooManySteps: () => new Error('Vocabulary migration exceeded the maximum number of steps'),
+  })
 }
 
 export function normalizeParsedGraphDocument(
@@ -176,28 +156,26 @@ function isValidGraphRecordShape(record: Record<string, unknown>): boolean {
   )
 }
 
-function migrateRecordToVersion(
-  input: Record<string, unknown>,
-  startVersion: number,
-): Record<string, unknown> {
-  let current: unknown = input
-  let version = startVersion
-
-  while (version < GRAPH_RECORD_VERSION) {
-    const migrate = GRAPH_RECORD_MIGRATIONS[version]
-
-    if (migrate === undefined) {
-      throw new Error(`Unsupported graph-record version: ${version}`)
-    }
-
-    current = migrate(current as Record<string, unknown>)
-
-    if (!isPlainObject(current) || current.recordVersion !== version + 1) {
-      throw new Error(`Graph-record migration ${version} must produce version ${version + 1}`)
-    }
-
-    version += 1
-  }
+function migrateRecordToVersion(input: Record<string, unknown>): Record<string, unknown> {
+  const current = migrateLadder<unknown, number>(input, {
+    targetVersion: GRAPH_RECORD_VERSION,
+    migrations: GRAPH_RECORD_MIGRATIONS,
+    readVersion: (state) =>
+      isPlainObject(state) && typeof state.recordVersion === 'number'
+        ? state.recordVersion
+        : Number.NaN,
+    // NaN never satisfies `<`, so a malformed start version skips stepping
+    // exactly like the previous `while (version < GRAPH_RECORD_VERSION)` loop.
+    isComplete: (version, target) => !(version < target),
+    onMissingMigration: (version) => new Error(`Unsupported graph-record version: ${version}`),
+    onStalledMigration: (version) =>
+      new Error(`Graph-record migration ${version} must produce version ${version + 1}`),
+    assertStep: (version, nextVersion) => {
+      if (nextVersion !== version + 1) {
+        throw new Error(`Graph-record migration ${version} must produce version ${version + 1}`)
+      }
+    },
+  })
 
   if (!isPlainObject(current)) throw new Error('Invalid graph record')
 
@@ -383,7 +361,7 @@ export function normalizeGraphRecord(input: unknown): GraphRecord {
   if (typeof version !== 'number') throw new Error('Unsupported graph-record version: missing')
   if (version > GRAPH_RECORD_VERSION) throw new Error('Graph record is from a newer app version')
 
-  const current = migrateRecordToVersion(structuredClone(input), version)
+  const current = migrateRecordToVersion(structuredClone(input))
 
   migrateRecordVocabulary(current)
   validateRecordVocabulary(current)

@@ -43,40 +43,132 @@ function readEnvelopeVersion(document: RawGraphDocument): number {
   return version
 }
 
-function migrateEnvelope(document: RawGraphDocument): RawGraphDocument {
-  let current = document
-  let version = readEnvelopeVersion(current)
+/**
+ * Options for {@link migrateLadder}: one shared sequential-stepping loop for
+ * every data-at-rest migration surface (graph envelope, vocabulary, graph
+ * records). Each surface passes its own migration table and its own exact
+ * error constructors; the ladder owns only the stepping mechanics: forward
+ * guard, completion test, visited-set cycle detection, max-steps bound,
+ * missing-step lookup, and the did-not-advance check.
+ */
+export interface MigrationLadderOptions<State, Version extends PropertyKey> {
+  /** Version the ladder steps toward. */
+  targetVersion: Version
+  /** Migration table keyed by source version. */
+  migrations: Partial<Record<Version, (state: State) => State>>
+  /**
+   * Read the version out of a (possibly migrated) state. May throw a
+   * surface-specific error for malformed state; thrown errors propagate.
+   */
+  readVersion: (state: State) => Version
+  /** True once stepping is done (exact match for discrete versions). */
+  isComplete: (version: Version, target: Version) => boolean
+  /** Optional forward guard: throw a surface-specific error for newer input. */
+  assertNotNewer?: (version: Version, target: Version) => void
+  /** Optional bound on applied steps; unbounded when omitted. */
+  maxSteps?: number
+  /** Error for a version with no migration step. */
+  onMissingMigration: (version: Version) => Error
+  /** Error for a migration that does not advance the version. */
+  onStalledMigration: (version: Version, nextVersion: Version) => Error
+  /** Error for a revisited version; defaults to a generic cycle error. */
+  onCycle?: (version: Version) => Error
+  /** Error for exceeding `maxSteps`; defaults to a generic steps error. */
+  onTooManySteps?: (version: Version) => Error
+  /**
+   * Optional per-step strictness beyond advancement (e.g. numeric surfaces
+   * requiring exactly version + 1). Throw a surface-specific error on
+   * violation; thrown errors propagate.
+   */
+  assertStep?: (version: Version, nextVersion: Version) => void
+}
 
-  if (version > GRAPH_FORMAT_VERSION) {
-    throw new NewerGraphFormatError(version)
-  }
+function defaultMigrationCycleError<Version extends PropertyKey>(version: Version): Error {
+  return new Error(`Migration cycle detected at version: ${String(version)}`)
+}
 
-  while (version < GRAPH_FORMAT_VERSION) {
-    const migrate = ENVELOPE_MIGRATIONS[version]
+function defaultTooManyMigrationStepsError<Version extends PropertyKey>(version: Version): Error {
+  return new Error(`Migration exceeded the maximum number of steps at version: ${String(version)}`)
+}
 
-    // Stryker disable next-line ConditionalExpression,EqualityOperator: ENVELOPE_MIGRATIONS is empty at baseline; migrate is always undefined — equivalent mutant
+/**
+ * Step a state through a migration table toward `targetVersion`, applying one
+ * source-versioned migration at a time. Revisited versions throw (cycle),
+ * versions with no step throw (missing migration), and migrations that do not
+ * advance the version throw (stalled). Errors thrown by `readVersion`, by a
+ * migration, or by the optional guards propagate unchanged.
+ */
+export function migrateLadder<State, Version extends PropertyKey>(
+  input: State,
+  options: MigrationLadderOptions<State, Version>,
+): State {
+  let current = input
+  let version = options.readVersion(current)
+
+  options.assertNotNewer?.(version, options.targetVersion)
+
+  const maxSteps = options.maxSteps ?? Number.POSITIVE_INFINITY
+  const visitedVersions = new Set<Version>()
+  let migrationSteps = 0
+
+  while (!options.isComplete(version, options.targetVersion)) {
+    if (visitedVersions.has(version)) {
+      throw (options.onCycle ?? defaultMigrationCycleError)(version)
+    }
+    if (migrationSteps >= maxSteps) {
+      throw (options.onTooManySteps ?? defaultTooManyMigrationStepsError)(version)
+    }
+    visitedVersions.add(version)
+    migrationSteps += 1
+
+    const migrate = options.migrations[version]
+
     if (migrate === undefined) {
-      throw new UnsupportedGraphFormatError(version)
+      throw options.onMissingMigration(version)
     }
 
-    /* c8 ignore start */ // migration-step-advance is unreachable while ENVELOPE_MIGRATIONS is empty
-    // Stryker disable next-line all: migration-step-advance is unreachable while ENVELOPE_MIGRATIONS is empty
     current = migrate(current)
-    // Stryker disable next-line all: unreachable
-    const nextVersion = readEnvelopeVersion(current)
+    const nextVersion = options.readVersion(current)
 
-    // Stryker disable next-line all: unreachable
-    if (nextVersion !== version + 1) {
-      // Stryker disable next-line all: unreachable
-      throw new Error(`Envelope migration ${version} must produce version ${version + 1}`)
+    if (nextVersion === version) {
+      throw options.onStalledMigration(version, nextVersion)
     }
 
-    // Stryker disable next-line all: unreachable
+    options.assertStep?.(version, nextVersion)
+
     version = nextVersion
-    /* c8 ignore stop */
   }
 
   return current
+}
+
+function migrateEnvelope(document: RawGraphDocument): RawGraphDocument {
+  return migrateLadder(document, {
+    targetVersion: GRAPH_FORMAT_VERSION,
+    migrations: ENVELOPE_MIGRATIONS,
+    readVersion: readEnvelopeVersion,
+    isComplete: (version, target) => version === target,
+    assertNotNewer: (version, target) => {
+      if (version > target) {
+        throw new NewerGraphFormatError(version)
+      }
+    },
+    onMissingMigration: (version) => new UnsupportedGraphFormatError(version),
+    /* c8 ignore start */ // envelope-step-checks are unreachable while ENVELOPE_MIGRATIONS is empty
+    // Stryker disable next-line all: envelope-step-checks are unreachable while ENVELOPE_MIGRATIONS is empty
+    onStalledMigration: (version) =>
+      // Stryker disable next-line all: envelope-step-checks are unreachable while ENVELOPE_MIGRATIONS is empty
+      new Error(`Envelope migration ${version} must produce version ${version + 1}`),
+    // Stryker disable next-line all: envelope-step-checks are unreachable while ENVELOPE_MIGRATIONS is empty
+    assertStep: (version, nextVersion) => {
+      // Stryker disable next-line all: envelope-step-checks are unreachable while ENVELOPE_MIGRATIONS is empty
+      if (nextVersion !== version + 1) {
+        // Stryker disable next-line all: envelope-step-checks are unreachable while ENVELOPE_MIGRATIONS is empty
+        throw new Error(`Envelope migration ${version} must produce version ${version + 1}`)
+      }
+    },
+    /* c8 ignore stop */
+  })
 }
 
 export interface GraphConcept<D extends Record<string, unknown> = Record<string, unknown>> {

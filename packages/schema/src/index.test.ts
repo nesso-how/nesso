@@ -4,10 +4,12 @@ import envelopeV1 from './fixtures/envelope/v1.json'
 import {
   deserialize,
   GRAPH_FORMAT_VERSION,
+  migrateLadder,
   NewerGraphFormatError,
   serialize,
   UnsupportedGraphFormatError,
   type GraphDocumentInput,
+  type MigrationLadderOptions,
 } from './index.js'
 
 type TestConceptData = { score?: number; flag?: boolean }
@@ -592,6 +594,222 @@ describe('envelope compatibility', () => {
         expect((err as UnsupportedGraphFormatError).version).toBeUndefined()
       }
     })
+  })
+})
+
+describe('migrateLadder', () => {
+  interface LadderState {
+    version: number
+    value: string
+  }
+
+  function ladderOptions(
+    migrations: Partial<Record<number, (state: LadderState) => LadderState>>,
+    overrides: Partial<MigrationLadderOptions<LadderState, number>> = {},
+  ): MigrationLadderOptions<LadderState, number> {
+    return {
+      targetVersion: 3,
+      migrations,
+      readVersion: (state) => state.version,
+      isComplete: (version, target) => version === target,
+      onMissingMigration: (version) => new Error(`No migration from version ${version}`),
+      onStalledMigration: (version, next) =>
+        new Error(`Migration ${version} stalled at version ${next}`),
+      ...overrides,
+    }
+  }
+
+  function stepTo(next: number, seen: number[] = []) {
+    return (state: LadderState): LadderState => {
+      seen.push(state.version)
+      return { ...state, version: next }
+    }
+  }
+
+  it('steps a numeric ladder to the target in source-version order', () => {
+    const seen: number[] = []
+    const result = migrateLadder(
+      { version: 1, value: 'start' },
+      ladderOptions({ 1: stepTo(2, seen), 2: (state) => ({ ...state, version: 3 }) }),
+    )
+
+    expect(seen).toEqual([1])
+    expect(result).toEqual({ version: 3, value: 'start' })
+  })
+
+  it('returns the input unchanged when already current', () => {
+    const input: LadderState = { version: 3, value: 'current' }
+
+    expect(migrateLadder(input, ladderOptions({}))).toBe(input)
+  })
+
+  it('throws the missing-migration error for a version with no step', () => {
+    expect(() => migrateLadder({ version: 0, value: 'old' }, ladderOptions({}))).toThrow(
+      'No migration from version 0',
+    )
+  })
+
+  it('throws the stalled error when a migration does not advance the version', () => {
+    const options = ladderOptions({ 1: (state) => ({ ...state }) })
+
+    expect(() => migrateLadder({ version: 1, value: 'stuck' }, options)).toThrow(
+      'Migration 1 stalled at version 1',
+    )
+  })
+
+  interface NamedLadderState {
+    version: string
+    value: string
+  }
+
+  function namedLadderOptions(
+    migrations: Partial<Record<string, (state: NamedLadderState) => NamedLadderState>>,
+    overrides: Partial<MigrationLadderOptions<NamedLadderState, string>> = {},
+  ): MigrationLadderOptions<NamedLadderState, string> {
+    return {
+      targetVersion: 'c',
+      migrations,
+      readVersion: (state) => state.version,
+      isComplete: (version, target) => version === target,
+      onMissingMigration: (version) => new Error(`No migration from version ${version}`),
+      onStalledMigration: (version, next) =>
+        new Error(`Migration ${version} stalled at version ${next}`),
+      ...overrides,
+    }
+  }
+
+  it('detects a migration cycle with a custom error', () => {
+    const options = namedLadderOptions(
+      {
+        a: (state) => ({ ...state, version: 'b' }),
+        b: (state) => ({ ...state, version: 'a' }),
+      },
+      { onCycle: (version) => new Error(`Custom cycle at version: ${version}`) },
+    )
+
+    expect(() => migrateLadder({ version: 'a', value: 'loop' }, options)).toThrow(
+      'Custom cycle at version: a',
+    )
+  })
+
+  it('uses the default cycle error when onCycle is omitted', () => {
+    const options = namedLadderOptions({
+      a: (state) => ({ ...state, version: 'b' }),
+      b: (state) => ({ ...state, version: 'a' }),
+    })
+
+    try {
+      migrateLadder({ version: 'a', value: 'loop' }, options)
+      expect.unreachable()
+    } catch (error) {
+      expect(error).toBeInstanceOf(Error)
+      expect((error as Error).message).toBe('Migration cycle detected at version: a')
+    }
+  })
+
+  it('enforces maxSteps with the default error after exactly maxSteps applications', () => {
+    const applied: number[] = []
+    const migrations: Partial<Record<number, (state: LadderState) => LadderState>> = {}
+    for (let version = 1; version <= 4; version += 1) {
+      migrations[version] = stepTo(version + 1, applied)
+    }
+    const options = ladderOptions(migrations, { targetVersion: 5, maxSteps: 2 })
+
+    try {
+      migrateLadder({ version: 1, value: 'long' }, options)
+      expect.unreachable()
+    } catch (error) {
+      expect(error).toBeInstanceOf(Error)
+      expect((error as Error).message).toBe(
+        'Migration exceeded the maximum number of steps at version: 3',
+      )
+    }
+    expect(applied).toEqual([1, 2])
+  })
+
+  it('enforces maxSteps with a custom error', () => {
+    const migrations: Partial<Record<number, (state: LadderState) => LadderState>> = {}
+    for (let version = 1; version <= 4; version += 1) {
+      migrations[version] = stepTo(version + 1)
+    }
+    const options = ladderOptions(migrations, {
+      targetVersion: 5,
+      maxSteps: 1,
+      onTooManySteps: (version) => new Error(`Custom step budget exceeded at ${version}`),
+    })
+
+    expect(() => migrateLadder({ version: 1, value: 'long' }, options)).toThrow(
+      'Custom step budget exceeded at 2',
+    )
+  })
+
+  it('rejects newer input through assertNotNewer without applying migrations', () => {
+    let applied = 0
+    const options = ladderOptions(
+      {
+        1: (state) => {
+          applied += 1
+          return { ...state, version: 2 }
+        },
+      },
+      {
+        assertNotNewer: (version, target) => {
+          if (version > target) throw new Error(`Newer version: ${version}`)
+        },
+      },
+    )
+
+    expect(() => migrateLadder({ version: 5, value: 'future' }, options)).toThrow(
+      'Newer version: 5',
+    )
+    expect(applied).toBe(0)
+  })
+
+  it('runs assertStep after each advancing step', () => {
+    const checked: Array<[number, number]> = []
+    const options = ladderOptions(
+      { 1: stepTo(2), 2: (state) => ({ ...state, version: 3 }) },
+      {
+        assertStep: (version, next) => {
+          checked.push([version, next])
+          if (next !== version + 1) throw new Error(`Must advance by one from ${version}`)
+        },
+      },
+    )
+
+    expect(migrateLadder({ version: 1, value: 'strict' }, options).version).toBe(3)
+    expect(checked).toEqual([
+      [1, 2],
+      [2, 3],
+    ])
+
+    const jump = ladderOptions(
+      { 1: stepTo(3) },
+      {
+        assertStep: (version, next) => {
+          if (next !== version + 1) throw new Error(`Must advance by one from ${version}`)
+        },
+      },
+    )
+    expect(() => migrateLadder({ version: 1, value: 'jump' }, jump)).toThrow(
+      'Must advance by one from 1',
+    )
+  })
+
+  it('propagates errors thrown by migrations unchanged', () => {
+    const failure = new RangeError('migration blew up')
+    const options = ladderOptions({
+      1: () => {
+        throw failure
+      },
+    })
+
+    try {
+      migrateLadder({ version: 1, value: 'fail' }, options)
+      expect.unreachable()
+    } catch (error) {
+      expect(error).toBe(failure)
+    }
   })
 })
 
