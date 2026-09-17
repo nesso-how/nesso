@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.2.0-beta.8] - 2026-09-17
+
 ### Changed
 
 - **Review badge counts only studied concepts:** never-studied concepts no longer inflate the TopBar due badge; the review session itself still serves new cards first.
@@ -863,7 +865,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial alpha: interactive knowledge graph (web + Tauri v2); desktop installers on GitHub Releases (macOS Apple silicon and Intel).
 
-[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.2.0-beta.7...HEAD
+[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.2.0-beta.8...HEAD
+[0.2.0-beta.8]: https://github.com/nesso-how/nesso/compare/v0.2.0-beta.7...v0.2.0-beta.8
 [0.2.0-beta.7]: https://github.com/nesso-how/nesso/compare/v0.2.0-beta.6...v0.2.0-beta.7
 [0.2.0-beta.6]: https://github.com/nesso-how/nesso/compare/v0.2.0-beta.5...v0.2.0-beta.6
 [0.2.0-beta.5]: https://github.com/nesso-how/nesso/compare/v0.2.0-beta.4...v0.2.0-beta.5
