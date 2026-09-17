@@ -52,6 +52,19 @@ function isMentorToolName(value: string): value is MentorToolName {
   return MENTOR_TOOL_NAME_SET.has(value)
 }
 
+/**
+ * Per-callsite differences of the single streaming turn lifecycle owned by
+ * `runTurn`. The opener clears the initial load flag on first token/settle
+ * and replaces history on error; a user send clears the thinking flag and
+ * appends the error instead, plus reports a success telemetry event.
+ */
+interface RunTurnOptions {
+  onFirstToken: () => void
+  onSuccess?: () => void
+  onError: (failure: Message) => void
+  onSettled: () => void
+}
+
 function MentorUserBubble({ text }: { text: string }) {
   return (
     <div style={{ display: 'flex', justifyContent: 'flex-end', margin: '5px 0' }}>
@@ -244,14 +257,92 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
     [settings, captureTurn],
   )
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: opening line tied to graph open/switch; live sends use fresh prompts via captureTurn
+  // Latest-transport refs so the single `runTurn` below stays identity-stable:
+  // the opening effect is keyed on session deps only (an API-key edit must not
+  // reset the conversation), so it cannot depend on a closure over `settings`
+  // or the locale object. Refs are snapshotted once per turn at call time.
+  const completeTurnRef = useRef(completeTurn)
+  completeTurnRef.current = completeTurn
+  const tRef = useRef(t)
+  tRef.current = t
+
+  /**
+   * The single streaming turn lifecycle: abort the previous turn, register a
+   * fresh controller, stream `fetchCompletion` with the shared handlers
+   * triple, then apply terminal state and telemetry. Returns the controller
+   * (for effect cleanup) and the settled-when-done promise (never rejects).
+   */
+  const runTurn = useCallback(
+    (
+      messages: ChatMessage[],
+      prompts: ReturnType<typeof captureTurn>,
+      options: RunTurnOptions,
+    ): { controller: AbortController; done: Promise<void> } => {
+      const doComplete = completeTurnRef.current
+      const tt = tRef.current
+      setToolAction(null)
+      abortRef.current?.abort()
+      const controller = new AbortController()
+      abortRef.current = controller
+      let answered = false
+      const done = doComplete(messages, prompts, controller, {
+        onToken: (delta) => {
+          if (!isActiveController(abortRef.current, controller)) return
+          setToolAction(null)
+          if (!answered) {
+            answered = true
+            options.onFirstToken()
+          }
+          setHistory((h) => appendToLastMentor(h, delta))
+        },
+        onToolCall: (toolName) => {
+          if (!isActiveController(abortRef.current, controller)) return
+          if (!isMentorToolName(toolName)) return
+          setToolAction(toolName)
+        },
+        onReasoning: () => {
+          if (!isActiveController(abortRef.current, controller)) return
+          setReasoningActive(true)
+        },
+      })
+        .then((full) => {
+          if (isActiveController(abortRef.current, controller) && !answered) {
+            setReasoningActive(false)
+            setHistory((h) => appendToLastMentor(h, full || '…'))
+          }
+          if (isActiveController(abortRef.current, controller)) {
+            options.onSuccess?.()
+          }
+        })
+        .catch((err) => {
+          if (isActiveController(abortRef.current, controller)) {
+            setToolAction(null)
+            options.onError({ role: 'mentor', text: mentorFailureMessage(err, tt), error: true })
+            track({
+              name: 'mentor_request_failed',
+              props: { reason: isNetworkFailure(err) ? 'network' : 'response' },
+            })
+          }
+        })
+        .finally(() => {
+          if (isActiveController(abortRef.current, controller)) {
+            setStreaming(false)
+            setToolAction(null)
+            options.onSettled()
+          }
+        })
+      return { controller, done }
+    },
+    [],
+  )
+
   useEffect(() => {
     if (!mentorPanelExpanded) return
     setToolAction(null)
     if (!aiReady) {
       abortRef.current?.abort()
       abortRef.current = null
-      setHistory([{ role: 'mentor', text: t.mentor.needsSetup }])
+      setHistory([{ role: 'mentor', text: tRef.current.mentor.needsSetup }])
       setStreaming(false)
       setThinking(false)
       setLoadingInitial(false)
@@ -260,8 +351,6 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
     }
 
     abortRef.current?.abort()
-    const controller = new AbortController()
-    abortRef.current = controller
     setHistory([])
     setStreaming(false)
     setThinking(false)
@@ -270,52 +359,19 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
 
     const prompts = captureTurn()
 
-    let answered = false
-    completeTurn([{ role: 'user', content: prompts.openerText }], prompts, controller, {
-      onToken: (delta) => {
-        if (!isActiveController(abortRef.current, controller)) return
-        setToolAction(null)
-        if (!answered) {
-          answered = true
-          setLoadingInitial(false)
-          setReasoningActive(false)
-          setStreaming(true)
-        }
-        setHistory((h) => appendToLastMentor(h, delta))
+    const { controller } = runTurn([{ role: 'user', content: prompts.openerText }], prompts, {
+      onFirstToken: () => {
+        setLoadingInitial(false)
+        setReasoningActive(false)
+        setStreaming(true)
       },
-      onToolCall: (toolName) => {
-        if (!isActiveController(abortRef.current, controller)) return
-        if (!isMentorToolName(toolName)) return
-        setToolAction(toolName)
+      onError: (failure) => {
+        setHistory([failure])
       },
-      onReasoning: () => {
-        if (!isActiveController(abortRef.current, controller)) return
-        setReasoningActive(true)
+      onSettled: () => {
+        setLoadingInitial(false)
       },
     })
-      .then((full) => {
-        if (isActiveController(abortRef.current, controller) && !answered) {
-          setReasoningActive(false)
-          setHistory((h) => appendToLastMentor(h, full || '…'))
-        }
-      })
-      .catch((err) => {
-        if (isActiveController(abortRef.current, controller)) {
-          setToolAction(null)
-          setHistory([{ role: 'mentor', text: mentorFailureMessage(err, t), error: true }])
-          track({
-            name: 'mentor_request_failed',
-            props: { reason: isNetworkFailure(err) ? 'network' : 'response' },
-          })
-        }
-      })
-      .finally(() => {
-        if (isActiveController(abortRef.current, controller)) {
-          setLoadingInitial(false)
-          setStreaming(false)
-          setToolAction(null)
-        }
-      })
 
     return () => {
       controller.abort()
@@ -332,6 +388,7 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
     settings.mentorSystemPrompt,
     chatKey,
     captureTurn,
+    runTurn,
   ])
 
   // Emit mentor_session_completed when the session ends naturally (last
@@ -381,10 +438,6 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
     if (!text.trim() || thinking || loadingInitial) return
     // Abortable, and guarded below: a "new chat" or graph switch aborts via
     // abortRef, so a stale reply never lands in the wrong conversation.
-    setToolAction(null)
-    abortRef.current?.abort()
-    const controller = new AbortController()
-    abortRef.current = controller
     const next: Message[] = [...history, { role: 'user', text }]
     setHistory(next)
     setDraft('')
@@ -397,56 +450,23 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
       if (el) el.scrollTop = el.scrollHeight
     })
     const prompts = captureTurn()
-    let answered = false
-    try {
-      const full = await completeTurn(toConversation(next), prompts, controller, {
-        onToken: (delta) => {
-          if (!isActiveController(abortRef.current, controller)) return
-          setToolAction(null)
-          if (!answered) {
-            answered = true
-            setThinking(false)
-            setReasoningActive(false)
-            setStreaming(true)
-          }
-          setHistory((h) => appendToLastMentor(h, delta))
-        },
-        onToolCall: (toolName) => {
-          if (!isActiveController(abortRef.current, controller)) return
-          if (!isMentorToolName(toolName)) return
-          setToolAction(toolName)
-        },
-        onReasoning: () => {
-          if (!isActiveController(abortRef.current, controller)) return
-          setReasoningActive(true)
-        },
-      })
-      if (isActiveController(abortRef.current, controller) && !answered) {
-        setReasoningActive(false)
-        setHistory((h) => appendToLastMentor(h, full || '…'))
-      }
-      if (isActiveController(abortRef.current, controller)) {
-        track({ name: 'mentor_response_received' })
-      }
-    } catch (err) {
-      if (isActiveController(abortRef.current, controller)) {
-        setToolAction(null)
-        setHistory((h) => [
-          ...h,
-          { role: 'mentor', text: mentorFailureMessage(err, t), error: true },
-        ])
-        track({
-          name: 'mentor_request_failed',
-          props: { reason: isNetworkFailure(err) ? 'network' : 'response' },
-        })
-      }
-    } finally {
-      if (isActiveController(abortRef.current, controller)) {
-        setStreaming(false)
+    const { done } = runTurn(toConversation(next), prompts, {
+      onFirstToken: () => {
         setThinking(false)
-        setToolAction(null)
-      }
-    }
+        setReasoningActive(false)
+        setStreaming(true)
+      },
+      onSuccess: () => {
+        track({ name: 'mentor_response_received' })
+      },
+      onError: (failure) => {
+        setHistory((h) => [...h, failure])
+      },
+      onSettled: () => {
+        setThinking(false)
+      },
+    })
+    await done
   }
 
   const thinkingLabel = toolAction
