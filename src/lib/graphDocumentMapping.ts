@@ -1,16 +1,8 @@
 // SPDX-License-Identifier: MIT
 import type { Node, Edge } from '@xyflow/react'
-import type {
-  ConceptNodeData,
-  GraphDisplaySettings,
-  LearningNodeParams,
-  NessoGraphDocument,
-  NessoGraphDocumentInput,
-} from '@/types/graph'
+import type { ConceptNodeData, GraphDisplaySettings, NessoGraphDocumentInput } from '@/types/graph'
 import { VOCABULARY } from '@/types/graph'
 import type { NessoEdgeData } from '@nesso-how/graph'
-import { documentToRenderGraph } from '@nesso-how/graph'
-import { mergeReviewIntoNode } from '@/lib/graphContent'
 
 function relationCurveData(
   edgeData: NessoEdgeData | undefined,
@@ -33,18 +25,6 @@ function relationFromEdge(e: Edge) {
     target: e.target,
     type: edgeData?.type,
     ...(data !== undefined ? { data } : {}),
-  }
-}
-
-export function documentToGraphFromReviews(
-  doc: NessoGraphDocument,
-  reviews: Map<string, LearningNodeParams>,
-): { nodes: Node<ConceptNodeData>[]; edges: Edge[]; display?: Partial<GraphDisplaySettings> } {
-  const { nodes, edges, display } = documentToRenderGraph(doc)
-  return {
-    nodes: nodes.map((n) => mergeReviewIntoNode(n, reviews.get(n.id))),
-    edges,
-    display,
   }
 }
 
