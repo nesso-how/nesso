@@ -85,6 +85,17 @@ function toastUnsupportedProject(
   })
 }
 
+/** Single desktop-persist seam: on desktop the folder is the source of truth,
+ *  so the record is committed to disk first (its name may have been
+ *  de-duplicated there); on web it is a strict passthrough. */
+async function persistGraphRecord(
+  settings: GraphState['settings'],
+  record: GraphRecord,
+): Promise<GraphRecord> {
+  if (!isDesktop()) return record
+  return writeGraphRecordToWorkspace(settings, record)
+}
+
 function normalizeStoredRecord(r: GraphRecord | undefined): GraphRecord | undefined {
   if (r === undefined) return undefined
   return normalizeGraphRecord(r)
@@ -250,7 +261,7 @@ async function persistContentGraphRecord(
   // Disk-first: the folder is the source of truth, so the write there is the
   // commit point. Only on success do we mirror the persisted record (its name
   // may have been de-duplicated on disk) into IDB.
-  const persisted = isDesktop() ? await writeGraphRecordToWorkspace(settings, record) : record
+  const persisted = await persistGraphRecord(settings, record)
   await dbSaveGraph(persisted)
   return persisted
 }
@@ -738,9 +749,7 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
       edges: [],
       display,
     }
-    const persisted = isDesktop()
-      ? await writeGraphRecordToWorkspace(get().settings, record)
-      : record
+    const persisted = await persistGraphRecord(get().settings, record)
     await dbSaveGraph(persisted)
     _draggingNodeIds.clear()
     set((s) => ({
@@ -780,9 +789,7 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
       display: persistDisplay,
     }
     await persistReviewStatesFromNodes(graphId, nodes)
-    const persisted = isDesktop()
-      ? await writeGraphRecordToWorkspace(get().settings, record)
-      : record
+    const persisted = await persistGraphRecord(get().settings, record)
     await dbSaveGraph(persisted)
     _draggingNodeIds.clear()
     set((s) => {
@@ -803,9 +810,7 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
     const record = normalizeStoredRecord(await dbLoadGraph(id))
     if (!record) return
     const updated = { ...record, name }
-    const persisted = isDesktop()
-      ? await writeGraphRecordToWorkspace(get().settings, updated)
-      : updated
+    const persisted = await persistGraphRecord(get().settings, updated)
     await dbSaveGraph(persisted)
     set((s) => ({
       graphList: s.graphList.map((g) => (g.id === id ? { ...g, name: persisted.name } : g)),
