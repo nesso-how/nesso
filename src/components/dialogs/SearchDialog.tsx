@@ -4,7 +4,7 @@ import type { Node } from '@xyflow/react'
 import { useGraphStore } from '@/store'
 import { useShallow } from 'zustand/react/shallow'
 import type { ConceptNodeData } from '@/types/graph'
-import { useT } from '@/i18n'
+import { useT, type Locale } from '@/i18n'
 import { ModalOverlay } from '@/components/ui/ModalOverlay'
 
 interface Props {
@@ -14,16 +14,16 @@ interface Props {
   onSelectGraph: (id: string) => void
 }
 
-function timeAgo(ts: number): string {
+function formatTimeAgo(ts: number, labels: Locale['search']['timeAgo']): string {
   const s = Math.max(1, Math.floor((Date.now() - ts) / 1000))
-  if (s < 60) return 'now'
+  if (s < 60) return labels.now
   const m = Math.floor(s / 60)
-  if (m < 60) return `${m}m ago`
+  if (m < 60) return labels.minutes(m)
   const h = Math.floor(m / 60)
-  if (h < 24) return `${h}h ago`
+  if (h < 24) return labels.hours(h)
   const d = Math.floor(h / 24)
-  if (d < 7) return `${d}d ago`
-  return `${Math.floor(d / 7)}w ago`
+  if (d < 7) return labels.days(d)
+  return labels.weeks(Math.floor(d / 7))
 }
 
 const EMPTY_CONCEPT_NODES: Node<ConceptNodeData>[] = []
@@ -190,7 +190,7 @@ export function SearchDialog({ open, onClose, onSelectNode, onSelectGraph }: Pro
                     key={g.id}
                     active={g.id === currentGraphId}
                     label={g.name}
-                    meta={timeAgo(g.updatedAt)}
+                    meta={formatTimeAgo(g.updatedAt, t.search.timeAgo)}
                     onClick={() => handleSelectGraph(g.id)}
                   />
                 ))}

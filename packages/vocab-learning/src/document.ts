@@ -76,11 +76,6 @@ export function checkVocabularyIdentity(
  * notes document. Any other key is rejected.
  */
 function validateElaboration(value: unknown): void {
-  if (VOCABULARY.version === '0.1.0') {
-    validateDefinitionOnlyElaboration(value)
-    return
-  }
-
   const elab = isPlainObject(value) ? value : null
   if (!elab || typeof elab.definition !== 'string' || !Object.hasOwn(elab, 'definition')) {
     throw new Error('Concept elaboration must contain only definition')

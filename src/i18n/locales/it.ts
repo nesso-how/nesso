@@ -113,6 +113,12 @@ const it: typeof en = {
     startReview: 'Inizia il ripasso',
     recallPrompt: 'Ricorda le relazioni prima di rivelare.',
     reveal: 'Rivela',
+    hints: {
+      orPressSpace: 'o premi Spazio',
+      rate: 'valuta',
+      reveal: 'rivela',
+      close: 'chiudi',
+    },
     interval: {
       lessThanMinute: '< 1 min',
       minute: (count: number) => `${count} min`,
@@ -252,6 +258,13 @@ const it: typeof en = {
     graphs: 'Grafi',
     concepts: 'Concetti',
     noResults: (q) => `Nessun risultato per "${q}".`,
+    timeAgo: {
+      now: 'ora',
+      minutes: (n) => `${n}min fa`,
+      hours: (n) => `${n}h fa`,
+      days: (n) => `${n}g fa`,
+      weeks: (n) => `${n}sett fa`,
+    },
   },
   shortcuts: {
     title: 'Scorciatoie da tastiera',

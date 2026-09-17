@@ -131,6 +131,7 @@ const SETTINGS_FIELD_VALIDATORS: Record<string, SettingsFieldValidator> = {
   autoCurveFlip: isBoolean,
   mentorEnabled: isBoolean,
   reviewEnabled: isBoolean,
+  reviewReminderEnabled: isBoolean,
   inspectorMemoryOpen: isBoolean,
   inspectorRelationsOpen: isBoolean,
   telemetry: isBoolean,

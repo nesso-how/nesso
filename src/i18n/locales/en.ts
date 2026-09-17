@@ -112,6 +112,12 @@ const en = {
     startReview: 'Start review',
     recallPrompt: 'Recall its relations before revealing.',
     reveal: 'Reveal',
+    hints: {
+      orPressSpace: 'or press Space',
+      rate: 'rate',
+      reveal: 'reveal',
+      close: 'close',
+    },
     interval: {
       lessThanMinute: '< 1 min',
       minute: (count: number) => `${count} min`,
@@ -249,6 +255,13 @@ const en = {
     graphs: 'Graphs',
     concepts: 'Concepts',
     noResults: (q: string) => `No results for "${q}".`,
+    timeAgo: {
+      now: 'now',
+      minutes: (n: number) => `${n}m ago`,
+      hours: (n: number) => `${n}h ago`,
+      days: (n: number) => `${n}d ago`,
+      weeks: (n: number) => `${n}w ago`,
+    },
   },
   shortcuts: {
     title: 'Keyboard shortcuts',

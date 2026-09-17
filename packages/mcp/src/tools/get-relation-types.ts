@@ -4,6 +4,7 @@ import * as z from 'zod/v4'
 import {
   RELATION_TYPES,
   RELATION_CATEGORIES,
+  RELATION_TYPE_VALUES,
   type GlyphKind,
   type RelationCategory,
   type RelationTypeName,
@@ -53,7 +54,7 @@ export function registerGetRelationTypes(server: McpServer): void {
     'get_relation_types',
     {
       description:
-        'Returns all 52 semantic relation types supported by Nesso, grouped by 8 categories. ' +
+        `Returns all ${RELATION_TYPE_VALUES.length} semantic relation types supported by Nesso, grouped by ${RELATION_CATEGORIES.length} categories. ` +
         'Each type carries type properties (transitive, inverse, strength, polarity, cardinality) ' +
         'in addition to its glyph. ' +
         'Use this when you need valid relation type names for graph JSON or explanations for the user.',
