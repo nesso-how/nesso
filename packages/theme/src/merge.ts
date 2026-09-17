@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: MIT
+import { isPlainObject } from '@nesso-how/vocab-learning'
 import type { DeepPartial } from './types.js'
 
-export function isPlainObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
+export { isPlainObject }
 
 /** Recursively merge `override` onto `base`; `undefined` values are skipped. */
 export function deepMerge<T>(base: T, override: DeepPartial<T>): T {

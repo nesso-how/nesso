@@ -151,8 +151,15 @@ export function serialize<
   )
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
+/**
+ * Canonical plain-object guard shared across the monorepo: accepts only
+ * objects with `Object.prototype` or a null prototype; rejects arrays,
+ * class instances, and functions.
+ */
+export function isPlainObject(value: unknown): value is Record<string, unknown> {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false
+  const prototype: object | null = Object.getPrototypeOf(value)
+  return prototype === Object.prototype || prototype === null
 }
 
 /**
@@ -168,7 +175,7 @@ export function deserialize<
 >(json: string): GraphDocument<NC, RE, M> {
   const parsed: unknown = JSON.parse(json)
 
-  if (!isRecord(parsed)) {
+  if (!isPlainObject(parsed)) {
     throw new Error('Invalid Nesso graph document')
   }
 
@@ -180,7 +187,7 @@ export function deserialize<
   const rawConcepts: unknown[] = data.concepts
   const concepts: GraphConcept<NC>[] = rawConcepts.map((value: unknown, i: number) => {
     if (
-      !isRecord(value) ||
+      !isPlainObject(value) ||
       typeof value.id !== 'string' ||
       value.id === '' ||
       typeof value.label !== 'string' ||
@@ -207,7 +214,7 @@ export function deserialize<
   const rawRelations: unknown[] = data.relations
   const relations: GraphRelation<RE>[] = rawRelations.map((value: unknown, i: number) => {
     if (
-      !isRecord(value) ||
+      !isPlainObject(value) ||
       typeof value.id !== 'string' ||
       typeof value.source !== 'string' ||
       typeof value.target !== 'string'
@@ -231,14 +238,14 @@ export function deserialize<
   let vocabulary: { id: string; version: string } | undefined
   const vocabValue: unknown = data.vocabulary
   if (
-    isRecord(vocabValue) &&
+    isPlainObject(vocabValue) &&
     typeof vocabValue.id === 'string' &&
     typeof vocabValue.version === 'string'
   ) {
     vocabulary = { id: vocabValue.id, version: vocabValue.version }
   }
   let meta: M | undefined
-  if (isRecord(data.meta)) {
+  if (isPlainObject(data.meta)) {
     meta = data.meta as M
   }
   return {

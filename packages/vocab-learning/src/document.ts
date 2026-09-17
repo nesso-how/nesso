@@ -2,7 +2,11 @@
 //
 // Learning-vocabulary graph file I/O: wraps `@nesso-how/schema` serialize/deserialize
 // and adds validation (elaboration shape, known `relation.type` ids).
-import { deserialize as deserializeSchema, serialize as serializeSchema } from '@nesso-how/schema'
+import {
+  deserialize as deserializeSchema,
+  isPlainObject,
+  serialize as serializeSchema,
+} from '@nesso-how/schema'
 import type {
   NessoConceptData,
   NessoGraphDocument,
@@ -14,10 +18,6 @@ import { RELATION_TYPES } from './relationTypes.js'
 import { VOCABULARY } from './vocabularyIdentity.js'
 
 const VALID_RELATION_TYPES = new Set<string>(Object.keys(RELATION_TYPES))
-
-function asRecord(value: unknown): Record<string, unknown> | null {
-  return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : null
-}
 
 /** Compare two semver strings. Returns positive if a > b, negative if a < b, 0 if equal. */
 function compareVersions(a: string, b: string): number {
@@ -65,7 +65,7 @@ function validateElaboration(value: unknown): void {
     return
   }
 
-  const elab = asRecord(value)
+  const elab = isPlainObject(value) ? value : null
   if (!elab || typeof elab.definition !== 'string' || !Object.hasOwn(elab, 'definition')) {
     throw new Error('Concept elaboration must contain only definition')
   }
@@ -85,7 +85,7 @@ function validateElaboration(value: unknown): void {
  * attributed to `0.1.0` stay rejected here.
  */
 export function validateDefinitionOnlyElaboration(value: unknown): void {
-  const elab = asRecord(value)
+  const elab = isPlainObject(value) ? value : null
   if (
     !elab ||
     typeof elab.definition !== 'string' ||

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
 import { documentToRenderGraph } from '@nesso-how/graph'
+import { isPlainObject } from '@nesso-how/schema'
 import {
   VOCABULARY,
   deserializeEnvelope,
@@ -48,10 +49,6 @@ interface RecordIdentity {
   createdAt: number
   updatedAt: number
   name?: string
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
 /** Returns true when `a` is a newer semver than `b`. */
@@ -166,12 +163,6 @@ export function normalizeGraphDocument(
   return normalizeParsedGraphDocument(document, identity)
 }
 
-function asRecord(value: unknown): Record<string, unknown> | null {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : null
-}
-
 function hasValidRecordFields(record: Record<string, unknown>): boolean {
   return (
     typeof record.id === 'string' &&
@@ -186,7 +177,7 @@ function hasValidRecordFields(record: Record<string, unknown>): boolean {
 }
 
 function isValidGraphRecordShape(record: Record<string, unknown>): boolean {
-  const vocab = asRecord(record.vocabulary)
+  const vocab = isPlainObject(record.vocabulary) ? record.vocabulary : null
 
   return (
     record.recordVersion === GRAPH_RECORD_VERSION &&
@@ -213,20 +204,20 @@ function migrateRecordToVersion(
 
     current = migrate(current as Record<string, unknown>)
 
-    if (!isRecord(current) || current.recordVersion !== version + 1) {
+    if (!isPlainObject(current) || current.recordVersion !== version + 1) {
       throw new Error(`Graph-record migration ${version} must produce version ${version + 1}`)
     }
 
     version += 1
   }
 
-  if (!isRecord(current)) throw new Error('Invalid graph record')
+  if (!isPlainObject(current)) throw new Error('Invalid graph record')
 
   return current
 }
 
 function validateRecordVocabulary(record: Record<string, unknown>): void {
-  const vocab = asRecord(record.vocabulary)
+  const vocab = isPlainObject(record.vocabulary) ? record.vocabulary : null
 
   if (!vocab) throw new Error('Graph record has an unsupported vocabulary')
   if (vocab.id !== VOCABULARY.id) throw new Error('Graph record has an unsupported vocabulary')
@@ -243,11 +234,12 @@ function validateRecordVocabulary(record: Record<string, unknown>): void {
 /** Relabel IDB records carrying vocabulary `0.1.0` metadata to the current
  * vocabulary, validating the definition-only source shape first. */
 function migrateRecordVocabulary(record: Record<string, unknown>): void {
-  const vocab = asRecord(record.vocabulary)
+  const vocab = isPlainObject(record.vocabulary) ? record.vocabulary : null
   if (!vocab || vocab.version !== '0.1.0') return
   const nodes = Array.isArray(record.nodes) ? record.nodes : []
   for (const node of nodes) {
-    const data = asRecord((node as { data?: unknown }).data)
+    const nodeData: unknown = (node as { data?: unknown }).data
+    const data = isPlainObject(nodeData) ? nodeData : null
     if (data?.elaboration !== undefined) validateDefinitionOnlyElaboration(data.elaboration)
   }
   vocab.version = VOCABULARY.version
@@ -394,7 +386,7 @@ export function tryResolveGraphIdentityFromEnvelope(
 }
 
 export function normalizeGraphRecord(input: unknown): GraphRecord {
-  if (!isRecord(input)) throw new Error('Invalid graph record')
+  if (!isPlainObject(input)) throw new Error('Invalid graph record')
 
   const version: unknown = input.recordVersion
 

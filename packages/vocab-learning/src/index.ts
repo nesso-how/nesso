@@ -15,6 +15,10 @@ export type {
 
 export { VOCABULARY } from './vocabularyIdentity.js'
 
+// Re-exported so downstream packages with a layering boundary against
+// `@nesso-how/schema` (e.g. `@nesso-how/theme`) can share the canonical guard.
+export { isPlainObject } from '@nesso-how/schema'
+
 export {
   defaultConceptReviewFields,
   type ConceptNodeData,

@@ -3,6 +3,7 @@ import dagre from 'dagre'
 import * as z from 'zod/v4'
 import {
   deserialize,
+  isPlainObject,
   serialize,
   VOCABULARY,
   RELATION_TYPE_VALUES,
@@ -77,10 +78,6 @@ export type BuildGraphInput = z.infer<typeof buildGraphInputSchema>
 
 const NODE_WIDTH = 180
 const NODE_HEIGHT = 60
-
-function asRecord(value: unknown): Record<string, unknown> | null {
-  return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : null
-}
 
 /** Short element id (`n`/`e` + 5 base36 chars), retried until unique within `used`. */
 export function newElementId(prefix: 'n' | 'e', used: ReadonlySet<string>): string {
@@ -181,7 +178,7 @@ export function validateGraphJson(graph: string): GraphValidationResult {
     }
   }
 
-  const root = asRecord(parsed)
+  const root = isPlainObject(parsed) ? parsed : null
   if (!root) {
     return {
       valid: false,
