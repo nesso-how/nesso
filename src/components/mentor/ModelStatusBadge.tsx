@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+import type { ReactNode } from 'react'
 import { useT } from '@/i18n'
 import { isDesktop } from '@/lib/isDesktop'
 import type { ModelStatus } from '@/lib/ollama'
@@ -18,13 +19,88 @@ interface Props {
   onPull: () => void
 }
 
+function ErrorStatus({ baseUrl, dot }: { baseUrl: string; dot: (color: string) => ReactNode }) {
+  const t = useT()
+  const hint = getErrorHint(baseUrl, isDesktop(), window.location.hostname)
+  if (hint === 'unreachable') {
+    return (
+      <>
+        {dot('var(--ink-4)')}
+        <span style={{ color: 'var(--ink-4)' }}>{t.settings.ai.status.unreachable}</span>
+      </>
+    )
+  }
+  if (hint === 'ollama-not-running') {
+    return (
+      <>
+        {dot('var(--ink-4)')}
+        <span style={{ color: 'var(--ink-4)' }}>{t.settings.ai.status.ollamaNotRunning}</span>
+        <code style={{ color: 'var(--ink-2)', fontSize: 'var(--text-xs)' }}>ollama serve</code>
+      </>
+    )
+  }
+  // cors-blocked
+  return (
+    <>
+      {dot('var(--conf-2)')}
+      <span style={{ color: 'var(--ink-4)' }}>{t.settings.ai.status.corsBlocked}</span>
+      <code style={{ color: 'var(--ink-2)', fontSize: 'var(--text-xs)' }}>
+        OLLAMA_ORIGINS={window.location.origin}
+      </code>
+    </>
+  )
+}
+
+/** Model-bound states stay hidden until a model is set; endpoint-level states
+ *  render without one so URL/key problems surface immediately on entry. */
+function isModelBoundStatus(status: ModelStatus): boolean {
+  return status === 'available' || status === 'unavailable' || status === 'pulling'
+}
+
+function UnavailableStatus({
+  canPull,
+  dot,
+  onPull,
+}: {
+  canPull: boolean
+  dot: (color: string) => ReactNode
+  onPull: () => void
+}) {
+  const t = useT()
+  return (
+    <>
+      {dot('var(--conf-2)')}
+      <span style={{ color: 'var(--ink-3)' }}>
+        {canPull ? t.settings.ai.status.notFound : t.settings.ai.status.modelNotFound}
+      </span>
+      {canPull && (
+        <button
+          type="button"
+          onClick={onPull}
+          style={{
+            appearance: 'none',
+            border: '0.5px solid var(--accent)',
+            background: 'transparent',
+            color: 'var(--accent)',
+            fontSize: '11px',
+            fontWeight: 500,
+            fontFamily: 'var(--font-mono)',
+            padding: '2px 8px',
+            borderRadius: 'var(--radius-sm)',
+            cursor: 'pointer',
+          }}
+        >
+          {t.settings.ai.status.pull}
+        </button>
+      )}
+    </>
+  )
+}
+
 export function ModelStatusBadge({ status, model, baseUrl, pullProgress, canPull, onPull }: Props) {
   const t = useT()
   if (status === 'idle') return null
-  // Endpoint-level states render without a model so URL/key problems surface
-  // immediately on entry; model-bound states stay hidden until one is set.
-  if ((status === 'available' || status === 'unavailable' || status === 'pulling') && !model)
-    return null
+  if (isModelBoundStatus(status) && !model) return null
   const dot = (color: string) => (
     <span
       style={{
@@ -110,32 +186,7 @@ export function ModelStatusBadge({ status, model, baseUrl, pullProgress, canPull
         </>
       )}
       {status === 'unavailable' && (
-        <>
-          {dot('var(--conf-2)')}
-          <span style={{ color: 'var(--ink-3)' }}>
-            {canPull ? t.settings.ai.status.notFound : t.settings.ai.status.modelNotFound}
-          </span>
-          {canPull && (
-            <button
-              type="button"
-              onClick={onPull}
-              style={{
-                appearance: 'none',
-                border: '0.5px solid var(--accent)',
-                background: 'transparent',
-                color: 'var(--accent)',
-                fontSize: '11px',
-                fontWeight: 500,
-                fontFamily: 'var(--font-mono)',
-                padding: '2px 8px',
-                borderRadius: 'var(--radius-sm)',
-                cursor: 'pointer',
-              }}
-            >
-              {t.settings.ai.status.pull}
-            </button>
-          )}
-        </>
+        <UnavailableStatus canPull={canPull} dot={dot} onPull={onPull} />
       )}
       {status === 'unauthorized' && (
         <>
@@ -143,41 +194,7 @@ export function ModelStatusBadge({ status, model, baseUrl, pullProgress, canPull
           <span style={{ color: 'var(--ink-4)' }}>{t.settings.ai.status.unauthorized}</span>
         </>
       )}
-      {status === 'error' &&
-        (() => {
-          const hint = getErrorHint(baseUrl, isDesktop(), window.location.hostname)
-          if (hint === 'unreachable') {
-            return (
-              <>
-                {dot('var(--ink-4)')}
-                <span style={{ color: 'var(--ink-4)' }}>{t.settings.ai.status.unreachable}</span>
-              </>
-            )
-          }
-          if (hint === 'ollama-not-running') {
-            return (
-              <>
-                {dot('var(--ink-4)')}
-                <span style={{ color: 'var(--ink-4)' }}>
-                  {t.settings.ai.status.ollamaNotRunning}
-                </span>
-                <code style={{ color: 'var(--ink-2)', fontSize: 'var(--text-xs)' }}>
-                  ollama serve
-                </code>
-              </>
-            )
-          }
-          // cors-blocked
-          return (
-            <>
-              {dot('var(--conf-2)')}
-              <span style={{ color: 'var(--ink-4)' }}>{t.settings.ai.status.corsBlocked}</span>
-              <code style={{ color: 'var(--ink-2)', fontSize: 'var(--text-xs)' }}>
-                OLLAMA_ORIGINS={window.location.origin}
-              </code>
-            </>
-          )
-        })()}
+      {status === 'error' && <ErrorStatus baseUrl={baseUrl} dot={dot} />}
     </div>
   )
 }
