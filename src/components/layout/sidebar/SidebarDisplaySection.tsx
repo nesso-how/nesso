@@ -5,6 +5,7 @@ import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { Switch } from '@/components/ui/Switch'
 import { SettingRow } from '@/components/ui/SettingRow'
 import { SidebarHeatmapToggle } from '@/components/ui/HeatmapDisplayToggle'
+import { sectionLabel } from './sidebarStyles'
 
 /** Display section: per-graph appearance overrides. Subscribes directly to
  *  the display data it renders; no local state. */
@@ -98,13 +99,4 @@ export function SidebarDisplaySection() {
       )}
     </div>
   )
-}
-
-const sectionLabel: React.CSSProperties = {
-  fontSize: '11px',
-  fontWeight: 500,
-  fontFamily: 'var(--font-mono)',
-  color: 'var(--ink-4)',
-  textTransform: 'uppercase',
-  letterSpacing: '0.08em',
 }

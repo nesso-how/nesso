@@ -254,7 +254,10 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
         controller.signal,
         handlers,
       ),
-    [settings, captureTurn],
+    // `captureTurn` appears only in the `ReturnType` annotations above — it is
+    // never read at runtime here (and is `[]`-stable anyway) — so it is not a
+    // reactive dependency.
+    [settings],
   )
 
   // Latest-transport refs so the single `runTurn` below stays identity-stable:
@@ -336,6 +339,7 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
     [],
   )
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: session keys (graph, settings, chatKey) intentionally restart the opener turn; latest transport/settings are read via refs and getState, so the effect must not re-run on their identity change.
   useEffect(() => {
     if (!mentorPanelExpanded) return
     setToolAction(null)
@@ -394,6 +398,7 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
   // Emit mentor_session_completed when the session ends naturally (last
   // message was a successful mentor reply) or mentor_session_abandoned
   // otherwise. Resets the user-message count on each new session.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: same session keys intentionally reset the per-session message count; the effect body reads refs only.
   useEffect(() => {
     if (!mentorPanelExpanded) return
     userMessageCountRef.current = 0

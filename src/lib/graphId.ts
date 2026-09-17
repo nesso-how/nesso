@@ -22,6 +22,5 @@ export function isGraphId(value: string): boolean {
 
 // Element ids are vocabulary-owned document identity: the generator lives in
 // `@nesso-how/vocab-learning` so the app and the MCP package share one
-// implementation. `newGraphId`/`isGraphId` stay app-local — graph ids are an
-// app-level concern, not document element identity.
-export { newElementId } from '@nesso-how/vocab-learning'
+// implementation — import it from there. `newGraphId`/`isGraphId` stay
+// app-local: graph ids are an app-level concern, not document element identity.

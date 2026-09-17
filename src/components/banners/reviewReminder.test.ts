@@ -2,7 +2,8 @@
 import { describe, expect, it } from 'vitest'
 import type { Node } from '@xyflow/react'
 import type { ConceptNodeData } from '@nesso-how/vocab-learning'
-import { getReviewReminderEligibility, localDayKey, studiedDueCount } from './reviewReminder'
+import { getReviewReminderEligibility, localDayKey } from './reviewReminder'
+import { studiedDueCount } from '@/data/fsrsDueQueue'
 
 const now = new Date(2026, 6, 22, 12, 0, 0)
 

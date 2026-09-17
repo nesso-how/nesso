@@ -7,6 +7,7 @@ import { useT } from '@/i18n'
 import { confirm } from '@/components/ui/confirm'
 import { Icon } from '@/components/ui/icons'
 import { hoverStyle } from '@/lib/hoverStyle'
+import { iconBtn, sectionLabel } from './sidebarStyles'
 
 /** Graphs section: switch / delete / rename. Owns its rename + hover state
  *  exclusively (moved verbatim from Sidebar); subscribes directly to the
@@ -247,20 +248,6 @@ export function SidebarGraphsSection() {
   )
 }
 
-const iconBtn: React.CSSProperties = {
-  appearance: 'none',
-  border: 0,
-  background: 'transparent',
-  width: 26,
-  height: 26,
-  borderRadius: 'var(--radius-sm)',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  color: 'var(--ink-3)',
-  cursor: 'pointer',
-}
-
 const graphsNewBtn: React.CSSProperties = {
   appearance: 'none',
   border: 0,
@@ -273,13 +260,4 @@ const graphsNewBtn: React.CSSProperties = {
   gap: 5,
   color: 'var(--ink-3)',
   cursor: 'pointer',
-}
-
-const sectionLabel: React.CSSProperties = {
-  fontSize: '11px',
-  fontWeight: 500,
-  fontFamily: 'var(--font-mono)',
-  color: 'var(--ink-4)',
-  textTransform: 'uppercase',
-  letterSpacing: '0.08em',
 }

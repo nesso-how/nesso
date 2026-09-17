@@ -3,6 +3,7 @@ import { useT } from '@/i18n'
 import { NessoMark } from '../NessoMark'
 import { TOPBAR_HEIGHT_PX } from '../TopBar'
 import { WEBSITE_URL } from '@/data/appInfo'
+import { iconBtn } from './sidebarStyles'
 
 interface Props {
   onCollapse: () => void
@@ -80,18 +81,4 @@ export function SidebarHeader({ onCollapse }: Props) {
       </button>
     </div>
   )
-}
-
-const iconBtn: React.CSSProperties = {
-  appearance: 'none',
-  border: 0,
-  background: 'transparent',
-  width: 26,
-  height: 26,
-  borderRadius: 'var(--radius-sm)',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  color: 'var(--ink-3)',
-  cursor: 'pointer',
 }

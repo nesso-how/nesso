@@ -14,6 +14,9 @@ export async function applyDesktopMenu(
 ): Promise<void> {
   if (!isDesktop()) return
   const { invoke } = await import('@tauri-apps/api/core')
+  // Log invoke failures instead of swallowing them: unknown frontend menu
+  // keys fail the whole deserialization by design (strict `MenuItemId`
+  // enum), and a silent catch would hide that wiring mistake.
   await invoke('set_app_menu', {
     labels: Object.entries(menu),
     state: {
@@ -21,5 +24,7 @@ export async function applyDesktopMenu(
       edgeEncoding: display.edgeEncoding,
       curveStyle: display.curveStyle,
     },
-  }).catch(() => {})
+  }).catch((err) => {
+    console.error('[nesso] set_app_menu failed:', err)
+  })
 }

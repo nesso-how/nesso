@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: MIT
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { GRAPH_FORMAT_VERSION } from '@nesso-how/schema'
-import { serialize, VOCABULARY } from '@nesso-how/vocab-learning'
+import { newElementId, serialize, VOCABULARY } from '@nesso-how/vocab-learning'
 import {
   buildGraphDocument,
   buildGraphInputSchema,
   buildGraphJson,
-  newElementId,
   validateGraphJson,
 } from './graph-tools.js'
 

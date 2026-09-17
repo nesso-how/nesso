@@ -3,8 +3,6 @@ import type { Node } from '@xyflow/react'
 import type { ConceptNodeData } from '@nesso-how/vocab-learning'
 import { studiedDueCount } from '@/data/fsrsDueQueue'
 
-export { studiedDueCount }
-
 interface ReviewReminderEligibilityInput {
   nodes: Node<ConceptNodeData>[]
   graphId: string

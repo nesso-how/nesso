@@ -1,33 +1,9 @@
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from 'vitest'
-import { defaultConceptReviewFields, VOCABULARY } from '@/types/graph'
+import { defaultConceptReviewFields } from '@/types/graph'
 import { deserialize, serialize } from '@nesso-how/vocab-learning'
-import type { NessoGraphDocument, NotesDocument } from '@nesso-how/vocab-learning'
-import { documentToGraphFromReviews, graphToDocument } from './graphDocumentMapping'
-
-const doc: NessoGraphDocument = {
-  version: 1,
-  vocabulary: { id: VOCABULARY.id, version: VOCABULARY.version },
-  name: 'Test',
-  concepts: [{ id: 'n1', label: 'A', x: 10, y: 20 }],
-  relations: [],
-}
-
-describe('documentToGraphFromReviews', () => {
-  it('merges review params when present', () => {
-    const review = { ...defaultConceptReviewFields(), stability: 99, due: 5000 }
-    const { nodes } = documentToGraphFromReviews(doc, new Map([['n1', review]]))
-    expect(nodes[0].data.stability).toBe(99)
-    expect(nodes[0].data.due).toBe(5000)
-    expect(nodes[0].data.text).toBe('A')
-  })
-
-  it('defaults FSRS when review entry is absent', () => {
-    const { nodes } = documentToGraphFromReviews(doc, new Map())
-    expect(nodes[0].data).toMatchObject(defaultConceptReviewFields())
-    expect(nodes[0].data.text).toBe('A')
-  })
-})
+import type { NotesDocument } from '@nesso-how/vocab-learning'
+import { graphToDocument } from './graphDocumentMapping'
 
 describe('graphToDocument', () => {
   const display = {
