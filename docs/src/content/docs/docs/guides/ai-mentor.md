@@ -22,14 +22,14 @@ Nesso does not send the whole graph by default. A compatible model can request b
 The mentor's visible chat history lives only in the open panel session. Chat history resets when you switch graphs, reopen the panel, click **New chat**, change the UI language, base URL, model, or custom system prompt, or when AI readiness changes, such as when the configured mentor becomes available or unavailable. Changing only the API key does not reset the chat. Changing the selection alone does not reset existing history; the current selection is captured with each request.
 
 :::caution
-Socrates requires a tool-capable endpoint (for example `qwen3:8b`). If an endpoint rejects graph-reading tools, that turn fails once through the normal error path; there is no snapshot fallback.
+Socrates requires a tool-capable endpoint (for example `qwen3.5:9b`). If an endpoint rejects graph-reading tools, that turn fails once through the normal error path; there is no snapshot fallback.
 :::
 
 ## Connecting a model
 
 Under **Settings → AI**, configure an OpenAI-compatible `chat/completions` base URL, model, optional API key, and optional **Custom system prompt**. These fields appear only while **Mentor** is enabled.
 
-For a local model, point Nesso at an OpenAI-compatible endpoint: local [Ollama](https://ollama.com/) at `http://localhost:11434/v1` (for example with model `qwen3:8b`), LM Studio, or a llama-server/Unsloth direct server. Local endpoints normally need no API key. A context of 8–16k covers typical mentor traffic on 24GB-class machines; raise it for very large graphs or long chats, at the cost of speed and memory.
+For a local model, point Nesso at an OpenAI-compatible endpoint: local [Ollama](https://ollama.com/) at `http://localhost:11434/v1` (for example with model `qwen3.5:9b`), LM Studio, or a llama-server/Unsloth direct server. Local endpoints normally need no API key. A context of 8–16k covers typical mentor traffic on 24GB-class machines; raise it for very large graphs or long chats, at the cost of speed and memory.
 
 The desktop app accepts hosted `https://` endpoints and loopback HTTP at `localhost`, `127.0.0.1`, or `::1`. It rejects arbitrary non-loopback `http://` endpoints. The browser app uses normal browser networking, so the endpoint must allow the app's origin. Nesso sends a configured API key only as a bearer token to that endpoint and does not log it.
 
