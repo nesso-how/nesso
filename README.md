@@ -15,7 +15,7 @@
 [![Checked with Biome](https://img.shields.io/badge/Checked_with-Biome-60A5FA?logo=biome&logoColor=white)](https://biomejs.dev)
 [![Analyzed with fallow](https://img.shields.io/badge/analyzed_with-fallow-0d7377)](https://github.com/fallow-rs/fallow)
 
-[Website](https://nesso.how) · [Try it](https://app.nesso.how) · [Docs](https://nesso.how/docs/introduction) · [Releases](https://github.com/nesso-how/nesso/releases)
+[Website](https://nesso.how) · [Try it](https://app.nesso.how) · [Docs](https://nesso.how/docs/introduction) · [Discussions](https://github.com/nesso-how/nesso/discussions) · [Releases](https://github.com/nesso-how/nesso/releases)
 
 </div>
 
@@ -94,7 +94,7 @@ Nesso is built as a monorepo of focused packages so that its graph vocabulary, v
 
 ## Contributing
 
-Bug reports, feature ideas, and PRs are welcome on [GitHub Issues](https://github.com/nesso-how/nesso/issues). Start with [CONTRIBUTING.md](CONTRIBUTING.md).
+Ideas and Q&A are welcome in [GitHub Discussions](https://github.com/nesso-how/nesso/discussions); bug reports and PRs belong on [GitHub Issues](https://github.com/nesso-how/nesso/issues). Start with [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Contact
 
