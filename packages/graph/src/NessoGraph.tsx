@@ -22,7 +22,12 @@ import type {
   NessoGraphDocumentInput,
   CategoryPalette,
 } from '@nesso-how/vocab-learning'
-import { pickDisplay, type NessoEdgeData, type GraphDisplaySettings } from './display.js'
+import {
+  DEFAULT_GRAPH_DISPLAY,
+  pickDisplay,
+  type NessoEdgeData,
+  type GraphDisplaySettings,
+} from './display.js'
 import { GraphDisplayContext, type CategoryColorMode } from './context.js'
 import { documentToRenderGraph } from './documentToRenderGraph.js'
 import { ConceptNode } from './ConceptNode.js'
@@ -196,14 +201,30 @@ export function NessoGraph({
 
   const ctx = useMemo(
     () => ({
-      edgeEncoding: pickDisplay(display?.edgeEncoding, graphDisplay?.edgeEncoding, 'full'),
-      showHeatmap: pickDisplay(display?.showHeatmap, graphDisplay?.showHeatmap, true),
-      curveStyle: pickDisplay(display?.curveStyle, graphDisplay?.curveStyle, 'arc'),
-      autoCurveFlip: pickDisplay(display?.autoCurveFlip, graphDisplay?.autoCurveFlip, true),
+      edgeEncoding: pickDisplay(
+        display?.edgeEncoding,
+        graphDisplay?.edgeEncoding,
+        DEFAULT_GRAPH_DISPLAY.edgeEncoding,
+      ),
+      showHeatmap: pickDisplay(
+        display?.showHeatmap,
+        graphDisplay?.showHeatmap,
+        DEFAULT_GRAPH_DISPLAY.showHeatmap,
+      ),
+      curveStyle: pickDisplay(
+        display?.curveStyle,
+        graphDisplay?.curveStyle,
+        DEFAULT_GRAPH_DISPLAY.curveStyle,
+      ),
+      autoCurveFlip: pickDisplay(
+        display?.autoCurveFlip,
+        graphDisplay?.autoCurveFlip,
+        DEFAULT_GRAPH_DISPLAY.autoCurveFlip,
+      ),
       dimUnconnectedOnSelect: pickDisplay(
         display?.dimUnconnectedOnSelect,
         graphDisplay?.dimUnconnectedOnSelect,
-        true,
+        DEFAULT_GRAPH_DISPLAY.dimUnconnectedOnSelect,
       ),
       palette,
       categoryColorMode,
