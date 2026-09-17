@@ -29,7 +29,7 @@ Socrates requires a tool-capable endpoint (for example `qwen3:8b`). If an endpoi
 
 Under **Settings → AI**, configure an OpenAI-compatible `chat/completions` base URL, model, optional API key, and optional **Custom system prompt**. These fields appear only while **Mentor** is enabled.
 
-For a local model, point Nesso at an OpenAI-compatible endpoint: local [Ollama](https://ollama.com/) at `http://localhost:11434/v1` (for example with model `qwen3:8b`), LM Studio, or a llama-server/Unsloth direct server. Local endpoints normally need no API key; on 24GB-class machines a context of 8–16k is plenty for mentor traffic.
+For a local model, point Nesso at an OpenAI-compatible endpoint: local [Ollama](https://ollama.com/) at `http://localhost:11434/v1` (for example with model `qwen3:8b`), LM Studio, or a llama-server/Unsloth direct server. Local endpoints normally need no API key. A context of 8–16k covers typical mentor traffic on 24GB-class machines; raise it for very large graphs or long chats, at the cost of speed and memory.
 
 The desktop app accepts hosted `https://` endpoints and loopback HTTP at `localhost`, `127.0.0.1`, or `::1`. It rejects arbitrary non-loopback `http://` endpoints. The browser app uses normal browser networking, so the endpoint must allow the app's origin. Nesso sends a configured API key only as a bearer token to that endpoint and does not log it.
 
