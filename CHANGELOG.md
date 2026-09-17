@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.2.0-beta.7] - 2026-09-17
+
 ### Changed
 
 - **AI mentor is now tools-only:** Socrates uses one compact prompt path with six read-only graph tools and a fixed graph-free opening request routed via tools (selected concept via `inspectConcept`, selected relation via `inspectRelation`, otherwise `getGraphOverview`). The legacy snapshot fallback, title-seeded openings, and compatibility retry are removed; tool-incompatible endpoints fail once through the normal error path. The built-in persona is now minimal guidelines that help build understanding instead of script rules, and the fresh-install default model is `qwen3:8b` (existing saved models are untouched).
@@ -850,7 +852,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial alpha: interactive knowledge graph (web + Tauri v2); desktop installers on GitHub Releases (macOS Apple silicon and Intel).
 
-[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.2.0-beta.6...HEAD
+[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.2.0-beta.7...HEAD
+[0.2.0-beta.7]: https://github.com/nesso-how/nesso/compare/v0.2.0-beta.6...v0.2.0-beta.7
 [0.2.0-beta.6]: https://github.com/nesso-how/nesso/compare/v0.2.0-beta.5...v0.2.0-beta.6
 [0.2.0-beta.5]: https://github.com/nesso-how/nesso/compare/v0.2.0-beta.4...v0.2.0-beta.5
 [0.2.0-beta.4]: https://github.com/nesso-how/nesso/compare/v0.2.0-beta.3...v0.2.0-beta.4
