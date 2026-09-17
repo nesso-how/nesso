@@ -64,9 +64,9 @@ test('selecting a concept dims unconnected edges and keeps connected ones at def
   await expect(connected.locator('path').nth(1)).toHaveAttribute('opacity', '0.78')
   await expect(unrelated.locator('path').nth(1)).toHaveAttribute('stroke-width', '1.4')
   await expect(unrelated.locator('path').nth(1)).toHaveAttribute('opacity', '0.28')
-  await expect(connected.locator('circle')).toHaveAttribute('fill', 'var(--paper, #ffffff)')
+  await expect(connected.locator('circle')).toHaveAttribute('fill', 'var(--paper)')
   await expect(connected.locator('circle')).toHaveAttribute('stroke-opacity', '1')
-  await expect(unrelated.locator('circle')).toHaveAttribute('fill', 'var(--paper, #ffffff)')
+  await expect(unrelated.locator('circle')).toHaveAttribute('fill', 'var(--paper)')
   await expect(unrelated.locator('circle')).toHaveAttribute('stroke-opacity', '0.28')
 
   await deselect(page)
