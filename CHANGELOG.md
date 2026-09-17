@@ -6,6 +6,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Changed
+
+- **Review badge counts only studied concepts:** never-studied concepts no longer inflate the TopBar due badge; the review session itself still serves new cards first.
+- **The AI settings health check fires once per settings change** instead of twice.
+
+### Fixed
+
+- **Localized desktop menus show the correct "Open Project" label** — it rendered empty in non-English menus.
+- **Creating or importing a graph resets file-conflict tracking**, so a stale conflict flag can no longer silently block subsequent saves.
+
 ## [0.2.0-beta.7] - 2026-09-17
 
 ### Changed
