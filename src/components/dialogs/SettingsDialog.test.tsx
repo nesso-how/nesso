@@ -50,13 +50,26 @@ async function openAiTab(): Promise<void> {
   await act(async () => {
     aiTab.dispatchEvent(new MouseEvent('click', { bubbles: true }))
   })
-  // Flush the mocked /models fetch so discovered chips render.
+  // Flush the mocked /models fetch so discovered options render.
   await act(async () => {})
 }
 
-function chipButton(label: string): HTMLButtonElement {
+function selectToggle(): HTMLButtonElement {
+  const toggles = [...container!.querySelectorAll('button')].filter((b) => b.querySelector('svg'))
+  if (toggles.length !== 1)
+    throw new Error(`expected exactly one select toggle, found ${toggles.length}`)
+  return toggles[0] as HTMLButtonElement
+}
+
+async function openModelSelect(): Promise<void> {
+  await act(async () => {
+    selectToggle().dispatchEvent(new MouseEvent('click', { bubbles: true }))
+  })
+}
+
+function selectOption(label: string): HTMLButtonElement {
   const found = [...container!.querySelectorAll('button')].find((b) => b.textContent === label)
-  if (!found) throw new Error(`chip button "${label}" not found`)
+  if (!found) throw new Error(`select option "${label}" not found`)
   return found as HTMLButtonElement
 }
 
@@ -81,17 +94,18 @@ afterEach(() => {
 })
 
 describe('SettingsDialog AI model discovery', () => {
-  it('shows discovered endpoint models with no hardcoded presets for localhost', async () => {
+  it('lists discovered endpoint models in a select with no hardcoded presets', async () => {
     vi.mocked(listEndpointModels).mockResolvedValue(['discovered-local-a', 'discovered-local-b'])
     setupSettings({ aiBaseUrl: 'http://localhost:11434/v1', aiModel: 'discovered-local-a' })
     await openAiTab()
+    await openModelSelect()
     expect(container!.textContent).toContain('discovered-local-a')
     expect(container!.textContent).toContain('discovered-local-b')
     expect(container!.textContent).not.toContain('llama3.2:3b')
     expect(container!.textContent).not.toContain('qwen3:8b')
   })
 
-  it('shows discovered models for a remote endpoint', async () => {
+  it('lists discovered models in a select for a remote endpoint', async () => {
     vi.mocked(listEndpointModels).mockResolvedValue(['big-pickle'])
     setupSettings({
       aiBaseUrl: 'https://opencode.ai/zen/v1',
@@ -99,12 +113,13 @@ describe('SettingsDialog AI model discovery', () => {
       aiApiKey: 'test-key',
     })
     await openAiTab()
+    await openModelSelect()
     expect(container!.textContent).toContain('big-pickle')
     expect(container!.textContent).not.toContain('llama3.2:3b')
     expect(container!.textContent).not.toContain('qwen3:8b')
   })
 
-  it('keeps the custom model input editable alongside discovered models', async () => {
+  it('keeps the custom model input editable alongside the select', async () => {
     vi.mocked(listEndpointModels).mockResolvedValue(['discovered-local-a'])
     setupSettings({ aiBaseUrl: 'http://localhost:11434/v1', aiModel: 'discovered-local-a' })
     await openAiTab()
@@ -116,8 +131,9 @@ describe('SettingsDialog AI model discovery', () => {
     vi.mocked(listEndpointModels).mockResolvedValue(['discovered-local-a', 'discovered-local-b'])
     setupSettings({ aiBaseUrl: 'http://localhost:11434/v1', aiModel: 'discovered-local-a' })
     await openAiTab()
+    await openModelSelect()
     await act(async () => {
-      chipButton('discovered-local-b').dispatchEvent(new MouseEvent('click', { bubbles: true }))
+      selectOption('discovered-local-b').dispatchEvent(new MouseEvent('click', { bubbles: true }))
     })
     expect(useGraphStore.getState().settings.aiModel).toBe('discovered-local-b')
     expect(vi.mocked(checkEndpoint)).toHaveBeenCalledWith(
@@ -128,11 +144,23 @@ describe('SettingsDialog AI model discovery', () => {
     )
   })
 
+  it('shows a custom model typed outside the discovered list', async () => {
+    vi.mocked(listEndpointModels).mockResolvedValue(['discovered-local-a'])
+    setupSettings({ aiBaseUrl: 'http://localhost:11434/v1', aiModel: 'my-custom-model' })
+    await openAiTab()
+    // The select still displays the current value even when it is not discovered.
+    expect(selectToggle().textContent).toContain('my-custom-model')
+    expect(container!.querySelector('input[placeholder="e.g. qwen3:8b"]')).not.toBeNull()
+  })
+
   it('falls back to the bare input when discovery returns nothing', async () => {
     vi.mocked(listEndpointModels).mockResolvedValue([])
     setupSettings({ aiBaseUrl: 'http://localhost:11434/v1', aiModel: 'custom-model' })
     await openAiTab()
     expect(container!.querySelector('input[placeholder="e.g. qwen3:8b"]')).not.toBeNull()
     expect(container!.textContent).not.toContain('llama3.2:3b')
+    expect(
+      [...container!.querySelectorAll('button')].filter((b) => b.querySelector('svg')),
+    ).toHaveLength(0)
   })
 })

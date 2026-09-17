@@ -64,7 +64,7 @@ export function SettingsDialog({ open, onClose }: Props) {
   // inventory (Ollama and hosted providers alike) so the user picks a real
   // id instead of a hardcoded preset. Runs independently of the health check
   // above — notably it does not depend on the selected model, so typing or
-  // picking a chip never refetches the list.
+  // selecting a model never refetches the list.
   useEffect(() => {
     if (!open || !settings.mentorEnabled) {
       modelsAbortRef.current?.abort()
@@ -462,41 +462,19 @@ export function SettingsDialog({ open, onClose }: Props) {
                           {t.settings.ai.modelDesc}
                         </small>
                         {availableModels.length > 0 && (
-                          <div
-                            style={{
-                              display: 'flex',
-                              flexWrap: 'wrap',
-                              gap: 'var(--space-3)',
-                              marginBottom: 10,
-                            }}
-                          >
-                            {availableModels.map((id) => {
-                              const active = settings.aiModel === id
-                              return (
-                                <button
-                                  key={id}
-                                  type="button"
-                                  onClick={() => {
-                                    setSetting('aiModel', id)
-                                    triggerCheck(settings.aiBaseUrl, id, settings.aiApiKey)
-                                  }}
-                                  style={{
-                                    appearance: 'none',
-                                    border: `0.5px solid ${active ? 'var(--ink-2)' : 'var(--line)'}`,
-                                    background: active ? 'var(--paper-deep)' : 'transparent',
-                                    color: active ? 'var(--ink)' : 'var(--ink-3)',
-                                    fontSize: '11px',
-                                    fontWeight: 500,
-                                    fontFamily: 'var(--font-mono)',
-                                    padding: '5px 10px',
-                                    borderRadius: 'var(--radius-sm)',
-                                    cursor: 'pointer',
-                                  }}
-                                >
-                                  {id}
-                                </button>
-                              )
-                            })}
+                          <div style={{ marginBottom: 10 }}>
+                            <Select
+                              options={(availableModels.includes(settings.aiModel) ||
+                              settings.aiModel === ''
+                                ? availableModels
+                                : [settings.aiModel, ...availableModels]
+                              ).map((id) => ({ id, label: id }))}
+                              value={settings.aiModel}
+                              onChange={(id) => {
+                                setSetting('aiModel', id)
+                                triggerCheck(settings.aiBaseUrl, id, settings.aiApiKey)
+                              }}
+                            />
                           </div>
                         )}
                         <input
