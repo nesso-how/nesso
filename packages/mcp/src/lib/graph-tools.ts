@@ -80,11 +80,6 @@ export type BuildGraphInput = z.infer<typeof buildGraphInputSchema>
 const NODE_WIDTH = 180
 const NODE_HEIGHT = 60
 
-// The element id generator lives in `@nesso-how/vocab-learning` (single home for
-// document element identity); re-exported here so existing `graph-tools`
-// consumers keep resolving it from this module.
-export { newElementId }
-
 function issue(path: string, message: string): GraphValidationIssue {
   return { path, message }
 }

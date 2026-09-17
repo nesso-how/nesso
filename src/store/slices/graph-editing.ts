@@ -20,7 +20,7 @@ import {
 } from '@/lib/graphClipboard'
 import { defaultCurveFlip, nodeCenterX, nodeCenterY } from '@nesso-how/graph'
 import { locales } from '@/i18n/registry'
-import { newElementId } from '@/lib/graphId'
+import { newElementId } from '@nesso-how/vocab-learning'
 import { track } from '@/telemetry'
 import type { GraphSnapshot } from '../types'
 import type { GraphState } from '../state'

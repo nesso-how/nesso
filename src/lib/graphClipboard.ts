@@ -2,7 +2,7 @@
 import type { Node, Edge } from '@xyflow/react'
 import type { ConceptNodeData } from '@/types/graph'
 import { CONCEPT_HANDLE_IN, CONCEPT_HANDLE_OUT } from '@/data/conceptHandles'
-import { newElementId } from '@/lib/graphId'
+import { newElementId } from '@nesso-how/vocab-learning'
 import { stripEdgeSelection, stripNodeSelection } from '@/lib/graphPersist'
 
 export type GraphClipboard = {

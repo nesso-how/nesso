@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from 'vitest'
-import { isGraphId, newElementId, newGraphId } from './graphId'
+import { isGraphId, newGraphId } from './graphId'
+import { newElementId } from '@nesso-how/vocab-learning'
 
 describe('newGraphId', () => {
   it('produces a `g` + 13 lowercase-alphanumeric id', () => {
