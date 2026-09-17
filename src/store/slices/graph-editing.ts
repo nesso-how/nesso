@@ -16,6 +16,7 @@ import {
   instantiateClipboard,
   setGraphClipboard,
   snapshotSelection,
+  type GraphClipboard,
 } from '@/lib/graphClipboard'
 import { defaultCurveFlip, nodeCenterX, nodeCenterY } from '@nesso-how/graph'
 import { locales } from '@/i18n/registry'
@@ -140,6 +141,39 @@ function applySelectionFlags(
     edges: edgesChanged ? nextEdges : edges,
     changed: nodesChanged || edgesChanged,
   }
+}
+
+/**
+ * Deselect every node/edge, preserving element identity for untouched entries
+ * (same mapping shape as the inline deselect maps it replaces).
+ */
+function clearFlowSelection(
+  nodes: Node<ConceptNodeData>[],
+  edges: Edge[],
+): { nodes: Node<ConceptNodeData>[]; edges: Edge[] } {
+  const cleared = applySelectionFlags(nodes, edges, new Set<string>(), new Set<string>())
+  return { nodes: cleared.nodes, edges: cleared.edges }
+}
+
+/**
+ * Deep-clone a node/edge snapshot with fresh ids (via `newElementId`, nodes
+ * first then edges) and offset positions — shared by paste (with an optional
+ * cursor anchor) and duplicate (cascading offset). Selection of the inserted
+ * elements stays at the call sites: paste also anchors a lone edge, duplicate
+ * only anchors a lone node.
+ */
+function insertCloned(
+  snapshot: GraphClipboard,
+  nodes: Node<ConceptNodeData>[],
+  edges: Edge[],
+  at?: { x: number; y: number },
+): { nodes: Node<ConceptNodeData>[]; edges: Edge[] } {
+  return instantiateClipboard(
+    snapshot,
+    new Set(nodes.map((n) => n.id)),
+    new Set(edges.map((e) => e.id)),
+    at,
+  )
 }
 
 export function bakeCurveFlipFromPositions(edges: Edge[], nodes: Node<ConceptNodeData>[]): Edge[] {
@@ -346,26 +380,29 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
 
   addNode: (x = 0, y = 0) => {
     const id = newElementId('n', new Set(get().nodes.map((n) => n.id)))
-    set((s) => ({
-      ...pushHistory(s),
-      nodes: [
-        ...s.nodes.map((n) => (n.selected ? { ...n, selected: false } : n)),
-        {
-          id,
-          type: 'concept',
-          position: { x, y },
-          selected: true,
-          data: {
-            text: locales[get().settings.language].canvas.newConcept,
-            ...defaultConceptReviewFields(),
+    set((s) => {
+      const cleared = clearFlowSelection(s.nodes, s.edges)
+      return {
+        ...pushHistory(s),
+        nodes: [
+          ...cleared.nodes,
+          {
+            id,
+            type: 'concept',
+            position: { x, y },
+            selected: true,
+            data: {
+              text: locales[get().settings.language].canvas.newConcept,
+              ...defaultConceptReviewFields(),
+            },
           },
-        },
-      ],
-      edges: s.edges.map((e) => (e.selected ? { ...e, selected: false } : e)),
-      selected: { kind: 'node', id },
-      selectedIds: [id],
-      editNodeId: id,
-    }))
+        ],
+        edges: cleared.edges,
+        selected: { kind: 'node', id },
+        selectedIds: [id],
+        editNodeId: id,
+      }
+    })
     return id
   },
 
@@ -375,6 +412,7 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
   addEdge: (source, target, type) => {
     const id = newElementId('e', new Set(get().edges.map((e) => e.id)))
     set((s) => {
+      const cleared = clearFlowSelection(s.nodes, s.edges)
       const sourceNode = s.nodes.find((n) => n.id === source)
       const targetNode = s.nodes.find((n) => n.id === target)
       const autoCurveFlip = s.graphDisplay.autoCurveFlip
@@ -390,9 +428,9 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
 
       return {
         ...pushHistory(s),
-        nodes: s.nodes.map((n) => (n.selected ? { ...n, selected: false } : n)),
+        nodes: cleared.nodes,
         edges: [
-          ...s.edges.map((e) => (e.selected ? { ...e, selected: false } : e)),
+          ...cleared.edges,
           {
             id,
             source,
@@ -549,26 +587,24 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
     const clip = getGraphClipboard()
     if (!clip?.nodes.length && !clip?.edges.length) return null
     const s = get()
-    const { nodes: pastedNodes, edges: pastedEdges } = instantiateClipboard(
-      clip,
-      new Set(s.nodes.map((n) => n.id)),
-      new Set(s.edges.map((e) => e.id)),
-      at,
-    )
+    const { nodes: pastedNodes, edges: pastedEdges } = insertCloned(clip, s.nodes, s.edges, at)
     const pastedNodeIds = pastedNodes.map((n) => n.id)
 
-    set((s) => ({
-      ...pushHistory(s),
-      nodes: [...s.nodes.map((n) => (n.selected ? { ...n, selected: false } : n)), ...pastedNodes],
-      edges: [...s.edges.map((e) => (e.selected ? { ...e, selected: false } : e)), ...pastedEdges],
-      selected:
-        pastedNodeIds.length === 1
-          ? { kind: 'node', id: pastedNodeIds[0] }
-          : pastedEdges.length === 1 && pastedNodeIds.length === 0
-            ? { kind: 'edge', id: pastedEdges[0].id }
-            : null,
-      selectedIds: pastedNodeIds,
-    }))
+    set((s) => {
+      const cleared = clearFlowSelection(s.nodes, s.edges)
+      return {
+        ...pushHistory(s),
+        nodes: [...cleared.nodes, ...pastedNodes],
+        edges: [...cleared.edges, ...pastedEdges],
+        selected:
+          pastedNodeIds.length === 1
+            ? { kind: 'node', id: pastedNodeIds[0] }
+            : pastedEdges.length === 1 && pastedNodeIds.length === 0
+              ? { kind: 'edge', id: pastedEdges[0].id }
+              : null,
+        selectedIds: pastedNodeIds,
+      }
+    })
     advanceClipboardAfterPaste()
     return pastedNodeIds
   },
@@ -577,19 +613,18 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
     const snap = snapshotSelection(get())
     if (!snap) return null
     const s = get()
-    const { nodes: dupNodes, edges: dupEdges } = instantiateClipboard(
-      snap,
-      new Set(s.nodes.map((n) => n.id)),
-      new Set(s.edges.map((e) => e.id)),
-    )
+    const { nodes: dupNodes, edges: dupEdges } = insertCloned(snap, s.nodes, s.edges)
     const dupNodeIds = dupNodes.map((n) => n.id)
-    set((cur) => ({
-      ...pushHistory(cur),
-      nodes: [...cur.nodes.map((n) => (n.selected ? { ...n, selected: false } : n)), ...dupNodes],
-      edges: [...cur.edges.map((e) => (e.selected ? { ...e, selected: false } : e)), ...dupEdges],
-      selected: dupNodeIds.length === 1 ? { kind: 'node', id: dupNodeIds[0] } : null,
-      selectedIds: dupNodeIds,
-    }))
+    set((cur) => {
+      const cleared = clearFlowSelection(cur.nodes, cur.edges)
+      return {
+        ...pushHistory(cur),
+        nodes: [...cleared.nodes, ...dupNodes],
+        edges: [...cleared.edges, ...dupEdges],
+        selected: dupNodeIds.length === 1 ? { kind: 'node', id: dupNodeIds[0] } : null,
+        selectedIds: dupNodeIds,
+      }
+    })
     return dupNodeIds
   },
 
