@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 import { writeFileSync } from 'node:fs'
 import { fileURLToPath, URL } from 'node:url'
-import { PALETTES } from '@nesso-how/vocab-learning'
+import { categoryCssVars } from '@nesso-how/vocab-learning'
 import { defaultTheme, starlightCss, themeCss } from '@nesso-how/theme'
 
 /**
@@ -10,9 +10,9 @@ import { defaultTheme, starlightCss, themeCss } from '@nesso-how/theme'
  * `predev` / `prebuild`; outputs are git-ignored. Edit theme values in
  * `packages/theme/src/default.ts`, never in the generated files.
  */
-const header = (what) =>
+const header = (what, source = '@nesso-how/theme') =>
   '/* SPDX-License-Identifier: MIT */\n' +
-  `/* GENERATED ${what} from @nesso-how/theme by docs/scripts/gen-theme-css.mjs — do not edit. */\n\n`
+  `/* GENERATED ${what} from ${source} by docs/scripts/gen-theme-css.mjs — do not edit. */\n\n`
 
 const styles = (name) => fileURLToPath(new URL(`../src/styles/${name}`, import.meta.url))
 
@@ -24,11 +24,11 @@ writeFileSync(
 
 // App-namespace tokens (`--paper`/`--ink`/`--cat-*`/…) for the standalone landing
 // page, which lives outside Starlight and consumes the app variables directly.
-const palette = PALETTES[defaultTheme.categoryPalette] ?? PALETTES.default
-const categoryRoot = `:root {\n${Object.entries(palette)
-  .map(([cat, hex]) => `  --cat-${cat}: ${hex};`)
+const categoryVars = categoryCssVars(defaultTheme.categoryPalette)
+const categoryRoot = `:root {\n${Object.entries(categoryVars)
+  .map(([name, hex]) => `  ${name}: ${hex};`)
   .join('\n')}\n}`
 writeFileSync(
   styles('theme.app.generated.css'),
-  `${header('(app tokens)')}${themeCss(defaultTheme)}\n\n${categoryRoot}\n`,
+  `${header('(app tokens)', '@nesso-how/theme + @nesso-how/vocab-learning')}${themeCss(defaultTheme)}\n\n${categoryRoot}\n`,
 )

@@ -35,7 +35,7 @@ export {
   type Transitivity,
 } from './relationTypes.js'
 
-export { CategoryPalette, GLYPH_PATHS, PALETTES } from './visual.js'
+export { CategoryPalette, categoryCssVars, GLYPH_PATHS, PALETTES } from './visual.js'
 
 export {
   deserialize,
