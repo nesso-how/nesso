@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 import { useT } from '@/i18n'
 import { isDesktop } from '@/lib/isDesktop'
-import type { OllamaModelStatus } from '@/lib/ollama'
+import type { ModelStatus } from '@/lib/ollama'
 import { isLocalhostUrl } from '@/lib/ollama'
 import { getErrorHint } from './modelStatusDisplay'
 
 interface Props {
-  status: OllamaModelStatus
+  status: ModelStatus
   model: string
   baseUrl: string
   pullProgress: number
@@ -16,6 +16,7 @@ interface Props {
 export function ModelStatusBadge({ status, model, baseUrl, pullProgress, onPull }: Props) {
   const t = useT()
   if (status === 'idle' || !model) return null
+  const isLocal = isLocalhostUrl(baseUrl)
   const dot = (color: string) => (
     <span
       style={{
@@ -30,6 +31,7 @@ export function ModelStatusBadge({ status, model, baseUrl, pullProgress, onPull 
   )
 
   if (status === 'pulling') {
+    if (!isLocal) return null
     return (
       <div style={{ marginTop: 8 }}>
         <div
@@ -64,8 +66,6 @@ export function ModelStatusBadge({ status, model, baseUrl, pullProgress, onPull 
       </div>
     )
   }
-
-  const isLocal = isLocalhostUrl(baseUrl)
 
   return (
     <div
@@ -104,7 +104,9 @@ export function ModelStatusBadge({ status, model, baseUrl, pullProgress, onPull 
       {status === 'unavailable' && (
         <>
           {dot('var(--conf-2)')}
-          <span style={{ color: 'var(--ink-3)' }}>{t.settings.ai.status.notFound}</span>
+          <span style={{ color: 'var(--ink-3)' }}>
+            {isLocal ? t.settings.ai.status.notFound : t.settings.ai.status.modelNotFound}
+          </span>
           {isLocal && (
             <button
               type="button"

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-export type OllamaModelStatus =
+export type ModelStatus =
   | 'idle'
   | 'checking'
   | 'available'

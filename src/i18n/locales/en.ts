@@ -68,6 +68,7 @@ const en = {
         checking: 'Checking…',
         available: 'Available',
         notFound: 'Not found locally',
+        modelNotFound: 'Model not found',
         pull: 'Pull',
         ollamaNotRunning: 'Ollama not running:',
         corsBlocked: 'CORS blocked. Set',

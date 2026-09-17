@@ -68,6 +68,7 @@ const it: typeof en = {
         checking: 'Controllo in corso…',
         available: 'Disponibile',
         notFound: 'Non trovato in locale',
+        modelNotFound: 'Modello non trovato',
         pull: 'Scarica',
         ollamaNotRunning: 'Ollama non in esecuzione:',
         corsBlocked: 'CORS bloccato. Imposta',

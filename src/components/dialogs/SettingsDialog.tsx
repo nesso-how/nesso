@@ -15,7 +15,8 @@ import { SettingsHeatmapDefault } from '@/components/ui/HeatmapDisplayToggle'
 import type { Language } from '@/types/graph'
 import { checkEndpoint, executeModelPull } from '@/llm/completion'
 import { MENTOR_PERSONA_MAX_CHARS } from '@/llm/context'
-import type { OllamaModelStatus } from '@/lib/ollama'
+import type { ModelStatus } from '@/lib/ollama'
+import { isLocalhostUrl } from '@/lib/ollama'
 
 const OLLAMA_PRESETS = [
   { id: 'llama3.2:3b', note: 'lightweight · fast' },
@@ -40,7 +41,7 @@ export function SettingsDialog({ open, onClose }: Props) {
   const [tab, setTab] = useState<Tab>('appearance')
   const settings = useGraphStore((s) => s.settings)
   const setSetting = useGraphStore((s) => s.setSetting)
-  const [modelStatus, setModelStatus] = useState<OllamaModelStatus>('idle')
+  const [modelStatus, setModelStatus] = useState<ModelStatus>('idle')
   const [pullProgress, setPullProgress] = useState(0)
 
   const healthCheckAbortRef = useRef<AbortController | null>(null)
@@ -437,43 +438,45 @@ export function SettingsDialog({ open, onClose }: Props) {
                         >
                           {t.settings.ai.modelDesc}
                         </small>
-                        <div
-                          style={{
-                            display: 'flex',
-                            flexWrap: 'wrap',
-                            gap: 'var(--space-3)',
-                            marginBottom: 10,
-                          }}
-                        >
-                          {OLLAMA_PRESETS.map((p) => {
-                            const active = settings.aiModel === p.id
-                            return (
-                              <button
-                                key={p.id}
-                                type="button"
-                                title={p.note}
-                                onClick={() => {
-                                  setSetting('aiModel', p.id)
-                                  triggerCheck(settings.aiBaseUrl, p.id, settings.aiApiKey)
-                                }}
-                                style={{
-                                  appearance: 'none',
-                                  border: `0.5px solid ${active ? 'var(--ink-2)' : 'var(--line)'}`,
-                                  background: active ? 'var(--paper-deep)' : 'transparent',
-                                  color: active ? 'var(--ink)' : 'var(--ink-3)',
-                                  fontSize: '11px',
-                                  fontWeight: 500,
-                                  fontFamily: 'var(--font-mono)',
-                                  padding: '5px 10px',
-                                  borderRadius: 'var(--radius-sm)',
-                                  cursor: 'pointer',
-                                }}
-                              >
-                                {p.id}
-                              </button>
-                            )
-                          })}
-                        </div>
+                        {isLocalhostUrl(settings.aiBaseUrl) && (
+                          <div
+                            style={{
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              gap: 'var(--space-3)',
+                              marginBottom: 10,
+                            }}
+                          >
+                            {OLLAMA_PRESETS.map((p) => {
+                              const active = settings.aiModel === p.id
+                              return (
+                                <button
+                                  key={p.id}
+                                  type="button"
+                                  title={p.note}
+                                  onClick={() => {
+                                    setSetting('aiModel', p.id)
+                                    triggerCheck(settings.aiBaseUrl, p.id, settings.aiApiKey)
+                                  }}
+                                  style={{
+                                    appearance: 'none',
+                                    border: `0.5px solid ${active ? 'var(--ink-2)' : 'var(--line)'}`,
+                                    background: active ? 'var(--paper-deep)' : 'transparent',
+                                    color: active ? 'var(--ink)' : 'var(--ink-3)',
+                                    fontSize: '11px',
+                                    fontWeight: 500,
+                                    fontFamily: 'var(--font-mono)',
+                                    padding: '5px 10px',
+                                    borderRadius: 'var(--radius-sm)',
+                                    cursor: 'pointer',
+                                  }}
+                                >
+                                  {p.id}
+                                </button>
+                              )
+                            })}
+                          </div>
+                        )}
                         <input
                           type="text"
                           value={settings.aiModel}
