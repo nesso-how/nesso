@@ -20,15 +20,8 @@ export function isGraphId(value: string): boolean {
   return /^g[a-z0-9]{13}$/.test(value)
 }
 
-/**
- * Short canvas element id (`n`/`e` + 5 base36 chars), retried until it does not
- * collide with `used`. 36^5 ≈ 60M keeps ids short, but pasting/importing into
- * large graphs makes a collision check necessary — a duplicate id corrupts
- * selection and edge remapping.
- */
-export function newElementId(prefix: 'n' | 'e', used: ReadonlySet<string>): string {
-  for (;;) {
-    const id = prefix + Math.random().toString(36).slice(2, 7)
-    if (!used.has(id)) return id
-  }
-}
+// Element ids are vocabulary-owned document identity: the generator lives in
+// `@nesso-how/vocab-learning` so the app and the MCP package share one
+// implementation. `newGraphId`/`isGraphId` stay app-local — graph ids are an
+// app-level concern, not document element identity.
+export { newElementId } from '@nesso-how/vocab-learning'

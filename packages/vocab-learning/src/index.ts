@@ -13,6 +13,8 @@ export type {
   NessoGraphDocumentInput,
 } from './graphDocument.js'
 
+export { newElementId } from './graphDocument.js'
+
 export { VOCABULARY } from './vocabularyIdentity.js'
 
 // Re-exported so downstream packages with a layering boundary against
