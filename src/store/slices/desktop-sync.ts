@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 import type { StateCreator } from 'zustand'
 import { isDesktop } from '@/lib/isDesktop'
-import { graphContentFingerprint, reviewStateFingerprint } from '@/lib/graphPersist'
 import { mergeGraphDisplay } from '@/types/graph'
 import {
   readManifest,
@@ -12,6 +11,7 @@ import {
 } from '@/lib/workspace'
 import { dbSaveGraph } from '../db'
 import { _draggingNodeIds } from './graph-editing'
+import { freshGraphSession } from './graph-management'
 import type { GraphState } from '../state'
 
 export interface DesktopSyncSlice {
@@ -53,23 +53,16 @@ export const createDesktopSyncSlice: StateCreator<GraphState, [], [], DesktopSyn
     setDiskSyncCache(ws.displayPath, manifest)
     await dbSaveGraph(record)
     const graphDisplay = mergeGraphDisplay(record.display, settings)
-    const fp = graphContentFingerprint(record.nodes, record.edges, graphDisplay)
     _draggingNodeIds.clear()
     set((s) => ({
-      nodes: record.nodes,
-      edges: record.edges,
-      graphDisplay,
-      selected: null,
-      writingModeNodeId: null,
-      loadedToken: s.loadedToken + 1,
-      savedFingerprint: fp,
-      savedReviewFingerprint: reviewStateFingerprint(record.nodes),
-      externalFileConflict: false,
+      ...freshGraphSession(s, {
+        nodes: record.nodes,
+        edges: record.edges,
+        graphDisplay,
+      }),
       graphList: s.graphList.map((g) =>
         g.id === currentGraphId ? { ...g, name: record.name, updatedAt: record.updatedAt } : g,
       ),
-      _history: [],
-      _future: [],
     }))
   },
 })

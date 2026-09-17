@@ -281,6 +281,51 @@ function patchAfterSaveCurrentGraph(
   })
 }
 
+/**
+ * Shared "fresh graph session" reset for every path that replaces the active
+ * graph in memory (load, create, import, reload-from-disk). Both
+ * change-tracking fingerprints are computed from the incoming content, so no
+ * path can leave a stale review fingerprint, a stuck file conflict, or a
+ * stale load token behind. Callers add their own `currentGraphId` / `graphList`
+ * updates; module-level touches (`_draggingNodeIds.clear()`) stay at the call
+ * sites.
+ */
+export function freshGraphSession(
+  s: Pick<GraphState, 'loadedToken'>,
+  args: {
+    nodes: Node<ConceptNodeData>[]
+    edges: Edge[]
+    graphDisplay: GraphDisplaySettings
+  },
+): Pick<
+  GraphState,
+  | 'nodes'
+  | 'edges'
+  | 'graphDisplay'
+  | 'selected'
+  | 'writingModeNodeId'
+  | 'loadedToken'
+  | 'savedFingerprint'
+  | 'savedReviewFingerprint'
+  | 'externalFileConflict'
+  | '_history'
+  | '_future'
+> {
+  return {
+    nodes: args.nodes,
+    edges: args.edges,
+    graphDisplay: args.graphDisplay,
+    selected: null,
+    writingModeNodeId: null,
+    loadedToken: s.loadedToken + 1,
+    savedFingerprint: graphContentFingerprint(args.nodes, args.edges, args.graphDisplay),
+    savedReviewFingerprint: reviewStateFingerprint(args.nodes),
+    externalFileConflict: false,
+    _history: [],
+    _future: [],
+  }
+}
+
 export interface GraphManagementSlice {
   currentGraphId: string
   graphList: GraphMeta[]
@@ -633,20 +678,9 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
     if (requestId !== _loadRequestId) return
     const nodes = record.nodes.map((n) => mergeReviewIntoNode(n, reviews.get(n.id)))
     const graphDisplay = mergeGraphDisplay(record.display, get().settings)
-    const fp = graphContentFingerprint(nodes, record.edges, graphDisplay)
     set((s) => ({
       currentGraphId: record.id,
-      nodes,
-      edges: record.edges,
-      graphDisplay,
-      selected: null,
-      writingModeNodeId: null,
-      loadedToken: s.loadedToken + 1,
-      savedFingerprint: fp,
-      savedReviewFingerprint: reviewStateFingerprint(nodes),
-      externalFileConflict: false,
-      _history: [],
-      _future: [],
+      ...freshGraphSession(s, { nodes, edges: record.edges, graphDisplay }),
     }))
     track({ name: 'graph_opened' })
   },
@@ -714,14 +748,7 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
         { id: persisted.id, name: persisted.name, updatedAt: persisted.updatedAt },
       ],
       currentGraphId: persisted.id,
-      nodes: [],
-      edges: [],
-      graphDisplay: display,
-      selected: null,
-      writingModeNodeId: null,
-      savedFingerprint: graphContentFingerprint([], [], display),
-      _history: [],
-      _future: [],
+      ...freshGraphSession(s, { nodes: [], edges: [], graphDisplay: display }),
     }))
     return persisted.id
   },
@@ -765,14 +792,7 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
       return {
         graphList,
         currentGraphId: graphId,
-        nodes,
-        edges,
-        graphDisplay,
-        selected: null,
-        writingModeNodeId: null,
-        savedFingerprint: graphContentFingerprint(nodes, edges, graphDisplay),
-        _history: [],
-        _future: [],
+        ...freshGraphSession(s, { nodes, edges, graphDisplay }),
       }
     })
     return graphId

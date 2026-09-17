@@ -12,6 +12,7 @@ import {
   GRAPH_RECORD_VERSION,
 } from '@/store/db'
 import type { GraphRecord } from '@/store/db'
+import { reviewStateFingerprint } from '@/lib/graphPersist'
 import type { GraphState } from '../state'
 import { createDesktopSyncSlice } from './desktop-sync'
 import { createGraphEditingSlice } from './graph-editing'
@@ -130,6 +131,25 @@ describe('createGraph', () => {
     expect(state.graphDisplay.showHeatmap).toBe(false)
     const stored = await dbLoadGraph(id)
     expect(stored).toMatchObject({ id, name: 'Fresh' })
+  })
+
+  it('starts a clean tracking session: bumps the load token, refreshes the review fingerprint, and clears a pending conflict', async () => {
+    const s = await freshStore()
+    const a = await s.getState().createGraph('A')
+    s.getState().addNode()
+    await s.getState().saveCurrentGraph()
+    // Setup check: the saved session now tracks a one-node review state.
+    expect(s.getState().savedReviewFingerprint).not.toBe(reviewStateFingerprint([]))
+    s.setState({ externalFileConflict: true })
+    const tokenBefore = s.getState().loadedToken
+
+    await s.getState().createGraph('B')
+
+    const state = s.getState()
+    expect(state.currentGraphId).not.toBe(a)
+    expect(state.loadedToken).toBe(tokenBefore + 1)
+    expect(state.savedReviewFingerprint).toBe(reviewStateFingerprint(state.nodes))
+    expect(state.externalFileConflict).toBe(false)
   })
 })
 
