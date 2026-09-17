@@ -20,7 +20,11 @@ interface Props {
 
 export function ModelStatusBadge({ status, model, baseUrl, pullProgress, canPull, onPull }: Props) {
   const t = useT()
-  if (status === 'idle' || !model) return null
+  if (status === 'idle') return null
+  // Endpoint-level states render without a model so URL/key problems surface
+  // immediately on entry; model-bound states stay hidden until one is set.
+  if ((status === 'available' || status === 'unavailable' || status === 'pulling') && !model)
+    return null
   const dot = (color: string) => (
     <span
       style={{

@@ -80,9 +80,24 @@ describe('ModelStatusBadge', () => {
     expect(textContent()).toBe('')
   })
 
-  it('renders nothing when model is empty', () => {
-    render('checking', 'http://localhost:11434', '')
+  it('renders nothing for model-bound statuses when model is empty', () => {
+    render('unavailable', 'http://localhost:11434', '')
     expect(textContent()).toBe('')
+  })
+
+  it('shows "Checking…" without a model while the endpoint is probed', () => {
+    render('checking', 'http://localhost:11434', '')
+    expect(textContent()).toContain('Checking')
+  })
+
+  it('shows "Unauthorized" without a model', () => {
+    render('unauthorized', 'http://localhost:11434', '')
+    expect(textContent()).toContain('Unauthorized')
+  })
+
+  it('shows "API unreachable" without a model', () => {
+    render('error', 'https://opencode.ai/zen/v1', '', false)
+    expect(textContent()).toContain('API unreachable')
   })
 
   it('shows "Checking…" when checking', () => {

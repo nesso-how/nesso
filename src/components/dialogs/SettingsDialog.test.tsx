@@ -225,4 +225,13 @@ describe('SettingsDialog AI model discovery', () => {
     expect(container!.textContent).toContain('Model not found')
     expect(container!.textContent).not.toContain('Pull')
   })
+
+  it('shows unauthorized immediately on URL entry with an empty model', async () => {
+    vi.mocked(listEndpointModels).mockResolvedValue([])
+    vi.mocked(checkEndpoint).mockResolvedValue('unauthorized')
+    vi.mocked(isOllamaNative).mockResolvedValue(false)
+    setupSettings({ aiBaseUrl: 'http://127.0.0.1:8888/v1', aiModel: '' })
+    await openAiTab()
+    expect(container!.textContent).toContain('Unauthorized')
+  })
 })
