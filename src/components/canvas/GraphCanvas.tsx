@@ -63,6 +63,7 @@ export function GraphCanvas({
     (kind: 'node' | 'edge', id: string) => selected?.kind === kind && selected.id === id,
     [selected],
   )
+  const selectedNodeId = selected?.kind === 'node' ? selected.id : null
 
   const { screenToFlowPosition } = useReactFlow()
   // Only read at mount of the keyed NessoGraph below — memoized so the O(N)
@@ -186,6 +187,7 @@ export function GraphCanvas({
         categoryColorMode="css"
         getRelationLabel={getRelationLabel}
         isItemSelected={isItemSelected}
+        selectedNodeId={selectedNodeId}
         nodeTypes={nodeTypes}
         nodesDraggable={true}
         nodesConnectable={true}

@@ -22,7 +22,7 @@ import type {
   NessoGraphDocumentInput,
   CategoryPalette,
 } from '@nesso-how/vocab-learning'
-import type { NessoEdgeData, GraphDisplaySettings } from './display.js'
+import { pickDisplay, type NessoEdgeData, type GraphDisplaySettings } from './display.js'
 import { GraphDisplayContext, type CategoryColorMode } from './context.js'
 import { documentToRenderGraph } from './documentToRenderGraph.js'
 import { ConceptNode } from './ConceptNode.js'
@@ -93,6 +93,8 @@ export interface NessoGraphProps {
   categoryColorMode?: CategoryColorMode
   getRelationLabel?: (type: RelationTypeName) => string
   isItemSelected?: (kind: 'node' | 'edge', id: string) => boolean
+  /** Id of the currently selected concept, if any — used to emphasize connected edges. */
+  selectedNodeId?: string | null
 
   // Node/edge types — override for app-specific interactivity (e.g. inline edit).
   nodeTypes?: NodeTypes
@@ -148,6 +150,7 @@ export function NessoGraph({
   categoryColorMode = 'palette',
   getRelationLabel,
   isItemSelected,
+  selectedNodeId,
   nodeTypes = DEFAULT_NODE_TYPES,
   edgeTypes = DEFAULT_EDGE_TYPES,
   nodesDraggable = false,
@@ -193,16 +196,30 @@ export function NessoGraph({
 
   const ctx = useMemo(
     () => ({
-      edgeEncoding: display?.edgeEncoding ?? graphDisplay?.edgeEncoding ?? 'full',
-      showHeatmap: display?.showHeatmap ?? graphDisplay?.showHeatmap ?? true,
-      curveStyle: display?.curveStyle ?? graphDisplay?.curveStyle ?? 'arc',
-      autoCurveFlip: display?.autoCurveFlip ?? graphDisplay?.autoCurveFlip ?? true,
+      edgeEncoding: pickDisplay(display?.edgeEncoding, graphDisplay?.edgeEncoding, 'full'),
+      showHeatmap: pickDisplay(display?.showHeatmap, graphDisplay?.showHeatmap, true),
+      curveStyle: pickDisplay(display?.curveStyle, graphDisplay?.curveStyle, 'arc'),
+      autoCurveFlip: pickDisplay(display?.autoCurveFlip, graphDisplay?.autoCurveFlip, true),
+      dimUnconnectedOnSelect: pickDisplay(
+        display?.dimUnconnectedOnSelect,
+        graphDisplay?.dimUnconnectedOnSelect,
+        true,
+      ),
       palette,
       categoryColorMode,
       getRelationLabel,
       isItemSelected,
+      selectedNodeId,
     }),
-    [display, graphDisplay, palette, categoryColorMode, getRelationLabel, isItemSelected],
+    [
+      display,
+      graphDisplay,
+      palette,
+      categoryColorMode,
+      getRelationLabel,
+      isItemSelected,
+      selectedNodeId,
+    ],
   )
 
   const { preventScrolling: preventScrollingOverride, ...restReactFlowProps } = reactFlowProps ?? {}

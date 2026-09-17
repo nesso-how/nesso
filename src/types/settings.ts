@@ -61,6 +61,7 @@ export function defaultGraphDisplay(
     showHeatmap: settings?.showHeatmap ?? true,
     curveStyle: settings?.curveStyle ?? 'arc',
     autoCurveFlip: settings?.autoCurveFlip !== false,
+    dimUnconnectedOnSelect: true,
   }
 }
 
@@ -75,5 +76,6 @@ export function mergeGraphDisplay(
     showHeatmap: stored.showHeatmap ?? base.showHeatmap,
     curveStyle: stored.curveStyle ?? base.curveStyle,
     autoCurveFlip: stored.autoCurveFlip !== undefined ? stored.autoCurveFlip : base.autoCurveFlip,
+    dimUnconnectedOnSelect: stored.dimUnconnectedOnSelect ?? base.dimUnconnectedOnSelect,
   }
 }

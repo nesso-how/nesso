@@ -35,6 +35,7 @@ describe('graphToDocument', () => {
     showHeatmap: false,
     curveStyle: 'straight' as const,
     autoCurveFlip: true,
+    dimUnconnectedOnSelect: true,
   }
 
   it('omits FSRS from serialized concepts', () => {
