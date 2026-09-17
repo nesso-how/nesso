@@ -240,7 +240,7 @@ const it: typeof en = {
       arc: 'Curva',
       line: 'Linea',
       autoFlip: 'Flip automatico',
-      dimUnconnected: 'Attenua altri archi',
+      dimUnconnected: 'Focus',
     },
   },
   search: {

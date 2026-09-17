@@ -77,8 +77,7 @@ test('selecting a concept dims unconnected edges and keeps connected ones at def
   // Per-map toggle off: selecting no longer dims anything.
   const dimSwitch = page
     .locator('div')
-    .filter({ hasText: 'Dim other edges' })
-    .last()
+    .filter({ hasText: /^Focus$/ })
     .getByRole('switch')
   await dimSwitch.click()
   await expect(dimSwitch).toHaveAttribute('aria-checked', 'false')
