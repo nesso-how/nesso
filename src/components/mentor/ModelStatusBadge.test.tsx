@@ -4,7 +4,7 @@
 import { createRoot, type Root } from 'react-dom/client'
 import { act } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { OllamaModelStatus } from '@/lib/ollama'
+import type { ModelStatus } from '@/lib/ollama'
 
 // Minimal i18n stub — avoids the persisted store.
 vi.mock('@/i18n', () => ({
@@ -16,6 +16,7 @@ vi.mock('@/i18n', () => ({
           checking: 'Checking…',
           available: 'Available',
           notFound: 'Not found locally',
+          modelNotFound: 'Model not found',
           pull: 'Pull',
           ollamaNotRunning: 'Ollama not running:',
           corsBlocked: 'CORS blocked. Set',
@@ -50,9 +51,10 @@ afterEach(() => {
 })
 
 function render(
-  status: OllamaModelStatus,
+  status: ModelStatus,
   baseUrl = 'http://localhost:11434',
   model = 'gemma3:4b',
+  canPull = true,
 ) {
   act(() => {
     root!.render(
@@ -61,6 +63,7 @@ function render(
         model={model}
         baseUrl={baseUrl}
         pullProgress={0}
+        canPull={canPull}
         onPull={() => {}}
       />,
     )
@@ -77,9 +80,24 @@ describe('ModelStatusBadge', () => {
     expect(textContent()).toBe('')
   })
 
-  it('renders nothing when model is empty', () => {
-    render('checking', 'http://localhost:11434', '')
+  it('renders nothing for model-bound statuses when model is empty', () => {
+    render('unavailable', 'http://localhost:11434', '')
     expect(textContent()).toBe('')
+  })
+
+  it('shows "Checking…" without a model while the endpoint is probed', () => {
+    render('checking', 'http://localhost:11434', '')
+    expect(textContent()).toContain('Checking')
+  })
+
+  it('shows "Unauthorized" without a model', () => {
+    render('unauthorized', 'http://localhost:11434', '')
+    expect(textContent()).toContain('Unauthorized')
+  })
+
+  it('shows "API unreachable" without a model', () => {
+    render('error', 'https://opencode.ai/zen/v1', '', false)
+    expect(textContent()).toContain('API unreachable')
   })
 
   it('shows "Checking…" when checking', () => {
@@ -98,9 +116,50 @@ describe('ModelStatusBadge', () => {
     expect(textContent()).toContain('Pull')
   })
 
+  it('treats 127.0.0.1 as local for unavailable', () => {
+    render('unavailable', 'http://127.0.0.1:11434/v1')
+    expect(textContent()).toContain('Not found locally')
+    expect(textContent()).toContain('Pull')
+  })
+
   it('does not show pull button for non-local endpoints on unavailable', () => {
-    render('unavailable', 'https://opencode.ai/zen/v1')
+    render('unavailable', 'https://opencode.ai/zen/v1', 'gemma3:4b', false)
     expect(textContent()).not.toContain('Pull')
+  })
+
+  it('shows neutral "Model not found" without local wording for non-local unavailable', () => {
+    render('unavailable', 'https://opencode.ai/zen/v1', 'gemma3:4b', false)
+    expect(textContent()).toContain('Model not found')
+    expect(textContent()).not.toContain('locally')
+    expect(textContent()).not.toContain('Pull')
+  })
+
+  it('renders nothing when pulling on a non-local endpoint', () => {
+    act(() => {
+      root!.render(
+        <ModelStatusBadge
+          status="pulling"
+          model="gemma3:4b"
+          baseUrl="https://opencode.ai/zen/v1"
+          pullProgress={0.42}
+          canPull={false}
+          onPull={() => {}}
+        />,
+      )
+    })
+    expect(textContent()).toBe('')
+  })
+
+  it('shows neutral text without Pull for a local non-Ollama endpoint', () => {
+    render('unavailable', 'http://127.0.0.1:8888/v1', 'some-model', false)
+    expect(textContent()).toContain('Model not found')
+    expect(textContent()).not.toContain('locally')
+    expect(textContent()).not.toContain('Pull')
+  })
+
+  it('renders nothing when pulling without pull capability', () => {
+    render('pulling', 'http://localhost:11434', 'gemma3:4b', false)
+    expect(textContent()).toBe('')
   })
 
   it('shows pull progress when pulling', () => {
@@ -111,6 +170,7 @@ describe('ModelStatusBadge', () => {
           model="gemma3:4b"
           baseUrl="http://localhost:11434"
           pullProgress={0.42}
+          canPull
           onPull={() => {}}
         />,
       )
@@ -120,7 +180,7 @@ describe('ModelStatusBadge', () => {
   })
 
   it('shows "Unauthorized" when status is unauthorized', () => {
-    render('unauthorized' as OllamaModelStatus, 'https://opencode.ai/zen/v1')
+    render('unauthorized' as ModelStatus, 'https://opencode.ai/zen/v1')
     expect(textContent()).toContain('Unauthorized')
   })
 

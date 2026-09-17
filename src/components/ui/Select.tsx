@@ -13,9 +13,13 @@ interface Props<T extends string> {
 }
 
 /** Compact dropdown select. Use for growing enums (e.g. Language); use
- *  SegmentedControl for small fixed sets of even choices. */
+ *  SegmentedControl for small fixed sets of even choices. The menu spans the
+ *  control width, scrolls internally past a max height, and flips above the
+ *  toggle when there is no room below — it must survive inside scrollable
+ *  dialog content without being clipped. */
 export function Select<T extends string>({ options, value, onChange }: Props<T>) {
   const [open, setOpen] = useState(false)
+  const [openAbove, setOpenAbove] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -29,11 +33,31 @@ export function Select<T extends string>({ options, value, onChange }: Props<T>)
 
   const current = options.find((o) => o.id === value)
 
+  const toggle = () => {
+    if (!open && ref.current) {
+      const rect = ref.current.getBoundingClientRect()
+      // Measure against the enclosing dialog when there is one: the menu
+      // must fit the dialog's visible box, not just the viewport, because
+      // dialogs clip overflowing content.
+      const host = ref.current.closest('[role="dialog"]')
+      const top = host ? host.getBoundingClientRect().top : 0
+      const bottom = host ? host.getBoundingClientRect().bottom : window.innerHeight
+      const spaceBelow = bottom - rect.bottom
+      // Estimated menu height for the current option count, capped the same
+      // way as the menu style below. Prefer below; flip above only when the
+      // menu would not fit and above has meaningfully more room.
+      const need = Math.min(options.length * 33 + 16, 244)
+      setOpenAbove(spaceBelow < need && rect.top - top > spaceBelow)
+    }
+    setOpen((o) => !o)
+  }
+
   return (
     <div ref={ref} style={{ position: 'relative' }}>
       <button
         type="button"
-        onClick={() => setOpen((o) => !o)}
+        title={current?.label ?? ''}
+        onClick={toggle}
         style={{
           display: 'inline-flex',
           alignItems: 'center',
@@ -48,9 +72,12 @@ export function Select<T extends string>({ options, value, onChange }: Props<T>)
           fontFamily: 'var(--font-sans)',
           padding: '5px 7px 5px 11px',
           borderRadius: 'var(--radius-sm)',
+          maxWidth: '100%',
+          overflow: 'hidden',
+          whiteSpace: 'nowrap',
         }}
       >
-        {current?.label ?? ''}
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{current?.label ?? ''}</span>
         <svg
           width="10"
           height="10"
@@ -67,18 +94,20 @@ export function Select<T extends string>({ options, value, onChange }: Props<T>)
       </button>
       {open && (
         <div
+          className="nesso-scrollbar"
           style={{
             position: 'absolute',
-            top: 'calc(100% + 4px)',
+            ...(openAbove ? { bottom: 'calc(100% + 4px)' } : { top: 'calc(100% + 4px)' }),
+            left: 0,
             right: 0,
-            minWidth: '100%',
+            maxHeight: 240,
+            overflowY: 'auto',
             background: 'var(--bg-card)',
             border: '0.5px solid var(--line)',
             borderRadius: 'var(--radius-md)',
             boxShadow: 'var(--shadow-lg)',
             padding: 'var(--space-2)',
             zIndex: 5,
-            whiteSpace: 'nowrap',
           }}
         >
           {options.map((o) => {
@@ -87,6 +116,7 @@ export function Select<T extends string>({ options, value, onChange }: Props<T>)
               <button
                 key={o.id}
                 type="button"
+                title={o.label}
                 onClick={() => {
                   onChange(o.id)
                   setOpen(false)
@@ -95,6 +125,7 @@ export function Select<T extends string>({ options, value, onChange }: Props<T>)
                   display: 'flex',
                   alignItems: 'center',
                   width: '100%',
+                  minWidth: 0,
                   textAlign: 'left',
                   appearance: 'none',
                   border: 0,
@@ -104,6 +135,9 @@ export function Select<T extends string>({ options, value, onChange }: Props<T>)
                   font: `${active ? 500 : 400} 12.5px 'Inter', system-ui`,
                   padding: '6px 10px',
                   borderRadius: 'var(--radius-sm)',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
                 }}
               >
                 {o.label}

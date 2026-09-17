@@ -74,6 +74,109 @@ export function isLocalhostUrl(url: string): boolean {
 // ---------------------------------------------------------------------------
 
 /**
+ * Shared fetch for the OpenAI-compatible `/models` endpoint: trims trailing
+ * slashes, sends the bearer key only when set, and composes the caller signal
+ * with an internal 5-second timeout. Throws on network failure or abort;
+ * callers map HTTP statuses to their own outcome.
+ */
+async function fetchModelsResponse(
+  baseUrl: string,
+  apiKey: string,
+  signal?: AbortSignal,
+): Promise<Response> {
+  const cleanUrl = baseUrl.replace(/\/+$/, '')
+  const fetcher = getConfiguredFetch()
+  const headers: Record<string, string> = {}
+  if (apiKey) {
+    headers['Authorization'] = `Bearer ${apiKey}`
+  }
+  // Desktop only: ask the Tauri HTTP plugin to strip its forced
+  // `Origin: tauri://localhost` header by sending it empty (removed
+  // plugin-side; requires the `unsafe-headers` plugin feature, and must stay
+  // in sync with src-tauri/Cargo.toml). Origin-rejecting endpoints 401
+  // otherwise. Browsers forbid setting Origin, so this stays desktop-only.
+  if (isDesktop()) {
+    headers['Origin'] = ''
+  }
+  const effectiveSignal = signal
+    ? AbortSignal.any([signal, AbortSignal.timeout(5000)])
+    : AbortSignal.timeout(5000)
+  return fetcher(`${cleanUrl}/models`, {
+    signal: effectiveSignal,
+    headers,
+  })
+}
+
+/**
+ * Lists the model ids reported by the endpoint's OpenAI-compatible `/models`
+ * route. Never throws: unreachable endpoints, non-2xx responses, and aborts
+ * all resolve to an empty list so settings UI can fall back to the bare input.
+ *
+ * The caller signal is composed with an internal 5-second timeout via
+ * `AbortSignal.any`; when no signal is given the timeout applies on its own.
+ */
+export async function listEndpointModels(
+  baseUrl: string,
+  apiKey: string,
+  signal?: AbortSignal,
+): Promise<string[]> {
+  try {
+    const res = await fetchModelsResponse(baseUrl, apiKey, signal)
+    if (!res.ok) return []
+    const data = (await res.json()) as { data?: { id: string }[] }
+    return (data.data ?? []).map((m) => m.id)
+  } catch {
+    return []
+  }
+}
+
+/**
+ * Probes whether the endpoint speaks the native Ollama API by querying
+ * `/api/version` on the native base (the OpenAI-compatible base minus an
+ * optional `/v1` suffix). Tri-state, never throws:
+ * - `true` — 2xx JSON response carrying a non-empty `version` string.
+ * - `false` — answered, but not Ollama (non-2xx, malformed payload).
+ * - `null` — unreachable (network failure, timeout, abort): genuinely
+ *   unknown, so the caller should keep its previous value rather than hide
+ *   Pull on a transient blip.
+ *
+ * Sends no Authorization header: Ollama needs none, and a stale key would
+ * skew the probe (some servers 401 unknown bearers). Same timeout
+ * composition as the `/models` calls.
+ */
+export async function isOllamaNative(
+  baseUrl: string,
+  signal?: AbortSignal,
+): Promise<boolean | null> {
+  const fetcher = getConfiguredFetch()
+  const headers: Record<string, string> = {}
+  // Same empty-Origin strip as the `/models` calls: without it the desktop
+  // transport forces `Origin: tauri://localhost` and Origin-rejecting
+  // servers would skew the probe. Desktop-only; browsers forbid the header.
+  if (isDesktop()) {
+    headers['Origin'] = ''
+  }
+  const effectiveSignal = signal
+    ? AbortSignal.any([signal, AbortSignal.timeout(5000)])
+    : AbortSignal.timeout(5000)
+  let res: Response
+  try {
+    res = await fetcher(`${ollamaNativeBase(baseUrl)}/api/version`, {
+      signal: effectiveSignal,
+      headers,
+    })
+  } catch {
+    return null
+  }
+  if (!res.ok) return false
+  try {
+    const data = (await res.json()) as { version?: unknown }
+    return typeof data.version === 'string' && data.version.length > 0
+  } catch {
+    return false
+  }
+}
+/**
  * Checks whether a model is available at the given base URL by querying the
  * `/models` endpoint. Returns one of:
  * - `'available'`   — model found in the list
@@ -81,8 +184,8 @@ export function isLocalhostUrl(url: string): boolean {
  * - `'unauthorized'` — HTTP 401 or 403
  * - `'error'`       — network failure, timeout, or any other non-2xx response
  *
- * When the caller provides a signal it is passed straight through to fetch.
- * When no signal is given a 5-second timeout is applied internally.
+ * The caller signal is composed with an internal 5-second timeout via
+ * `AbortSignal.any`; when no signal is given the timeout applies on its own.
  */
 export async function checkEndpoint(
   baseUrl: string,
@@ -91,19 +194,7 @@ export async function checkEndpoint(
   signal?: AbortSignal,
 ): Promise<'available' | 'unavailable' | 'unauthorized' | 'error'> {
   try {
-    const cleanUrl = baseUrl.replace(/\/+$/, '')
-    const fetcher = getConfiguredFetch()
-    const headers: Record<string, string> = {}
-    if (apiKey) {
-      headers['Authorization'] = `Bearer ${apiKey}`
-    }
-    const effectiveSignal = signal
-      ? AbortSignal.any([signal, AbortSignal.timeout(5000)])
-      : AbortSignal.timeout(5000)
-    const res = await fetcher(`${cleanUrl}/models`, {
-      signal: effectiveSignal,
-      headers,
-    })
+    const res = await fetchModelsResponse(baseUrl, apiKey, signal)
     if (res.status === 401 || res.status === 403) return 'unauthorized'
     if (!res.ok) return 'error'
     const data = (await res.json()) as { data?: { id: string }[] }
@@ -238,6 +329,10 @@ function mentorModel(settings: NessoSettings) {
     name: 'nesso-mentor',
     baseURL: settings.aiBaseUrl.replace(/\/+$/, ''),
     ...(settings.aiApiKey ? { apiKey: settings.aiApiKey } : {}),
+    // Desktop only: same empty-Origin strip as fetchModelsResponse above —
+    // chat completions travel the same native transport and would 401 the
+    // same way. Browsers forbid setting Origin, so this stays desktop-only.
+    ...(isDesktop() ? { headers: { Origin: '' } } : {}),
     ...(isDesktop() ? { fetch: _desktopFetch } : {}),
   })
   return wrapLanguageModel({

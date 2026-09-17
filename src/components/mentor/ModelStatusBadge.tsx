@@ -1,21 +1,106 @@
 // SPDX-License-Identifier: MIT
+import type { ReactNode } from 'react'
 import { useT } from '@/i18n'
 import { isDesktop } from '@/lib/isDesktop'
-import type { OllamaModelStatus } from '@/lib/ollama'
-import { isLocalhostUrl } from '@/lib/ollama'
+import type { ModelStatus } from '@/lib/ollama'
 import { getErrorHint } from './modelStatusDisplay'
 
 interface Props {
-  status: OllamaModelStatus
+  status: ModelStatus
   model: string
   baseUrl: string
   pullProgress: number
+  /**
+   * Whether the Ollama-native Pull affordance may show: the endpoint is a
+   * loopback URL and has not proven to be a non-Ollama server. The dialog
+   * computes this from the `/api/version` probe; the badge only renders it.
+   */
+  canPull: boolean
   onPull: () => void
 }
 
-export function ModelStatusBadge({ status, model, baseUrl, pullProgress, onPull }: Props) {
+function ErrorStatus({ baseUrl, dot }: { baseUrl: string; dot: (color: string) => ReactNode }) {
   const t = useT()
-  if (status === 'idle' || !model) return null
+  const hint = getErrorHint(baseUrl, isDesktop(), window.location.hostname)
+  if (hint === 'unreachable') {
+    return (
+      <>
+        {dot('var(--ink-4)')}
+        <span style={{ color: 'var(--ink-4)' }}>{t.settings.ai.status.unreachable}</span>
+      </>
+    )
+  }
+  if (hint === 'ollama-not-running') {
+    return (
+      <>
+        {dot('var(--ink-4)')}
+        <span style={{ color: 'var(--ink-4)' }}>{t.settings.ai.status.ollamaNotRunning}</span>
+        <code style={{ color: 'var(--ink-2)', fontSize: 'var(--text-xs)' }}>ollama serve</code>
+      </>
+    )
+  }
+  // cors-blocked
+  return (
+    <>
+      {dot('var(--conf-2)')}
+      <span style={{ color: 'var(--ink-4)' }}>{t.settings.ai.status.corsBlocked}</span>
+      <code style={{ color: 'var(--ink-2)', fontSize: 'var(--text-xs)' }}>
+        OLLAMA_ORIGINS={window.location.origin}
+      </code>
+    </>
+  )
+}
+
+/** Model-bound states stay hidden until a model is set; endpoint-level states
+ *  render without one so URL/key problems surface immediately on entry. */
+function isModelBoundStatus(status: ModelStatus): boolean {
+  return status === 'available' || status === 'unavailable' || status === 'pulling'
+}
+
+function UnavailableStatus({
+  canPull,
+  dot,
+  onPull,
+}: {
+  canPull: boolean
+  dot: (color: string) => ReactNode
+  onPull: () => void
+}) {
+  const t = useT()
+  return (
+    <>
+      {dot('var(--conf-2)')}
+      <span style={{ color: 'var(--ink-3)' }}>
+        {canPull ? t.settings.ai.status.notFound : t.settings.ai.status.modelNotFound}
+      </span>
+      {canPull && (
+        <button
+          type="button"
+          onClick={onPull}
+          style={{
+            appearance: 'none',
+            border: '0.5px solid var(--accent)',
+            background: 'transparent',
+            color: 'var(--accent)',
+            fontSize: '11px',
+            fontWeight: 500,
+            fontFamily: 'var(--font-mono)',
+            padding: '2px 8px',
+            borderRadius: 'var(--radius-sm)',
+            cursor: 'pointer',
+          }}
+        >
+          {t.settings.ai.status.pull}
+        </button>
+      )}
+    </>
+  )
+}
+
+export function ModelStatusBadge({ status, model, baseUrl, pullProgress, canPull, onPull }: Props) {
+  const t = useT()
+  if (status === 'idle') return null
+  if (isModelBoundStatus(status) && !model) return null
   const dot = (color: string) => (
     <span
       style={{
@@ -30,6 +115,7 @@ export function ModelStatusBadge({ status, model, baseUrl, pullProgress, onPull 
   )
 
   if (status === 'pulling') {
+    if (!canPull) return null
     return (
       <div style={{ marginTop: 8 }}>
         <div
@@ -64,8 +150,6 @@ export function ModelStatusBadge({ status, model, baseUrl, pullProgress, onPull 
       </div>
     )
   }
-
-  const isLocal = isLocalhostUrl(baseUrl)
 
   return (
     <div
@@ -102,30 +186,7 @@ export function ModelStatusBadge({ status, model, baseUrl, pullProgress, onPull 
         </>
       )}
       {status === 'unavailable' && (
-        <>
-          {dot('var(--conf-2)')}
-          <span style={{ color: 'var(--ink-3)' }}>{t.settings.ai.status.notFound}</span>
-          {isLocal && (
-            <button
-              type="button"
-              onClick={onPull}
-              style={{
-                appearance: 'none',
-                border: '0.5px solid var(--accent)',
-                background: 'transparent',
-                color: 'var(--accent)',
-                fontSize: '11px',
-                fontWeight: 500,
-                fontFamily: 'var(--font-mono)',
-                padding: '2px 8px',
-                borderRadius: 'var(--radius-sm)',
-                cursor: 'pointer',
-              }}
-            >
-              {t.settings.ai.status.pull}
-            </button>
-          )}
-        </>
+        <UnavailableStatus canPull={canPull} dot={dot} onPull={onPull} />
       )}
       {status === 'unauthorized' && (
         <>
@@ -133,41 +194,7 @@ export function ModelStatusBadge({ status, model, baseUrl, pullProgress, onPull 
           <span style={{ color: 'var(--ink-4)' }}>{t.settings.ai.status.unauthorized}</span>
         </>
       )}
-      {status === 'error' &&
-        (() => {
-          const hint = getErrorHint(baseUrl, isDesktop(), window.location.hostname)
-          if (hint === 'unreachable') {
-            return (
-              <>
-                {dot('var(--ink-4)')}
-                <span style={{ color: 'var(--ink-4)' }}>{t.settings.ai.status.unreachable}</span>
-              </>
-            )
-          }
-          if (hint === 'ollama-not-running') {
-            return (
-              <>
-                {dot('var(--ink-4)')}
-                <span style={{ color: 'var(--ink-4)' }}>
-                  {t.settings.ai.status.ollamaNotRunning}
-                </span>
-                <code style={{ color: 'var(--ink-2)', fontSize: 'var(--text-xs)' }}>
-                  ollama serve
-                </code>
-              </>
-            )
-          }
-          // cors-blocked
-          return (
-            <>
-              {dot('var(--conf-2)')}
-              <span style={{ color: 'var(--ink-4)' }}>{t.settings.ai.status.corsBlocked}</span>
-              <code style={{ color: 'var(--ink-2)', fontSize: 'var(--text-xs)' }}>
-                OLLAMA_ORIGINS={window.location.origin}
-              </code>
-            </>
-          )
-        })()}
+      {status === 'error' && <ErrorStatus baseUrl={baseUrl} dot={dot} />}
     </div>
   )
 }

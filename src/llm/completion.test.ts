@@ -19,6 +19,8 @@ import {
   isAiReady,
   isLocalhostUrl,
   isNetworkFailure,
+  isOllamaNative,
+  listEndpointModels,
   pullModel,
 } from './completion'
 
@@ -249,6 +251,9 @@ describe('fetchCompletion streaming', () => {
     expect(init.method).toBe('POST')
     expect(init.maxRedirections).toBe(0)
     expect(new Headers(init.headers).get('authorization')).toBe('Bearer test-key')
+    // Empty Origin: the Tauri HTTP plugin strips it instead of forcing
+    // `Origin: tauri://localhost`, which Origin-rejecting endpoints 401.
+    expect(new Headers(init.headers).get('origin')).toBe('')
     expect(init.signal).toBe(controller.signal)
 
     const body = JSON.parse(String(init.body)) as {
@@ -760,6 +765,180 @@ describe('checkEndpoint', () => {
 
     const result = await checkEndpoint('http://localhost:11434', 'gemma3:4b', '', controller.signal)
     expect(result).toBe('error')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// listEndpointModels
+// ---------------------------------------------------------------------------
+
+describe('listEndpointModels', () => {
+  it('returns model ids from the /models list', async () => {
+    vi.stubGlobal('window', {})
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ data: [{ id: 'gemma3:4b' }, { id: 'qwen3:8b' }] }), {
+          status: 200,
+        }),
+      ),
+    )
+
+    const result = await listEndpointModels('http://localhost:11434', '')
+    expect(result).toEqual(['gemma3:4b', 'qwen3:8b'])
+  })
+
+  it('sends bearer auth when apiKey is provided', async () => {
+    vi.stubGlobal('window', {})
+    const browserFetch = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ data: [{ id: 'big-pickle' }] }), {
+        status: 200,
+      }),
+    )
+    vi.stubGlobal('fetch', browserFetch)
+
+    await listEndpointModels('https://opencode.ai/zen/v1', 'test-key')
+
+    const [, init] = browserFetch.mock.calls[0] as [string, RequestInit]
+    expect(new Headers(init.headers).get('authorization')).toBe('Bearer test-key')
+  })
+
+  it('strips trailing slashes from the base URL', async () => {
+    vi.stubGlobal('window', {})
+    const browserFetch = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ data: [{ id: 'gemma3:4b' }] }), {
+        status: 200,
+      }),
+    )
+    vi.stubGlobal('fetch', browserFetch)
+
+    await listEndpointModels('http://localhost:11434/v1/', '')
+
+    const [url] = browserFetch.mock.calls[0] as [string]
+    expect(url).toBe('http://localhost:11434/v1/models')
+  })
+
+  it('returns [] for 401 without throwing', async () => {
+    vi.stubGlobal('window', {})
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('unauthorized', { status: 401 })))
+
+    const result = await listEndpointModels('https://opencode.ai/zen/v1', 'bad-key')
+    expect(result).toEqual([])
+  })
+
+  it('returns [] for 500 without throwing', async () => {
+    vi.stubGlobal('window', {})
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('server error', { status: 500 })))
+
+    const result = await listEndpointModels('https://opencode.ai/zen/v1', 'test-key')
+    expect(result).toEqual([])
+  })
+
+  it('returns [] for network failures without throwing', async () => {
+    vi.stubGlobal('window', {})
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')))
+
+    const result = await listEndpointModels('http://localhost:11434', '')
+    expect(result).toEqual([])
+  })
+
+  it('returns [] when the caller aborts before fetch completes', async () => {
+    vi.stubGlobal('window', {})
+    const controller = new AbortController()
+    controller.abort()
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockRejectedValue(new DOMException('The operation was aborted.', 'AbortError')),
+    )
+
+    const result = await listEndpointModels('http://localhost:11434', '', controller.signal)
+    expect(result).toEqual([])
+  })
+
+  it('sends an empty Origin on desktop so the plugin strips its forced header', async () => {
+    vi.stubGlobal('window', { __TAURI_INTERNALS__: {} })
+    vi.stubGlobal('fetch', vi.fn())
+    mockNativeFetch.mockResolvedValue(
+      new Response(JSON.stringify({ data: [{ id: 'gemma3:4b' }] }), { status: 200 }),
+    )
+
+    await listEndpointModels('http://127.0.0.1:8888/v1', '')
+
+    const [, init] = mockNativeFetch.mock.calls[0] as [string, RequestInit]
+    // Empty string: tauri-plugin-http removes the header instead of sending
+    // `Origin: tauri://localhost`, which Origin-rejecting endpoints 401.
+    expect(new Headers(init.headers).get('origin')).toBe('')
+  })
+
+  it('does not set Origin in browser builds where it is a forbidden header', async () => {
+    vi.stubGlobal('window', {})
+    const browserFetch = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ data: [{ id: 'gemma3:4b' }] }), {
+        status: 200,
+      }),
+    )
+    vi.stubGlobal('fetch', browserFetch)
+
+    await listEndpointModels('http://127.0.0.1:8888/v1', '')
+
+    const [, init] = browserFetch.mock.calls[0] as [string, RequestInit]
+    expect(new Headers(init.headers).get('origin')).toBeNull()
+  })
+})
+
+// ---------------------------------------------------------------------------
+// isOllamaNative
+// ---------------------------------------------------------------------------
+
+describe('isOllamaNative', () => {
+  it('returns true when /api/version reports a version string', async () => {
+    vi.stubGlobal('window', {})
+    const browserFetch = vi
+      .fn()
+      .mockResolvedValue(new Response(JSON.stringify({ version: '0.11.4' }), { status: 200 }))
+    vi.stubGlobal('fetch', browserFetch)
+
+    await expect(isOllamaNative('http://localhost:11434/v1')).resolves.toBe(true)
+
+    const [url] = browserFetch.mock.calls[0] as [string]
+    expect(url).toBe('http://localhost:11434/api/version')
+  })
+
+  it('returns false for non-Ollama servers (non-2xx)', async () => {
+    vi.stubGlobal('window', {})
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('not found', { status: 404 })))
+
+    await expect(isOllamaNative('http://127.0.0.1:8888/v1')).resolves.toBe(false)
+  })
+
+  it('returns false when the version payload has no version string', async () => {
+    vi.stubGlobal('window', {})
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(new Response(JSON.stringify({ foo: 1 }), { status: 200 })),
+    )
+
+    await expect(isOllamaNative('http://localhost:11434/v1')).resolves.toBe(false)
+  })
+
+  it('returns null on network failure so callers keep the previous value', async () => {
+    vi.stubGlobal('window', {})
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')))
+
+    await expect(isOllamaNative('http://localhost:11434/v1')).resolves.toBeNull()
+  })
+
+  it('sends no auth header so a stale key cannot skew the probe', async () => {
+    vi.stubGlobal('window', {})
+    const browserFetch = vi
+      .fn()
+      .mockResolvedValue(new Response(JSON.stringify({ version: '0.11.4' }), { status: 200 }))
+    vi.stubGlobal('fetch', browserFetch)
+
+    await isOllamaNative('http://localhost:11434/v1')
+
+    const [, init] = browserFetch.mock.calls[0] as [string, RequestInit]
+    expect(new Headers(init.headers).get('authorization')).toBeNull()
   })
 })
 

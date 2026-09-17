@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from 'vitest'
-import type { OllamaModelStatus } from './ollama'
+import type { ModelStatus } from './ollama'
 import { ollamaNativeBase, isLocalhostUrl } from './ollama'
 
 describe('ollamaNativeBase', () => {

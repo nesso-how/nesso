@@ -13,17 +13,25 @@ import { useT } from '@/i18n'
 import { LearningSettings } from './LearningSettings'
 import { SettingsHeatmapDefault } from '@/components/ui/HeatmapDisplayToggle'
 import type { Language } from '@/types/graph'
-import { checkEndpoint, executeModelPull } from '@/llm/completion'
+import {
+  checkEndpoint,
+  executeModelPull,
+  isOllamaNative,
+  listEndpointModels,
+} from '@/llm/completion'
 import { MENTOR_PERSONA_MAX_CHARS } from '@/llm/context'
-import type { OllamaModelStatus } from '@/lib/ollama'
-
-const OLLAMA_PRESETS = [
-  { id: 'llama3.2:3b', note: 'lightweight · fast' },
-  { id: 'qwen3:8b', note: 'balanced · recommended' },
-] as const
+import type { ModelStatus } from '@/lib/ollama'
+import { isLocalhostUrl } from '@/lib/ollama'
 
 type Tab = 'appearance' | 'learning' | 'ai' | 'privacy'
 const ALL_TABS = ['appearance', 'learning', 'ai', 'privacy'] as const
+
+/**
+ * Pseudo-option id inside the model select that reveals the free-text input
+ * instead of picking a model. Never stored in settings, never health-checked:
+ * the onChange handler intercepts it before setSetting/triggerCheck.
+ */
+const CUSTOM_MODEL_OPTION_ID = '__nesso_custom__'
 
 const LANGUAGES: { id: Language; label: string }[] = [
   { id: 'en', label: 'English' },
@@ -40,10 +48,18 @@ export function SettingsDialog({ open, onClose }: Props) {
   const [tab, setTab] = useState<Tab>('appearance')
   const settings = useGraphStore((s) => s.settings)
   const setSetting = useGraphStore((s) => s.setSetting)
-  const [modelStatus, setModelStatus] = useState<OllamaModelStatus>('idle')
+  const [modelStatus, setModelStatus] = useState<ModelStatus>('idle')
   const [pullProgress, setPullProgress] = useState(0)
+  const [availableModels, setAvailableModels] = useState<string[]>([])
+  const [customModelOpen, setCustomModelOpen] = useState(false)
+  // Whether the endpoint speaks the native Ollama API (`/api/version` probe).
+  // null = not probed yet: Pull stays offered on loopback until the endpoint
+  // positively proves otherwise, so starting a local Ollama mid-dialog keeps
+  // working exactly as before.
+  const [ollamaNative, setOllamaNative] = useState<boolean | null>(null)
 
   const healthCheckAbortRef = useRef<AbortController | null>(null)
+  const modelsAbortRef = useRef<AbortController | null>(null)
 
   const triggerCheck = useCallback((baseUrl: string, model: string, apiKey?: string) => {
     if (!model) {
@@ -62,6 +78,49 @@ export function SettingsDialog({ open, onClose }: Props) {
         if (!controller.signal.aborted) setModelStatus('error')
       })
   }, [])
+
+  // Provider-agnostic model discovery: list the endpoint's own `/models`
+  // inventory (Ollama and hosted providers alike) so the user picks a real
+  // id instead of a hardcoded preset. Runs independently of the health check
+  // above — notably it does not depend on the selected model, so typing or
+  // selecting a model never refetches the list.
+  useEffect(() => {
+    if (!open || !settings.mentorEnabled) {
+      modelsAbortRef.current?.abort()
+      setAvailableModels([])
+      return
+    }
+    modelsAbortRef.current?.abort()
+    const controller = new AbortController()
+    modelsAbortRef.current = controller
+    // The previous endpoint's ids stop being offered as soon as the URL or
+    // key changes; the bare input below stays usable while loading.
+    setAvailableModels([])
+    setCustomModelOpen(false)
+    void listEndpointModels(settings.aiBaseUrl, settings.aiApiKey, controller.signal).then(
+      (ids) => {
+        if (controller.signal.aborted) return
+        setAvailableModels(ids)
+        // Default an empty model to the first discovered id so the select
+        // never sits blank after entering a URL. A non-empty value — typed
+        // or previously selected — is never overwritten; read it fresh so a
+        // model typed while the fetch was in flight wins.
+        if (ids.length > 0 && useGraphStore.getState().settings.aiModel === '') {
+          setSetting('aiModel', ids[0])
+        }
+      },
+    )
+    // Native Ollama probe for the Pull affordance: only a server that
+    // positively answers `/api/version` is offered Pull. Unreachable keeps
+    // the previous value (an Ollama started mid-dialog keeps working);
+    // proven non-Ollama hides Pull.
+    void isOllamaNative(settings.aiBaseUrl, controller.signal).then((native) => {
+      if (!controller.signal.aborted && native !== null) setOllamaNative(native)
+    })
+    return () => {
+      controller.abort()
+    }
+  }, [open, settings.aiBaseUrl, settings.aiApiKey, settings.mentorEnabled])
 
   const pullAbortRef = useRef<AbortController | null>(null)
   /** Monotonic counter — bumped on each new pull or settings invalidation. */
@@ -128,6 +187,15 @@ export function SettingsDialog({ open, onClose }: Props) {
       controller.abort()
     }
   }, [open, settings.aiBaseUrl, settings.aiModel, settings.aiApiKey, settings.mentorEnabled])
+
+  // The free-text input stays visible when there is no discovered list, when
+  // the user explicitly opened it, or when the current value is custom
+  // (typed, e.g. a model to pull that is not listed yet). Otherwise the
+  // select alone is the control and the input hides behind its toggle.
+  const showModelInput =
+    availableModels.length === 0 ||
+    customModelOpen ||
+    (settings.aiModel !== '' && !availableModels.includes(settings.aiModel))
 
   const inputStyle: React.CSSProperties = {
     width: '100%',
@@ -437,61 +505,54 @@ export function SettingsDialog({ open, onClose }: Props) {
                         >
                           {t.settings.ai.modelDesc}
                         </small>
-                        <div
-                          style={{
-                            display: 'flex',
-                            flexWrap: 'wrap',
-                            gap: 'var(--space-3)',
-                            marginBottom: 10,
-                          }}
-                        >
-                          {OLLAMA_PRESETS.map((p) => {
-                            const active = settings.aiModel === p.id
-                            return (
-                              <button
-                                key={p.id}
-                                type="button"
-                                title={p.note}
-                                onClick={() => {
-                                  setSetting('aiModel', p.id)
-                                  triggerCheck(settings.aiBaseUrl, p.id, settings.aiApiKey)
-                                }}
-                                style={{
-                                  appearance: 'none',
-                                  border: `0.5px solid ${active ? 'var(--ink-2)' : 'var(--line)'}`,
-                                  background: active ? 'var(--paper-deep)' : 'transparent',
-                                  color: active ? 'var(--ink)' : 'var(--ink-3)',
-                                  fontSize: '11px',
-                                  fontWeight: 500,
-                                  fontFamily: 'var(--font-mono)',
-                                  padding: '5px 10px',
-                                  borderRadius: 'var(--radius-sm)',
-                                  cursor: 'pointer',
-                                }}
-                              >
-                                {p.id}
-                              </button>
-                            )
-                          })}
-                        </div>
-                        <input
-                          type="text"
-                          value={settings.aiModel}
-                          placeholder="e.g. qwen3:8b"
-                          onChange={(e) => {
-                            setSetting('aiModel', e.target.value)
-                            setModelStatus('idle')
-                          }}
-                          onBlur={(e) =>
-                            triggerCheck(settings.aiBaseUrl, e.target.value, settings.aiApiKey)
-                          }
-                          style={inputStyle}
-                        />
+                        {availableModels.length > 0 && (
+                          <div style={{ marginBottom: 10 }}>
+                            <Select
+                              options={[
+                                ...(availableModels.includes(settings.aiModel) ||
+                                settings.aiModel === ''
+                                  ? availableModels
+                                  : [settings.aiModel, ...availableModels]
+                                ).map((id) => ({ id, label: id })),
+                                { id: CUSTOM_MODEL_OPTION_ID, label: t.settings.ai.customModel },
+                              ]}
+                              value={settings.aiModel}
+                              onChange={(id) => {
+                                if (id === CUSTOM_MODEL_OPTION_ID) {
+                                  // Reveal the free-text input without touching
+                                  // the stored model; picking a discovered id
+                                  // below closes it again.
+                                  setCustomModelOpen(true)
+                                  return
+                                }
+                                setSetting('aiModel', id)
+                                setCustomModelOpen(false)
+                                triggerCheck(settings.aiBaseUrl, id, settings.aiApiKey)
+                              }}
+                            />
+                          </div>
+                        )}
+                        {showModelInput && (
+                          <input
+                            type="text"
+                            value={settings.aiModel}
+                            placeholder="e.g. qwen3:8b"
+                            onChange={(e) => {
+                              setSetting('aiModel', e.target.value)
+                              setModelStatus('idle')
+                            }}
+                            onBlur={(e) =>
+                              triggerCheck(settings.aiBaseUrl, e.target.value, settings.aiApiKey)
+                            }
+                            style={inputStyle}
+                          />
+                        )}
                         <ModelStatusBadge
                           status={modelStatus}
                           model={settings.aiModel}
                           baseUrl={settings.aiBaseUrl}
                           pullProgress={pullProgress}
+                          canPull={isLocalhostUrl(settings.aiBaseUrl) && ollamaNative !== false}
                           onPull={() => void handlePull()}
                         />
                       </div>
