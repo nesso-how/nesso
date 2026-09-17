@@ -27,7 +27,9 @@ export {
 export { grantFsScope, pickWorkspaceFolder } from '@/lib/workspace/scope'
 export {
   reconcileDiskWithIdb,
-  persistWorkspaceSync,
+  syncWorkspace,
   loadProjectFromDisk,
+  listNormalizedGraphs,
+  recordsToGraphMeta,
   checkWorkspaceCompatibility,
 } from '@/lib/workspace/sync'

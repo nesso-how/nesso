@@ -24,7 +24,8 @@ import {
   grantFsScope,
   loadProjectFromDisk,
   normalizePath,
-  persistWorkspaceSync,
+  syncWorkspace,
+  recordsToGraphMeta,
   pickWorkspaceFolder,
   removeGraphFromWorkspace,
   resolveWorkspace,
@@ -145,7 +146,7 @@ function commitRecordsAsGraphList(
   get: () => GraphState,
   set: (patch: Partial<GraphState>) => void,
 ): GraphMeta[] {
-  const list = records.map((r) => ({ id: r.id, name: r.name, updatedAt: r.updatedAt }))
+  const list = recordsToGraphMeta(records)
   const validIds = new Set(records.map((r) => r.id))
   const patch: Partial<GraphState> = { graphList: list }
   if (!validIds.has(get().currentGraphId) && records[0]) {
@@ -456,7 +457,7 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
           return await get().markProjectMissing(activeProjectPath)
         }
 
-        records = await persistWorkspaceSync(get().settings, records)
+        records = await syncWorkspace(get().settings, records)
       } catch (err) {
         console.error('[nesso] workspace sync failed:', err)
       }
@@ -567,7 +568,7 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
         if (finalRecords === null) return get().graphList
         records = finalRecords
 
-        const list = records.map((r) => ({ id: r.id, name: r.name, updatedAt: r.updatedAt }))
+        const list = recordsToGraphMeta(records)
         set({ graphList: list })
 
         const next = [...records].sort((a, b) => b.updatedAt - a.updatedAt)[0]

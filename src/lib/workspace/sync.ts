@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 import type { GraphRecord } from '@/store/db'
+import type { GraphMeta } from '@/store/types'
 import { dbDeleteGraph, dbListGraphs, dbSaveGraph } from '@/store/db'
 import { graphPersistEquals } from '@/lib/graphPersist'
 import { normalizeGraphRecord } from '@/lib/graphLoadNormalizer'
@@ -203,32 +204,58 @@ export async function reconcileDiskWithIdb(
   }
 }
 
-/** IndexedDB ↔ workspace sync; returns graph list after merge. */
-export async function persistWorkspaceSync(
-  settings: Pick<NessoSettings, 'activeProjectPath'>,
-  records: GraphRecord[],
-): Promise<GraphRecord[]> {
-  const ws = await resolveWorkspace(settings)
-  await grantFsScope(ws.displayPath)
-  const { toPersist, manifest, removed, reservedPaths } = await reconcileDiskWithIdb(ws, records)
-  setDiskSyncCache(ws.displayPath, manifest, reservedPaths)
-  await persistToIdb(toPersist)
-  for (const id of removed) await dbDeleteGraph(id)
+/** Map full records to the lightweight list metadata the store keeps. */
+export function recordsToGraphMeta(records: GraphRecord[]): GraphMeta[] {
+  return records.map((r) => ({ id: r.id, name: r.name, updatedAt: r.updatedAt }))
+}
+
+function logSkippedRecord(label: string, r: GraphRecord): void {
+  // Isolate: a single corrupt IDB row must not abort the entire
+  // sync. The corrupt data is preserved in IDB — never deleted.
+  console.warn(
+    `[nesso] ${label} skipping corrupt graph record:`,
+    typeof (r as { id?: unknown })?.id === 'string' ? (r as { id: string }).id : '?',
+  )
+}
+
+/**
+ * Normalize every IndexedDB record, skipping corrupt rows without aborting.
+ * `label` identifies the caller in the skip warning so consolidated call
+ * sites keep their previous log prefix.
+ */
+export async function listNormalizedGraphs(label: string): Promise<GraphRecord[]> {
   const raw = await dbListGraphs()
   const out: GraphRecord[] = []
   for (const r of raw) {
     try {
       out.push(normalizeGraphRecord(r))
     } catch {
-      // Isolate: a single corrupt IDB row must not abort the entire
-      // sync. The corrupt data is preserved in IDB — never deleted.
-      console.warn(
-        '[nesso] persistWorkspaceSync skipping corrupt graph record:',
-        typeof (r as { id?: unknown })?.id === 'string' ? (r as { id: string }).id : '?',
-      )
+      logSkippedRecord(label, r)
     }
   }
   return out
+}
+
+/**
+ * Shared persist/load shape: cache the manifest plus reserved paths, mirror
+ * disk-newer records into IDB, and drop IDB records whose file vanished.
+ */
+async function applySyncResult(ws: WorkspaceTarget, result: DiskReconcileResult): Promise<void> {
+  setDiskSyncCache(ws.displayPath, result.manifest, result.reservedPaths)
+  await persistToIdb(result.toPersist)
+  for (const id of result.removed) await dbDeleteGraph(id)
+}
+
+/** IndexedDB ↔ workspace sync; returns graph list after merge. */
+export async function syncWorkspace(
+  settings: Pick<NessoSettings, 'activeProjectPath'>,
+  records: GraphRecord[],
+): Promise<GraphRecord[]> {
+  const ws = await resolveWorkspace(settings)
+  await grantFsScope(ws.displayPath)
+  const result = await reconcileDiskWithIdb(ws, records)
+  await applySyncResult(ws, result)
+  return listNormalizedGraphs('syncWorkspace')
 }
 
 export interface ProjectLoadResult {
@@ -291,20 +318,12 @@ export async function checkWorkspaceCompatibility(
 
 /** Load every graph from a project folder into IDB (disk is the source of truth). */
 export async function loadProjectFromDisk(ws: WorkspaceTarget): Promise<ProjectLoadResult> {
-  const { toPersist, manifest, unsupportedFiles } = await reconcileDiskWithIdb(ws, [])
-  setDiskSyncCache(ws.displayPath, manifest, unsupportedFiles)
-  await persistToIdb(toPersist)
-  const raw = await dbListGraphs()
-  const records: GraphRecord[] = []
-  for (const r of raw) {
-    try {
-      records.push(normalizeGraphRecord(r))
-    } catch {
-      console.warn(
-        '[nesso] loadProjectFromDisk skipping corrupt graph record:',
-        typeof (r as { id?: unknown })?.id === 'string' ? (r as { id: string }).id : '?',
-      )
-    }
+  const result = await reconcileDiskWithIdb(ws, [])
+  // `removed` is always empty here (no IDB input records), so applySyncResult
+  // only caches the manifest plus reserved paths and persists disk records.
+  await applySyncResult(ws, result)
+  return {
+    records: await listNormalizedGraphs('loadProjectFromDisk'),
+    unsupportedFiles: result.unsupportedFiles,
   }
-  return { records, unsupportedFiles }
 }
