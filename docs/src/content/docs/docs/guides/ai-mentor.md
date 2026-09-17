@@ -56,7 +56,7 @@ The hosted web app can call `http://localhost:11434`, but Ollama must allow the 
 
 Built-in Socrates replies in the active UI language, English or Italian.
 
-**Settings → AI → Custom system prompt** replaces Socrates' built-in identity, tone, goals, style, and reply-language instruction. Nesso trims the value and uses at most 4,000 characters. Leave it empty or whitespace-only to restore the built-in persona.
+**Settings → AI → Custom system prompt** replaces Socrates' built-in identity, tone, goals, and style. Nesso trims the value and uses at most 4,000 characters. Leave it empty or whitespace-only to restore the built-in persona. Reply language follows the UI language unless the custom prompt specifies otherwise.
 
 A custom prompt does not add graph-editing capabilities. Nesso remains read-only and continues to treat graph-derived text as data rather than instructions.
 

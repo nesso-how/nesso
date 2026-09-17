@@ -9,8 +9,12 @@ fallback for the key. Readiness requires a configured base URL and model.
 ## Persona and trust boundary
 
 `src/llm/context.ts` composes the built-in or trimmed custom persona with a
-fixed policy and runtime context. A custom persona replaces identity, tone,
-goals, style, and language choices, but never replaces the fixed policy.
+fixed policy array and runtime context. A custom persona replaces identity,
+tone, goals, and style, but never replaces the fixed policy. The fixed policy
+is, in order: read-only trust boundary; reply language (UI language default,
+overridable by an explicit instruction above it); tool routing; tool-result
+transience; FSRS interpretation. Persona always precedes policy because the
+language line refers to "above".
 Graph-derived content from selection metadata and tool results is reference
 data, never instructions. The mentor is read-only and must never claim to
 have changed the graph. The absence of mutation tools is the hard capability
@@ -18,7 +22,8 @@ boundary. The built-in persona is minimal guidelines (help build
 understanding, grounded in the graph, ask a focused question when it moves
 learning forward), not script rules.
 
-Compact runtime context does not eagerly include graph titles, definitions,
+Compact runtime context is per-turn data only: graph counts and the captured
+selection handle. It does not eagerly include graph titles, definitions,
 relations, snapshots, or the full FSRS legend. The opening turn uses one
 fixed, graph-free request (`MENTOR_OPENING_REQUEST`); selected titles,
 definitions, and relation details arrive only through bounded tool results.
