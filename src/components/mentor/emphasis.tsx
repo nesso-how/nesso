@@ -18,6 +18,22 @@ type Block = { kind: 'para'; lines: string[] } | { kind: 'ul' | 'ol'; items: str
 const UNORDERED_ITEM = /^\s*[-*•]\s+(.*)$/
 const ORDERED_ITEM = /^\s*\d+[.)]\s+(.*)$/
 
+type ListMatch = { kind: 'ul' | 'ol'; item: string }
+
+function matchListItem(line: string): ListMatch | null {
+  const unordered = line.match(UNORDERED_ITEM)
+  if (unordered) return { kind: 'ul', item: unordered[1] }
+  const ordered = line.match(ORDERED_ITEM)
+  if (ordered) return { kind: 'ol', item: ordered[1] }
+  return null
+}
+
+function appendListItem(blocks: Block[], match: ListMatch): void {
+  const last = blocks[blocks.length - 1]
+  if (last && last.kind === match.kind) last.items.push(match.item)
+  else blocks.push({ kind: match.kind, items: [match.item] })
+}
+
 function parseBlocks(text: string): Block[] {
   const blocks: Block[] = []
   let para: string[] = []
@@ -30,9 +46,8 @@ function parseBlocks(text: string): Block[] {
   }
 
   for (const line of text.split('\n')) {
-    const unordered = line.match(UNORDERED_ITEM)
-    const ordered = unordered ? null : line.match(ORDERED_ITEM)
-    if (!unordered && !ordered) {
+    const match = matchListItem(line)
+    if (!match) {
       // Blank lines end a paragraph; other lines join it so single line
       // breaks survive via the pre-wrapped parent bubble.
       if (line.trim() === '') flushPara()
@@ -40,45 +55,46 @@ function parseBlocks(text: string): Block[] {
       continue
     }
     flushPara()
-    const item = (unordered ?? ordered)![1]
-    const last = blocks[blocks.length - 1]
-    const kind = unordered ? 'ul' : 'ol'
-    if (last && last.kind === kind) last.items.push(item)
-    else blocks.push({ kind, items: [item] })
+    appendListItem(blocks, match)
   }
   flushPara()
   return blocks
 }
 
+function isWrapped(part: string, marker: string): boolean {
+  return part.startsWith(marker) && part.endsWith(marker) && part.length >= marker.length * 2 + 1
+}
+
+function renderInlinePart(part: string, key: string): React.ReactNode {
+  if (isWrapped(part, '**')) {
+    return <strong key={key}>{part.slice(2, -2)}</strong>
+  }
+  if (isWrapped(part, '`')) {
+    return (
+      <code
+        key={key}
+        style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: '0.86em',
+          background: 'var(--paper-deep)',
+          borderRadius: 'var(--radius-sm)',
+          padding: '0 4px',
+        }}
+      >
+        {part.slice(1, -1)}
+      </code>
+    )
+  }
+  if (isWrapped(part, '*')) {
+    return <em key={key}>{part.slice(1, -1)}</em>
+  }
+  return <Fragment key={key}>{part}</Fragment>
+}
+
 /** Split inline markdown into bold/italic/code elements; the rest stays literal. */
 function renderInline(text: string, keyPrefix: string): React.ReactNode {
   const parts = text.split(/(`[^`\n]+`|\*\*[^*\n]+\*\*|\*[^*\n]+\*)/g)
-  return parts.map((part, i) => {
-    const key = `${keyPrefix}-${i}`
-    if (part.startsWith('**') && part.endsWith('**') && part.length >= 6) {
-      return <strong key={key}>{part.slice(2, -2)}</strong>
-    }
-    if (part.startsWith('`') && part.endsWith('`') && part.length >= 3) {
-      return (
-        <code
-          key={key}
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: '0.86em',
-            background: 'var(--paper-deep)',
-            borderRadius: 'var(--radius-sm)',
-            padding: '0 4px',
-          }}
-        >
-          {part.slice(1, -1)}
-        </code>
-      )
-    }
-    if (part.startsWith('*') && part.endsWith('*') && part.length >= 3) {
-      return <em key={key}>{part.slice(1, -1)}</em>
-    }
-    return <Fragment key={key}>{part}</Fragment>
-  })
+  return parts.map((part, i) => renderInlinePart(part, `${keyPrefix}-${i}`))
 }
 
 /** Join paragraph lines with their original single newlines. */
@@ -95,25 +111,28 @@ function renderParagraphLines(lines: string[], keyPrefix: string): React.ReactNo
   )
 }
 
+function renderListItems(items: string[], keyPrefix: string): React.ReactNode {
+  return items.map((item, j) => <li key={j}>{renderInline(item, `${keyPrefix}-${j}`)}</li>)
+}
+
+function renderBlock(block: Block, index: number, isLast: boolean): React.ReactNode {
+  const spacing = isLast ? undefined : { marginBottom: 8 }
+  if (block.kind === 'para') {
+    return (
+      <div key={index} style={spacing}>
+        {renderParagraphLines(block.lines, `p${index}`)}
+      </div>
+    )
+  }
+  const List = block.kind
+  return (
+    <List key={index} style={{ margin: '4px 0', paddingLeft: 20, ...spacing }}>
+      {renderListItems(block.items, `l${index}`)}
+    </List>
+  )
+}
+
 function renderBlocks(text: string): React.ReactNode {
   const blocks = parseBlocks(text)
-  return blocks.map((block, i) => {
-    const last = i === blocks.length - 1
-    const spacing = last ? undefined : { marginBottom: 8 }
-    if (block.kind === 'para') {
-      return (
-        <div key={i} style={spacing}>
-          {renderParagraphLines(block.lines, `p${i}`)}
-        </div>
-      )
-    }
-    const List = block.kind
-    return (
-      <List key={i} style={{ margin: '4px 0', paddingLeft: 20, ...spacing }}>
-        {block.items.map((item, j) => (
-          <li key={j}>{renderInline(item, `l${i}-${j}`)}</li>
-        ))}
-      </List>
-    )
-  })
+  return blocks.map((block, i) => renderBlock(block, i, i === blocks.length - 1))
 }
