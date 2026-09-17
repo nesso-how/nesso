@@ -47,7 +47,9 @@ shape introduced before `0.2.0-beta.0`. The current vocabulary `0.2.0` adds
 optional rich notes to concept elaborations. Files declaring vocabulary
 `0.1.0` migrate automatically on load. Removed alpha-only `examples`, string
 `notes`, and image fields stay rejected, never migrated. Review scheduling
-state is stored separately and is not included in exported graph files.
+state is stored separately and is not included in exported graph files. The
+full envelope shape is documented in the
+[graph file schema](../reference/graph-file-schema/) reference.
 
 ## Desktop projects
 

@@ -7,10 +7,10 @@ Nesso is available as a hosted web app, native desktop apps for macOS, x64 Windo
 
 ## Tutorial
 
-The simplest way to get started is the web app at [app.nesso.how](https://app.nesso.how), no install required. The first time you open Nesso, it starts with an empty **Tutorial** graph and walks you through the essentials:
+The simplest way to get started is the web app at [app.nesso.how](https://app.nesso.how), no install required. The first time you open Nesso, a **Welcome** screen appears and a sample graph (**Understanding**) is preloaded in the sidebar. **Show me how** starts a guided tour that walks you through the essentials, creating your own graph as you go (the tour suggests the name **Tutorial**):
 
 1. **Welcome**: a short overview of typed knowledge graphs and spaced repetition.
-2. **Guided tour**: coachmarks on the real UI that walk you through adding and naming concepts, adding a definition in the inspector, connecting two ideas with a typed relation, opening **Review**, then deleting a node and a graph.
+2. **Guided tour**: coachmarks on the real UI that walk you through creating a new graph, adding and naming concepts, adding a definition in the inspector, connecting two ideas with a typed relation, opening **Review**, then deleting a node and the tour graph.
 3. **Telemetry** (optional): a one-time banner in the top-right asks whether to share anonymous usage events.
 
 You can skip the welcome screen or the tour at any step. To restart it later, open the **About** dialog from the menu bar.
@@ -44,7 +44,7 @@ Desktop apps **update themselves**: on launch they check GitHub Releases and, wh
 
 ## Run from source
 
-Requires [Node.js](https://nodejs.org/) and [pnpm](https://pnpm.io/).
+Requires [Node.js](https://nodejs.org/) 22+ and [pnpm](https://pnpm.io/) 10+.
 
 ```sh
 git clone https://github.com/nesso-how/nesso.git

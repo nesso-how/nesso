@@ -36,7 +36,7 @@ Nesso is an interactive concept map where nodes are ideas and edges are [typed s
 
 ## Quick start
 
-**Prerequisites:** Node 20+, [pnpm](https://pnpm.io) 10+ (via `corepack enable`), and a [Rust toolchain](https://tauri.app/start/prerequisites/) for the desktop build.
+**Prerequisites:** Node 22+, [pnpm](https://pnpm.io) 10+ (via `corepack enable`), and a [Rust toolchain](https://tauri.app/start/prerequisites/) for the desktop build.
 
 ```bash
 pnpm install

@@ -68,6 +68,7 @@ export default defineConfig({
         {
           label: 'Reference',
           items: [
+            { label: 'Graph file schema', slug: 'docs/reference/graph-file-schema' },
             { label: 'Relation types', slug: 'docs/reference/relation-types' },
             { label: 'MCP tools', slug: 'docs/reference/mcp-tools' },
           ],

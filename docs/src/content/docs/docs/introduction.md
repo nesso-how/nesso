@@ -29,7 +29,7 @@ An optional AI mentor, Socrates, helps you build understanding of what you have 
 
 **Constructivist by design.** Every feature is oriented around the learner doing cognitive work: drawing edges, labelling relations, writing definitions in their own words, self-rating recall. The system does not do this work for them.
 
-**Open by default.** The code is MIT-licensed. The graph schema is documented, vocabulary-agnostic, and importable/exportable as plain JSON. The Nesso Learning Vocabulary it ships with is a declared, replaceable package. The MCP server makes the graph vocabulary available to any compatible client. Technical work done here is and will be intended to be useful beyond this application.
+**Open by default.** The code is MIT-licensed. The [graph schema](../reference/graph-file-schema/) is documented, vocabulary-agnostic, and importable/exportable as plain JSON. The Nesso Learning Vocabulary it ships with is a declared, replaceable package. The MCP server makes the graph vocabulary available to any compatible client. Technical work done here is and will be intended to be useful beyond this application.
 
 **Private by architecture.** In the web app, graphs are stored locally in your browser. In the desktop app, they are also saved as plain JSON files on your machine. Your graph content and definitions stay on your device. Mentor chat is session-only in the app. If you enable the mentor and use a remote AI endpoint, prompts are sent to that provider each turn. Optional telemetry (anonymous crash reports and aggregated usage events) is off by default and opt-in from settings. It never includes graph content, chat, or keys.
 
