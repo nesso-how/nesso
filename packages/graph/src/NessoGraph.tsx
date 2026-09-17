@@ -22,7 +22,7 @@ import type {
   NessoGraphDocumentInput,
   CategoryPalette,
 } from '@nesso-how/vocab-learning'
-import type { NessoEdgeData, GraphDisplaySettings } from './display.js'
+import { pickDisplay, type NessoEdgeData, type GraphDisplaySettings } from './display.js'
 import { GraphDisplayContext, type CategoryColorMode } from './context.js'
 import { documentToRenderGraph } from './documentToRenderGraph.js'
 import { ConceptNode } from './ConceptNode.js'
@@ -196,12 +196,15 @@ export function NessoGraph({
 
   const ctx = useMemo(
     () => ({
-      edgeEncoding: display?.edgeEncoding ?? graphDisplay?.edgeEncoding ?? 'full',
-      showHeatmap: display?.showHeatmap ?? graphDisplay?.showHeatmap ?? true,
-      curveStyle: display?.curveStyle ?? graphDisplay?.curveStyle ?? 'arc',
-      autoCurveFlip: display?.autoCurveFlip ?? graphDisplay?.autoCurveFlip ?? true,
-      dimUnconnectedOnSelect:
-        display?.dimUnconnectedOnSelect ?? graphDisplay?.dimUnconnectedOnSelect ?? true,
+      edgeEncoding: pickDisplay(display?.edgeEncoding, graphDisplay?.edgeEncoding, 'full'),
+      showHeatmap: pickDisplay(display?.showHeatmap, graphDisplay?.showHeatmap, true),
+      curveStyle: pickDisplay(display?.curveStyle, graphDisplay?.curveStyle, 'arc'),
+      autoCurveFlip: pickDisplay(display?.autoCurveFlip, graphDisplay?.autoCurveFlip, true),
+      dimUnconnectedOnSelect: pickDisplay(
+        display?.dimUnconnectedOnSelect,
+        graphDisplay?.dimUnconnectedOnSelect,
+        true,
+      ),
       palette,
       categoryColorMode,
       getRelationLabel,
