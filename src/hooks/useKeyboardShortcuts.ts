@@ -4,6 +4,7 @@ import type { Dispatch, SetStateAction } from 'react'
 import { useGraphStore } from '@/store'
 import { focusFlowNodes } from '@/lib/focusFlowSelection'
 import { resolveShortcut, isTextControlFocused } from '@/lib/shortcuts'
+import type { ResolvedShortcut, ShortcutAction } from '@/lib/shortcuts'
 
 type SetBoolean = Dispatch<SetStateAction<boolean>>
 
@@ -28,6 +29,19 @@ export interface KeyboardShortcutOptions {
   setShowRelationTypes: SetBoolean
   setShowSearch: SetBoolean
   setShowAbout: SetBoolean
+}
+
+/**
+ * Resolve a keydown to a shortcut action, or null when shortcuts are
+ * suppressed (text control focused) or the key is unbound. Pure read of the
+ * resolver plus the current selection — no side effects.
+ */
+function resolveKeyAction(e: KeyboardEvent, anyModalOpen: boolean): ResolvedShortcut | null {
+  if (isTextControlFocused()) return null
+  return resolveShortcut(e, {
+    anyModalOpen,
+    hasSelectedNode: useGraphStore.getState().selected?.kind === 'node',
+  })
 }
 
 /**
@@ -57,77 +71,51 @@ export function useKeyboardShortcuts({
   setShowAbout,
 }: KeyboardShortcutOptions): void {
   useEffect(() => {
+    // Per-action dispatch table: keeps each branch independently small
+    // instead of one large switch body. `Record<ShortcutAction, …>` makes an
+    // unhandled action a compile error rather than a silent no-op.
+    const handlers: Record<ShortcutAction, () => void> = {
+      'close-modals': () => {
+        setShowReview(false)
+        setShowShortcuts(false)
+        setShowSettings(false)
+        setShowRelationTypes(false)
+        setShowSearch(false)
+        setShowAbout(false)
+      },
+      'toggle-shortcuts': () => setShowShortcuts((s) => !s),
+      'toggle-settings': () => setShowSettings((s) => !s),
+      'toggle-search': () => setShowSearch((s) => !s),
+      undo: () => undo(),
+      redo: () => redo(),
+      'delete-selection': () => deleteSelection(),
+      copy: () => copySelection(),
+      cut: () => cutSelection(),
+      paste: () => {
+        const ids = pasteSelection()
+        if (ids?.length) focusFlowNodes(ids)
+      },
+      duplicate: () => {
+        const ids = duplicateSelection()
+        if (ids?.length) focusFlowNodes(ids)
+      },
+      'select-all': () => selectAll(),
+      'edit-selected-node': () => {
+        const sel = useGraphStore.getState().selected
+        if (sel?.kind === 'node') requestEditNode(sel.id)
+      },
+      'open-review': () => {
+        if (useGraphStore.getState().settings.reviewEnabled) openReview()
+      },
+      'add-concept': () => handleAddConcept(),
+      'fit-view': () => fitView(),
+      block: () => {},
+    }
     const onKey = (e: KeyboardEvent) => {
-      if (isTextControlFocused()) return
-      const resolved = resolveShortcut(e, {
-        anyModalOpen,
-        hasSelectedNode: useGraphStore.getState().selected?.kind === 'node',
-      })
+      const resolved = resolveKeyAction(e, anyModalOpen)
       if (!resolved) return
       if (resolved.preventDefault) e.preventDefault()
-      switch (resolved.action) {
-        case 'close-modals':
-          setShowReview(false)
-          setShowShortcuts(false)
-          setShowSettings(false)
-          setShowRelationTypes(false)
-          setShowSearch(false)
-          setShowAbout(false)
-          break
-        case 'toggle-shortcuts':
-          setShowShortcuts((s) => !s)
-          break
-        case 'toggle-settings':
-          setShowSettings((s) => !s)
-          break
-        case 'toggle-search':
-          setShowSearch((s) => !s)
-          break
-        case 'undo':
-          undo()
-          break
-        case 'redo':
-          redo()
-          break
-        case 'delete-selection':
-          deleteSelection()
-          break
-        case 'copy':
-          copySelection()
-          break
-        case 'cut':
-          cutSelection()
-          break
-        case 'paste': {
-          const ids = pasteSelection()
-          if (ids?.length) focusFlowNodes(ids)
-          break
-        }
-        case 'duplicate': {
-          const ids = duplicateSelection()
-          if (ids?.length) focusFlowNodes(ids)
-          break
-        }
-        case 'select-all':
-          selectAll()
-          break
-        case 'edit-selected-node': {
-          const sel = useGraphStore.getState().selected
-          if (sel?.kind === 'node') requestEditNode(sel.id)
-          break
-        }
-        case 'open-review':
-          if (useGraphStore.getState().settings.reviewEnabled) openReview()
-          break
-        case 'add-concept':
-          handleAddConcept()
-          break
-        case 'fit-view':
-          fitView()
-          break
-        case 'block':
-          break
-      }
+      handlers[resolved.action]()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
