@@ -2,7 +2,6 @@
 import { useT } from '@/i18n'
 import { isDesktop } from '@/lib/isDesktop'
 import type { ModelStatus } from '@/lib/ollama'
-import { isLocalhostUrl } from '@/lib/ollama'
 import { getErrorHint } from './modelStatusDisplay'
 
 interface Props {
@@ -10,13 +9,18 @@ interface Props {
   model: string
   baseUrl: string
   pullProgress: number
+  /**
+   * Whether the Ollama-native Pull affordance may show: the endpoint is a
+   * loopback URL and has not proven to be a non-Ollama server. The dialog
+   * computes this from the `/api/version` probe; the badge only renders it.
+   */
+  canPull: boolean
   onPull: () => void
 }
 
-export function ModelStatusBadge({ status, model, baseUrl, pullProgress, onPull }: Props) {
+export function ModelStatusBadge({ status, model, baseUrl, pullProgress, canPull, onPull }: Props) {
   const t = useT()
   if (status === 'idle' || !model) return null
-  const isLocal = isLocalhostUrl(baseUrl)
   const dot = (color: string) => (
     <span
       style={{
@@ -31,7 +35,7 @@ export function ModelStatusBadge({ status, model, baseUrl, pullProgress, onPull 
   )
 
   if (status === 'pulling') {
-    if (!isLocal) return null
+    if (!canPull) return null
     return (
       <div style={{ marginTop: 8 }}>
         <div
@@ -105,9 +109,9 @@ export function ModelStatusBadge({ status, model, baseUrl, pullProgress, onPull 
         <>
           {dot('var(--conf-2)')}
           <span style={{ color: 'var(--ink-3)' }}>
-            {isLocal ? t.settings.ai.status.notFound : t.settings.ai.status.modelNotFound}
+            {canPull ? t.settings.ai.status.notFound : t.settings.ai.status.modelNotFound}
           </span>
-          {isLocal && (
+          {canPull && (
             <button
               type="button"
               onClick={onPull}

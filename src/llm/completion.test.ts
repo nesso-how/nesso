@@ -19,6 +19,7 @@ import {
   isAiReady,
   isLocalhostUrl,
   isNetworkFailure,
+  isOllamaNative,
   listEndpointModels,
   pullModel,
 } from './completion'
@@ -882,6 +883,62 @@ describe('listEndpointModels', () => {
 
     const [, init] = browserFetch.mock.calls[0] as [string, RequestInit]
     expect(new Headers(init.headers).get('origin')).toBeNull()
+  })
+})
+
+// ---------------------------------------------------------------------------
+// isOllamaNative
+// ---------------------------------------------------------------------------
+
+describe('isOllamaNative', () => {
+  it('returns true when /api/version reports a version string', async () => {
+    vi.stubGlobal('window', {})
+    const browserFetch = vi
+      .fn()
+      .mockResolvedValue(new Response(JSON.stringify({ version: '0.11.4' }), { status: 200 }))
+    vi.stubGlobal('fetch', browserFetch)
+
+    await expect(isOllamaNative('http://localhost:11434/v1')).resolves.toBe(true)
+
+    const [url] = browserFetch.mock.calls[0] as [string]
+    expect(url).toBe('http://localhost:11434/api/version')
+  })
+
+  it('returns false for non-Ollama servers (non-2xx)', async () => {
+    vi.stubGlobal('window', {})
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('not found', { status: 404 })))
+
+    await expect(isOllamaNative('http://127.0.0.1:8888/v1')).resolves.toBe(false)
+  })
+
+  it('returns false when the version payload has no version string', async () => {
+    vi.stubGlobal('window', {})
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(new Response(JSON.stringify({ foo: 1 }), { status: 200 })),
+    )
+
+    await expect(isOllamaNative('http://localhost:11434/v1')).resolves.toBe(false)
+  })
+
+  it('returns null on network failure so callers keep the previous value', async () => {
+    vi.stubGlobal('window', {})
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')))
+
+    await expect(isOllamaNative('http://localhost:11434/v1')).resolves.toBeNull()
+  })
+
+  it('sends no auth header so a stale key cannot skew the probe', async () => {
+    vi.stubGlobal('window', {})
+    const browserFetch = vi
+      .fn()
+      .mockResolvedValue(new Response(JSON.stringify({ version: '0.11.4' }), { status: 200 }))
+    vi.stubGlobal('fetch', browserFetch)
+
+    await isOllamaNative('http://localhost:11434/v1')
+
+    const [, init] = browserFetch.mock.calls[0] as [string, RequestInit]
+    expect(new Headers(init.headers).get('authorization')).toBeNull()
   })
 })
 

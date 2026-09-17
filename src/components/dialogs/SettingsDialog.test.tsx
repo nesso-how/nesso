@@ -8,7 +8,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { act } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useGraphStore } from '@/store'
-import { checkEndpoint, listEndpointModels } from '@/llm/completion'
+import { checkEndpoint, isOllamaNative, listEndpointModels } from '@/llm/completion'
 import { SettingsDialog } from './SettingsDialog'
 
 vi.mock('@/llm/completion', async (importOriginal) => {
@@ -18,6 +18,7 @@ vi.mock('@/llm/completion', async (importOriginal) => {
     checkEndpoint: vi.fn().mockResolvedValue('available'),
     executeModelPull: vi.fn().mockResolvedValue(true),
     listEndpointModels: vi.fn().mockResolvedValue([]),
+    isOllamaNative: vi.fn().mockResolvedValue(true),
   }
 })
 
@@ -203,5 +204,25 @@ describe('SettingsDialog AI model discovery', () => {
     expect(
       [...container!.querySelectorAll('button')].filter((b) => b.querySelector('svg')),
     ).toHaveLength(0)
+  })
+
+  it('offers Pull for an unavailable model on a proven Ollama endpoint', async () => {
+    vi.mocked(listEndpointModels).mockResolvedValue(['llama3.2:3b'])
+    vi.mocked(checkEndpoint).mockResolvedValue('unavailable')
+    vi.mocked(isOllamaNative).mockResolvedValue(true)
+    setupSettings({ aiBaseUrl: 'http://localhost:11434/v1', aiModel: 'qwen3:8b' })
+    await openAiTab()
+    expect(container!.textContent).toContain('Not found locally')
+    expect(container!.textContent).toContain('Pull')
+  })
+
+  it('hides Pull with neutral text on a proven non-Ollama endpoint', async () => {
+    vi.mocked(listEndpointModels).mockResolvedValue(['unsloth/Qwen3.5-9B-GGUF'])
+    vi.mocked(checkEndpoint).mockResolvedValue('unavailable')
+    vi.mocked(isOllamaNative).mockResolvedValue(false)
+    setupSettings({ aiBaseUrl: 'http://127.0.0.1:8888/v1', aiModel: 'unknown-model' })
+    await openAiTab()
+    expect(container!.textContent).toContain('Model not found')
+    expect(container!.textContent).not.toContain('Pull')
   })
 })

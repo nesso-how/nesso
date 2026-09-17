@@ -131,6 +131,52 @@ export async function listEndpointModels(
 }
 
 /**
+ * Probes whether the endpoint speaks the native Ollama API by querying
+ * `/api/version` on the native base (the OpenAI-compatible base minus an
+ * optional `/v1` suffix). Tri-state, never throws:
+ * - `true` — 2xx JSON response carrying a non-empty `version` string.
+ * - `false` — answered, but not Ollama (non-2xx, malformed payload).
+ * - `null` — unreachable (network failure, timeout, abort): genuinely
+ *   unknown, so the caller should keep its previous value rather than hide
+ *   Pull on a transient blip.
+ *
+ * Sends no Authorization header: Ollama needs none, and a stale key would
+ * skew the probe (some servers 401 unknown bearers). Same timeout
+ * composition as the `/models` calls.
+ */
+export async function isOllamaNative(
+  baseUrl: string,
+  signal?: AbortSignal,
+): Promise<boolean | null> {
+  const fetcher = getConfiguredFetch()
+  const headers: Record<string, string> = {}
+  // Same empty-Origin strip as the `/models` calls: without it the desktop
+  // transport forces `Origin: tauri://localhost` and Origin-rejecting
+  // servers would skew the probe. Desktop-only; browsers forbid the header.
+  if (isDesktop()) {
+    headers['Origin'] = ''
+  }
+  const effectiveSignal = signal
+    ? AbortSignal.any([signal, AbortSignal.timeout(5000)])
+    : AbortSignal.timeout(5000)
+  let res: Response
+  try {
+    res = await fetcher(`${ollamaNativeBase(baseUrl)}/api/version`, {
+      signal: effectiveSignal,
+      headers,
+    })
+  } catch {
+    return null
+  }
+  if (!res.ok) return false
+  try {
+    const data = (await res.json()) as { version?: unknown }
+    return typeof data.version === 'string' && data.version.length > 0
+  } catch {
+    return false
+  }
+}
+/**
  * Checks whether a model is available at the given base URL by querying the
  * `/models` endpoint. Returns one of:
  * - `'available'`   — model found in the list

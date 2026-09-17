@@ -13,9 +13,15 @@ import { useT } from '@/i18n'
 import { LearningSettings } from './LearningSettings'
 import { SettingsHeatmapDefault } from '@/components/ui/HeatmapDisplayToggle'
 import type { Language } from '@/types/graph'
-import { checkEndpoint, executeModelPull, listEndpointModels } from '@/llm/completion'
+import {
+  checkEndpoint,
+  executeModelPull,
+  isOllamaNative,
+  listEndpointModels,
+} from '@/llm/completion'
 import { MENTOR_PERSONA_MAX_CHARS } from '@/llm/context'
 import type { ModelStatus } from '@/lib/ollama'
+import { isLocalhostUrl } from '@/lib/ollama'
 
 type Tab = 'appearance' | 'learning' | 'ai' | 'privacy'
 const ALL_TABS = ['appearance', 'learning', 'ai', 'privacy'] as const
@@ -46,6 +52,11 @@ export function SettingsDialog({ open, onClose }: Props) {
   const [pullProgress, setPullProgress] = useState(0)
   const [availableModels, setAvailableModels] = useState<string[]>([])
   const [customModelOpen, setCustomModelOpen] = useState(false)
+  // Whether the endpoint speaks the native Ollama API (`/api/version` probe).
+  // null = not probed yet: Pull stays offered on loopback until the endpoint
+  // positively proves otherwise, so starting a local Ollama mid-dialog keeps
+  // working exactly as before.
+  const [ollamaNative, setOllamaNative] = useState<boolean | null>(null)
 
   const healthCheckAbortRef = useRef<AbortController | null>(null)
   const modelsAbortRef = useRef<AbortController | null>(null)
@@ -99,6 +110,13 @@ export function SettingsDialog({ open, onClose }: Props) {
         }
       },
     )
+    // Native Ollama probe for the Pull affordance: only a server that
+    // positively answers `/api/version` is offered Pull. Unreachable keeps
+    // the previous value (an Ollama started mid-dialog keeps working);
+    // proven non-Ollama hides Pull.
+    void isOllamaNative(settings.aiBaseUrl, controller.signal).then((native) => {
+      if (!controller.signal.aborted && native !== null) setOllamaNative(native)
+    })
     return () => {
       controller.abort()
     }
@@ -534,6 +552,7 @@ export function SettingsDialog({ open, onClose }: Props) {
                           model={settings.aiModel}
                           baseUrl={settings.aiBaseUrl}
                           pullProgress={pullProgress}
+                          canPull={isLocalhostUrl(settings.aiBaseUrl) && ollamaNative !== false}
                           onPull={() => void handlePull()}
                         />
                       </div>
