@@ -5,12 +5,10 @@ import {
   RELATION_TYPE_VALUES,
   asRelationTypeName,
 } from '@/data/relationTypes'
-import type { Node } from '@xyflow/react'
 import { GlyphSVG } from '@nesso-how/graph'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { SettingRow } from '@/components/ui/SettingRow'
-import { useGraphStore, selectedEdgeSelector, type GraphState } from '@/store'
-import type { ConceptNodeData } from '@/types/graph'
+import { useGraphStore, selectedEdgeSelector } from '@/store'
 import { useT } from '@/i18n'
 import { InspectorPanel } from './InspectorPanel'
 import { InspectorActionToolbar, InspectorCollapseCloseRow } from './inspectorChrome'
@@ -23,7 +21,8 @@ interface Props {
 export function EdgeInspector({ panelWidth, onPanelWidthChange }: Props) {
   const t = useT()
   const edge = useGraphStore(selectedEdgeSelector)!
-  const nodes: Node<ConceptNodeData>[] = useGraphStore((s: GraphState) => s.nodes)
+  const fromText = useGraphStore((s) => s.nodes.find((n) => n.id === edge.source)?.data.text)
+  const toText = useGraphStore((s) => s.nodes.find((n) => n.id === edge.target)?.data.text)
   const updateEdgeType = useGraphStore((s) => s.updateEdgeType)
   const setEdgeCurveFlipMode = useGraphStore((s) => s.setEdgeCurveFlipMode)
   const curveStyle = useGraphStore((s) => s.graphDisplay.curveStyle)
@@ -31,8 +30,6 @@ export function EdgeInspector({ panelWidth, onPanelWidthChange }: Props) {
   const edgeType = asRelationTypeName(edge.data?.type)
   const T = RELATION_TYPES[edgeType]
   const C = RELATION_CATEGORY_COLORS[T.cat]
-  const from = nodes.find((n) => n.id === edge.source)
-  const to = nodes.find((n) => n.id === edge.target)
   const siblings = RELATION_TYPE_VALUES.filter((id) => RELATION_TYPES[id].cat === T.cat)
   const curveFlipPinned = Boolean(edge.data?.curveFlipPinned)
   const curveFlipMode = autoCurveFlip
@@ -62,7 +59,7 @@ export function EdgeInspector({ panelWidth, onPanelWidthChange }: Props) {
               color: 'var(--ink)',
             }}
           >
-            {from?.data.text}
+            {fromText}
           </span>
           <div
             style={{ display: 'flex', alignItems: 'center', gap: 7, paddingLeft: 1, minWidth: 0 }}
@@ -88,7 +85,7 @@ export function EdgeInspector({ panelWidth, onPanelWidthChange }: Props) {
               color: 'var(--ink)',
             }}
           >
-            {to?.data.text}
+            {toText}
           </span>
         </div>
       </div>

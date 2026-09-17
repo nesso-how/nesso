@@ -6,6 +6,7 @@ import type { ConceptNodeData } from '@/types/graph'
 import { RELATION_TYPES, RELATION_CATEGORY_COLORS, asRelationTypeName } from '@/data/relationTypes'
 import { withDefinition } from '@/lib/elaboration'
 import { useGraphStore, selectedNodeSelector } from '@/store'
+import { useShallow } from 'zustand/react/shallow'
 import { useT } from '@/i18n'
 import { InlineEdit } from './InlineEdit'
 import { InspectorPanel } from './InspectorPanel'
@@ -236,11 +237,25 @@ function RelationsSection({
 function useNodeInspectorState() {
   const t = useT()
   const node = useGraphStore(selectedNodeSelector)!
-  const edges = useGraphStore((s) => s.edges)
-  const nodes = useGraphStore((s) => s.nodes)
+  const nodeId = node.id
+  // Shallow-compared derived collections: element refs are preserved by store
+  // mutations for untouched edges/nodes, so unrelated updates skip re-render.
+  const outgoing = useGraphStore(useShallow((s) => s.edges.filter((e) => e.source === nodeId)))
+  const incoming = useGraphStore(useShallow((s) => s.edges.filter((e) => e.target === nodeId)))
+  const relatedNodes = useGraphStore(
+    useShallow((s) => {
+      const ids = new Set<string>()
+      for (const edge of s.edges) {
+        if (edge.source === nodeId) ids.add(edge.target)
+        else if (edge.target === nodeId) ids.add(edge.source)
+      }
+      return s.nodes.filter((n) => ids.has(n.id))
+    }),
+  )
   const setSelected = useGraphStore((s) => s.setSelected)
   const updateNodeData = useGraphStore((s) => s.updateNodeData)
-  const settings = useGraphStore((s) => s.settings)
+  const memoryOpen = useGraphStore((s) => s.settings.inspectorMemoryOpen)
+  const relationsOpen = useGraphStore((s) => s.settings.inspectorRelationsOpen)
   const setSetting = useGraphStore((s) => s.setSetting)
   const onboardingStep = useGraphStore((s) => s.onboardingStep)
   const openWritingMode = useGraphStore((s) => s.openWritingMode)
@@ -249,11 +264,13 @@ function useNodeInspectorState() {
   return {
     t,
     node,
-    edges,
-    nodes,
+    outgoing,
+    incoming,
+    relatedNodes,
     setSelected,
     updateNodeData,
-    settings,
+    memoryOpen,
+    relationsOpen,
     setSetting,
     onboardingStep,
     openWritingMode,
@@ -271,27 +288,24 @@ export function NodeInspector({
   const {
     t,
     node,
-    edges,
-    nodes,
+    outgoing,
+    incoming,
+    relatedNodes,
     setSelected,
     updateNodeData,
-    settings,
+    memoryOpen,
+    relationsOpen,
     setSetting,
     onboardingStep,
     openWritingMode,
     firstNodeId,
   } = useNodeInspectorState()
 
-  const memoryOpen = settings.inspectorMemoryOpen
-  const relationsOpen = settings.inspectorRelationsOpen
-
   const elab = node.data.elaboration
 
   const patch = (definition: string) =>
     updateNodeData(node.id, { elaboration: withDefinition(elab, definition) })
 
-  const outgoing = edges.filter((e) => e.source === node.id)
-  const incoming = edges.filter((e) => e.target === node.id)
   const focusNode = (id: string) => setSelected({ kind: 'node', id })
 
   const isDue = node.data.due <= 0 || node.data.due <= Date.now()
@@ -383,7 +397,7 @@ export function NodeInspector({
         <RelationsSection
           outgoing={outgoing}
           incoming={incoming}
-          nodes={nodes}
+          nodes={relatedNodes}
           open={relationsOpen}
           title={t.inspector.relations}
           relationLabel={(id) => t.relationTypes.types[id]}

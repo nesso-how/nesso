@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import type { Node } from '@xyflow/react'
 import { useGraphStore } from '@/store'
+import { useShallow } from 'zustand/react/shallow'
 import type { ConceptNodeData } from '@/types/graph'
 import { useT } from '@/i18n'
 import { ModalOverlay } from '@/components/ui/ModalOverlay'
@@ -25,9 +26,10 @@ function timeAgo(ts: number): string {
   return `${Math.floor(d / 7)}w ago`
 }
 
+const EMPTY_CONCEPT_NODES: Node<ConceptNodeData>[] = []
+
 export function SearchDialog({ open, onClose, onSelectNode, onSelectGraph }: Props) {
   const t = useT()
-  const nodes = useGraphStore((s) => s.nodes)
   const graphList = useGraphStore((s) => s.graphList)
   const currentGraphId = useGraphStore((s) => s.currentGraphId)
   const selectedNodeId = useGraphStore((s) => (s.selected?.kind === 'node' ? s.selected.id : null))
@@ -48,14 +50,22 @@ export function SearchDialog({ open, onClose, onSelectNode, onSelectGraph }: Pro
     return q ? sorted.filter((g) => g.name.toLowerCase().includes(q)) : sorted
   }, [graphList, q])
 
-  const conceptResults = useMemo(() => {
-    return q ? nodes.filter((n) => n.data.text.toLowerCase().includes(q)) : nodes.slice(0, 6)
-  }, [nodes, q])
+  // No whole-array subscription while closed (stable EMPTY), and shallow-compared
+  // matching node refs while open, so unrelated updates skip re-render.
+  const conceptResults = useGraphStore(
+    useShallow((s): Node<ConceptNodeData>[] => {
+      if (!open) return EMPTY_CONCEPT_NODES
+      return q ? s.nodes.filter((n) => n.data.text.toLowerCase().includes(q)) : s.nodes.slice(0, 6)
+    }),
+  )
 
-  const allResults = [
-    ...graphResults.map((g) => ({ kind: 'graph' as const, g })),
-    ...conceptResults.map((n) => ({ kind: 'concept' as const, n })),
-  ]
+  const allResults = useMemo(
+    () => [
+      ...graphResults.map((g) => ({ kind: 'graph' as const, g })),
+      ...conceptResults.map((n) => ({ kind: 'concept' as const, n })),
+    ],
+    [graphResults, conceptResults],
+  )
 
   const handleSelectGraph = (id: string) => {
     onSelectGraph(id)
