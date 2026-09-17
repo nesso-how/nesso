@@ -29,7 +29,7 @@ const ALL_TABS = ['appearance', 'learning', 'ai', 'privacy'] as const
 /**
  * Pseudo-option id inside the model select that reveals the free-text input
  * instead of picking a model. Never stored in settings, never health-checked:
- * the onChange handler intercepts it before setSetting/triggerCheck.
+ * the onChange handler intercepts it before setSetting.
  */
 const CUSTOM_MODEL_OPTION_ID = '__nesso_custom__'
 
@@ -60,24 +60,6 @@ export function SettingsDialog({ open, onClose }: Props) {
 
   const healthCheckAbortRef = useRef<AbortController | null>(null)
   const modelsAbortRef = useRef<AbortController | null>(null)
-
-  const triggerCheck = useCallback((baseUrl: string, model: string, apiKey?: string) => {
-    if (!model) {
-      setModelStatus('idle')
-      return
-    }
-    healthCheckAbortRef.current?.abort()
-    const controller = new AbortController()
-    healthCheckAbortRef.current = controller
-    setModelStatus('checking')
-    checkEndpoint(baseUrl, model, apiKey ?? '', controller.signal)
-      .then((s) => {
-        if (!controller.signal.aborted) setModelStatus(s)
-      })
-      .catch(() => {
-        if (!controller.signal.aborted) setModelStatus('error')
-      })
-  }, [])
 
   // Provider-agnostic model discovery: list the endpoint's own `/models`
   // inventory (Ollama and hosted providers alike) so the user picks a real
@@ -527,7 +509,6 @@ export function SettingsDialog({ open, onClose }: Props) {
                                 }
                                 setSetting('aiModel', id)
                                 setCustomModelOpen(false)
-                                triggerCheck(settings.aiBaseUrl, id, settings.aiApiKey)
                               }}
                             />
                           </div>
@@ -541,9 +522,6 @@ export function SettingsDialog({ open, onClose }: Props) {
                               setSetting('aiModel', e.target.value)
                               setModelStatus('idle')
                             }}
-                            onBlur={(e) =>
-                              triggerCheck(settings.aiBaseUrl, e.target.value, settings.aiApiKey)
-                            }
                             style={inputStyle}
                           />
                         )}
