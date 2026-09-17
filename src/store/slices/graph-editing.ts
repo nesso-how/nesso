@@ -24,8 +24,14 @@ import { track } from '@/telemetry'
 import type { GraphSnapshot } from '../types'
 import type { GraphState } from '../state'
 
+import {
+  addDraggingNodeId,
+  clearDraggingNodeIds,
+  deleteDraggingNodeId,
+  hasDraggingNodeId,
+} from './graphSession'
+
 export const MAX_UNDO = 50
-export const _draggingNodeIds = new Set<string>()
 
 export function pushHistory(
   s: GraphSnapshot & { _history: GraphSnapshot[]; _future: GraphSnapshot[] },
@@ -205,7 +211,7 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
     set((s) => {
       if (!s._history.length) return s
       const prev = s._history[s._history.length - 1]
-      _draggingNodeIds.clear()
+      clearDraggingNodeIds()
       return {
         _history: s._history.slice(0, -1),
         _future: [{ nodes: s.nodes, edges: s.edges }, ...s._future].slice(0, MAX_UNDO),
@@ -221,7 +227,7 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
     set((s) => {
       if (!s._future.length) return s
       const next = s._future[0]
-      _draggingNodeIds.clear()
+      clearDraggingNodeIds()
       return {
         _future: s._future.slice(1),
         _history: [...s._history, { nodes: s.nodes, edges: s.edges }].slice(-MAX_UNDO),
@@ -236,17 +242,17 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
   onNodesChange: (changes) => {
     for (const c of changes) {
       if (c.type === 'position' && c.dragging === false) {
-        _draggingNodeIds.delete(c.id)
+        deleteDraggingNodeId(c.id)
       }
     }
     const startsDrag = changes.filter(
       (c): c is Extract<NodeChange<Node<ConceptNodeData>>, { type: 'position' }> =>
-        c.type === 'position' && c.dragging === true && !_draggingNodeIds.has(c.id),
+        c.type === 'position' && c.dragging === true && !hasDraggingNodeId(c.id),
     )
     const hasRemove = changes.some((c) => c.type === 'remove')
     if (startsDrag.length > 0) {
       for (const c of startsDrag) {
-        _draggingNodeIds.add(c.id)
+        addDraggingNodeId(c.id)
       }
       set((s) => ({
         ...pushHistory(s),

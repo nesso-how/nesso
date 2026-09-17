@@ -46,7 +46,17 @@ import {
   dbDeleteReviewForGraph,
   dbGetReviewStatesForGraph,
 } from '../db'
-import { _draggingNodeIds } from './graph-editing'
+import {
+  beginSwitchProject,
+  clearDraggingNodeIds,
+  endSwitchProject,
+  getSwitchProjectInflight,
+  isLatestLoadRequest,
+  isOutgoingSaveBlocked,
+  nextLoadRequestId,
+  setSuppressOutgoingSave,
+  setSwitchProjectInflight,
+} from './graphSession'
 import type { GraphMeta } from '../types'
 import type { GraphState } from '../state'
 import type { Language } from '@/types/graph'
@@ -164,18 +174,6 @@ function commitRecordsAsGraphList(
   set(patch)
   return list
 }
-
-// Guards the clear+reload window during project switches:
-// _switchingProject blocks saveCurrentGraph from writing to the wrong folder;
-// _switchProjectInflight serialises concurrent switchProject invocations.
-let _switchingProject = false
-let _switchProjectInflight: Promise<GraphMeta[]> | null = null
-// Set while abandoning a project whose folder was deleted externally — any
-// save in that window would silently recreate the folder from the IDB cache.
-let _suppressOutgoingSave = false
-// Monotonic counter for loadGraph race prevention — the most recently started
-// call wins, older ones are discarded. Has no semantic meaning beyond this.
-let _loadRequestId = 0
 
 /** Register `path` as the most-recent known project, then switch to it. */
 function registerAndSwitch(
@@ -297,8 +295,8 @@ function patchAfterSaveCurrentGraph(
  * change-tracking fingerprints are computed from the incoming content, so no
  * path can leave a stale review fingerprint, a stuck file conflict, or a
  * stale load token behind. Callers add their own `currentGraphId` / `graphList`
- * updates; module-level touches (`_draggingNodeIds.clear()`) stay at the call
- * sites.
+ * updates; drag-marker resets (`clearDraggingNodeIds()` in graphSession) stay
+ * at the call sites.
  */
 export function freshGraphSession(
   s: Pick<GraphState, 'loadedToken'>,
@@ -486,10 +484,12 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
     if (!isDesktop()) return get().graphList
 
     // Serialise concurrent calls — wait for any ongoing switch to finish first.
-    // _switchProjectInflight is assigned synchronously below (no await between the
+    // The inflight slot is assigned synchronously below (no await between the
     // while-exit and the assignment), so no two callers can both pass the guard.
-    while (_switchProjectInflight) {
-      await _switchProjectInflight.catch(() => {})
+    let inflight = getSwitchProjectInflight()
+    while (inflight) {
+      await inflight.catch(() => {})
+      inflight = getSwitchProjectInflight()
     }
 
     const norm = normalizePath(path)
@@ -497,10 +497,10 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
     if (current && normalizePath(current) === norm) return get().graphList
 
     const run = async (): Promise<GraphMeta[]> => {
-      // Save onto the OUTGOING project before _switchingProject = true so the
+      // Save onto the OUTGOING project before beginSwitchProject() so the
       // guard inside saveCurrentGraph doesn't block it.
       await get().saveCurrentGraph()
-      _switchingProject = true
+      beginSwitchProject()
       try {
         await grantFsScope(await resolveWorkspacePath(norm))
 
@@ -581,15 +581,16 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
         await get().loadGraph(next.id)
         return list
       } finally {
-        _switchingProject = false
+        endSwitchProject()
       }
     }
 
-    _switchProjectInflight = run()
+    const runPromise = run()
+    setSwitchProjectInflight(runPromise)
     try {
-      return await _switchProjectInflight
+      return await runPromise
     } finally {
-      _switchProjectInflight = null
+      setSwitchProjectInflight(null)
     }
   },
 
@@ -638,7 +639,7 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
     // cache and seeds an empty project if needed — while suppressing saves,
     // which would otherwise recreate the abandoned folder. The missing entry
     // stays in the list, flagged.
-    _suppressOutgoingSave = true
+    setSuppressOutgoingSave(true)
     try {
       const missing = new Set(get().missingProjects)
       const target =
@@ -646,7 +647,7 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
         (await getDefaultWorkspacePath())
       return await registerAndSwitch(target, set, get)
     } finally {
-      _suppressOutgoingSave = false
+      setSuppressOutgoingSave(false)
     }
   },
 
@@ -669,9 +670,9 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
     }
     // Capture a monotonic request id so the most-recently-started loadGraph
     // wins and older ones are discarded across every async gap below.
-    const requestId = ++_loadRequestId
+    const requestId = nextLoadRequestId()
     const storedRecord = await dbLoadGraph(id)
-    if (requestId !== _loadRequestId) return
+    if (!isLatestLoadRequest(requestId)) return
     const record = normalizeStoredRecord(storedRecord)
     if (!record) {
       const showHeatmap = defaultGraphDisplay(get().settings).showHeatmap
@@ -680,9 +681,9 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
       }))
       return
     }
-    _draggingNodeIds.clear()
+    clearDraggingNodeIds()
     const reviews = await dbGetReviewStatesForGraph(id)
-    if (requestId !== _loadRequestId) return
+    if (!isLatestLoadRequest(requestId)) return
     const nodes = record.nodes.map((n) => mergeReviewIntoNode(n, reviews.get(n.id)))
     const graphDisplay = mergeGraphDisplay(record.display, get().settings)
     set((s) => ({
@@ -693,7 +694,7 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
   },
 
   saveCurrentGraph: async () => {
-    if (get().externalFileConflict || _switchingProject || _suppressOutgoingSave) return
+    if (get().externalFileConflict || isOutgoingSaveBlocked()) return
     const { currentGraphId, nodes, edges, graphList, graphDisplay, settings, loadedToken } = get()
     const flags = saveDirtyFlags(
       nodes,
@@ -746,7 +747,7 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
     }
     const persisted = await persistGraphRecord(get().settings, record)
     await dbSaveGraph(persisted)
-    _draggingNodeIds.clear()
+    clearDraggingNodeIds()
     set((s) => ({
       graphList: [
         ...s.graphList,
@@ -786,7 +787,7 @@ export const createGraphManagementSlice: StateCreator<GraphState, [], [], GraphM
     await persistReviewStatesFromNodes(graphId, nodes)
     const persisted = await persistGraphRecord(get().settings, record)
     await dbSaveGraph(persisted)
-    _draggingNodeIds.clear()
+    clearDraggingNodeIds()
     set((s) => {
       const meta = { id: graphId, name: persisted.name, updatedAt: persisted.updatedAt }
       const graphList = s.graphList.some((g) => g.id === graphId)

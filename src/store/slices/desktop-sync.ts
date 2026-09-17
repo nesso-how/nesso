@@ -10,7 +10,7 @@ import {
   setDiskSyncCache,
 } from '@/lib/workspace'
 import { dbSaveGraph } from '../db'
-import { _draggingNodeIds } from './graph-editing'
+import { clearDraggingNodeIds } from './graphSession'
 import { freshGraphSession } from './graph-management'
 import type { GraphState } from '../state'
 
@@ -53,7 +53,7 @@ export const createDesktopSyncSlice: StateCreator<GraphState, [], [], DesktopSyn
     setDiskSyncCache(ws.displayPath, manifest)
     await dbSaveGraph(record)
     const graphDisplay = mergeGraphDisplay(record.display, settings)
-    _draggingNodeIds.clear()
+    clearDraggingNodeIds()
     set((s) => ({
       ...freshGraphSession(s, {
         nodes: record.nodes,
