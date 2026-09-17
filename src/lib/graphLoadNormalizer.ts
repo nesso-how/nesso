@@ -4,6 +4,8 @@ import { documentToRenderGraph } from '@nesso-how/graph'
 import { isPlainObject } from '@nesso-how/schema'
 import {
   VOCABULARY,
+  checkVocabularyIdentity,
+  compareVersions,
   deserializeEnvelope,
   validateDefinitionOnlyElaboration,
   validateNessoDocument,
@@ -49,20 +51,6 @@ interface RecordIdentity {
   createdAt: number
   updatedAt: number
   name?: string
-}
-
-/** Returns true when `a` is a newer semver than `b`. */
-function isNewerVersion(a: string, b: string): boolean {
-  const pa = a.split('.').map(Number)
-  const pb = b.split('.').map(Number)
-  for (let i = 0; i < 3; i++) {
-    const na = pa[i] ?? 0
-    const nb = pb[i] ?? 0
-    if (Number.isNaN(na) || Number.isNaN(nb)) return false
-    if (na > nb) return true
-    if (na < nb) return false
-  }
-  return false
 }
 
 function migrateVocabulary(document: NessoGraphDocument): NessoGraphDocument {
@@ -119,7 +107,7 @@ export function normalizeParsedGraphDocument(
   if (document.vocabulary.id !== VOCABULARY.id) {
     throw new Error(`Unsupported graph vocabulary: ${document.vocabulary.id}`)
   }
-  if (isNewerVersion(document.vocabulary.version, VOCABULARY.version)) {
+  if (compareVersions(document.vocabulary.version, VOCABULARY.version) > 0) {
     throw new Error(
       `Graph document is from a newer vocabulary version: ${document.vocabulary.version}`,
     )
@@ -222,7 +210,7 @@ function validateRecordVocabulary(record: Record<string, unknown>): void {
   if (!vocab) throw new Error('Graph record has an unsupported vocabulary')
   if (vocab.id !== VOCABULARY.id) throw new Error('Graph record has an unsupported vocabulary')
 
-  if (isNewerVersion(vocab.version as string, VOCABULARY.version)) {
+  if (compareVersions(vocab.version as string, VOCABULARY.version) > 0) {
     throw new Error('Graph record has an unsupported vocabulary')
   }
 
@@ -372,9 +360,11 @@ export function tryResolveGraphIdentityFromEnvelope(
     return null
   }
 
-  if (file.vocabulary === undefined) return null
-  if (file.vocabulary.id !== VOCABULARY.id) return null
-  if (isNewerVersion(file.vocabulary.version, VOCABULARY.version)) return null
+  try {
+    checkVocabularyIdentity(file.vocabulary)
+  } catch {
+    return null
+  }
 
   // Must have a known migration path or be at the current version.
   if (file.vocabulary.version !== VOCABULARY.version) {

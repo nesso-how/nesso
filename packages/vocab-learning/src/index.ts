@@ -42,6 +42,8 @@ export {
 export { CategoryPalette, categoryCssVars, GLYPH_PATHS, PALETTES } from './visual.js'
 
 export {
+  checkVocabularyIdentity,
+  compareVersions,
   deserialize,
   deserializeEnvelope,
   serialize,

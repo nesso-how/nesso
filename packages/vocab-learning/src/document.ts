@@ -19,8 +19,12 @@ import { VOCABULARY } from './vocabularyIdentity.js'
 
 const VALID_RELATION_TYPES = new Set<string>(Object.keys(RELATION_TYPES))
 
-/** Compare two semver strings. Returns positive if a > b, negative if a < b, 0 if equal. */
-function compareVersions(a: string, b: string): number {
+/**
+ * Compare two semver strings. Returns positive if a > b, negative if a < b, 0 if equal.
+ * NaN policy: a non-numeric component compares as not-newer (the comparison
+ * returns 0), so malformed versions never pass a `> 0` forward guard.
+ */
+export function compareVersions(a: string, b: string): number {
   const pa = a.split('.').map(Number)
   const pb = b.split('.').map(Number)
   for (let i = 0; i < 3; i++) {
@@ -53,6 +57,18 @@ function validateVocabularyIdentity(
   if (compareVersions(vocabulary.version, VOCABULARY.version) > 0) {
     throw new Error(`Unsupported learning vocabulary version: ${vocabulary.version}`)
   }
+}
+
+/**
+ * Throw-semantics vocabulary identity guard for app-side chokepoints.
+ * Wraps {@link validateVocabularyIdentity}: rejects a missing vocabulary,
+ * a foreign vocabulary id, and newer vocabulary versions; older versions
+ * pass through so the caller can migrate them.
+ */
+export function checkVocabularyIdentity(
+  vocabulary: NessoGraphDocument['vocabulary'],
+): asserts vocabulary is NonNullable<NessoGraphDocument['vocabulary']> {
+  validateVocabularyIdentity(vocabulary)
 }
 
 /**
