@@ -153,6 +153,17 @@ describe('SettingsDialog AI model discovery', () => {
     expect(container!.querySelector('input[placeholder="e.g. qwen3:8b"]')).not.toBeNull()
   })
 
+  it('defaults an empty model to the first discovered model', async () => {
+    vi.mocked(listEndpointModels).mockResolvedValue(['discovered-local-a', 'discovered-local-b'])
+    setupSettings({ aiBaseUrl: 'http://localhost:11434/v1', aiModel: '' })
+    await openAiTab()
+    expect(useGraphStore.getState().settings.aiModel).toBe('discovered-local-a')
+    const input = container!.querySelector(
+      'input[placeholder="e.g. qwen3:8b"]',
+    ) as HTMLInputElement | null
+    expect(input?.value).toBe('discovered-local-a')
+  })
+
   it('falls back to the bare input when discovery returns nothing', async () => {
     vi.mocked(listEndpointModels).mockResolvedValue([])
     setupSettings({ aiBaseUrl: 'http://localhost:11434/v1', aiModel: 'custom-model' })

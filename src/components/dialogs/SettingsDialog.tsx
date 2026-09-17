@@ -79,7 +79,15 @@ export function SettingsDialog({ open, onClose }: Props) {
     setAvailableModels([])
     void listEndpointModels(settings.aiBaseUrl, settings.aiApiKey, controller.signal).then(
       (ids) => {
-        if (!controller.signal.aborted) setAvailableModels(ids)
+        if (controller.signal.aborted) return
+        setAvailableModels(ids)
+        // Default an empty model to the first discovered id so the select
+        // never sits blank after entering a URL. A non-empty value — typed
+        // or previously selected — is never overwritten; read it fresh so a
+        // model typed while the fetch was in flight wins.
+        if (ids.length > 0 && useGraphStore.getState().settings.aiModel === '') {
+          setSetting('aiModel', ids[0])
+        }
       },
     )
     return () => {
