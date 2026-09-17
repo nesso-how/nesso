@@ -38,6 +38,6 @@ Use `e2e-native/run-local.sh` on macOS and
 
 Stryker uses the registered `schema`, `store`, `workspace`, `mentor`, and
 `graphTools` areas. Run an area script directly or use
-`pnpm run analyze:mutation:changed -- --base origin/main --working` for changed
+`pnpm run analyze:mutation:changed --base origin/main --working` for changed
 tracked files. The selector does not include untracked files. Mutation testing
 is scheduled/manual and is not a per-pull-request CI gate.
