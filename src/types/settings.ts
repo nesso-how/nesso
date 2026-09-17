@@ -2,7 +2,12 @@
 import type { Card, State } from 'ts-fsrs'
 import type { CategoryPalette } from '@nesso-how/vocab-learning'
 import type { ConceptNodeData } from '@nesso-how/vocab-learning'
-import type { CurveStyle, EdgeEncoding, GraphDisplaySettings } from '@nesso-how/graph'
+import {
+  DEFAULT_GRAPH_DISPLAY,
+  type CurveStyle,
+  type EdgeEncoding,
+  type GraphDisplaySettings,
+} from '@nesso-how/graph'
 
 export type Language = 'en' | 'it'
 
@@ -57,11 +62,11 @@ export function defaultGraphDisplay(
   settings?: Pick<NessoSettings, 'edgeEncoding' | 'showHeatmap' | 'curveStyle' | 'autoCurveFlip'>,
 ): GraphDisplaySettings {
   return {
-    edgeEncoding: settings?.edgeEncoding ?? 'full',
-    showHeatmap: settings?.showHeatmap ?? true,
-    curveStyle: settings?.curveStyle ?? 'arc',
-    autoCurveFlip: settings?.autoCurveFlip !== false,
-    dimUnconnectedOnSelect: true,
+    edgeEncoding: settings?.edgeEncoding ?? DEFAULT_GRAPH_DISPLAY.edgeEncoding,
+    showHeatmap: settings?.showHeatmap ?? DEFAULT_GRAPH_DISPLAY.showHeatmap,
+    curveStyle: settings?.curveStyle ?? DEFAULT_GRAPH_DISPLAY.curveStyle,
+    autoCurveFlip: settings?.autoCurveFlip ?? DEFAULT_GRAPH_DISPLAY.autoCurveFlip,
+    dimUnconnectedOnSelect: DEFAULT_GRAPH_DISPLAY.dimUnconnectedOnSelect,
   }
 }
 

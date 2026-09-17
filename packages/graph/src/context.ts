@@ -2,6 +2,7 @@
 import { createContext, useContext } from 'react'
 import type { RelationTypeName, CategoryPalette } from '@nesso-how/vocab-learning'
 import type { EdgeEncoding, CurveStyle } from './display.js'
+import { DEFAULT_GRAPH_DISPLAY } from './display.js'
 
 export type CategoryColorMode = 'palette' | 'css'
 
@@ -22,13 +23,9 @@ export interface NessoGraphDisplayContext {
 }
 
 const defaultContext: NessoGraphDisplayContext = {
-  edgeEncoding: 'full',
-  showHeatmap: true,
-  curveStyle: 'arc',
-  autoCurveFlip: true,
+  ...DEFAULT_GRAPH_DISPLAY,
   palette: 'default',
   categoryColorMode: 'palette',
-  dimUnconnectedOnSelect: true,
 }
 
 export const GraphDisplayContext = createContext<NessoGraphDisplayContext>(defaultContext)

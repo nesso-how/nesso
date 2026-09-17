@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+import { isPlainObject } from '@nesso-how/schema'
 import type { NotesDocument } from './graphDocument.js'
 
 export const NOTES_MAX_DEPTH = 8
@@ -20,14 +21,6 @@ function isDisallowedValue(value: unknown): boolean {
 
 function isUnknownArray(value: unknown): value is unknown[] {
   return Array.isArray(value)
-}
-
-/** JSON object values accepted for document and content nodes. */
-function isPlainObject(value: unknown): value is Record<string, unknown> {
-  if (typeof value !== 'object' || value === null || isUnknownArray(value)) return false
-  const prototype: object | null = Object.getPrototypeOf(value)
-  const objectPrototype: object = Object.prototype
-  return prototype === objectPrototype || prototype === null
 }
 
 function hasOwn(value: Record<string, unknown>, key: string): boolean {

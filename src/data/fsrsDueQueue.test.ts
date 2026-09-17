@@ -3,7 +3,7 @@ import type { Node } from '@xyflow/react'
 import { describe, expect, it } from 'vitest'
 import type { ConceptNodeData } from '@/types/graph'
 import { defaultConceptReviewFields } from '@/types/graph'
-import { sortedDueConceptNodes } from './fsrsDueQueue'
+import { sortedDueConceptNodes, studiedDueCount } from './fsrsDueQueue'
 
 function node(id: string, due: number): Node<ConceptNodeData> {
   return {
@@ -35,5 +35,25 @@ describe('sortedDueConceptNodes', () => {
     const input = [node('a', 2), node('b', 1)]
     sortedDueConceptNodes(input)
     expect(input.map((n) => n.id)).toEqual(['a', 'b'])
+  })
+})
+
+describe('studiedDueCount', () => {
+  it('counts only studied concepts due now or earlier', () => {
+    const now = Date.now()
+    const withReps = (n: Node<ConceptNodeData>, reps: number): Node<ConceptNodeData> => ({
+      ...n,
+      data: { ...n.data, reps },
+    })
+    expect(
+      studiedDueCount(
+        [
+          withReps(node('new', now - 1_000), 0),
+          withReps(node('due', now - 1_000), 2),
+          withReps(node('future', now + 1_000_000), 3),
+        ],
+        now,
+      ),
+    ).toBe(1)
   })
 })

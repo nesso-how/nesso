@@ -5,8 +5,8 @@ import { isDesktop } from '@/lib/isDesktop'
 
 /**
  * Rebuilds the native menu with localized labels and the current display state.
- * The `menu` locale keys map 1:1 to the Rust `MenuLabels` fields, so they are
- * passed straight through. No-op on the web build.
+ * The `menu` locale keys map 1:1 to the Rust `MenuItemId` entries, so they are
+ * passed straight through as `[id, label]` pairs. No-op on the web build.
  */
 export async function applyDesktopMenu(
   menu: Locale['menu'],
@@ -15,7 +15,7 @@ export async function applyDesktopMenu(
   if (!isDesktop()) return
   const { invoke } = await import('@tauri-apps/api/core')
   await invoke('set_app_menu', {
-    labels: menu,
+    labels: Object.entries(menu),
     state: {
       heatmap: display.showHeatmap,
       edgeEncoding: display.edgeEncoding,

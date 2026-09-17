@@ -2,7 +2,11 @@
 //
 // Learning-vocabulary graph file I/O: wraps `@nesso-how/schema` serialize/deserialize
 // and adds validation (elaboration shape, known `relation.type` ids).
-import { deserialize as deserializeSchema, serialize as serializeSchema } from '@nesso-how/schema'
+import {
+  deserialize as deserializeSchema,
+  isPlainObject,
+  serialize as serializeSchema,
+} from '@nesso-how/schema'
 import type {
   NessoConceptData,
   NessoGraphDocument,
@@ -15,12 +19,12 @@ import { VOCABULARY } from './vocabularyIdentity.js'
 
 const VALID_RELATION_TYPES = new Set<string>(Object.keys(RELATION_TYPES))
 
-function asRecord(value: unknown): Record<string, unknown> | null {
-  return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : null
-}
-
-/** Compare two semver strings. Returns positive if a > b, negative if a < b, 0 if equal. */
-function compareVersions(a: string, b: string): number {
+/**
+ * Compare two semver strings. Returns positive if a > b, negative if a < b, 0 if equal.
+ * NaN policy: a non-numeric component compares as not-newer (the comparison
+ * returns 0), so malformed versions never pass a `> 0` forward guard.
+ */
+export function compareVersions(a: string, b: string): number {
   const pa = a.split('.').map(Number)
   const pb = b.split('.').map(Number)
   for (let i = 0; i < 3; i++) {
@@ -56,16 +60,23 @@ function validateVocabularyIdentity(
 }
 
 /**
+ * Throw-semantics vocabulary identity guard for app-side chokepoints.
+ * Wraps {@link validateVocabularyIdentity}: rejects a missing vocabulary,
+ * a foreign vocabulary id, and newer vocabulary versions; older versions
+ * pass through so the caller can migrate them.
+ */
+export function checkVocabularyIdentity(
+  vocabulary: NessoGraphDocument['vocabulary'],
+): asserts vocabulary is NonNullable<NessoGraphDocument['vocabulary']> {
+  validateVocabularyIdentity(vocabulary)
+}
+
+/**
  * Current-version elaboration shape: `definition` plus an optional bounded
  * notes document. Any other key is rejected.
  */
 function validateElaboration(value: unknown): void {
-  if (VOCABULARY.version === '0.1.0') {
-    validateDefinitionOnlyElaboration(value)
-    return
-  }
-
-  const elab = asRecord(value)
+  const elab = isPlainObject(value) ? value : null
   if (!elab || typeof elab.definition !== 'string' || !Object.hasOwn(elab, 'definition')) {
     throw new Error('Concept elaboration must contain only definition')
   }
@@ -85,7 +96,7 @@ function validateElaboration(value: unknown): void {
  * attributed to `0.1.0` stay rejected here.
  */
 export function validateDefinitionOnlyElaboration(value: unknown): void {
-  const elab = asRecord(value)
+  const elab = isPlainObject(value) ? value : null
   if (
     !elab ||
     typeof elab.definition !== 'string' ||

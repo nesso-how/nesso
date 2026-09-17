@@ -17,6 +17,7 @@ export type {
   GraphDisplaySettings,
   NessoEdgeData,
 } from './display.js'
+export { DEFAULT_GRAPH_DISPLAY } from './display.js'
 export { documentToRenderGraph } from './documentToRenderGraph.js'
 
 // Shared canvas utilities — import from here to avoid duplication with the main app.

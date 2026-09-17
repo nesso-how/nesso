@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 import type { Node } from '@xyflow/react'
 import type { ConceptNodeData } from '@nesso-how/vocab-learning'
+import { studiedDueCount } from '@/data/fsrsDueQueue'
+
+export { studiedDueCount }
 
 interface ReviewReminderEligibilityInput {
   nodes: Node<ConceptNodeData>[]
@@ -16,10 +19,6 @@ export function localDayKey(now: Date): string {
   const month = String(now.getMonth() + 1).padStart(2, '0')
   const day = String(now.getDate()).padStart(2, '0')
   return `${now.getFullYear()}-${month}-${day}`
-}
-
-export function studiedDueCount(nodes: Node<ConceptNodeData>[], nowMs: number): number {
-  return nodes.filter((node) => node.data.reps > 0 && node.data.due <= nowMs).length
 }
 
 export function getReviewReminderEligibility({

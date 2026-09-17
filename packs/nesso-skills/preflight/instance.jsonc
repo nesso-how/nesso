@@ -24,7 +24,7 @@
             "name": "Run conditional mutation testing",
             "instructions": [
               "Run mutation testing when the diff touches pure logic in a Stryker area such as `src/llm/`, `src/data/fsrsDueQueue`, store slices, workspace, or `packages/schema`.",
-              "Run `pnpm run analyze:mutation:changed -- --base origin/main`; this check is conditional and not in CI."
+              "Run `pnpm run analyze:mutation:changed --base origin/main`; this check is conditional and not in CI."
             ]
           },
           {

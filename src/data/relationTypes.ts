@@ -3,23 +3,14 @@ import {
   RELATION_TYPES,
   RELATION_TYPE_VALUES,
   RELATION_CATEGORIES,
+  asRelationTypeName,
   isPrimaryRelationType,
   type RelationCategory,
   type RelationTypeName,
   type RelationTypeDef,
 } from '@nesso-how/vocab-learning'
 
-export { RELATION_TYPES, RELATION_TYPE_VALUES, isPrimaryRelationType }
-
-/** Coerce persisted / React Flow edge `data.type` to a known relation id. */
-export function asRelationTypeName(
-  value: unknown,
-  fallback: RelationTypeName = 'causes',
-): RelationTypeName {
-  return typeof value === 'string' && value in RELATION_TYPES
-    ? (value as RelationTypeName)
-    : fallback
-}
+export { RELATION_TYPES, RELATION_TYPE_VALUES, asRelationTypeName, isPrimaryRelationType }
 
 /** Category id → CSS palette var for canvas/UI chrome. Labels live in i18n. */
 export const RELATION_CATEGORY_COLORS = Object.fromEntries(

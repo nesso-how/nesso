@@ -112,6 +112,12 @@ const en = {
     startReview: 'Start review',
     recallPrompt: 'Recall its relations before revealing.',
     reveal: 'Reveal',
+    hints: {
+      orPressSpace: 'or press Space',
+      rate: 'rate',
+      reveal: 'reveal',
+      close: 'close',
+    },
     interval: {
       lessThanMinute: '< 1 min',
       minute: (count: number) => `${count} min`,
@@ -218,6 +224,10 @@ const en = {
       removeProjectCta: 'Remove',
       missingProject: 'not found',
       missingProjectHint: 'Folder not found. It may have been moved or renamed.',
+      unsupportedProject: (count: number) =>
+        `This project contains ${count} file(s) not supported by this version of Nesso. Please update the app or remove the files manually.`,
+      projectMissing:
+        'Project folder not found: it may have been moved or renamed. It stays in the list until you remove it.',
     },
     newGraphTitle: 'New graph',
     deleteGraph: 'Delete graph',
@@ -245,6 +255,13 @@ const en = {
     graphs: 'Graphs',
     concepts: 'Concepts',
     noResults: (q: string) => `No results for "${q}".`,
+    timeAgo: {
+      now: 'now',
+      minutes: (n: number) => `${n}m ago`,
+      hours: (n: number) => `${n}h ago`,
+      days: (n: number) => `${n}d ago`,
+      weeks: (n: number) => `${n}w ago`,
+    },
   },
   shortcuts: {
     title: 'Keyboard shortcuts',

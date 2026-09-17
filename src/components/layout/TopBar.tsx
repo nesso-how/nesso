@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
-import { useMemo, useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useGraphStore } from '@/store'
-import { sortedDueConceptNodes } from '@/data/fsrsDueQueue'
+import { studiedDueCount } from '@/data/fsrsDueQueue'
 import { GraphIO } from '@/components/dialogs/GraphIO'
 import { useT } from '@/i18n'
 import { isDesktop } from '@/lib/isDesktop'
@@ -34,7 +34,6 @@ export function TopBar({
   const t = useT()
   const graphList = useGraphStore((s) => s.graphList)
   const currentGraphId = useGraphStore((s) => s.currentGraphId)
-  const nodes = useGraphStore((s) => s.nodes)
   const reviewEnabled = useGraphStore((s) => s.settings.reviewEnabled)
   const onboardingStep = useGraphStore((s) => s.onboardingStep)
   const current = graphList.find((g) => g.id === currentGraphId)
@@ -44,7 +43,10 @@ export function TopBar({
     const id = setInterval(() => setNow(Date.now()), 60_000)
     return () => clearInterval(id)
   }, [])
-  const dueCount = useMemo(() => sortedDueConceptNodes(nodes).length, [nodes, now])
+  // Primitive subscription: re-render only when the due count itself changes,
+  // not on every unrelated graph update. `now` ticks each minute so newly-due
+  // concepts refresh the badge; the badge counts studied-only concepts.
+  const dueCount = useGraphStore((s) => studiedDueCount(s.nodes, now))
   const onReviewTourStep = isOnboardingStep(onboardingStep, 'review-button')
 
   return (

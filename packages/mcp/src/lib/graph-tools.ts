@@ -3,6 +3,8 @@ import dagre from 'dagre'
 import * as z from 'zod/v4'
 import {
   deserialize,
+  isPlainObject,
+  newElementId,
   serialize,
   VOCABULARY,
   RELATION_TYPE_VALUES,
@@ -78,17 +80,10 @@ export type BuildGraphInput = z.infer<typeof buildGraphInputSchema>
 const NODE_WIDTH = 180
 const NODE_HEIGHT = 60
 
-function asRecord(value: unknown): Record<string, unknown> | null {
-  return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : null
-}
-
-/** Short element id (`n`/`e` + 5 base36 chars), retried until unique within `used`. */
-export function newElementId(prefix: 'n' | 'e', used: ReadonlySet<string>): string {
-  for (;;) {
-    const id = prefix + Math.random().toString(36).slice(2, 7)
-    if (!used.has(id)) return id
-  }
-}
+// The element id generator lives in `@nesso-how/vocab-learning` (single home for
+// document element identity); re-exported here so existing `graph-tools`
+// consumers keep resolving it from this module.
+export { newElementId }
 
 function issue(path: string, message: string): GraphValidationIssue {
   return { path, message }
@@ -181,7 +176,7 @@ export function validateGraphJson(graph: string): GraphValidationResult {
     }
   }
 
-  const root = asRecord(parsed)
+  const root = isPlainObject(parsed) ? parsed : null
   if (!root) {
     return {
       valid: false,

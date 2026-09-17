@@ -41,9 +41,8 @@ export function ConceptNodeBody({
         position: 'relative',
         padding: '6px 14px',
         borderRadius: 999,
-        background: selected || showHeatmap ? 'var(--bg-card, #f5f5f5)' : 'transparent',
-        border:
-          selected || showHeatmap ? '0.5px solid var(--line, #d0d0d0)' : '0.5px solid transparent',
+        background: selected || showHeatmap ? 'var(--bg-card)' : 'transparent',
+        border: selected || showHeatmap ? '0.5px solid var(--line)' : '0.5px solid transparent',
         cursor,
         userSelect,
         minWidth: 60,
@@ -68,7 +67,7 @@ export function ConceptNodeBody({
             position: 'absolute',
             inset: -6,
             borderRadius: 999,
-            border: '1px dashed var(--accent, #3b82f6)',
+            border: '1px dashed var(--accent)',
             opacity: 0.7,
             pointerEvents: 'none',
           }}
@@ -81,7 +80,7 @@ export function ConceptNodeBody({
             position: 'absolute',
             inset: -4,
             borderRadius: 999,
-            border: '1.5px dotted color-mix(in srgb, var(--accent, #3b82f6) 65%, transparent)',
+            border: '1.5px dotted color-mix(in srgb, var(--accent) 65%, transparent)',
             pointerEvents: 'none',
           }}
         />
@@ -92,7 +91,7 @@ export function ConceptNodeBody({
           style={{
             font: '500 16px Fraunces, ui-serif, Georgia, serif',
             letterSpacing: '-0.005em',
-            color: 'var(--ink, #1a1a1a)',
+            color: 'var(--ink)',
             display: 'block',
             whiteSpace: 'pre',
           }}

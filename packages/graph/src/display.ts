@@ -22,6 +22,15 @@ export interface GraphDisplaySettings {
   dimUnconnectedOnSelect: boolean
 }
 
+/** Single source of truth for graph display defaults (package + app). */
+export const DEFAULT_GRAPH_DISPLAY: GraphDisplaySettings = {
+  edgeEncoding: 'full',
+  showHeatmap: true,
+  curveStyle: 'arc',
+  autoCurveFlip: true,
+  dimUnconnectedOnSelect: true,
+}
+
 export interface NessoEdgeData extends Record<string, unknown> {
   type: RelationTypeName
   siblingIdx?: number

@@ -2,8 +2,8 @@
 import { useState } from 'react'
 import type { Edge, EdgeProps } from '@xyflow/react'
 import { useStore } from '@xyflow/react'
-import { PALETTES, RELATION_TYPES } from '@nesso-how/vocab-learning'
-import type { RelationCategory, RelationTypeName } from '@nesso-how/vocab-learning'
+import { PALETTES, RELATION_TYPES, asRelationTypeName } from '@nesso-how/vocab-learning'
+import type { RelationCategory } from '@nesso-how/vocab-learning'
 import type { NessoEdgeData } from './display.js'
 import { GlyphSVG } from './GlyphSVG.js'
 import { useGraphDisplay, type NessoGraphDisplayContext } from './context.js'
@@ -17,22 +17,13 @@ import {
   rectExit,
 } from './geometry.js'
 
-function asRelationTypeName(
-  value: unknown,
-  fallback: RelationTypeName = 'causes',
-): RelationTypeName {
-  return typeof value === 'string' && value in RELATION_TYPES
-    ? (value as RelationTypeName)
-    : fallback
-}
-
 function categoryColor(
   cat: RelationCategory,
   mode: 'palette' | 'css',
   palette: NessoGraphDisplayContext['palette'],
 ): string {
   if (mode === 'css') return `var(--cat-${cat})`
-  return PALETTES[palette]?.[cat] ?? '#666666'
+  return PALETTES[palette][cat]
 }
 
 type NessoFlowEdge = Edge<NessoEdgeData, 'nesso'>
@@ -57,9 +48,7 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
   const edgeType = asRelationTypeName(data?.type)
   const T = RELATION_TYPES[edgeType]
   const color =
-    edgeEncoding === 'minimal'
-      ? 'var(--ink-3, #888888)'
-      : categoryColor(T.cat, categoryColorMode, palette)
+    edgeEncoding === 'minimal' ? 'var(--ink-3)' : categoryColor(T.cat, categoryColorMode, palette)
   const isSelected = selected || isItemSelected?.('edge', id) === true
   const isConnected = isEdgeConnectedToNode(source, target, selectedNodeId)
   const hasSelection = dimUnconnectedOnSelect && selectedNodeId != null && selectedNodeId !== ''
@@ -166,7 +155,7 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
             cx={labelX}
             cy={labelY}
             r={r}
-            fill="var(--paper, #ffffff)"
+            fill="var(--paper)"
             stroke={color}
             strokeOpacity={dimmed ? op : 1}
             strokeWidth={1.2}
@@ -188,8 +177,8 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
           <div
             style={{
               display: 'inline-block',
-              background: 'var(--paper, #ffffff)',
-              border: '0.5px solid var(--line, #d0d0d0)',
+              background: 'var(--paper)',
+              border: '0.5px solid var(--line)',
               borderRadius: 4,
               padding: '1px 6px',
               font: "500 10px 'JetBrains Mono', ui-monospace",

@@ -4,6 +4,7 @@ import { TOPBAR_HEIGHT_PX } from '@/components/layout/TopBar'
 import { STATUS_BAR_HEIGHT_PX } from '@/components/layout/StatusBar'
 import { useT } from '@/i18n'
 import { useHorizontalResize } from '@/hooks/useHorizontalResize'
+import { ResizeHandle } from '@/components/ui/ResizeHandle'
 import {
   clampInspectorPanelWidth,
   INSPECTOR_PANEL_MAX_WIDTH,
@@ -48,29 +49,15 @@ export function InspectorPanel({ panelWidth, onPanelWidthChange, children }: Pro
     >
       {children}
 
-      <button
-        type="button"
-        aria-valuenow={Math.round(panelWidth)}
-        aria-valuemin={INSPECTOR_PANEL_MIN_WIDTH}
-        aria-valuemax={INSPECTOR_PANEL_MAX_WIDTH}
-        aria-label={`Resize inspector width (${panelWidth}px). Arrow keys adjust width.`}
+      <ResizeHandle
+        side="left"
+        ariaLabel={`Resize inspector width (${panelWidth}px). Arrow keys adjust width.`}
         title={t.inspector.resizeHandle}
+        valueNow={Math.round(panelWidth)}
+        valueMin={INSPECTOR_PANEL_MIN_WIDTH}
+        valueMax={INSPECTOR_PANEL_MAX_WIDTH}
         onMouseDown={onResizeHandleMouseDown}
         onKeyDown={onResizeHandleKeyDown}
-        style={{
-          position: 'absolute',
-          top: 0,
-          bottom: 0,
-          left: -4,
-          width: 8,
-          cursor: 'col-resize',
-          touchAction: 'none',
-          background: 'transparent',
-          border: 'none',
-          padding: 0,
-          margin: 0,
-          boxSizing: 'border-box',
-        }}
       />
     </div>
   )

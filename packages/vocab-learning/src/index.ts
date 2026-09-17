@@ -6,14 +6,17 @@
 export type {
   ConceptElaboration,
   NotesDocument,
-  NotesNode,
-  NessoConceptData,
-  NessoRelationData,
   NessoGraphDocument,
   NessoGraphDocumentInput,
 } from './graphDocument.js'
 
+export { newElementId } from './graphDocument.js'
+
 export { VOCABULARY } from './vocabularyIdentity.js'
+
+// Re-exported so downstream packages with a layering boundary against
+// `@nesso-how/schema` (e.g. `@nesso-how/theme`) can share the canonical guard.
+export { isPlainObject } from '@nesso-how/schema'
 
 export {
   defaultConceptReviewFields,
@@ -25,6 +28,8 @@ export {
   RELATION_CATEGORIES,
   RELATION_TYPES,
   RELATION_TYPE_VALUES,
+  DEFAULT_RELATION_TYPE,
+  asRelationTypeName,
   isPrimaryRelationType,
   type Cardinality,
   type GlyphKind,
@@ -35,9 +40,11 @@ export {
   type Transitivity,
 } from './relationTypes.js'
 
-export { CategoryPalette, GLYPH_PATHS, PALETTES } from './visual.js'
+export { CategoryPalette, categoryCssVars, GLYPH_PATHS, PALETTES } from './visual.js'
 
 export {
+  checkVocabularyIdentity,
+  compareVersions,
   deserialize,
   deserializeEnvelope,
   serialize,

@@ -9,7 +9,6 @@ import { WritingEditor } from './WritingEditor'
 interface Props {
   nodeId: string
   onClose: () => void
-  canvasInsets?: { top: number; right: number; bottom: number; left: number }
 }
 
 /** Text column width; the card wraps it plus uniform CONTENT_INSET gutters. */
@@ -24,7 +23,7 @@ const CONTENT_INSET = 32
  * where you were. Notes commit synchronously through the graph-editing slice,
  * and `anyModalOpen` suppresses canvas shortcuts.
  */
-export function WritingMode({ nodeId, onClose, canvasInsets }: Props) {
+export function WritingMode({ nodeId, onClose }: Props) {
   const t = useT()
   const returnFocusRef = useRef<HTMLElement | null>(null)
   const closeRequestedRef = useRef(false)
@@ -68,7 +67,6 @@ export function WritingMode({ nodeId, onClose, canvasInsets }: Props) {
   if (!node) return null
 
   const definition = node.data.elaboration?.definition ?? ''
-  const insets = canvasInsets ?? { top: 0, right: 0, bottom: 0, left: 0 }
 
   return (
     // Backdrop conventions mirror ReviewMode's ModalOverlay (translucent dim,
@@ -85,10 +83,10 @@ export function WritingMode({ nodeId, onClose, canvasInsets }: Props) {
       onClick={handleClose}
       style={{
         position: 'fixed',
-        top: insets.top,
-        right: insets.right,
-        bottom: insets.bottom,
-        left: insets.left,
+        top: 0,
+        right: 0,
+        bottom: 0,
+        left: 0,
         zIndex: 70,
         background: 'color-mix(in srgb, var(--ink) 55%, transparent)',
         display: 'flex',

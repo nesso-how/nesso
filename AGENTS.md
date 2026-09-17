@@ -50,7 +50,7 @@ pnpm exec atlante validate
 pnpm run worktree <issue|branch>
 pnpm --filter docs build
 pnpm run build:mcp
-pnpm run analyze:mutation:changed -- --base origin/main --working
+pnpm run analyze:mutation:changed --base origin/main --working
 ```
 
 Use the mutation command when changed pure logic belongs to a registered
@@ -75,7 +75,7 @@ Choose checks based on the change's scope and risk:
   validate the Astro site and `pnpm run build:mcp` to refresh the MCP docs
   bundle. The full preflight does not include the docs-site build.
 - **Pure logic in a registered mutation area:** run
-  `pnpm run analyze:mutation:changed -- --base origin/main --working` when
+  `pnpm run analyze:mutation:changed --base origin/main --working` when
   mutation feedback is relevant. `--working` includes tracked staged and
   unstaged changes; untracked files are not detected by the selector.
 - **Native persistence, filesystem, or sync changes:** run

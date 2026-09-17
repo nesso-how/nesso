@@ -2,7 +2,7 @@
 import { useState, useEffect, useLayoutEffect, useCallback, useRef, useMemo } from 'react'
 import { ReactFlowProvider, useReactFlow } from '@xyflow/react'
 import { GraphCanvas } from './components/canvas/GraphCanvas'
-import { TopBar } from './components/layout/TopBar'
+import { TopBar, TOPBAR_HEIGHT_PX } from './components/layout/TopBar'
 import {
   Sidebar,
   clampSidebarWidth,
@@ -10,35 +10,21 @@ import {
   writeSidebarWidth,
 } from './components/layout/Sidebar'
 import { StatusBar, STATUS_BAR_HEIGHT_PX } from './components/layout/StatusBar'
-import { RelationTypesDialog } from './components/dialogs/RelationTypesDialog'
+import { AppPanels } from './components/layout/AppPanels'
+import { AppOverlays } from './components/layout/AppOverlays'
+import { AppBannerStack } from './components/layout/AppBannerStack'
 import {
-  Inspector,
   INSPECTOR_CANVAS_LEFT_GUTTER,
   INSPECTOR_RAIL_WIDTH,
   clampInspectorPanelWidth,
   readInspectorPanelWidth,
   writeInspectorPanelWidth,
 } from './components/Inspector'
-import { MentorPanel } from './components/mentor/MentorPanel'
-import { ReviewMode } from './components/review/ReviewMode'
-import { WritingMode } from './components/writing/WritingMode'
-import { ShortcutsDialog } from './components/dialogs/ShortcutsDialog'
-import { SettingsDialog } from './components/dialogs/SettingsDialog'
-import { AboutDialog } from './components/dialogs/AboutDialog'
-import { SearchDialog } from './components/dialogs/SearchDialog'
-import { ConfirmDialog } from './components/ui/ConfirmDialog'
-import { ToastViewport } from './components/ui/ToastViewport'
 import { useGraphStore, selectedNodeSelector, selectedEdgeSelector } from './store'
 import { useAutoSave } from './hooks/useAutoSave'
 import { useGraphFileWatch } from './hooks/useGraphFileWatch'
 import { useDesktopMenu } from './hooks/useDesktopMenu'
 import { useOnboardingFlow } from './hooks/useOnboardingFlow'
-import { GraphFileConflictBanner } from './components/banners/GraphFileConflictBanner'
-import { UpdateBanner } from './components/banners/UpdateBanner'
-import { ReviewReminderBanner } from './components/banners/ReviewReminderBanner'
-import { TelemetryConsentBanner } from './components/banners/TelemetryConsentBanner'
-import { WelcomeDialog } from './components/onboarding/WelcomeDialog'
-import { CoachmarkOverlay } from './components/onboarding/CoachmarkOverlay'
 import { PALETTES } from '@nesso-how/vocab-learning'
 import { findNewConceptPosition, NEW_CONCEPT_SIZE } from './data/newConceptLayout'
 import { focusFlowNodes } from './lib/focusFlowSelection'
@@ -49,6 +35,51 @@ import { getSeedInitialFitZoom } from './data/seedGraph'
 import { APP_VERSION } from './data/appInfo'
 import { isDesktop } from './lib/isDesktop'
 import { initTelemetry, shutdownTelemetry, track } from './telemetry'
+
+interface CanvasInsets {
+  top: number
+  bottom: number
+  left: number
+  right: number
+}
+
+interface ResolveCanvasInsetsArgs {
+  sidebarWidth: number
+  inspectorPanelWidth: number
+  inspectorCollapsed: boolean
+  /** Whether the inspector currently occupies canvas space; differs per consumer. */
+  inspectorVisible: boolean
+  /** Right inset when the inspector is hidden; differs per overlay. */
+  emptyRightInset?: number
+  /** Gutter added to the sidebar width; MentorPanel docks without it. */
+  leftGutter?: number
+}
+
+/**
+ * Single derivation for canvas insets. Every inset consumer in this file routes
+ * through here; per-overlay differences (inspector visibility condition, hidden
+ * right fallback, left gutter) are explicit inputs so each call site keeps its
+ * previous output byte-for-byte.
+ */
+function resolveCanvasInsets({
+  sidebarWidth,
+  inspectorPanelWidth,
+  inspectorCollapsed,
+  inspectorVisible,
+  emptyRightInset = 30,
+  leftGutter = INSPECTOR_CANVAS_LEFT_GUTTER,
+}: ResolveCanvasInsetsArgs): CanvasInsets {
+  return {
+    top: TOPBAR_HEIGHT_PX,
+    bottom: STATUS_BAR_HEIGHT_PX,
+    left: sidebarWidth + leftGutter,
+    right: inspectorVisible
+      ? inspectorCollapsed
+        ? INSPECTOR_RAIL_WIDTH
+        : inspectorPanelWidth
+      : emptyRightInset,
+  }
+}
 
 function AppInner() {
   const [showReview, setShowReview] = useState(false)
@@ -174,13 +205,13 @@ function AppInner() {
   }, [loadGraph])
 
   const canvasInsets = useMemo(
-    () => ({
-      top: 52,
-      bottom: STATUS_BAR_HEIGHT_PX,
-      left: sidebarWidth + INSPECTOR_CANVAS_LEFT_GUTTER,
-      right:
-        selected !== null ? (inspectorCollapsed ? INSPECTOR_RAIL_WIDTH : inspectorPanelWidth) : 30,
-    }),
+    () =>
+      resolveCanvasInsets({
+        sidebarWidth,
+        inspectorPanelWidth,
+        inspectorCollapsed,
+        inspectorVisible: selected !== null,
+      }),
     [sidebarWidth, inspectorPanelWidth, inspectorCollapsed, selected],
   )
 
@@ -267,6 +298,32 @@ function AppInner() {
 
   const hasSelection = !!selectedNode || !!selectedEdge
 
+  // Overlay insets share the canvas derivation but key inspector visibility on
+  // the resolved selection (the Inspector renders only when a node/edge
+  // resolves). MentorPanel docks flush to the sidebar and collapses to 0.
+  const overlayInsets = useMemo(
+    () =>
+      resolveCanvasInsets({
+        sidebarWidth,
+        inspectorPanelWidth,
+        inspectorCollapsed,
+        inspectorVisible: hasSelection,
+      }),
+    [sidebarWidth, inspectorPanelWidth, inspectorCollapsed, hasSelection],
+  )
+  const mentorInsets = useMemo(
+    () =>
+      resolveCanvasInsets({
+        sidebarWidth,
+        inspectorPanelWidth,
+        inspectorCollapsed,
+        inspectorVisible: hasSelection,
+        emptyRightInset: 0,
+        leftGutter: 0,
+      }),
+    [sidebarWidth, inspectorPanelWidth, inspectorCollapsed, hasSelection],
+  )
+
   const handleSelectNode = useCallback(
     (node: { id: string; position: { x: number; y: number } }) => {
       suppressSelectPanRef.current = node.id
@@ -276,18 +333,21 @@ function AppInner() {
       const w = liveNode?.measured?.width ?? 160
       const h = liveNode?.measured?.height ?? 32
 
-      const TOP = 52
-      const BOTTOM = STATUS_BAR_HEIGHT_PX
-      const RIGHT = inspectorCollapsed ? INSPECTOR_RAIL_WIDTH : inspectorPanelWidth
-      const leftPad = sidebarWidth + INSPECTOR_CANVAS_LEFT_GUTTER
-      const canvasW = window.innerWidth - leftPad - RIGHT
-      const canvasH = window.innerHeight - TOP - BOTTOM
+      // A selection is being established, so the inspector will occupy space.
+      const selectInsets = resolveCanvasInsets({
+        sidebarWidth,
+        inspectorPanelWidth,
+        inspectorCollapsed,
+        inspectorVisible: true,
+      })
+      const canvasW = window.innerWidth - selectInsets.left - selectInsets.right
+      const canvasH = window.innerHeight - selectInsets.top - selectInsets.bottom
 
       const zoom = 1.2
       setViewport(
         {
-          x: leftPad + canvasW / 2 - (node.position.x + w / 2) * zoom,
-          y: TOP + canvasH / 2 - (node.position.y + h / 2) * zoom,
+          x: selectInsets.left + canvasW / 2 - (node.position.x + w / 2) * zoom,
+          y: selectInsets.top + canvasH / 2 - (node.position.y + h / 2) * zoom,
           zoom,
         },
         { duration: 500 },
@@ -297,16 +357,10 @@ function AppInner() {
   )
 
   const handleAddConcept = useCallback(() => {
-    const topInset = 52
-    const bottomInset = STATUS_BAR_HEIGHT_PX
-    const leftInset = sidebarWidth + INSPECTOR_CANVAS_LEFT_GUTTER
-    const rightInset = hasSelection
-      ? inspectorCollapsed
-        ? INSPECTOR_RAIL_WIDTH
-        : inspectorPanelWidth
-      : 30
-    const screenCenterX = leftInset + (window.innerWidth - leftInset - rightInset) / 2
-    const screenCenterY = topInset + (window.innerHeight - topInset - bottomInset) / 2
+    const screenCenterX =
+      overlayInsets.left + (window.innerWidth - overlayInsets.left - overlayInsets.right) / 2
+    const screenCenterY =
+      overlayInsets.top + (window.innerHeight - overlayInsets.top - overlayInsets.bottom) / 2
     const { x: flowCx, y: flowCy } = screenToFlowPosition({ x: screenCenterX, y: screenCenterY })
     const { x, y } = findNewConceptPosition(useGraphStore.getState().nodes, flowCx, flowCy)
     const nodeCx = x + NEW_CONCEPT_SIZE.width / 2
@@ -316,16 +370,7 @@ function AppInner() {
     addNode(x, y)
     track({ name: 'node_created' })
     setCenter(nodeCx, nodeCy, { zoom: Math.max(getViewport().zoom, 1), duration: 300 })
-  }, [
-    addNode,
-    setCenter,
-    getViewport,
-    screenToFlowPosition,
-    sidebarWidth,
-    hasSelection,
-    inspectorPanelWidth,
-    inspectorCollapsed,
-  ])
+  }, [addNode, setCenter, getViewport, screenToFlowPosition, overlayInsets])
 
   // Pan-on-select: nudge the viewport so the selected node/edge stays clear of the
   // right-docked inspector (and other chrome). Only fires when the element falls
@@ -371,12 +416,19 @@ function AppInner() {
     }
     const v = getViewport()
     const M = 56
-    const rightInset = inspectorCollapsed ? INSPECTOR_RAIL_WIDTH : inspectorPanelWidth
+    // The selection exists here, so the inspector occupies space; the comfort
+    // bounds are the shared insets expanded by the margin M.
+    const panInsets = resolveCanvasInsets({
+      sidebarWidth,
+      inspectorPanelWidth,
+      inspectorCollapsed,
+      inspectorVisible: true,
+    })
     const pan = computeSelectionPan({ left: wLeft, top: wTop, right: wRight, bottom: wBottom }, v, {
-      left: sidebarWidth + M,
-      right: window.innerWidth - rightInset - M,
-      top: 52 + M,
-      bottom: window.innerHeight - STATUS_BAR_HEIGHT_PX - M,
+      left: panInsets.left - INSPECTOR_CANVAS_LEFT_GUTTER + M,
+      right: window.innerWidth - panInsets.right - M,
+      top: panInsets.top + M,
+      bottom: window.innerHeight - panInsets.bottom - M,
     })
     if (!pan) return
     setViewport({ x: v.x + pan.dx, y: v.y + pan.dy, zoom: v.zoom }, { duration: 300 })
@@ -485,12 +537,10 @@ function AppInner() {
   return (
     <div style={{ position: 'fixed', inset: 0 }}>
       <GraphCanvas
-        topInset={52}
-        bottomInset={STATUS_BAR_HEIGHT_PX}
-        leftInset={sidebarWidth + INSPECTOR_CANVAS_LEFT_GUTTER}
-        rightInset={
-          hasSelection ? (inspectorCollapsed ? INSPECTOR_RAIL_WIDTH : inspectorPanelWidth) : 30
-        }
+        topInset={overlayInsets.top}
+        bottomInset={overlayInsets.bottom}
+        leftInset={overlayInsets.left}
+        rightInset={overlayInsets.right}
         onFit={fitView}
       />
 
@@ -513,77 +563,42 @@ function AppInner() {
         onAbout={() => setShowAbout(true)}
       />
 
-      <RelationTypesDialog open={showRelationTypes} onClose={() => setShowRelationTypes(false)} />
-      <Inspector
-        panelWidth={inspectorPanelWidth}
-        onPanelWidthChange={(w) => setInspectorPanelWidth(clampInspectorPanelWidth(w))}
+      <AppPanels
+        inspectorPanelWidth={inspectorPanelWidth}
+        onInspectorPanelWidthChange={(w) => setInspectorPanelWidth(clampInspectorPanelWidth(w))}
+        mentorLeftInset={mentorInsets.left}
+        mentorRightInset={mentorInsets.right}
       />
       <StatusBar sidebarWidth={sidebarWidth} onFit={fitView} />
-      {mentorEnabled && (
-        <MentorPanel
-          leftInset={sidebarWidth}
-          rightInset={
-            hasSelection ? (inspectorCollapsed ? INSPECTOR_RAIL_WIDTH : inspectorPanelWidth) : 0
-          }
-        />
-      )}
-      <ReviewMode open={showReview} onClose={() => setShowReview(false)} />
-      {writingModeNodeId !== null && (
-        <WritingMode nodeId={writingModeNodeId} onClose={closeWritingMode} />
-      )}
-      <ShortcutsDialog open={showShortcuts} onClose={() => setShowShortcuts(false)} />
-      <SettingsDialog open={showSettings} onClose={() => setShowSettings(false)} />
-      <AboutDialog
-        open={showAbout}
-        onClose={() => setShowAbout(false)}
+      <AppOverlays
+        showRelationTypes={showRelationTypes}
+        onCloseRelationTypes={() => setShowRelationTypes(false)}
+        showReview={showReview}
+        onCloseReview={() => setShowReview(false)}
+        writingModeNodeId={writingModeNodeId}
+        onCloseWritingMode={closeWritingMode}
+        showShortcuts={showShortcuts}
+        onCloseShortcuts={() => setShowShortcuts(false)}
+        showSettings={showSettings}
+        onCloseSettings={() => setShowSettings(false)}
+        showAbout={showAbout}
+        onCloseAbout={() => setShowAbout(false)}
         onShowTutorial={() => {
           setShowAbout(false)
           onboarding.startTour()
         }}
-      />
-      <SearchDialog
-        open={showSearch}
-        onClose={() => setShowSearch(false)}
+        showSearch={showSearch}
+        onCloseSearch={() => setShowSearch(false)}
         onSelectNode={handleSelectNode}
         onSelectGraph={(id) => loadGraph(id)}
+        onboarding={onboarding}
       />
-      <WelcomeDialog
-        open={onboarding.phase === 'welcome'}
-        onShowMeHow={onboarding.startTour}
-        onSkipIntro={onboarding.skipOnboarding}
+      <AppBannerStack
+        onStartReview={openReview}
+        onboardingActive={onboarding.phase !== 'idle'}
+        consentOpen={onboarding.phase === 'consent'}
+        onDismissConsent={onboarding.finishOnboarding}
       />
-      {onboarding.phase === 'tour' && !showReview && (
-        <CoachmarkOverlay
-          stepIndex={onboarding.tourStep}
-          onSkip={onboarding.skipOnboarding}
-          onNext={onboarding.advanceTour}
-        />
-      )}
-      <div
-        style={{
-          position: 'fixed',
-          top: 60,
-          right: 16,
-          zIndex: 60,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 10,
-          alignItems: 'flex-end',
-        }}
-      >
-        <GraphFileConflictBanner />
-        <UpdateBanner />
-        <ReviewReminderBanner
-          onStartReview={openReview}
-          onboardingActive={onboarding.phase !== 'idle'}
-        />
-        <TelemetryConsentBanner
-          open={onboarding.phase === 'consent'}
-          onDismiss={onboarding.finishOnboarding}
-        />
-        <ToastViewport />
-      </div>
-      <ConfirmDialog />
     </div>
   )
 }

@@ -597,87 +597,105 @@ async fn save_file_dialog(
     Err("save_file_dialog is not supported on this platform".into())
 }
 
-/// Localized labels for the native menu. Built once from the frontend's i18n
-/// strings and passed in via [`set_app_menu`], so the menu follows the in-app
-/// language. Missing fields fall back to the English defaults below (used for
-/// the startup menu before the webview hydrates and calls `set_app_menu`).
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase", default)]
-struct MenuLabels {
-    file: String,
-    edit: String,
-    view: String,
-    window: String,
-    help: String,
-    about: String,
-    settings: String,
-    new_graph: String,
-    open_project: String,
-    export_json: String,
-    export_png: String,
-    import: String,
-    undo: String,
-    redo: String,
-    cut: String,
-    copy: String,
-    paste: String,
-    select_all: String,
-    zoom_in: String,
-    zoom_out: String,
-    zoom_fit: String,
-    heatmap: String,
-    edges: String,
-    edges_full: String,
-    edges_category: String,
-    edges_minimal: String,
-    curve: String,
-    curve_arc: String,
-    curve_straight: String,
-    documentation: String,
-    website: String,
-    report_issue: String,
-    shortcuts: String,
+/// Typed ids for the localizable menu items. The ids stay typed Rust-side;
+/// only the display labels cross from the frontend. Serialized in camelCase
+/// to match the `Locale['menu']` keys, except `OpenProject` which maps to the
+/// frontend's `openOrCreateProject` key via an explicit rename.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Deserialize)]
+#[serde(rename_all = "camelCase")]
+enum MenuItemId {
+    File,
+    Edit,
+    View,
+    Window,
+    Help,
+    About,
+    Settings,
+    NewGraph,
+    #[serde(rename = "openOrCreateProject")]
+    OpenProject,
+    ExportJson,
+    ExportPng,
+    Import,
+    Undo,
+    Redo,
+    Cut,
+    Copy,
+    Paste,
+    SelectAll,
+    ZoomIn,
+    ZoomOut,
+    ZoomFit,
+    Heatmap,
+    Edges,
+    EdgesFull,
+    EdgesCategory,
+    EdgesMinimal,
+    Curve,
+    CurveArc,
+    CurveStraight,
+    Documentation,
+    Website,
+    ReportIssue,
+    Shortcuts,
 }
 
-impl Default for MenuLabels {
-    fn default() -> Self {
-        let s = |v: &str| v.to_string();
-        Self {
-            file: s("File"),
-            edit: s("Edit"),
-            view: s("View"),
-            window: s("Window"),
-            help: s("Help"),
-            about: s("About Nesso"),
-            settings: s("Settings…"),
-            new_graph: s("New Graph"),
-            open_project: s("Open or Create Project…"),
-            export_json: s("Export Graph (JSON)"),
-            export_png: s("Export Graph (PNG)"),
-            import: s("Import Graph…"),
-            undo: s("Undo"),
-            redo: s("Redo"),
-            cut: s("Cut"),
-            copy: s("Copy"),
-            paste: s("Paste"),
-            select_all: s("Select All"),
-            zoom_in: s("Zoom In"),
-            zoom_out: s("Zoom Out"),
-            zoom_fit: s("Zoom to Fit"),
-            heatmap: s("Heatmap"),
-            edges: s("Edges"),
-            edges_full: s("Full"),
-            edges_category: s("Category"),
-            edges_minimal: s("Minimal"),
-            curve: s("Curve"),
-            curve_arc: s("Arc"),
-            curve_straight: s("Straight"),
-            documentation: s("Documentation"),
-            website: s("Website"),
-            report_issue: s("Report an Issue"),
-            shortcuts: s("Keyboard Shortcuts"),
-        }
-    }
+/// Localized labels for the native menu: an ordered list of `(item id, label)`
+/// entries built from the frontend's i18n strings and passed in via
+/// [`set_app_menu`], so the menu follows the in-app language. New menu items
+/// only need a variant above plus a builder entry below — no struct surgery.
+type MenuLabels = Vec<(MenuItemId, String)>;
+
+/// Looks up the label for `id`. A missing entry yields an empty label, exactly
+/// as a missing field did under the previous `MenuLabels` struct (serde field
+/// defaults are empty strings, not the English baseline — the English strings
+/// below only apply to the startup menu built before the webview hydrates).
+fn menu_label(labels: &MenuLabels, id: MenuItemId) -> &str {
+    labels
+        .iter()
+        .find_map(|(key, value)| (*key == id).then_some(value.as_str()))
+        .unwrap_or("")
+}
+
+/// English baseline labels for the startup menu, before the webview hydrates
+/// and calls `set_app_menu` with the active language.
+fn default_menu_labels() -> MenuLabels {
+    let entry = |id: MenuItemId, label: &str| (id, label.to_string());
+    vec![
+        entry(MenuItemId::File, "File"),
+        entry(MenuItemId::Edit, "Edit"),
+        entry(MenuItemId::View, "View"),
+        entry(MenuItemId::Window, "Window"),
+        entry(MenuItemId::Help, "Help"),
+        entry(MenuItemId::About, "About Nesso"),
+        entry(MenuItemId::Settings, "Settings…"),
+        entry(MenuItemId::NewGraph, "New Graph"),
+        entry(MenuItemId::OpenProject, "Open or Create Project…"),
+        entry(MenuItemId::ExportJson, "Export Graph (JSON)"),
+        entry(MenuItemId::ExportPng, "Export Graph (PNG)"),
+        entry(MenuItemId::Import, "Import Graph…"),
+        entry(MenuItemId::Undo, "Undo"),
+        entry(MenuItemId::Redo, "Redo"),
+        entry(MenuItemId::Cut, "Cut"),
+        entry(MenuItemId::Copy, "Copy"),
+        entry(MenuItemId::Paste, "Paste"),
+        entry(MenuItemId::SelectAll, "Select All"),
+        entry(MenuItemId::ZoomIn, "Zoom In"),
+        entry(MenuItemId::ZoomOut, "Zoom Out"),
+        entry(MenuItemId::ZoomFit, "Zoom to Fit"),
+        entry(MenuItemId::Heatmap, "Heatmap"),
+        entry(MenuItemId::Edges, "Edges"),
+        entry(MenuItemId::EdgesFull, "Full"),
+        entry(MenuItemId::EdgesCategory, "Category"),
+        entry(MenuItemId::EdgesMinimal, "Minimal"),
+        entry(MenuItemId::Curve, "Curve"),
+        entry(MenuItemId::CurveArc, "Arc"),
+        entry(MenuItemId::CurveStraight, "Straight"),
+        entry(MenuItemId::Documentation, "Documentation"),
+        entry(MenuItemId::Website, "Website"),
+        entry(MenuItemId::ReportIssue, "Report an Issue"),
+        entry(MenuItemId::Shortcuts, "Keyboard Shortcuts"),
+    ]
 }
 
 /// Current toggle/radio state so the View menu's check items mirror the live
@@ -703,56 +721,63 @@ fn build_app_menu(
 ) -> tauri::Result<tauri::menu::Menu<tauri::Wry>> {
     use tauri::menu::{CheckMenuItemBuilder, MenuBuilder, MenuItemBuilder, SubmenuBuilder};
 
-    let about_i = MenuItemBuilder::with_id("about", &labels.about).build(app)?;
-    let settings_i = MenuItemBuilder::with_id("settings", &labels.settings)
+    let text = |id: MenuItemId| menu_label(labels, id);
+
+    let about_i = MenuItemBuilder::with_id("about", text(MenuItemId::About)).build(app)?;
+    let settings_i = MenuItemBuilder::with_id("settings", text(MenuItemId::Settings))
         .accelerator("CmdOrCtrl+Comma")
         .build(app)?;
 
-    let new_graph_i = MenuItemBuilder::with_id("new-graph", &labels.new_graph)
+    let new_graph_i = MenuItemBuilder::with_id("new-graph", text(MenuItemId::NewGraph))
         .accelerator("CmdOrCtrl+N")
         .build(app)?;
-    let open_project_i = MenuItemBuilder::with_id("open-project", &labels.open_project)
+    let open_project_i = MenuItemBuilder::with_id("open-project", text(MenuItemId::OpenProject))
         .accelerator("CmdOrCtrl+O")
         .build(app)?;
-    let export_json_i = MenuItemBuilder::with_id("export-json", &labels.export_json)
+    let export_json_i = MenuItemBuilder::with_id("export-json", text(MenuItemId::ExportJson))
         .accelerator("CmdOrCtrl+Shift+E")
         .build(app)?;
-    let export_png_i = MenuItemBuilder::with_id("export-png", &labels.export_png).build(app)?;
-    let import_i = MenuItemBuilder::with_id("import", &labels.import).build(app)?;
+    let export_png_i =
+        MenuItemBuilder::with_id("export-png", text(MenuItemId::ExportPng)).build(app)?;
+    let import_i = MenuItemBuilder::with_id("import", text(MenuItemId::Import)).build(app)?;
 
-    let zoom_in_i = MenuItemBuilder::with_id("zoom-in", &labels.zoom_in)
+    let zoom_in_i = MenuItemBuilder::with_id("zoom-in", text(MenuItemId::ZoomIn))
         .accelerator("CmdOrCtrl+Plus")
         .build(app)?;
-    let zoom_out_i = MenuItemBuilder::with_id("zoom-out", &labels.zoom_out)
+    let zoom_out_i = MenuItemBuilder::with_id("zoom-out", text(MenuItemId::ZoomOut))
         .accelerator("CmdOrCtrl+Minus")
         .build(app)?;
-    let fit_i = MenuItemBuilder::with_id("fit", &labels.zoom_fit)
+    let fit_i = MenuItemBuilder::with_id("fit", text(MenuItemId::ZoomFit))
         .accelerator("CmdOrCtrl+0")
         .build(app)?;
-    let heatmap_i = CheckMenuItemBuilder::with_id("heatmap", &labels.heatmap)
+    let heatmap_i = CheckMenuItemBuilder::with_id("heatmap", text(MenuItemId::Heatmap))
         .checked(state.heatmap)
         .build(app)?;
-    let edges_full_i = CheckMenuItemBuilder::with_id("edges-full", &labels.edges_full)
+    let edges_full_i = CheckMenuItemBuilder::with_id("edges-full", text(MenuItemId::EdgesFull))
         .checked(state.edge_encoding == "full")
         .build(app)?;
-    let edges_category_i = CheckMenuItemBuilder::with_id("edges-category", &labels.edges_category)
-        .checked(state.edge_encoding == "category")
-        .build(app)?;
-    let edges_minimal_i = CheckMenuItemBuilder::with_id("edges-minimal", &labels.edges_minimal)
-        .checked(state.edge_encoding == "minimal")
-        .build(app)?;
-    let curve_arc_i = CheckMenuItemBuilder::with_id("curve-arc", &labels.curve_arc)
+    let edges_category_i =
+        CheckMenuItemBuilder::with_id("edges-category", text(MenuItemId::EdgesCategory))
+            .checked(state.edge_encoding == "category")
+            .build(app)?;
+    let edges_minimal_i =
+        CheckMenuItemBuilder::with_id("edges-minimal", text(MenuItemId::EdgesMinimal))
+            .checked(state.edge_encoding == "minimal")
+            .build(app)?;
+    let curve_arc_i = CheckMenuItemBuilder::with_id("curve-arc", text(MenuItemId::CurveArc))
         .checked(state.curve_style == "arc")
         .build(app)?;
-    let curve_straight_i = CheckMenuItemBuilder::with_id("curve-straight", &labels.curve_straight)
-        .checked(state.curve_style == "straight")
-        .build(app)?;
+    let curve_straight_i =
+        CheckMenuItemBuilder::with_id("curve-straight", text(MenuItemId::CurveStraight))
+            .checked(state.curve_style == "straight")
+            .build(app)?;
 
-    let docs_i = MenuItemBuilder::with_id("docs", &labels.documentation).build(app)?;
-    let website_i = MenuItemBuilder::with_id("website", &labels.website).build(app)?;
+    let docs_i = MenuItemBuilder::with_id("docs", text(MenuItemId::Documentation)).build(app)?;
+    let website_i = MenuItemBuilder::with_id("website", text(MenuItemId::Website)).build(app)?;
     let report_issue_i =
-        MenuItemBuilder::with_id("report-issue", &labels.report_issue).build(app)?;
-    let shortcuts_i = MenuItemBuilder::with_id("shortcuts", &labels.shortcuts).build(app)?;
+        MenuItemBuilder::with_id("report-issue", text(MenuItemId::ReportIssue)).build(app)?;
+    let shortcuts_i =
+        MenuItemBuilder::with_id("shortcuts", text(MenuItemId::Shortcuts)).build(app)?;
 
     let menu = MenuBuilder::new(app);
 
@@ -777,7 +802,7 @@ fn build_app_menu(
         menu.item(&app_menu)
     };
 
-    let file = SubmenuBuilder::new(app, &labels.file)
+    let file = SubmenuBuilder::new(app, text(MenuItemId::File))
         .item(&new_graph_i)
         .item(&open_project_i)
         .separator()
@@ -789,30 +814,30 @@ fn build_app_menu(
     let file = file.separator().item(&settings_i);
     let file = file.build()?;
 
-    let edit_builder = SubmenuBuilder::new(app, &labels.edit);
+    let edit_builder = SubmenuBuilder::new(app, text(MenuItemId::Edit));
     #[cfg(target_os = "macos")]
     let edit_builder = edit_builder
-        .undo_with_text(&labels.undo)
-        .redo_with_text(&labels.redo)
+        .undo_with_text(text(MenuItemId::Undo))
+        .redo_with_text(text(MenuItemId::Redo))
         .separator();
     let edit = edit_builder
-        .cut_with_text(&labels.cut)
-        .copy_with_text(&labels.copy)
-        .paste_with_text(&labels.paste)
+        .cut_with_text(text(MenuItemId::Cut))
+        .copy_with_text(text(MenuItemId::Copy))
+        .paste_with_text(text(MenuItemId::Paste))
         .separator()
-        .select_all_with_text(&labels.select_all)
+        .select_all_with_text(text(MenuItemId::SelectAll))
         .build()?;
 
-    let edges_sub = SubmenuBuilder::new(app, &labels.edges)
+    let edges_sub = SubmenuBuilder::new(app, text(MenuItemId::Edges))
         .item(&edges_full_i)
         .item(&edges_category_i)
         .item(&edges_minimal_i)
         .build()?;
-    let curve_sub = SubmenuBuilder::new(app, &labels.curve)
+    let curve_sub = SubmenuBuilder::new(app, text(MenuItemId::Curve))
         .item(&curve_arc_i)
         .item(&curve_straight_i)
         .build()?;
-    let view = SubmenuBuilder::new(app, &labels.view)
+    let view = SubmenuBuilder::new(app, text(MenuItemId::View))
         .item(&zoom_in_i)
         .item(&zoom_out_i)
         .item(&fit_i)
@@ -824,14 +849,14 @@ fn build_app_menu(
         .fullscreen()
         .build()?;
 
-    let window = SubmenuBuilder::new(app, &labels.window)
+    let window = SubmenuBuilder::new(app, text(MenuItemId::Window))
         .minimize()
         .maximize()
         .separator()
         .close_window()
         .build()?;
 
-    let help = SubmenuBuilder::new(app, &labels.help)
+    let help = SubmenuBuilder::new(app, text(MenuItemId::Help))
         .item(&docs_i)
         .item(&website_i)
         .item(&report_issue_i)
@@ -954,7 +979,7 @@ pub fn run() {
                 // English baseline menu; the webview rebuilds it in the active
                 // language via `set_app_menu` as soon as it mounts.
                 let menu =
-                    build_app_menu(app.handle(), &MenuLabels::default(), &MenuState::default())?;
+                    build_app_menu(app.handle(), &default_menu_labels(), &MenuState::default())?;
                 app.set_menu(menu)?;
 
                 // Custom item ids double as `menu:<id>` event names handled in

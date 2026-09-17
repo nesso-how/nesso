@@ -15,7 +15,7 @@
       "crap_critical": {
         "count": 1
       },
-      "crap_high": {
+      "crap_moderate": {
         "count": 1
       }
     },
@@ -41,14 +41,6 @@
       },
       "crap_moderate": {
         "count": 3
-      }
-    },
-    "scripts/release.mjs": {
-      "complexity_critical": {
-        "count": 1
-      },
-      "crap_critical": {
-        "count": 1
       }
     },
     "scripts/stryker/areas.mjs": {
@@ -147,11 +139,8 @@
         "count": 2
       }
     },
-    "src/components/dialogs/SettingsDialog.tsx": {
+    "src/components/dialogs/settings/AiSection.tsx": {
       "complexity_high": {
-        "count": 1
-      },
-      "crap_high": {
         "count": 1
       }
     },
@@ -171,15 +160,19 @@
         "count": 1
       }
     },
-    "src/components/layout/Sidebar.tsx": {
-      "complexity_critical": {
+    "src/components/inspector/NodeInspector.tsx": {
+      "complexity_moderate": {
         "count": 1
-      },
-      "crap_critical": {
-        "count": 2
-      },
+      }
+    },
+    "src/components/layout/AppOverlays.tsx": {
+      "complexity_moderate": {
+        "count": 1
+      }
+    },
+    "src/components/layout/Sidebar.tsx": {
       "crap_moderate": {
-        "count": 2
+        "count": 1
       }
     },
     "src/components/layout/SidebarProjects.tsx": {
@@ -195,11 +188,16 @@
         "count": 1
       }
     },
-    "src/components/mentor/MentorPanel.tsx": {
-      "complexity_critical": {
+    "src/components/layout/sidebar/SidebarGraphsSection.tsx": {
+      "crap_critical": {
         "count": 1
       },
       "crap_moderate": {
+        "count": 2
+      }
+    },
+    "src/components/mentor/MentorPanel.tsx": {
+      "complexity_critical": {
         "count": 1
       }
     },
@@ -226,16 +224,6 @@
       "crap_critical": {
         "count": 1
       },
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "src/components/ui/SegmentedControl.tsx": {
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "src/components/ui/Select.tsx": {
       "crap_moderate": {
         "count": 1
       }
@@ -294,7 +282,7 @@
         "count": 1
       },
       "crap_moderate": {
-        "count": 2
+        "count": 1
       }
     }
   },
@@ -303,13 +291,13 @@
     "src/store/slices/graph-editing.ts:high impact",
     "src/App.tsx:complexity",
     "src/lib/shortcuts.ts:complexity",
+    "src/hooks/useOnboardingFlow.ts:high impact",
     "packages/vocab-learning/src/notes.ts:high impact",
+    "src/data/fsrsDueQueue.ts:high impact",
     "src/components/canvas/GraphCanvas.tsx:complexity",
-    "src/hooks/useOnboardingFlow.ts:complexity",
-    "packages/graph/src/NessoGraph.tsx:complexity",
     "src/components/canvas/ConceptNode.tsx:complexity",
+    "packages/graph/src/NessoGraph.tsx:complexity",
     "src/components/mentor/MentorPanel.tsx:complexity",
-    "src/components/inspector/InlineEdit.tsx:complexity",
-    "scripts/release.mjs:complexity"
+    "src/components/inspector/InlineEdit.tsx:complexity"
   ]
 }

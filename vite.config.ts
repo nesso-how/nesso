@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs'
 import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import { fileURLToPath, URL } from 'node:url'
-import { PALETTES } from '@nesso-how/vocab-learning'
+import { categoryCssVars } from '@nesso-how/vocab-learning'
 import { defaultTheme, themeCss } from '@nesso-how/theme'
 
 const host = process.env.TAURI_DEV_HOST
@@ -19,9 +19,9 @@ const pkg = JSON.parse(
  * the relation-type vocabulary and stay orthogonal to the theme switch.
  */
 function nessoTheme(): Plugin {
-  const palette = PALETTES[defaultTheme.categoryPalette] ?? PALETTES.default
-  const categoryRoot = `:root {\n${Object.entries(palette)
-    .map(([cat, hex]) => `  --cat-${cat}: ${hex};`)
+  const categoryVars = categoryCssVars(defaultTheme.categoryPalette)
+  const categoryRoot = `:root {\n${Object.entries(categoryVars)
+    .map(([name, hex]) => `  ${name}: ${hex};`)
     .join('\n')}\n}`
   const css = `${themeCss(defaultTheme)}\n\n${categoryRoot}`
   return {

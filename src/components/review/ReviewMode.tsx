@@ -381,7 +381,7 @@ export function ReviewMode({ open, onClose }: Props) {
                   color: 'var(--ink-4)',
                 }}
               >
-                or press Space
+                {t.review.hints.orPressSpace}
               </span>
             </div>
           </>
@@ -476,18 +476,18 @@ export function ReviewMode({ open, onClose }: Props) {
                     {k}
                   </kbd>
                 ))}
-                <span style={{ marginLeft: 2 }}>rate</span>
+                <span style={{ marginLeft: 2 }}>{t.review.hints.rate}</span>
               </>
             ) : (
               <>
                 <kbd style={hintKbd}>Space</kbd>
-                <span>reveal</span>
+                <span>{t.review.hints.reveal}</span>
               </>
             )}
           </span>
           <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
             <kbd style={hintKbd}>Esc</kbd>
-            <span>close</span>
+            <span>{t.review.hints.close}</span>
           </span>
         </div>
       </ReviewOverlay>

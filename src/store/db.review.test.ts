@@ -6,10 +6,8 @@ import { defaultConceptReviewFields } from '@/types/graph'
 import {
   dbClearGraphs,
   dbDeleteReviewForGraph,
-  dbGetReviewState,
   dbGetReviewStatesForGraph,
   dbPruneReviewStates,
-  dbPutReviewState,
   dbPutReviewStatesForGraph,
   reviewStateKey,
 } from './db'
@@ -35,15 +33,15 @@ describe('review store CRUD', () => {
   it('round-trips a single node review', async () => {
     const graphId = graphIdFor('round-trip')
     const params = { ...defaultConceptReviewFields(), stability: 42, due: 123 }
-    await dbPutReviewState(graphId, nodeId, params)
-    expect(await dbGetReviewState(graphId, nodeId)).toEqual(params)
+    await dbPutReviewStatesForGraph(graphId, new Map([[nodeId, params]]))
+    expect((await dbGetReviewStatesForGraph(graphId)).get(nodeId)).toEqual(params)
     await dbClearGraphs()
-    expect(await dbGetReviewState(graphId, nodeId)).toEqual(params)
+    expect((await dbGetReviewStatesForGraph(graphId)).get(nodeId)).toEqual(params)
   })
 
   it('returns undefined for missing entries', async () => {
     const graphId = graphIdFor('missing')
-    expect(await dbGetReviewState(graphId, nodeId)).toBeUndefined()
+    expect((await dbGetReviewStatesForGraph(graphId)).get(nodeId)).toBeUndefined()
   })
 
   it('bulk-puts and lists reviews for one graph', async () => {
@@ -66,8 +64,11 @@ describe('review store CRUD', () => {
   it('does not return reviews from other graphs', async () => {
     const graphId = graphIdFor('isolated-a')
     const otherGraphId = graphIdFor('isolated-b')
-    await dbPutReviewState(graphId, nodeId, defaultConceptReviewFields())
-    await dbPutReviewState(otherGraphId, nodeId, { ...defaultConceptReviewFields(), reps: 9 })
+    await dbPutReviewStatesForGraph(graphId, new Map([[nodeId, defaultConceptReviewFields()]]))
+    await dbPutReviewStatesForGraph(
+      otherGraphId,
+      new Map([[nodeId, { ...defaultConceptReviewFields(), reps: 9 }]]),
+    )
     const map = await dbGetReviewStatesForGraph(graphId)
     expect(map.size).toBe(1)
     expect(map.get(nodeId)?.reps).toBe(0)

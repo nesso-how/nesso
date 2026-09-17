@@ -2,8 +2,9 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import type { Node } from '@xyflow/react'
 import { useGraphStore } from '@/store'
+import { useShallow } from 'zustand/react/shallow'
 import type { ConceptNodeData } from '@/types/graph'
-import { useT } from '@/i18n'
+import { useT, type Locale } from '@/i18n'
 import { ModalOverlay } from '@/components/ui/ModalOverlay'
 
 interface Props {
@@ -13,21 +14,22 @@ interface Props {
   onSelectGraph: (id: string) => void
 }
 
-function timeAgo(ts: number): string {
+function formatTimeAgo(ts: number, labels: Locale['search']['timeAgo']): string {
   const s = Math.max(1, Math.floor((Date.now() - ts) / 1000))
-  if (s < 60) return 'now'
+  if (s < 60) return labels.now
   const m = Math.floor(s / 60)
-  if (m < 60) return `${m}m ago`
+  if (m < 60) return labels.minutes(m)
   const h = Math.floor(m / 60)
-  if (h < 24) return `${h}h ago`
+  if (h < 24) return labels.hours(h)
   const d = Math.floor(h / 24)
-  if (d < 7) return `${d}d ago`
-  return `${Math.floor(d / 7)}w ago`
+  if (d < 7) return labels.days(d)
+  return labels.weeks(Math.floor(d / 7))
 }
+
+const EMPTY_CONCEPT_NODES: Node<ConceptNodeData>[] = []
 
 export function SearchDialog({ open, onClose, onSelectNode, onSelectGraph }: Props) {
   const t = useT()
-  const nodes = useGraphStore((s) => s.nodes)
   const graphList = useGraphStore((s) => s.graphList)
   const currentGraphId = useGraphStore((s) => s.currentGraphId)
   const selectedNodeId = useGraphStore((s) => (s.selected?.kind === 'node' ? s.selected.id : null))
@@ -48,14 +50,22 @@ export function SearchDialog({ open, onClose, onSelectNode, onSelectGraph }: Pro
     return q ? sorted.filter((g) => g.name.toLowerCase().includes(q)) : sorted
   }, [graphList, q])
 
-  const conceptResults = useMemo(() => {
-    return q ? nodes.filter((n) => n.data.text.toLowerCase().includes(q)) : nodes.slice(0, 6)
-  }, [nodes, q])
+  // No whole-array subscription while closed (stable EMPTY), and shallow-compared
+  // matching node refs while open, so unrelated updates skip re-render.
+  const conceptResults = useGraphStore(
+    useShallow((s): Node<ConceptNodeData>[] => {
+      if (!open) return EMPTY_CONCEPT_NODES
+      return q ? s.nodes.filter((n) => n.data.text.toLowerCase().includes(q)) : s.nodes.slice(0, 6)
+    }),
+  )
 
-  const allResults = [
-    ...graphResults.map((g) => ({ kind: 'graph' as const, g })),
-    ...conceptResults.map((n) => ({ kind: 'concept' as const, n })),
-  ]
+  const allResults = useMemo(
+    () => [
+      ...graphResults.map((g) => ({ kind: 'graph' as const, g })),
+      ...conceptResults.map((n) => ({ kind: 'concept' as const, n })),
+    ],
+    [graphResults, conceptResults],
+  )
 
   const handleSelectGraph = (id: string) => {
     onSelectGraph(id)
@@ -180,7 +190,7 @@ export function SearchDialog({ open, onClose, onSelectNode, onSelectGraph }: Pro
                     key={g.id}
                     active={g.id === currentGraphId}
                     label={g.name}
-                    meta={timeAgo(g.updatedAt)}
+                    meta={formatTimeAgo(g.updatedAt, t.search.timeAgo)}
                     onClick={() => handleSelectGraph(g.id)}
                   />
                 ))}

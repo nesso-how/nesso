@@ -51,6 +51,18 @@ export const PALETTES: Record<CategoryPalette, Record<RelationCategory, string>>
 }
 
 /**
+ * CSS variable map for a category palette (`--cat-<category>` → hex).
+ * Single emitter for the category→CSS-variable map so app and docs shells
+ * never duplicate the naming or the palette lookup.
+ */
+export function categoryCssVars(palette: CategoryPalette): Record<string, string> {
+  const resolved = PALETTES[palette] ?? PALETTES.default
+  return Object.fromEntries(
+    Object.entries(resolved).map(([category, hex]) => [`--cat-${category}`, hex]),
+  )
+}
+
+/**
  * Raw SVG inner content for each glyph kind, on a 14×14 viewBox.
  * Uses `currentColor` for stroke/fill — set CSS `color` on the parent to tint.
  * Default stroke attrs: fill=none, stroke=currentColor, stroke-width=1.4,

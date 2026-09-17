@@ -3,15 +3,16 @@ import { useEffect, useRef } from 'react'
 import { mergeGraphDisplay, type GraphDisplaySettings } from '@/types/graph'
 import { useGraphStore } from '@/store'
 import { graphContentFingerprint } from '@/lib/graphPersist'
-import { dbDeleteGraph, dbListGraphs, dbSaveGraph, type GraphRecord } from '@/store/db'
-import { normalizeGraphRecord } from '@/lib/graphLoadNormalizer'
+import { dbDeleteGraph, dbSaveGraph, type GraphRecord } from '@/store/db'
 import { isDesktop } from '@/lib/isDesktop'
 import {
   grantFsScope,
   isManifestOnlyWatchPaths,
   isSelfWriteEcho,
   isWatchSuppressed,
+  listNormalizedGraphs,
   reconcileDiskWithIdb,
+  recordsToGraphMeta,
   resolveWorkspace,
   setDiskSyncCache,
 } from '@/lib/workspace'
@@ -117,25 +118,6 @@ export function useGraphFileWatch() {
       if (unwatch) unwatchRef.current = unwatch
     })()
 
-    /** Extract a human-readable id from a raw record for log messages. */
-    function logIdFromRecord(r: GraphRecord): string {
-      return typeof (r as { id?: unknown })?.id === 'string' ? (r as { id: string }).id : '?'
-    }
-
-    /** Normalize raw IDB records, skipping any that fail validation.
-     *  Corrupt records are preserved in IDB — never deleted. */
-    function normalizeIdbList(raw: GraphRecord[]): GraphRecord[] {
-      const out: GraphRecord[] = []
-      for (const r of raw) {
-        try {
-          out.push(normalizeGraphRecord(r))
-        } catch {
-          console.warn('[nesso] watcher skipping corrupt graph record:', logIdFromRecord(r))
-        }
-      }
-      return out
-    }
-
     /** Persist the reconcile results (new writes + removals) to IDB.
      *  Checks stale after each per-record await so that a generation change
      *  mid-loop does not continue mutating IDB for a dead effect. */
@@ -157,10 +139,12 @@ export function useGraphFileWatch() {
      *  freshly-normalized graph records. Returns an empty array when the
      *  effect has gone stale during the IDB read. */
     async function refreshStoreGraphList(): Promise<GraphRecord[]> {
-      const records = normalizeIdbList(await dbListGraphs())
+      // Corrupt records are preserved in IDB — never deleted; see
+      // listNormalizedGraphs.
+      const records = await listNormalizedGraphs('watcher')
       if (isStaleEffect()) return []
       useGraphStore.setState({
-        graphList: records.map((r) => ({ id: r.id, name: r.name, updatedAt: r.updatedAt })),
+        graphList: recordsToGraphMeta(records),
       })
       return records
     }
@@ -224,7 +208,7 @@ export function useGraphFileWatch() {
     async function reconcileAndPersist(
       ws: Awaited<ReturnType<typeof resolveWorkspace>>,
     ): Promise<{ toPersist: GraphRecord[]; removed: string[] } | null> {
-      const idbRecords = normalizeIdbList(await dbListGraphs())
+      const idbRecords = await listNormalizedGraphs('watcher')
       const { toPersist, manifest, removed, reservedPaths } = await reconcileDiskWithIdb(
         ws,
         idbRecords,

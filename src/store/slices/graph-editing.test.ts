@@ -6,12 +6,8 @@ import { createStore } from 'zustand/vanilla'
 import { setGraphClipboard } from '@/lib/graphClipboard'
 import type { ConceptNodeData } from '@/types/graph'
 import type { GraphState } from '../state'
-import {
-  _draggingNodeIds,
-  bakeCurveFlipFromPositions,
-  createGraphEditingSlice,
-  MAX_UNDO,
-} from './graph-editing'
+import { bakeCurveFlipFromPositions, createGraphEditingSlice, MAX_UNDO } from './graph-editing'
+import { clearDraggingNodeIds } from './graphSession'
 import { createSettingsSlice } from './settings'
 import { track } from '@/telemetry'
 
@@ -40,7 +36,7 @@ type Store = ReturnType<typeof makeStore>
 
 beforeEach(() => {
   setGraphClipboard(null)
-  _draggingNodeIds.clear()
+  clearDraggingNodeIds()
   vi.clearAllMocks()
 })
 

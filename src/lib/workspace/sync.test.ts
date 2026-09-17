@@ -15,7 +15,7 @@ import { setDiskSyncCache, getDiskSyncCache } from '@/lib/workspace/manifest'
 import {
   checkWorkspaceCompatibility,
   loadProjectFromDisk,
-  persistWorkspaceSync,
+  syncWorkspace,
 } from '@/lib/workspace/sync'
 import { graphDocumentJson } from '@/test/graphDocument'
 import { dbClearGraphs, dbListGraphs, dbSaveGraph, type GraphRecord } from '@/store/db'
@@ -102,7 +102,7 @@ describe('loadProjectFromDisk', () => {
   })
 })
 
-describe('persistWorkspaceSync corrupt isolation', () => {
+describe('syncWorkspace corrupt isolation', () => {
   it('returns valid records and skips a corrupt IDB row instead of aborting the sync', async () => {
     // Seed a valid record in IDB.
     await dbSaveGraph(record(gid(1), 'Valid', 1000))
@@ -118,9 +118,9 @@ describe('persistWorkspaceSync corrupt isolation', () => {
       edges: [],
     } as unknown as GraphRecord)
 
-    // persistWorkspaceSync must not throw when one IDB record is corrupt.
+    // syncWorkspace must not throw when one IDB record is corrupt.
     // It should return the valid record and skip the corrupt one.
-    const list = await persistWorkspaceSync(SETTINGS, await dbListGraphs())
+    const list = await syncWorkspace(SETTINGS, await dbListGraphs())
 
     // Valid record is in the result.
     expect(list.some((r) => r.id === gid(1))).toBe(true)
@@ -134,11 +134,11 @@ describe('persistWorkspaceSync corrupt isolation', () => {
   })
 })
 
-describe('persistWorkspaceSync', () => {
+describe('syncWorkspace', () => {
   it('writes an IDB-only record out to disk and tracks it in the manifest', async () => {
     await dbSaveGraph(record(gid(1), 'Solo', 1000))
 
-    await persistWorkspaceSync(SETTINGS, await dbListGraphs())
+    await syncWorkspace(SETTINGS, await dbListGraphs())
 
     expect(tauriFsState.files.has('/proj/Solo.json')).toBe(true)
     const manifest = JSON.parse(tauriFsState.files.get('/proj/.nesso/manifest.json')!)
@@ -157,7 +157,7 @@ describe('persistWorkspaceSync', () => {
       }),
     )
 
-    await persistWorkspaceSync(SETTINGS, await dbListGraphs())
+    await syncWorkspace(SETTINGS, await dbListGraphs())
 
     const [stored] = await dbListGraphs()
     expect(stored.updatedAt).toBe(5000)
@@ -168,7 +168,7 @@ describe('persistWorkspaceSync', () => {
     await dbSaveGraph(record(gid(1), 'Gone', 1000))
     writeDiskManifest({ [gid(1)]: { ...record(gid(1), 'Gone', 1000), file: 'Gone.json' } })
 
-    const list = await persistWorkspaceSync(SETTINGS, await dbListGraphs())
+    const list = await syncWorkspace(SETTINGS, await dbListGraphs())
 
     expect(list).toHaveLength(0)
     expect(await dbListGraphs()).toHaveLength(0)
@@ -178,7 +178,7 @@ describe('persistWorkspaceSync', () => {
     await dbSaveGraph(record(gid(1), 'Foo', 1000))
     writeDiskFile('Foo.json', { id: gid(2), name: 'Foo', updatedAt: 1000 })
 
-    const list = await persistWorkspaceSync(SETTINGS, await dbListGraphs())
+    const list = await syncWorkspace(SETTINGS, await dbListGraphs())
 
     expect(list.map((r) => r.name).sort()).toEqual(['Foo', 'Foo-2'])
     // The renamed graph's file follows its de-duplicated name.
@@ -197,7 +197,7 @@ describe('persistWorkspaceSync', () => {
       }),
     )
 
-    await persistWorkspaceSync(SETTINGS, await dbListGraphs())
+    await syncWorkspace(SETTINGS, await dbListGraphs())
 
     const [stored] = await dbListGraphs()
     expect(stored.nodes).toHaveLength(1)
@@ -208,7 +208,7 @@ describe('persistWorkspaceSync', () => {
     // Same empty content, just a bumped timestamp
     writeDiskFile('Doc.json', { id: gid(1), name: 'Doc', updatedAt: 5000 })
 
-    await persistWorkspaceSync(SETTINGS, await dbListGraphs())
+    await syncWorkspace(SETTINGS, await dbListGraphs())
 
     const [stored] = await dbListGraphs()
     // Content is unchanged — the record should NOT have been pushed to toPersist,
@@ -263,7 +263,7 @@ describe('disk id and name resolution', () => {
     await dbSaveGraph(record(gid(1), 'Old', 1000))
     writeDiskFile('New.json', { id: gid(1), name: 'New', updatedAt: 1000 })
 
-    await persistWorkspaceSync(SETTINGS, await dbListGraphs())
+    await syncWorkspace(SETTINGS, await dbListGraphs())
 
     const [stored] = await dbListGraphs()
     expect(stored.name).toBe('New')
@@ -299,7 +299,7 @@ describe('unsupported path reservation', () => {
     expect(result.records).toHaveLength(1)
     expect(result.unsupportedFiles).toEqual(['Foreign.json'])
     // reconcileDiskWithIdb returns reservedPaths — loadProjectFromDisk
-    // (and persistWorkspaceSync) persist them in the disk-sync cache so
+    // (and syncWorkspace) persist them in the disk-sync cache so
     // subsequent save operations avoid overwriting unsupported files.
     const cache = getDiskSyncCache()
     expect(cache.reservedPaths).toEqual(['Foreign.json'])
@@ -323,8 +323,8 @@ describe('unsupported path reservation', () => {
       }),
     )
 
-    // persistWorkspaceSync must not overwrite the unsupported file.
-    await persistWorkspaceSync(SETTINGS, await dbListGraphs())
+    // syncWorkspace must not overwrite the unsupported file.
+    await syncWorkspace(SETTINGS, await dbListGraphs())
 
     // The unsupported file's content is still intact.
     const raw = tauriFsState.files.get('/proj/Foreign.json')!
@@ -367,7 +367,7 @@ describe('unsupported path reservation', () => {
     // IDB record with a newer updatedAt — the else-if branch needs this.
     await dbSaveGraph(record(gid(1), 'SomeNewerName', 5000))
 
-    await persistWorkspaceSync(SETTINGS, await dbListGraphs())
+    await syncWorkspace(SETTINGS, await dbListGraphs())
 
     // The unsupported file must NOT be renamed/overwritten.
     const raw = tauriFsState.files.get('/proj/Collision.json')!

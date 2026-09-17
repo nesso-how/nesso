@@ -178,10 +178,15 @@ describe('SettingsDialog AI model discovery', () => {
     setupSettings({ aiBaseUrl: 'http://localhost:11434/v1', aiModel: 'discovered-local-a' })
     await openAiTab()
     await openModelSelect()
+    // Ignore the health check(s) from opening the dialog: one field edit
+    // must produce exactly one health-check request.
+    vi.mocked(checkEndpoint).mockClear()
     await act(async () => {
       selectOption('discovered-local-b').dispatchEvent(new MouseEvent('click', { bubbles: true }))
     })
+    await act(async () => {})
     expect(useGraphStore.getState().settings.aiModel).toBe('discovered-local-b')
+    expect(vi.mocked(checkEndpoint)).toHaveBeenCalledTimes(1)
     expect(vi.mocked(checkEndpoint)).toHaveBeenCalledWith(
       'http://localhost:11434/v1',
       'discovered-local-b',
