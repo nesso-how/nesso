@@ -119,12 +119,33 @@ describe('SettingsDialog AI model discovery', () => {
     expect(container!.textContent).not.toContain('qwen3:8b')
   })
 
-  it('keeps the custom model input editable alongside the select', async () => {
+  it('hides the input behind a custom toggle when the model is discovered', async () => {
     vi.mocked(listEndpointModels).mockResolvedValue(['discovered-local-a'])
     setupSettings({ aiBaseUrl: 'http://localhost:11434/v1', aiModel: 'discovered-local-a' })
     await openAiTab()
-    const input = container!.querySelector('input[placeholder="e.g. qwen3:8b"]')
-    expect(input).not.toBeNull()
+    expect(container!.querySelector('input[placeholder="e.g. qwen3:8b"]')).toBeNull()
+    const toggle = [...container!.querySelectorAll('button')].find(
+      (b) => b.textContent === 'Enter a custom model…',
+    )
+    expect(toggle).not.toBeUndefined()
+    await act(async () => {
+      toggle!.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    })
+    expect(container!.querySelector('input[placeholder="e.g. qwen3:8b"]')).not.toBeNull()
+  })
+
+  it('hides the input again after picking a discovered model', async () => {
+    vi.mocked(listEndpointModels).mockResolvedValue(['discovered-local-a', 'discovered-local-b'])
+    setupSettings({ aiBaseUrl: 'http://localhost:11434/v1', aiModel: 'my-custom-model' })
+    await openAiTab()
+    // Custom value forces the input visible.
+    expect(container!.querySelector('input[placeholder="e.g. qwen3:8b"]')).not.toBeNull()
+    await openModelSelect()
+    await act(async () => {
+      selectOption('discovered-local-b').dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    })
+    expect(useGraphStore.getState().settings.aiModel).toBe('discovered-local-b')
+    expect(container!.querySelector('input[placeholder="e.g. qwen3:8b"]')).toBeNull()
   })
 
   it('selecting a discovered model updates the model and re-checks it', async () => {
@@ -158,10 +179,9 @@ describe('SettingsDialog AI model discovery', () => {
     setupSettings({ aiBaseUrl: 'http://localhost:11434/v1', aiModel: '' })
     await openAiTab()
     expect(useGraphStore.getState().settings.aiModel).toBe('discovered-local-a')
-    const input = container!.querySelector(
-      'input[placeholder="e.g. qwen3:8b"]',
-    ) as HTMLInputElement | null
-    expect(input?.value).toBe('discovered-local-a')
+    // Defaulted value is discovered, so the select shows it and the input stays hidden.
+    expect(selectToggle().textContent).toContain('discovered-local-a')
+    expect(container!.querySelector('input[placeholder="e.g. qwen3:8b"]')).toBeNull()
   })
 
   it('falls back to the bare input when discovery returns nothing', async () => {

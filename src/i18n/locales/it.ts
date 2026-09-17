@@ -54,9 +54,10 @@ const it: typeof en = {
       mentorMode: 'Mentore',
       mentorModeDesc: 'Quando è disattivato, Socrate non compare nella barra di stato.',
       apiBaseUrl: 'URL base API',
-      apiBaseUrlDesc: 'Endpoint OpenAI-compatibile. Default: Ollama locale.',
+      apiBaseUrlDesc: 'URL base di un endpoint OpenAI-compatibile (Ollama, Unsloth o in hosting).',
       model: 'Modello',
       modelDesc: 'Modello usato dalle funzioni AI.',
+      customModel: 'Inserisci un modello personalizzato…',
       apiKey: 'Chiave API',
       apiKeyDesc:
         'Di solito vuoto per Ollama locale. Per API remote, imposta il segreto che il tuo endpoint si aspetta come',

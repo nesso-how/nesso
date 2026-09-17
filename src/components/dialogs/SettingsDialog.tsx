@@ -38,6 +38,7 @@ export function SettingsDialog({ open, onClose }: Props) {
   const [modelStatus, setModelStatus] = useState<ModelStatus>('idle')
   const [pullProgress, setPullProgress] = useState(0)
   const [availableModels, setAvailableModels] = useState<string[]>([])
+  const [customModelOpen, setCustomModelOpen] = useState(false)
 
   const healthCheckAbortRef = useRef<AbortController | null>(null)
   const modelsAbortRef = useRef<AbortController | null>(null)
@@ -77,6 +78,7 @@ export function SettingsDialog({ open, onClose }: Props) {
     // The previous endpoint's ids stop being offered as soon as the URL or
     // key changes; the bare input below stays usable while loading.
     setAvailableModels([])
+    setCustomModelOpen(false)
     void listEndpointModels(settings.aiBaseUrl, settings.aiApiKey, controller.signal).then(
       (ids) => {
         if (controller.signal.aborted) return
@@ -160,6 +162,15 @@ export function SettingsDialog({ open, onClose }: Props) {
       controller.abort()
     }
   }, [open, settings.aiBaseUrl, settings.aiModel, settings.aiApiKey, settings.mentorEnabled])
+
+  // The free-text input stays visible when there is no discovered list, when
+  // the user explicitly opened it, or when the current value is custom
+  // (typed, e.g. a model to pull that is not listed yet). Otherwise the
+  // select alone is the control and the input hides behind its toggle.
+  const showModelInput =
+    availableModels.length === 0 ||
+    customModelOpen ||
+    (settings.aiModel !== '' && !availableModels.includes(settings.aiModel))
 
   const inputStyle: React.CSSProperties = {
     width: '100%',
@@ -480,24 +491,50 @@ export function SettingsDialog({ open, onClose }: Props) {
                               value={settings.aiModel}
                               onChange={(id) => {
                                 setSetting('aiModel', id)
+                                setCustomModelOpen(false)
                                 triggerCheck(settings.aiBaseUrl, id, settings.aiApiKey)
                               }}
                             />
                           </div>
                         )}
-                        <input
-                          type="text"
-                          value={settings.aiModel}
-                          placeholder="e.g. qwen3:8b"
-                          onChange={(e) => {
-                            setSetting('aiModel', e.target.value)
-                            setModelStatus('idle')
-                          }}
-                          onBlur={(e) =>
-                            triggerCheck(settings.aiBaseUrl, e.target.value, settings.aiApiKey)
-                          }
-                          style={inputStyle}
-                        />
+                        {availableModels.length > 0 && !showModelInput && (
+                          <div style={{ marginBottom: 10 }}>
+                            <button
+                              type="button"
+                              onClick={() => setCustomModelOpen(true)}
+                              style={{
+                                appearance: 'none',
+                                border: 'none',
+                                background: 'transparent',
+                                padding: 0,
+                                cursor: 'pointer',
+                                fontSize: '11px',
+                                fontWeight: 400,
+                                fontFamily: 'var(--font-mono)',
+                                color: 'var(--ink-4)',
+                                textDecoration: 'underline',
+                                textUnderlineOffset: 2,
+                              }}
+                            >
+                              {t.settings.ai.customModel}
+                            </button>
+                          </div>
+                        )}
+                        {showModelInput && (
+                          <input
+                            type="text"
+                            value={settings.aiModel}
+                            placeholder="e.g. qwen3:8b"
+                            onChange={(e) => {
+                              setSetting('aiModel', e.target.value)
+                              setModelStatus('idle')
+                            }}
+                            onBlur={(e) =>
+                              triggerCheck(settings.aiBaseUrl, e.target.value, settings.aiApiKey)
+                            }
+                            style={inputStyle}
+                          />
+                        )}
                         <ModelStatusBadge
                           status={modelStatus}
                           model={settings.aiModel}
