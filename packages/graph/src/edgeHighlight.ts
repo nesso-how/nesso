@@ -36,7 +36,9 @@ export function resolveEdgeVisual({
 }: EdgeVisualInput): EdgeVisual {
   if (isSelected) return { width: SELECTED_WIDTH, opacity: FULL_OPACITY, dimmed: false }
   if (hovered) return { width: DEFAULT_WIDTH, opacity: FULL_OPACITY, dimmed: false }
-  if (isConnected) return { width: SELECTED_WIDTH, opacity: FULL_OPACITY, dimmed: false }
-  if (hasSelection) return { width: DEFAULT_WIDTH, opacity: DIMMED_OPACITY, dimmed: true }
+  // Connected edges intentionally keep their default look: selecting a concept
+  // only dims the rest of the map, it never restyles the selection itself.
+  if (hasSelection && !isConnected)
+    return { width: DEFAULT_WIDTH, opacity: DIMMED_OPACITY, dimmed: true }
   return { width: DEFAULT_WIDTH, opacity: DEFAULT_OPACITY, dimmed: false }
 }

@@ -160,16 +160,17 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
       )}
 
       {edgeEncoding !== 'minimal' && (
-        <g style={{ pointerEvents: 'all' }} opacity={dimmed ? op : 1}>
+        <g style={{ pointerEvents: 'all' }}>
           <circle
             cx={labelX}
             cy={labelY}
             r={r}
             fill="var(--paper, #ffffff)"
             stroke={color}
+            strokeOpacity={dimmed ? op : 1}
             strokeWidth={1.2}
           />
-          <g transform={`translate(${labelX - 7}, ${labelY - 7})`}>
+          <g transform={`translate(${labelX - 7}, ${labelY - 7})`} opacity={dimmed ? op : 1}>
             <GlyphSVG kind={T.glyph} color={color} size={14} />
           </g>
         </g>
@@ -181,7 +182,6 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
           y={labelY + r + 2}
           width={120}
           height={20}
-          opacity={dimmed ? op : 1}
           style={{ overflow: 'visible', pointerEvents: 'none' }}
         >
           <div
@@ -198,7 +198,7 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
               lineHeight: '16px',
             }}
           >
-            {label}
+            <span style={{ opacity: dimmed ? op : 1 }}>{label}</span>
           </div>
         </foreignObject>
       )}

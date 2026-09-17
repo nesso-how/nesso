@@ -39,7 +39,9 @@ test('uses solid paths while preserving glyph visibility in non-minimal modes', 
   await expect(edge.locator('circle')).toHaveCount(0)
 })
 
-test('selecting a concept emphasizes connected edges and dims the rest', async ({ page }) => {
+test('selecting a concept dims unconnected edges and keeps connected ones at default', async ({
+  page,
+}) => {
   await seedTwoConcepts(page)
   await createConceptAt(page, 0.45, 0.75, 'Gamma')
   await connectAlphaBeta(page, 'subtype-of')
@@ -53,12 +55,19 @@ test('selecting a concept emphasizes connected edges and dims the rest', async (
   await expect(page.locator('.react-flow__node.selected')).toHaveCount(1)
 
   // Creation order is preserved: Alpha→Beta first, Beta→Gamma second.
+  // The selected concept's own edges keep their default look; only the rest
+  // of the map dims — including glyph badges, whose paper background must
+  // stay opaque (no ghosting from overlapping lines).
   const connected = edges(page).first()
   const unrelated = edges(page).nth(1)
-  await expect(connected.locator('path').nth(1)).toHaveAttribute('stroke-width', '2')
-  await expect(connected.locator('path').nth(1)).toHaveAttribute('opacity', '1')
+  await expect(connected.locator('path').nth(1)).toHaveAttribute('stroke-width', '1.4')
+  await expect(connected.locator('path').nth(1)).toHaveAttribute('opacity', '0.78')
   await expect(unrelated.locator('path').nth(1)).toHaveAttribute('stroke-width', '1.4')
   await expect(unrelated.locator('path').nth(1)).toHaveAttribute('opacity', '0.28')
+  await expect(connected.locator('circle')).toHaveAttribute('fill', 'var(--paper, #ffffff)')
+  await expect(connected.locator('circle')).toHaveAttribute('stroke-opacity', '1')
+  await expect(unrelated.locator('circle')).toHaveAttribute('fill', 'var(--paper, #ffffff)')
+  await expect(unrelated.locator('circle')).toHaveAttribute('stroke-opacity', '0.28')
 
   await deselect(page)
   await expect(page.locator('.react-flow__node.selected')).toHaveCount(0)

@@ -30,7 +30,7 @@ describe('resolveEdgeVisual', () => {
     ).toEqual({ width: 1.4, opacity: 0.78, dimmed: false })
   })
 
-  it('emphasizes edges connected to the selected node', () => {
+  it('keeps the default look for edges connected to the selected node', () => {
     expect(
       resolveEdgeVisual({
         isSelected: false,
@@ -38,7 +38,7 @@ describe('resolveEdgeVisual', () => {
         isConnected: true,
         hasSelection: true,
       }),
-    ).toEqual({ width: 2, opacity: 1, dimmed: false })
+    ).toEqual({ width: 1.4, opacity: 0.78, dimmed: false })
   })
 
   it('dims unconnected edges while a node is selected', () => {
