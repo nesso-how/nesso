@@ -21,14 +21,13 @@ import {
   writeInspectorPanelWidth,
 } from './components/Inspector'
 import { useGraphStore, selectedNodeSelector, selectedEdgeSelector } from './store'
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import { useAutoSave } from './hooks/useAutoSave'
 import { useGraphFileWatch } from './hooks/useGraphFileWatch'
 import { useDesktopMenu } from './hooks/useDesktopMenu'
 import { useOnboardingFlow } from './hooks/useOnboardingFlow'
 import { PALETTES } from '@nesso-how/vocab-learning'
 import { findNewConceptPosition, NEW_CONCEPT_SIZE } from './data/newConceptLayout'
-import { focusFlowNodes } from './lib/focusFlowSelection'
-import { resolveShortcut, isTextControlFocused } from './lib/shortcuts'
 import { computeSelectionPan } from './lib/selectionPan'
 import { computeFitViewport, fitCanvasSize } from './lib/fitGraphViewport'
 import { getSeedInitialFitZoom } from './data/seedGraph'
@@ -442,83 +441,8 @@ function AppInner() {
     inspectorCollapsed,
   ])
 
-  // Keyboard shortcuts
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (isTextControlFocused()) return
-      const resolved = resolveShortcut(e, {
-        anyModalOpen,
-        hasSelectedNode: useGraphStore.getState().selected?.kind === 'node',
-      })
-      if (!resolved) return
-      if (resolved.preventDefault) e.preventDefault()
-      switch (resolved.action) {
-        case 'close-modals':
-          setShowReview(false)
-          setShowShortcuts(false)
-          setShowSettings(false)
-          setShowRelationTypes(false)
-          setShowSearch(false)
-          setShowAbout(false)
-          break
-        case 'toggle-shortcuts':
-          setShowShortcuts((s) => !s)
-          break
-        case 'toggle-settings':
-          setShowSettings((s) => !s)
-          break
-        case 'toggle-search':
-          setShowSearch((s) => !s)
-          break
-        case 'undo':
-          undo()
-          break
-        case 'redo':
-          redo()
-          break
-        case 'delete-selection':
-          deleteSelection()
-          break
-        case 'copy':
-          copySelection()
-          break
-        case 'cut':
-          cutSelection()
-          break
-        case 'paste': {
-          const ids = pasteSelection()
-          if (ids?.length) focusFlowNodes(ids)
-          break
-        }
-        case 'duplicate': {
-          const ids = duplicateSelection()
-          if (ids?.length) focusFlowNodes(ids)
-          break
-        }
-        case 'select-all':
-          selectAll()
-          break
-        case 'edit-selected-node': {
-          const sel = useGraphStore.getState().selected
-          if (sel?.kind === 'node') requestEditNode(sel.id)
-          break
-        }
-        case 'open-review':
-          if (useGraphStore.getState().settings.reviewEnabled) openReview()
-          break
-        case 'add-concept':
-          handleAddConcept()
-          break
-        case 'fit-view':
-          fitView()
-          break
-        case 'block':
-          break
-      }
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [
+  useKeyboardShortcuts({
+    anyModalOpen,
     undo,
     redo,
     copySelection,
@@ -531,8 +455,13 @@ function AppInner() {
     handleAddConcept,
     openReview,
     fitView,
-    anyModalOpen,
-  ])
+    setShowReview,
+    setShowShortcuts,
+    setShowSettings,
+    setShowRelationTypes,
+    setShowSearch,
+    setShowAbout,
+  })
 
   return (
     <div style={{ position: 'fixed', inset: 0 }}>
