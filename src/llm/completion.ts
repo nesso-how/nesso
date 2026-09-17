@@ -90,6 +90,14 @@ async function fetchModelsResponse(
   if (apiKey) {
     headers['Authorization'] = `Bearer ${apiKey}`
   }
+  // Desktop only: ask the Tauri HTTP plugin to strip its forced
+  // `Origin: tauri://localhost` header by sending it empty (removed
+  // plugin-side; requires the `unsafe-headers` plugin feature, and must stay
+  // in sync with src-tauri/Cargo.toml). Origin-rejecting endpoints 401
+  // otherwise. Browsers forbid setting Origin, so this stays desktop-only.
+  if (isDesktop()) {
+    headers['Origin'] = ''
+  }
   const effectiveSignal = signal
     ? AbortSignal.any([signal, AbortSignal.timeout(5000)])
     : AbortSignal.timeout(5000)
@@ -275,6 +283,10 @@ function mentorModel(settings: NessoSettings) {
     name: 'nesso-mentor',
     baseURL: settings.aiBaseUrl.replace(/\/+$/, ''),
     ...(settings.aiApiKey ? { apiKey: settings.aiApiKey } : {}),
+    // Desktop only: same empty-Origin strip as fetchModelsResponse above —
+    // chat completions travel the same native transport and would 401 the
+    // same way. Browsers forbid setting Origin, so this stays desktop-only.
+    ...(isDesktop() ? { headers: { Origin: '' } } : {}),
     ...(isDesktop() ? { fetch: _desktopFetch } : {}),
   })
   return wrapLanguageModel({

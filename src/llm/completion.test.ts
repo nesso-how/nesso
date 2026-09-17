@@ -250,6 +250,9 @@ describe('fetchCompletion streaming', () => {
     expect(init.method).toBe('POST')
     expect(init.maxRedirections).toBe(0)
     expect(new Headers(init.headers).get('authorization')).toBe('Bearer test-key')
+    // Empty Origin: the Tauri HTTP plugin strips it instead of forcing
+    // `Origin: tauri://localhost`, which Origin-rejecting endpoints 401.
+    expect(new Headers(init.headers).get('origin')).toBe('')
     expect(init.signal).toBe(controller.signal)
 
     const body = JSON.parse(String(init.body)) as {
@@ -849,6 +852,36 @@ describe('listEndpointModels', () => {
 
     const result = await listEndpointModels('http://localhost:11434', '', controller.signal)
     expect(result).toEqual([])
+  })
+
+  it('sends an empty Origin on desktop so the plugin strips its forced header', async () => {
+    vi.stubGlobal('window', { __TAURI_INTERNALS__: {} })
+    vi.stubGlobal('fetch', vi.fn())
+    mockNativeFetch.mockResolvedValue(
+      new Response(JSON.stringify({ data: [{ id: 'gemma3:4b' }] }), { status: 200 }),
+    )
+
+    await listEndpointModels('http://127.0.0.1:8888/v1', '')
+
+    const [, init] = mockNativeFetch.mock.calls[0] as [string, RequestInit]
+    // Empty string: tauri-plugin-http removes the header instead of sending
+    // `Origin: tauri://localhost`, which Origin-rejecting endpoints 401.
+    expect(new Headers(init.headers).get('origin')).toBe('')
+  })
+
+  it('does not set Origin in browser builds where it is a forbidden header', async () => {
+    vi.stubGlobal('window', {})
+    const browserFetch = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ data: [{ id: 'gemma3:4b' }] }), {
+        status: 200,
+      }),
+    )
+    vi.stubGlobal('fetch', browserFetch)
+
+    await listEndpointModels('http://127.0.0.1:8888/v1', '')
+
+    const [, init] = browserFetch.mock.calls[0] as [string, RequestInit]
+    expect(new Headers(init.headers).get('origin')).toBeNull()
   })
 })
 
