@@ -8,7 +8,9 @@ The AI mentor is **experimental** and **off by default**. Enable it under **Sett
 When enabled, click **Socrates** in the bottom-left status bar. Socrates helps you build understanding of your graph, explaining clearly and asking a focused question when it moves learning forward. It can read your graph, but it cannot edit it.
 
 :::note
-For good results, use at least a 7–8B instruction-following model. `qwen3:14b` is a strong local choice; use a larger model if your hardware or hosted provider allows it.
+For good results, use at least a 7–8B instruction-following model with tool calling.
+A Qwen3.5-9B-class model is the recommended local choice; use a larger model if
+your hardware or hosted provider allows it.
 :::
 
 ## How graph context works
@@ -27,7 +29,7 @@ Socrates requires a tool-capable endpoint (for example `qwen3:8b`). If an endpoi
 
 Under **Settings → AI**, configure an OpenAI-compatible `chat/completions` base URL, model, optional API key, and optional **Custom system prompt**. These fields appear only while **Mentor** is enabled.
 
-The default is local [Ollama](https://ollama.com/) at `http://localhost:11434/v1` with model `qwen3:8b`. Local Ollama normally needs no API key.
+For a local model, point Nesso at an OpenAI-compatible endpoint: local [Ollama](https://ollama.com/) at `http://localhost:11434/v1` (for example with model `qwen3:8b`), LM Studio, or a llama-server/Unsloth direct server. Local endpoints normally need no API key. A context of 8–16k covers typical mentor traffic on 24GB-class machines; raise it for very large graphs or long chats, at the cost of speed and memory.
 
 The desktop app accepts hosted `https://` endpoints and loopback HTTP at `localhost`, `127.0.0.1`, or `::1`. It rejects arbitrary non-loopback `http://` endpoints. The browser app uses normal browser networking, so the endpoint must allow the app's origin. Nesso sends a configured API key only as a bearer token to that endpoint and does not log it.
 
