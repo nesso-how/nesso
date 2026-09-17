@@ -13,15 +13,9 @@ import { useT } from '@/i18n'
 import { LearningSettings } from './LearningSettings'
 import { SettingsHeatmapDefault } from '@/components/ui/HeatmapDisplayToggle'
 import type { Language } from '@/types/graph'
-import { checkEndpoint, executeModelPull } from '@/llm/completion'
+import { checkEndpoint, executeModelPull, listEndpointModels } from '@/llm/completion'
 import { MENTOR_PERSONA_MAX_CHARS } from '@/llm/context'
 import type { ModelStatus } from '@/lib/ollama'
-import { isLocalhostUrl } from '@/lib/ollama'
-
-const OLLAMA_PRESETS = [
-  { id: 'llama3.2:3b', note: 'lightweight · fast' },
-  { id: 'qwen3:8b', note: 'balanced · recommended' },
-] as const
 
 type Tab = 'appearance' | 'learning' | 'ai' | 'privacy'
 const ALL_TABS = ['appearance', 'learning', 'ai', 'privacy'] as const
@@ -43,8 +37,10 @@ export function SettingsDialog({ open, onClose }: Props) {
   const setSetting = useGraphStore((s) => s.setSetting)
   const [modelStatus, setModelStatus] = useState<ModelStatus>('idle')
   const [pullProgress, setPullProgress] = useState(0)
+  const [availableModels, setAvailableModels] = useState<string[]>([])
 
   const healthCheckAbortRef = useRef<AbortController | null>(null)
+  const modelsAbortRef = useRef<AbortController | null>(null)
 
   const triggerCheck = useCallback((baseUrl: string, model: string, apiKey?: string) => {
     if (!model) {
@@ -63,6 +59,33 @@ export function SettingsDialog({ open, onClose }: Props) {
         if (!controller.signal.aborted) setModelStatus('error')
       })
   }, [])
+
+  // Provider-agnostic model discovery: list the endpoint's own `/models`
+  // inventory (Ollama and hosted providers alike) so the user picks a real
+  // id instead of a hardcoded preset. Runs independently of the health check
+  // above — notably it does not depend on the selected model, so typing or
+  // picking a chip never refetches the list.
+  useEffect(() => {
+    if (!open || !settings.mentorEnabled) {
+      modelsAbortRef.current?.abort()
+      setAvailableModels([])
+      return
+    }
+    modelsAbortRef.current?.abort()
+    const controller = new AbortController()
+    modelsAbortRef.current = controller
+    // The previous endpoint's ids stop being offered as soon as the URL or
+    // key changes; the bare input below stays usable while loading.
+    setAvailableModels([])
+    void listEndpointModels(settings.aiBaseUrl, settings.aiApiKey, controller.signal).then(
+      (ids) => {
+        if (!controller.signal.aborted) setAvailableModels(ids)
+      },
+    )
+    return () => {
+      controller.abort()
+    }
+  }, [open, settings.aiBaseUrl, settings.aiApiKey, settings.mentorEnabled])
 
   const pullAbortRef = useRef<AbortController | null>(null)
   /** Monotonic counter — bumped on each new pull or settings invalidation. */
@@ -438,7 +461,7 @@ export function SettingsDialog({ open, onClose }: Props) {
                         >
                           {t.settings.ai.modelDesc}
                         </small>
-                        {isLocalhostUrl(settings.aiBaseUrl) && (
+                        {availableModels.length > 0 && (
                           <div
                             style={{
                               display: 'flex',
@@ -447,16 +470,15 @@ export function SettingsDialog({ open, onClose }: Props) {
                               marginBottom: 10,
                             }}
                           >
-                            {OLLAMA_PRESETS.map((p) => {
-                              const active = settings.aiModel === p.id
+                            {availableModels.map((id) => {
+                              const active = settings.aiModel === id
                               return (
                                 <button
-                                  key={p.id}
+                                  key={id}
                                   type="button"
-                                  title={p.note}
                                   onClick={() => {
-                                    setSetting('aiModel', p.id)
-                                    triggerCheck(settings.aiBaseUrl, p.id, settings.aiApiKey)
+                                    setSetting('aiModel', id)
+                                    triggerCheck(settings.aiBaseUrl, id, settings.aiApiKey)
                                   }}
                                   style={{
                                     appearance: 'none',
@@ -471,7 +493,7 @@ export function SettingsDialog({ open, onClose }: Props) {
                                     cursor: 'pointer',
                                   }}
                                 >
-                                  {p.id}
+                                  {id}
                                 </button>
                               )
                             })}

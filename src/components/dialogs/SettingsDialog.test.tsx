@@ -8,6 +8,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { act } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useGraphStore } from '@/store'
+import { checkEndpoint, listEndpointModels } from '@/llm/completion'
 import { SettingsDialog } from './SettingsDialog'
 
 vi.mock('@/llm/completion', async (importOriginal) => {
@@ -16,6 +17,7 @@ vi.mock('@/llm/completion', async (importOriginal) => {
     ...actual,
     checkEndpoint: vi.fn().mockResolvedValue('available'),
     executeModelPull: vi.fn().mockResolvedValue(true),
+    listEndpointModels: vi.fn().mockResolvedValue([]),
   }
 })
 
@@ -48,6 +50,14 @@ async function openAiTab(): Promise<void> {
   await act(async () => {
     aiTab.dispatchEvent(new MouseEvent('click', { bubbles: true }))
   })
+  // Flush the mocked /models fetch so discovered chips render.
+  await act(async () => {})
+}
+
+function chipButton(label: string): HTMLButtonElement {
+  const found = [...container!.querySelectorAll('button')].find((b) => b.textContent === label)
+  if (!found) throw new Error(`chip button "${label}" not found`)
+  return found as HTMLButtonElement
 }
 
 beforeEach(() => {
@@ -70,22 +80,59 @@ afterEach(() => {
   vi.clearAllMocks()
 })
 
-describe('SettingsDialog AI presets gating', () => {
-  it('shows Ollama preset chips for a localhost endpoint', async () => {
-    setupSettings({ aiBaseUrl: 'http://localhost:11434/v1', aiModel: 'qwen3:8b' })
+describe('SettingsDialog AI model discovery', () => {
+  it('shows discovered endpoint models with no hardcoded presets for localhost', async () => {
+    vi.mocked(listEndpointModels).mockResolvedValue(['discovered-local-a', 'discovered-local-b'])
+    setupSettings({ aiBaseUrl: 'http://localhost:11434/v1', aiModel: 'discovered-local-a' })
     await openAiTab()
-    expect(container!.textContent).toContain('llama3.2:3b')
-    expect(container!.textContent).toContain('qwen3:8b')
+    expect(container!.textContent).toContain('discovered-local-a')
+    expect(container!.textContent).toContain('discovered-local-b')
+    expect(container!.textContent).not.toContain('llama3.2:3b')
+    expect(container!.textContent).not.toContain('qwen3:8b')
   })
 
-  it('hides Ollama preset chips for a remote endpoint', async () => {
+  it('shows discovered models for a remote endpoint', async () => {
+    vi.mocked(listEndpointModels).mockResolvedValue(['big-pickle'])
     setupSettings({
       aiBaseUrl: 'https://opencode.ai/zen/v1',
       aiModel: 'big-pickle',
       aiApiKey: 'test-key',
     })
     await openAiTab()
+    expect(container!.textContent).toContain('big-pickle')
     expect(container!.textContent).not.toContain('llama3.2:3b')
     expect(container!.textContent).not.toContain('qwen3:8b')
+  })
+
+  it('keeps the custom model input editable alongside discovered models', async () => {
+    vi.mocked(listEndpointModels).mockResolvedValue(['discovered-local-a'])
+    setupSettings({ aiBaseUrl: 'http://localhost:11434/v1', aiModel: 'discovered-local-a' })
+    await openAiTab()
+    const input = container!.querySelector('input[placeholder="e.g. qwen3:8b"]')
+    expect(input).not.toBeNull()
+  })
+
+  it('selecting a discovered model updates the model and re-checks it', async () => {
+    vi.mocked(listEndpointModels).mockResolvedValue(['discovered-local-a', 'discovered-local-b'])
+    setupSettings({ aiBaseUrl: 'http://localhost:11434/v1', aiModel: 'discovered-local-a' })
+    await openAiTab()
+    await act(async () => {
+      chipButton('discovered-local-b').dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    })
+    expect(useGraphStore.getState().settings.aiModel).toBe('discovered-local-b')
+    expect(vi.mocked(checkEndpoint)).toHaveBeenCalledWith(
+      'http://localhost:11434/v1',
+      'discovered-local-b',
+      '',
+      expect.anything(),
+    )
+  })
+
+  it('falls back to the bare input when discovery returns nothing', async () => {
+    vi.mocked(listEndpointModels).mockResolvedValue([])
+    setupSettings({ aiBaseUrl: 'http://localhost:11434/v1', aiModel: 'custom-model' })
+    await openAiTab()
+    expect(container!.querySelector('input[placeholder="e.g. qwen3:8b"]')).not.toBeNull()
+    expect(container!.textContent).not.toContain('llama3.2:3b')
   })
 })

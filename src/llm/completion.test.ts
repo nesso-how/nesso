@@ -19,6 +19,7 @@ import {
   isAiReady,
   isLocalhostUrl,
   isNetworkFailure,
+  listEndpointModels,
   pullModel,
 } from './completion'
 
@@ -760,6 +761,94 @@ describe('checkEndpoint', () => {
 
     const result = await checkEndpoint('http://localhost:11434', 'gemma3:4b', '', controller.signal)
     expect(result).toBe('error')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// listEndpointModels
+// ---------------------------------------------------------------------------
+
+describe('listEndpointModels', () => {
+  it('returns model ids from the /models list', async () => {
+    vi.stubGlobal('window', {})
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ data: [{ id: 'gemma3:4b' }, { id: 'qwen3:8b' }] }), {
+          status: 200,
+        }),
+      ),
+    )
+
+    const result = await listEndpointModels('http://localhost:11434', '')
+    expect(result).toEqual(['gemma3:4b', 'qwen3:8b'])
+  })
+
+  it('sends bearer auth when apiKey is provided', async () => {
+    vi.stubGlobal('window', {})
+    const browserFetch = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ data: [{ id: 'big-pickle' }] }), {
+        status: 200,
+      }),
+    )
+    vi.stubGlobal('fetch', browserFetch)
+
+    await listEndpointModels('https://opencode.ai/zen/v1', 'test-key')
+
+    const [, init] = browserFetch.mock.calls[0] as [string, RequestInit]
+    expect(new Headers(init.headers).get('authorization')).toBe('Bearer test-key')
+  })
+
+  it('strips trailing slashes from the base URL', async () => {
+    vi.stubGlobal('window', {})
+    const browserFetch = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ data: [{ id: 'gemma3:4b' }] }), {
+        status: 200,
+      }),
+    )
+    vi.stubGlobal('fetch', browserFetch)
+
+    await listEndpointModels('http://localhost:11434/v1/', '')
+
+    const [url] = browserFetch.mock.calls[0] as [string]
+    expect(url).toBe('http://localhost:11434/v1/models')
+  })
+
+  it('returns [] for 401 without throwing', async () => {
+    vi.stubGlobal('window', {})
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('unauthorized', { status: 401 })))
+
+    const result = await listEndpointModels('https://opencode.ai/zen/v1', 'bad-key')
+    expect(result).toEqual([])
+  })
+
+  it('returns [] for 500 without throwing', async () => {
+    vi.stubGlobal('window', {})
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('server error', { status: 500 })))
+
+    const result = await listEndpointModels('https://opencode.ai/zen/v1', 'test-key')
+    expect(result).toEqual([])
+  })
+
+  it('returns [] for network failures without throwing', async () => {
+    vi.stubGlobal('window', {})
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')))
+
+    const result = await listEndpointModels('http://localhost:11434', '')
+    expect(result).toEqual([])
+  })
+
+  it('returns [] when the caller aborts before fetch completes', async () => {
+    vi.stubGlobal('window', {})
+    const controller = new AbortController()
+    controller.abort()
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockRejectedValue(new DOMException('The operation was aborted.', 'AbortError')),
+    )
+
+    const result = await listEndpointModels('http://localhost:11434', '', controller.signal)
+    expect(result).toEqual([])
   })
 })
 

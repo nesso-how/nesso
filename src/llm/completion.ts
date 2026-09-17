@@ -74,6 +74,55 @@ export function isLocalhostUrl(url: string): boolean {
 // ---------------------------------------------------------------------------
 
 /**
+ * Shared fetch for the OpenAI-compatible `/models` endpoint: trims trailing
+ * slashes, sends the bearer key only when set, and composes the caller signal
+ * with an internal 5-second timeout. Throws on network failure or abort;
+ * callers map HTTP statuses to their own outcome.
+ */
+async function fetchModelsResponse(
+  baseUrl: string,
+  apiKey: string,
+  signal?: AbortSignal,
+): Promise<Response> {
+  const cleanUrl = baseUrl.replace(/\/+$/, '')
+  const fetcher = getConfiguredFetch()
+  const headers: Record<string, string> = {}
+  if (apiKey) {
+    headers['Authorization'] = `Bearer ${apiKey}`
+  }
+  const effectiveSignal = signal
+    ? AbortSignal.any([signal, AbortSignal.timeout(5000)])
+    : AbortSignal.timeout(5000)
+  return fetcher(`${cleanUrl}/models`, {
+    signal: effectiveSignal,
+    headers,
+  })
+}
+
+/**
+ * Lists the model ids reported by the endpoint's OpenAI-compatible `/models`
+ * route. Never throws: unreachable endpoints, non-2xx responses, and aborts
+ * all resolve to an empty list so settings UI can fall back to the bare input.
+ *
+ * The caller signal is composed with an internal 5-second timeout via
+ * `AbortSignal.any`; when no signal is given the timeout applies on its own.
+ */
+export async function listEndpointModels(
+  baseUrl: string,
+  apiKey: string,
+  signal?: AbortSignal,
+): Promise<string[]> {
+  try {
+    const res = await fetchModelsResponse(baseUrl, apiKey, signal)
+    if (!res.ok) return []
+    const data = (await res.json()) as { data?: { id: string }[] }
+    return (data.data ?? []).map((m) => m.id)
+  } catch {
+    return []
+  }
+}
+
+/**
  * Checks whether a model is available at the given base URL by querying the
  * `/models` endpoint. Returns one of:
  * - `'available'`   — model found in the list
@@ -81,8 +130,8 @@ export function isLocalhostUrl(url: string): boolean {
  * - `'unauthorized'` — HTTP 401 or 403
  * - `'error'`       — network failure, timeout, or any other non-2xx response
  *
- * When the caller provides a signal it is passed straight through to fetch.
- * When no signal is given a 5-second timeout is applied internally.
+ * The caller signal is composed with an internal 5-second timeout via
+ * `AbortSignal.any`; when no signal is given the timeout applies on its own.
  */
 export async function checkEndpoint(
   baseUrl: string,
@@ -91,19 +140,7 @@ export async function checkEndpoint(
   signal?: AbortSignal,
 ): Promise<'available' | 'unavailable' | 'unauthorized' | 'error'> {
   try {
-    const cleanUrl = baseUrl.replace(/\/+$/, '')
-    const fetcher = getConfiguredFetch()
-    const headers: Record<string, string> = {}
-    if (apiKey) {
-      headers['Authorization'] = `Bearer ${apiKey}`
-    }
-    const effectiveSignal = signal
-      ? AbortSignal.any([signal, AbortSignal.timeout(5000)])
-      : AbortSignal.timeout(5000)
-    const res = await fetcher(`${cleanUrl}/models`, {
-      signal: effectiveSignal,
-      headers,
-    })
+    const res = await fetchModelsResponse(baseUrl, apiKey, signal)
     if (res.status === 401 || res.status === 403) return 'unauthorized'
     if (!res.ok) return 'error'
     const data = (await res.json()) as { data?: { id: string }[] }
