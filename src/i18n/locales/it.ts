@@ -57,7 +57,7 @@ const it: typeof en = {
       apiBaseUrlDesc: 'URL base di un endpoint OpenAI-compatibile (Ollama, Unsloth o in hosting).',
       model: 'Modello',
       modelDesc: 'Modello usato dalle funzioni AI.',
-      customModel: 'Inserisci un modello personalizzato…',
+      customModel: 'Personalizzato…',
       apiKey: 'Chiave API',
       apiKeyDesc:
         'Di solito vuoto per Ollama locale. Per API remote, imposta il segreto che il tuo endpoint si aspetta come',

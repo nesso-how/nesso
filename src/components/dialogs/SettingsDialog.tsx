@@ -20,6 +20,13 @@ import type { ModelStatus } from '@/lib/ollama'
 type Tab = 'appearance' | 'learning' | 'ai' | 'privacy'
 const ALL_TABS = ['appearance', 'learning', 'ai', 'privacy'] as const
 
+/**
+ * Pseudo-option id inside the model select that reveals the free-text input
+ * instead of picking a model. Never stored in settings, never health-checked:
+ * the onChange handler intercepts it before setSetting/triggerCheck.
+ */
+const CUSTOM_MODEL_OPTION_ID = '__nesso_custom__'
+
 const LANGUAGES: { id: Language; label: string }[] = [
   { id: 'en', label: 'English' },
   { id: 'it', label: 'Italiano' },
@@ -483,41 +490,28 @@ export function SettingsDialog({ open, onClose }: Props) {
                         {availableModels.length > 0 && (
                           <div style={{ marginBottom: 10 }}>
                             <Select
-                              options={(availableModels.includes(settings.aiModel) ||
-                              settings.aiModel === ''
-                                ? availableModels
-                                : [settings.aiModel, ...availableModels]
-                              ).map((id) => ({ id, label: id }))}
+                              options={[
+                                ...(availableModels.includes(settings.aiModel) ||
+                                settings.aiModel === ''
+                                  ? availableModels
+                                  : [settings.aiModel, ...availableModels]
+                                ).map((id) => ({ id, label: id })),
+                                { id: CUSTOM_MODEL_OPTION_ID, label: t.settings.ai.customModel },
+                              ]}
                               value={settings.aiModel}
                               onChange={(id) => {
+                                if (id === CUSTOM_MODEL_OPTION_ID) {
+                                  // Reveal the free-text input without touching
+                                  // the stored model; picking a discovered id
+                                  // below closes it again.
+                                  setCustomModelOpen(true)
+                                  return
+                                }
                                 setSetting('aiModel', id)
                                 setCustomModelOpen(false)
                                 triggerCheck(settings.aiBaseUrl, id, settings.aiApiKey)
                               }}
                             />
-                          </div>
-                        )}
-                        {availableModels.length > 0 && !showModelInput && (
-                          <div style={{ marginBottom: 10 }}>
-                            <button
-                              type="button"
-                              onClick={() => setCustomModelOpen(true)}
-                              style={{
-                                appearance: 'none',
-                                border: 'none',
-                                background: 'transparent',
-                                padding: 0,
-                                cursor: 'pointer',
-                                fontSize: '11px',
-                                fontWeight: 400,
-                                fontFamily: 'var(--font-mono)',
-                                color: 'var(--ink-4)',
-                                textDecoration: 'underline',
-                                textUnderlineOffset: 2,
-                              }}
-                            >
-                              {t.settings.ai.customModel}
-                            </button>
                           </div>
                         )}
                         {showModelInput && (

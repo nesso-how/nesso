@@ -119,18 +119,28 @@ describe('SettingsDialog AI model discovery', () => {
     expect(container!.textContent).not.toContain('qwen3:8b')
   })
 
-  it('hides the input behind a custom toggle when the model is discovered', async () => {
+  it('offers a Custom option inside the select instead of a separate button', async () => {
     vi.mocked(listEndpointModels).mockResolvedValue(['discovered-local-a'])
     setupSettings({ aiBaseUrl: 'http://localhost:11434/v1', aiModel: 'discovered-local-a' })
     await openAiTab()
+    // Input hidden, and no standalone custom button anywhere.
     expect(container!.querySelector('input[placeholder="e.g. qwen3:8b"]')).toBeNull()
-    const toggle = [...container!.querySelectorAll('button')].find(
-      (b) => b.textContent === 'Enter a custom model…',
-    )
-    expect(toggle).not.toBeUndefined()
+    expect(
+      [...container!.querySelectorAll('button')].some((b) => b.textContent === 'Custom…'),
+    ).toBe(false)
+    await openModelSelect()
+    expect(selectOption('Custom…')).not.toBeNull()
+  })
+
+  it('selecting Custom reveals the input without changing the model', async () => {
+    vi.mocked(listEndpointModels).mockResolvedValue(['discovered-local-a', 'discovered-local-b'])
+    setupSettings({ aiBaseUrl: 'http://localhost:11434/v1', aiModel: 'discovered-local-a' })
+    await openAiTab()
+    await openModelSelect()
     await act(async () => {
-      toggle!.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+      selectOption('Custom…').dispatchEvent(new MouseEvent('click', { bubbles: true }))
     })
+    expect(useGraphStore.getState().settings.aiModel).toBe('discovered-local-a')
     expect(container!.querySelector('input[placeholder="e.g. qwen3:8b"]')).not.toBeNull()
   })
 

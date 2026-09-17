@@ -57,7 +57,7 @@ const en = {
       apiBaseUrlDesc: 'Base URL of an OpenAI-compatible endpoint (Ollama, Unsloth, or hosted).',
       model: 'Model',
       modelDesc: 'Model used by AI features.',
-      customModel: 'Enter a custom model…',
+      customModel: 'Custom…',
       apiKey: 'API key',
       apiKeyDesc:
         'Usually empty for local Ollama. For hosted APIs, set whatever secret your endpoint expects as',
