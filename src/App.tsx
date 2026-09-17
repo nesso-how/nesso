@@ -10,35 +10,21 @@ import {
   writeSidebarWidth,
 } from './components/layout/Sidebar'
 import { StatusBar, STATUS_BAR_HEIGHT_PX } from './components/layout/StatusBar'
-import { RelationTypesDialog } from './components/dialogs/RelationTypesDialog'
+import { AppPanels } from './components/layout/AppPanels'
+import { AppOverlays } from './components/layout/AppOverlays'
+import { AppBannerStack } from './components/layout/AppBannerStack'
 import {
-  Inspector,
   INSPECTOR_CANVAS_LEFT_GUTTER,
   INSPECTOR_RAIL_WIDTH,
   clampInspectorPanelWidth,
   readInspectorPanelWidth,
   writeInspectorPanelWidth,
 } from './components/Inspector'
-import { MentorPanel } from './components/mentor/MentorPanel'
-import { ReviewMode } from './components/review/ReviewMode'
-import { WritingMode } from './components/writing/WritingMode'
-import { ShortcutsDialog } from './components/dialogs/ShortcutsDialog'
-import { SettingsDialog } from './components/dialogs/SettingsDialog'
-import { AboutDialog } from './components/dialogs/AboutDialog'
-import { SearchDialog } from './components/dialogs/SearchDialog'
-import { ConfirmDialog } from './components/ui/ConfirmDialog'
-import { ToastViewport } from './components/ui/ToastViewport'
 import { useGraphStore, selectedNodeSelector, selectedEdgeSelector } from './store'
 import { useAutoSave } from './hooks/useAutoSave'
 import { useGraphFileWatch } from './hooks/useGraphFileWatch'
 import { useDesktopMenu } from './hooks/useDesktopMenu'
 import { useOnboardingFlow } from './hooks/useOnboardingFlow'
-import { GraphFileConflictBanner } from './components/banners/GraphFileConflictBanner'
-import { UpdateBanner } from './components/banners/UpdateBanner'
-import { ReviewReminderBanner } from './components/banners/ReviewReminderBanner'
-import { TelemetryConsentBanner } from './components/banners/TelemetryConsentBanner'
-import { WelcomeDialog } from './components/onboarding/WelcomeDialog'
-import { CoachmarkOverlay } from './components/onboarding/CoachmarkOverlay'
 import { PALETTES } from '@nesso-how/vocab-learning'
 import { findNewConceptPosition, NEW_CONCEPT_SIZE } from './data/newConceptLayout'
 import { focusFlowNodes } from './lib/focusFlowSelection'
@@ -577,72 +563,42 @@ function AppInner() {
         onAbout={() => setShowAbout(true)}
       />
 
-      <RelationTypesDialog open={showRelationTypes} onClose={() => setShowRelationTypes(false)} />
-      <Inspector
-        panelWidth={inspectorPanelWidth}
-        onPanelWidthChange={(w) => setInspectorPanelWidth(clampInspectorPanelWidth(w))}
+      <AppPanels
+        inspectorPanelWidth={inspectorPanelWidth}
+        onInspectorPanelWidthChange={(w) => setInspectorPanelWidth(clampInspectorPanelWidth(w))}
+        mentorLeftInset={mentorInsets.left}
+        mentorRightInset={mentorInsets.right}
       />
       <StatusBar sidebarWidth={sidebarWidth} onFit={fitView} />
-      {mentorEnabled && (
-        <MentorPanel leftInset={mentorInsets.left} rightInset={mentorInsets.right} />
-      )}
-      <ReviewMode open={showReview} onClose={() => setShowReview(false)} />
-      {writingModeNodeId !== null && (
-        <WritingMode nodeId={writingModeNodeId} onClose={closeWritingMode} />
-      )}
-      <ShortcutsDialog open={showShortcuts} onClose={() => setShowShortcuts(false)} />
-      <SettingsDialog open={showSettings} onClose={() => setShowSettings(false)} />
-      <AboutDialog
-        open={showAbout}
-        onClose={() => setShowAbout(false)}
+      <AppOverlays
+        showRelationTypes={showRelationTypes}
+        onCloseRelationTypes={() => setShowRelationTypes(false)}
+        showReview={showReview}
+        onCloseReview={() => setShowReview(false)}
+        writingModeNodeId={writingModeNodeId}
+        onCloseWritingMode={closeWritingMode}
+        showShortcuts={showShortcuts}
+        onCloseShortcuts={() => setShowShortcuts(false)}
+        showSettings={showSettings}
+        onCloseSettings={() => setShowSettings(false)}
+        showAbout={showAbout}
+        onCloseAbout={() => setShowAbout(false)}
         onShowTutorial={() => {
           setShowAbout(false)
           onboarding.startTour()
         }}
-      />
-      <SearchDialog
-        open={showSearch}
-        onClose={() => setShowSearch(false)}
+        showSearch={showSearch}
+        onCloseSearch={() => setShowSearch(false)}
         onSelectNode={handleSelectNode}
         onSelectGraph={(id) => loadGraph(id)}
+        onboarding={onboarding}
       />
-      <WelcomeDialog
-        open={onboarding.phase === 'welcome'}
-        onShowMeHow={onboarding.startTour}
-        onSkipIntro={onboarding.skipOnboarding}
+      <AppBannerStack
+        onStartReview={openReview}
+        onboardingActive={onboarding.phase !== 'idle'}
+        consentOpen={onboarding.phase === 'consent'}
+        onDismissConsent={onboarding.finishOnboarding}
       />
-      {onboarding.phase === 'tour' && !showReview && (
-        <CoachmarkOverlay
-          stepIndex={onboarding.tourStep}
-          onSkip={onboarding.skipOnboarding}
-          onNext={onboarding.advanceTour}
-        />
-      )}
-      <div
-        style={{
-          position: 'fixed',
-          top: 60,
-          right: 16,
-          zIndex: 60,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 10,
-          alignItems: 'flex-end',
-        }}
-      >
-        <GraphFileConflictBanner />
-        <UpdateBanner />
-        <ReviewReminderBanner
-          onStartReview={openReview}
-          onboardingActive={onboarding.phase !== 'idle'}
-        />
-        <TelemetryConsentBanner
-          open={onboarding.phase === 'consent'}
-          onDismiss={onboarding.finishOnboarding}
-        />
-        <ToastViewport />
-      </div>
-      <ConfirmDialog />
     </div>
   )
 }
