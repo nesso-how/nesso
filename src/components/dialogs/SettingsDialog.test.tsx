@@ -139,7 +139,7 @@ describe('SettingsDialog AI model discovery', () => {
     setupSettings({ aiBaseUrl: 'http://localhost:11434/v1', aiModel: 'discovered-local-a' })
     await openAiTab()
     // Input hidden, and no standalone custom button anywhere.
-    expect(getContainer().querySelector('input[placeholder="e.g. qwen3:8b"]')).toBeNull()
+    expect(getContainer().querySelector('input[placeholder="e.g. qwen3.5:9b"]')).toBeNull()
     expect(
       [...getContainer().querySelectorAll('button')].some((b) => b.textContent === 'Custom…'),
     ).toBe(false)
@@ -156,7 +156,7 @@ describe('SettingsDialog AI model discovery', () => {
       selectOption('Custom…').dispatchEvent(new MouseEvent('click', { bubbles: true }))
     })
     expect(useGraphStore.getState().settings.aiModel).toBe('discovered-local-a')
-    expect(getContainer().querySelector('input[placeholder="e.g. qwen3:8b"]')).not.toBeNull()
+    expect(getContainer().querySelector('input[placeholder="e.g. qwen3.5:9b"]')).not.toBeNull()
   })
 
   it('hides the input again after picking a discovered model', async () => {
@@ -164,13 +164,13 @@ describe('SettingsDialog AI model discovery', () => {
     setupSettings({ aiBaseUrl: 'http://localhost:11434/v1', aiModel: 'my-custom-model' })
     await openAiTab()
     // Custom value forces the input visible.
-    expect(getContainer().querySelector('input[placeholder="e.g. qwen3:8b"]')).not.toBeNull()
+    expect(getContainer().querySelector('input[placeholder="e.g. qwen3.5:9b"]')).not.toBeNull()
     await openModelSelect()
     await act(async () => {
       selectOption('discovered-local-b').dispatchEvent(new MouseEvent('click', { bubbles: true }))
     })
     expect(useGraphStore.getState().settings.aiModel).toBe('discovered-local-b')
-    expect(getContainer().querySelector('input[placeholder="e.g. qwen3:8b"]')).toBeNull()
+    expect(getContainer().querySelector('input[placeholder="e.g. qwen3.5:9b"]')).toBeNull()
   })
 
   it('selecting a discovered model updates the model and re-checks it', async () => {
@@ -196,7 +196,7 @@ describe('SettingsDialog AI model discovery', () => {
     await openAiTab()
     // The select still displays the current value even when it is not discovered.
     expect(selectToggle().textContent).toContain('my-custom-model')
-    expect(getContainer().querySelector('input[placeholder="e.g. qwen3:8b"]')).not.toBeNull()
+    expect(getContainer().querySelector('input[placeholder="e.g. qwen3.5:9b"]')).not.toBeNull()
   })
 
   it('defaults an empty model to the first discovered model', async () => {
@@ -206,14 +206,14 @@ describe('SettingsDialog AI model discovery', () => {
     expect(useGraphStore.getState().settings.aiModel).toBe('discovered-local-a')
     // Defaulted value is discovered, so the select shows it and the input stays hidden.
     expect(selectToggle().textContent).toContain('discovered-local-a')
-    expect(getContainer().querySelector('input[placeholder="e.g. qwen3:8b"]')).toBeNull()
+    expect(getContainer().querySelector('input[placeholder="e.g. qwen3.5:9b"]')).toBeNull()
   })
 
   it('falls back to the bare input when discovery returns nothing', async () => {
     vi.mocked(listEndpointModels).mockResolvedValue([])
     setupSettings({ aiBaseUrl: 'http://localhost:11434/v1', aiModel: 'custom-model' })
     await openAiTab()
-    expect(getContainer().querySelector('input[placeholder="e.g. qwen3:8b"]')).not.toBeNull()
+    expect(getContainer().querySelector('input[placeholder="e.g. qwen3.5:9b"]')).not.toBeNull()
     expect(getContainer().textContent).not.toContain('llama3.2:3b')
     expect(
       [...getContainer().querySelectorAll('button')].filter((b) => b.querySelector('svg')),

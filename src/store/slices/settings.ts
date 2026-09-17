@@ -25,7 +25,7 @@ export const createSettingsSlice: StateCreator<GraphState, [], [], SettingsSlice
     autoCurveFlip: true,
     categoryPalette: 'default',
     aiBaseUrl: 'http://localhost:11434/v1',
-    aiModel: 'qwen3:8b',
+    aiModel: 'qwen3.5:9b',
     aiApiKey: '',
     mentorSystemPrompt: '',
     mentorEnabled: false,

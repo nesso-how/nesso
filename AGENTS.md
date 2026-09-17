@@ -32,7 +32,7 @@ materialization command.
 
 ## Prerequisites
 
-- Use Node 20+, Corepack, and pnpm 10 (`package.json` pins pnpm 10.14.0).
+- Use Node 22+, Corepack, and pnpm 10 (`package.json` pins pnpm 10.14.0).
 - Install the Playwright browser and system dependencies before browser E2E checks: `pnpm exec playwright install --with-deps chromium`.
 - Tauri checks require the Rust toolchain and platform-specific Tauri prerequisites. The CI Linux lane additionally installs GTK/WebKit development packages.
 - Native E2E requires `tauri-driver` and a native WebDriver on Linux/Windows. On macOS, use the Docker wrapper described below because macOS has no native Tauri WebDriver.

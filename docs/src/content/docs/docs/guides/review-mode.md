@@ -40,7 +40,7 @@ Under **Settings → Learning → Review**:
 | **Target retention** | Probability of correctly recalling a concept at its next review. Higher means more frequent reviews.                  | 70% to 97%  |
 | **Max interval**     | Longest interval FSRS can schedule, in days. Caps how far into the future a card can be pushed.                       | 1 to 36,500 |
 
-The defaults (90% retention, 100-year cap) match the FSRS reference defaults. Lower the retention if you're comfortable forgetting more in exchange for fewer reviews. Raise the max interval if you want long-term cards to keep stretching out.
+The defaults are 90% target retention and a 1-year maximum interval (365 days). The FSRS reference default caps intervals at 100 years (36,500 days); Nesso starts more conservative and lets you raise the cap up to that ceiling. Lower the retention if you're comfortable forgetting more in exchange for fewer reviews. Raise the max interval if you want long-term cards to keep stretching out.
 
 Review is on by default. The **Review mode** toggle at the top of **Settings → Learning** turns it off entirely: the **Review** pill and the `R` shortcut disappear, and the FSRS settings above hide while it is off. The **Review reminder** toggle remains available independently, but reminders only appear while **Review mode** is enabled.
 

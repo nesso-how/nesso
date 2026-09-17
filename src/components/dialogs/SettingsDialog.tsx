@@ -536,7 +536,7 @@ export function SettingsDialog({ open, onClose }: Props) {
                           <input
                             type="text"
                             value={settings.aiModel}
-                            placeholder="e.g. qwen3:8b"
+                            placeholder="e.g. qwen3.5:9b"
                             onChange={(e) => {
                               setSetting('aiModel', e.target.value)
                               setModelStatus('idle')
