@@ -7,6 +7,7 @@ import type { RelationCategory, RelationTypeName } from '@nesso-how/vocab-learni
 import type { NessoEdgeData } from './display.js'
 import { GlyphSVG } from './GlyphSVG.js'
 import { useGraphDisplay, type NessoGraphDisplayContext } from './context.js'
+import { isEdgeConnectedToNode, resolveEdgeVisual } from './edgeHighlight.js'
 import {
   arcControlPoint,
   effectiveCurveFlip,
@@ -46,6 +47,7 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
     categoryColorMode,
     getRelationLabel,
     isItemSelected,
+    selectedNodeId,
   } = useGraphDisplay()
 
   const sourceNode = useStore((s) => s.nodeLookup.get(source))
@@ -58,6 +60,8 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
       ? 'var(--ink-3, #888888)'
       : categoryColor(T.cat, categoryColorMode, palette)
   const isSelected = selected || isItemSelected?.('edge', id) === true
+  const isConnected = isEdgeConnectedToNode(source, target, selectedNodeId)
+  const hasSelection = selectedNodeId != null && selectedNodeId !== ''
   const showLabel =
     edgeEncoding === 'full' || (edgeEncoding !== 'minimal' && (hovered || isSelected))
   const straight = curveStyle === 'straight'
@@ -118,8 +122,16 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
   const ax2 = b.x + Math.cos(a2) * arrowSize
   const ay2 = b.y + Math.sin(a2) * arrowSize
 
-  const w = isSelected ? 2 : 1.4
-  const op = isSelected || hovered ? 1 : 0.78
+  const {
+    width: w,
+    opacity: op,
+    dimmed,
+  } = resolveEdgeVisual({
+    isSelected,
+    hovered,
+    isConnected,
+    hasSelection,
+  })
   const r = 11
 
   return (
@@ -140,11 +152,15 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
       />
 
       {T.inverse !== 'self' && edgeEncoding !== 'minimal' && (
-        <polygon points={`${b.x},${b.y} ${ax1},${ay1} ${ax2},${ay2}`} fill={color} opacity={0.85} />
+        <polygon
+          points={`${b.x},${b.y} ${ax1},${ay1} ${ax2},${ay2}`}
+          fill={color}
+          opacity={dimmed ? op : 0.85}
+        />
       )}
 
       {edgeEncoding !== 'minimal' && (
-        <g style={{ pointerEvents: 'all' }}>
+        <g style={{ pointerEvents: 'all' }} opacity={dimmed ? op : 1}>
           <circle
             cx={labelX}
             cy={labelY}
@@ -165,6 +181,7 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
           y={labelY + r + 2}
           width={120}
           height={20}
+          opacity={dimmed ? op : 1}
           style={{ overflow: 'visible', pointerEvents: 'none' }}
         >
           <div

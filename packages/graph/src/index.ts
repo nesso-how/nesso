@@ -6,6 +6,8 @@ export { ConceptNode } from './ConceptNode.js'
 export { ConceptNodeBody } from './ConceptNodeBody.js'
 export type { ConceptNodeBodyProps } from './ConceptNodeBody.js'
 export { NessoEdge } from './NessoEdge.js'
+export { isEdgeConnectedToNode, resolveEdgeVisual } from './edgeHighlight.js'
+export type { EdgeVisual, EdgeVisualInput } from './edgeHighlight.js'
 export { useGraphDisplay, GraphDisplayContext } from './context.js'
 export type { NessoGraphDisplayContext, CategoryColorMode } from './context.js'
 

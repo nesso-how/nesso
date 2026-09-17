@@ -15,6 +15,8 @@ export interface NessoGraphDisplayContext {
   categoryColorMode: CategoryColorMode
   getRelationLabel?: (type: RelationTypeName) => string
   isItemSelected?: (kind: 'node' | 'edge', id: string) => boolean
+  /** Id of the currently selected concept, if any — used to emphasize connected edges. */
+  selectedNodeId?: string | null
 }
 
 const defaultContext: NessoGraphDisplayContext = {

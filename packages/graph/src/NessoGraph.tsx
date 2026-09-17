@@ -93,6 +93,8 @@ export interface NessoGraphProps {
   categoryColorMode?: CategoryColorMode
   getRelationLabel?: (type: RelationTypeName) => string
   isItemSelected?: (kind: 'node' | 'edge', id: string) => boolean
+  /** Id of the currently selected concept, if any — used to emphasize connected edges. */
+  selectedNodeId?: string | null
 
   // Node/edge types — override for app-specific interactivity (e.g. inline edit).
   nodeTypes?: NodeTypes
@@ -148,6 +150,7 @@ export function NessoGraph({
   categoryColorMode = 'palette',
   getRelationLabel,
   isItemSelected,
+  selectedNodeId,
   nodeTypes = DEFAULT_NODE_TYPES,
   edgeTypes = DEFAULT_EDGE_TYPES,
   nodesDraggable = false,
@@ -201,8 +204,17 @@ export function NessoGraph({
       categoryColorMode,
       getRelationLabel,
       isItemSelected,
+      selectedNodeId,
     }),
-    [display, graphDisplay, palette, categoryColorMode, getRelationLabel, isItemSelected],
+    [
+      display,
+      graphDisplay,
+      palette,
+      categoryColorMode,
+      getRelationLabel,
+      isItemSelected,
+      selectedNodeId,
+    ],
   )
 
   const { preventScrolling: preventScrollingOverride, ...restReactFlowProps } = reactFlowProps ?? {}
