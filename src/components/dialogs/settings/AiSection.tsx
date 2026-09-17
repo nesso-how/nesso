@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: MIT
-import { useState, useEffect, useCallback, useRef } from 'react'
 import { useGraphStore } from '@/store'
 import { ModelStatusBadge } from '@/components/mentor/ModelStatusBadge'
 import { SettingsFormRow } from '@/components/ui/SettingsFormRow'
@@ -7,15 +6,11 @@ import { Switch } from '@/components/ui/Switch'
 import { Select } from '@/components/ui/Select'
 import { ExperimentalBadge } from '@/components/ui/ExperimentalBadge'
 import { useT } from '@/i18n'
-import {
-  checkEndpoint,
-  executeModelPull,
-  isOllamaNative,
-  listEndpointModels,
-} from '@/llm/completion'
-import { MENTOR_PERSONA_MAX_CHARS } from '@/llm/context'
-import type { ModelStatus } from '@/lib/ollama'
 import { isLocalhostUrl } from '@/lib/ollama'
+import { MENTOR_PERSONA_MAX_CHARS } from '@/llm/context'
+import { useModelDiscovery } from './ai/useModelDiscovery'
+import { useModelPull } from './ai/useModelPull'
+import { useEndpointHealthCheck } from './ai/useEndpointHealthCheck'
 
 /**
  * Pseudo-option id inside the model select that reveals the free-text input
@@ -32,120 +27,33 @@ export function AiSection({ open }: { open: boolean }) {
   const aiApiKey = useGraphStore((s) => s.settings.aiApiKey)
   const mentorSystemPrompt = useGraphStore((s) => s.settings.mentorSystemPrompt)
   const setSetting = useGraphStore((s) => s.setSetting)
-  const [modelStatus, setModelStatus] = useState<ModelStatus>('idle')
-  const [pullProgress, setPullProgress] = useState(0)
-  const [availableModels, setAvailableModels] = useState<string[]>([])
-  const [customModelOpen, setCustomModelOpen] = useState(false)
-  // Whether the endpoint speaks the native Ollama API (`/api/version` probe).
-  // null = not probed yet: Pull stays offered on loopback until the endpoint
-  // positively proves otherwise, so starting a local Ollama mid-dialog keeps
-  // working exactly as before.
-  const [ollamaNative, setOllamaNative] = useState<boolean | null>(null)
 
-  const healthCheckAbortRef = useRef<AbortController | null>(null)
-  const modelsAbortRef = useRef<AbortController | null>(null)
-
-  // Provider-agnostic model discovery: list the endpoint's own `/models`
-  // inventory (Ollama and hosted providers alike) so the user picks a real
-  // id instead of a hardcoded preset. Runs independently of the health check
-  // above — notably it does not depend on the selected model, so typing or
-  // selecting a model never refetches the list.
-  useEffect(() => {
-    if (!open || !mentorEnabled) {
-      modelsAbortRef.current?.abort()
-      setAvailableModels([])
-      return
-    }
-    modelsAbortRef.current?.abort()
-    const controller = new AbortController()
-    modelsAbortRef.current = controller
-    // The previous endpoint's ids stop being offered as soon as the URL or
-    // key changes; the bare input below stays usable while loading.
-    setAvailableModels([])
-    setCustomModelOpen(false)
-    void listEndpointModels(aiBaseUrl, aiApiKey, controller.signal).then((ids) => {
-      if (controller.signal.aborted) return
-      setAvailableModels(ids)
-      // Default an empty model to the first discovered id so the select
-      // never sits blank after entering a URL. A non-empty value — typed
-      // or previously selected — is never overwritten; read it fresh so a
-      // model typed while the fetch was in flight wins.
-      if (ids.length > 0 && useGraphStore.getState().settings.aiModel === '') {
-        setSetting('aiModel', ids[0])
-      }
-    })
-    // Native Ollama probe for the Pull affordance: only a server that
-    // positively answers `/api/version` is offered Pull. Unreachable keeps
-    // the previous value (an Ollama started mid-dialog keeps working);
-    // proven non-Ollama hides Pull.
-    void isOllamaNative(aiBaseUrl, controller.signal).then((native) => {
-      if (!controller.signal.aborted && native !== null) setOllamaNative(native)
-    })
-    return () => {
-      controller.abort()
-    }
-  }, [open, aiBaseUrl, aiApiKey, mentorEnabled, setSetting])
-
-  const pullAbortRef = useRef<AbortController | null>(null)
-  /** Monotonic counter — bumped on each new pull or settings invalidation. */
-  const pullRequestIdRef = useRef(0)
-
-  const handlePull = useCallback(async () => {
-    pullAbortRef.current?.abort()
-    pullRequestIdRef.current += 1
-    const requestId = pullRequestIdRef.current
-
-    const controller = new AbortController()
-    pullAbortRef.current = controller
-    setModelStatus('pulling')
-    setPullProgress(0)
-
-    const guardedProgress = (fraction: number) => {
-      if (pullRequestIdRef.current === requestId) setPullProgress(fraction)
-    }
-
-    const ok = await executeModelPull(aiBaseUrl, aiModel, controller.signal, guardedProgress)
-    // Only update state if this is still the latest pull request AND not aborted.
-    if (!controller.signal.aborted && pullRequestIdRef.current === requestId) {
-      setModelStatus(ok ? 'available' : 'error')
-    }
-  }, [aiBaseUrl, aiModel])
-
-  // Stop watching the pull stream when the dialog closes.
-  useEffect(() => {
-    if (!open) pullAbortRef.current?.abort()
-  }, [open])
-
-  useEffect(() => {
-    if (!open || !mentorEnabled) {
-      healthCheckAbortRef.current?.abort()
-      pullAbortRef.current?.abort()
-      pullRequestIdRef.current = 0
-      setModelStatus('idle')
-      return
-    }
-    // Settings changed while dialog is open and mentor is enabled — abort
-    // any in-flight pull and invalidate stale requests so an old pull cannot
-    // mark a freshly-selected model as available.
-    pullAbortRef.current?.abort()
-    pullRequestIdRef.current = 0
-
-    const controller = new AbortController()
-    // Abort any in-flight check from the previous effect invocation.
-    healthCheckAbortRef.current?.abort()
-    healthCheckAbortRef.current = controller
-    setModelStatus('checking')
-    checkEndpoint(aiBaseUrl, aiModel, aiApiKey, controller.signal)
-      .then((s) => {
-        if (!controller.signal.aborted) setModelStatus(s)
-      })
-      .catch(() => {
-        if (!controller.signal.aborted) setModelStatus('error')
-      })
-    return () => {
-      controller.abort()
-    }
-  }, [open, aiBaseUrl, aiModel, aiApiKey, mentorEnabled])
+  // Async lifecycles, split by ownership: discovery, pull, and health check
+  // each own their abort state exclusively. The only cross-lifecycle
+  // coordination is `invalidatePull`, which lets the health check retire a
+  // stale pull without touching the pull's refs. Hook order preserves the
+  // original effect order (discovery → pull → health check).
+  const { availableModels, customModelOpen, setCustomModelOpen, ollamaNative } = useModelDiscovery({
+    open,
+    mentorEnabled,
+    aiBaseUrl,
+    aiApiKey,
+    setSetting,
+  })
+  const { modelStatus, setModelStatus, pullProgress, handlePull, invalidatePull } = useModelPull({
+    open,
+    aiBaseUrl,
+    aiModel,
+  })
+  useEndpointHealthCheck({
+    open,
+    mentorEnabled,
+    aiBaseUrl,
+    aiModel,
+    aiApiKey,
+    setModelStatus,
+    invalidatePull,
+  })
 
   // The free-text input stays visible when there is no discovered list, when
   // the user explicitly opened it, or when the current value is custom
