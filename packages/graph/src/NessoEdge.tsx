@@ -2,8 +2,8 @@
 import { useState } from 'react'
 import type { Edge, EdgeProps } from '@xyflow/react'
 import { useStore } from '@xyflow/react'
-import { PALETTES, RELATION_TYPES } from '@nesso-how/vocab-learning'
-import type { RelationCategory, RelationTypeName } from '@nesso-how/vocab-learning'
+import { PALETTES, RELATION_TYPES, asRelationTypeName } from '@nesso-how/vocab-learning'
+import type { RelationCategory } from '@nesso-how/vocab-learning'
 import type { NessoEdgeData } from './display.js'
 import { GlyphSVG } from './GlyphSVG.js'
 import { useGraphDisplay, type NessoGraphDisplayContext } from './context.js'
@@ -16,15 +16,6 @@ import {
   nessoArcPath,
   rectExit,
 } from './geometry.js'
-
-function asRelationTypeName(
-  value: unknown,
-  fallback: RelationTypeName = 'causes',
-): RelationTypeName {
-  return typeof value === 'string' && value in RELATION_TYPES
-    ? (value as RelationTypeName)
-    : fallback
-}
 
 function categoryColor(
   cat: RelationCategory,

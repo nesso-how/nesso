@@ -29,6 +29,8 @@ export {
   RELATION_CATEGORIES,
   RELATION_TYPES,
   RELATION_TYPE_VALUES,
+  DEFAULT_RELATION_TYPE,
+  asRelationTypeName,
   isPrimaryRelationType,
   type Cardinality,
   type GlyphKind,

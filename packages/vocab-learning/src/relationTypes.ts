@@ -557,3 +557,16 @@ export function isPrimaryRelationType(id: RelationTypeName): boolean {
   if (def.inverse === 'self') return true
   return RELATION_TYPE_VALUES.indexOf(id) < RELATION_TYPE_VALUES.indexOf(def.inverse)
 }
+
+/** Default relation type used when persisted edge data carries an unknown id. */
+export const DEFAULT_RELATION_TYPE: RelationTypeName = 'causes'
+
+/** Coerce persisted / React Flow edge `data.type` to a known relation id. */
+export function asRelationTypeName(
+  value: unknown,
+  fallback: RelationTypeName = DEFAULT_RELATION_TYPE,
+): RelationTypeName {
+  return typeof value === 'string' && value in RELATION_TYPES
+    ? (value as RelationTypeName)
+    : fallback
+}
