@@ -87,14 +87,14 @@ export const en: Locale = {
   mentor: {
     label: 'Socratic mentor',
     badge: 'Experimental',
-    heading: 'Then Socrates questions it',
-    body: 'Layered on top of the graph, a Socratic AI reads your current selection and answers with questions, not summaries. Connect any OpenAI-compatible endpoint: a local model via Ollama, or a cloud provider. Point it at a capable model for a real conversation.',
+    heading: 'Then Socrates helps you understand it',
+    body: 'Layered on top of the graph, a Socratic AI reads your graph and helps you build understanding, explaining clearly and asking focused questions. Connect any OpenAI-compatible endpoint: a local model via Ollama, or a cloud provider. Point it at a capable model for a real conversation.',
     chat: {
       userMsg: 'Let’s explore Understanding',
       mentorMsg:
         'You marked <em>Understanding</em> as contrasting with <em>Passive consumption</em>. What does it mean to consume information passively? Can you ever build genuine understanding that way?',
       inputPlaceholder: 'Reply to Socrates…',
-      modelName: 'gemma3:4b',
+      modelName: 'qwen3:8b',
     },
   },
   vocab: {

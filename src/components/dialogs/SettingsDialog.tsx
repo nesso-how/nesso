@@ -19,8 +19,7 @@ import type { OllamaModelStatus } from '@/lib/ollama'
 
 const OLLAMA_PRESETS = [
   { id: 'llama3.2:3b', note: 'lightweight · fast' },
-  { id: 'gemma3:4b', note: 'balanced · recommended' },
-  { id: 'qwen3:8b', note: 'newest · best reasoning' },
+  { id: 'qwen3:8b', note: 'balanced · recommended' },
 ] as const
 
 type Tab = 'appearance' | 'learning' | 'ai' | 'privacy'
@@ -478,7 +477,7 @@ export function SettingsDialog({ open, onClose }: Props) {
                         <input
                           type="text"
                           value={settings.aiModel}
-                          placeholder="e.g. gemma3:4b"
+                          placeholder="e.g. qwen3:8b"
                           onChange={(e) => {
                             setSetting('aiModel', e.target.value)
                             setModelStatus('idle')

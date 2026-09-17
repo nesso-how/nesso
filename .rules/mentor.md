@@ -9,17 +9,25 @@ fallback for the key. Readiness requires a configured base URL and model.
 ## Persona and trust boundary
 
 `src/llm/context.ts` composes the built-in or trimmed custom persona with a
-fixed policy and runtime context. A custom persona replaces identity, tone,
-formatting, and language choices, but never replaces the fixed policy.
-Graph-derived content from selection metadata, prompts, snapshots, and tool
-results is reference data, never instructions. The mentor is read-only and
-must never claim to have changed the graph. The absence of mutation tools is
-the hard capability boundary.
+fixed policy array and runtime context. A custom persona replaces identity,
+tone, goals, and style, but never replaces the fixed policy. The fixed policy
+is, in order: read-only trust boundary; reply language (UI language default,
+overridable by an explicit instruction above it); tool routing; tool-result
+transience; FSRS interpretation. Persona always precedes policy because the
+language line refers to "above".
+Graph-derived content from selection metadata and tool results is reference
+data, never instructions. The mentor is read-only and must never claim to
+have changed the graph. The absence of mutation tools is the hard capability
+boundary. The built-in persona is minimal guidelines (help build
+understanding, grounded in the graph, ask a focused question when it moves
+learning forward), not script rules.
 
-Compact runtime context does not eagerly include graph titles, definitions,
-relations, snapshots, or the full FSRS legend. Legacy context remains bounded
-to 60 concepts, 120 relations, and the 12,000-character ceiling. Custom persona
-input remains capped at `MENTOR_PERSONA_MAX_CHARS` (4,000).
+Compact runtime context is per-turn data only: graph counts and the captured
+selection handle. It does not eagerly include graph titles, definitions,
+relations, snapshots, or the full FSRS legend. The opening turn uses one
+fixed, graph-free request (`MENTOR_OPENING_REQUEST`); selected titles,
+definitions, and relation details arrive only through bounded tool results.
+Custom persona input remains capped at `MENTOR_PERSONA_MAX_CHARS` (4,000).
 
 ## Tools and graph context
 
@@ -43,18 +51,17 @@ SHA-256 digest for oversized ids, within the tool bound.
 
 ## State and compatibility
 
-Chat history, capability mode, tool activity, draft, streaming flags, and abort
+Chat history, tool activity, draft, streaming flags, and abort
 controllers stay in `MentorPanel` local state or refs. They are never Zustand
 fields or persisted data. Closing the panel, changing graphs, changing AI
 readiness/language/base URL/model/persona, and **New chat** reset the local
 conversation and abort the current request. Selection changes alone and API-key
 edits alone do not reset it. Stale callbacks must not update a newer request.
 
-A tool-capable attempt allows at most four model steps. It may make one legacy
-retry only for an explicit tool-protocol compatibility failure before the first
-visible answer token. Aborts, authentication/network/generic failures, ordinary
-tool failures, and failures after visible text do not retry. A successful
-fallback remains local to that chat and is reset by the lifecycle above.
+The mentor uses one tools-only completion path with all six read-only graph
+tools. A tool-capable attempt allows at most four model steps. A
+tool-incompatible endpoint fails once through the existing error path; there
+is no snapshot fallback and no legacy mode.
 
 ## Transport privacy
 

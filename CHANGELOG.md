@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Changed
+
+- **AI mentor is now tools-only:** Socrates uses one compact prompt path with six read-only graph tools and a fixed graph-free opening request routed via tools (selected concept via `inspectConcept`, selected relation via `inspectRelation`, otherwise `getGraphOverview`). The legacy snapshot fallback, title-seeded openings, and compatibility retry are removed; tool-incompatible endpoints fail once through the normal error path. The built-in persona is now minimal guidelines that help build understanding instead of script rules, and the fresh-install default model is `qwen3:8b` (existing saved models are untouched).
+
 ## [0.2.0-beta.6] - 2026-09-16
 
 ### Added

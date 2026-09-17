@@ -8,9 +8,8 @@ import {
   fetchCompletion,
   isAiReady,
   isNetworkFailure,
-  isToolCompatibilityFailure,
 } from '@/llm/completion'
-import { buildLegacyMentorPrompt, buildMentorPrompt, buildMentorSeedText } from '@/llm/context'
+import { MENTOR_OPENING_REQUEST, buildMentorPrompt } from '@/llm/context'
 import { createMentorTools, MENTOR_TOOL_NAMES, type MentorToolName } from '@/llm/tools'
 import { useT } from '@/i18n'
 import { CloseButton } from '@/components/ui/CloseButton'
@@ -205,7 +204,6 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const abortRef = useRef<AbortController | null>(null)
-  const legacyModeRef = useRef(false)
   const userMessageCountRef = useRef(0)
   const historyRef = useRef(history)
   historyRef.current = history
@@ -214,7 +212,7 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
     const state = useGraphStore.getState()
     const selection = state.selected ? { ...state.selected } : null
     return {
-      seedText: buildMentorSeedText(state.settings.language, state.nodes, state.edges, selection),
+      openerText: MENTOR_OPENING_REQUEST,
       compactInstructions: buildMentorPrompt(
         state.nodes,
         state.edges,
@@ -222,14 +220,6 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
         state.settings.language,
         state.settings.mentorSystemPrompt,
       ),
-      buildLegacyInstructions: () =>
-        buildLegacyMentorPrompt(
-          state.nodes,
-          state.edges,
-          selection,
-          state.settings.language,
-          state.settings.mentorSystemPrompt,
-        ),
     }
   }, [])
 
@@ -239,41 +229,24 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
       prompts: ReturnType<typeof captureTurn>,
       controller: AbortController,
       handlers: CompletionHandlers,
-      hasVisibleText: () => boolean,
-    ): Promise<string> => {
-      const attempt = (legacy: boolean) =>
-        fetchCompletion(
-          settings,
-          {
-            instructions: legacy ? prompts.buildLegacyInstructions() : prompts.compactInstructions,
-            messages,
-            ...(legacy ? {} : { tools: MENTOR_TOOLS }),
-          },
-          MENTOR_MAX_TOKENS,
-          controller.signal,
-          handlers,
-        )
-
-      if (legacyModeRef.current) return attempt(true)
-      try {
-        return await attempt(false)
-      } catch (error) {
-        if (controller.signal.aborted || hasVisibleText() || !isToolCompatibilityFailure(error)) {
-          throw error
-        }
-        legacyModeRef.current = true
-        setReasoningActive(false)
-        setToolAction(null)
-        return attempt(true)
-      }
-    },
+    ): Promise<string> =>
+      fetchCompletion(
+        settings,
+        {
+          instructions: prompts.compactInstructions,
+          messages,
+          tools: MENTOR_TOOLS,
+        },
+        MENTOR_MAX_TOKENS,
+        controller.signal,
+        handlers,
+      ),
     [settings, captureTurn],
   )
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: opening line tied to graph open/switch; live sends use fresh prompts via captureTurn
   useEffect(() => {
     if (!mentorPanelExpanded) return
-    legacyModeRef.current = false
     setToolAction(null)
     if (!aiReady) {
       abortRef.current?.abort()
@@ -298,34 +271,28 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
     const prompts = captureTurn()
 
     let answered = false
-    completeTurn(
-      [{ role: 'user', content: prompts.seedText }],
-      prompts,
-      controller,
-      {
-        onToken: (delta) => {
-          if (!isActiveController(abortRef.current, controller)) return
-          setToolAction(null)
-          if (!answered) {
-            answered = true
-            setLoadingInitial(false)
-            setReasoningActive(false)
-            setStreaming(true)
-          }
-          setHistory((h) => appendToLastMentor(h, delta))
-        },
-        onToolCall: (toolName) => {
-          if (!isActiveController(abortRef.current, controller)) return
-          if (!isMentorToolName(toolName)) return
-          setToolAction(toolName)
-        },
-        onReasoning: () => {
-          if (!isActiveController(abortRef.current, controller)) return
-          setReasoningActive(true)
-        },
+    completeTurn([{ role: 'user', content: prompts.openerText }], prompts, controller, {
+      onToken: (delta) => {
+        if (!isActiveController(abortRef.current, controller)) return
+        setToolAction(null)
+        if (!answered) {
+          answered = true
+          setLoadingInitial(false)
+          setReasoningActive(false)
+          setStreaming(true)
+        }
+        setHistory((h) => appendToLastMentor(h, delta))
       },
-      () => answered,
-    )
+      onToolCall: (toolName) => {
+        if (!isActiveController(abortRef.current, controller)) return
+        if (!isMentorToolName(toolName)) return
+        setToolAction(toolName)
+      },
+      onReasoning: () => {
+        if (!isActiveController(abortRef.current, controller)) return
+        setReasoningActive(true)
+      },
+    })
       .then((full) => {
         if (isActiveController(abortRef.current, controller) && !answered) {
           setReasoningActive(false)
@@ -432,34 +399,28 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
     const prompts = captureTurn()
     let answered = false
     try {
-      const full = await completeTurn(
-        toConversation(next),
-        prompts,
-        controller,
-        {
-          onToken: (delta) => {
-            if (!isActiveController(abortRef.current, controller)) return
-            setToolAction(null)
-            if (!answered) {
-              answered = true
-              setThinking(false)
-              setReasoningActive(false)
-              setStreaming(true)
-            }
-            setHistory((h) => appendToLastMentor(h, delta))
-          },
-          onToolCall: (toolName) => {
-            if (!isActiveController(abortRef.current, controller)) return
-            if (!isMentorToolName(toolName)) return
-            setToolAction(toolName)
-          },
-          onReasoning: () => {
-            if (!isActiveController(abortRef.current, controller)) return
-            setReasoningActive(true)
-          },
+      const full = await completeTurn(toConversation(next), prompts, controller, {
+        onToken: (delta) => {
+          if (!isActiveController(abortRef.current, controller)) return
+          setToolAction(null)
+          if (!answered) {
+            answered = true
+            setThinking(false)
+            setReasoningActive(false)
+            setStreaming(true)
+          }
+          setHistory((h) => appendToLastMentor(h, delta))
         },
-        () => answered,
-      )
+        onToolCall: (toolName) => {
+          if (!isActiveController(abortRef.current, controller)) return
+          if (!isMentorToolName(toolName)) return
+          setToolAction(toolName)
+        },
+        onReasoning: () => {
+          if (!isActiveController(abortRef.current, controller)) return
+          setReasoningActive(true)
+        },
+      })
       if (isActiveController(abortRef.current, controller) && !answered) {
         setReasoningActive(false)
         setHistory((h) => appendToLastMentor(h, full || '…'))
@@ -575,7 +536,6 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
             onClick={() => {
               setToolAction(null)
               abortRef.current?.abort()
-              legacyModeRef.current = false
               setChatKey((k) => k + 1)
             }}
             style={{
@@ -620,7 +580,6 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
             onClick={() => {
               setToolAction(null)
               abortRef.current?.abort()
-              legacyModeRef.current = false
               setMentorPanelExpanded(false)
             }}
           />

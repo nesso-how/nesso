@@ -23,7 +23,7 @@ Nesso inverts the flow. The learner constructs their own knowledge structure: a 
 
 Algorithms work on what the learner has built, not on a generic curriculum. Spaced repetition is driven by graph structure: concepts with low stability or untested connections surface before well-reinforced ones. The review queue is always a function of the learner's own map.
 
-An optional AI mentor, Socrates, can probe what you have built. It asks questions calibrated to your current graph rather than delivering answers. See [AI mentor (Socrates)](../guides/ai-mentor/) for setup and behaviour.
+An optional AI mentor, Socrates, helps you build understanding of what you have built, explaining clearly and asking focused questions calibrated to your current graph. See [AI mentor (Socrates)](../guides/ai-mentor/) for setup and behaviour.
 
 ## Principles
 

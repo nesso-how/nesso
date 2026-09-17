@@ -9,7 +9,7 @@ Graph content (concepts, definitions, relation structure) is stored locally: gra
 
 The only things that can leave your device:
 
-- **AI mentor prompts and chat history**, if you enable the mentor with a remote endpoint. Normal requests include mentor configuration, graph counts, the current selection, visible chat history, and the selected concept or relation details used to open the chat. The model can request additional graph fields through read-only queries. If the endpoint does not support those queries, one fallback request may include a bounded graph snapshot. A local Ollama endpoint sends this data only to the local service on your machine.
+- **AI mentor prompts and chat history**, if you enable the mentor with a remote endpoint. Normal requests include mentor configuration, graph counts, the captured selection handle, and visible chat history. The model requests additional graph fields through read-only tools as needed. There is no snapshot fallback; endpoints must support tool calls. A local Ollama endpoint sends this data only to the local service on your machine.
 - **Transient tool activity** is not added to the chat. Within Nesso, tool inputs and results are not rendered, logged, persisted, or resent after the turn. A remote provider receives request content while completing it and may retain it under that provider's policy.
 - **Opt-in telemetry**, off by default.
 - **The desktop app's version check** against GitHub Releases, a plain request that carries no graph or usage data.
