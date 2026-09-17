@@ -237,6 +237,7 @@ const en = {
       arc: 'Arc',
       line: 'Line',
       autoFlip: 'Auto flip',
+      dimUnconnected: 'Dim other edges',
     },
   },
   search: {

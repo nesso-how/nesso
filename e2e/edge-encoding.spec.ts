@@ -73,6 +73,23 @@ test('selecting a concept dims unconnected edges and keeps connected ones at def
   await expect(page.locator('.react-flow__node.selected')).toHaveCount(0)
   await expect(connected.locator('path').nth(1)).toHaveAttribute('opacity', '0.78')
   await expect(unrelated.locator('path').nth(1)).toHaveAttribute('opacity', '0.78')
+
+  // Per-map toggle off: selecting no longer dims anything.
+  const dimSwitch = page
+    .locator('div')
+    .filter({ hasText: 'Dim other edges' })
+    .last()
+    .getByRole('switch')
+  await dimSwitch.click()
+  await expect(dimSwitch).toHaveAttribute('aria-checked', 'false')
+
+  await nodeByText(page, 'Alpha').click()
+  await expect(page.locator('.react-flow__node.selected')).toHaveCount(1)
+  await expect(connected.locator('path').nth(1)).toHaveAttribute('opacity', '0.78')
+  await expect(unrelated.locator('path').nth(1)).toHaveAttribute('opacity', '0.78')
+
+  await dimSwitch.click()
+  await expect(dimSwitch).toHaveAttribute('aria-checked', 'true')
 })
 
 test('relation types dialog previews solid strokes and glyphs', async ({ page }) => {

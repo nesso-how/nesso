@@ -10,6 +10,7 @@ const display: GraphDisplaySettings = {
   showHeatmap: false,
   curveStyle: 'straight',
   autoCurveFlip: true,
+  dimUnconnectedOnSelect: true,
 }
 
 function node(

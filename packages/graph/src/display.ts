@@ -9,6 +9,8 @@ export interface GraphDisplaySettings {
   showHeatmap: boolean
   curveStyle: CurveStyle
   autoCurveFlip: boolean
+  /** Dim edges unconnected to the selected concept. Per-map, default on. */
+  dimUnconnectedOnSelect: boolean
 }
 
 export interface NessoEdgeData extends Record<string, unknown> {

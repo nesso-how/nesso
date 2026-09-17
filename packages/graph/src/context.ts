@@ -17,6 +17,8 @@ export interface NessoGraphDisplayContext {
   isItemSelected?: (kind: 'node' | 'edge', id: string) => boolean
   /** Id of the currently selected concept, if any — used to emphasize connected edges. */
   selectedNodeId?: string | null
+  /** Dim edges unconnected to the selected concept. Defaults to on. */
+  dimUnconnectedOnSelect: boolean
 }
 
 const defaultContext: NessoGraphDisplayContext = {
@@ -26,6 +28,7 @@ const defaultContext: NessoGraphDisplayContext = {
   autoCurveFlip: true,
   palette: 'default',
   categoryColorMode: 'palette',
+  dimUnconnectedOnSelect: true,
 }
 
 export const GraphDisplayContext = createContext<NessoGraphDisplayContext>(defaultContext)

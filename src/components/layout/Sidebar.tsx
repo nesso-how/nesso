@@ -535,6 +535,12 @@ export function Sidebar({
                     />
                   </SettingRow>
                 )}
+                <SettingRow label={t.sidebar.displayOptions.dimUnconnected}>
+                  <Switch
+                    value={graphDisplay.dimUnconnectedOnSelect}
+                    onChange={(v) => setGraphDisplay('dimUnconnectedOnSelect', v)}
+                  />
+                </SettingRow>
               </div>
             )}
           </div>

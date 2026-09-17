@@ -48,6 +48,7 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
     getRelationLabel,
     isItemSelected,
     selectedNodeId,
+    dimUnconnectedOnSelect,
   } = useGraphDisplay()
 
   const sourceNode = useStore((s) => s.nodeLookup.get(source))
@@ -61,7 +62,7 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
       : categoryColor(T.cat, categoryColorMode, palette)
   const isSelected = selected || isItemSelected?.('edge', id) === true
   const isConnected = isEdgeConnectedToNode(source, target, selectedNodeId)
-  const hasSelection = selectedNodeId != null && selectedNodeId !== ''
+  const hasSelection = dimUnconnectedOnSelect && selectedNodeId != null && selectedNodeId !== ''
   const showLabel =
     edgeEncoding === 'full' || (edgeEncoding !== 'minimal' && (hovered || isSelected))
   const straight = curveStyle === 'straight'

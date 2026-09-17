@@ -200,6 +200,8 @@ export function NessoGraph({
       showHeatmap: display?.showHeatmap ?? graphDisplay?.showHeatmap ?? true,
       curveStyle: display?.curveStyle ?? graphDisplay?.curveStyle ?? 'arc',
       autoCurveFlip: display?.autoCurveFlip ?? graphDisplay?.autoCurveFlip ?? true,
+      dimUnconnectedOnSelect:
+        display?.dimUnconnectedOnSelect ?? graphDisplay?.dimUnconnectedOnSelect ?? true,
       palette,
       categoryColorMode,
       getRelationLabel,

@@ -38,6 +38,7 @@ describe('defaultGraphDisplay', () => {
       showHeatmap: true,
       curveStyle: 'arc',
       autoCurveFlip: true,
+      dimUnconnectedOnSelect: true,
     })
   })
 
@@ -54,6 +55,7 @@ describe('defaultGraphDisplay', () => {
       showHeatmap: false,
       curveStyle: 'straight',
       autoCurveFlip: false,
+      dimUnconnectedOnSelect: true,
     })
   })
 })
@@ -72,6 +74,7 @@ describe('mergeGraphDisplay', () => {
       showHeatmap: false,
       curveStyle: 'straight',
       autoCurveFlip: true,
+      dimUnconnectedOnSelect: true,
     })
   })
 
@@ -85,6 +88,16 @@ describe('mergeGraphDisplay', () => {
 
   it('preserves a stored autoCurveFlip of false rather than falling back to true', () => {
     expect(mergeGraphDisplay({ autoCurveFlip: false }, settings).autoCurveFlip).toBe(false)
+  })
+
+  it('preserves a stored dimUnconnectedOnSelect of false rather than falling back to true', () => {
+    expect(
+      mergeGraphDisplay({ dimUnconnectedOnSelect: false }, settings).dimUnconnectedOnSelect,
+    ).toBe(false)
+  })
+
+  it('defaults dimUnconnectedOnSelect to true when the stored display predates it', () => {
+    expect(mergeGraphDisplay({ edgeEncoding: 'full' }, settings).dimUnconnectedOnSelect).toBe(true)
   })
 })
 
