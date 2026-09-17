@@ -18,32 +18,23 @@ import { TOPBAR_HEIGHT_PX } from './TopBar'
 import { WEBSITE_URL } from '@/data/appInfo'
 import { isDesktop } from '@/lib/isDesktop'
 import { SIDEBAR_WIDTH_STORAGE_KEY } from '@/data/storageKeys'
+import { createPanelWidthStorage } from '@/lib/panelWidth'
+import { ResizeHandle } from '@/components/ui/ResizeHandle'
 
 export const SIDEBAR_MIN_WIDTH = 180
 export const SIDEBAR_MAX_WIDTH = 380
 export const SIDEBAR_DEFAULT_WIDTH = 248
 
-export function clampSidebarWidth(w: number): number {
-  return Math.min(SIDEBAR_MAX_WIDTH, Math.max(SIDEBAR_MIN_WIDTH, Math.round(w)))
-}
+const sidebarWidthStorage = createPanelWidthStorage({
+  storageKey: SIDEBAR_WIDTH_STORAGE_KEY,
+  min: SIDEBAR_MIN_WIDTH,
+  max: SIDEBAR_MAX_WIDTH,
+  fallback: SIDEBAR_DEFAULT_WIDTH,
+})
 
-export function readSidebarWidth(): number {
-  try {
-    const raw = localStorage.getItem(SIDEBAR_WIDTH_STORAGE_KEY)
-    if (raw == null) return SIDEBAR_DEFAULT_WIDTH
-    return clampSidebarWidth(Number(raw))
-  } catch {
-    return SIDEBAR_DEFAULT_WIDTH
-  }
-}
-
-export function writeSidebarWidth(w: number): void {
-  try {
-    localStorage.setItem(SIDEBAR_WIDTH_STORAGE_KEY, String(clampSidebarWidth(w)))
-  } catch {
-    /* ignore */
-  }
-}
+export const clampSidebarWidth = sidebarWidthStorage.clampWidth
+export const readSidebarWidth = sidebarWidthStorage.readWidth
+export const writeSidebarWidth = sidebarWidthStorage.writeWidth
 
 interface Props {
   collapsed: boolean
@@ -623,25 +614,11 @@ export function Sidebar({
 
       {/* Resize handle — outside overflow:hidden wrapper so it can straddle the border */}
       {!collapsed && (
-        <button
-          type="button"
-          aria-label="Resize sidebar"
+        <ResizeHandle
+          side="right"
+          ariaLabel="Resize sidebar"
           onMouseDown={onResizeHandleMouseDown}
           onKeyDown={onResizeHandleKeyDown}
-          style={{
-            position: 'absolute',
-            top: 0,
-            bottom: 0,
-            right: -4,
-            width: 8,
-            cursor: 'col-resize',
-            touchAction: 'none',
-            background: 'transparent',
-            border: 'none',
-            padding: 0,
-            margin: 0,
-            boxSizing: 'border-box',
-          }}
         />
       )}
     </div>
