@@ -69,7 +69,7 @@ async function installProductionCsp(page: Page): Promise<string> {
     })
   })
 
-  await page.route('http://localhost:5173/', async (route) => {
+  await page.route('http://localhost:*/', async (route) => {
     const response = await route.fetch()
     await route.fulfill({
       response,
