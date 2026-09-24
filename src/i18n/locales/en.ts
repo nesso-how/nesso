@@ -182,8 +182,6 @@ const en = {
       write: 'Write',
       elaboration: 'Elaboration',
       openNote: 'Open note',
-      showMore: 'Show more',
-      showLess: 'Show less',
     },
     actions: {
       copy: 'Copy (⌘C)',

@@ -380,7 +380,8 @@ body::before {
 .writing-editor .ProseMirror h2,
 .writing-editor .ProseMirror h3 {
   font-family: var(--font-display);
-  margin: 1.2em 0 0.5em;
+  /* Headings carry no top margin; spacing above comes from the previous block. */
+  margin: 0 0 0.5em;
 }
 
 .writing-editor .ProseMirror ul,

@@ -100,7 +100,10 @@ function useWritingEditor({
   const editor = useEditor({
     extensions: [
       StarterKit.configure({ heading: { levels: [2, 3] } }),
-      Placeholder.configure({ placeholder, showOnlyCurrent: false }),
+      // Keep the default showOnlyCurrent so decorations rebuild from the live
+      // editor state; the incremental mode captures a stale isEmpty after
+      // clearing all content, which hides the placeholder until remount.
+      Placeholder.configure({ placeholder }),
       SlashCommand.configure({ snippets }),
     ],
     content: toEditableDoc(initialNotes),

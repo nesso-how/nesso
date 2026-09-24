@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-import { useState, type CSSProperties } from 'react'
+import type { CSSProperties } from 'react'
 import type { Edge, Node } from '@xyflow/react'
 import type { RelationTypeName } from '@nesso-how/vocab-learning'
 import type { ConceptNodeData } from '@/types/graph'
@@ -284,20 +284,16 @@ function InlineNotes({ node }: { node: Node<ConceptNodeData> }) {
   const updateNodeNotes = useGraphStore((s) => s.updateNodeNotes)
   const writingModeNodeId = useGraphStore((s) => s.writingModeNodeId)
   const openWritingMode = useGraphStore((s) => s.openWritingMode)
-  const [notesExpanded, setNotesExpanded] = useState(false)
 
-  // Only one live editor may own the notes while Writing Mode is open.
+  // Only one live editor may own the notes while Writing Mode is open. Notes
+  // longer than the preview height scroll inside their own clipped container.
   return (
     <>
       {writingModeNodeId !== node.id && (
         <div
           data-testid="inspector-notes-inline"
-          className="inspector-notes-inline"
-          style={
-            notesExpanded
-              ? { marginTop: 12 }
-              : { marginTop: 12, maxHeight: 132, overflow: 'hidden' }
-          }
+          className="inspector-notes-inline nesso-scrollbar"
+          style={{ marginTop: 12, maxHeight: 396, overflowY: 'auto' }}
         >
           <WritingEditor
             key={node.id}
@@ -313,28 +309,6 @@ function InlineNotes({ node }: { node: Node<ConceptNodeData> }) {
             menuLabel={t.writing.snippetsMenu}
           />
         </div>
-      )}
-
-      {elab?.notes !== undefined && (
-        <button
-          type="button"
-          data-testid="inspector-notes-toggle"
-          onClick={() => setNotesExpanded((v) => !v)}
-          style={{
-            appearance: 'none',
-            border: 0,
-            background: 'transparent',
-            color: 'var(--ink-3)',
-            fontSize: 'var(--text-sm)',
-            fontFamily: 'var(--font-sans)',
-            padding: '4px 0 0',
-            cursor: 'pointer',
-            width: '100%',
-            textAlign: 'left',
-          }}
-        >
-          {notesExpanded ? t.inspector.notes.showLess : `… ${t.inspector.notes.showMore}`}
-        </button>
       )}
 
       <button

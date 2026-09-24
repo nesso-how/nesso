@@ -2,10 +2,8 @@
 import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 
 function syncScrollHeight(el: HTMLElement) {
-  const target = `${el.scrollHeight}px`
-  if (el.style.height === target) return
   el.style.height = 'auto'
-  el.style.height = target
+  el.style.height = `${el.scrollHeight}px`
 }
 
 export function InlineEdit({

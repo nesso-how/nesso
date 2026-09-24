@@ -184,8 +184,6 @@ const it: typeof en = {
       write: 'Scrivi',
       elaboration: 'Elaborazione',
       openNote: 'Apri nota',
-      showMore: 'Mostra di più',
-      showLess: 'Mostra di meno',
     },
     actions: {
       copy: 'Copia (⌘C)',

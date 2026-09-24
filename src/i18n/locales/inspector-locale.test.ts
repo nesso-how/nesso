@@ -11,8 +11,6 @@ describe('inspector locale keys (definition + notes section)', () => {
     'write',
     'elaboration',
     'openNote',
-    'showMore',
-    'showLess',
   ]
 
   it('inspector.notes has the elaboration-section keys (no preview empty state)', () => {

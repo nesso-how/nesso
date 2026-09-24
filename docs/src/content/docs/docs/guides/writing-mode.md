@@ -9,8 +9,9 @@ right**. The Inspector panel is comfortable for a short definition; Writing Mode
 is where longer thinking happens.
 
 For quick edits, the Inspector also has an inline notes editor. When notes are
-empty, its hint is visible before you click into the editor; open the full note
-for longer writing.
+empty, its hint is visible before you click into the editor and returns after
+you clear the note; open the full note for longer writing. Longer notes clip at
+a fixed preview height and scroll inside the inline editor.
 
 ## Opening and closing
 
@@ -26,7 +27,8 @@ first `Esc` closes the menu; a second `Esc` then closes Writing Mode.
 ## Writing
 
 The editor is a rich-text editor: headings, lists, quotes, and dividers work the
-way you expect. Type `/` on an empty spot to open the snippet menu:
+way you expect. Headings carry no extra top margin, in both the Inspector and
+Writing Mode. Type `/` on an empty spot to open the snippet menu:
 
 - **Heading 2 / Heading 3**: structure long notes
 - **Bullet list / Numbered list**
