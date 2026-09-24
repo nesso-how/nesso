@@ -75,24 +75,15 @@ describe('arcControlPoint', () => {
 
 describe('curveOffsetForPointer', () => {
   // Horizontal chord (0,0) -> (100,0): normal points down (+y), default bend 22.
-  it('maps a pointer on the default-bow apex back to +1', () => {
+  it('inverts the bow mapping (+1 apex, -1 mirrored, 0 on the chord)', () => {
     expect(curveOffsetForPointer(50, 11, 0, 0, 100, 0)).toBeCloseTo(1, 1)
-  })
-
-  it('mirrors the offset across the chord', () => {
     expect(curveOffsetForPointer(50, -11, 0, 0, 100, 0)).toBeCloseTo(-1, 1)
-  })
-
-  it('returns 0 for a pointer on the chord (flatten gesture)', () => {
     expect(curveOffsetForPointer(50, 0, 0, 0, 100, 0)).toBe(0)
   })
 
-  it('clamps far pointers to the ±3 window', () => {
+  it('clamps far pointers and falls back on a degenerate chord', () => {
     expect(curveOffsetForPointer(50, 500, 0, 0, 100, 0)).toBe(3)
     expect(curveOffsetForPointer(50, -500, 0, 0, 100, 0)).toBe(-3)
-  })
-
-  it('falls back to the current offset for a degenerate chord', () => {
     expect(curveOffsetForPointer(5, 5, 10, 10, 10, 10, -1)).toBe(-1)
   })
 })

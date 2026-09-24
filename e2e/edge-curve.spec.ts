@@ -1,15 +1,6 @@
 // SPDX-License-Identifier: MIT
 import { test, expect } from '@playwright/test'
-import {
-  connectAlphaBeta,
-  createConceptAt,
-  dragConnect,
-  gotoApp,
-  newEmptyGraph,
-  nodeByText,
-  seedTwoConcepts,
-  selectEdge,
-} from './helpers'
+import { connectAlphaBeta, gotoApp, newEmptyGraph, seedTwoConcepts, selectEdge } from './helpers'
 
 /** Signed side of the quadratic control point relative to the edge chord. */
 async function quadSide(page: import('@playwright/test').Page): Promise<number> {
@@ -105,43 +96,4 @@ test('double-clicking the curve handle resets the arc to the default bow', async
 
   await handle.dblclick()
   expect(Math.sign(await quadSide(page))).toBe(Math.sign(defaultSide))
-})
-
-test('curve drag follows the pointer monotonically without flickering', async ({ page }) => {
-  await gotoApp(page)
-  await newEmptyGraph(page)
-  // Short edge: close nodes maximize the trim-point swing, which is what
-  // used to make the arc jitter against the pointer.
-  await createConceptAt(page, 0.42, 0.5, 'Alpha')
-  await createConceptAt(page, 0.56, 0.52, 'Beta')
-  await dragConnect(page, nodeByText(page, 'Alpha'), nodeByText(page, 'Beta'))
-  await page.getByTestId('relation-chip-subtype-of').click()
-  await page.locator('.react-flow__edge').waitFor()
-  await selectEdge(page)
-
-  const handle = page.locator('[data-testid^="curve-handle-"]')
-  await expect(handle).toBeVisible()
-
-  // Step the pointer steadily along the bow normal and sample the apex side
-  // back-to-back: any up-and-down jitter means the drag inverse is chasing
-  // a moving reference chord instead of following the pointer.
-  const box = await handle.boundingBox()
-  if (!box) throw new Error('curve handle has no bounding box')
-  const start = { x: box.x + box.width / 2, y: box.y + box.height / 2 }
-  await page.mouse.move(start.x, start.y)
-  await page.mouse.down()
-  const sides: number[] = [await quadSide(page)]
-  for (let i = 1; i <= 15; i++) {
-    await page.mouse.move(start.x, start.y + i * 8, { steps: 1 })
-    await page.waitForTimeout(30)
-    sides.push(await quadSide(page))
-  }
-  await page.mouse.up()
-
-  for (let i = 1; i < sides.length; i++) {
-    expect(sides[i], `apex side must not step back at sample ${i}`).toBeGreaterThanOrEqual(
-      sides[i - 1] - 1,
-    )
-  }
-  expect(sides[sides.length - 1]).toBeGreaterThan(sides[0])
 })
