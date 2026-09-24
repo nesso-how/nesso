@@ -17,7 +17,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Writing Mode snippets focus on structure: the callout and example snippets are removed; notes and description share one text size across the Inspector and Writing Mode, with empty-field hints in English and Italian.
 - The Inspector panel can be resized up to 720 px (previously 520 px).
 - **No relation icons on the canvas:** relations are identified by category colour, arrow, and label only. The glyph badge at the edge midpoint is gone, along with the glyph chips in the Inspector relation rows, the relation types dialog previews, and the `glyph` field in the `get_relation_types` MCP payload.
-- **The `@nesso-how/mcp` package declares `engines: node >= 20`**, so npm warns installs on unsupported Node versions.
+<- **The `@nesso-how/mcp` package declares `engines: node >= 20`**, so npm warns installs on unsupported Node versions.
+- **Mentor graph reads scale to large graphs:** the overview returns the 25 weakest concepts by default (previously 10), and the overview and search tools accept an optional `limit` input raising results up to 500 per call, so Socrates can enumerate the whole graph when asked.
 
 ### Fixed
 

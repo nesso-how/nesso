@@ -12,8 +12,10 @@ import type { ConceptNodeData } from '@/types/graph'
 import { FSRS_PRIORITY_RULE, nodeStrength } from './context'
 import { createGraphIdHandles, type GraphIdHandles } from './graphHandles'
 
-export const OVERVIEW_LIMIT = 10
+export const OVERVIEW_LIMIT = 25
+export const OVERVIEW_MAX_LIMIT = 500
 export const SEARCH_LIMIT = 10
+export const SEARCH_MAX_LIMIT = 500
 export const NEIGHBOR_LIMIT = 20
 export const PREVIEW_MAX_CHARS = 160
 export const DEFINITION_MAX_CHARS = 1_200
@@ -42,6 +44,13 @@ function boundedText(value: string | undefined, maxChars: number): BoundedText {
   }
 }
 
+function boundedLimit(value: number | undefined, max: number, fallback: number): number {
+  // Number.isFinite rejects non-numbers without coercing, so one guard covers
+  // strings, null, undefined, NaN, and Infinity alike.
+  if (!Number.isFinite(value)) return fallback
+  return Math.min(Math.max(Math.floor(value), 1), max)
+}
+
 function isDue(node: Node<ConceptNodeData>, now: number): boolean {
   return node.data.due > 0 && node.data.due <= now
 }
@@ -63,11 +72,11 @@ function overviewConcept(node: Node<ConceptNodeData>, now: number, handles: Grap
   }
 }
 
-export function getGraphOverview(state: MentorGraphState, now = Date.now()) {
+export function getGraphOverview(state: MentorGraphState, now = Date.now(), limit?: number) {
   const handles = createGraphIdHandles(state.nodes, state.edges)
   const concepts = [...state.nodes]
     .sort((left, right) => nodeStrength(left) - nodeStrength(right))
-    .slice(0, OVERVIEW_LIMIT)
+    .slice(0, boundedLimit(limit, OVERVIEW_MAX_LIMIT, OVERVIEW_LIMIT))
     .map((node) => overviewConcept(node, now, handles))
   return {
     contentProvenance: CONTENT_PROVENANCE,
@@ -78,7 +87,7 @@ export function getGraphOverview(state: MentorGraphState, now = Date.now()) {
   }
 }
 
-export function searchConcepts(state: MentorGraphState, query: string) {
+export function searchConcepts(state: MentorGraphState, query: string, limit?: number) {
   const handles = createGraphIdHandles(state.nodes, state.edges)
   const boundedQuery = boundedText(query, TOOL_STRING_MAX_CHARS).text
   const normalized = boundedQuery.toLocaleLowerCase()
@@ -106,11 +115,13 @@ export function searchConcepts(state: MentorGraphState, query: string) {
     })
     .filter((item) => item.rank >= 0)
     .sort((left, right) => left.rank - right.rank || left.index - right.index)
-  const matches = ranked.slice(0, SEARCH_LIMIT).map(({ node }) => ({
-    id: handles.nodeHandle(node.id),
-    title: boundedText(node.data.text, PREVIEW_MAX_CHARS).text,
-    definitionPreview: boundedText(node.data.elaboration?.definition, PREVIEW_MAX_CHARS),
-  }))
+  const matches = ranked
+    .slice(0, boundedLimit(limit, SEARCH_MAX_LIMIT, SEARCH_LIMIT))
+    .map(({ node }) => ({
+      id: handles.nodeHandle(node.id),
+      title: boundedText(node.data.text, PREVIEW_MAX_CHARS).text,
+      definitionPreview: boundedText(node.data.elaboration?.definition, PREVIEW_MAX_CHARS),
+    }))
   return {
     contentProvenance: CONTENT_PROVENANCE,
     query: boundedQuery,
@@ -291,9 +302,11 @@ export const MENTOR_TOOL_NAMES = [
 ] as const
 export type MentorToolName = (typeof MENTOR_TOOL_NAMES)[number]
 
-const emptyInput = jsonSchema<Record<string, never>>({
+const overviewInput = jsonSchema<{ limit?: number }>({
   type: 'object',
-  properties: {},
+  properties: {
+    limit: { type: 'integer', minimum: 1, maximum: OVERVIEW_MAX_LIMIT },
+  },
   additionalProperties: false,
 })
 const idInput = jsonSchema<{ id: string }>({
@@ -306,21 +319,23 @@ const idInput = jsonSchema<{ id: string }>({
 export function createMentorTools(getState: () => MentorGraphState) {
   return {
     getGraphOverview: tool({
-      description: `Read graph counts and up to ten concepts in weakest-first order. Unreviewed concepts come first; among reviewed concepts, ${FSRS_PRIORITY_RULE} Never modifies the graph.`,
-      inputSchema: emptyInput,
-      execute: async () => getGraphOverview(getState()),
+      description: `Read graph counts and up to twenty-five concepts in weakest-first order by default; pass limit up to 500 to read more, where omitted 0 means the whole graph. Unreviewed concepts come first; among reviewed concepts, ${FSRS_PRIORITY_RULE} Never modifies the graph.`,
+      inputSchema: overviewInput,
+      execute: async ({ limit }) => getGraphOverview(getState(), undefined, limit),
     }),
     searchConcepts: tool({
-      description: 'Search user-authored concept titles only. Never modifies the graph.',
-      inputSchema: jsonSchema<{ query: string }>({
+      description:
+        'Search user-authored concept titles only; up to ten matches by default, up to 500 via limit. Never modifies the graph.',
+      inputSchema: jsonSchema<{ query: string; limit?: number }>({
         type: 'object',
         properties: {
           query: { type: 'string', minLength: 1, maxLength: TOOL_STRING_MAX_CHARS },
+          limit: { type: 'integer', minimum: 1, maximum: SEARCH_MAX_LIMIT },
         },
         required: ['query'],
         additionalProperties: false,
       }),
-      execute: async ({ query }) => searchConcepts(getState(), query),
+      execute: async ({ query, limit }) => searchConcepts(getState(), query, limit),
     }),
     inspectConcept: tool({
       description: `Read one concept, its bounded definition, and FSRS memory state by stable id. stability is estimated recall strength in days; difficulty is learned recall difficulty; state is New, Learning, Review, or Relearning; lastRating is Again, Hard, Good, or Easy; isDue reports whether review is scheduled now. ${FSRS_PRIORITY_RULE} Never modifies the graph. notes is the flattened concept notes capped at 1,200 characters.`,
