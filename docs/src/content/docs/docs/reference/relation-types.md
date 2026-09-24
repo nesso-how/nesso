@@ -21,7 +21,7 @@ Each relation type declares the properties below. They define the contract that 
 
 ## Visual encoding
 
-- **Visual encoding**: category colour gives a coarse signal across the 8 categories; each type also has a glyph for a finer, near-type-level signal. Edge strokes are solid in every encoding mode.
+- **Visual encoding**: category colour is the single visual channel, giving a coarse signal across the 8 categories; the relation label names the exact type on hover, selection, or in `full` edge encoding. Edge strokes are solid in every encoding mode.
 
 ## Categories
 

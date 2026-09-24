@@ -2,7 +2,6 @@
 import { useState } from 'react'
 import { RELATION_CATEGORY_COLORS, RELATION_TYPES, buildRelationGroups } from '@/data/relationTypes'
 import { RELATION_CATEGORIES } from '@nesso-how/vocab-learning'
-import { GlyphSVG } from '@nesso-how/graph'
 import { CloseButton } from '@/components/ui/CloseButton'
 import { ModalOverlay } from '@/components/ui/ModalOverlay'
 import { useGraphStore } from '@/store'
@@ -231,21 +230,6 @@ export function RelationTypesDialog({ open, onClose }: Props) {
                         strokeWidth={1.4}
                         strokeLinecap="round"
                       />
-                      <circle
-                        cx="18"
-                        cy="7"
-                        r="6.5"
-                        fill="var(--bg-card)"
-                        stroke={encoding === 'minimal' ? 'var(--ink-3)' : g.color}
-                        strokeWidth={0.8}
-                      />
-                      <g transform="translate(11, 0)">
-                        <GlyphSVG
-                          kind={edgeDef.glyph}
-                          color={encoding === 'minimal' ? 'var(--ink-3)' : g.color}
-                          size={14}
-                        />
-                      </g>
                     </svg>
 
                     <span

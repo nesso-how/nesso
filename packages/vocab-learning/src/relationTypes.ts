@@ -2,12 +2,11 @@
 //
 // Semantic relation vocabulary: ordered categories, 52 typed relation ids, and
 // per-type properties (transitive, inverse, strength, polarity, cardinality)
-// plus visual encoding (category colour + glyph). UI labels live in app i18n, not here.
+// plus the category colour as the visual channel. UI labels live in app i18n, not here.
 //
 // Inverse types are derived from the primaries table below: each pair stores
-// the primary fields once plus the inverse name/label (and glyph override when
-// it differs). The derived record is field-by-field identical to the former
-// hand-written literals.
+// the primary fields once plus the inverse name/label. The derived record is
+// field-by-field identical to the former hand-written literals.
 
 export const RELATION_CATEGORIES = [
   'taxonomic',
@@ -84,38 +83,6 @@ export type RelationTypeName =
   | 'defines'
   | 'defined-by'
 
-export type GlyphKind =
-  | 'triangle-up'
-  | 'circle-dot'
-  | 'diamond'
-  | 'diamond-open'
-  | 'hash'
-  | 'arrow-right'
-  | 'asterisk'
-  | 'key'
-  | 'block'
-  | 'spark'
-  | 'anchor'
-  | 'tool'
-  | 'chevron-r'
-  | 'ring'
-  | 'tilde'
-  | 'x'
-  | 'minus'
-  | 'flag'
-  | 'approx'
-  | 'arrows-lr'
-  | 'check'
-  | 'slash'
-  | 'bulb'
-  | 'equals'
-  | 'lock'
-  | 'flame'
-  | 'hourglass'
-  | 'brackets'
-  | 'overlap'
-  | 'branch'
-
 /** Transitivity of a relation: `Y` strict, `N` none, `weak` with decay (algorithms may discount weight per step). */
 export type Transitivity = 'Y' | 'N' | 'weak'
 
@@ -128,8 +95,6 @@ export type Cardinality = '1-1' | '1-N' | 'N-1' | 'N-N'
 export interface RelationTypeDef {
   cat: RelationCategory
   label: string
-  // visual encoding
-  glyph: GlyphKind
   // type properties
   transitive: Transitivity
   /** Canonical inverse in the set; `'self'` for symmetric types. */
@@ -143,15 +108,12 @@ export interface RelationTypeDef {
 interface InverseSpec {
   name: RelationTypeName
   label: string
-  /** Only set when the inverse glyph differs from the primary glyph. */
-  glyph?: GlyphKind
 }
 
 interface PrimaryRelationSpec {
   name: RelationTypeName
   cat: RelationCategory
   label: string
-  glyph: GlyphKind
   transitive: Transitivity
   strength: number
   polarity: Polarity
@@ -167,7 +129,6 @@ const PRIMARY_RELATION_SPECS: readonly PrimaryRelationSpec[] = [
     name: 'subtype-of',
     cat: 'taxonomic',
     label: 'subtype of',
-    glyph: 'triangle-up',
     transitive: 'Y',
     strength: 0.9,
     polarity: 0,
@@ -178,7 +139,6 @@ const PRIMARY_RELATION_SPECS: readonly PrimaryRelationSpec[] = [
     name: 'instance-of',
     cat: 'taxonomic',
     label: 'instance of',
-    glyph: 'circle-dot',
     transitive: 'N',
     strength: 0.95,
     polarity: 0,
@@ -191,18 +151,16 @@ const PRIMARY_RELATION_SPECS: readonly PrimaryRelationSpec[] = [
     name: 'part-of',
     cat: 'structural',
     label: 'part of',
-    glyph: 'diamond',
     transitive: 'Y',
     strength: 0.85,
     polarity: 0,
     cardinality: 'N-1',
-    inverse: { name: 'contains', label: 'contains', glyph: 'diamond-open' },
+    inverse: { name: 'contains', label: 'contains' },
   },
   {
     name: 'made-of',
     cat: 'structural',
     label: 'made of',
-    glyph: 'hash',
     transitive: 'weak',
     strength: 0.75,
     polarity: 0,
@@ -215,7 +173,6 @@ const PRIMARY_RELATION_SPECS: readonly PrimaryRelationSpec[] = [
     name: 'causes',
     cat: 'causal',
     label: 'causes',
-    glyph: 'arrow-right',
     transitive: 'N',
     strength: 0.85,
     polarity: 1,
@@ -226,7 +183,6 @@ const PRIMARY_RELATION_SPECS: readonly PrimaryRelationSpec[] = [
     name: 'produces',
     cat: 'causal',
     label: 'produces',
-    glyph: 'asterisk',
     transitive: 'N',
     strength: 0.7,
     polarity: 1,
@@ -237,7 +193,6 @@ const PRIMARY_RELATION_SPECS: readonly PrimaryRelationSpec[] = [
     name: 'enables',
     cat: 'causal',
     label: 'enables',
-    glyph: 'key',
     transitive: 'weak',
     strength: 0.6,
     polarity: 1,
@@ -248,7 +203,6 @@ const PRIMARY_RELATION_SPECS: readonly PrimaryRelationSpec[] = [
     name: 'prevents',
     cat: 'causal',
     label: 'prevents',
-    glyph: 'block',
     transitive: 'N',
     strength: 0.85,
     polarity: -1,
@@ -259,7 +213,6 @@ const PRIMARY_RELATION_SPECS: readonly PrimaryRelationSpec[] = [
     name: 'triggers',
     cat: 'causal',
     label: 'triggers',
-    glyph: 'spark',
     transitive: 'N',
     strength: 0.7,
     polarity: 1,
@@ -270,7 +223,6 @@ const PRIMARY_RELATION_SPECS: readonly PrimaryRelationSpec[] = [
     name: 'inhibits',
     cat: 'causal',
     label: 'inhibits',
-    glyph: 'minus',
     transitive: 'N',
     strength: 0.55,
     polarity: -1,
@@ -281,7 +233,6 @@ const PRIMARY_RELATION_SPECS: readonly PrimaryRelationSpec[] = [
     name: 'disables',
     cat: 'causal',
     label: 'disables',
-    glyph: 'lock',
     transitive: 'weak',
     strength: 0.6,
     polarity: -1,
@@ -292,7 +243,6 @@ const PRIMARY_RELATION_SPECS: readonly PrimaryRelationSpec[] = [
     name: 'consumes',
     cat: 'causal',
     label: 'consumes',
-    glyph: 'flame',
     transitive: 'N',
     strength: 0.65,
     polarity: -1,
@@ -303,7 +253,6 @@ const PRIMARY_RELATION_SPECS: readonly PrimaryRelationSpec[] = [
     name: 'delays',
     cat: 'causal',
     label: 'delays',
-    glyph: 'hourglass',
     transitive: 'weak',
     strength: 0.55,
     polarity: -1,
@@ -316,7 +265,6 @@ const PRIMARY_RELATION_SPECS: readonly PrimaryRelationSpec[] = [
     name: 'requires',
     cat: 'dependency',
     label: 'requires',
-    glyph: 'anchor',
     transitive: 'Y',
     strength: 0.85,
     polarity: 0,
@@ -327,7 +275,6 @@ const PRIMARY_RELATION_SPECS: readonly PrimaryRelationSpec[] = [
     name: 'uses',
     cat: 'dependency',
     label: 'uses',
-    glyph: 'tool',
     transitive: 'weak',
     strength: 0.5,
     polarity: 0,
@@ -338,7 +285,6 @@ const PRIMARY_RELATION_SPECS: readonly PrimaryRelationSpec[] = [
     name: 'used-for',
     cat: 'dependency',
     label: 'used for',
-    glyph: 'flag',
     transitive: 'N',
     strength: 0.55,
     polarity: 1,
@@ -351,7 +297,6 @@ const PRIMARY_RELATION_SPECS: readonly PrimaryRelationSpec[] = [
     name: 'precedes',
     cat: 'temporal',
     label: 'precedes',
-    glyph: 'chevron-r',
     transitive: 'Y',
     strength: 0.5,
     polarity: 0,
@@ -362,7 +307,6 @@ const PRIMARY_RELATION_SPECS: readonly PrimaryRelationSpec[] = [
     name: 'occurs-in',
     cat: 'temporal',
     label: 'occurs in',
-    glyph: 'ring',
     transitive: 'Y',
     strength: 0.4,
     polarity: 0,
@@ -373,7 +317,6 @@ const PRIMARY_RELATION_SPECS: readonly PrimaryRelationSpec[] = [
     name: 'during',
     cat: 'temporal',
     label: 'during',
-    glyph: 'brackets',
     transitive: 'Y',
     strength: 0.55,
     polarity: 0,
@@ -384,7 +327,6 @@ const PRIMARY_RELATION_SPECS: readonly PrimaryRelationSpec[] = [
     name: 'overlaps-with',
     cat: 'temporal',
     label: 'overlaps with',
-    glyph: 'overlap',
     transitive: 'N',
     strength: 0.45,
     polarity: 0,
@@ -394,7 +336,6 @@ const PRIMARY_RELATION_SPECS: readonly PrimaryRelationSpec[] = [
     name: 'derives-from',
     cat: 'temporal',
     label: 'derives from',
-    glyph: 'branch',
     transitive: 'Y',
     strength: 0.7,
     polarity: 0,
@@ -407,7 +348,6 @@ const PRIMARY_RELATION_SPECS: readonly PrimaryRelationSpec[] = [
     name: 'contrasts-with',
     cat: 'opposition',
     label: 'contrasts with',
-    glyph: 'tilde',
     transitive: 'N',
     strength: 0.5,
     polarity: -1,
@@ -417,7 +357,6 @@ const PRIMARY_RELATION_SPECS: readonly PrimaryRelationSpec[] = [
     name: 'opposite-of',
     cat: 'opposition',
     label: 'opposite of',
-    glyph: 'x',
     transitive: 'N',
     strength: 0.8,
     polarity: -1,
@@ -429,7 +368,6 @@ const PRIMARY_RELATION_SPECS: readonly PrimaryRelationSpec[] = [
     name: 'similar-to',
     cat: 'similarity',
     label: 'similar to',
-    glyph: 'approx',
     transitive: 'weak',
     strength: 0.4,
     polarity: 1,
@@ -439,7 +377,6 @@ const PRIMARY_RELATION_SPECS: readonly PrimaryRelationSpec[] = [
     name: 'analogous-to',
     cat: 'similarity',
     label: 'analogous to',
-    glyph: 'arrows-lr',
     transitive: 'N',
     strength: 0.3,
     polarity: 1,
@@ -451,7 +388,6 @@ const PRIMARY_RELATION_SPECS: readonly PrimaryRelationSpec[] = [
     name: 'supports',
     cat: 'epistemic',
     label: 'supports',
-    glyph: 'check',
     transitive: 'weak',
     strength: 0.7,
     polarity: 1,
@@ -462,7 +398,6 @@ const PRIMARY_RELATION_SPECS: readonly PrimaryRelationSpec[] = [
     name: 'contradicts',
     cat: 'epistemic',
     label: 'contradicts',
-    glyph: 'slash',
     transitive: 'N',
     strength: 0.75,
     polarity: -1,
@@ -472,7 +407,6 @@ const PRIMARY_RELATION_SPECS: readonly PrimaryRelationSpec[] = [
     name: 'explains',
     cat: 'epistemic',
     label: 'explains',
-    glyph: 'bulb',
     transitive: 'weak',
     strength: 0.8,
     polarity: 0,
@@ -483,7 +417,6 @@ const PRIMARY_RELATION_SPECS: readonly PrimaryRelationSpec[] = [
     name: 'defines',
     cat: 'epistemic',
     label: 'defines',
-    glyph: 'equals',
     transitive: 'N',
     strength: 0.9,
     polarity: 0,
@@ -507,7 +440,6 @@ function buildRelationTypes(): Record<RelationTypeName, RelationTypeDef> {
         {
           cat: spec.cat,
           label: spec.label,
-          glyph: spec.glyph,
           transitive: spec.transitive,
           inverse: 'self',
           strength: spec.strength,
@@ -522,7 +454,6 @@ function buildRelationTypes(): Record<RelationTypeName, RelationTypeDef> {
       {
         cat: spec.cat,
         label: spec.label,
-        glyph: spec.glyph,
         transitive: spec.transitive,
         inverse: spec.inverse.name,
         strength: spec.strength,
@@ -535,7 +466,6 @@ function buildRelationTypes(): Record<RelationTypeName, RelationTypeDef> {
       {
         cat: spec.cat,
         label: spec.inverse.label,
-        glyph: spec.inverse.glyph ?? spec.glyph,
         transitive: spec.transitive,
         inverse: spec.name,
         strength: spec.strength,

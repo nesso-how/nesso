@@ -15,6 +15,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Writing Mode snippets focus on structure: the callout and example snippets are removed; notes and description share one text size across the Inspector and Writing Mode, with empty-field hints in English and Italian.
 - The Inspector panel can be resized up to 720 px (previously 520 px).
+- **No relation icons on the canvas:** relations are identified by category colour, arrow, and label only. The glyph badge at the edge midpoint is gone, along with the glyph chips in the Inspector relation rows, the relation types dialog previews, and the `glyph` field in the `get_relation_types` MCP payload.
 
 ### Fixed
 

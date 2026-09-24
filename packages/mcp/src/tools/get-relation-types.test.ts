@@ -4,7 +4,7 @@ import { RELATION_CATEGORIES, RELATION_TYPES } from '@nesso-how/vocab-learning'
 import { getRelationTypesPayload } from './get-relation-types.js'
 
 describe('getRelationTypesPayload', () => {
-  it('returns glyphs without line styles for every relation type', () => {
+  it('returns semantic properties without glyph or line styles for every relation type', () => {
     const payload = getRelationTypesPayload()
     const types = payload.flatMap((category) => category.types)
 
@@ -12,8 +12,9 @@ describe('getRelationTypesPayload', () => {
     expect(types).toHaveLength(52)
 
     for (const type of types) {
-      expect(type.glyph).toBe(RELATION_TYPES[type.type].glyph)
+      expect(type).not.toHaveProperty('glyph')
       expect(type).not.toHaveProperty('line')
+      expect(type.symmetric).toBe(RELATION_TYPES[type.type].inverse === 'self')
     }
   })
 })

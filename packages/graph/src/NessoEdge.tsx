@@ -5,7 +5,6 @@ import { useStore } from '@xyflow/react'
 import { PALETTES, RELATION_TYPES, asRelationTypeName } from '@nesso-how/vocab-learning'
 import type { RelationCategory } from '@nesso-how/vocab-learning'
 import type { NessoEdgeData } from './display.js'
-import { GlyphSVG } from './GlyphSVG.js'
 import { useGraphDisplay, type NessoGraphDisplayContext } from './context.js'
 import { isEdgeConnectedToNode, resolveEdgeVisual } from './edgeHighlight.js'
 import {
@@ -122,7 +121,6 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
     isConnected,
     hasSelection,
   })
-  const r = 11
 
   return (
     <g
@@ -149,27 +147,10 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
         />
       )}
 
-      {edgeEncoding !== 'minimal' && (
-        <g style={{ pointerEvents: 'all' }}>
-          <circle
-            cx={labelX}
-            cy={labelY}
-            r={r}
-            fill="var(--paper)"
-            stroke={color}
-            strokeOpacity={dimmed ? op : 1}
-            strokeWidth={1.2}
-          />
-          <g transform={`translate(${labelX - 7}, ${labelY - 7})`} opacity={dimmed ? op : 1}>
-            <GlyphSVG kind={T.glyph} color={color} size={14} />
-          </g>
-        </g>
-      )}
-
       {showLabel && (
         <foreignObject
           x={labelX - 60}
-          y={labelY + r + 2}
+          y={labelY - 10}
           width={120}
           height={20}
           style={{ overflow: 'visible', pointerEvents: 'none' }}

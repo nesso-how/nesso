@@ -3,7 +3,7 @@ title: Embedding graphs
 description: Render Nesso knowledge graphs in your own React app with @nesso-how/graph.
 ---
 
-The [`@nesso-how/graph`](https://www.npmjs.com/package/@nesso-how/graph) package is an embeddable React component for rendering Nesso knowledge graphs: the same visual style (categories, glyphs, edge curves) used by the app, available for docs, blog posts, or any React surface.
+The [`@nesso-how/graph`](https://www.npmjs.com/package/@nesso-how/graph) package is an embeddable React component for rendering Nesso knowledge graphs: the same visual style (categories, edge curves) used by the app, available for docs, blog posts, or any React surface.
 
 ## Install
 
@@ -25,7 +25,7 @@ import '@xyflow/react/dist/style.css';
 <NessoGraph graph={doc} style={{ width: '100%', height: 400 }} />
 ```
 
-By default the graph renders read-only (no drag, connect, or selection) using the same category colors, glyphs, and edge encoding as the app.
+By default the graph renders read-only (no drag, connect, or selection) using the same category colors and edge encoding as the app.
 
 ## Display options
 

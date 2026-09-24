@@ -36,7 +36,7 @@ Or build React Flow props yourself with `documentToRenderGraph(doc)` when you ne
 
 `NessoGraph` renders read-only by default — no drag, connect, or selection. Default `nodeTypes`/`edgeTypes` use `ConceptNode` and `NessoEdge` from this package (display settings via `GraphDisplayContext`).
 
-Pass `display`/`palette` to control categories, glyphs, and curves. Use `categoryColorMode: 'css'` when `--cat-*` CSS variables are set on the page (the main app); embeds default to `palette` (hex from `PALETTES` in `@nesso-how/vocab-learning`). Optional `getRelationLabel` and `isItemSelected` customize labels and selection. Pass any other [`ReactFlow`](https://reactflow.dev/api-reference/react-flow) prop through `reactFlowProps`.
+Pass `display`/`palette` to control categories, colours, and curves. Use `categoryColorMode: 'css'` when `--cat-*` CSS variables are set on the page (the main app); embeds default to `palette` (hex from `PALETTES` in `@nesso-how/vocab-learning`). Optional `getRelationLabel` and `isItemSelected` customize labels and selection. Pass any other [`ReactFlow`](https://reactflow.dev/api-reference/react-flow) prop through `reactFlowProps`.
 
 Full guide: [Embedding graphs](https://nesso.how/docs/guides/embedding-graphs/).
 
