@@ -5,6 +5,8 @@ description: Reference for the four tools exposed by the @nesso-how/mcp server.
 
 The `@nesso-how/mcp` server exposes four tools. See [MCP](../../guides/mcp/) for setup and workflow.
 
+The server also advertises **usage instructions** on connect (the recommended tool flow), and `get_relation_types` and `validate_graph` return their payloads both as text and as validated **structured content** (`structuredContent` in the tool result), so structured clients can consume them without parsing the text output.
+
 ### `get_nesso_docs`
 
 Fetches documentation pages from this site. Call it without a `slug` to get a table of contents, or with a slug (e.g. `"guides/getting-started"`) to get the full page content.

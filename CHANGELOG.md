@@ -10,16 +10,19 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - **Inline Elaboration in the Inspector:** a collapsible Elaboration section with an editable description and an inline notes editor; **Open note** jumps into Writing Mode, and long notes scroll inside the clipped inline editor.
 - **Code block snippet** in the Writing Mode slash menu.
+- **MCP server usage instructions and structured results:** the Nesso MCP server now tells connected clients the recommended tool flow, and `get_relation_types` and `validate_graph` also return validated structured content next to the existing text output.
 
 ### Changed
 
 - Writing Mode snippets focus on structure: the callout and example snippets are removed; notes and description share one text size across the Inspector and Writing Mode, with empty-field hints in English and Italian.
 - The Inspector panel can be resized up to 720 px (previously 520 px).
 - **No relation icons on the canvas:** relations are identified by category colour, arrow, and label only. The glyph badge at the edge midpoint is gone, along with the glyph chips in the Inspector relation rows, the relation types dialog previews, and the `glyph` field in the `get_relation_types` MCP payload.
+- **The `@nesso-how/mcp` package declares `engines: node >= 20`**, so npm warns installs on unsupported Node versions.
 
 ### Fixed
 
 - The notes placeholder shows before focus and returns after clearing all text, and the description height follows its text when the Inspector is resized.
+- **The published `@nesso-how/mcp` package starts again after install** — the `^2.0.0-alpha.2` range resolved to MCP SDK `2.1.0`, where `StdioServerTransport` is no longer exported from the package root, crashing `nesso-mcp` on launch. The dependency is now pinned exactly to `2.1.0` and the transport is imported from its `./stdio` subpath.
 
 ## [0.2.0-beta.8] - 2026-09-17
 
