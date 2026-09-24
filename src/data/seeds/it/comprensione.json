@@ -137,8 +137,7 @@
     "display": {
       "edgeEncoding": "full",
       "showHeatmap": false,
-      "curveStyle": "straight",
-      "autoCurveFlip": true
+      "curveStyle": "straight"
     }
   }
 }

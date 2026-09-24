@@ -6,14 +6,10 @@ import type { NessoEdgeData } from '@nesso-how/graph'
 
 function relationCurveData(
   edgeData: NessoEdgeData | undefined,
-): { curveFlip?: boolean; curveFlipPinned?: boolean } | undefined {
-  const curveFlip = edgeData?.curveFlip
-  const curveFlipPinned = edgeData?.curveFlipPinned
-  if (curveFlip === undefined && curveFlipPinned === undefined) return undefined
-  return {
-    ...(curveFlip !== undefined ? { curveFlip } : {}),
-    ...(curveFlipPinned !== undefined ? { curveFlipPinned } : {}),
-  }
+): { curveOffset?: number } | undefined {
+  const curveOffset = edgeData?.curveOffset
+  if (curveOffset === undefined) return undefined
+  return { curveOffset }
 }
 
 function relationFromEdge(e: Edge) {

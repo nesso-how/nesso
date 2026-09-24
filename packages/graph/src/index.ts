@@ -24,12 +24,11 @@ export { documentToRenderGraph } from './documentToRenderGraph.js'
 export { ratingColor } from './ratingColor.js'
 export {
   arcControlPoint,
-  defaultCurveFlip,
+  clampCurveOffset,
+  CURVE_OFFSET_LIMIT,
   nodeCenterX,
   nodeCenterY,
-  flowNodeCenterX,
   flowNodeCenterY,
-  effectiveCurveFlip,
   rectExit,
   nessoArcPath,
 } from './geometry.js'

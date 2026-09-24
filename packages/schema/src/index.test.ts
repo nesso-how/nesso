@@ -262,11 +262,11 @@ describe('serialize / deserialize', () => {
       name: 'R',
       concepts: [makeConcept('n1')],
       relations: [
-        { id: 'e1', source: 'n1', target: 'n1', type: 'causes', data: { curveFlip: true } },
+        { id: 'e1', source: 'n1', target: 'n1', type: 'causes', data: { curveOffset: -1 } },
       ],
     }
     const parsed = deserialize(serialize(doc))
-    expect(parsed.relations[0].data).toEqual({ curveFlip: true })
+    expect(parsed.relations[0].data).toEqual({ curveOffset: -1 })
   })
 })
 

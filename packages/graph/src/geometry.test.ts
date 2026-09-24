@@ -2,26 +2,13 @@
 import { describe, expect, it } from 'vitest'
 import {
   arcControlPoint,
-  defaultCurveFlip,
-  effectiveCurveFlip,
+  clampCurveOffset,
+  CURVE_OFFSET_LIMIT,
   nessoArcPath,
   nodeCenterX,
   nodeCenterY,
   rectExit,
 } from './geometry.js'
-
-describe('defaultCurveFlip', () => {
-  it('flips only when the target is above-right or below-left of the source', () => {
-    // target above and to the right -> above !== left -> flip
-    expect(defaultCurveFlip(0, 0, 10, -10)).toBe(true)
-    // target below and to the left -> flip
-    expect(defaultCurveFlip(0, 0, -10, 10)).toBe(true)
-    // target above and to the left -> no flip
-    expect(defaultCurveFlip(0, 0, -10, -10)).toBe(false)
-    // target below and to the right -> no flip
-    expect(defaultCurveFlip(0, 0, 10, 10)).toBe(false)
-  })
-})
 
 describe('nodeCenterX / nodeCenterY', () => {
   it('uses measured dimensions when present', () => {
@@ -58,10 +45,30 @@ describe('arcControlPoint', () => {
     expect(cpy).toBeGreaterThan(0) // bows downward (perpendicular)
   })
 
-  it('mirrors the bend when curveFlip is set', () => {
-    const a = arcControlPoint(0, 0, 100, 0, 0, false)
-    const b = arcControlPoint(0, 0, 100, 0, 0, true)
+  it('mirrors the bend at offset -1 and flattens the arc at offset 0', () => {
+    const a = arcControlPoint(0, 0, 100, 0, 0, 1)
+    const b = arcControlPoint(0, 0, 100, 0, 0, -1)
+    const flat = arcControlPoint(0, 0, 100, 0, 0, 0)
+    expect(b.cpx).toBeCloseTo(a.cpx)
     expect(b.cpy).toBeCloseTo(-a.cpy)
+    expect(flat.cpx).toBe(50)
+    expect(flat.cpy).toBeCloseTo(0)
+  })
+
+  it('scales the bow with |offset| and keeps the sibling fan additive', () => {
+    const base = arcControlPoint(0, 0, 100, 0, 0, 1)
+    expect(arcControlPoint(0, 0, 100, 0, 0, 2).cpy).toBeCloseTo(base.cpy * 2)
+    // fan = siblingIdx * 7, added after the offset scaling
+    expect(arcControlPoint(0, 0, 100, 0, 1, 1).cpy).toBeCloseTo(base.cpy + 7)
+  })
+
+  it('clamps dragged offsets to the CURVE_OFFSET_LIMIT window', () => {
+    expect(CURVE_OFFSET_LIMIT).toBe(3)
+    expect(clampCurveOffset(10)).toBe(3)
+    expect(clampCurveOffset(-10)).toBe(-3)
+    expect(clampCurveOffset(1.5)).toBe(1.5)
+    expect(clampCurveOffset(Number.NaN)).toBe(1)
+    expect(clampCurveOffset(Number.POSITIVE_INFINITY)).toBe(1)
   })
 })
 
@@ -79,15 +86,10 @@ describe('nessoArcPath', () => {
     expect(r.path).toMatch(/^M 0 0 Q /)
     expect(r.path).toContain(' 100 0')
   })
-})
 
-describe('effectiveCurveFlip', () => {
-  it('computes the automatic flip when auto and not pinned', () => {
-    expect(effectiveCurveFlip(true, false, false, 0, 0, 10, -10)).toBe(true)
-  })
-
-  it('honors the stored flip when pinned or not auto', () => {
-    expect(effectiveCurveFlip(true, true, true, 0, 0, 10, 10)).toBe(true)
-    expect(effectiveCurveFlip(false, false, false, 0, 0, 10, -10)).toBe(false)
+  it('places the label at the line midpoint when the arc is flattened', () => {
+    const r = nessoArcPath(0, 0, 100, 50, 0, false, 0)
+    expect(r.labelX).toBe(50)
+    expect(r.labelY).toBeCloseTo(25)
   })
 })

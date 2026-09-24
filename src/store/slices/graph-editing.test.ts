@@ -6,7 +6,7 @@ import { createStore } from 'zustand/vanilla'
 import { setGraphClipboard } from '@/lib/graphClipboard'
 import type { ConceptNodeData } from '@/types/graph'
 import type { GraphState } from '../state'
-import { bakeCurveFlipFromPositions, createGraphEditingSlice, MAX_UNDO } from './graph-editing'
+import { createGraphEditingSlice, MAX_UNDO } from './graph-editing'
 import { clearDraggingNodeIds } from './graphSession'
 import { createSettingsSlice } from './settings'
 import { track } from '@/telemetry'
@@ -544,67 +544,6 @@ describe('updateEdgeType', () => {
   })
 })
 
-describe('setEdgeCurveFlipMode', () => {
-  function edgeStore() {
-    const s = makeStore()
-    const a = s.getState().addNode(0, 0)
-    const b = s.getState().addNode(100, 0)
-    const id = s.getState().addEdge(a, b, 'causes')
-    return { s, id }
-  }
-
-  it("mode 'on' sets curveFlip true and pins it while autoCurveFlip is on", () => {
-    const { s, id } = edgeStore()
-    s.getState().setEdgeCurveFlipMode(id, 'on')
-    const d = s.getState().edges.find((e) => e.id === id)!.data!
-    expect(d.curveFlip).toBe(true)
-    expect(d.curveFlipPinned).toBe(true)
-  })
-
-  it("mode 'off' sets curveFlip false", () => {
-    const { s, id } = edgeStore()
-    s.getState().setEdgeCurveFlipMode(id, 'off')
-    expect(s.getState().edges.find((e) => e.id === id)!.data!.curveFlip).toBe(false)
-  })
-
-  it("mode 'auto' clears curveFlip and the pin", () => {
-    const { s, id } = edgeStore()
-    s.getState().setEdgeCurveFlipMode(id, 'on')
-    s.getState().setEdgeCurveFlipMode(id, 'auto')
-    const d = s.getState().edges.find((e) => e.id === id)!.data!
-    expect(d.curveFlip).toBeUndefined()
-    expect('curveFlipPinned' in d).toBe(false)
-  })
-
-  it('does not pin when autoCurveFlip is off', () => {
-    const { s, id } = edgeStore()
-    s.getState().setGraphDisplay('autoCurveFlip', false)
-    s.getState().setEdgeCurveFlipMode(id, 'on')
-    const d = s.getState().edges.find((e) => e.id === id)!.data!
-    expect(d.curveFlip).toBe(true)
-    expect('curveFlipPinned' in d).toBe(false)
-  })
-})
-
-describe('addEdge curve flip', () => {
-  it('bakes curveFlip into a new edge when autoCurveFlip is off and geometry flips', () => {
-    const s = makeStore()
-    s.getState().setGraphDisplay('autoCurveFlip', false)
-    const a = s.getState().addNode(0, 0)
-    const b = s.getState().addNode(100, -100)
-    const id = s.getState().addEdge(a, b, 'causes')
-    expect(s.getState().edges.find((e) => e.id === id)?.data?.curveFlip).toBe(true)
-  })
-
-  it('omits curveFlip while autoCurveFlip is on', () => {
-    const s = makeStore()
-    const a = s.getState().addNode(0, 0)
-    const b = s.getState().addNode(100, -100)
-    const id = s.getState().addEdge(a, b, 'causes')
-    expect(s.getState().edges.find((e) => e.id === id)?.data?.curveFlip).toBeUndefined()
-  })
-})
-
 describe('setSelected', () => {
   it('marks the node selected, deselects others, and fills selectedIds', () => {
     const s = makeStore()
@@ -764,38 +703,6 @@ describe('undo / redo edges', () => {
     const s = makeStore()
     for (let i = 0; i < MAX_UNDO + 10; i++) s.getState().addNode()
     expect(s.getState()._history.length).toBe(MAX_UNDO)
-  })
-})
-
-describe('bakeCurveFlipFromPositions', () => {
-  const node = (id: string, x: number, y: number) =>
-    ({ id, position: { x, y }, data: {} }) as unknown as Node<ConceptNodeData>
-  const edge = (extra: Record<string, unknown>) =>
-    ({ id: 'e', source: 'a', target: 'b', data: { type: 'causes', ...extra } }) as unknown as Edge
-
-  it('pins a computed curveFlip onto an unpinned edge when geometry flips', () => {
-    const baked = bakeCurveFlipFromPositions([edge({})], [node('a', 0, 0), node('b', 100, -100)])
-    expect(baked[0].data?.curveFlip).toBe(true)
-  })
-
-  it('leaves a pinned edge untouched (same reference)', () => {
-    const edges = [edge({ curveFlipPinned: true })]
-    const baked = bakeCurveFlipFromPositions(edges, [node('a', 0, 0), node('b', 100, -100)])
-    expect(baked[0]).toBe(edges[0])
-  })
-
-  it('leaves an edge with a missing endpoint untouched (same reference)', () => {
-    const edges = [edge({})]
-    const baked = bakeCurveFlipFromPositions(edges, [node('a', 0, 0)])
-    expect(baked[0]).toBe(edges[0])
-  })
-
-  it('drops curveFlip back to undefined when geometry says no flip', () => {
-    const baked = bakeCurveFlipFromPositions(
-      [edge({ curveFlip: true })],
-      [node('a', 0, 0), node('b', 100, 0)],
-    )
-    expect(baked[0].data?.curveFlip).toBeUndefined()
   })
 })
 

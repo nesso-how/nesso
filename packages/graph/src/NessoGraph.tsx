@@ -216,11 +216,6 @@ export function NessoGraph({
         graphDisplay?.curveStyle,
         DEFAULT_GRAPH_DISPLAY.curveStyle,
       ),
-      autoCurveFlip: pickDisplay(
-        display?.autoCurveFlip,
-        graphDisplay?.autoCurveFlip,
-        DEFAULT_GRAPH_DISPLAY.autoCurveFlip,
-      ),
       dimUnconnectedOnSelect: pickDisplay(
         display?.dimUnconnectedOnSelect,
         graphDisplay?.dimUnconnectedOnSelect,

@@ -2,7 +2,6 @@
 import type { StateCreator } from 'zustand'
 import type { NessoSettings, GraphDisplaySettings } from '@/types/graph'
 import { defaultGraphDisplay } from '@/types/graph'
-import { bakeCurveFlipFromPositions, pushHistory } from './graph-editing'
 import type { GraphState } from '../state'
 
 export interface SettingsSlice {
@@ -22,7 +21,6 @@ export const createSettingsSlice: StateCreator<GraphState, [], [], SettingsSlice
     edgeEncoding: 'full',
     showHeatmap: false,
     curveStyle: 'arc',
-    autoCurveFlip: true,
     categoryPalette: 'default',
     aiBaseUrl: 'http://localhost:11434/v1',
     aiModel: 'qwen3.5:9b',
@@ -50,16 +48,6 @@ export const createSettingsSlice: StateCreator<GraphState, [], [], SettingsSlice
     setSetting: (key, value) => set((s) => ({ settings: { ...s.settings, [key]: value } })),
 
     setGraphDisplay: (key, value) =>
-      set((s) => {
-        const graphDisplay = { ...s.graphDisplay, [key]: value }
-        if (key === 'autoCurveFlip' && value === false && s.graphDisplay.autoCurveFlip) {
-          return {
-            ...pushHistory(s),
-            graphDisplay,
-            edges: bakeCurveFlipFromPositions(s.edges, s.nodes),
-          }
-        }
-        return { graphDisplay }
-      }),
+      set((s) => ({ graphDisplay: { ...s.graphDisplay, [key]: value } })),
   }
 }

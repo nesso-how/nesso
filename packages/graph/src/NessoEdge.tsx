@@ -7,14 +7,7 @@ import type { RelationCategory } from '@nesso-how/vocab-learning'
 import type { NessoEdgeData } from './display.js'
 import { useGraphDisplay, type NessoGraphDisplayContext } from './context.js'
 import { isEdgeConnectedToNode, resolveEdgeVisual } from './edgeHighlight.js'
-import {
-  arcControlPoint,
-  effectiveCurveFlip,
-  flowNodeCenterX,
-  flowNodeCenterY,
-  nessoArcPath,
-  rectExit,
-} from './geometry.js'
+import { arcControlPoint, flowNodeCenterY, nessoArcPath, rectExit } from './geometry.js'
 
 function categoryColor(
   cat: RelationCategory,
@@ -32,7 +25,6 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
   const {
     edgeEncoding,
     curveStyle,
-    autoCurveFlip,
     palette,
     categoryColorMode,
     getRelationLabel,
@@ -68,15 +60,7 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
   const tcx = targetNode.internals.positionAbsolute.x + tw / 2
   const tcy = flowNodeCenterY(targetNode)
 
-  const curveFlip = effectiveCurveFlip(
-    autoCurveFlip,
-    data?.curveFlipPinned,
-    data?.curveFlip,
-    flowNodeCenterX(sourceNode),
-    scy,
-    flowNodeCenterX(targetNode),
-    tcy,
-  )
+  const curveOffset = data?.curveOffset ?? 1
 
   const pad = 6
   const { a, b } = (() => {
@@ -86,7 +70,7 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
         b: rectExit(tcx, tcy, tw + pad * 2, th + pad * 2, scx, scy),
       }
     }
-    const { cpx, cpy } = arcControlPoint(scx, scy, tcx, tcy, data?.siblingIdx ?? 0, curveFlip)
+    const { cpx, cpy } = arcControlPoint(scx, scy, tcx, tcy, data?.siblingIdx ?? 0, curveOffset)
     return {
       a: rectExit(scx, scy, sw + pad * 2, sh + pad * 2, cpx, cpy),
       b: rectExit(tcx, tcy, tw + pad * 2, th + pad * 2, cpx, cpy),
@@ -100,7 +84,7 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
     b.y,
     data?.siblingIdx ?? 0,
     straight,
-    curveFlip,
+    curveOffset,
   )
 
   const arrowSize = 7

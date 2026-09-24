@@ -81,14 +81,6 @@ export function SidebarDisplaySection() {
               onChange={(v) => setGraphDisplay('curveStyle', v as 'arc' | 'straight')}
             />
           </SettingRow>
-          {graphDisplay.curveStyle === 'arc' && (
-            <SettingRow label={t.sidebar.displayOptions.autoFlip}>
-              <Switch
-                value={graphDisplay.autoCurveFlip}
-                onChange={(v) => setGraphDisplay('autoCurveFlip', v)}
-              />
-            </SettingRow>
-          )}
           <SettingRow label={t.sidebar.displayOptions.dimUnconnected}>
             <Switch
               value={graphDisplay.dimUnconnectedOnSelect}

@@ -1,13 +1,6 @@
 // SPDX-License-Identifier: MIT
 import type { ConnectionLineComponentProps } from '@xyflow/react'
-import {
-  arcControlPoint,
-  effectiveCurveFlip,
-  flowNodeCenterX,
-  flowNodeCenterY,
-  nessoArcPath,
-  rectExit,
-} from '@nesso-how/graph'
+import { arcControlPoint, flowNodeCenterY, nessoArcPath, rectExit } from '@nesso-how/graph'
 import { useGraphStore } from '@/store'
 
 const pad = 6
@@ -21,7 +14,6 @@ export function NessoConnectionLine({
   toY,
 }: ConnectionLineComponentProps) {
   const straight = useGraphStore((s) => s.graphDisplay.curveStyle === 'straight')
-  const autoCurveFlip = useGraphStore((s) => s.graphDisplay.autoCurveFlip)
 
   const sw = fromNode.measured?.width ?? 80
   const sh = fromNode.measured?.height ?? 32
@@ -31,22 +23,12 @@ export function NessoConnectionLine({
   let startX = fromX
   let startY = fromY
   let b: { x: number; y: number }
-  let curveFlip = false
 
   if (toNode) {
     const tw = toNode.measured?.width ?? 80
     const th = toNode.measured?.height ?? 32
     const tcx = toNode.internals.positionAbsolute.x + tw / 2
     const tcy = flowNodeCenterY(toNode)
-    curveFlip = effectiveCurveFlip(
-      autoCurveFlip,
-      false,
-      false,
-      flowNodeCenterX(fromNode),
-      scy,
-      flowNodeCenterX(toNode),
-      tcy,
-    )
     if (straight) {
       const a = rectExit(scx, scy, sw + pad * 2, sh + pad * 2, tcx, tcy)
       b = rectExit(tcx, tcy, tw + pad * 2, th + pad * 2, scx, scy)
@@ -54,39 +36,31 @@ export function NessoConnectionLine({
       startY = a.y
     } else {
       // Mirror NessoEdge: derive the control point from node centers so that
-      // both exit points account for the actual curve direction (including flip).
-      const { cpx, cpy } = arcControlPoint(scx, scy, tcx, tcy, 0, curveFlip)
+      // both exit points account for the actual curve direction. The preview
+      // always uses the default bow; custom offsets belong to saved edges.
+      const { cpx, cpy } = arcControlPoint(scx, scy, tcx, tcy, 0)
       const a = rectExit(scx, scy, sw + pad * 2, sh + pad * 2, cpx, cpy)
       b = rectExit(tcx, tcy, tw + pad * 2, th + pad * 2, cpx, cpy)
       startX = a.x
       startY = a.y
     }
   } else {
-    // No target node yet: treat cursor as a virtual target so the flip direction
-    // and source exit point update dynamically as the user moves the cursor.
-    curveFlip = effectiveCurveFlip(
-      autoCurveFlip,
-      false,
-      false,
-      flowNodeCenterX(fromNode),
-      scy,
-      toX,
-      toY,
-    )
+    // No target node yet: treat the cursor as a virtual target so the source
+    // exit point follows it dynamically.
     b = { x: toX, y: toY }
     if (straight) {
       const a = rectExit(scx, scy, sw + pad * 2, sh + pad * 2, toX, toY)
       startX = a.x
       startY = a.y
     } else {
-      const { cpx, cpy } = arcControlPoint(scx, scy, toX, toY, 0, curveFlip)
+      const { cpx, cpy } = arcControlPoint(scx, scy, toX, toY, 0)
       const a = rectExit(scx, scy, sw + pad * 2, sh + pad * 2, cpx, cpy)
       startX = a.x
       startY = a.y
     }
   }
 
-  const { path } = nessoArcPath(startX, startY, b.x, b.y, 0, straight, curveFlip)
+  const { path } = nessoArcPath(startX, startY, b.x, b.y, 0, straight)
 
   return (
     <path

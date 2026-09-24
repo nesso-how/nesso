@@ -9,7 +9,6 @@ const display: GraphDisplaySettings = {
   edgeEncoding: 'full',
   showHeatmap: false,
   curveStyle: 'straight',
-  autoCurveFlip: true,
   dimUnconnectedOnSelect: true,
 }
 

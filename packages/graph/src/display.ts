@@ -17,7 +17,6 @@ export interface GraphDisplaySettings {
   edgeEncoding: EdgeEncoding
   showHeatmap: boolean
   curveStyle: CurveStyle
-  autoCurveFlip: boolean
   /** Dim edges unconnected to the selected concept. Per-map, default on. */
   dimUnconnectedOnSelect: boolean
 }
@@ -27,13 +26,15 @@ export const DEFAULT_GRAPH_DISPLAY: GraphDisplaySettings = {
   edgeEncoding: 'full',
   showHeatmap: true,
   curveStyle: 'arc',
-  autoCurveFlip: true,
   dimUnconnectedOnSelect: true,
 }
 
 export interface NessoEdgeData extends Record<string, unknown> {
   type: RelationTypeName
   siblingIdx?: number
-  curveFlip?: boolean
-  curveFlipPinned?: boolean
+  /**
+   * Signed multiplier of the default arc bow: 1 = default side, -1 = mirrored,
+   * 0 = straight, |offset| > 1 exaggerates the bow. Absent = default bow.
+   */
+  curveOffset?: number
 }

@@ -10,7 +10,6 @@ export interface NessoGraphDisplayContext {
   edgeEncoding: EdgeEncoding
   showHeatmap: boolean
   curveStyle: CurveStyle
-  autoCurveFlip: boolean
   palette: CategoryPalette
   /** `palette` uses hex from PALETTES; `css` uses `var(--cat-*)` (app with live palette switching). */
   categoryColorMode: CategoryColorMode

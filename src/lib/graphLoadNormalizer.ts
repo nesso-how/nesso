@@ -353,6 +353,33 @@ export function tryResolveGraphIdentityFromEnvelope(
   return { id: file.id ?? '', name: file.name ?? '' }
 }
 
+/**
+ * Web IndexedDB records persist React Flow edges verbatim, so records written
+ * before the offset model still carry boolean flip fields. Translate them at
+ * the record boundary so old graphs render as they did: flipped becomes a -1
+ * offset, unflipped/default loses the dead fields. Edges without legacy
+ * fields keep their reference; a stored offset always wins over legacy flags.
+ */
+function translateLegacyRecordCurve(edges: GraphRecord['edges']): GraphRecord['edges'] {
+  let changed = false
+  const next = edges.map((e) => {
+    const data = e.data as
+      | { curveOffset?: unknown; curveFlip?: unknown; curveFlipPinned?: unknown }
+      | undefined
+    if (data?.curveFlip === undefined && data?.curveFlipPinned === undefined) return e
+    changed = true
+    const { curveFlip: _flip, curveFlipPinned: _pinned, ...rest } = data ?? {}
+    return {
+      ...e,
+      data: {
+        ...rest,
+        ...(data?.curveFlip === true && data?.curveOffset === undefined ? { curveOffset: -1 } : {}),
+      },
+    }
+  })
+  return changed ? next : edges
+}
+
 export function normalizeGraphRecord(input: unknown): GraphRecord {
   if (!isPlainObject(input)) throw new Error('Invalid graph record')
 
@@ -372,5 +399,5 @@ export function normalizeGraphRecord(input: unknown): GraphRecord {
 
   deepValidateGraphRecordContent(record)
 
-  return record
+  return { ...record, edges: translateLegacyRecordCurve(record.edges) }
 }

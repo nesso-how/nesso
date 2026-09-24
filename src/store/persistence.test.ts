@@ -367,7 +367,6 @@ describe('validateMergePayload', () => {
       edgeEncoding: 'full',
       showHeatmap: true,
       curveStyle: 'arc',
-      autoCurveFlip: false,
       mentorEnabled: true,
       reviewEnabled: false,
       fsrsRetention: 0.9,

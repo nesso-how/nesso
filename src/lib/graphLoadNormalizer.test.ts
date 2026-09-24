@@ -515,13 +515,71 @@ describe('normalizeGraphRecord strict shape validation', () => {
         edgeEncoding: 'full',
         showHeatmap: true,
         curveStyle: 'arc',
-        autoCurveFlip: false,
       },
     })
     const result = normalizeGraphRecord(good)
     expect(result.id).toBe('test-id')
     expect(result.nodes).toHaveLength(2)
     expect(result.edges).toHaveLength(1)
+  })
+
+  it('translates legacy curve flip fields on record edges to curve offsets', () => {
+    // Web IndexedDB records persist React Flow edges verbatim, so old records
+    // still carry the pre-offset flip fields. They must render as they did.
+    const legacy = validRecord({
+      nodes: [
+        { id: 'n1', type: 'concept', position: { x: 0, y: 0 }, data: { text: 'A' } },
+        { id: 'n2', type: 'concept', position: { x: 10, y: 10 }, data: { text: 'B' } },
+      ],
+      edges: [
+        {
+          id: 'e1',
+          source: 'n1',
+          target: 'n2',
+          sourceHandle: 'out',
+          targetHandle: 'in',
+          type: 'nesso',
+          data: { type: 'subtype-of', curveFlip: true, curveFlipPinned: true },
+        },
+        {
+          id: 'e2',
+          source: 'n2',
+          target: 'n1',
+          sourceHandle: 'out',
+          targetHandle: 'in',
+          type: 'nesso',
+          data: { type: 'subtype-of', curveFlip: false },
+        },
+      ],
+    })
+    const result = normalizeGraphRecord(legacy)
+    expect(result.edges[0]?.data).toEqual({ type: 'subtype-of', curveOffset: -1 })
+    expect(result.edges[1]?.data).toEqual({ type: 'subtype-of' })
+  })
+
+  it('leaves record edges without legacy curve fields structurally untouched', () => {
+    const edges = [
+      {
+        id: 'e1',
+        source: 'n1',
+        target: 'n2',
+        sourceHandle: 'out',
+        targetHandle: 'in',
+        type: 'nesso',
+        data: { type: 'subtype-of', siblingIdx: 2 },
+      },
+    ]
+    const result = normalizeGraphRecord(
+      validRecord({
+        nodes: [
+          { id: 'n1', type: 'concept', position: { x: 0, y: 0 }, data: { text: 'A' } },
+          { id: 'n2', type: 'concept', position: { x: 10, y: 10 }, data: { text: 'B' } },
+        ],
+        edges,
+      }),
+    )
+    expect(result.edges[0]).toEqual(edges[0])
+    expect(result.edges[0]?.data).not.toHaveProperty('curveOffset')
   })
 })
 

@@ -7,7 +7,6 @@ import {
   type ConceptNodeData,
   type NotesDocument,
   type RelationTypeName,
-  type NessoEdgeData,
 } from '@/types/graph'
 import { CONCEPT_HANDLE_IN, CONCEPT_HANDLE_OUT } from '@/data/conceptHandles'
 import {
@@ -18,7 +17,6 @@ import {
   snapshotSelection,
   type GraphClipboard,
 } from '@/lib/graphClipboard'
-import { defaultCurveFlip, nodeCenterX, nodeCenterY } from '@nesso-how/graph'
 import { locales } from '@/i18n/registry'
 import { newElementId } from '@nesso-how/vocab-learning'
 import { track } from '@/telemetry'
@@ -176,23 +174,6 @@ function insertCloned(
   )
 }
 
-export function bakeCurveFlipFromPositions(edges: Edge[], nodes: Node<ConceptNodeData>[]): Edge[] {
-  return edges.map((e) => {
-    if (e.data?.curveFlipPinned) return e
-    const sourceNode = nodes.find((n) => n.id === e.source)
-    const targetNode = nodes.find((n) => n.id === e.target)
-    if (!sourceNode || !targetNode) return e
-    const curveFlip = defaultCurveFlip(
-      nodeCenterX(sourceNode),
-      nodeCenterY(sourceNode),
-      nodeCenterX(targetNode),
-      nodeCenterY(targetNode),
-    )
-    if (Boolean(e.data?.curveFlip) === curveFlip) return e
-    return { ...e, data: { ...e.data, curveFlip: curveFlip || undefined } }
-  })
-}
-
 export interface GraphEditingSlice {
   nodes: Node<ConceptNodeData>[]
   edges: Edge[]
@@ -212,7 +193,6 @@ export interface GraphEditingSlice {
   addNode: (x?: number, y?: number) => string
   addEdge: (source: string, target: string, type: RelationTypeName) => string
   updateEdgeType: (id: string, type: RelationTypeName) => void
-  setEdgeCurveFlipMode: (id: string, mode: 'auto' | 'off' | 'on') => void
   deleteEdge: (id: string) => void
   setSelected: (sel: import('../types').Selection) => void
   syncFlowSelection: (nodeIds: string[], edgeIds: string[]) => void
@@ -413,18 +393,6 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
     const id = newElementId('e', new Set(get().edges.map((e) => e.id)))
     set((s) => {
       const cleared = clearFlowSelection(s.nodes, s.edges)
-      const sourceNode = s.nodes.find((n) => n.id === source)
-      const targetNode = s.nodes.find((n) => n.id === target)
-      const autoCurveFlip = s.graphDisplay.autoCurveFlip
-      const curveFlip =
-        !autoCurveFlip && sourceNode && targetNode
-          ? defaultCurveFlip(
-              nodeCenterX(sourceNode),
-              nodeCenterY(sourceNode),
-              nodeCenterX(targetNode),
-              nodeCenterY(targetNode),
-            )
-          : false
 
       return {
         ...pushHistory(s),
@@ -439,7 +407,7 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
             targetHandle: CONCEPT_HANDLE_IN,
             type: 'nesso',
             selected: true,
-            data: { type, ...(curveFlip ? { curveFlip: true } : {}) },
+            data: { type },
           },
         ],
         selected: { kind: 'edge', id },
@@ -453,29 +421,6 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
     set((s) => ({
       ...pushHistory(s),
       edges: s.edges.map((e) => (e.id === id ? { ...e, data: { ...e.data, type } } : e)),
-    })),
-
-  setEdgeCurveFlipMode: (id, mode) =>
-    set((s) => ({
-      ...pushHistory(s),
-      edges: s.edges.map((e) => {
-        if (e.id !== id) return e
-        const edge = e as Edge<NessoEdgeData, 'nesso'>
-        const d = edge.data!
-        if (mode === 'auto') {
-          const data: NessoEdgeData = { type: d.type, siblingIdx: d.siblingIdx }
-          return { ...edge, data }
-        }
-        const auto = s.graphDisplay.autoCurveFlip
-        const data: NessoEdgeData = {
-          type: d.type,
-          siblingIdx: d.siblingIdx,
-          curveFlip: mode === 'on',
-        }
-        if (auto) data.curveFlipPinned = true
-        else delete data.curveFlipPinned
-        return { ...edge, data }
-      }),
     })),
 
   deleteEdge: (id) => {

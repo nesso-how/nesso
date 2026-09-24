@@ -4,13 +4,13 @@ import { defaultConceptReviewFields } from '@/types/graph'
 import { deserialize, serialize } from '@nesso-how/vocab-learning'
 import type { NotesDocument } from '@nesso-how/vocab-learning'
 import { graphToDocument } from './graphDocumentMapping'
+import type { NessoEdgeData } from '@nesso-how/graph'
 
 describe('graphToDocument', () => {
   const display = {
     edgeEncoding: 'full' as const,
     showHeatmap: false,
     curveStyle: 'straight' as const,
-    autoCurveFlip: true,
     dimUnconnectedOnSelect: true,
   }
 
@@ -32,7 +32,7 @@ describe('graphToDocument', () => {
     expect((file.concepts[0].data as { stability?: number } | undefined)?.stability).toBeUndefined()
   })
 
-  it('serializes relation curve metadata without FSRS', () => {
+  it('serializes relation curve offsets without FSRS or legacy fields', () => {
     const file = graphToDocument({
       name: 'Test',
       display,
@@ -54,7 +54,13 @@ describe('graphToDocument', () => {
           source: 'n1',
           target: 'n2',
           type: 'nesso',
-          data: { type: 'causes', curveFlip: true, curveFlipPinned: false },
+          // A runtime edge that somehow still carries a legacy field must not
+          // leak it into the saved document.
+          data: {
+            type: 'causes',
+            curveOffset: -1.5,
+            curveFlip: true,
+          } as unknown as NessoEdgeData,
         },
       ],
     })
@@ -63,8 +69,31 @@ describe('graphToDocument', () => {
       source: 'n1',
       target: 'n2',
       type: 'causes',
-      data: { curveFlip: true, curveFlipPinned: false },
+      data: { curveOffset: -1.5 },
     })
+    expect(file.relations[0].data).not.toHaveProperty('curveFlip')
+    expect(file.relations[0].data).not.toHaveProperty('curveFlipPinned')
+  })
+
+  it('omits relation data entirely when no curve offset is stored', () => {
+    const file = graphToDocument({
+      name: 'Test',
+      display,
+      nodes: [
+        {
+          id: 'n1',
+          position: { x: 0, y: 0 },
+          data: { text: 'A', ...defaultConceptReviewFields() },
+        },
+        {
+          id: 'n2',
+          position: { x: 1, y: 1 },
+          data: { text: 'B', ...defaultConceptReviewFields() },
+        },
+      ],
+      edges: [{ id: 'e1', source: 'n1', target: 'n2', type: 'nesso', data: { type: 'causes' } }],
+    })
+    expect(file.relations[0]).not.toHaveProperty('data')
   })
 
   it('round-trips elaboration notes without restructuring them', () => {
