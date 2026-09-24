@@ -33,6 +33,11 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
   const [dragOffset, setDragOffset] = useState<number | null>(null)
   const dragPointerId = useRef<number | null>(null)
   const dragMoved = useRef(false)
+  // Reference chord frozen at drag start. The trimmed endpoints slide as the
+  // offset changes, so inverting against the live chord would chase a moving
+  // target and make the arc jitter; the frozen chord keeps the mapping a pure
+  // function of the pointer for the whole gesture.
+  const dragChord = useRef<{ ax: number; ay: number; bx: number; by: number } | null>(null)
   const { screenToFlowPosition } = useReactFlow()
   const {
     edgeEncoding,
@@ -136,7 +141,14 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
 
   function offsetAt(clientX: number, clientY: number): number {
     const p = screenToFlowPosition({ x: clientX, y: clientY })
-    return curveOffsetForPointer(p.x, p.y, a.x, a.y, b.x, b.y, renderOffset)
+    const chord = dragChord.current ?? { ax: a.x, ay: a.y, bx: b.x, by: b.y }
+    return curveOffsetForPointer(p.x, p.y, chord.ax, chord.ay, chord.bx, chord.by, renderOffset)
+  }
+
+  function endCurveDrag() {
+    dragPointerId.current = null
+    dragChord.current = null
+    setDragOffset(null)
   }
 
   return (
@@ -214,6 +226,7 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
               e.currentTarget.setPointerCapture(e.pointerId)
               dragPointerId.current = e.pointerId
               dragMoved.current = false
+              dragChord.current = { ax: a.x, ay: a.y, bx: b.x, by: b.y }
               setDragOffset(offsetAt(e.clientX, e.clientY))
             }}
             onPointerMove={(e) => {
@@ -223,21 +236,19 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
             }}
             onPointerUp={(e) => {
               if (dragPointerId.current !== e.pointerId) return
-              dragPointerId.current = null
               const moved = dragMoved.current
-              setDragOffset(null)
+              const final = moved ? offsetAt(e.clientX, e.clientY) : undefined
+              endCurveDrag()
               // A plain click only previews; the store (and its history)
               // sees one commit per real drag.
-              if (moved) onEdgeCurveOffsetChange?.(id, offsetAt(e.clientX, e.clientY))
+              if (final !== undefined) onEdgeCurveOffsetChange?.(id, final)
             }}
             onPointerCancel={() => {
-              dragPointerId.current = null
-              setDragOffset(null)
+              endCurveDrag()
             }}
             onDoubleClick={(e) => {
               e.stopPropagation()
-              dragPointerId.current = null
-              setDragOffset(null)
+              endCurveDrag()
               onEdgeCurveOffsetChange?.(id, undefined)
             }}
           />
