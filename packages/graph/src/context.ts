@@ -15,6 +15,10 @@ export interface NessoGraphDisplayContext {
   categoryColorMode: CategoryColorMode
   getRelationLabel?: (type: RelationTypeName) => string
   isItemSelected?: (kind: 'node' | 'edge', id: string) => boolean
+  /**
+   * Curve-drag commit callback (see NessoGraphProps). Absent = read-only.
+   */
+  onEdgeCurveOffsetChange?: (id: string, offset: number | undefined) => void
   /** Id of the currently selected concept, if any — used to emphasize connected edges. */
   selectedNodeId?: string | null
   /** Dim edges unconnected to the selected concept. Defaults to on. */

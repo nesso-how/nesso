@@ -22,6 +22,9 @@ test('uses solid category-coloured strokes in non-minimal modes and grey in mini
 }) => {
   await seedTwoConcepts(page)
   await connectAlphaBeta(page, 'similar-to')
+  // A fresh edge starts selected, which shows the curve drag handle (circles).
+  // Deselect so the assertions below only see encoding strokes.
+  await deselect(page)
 
   const edge = edges(page).first()
 

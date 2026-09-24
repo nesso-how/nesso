@@ -1,13 +1,19 @@
 // SPDX-License-Identifier: MIT
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { Edge, EdgeProps } from '@xyflow/react'
-import { useStore } from '@xyflow/react'
+import { useReactFlow, useStore } from '@xyflow/react'
 import { PALETTES, RELATION_TYPES, asRelationTypeName } from '@nesso-how/vocab-learning'
 import type { RelationCategory } from '@nesso-how/vocab-learning'
 import type { NessoEdgeData } from './display.js'
 import { useGraphDisplay, type NessoGraphDisplayContext } from './context.js'
 import { isEdgeConnectedToNode, resolveEdgeVisual } from './edgeHighlight.js'
-import { arcControlPoint, flowNodeCenterY, nessoArcPath, rectExit } from './geometry.js'
+import {
+  arcControlPoint,
+  curveOffsetForPointer,
+  flowNodeCenterY,
+  nessoArcPath,
+  rectExit,
+} from './geometry.js'
 
 function categoryColor(
   cat: RelationCategory,
@@ -22,6 +28,12 @@ type NessoFlowEdge = Edge<NessoEdgeData, 'nesso'>
 
 export function NessoEdge({ id, source, target, data, selected }: EdgeProps<NessoFlowEdge>) {
   const [hovered, setHovered] = useState(false)
+  // Live preview offset while a curve drag is in flight; committed to the
+  // store once per gesture on pointer-up, so undo sees a single entry.
+  const [dragOffset, setDragOffset] = useState<number | null>(null)
+  const dragPointerId = useRef<number | null>(null)
+  const dragMoved = useRef(false)
+  const { screenToFlowPosition } = useReactFlow()
   const {
     edgeEncoding,
     curveStyle,
@@ -31,6 +43,7 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
     isItemSelected,
     selectedNodeId,
     dimUnconnectedOnSelect,
+    onEdgeCurveOffsetChange,
   } = useGraphDisplay()
 
   const sourceNode = useStore((s) => s.nodeLookup.get(source))
@@ -60,7 +73,8 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
   const tcx = targetNode.internals.positionAbsolute.x + tw / 2
   const tcy = flowNodeCenterY(targetNode)
 
-  const curveOffset = data?.curveOffset ?? 1
+  const storedOffset = data?.curveOffset ?? 1
+  const renderOffset = dragOffset ?? storedOffset
 
   const pad = 6
   const { a, b } = (() => {
@@ -70,7 +84,7 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
         b: rectExit(tcx, tcy, tw + pad * 2, th + pad * 2, scx, scy),
       }
     }
-    const { cpx, cpy } = arcControlPoint(scx, scy, tcx, tcy, data?.siblingIdx ?? 0, curveOffset)
+    const { cpx, cpy } = arcControlPoint(scx, scy, tcx, tcy, data?.siblingIdx ?? 0, renderOffset)
     return {
       a: rectExit(scx, scy, sw + pad * 2, sh + pad * 2, cpx, cpy),
       b: rectExit(tcx, tcy, tw + pad * 2, th + pad * 2, cpx, cpy),
@@ -84,7 +98,7 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
     b.y,
     data?.siblingIdx ?? 0,
     straight,
-    curveOffset,
+    renderOffset,
   )
 
   const arrowSize = 7
@@ -105,6 +119,25 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
     isConnected,
     hasSelection,
   })
+
+  const editable = onEdgeCurveOffsetChange !== undefined
+  const showHandle = editable && !straight && (isSelected || hovered)
+
+  // Unit normal of the chord (same convention as arcControlPoint): the label
+  // chip is nudged along it while the handle is visible so the handle can sit
+  // exactly on the curve apex without covering the text.
+  const chordDx = b.x - a.x
+  const chordDy = b.y - a.y
+  const chordLen = Math.sqrt(chordDx * chordDx + chordDy * chordDy) || 1
+  const nx = -chordDy / chordLen
+  const ny = chordDx / chordLen
+  const textX = showHandle ? labelX + nx * 14 : labelX
+  const textY = showHandle ? labelY + ny * 14 : labelY
+
+  function offsetAt(clientX: number, clientY: number): number {
+    const p = screenToFlowPosition({ x: clientX, y: clientY })
+    return curveOffsetForPointer(p.x, p.y, a.x, a.y, b.x, b.y, renderOffset)
+  }
 
   return (
     <g
@@ -133,8 +166,8 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
 
       {showLabel && (
         <foreignObject
-          x={labelX - 60}
-          y={labelY - 10}
+          x={textX - 60}
+          y={textY - 10}
           width={120}
           height={20}
           style={{ overflow: 'visible', pointerEvents: 'none' }}
@@ -156,6 +189,66 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
             <span style={{ opacity: dimmed ? op : 1 }}>{label}</span>
           </div>
         </foreignObject>
+      )}
+
+      {showHandle && (
+        <g>
+          <circle
+            cx={labelX}
+            cy={labelY}
+            r={7}
+            fill="var(--paper)"
+            stroke="var(--accent)"
+            strokeWidth={1.5}
+            data-testid={`curve-handle-${id}`}
+            style={{
+              cursor: dragOffset !== null ? 'grabbing' : 'grab',
+              pointerEvents: 'all',
+              touchAction: 'none',
+            }}
+            onPointerDown={(e) => {
+              if (e.button !== 0 || dragPointerId.current !== null) return
+              // Keep the gesture on the handle: React Flow must not start a
+              // pane pan or node drag from these events.
+              e.stopPropagation()
+              e.currentTarget.setPointerCapture(e.pointerId)
+              dragPointerId.current = e.pointerId
+              dragMoved.current = false
+              setDragOffset(offsetAt(e.clientX, e.clientY))
+            }}
+            onPointerMove={(e) => {
+              if (dragPointerId.current !== e.pointerId) return
+              dragMoved.current = true
+              setDragOffset(offsetAt(e.clientX, e.clientY))
+            }}
+            onPointerUp={(e) => {
+              if (dragPointerId.current !== e.pointerId) return
+              dragPointerId.current = null
+              const moved = dragMoved.current
+              setDragOffset(null)
+              // A plain click only previews; the store (and its history)
+              // sees one commit per real drag.
+              if (moved) onEdgeCurveOffsetChange?.(id, offsetAt(e.clientX, e.clientY))
+            }}
+            onPointerCancel={() => {
+              dragPointerId.current = null
+              setDragOffset(null)
+            }}
+            onDoubleClick={(e) => {
+              e.stopPropagation()
+              dragPointerId.current = null
+              setDragOffset(null)
+              onEdgeCurveOffsetChange?.(id, undefined)
+            }}
+          />
+          <circle
+            cx={labelX}
+            cy={labelY}
+            r={2}
+            fill="var(--accent)"
+            style={{ pointerEvents: 'none' }}
+          />
+        </g>
       )}
     </g>
   )

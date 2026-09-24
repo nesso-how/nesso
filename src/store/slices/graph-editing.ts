@@ -5,6 +5,7 @@ import type { StateCreator } from 'zustand'
 import {
   defaultConceptReviewFields,
   type ConceptNodeData,
+  type NessoEdgeData,
   type NotesDocument,
   type RelationTypeName,
 } from '@/types/graph'
@@ -18,6 +19,7 @@ import {
   type GraphClipboard,
 } from '@/lib/graphClipboard'
 import { locales } from '@/i18n/registry'
+import { clampCurveOffset } from '@nesso-how/graph'
 import { newElementId } from '@nesso-how/vocab-learning'
 import { track } from '@/telemetry'
 import type { GraphSnapshot } from '../types'
@@ -193,6 +195,7 @@ export interface GraphEditingSlice {
   addNode: (x?: number, y?: number) => string
   addEdge: (source: string, target: string, type: RelationTypeName) => string
   updateEdgeType: (id: string, type: RelationTypeName) => void
+  setEdgeCurveOffset: (id: string, offset: number | undefined) => void
   deleteEdge: (id: string) => void
   setSelected: (sel: import('../types').Selection) => void
   syncFlowSelection: (nodeIds: string[], edgeIds: string[]) => void
@@ -421,6 +424,21 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
     set((s) => ({
       ...pushHistory(s),
       edges: s.edges.map((e) => (e.id === id ? { ...e, data: { ...e.data, type } } : e)),
+    })),
+
+  setEdgeCurveOffset: (id, offset) =>
+    set((s) => ({
+      ...pushHistory(s),
+      edges: s.edges.map((e) => {
+        if (e.id !== id) return e
+        const data = { ...(e.data as NessoEdgeData) }
+        // The drag commits once per gesture, so one history entry covers the
+        // whole drag. Near-default offsets drop the key to keep saves clean.
+        if (offset === undefined || !Number.isFinite(offset) || Math.abs(offset - 1) < 0.005)
+          delete data.curveOffset
+        else data.curveOffset = Math.round(clampCurveOffset(offset) * 100) / 100
+        return { ...e, data }
+      }),
     })),
 
   deleteEdge: (id) => {

@@ -48,6 +48,34 @@ export function clampCurveOffset(offset: number): number {
   return Math.min(CURVE_OFFSET_LIMIT, Math.max(-CURVE_OFFSET_LIMIT, offset))
 }
 
+/**
+ * Inverse of the arc bow for pointer dragging: given a pointer position in
+ * flow coordinates and the edge chord, return the signed offset that would
+ * place the curve apex under the pointer. The apex sits halfway between chord
+ * and control point, hence the factor of 2. A pointer on the chord flattens
+ * the arc (0); far pointers clamp to the limit window.
+ */
+export function curveOffsetForPointer(
+  px: number,
+  py: number,
+  ax: number,
+  ay: number,
+  bx: number,
+  by: number,
+  fallback = 1,
+): number {
+  const dx = bx - ax
+  const dy = by - ay
+  const dist = Math.sqrt(dx * dx + dy * dy)
+  const defaultBend = Math.min(dist * 0.22, 90)
+  if (!(defaultBend > 0)) return fallback
+  const nx = -dy / dist
+  const ny = dx / dist
+  const mx = (ax + bx) / 2
+  const my = (ay + by) / 2
+  return clampCurveOffset((2 * ((px - mx) * nx + (py - my) * ny)) / defaultBend)
+}
+
 /** Quadratic-curve control point shared by edge rendering and the connection line. */
 export function arcControlPoint(
   sx: number,

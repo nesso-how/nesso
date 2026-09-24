@@ -125,6 +125,13 @@ export interface NessoGraphProps {
   onNodeClick?: (id: string, data: ConceptNodeData) => void
   onEdgeClick?: (id: string, data: NessoEdgeData) => void
 
+  /**
+   * Curve-drag commit callback. When defined, arc edges expose a midpoint
+   * drag handle while selected or hovered; a committed offset (or undefined
+   * when back at the default bow) arrives here. Absent = read-only rendering.
+   */
+  onEdgeCurveOffsetChange?: (id: string, offset: number | undefined) => void
+
   // Viewport.
   fitView?: boolean
   defaultViewport?: Viewport
@@ -156,6 +163,7 @@ export function NessoGraph({
   getRelationLabel,
   isItemSelected,
   selectedNodeId,
+  onEdgeCurveOffsetChange,
   nodeTypes = DEFAULT_NODE_TYPES,
   edgeTypes = DEFAULT_EDGE_TYPES,
   nodesDraggable = false,
@@ -226,6 +234,7 @@ export function NessoGraph({
       getRelationLabel,
       isItemSelected,
       selectedNodeId,
+      onEdgeCurveOffsetChange,
     }),
     [
       display,
@@ -235,6 +244,7 @@ export function NessoGraph({
       getRelationLabel,
       isItemSelected,
       selectedNodeId,
+      onEdgeCurveOffsetChange,
     ],
   )
 

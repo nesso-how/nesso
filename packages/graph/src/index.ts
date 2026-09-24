@@ -25,6 +25,7 @@ export { ratingColor } from './ratingColor.js'
 export {
   arcControlPoint,
   clampCurveOffset,
+  curveOffsetForPointer,
   CURVE_OFFSET_LIMIT,
   nodeCenterX,
   nodeCenterY,

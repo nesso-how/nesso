@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   arcControlPoint,
   clampCurveOffset,
+  curveOffsetForPointer,
   CURVE_OFFSET_LIMIT,
   nessoArcPath,
   nodeCenterX,
@@ -69,6 +70,30 @@ describe('arcControlPoint', () => {
     expect(clampCurveOffset(1.5)).toBe(1.5)
     expect(clampCurveOffset(Number.NaN)).toBe(1)
     expect(clampCurveOffset(Number.POSITIVE_INFINITY)).toBe(1)
+  })
+})
+
+describe('curveOffsetForPointer', () => {
+  // Horizontal chord (0,0) -> (100,0): normal points down (+y), default bend 22.
+  it('maps a pointer on the default-bow apex back to +1', () => {
+    expect(curveOffsetForPointer(50, 11, 0, 0, 100, 0)).toBeCloseTo(1, 1)
+  })
+
+  it('mirrors the offset across the chord', () => {
+    expect(curveOffsetForPointer(50, -11, 0, 0, 100, 0)).toBeCloseTo(-1, 1)
+  })
+
+  it('returns 0 for a pointer on the chord (flatten gesture)', () => {
+    expect(curveOffsetForPointer(50, 0, 0, 0, 100, 0)).toBe(0)
+  })
+
+  it('clamps far pointers to the ±3 window', () => {
+    expect(curveOffsetForPointer(50, 500, 0, 0, 100, 0)).toBe(3)
+    expect(curveOffsetForPointer(50, -500, 0, 0, 100, 0)).toBe(-3)
+  })
+
+  it('falls back to the current offset for a degenerate chord', () => {
+    expect(curveOffsetForPointer(5, 5, 10, 10, 10, 10, -1)).toBe(-1)
   })
 })
 

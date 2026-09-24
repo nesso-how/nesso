@@ -47,6 +47,7 @@ export function GraphCanvas({
   const edges = useGraphStore((s) => s.edges)
   const onNodesChange = useGraphStore((s) => s.onNodesChange)
   const onEdgesChange = useGraphStore((s) => s.onEdgesChange)
+  const setEdgeCurveOffset = useGraphStore((s) => s.setEdgeCurveOffset)
   const addNode = useGraphStore((s) => s.addNode)
   const clearEditNodeId = useGraphStore((s) => s.clearEditNodeId)
   const syncFlowSelection = useGraphStore((s) => s.syncFlowSelection)
@@ -202,6 +203,7 @@ export function GraphCanvas({
         onConnectEnd={onConnectEnd}
         onSelectionChange={onSelectionChange}
         onMoveEnd={persistViewportOnMoveEnd}
+        onEdgeCurveOffsetChange={setEdgeCurveOffset}
         reactFlowProps={{
           zoomOnDoubleClick: false,
           connectionMode: ConnectionMode.Loose,

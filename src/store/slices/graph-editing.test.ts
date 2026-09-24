@@ -544,6 +544,71 @@ describe('updateEdgeType', () => {
   })
 })
 
+describe('setEdgeCurveOffset', () => {
+  function edgeStore() {
+    const s = makeStore()
+    const a = s.getState().addNode(0, 0)
+    const b = s.getState().addNode(100, 0)
+    const id = s.getState().addEdge(a, b, 'causes')
+    return { s, id }
+  }
+
+  it('stores a dragged offset on the edge data', () => {
+    const { s, id } = edgeStore()
+    s.getState().setEdgeCurveOffset(id, -1.5)
+    expect(s.getState().edges.find((e) => e.id === id)?.data?.curveOffset).toBe(-1.5)
+  })
+
+  it('clamps out-of-range offsets to the ±3 window', () => {
+    const { s, id } = edgeStore()
+    s.getState().setEdgeCurveOffset(id, 10)
+    expect(s.getState().edges.find((e) => e.id === id)?.data?.curveOffset).toBe(3)
+    s.getState().setEdgeCurveOffset(id, -10)
+    expect(s.getState().edges.find((e) => e.id === id)?.data?.curveOffset).toBe(-3)
+  })
+
+  it('rounds to two decimals so saves stay clean', () => {
+    const { s, id } = edgeStore()
+    s.getState().setEdgeCurveOffset(id, 1.234)
+    expect(s.getState().edges.find((e) => e.id === id)?.data?.curveOffset).toBe(1.23)
+  })
+
+  it('drops the key for undefined and near-default offsets', () => {
+    const { s, id } = edgeStore()
+    s.getState().setEdgeCurveOffset(id, -2)
+    s.getState().setEdgeCurveOffset(id, undefined)
+    expect('curveOffset' in (s.getState().edges.find((e) => e.id === id)?.data ?? {})).toBe(false)
+    s.getState().setEdgeCurveOffset(id, -2)
+    s.getState().setEdgeCurveOffset(id, 1.002)
+    expect('curveOffset' in (s.getState().edges.find((e) => e.id === id)?.data ?? {})).toBe(false)
+  })
+
+  it('drops the key for non-finite offsets', () => {
+    const { s, id } = edgeStore()
+    s.getState().setEdgeCurveOffset(id, -2)
+    s.getState().setEdgeCurveOffset(id, Number.NaN)
+    expect('curveOffset' in (s.getState().edges.find((e) => e.id === id)?.data ?? {})).toBe(false)
+  })
+
+  it('pushes one history entry per committed drag, restorable with undo', () => {
+    const { s, id } = edgeStore()
+    s.getState().setEdgeCurveOffset(id, -1.5)
+    expect(s.getState().edges.find((e) => e.id === id)?.data?.curveOffset).toBe(-1.5)
+    s.getState().undo()
+    expect('curveOffset' in (s.getState().edges.find((e) => e.id === id)?.data ?? {})).toBe(false)
+  })
+
+  it('leaves other edges untouched', () => {
+    const s = makeStore()
+    const a = s.getState().addNode(0, 0)
+    const b = s.getState().addNode(100, 0)
+    const e1 = s.getState().addEdge(a, b, 'causes')
+    const e2 = s.getState().addEdge(b, a, 'requires')
+    s.getState().setEdgeCurveOffset(e1, -1.5)
+    expect(s.getState().edges.find((e) => e.id === e2)?.data?.curveOffset).toBeUndefined()
+  })
+})
+
 describe('setSelected', () => {
   it('marks the node selected, deselects others, and fills selectedIds', () => {
     const s = makeStore()
