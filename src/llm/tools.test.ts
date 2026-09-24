@@ -14,6 +14,7 @@ import {
   inspectRelation,
   listNeighbors,
   PREVIEW_MAX_CHARS,
+  TITLE_MAX_CHARS,
   searchConcepts,
   createMentorTools,
 } from './tools'
@@ -382,18 +383,18 @@ describe('user-authored tool output', () => {
 
     const overview = getGraphOverview(state)
     expectBounded(overview.concepts[0].id, 200)
-    expectBounded(overview.concepts[0].title, PREVIEW_MAX_CHARS)
+    expectBounded(overview.concepts[0].title, TITLE_MAX_CHARS)
 
     const search = searchConcepts(state, oversized)
     expectBounded(search.query, 200)
     expectBounded(search.matches[0].id, 200)
-    expectBounded(search.matches[0].title, PREVIEW_MAX_CHARS)
+    expectBounded(search.matches[0].title, TITLE_MAX_CHARS)
     expectBounded(search.matches[0].definitionPreview.text, PREVIEW_MAX_CHARS)
 
     const conceptResult = inspectConcept(state, oversized)
     if (!conceptResult.found) throw new Error('expected concept to be found')
     expectBounded(conceptResult.id, 200)
-    expectBounded(conceptResult.title, PREVIEW_MAX_CHARS)
+    expectBounded(conceptResult.title, TITLE_MAX_CHARS)
     expectBounded(conceptResult.definition.text, 1_200)
 
     const relationResult = inspectRelation(state, oversized)
@@ -407,10 +408,10 @@ describe('user-authored tool output', () => {
       throw new Error('expected relation endpoints to be found')
     }
     expectBounded(relationResult.source.id, 200)
-    expectBounded(relationResult.source.title, PREVIEW_MAX_CHARS)
+    expectBounded(relationResult.source.title, TITLE_MAX_CHARS)
     expectBounded(relationResult.source.definitionPreview.text, PREVIEW_MAX_CHARS)
     expectBounded(relationResult.target.id, 200)
-    expectBounded(relationResult.target.title, PREVIEW_MAX_CHARS)
+    expectBounded(relationResult.target.title, TITLE_MAX_CHARS)
     expectBounded(relationResult.target.definitionPreview.text, PREVIEW_MAX_CHARS)
 
     const neighbors = listNeighbors(state, oversized)
@@ -545,6 +546,63 @@ describe('inspectConcept notes', () => {
     if (!result.found) throw new Error('expected found')
     expect(result.notes).toEqual({ text: '', truncated: false })
   })
+
+  it('raises the notes bound via notesLimit up to the 16,000 cap', () => {
+    const longText = 'n'.repeat(17_000)
+    const notes: NotesDocument = {
+      type: 'doc',
+      content: [{ type: 'paragraph', content: [{ type: 'text', text: longText }] }],
+    }
+    const node = concept('n-long', 'Long', { elaboration: { definition: 'd', notes } })
+    const state = graph([node])
+    const capped = inspectConcept(state, 'n-long', 1_000, 99_999)
+    if (!capped.found) throw new Error('expected found')
+    expect(capped.notes.text.length).toBeLessThanOrEqual(16_000)
+    expect(capped.notes.truncated).toBe(true)
+    const full = inspectConcept(state, 'n-long', 1_000, 16_000)
+    if (!full.found) throw new Error('expected found')
+    expect(full.notes.text.length).toBeGreaterThan(1_200)
+    expect(full.notes.truncated).toBe(true)
+  })
+
+  it('clamps out-of-range notes limits to the default, one, or the cap', () => {
+    const longText = 'n'.repeat(2_000)
+    const notes: NotesDocument = {
+      type: 'doc',
+      content: [{ type: 'paragraph', content: [{ type: 'text', text: longText }] }],
+    }
+    const node = concept('n-clamp', 'Clamp', { elaboration: { definition: 'd', notes } })
+    const state = graph([node])
+    const fallback = inspectConcept(state, 'n-clamp', 1_000, Number.NaN)
+    if (!fallback.found) throw new Error('expected found')
+    expect(fallback.notes.text.length).toBeLessThanOrEqual(1_200)
+    const invalid = inspectConcept(state, 'n-clamp', 1_000, 'abc' as unknown as number)
+    if (!invalid.found) throw new Error('expected found')
+    expect(invalid.notes.text.length).toBeLessThanOrEqual(1_200)
+    const infinite = inspectConcept(state, 'n-clamp', 1_000, Number.POSITIVE_INFINITY)
+    if (!infinite.found) throw new Error('expected found')
+    expect(infinite.notes.text.length).toBeLessThanOrEqual(1_200)
+    const floored = inspectConcept(state, 'n-clamp', 1_000, 2.9)
+    if (!floored.found) throw new Error('expected found')
+    expect(floored.notes.text.length).toBeLessThanOrEqual(2)
+    const min = inspectConcept(state, 'n-clamp', 1_000, 0)
+    if (!min.found) throw new Error('expected found')
+    expect(min.notes.text.length).toBeLessThanOrEqual(1)
+    const negative = inspectConcept(state, 'n-clamp', 1_000, -5)
+    if (!negative.found) throw new Error('expected found')
+    expect(negative.notes.text.length).toBeLessThanOrEqual(1)
+  })
+
+  it('caps concept titles at 120 characters across graph tools', () => {
+    const longTitle = 't'.repeat(150)
+    const state = graph([concept('n-title', longTitle)])
+    const overview = getGraphOverview(state, 1_000)
+    expect(overview.concepts[0]!.title.length).toBeLessThanOrEqual(120)
+    expect(overview.concepts[0]!.title.endsWith('…')).toBe(true)
+    const inspected = inspectConcept(state, 'n-title')
+    if (!inspected.found) throw new Error('expected found')
+    expect(inspected.title.length).toBeLessThanOrEqual(120)
+  })
 })
 
 describe('inspectRelation', () => {
@@ -646,7 +704,7 @@ describe('listNeighbors', () => {
   })
 
   it('bounds repeated endpoint titles in relation results', () => {
-    const longTitle = 'title '.repeat(PREVIEW_MAX_CHARS)
+    const longTitle = 'title '.repeat(TITLE_MAX_CHARS)
     const result = listNeighbors(
       graph([concept('a', longTitle), concept('b', longTitle)], [relation('e-1', 'a', 'b')]),
       'a',
@@ -659,10 +717,10 @@ describe('listNeighbors', () => {
         relationResult.target.found &&
         relationResult.neighbor.found
       ) {
-        expect(relationResult.source.title).toHaveLength(PREVIEW_MAX_CHARS)
+        expect(relationResult.source.title).toHaveLength(TITLE_MAX_CHARS)
         expect(relationResult.source.title.endsWith('…')).toBe(true)
-        expect(relationResult.target.title).toHaveLength(PREVIEW_MAX_CHARS)
-        expect(relationResult.neighbor.title).toHaveLength(PREVIEW_MAX_CHARS)
+        expect(relationResult.target.title).toHaveLength(TITLE_MAX_CHARS)
+        expect(relationResult.neighbor.title).toHaveLength(TITLE_MAX_CHARS)
       }
     }
   })
@@ -778,7 +836,7 @@ describe('createMentorTools', () => {
   const fsrsPriorityRule =
     'Lower stability and Again or Hard suggest weaker recall, while isDue is a scheduling cue rather than proof of conceptual misunderstanding.'
   const overviewDescription = `Read graph counts and up to twenty-five concepts in weakest-first order by default; pass limit up to 500 to read more, where omitted 0 means the whole graph. Unreviewed concepts come first; among reviewed concepts, ${fsrsPriorityRule} Never modifies the graph.`
-  const inspectConceptDescription = `Read one concept, its bounded definition, and FSRS memory state by stable id. stability is estimated recall strength in days; difficulty is learned recall difficulty; state is New, Learning, Review, or Relearning; lastRating is Again, Hard, Good, or Easy; isDue reports whether review is scheduled now. ${fsrsPriorityRule} Never modifies the graph. notes is the flattened concept notes capped at 1,200 characters.`
+  const inspectConceptDescription = `Read one concept, its bounded definition, and FSRS memory state by stable id. stability is estimated recall strength in days; difficulty is learned recall difficulty; state is New, Learning, Review, or Relearning; lastRating is Again, Hard, Good, or Easy; isDue reports whether review is scheduled now. ${fsrsPriorityRule} Never modifies the graph. notes is the flattened concept notes capped at 1,200 characters by default, raisable to 16,000 via notesLimit.`
 
   it('pins weakest-first and FSRS semantics in the two memory-aware tool descriptions', () => {
     const tools = createMentorTools(() => graph([]))
@@ -838,6 +896,13 @@ describe('createMentorTools', () => {
         query: { type: 'string', minLength: 1, maxLength: 200 },
         limit: { type: 'integer', minimum: 1, maximum: 500 },
       },
+    })
+    expect(asSchema(tools.inspectConcept.inputSchema).jsonSchema).toMatchObject({
+      properties: {
+        id: { type: 'string', minLength: 1, maxLength: 200 },
+        notesLimit: { type: 'integer', minimum: 1, maximum: 16000 },
+      },
+      required: ['id'],
     })
   })
 })

@@ -4,6 +4,7 @@ import type { Edge, Node } from '@xyflow/react'
 import type { RelationTypeName } from '@nesso-how/vocab-learning'
 import type { ConceptNodeData } from '@/types/graph'
 import { RELATION_TYPES, RELATION_CATEGORY_COLORS, asRelationTypeName } from '@/data/relationTypes'
+import { CONCEPT_TITLE_MAX_LENGTH, CONCEPT_DEFINITION_MAX_LENGTH } from '@/data/conceptBounds'
 import { withDefinition } from '@/lib/elaboration'
 import { useGraphStore, selectedNodeSelector } from '@/store'
 import { useShallow } from 'zustand/react/shallow'
@@ -384,7 +385,7 @@ function ElaborationSection({ node }: { node: Node<ConceptNodeData> }) {
               onSave={(v) => patch(v)}
               multiline
               noEditBorder
-              maxLength={2000}
+              maxLength={CONCEPT_DEFINITION_MAX_LENGTH}
               /* Matches the inline notes surface: display font, ink text,
                  normal leading, no padding. Empty text uses the shared ink-5 hint. */
               textStyle={{
@@ -476,7 +477,7 @@ export function NodeInspector({
             placeholder="Untitled"
             multiline
             noEditBorder
-            maxLength={120}
+            maxLength={CONCEPT_TITLE_MAX_LENGTH}
             onSave={(v) => {
               if (v.trim()) updateNodeData(node.id, { text: v.trim().replace(/\n+/g, ' ') })
             }}

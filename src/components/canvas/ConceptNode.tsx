@@ -5,6 +5,7 @@ import type { Node } from '@xyflow/react'
 import { ConceptNodeBody, useGraphDisplay } from '@nesso-how/graph'
 import type { ConceptNodeData } from '@/types/graph'
 import { CONCEPT_HANDLE_IN, CONCEPT_HANDLE_OUT } from '@/data/conceptHandles'
+import { CONCEPT_TITLE_MAX_LENGTH } from '@/data/conceptBounds'
 import { isOnboardingStep } from '@/components/onboarding/onboardingSteps'
 import { useGraphStore } from '@/store'
 
@@ -197,6 +198,7 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
               ref={inputRef}
               className="nodrag nopan"
               value={draft}
+              maxLength={CONCEPT_TITLE_MAX_LENGTH}
               onChange={(e) => setDraft(e.target.value)}
               onBlur={(e) => {
                 if (skipBlurCommit.current) {
