@@ -88,7 +88,7 @@ export function WritingMode({ nodeId, onClose }: Props) {
         bottom: 0,
         left: 0,
         zIndex: 70,
-        background: 'color-mix(in srgb, var(--ink) 55%, transparent)',
+        background: 'rgba(20, 18, 14, 0.55)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
