@@ -22,7 +22,7 @@ Drag from either visible connection dot on a node to another node. The node wher
 - The connection line previews with the same quadratic geometry the final edge uses.
 - Edge type can be changed any time from the Inspector when an edge is selected.
 
-See the [relation types reference](../../reference/relation-types/) for the full list, semantic meaning, and type properties. Each type has a category colour and an SVG glyph, both defined in `@nesso-how/vocab-learning`. Edge encoding density is under [Display options](#display-options-sidebar) below.
+See the [relation types reference](../../reference/relation-types/) for the full list, semantic meaning, and type properties. Each type has a category colour, defined in `@nesso-how/vocab-learning`. Edge encoding density is under [Display options](#display-options-sidebar) below.
 
 ## Selecting and editing
 
@@ -43,7 +43,7 @@ The Inspector docks on the **right**, full height between the top bar and the st
 When a concept is selected it shows, top to bottom:
 
 - **Memory** _(collapsible):_ the FSRS schedule, read-only: when due, stability (in days), last self-rating, review count (with lapses), and time since the last review.
-- **Relations** _(collapsible):_ outgoing and incoming edges, each connected concept shown with the relation glyph in a chip and the type on the right (incoming dimmed). Click a row to jump to that concept. Change a relation's type by selecting the edge.
+- **Relations** _(collapsible):_ outgoing and incoming edges, each connected concept shown with the relation type coloured by category (incoming dimmed). Click a row to jump to that concept. Change a relation's type by selecting the edge.
 - **Elaboration** _(collapsible):_ an editable description above an inline notes editor. Empty notes show a hint before you click. Use **Open note** to switch to [Writing Mode](../../guides/writing-mode/) for longer writing.
 
 When an edge is selected, the Inspector shows the relation as a chip with its category colour and a dropdown of every relation type. Picking a new type updates the edge in place. The graph keeps its endpoints and identity.
