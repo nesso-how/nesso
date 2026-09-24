@@ -17,6 +17,7 @@ describe('buildSnippets', () => {
       'ordered-list',
       'blockquote',
       'divider',
+      'code',
     ])
     for (const s of snippets) {
       expect(typeof s.label).toBe('string')
@@ -39,6 +40,7 @@ describe('buildSnippets', () => {
       'ordered-list': ['focus', 'toggleOrderedList', 'run'],
       blockquote: ['focus', 'toggleBlockquote', 'run'],
       divider: ['focus', 'setHorizontalRule', 'run'],
+      code: ['focus', 'toggleCodeBlock', 'run'],
     }
     const editor = new Editor({
       element: document.createElement('div'),

@@ -61,5 +61,12 @@ export function buildSnippets(t: SnippetStrings): SnippetDefinition[] {
       icon: 'M3 12h18',
       command: (e) => e.chain().focus().setHorizontalRule().run(),
     },
+    {
+      id: 'code',
+      label: t.code,
+      description: t.codeDesc,
+      icon: 'M8 6l-6 6 6 6M16 6l6 6-6 6',
+      command: (e) => e.chain().focus().toggleCodeBlock().run(),
+    },
   ]
 }

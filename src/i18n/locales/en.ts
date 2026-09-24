@@ -151,6 +151,8 @@ const en = {
       blockquoteDesc: 'Quoted block',
       divider: 'Divider',
       dividerDesc: 'Horizontal rule',
+      code: 'Code',
+      codeDesc: 'Code block',
     },
   },
   inspector: {

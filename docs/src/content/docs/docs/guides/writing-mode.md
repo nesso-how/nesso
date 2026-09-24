@@ -28,6 +28,7 @@ way you expect. Type `/` on an empty spot to open the snippet menu:
 - **Bullet list / Numbered list**
 - **Quote**
 - **Divider**
+- **Code**: a code block
 
 Valid edits are committed immediately to the graph and then persisted by the
 graph's existing autosave. While Writing Mode is open, canvas shortcuts
