@@ -361,10 +361,16 @@ body::before {
 .writing-editor .ProseMirror {
   outline: none;
   font-family: var(--font-display);
-  font-size: var(--text-base);
+  font-size: var(--text-lg);
   line-height: var(--leading-normal);
   color: var(--ink);
   min-height: 40vh;
+}
+
+/* Inspector inline notes: compact variant of the dialog writing surface. */
+.inspector-notes-inline .ProseMirror {
+  min-height: 0;
+  font-size: 14px;
 }
 
 .writing-editor .ProseMirror p {
@@ -374,7 +380,8 @@ body::before {
 .writing-editor .ProseMirror h2,
 .writing-editor .ProseMirror h3 {
   font-family: var(--font-display);
-  margin: 1.2em 0 0.5em;
+  /* Headings carry no top margin; spacing above comes from the previous block. */
+  margin: 0 0 0.5em;
 }
 
 .writing-editor .ProseMirror ul,
@@ -407,27 +414,6 @@ body::before {
   font-family: var(--font-mono);
 }
 
-.writing-callout {
-  background: var(--paper-deep);
-  padding: 10px 14px;
-  border-radius: var(--radius-md);
-  margin: 0 0 0.9em;
-}
-
-.writing-example {
-  border: 0.5px dashed var(--line-strong);
-  padding: 10px 14px;
-  border-radius: var(--radius-md);
-  margin: 0 0 0.9em;
-}
-
-/* The last inner block carries a 0.9em bottom margin that stacks with the box
-   padding, making the bottom visually heavier than the top. Extra specificity
-   (.writing-editor prefix) is required to beat `.writing-editor .ProseMirror p`. */
-.writing-editor .writing-example > :last-child {
-  margin-bottom: 0;
-}
-
 .writing-editor .ProseMirror hr {
   border: none;
   border-top: 1px solid var(--line-strong);
@@ -436,7 +422,7 @@ body::before {
 
 .writing-editor .ProseMirror p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
-  color: var(--ink-4);
+  color: var(--ink-5);
   float: left;
   height: 0;
   pointer-events: none;

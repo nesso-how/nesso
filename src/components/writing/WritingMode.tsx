@@ -88,7 +88,7 @@ export function WritingMode({ nodeId, onClose }: Props) {
         bottom: 0,
         left: 0,
         zIndex: 70,
-        background: 'color-mix(in srgb, var(--ink) 55%, transparent)',
+        background: 'rgba(20, 18, 14, 0.55)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -166,7 +166,7 @@ export function WritingMode({ nodeId, onClose }: Props) {
                   data-testid="writing-mode-definition"
                   style={{
                     marginTop: 'var(--space-5)',
-                    fontSize: '14.5px',
+                    fontSize: 'var(--text-lg)',
                     fontWeight: 400,
                     lineHeight: 1.55,
                     fontFamily: 'var(--font-display)',

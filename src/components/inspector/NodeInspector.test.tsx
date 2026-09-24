@@ -42,6 +42,7 @@ beforeEach(() => {
     nodes: [conceptNode()],
     edges: [],
     selected: { kind: 'node', id: 'n1' },
+    writingModeNodeId: null,
     settings: {
       ...useGraphStore.getState().settings,
       inspectorMemoryOpen: false,
@@ -62,24 +63,27 @@ afterEach(() => {
   container = null
 })
 
-describe('NodeInspector notes action', () => {
-  it('renders a full-width themed Write button', async () => {
+describe('NodeInspector elaboration section', () => {
+  it('renders the elaboration section with inline editor, toggle, and themed Open note button', async () => {
     await act(async () => {
       root?.render(<NodeInspector panelWidth={320} onPanelWidthChange={vi.fn()} />)
     })
 
-    const section = container?.querySelector('[data-testid="inspector-notes-section"]')
-    if (!section) throw new Error('notes section not rendered')
-    expect(section.children).toHaveLength(1)
+    const section = container?.querySelector('[data-testid="inspector-elaboration-section"]')
+    if (!section) throw new Error('elaboration section not rendered')
+
+    const inline = section.querySelector('[data-testid="inspector-notes-inline"]')
+    if (!inline) throw new Error('inline notes editor not rendered')
+    expect(inline.querySelector('.ProseMirror')).not.toBeNull()
 
     const button = section.querySelector<HTMLButtonElement>('[data-testid="inspector-notes-write"]')
-    if (!button) throw new Error('write button not rendered')
-    expect(button.textContent).toBe(en.inspector.notes.write)
+    if (!button) throw new Error('open note button not rendered')
+    expect(button.textContent).toBe(en.inspector.notes.openNote)
     expect(button.style.width).toBe('100%')
     expect(button.style.borderRadius).toBe('var(--radius-sm)')
     expect(button.style.border).toBe('0.5px solid var(--line)')
     expect(button.style.padding).toBe('var(--space-2) var(--space-5)')
-    expect(button.style.fontSize).toBe('var(--text-sm)')
+    expect(button.style.fontSize).toBe('12.5px')
     expect(button.style.fontWeight).toBe('var(--font-weight-medium)')
     expect(button.style.fontFamily).toBe('var(--font-sans)')
 
@@ -89,5 +93,33 @@ describe('NodeInspector notes action', () => {
       button.click()
     })
     expect(useGraphStore.getState().writingModeNodeId).toBe('n1')
+    // Exactly one live editor: the inline instance unmounts while the dialog is open.
+    expect(section.querySelector('[data-testid="inspector-notes-inline"]')).toBeNull()
+  })
+
+  it('collapses and expands through a persisted settings toggle', async () => {
+    await act(async () => {
+      root?.render(<NodeInspector panelWidth={320} onPanelWidthChange={vi.fn()} />)
+    })
+    const section = container?.querySelector('[data-testid="inspector-elaboration-section"]')
+    if (!section) throw new Error('elaboration section not rendered')
+
+    const header = section.querySelector<HTMLButtonElement>(':scope > button')
+    if (!header) throw new Error('elaboration header not rendered')
+    expect(header.textContent).toContain(en.inspector.notes.elaboration)
+
+    // Collapsed: body unmounts (inline editor gone), setting persists.
+    await act(async () => {
+      header.click()
+    })
+    expect(useGraphStore.getState().settings.inspectorElaborationOpen).toBe(false)
+    expect(section.querySelector('[data-testid="inspector-notes-inline"]')).toBeNull()
+
+    // Expanded again: body returns.
+    await act(async () => {
+      header.click()
+    })
+    expect(useGraphStore.getState().settings.inspectorElaborationOpen).toBe(true)
+    expect(section.querySelector('[data-testid="inspector-notes-inline"]')).not.toBeNull()
   })
 })

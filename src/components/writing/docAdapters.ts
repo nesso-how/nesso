@@ -99,6 +99,10 @@ function emptyParagraph(): JSONContent {
   return { type: 'paragraph' }
 }
 
+function emptyEditableDoc(): JSONContent {
+  return { type: 'doc', content: [emptyParagraph()] }
+}
+
 function normalizeInlineChildren(node: JSONContent): JSONContent[] {
   return joinInlinePieces(
     childrenOf(node).map((child) => ({
@@ -233,8 +237,6 @@ const BLOCK_NORMALIZERS = Object.assign(Object.create(null) as Record<string, Bl
   paragraph: normalizeParagraphBlock,
   heading: normalizeHeadingBlock,
   blockquote: normalizeContainerBlock,
-  callout: normalizeContainerBlock,
-  example: normalizeContainerBlock,
   bulletList: normalizeListBlock,
   orderedList: normalizeListBlock,
   listItem: normalizeLooseListItemBlock,
@@ -251,11 +253,15 @@ function normalizeBlock(node: JSONContent): JSONContent[] {
 
 /** Prepare persisted notes for the editor: unknown blocks become paragraphs. */
 export function toEditableDoc(notes: NotesDocument | undefined): JSONContent {
-  if (notes === undefined || !isValidNotesDocument(notes)) return { type: 'doc', content: [] }
+  if (notes === undefined || !isValidNotesDocument(notes)) return emptyEditableDoc()
   const source = notes as unknown as JSONContent
   const [doc] = normalizeBlock(source)
-  if (doc === undefined || doc.type !== 'doc') return { type: 'doc', content: [] }
-  return { ...doc, content: Array.isArray(doc.content) ? doc.content : [] }
+  if (doc === undefined || doc.type !== 'doc') return emptyEditableDoc()
+  return {
+    ...doc,
+    content:
+      Array.isArray(doc.content) && doc.content.length > 0 ? doc.content : [emptyParagraph()],
+  }
 }
 
 /**

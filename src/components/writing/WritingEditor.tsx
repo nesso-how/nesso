@@ -15,8 +15,6 @@ import type { NotesDocument } from '@/types/graph'
 import type { Locale } from '@/i18n/registry'
 import { asNotesDocument, commitDoc, toEditableDoc } from './docAdapters'
 import { SLASH_MENU_LABEL_KEY } from './SlashMenu'
-import { Callout } from './extensions/callout'
-import { Example } from './extensions/example'
 import { SlashCommand } from './extensions/slashCommand'
 
 const DEFAULT_INVALID_NOTES_MESSAGE =
@@ -70,6 +68,7 @@ interface Props {
   initialNotes: NotesDocument | undefined
   onCommit: (notes: NotesDocument | undefined) => void
   onEscape?: () => void
+  autoFocus?: boolean
   onWordCountChange?: (words: number) => void
   invalidNotesMessage?: string
   snippets: Locale['writing']['snippets']
@@ -82,6 +81,7 @@ function useWritingEditor({
   initialNotes,
   onCommit,
   onEscape,
+  autoFocus,
   onWordCountChange,
   invalidNotesMessage = DEFAULT_INVALID_NOTES_MESSAGE,
   snippets,
@@ -100,13 +100,14 @@ function useWritingEditor({
   const editor = useEditor({
     extensions: [
       StarterKit.configure({ heading: { levels: [2, 3] } }),
-      Callout,
-      Example,
+      // Keep the default showOnlyCurrent so decorations rebuild from the live
+      // editor state; the incremental mode captures a stale isEmpty after
+      // clearing all content, which hides the placeholder until remount.
       Placeholder.configure({ placeholder }),
       SlashCommand.configure({ snippets }),
     ],
     content: toEditableDoc(initialNotes),
-    autofocus: 'end',
+    autofocus: autoFocus === false ? false : 'end',
     onUpdate: ({ editor: ed }) => {
       const json = ed.getJSON()
       if (!isValidNotesDocument(json)) {

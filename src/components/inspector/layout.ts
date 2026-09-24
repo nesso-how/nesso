@@ -5,8 +5,8 @@ import { createPanelWidthStorage } from '@/lib/panelWidth'
 export const INSPECTOR_PANEL_EDGE_INSET = 12
 export const INSPECTOR_CANVAS_LEFT_GUTTER = INSPECTOR_PANEL_EDGE_INSET * 2
 export const INSPECTOR_PANEL_MIN_WIDTH = 220
-export const INSPECTOR_PANEL_MAX_WIDTH = 520
-export const INSPECTOR_PANEL_DEFAULT_WIDTH = 296
+export const INSPECTOR_PANEL_MAX_WIDTH = 720
+export const INSPECTOR_PANEL_DEFAULT_WIDTH = 340
 
 const inspectorPanelWidthStorage = createPanelWidthStorage({
   storageKey: INSPECTOR_WIDTH_STORAGE_KEY,

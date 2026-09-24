@@ -134,6 +134,7 @@ const SETTINGS_FIELD_VALIDATORS: Record<string, SettingsFieldValidator> = {
   reviewReminderEnabled: isBoolean,
   inspectorMemoryOpen: isBoolean,
   inspectorRelationsOpen: isBoolean,
+  inspectorElaborationOpen: isBoolean,
   telemetry: isBoolean,
   onboardingCompleted: isBoolean,
   telemetryPromptShown: isBoolean,

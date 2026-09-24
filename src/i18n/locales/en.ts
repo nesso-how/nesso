@@ -135,7 +135,7 @@ const en = {
   },
   writing: {
     close: 'Close writing mode',
-    placeholder: 'Explain this in your own words…',
+    placeholder: 'Elaborate on this concept…',
     invalidNotes: 'This note is too large or contains unsupported formatting and won’t be saved',
     snippetsMenu: 'Snippets',
     snippets: {
@@ -151,10 +151,8 @@ const en = {
       blockquoteDesc: 'Quoted block',
       divider: 'Divider',
       dividerDesc: 'Horizontal rule',
-      callout: 'Callout',
-      calloutDesc: 'Highlighted note box',
-      example: 'Example',
-      exampleDesc: 'Worked example box',
+      code: 'Code',
+      codeDesc: 'Code block',
     },
   },
   inspector: {
@@ -179,9 +177,11 @@ const en = {
     ratingNames: ['—', 'Again', 'Hard', 'Good', 'Easy'],
     notes: {
       definition: 'Definition',
-      definitionPlaceholder: 'In your own words…',
+      definitionPlaceholder: 'Describe this concept…',
       section: 'Notes',
       write: 'Write',
+      elaboration: 'Elaboration',
+      openNote: 'Open note',
     },
     actions: {
       copy: 'Copy (⌘C)',

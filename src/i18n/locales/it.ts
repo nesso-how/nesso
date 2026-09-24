@@ -136,7 +136,7 @@ const it: typeof en = {
   },
   writing: {
     close: 'Chiudi modalità scrittura',
-    placeholder: 'Spiegalo con parole tue…',
+    placeholder: 'Elabora questo concetto…',
     invalidNotes:
       'Questa nota è troppo grande o contiene una formattazione non supportata e non verrà salvata',
     snippetsMenu: 'Snippet',
@@ -153,10 +153,8 @@ const it: typeof en = {
       blockquoteDesc: 'Blocco citato',
       divider: 'Separatore',
       dividerDesc: 'Linea orizzontale',
-      callout: 'Riquadro',
-      calloutDesc: 'Nota evidenziata',
-      example: 'Esempio',
-      exampleDesc: 'Casella di esempio svolto',
+      code: 'Codice',
+      codeDesc: 'Blocco di codice',
     },
   },
   inspector: {
@@ -181,9 +179,11 @@ const it: typeof en = {
     ratingNames: ['—', 'Ancora', 'Difficile', 'Bene', 'Facile'],
     notes: {
       definition: 'Definizione',
-      definitionPlaceholder: 'Con parole tue…',
+      definitionPlaceholder: 'Descrivi questo concetto…',
       section: 'Note',
       write: 'Scrivi',
+      elaboration: 'Elaborazione',
+      openNote: 'Apri nota',
     },
     actions: {
       copy: 'Copia (⌘C)',

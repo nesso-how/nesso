@@ -20,12 +20,10 @@ test('multiline definition field grows without ResizeObserver errors', async ({ 
   // Click the node to open the inspector
   await nodeByText(page, 'Test Concept').click()
 
-  // The definition field uses InlineEdit with borderedPlaceholder={true}.
-  // When empty, it renders a dashed-border <div> containing the placeholder
-  // text "In your own words…" (English locale).
+  // The empty definition field shows its English placeholder as plain text.
   // Find the placeholder directly by its text — it only appears in the
   // definition field inside the inspector.
-  const defPlaceholder = page.getByText('In your own words…')
+  const defPlaceholder = page.getByText('Describe this concept…')
   await expect(defPlaceholder).toBeVisible()
 
   // Click the placeholder to start editing. Since multiline={true} and
@@ -43,7 +41,7 @@ test('multiline definition field grows without ResizeObserver errors', async ({ 
   expect(initialHeight).toBeGreaterThan(0)
 
   // Use fill() to set initial text (dispatches input events React can capture).
-  // The narrow inspector panel (~270px) forces wrapping past a single line.
+  // The inspector panel forces wrapping past a single line.
   await textarea.fill(
     'This is a long definition that should wrap across multiple lines and test the auto-grow behavior',
   )
@@ -75,4 +73,46 @@ test('multiline definition field grows without ResizeObserver errors', async ({ 
   // Verify no ResizeObserver loop errors were emitted
   const resizeLoopErrors = errors.filter((e) => e.includes('ResizeObserver'))
   expect(resizeLoopErrors).toHaveLength(0)
+})
+
+test('description follows its text height after widening and narrowing the inspector', async ({
+  page,
+}) => {
+  await createConceptAt(page, 0.4, 0.5, 'Resizable description')
+  await nodeByText(page, 'Resizable description').click()
+  const description = page.getByText('Describe this concept…')
+  await description.click()
+  const text = 'A description whose lines wrap differently as the inspector changes width. '.repeat(
+    8,
+  )
+  await page.locator('textarea').fill(text)
+  await page.locator('textarea').press('Enter')
+
+  const section = page.getByTestId('inspector-elaboration-section')
+  const display = section.getByText(text)
+  const handle = page.getByRole('button', { name: /Resize inspector width/ })
+  const resizeTo = async (width: number) => {
+    const box = await handle.boundingBox()
+    if (!box) throw new Error('resize handle missing')
+    const current = Number(await handle.getAttribute('aria-valuenow'))
+    await page.mouse.move(box.x + box.width / 2, box.y + 30)
+    await page.mouse.down()
+    await page.mouse.move(box.x + box.width / 2 + current - width, box.y + 30, { steps: 5 })
+    await page.mouse.up()
+    await expect(handle).toHaveAttribute('aria-valuenow', String(width))
+  }
+  const extraHeight = () =>
+    display.evaluate((el) => {
+      const displayed = el.getBoundingClientRect().height
+      const fixedHeight = el.style.height
+      el.style.height = 'auto'
+      const natural = el.getBoundingClientRect().height
+      el.style.height = fixedHeight
+      return displayed - natural
+    })
+
+  await resizeTo(220)
+  await resizeTo(520)
+  // The height sync runs in a ResizeObserver callback; poll until it settles.
+  await expect.poll(extraHeight).toBeLessThan(2)
 })

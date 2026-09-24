@@ -6,6 +6,20 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- **Inline Elaboration in the Inspector:** a collapsible Elaboration section with an editable description and an inline notes editor; **Open note** jumps into Writing Mode, and long notes scroll inside the clipped inline editor.
+- **Code block snippet** in the Writing Mode slash menu.
+
+### Changed
+
+- Writing Mode snippets focus on structure: the callout and example snippets are removed; notes and description share one text size across the Inspector and Writing Mode, with empty-field hints in English and Italian.
+- The Inspector panel can be resized up to 720 px (previously 520 px).
+
+### Fixed
+
+- The notes placeholder shows before focus and returns after clearing all text, and the description height follows its text when the Inspector is resized.
+
 ## [0.2.0-beta.8] - 2026-09-17
 
 ### Changed
