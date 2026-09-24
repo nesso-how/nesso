@@ -48,12 +48,64 @@ export function clampCurveOffset(offset: number): number {
   return Math.min(CURVE_OFFSET_LIMIT, Math.max(-CURVE_OFFSET_LIMIT, offset))
 }
 
+/** Point on the quadratic Bézier (a, c, b) at parameter t. */
+export function quadraticPoint(
+  ax: number,
+  ay: number,
+  cpx: number,
+  cpy: number,
+  bx: number,
+  by: number,
+  t: number,
+): { x: number; y: number } {
+  const u = 1 - t
+  return {
+    x: u * u * ax + 2 * u * t * cpx + t * t * bx,
+    y: u * u * ay + 2 * u * t * cpy + t * t * by,
+  }
+}
+
 /**
- * Inverse of the arc bow for pointer dragging: given a pointer position in
+ * Inverse of the arc bow at curve parameter t: given a pointer position in
  * flow coordinates and the edge chord, return the signed offset that would
- * place the curve apex under the pointer. The apex sits halfway between chord
- * and control point, hence the factor of 2. A pointer on the chord flattens
- * the arc (0); far pointers clamp to the limit window.
+ * place B(t) under the pointer (normal component; sliding along the chord
+ * leaves the shape unchanged). t is clamped to the middle of the arc because
+ * the mapping degenerates near the endpoints (w = 2(1-t)t → 0). A pointer on
+ * the chord flattens the arc (0); far pointers clamp to the limit window.
+ */
+export function curveOffsetForPointerAt(
+  px: number,
+  py: number,
+  ax: number,
+  ay: number,
+  bx: number,
+  by: number,
+  t: number,
+  siblingIdx = 0,
+  fallback = 1,
+): number {
+  const tc = Math.min(0.85, Math.max(0.15, t))
+  const dx = bx - ax
+  const dy = by - ay
+  const dist = Math.sqrt(dx * dx + dy * dy)
+  const defaultBend = Math.min(dist * 0.22, 90)
+  if (!(defaultBend > 0)) return fallback
+  const nx = -dy / dist
+  const ny = dx / dist
+  const mx = (ax + bx) / 2
+  const my = (ay + by) / 2
+  // Base point L(t) without bow or fan: B(t) = L(t) + n·(offset·bend + fan)·w.
+  const u = 1 - tc
+  const w = 2 * u * tc
+  const lx = u * u * ax + 2 * u * tc * mx + tc * tc * bx
+  const ly = u * u * ay + 2 * u * tc * my + tc * tc * by
+  const normal = (px - lx) * nx + (py - ly) * ny
+  return clampCurveOffset((normal / w - siblingIdx * 7) / defaultBend)
+}
+
+/**
+ * Apex (t = 0.5) specialization of the drag inverse, sibling-fan free: the
+ * midpoint handle era used it; the arc-middle drag uses `curveOffsetForPointerAt`.
  */
 export function curveOffsetForPointer(
   px: number,
@@ -64,16 +116,7 @@ export function curveOffsetForPointer(
   by: number,
   fallback = 1,
 ): number {
-  const dx = bx - ax
-  const dy = by - ay
-  const dist = Math.sqrt(dx * dx + dy * dy)
-  const defaultBend = Math.min(dist * 0.22, 90)
-  if (!(defaultBend > 0)) return fallback
-  const nx = -dy / dist
-  const ny = dx / dist
-  const mx = (ax + bx) / 2
-  const my = (ay + by) / 2
-  return clampCurveOffset((2 * ((px - mx) * nx + (py - my) * ny)) / defaultBend)
+  return curveOffsetForPointerAt(px, py, ax, ay, bx, by, 0.5, 0, fallback)
 }
 
 /** Quadratic-curve control point shared by edge rendering and the connection line. */

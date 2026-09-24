@@ -19,6 +19,10 @@ export interface NessoGraphDisplayContext {
    * Curve-drag commit callback (see NessoGraphProps). Absent = read-only.
    */
   onEdgeCurveOffsetChange?: (id: string, offset: number | undefined) => void
+  /**
+   * Endpoint-retarget callback (see NessoGraphProps). Absent = no reconnect dots.
+   */
+  onEdgeReconnect?: (id: string, side: 'source' | 'target', nodeId: string) => void
   /** Id of the currently selected concept, if any — used to emphasize connected edges. */
   selectedNodeId?: string | null
   /** Dim edges unconnected to the selected concept. Defaults to on. */

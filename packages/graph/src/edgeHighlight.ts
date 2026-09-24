@@ -35,7 +35,9 @@ export function resolveEdgeVisual({
   hasSelection,
 }: EdgeVisualInput): EdgeVisual {
   if (isSelected) return { width: SELECTED_WIDTH, opacity: FULL_OPACITY, dimmed: false }
-  if (hovered) return { width: DEFAULT_WIDTH, opacity: FULL_OPACITY, dimmed: false }
+  // Hover enlarges the stroke exactly like selection: it signals that the
+  // arc itself is draggable from any middle point.
+  if (hovered) return { width: SELECTED_WIDTH, opacity: FULL_OPACITY, dimmed: false }
   // Connected edges intentionally keep their default look: selecting a concept
   // only dims the rest of the map, it never restyles the selection itself.
   if (hasSelection && !isConnected)

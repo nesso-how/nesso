@@ -1,6 +1,15 @@
 // SPDX-License-Identifier: MIT
 import { test, expect } from '@playwright/test'
-import { connectAlphaBeta, gotoApp, newEmptyGraph, seedTwoConcepts, selectEdge } from './helpers'
+import {
+  connectAlphaBeta,
+  createConceptAt,
+  gotoApp,
+  newEmptyGraph,
+  nodeByText,
+  edges,
+  seedTwoConcepts,
+  selectEdge,
+} from './helpers'
 
 /** Signed side of the quadratic control point relative to the edge chord. */
 async function quadSide(page: import('@playwright/test').Page): Promise<number> {
@@ -20,38 +29,44 @@ async function quadSide(page: import('@playwright/test').Page): Promise<number> 
   })
 }
 
-test('dragging the curve handle mirrors the arc and persists across reload', async ({ page }) => {
+/** Screen point of the edge stroke at a fraction of its length. */
+async function strokePoint(
+  page: import('@playwright/test').Page,
+  fraction: number,
+): Promise<{ x: number; y: number }> {
+  return page.evaluate((f) => {
+    const hit = document.querySelector('.react-flow__edge path')
+    if (!(hit instanceof SVGPathElement)) throw new Error('edge hit path not found')
+    const pt = hit.getPointAtLength(hit.getTotalLength() * f)
+    const ctm = hit.getScreenCTM()
+    if (!ctm) throw new Error('edge hit path has no screen CTM')
+    const s = new DOMPoint(pt.x, pt.y).matrixTransform(ctm)
+    return { x: s.x, y: s.y }
+  }, fraction)
+}
+
+async function chordMid(page: import('@playwright/test').Page): Promise<{ x: number; y: number }> {
+  const a = await strokePoint(page, 0)
+  const b = await strokePoint(page, 1)
+  return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
+}
+
+test('dragging the arc middle mirrors the bow and persists across reload', async ({ page }) => {
   await gotoApp(page)
   await newEmptyGraph(page)
   await seedTwoConcepts(page)
   await connectAlphaBeta(page)
   await selectEdge(page)
 
-  const handle = page.locator('[data-testid^="curve-handle-"]')
-  await expect(handle).toBeVisible()
-
   const before = await quadSide(page)
   expect(before).not.toBe(0)
 
-  // Drag the handle across the chord to the mirrored side.
-  const box = await handle.boundingBox()
-  if (!box) throw new Error('curve handle has no bounding box')
-  const start = { x: box.x + box.width / 2, y: box.y + box.height / 2 }
-  const chordMid = await page.evaluate(() => {
-    const hit = document.querySelector('.react-flow__edge path')
-    if (!(hit instanceof SVGPathElement)) throw new Error('edge hit path not found')
-    const len = hit.getTotalLength()
-    const p0 = hit.getPointAtLength(0)
-    const p1 = hit.getPointAtLength(len)
-    const ctm = hit.getScreenCTM()
-    if (!ctm) throw new Error('edge hit path has no screen CTM')
-    const a = new DOMPoint(p0.x, p0.y).matrixTransform(ctm)
-    const b = new DOMPoint(p1.x, p1.y).matrixTransform(ctm)
-    return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
-  })
+  // Grab the stroke middle and drag across the chord to the mirrored side.
+  const start = await strokePoint(page, 0.5)
+  const mid = await chordMid(page)
   const end = {
-    x: chordMid.x + (chordMid.x - start.x) * 1.5,
-    y: chordMid.y + (chordMid.y - start.y) * 1.5,
+    x: mid.x + (mid.x - start.x) * 1.5,
+    y: mid.y + (mid.y - start.y) * 1.5,
   }
   await page.mouse.move(start.x, start.y)
   await page.mouse.down()
@@ -68,32 +83,58 @@ test('dragging the curve handle mirrors the arc and persists across reload', asy
   await expect(page.locator('.react-flow__pane')).toBeVisible()
   await expect(page.locator('.react-flow__edge')).toHaveCount(1)
   await selectEdge(page)
-  await expect(page.locator('[data-testid^="curve-handle-"]')).toBeVisible()
   expect(Math.sign(await quadSide(page))).toBe(Math.sign(after))
 })
 
-test('double-clicking the curve handle resets the arc to the default bow', async ({ page }) => {
+test('double-clicking the arc resets the default bow', async ({ page }) => {
   await gotoApp(page)
   await newEmptyGraph(page)
   await seedTwoConcepts(page)
   await connectAlphaBeta(page)
   await selectEdge(page)
 
-  const handle = page.locator('[data-testid^="curve-handle-"]')
-  await expect(handle).toBeVisible()
-
   const defaultSide = await quadSide(page)
 
   // Bend the arc to the mirrored side first (same gesture as above).
-  const box = await handle.boundingBox()
-  if (!box) throw new Error('curve handle has no bounding box')
-  const start = { x: box.x + box.width / 2, y: box.y + box.height / 2 }
+  const start = await strokePoint(page, 0.5)
+  const mid = await chordMid(page)
   await page.mouse.move(start.x, start.y)
   await page.mouse.down()
-  await page.mouse.move(start.x, start.y - 160, { steps: 12 })
+  await page.mouse.move(mid.x + (mid.x - start.x) * 1.5, mid.y + (mid.y - start.y) * 1.5, {
+    steps: 12,
+  })
   await page.mouse.up()
   expect(Math.sign(await quadSide(page))).toBe(-Math.sign(defaultSide))
 
-  await handle.dblclick()
+  const reset = await strokePoint(page, 0.5)
+  await page.mouse.dblclick(reset.x, reset.y)
   expect(Math.sign(await quadSide(page))).toBe(Math.sign(defaultSide))
+})
+
+test('dragging the target end dot retargets the edge onto another concept', async ({ page }) => {
+  await gotoApp(page)
+  await newEmptyGraph(page)
+  await seedTwoConcepts(page)
+  await createConceptAt(page, 0.45, 0.75, 'Gamma')
+  await connectAlphaBeta(page)
+  await selectEdge(page)
+
+  const dot = page.locator('[data-testid^="reconnect-target-"]')
+  await expect(dot).toBeVisible()
+  const box = await dot.boundingBox()
+  if (!box) throw new Error('reconnect dot has no bounding box')
+  const gamma = await nodeByText(page, 'Gamma').boundingBox()
+  if (!gamma) throw new Error('Gamma node has no bounding box')
+
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(gamma.x + gamma.width / 2, gamma.y + gamma.height / 2, { steps: 12 })
+  await page.mouse.up()
+
+  await expect(edges(page)).toHaveCount(1)
+  await selectEdge(page)
+  const inspector = page.locator('[data-chrome]').filter({
+    has: page.getByTestId('edge-current-relation'),
+  })
+  await expect(inspector).toHaveText(/Alpha.*subtype of.*Gamma/)
 })

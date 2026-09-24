@@ -26,6 +26,8 @@ export {
   arcControlPoint,
   clampCurveOffset,
   curveOffsetForPointer,
+  curveOffsetForPointerAt,
+  quadraticPoint,
   CURVE_OFFSET_LIMIT,
   nodeCenterX,
   nodeCenterY,

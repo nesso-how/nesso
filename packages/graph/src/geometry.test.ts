@@ -4,10 +4,12 @@ import {
   arcControlPoint,
   clampCurveOffset,
   curveOffsetForPointer,
+  curveOffsetForPointerAt,
   CURVE_OFFSET_LIMIT,
   nessoArcPath,
   nodeCenterX,
   nodeCenterY,
+  quadraticPoint,
   rectExit,
 } from './geometry.js'
 
@@ -85,6 +87,19 @@ describe('curveOffsetForPointer', () => {
     expect(curveOffsetForPointer(50, 500, 0, 0, 100, 0)).toBe(3)
     expect(curveOffsetForPointer(50, -500, 0, 0, 100, 0)).toBe(-3)
     expect(curveOffsetForPointer(5, 5, 10, 10, 10, 10, -1)).toBe(-1)
+  })
+
+  it('round-trips an off-apex grab exactly, fan included', () => {
+    // Forward: point B(t) on a fanned, mirrored arc; inverse must recover
+    // the offset so the arc follows the pointer exactly at the grab point.
+    const t = 0.25
+    const siblingIdx = 2
+    const { cpx, cpy } = arcControlPoint(0, 0, 200, 0, siblingIdx, -1.5)
+    const grab = quadraticPoint(0, 0, cpx, cpy, 200, 0, t)
+    expect(curveOffsetForPointerAt(grab.x, grab.y, 0, 0, 200, 0, t, siblingIdx)).toBeCloseTo(
+      -1.5,
+      6,
+    )
   })
 })
 

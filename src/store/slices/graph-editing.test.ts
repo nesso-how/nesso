@@ -585,6 +585,37 @@ describe('setEdgeCurveOffset', () => {
   })
 })
 
+describe('reconnectEdge', () => {
+  function twoEdges() {
+    const s = makeStore()
+    const a = s.getState().addNode(0, 0)
+    const b = s.getState().addNode(100, 0)
+    const c = s.getState().addNode(200, 0)
+    const id = s.getState().addEdge(a, b, 'causes')
+    return { s, id, a, b, c }
+  }
+
+  it('moves one end to another concept, restorable with undo', () => {
+    const { s, id, a, c } = twoEdges()
+    s.getState().reconnectEdge(id, 'target', c)
+    const edge = s.getState().edges.find((e) => e.id === id)
+    expect(edge?.source).toBe(a)
+    expect(edge?.target).toBe(c)
+    expect(edge?.data?.type).toBe('causes')
+    s.getState().undo()
+    expect(s.getState().edges.find((e) => e.id === id)?.target).not.toBe(c)
+  })
+
+  it('ignores self-loops, unknown nodes and no-change drops', () => {
+    const { s, id, a, b } = twoEdges()
+    const before = s.getState().edges
+    s.getState().reconnectEdge(id, 'target', a)
+    s.getState().reconnectEdge(id, 'source', 'missing')
+    s.getState().reconnectEdge(id, 'target', b)
+    expect(s.getState().edges).toBe(before)
+  })
+})
+
 describe('setSelected', () => {
   it('marks the node selected, deselects others, and fills selectedIds', () => {
     const s = makeStore()

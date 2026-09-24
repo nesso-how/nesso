@@ -126,11 +126,19 @@ export interface NessoGraphProps {
   onEdgeClick?: (id: string, data: NessoEdgeData) => void
 
   /**
-   * Curve-drag commit callback. When defined, arc edges expose a midpoint
-   * drag handle while selected or hovered; a committed offset (or undefined
-   * when back at the default bow) arrives here. Absent = read-only rendering.
+   * Curve-drag commit callback. When defined, arc edges are draggable from
+   * any middle point while selected or hovered; a committed offset (or
+   * undefined when back at the default bow) arrives here. Absent = read-only.
    */
   onEdgeCurveOffsetChange?: (id: string, offset: number | undefined) => void
+
+  /**
+   * Endpoint-retarget callback. When defined, arc endpoints expose reconnect
+   * dots on hover/selection: dragging one straightens the arc into a preview
+   * line, dropping it on a concept moves that end of the edge there.
+   * Absent = no reconnect dots.
+   */
+  onEdgeReconnect?: (id: string, side: 'source' | 'target', nodeId: string) => void
 
   // Viewport.
   fitView?: boolean
@@ -164,6 +172,7 @@ export function NessoGraph({
   isItemSelected,
   selectedNodeId,
   onEdgeCurveOffsetChange,
+  onEdgeReconnect,
   nodeTypes = DEFAULT_NODE_TYPES,
   edgeTypes = DEFAULT_EDGE_TYPES,
   nodesDraggable = false,
@@ -235,6 +244,7 @@ export function NessoGraph({
       isItemSelected,
       selectedNodeId,
       onEdgeCurveOffsetChange,
+      onEdgeReconnect,
     }),
     [
       display,
@@ -245,6 +255,7 @@ export function NessoGraph({
       isItemSelected,
       selectedNodeId,
       onEdgeCurveOffsetChange,
+      onEdgeReconnect,
     ],
   )
 

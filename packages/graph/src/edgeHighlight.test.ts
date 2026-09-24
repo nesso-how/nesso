@@ -64,7 +64,9 @@ describe('resolveEdgeVisual', () => {
     ).toEqual({ width: 2, opacity: 1, dimmed: false })
   })
 
-  it('lets hover win over dimming without widening', () => {
+  it('lets hover win over dimming and widen like selection', () => {
+    // Hover enlarges the stroke exactly like selection: it signals that the
+    // arc itself is draggable from any middle point.
     expect(
       resolveEdgeVisual({
         isSelected: false,
@@ -72,6 +74,6 @@ describe('resolveEdgeVisual', () => {
         isConnected: false,
         hasSelection: true,
       }),
-    ).toEqual({ width: 1.4, opacity: 1, dimmed: false })
+    ).toEqual({ width: 2, opacity: 1, dimmed: false })
   })
 })

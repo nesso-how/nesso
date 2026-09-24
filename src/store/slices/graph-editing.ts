@@ -196,6 +196,7 @@ export interface GraphEditingSlice {
   addEdge: (source: string, target: string, type: RelationTypeName) => string
   updateEdgeType: (id: string, type: RelationTypeName) => void
   setEdgeCurveOffset: (id: string, offset: number | undefined) => void
+  reconnectEdge: (id: string, side: 'source' | 'target', nodeId: string) => void
   deleteEdge: (id: string) => void
   setSelected: (sel: import('../types').Selection) => void
   syncFlowSelection: (nodeIds: string[], edgeIds: string[]) => void
@@ -440,6 +441,30 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
         return { ...e, data }
       }),
     })),
+
+  reconnectEdge: (id, side, nodeId) => {
+    const s = get()
+    const edge = s.edges.find((e) => e.id === id)
+    // Same guards as drag-to-connect: the node must exist and an edge may
+    // never loop back onto its own other end. A drop on the edge's current
+    // end is a no-op without a history entry.
+    if (!edge || !s.nodes.some((n) => n.id === nodeId)) return
+    if (side === 'source' ? nodeId === edge.target : nodeId === edge.source) return
+    if (side === 'source' ? nodeId === edge.source : nodeId === edge.target) return
+    set((prev) => ({
+      ...pushHistory(prev),
+      edges: prev.edges.map((e) =>
+        e.id === id
+          ? {
+              ...e,
+              ...(side === 'source'
+                ? { source: nodeId, sourceHandle: CONCEPT_HANDLE_OUT }
+                : { target: nodeId, targetHandle: CONCEPT_HANDLE_IN }),
+            }
+          : e,
+      ),
+    }))
+  },
 
   deleteEdge: (id) => {
     if (get().edges.some((e) => e.id === id)) track({ name: 'edge_deleted' })
