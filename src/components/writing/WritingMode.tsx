@@ -166,7 +166,7 @@ export function WritingMode({ nodeId, onClose }: Props) {
                   data-testid="writing-mode-definition"
                   style={{
                     marginTop: 'var(--space-5)',
-                    fontSize: '14.5px',
+                    fontSize: 'var(--text-lg)',
                     fontWeight: 400,
                     lineHeight: 1.55,
                     fontFamily: 'var(--font-display)',

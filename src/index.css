@@ -361,7 +361,7 @@ body::before {
 .writing-editor .ProseMirror {
   outline: none;
   font-family: var(--font-display);
-  font-size: var(--text-base);
+  font-size: var(--text-lg);
   line-height: var(--leading-normal);
   color: var(--ink);
   min-height: 40vh;
