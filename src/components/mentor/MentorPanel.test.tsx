@@ -500,6 +500,63 @@ describe('MentorPanel graph tools', () => {
     })
   })
 
+  it('shows tool activity again for tool calls after answering started', async () => {
+    let onToolCall: ((name: string) => void) | undefined
+    let onToken: ((delta: string) => void) | undefined
+    let resolveRequest!: (value: string) => void
+    mockFetchCompletion.mockImplementationOnce(
+      async (
+        _settings: unknown,
+        _request: unknown,
+        _maxTokens: unknown,
+        _signal: unknown,
+        handlers:
+          | {
+              onToken?: (delta: string) => void
+              onToolCall?: (name: string) => void
+            }
+          | undefined,
+      ) => {
+        onToolCall = handlers?.onToolCall
+        onToken = handlers?.onToken
+        return new Promise<string>((resolve) => {
+          resolveRequest = resolve
+        })
+      },
+    )
+
+    await act(async () => {
+      root!.render(<MentorPanel leftInset={0} rightInset={0} />)
+    })
+    await act(async () => {
+      onToolCall?.('searchConcepts')
+    })
+    expect(container!.querySelector('[role="status"]')?.textContent).toContain(
+      'Searching concepts…',
+    )
+
+    await act(async () => {
+      onToken?.('Partial ')
+    })
+    expect(container!.querySelector('[role="status"]')).toBeNull()
+
+    await act(async () => {
+      onToolCall?.('listNeighbors')
+    })
+    expect(container!.querySelector('[role="status"]')?.textContent).toContain(
+      'Following relations…',
+    )
+
+    await act(async () => {
+      onToken?.('more ')
+    })
+    expect(container!.querySelector('[role="status"]')).toBeNull()
+
+    await act(async () => {
+      resolveRequest('Partial more ')
+    })
+  })
+
   it('keeps tool names, inputs, and results out of visible chat history', async () => {
     let handlers:
       | { onToken?: (delta: string) => void; onToolCall?: (name: string) => void }
