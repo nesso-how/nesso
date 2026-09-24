@@ -20,6 +20,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 
 - The notes placeholder shows before focus and returns after clearing all text, and the description height follows its text when the Inspector is resized.
+- **The published `@nesso-how/mcp` package starts again after install** — the `^2.0.0-alpha.2` range resolved to MCP SDK `2.1.0`, where `StdioServerTransport` is no longer exported from the package root, crashing `nesso-mcp` on launch. The dependency is now pinned exactly to `2.1.0` and the transport is imported from its `./stdio` subpath.
 
 ## [0.2.0-beta.8] - 2026-09-17
 

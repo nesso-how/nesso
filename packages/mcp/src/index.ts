@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // SPDX-License-Identifier: MIT
 import { readFileSync } from 'node:fs'
-import { McpServer, StdioServerTransport } from '@modelcontextprotocol/server'
+import { McpServer } from '@modelcontextprotocol/server'
+import { StdioServerTransport } from '@modelcontextprotocol/server/stdio'
 import { registerBuildGraph } from './tools/build-graph.js'
 import { registerGetRelationTypes } from './tools/get-relation-types.js'
 import { registerGetDocs } from './tools/get-docs.js'
