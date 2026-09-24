@@ -5,7 +5,6 @@ import {
   RELATION_TYPES,
   RELATION_CATEGORIES,
   RELATION_TYPE_VALUES,
-  type GlyphKind,
   type RelationCategory,
   type RelationTypeName,
   type Transitivity,
@@ -16,7 +15,6 @@ import {
 export type RelationTypePayload = {
   type: RelationTypeName
   label: string
-  glyph: GlyphKind
   symmetric: boolean
   transitive: Transitivity
   inverse: RelationTypeName | 'self'
@@ -38,7 +36,6 @@ export function getRelationTypesPayload(): RelationTypesPayload {
       .map(([name, def]) => ({
         type: name as RelationTypeName,
         label: def.label,
-        glyph: def.glyph,
         symmetric: def.inverse === 'self',
         transitive: def.transitive,
         inverse: def.inverse,
@@ -55,8 +52,7 @@ export function registerGetRelationTypes(server: McpServer): void {
     {
       description:
         `Returns all ${RELATION_TYPE_VALUES.length} semantic relation types supported by Nesso, grouped by ${RELATION_CATEGORIES.length} categories. ` +
-        'Each type carries type properties (transitive, inverse, strength, polarity, cardinality) ' +
-        'in addition to its glyph. ' +
+        'Each type carries type properties (transitive, inverse, strength, polarity, cardinality). ' +
         'Use this when you need valid relation type names for graph JSON or explanations for the user.',
       inputSchema: z.object({}),
     },

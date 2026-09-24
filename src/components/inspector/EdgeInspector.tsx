@@ -5,7 +5,6 @@ import {
   RELATION_TYPE_VALUES,
   asRelationTypeName,
 } from '@/data/relationTypes'
-import { GlyphSVG } from '@nesso-how/graph'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { SettingRow } from '@/components/ui/SettingRow'
 import { useGraphStore, selectedEdgeSelector } from '@/store'
@@ -64,7 +63,6 @@ export function EdgeInspector({ panelWidth, onPanelWidthChange }: Props) {
           <div
             style={{ display: 'flex', alignItems: 'center', gap: 7, paddingLeft: 1, minWidth: 0 }}
           >
-            <GlyphSVG kind={T.glyph} color={C.color} size={14} />
             <span
               data-testid="edge-current-relation"
               style={{

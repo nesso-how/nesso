@@ -32,7 +32,6 @@ export {
   asRelationTypeName,
   isPrimaryRelationType,
   type Cardinality,
-  type GlyphKind,
   type Polarity,
   type RelationCategory,
   type RelationTypeDef,
@@ -40,7 +39,7 @@ export {
   type Transitivity,
 } from './relationTypes.js'
 
-export { CategoryPalette, categoryCssVars, GLYPH_PATHS, PALETTES } from './visual.js'
+export { CategoryPalette, categoryCssVars, PALETTES } from './visual.js'
 
 export {
   checkVocabularyIdentity,

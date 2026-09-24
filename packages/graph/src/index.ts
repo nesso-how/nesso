@@ -21,7 +21,6 @@ export { DEFAULT_GRAPH_DISPLAY } from './display.js'
 export { documentToRenderGraph } from './documentToRenderGraph.js'
 
 // Shared canvas utilities — import from here to avoid duplication with the main app.
-export { GlyphSVG } from './GlyphSVG.js'
 export { ratingColor } from './ratingColor.js'
 export {
   arcControlPoint,

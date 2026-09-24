@@ -8,11 +8,11 @@ import {
 } from './relationTypes.js'
 
 describe('RELATION_TYPES visual encoding', () => {
-  it('uses glyphs without a per-type line style', () => {
+  it('encodes visually with category colour only (no glyph, no per-type line style)', () => {
     expect(Object.keys(RELATION_TYPES)).toHaveLength(52)
 
     for (const definition of Object.values(RELATION_TYPES)) {
-      expect(definition.glyph).toBeDefined()
+      expect(definition).not.toHaveProperty('glyph')
       expect(definition).not.toHaveProperty('line')
     }
   })
@@ -92,12 +92,6 @@ describe('RELATION_TYPES visual encoding', () => {
       expect(peer.strength).toBe(definition.strength)
       expect(peer.polarity).toBe(definition.polarity)
       expect(peer.cardinality).toBe(flip(definition.cardinality))
-      if (id === 'part-of' || id === 'contains') {
-        expect(RELATION_TYPES['part-of'].glyph).toBe('diamond')
-        expect(RELATION_TYPES.contains.glyph).toBe('diamond-open')
-      } else {
-        expect(peer.glyph).toBe(definition.glyph)
-      }
       expect(isPrimaryRelationType(id)).toBe(
         RELATION_TYPE_VALUES.indexOf(id) < RELATION_TYPE_VALUES.indexOf(definition.inverse),
       )

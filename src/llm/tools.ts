@@ -247,7 +247,6 @@ function relationTypeSummary(id: RelationTypeName) {
     id,
     label: definition.label,
     category: definition.cat,
-    glyph: definition.glyph,
     inverse: definition.inverse,
     symmetric: definition.inverse === 'self',
     transitive: definition.transitive,

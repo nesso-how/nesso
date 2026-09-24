@@ -168,7 +168,6 @@ function RelationRows({
             label={`${incoming ? '← ' : ''}${relationLabel(relationId)}`}
             text={relatedNode?.data.text ?? ''}
             color={color}
-            glyph={relation.glyph}
             onClick={() => onFocus(relatedNodeId)}
             dim={incoming}
           />
