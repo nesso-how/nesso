@@ -635,7 +635,11 @@ export function MentorPanel({ leftInset, rightInset }: { leftInset: number; righ
               />
             ))
           )}
-          {thinking && <MentorActivityStatus label={thinkingLabel} />}
+          {/* Tool and reasoning activity can resume after answering started in
+              multi-step turns, so keep showing live activity while streaming. */}
+          {(thinking || (streaming && thinkingLabel !== undefined)) && (
+            <MentorActivityStatus label={thinkingLabel} />
+          )}
         </div>
 
         <div

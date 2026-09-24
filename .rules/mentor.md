@@ -37,10 +37,14 @@ The six tools in `src/llm/tools.ts` are read-only: `getGraphOverview`,
 execution time; `getRelationTypes` reads the canonical vocabulary directly.
 Tool names, inputs, results, and reasoning never enter visible chat history.
 
-Tool bounds remain part of the contract: overview returns the 10 weakest
-concepts, search returns 10 matches with 160-character previews, concept
-definitions and notes are capped at 1,200 characters, relation previews at 160,
-and neighbors at 20. Successful graph results identify their content as user
+Tool bounds remain part of the contract: overview returns the 25 weakest
+concepts by default, raisable to 500 through its optional `limit` input;
+search returns 10 matches by default, also raisable to 500 through `limit`.
+Concept titles are capped at 120 characters with 160-character definition
+previews; concept definitions are capped at 1,200 characters; notes are capped
+at 1,200 characters by default, raisable to 16,000 through the optional
+`notesLimit` input of `inspectConcept`; relation previews at 160, and
+neighbors at 20. Successful graph results identify their content as user
 authored graph data, not instructions.
 
 Graph references use the deterministic opaque handles from

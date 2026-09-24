@@ -17,7 +17,7 @@ your hardware or hosted provider allows it.
 
 When a chat opens, Nesso sends one fixed, graph-free request and the captured selection handle. Socrates inspects the selection with read-only tools (a selected concept via `inspectConcept`, a selected relation via `inspectRelation`) or starts with `getGraphOverview` when nothing is selected. Titles, definitions, and relation details arrive only through bounded tool results.
 
-Nesso does not send the whole graph by default. A compatible model can request bounded, read-only graph details as it needs them. Those reads use the current graph, so they can reflect edits you make during a turn. Tool activity is transient: Nesso does not show tool inputs or results in chat, log them, persist them, or resend them after the turn.
+Nesso does not send the whole graph by default. A compatible model can request bounded, read-only graph details as it needs them: the overview starts at the 25 weakest concepts and a search returns 10 matches, and either read can be raised to at most 500 items per call through an explicit limit, with any omissions reported in the result. Those reads use the current graph, so they can reflect edits you make during a turn. Tool activity is transient: Nesso does not show tool inputs or results in chat, log them, persist them, or resend them after the turn.
 
 The mentor's visible chat history lives only in the open panel session. Chat history resets when you switch graphs, reopen the panel, click **New chat**, change the UI language, base URL, model, or custom system prompt, or when AI readiness changes, such as when the configured mentor becomes available or unavailable. Changing only the API key does not reset the chat. Changing the selection alone does not reset existing history; the current selection is captured with each request.
 
@@ -68,6 +68,6 @@ With local Ollama, mentor requests stay between Nesso and the local service on y
 
 With a remote endpoint, Nesso sends the mentor prompt, visible chat history, graph counts, and the captured selection handle. Additional graph fields are sent only when the model requests them through tools. There is no snapshot fallback; a tool-incompatible endpoint fails once through the normal error path. The configured API key is sent only to that endpoint as a bearer token.
 
-When Socrates inspects a concept, its rich notes are flattened and bounded to at most **1,200 characters** before they are added to the tool result. With a remote model, that excerpt may leave your device and the provider may retain it under its own policy. Choose local Ollama, or avoid storing sensitive text in graph notes, when that matters.
+When Socrates inspects a concept, its rich notes are flattened and bounded to at most **1,200 characters** by default, raisable to **16,000 characters** per call through an explicit limit, before they are added to the tool result. With a remote model, that excerpt may leave your device and the provider may retain it under its own policy. Choose local Ollama, or avoid storing sensitive text in graph notes, when that matters.
 
 Nesso does not persist mentor chat history or tool traces. A remote provider receives request content and may retain it under its own policy, so check the provider's terms before sending a private graph.
