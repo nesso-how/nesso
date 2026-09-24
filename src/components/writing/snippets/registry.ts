@@ -61,19 +61,5 @@ export function buildSnippets(t: SnippetStrings): SnippetDefinition[] {
       icon: 'M3 12h18',
       command: (e) => e.chain().focus().setHorizontalRule().run(),
     },
-    {
-      id: 'callout',
-      label: t.callout,
-      description: t.calloutDesc,
-      icon: 'M12 3l9 16H3zM12 9v4M12 16h.01',
-      command: (e) => e.chain().focus().setCallout().run(),
-    },
-    {
-      id: 'example',
-      label: t.example,
-      description: t.exampleDesc,
-      icon: 'M4 5h16v14H4zM8 9h8M8 13h5',
-      command: (e) => e.chain().focus().setExample().run(),
-    },
   ]
 }

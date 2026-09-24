@@ -407,27 +407,6 @@ body::before {
   font-family: var(--font-mono);
 }
 
-.writing-callout {
-  background: var(--paper-deep);
-  padding: 10px 14px;
-  border-radius: var(--radius-md);
-  margin: 0 0 0.9em;
-}
-
-.writing-example {
-  border: 0.5px dashed var(--line-strong);
-  padding: 10px 14px;
-  border-radius: var(--radius-md);
-  margin: 0 0 0.9em;
-}
-
-/* The last inner block carries a 0.9em bottom margin that stacks with the box
-   padding, making the bottom visually heavier than the top. Extra specificity
-   (.writing-editor prefix) is required to beat `.writing-editor .ProseMirror p`. */
-.writing-editor .writing-example > :last-child {
-  margin-bottom: 0;
-}
-
 .writing-editor .ProseMirror hr {
   border: none;
   border-top: 1px solid var(--line-strong);

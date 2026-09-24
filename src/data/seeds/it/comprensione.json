@@ -18,7 +18,7 @@
             "type": "doc",
             "content": [
               {
-                "type": "callout",
+                "type": "blockquote",
                 "content": [
                   {
                     "type": "paragraph",
@@ -32,16 +32,11 @@
                 ]
               },
               {
-                "type": "example",
+                "type": "paragraph",
                 "content": [
                   {
-                    "type": "paragraph",
-                    "content": [
-                      {
-                        "type": "text",
-                        "text": "Esempio: dopo un capitolo, ridisegna il suo argomento come un piccolo grafo a memoria."
-                      }
-                    ]
+                    "type": "text",
+                    "text": "Esempio: dopo un capitolo, ridisegna il suo argomento come un piccolo grafo a memoria."
                   }
                 ]
               }

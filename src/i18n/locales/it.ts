@@ -153,10 +153,6 @@ const it: typeof en = {
       blockquoteDesc: 'Blocco citato',
       divider: 'Separatore',
       dividerDesc: 'Linea orizzontale',
-      callout: 'Riquadro',
-      calloutDesc: 'Nota evidenziata',
-      example: 'Esempio',
-      exampleDesc: 'Casella di esempio svolto',
     },
   },
   inspector: {

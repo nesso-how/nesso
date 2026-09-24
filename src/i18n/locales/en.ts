@@ -151,10 +151,6 @@ const en = {
       blockquoteDesc: 'Quoted block',
       divider: 'Divider',
       dividerDesc: 'Horizontal rule',
-      callout: 'Callout',
-      calloutDesc: 'Highlighted note box',
-      example: 'Example',
-      exampleDesc: 'Worked example box',
     },
   },
   inspector: {

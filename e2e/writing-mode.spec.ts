@@ -2,7 +2,7 @@
 import { expect, test } from '@playwright/test'
 import { createConceptAt, gotoApp, nodeByText, nodes } from './helpers'
 
-test('writing mode: open from inspector, write, insert callout via /, close, persists across reload', async ({
+test('writing mode: open from inspector, write, insert quote via /, close, persists across reload', async ({
   page,
 }) => {
   await gotoApp(page)
@@ -24,16 +24,16 @@ test('writing mode: open from inspector, write, insert callout via /, close, per
   // editable surface before typing so keystrokes land in the document.
   await expect(page.locator('.writing-editor .ProseMirror')).toBeVisible()
 
-  // Write, then insert the Callout snippet through the slash menu.
+  // Write, then insert the Quote snippet through the slash menu.
   await page.keyboard.type('First thought ')
   await page.keyboard.type('/')
-  await page.getByTestId('slash-item-callout').click()
+  await page.getByTestId('slash-item-blockquote').click()
   // The menu click refocuses the editor asynchronously; wait for focus so the
   // first keystroke of the snippet body is not swallowed.
   await expect(page.locator('.writing-editor .ProseMirror')).toBeFocused()
-  await page.keyboard.type('Key takeaway')
-  // `setCallout` wraps the current paragraph, so the callout holds the line.
-  await expect(page.locator('.writing-callout')).toContainText('Key takeaway')
+  await page.keyboard.type('Key quote')
+  // `toggleBlockquote` wraps the current paragraph, so the quote holds the line.
+  await expect(page.locator('.writing-editor .ProseMirror blockquote')).toContainText('Key quote')
 
   // WritingMode closes on Escape via a capture-phase window listener that
   // decides before ProseMirror can consume the key, so it works while the
@@ -46,7 +46,7 @@ test('writing mode: open from inspector, write, insert callout via /, close, per
 
   // Reload → notes persist through the existing autosave path. The Inspector
   // has no notes preview, so persistence is verified by REOPENING Writing
-  // Mode and reading the text and callout inside the editor.
+  // Mode and reading the text and quote inside the editor.
   await page.reload()
   await expect(page.locator('.react-flow__pane')).toBeVisible()
   await nodeByText(page, 'Alpha').click()
@@ -55,5 +55,5 @@ test('writing mode: open from inspector, write, insert callout via /, close, per
   await expect(page.getByTestId('writing-mode')).toBeVisible()
   await expect(page.getByTestId('writing-mode-title')).toHaveText('Alpha')
   await expect(page.locator('.writing-editor .ProseMirror')).toContainText('First thought')
-  await expect(page.locator('.writing-callout')).toContainText('Key takeaway')
+  await expect(page.locator('.writing-editor .ProseMirror blockquote')).toContainText('Key quote')
 })

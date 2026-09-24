@@ -1,6 +1,6 @@
 ---
 title: Writing mode
-description: A focused writing area over the canvas for a concept's notes, with slash-menu snippets like callouts and examples while the Inspector stays available on the right.
+description: A focused writing area over the canvas for a concept's notes, with slash-menu snippets while the Inspector stays available on the right.
 ---
 
 Writing Mode is a focused writing area that takes over the **canvas** for a
@@ -28,8 +28,6 @@ way you expect. Type `/` on an empty spot to open the snippet menu:
 - **Bullet list / Numbered list**
 - **Quote**
 - **Divider**
-- **Callout**: a highlighted note box
-- **Example**: a worked-example box
 
 Valid edits are committed immediately to the graph and then persisted by the
 graph's existing autosave. While Writing Mode is open, canvas shortcuts
@@ -39,15 +37,14 @@ you are inside it. Notes edits do not add entries to the graph undo history.
 ## How notes are stored
 
 Notes are stored with the graph exactly as the editor produces them (IndexedDB
-for web graphs, project files on desktop), including custom blocks like callouts
-and examples. A concept's elaboration carries a short
+for web graphs, project files on desktop). A concept's elaboration carries a short
 `definition` (still editable inline in the Inspector) plus optional `notes`.
 Clearing all text from Writing Mode removes the notes entirely instead of
 leaving an empty document behind. Graph files that contain blocks a given app
 version does not know still load: unknown blocks show as their plain text, so
 content is never destroyed. If you edit such a document, those unknown blocks
 are kept as their flattened plain text, so their structure is not preserved;
-supported blocks like callouts and examples round-trip exactly. This is part
+supported blocks round-trip exactly. This is part
 of the graph file compatibility
 promise. See [Graph management](../../guides/graph-management/) for the full
 picture.

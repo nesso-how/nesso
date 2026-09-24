@@ -233,8 +233,6 @@ const BLOCK_NORMALIZERS = Object.assign(Object.create(null) as Record<string, Bl
   paragraph: normalizeParagraphBlock,
   heading: normalizeHeadingBlock,
   blockquote: normalizeContainerBlock,
-  callout: normalizeContainerBlock,
-  example: normalizeContainerBlock,
   bulletList: normalizeListBlock,
   orderedList: normalizeListBlock,
   listItem: normalizeLooseListItemBlock,

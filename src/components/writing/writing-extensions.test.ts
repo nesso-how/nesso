@@ -6,39 +6,17 @@ import { SuggestionPluginKey } from '@tiptap/suggestion'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import en from '@/i18n/locales/en'
 import { SlashCommand, positionSlashPopup, slashMenuItems } from './extensions/slashCommand'
-import { Callout } from './extensions/callout'
-import { Example } from './extensions/example'
 
 function makeEditor(content: string | object = '<p>base</p>') {
-  return new Editor({ extensions: [StarterKit, Callout, Example], content: content as never })
+  return new Editor({ extensions: [StarterKit], content: content as never })
 }
 
-describe('custom snippet nodes', () => {
-  it('wraps content in a callout and round-trips through JSON verbatim', () => {
+describe('editor schema', () => {
+  it('exposes no custom snippet nodes', () => {
     const editor = makeEditor()
-    editor.commands.selectAll()
-    editor.commands.setCallout()
-    const json = editor.getJSON()
-    expect(json.content?.[0]?.type).toBe('callout')
-    const again = makeEditor(json)
-    expect(again.getJSON()).toEqual(json)
+    expect(editor.schema.nodes).not.toHaveProperty('callout')
+    expect(editor.schema.nodes).not.toHaveProperty('example')
     editor.destroy()
-    again.destroy()
-  })
-
-  it('exposes setExample and round-trips an example block verbatim', () => {
-    const editor = makeEditor()
-    editor.commands.focus('end')
-    editor.commands.insertContent('<p>worked example</p>')
-    editor.commands.setExample()
-    const json = editor.getJSON()
-    expect(json.content?.some((n) => n.type === 'example')).toBe(true)
-    const again = makeEditor(json)
-    expect(again.getJSON()).toEqual(json)
-    expect(typeof editor.commands.setCallout).toBe('function')
-    expect(typeof editor.commands.setExample).toBe('function')
-    editor.destroy()
-    again.destroy()
   })
 })
 
@@ -54,16 +32,16 @@ describe('note mark schema', () => {
 
 describe('slashMenuItems', () => {
   it('uses the configured snippet strings for labels and filters by label or id', () => {
-    const strings = { ...en.writing.snippets, callout: 'Nota evidenziata' }
-    expect(slashMenuItems(strings, '').find((s) => s.id === 'callout')?.label).toBe(
-      'Nota evidenziata',
+    const strings = { ...en.writing.snippets, blockquote: 'Citazione speciale' }
+    expect(slashMenuItems(strings, '').find((s) => s.id === 'blockquote')?.label).toBe(
+      'Citazione speciale',
     )
-    expect(slashMenuItems(strings, 'eviden').map((s) => s.id)).toEqual(['callout'])
+    expect(slashMenuItems(strings, 'speciale').map((s) => s.id)).toEqual(['blockquote'])
     expect(slashMenuItems(en.writing.snippets, 'head').map((s) => s.id)).toEqual([
       'heading-2',
       'heading-3',
     ])
-    expect(slashMenuItems(en.writing.snippets, 'callout').map((s) => s.id)).toEqual(['callout'])
+    expect(slashMenuItems(en.writing.snippets, 'quote').map((s) => s.id)).toEqual(['blockquote'])
   })
 })
 
@@ -78,12 +56,7 @@ describe('SlashCommand options contract', () => {
 describe('SlashCommand Escape + popup lifecycle contract', () => {
   function makeSlashEditor() {
     const editor = new Editor({
-      extensions: [
-        StarterKit,
-        Callout,
-        Example,
-        SlashCommand.configure({ snippets: en.writing.snippets }),
-      ],
+      extensions: [StarterKit, SlashCommand.configure({ snippets: en.writing.snippets })],
       content: '<p></p>',
     })
     editor.commands.focus('end')

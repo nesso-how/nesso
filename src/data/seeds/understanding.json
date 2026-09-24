@@ -18,7 +18,7 @@
             "type": "doc",
             "content": [
               {
-                "type": "callout",
+                "type": "blockquote",
                 "content": [
                   {
                     "type": "paragraph",
@@ -32,16 +32,11 @@
                 ]
               },
               {
-                "type": "example",
+                "type": "paragraph",
                 "content": [
                   {
-                    "type": "paragraph",
-                    "content": [
-                      {
-                        "type": "text",
-                        "text": "Example: after reading a chapter, redraw its argument as a small graph from memory."
-                      }
-                    ]
+                    "type": "text",
+                    "text": "Example: after reading a chapter, redraw its argument as a small graph from memory."
                   }
                 ]
               }

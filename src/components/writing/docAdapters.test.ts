@@ -5,8 +5,6 @@ import { isValidNotesDocument } from '@nesso-how/vocab-learning'
 import { describe, expect, it } from 'vitest'
 import { NOTES_MAX_SERIALIZED_CHARS, type NotesDocument } from '@/types/graph'
 import { asNotesDocument, commitDoc, toEditableDoc } from './docAdapters'
-import { Callout } from './extensions/callout'
-import { Example } from './extensions/example'
 
 // The degradation boundary is exercised exactly as production enters it:
 // editor-shaped JSON (which may contain block types the current vocabulary
@@ -27,7 +25,7 @@ function expectTipTapSafe(node: JSONContent, root = true): void {
 
 function createWritingEditor(content: JSONContent): Editor {
   return new Editor({
-    extensions: [StarterKit.configure({ heading: { levels: [2, 3] } }), Callout, Example],
+    extensions: [StarterKit.configure({ heading: { levels: [2, 3] } })],
     content,
   })
 }
@@ -85,12 +83,31 @@ describe('toEditableDoc', () => {
       type: 'doc',
       content: [
         {
-          type: 'callout',
+          type: 'blockquote',
           content: [{ type: 'paragraph', content: [{ type: 'text', text: 'c' }] }],
         },
       ],
     })
-    expect(doc.content?.[0]?.type).toBe('callout')
+    expect(doc.content?.[0]?.type).toBe('blockquote')
+  })
+
+  it('degrades removed callout and example blocks to paragraphs keeping their text', () => {
+    const doc = toEditable({
+      type: 'doc',
+      content: [
+        {
+          type: 'callout',
+          content: [{ type: 'paragraph', content: [{ type: 'text', text: 'legacy highlight' }] }],
+        },
+        {
+          type: 'example',
+          content: [{ type: 'paragraph', content: [{ type: 'text', text: 'legacy worked' }] }],
+        },
+      ],
+    })
+    expect(doc.content?.map((node) => node.type)).toEqual(['paragraph', 'paragraph'])
+    expect(JSON.stringify(doc)).toContain('legacy highlight')
+    expect(JSON.stringify(doc)).toContain('legacy worked')
   })
 
   it('keeps validator-accepted empty blocks and unknown containers safe for TipTap', () => {
@@ -248,7 +265,7 @@ describe('toEditableDoc', () => {
     }
   })
 
-  it('keeps valid lists, callouts, examples, and code blocks in the editor schema', () => {
+  it('keeps valid lists and code blocks in the editor schema', () => {
     const persisted: JSONContent = {
       type: 'doc',
       content: [
@@ -261,8 +278,6 @@ describe('toEditableDoc', () => {
           attrs: { order: 3 },
           content: [{ type: 'listItem', content: [paragraph('ordered')] }],
         },
-        { type: 'callout', content: [paragraph('callout')] },
-        { type: 'example', content: [paragraph('example')] },
         { type: 'codeBlock', attrs: { language: 'ts' }, content: [{ type: 'text', text: 'code' }] },
       ],
     }
@@ -273,8 +288,6 @@ describe('toEditableDoc', () => {
       expect(() => editor?.state.doc.check()).not.toThrow()
       expect(editor?.getText()).toEqual(expect.stringContaining('bullet'))
       expect(editor?.getText()).toEqual(expect.stringContaining('ordered'))
-      expect(editor?.getText()).toEqual(expect.stringContaining('callout'))
-      expect(editor?.getText()).toEqual(expect.stringContaining('example'))
       expect(editor?.getText()).toEqual(expect.stringContaining('code'))
     } finally {
       editor?.destroy()

@@ -15,8 +15,6 @@ import type { NotesDocument } from '@/types/graph'
 import type { Locale } from '@/i18n/registry'
 import { asNotesDocument, commitDoc, toEditableDoc } from './docAdapters'
 import { SLASH_MENU_LABEL_KEY } from './SlashMenu'
-import { Callout } from './extensions/callout'
-import { Example } from './extensions/example'
 import { SlashCommand } from './extensions/slashCommand'
 
 const DEFAULT_INVALID_NOTES_MESSAGE =
@@ -100,8 +98,6 @@ function useWritingEditor({
   const editor = useEditor({
     extensions: [
       StarterKit.configure({ heading: { levels: [2, 3] } }),
-      Callout,
-      Example,
       Placeholder.configure({ placeholder }),
       SlashCommand.configure({ snippets }),
     ],
