@@ -86,19 +86,6 @@ Choose checks based on the change's scope and risk:
 Use the quickest check that gives useful feedback while iterating, then use the
 appropriate heavyweight and scope-specific checks before handing work off.
 
-## Browser verification (agent-browser)
-
-The project `agent-browser` dev dependency drives a persistent headless Chrome
-for visual checks of UI changes:
-
-```sh
-pnpm run dev                                               # vite on http://localhost:5173
-pnpm exec agent-browser open http://localhost:5173 && pnpm exec agent-browser screenshot
-```
-
-- `pnpm exec agent-browser snapshot -i` lists interactive elements as `@refs`; act with `click`/`fill`/`press @ref`, inspect with `get text`/`get styles`, and read page logs with `console`/`errors`.
-- Commands run against a background daemon, so the browser persists between calls; `--headed` shows the window and `pnpm exec agent-browser close` stops it.
-
 ## Hard constraints
 
 - Keep mentor history, tool traces, and transient mentor state out of the global store and persistence. The lifecycle and reset details live in [`mentor.md`](.rules/mentor.md).
