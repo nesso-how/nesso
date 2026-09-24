@@ -17,7 +17,7 @@ test.beforeEach(async ({ page }) => {
   await newEmptyGraph(page)
 })
 
-test('uses solid paths while preserving glyph visibility in non-minimal modes', async ({
+test('uses solid category-coloured strokes in non-minimal modes and grey in minimal', async ({
   page,
 }) => {
   await seedTwoConcepts(page)
@@ -29,7 +29,7 @@ test('uses solid paths while preserving glyph visibility in non-minimal modes', 
     await page.getByRole('button', { name: encoding, exact: true }).click()
 
     await expect(edge.locator('path[stroke-dasharray]')).toHaveCount(0)
-    await expect(edge.locator('circle')).toHaveCount(1)
+    await expect(edge.locator('circle')).toHaveCount(0)
     await expect(edge.locator('path').nth(1)).toHaveAttribute('stroke', 'var(--cat-similarity)')
   }
 
@@ -37,6 +37,7 @@ test('uses solid paths while preserving glyph visibility in non-minimal modes', 
 
   await expect(edge.locator('path[stroke-dasharray]')).toHaveCount(0)
   await expect(edge.locator('circle')).toHaveCount(0)
+  await expect(edge.locator('path').nth(1)).toHaveAttribute('stroke', 'var(--ink-3)')
 })
 
 test('selecting a concept dims unconnected edges and keeps connected ones at default', async ({
@@ -56,18 +57,13 @@ test('selecting a concept dims unconnected edges and keeps connected ones at def
 
   // Creation order is preserved: Alpha→Beta first, Beta→Gamma second.
   // The selected concept's own edges keep their default look; only the rest
-  // of the map dims — including glyph badges, whose paper background must
-  // stay opaque (no ghosting from overlapping lines).
+  // of the map dims.
   const connected = edges(page).first()
   const unrelated = edges(page).nth(1)
   await expect(connected.locator('path').nth(1)).toHaveAttribute('stroke-width', '1.4')
   await expect(connected.locator('path').nth(1)).toHaveAttribute('opacity', '0.78')
   await expect(unrelated.locator('path').nth(1)).toHaveAttribute('stroke-width', '1.4')
   await expect(unrelated.locator('path').nth(1)).toHaveAttribute('opacity', '0.28')
-  await expect(connected.locator('circle')).toHaveAttribute('fill', 'var(--paper)')
-  await expect(connected.locator('circle')).toHaveAttribute('stroke-opacity', '1')
-  await expect(unrelated.locator('circle')).toHaveAttribute('fill', 'var(--paper)')
-  await expect(unrelated.locator('circle')).toHaveAttribute('stroke-opacity', '0.28')
 
   await deselect(page)
   await expect(page.locator('.react-flow__node.selected')).toHaveCount(0)
@@ -91,7 +87,7 @@ test('selecting a concept dims unconnected edges and keeps connected ones at def
   await expect(dimSwitch).toHaveAttribute('aria-checked', 'true')
 })
 
-test('relation types dialog previews solid strokes and glyphs', async ({ page }) => {
+test('relation types dialog previews solid strokes without badges', async ({ page }) => {
   await page.getByTestId('graph-io-menu').click()
 
   const menu = page.getByRole('menu')
@@ -100,5 +96,6 @@ test('relation types dialog previews solid strokes and glyphs', async ({ page })
   const dialog = page.getByRole('dialog')
   await expect(dialog).toBeVisible()
   await expect(dialog.locator('svg path[stroke-dasharray]')).toHaveCount(0)
-  await expect(dialog.locator('svg[width="36"] > circle')).toHaveCount(52)
+  await expect(dialog.locator('svg[width="36"] > path')).toHaveCount(52)
+  await expect(dialog.locator('svg[width="36"] > circle')).toHaveCount(0)
 })

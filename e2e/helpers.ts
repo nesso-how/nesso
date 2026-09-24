@@ -140,9 +140,22 @@ export async function connectAlphaBeta(page: Page, relationId = 'subtype-of'): P
   await expect(edges(page)).toHaveCount(1)
 }
 
-/** Select the single edge by clicking its always-on glyph badge (pointer-events: all). */
+/**
+ * Select the single edge by clicking its invisible 14px-wide hit path at the
+ * curve midpoint. The midpoint comes from `getPointAtLength` mapped through
+ * `getScreenCTM()`, so the click lands on the stroke for arcs and lines alike.
+ */
 export async function selectEdge(page: Page): Promise<void> {
-  await page.locator('.react-flow__edge circle').first().click()
+  const point = await page.evaluate(() => {
+    const hit = document.querySelector('.react-flow__edge path')
+    if (!(hit instanceof SVGPathElement)) throw new Error('edge hit path not found')
+    const mid = hit.getPointAtLength(hit.getTotalLength() / 2)
+    const ctm = hit.getScreenCTM()
+    if (!ctm) throw new Error('edge hit path has no screen CTM')
+    const screen = new DOMPoint(mid.x, mid.y).matrixTransform(ctm)
+    return { x: screen.x, y: screen.y }
+  })
+  await page.mouse.click(point.x, point.y)
 }
 
 /** Seed the current graph's first concept as a previously reviewed due card. */
