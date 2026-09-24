@@ -17,6 +17,7 @@ export type {
   GraphDisplaySettings,
   NessoEdgeData,
 } from './display.js'
+export type { ConnectionPreview } from './geometry.js'
 export { DEFAULT_GRAPH_DISPLAY } from './display.js'
 export { documentToRenderGraph } from './documentToRenderGraph.js'
 
@@ -25,8 +26,10 @@ export { ratingColor } from './ratingColor.js'
 export {
   arcControlPoint,
   clampCurveOffset,
+  connectionPreview,
   curveOffsetForPointer,
   curveOffsetForPointerAt,
+  NODE_PAD,
   quadraticPoint,
   CURVE_OFFSET_LIMIT,
   nodeCenterX,

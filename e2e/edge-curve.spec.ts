@@ -51,12 +51,57 @@ async function chordMid(page: import('@playwright/test').Page): Promise<{ x: num
   return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
 }
 
+/** Smallest screen distance from a point to the visible edge stroke. */
+async function cursorGap(
+  page: import('@playwright/test').Page,
+  cx: number,
+  cy: number,
+): Promise<number> {
+  return page.evaluate(
+    ({ cx, cy }) => {
+      const paths = [...document.querySelectorAll('.react-flow__edge path')]
+      const v = paths.find((p) => p.getAttribute('stroke') !== 'transparent')
+      if (!(v instanceof SVGPathElement)) throw new Error('visible edge path not found')
+      const ctm = v.getScreenCTM()
+      if (!ctm) throw new Error('edge path has no screen CTM')
+      const len = v.getTotalLength()
+      let best = Infinity
+      for (let i = 0; i <= 60; i++) {
+        const pt = v.getPointAtLength((len * i) / 60)
+        const s = new DOMPoint(pt.x, pt.y).matrixTransform(ctm)
+        best = Math.min(best, Math.hypot(s.x - cx, s.y - cy))
+      }
+      return best
+    },
+    { cx, cy },
+  )
+}
+
+/**
+ * The canvas viewport animates briefly after load (fitView settling); pixel
+ * gap assertions wait it out so they measure the drag, not the animation.
+ */
+async function waitForViewportSettled(page: import('@playwright/test').Page): Promise<void> {
+  await page.waitForFunction(
+    () =>
+      new Promise<boolean>((resolve) => {
+        const read = () =>
+          document.querySelector('.react-flow__viewport')?.getAttribute('style') ?? ''
+        const first = read()
+        setTimeout(() => resolve(read() === first), 300)
+      }),
+    undefined,
+    { timeout: 8000 },
+  )
+}
+
 test('dragging the arc middle mirrors the bow and persists across reload', async ({ page }) => {
   await gotoApp(page)
   await newEmptyGraph(page)
   await seedTwoConcepts(page)
   await connectAlphaBeta(page)
   await selectEdge(page)
+  await waitForViewportSettled(page)
 
   const before = await quadSide(page)
   expect(before).not.toBe(0)
@@ -75,6 +120,8 @@ test('dragging the arc middle mirrors the bow and persists across reload', async
 
   const after = await quadSide(page)
   expect(Math.sign(after)).toBe(-Math.sign(before))
+  // No jump on release: the committed curve stays where the cursor left it.
+  expect(await cursorGap(page, end.x, end.y)).toBeLessThan(4)
 
   // Let the debounced autosave (500ms) flush to IndexedDB, then reload: the
   // custom bow must survive as a persisted curveOffset.

@@ -139,6 +139,89 @@ export function arcControlPoint(
   return { cpx: (sx + tx) / 2 + nx * bend, cpy: (sy + ty) / 2 + ny * bend }
 }
 
+/** Trim margin around node boxes shared by edge rendering and previews. */
+export const NODE_PAD = 6
+
+export interface ConnectionPreview {
+  path: string
+  /** True when the cursor is over a concept (creation shows a stronger line). */
+  snapped: boolean
+}
+
+/**
+ * Creation-style preview from a fixed node center to the cursor, optionally
+ * snapped onto a hovered concept's border. Shared by the drag-to-connect
+ * line and the endpoint-reconnect preview so both look exactly alike:
+ * default bow, accent dashed stroke, faint while free and stronger on snap.
+ */
+export function connectionPreview(
+  fromCx: number,
+  fromCy: number,
+  fromW: number,
+  fromH: number,
+  toX: number,
+  toY: number,
+  toNode: { cx: number; cy: number; w: number; h: number } | null,
+  straight = false,
+): ConnectionPreview {
+  let startX = fromCx
+  let startY = fromCy
+  let bx = toX
+  let by = toY
+  if (toNode) {
+    if (straight) {
+      const a = rectExit(
+        fromCx,
+        fromCy,
+        fromW + NODE_PAD * 2,
+        fromH + NODE_PAD * 2,
+        toNode.cx,
+        toNode.cy,
+      )
+      const b = rectExit(
+        toNode.cx,
+        toNode.cy,
+        toNode.w + NODE_PAD * 2,
+        toNode.h + NODE_PAD * 2,
+        fromCx,
+        fromCy,
+      )
+      startX = a.x
+      startY = a.y
+      bx = b.x
+      by = b.y
+    } else {
+      const { cpx, cpy } = arcControlPoint(fromCx, fromCy, toNode.cx, toNode.cy, 0)
+      const a = rectExit(fromCx, fromCy, fromW + NODE_PAD * 2, fromH + NODE_PAD * 2, cpx, cpy)
+      const b = rectExit(
+        toNode.cx,
+        toNode.cy,
+        toNode.w + NODE_PAD * 2,
+        toNode.h + NODE_PAD * 2,
+        cpx,
+        cpy,
+      )
+      startX = a.x
+      startY = a.y
+      bx = b.x
+      by = b.y
+    }
+  } else {
+    if (straight) {
+      const a = rectExit(fromCx, fromCy, fromW + NODE_PAD * 2, fromH + NODE_PAD * 2, toX, toY)
+      startX = a.x
+      startY = a.y
+    } else {
+      const { cpx, cpy } = arcControlPoint(fromCx, fromCy, toX, toY, 0)
+      const a = rectExit(fromCx, fromCy, fromW + NODE_PAD * 2, fromH + NODE_PAD * 2, cpx, cpy)
+      startX = a.x
+      startY = a.y
+    }
+  }
+  const { path } = nessoArcPath(startX, startY, bx, by, 0, straight)
+  return { path, snapped: toNode !== null }
+}
+
 export function nessoArcPath(
   sx: number,
   sy: number,
