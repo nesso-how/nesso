@@ -135,7 +135,7 @@ const en = {
   },
   writing: {
     close: 'Close writing mode',
-    placeholder: 'Explain this in your own words…',
+    placeholder: 'Elaborate on this concept…',
     invalidNotes: 'This note is too large or contains unsupported formatting and won’t be saved',
     snippetsMenu: 'Snippets',
     snippets: {
@@ -177,9 +177,13 @@ const en = {
     ratingNames: ['—', 'Again', 'Hard', 'Good', 'Easy'],
     notes: {
       definition: 'Definition',
-      definitionPlaceholder: 'In your own words…',
+      definitionPlaceholder: 'Describe this concept…',
       section: 'Notes',
       write: 'Write',
+      elaboration: 'Elaboration',
+      openNote: 'Open note',
+      showMore: 'Show more',
+      showLess: 'Show less',
     },
     actions: {
       copy: 'Copy (⌘C)',

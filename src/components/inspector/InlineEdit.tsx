@@ -207,7 +207,7 @@ export function InlineEdit({
       style={{
         ...textStyle,
         cursor: 'text',
-        color: empty ? 'var(--ink-4)' : (textStyle?.color ?? 'var(--ink)'),
+        color: empty ? 'var(--ink-5)' : (textStyle?.color ?? 'var(--ink)'),
         fontStyle: textStyle?.fontStyle ?? 'normal',
         whiteSpace: multiline ? 'pre-wrap' : 'normal',
         wordBreak: 'break-word',

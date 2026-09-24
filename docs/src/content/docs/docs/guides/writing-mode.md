@@ -8,10 +8,14 @@ concept's **notes** while the node **Inspector stays visible docked on the
 right**. The Inspector panel is comfortable for a short definition; Writing Mode
 is where longer thinking happens.
 
+For quick edits, the Inspector also has an inline notes editor. When notes are
+empty, its hint is visible before you click into the editor; open the full note
+for longer writing.
+
 ## Opening and closing
 
 1. Select a concept so the Inspector shows it.
-2. In the Inspector, click the full-width **Write** button.
+2. In the Inspector, click the full-width **Open note** button.
 
 The canvas gives way to a centered serif column headed by the concept's name,
 with its definition shown read-only underneath as brief context; the Inspector

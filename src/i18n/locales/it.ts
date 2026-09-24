@@ -136,7 +136,7 @@ const it: typeof en = {
   },
   writing: {
     close: 'Chiudi modalità scrittura',
-    placeholder: 'Spiegalo con parole tue…',
+    placeholder: 'Elabora questo concetto…',
     invalidNotes:
       'Questa nota è troppo grande o contiene una formattazione non supportata e non verrà salvata',
     snippetsMenu: 'Snippet',
@@ -179,9 +179,13 @@ const it: typeof en = {
     ratingNames: ['—', 'Ancora', 'Difficile', 'Bene', 'Facile'],
     notes: {
       definition: 'Definizione',
-      definitionPlaceholder: 'Con parole tue…',
+      definitionPlaceholder: 'Descrivi questo concetto…',
       section: 'Note',
       write: 'Scrivi',
+      elaboration: 'Elaborazione',
+      openNote: 'Apri nota',
+      showMore: 'Mostra di più',
+      showLess: 'Mostra di meno',
     },
     actions: {
       copy: 'Copia (⌘C)',

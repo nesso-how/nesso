@@ -2,6 +2,20 @@
 import { expect, test } from '@playwright/test'
 import { createConceptAt, gotoApp, nodeByText, nodes } from './helpers'
 
+test('inspector shows the empty notes placeholder before the editor receives focus', async ({
+  page,
+}) => {
+  await gotoApp(page)
+  await expect(nodes(page).first()).toBeVisible()
+  await createConceptAt(page, 0.3, 0.5, 'Empty notes')
+
+  const editor = page.getByTestId('inspector-notes-inline').locator('.ProseMirror')
+  const placeholder = editor.locator('p.is-editor-empty[data-placeholder]')
+  await expect(editor).not.toBeFocused()
+  await expect(placeholder).toHaveAttribute('data-placeholder', 'Elaborate on this concept…')
+  await expect(editor).not.toBeFocused()
+})
+
 test('writing mode: open from inspector, write, insert quote via /, close, persists across reload', async ({
   page,
 }) => {
@@ -11,8 +25,7 @@ test('writing mode: open from inspector, write, insert quote via /, close, persi
   await expect(nodes(page).first()).toBeVisible()
   await createConceptAt(page, 0.3, 0.5, 'Alpha')
 
-  // Open Writing Mode from the Inspector NOTES section (entry point only —
-  // the Inspector shows no notes preview).
+  // Open Writing Mode from the Inspector's inline notes section.
   await nodeByText(page, 'Alpha').click()
   await expect(page.getByTestId('inspector-notes-write')).toBeVisible()
   await expect(page.getByTestId('inspector-notes-preview')).toHaveCount(0)
@@ -20,9 +33,9 @@ test('writing mode: open from inspector, write, insert quote via /, close, persi
   await expect(page.getByTestId('writing-mode')).toBeVisible()
   // The content column opens with an H1 of the node name as context.
   await expect(page.getByTestId('writing-mode-title')).toHaveText('Alpha')
-  // The TipTap editor mounts asynchronously after the overlay; wait for the
-  // editable surface before typing so keystrokes land in the document.
-  await expect(page.locator('.writing-editor .ProseMirror')).toBeVisible()
+  // The TipTap editor mounts and autofocuses asynchronously after the overlay;
+  // wait for focus so the first keystroke lands in the document.
+  await expect(page.locator('.writing-editor .ProseMirror')).toBeFocused()
 
   // Write, then insert the Quote snippet through the slash menu.
   await page.keyboard.type('First thought ')
@@ -44,9 +57,8 @@ test('writing mode: open from inspector, write, insert quote via /, close, persi
   await expect(page.getByTestId('writing-mode')).toHaveCount(0)
   await page.waitForTimeout(1000)
 
-  // Reload → notes persist through the existing autosave path. The Inspector
-  // has no notes preview, so persistence is verified by REOPENING Writing
-  // Mode and reading the text and quote inside the editor.
+  // Reload → notes persist through the existing autosave path. Verify by
+  // reopening Writing Mode and reading the text and quote inside the editor.
   await page.reload()
   await expect(page.locator('.react-flow__pane')).toBeVisible()
   await nodeByText(page, 'Alpha').click()

@@ -20,12 +20,10 @@ test('multiline definition field grows without ResizeObserver errors', async ({ 
   // Click the node to open the inspector
   await nodeByText(page, 'Test Concept').click()
 
-  // The definition field uses InlineEdit with borderedPlaceholder={true}.
-  // When empty, it renders a dashed-border <div> containing the placeholder
-  // text "In your own words…" (English locale).
+  // The empty definition field shows its English placeholder as plain text.
   // Find the placeholder directly by its text — it only appears in the
   // definition field inside the inspector.
-  const defPlaceholder = page.getByText('In your own words…')
+  const defPlaceholder = page.getByText('Describe this concept…')
   await expect(defPlaceholder).toBeVisible()
 
   // Click the placeholder to start editing. Since multiline={true} and
@@ -43,7 +41,7 @@ test('multiline definition field grows without ResizeObserver errors', async ({ 
   expect(initialHeight).toBeGreaterThan(0)
 
   // Use fill() to set initial text (dispatches input events React can capture).
-  // The narrow inspector panel (~270px) forces wrapping past a single line.
+  // The inspector panel forces wrapping past a single line.
   await textarea.fill(
     'This is a long definition that should wrap across multiple lines and test the auto-grow behavior',
   )

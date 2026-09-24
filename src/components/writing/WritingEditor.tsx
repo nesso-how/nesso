@@ -68,6 +68,7 @@ interface Props {
   initialNotes: NotesDocument | undefined
   onCommit: (notes: NotesDocument | undefined) => void
   onEscape?: () => void
+  autoFocus?: boolean
   onWordCountChange?: (words: number) => void
   invalidNotesMessage?: string
   snippets: Locale['writing']['snippets']
@@ -80,6 +81,7 @@ function useWritingEditor({
   initialNotes,
   onCommit,
   onEscape,
+  autoFocus,
   onWordCountChange,
   invalidNotesMessage = DEFAULT_INVALID_NOTES_MESSAGE,
   snippets,
@@ -98,11 +100,11 @@ function useWritingEditor({
   const editor = useEditor({
     extensions: [
       StarterKit.configure({ heading: { levels: [2, 3] } }),
-      Placeholder.configure({ placeholder }),
+      Placeholder.configure({ placeholder, showOnlyCurrent: false }),
       SlashCommand.configure({ snippets }),
     ],
     content: toEditableDoc(initialNotes),
-    autofocus: 'end',
+    autofocus: autoFocus === false ? false : 'end',
     onUpdate: ({ editor: ed }) => {
       const json = ed.getJSON()
       if (!isValidNotesDocument(json)) {

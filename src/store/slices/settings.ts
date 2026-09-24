@@ -35,6 +35,7 @@ export const createSettingsSlice: StateCreator<GraphState, [], [], SettingsSlice
     maximumInterval: 365,
     inspectorMemoryOpen: true,
     inspectorRelationsOpen: true,
+    inspectorElaborationOpen: true,
     knownProjects: [],
     activeProjectPath: null,
     telemetry: false,

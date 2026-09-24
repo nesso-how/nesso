@@ -43,9 +43,8 @@ The Inspector docks on the **right**, full height between the top bar and the st
 When a concept is selected it shows, top to bottom:
 
 - **Memory** _(collapsible):_ the FSRS schedule, read-only: when due, stability (in days), last self-rating, review count (with lapses), and time since the last review.
-- **Definition**: see below.
-- **Notes**: the entry point to [Writing mode](../../guides/writing-mode/), which you open with its **Write** button; the notes themselves are not shown here.
 - **Relations** _(collapsible):_ outgoing and incoming edges, each connected concept shown with the relation glyph in a chip and the type on the right (incoming dimmed). Click a row to jump to that concept. Change a relation's type by selecting the edge.
+- **Elaboration** _(collapsible):_ an editable description above an inline notes editor. Empty notes show a hint before you click. Use **Open note** to switch to [Writing Mode](../../guides/writing-mode/) for longer writing.
 
 When an edge is selected, the Inspector shows the relation as a chip with its category colour and a dropdown of every relation type. Picking a new type updates the edge in place. The graph keeps its endpoints and identity.
 
@@ -57,7 +56,7 @@ A single free-text field that travels with the concept and feeds both the AI men
 
 In Review, the definition appears when you **Reveal** a card so you can check your recall. The AI mentor reads it only through bounded tool results when it searches or inspects a relevant concept; it is never embedded eagerly in the prompt.
 
-Longer writing happens in **Writing Mode**: in the Inspector, click the full-width **Write** button and the canvas gives way to a focused writing area while the Inspector stays docked on the right. See [Writing mode](../../guides/writing-mode/).
+Longer writing happens in **Writing Mode**: in the Inspector, click the full-width **Open note** button and the canvas gives way to a focused writing area while the Inspector stays docked on the right. See [Writing mode](../../guides/writing-mode/).
 
 ## Display options (sidebar)
 

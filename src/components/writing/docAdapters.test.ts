@@ -31,8 +31,13 @@ function createWritingEditor(content: JSONContent): Editor {
 }
 
 describe('toEditableDoc', () => {
-  it('normalizes a document without optional content to an empty editable document', () => {
-    expect(toEditable({ type: 'doc' })).toEqual({ type: 'doc', content: [] })
+  it('gives empty notes an editable paragraph before the first interaction', () => {
+    expect(toEditableDoc(undefined)).toEqual({ type: 'doc', content: [{ type: 'paragraph' }] })
+    expect(toEditable({ type: 'doc' })).toEqual({ type: 'doc', content: [{ type: 'paragraph' }] })
+    expect(toEditable({ type: 'doc', content: [] })).toEqual({
+      type: 'doc',
+      content: [{ type: 'paragraph' }],
+    })
   })
 
   it('does not degrade structurally invalid direct text nodes', () => {
@@ -42,7 +47,7 @@ describe('toEditableDoc', () => {
     }
 
     expect(isValidNotesDocument(persisted)).toBe(false)
-    expect(toEditable(persisted)).toEqual({ type: 'doc', content: [] })
+    expect(toEditable(persisted)).toEqual({ type: 'doc', content: [{ type: 'paragraph' }] })
   })
 
   it.each([
@@ -492,9 +497,9 @@ describe('toEditableDoc — lossless degradation', () => {
     })
   })
 
-  it('degrades an empty unknown block to nothing', () => {
+  it('degrades an empty unknown block to an empty editable paragraph', () => {
     const doc = toEditable({ type: 'doc', content: [{ type: 'futureEmpty' }] })
-    expect(doc.content).toEqual([])
+    expect(doc.content).toEqual([{ type: 'paragraph' }])
   })
 
   it('deep-copies marks on pass-through text nodes sharing one source array', () => {

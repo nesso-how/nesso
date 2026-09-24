@@ -4,10 +4,20 @@ import en from './en'
 import itLocale from './it'
 
 describe('inspector locale keys (definition + notes section)', () => {
-  it('inspector.notes has definition, placeholder, section, and write (no preview empty state)', () => {
-    const allowed = ['definition', 'definitionPlaceholder', 'section', 'write']
+  const notesKeys = [
+    'definition',
+    'definitionPlaceholder',
+    'section',
+    'write',
+    'elaboration',
+    'openNote',
+    'showMore',
+    'showLess',
+  ]
+
+  it('inspector.notes has the elaboration-section keys (no preview empty state)', () => {
     const actual = Object.keys(en.inspector.notes)
-    expect(actual.sort()).toEqual(allowed.sort())
+    expect(actual.sort()).toEqual([...notesKeys].sort())
   })
 
   it('inspector has no image key', () => {
@@ -15,9 +25,8 @@ describe('inspector locale keys (definition + notes section)', () => {
   })
 
   it('Italian locale matches English structure', () => {
-    const allowed = ['definition', 'definitionPlaceholder', 'section', 'write']
     const actual = Object.keys(itLocale.inspector.notes)
-    expect(actual.sort()).toEqual(allowed.sort())
+    expect(actual.sort()).toEqual([...notesKeys].sort())
     expect(itLocale.inspector).not.toHaveProperty('image')
   })
 

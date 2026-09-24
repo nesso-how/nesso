@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-import { type CSSProperties } from 'react'
+import { useState, type CSSProperties } from 'react'
 import type { Edge, Node } from '@xyflow/react'
 import type { RelationTypeName } from '@nesso-how/vocab-learning'
 import type { ConceptNodeData } from '@/types/graph'
@@ -9,6 +9,7 @@ import { useGraphStore, selectedNodeSelector } from '@/store'
 import { useShallow } from 'zustand/react/shallow'
 import { useT } from '@/i18n'
 import { InlineEdit } from './InlineEdit'
+import { WritingEditor } from '@/components/writing/WritingEditor'
 import { InspectorPanel } from './InspectorPanel'
 import { EdgeRow } from './EdgeRow'
 import { InspectorActionToolbar, InspectorCollapseCloseRow } from './inspectorChrome'
@@ -54,6 +55,11 @@ function Chevron({ open }: { open: boolean }) {
       />
     </svg>
   )
+}
+
+function blurActiveElement(): void {
+  const active = document.activeElement
+  if (active instanceof HTMLElement) active.blur()
 }
 
 type MemoryRow = { label: string; value: string; accent?: boolean; warn?: boolean }
@@ -257,9 +263,6 @@ function useNodeInspectorState() {
   const memoryOpen = useGraphStore((s) => s.settings.inspectorMemoryOpen)
   const relationsOpen = useGraphStore((s) => s.settings.inspectorRelationsOpen)
   const setSetting = useGraphStore((s) => s.setSetting)
-  const onboardingStep = useGraphStore((s) => s.onboardingStep)
-  const openWritingMode = useGraphStore((s) => s.openWritingMode)
-  const firstNodeId = useGraphStore((s) => s.nodes[0]?.id ?? null)
 
   return {
     t,
@@ -272,10 +275,162 @@ function useNodeInspectorState() {
     memoryOpen,
     relationsOpen,
     setSetting,
-    onboardingStep,
-    openWritingMode,
-    firstNodeId,
   }
+}
+
+function InlineNotes({ node }: { node: Node<ConceptNodeData> }) {
+  const t = useT()
+  const elab = node.data.elaboration
+  const updateNodeNotes = useGraphStore((s) => s.updateNodeNotes)
+  const writingModeNodeId = useGraphStore((s) => s.writingModeNodeId)
+  const openWritingMode = useGraphStore((s) => s.openWritingMode)
+  const [notesExpanded, setNotesExpanded] = useState(false)
+
+  // Only one live editor may own the notes while Writing Mode is open.
+  return (
+    <>
+      {writingModeNodeId !== node.id && (
+        <div
+          data-testid="inspector-notes-inline"
+          className="inspector-notes-inline"
+          style={
+            notesExpanded
+              ? { marginTop: 12 }
+              : { marginTop: 12, maxHeight: 132, overflow: 'hidden' }
+          }
+        >
+          <WritingEditor
+            key={node.id}
+            identityKey={node.id}
+            definition={elab?.definition ?? ''}
+            placeholder={t.writing.placeholder}
+            initialNotes={elab?.notes}
+            onCommit={(notes) => updateNodeNotes(node.id, notes)}
+            onEscape={blurActiveElement}
+            autoFocus={false}
+            invalidNotesMessage={t.writing.invalidNotes}
+            snippets={t.writing.snippets}
+            menuLabel={t.writing.snippetsMenu}
+          />
+        </div>
+      )}
+
+      {elab?.notes !== undefined && (
+        <button
+          type="button"
+          data-testid="inspector-notes-toggle"
+          onClick={() => setNotesExpanded((v) => !v)}
+          style={{
+            appearance: 'none',
+            border: 0,
+            background: 'transparent',
+            color: 'var(--ink-3)',
+            fontSize: 'var(--text-sm)',
+            fontFamily: 'var(--font-sans)',
+            padding: '4px 0 0',
+            cursor: 'pointer',
+            width: '100%',
+            textAlign: 'left',
+          }}
+        >
+          {notesExpanded ? t.inspector.notes.showLess : `… ${t.inspector.notes.showMore}`}
+        </button>
+      )}
+
+      <button
+        type="button"
+        data-testid="inspector-notes-write"
+        className="inspector-notes-write"
+        onClick={() => openWritingMode(node.id)}
+        style={{
+          appearance: 'none',
+          border: '0.5px solid var(--line)',
+          color: 'var(--ink-2)',
+          fontSize: '12.5px',
+          fontWeight: 'var(--font-weight-medium)',
+          fontFamily: 'var(--font-sans)',
+          padding: 'var(--space-2) var(--space-5)',
+          borderRadius: 'var(--radius-sm)',
+          cursor: 'pointer',
+          width: '100%',
+          marginTop: 8,
+        }}
+      >
+        {t.inspector.notes.openNote}
+      </button>
+    </>
+  )
+}
+
+function ElaborationSection({ node }: { node: Node<ConceptNodeData> }) {
+  const t = useT()
+  const elab = node.data.elaboration
+  const updateNodeData = useGraphStore((s) => s.updateNodeData)
+  const elaborationOpen = useGraphStore((s) => s.settings.inspectorElaborationOpen)
+  const setSetting = useGraphStore((s) => s.setSetting)
+  const onboardingStep = useGraphStore((s) => s.onboardingStep)
+  const firstNodeId = useGraphStore((s) => s.nodes[0]?.id ?? null)
+
+  const patch = (definition: string) =>
+    updateNodeData(node.id, { elaboration: withDefinition(elab, definition) })
+
+  return (
+    <div data-testid="inspector-elaboration-section">
+      <button
+        type="button"
+        onClick={() => setSetting('inspectorElaborationOpen', !elaborationOpen)}
+        style={{
+          appearance: 'none',
+          border: 0,
+          background: 'transparent',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 'var(--space-3)',
+          padding: 0,
+          marginBottom: elaborationOpen ? 11 : 0,
+          width: '100%',
+          ...LABEL_STYLE,
+        }}
+      >
+        <span>{t.inspector.notes.elaboration}</span>
+        <Chevron open={elaborationOpen} />
+      </button>
+      {elaborationOpen && (
+        <>
+          <div
+            data-onboarding={
+              isOnboardingStep(onboardingStep, 'inspector-definition') && node.id === firstNodeId
+                ? 'inspector-definition'
+                : undefined
+            }
+          >
+            <InlineEdit
+              value={elab?.definition ?? ''}
+              placeholder={t.inspector.notes.definitionPlaceholder}
+              onSave={(v) => patch(v)}
+              multiline
+              noEditBorder
+              maxLength={2000}
+              /* Matches the inline notes surface: display font, ink text,
+                 normal leading, no padding. Empty text uses the shared ink-5 hint. */
+              textStyle={{
+                fontSize: '14px',
+                fontWeight: 400,
+                lineHeight: 'var(--leading-normal)',
+                fontFamily: 'var(--font-display)',
+                color: 'var(--ink)',
+              }}
+            />
+          </div>
+
+          <div style={{ borderTop: '0.5px solid var(--line)', marginTop: 12 }} />
+
+          <InlineNotes node={node} />
+        </>
+      )}
+    </div>
+  )
 }
 
 export function NodeInspector({
@@ -296,15 +451,7 @@ export function NodeInspector({
     memoryOpen,
     relationsOpen,
     setSetting,
-    onboardingStep,
-    openWritingMode,
-    firstNodeId,
   } = useNodeInspectorState()
-
-  const elab = node.data.elaboration
-
-  const patch = (definition: string) =>
-    updateNodeData(node.id, { elaboration: withDefinition(elab, definition) })
 
   const focusNode = (id: string) => setSelected({ kind: 'node', id })
 
@@ -405,56 +552,7 @@ export function NodeInspector({
           onToggle={() => setSetting('inspectorRelationsOpen', !relationsOpen)}
         />
 
-        {/* Definition */}
-        <div
-          data-onboarding={
-            isOnboardingStep(onboardingStep, 'inspector-definition') && node.id === firstNodeId
-              ? 'inspector-definition'
-              : undefined
-          }
-        >
-          <div style={{ ...LABEL_STYLE, marginBottom: 6 }}>{t.inspector.notes.definition}</div>
-          <InlineEdit
-            value={elab?.definition ?? ''}
-            placeholder={t.inspector.notes.definitionPlaceholder}
-            onSave={(v) => patch(v)}
-            multiline
-            noEditBorder
-            borderedPlaceholder
-            maxLength={2000}
-            textStyle={{
-              fontSize: '13.5px',
-              fontWeight: 400,
-              lineHeight: 1.55,
-              fontFamily: 'var(--font-display)',
-              color: 'var(--ink-2)',
-            }}
-          />
-        </div>
-
-        {/* Notes — entry point only; reading and editing happen in Writing Mode */}
-        <div data-testid="inspector-notes-section">
-          <button
-            type="button"
-            data-testid="inspector-notes-write"
-            className="inspector-notes-write"
-            onClick={() => openWritingMode(node.id)}
-            style={{
-              appearance: 'none',
-              border: '0.5px solid var(--line)',
-              color: 'var(--ink-2)',
-              fontSize: 'var(--text-sm)',
-              fontWeight: 'var(--font-weight-medium)',
-              fontFamily: 'var(--font-sans)',
-              padding: 'var(--space-2) var(--space-5)',
-              borderRadius: 'var(--radius-sm)',
-              cursor: 'pointer',
-              width: '100%',
-            }}
-          >
-            {t.inspector.notes.write}
-          </button>
-        </div>
+        <ElaborationSection key={node.id} node={node} />
       </div>
 
       {/* Action toolbar — docked footer */}

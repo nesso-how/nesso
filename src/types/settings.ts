@@ -31,6 +31,7 @@ export interface NessoSettings {
   maximumInterval: number
   inspectorMemoryOpen: boolean
   inspectorRelationsOpen: boolean
+  inspectorElaborationOpen: boolean
   /** Desktop: absolute paths of folders the user has explicitly opened, most-recent first. */
   knownProjects: string[]
   /** Desktop: absolute path of the active project folder; null until resolved at startup. */

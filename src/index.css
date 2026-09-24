@@ -367,6 +367,12 @@ body::before {
   min-height: 40vh;
 }
 
+/* Inspector inline notes: compact variant of the dialog writing surface. */
+.inspector-notes-inline .ProseMirror {
+  min-height: 0;
+  font-size: 14px;
+}
+
 .writing-editor .ProseMirror p {
   margin: 0 0 0.9em;
 }
@@ -415,7 +421,7 @@ body::before {
 
 .writing-editor .ProseMirror p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
-  color: var(--ink-4);
+  color: var(--ink-5);
   float: left;
   height: 0;
   pointer-events: none;

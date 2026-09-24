@@ -163,6 +163,20 @@ describe('WritingEditor', () => {
     )
   })
 
+  it('decorates an empty editor with the placeholder without requiring focus', async () => {
+    const onCommit = vi.fn<(notes: NotesDocument | undefined) => void>()
+    await renderEditor(onCommit, undefined)
+    // The TipTap view mounts on a delayed scheduler tick in jsdom; wait for it.
+    await vi.waitFor(() => {
+      const emptyParagraph = queryProseMirror().querySelector<HTMLElement>(
+        'p.is-editor-empty[data-placeholder]',
+      )
+      if (!emptyParagraph) throw new Error('placeholder decoration not mounted yet')
+      expect(emptyParagraph.getAttribute('data-placeholder')).toBe(en.writing.placeholder)
+    })
+    await unmountUI()
+  })
+
   it('commits a valid edit immediately and canonicalizes it', async () => {
     const onCommit = vi.fn<(notes: NotesDocument | undefined) => void>()
     await renderEditor(onCommit, notes('pending text'))
