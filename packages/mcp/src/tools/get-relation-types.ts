@@ -28,6 +28,26 @@ export type RelationTypesPayload = Array<{
   types: RelationTypePayload[]
 }>
 
+const relationTypePayloadSchema = z.object({
+  type: z.string(),
+  label: z.string(),
+  symmetric: z.boolean(),
+  transitive: z.string(),
+  inverse: z.string(),
+  strength: z.number(),
+  polarity: z.number(),
+  cardinality: z.string(),
+})
+
+const getRelationTypesOutputSchema = z.object({
+  categories: z.array(
+    z.object({
+      category: z.enum(RELATION_CATEGORIES),
+      types: z.array(relationTypePayloadSchema),
+    }),
+  ),
+})
+
 export function getRelationTypesPayload(): RelationTypesPayload {
   return RELATION_CATEGORIES.map((cat) => ({
     category: cat,
@@ -55,12 +75,14 @@ export function registerGetRelationTypes(server: McpServer): void {
         'Each type carries type properties (transitive, inverse, strength, polarity, cardinality). ' +
         'Use this when you need valid relation type names for graph JSON or explanations for the user.',
       inputSchema: z.object({}),
+      outputSchema: getRelationTypesOutputSchema,
     },
     async () => {
       const result = getRelationTypesPayload()
 
       return {
         content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }],
+        structuredContent: { categories: result },
       }
     },
   )
