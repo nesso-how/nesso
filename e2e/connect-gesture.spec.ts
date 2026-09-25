@@ -20,9 +20,7 @@ async function emptyPoint(page: Page): Promise<{ x: number; y: number }> {
 }
 
 async function handleCenter(page: Page, name: string): Promise<{ x: number; y: number }> {
-  const box = await nodeByText(page, name)
-    .locator('.react-flow__handle-right.nesso-node-handle')
-    .boundingBox()
+  const box = await nodeByText(page, name).locator('.nesso-node-handle').boundingBox()
   if (!box) throw new Error('source handle has no bounding box')
   return { x: box.x + box.width / 2, y: box.y + box.height / 2 }
 }

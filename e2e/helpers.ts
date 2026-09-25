@@ -144,21 +144,16 @@ export async function seedTwoConcepts(page: Page): Promise<void> {
   await expect(nodes(page)).toHaveCount(2)
 }
 
-type HandleSide = 'left' | 'right'
-
-export async function dragConnect(
-  page: Page,
-  from: Locator,
-  to: Locator,
-  fromSide: HandleSide = 'right',
-  toSide?: HandleSide,
-): Promise<void> {
-  const handle = await from
-    .locator(`.react-flow__handle-${fromSide}.nesso-node-handle`)
-    .boundingBox()
-  const target = toSide
-    ? await to.locator(`.react-flow__handle-${toSide}.nesso-node-handle`).boundingBox()
-    : await to.boundingBox()
+/** Drag from the node's single hover dot onto another concept. The dot sits
+ * on the pill border nearest the cursor, so hovering the node body first
+ * reveals it, then the drag starts from its center. */
+export async function dragConnect(page: Page, from: Locator, to: Locator): Promise<void> {
+  const nodeBox = await from.boundingBox()
+  if (!nodeBox) throw new Error('source node has no bounding box')
+  // Hover the node body to reveal its dot, then grab the dot center.
+  await page.mouse.move(nodeBox.x + nodeBox.width / 2, nodeBox.y + nodeBox.height / 2)
+  const handle = await from.locator('.nesso-node-handle').boundingBox()
+  const target = await to.boundingBox()
 
   if (!handle || !target) throw new Error('node handle or target has no bounding box')
 

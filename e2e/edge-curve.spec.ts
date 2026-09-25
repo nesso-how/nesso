@@ -40,7 +40,7 @@ for (const style of ['Arc', 'Line'] as const) {
     if (style === 'Line') await page.getByRole('button', { name: 'Line', exact: true }).click()
     await deselect(page)
 
-    const start = await nodeByText(page, 'Alpha').locator('.react-flow__handle-right').boundingBox()
+    const start = await nodeByText(page, 'Alpha').locator('.nesso-node-handle').boundingBox()
     const end = await nodeByText(page, 'Beta').boundingBox()
     if (!start || !end) throw new Error('connection nodes not measured')
     await page.mouse.move(start.x + start.width / 2, start.y + start.height / 2)
