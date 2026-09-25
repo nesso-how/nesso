@@ -8,7 +8,7 @@ import type { NessoEdgeData } from './display.js'
 import { useGraphDisplay, type NessoGraphDisplayContext } from './context.js'
 import { isEdgeConnectedToNode, resolveEdgeVisual } from './edgeHighlight.js'
 import { EdgeEndpointDot } from './EdgeEndpointDot.js'
-import { edgeArcGeometry, flowNodeCenterY, pointFromBox } from './geometry.js'
+import { edgeArcGeometry, flowNodeCenterY } from './geometry.js'
 import {
   closestCurveT,
   reconnectPreview,
