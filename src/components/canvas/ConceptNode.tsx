@@ -261,7 +261,11 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
         </div>
       </ConceptNodeBody>
 
-      <ConceptHoverDot visible={hover.dotVisible} connectHandle={hover.connectHandleAttr} />
+      <ConceptHoverDot
+        visible={hover.dotVisible}
+        corner={hover.corner}
+        connectHandle={hover.connectHandleAttr}
+      />
       {/* Hidden target keeps left-edge drop coverage (connectionRadius) now
           that the visible target dot is gone; the in-c1/in-c2 pair below
           keeps the center coverage from commit 873035d. */}
