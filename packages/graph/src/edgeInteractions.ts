@@ -8,6 +8,7 @@ import type { EndpointAttachment } from './geometry.js'
 import {
   attachmentAt,
   edgeArcGeometry,
+  pointFromBox,
   pointRelativeToBox,
   quadraticPoint,
   rebaseArcAnchor,
@@ -176,6 +177,19 @@ function startAnchorFor(input: ReconnectPreviewInput, drag: DraggedPoint, startB
     drag.side === 'target' ? startBox : input.targetBox,
   )
 }
+/** The committed anchor is stored relative to the source node's padded box,
+ * so the curve follows the node; the live drag anchor is flow-absolute and
+ * always wins while a gesture is in flight. */
+export function resolveLiveAnchor(
+  curveAnchor: { x: number; y: number; t: number } | undefined,
+  sourceBox: GestureBox,
+  dragAnchor: AnchorPoint | null,
+): AnchorPoint | null {
+  if (dragAnchor) return dragAnchor
+  if (!curveAnchor) return null
+  return { ...pointFromBox(sourceBox, curveAnchor), t: curveAnchor.t }
+}
+
 /** Curve parameter of a quadratic arc closest to a flow point, sampled. */
 export function closestCurveT(
   ra: { x: number; y: number },

@@ -12,6 +12,7 @@ import { edgeArcGeometry, flowNodeCenterY, pointFromBox } from './geometry.js'
 import {
   closestCurveT,
   reconnectPreview,
+  resolveLiveAnchor,
   type AnchorPoint,
   type DraggedPoint,
   type GestureBox,
@@ -111,17 +112,6 @@ function edgeBoxes(
       h: th,
     },
   }
-}
-
-/** The committed anchor is stored relative to the source node's padded box,
- * so the curve follows the node; the live drag anchor is flow-absolute. */
-function resolveLiveAnchor(
-  curveAnchor: { x: number; y: number; t: number } | undefined,
-  sourceBox: GestureBox,
-  dragAnchor: AnchorPoint | null,
-): AnchorPoint | null {
-  if (!curveAnchor) return dragAnchor
-  return { ...pointFromBox(sourceBox, curveAnchor), t: curveAnchor.t }
 }
 
 export function NessoEdge({ id, source, target, data, selected }: EdgeProps<NessoFlowEdge>) {
