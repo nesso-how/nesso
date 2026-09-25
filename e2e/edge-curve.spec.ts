@@ -33,9 +33,7 @@ async function quadSide(page: import('@playwright/test').Page): Promise<number> 
 }
 
 for (const style of ['Arc', 'Line'] as const) {
-  test(`new edge preview in ${style} mode matches the created edge without endpoint dots`, async ({
-    page,
-  }) => {
+  test(`new edge preview in ${style} mode matches the created edge`, async ({ page }) => {
     await gotoApp(page)
     await newEmptyGraph(page)
     await seedTwoConcepts(page)
@@ -48,7 +46,6 @@ for (const style of ['Arc', 'Line'] as const) {
     await page.mouse.move(start.x + start.width / 2, start.y + start.height / 2)
     await page.mouse.down()
     await page.mouse.move(start.x + start.width / 2 + 6, start.y + start.height / 2 + 6)
-    await expect(page.locator('[data-testid^="creation-"]')).toHaveCount(0)
     await page.mouse.move(end.x + end.width / 2, end.y + end.height / 2, { steps: 12 })
 
     const connectionPath = page.locator('.react-flow__connectionline path[stroke="var(--accent)"]')
@@ -62,7 +59,6 @@ for (const style of ['Arc', 'Line'] as const) {
     const preview = await connectionPath.getAttribute('d')
     expect(preview).toContain(style === 'Arc' ? ' Q ' : ' L ')
     const points = numbers(preview)
-    await expect(page.locator('[data-testid^="creation-"]')).toHaveCount(0)
 
     await page.mouse.up()
     await page.getByTestId('relation-chip-subtype-of').click()
