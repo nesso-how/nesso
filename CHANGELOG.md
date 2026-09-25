@@ -16,6 +16,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - **The curve flip options are replaced by free dragging:** the per-edge Curve control (off/auto/on) and the global auto-flip toggle are gone; drag the arc directly instead.
 - **"Flip direction" is hidden for symmetric relations** (relations that are their own inverse, like "contrasts with" and "similar to"), where reversing changes nothing.
 - **Selecting a relation now focuses the map** like selecting a concept: the selected arc and its two concepts stay highlighted while the rest of the map fades, following the same Focus setting. Selecting a concept now also fades concepts beyond its direct neighbours; faded concepts render at 0.4 opacity so the map structure stays readable.
+- **Single hover connection dot:** hovering a concept shows the shared dashed outline plus one connection dot that follows the cursor along the node border, replacing the two fixed side dots. Drag from the dot to create a relation.
 
 ## [0.2.0-beta.9] - 2026-09-24
 
