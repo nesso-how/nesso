@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.2.0-beta.10] - 2026-09-25
+
 ### Added
 
 - **Draggable arcs:** bend any relation curve by dragging the arc itself; the reshaped curve is saved with the graph and follows its concepts. Double-click an arc to reset it to the default bow.
@@ -899,7 +901,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial alpha: interactive knowledge graph (web + Tauri v2); desktop installers on GitHub Releases (macOS Apple silicon and Intel).
 
-[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.2.0-beta.9...HEAD
+[Unreleased]: https://github.com/nesso-how/nesso/compare/v0.2.0-beta.10...HEAD
+[0.2.0-beta.10]: https://github.com/nesso-how/nesso/compare/v0.2.0-beta.9...v0.2.0-beta.10
 [0.2.0-beta.9]: https://github.com/nesso-how/nesso/compare/v0.2.0-beta.8...v0.2.0-beta.9
 [0.2.0-beta.8]: https://github.com/nesso-how/nesso/compare/v0.2.0-beta.7...v0.2.0-beta.8
 [0.2.0-beta.7]: https://github.com/nesso-how/nesso/compare/v0.2.0-beta.6...v0.2.0-beta.7
