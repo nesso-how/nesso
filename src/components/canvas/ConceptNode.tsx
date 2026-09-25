@@ -155,8 +155,8 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
   // Same highlight while an endpoint-reconnect drag hovers this concept.
   // Boolean selector again: only the entered/left nodes re-render per move.
   const isReconnectTarget = useGraphStore((s) => s.reconnectTargetId === id)
-  // Single hover dot on the pill border nearest the cursor + the shared
-  // selection-style ring while hovered (see ConceptHoverDot).
+  // Single fixed top-left hover dot + the shared selection-style ring while
+  // hovered (see ConceptHoverDot).
   const hover = useHoverDot(id)
 
   return (
