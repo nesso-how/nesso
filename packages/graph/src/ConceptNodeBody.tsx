@@ -4,18 +4,21 @@ import { NODE_DIMMED_OPACITY } from './edgeHighlight.js'
 import { ratingColor } from './ratingColor.js'
 
 /** Absolute decoration rings and the heatmap tint behind the concept label.
- * The dashed ring marks the selected concept and, during connect/reconnect
- * drags, the destination concept — one shared highlight for both. */
+ * The dashed ring marks the selected concept, the hovered concept, and,
+ * during connect/reconnect drags, the destination concept — one shared
+ * highlight for all three. */
 function ConceptOverlays({
   showHeatmap,
   heatTint,
   selected,
   connectionTarget,
+  hovered,
 }: {
   showHeatmap: boolean
   heatTint: string
   selected: boolean
   connectionTarget: boolean
+  hovered: boolean
 }) {
   return (
     <>
@@ -32,8 +35,9 @@ function ConceptOverlays({
         />
       )}
 
-      {(selected || connectionTarget) && (
+      {(selected || connectionTarget || hovered) && (
         <div
+          className="nesso-ring"
           style={{
             position: 'absolute',
             inset: -6,
@@ -59,6 +63,9 @@ export interface ConceptNodeBodyProps {
   /** Highlights the concept with the selection ring while a connect or
    * reconnect drag hovers it as the destination. */
   connectionTarget?: boolean
+  /** Shows the shared selection-style ring while the cursor is over the
+   * concept. The dot position itself is app-owned (ref, no re-render). */
+  hovered?: boolean
   /** Fades the concept while another map element holds the focus. */
   dimmed?: boolean
   rootRef?: Ref<HTMLDivElement>
@@ -76,6 +83,7 @@ export function ConceptNodeBody({
   userSelect = 'none',
   className,
   connectionTarget = false,
+  hovered = false,
   dimmed = false,
   rootRef,
   onDoubleClick,
@@ -105,6 +113,7 @@ export function ConceptNodeBody({
         heatTint={heatTint}
         selected={selected}
         connectionTarget={connectionTarget}
+        hovered={hovered}
       />
 
       {children ?? (

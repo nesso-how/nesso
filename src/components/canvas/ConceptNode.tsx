@@ -4,7 +4,8 @@ import { Handle, Position, NodeProps, useConnection } from '@xyflow/react'
 import type { Node } from '@xyflow/react'
 import { ConceptNodeBody, useGraphDisplay } from '@nesso-how/graph'
 import type { ConceptNodeData } from '@/types/graph'
-import { CONCEPT_HANDLE_IN, CONCEPT_HANDLE_OUT } from '@/data/conceptHandles'
+import { CONCEPT_HANDLE_IN } from '@/data/conceptHandles'
+import { ConceptHoverDot, useHoverDot } from './ConceptHoverDot'
 import { CONCEPT_TITLE_MAX_LENGTH } from '@/data/conceptBounds'
 import { isOnboardingStep } from '@/components/onboarding/onboardingSteps'
 import { useGraphStore } from '@/store'
@@ -154,6 +155,9 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
   // Same highlight while an endpoint-reconnect drag hovers this concept.
   // Boolean selector again: only the entered/left nodes re-render per move.
   const isReconnectTarget = useGraphStore((s) => s.reconnectTargetId === id)
+  // Single hover dot on the pill border nearest the cursor + the shared
+  // selection-style ring while hovered (see ConceptHoverDot).
+  const hover = useHoverDot(id)
 
   return (
     <div
@@ -168,6 +172,9 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
               : undefined
       }
       style={{ position: 'relative' }}
+      onMouseEnter={hover.onEnter}
+      onMouseLeave={hover.onLeave}
+      onMouseMove={hover.onMove}
     >
       <ConceptNodeBody
         rootRef={rootRef}
@@ -178,6 +185,7 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
         cursor={editing ? 'text' : 'grab'}
         userSelect={editing ? 'text' : 'none'}
         connectionTarget={isConnectionTarget || isReconnectTarget}
+        hovered={hover.hovered}
         dimmed={isDimmed}
         onDoubleClick={(e) => {
           e.stopPropagation()
@@ -254,37 +262,26 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
         </div>
       </ConceptNodeBody>
 
-      <Handle
-        id={CONCEPT_HANDLE_OUT}
-        type="source"
-        position={Position.Right}
-        className="nesso-node-handle"
-        data-onboarding={
-          isOnboardingStep(onboardingStep, 'connect-handle') && id === firstNodeId
-            ? 'connect-handle'
-            : undefined
-        }
-        style={{
-          width: 22,
-          height: 22,
-          background:
-            'radial-gradient(circle, var(--accent) 2.5px, var(--bg-card, #fff) 2.5px 4px, transparent 4px)',
-          border: 'none',
-          borderRadius: 'var(--radius-circle)',
-        }}
+      <ConceptHoverDot
+        visible={hover.dotVisible}
+        dotRef={hover.dotRef}
+        connectHandle={hover.connectHandleAttr}
       />
+      {/* Hidden target keeps left-edge drop coverage (connectionRadius) now
+          that the visible target dot is gone; the in-c1/in-c2 pair below
+          keeps the center coverage from commit 873035d. */}
       <Handle
         id={CONCEPT_HANDLE_IN}
         type="target"
         position={Position.Left}
-        className="nesso-node-handle"
         style={{
-          width: 22,
-          height: 22,
-          background:
-            'radial-gradient(circle, var(--accent) 2.5px, var(--bg-card, #fff) 2.5px 4px, transparent 4px)',
+          width: 1,
+          height: 1,
+          minWidth: 0,
+          opacity: 0,
+          pointerEvents: 'none',
           border: 'none',
-          borderRadius: 'var(--radius-circle)',
+          background: 'transparent',
         }}
       />
       <Handle

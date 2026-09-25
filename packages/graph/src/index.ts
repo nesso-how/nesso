@@ -28,6 +28,7 @@ export {
   arcControlPoint,
   attachmentAt,
   clampCurveOffset,
+  closestPillBorder,
   connectionPreview,
   pointFromBox,
   pointRelativeToBox,
