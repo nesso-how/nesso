@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 import { useState, type ReactNode } from 'react'
 import { Icon, type IconName } from '@/components/ui/icons'
+import { RELATION_TYPES, asRelationTypeName } from '@nesso-how/vocab-learning'
 import { useGraphStore } from '@/store'
 import { TOPBAR_HEIGHT_PX } from '@/components/layout/TopBar'
 import { STATUS_BAR_HEIGHT_PX } from '@/components/layout/StatusBar'
@@ -90,14 +91,23 @@ export function InspectorActionToolbar({
   const setSelected = useGraphStore((s) => s.setSelected)
 
   const isEdge = selected?.kind === 'edge'
+  const selectedEdge = useGraphStore((s) =>
+    s.selected?.kind === 'edge' ? s.edges.find((e) => e.id === s.selected?.id) : undefined,
+  )
+  // Reversing a symmetric relation (inverse === 'self') is a visual no-op.
+  const symmetricEdge =
+    selectedEdge !== undefined &&
+    RELATION_TYPES[asRelationTypeName(selectedEdge.data?.type)].inverse === 'self'
   const vertical = orientation === 'vertical'
 
   const leading: ReactNode = isEdge ? (
-    <InspectorIconBtn
-      icon="flip"
-      title={t.inspector.actions.flip}
-      onClick={() => selected && reverseEdge(selected.id)}
-    />
+    symmetricEdge ? null : (
+      <InspectorIconBtn
+        icon="flip"
+        title={t.inspector.actions.flip}
+        onClick={() => selected && reverseEdge(selected.id)}
+      />
+    )
   ) : (
     <>
       <InspectorIconBtn
