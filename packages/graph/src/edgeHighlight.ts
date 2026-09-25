@@ -29,6 +29,8 @@ const DEFAULT_WIDTH = 1.4
 const FULL_OPACITY = 1
 const DEFAULT_OPACITY = 0.78
 export const DIMMED_OPACITY = 0.28
+/** Dimmed concepts stay slightly more visible than dimmed relations. */
+export const NODE_DIMMED_OPACITY = 0.4
 
 export function resolveEdgeVisual({
   isSelected,

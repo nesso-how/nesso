@@ -3,6 +3,61 @@ import type { CSSProperties, MouseEventHandler, ReactNode, Ref } from 'react'
 import { DIMMED_OPACITY } from './edgeHighlight.js'
 import { ratingColor } from './ratingColor.js'
 
+/** Absolute decoration rings and the heatmap tint behind the concept label. */
+function ConceptOverlays({
+  showHeatmap,
+  heatTint,
+  selected,
+  connectionTarget,
+}: {
+  showHeatmap: boolean
+  heatTint: string
+  selected: boolean
+  connectionTarget: boolean
+}) {
+  return (
+    <>
+      {showHeatmap && (
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            borderRadius: 999,
+            background: heatTint,
+            opacity: 0.14,
+            pointerEvents: 'none',
+          }}
+        />
+      )}
+
+      {selected && (
+        <div
+          style={{
+            position: 'absolute',
+            inset: -6,
+            borderRadius: 999,
+            border: '1px dashed var(--accent)',
+            opacity: 0.7,
+            pointerEvents: 'none',
+          }}
+        />
+      )}
+
+      {connectionTarget && (
+        <div
+          style={{
+            position: 'absolute',
+            inset: -4,
+            borderRadius: 999,
+            border: '1.5px dotted color-mix(in srgb, var(--accent) 65%, transparent)',
+            pointerEvents: 'none',
+          }}
+        />
+      )}
+    </>
+  )
+}
+
 export interface ConceptNodeBodyProps {
   text: string
   selected: boolean
@@ -53,43 +108,12 @@ export function ConceptNodeBody({
         opacity: dimmed ? DIMMED_OPACITY : undefined,
       }}
     >
-      {showHeatmap && (
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            borderRadius: 999,
-            background: heatTint,
-            opacity: 0.14,
-            pointerEvents: 'none',
-          }}
-        />
-      )}
-
-      {selected && (
-        <div
-          style={{
-            position: 'absolute',
-            inset: -6,
-            borderRadius: 999,
-            border: '1px dashed var(--accent)',
-            opacity: 0.7,
-            pointerEvents: 'none',
-          }}
-        />
-      )}
-
-      {connectionTarget && (
-        <div
-          style={{
-            position: 'absolute',
-            inset: -4,
-            borderRadius: 999,
-            border: '1.5px dotted color-mix(in srgb, var(--accent) 65%, transparent)',
-            pointerEvents: 'none',
-          }}
-        />
-      )}
+      <ConceptOverlays
+        showHeatmap={showHeatmap}
+        heatTint={heatTint}
+        selected={selected}
+        connectionTarget={connectionTarget}
+      />
 
       {children ?? (
         <span

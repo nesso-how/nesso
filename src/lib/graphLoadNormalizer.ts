@@ -360,22 +360,31 @@ export function tryResolveGraphIdentityFromEnvelope(
  * offset, unflipped/default loses the dead fields. Edges without legacy
  * fields keep their reference; a stored offset always wins over legacy flags.
  */
+type LegacyCurveData = {
+  curveOffset?: unknown
+  curveFlip?: unknown
+  curveFlipPinned?: unknown
+}
+
+function translateLegacyEdgeCurve(e: GraphRecordEdge): GraphRecordEdge {
+  const data = e.data as LegacyCurveData | undefined
+  if (data?.curveFlip === undefined && data?.curveFlipPinned === undefined) return e
+  const { curveFlip: _flip, curveFlipPinned: _pinned, ...rest } = data
+  return {
+    ...e,
+    data: {
+      ...rest,
+      ...(data.curveFlip === true && data.curveOffset === undefined ? { curveOffset: -1 } : {}),
+    },
+  }
+}
+
 function translateLegacyRecordCurve(edges: GraphRecord['edges']): GraphRecord['edges'] {
   let changed = false
   const next = edges.map((e) => {
-    const data = e.data as
-      | { curveOffset?: unknown; curveFlip?: unknown; curveFlipPinned?: unknown }
-      | undefined
-    if (data?.curveFlip === undefined && data?.curveFlipPinned === undefined) return e
-    changed = true
-    const { curveFlip: _flip, curveFlipPinned: _pinned, ...rest } = data ?? {}
-    return {
-      ...e,
-      data: {
-        ...rest,
-        ...(data?.curveFlip === true && data?.curveOffset === undefined ? { curveOffset: -1 } : {}),
-      },
-    }
+    const translated = translateLegacyEdgeCurve(e)
+    if (translated !== e) changed = true
+    return translated
   })
   return changed ? next : edges
 }

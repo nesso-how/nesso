@@ -225,6 +225,74 @@ export interface GraphEditingSlice {
 
 const round3 = (n: number) => Math.round(n * 1000) / 1000
 
+function isAnchorUnchanged(
+  curveAnchor: { x: number; y: number; t: number } | undefined,
+  storedAnchor: { x: number; y: number; t: number } | undefined,
+): boolean {
+  if (curveAnchor === undefined) return storedAnchor === undefined
+  // Compare at commit precision so re-dropping an identical anchor on the
+  // same node stays a no-op; the stored value itself stays unrounded so the
+  // final arc matches the preview exactly.
+  return (
+    !!storedAnchor &&
+    round3(curveAnchor.x) === storedAnchor.x &&
+    round3(curveAnchor.y) === storedAnchor.y &&
+    round3(curveAnchor.t) === storedAnchor.t
+  )
+}
+
+function isSameAttachment(
+  previous: { x: number; y: number } | undefined,
+  attachment: { x: number; y: number } | undefined,
+): boolean {
+  return !attachment || (previous?.x === attachment.x && previous?.y === attachment.y)
+}
+
+/** One-edge reconnect reducer: moves the endpoint, attaches, and carries the
+ * rebased reshape point in the same entry. */
+function applyReconnect(
+  e: GraphState['edges'][number],
+  id: string,
+  side: 'source' | 'target',
+  nodeId: string,
+  key: 'sourceAttachment' | 'targetAttachment',
+  attachment: { x: number; y: number } | undefined,
+  curveAnchor: { x: number; y: number; t: number } | undefined,
+): GraphState['edges'][number] {
+  if (e.id !== id) return e
+  const data = { ...e.data }
+  if (attachment) data[key] = attachment
+  else delete data[key]
+  // The rebased reshape point commits with the same history entry as
+  // the endpoint move it belongs to.
+  if (curveAnchor) data.curveAnchor = curveAnchor
+  return {
+    ...e,
+    data,
+    ...(side === 'source'
+      ? { source: nodeId, sourceHandle: CONCEPT_HANDLE_OUT }
+      : { target: nodeId, targetHandle: CONCEPT_HANDLE_IN }),
+  }
+}
+
+function isReconnectNoOp(
+  edge: GraphState['edges'][number],
+  side: 'source' | 'target',
+  nodeId: string,
+  attachment: { x: number; y: number } | undefined,
+  curveAnchor: { x: number; y: number; t: number } | undefined,
+): boolean {
+  const key = side === 'source' ? 'sourceAttachment' : 'targetAttachment'
+  const sameEnd = side === 'source' ? nodeId === edge.source : nodeId === edge.target
+  const previous = (edge.data as NessoEdgeData | undefined)?.[key]
+  const storedAnchor = (edge.data as NessoEdgeData | undefined)?.curveAnchor
+  return (
+    sameEnd &&
+    isAnchorUnchanged(curveAnchor, storedAnchor) &&
+    isSameAttachment(previous, attachment)
+  )
+}
+
 export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEditingSlice> = (
   set,
   get,
@@ -482,44 +550,13 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
     // history when its attachment or reshape point actually moves.
     if (!edge || !s.nodes.some((n) => n.id === nodeId)) return
     if (side === 'source' ? nodeId === edge.target : nodeId === edge.source) return
+    if (isReconnectNoOp(edge, side, nodeId, attachment, curveAnchor)) return
     const key = side === 'source' ? 'sourceAttachment' : 'targetAttachment'
-    const sameEnd = side === 'source' ? nodeId === edge.source : nodeId === edge.target
-    const previous = (edge.data as NessoEdgeData | undefined)?.[key]
-    const storedAnchor = (edge.data as NessoEdgeData | undefined)?.curveAnchor
-    // Compare at commit precision so re-dropping an identical anchor on the
-    // same node stays a no-op; the stored value itself stays unrounded so the
-    // final arc matches the preview exactly.
-    const anchorUnchanged =
-      curveAnchor === undefined
-        ? storedAnchor === undefined
-        : !!storedAnchor &&
-          round3(curveAnchor.x) === storedAnchor.x &&
-          round3(curveAnchor.y) === storedAnchor.y &&
-          round3(curveAnchor.t) === storedAnchor.t
-    if (
-      sameEnd &&
-      anchorUnchanged &&
-      (!attachment || (previous?.x === attachment.x && previous?.y === attachment.y))
-    )
-      return
     set((prev) => ({
       ...pushHistory(prev),
-      edges: prev.edges.map((e) => {
-        if (e.id !== id) return e
-        const data = { ...e.data }
-        if (attachment) data[key] = attachment
-        else delete data[key]
-        // The rebased reshape point commits with the same history entry as
-        // the endpoint move it belongs to.
-        if (curveAnchor) data.curveAnchor = curveAnchor
-        return {
-          ...e,
-          data,
-          ...(side === 'source'
-            ? { source: nodeId, sourceHandle: CONCEPT_HANDLE_OUT }
-            : { target: nodeId, targetHandle: CONCEPT_HANDLE_IN }),
-        }
-      }),
+      edges: prev.edges.map((e) =>
+        applyReconnect(e, id, side, nodeId, key, attachment, curveAnchor),
+      ),
     }))
   },
 

@@ -12,23 +12,18 @@ function relationCurveData(edgeData: NessoEdgeData | undefined):
       curveAnchor?: { x: number; y: number; t: number }
     }
   | undefined {
-  const curveOffset = edgeData?.curveOffset
-  const sourceAttachment = edgeData?.sourceAttachment
-  const targetAttachment = edgeData?.targetAttachment
-  const curveAnchor = edgeData?.curveAnchor
-  if (
-    curveOffset === undefined &&
-    sourceAttachment === undefined &&
-    targetAttachment === undefined &&
-    curveAnchor === undefined
-  )
-    return undefined
-  return {
-    ...(curveOffset !== undefined && { curveOffset }),
-    ...(sourceAttachment !== undefined && { sourceAttachment }),
-    ...(targetAttachment !== undefined && { targetAttachment }),
-    ...(curveAnchor !== undefined && { curveAnchor }),
-  }
+  if (!edgeData) return undefined
+  const data: {
+    curveOffset?: number
+    sourceAttachment?: { x: number; y: number }
+    targetAttachment?: { x: number; y: number }
+    curveAnchor?: { x: number; y: number; t: number }
+  } = {}
+  if (edgeData.curveOffset !== undefined) data.curveOffset = edgeData.curveOffset
+  if (edgeData.sourceAttachment !== undefined) data.sourceAttachment = edgeData.sourceAttachment
+  if (edgeData.targetAttachment !== undefined) data.targetAttachment = edgeData.targetAttachment
+  if (edgeData.curveAnchor !== undefined) data.curveAnchor = edgeData.curveAnchor
+  return Object.keys(data).length > 0 ? data : undefined
 }
 
 function relationFromEdge(e: Edge) {

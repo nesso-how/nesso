@@ -1,8 +1,52 @@
 // SPDX-License-Identifier: MIT
 import { useLayoutEffect } from 'react'
-import { useReactFlow, type ConnectionLineComponentProps } from '@xyflow/react'
+import { useReactFlow, type ConnectionLineComponentProps, type Node } from '@xyflow/react'
 import { attachmentAt, connectionPreview, flowNodeCenterY } from '@nesso-how/graph'
 import { useGraphStore } from '@/store'
+
+/** Concept under the cursor, if any, excluding the drag origin. */
+export function hoveredNode(
+  nodes: Node[],
+  fromId: string,
+  cursor: { x: number; y: number },
+): Node | undefined {
+  return nodes.find((node) => node.id !== fromId && insideNode(node, cursor))
+}
+
+export function insideNode(node: Node, cursor: { x: number; y: number }): boolean {
+  const w = node.measured?.width ?? 80
+  const h = node.measured?.height ?? 32
+  return (
+    cursor.x >= node.position.x &&
+    cursor.x <= node.position.x + w &&
+    cursor.y >= node.position.y &&
+    cursor.y <= node.position.y + h
+  )
+}
+
+/** Padded flow box of the drop destination. Nesso concepts are flat, so
+ * position is flow-absolute. */
+export function destinationBoxOf(destination: Node) {
+  const w = destination.measured?.width ?? 80
+  const h = destination.measured?.height ?? 32
+  return {
+    cx: destination.position.x + w / 2,
+    cy: destination.position.y + h / 2,
+    w,
+    h,
+  }
+}
+
+/** styleEdges fans siblings in insertion order; the new edge is appended. */
+export function siblingCount(
+  edges: { source: string; target: string }[],
+  fromId: string,
+  toId: string,
+) {
+  return edges.filter(
+    (e) => (e.source === fromId && e.target === toId) || (e.source === toId && e.target === fromId),
+  ).length
+}
 
 export function NessoConnectionLine({
   fromNode,
@@ -27,35 +71,10 @@ export function NessoConnectionLine({
   const scx = fromNode.internals.positionAbsolute.x + sw / 2
   const scy = flowNodeCenterY(fromNode)
 
-  const hovered = getNodes().find((node) => {
-    if (node.id === fromNode.id) return false
-    const w = node.measured?.width ?? 80
-    const h = node.measured?.height ?? 32
-    return (
-      cursor.x >= node.position.x &&
-      cursor.x <= node.position.x + w &&
-      cursor.y >= node.position.y &&
-      cursor.y <= node.position.y + h
-    )
-  })
+  const hovered = hoveredNode(getNodes(), fromNode.id, cursor)
   const destination = hovered ?? (toNode?.id !== fromNode.id ? toNode : null)
-  // Nesso concepts are flat, so position is flow-absolute.
-  const destinationBox = destination
-    ? {
-        cx: destination.position.x + (destination.measured?.width ?? 80) / 2,
-        cy: destination.position.y + (destination.measured?.height ?? 32) / 2,
-        w: destination.measured?.width ?? 80,
-        h: destination.measured?.height ?? 32,
-      }
-    : null
-  // styleEdges fans siblings in insertion order; the new edge is appended.
-  const siblingIdx = destination
-    ? getEdges().filter(
-        (e) =>
-          (e.source === fromNode.id && e.target === destination.id) ||
-          (e.source === destination.id && e.target === fromNode.id),
-      ).length
-    : 0
+  const destinationBox = destination ? destinationBoxOf(destination) : null
+  const siblingIdx = destination ? siblingCount(getEdges(), fromNode.id, destination.id) : 0
   const targetAttachment = destinationBox ? attachmentAt(destinationBox, cursor) : undefined
   useLayoutEffect(() => {
     onPreviewAttachment?.(destination?.id ?? null, targetAttachment)

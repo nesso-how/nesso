@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 import { useState, useLayoutEffect, useEffect, useRef } from 'react'
 import { useGraphStore } from '@/store'
-import { RELATION_TYPES, asRelationTypeName } from '@nesso-how/vocab-learning'
 import { useT } from '@/i18n'
+import { useSelectedEdgeIsSymmetric } from './useSelectedEdgeIsSymmetric'
 import { newConceptTopLeftAtFlowCenter } from '@/data/newConceptLayout'
 import { focusFlowNodes } from '@/lib/focusFlowSelection'
 import { Icon } from '@/components/ui/icons'
@@ -115,13 +115,7 @@ export function GraphContextMenu({
   const pasteSelection = useGraphStore((s) => s.pasteSelection)
   const reverseEdge = useGraphStore((s) => s.reverseEdge)
   const addNode = useGraphStore((s) => s.addNode)
-  const selectedEdge = useGraphStore((s) =>
-    s.selected?.kind === 'edge' ? s.edges.find((e) => e.id === s.selected?.id) : undefined,
-  )
-  // Reversing a symmetric relation (inverse === 'self') is a visual no-op.
-  const symmetricEdge =
-    selectedEdge !== undefined &&
-    RELATION_TYPES[asRelationTypeName(selectedEdge.data?.type)].inverse === 'self'
+  const symmetricEdge = useSelectedEdgeIsSymmetric()
 
   useLayoutEffect(() => {
     const el = ref.current

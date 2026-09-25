@@ -107,6 +107,39 @@ export function validateDefinitionOnlyElaboration(value: unknown): void {
   }
 }
 
+function isValidAttachment(value: unknown): boolean {
+  return (
+    isPlainObject(value) &&
+    Object.keys(value).length === 2 &&
+    [value.x, value.y].every(Number.isFinite) &&
+    Math.abs(value.x as number) <= 1 &&
+    Math.abs(value.y as number) <= 1
+  )
+}
+
+function isValidCurveAnchor(value: unknown): boolean {
+  return (
+    isPlainObject(value) &&
+    Object.keys(value).length === 3 &&
+    [value.x, value.y, value.t].every(Number.isFinite) &&
+    (value.t as number) > 0 &&
+    (value.t as number) < 1
+  )
+}
+
+function validateRelationData(data: Record<string, unknown> | undefined, index: number): void {
+  for (const side of ['sourceAttachment', 'targetAttachment'] as const) {
+    const value: unknown = data?.[side]
+    if (value !== undefined && !isValidAttachment(value)) {
+      throw new Error(`Invalid Nesso graph document: ${side} at relations[${index}]`)
+    }
+  }
+  const anchor: unknown = data?.curveAnchor
+  if (anchor !== undefined && !isValidCurveAnchor(anchor)) {
+    throw new Error(`Invalid Nesso graph document: curveAnchor at relations[${index}]`)
+  }
+}
+
 function validateRelations<M extends Record<string, unknown>>(doc: NessoGraphDocument<M>): void {
   for (let i = 0; i < doc.relations.length; i++) {
     const rel = doc.relations[i]
@@ -115,39 +148,7 @@ function validateRelations<M extends Record<string, unknown>>(doc: NessoGraphDoc
         `Invalid Nesso graph document: unknown relation type "${rel.type}" at relations[${i}]`,
       )
     }
-    for (const side of ['sourceAttachment', 'targetAttachment'] as const) {
-      const value: unknown = rel.data?.[side]
-      if (value === undefined) continue
-      if (
-        !isPlainObject(value) ||
-        Object.keys(value).length !== 2 ||
-        typeof value.x !== 'number' ||
-        !Number.isFinite(value.x) ||
-        Math.abs(value.x) > 1 ||
-        typeof value.y !== 'number' ||
-        !Number.isFinite(value.y) ||
-        Math.abs(value.y) > 1
-      ) {
-        throw new Error(`Invalid Nesso graph document: ${side} at relations[${i}]`)
-      }
-    }
-    const anchor: unknown = rel.data?.curveAnchor
-    if (anchor !== undefined) {
-      if (
-        !isPlainObject(anchor) ||
-        Object.keys(anchor).length !== 3 ||
-        typeof anchor.x !== 'number' ||
-        !Number.isFinite(anchor.x) ||
-        typeof anchor.y !== 'number' ||
-        !Number.isFinite(anchor.y) ||
-        typeof anchor.t !== 'number' ||
-        !Number.isFinite(anchor.t) ||
-        anchor.t <= 0 ||
-        anchor.t >= 1
-      ) {
-        throw new Error(`Invalid Nesso graph document: curveAnchor at relations[${i}]`)
-      }
-    }
+    validateRelationData(rel.data, i)
   }
 }
 
