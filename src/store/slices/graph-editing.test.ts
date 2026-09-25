@@ -544,7 +544,7 @@ describe('updateEdgeType', () => {
   })
 })
 
-describe('setEdgeCurveOffset', () => {
+describe('setEdgeCurveAnchor', () => {
   function edgeStore() {
     const s = makeStore()
     const a = s.getState().addNode(0, 0)
@@ -553,35 +553,46 @@ describe('setEdgeCurveOffset', () => {
     return { s, id }
   }
 
-  it('stores, clamps and rounds a dragged offset', () => {
+  it('stores a rounded anchor superseding the legacy offset; reset clears every custom field', () => {
     const { s, id } = edgeStore()
-    s.getState().setEdgeCurveOffset(id, -1.5)
-    expect(s.getState().edges.find((e) => e.id === id)?.data?.curveOffset).toBe(-1.5)
-    s.getState().setEdgeCurveOffset(id, 10)
-    expect(s.getState().edges.find((e) => e.id === id)?.data?.curveOffset).toBe(3)
-    s.getState().setEdgeCurveOffset(id, 1.234)
-    expect(s.getState().edges.find((e) => e.id === id)?.data?.curveOffset).toBe(1.23)
+    s.getState().setEdgeCurveAnchor(id, { x: 0.12345, y: -1.23456, t: 0.4 })
+    expect(s.getState().edges.find((e) => e.id === id)?.data?.curveAnchor).toEqual({
+      x: 0.123,
+      y: -1.235,
+      t: 0.4,
+    })
+    s.getState().setEdgeCurveAnchor(id, undefined)
+    const data = s.getState().edges.find((e) => e.id === id)?.data
+    expect('curveAnchor' in (data ?? {})).toBe(false)
+    expect('curveOffset' in (data ?? {})).toBe(false)
   })
 
-  it('drops the key for default, undefined and non-finite offsets', () => {
+  it('ignores invalid anchors without a history entry', () => {
     const { s, id } = edgeStore()
-    s.getState().setEdgeCurveOffset(id, -2)
-    s.getState().setEdgeCurveOffset(id, undefined)
-    expect('curveOffset' in (s.getState().edges.find((e) => e.id === id)?.data ?? {})).toBe(false)
-    s.getState().setEdgeCurveOffset(id, -2)
-    s.getState().setEdgeCurveOffset(id, 1.002)
-    expect('curveOffset' in (s.getState().edges.find((e) => e.id === id)?.data ?? {})).toBe(false)
-    s.getState().setEdgeCurveOffset(id, -2)
-    s.getState().setEdgeCurveOffset(id, Number.NaN)
-    expect('curveOffset' in (s.getState().edges.find((e) => e.id === id)?.data ?? {})).toBe(false)
+    s.getState().setEdgeCurveAnchor(id, { x: 0.5, y: 0.5, t: 0.3 })
+    const before = s.getState().edges
+    s.getState().setEdgeCurveAnchor(id, { x: Number.NaN, y: 0, t: 0.5 })
+    s.getState().setEdgeCurveAnchor(id, { x: 0, y: 0, t: 1 })
+    s.getState().setEdgeCurveAnchor(id, { x: 0, y: 0, t: 0 })
+    expect(s.getState().edges).toBe(before)
   })
 
-  it('pushes one history entry per committed drag, restorable with undo', () => {
+  it('pushes one history entry per committed drag, restorable with undo/redo', () => {
     const { s, id } = edgeStore()
-    s.getState().setEdgeCurveOffset(id, -1.5)
-    expect(s.getState().edges.find((e) => e.id === id)?.data?.curveOffset).toBe(-1.5)
+    s.getState().setEdgeCurveAnchor(id, { x: 0.4, y: -0.8, t: 0.27 })
+    expect(s.getState().edges.find((e) => e.id === id)?.data?.curveAnchor).toEqual({
+      x: 0.4,
+      y: -0.8,
+      t: 0.27,
+    })
     s.getState().undo()
-    expect('curveOffset' in (s.getState().edges.find((e) => e.id === id)?.data ?? {})).toBe(false)
+    expect('curveAnchor' in (s.getState().edges.find((e) => e.id === id)?.data ?? {})).toBe(false)
+    s.getState().redo()
+    expect(s.getState().edges.find((e) => e.id === id)?.data?.curveAnchor).toEqual({
+      x: 0.4,
+      y: -0.8,
+      t: 0.27,
+    })
   })
 })
 
@@ -597,13 +608,58 @@ describe('reconnectEdge', () => {
 
   it('moves one end to another concept, restorable with undo', () => {
     const { s, id, a, c } = twoEdges()
-    s.getState().reconnectEdge(id, 'target', c)
+    const attachment = { x: 0.2, y: -1 }
+    s.getState().reconnectEdge(id, 'target', c, attachment)
     const edge = s.getState().edges.find((e) => e.id === id)
     expect(edge?.source).toBe(a)
     expect(edge?.target).toBe(c)
     expect(edge?.data?.type).toBe('causes')
+    expect(edge?.data?.targetAttachment).toEqual(attachment)
     s.getState().undo()
     expect(s.getState().edges.find((e) => e.id === id)?.target).not.toBe(c)
+    expect(s.getState().edges.find((e) => e.id === id)?.data?.targetAttachment).toBeUndefined()
+    s.getState().redo()
+    expect(s.getState().edges.find((e) => e.id === id)?.data?.targetAttachment).toEqual(attachment)
+  })
+
+  it('repositions the same endpoint and swaps attachments when direction is reversed', () => {
+    const { s, id, b } = twoEdges()
+    s.getState().reconnectEdge(id, 'target', b, { x: 0, y: -1 })
+    s.getState().reconnectEdge(id, 'target', b, { x: 0.3, y: -1 })
+    expect(s.getState().edges.find((e) => e.id === id)?.data?.targetAttachment).toEqual({
+      x: 0.3,
+      y: -1,
+    })
+    s.getState().undo()
+    expect(s.getState().edges.find((e) => e.id === id)?.data?.targetAttachment).toEqual({
+      x: 0,
+      y: -1,
+    })
+    s.getState().reverseEdge(id)
+    const reversed = s.getState().edges.find((e) => e.id === id)
+    expect(reversed?.data?.sourceAttachment).toEqual({ x: 0, y: -1 })
+    expect(reversed?.data?.targetAttachment).toBeUndefined()
+  })
+
+  it('re-expresses the curve anchor against the new source when direction is reversed', () => {
+    const { s, id } = twoEdges()
+    s.getState().setEdgeCurveAnchor(id, { x: 0.3, y: -1, t: 0.35 })
+    s.getState().reverseEdge(id)
+    const anchor = s.getState().edges.find((e) => e.id === id)?.data?.curveAnchor as
+      | { x: number; y: number; t: number }
+      | undefined
+    // a(0,0) -> b(100,0), default 80x32 boxes + 6px pad: the flow point
+    // (53.8, -6) relative to b(100,0) normalizes to these values; t mirrors.
+    expect(anchor?.x).toBeCloseTo(-1.874, 2)
+    expect(anchor?.y).toBeCloseTo(-1, 6)
+    expect(anchor?.t).toBeCloseTo(0.65, 6)
+    s.getState().reverseEdge(id)
+    const back = s.getState().edges.find((e) => e.id === id)?.data?.curveAnchor as
+      | { x: number; y: number; t: number }
+      | undefined
+    expect(back?.x).toBeCloseTo(0.3, 2)
+    expect(back?.y).toBeCloseTo(-1, 6)
+    expect(back?.t).toBeCloseTo(0.35, 6)
   })
 
   it('ignores self-loops, unknown nodes and no-change drops', () => {
@@ -613,6 +669,19 @@ describe('reconnectEdge', () => {
     s.getState().reconnectEdge(id, 'source', 'missing')
     s.getState().reconnectEdge(id, 'target', b)
     expect(s.getState().edges).toBe(before)
+  })
+
+  it('commits a rebased curve anchor in the same history entry as the move', () => {
+    const { s, id, c } = twoEdges()
+    s.getState().setEdgeCurveAnchor(id, { x: 0.5, y: -1, t: 0.4 })
+    s.getState().reconnectEdge(id, 'target', c, { x: 0, y: -1 }, { x: 0.4, y: -0.9, t: 0.4 })
+    const moved = s.getState().edges.find((e) => e.id === id)
+    expect(moved?.target).toBe(c)
+    expect(moved?.data?.curveAnchor).toEqual({ x: 0.4, y: -0.9, t: 0.4 })
+    s.getState().undo()
+    const restored = s.getState().edges.find((e) => e.id === id)
+    expect(restored?.target).not.toBe(c)
+    expect(restored?.data?.curveAnchor).toEqual({ x: 0.5, y: -1, t: 0.4 })
   })
 })
 

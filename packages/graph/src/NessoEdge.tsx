@@ -7,14 +7,15 @@ import type { RelationCategory } from '@nesso-how/vocab-learning'
 import type { NessoEdgeData } from './display.js'
 import { useGraphDisplay, type NessoGraphDisplayContext } from './context.js'
 import { isEdgeConnectedToNode, resolveEdgeVisual } from './edgeHighlight.js'
+import { EdgeEndpointDot } from './EdgeEndpointDot.js'
 import {
-  arcControlPoint,
-  connectionPreview,
-  curveOffsetForPointerAt,
+  attachmentAt,
+  edgeArcGeometry,
   flowNodeCenterY,
-  nessoArcPath,
+  pointFromBox,
+  pointRelativeToBox,
   quadraticPoint,
-  rectExit,
+  rebaseArcAnchor,
 } from './geometry.js'
 
 function categoryColor(
@@ -30,37 +31,31 @@ type NessoFlowEdge = Edge<NessoEdgeData, 'nesso'>
 
 export function NessoEdge({ id, source, target, data, selected }: EdgeProps<NessoFlowEdge>) {
   const [hovered, setHovered] = useState(false)
-  // Live preview offset while a curve drag is in flight; committed to the
-  // store once per gesture on pointer-up, so undo sees a single entry.
-  const [dragOffset, setDragOffset] = useState<number | null>(null)
+  const [hoveredReconnectDot, setHoveredReconnectDot] = useState<'source' | 'target' | null>(null)
+  // In-flight reshape anchor (flow coordinates). Committed once per gesture
+  // on pointer-up through onEdgeCurveAnchorChange; the persisted
+  // data.curveAnchor then drives rendering until the next gesture.
+  const [dragAnchor, setDragAnchor] = useState<{ x: number; y: number; t: number } | null>(null)
   const dragPointerId = useRef<number | null>(null)
   const dragMoved = useRef(false)
-  // Grab reference frozen at drag start: the trimmed endpoints slide as the
-  // offset changes, so inverting against the live chord would chase a moving
-  // target and make the arc jitter; the frozen chord + grab parameter keep
-  // the mapping a pure function of the pointer for the whole gesture.
-  const dragGrab = useRef<{
-    ax: number
-    ay: number
-    bx: number
-    by: number
-    t: number
-    siblingIdx: number
-  } | null>(null)
+  const dragT = useRef<number | null>(null)
+  const dragStartClient = useRef<{ x: number; y: number } | null>(null)
   // Endpoint retargeting in flight: the dragged dot follows the cursor while
-  // a creation-style preview arc runs from the fixed end. overNodeId tracks
-  // the concept under the cursor for the snapped variant of the preview.
+  // a dashed copy of the prospective edge shows its final geometry. overNodeId
+  // tracks the concept under the cursor for the snapped preview.
   const [reconnectDrag, setReconnectDrag] = useState<{
     side: 'source' | 'target'
     x: number
     y: number
+    startX: number
+    startY: number
     overNodeId: string | null
   } | null>(null)
   const reconnectPointerId = useRef<number | null>(null)
   // Concept boxes snapshotted at reconnect start for the cursor hit test
   // (pointer capture retargets elementFromPoint, so geometry is used instead).
   const reconnectNodes = useRef<{ id: string; cx: number; cy: number; w: number; h: number }[]>([])
-  const { screenToFlowPosition, getNodes } = useReactFlow()
+  const { screenToFlowPosition, getNodes, getEdges } = useReactFlow()
   const {
     edgeEncoding,
     curveStyle,
@@ -70,8 +65,9 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
     isItemSelected,
     selectedNodeId,
     dimUnconnectedOnSelect,
-    onEdgeCurveOffsetChange,
+    onEdgeCurveAnchorChange,
     onEdgeReconnect,
+    onEdgeReconnectOver,
   } = useGraphDisplay()
 
   const sourceNode = useStore((s) => s.nodeLookup.get(source))
@@ -102,31 +98,25 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
   const tcy = flowNodeCenterY(targetNode)
 
   const storedOffset = data?.curveOffset ?? 1
-  const renderOffset = dragOffset ?? storedOffset
 
-  const pad = 6
-  function trimEndpoints(offset: number) {
-    if (straight) {
-      return {
-        a: rectExit(scx, scy, sw + pad * 2, sh + pad * 2, tcx, tcy),
-        b: rectExit(tcx, tcy, tw + pad * 2, th + pad * 2, scx, scy),
-      }
-    }
-    const { cpx, cpy } = arcControlPoint(scx, scy, tcx, tcy, data?.siblingIdx ?? 0, offset)
-    return {
-      a: rectExit(scx, scy, sw + pad * 2, sh + pad * 2, cpx, cpy),
-      b: rectExit(tcx, tcy, tw + pad * 2, th + pad * 2, cpx, cpy),
-    }
-  }
-  const { a, b } = trimEndpoints(renderOffset)
-
-  // Endpoints frozen for the drag duration: the live trim points slide as
-  // the offset changes, so rendering against them would let the arc drift
-  // off the cursor mid-gesture. Frozen ends keep B(t) exactly under the
-  // pointer; the live trim resumes on release.
-  const grabbing = dragGrab.current !== null && dragOffset !== null
-  const ra = grabbing ? { x: dragGrab.current!.ax, y: dragGrab.current!.ay } : a
-  const rb = grabbing ? { x: dragGrab.current!.bx, y: dragGrab.current!.by } : b
+  const sourceBox = { cx: scx, cy: scy, w: sw, h: sh }
+  const targetBox = { cx: tcx, cy: tcy, w: tw, h: th }
+  const siblingIdx = data?.siblingIdx ?? 0
+  // The committed anchor is stored relative to the source node's padded box,
+  // so the curve follows the node; the live drag anchor is flow-absolute.
+  const persistedAnchor = data?.curveAnchor
+    ? { ...pointFromBox(sourceBox, data.curveAnchor), t: data.curveAnchor.t }
+    : null
+  const liveAnchor = dragAnchor ?? persistedAnchor
+  const arc = edgeArcGeometry(sourceBox, targetBox, {
+    straight,
+    curveOffset: storedOffset,
+    siblingIdx,
+    anchor: liveAnchor ?? undefined,
+    sourceAttachment: data?.sourceAttachment,
+    targetAttachment: data?.targetAttachment,
+  })
+  const { a: ra, b: rb, path, labelX, labelY, arrowAngle } = arc
 
   // Concept under a flow point, from the reconnect-start snapshot.
   function nodeAt(p: {
@@ -140,15 +130,102 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
     )
   }
 
-  const { path, labelX, labelY, arrowAngle } = nessoArcPath(
-    ra.x,
-    ra.y,
-    rb.x,
-    rb.y,
-    data?.siblingIdx ?? 0,
-    straight,
-    renderOffset,
-  )
+  // styleEdges assigns the sibling index in edge order for each unordered
+  // node pair. A new endpoint can move the edge into a different fan.
+  function siblingIdxAfterReconnect(nextSource: string, nextTarget: string): number {
+    let index = 0
+    for (const edge of getEdges()) {
+      if (edge.id === id) break
+      if (
+        (edge.source === nextSource && edge.target === nextTarget) ||
+        (edge.source === nextTarget && edge.target === nextSource)
+      )
+        index++
+    }
+    return index
+  }
+
+  const preview = reconnectDrag
+    ? (() => {
+        const overBox = reconnectDrag.overNodeId ? nodeAt(reconnectDrag) : null
+        const endBox = overBox ?? { cx: reconnectDrag.x, cy: reconnectDrag.y, w: 0, h: 0 }
+        const nextSource = reconnectDrag.side === 'source' ? endBox : sourceBox
+        const nextTarget = reconnectDrag.side === 'target' ? endBox : targetBox
+        const nextSiblingIdx = overBox
+          ? siblingIdxAfterReconnect(
+              reconnectDrag.side === 'source' ? overBox.id : source,
+              reconnectDrag.side === 'target' ? overBox.id : target,
+            )
+          : siblingIdx
+        const movingAttachment = overBox ? attachmentAt(overBox, reconnectDrag) : undefined
+        const options = {
+          straight,
+          curveOffset: storedOffset,
+          siblingIdx: nextSiblingIdx,
+          anchor: liveAnchor
+            ? rebaseArcAnchor(liveAnchor, sourceBox, targetBox, nextSource, nextTarget)
+            : undefined,
+          freeEnd: overBox ? undefined : reconnectDrag.side,
+          sourceAttachment:
+            reconnectDrag.side === 'source' ? movingAttachment : data?.sourceAttachment,
+          targetAttachment:
+            reconnectDrag.side === 'target' ? movingAttachment : data?.targetAttachment,
+        }
+        const geometry = edgeArcGeometry(nextSource, nextTarget, options)
+        if (overBox) return { ...geometry, snapped: true }
+
+        // The click can land anywhere in the dot's 22px hit area, not just
+        // at the rendered endpoint. Starting from that cursor position would
+        // recompute the bow and make the preview jump on pointerdown. Blend
+        // away only that initial discrepancy while dragging in free space;
+        // snapped previews still use the exact prospective edge geometry.
+        const startBox = { cx: reconnectDrag.startX, cy: reconnectDrag.startY, w: 0, h: 0 }
+        const startGeometry = edgeArcGeometry(
+          reconnectDrag.side === 'source' ? startBox : sourceBox,
+          reconnectDrag.side === 'target' ? startBox : targetBox,
+          {
+            ...options,
+            anchor: liveAnchor
+              ? rebaseArcAnchor(
+                  liveAnchor,
+                  sourceBox,
+                  targetBox,
+                  reconnectDrag.side === 'source' ? startBox : sourceBox,
+                  reconnectDrag.side === 'target' ? startBox : targetBox,
+                )
+              : undefined,
+          },
+        )
+        const traveled = Math.hypot(
+          reconnectDrag.x - reconnectDrag.startX,
+          reconnectDrag.y - reconnectDrag.startY,
+        )
+        const ratio = Math.min(traveled / 80, 1)
+        const correction = 1 - ratio * ratio * (3 - 2 * ratio)
+        const a = {
+          x: geometry.a.x + (ra.x - startGeometry.a.x) * correction,
+          y: geometry.a.y + (ra.y - startGeometry.a.y) * correction,
+        }
+        const b = {
+          x: geometry.b.x + (rb.x - startGeometry.b.x) * correction,
+          y: geometry.b.y + (rb.y - startGeometry.b.y) * correction,
+        }
+        const cpx = geometry.cpx + (arc.cpx - startGeometry.cpx) * correction
+        const cpy = geometry.cpy + (arc.cpy - startGeometry.cpy) * correction
+        const path = straight
+          ? `M ${a.x} ${a.y} L ${b.x} ${b.y}`
+          : `M ${a.x} ${a.y} Q ${cpx} ${cpy} ${b.x} ${b.y}`
+        return {
+          ...geometry,
+          a,
+          b,
+          path,
+          labelX: straight ? (a.x + b.x) / 2 : (a.x + 2 * cpx + b.x) / 4,
+          labelY: straight ? (a.y + b.y) / 2 : (a.y + 2 * cpy + b.y) / 4,
+          snapped: false,
+        }
+      })()
+    : null
 
   const arrowSize = 7
   const a1 = arrowAngle + Math.PI - 0.45
@@ -169,14 +246,12 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
     hasSelection,
   })
 
-  const editable = onEdgeCurveOffsetChange !== undefined
+  const editable = onEdgeCurveAnchorChange !== undefined
   const reconnectable = onEdgeReconnect !== undefined
   const canCurve = editable && !straight
-  // Endpoint dots appear on hover/selection; while a reconnect is in flight
-  // they stay mounted so pointer capture survives the re-renders.
-  const showDots = reconnectable && (isSelected || hovered || reconnectDrag !== null)
-
-  const siblingIdx = data?.siblingIdx ?? 0
+  // Both dots appear on hover, never on selection alone. During reconnect
+  // the captured dot stays mounted but invisible until the gesture ends.
+  const showDots = reconnectable && (hovered || reconnectDrag !== null)
 
   function flowPointAt(clientX: number, clientY: number): { x: number; y: number } {
     return screenToFlowPosition({ x: clientX, y: clientY })
@@ -184,12 +259,11 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
 
   // Curve parameter of the rendered arc closest to a flow point, sampled.
   function closestT(p: { x: number; y: number }): number {
-    const { cpx, cpy } = arcControlPoint(a.x, a.y, b.x, b.y, siblingIdx, renderOffset)
     let best = 0.5
     let bestD = Number.POSITIVE_INFINITY
     for (let i = 0; i <= 24; i++) {
       const t = i / 24
-      const q = quadraticPoint(a.x, a.y, cpx, cpy, b.x, b.y, t)
+      const q = quadraticPoint(ra.x, ra.y, arc.cpx, arc.cpy, rb.x, rb.y, t)
       const d = (q.x - p.x) * (q.x - p.x) + (q.y - p.y) * (q.y - p.y)
       if (d < bestD) {
         bestD = d
@@ -199,64 +273,51 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
     return best
   }
 
-  function offsetAtPoint(p: { x: number; y: number }): number {
-    const g = dragGrab.current
-    if (!g) return renderOffset
-    return curveOffsetForPointerAt(
-      p.x,
-      p.y,
-      g.ax,
-      g.ay,
-      g.bx,
-      g.by,
-      g.t,
-      g.siblingIdx,
-      renderOffset,
-    )
-  }
-
   function endCurveDrag() {
     dragPointerId.current = null
-    dragGrab.current = null
-    setDragOffset(null)
-  }
-
-  // Solve the offset against the LIVE trim so the committed curve passes
-  // through the release point: the frozen trim holds the arc steady during
-  // the gesture, but the live trim slides with the offset — committing the
-  // preview value as-is would make the arc visibly jump on release.
-  function solveReleaseOffset(p: { x: number; y: number }): number {
-    const g = dragGrab.current
-    if (!g) return renderOffset
-    let s = offsetAtPoint(p)
-    for (let i = 0; i < 10; i++) {
-      const { a: la, b: lb } = trimEndpoints(s)
-      const next = curveOffsetForPointerAt(p.x, p.y, la.x, la.y, lb.x, lb.y, g.t, g.siblingIdx, s)
-      if (!Number.isFinite(next)) break
-      if (Math.abs(next - s) < 0.001) {
-        s = next
-        break
-      }
-      s = next
-    }
-    return s
+    dragT.current = null
+    dragStartClient.current = null
   }
 
   function endReconnectDrag() {
     reconnectPointerId.current = null
     reconnectNodes.current = []
     setReconnectDrag(null)
+    notifyReconnectOver(null)
+  }
+
+  // Last notified hover target, to only emit on change.
+  const reconnectOverRef = useRef<string | null>(null)
+
+  function notifyReconnectOver(nodeId: string | null) {
+    if (reconnectOverRef.current === nodeId) return
+    reconnectOverRef.current = nodeId
+    onEdgeReconnectOver?.(nodeId)
+  }
+
+  // Hovered concept for a reconnect side, excluding the fixed end itself
+  // (a drop there would self-loop, mirroring creation's fromNode guard).
+  function overNodeId(side: 'source' | 'target', p: { x: number; y: number }): string | null {
+    const fixedId = side === 'target' ? source : target
+    const over = nodeAt(p)
+    return over && over.id !== fixedId ? over.id : null
   }
 
   return (
-    <g onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
+    <g
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => {
+        setHovered(false)
+        setHoveredReconnectDot(null)
+      }}
+    >
       <path
         d={path}
         stroke="transparent"
         strokeWidth={14}
         fill="none"
         style={{
-          cursor: canCurve ? (dragOffset !== null ? 'grabbing' : 'grab') : undefined,
+          cursor: canCurve ? (dragPointerId.current !== null ? 'grabbing' : 'grab') : undefined,
           pointerEvents: 'all',
           touchAction: 'none',
         }}
@@ -264,77 +325,71 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
           if (e.button !== 0 || !canCurve || dragPointerId.current !== null) return
           const p = flowPointAt(e.clientX, e.clientY)
           const t = closestT(p)
-          // The grab must sit on the middle of the arc: near the ends a drag
-          // would be ambiguous with the reconnect dots, so let it be a click.
-          if (t < 0.12 || t > 0.88) return
+          // The reconnect dots own the endpoints; every other part of the
+          // stroke can be grabbed. Avoid the Bézier singularity at t=0/1.
+          if (t < 0.02 || t > 0.98) return
           // Keep the gesture on the arc: React Flow must not start a pane
           // pan from these events.
           e.stopPropagation()
           e.currentTarget.setPointerCapture(e.pointerId)
           dragPointerId.current = e.pointerId
           dragMoved.current = false
-          dragGrab.current = { ax: a.x, ay: a.y, bx: b.x, by: b.y, t, siblingIdx }
-          // Snap the arc onto the cursor from the grab moment: the hit area
-          // is wider than the visible stroke, so the offsets could otherwise
-          // start a few pixels off and keep that bias for the whole gesture.
-          setDragOffset(offsetAtPoint(p))
+          dragT.current = t
+          dragStartClient.current = { x: e.clientX, y: e.clientY }
+          // Do not touch the curve on a click; wait for a real drag.
         }}
         onPointerMove={(e) => {
           if (dragPointerId.current !== e.pointerId) return
+          const start = dragStartClient.current
+          if (
+            !dragMoved.current &&
+            start &&
+            Math.hypot(e.clientX - start.x, e.clientY - start.y) < 4
+          )
+            return
           dragMoved.current = true
-          setDragOffset(offsetAtPoint(flowPointAt(e.clientX, e.clientY)))
+          const t = dragT.current
+          if (t !== null) setDragAnchor({ ...flowPointAt(e.clientX, e.clientY), t })
         }}
         onPointerUp={(e) => {
           if (dragPointerId.current !== e.pointerId) return
-          const moved = dragMoved.current
-          const final = moved ? solveReleaseOffset(flowPointAt(e.clientX, e.clientY)) : undefined
+          // A release without a real drag is a click: leave the curve alone.
+          if (dragT.current !== null && dragMoved.current) {
+            const p = flowPointAt(e.clientX, e.clientY)
+            // One history entry per gesture: the store commit replaces the
+            // local anchor as the source of truth for the rendered shape.
+            // Raw normalization — the grabbed point is NOT on the node border.
+            onEdgeCurveAnchorChange?.(id, { ...pointRelativeToBox(sourceBox, p), t: dragT.current })
+            setDragAnchor(null)
+          }
           endCurveDrag()
-          // A plain click only previews; the store (and its history) sees
-          // one commit per real drag.
-          if (final !== undefined) onEdgeCurveOffsetChange?.(id, final)
         }}
         onPointerCancel={() => {
+          // The committed shape lives in the store; dropping the live anchor
+          // restores it.
+          setDragAnchor(null)
           endCurveDrag()
         }}
         onDoubleClick={(e) => {
           if (!canCurve) return
           e.stopPropagation()
           endCurveDrag()
-          onEdgeCurveOffsetChange?.(id, undefined)
+          setDragAnchor(null)
+          onEdgeCurveAnchorChange?.(id, undefined)
         }}
       />
 
-      {reconnectDrag !== null ? (
-        (() => {
-          // Creation-identical preview: default bow, accent dashed stroke,
-          // faint while free and stronger when snapped onto a concept.
-          const fixedNode = reconnectDrag.side === 'target' ? sourceNode : targetNode
-          const fw = fixedNode.measured?.width ?? 80
-          const fh = fixedNode.measured?.height ?? 32
-          const overBox = reconnectDrag.overNodeId ? (nodeAt(reconnectDrag) ?? null) : null
-          const { path: previewPath, snapped } = connectionPreview(
-            fixedNode.internals.positionAbsolute.x + fw / 2,
-            flowNodeCenterY(fixedNode),
-            fw,
-            fh,
-            reconnectDrag.x,
-            reconnectDrag.y,
-            overBox,
-            straight,
-          )
-          return (
-            <path
-              d={previewPath}
-              fill="none"
-              stroke="var(--accent)"
-              strokeWidth={1.5}
-              strokeDasharray={'0.5 3'}
-              opacity={snapped ? 0.65 : 0.25}
-              strokeLinecap="round"
-              style={{ pointerEvents: 'none' }}
-            />
-          )
-        })()
+      {preview ? (
+        <path
+          d={preview.path}
+          fill="none"
+          stroke="var(--accent)"
+          strokeWidth={1.5}
+          strokeDasharray={'0.5 3'}
+          opacity={preview.snapped ? 0.65 : 0.25}
+          strokeLinecap="round"
+          style={{ pointerEvents: 'none' }}
+        />
       ) : (
         <path
           d={path}
@@ -358,8 +413,8 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
 
       {showLabel && (
         <foreignObject
-          x={labelX - 60}
-          y={labelY - 10}
+          x={(preview?.labelX ?? labelX) - 60}
+          y={(preview?.labelY ?? labelY) - 10}
           width={120}
           height={20}
           style={{ overflow: 'visible', pointerEvents: 'none' }}
@@ -385,70 +440,124 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
 
       {showDots && (
         <g>
-          {(['source', 'target'] as const).map((side) => {
-            const cx =
-              reconnectDrag?.side === side ? reconnectDrag.x : side === 'source' ? ra.x : rb.x
-            const cy =
-              reconnectDrag?.side === side ? reconnectDrag.y : side === 'source' ? ra.y : rb.y
-            const fixed = reconnectDrag !== null && reconnectDrag.side !== side
-            return (
-              <circle
-                key={side}
-                cx={cx}
-                cy={cy}
-                r={6}
-                fill="var(--paper)"
-                stroke="var(--accent)"
-                strokeWidth={1.5}
-                data-testid={`reconnect-${side}-${id}`}
-                style={{
-                  cursor: fixed ? undefined : 'crosshair',
-                  pointerEvents: fixed ? 'none' : 'all',
-                  touchAction: 'none',
-                }}
-                onPointerDown={(e) => {
-                  if (e.button !== 0 || !reconnectable || reconnectPointerId.current !== null)
-                    return
-                  e.stopPropagation()
-                  e.currentTarget.setPointerCapture(e.pointerId)
-                  reconnectPointerId.current = e.pointerId
-                  // Public node positions (Nesso concepts are flat, so
-                  // position is flow-absolute); no store subscription needed.
-                  reconnectNodes.current = getNodes().map((n) => {
-                    const w = n.measured?.width ?? 80
-                    const h = n.measured?.height ?? 32
-                    return {
-                      id: n.id,
-                      cx: n.position.x + w / 2,
-                      cy: n.position.y + h / 2,
-                      w,
-                      h,
-                    }
-                  })
-                  const p = flowPointAt(e.clientX, e.clientY)
-                  setReconnectDrag({ side, x: p.x, y: p.y, overNodeId: nodeAt(p)?.id ?? null })
-                }}
-                onPointerMove={(e) => {
-                  if (reconnectPointerId.current !== e.pointerId) return
-                  const p = flowPointAt(e.clientX, e.clientY)
-                  setReconnectDrag({ side, x: p.x, y: p.y, overNodeId: nodeAt(p)?.id ?? null })
-                }}
-                onPointerUp={(e) => {
-                  if (reconnectPointerId.current !== e.pointerId) return
-                  reconnectPointerId.current = null
-                  // Geometric drop lookup: pointer capture retargets
-                  // elementFromPoint, so the snapshot is used instead.
-                  const drop = nodeAt(flowPointAt(e.clientX, e.clientY))?.id ?? null
-                  const drag = reconnectDrag
-                  endReconnectDrag()
-                  if (drag && drop) onEdgeReconnect?.(id, drag.side, drop)
-                }}
-                onPointerCancel={() => {
-                  endReconnectDrag()
-                }}
-              />
-            )
-          })}
+          {(['source', 'target'] as const)
+            .filter((side) => reconnectDrag === null || reconnectDrag.side === side)
+            .map((side) => {
+              // Captured pointer events keep arriving even when the dragged
+              // dot snaps away from the cursor onto the concept border.
+              const endpoint = side === 'source' ? (preview?.a ?? ra) : (preview?.b ?? rb)
+              const { x: cx, y: cy } = endpoint
+              return (
+                <EdgeEndpointDot
+                  key={side}
+                  x={cx}
+                  y={cy}
+                  active={hoveredReconnectDot === side}
+                  hidden={reconnectDrag !== null}
+                >
+                  <circle
+                    cx={cx}
+                    cy={cy}
+                    r={11}
+                    fill="transparent"
+                    data-testid={`reconnect-${side}-${id}`}
+                    style={{
+                      cursor: 'crosshair',
+                      pointerEvents: 'all',
+                      touchAction: 'none',
+                    }}
+                    onPointerEnter={() => setHoveredReconnectDot(side)}
+                    onPointerLeave={() => setHoveredReconnectDot(null)}
+                    onPointerDown={(e) => {
+                      if (e.button !== 0 || !reconnectable || reconnectPointerId.current !== null)
+                        return
+                      e.stopPropagation()
+                      e.currentTarget.setPointerCapture(e.pointerId)
+                      reconnectPointerId.current = e.pointerId
+                      // Public node positions (Nesso concepts are flat, so
+                      // position is flow-absolute); no store subscription needed.
+                      reconnectNodes.current = getNodes().map((n) => {
+                        const w = n.measured?.width ?? 80
+                        const h = n.measured?.height ?? 32
+                        return {
+                          id: n.id,
+                          cx: n.position.x + w / 2,
+                          cy: n.position.y + h / 2,
+                          w,
+                          h,
+                        }
+                      })
+                      const p = flowPointAt(e.clientX, e.clientY)
+                      const over = overNodeId(side, p)
+                      notifyReconnectOver(over)
+                      setReconnectDrag({
+                        side,
+                        x: p.x,
+                        y: p.y,
+                        startX: p.x,
+                        startY: p.y,
+                        overNodeId: over,
+                      })
+                    }}
+                    onPointerMove={(e) => {
+                      if (reconnectPointerId.current !== e.pointerId) return
+                      const p = flowPointAt(e.clientX, e.clientY)
+                      const over = overNodeId(side, p)
+                      notifyReconnectOver(over)
+                      setReconnectDrag(
+                        (current) =>
+                          current && {
+                            ...current,
+                            x: p.x,
+                            y: p.y,
+                            overNodeId: over,
+                          },
+                      )
+                    }}
+                    onPointerUp={(e) => {
+                      if (reconnectPointerId.current !== e.pointerId) return
+                      reconnectPointerId.current = null
+                      // Geometric drop lookup: pointer capture retargets
+                      // elementFromPoint, so the snapshot is used instead.
+                      const drop = nodeAt(flowPointAt(e.clientX, e.clientY)) ?? null
+                      const drag = reconnectDrag
+                      endReconnectDrag()
+                      if (drag && drop) {
+                        const fixedId = drag.side === 'source' ? target : source
+                        // Re-base a reshaped curve onto the prospective chord
+                        // and commit it in the same transaction as the move,
+                        // so one undo step covers the whole gesture.
+                        const nextSource = drag.side === 'source' ? drop : sourceBox
+                        const nextTarget = drag.side === 'target' ? drop : targetBox
+                        const rebased =
+                          liveAnchor && drop.id !== fixedId
+                            ? rebaseArcAnchor(
+                                liveAnchor,
+                                sourceBox,
+                                targetBox,
+                                nextSource,
+                                nextTarget,
+                              )
+                            : null
+                        setDragAnchor(null)
+                        onEdgeReconnect?.(
+                          id,
+                          drag.side,
+                          drop.id,
+                          attachmentAt(drop, flowPointAt(e.clientX, e.clientY)),
+                          rebased
+                            ? { ...pointRelativeToBox(nextSource, rebased), t: rebased.t }
+                            : undefined,
+                        )
+                      }
+                    }}
+                    onPointerCancel={() => {
+                      endReconnectDrag()
+                    }}
+                  />
+                </EdgeEndpointDot>
+              )
+            })}
         </g>
       )}
     </g>

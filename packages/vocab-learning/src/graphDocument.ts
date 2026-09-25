@@ -45,6 +45,11 @@ export interface NessoRelationData extends Record<string, unknown> {
    * documents are read as -1 on load.
    */
   curveOffset?: number
+  /** Endpoint positions relative to the padded concept box; absent = automatic exit. */
+  sourceAttachment?: { x: number; y: number }
+  targetAttachment?: { x: number; y: number }
+  /** Manual curve reshape point, normalized to the source concept's padded box. */
+  curveAnchor?: { x: number; y: number; t: number }
 }
 
 export type NessoGraphDocument<M extends Record<string, unknown> = Record<string, unknown>> =

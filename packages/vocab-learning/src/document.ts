@@ -115,6 +115,39 @@ function validateRelations<M extends Record<string, unknown>>(doc: NessoGraphDoc
         `Invalid Nesso graph document: unknown relation type "${rel.type}" at relations[${i}]`,
       )
     }
+    for (const side of ['sourceAttachment', 'targetAttachment'] as const) {
+      const value: unknown = rel.data?.[side]
+      if (value === undefined) continue
+      if (
+        !isPlainObject(value) ||
+        Object.keys(value).length !== 2 ||
+        typeof value.x !== 'number' ||
+        !Number.isFinite(value.x) ||
+        Math.abs(value.x) > 1 ||
+        typeof value.y !== 'number' ||
+        !Number.isFinite(value.y) ||
+        Math.abs(value.y) > 1
+      ) {
+        throw new Error(`Invalid Nesso graph document: ${side} at relations[${i}]`)
+      }
+    }
+    const anchor: unknown = rel.data?.curveAnchor
+    if (anchor !== undefined) {
+      if (
+        !isPlainObject(anchor) ||
+        Object.keys(anchor).length !== 3 ||
+        typeof anchor.x !== 'number' ||
+        !Number.isFinite(anchor.x) ||
+        typeof anchor.y !== 'number' ||
+        !Number.isFinite(anchor.y) ||
+        typeof anchor.t !== 'number' ||
+        !Number.isFinite(anchor.t) ||
+        anchor.t <= 0 ||
+        anchor.t >= 1
+      ) {
+        throw new Error(`Invalid Nesso graph document: curveAnchor at relations[${i}]`)
+      }
+    }
   }
 }
 

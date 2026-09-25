@@ -3,6 +3,7 @@ import { createContext, useContext } from 'react'
 import type { RelationTypeName, CategoryPalette } from '@nesso-how/vocab-learning'
 import type { EdgeEncoding, CurveStyle } from './display.js'
 import { DEFAULT_GRAPH_DISPLAY } from './display.js'
+import type { EndpointAttachment } from './geometry.js'
 
 export type CategoryColorMode = 'palette' | 'css'
 
@@ -16,13 +17,29 @@ export interface NessoGraphDisplayContext {
   getRelationLabel?: (type: RelationTypeName) => string
   isItemSelected?: (kind: 'node' | 'edge', id: string) => boolean
   /**
-   * Curve-drag commit callback (see NessoGraphProps). Absent = read-only.
+   * Curve-reshape commit callback (see NessoGraphProps). Receives the anchor
+   * (source-node-relative point + curve parameter) once per completed drag,
+   * or undefined when the curve is reset to the default bow. Absent = read-only.
    */
-  onEdgeCurveOffsetChange?: (id: string, offset: number | undefined) => void
+  onEdgeCurveAnchorChange?: (
+    id: string,
+    anchor: { x: number; y: number; t: number } | undefined,
+  ) => void
   /**
    * Endpoint-retarget callback (see NessoGraphProps). Absent = no reconnect dots.
    */
-  onEdgeReconnect?: (id: string, side: 'source' | 'target', nodeId: string) => void
+  onEdgeReconnect?: (
+    id: string,
+    side: 'source' | 'target',
+    nodeId: string,
+    attachment?: EndpointAttachment,
+    curveAnchor?: { x: number; y: number; t: number },
+  ) => void
+  /**
+   * Reconnect hover callback: the hovered concept id while an endpoint drag
+   * is over a valid target, or null. Drives the destination highlight.
+   */
+  onEdgeReconnectOver?: (nodeId: string | null) => void
   /** Id of the currently selected concept, if any — used to emphasize connected edges. */
   selectedNodeId?: string | null
   /** Dim edges unconnected to the selected concept. Defaults to on. */

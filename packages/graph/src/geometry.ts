@@ -65,60 +65,6 @@ export function quadraticPoint(
   }
 }
 
-/**
- * Inverse of the arc bow at curve parameter t: given a pointer position in
- * flow coordinates and the edge chord, return the signed offset that would
- * place B(t) under the pointer (normal component; sliding along the chord
- * leaves the shape unchanged). t is clamped to the middle of the arc because
- * the mapping degenerates near the endpoints (w = 2(1-t)t → 0). A pointer on
- * the chord flattens the arc (0); far pointers clamp to the limit window.
- */
-export function curveOffsetForPointerAt(
-  px: number,
-  py: number,
-  ax: number,
-  ay: number,
-  bx: number,
-  by: number,
-  t: number,
-  siblingIdx = 0,
-  fallback = 1,
-): number {
-  const tc = Math.min(0.85, Math.max(0.15, t))
-  const dx = bx - ax
-  const dy = by - ay
-  const dist = Math.sqrt(dx * dx + dy * dy)
-  const defaultBend = Math.min(dist * 0.22, 90)
-  if (!(defaultBend > 0)) return fallback
-  const nx = -dy / dist
-  const ny = dx / dist
-  const mx = (ax + bx) / 2
-  const my = (ay + by) / 2
-  // Base point L(t) without bow or fan: B(t) = L(t) + n·(offset·bend + fan)·w.
-  const u = 1 - tc
-  const w = 2 * u * tc
-  const lx = u * u * ax + 2 * u * tc * mx + tc * tc * bx
-  const ly = u * u * ay + 2 * u * tc * my + tc * tc * by
-  const normal = (px - lx) * nx + (py - ly) * ny
-  return clampCurveOffset((normal / w - siblingIdx * 7) / defaultBend)
-}
-
-/**
- * Apex (t = 0.5) specialization of the drag inverse, sibling-fan free: the
- * midpoint handle era used it; the arc-middle drag uses `curveOffsetForPointerAt`.
- */
-export function curveOffsetForPointer(
-  px: number,
-  py: number,
-  ax: number,
-  ay: number,
-  bx: number,
-  by: number,
-  fallback = 1,
-): number {
-  return curveOffsetForPointerAt(px, py, ax, ay, bx, by, 0.5, 0, fallback)
-}
-
 /** Quadratic-curve control point shared by edge rendering and the connection line. */
 export function arcControlPoint(
   sx: number,
@@ -142,6 +88,198 @@ export function arcControlPoint(
 /** Trim margin around node boxes shared by edge rendering and previews. */
 export const NODE_PAD = 6
 
+export interface EndpointAttachment {
+  /** Coordinates normalized to the node box plus NODE_PAD, relative to its centre. */
+  x: number
+  y: number
+}
+
+/** Project a cursor point onto the rounded (pill-shaped) attachment border. */
+export function closestPillBorder(
+  node: { cx: number; cy: number; w: number; h: number },
+  point: { x: number; y: number },
+): { x: number; y: number } {
+  const hx = node.w / 2 + NODE_PAD
+  const hy = node.h / 2 + NODE_PAD
+  const horizontal = hx >= hy
+  const halfSegment = Math.abs(hx - hy)
+  const sx =
+    node.cx + (horizontal ? Math.max(-halfSegment, Math.min(halfSegment, point.x - node.cx)) : 0)
+  const sy =
+    node.cy + (horizontal ? 0 : Math.max(-halfSegment, Math.min(halfSegment, point.y - node.cy)))
+  const dx = point.x - sx
+  const dy = point.y - sy
+  const length = Math.hypot(dx, dy)
+  const radius = Math.min(hx, hy)
+  return length === 0
+    ? { x: sx, y: sy - radius }
+    : { x: sx + (dx / length) * radius, y: sy + (dy / length) * radius }
+}
+
+/** Raw point in node-box coordinates: normalization only, no border projection. */
+export function pointRelativeToBox(
+  node: { cx: number; cy: number; w: number; h: number },
+  point: { x: number; y: number },
+): { x: number; y: number } {
+  return {
+    x: (point.x - node.cx) / (node.w / 2 + NODE_PAD),
+    y: (point.y - node.cy) / (node.h / 2 + NODE_PAD),
+  }
+}
+
+/** Inverse of {@link pointRelativeToBox}: flow point for box coordinates. */
+export function pointFromBox(
+  node: { cx: number; cy: number; w: number; h: number },
+  point: { x: number; y: number },
+): { x: number; y: number } {
+  return {
+    x: node.cx + point.x * (node.w / 2 + NODE_PAD),
+    y: node.cy + point.y * (node.h / 2 + NODE_PAD),
+  }
+}
+
+export function attachmentAt(
+  node: { cx: number; cy: number; w: number; h: number },
+  point: { x: number; y: number },
+): EndpointAttachment {
+  return pointRelativeToBox(node, closestPillBorder(node, point))
+}
+
+export function attachmentPoint(
+  node: { cx: number; cy: number; w: number; h: number },
+  attachment: EndpointAttachment,
+): { x: number; y: number } {
+  return closestPillBorder(node, pointFromBox(node, attachment))
+}
+
+/**
+ * Exit point of an arc end: the saved border attachment, the free-drag
+ * center, or the automatic exit towards the curve's control point.
+ */
+function arcEndPoint(
+  box: { cx: number; cy: number; w: number; h: number },
+  attachment: EndpointAttachment | undefined,
+  freeEnd: boolean,
+  toX: number,
+  toY: number,
+) {
+  if (attachment && !freeEnd) return attachmentPoint(box, attachment)
+  if (freeEnd) return { x: box.cx, y: box.cy }
+  return rectExit(box.cx, box.cy, box.w + NODE_PAD * 2, box.h + NODE_PAD * 2, toX, toY)
+}
+
+/**
+ * An interactive quadratic through a grabbed point. Its node exits point
+ * towards that point, so both ends follow the gesture. Solving the Bézier
+ * equation for its control point then places B(t) on the pointer exactly —
+ * without iterating or restricting motion to the chord normal.
+ */
+export function anchoredArc(
+  source: { cx: number; cy: number; w: number; h: number },
+  target: { cx: number; cy: number; w: number; h: number },
+  anchor: { x: number; y: number; t: number },
+  freeEnd?: 'source' | 'target',
+  attachments: { source?: EndpointAttachment; target?: EndpointAttachment } = {},
+) {
+  const { x, y, t } = anchor
+  const a = arcEndPoint(source, attachments.source, freeEnd === 'source', x, y)
+  const b = arcEndPoint(target, attachments.target, freeEnd === 'target', x, y)
+  const u = 1 - t
+  const weight = 2 * u * t
+  const cpx = (x - u * u * a.x - t * t * b.x) / weight
+  const cpy = (y - u * u * a.y - t * t * b.y) / weight
+  return {
+    a,
+    b,
+    cpx,
+    cpy,
+    path: `M ${a.x} ${a.y} Q ${cpx} ${cpy} ${b.x} ${b.y}`,
+    labelX: (a.x + 2 * cpx + b.x) / 4,
+    labelY: (a.y + 2 * cpy + b.y) / 4,
+    arrowAngle: Math.atan2(b.y - cpy, b.x - cpx),
+  }
+}
+
+/** Keep a dragged curve's position relative to the source→target chord. */
+export function rebaseArcAnchor(
+  anchor: { x: number; y: number; t: number },
+  fromSource: { cx: number; cy: number },
+  fromTarget: { cx: number; cy: number },
+  toSource: { cx: number; cy: number },
+  toTarget: { cx: number; cy: number },
+) {
+  const dx = fromTarget.cx - fromSource.cx
+  const dy = fromTarget.cy - fromSource.cy
+  const lengthSquared = dx * dx + dy * dy
+  if (lengthSquared === 0) {
+    return {
+      x: anchor.x + toSource.cx - fromSource.cx,
+      y: anchor.y + toSource.cy - fromSource.cy,
+      t: anchor.t,
+    }
+  }
+  const px = anchor.x - fromSource.cx
+  const py = anchor.y - fromSource.cy
+  const along = (px * dx + py * dy) / lengthSquared
+  const across = (py * dx - px * dy) / lengthSquared
+  const nextDx = toTarget.cx - toSource.cx
+  const nextDy = toTarget.cy - toSource.cy
+  return {
+    x: toSource.cx + along * nextDx - across * nextDy,
+    y: toSource.cy + along * nextDy + across * nextDx,
+    t: anchor.t,
+  }
+}
+
+/** Geometry shared by a real edge and its endpoint-reconnect preview. */
+export function edgeArcGeometry(
+  source: { cx: number; cy: number; w: number; h: number },
+  target: { cx: number; cy: number; w: number; h: number },
+  options: {
+    straight?: boolean
+    curveOffset?: number
+    siblingIdx?: number
+    anchor?: { x: number; y: number; t: number }
+    freeEnd?: 'source' | 'target'
+    sourceAttachment?: EndpointAttachment
+    targetAttachment?: EndpointAttachment
+  } = {},
+) {
+  const {
+    straight = false,
+    curveOffset = 1,
+    siblingIdx = 0,
+    anchor,
+    freeEnd,
+    sourceAttachment,
+    targetAttachment,
+  } = options
+  if (anchor && !straight)
+    return anchoredArc(source, target, anchor, freeEnd, {
+      source: sourceAttachment,
+      target: targetAttachment,
+    })
+
+  const { cpx, cpy } = straight
+    ? { cpx: target.cx, cpy: target.cy }
+    : arcControlPoint(source.cx, source.cy, target.cx, target.cy, siblingIdx, curveOffset)
+  const a = arcEndPoint(
+    source,
+    sourceAttachment,
+    freeEnd === 'source',
+    straight ? target.cx : cpx,
+    straight ? target.cy : cpy,
+  )
+  const b = arcEndPoint(
+    target,
+    targetAttachment,
+    freeEnd === 'target',
+    straight ? source.cx : cpx,
+    straight ? source.cy : cpy,
+  )
+  return { a, b, ...nessoArcPath(a.x, a.y, b.x, b.y, siblingIdx, straight, curveOffset) }
+}
+
 export interface ConnectionPreview {
   path: string
   /** True when the cursor is over a concept (creation shows a stronger line). */
@@ -149,10 +287,9 @@ export interface ConnectionPreview {
 }
 
 /**
- * Creation-style preview from a fixed node center to the cursor, optionally
- * snapped onto a hovered concept's border. Shared by the drag-to-connect
- * line and the endpoint-reconnect preview so both look exactly alike:
- * default bow, accent dashed stroke, faint while free and stronger on snap.
+ * Connection-creation preview from a fixed node center to the cursor,
+ * optionally snapped onto a concept's border. Both creation and reconnect
+ * use edgeArcGeometry, the same path as the committed edge.
  */
 export function connectionPreview(
   fromCx: number,
@@ -163,63 +300,24 @@ export function connectionPreview(
   toY: number,
   toNode: { cx: number; cy: number; w: number; h: number } | null,
   straight = false,
+  curveOffset = 1,
+  siblingIdx = 0,
+  targetAttachment?: EndpointAttachment,
 ): ConnectionPreview {
-  let startX = fromCx
-  let startY = fromCy
-  let bx = toX
-  let by = toY
-  if (toNode) {
-    if (straight) {
-      const a = rectExit(
-        fromCx,
-        fromCy,
-        fromW + NODE_PAD * 2,
-        fromH + NODE_PAD * 2,
-        toNode.cx,
-        toNode.cy,
-      )
-      const b = rectExit(
-        toNode.cx,
-        toNode.cy,
-        toNode.w + NODE_PAD * 2,
-        toNode.h + NODE_PAD * 2,
-        fromCx,
-        fromCy,
-      )
-      startX = a.x
-      startY = a.y
-      bx = b.x
-      by = b.y
-    } else {
-      const { cpx, cpy } = arcControlPoint(fromCx, fromCy, toNode.cx, toNode.cy, 0)
-      const a = rectExit(fromCx, fromCy, fromW + NODE_PAD * 2, fromH + NODE_PAD * 2, cpx, cpy)
-      const b = rectExit(
-        toNode.cx,
-        toNode.cy,
-        toNode.w + NODE_PAD * 2,
-        toNode.h + NODE_PAD * 2,
-        cpx,
-        cpy,
-      )
-      startX = a.x
-      startY = a.y
-      bx = b.x
-      by = b.y
-    }
-  } else {
-    if (straight) {
-      const a = rectExit(fromCx, fromCy, fromW + NODE_PAD * 2, fromH + NODE_PAD * 2, toX, toY)
-      startX = a.x
-      startY = a.y
-    } else {
-      const { cpx, cpy } = arcControlPoint(fromCx, fromCy, toX, toY, 0)
-      const a = rectExit(fromCx, fromCy, fromW + NODE_PAD * 2, fromH + NODE_PAD * 2, cpx, cpy)
-      startX = a.x
-      startY = a.y
-    }
+  return {
+    path: edgeArcGeometry(
+      { cx: fromCx, cy: fromCy, w: fromW, h: fromH },
+      toNode ?? { cx: toX, cy: toY, w: 0, h: 0 },
+      {
+        straight,
+        curveOffset,
+        siblingIdx,
+        freeEnd: toNode ? undefined : 'target',
+        targetAttachment,
+      },
+    ).path,
+    snapped: toNode !== null,
   }
-  const { path } = nessoArcPath(startX, startY, bx, by, 0, straight)
-  return { path, snapped: toNode !== null }
 }
 
 export function nessoArcPath(
@@ -230,7 +328,7 @@ export function nessoArcPath(
   siblingIdx = 0,
   straight = false,
   curveOffset = 1,
-): { path: string; labelX: number; labelY: number; arrowAngle: number } {
+): { path: string; labelX: number; labelY: number; arrowAngle: number; cpx: number; cpy: number } {
   if (straight) {
     const lx = (sx + tx) / 2
     const ly = (sy + ty) / 2
@@ -239,6 +337,8 @@ export function nessoArcPath(
       labelX: lx,
       labelY: ly,
       arrowAngle: Math.atan2(ty - sy, tx - sx),
+      cpx: tx,
+      cpy: ty,
     }
   }
 
@@ -249,5 +349,5 @@ export function nessoArcPath(
   const labelY = cpy * 0.5 + (sy + ty) * 0.25
   const arrowAngle = Math.atan2(ty - cpy, tx - cpx)
 
-  return { path, labelX, labelY, arrowAngle }
+  return { path, labelX, labelY, arrowAngle, cpx, cpy }
 }

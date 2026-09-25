@@ -19,7 +19,7 @@ import {
   type GraphClipboard,
 } from '@/lib/graphClipboard'
 import { locales } from '@/i18n/registry'
-import { clampCurveOffset } from '@nesso-how/graph'
+import { pointFromBox, pointRelativeToBox } from '@nesso-how/graph'
 import { newElementId } from '@nesso-how/vocab-learning'
 import { track } from '@/telemetry'
 import type { GraphSnapshot } from '../types'
@@ -193,10 +193,21 @@ export interface GraphEditingSlice {
   updateNodeNotes: (id: string, notes: NotesDocument | undefined) => void
   deleteNode: (id: string) => void
   addNode: (x?: number, y?: number) => string
-  addEdge: (source: string, target: string, type: RelationTypeName) => string
+  addEdge: (
+    source: string,
+    target: string,
+    type: RelationTypeName,
+    targetAttachment?: { x: number; y: number },
+  ) => string
   updateEdgeType: (id: string, type: RelationTypeName) => void
-  setEdgeCurveOffset: (id: string, offset: number | undefined) => void
-  reconnectEdge: (id: string, side: 'source' | 'target', nodeId: string) => void
+  setEdgeCurveAnchor: (id: string, anchor?: { x: number; y: number; t: number }) => void
+  reconnectEdge: (
+    id: string,
+    side: 'source' | 'target',
+    nodeId: string,
+    attachment?: { x: number; y: number },
+    curveAnchor?: { x: number; y: number; t: number },
+  ) => void
   deleteEdge: (id: string) => void
   setSelected: (sel: import('../types').Selection) => void
   syncFlowSelection: (nodeIds: string[], edgeIds: string[]) => void
@@ -211,6 +222,8 @@ export interface GraphEditingSlice {
   requestEditNode: (id: string) => void
   clearEditNodeId: () => void
 }
+
+const round3 = (n: number) => Math.round(n * 1000) / 1000
 
 export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEditingSlice> = (
   set,
@@ -393,7 +406,7 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
   requestEditNode: (id) => set({ editNodeId: id }),
   clearEditNodeId: () => set({ editNodeId: null }),
 
-  addEdge: (source, target, type) => {
+  addEdge: (source, target, type, targetAttachment) => {
     const id = newElementId('e', new Set(get().edges.map((e) => e.id)))
     set((s) => {
       const cleared = clearFlowSelection(s.nodes, s.edges)
@@ -411,7 +424,7 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
             targetHandle: CONCEPT_HANDLE_IN,
             type: 'nesso',
             selected: true,
-            data: { type },
+            data: { type, ...(targetAttachment && { targetAttachment }) },
           },
         ],
         selected: { kind: 'edge', id },
@@ -427,42 +440,86 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
       edges: s.edges.map((e) => (e.id === id ? { ...e, data: { ...e.data, type } } : e)),
     })),
 
-  setEdgeCurveOffset: (id, offset) =>
+  setEdgeCurveAnchor: (id, anchor) => {
+    if (
+      anchor &&
+      (!Number.isFinite(anchor.x) ||
+        !Number.isFinite(anchor.y) ||
+        !Number.isFinite(anchor.t) ||
+        anchor.t <= 0 ||
+        anchor.t >= 1)
+    )
+      return
     set((s) => ({
       ...pushHistory(s),
       edges: s.edges.map((e) => {
         if (e.id !== id) return e
         const data = { ...(e.data as NessoEdgeData) }
-        // The drag commits once per gesture, so one history entry covers the
-        // whole drag. Near-default offsets drop the key to keep saves clean.
-        if (offset === undefined || !Number.isFinite(offset) || Math.abs(offset - 1) < 0.005)
+        if (!anchor) {
+          // Reset to the default bow: drop every custom-curve field.
+          delete data.curveAnchor
           delete data.curveOffset
-        else data.curveOffset = Math.round(clampCurveOffset(offset) * 100) / 100
+          return { ...e, data }
+        }
+        // The anchor supersedes the legacy scalar bow; dropping it keeps
+        // saved documents clean.
+        delete data.curveOffset
+        data.curveAnchor = {
+          x: round3(anchor.x),
+          y: round3(anchor.y),
+          t: round3(anchor.t),
+        }
         return { ...e, data }
       }),
-    })),
+    }))
+  },
 
-  reconnectEdge: (id, side, nodeId) => {
+  reconnectEdge: (id, side, nodeId, attachment, curveAnchor) => {
     const s = get()
     const edge = s.edges.find((e) => e.id === id)
     // Same guards as drag-to-connect: the node must exist and an edge may
-    // never loop back onto its own other end. A drop on the edge's current
-    // end is a no-op without a history entry.
+    // never loop back onto its own other end. A same-node drop only changes
+    // history when its attachment or reshape point actually moves.
     if (!edge || !s.nodes.some((n) => n.id === nodeId)) return
     if (side === 'source' ? nodeId === edge.target : nodeId === edge.source) return
-    if (side === 'source' ? nodeId === edge.source : nodeId === edge.target) return
+    const key = side === 'source' ? 'sourceAttachment' : 'targetAttachment'
+    const sameEnd = side === 'source' ? nodeId === edge.source : nodeId === edge.target
+    const previous = (edge.data as NessoEdgeData | undefined)?.[key]
+    const storedAnchor = (edge.data as NessoEdgeData | undefined)?.curveAnchor
+    // Compare at commit precision so re-dropping an identical anchor on the
+    // same node stays a no-op; the stored value itself stays unrounded so the
+    // final arc matches the preview exactly.
+    const anchorUnchanged =
+      curveAnchor === undefined
+        ? storedAnchor === undefined
+        : !!storedAnchor &&
+          round3(curveAnchor.x) === storedAnchor.x &&
+          round3(curveAnchor.y) === storedAnchor.y &&
+          round3(curveAnchor.t) === storedAnchor.t
+    if (
+      sameEnd &&
+      anchorUnchanged &&
+      (!attachment || (previous?.x === attachment.x && previous?.y === attachment.y))
+    )
+      return
     set((prev) => ({
       ...pushHistory(prev),
-      edges: prev.edges.map((e) =>
-        e.id === id
-          ? {
-              ...e,
-              ...(side === 'source'
-                ? { source: nodeId, sourceHandle: CONCEPT_HANDLE_OUT }
-                : { target: nodeId, targetHandle: CONCEPT_HANDLE_IN }),
-            }
-          : e,
-      ),
+      edges: prev.edges.map((e) => {
+        if (e.id !== id) return e
+        const data = { ...e.data }
+        if (attachment) data[key] = attachment
+        else delete data[key]
+        // The rebased reshape point commits with the same history entry as
+        // the endpoint move it belongs to.
+        if (curveAnchor) data.curveAnchor = curveAnchor
+        return {
+          ...e,
+          data,
+          ...(side === 'source'
+            ? { source: nodeId, sourceHandle: CONCEPT_HANDLE_OUT }
+            : { target: nodeId, targetHandle: CONCEPT_HANDLE_IN }),
+        }
+      }),
     }))
   },
 
@@ -619,16 +676,42 @@ export const createGraphEditingSlice: StateCreator<GraphState, [], [], GraphEdit
   reverseEdge: (id) =>
     set((s) => ({
       ...pushHistory(s),
-      edges: s.edges.map((e) =>
-        e.id === id
-          ? {
-              ...e,
-              source: e.target,
-              target: e.source,
-              sourceHandle: CONCEPT_HANDLE_OUT,
-              targetHandle: CONCEPT_HANDLE_IN,
+      edges: s.edges.map((e) => {
+        if (e.id !== id) return e
+        const { sourceAttachment, targetAttachment, curveAnchor, ...rest } = (e.data ??
+          {}) as NessoEdgeData
+        // The reshape point stays on the same spot of the drawing: re-express
+        // it against the new source (the old target) with t -> 1 - t, which
+        // traces the identical quadratic in reverse.
+        let nextAnchor: { x: number; y: number; t: number } | undefined
+        if (curveAnchor) {
+          const boxOf = (n: (typeof s.nodes)[number]) => ({
+            cx: n.position.x + (n.measured?.width ?? 80) / 2,
+            cy: n.position.y + (n.measured?.height ?? 32) / 2,
+            w: n.measured?.width ?? 80,
+            h: n.measured?.height ?? 32,
+          })
+          const oldSource = s.nodes.find((n) => n.id === e.source)
+          const newSource = s.nodes.find((n) => n.id === e.target)
+          if (oldSource && newSource)
+            nextAnchor = {
+              ...pointRelativeToBox(boxOf(newSource), pointFromBox(boxOf(oldSource), curveAnchor)),
+              t: 1 - curveAnchor.t,
             }
-          : e,
-      ),
+        }
+        return {
+          ...e,
+          data: {
+            ...rest,
+            ...(targetAttachment && { sourceAttachment: targetAttachment }),
+            ...(sourceAttachment && { targetAttachment: sourceAttachment }),
+            ...(nextAnchor && { curveAnchor: nextAnchor }),
+          },
+          source: e.target,
+          target: e.source,
+          sourceHandle: CONCEPT_HANDLE_OUT,
+          targetHandle: CONCEPT_HANDLE_IN,
+        }
+      }),
     })),
 })

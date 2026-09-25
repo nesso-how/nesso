@@ -60,8 +60,8 @@ Longer writing happens in **Writing Mode**: in the Inspector, click the full-wid
 
 ## Display options (sidebar)
 
-**Sidebar → Display** controls how the **active graph** is rendered: heatmap overlay, edge encoding density, curve style, auto flip, and dimming of unconnected edges on selection. Choices are saved **with the graph** in IndexedDB (and included in JSON export). New graphs start from the app defaults until you change them.
+**Sidebar → Display** controls how the **active graph** is rendered: heatmap overlay, edge encoding density, curve style, and dimming of unconnected edges on selection. Choices are saved **with the graph** in IndexedDB (and included in JSON export). New graphs start from the app defaults until you change them.
 
 Selecting a concept dims every edge that is not connected to it (**Focus**, on by default) so its relations stand out; the selected concept and its own edges keep their normal look. Turn the switch off for that graph to keep the full map at its normal look while selecting.
 
-When **Display → Curve** is set to **Arc**, **Auto flip** (on by default) bends relations toward the side that avoids overlapping nodes, flipping when the target is above the source on the right, or below on the left, and updates live while you drag concepts. **Flip curve** in the Inspector is **Off | Auto | On** while auto flip is on: **Auto** follows layout, **Off** / **On** pin a manual bend on that edge. With auto flip off for that graph, the control is **Off | On** only.
+When **Display → Curve** is set to **Arc**, drag an arc to reshape it; double-click it to reset its bend. The reshaped curve is saved with the graph and follows its concepts. Hover over an existing relation to reveal its endpoint handles. Drag one onto a concept to reconnect it: while the cursor moves inside the concept, the endpoint follows the nearest point on its rounded border and stays there when released. The same destination snap applies when creating a new relation; its position survives the relation-picker step. The chosen attachment is saved with the graph. **Line** renders straight relations instead.

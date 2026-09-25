@@ -5,13 +5,20 @@ import { defaultConceptReviewFields } from '@nesso-how/vocab-learning'
 import type { NessoEdgeData, GraphDisplaySettings } from './display.js'
 
 function edgeDataFromRelation(r: NessoGraphDocumentInput['relations'][number]): NessoEdgeData {
-  const { curveOffset } = r.data ?? {}
-  if (curveOffset !== undefined) return { type: r.type as NessoEdgeData['type'], curveOffset }
+  const { curveOffset, curveAnchor, sourceAttachment, targetAttachment } = r.data ?? {}
+  const attachmentData = {
+    ...(sourceAttachment !== undefined && { sourceAttachment }),
+    ...(targetAttachment !== undefined && { targetAttachment }),
+    ...(curveAnchor !== undefined && { curveAnchor }),
+  }
+  if (curveOffset !== undefined)
+    return { type: r.type as NessoEdgeData['type'], curveOffset, ...attachmentData }
   // Legacy documents predate curveOffset and carry boolean flip fields; they
   // are not part of the current type but must keep rendering as they did.
   const legacy = r.data as { curveFlip?: boolean } | undefined
-  if (legacy?.curveFlip) return { type: r.type as NessoEdgeData['type'], curveOffset: -1 }
-  return { type: r.type as NessoEdgeData['type'] }
+  if (legacy?.curveFlip)
+    return { type: r.type as NessoEdgeData['type'], curveOffset: -1, ...attachmentData }
+  return { type: r.type as NessoEdgeData['type'], ...attachmentData }
 }
 
 function relationToEdge(r: NessoGraphDocumentInput['relations'][number]): Edge<NessoEdgeData> {

@@ -5,6 +5,7 @@ import {
   BackgroundVariant,
   ConnectionMode,
   useReactFlow,
+  type ConnectionLineComponentProps,
   type OnMoveEnd,
   type OnNodesChange,
 } from '@xyflow/react'
@@ -47,8 +48,9 @@ export function GraphCanvas({
   const edges = useGraphStore((s) => s.edges)
   const onNodesChange = useGraphStore((s) => s.onNodesChange)
   const onEdgesChange = useGraphStore((s) => s.onEdgesChange)
-  const setEdgeCurveOffset = useGraphStore((s) => s.setEdgeCurveOffset)
+  const setEdgeCurveAnchor = useGraphStore((s) => s.setEdgeCurveAnchor)
   const reconnectEdge = useGraphStore((s) => s.reconnectEdge)
+  const setReconnectTargetId = useGraphStore((s) => s.setReconnectTargetId)
   const addNode = useGraphStore((s) => s.addNode)
   const clearEditNodeId = useGraphStore((s) => s.clearEditNodeId)
   const syncFlowSelection = useGraphStore((s) => s.syncFlowSelection)
@@ -90,8 +92,21 @@ export function GraphCanvas({
 
   const { ctxMenu, closeCtxMenu, onNodeContextMenu, onEdgeContextMenu, onPaneContextMenu } =
     useGraphContextMenu()
-  const { pendingConn, setPendingConn, onConnectStart, onConnectEnd, onConnect, onPickRelation } =
-    useConnectRelation()
+  const {
+    pendingConn,
+    setPendingConn,
+    onConnectStart,
+    onConnectEnd,
+    onConnect,
+    onPickRelation,
+    onPreviewAttachment,
+  } = useConnectRelation()
+  const connectionLine = useCallback(
+    (props: ConnectionLineComponentProps) => (
+      <NessoConnectionLine {...props} onPreviewAttachment={onPreviewAttachment} />
+    ),
+    [onPreviewAttachment],
+  )
   const selectionSyncFrame = useRef<number | null>(null)
   const canvasRef = useRef<HTMLDivElement>(null)
 
@@ -204,8 +219,9 @@ export function GraphCanvas({
         onConnectEnd={onConnectEnd}
         onSelectionChange={onSelectionChange}
         onMoveEnd={persistViewportOnMoveEnd}
-        onEdgeCurveOffsetChange={setEdgeCurveOffset}
+        onEdgeCurveAnchorChange={setEdgeCurveAnchor}
         onEdgeReconnect={reconnectEdge}
+        onEdgeReconnectOver={setReconnectTargetId}
         reactFlowProps={{
           zoomOnDoubleClick: false,
           connectionMode: ConnectionMode.Loose,
@@ -215,7 +231,7 @@ export function GraphCanvas({
           multiSelectionKeyCode: ['Meta', 'Control'],
           zoomActivationKeyCode: 'Alt',
           proOptions: { hideAttribution: true },
-          connectionLineComponent: NessoConnectionLine,
+          connectionLineComponent: connectionLine,
           style: { background: 'transparent' },
           onNodeContextMenu,
           onEdgeContextMenu,

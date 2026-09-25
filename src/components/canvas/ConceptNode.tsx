@@ -147,6 +147,9 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
   const isConnectionTarget = useConnection(
     (c) => c.inProgress && c.toNode?.id === id && c.fromNode?.id !== id,
   )
+  // Same highlight while an endpoint-reconnect drag hovers this concept.
+  // Boolean selector again: only the entered/left nodes re-render per move.
+  const isReconnectTarget = useGraphStore((s) => s.reconnectTargetId === id)
 
   return (
     <div
@@ -170,7 +173,7 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
         lastRating={data.lastRating ?? 0}
         cursor={editing ? 'text' : 'grab'}
         userSelect={editing ? 'text' : 'none'}
-        connectionTarget={isConnectionTarget}
+        connectionTarget={isConnectionTarget || isReconnectTarget}
         onDoubleClick={(e) => {
           e.stopPropagation()
           requestEditNode(id)

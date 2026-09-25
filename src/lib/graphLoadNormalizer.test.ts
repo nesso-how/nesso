@@ -52,6 +52,45 @@ describe('graph load normalization', () => {
     expect(normalizeGraphRecord(record)).toEqual(record)
   })
 
+  it('deep-validates endpoint attachments stored on record edges', () => {
+    const record = normalizeGraphDocument(JSON.stringify(baseline), {
+      id: 'beta-baseline',
+      createdAt: 1,
+      updatedAt: 1,
+    })
+    const withEdge = {
+      ...record,
+      nodes: [
+        ...record.nodes,
+        {
+          id: 'concept-2',
+          position: { x: 100, y: 0 },
+          data: { text: 'Second' },
+        },
+      ],
+      edges: [
+        ...record.edges,
+        {
+          id: 'edge-1',
+          source: 'concept-1',
+          target: 'concept-2',
+          type: 'nesso' as const,
+          data: { type: 'causes' },
+        },
+      ],
+    }
+    const attach = (targetAttachment: unknown) => ({
+      ...withEdge,
+      edges: withEdge.edges.map((e, i) =>
+        i === withEdge.edges.length - 1 ? { ...e, data: { ...e.data, targetAttachment } } : e,
+      ),
+    })
+    expect(
+      normalizeGraphRecord(attach({ x: 0.5, y: -1 })).edges.at(-1)?.data?.targetAttachment,
+    ).toEqual({ x: 0.5, y: -1 })
+    expect(() => normalizeGraphRecord(attach({ x: 1.5, y: 0 }))).toThrow(/targetAttachment/)
+  })
+
   it('rejects an unversioned alpha graph record', () => {
     const current = normalizeGraphDocument(JSON.stringify(baseline), {
       id: 'beta-baseline',

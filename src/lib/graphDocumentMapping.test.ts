@@ -5,6 +5,7 @@ import { deserialize, serialize } from '@nesso-how/vocab-learning'
 import type { NotesDocument } from '@nesso-how/vocab-learning'
 import { graphToDocument } from './graphDocumentMapping'
 import type { NessoEdgeData } from '@nesso-how/graph'
+import { documentToRenderGraph } from '@nesso-how/graph'
 
 describe('graphToDocument', () => {
   const display = {
@@ -59,6 +60,8 @@ describe('graphToDocument', () => {
           data: {
             type: 'causes',
             curveOffset: -1.5,
+            targetAttachment: { x: 0.25, y: -1 },
+            curveAnchor: { x: 0.1, y: -0.5, t: 0.4 },
             curveFlip: true,
           } as unknown as NessoEdgeData,
         },
@@ -69,10 +72,21 @@ describe('graphToDocument', () => {
       source: 'n1',
       target: 'n2',
       type: 'causes',
-      data: { curveOffset: -1.5 },
+      data: {
+        curveOffset: -1.5,
+        targetAttachment: { x: 0.25, y: -1 },
+        curveAnchor: { x: 0.1, y: -0.5, t: 0.4 },
+      },
     })
     expect(file.relations[0].data).not.toHaveProperty('curveFlip')
     expect(file.relations[0].data).not.toHaveProperty('curveFlipPinned')
+    expect(file.relations[0].data).toHaveProperty('curveAnchor', { x: 0.1, y: -0.5, t: 0.4 })
+    expect(documentToRenderGraph(file).edges[0].data?.targetAttachment).toEqual({ x: 0.25, y: -1 })
+    expect(documentToRenderGraph(file).edges[0].data?.curveAnchor).toEqual({
+      x: 0.1,
+      y: -0.5,
+      t: 0.4,
+    })
   })
 
   it('omits relation data entirely when no curve offset is stored', () => {

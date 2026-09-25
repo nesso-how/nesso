@@ -4,12 +4,31 @@ import type { ConceptNodeData, GraphDisplaySettings, NessoGraphDocumentInput } f
 import { VOCABULARY } from '@/types/graph'
 import type { NessoEdgeData } from '@nesso-how/graph'
 
-function relationCurveData(
-  edgeData: NessoEdgeData | undefined,
-): { curveOffset?: number } | undefined {
+function relationCurveData(edgeData: NessoEdgeData | undefined):
+  | {
+      curveOffset?: number
+      sourceAttachment?: { x: number; y: number }
+      targetAttachment?: { x: number; y: number }
+      curveAnchor?: { x: number; y: number; t: number }
+    }
+  | undefined {
   const curveOffset = edgeData?.curveOffset
-  if (curveOffset === undefined) return undefined
-  return { curveOffset }
+  const sourceAttachment = edgeData?.sourceAttachment
+  const targetAttachment = edgeData?.targetAttachment
+  const curveAnchor = edgeData?.curveAnchor
+  if (
+    curveOffset === undefined &&
+    sourceAttachment === undefined &&
+    targetAttachment === undefined &&
+    curveAnchor === undefined
+  )
+    return undefined
+  return {
+    ...(curveOffset !== undefined && { curveOffset }),
+    ...(sourceAttachment !== undefined && { sourceAttachment }),
+    ...(targetAttachment !== undefined && { targetAttachment }),
+    ...(curveAnchor !== undefined && { curveAnchor }),
+  }
 }
 
 function relationFromEdge(e: Edge) {

@@ -31,6 +31,10 @@ export interface UISlice {
   /** Concept being written in the full-screen Writing Mode overlay. Transient:
    *  never persisted; closes on node deletion, graph switch/reload, or Escape. */
   writingModeNodeId: string | null
+  /** Concept hovered by an endpoint-reconnect drag. Transient highlight only,
+   *  cleared on drop, cancel, or a new gesture. */
+  reconnectTargetId: string | null
+  setReconnectTargetId: (id: string | null) => void
   openWritingMode: (id: string) => void
   closeWritingMode: () => void
   setMentorPanelExpanded: (expanded: boolean) => void
@@ -67,6 +71,8 @@ export const createUISlice: StateCreator<GraphState, [], [], UISlice> = (set, ge
   onboardingDeleteNodeDone: false,
   reviewReminderLastShownByGraph: {},
   writingModeNodeId: null,
+  reconnectTargetId: null,
+  setReconnectTargetId: (id) => set({ reconnectTargetId: id }),
 
   setMentorPanelExpanded: (expanded) => set({ mentorPanelExpanded: expanded }),
   setSidebarCollapsed: (v) => set({ sidebarCollapsed: v }),
