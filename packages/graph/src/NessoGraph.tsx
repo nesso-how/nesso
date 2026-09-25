@@ -103,6 +103,8 @@ export interface NessoGraphProps {
   selectedNodeId?: string | null
   /** See {@link NessoGraphDisplayContext.selectedEdge}. */
   selectedEdge?: { id: string; source: string; target: string } | null
+  /** See {@link NessoGraphDisplayContext.focusNodeIds}. */
+  focusNodeIds?: string[] | null
 
   // Node/edge types — override for app-specific interactivity (e.g. inline edit).
   nodeTypes?: NodeTypes
@@ -192,6 +194,7 @@ export function NessoGraph({
   isItemSelected,
   selectedNodeId,
   selectedEdge,
+  focusNodeIds,
   onEdgeCurveAnchorChange,
   onEdgeReconnect,
   onEdgeReconnectOver,
@@ -266,6 +269,7 @@ export function NessoGraph({
       isItemSelected,
       selectedNodeId,
       selectedEdge,
+      focusNodeIds,
       onEdgeCurveAnchorChange,
       onEdgeReconnect,
       onEdgeReconnectOver,
@@ -279,6 +283,7 @@ export function NessoGraph({
       isItemSelected,
       selectedNodeId,
       selectedEdge,
+      focusNodeIds,
       onEdgeCurveAnchorChange,
       onEdgeReconnect,
       onEdgeReconnectOver,

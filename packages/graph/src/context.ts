@@ -48,6 +48,12 @@ export interface NessoGraphDisplayContext {
    * while the rest dims.
    */
   selectedEdge?: { id: string; source: string; target: string } | null
+  /**
+   * Concept ids in the current focus: the selected relation's endpoints, or
+   * the selected concept plus its direct neighbours. Null when nothing is
+   * selected. Concepts outside the focus dim while the Focus setting is on.
+   */
+  focusNodeIds?: string[] | null
   /** Dim edges unconnected to the selected concept. Defaults to on. */
   dimUnconnectedOnSelect: boolean
 }

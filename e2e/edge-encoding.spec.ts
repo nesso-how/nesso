@@ -115,21 +115,40 @@ test('selecting a relation focuses its endpoints and dims the rest of the map', 
 
   // Endpoints stay highlighted; the rest of the map fades like its edges.
   // The fade sits on the concept pill div inside the React Flow wrapper.
+  // Concepts fade less than relations (0.4 vs 0.28).
   const pill = (text: string) => nodeByText(page, text).locator('.nesso-node > div').first()
   await expect(pill('Alpha')).toHaveCSS('opacity', '1')
   await expect(pill('Beta')).toHaveCSS('opacity', '1')
-  await expect(pill('Gamma')).toHaveCSS('opacity', '0.28')
+  await expect(pill('Gamma')).toHaveCSS('opacity', '0.4')
 
   await deselect(page)
   await expect(selectedEdge.locator('path').nth(1)).toHaveAttribute('opacity', '0.78')
   await expect(otherEdge.locator('path').nth(1)).toHaveAttribute('opacity', '0.78')
   await expect(pill('Gamma')).toHaveCSS('opacity', '1')
 
-  // Selecting a concept keeps the node-focus behavior unchanged: no node dim.
+  // Concept focus dims concepts too: neighbours stay, the rest fades.
+  // Edges keep the pre-existing node-focus behavior (unconnected dim).
   await nodeByText(page, 'Alpha').click()
   await expect(page.locator('.react-flow__node.selected')).toHaveCount(1)
+  await expect(pill('Alpha')).toHaveCSS('opacity', '1')
+  await expect(pill('Beta')).toHaveCSS('opacity', '1')
+  await expect(pill('Gamma')).toHaveCSS('opacity', '0.4')
+  await expect(otherEdge.locator('path').nth(1)).toHaveAttribute('opacity', '0.28')
+
+  // Focus toggle off: selecting the relation dims nothing at all.
+  await deselect(page)
+  const dimSwitch = page
+    .locator('div')
+    .filter({ hasText: /^Focus$/ })
+    .getByRole('switch')
+  await dimSwitch.click()
+  await expect(dimSwitch).toHaveAttribute('aria-checked', 'false')
+  await selectEdge(page)
+  await expect(page.locator('.react-flow__edge.selected')).toHaveCount(1)
   await expect(pill('Gamma')).toHaveCSS('opacity', '1')
   await expect(otherEdge.locator('path').nth(1)).toHaveAttribute('opacity', '0.78')
+  await dimSwitch.click()
+  await expect(dimSwitch).toHaveAttribute('aria-checked', 'true')
 })
 
 test('relation types dialog previews solid strokes without badges', async ({ page }) => {

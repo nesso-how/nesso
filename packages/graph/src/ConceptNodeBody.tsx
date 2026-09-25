@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 import type { CSSProperties, MouseEventHandler, ReactNode, Ref } from 'react'
-import { DIMMED_OPACITY } from './edgeHighlight.js'
+import { NODE_DIMMED_OPACITY } from './edgeHighlight.js'
 import { ratingColor } from './ratingColor.js'
 
 /** Absolute decoration rings and the heatmap tint behind the concept label. */
@@ -105,7 +105,7 @@ export function ConceptNodeBody({
         cursor,
         userSelect,
         minWidth: 60,
-        opacity: dimmed ? DIMMED_OPACITY : undefined,
+        opacity: dimmed ? NODE_DIMMED_OPACITY : undefined,
       }}
     >
       <ConceptOverlays

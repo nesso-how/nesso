@@ -19,12 +19,8 @@ const HIDDEN_HANDLE: React.CSSProperties = {
 }
 
 export function ConceptNode({ data, selected, id }: NodeProps<ConceptNodeType>) {
-  const { showHeatmap, dimUnconnectedOnSelect, selectedEdge } = useGraphDisplay()
-  const dimmed =
-    !!dimUnconnectedOnSelect &&
-    !!selectedEdge &&
-    selectedEdge.source !== id &&
-    selectedEdge.target !== id
+  const { showHeatmap, dimUnconnectedOnSelect, focusNodeIds } = useGraphDisplay()
+  const dimmed = !!dimUnconnectedOnSelect && !!focusNodeIds && !focusNodeIds.includes(id)
 
   return (
     <div style={{ position: 'relative' }}>

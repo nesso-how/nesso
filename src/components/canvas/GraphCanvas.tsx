@@ -28,6 +28,7 @@ import { styleEdges } from '@/lib/styleEdges'
 import { getSeedInitialFitZoom } from '@/data/seedGraph'
 import { newConceptTopLeftAtFlowCenter } from '@/data/newConceptLayout'
 import type { RelationTypeName } from '@/types/graph'
+import { computeFocusNodeIds } from '@/lib/canvasFocus'
 
 const nodeTypes = { concept: ConceptNode }
 
@@ -75,6 +76,13 @@ export function GraphCanvas({
     const edge = edges.find((e) => e.id === selected.id)
     return edge ? { id: edge.id, source: edge.source, target: edge.target } : null
   }, [selected, edges])
+  // Concepts in the current focus: the selected relation's endpoints, or the
+  // selected concept plus its direct neighbours. Null when nothing relevant
+  // is selected, so no concept dims.
+  const focusNodeIds = useMemo(
+    () => computeFocusNodeIds(selected, selectedEdge, edges),
+    [selected, selectedEdge, edges],
+  )
 
   const { screenToFlowPosition } = useReactFlow()
   // Only read at mount of the keyed NessoGraph below — memoized so the O(N)
@@ -213,6 +221,7 @@ export function GraphCanvas({
         isItemSelected={isItemSelected}
         selectedNodeId={selectedNodeId}
         selectedEdge={selectedEdge}
+        focusNodeIds={focusNodeIds}
         nodeTypes={nodeTypes}
         nodesDraggable={true}
         nodesConnectable={true}
