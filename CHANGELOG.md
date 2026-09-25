@@ -6,6 +6,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- **Draggable arcs:** bend any relation curve by dragging the arc itself; the reshaped curve is saved with the graph and follows its concepts. Double-click an arc to reset it to the default bow.
+- **Endpoint handles with border snapping:** hover a relation to reveal its endpoint handles and drag one onto a concept to reconnect it. While the cursor is over a concept, the endpoint follows the nearest point on its rounded border and stays there after release — the same snapping applies when creating a new relation, and the chosen attachment is saved.
+
+### Changed
+
+- **The curve flip options are replaced by free dragging:** the per-edge Curve control (off/auto/on) and the global auto-flip toggle are gone; drag the arc directly instead.
+- **"Flip direction" is hidden for symmetric relations** (relations that are their own inverse, like "contrasts with" and "similar to"), where reversing changes nothing.
+- **Selecting a relation now focuses the map** like selecting a concept: the selected arc and its two concepts stay highlighted while the rest of the map fades, following the same Focus setting.
+
 ## [0.2.0-beta.9] - 2026-09-24
 
 ### Added
