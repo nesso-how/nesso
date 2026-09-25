@@ -31,12 +31,9 @@ export {
   DEFAULT_RELATION_TYPE,
   asRelationTypeName,
   isPrimaryRelationType,
-  type Cardinality,
-  type Polarity,
   type RelationCategory,
   type RelationTypeDef,
   type RelationTypeName,
-  type Transitivity,
 } from './relationTypes.js'
 
 export { CategoryPalette, categoryCssVars, PALETTES } from './visual.js'

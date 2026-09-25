@@ -785,8 +785,6 @@ describe('getRelationTypes', () => {
           id: 'opposite-of',
           inverse: 'self',
           symmetric: true,
-          polarity: -1,
-          cardinality: '1-1',
         }),
       ]),
     )
@@ -800,7 +798,7 @@ describe('getRelationTypes', () => {
     expect(result.groups).toEqual([])
   })
 
-  it('preserves canonical vocabulary properties, including self inverses', () => {
+  it('preserves canonical vocabulary identity, including self inverses', () => {
     const result = getRelationTypes(['causes', 'opposite-of'])
     const types = result.groups.flatMap((group) => group.types)
 
@@ -808,18 +806,17 @@ describe('getRelationTypes', () => {
       expect.arrayContaining([
         expect.objectContaining({
           id: 'causes',
-          transitive: 'N',
+          label: 'causes',
+          category: 'causal',
           inverse: 'caused-by',
         }),
         expect.objectContaining({
           id: 'opposite-of',
-          transitive: 'N',
           inverse: 'self',
           symmetric: true,
         }),
       ]),
     )
-    expect(types.find((type) => type.id === 'causes')).not.toHaveProperty('transitivity')
     expect(types.find((type) => type.id === 'causes')).toHaveProperty('symmetric', false)
   })
 

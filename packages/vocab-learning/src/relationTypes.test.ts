@@ -1,11 +1,6 @@
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from 'vitest'
-import {
-  RELATION_TYPES,
-  RELATION_TYPE_VALUES,
-  isPrimaryRelationType,
-  type Cardinality,
-} from './relationTypes.js'
+import { RELATION_TYPES, RELATION_TYPE_VALUES, isPrimaryRelationType } from './relationTypes.js'
 
 describe('RELATION_TYPES visual encoding', () => {
   it('encodes visually with category colour only (no glyph, no per-type line style)', () => {
@@ -73,12 +68,6 @@ describe('RELATION_TYPES visual encoding', () => {
       'defined-by',
     ])
 
-    const flip = (cardinality: Cardinality): Cardinality => {
-      if (cardinality === 'N-1') return '1-N'
-      if (cardinality === '1-N') return 'N-1'
-      return cardinality
-    }
-
     for (const id of RELATION_TYPE_VALUES) {
       const definition = RELATION_TYPES[id]
       if (definition.inverse === 'self') {
@@ -88,10 +77,6 @@ describe('RELATION_TYPES visual encoding', () => {
       const peer = RELATION_TYPES[definition.inverse]
       expect(peer.inverse).toBe(id)
       expect(peer.cat).toBe(definition.cat)
-      expect(peer.transitive).toBe(definition.transitive)
-      expect(peer.strength).toBe(definition.strength)
-      expect(peer.polarity).toBe(definition.polarity)
-      expect(peer.cardinality).toBe(flip(definition.cardinality))
       expect(isPrimaryRelationType(id)).toBe(
         RELATION_TYPE_VALUES.indexOf(id) < RELATION_TYPE_VALUES.indexOf(definition.inverse),
       )

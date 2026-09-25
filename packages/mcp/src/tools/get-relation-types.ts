@@ -7,20 +7,13 @@ import {
   RELATION_TYPE_VALUES,
   type RelationCategory,
   type RelationTypeName,
-  type Transitivity,
-  type Polarity,
-  type Cardinality,
 } from '@nesso-how/vocab-learning'
 
 export type RelationTypePayload = {
   type: RelationTypeName
   label: string
   symmetric: boolean
-  transitive: Transitivity
   inverse: RelationTypeName | 'self'
-  strength: number
-  polarity: Polarity
-  cardinality: Cardinality
 }
 
 export type RelationTypesPayload = Array<{
@@ -32,11 +25,7 @@ const relationTypePayloadSchema = z.object({
   type: z.string(),
   label: z.string(),
   symmetric: z.boolean(),
-  transitive: z.string(),
   inverse: z.string(),
-  strength: z.number(),
-  polarity: z.number(),
-  cardinality: z.string(),
 })
 
 const getRelationTypesOutputSchema = z.object({
@@ -57,11 +46,7 @@ export function getRelationTypesPayload(): RelationTypesPayload {
         type: name as RelationTypeName,
         label: def.label,
         symmetric: def.inverse === 'self',
-        transitive: def.transitive,
         inverse: def.inverse,
-        strength: def.strength,
-        polarity: def.polarity,
-        cardinality: def.cardinality,
       })),
   }))
 }
@@ -72,7 +57,7 @@ export function registerGetRelationTypes(server: McpServer): void {
     {
       description:
         `Returns all ${RELATION_TYPE_VALUES.length} semantic relation types supported by Nesso, grouped by ${RELATION_CATEGORIES.length} categories. ` +
-        'Each type carries type properties (transitive, inverse, strength, polarity, cardinality). ' +
+        'Each type carries its label, category, and canonical inverse (`self` for symmetric types). ' +
         'Use this when you need valid relation type names for graph JSON or explanations for the user.',
       inputSchema: z.object({}),
       outputSchema: getRelationTypesOutputSchema,
