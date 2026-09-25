@@ -4,7 +4,7 @@ import { RELATION_CATEGORIES, RELATION_TYPES } from '@nesso-how/vocab-learning'
 import { getRelationTypesPayload } from './get-relation-types.js'
 
 describe('getRelationTypesPayload', () => {
-  it('returns semantic properties without glyph or line styles for every relation type', () => {
+  it('returns category, label, and inverse without per-type line styles for every relation type', () => {
     const payload = getRelationTypesPayload()
     const types = payload.flatMap((category) => category.types)
 

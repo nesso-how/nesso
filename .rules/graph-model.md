@@ -26,9 +26,8 @@ edits go through the elaboration helper and must preserve existing notes.
 
 ## Relations
 
-The vocabulary owns the 52 relation types in 8 categories, their inverse or
-symmetric semantics, and their type-level properties. `strength` is a semantic
-weight of a relation type, not per-edge confidence. Use the canonical
+The vocabulary owns the 52 relation types in 8 categories and their inverse or
+symmetric semantics. Use the canonical
 definitions and category order from `@nesso-how/vocab-learning`; do not copy
 the schema or relation table into app code.
 

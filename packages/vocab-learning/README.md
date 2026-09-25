@@ -1,6 +1,6 @@
 # @nesso-how/vocab-learning
 
-The **Nesso Learning Vocabulary** for [Nesso](https://nesso.how) — a self-contained graph vocabulary: 52 typed relation types in 8 categories, type properties, category palettes, and private node parameters (FSRS review fields).
+The **Nesso Learning Vocabulary** for [Nesso](https://nesso.how) — a self-contained graph vocabulary: 52 typed relation types in 8 categories, category palettes, and private node parameters (FSRS review fields).
 
 Graph JSON files declare which vocabulary they use via `VOCABULARY.id` and a normative `version`. File I/O builds on [`@nesso-how/schema`](../schema/README.md) and adds learning-vocabulary validation (elaboration shape, known relation type ids).
 
@@ -25,7 +25,7 @@ import {
 } from '@nesso-how/vocab-learning'
 
 const def = RELATION_TYPES['causes']
-// { cat: 'causal', label: 'causes', inverse: 'caused-by', ... }
+// { cat: 'causal', label: 'causes', inverse: 'caused-by' }
 
 const freshNode = defaultConceptReviewFields()
 // { stability: 0, difficulty: 0, due: 0, ... }

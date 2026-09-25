@@ -268,10 +268,6 @@ function relationTypeSummary(id: RelationTypeName) {
     category: definition.cat,
     inverse: definition.inverse,
     symmetric: definition.inverse === 'self',
-    transitive: definition.transitive,
-    strength: definition.strength,
-    polarity: definition.polarity,
-    cardinality: definition.cardinality,
   }
 }
 
