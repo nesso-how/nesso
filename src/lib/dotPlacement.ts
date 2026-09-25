@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-import { edgeArcGeometry } from '@nesso-how/graph'
+import { edgeArcGeometry, pointFromBox } from '@nesso-how/graph'
 
 /** Flow box of a concept. */
 export interface DotBox {
@@ -37,7 +37,8 @@ export function dotCorners(box: DotBox): { left: number; top: number }[] {
 /** Minimum flow-px distance between the dot corner and an arc endpoint. */
 export const DOT_CORNER_CLEARANCE = 20
 
-function numberField(
+/** Finite number field with fallback (rejects missing, non-numeric, NaN). */
+export function numberField(
   data: Record<string, unknown> | undefined,
   key: string,
   fallback: number,
@@ -46,25 +47,29 @@ function numberField(
   return typeof value === 'number' && Number.isFinite(value) ? value : fallback
 }
 
-function pointField(
+function finitePoint(value: unknown): { x: number; y: number } | undefined {
+  if (typeof value !== 'object' || value === null) return undefined
+  const { x, y } = value as { x?: unknown; y?: unknown }
+  return Number.isFinite(x) && Number.isFinite(y) ? { x: x as number, y: y as number } : undefined
+}
+
+/** Border attachment `{x, y}` or undefined for missing/malformed values. */
+export function pointField(
   data: Record<string, unknown> | undefined,
   key: string,
 ): { x: number; y: number } | undefined {
-  const value = data?.[key]
-  if (typeof value !== 'object' || value === null) return undefined
-  const { x, y } = value as { x?: unknown; y?: unknown }
-  return typeof x === 'number' && typeof y === 'number' ? { x, y } : undefined
+  return finitePoint(data?.[key])
 }
 
-function anchorField(
+/** Saved reshape anchor or undefined for missing/malformed values. */
+export function anchorField(
   data: Record<string, unknown> | undefined,
 ): { x: number; y: number; t: number } | undefined {
   const value = data?.['curveAnchor']
   if (typeof value !== 'object' || value === null) return undefined
-  const { x, y, t } = value as { x?: unknown; y?: unknown; t?: unknown }
-  return typeof x === 'number' && typeof y === 'number' && typeof t === 'number'
-    ? { x, y, t }
-    : undefined
+  const { t } = value as { t?: unknown }
+  const point = finitePoint(value)
+  return point && Number.isFinite(t) ? { ...point, t: t as number } : undefined
 }
 
 function toBox(snapshot: DotSnapshot | undefined, fallback: DotBox): DotBox {
@@ -75,6 +80,62 @@ function toBox(snapshot: DotSnapshot | undefined, fallback: DotBox): DotBox {
     h: snapshot?.measured?.height ?? fallback.h,
   }
 }
+
+function geoBox(box: DotBox): { cx: number; cy: number; w: number; h: number } {
+  return { cx: box.x + box.w / 2, cy: box.y + box.h / 2, w: box.w, h: box.h }
+}
+
+/**
+ * Flow point where `edge` ends on `nodeId`, via `edgeArcGeometry` with the
+ * same params the renderer uses — or undefined when the edge is unrelated
+ * or its other end is unknown.
+ */
+export function incidentEndpoint(
+  edge: DotEdge,
+  nodeId: string,
+  myBox: DotBox,
+  boxOf: (id: string) => DotBox | undefined,
+  straight: boolean,
+): { x: number; y: number } | undefined {
+  if (edge.source !== nodeId && edge.target !== nodeId) return undefined
+  const fromSource = edge.source === nodeId
+  const other = boxOf(fromSource ? edge.target : edge.source)
+  if (!other) return undefined
+  // The stored anchor is normalized to the source box (see display.ts);
+  // the renderer converts it via pointFromBox before solving the arc.
+  const storedAnchor = anchorField(edge.data)
+  const sourceBox = fromSource ? myBox : other
+  const geo = edgeArcGeometry(geoBox(sourceBox), geoBox(fromSource ? other : myBox), {
+    straight,
+    curveOffset: numberField(edge.data, 'curveOffset', 1),
+    siblingIdx: numberField(edge.data, 'siblingIdx', 0),
+    anchor: storedAnchor
+      ? { ...pointFromBox(geoBox(sourceBox), storedAnchor), t: storedAnchor.t }
+      : undefined,
+    sourceAttachment: pointField(edge.data, 'sourceAttachment'),
+    targetAttachment: pointField(edge.data, 'targetAttachment'),
+  })
+  return fromSource ? geo.a : geo.b
+}
+
+/** First corner no endpoint comes closer to than the clearance. */
+export function firstFreeCorner(
+  box: DotBox,
+  ends: { x: number; y: number }[],
+): { left: number; top: number } {
+  const corners = dotCorners(box)
+  return (
+    corners.find((corner) =>
+      ends.every(
+        (end) =>
+          Math.hypot(end.x - (box.x + corner.left), end.y - (box.y + corner.top)) >=
+          DOT_CORNER_CLEARANCE,
+      ),
+    ) ?? corners[0]
+  )
+}
+
+const FALLBACK_BOX: DotBox = { x: 0, y: 0, w: 80, h: 32 }
 
 /**
  * Corner for the node's hover dot: the first candidate no attached arc ends
@@ -89,52 +150,16 @@ export function hoverDotCorner(
   snapshotOf: (id: string) => DotSnapshot | undefined,
   curveStyle: string,
 ): { left: number; top: number } {
-  const myBox = toBox(mine, { x: 0, y: 0, w: 80, h: 32 })
+  const myBox = toBox(mine, FALLBACK_BOX)
   const straight = curveStyle === 'straight'
+  const boxOf = (id: string) => {
+    const snapshot = snapshotOf(id)
+    return snapshot ? toBox(snapshot, FALLBACK_BOX) : undefined
+  }
   const ends: { x: number; y: number }[] = []
   for (const edge of edges) {
-    if (edge.source !== nodeId && edge.target !== nodeId) continue
-    const side = edge.source === nodeId ? 'source' : 'target'
-    const other = toBox(snapshotOf(edge.source === nodeId ? edge.target : edge.source), {
-      x: 0,
-      y: 0,
-      w: 80,
-      h: 32,
-    })
-    const sourceBox = side === 'source' ? myBox : other
-    const targetBox = side === 'source' ? other : myBox
-    const geo = edgeArcGeometry(
-      {
-        cx: sourceBox.x + sourceBox.w / 2,
-        cy: sourceBox.y + sourceBox.h / 2,
-        w: sourceBox.w,
-        h: sourceBox.h,
-      },
-      {
-        cx: targetBox.x + targetBox.w / 2,
-        cy: targetBox.y + targetBox.h / 2,
-        w: targetBox.w,
-        h: targetBox.h,
-      },
-      {
-        straight,
-        curveOffset: numberField(edge.data, 'curveOffset', 1),
-        siblingIdx: numberField(edge.data, 'siblingIdx', 0),
-        anchor: anchorField(edge.data),
-        sourceAttachment: pointField(edge.data, 'sourceAttachment'),
-        targetAttachment: pointField(edge.data, 'targetAttachment'),
-      },
-    )
-    ends.push(side === 'source' ? geo.a : geo.b)
+    const end = incidentEndpoint(edge, nodeId, myBox, boxOf, straight)
+    if (end) ends.push(end)
   }
-  const corners = dotCorners(myBox)
-  return (
-    corners.find((corner) =>
-      ends.every(
-        (end) =>
-          Math.hypot(end.x - (myBox.x + corner.left), end.y - (myBox.y + corner.top)) >=
-          DOT_CORNER_CLEARANCE,
-      ),
-    ) ?? corners[0]
-  )
+  return firstFreeCorner(myBox, ends)
 }
