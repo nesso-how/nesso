@@ -288,6 +288,8 @@ export interface ReconnectGesture {
   notifyReconnectOver(nodeId: string | null): void
   setReconnectDrag: Dispatch<SetStateAction<DraggedPoint | null>>
   setDragAnchor(anchor: AnchorPoint | null): void
+  /** Fired once when the endpoint drag actually starts (after the guards). */
+  onReconnectStart?: () => void
   onEdgeReconnect?: (
     id: string,
     side: 'source' | 'target',
@@ -311,6 +313,7 @@ export function startReconnectDrag(
   // Public node positions (Nesso concepts are flat, so position is
   // flow-absolute); no store subscription needed.
   g.reconnectNodes.current = g.snapshotNodes()
+  g.onReconnectStart?.()
   const p = g.flowPointAt(e.clientX, e.clientY)
   const over = g.overNodeId(side, p)
   g.notifyReconnectOver(over)

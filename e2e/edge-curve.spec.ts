@@ -10,6 +10,7 @@ import {
   edges,
   seedTwoConcepts,
   selectEdge,
+  strokePoint,
   waitForCurveAnchorSaved,
 } from './helpers'
 
@@ -73,22 +74,6 @@ for (const style of ['Arc', 'Line'] as const) {
     expect(finalPoints).toHaveLength(points.length)
     for (let i = 0; i < points.length; i++) expect(finalPoints[i]).toBeCloseTo(points[i], 3)
   })
-}
-
-/** Screen point of the edge stroke at a fraction of its length. */
-async function strokePoint(
-  page: import('@playwright/test').Page,
-  fraction: number,
-): Promise<{ x: number; y: number }> {
-  return page.evaluate((f) => {
-    const hit = document.querySelector('.react-flow__edge path')
-    if (!(hit instanceof SVGPathElement)) throw new Error('edge hit path not found')
-    const pt = hit.getPointAtLength(hit.getTotalLength() * f)
-    const ctm = hit.getScreenCTM()
-    if (!ctm) throw new Error('edge hit path has no screen CTM')
-    const s = new DOMPoint(pt.x, pt.y).matrixTransform(ctm)
-    return { x: s.x, y: s.y }
-  }, fraction)
 }
 
 async function chordMid(page: import('@playwright/test').Page): Promise<{ x: number; y: number }> {
@@ -269,10 +254,12 @@ test('dragging the target end dot retargets the edge onto another concept', asyn
     expect(pressedPoints[i]).toBeCloseTo(originalPoints[i], 3)
   await page.mouse.move(gamma.x + gamma.width / 2, gamma.y + gamma.height / 2, { steps: 12 })
 
-  // Mid-drag, before release: Gamma shows the dotted destination border
-  // (same as creating an arc) and the dashed preview keeps the edge's bow.
+  // Mid-drag, before release: Gamma shows the selection-style dashed
+  // destination ring (shared with the selection highlight) and the dashed
+  // preview keeps the edge's bow.
   const gammaNode = nodeByText(page, 'Gamma')
-  await expect(gammaNode.locator('div[style*="dotted"]')).toBeVisible()
+  await expect(gammaNode.locator('div[style*="dashed"]')).toBeVisible()
+  await expect(page.locator('div[style*="dotted"]')).toHaveCount(0)
   const preview = await page.evaluate(() => {
     const paths = [...document.querySelectorAll('.react-flow__edge path')]
     return paths.map((p) => p.getAttribute('d')).join(' | ')

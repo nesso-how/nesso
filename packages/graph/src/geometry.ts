@@ -88,6 +88,13 @@ export function arcControlPoint(
 /** Trim margin around node boxes shared by edge rendering and previews. */
 export const NODE_PAD = 6
 
+/**
+ * Dash pattern of the connect/reconnect preview arc. It matches the CSS
+ * `1px dashed` destination ring on concepts (screenshot-verified in Chromium),
+ * so the dragged arc and its destination highlight read as one gesture.
+ */
+export const PREVIEW_DASHARRAY = '3 2'
+
 export interface EndpointAttachment {
   /** Coordinates normalized to the node box plus NODE_PAD, relative to its centre. */
   x: number

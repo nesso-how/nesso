@@ -198,6 +198,19 @@ export async function selectEdge(page: Page): Promise<void> {
   await page.mouse.click(point.x, point.y)
 }
 
+/** Screen point of the first edge stroke at a fraction of its length. */
+export async function strokePoint(page: Page, fraction: number): Promise<{ x: number; y: number }> {
+  return page.evaluate((f) => {
+    const hit = document.querySelector('.react-flow__edge path')
+    if (!(hit instanceof SVGPathElement)) throw new Error('edge hit path not found')
+    const pt = hit.getPointAtLength(hit.getTotalLength() * f)
+    const ctm = hit.getScreenCTM()
+    if (!ctm) throw new Error('edge hit path has no screen CTM')
+    const s = new DOMPoint(pt.x, pt.y).matrixTransform(ctm)
+    return { x: s.x, y: s.y }
+  }, fraction)
+}
+
 /** Seed the current graph's first concept as a previously reviewed due card. */
 export async function makeCurrentGraphConceptStudiedAndDue(page: Page): Promise<void> {
   await page.evaluate(async () => {

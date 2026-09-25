@@ -63,6 +63,9 @@ export function useConnectRelation() {
       nodeId: params.nodeId ?? null,
       handleType: (params.handleType as ConnectionHandleType | null) ?? null,
     }
+    // A connect drag takes over the canvas: clear the current selection so
+    // the destination highlight is unambiguous and the map unfocuses.
+    useGraphStore.getState().setSelected(null)
   }, [])
 
   const onConnectEnd = useCallback<OnConnectEnd>(

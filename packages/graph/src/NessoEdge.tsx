@@ -8,7 +8,7 @@ import type { NessoEdgeData } from './display.js'
 import { useGraphDisplay, type NessoGraphDisplayContext } from './context.js'
 import { isEdgeConnectedToNode, resolveEdgeVisual } from './edgeHighlight.js'
 import { EdgeEndpointDot } from './EdgeEndpointDot.js'
-import { edgeArcGeometry, flowNodeCenterY } from './geometry.js'
+import { edgeArcGeometry, flowNodeCenterY, PREVIEW_DASHARRAY } from './geometry.js'
 import {
   closestCurveT,
   reconnectPreview,
@@ -154,6 +154,7 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
     onEdgeCurveAnchorChange,
     onEdgeReconnect,
     onEdgeReconnectOver,
+    onEdgeReconnectStart,
   } = useGraphDisplay()
 
   const sourceNode = useStore((s) => s.nodeLookup.get(source))
@@ -328,6 +329,7 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
     notifyReconnectOver,
     setReconnectDrag,
     setDragAnchor,
+    onReconnectStart: onEdgeReconnectStart,
     onEdgeReconnect,
     siblingIdxAfter: siblingIdxAfterReconnect,
     endReconnectDrag,
@@ -425,7 +427,7 @@ function NessoEdgeStroke({
         fill="none"
         stroke="var(--accent)"
         strokeWidth={1.5}
-        strokeDasharray={'0.5 3'}
+        strokeDasharray={PREVIEW_DASHARRAY}
         opacity={preview.snapped ? 0.65 : 0.25}
         strokeLinecap="round"
         style={{ pointerEvents: 'none' }}

@@ -64,6 +64,11 @@ export function GraphCanvas({
   const t = useT()
 
   const getRelationLabel = useCallback((type: RelationTypeName) => t.relationTypes.types[type], [t])
+  // A connect or reconnect drag takes over the canvas: clear the selection
+  // on gesture start so the destination highlight is unambiguous.
+  const clearSelectionOnGestureStart = useCallback(() => {
+    useGraphStore.getState().setSelected(null)
+  }, [])
   const isItemSelected = useCallback(
     (kind: 'node' | 'edge', id: string) => selected?.kind === kind && selected.id === id,
     [selected],
@@ -238,6 +243,7 @@ export function GraphCanvas({
         onMoveEnd={persistViewportOnMoveEnd}
         onEdgeCurveAnchorChange={setEdgeCurveAnchor}
         onEdgeReconnect={reconnectEdge}
+        onEdgeReconnectStart={clearSelectionOnGestureStart}
         onEdgeReconnectOver={setReconnectTargetId}
         reactFlowProps={{
           zoomOnDoubleClick: false,

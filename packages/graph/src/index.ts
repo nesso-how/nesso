@@ -32,6 +32,7 @@ export {
   pointFromBox,
   pointRelativeToBox,
   NODE_PAD,
+  PREVIEW_DASHARRAY,
   quadraticPoint,
   CURVE_OFFSET_LIMIT,
   nodeCenterX,

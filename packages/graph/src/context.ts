@@ -40,6 +40,12 @@ export interface NessoGraphDisplayContext {
    * is over a valid target, or null. Drives the destination highlight.
    */
   onEdgeReconnectOver?: (nodeId: string | null) => void
+  /**
+   * Fired once when an endpoint-reconnect drag actually starts. The app uses
+   * it to clear the current selection so the destination highlight is
+   * unambiguous and the map unfocuses.
+   */
+  onEdgeReconnectStart?: () => void
   /** Id of the currently selected concept, if any — used to emphasize connected edges. */
   selectedNodeId?: string | null
   /**

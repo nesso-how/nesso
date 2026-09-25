@@ -1,7 +1,12 @@
 // SPDX-License-Identifier: MIT
 import { useLayoutEffect } from 'react'
 import { useReactFlow, type ConnectionLineComponentProps, type Node } from '@xyflow/react'
-import { attachmentAt, connectionPreview, flowNodeCenterY } from '@nesso-how/graph'
+import {
+  attachmentAt,
+  connectionPreview,
+  flowNodeCenterY,
+  PREVIEW_DASHARRAY,
+} from '@nesso-how/graph'
 import { useGraphStore } from '@/store'
 
 /** Concept under the cursor, if any, excluding the drag origin. */
@@ -99,7 +104,7 @@ export function NessoConnectionLine({
       fill="none"
       stroke="var(--accent)"
       strokeWidth={1.5}
-      strokeDasharray={'0.5 3'}
+      strokeDasharray={PREVIEW_DASHARRAY}
       opacity={snapped ? 0.65 : 0.25}
       strokeLinecap="round"
     />

@@ -3,7 +3,9 @@ import type { CSSProperties, MouseEventHandler, ReactNode, Ref } from 'react'
 import { NODE_DIMMED_OPACITY } from './edgeHighlight.js'
 import { ratingColor } from './ratingColor.js'
 
-/** Absolute decoration rings and the heatmap tint behind the concept label. */
+/** Absolute decoration rings and the heatmap tint behind the concept label.
+ * The dashed ring marks the selected concept and, during connect/reconnect
+ * drags, the destination concept — one shared highlight for both. */
 function ConceptOverlays({
   showHeatmap,
   heatTint,
@@ -30,7 +32,7 @@ function ConceptOverlays({
         />
       )}
 
-      {selected && (
+      {(selected || connectionTarget) && (
         <div
           style={{
             position: 'absolute',
@@ -38,18 +40,6 @@ function ConceptOverlays({
             borderRadius: 999,
             border: '1px dashed var(--accent)',
             opacity: 0.7,
-            pointerEvents: 'none',
-          }}
-        />
-      )}
-
-      {connectionTarget && (
-        <div
-          style={{
-            position: 'absolute',
-            inset: -4,
-            borderRadius: 999,
-            border: '1.5px dotted color-mix(in srgb, var(--accent) 65%, transparent)',
             pointerEvents: 'none',
           }}
         />
@@ -66,6 +56,8 @@ export interface ConceptNodeBodyProps {
   cursor?: CSSProperties['cursor']
   userSelect?: CSSProperties['userSelect']
   className?: string
+  /** Highlights the concept with the selection ring while a connect or
+   * reconnect drag hovers it as the destination. */
   connectionTarget?: boolean
   /** Fades the concept while another map element holds the focus. */
   dimmed?: boolean
