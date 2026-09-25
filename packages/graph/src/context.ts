@@ -42,6 +42,12 @@ export interface NessoGraphDisplayContext {
   onEdgeReconnectOver?: (nodeId: string | null) => void
   /** Id of the currently selected concept, if any — used to emphasize connected edges. */
   selectedNodeId?: string | null
+  /**
+   * The currently selected relation with its endpoints, if any — used to focus
+   * the map on it: the arc and its source/target concepts stay highlighted
+   * while the rest dims.
+   */
+  selectedEdge?: { id: string; source: string; target: string } | null
   /** Dim edges unconnected to the selected concept. Defaults to on. */
   dimUnconnectedOnSelect: boolean
 }

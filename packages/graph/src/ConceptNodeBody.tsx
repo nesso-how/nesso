@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 import type { CSSProperties, MouseEventHandler, ReactNode, Ref } from 'react'
+import { DIMMED_OPACITY } from './edgeHighlight.js'
 import { ratingColor } from './ratingColor.js'
 
 export interface ConceptNodeBodyProps {
@@ -11,6 +12,8 @@ export interface ConceptNodeBodyProps {
   userSelect?: CSSProperties['userSelect']
   className?: string
   connectionTarget?: boolean
+  /** Fades the concept while another map element holds the focus. */
+  dimmed?: boolean
   rootRef?: Ref<HTMLDivElement>
   onDoubleClick?: MouseEventHandler<HTMLDivElement>
   /** Replaces the default label span (e.g. inline edit overlay). */
@@ -26,6 +29,7 @@ export function ConceptNodeBody({
   userSelect = 'none',
   className,
   connectionTarget = false,
+  dimmed = false,
   rootRef,
   onDoubleClick,
   children,
@@ -46,6 +50,7 @@ export function ConceptNodeBody({
         cursor,
         userSelect,
         minWidth: 60,
+        opacity: dimmed ? DIMMED_OPACITY : undefined,
       }}
     >
       {showHeatmap && (

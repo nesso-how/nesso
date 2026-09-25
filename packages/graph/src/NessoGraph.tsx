@@ -101,6 +101,8 @@ export interface NessoGraphProps {
   isItemSelected?: (kind: 'node' | 'edge', id: string) => boolean
   /** Id of the currently selected concept, if any — used to emphasize connected edges. */
   selectedNodeId?: string | null
+  /** See {@link NessoGraphDisplayContext.selectedEdge}. */
+  selectedEdge?: { id: string; source: string; target: string } | null
 
   // Node/edge types — override for app-specific interactivity (e.g. inline edit).
   nodeTypes?: NodeTypes
@@ -189,6 +191,7 @@ export function NessoGraph({
   getRelationLabel,
   isItemSelected,
   selectedNodeId,
+  selectedEdge,
   onEdgeCurveAnchorChange,
   onEdgeReconnect,
   onEdgeReconnectOver,
@@ -262,6 +265,7 @@ export function NessoGraph({
       getRelationLabel,
       isItemSelected,
       selectedNodeId,
+      selectedEdge,
       onEdgeCurveAnchorChange,
       onEdgeReconnect,
       onEdgeReconnectOver,
@@ -274,6 +278,7 @@ export function NessoGraph({
       getRelationLabel,
       isItemSelected,
       selectedNodeId,
+      selectedEdge,
       onEdgeCurveAnchorChange,
       onEdgeReconnect,
       onEdgeReconnectOver,

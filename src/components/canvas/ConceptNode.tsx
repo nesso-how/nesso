@@ -53,7 +53,15 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
   const secondNodeId = useGraphStore((s) => s.nodes[1]?.id ?? null)
   const clearEditNodeId = useGraphStore((s) => s.clearEditNodeId)
   const requestEditNode = useGraphStore((s) => s.requestEditNode)
-  const { showHeatmap } = useGraphDisplay()
+  const { showHeatmap, dimUnconnectedOnSelect, selectedEdge } = useGraphDisplay()
+
+  // A selected relation focuses the map: its endpoints stay highlighted and
+  // every other concept fades, mirroring the edges' dim treatment.
+  const isDimmed =
+    !!dimUnconnectedOnSelect &&
+    !!selectedEdge &&
+    selectedEdge.source !== id &&
+    selectedEdge.target !== id
 
   const startEdit = useCallback(() => {
     setDraft(data.text)
@@ -174,6 +182,7 @@ export function ConceptNode({ id, data, selected }: NodeProps<ConceptNodeType>) 
         cursor={editing ? 'text' : 'grab'}
         userSelect={editing ? 'text' : 'none'}
         connectionTarget={isConnectionTarget || isReconnectTarget}
+        dimmed={isDimmed}
         onDoubleClick={(e) => {
           e.stopPropagation()
           requestEditNode(id)

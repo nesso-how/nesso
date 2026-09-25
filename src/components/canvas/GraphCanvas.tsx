@@ -68,6 +68,13 @@ export function GraphCanvas({
     [selected],
   )
   const selectedNodeId = selected?.kind === 'node' ? selected.id : null
+  // The selected relation carries its endpoints so nodes and edges can focus
+  // the map around it.
+  const selectedEdge = useMemo(() => {
+    if (selected?.kind !== 'edge') return null
+    const edge = edges.find((e) => e.id === selected.id)
+    return edge ? { id: edge.id, source: edge.source, target: edge.target } : null
+  }, [selected, edges])
 
   const { screenToFlowPosition } = useReactFlow()
   // Only read at mount of the keyed NessoGraph below — memoized so the O(N)
@@ -205,6 +212,7 @@ export function GraphCanvas({
         getRelationLabel={getRelationLabel}
         isItemSelected={isItemSelected}
         selectedNodeId={selectedNodeId}
+        selectedEdge={selectedEdge}
         nodeTypes={nodeTypes}
         nodesDraggable={true}
         nodesConnectable={true}

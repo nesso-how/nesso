@@ -64,6 +64,7 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
     getRelationLabel,
     isItemSelected,
     selectedNodeId,
+    selectedEdge,
     dimUnconnectedOnSelect,
     onEdgeCurveAnchorChange,
     onEdgeReconnect,
@@ -79,7 +80,10 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
     edgeEncoding === 'minimal' ? 'var(--ink-3)' : categoryColor(T.cat, categoryColorMode, palette)
   const isSelected = selected || isItemSelected?.('edge', id) === true
   const isConnected = isEdgeConnectedToNode(source, target, selectedNodeId)
-  const hasSelection = dimUnconnectedOnSelect && selectedNodeId != null && selectedNodeId !== ''
+  // A relation selection focuses the map like a concept selection: the
+  // selected arc and its endpoints keep their look, the rest dims.
+  const inFocus = selectedEdge ? selectedEdge.id === id : isConnected
+  const hasSelection = dimUnconnectedOnSelect && Boolean(selectedNodeId || selectedEdge)
   const showLabel =
     edgeEncoding === 'full' || (edgeEncoding !== 'minimal' && (hovered || isSelected))
   const straight = curveStyle === 'straight'
@@ -242,7 +246,7 @@ export function NessoEdge({ id, source, target, data, selected }: EdgeProps<Ness
   } = resolveEdgeVisual({
     isSelected,
     hovered,
-    isConnected,
+    inFocus,
     hasSelection,
   })
 
