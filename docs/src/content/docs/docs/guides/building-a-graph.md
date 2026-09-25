@@ -17,7 +17,7 @@ An empty graph shows a centered **"Your first concept"** hint, but the double-cl
 
 ## Drawing relations
 
-Drag from either visible connection dot on a node to another node. The node where you start is the source and the node where you release is the target, so the relation picker follows the direction of your gesture. The usual path is the right edge (`out`) to the other node's left edge (`in`). On release, a **relation picker** opens, grouped by category. Pick the relation type and the edge is created.
+Hover a concept to reveal its dashed outline and a single connection dot on the first free corner of its border (top-left, then bottom-left), so it never covers an attached arc end. Drag from the dot to another node. The node where you start is the source and the node where you release is the target, so the relation picker follows the direction of your gesture. On release, a **relation picker** opens, grouped by category. Pick the relation type and the edge is created.
 
 - The connection line previews with the same quadratic geometry the final edge uses.
 - Edge type can be changed any time from the Inspector when an edge is selected.
@@ -60,8 +60,8 @@ Longer writing happens in **Writing Mode**: in the Inspector, click the full-wid
 
 ## Display options (sidebar)
 
-**Sidebar → Display** controls how the **active graph** is rendered: heatmap overlay, edge encoding density, curve style, auto flip, and dimming of unconnected edges on selection. Choices are saved **with the graph** in IndexedDB (and included in JSON export). New graphs start from the app defaults until you change them.
+**Sidebar → Display** controls how the **active graph** is rendered: heatmap overlay, edge encoding density, curve style, and dimming of unconnected edges on selection. Choices are saved **with the graph** in IndexedDB (and included in JSON export). New graphs start from the app defaults until you change them.
 
-Selecting a concept dims every edge that is not connected to it (**Focus**, on by default) so its relations stand out; the selected concept and its own edges keep their normal look. Turn the switch off for that graph to keep the full map at its normal look while selecting.
+Selecting a concept focuses the map on it (**Focus**, on by default): edges not connected to it fade, and so do concepts beyond its direct neighbours, so its relations stand out. Selecting a relation focuses its two concepts the same way. Turn the switch off for that graph to keep the full map at its normal look while selecting.
 
-When **Display → Curve** is set to **Arc**, **Auto flip** (on by default) bends relations toward the side that avoids overlapping nodes, flipping when the target is above the source on the right, or below on the left, and updates live while you drag concepts. **Flip curve** in the Inspector is **Off | Auto | On** while auto flip is on: **Auto** follows layout, **Off** / **On** pin a manual bend on that edge. With auto flip off for that graph, the control is **Off | On** only.
+When **Display → Curve** is set to **Arc**, drag an arc to reshape it; double-click it to reset its bend. The reshaped curve is saved with the graph and follows its concepts. Hover over an existing relation to reveal its endpoint handles. Drag one onto a concept to reconnect it: while the cursor moves inside the concept, the endpoint follows the nearest point on its rounded border and stays there when released. The same destination snap applies when creating a new relation; its position survives the relation-picker step. The chosen attachment is saved with the graph. **Line** renders straight relations instead.

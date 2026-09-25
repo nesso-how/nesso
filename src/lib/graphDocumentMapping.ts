@@ -4,16 +4,26 @@ import type { ConceptNodeData, GraphDisplaySettings, NessoGraphDocumentInput } f
 import { VOCABULARY } from '@/types/graph'
 import type { NessoEdgeData } from '@nesso-how/graph'
 
-function relationCurveData(
-  edgeData: NessoEdgeData | undefined,
-): { curveFlip?: boolean; curveFlipPinned?: boolean } | undefined {
-  const curveFlip = edgeData?.curveFlip
-  const curveFlipPinned = edgeData?.curveFlipPinned
-  if (curveFlip === undefined && curveFlipPinned === undefined) return undefined
-  return {
-    ...(curveFlip !== undefined ? { curveFlip } : {}),
-    ...(curveFlipPinned !== undefined ? { curveFlipPinned } : {}),
-  }
+function relationCurveData(edgeData: NessoEdgeData | undefined):
+  | {
+      curveOffset?: number
+      sourceAttachment?: { x: number; y: number }
+      targetAttachment?: { x: number; y: number }
+      curveAnchor?: { x: number; y: number; t: number }
+    }
+  | undefined {
+  if (!edgeData) return undefined
+  const data: {
+    curveOffset?: number
+    sourceAttachment?: { x: number; y: number }
+    targetAttachment?: { x: number; y: number }
+    curveAnchor?: { x: number; y: number; t: number }
+  } = {}
+  if (edgeData.curveOffset !== undefined) data.curveOffset = edgeData.curveOffset
+  if (edgeData.sourceAttachment !== undefined) data.sourceAttachment = edgeData.sourceAttachment
+  if (edgeData.targetAttachment !== undefined) data.targetAttachment = edgeData.targetAttachment
+  if (edgeData.curveAnchor !== undefined) data.curveAnchor = edgeData.curveAnchor
+  return Object.keys(data).length > 0 ? data : undefined
 }
 
 function relationFromEdge(e: Edge) {

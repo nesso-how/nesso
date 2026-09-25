@@ -51,6 +51,52 @@ describe('vocab-learning serialize / deserialize', () => {
     expect(() => deserialize(json)).toThrow(/unknown relation type/)
   })
 
+  it('rejects malformed attachment coordinates but accepts documents without attachments', () => {
+    const relation = { id: 'e1', source: 'n1', target: 'n1', type: 'causes' }
+    expect(() => deserialize(JSON.stringify(documentWith({ relations: [relation] })))).not.toThrow()
+    for (const attachment of [
+      { x: 1.5, y: 0 },
+      { x: 0, y: null },
+    ]) {
+      expect(() =>
+        deserialize(
+          JSON.stringify(
+            documentWith({
+              relations: [{ ...relation, data: { targetAttachment: attachment } }],
+            }),
+          ),
+        ),
+      ).toThrow(/targetAttachment/)
+    }
+  })
+
+  it('rejects a malformed curve anchor but accepts a valid one', () => {
+    const relation = { id: 'e1', source: 'n1', target: 'n1', type: 'causes' }
+    expect(() =>
+      deserialize(
+        JSON.stringify(
+          documentWith({
+            relations: [{ ...relation, data: { curveAnchor: { x: 0.3, y: -1, t: 0.4 } } }],
+          }),
+        ),
+      ),
+    ).not.toThrow()
+    for (const anchor of [
+      { x: 0.3, y: -1, t: 1 },
+      { x: 0.3, y: -1, t: 0 },
+      { x: Number.NaN, y: -1, t: 0.4 },
+      { x: 0.3, y: -1 },
+    ]) {
+      expect(() =>
+        deserialize(
+          JSON.stringify(
+            documentWith({ relations: [{ ...relation, data: { curveAnchor: anchor } }] }),
+          ),
+        ),
+      ).toThrow(/curveAnchor/)
+    }
+  })
+
   it('rejects an elaboration with a missing definition field', () => {
     const json = JSON.stringify({
       version: GRAPH_FORMAT_VERSION,

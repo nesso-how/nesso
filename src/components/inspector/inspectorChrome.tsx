@@ -2,6 +2,7 @@
 import { useState, type ReactNode } from 'react'
 import { Icon, type IconName } from '@/components/ui/icons'
 import { useGraphStore } from '@/store'
+import { useSelectedEdgeIsSymmetric } from '@/components/canvas/useSelectedEdgeIsSymmetric'
 import { TOPBAR_HEIGHT_PX } from '@/components/layout/TopBar'
 import { STATUS_BAR_HEIGHT_PX } from '@/components/layout/StatusBar'
 import { useT } from '@/i18n'
@@ -72,33 +73,27 @@ export function InspectorCollapseCloseRow({ marginBottom }: { marginBottom: numb
   )
 }
 
-/** Bottom (or rail) action toolbar. Operates on the live selection via the store. */
-export function InspectorActionToolbar({
-  orientation = 'horizontal',
-  includeClose = false,
-}: {
-  orientation?: 'horizontal' | 'vertical'
-  includeClose?: boolean
-}) {
+/** Flip direction, shown only for directed relations (the caller hides it on symmetric ones). */
+function FlipDirectionButton() {
   const t = useT()
-  const selected = useGraphStore((s) => s.selected)
-  const copySelection = useGraphStore((s) => s.copySelection)
-  const cutSelection = useGraphStore((s) => s.cutSelection)
-  const duplicateSelection = useGraphStore((s) => s.duplicateSelection)
-  const deleteSelection = useGraphStore((s) => s.deleteSelection)
   const reverseEdge = useGraphStore((s) => s.reverseEdge)
-  const setSelected = useGraphStore((s) => s.setSelected)
-
-  const isEdge = selected?.kind === 'edge'
-  const vertical = orientation === 'vertical'
-
-  const leading: ReactNode = isEdge ? (
+  const selected = useGraphStore((s) => s.selected)
+  return (
     <InspectorIconBtn
       icon="flip"
       title={t.inspector.actions.flip}
       onClick={() => selected && reverseEdge(selected.id)}
     />
-  ) : (
+  )
+}
+
+/** Copy / cut / duplicate for a concept selection. */
+function NodeClipboardActions() {
+  const t = useT()
+  const copySelection = useGraphStore((s) => s.copySelection)
+  const cutSelection = useGraphStore((s) => s.cutSelection)
+  const duplicateSelection = useGraphStore((s) => s.duplicateSelection)
+  return (
     <>
       <InspectorIconBtn
         icon="copy"
@@ -112,6 +107,33 @@ export function InspectorActionToolbar({
         onClick={() => duplicateSelection()}
       />
     </>
+  )
+}
+
+/** Bottom (or rail) action toolbar. Operates on the live selection via the store. */
+export function InspectorActionToolbar({
+  orientation = 'horizontal',
+  includeClose = false,
+}: {
+  orientation?: 'horizontal' | 'vertical'
+  includeClose?: boolean
+}) {
+  const t = useT()
+  const selected = useGraphStore((s) => s.selected)
+  const deleteSelection = useGraphStore((s) => s.deleteSelection)
+  const setSelected = useGraphStore((s) => s.setSelected)
+
+  const isEdge = selected?.kind === 'edge'
+  // Reversing a symmetric relation (inverse === 'self') is a visual no-op.
+  const symmetricEdge = useSelectedEdgeIsSymmetric()
+  const vertical = orientation === 'vertical'
+
+  const leading: ReactNode = isEdge ? (
+    symmetricEdge ? null : (
+      <FlipDirectionButton />
+    )
+  ) : (
+    <NodeClipboardActions />
   )
 
   return (

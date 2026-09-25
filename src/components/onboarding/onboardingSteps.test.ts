@@ -11,7 +11,6 @@ function baseState(overrides: Partial<GraphState> = {}): GraphState {
       edgeEncoding: 'full',
       showHeatmap: false,
       curveStyle: 'arc',
-      autoCurveFlip: true,
       categoryPalette: 'default',
       aiBaseUrl: '',
       aiModel: '',

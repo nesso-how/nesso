@@ -32,6 +32,7 @@ import { GraphDisplayContext, type CategoryColorMode } from './context.js'
 import { documentToRenderGraph } from './documentToRenderGraph.js'
 import { ConceptNode } from './ConceptNode.js'
 import { NessoEdge } from './NessoEdge.js'
+import type { EndpointAttachment } from './geometry.js'
 
 const DEFAULT_NODE_TYPES: NodeTypes = { concept: ConceptNode as NodeTypes[string] }
 const DEFAULT_EDGE_TYPES: EdgeTypes = { nesso: NessoEdge as EdgeTypes[string] }
@@ -100,6 +101,12 @@ export interface NessoGraphProps {
   isItemSelected?: (kind: 'node' | 'edge', id: string) => boolean
   /** Id of the currently selected concept, if any — used to emphasize connected edges. */
   selectedNodeId?: string | null
+  /** See {@link NessoGraphDisplayContext.selectedEdge}. */
+  selectedEdge?: { id: string; source: string; target: string } | null
+  /** See {@link NessoGraphDisplayContext.focusNodeIds}. */
+  focusNodeIds?: string[] | null
+  /** See {@link NessoGraphDisplayContext.onEdgeReconnectStart}. */
+  onEdgeReconnectStart?: () => void
 
   // Node/edge types — override for app-specific interactivity (e.g. inline edit).
   nodeTypes?: NodeTypes
@@ -124,6 +131,38 @@ export interface NessoGraphProps {
   // Simplified click callbacks for the read-only use-case.
   onNodeClick?: (id: string, data: ConceptNodeData) => void
   onEdgeClick?: (id: string, data: NessoEdgeData) => void
+
+  /**
+   * Curve-reshape commit callback. When defined, arc edges are draggable from
+   * any middle point; the anchor (source-node-relative point + curve parameter
+   * t) arrives here once per completed drag, or undefined on double-click
+   * reset. Absent = read-only.
+   */
+  onEdgeCurveAnchorChange?: (
+    id: string,
+    anchor: { x: number; y: number; t: number } | undefined,
+  ) => void
+
+  /**
+   * Endpoint-retarget callback. When defined, arc endpoints expose reconnect
+   * dots on hover: dragging one previews the prospective edge's shape,
+   * dropping it on a concept moves that end of the edge there.
+   * Absent = no reconnect dots.
+   */
+  onEdgeReconnect?: (
+    id: string,
+    side: 'source' | 'target',
+    nodeId: string,
+    attachment?: EndpointAttachment,
+    curveAnchor?: { x: number; y: number; t: number },
+  ) => void
+
+  /**
+   * Reconnect hover callback. When defined, the hovered concept id (or null)
+   * arrives here while an endpoint drag is over a valid target. Absent = no
+   * destination highlight.
+   */
+  onEdgeReconnectOver?: (nodeId: string | null) => void
 
   // Viewport.
   fitView?: boolean
@@ -156,6 +195,12 @@ export function NessoGraph({
   getRelationLabel,
   isItemSelected,
   selectedNodeId,
+  selectedEdge,
+  focusNodeIds,
+  onEdgeReconnectStart,
+  onEdgeCurveAnchorChange,
+  onEdgeReconnect,
+  onEdgeReconnectOver,
   nodeTypes = DEFAULT_NODE_TYPES,
   edgeTypes = DEFAULT_EDGE_TYPES,
   nodesDraggable = false,
@@ -216,11 +261,6 @@ export function NessoGraph({
         graphDisplay?.curveStyle,
         DEFAULT_GRAPH_DISPLAY.curveStyle,
       ),
-      autoCurveFlip: pickDisplay(
-        display?.autoCurveFlip,
-        graphDisplay?.autoCurveFlip,
-        DEFAULT_GRAPH_DISPLAY.autoCurveFlip,
-      ),
       dimUnconnectedOnSelect: pickDisplay(
         display?.dimUnconnectedOnSelect,
         graphDisplay?.dimUnconnectedOnSelect,
@@ -231,6 +271,12 @@ export function NessoGraph({
       getRelationLabel,
       isItemSelected,
       selectedNodeId,
+      selectedEdge,
+      focusNodeIds,
+      onEdgeReconnectStart,
+      onEdgeCurveAnchorChange,
+      onEdgeReconnect,
+      onEdgeReconnectOver,
     }),
     [
       display,
@@ -240,6 +286,12 @@ export function NessoGraph({
       getRelationLabel,
       isItemSelected,
       selectedNodeId,
+      selectedEdge,
+      focusNodeIds,
+      onEdgeReconnectStart,
+      onEdgeCurveAnchorChange,
+      onEdgeReconnect,
+      onEdgeReconnectOver,
     ],
   )
 

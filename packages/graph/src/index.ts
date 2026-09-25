@@ -6,6 +6,7 @@ export { ConceptNode } from './ConceptNode.js'
 export { ConceptNodeBody } from './ConceptNodeBody.js'
 export type { ConceptNodeBodyProps } from './ConceptNodeBody.js'
 export { NessoEdge } from './NessoEdge.js'
+export { EdgeEndpointDot } from './EdgeEndpointDot.js'
 export { isEdgeConnectedToNode, resolveEdgeVisual } from './edgeHighlight.js'
 export type { EdgeVisual, EdgeVisualInput } from './edgeHighlight.js'
 export { useGraphDisplay, GraphDisplayContext } from './context.js'
@@ -17,6 +18,7 @@ export type {
   GraphDisplaySettings,
   NessoEdgeData,
 } from './display.js'
+export type { ConnectionPreview, EndpointAttachment } from './geometry.js'
 export { DEFAULT_GRAPH_DISPLAY } from './display.js'
 export { documentToRenderGraph } from './documentToRenderGraph.js'
 
@@ -24,12 +26,19 @@ export { documentToRenderGraph } from './documentToRenderGraph.js'
 export { ratingColor } from './ratingColor.js'
 export {
   arcControlPoint,
-  defaultCurveFlip,
+  attachmentAt,
+  clampCurveOffset,
+  connectionPreview,
+  edgeArcGeometry,
+  pointFromBox,
+  pointRelativeToBox,
+  NODE_PAD,
+  PREVIEW_DASHARRAY,
+  quadraticPoint,
+  CURVE_OFFSET_LIMIT,
   nodeCenterX,
   nodeCenterY,
-  flowNodeCenterX,
   flowNodeCenterY,
-  effectiveCurveFlip,
   rectExit,
   nessoArcPath,
 } from './geometry.js'

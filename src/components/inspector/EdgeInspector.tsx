@@ -5,8 +5,6 @@ import {
   RELATION_TYPE_VALUES,
   asRelationTypeName,
 } from '@/data/relationTypes'
-import { SegmentedControl } from '@/components/ui/SegmentedControl'
-import { SettingRow } from '@/components/ui/SettingRow'
 import { useGraphStore, selectedEdgeSelector } from '@/store'
 import { useT } from '@/i18n'
 import { InspectorPanel } from './InspectorPanel'
@@ -23,24 +21,10 @@ export function EdgeInspector({ panelWidth, onPanelWidthChange }: Props) {
   const fromText = useGraphStore((s) => s.nodes.find((n) => n.id === edge.source)?.data.text)
   const toText = useGraphStore((s) => s.nodes.find((n) => n.id === edge.target)?.data.text)
   const updateEdgeType = useGraphStore((s) => s.updateEdgeType)
-  const setEdgeCurveFlipMode = useGraphStore((s) => s.setEdgeCurveFlipMode)
-  const curveStyle = useGraphStore((s) => s.graphDisplay.curveStyle)
-  const autoCurveFlip = useGraphStore((s) => s.graphDisplay.autoCurveFlip)
   const edgeType = asRelationTypeName(edge.data?.type)
   const T = RELATION_TYPES[edgeType]
   const C = RELATION_CATEGORY_COLORS[T.cat]
   const siblings = RELATION_TYPE_VALUES.filter((id) => RELATION_TYPES[id].cat === T.cat)
-  const curveFlipPinned = Boolean(edge.data?.curveFlipPinned)
-  const curveFlipMode = autoCurveFlip
-    ? curveFlipPinned
-      ? edge.data?.curveFlip
-        ? 'on'
-        : 'off'
-      : 'auto'
-    : edge.data?.curveFlip
-      ? 'on'
-      : 'off'
-  const showCurveFlip = curveStyle === 'arc'
 
   return (
     <InspectorPanel panelWidth={panelWidth} onPanelWidthChange={onPanelWidthChange}>
@@ -128,44 +112,6 @@ export function EdgeInspector({ panelWidth, onPanelWidthChange }: Props) {
             </button>
           ))}
         </div>
-
-        {showCurveFlip && (
-          <>
-            <h5
-              style={{
-                margin: '18px 0 6px',
-                fontSize: '10px',
-                fontWeight: 600,
-                fontFamily: 'var(--font-mono)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.08em',
-                color: 'var(--ink-4)',
-              }}
-            >
-              {t.sidebar.display}
-            </h5>
-            <SettingRow label={t.inspector.flipCurve}>
-              <SegmentedControl
-                options={
-                  autoCurveFlip
-                    ? [
-                        { id: 'off', label: t.sidebar.displayOptions.off },
-                        { id: 'auto', label: t.inspector.flipCurveAuto },
-                        { id: 'on', label: t.sidebar.displayOptions.on },
-                      ]
-                    : [
-                        { id: 'off', label: t.sidebar.displayOptions.off },
-                        { id: 'on', label: t.sidebar.displayOptions.on },
-                      ]
-                }
-                value={curveFlipMode}
-                onChange={(v) => {
-                  if (v !== curveFlipMode) setEdgeCurveFlipMode(edge.id, v as 'auto' | 'off' | 'on')
-                }}
-              />
-            </SettingRow>
-          </>
-        )}
       </div>
 
       {/* Action toolbar — docked footer */}

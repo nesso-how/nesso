@@ -18,8 +18,9 @@ const HIDDEN_HANDLE: React.CSSProperties = {
   pointerEvents: 'none',
 }
 
-export function ConceptNode({ data, selected }: NodeProps<ConceptNodeType>) {
-  const { showHeatmap } = useGraphDisplay()
+export function ConceptNode({ data, selected, id }: NodeProps<ConceptNodeType>) {
+  const { showHeatmap, dimUnconnectedOnSelect, focusNodeIds } = useGraphDisplay()
+  const dimmed = !!dimUnconnectedOnSelect && !!focusNodeIds && !focusNodeIds.includes(id)
 
   return (
     <div style={{ position: 'relative' }}>
@@ -28,6 +29,7 @@ export function ConceptNode({ data, selected }: NodeProps<ConceptNodeType>) {
         selected={selected}
         showHeatmap={showHeatmap}
         lastRating={data.lastRating ?? 0}
+        dimmed={dimmed}
       />
       <Handle id="out" type="source" position={Position.Right} style={HIDDEN_HANDLE} />
       <Handle id="in" type="target" position={Position.Left} style={HIDDEN_HANDLE} />

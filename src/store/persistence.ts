@@ -128,7 +128,6 @@ const SETTINGS_FIELD_VALIDATORS: Record<string, SettingsFieldValidator> = {
   // booleans
   dark: isBoolean,
   showHeatmap: isBoolean,
-  autoCurveFlip: isBoolean,
   mentorEnabled: isBoolean,
   reviewEnabled: isBoolean,
   reviewReminderEnabled: isBoolean,

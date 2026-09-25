@@ -39,8 +39,17 @@ export interface NessoConceptData extends Record<string, unknown> {
 
 /** Shared relation content in a Nesso graph document. */
 export interface NessoRelationData extends Record<string, unknown> {
-  curveFlip?: boolean
-  curveFlipPinned?: boolean
+  /**
+   * Signed multiplier of the default arc bow: 1 = default side, -1 = mirrored,
+   * 0 = straight, |offset| > 1 exaggerates the bow. Legacy `curveFlip: true`
+   * documents are read as -1 on load.
+   */
+  curveOffset?: number
+  /** Endpoint positions relative to the padded concept box; absent = automatic exit. */
+  sourceAttachment?: { x: number; y: number }
+  targetAttachment?: { x: number; y: number }
+  /** Manual curve reshape point, normalized to the source concept's padded box. */
+  curveAnchor?: { x: number; y: number; t: number }
 }
 
 export type NessoGraphDocument<M extends Record<string, unknown> = Record<string, unknown>> =

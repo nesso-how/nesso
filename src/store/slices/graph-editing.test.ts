@@ -6,7 +6,7 @@ import { createStore } from 'zustand/vanilla'
 import { setGraphClipboard } from '@/lib/graphClipboard'
 import type { ConceptNodeData } from '@/types/graph'
 import type { GraphState } from '../state'
-import { bakeCurveFlipFromPositions, createGraphEditingSlice, MAX_UNDO } from './graph-editing'
+import { createGraphEditingSlice, MAX_UNDO } from './graph-editing'
 import { clearDraggingNodeIds } from './graphSession'
 import { createSettingsSlice } from './settings'
 import { track } from '@/telemetry'
@@ -544,7 +544,7 @@ describe('updateEdgeType', () => {
   })
 })
 
-describe('setEdgeCurveFlipMode', () => {
+describe('setEdgeCurveAnchor', () => {
   function edgeStore() {
     const s = makeStore()
     const a = s.getState().addNode(0, 0)
@@ -553,55 +553,135 @@ describe('setEdgeCurveFlipMode', () => {
     return { s, id }
   }
 
-  it("mode 'on' sets curveFlip true and pins it while autoCurveFlip is on", () => {
+  it('stores a rounded anchor superseding the legacy offset; reset clears every custom field', () => {
     const { s, id } = edgeStore()
-    s.getState().setEdgeCurveFlipMode(id, 'on')
-    const d = s.getState().edges.find((e) => e.id === id)!.data!
-    expect(d.curveFlip).toBe(true)
-    expect(d.curveFlipPinned).toBe(true)
+    s.getState().setEdgeCurveAnchor(id, { x: 0.12345, y: -1.23456, t: 0.4 })
+    expect(s.getState().edges.find((e) => e.id === id)?.data?.curveAnchor).toEqual({
+      x: 0.123,
+      y: -1.235,
+      t: 0.4,
+    })
+    s.getState().setEdgeCurveAnchor(id, undefined)
+    const data = s.getState().edges.find((e) => e.id === id)?.data
+    expect('curveAnchor' in (data ?? {})).toBe(false)
+    expect('curveOffset' in (data ?? {})).toBe(false)
   })
 
-  it("mode 'off' sets curveFlip false", () => {
+  it('ignores invalid anchors without a history entry', () => {
     const { s, id } = edgeStore()
-    s.getState().setEdgeCurveFlipMode(id, 'off')
-    expect(s.getState().edges.find((e) => e.id === id)!.data!.curveFlip).toBe(false)
+    s.getState().setEdgeCurveAnchor(id, { x: 0.5, y: 0.5, t: 0.3 })
+    const before = s.getState().edges
+    s.getState().setEdgeCurveAnchor(id, { x: Number.NaN, y: 0, t: 0.5 })
+    s.getState().setEdgeCurveAnchor(id, { x: 0, y: 0, t: 1 })
+    s.getState().setEdgeCurveAnchor(id, { x: 0, y: 0, t: 0 })
+    expect(s.getState().edges).toBe(before)
   })
 
-  it("mode 'auto' clears curveFlip and the pin", () => {
+  it('pushes one history entry per committed drag, restorable with undo/redo', () => {
     const { s, id } = edgeStore()
-    s.getState().setEdgeCurveFlipMode(id, 'on')
-    s.getState().setEdgeCurveFlipMode(id, 'auto')
-    const d = s.getState().edges.find((e) => e.id === id)!.data!
-    expect(d.curveFlip).toBeUndefined()
-    expect('curveFlipPinned' in d).toBe(false)
-  })
-
-  it('does not pin when autoCurveFlip is off', () => {
-    const { s, id } = edgeStore()
-    s.getState().setGraphDisplay('autoCurveFlip', false)
-    s.getState().setEdgeCurveFlipMode(id, 'on')
-    const d = s.getState().edges.find((e) => e.id === id)!.data!
-    expect(d.curveFlip).toBe(true)
-    expect('curveFlipPinned' in d).toBe(false)
+    s.getState().setEdgeCurveAnchor(id, { x: 0.4, y: -0.8, t: 0.27 })
+    expect(s.getState().edges.find((e) => e.id === id)?.data?.curveAnchor).toEqual({
+      x: 0.4,
+      y: -0.8,
+      t: 0.27,
+    })
+    s.getState().undo()
+    expect('curveAnchor' in (s.getState().edges.find((e) => e.id === id)?.data ?? {})).toBe(false)
+    s.getState().redo()
+    expect(s.getState().edges.find((e) => e.id === id)?.data?.curveAnchor).toEqual({
+      x: 0.4,
+      y: -0.8,
+      t: 0.27,
+    })
   })
 })
 
-describe('addEdge curve flip', () => {
-  it('bakes curveFlip into a new edge when autoCurveFlip is off and geometry flips', () => {
+describe('reconnectEdge', () => {
+  function twoEdges() {
     const s = makeStore()
-    s.getState().setGraphDisplay('autoCurveFlip', false)
     const a = s.getState().addNode(0, 0)
-    const b = s.getState().addNode(100, -100)
+    const b = s.getState().addNode(100, 0)
+    const c = s.getState().addNode(200, 0)
     const id = s.getState().addEdge(a, b, 'causes')
-    expect(s.getState().edges.find((e) => e.id === id)?.data?.curveFlip).toBe(true)
+    return { s, id, a, b, c }
+  }
+
+  it('moves one end to another concept, restorable with undo', () => {
+    const { s, id, a, c } = twoEdges()
+    const attachment = { x: 0.2, y: -1 }
+    s.getState().reconnectEdge(id, 'target', c, attachment)
+    const edge = s.getState().edges.find((e) => e.id === id)
+    expect(edge?.source).toBe(a)
+    expect(edge?.target).toBe(c)
+    expect(edge?.data?.type).toBe('causes')
+    expect(edge?.data?.targetAttachment).toEqual(attachment)
+    s.getState().undo()
+    expect(s.getState().edges.find((e) => e.id === id)?.target).not.toBe(c)
+    expect(s.getState().edges.find((e) => e.id === id)?.data?.targetAttachment).toBeUndefined()
+    s.getState().redo()
+    expect(s.getState().edges.find((e) => e.id === id)?.data?.targetAttachment).toEqual(attachment)
   })
 
-  it('omits curveFlip while autoCurveFlip is on', () => {
-    const s = makeStore()
-    const a = s.getState().addNode(0, 0)
-    const b = s.getState().addNode(100, -100)
-    const id = s.getState().addEdge(a, b, 'causes')
-    expect(s.getState().edges.find((e) => e.id === id)?.data?.curveFlip).toBeUndefined()
+  it('repositions the same endpoint and swaps attachments when direction is reversed', () => {
+    const { s, id, b } = twoEdges()
+    s.getState().reconnectEdge(id, 'target', b, { x: 0, y: -1 })
+    s.getState().reconnectEdge(id, 'target', b, { x: 0.3, y: -1 })
+    expect(s.getState().edges.find((e) => e.id === id)?.data?.targetAttachment).toEqual({
+      x: 0.3,
+      y: -1,
+    })
+    s.getState().undo()
+    expect(s.getState().edges.find((e) => e.id === id)?.data?.targetAttachment).toEqual({
+      x: 0,
+      y: -1,
+    })
+    s.getState().reverseEdge(id)
+    const reversed = s.getState().edges.find((e) => e.id === id)
+    expect(reversed?.data?.sourceAttachment).toEqual({ x: 0, y: -1 })
+    expect(reversed?.data?.targetAttachment).toBeUndefined()
+  })
+
+  it('re-expresses the curve anchor against the new source when direction is reversed', () => {
+    const { s, id } = twoEdges()
+    s.getState().setEdgeCurveAnchor(id, { x: 0.3, y: -1, t: 0.35 })
+    s.getState().reverseEdge(id)
+    const anchor = s.getState().edges.find((e) => e.id === id)?.data?.curveAnchor as
+      | { x: number; y: number; t: number }
+      | undefined
+    // a(0,0) -> b(100,0), default 80x32 boxes + 6px pad: the flow point
+    // (53.8, -6) relative to b(100,0) normalizes to these values; t mirrors.
+    expect(anchor?.x).toBeCloseTo(-1.874, 2)
+    expect(anchor?.y).toBeCloseTo(-1, 6)
+    expect(anchor?.t).toBeCloseTo(0.65, 6)
+    s.getState().reverseEdge(id)
+    const back = s.getState().edges.find((e) => e.id === id)?.data?.curveAnchor as
+      | { x: number; y: number; t: number }
+      | undefined
+    expect(back?.x).toBeCloseTo(0.3, 2)
+    expect(back?.y).toBeCloseTo(-1, 6)
+    expect(back?.t).toBeCloseTo(0.35, 6)
+  })
+
+  it('ignores self-loops, unknown nodes and no-change drops', () => {
+    const { s, id, a, b } = twoEdges()
+    const before = s.getState().edges
+    s.getState().reconnectEdge(id, 'target', a)
+    s.getState().reconnectEdge(id, 'source', 'missing')
+    s.getState().reconnectEdge(id, 'target', b)
+    expect(s.getState().edges).toBe(before)
+  })
+
+  it('commits a rebased curve anchor in the same history entry as the move', () => {
+    const { s, id, c } = twoEdges()
+    s.getState().setEdgeCurveAnchor(id, { x: 0.5, y: -1, t: 0.4 })
+    s.getState().reconnectEdge(id, 'target', c, { x: 0, y: -1 }, { x: 0.4, y: -0.9, t: 0.4 })
+    const moved = s.getState().edges.find((e) => e.id === id)
+    expect(moved?.target).toBe(c)
+    expect(moved?.data?.curveAnchor).toEqual({ x: 0.4, y: -0.9, t: 0.4 })
+    s.getState().undo()
+    const restored = s.getState().edges.find((e) => e.id === id)
+    expect(restored?.target).not.toBe(c)
+    expect(restored?.data?.curveAnchor).toEqual({ x: 0.5, y: -1, t: 0.4 })
   })
 })
 
@@ -764,38 +844,6 @@ describe('undo / redo edges', () => {
     const s = makeStore()
     for (let i = 0; i < MAX_UNDO + 10; i++) s.getState().addNode()
     expect(s.getState()._history.length).toBe(MAX_UNDO)
-  })
-})
-
-describe('bakeCurveFlipFromPositions', () => {
-  const node = (id: string, x: number, y: number) =>
-    ({ id, position: { x, y }, data: {} }) as unknown as Node<ConceptNodeData>
-  const edge = (extra: Record<string, unknown>) =>
-    ({ id: 'e', source: 'a', target: 'b', data: { type: 'causes', ...extra } }) as unknown as Edge
-
-  it('pins a computed curveFlip onto an unpinned edge when geometry flips', () => {
-    const baked = bakeCurveFlipFromPositions([edge({})], [node('a', 0, 0), node('b', 100, -100)])
-    expect(baked[0].data?.curveFlip).toBe(true)
-  })
-
-  it('leaves a pinned edge untouched (same reference)', () => {
-    const edges = [edge({ curveFlipPinned: true })]
-    const baked = bakeCurveFlipFromPositions(edges, [node('a', 0, 0), node('b', 100, -100)])
-    expect(baked[0]).toBe(edges[0])
-  })
-
-  it('leaves an edge with a missing endpoint untouched (same reference)', () => {
-    const edges = [edge({})]
-    const baked = bakeCurveFlipFromPositions(edges, [node('a', 0, 0)])
-    expect(baked[0]).toBe(edges[0])
-  })
-
-  it('drops curveFlip back to undefined when geometry says no flip', () => {
-    const baked = bakeCurveFlipFromPositions(
-      [edge({ curveFlip: true })],
-      [node('a', 0, 0), node('b', 100, 0)],
-    )
-    expect(baked[0].data?.curveFlip).toBeUndefined()
   })
 })
 

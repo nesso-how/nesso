@@ -338,14 +338,27 @@ body::before {
   -webkit-user-select: text;
 }
 
-/* Concept node handles — CSS :hover avoids WKWebView re-render blur on mouse enter */
+/* Concept hover dot — ghost at rest and solid on hover, like the arc
+ * endpoint dots (EdgeEndpointDot inactive/active). The :hover swap is pure
+ * CSS so it costs no re-render; visibility (hide on leave/drag) is
+ * React-driven through the wrapper. */
 .react-flow__handle.nesso-node-handle {
-  opacity: 0;
+  opacity: 0.25;
+  background: radial-gradient(
+    circle,
+    var(--accent) 0 4px,
+    color-mix(in srgb, var(--accent) 30%, transparent) 5px 6px,
+    transparent 7px
+  );
 }
-.nesso-node:hover .react-flow__handle.nesso-node-handle,
-.react-flow__handle.nesso-node-handle.connectingfrom,
-.react-flow__handle.nesso-node-handle.connectingto {
-  opacity: 0.85;
+.react-flow__handle.nesso-node-handle:hover {
+  opacity: 0.55;
+  background: radial-gradient(
+    circle,
+    var(--accent) 0 6px,
+    var(--bg-card, #fff) 6px 7px,
+    transparent 8px
+  );
 }
 
 /*
@@ -426,4 +439,14 @@ body::before {
   float: left;
   height: 0;
   pointer-events: none;
+}
+
+/* The canvas uses a plain arrow cursor: the grab hand lives only on the
+ * edge arc itself (draggable from any middle point) and the crosshair on
+ * its reconnect dots. Higher specificity than the React Flow defaults so
+ * this holds regardless of stylesheet order. */
+div.react-flow .react-flow__pane.draggable,
+div.react-flow .react-flow__pane.dragging,
+div.react-flow .react-flow__pane.selection {
+  cursor: default;
 }

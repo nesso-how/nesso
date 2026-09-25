@@ -5,6 +5,7 @@ import {
   BackgroundVariant,
   ConnectionMode,
   useReactFlow,
+  type ConnectionLineComponentProps,
   type OnMoveEnd,
   type OnNodesChange,
 } from '@xyflow/react'
@@ -27,6 +28,7 @@ import { styleEdges } from '@/lib/styleEdges'
 import { getSeedInitialFitZoom } from '@/data/seedGraph'
 import { newConceptTopLeftAtFlowCenter } from '@/data/newConceptLayout'
 import type { RelationTypeName } from '@/types/graph'
+import { computeFocusNodeIds } from '@/lib/canvasFocus'
 
 const nodeTypes = { concept: ConceptNode }
 
@@ -47,6 +49,9 @@ export function GraphCanvas({
   const edges = useGraphStore((s) => s.edges)
   const onNodesChange = useGraphStore((s) => s.onNodesChange)
   const onEdgesChange = useGraphStore((s) => s.onEdgesChange)
+  const setEdgeCurveAnchor = useGraphStore((s) => s.setEdgeCurveAnchor)
+  const reconnectEdge = useGraphStore((s) => s.reconnectEdge)
+  const setReconnectTargetId = useGraphStore((s) => s.setReconnectTargetId)
   const addNode = useGraphStore((s) => s.addNode)
   const clearEditNodeId = useGraphStore((s) => s.clearEditNodeId)
   const syncFlowSelection = useGraphStore((s) => s.syncFlowSelection)
@@ -59,11 +64,30 @@ export function GraphCanvas({
   const t = useT()
 
   const getRelationLabel = useCallback((type: RelationTypeName) => t.relationTypes.types[type], [t])
+  // A connect or reconnect drag takes over the canvas: clear the selection
+  // on gesture start so the destination highlight is unambiguous.
+  const clearSelectionOnGestureStart = useCallback(() => {
+    useGraphStore.getState().setSelected(null)
+  }, [])
   const isItemSelected = useCallback(
     (kind: 'node' | 'edge', id: string) => selected?.kind === kind && selected.id === id,
     [selected],
   )
   const selectedNodeId = selected?.kind === 'node' ? selected.id : null
+  // The selected relation carries its endpoints so nodes and edges can focus
+  // the map around it.
+  const selectedEdge = useMemo(() => {
+    if (selected?.kind !== 'edge') return null
+    const edge = edges.find((e) => e.id === selected.id)
+    return edge ? { id: edge.id, source: edge.source, target: edge.target } : null
+  }, [selected, edges])
+  // Concepts in the current focus: the selected relation's endpoints, or the
+  // selected concept plus its direct neighbours. Null when nothing relevant
+  // is selected, so no concept dims.
+  const focusNodeIds = useMemo(
+    () => computeFocusNodeIds(selected, selectedEdge, edges),
+    [selected, selectedEdge, edges],
+  )
 
   const { screenToFlowPosition } = useReactFlow()
   // Only read at mount of the keyed NessoGraph below — memoized so the O(N)
@@ -88,8 +112,21 @@ export function GraphCanvas({
 
   const { ctxMenu, closeCtxMenu, onNodeContextMenu, onEdgeContextMenu, onPaneContextMenu } =
     useGraphContextMenu()
-  const { pendingConn, setPendingConn, onConnectStart, onConnectEnd, onConnect, onPickRelation } =
-    useConnectRelation()
+  const {
+    pendingConn,
+    setPendingConn,
+    onConnectStart,
+    onConnectEnd,
+    onConnect,
+    onPickRelation,
+    onPreviewAttachment,
+  } = useConnectRelation()
+  const connectionLine = useCallback(
+    (props: ConnectionLineComponentProps) => (
+      <NessoConnectionLine {...props} onPreviewAttachment={onPreviewAttachment} />
+    ),
+    [onPreviewAttachment],
+  )
   const selectionSyncFrame = useRef<number | null>(null)
   const canvasRef = useRef<HTMLDivElement>(null)
 
@@ -188,6 +225,8 @@ export function GraphCanvas({
         getRelationLabel={getRelationLabel}
         isItemSelected={isItemSelected}
         selectedNodeId={selectedNodeId}
+        selectedEdge={selectedEdge}
+        focusNodeIds={focusNodeIds}
         nodeTypes={nodeTypes}
         nodesDraggable={true}
         nodesConnectable={true}
@@ -202,6 +241,10 @@ export function GraphCanvas({
         onConnectEnd={onConnectEnd}
         onSelectionChange={onSelectionChange}
         onMoveEnd={persistViewportOnMoveEnd}
+        onEdgeCurveAnchorChange={setEdgeCurveAnchor}
+        onEdgeReconnect={reconnectEdge}
+        onEdgeReconnectStart={clearSelectionOnGestureStart}
+        onEdgeReconnectOver={setReconnectTargetId}
         reactFlowProps={{
           zoomOnDoubleClick: false,
           connectionMode: ConnectionMode.Loose,
@@ -211,7 +254,7 @@ export function GraphCanvas({
           multiSelectionKeyCode: ['Meta', 'Control'],
           zoomActivationKeyCode: 'Alt',
           proOptions: { hideAttribution: true },
-          connectionLineComponent: NessoConnectionLine,
+          connectionLineComponent: connectionLine,
           style: { background: 'transparent' },
           onNodeContextMenu,
           onEdgeContextMenu,

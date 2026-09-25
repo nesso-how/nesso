@@ -135,11 +135,11 @@ test('focus works on the next creation after committing with Enter', async ({ pa
   await expect(page.locator('.react-flow__node', { hasText: 'second' })).toBeVisible()
 })
 
-test('connects from the visible left handle and preserves drag direction', async ({ page }) => {
+test('drag direction sets the relation direction', async ({ page }) => {
   await seedTwoConcepts(page)
   await deselect(page)
 
-  await dragConnect(page, nodeByText(page, 'Alpha'), nodeByText(page, 'Beta'), 'left', 'right')
+  await dragConnect(page, nodeByText(page, 'Beta'), nodeByText(page, 'Alpha'))
 
   const relationChip = page.getByTestId('relation-chip-subtype-of')
   await expect(edges(page)).toHaveCount(0)
@@ -152,21 +152,15 @@ test('connects from the visible left handle and preserves drag direction', async
   const inspector = page.locator('[data-chrome]').filter({
     has: page.getByTestId('edge-current-relation'),
   })
-  await expect(inspector).toHaveText(/Alpha.*subtype of.*Beta/)
+  await expect(inspector).toHaveText(/Beta.*subtype of.*Alpha/)
 })
 
-test('connects from the left handle and drops on node body using fallback', async ({ page }) => {
+test('dropping on the node body creates the edge using fallback', async ({ page }) => {
   await seedTwoConcepts(page)
   await deselect(page)
 
-  // Drop on Beta's body, not on its handle — exercises onConnectEnd fallback.
-  await dragConnect(
-    page,
-    nodeByText(page, 'Alpha'),
-    nodeByText(page, 'Beta'),
-    'left',
-    // omit toSide — drops on node body, triggering onConnectEnd fallback
-  )
+  // Drop on Beta's body — exercises onConnectEnd fallback.
+  await dragConnect(page, nodeByText(page, 'Alpha'), nodeByText(page, 'Beta'))
 
   const relationChip = page.getByTestId('relation-chip-subtype-of')
   await expect(edges(page)).toHaveCount(0)

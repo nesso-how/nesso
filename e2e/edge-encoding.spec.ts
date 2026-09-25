@@ -10,6 +10,7 @@ import {
   newEmptyGraph,
   nodeByText,
   seedTwoConcepts,
+  selectEdge,
 } from './helpers'
 
 test.beforeEach(async ({ page }) => {
@@ -22,6 +23,9 @@ test('uses solid category-coloured strokes in non-minimal modes and grey in mini
 }) => {
   await seedTwoConcepts(page)
   await connectAlphaBeta(page, 'similar-to')
+  // A fresh edge starts selected, which widens its stroke and shows its label.
+  // Deselect so the assertions below only see encoding strokes.
+  await deselect(page)
 
   const edge = edges(page).first()
 
@@ -83,6 +87,66 @@ test('selecting a concept dims unconnected edges and keeps connected ones at def
   await expect(connected.locator('path').nth(1)).toHaveAttribute('opacity', '0.78')
   await expect(unrelated.locator('path').nth(1)).toHaveAttribute('opacity', '0.78')
 
+  await dimSwitch.click()
+  await expect(dimSwitch).toHaveAttribute('aria-checked', 'true')
+})
+
+test('selecting a relation focuses its endpoints and dims the rest of the map', async ({
+  page,
+}) => {
+  await seedTwoConcepts(page)
+  await createConceptAt(page, 0.45, 0.75, 'Gamma')
+  await connectAlphaBeta(page, 'subtype-of')
+
+  await deselect(page)
+  await dragConnect(page, nodeByText(page, 'Beta'), nodeByText(page, 'Gamma'))
+  await page.getByTestId('relation-chip-subtype-of').click()
+  await expect(edges(page)).toHaveCount(2)
+
+  // selectEdge clicks the first edge's stroke: Alpha→Beta.
+  await selectEdge(page)
+  await expect(page.locator('.react-flow__edge.selected')).toHaveCount(1)
+
+  const selectedEdge = edges(page).first()
+  const otherEdge = edges(page).nth(1)
+  await expect(selectedEdge.locator('path').nth(1)).toHaveAttribute('stroke-width', '2')
+  await expect(selectedEdge.locator('path').nth(1)).toHaveAttribute('opacity', '1')
+  await expect(otherEdge.locator('path').nth(1)).toHaveAttribute('opacity', '0.28')
+
+  // Endpoints stay highlighted; the rest of the map fades like its edges.
+  // The fade sits on the concept pill div inside the React Flow wrapper.
+  // Concepts fade less than relations (0.4 vs 0.28).
+  const pill = (text: string) => nodeByText(page, text).locator('.nesso-node > div').first()
+  await expect(pill('Alpha')).toHaveCSS('opacity', '1')
+  await expect(pill('Beta')).toHaveCSS('opacity', '1')
+  await expect(pill('Gamma')).toHaveCSS('opacity', '0.4')
+
+  await deselect(page)
+  await expect(selectedEdge.locator('path').nth(1)).toHaveAttribute('opacity', '0.78')
+  await expect(otherEdge.locator('path').nth(1)).toHaveAttribute('opacity', '0.78')
+  await expect(pill('Gamma')).toHaveCSS('opacity', '1')
+
+  // Concept focus dims concepts too: neighbours stay, the rest fades.
+  // Edges keep the pre-existing node-focus behavior (unconnected dim).
+  await nodeByText(page, 'Alpha').click()
+  await expect(page.locator('.react-flow__node.selected')).toHaveCount(1)
+  await expect(pill('Alpha')).toHaveCSS('opacity', '1')
+  await expect(pill('Beta')).toHaveCSS('opacity', '1')
+  await expect(pill('Gamma')).toHaveCSS('opacity', '0.4')
+  await expect(otherEdge.locator('path').nth(1)).toHaveAttribute('opacity', '0.28')
+
+  // Focus toggle off: selecting the relation dims nothing at all.
+  await deselect(page)
+  const dimSwitch = page
+    .locator('div')
+    .filter({ hasText: /^Focus$/ })
+    .getByRole('switch')
+  await dimSwitch.click()
+  await expect(dimSwitch).toHaveAttribute('aria-checked', 'false')
+  await selectEdge(page)
+  await expect(page.locator('.react-flow__edge.selected')).toHaveCount(1)
+  await expect(pill('Gamma')).toHaveCSS('opacity', '1')
+  await expect(otherEdge.locator('path').nth(1)).toHaveAttribute('opacity', '0.78')
   await dimSwitch.click()
   await expect(dimSwitch).toHaveAttribute('aria-checked', 'true')
 })

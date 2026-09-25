@@ -2,6 +2,7 @@
 import { useState, useLayoutEffect, useEffect, useRef } from 'react'
 import { useGraphStore } from '@/store'
 import { useT } from '@/i18n'
+import { useSelectedEdgeIsSymmetric } from './useSelectedEdgeIsSymmetric'
 import { newConceptTopLeftAtFlowCenter } from '@/data/newConceptLayout'
 import { focusFlowNodes } from '@/lib/focusFlowSelection'
 import { Icon } from '@/components/ui/icons'
@@ -114,6 +115,7 @@ export function GraphContextMenu({
   const pasteSelection = useGraphStore((s) => s.pasteSelection)
   const reverseEdge = useGraphStore((s) => s.reverseEdge)
   const addNode = useGraphStore((s) => s.addNode)
+  const symmetricEdge = useSelectedEdgeIsSymmetric()
 
   useLayoutEffect(() => {
     const el = ref.current
@@ -176,11 +178,15 @@ export function GraphContextMenu({
     ]
   } else if (menu.kind === 'edge') {
     items = [
-      {
-        icon: 'flip',
-        label: t.contextMenu.flip,
-        onClick: () => selected && reverseEdge(selected.id),
-      },
+      ...(selected && !symmetricEdge
+        ? [
+            {
+              icon: 'flip' as const,
+              label: t.contextMenu.flip,
+              onClick: () => selected && reverseEdge(selected.id),
+            },
+          ]
+        : []),
       'sep',
       {
         icon: 'trash',

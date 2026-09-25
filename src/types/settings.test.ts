@@ -37,7 +37,6 @@ describe('defaultGraphDisplay', () => {
       edgeEncoding: 'full',
       showHeatmap: true,
       curveStyle: 'arc',
-      autoCurveFlip: true,
       dimUnconnectedOnSelect: true,
     })
   })
@@ -48,13 +47,11 @@ describe('defaultGraphDisplay', () => {
         edgeEncoding: 'minimal',
         showHeatmap: false,
         curveStyle: 'straight',
-        autoCurveFlip: false,
       }),
     ).toEqual({
       edgeEncoding: 'minimal',
       showHeatmap: false,
       curveStyle: 'straight',
-      autoCurveFlip: false,
       dimUnconnectedOnSelect: true,
     })
   })
@@ -65,7 +62,6 @@ describe('mergeGraphDisplay', () => {
     edgeEncoding: 'category',
     showHeatmap: false,
     curveStyle: 'straight',
-    autoCurveFlip: true,
   } as NessoSettings
 
   it('uses settings-derived defaults when nothing is stored', () => {
@@ -73,7 +69,6 @@ describe('mergeGraphDisplay', () => {
       edgeEncoding: 'category',
       showHeatmap: false,
       curveStyle: 'straight',
-      autoCurveFlip: true,
       dimUnconnectedOnSelect: true,
     })
   })
@@ -84,10 +79,6 @@ describe('mergeGraphDisplay', () => {
       showHeatmap: false,
       curveStyle: 'straight',
     })
-  })
-
-  it('preserves a stored autoCurveFlip of false rather than falling back to true', () => {
-    expect(mergeGraphDisplay({ autoCurveFlip: false }, settings).autoCurveFlip).toBe(false)
   })
 
   it('preserves a stored dimUnconnectedOnSelect of false rather than falling back to true', () => {

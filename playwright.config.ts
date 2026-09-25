@@ -20,15 +20,16 @@ export default defineConfig({
   retries: CI ? 2 : 0,
   reporter: CI ? [['html', { open: 'never' }], ['list']] : 'list',
   use: {
-    baseURL: 'http://localhost:5173',
+    baseURL: 'http://localhost:5178',
     trace: 'on-first-retry',
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
-  // Reuse a dev server already running locally; start a fresh one in CI. Vite
-  // pins port 5173 (`strictPort`), so the URL is stable.
+  // Reuse a dev server already running locally; start a fresh one in CI. The
+  // dedicated port keeps the Playwright-spawned server independent of an
+  // interactive `pnpm dev` on 5173; Vite's strictPort pins the test port.
   webServer: {
-    command: 'pnpm dev',
-    url: 'http://localhost:5173',
+    command: 'pnpm exec vite --port 5178',
+    url: 'http://localhost:5178',
     reuseExistingServer: !CI,
     timeout: 120_000,
   },

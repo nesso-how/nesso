@@ -17,7 +17,6 @@ export interface NessoSettings {
   edgeEncoding: EdgeEncoding
   showHeatmap: boolean
   curveStyle: CurveStyle
-  autoCurveFlip: boolean
   categoryPalette: CategoryPalette
   aiBaseUrl: string
   aiModel: string
@@ -60,13 +59,12 @@ export function nodeToCard(data: ConceptNodeData): Card {
 }
 
 export function defaultGraphDisplay(
-  settings?: Pick<NessoSettings, 'edgeEncoding' | 'showHeatmap' | 'curveStyle' | 'autoCurveFlip'>,
+  settings?: Pick<NessoSettings, 'edgeEncoding' | 'showHeatmap' | 'curveStyle'>,
 ): GraphDisplaySettings {
   return {
     edgeEncoding: settings?.edgeEncoding ?? DEFAULT_GRAPH_DISPLAY.edgeEncoding,
     showHeatmap: settings?.showHeatmap ?? DEFAULT_GRAPH_DISPLAY.showHeatmap,
     curveStyle: settings?.curveStyle ?? DEFAULT_GRAPH_DISPLAY.curveStyle,
-    autoCurveFlip: settings?.autoCurveFlip ?? DEFAULT_GRAPH_DISPLAY.autoCurveFlip,
     dimUnconnectedOnSelect: DEFAULT_GRAPH_DISPLAY.dimUnconnectedOnSelect,
   }
 }
@@ -81,7 +79,6 @@ export function mergeGraphDisplay(
     edgeEncoding: stored.edgeEncoding ?? base.edgeEncoding,
     showHeatmap: stored.showHeatmap ?? base.showHeatmap,
     curveStyle: stored.curveStyle ?? base.curveStyle,
-    autoCurveFlip: stored.autoCurveFlip !== undefined ? stored.autoCurveFlip : base.autoCurveFlip,
     dimUnconnectedOnSelect: stored.dimUnconnectedOnSelect ?? base.dimUnconnectedOnSelect,
   }
 }

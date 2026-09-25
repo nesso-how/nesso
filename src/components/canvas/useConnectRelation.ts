@@ -2,12 +2,14 @@
 import { useCallback, useRef, useState } from 'react'
 import type { OnConnect, OnConnectStart, OnConnectEnd } from '@xyflow/react'
 import { useGraphStore } from '@/store'
+import type { EndpointAttachment } from '@nesso-how/graph'
 import type { RelationTypeName } from '@/types/graph'
 import { track } from '@/telemetry'
 
 export interface PendingConnection {
   source: string
   target: string
+  targetAttachment?: EndpointAttachment
   screenX: number
   screenY: number
 }
@@ -44,39 +46,63 @@ export function useConnectRelation() {
   const [pendingConn, setPendingConn] = useState<PendingConnection | null>(null)
   const connectingStart = useRef<ConnectingStart>({ nodeId: null, handleType: null })
   const connectionAccepted = useRef(false)
+  const previewAttachment = useRef<{ nodeId: string; point: EndpointAttachment } | null>(null)
+  const onPreviewAttachment = useCallback((nodeId: string | null, point?: EndpointAttachment) => {
+    previewAttachment.current = nodeId && point ? { nodeId, point } : null
+  }, [])
+  const attachmentFor = useCallback(
+    (nodeId: string) =>
+      previewAttachment.current?.nodeId === nodeId ? previewAttachment.current.point : undefined,
+    [],
+  )
 
   const onConnectStart = useCallback<OnConnectStart>((_, params) => {
     connectionAccepted.current = false
+    previewAttachment.current = null
     connectingStart.current = {
       nodeId: params.nodeId ?? null,
       handleType: (params.handleType as ConnectionHandleType | null) ?? null,
     }
+    // A connect drag takes over the canvas: clear the current selection so
+    // the destination highlight is unambiguous and the map unfocuses.
+    useGraphStore.getState().setSelected(null)
   }, [])
 
-  const onConnectEnd = useCallback<OnConnectEnd>((event) => {
-    // If onConnect already handled this, skip the fallback.
-    if (connectionAccepted.current) {
-      connectionAccepted.current = false
-      return
-    }
-    const target = (event.target as Element)
-      .closest('.react-flow__node[data-id]')
-      ?.getAttribute('data-id')
-    const start = connectingStart.current
-    if (!start.nodeId || !target || start.nodeId === target) {
+  const onConnectEnd = useCallback<OnConnectEnd>(
+    (event) => {
+      // If onConnect already handled this, skip the fallback.
+      if (connectionAccepted.current) {
+        connectionAccepted.current = false
+        setPendingConn(
+          (current) =>
+            current && {
+              ...current,
+              targetAttachment: attachmentFor(current.target),
+            },
+        )
+        return
+      }
+      const target = (event.target as Element)
+        .closest('.react-flow__node[data-id]')
+        ?.getAttribute('data-id')
+      const start = connectingStart.current
+      if (!start.nodeId || !target || start.nodeId === target) {
+        connectingStart.current = { nodeId: null, handleType: null }
+        return
+      }
+      const normalized = normalizeConnection(start.nodeId, target, start.handleType)
+      const e = event as MouseEvent
+      setPendingConn({
+        source: normalized.source,
+        target: normalized.target,
+        targetAttachment: attachmentFor(normalized.target),
+        screenX: e.clientX,
+        screenY: e.clientY,
+      })
       connectingStart.current = { nodeId: null, handleType: null }
-      return
-    }
-    const normalized = normalizeConnection(start.nodeId, target, start.handleType)
-    const e = event as MouseEvent
-    setPendingConn({
-      source: normalized.source,
-      target: normalized.target,
-      screenX: e.clientX,
-      screenY: e.clientY,
-    })
-    connectingStart.current = { nodeId: null, handleType: null }
-  }, [])
+    },
+    [attachmentFor],
+  )
 
   const onConnect = useCallback<OnConnect>((conn) => {
     if (!conn.source || !conn.target || conn.source === conn.target) return
@@ -95,12 +121,20 @@ export function useConnectRelation() {
   const onPickRelation = useCallback(
     (type: RelationTypeName) => {
       if (!pendingConn) return
-      addEdge(pendingConn.source, pendingConn.target, type)
+      addEdge(pendingConn.source, pendingConn.target, type, pendingConn.targetAttachment)
       track({ name: 'edge_created', props: { relation_type: type } })
       setPendingConn(null)
     },
     [pendingConn, addEdge],
   )
 
-  return { pendingConn, setPendingConn, onConnectStart, onConnectEnd, onConnect, onPickRelation }
+  return {
+    pendingConn,
+    setPendingConn,
+    onConnectStart,
+    onConnectEnd,
+    onConnect,
+    onPickRelation,
+    onPreviewAttachment,
+  }
 }

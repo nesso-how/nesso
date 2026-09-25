@@ -59,8 +59,15 @@ check and produce it.
   [relation types reference](./relation-types/). A missing type is reported as
   a warning by `validate_graph` (the app falls back to `causes` at render
   time); an unknown type is an error.
-- `data` _(optional)_: `curveFlip` and `curveFlipPinned`, the manual curve
-  bend controls from [Display options](../guides/building-a-graph/#display-options-sidebar).
+- `data` _(optional)_: `curveOffset` controls the arc bow. `sourceAttachment`
+  and `targetAttachment` each contain `{ "x": number, "y": number }` when an
+  endpoint was placed manually by reconnecting, and `curveAnchor` contains
+  `{ "x": number, "y": number, "t": number }` when the arc was reshaped by
+  dragging. Coordinates are relative to the concept's padded bounding box,
+  with its centre at `(0, 0)` and axes ranging from `-1` to `1`; on resize
+  they project back onto the rounded border, and `t` is the curve parameter
+  of the grabbed point. Missing fields use automatic placement. These
+  presentation fields do not change relation semantics.
 
 ## Example
 

@@ -31,6 +31,46 @@ export function nodeByText(page: Page, text: string): Locator {
 export const edges = (page: Page): Locator => page.locator('.react-flow__edge')
 export const nodes = (page: Page): Locator => page.locator('.react-flow__node')
 
+/**
+ * Wait until the reshaped curve has been flushed to IndexedDB, so a reload
+ * restores it. Polls the stored record instead of sleeping a fixed delay:
+ * the autosave debounce (500ms) plus the async write vary under load, which
+ * made a fixed 1000ms wait flaky in batch runs. (Implemented with
+ * expect.poll: page.waitForFunction with a numeric polling interval does NOT
+ * await a returned Promise — the Promise object itself is truthy, so the
+ * wait returns on the first poll.)
+ */
+export async function waitForCurveAnchorSaved(page: Page): Promise<void> {
+  await expect
+    .poll(
+      async () =>
+        page.evaluate(
+          () =>
+            new Promise<boolean>((resolve) => {
+              const open = indexedDB.open('nesso-graphs')
+              open.onerror = () => resolve(false)
+              open.onsuccess = () => {
+                const db = open.result
+                const getAll = db.transaction('graphs', 'readonly').objectStore('graphs').getAll()
+                getAll.onerror = () => {
+                  db.close()
+                  resolve(false)
+                }
+                getAll.onsuccess = () => {
+                  const saved = (
+                    getAll.result as { edges?: { data?: { curveAnchor?: unknown } }[] }[]
+                  ).some((record) => record.edges?.some((e) => e.data?.curveAnchor !== undefined))
+                  db.close()
+                  resolve(saved)
+                }
+              }
+            }),
+        ),
+      { timeout: 15_000 },
+    )
+    .toBe(true)
+}
+
 export async function gotoApp(page: Page): Promise<void> {
   await page.addInitScript(
     ({ key, version, defaults }) => {
@@ -104,21 +144,16 @@ export async function seedTwoConcepts(page: Page): Promise<void> {
   await expect(nodes(page)).toHaveCount(2)
 }
 
-type HandleSide = 'left' | 'right'
-
-export async function dragConnect(
-  page: Page,
-  from: Locator,
-  to: Locator,
-  fromSide: HandleSide = 'right',
-  toSide?: HandleSide,
-): Promise<void> {
-  const handle = await from
-    .locator(`.react-flow__handle-${fromSide}.nesso-node-handle`)
-    .boundingBox()
-  const target = toSide
-    ? await to.locator(`.react-flow__handle-${toSide}.nesso-node-handle`).boundingBox()
-    : await to.boundingBox()
+/** Drag from the node's single hover dot onto another concept. The dot sits
+ * on the pill border nearest the cursor, so hovering the node body first
+ * reveals it, then the drag starts from its center. */
+export async function dragConnect(page: Page, from: Locator, to: Locator): Promise<void> {
+  const nodeBox = await from.boundingBox()
+  if (!nodeBox) throw new Error('source node has no bounding box')
+  // Hover the node body to reveal its dot, then grab the dot center.
+  await page.mouse.move(nodeBox.x + nodeBox.width / 2, nodeBox.y + nodeBox.height / 2)
+  const handle = await from.locator('.nesso-node-handle').boundingBox()
+  const target = await to.boundingBox()
 
   if (!handle || !target) throw new Error('node handle or target has no bounding box')
 
@@ -156,6 +191,19 @@ export async function selectEdge(page: Page): Promise<void> {
     return { x: screen.x, y: screen.y }
   })
   await page.mouse.click(point.x, point.y)
+}
+
+/** Screen point of the first edge stroke at a fraction of its length. */
+export async function strokePoint(page: Page, fraction: number): Promise<{ x: number; y: number }> {
+  return page.evaluate((f) => {
+    const hit = document.querySelector('.react-flow__edge path')
+    if (!(hit instanceof SVGPathElement)) throw new Error('edge hit path not found')
+    const pt = hit.getPointAtLength(hit.getTotalLength() * f)
+    const ctm = hit.getScreenCTM()
+    if (!ctm) throw new Error('edge hit path has no screen CTM')
+    const s = new DOMPoint(pt.x, pt.y).matrixTransform(ctm)
+    return { x: s.x, y: s.y }
+  }, fraction)
 }
 
 /** Seed the current graph's first concept as a previously reviewed due card. */

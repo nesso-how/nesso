@@ -2,7 +2,6 @@
 import { useGraphStore } from '@/store'
 import { SettingsFormRow } from '@/components/ui/SettingsFormRow'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
-import { Switch } from '@/components/ui/Switch'
 import { Select } from '@/components/ui/Select'
 import { useT } from '@/i18n'
 import { SettingsHeatmapDefault } from '@/components/ui/HeatmapDisplayToggle'
@@ -19,7 +18,6 @@ export function AppearanceSection() {
   const language = useGraphStore((s) => s.settings.language)
   const edgeEncoding = useGraphStore((s) => s.settings.edgeEncoding)
   const curveStyle = useGraphStore((s) => s.settings.curveStyle)
-  const autoCurveFlip = useGraphStore((s) => s.settings.autoCurveFlip)
   const setSetting = useGraphStore((s) => s.setSetting)
 
   return (
@@ -99,12 +97,6 @@ export function AppearanceSection() {
             onChange={(v) => setSetting('curveStyle', v as 'arc' | 'straight')}
           />
         </SettingsFormRow>
-
-        {curveStyle === 'arc' && (
-          <SettingsFormRow divider={false} label={t.settings.appearance.autoFlip}>
-            <Switch value={autoCurveFlip} onChange={(v) => setSetting('autoCurveFlip', v)} />
-          </SettingsFormRow>
-        )}
       </div>
     </>
   )
