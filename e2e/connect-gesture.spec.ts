@@ -31,6 +31,34 @@ async function nodeCenter(page: Page, name: string): Promise<{ x: number; y: num
   return { x: box.x + box.width / 2, y: box.y + box.height / 2 }
 }
 
+test('the hover dot moves to the next free corner when an arc ends on it', async ({ page }) => {
+  await gotoApp(page)
+  await newEmptyGraph(page)
+  await seedTwoConcepts(page)
+
+  // Drop Beta's arc onto Alpha's top-left corner so the attachment lands there.
+  const beta = await nodeByText(page, 'Beta').boundingBox()
+  if (!beta) throw new Error('Beta has no bounding box')
+  await page.mouse.move(beta.x + beta.width / 2, beta.y + beta.height / 2)
+  const from = await handleCenter(page, 'Beta')
+  await page.mouse.move(from.x, from.y)
+  await page.mouse.down()
+  const alpha = await nodeByText(page, 'Alpha').boundingBox()
+  if (!alpha) throw new Error('Alpha has no bounding box')
+  await page.mouse.move(alpha.x + 2, alpha.y + 2, { steps: 12 })
+  await page.mouse.up()
+  await page.getByTestId('relation-chip-subtype-of').click()
+  await expect(edges(page)).toHaveCount(1)
+
+  // Alpha's dot vacated the taken top-left corner for the bottom-left one.
+  await deselect(page)
+  await page.mouse.move(alpha.x + alpha.width / 2, alpha.y + alpha.height / 2)
+  const dot = await nodeByText(page, 'Alpha').locator('.nesso-node-handle').boundingBox()
+  if (!dot) throw new Error('hover dot has no bounding box')
+  expect(Math.abs(dot.x + dot.width / 2 - alpha.x)).toBeLessThan(12)
+  expect(Math.abs(dot.y + dot.height / 2 - (alpha.y + alpha.height))).toBeLessThan(12)
+})
+
 test('starting a connection drag deselects the selected concept', async ({ page }) => {
   await gotoApp(page)
   await newEmptyGraph(page)
