@@ -17,7 +17,7 @@ An empty graph shows a centered **"Your first concept"** hint, but the double-cl
 
 ## Drawing relations
 
-Hover a concept to reveal its dashed outline and a single connection dot on its border near the cursor. Drag from the dot to another node. The node where you start is the source and the node where you release is the target, so the relation picker follows the direction of your gesture. On release, a **relation picker** opens, grouped by category. Pick the relation type and the edge is created.
+Hover a concept to reveal its dashed outline and a single connection dot fixed on the top-left of its border. Drag from the dot to another node. The node where you start is the source and the node where you release is the target, so the relation picker follows the direction of your gesture. On release, a **relation picker** opens, grouped by category. Pick the relation type and the edge is created.
 
 - The connection line previews with the same quadratic geometry the final edge uses.
 - Edge type can be changed any time from the Inspector when an edge is selected.
