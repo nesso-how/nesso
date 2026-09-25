@@ -10,6 +10,7 @@ import {
   edges,
   seedTwoConcepts,
   selectEdge,
+  waitForCurveAnchorSaved,
 } from './helpers'
 
 /** Signed side of the quadratic control point relative to the edge chord. */
@@ -198,7 +199,7 @@ test('dragging an off-center arc point tracks the pointer and preserves a chosen
   expect(Math.hypot(targetAfter.x - targetBefore.x, targetAfter.y - targetBefore.y)).toBeLessThan(1) // creation placed the target explicitly on its border
 
   // The reshaped curve must survive a reload, not just the local state.
-  await page.waitForTimeout(1000) // debounced autosave (500ms) flushes to IndexedDB
+  await waitForCurveAnchorSaved(page)
   await page.reload()
   await expect(page.locator('.react-flow__pane')).toBeVisible()
   await expect(edges(page)).toHaveCount(1)

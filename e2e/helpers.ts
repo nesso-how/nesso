@@ -31,6 +31,46 @@ export function nodeByText(page: Page, text: string): Locator {
 export const edges = (page: Page): Locator => page.locator('.react-flow__edge')
 export const nodes = (page: Page): Locator => page.locator('.react-flow__node')
 
+/**
+ * Wait until the reshaped curve has been flushed to IndexedDB, so a reload
+ * restores it. Polls the stored record instead of sleeping a fixed delay:
+ * the autosave debounce (500ms) plus the async write vary under load, which
+ * made a fixed 1000ms wait flaky in batch runs. (Implemented with
+ * expect.poll: page.waitForFunction with a numeric polling interval does NOT
+ * await a returned Promise — the Promise object itself is truthy, so the
+ * wait returns on the first poll.)
+ */
+export async function waitForCurveAnchorSaved(page: Page): Promise<void> {
+  await expect
+    .poll(
+      async () =>
+        page.evaluate(
+          () =>
+            new Promise<boolean>((resolve) => {
+              const open = indexedDB.open('nesso-graphs')
+              open.onerror = () => resolve(false)
+              open.onsuccess = () => {
+                const db = open.result
+                const getAll = db.transaction('graphs', 'readonly').objectStore('graphs').getAll()
+                getAll.onerror = () => {
+                  db.close()
+                  resolve(false)
+                }
+                getAll.onsuccess = () => {
+                  const saved = (
+                    getAll.result as { edges?: { data?: { curveAnchor?: unknown } }[] }[]
+                  ).some((record) => record.edges?.some((e) => e.data?.curveAnchor !== undefined))
+                  db.close()
+                  resolve(saved)
+                }
+              }
+            }),
+        ),
+      { timeout: 15_000 },
+    )
+    .toBe(true)
+}
+
 export async function gotoApp(page: Page): Promise<void> {
   await page.addInitScript(
     ({ key, version, defaults }) => {
