@@ -34,14 +34,12 @@ describe('hoverDotCorner', () => {
     })
   })
 
-  it('falls back to the primary corner when every corner is taken', () => {
+  it('falls back to the primary corner when both corners are taken', () => {
     const snap: DotSnapshot = { position: { x: 0, y: 0 }, measured: { width: 40, height: 40 } }
     const of = () => snap
     const edges: DotEdge[] = [
       { source: 'n', target: 'n', data: { sourceAttachment: { x: -1, y: -1 } } },
       { source: 'n', target: 'n', data: { sourceAttachment: { x: -1, y: 1 } } },
-      { source: 'n', target: 'n', data: { sourceAttachment: { x: 1, y: -1 } } },
-      { source: 'n', target: 'n', data: { sourceAttachment: { x: 1, y: 1 } } },
     ]
     expect(hoverDotCorner('n', snap, edges, of, 'arc')).toEqual({ left: 0, top: 0 })
   })

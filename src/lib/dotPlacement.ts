@@ -24,14 +24,13 @@ export interface DotEdge {
 
 /**
  * Corner candidates for the hover dot, in order: top-left (primary),
- * bottom-left, top-right, bottom-right — as offsets from the node origin.
+ * bottom-left. Two are enough: both taken at once is vanishingly rare, and
+ * keeping the dot on the left side stays visually calm.
  */
 export function dotCorners(box: DotBox): { left: number; top: number }[] {
   return [
     { left: 0, top: 0 },
     { left: 0, top: box.h },
-    { left: box.w, top: 0 },
-    { left: box.w, top: box.h },
   ]
 }
 
@@ -79,7 +78,7 @@ function toBox(snapshot: DotSnapshot | undefined, fallback: DotBox): DotBox {
 
 /**
  * Corner for the node's hover dot: the first candidate no attached arc ends
- * on, falling back to the primary top-left when every corner is taken.
+ * on, falling back to the primary top-left when both corners are taken.
  * Endpoints reuse `edgeArcGeometry`, so they always match the rendered arcs.
  * Pure and unit-tested; the hook only applies the result to the DOM.
  */
