@@ -14,6 +14,12 @@ importers:
       '@fontsource-variable/geist':
         specifier: ^5.3.0
         version: 5.3.0
+      '@nesso/schema':
+        specifier: workspace:*
+        version: link:packages/schema
+      '@nesso/vocab':
+        specifier: workspace:*
+        version: link:packages/vocab
       '@tailwindcss/vite':
         specifier: ^4.3.3
         version: 4.3.3(vite@8.3.1(@types/node@24.19.0)(jiti@2.7.0))
@@ -72,6 +78,10 @@ importers:
       vite:
         specifier: ^8.3.0
         version: 8.3.1(@types/node@24.19.0)(jiti@2.7.0)
+
+  packages/schema: {}
+
+  packages/vocab: {}
 
 packages:
 

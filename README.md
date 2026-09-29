@@ -1,38 +1,25 @@
 # nesso-min
 
-A minimal knowledge graph: connect concepts with optionally labeled relations,
-and keep the interface as small as possible.
+A minimal, light-only knowledge graph app for connecting concepts with directed relations.
 
-## Stack
-
-- [Vite](https://vite.dev) + React + TypeScript
-- [shadcn/ui](https://ui.shadcn.com) on Base UI primitives + Tailwind CSS v4
-- [@xyflow/react](https://reactflow.dev) for the graph canvas
-- [zustand](https://zustand.docs.pmnd.rs) as the single graph store
-
-## Layout
-
-Sidebar (tag groups or AND-filtered concepts) · Navbar (focused concept, add
-concept) · Canvas (one-hop neighborhood, zoom, pan, drag to connect) ·
-Inspector (edit selection, or the focused concept).
-
-## Commands
+## Run
 
 ```sh
 pnpm install
-pnpm dev      # start dev server
-pnpm build    # type-check and build
-pnpm lint     # oxlint
+pnpm dev
+pnpm build
+pnpm lint
+pnpm test
 ```
 
-## Model
+## Graph
 
-Concepts are nodes; relations are directed edges with free-text labels. New
-edges start unlabeled and can be named in the Inspector.
+Concepts have labels, tags, and positions. Relations have stable IRIs; new
+connections use `linksTo` and appear unlabeled. Choose an existing relation
+type or name a new one in the Inspector. The canvas shows the focused concept
+and its direct neighbors; selecting an item does not change focus.
 
-`data/sample-graph.json` provides the starting graph. Every concept can have
-multiple tags; clicking one in the sidebar makes it the focus. The canvas shows
-its direct neighbors in either direction, while selecting a node or edge does
-not change the focus. Edits stay in memory and reset on reload.
-New concepts are linked to the focus with an unlabeled edge, so they remain
-visible in its one-hop view.
+`data/sample-graph.json` is the self-contained JSON-LD starting graph. Edits
+stay in memory and reset on reload. `@nesso/schema` defines the in-memory graph
+and JSON-LD conversion; `@nesso/vocab` supplies the default relation types.
+React Flow structures are derived in the app for rendering.

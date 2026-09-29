@@ -5,7 +5,9 @@ import { useGraphStore } from '@/store/graph'
 
 export function Navbar() {
   const focusId = useGraphStore((state) => state.focusId)
-  const focusName = useGraphStore((state) => state.nodes.find((node) => node.id === focusId)?.data.label)
+  const focusName = useGraphStore((state) =>
+    state.graph.concepts.find((concept) => concept.id === focusId)?.label,
+  )
   const addConcept = useGraphStore((state) => state.addConcept)
 
   return (

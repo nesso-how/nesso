@@ -1,3 +1,4 @@
+import { defaultRelationId } from '@nesso/vocab'
 import {
   BaseEdge,
   EdgeLabelRenderer,
@@ -5,6 +6,7 @@ import {
   type EdgeProps,
 } from '@xyflow/react'
 import type { RelationEdge } from '@/lib/types'
+import { useGraphStore } from '@/store/graph'
 
 export function RelationEdgeView(props: EdgeProps<RelationEdge>) {
   const { id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, markerEnd, data } =
@@ -17,7 +19,11 @@ export function RelationEdgeView(props: EdgeProps<RelationEdge>) {
     sourcePosition,
     targetPosition,
   })
-  const label = data?.relation.trim()
+  const label = useGraphStore((state) =>
+    data?.relationId === defaultRelationId
+      ? ''
+      : state.graph.relationTypes.find((item) => item.id === data?.relationId)?.label ?? '',
+  )
 
   return (
     <>

@@ -9,16 +9,18 @@ import {
   type NodeTypes,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
+import { relationKey } from '@nesso/schema'
 import { ConceptNodeView } from '@/components/graph/ConceptNodeView'
 import { RelationEdgeView } from '@/components/graph/RelationEdgeView'
+import { conceptNode, relationEdge } from '@/lib/graph'
 import { useGraphStore } from '@/store/graph'
 
 const nodeTypes: NodeTypes = { concept: ConceptNodeView }
 const edgeTypes: EdgeTypes = { relation: RelationEdgeView }
 
 export function Canvas() {
-  const nodes = useGraphStore((state) => state.nodes)
-  const edges = useGraphStore((state) => state.edges)
+  const graph = useGraphStore((state) => state.graph)
+  const selected = useGraphStore((state) => state.selected)
   const focusId = useGraphStore((state) => state.focusId)
   const onNodesChange = useGraphStore((state) => state.onNodesChange)
   const onEdgesChange = useGraphStore((state) => state.onEdgesChange)
@@ -26,6 +28,12 @@ export function Canvas() {
   const addConcept = useGraphStore((state) => state.addConcept)
   const { screenToFlowPosition, fitView } = useReactFlow()
 
+  const nodes = graph.concepts.map((concept) =>
+    conceptNode(concept, selected?.kind === 'concept' && selected.id === concept.id),
+  )
+  const edges = graph.relations.map((relation) =>
+    relationEdge(relation, selected?.kind === 'relation' && selected.id === relationKey(relation)),
+  )
   const visible = new Set([focusId])
   for (const edge of edges) {
     if (edge.source === focusId) visible.add(edge.target)

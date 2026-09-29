@@ -8,9 +8,12 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
+    "test": "node --test packages/schema/test/*.test.ts",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@nesso/schema": "workspace:*",
+    "@nesso/vocab": "workspace:*",
     "@base-ui/react": "^1.8.0",
     "@fontsource-variable/geist": "^5.3.0",
     "@tailwindcss/vite": "^4.3.3",

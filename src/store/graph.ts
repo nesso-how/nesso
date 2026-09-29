@@ -1,31 +1,16 @@
-import {
-  applyEdgeChanges,
-  applyNodeChanges,
-  MarkerType,
-  type Connection,
-  type EdgeChange,
-  type NodeChange,
-  type XYPosition,
-} from '@xyflow/react'
+import { newIri, parseGraph, relationKey, type Graph, type Relation } from '@nesso/schema'
+import { defaultRelationId } from '@nesso/vocab'
+import { type Connection, type EdgeChange, type NodeChange, type XYPosition } from '@xyflow/react'
 import { create } from 'zustand'
 import sample from '../../data/sample-graph.json'
 import type { ConceptNode, RelationEdge } from '@/lib/types'
 
-function relation(id: string, source: string, target: string, label = ''): RelationEdge {
-  return {
-    id,
-    source,
-    target,
-    type: 'relation',
-    data: { relation: label },
-    markerEnd: { type: MarkerType.ArrowClosed, width: 18, height: 18, color: 'var(--muted-foreground)' },
-  }
-}
+type Selection = { kind: 'concept' | 'relation'; id: string } | null
 
 interface GraphState {
-  nodes: ConceptNode[]
-  edges: RelationEdge[]
+  graph: Graph
   focusId: string
+  selected: Selection
   setFocus: (id: string) => void
   onNodesChange: (changes: NodeChange<ConceptNode>[]) => void
   onEdgesChange: (changes: EdgeChange<RelationEdge>[]) => void
@@ -34,123 +19,190 @@ interface GraphState {
   addTags: (id: string, tags: string[]) => void
   removeTag: (id: string, tag: string) => void
   connect: (connection: Connection) => void
-  setEdgeRelation: (id: string, relation: string) => void
+  setEdgeRelation: (id: string, label: string) => void
   removeNode: (id: string) => void
   removeEdge: (id: string) => void
 }
 
+const initialGraph = parseGraph(sample)
+
 export const useGraphStore = create<GraphState>((set) => ({
-  nodes: sample.nodes.map((node) => ({ ...node, type: 'concept' as const })),
-  edges: sample.edges.map((edge) =>
-    relation(edge.id, edge.source, edge.target, edge.data.relation),
-  ),
-  focusId: sample.nodes[0].id,
+  graph: initialGraph,
+  focusId: initialGraph.concepts[0].id,
+  selected: null,
 
-  setFocus: (id) =>
-    set((state) => ({
-      focusId: id,
-      nodes: state.nodes.map((node) => ({ ...node, selected: node.id === id })),
-      edges: state.edges.map((edge) => ({ ...edge, selected: false })),
-    })),
+  setFocus: (id) => set({ focusId: id, selected: { kind: 'concept', id } }),
 
-  onNodesChange: (changes) =>
-    set((state) => ({ nodes: applyNodeChanges(changes, state.nodes) })),
-
-  onEdgesChange: (changes) =>
-    set((state) => ({ edges: applyEdgeChanges(changes, state.edges) })),
-
-  addConcept: (position) =>
-    set((state) => {
-      const id = crypto.randomUUID()
-      const focus = state.nodes.find((node) => node.id === state.focusId)
-      return {
-        nodes: [
-          ...state.nodes.map((node) => ({ ...node, selected: false })),
-          {
-            id,
-            type: 'concept',
-            position: position ?? {
-              x: (focus?.position.x ?? 0) + 160,
-              y: (focus?.position.y ?? 0) + 100,
-            },
-            data: { label: `Concept ${state.nodes.length + 1}`, tags: [] },
-            selected: true,
-          },
-        ],
-        edges: [
-          ...state.edges.map((edge) => ({ ...edge, selected: false })),
-          relation(crypto.randomUUID(), state.focusId, id),
-        ],
+  onNodesChange: (changes) => set((state) => {
+    let { graph, selected, focusId } = state
+    for (const change of changes) {
+      if (change.type === 'position' && change.position) {
+        const position = change.position
+        graph = {
+          ...graph,
+          concepts: graph.concepts.map((concept) =>
+            concept.id === change.id ? { ...concept, position } : concept,
+          ),
+        }
+      } else if (change.type === 'select') {
+        if (change.selected) selected = { kind: 'concept', id: change.id }
+        else if (selected?.kind === 'concept' && selected.id === change.id) selected = null
+      } else if (change.type === 'remove' && graph.concepts.length > 1) {
+        graph = {
+          ...graph,
+          concepts: graph.concepts.filter((concept) => concept.id !== change.id),
+          relations: graph.relations.filter((relation) =>
+            relation.source !== change.id && relation.target !== change.id,
+          ),
+        }
+        if (focusId === change.id) focusId = graph.concepts[0].id
+        if (selected?.id === change.id) selected = null
+        if (selected?.kind === 'relation' &&
+          !graph.relations.some((relation) => relationKey(relation) === selected?.id)) selected = null
       }
-    }),
+    }
+    return { graph, selected, focusId }
+  }),
 
-  setConceptLabel: (id, label) =>
-    set((state) => ({
-      nodes: state.nodes.map((node) =>
-        node.id === id ? { ...node, data: { ...node.data, label } } : node,
+  onEdgesChange: (changes) => set((state) => {
+    let { graph, selected } = state
+    for (const change of changes) {
+      if (change.type === 'select') {
+        if (change.selected) selected = { kind: 'relation', id: change.id }
+        else if (selected?.kind === 'relation' && selected.id === change.id) selected = null
+      } else if (change.type === 'remove') {
+        graph = {
+          ...graph,
+          relations: graph.relations.filter((relation) => relationKey(relation) !== change.id),
+        }
+        if (selected?.id === change.id) selected = null
+      }
+    }
+    return { graph, selected }
+  }),
+
+  addConcept: (position) => set((state) => {
+    const id = newIri()
+    const focus = state.graph.concepts.find((concept) => concept.id === state.focusId)
+    const relation: Relation = { source: state.focusId, predicate: defaultRelationId, target: id }
+    return {
+      graph: {
+        ...state.graph,
+        concepts: [...state.graph.concepts, {
+          id,
+          label: `Concept ${state.graph.concepts.length + 1}`,
+          tags: [],
+          position: position ?? {
+            x: (focus?.position.x ?? 0) + 160,
+            y: (focus?.position.y ?? 0) + 100,
+          },
+        }],
+        relations: [...state.graph.relations, relation],
+      },
+      selected: { kind: 'concept', id },
+    }
+  }),
+
+  setConceptLabel: (id, label) => set((state) => ({
+    graph: {
+      ...state.graph,
+      concepts: state.graph.concepts.map((concept) =>
+        concept.id === id ? { ...concept, label } : concept,
       ),
-    })),
+    },
+  })),
 
-  addTags: (id, tags) =>
-    set((state) => {
-      const known = state.nodes.flatMap((node) => node.data.tags)
-      return {
-        nodes: state.nodes.map((node) => {
-          if (node.id !== id) return node
-          const next = [...node.data.tags]
+  addTags: (id, tags) => set((state) => {
+    const known = state.graph.concepts.flatMap((concept) => concept.tags)
+    return {
+      graph: {
+        ...state.graph,
+        concepts: state.graph.concepts.map((concept) => {
+          if (concept.id !== id) return concept
+          const next = [...concept.tags]
           for (const raw of tags) {
             const tag = raw.trim()
             if (!tag || next.some((item) => item.toLowerCase() === tag.toLowerCase())) continue
             next.push(known.find((item) => item.toLowerCase() === tag.toLowerCase()) ?? tag)
           }
-          return { ...node, data: { ...node.data, tags: next } }
+          return { ...concept, tags: next }
         }),
-      }
-    }),
+      },
+    }
+  }),
 
-  removeTag: (id, tag) =>
-    set((state) => ({
-      nodes: state.nodes.map((node) =>
-        node.id === id
-          ? { ...node, data: { ...node.data, tags: node.data.tags.filter((item) => item !== tag) } }
-          : node,
+  removeTag: (id, tag) => set((state) => ({
+    graph: {
+      ...state.graph,
+      concepts: state.graph.concepts.map((concept) =>
+        concept.id === id ? { ...concept, tags: concept.tags.filter((item) => item !== tag) } : concept,
       ),
-    })),
+    },
+  })),
 
   connect: ({ source, target }) => {
     if (!source || !target || source === target) return
     set((state) => {
-      if (state.edges.some((edge) => edge.source === source && edge.target === target)) return state
+      if (!state.graph.concepts.some((concept) => concept.id === source) ||
+        !state.graph.concepts.some((concept) => concept.id === target)) return state
+      if (state.graph.relations.some((relation) => relation.source === source && relation.target === target)) {
+        return state
+      }
+      const relation: Relation = { source, predicate: defaultRelationId, target }
       return {
-        nodes: state.nodes.map((node) => ({ ...node, selected: false })),
-        edges: [
-          ...state.edges.map((edge) => ({ ...edge, selected: false })),
-          { ...relation(crypto.randomUUID(), source, target), selected: true },
-        ],
+        graph: { ...state.graph, relations: [...state.graph.relations, relation] },
+        selected: { kind: 'relation', id: relationKey(relation) },
       }
     })
   },
 
-  setEdgeRelation: (id, label) =>
-    set((state) => ({
-      edges: state.edges.map((edge) =>
-        edge.id === id
-          ? { ...edge, data: { ...edge.data, relation: label } }
-          : edge,
-      ),
-    })),
+  setEdgeRelation: (id, rawLabel) => set((state) => {
+    const current = state.graph.relations.find((relation) => relationKey(relation) === id)
+    if (!current) return state
+    const label = rawLabel.trim()
+    const existing = state.graph.relationTypes.find(
+      (item) => item.label.toLowerCase() === label.toLowerCase(),
+    )
+    const type = label ? existing ?? { id: newIri(), label } : null
+    const next = { ...current, predicate: type?.id ?? defaultRelationId }
+    if (state.graph.relations.some((relation) =>
+      relationKey(relation) === relationKey(next) && relationKey(relation) !== id,
+    )) return state
+    return {
+      graph: {
+        ...state.graph,
+        relationTypes: type && !existing
+          ? [...state.graph.relationTypes, type]
+          : state.graph.relationTypes,
+        relations: state.graph.relations.map((relation) =>
+          relationKey(relation) === id ? next : relation,
+        ),
+      },
+      selected: { kind: 'relation', id: relationKey(next) },
+    }
+  }),
 
-  removeNode: (id) =>
-    set((state) => {
-      if (state.nodes.length === 1) return state
-      const nodes = state.nodes.filter((node) => node.id !== id)
-      return {
-        nodes,
-        edges: state.edges.filter((edge) => edge.source !== id && edge.target !== id),
-        focusId: state.focusId === id ? nodes[0].id : state.focusId,
-      }
-    }),
+  removeNode: (id) => set((state) => {
+    if (state.graph.concepts.length === 1) return state
+    const concepts = state.graph.concepts.filter((concept) => concept.id !== id)
+    return {
+      graph: {
+        ...state.graph,
+        concepts,
+        relations: state.graph.relations.filter((relation) =>
+          relation.source !== id && relation.target !== id,
+        ),
+      },
+      focusId: state.focusId === id ? concepts[0].id : state.focusId,
+      selected: null,
+    }
+  }),
 
-  removeEdge: (id) =>
-    set((state) => ({ edges: state.edges.filter((edge) => edge.id !== id) })),
+  removeEdge: (id) => set((state) => ({
+    graph: {
+      ...state.graph,
+      relations: state.graph.relations.filter((relation) => relationKey(relation) !== id),
+    },
+    selected: null,
+  })),
 }))
