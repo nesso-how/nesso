@@ -1,33 +1,38 @@
 import { relationKey } from './core.ts'
+import type { SchemaIssue } from './errors.ts'
 import type { Graph } from './types.ts'
 
-export function validateGraph(graph: Graph): string[] {
-  const errors: string[] = []
+export function validateGraph(graph: Graph): SchemaIssue[] {
+  const issues: SchemaIssue[] = []
   const concepts = new Set<string>()
   const types = new Set<string>()
   const relations = new Set<string>()
 
-  for (const concept of graph.concepts) {
-    if (!concept.id || concepts.has(concept.id)) errors.push(`Duplicate or missing concept IRI: ${concept.id}`)
+  for (const [index, concept] of graph.concepts.entries()) {
+    if (!concept.id || concepts.has(concept.id)) {
+      issues.push({ path: `concepts[${index}].id`, message: `Duplicate or missing concept IRI: ${concept.id}` })
+    }
     concepts.add(concept.id)
     if (!Number.isFinite(concept.position.x) || !Number.isFinite(concept.position.y)) {
-      errors.push(`Invalid position: ${concept.id}`)
+      issues.push({ path: `concepts[${index}].position`, message: `Invalid position: ${concept.id}` })
     }
   }
-  for (const type of graph.relationTypes) {
+  for (const [index, type] of graph.relationTypes.entries()) {
     if (!type.id || types.has(type.id) || concepts.has(type.id)) {
-      errors.push(`Duplicate or missing relation IRI: ${type.id}`)
+      issues.push({ path: `relationTypes[${index}].id`, message: `Duplicate or missing relation IRI: ${type.id}` })
     }
     types.add(type.id)
   }
-  for (const relation of graph.relations) {
+  for (const [index, relation] of graph.relations.entries()) {
     if (!concepts.has(relation.source) || !concepts.has(relation.target)) {
-      errors.push(`Unknown concept in relation: ${relationKey(relation)}`)
+      issues.push({ path: `relations[${index}]`, message: `Unknown concept in relation: ${relationKey(relation)}` })
     }
-    if (!types.has(relation.predicate)) errors.push(`Unknown relation type: ${relation.predicate}`)
+    if (!types.has(relation.predicate)) {
+      issues.push({ path: `relations[${index}].predicate`, message: `Unknown relation type: ${relation.predicate}` })
+    }
     const key = relationKey(relation)
-    if (relations.has(key)) errors.push(`Duplicate relation: ${key}`)
+    if (relations.has(key)) issues.push({ path: `relations[${index}]`, message: `Duplicate relation: ${key}` })
     relations.add(key)
   }
-  return errors
+  return issues
 }

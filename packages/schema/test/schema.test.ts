@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { parseGraph, relationKey, schemaContext, serializeGraph, validateGraph } from '../src/index.ts'
+import { parseGraph, relationKey, SchemaError, schemaContext, serializeGraph, validateGraph } from '../src/index.ts'
 
 const predicate = 'https://example.org/relation/connects'
 const subject = 'https://example.org/concept/one'
@@ -33,6 +33,19 @@ test('a graph with compact and custom predicates survives a JSON-LD round trip',
 test('missing references are rejected instead of disappearing on export', () => {
   const graph = parseGraph(fixture)
   graph.relations.push({ source: subject, predicate, target: 'urn:uuid:missing' })
-  assert.match(validateGraph(graph).join('\n'), /Unknown concept/)
+  assert.match(validateGraph(graph).map((issue) => issue.message).join('\n'), /Unknown concept/)
   assert.throws(() => serializeGraph(graph), /Unknown concept/)
+})
+
+test('parse failures report structured issues', () => {
+  const broken = {
+    ...fixture,
+    '@graph': [...fixture['@graph'], { '@id': 'urn:uuid:broken', 'rdfs:label': 'Broken', tags: 'Example' }],
+  }
+  assert.throws(
+    () => parseGraph(broken),
+    (error: unknown) =>
+      error instanceof SchemaError &&
+      error.issues.some(({ path, message }) => path === '@graph[4].tags' && message === 'Invalid tags: urn:uuid:broken'),
+  )
 })

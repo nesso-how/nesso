@@ -7,4 +7,5 @@
 - Keep edits in memory; `data/sample-graph.json` is the self-contained JSON-LD starting graph, including positions. Keep `@nesso/schema` independent of the app and the default vocabulary.
 - Write UI, code, and documentation in English. Do not add comments to code.
 - Use TypeScript for source code, tests, and scripts (`.ts`, or `.tsx` for JSX). Use JavaScript only when a tool does not support TypeScript; keep data and documentation in their native formats.
+- Report failures with a package-scoped `<Package>Error extends Error` carrying `readonly issues: { path: string; message: string }[]`, joined into the error message (see `SchemaError` in `@nesso/schema`). Reuse this shape in future packages; keep packages dependency-free.
 - Check changes with `pnpm build` and `pnpm lint`. Stage changes for review, and do not commit until the user has reviewed the diff and explicitly approves.
