@@ -1,11 +1,18 @@
-import { newIri, parseGraph, relationKey, type Graph, type Relation } from '@nesso/schema'
-import { defaultRelationId } from '@nesso/vocab'
+import { newIri, parseGraph, relationKey, type Graph, type Relation, type RelationType } from '@nesso/schema'
+import { defaultRelationId, relationIds } from '@nesso/vocab'
 import { type Connection, type EdgeChange, type NodeChange, type XYPosition } from '@xyflow/react'
 import { create } from 'zustand'
 import sample from '../../data/sample-graph.json'
 import type { ConceptNode, RelationEdge } from '@/lib/types'
 
 type Selection = { kind: 'concept' | 'relation'; id: string } | null
+
+const defaultTypeIds = new Set<string>(Object.values(relationIds))
+
+const usedTypes = (types: RelationType[], relations: Relation[]) => {
+  const used = new Set(relations.map((relation) => relation.predicate))
+  return types.filter((type) => defaultTypeIds.has(type.id) || used.has(type.id))
+}
 
 interface GraphState {
   graph: Graph
@@ -48,12 +55,14 @@ export const useGraphStore = create<GraphState>((set) => ({
         if (change.selected) selected = { kind: 'concept', id: change.id }
         else if (selected?.kind === 'concept' && selected.id === change.id) selected = null
       } else if (change.type === 'remove' && graph.concepts.length > 1) {
+        const relations = graph.relations.filter((relation) =>
+          relation.source !== change.id && relation.target !== change.id,
+        )
         graph = {
           ...graph,
           concepts: graph.concepts.filter((concept) => concept.id !== change.id),
-          relations: graph.relations.filter((relation) =>
-            relation.source !== change.id && relation.target !== change.id,
-          ),
+          relations,
+          relationTypes: usedTypes(graph.relationTypes, relations),
         }
         if (focusId === change.id) focusId = graph.concepts[0].id
         if (selected?.id === change.id) selected = null
@@ -71,10 +80,8 @@ export const useGraphStore = create<GraphState>((set) => ({
         if (change.selected) selected = { kind: 'relation', id: change.id }
         else if (selected?.kind === 'relation' && selected.id === change.id) selected = null
       } else if (change.type === 'remove') {
-        graph = {
-          ...graph,
-          relations: graph.relations.filter((relation) => relationKey(relation) !== change.id),
-        }
+        const relations = graph.relations.filter((relation) => relationKey(relation) !== change.id)
+        graph = { ...graph, relations, relationTypes: usedTypes(graph.relationTypes, relations) }
         if (selected?.id === change.id) selected = null
       }
     }
@@ -168,14 +175,16 @@ export const useGraphStore = create<GraphState>((set) => ({
     if (state.graph.relations.some((relation) =>
       relationKey(relation) === relationKey(next) && relationKey(relation) !== id,
     )) return state
+    const relations = state.graph.relations.map((relation) =>
+      relationKey(relation) === id ? next : relation,
+    )
     return {
       graph: {
         ...state.graph,
-        relationTypes: type && !existing
-          ? [...state.graph.relationTypes, type]
-          : state.graph.relationTypes,
-        relations: state.graph.relations.map((relation) =>
-          relationKey(relation) === id ? next : relation,
+        relations,
+        relationTypes: usedTypes(
+          type && !existing ? [...state.graph.relationTypes, type] : state.graph.relationTypes,
+          relations,
         ),
       },
       selected: { kind: 'relation', id: relationKey(next) },
@@ -185,24 +194,30 @@ export const useGraphStore = create<GraphState>((set) => ({
   removeNode: (id) => set((state) => {
     if (state.graph.concepts.length === 1) return state
     const concepts = state.graph.concepts.filter((concept) => concept.id !== id)
+    const relations = state.graph.relations.filter((relation) =>
+      relation.source !== id && relation.target !== id,
+    )
     return {
       graph: {
         ...state.graph,
         concepts,
-        relations: state.graph.relations.filter((relation) =>
-          relation.source !== id && relation.target !== id,
-        ),
+        relations,
+        relationTypes: usedTypes(state.graph.relationTypes, relations),
       },
       focusId: state.focusId === id ? concepts[0].id : state.focusId,
       selected: null,
     }
   }),
 
-  removeEdge: (id) => set((state) => ({
-    graph: {
-      ...state.graph,
-      relations: state.graph.relations.filter((relation) => relationKey(relation) !== id),
-    },
-    selected: null,
-  })),
+  removeEdge: (id) => set((state) => {
+    const relations = state.graph.relations.filter((relation) => relationKey(relation) !== id)
+    return {
+      graph: {
+        ...state.graph,
+        relations,
+        relationTypes: usedTypes(state.graph.relationTypes, relations),
+      },
+      selected: null,
+    }
+  }),
 }))
