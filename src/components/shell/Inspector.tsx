@@ -1,5 +1,6 @@
 import { relationKey, type RelationType } from '@nesso/schema'
 import { defaultRelationId } from '@nesso/vocab'
+import { Autocomplete } from '@base-ui/react/autocomplete'
 import { useState } from 'react'
 import { Trash2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -14,9 +15,16 @@ function RelationInput({ edgeId, label, relationTypes, onSave }: {
   onSave: (id: string, label: string) => void
 }) {
   const [value, setValue] = useState(label)
+  const [open, setOpen] = useState(false)
+  const options = relationTypes
+    .filter((item) => item.id !== defaultRelationId)
+    .map((item) => item.label)
+  const query = value.trim().toLowerCase()
+  const visible = options.filter((item) =>
+    item.toLowerCase().includes(query) && item.toLowerCase() !== query)
 
-  const save = () => {
-    const trimmed = value.trim()
+  const save = (raw: string) => {
+    const trimmed = raw.trim()
     onSave(edgeId, trimmed)
     setValue(relationTypes.find(
       (item) => item.label.toLowerCase() === trimmed.toLowerCase(),
@@ -26,22 +34,53 @@ function RelationInput({ edgeId, label, relationTypes, onSave }: {
   return (
     <div className="flex flex-col gap-1.5">
       <Label htmlFor="relation-label">Relation</Label>
-      <Input
-        id="relation-label"
-        list="relation-options"
+      <Autocomplete.Root
+        items={options}
+        filteredItems={visible}
         value={value}
-        onChange={(event) => setValue(event.target.value)}
-        onBlur={save}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter') event.currentTarget.blur()
+        open={open && visible.length > 0}
+        onOpenChange={setOpen}
+        onValueChange={(next, details) => {
+          setValue(next)
+          if (details.reason === 'item-press' || details.reason === 'clear-press') save(next)
         }}
-        placeholder="Choose or name a relation"
-      />
-      <datalist id="relation-options">
-        {relationTypes.filter((item) => item.id !== defaultRelationId).map((item) => (
-          <option key={item.id} value={item.label} />
-        ))}
-      </datalist>
+        openOnInputClick
+      >
+        <div className="relative">
+          <Autocomplete.Input
+            id="relation-label"
+            render={<Input className="pr-7" />}
+            onBlur={(event) => save(event.currentTarget.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') save(event.currentTarget.value)
+            }}
+            placeholder="Choose or name a relation"
+          />
+          <Autocomplete.Clear
+            aria-label="Clear relation"
+            className="absolute top-1/2 right-1.5 flex size-5 -translate-y-1/2 items-center justify-center rounded-sm text-muted-foreground outline-none hover:bg-accent hover:text-foreground"
+          >
+            <X className="size-3.5" />
+          </Autocomplete.Clear>
+        </div>
+        <Autocomplete.Portal>
+          <Autocomplete.Positioner sideOffset={4} className="z-50 outline-none">
+            <Autocomplete.Popup className="max-h-72 w-[var(--anchor-width)] overflow-y-auto rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-md">
+              <Autocomplete.List>
+                {(item: string) => (
+                  <Autocomplete.Item
+                    key={item}
+                    value={item}
+                    className="cursor-pointer rounded-md px-2 py-1.5 text-sm outline-none data-highlighted:bg-accent data-highlighted:text-accent-foreground"
+                  >
+                    {item}
+                  </Autocomplete.Item>
+                )}
+              </Autocomplete.List>
+            </Autocomplete.Popup>
+          </Autocomplete.Positioner>
+        </Autocomplete.Portal>
+      </Autocomplete.Root>
     </div>
   )
 }
