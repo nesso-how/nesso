@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import type { VocabDefinition } from '@nesso/plugin'
-import { relationKey, SchemaError, type Graph } from '@nesso/schema'
+import { relationKey, SchemaError, validateGraph, type Graph } from '@nesso/schema'
 import { createNessoStore } from './create.ts'
 
 const fixture = (): Graph => ({
@@ -88,7 +88,7 @@ test('retyping a relation moves its identity and selection to the new triple and
   host.registerVocab(vocabA)
   const id = relationKey({ source: 'urn:n1', predicate: 'urn:links', target: 'urn:n2' })
   host.store.setSelection({ kind: 'relation', id })
-  host.store.setRelationType(id, 'part')
+  host.store.setRelationType(id, 'urn:part')
   const state = host.store.getState()
   const retyped = { source: 'urn:n1', predicate: 'urn:part', target: 'urn:n2' }
   assert.deepEqual(state.graph.relations[0], retyped)
@@ -176,4 +176,128 @@ test('initialization validates and owns a private copy of the graph', () => {
   input.relations.push({ source: 'urn:n2', predicate: 'urn:links', target: 'urn:n3' })
   assert.equal(host.store.getState().graph.concepts.length, 3)
   assert.equal(host.store.getState().graph.relations.length, 2)
+})
+
+test('relation types are selected by IRI even when document and vocabulary labels collide', () => {
+  const host = createNessoStore(fixture())
+  host.registerVocab({
+    id: 'collision',
+    label: 'Collision',
+    relationTypes: [{ id: 'urn:other-links', label: 'links' }],
+    defaultTypeId: 'urn:other-links',
+  })
+  const before = host.store.getState()
+  const id = relationKey(before.graph.relations[0])
+  host.store.setRelationType(id, 'urn:links')
+  assert.equal(host.store.getState(), before)
+  host.store.setRelationType(id, 'urn:other-links')
+  const state = host.store.getState()
+  assert.equal(state.graph.relations[0].predicate, 'urn:other-links')
+  assert.deepEqual(state.selected, { kind: 'relation', id: relationKey(state.graph.relations[0]) })
+  assert.deepEqual(state.graph.relationTypes, [
+    { id: 'urn:links', label: 'links' },
+    { id: 'urn:other-links', label: 'links' },
+  ])
+})
+
+test('unknown type IRIs are rejected atomically and retyping never creates duplicate triples', () => {
+  const graph = fixture()
+  graph.relationTypes.push({ id: 'urn:part', label: 'part' })
+  graph.relations.push({ source: 'urn:n1', predicate: 'urn:part', target: 'urn:n2' })
+  const host = createNessoStore(graph)
+  host.registerVocab(vocabA)
+  const before = host.store.getState()
+  const id = relationKey(before.graph.relations[0])
+  assert.deepEqual(issuesOf(() => host.store.setRelationType(id, 'urn:unknown')), [
+    { path: 'relationTypeId', message: 'Unknown relation type: urn:unknown' },
+  ])
+  assert.equal(host.store.getState(), before)
+  host.store.setRelationType(id, 'urn:part')
+  assert.equal(host.store.getState(), before)
+})
+
+test('naming a new relation type creates and assigns its own IRI atomically', () => {
+  const host = createNessoStore(fixture())
+  const before = host.store.getState()
+  const id = relationKey(before.graph.relations[0])
+  assert.deepEqual(issuesOf(() => host.store.createRelationType(id, '  ')), [
+    { path: 'label', message: 'Relation type label must not be empty' },
+  ])
+  assert.equal(host.store.getState(), before)
+  host.store.createRelationType(id, ' links ')
+  const state = host.store.getState()
+  const type = state.graph.relationTypes.at(-1)
+  assert.equal(type?.label, 'links')
+  assert.notEqual(type?.id, 'urn:links')
+  assert.equal(state.graph.relations[0].predicate, type?.id)
+  assert.deepEqual(state.selected, { kind: 'relation', id: relationKey(state.graph.relations[0]) })
+  assert.deepEqual(validateGraph(structuredClone(state.graph) as Graph), [])
+})
+
+test('editGraph owns its result even when callers retain the draft or return an external graph', () => {
+  for (const replace of [false, true]) {
+    const host = createNessoStore(fixture())
+    host.store.setFocus('urn:n2')
+    const external = fixture()
+    const retained: Graph[] = []
+    host.store.editGraph((draft) => {
+      retained.push(draft)
+      return replace ? external : draft
+    })
+    const before = host.store.getState()
+    const snapshot = structuredClone(before)
+    let notifications = 0
+    host.store.subscribe(() => notifications++)
+    retained[0].concepts[0].position.x = NaN
+    retained[0].concepts.pop()
+    external.concepts[0].position.x = NaN
+    external.concepts.pop()
+    assert.equal(host.store.getState(), before)
+    assert.deepEqual(host.store.getState(), snapshot)
+    assert.equal(notifications, 0)
+    assert.deepEqual(validateGraph(structuredClone(before.graph) as Graph), [])
+  }
+})
+
+test('concept positions and selection are copied from their callers', () => {
+  const host = createNessoStore(fixture())
+  host.registerVocab(vocabA)
+  const position = { x: 10, y: 20 }
+  const id = host.store.addConcept(position)
+  const selection = { kind: 'concept' as const, id }
+  host.store.setSelection(selection)
+  position.x = NaN
+  selection.id = 'urn:missing'
+  assert.deepEqual(host.store.getState().graph.concepts.find((concept) => concept.id === id)?.position, { x: 10, y: 20 })
+  assert.deepEqual(host.store.getState().selected, { kind: 'concept', id })
+  assert.deepEqual(validateGraph(structuredClone(host.store.getState().graph) as Graph), [])
+})
+
+test('registered vocabularies and their inserted types are owned independently by each store', () => {
+  const input = {
+    id: 'shared',
+    label: 'Shared',
+    relationTypes: [{ id: 'urn:shared-type', label: 'shared' }],
+    defaultTypeId: 'urn:shared-type',
+  }
+  const a = createNessoStore(fixture())
+  const b = createNessoStore(fixture())
+  a.registerVocab(input)
+  b.registerVocab(input)
+  input.id = 'changed'
+  input.defaultTypeId = 'urn:changed'
+  input.relationTypes[0].id = 'urn:changed'
+  input.relationTypes[0].label = 'changed'
+  for (const host of [a, b]) {
+    host.store.addConcept()
+    const state = host.store.getState()
+    assert.equal(state.activeVocabId, 'shared')
+    assert.equal(state.vocabs[0].defaultTypeId, 'urn:shared-type')
+    assert.deepEqual(state.graph.relationTypes.at(-1), { id: 'urn:shared-type', label: 'shared' })
+    assert.notEqual(state.graph.relationTypes.at(-1), state.vocabs[0].relationTypes[0])
+    assert.deepEqual(validateGraph(structuredClone(state.graph) as Graph), [])
+  }
+  assert.notEqual(a.store.getState().vocabs[0], b.store.getState().vocabs[0])
+  assert.notEqual(a.store.getState().vocabs[0].relationTypes[0], b.store.getState().vocabs[0].relationTypes[0])
+  assert.notEqual(a.store.getState().graph.relationTypes.at(-1), b.store.getState().graph.relationTypes.at(-1))
 })

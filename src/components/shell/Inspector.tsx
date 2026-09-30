@@ -1,54 +1,72 @@
 import { relationKey, type RelationType } from '@nesso/schema'
 import { Autocomplete } from '@base-ui/react/autocomplete'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { nessoStore, useNessoStore } from '@/store'
 
-function RelationInput({ edgeId, label, relationTypes, onSave }: {
+function RelationInput({ edgeId, typeId, label, defaultTypeId, relationTypes, onSave, onCreate }: {
   edgeId: string
+  typeId: string
   label: string
-  relationTypes: RelationType[]
-  onSave: (id: string, label: string) => void
+  defaultTypeId: string | undefined
+  relationTypes: readonly Readonly<RelationType>[]
+  onSave: (id: string, typeId: string) => void
+  onCreate: (id: string, label: string) => void
 }) {
   const [value, setValue] = useState(label)
   const [open, setOpen] = useState(false)
-  const options = relationTypes.map((item) => item.label)
+  const [error, setError] = useState('')
+  const highlighted = useRef<Readonly<RelationType> | undefined>(undefined)
   const query = value.trim().toLowerCase()
-  const visible = options.filter((item) =>
-    item.toLowerCase().includes(query) && item.toLowerCase() !== query)
+  const visible = relationTypes.filter((item) =>
+    item.id !== typeId && item.label.toLowerCase().includes(query))
 
   const save = (raw: string) => {
     const trimmed = raw.trim()
-    onSave(edgeId, trimmed)
-    setValue(relationTypes.find(
-      (item) => item.label.toLowerCase() === trimmed.toLowerCase(),
-    )?.label ?? trimmed)
+    if (trimmed.toLowerCase() === label.trim().toLowerCase()) return
+    if (!trimmed) {
+      if (defaultTypeId) onSave(edgeId, defaultTypeId)
+      return
+    }
+    const matches = relationTypes.filter((item) => item.label.toLowerCase() === trimmed.toLowerCase())
+    if (matches.length > 1) {
+      setError('Choose a relation type: this label has multiple IRIs.')
+      setOpen(true)
+      return
+    }
+    if (matches.length === 1) onSave(edgeId, matches[0].id)
+    else onCreate(edgeId, trimmed)
+    setValue(matches[0]?.label ?? trimmed)
   }
 
   return (
     <div className="flex flex-col gap-1.5">
       <Label htmlFor="relation-label">Relation</Label>
       <Autocomplete.Root
-        items={options}
+        items={relationTypes}
         filteredItems={visible}
+        itemToStringValue={(item) => item.label}
         value={value}
         open={open && visible.length > 0}
         onOpenChange={setOpen}
         onValueChange={(next, details) => {
           setValue(next)
-          if (details.reason === 'item-press' || details.reason === 'clear-press') save(next)
+          setError('')
+          if (details.reason === 'clear-press' && defaultTypeId) onSave(edgeId, defaultTypeId)
         }}
+        onItemHighlighted={(item) => { highlighted.current = item }}
         openOnInputClick
       >
         <div className="relative">
           <Autocomplete.Input
             id="relation-label"
+            aria-invalid={Boolean(error)}
             render={<Input className="pr-7" />}
             onBlur={(event) => save(event.currentTarget.value)}
             onKeyDown={(event) => {
-              if (event.key === 'Enter') save(event.currentTarget.value)
+              if (event.key === 'Enter' && !highlighted.current) save(event.currentTarget.value)
             }}
             placeholder="Choose or name a relation"
           />
@@ -63,13 +81,17 @@ function RelationInput({ edgeId, label, relationTypes, onSave }: {
           <Autocomplete.Positioner sideOffset={4} className="z-50 outline-none">
             <Autocomplete.Popup className="max-h-72 w-[var(--anchor-width)] overflow-y-auto rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-md">
               <Autocomplete.List>
-                {(item: string) => (
+                {(item: Readonly<RelationType>) => (
                   <Autocomplete.Item
-                    key={item}
+                    key={item.id}
                     value={item}
+                    onClick={() => onSave(edgeId, item.id)}
                     className="cursor-pointer rounded-md px-2 py-1.5 text-sm outline-none data-highlighted:bg-accent data-highlighted:text-accent-foreground"
                   >
-                    {item}
+                    {item.label}
+                    {relationTypes.some((type) => type.id !== item.id && type.label.toLowerCase() === item.label.toLowerCase()) && (
+                      <span className="ml-2 text-xs text-muted-foreground">{item.id}</span>
+                    )}
                   </Autocomplete.Item>
                 )}
               </Autocomplete.List>
@@ -77,6 +99,7 @@ function RelationInput({ edgeId, label, relationTypes, onSave }: {
           </Autocomplete.Positioner>
         </Autocomplete.Portal>
       </Autocomplete.Root>
+      {error && <p role="alert" className="text-xs text-destructive">{error}</p>}
     </div>
   )
 }
@@ -89,7 +112,7 @@ export function Inspector() {
   const vocabs = useNessoStore((state) => state.vocabs)
   const activeVocabId = useNessoStore((state) => state.activeVocabId)
   const activeVocab = vocabs.find((vocab) => vocab.id === activeVocabId)
-  const offered = new Map<string, RelationType>()
+  const offered = new Map<string, Readonly<RelationType>>()
   for (const type of [...graph.relationTypes, ...(activeVocab?.relationTypes ?? [])]) {
     if (type.id !== activeVocab?.defaultTypeId && !offered.has(type.id)) offered.set(type.id, type)
   }
@@ -178,9 +201,12 @@ export function Inspector() {
           <RelationInput
             key={`${relationKey(selectedEdge)}:${selectedRelationLabel}`}
             edgeId={relationKey(selectedEdge)}
+            typeId={selectedEdge.predicate}
             label={selectedRelationLabel}
+            defaultTypeId={activeVocab?.defaultTypeId}
             relationTypes={relationTypes}
             onSave={nessoStore.setRelationType}
+            onCreate={nessoStore.createRelationType}
           />
         </section>
       ) : null}

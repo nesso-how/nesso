@@ -46,11 +46,11 @@ const neighborhood = (graph: GraphSnapshot, focusId: string): GraphSnapshot => {
   }
 }
 
-const defaultType = (vocab: VocabDefinition): RelationType =>
+const defaultType = (vocab: VocabDefinition): Readonly<RelationType> =>
   vocab.relationTypes.find((item) => item.id === vocab.defaultTypeId) ?? { id: vocab.defaultTypeId, label: '' }
 
-const ensureType = (graph: Graph, type: RelationType): void => {
-  if (!graph.relationTypes.some((item) => item.id === type.id)) graph.relationTypes.push(type)
+const ensureType = (graph: Graph, type: Readonly<RelationType>): void => {
+  if (!graph.relationTypes.some((item) => item.id === type.id)) graph.relationTypes.push({ ...type })
 }
 
 export const createNessoStore = (graph: Graph) => {
@@ -95,17 +95,18 @@ export const createNessoStore = (graph: Graph) => {
     return vocab
   }
 
-  const resolveType = (
-    graph: { readonly relationTypes: readonly RelationType[] },
-    vocab: VocabDefinition,
-    rawLabel: string,
-  ): RelationType => {
-    const label = rawLabel.trim()
-    if (!label) return defaultType(vocab)
-    const name = label.toLowerCase()
-    return vocab.relationTypes.find((item) => item.label.toLowerCase() === name)
-      ?? graph.relationTypes.find((item) => item.label.toLowerCase() === name)
-      ?? { id: newIri(), label }
+  const retypeRelation = (id: string, type: Readonly<RelationType>): void => {
+    const state = store.getState()
+    const relation = state.graph.relations.find((item) => relationKey(item) === id)
+    if (!relation || relation.predicate === type.id) return
+    const triple = relationKey({ ...relation, predicate: type.id })
+    if (state.graph.relations.some((item) => relationKey(item) === triple)) return
+    commit((draft) => {
+      const index = draft.graph.relations.findIndex((item) => relationKey(item) === id)
+      ensureType(draft.graph, type)
+      draft.graph.relations[index] = { ...draft.graph.relations[index], predicate: type.id }
+      draft.selected = { kind: 'relation', id: relationKey(draft.graph.relations[index]) }
+    })
   }
 
   const renderers = new Map<string, RendererDefinition>()
@@ -139,7 +140,7 @@ export const createNessoStore = (graph: Graph) => {
 
     setSelection: (selection) => {
       const state = store.getState()
-      store.setState({ selected: selectionExists(state.graph, selection) ? selection : null })
+      store.setState({ selected: selection && selectionExists(state.graph, selection) ? { ...selection } : null })
     },
 
     setView: (mode) => {
@@ -188,7 +189,7 @@ export const createNessoStore = (graph: Graph) => {
           id,
           label: `Concept ${draft.graph.concepts.length + 1}`,
           tags: [],
-          position: position ?? {
+          position: position ? { x: position.x, y: position.y } : {
             x: (focus?.position.x ?? 0) + 160,
             y: (focus?.position.y ?? 0) + 100,
           },
@@ -213,21 +214,17 @@ export const createNessoStore = (graph: Graph) => {
       })
     },
 
-    setRelationType: (id, rawLabel) => {
-      const vocab = activeVocab()
-      const state = store.getState()
-      const relation = state.graph.relations.find((item) => relationKey(item) === id)
-      if (!relation) return
-      const type = resolveType(state.graph, vocab, rawLabel)
-      const triple = relationKey({ ...relation, predicate: type.id })
-      if (state.graph.relations.some((item) => item !== relation && relationKey(item) === triple)) return
-      commit((draft) => {
-        const index = draft.graph.relations.findIndex((item) => relationKey(item) === id)
-        if (index < 0) return
-        ensureType(draft.graph, type)
-        draft.graph.relations[index] = { ...draft.graph.relations[index], predicate: type.id }
-        draft.selected = { kind: 'relation', id: relationKey(draft.graph.relations[index]) }
-      })
+    setRelationType: (id, typeId) => {
+      const type = store.getState().graph.relationTypes.find((item) => item.id === typeId)
+        ?? activeVocab().relationTypes.find((item) => item.id === typeId)
+      if (!type) throw new SchemaError([{ path: 'relationTypeId', message: `Unknown relation type: ${typeId}` }])
+      retypeRelation(id, type)
+    },
+
+    createRelationType: (id, rawLabel) => {
+      const label = rawLabel.trim()
+      if (!label) throw new SchemaError([{ path: 'label', message: 'Relation type label must not be empty' }])
+      retypeRelation(id, { id: newIri(), label })
     },
 
     removeConcept: (id) => commit((draft) => {
@@ -242,7 +239,7 @@ export const createNessoStore = (graph: Graph) => {
     }),
 
     editGraph: (edit) => commit((draft) => {
-      draft.graph = edit(draft.graph)
+      draft.graph = structuredClone(edit(draft.graph)) as Graph
     }),
 
     setActiveVocab: (id) => {
@@ -275,7 +272,7 @@ export const createNessoStore = (graph: Graph) => {
     }
     if (issues.length > 0) throw new SchemaError(issues)
     store.setState({
-      vocabs: [...state.vocabs, vocab],
+      vocabs: [...state.vocabs, structuredClone(vocab)],
       activeVocabId: state.activeVocabId || vocab.id,
     })
   }

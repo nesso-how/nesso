@@ -1,4 +1,4 @@
-import type { Plugin } from '@nesso/plugin'
+import type { Plugin, VocabDefinition } from '@nesso/plugin'
 
 export const relationIds = {
   linksTo: 'urn:uuid:c7aeeb73-f438-5bc6-a02b-87c06755a15d',
@@ -9,7 +9,8 @@ export const relationIds = {
 
 export const defaultRelationId = relationIds.linksTo
 
-export const defaultRelationTypes = Object.entries(relationIds).map(([label, id]) => ({ id, label }))
+export const defaultRelationTypes: VocabDefinition['relationTypes'] =
+  Object.entries(relationIds).map(([label, id]) => ({ id, label }))
 
 export const vocabPlugin: Plugin = () => ({
   vocabs: [{

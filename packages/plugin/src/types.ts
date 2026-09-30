@@ -17,7 +17,7 @@ export type GraphSnapshot = DeepReadonly<Graph>
 export type VocabDefinition = {
   readonly id: string
   readonly label: string
-  readonly relationTypes: readonly RelationType[]
+  readonly relationTypes: readonly Readonly<RelationType>[]
   readonly defaultTypeId: string
 }
 
@@ -46,7 +46,8 @@ export type NessoStore = {
   readonly removeTag: (id: string, tag: string) => void
   readonly addConcept: (position?: Position) => string
   readonly connect: (source: string, target: string) => void
-  readonly setRelationType: (id: string, label: string) => void
+  readonly setRelationType: (id: string, typeId: string) => void
+  readonly createRelationType: (id: string, label: string) => void
   readonly removeConcept: (id: string) => void
   readonly removeRelation: (id: string) => void
   readonly editGraph: (edit: (graph: Graph) => Graph) => void
