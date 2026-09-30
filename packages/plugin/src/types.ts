@@ -23,15 +23,30 @@ export type VocabDefinition = {
 
 export type ViewMode = 'focus' | 'whole'
 
-export type NessoState = {
-  readonly graph: GraphSnapshot
-  readonly view: ViewMode
-  readonly viewGraph: GraphSnapshot
+export type Viewport = {
+  readonly x: number
+  readonly y: number
+  readonly zoom: number
+}
+
+export type WorkspaceState = {
   readonly focusId: string
-  readonly selected: Selection
-  readonly vocabs: readonly VocabDefinition[]
+  readonly view: ViewMode
+  readonly viewports: Readonly<Partial<Record<string, Viewport>>>
+}
+
+export type Preferences = {
   readonly activeVocabId: string
   readonly activeRendererId: string
+}
+
+export type NessoState = {
+  readonly graph: GraphSnapshot
+  readonly workspace: WorkspaceState
+  readonly preferences: Preferences
+  readonly viewGraph: GraphSnapshot
+  readonly selected: Selection
+  readonly vocabs: readonly VocabDefinition[]
 }
 
 export type NessoStore = {
@@ -40,6 +55,7 @@ export type NessoStore = {
   readonly setFocus: (id: string) => void
   readonly setSelection: (selection: Selection) => void
   readonly setView: (mode: ViewMode) => void
+  readonly setViewport: (rendererId: string, viewport: Viewport) => void
   readonly setConceptPosition: (id: string, position: Readonly<Position>) => void
   readonly setConceptPositions: (updates: readonly { readonly id: string; readonly position: Readonly<Position> }[]) => void
   readonly setConceptLabel: (id: string, label: string) => void

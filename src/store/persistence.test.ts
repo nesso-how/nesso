@@ -1,0 +1,172 @@
+import assert from 'node:assert/strict'
+import test from 'node:test'
+import { parseGraph, serializeGraph, type Graph } from '@nesso/schema'
+import { createNessoStore } from './create.ts'
+import { connectPersistence, loadPersistence, storageKeys } from './persistence.ts'
+
+const fixture = (): Graph => ({
+  concepts: [
+    { id: 'urn:one', label: 'One', tags: ['Mobility'], position: { x: 10, y: 20 } },
+    { id: 'urn:two', label: 'Two', tags: ['Energy'], position: { x: 30, y: 40 } },
+    { id: 'urn:hidden', label: 'Hidden', tags: [], position: { x: 50, y: 60 } },
+  ],
+  relations: [{ source: 'urn:one', predicate: 'urn:links', target: 'urn:two' }],
+  relationTypes: [{ id: 'urn:links', label: 'links' }, { id: 'urn:unused', label: 'unused' }],
+})
+
+const memoryStorage = () => {
+  const records = new Map<string, string>()
+  const writes: string[] = []
+  return {
+    records,
+    writes,
+    getItem: (key: string) => records.get(key) ?? null,
+    setItem: (key: string, value: string) => {
+      records.set(key, value)
+      writes.push(key)
+    },
+  }
+}
+
+const registeredHost = (graph: Graph | null, restored = {}) => {
+  const host = createNessoStore(graph, restored)
+  host.registerVocab({
+    id: 'vocab', label: 'Vocabulary', defaultTypeId: 'urn:links',
+    relationTypes: [{ id: 'urn:links', label: 'links' }],
+  })
+  host.registerRenderer({ id: 'graph', label: 'Graph', component: () => null })
+  return host
+}
+
+test('local persistence round-trips the whole document, workspace and preferences, not runtime state', () => {
+  const storage = memoryStorage()
+  const loaded = loadPersistence(() => storage)
+  const host = registeredHost(fixture())
+  host.ui.setTagFilter(['Mobility', 'Energy'])
+  host.ui.setPanelSizes({ explorerWidth: 310, inspectorWidth: 330 })
+  host.store.setViewport('graph', { x: 100, y: 200, zoom: 0.75 })
+  host.store.setConceptLabel('urn:one', 'Renamed')
+  host.store.setSelection({ kind: 'concept', id: 'urn:two' })
+  const persistence = connectPersistence(host, () => storage, loaded)
+  persistence.flush()
+  const saved = JSON.parse(storage.records.get(storageKeys.document)!)
+  assert.deepEqual(Object.keys(saved), ['version', 'graph', 'workspace'])
+  assert.deepEqual(parseGraph(saved.graph), host.store.getState().graph)
+  assert.equal(saved.graph['@graph'].length, 5)
+  assert.equal(host.store.getState().viewGraph.concepts.length, 2)
+  const restored = loadPersistence(() => storage)
+  const reopened = registeredHost(restored.graph!, restored).store.getState()
+  assert.deepEqual(reopened.graph, host.store.getState().graph)
+  assert.deepEqual(reopened.workspace, host.store.getState().workspace)
+  assert.deepEqual(reopened.preferences, host.store.getState().preferences)
+  assert.equal(reopened.selected, null)
+  assert.deepEqual(reopened.persistenceIssues, [])
+  assert.deepEqual(reopened.viewGraph.concepts.map(({ id }) => id), ['urn:one', 'urn:two'])
+  const preferences = host.store.getState().preferences
+  host.ui.resetGraph()
+  const reset = host.store.getState()
+  assert.equal(reset.graph.concepts.length, 1)
+  assert.deepEqual(reset.graph.relations, [])
+  assert.deepEqual(reset.graph.relationTypes, [])
+  assert.deepEqual(reset.workspace, { focusId: reset.graph.concepts[0].id, view: 'focus', tagFilter: [], viewports: {} })
+  assert.equal(reset.selected, null)
+  assert.equal(reset.preferences, preferences)
+  persistence.flush()
+  const savedReset = loadPersistence(() => storage)
+  assert.deepEqual(registeredHost(savedReset.graph!, savedReset).store.getState().graph, reset.graph)
+  storage.records.set(storageKeys.document, JSON.stringify({ version: 1, graph: null, workspace: null }))
+  const deleted = loadPersistence(() => storage)
+  assert.equal(registeredHost(deleted.graph ?? null, deleted).store.getState().graph.concepts.length, 1)
+  persistence.dispose()
+})
+
+test('autosave debounces durable sections only and flushes pending edits on shutdown', (context) => {
+  context.mock.timers.enable({ apis: ['setTimeout'] })
+  const storage = memoryStorage()
+  const host = registeredHost(fixture())
+  const persistence = connectPersistence(host, () => storage, loadPersistence(() => storage))
+  persistence.flush()
+  storage.writes.length = 0
+  host.store.setSelection({ kind: 'concept', id: 'urn:two' })
+  context.mock.timers.tick(200)
+  assert.deepEqual(storage.writes, [])
+  host.store.setConceptLabel('urn:one', 'First')
+  context.mock.timers.tick(100)
+  host.store.setConceptLabel('urn:one', 'Last')
+  context.mock.timers.tick(199)
+  assert.deepEqual(storage.writes, [])
+  context.mock.timers.tick(1)
+  assert.deepEqual(storage.writes, [storageKeys.document])
+  assert.equal(loadPersistence(() => storage).graph?.concepts[0].label, 'Last')
+  storage.writes.length = 0
+  host.ui.setPanelSizes({ explorerWidth: 300, inspectorWidth: 350 })
+  context.mock.timers.tick(200)
+  assert.deepEqual(storage.writes, [storageKeys.preferences])
+  host.store.setConceptLabel('urn:one', 'Before closing')
+  persistence.dispose()
+  assert.equal(loadPersistence(() => storage).graph?.concepts[0].label, 'Before closing')
+  storage.writes.length = 0
+  host.store.setConceptLabel('urn:one', 'After closing')
+  persistence.flush()
+  assert.deepEqual(storage.writes, [])
+})
+
+test('invalid records are reported and never overwritten while the other section can still save', () => {
+  const state = registeredHost(fixture()).store.getState()
+  const invalid = [
+    ['document', '{broken json'],
+    ['preferences', '{broken json'],
+    ['document', JSON.stringify({ version: 2 })],
+    ['document', JSON.stringify({ version: 1, graph: serializeGraph({ concepts: [], relations: [], relationTypes: [] }), workspace: state.workspace })],
+    ['document', JSON.stringify({ version: 1, graph: serializeGraph(fixture()), workspace: { ...state.workspace, view: 'unknown' } })],
+    ['preferences', JSON.stringify({ version: 1, preferences: { ...state.preferences, panels: { explorerWidth: 0, inspectorWidth: 280 } } })],
+  ] as const
+  for (const [section, text] of invalid) {
+    const storage = memoryStorage()
+    storage.records.set(storageKeys[section], text)
+    const loaded = loadPersistence(() => storage)
+    assert.deepEqual(loaded.blocked, [section])
+    assert.ok(loaded.issues[0].path.startsWith(section))
+    const host = registeredHost(loaded.graph ?? fixture(), loaded)
+    const persistence = connectPersistence(host, () => storage, loaded)
+    host.store.setConceptLabel('urn:one', 'Memory only')
+    host.ui.setPanelSizes({ explorerWidth: 300, inspectorWidth: 350 })
+    persistence.flush()
+    assert.equal(storage.records.get(storageKeys[section]), text)
+    assert.equal(storage.writes.includes(storageKeys[section]), false)
+    assert.deepEqual(host.store.getState().persistenceIssues, loaded.issues)
+    assert.equal(storage.writes.length, 1)
+    persistence.dispose()
+  }
+})
+
+test('storage failures are reported, preserve saved data and allow retrying in-memory edits', () => {
+  const denied = loadPersistence(() => { throw new Error('Access denied') })
+  assert.deepEqual(denied.blocked, ['document', 'preferences'])
+  assert.equal(denied.issues.length, 2)
+  const storage = memoryStorage()
+  const host = registeredHost(fixture())
+  const loaded = loadPersistence(() => storage)
+  let quotaExceeded = false
+  const limited = {
+    getItem: storage.getItem,
+    setItem: (key: string, value: string) => {
+      if (quotaExceeded && key === storageKeys.document) throw new Error('Quota exceeded')
+      storage.setItem(key, value)
+    },
+  }
+  const persistence = connectPersistence(host, () => limited, loaded)
+  persistence.flush()
+  const original = storage.records.get(storageKeys.document)
+  quotaExceeded = true
+  host.store.setConceptLabel('urn:one', 'Unsaved')
+  persistence.flush()
+  assert.equal(storage.records.get(storageKeys.document), original)
+  assert.match(host.store.getState().persistenceIssues[0].message, /Quota/)
+  quotaExceeded = false
+  host.store.setConceptLabel('urn:one', 'Latest')
+  persistence.flush()
+  assert.equal(loadPersistence(() => storage).graph?.concepts[0].label, 'Latest')
+  assert.deepEqual(host.store.getState().persistenceIssues, [])
+  persistence.dispose()
+})

@@ -3,6 +3,7 @@ import test from 'node:test'
 import type { NessoStore, VocabDefinition } from '@nesso/plugin'
 import { relationKey, SchemaError, validateGraph, type Graph } from '@nesso/schema'
 import { createNessoStore } from './create.ts'
+import { NessoError } from './errors.ts'
 
 const fixture = (): Graph => ({
   concepts: [
@@ -58,7 +59,7 @@ test('an invalid edit is rejected atomically and leaves document, focus and sele
   }))
   assert.ok(issues.some(({ path, message }) => path === 'relations[2]' && message.includes('urn:missing')))
   assert.equal(host.store.getState().graph, before)
-  assert.equal(host.store.getState().focusId, 'urn:n2')
+  assert.equal(host.store.getState().workspace.focusId, 'urn:n2')
   assert.deepEqual(host.store.getState().selected, { kind: 'relation', id: relationKey({ source: 'urn:n1', predicate: 'urn:links', target: 'urn:n3' }) })
   host.store.setConceptLabel('urn:n1', 'Renamed')
   assert.equal(host.store.getState().graph.concepts[0].label, 'Renamed')
@@ -71,7 +72,7 @@ test('deleting a concept prunes incident relations, reconciles focus and selecti
   host.store.setSelection({ kind: 'relation', id: relationKey({ source: 'urn:n1', predicate: 'urn:links', target: 'urn:n3' }) })
   host.store.removeConcept('urn:n1')
   const state = host.store.getState()
-  assert.equal(state.focusId, 'urn:n2')
+  assert.equal(state.workspace.focusId, 'urn:n2')
   assert.deepEqual(state.graph.relations, [])
   assert.equal(state.selected, null)
   host.store.removeConcept('urn:n3')
@@ -125,7 +126,7 @@ test('vocab registration validates, switching never rewrites the document, and u
   const document = host.store.getState().graph
   host.registerVocab(vocabB)
   host.store.setActiveVocab('b')
-  assert.equal(host.store.getState().activeVocabId, 'b')
+  assert.equal(host.store.getState().preferences.activeVocabId, 'b')
   assert.equal(host.store.getState().graph, document)
   const added = host.store.addConcept()
   const state = host.store.getState()
@@ -138,7 +139,7 @@ test('the view graph materializes the focus neighborhood and follows the view mo
   const host = createNessoStore(fixture())
   host.registerVocab(vocabA)
   let state = host.store.getState()
-  assert.equal(state.view, 'focus')
+  assert.equal(state.workspace.view, 'focus')
   assert.deepEqual(state.viewGraph.concepts.map((concept) => concept.id), ['urn:n1', 'urn:n2', 'urn:n3'])
   const added = host.store.addConcept()
   assert.ok(host.store.getState().viewGraph.concepts.some((concept) => concept.id === added))
@@ -147,7 +148,7 @@ test('the view graph materializes the focus neighborhood and follows the view mo
   assert.equal(state.viewGraph, state.graph)
   host.store.setFocus('urn:n2')
   state = host.store.getState()
-  assert.equal(state.view, 'focus')
+  assert.equal(state.workspace.view, 'focus')
   assert.deepEqual(state.viewGraph.concepts.map((concept) => concept.id), ['urn:n1', 'urn:n2'])
   assert.deepEqual(state.viewGraph.relations, [{ source: 'urn:n1', predicate: 'urn:links', target: 'urn:n2' }])
   assert.deepEqual(state.viewGraph.relationTypes, [{ id: 'urn:links', label: 'links' }])
@@ -157,7 +158,7 @@ test('renderer registration rejects duplicate ids and unknown activation, first 
   const host = createNessoStore(fixture())
   const renderer = { id: 'graph', label: 'Graph', component: () => null }
   host.registerRenderer(renderer)
-  assert.equal(host.store.getState().activeRendererId, 'graph')
+  assert.equal(host.store.getState().preferences.activeRendererId, 'graph')
   const issues = issuesOf(() => host.registerRenderer({ ...renderer, label: 'Other' }))
   assert.deepEqual(issues, [{ path: 'renderer.id', message: 'Duplicate renderer id: graph' }])
   assert.match(issuesOf(() => host.store.setActiveRenderer('other')).map(({ message }) => message).join(' '), /Unknown renderer/)
@@ -291,7 +292,7 @@ test('registered vocabularies and their inserted types are owned independently b
   for (const host of [a, b]) {
     host.store.addConcept()
     const state = host.store.getState()
-    assert.equal(state.activeVocabId, 'shared')
+    assert.equal(state.preferences.activeVocabId, 'shared')
     assert.equal(state.vocabs[0].defaultTypeId, 'urn:shared-type')
     assert.deepEqual(state.graph.relationTypes.at(-1), { id: 'urn:shared-type', label: 'shared' })
     assert.notEqual(state.graph.relationTypes.at(-1), state.vocabs[0].relationTypes[0])
@@ -422,5 +423,65 @@ test('domain writes share surviving objects without mutating previous snapshots'
     assert.equal(after.graph.relationTypes[0], before.graph.relationTypes[0])
     assert.deepEqual(before, snapshot)
     assert.deepEqual(validateGraph(after.graph), [])
+  }
+})
+
+test('restoration resolves saved focus and plugin preferences, falling back when unavailable', () => {
+  for (const missing of [false, true]) {
+    const host = createNessoStore(fixture(), {
+      workspace: { focusId: missing ? 'urn:missing' : 'urn:n2', view: 'whole', tagFilter: [], viewports: {} },
+      preferences: {
+        activeVocabId: missing ? 'removed' : 'b', activeRendererId: missing ? 'removed' : 'other',
+        panels: { explorerWidth: 256, inspectorWidth: 280 },
+      },
+    })
+    host.registerVocab(vocabA)
+    host.registerVocab(vocabB)
+    for (const id of ['graph', 'other']) host.registerRenderer({ id, label: id, component: () => null })
+    const state = host.store.getState()
+    assert.equal(state.workspace.focusId, missing ? 'urn:n1' : 'urn:n2')
+    assert.equal(state.preferences.activeVocabId, missing ? 'a' : 'b')
+    assert.equal(state.preferences.activeRendererId, missing ? 'graph' : 'other')
+    assert.equal(state.viewGraph, state.graph)
+    assert.equal(state.selected, null)
+    assert.deepEqual(state.graph, fixture())
+  }
+})
+
+test('UI and viewport writes own their inputs, ignore no-ops and reject invalid changes atomically', () => {
+  const host = createNessoStore(fixture())
+  host.registerRenderer({ id: 'graph', label: 'Graph', component: () => null })
+  const graph = host.store.getState().graph
+  const tags = [' Mobility ', 'Energy', 'Energy', '']
+  const panels = { explorerWidth: 300, inspectorWidth: 350 }
+  const viewport = { x: 100, y: -200, zoom: 0.8 }
+  host.ui.setTagFilter(tags)
+  host.ui.setPanelSizes(panels)
+  host.store.setViewport('graph', viewport)
+  tags.push('Other')
+  panels.explorerWidth = NaN
+  viewport.x = NaN
+  const state = host.store.getState()
+  assert.equal(state.graph, graph)
+  assert.deepEqual(state.workspace.tagFilter, ['Mobility', 'Energy'])
+  assert.deepEqual(state.workspace.viewports.graph, { x: 100, y: -200, zoom: 0.8 })
+  assert.deepEqual(state.preferences.panels, { explorerWidth: 300, inspectorWidth: 350 })
+  let notifications = 0
+  host.store.subscribe(() => notifications++)
+  host.ui.setTagFilter(['Mobility', 'Energy'])
+  host.ui.setPanelSizes({ explorerWidth: 300, inspectorWidth: 350 })
+  host.store.setViewport('graph', { x: 100, y: -200, zoom: 0.8 })
+  assert.equal(host.store.getState(), state)
+  assert.equal(notifications, 0)
+  const writes = [
+    () => host.ui.setPanelSizes({ explorerWidth: 500, inspectorWidth: 300 }),
+    () => host.ui.setPanelSizes({ explorerWidth: 300, inspectorWidth: 100 }),
+    () => host.store.setViewport('missing', { x: 0, y: 0, zoom: 1 }),
+    () => host.store.setViewport('graph', { x: Infinity, y: 0, zoom: 1 }),
+    () => host.store.setViewport('graph', { x: 0, y: 0, zoom: 0 }),
+  ]
+  for (const write of writes) {
+    assert.throws(write, (error: unknown) => error instanceof NessoError && error.issues.length > 0)
+    assert.equal(host.store.getState(), state)
   }
 })

@@ -4,7 +4,7 @@ Action plugin exporting the visible graph as a JSON-LD download.
 
 ## Usage
 
-Add `exportPlugin` to the static plugin list in `src/plugins.ts`; it contributes an `Export` button to the navbar that downloads whatever the host currently shows (focused neighborhood or whole graph).
+Add `exportPlugin` to the static plugin list in `src/plugins.ts`; it contributes an `Export` item to the navbar's hamburger menu that downloads whatever the host currently shows (focused neighborhood or whole graph).
 
 ## API
 

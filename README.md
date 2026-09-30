@@ -21,13 +21,10 @@ pnpm test
 
 DMGs are not signed or notarized; Gatekeeper may block downloaded apps.
 
-## Architecture
+## Usage
 
-One core graph, owned by the host store, with plugins extending it.
+The first graph starts from `src/data/seed-graph.json`. Edits, navigation, tag filters, and panel sizes are saved automatically in this browser, without cross-device sync.
 
-- `@nesso/schema` — core graph model, JSON-LD profile, and validation.
-- `src/` — host: owns the single graph and its store, materializes the visible graph (`viewGraph`), registers plugins.
-- `@nesso/plugin` — types-only plugin contract.
-- `@nesso/vocab` — default vocabulary plugin.
-- `@nesso/graph` — React Flow renderer plugin.
-- `@nesso/export` — action plugin exporting the visible graph as JSON-LD.
+The hamburger menu offers Export (the visible graph; choose All concepts for the whole graph) and Reset graph. Reset asks for confirmation, then starts a fresh graph with one concept, retaining app preferences.
+
+Storage failures show a warning and preserve existing saved data; editing remains available in memory. Browser storage is not a backup.

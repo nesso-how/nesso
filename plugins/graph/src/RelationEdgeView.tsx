@@ -19,7 +19,7 @@ export function RelationEdgeView(props: EdgeProps<RelationEdge>) {
     targetPosition,
   })
   const label = useNesso((state) => {
-    const vocab = state.vocabs.find((item) => item.id === state.activeVocabId)
+    const vocab = state.vocabs.find((item) => item.id === state.preferences.activeVocabId)
     if (data?.relationId === vocab?.defaultTypeId) return ''
     return state.graph.relationTypes.find((item) => item.id === data?.relationId)?.label ?? ''
   })

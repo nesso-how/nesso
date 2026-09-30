@@ -1,19 +1,19 @@
 import type { GraphSnapshot } from '@nesso/plugin'
-import { useState, type PointerEvent as ReactPointerEvent } from 'react'
+import { type PointerEvent as ReactPointerEvent } from 'react'
 import { ResizeHandle } from '@/components/ui/resizable'
 import { Sidebar } from '@/components/ui/sidebar'
-import { nessoStore, useNessoStore } from '@/store'
+import { host, nessoStore, useNessoStore } from '@/store'
 
 type ConceptView = GraphSnapshot['concepts'][number]
 
 const MIN_WIDTH = 200
 const MAX_WIDTH = 480
 
-export function AppSidebar({ onResize }: { onResize: (width: number) => void }) {
+export function AppSidebar() {
   const concepts = useNessoStore((state) => state.graph.concepts)
-  const focusId = useNessoStore((state) => state.focusId)
-  const view = useNessoStore((state) => state.view)
-  const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const focusId = useNessoStore((state) => state.workspace.focusId)
+  const view = useNessoStore((state) => state.workspace.view)
+  const selectedTags = useNessoStore((state) => state.workspace.tagFilter)
   const tags = [...new Set([...concepts.flatMap((concept) => concept.tags), ...selectedTags])].sort()
   const sorted = [...concepts].sort((a, b) => a.label.localeCompare(b.label))
   const filtered = sorted.filter((concept) => selectedTags.every((tag) => concept.tags.includes(tag)))
@@ -37,12 +37,10 @@ export function AppSidebar({ onResize }: { onResize: (width: number) => void }) 
 
   const startResize = (event: ReactPointerEvent<HTMLDivElement>) => {
     event.preventDefault()
-    // Same approach as react-resizable-panels: imperative updates during the
-    // gesture (no re-renders), React state commits once on pointer-up.
     const handle = event.currentTarget
     const wrapper = handle.closest<HTMLElement>('[data-slot="sidebar-wrapper"]')
     handle.dataset.resizing = ''
-    let width = 256
+    let width = host.store.getState().preferences.panels.explorerWidth
     const onMove = (move: PointerEvent) => {
       width = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, move.clientX))
       wrapper?.style.setProperty('--sidebar-width', `${width}px`)
@@ -51,7 +49,7 @@ export function AppSidebar({ onResize }: { onResize: (width: number) => void }) 
       delete handle.dataset.resizing
       window.removeEventListener('pointermove', onMove)
       window.removeEventListener('pointerup', stop)
-      onResize(width)
+      host.ui.setPanelSizes({ ...host.store.getState().preferences.panels, explorerWidth: width })
     }
     window.addEventListener('pointermove', onMove)
     window.addEventListener('pointerup', stop)
@@ -79,9 +77,9 @@ export function AppSidebar({ onResize }: { onResize: (width: number) => void }) 
                   type="checkbox"
                   checked={selectedTags.includes(tag)}
                   onChange={(event) =>
-                    setSelectedTags((current) =>
-                      event.target.checked ? [...current, tag] : current.filter((item) => item !== tag),
-                    )
+                    host.ui.setTagFilter(event.target.checked
+                      ? [...selectedTags, tag]
+                      : selectedTags.filter((item) => item !== tag))
                   }
                 />
                 {tag}

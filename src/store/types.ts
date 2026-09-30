@@ -1,0 +1,27 @@
+import type { NessoState, NessoStore, Preferences, WorkspaceState } from '@nesso/plugin'
+import type { SchemaIssue } from '@nesso/schema'
+
+export type PanelSizes = {
+  readonly explorerWidth: number
+  readonly inspectorWidth: number
+}
+
+export type HostWorkspace = WorkspaceState & {
+  readonly tagFilter: readonly string[]
+}
+
+export type HostPreferences = Preferences & {
+  readonly panels: PanelSizes
+}
+
+export type HostState = NessoState & {
+  readonly workspace: HostWorkspace
+  readonly preferences: HostPreferences
+  readonly persistenceIssues: readonly Readonly<SchemaIssue>[]
+}
+
+export type HostStore = Omit<NessoStore, 'getState'> & {
+  readonly getState: () => HostState
+}
+
+export type RestoredState = Partial<Pick<HostState, 'workspace' | 'preferences'>>

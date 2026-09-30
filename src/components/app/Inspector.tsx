@@ -108,9 +108,9 @@ export function Inspector() {
   const [tagInput, setTagInput] = useState('')
   const graph = useNessoStore((state) => state.graph)
   const selected = useNessoStore((state) => state.selected)
-  const focusId = useNessoStore((state) => state.focusId)
+  const focusId = useNessoStore((state) => state.workspace.focusId)
   const vocabs = useNessoStore((state) => state.vocabs)
-  const activeVocabId = useNessoStore((state) => state.activeVocabId)
+  const activeVocabId = useNessoStore((state) => state.preferences.activeVocabId)
   const activeVocab = vocabs.find((vocab) => vocab.id === activeVocabId)
   const offered = new Map<string, Readonly<RelationType>>()
   for (const type of [...graph.relationTypes, ...(activeVocab?.relationTypes ?? [])]) {

@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   Background,
   BackgroundVariant,
@@ -27,9 +27,11 @@ export function Canvas() {
   const graph = useNesso((state) => state.viewGraph)
   const selected = useNesso((state) => state.selected)
   const conceptCount = useNesso((state) => state.graph.concepts.length)
-  const focusId = useNesso((state) => state.focusId)
-  const view = useNesso((state) => state.view)
+  const focusId = useNesso((state) => state.workspace.focusId)
+  const view = useNesso((state) => state.workspace.view)
   const store = useStore()
+  const [initialViewport] = useState(() => store.getState().workspace.viewports.graph)
+  const navigation = useRef({ focusId, view })
   const { fitView } = useReactFlow()
 
   const nodes = graph.concepts.map((concept) =>
@@ -80,6 +82,8 @@ export function Canvas() {
   }
 
   useEffect(() => {
+    if (navigation.current.focusId === focusId && navigation.current.view === view) return
+    navigation.current = { focusId, view }
     const frame = requestAnimationFrame(() => {
       void fitView({ padding: 0.3, maxZoom: 1.2, duration: 300 })
     })
@@ -98,8 +102,10 @@ export function Canvas() {
         onConnect={onConnect}
         connectionLineStyle={{ stroke: 'var(--muted-foreground)', strokeWidth: 2 }}
         proOptions={{ hideAttribution: true }}
-        fitView
-        fitViewOptions={{ padding: 0.3 }}
+        defaultViewport={initialViewport}
+        onMoveEnd={(_event, viewport) => store.setViewport('graph', viewport)}
+        fitView={!initialViewport}
+        fitViewOptions={{ padding: 0.3, maxZoom: 1.2 }}
         minZoom={0.2}
       >
         <Background variant={BackgroundVariant.Dots} gap={20} size={1.5} />

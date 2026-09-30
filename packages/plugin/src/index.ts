@@ -6,8 +6,11 @@ export type {
   Plugin,
   PluginContext,
   PluginDefinition,
+  Preferences,
   RendererDefinition,
   Selection,
   ViewMode,
+  Viewport,
   VocabDefinition,
+  WorkspaceState,
 } from './types.ts'
