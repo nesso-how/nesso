@@ -11,10 +11,10 @@ import {
   SchemaError,
   validateGraph,
   type Graph,
-  type RelationType,
   type SchemaIssue,
 } from '@nesso/schema'
 import { createStore } from 'zustand/vanilla'
+import { applyGraphOperations } from './operations.ts'
 import { defaultPanels, fail, parsePanels, parsePreferences, parseTagFilter, parseViewport, parseWorkspace } from './settings.ts'
 import type { HostPreferences, HostState, HostStore, HostWorkspace, PanelSizes, RestoredState } from './types.ts'
 
@@ -44,14 +44,6 @@ const neighborhood = (graph: GraphSnapshot, focusId: string): GraphSnapshot => {
     relationTypes: graph.relationTypes.filter((type) => relations.some((relation) => relation.predicate === type.id)),
   }
 }
-
-const defaultType = (vocab: VocabDefinition): Readonly<RelationType> =>
-  vocab.relationTypes.find((item) => item.id === vocab.defaultTypeId) ?? { id: vocab.defaultTypeId, label: '' }
-
-const withType = (graph: GraphSnapshot, type: Readonly<RelationType>): GraphSnapshot['relationTypes'] =>
-  graph.relationTypes.some((item) => item.id === type.id)
-    ? graph.relationTypes
-    : [...graph.relationTypes, { ...type }]
 
 const newGraph = (): Graph => ({
   concepts: [{ id: newIri(), label: 'Concept 1', tags: [], position: { x: 0, y: 0 } }],
@@ -103,50 +95,9 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
     })
   }
 
-  const activeVocab = (): VocabDefinition => {
-    const state = store.getState()
-    const vocab = state.vocabs.find((item) => item.id === state.preferences.activeVocabId)
-    if (!vocab) throw new SchemaError([{ path: 'activeVocabId', message: 'No active vocabulary' }])
-    return vocab
-  }
-
-  const retypeRelation = (id: string, type: Readonly<RelationType>): void => {
-    const state = store.getState()
-    const relation = state.graph.relations.find((item) => relationKey(item) === id)
-    if (!relation || relation.predicate === type.id) return
-    const triple = relationKey({ ...relation, predicate: type.id })
-    if (state.graph.relations.some((item) => relationKey(item) === triple)) return
-    commit({
-      ...state.graph,
-      relationTypes: withType(state.graph, type),
-      relations: state.graph.relations.map((item) => item === relation ? { ...item, predicate: type.id } : item),
-    }, { kind: 'relation', id: triple })
-  }
-
-  const updateConcept = (
-    id: string,
-    update: (concept: GraphSnapshot['concepts'][number]) => GraphSnapshot['concepts'][number],
-  ): void => {
-    const graph = store.getState().graph
-    const concept = graph.concepts.find((item) => item.id === id)
-    if (!concept) return
-    const next = update(concept)
-    if (next === concept) return
-    commit({ ...graph, concepts: graph.concepts.map((item) => item === concept ? next : item) })
-  }
-
-  const setConceptPositions: NessoStore['setConceptPositions'] = (updates) => {
-    if (updates.length === 0) return
-    const graph = store.getState().graph
-    const positions = new Map(updates.map(({ id, position }) => [id, position]))
-    let changed = false
-    const concepts = graph.concepts.map((concept) => {
-      const position = positions.get(concept.id)
-      if (!position || (position.x === concept.position.x && position.y === concept.position.y)) return concept
-      changed = true
-      return { ...concept, position: { x: position.x, y: position.y } }
-    })
-    if (changed) commit({ ...graph, concepts })
+  const applyOperations: NessoStore['applyOperations'] = (operations) => {
+    const next = applyGraphOperations(store.getState(), operations)
+    commit(next.graph, next.selected)
   }
 
   const renderers = new Map<string, RendererDefinition>()
@@ -209,97 +160,23 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
       } })
     },
 
-    setConceptPosition: (id, position) => setConceptPositions([{ id, position }]),
-    setConceptPositions,
-
-    setConceptLabel: (id, label) => updateConcept(id, (concept) =>
-      concept.label === label ? concept : { ...concept, label }),
-
-    addTags: (id, tags) => updateConcept(id, (concept) => {
-      const known = store.getState().graph.concepts.flatMap((item) => item.tags)
-      const next = [...concept.tags]
-      for (const raw of tags) {
-        const tag = raw.trim()
-        if (!tag || next.some((item) => item.toLowerCase() === tag.toLowerCase())) continue
-        next.push(known.find((item) => item.toLowerCase() === tag.toLowerCase()) ?? tag)
-      }
-      return next.length === concept.tags.length ? concept : { ...concept, tags: next }
-    }),
-
-    removeTag: (id, tag) => updateConcept(id, (concept) =>
-      concept.tags.includes(tag) ? { ...concept, tags: concept.tags.filter((item) => item !== tag) } : concept),
+    applyOperations,
+    setConceptPosition: (id, position) => applyOperations([{ kind: 'concept.position', id, value: position }]),
+    setConceptPositions: (updates) => applyOperations([{ kind: 'concept.positions', updates }]),
+    setConceptLabel: (id, label) => applyOperations([{ kind: 'concept.label', id, value: label }]),
+    addTags: (id, tags) => applyOperations([{ kind: 'concept.tags.add', id, tags }]),
+    removeTag: (id, tag) => applyOperations([{ kind: 'concept.tags.remove', id, tag }]),
 
     addConcept: (position) => {
       const id = newIri()
-      const vocab = activeVocab()
-      const { graph, workspace: { focusId } } = store.getState()
-      const focus = graph.concepts.find((concept) => concept.id === focusId)
-      commit({
-        ...graph,
-        relationTypes: withType(graph, defaultType(vocab)),
-        concepts: [...graph.concepts, {
-          id,
-          label: `Concept ${graph.concepts.length + 1}`,
-          tags: [],
-          position: position ? { x: position.x, y: position.y } : {
-            x: (focus?.position.x ?? 0) + 160,
-            y: (focus?.position.y ?? 0) + 100,
-          },
-        }],
-        relations: [...graph.relations, { source: focusId, predicate: vocab.defaultTypeId, target: id }],
-      }, { kind: 'concept', id })
+      applyOperations([{ kind: 'concept.add', id, position }])
       return id
     },
-
-    connect: (source, target) => {
-      if (!source || !target || source === target) return
-      const state = store.getState()
-      const vocab = activeVocab()
-      const key = relationKey({ source, predicate: vocab.defaultTypeId, target })
-      if (state.graph.relations.some((relation) => relationKey(relation) === key)) return
-      commit({
-        ...state.graph,
-        relationTypes: withType(state.graph, defaultType(vocab)),
-        relations: [...state.graph.relations, { source, predicate: vocab.defaultTypeId, target }],
-      }, { kind: 'relation', id: key })
-    },
-
-    setRelationType: (id, typeId) => {
-      const type = store.getState().graph.relationTypes.find((item) => item.id === typeId)
-        ?? activeVocab().relationTypes.find((item) => item.id === typeId)
-      if (!type) throw new SchemaError([{ path: 'relationTypeId', message: `Unknown relation type: ${typeId}` }])
-      retypeRelation(id, type)
-    },
-
-    createRelationType: (id, rawLabel) => {
-      const label = rawLabel.trim()
-      if (!label) throw new SchemaError([{ path: 'label', message: 'Relation type label must not be empty' }])
-      retypeRelation(id, { id: newIri(), label })
-    },
-
-    removeConcept: (id) => {
-      const graph = store.getState().graph
-      if (!graph.concepts.some((concept) => concept.id === id)) return
-      const relations = graph.relations.filter((relation) =>
-        relation.source !== id && relation.target !== id,
-      )
-      commit({
-        ...graph,
-        concepts: graph.concepts.filter((concept) => concept.id !== id),
-        relations: relations.length === graph.relations.length ? graph.relations : relations,
-      })
-    },
-
-    removeRelation: (id) => {
-      const graph = store.getState().graph
-      const relations = graph.relations.filter((relation) => relationKey(relation) !== id)
-      if (relations.length !== graph.relations.length) commit({ ...graph, relations })
-    },
-
-    editGraph: (edit) => {
-      const draft = structuredClone(store.getState().graph) as Graph
-      commit(structuredClone(edit(draft)) as Graph)
-    },
+    connect: (source, target) => applyOperations([{ kind: 'relation.connect', source, target }]),
+    setRelationType: (id, typeId) => applyOperations([{ kind: 'relation.type', id, typeId }]),
+    createRelationType: (id, label) => applyOperations([{ kind: 'relation.type.create', id, typeId: newIri(), label }]),
+    removeConcept: (id) => applyOperations([{ kind: 'concept.remove', id }]),
+    removeRelation: (id) => applyOperations([{ kind: 'relation.remove', id }]),
 
     setActiveVocab: (id) => {
       if (!store.getState().vocabs.some((vocab) => vocab.id === id)) {

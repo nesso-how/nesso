@@ -47,7 +47,9 @@ export const exampleRendererPlugin: Plugin = ({ store }) => ({
 - `PluginContext`: supplies the host-created `NessoStore`.
 - `PluginDefinition`: optional `renderers`, `vocabs`, and `actions` contributions.
 - `NessoState`: readonly graph, workspace, preferences, visible graph, selection, and vocabulary definitions.
-- `NessoStore`: read/subscribe, graph editing, navigation, viewport, and active-plugin commands. Graph edits are validated and committed atomically or rejected with `SchemaError`; `editGraph` supplies an isolated mutable draft.
+- `NessoStore`: read/subscribe, graph editing, navigation, viewport, and active-plugin commands. Single-write methods delegate to `applyOperations`.
+- `applyOperations`: ordered graph writes, validated and committed atomically or rejected with `SchemaError`; no-ops do not notify. Creation operations require explicit IDs, generated with `newIri` from `@nesso/schema`.
+- `GraphOperation`: readonly domain writes for concepts and relations.
 - `RendererDefinition`, `VocabDefinition`, `ActionDefinition`: contribution shapes. Actions are `{ id, label, run }` commands; renderer components use the injected store.
 
 See [`src/types.ts`](src/types.ts) for all exported types and method signatures.

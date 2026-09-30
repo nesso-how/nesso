@@ -14,6 +14,19 @@ export type Selection =
 
 export type GraphSnapshot = DeepReadonly<Graph>
 
+export type GraphOperation =
+  | { readonly kind: 'concept.label'; readonly id: string; readonly value: string }
+  | { readonly kind: 'concept.position'; readonly id: string; readonly value: Readonly<Position> }
+  | { readonly kind: 'concept.positions'; readonly updates: readonly { readonly id: string; readonly position: Readonly<Position> }[] }
+  | { readonly kind: 'concept.tags.add'; readonly id: string; readonly tags: readonly string[] }
+  | { readonly kind: 'concept.tags.remove'; readonly id: string; readonly tag: string }
+  | { readonly kind: 'concept.add'; readonly id: string; readonly position?: Readonly<Position> }
+  | { readonly kind: 'concept.remove'; readonly id: string }
+  | { readonly kind: 'relation.connect'; readonly source: string; readonly target: string }
+  | { readonly kind: 'relation.type'; readonly id: string; readonly typeId: string }
+  | { readonly kind: 'relation.type.create'; readonly id: string; readonly typeId: string; readonly label: string }
+  | { readonly kind: 'relation.remove'; readonly id: string }
+
 export type VocabDefinition = {
   readonly id: string
   readonly label: string
@@ -67,7 +80,7 @@ export type NessoStore = {
   readonly createRelationType: (id: string, label: string) => void
   readonly removeConcept: (id: string) => void
   readonly removeRelation: (id: string) => void
-  readonly editGraph: (edit: (graph: Graph) => Graph) => void
+  readonly applyOperations: (operations: readonly GraphOperation[]) => void
   readonly setActiveVocab: (id: string) => void
   readonly setActiveRenderer: (id: string) => void
 }

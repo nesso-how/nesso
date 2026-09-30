@@ -1,5 +1,6 @@
 export type {
   ActionDefinition,
+  GraphOperation,
   GraphSnapshot,
   NessoState,
   NessoStore,
