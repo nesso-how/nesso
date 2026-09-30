@@ -2,7 +2,7 @@
 
 A minimal, light-only knowledge graph app for connecting concepts with directed relations.
 
-## Run
+## Run (browser)
 
 ```sh
 pnpm install
@@ -11,6 +11,15 @@ pnpm build
 pnpm lint
 pnpm test
 ```
+
+## macOS
+
+- `pnpm desktop` — build and run the desktop app.
+- Development: run `pnpm dev --host 127.0.0.1 --strictPort` and `pnpm desktop:dev` in separate terminals.
+- `pnpm dist:mac` — build Apple Silicon and Intel DMGs in `release/`.
+- Push a `v*` version tag to publish both DMGs on GitHub Releases.
+
+DMGs are not signed or notarized; Gatekeeper may block downloaded apps.
 
 ## Architecture
 
