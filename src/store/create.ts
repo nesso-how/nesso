@@ -3,6 +3,7 @@ import type {
   NessoStore,
   RendererDefinition,
   Selection,
+  ThemeDefinition,
   VocabDefinition,
 } from '@nesso/plugin'
 import {
@@ -66,12 +67,13 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
   const preferences: HostPreferences = restored.preferences ? parsePreferences(restored.preferences) : {
     activeVocabId: '',
     activeRendererId: '',
+    activeThemeId: '',
     panels: { ...defaultPanels },
   }
   const store = createStore<HostState>()(() => ({
     graph: initial,
     workspace: { ...workspace, focusId },
-    preferences: { ...preferences, activeVocabId: '', activeRendererId: '' },
+    preferences: { ...preferences, activeVocabId: '', activeRendererId: '', activeThemeId: '' },
     viewGraph: workspace.view === 'whole' ? initial : neighborhood(initial, focusId),
     selected: null,
     vocabs: [],
@@ -116,6 +118,24 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
   const getRenderer = (id: string): RendererDefinition | undefined => renderers.get(id)
 
   const listRenderers = (): readonly RendererDefinition[] => [...renderers.values()]
+
+  const themes = new Map<string, ThemeDefinition>()
+
+  const registerTheme = (theme: ThemeDefinition): void => {
+    if (typeof theme.id !== 'string' || !theme.id.trim() || themes.has(theme.id)) {
+      fail('theme.id', `Duplicate or missing theme id: ${theme.id}`)
+    }
+    if (typeof theme.label !== 'string' || !theme.label.trim()) fail('theme.label', 'Expected a theme label')
+    themes.set(theme.id, { id: theme.id, label: theme.label })
+    const state = store.getState()
+    if (!state.preferences.activeThemeId || theme.id === preferences.activeThemeId) {
+      store.setState({ preferences: { ...state.preferences, activeThemeId: theme.id } })
+    }
+  }
+
+  const getTheme = (id: string): ThemeDefinition | undefined => themes.get(id)
+
+  const listThemes = (): readonly ThemeDefinition[] => [...themes.values()]
 
   const nessoStore: HostStore = {
     getState: store.getState,
@@ -224,6 +244,13 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
 
   const ui = {
     resetGraph: (): void => commit(newGraph(), null, true),
+    setActiveTheme: (id: string): void => {
+      if (!themes.has(id)) fail('preferences.activeThemeId', `Unknown theme: ${id}`)
+      const state = store.getState()
+      if (state.preferences.activeThemeId !== id) {
+        store.setState({ preferences: { ...state.preferences, activeThemeId: id } })
+      }
+    },
     setTagFilter: (tags: readonly string[]): void => {
       const next = parseTagFilter(tags)
       const state = store.getState()
@@ -243,5 +270,5 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
     },
   }
 
-  return { store: nessoStore, ui, registerVocab, registerRenderer, getRenderer, listRenderers }
+  return { store: nessoStore, ui, registerVocab, registerRenderer, getRenderer, listRenderers, registerTheme, getTheme, listThemes }
 }

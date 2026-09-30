@@ -18,11 +18,11 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
-    "@fontsource-variable/geist": "^5.3.0",
     "@nesso/export": "workspace:*",
     "@nesso/graph": "workspace:*",
     "@nesso/plugin": "workspace:*",
     "@nesso/schema": "workspace:*",
+    "@nesso/theme": "workspace:*",
     "@nesso/vocab": "workspace:*",
     "@tailwindcss/vite": "^4.3.3",
     "class-variance-authority": "^0.7.1",

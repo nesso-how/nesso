@@ -66,10 +66,11 @@ export const parseWorkspace = (value: unknown): HostWorkspace => {
 }
 
 export const parsePreferences = (value: unknown): HostPreferences => {
-  const preferences = object(value, 'preferences', ['activeVocabId', 'activeRendererId', 'panels'])
+  const preferences = object(value, 'preferences', ['activeVocabId', 'activeRendererId', 'activeThemeId', 'panels'])
   return {
     activeVocabId: string(preferences.activeVocabId, 'preferences.activeVocabId'),
     activeRendererId: string(preferences.activeRendererId, 'preferences.activeRendererId'),
+    activeThemeId: preferences.activeThemeId === undefined ? '' : string(preferences.activeThemeId, 'preferences.activeThemeId'),
     panels: parsePanels(preferences.panels),
   }
 }

@@ -10,6 +10,7 @@ export type {
   Preferences,
   RendererDefinition,
   Selection,
+  ThemeDefinition,
   ViewMode,
   Viewport,
   VocabDefinition,

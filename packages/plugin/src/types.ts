@@ -97,10 +97,16 @@ export type ActionDefinition = {
   readonly run: () => void
 }
 
+export type ThemeDefinition = {
+  readonly id: string
+  readonly label: string
+}
+
 export type PluginDefinition = {
   readonly renderers?: readonly RendererDefinition[]
   readonly vocabs?: readonly VocabDefinition[]
   readonly actions?: readonly ActionDefinition[]
+  readonly themes?: readonly ThemeDefinition[]
 }
 
 export type PluginContext = { readonly store: NessoStore }

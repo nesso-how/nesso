@@ -1,0 +1,12 @@
+.react-flow .react-flow__controls-button {
+  background: var(--card);
+  border-color: var(--border);
+}
+
+.react-flow .react-flow__controls-button:hover {
+  background: var(--accent);
+}
+
+.react-flow .react-flow__controls-button svg {
+  fill: var(--foreground);
+}

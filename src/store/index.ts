@@ -14,7 +14,7 @@ export const host = createNessoStore(
 )
 host.ui.setPersistenceIssues(loaded.issues)
 
-export const { store: nessoStore, registerVocab, registerRenderer, getRenderer, listRenderers } = host
+export const { store: nessoStore, registerVocab, registerRenderer, getRenderer, listRenderers, registerTheme, getTheme, listThemes } = host
 
 export const startAutosave = (): (() => void) => {
   const persistence = connectPersistence(host, storage, loaded)

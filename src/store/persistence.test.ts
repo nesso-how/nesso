@@ -35,6 +35,7 @@ const registeredHost = (graph: Graph | null, restored = {}) => {
     relationTypes: [{ id: 'urn:links', label: 'links' }],
   })
   host.registerRenderer({ id: 'graph', label: 'Graph', component: () => null })
+  host.registerTheme({ id: 'light', label: 'Light' })
   return host
 }
 
@@ -63,6 +64,10 @@ test('local persistence round-trips the whole document, workspace and preference
   assert.deepEqual(reopened.persistenceIssues, [])
   assert.deepEqual(reopened.viewGraph.concepts.map(({ id }) => id), ['urn:one', 'urn:two'])
   const preferences = host.store.getState().preferences
+  const savedPreferences = JSON.parse(storage.records.get(storageKeys.preferences)!)
+  assert.equal(savedPreferences.preferences.activeThemeId, 'light')
+  assert.equal('themes' in savedPreferences.preferences, false)
+  assert.equal('themes' in saved, false)
   host.ui.resetGraph()
   const reset = host.store.getState()
   assert.equal(reset.graph.concepts.length, 1)
@@ -109,6 +114,43 @@ test('autosave debounces durable sections only and flushes pending edits on shut
   host.store.setConceptLabel('urn:one', 'After closing')
   persistence.flush()
   assert.deepEqual(storage.writes, [])
+})
+
+test('legacy theme-less preferences restore without blocking, while malformed theme ids remain protected', () => {
+  const storage = memoryStorage()
+  const legacy = {
+    activeVocabId: 'vocab',
+    activeRendererId: 'graph',
+    panels: { explorerWidth: 310, inspectorWidth: 330 },
+  }
+  storage.records.set(storageKeys.preferences, JSON.stringify({ version: 1, preferences: legacy }))
+  const loaded = loadPersistence(() => storage)
+  assert.deepEqual(loaded.blocked, [])
+  assert.deepEqual(loaded.issues, [])
+  assert.equal(loaded.preferences?.activeThemeId, '')
+  const host = registeredHost(fixture(), loaded)
+  assert.equal(host.store.getState().preferences.activeThemeId, 'light')
+  assert.deepEqual(host.store.getState().preferences.panels, legacy.panels)
+  const persistence = connectPersistence(host, () => storage, loaded)
+  persistence.flush()
+  assert.equal(loadPersistence(() => storage).preferences?.activeThemeId, 'light')
+  host.registerTheme({ id: 'alternative', label: 'Alternative' })
+  host.ui.setActiveTheme('alternative')
+  persistence.flush()
+  const restored = loadPersistence(() => storage)
+  const reopened = registeredHost(restored.graph!, restored)
+  reopened.registerTheme({ id: 'alternative', label: 'Alternative' })
+  assert.equal(reopened.store.getState().preferences.activeThemeId, 'alternative')
+  persistence.dispose()
+  const invalid = JSON.stringify({ version: 1, preferences: { ...legacy, activeThemeId: null } })
+  storage.records.set(storageKeys.preferences, invalid)
+  const blocked = loadPersistence(() => storage)
+  assert.deepEqual(blocked.blocked, ['preferences'])
+  assert.match(blocked.issues[0].path, /activeThemeId/)
+  const protectedPersistence = connectPersistence(registeredHost(fixture(), blocked), () => storage, blocked)
+  protectedPersistence.flush()
+  assert.equal(storage.records.get(storageKeys.preferences), invalid)
+  protectedPersistence.dispose()
 })
 
 test('invalid records are reported and never overwritten while the other section can still save', () => {

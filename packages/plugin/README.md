@@ -45,11 +45,11 @@ export const exampleRendererPlugin: Plugin = ({ store }) => ({
 
 - `Plugin`: factory `(context: PluginContext) => PluginDefinition`.
 - `PluginContext`: supplies the host-created `NessoStore`.
-- `PluginDefinition`: optional `renderers`, `vocabs`, and `actions` contributions.
+- `PluginDefinition`: optional `renderers`, `vocabs`, `actions`, and `themes` contributions.
 - `NessoState`: readonly graph, workspace, preferences, visible graph, selection, and vocabulary definitions.
 - `NessoStore`: read/subscribe, graph editing, navigation, viewport, and active-plugin commands. Single-write methods delegate to `applyOperations`.
 - `applyOperations`: ordered graph writes, validated and committed atomically or rejected with `SchemaError`; no-ops do not notify. Creation operations require explicit IDs, generated with `newIri` from `@nesso/schema`.
 - `GraphOperation`: readonly domain writes for concepts and relations.
-- `RendererDefinition`, `VocabDefinition`, `ActionDefinition`: contribution shapes. Actions are `{ id, label, run }` commands; renderer components use the injected store.
+- `RendererDefinition`, `VocabDefinition`, `ActionDefinition`, `ThemeDefinition`: contribution shapes. Actions are `{ id, label, run }` commands; renderer components use the injected store. Themes are `{ id, label }` definitions whose statically imported CSS scopes tokens to `:root[data-theme='<id>']`. The host owns the active theme preference and DOM application; theme plugins need no DOM access or store commands.
 
 See [`src/types.ts`](src/types.ts) for all exported types and method signatures.

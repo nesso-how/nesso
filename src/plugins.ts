@@ -1,10 +1,11 @@
 import type { ActionDefinition, Plugin } from '@nesso/plugin'
 import { exportPlugin } from '@nesso/export'
 import { graphPlugin } from '@nesso/graph'
+import { themePlugin } from '@nesso/theme'
 import { vocabPlugin } from '@nesso/vocab'
-import { nessoStore, registerRenderer, registerVocab } from '@/store'
+import { nessoStore, registerRenderer, registerTheme, registerVocab } from '@/store'
 
-const plugins: readonly Plugin[] = [vocabPlugin, graphPlugin, exportPlugin]
+const plugins: readonly Plugin[] = [vocabPlugin, graphPlugin, exportPlugin, themePlugin]
 
 export const actions: ActionDefinition[] = []
 
@@ -12,5 +13,6 @@ for (const plugin of plugins) {
   const definition = plugin({ store: nessoStore })
   for (const vocab of definition.vocabs ?? []) registerVocab(vocab)
   for (const renderer of definition.renderers ?? []) registerRenderer(renderer)
+  for (const theme of definition.themes ?? []) registerTheme(theme)
   actions.push(...(definition.actions ?? []))
 }

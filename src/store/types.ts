@@ -11,6 +11,7 @@ export type HostWorkspace = WorkspaceState & {
 }
 
 export type HostPreferences = Preferences & {
+  readonly activeThemeId: string
   readonly panels: PanelSizes
 }
 

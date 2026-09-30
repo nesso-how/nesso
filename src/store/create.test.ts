@@ -523,16 +523,19 @@ test('restoration resolves saved focus and plugin preferences, falling back when
       workspace: { focusId: missing ? 'urn:missing' : 'urn:n2', view: 'whole', tagFilter: [], viewports: {} },
       preferences: {
         activeVocabId: missing ? 'removed' : 'b', activeRendererId: missing ? 'removed' : 'other',
+        activeThemeId: missing ? 'removed' : 'alternative',
         panels: { explorerWidth: 256, inspectorWidth: 280 },
       },
     })
     host.registerVocab(vocabA)
     host.registerVocab(vocabB)
     for (const id of ['graph', 'other']) host.registerRenderer({ id, label: id, component: () => null })
+    for (const id of ['light', 'alternative']) host.registerTheme({ id, label: id })
     const state = host.store.getState()
     assert.equal(state.workspace.focusId, missing ? 'urn:n1' : 'urn:n2')
     assert.equal(state.preferences.activeVocabId, missing ? 'a' : 'b')
     assert.equal(state.preferences.activeRendererId, missing ? 'graph' : 'other')
+    assert.equal(state.preferences.activeThemeId, missing ? 'light' : 'alternative')
     assert.equal(state.viewGraph, state.graph)
     assert.equal(state.selected, null)
     assert.deepEqual(state.graph, fixture())
@@ -575,4 +578,46 @@ test('UI and viewport writes own their inputs, ignore no-ops and reject invalid 
     assert.throws(write, (error: unknown) => error instanceof NessoError && error.issues.length > 0)
     assert.equal(host.store.getState(), state)
   }
+})
+
+test('theme registration and activation are validated, isolated, and leave the document untouched', () => {
+  const host = createNessoStore(fixture())
+  const other = createNessoStore(fixture())
+  const before = host.store.getState()
+  const theme = { id: 'light', label: 'Light' }
+  host.registerTheme(theme)
+  theme.label = 'Changed externally'
+  assert.deepEqual(host.getTheme('light'), { id: 'light', label: 'Light' })
+  assert.deepEqual(other.listThemes(), [])
+  assert.equal(other.store.getState().preferences.activeThemeId, '')
+  host.registerTheme({ id: 'alternative', label: 'Alternative' })
+  assert.deepEqual(host.listThemes().map(({ id }) => id), ['light', 'alternative'])
+  assert.equal(host.store.getState().preferences.activeThemeId, 'light')
+  const snapshot = host.store.getState()
+  let notifications = 0
+  host.store.subscribe(() => notifications++)
+  for (const invalid of [
+    { id: 'light', label: 'Duplicate' },
+    { id: '', label: 'Missing id' },
+    { id: ' ', label: 'Blank id' },
+    { id: 'invalid', label: '' },
+  ]) {
+    assert.throws(() => host.registerTheme(invalid), NessoError)
+    assert.equal(host.store.getState(), snapshot)
+  }
+  assert.equal(host.getTheme('invalid'), undefined)
+  assert.throws(() => host.ui.setActiveTheme('missing'), (error: unknown) =>
+    error instanceof NessoError && error.issues[0].path === 'preferences.activeThemeId')
+  host.ui.setActiveTheme('light')
+  assert.equal(host.store.getState(), snapshot)
+  assert.equal(notifications, 0)
+  host.ui.setActiveTheme('alternative')
+  assert.equal(host.store.getState().preferences.activeThemeId, 'alternative')
+  assert.equal(notifications, 1)
+  assert.equal(host.store.getState().graph, before.graph)
+  assert.equal(host.store.getState().workspace, before.workspace)
+  assert.equal(host.store.getState().viewGraph, before.viewGraph)
+  const preferences = host.store.getState().preferences
+  host.ui.resetGraph()
+  assert.equal(host.store.getState().preferences, preferences)
 })
