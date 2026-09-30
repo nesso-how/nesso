@@ -1,12 +1,10 @@
 import { relationKey, type RelationType } from '@nesso/schema'
-import { defaultRelationId } from '@nesso/vocab'
 import { Autocomplete } from '@base-ui/react/autocomplete'
 import { useState } from 'react'
-import { Trash2, X } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { useGraphStore } from '@/store/graph'
+import { nessoStore, useNessoStore } from '@/store'
 
 function RelationInput({ edgeId, label, relationTypes, onSave }: {
   edgeId: string
@@ -16,9 +14,7 @@ function RelationInput({ edgeId, label, relationTypes, onSave }: {
 }) {
   const [value, setValue] = useState(label)
   const [open, setOpen] = useState(false)
-  const options = relationTypes
-    .filter((item) => item.id !== defaultRelationId)
-    .map((item) => item.label)
+  const options = relationTypes.map((item) => item.label)
   const query = value.trim().toLowerCase()
   const visible = options.filter((item) =>
     item.toLowerCase().includes(query) && item.toLowerCase() !== query)
@@ -87,16 +83,17 @@ function RelationInput({ edgeId, label, relationTypes, onSave }: {
 
 export function Inspector() {
   const [tagInput, setTagInput] = useState('')
-  const graph = useGraphStore((state) => state.graph)
-  const selected = useGraphStore((state) => state.selected)
-  const relationTypes = graph.relationTypes
-  const focusId = useGraphStore((state) => state.focusId)
-  const setConceptLabel = useGraphStore((state) => state.setConceptLabel)
-  const addTags = useGraphStore((state) => state.addTags)
-  const removeTag = useGraphStore((state) => state.removeTag)
-  const setEdgeRelation = useGraphStore((state) => state.setEdgeRelation)
-  const removeNode = useGraphStore((state) => state.removeNode)
-  const removeEdge = useGraphStore((state) => state.removeEdge)
+  const graph = useNessoStore((state) => state.graph)
+  const selected = useNessoStore((state) => state.selected)
+  const focusId = useNessoStore((state) => state.focusId)
+  const vocabs = useNessoStore((state) => state.vocabs)
+  const activeVocabId = useNessoStore((state) => state.activeVocabId)
+  const activeVocab = vocabs.find((vocab) => vocab.id === activeVocabId)
+  const offered = new Map<string, RelationType>()
+  for (const type of [...graph.relationTypes, ...(activeVocab?.relationTypes ?? [])]) {
+    if (type.id !== activeVocab?.defaultTypeId && !offered.has(type.id)) offered.set(type.id, type)
+  }
+  const relationTypes = [...offered.values()]
   const selectedNode = selected?.kind === 'concept'
     ? graph.concepts.find((concept) => concept.id === selected.id)
     : undefined
@@ -111,7 +108,7 @@ export function Inspector() {
     ? (graph.concepts.find((item) => item.id === selectedEdge.target)?.label ?? '?')
     : null
   const selectedRelationId = selectedEdge?.predicate
-  const selectedRelationLabel = selectedRelationId === defaultRelationId
+  const selectedRelationLabel = selectedRelationId === activeVocab?.defaultTypeId
     ? ''
     : relationTypes.find((item) => item.id === selectedRelationId)?.label ?? ''
 
@@ -127,7 +124,7 @@ export function Inspector() {
             <Input
               id="concept-label"
               value={concept.label}
-              onChange={(event) => setConceptLabel(concept.id, event.target.value)}
+              onChange={(event) => nessoStore.setConceptLabel(concept.id, event.target.value)}
             />
           </div>
           <div className="flex flex-col gap-1.5">
@@ -138,7 +135,7 @@ export function Inspector() {
                   key={tag}
                   type="button"
                   aria-label={`Remove ${tag} tag`}
-                  onClick={() => removeTag(concept.id, tag)}
+                  onClick={() => nessoStore.removeTag(concept.id, tag)}
                   className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs hover:bg-accent"
                 >
                   {tag} <X className="size-3" />
@@ -148,30 +145,27 @@ export function Inspector() {
             <form
               onSubmit={(event) => {
                 event.preventDefault()
-                addTags(concept.id, tagInput.split(','))
+                nessoStore.addTags(concept.id, tagInput.split(' '))
                 setTagInput('')
               }}
-              className="flex gap-1"
             >
               <Input
                 id="concept-tags"
                 value={tagInput}
-                onChange={(event) => setTagInput(event.target.value)}
-                placeholder="Tag, tag…"
+                onChange={(event) => {
+                  const next = event.target.value
+                  const index = next.lastIndexOf(' ')
+                  if (index === -1) {
+                    setTagInput(next)
+                    return
+                  }
+                  nessoStore.addTags(concept.id, next.slice(0, index).split(' '))
+                  setTagInput(next.slice(index + 1))
+                }}
+                placeholder="Type a tag, press space…"
               />
-              <Button type="submit" variant="outline" size="sm">Add</Button>
             </form>
           </div>
-          <Button
-            variant="destructive"
-            size="sm"
-            className="self-start"
-            disabled={graph.concepts.length === 1}
-            onClick={() => removeNode(concept.id)}
-          >
-            <Trash2 data-icon="inline-start" />
-            Delete
-          </Button>
         </section>
       ) : selectedEdge ? (
         <section className="flex flex-col gap-3">
@@ -182,21 +176,12 @@ export function Inspector() {
             {sourceLabel} &rarr; {targetLabel}
           </p>
           <RelationInput
-            key={relationKey(selectedEdge)}
+            key={`${relationKey(selectedEdge)}:${selectedRelationLabel}`}
             edgeId={relationKey(selectedEdge)}
             label={selectedRelationLabel}
             relationTypes={relationTypes}
-            onSave={setEdgeRelation}
+            onSave={nessoStore.setRelationType}
           />
-          <Button
-            variant="destructive"
-            size="sm"
-            className="self-start"
-            onClick={() => removeEdge(relationKey(selectedEdge))}
-          >
-            <Trash2 data-icon="inline-start" />
-            Delete
-          </Button>
         </section>
       ) : null}
     </aside>

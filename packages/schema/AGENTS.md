@@ -1,5 +1,7 @@
 # @nesso/schema
 
-- Keep this package independent of the app and its UI. Do not import app code, canvas or rendering libraries, or state-management libraries.
-- Define only the graph data model, its JSON-LD profile, and framework-independent utilities. Do not put canvas-specific behavior or default relation vocabulary here.
+- Define only the graph data model, its JSON-LD profile, and framework-independent utilities.
+- The JSON-LD support is a fixed profile, not a general processor: canonical `schemaContext` only, no remote contexts or aliases — anything outside the profile is an error, never ignored.
+- A valid graph survives `parseGraph(serializeGraph(…))` unchanged; keep the pipeline lossless.
+- Everything crossing the boundary is validated: `parseGraph` and `serializeGraph` run `validateGraph` and throw `SchemaError` — no partial or unvalidated output.
 - Keep package tests self-contained; do not load app data or fixtures.

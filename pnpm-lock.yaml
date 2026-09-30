@@ -14,18 +14,24 @@ importers:
       '@fontsource-variable/geist':
         specifier: ^5.3.0
         version: 5.3.0
+      '@nesso/export':
+        specifier: workspace:*
+        version: link:plugins/export
+      '@nesso/graph':
+        specifier: workspace:*
+        version: link:plugins/graph
+      '@nesso/plugin':
+        specifier: workspace:*
+        version: link:packages/plugin
       '@nesso/schema':
         specifier: workspace:*
         version: link:packages/schema
       '@nesso/vocab':
         specifier: workspace:*
-        version: link:packages/vocab
+        version: link:plugins/vocab
       '@tailwindcss/vite':
         specifier: ^4.3.3
         version: 4.3.3(vite@8.3.1(@types/node@24.19.0)(jiti@2.7.0))
-      '@xyflow/react':
-        specifier: ^12.12.0
-        version: 12.12.0(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -79,9 +85,58 @@ importers:
         specifier: ^8.3.0
         version: 8.3.1(@types/node@24.19.0)(jiti@2.7.0)
 
+  packages/plugin:
+    dependencies:
+      react:
+        specifier: ^19.2.8
+        version: 19.3.0
+    devDependencies:
+      '@nesso/schema':
+        specifier: workspace:*
+        version: link:../schema
+      '@types/react':
+        specifier: ^19.2.18
+        version: 19.3.0
+
   packages/schema: {}
 
-  packages/vocab: {}
+  plugins/export:
+    dependencies:
+      '@nesso/schema':
+        specifier: workspace:*
+        version: link:../../packages/schema
+    devDependencies:
+      '@nesso/plugin':
+        specifier: workspace:*
+        version: link:../../packages/plugin
+
+  plugins/graph:
+    dependencies:
+      '@nesso/schema':
+        specifier: workspace:*
+        version: link:../../packages/schema
+      '@xyflow/react':
+        specifier: ^12.12.0
+        version: 12.12.0(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      cn:
+        specifier: ^0.4.0
+        version: 0.4.0
+      react:
+        specifier: ^19.2.8
+        version: 19.3.0
+    devDependencies:
+      '@nesso/plugin':
+        specifier: workspace:*
+        version: link:../../packages/plugin
+      '@types/react':
+        specifier: ^19.2.18
+        version: 19.3.0
+
+  plugins/vocab:
+    devDependencies:
+      '@nesso/plugin':
+        specifier: workspace:*
+        version: link:../../packages/plugin
 
 packages:
 

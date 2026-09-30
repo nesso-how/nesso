@@ -1,8 +1,12 @@
-import { relationKey, type Concept, type Relation } from '@nesso/schema'
+import type { GraphSnapshot } from '@nesso/plugin'
+import { relationKey } from '@nesso/schema'
 import { MarkerType } from '@xyflow/react'
-import type { ConceptNode, RelationEdge } from '@/lib/types'
+import type { ConceptNode, RelationEdge } from './types'
 
-export function conceptNode(concept: Concept, selected: boolean): ConceptNode {
+type ConceptView = GraphSnapshot['concepts'][number]
+type RelationView = GraphSnapshot['relations'][number]
+
+export function conceptNode(concept: ConceptView, selected: boolean): ConceptNode {
   return {
     id: concept.id,
     type: 'concept',
@@ -12,7 +16,7 @@ export function conceptNode(concept: Concept, selected: boolean): ConceptNode {
   }
 }
 
-export function relationEdge(relation: Relation, selected: boolean): RelationEdge {
+export function relationEdge(relation: RelationView, selected: boolean): RelationEdge {
   return {
     id: relationKey(relation),
     source: relation.source,

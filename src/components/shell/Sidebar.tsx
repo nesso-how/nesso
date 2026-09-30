@@ -1,29 +1,31 @@
-import type { Concept } from '@nesso/schema'
+import type { GraphSnapshot } from '@nesso/plugin'
 import { useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { ResizeHandle } from '@/components/ui/resizable'
 import { Sidebar } from '@/components/ui/sidebar'
-import { useGraphStore } from '@/store/graph'
+import { nessoStore, useNessoStore } from '@/store'
+
+type ConceptView = GraphSnapshot['concepts'][number]
 
 const MIN_WIDTH = 200
 const MAX_WIDTH = 480
 
 export function AppSidebar({ onResize }: { onResize: (width: number) => void }) {
-  const concepts = useGraphStore((state) => state.graph.concepts)
-  const focusId = useGraphStore((state) => state.focusId)
-  const setFocus = useGraphStore((state) => state.setFocus)
+  const concepts = useNessoStore((state) => state.graph.concepts)
+  const focusId = useNessoStore((state) => state.focusId)
+  const view = useNessoStore((state) => state.view)
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const tags = [...new Set([...concepts.flatMap((concept) => concept.tags), ...selectedTags])].sort()
   const sorted = [...concepts].sort((a, b) => a.label.localeCompare(b.label))
   const filtered = sorted.filter((concept) => selectedTags.every((tag) => concept.tags.includes(tag)))
 
-  const list = (items: Concept[]) => (
+  const list = (items: readonly ConceptView[]) => (
     <ul className="space-y-0.5">
       {items.map((concept) => (
         <li key={concept.id}>
           <button
             type="button"
-            onClick={() => setFocus(concept.id)}
-            aria-current={concept.id === focusId ? 'true' : undefined}
+            onClick={() => nessoStore.setFocus(concept.id)}
+            aria-current={view === 'focus' && concept.id === focusId ? 'true' : undefined}
             className="w-full truncate rounded-md px-2 py-1.5 text-left text-sm hover:bg-sidebar-accent aria-current:bg-sidebar-accent"
           >
             {concept.label}
@@ -58,6 +60,14 @@ export function AppSidebar({ onResize }: { onResize: (width: number) => void }) 
   return (
     <Sidebar>
       <div className="explorer-scroll min-h-0 flex-1 overflow-y-auto p-3">
+        <button
+          type="button"
+          onClick={() => nessoStore.setView('whole')}
+          aria-current={view === 'whole' ? 'true' : undefined}
+          className="mb-3 w-full rounded-md border px-2 py-1.5 text-left text-sm hover:bg-sidebar-accent aria-current:bg-sidebar-accent"
+        >
+          All concepts
+        </button>
         <details className="mb-3 rounded-md border px-2 py-1.5 text-sm">
           <summary className="cursor-pointer select-none">
             Tags{selectedTags.length > 0 ? ` (${selectedTags.length})` : ''}

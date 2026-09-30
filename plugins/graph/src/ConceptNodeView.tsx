@@ -1,6 +1,6 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react'
-import type { ConceptNode } from '@/lib/types'
-import { cn } from '@/lib/utils'
+import { cn } from 'cn'
+import type { ConceptNode } from './types'
 
 export function ConceptNodeView({ data, selected }: NodeProps<ConceptNode>) {
   return (

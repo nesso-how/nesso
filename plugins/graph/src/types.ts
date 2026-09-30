@@ -1,6 +1,6 @@
 import type { Edge, Node } from '@xyflow/react'
 
-export type ConceptData = { label: string; tags: string[] }
+export type ConceptData = { label: string; tags: readonly string[] }
 export type ConceptNode = Node<ConceptData, 'concept'>
 
 export type RelationData = { relationId: string }

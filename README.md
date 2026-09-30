@@ -12,14 +12,13 @@ pnpm lint
 pnpm test
 ```
 
-## Graph
+## Architecture
 
-Concepts have labels, tags, and positions. Relations have stable IRIs; new
-connections use `linksTo` and appear unlabeled. Choose an existing relation
-type or name a new one in the Inspector. The canvas shows the focused concept
-and its direct neighbors; selecting an item does not change focus.
+One core graph, owned by the host store, with plugins extending it.
 
-`data/sample-graph.json` is the self-contained JSON-LD starting graph. Edits
-stay in memory and reset on reload. `@nesso/schema` defines the in-memory graph
-and JSON-LD conversion; `@nesso/vocab` supplies the default relation types.
-React Flow structures are derived in the app for rendering.
+- `@nesso/schema` — core graph model, JSON-LD profile, and validation.
+- `src/` — host: owns the single graph and its store, materializes the visible graph (`viewGraph`), registers plugins.
+- `@nesso/plugin` — types-only plugin contract.
+- `@nesso/vocab` — default vocabulary plugin.
+- `@nesso/graph` — React Flow renderer plugin.
+- `@nesso/export` — action plugin exporting the visible graph as JSON-LD.
