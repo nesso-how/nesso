@@ -17,9 +17,7 @@ import {
 } from '@nesso/schema'
 import { createStore } from 'zustand/vanilla'
 
-type Draft = { graph: Graph; focusId: string; selected: Selection }
-
-const checkGraph = (graph: Graph): void => {
+const checkGraph = (graph: GraphSnapshot): void => {
   const issues = validateGraph(graph)
   if (graph.concepts.length === 0) {
     issues.push({ path: 'concepts', message: 'Graph must keep at least one concept' })
@@ -49,9 +47,10 @@ const neighborhood = (graph: GraphSnapshot, focusId: string): GraphSnapshot => {
 const defaultType = (vocab: VocabDefinition): Readonly<RelationType> =>
   vocab.relationTypes.find((item) => item.id === vocab.defaultTypeId) ?? { id: vocab.defaultTypeId, label: '' }
 
-const ensureType = (graph: Graph, type: Readonly<RelationType>): void => {
-  if (!graph.relationTypes.some((item) => item.id === type.id)) graph.relationTypes.push({ ...type })
-}
+const withType = (graph: GraphSnapshot, type: Readonly<RelationType>): GraphSnapshot['relationTypes'] =>
+  graph.relationTypes.some((item) => item.id === type.id)
+    ? graph.relationTypes
+    : [...graph.relationTypes, { ...type }]
 
 export const createNessoStore = (graph: Graph) => {
   checkGraph(graph)
@@ -67,24 +66,18 @@ export const createNessoStore = (graph: Graph) => {
     activeRendererId: '',
   }))
 
-  const commit = (edit: (draft: Draft) => void): void => {
+  const commit = (candidate: GraphSnapshot, selected = store.getState().selected): void => {
     const prev = store.getState()
-    const draft: Draft = {
-      graph: structuredClone(prev.graph) as Graph,
-      focusId: prev.focusId,
-      selected: prev.selected,
-    }
-    edit(draft)
-    checkGraph(draft.graph)
-    if (!draft.graph.concepts.some((concept) => concept.id === draft.focusId)) {
-      draft.focusId = draft.graph.concepts[0].id
-    }
-    if (!selectionExists(draft.graph, draft.selected)) draft.selected = null
+    if (candidate === prev.graph && selected === prev.selected) return
+    checkGraph(candidate)
+    const focusId = candidate.concepts.some((concept) => concept.id === prev.focusId)
+      ? prev.focusId
+      : candidate.concepts[0].id
     store.setState({
-      graph: draft.graph,
-      viewGraph: prev.view === 'whole' ? draft.graph : neighborhood(draft.graph, draft.focusId),
-      focusId: draft.focusId,
-      selected: draft.selected,
+      graph: candidate,
+      viewGraph: prev.view === 'whole' ? candidate : neighborhood(candidate, focusId),
+      focusId,
+      selected: selectionExists(candidate, selected) ? selected : null,
     })
   }
 
@@ -101,12 +94,37 @@ export const createNessoStore = (graph: Graph) => {
     if (!relation || relation.predicate === type.id) return
     const triple = relationKey({ ...relation, predicate: type.id })
     if (state.graph.relations.some((item) => relationKey(item) === triple)) return
-    commit((draft) => {
-      const index = draft.graph.relations.findIndex((item) => relationKey(item) === id)
-      ensureType(draft.graph, type)
-      draft.graph.relations[index] = { ...draft.graph.relations[index], predicate: type.id }
-      draft.selected = { kind: 'relation', id: relationKey(draft.graph.relations[index]) }
+    commit({
+      ...state.graph,
+      relationTypes: withType(state.graph, type),
+      relations: state.graph.relations.map((item) => item === relation ? { ...item, predicate: type.id } : item),
+    }, { kind: 'relation', id: triple })
+  }
+
+  const updateConcept = (
+    id: string,
+    update: (concept: GraphSnapshot['concepts'][number]) => GraphSnapshot['concepts'][number],
+  ): void => {
+    const graph = store.getState().graph
+    const concept = graph.concepts.find((item) => item.id === id)
+    if (!concept) return
+    const next = update(concept)
+    if (next === concept) return
+    commit({ ...graph, concepts: graph.concepts.map((item) => item === concept ? next : item) })
+  }
+
+  const setConceptPositions: NessoStore['setConceptPositions'] = (updates) => {
+    if (updates.length === 0) return
+    const graph = store.getState().graph
+    const positions = new Map(updates.map(({ id, position }) => [id, position]))
+    let changed = false
+    const concepts = graph.concepts.map((concept) => {
+      const position = positions.get(concept.id)
+      if (!position || (position.x === concept.position.x && position.y === concept.position.y)) return concept
+      changed = true
+      return { ...concept, position: { x: position.x, y: position.y } }
     })
+    if (changed) commit({ ...graph, concepts })
   }
 
   const renderers = new Map<string, RendererDefinition>()
@@ -152,51 +170,45 @@ export const createNessoStore = (graph: Graph) => {
       })
     },
 
-    setConceptPosition: (id, position) => commit((draft) => {
-      const concept = draft.graph.concepts.find((item) => item.id === id)
-      if (concept) concept.position = { x: position.x, y: position.y }
-    }),
+    setConceptPosition: (id, position) => setConceptPositions([{ id, position }]),
+    setConceptPositions,
 
-    setConceptLabel: (id, label) => commit((draft) => {
-      const concept = draft.graph.concepts.find((item) => item.id === id)
-      if (concept) concept.label = label
-    }),
+    setConceptLabel: (id, label) => updateConcept(id, (concept) =>
+      concept.label === label ? concept : { ...concept, label }),
 
-    addTags: (id, tags) => commit((draft) => {
-      const concept = draft.graph.concepts.find((item) => item.id === id)
-      if (!concept) return
-      const known = draft.graph.concepts.flatMap((item) => item.tags)
+    addTags: (id, tags) => updateConcept(id, (concept) => {
+      const known = store.getState().graph.concepts.flatMap((item) => item.tags)
+      const next = [...concept.tags]
       for (const raw of tags) {
         const tag = raw.trim()
-        if (!tag || concept.tags.some((item) => item.toLowerCase() === tag.toLowerCase())) continue
-        concept.tags.push(known.find((item) => item.toLowerCase() === tag.toLowerCase()) ?? tag)
+        if (!tag || next.some((item) => item.toLowerCase() === tag.toLowerCase())) continue
+        next.push(known.find((item) => item.toLowerCase() === tag.toLowerCase()) ?? tag)
       }
+      return next.length === concept.tags.length ? concept : { ...concept, tags: next }
     }),
 
-    removeTag: (id, tag) => commit((draft) => {
-      const concept = draft.graph.concepts.find((item) => item.id === id)
-      if (concept) concept.tags = concept.tags.filter((item) => item !== tag)
-    }),
+    removeTag: (id, tag) => updateConcept(id, (concept) =>
+      concept.tags.includes(tag) ? { ...concept, tags: concept.tags.filter((item) => item !== tag) } : concept),
 
     addConcept: (position) => {
       const id = newIri()
       const vocab = activeVocab()
-      const focusId = store.getState().focusId
-      commit((draft) => {
-        ensureType(draft.graph, defaultType(vocab))
-        const focus = draft.graph.concepts.find((concept) => concept.id === focusId)
-        draft.graph.concepts.push({
+      const { graph, focusId } = store.getState()
+      const focus = graph.concepts.find((concept) => concept.id === focusId)
+      commit({
+        ...graph,
+        relationTypes: withType(graph, defaultType(vocab)),
+        concepts: [...graph.concepts, {
           id,
-          label: `Concept ${draft.graph.concepts.length + 1}`,
+          label: `Concept ${graph.concepts.length + 1}`,
           tags: [],
           position: position ? { x: position.x, y: position.y } : {
             x: (focus?.position.x ?? 0) + 160,
             y: (focus?.position.y ?? 0) + 100,
           },
-        })
-        draft.graph.relations.push({ source: focusId, predicate: vocab.defaultTypeId, target: id })
-        draft.selected = { kind: 'concept', id }
-      })
+        }],
+        relations: [...graph.relations, { source: focusId, predicate: vocab.defaultTypeId, target: id }],
+      }, { kind: 'concept', id })
       return id
     },
 
@@ -206,12 +218,11 @@ export const createNessoStore = (graph: Graph) => {
       const vocab = activeVocab()
       const key = relationKey({ source, predicate: vocab.defaultTypeId, target })
       if (state.graph.relations.some((relation) => relationKey(relation) === key)) return
-      commit((draft) => {
-        ensureType(draft.graph, defaultType(vocab))
-        const relation = { source, predicate: vocab.defaultTypeId, target }
-        draft.graph.relations.push(relation)
-        draft.selected = { kind: 'relation', id: relationKey(relation) }
-      })
+      commit({
+        ...state.graph,
+        relationTypes: withType(state.graph, defaultType(vocab)),
+        relations: [...state.graph.relations, { source, predicate: vocab.defaultTypeId, target }],
+      }, { kind: 'relation', id: key })
     },
 
     setRelationType: (id, typeId) => {
@@ -227,20 +238,29 @@ export const createNessoStore = (graph: Graph) => {
       retypeRelation(id, { id: newIri(), label })
     },
 
-    removeConcept: (id) => commit((draft) => {
-      draft.graph.concepts = draft.graph.concepts.filter((concept) => concept.id !== id)
-      draft.graph.relations = draft.graph.relations.filter((relation) =>
+    removeConcept: (id) => {
+      const graph = store.getState().graph
+      if (!graph.concepts.some((concept) => concept.id === id)) return
+      const relations = graph.relations.filter((relation) =>
         relation.source !== id && relation.target !== id,
       )
-    }),
+      commit({
+        ...graph,
+        concepts: graph.concepts.filter((concept) => concept.id !== id),
+        relations: relations.length === graph.relations.length ? graph.relations : relations,
+      })
+    },
 
-    removeRelation: (id) => commit((draft) => {
-      draft.graph.relations = draft.graph.relations.filter((relation) => relationKey(relation) !== id)
-    }),
+    removeRelation: (id) => {
+      const graph = store.getState().graph
+      const relations = graph.relations.filter((relation) => relationKey(relation) !== id)
+      if (relations.length !== graph.relations.length) commit({ ...graph, relations })
+    },
 
-    editGraph: (edit) => commit((draft) => {
-      draft.graph = structuredClone(edit(draft.graph)) as Graph
-    }),
+    editGraph: (edit) => {
+      const draft = structuredClone(store.getState().graph) as Graph
+      commit(structuredClone(edit(draft)) as Graph)
+    },
 
     setActiveVocab: (id) => {
       if (!store.getState().vocabs.some((vocab) => vocab.id === id)) {

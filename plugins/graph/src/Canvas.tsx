@@ -40,10 +40,12 @@ export function Canvas() {
   )
 
   const onNodesChange = (changes: NodeChange<ConceptNode>[]) => {
+    store.setConceptPositions(changes.flatMap((change) =>
+      change.type === 'position' && change.position ? [{ id: change.id, position: change.position }] : [],
+    ))
     for (const change of changes) {
       const state = store.getState()
-      if (change.type === 'position' && change.position) store.setConceptPosition(change.id, change.position)
-      else if (change.type === 'select') {
+      if (change.type === 'select') {
         if (change.selected) store.setSelection({ kind: 'concept', id: change.id })
         else if (state.selected?.kind === 'concept' && state.selected.id === change.id) store.setSelection(null)
       } else if (change.type === 'remove' && state.graph.concepts.length > 1) store.removeConcept(change.id)

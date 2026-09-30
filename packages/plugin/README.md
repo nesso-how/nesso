@@ -48,6 +48,7 @@ export const exampleRendererPlugin: Plugin = ({ store }) => ({
 - `PluginDefinition`: optional `renderers`, `vocabs`, and `actions` contributions.
 - `NessoState`: deeply readonly snapshot — whole graph, visible graph (`viewGraph`), view mode, focus, selection, vocabs, active ids.
 - `NessoStore`: read/subscribe plus domain writes; `editGraph` candidates are validated and committed atomically or rejected with `SchemaError`.
+- Domain writes preserve unchanged graph objects. `setConceptPositions([{ id, position }])` applies a position batch atomically with one notification; repeated ids use the last position, unknown ids and unchanged positions are ignored. `setConceptPosition` uses the same path. Every graph commit still validates the whole document and materializes `viewGraph`.
 - `setRelationType(relationId, typeId)` selects an existing document or active-vocabulary type by IRI; `createRelationType(relationId, label)` creates and assigns a new type atomically. Labels need not be unique.
 - The host owns copies of registered vocabularies and `editGraph` results; mutating their original inputs or retained drafts cannot change published state.
 - `RendererDefinition`, `VocabDefinition`, `ActionDefinition`: contribution shapes; actions are `{ id, label, run }` commands reading current state at invocation.

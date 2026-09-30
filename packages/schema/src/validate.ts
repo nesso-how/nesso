@@ -1,8 +1,12 @@
 import { relationKey } from './core.ts'
 import type { SchemaIssue } from './errors.ts'
-import type { Graph } from './types.ts'
+import type { Position, Relation, RelationType } from './types.ts'
 
-export function validateGraph(graph: Graph): SchemaIssue[] {
+export function validateGraph(graph: {
+  readonly concepts: readonly { readonly id: string; readonly position: Readonly<Position> }[]
+  readonly relationTypes: readonly Readonly<RelationType>[]
+  readonly relations: readonly Readonly<Relation>[]
+}): SchemaIssue[] {
   const issues: SchemaIssue[] = []
   const concepts = new Set<string>()
   const types = new Set<string>()

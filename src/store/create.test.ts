@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import type { VocabDefinition } from '@nesso/plugin'
+import type { NessoStore, VocabDefinition } from '@nesso/plugin'
 import { relationKey, SchemaError, validateGraph, type Graph } from '@nesso/schema'
 import { createNessoStore } from './create.ts'
 
@@ -300,4 +300,127 @@ test('registered vocabularies and their inserted types are owned independently b
   assert.notEqual(a.store.getState().vocabs[0], b.store.getState().vocabs[0])
   assert.notEqual(a.store.getState().vocabs[0].relationTypes[0], b.store.getState().vocabs[0].relationTypes[0])
   assert.notEqual(a.store.getState().graph.relationTypes.at(-1), b.store.getState().graph.relationTypes.at(-1))
+})
+
+test('a position batch publishes once and shares untouched graph objects', () => {
+  for (const view of ['focus', 'whole'] as const) {
+    const graph = fixture()
+    graph.relations.pop()
+    const { store } = createNessoStore(graph)
+    store.setView(view)
+    const before = store.getState()
+    const snapshot = structuredClone(before)
+    const updates = [
+      { id: 'urn:n1', position: { x: 10, y: 20 } },
+      { id: 'urn:n2', position: { x: 30, y: 40 } },
+    ]
+    let notifications = 0
+    store.subscribe(() => notifications++)
+    store.setConceptPositions(updates)
+    const after = store.getState()
+    assert.equal(notifications, 1)
+    assert.deepEqual(after.graph.concepts.map(({ position }) => position), [
+      { x: 10, y: 20 }, { x: 30, y: 40 }, { x: 2, y: 0 },
+    ])
+    for (const index of [0, 1]) {
+      assert.notEqual(after.graph.concepts[index], before.graph.concepts[index])
+      assert.equal(after.graph.concepts[index].tags, before.graph.concepts[index].tags)
+      assert.equal(after.viewGraph.concepts[index], after.graph.concepts[index])
+    }
+    assert.equal(after.graph.concepts[2], before.graph.concepts[2])
+    assert.equal(after.graph.relations, before.graph.relations)
+    assert.equal(after.graph.relationTypes, before.graph.relationTypes)
+    if (view === 'whole') assert.equal(after.viewGraph, after.graph)
+    else assert.deepEqual(after.viewGraph.concepts.map(({ id }) => id), ['urn:n1', 'urn:n2'])
+    assert.deepEqual(before, snapshot)
+    updates[0].position.x = NaN
+    assert.deepEqual(after.graph.concepts[0].position, { x: 10, y: 20 })
+  }
+})
+
+test('position batches reject invalid coordinates atomically in every view mode', () => {
+  for (const view of ['focus', 'whole'] as const) {
+    for (const invalid of [NaN, Infinity, -Infinity]) {
+      const { store } = createNessoStore(fixture())
+      store.setFocus('urn:n2')
+      store.setView(view)
+      const before = store.getState()
+      let notifications = 0
+      store.subscribe(() => notifications++)
+      assert.deepEqual(issuesOf(() => store.setConceptPositions([
+        { id: 'urn:n1', position: { x: 10, y: 20 } },
+        { id: 'urn:n3', position: { x: 30, y: invalid } },
+      ])), [{ path: 'concepts[2].position', message: 'Invalid position: urn:n3' }])
+      assert.equal(store.getState(), before)
+      assert.equal(notifications, 0)
+    }
+  }
+})
+
+test('position batches ignore unknown ids and use the last position for repeated ids', () => {
+  const { store } = createNessoStore(fixture())
+  let notifications = 0
+  store.subscribe(() => notifications++)
+  store.setConceptPositions([
+    { id: 'urn:missing', position: { x: NaN, y: NaN } },
+    { id: 'urn:n1', position: { x: NaN, y: NaN } },
+    { id: 'urn:n1', position: { x: 10, y: 20 } },
+  ])
+  assert.equal(notifications, 1)
+  assert.deepEqual(store.getState().graph.concepts[0].position, { x: 10, y: 20 })
+  const before = store.getState()
+  store.setConceptPositions([
+    { id: 'urn:n1', position: { x: 30, y: 40 } },
+    { id: 'urn:n1', position: { x: 10, y: 20 } },
+  ])
+  assert.equal(store.getState(), before)
+  assert.equal(notifications, 1)
+})
+
+test('domain no-ops preserve state identity and do not notify subscribers', () => {
+  const { store } = createNessoStore(fixture())
+  const before = store.getState()
+  let notifications = 0
+  store.subscribe(() => notifications++)
+  store.setConceptPositions([])
+  store.setConceptPositions([{ id: 'urn:missing', position: { x: 1, y: 2 } }])
+  store.setConceptPosition('urn:n1', { x: 0, y: 0 })
+  store.setConceptLabel('urn:n1', 'One')
+  store.setConceptLabel('urn:missing', 'Missing')
+  store.addTags('urn:n1', [' ', ''])
+  store.removeTag('urn:n1', 'missing')
+  store.removeConcept('urn:missing')
+  store.removeRelation('missing')
+  assert.equal(store.getState(), before)
+  assert.equal(notifications, 0)
+})
+
+test('domain writes share surviving objects without mutating previous snapshots', () => {
+  const writes: ((store: NessoStore) => void)[] = [
+    (store) => store.setConceptPosition('urn:n1', { x: 10, y: 20 }),
+    (store) => store.setConceptLabel('urn:n1', 'Renamed'),
+    (store) => store.addTags('urn:n1', ['New', ' new ']),
+    (store) => store.removeTag('urn:n1', 'Existing'),
+    (store) => { store.addConcept() },
+    (store) => store.connect('urn:n2', 'urn:n3'),
+    (store) => store.setRelationType(relationKey(store.getState().graph.relations[0]), 'urn:part'),
+    (store) => store.createRelationType(relationKey(store.getState().graph.relations[0]), 'Custom'),
+    (store) => store.removeRelation(relationKey(store.getState().graph.relations[0])),
+    (store) => store.removeConcept('urn:n2'),
+  ]
+  for (const write of writes) {
+    const graph = fixture()
+    graph.concepts[0].tags = ['Existing']
+    const { store, registerVocab } = createNessoStore(graph)
+    registerVocab(vocabA)
+    const before = store.getState()
+    const snapshot = structuredClone(before)
+    write(store)
+    const after = store.getState()
+    assert.equal(after.graph.concepts.find(({ id }) => id === 'urn:n3'), before.graph.concepts[2])
+    assert.equal(after.graph.relations.find((relation) => relationKey(relation) === relationKey(before.graph.relations[1])), before.graph.relations[1])
+    assert.equal(after.graph.relationTypes[0], before.graph.relationTypes[0])
+    assert.deepEqual(before, snapshot)
+    assert.deepEqual(validateGraph(after.graph), [])
+  }
 })
