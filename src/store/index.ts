@@ -15,7 +15,7 @@ export const host = createNessoStore(graph, firstRun ? {
   ...loaded,
     workspace: { activeViewId: null, savedViews: seedViews, viewports: {} },
 } : loaded)
-host.ui.setPersistenceIssues(loaded.issues)
+host.setPersistenceIssues(loaded.issues)
 
 export const { store: nessoStore, registerVocab, registerRenderer, getRenderer, registerTheme } = host
 

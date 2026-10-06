@@ -5,4 +5,7 @@ export const kernelTheme: ThemeDefinition = {
   label: 'Kernel',
 }
 
-export const themePlugin: Plugin = () => ({ themes: [kernelTheme] })
+export const themePlugin: Plugin = {
+  operations: [],
+  create: () => ({ themes: [kernelTheme] }),
+}

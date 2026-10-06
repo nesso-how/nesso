@@ -4,7 +4,7 @@ import test from 'node:test'
 import { themePlugin } from '../src/index.ts'
 
 test('the theme plugin contributes an identity matching its stylesheet without accessing the store', () => {
-  const definition = themePlugin({
+  const definition = themePlugin.create({
     get store() {
       assert.fail('Theme definitions must not access the store')
     },

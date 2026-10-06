@@ -34,7 +34,7 @@ export function ConceptConnections({ conceptId }: { conceptId: string }) {
                 <span className="min-w-0 break-words">{label}</span>
               </span>
               <span className="col-start-1 row-start-2 min-h-6 min-w-0 max-w-full justify-self-start text-[13px] leading-[19px] break-words">{other?.label}</span>
-              {activeViewId !== null && <Button variant="ghost" size="icon-sm" className="col-start-2 row-span-2 row-start-1 self-center text-muted-foreground hover:bg-transparent hover:text-foreground" title={included ? 'Remove from current view' : 'Add to current view'} aria-label={`${included ? 'Remove' : 'Add'} ${other?.label} ${included ? 'from' : 'to'} current view`} onClick={() => host.ui.setViewMembership(activeViewId, otherId, !included)}><MembershipIcon /></Button>}
+              {activeViewId !== null && <Button variant="ghost" size="icon-sm" className="col-start-2 row-span-2 row-start-1 self-center text-muted-foreground hover:bg-transparent hover:text-foreground" title={included ? 'Remove from current view' : 'Add to current view'} aria-label={`${included ? 'Remove' : 'Add'} ${other?.label} ${included ? 'from' : 'to'} current view`} onClick={() => host.store.setViewMembership(activeViewId, otherId, !included)}><MembershipIcon /></Button>}
             </div>
           )
         })}

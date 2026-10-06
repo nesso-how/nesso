@@ -1,6 +1,6 @@
-import type { Viewport } from '@nesso/plugin'
+import type { PanelSizes, Preferences, SectionId, Viewport, WorkspaceState } from '@nesso/plugin'
 import { NessoError } from './errors.ts'
-import { sectionIds, type HostPreferences, type HostWorkspace, type PanelSizes, type SectionId } from './types.ts'
+import { sectionIds } from './types.ts'
 
 export const defaultPanels: PanelSizes = { explorerWidth: 180, inspectorWidth: 210 }
 export const panelLimits = {
@@ -48,7 +48,13 @@ export const parsePanels = (value: unknown): PanelSizes => {
   }
 }
 
-export const parseWorkspace = (value: unknown): HostWorkspace => {
+export const parseViewName = (value: unknown, path: string): string => {
+  const name = string(value, path).trim()
+  if (!name || name.length > maxViewNameLength) fail(path, `Expected a name of 1–${maxViewNameLength} characters`)
+  return name
+}
+
+export const parseWorkspace = (value: unknown): WorkspaceState => {
   const workspace = object(value, 'workspace', ['activeViewId', 'savedViews', 'viewports'])
   if (!Array.isArray(workspace.savedViews)) fail('workspace.savedViews', 'Expected saved views')
   const ids = new Set<string>()
@@ -56,10 +62,9 @@ export const parseWorkspace = (value: unknown): HostWorkspace => {
     const path = `workspace.savedViews[${index}]`
     const view = object(value, path, ['id', 'name', 'conceptIds', 'pinned'])
     const id = string(view.id, `${path}.id`)
-    const name = string(view.name, `${path}.name`).trim()
+    const name = parseViewName(view.name, `${path}.name`)
     if (!id || ids.has(id)) fail(`${path}.id`, 'Duplicate or missing view id')
     ids.add(id)
-    if (!name || name.length > maxViewNameLength) fail(`${path}.name`, `Expected a name of 1–${maxViewNameLength} characters`)
     if (!Array.isArray(view.conceptIds) || !view.conceptIds.every((id) => typeof id === 'string')) {
       fail(`${path}.conceptIds`, 'Expected concept ids')
     }
@@ -81,7 +86,7 @@ export const parseWorkspace = (value: unknown): HostWorkspace => {
   }
 }
 
-export const parsePreferences = (value: unknown): HostPreferences => {
+export const parsePreferences = (value: unknown): Preferences => {
   const preferences = object(value, 'preferences', ['activeVocabId', 'activeRendererId', 'activeThemeId', 'panels', 'collapsedSections'])
   let collapsedSections: SectionId[] | undefined
   if (preferences.collapsedSections !== undefined) {

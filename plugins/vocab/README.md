@@ -11,4 +11,4 @@ Add `vocabPlugin` to the static plugin list in `src/plugins.ts`.
 - `relationIds`: stable IRIs for the four relation types.
 - `defaultRelationId`: the IRI of `linksTo`.
 - `defaultRelationTypes`: the same types as `{ id, label }` entries.
-- `vocabPlugin`: static plugin factory returning the vocabulary contribution.
+- `vocabPlugin`: read-only operation declaration and factory returning the vocabulary contribution.

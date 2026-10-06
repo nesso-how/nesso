@@ -44,7 +44,7 @@ export default function App() {
             onLayoutChanged={(layout, meta) => {
               if (!selected || !meta.isUserInteraction || !group.current) return
               const inspectorWidth = Math.max(panelLimits.inspectorWidth.min, group.current.clientWidth * (meta.requestedLayout ?? layout).inspector / 100)
-              host.ui.setPanelSizes({ ...host.store.getState().preferences.panels, inspectorWidth })
+              host.store.setPanelSizes({ ...host.store.getState().preferences.panels, inspectorWidth })
             }}
           >
             <ResizablePanel id="canvas" minSize="40%">

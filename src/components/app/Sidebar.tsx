@@ -5,6 +5,7 @@ import { MoreHorizontal } from 'lucide-react'
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { Sidebar } from './SidebarLayout'
 import { NewViewButton } from './NewViewButton'
+import { ViewNameForm } from './ViewNameForm'
 import { host, nessoStore, useNessoStore } from '@/store'
 import { panelLimits } from '@/store/settings'
 
@@ -14,11 +15,13 @@ export function AppSidebar() {
   const pinnedOpen = !collapsed?.includes('sidebar.pinned-views')
   const viewsOpen = !collapsed?.includes('sidebar.views')
   const [deleting, setDeleting] = useState<SavedView | null>(null)
+  const [renaming, setRenaming] = useState<SavedView | null>(null)
   const [menu, setMenu] = useState<string | null>(null)
   const cancel = useRef<HTMLButtonElement>(null)
   const createTrigger = useRef<HTMLButtonElement>(null)
   const menuTriggers = useRef(new Map<string, HTMLButtonElement>())
   const deletingId = useRef<string | null>(null)
+  const renamingId = useRef<string | null>(null)
   const pinned = workspace.savedViews.filter((view) => view.pinned)
   const ordinary = workspace.savedViews.filter((view) => !view.pinned)
 
@@ -48,14 +51,18 @@ export function AppSidebar() {
         </Menu.Trigger>
         <MenuPopup>
           <MenuItem onClick={() => {
-            host.ui.setViewPinned(view.id, !view.pinned)
+            renamingId.current = view.id
+            setRenaming(view)
+          }}>Rename view</MenuItem>
+          <MenuItem onClick={() => {
+            host.store.setViewPinned(view.id, !view.pinned)
             requestAnimationFrame(() => {
               const trigger = menuTriggers.current.get(view.id)
               const target = trigger?.getClientRects().length ? trigger : createTrigger.current
               target?.focus()
             })
           }}>{view.pinned ? 'Unpin view' : 'Pin view'}</MenuItem>
-          <MenuItem onClick={() => downloadGraph(host.ui.getViewGraph(view.id), view.name)}>Export view</MenuItem>
+          <MenuItem onClick={() => downloadGraph(host.store.getViewGraph(view.id), view.name)}>Export view</MenuItem>
           <Menu.Separator className="my-1 h-px bg-border" />
           <MenuItem onClick={() => { deletingId.current = view.id; setDeleting(view) }}>Delete view</MenuItem>
         </MenuPopup>
@@ -81,7 +88,7 @@ export function AppSidebar() {
       delete handle.dataset.resizing
       window.removeEventListener('pointermove', onMove)
       window.removeEventListener('pointerup', stop)
-      host.ui.setPanelSizes({ ...host.store.getState().preferences.panels, explorerWidth: width })
+      host.store.setPanelSizes({ ...host.store.getState().preferences.panels, explorerWidth: width })
     }
     window.addEventListener('pointermove', onMove)
     window.addEventListener('pointerup', stop)
@@ -92,7 +99,7 @@ export function AppSidebar() {
       <Sidebar>
         <div className="flex min-h-0 flex-1 flex-col px-3 pt-5">
           <NewViewButton ref={createTrigger} />
-          {heading('Pinned views', 'pinned-views', pinnedOpen, () => host.ui.setSectionOpen('sidebar.pinned-views', !pinnedOpen))}
+          {heading('Pinned views', 'pinned-views', pinnedOpen, () => host.store.setSectionOpen('sidebar.pinned-views', !pinnedOpen))}
           <div className="explorer-scroll min-h-0 flex-1 overflow-y-auto p-1.5 -mx-1.5" onScroll={() => setMenu(null)}>
             <div id="pinned-views" hidden={!pinnedOpen} className="mt-1 space-y-0.5">
               <button type="button" onClick={() => nessoStore.setView(null)} aria-current={workspace.activeViewId === null ? 'page' : undefined} className="min-h-14 w-full shrink-0 rounded-sm px-2.5 py-2 text-left hover:bg-accent aria-[current=page]:bg-pressed">
@@ -102,20 +109,30 @@ export function AppSidebar() {
               {pinned.map(row)}
             </div>
             <div className="mt-4">
-              {heading('Views', 'saved-views', viewsOpen, () => host.ui.setSectionOpen('sidebar.views', !viewsOpen))}
+              {heading('Views', 'saved-views', viewsOpen, () => host.store.setSectionOpen('sidebar.views', !viewsOpen))}
               <div id="saved-views" hidden={!viewsOpen} className="mt-1 space-y-0.5">{ordinary.map(row)}</div>
             </div>
           </div>
         </div>
         <ResizeHandle onPointerDown={startResize} aria-label="Resize sidebar" className="absolute inset-y-0 right-0 z-20 cursor-col-resize bg-transparent" />
       </Sidebar>
+      <Dialog.Root open={renaming !== null} onOpenChange={(open) => { if (!open) setRenaming(null) }}>
+        <DialogPopup finalFocus={() => menuTriggers.current.get(renamingId.current ?? '') ?? createTrigger.current}>
+          <Dialog.Title className="text-sm">Rename view</Dialog.Title>
+          <Dialog.Description className="mt-2 text-xs text-muted-foreground">Only the name changes. Concepts and relations remain untouched.</Dialog.Description>
+          {renaming && <ViewNameForm initialName={renaming.name} submitLabel="Save name" onSubmit={(name) => {
+            host.store.renameView(renaming.id, name)
+            setRenaming(null)
+          }} />}
+        </DialogPopup>
+      </Dialog.Root>
       <Dialog.Root open={deleting !== null} onOpenChange={(open) => { if (!open) setDeleting(null) }}>
         <DialogPopup initialFocus={cancel} finalFocus={() => menuTriggers.current.get(deletingId.current ?? '') ?? createTrigger.current}>
           <Dialog.Title className="text-sm">Delete “{deleting?.name}”?</Dialog.Title>
           <Dialog.Description className="mt-2 text-xs text-muted-foreground">Concepts and relations remain untouched. This only deletes the view.</Dialog.Description>
           <div className="mt-6 flex justify-end gap-2">
             <Dialog.Close render={<Button ref={cancel} variant="outline" />}>Cancel</Dialog.Close>
-            <Button onClick={() => { if (deleting) host.ui.deleteView(deleting.id); setDeleting(null) }}>Delete view</Button>
+            <Button onClick={() => { if (deleting) host.store.deleteView(deleting.id); setDeleting(null) }}>Delete view</Button>
           </div>
         </DialogPopup>
       </Dialog.Root>

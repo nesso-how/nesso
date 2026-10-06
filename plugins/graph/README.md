@@ -16,4 +16,4 @@ Selected edges show native reconnect handles while editing is unlocked. Dragging
 
 ## API
 
-- `graphPlugin`: factory binding the injected `NessoStore` to its renderer instance.
+- `graphPlugin`: operation declaration and factory binding the injected `NessoStore` to its renderer instance.

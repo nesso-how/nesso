@@ -14,10 +14,13 @@ export const downloadGraph = (graph: GraphSnapshot, name = 'graph'): void => {
   URL.revokeObjectURL(url)
 }
 
-export const exportPlugin: Plugin = ({ store }) => ({
-  actions: [{
-    id: 'export-view',
-    label: 'Export view',
-    run: () => downloadGraph(store.getState().viewGraph),
-  }],
-})
+export const exportPlugin: Plugin = {
+  operations: [],
+  create: ({ store }) => ({
+    actions: [{
+      id: 'export-view',
+      label: 'Export view',
+      run: () => downloadGraph(store.getState().viewGraph),
+    }],
+  }),
+}

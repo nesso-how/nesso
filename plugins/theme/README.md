@@ -13,6 +13,6 @@ Stylesheets and fonts are bundled statically. Each theme scopes its tokens to it
 ## API
 
 - `kernelTheme`: Kernel's id and label (`ThemeDefinition` from `@nesso/plugin`).
-- `themePlugin`: static plugin factory returning the theme contribution; no store mutation or lifecycle hooks.
+- `themePlugin`: read-only operation declaration and factory returning the theme contribution; no store mutation or lifecycle hooks.
 - `styles.css`: semantic CSS tokens scoped to `:root[data-theme='kernel']`, importing bundled fonts.
 - `fonts.css`: locally bundled Geist and IBM Plex Mono font declarations.
