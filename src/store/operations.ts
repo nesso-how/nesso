@@ -6,8 +6,7 @@ const sameItems = <T>(left: readonly T[], right: readonly T[], equal: (left: T, 
 
 const sameGraph = (left: GraphSnapshot, right: GraphSnapshot): boolean =>
   sameItems(left.concepts, right.concepts, (a, b) =>
-    a.id === b.id && a.label === b.label && a.position.x === b.position.x && a.position.y === b.position.y
-    && sameItems(a.tags, b.tags, (a, b) => a === b))
+    a.id === b.id && a.label === b.label && a.position.x === b.position.x && a.position.y === b.position.y)
   && sameItems(left.relations, right.relations, (a, b) => relationKey(a) === relationKey(b))
   && sameItems(left.relationTypes, right.relationTypes, (a, b) => a.id === b.id && a.label === b.label)
 
@@ -71,39 +70,24 @@ export const applyGraphOperations = (state: NessoState, operations: readonly Gra
       case 'concept.positions':
         setPositions(operation.updates)
         break
-      case 'concept.tags.add':
-        updateConcept(operation.id, (concept) => {
-          const known = graph.concepts.flatMap((item) => item.tags)
-          const tags = [...concept.tags]
-          for (const raw of operation.tags) {
-            const tag = raw.trim()
-            if (!tag || tags.some((item) => item.toLowerCase() === tag.toLowerCase())) continue
-            tags.push(known.find((item) => item.toLowerCase() === tag.toLowerCase()) ?? tag)
-          }
-          return tags.length === concept.tags.length ? concept : { ...concept, tags }
-        })
-        break
-      case 'concept.tags.remove':
-        updateConcept(operation.id, (concept) => concept.tags.includes(operation.tag)
-          ? { ...concept, tags: concept.tags.filter((item) => item !== operation.tag) } : concept)
-        break
       case 'concept.add': {
-        const vocab = activeVocab()
-        const focus = graph.concepts.find((concept) => concept.id === state.workspace.focusId) ?? graph.concepts[0]
-        const type = vocab.relationTypes.find((item) => item.id === vocab.defaultTypeId) ?? { id: vocab.defaultTypeId, label: '' }
+        const source = selected?.kind === 'concept'
+          ? graph.concepts.find((concept) => concept.id === selected?.id)
+          : undefined
+        const vocab = source ? activeVocab() : null
+        const type = vocab?.relationTypes.find((item) => item.id === vocab.defaultTypeId)
         graph = {
           ...graph,
-          relationTypes: withType(type),
+          relationTypes: type ? withType(type) : graph.relationTypes,
           concepts: [...graph.concepts, {
             id: operation.id,
             label: `Concept ${graph.concepts.length + 1}`,
-            tags: [],
             position: operation.position ? { x: operation.position.x, y: operation.position.y } : {
-              x: (focus?.position.x ?? 0) + 160,
-              y: (focus?.position.y ?? 0) + 100,
+              x: (source?.position.x ?? 0) + 160,
+              y: (source?.position.y ?? 0) + 100,
             },
           }],
-          relations: focus ? [...graph.relations, { source: focus.id, predicate: vocab.defaultTypeId, target: operation.id }] : graph.relations,
+          relations: source && vocab ? [...graph.relations, { source: source.id, predicate: vocab.defaultTypeId, target: operation.id }] : graph.relations,
         }
         selected = { kind: 'concept', id: operation.id }
         break

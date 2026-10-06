@@ -15,9 +15,12 @@ export const examplePlugin: Plugin = ({ store }) => ({
     defaultTypeId: 'urn:example:related',
   }],
   actions: [{
-    id: 'rename-focus',
-    label: 'Rename focus',
-    run: () => store.setConceptLabel(store.getState().workspace.focusId, 'Renamed'),
+    id: 'rename-selected',
+    label: 'Rename selected concept',
+    run: () => {
+      const selected = store.getState().selected
+      if (selected?.kind === 'concept') store.setConceptLabel(selected.id, 'Renamed')
+    },
   }],
 })
 ```
@@ -34,8 +37,8 @@ export const exampleRendererPlugin: Plugin = ({ store }) => ({
     id: 'example',
     label: 'Example',
     component: function ExampleRenderer() {
-      const focusId = useSyncExternalStore(store.subscribe, () => store.getState().workspace.focusId)
-      return <div>{focusId}</div>
+      const selected = useSyncExternalStore(store.subscribe, () => store.getState().selected)
+      return <div>{selected?.id ?? 'No selection'}</div>
     },
   }],
 })
@@ -50,6 +53,8 @@ export const exampleRendererPlugin: Plugin = ({ store }) => ({
 - `NessoStore`: read/subscribe, graph editing, navigation, viewport, and active-plugin commands. Single-write methods delegate to `applyOperations`.
 - `applyOperations`: ordered graph writes, validated and committed atomically or rejected with `SchemaError`; no-ops do not notify. Creation operations require explicit IDs, generated with `newIri` from `@nesso/schema`.
 - `GraphOperation`: readonly domain writes for concepts and relations.
-- `RendererDefinition`, `VocabDefinition`, `ActionDefinition`, `ThemeDefinition`: contribution shapes. Actions are `{ id, label, run }` commands; renderer components use the injected store. Themes are `{ id, label }` definitions whose statically imported CSS scopes tokens to `:root[data-theme='<id>']`. The host owns the active theme preference and DOM application; theme plugins need no DOM access or store commands.
+- `RendererDefinition`, `VocabDefinition`, `ActionDefinition`: contribution shapes. Actions are `{ id, label, run }` commands; renderer components use the injected store.
+- `SavedView`: readonly named concept set with pin metadata. `WorkspaceState` holds saved views, the active view id, and renderer viewports; null active view means the complete graph.
+- `ThemeDefinition`: id and label. Statically imported CSS scopes tokens to `:root[data-theme='<id>']`; the host owns the active theme preference and DOM application.
 
 See [`src/types.ts`](src/types.ts) for all exported types and method signatures.

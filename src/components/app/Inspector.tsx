@@ -2,8 +2,10 @@ import { relationKey, type RelationType } from '@nesso/schema'
 import { Autocomplete } from '@base-ui/react/autocomplete'
 import { useRef, useState } from 'react'
 import { X } from 'lucide-react'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { Input, Label } from '@nesso/ui'
+import { ConceptViews } from './ConceptViews'
+import { ConceptConnections } from './ConceptConnections'
+import { InspectorSection } from './InspectorSection'
 import { nessoStore, useNessoStore } from '@/store'
 
 function RelationInput({ edgeId, typeId, label, defaultTypeId, relationTypes, onSave, onCreate }: {
@@ -72,21 +74,21 @@ function RelationInput({ edgeId, typeId, label, defaultTypeId, relationTypes, on
           />
           <Autocomplete.Clear
             aria-label="Clear relation"
-            className="absolute top-1/2 right-1.5 flex size-5 -translate-y-1/2 items-center justify-center rounded-sm text-muted-foreground outline-none hover:bg-accent hover:text-foreground"
+            className="nesso-button absolute top-1/2 right-1.5 flex size-5 -translate-y-1/2 items-center justify-center text-muted-foreground hover:bg-accent hover:text-foreground"
           >
             <X className="size-3.5" />
           </Autocomplete.Clear>
         </div>
         <Autocomplete.Portal>
           <Autocomplete.Positioner sideOffset={4} className="z-50 outline-none">
-            <Autocomplete.Popup className="max-h-72 w-[var(--anchor-width)] overflow-y-auto rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-md">
+            <Autocomplete.Popup className="nesso-popup max-h-72 w-[var(--anchor-width)] overflow-y-auto p-1">
               <Autocomplete.List>
                 {(item: Readonly<RelationType>) => (
                   <Autocomplete.Item
                     key={item.id}
                     value={item}
                     onClick={() => onSave(edgeId, item.id)}
-                    className="cursor-pointer rounded-md px-2 py-1.5 text-sm outline-none data-highlighted:bg-accent data-highlighted:text-accent-foreground"
+                    className="nesso-option cursor-default px-2.5 py-2 text-xs"
                   >
                     {item.label}
                     {relationTypes.some((type) => type.id !== item.id && type.label.toLowerCase() === item.label.toLowerCase()) && (
@@ -105,10 +107,9 @@ function RelationInput({ edgeId, typeId, label, defaultTypeId, relationTypes, on
 }
 
 export function Inspector() {
-  const [tagInput, setTagInput] = useState('')
   const graph = useNessoStore((state) => state.graph)
   const selected = useNessoStore((state) => state.selected)
-  const focusId = useNessoStore((state) => state.workspace.focusId)
+  const viewGraph = useNessoStore((state) => state.viewGraph)
   const vocabs = useNessoStore((state) => state.vocabs)
   const activeVocabId = useNessoStore((state) => state.preferences.activeVocabId)
   const activeVocab = vocabs.find((vocab) => vocab.id === activeVocabId)
@@ -117,13 +118,12 @@ export function Inspector() {
     if (type.id !== activeVocab?.defaultTypeId && !offered.has(type.id)) offered.set(type.id, type)
   }
   const relationTypes = [...offered.values()]
-  const selectedNode = selected?.kind === 'concept'
+  const concept = selected?.kind === 'concept'
     ? graph.concepts.find((concept) => concept.id === selected.id)
     : undefined
   const selectedEdge = selected?.kind === 'relation'
     ? graph.relations.find((relation) => relationKey(relation) === selected.id)
     : undefined
-  const concept = selectedEdge ? undefined : selectedNode ?? graph.concepts.find((item) => item.id === focusId)
   const sourceLabel = selectedEdge
     ? (graph.concepts.find((item) => item.id === selectedEdge.source)?.label ?? '?')
     : null
@@ -136,12 +136,10 @@ export function Inspector() {
     : relationTypes.find((item) => item.id === selectedRelationId)?.label ?? ''
 
   return (
-    <aside className="flex h-full flex-col gap-4 overflow-y-auto p-3 text-sm">
+    <aside className="flex h-full flex-col overflow-y-auto bg-background px-5 py-6 text-sm">
       {concept ? (
-        <section className="flex flex-col gap-3">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Concept
-          </h2>
+        <section className="flex flex-col gap-[26px]">
+          {!viewGraph.concepts.some((item) => item.id === concept.id) && <p className="text-xs text-muted-foreground">This concept is outside the current view.</p>}
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="concept-label">Label</Label>
             <Input
@@ -150,54 +148,11 @@ export function Inspector() {
               onChange={(event) => nessoStore.setConceptLabel(concept.id, event.target.value)}
             />
           </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="concept-tags">Tags</Label>
-            <div className="flex flex-wrap gap-1">
-              {concept.tags.map((tag) => (
-                <button
-                  key={tag}
-                  type="button"
-                  aria-label={`Remove ${tag} tag`}
-                  onClick={() => nessoStore.removeTag(concept.id, tag)}
-                  className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs hover:bg-accent"
-                >
-                  {tag} <X className="size-3" />
-                </button>
-              ))}
-            </div>
-            <form
-              onSubmit={(event) => {
-                event.preventDefault()
-                nessoStore.addTags(concept.id, tagInput.split(' '))
-                setTagInput('')
-              }}
-            >
-              <Input
-                id="concept-tags"
-                value={tagInput}
-                onChange={(event) => {
-                  const next = event.target.value
-                  const index = next.lastIndexOf(' ')
-                  if (index === -1) {
-                    setTagInput(next)
-                    return
-                  }
-                  nessoStore.addTags(concept.id, next.slice(0, index).split(' '))
-                  setTagInput(next.slice(index + 1))
-                }}
-                placeholder="Type a tag, press space…"
-              />
-            </form>
-          </div>
+          <ConceptConnections key={`connections:${concept.id}`} conceptId={concept.id} />
+          <ConceptViews key={`views:${concept.id}`} conceptId={concept.id} />
         </section>
       ) : selectedEdge ? (
-        <section className="flex flex-col gap-3">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Relation
-          </h2>
-          <p className="text-muted-foreground">
-            {sourceLabel} &rarr; {targetLabel}
-          </p>
+        <section className="flex flex-col gap-[26px]">
           <RelationInput
             key={`${relationKey(selectedEdge)}:${selectedRelationLabel}`}
             edgeId={relationKey(selectedEdge)}
@@ -208,6 +163,12 @@ export function Inspector() {
             onSave={nessoStore.setRelationType}
             onCreate={nessoStore.createRelationType}
           />
+          <InspectorSection id="inspector.nodes" title="Nodes">
+            <div className="mt-2 space-y-3">
+              <div className="flex flex-col gap-1"><span className="font-mono text-[10px] leading-[14px] text-muted-foreground">From</span><span className="text-[13px] leading-[19px] break-words">{sourceLabel}</span></div>
+              <div className="flex flex-col gap-1"><span className="font-mono text-[10px] leading-[14px] text-muted-foreground">To</span><span className="text-[13px] leading-[19px] break-words">{targetLabel}</span></div>
+            </div>
+          </InspectorSection>
         </section>
       ) : null}
     </aside>

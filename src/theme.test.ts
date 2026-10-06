@@ -21,7 +21,7 @@ test('the host applies only registered themes, tracks changes, and disconnects c
   assert.deepEqual(applied, [['data-theme', 'light']])
   host.registerTheme({ id: 'alternative', label: 'Alternative' })
   host.ui.setActiveTheme('light')
-  host.store.setConceptLabel(host.store.getState().workspace.focusId, 'Renamed')
+  host.store.setConceptLabel(host.store.getState().graph.concepts[0].id, 'Renamed')
   assert.equal(applied.length, 1)
   host.ui.setActiveTheme('alternative')
   assert.deepEqual(applied, [['data-theme', 'light'], ['data-theme', 'alternative']])

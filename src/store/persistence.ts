@@ -49,6 +49,10 @@ export const loadPersistence = (storage: StorageSource): LoadedState => {
         const graph = parseGraph(saved.graph)
         if (graph.concepts.length === 0) fail('graph.concepts', 'Graph must keep at least one concept')
         const workspace = parseWorkspace(saved.workspace)
+        const ids = new Set(graph.concepts.map((concept) => concept.id))
+        for (const [index, view] of workspace.savedViews.entries()) {
+          if (view.conceptIds.some((id) => !ids.has(id))) fail(`workspace.savedViews[${index}].conceptIds`, 'Unknown concept')
+        }
         loaded.graph = graph
         loaded.workspace = workspace
       } else {

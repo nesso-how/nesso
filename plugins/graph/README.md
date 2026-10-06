@@ -4,9 +4,11 @@ React Flow renderer plugin: canvas, node/edge views, and adapters rendering the 
 
 ## Usage
 
-Add `graphPlugin` to the static plugin list in `src/plugins.ts`; the host renders its renderer when active (focused neighborhood or whole graph). The canvas offers `Add concept` (+) and `Delete selected` (trash, enabled only with a selection) as one horizontal control group top right; double-click zooms.
+Add `graphPlugin` to the static plugin list in `src/plugins.ts`; the host renders its renderer when active (saved view or complete graph). The canvas offers `Add concept` (+) and `Delete selected` (trash, enabled only with a selection) as one horizontal control group top right; double-click zooms.
 
-The canvas restores `workspace.viewports.graph` on mount and records the viewport at the end of pan/zoom gestures. Opening a saved workspace does not auto-fit over its viewport; changing focus or view mode still fits the new neighborhood or whole graph.
+New concepts appear near the selected concept, constrained to the visible canvas with a 24px margin; without a selected concept, they appear at the viewport center. Placement accounts for pan, zoom, node dimensions, and the Inspector opening without reframing the graph.
+
+The canvas restores `workspace.viewports.graph` on mount and records the viewport at the end of pan/zoom gestures. Switching views fits the new scope; membership edits and pinning do not reframe it.
 
 ## API
 

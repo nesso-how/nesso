@@ -6,13 +6,19 @@ export type PanelSizes = {
   readonly inspectorWidth: number
 }
 
-export type HostWorkspace = WorkspaceState & {
-  readonly tagFilter: readonly string[]
-}
+export type HostWorkspace = WorkspaceState
+
+export const sectionIds = [
+  'sidebar', 'sidebar.pinned-views', 'sidebar.views',
+  'inspector.connections', 'inspector.views', 'inspector.nodes',
+] as const
+
+export type SectionId = typeof sectionIds[number]
 
 export type HostPreferences = Preferences & {
   readonly activeThemeId: string
   readonly panels: PanelSizes
+  readonly collapsedSections?: readonly SectionId[]
 }
 
 export type HostState = NessoState & {

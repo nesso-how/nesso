@@ -9,7 +9,7 @@ test('the theme plugin contributes an identity matching its stylesheet without a
       assert.fail('Theme definitions must not access the store')
     },
   })
-  assert.deepEqual(definition.themes, [{ id: 'nesso-light', label: 'Nesso Light' }])
+  assert.deepEqual(definition.themes, [{ id: 'kernel', label: 'Kernel' }])
   const css = readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8')
   for (const theme of definition.themes ?? []) {
     assert.ok(css.includes(`:root[data-theme='${theme.id}']`))

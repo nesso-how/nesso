@@ -1,18 +1,18 @@
 # @nesso/theme
 
-Light-only theme plugin providing the app's palette, Geist font, and base radius.
+Kernel, the default light-only theme: white surfaces, silver navigation, mist canvas, graphite states, 3px controls, and 4px graph objects/dialogs.
 
 ## Usage
 
 Add `themePlugin` to the static plugin list in `src/plugins.ts` and import `@nesso/theme/styles.css` in `src/index.css`.
 
-The host resolves the active theme id in app preferences and applies it as `data-theme` to the document root, so portaled UI inherits the same tokens. It maps tokens to Tailwind utilities and applies global base styles; component recipes and layout remain outside this plugin.
+The host validates theme identities, resolves `activeThemeId` from app preferences, and applies it as `data-theme` to the document root. Shared UI maps semantic tokens to Tailwind utilities; component recipes and layout remain outside this plugin.
 
-Stylesheets are bundled at build time, not fetched when a theme is selected. Registering a theme does not load its CSS: the stylesheet must also be imported statically. The host observes `activeThemeId` and switches themes by changing `data-theme`; each stylesheet scopes its tokens to its own theme id. There is currently one theme and no theme selector.
-
-Including theme CSS upfront avoids a stylesheet download on switching, at the cost of a larger initial CSS bundle. The browser still recalculates styles and repaints, and new fonts may load separately.
+Stylesheets and fonts are bundled statically. Each theme scopes its tokens to its own id; registration does not load CSS. The host observes the active theme preference, but there is currently one theme and no theme selector.
 
 ## API
 
-- `themePlugin`: static plugin factory contributing the `nesso-light` theme definition without accessing the store or DOM.
-- `@nesso/theme/styles.css`: Geist font assets and semantic CSS tokens scoped to `:root[data-theme='nesso-light']`.
+- `kernelTheme`: Kernel's id and label (`ThemeDefinition` from `@nesso/plugin`).
+- `themePlugin`: static plugin factory returning the theme contribution; no store mutation or lifecycle hooks.
+- `styles.css`: semantic CSS tokens scoped to `:root[data-theme='kernel']`, importing bundled fonts.
+- `fonts.css`: locally bundled Geist and IBM Plex Mono font declarations.

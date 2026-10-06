@@ -1,5 +1,8 @@
-import type { Plugin } from '@nesso/plugin'
+import type { Plugin, ThemeDefinition } from '@nesso/plugin'
 
-export const themePlugin: Plugin = () => ({
-  themes: [{ id: 'nesso-light', label: 'Nesso Light' }],
-})
+export const kernelTheme: ThemeDefinition = {
+  id: 'kernel',
+  label: 'Kernel',
+}
+
+export const themePlugin: Plugin = () => ({ themes: [kernelTheme] })

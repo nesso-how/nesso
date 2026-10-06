@@ -1,38 +1,70 @@
-import type { GraphSnapshot } from '@nesso/plugin'
-import { type PointerEvent as ReactPointerEvent } from 'react'
-import { ResizeHandle } from '@/components/ui/resizable'
-import { Sidebar } from '@/components/ui/sidebar'
+import type { SavedView } from '@nesso/plugin'
+import { downloadGraph } from '@nesso/export'
+import { Button, Dialog, DialogPopup, Menu, MenuItem, MenuPopup, ResizeHandle } from '@nesso/ui'
+import { MoreHorizontal } from 'lucide-react'
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
+import { Sidebar } from './SidebarLayout'
+import { NewViewButton } from './NewViewButton'
+import { SectionHeading } from './SectionHeading'
 import { host, nessoStore, useNessoStore } from '@/store'
 
-type ConceptView = GraphSnapshot['concepts'][number]
-
-const MIN_WIDTH = 200
-const MAX_WIDTH = 480
-
 export function AppSidebar() {
-  const concepts = useNessoStore((state) => state.graph.concepts)
-  const focusId = useNessoStore((state) => state.workspace.focusId)
-  const view = useNessoStore((state) => state.workspace.view)
-  const selectedTags = useNessoStore((state) => state.workspace.tagFilter)
-  const tags = [...new Set([...concepts.flatMap((concept) => concept.tags), ...selectedTags])].sort()
-  const sorted = [...concepts].sort((a, b) => a.label.localeCompare(b.label))
-  const filtered = sorted.filter((concept) => selectedTags.every((tag) => concept.tags.includes(tag)))
+  const workspace = useNessoStore((state) => state.workspace)
+  const collapsed = useNessoStore((state) => state.preferences.collapsedSections)
+  const pinnedOpen = !collapsed?.includes('sidebar.pinned-views')
+  const viewsOpen = !collapsed?.includes('sidebar.views')
+  const [deleting, setDeleting] = useState<SavedView | null>(null)
+  const [menu, setMenu] = useState<string | null>(null)
+  const cancel = useRef<HTMLButtonElement>(null)
+  const createTrigger = useRef<HTMLButtonElement>(null)
+  const menuTriggers = useRef(new Map<string, HTMLButtonElement>())
+  const deletingId = useRef<string | null>(null)
+  const pinned = workspace.savedViews.filter((view) => view.pinned)
+  const ordinary = workspace.savedViews.filter((view) => !view.pinned)
 
-  const list = (items: readonly ConceptView[]) => (
-    <ul className="space-y-0.5">
-      {items.map((concept) => (
-        <li key={concept.id}>
-          <button
-            type="button"
-            onClick={() => nessoStore.setFocus(concept.id)}
-            aria-current={view === 'focus' && concept.id === focusId ? 'true' : undefined}
-            className="w-full truncate rounded-md px-2 py-1.5 text-left text-sm hover:bg-sidebar-accent aria-current:bg-sidebar-accent"
-          >
-            {concept.label}
-          </button>
-        </li>
-      ))}
-    </ul>
+  useEffect(() => {
+    const close = () => setMenu(null)
+    window.addEventListener('resize', close)
+    return () => window.removeEventListener('resize', close)
+  }, [])
+
+  const row = (view: SavedView) => (
+    <div key={view.id} className="group flex min-h-14 items-center gap-1 rounded-sm hover:bg-accent has-[:focus-visible]:bg-accent has-[[aria-current]]:bg-pressed">
+      <button
+        type="button"
+        onClick={() => nessoStore.setView(view.id)}
+        aria-current={workspace.activeViewId === view.id ? 'page' : undefined}
+        className="min-w-0 flex-1 rounded-sm px-2.5 py-2 text-left"
+      >
+        <span className="block text-[13px] leading-[19px] break-words">{view.name}</span>
+        <span className="mt-[3px] block font-mono text-[10px] leading-[14px] text-muted-foreground">{view.conceptIds.length} {view.conceptIds.length === 1 ? 'concept' : 'concepts'}</span>
+      </button>
+      <Menu.Root open={menu === view.id} onOpenChange={(open) => setMenu(open ? view.id : null)}>
+        <Menu.Trigger ref={(element: HTMLButtonElement | null) => {
+          if (element) menuTriggers.current.set(view.id, element)
+          else menuTriggers.current.delete(view.id)
+        }} render={<Button variant="ghost" size="icon-sm" className="mr-1 text-muted-foreground opacity-0 group-hover:opacity-100 group-has-[:focus-visible]:opacity-100 data-popup-open:opacity-100 hover:bg-transparent hover:text-foreground active:bg-transparent [@media(pointer:coarse)]:opacity-100" aria-label={`Actions for ${view.name}`} />}>
+          <MoreHorizontal />
+        </Menu.Trigger>
+        <MenuPopup>
+          <MenuItem onClick={() => {
+            host.ui.setViewPinned(view.id, !view.pinned)
+            requestAnimationFrame(() => {
+              const trigger = menuTriggers.current.get(view.id)
+              const target = trigger?.getClientRects().length ? trigger : createTrigger.current
+              target?.focus()
+            })
+          }}>{view.pinned ? 'Unpin view' : 'Pin view'}</MenuItem>
+          <MenuItem onClick={() => downloadGraph(host.ui.getViewGraph(view.id), view.name)}>Export view</MenuItem>
+          <Menu.Separator className="my-1 h-px bg-border" />
+          <MenuItem onClick={() => { deletingId.current = view.id; setDeleting(view) }}>Delete view</MenuItem>
+        </MenuPopup>
+      </Menu.Root>
+    </div>
+  )
+
+  const heading = (label: string, id: string, open: boolean, toggle: () => void) => (
+    <SectionHeading open={open} className="min-h-8" aria-controls={id} onClick={toggle}>{label}</SectionHeading>
   )
 
   const startResize = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -42,7 +74,7 @@ export function AppSidebar() {
     handle.dataset.resizing = ''
     let width = host.store.getState().preferences.panels.explorerWidth
     const onMove = (move: PointerEvent) => {
-      width = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, move.clientX))
+      width = Math.min(480, Math.max(200, move.clientX))
       wrapper?.style.setProperty('--sidebar-width', `${width}px`)
     }
     const stop = () => {
@@ -56,71 +88,37 @@ export function AppSidebar() {
   }
 
   return (
-    <Sidebar>
-      <div className="explorer-scroll min-h-0 flex-1 overflow-y-auto p-3">
-        <button
-          type="button"
-          onClick={() => nessoStore.setView('whole')}
-          aria-current={view === 'whole' ? 'true' : undefined}
-          className="mb-3 w-full rounded-md border px-2 py-1.5 text-left text-sm hover:bg-sidebar-accent aria-current:bg-sidebar-accent"
-        >
-          All concepts
-        </button>
-        <details className="mb-3 rounded-md border px-2 py-1.5 text-sm">
-          <summary className="cursor-pointer select-none">
-            Tags{selectedTags.length > 0 ? ` (${selectedTags.length})` : ''}
-          </summary>
-          <div className="mt-2 space-y-1 border-t pt-2">
-            {tags.map((tag) => (
-              <label key={tag} className="flex cursor-pointer items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={selectedTags.includes(tag)}
-                  onChange={(event) =>
-                    host.ui.setTagFilter(event.target.checked
-                      ? [...selectedTags, tag]
-                      : selectedTags.filter((item) => item !== tag))
-                  }
-                />
-                {tag}
-              </label>
-            ))}
+    <>
+      <Sidebar>
+        <div className="flex min-h-0 flex-1 flex-col px-3 pt-5">
+          <NewViewButton ref={createTrigger} />
+          {heading('Pinned views', 'pinned-views', pinnedOpen, () => host.ui.setSectionOpen('sidebar.pinned-views', !pinnedOpen))}
+          <div className="explorer-scroll min-h-0 flex-1 overflow-y-auto p-1.5 -mx-1.5" onScroll={() => setMenu(null)}>
+            <div id="pinned-views" hidden={!pinnedOpen} className="mt-1 space-y-0.5">
+              <button type="button" onClick={() => nessoStore.setView(null)} aria-current={workspace.activeViewId === null ? 'page' : undefined} className="min-h-14 w-full shrink-0 rounded-sm px-2.5 py-2 text-left hover:bg-accent aria-[current=page]:bg-pressed">
+                <span className="block text-[13px] leading-[19px]">Complete graph</span>
+                <span className="mt-[3px] block font-mono text-[10px] leading-[14px] text-muted-foreground">Default</span>
+              </button>
+              {pinned.map(row)}
+            </div>
+            <div className="mt-4">
+              {heading('Views', 'saved-views', viewsOpen, () => host.ui.setSectionOpen('sidebar.views', !viewsOpen))}
+              <div id="saved-views" hidden={!viewsOpen} className="mt-1 space-y-0.5">{ordinary.map(row)}</div>
+            </div>
           </div>
-        </details>
-        {selectedTags.length > 0 ? (
-          list(filtered)
-        ) : (
-          <>
-            {tags.map((tag) => {
-              const items = sorted.filter((concept) => concept.tags.includes(tag))
-              return items.length > 0 ? (
-                <details key={tag} className="mb-2">
-                  <summary className="cursor-pointer py-1 text-xs font-semibold text-muted-foreground">
-                    {tag}
-                  </summary>
-                  {list(items)}
-                </details>
-              ) : null
-            })}
-            {sorted.some((concept) => concept.tags.length === 0) && (
-              <details open className="mb-2">
-                <summary className="cursor-pointer py-1 text-xs font-semibold text-muted-foreground">
-                  Untagged
-                </summary>
-                {list(sorted.filter((concept) => concept.tags.length === 0))}
-              </details>
-            )}
-          </>
-        )}
-        {selectedTags.length > 0 && filtered.length === 0 && (
-          <p className="text-sm text-muted-foreground">No concepts found</p>
-        )}
-      </div>
-      <ResizeHandle
-        onPointerDown={startResize}
-        aria-label="Resize sidebar"
-        className="absolute inset-y-0 right-0 z-20 cursor-col-resize bg-transparent"
-      />
-    </Sidebar>
+        </div>
+        <ResizeHandle onPointerDown={startResize} aria-label="Resize sidebar" className="absolute inset-y-0 right-0 z-20 cursor-col-resize bg-transparent" />
+      </Sidebar>
+      <Dialog.Root open={deleting !== null} onOpenChange={(open) => { if (!open) setDeleting(null) }}>
+        <DialogPopup initialFocus={cancel} finalFocus={() => menuTriggers.current.get(deletingId.current ?? '') ?? createTrigger.current}>
+          <Dialog.Title className="text-sm">Delete “{deleting?.name}”?</Dialog.Title>
+          <Dialog.Description className="mt-2 text-xs text-muted-foreground">Concepts and relations remain untouched. This only deletes the view.</Dialog.Description>
+          <div className="mt-6 flex justify-end gap-2">
+            <Dialog.Close render={<Button ref={cancel} variant="outline" />}>Cancel</Dialog.Close>
+            <Button onClick={() => { if (deleting) host.ui.deleteView(deleting.id); setDeleting(null) }}>Delete view</Button>
+          </div>
+        </DialogPopup>
+      </Dialog.Root>
+    </>
   )
 }

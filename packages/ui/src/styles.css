@@ -1,0 +1,75 @@
+@source "./**/*.{ts,tsx}";
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-canvas: var(--canvas);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--hover);
+  --color-pressed: var(--pressed);
+  --color-border: var(--border);
+  --color-input: var(--border);
+  --color-ring: var(--ring);
+  --color-destructive: var(--foreground);
+  --color-card: var(--background);
+  --color-popover: var(--background);
+  --color-node-border: var(--node-border);
+  --radius-sm: var(--radius-control);
+  --radius-lg: var(--radius-object);
+}
+
+@layer components {
+  .nesso-button,
+  .nesso-input,
+  .nesso-option {
+    border-radius: var(--radius-control);
+    transition: background-color var(--duration-state), border-color var(--duration-state);
+  }
+
+  .nesso-button:focus-visible,
+  .nesso-option:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  .nesso-input:focus-visible {
+    outline: none;
+  }
+
+  .nesso-popup {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-object);
+    background: var(--background);
+    color: var(--foreground);
+    box-shadow: 0 8px 24px #00000014;
+    outline: none;
+  }
+
+  .nesso-option[data-highlighted] {
+    background: var(--hover);
+  }
+
+  @media (pointer: coarse) {
+    .nesso-button,
+    .nesso-input,
+    .nesso-option {
+      min-width: 44px;
+      min-height: 44px;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0s !important;
+    animation-duration: 0s !important;
+  }
+}

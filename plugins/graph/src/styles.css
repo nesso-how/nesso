@@ -1,12 +1,32 @@
-.react-flow .react-flow__controls-button {
-  background: var(--card);
-  border-color: var(--border);
+.react-flow {
+  --xy-background-color: var(--canvas);
+  --xy-edge-stroke: var(--edge);
+  --xy-node-border-radius: var(--radius-object);
+  --xy-controls-button-background-color: var(--background);
+  --xy-controls-button-background-color-hover: var(--hover);
+  --xy-controls-button-color: var(--foreground);
+  --xy-controls-button-border-color: var(--border);
+  --xy-controls-box-shadow: none;
 }
 
-.react-flow .react-flow__controls-button:hover {
-  background: var(--accent);
+.react-flow__controls {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
 }
 
-.react-flow .react-flow__controls-button svg {
-  fill: var(--foreground);
+.react-flow__controls-button {
+  border-radius: var(--radius-control);
+}
+
+.react-flow__controls-button:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: -2px;
+}
+
+@media (pointer: coarse) {
+  .react-flow__controls-button {
+    width: 44px;
+    height: 44px;
+  }
 }

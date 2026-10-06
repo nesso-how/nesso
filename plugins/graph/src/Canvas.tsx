@@ -17,7 +17,7 @@ import './styles.css'
 import { relationKey } from '@nesso/schema'
 import { ConceptNodeView } from './ConceptNodeView'
 import { RelationEdgeView } from './RelationEdgeView'
-import { conceptNode, relationEdge } from './adapters'
+import { conceptNode, conceptNodeSize, relationEdge } from './adapters'
 import type { ConceptNode, RelationEdge } from './types'
 import { useNesso, useStore } from './store'
 
@@ -28,12 +28,12 @@ export function Canvas() {
   const graph = useNesso((state) => state.viewGraph)
   const selected = useNesso((state) => state.selected)
   const conceptCount = useNesso((state) => state.graph.concepts.length)
-  const focusId = useNesso((state) => state.workspace.focusId)
-  const view = useNesso((state) => state.workspace.view)
+  const view = useNesso((state) => state.workspace.activeViewId)
   const store = useStore()
   const [initialViewport] = useState(() => store.getState().workspace.viewports.graph)
-  const navigation = useRef({ focusId, view })
-  const { fitView } = useReactFlow()
+  const navigation = useRef(view)
+  const canvas = useRef<HTMLDivElement>(null)
+  const { fitView, screenToFlowPosition } = useReactFlow()
 
   const nodes = graph.concepts.map((concept) =>
     conceptNode(concept, selected?.kind === 'concept' && selected.id === concept.id),
@@ -71,6 +71,33 @@ export function Canvas() {
 
   const canDelete = selected !== null && (selected.kind === 'relation' || conceptCount > 1)
 
+  const handleAdd = () => {
+    const element = canvas.current
+    if (!element) return
+    const state = store.getState()
+    const source = state.selected?.kind === 'concept'
+      ? state.graph.concepts.find((concept) => concept.id === state.selected?.id)
+      : undefined
+    const placement = () => {
+      const bounds = element.getBoundingClientRect()
+      const topLeft = screenToFlowPosition({ x: bounds.left + 24, y: bounds.top + 24 })
+      const bottomRight = screenToFlowPosition({ x: bounds.right - 24, y: bounds.bottom - 24 })
+      const maxX = Math.max(topLeft.x, bottomRight.x - conceptNodeSize.width)
+      const maxY = Math.max(topLeft.y, bottomRight.y - conceptNodeSize.height)
+      const position = source
+        ? { x: source.position.x + 160, y: source.position.y + 100 }
+        : { x: (topLeft.x + maxX) / 2, y: (topLeft.y + maxY) / 2 }
+      return {
+        x: Math.max(topLeft.x, Math.min(position.x, maxX)),
+        y: Math.max(topLeft.y, Math.min(position.y, maxY)),
+      }
+    }
+    const id = store.addConcept(placement())
+    requestAnimationFrame(() => {
+      if (canvas.current === element) store.setConceptPosition(id, placement())
+    })
+  }
+
   const handleDelete = () => {
     const state = store.getState()
     const current = state.selected
@@ -83,16 +110,16 @@ export function Canvas() {
   }
 
   useEffect(() => {
-    if (navigation.current.focusId === focusId && navigation.current.view === view) return
-    navigation.current = { focusId, view }
+    if (navigation.current === view) return
+    navigation.current = view
     const frame = requestAnimationFrame(() => {
       void fitView({ padding: 0.3, maxZoom: 1.2, duration: 300 })
     })
     return () => cancelAnimationFrame(frame)
-  }, [focusId, view, fitView])
+  }, [view, fitView])
 
   return (
-    <div className="h-full w-full">
+    <div ref={canvas} className="h-full w-full">
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -101,7 +128,8 @@ export function Canvas() {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
-        connectionLineStyle={{ stroke: 'var(--muted-foreground)', strokeWidth: 2 }}
+        onPaneClick={() => store.setSelection(null)}
+        connectionLineStyle={{ stroke: 'var(--edge)', strokeWidth: 1 }}
         proOptions={{ hideAttribution: true }}
         defaultViewport={initialViewport}
         onMoveEnd={(_event, viewport) => store.setViewport('graph', viewport)}
@@ -109,7 +137,7 @@ export function Canvas() {
         fitViewOptions={{ padding: 0.3, maxZoom: 1.2 }}
         minZoom={0.2}
       >
-        <Background variant={BackgroundVariant.Dots} gap={20} size={1.5} />
+        <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="var(--border)" />
         <Controls showZoom={false} />
         <Controls position="top-right" orientation="horizontal" showZoom={false} showFitView={false} showInteractive={false}>
           <ControlButton onClick={handleDelete} disabled={!canDelete} title="Delete selected" aria-label="Delete selected">
@@ -117,7 +145,7 @@ export function Canvas() {
               <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
             </svg>
           </ControlButton>
-          <ControlButton onClick={() => store.addConcept()} title="Add concept" aria-label="Add concept">
+          <ControlButton onClick={handleAdd} title="Add concept" aria-label="Add concept">
             <svg viewBox="0 0 24 24">
               <path d="M13 11V3h-2v8H3v2h8v8h2v-8h8v-2h-8z" />
             </svg>

@@ -30,12 +30,12 @@ export function RelationEdgeView(props: EdgeProps<RelationEdge>) {
         id={id}
         path={path}
         markerEnd={markerEnd}
-        style={{ stroke: 'var(--muted-foreground)', strokeWidth: 2 }}
+        style={{ stroke: props.selected ? 'var(--primary)' : 'var(--edge)', strokeWidth: 1 }}
       />
       {label && (
         <EdgeLabelRenderer>
           <div
-            className="nodrag nopan pointer-events-none absolute rounded border bg-popover px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground"
+            className="nodrag nopan pointer-events-none absolute bg-popover px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground"
             style={{ transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)` }}
           >
             {label}

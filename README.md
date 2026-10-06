@@ -2,17 +2,16 @@
 
 A minimal, light-only knowledge graph app for connecting concepts with directed relations.
 
-## Run (browser)
+## Run
 
 ```sh
 pnpm install
 pnpm dev
-pnpm build
-pnpm lint
-pnpm test
 ```
 
-## macOS
+Build and checks: `pnpm build`, `pnpm lint`, `pnpm test`.
+
+For macOS:
 
 - `pnpm desktop` — build and run the desktop app.
 - Development: run `pnpm dev --host 127.0.0.1 --strictPort` and `pnpm desktop:dev` in separate terminals.
@@ -23,8 +22,19 @@ DMGs are not signed or notarized; Gatekeeper may block downloaded apps.
 
 ## Usage
 
-The first graph starts from `src/data/seed-graph.json`. Edits, navigation, tag filters, and panel sizes are saved automatically in this browser, without cross-device sync.
+- **Concepts** are the graph's nodes, connected by directed, typed **relations**.
+- **Views** are named subsets of the same graph, not copies. Complete graph always contains every concept; removing a concept from a view does not delete it.
+- **Vocabularies** provide relation types; users can also name their own.
 
-The hamburger menu offers Export (the visible graph; choose All concepts for the whole graph) and Reset graph. Reset asks for confirmation, then starts a fresh graph with one concept, retaining app preferences.
+Use the Explorer to navigate views, the canvas to build the graph, and the Inspector to edit the selection and its memberships. The visible graph can be exported as JSON-LD.
 
-Storage failures show a warning and preserve existing saved data; editing remains available in memory. Browser storage is not a backup.
+The document and app preferences, including collapsed sections, are saved locally and automatically. There is no cross-device sync; local storage is not a backup. This is pre-alpha software, and stored formats may change without migrations.
+
+## Architecture
+
+- **Host (`src/`)** owns the app shell, the shared store, persistence, and static plugin registration. The store separates graph data, workspace navigation/views, and app preferences, and supplies the visible graph to renderers.
+- **Schema (`packages/schema/`)** defines and validates graph data and handles JSON-LD serialization.
+- **Plugin contract (`packages/plugin/`)** defines readonly state and contributions. Plugins interact with the host through an injected store, never through app internals.
+- **UI and theme (`packages/ui/`, `plugins/theme/`)** provide shared Base UI-backed controls, semantic styles, Kernel tokens, and bundled fonts. The host applies the theme; renderers consume its CSS tokens.
+- **Plugins (`plugins/graph/`, `plugins/vocab/`, `plugins/export/`)** contribute the React Flow canvas, relation vocabularies, and export actions. Renderer-specific components and styles stay inside their plugin.
+- **Desktop (`electron/`)** wraps the same app in Electron for macOS.

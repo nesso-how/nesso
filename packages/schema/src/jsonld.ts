@@ -27,7 +27,7 @@ export function parseGraph(value: unknown): Graph {
     fail('', 'Unsupported document property')
   }
   const context = object(document['@context'], '@context')
-  for (const term of ['rdf', 'rdfs', 'tags', 'position'] as const) {
+  for (const term of ['rdf', 'rdfs', 'position'] as const) {
     const expected = schemaContext[term]
     const actual = context[term]
     if (typeof expected === 'string') {
@@ -64,15 +64,11 @@ export function parseGraph(value: unknown): Graph {
       continue
     }
     if (entry['@type'] !== undefined) fail(`${path}.@type`, `Unsupported concept type: ${id}`)
-    const tags = entry.tags === undefined ? [] : entry.tags
-    if (!Array.isArray(tags) || !tags.every((tag) => typeof tag === 'string')) {
-      fail(`${path}.tags`, `Invalid tags: ${id}`)
-    }
     const position = entry.position === undefined ? { x: 0, y: 0 } : object(entry.position, `${path}.position`)
     if (typeof position.x !== 'number' || typeof position.y !== 'number') {
       fail(`${path}.position`, `Invalid position: ${id}`)
     }
-    concepts.push({ id, label, tags, position: { x: position.x, y: position.y } })
+    concepts.push({ id, label, position: { x: position.x, y: position.y } })
   }
 
   const known = new Set(relationTypes.map((type) => type.id))
@@ -81,7 +77,7 @@ export function parseGraph(value: unknown): Graph {
     if (entry['@type'] === 'rdf:Property') continue
     const id = iri(entry['@id'], `@graph[${index}].@id`)
     for (const [term, value] of Object.entries(entry)) {
-      if (['@id', 'rdfs:label', 'tags', 'position'].includes(term)) continue
+      if (['@id', 'rdfs:label', 'position'].includes(term)) continue
       const path = `@graph[${index}].${term}`
       const predicate = predicates.get(term) ?? (known.has(term) ? term : undefined)
       if (!predicate || !known.has(predicate)) fail(path, `Unsupported property: ${term}`)
@@ -107,7 +103,6 @@ export function serializeGraph(graph: Graph): JsonObject {
     const entry: JsonObject = {
       '@id': concept.id,
       'rdfs:label': concept.label,
-      tags: concept.tags,
       position: concept.position,
     }
     for (const relation of graph.relations.filter((item) => item.source === concept.id)) {

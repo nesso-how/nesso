@@ -16,8 +16,8 @@ import {
 } from '@nesso/schema'
 import { createStore } from 'zustand/vanilla'
 import { applyGraphOperations } from './operations.ts'
-import { defaultPanels, fail, parsePanels, parsePreferences, parseTagFilter, parseViewport, parseWorkspace } from './settings.ts'
-import type { HostPreferences, HostState, HostStore, HostWorkspace, PanelSizes, RestoredState } from './types.ts'
+import { defaultPanels, fail, parsePanels, parsePreferences, parseViewport, parseWorkspace } from './settings.ts'
+import { sectionIds, type HostPreferences, type HostState, type HostStore, type HostWorkspace, type PanelSizes, type RestoredState, type SectionId } from './types.ts'
 
 const checkGraph = (graph: GraphSnapshot): void => {
   const issues = validateGraph(graph)
@@ -32,38 +32,36 @@ const selectionExists = (graph: GraphSnapshot, selected: Selection): boolean =>
     ? graph.concepts.some((concept) => concept.id === selected.id)
     : graph.relations.some((relation) => relationKey(relation) === selected.id))
 
-const neighborhood = (graph: GraphSnapshot, focusId: string): GraphSnapshot => {
-  const ids = new Set([focusId])
-  for (const { source, target } of graph.relations) {
-    if (source === focusId) ids.add(target)
-    if (target === focusId) ids.add(source)
-  }
+const materialize = (graph: GraphSnapshot, workspace: HostWorkspace): GraphSnapshot => {
+  if (workspace.activeViewId === null) return graph
+  const ids = new Set(workspace.savedViews.find((view) => view.id === workspace.activeViewId)?.conceptIds ?? [])
   const relations = graph.relations.filter((relation) => ids.has(relation.source) && ids.has(relation.target))
   return {
     concepts: graph.concepts.filter((concept) => ids.has(concept.id)),
     relations,
-    relationTypes: graph.relationTypes.filter((type) => relations.some((relation) => relation.predicate === type.id)),
+    relationTypes: graph.relationTypes,
   }
 }
 
 const newGraph = (): Graph => ({
-  concepts: [{ id: newIri(), label: 'Concept 1', tags: [], position: { x: 0, y: 0 } }],
+  concepts: [{ id: newIri(), label: 'Concept 1', position: { x: 0, y: 0 } }],
   relationTypes: [],
   relations: [],
 })
-const newWorkspace = (focusId: string): HostWorkspace => ({
-  focusId,
-  view: 'focus',
-  tagFilter: [],
+const newWorkspace = (): HostWorkspace => ({
+  activeViewId: null,
+  savedViews: [],
   viewports: {},
 })
 
 export const createNessoStore = (graph: Graph | null, restored: RestoredState = {}) => {
   if (graph) checkGraph(graph)
   const initial = graph ? structuredClone(graph) : newGraph()
-  const workspace = graph && restored.workspace ? parseWorkspace(restored.workspace) : newWorkspace(initial.concepts[0].id)
-  const focusId = initial.concepts.some((concept) => concept.id === workspace.focusId)
-    ? workspace.focusId : initial.concepts[0].id
+  const workspace = graph && restored.workspace ? parseWorkspace(restored.workspace) : newWorkspace()
+  const initialIds = new Set(initial.concepts.map((concept) => concept.id))
+  if (workspace.savedViews.some((view) => view.conceptIds.some((id) => !initialIds.has(id)))) {
+    fail('workspace.savedViews', 'Unknown concept in view')
+  }
   const preferences: HostPreferences = restored.preferences ? parsePreferences(restored.preferences) : {
     activeVocabId: '',
     activeRendererId: '',
@@ -72,9 +70,9 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
   }
   const store = createStore<HostState>()(() => ({
     graph: initial,
-    workspace: { ...workspace, focusId },
+    workspace,
     preferences: { ...preferences, activeVocabId: '', activeRendererId: '', activeThemeId: '' },
-    viewGraph: workspace.view === 'whole' ? initial : neighborhood(initial, focusId),
+    viewGraph: materialize(initial, workspace),
     selected: null,
     vocabs: [],
     persistenceIssues: [],
@@ -84,14 +82,35 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
     const prev = store.getState()
     if (candidate === prev.graph && selected === prev.selected) return
     checkGraph(candidate)
-    const focusId = !reset && candidate.concepts.some((concept) => concept.id === prev.workspace.focusId)
-      ? prev.workspace.focusId
-      : candidate.concepts[0].id
-    const workspace = reset ? newWorkspace(focusId)
-      : focusId === prev.workspace.focusId ? prev.workspace : { ...prev.workspace, focusId }
+    if (!reset && candidate.relations !== prev.graph.relations) {
+      const used = new Set(candidate.relations.map((relation) => relation.predicate))
+      const vocabularyTypes = new Set(prev.vocabs.flatMap((vocab) => vocab.relationTypes.map((type) => type.id)))
+      const removed = new Set(prev.graph.relations.map((relation) => relation.predicate)
+        .filter((id) => !used.has(id) && !vocabularyTypes.has(id)))
+      if (removed.size) {
+        const relationTypes = candidate.relationTypes.filter((type) => !removed.has(type.id))
+        if (relationTypes.length !== candidate.relationTypes.length) candidate = { ...candidate, relationTypes }
+      }
+    }
+    let workspace = reset ? newWorkspace() : prev.workspace
+    if (!reset) {
+      const ids = new Set(candidate.concepts.map((concept) => concept.id))
+      const previousIds = new Set(prev.graph.concepts.map((concept) => concept.id))
+      const addedIds = candidate.concepts.filter((concept) => !previousIds.has(concept.id)).map((concept) => concept.id)
+      let changed = false
+      const savedViews = workspace.savedViews.map((view) => {
+        let conceptIds = view.conceptIds
+        if (conceptIds.some((id) => !ids.has(id))) conceptIds = conceptIds.filter((id) => ids.has(id))
+        if (addedIds.length && view.id === workspace.activeViewId) conceptIds = [...conceptIds, ...addedIds]
+        if (conceptIds === view.conceptIds) return view
+        changed = true
+        return { ...view, conceptIds }
+      })
+      if (changed) workspace = { ...workspace, savedViews }
+    }
     store.setState({
       graph: candidate,
-      viewGraph: workspace.view === 'whole' ? candidate : neighborhood(candidate, focusId),
+      viewGraph: materialize(candidate, workspace),
       workspace,
       selected: selectionExists(candidate, selected) ? selected : null,
     })
@@ -117,8 +136,6 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
 
   const getRenderer = (id: string): RendererDefinition | undefined => renderers.get(id)
 
-  const listRenderers = (): readonly RendererDefinition[] => [...renderers.values()]
-
   const themes = new Map<string, ThemeDefinition>()
 
   const registerTheme = (theme: ThemeDefinition): void => {
@@ -141,30 +158,21 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
     getState: store.getState,
     subscribe: store.subscribe,
 
-    setFocus: (id) => {
-      const state = store.getState()
-      if (!state.graph.concepts.some((concept) => concept.id === id)) return
-      const unchanged = state.workspace.focusId === id && state.workspace.view === 'focus'
-      if (unchanged && state.selected?.kind === 'concept' && state.selected.id === id) return
-      store.setState({
-        workspace: unchanged ? state.workspace : { ...state.workspace, focusId: id, view: 'focus' },
-        selected: { kind: 'concept', id },
-        viewGraph: unchanged ? state.viewGraph : neighborhood(state.graph, id),
-      })
-    },
-
     setSelection: (selection) => {
       const state = store.getState()
       store.setState({ selected: selection && selectionExists(state.graph, selection) ? { ...selection } : null })
     },
 
-    setView: (mode) => {
+    setView: (id) => {
       const state = store.getState()
-      if (mode !== 'focus' && mode !== 'whole') fail('workspace.view', 'Unknown view mode')
-      if (state.workspace.view === mode) return
+      if (id !== null && !state.workspace.savedViews.some((view) => view.id === id)) fail('workspace.activeViewId', 'Unknown view')
+      if (state.workspace.activeViewId === id) return
+      const workspace = { ...state.workspace, activeViewId: id }
+      const viewGraph = materialize(state.graph, workspace)
       store.setState({
-        workspace: { ...state.workspace, view: mode },
-        viewGraph: mode === 'whole' ? state.graph : neighborhood(state.graph, state.workspace.focusId),
+        workspace,
+        selected: selectionExists(viewGraph, state.selected) ? state.selected : null,
+        viewGraph,
       })
     },
 
@@ -184,8 +192,6 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
     setConceptPosition: (id, position) => applyOperations([{ kind: 'concept.position', id, value: position }]),
     setConceptPositions: (updates) => applyOperations([{ kind: 'concept.positions', updates }]),
     setConceptLabel: (id, label) => applyOperations([{ kind: 'concept.label', id, value: label }]),
-    addTags: (id, tags) => applyOperations([{ kind: 'concept.tags.add', id, tags }]),
-    removeTag: (id, tag) => applyOperations([{ kind: 'concept.tags.remove', id, tag }]),
 
     addConcept: (position) => {
       const id = newIri()
@@ -251,17 +257,62 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
         store.setState({ preferences: { ...state.preferences, activeThemeId: id } })
       }
     },
-    setTagFilter: (tags: readonly string[]): void => {
-      const next = parseTagFilter(tags)
+    createView: (name: string, conceptIds: readonly string[]): string => {
       const state = store.getState()
-      if (next.length === state.workspace.tagFilter.length && next.every((tag, index) => tag === state.workspace.tagFilter[index])) return
-      store.setState({ workspace: { ...state.workspace, tagFilter: next } })
+      const id = newIri()
+      const workspace = parseWorkspace({ ...state.workspace, activeViewId: id, savedViews: [
+        ...state.workspace.savedViews, { id, name, conceptIds: [...new Set(conceptIds)], pinned: false },
+      ] })
+      if (conceptIds.some((id) => !state.graph.concepts.some((concept) => concept.id === id))) fail('view.conceptIds', 'Unknown concept')
+      store.setState({ workspace, viewGraph: materialize(state.graph, workspace) })
+      return id
+    },
+    setViewPinned: (id: string, pinned: boolean): void => {
+      const state = store.getState()
+      const view = state.workspace.savedViews.find((view) => view.id === id) ?? fail('view.id', 'Unknown view')
+      if (view.pinned === pinned) return
+      store.setState({ workspace: { ...state.workspace, savedViews: state.workspace.savedViews.map((view) =>
+        view.id === id ? { ...view, pinned } : view) } })
+    },
+    setViewMembership: (viewId: string, conceptId: string, included: boolean): void => {
+      const state = store.getState()
+      const view = state.workspace.savedViews.find((view) => view.id === viewId) ?? fail('view.id', 'Unknown view')
+      if (!state.graph.concepts.some((concept) => concept.id === conceptId)) fail('view.conceptId', 'Unknown concept')
+      if (view.conceptIds.includes(conceptId) === included) return
+      const conceptIds = included
+        ? [...view.conceptIds, conceptId]
+        : view.conceptIds.filter((id) => id !== conceptId)
+      const workspace = { ...state.workspace, savedViews: state.workspace.savedViews.map((view) =>
+        view.id === viewId ? { ...view, conceptIds } : view) }
+      store.setState({ workspace, viewGraph: workspace.activeViewId === viewId ? materialize(state.graph, workspace) : state.viewGraph })
+    },
+    deleteView: (id: string): void => {
+      const state = store.getState()
+      if (!state.workspace.savedViews.some((view) => view.id === id)) fail('view.id', 'Unknown view')
+      const active = state.workspace.activeViewId === id
+      const workspace = { ...state.workspace, activeViewId: active ? null : state.workspace.activeViewId,
+        savedViews: state.workspace.savedViews.filter((view) => view.id !== id) }
+      store.setState({ workspace, viewGraph: active ? state.graph : state.viewGraph })
+    },
+    getViewGraph: (id: string): GraphSnapshot => {
+      const state = store.getState()
+      if (!state.workspace.savedViews.some((view) => view.id === id)) fail('view.id', 'Unknown view')
+      return materialize(state.graph, { ...state.workspace, activeViewId: id })
     },
     setPanelSizes: (sizes: PanelSizes): void => {
       const panels = parsePanels(sizes)
       const state = store.getState()
       if (panels.explorerWidth === state.preferences.panels.explorerWidth && panels.inspectorWidth === state.preferences.panels.inspectorWidth) return
       store.setState({ preferences: { ...state.preferences, panels } })
+    },
+    setSectionOpen: (id: SectionId, open: boolean): void => {
+      if (!sectionIds.includes(id)) fail('preferences.collapsedSections', 'Unknown section')
+      if (typeof open !== 'boolean') fail('section.open', 'Expected a boolean')
+      const state = store.getState()
+      const collapsed = state.preferences.collapsedSections ?? []
+      if (!collapsed.includes(id) === open) return
+      const collapsedSections = open ? collapsed.filter((section) => section !== id) : [...collapsed, id]
+      store.setState({ preferences: { ...state.preferences, collapsedSections } })
     },
     setPersistenceIssues: (issues: readonly Readonly<SchemaIssue>[]): void => {
       if (JSON.stringify(issues) !== JSON.stringify(store.getState().persistenceIssues)) {
@@ -270,5 +321,5 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
     },
   }
 
-  return { store: nessoStore, ui, registerVocab, registerRenderer, getRenderer, listRenderers, registerTheme, getTheme, listThemes }
+  return { store: nessoStore, ui, registerVocab, registerRenderer, getRenderer, registerTheme, getTheme, listThemes }
 }

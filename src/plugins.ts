@@ -5,7 +5,7 @@ import { themePlugin } from '@nesso/theme'
 import { vocabPlugin } from '@nesso/vocab'
 import { nessoStore, registerRenderer, registerTheme, registerVocab } from '@/store'
 
-const plugins: readonly Plugin[] = [vocabPlugin, graphPlugin, exportPlugin, themePlugin]
+const plugins: readonly Plugin[] = [themePlugin, vocabPlugin, graphPlugin, exportPlugin]
 
 export const actions: ActionDefinition[] = []
 

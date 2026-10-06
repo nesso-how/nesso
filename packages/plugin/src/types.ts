@@ -18,8 +18,6 @@ export type GraphOperation =
   | { readonly kind: 'concept.label'; readonly id: string; readonly value: string }
   | { readonly kind: 'concept.position'; readonly id: string; readonly value: Readonly<Position> }
   | { readonly kind: 'concept.positions'; readonly updates: readonly { readonly id: string; readonly position: Readonly<Position> }[] }
-  | { readonly kind: 'concept.tags.add'; readonly id: string; readonly tags: readonly string[] }
-  | { readonly kind: 'concept.tags.remove'; readonly id: string; readonly tag: string }
   | { readonly kind: 'concept.add'; readonly id: string; readonly position?: Readonly<Position> }
   | { readonly kind: 'concept.remove'; readonly id: string }
   | { readonly kind: 'relation.connect'; readonly source: string; readonly target: string }
@@ -34,7 +32,12 @@ export type VocabDefinition = {
   readonly defaultTypeId: string
 }
 
-export type ViewMode = 'focus' | 'whole'
+export type SavedView = {
+  readonly id: string
+  readonly name: string
+  readonly conceptIds: readonly string[]
+  readonly pinned: boolean
+}
 
 export type Viewport = {
   readonly x: number
@@ -43,8 +46,8 @@ export type Viewport = {
 }
 
 export type WorkspaceState = {
-  readonly focusId: string
-  readonly view: ViewMode
+  readonly activeViewId: string | null
+  readonly savedViews: readonly SavedView[]
   readonly viewports: Readonly<Partial<Record<string, Viewport>>>
 }
 
@@ -65,15 +68,12 @@ export type NessoState = {
 export type NessoStore = {
   readonly getState: () => NessoState
   readonly subscribe: (listener: () => void) => () => void
-  readonly setFocus: (id: string) => void
   readonly setSelection: (selection: Selection) => void
-  readonly setView: (mode: ViewMode) => void
+  readonly setView: (id: string | null) => void
   readonly setViewport: (rendererId: string, viewport: Viewport) => void
   readonly setConceptPosition: (id: string, position: Readonly<Position>) => void
   readonly setConceptPositions: (updates: readonly { readonly id: string; readonly position: Readonly<Position> }[]) => void
   readonly setConceptLabel: (id: string, label: string) => void
-  readonly addTags: (id: string, tags: readonly string[]) => void
-  readonly removeTag: (id: string, tag: string) => void
   readonly addConcept: (position?: Readonly<Position>) => string
   readonly connect: (source: string, target: string) => void
   readonly setRelationType: (id: string, typeId: string) => void

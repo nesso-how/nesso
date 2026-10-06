@@ -1,0 +1,49 @@
+[
+  {
+    "id": "mobility", "name": "Mobility", "pinned": false,
+    "conceptIds": [
+      "urn:uuid:453a027b-5736-5e9e-a8f6-29c611a86522",
+      "urn:uuid:965a305c-cd29-5fbe-a22d-d100105355a5",
+      "urn:uuid:2242cdaf-cde6-53f4-a78f-68df5581b435",
+      "urn:uuid:5e5b8945-a806-5510-bfbc-3e97a4754393",
+      "urn:uuid:88047303-9c3a-5527-8bb7-498d3ff42c0d",
+      "urn:uuid:bb100509-47eb-5aa1-aa39-be15e08272dc",
+      "urn:uuid:b4fc7ed8-3f82-5e65-9e65-e268b90fe741"
+    ]
+  },
+  {
+    "id": "energy", "name": "Energy", "pinned": false,
+    "conceptIds": ["urn:uuid:2242cdaf-cde6-53f4-a78f-68df5581b435", "urn:uuid:241a73f7-286a-5517-a450-9fdf102aaf64"]
+  },
+  {
+    "id": "health", "name": "Health", "pinned": false,
+    "conceptIds": [
+      "urn:uuid:5e5b8945-a806-5510-bfbc-3e97a4754393",
+      "urn:uuid:6b8373ec-7eb6-58d8-9951-98319988d396",
+      "urn:uuid:167aba99-57f0-54a7-afed-2d8a72a14763",
+      "urn:uuid:07524c4f-ecfb-5452-a6df-66bc956db5ac"
+    ]
+  },
+  {
+    "id": "infrastructure", "name": "Infrastructure", "pinned": false,
+    "conceptIds": [
+      "urn:uuid:88047303-9c3a-5527-8bb7-498d3ff42c0d",
+      "urn:uuid:d32e5909-1b53-5dae-b64a-1b16f2e8f3ef",
+      "urn:uuid:241a73f7-286a-5517-a450-9fdf102aaf64",
+      "urn:uuid:762b8eae-6e45-54c8-84b0-0dc6ec45ab17"
+    ]
+  },
+  {
+    "id": "environment", "name": "Environment", "pinned": false,
+    "conceptIds": [
+      "urn:uuid:b4fc7ed8-3f82-5e65-9e65-e268b90fe741",
+      "urn:uuid:6b8373ec-7eb6-58d8-9951-98319988d396",
+      "urn:uuid:07524c4f-ecfb-5452-a6df-66bc956db5ac",
+      "urn:uuid:d32e5909-1b53-5dae-b64a-1b16f2e8f3ef"
+    ]
+  },
+  {
+    "id": "community", "name": "Community", "pinned": false,
+    "conceptIds": ["urn:uuid:762b8eae-6e45-54c8-84b0-0dc6ec45ab17"]
+  }
+]

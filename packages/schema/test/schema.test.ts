@@ -11,7 +11,7 @@ const fixture = {
   '@graph': [
     { '@id': predicate, '@type': 'rdf:Property', 'rdfs:label': 'connects' },
     {
-      '@id': subject, 'rdfs:label': 'One', tags: ['Example'], position: { x: 10, y: 20 },
+      '@id': subject, 'rdfs:label': 'One', position: { x: 10, y: 20 },
       connects: targets.map((id) => ({ '@id': id })),
     },
     { '@id': targets[0], 'rdfs:label': 'Two', position: { x: 30, y: 40 } },
@@ -40,12 +40,12 @@ test('missing references are rejected instead of disappearing on export', () => 
 test('parse failures report structured issues', () => {
   const broken = {
     ...fixture,
-    '@graph': [...fixture['@graph'], { '@id': 'urn:uuid:broken', 'rdfs:label': 'Broken', tags: 'Example' }],
+    '@graph': [...fixture['@graph'], { '@id': 'urn:uuid:broken', 'rdfs:label': 'Broken', position: { x: 'bad', y: 0 } }],
   }
   assert.throws(
     () => parseGraph(broken),
     (error: unknown) =>
       error instanceof SchemaError &&
-      error.issues.some(({ path, message }) => path === '@graph[4].tags' && message === 'Invalid tags: urn:uuid:broken'),
+      error.issues.some(({ path, message }) => path === '@graph[4].position' && message === 'Invalid position: urn:uuid:broken'),
   )
 })

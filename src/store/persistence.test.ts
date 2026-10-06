@@ -3,12 +3,13 @@ import test from 'node:test'
 import { parseGraph, serializeGraph, type Graph } from '@nesso/schema'
 import { createNessoStore } from './create.ts'
 import { connectPersistence, loadPersistence, storageKeys } from './persistence.ts'
+import { sectionIds } from './types.ts'
 
 const fixture = (): Graph => ({
   concepts: [
-    { id: 'urn:one', label: 'One', tags: ['Mobility'], position: { x: 10, y: 20 } },
-    { id: 'urn:two', label: 'Two', tags: ['Energy'], position: { x: 30, y: 40 } },
-    { id: 'urn:hidden', label: 'Hidden', tags: [], position: { x: 50, y: 60 } },
+    { id: 'urn:one', label: 'One', position: { x: 10, y: 20 } },
+    { id: 'urn:two', label: 'Two', position: { x: 30, y: 40 } },
+    { id: 'urn:hidden', label: 'Hidden', position: { x: 50, y: 60 } },
   ],
   relations: [{ source: 'urn:one', predicate: 'urn:links', target: 'urn:two' }],
   relationTypes: [{ id: 'urn:links', label: 'links' }, { id: 'urn:unused', label: 'unused' }],
@@ -43,8 +44,10 @@ test('local persistence round-trips the whole document, workspace and preference
   const storage = memoryStorage()
   const loaded = loadPersistence(() => storage)
   const host = registeredHost(fixture())
-  host.ui.setTagFilter(['Mobility', 'Energy'])
+  const viewId = host.ui.createView('Pair', ['urn:one', 'urn:two'])
+  host.ui.setViewPinned(viewId, true)
   host.ui.setPanelSizes({ explorerWidth: 310, inspectorWidth: 330 })
+  for (const id of sectionIds) host.ui.setSectionOpen(id, false)
   host.store.setViewport('graph', { x: 100, y: 200, zoom: 0.75 })
   host.store.setConceptLabel('urn:one', 'Renamed')
   host.store.setSelection({ kind: 'concept', id: 'urn:two' })
@@ -60,6 +63,7 @@ test('local persistence round-trips the whole document, workspace and preference
   assert.deepEqual(reopened.graph, host.store.getState().graph)
   assert.deepEqual(reopened.workspace, host.store.getState().workspace)
   assert.deepEqual(reopened.preferences, host.store.getState().preferences)
+  assert.deepEqual(reopened.preferences.collapsedSections, sectionIds)
   assert.equal(reopened.selected, null)
   assert.deepEqual(reopened.persistenceIssues, [])
   assert.deepEqual(reopened.viewGraph.concepts.map(({ id }) => id), ['urn:one', 'urn:two'])
@@ -73,7 +77,7 @@ test('local persistence round-trips the whole document, workspace and preference
   assert.equal(reset.graph.concepts.length, 1)
   assert.deepEqual(reset.graph.relations, [])
   assert.deepEqual(reset.graph.relationTypes, [])
-  assert.deepEqual(reset.workspace, { focusId: reset.graph.concepts[0].id, view: 'focus', tagFilter: [], viewports: {} })
+  assert.deepEqual(reset.workspace, { activeViewId: null, savedViews: [], viewports: {} })
   assert.equal(reset.selected, null)
   assert.equal(reset.preferences, preferences)
   persistence.flush()
@@ -107,6 +111,11 @@ test('autosave debounces durable sections only and flushes pending edits on shut
   host.ui.setPanelSizes({ explorerWidth: 300, inspectorWidth: 350 })
   context.mock.timers.tick(200)
   assert.deepEqual(storage.writes, [storageKeys.preferences])
+  storage.writes.length = 0
+  host.ui.setSectionOpen('inspector.connections', false)
+  context.mock.timers.tick(200)
+  assert.deepEqual(storage.writes, [storageKeys.preferences])
+  assert.deepEqual(loadPersistence(() => storage).preferences?.collapsedSections, ['inspector.connections'])
   host.store.setConceptLabel('urn:one', 'Before closing')
   persistence.dispose()
   assert.equal(loadPersistence(() => storage).graph?.concepts[0].label, 'Before closing')
@@ -160,8 +169,12 @@ test('invalid records are reported and never overwritten while the other section
     ['preferences', '{broken json'],
     ['document', JSON.stringify({ version: 2 })],
     ['document', JSON.stringify({ version: 1, graph: serializeGraph({ concepts: [], relations: [], relationTypes: [] }), workspace: state.workspace })],
-    ['document', JSON.stringify({ version: 1, graph: serializeGraph(fixture()), workspace: { ...state.workspace, view: 'unknown' } })],
+    ['document', JSON.stringify({ version: 1, graph: serializeGraph(fixture()), workspace: { ...state.workspace, activeViewId: 'unknown' } })],
+    ['document', JSON.stringify({ version: 1, graph: serializeGraph(fixture()), workspace: { ...state.workspace, savedViews: [{ id: 'bad', name: 'Bad', pinned: false, conceptIds: ['missing'] }] } })],
     ['preferences', JSON.stringify({ version: 1, preferences: { ...state.preferences, panels: { explorerWidth: 0, inspectorWidth: 280 } } })],
+    ['preferences', JSON.stringify({ version: 1, preferences: { ...state.preferences, collapsedSections: null } })],
+    ['preferences', JSON.stringify({ version: 1, preferences: { ...state.preferences, collapsedSections: ['missing'] } })],
+    ['preferences', JSON.stringify({ version: 1, preferences: { ...state.preferences, collapsedSections: ['sidebar', 'sidebar'] } })],
   ] as const
   for (const [section, text] of invalid) {
     const storage = memoryStorage()
