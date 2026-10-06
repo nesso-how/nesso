@@ -38,7 +38,7 @@ export default function App() {
             orientation="horizontal"
             className="min-h-0 flex-1"
             onLayoutChanged={(layout, meta) => {
-              if (!selected || !meta.isUserInteraction || !group.current) return
+              if (selected.length === 0 || !meta.isUserInteraction || !group.current) return
               const inspectorWidth = Math.max(panelLimits.inspectorWidth.min, group.current.clientWidth * (meta.requestedLayout ?? layout).inspector / 100)
               host.store.setPanelSizes({ ...host.store.getState().preferences.panels, inspectorWidth })
             }}
@@ -46,8 +46,8 @@ export default function App() {
             <ResizablePanel id="canvas" minSize="40%">
               <RendererHost />
             </ResizablePanel>
-            {selected && <ResizableHandle />}
-            {selected && (
+            {selected.length > 0 && <ResizableHandle />}
+            {selected.length > 0 && (
               <ResizablePanel id="inspector" defaultSize={panels.inspectorWidth} minSize={panelLimits.inspectorWidth.min} maxSize="45%" groupResizeBehavior="preserve-pixel-size">
                 <Inspector />
               </ResizablePanel>

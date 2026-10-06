@@ -22,10 +22,15 @@ export const checkGraph = (graph: GraphSnapshot): void => {
   if (issues.length > 0) throw new SchemaError(issues)
 }
 
-export const selectionExists = (graph: GraphSnapshot, selected: Selection): boolean =>
-  !selected || (selected.kind === 'concept'
-    ? graph.concepts.some((concept) => concept.id === selected.id)
-    : graph.relations.some((relation) => relationKey(relation) === selected.id))
+export const reconcileSelection = (graph: GraphSnapshot, selected: Selection): Selection => {
+  if (selected.length === 0) return selected
+  const available = {
+    concept: new Set(graph.concepts.map((concept) => concept.id)),
+    relation: new Set(graph.relations.map(relationKey)),
+  }
+  const next = selected.filter(({ kind, id }) => available[kind].delete(id))
+  return next.length === selected.length ? selected : next
+}
 
 export const materialize = (graph: GraphSnapshot, workspace: WorkspaceState, previous?: NessoState): GraphSnapshot => {
   if (workspace.activeViewId === null) return graph
@@ -123,7 +128,9 @@ export const applyStateOperations = (state: NessoState, operations: readonly Nes
     if (relations.get(triple)) return
     if (type) withType(type)
     relations.set(id, next)
-    selected = { kind: 'relation', id: triple }
+    selected = selected.some((item) => item.kind === 'relation' && item.id === id)
+      ? selected.map((item) => item.kind === 'relation' && item.id === id ? { kind: 'relation', id: triple } : item)
+      : [{ kind: 'relation', id: triple }]
   }
 
   const updateView = (id: string, update: (view: SavedView) => SavedView): void => {
@@ -150,8 +157,9 @@ export const applyStateOperations = (state: NessoState, operations: readonly Nes
         setPositions(operation.updates)
         break
       case 'concept.add': {
-        const source = selected?.kind === 'concept'
-          ? concepts.get(selected.id)
+        const current = reconcileSelection(graph(), selected)
+        const source = current.length === 1 && current[0].kind === 'concept'
+          ? concepts.get(current[0].id)
           : undefined
         const vocab = source ? activeVocab() : null
         const type = vocab?.relationTypes.find((item) => item.id === vocab.defaultTypeId)
@@ -165,7 +173,7 @@ export const applyStateOperations = (state: NessoState, operations: readonly Nes
           },
         })
         if (source && vocab) relations.add({ source: source.id, predicate: vocab.defaultTypeId, target: operation.id })
-        selected = { kind: 'concept', id: operation.id }
+        selected = [{ kind: 'concept', id: operation.id }]
         if (workspace.activeViewId !== null) updateView(workspace.activeViewId, (view) =>
           view.conceptIds.includes(operation.id) ? view : { ...view, conceptIds: [...view.conceptIds, operation.id] })
         break
@@ -187,7 +195,7 @@ export const applyStateOperations = (state: NessoState, operations: readonly Nes
         const type = vocab.relationTypes.find((item) => item.id === vocab.defaultTypeId) ?? { id: vocab.defaultTypeId, label: '' }
         withType(type)
         relations.add(relation)
-        selected = { kind: 'relation', id: key }
+        selected = [{ kind: 'relation', id: key }]
         break
       }
       case 'relation.type': {
@@ -221,19 +229,19 @@ export const applyStateOperations = (state: NessoState, operations: readonly Nes
         types = new ListEdit([], (item: Readonly<RelationType>) => item.id, sameType)
         views = new ListEdit([], (item: SavedView) => item.id, sameView)
         workspace = newWorkspace()
-        selected = null
+        selected = []
         explicitSelection = selected
         reset = true
         break
       case 'selection.set':
-        selected = operation.value && selectionExists(graph(), operation.value) ? { ...operation.value } : null
+        selected = reconcileSelection(graph(), operation.value.map((item) => ({ ...item })))
         explicitSelection = selected
         break
       case 'view.activate':
         if (operation.id !== null && !workspace.savedViews.some((view) => view.id === operation.id)) fail('workspace.activeViewId', 'Unknown view')
         if (workspace.activeViewId === operation.id) break
         workspace = { ...workspace, activeViewId: operation.id }
-        if (!selectionExists(materialize(graph(), workspace), selected)) selected = null
+        selected = reconcileSelection(materialize(graph(), workspace), selected)
         explicitSelection = selected
         break
       case 'view.create':
@@ -327,8 +335,8 @@ export const applyStateOperations = (state: NessoState, operations: readonly Nes
     parsePreferences(preferences)
     if (samePreferences(preferences, state.preferences)) preferences = state.preferences
   }
-  if (!selectionExists(candidate, selected)) selected = null
-  if (selected?.kind === state.selected?.kind && selected?.id === state.selected?.id) selected = state.selected
+  selected = reconcileSelection(candidate, selected)
+  if (sameItems(selected, state.selected, (a, b) => a.kind === b.kind && a.id === b.id)) selected = state.selected
   const unchanged = candidate === state.graph && workspace === state.workspace && preferences === state.preferences && selected === state.selected
   const next = unchanged ? state : { ...state, graph: candidate, workspace, preferences, selected, viewGraph: materialize(candidate, workspace, state) }
   return { next, reset, delta: { concepts: conceptEdit.changes, relations: relationEdit.changes, relationTypes: typeEdit.changes, views: viewChanges(viewEdit.changes) } }

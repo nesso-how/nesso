@@ -1,7 +1,7 @@
 import type { NessoState, SavedView } from '@nesso/plugin'
 import { relationKey } from '@nesso/schema'
 import { applyChanges, hasDelta, mergeChanges, sameConcept, type Change, type DocumentDelta, type ViewChange } from './delta.ts'
-import { checkGraph, materialize, selectionExists } from './operations.ts'
+import { checkGraph, materialize, reconcileSelection } from './operations.ts'
 import { parseWorkspace } from './settings.ts'
 
 export const historyLimit = 100
@@ -41,7 +41,7 @@ const restore = (state: NessoState, delta: DocumentDelta, forward: boolean): Nes
   const workspace = savedViews === state.workspace.savedViews && activeViewId === state.workspace.activeViewId
     ? state.workspace : { ...state.workspace, savedViews, activeViewId }
   if (workspace !== state.workspace) parseWorkspace(workspace)
-  return { ...state, graph, workspace, selected: selectionExists(graph, state.selected) ? state.selected : null, viewGraph: materialize(graph, workspace, state) }
+  return { ...state, graph, workspace, selected: reconcileSelection(graph, state.selected), viewGraph: materialize(graph, workspace, state) }
 }
 
 export const createHistory = (getState: () => NessoState, publish: (next: NessoState) => void) => {

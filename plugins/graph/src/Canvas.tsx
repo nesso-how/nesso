@@ -23,9 +23,11 @@ import { ConnectionPreview } from './ConnectionPreview'
 import { conceptNode, conceptNodeMinSize, relationEdge, type ConceptNodeSizes } from './adapters'
 import type { ConceptNode, RelationEdge } from './types'
 import { useNesso, useStore } from './store'
+import { selectionFromChanges } from './selection'
 
 const nodeTypes: NodeTypes = { concept: ConceptNodeView }
 const fitViewOptions = { padding: 0.3, maxZoom: 1.2 }
+const multiSelectionKeys = ['Meta', 'Control', 'Shift']
 
 export function Canvas() {
   const graph = useNesso((state) => state.viewGraph)
@@ -34,7 +36,7 @@ export function Canvas() {
   const defaultTypeId = useNesso((state) => state.vocabs.find((vocab) => vocab.id === state.preferences.activeVocabId)?.defaultTypeId)
   const view = useNesso((state) => state.workspace.activeViewId)
   const viewName = useNesso((state) => state.workspace.savedViews.find((saved) => saved.id === state.workspace.activeViewId)?.name ?? 'Complete graph')
-  const viewCount = useNesso((state) => state.viewGraph.concepts.length)
+  const viewCount = graph.concepts.length
   const store = useStore()
   const flow = useStoreApi()
   const interactive = useFlowStore((state) => state.nodesDraggable || state.nodesConnectable || state.elementsSelectable)
@@ -49,24 +51,20 @@ export function Canvas() {
   const zoom = useFlowStore((state) => state.transform[2])
   const [sizes, setSizes] = useState<ConceptNodeSizes>({})
 
+  const selectedConcepts = new Set(selected.filter((item) => item.kind === 'concept').map((item) => item.id))
+  const selectedRelations = new Set(selected.filter((item) => item.kind === 'relation').map((item) => item.id))
+  const singleSelection = selected.length === 1
   const nodes = graph.concepts.map((concept) =>
-    conceptNode(concept, selected?.kind === 'concept' && selected.id === concept.id, sizes[concept.id]),
+    conceptNode(concept, selectedConcepts.has(concept.id), sizes[concept.id]),
   )
   const edges = graph.relations.map((relation) =>
-    relationEdge(relation, selected?.kind === 'relation' && selected.id === relationKey(relation), graph, defaultTypeId, sizes),
+    relationEdge(relation, selectedRelations.has(relationKey(relation)), singleSelection, graph, defaultTypeId, sizes),
   )
 
   const onObjectChanges = (kind: 'concept' | 'relation', changes: (NodeChange<ConceptNode> | EdgeChange<RelationEdge>)[]) => {
-    for (const change of changes) {
-      const state = store.getState()
-      if (change.type === 'select') {
-        if (change.selected) store.setSelection({ kind, id: change.id })
-        else if (state.selected?.kind === kind && state.selected.id === change.id) store.setSelection(null)
-      } else if (change.type === 'remove') {
-        if (kind === 'relation') store.removeRelation(change.id)
-        else if (state.graph.concepts.length > 1) store.removeConcept(change.id)
-      }
-    }
+    const current = store.getState().selected
+    const next = selectionFromChanges(current, kind, changes)
+    if (next !== current) store.setSelection(next)
   }
 
   const onNodesChange = (changes: NodeChange<ConceptNode>[]) => {
@@ -92,10 +90,10 @@ export function Canvas() {
     setReconnectDrag(false)
     flow.getState().cancelConnection()
     flow.setState({ connectionClickStartHandle: null })
-    store.setSelection(null)
+    store.setSelection([])
   }
 
-  const canDelete = selected !== null && (selected.kind === 'relation' || conceptCount > 1)
+  const canDelete = selected.length > 0 && selectedConcepts.size < conceptCount
   const canUndo = useNesso((state) => state.history.canUndo)
   const canRedo = useNesso((state) => state.history.canRedo)
 
@@ -103,8 +101,8 @@ export function Canvas() {
     const element = canvas.current
     if (!element) return
     const state = store.getState()
-    const source = state.selected?.kind === 'concept'
-      ? state.graph.concepts.find((concept) => concept.id === state.selected?.id)
+    const source = state.selected.length === 1 && state.selected[0].kind === 'concept'
+      ? state.graph.concepts.find((concept) => concept.id === state.selected[0].id)
       : undefined
     const placement = () => {
       const bounds = element.getBoundingClientRect()
@@ -129,8 +127,9 @@ export function Canvas() {
   }
 
   const handleDelete = () => {
-    const current = store.getState().selected
-    if (current) onObjectChanges(current.kind, [{ type: 'remove', id: current.id }])
+    const { selected, graph } = store.getState()
+    if (selected.filter((item) => item.kind === 'concept').length >= graph.concepts.length) return
+    store.applyOperations(selected.map(({ kind, id }) => ({ kind: kind === 'concept' ? 'concept.remove' : 'relation.remove', id })))
   }
 
   useEffect(() => {
@@ -143,12 +142,30 @@ export function Canvas() {
   }, [view, fitView])
 
   return (
-    <div ref={canvas} tabIndex={0} className={reconnectDrag ? 'h-full w-full outline-none graph-reconnecting' : 'h-full w-full outline-none'} onKeyDown={(event) => { if (event.key === 'Escape') clearSelection() }}>
+    <div ref={canvas} tabIndex={0} className={reconnectDrag ? 'h-full w-full outline-none graph-reconnecting' : 'h-full w-full outline-none'} onKeyDown={(event) => {
+      if (event.key === 'Escape') clearSelection()
+      if (!interactive) return
+      if (event.key === 'Delete' || event.key === 'Backspace') {
+        event.preventDefault()
+        handleDelete()
+      }
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'a') {
+        event.preventDefault()
+        const visible = store.getState().viewGraph
+        store.setSelection([
+          ...visible.concepts.map((concept) => ({ kind: 'concept' as const, id: concept.id })),
+          ...visible.relations.map((relation) => ({ kind: 'relation' as const, id: relationKey(relation) })),
+        ])
+      }
+    }}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
         nodesDraggable={interactive}
+        nodesConnectable={interactive && singleSelection}
+        multiSelectionKeyCode={multiSelectionKeys}
+        deleteKeyCode={null}
         onNodesChange={onNodesChange}
         onEdgesChange={(changes) => onObjectChanges('relation', changes)}
         onConnect={({ source, target }) => store.connect(source, target)}
@@ -179,7 +196,7 @@ export function Canvas() {
           <ControlButton className="react-flow__controls-fitview" onClick={() => { void fitView(fitViewOptions) }} title="Fit View" aria-label="Fit View">
             <Maximize aria-hidden="true" />
           </ControlButton>
-          <ControlButton className="react-flow__controls-interactive" onClick={() => flow.setState({ nodesDraggable: !interactive, nodesConnectable: !interactive, elementsSelectable: !interactive })} title={interactive ? 'Lock interactions' : 'Unlock interactions'} aria-label={interactive ? 'Lock interactions' : 'Unlock interactions'} aria-pressed={!interactive}>
+          <ControlButton className="react-flow__controls-interactive" onClick={() => flow.setState({ nodesDraggable: !interactive, nodesConnectable: !interactive && singleSelection, elementsSelectable: !interactive })} title={interactive ? 'Lock interactions' : 'Unlock interactions'} aria-label={interactive ? 'Lock interactions' : 'Unlock interactions'} aria-pressed={!interactive}>
             <LockIcon aria-hidden="true" />
           </ControlButton>
         </Controls>

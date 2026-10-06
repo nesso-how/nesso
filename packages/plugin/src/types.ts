@@ -7,10 +7,7 @@ type DeepReadonly<T> = T extends readonly (infer U)[]
     ? { readonly [K in keyof T]: DeepReadonly<T[K]> }
     : T
 
-export type Selection =
-  | { readonly kind: 'concept'; readonly id: string }
-  | { readonly kind: 'relation'; readonly id: string }
-  | null
+export type Selection = readonly { readonly kind: 'concept' | 'relation'; readonly id: string }[]
 
 export type GraphSnapshot = DeepReadonly<Graph>
 

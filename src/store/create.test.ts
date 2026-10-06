@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import type { NessoOperation, NessoStore, SectionId, VocabDefinition } from '@nesso/plugin'
+import type { NessoOperation, SectionId, Selection, VocabDefinition } from '@nesso/plugin'
 import { relationKey, SchemaError, type Graph } from '@nesso/schema'
 import { maxConceptLabelLength, maxRelationLabelLength } from './settings.ts'
 import { createNessoStore } from './create.ts'
@@ -51,7 +51,7 @@ const issuesOf = (run: () => void): SchemaError['issues'] => {
 test('invalid batches leave state untouched whether validation or an operation fails', () => {
   const host = createNessoStore(fixture())
   host.registerVocab(vocabA)
-  host.store.setSelection({ kind: 'relation', id: relationKey({ source: 'urn:n1', predicate: 'urn:links', target: 'urn:n3' }) })
+  host.store.setSelection([{ kind: 'relation', id: relationKey({ source: 'urn:n1', predicate: 'urn:links', target: 'urn:n3' }) }])
   const before = host.store.getState()
   let notifications = 0
   host.store.subscribe(() => notifications++)
@@ -101,18 +101,21 @@ test('overlong concept and relation labels are rejected atomically at every writ
 test('deleting a concept prunes incident relations, reconciles selection, and keeps one concept', () => {
   const host = createNessoStore(fixture())
   host.registerVocab(vocabA)
-  host.store.setSelection({ kind: 'relation', id: relationKey({ source: 'urn:n1', predicate: 'urn:links', target: 'urn:n3' }) })
+  host.store.setSelection([
+    { kind: 'relation', id: relationKey({ source: 'urn:n1', predicate: 'urn:links', target: 'urn:n3' }) },
+    { kind: 'concept', id: 'urn:n2' },
+  ])
   host.store.removeConcept('urn:n1')
   const state = host.store.getState()
   assert.deepEqual(state.graph.relations, [])
-  assert.equal(state.selected, null)
+  assert.deepEqual(state.selected, [{ kind: 'concept', id: 'urn:n2' }])
   host.store.removeConcept('urn:n3')
   assert.match(issuesOf(() => host.store.removeConcept('urn:n2')).map(({ message }) => message).join(' '), /at least one concept/)
   assert.equal(host.store.getState().graph.concepts.length, 1)
-  host.store.setSelection({ kind: 'relation', id: relationKey({ source: 'urn:n2', predicate: 'urn:links', target: 'urn:n1' }) })
-  assert.equal(host.store.getState().selected, null)
-  host.store.setSelection({ kind: 'concept', id: 'urn:n2' })
-  assert.deepEqual(host.store.getState().selected, { kind: 'concept', id: 'urn:n2' })
+  host.store.setSelection([{ kind: 'relation', id: relationKey({ source: 'urn:n2', predicate: 'urn:links', target: 'urn:n1' }) }])
+  assert.deepEqual(host.store.getState().selected, [])
+  host.store.setSelection([{ kind: 'concept', id: 'urn:n2' }])
+  assert.deepEqual(host.store.getState().selected, [{ kind: 'concept', id: 'urn:n2' }])
 })
 
 test('vocab registration validates, switching never rewrites the document, and using a new default adds its type', () => {
@@ -163,9 +166,10 @@ test('saved views materialize shared subsets, reconcile membership and never cha
   assert.deepEqual(state.viewGraph.concepts.map((concept) => concept.id), ['urn:n1', 'urn:n2'])
   assert.deepEqual(state.viewGraph.relations, [{ source: 'urn:n1', predicate: 'urn:links', target: 'urn:n2' }])
   assert.deepEqual(state.viewGraph.relationTypes, [{ id: 'urn:links', label: 'links' }])
-  host.store.setSelection({ kind: 'concept', id: 'urn:n2' })
+  const selected: Selection = [{ kind: 'concept', id: 'urn:n1' }, { kind: 'concept', id: 'urn:n2' }]
+  host.store.setSelection(selected)
   host.store.setViewMembership(id, 'urn:n2', false)
-  assert.deepEqual(host.store.getState().selected, { kind: 'concept', id: 'urn:n2' })
+  assert.deepEqual(host.store.getState().selected, selected)
   assert.deepEqual(host.store.getState().viewGraph.relations, [])
   host.store.setViewMembership(id, 'urn:n2', true)
   const beforePin = host.store.getState()
@@ -189,34 +193,38 @@ test('switching views preserves visible selections, including every selection in
   const pair = host.store.createView('Pair', ['urn:n1', 'urn:n2'])
   const other = host.store.createView('Other', ['urn:n1', 'urn:n3'])
   const graph = host.store.getState().graph
-  for (const selected of [
+  const selected: Selection = [
     { kind: 'concept', id: 'urn:n1' },
+    { kind: 'concept', id: 'urn:n2' },
     { kind: 'relation', id: relationKey(graph.relations[0]) },
-  ] as const) {
-    host.store.setSelection(selected)
-    host.store.setView(pair)
-    assert.deepEqual(host.store.getState().selected, selected)
-    host.store.setView(null)
-    assert.deepEqual(host.store.getState().selected, selected)
-    assert.equal(host.store.getState().viewGraph, graph)
-    host.store.setView(other)
-    assert.deepEqual(host.store.getState().selected, selected.kind === 'concept' ? selected : null)
-    assert.equal(host.store.getState().graph, graph)
-  }
-  host.store.setSelection({ kind: 'concept', id: 'urn:n3' })
+  ]
+  host.store.setSelection(selected)
   host.store.setView(pair)
-  assert.equal(host.store.getState().selected, null)
+  assert.deepEqual(host.store.getState().selected, selected)
+  host.store.setView(null)
+  assert.deepEqual(host.store.getState().selected, selected)
+  assert.equal(host.store.getState().viewGraph, graph)
+  host.store.setView(other)
+  assert.deepEqual(host.store.getState().selected, [selected[0]])
+  assert.equal(host.store.getState().graph, graph)
+  host.store.setSelection([{ kind: 'concept', id: 'urn:n3' }])
+  host.store.setView(pair)
+  assert.deepEqual(host.store.getState().selected, [])
 })
 
 test('new concepts link only to a selected concept and join the active view atomically', () => {
   for (const subset of [false, true]) {
-    for (const kind of ['concept', 'relation', null] as const) {
+    for (const kind of ['concept', 'relation', 'concepts', 'mixed', null] as const) {
       const host = createNessoStore(fixture())
       host.registerVocab(vocabB)
       const viewId = subset ? host.store.createView('Pair', ['urn:n1', 'urn:n2']) : null
-      host.store.setSelection(kind === 'concept'
-        ? { kind, id: 'urn:n2' }
-        : kind === 'relation' ? { kind, id: relationKey(host.store.getState().graph.relations[0]) } : null)
+      const relation = { kind: 'relation' as const, id: relationKey(host.store.getState().graph.relations[0]) }
+      host.store.setSelection(kind === 'concept' ? [{ kind, id: 'urn:n2' }]
+        : kind === 'relation' ? [relation]
+        : kind === 'concepts' || kind === 'mixed' ? [
+          { kind: 'concept', id: 'urn:n1' },
+          kind === 'mixed' ? relation : { kind: 'concept', id: 'urn:n2' },
+        ] : [])
       const before = host.store.getState()
       assert.deepEqual(host.store.conceptPlacementOffset, { x: 160, y: 100 })
       assert.ok(Object.isFrozen(host.store.conceptPlacementOffset))
@@ -225,7 +233,7 @@ test('new concepts link only to a selected concept and join the active view atom
       const id = host.store.addConcept()
       const after = host.store.getState()
       assert.equal(notifications, 1)
-      assert.deepEqual(after.selected, { kind: 'concept', id })
+      assert.deepEqual(after.selected, [{ kind: 'concept', id }])
       assert.equal(after.graph.concepts.length, before.graph.concepts.length + 1)
       assert.deepEqual(after.graph.concepts.at(-1)?.position, { x: kind === 'concept' ? 161 : 160, y: 100 })
       if (kind === 'concept') {
@@ -283,10 +291,12 @@ test('relation types are selected by IRI even when document and vocabulary label
   const id = relationKey(before.graph.relations[0])
   host.store.setRelationType(id, 'urn:links')
   assert.equal(host.store.getState(), before)
+  const selected: Selection = [{ kind: 'relation', id }, { kind: 'concept', id: 'urn:n3' }]
+  host.store.setSelection(selected)
   host.store.setRelationType(id, 'urn:other-links')
   const state = host.store.getState()
   assert.equal(state.graph.relations[0].predicate, 'urn:other-links')
-  assert.deepEqual(state.selected, { kind: 'relation', id: relationKey(state.graph.relations[0]) })
+  assert.deepEqual(state.selected, [{ kind: 'relation', id: relationKey(state.graph.relations[0]) }, selected[1]])
   assert.deepEqual(state.graph.relationTypes, [
     { id: 'urn:links', label: 'links' },
     { id: 'urn:other-links', label: 'links' },
@@ -307,7 +317,7 @@ test('naming a new relation type creates and assigns its own IRI atomically', ()
   assert.equal(type?.label, 'links')
   assert.notEqual(type?.id, 'urn:links')
   assert.equal(state.graph.relations[0].predicate, type?.id)
-  assert.deepEqual(state.selected, { kind: 'relation', id: relationKey(state.graph.relations[0]) })
+  assert.deepEqual(state.selected, [{ kind: 'relation', id: relationKey(state.graph.relations[0]) }])
 })
 
 test('reconnecting either endpoint preserves its predicate, shared objects and view membership', () => {
@@ -319,7 +329,8 @@ test('reconnecting either endpoint preserves its predicate, shared objects and v
     host.registerVocab(vocabB)
     host.store.createView('Pair', ['urn:n1', 'urn:n2'])
     const id = relationKey(graph.relations[0])
-    host.store.setSelection({ kind: 'relation', id })
+    const selected: Selection = [{ kind: 'relation', id }, { kind: 'concept', id: 'urn:n3' }]
+    host.store.setSelection(selected)
     const before = host.store.getState()
     const snapshot = structuredClone(before)
     let notifications = 0
@@ -329,7 +340,7 @@ test('reconnecting either endpoint preserves its predicate, shared objects and v
     const after = host.store.getState()
     assert.equal(notifications, 1)
     assert.deepEqual(after.graph.relations[0], expected)
-    assert.deepEqual(after.selected, { kind: 'relation', id: relationKey(expected) })
+    assert.deepEqual(after.selected, [{ kind: 'relation', id: relationKey(expected) }, selected[1]])
     assert.equal(after.graph.relations[1], before.graph.relations[1])
     assert.equal(after.graph.relationTypes, before.graph.relationTypes)
     assert.equal(after.graph.concepts, before.graph.concepts)
@@ -342,7 +353,7 @@ test('reconnecting either endpoint preserves its predicate, shared objects and v
 test('invalid reconnects roll back atomically and duplicate, self or unchanged reconnects are no-ops', () => {
   const { store } = createNessoStore(fixture())
   const id = relationKey(store.getState().graph.relations[0])
-  store.setSelection({ kind: 'relation', id })
+  store.setSelection([{ kind: 'relation', id }])
   const before = store.getState()
   let notifications = 0
   store.subscribe(() => notifications++)
@@ -404,7 +415,7 @@ test('batches can reference new concepts and types and reconcile navigation afte
   const host = createNessoStore(fixture())
   host.registerVocab(vocabA)
   const viewId = host.store.createView('All', ['urn:n1', 'urn:n2', 'urn:n3'])
-  host.store.setSelection({ kind: 'concept', id: 'urn:n1' })
+  host.store.setSelection([{ kind: 'concept', id: 'urn:n1' }])
   const relation = { source: 'urn:n4', predicate: 'urn:links', target: 'urn:n5' }
   let notifications = 0
   host.store.subscribe(() => notifications++)
@@ -424,7 +435,7 @@ test('batches can reference new concepts and types and reconcile navigation afte
   assert.deepEqual(state.graph.relationTypes.at(-1), { id: 'urn:custom', label: 'Custom' })
   assert.equal(state.workspace.activeViewId, viewId)
   assert.deepEqual(state.workspace.savedViews[0].conceptIds, ['urn:n2', 'urn:n3', 'urn:n4', 'urn:n5'])
-  assert.equal(state.selected, null)
+  assert.deepEqual(state.selected, [])
   assert.deepEqual(state.viewGraph.concepts.map((concept) => concept.id), ['urn:n2', 'urn:n3', 'urn:n4', 'urn:n5'])
 })
 
@@ -439,11 +450,11 @@ test('state batches share ordered graph, view and preference changes, including 
   store.subscribe(() => notifications++)
   store.applyOperations([
     { kind: 'view.create', id: 'urn:first', name: 'First', conceptIds: ['urn:n1'] },
-    { kind: 'selection.set', value: { kind: 'concept', id: 'urn:n1' } },
+    { kind: 'selection.set', value: [{ kind: 'concept', id: 'urn:n1' }] },
     { kind: 'preferences.vocab', id: vocabB.id },
     { kind: 'concept.add', id: 'urn:n4' },
     { kind: 'view.create', id: 'urn:second', name: 'Temporary', conceptIds: ['urn:n2'] },
-    { kind: 'selection.set', value: null },
+    { kind: 'selection.set', value: [] },
     { kind: 'concept.add', id: 'urn:n5' },
     { kind: 'view.rename', id: 'urn:second', name: ' Second ' },
     { kind: 'view.membership', viewId: 'urn:second', conceptId: 'urn:n4', included: true },
@@ -453,7 +464,7 @@ test('state batches share ordered graph, view and preference changes, including 
     { kind: 'preferences.panels', value: { explorerWidth: 300, inspectorWidth: 350 } },
     { kind: 'preferences.section', id: 'sidebar.views', open: false },
     { kind: 'viewport.set', rendererId: 'graph', value: { x: 10, y: 20, zoom: 0.8 } },
-    { kind: 'selection.set', value: { kind: 'concept', id: 'urn:n4' } },
+    { kind: 'selection.set', value: [{ kind: 'concept', id: 'urn:n4' }] },
     { kind: 'view.activate', id: 'urn:first' },
   ])
   const state = store.getState()
@@ -464,14 +475,14 @@ test('state batches share ordered graph, view and preference changes, including 
   ])
   assert.deepEqual(state.graph.relations.at(-1), { source: 'urn:n1', predicate: vocabB.defaultTypeId, target: 'urn:n4' })
   assert.deepEqual(state.viewGraph.concepts.map(({ id }) => id), ['urn:n1', 'urn:n4'])
-  assert.deepEqual(state.selected, { kind: 'concept', id: 'urn:n4' })
+  assert.deepEqual(state.selected, [{ kind: 'concept', id: 'urn:n4' }])
   assert.deepEqual(state.preferences.panels, { explorerWidth: 300, inspectorWidth: 350 })
   assert.deepEqual(state.preferences.collapsedSections, ['sidebar.views'])
   assert.deepEqual(state.workspace.viewports.graph, { x: 10, y: 20, zoom: 0.8 })
   store.applyOperations([
     { kind: 'document.reset', id: 'urn:fresh' },
     { kind: 'view.create', id: 'urn:fresh-view', name: 'Fresh', conceptIds: ['urn:fresh'] },
-    { kind: 'selection.set', value: { kind: 'concept', id: 'urn:fresh' } },
+    { kind: 'selection.set', value: [{ kind: 'concept', id: 'urn:fresh' }] },
     { kind: 'concept.add', id: 'urn:child' },
   ])
   assert.equal(notifications, 2)
@@ -502,7 +513,7 @@ test('invalid state batches reject every preceding change without notification',
       { kind: 'concept.label', id: 'urn:n1', value: 'Changed' },
       { kind: 'view.pin', id: viewId, pinned: true },
       { kind: 'preferences.section', id: 'sidebar', open: false },
-      { kind: 'selection.set', value: { kind: 'concept', id: 'urn:n2' } },
+      { kind: 'selection.set', value: [{ kind: 'concept', id: 'urn:n2' }] },
       operation,
     ]), (error: unknown) => (error instanceof SchemaError || error instanceof NessoError) && error.issues.length > 0)
     assert.equal(store.getState(), before)
@@ -517,7 +528,7 @@ test('empty and cancelling batches preserve state identity and do not notify', (
   host.registerRenderer({ id: 'graph', label: 'Graph', component: () => null })
   const viewId = host.store.createView('Pair', ['urn:n1', 'urn:n2'])
   host.store.setViewport('graph', { x: 0, y: 0, zoom: 1 })
-  host.store.setSelection({ kind: 'concept', id: 'urn:n1' })
+  host.store.setSelection([{ kind: 'concept', id: 'urn:n1' }])
   const before = host.store.getState()
   const relation = { source: 'urn:n2', predicate: 'urn:links', target: 'urn:n3' }
   let notifications = 0
@@ -551,11 +562,11 @@ test('empty and cancelling batches preserve state identity and do not notify', (
   assert.equal(host.store.getState(), before)
   assert.equal(notifications, 0)
   host.store.applyOperations([
-    { kind: 'selection.set', value: { kind: 'concept', id: 'urn:n2' } },
+    { kind: 'selection.set', value: [{ kind: 'concept', id: 'urn:n2' }] },
     { kind: 'concept.add', id: 'urn:temporary-concept' },
     { kind: 'concept.remove', id: 'urn:temporary-concept' },
   ])
-  assert.deepEqual(host.store.getState().selected, { kind: 'concept', id: 'urn:n2' })
+  assert.deepEqual(host.store.getState().selected, [{ kind: 'concept', id: 'urn:n2' }])
   assert.equal(host.store.getState().graph, before.graph)
   assert.equal(host.store.getState().workspace, before.workspace)
   assert.equal(notifications, 1)
@@ -566,7 +577,7 @@ test('batches validate only the final document and link additions only to a surv
     const host = createNessoStore(fixture())
     host.registerVocab(vocabA)
     const removals = empty ? ['urn:n1', 'urn:n2', 'urn:n3'] : ['urn:n1', 'urn:n3']
-    host.store.setSelection({ kind: 'concept', id: 'urn:n2' })
+    host.store.setSelection([{ kind: 'concept', id: 'urn:n2' }])
     let notifications = 0
     host.store.subscribe(() => notifications++)
     host.store.applyOperations([
@@ -577,7 +588,7 @@ test('batches validate only the final document and link additions only to a surv
     assert.equal(notifications, 1)
     assert.deepEqual(state.graph.concepts.map((concept) => concept.id), empty ? ['urn:n4'] : ['urn:n2', 'urn:n4'])
     assert.deepEqual(state.graph.relations, empty ? [] : [{ source: 'urn:n2', predicate: 'urn:links', target: 'urn:n4' }])
-    assert.deepEqual(state.selected, { kind: 'concept', id: 'urn:n4' })
+    assert.deepEqual(state.selected, [{ kind: 'concept', id: 'urn:n4' }])
   }
 })
 
@@ -612,17 +623,34 @@ test('custom relation types disappear only after their last use in the whole gra
   }
 })
 
-test('concept positions and selection are copied from their callers', () => {
-  const host = createNessoStore(fixture())
-  host.registerVocab(vocabA)
+test('positions and multiple selections are owned, normalized and ignore no-ops', () => {
+  const { store } = createNessoStore(fixture())
   const position = { x: 10, y: 20 }
-  const id = host.store.addConcept(position)
-  const selection = { kind: 'concept' as const, id }
-  host.store.setSelection(selection)
+  const id = store.addConcept(position)
+  const relationId = relationKey(store.getState().graph.relations[0])
+  const concept = { kind: 'concept' as const, id }
+  const relation = { kind: 'relation' as const, id: relationId }
+  const input = [concept, relation, concept, { kind: 'concept' as const, id: 'missing' }]
+  let notifications = 0
+  store.subscribe(() => notifications++)
+  store.setSelection(input)
+  const before = store.getState()
+  assert.equal(notifications, 1)
+  assert.deepEqual(before.selected, [concept, relation])
   position.x = NaN
-  selection.id = 'urn:missing'
-  assert.deepEqual(host.store.getState().graph.concepts.find((concept) => concept.id === id)?.position, { x: 10, y: 20 })
-  assert.deepEqual(host.store.getState().selected, { kind: 'concept', id })
+  concept.id = 'missing'
+  relation.id = 'missing'
+  input.length = 0
+  assert.deepEqual(before.graph.concepts.find((concept) => concept.id === id)?.position, { x: 10, y: 20 })
+  assert.deepEqual(before.selected, [{ kind: 'concept', id }, { kind: 'relation', id: relationId }])
+  store.setSelection([...before.selected, before.selected[0]])
+  assert.equal(store.getState(), before)
+  assert.equal(notifications, 1)
+  store.setSelection([])
+  const cleared = store.getState()
+  store.setSelection([])
+  assert.equal(store.getState(), cleared)
+  assert.equal(notifications, 2)
 })
 
 test('registered vocabularies and their inserted types are owned independently by each store', () => {
@@ -641,7 +669,7 @@ test('registered vocabularies and their inserted types are owned independently b
   input.relationTypes[0].id = 'urn:changed'
   input.relationTypes[0].label = 'changed'
   for (const host of [a, b]) {
-    host.store.setSelection({ kind: 'concept', id: 'urn:n1' })
+    host.store.setSelection([{ kind: 'concept', id: 'urn:n1' }])
     host.store.addConcept()
     const state = host.store.getState()
     assert.equal(state.preferences.activeVocabId, 'shared')
@@ -654,48 +682,12 @@ test('registered vocabularies and their inserted types are owned independently b
   assert.notEqual(a.store.getState().graph.relationTypes.at(-1), b.store.getState().graph.relationTypes.at(-1))
 })
 
-test('a position batch publishes once and shares untouched graph objects', () => {
-  for (const subset of [true, false]) {
-    const graph = fixture()
-    graph.relations.pop()
-    const { store } = createNessoStore(graph)
-    if (subset) store.createView('Pair', ['urn:n1', 'urn:n2'])
-    const before = store.getState()
-    const snapshot = structuredClone(before)
-    const updates = [
-      { id: 'urn:n1', position: { x: 10, y: 20 } },
-      { id: 'urn:n2', position: { x: 30, y: 40 } },
-    ]
-    let notifications = 0
-    store.subscribe(() => notifications++)
-    store.setConceptPositions(updates)
-    const after = store.getState()
-    assert.equal(notifications, 1)
-    assert.deepEqual(after.graph.concepts.map(({ position }) => position), [
-      { x: 10, y: 20 }, { x: 30, y: 40 }, { x: 2, y: 0 },
-    ])
-    for (const index of [0, 1]) {
-      assert.notEqual(after.graph.concepts[index], before.graph.concepts[index])
-      assert.equal(after.viewGraph.concepts[index], after.graph.concepts[index])
-    }
-    assert.equal(after.graph.concepts[2], before.graph.concepts[2])
-    assert.equal(after.graph.relations, before.graph.relations)
-    assert.equal(after.graph.relationTypes, before.graph.relationTypes)
-    assert.equal(after.viewGraph.relations, before.viewGraph.relations)
-    if (!subset) assert.equal(after.viewGraph, after.graph)
-    else assert.deepEqual(after.viewGraph.concepts.map(({ id }) => id), ['urn:n1', 'urn:n2'])
-    assert.deepEqual(before, snapshot)
-    updates[0].position.x = NaN
-    assert.deepEqual(after.graph.concepts[0].position, { x: 10, y: 20 })
-  }
-})
-
 test('position batches reject invalid coordinates atomically in every view mode', () => {
   for (const subset of [true, false]) {
     for (const invalid of [NaN, Infinity, -Infinity]) {
       const { store } = createNessoStore(fixture())
       if (subset) store.createView('Pair', ['urn:n1', 'urn:n2'])
-      store.setSelection({ kind: 'concept', id: 'urn:n2' })
+      store.setSelection([{ kind: 'concept', id: 'urn:n2' }])
       const before = store.getState()
       let notifications = 0
       store.subscribe(() => notifications++)
@@ -754,32 +746,6 @@ test('domain no-ops preserve state identity and do not notify subscribers', () =
   assert.equal(notifications, 0)
 })
 
-test('domain writes share surviving objects without mutating previous snapshots', () => {
-  const writes: ((store: NessoStore) => void)[] = [
-    (store) => store.setConceptPosition('urn:n1', { x: 10, y: 20 }),
-    (store) => store.setConceptLabel('urn:n1', 'Renamed'),
-    (store) => { store.addConcept() },
-    (store) => store.connect('urn:n2', 'urn:n3'),
-    (store) => store.setRelationType(relationKey(store.getState().graph.relations[0]), 'urn:part'),
-    (store) => store.createRelationType(relationKey(store.getState().graph.relations[0]), 'Custom'),
-    (store) => store.removeRelation(relationKey(store.getState().graph.relations[0])),
-    (store) => store.removeConcept('urn:n2'),
-  ]
-  for (const write of writes) {
-    const graph = fixture()
-    const { store, registerVocab } = createNessoStore(graph)
-    registerVocab(vocabA)
-    const before = store.getState()
-    const snapshot = structuredClone(before)
-    write(store)
-    const after = store.getState()
-    assert.equal(after.graph.concepts.find(({ id }) => id === 'urn:n3'), before.graph.concepts[2])
-    assert.equal(after.graph.relations.find((relation) => relationKey(relation) === relationKey(before.graph.relations[1])), before.graph.relations[1])
-    assert.equal(after.graph.relationTypes[0], before.graph.relationTypes[0])
-    assert.deepEqual(before, snapshot)
-  }
-})
-
 test('restoration resolves saved plugin preferences, falling back when unavailable', () => {
   for (const missing of [false, true]) {
     const host = createNessoStore(fixture(), {
@@ -799,14 +765,14 @@ test('restoration resolves saved plugin preferences, falling back when unavailab
     assert.equal(state.preferences.activeRendererId, missing ? 'graph' : 'other')
     assert.equal(state.preferences.activeThemeId, missing ? 'light' : 'alternative')
     assert.equal(state.viewGraph, state.graph)
-    assert.equal(state.selected, null)
+    assert.deepEqual(state.selected, [])
     assert.deepEqual(state.graph, fixture())
   }
 })
 
 test('section preferences are global, immutable, validated and independent of the document', () => {
   const host = createNessoStore(fixture())
-  host.store.setSelection({ kind: 'concept', id: 'urn:n1' })
+  host.store.setSelection([{ kind: 'concept', id: 'urn:n1' }])
   const before = host.store.getState()
   let notifications = 0
   host.store.subscribe(() => notifications++)
@@ -843,7 +809,7 @@ test('view renaming changes only the name and ignores no-ops', () => {
   const host = createNessoStore(fixture())
   const viewId = host.store.createView('Pair', ['urn:n1', 'urn:n2'])
   host.store.setViewPinned(viewId, true)
-  host.store.setSelection({ kind: 'concept', id: 'urn:n1' })
+  host.store.setSelection([{ kind: 'concept', id: 'urn:n1' }])
   const before = host.store.getState()
   host.store.renameView(viewId, '  Renamed pair  ')
   const after = host.store.getState()

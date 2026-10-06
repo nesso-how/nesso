@@ -31,7 +31,7 @@ export function conceptNode(concept: ConceptView, selected: boolean, measured?: 
   }
 }
 
-export function relationEdge(relation: RelationView, selected: boolean, graph: GraphSnapshot, defaultTypeId?: string, sizes: ConceptNodeSizes = {}): RelationEdge {
+export function relationEdge(relation: RelationView, selected: boolean, singleSelection: boolean, graph: GraphSnapshot, defaultTypeId?: string, sizes: ConceptNodeSizes = {}): RelationEdge {
   const bounds = (id: string): ConceptBounds => ({ position: graph.concepts.find((concept) => concept.id === id)!.position, ...(sizes[id] ?? conceptNodeMinSize) })
   const source = bounds(relation.source)
   const target = bounds(relation.target)
@@ -48,7 +48,7 @@ export function relationEdge(relation: RelationView, selected: boolean, graph: G
     style: { stroke: selected ? 'var(--primary)' : 'var(--edge)', strokeWidth: selected ? 1.5 : 1.2 },
     interactionWidth: 18,
     selected,
-    reconnectable: selected,
+    reconnectable: selected && singleSelection,
     markerEnd: { type: MarkerType.ArrowClosed, width: 14, height: 14, color: selected ? 'var(--primary)' : 'var(--edge)' },
   }
 }

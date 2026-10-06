@@ -19,11 +19,22 @@ test('undo and redo restore deletion, incident relations, custom types, membersh
   ] } })
   const before = host.store.getState()
   const snapshot = structuredClone(before)
-  host.store.removeConcept('urn:n1')
+  const selected = [
+    { kind: 'concept' as const, id: 'urn:n1' },
+    { kind: 'concept' as const, id: 'urn:n2' },
+    { kind: 'relation' as const, id: relationKey(before.graph.relations[0]) },
+  ]
+  host.store.setSelection(selected)
+  host.store.applyOperations([
+    { kind: 'concept.remove', id: 'urn:n1' },
+    { kind: 'concept.remove', id: 'urn:n2' },
+    { kind: 'relation.remove', id: selected[2].id },
+  ])
   const after = host.store.getState()
   assert.deepEqual(after.graph.relationTypes, [])
+  assert.deepEqual(after.selected, [])
   host.store.setView('urn:v2')
-  host.store.setSelection({ kind: 'concept', id: 'urn:n3' })
+  host.store.setSelection([{ kind: 'concept', id: 'urn:n3' }])
   let notifications = 0
   host.store.subscribe(() => notifications++)
   host.history.undo()
@@ -32,12 +43,14 @@ test('undo and redo restore deletion, incident relations, custom types, membersh
   assert.deepEqual(undone.graph, before.graph)
   assert.deepEqual(undone.workspace.savedViews, before.workspace.savedViews)
   assert.equal(undone.workspace.activeViewId, 'urn:v2')
-  assert.deepEqual(undone.selected, { kind: 'concept', id: 'urn:n3' })
+  assert.deepEqual(undone.selected, [{ kind: 'concept', id: 'urn:n3' }])
   assert.equal(undone.graph.concepts[0], before.graph.concepts[0])
   assert.equal(undone.graph.concepts[1], before.graph.concepts[1])
   assert.deepEqual(undone.history, { canUndo: false, canRedo: true })
+  host.store.setSelection([...selected, { kind: 'concept', id: 'urn:n3' }])
   host.history.redo()
-  assert.equal(notifications, 2)
+  assert.equal(notifications, 3)
+  assert.deepEqual(host.store.getState().selected, [{ kind: 'concept', id: 'urn:n3' }])
   assert.deepEqual(host.store.getState().graph, after.graph)
   assert.deepEqual(host.store.getState().workspace.savedViews, after.workspace.savedViews)
   assert.deepEqual(before, snapshot)
@@ -48,7 +61,7 @@ test('mixed batches undo only document changes and replay recorded effects, not 
   host.registerVocab({ id: 'vocab', label: 'Vocab', defaultTypeId: 'urn:links', relationTypes: [{ id: 'urn:links', label: 'Links' }] })
   host.store.applyOperations([
     { kind: 'view.create', id: 'urn:v', name: 'View', conceptIds: ['urn:n0'] },
-    { kind: 'selection.set', value: { kind: 'concept', id: 'urn:n0' } },
+    { kind: 'selection.set', value: [{ kind: 'concept', id: 'urn:n0' }] },
     { kind: 'concept.add', id: 'urn:new' },
     { kind: 'view.rename', id: 'urn:v', name: 'Renamed' },
     { kind: 'view.pin', id: 'urn:v', pinned: true },
@@ -60,15 +73,15 @@ test('mixed batches undo only document changes and replay recorded effects, not 
   assert.deepEqual(host.store.getState().workspace.savedViews, [])
   assert.equal(host.store.getState().workspace.activeViewId, null)
   assert.equal(host.store.getState().preferences, after.preferences)
-  assert.equal(host.store.getState().selected, null)
+  assert.deepEqual(host.store.getState().selected, [])
   host.registerVocab({ id: 'other', label: 'Other', defaultTypeId: 'urn:other', relationTypes: [{ id: 'urn:other', label: 'Other' }] })
   host.store.setActiveVocab('other')
-  host.store.setSelection({ kind: 'concept', id: 'urn:n3' })
+  host.store.setSelection([{ kind: 'concept', id: 'urn:n3' }])
   host.history.redo()
   assert.deepEqual(host.store.getState().graph, after.graph)
   assert.deepEqual(host.store.getState().workspace.savedViews, after.workspace.savedViews)
   assert.equal(host.store.getState().workspace.activeViewId, null)
-  assert.deepEqual(host.store.getState().selected, { kind: 'concept', id: 'urn:n3' })
+  assert.deepEqual(host.store.getState().selected, [{ kind: 'concept', id: 'urn:n3' }])
   assert.equal(host.store.getState().preferences.activeVocabId, 'other')
 })
 

@@ -38,7 +38,7 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
     workspace,
     preferences: { ...preferences, activeVocabId: '', activeRendererId: '', activeThemeId: '' },
     viewGraph: materialize(initial, workspace),
-    selected: null,
+    selected: [],
     vocabs: [],
     persistenceIssues: [],
     history: { canUndo: false, canRedo: false },

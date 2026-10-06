@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { Position } from '@xyflow/react'
 import type { Graph } from '@nesso/schema'
-import { conceptNode, facingSide, relationEdge } from '../src/adapters.ts'
+import { conceptNode, facingSide, relationEdge } from './adapters.ts'
 
 test('node adapters retain measured dimensions when their position changes', () => {
   const concept = { id: 'urn:a', label: 'A', position: { x: 0, y: 0 } }
@@ -31,21 +31,25 @@ test('native edges use facing borders, preserve predicates and keep the default 
     [{ x: 0, y: -100 }, Position.Top, Position.Bottom],
   ] as const) {
     graph.concepts[1].position = position
-    const edge = relationEdge(graph.relations[0], false, graph, 'urn:links')
+    const edge = relationEdge(graph.relations[0], false, false, graph, 'urn:links')
     assert.equal(edge.sourceHandle, source)
     assert.equal(edge.targetHandle, target)
     assert.equal(edge.label, undefined)
     assert.equal(edge.interactionWidth, 18)
   }
-  const selected = relationEdge(graph.relations[0], true, graph)
+  const selected = relationEdge(graph.relations[0], true, true, graph)
   assert.equal(selected.reconnectable, true)
-  assert.equal(relationEdge(graph.relations[0], false, graph).reconnectable, false)
+  assert.equal(relationEdge(graph.relations[0], false, true, graph).reconnectable, false)
+  const multiple = relationEdge(graph.relations[0], true, false, graph)
+  assert.equal(multiple.reconnectable, false)
+  assert.equal(multiple.selected, true)
+  assert.deepEqual(multiple.style, selected.style)
   assert.equal(selected.label, 'links')
   assert.equal(selected.style?.stroke, 'var(--primary)')
-  const loop = relationEdge({ ...graph.relations[0], target: 'urn:a' }, false, graph)
+  const loop = relationEdge({ ...graph.relations[0], target: 'urn:a' }, false, false, graph)
   assert.notEqual(loop.sourceHandle, loop.targetHandle)
   graph.concepts[1].position = { x: 600, y: 100 }
-  const resized = relationEdge(graph.relations[0], false, graph, undefined, {
+  const resized = relationEdge(graph.relations[0], false, false, graph, undefined, {
     'urn:a': { width: 600, height: 50 },
     'urn:b': { width: 120, height: 50 },
   })

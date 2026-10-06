@@ -9,6 +9,8 @@
   --xy-controls-button-border-color: var(--border);
   --xy-controls-box-shadow: none;
   --xy-edge-label-background-color: var(--background);
+  --xy-selection-background-color: var(--selection-halo);
+  --xy-selection-border: 1px solid var(--primary);
 }
 
 .react-flow .node-source {

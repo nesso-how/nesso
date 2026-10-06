@@ -24,7 +24,7 @@ test('plugin stores enforce isolated declaration snapshots for helpers and entir
   for (const write of [
     () => reader.setConceptLabel(id, 'Denied'),
     () => reader.reconnectRelation('missing', id, id),
-    () => store.setSelection({ kind: 'concept', id }),
+    () => store.setSelection([{ kind: 'concept', id }]),
     () => store.applyOperations([
       { kind: 'concept.label', id, value: 'Must not commit' },
       { kind: 'view.remove', id: viewId },

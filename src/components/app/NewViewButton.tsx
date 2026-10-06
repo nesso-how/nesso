@@ -1,18 +1,17 @@
 import { useState, type Ref } from 'react'
 import { LayersPlus } from 'lucide-react'
 import { Button, Dialog, DialogPopup } from '@nesso/ui'
-import { host, useNessoStore } from '@/store'
+import { host } from '@/store'
 import { ViewNameForm } from './ViewNameForm'
 
 export function NewViewButton({ iconOnly = false, ref }: { iconOnly?: boolean; ref?: Ref<HTMLButtonElement> }) {
-  const selected = useNessoStore((state) => state.selected)
   const [open, setOpen] = useState(false)
   const [conceptIds, setConceptIds] = useState<readonly string[]>([])
 
   return (
     <Dialog.Root open={open} onOpenChange={(nextOpen) => {
       if (nextOpen) {
-        setConceptIds(selected?.kind === 'concept' ? [selected.id] : [])
+        setConceptIds(host.store.getState().selected.filter((item) => item.kind === 'concept').map((item) => item.id))
       }
       setOpen(nextOpen)
     }}>
@@ -28,7 +27,7 @@ export function NewViewButton({ iconOnly = false, ref }: { iconOnly?: boolean; r
       </Dialog.Trigger>
       <DialogPopup>
         <Dialog.Title className="text-sm">New view</Dialog.Title>
-        <Dialog.Description className="mt-2 text-xs text-muted-foreground">{conceptIds.length ? `${conceptIds.length} selected concept` : 'Empty view · 0 concepts'}. Views reference shared concepts, not copies.</Dialog.Description>
+        <Dialog.Description className="mt-2 text-xs text-muted-foreground">{conceptIds.length ? `${conceptIds.length} selected ${conceptIds.length === 1 ? 'concept' : 'concepts'}` : 'Empty view · 0 concepts'}. Views reference shared concepts, not copies.</Dialog.Description>
         <ViewNameForm submitLabel="Create view" onSubmit={(name) => {
           host.store.createView(name, conceptIds)
           setOpen(false)

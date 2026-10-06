@@ -105,11 +105,15 @@ export function Inspector() {
     if (type.id !== activeVocab?.defaultTypeId && !offered.has(type.id)) offered.set(type.id, type)
   }
   const relationTypes = [...offered.values()]
-  const concept = selected?.kind === 'concept'
-    ? graph.concepts.find((concept) => concept.id === selected.id)
+  const item = selected.length === 1 ? selected[0] : undefined
+  const conceptIds = selected.filter((item) => item.kind === 'concept').map((item) => item.id)
+  const relationCount = selected.length - conceptIds.length
+  const outsideCount = conceptIds.filter((id) => !viewGraph.concepts.some((concept) => concept.id === id)).length
+  const concept = item?.kind === 'concept'
+    ? graph.concepts.find((concept) => concept.id === item.id)
     : undefined
-  const selectedEdge = selected?.kind === 'relation'
-    ? graph.relations.find((relation) => relationKey(relation) === selected.id)
+  const selectedEdge = item?.kind === 'relation'
+    ? graph.relations.find((relation) => relationKey(relation) === item.id)
     : undefined
   const sourceLabel = selectedEdge
     ? (graph.concepts.find((item) => item.id === selectedEdge.source)?.label ?? '?')
@@ -123,10 +127,20 @@ export function Inspector() {
     : relationTypes.find((item) => item.id === selectedRelationId)?.label ?? ''
 
   return (
-    <aside className="flex h-full flex-col overflow-y-auto bg-background px-5 py-6 text-sm">
-      {concept ? (
+    <aside className="flex h-full flex-col gap-[26px] overflow-y-auto bg-background px-5 py-6 text-sm">
+      {selected.length > 1 ? (
+        <div className="flex flex-col gap-1.5">
+          <h2 className="font-medium">Selection</h2>
+          <p className="text-xs text-muted-foreground">{[
+            conceptIds.length > 0 ? `${conceptIds.length} ${conceptIds.length === 1 ? 'concept' : 'concepts'}` : '',
+            relationCount > 0 ? `${relationCount} ${relationCount === 1 ? 'relation' : 'relations'}` : '',
+          ].filter(Boolean).join(' · ')}</p>
+          <p className="text-xs text-muted-foreground">Select a single item to edit its label or relation type.</p>
+          {outsideCount > 0 && <p className="text-xs text-muted-foreground">{outsideCount} {outsideCount === 1 ? 'concept is' : 'concepts are'} outside the current view.</p>}
+        </div>
+      ) : concept ? (
         <section className="flex flex-col gap-[26px]">
-          {!viewGraph.concepts.some((item) => item.id === concept.id) && <p className="text-xs text-muted-foreground">This concept is outside the current view.</p>}
+          {outsideCount > 0 && <p className="text-xs text-muted-foreground">This concept is outside the current view.</p>}
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="concept-label">Label</Label>
             <Input
@@ -143,7 +157,6 @@ export function Inspector() {
             />
           </div>
           <ConceptConnections key={`connections:${concept.id}`} conceptId={concept.id} />
-          <ConceptViews key={`views:${concept.id}`} conceptId={concept.id} />
         </section>
       ) : selectedEdge ? (
         <section className="flex flex-col gap-[26px]">
@@ -165,6 +178,7 @@ export function Inspector() {
           </InspectorSection>
         </section>
       ) : null}
+      {conceptIds.length > 0 && <ConceptViews key={JSON.stringify(conceptIds)} conceptIds={conceptIds} />}
     </aside>
   )
 }
