@@ -20,7 +20,7 @@ export function ConceptViews({ conceptId }: { conceptId: string }) {
           {memberships.map((view) => (
             <li key={view.id} className="flex items-center gap-2">
               <span className="min-w-0 flex-1 break-words">{view.name}</span>
-              <Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:bg-transparent hover:text-foreground" aria-label={`Remove from ${view.name}`} onClick={() => host.ui.setViewMembership(view.id, conceptId, false)}><X /></Button>
+              <Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:bg-transparent hover:text-foreground" aria-label={`Remove from ${view.name}`} onClick={() => host.store.setViewMembership(view.id, conceptId, false)}><X /></Button>
             </li>
           ))}
         </ul>
@@ -35,7 +35,7 @@ export function ConceptViews({ conceptId }: { conceptId: string }) {
         onInputValueChange={(next, details) => { if (details.reason !== 'item-press') setQuery(next) }}
         onValueChange={(view) => {
           if (!view) return
-          host.ui.setViewMembership(view.id, conceptId, true)
+          host.store.setViewMembership(view.id, conceptId, true)
           setOpen(false)
         }}
       >

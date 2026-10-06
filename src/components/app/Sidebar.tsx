@@ -55,14 +55,14 @@ export function AppSidebar() {
             setRenaming(view)
           }}>Rename view</MenuItem>
           <MenuItem onClick={() => {
-            host.ui.setViewPinned(view.id, !view.pinned)
+            host.store.setViewPinned(view.id, !view.pinned)
             requestAnimationFrame(() => {
               const trigger = menuTriggers.current.get(view.id)
               const target = trigger?.getClientRects().length ? trigger : createTrigger.current
               target?.focus()
             })
           }}>{view.pinned ? 'Unpin view' : 'Pin view'}</MenuItem>
-          <MenuItem onClick={() => downloadGraph(host.ui.getViewGraph(view.id), view.name)}>Export view</MenuItem>
+          <MenuItem onClick={() => downloadGraph(host.store.getViewGraph(view.id), view.name)}>Export view</MenuItem>
           <Menu.Separator className="my-1 h-px bg-border" />
           <MenuItem onClick={() => { deletingId.current = view.id; setDeleting(view) }}>Delete view</MenuItem>
         </MenuPopup>
@@ -88,7 +88,7 @@ export function AppSidebar() {
       delete handle.dataset.resizing
       window.removeEventListener('pointermove', onMove)
       window.removeEventListener('pointerup', stop)
-      host.ui.setPanelSizes({ ...host.store.getState().preferences.panels, explorerWidth: width })
+      host.store.setPanelSizes({ ...host.store.getState().preferences.panels, explorerWidth: width })
     }
     window.addEventListener('pointermove', onMove)
     window.addEventListener('pointerup', stop)
@@ -99,7 +99,7 @@ export function AppSidebar() {
       <Sidebar>
         <div className="flex min-h-0 flex-1 flex-col px-3 pt-5">
           <NewViewButton ref={createTrigger} />
-          {heading('Pinned views', 'pinned-views', pinnedOpen, () => host.ui.setSectionOpen('sidebar.pinned-views', !pinnedOpen))}
+          {heading('Pinned views', 'pinned-views', pinnedOpen, () => host.store.setSectionOpen('sidebar.pinned-views', !pinnedOpen))}
           <div className="explorer-scroll min-h-0 flex-1 overflow-y-auto p-1.5 -mx-1.5" onScroll={() => setMenu(null)}>
             <div id="pinned-views" hidden={!pinnedOpen} className="mt-1 space-y-0.5">
               <button type="button" onClick={() => nessoStore.setView(null)} aria-current={workspace.activeViewId === null ? 'page' : undefined} className="min-h-14 w-full shrink-0 rounded-sm px-2.5 py-2 text-left hover:bg-accent aria-[current=page]:bg-pressed">
@@ -109,7 +109,7 @@ export function AppSidebar() {
               {pinned.map(row)}
             </div>
             <div className="mt-4">
-              {heading('Views', 'saved-views', viewsOpen, () => host.ui.setSectionOpen('sidebar.views', !viewsOpen))}
+              {heading('Views', 'saved-views', viewsOpen, () => host.store.setSectionOpen('sidebar.views', !viewsOpen))}
               <div id="saved-views" hidden={!viewsOpen} className="mt-1 space-y-0.5">{ordinary.map(row)}</div>
             </div>
           </div>
@@ -121,7 +121,7 @@ export function AppSidebar() {
           <Dialog.Title className="text-sm">Rename view</Dialog.Title>
           <Dialog.Description className="mt-2 text-xs text-muted-foreground">Only the name changes. Concepts and relations remain untouched.</Dialog.Description>
           {renaming && <ViewNameForm initialName={renaming.name} submitLabel="Save name" onSubmit={(name) => {
-            host.ui.renameView(renaming.id, name)
+            host.store.renameView(renaming.id, name)
             setRenaming(null)
           }} />}
         </DialogPopup>
@@ -132,7 +132,7 @@ export function AppSidebar() {
           <Dialog.Description className="mt-2 text-xs text-muted-foreground">Concepts and relations remain untouched. This only deletes the view.</Dialog.Description>
           <div className="mt-6 flex justify-end gap-2">
             <Dialog.Close render={<Button ref={cancel} variant="outline" />}>Cancel</Dialog.Close>
-            <Button onClick={() => { if (deleting) host.ui.deleteView(deleting.id); setDeleting(null) }}>Delete view</Button>
+            <Button onClick={() => { if (deleting) host.store.deleteView(deleting.id); setDeleting(null) }}>Delete view</Button>
           </div>
         </DialogPopup>
       </Dialog.Root>

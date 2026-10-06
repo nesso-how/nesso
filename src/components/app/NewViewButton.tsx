@@ -30,7 +30,7 @@ export function NewViewButton({ iconOnly = false, ref }: { iconOnly?: boolean; r
         <Dialog.Title className="text-sm">New view</Dialog.Title>
         <Dialog.Description className="mt-2 text-xs text-muted-foreground">{conceptIds.length ? `${conceptIds.length} selected concept` : 'Empty view · 0 concepts'}. Views reference shared concepts, not copies.</Dialog.Description>
         <ViewNameForm submitLabel="Create view" onSubmit={(name) => {
-          host.ui.createView(name, conceptIds)
+          host.store.createView(name, conceptIds)
           setOpen(false)
         }} />
       </DialogPopup>

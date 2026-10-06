@@ -18,7 +18,7 @@ export function SidebarProvider({ children, ...props }: ComponentProps<'div'>) {
   const open = useNessoStore((state) => !state.preferences.collapsedSections?.includes('sidebar'))
 
   return (
-    <SidebarContext.Provider value={{ open, toggle: () => host.ui.setSectionOpen('sidebar', !open) }}>
+    <SidebarContext.Provider value={{ open, toggle: () => host.store.setSectionOpen('sidebar', !open) }}>
       <div data-slot="sidebar-wrapper" className="flex h-svh w-full flex-col overflow-hidden" {...props}>
         {children}
       </div>

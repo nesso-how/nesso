@@ -1,7 +1,7 @@
 import { Collapsible } from '@nesso/ui'
 import type { ReactNode } from 'react'
 import { host, useNessoStore } from '@/store'
-import type { SectionId } from '@/store/types'
+import type { SectionId } from '@nesso/plugin'
 import { SectionHeading } from './SectionHeading'
 
 export function InspectorSection({ id, title, children, onOpenChange }: {
@@ -13,7 +13,7 @@ export function InspectorSection({ id, title, children, onOpenChange }: {
   const open = useNessoStore((state) => !state.preferences.collapsedSections?.includes(id))
   return (
     <Collapsible.Root open={open} onOpenChange={(next) => {
-      host.ui.setSectionOpen(id, next)
+      host.store.setSectionOpen(id, next)
       onOpenChange?.(next)
     }} render={<section />}>
       <h2>

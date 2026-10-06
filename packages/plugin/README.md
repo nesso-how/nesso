@@ -50,11 +50,11 @@ export const exampleRendererPlugin: Plugin = ({ store }) => ({
 - `PluginContext`: supplies the host-created `NessoStore`.
 - `PluginDefinition`: optional `renderers`, `vocabs`, `actions`, and `themes` contributions.
 - `NessoState`: readonly graph, workspace, preferences, visible graph, selection, and vocabulary definitions.
-- `NessoStore`: read/subscribe, graph editing, navigation, viewport, and active-plugin commands. Single-write methods delegate to `applyOperations`.
-- `applyOperations`: ordered graph writes, validated and committed atomically or rejected with `SchemaError`; no-ops do not notify. Creation operations require explicit IDs, generated with `newIri` from `@nesso/schema`.
-- `GraphOperation`: readonly domain writes for concepts and relations.
+- `NessoStore`: read/subscribe, graph and view editing, navigation, viewport, preferences, and document reset. Every write helper delegates to `applyOperations`; `getViewGraph` asks the host to materialize a saved view without activating it.
+- `applyOperations`: ordered state writes, validated and committed atomically or rejected with structured `SchemaError` or host errors; no-ops do not notify. Creation and reset operations require explicit IDs, generated with `newIri` from `@nesso/schema`. Registration and persistence diagnostics stay internal.
+- `NessoOperation`: readonly writes for concepts, relations, views, selection, viewport, preferences, and reset. Each operation reads the preceding candidate state; new concepts join the view active at their creation. Only the final state is published. Undo/redo is not implemented.
 - `RendererDefinition`, `VocabDefinition`, `ActionDefinition`: contribution shapes. Actions are `{ id, label, run }` commands; renderer components use the injected store.
 - `SavedView`: readonly named concept set with pin metadata. `WorkspaceState` holds saved views, the active view id, and renderer viewports; null active view means the complete graph.
-- `ThemeDefinition`: id and label. Statically imported CSS scopes tokens to `:root[data-theme='<id>']`; the host owns the active theme preference and DOM application.
+- `ThemeDefinition`: id and label. Statically imported CSS scopes tokens to `:root[data-theme='<id>']`; theme activation uses the store and DOM application stays in the host.
 
 See [`src/types.ts`](src/types.ts) for all exported types and method signatures.

@@ -1,6 +1,6 @@
-import type { Viewport } from '@nesso/plugin'
+import type { PanelSizes, Preferences, SectionId, Viewport, WorkspaceState } from '@nesso/plugin'
 import { NessoError } from './errors.ts'
-import { sectionIds, type HostPreferences, type HostWorkspace, type PanelSizes, type SectionId } from './types.ts'
+import { sectionIds } from './types.ts'
 
 export const defaultPanels: PanelSizes = { explorerWidth: 232, inspectorWidth: 304 }
 
@@ -49,7 +49,7 @@ export const parseViewName = (value: unknown, path: string): string => {
   return name
 }
 
-export const parseWorkspace = (value: unknown): HostWorkspace => {
+export const parseWorkspace = (value: unknown): WorkspaceState => {
   const workspace = object(value, 'workspace', ['activeViewId', 'savedViews', 'viewports'])
   if (!Array.isArray(workspace.savedViews)) fail('workspace.savedViews', 'Expected saved views')
   const ids = new Set<string>()
@@ -81,7 +81,7 @@ export const parseWorkspace = (value: unknown): HostWorkspace => {
   }
 }
 
-export const parsePreferences = (value: unknown): HostPreferences => {
+export const parsePreferences = (value: unknown): Preferences => {
   const preferences = object(value, 'preferences', ['activeVocabId', 'activeRendererId', 'activeThemeId', 'panels', 'collapsedSections'])
   let collapsedSections: SectionId[] | undefined
   if (preferences.collapsedSections !== undefined) {

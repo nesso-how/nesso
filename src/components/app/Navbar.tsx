@@ -20,7 +20,7 @@ export function Navbar() {
                 ))}
                 <Menu.Separator className="my-1 h-px bg-border" />
                  <MenuItem onClick={() => {
-                  if (window.confirm('Reset the graph? All concepts and relations will be replaced by one new concept. This cannot be undone.')) host.ui.resetGraph()
+                  if (window.confirm('Reset the graph? All concepts and relations will be replaced by one new concept. This cannot be undone.')) host.store.resetGraph()
                  }}>Reset graph</MenuItem>
           </MenuPopup>
         </Menu.Root>

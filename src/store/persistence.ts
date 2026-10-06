@@ -2,7 +2,7 @@ import { parseGraph, SchemaError, serializeGraph, type Graph, type SchemaIssue }
 import type { createNessoStore } from './create.ts'
 import { NessoError } from './errors.ts'
 import { fail, object, parsePreferences, parseWorkspace } from './settings.ts'
-import type { HostPreferences, HostWorkspace } from './types.ts'
+import type { Preferences, WorkspaceState } from '@nesso/plugin'
 
 type Section = 'document' | 'preferences'
 type StorageSource = () => Pick<Storage, 'getItem' | 'setItem'>
@@ -15,8 +15,8 @@ export const storageKeys = {
 
 export type LoadedState = {
   graph?: Graph | null
-  workspace?: HostWorkspace
-  preferences?: HostPreferences
+  workspace?: WorkspaceState
+  preferences?: Preferences
   blocked: Section[]
   issues: SchemaIssue[]
 }
@@ -93,7 +93,7 @@ export const connectPersistence = (
         writeIssues[section] = storageError(section, error).issues
       }
     }
-    host.ui.setPersistenceIssues([...loaded.issues, ...Object.values(writeIssues).flat()])
+    host.setPersistenceIssues([...loaded.issues, ...Object.values(writeIssues).flat()])
   }
 
   const schedule = (): void => {
