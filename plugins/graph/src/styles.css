@@ -19,7 +19,7 @@
 .react-flow .node-source::before {
   content: '';
   position: absolute;
-  inset: 8px;
+  inset: 7px;
   border: 1px solid var(--handle);
   border-radius: 50%;
   background: var(--background);
@@ -56,6 +56,11 @@
 .react-flow__edgeupdater:hover {
   fill: var(--foreground);
   stroke: var(--foreground);
+}
+
+.graph-reconnecting .react-flow__edgeupdater {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .react-flow__node:focus-visible .concept-node {
@@ -123,6 +128,6 @@
     height: 44px !important;
   }
   .react-flow .node-source::before {
-    inset: 18px;
+    inset: 17px;
   }
 }

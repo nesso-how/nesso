@@ -40,6 +40,7 @@ export function Canvas() {
   const [initialViewport] = useState(() => store.getState().workspace.viewports.graph)
   const navigation = useRef(view)
   const reconnecting = useRef<RelationEdge | null>(null)
+  const [reconnectDrag, setReconnectDrag] = useState(false)
   const canvas = useRef<HTMLDivElement>(null)
   const { fitView, screenToFlowPosition } = useReactFlow()
   const zoom = useFlowStore((state) => state.transform[2])
@@ -82,6 +83,7 @@ export function Canvas() {
 
   const clearSelection = () => {
     reconnecting.current = null
+    setReconnectDrag(false)
     flow.getState().cancelConnection()
     flow.setState({ connectionClickStartHandle: null })
     store.setSelection(null)
@@ -131,7 +133,7 @@ export function Canvas() {
   }, [view, fitView])
 
   return (
-    <div ref={canvas} tabIndex={0} className="h-full w-full outline-none" onKeyDown={(event) => { if (event.key === 'Escape') clearSelection() }}>
+    <div ref={canvas} tabIndex={0} className={reconnectDrag ? 'h-full w-full outline-none graph-reconnecting' : 'h-full w-full outline-none'} onKeyDown={(event) => { if (event.key === 'Escape') clearSelection() }}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -141,9 +143,9 @@ export function Canvas() {
         onEdgesChange={(changes) => onObjectChanges('relation', changes)}
         onConnect={({ source, target }) => store.connect(source, target)}
         onReconnect={interactive ? (edge, { source, target }) => store.reconnectRelation(edge.id, source, target) : undefined}
-        onReconnectStart={(_event, edge) => { reconnecting.current = edge }}
-        onReconnectEnd={() => { reconnecting.current = null }}
-        reconnectRadius={6 / zoom}
+        onReconnectStart={(_event, edge) => { reconnecting.current = edge; setReconnectDrag(true) }}
+        onReconnectEnd={() => { reconnecting.current = null; setReconnectDrag(false) }}
+        reconnectRadius={5 / zoom}
         connectionMode={ConnectionMode.Loose}
         isValidConnection={({ source, target }) => {
           const relations = store.getState().graph.relations
