@@ -4,22 +4,98 @@
   --xy-node-border-radius: var(--radius-object);
   --xy-controls-button-background-color: var(--background);
   --xy-controls-button-background-color-hover: var(--hover);
-  --xy-controls-button-color: var(--foreground);
+  --xy-controls-button-color: var(--muted-foreground);
+  --xy-controls-button-color-hover: var(--foreground);
   --xy-controls-button-border-color: var(--border);
   --xy-controls-box-shadow: none;
+  --xy-edge-label-background-color: var(--background);
+}
+
+.react-flow .node-source {
+  width: 24px;
+  height: 24px;
+}
+
+.react-flow .node-source::before {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border: 1px solid var(--handle);
+  border-radius: 50%;
+  background: var(--background);
+}
+
+.react-flow .node-source:hover::before {
+  border-color: var(--foreground);
+  background: var(--foreground);
+}
+
+.react-flow .concept-node:has(.node-target.valid, .node-target:focus-visible) {
+  border-color: var(--foreground);
+  box-shadow: 0 0 0 2px var(--selection-halo);
+}
+
+.react-flow__edge:hover .react-flow__edge-path,
+.react-flow__edge:focus-visible .react-flow__edge-path {
+  stroke: var(--foreground) !important;
+}
+
+.react-flow__edge:focus-visible,
+.react-flow__node:focus-visible {
+  outline: none;
+}
+
+.react-flow__node:focus-visible .concept-node {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
 }
 
 .react-flow__controls {
   overflow: hidden;
+  padding: 2px;
+  background: var(--background);
   border: 1px solid var(--border);
   border-radius: var(--radius-control);
 }
 
 .react-flow__controls-button {
+  width: 28px;
+  height: 28px;
   border-radius: var(--radius-control);
 }
 
-.react-flow__controls-button:focus-visible {
+.react-flow__controls.horizontal .react-flow__controls-button {
+  border: none;
+}
+
+.react-flow__controls-button svg {
+  width: 14px;
+  height: 14px;
+  max-width: none;
+  max-height: none;
+  fill: none;
+}
+
+.react-flow__controls-button[aria-pressed='true'] {
+  background: var(--muted);
+  color: var(--foreground);
+}
+
+.react-flow__controls-button:disabled:hover {
+  background: var(--background);
+  color: var(--muted-foreground);
+}
+
+.react-flow__controls-button:disabled svg {
+  stroke-opacity: 0.4;
+}
+
+.react-flow__controls-button:active {
+  background: var(--pressed);
+}
+
+.react-flow__controls-button:focus-visible,
+.react-flow .node-source:focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: -2px;
 }
@@ -28,5 +104,12 @@
   .react-flow__controls-button {
     width: 44px;
     height: 44px;
+  }
+  .react-flow .node-source {
+    width: 44px !important;
+    height: 44px !important;
+  }
+  .react-flow .node-source::before {
+    inset: 18px;
   }
 }

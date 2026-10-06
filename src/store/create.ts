@@ -230,7 +230,7 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
     const state = store.getState()
     const issues: SchemaIssue[] = validateGraph({
       concepts: [],
-      relationTypes: [...vocab.relationTypes],
+      relationTypes: vocab.relationTypes,
       relations: [],
     })
     if (!vocab.id || state.vocabs.some((item) => item.id === vocab.id)) {

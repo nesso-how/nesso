@@ -1,4 +1,4 @@
-import { relationKey, type RelationType } from '@nesso/schema'
+import { maxConceptLabelLength, maxRelationLabelLength, relationKey, type RelationType } from '@nesso/schema'
 import { useRef, useState } from 'react'
 import { Autocomplete, AutocompleteClear, AutocompleteItem, AutocompletePopup, Input, Label } from '@nesso/ui'
 import { ConceptViews } from './ConceptViews'
@@ -62,6 +62,7 @@ function RelationInput({ edgeId, typeId, label, defaultTypeId, relationTypes, on
         <div className="relative">
           <Autocomplete.Input
             id="relation-label"
+            maxLength={maxRelationLabelLength}
             aria-invalid={Boolean(error)}
             render={<Input className="pr-7" />}
             onBlur={(event) => save(event.currentTarget.value)}
@@ -128,6 +129,7 @@ export function Inspector() {
             <Label htmlFor="concept-label">Label</Label>
             <Input
               id="concept-label"
+              maxLength={maxConceptLabelLength}
               value={concept.label}
               onChange={(event) => nessoStore.setConceptLabel(concept.id, event.target.value)}
             />

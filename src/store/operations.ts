@@ -110,7 +110,7 @@ export const applyGraphOperations = (state: NessoState, operations: readonly Gra
         const relation = { source: operation.source, predicate: vocab.defaultTypeId, target: operation.target }
         const key = relationKey(relation)
         if (graph.relations.some((item) => relationKey(item) === key)) break
-        const type = vocab.relationTypes.find((item) => item.id === vocab.defaultTypeId) ?? { id: vocab.defaultTypeId, label: '' }
+        const type = vocab.relationTypes.find((item) => item.id === vocab.defaultTypeId)!
         graph = { ...graph, relationTypes: withType(type), relations: [...graph.relations, relation] }
         selected = { kind: 'relation', id: key }
         break

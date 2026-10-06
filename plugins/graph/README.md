@@ -10,6 +10,8 @@ New concepts appear near the selected concept using the injected store's `concep
 
 The canvas restores `workspace.viewports.graph` on mount and records the viewport at the end of pan/zoom gestures. Switching views fits the new scope; membership edits and pinning do not reframe it.
 
+Nodes fit their single-line labels with a 120px minimum width and 50px height. Native measurements are retained during drag and used to choose facing borders. Only the selected node shows its creation handle; a native target handle covers each node during a connection. Hidden side handles attach native Bézier edges. The dashed preview shares the final edge's facing-side geometry and native Bézier renderer, ending at the pointer until a target is found. React Flow owns connection gestures, edge labels/hit areas, fit/lock controls, and the zoom readout. Self-connections and duplicate default relations are rejected.
+
 ## API
 
 - `graphPlugin`: factory binding the injected `NessoStore` to its renderer instance.
