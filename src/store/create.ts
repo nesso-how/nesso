@@ -15,7 +15,7 @@ import {
 import { createStore } from 'zustand/vanilla'
 import { createCommands } from './commands.ts'
 import { applyStateOperations, checkGraph, materialize, newGraph, newWorkspace } from './operations.ts'
-import { defaultPanels, fail, parsePreferences, parseWorkspace } from './settings.ts'
+import { defaultPanels, fail, maxRelationLabelLength, parsePreferences, parseWorkspace } from './settings.ts'
 import type { HostState, HostStore, RestoredState } from './types.ts'
 
 export const createNessoStore = (graph: Graph | null, restored: RestoredState = {}) => {
@@ -105,6 +105,11 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
     if (!vocab.defaultTypeId || !vocab.relationTypes.some((type) => type.id === vocab.defaultTypeId)) {
       issues.push({ path: 'defaultTypeId', message: `Default type is not offered by vocabulary: ${vocab.id}` })
     }
+    vocab.relationTypes.forEach((type, index) => {
+      if (type.label.length > maxRelationLabelLength) {
+        issues.push({ path: `relationTypes[${index}].label`, message: `Relation label must not exceed ${maxRelationLabelLength} characters` })
+      }
+    })
     if (issues.length > 0) throw new SchemaError(issues)
     store.setState({
       vocabs: [...state.vocabs, structuredClone(vocab)],

@@ -1,6 +1,6 @@
 import type { GraphSnapshot, NessoOperation, NessoState, Preferences, RendererDefinition, SavedView, Selection, ThemeDefinition, WorkspaceState } from '@nesso/plugin'
 import { relationKey, SchemaError, validateGraph, type Graph, type Relation, type RelationType } from '@nesso/schema'
-import { fail, parsePreferences, parseWorkspace } from './settings.ts'
+import { fail, maxConceptLabelLength, maxRelationLabelLength, parsePreferences, parseWorkspace } from './settings.ts'
 import { sectionIds } from './types.ts'
 
 export const conceptPlacementOffset = Object.freeze({ x: 160, y: 100 })
@@ -8,6 +8,16 @@ export const conceptPlacementOffset = Object.freeze({ x: 160, y: 100 })
 export const checkGraph = (graph: GraphSnapshot): void => {
   const issues = validateGraph(graph)
   if (graph.concepts.length === 0) issues.push({ path: 'concepts', message: 'Graph must keep at least one concept' })
+  graph.concepts.forEach((concept, index) => {
+    if (concept.label.length > maxConceptLabelLength) {
+      issues.push({ path: `concepts[${index}].label`, message: `Concept label must not exceed ${maxConceptLabelLength} characters` })
+    }
+  })
+  graph.relationTypes.forEach((type, index) => {
+    if (type.label.length > maxRelationLabelLength) {
+      issues.push({ path: `relationTypes[${index}].label`, message: `Relation label must not exceed ${maxRelationLabelLength} characters` })
+    }
+  })
   if (issues.length > 0) throw new SchemaError(issues)
 }
 

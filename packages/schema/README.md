@@ -16,8 +16,7 @@ const id = relationKey({ source, predicate, target })
 
 - `parseGraph`: read a supported JSON-LD document into a `Graph`.
 - `serializeGraph`: write a `Graph` as one JSON-LD document.
-- `validateGraph`: report invalid references, duplicates, positions, and label lengths.
-- `maxConceptLabelLength` / `maxRelationLabelLength`: shared 60/30-character limits; overlong labels are rejected, never truncated.
+- `validateGraph`: report invalid references, duplicates, and positions.
 - `newIri`: generate a UUID IRI.
 - `relationKey`: identify a relation by its source, predicate, and target.
 - `schemaContext`: the JSON-LD context of the profile.

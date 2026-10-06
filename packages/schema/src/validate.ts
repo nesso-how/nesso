@@ -1,4 +1,4 @@
-import { maxConceptLabelLength, maxRelationLabelLength, relationKey } from './core.ts'
+import { relationKey } from './core.ts'
 import type { SchemaIssue } from './errors.ts'
 import type { Position, Relation, RelationType } from './types.ts'
 
@@ -17,9 +17,6 @@ export function validateGraph(graph: {
       issues.push({ path: `concepts[${index}].id`, message: `Duplicate or missing concept IRI: ${concept.id}` })
     }
     concepts.add(concept.id)
-    if (concept.label.length > maxConceptLabelLength) {
-      issues.push({ path: `concepts[${index}].label`, message: `Concept label must not exceed ${maxConceptLabelLength} characters` })
-    }
     if (!Number.isFinite(concept.position.x) || !Number.isFinite(concept.position.y)) {
       issues.push({ path: `concepts[${index}].position`, message: `Invalid position: ${concept.id}` })
     }
@@ -29,9 +26,6 @@ export function validateGraph(graph: {
       issues.push({ path: `relationTypes[${index}].id`, message: `Duplicate or missing relation IRI: ${type.id}` })
     }
     types.add(type.id)
-    if (type.label.length > maxRelationLabelLength) {
-      issues.push({ path: `relationTypes[${index}].label`, message: `Relation label must not exceed ${maxRelationLabelLength} characters` })
-    }
   }
   for (const [index, relation] of graph.relations.entries()) {
     if (!concepts.has(relation.source) || !concepts.has(relation.target)) {

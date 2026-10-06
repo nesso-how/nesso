@@ -1,4 +1,4 @@
-export { maxConceptLabelLength, maxRelationLabelLength, newIri, relationKey, schemaContext } from './core.ts'
+export { newIri, relationKey, schemaContext } from './core.ts'
 export { SchemaError, type SchemaIssue } from './errors.ts'
 export { parseGraph, serializeGraph } from './jsonld.ts'
 export { validateGraph } from './validate.ts'

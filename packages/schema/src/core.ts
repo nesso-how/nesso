@@ -5,8 +5,6 @@ export const schemaContext = {
 } as const
 
 export const newIri = () => `urn:uuid:${crypto.randomUUID()}`
-export const maxConceptLabelLength = 60
-export const maxRelationLabelLength = 30
 export const relationKey = ({ source, predicate, target }: {
   source: string; predicate: string; target: string
 }) => JSON.stringify([source, predicate, target])

@@ -1,4 +1,5 @@
-import { maxConceptLabelLength, maxRelationLabelLength, relationKey, type RelationType } from '@nesso/schema'
+import { relationKey, type RelationType } from '@nesso/schema'
+import { maxConceptLabelLength, maxRelationLabelLength } from '@/store/settings'
 import { useRef, useState } from 'react'
 import { Autocomplete, AutocompleteClear, AutocompleteItem, AutocompletePopup, Input, Label } from '@nesso/ui'
 import { ConceptViews } from './ConceptViews'

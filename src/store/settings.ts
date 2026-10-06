@@ -8,6 +8,8 @@ export const panelLimits = {
   inspectorWidth: { min: 200 },
 } as const
 export const maxViewNameLength = 70
+export const maxConceptLabelLength = 60
+export const maxRelationLabelLength = 30
 
 export const fail = (path: string, message: string): never => {
   throw new NessoError([{ path, message }])

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { maxConceptLabelLength, maxRelationLabelLength, parseGraph, relationKey, SchemaError, schemaContext, serializeGraph, validateGraph } from '../src/index.ts'
+import { parseGraph, relationKey, SchemaError, schemaContext, serializeGraph, validateGraph } from '../src/index.ts'
 
 const predicate = 'https://example.org/relation/connects'
 const subject = 'https://example.org/concept/one'
@@ -35,26 +35,6 @@ test('missing references are rejected instead of disappearing on export', () => 
   graph.relations.push({ source: subject, predicate, target: 'urn:uuid:missing' })
   assert.match(validateGraph(graph).map((issue) => issue.message).join('\n'), /Unknown concept/)
   assert.throws(() => serializeGraph(graph), /Unknown concept/)
-})
-
-test('label limits are lossless at the boundary and reject overlong imports and exports', () => {
-  const graph = parseGraph(fixture)
-  graph.concepts[0].label = 'a'.repeat(maxConceptLabelLength)
-  graph.relationTypes[0].label = 'b'.repeat(maxRelationLabelLength)
-  const document = serializeGraph(graph)
-  assert.deepEqual(parseGraph(document), graph)
-  graph.concepts[0].label += 'a'
-  graph.relationTypes[0].label += 'b'
-  const expected = ['concepts[0].label', 'relationTypes[0].label']
-  assert.deepEqual(validateGraph(graph).map(({ path }) => path), expected)
-  const rejected = (error: unknown) => error instanceof SchemaError
-    && error.issues.map(({ path }) => path).join() === expected.join()
-  assert.throws(() => serializeGraph(graph), rejected)
-  document['@graph'][0]['rdfs:label'] = graph.relationTypes[0].label
-  document['@graph'][1]['rdfs:label'] = graph.concepts[0].label
-  assert.throws(() => parseGraph(document), rejected)
-  assert.equal(graph.concepts[0].label.length, maxConceptLabelLength + 1)
-  assert.equal(graph.relationTypes[0].label.length, maxRelationLabelLength + 1)
 })
 
 test('parse failures report structured issues', () => {
