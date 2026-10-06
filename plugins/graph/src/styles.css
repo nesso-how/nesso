@@ -45,6 +45,10 @@
   outline: none;
 }
 
+.react-flow .react-flow__panel.canvas-label {
+  z-index: 1;
+}
+
 .react-flow__edgeupdater {
   fill: var(--background);
   stroke: var(--handle);

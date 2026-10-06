@@ -33,6 +33,8 @@ export function Canvas() {
   const conceptCount = useNesso((state) => state.graph.concepts.length)
   const defaultTypeId = useNesso((state) => state.vocabs.find((vocab) => vocab.id === state.preferences.activeVocabId)?.defaultTypeId)
   const view = useNesso((state) => state.workspace.activeViewId)
+  const viewName = useNesso((state) => state.workspace.savedViews.find((saved) => saved.id === state.workspace.activeViewId)?.name ?? 'Complete graph')
+  const viewCount = useNesso((state) => state.viewGraph.concepts.length)
   const store = useStore()
   const flow = useStoreApi()
   const interactive = useFlowStore((state) => state.nodesDraggable || state.nodesConnectable || state.elementsSelectable)
@@ -171,6 +173,7 @@ export function Canvas() {
         fitViewOptions={fitViewOptions}
         minZoom={0.2}
       >
+        <Panel position="top-left" className="canvas-label pointer-events-none font-mono text-[10px] text-muted-foreground">{viewName} · {viewCount} {viewCount === 1 ? 'concept' : 'concepts'}</Panel>
         <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="var(--border)" />
         <Controls showZoom={false} showFitView={false} showInteractive={false} orientation="horizontal">
           <ControlButton className="react-flow__controls-fitview" onClick={() => { void fitView(fitViewOptions) }} title="Fit View" aria-label="Fit View">
@@ -180,7 +183,7 @@ export function Canvas() {
             <LockIcon aria-hidden="true" />
           </ControlButton>
         </Controls>
-        <Panel position="bottom-right" className="pointer-events-none font-mono text-[10px] text-muted-foreground" aria-label="Zoom level">{Math.round(zoom * 100)}%</Panel>
+        <Panel position="bottom-right" className="canvas-label pointer-events-none font-mono text-[10px] text-muted-foreground" aria-label="Zoom level">{Math.round(zoom * 100)}%</Panel>
         <Controls position="top-right" orientation="horizontal" showZoom={false} showFitView={false} showInteractive={false}>
           <ControlButton onClick={store.undo} disabled={!canUndo} title="Undo" aria-label="Undo">
             <Undo2 aria-hidden="true" />
