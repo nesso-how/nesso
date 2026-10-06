@@ -5,6 +5,7 @@ import { MoreHorizontal } from 'lucide-react'
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { Sidebar } from './SidebarLayout'
 import { NewViewButton } from './NewViewButton'
+import { ViewNameForm } from './ViewNameForm'
 import { SectionHeading } from './SectionHeading'
 import { host, nessoStore, useNessoStore } from '@/store'
 
@@ -14,11 +15,13 @@ export function AppSidebar() {
   const pinnedOpen = !collapsed?.includes('sidebar.pinned-views')
   const viewsOpen = !collapsed?.includes('sidebar.views')
   const [deleting, setDeleting] = useState<SavedView | null>(null)
+  const [renaming, setRenaming] = useState<SavedView | null>(null)
   const [menu, setMenu] = useState<string | null>(null)
   const cancel = useRef<HTMLButtonElement>(null)
   const createTrigger = useRef<HTMLButtonElement>(null)
   const menuTriggers = useRef(new Map<string, HTMLButtonElement>())
   const deletingId = useRef<string | null>(null)
+  const renamingId = useRef<string | null>(null)
   const pinned = workspace.savedViews.filter((view) => view.pinned)
   const ordinary = workspace.savedViews.filter((view) => !view.pinned)
 
@@ -47,6 +50,10 @@ export function AppSidebar() {
           <MoreHorizontal />
         </Menu.Trigger>
         <MenuPopup>
+          <MenuItem onClick={() => {
+            renamingId.current = view.id
+            setRenaming(view)
+          }}>Rename view</MenuItem>
           <MenuItem onClick={() => {
             host.ui.setViewPinned(view.id, !view.pinned)
             requestAnimationFrame(() => {
@@ -109,6 +116,16 @@ export function AppSidebar() {
         </div>
         <ResizeHandle onPointerDown={startResize} aria-label="Resize sidebar" className="absolute inset-y-0 right-0 z-20 cursor-col-resize bg-transparent" />
       </Sidebar>
+      <Dialog.Root open={renaming !== null} onOpenChange={(open) => { if (!open) setRenaming(null) }}>
+        <DialogPopup finalFocus={() => menuTriggers.current.get(renamingId.current ?? '') ?? createTrigger.current}>
+          <Dialog.Title className="text-sm">Rename view</Dialog.Title>
+          <Dialog.Description className="mt-2 text-xs text-muted-foreground">Only the name changes. Concepts and relations remain untouched.</Dialog.Description>
+          {renaming && <ViewNameForm initialName={renaming.name} submitLabel="Save name" onSubmit={(name) => {
+            host.ui.renameView(renaming.id, name)
+            setRenaming(null)
+          }} />}
+        </DialogPopup>
+      </Dialog.Root>
       <Dialog.Root open={deleting !== null} onOpenChange={(open) => { if (!open) setDeleting(null) }}>
         <DialogPopup initialFocus={cancel} finalFocus={() => menuTriggers.current.get(deletingId.current ?? '') ?? createTrigger.current}>
           <Dialog.Title className="text-sm">Delete “{deleting?.name}”?</Dialog.Title>

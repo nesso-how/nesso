@@ -675,6 +675,23 @@ test('section preferences are global, immutable, validated and independent of th
   assert.equal(host.store.getState(), state)
 })
 
+test('view renaming changes only the name and ignores no-ops', () => {
+  const host = createNessoStore(fixture())
+  const viewId = host.ui.createView('Pair', ['urn:n1', 'urn:n2'])
+  host.ui.setViewPinned(viewId, true)
+  host.store.setSelection({ kind: 'concept', id: 'urn:n1' })
+  const before = host.store.getState()
+  host.ui.renameView(viewId, '  Renamed pair  ')
+  const after = host.store.getState()
+  assert.deepEqual(after.workspace.savedViews[0], { ...before.workspace.savedViews[0], name: 'Renamed pair' })
+  assert.deepEqual(after, { ...before, workspace: { ...before.workspace, savedViews: after.workspace.savedViews } })
+  assert.equal(after.graph, before.graph)
+  assert.equal(after.viewGraph, before.viewGraph)
+  assert.equal(before.workspace.savedViews[0].name, 'Pair')
+  host.ui.renameView(viewId, ' Renamed pair ')
+  assert.equal(host.store.getState(), after)
+})
+
 test('UI and viewport writes own their inputs, ignore no-ops and reject invalid changes atomically', () => {
   const host = createNessoStore(fixture())
   host.registerRenderer({ id: 'graph', label: 'Graph', component: () => null })
@@ -697,6 +714,7 @@ test('UI and viewport writes own their inputs, ignore no-ops and reject invalid 
   host.store.subscribe(() => notifications++)
   host.ui.setViewMembership(viewId, 'urn:n1', true)
   host.ui.setViewPinned(viewId, false)
+  host.ui.renameView(viewId, 'Pair')
   host.store.setView(viewId)
   host.ui.setPanelSizes({ explorerWidth: 300, inspectorWidth: 350 })
   host.store.setViewport('graph', { x: 100, y: -200, zoom: 0.8 })
@@ -704,6 +722,9 @@ test('UI and viewport writes own their inputs, ignore no-ops and reject invalid 
   assert.equal(notifications, 0)
   const writes = [
     () => host.ui.createView('', []),
+    () => host.ui.renameView(viewId, '   '),
+    () => host.ui.renameView(viewId, 'x'.repeat(71)),
+    () => host.ui.renameView('missing', 'Name'),
     () => host.ui.createView('Invalid', ['missing']),
     () => host.ui.setViewMembership(viewId, 'missing', true),
     () => host.ui.deleteView('missing'),

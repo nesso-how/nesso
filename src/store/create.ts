@@ -16,7 +16,7 @@ import {
 } from '@nesso/schema'
 import { createStore } from 'zustand/vanilla'
 import { applyGraphOperations } from './operations.ts'
-import { defaultPanels, fail, parsePanels, parsePreferences, parseViewport, parseWorkspace } from './settings.ts'
+import { defaultPanels, fail, parsePanels, parsePreferences, parseViewName, parseViewport, parseWorkspace } from './settings.ts'
 import { sectionIds, type HostPreferences, type HostState, type HostStore, type HostWorkspace, type PanelSizes, type RestoredState, type SectionId } from './types.ts'
 
 const checkGraph = (graph: GraphSnapshot): void => {
@@ -266,6 +266,14 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
       if (conceptIds.some((id) => !state.graph.concepts.some((concept) => concept.id === id))) fail('view.conceptIds', 'Unknown concept')
       store.setState({ workspace, viewGraph: materialize(state.graph, workspace) })
       return id
+    },
+    renameView: (id: string, name: string): void => {
+      const state = store.getState()
+      const view = state.workspace.savedViews.find((view) => view.id === id) ?? fail('view.id', 'Unknown view')
+      const nextName = parseViewName(name, 'view.name')
+      if (view.name === nextName) return
+      store.setState({ workspace: { ...state.workspace, savedViews: state.workspace.savedViews.map((view) =>
+        view.id === id ? { ...view, name: nextName } : view) } })
     },
     setViewPinned: (id: string, pinned: boolean): void => {
       const state = store.getState()

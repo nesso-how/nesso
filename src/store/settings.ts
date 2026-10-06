@@ -43,6 +43,12 @@ export const parsePanels = (value: unknown): PanelSizes => {
   }
 }
 
+export const parseViewName = (value: unknown, path: string): string => {
+  const name = string(value, path).trim()
+  if (!name || name.length > 70) fail(path, 'Expected a name of 1–70 characters')
+  return name
+}
+
 export const parseWorkspace = (value: unknown): HostWorkspace => {
   const workspace = object(value, 'workspace', ['activeViewId', 'savedViews', 'viewports'])
   if (!Array.isArray(workspace.savedViews)) fail('workspace.savedViews', 'Expected saved views')
@@ -51,10 +57,9 @@ export const parseWorkspace = (value: unknown): HostWorkspace => {
     const path = `workspace.savedViews[${index}]`
     const view = object(value, path, ['id', 'name', 'conceptIds', 'pinned'])
     const id = string(view.id, `${path}.id`)
-    const name = string(view.name, `${path}.name`).trim()
+    const name = parseViewName(view.name, `${path}.name`)
     if (!id || ids.has(id)) fail(`${path}.id`, 'Duplicate or missing view id')
     ids.add(id)
-    if (!name || name.length > 70) fail(`${path}.name`, 'Expected a name of 1–70 characters')
     if (!Array.isArray(view.conceptIds) || !view.conceptIds.every((id) => typeof id === 'string')) {
       fail(`${path}.conceptIds`, 'Expected concept ids')
     }
