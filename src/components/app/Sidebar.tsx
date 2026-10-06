@@ -74,7 +74,7 @@ export function AppSidebar() {
     handle.dataset.resizing = ''
     let width = host.store.getState().preferences.panels.explorerWidth
     const onMove = (move: PointerEvent) => {
-      width = Math.min(480, Math.max(200, move.clientX))
+      width = Math.min(480, Math.max(180, move.clientX))
       wrapper?.style.setProperty('--sidebar-width', `${width}px`)
     }
     const stop = () => {

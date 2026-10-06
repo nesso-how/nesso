@@ -2,7 +2,7 @@ import type { Viewport } from '@nesso/plugin'
 import { NessoError } from './errors.ts'
 import { sectionIds, type HostPreferences, type HostWorkspace, type PanelSizes, type SectionId } from './types.ts'
 
-export const defaultPanels: PanelSizes = { explorerWidth: 232, inspectorWidth: 304 }
+export const defaultPanels: PanelSizes = { explorerWidth: 180, inspectorWidth: 210 }
 
 export const fail = (path: string, message: string): never => {
   throw new NessoError([{ path, message }])
@@ -38,7 +38,7 @@ export const parseViewport = (value: unknown, path: string): Viewport => {
 export const parsePanels = (value: unknown): PanelSizes => {
   const panels = object(value, 'preferences.panels', ['explorerWidth', 'inspectorWidth'])
   return {
-    explorerWidth: number(panels.explorerWidth, 'preferences.panels.explorerWidth', 200, 480),
+    explorerWidth: number(panels.explorerWidth, 'preferences.panels.explorerWidth', 180, 480),
     inspectorWidth: number(panels.inspectorWidth, 'preferences.panels.inspectorWidth', 200),
   }
 }
