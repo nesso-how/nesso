@@ -89,6 +89,7 @@ export type NessoState = {
   readonly viewGraph: GraphSnapshot
   readonly selected: Selection
   readonly vocabs: readonly VocabDefinition[]
+  readonly history: { readonly canUndo: boolean; readonly canRedo: boolean }
 }
 
 export type NessoStore = {
@@ -106,7 +107,9 @@ export type NessoStore = {
   readonly createRelationType: (id: string, label: string) => void
   readonly removeConcept: (id: string) => void
   readonly removeRelation: (id: string) => void
-  readonly applyOperations: (operations: readonly NessoOperation[]) => void
+  readonly applyOperations: (operations: readonly NessoOperation[], options?: { readonly historyGroup?: string }) => void
+  readonly undo: () => void
+  readonly redo: () => void
   readonly setActiveVocab: (id: string) => void
   readonly setActiveRenderer: (id: string) => void
   readonly setActiveTheme: (id: string) => void

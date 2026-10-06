@@ -2,8 +2,13 @@ import type { NessoOperation, NessoStore } from '@nesso/plugin'
 import { newIri } from '@nesso/schema'
 import { fail } from './settings.ts'
 
-export const createCommands = (applyOperations: NessoStore['applyOperations']): Omit<NessoStore, 'getState' | 'subscribe' | 'getViewGraph'> => ({
+export const createCommands = (
+  applyOperations: NessoStore['applyOperations'],
+  history: Pick<NessoStore, 'undo' | 'redo'>,
+): Omit<NessoStore, 'getState' | 'subscribe' | 'getViewGraph'> => ({
   applyOperations,
+  undo: history.undo,
+  redo: history.redo,
   setSelection: (value) => applyOperations([{ kind: 'selection.set', value }]),
   setView: (id) => applyOperations([{ kind: 'view.activate', id }]),
   setViewport: (rendererId, value) => applyOperations([{ kind: 'viewport.set', rendererId, value }]),
@@ -44,10 +49,10 @@ export const createPluginStore = (store: NessoStore, operations: readonly NessoO
     getState: store.getState,
     subscribe: store.subscribe,
     getViewGraph: store.getViewGraph,
-    ...createCommands((operations) => {
+    ...createCommands((operations, options) => {
       const denied = operations.find((operation) => !allowed.has(operation.kind))
       if (denied) fail('plugin.operations', `Operation not declared: ${denied.kind}`)
-      store.applyOperations(operations)
-    }),
+      store.applyOperations(operations, options)
+    }, store),
   }
 }

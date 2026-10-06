@@ -67,6 +67,7 @@ test('local persistence round-trips the whole document, workspace and preference
   assert.deepEqual(reopened.preferences, host.store.getState().preferences)
   assert.deepEqual(reopened.preferences.collapsedSections, sectionIds)
   assert.equal(reopened.selected, null)
+  assert.deepEqual(reopened.history, { canUndo: false, canRedo: false })
   assert.deepEqual(reopened.persistenceIssues, [])
   assert.deepEqual(reopened.viewGraph.concepts.map(({ id }) => id), ['urn:one', 'urn:two'])
   const preferences = host.store.getState().preferences
@@ -108,6 +109,12 @@ test('autosave debounces durable sections only and flushes pending edits on shut
   assert.deepEqual(storage.writes, [])
   context.mock.timers.tick(1)
   assert.deepEqual(storage.writes, [storageKeys.document])
+  assert.equal(loadPersistence(() => storage).graph?.concepts[0].label, 'Last')
+  host.history.undo()
+  context.mock.timers.tick(200)
+  assert.equal(loadPersistence(() => storage).graph?.concepts[0].label, 'First')
+  host.history.redo()
+  context.mock.timers.tick(200)
   assert.equal(loadPersistence(() => storage).graph?.concepts[0].label, 'Last')
   storage.writes.length = 0
   host.store.setPanelSizes({ explorerWidth: 300, inspectorWidth: 350 })

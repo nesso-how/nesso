@@ -2,6 +2,7 @@ import type { GraphSnapshot, NessoOperation, NessoState, Preferences, RendererDe
 import { relationKey, SchemaError, validateGraph, type Graph, type RelationType } from '@nesso/schema'
 import { fail, parsePreferences, parseWorkspace } from './settings.ts'
 import { sectionIds } from './types.ts'
+import { ListEdit, sameConcept, sameIds, sameType, sameView, viewChanges } from './delta.ts'
 
 export const checkGraph = (graph: GraphSnapshot): void => {
   const issues = validateGraph(graph)
@@ -9,17 +10,21 @@ export const checkGraph = (graph: GraphSnapshot): void => {
   if (issues.length > 0) throw new SchemaError(issues)
 }
 
-const selectionExists = (graph: GraphSnapshot, selected: Selection): boolean =>
+export const selectionExists = (graph: GraphSnapshot, selected: Selection): boolean =>
   !selected || (selected.kind === 'concept'
     ? graph.concepts.some((concept) => concept.id === selected.id)
     : graph.relations.some((relation) => relationKey(relation) === selected.id))
 
-export const materialize = (graph: GraphSnapshot, workspace: WorkspaceState): GraphSnapshot => {
+export const materialize = (graph: GraphSnapshot, workspace: WorkspaceState, previous?: NessoState): GraphSnapshot => {
   if (workspace.activeViewId === null) return graph
-  const ids = new Set(workspace.savedViews.find((view) => view.id === workspace.activeViewId)?.conceptIds ?? [])
+  const visibleIds = workspace.savedViews.find((view) => view.id === workspace.activeViewId)?.conceptIds ?? []
+  const previousIds = previous?.workspace.savedViews.find((view) => view.id === workspace.activeViewId)?.conceptIds ?? []
+  const sameScope = previous?.workspace.activeViewId === workspace.activeViewId && sameIds(visibleIds, previousIds)
+  if (sameScope && graph === previous.graph) return previous.viewGraph
+  const ids = new Set(visibleIds)
   return {
-    concepts: graph.concepts.filter((concept) => ids.has(concept.id)),
-    relations: graph.relations.filter((relation) => ids.has(relation.source) && ids.has(relation.target)),
+    concepts: sameScope && graph.concepts === previous.graph.concepts ? previous.viewGraph.concepts : graph.concepts.filter((concept) => ids.has(concept.id)),
+    relations: sameScope && graph.relations === previous.graph.relations ? previous.viewGraph.relations : graph.relations.filter((relation) => ids.has(relation.source) && ids.has(relation.target)),
     relationTypes: graph.relationTypes,
   }
 }
@@ -59,9 +64,12 @@ const samePreferences = (left: Preferences, right: Preferences): boolean =>
 export const applyStateOperations = (state: NessoState, operations: readonly NessoOperation[], registry: {
   readonly renderers: ReadonlyMap<string, RendererDefinition>
   readonly themes: ReadonlyMap<string, ThemeDefinition>
-}): NessoState => {
-  if (operations.length === 0) return state
-  let graph = state.graph
+}) => {
+  let concepts = new ListEdit(state.graph.concepts, (item) => item.id, sameConcept)
+  let relations = new ListEdit(state.graph.relations, relationKey, (a, b) => relationKey(a) === relationKey(b))
+  let types = new ListEdit(state.graph.relationTypes, (item) => item.id, sameType)
+  let views = new ListEdit(state.workspace.savedViews, (item) => item.id, sameView)
+  const graph = (): GraphSnapshot => ({ concepts: concepts.items, relations: relations.items, relationTypes: types.items })
   let workspace = state.workspace
   let preferences = state.preferences
   let selected = state.selected
@@ -74,49 +82,41 @@ export const applyStateOperations = (state: NessoState, operations: readonly Nes
     return vocab
   }
 
-  const withType = (type: Readonly<RelationType>): GraphSnapshot['relationTypes'] =>
-    graph.relationTypes.some((item) => item.id === type.id) ? graph.relationTypes : [...graph.relationTypes, { ...type }]
+  const withType = (type: Readonly<RelationType>): void => {
+    if (!types.get(type.id)) types.add({ ...type })
+  }
 
   const updateConcept = (
     id: string,
     update: (concept: GraphSnapshot['concepts'][number]) => GraphSnapshot['concepts'][number],
   ): void => {
-    const concept = graph.concepts.find((item) => item.id === id)
+    const concept = concepts.get(id)
     if (!concept) return
     const next = update(concept)
-    if (next !== concept) graph = { ...graph, concepts: graph.concepts.map((item) => item === concept ? next : item) }
+    concepts.set(id, next)
   }
 
   const setPositions = (updates: Extract<NessoOperation, { kind: 'concept.positions' }>['updates']): void => {
     if (updates.length === 0) return
-    const positions = new Map(updates.map(({ id, position }) => [id, position]))
-    let changed = false
-    const concepts = graph.concepts.map((concept) => {
-      const position = positions.get(concept.id)
-      if (!position || (position.x === concept.position.x && position.y === concept.position.y)) return concept
-      changed = true
-      return { ...concept, position: { x: position.x, y: position.y } }
-    })
-    if (changed) graph = { ...graph, concepts }
+    for (const { id, position } of updates) updateConcept(id, (concept) =>
+      position.x === concept.position.x && position.y === concept.position.y ? concept : { ...concept, position: { x: position.x, y: position.y } })
   }
 
   const retypeRelation = (id: string, type: Readonly<RelationType>): void => {
-    const relation = graph.relations.find((item) => relationKey(item) === id)
+    const relation = relations.get(id)
     if (!relation || relation.predicate === type.id) return
     const triple = relationKey({ ...relation, predicate: type.id })
-    if (graph.relations.some((item) => relationKey(item) === triple)) return
-    graph = {
-      ...graph,
-      relationTypes: withType(type),
-      relations: graph.relations.map((item) => item === relation ? { ...item, predicate: type.id } : item),
-    }
+    if (relations.get(triple)) return
+    withType(type)
+    relations.set(id, { ...relation, predicate: type.id })
     selected = { kind: 'relation', id: triple }
   }
 
   const updateView = (id: string, update: (view: SavedView) => SavedView): void => {
-    const view = workspace.savedViews.find((view) => view.id === id) ?? fail('view.id', 'Unknown view')
+    const view = views.get(id) ?? fail('view.id', 'Unknown view')
     const next = update(view)
-    if (next !== view) workspace = { ...workspace, savedViews: workspace.savedViews.map((item) => item === view ? next : item) }
+    views.set(id, next)
+    if (views.items !== workspace.savedViews) workspace = { ...workspace, savedViews: views.items }
   }
 
   const viewName = (name: string): string => {
@@ -137,39 +137,31 @@ export const applyStateOperations = (state: NessoState, operations: readonly Nes
         break
       case 'concept.add': {
         const source = selected?.kind === 'concept'
-          ? graph.concepts.find((concept) => concept.id === selected?.id)
+          ? concepts.get(selected.id)
           : undefined
         const vocab = source ? activeVocab() : null
         const type = vocab?.relationTypes.find((item) => item.id === vocab.defaultTypeId)
-        graph = {
-          ...graph,
-          relationTypes: type ? withType(type) : graph.relationTypes,
-          concepts: [...graph.concepts, {
-            id: operation.id,
-            label: `Concept ${graph.concepts.length + 1}`,
-            position: operation.position ? { x: operation.position.x, y: operation.position.y } : {
-              x: (source?.position.x ?? 0) + 160,
-              y: (source?.position.y ?? 0) + 100,
-            },
-          }],
-          relations: source && vocab ? [...graph.relations, { source: source.id, predicate: vocab.defaultTypeId, target: operation.id }] : graph.relations,
-        }
+        if (type) withType(type)
+        concepts.add({
+          id: operation.id,
+          label: `Concept ${concepts.items.length + 1}`,
+          position: operation.position ? { x: operation.position.x, y: operation.position.y } : {
+            x: (source?.position.x ?? 0) + 160,
+            y: (source?.position.y ?? 0) + 100,
+          },
+        })
+        if (source && vocab) relations.add({ source: source.id, predicate: vocab.defaultTypeId, target: operation.id })
         selected = { kind: 'concept', id: operation.id }
         if (workspace.activeViewId !== null) updateView(workspace.activeViewId, (view) =>
           view.conceptIds.includes(operation.id) ? view : { ...view, conceptIds: [...view.conceptIds, operation.id] })
         break
       }
       case 'concept.remove': {
-        if (!graph.concepts.some((concept) => concept.id === operation.id)) break
-        const relations = graph.relations.filter((relation) => relation.source !== operation.id && relation.target !== operation.id)
-        graph = {
-          ...graph,
-          concepts: graph.concepts.filter((concept) => concept.id !== operation.id),
-          relations: relations.length === graph.relations.length ? graph.relations : relations,
-        }
-        const savedViews = workspace.savedViews.map((view) => view.conceptIds.includes(operation.id)
-          ? { ...view, conceptIds: view.conceptIds.filter((id) => id !== operation.id) } : view)
-        if (savedViews.some((view, index) => view !== workspace.savedViews[index])) workspace = { ...workspace, savedViews }
+        if (!concepts.get(operation.id)) break
+        relations.removeWhere((relation) => relation.source === operation.id || relation.target === operation.id)
+        concepts.removeWhere((concept) => concept.id === operation.id)
+        for (const view of views.items) if (view.conceptIds.includes(operation.id)) updateView(view.id, (view) =>
+          ({ ...view, conceptIds: view.conceptIds.filter((id) => id !== operation.id) }))
         break
       }
       case 'relation.connect': {
@@ -177,14 +169,15 @@ export const applyStateOperations = (state: NessoState, operations: readonly Nes
         const vocab = activeVocab()
         const relation = { source: operation.source, predicate: vocab.defaultTypeId, target: operation.target }
         const key = relationKey(relation)
-        if (graph.relations.some((item) => relationKey(item) === key)) break
+        if (relations.get(key)) break
         const type = vocab.relationTypes.find((item) => item.id === vocab.defaultTypeId) ?? { id: vocab.defaultTypeId, label: '' }
-        graph = { ...graph, relationTypes: withType(type), relations: [...graph.relations, relation] }
+        withType(type)
+        relations.add(relation)
         selected = { kind: 'relation', id: key }
         break
       }
       case 'relation.type': {
-        const type = graph.relationTypes.find((item) => item.id === operation.typeId)
+        const type = types.get(operation.typeId)
           ?? activeVocab().relationTypes.find((item) => item.id === operation.typeId)
         if (!type) throw new SchemaError([{ path: 'relationTypeId', message: `Unknown relation type: ${operation.typeId}` }])
         retypeRelation(operation.id, type)
@@ -193,39 +186,42 @@ export const applyStateOperations = (state: NessoState, operations: readonly Nes
       case 'relation.type.create': {
         const label = operation.label.trim()
         if (!label) throw new SchemaError([{ path: 'label', message: 'Relation type label must not be empty' }])
-        if (graph.relationTypes.some((type) => type.id === operation.typeId)) {
+        if (types.get(operation.typeId)) {
           throw new SchemaError([{ path: 'relationTypeId', message: `Duplicate relation type IRI: ${operation.typeId}` }])
         }
         retypeRelation(operation.id, { id: operation.typeId, label })
         break
       }
       case 'relation.remove': {
-        const relations = graph.relations.filter((relation) => relationKey(relation) !== operation.id)
-        if (relations.length !== graph.relations.length) graph = { ...graph, relations }
+        relations.removeWhere((relation) => relationKey(relation) === operation.id)
         break
       }
       case 'document.reset':
-        graph = newGraph(operation.id)
+        concepts = new ListEdit(newGraph(operation.id).concepts, (item) => item.id, sameConcept)
+        relations = new ListEdit([], relationKey, (a, b) => relationKey(a) === relationKey(b))
+        types = new ListEdit([], (item: Readonly<RelationType>) => item.id, sameType)
+        views = new ListEdit([], (item: SavedView) => item.id, sameView)
         workspace = newWorkspace()
         selected = null
         explicitSelection = selected
         reset = true
         break
       case 'selection.set':
-        selected = operation.value && selectionExists(graph, operation.value) ? { ...operation.value } : null
+        selected = operation.value && selectionExists(graph(), operation.value) ? { ...operation.value } : null
         explicitSelection = selected
         break
       case 'view.activate':
         if (operation.id !== null && !workspace.savedViews.some((view) => view.id === operation.id)) fail('workspace.activeViewId', 'Unknown view')
         if (workspace.activeViewId === operation.id) break
         workspace = { ...workspace, activeViewId: operation.id }
-        if (!selectionExists(materialize(graph, workspace), selected)) selected = null
+        if (!selectionExists(materialize(graph(), workspace), selected)) selected = null
         explicitSelection = selected
         break
       case 'view.create':
-        workspace = { ...workspace, activeViewId: operation.id, savedViews: [...workspace.savedViews, {
+        views.add({
           id: operation.id, name: viewName(operation.name), conceptIds: [...new Set(operation.conceptIds)], pinned: false,
-        }] }
+        })
+        workspace = { ...workspace, activeViewId: operation.id, savedViews: views.items }
         break
       case 'view.rename':
         updateView(operation.id, (view) => {
@@ -237,7 +233,7 @@ export const applyStateOperations = (state: NessoState, operations: readonly Nes
         updateView(operation.id, (view) => view.pinned === operation.pinned ? view : { ...view, pinned: operation.pinned })
         break
       case 'view.membership':
-        if (!graph.concepts.some((concept) => concept.id === operation.conceptId)) fail('view.conceptId', 'Unknown concept')
+        if (!concepts.get(operation.conceptId)) fail('view.conceptId', 'Unknown concept')
         if (typeof operation.included !== 'boolean') fail('view.included', 'Expected a boolean')
         updateView(operation.viewId, (view) => view.conceptIds.includes(operation.conceptId) === operation.included ? view : {
           ...view, conceptIds: operation.included ? [...view.conceptIds, operation.conceptId] : view.conceptIds.filter((id) => id !== operation.conceptId),
@@ -245,8 +241,8 @@ export const applyStateOperations = (state: NessoState, operations: readonly Nes
         break
       case 'view.remove':
         if (!workspace.savedViews.some((view) => view.id === operation.id)) fail('view.id', 'Unknown view')
-        workspace = { ...workspace, activeViewId: workspace.activeViewId === operation.id ? null : workspace.activeViewId,
-          savedViews: workspace.savedViews.filter((view) => view.id !== operation.id) }
+        views.removeWhere((view) => view.id === operation.id)
+        workspace = { ...workspace, activeViewId: workspace.activeViewId === operation.id ? null : workspace.activeViewId, savedViews: views.items }
         break
       case 'viewport.set':
         if (!registry.renderers.has(operation.rendererId)) fail('rendererId', `Unknown renderer: ${operation.rendererId}`)
@@ -284,35 +280,37 @@ export const applyStateOperations = (state: NessoState, operations: readonly Nes
     }
   }
 
-  if (sameGraph(graph, state.graph)) {
-    graph = state.graph
+  const conceptEdit = concepts.finish()
+  const relationEdit = relations.finish()
+  if (!reset && relationEdit.items !== state.graph.relations) {
+    const used = new Set(relationEdit.items.map((relation) => relation.predicate))
+    const vocabularyTypes = new Set(state.vocabs.flatMap((vocab) => vocab.relationTypes.map((type) => type.id)))
+    const removed = new Set(relationEdit.changes.flatMap((change) => change.before ? [change.before.value.predicate] : [])
+      .filter((id) => !used.has(id) && !vocabularyTypes.has(id)))
+    types.removeWhere((type) => removed.has(type.id))
+  }
+  const typeEdit = types.finish()
+  const viewEdit = views.finish()
+  let candidate: GraphSnapshot = { concepts: conceptEdit.items, relations: relationEdit.items, relationTypes: typeEdit.items }
+  if (candidate.concepts === state.graph.concepts && candidate.relations === state.graph.relations && candidate.relationTypes === state.graph.relationTypes
+    || (reset && sameGraph(candidate, state.graph))) {
+    candidate = state.graph
     selected = explicitSelection
   }
-  if (graph !== state.graph) checkGraph(graph)
-  if (!reset && graph.relations !== state.graph.relations) {
-    const used = new Set(graph.relations.map((relation) => relation.predicate))
-    const vocabularyTypes = new Set(state.vocabs.flatMap((vocab) => vocab.relationTypes.map((type) => type.id)))
-    const removed = new Set(state.graph.relations.map((relation) => relation.predicate)
-      .filter((id) => !used.has(id) && !vocabularyTypes.has(id)))
-    const relationTypes = graph.relationTypes.filter((type) => !removed.has(type.id))
-    if (relationTypes.length !== graph.relationTypes.length) graph = { ...graph, relationTypes }
-  }
+  if (candidate !== state.graph) checkGraph(candidate)
+  if (viewEdit.items !== workspace.savedViews) workspace = { ...workspace, savedViews: viewEdit.items }
   if (workspace !== state.workspace) {
     parseWorkspace(workspace)
-    const ids = new Set(graph.concepts.map((concept) => concept.id))
-    if (workspace.savedViews.some((view) => view.conceptIds.some((id) => !ids.has(id)))) fail('view.conceptIds', 'Unknown concept')
+    if (viewEdit.changes.some((change) => change.after?.value.conceptIds.some((id) => !concepts.get(id)))) fail('view.conceptIds', 'Unknown concept')
     if (sameWorkspace(workspace, state.workspace)) workspace = state.workspace
   }
   if (preferences !== state.preferences) {
     parsePreferences(preferences)
     if (samePreferences(preferences, state.preferences)) preferences = state.preferences
   }
-  if (!selectionExists(graph, selected)) selected = null
+  if (!selectionExists(candidate, selected)) selected = null
   if (selected?.kind === state.selected?.kind && selected?.id === state.selected?.id) selected = state.selected
-  if (graph === state.graph && workspace === state.workspace && preferences === state.preferences && selected === state.selected) return state
-  const previousIds = state.workspace.savedViews.find((view) => view.id === state.workspace.activeViewId)?.conceptIds ?? []
-  const visibleIds = workspace.savedViews.find((view) => view.id === workspace.activeViewId)?.conceptIds ?? []
-  const viewGraph = graph === state.graph && workspace.activeViewId === state.workspace.activeViewId && sameItems(visibleIds, previousIds, (a, b) => a === b)
-    ? state.viewGraph : materialize(graph, workspace)
-  return { ...state, graph, workspace, preferences, selected, viewGraph }
+  const unchanged = candidate === state.graph && workspace === state.workspace && preferences === state.preferences && selected === state.selected
+  const next = unchanged ? state : { ...state, graph: candidate, workspace, preferences, selected, viewGraph: materialize(candidate, workspace, state) }
+  return { next, reset, delta: { concepts: conceptEdit.changes, relations: relationEdit.changes, relationTypes: typeEdit.changes, views: viewChanges(viewEdit.changes) } }
 }

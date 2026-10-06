@@ -14,7 +14,7 @@ import {
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import './styles.css'
-import { relationKey } from '@nesso/schema'
+import { newIri, relationKey } from '@nesso/schema'
 import { ConceptNodeView } from './ConceptNodeView'
 import { RelationEdgeView } from './RelationEdgeView'
 import { conceptNode, conceptNodeSize, relationEdge } from './adapters'
@@ -32,6 +32,7 @@ export function Canvas() {
   const store = useStore()
   const [initialViewport] = useState(() => store.getState().workspace.viewports.graph)
   const navigation = useRef(view)
+  const dragGroup = useRef<string | undefined>(undefined)
   const canvas = useRef<HTMLDivElement>(null)
   const { fitView, screenToFlowPosition } = useReactFlow()
 
@@ -43,9 +44,12 @@ export function Canvas() {
   )
 
   const onNodesChange = (changes: NodeChange<ConceptNode>[]) => {
-    store.setConceptPositions(changes.flatMap((change) =>
+    if (changes.some((change) => change.type === 'position' && change.dragging) && !dragGroup.current) dragGroup.current = newIri()
+    const updates = changes.flatMap((change) =>
       change.type === 'position' && change.position ? [{ id: change.id, position: change.position }] : [],
-    ))
+    )
+    if (updates.length) store.applyOperations([{ kind: 'concept.positions', updates }], { historyGroup: dragGroup.current })
+    if (changes.some((change) => change.type === 'position' && change.dragging === false)) dragGroup.current = undefined
     for (const change of changes) {
       const state = store.getState()
       if (change.type === 'select') {
@@ -70,6 +74,8 @@ export function Canvas() {
   }
 
   const canDelete = selected !== null && (selected.kind === 'relation' || conceptCount > 1)
+  const canUndo = useNesso((state) => state.history.canUndo)
+  const canRedo = useNesso((state) => state.history.canRedo)
 
   const handleAdd = () => {
     const element = canvas.current
@@ -92,9 +98,11 @@ export function Canvas() {
         y: Math.max(topLeft.y, Math.min(position.y, maxY)),
       }
     }
-    const id = store.addConcept(placement())
+    const id = newIri()
+    const historyGroup = newIri()
+    store.applyOperations([{ kind: 'concept.add', id, position: placement() }], { historyGroup })
     requestAnimationFrame(() => {
-      if (canvas.current === element) store.setConceptPosition(id, placement())
+      if (canvas.current === element) store.applyOperations([{ kind: 'concept.position', id, value: placement() }], { historyGroup })
     })
   }
 
@@ -140,6 +148,16 @@ export function Canvas() {
         <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="var(--border)" />
         <Controls showZoom={false} />
         <Controls position="top-right" orientation="horizontal" showZoom={false} showFitView={false} showInteractive={false}>
+          <ControlButton onClick={store.undo} disabled={!canUndo} title="Undo" aria-label="Undo">
+            <svg viewBox="0 0 24 24">
+              <path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z" />
+            </svg>
+          </ControlButton>
+          <ControlButton onClick={store.redo} disabled={!canRedo} title="Redo" aria-label="Redo">
+            <svg viewBox="0 0 24 24">
+              <path d="M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z" />
+            </svg>
+          </ControlButton>
           <ControlButton onClick={handleDelete} disabled={!canDelete} title="Delete selected" aria-label="Delete selected">
             <svg viewBox="0 0 24 24">
               <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />

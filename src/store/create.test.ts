@@ -636,6 +636,7 @@ test('a position batch publishes once and shares untouched graph objects', () =>
     assert.equal(after.graph.concepts[2], before.graph.concepts[2])
     assert.equal(after.graph.relations, before.graph.relations)
     assert.equal(after.graph.relationTypes, before.graph.relationTypes)
+    assert.equal(after.viewGraph.relations, before.viewGraph.relations)
     if (!subset) assert.equal(after.viewGraph, after.graph)
     else assert.deepEqual(after.viewGraph.concepts.map(({ id }) => id), ['urn:n1', 'urn:n2'])
     assert.deepEqual(before, snapshot)

@@ -14,6 +14,7 @@ import {
 } from '@nesso/schema'
 import { createStore } from 'zustand/vanilla'
 import { createCommands } from './commands.ts'
+import { createHistory } from './history.ts'
 import { applyStateOperations, checkGraph, materialize, newGraph, newWorkspace } from './operations.ts'
 import { defaultPanels, fail, parsePreferences, parseWorkspace } from './settings.ts'
 import type { HostState, HostStore, RestoredState } from './types.ts'
@@ -40,12 +41,18 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
     selected: null,
     vocabs: [],
     persistenceIssues: [],
+    history: { canUndo: false, canRedo: false },
   }))
 
-  const applyOperations: NessoStore['applyOperations'] = (operations) => {
+  const history = createHistory(store.getState, (next) => store.setState({ ...next, history: history.flags() }))
+
+  const applyOperations: NessoStore['applyOperations'] = (operations, options) => {
     const state = store.getState()
-    const next = applyStateOperations(state, operations, { renderers, themes })
-    if (next !== state) store.setState(next)
+    const { next, delta, reset } = applyStateOperations(state, operations, { renderers, themes })
+    history.record(delta, options?.historyGroup, reset)
+    const flags = history.flags()
+    const historyState = flags.canUndo === state.history.canUndo && flags.canRedo === state.history.canRedo ? state.history : flags
+    if (next !== state || historyState !== state.history) store.setState({ ...next, history: historyState })
   }
 
   const renderers = new Map<string, RendererDefinition>()
@@ -85,7 +92,7 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
     getState: store.getState,
     subscribe: store.subscribe,
 
-    ...createCommands(applyOperations),
+    ...createCommands(applyOperations, history),
     getViewGraph: (id) => {
       const state = store.getState()
       if (!state.workspace.savedViews.some((view) => view.id === id)) fail('view.id', 'Unknown view')
@@ -122,5 +129,5 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
     }
   }
 
-  return { store: nessoStore, setPersistenceIssues, registerVocab, registerRenderer, getRenderer, registerTheme, getTheme, listThemes }
+  return { store: nessoStore, history: { undo: history.undo, redo: history.redo }, setPersistenceIssues, registerVocab, registerRenderer, getRenderer, registerTheme, getTheme, listThemes }
 }
