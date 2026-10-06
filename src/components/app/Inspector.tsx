@@ -1,4 +1,4 @@
-import { relationKey, type RelationType } from '@nesso/schema'
+import { newIri, relationKey, type RelationType } from '@nesso/schema'
 import { maxConceptLabelLength, maxRelationLabelLength } from '@/store/settings'
 import { useRef, useState } from 'react'
 import { Autocomplete, AutocompleteClear, AutocompleteItem, AutocompletePopup, Input, Label } from '@nesso/ui'
@@ -93,6 +93,7 @@ function RelationInput({ edgeId, typeId, label, defaultTypeId, relationTypes, on
 }
 
 export function Inspector() {
+  const textGroup = useRef<string | undefined>(undefined)
   const graph = useNessoStore((state) => state.graph)
   const selected = useNessoStore((state) => state.selected)
   const viewGraph = useNessoStore((state) => state.viewGraph)
@@ -129,10 +130,16 @@ export function Inspector() {
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="concept-label">Label</Label>
             <Input
+              key={concept.id}
               id="concept-label"
               maxLength={maxConceptLabelLength}
+              data-document-edit
               value={concept.label}
-              onChange={(event) => nessoStore.setConceptLabel(concept.id, event.target.value)}
+              onFocus={() => { textGroup.current = newIri() }}
+              onBlur={() => { textGroup.current = undefined }}
+              onChange={(event) => nessoStore.applyOperations([
+                { kind: 'concept.label', id: concept.id, value: event.target.value },
+              ], { historyGroup: textGroup.current ??= newIri() })}
             />
           </div>
           <ConceptConnections key={`connections:${concept.id}`} conceptId={concept.id} />

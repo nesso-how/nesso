@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Lock, LockOpen, Maximize, Plus, Trash2 } from 'lucide-react'
+import { Lock, LockOpen, Maximize, Plus, Redo2, Trash2, Undo2 } from 'lucide-react'
 import {
   Background,
   BackgroundVariant,
@@ -17,7 +17,7 @@ import {
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import './styles.css'
-import { relationKey } from '@nesso/schema'
+import { newIri, relationKey } from '@nesso/schema'
 import { ConceptNodeView } from './ConceptNodeView'
 import { ConnectionPreview } from './ConnectionPreview'
 import { conceptNode, conceptNodeMinSize, relationEdge, type ConceptNodeSizes } from './adapters'
@@ -41,6 +41,7 @@ export function Canvas() {
   const navigation = useRef(view)
   const reconnecting = useRef<RelationEdge | null>(null)
   const [reconnectDrag, setReconnectDrag] = useState(false)
+  const dragGroup = useRef<string | undefined>(undefined)
   const canvas = useRef<HTMLDivElement>(null)
   const { fitView, screenToFlowPosition } = useReactFlow()
   const zoom = useFlowStore((state) => state.transform[2])
@@ -75,9 +76,12 @@ export function Canvas() {
       for (const change of dimensions) next[change.id] = change.size
       return next
     })
-    store.setConceptPositions(changes.flatMap((change) =>
+    if (changes.some((change) => change.type === 'position' && change.dragging) && !dragGroup.current) dragGroup.current = newIri()
+    const updates = changes.flatMap((change) =>
       change.type === 'position' && change.position ? [{ id: change.id, position: change.position }] : [],
-    ))
+    )
+    if (updates.length) store.applyOperations([{ kind: 'concept.positions', updates }], { historyGroup: dragGroup.current })
+    if (changes.some((change) => change.type === 'position' && change.dragging === false)) dragGroup.current = undefined
     onObjectChanges('concept', changes)
   }
 
@@ -90,6 +94,8 @@ export function Canvas() {
   }
 
   const canDelete = selected !== null && (selected.kind === 'relation' || conceptCount > 1)
+  const canUndo = useNesso((state) => state.history.canUndo)
+  const canRedo = useNesso((state) => state.history.canRedo)
 
   const handleAdd = () => {
     const element = canvas.current
@@ -112,9 +118,11 @@ export function Canvas() {
         y: Math.max(topLeft.y, Math.min(position.y, maxY)),
       }
     }
-    const id = store.addConcept(placement())
+    const id = newIri()
+    const historyGroup = newIri()
+    store.applyOperations([{ kind: 'concept.add', id, position: placement() }], { historyGroup })
     requestAnimationFrame(() => {
-      if (canvas.current === element) store.setConceptPosition(id, placement())
+      if (canvas.current === element) store.applyOperations([{ kind: 'concept.position', id, value: placement() }], { historyGroup })
     })
   }
 
@@ -173,6 +181,12 @@ export function Canvas() {
         </Controls>
         <Panel position="bottom-right" className="pointer-events-none font-mono text-[10px] text-muted-foreground" aria-label="Zoom level">{Math.round(zoom * 100)}%</Panel>
         <Controls position="top-right" orientation="horizontal" showZoom={false} showFitView={false} showInteractive={false}>
+          <ControlButton onClick={store.undo} disabled={!canUndo} title="Undo" aria-label="Undo">
+            <Undo2 aria-hidden="true" />
+          </ControlButton>
+          <ControlButton onClick={store.redo} disabled={!canRedo} title="Redo" aria-label="Redo">
+            <Redo2 aria-hidden="true" />
+          </ControlButton>
           <ControlButton onClick={handleDelete} disabled={!canDelete} title="Delete selected" aria-label="Delete selected">
             <Trash2 aria-hidden="true" />
           </ControlButton>

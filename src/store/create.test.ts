@@ -654,6 +654,42 @@ test('registered vocabularies and their inserted types are owned independently b
   assert.notEqual(a.store.getState().graph.relationTypes.at(-1), b.store.getState().graph.relationTypes.at(-1))
 })
 
+test('a position batch publishes once and shares untouched graph objects', () => {
+  for (const subset of [true, false]) {
+    const graph = fixture()
+    graph.relations.pop()
+    const { store } = createNessoStore(graph)
+    if (subset) store.createView('Pair', ['urn:n1', 'urn:n2'])
+    const before = store.getState()
+    const snapshot = structuredClone(before)
+    const updates = [
+      { id: 'urn:n1', position: { x: 10, y: 20 } },
+      { id: 'urn:n2', position: { x: 30, y: 40 } },
+    ]
+    let notifications = 0
+    store.subscribe(() => notifications++)
+    store.setConceptPositions(updates)
+    const after = store.getState()
+    assert.equal(notifications, 1)
+    assert.deepEqual(after.graph.concepts.map(({ position }) => position), [
+      { x: 10, y: 20 }, { x: 30, y: 40 }, { x: 2, y: 0 },
+    ])
+    for (const index of [0, 1]) {
+      assert.notEqual(after.graph.concepts[index], before.graph.concepts[index])
+      assert.equal(after.viewGraph.concepts[index], after.graph.concepts[index])
+    }
+    assert.equal(after.graph.concepts[2], before.graph.concepts[2])
+    assert.equal(after.graph.relations, before.graph.relations)
+    assert.equal(after.graph.relationTypes, before.graph.relationTypes)
+    assert.equal(after.viewGraph.relations, before.viewGraph.relations)
+    if (!subset) assert.equal(after.viewGraph, after.graph)
+    else assert.deepEqual(after.viewGraph.concepts.map(({ id }) => id), ['urn:n1', 'urn:n2'])
+    assert.deepEqual(before, snapshot)
+    updates[0].position.x = NaN
+    assert.deepEqual(after.graph.concepts[0].position, { x: 10, y: 20 })
+  }
+})
+
 test('position batches reject invalid coordinates atomically in every view mode', () => {
   for (const subset of [true, false]) {
     for (const invalid of [NaN, Infinity, -Infinity]) {
