@@ -147,4 +147,7 @@ export type PluginDefinition = {
 
 export type PluginContext = { readonly store: NessoStore }
 
-export type Plugin = (context: PluginContext) => PluginDefinition
+export type Plugin = {
+  readonly operations: readonly NessoOperation['kind'][]
+  readonly create: (context: PluginContext) => PluginDefinition
+}

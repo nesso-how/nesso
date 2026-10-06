@@ -7,22 +7,25 @@ Types-only plugin contract for Nesso. Plugins use the injected store, without im
 ```ts
 import type { Plugin } from '@nesso/plugin'
 
-export const examplePlugin: Plugin = ({ store }) => ({
-  vocabs: [{
-    id: 'example',
-    label: 'Example',
-    relationTypes: [{ id: 'urn:example:related', label: 'related' }],
-    defaultTypeId: 'urn:example:related',
-  }],
-  actions: [{
-    id: 'rename-selected',
-    label: 'Rename selected concept',
-    run: () => {
-      const selected = store.getState().selected
-      if (selected?.kind === 'concept') store.setConceptLabel(selected.id, 'Renamed')
-    },
-  }],
-})
+export const examplePlugin: Plugin = {
+  operations: ['concept.label'],
+  create: ({ store }) => ({
+    vocabs: [{
+      id: 'example',
+      label: 'Example',
+      relationTypes: [{ id: 'urn:example:related', label: 'related' }],
+      defaultTypeId: 'urn:example:related',
+    }],
+    actions: [{
+      id: 'rename-selected',
+      label: 'Rename selected concept',
+      run: () => {
+        const selected = store.getState().selected
+        if (selected?.kind === 'concept') store.setConceptLabel(selected.id, 'Renamed')
+      },
+    }],
+  }),
+}
 ```
 
 Register plugins in the static list in the host (`src/plugins.ts`).
@@ -32,22 +35,25 @@ Renderers subscribe to the injected store with `useSyncExternalStore`:
 ```tsx
 import { useSyncExternalStore } from 'react'
 
-export const exampleRendererPlugin: Plugin = ({ store }) => ({
-  renderers: [{
-    id: 'example',
-    label: 'Example',
-    component: function ExampleRenderer() {
-      const selected = useSyncExternalStore(store.subscribe, () => store.getState().selected)
-      return <div>{selected?.id ?? 'No selection'}</div>
-    },
-  }],
-})
+export const exampleRendererPlugin: Plugin = {
+  operations: [],
+  create: ({ store }) => ({
+    renderers: [{
+      id: 'example',
+      label: 'Example',
+      component: function ExampleRenderer() {
+        const selected = useSyncExternalStore(store.subscribe, () => store.getState().selected)
+        return <div>{selected?.id ?? 'No selection'}</div>
+      },
+    }],
+  }),
+}
 ```
 
 ## API
 
-- `Plugin`: factory `(context: PluginContext) => PluginDefinition`.
-- `PluginContext`: supplies the host-created `NessoStore`.
+- `Plugin`: required readonly `operations: NessoOperation['kind'][]` and factory `create(context: PluginContext): PluginDefinition`. Declare only the explicit writes needed; `operations: []` grants no writes.
+- `PluginContext`: supplies a host-created `NessoStore` scoped to the plugin's declaration before `create` runs. The host snapshots the allowlist and rejects an entire batch containing undeclared operations with structured host errors. Helpers use the same check. Reads and subscriptions remain available. This controls store commands, not network access or other plugin code, and is not a security sandbox.
 - `PluginDefinition`: optional `renderers`, `vocabs`, `actions`, and `themes` contributions.
 - `NessoState`: readonly graph, workspace, preferences, visible graph, selection, and vocabulary definitions.
 - `NessoStore`: read/subscribe, graph and view editing, navigation, viewport, preferences, and document reset. Every write helper delegates to `applyOperations`; `getViewGraph` asks the host to materialize a saved view without activating it.

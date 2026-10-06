@@ -12,4 +12,4 @@ The canvas restores `workspace.viewports.graph` on mount and records the viewpor
 
 ## API
 
-- `graphPlugin`: factory binding the injected `NessoStore` to its renderer instance.
+- `graphPlugin`: operation declaration and factory binding the injected `NessoStore` to its renderer instance.

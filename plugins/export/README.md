@@ -8,5 +8,5 @@ Add `exportPlugin` to the static plugin list in `src/plugins.ts`; it contributes
 
 ## API
 
-- `exportPlugin`: static plugin factory contributing the `export-view` action.
+- `exportPlugin`: read-only operation declaration and factory contributing the `export-view` action.
 - `downloadGraph(graph, name?)`: export a graph with a filename derived from its name.

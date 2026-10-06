@@ -13,6 +13,7 @@ import {
   type SchemaIssue,
 } from '@nesso/schema'
 import { createStore } from 'zustand/vanilla'
+import { createCommands } from './commands.ts'
 import { applyStateOperations, checkGraph, materialize, newGraph, newWorkspace } from './operations.ts'
 import { defaultPanels, fail, parsePreferences, parseWorkspace } from './settings.ts'
 import type { HostState, HostStore, RestoredState } from './types.ts'
@@ -84,40 +85,7 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
     getState: store.getState,
     subscribe: store.subscribe,
 
-    applyOperations,
-    setSelection: (value) => applyOperations([{ kind: 'selection.set', value }]),
-    setView: (id) => applyOperations([{ kind: 'view.activate', id }]),
-    setViewport: (rendererId, value) => applyOperations([{ kind: 'viewport.set', rendererId, value }]),
-    setConceptPosition: (id, position) => applyOperations([{ kind: 'concept.position', id, value: position }]),
-    setConceptPositions: (updates) => applyOperations([{ kind: 'concept.positions', updates }]),
-    setConceptLabel: (id, label) => applyOperations([{ kind: 'concept.label', id, value: label }]),
-
-    addConcept: (position) => {
-      const id = newIri()
-      applyOperations([{ kind: 'concept.add', id, position }])
-      return id
-    },
-    connect: (source, target) => applyOperations([{ kind: 'relation.connect', source, target }]),
-    setRelationType: (id, typeId) => applyOperations([{ kind: 'relation.type', id, typeId }]),
-    createRelationType: (id, label) => applyOperations([{ kind: 'relation.type.create', id, typeId: newIri(), label }]),
-    removeConcept: (id) => applyOperations([{ kind: 'concept.remove', id }]),
-    removeRelation: (id) => applyOperations([{ kind: 'relation.remove', id }]),
-
-    setActiveVocab: (id) => applyOperations([{ kind: 'preferences.vocab', id }]),
-    setActiveRenderer: (id) => applyOperations([{ kind: 'preferences.renderer', id }]),
-    setActiveTheme: (id) => applyOperations([{ kind: 'preferences.theme', id }]),
-    setPanelSizes: (value) => applyOperations([{ kind: 'preferences.panels', value }]),
-    setSectionOpen: (id, open) => applyOperations([{ kind: 'preferences.section', id, open }]),
-    resetGraph: () => applyOperations([{ kind: 'document.reset', id: newIri() }]),
-    createView: (name, conceptIds) => {
-      const id = newIri()
-      applyOperations([{ kind: 'view.create', id, name, conceptIds }])
-      return id
-    },
-    renameView: (id, name) => applyOperations([{ kind: 'view.rename', id, name }]),
-    setViewPinned: (id, pinned) => applyOperations([{ kind: 'view.pin', id, pinned }]),
-    setViewMembership: (viewId, conceptId, included) => applyOperations([{ kind: 'view.membership', viewId, conceptId, included }]),
-    deleteView: (id) => applyOperations([{ kind: 'view.remove', id }]),
+    ...createCommands(applyOperations),
     getViewGraph: (id) => {
       const state = store.getState()
       if (!state.workspace.savedViews.some((view) => view.id === id)) fail('view.id', 'Unknown view')
