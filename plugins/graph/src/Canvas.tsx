@@ -163,6 +163,7 @@ export function Canvas() {
         onPaneClick={() => { clearSelection(); canvas.current?.focus() }}
         connectionLineComponent={ConnectionPreview}
         connectionLineStyle={{ stroke: 'var(--handle)', strokeWidth: 1.2, strokeDasharray: '4 4' }}
+        elevateEdgesOnSelect
         proOptions={{ hideAttribution: true }}
         defaultViewport={initialViewport}
         onMoveEnd={(_event, viewport) => store.setViewport('graph', viewport)}
