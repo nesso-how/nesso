@@ -3,6 +3,11 @@ import { NessoError } from './errors.ts'
 import { sectionIds, type HostPreferences, type HostWorkspace, type PanelSizes, type SectionId } from './types.ts'
 
 export const defaultPanels: PanelSizes = { explorerWidth: 180, inspectorWidth: 210 }
+export const panelLimits = {
+  explorerWidth: { min: 180, max: 480 },
+  inspectorWidth: { min: 200 },
+} as const
+export const maxViewNameLength = 70
 
 export const fail = (path: string, message: string): never => {
   throw new NessoError([{ path, message }])
@@ -38,8 +43,8 @@ export const parseViewport = (value: unknown, path: string): Viewport => {
 export const parsePanels = (value: unknown): PanelSizes => {
   const panels = object(value, 'preferences.panels', ['explorerWidth', 'inspectorWidth'])
   return {
-    explorerWidth: number(panels.explorerWidth, 'preferences.panels.explorerWidth', 180, 480),
-    inspectorWidth: number(panels.inspectorWidth, 'preferences.panels.inspectorWidth', 200),
+    explorerWidth: number(panels.explorerWidth, 'preferences.panels.explorerWidth', panelLimits.explorerWidth.min, panelLimits.explorerWidth.max),
+    inspectorWidth: number(panels.inspectorWidth, 'preferences.panels.inspectorWidth', panelLimits.inspectorWidth.min),
   }
 }
 
@@ -54,7 +59,7 @@ export const parseWorkspace = (value: unknown): HostWorkspace => {
     const name = string(view.name, `${path}.name`).trim()
     if (!id || ids.has(id)) fail(`${path}.id`, 'Duplicate or missing view id')
     ids.add(id)
-    if (!name || name.length > 70) fail(`${path}.name`, 'Expected a name of 1–70 characters')
+    if (!name || name.length > maxViewNameLength) fail(`${path}.name`, `Expected a name of 1–${maxViewNameLength} characters`)
     if (!Array.isArray(view.conceptIds) || !view.conceptIds.every((id) => typeof id === 'string')) {
       fail(`${path}.conceptIds`, 'Expected concept ids')
     }

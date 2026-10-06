@@ -68,6 +68,7 @@ export type NessoState = {
 export type NessoStore = {
   readonly getState: () => NessoState
   readonly subscribe: (listener: () => void) => () => void
+  readonly conceptPlacementOffset: Readonly<Position>
   readonly setSelection: (selection: Selection) => void
   readonly setView: (id: string | null) => void
   readonly setViewport: (rendererId: string, viewport: Viewport) => void

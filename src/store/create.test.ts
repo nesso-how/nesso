@@ -216,6 +216,8 @@ test('new concepts link only to a selected concept and join the active view atom
         ? { kind, id: 'urn:n2' }
         : kind === 'relation' ? { kind, id: relationKey(host.store.getState().graph.relations[0]) } : null)
       const before = host.store.getState()
+      assert.deepEqual(host.store.conceptPlacementOffset, { x: 160, y: 100 })
+      assert.ok(Object.isFrozen(host.store.conceptPlacementOffset))
       let notifications = 0
       host.store.subscribe(() => notifications++)
       const id = host.store.addConcept()
@@ -223,6 +225,7 @@ test('new concepts link only to a selected concept and join the active view atom
       assert.equal(notifications, 1)
       assert.deepEqual(after.selected, { kind: 'concept', id })
       assert.equal(after.graph.concepts.length, before.graph.concepts.length + 1)
+      assert.deepEqual(after.graph.concepts.at(-1)?.position, { x: kind === 'concept' ? 161 : 160, y: 100 })
       if (kind === 'concept') {
         const relation = { source: 'urn:n2', predicate: vocabB.defaultTypeId, target: id }
         assert.deepEqual(after.graph.relations.at(-1), relation)
@@ -677,6 +680,7 @@ test('section preferences are global, immutable, validated and independent of th
 
 test('UI and viewport writes own their inputs, ignore no-ops and reject invalid changes atomically', () => {
   const host = createNessoStore(fixture())
+  assert.deepEqual(host.store.getState().preferences.panels, { explorerWidth: 180, inspectorWidth: 210 })
   host.registerRenderer({ id: 'graph', label: 'Graph', component: () => null })
   const graph = host.store.getState().graph
   const conceptIds = ['urn:n1', 'urn:n2']
@@ -704,10 +708,12 @@ test('UI and viewport writes own their inputs, ignore no-ops and reject invalid 
   assert.equal(notifications, 0)
   const writes = [
     () => host.ui.createView('', []),
+    () => host.ui.createView('x'.repeat(71), []),
     () => host.ui.createView('Invalid', ['missing']),
     () => host.ui.setViewMembership(viewId, 'missing', true),
     () => host.ui.deleteView('missing'),
     () => host.ui.setPanelSizes({ explorerWidth: 500, inspectorWidth: 300 }),
+    () => host.ui.setPanelSizes({ explorerWidth: 179, inspectorWidth: 300 }),
     () => host.ui.setPanelSizes({ explorerWidth: 300, inspectorWidth: 100 }),
     () => host.store.setViewport('missing', { x: 0, y: 0, zoom: 1 }),
     () => host.store.setViewport('graph', { x: Infinity, y: 0, zoom: 1 }),
@@ -717,6 +723,12 @@ test('UI and viewport writes own their inputs, ignore no-ops and reject invalid 
     assert.throws(write, (error: unknown) => error instanceof NessoError && error.issues.length > 0)
     assert.equal(host.store.getState(), state)
   }
+  host.ui.setPanelSizes({ explorerWidth: 180, inspectorWidth: 200 })
+  assert.deepEqual(host.store.getState().preferences.panels, { explorerWidth: 180, inspectorWidth: 200 })
+  host.ui.setPanelSizes({ explorerWidth: 480, inspectorWidth: 200 })
+  assert.equal(host.store.getState().preferences.panels.explorerWidth, 480)
+  const longestView = host.ui.createView('x'.repeat(70), [])
+  assert.equal(host.store.getState().workspace.savedViews.find((view) => view.id === longestView)?.name.length, 70)
 })
 
 test('theme registration and activation are validated, isolated, and leave the document untouched', () => {

@@ -1,6 +1,8 @@
 import type { GraphOperation, GraphSnapshot, NessoState } from '@nesso/plugin'
 import { relationKey, SchemaError, type RelationType } from '@nesso/schema'
 
+export const conceptPlacementOffset = Object.freeze({ x: 160, y: 100 })
+
 const sameItems = <T>(left: readonly T[], right: readonly T[], equal: (left: T, right: T) => boolean): boolean =>
   left === right || (left.length === right.length && left.every((item, index) => item === right[index] || equal(item, right[index])))
 
@@ -83,8 +85,8 @@ export const applyGraphOperations = (state: NessoState, operations: readonly Gra
             id: operation.id,
             label: `Concept ${graph.concepts.length + 1}`,
             position: operation.position ? { x: operation.position.x, y: operation.position.y } : {
-              x: (source?.position.x ?? 0) + 160,
-              y: (source?.position.y ?? 0) + 100,
+              x: (source?.position.x ?? 0) + conceptPlacementOffset.x,
+              y: (source?.position.y ?? 0) + conceptPlacementOffset.y,
             },
           }],
           relations: source && vocab ? [...graph.relations, { source: source.id, predicate: vocab.defaultTypeId, target: operation.id }] : graph.relations,

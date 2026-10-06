@@ -15,7 +15,7 @@ import {
   type SchemaIssue,
 } from '@nesso/schema'
 import { createStore } from 'zustand/vanilla'
-import { applyGraphOperations } from './operations.ts'
+import { applyGraphOperations, conceptPlacementOffset } from './operations.ts'
 import { defaultPanels, fail, parsePanels, parsePreferences, parseViewport, parseWorkspace } from './settings.ts'
 import { sectionIds, type HostPreferences, type HostState, type HostStore, type HostWorkspace, type PanelSizes, type RestoredState, type SectionId } from './types.ts'
 
@@ -157,6 +157,7 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
   const nessoStore: HostStore = {
     getState: store.getState,
     subscribe: store.subscribe,
+    conceptPlacementOffset,
 
     setSelection: (selection) => {
       const state = store.getState()

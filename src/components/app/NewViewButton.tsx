@@ -2,6 +2,7 @@ import { useId, useState, type Ref } from 'react'
 import { LayersPlus } from 'lucide-react'
 import { Button, Dialog, DialogPopup, Input, Label } from '@nesso/ui'
 import { host, useNessoStore } from '@/store'
+import { maxViewNameLength } from '@/store/settings'
 
 export function NewViewButton({ iconOnly = false, ref }: { iconOnly?: boolean; ref?: Ref<HTMLButtonElement> }) {
   const selected = useNessoStore((state) => state.selected)
@@ -39,7 +40,7 @@ export function NewViewButton({ iconOnly = false, ref }: { iconOnly?: boolean; r
           }
         }}>
           <Label htmlFor={nameId}>Name</Label>
-          <Input id={nameId} value={name} onChange={(event) => setName(event.target.value)} maxLength={70} className="mt-2" />
+          <Input id={nameId} value={name} onChange={(event) => setName(event.target.value)} maxLength={maxViewNameLength} className="mt-2" />
           <div className="mt-6 flex justify-end gap-2">
             <Dialog.Close render={<Button variant="outline" />}>Cancel</Dialog.Close>
             <Button type="submit" disabled={!name.trim()}>Create view</Button>

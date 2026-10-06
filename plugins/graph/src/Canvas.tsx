@@ -23,6 +23,7 @@ import { useNesso, useStore } from './store'
 
 const nodeTypes: NodeTypes = { concept: ConceptNodeView }
 const edgeTypes: EdgeTypes = { relation: RelationEdgeView }
+const fitViewOptions = { padding: 0.3, maxZoom: 1.2 }
 
 export function Canvas() {
   const graph = useNesso((state) => state.viewGraph)
@@ -85,7 +86,7 @@ export function Canvas() {
       const maxX = Math.max(topLeft.x, bottomRight.x - conceptNodeSize.width)
       const maxY = Math.max(topLeft.y, bottomRight.y - conceptNodeSize.height)
       const position = source
-        ? { x: source.position.x + 160, y: source.position.y + 100 }
+        ? { x: source.position.x + store.conceptPlacementOffset.x, y: source.position.y + store.conceptPlacementOffset.y }
         : { x: (topLeft.x + maxX) / 2, y: (topLeft.y + maxY) / 2 }
       return {
         x: Math.max(topLeft.x, Math.min(position.x, maxX)),
@@ -113,7 +114,7 @@ export function Canvas() {
     if (navigation.current === view) return
     navigation.current = view
     const frame = requestAnimationFrame(() => {
-      void fitView({ padding: 0.3, maxZoom: 1.2, duration: 300 })
+      void fitView({ ...fitViewOptions, duration: 300 })
     })
     return () => cancelAnimationFrame(frame)
   }, [view, fitView])
@@ -134,7 +135,7 @@ export function Canvas() {
         defaultViewport={initialViewport}
         onMoveEnd={(_event, viewport) => store.setViewport('graph', viewport)}
         fitView={!initialViewport}
-        fitViewOptions={{ padding: 0.3, maxZoom: 1.2 }}
+        fitViewOptions={fitViewOptions}
         minZoom={0.2}
       >
         <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="var(--border)" />

@@ -7,6 +7,7 @@ import { Sidebar } from './SidebarLayout'
 import { NewViewButton } from './NewViewButton'
 import { SectionHeading } from './SectionHeading'
 import { host, nessoStore, useNessoStore } from '@/store'
+import { panelLimits } from '@/store/settings'
 
 export function AppSidebar() {
   const workspace = useNessoStore((state) => state.workspace)
@@ -74,7 +75,7 @@ export function AppSidebar() {
     handle.dataset.resizing = ''
     let width = host.store.getState().preferences.panels.explorerWidth
     const onMove = (move: PointerEvent) => {
-      width = Math.min(480, Math.max(180, move.clientX))
+      width = Math.min(panelLimits.explorerWidth.max, Math.max(panelLimits.explorerWidth.min, move.clientX))
       wrapper?.style.setProperty('--sidebar-width', `${width}px`)
     }
     const stop = () => {

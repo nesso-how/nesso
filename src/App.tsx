@@ -6,6 +6,7 @@ import { AppSidebar } from '@/components/app/Sidebar'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@nesso/ui'
 import { SidebarInset, SidebarProvider } from '@/components/app/SidebarLayout'
 import { getRenderer, host, useNessoStore } from '@/store'
+import { panelLimits } from '@/store/settings'
 
 function RendererHost() {
   const activeRendererId = useNessoStore((state) => state.preferences.activeRendererId)
@@ -42,7 +43,7 @@ export default function App() {
             className="min-h-0 flex-1"
             onLayoutChanged={(layout, meta) => {
               if (!selected || !meta.isUserInteraction || !group.current) return
-              const inspectorWidth = Math.max(200, group.current.clientWidth * (meta.requestedLayout ?? layout).inspector / 100)
+              const inspectorWidth = Math.max(panelLimits.inspectorWidth.min, group.current.clientWidth * (meta.requestedLayout ?? layout).inspector / 100)
               host.ui.setPanelSizes({ ...host.store.getState().preferences.panels, inspectorWidth })
             }}
           >
@@ -51,7 +52,7 @@ export default function App() {
             </ResizablePanel>
             {selected && <ResizableHandle />}
             {selected && (
-              <ResizablePanel id="inspector" defaultSize={panels.inspectorWidth} minSize={200} maxSize="45%" groupResizeBehavior="preserve-pixel-size">
+              <ResizablePanel id="inspector" defaultSize={panels.inspectorWidth} minSize={panelLimits.inspectorWidth.min} maxSize="45%" groupResizeBehavior="preserve-pixel-size">
                 <Inspector />
               </ResizablePanel>
             )}
