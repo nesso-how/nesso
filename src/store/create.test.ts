@@ -309,6 +309,57 @@ test('naming a new relation type creates and assigns its own IRI atomically', ()
   assert.deepEqual(state.selected, { kind: 'relation', id: relationKey(state.graph.relations[0]) })
 })
 
+test('reconnecting either endpoint preserves its predicate, shared objects and view membership', () => {
+  for (const endpoint of ['source', 'target'] as const) {
+    const graph = fixture()
+    graph.relationTypes.push({ id: 'urn:custom', label: 'Custom' })
+    graph.relations[0].predicate = 'urn:custom'
+    const host = createNessoStore(graph)
+    host.registerVocab(vocabB)
+    host.ui.createView('Pair', ['urn:n1', 'urn:n2'])
+    const id = relationKey(graph.relations[0])
+    host.store.setSelection({ kind: 'relation', id })
+    const before = host.store.getState()
+    const snapshot = structuredClone(before)
+    let notifications = 0
+    host.store.subscribe(() => notifications++)
+    const expected = { ...graph.relations[0], [endpoint]: 'urn:n3' }
+    host.store.reconnectRelation(id, expected.source, expected.target)
+    const after = host.store.getState()
+    assert.equal(notifications, 1)
+    assert.deepEqual(after.graph.relations[0], expected)
+    assert.deepEqual(after.selected, { kind: 'relation', id: relationKey(expected) })
+    assert.equal(after.graph.relations[1], before.graph.relations[1])
+    assert.equal(after.graph.relationTypes, before.graph.relationTypes)
+    assert.equal(after.graph.concepts, before.graph.concepts)
+    assert.equal(after.workspace, before.workspace)
+    assert.deepEqual(after.viewGraph.relations, [])
+    assert.deepEqual(before, snapshot)
+  }
+})
+
+test('invalid reconnects roll back atomically and duplicate, self or unchanged reconnects are no-ops', () => {
+  const { store } = createNessoStore(fixture())
+  const id = relationKey(store.getState().graph.relations[0])
+  store.setSelection({ kind: 'relation', id })
+  const before = store.getState()
+  let notifications = 0
+  store.subscribe(() => notifications++)
+  for (const [edgeId, source, target] of [
+    [id, 'urn:n1', 'urn:n2'],
+    [id, 'urn:n1', 'urn:n3'],
+    [id, 'urn:n1', 'urn:n1'],
+    [id, '', 'urn:n2'],
+    ['missing', 'urn:n2', 'urn:n3'],
+  ]) store.reconnectRelation(edgeId, source, target)
+  assert.throws(() => store.applyOperations([
+    { kind: 'concept.label', id: 'urn:n1', value: 'Temporary' },
+    { kind: 'relation.reconnect', id, source: 'urn:missing', target: 'urn:n2' },
+  ]), SchemaError)
+  assert.equal(store.getState(), before)
+  assert.equal(notifications, 0)
+})
+
 test('mixed batches publish once, apply in order and own inputs while sharing untouched objects', () => {
   for (const subset of [false, true]) {
     const { store, ui } = createNessoStore(fixture())
@@ -392,6 +443,8 @@ test('empty and cancelling batches preserve state identity and do not notify', (
     { kind: 'concept.position', id: 'urn:n1', value: { x: 0, y: 0 } },
     { kind: 'relation.connect', source: relation.source, target: relation.target },
     { kind: 'relation.remove', id: relationKey(relation) },
+    { kind: 'relation.reconnect', id: relationKey(before.graph.relations[0]), source: 'urn:n2', target: 'urn:n3' },
+    { kind: 'relation.reconnect', id: relationKey(relation), source: 'urn:n1', target: 'urn:n2' },
   ])
   assert.equal(host.store.getState(), before)
   assert.equal(notifications, 0)

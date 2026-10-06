@@ -39,6 +39,7 @@ export function Canvas() {
   const LockIcon = interactive ? LockOpen : Lock
   const [initialViewport] = useState(() => store.getState().workspace.viewports.graph)
   const navigation = useRef(view)
+  const reconnecting = useRef<RelationEdge | null>(null)
   const canvas = useRef<HTMLDivElement>(null)
   const { fitView, screenToFlowPosition } = useReactFlow()
   const zoom = useFlowStore((state) => state.transform[2])
@@ -80,6 +81,7 @@ export function Canvas() {
   }
 
   const clearSelection = () => {
+    reconnecting.current = null
     flow.getState().cancelConnection()
     flow.setState({ connectionClickStartHandle: null })
     store.setSelection(null)
@@ -138,8 +140,16 @@ export function Canvas() {
         onNodesChange={onNodesChange}
         onEdgesChange={(changes) => onObjectChanges('relation', changes)}
         onConnect={({ source, target }) => store.connect(source, target)}
+        onReconnect={interactive ? (edge, { source, target }) => store.reconnectRelation(edge.id, source, target) : undefined}
+        onReconnectStart={(_event, edge) => { reconnecting.current = edge }}
+        onReconnectEnd={() => { reconnecting.current = null }}
+        reconnectRadius={6 / zoom}
         connectionMode={ConnectionMode.Loose}
-        isValidConnection={({ source, target }) => source !== target && !store.getState().graph.relations.some((relation) => relation.source === source && relation.target === target && relation.predicate === defaultTypeId)}
+        isValidConnection={({ source, target }) => {
+          const relations = store.getState().graph.relations
+          const predicate = relations.find((relation) => relationKey(relation) === reconnecting.current?.id)?.predicate ?? defaultTypeId
+          return source !== target && !relations.some((relation) => relationKey(relation) !== reconnecting.current?.id && relation.source === source && relation.target === target && relation.predicate === predicate)
+        }}
         onPaneClick={() => { clearSelection(); canvas.current?.focus() }}
         connectionLineComponent={ConnectionPreview}
         connectionLineStyle={{ stroke: 'var(--handle)', strokeWidth: 1.2, strokeDasharray: '4 4' }}

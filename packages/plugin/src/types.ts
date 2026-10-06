@@ -21,6 +21,7 @@ export type GraphOperation =
   | { readonly kind: 'concept.add'; readonly id: string; readonly position?: Readonly<Position> }
   | { readonly kind: 'concept.remove'; readonly id: string }
   | { readonly kind: 'relation.connect'; readonly source: string; readonly target: string }
+  | { readonly kind: 'relation.reconnect'; readonly id: string; readonly source: string; readonly target: string }
   | { readonly kind: 'relation.type'; readonly id: string; readonly typeId: string }
   | { readonly kind: 'relation.type.create'; readonly id: string; readonly typeId: string; readonly label: string }
   | { readonly kind: 'relation.remove'; readonly id: string }
@@ -77,6 +78,7 @@ export type NessoStore = {
   readonly setConceptLabel: (id: string, label: string) => void
   readonly addConcept: (position?: Readonly<Position>) => string
   readonly connect: (source: string, target: string) => void
+  readonly reconnectRelation: (id: string, source: string, target: string) => void
   readonly setRelationType: (id: string, typeId: string) => void
   readonly createRelationType: (id: string, label: string) => void
   readonly removeConcept: (id: string) => void

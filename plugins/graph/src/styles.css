@@ -45,6 +45,19 @@
   outline: none;
 }
 
+.react-flow__edgeupdater {
+  fill: var(--background);
+  stroke: var(--handle);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  cursor: crosshair;
+}
+
+.react-flow__edgeupdater:hover {
+  fill: var(--foreground);
+  stroke: var(--foreground);
+}
+
 .react-flow__node:focus-visible .concept-node {
   outline: 2px solid var(--ring);
   outline-offset: 3px;

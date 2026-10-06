@@ -1,5 +1,5 @@
 import type { GraphOperation, GraphSnapshot, NessoState } from '@nesso/plugin'
-import { relationKey, SchemaError, type RelationType } from '@nesso/schema'
+import { relationKey, SchemaError, type Relation, type RelationType } from '@nesso/schema'
 
 export const conceptPlacementOffset = Object.freeze({ x: 160, y: 100 })
 
@@ -48,15 +48,17 @@ export const applyGraphOperations = (state: NessoState, operations: readonly Gra
     if (changed) graph = { ...graph, concepts }
   }
 
-  const retypeRelation = (id: string, type: Readonly<RelationType>): void => {
+  const updateRelation = (id: string, updates: Partial<Relation>, type?: Readonly<RelationType>): void => {
     const relation = graph.relations.find((item) => relationKey(item) === id)
-    if (!relation || relation.predicate === type.id) return
-    const triple = relationKey({ ...relation, predicate: type.id })
+    if (!relation) return
+    const next = { ...relation, ...updates }
+    const triple = relationKey(next)
+    if (triple === id) return
     if (graph.relations.some((item) => relationKey(item) === triple)) return
     graph = {
       ...graph,
-      relationTypes: withType(type),
-      relations: graph.relations.map((item) => item === relation ? { ...item, predicate: type.id } : item),
+      relationTypes: type ? withType(type) : graph.relationTypes,
+      relations: graph.relations.map((item) => item === relation ? next : item),
     }
     selected = { kind: 'relation', id: triple }
   }
@@ -119,7 +121,7 @@ export const applyGraphOperations = (state: NessoState, operations: readonly Gra
         const type = graph.relationTypes.find((item) => item.id === operation.typeId)
           ?? activeVocab().relationTypes.find((item) => item.id === operation.typeId)
         if (!type) throw new SchemaError([{ path: 'relationTypeId', message: `Unknown relation type: ${operation.typeId}` }])
-        retypeRelation(operation.id, type)
+        updateRelation(operation.id, { predicate: type.id }, type)
         break
       }
       case 'relation.type.create': {
@@ -128,9 +130,14 @@ export const applyGraphOperations = (state: NessoState, operations: readonly Gra
         if (graph.relationTypes.some((type) => type.id === operation.typeId)) {
           throw new SchemaError([{ path: 'relationTypeId', message: `Duplicate relation type IRI: ${operation.typeId}` }])
         }
-        retypeRelation(operation.id, { id: operation.typeId, label })
+        updateRelation(operation.id, { predicate: operation.typeId }, { id: operation.typeId, label })
         break
       }
+      case 'relation.reconnect':
+        if (operation.source && operation.target && operation.source !== operation.target) {
+          updateRelation(operation.id, { source: operation.source, target: operation.target })
+        }
+        break
       case 'relation.remove': {
         const relations = graph.relations.filter((relation) => relationKey(relation) !== operation.id)
         if (relations.length !== graph.relations.length) graph = { ...graph, relations }

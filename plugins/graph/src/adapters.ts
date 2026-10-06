@@ -48,6 +48,7 @@ export function relationEdge(relation: RelationView, selected: boolean, graph: G
     style: { stroke: selected ? 'var(--primary)' : 'var(--edge)', strokeWidth: selected ? 1.5 : 1.2 },
     interactionWidth: 18,
     selected,
+    reconnectable: selected,
     markerEnd: { type: MarkerType.ArrowClosed, width: 14, height: 14, color: selected ? 'var(--primary)' : 'var(--edge)' },
   }
 }

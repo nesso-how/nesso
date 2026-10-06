@@ -200,6 +200,7 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
       return id
     },
     connect: (source, target) => applyOperations([{ kind: 'relation.connect', source, target }]),
+    reconnectRelation: (id, source, target) => applyOperations([{ kind: 'relation.reconnect', id, source, target }]),
     setRelationType: (id, typeId) => applyOperations([{ kind: 'relation.type', id, typeId }]),
     createRelationType: (id, label) => applyOperations([{ kind: 'relation.type.create', id, typeId: newIri(), label }]),
     removeConcept: (id) => applyOperations([{ kind: 'concept.remove', id }]),

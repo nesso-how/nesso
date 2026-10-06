@@ -11,13 +11,14 @@ const anchor = (node: InternalNode, side: Position) => {
   }
 }
 
-export function ConnectionPreview({ fromNode, toNode, toX, toY, connectionLineStyle }: ConnectionLineComponentProps) {
+export function ConnectionPreview({ fromNode, fromHandle, toNode, toX, toY, connectionLineStyle }: ConnectionLineComponentProps) {
   const pointer = { x: toX, y: toY }
   const source = bounds(fromNode)
   const target = toNode ? bounds(toNode) : { position: pointer, width: 0, height: 0 }
-  const sourcePosition = facingSide(source, target)
-  const targetPosition = facingSide(target, source)
-  const from = anchor(fromNode, sourcePosition)
-  const to = toNode ? anchor(toNode, targetPosition) : pointer
-  return <BezierEdge sourceX={from.x} sourceY={from.y} targetX={to.x} targetY={to.y} sourcePosition={sourcePosition} targetPosition={targetPosition} style={connectionLineStyle} interactionWidth={0} />
+  const fromPosition = facingSide(source, target)
+  const toPosition = facingSide(target, source)
+  const from = { ...anchor(fromNode, fromPosition), position: fromPosition }
+  const to = { ...(toNode ? anchor(toNode, toPosition) : pointer), position: toPosition }
+  const [start, end] = fromHandle.type === 'target' ? [to, from] : [from, to]
+  return <BezierEdge sourceX={start.x} sourceY={start.y} targetX={end.x} targetY={end.y} sourcePosition={start.position} targetPosition={end.position} style={connectionLineStyle} interactionWidth={0} />
 }

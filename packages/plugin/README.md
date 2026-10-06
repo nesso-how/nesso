@@ -52,6 +52,7 @@ export const exampleRendererPlugin: Plugin = ({ store }) => ({
 - `NessoState`: readonly graph, workspace, preferences, visible graph, selection, and vocabulary definitions.
 - `NessoStore`: read/subscribe, graph editing, navigation, viewport, and active-plugin commands. Single-write methods delegate to `applyOperations`.
 - `conceptPlacementOffset`: readonly host-provided offset for placing new concepts near the selection, shared by domain writes and renderers.
+- `reconnectRelation`: change a relation's endpoints atomically, preserving its predicate and updating selection; unchanged endpoints, self-connections, and duplicates are no-ops.
 - `applyOperations`: ordered graph writes, validated and committed atomically or rejected with `SchemaError`; no-ops do not notify. Creation operations require explicit IDs, generated with `newIri` from `@nesso/schema`.
 - `GraphOperation`: readonly domain writes for concepts and relations.
 - `RendererDefinition`, `VocabDefinition`, `ActionDefinition`: contribution shapes. Actions are `{ id, label, run }` commands; renderer components use the injected store.

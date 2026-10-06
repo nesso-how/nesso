@@ -38,6 +38,8 @@ test('native edges use facing borders, preserve predicates and keep the default 
     assert.equal(edge.interactionWidth, 18)
   }
   const selected = relationEdge(graph.relations[0], true, graph)
+  assert.equal(selected.reconnectable, true)
+  assert.equal(relationEdge(graph.relations[0], false, graph).reconnectable, false)
   assert.equal(selected.label, 'links')
   assert.equal(selected.style?.stroke, 'var(--primary)')
   const loop = relationEdge({ ...graph.relations[0], target: 'urn:a' }, false, graph)
