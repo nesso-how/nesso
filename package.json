@@ -17,7 +17,6 @@
     "dist:mac": "pnpm build && electron-builder --mac dmg --arm64 --x64 --publish never"
   },
   "dependencies": {
-    "@base-ui/react": "^1.8.0",
     "@nesso/export": "workspace:*",
     "@nesso/graph": "workspace:*",
     "@nesso/plugin": "workspace:*",

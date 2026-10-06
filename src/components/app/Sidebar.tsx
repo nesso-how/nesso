@@ -1,11 +1,10 @@
 import type { SavedView } from '@nesso/plugin'
 import { downloadGraph } from '@nesso/export'
-import { Button, Dialog, DialogPopup, Menu, MenuItem, MenuPopup, ResizeHandle } from '@nesso/ui'
+import { Button, Dialog, DialogPopup, Menu, MenuItem, MenuPopup, ResizeHandle, SectionHeading } from '@nesso/ui'
 import { MoreHorizontal } from 'lucide-react'
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { Sidebar } from './SidebarLayout'
 import { NewViewButton } from './NewViewButton'
-import { SectionHeading } from './SectionHeading'
 import { host, nessoStore, useNessoStore } from '@/store'
 import { panelLimits } from '@/store/settings'
 

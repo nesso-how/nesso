@@ -1,8 +1,7 @@
-import { Collapsible } from '@nesso/ui'
+import { Collapsible, SectionHeading } from '@nesso/ui'
 import type { ReactNode } from 'react'
 import { host, useNessoStore } from '@/store'
 import type { SectionId } from '@/store/types'
-import { SectionHeading } from './SectionHeading'
 
 export function InspectorSection({ id, title, children, onOpenChange }: {
   id: SectionId

@@ -1,8 +1,6 @@
 import { relationKey, type RelationType } from '@nesso/schema'
-import { Autocomplete } from '@base-ui/react/autocomplete'
 import { useRef, useState } from 'react'
-import { X } from 'lucide-react'
-import { Input, Label } from '@nesso/ui'
+import { Autocomplete, AutocompleteClear, AutocompleteItem, AutocompletePopup, Input, Label } from '@nesso/ui'
 import { ConceptViews } from './ConceptViews'
 import { ConceptConnections } from './ConceptConnections'
 import { InspectorSection } from './InspectorSection'
@@ -72,34 +70,20 @@ function RelationInput({ edgeId, typeId, label, defaultTypeId, relationTypes, on
             }}
             placeholder="Choose or name a relation"
           />
-          <Autocomplete.Clear
-            aria-label="Clear relation"
-            className="nesso-button absolute top-1/2 right-1.5 flex size-5 -translate-y-1/2 items-center justify-center text-muted-foreground hover:bg-accent hover:text-foreground"
-          >
-            <X className="size-3.5" />
-          </Autocomplete.Clear>
+          <AutocompleteClear aria-label="Clear relation" />
         </div>
-        <Autocomplete.Portal>
-          <Autocomplete.Positioner sideOffset={4} className="z-50 outline-none">
-            <Autocomplete.Popup className="nesso-popup max-h-72 w-[var(--anchor-width)] overflow-y-auto p-1">
-              <Autocomplete.List>
-                {(item: Readonly<RelationType>) => (
-                  <Autocomplete.Item
-                    key={item.id}
-                    value={item}
-                    onClick={() => onSave(edgeId, item.id)}
-                    className="nesso-option cursor-default px-2.5 py-2 text-xs"
-                  >
-                    {item.label}
-                    {relationTypes.some((type) => type.id !== item.id && type.label.toLowerCase() === item.label.toLowerCase()) && (
-                      <span className="ml-2 text-xs text-muted-foreground">{item.id}</span>
-                    )}
-                  </Autocomplete.Item>
+        <AutocompletePopup>
+          <Autocomplete.List>
+            {(item: Readonly<RelationType>) => (
+              <AutocompleteItem key={item.id} value={item} onClick={() => onSave(edgeId, item.id)}>
+                {item.label}
+                {relationTypes.some((type) => type.id !== item.id && type.label.toLowerCase() === item.label.toLowerCase()) && (
+                  <span className="ml-2 text-xs text-muted-foreground">{item.id}</span>
                 )}
-              </Autocomplete.List>
-            </Autocomplete.Popup>
-          </Autocomplete.Positioner>
-        </Autocomplete.Portal>
+              </AutocompleteItem>
+            )}
+          </Autocomplete.List>
+        </AutocompletePopup>
       </Autocomplete.Root>
       {error && <p role="alert" className="text-xs text-destructive">{error}</p>}
     </div>

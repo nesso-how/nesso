@@ -1,4 +1,4 @@
-import { Button } from '@nesso/ui'
+import { Button } from './button'
 import { cn } from 'cn'
 import { ChevronDown } from 'lucide-react'
 import type { ComponentProps } from 'react'
