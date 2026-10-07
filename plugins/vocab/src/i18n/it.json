@@ -1,0 +1,5 @@
+{
+  "pluginName": "Nesso Vocabulary",
+  "pluginDescription": "Un linguaggio condiviso per le relazioni tra concetti.",
+  "pluginDocumentation": "Nesso fornisce i tipi di relazione linksTo, partOf, causes e kindOf. La relazione predefinita linksTo viene visualizzata senza etichetta. Cambiare vocabolario lascia invariate le relazioni esistenti."
+}

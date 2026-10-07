@@ -1,7 +1,7 @@
 import type { SavedView } from '@nesso/plugin'
 import { downloadGraph } from '@nesso/export'
 import { Button, Dialog, DialogPopup, Menu, MenuItem, MenuPopup, ResizeHandle, SectionHeading } from '@nesso/ui'
-import { MoreHorizontal } from 'lucide-react'
+import { MoreHorizontal, Settings2 } from 'lucide-react'
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { Sidebar } from './SidebarLayout'
 import { NewViewButton } from './NewViewButton'
@@ -115,6 +115,9 @@ export function AppSidebar() {
               <div id="saved-views" hidden={!viewsOpen} className="mt-1 space-y-0.5">{ordinary.map(row)}</div>
             </div>
           </div>
+        </div>
+        <div className="shrink-0 border-t px-3 py-2">
+          <Dialog.Trigger render={<Button data-settings-trigger variant="ghost" className="w-full justify-start text-muted-foreground" />}><Settings2 />{t('settings')}</Dialog.Trigger>
         </div>
         <ResizeHandle onPointerDown={startResize} aria-label={t('resizeSidebar')} className="absolute inset-y-0 right-0 z-20 cursor-col-resize bg-transparent" />
       </Sidebar>

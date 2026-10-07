@@ -150,6 +150,11 @@ export type ThemeDefinition = {
 export type PluginContext = { readonly store: NessoStore }
 
 export type Plugin = {
+  readonly metadata: (locale: Locale) => {
+    readonly name: string
+    readonly description: string
+    readonly documentation: string
+  }
   readonly operations: readonly NessoOperation['kind'][]
 } & (
   | { readonly kind: 'renderer'; readonly create: (context: PluginContext) => RendererDefinition }

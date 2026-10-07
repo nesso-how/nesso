@@ -21,6 +21,11 @@ export const downloadGraph = (graph: GraphSnapshot, name = 'graph'): void => {
 
 export const exportPlugin: Plugin = {
   kind: 'actions',
+  metadata: (locale) => ({
+    name: translate(locale)('pluginName'),
+    description: translate(locale)('pluginDescription'),
+    documentation: translate(locale)('pluginDocumentation'),
+  }),
   operations: [],
   create: ({ store }) => [{
     id: 'export-view',

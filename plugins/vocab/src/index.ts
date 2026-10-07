@@ -1,4 +1,9 @@
 import type { Plugin, VocabDefinition } from '@nesso/plugin'
+import { createTranslator } from '@nesso/i18n'
+import en from './i18n/en.json' with { type: 'json' }
+import it from './i18n/it.json' with { type: 'json' }
+
+const translate = createTranslator(en, { it })
 
 export const relationIds = {
   linksTo: 'urn:uuid:c7aeeb73-f438-5bc6-a02b-87c06755a15d',
@@ -14,6 +19,11 @@ export const defaultRelationTypes: VocabDefinition['relationTypes'] =
 
 export const vocabPlugin: Plugin = {
   kind: 'vocab',
+  metadata: (locale) => ({
+    name: translate(locale)('pluginName'),
+    description: translate(locale)('pluginDescription'),
+    documentation: translate(locale)('pluginDocumentation'),
+  }),
   operations: [],
   create: () => ({
     id: 'nesso-default',

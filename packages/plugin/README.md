@@ -4,7 +4,7 @@ Types-only definitions for Nesso's plugin system.
 
 ## Create a plugin
 
-A plugin declares one `kind`, the operation kinds it needs, and a `create({ store })` factory. Its kind determines the factory's return value:
+A plugin declares one `kind`, localized `metadata(locale)`, the operation kinds it needs, and a `create({ store })` factory. Its kind determines the factory's return value:
 
 | Kind | Return value |
 | --- | --- |
@@ -22,6 +22,11 @@ import type { Plugin } from '@nesso/plugin'
 
 export const examplePlugin: Plugin = {
   kind: 'actions',
+  metadata: () => ({
+    name: 'Rename selected',
+    description: 'Rename the selected concept.',
+    documentation: 'Select one concept and run the command from the graph menu.',
+  }),
   operations: ['concept.label'],
   create: ({ store }) => [{
     id: 'rename-selected',
@@ -38,7 +43,7 @@ export const examplePlugin: Plugin = {
 
 ### Register it
 
-Import `examplePlugin` from `./example-plugin` in [`src/plugins.ts`](../../src/plugins.ts) and append it to the existing `plugins` array. Plugins are registered statically and bundled with the app.
+Import `examplePlugin` from `./example-plugin` in [`src/plugins.ts`](../../src/plugins.ts) and add an entry to `bundledPlugins` with its package manifest. Plugins are registered statically and bundled with the app; the resulting registry supplies settings and navbar actions. The host assigns icons by plugin kind.
 
 Run `pnpm dev`, select one concept, and choose **Rename selected concept** from the navbar's **Graph menu**.
 
@@ -52,6 +57,11 @@ import { useSyncExternalStore } from 'react'
 
 export const exampleRendererPlugin: Plugin = {
   kind: 'renderer',
+  metadata: () => ({
+    name: 'Example renderer',
+    description: 'Display the selection count.',
+    documentation: 'Reads the current selection from the injected store.',
+  }),
   operations: [],
   create: ({ store }) => ({
     id: 'example',
@@ -90,6 +100,7 @@ Pass `{ historyGroup: string }` to coalesce adjacent label/position writes from 
 
 ### Contributions and locale
 
+- `metadata(locale)` returns readonly `name`, `description`, and `documentation` strings from the plugin's own catalogs. Translators stay internal to the plugin.
 - Actions are `{ id, label(locale), run }`; the host passes its active locale when displaying labels.
 - `preferences.locale` supports English and Italian, defaulting to English when unset. `setLocale` requires `preferences.locale` in the operation declaration. Use [@nesso/i18n](../i18n/README.md) with your own JSON catalogs.
 - A vocabulary's `defaultTypeId` must be one of its own relation types.

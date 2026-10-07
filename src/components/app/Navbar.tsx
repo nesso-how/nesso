@@ -1,13 +1,13 @@
 import { MoreHorizontal } from 'lucide-react'
 import { useEffect } from 'react'
-import { Button, Menu, MenuItem, MenuPopup, MenuRadioItem } from '@nesso/ui'
-import { defaultLocale, isLocale, localeNames, locales } from '@nesso/i18n'
+import { Button, Menu, MenuItem, MenuPopup } from '@nesso/ui'
+import { defaultLocale } from '@nesso/i18n'
 import { SidebarNewView, SidebarTrigger } from '@/components/app/SidebarLayout'
 import { actions } from '@/plugins'
 import { host, useNessoStore } from '@/store'
 import { translate } from '@/i18n'
 
-export function Navbar() {
+export function Navbar({ onOpenSettings }: { onOpenSettings: () => void }) {
   const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale)
   const t = translate(locale)
   useEffect(() => {
@@ -30,7 +30,7 @@ export function Navbar() {
       <SidebarNewView />
       <div className="ml-auto">
         <Menu.Root>
-          <Menu.Trigger render={<Button size="icon-sm" variant="ghost" aria-label={t('graphMenu')} title={t('graphMenu')} />}>
+          <Menu.Trigger render={<Button data-graph-menu-trigger size="icon-sm" variant="ghost" aria-label={t('graphMenu')} title={t('graphMenu')} />}>
             <MoreHorizontal />
           </Menu.Trigger>
           <MenuPopup>
@@ -38,13 +38,7 @@ export function Navbar() {
               <MenuItem key={action.id} onClick={action.run}>{action.label(locale)}</MenuItem>
             ))}
             <Menu.Separator className="my-1 h-px bg-border" />
-            <Menu.Group>
-              <Menu.GroupLabel className="px-2.5 py-2 text-xs text-muted-foreground">{t('language')}</Menu.GroupLabel>
-              <Menu.RadioGroup value={locale} onValueChange={(value) => { if (isLocale(value)) host.store.setLocale(value) }}>
-                {locales.map((value) => <MenuRadioItem key={value} value={value} lang={value}>{localeNames[value]}</MenuRadioItem>)}
-              </Menu.RadioGroup>
-            </Menu.Group>
-            <Menu.Separator className="my-1 h-px bg-border" />
+            <MenuItem className="md:hidden" onClick={onOpenSettings}>{t('settings')}</MenuItem>
             <MenuItem onClick={() => {
               if (window.confirm(translate(host.store.getState().preferences.locale ?? defaultLocale)('resetConfirmation'))) host.store.resetGraph()
             }}>{t('resetGraph')}</MenuItem>

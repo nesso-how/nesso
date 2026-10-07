@@ -5,6 +5,9 @@
   "exports": {
     ".": "./src/index.ts"
   },
+  "dependencies": {
+    "@nesso/i18n": "workspace:*"
+  },
   "peerDependencies": {
     "@nesso/plugin": "workspace:*"
   },

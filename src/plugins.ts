@@ -1,29 +1,46 @@
-import type { ActionDefinition, Plugin } from '@nesso/plugin'
 import { exportPlugin } from '@nesso/export'
 import { graphPlugin } from '@nesso/graph'
 import { themePlugin } from '@nesso/theme'
 import { vocabPlugin } from '@nesso/vocab'
+import { Monitor, Palette, Shapes, Zap } from 'lucide-react'
 import { nessoStore, registerRenderer, registerTheme, registerVocab } from '@/store'
+import graphPackage from '../plugins/graph/package.json'
+import themePackage from '../plugins/theme/package.json'
+import vocabPackage from '../plugins/vocab/package.json'
+import exportPackage from '../plugins/export/package.json'
 import { createPluginStore } from './store/commands.ts'
 
-const plugins: readonly Plugin[] = [themePlugin, vocabPlugin, graphPlugin, exportPlugin]
+const bundledPlugins = [
+  { plugin: graphPlugin, manifest: graphPackage },
+  { plugin: themePlugin, manifest: themePackage },
+  { plugin: vocabPlugin, manifest: vocabPackage },
+  { plugin: exportPlugin, manifest: exportPackage },
+] as const
 
-export const actions: ActionDefinition[] = []
+const icons = { renderer: Monitor, theme: Palette, vocab: Shapes, actions: Zap }
 
-for (const plugin of plugins) {
+export const plugins = bundledPlugins.map(({ plugin, manifest }) => {
+  const entry = { id: manifest.name, version: manifest.version, icon: icons[plugin.kind], metadata: plugin.metadata }
   const context = { store: createPluginStore(nessoStore, plugin.operations) }
   switch (plugin.kind) {
-    case 'renderer':
-      registerRenderer(plugin.create(context))
-      break
-    case 'theme':
-      registerTheme(plugin.create(context))
-      break
-    case 'vocab':
-      registerVocab(plugin.create(context))
-      break
+    case 'renderer': {
+      const contribution = plugin.create(context)
+      registerRenderer(contribution)
+      return { ...entry, kind: plugin.kind, contribution }
+    }
+    case 'theme': {
+      const contribution = plugin.create(context)
+      registerTheme(contribution)
+      return { ...entry, kind: plugin.kind, contribution }
+    }
+    case 'vocab': {
+      const contribution = plugin.create(context)
+      registerVocab(contribution)
+      return { ...entry, kind: plugin.kind, contribution }
+    }
     case 'actions':
-      actions.push(...plugin.create(context))
-      break
+      return { ...entry, kind: plugin.kind, contribution: plugin.create(context) }
   }
-}
+})
+
+export const actions = plugins.flatMap((plugin) => plugin.kind === 'actions' ? plugin.contribution : [])

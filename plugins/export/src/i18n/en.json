@@ -1,3 +1,6 @@
 {
+  "pluginName": "Export",
+  "pluginDescription": "Export your views in JSON-LD format.",
+  "pluginDocumentation": "Export downloads the current view as JSON-LD, including its concepts, internal relations, and relation type definitions. The complete graph view exports the whole graph.",
   "exportView": "Export view"
 }

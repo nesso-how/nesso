@@ -1,4 +1,7 @@
 {
+  "pluginName": "Nesso Graph",
+  "pluginDescription": "Visualizza e collega i tuoi concetti su un canvas.",
+  "pluginDocumentation": "Nesso Graph visualizza la vista corrente. Trascina i concetti per disporli, collegali e seleziona gli elementi per modificarli nell'Inspector. I controlli del canvas condividono la cronologia del documento.",
   "completeGraph": "Grafo completo",
   "conceptCount_one": "{{count}} concetto",
   "conceptCount_many": "{{count}} concetti",
