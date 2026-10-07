@@ -18,7 +18,8 @@
     "site:preview": "vite preview --config site/vite.config.ts",
     "desktop": "pnpm build && electron .",
     "desktop:dev": "tsc -p tsconfig.electron.json && electron . --dev",
-    "dist:mac": "pnpm build && electron-builder --mac dmg --arm64 --x64 --publish never"
+    "dist:mac": "pnpm build && electron-builder --mac dmg --arm64 --x64 --publish never",
+    "release": "node scripts/release.ts"
   },
   "dependencies": {
     "@nesso/export": "workspace:*",
