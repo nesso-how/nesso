@@ -1,6 +1,7 @@
 {
   "completeGraph": "Complete graph",
-  "conceptCount": { "one": "{count} concept", "other": "{count} concepts" },
+  "conceptCount_one": "{{count}} concept",
+  "conceptCount_other": "{{count}} concepts",
   "fitView": "Fit view",
   "lockInteractions": "Lock interactions",
   "unlockInteractions": "Unlock interactions",
@@ -9,13 +10,13 @@
   "redo": "Redo",
   "deleteSelected": "Delete selected",
   "addConcept": "Add concept",
-  "connectTo": "Connect to {name}",
-  "connectFrom": "Connect from {name}",
+  "connectTo": "Connect to {{name}}",
+  "connectFrom": "Connect from {{name}}",
   "nodeInstructions": "Press Enter or Space to select a concept. Use the arrow keys to move it, Delete to remove it, or Escape to clear the selection.",
   "nodeSelectionInstructions": "Press Enter or Space to select a concept. Press Delete to remove it or Escape to clear the selection.",
-  "nodeMoved": "Concept moved. New position, x: {x}, y: {y}",
+  "nodeMoved": "Concept moved. New position, x: {{x}}, y: {{y}}",
   "relationInstructions": "Press Enter or Space to select a relation. Press Delete to remove it or Escape to clear the selection.",
-  "relationFromTo": "Relation from {source} to {target}",
+  "relationFromTo": "Relation from {{source}} to {{target}}",
   "controls": "Graph controls",
   "toggleInteractions": "Toggle interactions"
 }

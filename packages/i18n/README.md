@@ -1,6 +1,6 @@
 # @nesso/i18n
 
-Framework-independent translation utilities with typed keys, interpolation, plurals, and English fallback. No runtime dependencies or mutable locale state.
+Framework-independent i18next wrapper with typed keys, interpolation, plurals, and English fallback. Each translator owns an isolated instance; locale selection never changes shared state.
 
 ## Usage
 
@@ -19,7 +19,7 @@ Keep JSON catalogs alongside their host or plugin. The host persists `preference
 
 ## API
 
-- `createTranslator`: infer keys and message shapes from the English catalog and return a locale-bound translator with English fallback. Messages are plain strings with `{name}` placeholders, or `{ one, other }` plural forms selected by `Intl.PluralRules` using `count`.
+- `createTranslator`: infer keys from the English catalog and return a locale-bound translator with English fallback. Catalogs use native i18next JSON: `{{name}}` placeholders and plural suffixes such as `conceptCount_one`/`conceptCount_other`, called as `t('conceptCount', { count })`. Include the locale's plural forms (`_many` for Italian). Bundled resources initialize synchronously; i18next handles interpolation and plural selection. Text is returned unescaped for React to render, never as HTML.
 - `locales`, `defaultLocale`, `localeNames`: supported English/Italian locales, English default, and native display names.
 - `isLocale`: check whether a value is a supported locale.
-- Types: `Locale`, `Message`, `Catalog`, `Translation`, `Values`; missing interpolation values or invalid counts throw `I18nError` with structured issues.
+- Types: `Locale`, `Catalog`, `Translation`, `Values`; unknown keys, missing interpolation values or invalid counts throw `I18nError` with structured issues.

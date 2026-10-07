@@ -1,6 +1,8 @@
 {
   "completeGraph": "Grafo completo",
-  "conceptCount": { "one": "{count} concetto", "other": "{count} concetti" },
+  "conceptCount_one": "{{count}} concetto",
+  "conceptCount_many": "{{count}} concetti",
+  "conceptCount_other": "{{count}} concetti",
   "fitView": "Adatta alla vista",
   "lockInteractions": "Blocca interazioni",
   "unlockInteractions": "Sblocca interazioni",
@@ -9,13 +11,13 @@
   "redo": "Ripeti",
   "deleteSelected": "Elimina selezione",
   "addConcept": "Aggiungi concetto",
-  "connectTo": "Collega a {name}",
-  "connectFrom": "Collega da {name}",
+  "connectTo": "Collega a {{name}}",
+  "connectFrom": "Collega da {{name}}",
   "nodeInstructions": "Premi Invio o Spazio per selezionare un concetto. Usa le frecce per spostarlo, Canc per eliminarlo o Esc per annullare la selezione.",
   "nodeSelectionInstructions": "Premi Invio o Spazio per selezionare un concetto. Premi Canc per eliminarlo o Esc per annullare la selezione.",
-  "nodeMoved": "Concetto spostato. Nuova posizione, x: {x}, y: {y}",
+  "nodeMoved": "Concetto spostato. Nuova posizione, x: {{x}}, y: {{y}}",
   "relationInstructions": "Premi Invio o Spazio per selezionare una relazione. Premi Canc per eliminarla o Esc per annullare la selezione.",
-  "relationFromTo": "Relazione da {source} a {target}",
+  "relationFromTo": "Relazione da {{source}} a {{target}}",
   "controls": "Controlli del grafo",
   "toggleInteractions": "Attiva o disattiva interazioni"
 }

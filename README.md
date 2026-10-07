@@ -35,7 +35,7 @@ The document and app preferences, including collapsed sections, are saved locall
 - **Host (`src/`)** owns the app shell, the shared store, persistence, and static plugin registration. The store separates graph data, workspace navigation/views, and app preferences, and supplies the visible graph to renderers.
 - **Schema (`packages/schema/`)** defines and validates graph data and handles JSON-LD serialization.
 - **Plugin contract (`packages/plugin/`)** defines readonly state and contributions. Plugins interact with the host through an injected store, never through app internals.
-- **Translations (`packages/i18n/`)** provide typed translation keys, interpolation, plurals, and English fallback. Host and plugins own their JSON catalogs; the host persists the locale preference.
+- **Translations (`packages/i18n/`)** wrap i18next with typed translation keys and isolated instances. Host and plugins own their JSON catalogs; the host persists the locale preference.
 - **UI and theme (`packages/ui/`, `plugins/theme/`)** provide shared Base UI-backed controls, semantic styles, Kernel tokens, and bundled fonts. The host applies the theme; renderers consume its CSS tokens.
 - **Plugins (`plugins/graph/`, `plugins/vocab/`, `plugins/export/`)** contribute the React Flow canvas, relation vocabularies, and export actions. Renderer-specific components and styles stay inside their plugin.
 - **Desktop (`electron/`)** wraps the same app in Electron for macOS.
