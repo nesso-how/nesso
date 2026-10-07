@@ -6,6 +6,7 @@
     ".": "./src/index.tsx"
   },
   "dependencies": {
+    "@nesso/i18n": "workspace:*",
     "@nesso/schema": "workspace:*",
     "@xyflow/react": "^12.12.0",
     "cn": "^0.4.0",

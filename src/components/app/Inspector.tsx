@@ -6,6 +6,7 @@ import { ConceptViews } from './ConceptViews'
 import { ConceptConnections } from './ConceptConnections'
 import { InspectorSection } from './InspectorSection'
 import { nessoStore, useNessoStore } from '@/store'
+import { useTranslation } from '@/i18n'
 
 function RelationInput({ edgeId, typeId, label, defaultTypeId, relationTypes, onSave, onCreate }: {
   edgeId: string
@@ -16,9 +17,10 @@ function RelationInput({ edgeId, typeId, label, defaultTypeId, relationTypes, on
   onSave: (id: string, typeId: string) => void
   onCreate: (id: string, label: string) => void
 }) {
+  const t = useTranslation()
   const [value, setValue] = useState(label)
   const [open, setOpen] = useState(false)
-  const [error, setError] = useState('')
+  const [error, setError] = useState(false)
   const highlighted = useRef<Readonly<RelationType> | undefined>(undefined)
   const query = value.trim().toLowerCase()
   const visible = relationTypes.filter((item) =>
@@ -33,7 +35,7 @@ function RelationInput({ edgeId, typeId, label, defaultTypeId, relationTypes, on
     }
     const matches = relationTypes.filter((item) => item.label.toLowerCase() === trimmed.toLowerCase())
     if (matches.length > 1) {
-      setError('Choose a relation type: this label has multiple IRIs.')
+      setError(true)
       setOpen(true)
       return
     }
@@ -44,7 +46,7 @@ function RelationInput({ edgeId, typeId, label, defaultTypeId, relationTypes, on
 
   return (
     <div className="flex flex-col gap-1.5">
-      <Label htmlFor="relation-label">Relation</Label>
+      <Label htmlFor="relation-label">{t('relation')}</Label>
       <Autocomplete.Root
         items={relationTypes}
         filteredItems={visible}
@@ -54,7 +56,7 @@ function RelationInput({ edgeId, typeId, label, defaultTypeId, relationTypes, on
         onOpenChange={setOpen}
         onValueChange={(next, details) => {
           setValue(next)
-          setError('')
+          setError(false)
           if (details.reason === 'clear-press' && defaultTypeId) onSave(edgeId, defaultTypeId)
         }}
         onItemHighlighted={(item) => { highlighted.current = item }}
@@ -70,9 +72,9 @@ function RelationInput({ edgeId, typeId, label, defaultTypeId, relationTypes, on
             onKeyDown={(event) => {
               if (event.key === 'Enter' && !highlighted.current) save(event.currentTarget.value)
             }}
-            placeholder="Choose or name a relation"
+            placeholder={t('relationPlaceholder')}
           />
-          <AutocompleteClear aria-label="Clear relation" />
+          <AutocompleteClear aria-label={t('clearRelation')} />
         </div>
         <AutocompletePopup>
           <Autocomplete.List>
@@ -87,12 +89,13 @@ function RelationInput({ edgeId, typeId, label, defaultTypeId, relationTypes, on
           </Autocomplete.List>
         </AutocompletePopup>
       </Autocomplete.Root>
-      {error && <p role="alert" className="text-xs text-destructive">{error}</p>}
+      {error && <p role="alert" className="text-xs text-destructive">{t('ambiguousRelation')}</p>}
     </div>
   )
 }
 
 export function Inspector() {
+  const t = useTranslation()
   const textGroup = useRef<string | undefined>(undefined)
   const graph = useNessoStore((state) => state.graph)
   const selected = useNessoStore((state) => state.selected)
@@ -130,19 +133,19 @@ export function Inspector() {
     <aside className="flex h-full flex-col gap-[26px] overflow-y-auto bg-background px-5 py-6 text-sm">
       {selected.length > 1 ? (
         <div className="flex flex-col gap-1.5">
-          <h2 className="font-medium">Selection</h2>
+          <h2 className="font-medium">{t('selection')}</h2>
           <p className="text-xs text-muted-foreground">{[
-            conceptIds.length > 0 ? `${conceptIds.length} ${conceptIds.length === 1 ? 'concept' : 'concepts'}` : '',
-            relationCount > 0 ? `${relationCount} ${relationCount === 1 ? 'relation' : 'relations'}` : '',
+            conceptIds.length > 0 ? t('conceptCount', { count: conceptIds.length }) : '',
+            relationCount > 0 ? t('relationCount', { count: relationCount }) : '',
           ].filter(Boolean).join(' · ')}</p>
-          <p className="text-xs text-muted-foreground">Select a single item to edit its label or relation type.</p>
-          {outsideCount > 0 && <p className="text-xs text-muted-foreground">{outsideCount} {outsideCount === 1 ? 'concept is' : 'concepts are'} outside the current view.</p>}
+          <p className="text-xs text-muted-foreground">{t('singleSelectionHint')}</p>
+          {outsideCount > 0 && <p className="text-xs text-muted-foreground">{t('outsideConceptCount', { count: outsideCount })}</p>}
         </div>
       ) : concept ? (
         <section className="flex flex-col gap-[26px]">
-          {outsideCount > 0 && <p className="text-xs text-muted-foreground">This concept is outside the current view.</p>}
+          {outsideCount > 0 && <p className="text-xs text-muted-foreground">{t('outsideConcept')}</p>}
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="concept-label">Label</Label>
+            <Label htmlFor="concept-label">{t('label')}</Label>
             <Input
               key={concept.id}
               id="concept-label"
@@ -170,10 +173,10 @@ export function Inspector() {
             onSave={nessoStore.setRelationType}
             onCreate={nessoStore.createRelationType}
           />
-          <InspectorSection id="inspector.nodes" title="Nodes">
+          <InspectorSection id="inspector.nodes" title={t('nodes')}>
             <div className="mt-2 space-y-3">
-              <div className="flex flex-col gap-1"><span className="font-mono text-[10px] leading-[14px] text-muted-foreground">From</span><span className="text-[13px] leading-[19px] break-words">{sourceLabel}</span></div>
-              <div className="flex flex-col gap-1"><span className="font-mono text-[10px] leading-[14px] text-muted-foreground">To</span><span className="text-[13px] leading-[19px] break-words">{targetLabel}</span></div>
+              <div className="flex flex-col gap-1"><span className="font-mono text-[10px] leading-[14px] text-muted-foreground">{t('from')}</span><span className="text-[13px] leading-[19px] break-words">{sourceLabel}</span></div>
+              <div className="flex flex-col gap-1"><span className="font-mono text-[10px] leading-[14px] text-muted-foreground">{t('to')}</span><span className="text-[13px] leading-[19px] break-words">{targetLabel}</span></div>
             </div>
           </InspectorSection>
         </section>

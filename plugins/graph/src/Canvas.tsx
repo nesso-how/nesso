@@ -24,18 +24,20 @@ import { conceptNode, conceptNodeMinSize, relationEdge, type ConceptNodeSizes } 
 import type { ConceptNode, RelationEdge } from './types'
 import { useNesso, useStore } from './store'
 import { selectionFromChanges } from './selection'
+import { useTranslation } from './i18n'
 
 const nodeTypes: NodeTypes = { concept: ConceptNodeView }
 const fitViewOptions = { padding: 0.3, maxZoom: 1.2 }
 const multiSelectionKeys = ['Meta', 'Control', 'Shift']
 
 export function Canvas() {
+  const t = useTranslation()
   const graph = useNesso((state) => state.viewGraph)
   const selected = useNesso((state) => state.selected)
   const conceptCount = useNesso((state) => state.graph.concepts.length)
   const defaultTypeId = useNesso((state) => state.vocabs.find((vocab) => vocab.id === state.preferences.activeVocabId)?.defaultTypeId)
   const view = useNesso((state) => state.workspace.activeViewId)
-  const viewName = useNesso((state) => state.workspace.savedViews.find((saved) => saved.id === state.workspace.activeViewId)?.name ?? 'Complete graph')
+  const viewName = useNesso((state) => state.workspace.savedViews.find((saved) => saved.id === state.workspace.activeViewId)?.name) ?? t('completeGraph')
   const viewCount = graph.concepts.length
   const store = useStore()
   const flow = useStoreApi()
@@ -57,9 +59,13 @@ export function Canvas() {
   const nodes = graph.concepts.map((concept) =>
     conceptNode(concept, selectedConcepts.has(concept.id), sizes[concept.id]),
   )
-  const edges = graph.relations.map((relation) =>
-    relationEdge(relation, selectedRelations.has(relationKey(relation)), singleSelection, graph, defaultTypeId, sizes),
-  )
+  const edges = graph.relations.map((relation) => ({
+    ...relationEdge(relation, selectedRelations.has(relationKey(relation)), singleSelection, graph, defaultTypeId, sizes),
+    ariaLabel: t('relationFromTo', {
+      source: graph.concepts.find((concept) => concept.id === relation.source)?.label ?? '',
+      target: graph.concepts.find((concept) => concept.id === relation.target)?.label ?? '',
+    }),
+  }))
 
   const onObjectChanges = (kind: 'concept' | 'relation', changes: (NodeChange<ConceptNode> | EdgeChange<RelationEdge>)[]) => {
     const current = store.getState().selected
@@ -162,6 +168,15 @@ export function Canvas() {
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
+        ariaLabelConfig={{
+          'node.a11yDescription.default': t('nodeSelectionInstructions'),
+          'node.a11yDescription.keyboardDisabled': t('nodeInstructions'),
+          'node.a11yDescription.ariaLiveMessage': ({ x, y }) => t('nodeMoved', { x, y }),
+          'edge.a11yDescription.default': t('relationInstructions'),
+          'controls.ariaLabel': t('controls'),
+          'controls.fitView.ariaLabel': t('fitView'),
+          'controls.interactive.ariaLabel': t('toggleInteractions'),
+        }}
         nodesDraggable={interactive}
         nodesConnectable={interactive && singleSelection}
         multiSelectionKeyCode={multiSelectionKeys}
@@ -190,28 +205,28 @@ export function Canvas() {
         fitViewOptions={fitViewOptions}
         minZoom={0.2}
       >
-        <Panel position="top-left" className="canvas-label pointer-events-none font-mono text-[10px] text-muted-foreground">{viewName} · {viewCount} {viewCount === 1 ? 'concept' : 'concepts'}</Panel>
+        <Panel position="top-left" className="canvas-label pointer-events-none font-mono text-[10px] text-muted-foreground">{viewName} · {t('conceptCount', { count: viewCount })}</Panel>
         <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="var(--border)" />
         <Controls showZoom={false} showFitView={false} showInteractive={false} orientation="horizontal">
-          <ControlButton className="react-flow__controls-fitview" onClick={() => { void fitView(fitViewOptions) }} title="Fit View" aria-label="Fit View">
+          <ControlButton className="react-flow__controls-fitview" onClick={() => { void fitView(fitViewOptions) }} title={t('fitView')} aria-label={t('fitView')}>
             <Maximize aria-hidden="true" />
           </ControlButton>
-          <ControlButton className="react-flow__controls-interactive" onClick={() => flow.setState({ nodesDraggable: !interactive, nodesConnectable: !interactive && singleSelection, elementsSelectable: !interactive })} title={interactive ? 'Lock interactions' : 'Unlock interactions'} aria-label={interactive ? 'Lock interactions' : 'Unlock interactions'} aria-pressed={!interactive}>
+          <ControlButton className="react-flow__controls-interactive" onClick={() => flow.setState({ nodesDraggable: !interactive, nodesConnectable: !interactive && singleSelection, elementsSelectable: !interactive })} title={t(interactive ? 'lockInteractions' : 'unlockInteractions')} aria-label={t(interactive ? 'lockInteractions' : 'unlockInteractions')} aria-pressed={!interactive}>
             <LockIcon aria-hidden="true" />
           </ControlButton>
         </Controls>
-        <Panel position="bottom-right" className="canvas-label pointer-events-none font-mono text-[10px] text-muted-foreground" aria-label="Zoom level">{Math.round(zoom * 100)}%</Panel>
+        <Panel position="bottom-right" className="canvas-label pointer-events-none font-mono text-[10px] text-muted-foreground" aria-label={t('zoomLevel')}>{Math.round(zoom * 100)}%</Panel>
         <Controls position="top-right" orientation="horizontal" showZoom={false} showFitView={false} showInteractive={false}>
-          <ControlButton onClick={store.undo} disabled={!canUndo} title="Undo" aria-label="Undo">
+          <ControlButton onClick={store.undo} disabled={!canUndo} title={t('undo')} aria-label={t('undo')}>
             <Undo2 aria-hidden="true" />
           </ControlButton>
-          <ControlButton onClick={store.redo} disabled={!canRedo} title="Redo" aria-label="Redo">
+          <ControlButton onClick={store.redo} disabled={!canRedo} title={t('redo')} aria-label={t('redo')}>
             <Redo2 aria-hidden="true" />
           </ControlButton>
-          <ControlButton onClick={handleDelete} disabled={!canDelete} title="Delete selected" aria-label="Delete selected">
+          <ControlButton onClick={handleDelete} disabled={!canDelete} title={t('deleteSelected')} aria-label={t('deleteSelected')}>
             <Trash2 aria-hidden="true" />
           </ControlButton>
-          <ControlButton onClick={handleAdd} title="Add concept" aria-label="Add concept">
+          <ControlButton onClick={handleAdd} title={t('addConcept')} aria-label={t('addConcept')}>
             <Plus aria-hidden="true" />
           </ControlButton>
         </Controls>

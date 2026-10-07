@@ -28,6 +28,7 @@ export const createCommands = (applyOperations: NessoStore['applyOperations']): 
   setActiveVocab: (id) => applyOperations([{ kind: 'preferences.vocab', id }]),
   setActiveRenderer: (id) => applyOperations([{ kind: 'preferences.renderer', id }]),
   setActiveTheme: (id) => applyOperations([{ kind: 'preferences.theme', id }]),
+  setLocale: (value) => applyOperations([{ kind: 'preferences.locale', value }]),
   setPanelSizes: (value) => applyOperations([{ kind: 'preferences.panels', value }]),
   setSectionOpen: (id, open) => applyOperations([{ kind: 'preferences.section', id, open }]),
   resetGraph: () => applyOperations([{ kind: 'document.reset', id: newIri() }]),

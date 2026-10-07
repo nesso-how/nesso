@@ -47,6 +47,7 @@ test('local persistence round-trips the whole document, workspace and preference
   const viewId = host.store.createView('Pair', ['urn:one', 'urn:two'])
   host.store.setViewPinned(viewId, true)
   host.store.setPanelSizes({ explorerWidth: 310, inspectorWidth: 330 })
+  host.store.setLocale('it')
   for (const id of sectionIds) host.store.setSectionOpen(id, false)
   host.store.setViewport('graph', { x: 100, y: 200, zoom: 0.75 })
   host.store.setConceptLabel('urn:one', 'Renamed')
@@ -184,6 +185,7 @@ test('invalid records are reported and never overwritten while the other section
     ['preferences', JSON.stringify({ version: 1, preferences: { ...state.preferences, collapsedSections: null } })],
     ['preferences', JSON.stringify({ version: 1, preferences: { ...state.preferences, collapsedSections: ['missing'] } })],
     ['preferences', JSON.stringify({ version: 1, preferences: { ...state.preferences, collapsedSections: ['sidebar', 'sidebar'] } })],
+    ['preferences', JSON.stringify({ version: 1, preferences: { ...state.preferences, locale: 'fr' } })],
   ] as const
   for (const [section, text] of invalid) {
     const storage = memoryStorage()

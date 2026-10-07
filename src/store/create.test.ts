@@ -505,6 +505,7 @@ test('invalid state batches reject every preceding change without notification',
     { kind: 'view.membership', viewId, conceptId: 'missing', included: true },
     { kind: 'preferences.panels', value: { explorerWidth: NaN, inspectorWidth: 300 } },
     { kind: 'preferences.renderer', id: 'missing' },
+    { kind: 'preferences.locale', value: 'fr' as never },
     { kind: 'document.reset', id: '' },
     { kind: 'concept.position', id: 'urn:n1', value: { x: NaN, y: 0 } },
   ]
@@ -768,6 +769,19 @@ test('restoration resolves saved plugin preferences, falling back when unavailab
     assert.deepEqual(state.selected, [])
     assert.deepEqual(state.graph, fixture())
   }
+})
+
+test('locale changes leave document data, selection and history untouched', () => {
+  const host = createNessoStore(fixture())
+  host.store.createView('Original view', ['urn:n1', 'urn:n2'])
+  host.store.setSelection([{ kind: 'concept', id: 'urn:n1' }])
+  const before = host.store.getState()
+  host.store.setLocale('it')
+  const after = host.store.getState()
+  assert.deepEqual(after, { ...before, preferences: { ...before.preferences, locale: 'it' } })
+  for (const key of ['graph', 'workspace', 'viewGraph', 'selected', 'history'] as const) assert.equal(after[key], before[key])
+  host.store.setLocale('it')
+  assert.equal(host.store.getState(), after)
 })
 
 test('section preferences are global, immutable, validated and independent of the document', () => {

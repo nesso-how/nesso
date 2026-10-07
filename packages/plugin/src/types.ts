@@ -1,4 +1,5 @@
 import type { Graph, Position, RelationType } from '@nesso/schema'
+import type { Locale } from '@nesso/i18n'
 import type { ComponentType } from 'react'
 
 type DeepReadonly<T> = T extends readonly (infer U)[]
@@ -36,6 +37,7 @@ export type NessoOperation =
   | { readonly kind: 'preferences.vocab'; readonly id: string }
   | { readonly kind: 'preferences.renderer'; readonly id: string }
   | { readonly kind: 'preferences.theme'; readonly id: string }
+  | { readonly kind: 'preferences.locale'; readonly value: Locale }
   | { readonly kind: 'preferences.panels'; readonly value: PanelSizes }
   | { readonly kind: 'preferences.section'; readonly id: SectionId; readonly open: boolean }
 
@@ -75,6 +77,7 @@ export type SectionId =
   | 'inspector.connections' | 'inspector.views' | 'inspector.nodes'
 
 export type Preferences = {
+  readonly locale?: Locale
   readonly activeVocabId: string
   readonly activeRendererId: string
   readonly activeThemeId: string
@@ -115,6 +118,7 @@ export type NessoStore = {
   readonly setActiveVocab: (id: string) => void
   readonly setActiveRenderer: (id: string) => void
   readonly setActiveTheme: (id: string) => void
+  readonly setLocale: (locale: Locale) => void
   readonly setPanelSizes: (sizes: PanelSizes) => void
   readonly setSectionOpen: (id: SectionId, open: boolean) => void
   readonly resetGraph: () => void
@@ -134,7 +138,7 @@ export type RendererDefinition = {
 
 export type ActionDefinition = {
   readonly id: string
-  readonly label: string
+  readonly label: (locale: Locale) => string
   readonly run: () => void
 }
 

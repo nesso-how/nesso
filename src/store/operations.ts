@@ -1,5 +1,6 @@
 import type { GraphSnapshot, NessoOperation, NessoState, Preferences, RendererDefinition, SavedView, Selection, ThemeDefinition, WorkspaceState } from '@nesso/plugin'
 import { relationKey, SchemaError, validateGraph, type Graph, type Relation, type RelationType } from '@nesso/schema'
+import { isLocale } from '@nesso/i18n'
 import { fail, maxConceptLabelLength, maxRelationLabelLength, parsePreferences, parseWorkspace } from './settings.ts'
 import { sectionIds } from './types.ts'
 import { ListEdit, sameConcept, sameIds, sameType, sameView, viewChanges } from './delta.ts'
@@ -74,7 +75,7 @@ const sameWorkspace = (left: WorkspaceState, right: WorkspaceState): boolean =>
   })
 
 const samePreferences = (left: Preferences, right: Preferences): boolean =>
-  left.activeVocabId === right.activeVocabId && left.activeRendererId === right.activeRendererId && left.activeThemeId === right.activeThemeId
+  left.locale === right.locale && left.activeVocabId === right.activeVocabId && left.activeRendererId === right.activeRendererId && left.activeThemeId === right.activeThemeId
   && left.panels.explorerWidth === right.panels.explorerWidth && left.panels.inspectorWidth === right.panels.inspectorWidth
   && sameItems(left.collapsedSections ?? [], right.collapsedSections ?? [], (a, b) => a === b)
 
@@ -290,6 +291,10 @@ export const applyStateOperations = (state: NessoState, operations: readonly Nes
       case 'preferences.theme':
         if (!registry.themes.has(operation.id)) fail('preferences.activeThemeId', `Unknown theme: ${operation.id}`)
         preferences = { ...preferences, activeThemeId: operation.id }
+        break
+      case 'preferences.locale':
+        if (!isLocale(operation.value)) fail('preferences.locale', 'Unsupported locale')
+        preferences = { ...preferences, locale: operation.value }
         break
       case 'preferences.panels':
         preferences = { ...preferences, panels: { ...operation.value } }

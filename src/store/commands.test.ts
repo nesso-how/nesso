@@ -26,6 +26,7 @@ test('plugin stores enforce isolated declaration snapshots for helpers and entir
     () => reader.reconnectRelation('missing', id, id),
     () => reader.undo(),
     () => reader.redo(),
+    () => reader.setLocale('it'),
     () => store.setSelection([{ kind: 'concept', id }]),
     () => store.undo(),
     () => store.redo(),

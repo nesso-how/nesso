@@ -1,4 +1,5 @@
 import type { PanelSizes, Preferences, SectionId, Viewport, WorkspaceState } from '@nesso/plugin'
+import { isLocale } from '@nesso/i18n'
 import { NessoError } from './errors.ts'
 import { sectionIds } from './types.ts'
 
@@ -89,7 +90,9 @@ export const parseWorkspace = (value: unknown): WorkspaceState => {
 }
 
 export const parsePreferences = (value: unknown): Preferences => {
-  const preferences = object(value, 'preferences', ['activeVocabId', 'activeRendererId', 'activeThemeId', 'panels', 'collapsedSections'])
+  const preferences = object(value, 'preferences', ['locale', 'activeVocabId', 'activeRendererId', 'activeThemeId', 'panels', 'collapsedSections'])
+  const locale = preferences.locale
+  if (locale !== undefined && !isLocale(locale)) fail('preferences.locale', 'Unsupported locale')
   let collapsedSections: SectionId[] | undefined
   if (preferences.collapsedSections !== undefined) {
     if (!Array.isArray(preferences.collapsedSections)) fail('preferences.collapsedSections', 'Expected section ids')
@@ -100,6 +103,7 @@ export const parsePreferences = (value: unknown): Preferences => {
     if (new Set(collapsedSections).size !== collapsedSections.length) fail('preferences.collapsedSections', 'Duplicate section id')
   }
   return {
+    ...(isLocale(locale) ? { locale } : {}),
     activeVocabId: string(preferences.activeVocabId, 'preferences.activeVocabId'),
     activeRendererId: string(preferences.activeRendererId, 'preferences.activeRendererId'),
     activeThemeId: preferences.activeThemeId === undefined ? '' : string(preferences.activeThemeId, 'preferences.activeThemeId'),

@@ -8,8 +8,10 @@ import { NewViewButton } from './NewViewButton'
 import { ViewNameForm } from './ViewNameForm'
 import { host, nessoStore, useNessoStore } from '@/store'
 import { panelLimits } from '@/store/settings'
+import { useTranslation } from '@/i18n'
 
 export function AppSidebar() {
+  const t = useTranslation()
   const workspace = useNessoStore((state) => state.workspace)
   const collapsed = useNessoStore((state) => state.preferences.collapsedSections)
   const pinnedOpen = !collapsed?.includes('sidebar.pinned-views')
@@ -40,20 +42,20 @@ export function AppSidebar() {
         className="min-w-0 flex-1 rounded-sm px-2.5 py-2 text-left"
       >
         <span className="block text-[13px] leading-[19px] break-words">{view.name}</span>
-        <span className="mt-[3px] block font-mono text-[10px] leading-[14px] text-muted-foreground">{view.conceptIds.length} {view.conceptIds.length === 1 ? 'concept' : 'concepts'}</span>
+        <span className="mt-[3px] block font-mono text-[10px] leading-[14px] text-muted-foreground">{t('conceptCount', { count: view.conceptIds.length })}</span>
       </button>
       <Menu.Root open={menu === view.id} onOpenChange={(open) => setMenu(open ? view.id : null)}>
         <Menu.Trigger ref={(element: HTMLButtonElement | null) => {
           if (element) menuTriggers.current.set(view.id, element)
           else menuTriggers.current.delete(view.id)
-        }} render={<Button variant="ghost" size="icon-sm" className="mr-1 text-muted-foreground opacity-0 group-hover:opacity-100 group-has-[:focus-visible]:opacity-100 data-popup-open:opacity-100 hover:bg-transparent hover:text-foreground active:bg-transparent [@media(pointer:coarse)]:opacity-100" aria-label={`Actions for ${view.name}`} />}>
+        }} render={<Button variant="ghost" size="icon-sm" className="mr-1 text-muted-foreground opacity-0 group-hover:opacity-100 group-has-[:focus-visible]:opacity-100 data-popup-open:opacity-100 hover:bg-transparent hover:text-foreground active:bg-transparent [@media(pointer:coarse)]:opacity-100" aria-label={t('actionsFor', { name: view.name })} />}>
           <MoreHorizontal />
         </Menu.Trigger>
         <MenuPopup>
           <MenuItem onClick={() => {
             renamingId.current = view.id
             setRenaming(view)
-          }}>Rename view</MenuItem>
+          }}>{t('renameView')}</MenuItem>
           <MenuItem onClick={() => {
             host.store.setViewPinned(view.id, !view.pinned)
             requestAnimationFrame(() => {
@@ -61,10 +63,10 @@ export function AppSidebar() {
               const target = trigger?.getClientRects().length ? trigger : createTrigger.current
               target?.focus()
             })
-          }}>{view.pinned ? 'Unpin view' : 'Pin view'}</MenuItem>
-          <MenuItem onClick={() => downloadGraph(host.store.getViewGraph(view.id), view.name)}>Export view</MenuItem>
+          }}>{t(view.pinned ? 'unpinView' : 'pinView')}</MenuItem>
+          <MenuItem onClick={() => downloadGraph(host.store.getViewGraph(view.id), view.name)}>{t('exportView')}</MenuItem>
           <Menu.Separator className="my-1 h-px bg-border" />
-          <MenuItem onClick={() => { deletingId.current = view.id; setDeleting(view) }}>Delete view</MenuItem>
+          <MenuItem onClick={() => { deletingId.current = view.id; setDeleting(view) }}>{t('deleteView')}</MenuItem>
         </MenuPopup>
       </Menu.Root>
     </div>
@@ -99,28 +101,28 @@ export function AppSidebar() {
       <Sidebar>
         <div className="flex min-h-0 flex-1 flex-col px-3 pt-5">
           <NewViewButton ref={createTrigger} />
-          {heading('Pinned views', 'pinned-views', pinnedOpen, () => host.store.setSectionOpen('sidebar.pinned-views', !pinnedOpen))}
+          {heading(t('pinnedViews'), 'pinned-views', pinnedOpen, () => host.store.setSectionOpen('sidebar.pinned-views', !pinnedOpen))}
           <div className="explorer-scroll min-h-0 flex-1 overflow-y-auto p-1.5 -mx-1.5" onScroll={() => setMenu(null)}>
             <div id="pinned-views" hidden={!pinnedOpen} className="mt-1 space-y-0.5">
               <button type="button" onClick={() => nessoStore.setView(null)} aria-current={workspace.activeViewId === null ? 'page' : undefined} className="min-h-14 w-full shrink-0 rounded-sm px-2.5 py-2 text-left hover:bg-accent aria-[current=page]:bg-pressed">
-                <span className="block text-[13px] leading-[19px]">Complete graph</span>
-                <span className="mt-[3px] block font-mono text-[10px] leading-[14px] text-muted-foreground">Default</span>
+                <span className="block text-[13px] leading-[19px]">{t('completeGraph')}</span>
+                <span className="mt-[3px] block font-mono text-[10px] leading-[14px] text-muted-foreground">{t('default')}</span>
               </button>
               {pinned.map(row)}
             </div>
             <div className="mt-4">
-              {heading('Views', 'saved-views', viewsOpen, () => host.store.setSectionOpen('sidebar.views', !viewsOpen))}
+              {heading(t('views'), 'saved-views', viewsOpen, () => host.store.setSectionOpen('sidebar.views', !viewsOpen))}
               <div id="saved-views" hidden={!viewsOpen} className="mt-1 space-y-0.5">{ordinary.map(row)}</div>
             </div>
           </div>
         </div>
-        <ResizeHandle onPointerDown={startResize} aria-label="Resize sidebar" className="absolute inset-y-0 right-0 z-20 cursor-col-resize bg-transparent" />
+        <ResizeHandle onPointerDown={startResize} aria-label={t('resizeSidebar')} className="absolute inset-y-0 right-0 z-20 cursor-col-resize bg-transparent" />
       </Sidebar>
       <Dialog.Root open={renaming !== null} onOpenChange={(open) => { if (!open) setRenaming(null) }}>
         <DialogPopup finalFocus={() => menuTriggers.current.get(renamingId.current ?? '') ?? createTrigger.current}>
-          <Dialog.Title className="text-sm">Rename view</Dialog.Title>
-          <Dialog.Description className="mt-2 text-xs text-muted-foreground">Only the name changes. Concepts and relations remain untouched.</Dialog.Description>
-          {renaming && <ViewNameForm initialName={renaming.name} submitLabel="Save name" onSubmit={(name) => {
+          <Dialog.Title className="text-sm">{t('renameView')}</Dialog.Title>
+          <Dialog.Description className="mt-2 text-xs text-muted-foreground">{t('renameDescription')}</Dialog.Description>
+          {renaming && <ViewNameForm initialName={renaming.name} submitLabel={t('saveName')} onSubmit={(name) => {
             host.store.renameView(renaming.id, name)
             setRenaming(null)
           }} />}
@@ -128,11 +130,11 @@ export function AppSidebar() {
       </Dialog.Root>
       <Dialog.Root open={deleting !== null} onOpenChange={(open) => { if (!open) setDeleting(null) }}>
         <DialogPopup initialFocus={cancel} finalFocus={() => menuTriggers.current.get(deletingId.current ?? '') ?? createTrigger.current}>
-          <Dialog.Title className="text-sm">Delete “{deleting?.name}”?</Dialog.Title>
-          <Dialog.Description className="mt-2 text-xs text-muted-foreground">Concepts and relations remain untouched. This only deletes the view.</Dialog.Description>
+          <Dialog.Title className="text-sm">{t('deleteViewTitle', { name: deleting?.name ?? '' })}</Dialog.Title>
+          <Dialog.Description className="mt-2 text-xs text-muted-foreground">{t('deleteViewDescription')}</Dialog.Description>
           <div className="mt-6 flex justify-end gap-2">
-            <Dialog.Close render={<Button ref={cancel} variant="outline" />}>Cancel</Dialog.Close>
-            <Button onClick={() => { if (deleting) host.store.deleteView(deleting.id); setDeleting(null) }}>Delete view</Button>
+            <Dialog.Close render={<Button ref={cancel} variant="outline" />}>{t('cancel')}</Dialog.Close>
+            <Button onClick={() => { if (deleting) host.store.deleteView(deleting.id); setDeleting(null) }}>{t('deleteView')}</Button>
           </div>
         </DialogPopup>
       </Dialog.Root>

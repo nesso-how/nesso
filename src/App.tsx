@@ -1,4 +1,5 @@
-import { useRef, type CSSProperties } from 'react'
+import { useEffect, useRef, type CSSProperties } from 'react'
+import { defaultLocale } from '@nesso/i18n'
 import { Inspector } from '@/components/app/Inspector'
 import { Navbar } from '@/components/app/Navbar'
 import { PersistenceNotice } from '@/components/app/PersistenceNotice'
@@ -7,6 +8,7 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@nesso/ui'
 import { SidebarInset, SidebarProvider } from '@/components/app/SidebarLayout'
 import { getRenderer, host, useNessoStore } from '@/store'
 import { panelLimits } from '@/store/settings'
+import { translate } from '@/i18n'
 
 function RendererHost() {
   const activeRendererId = useNessoStore((state) => state.preferences.activeRendererId)
@@ -21,9 +23,13 @@ function RendererHost() {
 }
 
 export default function App() {
+  const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale)
+  const t = translate(locale)
   const panels = useNessoStore((state) => state.preferences.panels)
   const selected = useNessoStore((state) => state.selected)
   const group = useRef<HTMLDivElement>(null)
+
+  useEffect(() => { document.documentElement.lang = locale }, [locale])
 
   return (
     <SidebarProvider
@@ -46,7 +52,7 @@ export default function App() {
             <ResizablePanel id="canvas" minSize="40%">
               <RendererHost />
             </ResizablePanel>
-            {selected.length > 0 && <ResizableHandle />}
+            {selected.length > 0 && <ResizableHandle aria-label={t('resizeInspector')} />}
             {selected.length > 0 && (
               <ResizablePanel id="inspector" defaultSize={panels.inspectorWidth} minSize={panelLimits.inspectorWidth.min} maxSize="45%" groupResizeBehavior="preserve-pixel-size">
                 <Inspector />

@@ -1,5 +1,10 @@
 import type { GraphSnapshot, Plugin } from '@nesso/plugin'
 import { serializeGraph, type Graph } from '@nesso/schema'
+import { createTranslator } from '@nesso/i18n'
+import en from './i18n/en.json' with { type: 'json' }
+import it from './i18n/it.json' with { type: 'json' }
+
+const translate = createTranslator(en, { it })
 
 export const downloadGraph = (graph: GraphSnapshot, name = 'graph'): void => {
   const blob = new Blob([JSON.stringify(serializeGraph(structuredClone(graph) as Graph), null, 2)], {
@@ -19,7 +24,7 @@ export const exportPlugin: Plugin = {
   create: ({ store }) => ({
     actions: [{
       id: 'export-view',
-      label: 'Export view',
+      label: (locale) => translate(locale)('exportView'),
       run: () => downloadGraph(store.getState().viewGraph),
     }],
   }),

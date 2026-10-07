@@ -6,10 +6,12 @@
     ".": "./src/index.ts"
   },
   "peerDependencies": {
+    "@nesso/i18n": "workspace:*",
     "@nesso/schema": "workspace:*",
     "react": "^19.2.8"
   },
   "devDependencies": {
+    "@nesso/i18n": "workspace:*",
     "@nesso/schema": "workspace:*",
     "@types/react": "^19.2.18"
   }

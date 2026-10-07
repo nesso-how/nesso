@@ -5,6 +5,7 @@ import { cn } from 'cn'
 import { NessoError } from '@/store/errors'
 import { NewViewButton } from './NewViewButton'
 import { host, useNessoStore } from '@/store'
+import { useTranslation } from '@/i18n'
 
 const SidebarContext = createContext<{ open: boolean; toggle: () => void } | null>(null)
 
@@ -55,10 +56,11 @@ export function Sidebar({ children }: ComponentProps<'div'>) {
 }
 
 export function SidebarTrigger() {
+  const t = useTranslation()
   const { open, toggle } = useSidebar()
 
   return (
-    <Button variant="ghost" size="icon-sm" aria-label="Toggle Sidebar" aria-expanded={open} title={open ? 'Collapse sidebar' : 'Expand sidebar'} onClick={toggle}>
+    <Button variant="ghost" size="icon-sm" aria-label={t('toggleSidebar')} aria-expanded={open} title={t(open ? 'collapseSidebar' : 'expandSidebar')} onClick={toggle}>
       <PanelLeftIcon />
     </Button>
   )

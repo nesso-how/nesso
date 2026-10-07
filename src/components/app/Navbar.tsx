@@ -1,11 +1,15 @@
 import { MoreHorizontal } from 'lucide-react'
 import { useEffect } from 'react'
-import { Button, Menu, MenuItem, MenuPopup } from '@nesso/ui'
+import { Button, Menu, MenuItem, MenuPopup, MenuRadioItem } from '@nesso/ui'
+import { defaultLocale, isLocale, localeNames, locales } from '@nesso/i18n'
 import { SidebarNewView, SidebarTrigger } from '@/components/app/SidebarLayout'
 import { actions } from '@/plugins'
-import { host } from '@/store'
+import { host, useNessoStore } from '@/store'
+import { translate } from '@/i18n'
 
 export function Navbar() {
+  const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale)
+  const t = translate(locale)
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.defaultPrevented || event.isComposing || event.altKey || !(event.metaKey || event.ctrlKey)) return
@@ -26,17 +30,24 @@ export function Navbar() {
       <SidebarNewView />
       <div className="ml-auto">
         <Menu.Root>
-          <Menu.Trigger render={<Button size="icon-sm" variant="ghost" aria-label="Graph menu" title="Graph menu" />}>
+          <Menu.Trigger render={<Button size="icon-sm" variant="ghost" aria-label={t('graphMenu')} title={t('graphMenu')} />}>
             <MoreHorizontal />
           </Menu.Trigger>
           <MenuPopup>
             {actions.map((action) => (
-              <MenuItem key={action.id} onClick={action.run}>{action.label}</MenuItem>
+              <MenuItem key={action.id} onClick={action.run}>{action.label(locale)}</MenuItem>
             ))}
             <Menu.Separator className="my-1 h-px bg-border" />
+            <Menu.Group>
+              <Menu.GroupLabel className="px-2.5 py-2 text-xs text-muted-foreground">{t('language')}</Menu.GroupLabel>
+              <Menu.RadioGroup value={locale} onValueChange={(value) => { if (isLocale(value)) host.store.setLocale(value) }}>
+                {locales.map((value) => <MenuRadioItem key={value} value={value} lang={value}>{localeNames[value]}</MenuRadioItem>)}
+              </Menu.RadioGroup>
+            </Menu.Group>
+            <Menu.Separator className="my-1 h-px bg-border" />
             <MenuItem onClick={() => {
-              if (window.confirm('Reset the graph? All concepts and relations will be replaced by one new concept. This cannot be undone.')) host.store.resetGraph()
-            }}>Reset graph</MenuItem>
+              if (window.confirm(translate(host.store.getState().preferences.locale ?? defaultLocale)('resetConfirmation'))) host.store.resetGraph()
+            }}>{t('resetGraph')}</MenuItem>
           </MenuPopup>
         </Menu.Root>
       </div>

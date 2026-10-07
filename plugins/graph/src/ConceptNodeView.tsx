@@ -3,6 +3,7 @@ import { cn } from 'cn'
 import type { KeyboardEvent } from 'react'
 import type { ConceptNode } from './types'
 import { conceptNodeMinSize } from './adapters'
+import { useTranslation } from './i18n'
 
 const activateHandle = (event: KeyboardEvent<HTMLDivElement>) => {
   if (event.key !== 'Enter' && event.key !== ' ') return
@@ -13,6 +14,7 @@ const activateHandle = (event: KeyboardEvent<HTMLDivElement>) => {
 }
 
 export function ConceptNodeView({ id, data, selected, isConnectable }: NodeProps<ConceptNode>) {
+  const t = useTranslation()
   const zoom = useStore((state) => state.transform[2])
   const connecting = useStore((state) => state.connectionClickStartHandle
     ? state.connectionClickStartHandle.nodeId !== id
@@ -29,14 +31,14 @@ export function ConceptNodeView({ id, data, selected, isConnectable }: NodeProps
       {Object.values(Position).map((position) => (
         <Handle key={position} id={position} type="source" position={position} isConnectable={false} className="!pointer-events-none opacity-0" />
       ))}
-      <Handle id="target" type="target" position={Position.Top} isConnectable={isConnectable} isConnectableStart={false} isConnectableEnd={isConnectable} role="button" aria-label={`Connect to ${data.label}`} aria-hidden={!connecting || !isConnectable} tabIndex={connecting && isConnectable ? 0 : -1} onKeyDown={activateHandle} className={cn('node-target !inset-0 !size-full !transform-none !border-0 opacity-0', !connecting && '!pointer-events-none')} />
+      <Handle id="target" type="target" position={Position.Top} isConnectable={isConnectable} isConnectableStart={false} isConnectableEnd={isConnectable} role="button" aria-label={t('connectTo', { name: data.label })} aria-hidden={!connecting || !isConnectable} tabIndex={connecting && isConnectable ? 0 : -1} onKeyDown={activateHandle} className={cn('node-target !inset-0 !size-full !transform-none !border-0 opacity-0', !connecting && '!pointer-events-none')} />
       <span className="whitespace-nowrap text-center">{data.label}</span>
       <Handle
         id="create"
         type="source"
         position={Position.Top}
         isConnectable={selected && isConnectable}
-        aria-label={`Connect from ${data.label}`}
+        aria-label={t('connectFrom', { name: data.label })}
         role="button"
         aria-hidden={!selected || !isConnectable}
         tabIndex={selected && isConnectable ? 0 : -1}

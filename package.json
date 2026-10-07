@@ -19,6 +19,7 @@
   "dependencies": {
     "@nesso/export": "workspace:*",
     "@nesso/graph": "workspace:*",
+    "@nesso/i18n": "workspace:*",
     "@nesso/plugin": "workspace:*",
     "@nesso/schema": "workspace:*",
     "@nesso/theme": "workspace:*",

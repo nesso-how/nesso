@@ -8,6 +8,8 @@ Add `graphPlugin` to the static plugin list in `src/plugins.ts`; the host render
 
 New concepts appear near the selected concept or at the viewport center, and join the active view. Only the selected node shows its creation handle; selected edges expose reconnect handles that preserve the relation type. Self-connections and duplicates are rejected.
 
+Canvas controls and accessibility messages use local English/Italian catalogs through `@nesso/i18n`. The renderer subscribes to the injected store's locale preference; concept labels and relation types are displayed unchanged.
+
 ## API
 
 - `graphPlugin`: operation declaration and factory binding the injected `NessoStore` to its renderer instance.

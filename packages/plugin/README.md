@@ -18,7 +18,7 @@ export const examplePlugin: Plugin = {
     }],
     actions: [{
       id: 'rename-selected',
-      label: 'Rename selected concept',
+      label: () => 'Rename selected concept',
       run: () => {
         const selected = store.getState().selected
         if (selected?.kind === 'concept') store.setConceptLabel(selected.id, 'Renamed')
@@ -63,7 +63,8 @@ export const exampleRendererPlugin: Plugin = {
 - `NessoOperation`: readonly writes for concepts, relations, views, selection, viewport, preferences, reset, and history. State writes read the preceding candidate state; new concepts join the view active at their creation. Only the final state is published. The host records graph and saved-view effects for undo/redo, not navigation or preferences.
 - `history.undo` and `history.redo`: declare these operation kinds to control the shared document history, including edits made by the host or other plugins. Each must be the only operation in its call; batches containing history alongside any other operation are rejected before changing state or history. Undo/redo restore recorded deltas without replaying original requests or recording a new edit. They do not require declarations for the original edit kinds, and an empty history is a no-op.
 - `applyOperations` accepts optional `{ historyGroup: string }` metadata to coalesce adjacent label/position edits in one interaction. Use a fresh ID for each text session or drag. Metadata does not bypass operation declarations; undo/redo commands remain host-owned.
-- `RendererDefinition`, `VocabDefinition`, `ActionDefinition`: contribution shapes. Actions are `{ id, label, run }` commands; renderer components use the injected store.
+- `RendererDefinition`, `VocabDefinition`, `ActionDefinition`: contribution shapes. Actions are `{ id, label(locale), run }` commands; the host supplies the active locale when displaying their labels. Renderer components use the injected store.
+- `Preferences.locale`: optional English/Italian interface locale; an unset preference means English. `setLocale` delegates to `preferences.locale`, subject to the same declaration check as other writes. Plugins read and subscribe to locale changes through the injected store and can use `@nesso/i18n` with their own catalogs.
 - `SavedView`: readonly named concept set with pin metadata. `WorkspaceState` holds saved views, the active view id, and renderer viewports; null active view means the complete graph.
 - `ThemeDefinition`: id and label. Statically imported CSS scopes tokens to `:root[data-theme='<id>']`; theme activation uses the store and DOM application stays in the host.
 
