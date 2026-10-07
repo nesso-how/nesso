@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" shape-rendering="crispEdges">
+<rect width="1200" height="630" fill="#ffffff"/>
+<g transform="translate(140 173) scale(7)">
+<path fill="#393939" d="M6 6h4v4H6zM22 6h4v4h-4zM6 10h4v4H6zM10 10h4v4h-4zM22 10h4v4h-4zM6 14h4v4H6zM14 14h4v4h-4zM22 14h4v4h-4zM6 18h4v4H6zM18 18h4v4h-4zM22 18h4v4h-4zM6 22h4v4H6zM22 22h4v4h-4z"/>
+</g>
+<text x="420" y="352" font-family="monospace" font-size="150" font-weight="bold" fill="#292929">nesso</text>
+<path fill="#393939" d="M880 362h95v14H880z"/>
+<text x="142" y="478" font-family="sans-serif" font-size="50" fill="#6b6b6b">A second brain built on connections.</text>
+</svg>
