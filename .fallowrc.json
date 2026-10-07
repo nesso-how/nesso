@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/fallow/schema.json",
-  "entry": ["src/lib/utils.ts"],
+  "entry": ["src/lib/utils.ts", "site/index.html"],
   "ignoreDependencies": ["shadcn"],
   "rules": {
     "unused-exports": "warn",
