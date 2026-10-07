@@ -5,7 +5,7 @@ import { host, useNessoStore } from '@/store'
 import { InspectorSection } from './InspectorSection'
 import { useTranslation } from '@/i18n'
 
-export function ConceptConnections({ conceptId }: { conceptId: string }) {
+export function ConceptConnections({ conceptId, readonly = false }: { conceptId: string; readonly?: boolean }) {
   const t = useTranslation()
   const graph = useNessoStore((state) => state.graph)
   const viewGraph = useNessoStore((state) => state.viewGraph)
@@ -36,7 +36,7 @@ export function ConceptConnections({ conceptId }: { conceptId: string }) {
                 <span className="min-w-0 break-words">{label}</span>
               </span>
               <span className="col-start-1 row-start-2 min-h-6 min-w-0 max-w-full justify-self-start text-[13px] leading-[19px] break-words">{other?.label}</span>
-              {activeViewId !== null && <Button variant="ghost" size="icon-sm" className="col-start-2 row-span-2 row-start-1 self-center text-muted-foreground hover:bg-transparent hover:text-foreground" title={t(included ? 'removeFromCurrentView' : 'addToCurrentView')} aria-label={t(included ? 'removeConceptFromCurrentView' : 'addConceptToCurrentView', { name: other?.label ?? '' })} onClick={() => host.store.setViewMembership(activeViewId, otherId, !included)}><MembershipIcon /></Button>}
+              {activeViewId !== null && !readonly && <Button variant="ghost" size="icon-sm" className="col-start-2 row-span-2 row-start-1 self-center text-muted-foreground hover:bg-transparent hover:text-foreground" title={t(included ? 'removeFromCurrentView' : 'addToCurrentView')} aria-label={t(included ? 'removeConceptFromCurrentView' : 'addConceptToCurrentView', { name: other?.label ?? '' })} onClick={() => host.store.setViewMembership(activeViewId, otherId, !included)}><MembershipIcon /></Button>}
             </div>
           )
         })}

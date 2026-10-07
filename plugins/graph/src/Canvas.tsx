@@ -23,6 +23,7 @@ import { ConnectionPreview } from './ConnectionPreview'
 import { conceptNode, conceptNodeMinSize, relationEdge, type ConceptNodeSizes } from './adapters'
 import type { ConceptNode, RelationEdge } from './types'
 import { useNesso, useStore } from './store'
+import { useIsCompact } from './media'
 import { selectionFromChanges } from './selection'
 import { useTranslation } from './i18n'
 
@@ -41,7 +42,9 @@ export function Canvas() {
   const viewCount = graph.concepts.length
   const store = useStore()
   const flow = useStoreApi()
-  const interactive = useFlowStore((state) => state.nodesDraggable || state.nodesConnectable || state.elementsSelectable)
+  const readonly = useIsCompact()
+  const flowInteractive = useFlowStore((state) => state.nodesDraggable || state.nodesConnectable || state.elementsSelectable)
+  const interactive = !readonly && flowInteractive
   const LockIcon = interactive ? LockOpen : Lock
   const [initialViewport] = useState(() => store.getState().workspace.viewports.graph)
   const navigation = useRef(view)
@@ -86,7 +89,7 @@ export function Canvas() {
     const updates = changes.flatMap((change) =>
       change.type === 'position' && change.position ? [{ id: change.id, position: change.position }] : [],
     )
-    if (updates.length) store.applyOperations([{ kind: 'concept.positions', updates }], { historyGroup: dragGroup.current })
+    if (!readonly && updates.length) store.applyOperations([{ kind: 'concept.positions', updates }], { historyGroup: dragGroup.current })
     if (changes.some((change) => change.type === 'position' && change.dragging === false)) dragGroup.current = undefined
     onObjectChanges('concept', changes)
   }
@@ -183,7 +186,7 @@ export function Canvas() {
         deleteKeyCode={null}
         onNodesChange={onNodesChange}
         onEdgesChange={(changes) => onObjectChanges('relation', changes)}
-        onConnect={({ source, target }) => store.connect(source, target)}
+        onConnect={readonly ? undefined : ({ source, target }) => store.connect(source, target)}
         onReconnect={interactive ? (edge, { source, target }) => store.reconnectRelation(edge.id, source, target) : undefined}
         onReconnectStart={(_event, edge) => { reconnecting.current = edge; setReconnectDrag(true) }}
         onReconnectEnd={() => { reconnecting.current = null; setReconnectDrag(false) }}
@@ -211,25 +214,29 @@ export function Canvas() {
           <ControlButton className="react-flow__controls-fitview" onClick={() => { void fitView(fitViewOptions) }} title={t('fitView')} aria-label={t('fitView')}>
             <Maximize aria-hidden="true" />
           </ControlButton>
-          <ControlButton className="react-flow__controls-interactive" onClick={() => flow.setState({ nodesDraggable: !interactive, nodesConnectable: !interactive && singleSelection, elementsSelectable: !interactive })} title={t(interactive ? 'lockInteractions' : 'unlockInteractions')} aria-label={t(interactive ? 'lockInteractions' : 'unlockInteractions')} aria-pressed={!interactive}>
-            <LockIcon aria-hidden="true" />
-          </ControlButton>
+          {!readonly && (
+            <ControlButton className="react-flow__controls-interactive" onClick={() => flow.setState({ nodesDraggable: !interactive, nodesConnectable: !interactive && singleSelection, elementsSelectable: !interactive })} title={t(interactive ? 'lockInteractions' : 'unlockInteractions')} aria-label={t(interactive ? 'lockInteractions' : 'unlockInteractions')} aria-pressed={!interactive}>
+              <LockIcon aria-hidden="true" />
+            </ControlButton>
+          )}
         </Controls>
         <Panel position="bottom-right" className="canvas-label pointer-events-none font-mono text-[10px] text-muted-foreground" aria-label={t('zoomLevel')}>{Math.round(zoom * 100)}%</Panel>
-        <Controls position="top-right" orientation="horizontal" showZoom={false} showFitView={false} showInteractive={false}>
-          <ControlButton onClick={store.undo} disabled={!canUndo} title={t('undo')} aria-label={t('undo')}>
-            <Undo2 aria-hidden="true" />
-          </ControlButton>
-          <ControlButton onClick={store.redo} disabled={!canRedo} title={t('redo')} aria-label={t('redo')}>
-            <Redo2 aria-hidden="true" />
-          </ControlButton>
-          <ControlButton onClick={handleDelete} disabled={!canDelete} title={t('deleteSelected')} aria-label={t('deleteSelected')}>
-            <Trash2 aria-hidden="true" />
-          </ControlButton>
-          <ControlButton onClick={handleAdd} title={t('addConcept')} aria-label={t('addConcept')}>
-            <Plus aria-hidden="true" />
-          </ControlButton>
-        </Controls>
+        {!readonly && (
+          <Controls position="top-right" orientation="horizontal" showZoom={false} showFitView={false} showInteractive={false}>
+            <ControlButton onClick={store.undo} disabled={!canUndo} title={t('undo')} aria-label={t('undo')}>
+              <Undo2 aria-hidden="true" />
+            </ControlButton>
+            <ControlButton onClick={store.redo} disabled={!canRedo} title={t('redo')} aria-label={t('redo')}>
+              <Redo2 aria-hidden="true" />
+            </ControlButton>
+            <ControlButton onClick={handleDelete} disabled={!canDelete} title={t('deleteSelected')} aria-label={t('deleteSelected')}>
+              <Trash2 aria-hidden="true" />
+            </ControlButton>
+            <ControlButton onClick={handleAdd} title={t('addConcept')} aria-label={t('addConcept')}>
+              <Plus aria-hidden="true" />
+            </ControlButton>
+          </Controls>
+        )}
       </ReactFlow>
     </div>
   )

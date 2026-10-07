@@ -6,7 +6,7 @@ import { host, useNessoStore } from '@/store'
 import { InspectorSection } from './InspectorSection'
 import { useTranslation } from '@/i18n'
 
-export function ConceptViews({ conceptIds }: { conceptIds: readonly string[] }) {
+export function ConceptViews({ conceptIds, readonly = false }: { conceptIds: readonly string[]; readonly?: boolean }) {
   const t = useTranslation()
   const workspace = useNessoStore((state) => state.workspace)
   const memberships = workspace.savedViews.filter((view) => conceptIds.some((id) => view.conceptIds.includes(id)))
@@ -25,12 +25,13 @@ export function ConceptViews({ conceptIds }: { conceptIds: readonly string[] }) 
           {memberships.map((view) => (
             <li key={view.id} className="flex items-center gap-2">
               <span className="min-w-0 flex-1 break-words">{view.name}{conceptIds.length > 1 && <span className="ml-2 text-xs text-muted-foreground">{conceptIds.filter((id) => view.conceptIds.includes(id)).length}/{conceptIds.length}</span>}</span>
-              <Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:bg-transparent hover:text-foreground" aria-label={t('removeFromView', { name: view.name })} onClick={() => setMembership(view.id, false)}><X /></Button>
+              {!readonly && <Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:bg-transparent hover:text-foreground" aria-label={t('removeFromView', { name: view.name })} onClick={() => setMembership(view.id, false)}><X /></Button>}
             </li>
           ))}
         </ul>
       )}
-      <Combobox.Root<SavedView>
+      {!readonly && (
+        <Combobox.Root<SavedView>
         items={available}
         itemToStringLabel={(view) => view.name}
         value={null}
@@ -57,6 +58,7 @@ export function ConceptViews({ conceptIds }: { conceptIds: readonly string[] }) 
           </Combobox.Empty>
         </ComboboxPopup>
       </Combobox.Root>
+      )}
     </InspectorSection>
   )
 }

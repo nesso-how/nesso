@@ -1,4 +1,4 @@
-import { MoreHorizontal } from 'lucide-react'
+import { Layers, MoreHorizontal } from 'lucide-react'
 import { useEffect } from 'react'
 import { Button, Menu, MenuItem, MenuPopup } from '@nesso/ui'
 import { defaultLocale } from '@nesso/i18n'
@@ -7,7 +7,7 @@ import { actions } from '@/plugins'
 import { host, useNessoStore } from '@/store'
 import { translate } from '@/i18n'
 
-export function Navbar({ onOpenSettings }: { onOpenSettings: () => void }) {
+export function Navbar({ readonly = false, onOpenViews, onOpenSettings }: { readonly?: boolean; onOpenViews?: () => void; onOpenSettings: () => void }) {
   const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale)
   const t = translate(locale)
   useEffect(() => {
@@ -26,8 +26,14 @@ export function Navbar({ onOpenSettings }: { onOpenSettings: () => void }) {
   }, [])
   return (
     <header className="flex h-[52px] shrink-0 items-center gap-2 border-b bg-background px-3">
-      <SidebarTrigger />
-      <SidebarNewView />
+      {readonly ? (
+        <Button variant="ghost" size="icon-sm" onClick={onOpenViews} aria-label={t('views')} title={t('views')}>
+          <Layers />
+        </Button>
+      ) : (
+        <SidebarTrigger />
+      )}
+      {!readonly && <SidebarNewView />}
       <div className="ml-auto">
         <Menu.Root>
           <Menu.Trigger render={<Button data-graph-menu-trigger size="icon-sm" variant="ghost" aria-label={t('graphMenu')} title={t('graphMenu')} />}>
@@ -39,9 +45,11 @@ export function Navbar({ onOpenSettings }: { onOpenSettings: () => void }) {
             ))}
             <Menu.Separator className="my-1 h-px bg-border" />
             <MenuItem className="md:hidden" onClick={onOpenSettings}>{t('settings')}</MenuItem>
-            <MenuItem onClick={() => {
-              if (window.confirm(translate(host.store.getState().preferences.locale ?? defaultLocale)('resetConfirmation'))) host.store.resetGraph()
-            }}>{t('resetGraph')}</MenuItem>
+            {!readonly && (
+              <MenuItem onClick={() => {
+                if (window.confirm(translate(host.store.getState().preferences.locale ?? defaultLocale)('resetConfirmation'))) host.store.resetGraph()
+              }}>{t('resetGraph')}</MenuItem>
+            )}
           </MenuPopup>
         </Menu.Root>
       </div>

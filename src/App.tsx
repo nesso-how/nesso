@@ -5,8 +5,9 @@ import { Navbar } from '@/components/app/Navbar'
 import { PersistenceNotice } from '@/components/app/PersistenceNotice'
 import { AppSidebar } from '@/components/app/Sidebar'
 import { SettingsDialog } from '@/components/app/SettingsDialog'
-import { Dialog, ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@nesso/ui'
+import { Dialog, ResizableHandle, ResizablePanel, ResizablePanelGroup, useMediaQuery } from '@nesso/ui'
 import { SidebarInset, SidebarProvider } from '@/components/app/SidebarLayout'
+import { ExplorerDrawer } from '@/components/app/ExplorerDrawer'
 import { getRenderer, host, useNessoStore } from '@/store'
 import { panelLimits } from '@/store/settings'
 import { translate } from '@/i18n'
@@ -29,22 +30,25 @@ export default function App() {
   const panels = useNessoStore((state) => state.preferences.panels)
   const selected = useNessoStore((state) => state.selected)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [viewsOpen, setViewsOpen] = useState(false)
+  const readonly = useMediaQuery('(max-width: 767px)')
   const group = useRef<HTMLDivElement>(null)
 
   useEffect(() => { document.documentElement.lang = locale }, [locale])
 
   return (
-    <Dialog.Root open={settingsOpen} onOpenChange={setSettingsOpen}>
+    <Dialog.Root open={settingsOpen} onOpenChange={(open) => { if (open) setViewsOpen(false); setSettingsOpen(open) }}>
       <SidebarProvider
         style={{ '--sidebar-width': `${panels.explorerWidth}px` } as CSSProperties}
       >
-        <Navbar onOpenSettings={() => setSettingsOpen(true)} />
+        <Navbar readonly={readonly} onOpenViews={() => setViewsOpen(true)} onOpenSettings={() => setSettingsOpen(true)} />
+        <ExplorerDrawer open={readonly && viewsOpen} onClose={() => setViewsOpen(false)} />
         <div className="relative flex min-h-0 flex-1 overflow-hidden">
           <AppSidebar />
           <SidebarInset className="min-w-0 overflow-hidden">
             <ResizablePanelGroup
               elementRef={group}
-              orientation="horizontal"
+              orientation={readonly ? 'vertical' : 'horizontal'}
               className="min-h-0 flex-1"
               onLayoutChanged={(layout, meta) => {
                 if (selected.length === 0 || !meta.isUserInteraction || !group.current) return
@@ -58,7 +62,7 @@ export default function App() {
               {selected.length > 0 && <ResizableHandle aria-label={t('resizeInspector')} />}
               {selected.length > 0 && (
                 <ResizablePanel id="inspector" defaultSize={panels.inspectorWidth} minSize={panelLimits.inspectorWidth.min} maxSize="45%" groupResizeBehavior="preserve-pixel-size">
-                  <Inspector />
+                  <Inspector readonly={readonly} />
                 </ResizablePanel>
               )}
             </ResizablePanelGroup>

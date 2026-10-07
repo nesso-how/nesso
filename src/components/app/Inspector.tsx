@@ -94,7 +94,7 @@ function RelationInput({ edgeId, typeId, label, defaultTypeId, relationTypes, on
   )
 }
 
-export function Inspector() {
+export function Inspector({ readonly = false }: { readonly?: boolean }) {
   const t = useTranslation()
   const textGroup = useRef<string | undefined>(undefined)
   const graph = useNessoStore((state) => state.graph)
@@ -145,34 +145,45 @@ export function Inspector() {
         <section className="flex flex-col gap-[26px]">
           {outsideCount > 0 && <p className="text-xs text-muted-foreground">{t('outsideConcept')}</p>}
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="concept-label">{t('label')}</Label>
-            <Input
-              key={concept.id}
-              id="concept-label"
-              maxLength={maxConceptLabelLength}
-              data-document-edit
-              value={concept.label}
-              onFocus={() => { textGroup.current = newIri() }}
-              onBlur={() => { textGroup.current = undefined }}
-              onChange={(event) => nessoStore.applyOperations([
-                { kind: 'concept.label', id: concept.id, value: event.target.value },
-              ], { historyGroup: textGroup.current ??= newIri() })}
-            />
+            <Label>{t('label')}</Label>
+            {readonly ? (
+              <p className="text-[13px] leading-[19px] break-words">{concept.label}</p>
+            ) : (
+              <Input
+                key={concept.id}
+                id="concept-label"
+                maxLength={maxConceptLabelLength}
+                data-document-edit
+                value={concept.label}
+                onFocus={() => { textGroup.current = newIri() }}
+                onBlur={() => { textGroup.current = undefined }}
+                onChange={(event) => nessoStore.applyOperations([
+                  { kind: 'concept.label', id: concept.id, value: event.target.value },
+                ], { historyGroup: textGroup.current ??= newIri() })}
+              />
+            )}
           </div>
-          <ConceptConnections key={`connections:${concept.id}`} conceptId={concept.id} />
+          <ConceptConnections key={`connections:${concept.id}`} conceptId={concept.id} readonly={readonly} />
         </section>
       ) : selectedEdge ? (
         <section className="flex flex-col gap-[26px]">
-          <RelationInput
-            key={`${relationKey(selectedEdge)}:${selectedRelationLabel}`}
-            edgeId={relationKey(selectedEdge)}
-            typeId={selectedEdge.predicate}
-            label={selectedRelationLabel}
-            defaultTypeId={activeVocab?.defaultTypeId}
-            relationTypes={relationTypes}
-            onSave={nessoStore.setRelationType}
-            onCreate={nessoStore.createRelationType}
-          />
+          {readonly ? (
+            <div className="flex flex-col gap-1.5">
+              <Label>{t('relation')}</Label>
+              {selectedRelationLabel && <p className="text-[13px] leading-[19px] break-words">{selectedRelationLabel}</p>}
+            </div>
+          ) : (
+            <RelationInput
+              key={`${relationKey(selectedEdge)}:${selectedRelationLabel}`}
+              edgeId={relationKey(selectedEdge)}
+              typeId={selectedEdge.predicate}
+              label={selectedRelationLabel}
+              defaultTypeId={activeVocab?.defaultTypeId}
+              relationTypes={relationTypes}
+              onSave={nessoStore.setRelationType}
+              onCreate={nessoStore.createRelationType}
+            />
+          )}
           <InspectorSection id="inspector.nodes" title={t('nodes')}>
             <div className="mt-2 space-y-3">
               <div className="flex flex-col gap-1"><span className="font-mono text-[10px] leading-[14px] text-muted-foreground">{t('from')}</span><span className="text-[13px] leading-[19px] break-words">{sourceLabel}</span></div>
@@ -181,7 +192,7 @@ export function Inspector() {
           </InspectorSection>
         </section>
       ) : null}
-      {conceptIds.length > 0 && <ConceptViews key={JSON.stringify(conceptIds)} conceptIds={conceptIds} />}
+      {conceptIds.length > 0 && <ConceptViews key={JSON.stringify(conceptIds)} conceptIds={conceptIds} readonly={readonly} />}
     </aside>
   )
 }

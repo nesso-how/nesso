@@ -1,4 +1,5 @@
 export { Button } from './button'
+export { useMediaQuery } from './media'
 export { Input } from './input'
 export { Label } from './label'
 export { Notice } from './notice'
