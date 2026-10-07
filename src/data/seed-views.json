@@ -1,49 +1,33 @@
 [
   {
-    "id": "mobility", "name": "Mobility", "pinned": false,
+    "id": "first-try", "name": "First try", "pinned": true,
     "conceptIds": [
-      "urn:uuid:453a027b-5736-5e9e-a8f6-29c611a86522",
-      "urn:uuid:965a305c-cd29-5fbe-a22d-d100105355a5",
-      "urn:uuid:2242cdaf-cde6-53f4-a78f-68df5581b435",
-      "urn:uuid:5e5b8945-a806-5510-bfbc-3e97a4754393",
-      "urn:uuid:88047303-9c3a-5527-8bb7-498d3ff42c0d",
-      "urn:uuid:bb100509-47eb-5aa1-aa39-be15e08272dc",
-      "urn:uuid:b4fc7ed8-3f82-5e65-9e65-e268b90fe741"
+      "urn:uuid:40ef4920-cf1f-41c6-8cff-6190897f591d",
+      "urn:uuid:f3db5b55-8f74-42eb-bd43-c3a53887a922",
+      "urn:uuid:e64eab51-22fd-433b-93cc-02be7945f31f",
+      "urn:uuid:74896b3c-ac0f-4d06-a9e5-05c7adca21c5",
+      "urn:uuid:96143bed-86b7-4227-af9d-a9831d494d3d",
+      "urn:uuid:5db4f50d-c838-4c49-a229-f8f8c90f0002"
     ]
   },
   {
-    "id": "energy", "name": "Energy", "pinned": false,
-    "conceptIds": ["urn:uuid:2242cdaf-cde6-53f4-a78f-68df5581b435", "urn:uuid:241a73f7-286a-5517-a450-9fdf102aaf64"]
-  },
-  {
-    "id": "health", "name": "Health", "pinned": false,
+    "id": "warm-spot", "name": "Warm spot", "pinned": false,
     "conceptIds": [
-      "urn:uuid:5e5b8945-a806-5510-bfbc-3e97a4754393",
-      "urn:uuid:6b8373ec-7eb6-58d8-9951-98319988d396",
-      "urn:uuid:167aba99-57f0-54a7-afed-2d8a72a14763",
-      "urn:uuid:07524c4f-ecfb-5452-a6df-66bc956db5ac"
+      "urn:uuid:74896b3c-ac0f-4d06-a9e5-05c7adca21c5",
+      "urn:uuid:69d22e9d-c4fc-48a4-8f7f-2b9f41bb1ddf",
+      "urn:uuid:5db4f50d-c838-4c49-a229-f8f8c90f0002",
+      "urn:uuid:6f9368dd-cc27-41e5-aa52-b51337e86540",
+      "urn:uuid:8ece1d3f-c61a-41d3-b1cb-0bc950d9dbfe"
     ]
   },
   {
-    "id": "infrastructure", "name": "Infrastructure", "pinned": false,
+    "id": "fresh-bread", "name": "Fresh bread", "pinned": false,
     "conceptIds": [
-      "urn:uuid:88047303-9c3a-5527-8bb7-498d3ff42c0d",
-      "urn:uuid:d32e5909-1b53-5dae-b64a-1b16f2e8f3ef",
-      "urn:uuid:241a73f7-286a-5517-a450-9fdf102aaf64",
-      "urn:uuid:762b8eae-6e45-54c8-84b0-0dc6ec45ab17"
+      "urn:uuid:96143bed-86b7-4227-af9d-a9831d494d3d",
+      "urn:uuid:20c70799-1348-45ba-8cb3-7adfe06567fe",
+      "urn:uuid:b096052c-3024-49ae-81e7-780eb6e0ddc1",
+      "urn:uuid:8ece1d3f-c61a-41d3-b1cb-0bc950d9dbfe",
+      "urn:uuid:9363b22a-aba6-4caf-b999-74d611c2ab68"
     ]
-  },
-  {
-    "id": "environment", "name": "Environment", "pinned": false,
-    "conceptIds": [
-      "urn:uuid:b4fc7ed8-3f82-5e65-9e65-e268b90fe741",
-      "urn:uuid:6b8373ec-7eb6-58d8-9951-98319988d396",
-      "urn:uuid:07524c4f-ecfb-5452-a6df-66bc956db5ac",
-      "urn:uuid:d32e5909-1b53-5dae-b64a-1b16f2e8f3ef"
-    ]
-  },
-  {
-    "id": "community", "name": "Community", "pinned": false,
-    "conceptIds": ["urn:uuid:762b8eae-6e45-54c8-84b0-0dc6ec45ab17"]
   }
 ]

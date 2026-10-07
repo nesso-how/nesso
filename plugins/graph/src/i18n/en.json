@@ -2,7 +2,7 @@
   "pluginName": "Nesso Graph",
   "pluginDescription": "View and connect your concepts on a canvas.",
   "pluginDocumentation": "Nesso Graph displays the current view. Drag concepts to arrange them, connect them, and select items to edit them in the Inspector. Canvas controls share the document's undo and redo history.",
-  "completeGraph": "Complete graph",
+  "completeGraph": "All",
   "conceptCount_one": "{{count}} concept",
   "conceptCount_other": "{{count}} concepts",
   "fitView": "Fit view",

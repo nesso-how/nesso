@@ -15,7 +15,7 @@
 ## Product
 
 - Keep the app light-only.
-- Views are concept subsets, never graph copies or tags. Complete graph is non-deletable. Keep relation type IRIs stable.
+- Views are concept subsets, never graph copies or tags. The `All` view (complete graph) is non-deletable. Keep relation type IRIs stable.
 - New concepts join the active saved view. With exactly one concept selected, link to it using the active vocabulary's default type, displayed unlabeled; otherwise start disconnected.
 - Explorer groups views by pinned status; pinning and collapsing never change scope.
 - Selection never changes view membership. There is no persistent concept focus. Close the Inspector when selection is empty.

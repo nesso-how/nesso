@@ -18,7 +18,7 @@ On macOS, `pnpm desktop` builds and runs the app.
 
 ## Usage
 
-Your knowledge lives in one graph. **Complete graph** always contains every concept.
+Your knowledge lives in one graph. **All** always contains every concept.
 
 - **Concepts** represent ideas, connected by directed, typed **relations**.
 - **Views** are named subsets of that graph, not copies. Removing a concept from a view does not delete it.
