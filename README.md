@@ -1,9 +1,7 @@
 <div align="center">
 
-<img src="public/icon.svg" alt="Nesso" width="96">
-
-# Nesso
-
+<img src="public/logo.svg" alt="Nesso" width="350">
+</br></br>
 A second brain for connecting ideas and building understanding in one knowledge graph, built on a small core with a simple plugin system.
 
 </div>
@@ -20,35 +18,33 @@ pnpm dev
 On macOS, `pnpm desktop` builds and runs the app.
 
 > [!WARNING]
-> Downloaded DMGs are not signed or notarized; Gatekeeper may block them.
+> Downloaded DMGs are still not signed or notarized; Gatekeeper may block them.
 
 ## Usage
 
-Your knowledge lives in one graph. **All** always contains every concept.
+Your knowledge lives in one graph.
 
 - **Concepts** represent ideas, connected by directed, typed **relations**.
-- **Views** are named subsets of that graph, not copies. Removing a concept from a view does not delete it.
-- **Vocabularies** provide relation types; you can also name your own.
-- **Plugins** provide the canvas, vocabularies, themes, and export, keeping the core small.
+- **Views** are named subsets of that graph.
+- **Vocabularies** provide relation types. Pou can also name your own.
+- **Plugins** provide the canvas, vocabularies, themes, and any actions on the current view.
 
-Use the Explorer to navigate views, the canvas to build the graph, and the Inspector to edit the selection and its memberships. The visible graph can be exported as JSON-LD.
+Use the Explorer to navigate views, the canvas to build the graph, and the Inspector to edit the selection and its memberships.
 
 > [!NOTE]
-> The document and preferences are saved automatically in local storage. There is no cross-device sync; local storage is not a backup.
->
 > This is pre-alpha software. Stored formats may change without migrations.
 
 ## Architecture
 
 ```mermaid
 flowchart TD
-  Host["Host · src/<br/>UI, store, persistence"]
-  Host --> Schema["@nesso/schema<br/>Model, validation, JSON-LD"]
-  Host --> UI["@nesso/ui<br/>Shared controls"]
-  Host --> I18n["@nesso/i18n<br/>Translations"]
-  Host <-->|Injected store| Plugins["Plugins<br/>graph · vocab · export · theme"]
+  Host["Host (UI, store, persistence)"]
+  Host --> Schema["@nesso/schema"]
+  Host --> UI["@nesso/ui"]
+  Host --> I18n["@nesso/i18n"]
+  Host <-->|Injected store| Plugins["Plugins<br/>(renderers, vocabs, themes, actions"]
   Plugins --> I18n
-  Host -.-> Contract["@nesso/plugin<br/>Types-only contract"]
+  Host -.-> Contract["@nesso/plugin"]
   Plugins -.-> Contract
 ```
 
@@ -65,8 +61,6 @@ The host owns state, materializes `viewGraph`, and registers plugins statically.
 | [`@nesso/export`](plugins/export/README.md) | Plugin | Graph and view export as JSON-LD. |
 | [`@nesso/theme`](plugins/theme/README.md) | Plugin | Kernel theme tokens and bundled fonts. |
 
-Host development rules: [`src/AGENTS.md`](src/AGENTS.md).
-
 ## Development
 
 Build and checks: `pnpm build`, `pnpm lint`, `pnpm test`, `pnpm analyze`.
@@ -74,8 +68,6 @@ Build and checks: `pnpm build`, `pnpm lint`, `pnpm test`, `pnpm analyze`.
 Use `pnpm analyze --summary` for a compact Fallow report. Duplication and complexity are advisory.
 
 For macOS development, run `pnpm dev --host 127.0.0.1 --strictPort` and `pnpm desktop:dev` in separate terminals.
-
-`pnpm dist:mac` builds Apple Silicon and Intel DMGs in `release/`. The [release workflow](.github/workflows/release.yml) publishes them from `v*` tags.
 
 ### Create a plugin
 
