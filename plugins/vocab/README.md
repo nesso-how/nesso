@@ -4,7 +4,7 @@ Nesso's default relation vocabulary plugin: `linksTo`, `partOf`, `causes`, and `
 
 ## Usage
 
-Add `vocabPlugin` to the static plugin list in `src/plugins.ts`.
+Register `vocabPlugin` using the [plugin guide](../../packages/plugin/README.md#register-it). Its default type is `linksTo`; the graph renderer hides the active vocabulary's default relation label.
 
 ## API
 
@@ -12,3 +12,5 @@ Add `vocabPlugin` to the static plugin list in `src/plugins.ts`.
 - `defaultRelationId`: the IRI of `linksTo`.
 - `defaultRelationTypes`: the same types as `{ id, label }` entries.
 - `vocabPlugin`: read-only operation declaration and factory returning the vocabulary contribution.
+
+See [src/index.ts](src/index.ts) for definitions.

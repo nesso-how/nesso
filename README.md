@@ -1,41 +1,75 @@
-# nesso-min
+# Nesso
 
-A minimal, light-only knowledge graph app for connecting concepts with directed relations.
+A second brain for connecting ideas and building understanding in one knowledge graph, built on a small core with a simple plugin system.
 
 ## Run
+
+Use Node.js 24 and the pnpm version specified in [`package.json`](package.json).
 
 ```sh
 pnpm install
 pnpm dev
 ```
 
-Build and checks: `pnpm build`, `pnpm lint`, `pnpm test`.
+On macOS, `pnpm desktop` builds and runs the app.
 
-For macOS:
-
-- `pnpm desktop` — build and run the desktop app.
-- Development: run `pnpm dev --host 127.0.0.1 --strictPort` and `pnpm desktop:dev` in separate terminals.
-- `pnpm dist:mac` — build Apple Silicon and Intel DMGs in `release/`.
-- Push a `v*` version tag to publish both DMGs on GitHub Releases.
-
-DMGs are not signed or notarized; Gatekeeper may block downloaded apps.
+> [!WARNING]
+> Downloaded DMGs are not signed or notarized; Gatekeeper may block them.
 
 ## Usage
 
-- **Concepts** are the graph's nodes, connected by directed, typed **relations**.
-- **Views** are named subsets of the same graph, not copies. Complete graph always contains every concept; removing a concept from a view does not delete it.
-- **Vocabularies** provide relation types; users can also name their own.
+Your knowledge lives in one graph. **Complete graph** always contains every concept.
+
+- **Concepts** represent ideas, connected by directed, typed **relations**.
+- **Views** are named subsets of that graph, not copies. Removing a concept from a view does not delete it.
+- **Vocabularies** provide relation types; you can also name your own.
+- **Plugins** provide the canvas, vocabularies, themes, and export, keeping the core small.
 
 Use the Explorer to navigate views, the canvas to build the graph, and the Inspector to edit the selection and its memberships. The visible graph can be exported as JSON-LD.
 
-The document and app preferences, including collapsed sections, are saved locally and automatically. There is no cross-device sync; local storage is not a backup. This is pre-alpha software, and stored formats may change without migrations.
+> [!NOTE]
+> The document and preferences are saved automatically in local storage. There is no cross-device sync; local storage is not a backup.
+>
+> This is pre-alpha software. Stored formats may change without migrations.
 
 ## Architecture
 
-- **Host (`src/`)** owns the app shell, the shared store, persistence, and static plugin registration. The store separates graph data, workspace navigation/views, and app preferences, and supplies the visible graph to renderers.
-- **Schema (`packages/schema/`)** defines and validates graph data and handles JSON-LD serialization.
-- **Plugin contract (`packages/plugin/`)** defines readonly state and contributions. Plugins interact with the host through an injected store, never through app internals.
-- **Translations (`packages/i18n/`)** wrap i18next with typed translation keys and isolated instances. Host and plugins own their JSON catalogs; the host persists the locale preference.
-- **UI and theme (`packages/ui/`, `plugins/theme/`)** provide shared Base UI-backed controls, semantic styles, Kernel tokens, and bundled fonts. The host applies the theme; renderers consume its CSS tokens.
-- **Plugins (`plugins/graph/`, `plugins/vocab/`, `plugins/export/`)** contribute the React Flow canvas, relation vocabularies, and export actions. Renderer-specific components and styles stay inside their plugin.
-- **Desktop (`electron/`)** wraps the same app in Electron for macOS.
+```mermaid
+flowchart TD
+  Host["Host · src/<br/>UI, store, persistence"]
+  Host --> Schema["@nesso/schema<br/>Model, validation, JSON-LD"]
+  Host --> UI["@nesso/ui<br/>Shared controls"]
+  Host --> I18n["@nesso/i18n<br/>Translations"]
+  Host <-->|Injected store| Plugins["Plugins<br/>graph · vocab · export · theme"]
+  Plugins --> I18n
+  Host -.-> Contract["@nesso/plugin<br/>Types-only contract"]
+  Plugins -.-> Contract
+```
+
+The host owns state, materializes `viewGraph`, and registers plugins statically. Plugins use the injected store, never host internals. Dashed arrows show the types-only contract.
+
+| Package | Kind | Responsibility |
+| --- | --- | --- |
+| [`@nesso/schema`](packages/schema/README.md) | Core | Graph model, validation, and JSON-LD. |
+| [`@nesso/plugin`](packages/plugin/README.md) | Core | Types-only plugin and store contract. |
+| [`@nesso/i18n`](packages/i18n/README.md) | Core | i18next with typed keys, isolated translators, and English fallback. |
+| [`@nesso/ui`](packages/ui/README.md) | Core | Shared React controls and styles. |
+| [`@nesso/graph`](plugins/graph/README.md) | Plugin | React Flow canvas for the host-provided visible graph. |
+| [`@nesso/vocab`](plugins/vocab/README.md) | Plugin | Default relation vocabulary. |
+| [`@nesso/export`](plugins/export/README.md) | Plugin | Graph and view export as JSON-LD. |
+| [`@nesso/theme`](plugins/theme/README.md) | Plugin | Kernel theme tokens and bundled fonts. |
+
+Host development rules: [`src/AGENTS.md`](src/AGENTS.md).
+
+## Development
+
+Build and checks: `pnpm build`, `pnpm lint`, `pnpm test`.
+
+For macOS development, run `pnpm dev --host 127.0.0.1 --strictPort` and `pnpm desktop:dev` in separate terminals.
+
+`pnpm dist:mac` builds Apple Silicon and Intel DMGs in `release/`. The [release workflow](.github/workflows/release.yml) publishes them from `v*` tags.
+
+### Create a plugin
+
+Build your own renderers, vocabularies, actions, or themes.
+See the [plugin guide](packages/plugin/README.md#create-a-plugin) to get started.

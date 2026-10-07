@@ -1,18 +1,18 @@
 # @nesso/theme
 
-Kernel, the default light-only theme: white surfaces, silver navigation, mist canvas, graphite states, 3px controls, and 4px graph objects/dialogs.
+Kernel, Nesso's default light-only theme, providing semantic tokens and bundled fonts.
 
 ## Usage
 
-Add `themePlugin` to the static plugin list in `src/plugins.ts` and import `@nesso/theme/styles.css` in `src/index.css`.
+Register `themePlugin` using the [plugin guide](../../packages/plugin/README.md#register-it) and import `@nesso/theme/styles.css` in [src/index.css](../../src/index.css).
 
-The host validates theme identities, resolves `activeThemeId` from app preferences, and applies it as `data-theme` to the document root. Shared UI maps semantic tokens to Tailwind utilities; component recipes and layout remain outside this plugin.
-
-Stylesheets and fonts are bundled statically. Each theme scopes its tokens to its own id; registration does not load CSS. The host observes the active theme preference, but there is currently one theme and no theme selector.
+Registration contributes identity metadata, not CSS loading. Stylesheets and fonts are bundled statically; tokens are scoped to `:root[data-theme='kernel']`. The host applies `activeThemeId` as `data-theme` on the document root. Component recipes and layout stay outside this plugin; there is currently one theme and no theme selector.
 
 ## API
 
-- `kernelTheme`: Kernel's id and label (`ThemeDefinition` from `@nesso/plugin`).
-- `themePlugin`: read-only operation declaration and factory returning the theme contribution; no store mutation or lifecycle hooks.
-- `styles.css`: semantic CSS tokens scoped to `:root[data-theme='kernel']`, importing bundled fonts.
-- `fonts.css`: locally bundled Geist and IBM Plex Mono font declarations.
+- `kernelTheme`: Kernel's ID and label.
+- `themePlugin`: declares no writes and returns the theme identity.
+- `styles.css`: semantic theme tokens and font imports.
+- `fonts.css`: bundled Geist and IBM Plex Mono imports.
+
+See [src/index.ts](src/index.ts) and [src/styles.css](src/styles.css) for definitions.

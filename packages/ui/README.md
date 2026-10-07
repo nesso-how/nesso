@@ -5,9 +5,11 @@ Reusable React primitives and shared styles. Base UI-backed controls use Nesso's
 ## Usage
 
 ```tsx
-import { Button, Input, Label, Notice } from '@nesso/ui'
+import { Notice } from '@nesso/ui'
 
-<Notice tone="warning">Some changes couldn't be saved on this device.</Notice>
+export function SaveWarning() {
+  return <Notice tone="warning">Some changes couldn't be saved locally.</Notice>
+}
 ```
 
 Import `@nesso/ui/styles.css` after Tailwind in the host stylesheet. The host supplies the theme tokens and fonts. React and React DOM are peers.
@@ -16,7 +18,7 @@ Import `@nesso/ui/styles.css` after Tailwind in the host stylesheet. The host su
 
 - `Button`: default, outline, and ghost variants; text and icon sizes.
 - `Input`, `Label`: shared form primitives.
-- `Menu`, `MenuItem`, `MenuPopup`: Base UI menu parts and styled items/popup.
+- `Menu`, `MenuItem`, `MenuPopup`, `MenuRadioItem`: Base UI menu parts, styled items/popup, and radio choices.
 - `Combobox`, `ComboboxItem`, `ComboboxPopup`: Base UI searchable selection parts and styled items/popup.
 - `Autocomplete`, `AutocompleteClear`, `AutocompleteItem`, `AutocompletePopup`: Base UI text suggestion parts with styled clear control, items, and popup; filtering and saving remain caller-owned.
 - `Collapsible`: Base UI disclosure parts.
@@ -25,3 +27,5 @@ Import `@nesso/ui/styles.css` after Tailwind in the host stylesheet. The host su
 - `Notice`: compact messages; `info` (default) uses a polite status, while `warning` and `error` use alerts. Content, actions, dismissal, and disclosure remain caller-owned.
 - `ResizeHandle`, `ResizableHandle`, `ResizablePanel`, `ResizablePanelGroup`: panel layout primitives.
 - `styles.css`: semantic token mappings, shared interaction states, touch targets, and reduced-motion styles.
+
+See [src/index.ts](src/index.ts) for all component exports.

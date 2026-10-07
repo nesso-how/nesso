@@ -1,8 +1,12 @@
 # @nesso/plugin
 
-Types-only plugin contract for Nesso. Plugins use the injected store, without importing app internals.
+Types-only definitions for Nesso's plugin system.
 
-## Usage
+## Create a plugin
+
+A plugin declares the operation kinds it needs and returns renderers, vocabularies, actions, or themes from `create({ store })`.
+
+Save this minimal action plugin as `src/example-plugin.ts`:
 
 ```ts
 import type { Plugin } from '@nesso/plugin'
@@ -10,29 +14,32 @@ import type { Plugin } from '@nesso/plugin'
 export const examplePlugin: Plugin = {
   operations: ['concept.label'],
   create: ({ store }) => ({
-    vocabs: [{
-      id: 'example',
-      label: 'Example',
-      relationTypes: [{ id: 'urn:example:related', label: 'related' }],
-      defaultTypeId: 'urn:example:related',
-    }],
     actions: [{
       id: 'rename-selected',
       label: () => 'Rename selected concept',
       run: () => {
         const selected = store.getState().selected
-        if (selected?.kind === 'concept') store.setConceptLabel(selected.id, 'Renamed')
+        if (selected.length === 1 && selected[0].kind === 'concept') {
+          store.setConceptLabel(selected[0].id, 'Renamed')
+        }
       },
     }],
   }),
 }
 ```
 
-Register plugins in the static list in the host (`src/plugins.ts`).
+### Register it
 
-Renderers subscribe to the injected store with `useSyncExternalStore`:
+Import `examplePlugin` from `./example-plugin` in [`src/plugins.ts`](../../src/plugins.ts) and append it to the existing `plugins` array. Plugins are registered statically and bundled with the app.
+
+Run `pnpm dev`, select one concept, and choose **Rename selected concept** from the navbar's **Graph menu**.
+
+### Add a renderer
+
+Renderer components subscribe to their injected store instance with `useSyncExternalStore`:
 
 ```tsx
+import type { Plugin } from '@nesso/plugin'
 import { useSyncExternalStore } from 'react'
 
 export const exampleRendererPlugin: Plugin = {
@@ -43,29 +50,44 @@ export const exampleRendererPlugin: Plugin = {
       label: 'Example',
       component: function ExampleRenderer() {
         const selected = useSyncExternalStore(store.subscribe, () => store.getState().selected)
-        return <div>{selected?.id ?? 'No selection'}</div>
+        return <div>{selected.length} selected</div>
       },
     }],
   }),
 }
 ```
 
-## API
+When displaying a graph, subscribe to `state.viewGraph`; the host already materializes the active view.
 
-- `Plugin`: required readonly `operations: NessoOperation['kind'][]` and factory `create(context: PluginContext): PluginDefinition`. Declare only the explicit writes needed; `operations: []` grants no writes.
-- `PluginContext`: supplies a host-created `NessoStore` scoped to the plugin's declaration before `create` runs. The host snapshots the allowlist and rejects an entire batch containing undeclared operations with structured host errors. Helpers use the same check. Reads and subscriptions remain available. This controls store commands, not network access or other plugin code, and is not a security sandbox.
-- `PluginDefinition`: optional `renderers`, `vocabs`, `actions`, and `themes` contributions.
-- `NessoState`: readonly graph, workspace, preferences, visible graph, selection, vocabulary definitions, and history flags.
-- `conceptPlacementOffset`: readonly host-provided offset for placing new concepts near the selection, shared by domain writes and renderers.
-- `reconnectRelation`: change a relation's endpoints atomically, preserving its predicate and updating selection; unchanged endpoints, self-connections, and duplicates are no-ops.
-- `NessoStore`: read/subscribe, graph and view editing, navigation, viewport, preferences, document reset, and host-owned undo/redo. Every write helper, including `undo` and `redo`, delegates to `applyOperations`; `getViewGraph` asks the host to materialize a saved view without activating it.
-- `applyOperations`: ordered state writes, validated and committed atomically or rejected with structured `SchemaError` or host errors; no-ops do not notify. Creation and reset operations require explicit IDs, generated with `newIri` from `@nesso/schema`. Registration and persistence diagnostics stay internal.
-- `NessoOperation`: readonly writes for concepts, relations, views, selection, viewport, preferences, reset, and history. State writes read the preceding candidate state; new concepts join the view active at their creation. Only the final state is published. The host records graph and saved-view effects for undo/redo, not navigation or preferences.
-- `history.undo` and `history.redo`: declare these operation kinds to control the shared document history, including edits made by the host or other plugins. Each must be the only operation in its call; batches containing history alongside any other operation are rejected before changing state or history. Undo/redo restore recorded deltas without replaying original requests or recording a new edit. They do not require declarations for the original edit kinds, and an empty history is a no-op.
-- `applyOperations` accepts optional `{ historyGroup: string }` metadata to coalesce adjacent label/position edits in one interaction. Use a fresh ID for each text session or drag. Metadata does not bypass operation declarations; undo/redo commands remain host-owned.
-- `RendererDefinition`, `VocabDefinition`, `ActionDefinition`: contribution shapes. Actions are `{ id, label(locale), run }` commands; the host supplies the active locale when displaying their labels. Renderer components use the injected store.
-- `Preferences.locale`: optional English/Italian interface locale; an unset preference means English. `setLocale` delegates to `preferences.locale`, subject to the same declaration check as other writes. Plugins read and subscribe to locale changes through the injected store and can use `@nesso/i18n` with their own catalogs.
-- `SavedView`: readonly named concept set with pin metadata. `WorkspaceState` holds saved views, the active view id, and renderer viewports; null active view means the complete graph.
-- `ThemeDefinition`: id and label. Statically imported CSS scopes tokens to `:root[data-theme='<id>']`; theme activation uses the store and DOM application stays in the host.
+## Contract
 
-See [`src/types.ts`](src/types.ts) for all exported types and method signatures.
+Use only the store injected into `create`; do not import host internals or keep a shared store at module scope. State snapshots, contributions, and operations are readonly. Read current state when an action runs; `selected` is an array of concept/relation references.
+
+Saved views hold concept IDs and pin metadata; `workspace.activeViewId: null` means the complete graph. Registration and persistence diagnostics remain internal to the host.
+
+### Writes
+
+- Declare only needed operation kinds in `operations`. The host copies the allowlist before initialization; every write helper delegates to `applyOperations` and follows the same check. Undeclared writes reject the whole batch. Empty declarations grant no writes, but reads and subscriptions remain available. This is not a security sandbox.
+- `applyOperations` evaluates state writes in order, validates the final candidate, and publishes at most once. Invalid batches throw structured `SchemaError` or host errors; no-ops do not notify.
+- Creation and reset operations require explicit stable IDs, generated with `newIri` from `@nesso/schema`; convenience helpers generate them. New concepts join the view active at their creation. Reuse the host's `conceptPlacementOffset` when placing concepts near the selection.
+- `reconnectRelation` preserves the predicate and updates selection; unchanged endpoints, self-connections, and duplicates are no-ops.
+- `getViewGraph(id)` asks the host for a saved view without activating it.
+
+### History
+
+Declare `history.undo` or `history.redo` to use the matching helper. Each must be alone in its call; mixed batches are rejected before changing state or history. Commands control shared document history, including host and other plugins' edits, without requiring the original edit kinds.
+
+History includes graph and saved-view edits, not navigation, selection, viewport, or preferences. Undo/redo restore recorded effects without replaying requests or recording a new edit; empty history is a no-op.
+
+Pass `{ historyGroup: string }` to coalesce adjacent label/position writes from one interaction. Use a fresh ID per text session or drag; this metadata never grants write access.
+
+### Contributions and locale
+
+- Actions are `{ id, label(locale), run }`; the host passes its active locale when displaying labels.
+- `preferences.locale` supports English and Italian, defaulting to English when unset. `setLocale` requires `preferences.locale` in the operation declaration. Use [@nesso/i18n](../i18n/README.md) with your own JSON catalogs.
+- A vocabulary's `defaultTypeId` must be one of its own relation types.
+- Themes contribute ID/label metadata. Import CSS statically and scope tokens to `:root[data-theme='<id>']`; the host applies the active theme to the DOM.
+
+## Reference
+
+See [src/types.ts](src/types.ts) for state, operation, contribution, and store method definitions.
