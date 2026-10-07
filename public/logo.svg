@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 148 32" shape-rendering="crispEdges">
+<path fill="#393939" d="M6 6h4v4H6zM22 6h4v4h-4zM6 10h4v4H6zM10 10h4v4h-4zM22 10h4v4h-4zM6 14h4v4H6zM14 14h4v4h-4zM22 14h4v4h-4zM6 18h4v4H6zM18 18h4v4h-4zM22 18h4v4h-4zM6 22h4v4H6zM22 22h4v4h-4z"/>
+<text x="36" y="22" font-family="'IBM Plex Mono', monospace" font-size="19" font-weight="500" fill="#292929">nesso</text>
+<path fill="#393939" d="M95 25h15v2H95z"/>
+</svg>
