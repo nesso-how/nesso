@@ -1,8 +1,12 @@
+<div align="center">
+
 <img src="public/icon.svg" alt="Nesso" width="96">
 
 # Nesso
 
 A second brain for connecting ideas and building understanding in one knowledge graph, built on a small core with a simple plugin system.
+
+</div>
 
 ## Run
 
