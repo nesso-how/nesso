@@ -1,0 +1,31 @@
+{
+  "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/v3.32.0/rule-pack-schema.json",
+  "version": 1,
+  "name": "nesso",
+  "rules": [
+    {
+      "id": "react-flow-isolation",
+      "kind": "banned-import",
+      "specifiers": ["@xyflow/react"],
+      "exclude": ["plugins/graph/**"],
+      "message": "Keep React Flow imports in plugins/graph.",
+      "severity": "error"
+    },
+    {
+      "id": "graph-ui-isolation",
+      "kind": "banned-import",
+      "specifiers": ["@nesso/ui"],
+      "files": ["plugins/graph/**"],
+      "message": "Use theme tokens directly instead of importing @nesso/ui in the graph plugin.",
+      "severity": "error"
+    },
+    {
+      "id": "plugin-types-only",
+      "kind": "banned-import",
+      "specifiers": ["@nesso/plugin"],
+      "ignoreTypeOnly": true,
+      "message": "Import only types from @nesso/plugin.",
+      "severity": "error"
+    }
+  ]
+}

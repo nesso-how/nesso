@@ -1,0 +1,26 @@
+{
+  "$schema": "./node_modules/fallow/schema.json",
+  "entry": ["src/lib/utils.ts"],
+  "ignoreDependencies": ["shadcn"],
+  "rules": {
+    "unused-exports": "warn",
+    "complexity-cyclomatic": "warn",
+    "complexity-cognitive": "warn",
+    "complexity-crap": "warn"
+  },
+  "duplicates": { "threshold": 0 },
+  "boundaries": {
+    "zones": [
+      { "name": "host", "patterns": ["src/**", "electron/**"] },
+      { "name": "schema", "patterns": ["packages/schema/**"] },
+      { "name": "shared", "patterns": ["packages/**"] },
+      { "name": "plugins", "patterns": ["plugins/**"] }
+    ],
+    "rules": [
+      { "from": "schema", "allow": [] },
+      { "from": "shared", "allow": ["schema"] },
+      { "from": "plugins", "allow": ["schema", "shared"] }
+    ]
+  },
+  "rulePacks": ["fallow-rules.json"]
+}

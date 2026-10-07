@@ -63,7 +63,9 @@ Host development rules: [`src/AGENTS.md`](src/AGENTS.md).
 
 ## Development
 
-Build and checks: `pnpm build`, `pnpm lint`, `pnpm test`.
+Build and checks: `pnpm build`, `pnpm lint`, `pnpm test`, `pnpm analyze`.
+
+Use `pnpm analyze --summary` for a compact Fallow report. Duplication and complexity are advisory.
 
 For macOS development, run `pnpm dev --host 127.0.0.1 --strictPort` and `pnpm desktop:dev` in separate terminals.
 
