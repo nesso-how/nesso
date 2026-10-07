@@ -8,6 +8,10 @@
 - Report failures with a package-scoped `<Package>Error extends Error` carrying `readonly issues: { path: string; message: string }[]`, joined into the message; follow `SchemaError`.
 - After code changes, run `pnpm analyze --summary`. Inspect scoped findings with `pnpm analyze --changed-since origin/main --format json --quiet` and verify unused exports with `pnpm analyze dead-code --trace FILE:EXPORT` before deleting them. Do not run Fallow autofix or add suppressions to make a check pass.
 
+## Release
+
+- Release from clean `main` with `pnpm release [--major|--minor|--patch|--alpha|--beta|<version>]`; the script bumps `package.json`, commits, tags `v<version>`, and pushes.
+
 ## Product
 
 - Keep the app light-only.
