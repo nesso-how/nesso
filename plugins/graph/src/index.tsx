@@ -7,6 +7,7 @@ export const graphPlugin: Plugin = {
   operations: [
     'concept.position', 'concept.positions', 'concept.add', 'concept.remove',
     'relation.connect', 'relation.reconnect', 'relation.remove', 'selection.set', 'viewport.set',
+    'history.undo', 'history.redo',
   ],
   create: ({ store }) => ({
     renderers: [{

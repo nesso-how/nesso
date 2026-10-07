@@ -19,12 +19,22 @@ test('plugin stores enforce isolated declaration snapshots for helpers and entir
   assert.equal(reader.getState(), host.store.getState())
   assert.equal(reader.getViewGraph(viewId).concepts[0].label, 'Allowed')
   assert.equal(notifications, 2)
-  allowed.push('selection.set')
+  allowed.push('selection.set', 'history.undo', 'history.redo')
   const before = host.store.getState()
   for (const write of [
     () => reader.setConceptLabel(id, 'Denied'),
     () => reader.reconnectRelation('missing', id, id),
+    () => reader.undo(),
+    () => reader.redo(),
     () => store.setSelection([{ kind: 'concept', id }]),
+    () => store.undo(),
+    () => store.redo(),
+    () => reader.applyOperations([{ kind: 'history.undo' }]),
+    () => reader.applyOperations([{ kind: 'history.redo' }]),
+    () => store.applyOperations([
+      { kind: 'concept.label', id, value: 'Must not commit' },
+      { kind: 'history.undo' },
+    ]),
     () => store.applyOperations([
       { kind: 'concept.label', id, value: 'Must not commit' },
       { kind: 'view.remove', id: viewId },

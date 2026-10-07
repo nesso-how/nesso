@@ -110,10 +110,10 @@ test('autosave debounces durable sections only and flushes pending edits on shut
   context.mock.timers.tick(1)
   assert.deepEqual(storage.writes, [storageKeys.document])
   assert.equal(loadPersistence(() => storage).graph?.concepts[0].label, 'Last')
-  host.history.undo()
+  host.store.undo()
   context.mock.timers.tick(200)
   assert.equal(loadPersistence(() => storage).graph?.concepts[0].label, 'First')
-  host.history.redo()
+  host.store.redo()
   context.mock.timers.tick(200)
   assert.equal(loadPersistence(() => storage).graph?.concepts[0].label, 'Last')
   storage.writes.length = 0

@@ -23,6 +23,8 @@ export type NessoOperation =
   | { readonly kind: 'relation.type.create'; readonly id: string; readonly typeId: string; readonly label: string }
   | { readonly kind: 'relation.remove'; readonly id: string }
   | { readonly kind: 'document.reset'; readonly id: string }
+  | { readonly kind: 'history.undo' }
+  | { readonly kind: 'history.redo' }
   | { readonly kind: 'selection.set'; readonly value: Selection }
   | { readonly kind: 'view.activate'; readonly id: string | null }
   | { readonly kind: 'view.create'; readonly id: string; readonly name: string; readonly conceptIds: readonly string[] }

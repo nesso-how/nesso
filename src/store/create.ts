@@ -47,6 +47,13 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
   const history = createHistory(store.getState, (next) => store.setState({ ...next, history: history.flags() }))
 
   const applyOperations: NessoStore['applyOperations'] = (operations, options) => {
+    const historyOperation = operations.find(({ kind }) => kind === 'history.undo' || kind === 'history.redo')
+    if (historyOperation) {
+      if (operations.length !== 1) fail('operations', 'History operations must be applied alone')
+      if (historyOperation.kind === 'history.undo') history.undo()
+      else history.redo()
+      return
+    }
     const state = store.getState()
     const { next, delta, reset } = applyStateOperations(state, operations, { renderers, themes })
     history.record(delta, options?.historyGroup, reset)
@@ -91,7 +98,7 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
   const nessoStore: HostStore = {
     getState: store.getState,
     subscribe: store.subscribe,
-    ...createCommands(applyOperations, history),
+    ...createCommands(applyOperations),
     getViewGraph: (id) => {
       const state = store.getState()
       if (!state.workspace.savedViews.some((view) => view.id === id)) fail('view.id', 'Unknown view')
@@ -133,5 +140,5 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
     }
   }
 
-  return { store: nessoStore, history: { undo: history.undo, redo: history.redo }, setPersistenceIssues, registerVocab, registerRenderer, getRenderer, registerTheme, getTheme, listThemes }
+  return { store: nessoStore, setPersistenceIssues, registerVocab, registerRenderer, getRenderer, registerTheme, getTheme, listThemes }
 }

@@ -14,8 +14,8 @@ export function Navbar() {
       const key = event.key.toLowerCase()
       if (key !== 'z' && !(key === 'y' && event.ctrlKey && !event.metaKey)) return
       event.preventDefault()
-      if (key === 'y' || event.shiftKey) host.history.redo()
-      else host.history.undo()
+      if (key === 'y' || event.shiftKey) host.store.redo()
+      else host.store.undo()
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
