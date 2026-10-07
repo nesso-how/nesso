@@ -6,6 +6,7 @@ export const kernelTheme: ThemeDefinition = {
 }
 
 export const themePlugin: Plugin = {
+  kind: 'theme',
   operations: [],
-  create: () => ({ themes: [kernelTheme] }),
+  create: () => kernelTheme,
 }

@@ -20,12 +20,11 @@ export const downloadGraph = (graph: GraphSnapshot, name = 'graph'): void => {
 }
 
 export const exportPlugin: Plugin = {
+  kind: 'actions',
   operations: [],
-  create: ({ store }) => ({
-    actions: [{
-      id: 'export-view',
-      label: (locale) => translate(locale)('exportView'),
-      run: () => downloadGraph(store.getState().viewGraph),
-    }],
-  }),
+  create: ({ store }) => [{
+    id: 'export-view',
+    label: (locale) => translate(locale)('exportView'),
+    run: () => downloadGraph(store.getState().viewGraph),
+  }],
 }

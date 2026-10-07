@@ -7,7 +7,6 @@ export type {
   PanelSizes,
   Plugin,
   PluginContext,
-  PluginDefinition,
   Preferences,
   RendererDefinition,
   SavedView,

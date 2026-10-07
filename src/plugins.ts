@@ -11,9 +11,19 @@ const plugins: readonly Plugin[] = [themePlugin, vocabPlugin, graphPlugin, expor
 export const actions: ActionDefinition[] = []
 
 for (const plugin of plugins) {
-  const definition = plugin.create({ store: createPluginStore(nessoStore, plugin.operations) })
-  for (const vocab of definition.vocabs ?? []) registerVocab(vocab)
-  for (const renderer of definition.renderers ?? []) registerRenderer(renderer)
-  for (const theme of definition.themes ?? []) registerTheme(theme)
-  actions.push(...(definition.actions ?? []))
+  const context = { store: createPluginStore(nessoStore, plugin.operations) }
+  switch (plugin.kind) {
+    case 'renderer':
+      registerRenderer(plugin.create(context))
+      break
+    case 'theme':
+      registerTheme(plugin.create(context))
+      break
+    case 'vocab':
+      registerVocab(plugin.create(context))
+      break
+    case 'actions':
+      actions.push(...plugin.create(context))
+      break
+  }
 }

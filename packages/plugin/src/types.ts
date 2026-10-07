@@ -147,16 +147,13 @@ export type ThemeDefinition = {
   readonly label: string
 }
 
-export type PluginDefinition = {
-  readonly renderers?: readonly RendererDefinition[]
-  readonly vocabs?: readonly VocabDefinition[]
-  readonly actions?: readonly ActionDefinition[]
-  readonly themes?: readonly ThemeDefinition[]
-}
-
 export type PluginContext = { readonly store: NessoStore }
 
 export type Plugin = {
   readonly operations: readonly NessoOperation['kind'][]
-  readonly create: (context: PluginContext) => PluginDefinition
-}
+} & (
+  | { readonly kind: 'renderer'; readonly create: (context: PluginContext) => RendererDefinition }
+  | { readonly kind: 'theme'; readonly create: (context: PluginContext) => ThemeDefinition }
+  | { readonly kind: 'vocab'; readonly create: (context: PluginContext) => VocabDefinition }
+  | { readonly kind: 'actions'; readonly create: (context: PluginContext) => readonly ActionDefinition[] }
+)

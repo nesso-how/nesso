@@ -4,7 +4,16 @@ Types-only definitions for Nesso's plugin system.
 
 ## Create a plugin
 
-A plugin declares the operation kinds it needs and returns renderers, vocabularies, actions, or themes from `create({ store })`.
+A plugin declares one `kind`, the operation kinds it needs, and a `create({ store })` factory. Its kind determines the factory's return value:
+
+| Kind | Return value |
+| --- | --- |
+| `renderer` | One `RendererDefinition` |
+| `theme` | One `ThemeDefinition` |
+| `vocab` | One `VocabDefinition` |
+| `actions` | A readonly list of related `ActionDefinition`s |
+
+A plugin cannot mix contribution kinds. Register separate plugins for separate renderers, themes, or vocabularies.
 
 Save this minimal action plugin as `src/example-plugin.ts`:
 
@@ -12,19 +21,18 @@ Save this minimal action plugin as `src/example-plugin.ts`:
 import type { Plugin } from '@nesso/plugin'
 
 export const examplePlugin: Plugin = {
+  kind: 'actions',
   operations: ['concept.label'],
-  create: ({ store }) => ({
-    actions: [{
-      id: 'rename-selected',
-      label: () => 'Rename selected concept',
-      run: () => {
-        const selected = store.getState().selected
-        if (selected.length === 1 && selected[0].kind === 'concept') {
-          store.setConceptLabel(selected[0].id, 'Renamed')
-        }
-      },
-    }],
-  }),
+  create: ({ store }) => [{
+    id: 'rename-selected',
+    label: () => 'Rename selected concept',
+    run: () => {
+      const selected = store.getState().selected
+      if (selected.length === 1 && selected[0].kind === 'concept') {
+        store.setConceptLabel(selected[0].id, 'Renamed')
+      }
+    },
+  }],
 }
 ```
 
@@ -43,16 +51,15 @@ import type { Plugin } from '@nesso/plugin'
 import { useSyncExternalStore } from 'react'
 
 export const exampleRendererPlugin: Plugin = {
+  kind: 'renderer',
   operations: [],
   create: ({ store }) => ({
-    renderers: [{
-      id: 'example',
-      label: 'Example',
-      component: function ExampleRenderer() {
-        const selected = useSyncExternalStore(store.subscribe, () => store.getState().selected)
-        return <div>{selected.length} selected</div>
-      },
-    }],
+    id: 'example',
+    label: 'Example',
+    component: function ExampleRenderer() {
+      const selected = useSyncExternalStore(store.subscribe, () => store.getState().selected)
+      return <div>{selected.length} selected</div>
+    },
   }),
 }
 ```
