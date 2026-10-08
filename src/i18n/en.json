@@ -48,8 +48,9 @@
   "newViewEmpty": "Empty view · 0 concepts. Views reference shared concepts, not copies.",
   "createView": "Create view",
   "name": "Name",
-  "saveFailure": "Some changes couldn't be saved on this device.",
+  "saveFailure": "Some changes couldn't be saved on this device. Export your graph to keep a copy.",
   "technicalDetails": "Technical details",
+  "getHelp": "Get help",
   "ambiguousRelation": "Choose a relation type: this label has multiple IRIs.",
   "relation": "Relation",
   "concept": "Concept",
@@ -103,5 +104,10 @@
   "origin": "Origin",
   "builtIn": "Included with Nesso",
   "documentation": "Documentation",
-  "close": "Close"
+  "close": "Close",
+  "toasts": "Toasts",
+  "info": "Info",
+  "viewExported": "View exported",
+  "viewExportedDescription": "Saved as JSON-LD.",
+  "toastQueued": "{{count}} waiting"
 }

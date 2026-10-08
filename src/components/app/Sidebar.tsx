@@ -7,11 +7,13 @@ import { Sidebar } from './SidebarLayout'
 import { NewViewButton } from './NewViewButton'
 import { ViewNameForm } from './ViewNameForm'
 import { host, nessoStore, useNessoStore } from '@/store'
+import { useToasts, viewExportedToast } from '@/components/app/toastQueue'
 import { panelLimits } from '@/store/settings'
 import { useTranslation } from '@/i18n'
 
 export function AppSidebar({ readonly = false, bare = false, onNavigate }: { readonly?: boolean; bare?: boolean; onNavigate?: () => void }) {
   const t = useTranslation()
+  const { notify } = useToasts()
   const workspace = useNessoStore((state) => state.workspace)
   const conceptCount = useNessoStore((state) => state.graph.concepts.length)
   const collapsed = useNessoStore((state) => state.preferences.collapsedSections)
@@ -71,7 +73,10 @@ export function AppSidebar({ readonly = false, bare = false, onNavigate }: { rea
                 target?.focus()
               })
             }}>{t(view.pinned ? 'unpinView' : 'pinView')}</MenuItem>
-            <MenuItem onClick={() => downloadGraph(host.store.getViewGraph(view.id), view.name)}>{t('exportView')}</MenuItem>
+            <MenuItem onClick={() => {
+              downloadGraph(host.store.getViewGraph(view.id), view.name)
+              notify(viewExportedToast(t))
+            }}>{t('exportView')}</MenuItem>
             <Menu.Separator className="my-1 h-px bg-border" />
             <MenuItem onClick={() => { deletingId.current = view.id; setDeleting(view) }}>{t('deleteView')}</MenuItem>
           </MenuPopup>

@@ -7,10 +7,12 @@ import { actions } from '@/plugins'
 import { host, useNessoStore } from '@/store'
 import { translate } from '@/i18n'
 import { UpdateButton } from './UpdateButton'
+import { useToasts, viewExportedToast } from './toastQueue'
 
 export function Navbar({ readonly = false, detailsOpen, onToggleDetails, onOpenViews, onOpenSettings }: { readonly?: boolean; detailsOpen: boolean; onToggleDetails: () => void; onOpenViews?: () => void; onOpenSettings: () => void }) {
   const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale)
   const t = translate(locale)
+  const { notify } = useToasts()
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.defaultPrevented || event.isComposing || event.altKey || !(event.metaKey || event.ctrlKey)) return
@@ -44,7 +46,10 @@ export function Navbar({ readonly = false, detailsOpen, onToggleDetails, onOpenV
           </Menu.Trigger>
           <MenuPopup>
             {actions.map((action) => (
-              <MenuItem key={action.id} onClick={action.run}>{action.label(locale)}</MenuItem>
+              <MenuItem key={action.id} onClick={() => {
+                action.run()
+                if (action.id === 'export-view') notify(viewExportedToast(t))
+              }}>{action.label(locale)}</MenuItem>
             ))}
             <Menu.Separator className="my-1 h-px bg-border" />
             <MenuItem className="md:hidden" onClick={onOpenSettings}>{t('settings')}</MenuItem>

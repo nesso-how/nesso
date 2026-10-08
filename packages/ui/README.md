@@ -5,10 +5,10 @@ Reusable React primitives and shared styles. Base UI-backed controls use Nesso's
 ## Usage
 
 ```tsx
-import { Notice } from '@nesso/ui'
+import { Banner } from '@nesso/ui'
 
 export function SaveWarning() {
-  return <Notice tone="warning">Some changes couldn't be saved locally.</Notice>
+  return <Banner tone="warning">Some changes couldn't be saved locally.</Banner>
 }
 ```
 
@@ -24,7 +24,8 @@ Import `@nesso/ui/styles.css` after Tailwind in the host stylesheet. The host su
 - `Collapsible`: Base UI disclosure parts.
 - `SectionHeading`: controlled disclosure heading with chevron, `aria-expanded`, and transparent hover/active backgrounds; open state remains caller-owned.
 - `Dialog`, `DialogPopup`: Base UI dialog parts and styled popup/backdrop.
-- `Notice`: compact messages; `info` (default) uses a polite status, while `warning` and `error` use alerts. Content, actions, dismissal, and disclosure remain caller-owned.
+- `Banner`: inline strip messages; `info` (default) uses a polite status, while `warning` and `error` use alerts. Content, actions, dismissal, and disclosure remain caller-owned.
+- `ToastViewport`: floating bottom-center info, warning, and request toasts. Info auto-dismisses with a pausable timer; warnings and requests persist until acted upon. Queueing, timers, and content remain caller-owned.
 - `ResizeHandle`, `ResizableHandle`, `ResizablePanel`, `ResizablePanelGroup`: panel layout primitives.
 - `styles.css`: semantic token mappings, shared interaction states, touch targets, and reduced-motion styles.
 

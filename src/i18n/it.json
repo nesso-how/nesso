@@ -51,8 +51,9 @@
   "newViewEmpty": "Vista vuota · 0 concetti. Le viste fanno riferimento a concetti condivisi, non a copie.",
   "createView": "Crea vista",
   "name": "Nome",
-  "saveFailure": "Non è stato possibile salvare alcune modifiche su questo dispositivo.",
+  "saveFailure": "Non è stato possibile salvare alcune modifiche su questo dispositivo. Esporta il grafo per tenerne una copia.",
   "technicalDetails": "Dettagli tecnici",
+  "getHelp": "Chiedi aiuto",
   "ambiguousRelation": "Scegli un tipo di relazione: questa etichetta corrisponde a più IRI.",
   "relation": "Relazione",
   "concept": "Concetto",
@@ -109,5 +110,10 @@
   "origin": "Origine",
   "builtIn": "Incluso in Nesso",
   "documentation": "Documentazione",
-  "close": "Chiudi"
+  "close": "Chiudi",
+  "toasts": "Notifiche",
+  "info": "Info",
+  "viewExported": "Vista esportata",
+  "viewExportedDescription": "Salvata come JSON-LD.",
+  "toastQueued": "{{count}} in attesa"
 }

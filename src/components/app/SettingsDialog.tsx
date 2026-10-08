@@ -5,7 +5,7 @@ import { ArrowUpRight, Check, ChevronDown, Settings2, X } from 'lucide-react'
 import { plugins } from '@/plugins'
 import { host, useNessoStore } from '@/store'
 import { translate } from '@/i18n'
-import { PersistenceNotice } from './PersistenceNotice'
+import { PersistenceBanner } from './PersistenceBanner'
 
 const providers = [
   { kind: 'renderer', key: 'activeRendererId', change: host.store.setActiveRenderer },
@@ -133,7 +133,7 @@ export function SettingsDialog() {
           </>}
         </div>
       </div>
-      <PersistenceNotice />
+      <PersistenceBanner />
     </DialogPopup>
   )
 }
