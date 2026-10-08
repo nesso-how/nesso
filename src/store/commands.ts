@@ -11,12 +11,12 @@ export const createCommands = (applyOperations: NessoStore['applyOperations']): 
   setSelection: (value) => applyOperations([{ kind: 'selection.set', value }]),
   setView: (id) => applyOperations([{ kind: 'view.activate', id }]),
   setViewport: (rendererId, value) => applyOperations([{ kind: 'viewport.set', rendererId, value }]),
-  setConceptPosition: (id, value) => applyOperations([{ kind: 'concept.position', id, value }]),
-  setConceptPositions: (updates) => applyOperations([{ kind: 'concept.positions', updates }]),
-  setConceptLabel: (id, value) => applyOperations([{ kind: 'concept.label', id, value }]),
-  addConcept: (position) => {
+  setConceptPosition: (id, value, historyGroup) => applyOperations([{ kind: 'concept.position', id, value }], historyGroup ? { historyGroup } : undefined),
+  setConceptPositions: (updates, historyGroup) => applyOperations([{ kind: 'concept.positions', updates }], historyGroup ? { historyGroup } : undefined),
+  setConceptLabel: (id, value, historyGroup) => applyOperations([{ kind: 'concept.label', id, value }], historyGroup ? { historyGroup } : undefined),
+  addConcept: (position, historyGroup) => {
     const id = newIri()
-    applyOperations([{ kind: 'concept.add', id, position }])
+    applyOperations([{ kind: 'concept.add', id, position }], historyGroup ? { historyGroup } : undefined)
     return id
   },
   connect: (source, target) => applyOperations([{ kind: 'relation.connect', source, target }]),

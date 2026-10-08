@@ -89,7 +89,7 @@ export function Canvas() {
     const updates = changes.flatMap((change) =>
       change.type === 'position' && change.position ? [{ id: change.id, position: change.position }] : [],
     )
-    if (!readonly && updates.length) store.applyOperations([{ kind: 'concept.positions', updates }], { historyGroup: dragGroup.current })
+    if (!readonly && updates.length) store.setConceptPositions(updates, dragGroup.current)
     if (changes.some((change) => change.type === 'position' && change.dragging === false)) dragGroup.current = undefined
     onObjectChanges('concept', changes)
   }
@@ -127,11 +127,10 @@ export function Canvas() {
         y: Math.max(topLeft.y, Math.min(position.y, maxY)),
       }
     }
-    const id = newIri()
     const historyGroup = newIri()
-    store.applyOperations([{ kind: 'concept.add', id, position: placement() }], { historyGroup })
+    const id = store.addConcept(placement(), historyGroup)
     requestAnimationFrame(() => {
-      if (canvas.current === element) store.applyOperations([{ kind: 'concept.position', id, value: placement() }], { historyGroup })
+      if (canvas.current === element) store.setConceptPosition(id, placement(), historyGroup)
     })
   }
 

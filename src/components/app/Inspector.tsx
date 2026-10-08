@@ -157,9 +157,7 @@ export function Inspector({ readonly = false }: { readonly?: boolean }) {
                 value={concept.label}
                 onFocus={() => { textGroup.current = newIri() }}
                 onBlur={() => { textGroup.current = undefined }}
-                onChange={(event) => nessoStore.applyOperations([
-                  { kind: 'concept.label', id: concept.id, value: event.target.value },
-                ], { historyGroup: textGroup.current ??= newIri() })}
+                onChange={(event) => nessoStore.setConceptLabel(concept.id, event.target.value, textGroup.current ??= newIri())}
               />
             )}
           </div>
