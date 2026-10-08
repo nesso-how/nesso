@@ -1,7 +1,9 @@
 import { newIri, relationKey, type RelationType } from '@nesso/schema'
 import { maxConceptLabelLength, maxRelationLabelLength } from '@/store/settings'
 import { useRef, useState } from 'react'
-import { Autocomplete, AutocompleteClear, AutocompleteItem, AutocompletePopup, Input, Label } from '@nesso/ui'
+import { Autocomplete, AutocompleteClear, AutocompleteItem, AutocompletePopup, Button, ContextLabel, Input, Label } from '@nesso/ui'
+import { Trash2 } from 'lucide-react'
+import { ViewDetails } from './ViewDetails'
 import { ConceptViews } from './ConceptViews'
 import { ConceptConnections } from './ConceptConnections'
 import { InspectorSection } from './InspectorSection'
@@ -130,10 +132,10 @@ export function Inspector({ readonly = false }: { readonly?: boolean }) {
     : relationTypes.find((item) => item.id === selectedRelationId)?.label ?? ''
 
   return (
-    <aside className="flex h-full flex-col gap-[26px] overflow-y-auto bg-background px-5 py-6 text-sm">
-      {selected.length > 1 ? (
+    <aside id="details-panel" aria-label={t('details')} className="flex h-full flex-col gap-[26px] overflow-y-auto bg-background px-5 py-6 text-sm">
+      {selected.length > 0 && <ContextLabel>{t(item ? item.kind : 'selection')}</ContextLabel>}
+      {selected.length === 0 ? <ViewDetails readonly={readonly} /> : selected.length > 1 ? (
         <div className="flex flex-col gap-1.5">
-          <h2 className="font-medium">{t('selection')}</h2>
           <p className="text-xs text-muted-foreground">{[
             conceptIds.length > 0 ? t('conceptCount', { count: conceptIds.length }) : '',
             relationCount > 0 ? t('relationCount', { count: relationCount }) : '',
@@ -191,6 +193,12 @@ export function Inspector({ readonly = false }: { readonly?: boolean }) {
         </section>
       ) : null}
       {conceptIds.length > 0 && <ConceptViews key={JSON.stringify(conceptIds)} conceptIds={conceptIds} readonly={readonly} />}
+      {!readonly && concept && (
+        <Button variant="outline" className="w-full justify-start" disabled={graph.concepts.length <= 1} onClick={() => nessoStore.removeConcept(concept.id)}><Trash2 />{t('deleteConcept')}</Button>
+      )}
+      {!readonly && selectedEdge && (
+        <Button variant="outline" className="w-full justify-start" onClick={() => nessoStore.removeRelation(relationKey(selectedEdge))}><Trash2 />{t('deleteRelation')}</Button>
+      )}
     </aside>
   )
 }

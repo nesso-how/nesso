@@ -1,4 +1,4 @@
-import { Layers, MoreHorizontal } from 'lucide-react'
+import { Layers, MoreHorizontal, PanelRight } from 'lucide-react'
 import { useEffect } from 'react'
 import { Button, Menu, MenuItem, MenuPopup } from '@nesso/ui'
 import { defaultLocale } from '@nesso/i18n'
@@ -8,7 +8,7 @@ import { host, useNessoStore } from '@/store'
 import { translate } from '@/i18n'
 import { UpdateButton } from './UpdateButton'
 
-export function Navbar({ readonly = false, onOpenViews, onOpenSettings }: { readonly?: boolean; onOpenViews?: () => void; onOpenSettings: () => void }) {
+export function Navbar({ readonly = false, detailsOpen, onToggleDetails, onOpenViews, onOpenSettings }: { readonly?: boolean; detailsOpen: boolean; onToggleDetails: () => void; onOpenViews?: () => void; onOpenSettings: () => void }) {
   const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale)
   const t = translate(locale)
   useEffect(() => {
@@ -35,7 +35,8 @@ export function Navbar({ readonly = false, onOpenViews, onOpenSettings }: { read
         <SidebarTrigger />
       )}
       {!readonly && <SidebarNewView />}
-      <div className="ml-auto flex items-center gap-2">
+      <div className="ml-auto flex items-center gap-1">
+        <Button variant="ghost" size="icon-sm" onClick={onToggleDetails} aria-label={t('toggleDetails')} title={t('details')} aria-expanded={detailsOpen} aria-controls="details-panel"><PanelRight /></Button>
         <UpdateButton />
         <Menu.Root>
           <Menu.Trigger render={<Button data-graph-menu-trigger size="icon-sm" variant="ghost" aria-label={t('graphMenu')} title={t('graphMenu')} />}>

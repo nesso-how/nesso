@@ -28,7 +28,7 @@ export default function App() {
   const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale)
   const t = translate(locale)
   const panels = useNessoStore((state) => state.preferences.panels)
-  const selected = useNessoStore((state) => state.selected)
+  const [detailsOpen, setDetailsOpen] = useState(true)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [viewsOpen, setViewsOpen] = useState(false)
   const readonly = useMediaQuery('(max-width: 767px)')
@@ -41,7 +41,7 @@ export default function App() {
       <SidebarProvider
         style={{ '--sidebar-width': `${panels.explorerWidth}px` } as CSSProperties}
       >
-        <Navbar readonly={readonly} onOpenViews={() => setViewsOpen(true)} onOpenSettings={() => setSettingsOpen(true)} />
+        <Navbar readonly={readonly} detailsOpen={detailsOpen} onToggleDetails={() => setDetailsOpen((open) => !open)} onOpenViews={() => setViewsOpen(true)} onOpenSettings={() => setSettingsOpen(true)} />
         <ExplorerDrawer open={readonly && viewsOpen} onClose={() => setViewsOpen(false)} />
         <div className="relative flex min-h-0 flex-1 overflow-hidden">
           <AppSidebar />
@@ -51,7 +51,7 @@ export default function App() {
               orientation={readonly ? 'vertical' : 'horizontal'}
               className="min-h-0 flex-1"
               onLayoutChanged={(layout, meta) => {
-                if (selected.length === 0 || !meta.isUserInteraction || !group.current) return
+                if (!detailsOpen || readonly || !meta.isUserInteraction || !group.current) return
                 const inspectorWidth = Math.max(panelLimits.inspectorWidth.min, group.current.clientWidth * (meta.requestedLayout ?? layout).inspector / 100)
                 host.store.setPanelSizes({ ...host.store.getState().preferences.panels, inspectorWidth })
               }}
@@ -59,8 +59,8 @@ export default function App() {
               <ResizablePanel id="canvas" minSize="40%">
                 <RendererHost />
               </ResizablePanel>
-              {selected.length > 0 && <ResizableHandle aria-label={t('resizeInspector')} />}
-              {selected.length > 0 && (
+              {detailsOpen && <ResizableHandle aria-label={t('resizeInspector')} />}
+              {detailsOpen && (
                 <ResizablePanel id="inspector" defaultSize={panels.inspectorWidth} minSize={panelLimits.inspectorWidth.min} maxSize="45%" groupResizeBehavior="preserve-pixel-size">
                   <Inspector readonly={readonly} />
                 </ResizablePanel>

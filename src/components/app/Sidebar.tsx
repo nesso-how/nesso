@@ -13,6 +13,7 @@ import { useTranslation } from '@/i18n'
 export function AppSidebar({ readonly = false, bare = false, onNavigate }: { readonly?: boolean; bare?: boolean; onNavigate?: () => void }) {
   const t = useTranslation()
   const workspace = useNessoStore((state) => state.workspace)
+  const conceptCount = useNessoStore((state) => state.graph.concepts.length)
   const collapsed = useNessoStore((state) => state.preferences.collapsedSections)
   const pinnedOpen = !collapsed?.includes('sidebar.pinned-views')
   const viewsOpen = !collapsed?.includes('sidebar.views')
@@ -112,7 +113,7 @@ export function AppSidebar({ readonly = false, bare = false, onNavigate }: { rea
           <div id="pinned-views" hidden={!pinnedOpen} className="mt-1 space-y-0.5">
             <button type="button" onClick={() => navigate(null)} aria-current={workspace.activeViewId === null ? 'page' : undefined} className="min-h-14 w-full shrink-0 rounded-sm px-2.5 py-2 text-left hover:bg-accent aria-[current=page]:bg-pressed">
               <span className="block text-[13px] leading-[19px]">{t('completeGraph')}</span>
-              <span className="mt-[3px] block font-mono text-[10px] leading-[14px] text-muted-foreground">{t('default')}</span>
+              <span className="mt-[3px] block font-mono text-[10px] leading-[14px] text-muted-foreground">{t('conceptCount', { count: conceptCount })}</span>
             </button>
             {pinned.map(row)}
           </div>
