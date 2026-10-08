@@ -39,7 +39,7 @@
     "zustand": "^5.0.15"
   },
   "build": {
-    "appId": "app.nesso.min",
+    "appId": "dev.nesso.desktop",
     "productName": "Nesso",
     "artifactName": "${productName}-${version}-${arch}.${ext}",
     "directories": { "output": "release" },
