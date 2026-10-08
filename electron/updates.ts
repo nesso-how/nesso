@@ -3,19 +3,19 @@ import type { AutoUpdater } from 'electron'
 import { ElectronError } from './errors.ts'
 
 export type UpdateState = {
-  status: 'available' | 'downloading' | 'installing'
-  percent?: number
-  error?: 'download' | 'save'
+  status: 'downloading' | 'ready' | 'installing'
+  error?: 'save' | 'install'
 } | null
 
 export type UpdateBridge = {
   subscribe: (listener: (state: UpdateState) => void) => () => void
-  download: () => Promise<void>
+  restart: () => void
   beforeInstall: (save: () => boolean) => () => void
 }
 
 export function connectUpdates(updater: AppUpdater, nativeUpdater: AutoUpdater, notify: (state: UpdateState) => void) {
   let state: UpdateState = null
+  let checking = false
   let installTimer: ReturnType<typeof setTimeout> | undefined
   updater.autoDownload = false
   updater.autoInstallOnAppQuit = false
@@ -28,39 +28,54 @@ export function connectUpdates(updater: AppUpdater, nativeUpdater: AutoUpdater, 
   const fail = (error: unknown) => {
     console.error(new ElectronError([{ path: 'update', message: error instanceof Error ? error.message : String(error) }]))
     clearTimeout(installTimer)
-    if (state) publish({ status: 'available', error: 'download' })
+    if (state?.status === 'installing') publish({ status: 'ready', error: 'install' })
+    else if (state?.status !== 'ready') publish(null)
   }
 
   updater.on('error', fail)
-  updater.on('update-available', () => publish({ status: 'available' }))
-  updater.on('download-progress', ({ percent }) => publish({ status: 'downloading', percent: Math.floor(percent) }))
-  updater.on('update-downloaded', () => nativeUpdater.checkForUpdates())
+  updater.on('update-available', () => {
+    if (state) return
+    publish({ status: 'downloading' })
+    void updater.downloadUpdate().catch(fail)
+  })
+  updater.on('update-downloaded', () => {
+    if (state?.status !== 'downloading') return
+    try {
+      nativeUpdater.checkForUpdates()
+    } catch (error) {
+      fail(error)
+    }
+  })
   nativeUpdater.on('update-downloaded', () => {
-    installTimer = setTimeout(() => publish({ status: 'available', error: 'save' }), 10_000)
-    publish({ status: 'installing' })
+    if (state?.status === 'downloading') publish({ status: 'ready' })
   })
 
-  const check = () => {
-    if (!state) void updater.checkForUpdates().catch(fail)
+  const check = async () => {
+    if (state?.status === 'ready') return publish({ ...state })
+    if (state || checking) return
+    checking = true
+    try {
+      await updater.checkForUpdates()
+    } catch (error) {
+      fail(error)
+    } finally {
+      checking = false
+    }
   }
-  check()
-  setInterval(check, 60 * 60 * 1000).unref()
+  void check()
+  setInterval(() => { void check() }, 60 * 60 * 1000).unref()
 
   return {
     getState: () => state,
-    download: async () => {
-      if (state?.status !== 'available') return
-      publish({ status: 'downloading', percent: 0 })
-      try {
-        await updater.downloadUpdate()
-      } catch (error) {
-        fail(error)
-      }
+    restart: () => {
+      if (state?.status !== 'ready') return
+      installTimer = setTimeout(() => publish({ status: 'ready', error: 'save' }), 10_000)
+      publish({ status: 'installing' })
     },
     install: (saved: boolean) => {
       if (state?.status !== 'installing') return
       clearTimeout(installTimer)
-      if (!saved) return publish({ status: 'available', error: 'save' })
+      if (!saved) return publish({ status: 'ready', error: 'save' })
       try {
         updater.quitAndInstall()
       } catch (error) {

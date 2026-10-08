@@ -8,7 +8,7 @@ const bridge: UpdateBridge = {
     ipcRenderer.send('update:subscribe')
     return () => { ipcRenderer.removeListener('update:state', receive) }
   },
-  download: () => ipcRenderer.invoke('update:download'),
+  restart: () => ipcRenderer.send('update:restart'),
   beforeInstall: (save) => {
     const prepare = () => {
       let saved = false

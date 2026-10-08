@@ -3,72 +3,104 @@ import { EventEmitter } from 'node:events'
 import test, { type TestContext } from 'node:test'
 import type { AutoUpdater } from 'electron'
 import type { AppUpdater } from 'electron-updater'
-import { connectUpdates } from './updates.ts'
+import { connectUpdates, type UpdateState } from './updates.ts'
 
-const fixture = (context: TestContext) => {
-  context.mock.method(globalThis, 'setInterval', () => ({ unref() {} }) as NodeJS.Timeout)
+const fixture = (context: TestContext, checkForUpdates = async () => null) => {
+  let check = () => {}
+  const interval = context.mock.method(globalThis, 'setInterval', (callback: () => void) => {
+    check = callback
+    return { unref() {} } as NodeJS.Timeout
+  })
   context.mock.method(console, 'error', () => {})
   const updater = Object.assign(new EventEmitter(), {
     autoDownload: true,
     autoInstallOnAppQuit: true,
     allowDowngrade: true,
-    checkForUpdates: context.mock.fn(async () => null),
+    checkForUpdates: context.mock.fn(checkForUpdates),
     downloadUpdate: context.mock.fn(async () => [] as string[]),
     quitAndInstall: context.mock.fn(),
   })
   const nativeUpdater = Object.assign(new EventEmitter(), { checkForUpdates: context.mock.fn() })
-  const updates = connectUpdates(updater as unknown as AppUpdater, nativeUpdater as unknown as AutoUpdater, () => {})
-  return { updater, nativeUpdater, updates }
+  const notify = context.mock.fn((_state: UpdateState) => {})
+  const updates = connectUpdates(updater as unknown as AppUpdater, nativeUpdater as unknown as AutoUpdater, notify)
+  return { updater, nativeUpdater, updates, notify, interval, check: () => check() }
 }
 
-test('updates download only on click and restart only after native validation and successful saving', async (context) => {
-  const { updater, nativeUpdater, updates } = fixture(context)
-  assert.equal(updater.autoDownload, false)
+test('updates check at startup and hourly without overlap, retrying after failure', async (context) => {
+  const pending = Promise.withResolvers<null>()
+  const { updater, updates, interval, check } = fixture(context, () => pending.promise)
+  assert.equal(updater.checkForUpdates.mock.callCount(), 1)
+  assert.equal(interval.mock.calls[0].arguments[1], 60 * 60 * 1000)
+  check()
+  assert.equal(updater.checkForUpdates.mock.callCount(), 1)
+  pending.reject(new Error('Offline'))
+  await pending.promise.catch(() => {})
+  assert.equal(updates.getState(), null)
+  updater.checkForUpdates.mock.mockImplementationOnce(async () => null)
+  check()
+  assert.equal(updater.checkForUpdates.mock.callCount(), 2)
+})
+
+test('updates download automatically but restart only after confirmation, validation and saving', (context) => {
+  const { updater, nativeUpdater, updates, notify, check } = fixture(context)
   assert.equal(updater.autoInstallOnAppQuit, false)
-  assert.equal(updater.allowDowngrade, false)
-  await updates.download()
-  updates.install(true)
-  assert.equal(updater.downloadUpdate.mock.callCount(), 0)
-  assert.equal(updater.quitAndInstall.mock.callCount(), 0)
 
   updater.emit('update-available')
-  await Promise.all([updates.download(), updates.download()])
+  assert.deepEqual(updates.getState(), { status: 'downloading' })
   assert.equal(updater.downloadUpdate.mock.callCount(), 1)
+  updates.restart()
+  assert.equal(updater.quitAndInstall.mock.callCount(), 0)
   updater.emit('update-downloaded')
   assert.equal(nativeUpdater.checkForUpdates.mock.callCount(), 1)
+  nativeUpdater.emit('update-downloaded')
+  assert.deepEqual(updates.getState(), { status: 'ready' })
   updates.install(true)
   assert.equal(updater.quitAndInstall.mock.callCount(), 0)
-  nativeUpdater.emit('update-downloaded')
+  const notifications = notify.mock.callCount()
+  check()
+  assert.equal(notify.mock.callCount(), notifications + 1)
+  assert.equal(updater.checkForUpdates.mock.callCount(), 1)
+  updates.restart()
   assert.deepEqual(updates.getState(), { status: 'installing' })
   updates.install(true)
   assert.equal(updater.quitAndInstall.mock.callCount(), 1)
 })
 
-test('failed downloads do not restart the app and can be retried', async (context) => {
-  const { updater, updates } = fixture(context)
-  updater.emit('update-available')
+test('failed downloads are retried automatically at the next interval', async (context) => {
+  const { updater, updates, check } = fixture(context)
   updater.downloadUpdate.mock.mockImplementationOnce(async () => { throw new Error('Download failed') })
-  await updates.download()
-  assert.deepEqual(updates.getState(), { status: 'available', error: 'download' })
+  updater.emit('update-available')
+  await Promise.resolve()
+  assert.equal(updates.getState(), null)
+  updates.restart()
   updates.install(true)
   assert.equal(updater.quitAndInstall.mock.callCount(), 0)
-  await updates.download()
+  updater.checkForUpdates.mock.mockImplementationOnce(async () => {
+    updater.emit('update-available')
+    return null
+  })
+  check()
   assert.equal(updater.downloadUpdate.mock.callCount(), 2)
+  assert.deepEqual(updates.getState(), { status: 'downloading' })
 })
 
-test('failed or missing save acknowledgements prevent restarting and allow retrying', async (context) => {
+test('failed or missing save acknowledgements prevent restarting and allow retrying', (context) => {
   context.mock.timers.enable({ apis: ['setTimeout'] })
   const { updater, nativeUpdater, updates } = fixture(context)
   updater.emit('update-available')
-  await updates.download()
+  updater.emit('update-downloaded')
   nativeUpdater.emit('update-downloaded')
+  updates.restart()
   updates.install(false)
-  assert.deepEqual(updates.getState(), { status: 'available', error: 'save' })
+  assert.deepEqual(updates.getState(), { status: 'ready', error: 'save' })
   assert.equal(updater.quitAndInstall.mock.callCount(), 0)
-  await updates.download()
-  nativeUpdater.emit('update-downloaded')
+  updates.restart()
   context.mock.timers.tick(10_000)
-  assert.deepEqual(updates.getState(), { status: 'available', error: 'save' })
+  assert.deepEqual(updates.getState(), { status: 'ready', error: 'save' })
   updates.install(true)
   assert.equal(updater.quitAndInstall.mock.callCount(), 0)
+  updates.restart()
+  updates.install(true)
+  assert.equal(updater.quitAndInstall.mock.callCount(), 1)
+  assert.equal(updater.downloadUpdate.mock.callCount(), 1)
 })

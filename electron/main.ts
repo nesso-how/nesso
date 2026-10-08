@@ -1,4 +1,4 @@
-import { app, autoUpdater, BrowserWindow, ipcMain, nativeTheme, net, protocol, session, type IpcMainEvent, type IpcMainInvokeEvent } from 'electron'
+import { app, autoUpdater, BrowserWindow, ipcMain, nativeTheme, net, protocol, session, type IpcMainEvent } from 'electron'
 import electronUpdater from 'electron-updater'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -50,13 +50,15 @@ app.whenReady().then(async () => {
         if (state?.status === 'installing') window.webContents.send('update:prepare')
       }
     })
-    const trusted = (event: IpcMainEvent | IpcMainInvokeEvent) =>
+    const trusted = (event: IpcMainEvent) =>
       BrowserWindow.getAllWindows().some((window) => window.webContents === event.sender)
       && event.senderFrame === event.sender.mainFrame && event.senderFrame.url === 'nesso://app/'
     ipcMain.on('update:subscribe', (event) => {
       if (trusted(event)) event.sender.send('update:state', updates.getState())
     })
-    ipcMain.handle('update:download', (event) => trusted(event) ? updates.download() : undefined)
+    ipcMain.on('update:restart', (event) => {
+      if (trusted(event)) updates.restart()
+    })
     ipcMain.on('update:install', (event, saved: unknown) => {
       if (!trusted(event)) return
       if (saved === true) event.sender.session.flushStorageData()

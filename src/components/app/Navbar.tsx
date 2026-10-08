@@ -5,7 +5,6 @@ import { defaultLocale } from '@nesso/i18n'
 import { SidebarNewView, SidebarTrigger } from '@/components/app/SidebarLayout'
 import { host, useNessoStore } from '@/store'
 import { translate } from '@/i18n'
-import { UpdateButton } from './UpdateButton'
 
 export function Navbar({ readonly = false, detailsOpen, onToggleDetails, onOpenViews, onOpenSettings }: { readonly?: boolean; detailsOpen: boolean; onToggleDetails: () => void; onOpenViews?: () => void; onOpenSettings: () => void }) {
   const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale)
@@ -36,7 +35,6 @@ export function Navbar({ readonly = false, detailsOpen, onToggleDetails, onOpenV
       {!readonly && <SidebarNewView />}
       <div className="ml-auto flex items-center gap-1">
         <Button variant="ghost" size="icon-sm" onClick={onToggleDetails} aria-label={t('toggleDetails')} title={t('details')} aria-expanded={detailsOpen} aria-controls="details-panel"><PanelRight /></Button>
-        <UpdateButton />
         <Button variant="ghost" size="icon-sm" className="md:hidden" onClick={onOpenSettings} aria-label={t('settings')} title={t('settings')}><Settings2 /></Button>
       </div>
     </header>
