@@ -64,7 +64,7 @@ export function SettingsDialog() {
   return (
     <DialogPopup className="settings-popup" initialFocus={title} finalFocus={() => {
       const trigger = document.querySelector<HTMLButtonElement>('[data-settings-trigger]')
-      return trigger?.getClientRects().length ? trigger : document.querySelector<HTMLButtonElement>('[data-graph-menu-trigger]')
+      return trigger?.getClientRects().length ? trigger : null
     }}>
       <header className="flex h-[52px] shrink-0 items-center justify-between border-b px-5">
         <Dialog.Title ref={title} tabIndex={-1} className="text-sm font-medium outline-none">{t('settings')}</Dialog.Title>

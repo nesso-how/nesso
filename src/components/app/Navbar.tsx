@@ -1,18 +1,15 @@
-import { Layers, MoreHorizontal, PanelRight } from 'lucide-react'
+import { Layers, PanelRight, Settings2 } from 'lucide-react'
 import { useEffect } from 'react'
-import { Button, Menu, MenuItem, MenuPopup } from '@nesso/ui'
+import { Button } from '@nesso/ui'
 import { defaultLocale } from '@nesso/i18n'
 import { SidebarNewView, SidebarTrigger } from '@/components/app/SidebarLayout'
-import { actions } from '@/plugins'
 import { host, useNessoStore } from '@/store'
 import { translate } from '@/i18n'
 import { UpdateButton } from './UpdateButton'
-import { useToasts, viewExportedToast } from './toastQueue'
 
 export function Navbar({ readonly = false, detailsOpen, onToggleDetails, onOpenViews, onOpenSettings }: { readonly?: boolean; detailsOpen: boolean; onToggleDetails: () => void; onOpenViews?: () => void; onOpenSettings: () => void }) {
   const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale)
   const t = translate(locale)
-  const { notify } = useToasts()
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.defaultPrevented || event.isComposing || event.altKey || !(event.metaKey || event.ctrlKey)) return
@@ -40,26 +37,7 @@ export function Navbar({ readonly = false, detailsOpen, onToggleDetails, onOpenV
       <div className="ml-auto flex items-center gap-1">
         <Button variant="ghost" size="icon-sm" onClick={onToggleDetails} aria-label={t('toggleDetails')} title={t('details')} aria-expanded={detailsOpen} aria-controls="details-panel"><PanelRight /></Button>
         <UpdateButton />
-        <Menu.Root>
-          <Menu.Trigger render={<Button data-graph-menu-trigger size="icon-sm" variant="ghost" aria-label={t('graphMenu')} title={t('graphMenu')} />}>
-            <MoreHorizontal />
-          </Menu.Trigger>
-          <MenuPopup>
-            {actions.map((action) => (
-              <MenuItem key={action.id} onClick={() => {
-                action.run()
-                if (action.id === 'export-view') notify(viewExportedToast(t))
-              }}>{action.label(locale)}</MenuItem>
-            ))}
-            <Menu.Separator className="my-1 h-px bg-border" />
-            <MenuItem className="md:hidden" onClick={onOpenSettings}>{t('settings')}</MenuItem>
-            {!readonly && (
-              <MenuItem onClick={() => {
-                if (window.confirm(translate(host.store.getState().preferences.locale ?? defaultLocale)('resetConfirmation'))) host.store.resetGraph()
-              }}>{t('resetGraph')}</MenuItem>
-            )}
-          </MenuPopup>
-        </Menu.Root>
+        <Button variant="ghost" size="icon-sm" className="md:hidden" onClick={onOpenSettings} aria-label={t('settings')} title={t('settings')}><Settings2 /></Button>
       </div>
     </header>
   )

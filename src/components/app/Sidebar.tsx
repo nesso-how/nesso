@@ -1,19 +1,34 @@
 import type { SavedView } from '@nesso/plugin'
-import { downloadGraph } from '@nesso/export'
+import { defaultLocale } from '@nesso/i18n'
 import { Button, Dialog, DialogPopup, Menu, MenuItem, MenuPopup, ResizeHandle, SectionHeading } from '@nesso/ui'
-import { MoreHorizontal, Settings2 } from 'lucide-react'
+import { MoreHorizontal, Pencil, Pin, PinOff, Settings2, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { Sidebar } from './SidebarLayout'
 import { NewViewButton } from './NewViewButton'
 import { ViewNameForm } from './ViewNameForm'
+import { viewActions } from '@/plugins'
 import { host, nessoStore, useNessoStore } from '@/store'
 import { useToasts, viewExportedToast } from '@/components/app/toastQueue'
 import { panelLimits } from '@/store/settings'
 import { useTranslation } from '@/i18n'
 
+function ViewActionGroup({ viewId }: { viewId: string | null }) {
+  const t = useTranslation()
+  const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale)
+  const { notify } = useToasts()
+  return (
+    <Menu.Group>
+      <Menu.GroupLabel className="px-2.5 pt-1 pb-0.5 text-[11px] leading-4 text-muted-foreground">{t('actions')}</Menu.GroupLabel>
+      {viewActions.map((action) => <MenuItem key={action.id} className="pl-4" onClick={() => {
+        action.runOnView?.(viewId)
+        if (action.id === 'export-view') notify(viewExportedToast(t))
+      }}>{action.label(locale)}</MenuItem>)}
+    </Menu.Group>
+  )
+}
+
 export function AppSidebar({ readonly = false, bare = false, onNavigate, onOpenSettings }: { readonly?: boolean; bare?: boolean; onNavigate?: () => void; onOpenSettings?: () => void }) {
   const t = useTranslation()
-  const { notify } = useToasts()
   const workspace = useNessoStore((state) => state.workspace)
   const conceptCount = useNessoStore((state) => state.graph.concepts.length)
   const collapsed = useNessoStore((state) => state.preferences.collapsedSections)
@@ -64,7 +79,7 @@ export function AppSidebar({ readonly = false, bare = false, onNavigate, onOpenS
             <MenuItem onClick={() => {
               renamingId.current = view.id
               setRenaming(view)
-            }}>{t('renameView')}</MenuItem>
+            }}><Pencil />{t('renameView')}</MenuItem>
             <MenuItem onClick={() => {
               host.store.setViewPinned(view.id, !view.pinned)
               requestAnimationFrame(() => {
@@ -72,13 +87,11 @@ export function AppSidebar({ readonly = false, bare = false, onNavigate, onOpenS
                 const target = trigger?.getClientRects().length ? trigger : createTrigger.current
                 target?.focus()
               })
-            }}>{t(view.pinned ? 'unpinView' : 'pinView')}</MenuItem>
-            <MenuItem onClick={() => {
-              downloadGraph(host.store.getViewGraph(view.id), view.name)
-              notify(viewExportedToast(t))
-            }}>{t('exportView')}</MenuItem>
+            }}>{view.pinned ? <PinOff /> : <Pin />}{t(view.pinned ? 'unpinView' : 'pinView')}</MenuItem>
             <Menu.Separator className="my-1 h-px bg-border" />
-            <MenuItem onClick={() => { deletingId.current = view.id; setDeleting(view) }}>{t('deleteView')}</MenuItem>
+            <ViewActionGroup viewId={view.id} />
+            <Menu.Separator className="my-1 h-px bg-border" />
+            <MenuItem onClick={() => { deletingId.current = view.id; setDeleting(view) }}><Trash2 />{t('deleteView')}</MenuItem>
           </MenuPopup>
         </Menu.Root>
       )}
@@ -116,10 +129,26 @@ export function AppSidebar({ readonly = false, bare = false, onNavigate, onOpenS
         {heading(t('pinnedViews'), 'pinned-views', pinnedOpen, () => host.store.setSectionOpen('sidebar.pinned-views', !pinnedOpen))}
         <div className="explorer-scroll min-h-0 flex-1 overflow-y-auto p-1.5 -mx-1.5" onScroll={() => setMenu(null)}>
           <div id="pinned-views" hidden={!pinnedOpen} className="mt-1 space-y-0.5">
-            <button type="button" onClick={() => navigate(null)} aria-current={workspace.activeViewId === null ? 'page' : undefined} className="min-h-14 w-full shrink-0 rounded-sm px-2.5 py-2 text-left hover:bg-accent aria-[current=page]:bg-pressed">
-              <span className="block text-[13px] leading-[19px]">{t('completeGraph')}</span>
-              <span className="mt-[3px] block font-mono text-[10px] leading-[14px] text-muted-foreground">{t('conceptCount', { count: conceptCount })}</span>
-            </button>
+            <div className="group flex min-h-14 items-center gap-1 rounded-sm hover:bg-accent has-[:focus-visible]:bg-accent has-[[aria-current]]:bg-pressed">
+              <button type="button" onClick={() => navigate(null)} aria-current={workspace.activeViewId === null ? 'page' : undefined} className="min-w-0 flex-1 rounded-sm px-2.5 py-2 text-left">
+                <span className="block text-[13px] leading-[19px]">{t('completeGraph')}</span>
+                <span className="mt-[3px] block font-mono text-[10px] leading-[14px] text-muted-foreground">{t('conceptCount', { count: conceptCount })}</span>
+              </button>
+              {!readonly && (
+                <Menu.Root open={menu === 'complete-graph'} onOpenChange={(open) => setMenu(open ? 'complete-graph' : null)}>
+                  <Menu.Trigger render={<Button variant="ghost" size="icon-sm" className="mr-1 text-muted-foreground opacity-0 group-hover:opacity-100 group-has-[:focus-visible]:opacity-100 data-popup-open:opacity-100 hover:bg-transparent hover:text-foreground active:bg-transparent [@media(pointer:coarse)]:opacity-100" aria-label={t('actionsFor', { name: t('completeGraph') })} />}>
+                    <MoreHorizontal />
+                  </Menu.Trigger>
+                  <MenuPopup>
+                    <ViewActionGroup viewId={null} />
+                    <Menu.Separator className="my-1 h-px bg-border" />
+                    <MenuItem onClick={() => {
+                      if (window.confirm(t('resetConfirmation'))) host.store.resetGraph()
+                    }}><Trash2 />{t('deleteView')}</MenuItem>
+                  </MenuPopup>
+                </Menu.Root>
+              )}
+            </div>
             {pinned.map(row)}
           </div>
           <div className="mt-4">

@@ -1,9 +1,11 @@
 import type { SavedView } from '@nesso/plugin'
-import { downloadGraph } from '@nesso/export'
+import { defaultLocale } from '@nesso/i18n'
 import { Button, ContextLabel, Input, Label } from '@nesso/ui'
 import { Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { host, useNessoStore } from '@/store'
+import { viewActions } from '@/plugins'
+import { useToasts, viewExportedToast } from './toastQueue'
 import { maxViewNameLength } from '@/store/settings'
 import { useTranslation } from '@/i18n'
 
@@ -27,6 +29,8 @@ function ViewName({ view }: { view: SavedView }) {
 
 export function ViewDetails({ readonly = false }: { readonly?: boolean }) {
   const t = useTranslation()
+  const { notify } = useToasts()
+  const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale)
   const workspace = useNessoStore((state) => state.workspace)
   const viewGraph = useNessoStore((state) => state.viewGraph)
   const view = workspace.savedViews.find((view) => view.id === workspace.activeViewId)
@@ -52,11 +56,15 @@ export function ViewDetails({ readonly = false }: { readonly?: boolean }) {
           <span className="size-3 rounded-[2px] bg-muted-foreground transition-transform [[aria-checked=true]_&]:translate-x-1.5 [[aria-checked=true]_&]:bg-foreground [[aria-checked=false]_&]:-translate-x-1.5" />
         </Button>
       </div>}
-      <Button variant="outline" className="w-full justify-between" onClick={() => {
-        const state = host.store.getState()
-        const active = state.workspace.savedViews.find((view) => view.id === state.workspace.activeViewId)
-        downloadGraph(state.viewGraph, active?.name ?? 'graph')
-      }}><span>{t(view ? 'exportView' : 'exportGraph')}</span><span className="font-mono text-[10px] text-muted-foreground">JSON-LD</span></Button>
+      <section aria-labelledby="view-actions-heading">
+        <h3 id="view-actions-heading" className="text-xs font-medium">{t('actions')}</h3>
+        <div className="mt-3 flex flex-col gap-2">
+          {viewActions.map((action) => <Button key={action.id} variant="outline" className="w-full justify-start" onClick={() => {
+            action.runOnView?.(workspace.activeViewId)
+            if (action.id === 'export-view') notify(viewExportedToast(t))
+          }}>{action.label(locale)}</Button>)}
+        </div>
+      </section>
       {view && !readonly && <Button variant="outline" className="w-full justify-start" onClick={() => host.store.deleteView(view.id)}><Trash2 />{t('deleteView')}</Button>}
     </>
   )
