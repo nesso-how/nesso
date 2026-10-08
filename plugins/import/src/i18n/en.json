@@ -1,0 +1,7 @@
+{
+  "pluginName": "Import",
+  "pluginDescription": "Import a Nesso view from a JSON-LD file.",
+  "pluginDocumentation": "Import merges a Nesso JSON-LD file into the current graph with fresh concept IDs, preserving labels, positions, relations, and missing relation types. Imported concepts join the view the action runs on.",
+  "importView": "Import",
+  "importFailure": "Could not import this file as a Nesso view."
+}

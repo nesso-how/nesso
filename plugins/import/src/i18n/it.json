@@ -1,0 +1,7 @@
+{
+  "pluginName": "Importa",
+  "pluginDescription": "Importa una vista di Nesso da un file JSON-LD.",
+  "pluginDocumentation": "Import unisce un file JSON-LD di Nesso nel grafo corrente con nuovi ID di concetto, preservando etichette, posizioni, relazioni e tipi di relazione mancanti. I concetti importati entrano nella vista da cui parte l'azione.",
+  "importView": "Importa",
+  "importFailure": "Impossibile importare questo file come vista di Nesso."
+}

@@ -17,6 +17,9 @@ importers:
       '@nesso/i18n':
         specifier: workspace:*
         version: link:packages/i18n
+      '@nesso/import':
+        specifier: workspace:*
+        version: link:plugins/import
       '@nesso/plugin':
         specifier: workspace:*
         version: link:packages/plugin
@@ -183,6 +186,19 @@ importers:
       '@types/react':
         specifier: ^19.2.18
         version: 19.3.0
+
+  plugins/import:
+    dependencies:
+      '@nesso/i18n':
+        specifier: workspace:*
+        version: link:../../packages/i18n
+      '@nesso/schema':
+        specifier: workspace:*
+        version: link:../../packages/schema
+    devDependencies:
+      '@nesso/plugin':
+        specifier: workspace:*
+        version: link:../../packages/plugin
 
   plugins/theme:
     dependencies:
