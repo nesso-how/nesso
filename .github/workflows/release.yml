@@ -20,7 +20,27 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
       - run: pnpm test
-      - run: pnpm dist:mac -c.extraMetadata.version="${GITHUB_REF_NAME#v}"
+      - name: Build, sign, and notarize
+        env:
+          CSC_LINK: ${{ secrets.APPLE_CERTIFICATE }}
+          CSC_KEY_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          : "${CSC_LINK:?Missing APPLE_CERTIFICATE secret}"
+          : "${CSC_KEY_PASSWORD:?Missing APPLE_CERTIFICATE_PASSWORD secret}"
+          : "${APPLE_ID:?Missing APPLE_ID secret}"
+          : "${APPLE_APP_SPECIFIC_PASSWORD:?Missing APPLE_PASSWORD secret}"
+          : "${APPLE_TEAM_ID:?Missing APPLE_TEAM_ID secret}"
+          pnpm dist:mac -c.extraMetadata.version="${GITHUB_REF_NAME#v}"
+      - name: Verify signed and notarized apps
+        run: |
+          for app in release/mac/Nesso.app release/mac-arm64/Nesso.app; do
+            codesign --verify --deep --strict --verbose=2 "$app"
+            xcrun stapler validate "$app"
+            spctl --assess --type execute --verbose=2 "$app"
+          done
       - run: gh release create "$GITHUB_REF_NAME" release/*.dmg --title "$GITHUB_REF_NAME" --generate-notes --verify-tag
         env:
           GH_TOKEN: ${{ github.token }}
