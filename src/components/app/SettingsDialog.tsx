@@ -1,11 +1,13 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { defaultLocale, isLocale, localeNames, locales } from '@nesso/i18n'
-import { Button, Combobox, ComboboxItem, ComboboxPopup, Dialog, DialogPopup, Label } from '@nesso/ui'
-import { ArrowUpRight, Check, ChevronDown, Settings2, X } from 'lucide-react'
+import { Button, Dialog, DialogPopup } from '@nesso/ui'
+import { ArrowUpRight, Check, Settings2, Sparkles, X } from 'lucide-react'
 import { plugins } from '@/plugins'
 import { host, useNessoStore } from '@/store'
 import { translate } from '@/i18n'
 import { PersistenceBanner } from './PersistenceBanner'
+import { PreferenceSelect } from './PreferenceSelect'
+import { AiSettings } from './AiSettings'
 import appPackage from '../../../package.json'
 
 const providers = [
@@ -13,33 +15,6 @@ const providers = [
   { kind: 'theme', key: 'activeThemeId', change: host.store.setActiveTheme },
   { kind: 'vocab', key: 'activeVocabId', change: host.store.setActiveVocab },
 ] as const
-
-function PreferenceSelect({ label, items, value, onChange, disabled }: {
-  label: string
-  items: { value: string; label: string }[]
-  value: string
-  onChange: (value: string) => void
-  disabled?: boolean
-}) {
-  const id = useId()
-  return (
-    <div className="settings-preference">
-      <Label id={`${id}-label`} htmlFor={id} className="w-fit">{label}</Label>
-      <Combobox.Root items={items} value={items.find((item) => item.value === value)} onValueChange={(item) => { if (item) onChange(item.value) }} filter={null} disabled={disabled}>
-        <Combobox.Trigger id={id} aria-labelledby={`${id}-label`} render={<Button variant="outline" className="w-full justify-between" />}>
-          <Combobox.Value /><ChevronDown className="text-muted-foreground" />
-        </Combobox.Trigger>
-        <ComboboxPopup>
-          <Combobox.List>
-            {(item: typeof items[number]) => <ComboboxItem key={item.value} value={item} className="flex items-center justify-between">
-              {item.label}<Combobox.ItemIndicator><Check className="size-3.5" /></Combobox.ItemIndicator>
-            </ComboboxItem>}
-          </Combobox.List>
-        </ComboboxPopup>
-      </Combobox.Root>
-    </div>
-  )
-}
 
 export function SettingsDialog() {
   const preferences = useNessoStore((state) => state.preferences)
@@ -75,6 +50,7 @@ export function SettingsDialog() {
         <nav ref={navigation} className="settings-sidebar" aria-label={t('settings')}>
           <p className="settings-nav-heading">Nesso</p>
           <Button variant="ghost" className="settings-nav w-full justify-start" aria-current={page === 'general' ? 'page' : undefined} onClick={() => setPage('general')}><Settings2 />{t('general')}</Button>
+          {window.nessoAi && <Button variant="ghost" className="settings-nav w-full justify-start" aria-current={page === 'ai' ? 'page' : undefined} onClick={() => setPage('ai')}><Sparkles />{t('ai')}</Button>}
           <p className="settings-nav-heading mt-6">{t('plugins')}<span className="ml-auto font-mono text-[10px]">{plugins.length}</span></p>
           {plugins.map((entry) => <Button key={entry.id} variant="ghost" className="settings-nav w-full justify-start" aria-current={page === entry.id ? 'page' : undefined} onClick={() => setPage(entry.id)}>
             <entry.icon /><span className="min-w-0 flex-1 truncate text-left">{entry.metadata(locale).name}</span>
@@ -86,6 +62,7 @@ export function SettingsDialog() {
           </div>
         </nav>
         <div className="settings-content">
+          {page === 'ai' && window.nessoAi && <><h2 ref={pageTitle} tabIndex={-1} className="text-base font-medium outline-none">{t('ai')}</h2><AiSettings bridge={window.nessoAi} /></>}
           {page === 'general' && <>
             <h2 ref={pageTitle} tabIndex={-1} className="text-base font-medium outline-none">{t('general')}</h2>
             <p className="mt-1.5 text-xs leading-[18px] text-muted-foreground">{t('generalDescription')}</p>
