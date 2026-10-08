@@ -87,6 +87,10 @@ export const applyStateOperations = (state: NessoState, operations: readonly Nes
   let relations = new ListEdit(state.graph.relations, relationKey, (a, b) => relationKey(a) === relationKey(b))
   let types = new ListEdit(state.graph.relationTypes, (item) => item.id, sameType)
   let views = new ListEdit(state.workspace.savedViews, (item) => item.id, sameView)
+  let relationOrigins: Map<string, string> | undefined
+  const origins = () => relationOrigins ??= new Map(state.graph.relations
+    .filter((relation) => relations.get(relationKey(relation)) === relation)
+    .map((relation) => [relationKey(relation), relationKey(relation)]))
   const graph = (): GraphSnapshot => ({ concepts: concepts.items, relations: relations.items, relationTypes: types.items })
   let workspace = state.workspace
   let preferences = state.preferences
@@ -128,6 +132,9 @@ export const applyStateOperations = (state: NessoState, operations: readonly Nes
     if (triple === id) return
     if (relations.get(triple)) return
     if (type) withType(type)
+    const origin = origins().get(id)
+    relationOrigins!.delete(id)
+    if (origin !== undefined) relationOrigins!.set(triple, origin)
     relations.set(id, next)
     selected = selected.some((item) => item.kind === 'relation' && item.id === id)
       ? selected.map((item) => item.kind === 'relation' && item.id === id ? { kind: 'relation', id: triple } : item)
@@ -173,7 +180,11 @@ export const applyStateOperations = (state: NessoState, operations: readonly Nes
             y: (source?.position.y ?? 0) + conceptPlacementOffset.y,
           },
         })
-        if (source && vocab) relations.add({ source: source.id, predicate: vocab.defaultTypeId, target: operation.id })
+        if (source && vocab) {
+          const relation = { source: source.id, predicate: vocab.defaultTypeId, target: operation.id }
+          relationOrigins?.delete(relationKey(relation))
+          relations.add(relation)
+        }
         selected = [{ kind: 'concept', id: operation.id }]
         if (workspace.activeViewId !== null) updateView(workspace.activeViewId, (view) =>
           view.conceptIds.includes(operation.id) ? view : { ...view, conceptIds: [...view.conceptIds, operation.id] })
@@ -195,6 +206,7 @@ export const applyStateOperations = (state: NessoState, operations: readonly Nes
         if (relations.get(key)) break
         const type = vocab.relationTypes.find((item) => item.id === vocab.defaultTypeId) ?? { id: vocab.defaultTypeId, label: '' }
         withType(type)
+        relationOrigins?.delete(key)
         relations.add(relation)
         selected = [{ kind: 'relation', id: key }]
         break
@@ -221,10 +233,12 @@ export const applyStateOperations = (state: NessoState, operations: readonly Nes
         }
         break
       case 'relation.remove': {
+        relationOrigins?.delete(operation.id)
         relations.removeWhere((relation) => relationKey(relation) === operation.id)
         break
       }
       case 'document.reset':
+        relationOrigins?.clear()
         concepts = new ListEdit(newGraph(operation.id).concepts, (item) => item.id, sameConcept)
         relations = new ListEdit([], relationKey, (a, b) => relationKey(a) === relationKey(b))
         types = new ListEdit([], (item: Readonly<RelationType>) => item.id, sameType)
@@ -344,5 +358,12 @@ export const applyStateOperations = (state: NessoState, operations: readonly Nes
   if (sameItems(selected, state.selected, (a, b) => a.kind === b.kind && a.id === b.id)) selected = state.selected
   const unchanged = candidate === state.graph && workspace === state.workspace && preferences === state.preferences && selected === state.selected
   const next = unchanged ? state : { ...state, graph: candidate, workspace, preferences, selected, viewGraph: materialize(candidate, workspace, state) }
-  return { next, reset, delta: { concepts: conceptEdit.changes, relations: relationEdit.changes, relationTypes: typeEdit.changes, views: viewChanges(viewEdit.changes) } }
+  let relationRewrites: { before: string; after: string }[] = []
+  if (relationOrigins?.size) {
+    const originalKeys = new Set(state.graph.relations.map(relationKey))
+    const finalKeys = new Set(candidate.relations.map(relationKey))
+    relationRewrites = [...relationOrigins].flatMap(([after, before]) =>
+      finalKeys.has(after) && !finalKeys.has(before) && !originalKeys.has(after) ? [{ before, after }] : [])
+  }
+  return { next, reset, relationRewrites, delta: { concepts: conceptEdit.changes, relations: relationEdit.changes, relationTypes: typeEdit.changes, views: viewChanges(viewEdit.changes) } }
 }

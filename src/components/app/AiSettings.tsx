@@ -1,7 +1,8 @@
 import { useEffect, useId, useState } from 'react'
 import { Button, Input, Label } from '@nesso/ui'
 import { Check, Plus, Trash2 } from 'lucide-react'
-import { aiProviders, type AiBridge, type AiConnectionInput, type AiConnections, type AiProvider, type AiResult } from '../../../electron/ai-contract'
+import { aiProviders, type AiConnectionInput, type AiConnections, type AiProvider, type AiResult } from '@nesso/ai/providers'
+import type { AiBridge } from '../../../electron/ai-bridge'
 import { useTranslation } from '@/i18n'
 import { PreferenceSelect } from './PreferenceSelect'
 

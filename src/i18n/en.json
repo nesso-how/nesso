@@ -1,5 +1,9 @@
 {
   "ai": "AI",
+  "aiApproval": "Apply AI changes?",
+  "aiEditApproval": "{{added}} additions, {{updated}} updates, {{removed}} deletions and {{memberships}} membership changes. All changes apply together and can be undone.",
+  "aiResetApproval": "Reset the complete graph and delete all saved views? History and chat will be cleared. This cannot be undone.",
+  "aiApply": "Apply changes",
   "aiDescription": "Connect your own provider. Credentials are encrypted on this device; requests go directly to the configured endpoint.",
   "aiConnections": "Connections",
   "aiNewConnection": "New connection",

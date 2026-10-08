@@ -11,17 +11,18 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "analyze": "fallow",
-    "test": "node --test",
+    "test": "tsc -b packages/ai && node --test",
     "preview": "vite preview",
     "site:dev": "vite --config site/vite.config.ts",
     "site:build": "vite build --config site/vite.config.ts",
     "site:preview": "vite preview --config site/vite.config.ts",
     "desktop": "pnpm build && electron .",
-    "desktop:dev": "tsc -p tsconfig.electron.json && electron . --dev",
+    "desktop:dev": "tsc -b tsconfig.electron.json && electron . --dev",
     "dist:mac": "pnpm build && electron-builder --mac dmg zip --arm64 --x64 --publish never",
     "release": "node scripts/release.ts"
   },
   "dependencies": {
+    "@nesso/ai": "workspace:*",
     "@nesso/export": "workspace:*",
     "@nesso/graph": "workspace:*",
     "@nesso/i18n": "workspace:*",
@@ -38,6 +39,7 @@
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "tailwindcss": "^4.3.3",
+    "zod": "^4.6.5",
     "zustand": "^5.0.15"
   },
   "build": {

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { createAiConnections } from './ai-connections.ts'
-import { aiProviders, type AiConnectionInput, type AiProvider } from './ai-contract.ts'
+import { aiProviders, type AiConnectionInput, type AiProvider } from '@nesso/ai/providers'
 import { ElectronError } from './errors.ts'
 
 const input: AiConnectionInput = { name: 'Local', provider: 'custom', endpoint: 'http://localhost:11434/v1/', model: 'local-model' }

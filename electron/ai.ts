@@ -2,7 +2,7 @@ import { app, BrowserWindow, ipcMain, safeStorage } from 'electron'
 import { readFileSync, renameSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { createAiConnections } from './ai-connections.ts'
-import type { AiResult } from './ai-contract.ts'
+import type { AiResult } from '@nesso/ai'
 import { ElectronError } from './errors.ts'
 
 export function connectAi(dev: boolean) {

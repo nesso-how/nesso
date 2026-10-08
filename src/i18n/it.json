@@ -1,5 +1,9 @@
 {
   "ai": "AI",
+  "aiApproval": "Applicare le modifiche AI?",
+  "aiEditApproval": "{{added}} aggiunte, {{updated}} modifiche, {{removed}} eliminazioni e {{memberships}} cambi di appartenenza. Le modifiche vengono applicate insieme e possono essere annullate.",
+  "aiResetApproval": "Azzerare il grafo completo ed eliminare tutte le viste salvate? Cronologia e chat verranno cancellate. Non si può annullare.",
+  "aiApply": "Applica modifiche",
   "aiDescription": "Collega il tuo provider. Le credenziali sono cifrate su questo dispositivo; le richieste vanno direttamente all’endpoint configurato.",
   "aiConnections": "Connessioni",
   "aiNewConnection": "Nuova connessione",

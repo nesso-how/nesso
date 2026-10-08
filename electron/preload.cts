@@ -1,5 +1,5 @@
 import type { UpdateBridge, UpdateState } from './updates.js'
-import type { AiBridge } from './ai-contract.js'
+import type { AiBridge } from './ai-bridge.js'
 
 const { contextBridge, ipcRenderer } = require('electron') as typeof import('electron')
 const bridge: UpdateBridge = {

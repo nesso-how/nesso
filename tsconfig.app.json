@@ -27,6 +27,7 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
+  "references": [{ "path": "./packages/ai" }],
   "include": ["src"],
   "exclude": ["src/**/*.test.ts"]
 }

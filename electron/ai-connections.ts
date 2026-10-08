@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { aiProviders, type AiConnectionInput, type AiConnections, type AiProvider } from './ai-contract.ts'
+import { aiProviders, type AiConnectionInput, type AiConnections, type AiProvider } from '@nesso/ai/providers'
 import { ElectronError } from './errors.ts'
 
 type Connection = Omit<AiConnectionInput, 'id' | 'apiKey'> & { id: string; apiKey: string }

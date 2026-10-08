@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@nesso/ai':
+        specifier: workspace:*
+        version: link:packages/ai
       '@nesso/export':
         specifier: workspace:*
         version: link:plugins/export
@@ -56,6 +59,9 @@ importers:
       tailwindcss:
         specifier: ^4.3.3
         version: 4.3.3
+      zod:
+        specifier: ^4.6.5
+        version: 4.6.5
       zustand:
         specifier: ^5.0.15
         version: 5.0.15(@types/react@19.3.0)(react@19.3.0)(use-sync-external-store@1.7.0(react@19.3.0))
@@ -93,6 +99,12 @@ importers:
       vite:
         specifier: ^8.3.0
         version: 8.3.1(@types/node@24.19.0)(jiti@2.7.0)
+
+  packages/ai:
+    dependencies:
+      zod:
+        specifier: ^4.6.5
+        version: 4.6.5
 
   packages/i18n:
     dependencies:
@@ -3201,6 +3213,9 @@ packages:
   zod@3.25.76:
     resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
 
+  zod@4.6.5:
+    resolution: {integrity: sha512-v5l/aFXZQeai4awLbOpSoHecE9UiMrnfx75tEXLjNonXVARxQ5mOeipTjROUchszUNCqnE+hqAMujRsRHsut2Q==}
+
   zustand@4.5.7:
     resolution: {integrity: sha512-CHOUy7mu3lbD6o6LJLfllpjkzhHXSBlX8B9+qPddUsIfeF5S/UZ5q0kmCsnRqT1UHFQZchNFDDzMbQsuesHWlw==}
     engines: {node: '>=12.7.0'}
@@ -6162,6 +6177,8 @@ snapshots:
       zod: 3.25.76
 
   zod@3.25.76: {}
+
+  zod@4.6.5: {}
 
   zustand@4.5.7(@types/react@19.3.0)(react@19.3.0):
     dependencies:

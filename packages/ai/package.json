@@ -1,0 +1,24 @@
+{
+  "name": "@nesso/ai",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "browser": "./src/index.ts",
+      "default": "./dist/index.js"
+    },
+    "./providers": {
+      "types": "./dist/providers.d.ts",
+      "browser": "./src/providers.ts",
+      "default": "./dist/providers.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "dependencies": {
+    "zod": "^4.6.5"
+  }
+}

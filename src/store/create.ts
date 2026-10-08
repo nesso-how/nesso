@@ -140,5 +140,8 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
     }
   }
 
-  return { store: nessoStore, setPersistenceIssues, registerVocab, registerRenderer, getRenderer, registerTheme, getTheme, listThemes }
+  const previewOperations = (state: Parameters<typeof applyStateOperations>[0], operations: Parameters<typeof applyStateOperations>[1]) =>
+    applyStateOperations(state, operations, { renderers, themes })
+
+  return { store: nessoStore, previewOperations, setPersistenceIssues, registerVocab, registerRenderer, getRenderer, registerTheme, getTheme, listThemes }
 }
