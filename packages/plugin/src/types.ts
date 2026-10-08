@@ -140,6 +140,7 @@ export type ActionDefinition = {
   readonly id: string
   readonly label: (locale: Locale) => string
   readonly run: () => void
+  readonly runOnView?: (viewId: string | null) => void
 }
 
 export type ThemeDefinition = {
