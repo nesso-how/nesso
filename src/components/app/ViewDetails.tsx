@@ -39,7 +39,7 @@ export function ViewDetails({ readonly = false }: { readonly?: boolean }) {
   return (
     <>
       <ContextLabel>{t(view ? 'activeView' : 'graphOverview')}</ContextLabel>
-      {view && !readonly ? <ViewName key={`${view.id}:${view.name}`} view={view} /> : <h3 className="font-medium break-words">{view?.name ?? t('completeGraph')}</h3>}
+      {view && !readonly ? <ViewName key={`${view.id}:${view.name}`} view={view} /> : view ? <h3 className="font-medium break-words">{view.name}</h3> : null}
       <section aria-labelledby="view-content-heading">
         <h3 id="view-content-heading" className="text-xs font-medium">{t('content')}</h3>
         <dl className="mt-3 space-y-2">
