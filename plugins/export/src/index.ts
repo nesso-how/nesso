@@ -1,6 +1,6 @@
 import type { GraphSnapshot, Plugin } from '@nesso/plugin'
 import { serializeGraph, type Graph } from '@nesso/schema'
-import { createTranslator } from '@nesso/i18n'
+import { createTranslator, defaultLocale } from '@nesso/i18n'
 import en from './i18n/en.json' with { type: 'json' }
 import it from './i18n/it.json' with { type: 'json' }
 
@@ -27,11 +27,13 @@ export const exportPlugin: Plugin = {
     documentation: translate(locale)('pluginDocumentation'),
   }),
   operations: [],
-  create: ({ store }) => {
+  create: ({ store, notifications }) => {
     const runOnView = (viewId: string | null) => {
       const state = store.getState()
       const view = viewId ? state.workspace.savedViews.find((item) => item.id === viewId) : undefined
       downloadGraph(viewId ? store.getViewGraph(viewId) : state.viewGraph, view?.name ?? 'graph')
+      const t = translate(state.preferences.locale ?? defaultLocale)
+      notifications.notify({ tone: 'info', title: t('viewExported'), description: t('viewExportedDescription') })
     }
     return [{
       id: 'export-view',

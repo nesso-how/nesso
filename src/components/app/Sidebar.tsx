@@ -9,21 +9,16 @@ import { DeleteViewDialog } from './DeleteViewDialog'
 import { ViewNameForm } from './ViewNameForm'
 import { viewActions } from '@/plugins'
 import { host, nessoStore, useNessoStore } from '@/store'
-import { useToasts, viewExportedToast } from '@/components/app/toastQueue'
 import { panelLimits } from '@/store/settings'
 import { useTranslation } from '@/i18n'
 
 function ViewActionGroup({ viewId }: { viewId: string | null }) {
   const t = useTranslation()
   const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale)
-  const { notify } = useToasts()
   return (
     <Menu.Group>
       <Menu.GroupLabel className="px-2.5 pt-1 pb-0.5 text-[11px] leading-4 text-muted-foreground">{t('actions')}</Menu.GroupLabel>
-      {viewActions.map((action) => <MenuItem key={action.id} className="pl-4" onClick={() => {
-        action.runOnView?.(viewId)
-        if (action.id === 'export-view') notify(viewExportedToast(t))
-      }}>{action.label(locale)}</MenuItem>)}
+      {viewActions.map((action) => <MenuItem key={action.id} className="pl-4" onClick={() => action.runOnView?.(viewId)}>{action.label(locale)}</MenuItem>)}
     </Menu.Group>
   )
 }

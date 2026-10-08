@@ -1,5 +1,4 @@
 {
-  "update": "Aggiornamento",
   "updateReady": "Aggiornamento pronto",
   "updateReadyDescription": "Riavvia Nesso per installarlo. Il tuo lavoro verrà salvato prima.",
   "restartNow": "Riavvia ora",
@@ -113,7 +112,7 @@
   "close": "Chiudi",
   "toasts": "Notifiche",
   "info": "Info",
-  "viewExported": "Vista esportata",
-  "viewExportedDescription": "Salvata come JSON-LD.",
+  "warning": "Attenzione",
+  "confirmation": "Conferma",
   "toastQueued": "{{count}} in attesa"
 }

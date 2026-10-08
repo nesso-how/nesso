@@ -29,6 +29,7 @@
 
 ## Plugins and UI
 
+- Keep the static plugin registry in `src/plugins`, the host notification queue and updater adapter in `src/notifications`, and DOM theme application in `src/theme`. Keep tests beside their implementation; plugin contract tests belong to `packages/plugin/test`.
 - Use static registration and small lookups; no lifecycle, runtime loading, uninstall, dynamic permission system, or event bus.
 - Snapshot each plugin's operation allowlist before initialization and check the whole batch before applying it. Host and plugin stores share command helpers; no helper bypasses the check.
 - Support multiple renderer, vocabulary, and theme definitions. Validate registration and activation, keeping one valid active ID for each registered kind; renderer components stay in the registry.

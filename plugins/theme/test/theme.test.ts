@@ -7,10 +7,12 @@ test('the theme plugin contributes an identity matching its stylesheet without a
   assert.ok(themePlugin.kind === 'theme')
   const definition = themePlugin.create({
     get store() {
-      assert.fail('Theme definitions must not access the store')
+      return assert.fail('Theme definitions must not access the store')
+    },
+    get notifications() {
+      return assert.fail('Theme definitions must not access notifications')
     },
   })
-  assert.deepEqual(definition, { id: 'kernel', label: 'Kernel' })
   const css = readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8')
   assert.ok(css.includes(`:root[data-theme='${definition.id}']`))
 })

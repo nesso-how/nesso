@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { defaultLocale } from '@nesso/i18n'
 import { Inspector } from '@/components/app/Inspector'
 import { Navbar } from '@/components/app/Navbar'
-import { ToastsHost, ToastsProvider } from '@/components/app/Toasts'
+import { ToastsHost } from '@/components/app/Toasts'
 import { PersistenceBanner } from '@/components/app/PersistenceBanner'
 import { AppSidebar } from '@/components/app/Sidebar'
 import { SettingsDialog } from '@/components/app/SettingsDialog'
@@ -43,7 +43,6 @@ export default function App() {
       <SidebarProvider
         style={{ '--sidebar-width': `${panels.explorerWidth}px` } as CSSProperties}
       >
-        <ToastsProvider>
         <Navbar readonly={readonly} detailsOpen={detailsOpen} onToggleDetails={() => setDetailsOpen((open) => !open)} onOpenViews={() => setViewsOpen(true)} onOpenSettings={openSettings} />
         <ExplorerDrawer open={readonly && viewsOpen} onClose={() => setViewsOpen(false)} onOpenSettings={openSettings} />
         <div className="relative flex min-h-0 flex-1 overflow-hidden">
@@ -75,7 +74,6 @@ export default function App() {
             <PersistenceBanner />
           </SidebarInset>
         </div>
-        </ToastsProvider>
       </SidebarProvider>
       <Dialog.Root open={settingsOpen} onOpenChange={(open) => { if (open) setViewsOpen(false); setSettingsOpen(open) }}>
         {settingsOpen && <SettingsDialog />}

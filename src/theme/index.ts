@@ -1,4 +1,4 @@
-import type { createNessoStore } from './store/create.ts'
+import type { createNessoStore } from '../store/create.ts'
 
 export const connectTheme = (
   host: ReturnType<typeof createNessoStore>,

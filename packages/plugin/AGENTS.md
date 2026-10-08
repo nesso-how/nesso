@@ -4,7 +4,8 @@
 
 - Keep the package types-only; never add runtime code or import the host or plugins. Keep the contract vocabulary-agnostic, without default vocabulary IDs or definitions.
 - Everything crossing the contract is deeply readonly: state, snapshots, contributions, and operations. No mutable state drafts cross the contract.
-- The store is the only injection channel: `PluginContext` stays `{ store }`. Expose typed writes and helpers, never `setState`, generic mutation callbacks, registration, or renderer-specific types. View and interface preferences use renderer-independent types.
+- `PluginContext` injects `{ store, notifications }`. State writes use the store; transient notifications stay outside `applyOperations`, persistence, and history. Expose typed writes and helpers, never `setState`, generic mutation callbacks, registration, or renderer-specific types. View and interface preferences use renderer-independent types.
+- Notifications support info, warning, and persistent confirmations. Plugins own localized content and confirmation callbacks; confirmations require both a primary action and a cancel action. `notify` returns an ID for `dismiss`; host and plugins use the same API.
 
 ## Operations
 

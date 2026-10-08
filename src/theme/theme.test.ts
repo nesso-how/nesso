@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { createNessoStore } from './store/create.ts'
-import { connectTheme } from './theme.ts'
+import { createNessoStore } from '../store/create.ts'
+import { connectTheme } from './index.ts'
 
 test('the host applies only registered themes, tracks changes, and disconnects cleanly', () => {
   for (const registered of [false, true]) {

@@ -4,7 +4,7 @@ Types-only definitions for Nesso's plugin system.
 
 ## Create a plugin
 
-A plugin declares one `kind`, localized `metadata(locale)`, the operation kinds it needs, and a `create({ store })` factory. Its kind determines the factory's return value:
+A plugin declares one `kind`, localized `metadata(locale)`, the operation kinds it needs, and a `create({ store, notifications })` factory. Its kind determines the factory's return value:
 
 | Kind | Return value |
 | --- | --- |
@@ -43,7 +43,7 @@ export const examplePlugin: Plugin = {
 
 ### Register it
 
-Import `examplePlugin` from `./example-plugin` in [`src/plugins.ts`](../../src/plugins.ts) and add an entry to `bundledPlugins` with its package manifest. Plugins are registered statically and bundled with the app; the resulting registry supplies settings and navbar actions. The host assigns icons by plugin kind.
+Import `examplePlugin` from `../example-plugin` in [`src/plugins/index.ts`](../../src/plugins/index.ts) and add an entry to `bundledPlugins` with its package manifest. Plugins are registered statically and bundled with the app; the resulting registry supplies settings and action menus. The host assigns icons by plugin kind.
 
 Run `pnpm dev`, select one concept, and choose **Rename selected concept** from the navbar's **Graph menu**.
 
@@ -78,7 +78,7 @@ When displaying a graph, subscribe to `state.viewGraph`; the host already materi
 
 ## Contract
 
-Use only the store injected into `create`; do not import host internals or keep a shared store at module scope. State snapshots, contributions, and operations are readonly. Read current state when an action runs; `selected` is an array of concept/relation references.
+Use only the APIs injected into `create`; do not import host internals or keep shared injected instances at module scope. State snapshots, contributions, operations, and notifications are readonly. Read current state when an action runs; `selected` is an array of concept/relation references.
 
 Saved views hold concept IDs and pin metadata; `workspace.activeViewId: null` means the complete graph. Registration and persistence diagnostics remain internal to the host.
 
@@ -89,6 +89,14 @@ Saved views hold concept IDs and pin metadata; `workspace.activeViewId: null` me
 - Creation and reset operations require explicit stable IDs, generated with `newIri` from `@nesso/schema`; convenience helpers generate them. New concepts join the view active at their creation. Reuse the host's `conceptPlacementOffset` when placing concepts near the selection.
 - `reconnectRelation` preserves the predicate and updates selection; unchanged endpoints, self-connections, and duplicates are no-ops.
 - `getViewGraph(id)` asks the host for a saved view without activating it.
+
+### Notifications
+
+Call `notifications.notify({ tone, title, description })` for `info` or `warning` feedback. For `confirmation`, also provide `action` and `cancelAction`, each with a localized `label` and an `onClick` callback. Info notifications auto-dismiss; warnings and confirmations remain until dismissed or acted upon.
+
+`notify` returns the notification ID. Call `notifications.dismiss(id)` to remove it programmatically. The host uses the same API for its own notifications.
+
+Plugins own notification text and callbacks. The host executes all actions uniformly and renders notifications without knowing their purpose. Notifications are transient effects outside `applyOperations`, persistence, and history; state writes inside callbacks still require their declared operation kinds.
 
 ### History
 

@@ -148,7 +148,28 @@ export type ThemeDefinition = {
   readonly label: string
 }
 
-export type PluginContext = { readonly store: NessoStore }
+export type NotificationAction = {
+  readonly label: string
+  readonly onClick: () => void
+}
+
+export type Notification = {
+  readonly title: string
+  readonly description?: string
+} & (
+  | { readonly tone: 'info' | 'warning' }
+  | { readonly tone: 'confirmation'; readonly action: NotificationAction; readonly cancelAction: NotificationAction }
+)
+
+export type Notifications = {
+  readonly notify: (notification: Notification) => string
+  readonly dismiss: (id: string) => void
+}
+
+export type PluginContext = {
+  readonly store: NessoStore
+  readonly notifications: Notifications
+}
 
 export type Plugin = {
   readonly metadata: (locale: Locale) => {

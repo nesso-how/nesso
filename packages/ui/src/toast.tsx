@@ -12,7 +12,7 @@ export type ToastItem = {
 } & (
   | { tone: 'info'; duration?: number; action?: ToastAction }
   | { tone: 'warning'; action?: ToastAction }
-  | { tone: 'request'; action: ToastAction; cancelAction: ToastAction }
+  | { tone: 'confirmation'; action: ToastAction; cancelAction: ToastAction }
 )
 
 function useToastLifecycle({ id, duration, onDismiss, onRestoreFocus }: {
@@ -58,7 +58,7 @@ function useToastLifecycle({ id, duration, onDismiss, onRestoreFocus }: {
   return { card, setHovered, setFocused, paused, leaving, dismiss }
 }
 
-const toastIcons = { info: Info, warning: TriangleAlert, request: CircleHelp }
+const toastIcons = { info: Info, warning: TriangleAlert, confirmation: CircleHelp }
 
 function ToastCard({ item, closeLabel, onDismiss, onRestoreFocus }: {
   item: ToastItem
@@ -97,11 +97,11 @@ function ToastCard({ item, closeLabel, onDismiss, onRestoreFocus }: {
         <h2 className="toast-title">{item.title}</h2>
         {item.description && <p className="toast-description">{item.description}</p>}
       </div>
-      {item.tone !== 'request' && <Button variant="ghost" size="icon-sm" className="toast-close" aria-label={`${closeLabel}: ${item.title}`} disabled={leaving} onClick={dismiss}><X /></Button>}
+      {item.tone !== 'confirmation' && <Button variant="ghost" size="icon-sm" className="toast-close" aria-label={`${closeLabel}: ${item.title}`} disabled={leaving} onClick={dismiss}><X /></Button>}
       {item.action && (
         <div className="toast-actions">
-          {item.tone === 'request' && <Button size="sm" variant="ghost" disabled={leaving} onClick={() => act(item.cancelAction)}>{item.cancelAction.label}</Button>}
-          <Button size="sm" variant={item.tone === 'request' ? 'default' : 'outline'} disabled={leaving} onClick={() => { if (item.action) act(item.action) }}>{item.action.label}</Button>
+          {item.tone === 'confirmation' && <Button size="sm" variant="ghost" disabled={leaving} onClick={() => act(item.cancelAction)}>{item.cancelAction.label}</Button>}
+          <Button size="sm" variant={item.tone === 'confirmation' ? 'default' : 'outline'} disabled={leaving} onClick={() => { if (item.action) act(item.action) }}>{item.action.label}</Button>
         </div>
       )}
       {duration > 0 && <div aria-hidden="true" className="toast-progress" style={{ '--toast-duration': `${duration}ms`, animationPlayState: paused || leaving ? 'paused' : 'running' } as CSSProperties} />}

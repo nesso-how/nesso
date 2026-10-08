@@ -2,5 +2,7 @@
   "pluginName": "Export",
   "pluginDescription": "Esporta le tue viste in formato JSON-LD.",
   "pluginDocumentation": "Export scarica una vista in JSON-LD, inclusi concetti, relazioni interne e definizioni dei tipi di relazione. Eseguilo dal menu di una vista salvata o dall'inspector; dal grafo completo si esporta l'intero grafo.",
-  "exportView": "Esporta"
+  "exportView": "Esporta",
+  "viewExported": "Vista esportata",
+  "viewExportedDescription": "Download JSON-LD avviato."
 }

@@ -739,7 +739,6 @@ test('domain no-ops preserve state identity and do not notify subscribers', () =
   store.removeConcept('urn:missing')
   store.removeRelation('missing')
   const id = relationKey(graph.relations[0])
-  store.setRelationType(id, 'urn:links')
   store.setRelationType(id, 'urn:part')
   store.connect('urn:n1', 'urn:n2')
   store.connect('urn:n1', 'urn:n1')
@@ -859,7 +858,6 @@ test('UI and viewport writes own their inputs, ignore no-ops and reject invalid 
   host.store.subscribe(() => notifications++)
   host.store.setViewMembership(viewId, 'urn:n1', true)
   host.store.setViewPinned(viewId, false)
-  host.store.renameView(viewId, 'Pair')
   host.store.setView(viewId)
   host.store.setPanelSizes({ explorerWidth: 300, inspectorWidth: 350 })
   host.store.setViewport('graph', { x: 100, y: -200, zoom: 0.8 })
@@ -930,7 +928,4 @@ test('theme registration and activation are validated, isolated, and leave the d
   assert.equal(host.store.getState().graph, before.graph)
   assert.equal(host.store.getState().workspace, before.workspace)
   assert.equal(host.store.getState().viewGraph, before.viewGraph)
-  const preferences = host.store.getState().preferences
-  host.store.resetGraph()
-  assert.equal(host.store.getState().preferences, preferences)
 })

@@ -1,5 +1,4 @@
 {
-  "update": "Update",
   "updateReady": "Update ready",
   "updateReadyDescription": "Restart Nesso to install it. Your work will be saved first.",
   "restartNow": "Restart now",
@@ -107,7 +106,7 @@
   "close": "Close",
   "toasts": "Toasts",
   "info": "Info",
-  "viewExported": "View exported",
-  "viewExportedDescription": "Saved as JSON-LD.",
+  "warning": "Warning",
+  "confirmation": "Confirmation",
   "toastQueued": "{{count}} waiting"
 }
