@@ -1,12 +1,12 @@
 # @nesso/export
 
-Action plugin exporting the visible graph as a JSON-LD download.
+Action plugin exporting a view as a JSON-LD download.
 
 ## Usage
 
-Register `exportPlugin` using the [plugin guide](../../packages/plugin/README.md#register-it). Its navbar **Export view** action reads the current `viewGraph` when invoked.
+Register `exportPlugin` using the [plugin guide](../../packages/plugin/README.md#register-it). Its **Export** action targets the view it runs on (`null` targets the complete graph), reading that view without changing navigation.
 
-Saved-view menus use `downloadGraph` with a host-materialized view, including inactive or empty views, without changing navigation. Interface labels use local English/Italian catalogs; graph contents are exported unchanged.
+The host lists view-scoped actions in the saved-view menus. Interface labels use local English/Italian catalogs; graph contents are exported unchanged.
 
 ## API
 

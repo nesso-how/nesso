@@ -27,9 +27,17 @@ export const exportPlugin: Plugin = {
     documentation: translate(locale)('pluginDocumentation'),
   }),
   operations: [],
-  create: ({ store }) => [{
-    id: 'export-view',
-    label: (locale) => translate(locale)('exportView'),
-    run: () => downloadGraph(store.getState().viewGraph),
-  }],
+  create: ({ store }) => {
+    const runOnView = (viewId: string | null) => {
+      const state = store.getState()
+      const view = viewId ? state.workspace.savedViews.find((item) => item.id === viewId) : undefined
+      downloadGraph(viewId ? store.getViewGraph(viewId) : state.viewGraph, view?.name ?? 'graph')
+    }
+    return [{
+      id: 'export-view',
+      label: (locale) => translate(locale)('exportView'),
+      run: () => runOnView(store.getState().workspace.activeViewId),
+      runOnView,
+    }]
+  },
 }
