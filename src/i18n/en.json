@@ -104,6 +104,7 @@
   "origin": "Origin",
   "builtIn": "Included with Nesso",
   "documentation": "Documentation",
+  "latest": "Latest version",
   "close": "Close",
   "toasts": "Toasts",
   "info": "Info",

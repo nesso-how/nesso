@@ -6,6 +6,7 @@ import { plugins } from '@/plugins'
 import { host, useNessoStore } from '@/store'
 import { translate } from '@/i18n'
 import { PersistenceBanner } from './PersistenceBanner'
+import appPackage from '../../../package.json'
 
 const providers = [
   { kind: 'renderer', key: 'activeRendererId', change: host.store.setActiveRenderer },
@@ -78,6 +79,11 @@ export function SettingsDialog() {
           {plugins.map((entry) => <Button key={entry.id} variant="ghost" className="settings-nav w-full justify-start" aria-current={page === entry.id ? 'page' : undefined} onClick={() => setPage(entry.id)}>
             <entry.icon /><span className="min-w-0 flex-1 truncate text-left">{entry.metadata(locale).name}</span>
           </Button>)}
+          <div className="settings-version">
+            <a href="https://github.com/nesso-how/nesso/releases/latest" target="_blank" rel="noopener noreferrer" aria-label={t('latest')}>
+              <span className="font-mono">v{appPackage.version}</span><ArrowUpRight className="size-3" aria-hidden="true" />
+            </a>
+          </div>
         </nav>
         <div className="settings-content">
           {page === 'general' && <>

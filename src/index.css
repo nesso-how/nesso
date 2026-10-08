@@ -47,11 +47,14 @@
 }
 
 .settings-body { display: flex; flex: 1; min-height: 0; }
-.settings-sidebar { width: 192px; flex-shrink: 0; padding: 20px 12px; overflow-y: auto; background: var(--sidebar); border-right: 1px solid var(--border); }
+.settings-sidebar { display: flex; flex-direction: column; width: 192px; flex-shrink: 0; padding: 20px 12px; overflow-y: auto; background: var(--sidebar); border-right: 1px solid var(--border); }
 .settings-nav-heading { display: flex; align-items: center; padding: 0 10px; margin-bottom: 8px; font-size: 11px; line-height: 16px; color: var(--muted-foreground); }
 .settings-nav { min-height: 36px; margin: 2px 0; }
 .settings-nav[aria-current="page"] { background: var(--pressed); }
 .settings-nav:not([aria-current]) { color: var(--muted-foreground); }
+.settings-version { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: auto; padding: 12px 10px 0; font-size: 11px; line-height: 16px; color: var(--muted-foreground); }
+.settings-version a { display: inline-flex; align-items: center; gap: 2px; color: var(--muted-foreground); }
+.settings-version a:hover { color: var(--foreground); text-decoration: underline; }
 .settings-content { flex: 1; min-width: 0; overflow-y: auto; padding: 22px 28px; scrollbar-width: thin; }
 .settings-section { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border); }
 .settings-preference { display: grid; grid-template-columns: minmax(100px, 1fr) minmax(160px, 236px); align-items: center; gap: 16px; }
@@ -59,9 +62,10 @@
 
 @media (max-width: 640px) {
   .settings-body { flex-direction: column; }
-  .settings-sidebar { display: flex; gap: 4px; width: 100%; padding: 8px 12px; overflow-x: auto; overflow-y: hidden; border-right: 0; border-bottom: 1px solid var(--border); }
+  .settings-sidebar { display: flex; flex-direction: row; gap: 4px; width: 100%; padding: 8px 12px; overflow-x: auto; overflow-y: hidden; border-right: 0; border-bottom: 1px solid var(--border); }
   .settings-nav-heading { display: none; }
   .settings-nav { width: auto; margin: 0; flex-shrink: 0; }
+  .settings-version { margin: 0 0 0 auto; padding: 0 0 0 12px; flex-shrink: 0; align-self: center; }
   .settings-content { padding: 22px 20px; }
   .settings-preference { grid-template-columns: minmax(90px, 1fr) minmax(140px, 1.3fr); gap: 12px; }
 }
