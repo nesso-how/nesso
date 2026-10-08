@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react'
 import { Lock, LockOpen, Maximize, Plus, Redo2, Trash2, Undo2 } from 'lucide-react'
 import {
   Background,
@@ -89,7 +89,7 @@ export function Canvas() {
     const updates = changes.flatMap((change) =>
       change.type === 'position' && change.position ? [{ id: change.id, position: change.position }] : [],
     )
-    if (!readonly && updates.length) store.applyOperations([{ kind: 'concept.positions', updates }], { historyGroup: dragGroup.current })
+    if (!readonly && updates.length) store.setConceptPositions(updates, dragGroup.current)
     if (changes.some((change) => change.type === 'position' && change.dragging === false)) dragGroup.current = undefined
     onObjectChanges('concept', changes)
   }
@@ -127,11 +127,10 @@ export function Canvas() {
         y: Math.max(topLeft.y, Math.min(position.y, maxY)),
       }
     }
-    const id = newIri()
     const historyGroup = newIri()
-    store.applyOperations([{ kind: 'concept.add', id, position: placement() }], { historyGroup })
+    const id = store.addConcept(placement(), historyGroup)
     requestAnimationFrame(() => {
-      if (canvas.current === element) store.applyOperations([{ kind: 'concept.position', id, value: placement() }], { historyGroup })
+      if (canvas.current === element) store.setConceptPosition(id, placement(), historyGroup)
     })
   }
 
@@ -139,6 +138,14 @@ export function Canvas() {
     const { selected, graph } = store.getState()
     if (selected.filter((item) => item.kind === 'concept').length >= graph.concepts.length) return
     store.applyOperations(selected.map(({ kind, id }) => ({ kind: kind === 'concept' ? 'concept.remove' : 'relation.remove', id })))
+  }
+
+  const handlePaneDoubleClick = (event: ReactMouseEvent) => {
+    if (readonly) return
+    const target = event.target as HTMLElement | null
+    if (target?.closest?.('.react-flow__node, .react-flow__edge, .react-flow__controls, .react-flow__panel, button')) return
+    const position = screenToFlowPosition({ x: event.clientX, y: event.clientY })
+    store.addConcept({ x: position.x - conceptNodeMinSize.width / 2, y: position.y - conceptNodeMinSize.height / 2 })
   }
 
   useEffect(() => {
@@ -198,6 +205,8 @@ export function Canvas() {
           return source !== target && !relations.some((relation) => relationKey(relation) !== reconnecting.current?.id && relation.source === source && relation.target === target && relation.predicate === predicate)
         }}
         onPaneClick={() => { clearSelection(); canvas.current?.focus() }}
+        onDoubleClick={handlePaneDoubleClick}
+        zoomOnDoubleClick={false}
         connectionLineComponent={ConnectionPreview}
         connectionLineStyle={{ stroke: 'var(--handle)', strokeWidth: 1.2, strokeDasharray: '4 4' }}
         elevateEdgesOnSelect
