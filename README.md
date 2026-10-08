@@ -6,6 +6,9 @@ A second brain for connecting ideas and building understanding in one knowledge 
 
 </div>
 
+> [!NOTE]
+> The previous version of Nesso is available on the [`v0.2-beta` branch](https://github.com/nesso-how/nesso/tree/v0.2-beta).
+
 ## Run
 
 Use Node.js 24 and the pnpm version specified in [`package.json`](package.json).
