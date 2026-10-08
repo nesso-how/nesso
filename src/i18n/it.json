@@ -24,6 +24,8 @@
   "relations": "Relazioni",
   "pinned": "Fissata",
   "toggleDetails": "Mostra o nascondi dettagli",
+  "collapseDetails": "Nascondi Inspector",
+  "expandDetails": "Mostra Inspector",
   "deleteView": "Elimina",
   "deleteViewConcepts": "Elimina anche i concetti usati solo in questa vista",
   "deleteConcept": "Elimina",

@@ -1,14 +1,12 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react'
+import { useEffect, useState } from 'react'
 import { defaultLocale } from '@nesso/i18n'
 import { Inspector } from '@/components/app/Inspector'
-import { Navbar } from '@/components/app/Navbar'
 import { ToastsHost } from '@/components/app/Toasts'
 import { PersistenceBanner } from '@/components/app/PersistenceBanner'
 import { AppSidebar } from '@/components/app/Sidebar'
 import { SettingsDialog } from '@/components/app/SettingsDialog'
-import { Dialog, ResizableHandle, ResizablePanel, ResizablePanelGroup, useMediaQuery } from '@nesso/ui'
+import { Dialog, SidePanel, useMediaQuery } from '@nesso/ui'
 import { SidebarInset, SidebarProvider } from '@/components/app/SidebarLayout'
-import { ExplorerDrawer } from '@/components/app/ExplorerDrawer'
 import { getRenderer, host, useNessoStore } from '@/store'
 import { panelLimits } from '@/store/settings'
 import { translate } from '@/i18n'
@@ -31,52 +29,58 @@ export default function App() {
   const panels = useNessoStore((state) => state.preferences.panels)
   const [detailsOpen, setDetailsOpen] = useState(true)
   const [settingsOpen, setSettingsOpen] = useState(false)
-  const [viewsOpen, setViewsOpen] = useState(false)
   const readonly = useMediaQuery('(max-width: 767px)')
-  const group = useRef<HTMLDivElement>(null)
 
   useEffect(() => { document.documentElement.lang = locale }, [locale])
-  const openSettings = () => { setViewsOpen(false); setSettingsOpen(true) }
+  useEffect(() => {
+    if (readonly) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || event.isComposing || event.altKey || !(event.metaKey || event.ctrlKey)) return
+      const target = event.target instanceof HTMLElement ? event.target : null
+      if (target?.closest('input, textarea, [contenteditable="true"]') && !target.hasAttribute('data-document-edit')) return
+      const key = event.key.toLowerCase()
+      if (key !== 'z' && !(key === 'y' && event.ctrlKey && !event.metaKey)) return
+      event.preventDefault()
+      if (key === 'y' || event.shiftKey) host.store.redo()
+      else host.store.undo()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [readonly])
+  const openSettings = () => setSettingsOpen(true)
 
   return (
     <>
-      <SidebarProvider
-        style={{ '--sidebar-width': `${panels.explorerWidth}px` } as CSSProperties}
-      >
-        <Navbar readonly={readonly} detailsOpen={detailsOpen} onToggleDetails={() => setDetailsOpen((open) => !open)} onOpenViews={() => setViewsOpen(true)} onOpenSettings={openSettings} />
-        <ExplorerDrawer open={readonly && viewsOpen} onClose={() => setViewsOpen(false)} onOpenSettings={openSettings} />
+      <SidebarProvider>
         <div className="relative flex min-h-0 flex-1 overflow-hidden">
-          <AppSidebar onOpenSettings={openSettings} />
+          {!readonly && <AppSidebar onOpenSettings={openSettings} />}
           <SidebarInset className="relative min-w-0 overflow-hidden">
-            <ResizablePanelGroup
-              elementRef={group}
-              orientation={readonly ? 'vertical' : 'horizontal'}
-              className="min-h-0 flex-1"
-              onLayoutChanged={(layout, meta) => {
-                if (!detailsOpen || readonly || !meta.isUserInteraction || !group.current) return
-                const inspectorWidth = Math.max(panelLimits.inspectorWidth.min, group.current.clientWidth * (meta.requestedLayout ?? layout).inspector / 100)
-                host.store.setPanelSizes({ ...host.store.getState().preferences.panels, inspectorWidth })
-              }}
-            >
-              <ResizablePanel id="canvas" minSize="40%">
-                <div className="relative h-full">
-                  <RendererHost />
-                  <ToastsHost />
-                </div>
-              </ResizablePanel>
-              {detailsOpen && <ResizableHandle aria-label={t('resizeInspector')} />}
-              {detailsOpen && (
-                <ResizablePanel id="inspector" defaultSize={panels.inspectorWidth} minSize={panelLimits.inspectorWidth.min} maxSize="45%" groupResizeBehavior="preserve-pixel-size">
-                  <Inspector readonly={readonly} />
-                </ResizablePanel>
-              )}
-            </ResizablePanelGroup>
+            <div className="flex min-h-0 flex-1">
+              <div id="canvas" className="relative min-h-0 min-w-0 flex-1">
+                <RendererHost />
+                <ToastsHost />
+              </div>
+              {!readonly && <SidePanel
+                id="inspector-panel"
+                side="right"
+                open={detailsOpen}
+                size={panels.inspectorWidth}
+                minSize={panelLimits.inspectorWidth.min}
+                maxSize="45%"
+                onToggle={() => setDetailsOpen((open) => !open)}
+                onSizeChange={(inspectorWidth) => host.store.setPanelSizes({ ...host.store.getState().preferences.panels, inspectorWidth })}
+                toggleLabel={t(detailsOpen ? 'collapseDetails' : 'expandDetails')}
+                resizeLabel={t('resizeInspector')}
+              >
+                <Inspector />
+              </SidePanel>}
+            </div>
             <PersistenceBanner />
           </SidebarInset>
         </div>
       </SidebarProvider>
-      <Dialog.Root open={settingsOpen} onOpenChange={(open) => { if (open) setViewsOpen(false); setSettingsOpen(open) }}>
-        {settingsOpen && <SettingsDialog />}
+      <Dialog.Root open={!readonly && settingsOpen} onOpenChange={setSettingsOpen}>
+        {!readonly && settingsOpen && <SettingsDialog />}
       </Dialog.Root>
     </>
   )

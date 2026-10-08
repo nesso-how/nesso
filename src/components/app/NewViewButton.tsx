@@ -5,7 +5,7 @@ import { host } from '@/store'
 import { ViewNameForm } from './ViewNameForm'
 import { useTranslation } from '@/i18n'
 
-export function NewViewButton({ iconOnly = false, ref }: { iconOnly?: boolean; ref?: Ref<HTMLButtonElement> }) {
+export function NewViewButton({ ref }: { ref?: Ref<HTMLButtonElement> }) {
   const t = useTranslation()
   const [open, setOpen] = useState(false)
   const [conceptIds, setConceptIds] = useState<readonly string[]>([])
@@ -19,13 +19,11 @@ export function NewViewButton({ iconOnly = false, ref }: { iconOnly?: boolean; r
     }}>
       <Dialog.Trigger ref={ref} render={<Button
         variant="ghost"
-        size={iconOnly ? 'icon-sm' : 'default'}
-        className={iconOnly ? undefined : 'mb-3 w-full justify-start'}
+        className="mb-3 w-full justify-start"
         aria-label={t('newView')}
-        title={iconOnly ? t('newView') : undefined}
       />}>
         <LayersPlus />
-        {!iconOnly && t('newView')}
+        {t('newView')}
       </Dialog.Trigger>
       <DialogPopup>
         <Dialog.Title className="text-sm">{t('newView')}</Dialog.Title>

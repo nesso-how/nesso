@@ -22,16 +22,6 @@
   }
 }
 
-[data-slot='sidebar-wrapper']:has([data-resizing]) [data-slot='sidebar-gap'],
-[data-slot='sidebar-wrapper']:has([data-resizing]) [data-slot='sidebar-container'] {
-  transition: none;
-}
-
-[data-slot='sidebar-wrapper']:has([data-resizing]) {
-  user-select: none;
-  cursor: col-resize;
-}
-
 .explorer-scroll {
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;

@@ -1,11 +1,10 @@
 import { createContext, useContext, type ComponentProps } from 'react'
-import { PanelLeftIcon } from 'lucide-react'
-import { Button } from '@nesso/ui'
+import { SidePanel } from '@nesso/ui'
 import { cn } from 'cn'
 import { NessoError } from '@/store/errors'
-import { NewViewButton } from './NewViewButton'
 import { host, useNessoStore } from '@/store'
 import { useTranslation } from '@/i18n'
+import { panelLimits } from '@/store/settings'
 
 const SidebarContext = createContext<{ open: boolean; toggle: () => void } | null>(null)
 
@@ -28,49 +27,31 @@ export function SidebarProvider({ children, ...props }: ComponentProps<'div'>) {
 }
 
 export function Sidebar({ children }: ComponentProps<'div'>) {
-  const { open } = useSidebar()
-
-  return (
-    <div data-slot="sidebar" className="hidden text-sidebar-foreground md:block">
-      <div
-        data-slot="sidebar-gap"
-        className={cn(
-          'relative bg-transparent transition-[width] duration-(--duration-state) ease-linear',
-          open ? 'w-(--sidebar-width)' : 'w-0',
-        )}
-      />
-      <div
-        data-slot="sidebar-container"
-        inert={!open}
-        className={cn(
-          'absolute inset-y-0 z-10 hidden w-(--sidebar-width) border-r transition-[left] duration-(--duration-state) ease-linear md:flex',
-          open ? 'left-0' : 'left-[calc(var(--sidebar-width)*-1)]',
-        )}
-      >
-        <div data-slot="sidebar-inner" className="flex size-full flex-col bg-sidebar">
-          {children}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-export function SidebarTrigger() {
-  const t = useTranslation()
   const { open, toggle } = useSidebar()
+  const size = useNessoStore((state) => state.preferences.panels.explorerWidth)
+  const t = useTranslation()
 
   return (
-    <Button variant="ghost" size="icon-sm" aria-label={t('toggleSidebar')} aria-expanded={open} title={t(open ? 'collapseSidebar' : 'expandSidebar')} onClick={toggle}>
-      <PanelLeftIcon />
-    </Button>
+    <SidePanel
+      id="explorer-panel"
+      side="left"
+      open={open}
+      size={size}
+      minSize={panelLimits.explorerWidth.min}
+      maxSize={panelLimits.explorerWidth.max}
+      onToggle={toggle}
+      onSizeChange={(explorerWidth) => host.store.setPanelSizes({ ...host.store.getState().preferences.panels, explorerWidth })}
+      toggleLabel={t(open ? 'collapseSidebar' : 'expandSidebar')}
+      resizeLabel={t('resizeSidebar')}
+      className="hidden text-sidebar-foreground md:block"
+    >
+      <div data-slot="sidebar-inner" className="flex size-full flex-col bg-sidebar">
+        {children}
+      </div>
+    </SidePanel>
   )
 }
 
 export function SidebarInset({ className, ...props }: ComponentProps<'main'>) {
   return <main className={cn('relative flex w-full flex-1 flex-col bg-background', className)} {...props} />
-}
-
-export function SidebarNewView() {
-  const { open } = useSidebar()
-  return open ? null : <NewViewButton iconOnly />
 }

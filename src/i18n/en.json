@@ -22,6 +22,8 @@
   "relations": "Relations",
   "pinned": "Pinned",
   "toggleDetails": "Show or hide details",
+  "collapseDetails": "Collapse inspector",
+  "expandDetails": "Expand inspector",
   "deleteView": "Delete",
   "deleteViewConcepts": "Also delete concepts used only in this view",
   "deleteConcept": "Delete",

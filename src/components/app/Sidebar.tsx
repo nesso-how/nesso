@@ -1,15 +1,14 @@
 import type { SavedView } from '@nesso/plugin'
 import { defaultLocale } from '@nesso/i18n'
-import { Button, Dialog, DialogPopup, Menu, MenuItem, MenuPopup, ResizeHandle, SectionHeading } from '@nesso/ui'
+import { Button, Dialog, DialogPopup, Menu, MenuItem, MenuPopup, SectionHeading } from '@nesso/ui'
 import { MoreHorizontal, Pencil, Pin, PinOff, Settings2, Trash2 } from 'lucide-react'
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Sidebar } from './SidebarLayout'
 import { NewViewButton } from './NewViewButton'
 import { DeleteViewDialog } from './DeleteViewDialog'
 import { ViewNameForm } from './ViewNameForm'
 import { viewActions } from '@/plugins'
 import { host, nessoStore, useNessoStore } from '@/store'
-import { panelLimits } from '@/store/settings'
 import { useTranslation } from '@/i18n'
 
 function ViewActionGroup({ viewId }: { viewId: string | null }) {
@@ -97,26 +96,6 @@ export function AppSidebar({ readonly = false, bare = false, onNavigate, onOpenS
     <SectionHeading open={open} className="min-h-8" aria-controls={id} onClick={toggle}>{label}</SectionHeading>
   )
 
-  const startResize = (event: ReactPointerEvent<HTMLDivElement>) => {
-    event.preventDefault()
-    const handle = event.currentTarget
-    const wrapper = handle.closest<HTMLElement>('[data-slot="sidebar-wrapper"]')
-    handle.dataset.resizing = ''
-    let width = host.store.getState().preferences.panels.explorerWidth
-    const onMove = (move: PointerEvent) => {
-      width = Math.min(panelLimits.explorerWidth.max, Math.max(panelLimits.explorerWidth.min, move.clientX))
-      wrapper?.style.setProperty('--sidebar-width', `${width}px`)
-    }
-    const stop = () => {
-      delete handle.dataset.resizing
-      window.removeEventListener('pointermove', onMove)
-      window.removeEventListener('pointerup', stop)
-      host.store.setPanelSizes({ ...host.store.getState().preferences.panels, explorerWidth: width })
-    }
-    window.addEventListener('pointermove', onMove)
-    window.addEventListener('pointerup', stop)
-  }
-
   const content = (
     <>
       <div className="flex min-h-0 flex-1 flex-col px-3 pt-5">
@@ -164,7 +143,6 @@ export function AppSidebar({ readonly = false, bare = false, onNavigate, onOpenS
       {bare ? content : (
         <Sidebar>
           {content}
-          <ResizeHandle onPointerDown={startResize} aria-label={t('resizeSidebar')} className="absolute inset-y-0 right-0 z-20 cursor-col-resize bg-transparent" />
         </Sidebar>
       )}
       {!readonly && (
