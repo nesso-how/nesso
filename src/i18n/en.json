@@ -1,5 +1,10 @@
 {
   "graphMenu": "Graph menu",
+  "update": "Update",
+  "updating": "Updating",
+  "restarting": "Restarting…",
+  "updateFailure": "Update failed. Try again.",
+  "updateSaveFailure": "Save failed. Update paused.",
   "language": "Language",
   "resetGraph": "Reset graph",
   "resetConfirmation": "Reset the graph? All concepts and relations will be replaced by one new concept. This cannot be undone.",

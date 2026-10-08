@@ -6,6 +6,7 @@ import { SidebarNewView, SidebarTrigger } from '@/components/app/SidebarLayout'
 import { actions } from '@/plugins'
 import { host, useNessoStore } from '@/store'
 import { translate } from '@/i18n'
+import { UpdateButton } from './UpdateButton'
 
 export function Navbar({ readonly = false, onOpenViews, onOpenSettings }: { readonly?: boolean; onOpenViews?: () => void; onOpenSettings: () => void }) {
   const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale)
@@ -34,7 +35,8 @@ export function Navbar({ readonly = false, onOpenViews, onOpenSettings }: { read
         <SidebarTrigger />
       )}
       {!readonly && <SidebarNewView />}
-      <div className="ml-auto">
+      <div className="ml-auto flex items-center gap-2">
+        <UpdateButton />
         <Menu.Root>
           <Menu.Trigger render={<Button data-graph-menu-trigger size="icon-sm" variant="ghost" aria-label={t('graphMenu')} title={t('graphMenu')} />}>
             <MoreHorizontal />

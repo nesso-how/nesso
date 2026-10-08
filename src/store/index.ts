@@ -21,12 +21,18 @@ export const { store: nessoStore, registerVocab, registerRenderer, getRenderer, 
 
 export const startAutosave = (): (() => void) => {
   const persistence = connectPersistence(host, storage, loaded)
+  const stopUpdateSave = window.nessoUpdater?.beforeInstall(() => {
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur()
+    persistence.flush()
+    return host.store.getState().persistenceIssues.length === 0
+  })
   const onVisibilityChange = () => {
     if (document.visibilityState === 'hidden') persistence.flush()
   }
   window.addEventListener('pagehide', persistence.flush)
   document.addEventListener('visibilitychange', onVisibilityChange)
   return () => {
+    stopUpdateSave?.()
     window.removeEventListener('pagehide', persistence.flush)
     document.removeEventListener('visibilitychange', onVisibilityChange)
     persistence.dispose()

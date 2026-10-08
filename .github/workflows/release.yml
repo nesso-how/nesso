@@ -33,7 +33,13 @@ jobs:
           : "${APPLE_ID:?Missing APPLE_ID secret}"
           : "${APPLE_APP_SPECIFIC_PASSWORD:?Missing APPLE_PASSWORD secret}"
           : "${APPLE_TEAM_ID:?Missing APPLE_TEAM_ID secret}"
-          pnpm dist:mac -c.extraMetadata.version="${GITHUB_REF_NAME#v}"
+          version="${GITHUB_REF_NAME#v}"
+          channel=latest
+          if [[ "$version" == *-* ]]; then
+            channel="${version#*-}"
+            channel="${channel%%.*}"
+          fi
+          pnpm dist:mac -c.extraMetadata.version="$version" -c.publish.channel="$channel"
       - name: Verify signed and notarized apps
         run: |
           for app in release/mac/Nesso.app release/mac-arm64/Nesso.app; do
@@ -41,6 +47,17 @@ jobs:
             xcrun stapler validate "$app"
             spctl --assess --type execute --verbose=2 "$app"
           done
-      - run: gh release create "$GITHUB_REF_NAME" release/*.dmg --title "$GITHUB_REF_NAME" --generate-notes --verify-tag
+      - name: Publish release and update files
+        run: |
+          shopt -s nullglob
+          version="${GITHUB_REF_NAME#v}"
+          for arch in arm64 x64; do
+            test -s "release/Nesso-${version}-${arch}.zip"
+          done
+          metadata=(release/*-mac.yml)
+          test "${#metadata[@]}" -gt 0
+          flags=()
+          if [[ "$version" == *-* ]]; then flags+=(--prerelease --latest=false); fi
+          gh release create "$GITHUB_REF_NAME" release/*.dmg release/*.zip release/*.blockmap "${metadata[@]}" --title "$GITHUB_REF_NAME" --generate-notes --verify-tag "${flags[@]}"
         env:
           GH_TOKEN: ${{ github.token }}

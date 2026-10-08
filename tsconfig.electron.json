@@ -5,8 +5,9 @@
     "rootDir": "electron",
     "outDir": "dist-electron",
     "noEmit": false,
-    "allowImportingTsExtensions": false,
+    "rewriteRelativeImportExtensions": true,
     "strict": true
   },
-  "include": ["electron/main.ts"]
+  "include": ["electron/**/*.ts", "electron/**/*.cts"],
+  "exclude": ["electron/**/*.test.ts"]
 }

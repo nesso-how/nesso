@@ -18,7 +18,7 @@
     "site:preview": "vite preview --config site/vite.config.ts",
     "desktop": "pnpm build && electron .",
     "desktop:dev": "tsc -p tsconfig.electron.json && electron . --dev",
-    "dist:mac": "pnpm build && electron-builder --mac dmg --arm64 --x64 --publish never",
+    "dist:mac": "pnpm build && electron-builder --mac dmg zip --arm64 --x64 --publish never",
     "release": "node scripts/release.ts"
   },
   "dependencies": {
@@ -32,6 +32,7 @@
     "@nesso/vocab": "workspace:*",
     "@tailwindcss/vite": "^4.3.3",
     "cn": "^0.4.0",
+    "electron-updater": "^6.8.9",
     "lucide-react": "^1.48.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
@@ -43,7 +44,8 @@
     "productName": "Nesso",
     "artifactName": "${productName}-${version}-${arch}.${ext}",
     "directories": { "output": "release" },
-    "files": ["dist/**/*", "dist-electron/**/*.js", "!node_modules/**/*"],
+    "files": ["dist/**/*", "dist-electron/**/*.{js,cjs}"],
+    "publish": { "provider": "github", "owner": "nesso-how", "repo": "nesso" },
     "npmRebuild": false,
     "mac": {
       "category": "public.app-category.productivity",

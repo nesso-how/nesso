@@ -1,15 +1,9 @@
-import { app, BrowserWindow, nativeTheme, net, protocol, session } from 'electron'
+import { app, autoUpdater, BrowserWindow, ipcMain, nativeTheme, net, protocol, session, type IpcMainEvent, type IpcMainInvokeEvent } from 'electron'
+import electronUpdater from 'electron-updater'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
-
-class ElectronError extends Error {
-  override name = 'ElectronError'
-  readonly issues: { path: string; message: string }[]
-  constructor(issues: { path: string; message: string }[]) {
-    super(issues.map(({ path, message }) => `${path}: ${message}`).join('\n'))
-    this.issues = issues
-  }
-}
+import { ElectronError } from './errors.ts'
+import { connectUpdates } from './updates.ts'
 
 const dev = !app.isPackaged && process.argv.includes('--dev')
 const root = path.join(app.getAppPath(), 'dist')
@@ -27,7 +21,10 @@ const report = (error: unknown): void => {
 }
 
 const createWindow = async (): Promise<void> => {
-  const window = new BrowserWindow({ width: 1280, height: 800, backgroundColor: '#ffffff' })
+  const window = new BrowserWindow({
+    width: 1280, height: 800, backgroundColor: '#ffffff',
+    webPreferences: { preload: path.join(import.meta.dirname, 'preload.cjs'), contextIsolation: true, sandbox: true },
+  })
   window.webContents.on('will-navigate', (event) => event.preventDefault())
   window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
   await window.loadURL(dev ? 'http://127.0.0.1:5173' : 'nesso://app/')
@@ -46,6 +43,26 @@ app.whenReady().then(async () => {
     response.headers.set('Content-Security-Policy', csp)
     return response
   })
+  if (app.isPackaged && process.platform === 'darwin') {
+    const updates = connectUpdates(electronUpdater.autoUpdater, autoUpdater, (state) => {
+      for (const window of BrowserWindow.getAllWindows()) {
+        window.webContents.send('update:state', state)
+        if (state?.status === 'installing') window.webContents.send('update:prepare')
+      }
+    })
+    const trusted = (event: IpcMainEvent | IpcMainInvokeEvent) =>
+      BrowserWindow.getAllWindows().some((window) => window.webContents === event.sender)
+      && event.senderFrame === event.sender.mainFrame && event.senderFrame.url === 'nesso://app/'
+    ipcMain.on('update:subscribe', (event) => {
+      if (trusted(event)) event.sender.send('update:state', updates.getState())
+    })
+    ipcMain.handle('update:download', (event) => trusted(event) ? updates.download() : undefined)
+    ipcMain.on('update:install', (event, saved: unknown) => {
+      if (!trusted(event)) return
+      if (saved === true) event.sender.session.flushStorageData()
+      updates.install(saved === true)
+    })
+  }
   await createWindow()
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) void createWindow().catch(report)

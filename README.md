@@ -81,22 +81,6 @@ Use `pnpm analyze --summary` for a compact Fallow report. Duplication and comple
 
 For macOS development, run `pnpm dev --host 127.0.0.1 --strictPort` and `pnpm desktop:dev` in separate terminals.
 
-### macOS releases
-
-The tag-triggered release workflow builds Intel and Apple Silicon DMGs, signs with Developer ID Application, notarizes with Apple, and staples the notarization ticket. It verifies each app's signature, ticket, and Gatekeeper assessment before publishing.
-
-Configure these repository secrets in GitHub Actions:
-
-| Secret | Value |
-| --- | --- |
-| `APPLE_CERTIFICATE` | Base64-encoded `.p12` containing the Developer ID Application certificate and private key. |
-| `APPLE_CERTIFICATE_PASSWORD` | Password protecting the `.p12`. |
-| `APPLE_ID` | Apple Developer account email. |
-| `APPLE_PASSWORD` | Apple app-specific password, not the account password. |
-| `APPLE_TEAM_ID` | Apple Developer Team ID. |
-
-`pnpm dist:mac` requires a valid signing identity. For local notarization, set `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, and `APPLE_TEAM_ID`; for signing, use a certificate in the keychain or set `CSC_LINK` and `CSC_KEY_PASSWORD`. Never commit certificates or credentials.
-
 ### Create a plugin
 
 Build your own renderers, vocabularies, actions, or themes.
