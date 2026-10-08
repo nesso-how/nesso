@@ -36,17 +36,18 @@ export default function App() {
   const group = useRef<HTMLDivElement>(null)
 
   useEffect(() => { document.documentElement.lang = locale }, [locale])
+  const openSettings = () => { setViewsOpen(false); setSettingsOpen(true) }
 
   return (
-    <Dialog.Root open={settingsOpen} onOpenChange={(open) => { if (open) setViewsOpen(false); setSettingsOpen(open) }}>
+    <>
       <SidebarProvider
         style={{ '--sidebar-width': `${panels.explorerWidth}px` } as CSSProperties}
       >
         <ToastsProvider>
-        <Navbar readonly={readonly} detailsOpen={detailsOpen} onToggleDetails={() => setDetailsOpen((open) => !open)} onOpenViews={() => setViewsOpen(true)} onOpenSettings={() => setSettingsOpen(true)} />
-        <ExplorerDrawer open={readonly && viewsOpen} onClose={() => setViewsOpen(false)} />
+        <Navbar readonly={readonly} detailsOpen={detailsOpen} onToggleDetails={() => setDetailsOpen((open) => !open)} onOpenViews={() => setViewsOpen(true)} onOpenSettings={openSettings} />
+        <ExplorerDrawer open={readonly && viewsOpen} onClose={() => setViewsOpen(false)} onOpenSettings={openSettings} />
         <div className="relative flex min-h-0 flex-1 overflow-hidden">
-          <AppSidebar />
+          <AppSidebar onOpenSettings={openSettings} />
           <SidebarInset className="relative min-w-0 overflow-hidden">
             <ResizablePanelGroup
               elementRef={group}
@@ -74,9 +75,11 @@ export default function App() {
             <PersistenceBanner />
           </SidebarInset>
         </div>
-        {settingsOpen && <SettingsDialog />}
         </ToastsProvider>
       </SidebarProvider>
-    </Dialog.Root>
+      <Dialog.Root open={settingsOpen} onOpenChange={(open) => { if (open) setViewsOpen(false); setSettingsOpen(open) }}>
+        {settingsOpen && <SettingsDialog />}
+      </Dialog.Root>
+    </>
   )
 }

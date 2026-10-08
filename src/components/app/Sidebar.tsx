@@ -11,7 +11,7 @@ import { useToasts, viewExportedToast } from '@/components/app/toastQueue'
 import { panelLimits } from '@/store/settings'
 import { useTranslation } from '@/i18n'
 
-export function AppSidebar({ readonly = false, bare = false, onNavigate }: { readonly?: boolean; bare?: boolean; onNavigate?: () => void }) {
+export function AppSidebar({ readonly = false, bare = false, onNavigate, onOpenSettings }: { readonly?: boolean; bare?: boolean; onNavigate?: () => void; onOpenSettings?: () => void }) {
   const t = useTranslation()
   const { notify } = useToasts()
   const workspace = useNessoStore((state) => state.workspace)
@@ -129,7 +129,7 @@ export function AppSidebar({ readonly = false, bare = false, onNavigate }: { rea
         </div>
       </div>
       <div className="shrink-0 border-t px-3 py-2">
-        <Dialog.Trigger render={<Button data-settings-trigger variant="ghost" className="w-full justify-start text-muted-foreground" />}><Settings2 />{t('settings')}</Dialog.Trigger>
+        <Button data-settings-trigger variant="ghost" className="w-full justify-start text-muted-foreground" onClick={onOpenSettings}><Settings2 />{t('settings')}</Button>
       </div>
     </>
   )

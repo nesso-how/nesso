@@ -4,7 +4,7 @@ import { Button } from '@nesso/ui'
 import { AppSidebar } from './Sidebar'
 import { useTranslation } from '@/i18n'
 
-export function ExplorerDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function ExplorerDrawer({ open, onClose, onOpenSettings }: { open: boolean; onClose: () => void; onOpenSettings: () => void }) {
   const t = useTranslation()
   useEffect(() => {
     if (!open) return
@@ -25,7 +25,7 @@ export function ExplorerDrawer({ open, onClose }: { open: boolean; onClose: () =
           </Button>
         </div>
         <div className="flex min-h-0 flex-1 flex-col">
-          <AppSidebar readonly bare onNavigate={onClose} />
+          <AppSidebar readonly bare onNavigate={onClose} onOpenSettings={onOpenSettings} />
         </div>
       </div>
     </div>
