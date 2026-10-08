@@ -2,8 +2,9 @@ import type { SavedView } from '@nesso/plugin'
 import { defaultLocale } from '@nesso/i18n'
 import { Button, ContextLabel, Input, Label } from '@nesso/ui'
 import { Trash2 } from 'lucide-react'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { host, useNessoStore } from '@/store'
+import { DeleteViewDialog } from './DeleteViewDialog'
 import { viewActions } from '@/plugins'
 import { useToasts, viewExportedToast } from './toastQueue'
 import { maxViewNameLength } from '@/store/settings'
@@ -29,6 +30,8 @@ function ViewName({ view }: { view: SavedView }) {
 
 export function ViewDetails({ readonly = false }: { readonly?: boolean }) {
   const t = useTranslation()
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const deleteTrigger = useRef<HTMLButtonElement>(null)
   const { notify } = useToasts()
   const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale)
   const workspace = useNessoStore((state) => state.workspace)
@@ -66,6 +69,10 @@ export function ViewDetails({ readonly = false }: { readonly?: boolean }) {
         </div>
       </section>
       {view && !readonly && <Button variant="outline" className="w-full justify-start" onClick={() => host.store.deleteView(view.id)}><Trash2 />{t('deleteView')}</Button>}
+      {!view && !readonly && <>
+        <Button ref={deleteTrigger} variant="outline" className="w-full justify-start" onClick={() => setConfirmingDelete(true)}><Trash2 />{t('deleteView')}</Button>
+        <DeleteViewDialog target={confirmingDelete ? 'complete-graph' : null} onClose={() => setConfirmingDelete(false)} finalFocus={() => deleteTrigger.current} />
+      </>}
     </>
   )
 }

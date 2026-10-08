@@ -5,6 +5,7 @@ import { MoreHorizontal, Pencil, Pin, PinOff, Settings2, Trash2 } from 'lucide-r
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { Sidebar } from './SidebarLayout'
 import { NewViewButton } from './NewViewButton'
+import { DeleteViewDialog } from './DeleteViewDialog'
 import { ViewNameForm } from './ViewNameForm'
 import { viewActions } from '@/plugins'
 import { host, nessoStore, useNessoStore } from '@/store'
@@ -34,10 +35,9 @@ export function AppSidebar({ readonly = false, bare = false, onNavigate, onOpenS
   const collapsed = useNessoStore((state) => state.preferences.collapsedSections)
   const pinnedOpen = !collapsed?.includes('sidebar.pinned-views')
   const viewsOpen = !collapsed?.includes('sidebar.views')
-  const [deleting, setDeleting] = useState<SavedView | null>(null)
+  const [deleting, setDeleting] = useState<SavedView | 'complete-graph' | null>(null)
   const [renaming, setRenaming] = useState<SavedView | null>(null)
   const [menu, setMenu] = useState<string | null>(null)
-  const cancel = useRef<HTMLButtonElement>(null)
   const createTrigger = useRef<HTMLButtonElement>(null)
   const menuTriggers = useRef(new Map<string, HTMLButtonElement>())
   const deletingId = useRef<string | null>(null)
@@ -136,15 +136,16 @@ export function AppSidebar({ readonly = false, bare = false, onNavigate, onOpenS
               </button>
               {!readonly && (
                 <Menu.Root open={menu === 'complete-graph'} onOpenChange={(open) => setMenu(open ? 'complete-graph' : null)}>
-                  <Menu.Trigger render={<Button variant="ghost" size="icon-sm" className="mr-1 text-muted-foreground opacity-0 group-hover:opacity-100 group-has-[:focus-visible]:opacity-100 data-popup-open:opacity-100 hover:bg-transparent hover:text-foreground active:bg-transparent [@media(pointer:coarse)]:opacity-100" aria-label={t('actionsFor', { name: t('completeGraph') })} />}>
+                  <Menu.Trigger ref={(element: HTMLButtonElement | null) => {
+                    if (element) menuTriggers.current.set('complete-graph', element)
+                    else menuTriggers.current.delete('complete-graph')
+                  }} render={<Button variant="ghost" size="icon-sm" className="mr-1 text-muted-foreground opacity-0 group-hover:opacity-100 group-has-[:focus-visible]:opacity-100 data-popup-open:opacity-100 hover:bg-transparent hover:text-foreground active:bg-transparent [@media(pointer:coarse)]:opacity-100" aria-label={t('actionsFor', { name: t('completeGraph') })} />}>
                     <MoreHorizontal />
                   </Menu.Trigger>
                   <MenuPopup>
                     <ViewActionGroup viewId={null} />
                     <Menu.Separator className="my-1 h-px bg-border" />
-                    <MenuItem onClick={() => {
-                      if (window.confirm(t('resetConfirmation'))) host.store.resetGraph()
-                    }}><Trash2 />{t('deleteView')}</MenuItem>
+                    <MenuItem onClick={() => { deletingId.current = 'complete-graph'; setDeleting('complete-graph') }}><Trash2 />{t('deleteView')}</MenuItem>
                   </MenuPopup>
                 </Menu.Root>
               )}
@@ -183,18 +184,7 @@ export function AppSidebar({ readonly = false, bare = false, onNavigate, onOpenS
           </DialogPopup>
         </Dialog.Root>
       )}
-      {!readonly && (
-        <Dialog.Root open={deleting !== null} onOpenChange={(open) => { if (!open) setDeleting(null) }}>
-          <DialogPopup initialFocus={cancel} finalFocus={() => menuTriggers.current.get(deletingId.current ?? '') ?? createTrigger.current}>
-            <Dialog.Title className="text-sm">{t('deleteViewTitle', { name: deleting?.name ?? '' })}</Dialog.Title>
-            <Dialog.Description className="mt-2 text-xs text-muted-foreground">{t('deleteViewDescription')}</Dialog.Description>
-            <div className="mt-6 flex justify-end gap-2">
-              <Dialog.Close render={<Button ref={cancel} variant="outline" />}>{t('cancel')}</Dialog.Close>
-              <Button onClick={() => { if (deleting) host.store.deleteView(deleting.id); setDeleting(null) }}>{t('deleteView')}</Button>
-            </div>
-          </DialogPopup>
-        </Dialog.Root>
-      )}
+      {!readonly && <DeleteViewDialog target={deleting} onClose={() => setDeleting(null)} finalFocus={() => menuTriggers.current.get(deletingId.current ?? '') ?? createTrigger.current} />}
     </>
   )
 }
