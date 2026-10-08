@@ -1,8 +1,17 @@
 <div align="center">
 
 <img src="public/logo.svg" alt="Nesso" width="350">
-</br></br>
+
+</br>
 A second brain for connecting ideas and building understanding in one knowledge graph, built on a small core with a simple plugin system.
+</br></br>
+
+[![CI](https://github.com/nesso-how/nesso/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/nesso-how/nesso/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/nesso-how/nesso?include_prereleases)](https://github.com/nesso-how/nesso/releases)
+
+[![Open web app](https://img.shields.io/badge/Open_web_app-nesso-555)](https://app.nesso.how)
+[![Website](https://img.shields.io/badge/Website-nesso.how-555)](https://nesso.how)
+[![Discussions](https://img.shields.io/badge/Discussions-GitHub-555)](https://github.com/nesso-how/nesso/discussions)
 
 </div>
 
