@@ -1,6 +1,6 @@
 # @nesso/ai
 
-Framework-independent tool contracts, chat schemas, and assistant instructions for Nesso's desktop AI chat. State, execution, and transport remain outside this package.
+Framework-independent tool contracts, chat schemas, and assistant instructions for Nesso's desktop AI chat and local MCP server. State, execution, and transport remain outside this package.
 
 ## Usage
 
@@ -30,6 +30,8 @@ Tool schemas validate input; the host supplies execution. Reads are paginated an
 Shared contracts and instructions only: no app state, execution, approvals, credentials, IPC or network access. Document edits and approvals belong to the host; provider requests and transport belong to Electron.
 
 The host store owns conversation messages and outcomes, persisted separately as `nesso.conversation` and excluded from document history. The chat controller owns transient requests and approvals; Electron stores encrypted connections and credentials.
+
+The local MCP server reuses `aiTools` schemas; each call commits independently after in-app approval.
 
 ## Build
 

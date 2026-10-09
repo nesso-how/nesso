@@ -5,6 +5,7 @@ import { pathToFileURL } from 'node:url'
 import { ElectronError } from './errors.ts'
 import { connectUpdates } from './updates.ts'
 import { connectAi } from './ai.ts'
+import { connectMcp } from './mcp.ts'
 
 const dev = !app.isPackaged && process.argv.includes('--dev')
 const root = path.join(app.getAppPath(), 'dist')
@@ -33,6 +34,7 @@ const createWindow = async (): Promise<void> => {
 
 app.whenReady().then(async () => {
   connectAi(dev)
+  connectMcp(dev)
   session.defaultSession.setPermissionCheckHandler(() => false)
   session.defaultSession.setPermissionRequestHandler((_contents, _permission, callback) => callback(false))
   protocol.handle('nesso', async (request) => {

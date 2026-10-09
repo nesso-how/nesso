@@ -8,7 +8,7 @@ import { notifications } from '@/notifications'
 
 const newConnection = (): AiConnectionInput => ({ name: 'OpenAI', provider: 'openai', endpoint: aiProviders.openai.endpoint, model: '', apiKey: '' })
 
-export function AiSettings({ bridge }: { bridge: AiBridge }) {
+export function AiSettings({ bridge, onEditorChange }: { bridge: AiBridge; onEditorChange?: (open: boolean) => void }) {
   const t = useTranslation()
   const id = useId()
   const [state, setState] = useState<AiConnections>({ connections: [], activeId: null })
@@ -39,6 +39,8 @@ export function AiSettings({ bridge }: { bridge: AiBridge }) {
     heading.current?.focus()
     heading.current?.closest('.settings-content')?.scrollTo({ top: 0 })
   }, [editorOpen])
+
+  useEffect(() => { onEditorChange?.(editorOpen) }, [editorOpen, onEditorChange])
 
   useEffect(() => () => { modelsRequest.current += 1 }, [])
 

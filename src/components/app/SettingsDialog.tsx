@@ -7,7 +7,18 @@ import { host, useNessoStore } from '@/store'
 import { translate } from '@/i18n'
 import { PersistenceBanner } from './PersistenceBanner'
 import { AiSettings } from './AiSettings'
+import { McpSettings } from './McpSettings'
+import type { AiBridge } from '../../../electron/ai-bridge'
+import type { McpBridge } from '../../../electron/mcp-bridge'
 import appPackage from '../../../package.json'
+
+function AiPage({ ai, mcp }: { ai: AiBridge; mcp: McpBridge | undefined }) {
+  const [editing, setEditing] = useState(false)
+  return <>
+    <AiSettings bridge={ai} onEditorChange={setEditing} />
+    {mcp && !editing && <McpSettings bridge={mcp} />}
+  </>
+}
 
 const providers = [
   { kind: 'renderer', key: 'activeRendererId', change: host.store.setActiveRenderer },
@@ -61,7 +72,7 @@ export function SettingsDialog({ initialPage = 'general' }: { initialPage?: 'gen
           </div>
         </nav>
         <div className="settings-content">
-          {page === 'ai' && window.nessoAi && <AiSettings bridge={window.nessoAi} />}
+          {page === 'ai' && window.nessoAi && <AiPage ai={window.nessoAi} mcp={window.nessoMcp} />}
           {page === 'general' && <>
             <h2 ref={pageTitle} tabIndex={-1} className="settings-page-title outline-none">{t('general')}</h2>
             <p className="settings-page-description">{t('generalDescription')}</p>

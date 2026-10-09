@@ -43,6 +43,10 @@ Your knowledge lives in one graph.
 
 Use the Explorer to navigate views, the canvas to build the graph, and the Inspector to edit the selection and its memberships.
 
+### AI
+
+In the desktop app, use **AI** with your own provider or a local model, or connect an external assistant through the local MCP server. Provider credentials are encrypted on your device, and chat requests go directly to the chosen endpoint. Graph edits are validated and undoable, with approvals handled inside Nesso.
+
 > [!NOTE]
 > This is pre-alpha software. Stored formats may change without migrations.
 
@@ -68,6 +72,7 @@ The host owns state, materializes `viewGraph`, and registers plugins statically.
 | [`@nesso/plugin`](packages/plugin/README.md) | Core | Types-only plugin and store contract. |
 | [`@nesso/i18n`](packages/i18n/README.md) | Core | i18next with typed keys, isolated translators, and English fallback. |
 | [`@nesso/ui`](packages/ui/README.md) | Core | Shared React controls and styles. |
+| [`@nesso/ai`](packages/ai/README.md) | Core | Shared chat and MCP tool contracts, policies, and assistant instructions. |
 | [`@nesso/graph`](plugins/graph/README.md) | Plugin | React Flow canvas for the host-provided visible graph. |
 | [`@nesso/vocab`](plugins/vocab/README.md) | Plugin | Default relation vocabulary. |
 | [`@nesso/export`](plugins/export/README.md) | Plugin | Graph and view export as JSON-LD. |

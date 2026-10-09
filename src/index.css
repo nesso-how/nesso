@@ -121,6 +121,18 @@
 .ai-key-visibility { position: absolute; top: 50%; right: 6px; transform: translateY(-50%); color: var(--muted-foreground); }
 .ai-editor-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
 .ai-loading { margin-top: 16px; color: var(--muted-foreground); font-size: 12px; }
+.mcp-title-group { display: flex; align-items: center; flex-wrap: wrap; gap: 2px 9px; }
+.mcp-title-group h3 { font-size: 12px; line-height: 18px; font-weight: 500; }
+.mcp-status { display: inline-flex; align-items: center; gap: 5px; color: var(--muted-foreground); font-size: 10px; line-height: 14px; }
+.mcp-status-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--muted-foreground); opacity: .5; }
+.mcp-status.running { color: #427b53; }
+.mcp-status.running .mcp-status-dot { background: #427b53; opacity: 1; }
+.mcp-credentials { display: grid; gap: 12px; margin-top: 16px; }
+.mcp-field.nesso-field { grid-template-columns: 76px minmax(0, 1fr); gap: 12px; }
+.mcp-credential { position: relative; }
+.mcp-credential-input.nesso-input { padding-right: 36px; font-family: var(--font-mono); font-size: 11px; }
+.mcp-credential-input-multiple.nesso-input { padding-right: 96px; }
+.mcp-credential-actions { position: absolute; top: 50%; right: 2px; transform: translateY(-50%); display: flex; align-items: center; }
 
 @media (max-width: 640px) {
   .settings-body { flex-direction: column; }
@@ -130,6 +142,7 @@
   .settings-version { margin: 0 0 0 auto; padding: 0 0 0 12px; flex-shrink: 0; align-self: center; }
   .settings-content { padding: 22px 20px; }
   .ai-connection-form .nesso-field { grid-template-columns: minmax(72px, 92px) minmax(0, 1fr); gap: 12px; }
+  .mcp-field.nesso-field { grid-template-columns: 48px minmax(0, 1fr); gap: 10px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

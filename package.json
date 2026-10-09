@@ -26,6 +26,7 @@
     "@ai-sdk/google": "^4.0.92",
     "@ai-sdk/openai": "^4.0.89",
     "@ai-sdk/openai-compatible": "^3.0.66",
+    "@modelcontextprotocol/sdk": "^1.32.1",
     "@nesso/ai": "workspace:*",
     "@nesso/export": "workspace:*",
     "@nesso/graph": "workspace:*",

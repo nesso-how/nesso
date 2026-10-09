@@ -1,6 +1,7 @@
 import type { UpdateBridge, UpdateState } from './updates.js'
 import type { AiBridge } from './ai-bridge.js'
 import type { AiChatEvent } from '@nesso/ai'
+import type { McpBridge, McpEvent, McpState } from './mcp-bridge.js'
 
 const { contextBridge, ipcRenderer } = require('electron') as typeof import('electron')
 const updater: UpdateBridge = {
@@ -42,3 +43,24 @@ const ai: AiBridge = {
   },
 }
 contextBridge.exposeInMainWorld('nessoAi', ai)
+const mcp: McpBridge = {
+  getState: () => ipcRenderer.invoke('mcp:state'),
+  setEnabled: (enabled) => ipcRenderer.invoke('mcp:enabled', enabled),
+  copyUrl: () => ipcRenderer.invoke('mcp:copy-url'),
+  copyToken: () => ipcRenderer.invoke('mcp:copy-token'),
+  regenerateAccess: () => ipcRenderer.invoke('mcp:regenerate'),
+  subscribeState: (listener) => {
+    const receive = (_event: unknown, state: McpState) => listener(state)
+    ipcRenderer.on('mcp:state', receive)
+    return () => { ipcRenderer.removeListener('mcp:state', receive) }
+  },
+  subscribeTools: (listener) => {
+    const receive = (_event: unknown, event: McpEvent) => listener(event)
+    ipcRenderer.on('mcp:tool', receive)
+    ipcRenderer.send('mcp:ready')
+    return () => { ipcRenderer.removeListener('mcp:tool', receive) }
+  },
+  disconnect: () => ipcRenderer.send('mcp:disconnect'),
+  reply: (id, result) => ipcRenderer.send('mcp:reply', id, result),
+}
+contextBridge.exposeInMainWorld('nessoMcp', mcp)

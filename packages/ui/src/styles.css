@@ -183,7 +183,7 @@
 .nesso-section-heading { font-size: 11px; line-height: 16px; }
 
 .nesso-field { display: grid; grid-template-columns: minmax(100px, 1fr) minmax(160px, 236px); align-items: center; gap: 16px; }
-.nesso-field > button:disabled { opacity: 1; color: var(--muted-foreground); background: var(--canvas); border-color: transparent; }
+.nesso-field > button:disabled { opacity: 1; color: var(--muted-foreground); background: var(--canvas); }
 .nesso-field > label { font-size: 12px; }
 .nesso-field-hint { margin-top: 6px; color: var(--muted-foreground); font-size: 11px; line-height: 16px; min-height: 16px; }
 
