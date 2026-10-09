@@ -18,7 +18,7 @@ Import `@nesso/ui/styles.css` after Tailwind in the host stylesheet. The host su
 
 - `Button`: default, outline, and ghost variants; text and icon sizes.
 - `Input`, `Label`: shared form primitives.
-- `Menu`, `MenuItem`, `MenuPopup`, `MenuRadioItem`: Base UI menu parts, styled items/popup, and radio choices.
+- `Menu`, `MenuItem`, `MenuPopup`, `MenuRadioItem`: Base UI menu parts, styled items/popup, and radio choices. `MenuPopup` accepts `anchor`, `align`, and `sideOffset` for trigger-based or virtual-anchor positioning, including context menus.
 - `Combobox`, `ComboboxItem`, `ComboboxPopup`: Base UI searchable selection parts and styled items/popup.
 - `Autocomplete`, `AutocompleteClear`, `AutocompleteItem`, `AutocompletePopup`: Base UI text suggestion parts with styled clear control, items, and popup; filtering and saving remain caller-owned.
 - `Collapsible`: Base UI disclosure parts.

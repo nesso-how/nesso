@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react'
-import { Lock, LockOpen, Maximize, Plus, Redo2, Trash2, Undo2 } from 'lucide-react'
+import { ListChecks, Lock, LockOpen, Maximize, Plus, Redo2, Trash2, Undo2 } from 'lucide-react'
+import type { Selection } from '@nesso/plugin'
 import {
   Background,
   BackgroundVariant,
@@ -20,16 +21,18 @@ import './styles.css'
 import { newIri, relationKey } from '@nesso/schema'
 import { ConceptNodeView } from './ConceptNodeView'
 import { ConnectionPreview } from './ConnectionPreview'
+import { GraphContextMenu } from './GraphContextMenu'
 import { conceptNode, conceptNodeMinSize, relationEdge, type ConceptNodeSizes } from './adapters'
 import type { ConceptNode, RelationEdge } from './types'
 import { useNesso, useStore } from './store'
 import { useIsCompact } from './media'
-import { selectionFromChanges } from './selection'
+import { selectionForContextMenu, selectionFromChanges } from './selection'
 import { useTranslation } from './i18n'
 
 const nodeTypes: NodeTypes = { concept: ConceptNodeView }
 const fitViewOptions = { padding: 0.3, maxZoom: 1.2 }
 const multiSelectionKeys = ['Meta', 'Control', 'Shift']
+type ContextMenuTarget = Selection[number]['kind'] | 'pane' | 'selection'
 
 export function Canvas() {
   const t = useTranslation()
@@ -55,6 +58,7 @@ export function Canvas() {
   const { fitView, screenToFlowPosition } = useReactFlow()
   const zoom = useFlowStore((state) => state.transform[2])
   const [sizes, setSizes] = useState<ConceptNodeSizes>({})
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; target: ContextMenuTarget } | null>(null)
 
   const selectedConcepts = new Set(selected.filter((item) => item.kind === 'concept').map((item) => item.id))
   const selectedRelations = new Set(selected.filter((item) => item.kind === 'relation').map((item) => item.id))
@@ -140,17 +144,49 @@ export function Canvas() {
     store.applyOperations(selected.map(({ kind, id }) => ({ kind: kind === 'concept' ? 'concept.remove' : 'relation.remove', id })))
   }
 
+  const selectAll = () => {
+    const visible = store.getState().viewGraph
+    store.setSelection([
+      ...visible.concepts.map((concept) => ({ kind: 'concept' as const, id: concept.id })),
+      ...visible.relations.map((relation) => ({ kind: 'relation' as const, id: relationKey(relation) })),
+    ])
+  }
+
+  const addConceptAt = (point: { x: number; y: number }) => {
+    const position = screenToFlowPosition(point)
+    store.addConcept({ x: position.x - conceptNodeMinSize.width / 2, y: position.y - conceptNodeMinSize.height / 2 })
+  }
+
+  const openContextMenu = (point: { x: number; y: number }, item?: Selection[number], target: ContextMenuTarget = item?.kind ?? 'pane') => {
+    if (interactive && item) store.setSelection(selectionForContextMenu(store.getState().selected, item))
+    setContextMenu({ ...point, target })
+  }
+
+  const handleContextMenu = (event: Pick<ReactMouseEvent, 'preventDefault' | 'clientX' | 'clientY'>, item?: Selection[number], target?: ContextMenuTarget) => {
+    event.preventDefault()
+    openContextMenu({ x: event.clientX, y: event.clientY }, item, target)
+  }
+
+  const openKeyboardContextMenu = (target: Element) => {
+    if (target.closest('button')) return
+    const object = target.closest('.react-flow__node, .react-flow__edge')
+    const bounds = (object ?? target).getBoundingClientRect()
+    const id = object?.getAttribute('data-id')
+    const item = object && id ? { kind: object.classList.contains('react-flow__node') ? 'concept' as const : 'relation' as const, id } : undefined
+    openContextMenu({ x: bounds.left + bounds.width / 2, y: bounds.top + bounds.height / 2 }, item)
+  }
+
   const handlePaneDoubleClick = (event: ReactMouseEvent) => {
     if (readonly) return
     const target = event.target as HTMLElement | null
     if (target?.closest?.('.react-flow__node, .react-flow__edge, .react-flow__controls, .react-flow__panel, button')) return
-    const position = screenToFlowPosition({ x: event.clientX, y: event.clientY })
-    store.addConcept({ x: position.x - conceptNodeMinSize.width / 2, y: position.y - conceptNodeMinSize.height / 2 })
+    addConceptAt({ x: event.clientX, y: event.clientY })
   }
 
   useEffect(() => {
     if (navigation.current === view) return
     navigation.current = view
+    setContextMenu(null)
     const frame = requestAnimationFrame(() => {
       void fitView({ ...fitViewOptions, duration: 300 })
     })
@@ -159,6 +195,12 @@ export function Canvas() {
 
   return (
     <div ref={canvas} tabIndex={0} className={reconnectDrag ? 'h-full w-full outline-none graph-reconnecting' : 'h-full w-full outline-none'} onKeyDown={(event) => {
+      if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) {
+        event.preventDefault()
+        openKeyboardContextMenu(event.target as Element)
+        return
+      }
+      if (contextMenu) return
       if (event.key === 'Escape') clearSelection()
       if (!interactive) return
       if (event.key === 'Delete' || event.key === 'Backspace') {
@@ -167,11 +209,7 @@ export function Canvas() {
       }
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'a') {
         event.preventDefault()
-        const visible = store.getState().viewGraph
-        store.setSelection([
-          ...visible.concepts.map((concept) => ({ kind: 'concept' as const, id: concept.id })),
-          ...visible.relations.map((relation) => ({ kind: 'relation' as const, id: relationKey(relation) })),
-        ])
+        selectAll()
       }
     }}>
       <ReactFlow
@@ -205,6 +243,10 @@ export function Canvas() {
           return source !== target && !relations.some((relation) => relationKey(relation) !== reconnecting.current?.id && relation.source === source && relation.target === target && relation.predicate === predicate)
         }}
         onPaneClick={() => { clearSelection(); canvas.current?.focus() }}
+        onPaneContextMenu={(event) => handleContextMenu(event)}
+        onNodeContextMenu={(event, node) => handleContextMenu(event, { kind: 'concept', id: node.id })}
+        onEdgeContextMenu={(event, edge) => handleContextMenu(event, { kind: 'relation', id: edge.id })}
+        onSelectionContextMenu={(event) => handleContextMenu(event, undefined, 'selection')}
         onDoubleClick={handlePaneDoubleClick}
         zoomOnDoubleClick={false}
         connectionLineComponent={ConnectionPreview}
@@ -212,6 +254,7 @@ export function Canvas() {
         elevateEdgesOnSelect
         proOptions={{ hideAttribution: true }}
         defaultViewport={initialViewport}
+        onMoveStart={() => setContextMenu(null)}
         onMoveEnd={(_event, viewport) => store.setViewport('graph', viewport)}
         fitView={!initialViewport}
         fitViewOptions={fitViewOptions}
@@ -238,7 +281,7 @@ export function Canvas() {
             <ControlButton onClick={store.redo} disabled={!canRedo} title={t('redo')} aria-label={t('redo')}>
               <Redo2 aria-hidden="true" />
             </ControlButton>
-            <ControlButton onClick={handleDelete} disabled={!canDelete} title={t('deleteSelected')} aria-label={t('deleteSelected')}>
+            <ControlButton onClick={handleDelete} disabled={!canDelete} title={t('delete')} aria-label={t('delete')}>
               <Trash2 aria-hidden="true" />
             </ControlButton>
             <ControlButton onClick={handleAdd} title={t('addConcept')} aria-label={t('addConcept')}>
@@ -247,6 +290,22 @@ export function Canvas() {
           </Controls>
         )}
       </ReactFlow>
+      <GraphContextMenu
+        position={contextMenu}
+        label={t('contextMenu')}
+        onClose={() => setContextMenu(null)}
+        finalFocus={canvas}
+        actions={[
+          ...(!readonly && contextMenu && contextMenu.target !== 'relation' ? [
+            { label: t(singleSelection && selected[0].kind === 'concept' ? 'addLinkedConcept' : 'addConcept'), icon: Plus, onClick: () => { if (contextMenu.target === 'pane') addConceptAt(contextMenu); else handleAdd() }, disabled: !interactive },
+          ] : []),
+          ...(!readonly && contextMenu && contextMenu.target !== 'pane' ? [
+            { label: t('delete'), icon: Trash2, onClick: handleDelete, disabled: !interactive || !canDelete },
+          ] : []),
+          { label: t('selectAll'), icon: ListChecks, onClick: selectAll, disabled: !interactive || viewCount === 0 },
+          { label: t('fitView'), icon: Maximize, onClick: () => { void fitView(fitViewOptions) } },
+        ]}
+      />
     </div>
   )
 }

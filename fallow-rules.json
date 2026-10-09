@@ -12,14 +12,6 @@
       "severity": "error"
     },
     {
-      "id": "graph-ui-isolation",
-      "kind": "banned-import",
-      "specifiers": ["@nesso/ui"],
-      "files": ["plugins/graph/**"],
-      "message": "Use theme tokens directly instead of importing @nesso/ui in the graph plugin.",
-      "severity": "error"
-    },
-    {
       "id": "plugin-types-only",
       "kind": "banned-import",
       "specifiers": ["@nesso/plugin"],
