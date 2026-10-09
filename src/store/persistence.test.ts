@@ -35,7 +35,7 @@ const registeredHost = (graph: Graph | null, restored = {}) => {
     id: 'vocab', label: 'Vocabulary', defaultTypeId: 'urn:links',
     relationTypes: [{ id: 'urn:links', label: 'links' }],
   })
-  host.registerRenderer({ id: 'graph', label: 'Graph', component: () => null })
+  host.registerRenderer({ id: 'graph', component: () => null })
   host.registerTheme({ id: 'light', label: 'Light' })
   return host
 }

@@ -1,22 +1,22 @@
 import { exportPlugin } from '@nesso/export'
-import { graphPlugin } from '@nesso/graph'
+import { conceptMapPlugin } from '@nesso/concept-map'
 import { importPlugin } from '@nesso/import'
-import { themePlugin } from '@nesso/theme'
-import { vocabPlugin } from '@nesso/vocab'
+import { kernelPlugin } from '@nesso/kernel'
+import { baseVocabPlugin } from '@nesso/base-vocab'
 import { Monitor, Palette, Shapes, Zap } from 'lucide-react'
 import { nessoStore, registerRenderer, registerTheme, registerVocab } from '@/store'
-import graphPackage from '../../plugins/graph/package.json'
-import themePackage from '../../plugins/theme/package.json'
-import vocabPackage from '../../plugins/vocab/package.json'
+import conceptMapPackage from '../../plugins/concept-map/package.json'
+import kernelPackage from '../../plugins/kernel/package.json'
+import baseVocabPackage from '../../plugins/base-vocab/package.json'
 import exportPackage from '../../plugins/export/package.json'
 import importPackage from '../../plugins/import/package.json'
 import { createPluginStore } from '../store/commands.ts'
 import { notifications } from '../notifications/index.ts'
 
 const bundledPlugins = [
-  { plugin: graphPlugin, manifest: graphPackage },
-  { plugin: themePlugin, manifest: themePackage },
-  { plugin: vocabPlugin, manifest: vocabPackage },
+  { plugin: conceptMapPlugin, manifest: conceptMapPackage },
+  { plugin: kernelPlugin, manifest: kernelPackage },
+  { plugin: baseVocabPlugin, manifest: baseVocabPackage },
   { plugin: exportPlugin, manifest: exportPackage },
   { plugin: importPlugin, manifest: importPackage },
 ] as const

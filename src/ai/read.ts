@@ -18,7 +18,7 @@ export function readAiTool(state: NessoState, name: string, input: unknown): AiT
         counts: { concepts: state.graph.concepts.length, relations: state.graph.relations.length, views: state.workspace.savedViews.length },
         visible: { concepts: state.viewGraph.concepts.length, relations: state.viewGraph.relations.length },
         selection: state.selected.slice(0, 100), selectionCount: state.selected.length, history: state.history,
-        vocabulary: vocab ? { id: vocab.id, label: vocab.label, defaultTypeId: vocab.defaultTypeId } : null,
+        vocabulary: vocab ? { id: vocab.id, defaultTypeId: vocab.defaultTypeId } : null,
       }
     }
     case 'concepts': {

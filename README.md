@@ -73,10 +73,10 @@ The host owns state, materializes `viewGraph`, and registers plugins statically.
 | [`@nesso/i18n`](packages/i18n/README.md) | Core | i18next with typed keys, isolated translators, and English fallback. |
 | [`@nesso/ui`](packages/ui/README.md) | Core | Shared React controls and styles. |
 | [`@nesso/ai`](packages/ai/README.md) | Core | Shared chat and MCP tool contracts, policies, and assistant instructions. |
-| [`@nesso/graph`](plugins/graph/README.md) | Plugin | React Flow canvas for the host-provided visible graph. |
-| [`@nesso/vocab`](plugins/vocab/README.md) | Plugin | Default relation vocabulary. |
+| [`@nesso/concept-map`](plugins/concept-map/README.md) | Plugin | React Flow canvas for the host-provided visible graph. |
+| [`@nesso/base-vocab`](plugins/base-vocab/README.md) | Plugin | Default relation vocabulary. |
 | [`@nesso/export`](plugins/export/README.md) | Plugin | Graph and view export as JSON-LD. |
-| [`@nesso/theme`](plugins/theme/README.md) | Plugin | Kernel theme tokens and bundled fonts. |
+| [`@nesso/kernel`](plugins/kernel/README.md) | Plugin | Kernel theme tokens and bundled fonts. |
 
 ## Development
 

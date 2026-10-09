@@ -7,8 +7,8 @@
       "id": "react-flow-isolation",
       "kind": "banned-import",
       "specifiers": ["@xyflow/react"],
-      "exclude": ["plugins/graph/**"],
-      "message": "Keep React Flow imports in plugins/graph.",
+      "exclude": ["plugins/concept-map/**"],
+      "message": "Keep React Flow imports in plugins/concept-map.",
       "severity": "error"
     },
     {

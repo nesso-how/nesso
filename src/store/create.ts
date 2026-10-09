@@ -83,8 +83,7 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
     if (typeof theme.id !== 'string' || !theme.id.trim() || themes.has(theme.id)) {
       fail('theme.id', `Duplicate or missing theme id: ${theme.id}`)
     }
-    if (typeof theme.label !== 'string' || !theme.label.trim()) fail('theme.label', 'Expected a theme label')
-    themes.set(theme.id, { id: theme.id, label: theme.label })
+    themes.set(theme.id, { id: theme.id })
     const state = store.getState()
     if (!state.preferences.activeThemeId || theme.id === preferences.activeThemeId) {
       store.setState({ preferences: { ...state.preferences, activeThemeId: theme.id } })

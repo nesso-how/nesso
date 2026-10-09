@@ -1,0 +1,5 @@
+{
+  "pluginName": "Base Vocabulary",
+  "pluginDescription": "A shared language for relationships between concepts.",
+  "pluginDocumentation": "Base provides linksTo, partOf, causes, and kindOf relation types. Its default linksTo relation is displayed without a label. Switching vocabulary leaves existing relations unchanged."
+}

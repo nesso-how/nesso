@@ -4,7 +4,7 @@ import { Canvas } from './Canvas'
 import { StoreContext } from './store'
 import { translate } from './i18n'
 
-export const graphPlugin: Plugin = {
+export const conceptMapPlugin: Plugin = {
   kind: 'renderer',
   metadata: (locale) => ({
     name: translate(locale)('pluginName'),
@@ -17,9 +17,8 @@ export const graphPlugin: Plugin = {
     'history.undo', 'history.redo',
   ],
   create: ({ store }) => ({
-    id: 'graph',
-    label: 'Graph',
-    component: function GraphRenderer() {
+    id: 'concept-map',
+    component: function ConceptMapRenderer() {
       return (
         <StoreContext.Provider value={store}>
           <ReactFlowProvider>

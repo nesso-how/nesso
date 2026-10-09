@@ -17,7 +17,7 @@ export const defaultRelationId = relationIds.linksTo
 export const defaultRelationTypes: VocabDefinition['relationTypes'] =
   Object.entries(relationIds).map(([label, id]) => ({ id, label }))
 
-export const vocabPlugin: Plugin = {
+export const baseVocabPlugin: Plugin = {
   kind: 'vocab',
   metadata: (locale) => ({
     name: translate(locale)('pluginName'),
@@ -26,8 +26,7 @@ export const vocabPlugin: Plugin = {
   }),
   operations: [],
   create: () => ({
-    id: 'nesso-default',
-    label: 'Nesso',
+    id: 'base-vocab',
     relationTypes: defaultRelationTypes,
     defaultTypeId: defaultRelationId,
   }),

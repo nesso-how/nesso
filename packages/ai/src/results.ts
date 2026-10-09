@@ -19,7 +19,7 @@ export type AiToolResults = {
     readonly selection: readonly { readonly kind: 'concept' | 'relation'; readonly id: string }[]
     readonly selectionCount: number
     readonly history: { readonly canUndo: boolean; readonly canRedo: boolean }
-    readonly vocabulary: { readonly id: string; readonly label: string; readonly defaultTypeId: string } | null
+    readonly vocabulary: { readonly id: string; readonly defaultTypeId: string } | null
   }
   readonly concepts: Page<{
     readonly id: string

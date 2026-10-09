@@ -1,6 +1,6 @@
 @import "tailwindcss";
 @import "@nesso/ui/styles.css";
-@import "@nesso/theme/styles.css";
+@import "@nesso/kernel/styles.css";
 @source "../plugins";
 
 @layer base {

@@ -1,5 +1,5 @@
 {
-  "pluginName": "Nesso Theme",
+  "pluginName": "Kernel",
   "pluginDescription": "Nesso's visual identity, with the Kernel theme.",
   "pluginDocumentation": "Kernel supplies the app's light theme tokens and fonts. It does not change your graph or views."
 }

@@ -112,7 +112,7 @@ Pass `{ historyGroup: string }` to coalesce adjacent label/position writes from 
 - Actions are `{ id, label(locale), run }`, with an optional `runOnView(viewId)` for view-scoped menus (`null` targets the complete graph); the host passes its active locale when displaying labels.
 - `preferences.locale` supports English and Italian, defaulting to English when unset. `setLocale` requires `preferences.locale` in the operation declaration. Use [@nesso/i18n](../i18n/README.md) with your own JSON catalogs.
 - A vocabulary's `defaultTypeId` must be one of its own relation types.
-- Themes contribute ID/label metadata. Import CSS statically and scope tokens to `:root[data-theme='<id>']`; the host applies the active theme to the DOM.
+- Themes contribute ID metadata. Import CSS statically and scope tokens to `:root[data-theme='<id>']`; the host applies the active theme to the DOM.
 
 ## Reference
 

@@ -26,33 +26,33 @@ importers:
       '@nesso/ai':
         specifier: workspace:*
         version: link:packages/ai
+      '@nesso/base-vocab':
+        specifier: workspace:*
+        version: link:plugins/base-vocab
+      '@nesso/concept-map':
+        specifier: workspace:*
+        version: link:plugins/concept-map
       '@nesso/export':
         specifier: workspace:*
         version: link:plugins/export
-      '@nesso/graph':
-        specifier: workspace:*
-        version: link:plugins/graph
       '@nesso/i18n':
         specifier: workspace:*
         version: link:packages/i18n
       '@nesso/import':
         specifier: workspace:*
         version: link:plugins/import
+      '@nesso/kernel':
+        specifier: workspace:*
+        version: link:plugins/kernel
       '@nesso/plugin':
         specifier: workspace:*
         version: link:packages/plugin
       '@nesso/schema':
         specifier: workspace:*
         version: link:packages/schema
-      '@nesso/theme':
-        specifier: workspace:*
-        version: link:plugins/theme
       '@nesso/ui':
         specifier: workspace:*
         version: link:packages/ui
-      '@nesso/vocab':
-        specifier: workspace:*
-        version: link:plugins/vocab
       '@tailwindcss/vite':
         specifier: ^4.3.3
         version: 4.3.3(vite@8.3.1(@types/node@24.19.0)(jiti@2.7.0))
@@ -176,20 +176,17 @@ importers:
         specifier: ^19.2.18
         version: 19.3.0
 
-  plugins/export:
+  plugins/base-vocab:
     dependencies:
       '@nesso/i18n':
         specifier: workspace:*
         version: link:../../packages/i18n
-      '@nesso/schema':
-        specifier: workspace:*
-        version: link:../../packages/schema
     devDependencies:
       '@nesso/plugin':
         specifier: workspace:*
         version: link:../../packages/plugin
 
-  plugins/graph:
+  plugins/concept-map:
     dependencies:
       '@nesso/i18n':
         specifier: workspace:*
@@ -223,6 +220,19 @@ importers:
         specifier: ^19.2.18
         version: 19.3.0
 
+  plugins/export:
+    dependencies:
+      '@nesso/i18n':
+        specifier: workspace:*
+        version: link:../../packages/i18n
+      '@nesso/schema':
+        specifier: workspace:*
+        version: link:../../packages/schema
+    devDependencies:
+      '@nesso/plugin':
+        specifier: workspace:*
+        version: link:../../packages/plugin
+
   plugins/import:
     dependencies:
       '@nesso/i18n':
@@ -236,7 +246,7 @@ importers:
         specifier: workspace:*
         version: link:../../packages/plugin
 
-  plugins/theme:
+  plugins/kernel:
     dependencies:
       '@fontsource-variable/geist':
         specifier: ^5.3.0
@@ -244,16 +254,6 @@ importers:
       '@fontsource/ibm-plex-mono':
         specifier: ^5.2.7
         version: 5.3.0
-      '@nesso/i18n':
-        specifier: workspace:*
-        version: link:../../packages/i18n
-    devDependencies:
-      '@nesso/plugin':
-        specifier: workspace:*
-        version: link:../../packages/plugin
-
-  plugins/vocab:
-    dependencies:
       '@nesso/i18n':
         specifier: workspace:*
         version: link:../../packages/i18n

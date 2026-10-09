@@ -7,10 +7,9 @@ const translate = createTranslator(en, { it })
 
 export const kernelTheme: ThemeDefinition = {
   id: 'kernel',
-  label: 'Kernel',
 }
 
-export const themePlugin: Plugin = {
+export const kernelPlugin: Plugin = {
   kind: 'theme',
   metadata: (locale) => ({
     name: translate(locale)('pluginName'),

@@ -83,7 +83,7 @@ export function SettingsDialog({ initialPage = 'general' }: { initialPage?: 'gen
             <section className="settings-section" aria-labelledby="settings-providers">
               <h3 id="settings-providers" className="settings-section-title">{t('providers')}</h3>
               <div className="mt-3 space-y-3">{providers.map(({ kind, key, change }) => {
-                const items = plugins.flatMap((entry) => entry.kind === kind ? [{ value: entry.contribution.id, label: entry.contribution.label }] : [])
+                const items = plugins.flatMap((entry) => entry.kind === kind ? [{ value: entry.contribution.id, label: entry.metadata(locale).name }] : [])
                 return <PreferenceSelect key={kind} label={t(kind)} items={items} value={preferences[key]} onChange={change} disabled={items.length < 2} />
               })}</div>
             </section>
@@ -107,10 +107,9 @@ export function SettingsDialog({ initialPage = 'general' }: { initialPage?: 'gen
             {plugin.kind === 'actions' ? <section className="mt-6" aria-labelledby="settings-commands">
               <h3 id="settings-commands" className="text-xs font-medium">{t('commands')}</h3>
               <ul className="mt-3 space-y-2">{plugin.contribution.map((action) => <li key={action.id} className="flex items-center gap-2 text-xs"><Check className="size-3.5 text-muted-foreground" aria-hidden="true" />{action.label(locale)}</li>)}</ul>
-            </section> : <section className="mt-6" aria-labelledby="settings-contribution">
+            </section> : plugin.kind === 'vocab' && <section className="mt-6" aria-labelledby="settings-contribution">
               <h3 id="settings-contribution" className="text-xs font-medium">{t(plugin.kind)}</h3>
-              <p className="mt-3 text-xs">{plugin.contribution.label}</p>
-              {plugin.kind === 'vocab' && <div className="mt-3 flex flex-wrap gap-2">{plugin.contribution.relationTypes.map((type) => <span key={type.id} className="settings-badge">{type.label}</span>)}</div>}
+              <div className="mt-3 flex flex-wrap gap-2">{plugin.contribution.relationTypes.map((type) => <span key={type.id} className="settings-badge">{type.label}</span>)}</div>
             </section>}
             <section className="settings-section" aria-labelledby="settings-details">
               <h3 id="settings-details" className="mb-3 text-xs font-medium">{t('details')}</h3>

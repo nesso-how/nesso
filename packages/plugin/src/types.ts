@@ -43,7 +43,6 @@ export type NessoOperation =
 
 export type VocabDefinition = {
   readonly id: string
-  readonly label: string
   readonly relationTypes: readonly Readonly<RelationType>[]
   readonly defaultTypeId: string
 }
@@ -132,7 +131,6 @@ export type NessoStore = {
 
 export type RendererDefinition = {
   readonly id: string
-  readonly label: string
   readonly component: ComponentType
 }
 
@@ -145,7 +143,6 @@ export type ActionDefinition = {
 
 export type ThemeDefinition = {
   readonly id: string
-  readonly label: string
 }
 
 export type NotificationAction = {

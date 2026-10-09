@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import test from 'node:test'
-import { themePlugin } from '../src/index.ts'
+import { kernelPlugin } from '../src/index.ts'
 
 test('the theme plugin contributes an identity matching its stylesheet without accessing the store', () => {
-  assert.ok(themePlugin.kind === 'theme')
-  const definition = themePlugin.create({
+  assert.ok(kernelPlugin.kind === 'theme')
+  const definition = kernelPlugin.create({
     get store() {
       return assert.fail('Theme definitions must not access the store')
     },

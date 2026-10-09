@@ -1,5 +1,5 @@
 {
-  "name": "@nesso/vocab",
+  "name": "@nesso/base-vocab",
   "version": "0.0.0",
   "type": "module",
   "exports": {

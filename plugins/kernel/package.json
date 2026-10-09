@@ -1,5 +1,5 @@
 {
-  "name": "@nesso/theme",
+  "name": "@nesso/kernel",
   "version": "0.0.0",
   "type": "module",
   "exports": {

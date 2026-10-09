@@ -1,10 +1,10 @@
-# @nesso/graph
+# @nesso/concept-map
 
 React Flow renderer plugin: canvas, node/edge views, and adapters rendering the host-provided `viewGraph`.
 
 ## Usage
 
-Register `graphPlugin` using the [plugin guide](../../packages/plugin/README.md#register-it). The host displays the renderer for the active saved view or complete graph.
+Register `conceptMapPlugin` using the [plugin guide](../../packages/plugin/README.md#register-it). The host displays the renderer for the active saved view or complete graph.
 
 ## Controls
 
@@ -23,4 +23,4 @@ Context menus use the shared `MenuPopup` and `MenuItem` primitives from `@nesso/
 
 ## API
 
-- `graphPlugin`: declared operations and a factory binding the injected store to its renderer instance. See [src/index.tsx](src/index.tsx).
+- `conceptMapPlugin`: declared operations and a factory binding the injected store to its renderer instance. See [src/index.tsx](src/index.tsx).
