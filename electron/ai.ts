@@ -1,34 +1,14 @@
 import { app, BrowserWindow, ipcMain, safeStorage, type IpcMainEvent, type IpcMainInvokeEvent } from 'electron'
-import { readFileSync, renameSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { createAiConnections } from './ai-connections.ts'
+import { createAiStorage } from './ai-storage.ts'
 import { aiChatRequest, type AiResult, type AiToolReply } from '@nesso/ai'
 import { ElectronError } from './errors.ts'
 import { createAiChatRun } from './ai-chat.ts'
 
 export function connectAi(dev: boolean) {
   const file = path.join(app.getPath('userData'), 'ai-connections.enc')
-  const available = () => {
-    if (!safeStorage.isEncryptionAvailable() || process.platform === 'linux' && safeStorage.getSelectedStorageBackend() === 'basic_text') {
-      throw new ElectronError([{ path: 'storage', message: 'Secure credential storage is unavailable' }])
-    }
-  }
-  const connections = createAiConnections({
-    read: () => {
-      available()
-      let encrypted: Buffer
-      try { encrypted = readFileSync(file) } catch (error) {
-        if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null
-        throw error
-      }
-      return safeStorage.decryptString(encrypted)
-    },
-    write: (value) => {
-      available()
-      writeFileSync(`${file}.tmp`, safeStorage.encryptString(value), { mode: 0o600 })
-      renameSync(`${file}.tmp`, file)
-    },
-  })
+  const connections = createAiConnections(createAiStorage(file, safeStorage))
   const trustedUrl = dev ? 'http://127.0.0.1:5173/' : 'nesso://app/'
   const trusted = (event: IpcMainEvent | IpcMainInvokeEvent) =>
     BrowserWindow.getAllWindows().some((window) => window.webContents === event.sender)

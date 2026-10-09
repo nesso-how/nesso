@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { IconButton, Tabs } from '@nesso/ui'
 import { SquarePen, X } from 'lucide-react'
 import type { createAiChat } from '@/ai/chat'
@@ -18,20 +18,19 @@ export function AssistantPanel({ chat, onClose, onOpenSettings, settingsOpen }: 
   const [tab, setTab] = useState<'chat' | 'details'>('chat')
   const [draft, setDraft] = useState('')
   const [activeModel, setActiveModel] = useState<string | null>(null)
+  const connectionUsed = useRef(false)
+  const busy = useSyncExternalStore(chat.subscribe, chat.getSnapshot).phase !== 'idle'
   useEffect(() => {
-    if (tab !== 'chat' || settingsOpen || !window.nessoAi) return
+    if (busy) connectionUsed.current = true
+    if (!connectionUsed.current || tab !== 'chat' || settingsOpen || !window.nessoAi) return
     let mounted = true
-    const load = () => {
-      void window.nessoAi!.list().then((result) => {
-        if (!mounted || 'issues' in result) return
-        const active = result.value.connections.find((entry) => entry.id === result.value.activeId)
-        setActiveModel(active ? `${active.name} · ${active.model}` : null)
-      }).catch(() => {})
-    }
-    load()
-    window.addEventListener('focus', load)
-    return () => { mounted = false; window.removeEventListener('focus', load) }
-  }, [tab, settingsOpen])
+    void window.nessoAi.list().then((result) => {
+      if (!mounted || 'issues' in result) return
+      const active = result.value.connections.find((entry) => entry.id === result.value.activeId)
+      setActiveModel(active ? `${active.name} · ${active.model}` : null)
+    }).catch(() => {})
+    return () => { mounted = false }
+  }, [tab, settingsOpen, busy])
   return (
     <Tabs.Root value={tab} onValueChange={(value) => setTab(value as typeof tab)} className="flex h-full min-h-0 flex-col">
       <header className="assistant-header">
@@ -44,7 +43,7 @@ export function AssistantPanel({ chat, onClose, onOpenSettings, settingsOpen }: 
           <IconButton aria-label={t('collapseDetails')} title={t('collapseDetails')} onClick={onClose}><X /></IconButton>
         </div>
       </header>
-      <Tabs.Panel value="chat" keepMounted className="min-h-0 flex-1 data-[hidden]:hidden"><Chat chat={chat} draft={draft} onDraftChange={setDraft} onOpenSettings={onOpenSettings} activeModel={activeModel} /></Tabs.Panel>
+      <Tabs.Panel value="chat" keepMounted className="min-h-0 flex-1 data-[hidden]:hidden"><Chat chat={chat} draft={draft} onDraftChange={setDraft} onOpenSettings={() => { connectionUsed.current = true; onOpenSettings() }} activeModel={activeModel} /></Tabs.Panel>
       <Tabs.Panel value="details" className="min-h-0 flex-1"><Inspector /></Tabs.Panel>
     </Tabs.Root>
   )
