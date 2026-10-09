@@ -1,5 +1,4 @@
 import type {
-  NessoStore,
   Preferences,
   RendererDefinition,
   ThemeDefinition,
@@ -16,7 +15,7 @@ import { createStore } from 'zustand/vanilla'
 import { createCommands } from './commands.ts'
 import { createHistory } from './history.ts'
 import { applyStateOperations, checkGraph, materialize, newGraph, newWorkspace } from './operations.ts'
-import { defaultPanels, fail, maxRelationLabelLength, parsePreferences, parseWorkspace } from './settings.ts'
+import { defaultPanels, fail, maxRelationLabelLength, parseConversation, parsePreferences, parseWorkspace } from './settings.ts'
 import type { HostState, HostStore, RestoredState } from './types.ts'
 
 export const createNessoStore = (graph: Graph | null, restored: RestoredState = {}) => {
@@ -36,6 +35,7 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
   const store = createStore<HostState>()(() => ({
     graph: initial,
     workspace,
+    conversation: parseConversation({ version: 1, messages: restored.conversation?.messages ?? [] }),
     preferences: { ...preferences, activeVocabId: '', activeRendererId: '', activeThemeId: '' },
     viewGraph: materialize(initial, workspace),
     selected: [],
@@ -46,7 +46,7 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
 
   const history = createHistory(store.getState, (next) => store.setState({ ...next, history: history.flags() }))
 
-  const applyOperations: NessoStore['applyOperations'] = (operations, options) => {
+  const applyOperations: HostStore['applyOperations'] = (operations, options) => {
     const historyOperation = operations.find(({ kind }) => kind === 'history.undo' || kind === 'history.redo')
     if (historyOperation) {
       if (operations.length !== 1) fail('operations', 'History operations must be applied alone')
@@ -99,6 +99,9 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
     getState: store.getState,
     subscribe: store.subscribe,
     ...createCommands(applyOperations),
+    applyOperations,
+    setChatMessages: (value) => applyOperations([{ kind: 'conversation.messages', value }]),
+    clearChat: () => applyOperations([{ kind: 'conversation.clear' }]),
     getViewGraph: (id) => {
       const state = store.getState()
       if (!state.workspace.savedViews.some((view) => view.id === id)) fail('view.id', 'Unknown view')

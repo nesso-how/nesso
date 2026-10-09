@@ -1,2 +1,6 @@
 export { aiTools } from './tools.ts'
+export { aiChatInstructions, aiChatMessages } from './prompt.ts'
+export { aiRewriteApprovalThreshold, aiTextLimits } from './policy.ts'
+export type { AiEffects, AiToolResults } from './results.ts'
+export { aiConversation, aiChatRequest, type AiChatMessage, type AiChatRequest, type AiChatEvent, type AiToolReply } from './chat.ts'
 export { aiProviders, type AiProvider, type AiConnectionInput, type AiConnection, type AiConnections, type AiResult } from './providers.ts'

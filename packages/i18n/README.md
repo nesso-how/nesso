@@ -49,3 +49,9 @@ The host persists `preferences.locale`, defaulting to English; plugins read and 
 - `isLocale`: check whether a value is a supported locale.
 
 Unknown keys, missing interpolation values, and invalid plural counts throw `I18nError` with structured `issues`. Returned strings are unescaped: render them as text, never as HTML. See [src/index.ts](src/index.ts) for signatures and types.
+
+## Build
+
+`pnpm --filter @nesso/i18n build`
+
+Vite uses TypeScript sources; Node and Electron use compiled JavaScript. The AI package builds this dependency automatically.

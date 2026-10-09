@@ -1,8 +1,8 @@
 import type { GraphSnapshot, NessoOperation, NessoState, Preferences, RendererDefinition, SavedView, Selection, ThemeDefinition, WorkspaceState } from '@nesso/plugin'
 import { relationKey, SchemaError, validateGraph, type Graph, type Relation, type RelationType } from '@nesso/schema'
 import { isLocale } from '@nesso/i18n'
-import { fail, maxConceptLabelLength, maxRelationLabelLength, parsePreferences, parseWorkspace } from './settings.ts'
-import { sectionIds } from './types.ts'
+import { fail, maxConceptLabelLength, maxRelationLabelLength, parseConversation, parsePreferences, parseWorkspace } from './settings.ts'
+import { sectionIds, type HostOperation, type HostState } from './types.ts'
 import { ListEdit, sameConcept, sameIds, sameType, sameView, viewChanges } from './delta.ts'
 
 export const conceptPlacementOffset = Object.freeze({ x: 160, y: 100 })
@@ -79,7 +79,7 @@ const samePreferences = (left: Preferences, right: Preferences): boolean =>
   && left.panels.explorerWidth === right.panels.explorerWidth && left.panels.inspectorWidth === right.panels.inspectorWidth
   && sameItems(left.collapsedSections ?? [], right.collapsedSections ?? [], (a, b) => a === b)
 
-export const applyStateOperations = (state: NessoState, operations: readonly NessoOperation[], registry: {
+export const applyStateOperations = (state: HostState, operations: readonly HostOperation[], registry: {
   readonly renderers: ReadonlyMap<string, RendererDefinition>
   readonly themes: ReadonlyMap<string, ThemeDefinition>
 }) => {
@@ -94,6 +94,7 @@ export const applyStateOperations = (state: NessoState, operations: readonly Nes
   const graph = (): GraphSnapshot => ({ concepts: concepts.items, relations: relations.items, relationTypes: types.items })
   let workspace = state.workspace
   let preferences = state.preferences
+  let conversation = state.conversation
   let selected = state.selected
   let explicitSelection = state.selected
   let reset = false
@@ -155,6 +156,12 @@ export const applyStateOperations = (state: NessoState, operations: readonly Nes
 
   for (const operation of operations) {
     switch (operation.kind) {
+      case 'conversation.messages':
+        conversation = parseConversation({ version: 1, messages: operation.value })
+        break
+      case 'conversation.clear':
+        conversation = { messages: [] }
+        break
       case 'concept.label':
         updateConcept(operation.id, (concept) => concept.label === operation.value ? concept : { ...concept, label: operation.value })
         break
@@ -244,6 +251,7 @@ export const applyStateOperations = (state: NessoState, operations: readonly Nes
         types = new ListEdit([], (item: Readonly<RelationType>) => item.id, sameType)
         views = new ListEdit([], (item: SavedView) => item.id, sameView)
         workspace = newWorkspace()
+        conversation = { messages: [] }
         selected = []
         explicitSelection = selected
         reset = true
@@ -355,9 +363,11 @@ export const applyStateOperations = (state: NessoState, operations: readonly Nes
     if (samePreferences(preferences, state.preferences)) preferences = state.preferences
   }
   selected = reconcileSelection(candidate, selected)
+  if (conversation !== state.conversation && JSON.stringify(conversation) === JSON.stringify(state.conversation)
+    && !state.persistenceIssues.some(({ path }) => path.startsWith('conversation'))) conversation = state.conversation
   if (sameItems(selected, state.selected, (a, b) => a.kind === b.kind && a.id === b.id)) selected = state.selected
-  const unchanged = candidate === state.graph && workspace === state.workspace && preferences === state.preferences && selected === state.selected
-  const next = unchanged ? state : { ...state, graph: candidate, workspace, preferences, selected, viewGraph: materialize(candidate, workspace, state) }
+  const unchanged = candidate === state.graph && workspace === state.workspace && preferences === state.preferences && selected === state.selected && conversation === state.conversation
+  const next = unchanged ? state : { ...state, graph: candidate, workspace, preferences, conversation, selected, viewGraph: materialize(candidate, workspace, state) }
   let relationRewrites: { before: string; after: string }[] = []
   if (relationOrigins?.size) {
     const originalKeys = new Set(state.graph.relations.map(relationKey))

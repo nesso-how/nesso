@@ -10,6 +10,8 @@ import { SidebarInset, SidebarProvider } from '@/components/app/SidebarLayout'
 import { getRenderer, host, useNessoStore } from '@/store'
 import { panelLimits } from '@/store/settings'
 import { translate } from '@/i18n'
+import { chat } from '@/ai'
+import { AssistantPanel } from '@/components/app/AssistantPanel'
 
 function RendererHost() {
   const activeRendererId = useNessoStore((state) => state.preferences.activeRendererId)
@@ -29,6 +31,7 @@ export default function App() {
   const panels = useNessoStore((state) => state.preferences.panels)
   const [detailsOpen, setDetailsOpen] = useState(true)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [settingsPage, setSettingsPage] = useState<'general' | 'ai'>('general')
   const readonly = useMediaQuery('(max-width: 767px)')
 
   useEffect(() => { document.documentElement.lang = locale }, [locale])
@@ -47,7 +50,7 @@ export default function App() {
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [readonly])
-  const openSettings = () => setSettingsOpen(true)
+  const openSettings = () => { setSettingsPage('general'); setSettingsOpen(true) }
 
   return (
     <>
@@ -64,15 +67,15 @@ export default function App() {
                 id="inspector-panel"
                 side="right"
                 open={detailsOpen}
-                size={panels.inspectorWidth}
-                minSize={panelLimits.inspectorWidth.min}
+                size={chat && panels.inspectorWidth < 300 ? 360 : panels.inspectorWidth}
+                minSize={chat ? 300 : panelLimits.inspectorWidth.min}
                 maxSize="45%"
                 onToggle={() => setDetailsOpen((open) => !open)}
                 onSizeChange={(inspectorWidth) => host.store.setPanelSizes({ ...host.store.getState().preferences.panels, inspectorWidth })}
                 toggleLabel={t(detailsOpen ? 'collapseDetails' : 'expandDetails')}
                 resizeLabel={t('resizeInspector')}
               >
-                <Inspector />
+                {chat ? <AssistantPanel chat={chat} onClose={() => setDetailsOpen(false)} onOpenSettings={() => { setSettingsPage('ai'); setSettingsOpen(true) }} settingsOpen={settingsOpen} /> : <Inspector />}
               </SidePanel>}
             </div>
             <PersistenceBanner />
@@ -80,7 +83,7 @@ export default function App() {
         </div>
       </SidebarProvider>
       <Dialog.Root open={!readonly && settingsOpen} onOpenChange={setSettingsOpen}>
-        {!readonly && settingsOpen && <SettingsDialog />}
+        {!readonly && settingsOpen && <SettingsDialog initialPage={settingsPage} />}
       </Dialog.Root>
     </>
   )

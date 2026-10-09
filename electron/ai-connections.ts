@@ -1,46 +1,47 @@
 import { randomUUID } from 'node:crypto'
-import { aiProviders, type AiConnectionInput, type AiConnections, type AiProvider } from '@nesso/ai/providers'
+import { z } from 'zod'
+import { aiConnectionInput, type AiConnections } from '@nesso/ai/providers'
 import { ElectronError } from './errors.ts'
 
-type Connection = Omit<AiConnectionInput, 'id' | 'apiKey'> & { id: string; apiKey: string }
-type Record = { connections: Connection[]; activeId: string | null }
+const connectionInput = aiConnectionInput.extend({
+  endpoint: aiConnectionInput.shape.endpoint.transform((value, context) => {
+    const url = new URL(value)
+    const loopback = ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)
+    if (!(url.protocol === 'https:' || url.protocol === 'http:' && loopback) || url.username || url.password || url.search || url.hash) {
+      context.addIssue({ code: 'custom', message: 'Use HTTPS, or HTTP on localhost, without credentials, query or fragment' })
+    }
+    return value.replace(/\/+$/, '')
+  }),
+})
+const storedConnection = connectionInput.extend({
+  id: aiConnectionInput.shape.id.unwrap(),
+  apiKey: aiConnectionInput.shape.apiKey.unwrap(),
+}).refine((entry) => entry.provider === 'custom' || !!entry.apiKey, { path: ['apiKey'], message: 'API key required' })
+const storedRecord = z.object({ connections: z.array(storedConnection), activeId: z.string().nullable() })
+  .refine(({ connections }) => new Set(connections.map(({ id }) => id)).size === connections.length,
+    { path: ['connections'], message: 'Duplicate connection ID' })
+  .refine(({ connections, activeId }) => activeId === null || connections.some(({ id }) => id === activeId),
+    { path: ['activeId'], message: 'Invalid active connection' })
+const discoveryInput = connectionInput.extend({ model: z.unknown().transform(() => '') })
+const cursor = z.string().max(2048).trim().min(1)
+const modelPage = z.object({
+  data: z.array(z.object({ id: aiConnectionInput.shape.model })),
+  has_more: z.boolean().optional(),
+  last_id: cursor.optional(),
+})
+const geminiModelPage = z.object({
+  models: z.array(z.object({ name: aiConnectionInput.shape.model })),
+  nextPageToken: cursor.optional(),
+})
+type Connection = z.infer<typeof storedConnection>
+type Record = z.infer<typeof storedRecord>
 type Storage = { read: () => string | null; write: (value: string) => void }
 
 const fail = (path: string, message: string): never => { throw new ElectronError([{ path, message }]) }
-const object = (value: unknown): { [key: string]: unknown } => {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return fail('connection', 'Expected an object')
-  return value as { [key: string]: unknown }
-}
-const text = (value: unknown, path: string, max = 256): string => {
-  if (typeof value !== 'string' || !value.trim() || value.length > max) return fail(path, `Expected non-empty text (maximum ${max} characters)`)
-  return value.trim()
-}
-
-const parseEndpoint = (value: unknown): string => {
-  const endpoint = text(value, 'endpoint', 2048)
-  let url: URL
-  try { url = new URL(endpoint) } catch { return fail('endpoint', 'Invalid URL') }
-  const loopback = ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)
-  if (!(url.protocol === 'https:' || url.protocol === 'http:' && loopback) || url.username || url.password || url.search || url.hash) {
-    return fail('endpoint', 'Use HTTPS, or HTTP on localhost, without credentials, query or fragment')
-  }
-  return endpoint.replace(/\/+$/, '')
-}
-
-const parse = (value: unknown, previous?: Connection, requireModel = true): Connection => {
-  const input = object(value)
-  const provider = text(input.provider, 'provider')
-  if (!Object.hasOwn(aiProviders, provider)) return fail('provider', 'Unknown provider')
-  const endpoint = parseEndpoint(input.endpoint)
-  if (input.apiKey !== undefined && (typeof input.apiKey !== 'string' || input.apiKey.length > 8192)) return fail('apiKey', 'Invalid API key')
-  const sameDestination = previous?.provider === provider && previous.endpoint === endpoint
-  const apiKey = typeof input.apiKey === 'string' && input.apiKey.trim() ? input.apiKey.trim() : sameDestination ? previous.apiKey : ''
-  if (!apiKey && provider !== 'custom') return fail('apiKey', 'API key required')
-  return {
-    id: input.id === undefined ? randomUUID() : text(input.id, 'id'),
-    name: text(input.name, 'name', 80), provider: provider as AiProvider,
-    endpoint, model: requireModel ? text(input.model, 'model') : '', apiKey,
-  }
+const parse = <T>(schema: z.ZodType<T>, value: unknown, location = 'connection'): T => {
+  const result = schema.safeParse(value)
+  if (!result.success) throw new ElectronError(result.error.issues.map(({ path, message }) => ({ path: path.join('.') || location, message })))
+  return result.data
 }
 
 const modelHeaders = (entry: Connection): { [key: string]: string } => {
@@ -58,13 +59,7 @@ const fetchModelPage = async (entry: Connection, query: string, request: typeof 
     response = await request(`${entry.endpoint}/models${query}`, { headers: modelHeaders(entry), redirect: 'error', signal: AbortSignal.timeout(15_000) })
   } catch { return fail('endpoint', 'Connection failed or timed out') }
   if (!response.ok) return fail('endpoint', `Provider returned HTTP ${response.status}`)
-  try { return object(await response.json()) } catch { return fail('endpoint', 'Invalid model list') }
-}
-
-const nextModelPage = (body: { [key: string]: unknown }, provider: AiProvider): string => {
-  if (provider === 'gemini' && body.nextPageToken) return `?${new URLSearchParams({ pageToken: text(body.nextPageToken, 'models.cursor', 2048) })}`
-  if (provider === 'anthropic' && body.has_more) return `?${new URLSearchParams({ after_id: text(body.last_id, 'models.cursor', 2048) })}`
-  return ''
+  try { return await response.json() as unknown } catch { return fail('endpoint', 'Invalid model list') }
 }
 
 const fetchModels = async (entry: Connection, request: typeof fetch): Promise<readonly string[]> => {
@@ -73,15 +68,18 @@ const fetchModels = async (entry: Connection, request: typeof fetch): Promise<re
   const gemini = entry.provider === 'gemini'
   let query = ''
   do {
-    const body = await fetchModelPage(entry, query, request)
-    const models = gemini ? body.models : body.data
-    if (!Array.isArray(models)) return fail('endpoint', 'Invalid model list')
-    for (const item of models) {
-      const model = object(item)
-      const id = text(gemini ? model.name : model.id, 'model')
-      ids.add(gemini ? id.replace(/^models\//, '') : id)
+    const raw = await fetchModelPage(entry, query, request)
+    const page = (gemini ? geminiModelPage : modelPage).safeParse(raw)
+    if (!page.success) return fail('endpoint', 'Invalid model list')
+    const body = page.data
+    if ('models' in body) {
+      for (const model of body.models) ids.add(model.name.replace(/^models\//, ''))
+      query = body.nextPageToken ? `?${new URLSearchParams({ pageToken: body.nextPageToken })}` : ''
+    } else {
+      for (const model of body.data) ids.add(model.id)
+      query = entry.provider === 'anthropic' && body.has_more
+        ? `?${new URLSearchParams({ after_id: parse(cursor, body.last_id, 'models.cursor') })}` : ''
     }
-    query = nextModelPage(body, entry.provider)
     if (query) {
       if (cursors.has(query) || cursors.size >= 20) return fail('endpoint', 'Invalid model pagination')
       cursors.add(query)
@@ -96,15 +94,7 @@ export function createAiConnections(storage: Storage, request: typeof fetch = fe
     try { raw = storage.read() } catch { return fail('storage', 'Cannot decrypt AI connections; existing data has not been changed') }
     if (raw === null) return { connections: [], activeId: null }
     try {
-      const record = object(JSON.parse(raw))
-      if (!Array.isArray(record.connections)) return fail('storage', 'Invalid connections')
-      const connections = record.connections.map((item: unknown) => {
-        if (typeof object(item).id !== 'string') return fail('storage', 'Missing connection ID')
-        return parse(item)
-      })
-      if (new Set(connections.map(({ id }) => id)).size !== connections.length) return fail('storage', 'Duplicate connection ID')
-      if (record.activeId !== null && !connections.some(({ id }) => id === record.activeId)) return fail('storage', 'Invalid active connection')
-      return { connections, activeId: record.activeId as string | null }
+      return parse(storedRecord, JSON.parse(raw))
     } catch { return fail('storage', 'Unreadable AI connections; existing data has not been changed') }
   }
   const snapshot = (record: Record): AiConnections => ({
@@ -115,13 +105,23 @@ export function createAiConnections(storage: Storage, request: typeof fetch = fe
     try { storage.write(JSON.stringify(record)) } catch { return fail('storage', 'Cannot securely save AI connections') }
     return snapshot(record)
   }
-  const connection = (record: Record, id: unknown) => record.connections.find((entry) => entry.id === text(id, 'id'))
-    ?? fail('id', 'Unknown connection')
-  const prepare = (record: Record, value: unknown, requireModel = true) => {
-    const input = object(value)
-    return parse(value, input.id === undefined ? undefined : connection(record, input.id), requireModel)
+  const connection = (record: Record, value: unknown) => {
+    const id = parse(aiConnectionInput.shape.id.unwrap(), value, 'id')
+    return record.connections.find((entry) => entry.id === id) ?? fail('id', 'Unknown connection')
+  }
+  const prepare = (record: Record, value: unknown, requireModel = true): Connection => {
+    const input = parse(requireModel ? connectionInput : discoveryInput, value)
+    const previous = input.id === undefined ? undefined : connection(record, input.id)
+    const sameDestination = previous?.provider === input.provider && previous.endpoint === input.endpoint
+    const apiKey = input.apiKey || (sameDestination ? previous.apiKey : '')
+    if (!apiKey && input.provider !== 'custom') return fail('apiKey', 'API key required')
+    return { ...input, id: input.id ?? randomUUID(), apiKey }
   }
   return {
+    active: () => {
+      const record = load()
+      return record.activeId === null ? fail('connection', 'Choose an active connection in Settings') : connection(record, record.activeId)
+    },
     list: () => snapshot(load()),
     save: (input: unknown) => {
       const record = load()

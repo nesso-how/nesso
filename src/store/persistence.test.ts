@@ -40,7 +40,7 @@ const registeredHost = (graph: Graph | null, restored = {}) => {
   return host
 }
 
-test('local persistence round-trips the whole document, workspace and preferences, not runtime state', () => {
+test('local persistence round-trips document, workspace, preferences and conversation, not runtime state', () => {
   const storage = memoryStorage()
   const loaded = loadPersistence(() => storage)
   const host = registeredHost(fixture())
@@ -51,6 +51,7 @@ test('local persistence round-trips the whole document, workspace and preference
   for (const id of sectionIds) host.store.setSectionOpen(id, false)
   host.store.setViewport('graph', { x: 100, y: 200, zoom: 0.75 })
   host.store.setConceptLabel('urn:one', 'Renamed')
+  host.store.setChatMessages([{ id: 'assistant', role: 'assistant', content: 'Proposed rename.', outcome: 'applied' }])
   host.store.setSelection([{ kind: 'concept', id: 'urn:one' }, { kind: 'concept', id: 'urn:two' }])
   const persistence = connectPersistence(host, () => storage, loaded)
   host.store.renameView(viewId, 'Renamed pair')
@@ -66,6 +67,8 @@ test('local persistence round-trips the whole document, workspace and preference
   assert.deepEqual(reopened.workspace, host.store.getState().workspace)
   assert.equal(reopened.workspace.savedViews[0].name, 'Renamed pair')
   assert.deepEqual(reopened.preferences, host.store.getState().preferences)
+  assert.deepEqual(reopened.conversation, host.store.getState().conversation)
+  assert.deepEqual(Object.keys(JSON.parse(storage.records.get(storageKeys.conversation)!)), ['version', 'messages'])
   assert.deepEqual(reopened.preferences.collapsedSections, sectionIds)
   assert.deepEqual(reopened.selected, [])
   assert.deepEqual(reopened.history, { canUndo: false, canRedo: false })
@@ -84,6 +87,7 @@ test('local persistence round-trips the whole document, workspace and preference
   assert.deepEqual(reset.workspace, { activeViewId: null, savedViews: [], viewports: {} })
   assert.deepEqual(reset.selected, [])
   assert.equal(reset.preferences, preferences)
+  assert.deepEqual(reset.conversation.messages, [])
   persistence.flush()
   const savedReset = loadPersistence(() => storage)
   assert.deepEqual(registeredHost(savedReset.graph!, savedReset).store.getState().graph, reset.graph)
@@ -126,6 +130,15 @@ test('autosave debounces durable sections only and flushes pending edits on shut
   context.mock.timers.tick(200)
   assert.deepEqual(storage.writes, [storageKeys.preferences])
   assert.deepEqual(loadPersistence(() => storage).preferences?.collapsedSections, ['inspector.connections'])
+  storage.writes.length = 0
+  host.store.setChatMessages([{ id: 'assistant', role: 'assistant', content: 'First', outcome: 'cancelled' }])
+  context.mock.timers.tick(100)
+  host.store.setChatMessages([{ id: 'assistant', role: 'assistant', content: 'Complete', outcome: 'complete' }])
+  context.mock.timers.tick(199)
+  assert.deepEqual(storage.writes, [])
+  context.mock.timers.tick(1)
+  assert.deepEqual(storage.writes, [storageKeys.conversation])
+  assert.equal(loadPersistence(() => storage).conversation?.messages[0].outcome, 'complete')
   host.store.setConceptLabel('urn:one', 'Before closing')
   persistence.dispose()
   assert.equal(loadPersistence(() => storage).graph?.concepts[0].label, 'Before closing')
@@ -177,6 +190,9 @@ test('invalid records are reported and never overwritten while the other section
   const invalid = [
     ['document', '{broken json'],
     ['preferences', '{broken json'],
+    ['conversation', '{broken json'],
+    ['conversation', JSON.stringify({ version: 2, messages: [] })],
+    ['conversation', JSON.stringify({ version: 1, messages: [{ id: 'invalid', role: 'system', content: 'Invalid' }] })],
     ['document', JSON.stringify({ version: 2 })],
     ['document', JSON.stringify({ version: 1, graph: serializeGraph({ concepts: [], relations: [], relationTypes: [] }), workspace: state.workspace })],
     ['document', JSON.stringify({ version: 1, graph: serializeGraph(fixture()), workspace: { ...state.workspace, activeViewId: 'unknown' } })],
@@ -201,15 +217,36 @@ test('invalid records are reported and never overwritten while the other section
     assert.equal(storage.records.get(storageKeys[section]), text)
     assert.equal(storage.writes.includes(storageKeys[section]), false)
     assert.deepEqual(host.store.getState().persistenceIssues, loaded.issues)
-    assert.equal(storage.writes.length, 1)
+    assert.equal(storage.writes.length, 2)
+    persistence.dispose()
+  }
+})
+
+test('an unreadable conversation stays protected with in-memory messages until explicit clear', () => {
+  for (const messages of [[], [{ id: 'user', role: 'user' as const, content: 'Hello' }]]) {
+    const storage = memoryStorage()
+    storage.records.set(storageKeys.conversation, 'unreadable')
+    const loaded = loadPersistence(() => storage)
+    const host = registeredHost(fixture(), loaded)
+    const persistence = connectPersistence(host, () => storage, loaded)
+    if (messages.length) host.store.setChatMessages(messages)
+    persistence.flush()
+    assert.deepEqual(host.store.getState().conversation.messages, messages)
+    assert.equal(storage.records.get(storageKeys.conversation), 'unreadable')
+    const before = host.store.getState()
+    host.store.clearChat()
+    persistence.flush()
+    assert.deepEqual(JSON.parse(storage.records.get(storageKeys.conversation)!), { version: 1, messages: [] })
+    assert.deepEqual(host.store.getState().persistenceIssues, [])
+    assert.equal(host.store.getState().graph, before.graph)
     persistence.dispose()
   }
 })
 
 test('storage failures are reported, preserve saved data and allow retrying in-memory edits', () => {
   const denied = loadPersistence(() => { throw new Error('Access denied') })
-  assert.deepEqual(denied.blocked, ['document', 'preferences'])
-  assert.equal(denied.issues.length, 2)
+  assert.deepEqual(denied.blocked, ['document', 'preferences', 'conversation'])
+  assert.equal(denied.issues.length, 3)
   const storage = memoryStorage()
   const host = registeredHost(fixture())
   const loaded = loadPersistence(() => storage)
@@ -217,22 +254,26 @@ test('storage failures are reported, preserve saved data and allow retrying in-m
   const limited = {
     getItem: storage.getItem,
     setItem: (key: string, value: string) => {
-      if (quotaExceeded && key === storageKeys.document) throw new Error('Quota exceeded')
+      if (quotaExceeded && (key === storageKeys.document || key === storageKeys.conversation)) throw new Error('Quota exceeded')
       storage.setItem(key, value)
     },
   }
   const persistence = connectPersistence(host, () => limited, loaded)
   persistence.flush()
   const original = storage.records.get(storageKeys.document)
+  const originalConversation = storage.records.get(storageKeys.conversation)
   quotaExceeded = true
   host.store.setConceptLabel('urn:one', 'Unsaved')
+  host.store.setChatMessages([{ id: 'user', role: 'user', content: 'Unsaved' }])
   persistence.flush()
   assert.equal(storage.records.get(storageKeys.document), original)
+  assert.equal(storage.records.get(storageKeys.conversation), originalConversation)
   assert.match(host.store.getState().persistenceIssues[0].message, /Quota/)
   quotaExceeded = false
   host.store.setConceptLabel('urn:one', 'Latest')
   persistence.flush()
   assert.equal(loadPersistence(() => storage).graph?.concepts[0].label, 'Latest')
+  assert.equal(loadPersistence(() => storage).conversation?.messages[0].content, 'Unsaved')
   assert.deepEqual(host.store.getState().persistenceIssues, [])
   persistence.dispose()
 })

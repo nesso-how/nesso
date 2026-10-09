@@ -48,6 +48,48 @@ const issuesOf = (run: () => void): SchemaError['issues'] => {
   assert.fail('Expected SchemaError')
 }
 
+test('conversation writes are validated, isolated from document history and cleared atomically on reset', () => {
+  const { store } = createNessoStore(fixture())
+  store.setConceptLabel('urn:n1', 'Changed')
+  store.undo()
+  const before = store.getState()
+  const messages = [{ id: 'user', role: 'user' as const, content: 'Hello' }]
+  let notifications = 0
+  store.subscribe(() => notifications++)
+  store.setChatMessages(messages)
+  const saved = store.getState()
+  messages[0].content = 'Mutated'
+  assert.equal(saved.conversation.messages[0].content, 'Hello')
+  assert.equal(saved.graph, before.graph)
+  assert.equal(saved.workspace, before.workspace)
+  assert.equal(saved.preferences, before.preferences)
+  assert.equal(saved.history, before.history)
+  assert.equal(notifications, 1)
+  store.setChatMessages(saved.conversation.messages)
+  assert.equal(store.getState(), saved)
+  assert.equal(notifications, 1)
+  assert.throws(() => store.applyOperations([
+    { kind: 'concept.label', id: 'urn:n1', value: 'Invalid batch' },
+    { kind: 'conversation.messages', value: [{ id: '', role: 'user', content: 'Invalid' }] },
+  ]), NessoError)
+  assert.throws(() => store.applyOperations([
+    { kind: 'conversation.clear' },
+    { kind: 'concept.add', id: 'urn:n1' },
+  ]), SchemaError)
+  assert.equal(store.getState(), saved)
+  store.redo()
+  assert.equal(store.getState().conversation, saved.conversation)
+  store.clearChat()
+  assert.deepEqual(store.getState().conversation.messages, [])
+  assert.equal(store.getState().history.canUndo, true)
+  store.setChatMessages(saved.conversation.messages)
+  notifications = 0
+  store.resetGraph()
+  assert.equal(notifications, 1)
+  assert.deepEqual(store.getState().conversation.messages, [])
+  assert.deepEqual(store.getState().history, { canUndo: false, canRedo: false })
+})
+
 test('invalid batches leave state untouched whether validation or an operation fails', () => {
   const host = createNessoStore(fixture())
   host.registerVocab(vocabA)

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { createTranslator } from '@nesso/i18n'
+import type { AiEffects, AiToolResults } from '@nesso/ai'
 import type { Graph } from '@nesso/schema'
 import { relationKey } from '@nesso/schema'
 import en from '../i18n/en.json' with { type: 'json' }
@@ -8,7 +9,6 @@ import { createNotifications } from '../notifications/create.ts'
 import { createNessoStore } from '../store/create.ts'
 import { NessoError } from '../store/errors.ts'
 import { createAiApproval } from './approval.ts'
-import type { AiEffects } from './effects.ts'
 import { createAiTurn } from './turn.ts'
 
 const fixture = (count = 3) => {
@@ -33,7 +33,7 @@ test('staged edits stay private and apply as one undoable document edit', async 
   turn.execute('edit', { operations: [{ kind: 'concept.add', id: 'urn:new' }] })
   turn.execute('edit', { operations: [{ kind: 'concept.label', id: 'urn:new', value: 'New concept' }, { kind: 'view.rename', id: view, name: 'Renamed' }] })
   assert.equal(host.store.getState(), before)
-  const staged = turn.execute('concepts', { ids: ['urn:new'] }) as { items: { label: string }[] }
+  const staged = turn.execute('concepts', { ids: ['urn:new'] }) as AiToolResults['concepts']
   assert.equal(staged.items[0].label, 'New concept')
   assert.equal((await turn.commit()).status, 'applied')
   assert.equal(publications, 1)
@@ -89,16 +89,16 @@ test('approval covers more than ten updates, not additions or a retyped relation
   assert.equal(approvals, 1)
 })
 
-test('deletion and reset require host consent; denial and Stop dismiss without edits', async () => {
+test('deletion requires host consent; reset, selection and navigation are rejected', async () => {
   const host = fixture()
   host.store.createView('Pair', ['urn:n0', 'urn:n1'])
   const notifications = createNotifications()
   const t = createTranslator(en)('en')
   const approve = createAiApproval(notifications.api, () => t)
-  for (const decision of ['deny', 'stop', 'approve', 'reset'] as const) {
+  for (const decision of ['deny', 'stop', 'approve'] as const) {
     const before = host.store.getState()
     const turn = createAiTurn(host, approve)
-    turn.execute('edit', { operations: [decision === 'reset' ? { kind: 'document.reset', id: 'urn:fresh' } : { kind: 'concept.remove', id: 'urn:n0' }] })
+    turn.execute('edit', { operations: [{ kind: 'concept.remove', id: 'urn:n0' }] })
     const pending = turn.commit()
     const notification = notifications.getSnapshot()[0]
     assert.equal(host.store.getState(), before)
@@ -106,13 +106,35 @@ test('deletion and reset require host consent; denial and Stop dismiss without e
     if (decision === 'deny') notification.cancelAction.onClick()
     else if (decision === 'stop') turn.cancel()
     else notification.action.onClick()
-    assert.equal((await pending).status, decision === 'approve' || decision === 'reset' ? 'applied' : 'cancelled')
+    assert.equal((await pending).status, decision === 'approve' ? 'applied' : 'cancelled')
     assert.equal(notifications.getSnapshot().length, 0)
     if (decision === 'deny' || decision === 'stop') assert.equal(host.store.getState(), before)
   }
-  assert.deepEqual(host.store.getState().graph.concepts.map(({ id }) => id), ['urn:fresh'])
-  assert.deepEqual(host.store.getState().workspace.savedViews, [])
-  assert.deepEqual(host.store.getState().history, { canUndo: false, canRedo: false })
+  assert.deepEqual(host.store.getState().graph.concepts.map(({ id }) => id), ['urn:n1', 'urn:n2'])
+  for (const operations of [
+    [{ kind: 'document.reset', id: 'urn:fresh' }],
+    [{ kind: 'selection.set', value: [] }],
+    [{ kind: 'view.activate', id: null }],
+  ]) {
+    const rejected = createAiTurn(host, async () => assert.fail('Unexpected approval'))
+    assert.throws(() => rejected.execute('edit', { operations }), NessoError)
+  }
+})
+
+test('selection reads page through the full selection', () => {
+  const host = fixture(5)
+  host.store.setSelection([
+    { kind: 'concept', id: 'urn:n0' }, { kind: 'concept', id: 'urn:n1' }, { kind: 'concept', id: 'urn:n2' },
+    { kind: 'concept', id: 'urn:n3' }, { kind: 'concept', id: 'urn:n4' },
+  ])
+  const turn = createAiTurn(host, async () => assert.fail('Unexpected approval'))
+  const first = turn.execute('selection', { offset: 0, limit: 2 }) as AiToolResults['selection']
+  assert.deepEqual(first.items.map(({ id }) => id), ['urn:n0', 'urn:n1'])
+  assert.equal(first.total, 5)
+  assert.equal(first.nextOffset, 2)
+  const rest = turn.execute('selection', { offset: 2, limit: 10 }) as AiToolResults['selection']
+  assert.deepEqual(rest.items.map(({ id }) => id), ['urn:n2', 'urn:n3', 'urn:n4'])
+  assert.equal(rest.nextOffset, null)
 })
 
 test('changes during generation or approval reject stale plans without overwriting user edits', async () => {

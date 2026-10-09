@@ -19,6 +19,7 @@
     "build": "tsc -b"
   },
   "dependencies": {
+    "@nesso/i18n": "workspace:*",
     "zod": "^4.6.5"
   }
 }

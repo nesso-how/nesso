@@ -1,22 +1,25 @@
 import { parseGraph, SchemaError, serializeGraph, type Graph, type SchemaIssue } from '@nesso/schema'
 import type { createNessoStore } from './create.ts'
 import { NessoError } from './errors.ts'
-import { fail, object, parsePreferences, parseWorkspace } from './settings.ts'
+import { fail, object, parseConversation, parsePreferences, parseWorkspace } from './settings.ts'
 import type { Preferences, WorkspaceState } from '@nesso/plugin'
+import type { HostState } from './types.ts'
 
-type Section = 'document' | 'preferences'
+type Section = 'document' | 'preferences' | 'conversation'
 type StorageSource = () => Pick<Storage, 'getItem' | 'setItem'>
-const sections = ['document', 'preferences'] as const
+const sections = ['document', 'preferences', 'conversation'] as const
 
 export const storageKeys = {
   document: 'nesso.document',
   preferences: 'nesso.preferences',
+  conversation: 'nesso.conversation',
 } as const
 
 export type LoadedState = {
   graph?: Graph | null
   workspace?: WorkspaceState
   preferences?: Preferences
+  conversation?: HostState['conversation']
   blocked: Section[]
   issues: SchemaIssue[]
 }
@@ -37,6 +40,10 @@ export const loadPersistence = (storage: StorageSource): LoadedState => {
     try {
       const text = storage().getItem(storageKeys[section])
       if (text === null) continue
+      if (section === 'conversation') {
+        loaded.conversation = parseConversation(JSON.parse(text))
+        continue
+      }
       const saved = object(JSON.parse(text), '', section === 'document'
         ? ['version', 'graph', 'workspace'] : ['version', 'preferences'])
       if (saved.version !== 1) fail('version', 'Unsupported storage version')
@@ -72,6 +79,8 @@ export const connectPersistence = (
   loaded: LoadedState,
 ) => {
   let previous = host.store.getState()
+  const blocked = new Set(loaded.blocked)
+  let readIssues = loaded.issues
   const pending = new Set<Section>(sections.filter((section) => !loaded.blocked.includes(section)))
   let timer: ReturnType<typeof setTimeout> | undefined
   const writeIssues: Partial<Record<Section, SchemaIssue[]>> = {}
@@ -85,7 +94,8 @@ export const connectPersistence = (
           version: 1,
           graph: serializeGraph(structuredClone(state.graph) as Graph),
           workspace: state.workspace,
-        } : { version: 1, preferences: state.preferences }
+        } : section === 'preferences' ? { version: 1, preferences: state.preferences }
+          : { version: 1, messages: state.conversation.messages }
         storage().setItem(storageKeys[section], JSON.stringify(saved))
         pending.delete(section)
         delete writeIssues[section]
@@ -93,7 +103,7 @@ export const connectPersistence = (
         writeIssues[section] = storageError(section, error).issues
       }
     }
-    host.setPersistenceIssues([...loaded.issues, ...Object.values(writeIssues).flat()])
+    host.setPersistenceIssues([...readIssues, ...Object.values(writeIssues).flat()])
   }
 
   const schedule = (): void => {
@@ -105,12 +115,19 @@ export const connectPersistence = (
     const state = host.store.getState()
     const documentChanged = state.graph !== previous.graph || state.workspace !== previous.workspace
     const preferencesChanged = state.preferences !== previous.preferences
+    const conversationChanged = state.conversation !== previous.conversation
     previous = state
-    if (documentChanged && !loaded.blocked.includes('document')) pending.add('document')
-    if (preferencesChanged && !loaded.blocked.includes('preferences')) pending.add('preferences')
-    if ((documentChanged || preferencesChanged) && pending.size) schedule()
+    if (conversationChanged && state.conversation.messages.length === 0) {
+      blocked.delete('conversation')
+      readIssues = readIssues.filter(({ path }) => !path.startsWith('conversation'))
+    }
+    if (documentChanged && !blocked.has('document')) pending.add('document')
+    if (preferencesChanged && !blocked.has('preferences')) pending.add('preferences')
+    if (conversationChanged && !blocked.has('conversation')) pending.add('conversation')
+    if ((documentChanged || preferencesChanged || conversationChanged) && pending.size) schedule()
   })
 
+  host.setPersistenceIssues(readIssues)
   if (pending.size) schedule()
 
   return {

@@ -1,13 +1,13 @@
 import type { NessoState } from '@nesso/plugin'
 import { relationKey } from '@nesso/schema'
-import { aiTools } from '@nesso/ai'
+import { aiTools, type AiToolResults } from '@nesso/ai'
 
 const page = <T>(items: readonly T[], { offset, limit }: { offset: number; limit: number }) => ({
   items: items.slice(offset, offset + limit), total: items.length,
   nextOffset: offset + limit < items.length ? offset + limit : null,
 })
 
-export function readAiTool(state: NessoState, name: string, input: unknown): unknown {
+export function readAiTool(state: NessoState, name: string, input: unknown): AiToolResults[Exclude<keyof AiToolResults, 'edit' | 'history'>] | undefined {
   switch (name) {
     case 'context': {
       aiTools.context.inputSchema.parse(input)
@@ -47,6 +47,10 @@ export function readAiTool(state: NessoState, name: string, input: unknown): unk
       const vocab = state.vocabs.find(({ id }) => id === state.preferences.activeVocabId)
       const types = new Map([...vocab?.relationTypes ?? [], ...state.graph.relationTypes].map((type) => [type.id, type]))
       return page([...types.values()], query)
+    }
+    case 'selection': {
+      const query = aiTools.selection.inputSchema.parse(input)
+      return page(state.selected, query)
     }
     default: return undefined
   }

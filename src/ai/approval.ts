@@ -1,6 +1,6 @@
 import type { Notifications } from '@nesso/plugin'
+import type { AiEffects } from '@nesso/ai'
 import type { translate } from '../i18n/index.ts'
-import type { AiEffects } from './effects.ts'
 
 export function createAiApproval(notifications: Notifications, getTranslation: () => ReturnType<typeof translate>) {
   return (effects: AiEffects, signal: AbortSignal): Promise<boolean> => new Promise((resolve) => {
@@ -19,7 +19,7 @@ export function createAiApproval(notifications: Notifications, getTranslation: (
     const groups = [effects.concepts, effects.relations, effects.relationTypes, effects.views]
     id = notifications.notify({
       tone: 'confirmation', title: t('aiApproval'),
-      description: effects.reset ? t('aiResetApproval') : t('aiEditApproval', {
+      description: t('aiEditApproval', {
         added: groups.reduce((total, group) => total + group.added, 0),
         updated: groups.reduce((total, group) => total + group.updated, 0),
         removed: groups.reduce((total, group) => total + group.removed, 0),

@@ -1,5 +1,6 @@
 import type { PanelSizes, Preferences, SectionId, Viewport, WorkspaceState } from '@nesso/plugin'
 import { isLocale } from '@nesso/i18n'
+import { aiConversation, aiTextLimits } from '@nesso/ai'
 import { NessoError } from './errors.ts'
 import { sectionIds } from './types.ts'
 
@@ -8,12 +9,18 @@ export const panelLimits = {
   explorerWidth: { min: 180, max: 480 },
   inspectorWidth: { min: 200 },
 } as const
-export const maxViewNameLength = 70
-export const maxConceptLabelLength = 60
-export const maxRelationLabelLength = 30
+export const maxViewNameLength = aiTextLimits.viewName
+export const maxConceptLabelLength = aiTextLimits.conceptLabel
+export const maxRelationLabelLength = aiTextLimits.relationLabel
 
 export const fail = (path: string, message: string): never => {
   throw new NessoError([{ path, message }])
+}
+
+export const parseConversation = (value: unknown) => {
+  const parsed = aiConversation.safeParse(value)
+  if (!parsed.success) throw new NessoError(parsed.error.issues.map(({ path, message }) => ({ path: path.join('.'), message })))
+  return { messages: parsed.data.messages }
 }
 
 export const object = (value: unknown, path: string, keys?: readonly string[]): Record<string, unknown> => {

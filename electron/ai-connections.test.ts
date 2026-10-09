@@ -28,14 +28,24 @@ test('connections persist activation and edits without exposing or transferring 
   assert.deepEqual(connections.remove(first.id), { connections: [], activeId: null })
 })
 
-test('invalid endpoints and unknown IDs are rejected without saving', () => {
+test('connection schemas reject invalid fields, unsafe endpoints and unknown IDs without saving', () => {
   const { connections, storage } = fixture()
-  for (const endpoint of ['http://remote.example/v1', 'file:///etc/passwd', 'https://user:pass@example.com', 'https://example.com?key=secret']) {
+  for (const endpoint of ['not a URL', 'http://remote.example/v1', 'file:///etc/passwd', 'https://user:pass@example.com', 'https://example.com?key=secret', 'https://example.com#fragment']) {
     assert.throws(() => connections.save({ ...input, endpoint }), ElectronError)
   }
+  for (const [field, value] of Object.entries({ id: '', name: ' ', provider: 'unsupported', model: '', apiKey: 123 })) {
+    assert.throws(() => connections.save({ ...input, [field]: value }), (error) => error instanceof ElectronError && error.issues.some(({ path }) => path === field))
+  }
+  for (const [field, max] of Object.entries({ id: 256, name: 80, model: 256, apiKey: 8192 })) {
+    assert.throws(() => connections.save({ ...input, [field]: 'x'.repeat(max + 1) }), ElectronError)
+  }
+  assert.throws(() => connections.save(null), ElectronError)
   assert.throws(() => connections.save({ ...input, provider: 'openai' }), ElectronError)
   assert.throws(() => connections.save({ ...input, id: 'missing' }), ElectronError)
   assert.equal(storage.read(), null)
+  for (const endpoint of ['http://localhost/v1/', 'http://127.0.0.1/v1/', 'http://[::1]/v1/', 'https://remote.example/v1/']) {
+    assert.equal(connections.save({ ...input, endpoint }).connections.at(-1)?.endpoint, endpoint.slice(0, -1))
+  }
 })
 
 test('unreadable storage and failed durable writes never overwrite existing connections', () => {
@@ -47,6 +57,20 @@ test('unreadable storage and failed durable writes never overwrite existing conn
   const { connections, storage } = fixture()
   connections.save(input)
   const before = storage.read()
+  const record = JSON.parse(before!)
+  for (const invalid of [
+    { ...record, connections: [...record.connections, ...record.connections] },
+    { ...record, activeId: 'missing' },
+    ...[
+      { id: undefined }, { apiKey: undefined }, { model: '' }, { endpoint: 'http://remote.example' },
+    ].map((change) => ({ ...record, connections: [{ ...record.connections[0], ...change }] })),
+  ]) {
+    const raw = JSON.stringify(invalid)
+    const protectedConnections = createAiConnections({ read: () => raw, write: () => { writes++ } })
+    assert.throws(() => protectedConnections.list(), ElectronError)
+    assert.throws(() => protectedConnections.save(input), ElectronError)
+  }
+  assert.equal(writes, 0)
   const unavailable = createAiConnections({ read: storage.read, write: () => { throw new Error('Keychain unavailable') } })
   assert.throws(() => unavailable.save(input), ElectronError)
   assert.equal(storage.read(), before)
@@ -83,4 +107,14 @@ test('model discovery works before choosing a model, follows pagination and leav
   const { connections } = fixture(async () => new Response(null, { status: 404 }))
   await assert.rejects(connections.models({ ...input, model: '' }), ElectronError)
   assert.equal(connections.save(input).connections[0].model, input.model)
+  for (const [provider, body] of [
+    ['custom', { data: [{ id: 123 }] }],
+    ['custom', { data: 'invalid' }],
+    ['anthropic', { data: [], has_more: true }],
+    ['gemini', { models: [], nextPageToken: ' ' }],
+  ] as const) {
+    const invalid = fixture(async () => Response.json(body))
+    await assert.rejects(invalid.connections.models({ ...input, provider, apiKey: 'secret' }), ElectronError)
+    assert.equal(invalid.storage.read(), null)
+  }
 })

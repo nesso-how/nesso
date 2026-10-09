@@ -7,6 +7,7 @@ import { host, startAutosave } from '@/store'
 import { connectTheme } from '@/theme'
 import { connectUpdateNotifications } from '@/notifications/updates'
 import { translate } from '@/i18n'
+import { chat } from '@/ai'
 import './index.css'
 import App from './App'
 
@@ -17,10 +18,14 @@ const stopUpdateNotifications = connectUpdateNotifications(
   notifications.api,
   () => translate(host.store.getState().preferences.locale ?? defaultLocale),
 )
+const stopChat = () => chat?.stop()
+window.addEventListener('pagehide', stopChat)
 import.meta.hot?.dispose(() => {
   stopTheme()
   stopAutosave()
   stopUpdateNotifications()
+  chat?.dispose()
+  window.removeEventListener('pagehide', stopChat)
 })
 
 createRoot(document.getElementById('root')!).render(

@@ -32,8 +32,7 @@ export function AiSettings({ bridge }: { bridge: AiBridge }) {
   const hasKey = saved?.hasKey && saved.provider === draft.provider && saved.endpoint === draft.endpoint.replace(/\/+$/, '')
   const loadFailedMessage = t('aiLoadFailed')
   const fail = useCallback((title: string, details: string) => {
-    if (details && details !== title) notifications.api.notify({ tone: 'warning', title, description: details })
-    else notifications.api.notify({ tone: 'warning', title })
+    notifications.api.notify({ tone: 'warning', title, description: details && details !== title ? details : undefined })
   }, [])
 
   useEffect(() => {
@@ -101,22 +100,16 @@ export function AiSettings({ bridge }: { bridge: AiBridge }) {
     if (input.provider !== undefined || input.endpoint !== undefined || input.apiKey === '') setShowKey(false)
     setDraft((current) => ({ ...current, ...input }))
   }
-  const edit = (input: AiConnectionInput) => {
-    setDraft(input)
+  const setEditor = (input: AiConnectionInput | null) => {
+    setDraft(input ?? newConnection())
     clearModels()
     setShowKey(false)
-    setEditorOpen(true)
-  }
-  const back = () => {
-    setEditorOpen(false)
-    setDraft(newConnection())
-    clearModels()
-    setShowKey(false)
+    setEditorOpen(input !== null)
   }
 
   return (
     <>
-      {editorOpen && <Button variant="ghost" size="sm" className="ai-back" disabled={busy} onClick={back}><ArrowLeft />{t('aiBackToConnections')}</Button>}
+      {editorOpen && <Button variant="ghost" size="sm" className="ai-back" disabled={busy} onClick={() => setEditor(null)}><ArrowLeft />{t('aiBackToConnections')}</Button>}
       <h2 ref={heading} tabIndex={-1} id={`${id}-editor`} className="settings-page-title ai-page-title outline-none">{editorOpen ? draft.id ? saved?.name ?? t('aiConnectionDetails') : t('aiNewConnection') : t('aiSettingsTitle')}</h2>
       <p className="settings-page-description">{t(editorOpen ? draft.id ? 'aiEditConnectionDescription' : 'aiNewConnectionDescription' : 'aiDescription')}</p>
       {!loaded && busy && <p role="status" className="ai-loading">{t('aiSettingsLoading')}</p>}
@@ -124,7 +117,7 @@ export function AiSettings({ bridge }: { bridge: AiBridge }) {
         {!editorOpen && <section aria-labelledby={`${id}-connections`} className="ai-connections">
           <div className="ai-section-heading">
             <h3 id={`${id}-connections`}>{t('aiConnections')}</h3>
-            <Button variant="ghost" size="sm" className="ai-new-connection" onClick={() => edit(newConnection())}><Plus />{t('aiNewConnection')}</Button>
+            <Button variant="ghost" size="sm" className="ai-new-connection" onClick={() => setEditor(newConnection())}><Plus />{t('aiNewConnection')}</Button>
           </div>
           {loaded && state.connections.length === 0 && <p className="ai-connections-empty">{t('aiConnectionsEmpty')}</p>}
           {state.connections.length > 0 && <div role="radiogroup" aria-labelledby={`${id}-connections`} className="space-y-0.5">
@@ -145,7 +138,7 @@ export function AiSettings({ bridge }: { bridge: AiBridge }) {
               </span>
             </ListRowButton>
             <RevealActions className="mr-1">
-              <IconButton aria-label={t('aiEditConnection', { name: entry.name })} title={t('aiEditConnection', { name: entry.name })} onClick={() => edit({ ...entry, apiKey: '' })}><Pencil /></IconButton>
+              <IconButton aria-label={t('aiEditConnection', { name: entry.name })} title={t('aiEditConnection', { name: entry.name })} onClick={() => setEditor({ ...entry, apiKey: '' })}><Pencil /></IconButton>
               <IconButton aria-label={t('aiDeleteConnection', { name: entry.name })} title={t('aiDeleteConnection', { name: entry.name })} onClick={() => setPendingDelete({ id: entry.id, name: entry.name })}><Trash2 /></IconButton>
             </RevealActions>
           </ListRow>})}
@@ -155,7 +148,7 @@ export function AiSettings({ bridge }: { bridge: AiBridge }) {
           event.preventDefault()
           void run(() => bridge.save(draft), (value) => {
             setState(value)
-            back()
+            setEditor(null)
           }, t('aiSaveFailed'))
         }}>
           <PreferenceSelect label={t('aiProvider')} items={Object.entries(aiProviders).map(([value, entry]) => ({ value, label: entry.name }))} value={draft.provider} disabled={busy} onChange={(value) => {

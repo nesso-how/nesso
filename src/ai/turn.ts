@@ -1,10 +1,10 @@
 import type { NessoOperation, NessoState } from '@nesso/plugin'
 import { SchemaError } from '@nesso/schema'
 import { ZodError } from 'zod'
-import { aiTools } from '@nesso/ai'
+import { aiTools, type AiEffects, type AiToolResults } from '@nesso/ai'
 import type { createNessoStore } from '../store/create.ts'
 import { NessoError } from '../store/errors.ts'
-import { summarizeEffects, type AiEffects } from './effects.ts'
+import { summarizeEffects } from './effects.ts'
 import { readAiTool } from './read.ts'
 
 type Boundary = Pick<ReturnType<typeof createNessoStore>, 'store' | 'previewOperations'>
@@ -45,7 +45,7 @@ export function createAiTurn(boundary: Boundary, approve: Approval, signal?: Abo
 
   return {
     cancel,
-    execute: (name: string, input: unknown): unknown => {
+    execute: (name: string, input: unknown): AiToolResults[keyof AiToolResults] => {
       try {
         if (status !== 'staging') fail('turn', 'Turn is closed or applying')
         current()
@@ -65,7 +65,7 @@ export function createAiTurn(boundary: Boundary, approve: Approval, signal?: Abo
           return { action: history, available: base.history[history === 'undo' ? 'canUndo' : 'canRedo'] }
         }
         const result = readAiTool(candidate, name, input)
-        if (result === undefined) fail('tool', 'Unknown tool or view')
+        if (result === undefined) return fail('tool', 'Unknown tool or view')
         return structuredClone(result)
       } catch (error) { cancel(); throw errorOf(error) }
     },
