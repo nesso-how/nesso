@@ -53,6 +53,7 @@ h1 span { display: block; }
 .description { margin: 25px 0 0; max-width: 390px; font-size: 16px; line-height: 1.65; color: var(--muted-foreground); text-wrap: pretty; }
 .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 32px; }
 .downloads { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 20px; font-size: 12px; color: var(--muted-foreground); }
+.downloads[hidden] { display: none; }
 .download-label { margin: 0; }
 .downloads .actions { margin-top: 0; gap: 12px; }
 .download-link { display: inline-flex; align-items: center; min-height: 24px; color: inherit; text-underline-offset: 3px; }
