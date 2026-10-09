@@ -10,7 +10,7 @@ export function SectionHeading({ open, children, className, ...props }: Componen
       variant="ghost"
       size="sm"
       aria-expanded={open}
-      className={cn('w-full justify-start font-mono text-[11px] text-muted-foreground hover:bg-transparent hover:text-foreground active:bg-transparent', className)}
+      className={cn('nesso-section-heading w-full justify-start font-mono text-muted-foreground hover:bg-transparent hover:text-foreground active:bg-transparent', className)}
     >
       <ChevronDown className={open ? '' : '-rotate-90'} />{children}
     </Button>

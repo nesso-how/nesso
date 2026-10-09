@@ -17,7 +17,7 @@ export function AutocompletePopup({ className, children, ...props }: Autocomplet
 }
 
 export function AutocompleteItem({ className, ...props }: Autocomplete.Item.Props) {
-  return <Autocomplete.Item className={cn('nesso-option cursor-default px-2.5 py-2 text-xs', className)} {...props} />
+  return <Autocomplete.Item className={cn('nesso-option cursor-default px-2.5 py-2', className)} {...props} />
 }
 
 export function AutocompleteClear({ className, children, ...props }: Autocomplete.Clear.Props) {

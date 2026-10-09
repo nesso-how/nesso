@@ -179,10 +179,12 @@
   .toast-progress { display: none; }
 }
 
+.nesso-button, .nesso-input, .nesso-option { font-size: 13px; line-height: 20px; }
+.nesso-section-heading { font-size: 11px; line-height: 16px; }
+
 .nesso-field { display: grid; grid-template-columns: minmax(100px, 1fr) minmax(160px, 236px); align-items: center; gap: 16px; }
 .nesso-field > button:disabled { opacity: 1; color: var(--muted-foreground); background: var(--canvas); border-color: transparent; }
 .nesso-field > label { font-size: 12px; }
-.nesso-field .nesso-button, .nesso-field-popup .nesso-option { font-family: var(--font-sans); font-size: 13px; line-height: 20px; font-weight: 400; }
 .nesso-field-hint { margin-top: 6px; color: var(--muted-foreground); font-size: 11px; line-height: 16px; min-height: 16px; }
 
 @media (max-width: 640px) {

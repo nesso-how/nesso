@@ -4,7 +4,7 @@ import { cn } from "cn"
 import type { ComponentProps } from "react"
 
 const buttonVariants = cva(
-  "nesso-button inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap border border-transparent px-2.5 text-xs leading-4 font-normal select-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-3.5 [&_svg]:shrink-0",
+  "nesso-button inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap border border-transparent px-2.5 font-normal select-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-3.5 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
