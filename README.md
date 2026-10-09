@@ -27,10 +27,10 @@ pnpm install
 pnpm dev
 ```
 
-On macOS, `pnpm desktop` builds and runs the app.
+On macOS, Windows, and Linux, `pnpm desktop` builds and runs the app.
 
 > [!WARNING]
-> Older unsigned DMGs may still be blocked by Gatekeeper. The macOS release workflow now requires signing and notarization before publishing.
+> Windows installers are currently unsigned and may trigger SmartScreen warnings.
 
 ## Usage
 
@@ -84,7 +84,7 @@ Build and checks: `pnpm build`, `pnpm lint`, `pnpm test`, `pnpm analyze`.
 
 Use `pnpm analyze --summary` for a compact Fallow report. Duplication and complexity are advisory.
 
-For macOS development, run `pnpm dev --host 127.0.0.1 --strictPort` and `pnpm desktop:dev` in separate terminals.
+For desktop development, run `pnpm dev --host 127.0.0.1 --strictPort` and `pnpm desktop:dev` in separate terminals.
 
 ### Create a plugin
 

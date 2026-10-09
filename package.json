@@ -3,6 +3,8 @@
   "private": true,
   "version": "1.0.0-alpha.7",
   "description": "A minimal knowledge graph app",
+  "homepage": "https://nesso.how",
+  "desktopName": "dev.nesso.desktop",
   "type": "module",
   "main": "dist-electron/main.js",
   "packageManager": "pnpm@10.14.0",
@@ -19,6 +21,8 @@
     "desktop": "pnpm build && electron .",
     "desktop:dev": "tsc -b tsconfig.electron.json && electron . --dev",
     "dist:mac": "pnpm build && electron-builder --mac dmg zip --arm64 --x64 --publish never",
+    "dist:win": "pnpm build && electron-builder --win nsis --x64 --publish never",
+    "dist:linux": "pnpm build && electron-builder --linux AppImage deb --x64 --publish never",
     "release": "node scripts/release.ts"
   },
   "dependencies": {
@@ -64,6 +68,15 @@
       "notarize": true,
       "entitlements": "build/entitlements.mac.plist",
       "entitlementsInherit": "build/entitlements.mac.plist"
+    },
+    "win": {
+      "icon": "public/icon-512.png"
+    },
+    "linux": {
+      "icon": "public/icon-512.png",
+      "category": "Office",
+      "syncDesktopName": true,
+      "maintainer": "Nesso contributors"
     }
   },
   "devDependencies": {

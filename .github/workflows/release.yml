@@ -1,4 +1,4 @@
-name: Release macOS
+name: Release
 
 on:
   push:
@@ -8,8 +8,21 @@ permissions:
   contents: write
 
 jobs:
-  release:
-    runs-on: macos-15
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            platform: mac
+          - os: windows-latest
+            platform: win
+          - os: ubuntu-24.04
+            platform: linux
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v4
@@ -20,7 +33,19 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
       - run: pnpm test
+      - name: Resolve release version and channel
+        id: release
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          channel=latest
+          if [[ "$version" == *-* ]]; then
+            channel="${version#*-}"
+            channel="${channel%%.*}"
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "channel=$channel" >> "$GITHUB_OUTPUT"
       - name: Build, sign, and notarize
+        if: matrix.platform == 'mac'
         env:
           CSC_LINK: ${{ secrets.APPLE_CERTIFICATE }}
           CSC_KEY_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
@@ -33,31 +58,69 @@ jobs:
           : "${APPLE_ID:?Missing APPLE_ID secret}"
           : "${APPLE_APP_SPECIFIC_PASSWORD:?Missing APPLE_PASSWORD secret}"
           : "${APPLE_TEAM_ID:?Missing APPLE_TEAM_ID secret}"
-          version="${GITHUB_REF_NAME#v}"
-          channel=latest
-          if [[ "$version" == *-* ]]; then
-            channel="${version#*-}"
-            channel="${channel%%.*}"
-          fi
-          pnpm dist:mac -c.extraMetadata.version="$version" -c.publish.channel="$channel"
+          pnpm dist:mac -c.extraMetadata.version="${{ steps.release.outputs.version }}" -c.publish.channel="${{ steps.release.outputs.channel }}"
+      - name: Build Windows and Linux packages
+        if: matrix.platform != 'mac'
+        run: pnpm dist:${{ matrix.platform }} -c.extraMetadata.version="${{ steps.release.outputs.version }}" -c.publish.channel="${{ steps.release.outputs.channel }}"
       - name: Verify signed and notarized apps
+        if: matrix.platform == 'mac'
         run: |
           for app in release/mac/Nesso.app release/mac-arm64/Nesso.app; do
             codesign --verify --deep --strict --verbose=2 "$app"
             xcrun stapler validate "$app"
             spctl --assess --type execute --verbose=2 "$app"
           done
+      - name: Verify packages and update metadata
+        env:
+          VERSION: ${{ steps.release.outputs.version }}
+          CHANNEL: ${{ steps.release.outputs.channel }}
+          PLATFORM: ${{ matrix.platform }}
+        run: |
+          case "$PLATFORM" in
+            mac)
+              for arch in arm64 x64; do
+                test -s "release/Nesso-${VERSION}-${arch}.dmg"
+                test -s "release/Nesso-${VERSION}-${arch}.zip"
+              done
+              test -s "release/${CHANNEL}-mac.yml"
+              ;;
+            win)
+              test -s "release/Nesso-${VERSION}-x64.exe"
+              test -s "release/${CHANNEL}.yml"
+              ;;
+            linux)
+              test -s "release/Nesso-${VERSION}-x86_64.AppImage"
+              test -s "release/Nesso-${VERSION}-amd64.deb"
+              test -s "release/${CHANNEL}-linux.yml"
+              ;;
+          esac
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nesso-${{ matrix.platform }}
+          if-no-files-found: error
+          path: |
+            release/*.dmg
+            release/*.zip
+            release/*.exe
+            release/*.AppImage
+            release/*.deb
+            release/*.blockmap
+            release/${{ steps.release.outputs.channel }}*.yml
+
+  publish:
+    needs: build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: nesso-*
+          merge-multiple: true
+          path: release
       - name: Publish release and update files
         run: |
-          shopt -s nullglob
-          version="${GITHUB_REF_NAME#v}"
-          for arch in arm64 x64; do
-            test -s "release/Nesso-${version}-${arch}.zip"
-          done
-          metadata=(release/*-mac.yml)
-          test "${#metadata[@]}" -gt 0
           flags=()
-          if [[ "$version" == *-* ]]; then flags+=(--prerelease --latest=false); fi
-          gh release create "$GITHUB_REF_NAME" release/*.dmg release/*.zip release/*.blockmap "${metadata[@]}" --title "$GITHUB_REF_NAME" --generate-notes --verify-tag "${flags[@]}"
+          if [[ "$GITHUB_REF_NAME" == *-* ]]; then flags+=(--prerelease --latest=false); fi
+          gh release create "$GITHUB_REF_NAME" release/* --title "$GITHUB_REF_NAME" --generate-notes --verify-tag "${flags[@]}"
         env:
           GH_TOKEN: ${{ github.token }}

@@ -5,7 +5,7 @@ import type { AutoUpdater } from 'electron'
 import type { AppUpdater } from 'electron-updater'
 import { connectUpdates, type UpdateState } from './updates.ts'
 
-const fixture = (context: TestContext, checkForUpdates = async () => null) => {
+const fixture = (context: TestContext, checkForUpdates = async () => null, nativeUpdates = true) => {
   let check = () => {}
   const interval = context.mock.method(globalThis, 'setInterval', (callback: () => void) => {
     check = callback
@@ -22,7 +22,7 @@ const fixture = (context: TestContext, checkForUpdates = async () => null) => {
   })
   const nativeUpdater = Object.assign(new EventEmitter(), { checkForUpdates: context.mock.fn() })
   const notify = context.mock.fn((_state: UpdateState) => {})
-  const updates = connectUpdates(updater as unknown as AppUpdater, nativeUpdater as unknown as AutoUpdater, notify)
+  const updates = connectUpdates(updater as unknown as AppUpdater, nativeUpdates ? nativeUpdater as unknown as AutoUpdater : undefined, notify)
   return { updater, nativeUpdater, updates, notify, interval, check: () => check() }
 }
 
@@ -82,6 +82,24 @@ test('failed downloads are retried automatically at the next interval', async (c
   check()
   assert.equal(updater.downloadUpdate.mock.callCount(), 2)
   assert.deepEqual(updates.getState(), { status: 'downloading' })
+})
+
+test('Windows and Linux updates become ready without the macOS native updater', (context) => {
+  const { updater, nativeUpdater, updates } = fixture(context, async () => null, false)
+  updater.emit('update-downloaded')
+  assert.equal(updates.getState(), null)
+  updater.emit('update-available')
+  updater.emit('update-downloaded')
+  assert.deepEqual(updates.getState(), { status: 'ready' })
+  assert.equal(nativeUpdater.checkForUpdates.mock.callCount(), 0)
+  updates.install(true)
+  assert.equal(updater.quitAndInstall.mock.callCount(), 0)
+  updates.restart()
+  updates.install(false)
+  assert.deepEqual(updates.getState(), { status: 'ready', error: 'save' })
+  updates.restart()
+  updates.install(true)
+  assert.equal(updater.quitAndInstall.mock.callCount(), 1)
 })
 
 test('failed or missing save acknowledgements prevent restarting and allow retrying', (context) => {

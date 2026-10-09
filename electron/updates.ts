@@ -13,7 +13,7 @@ export type UpdateBridge = {
   beforeInstall: (save: () => boolean) => () => void
 }
 
-export function connectUpdates(updater: AppUpdater, nativeUpdater: AutoUpdater, notify: (state: UpdateState) => void) {
+export function connectUpdates(updater: AppUpdater, nativeUpdater: AutoUpdater | undefined, notify: (state: UpdateState) => void) {
   let state: UpdateState = null
   let checking = false
   let installTimer: ReturnType<typeof setTimeout> | undefined
@@ -40,13 +40,14 @@ export function connectUpdates(updater: AppUpdater, nativeUpdater: AutoUpdater, 
   })
   updater.on('update-downloaded', () => {
     if (state?.status !== 'downloading') return
+    if (!nativeUpdater) return publish({ status: 'ready' })
     try {
       nativeUpdater.checkForUpdates()
     } catch (error) {
       fail(error)
     }
   })
-  nativeUpdater.on('update-downloaded', () => {
+  nativeUpdater?.on('update-downloaded', () => {
     if (state?.status === 'downloading') publish({ status: 'ready' })
   })
 

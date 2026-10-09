@@ -25,6 +25,7 @@ const report = (error: unknown): void => {
 const createWindow = async (): Promise<void> => {
   const window = new BrowserWindow({
     width: 1280, height: 800, backgroundColor: '#ffffff',
+    icon: path.join(root, 'icon-512.png'),
     webPreferences: { preload: path.join(import.meta.dirname, 'preload.cjs'), contextIsolation: true, sandbox: true },
   })
   window.webContents.on('will-navigate', (event) => event.preventDefault())
@@ -47,8 +48,8 @@ app.whenReady().then(async () => {
     response.headers.set('Content-Security-Policy', csp)
     return response
   })
-  if (app.isPackaged && process.platform === 'darwin') {
-    const updates = connectUpdates(electronUpdater.autoUpdater, autoUpdater, (state) => {
+  if (app.isPackaged) {
+    const updates = connectUpdates(electronUpdater.autoUpdater, process.platform === 'darwin' ? autoUpdater : undefined, (state) => {
       for (const window of BrowserWindow.getAllWindows()) {
         window.webContents.send('update:state', state)
         if (state?.status === 'installing') window.webContents.send('update:prepare')
@@ -75,4 +76,6 @@ app.whenReady().then(async () => {
   })
 }).catch(report)
 
-app.on('window-all-closed', () => {})
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') app.quit()
+})
