@@ -1,6 +1,7 @@
 import { Button as ButtonPrimitive } from "@base-ui/react/button"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "cn"
+import type { ComponentProps } from "react"
 
 const buttonVariants = cva(
   "nesso-button inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap border border-transparent px-2.5 text-xs leading-4 font-normal select-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-3.5 [&_svg]:shrink-0",
@@ -44,3 +45,14 @@ function Button({
 }
 
 export { Button }
+
+export function IconButton({ className, ...props }: ComponentProps<typeof Button>) {
+  return (
+    <Button
+      variant="ghost"
+      size="icon-sm"
+      className={cn('text-muted-foreground hover:bg-transparent hover:text-foreground active:bg-transparent', className)}
+      {...props}
+    />
+  )
+}
