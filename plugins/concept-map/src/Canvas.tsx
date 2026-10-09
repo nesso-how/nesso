@@ -31,6 +31,7 @@ import { useTranslation } from './i18n'
 
 const nodeTypes: NodeTypes = { concept: ConceptNodeView }
 const fitViewOptions = { padding: 0.3, maxZoom: 1.2 }
+const animatedFitViewOptions = { ...fitViewOptions, duration: 300 }
 const multiSelectionKeys = ['Meta', 'Control', 'Shift']
 type ContextMenuTarget = Selection[number]['kind'] | 'pane' | 'selection'
 
@@ -188,7 +189,7 @@ export function Canvas() {
     navigation.current = view
     setContextMenu(null)
     const frame = requestAnimationFrame(() => {
-      void fitView({ ...fitViewOptions, duration: 300 })
+      void fitView(animatedFitViewOptions)
     })
     return () => cancelAnimationFrame(frame)
   }, [view, fitView])
@@ -263,7 +264,7 @@ export function Canvas() {
         <Panel position="top-left" className="canvas-label pointer-events-none font-mono text-[10px] text-muted-foreground">{viewName} · {t('conceptCount', { count: viewCount })}</Panel>
         <Background variant={BackgroundVariant.Dots} gap={20} size={1.5} color="var(--node-border)" />
         <Controls showZoom={false} showFitView={false} showInteractive={false} orientation="horizontal">
-          <ControlButton className="react-flow__controls-fitview" onClick={() => { void fitView(fitViewOptions) }} title={t('fitView')} aria-label={t('fitView')}>
+          <ControlButton className="react-flow__controls-fitview" onClick={() => { void fitView(animatedFitViewOptions) }} title={t('fitView')} aria-label={t('fitView')}>
             <Maximize aria-hidden="true" />
           </ControlButton>
           {!readonly && (
@@ -303,7 +304,7 @@ export function Canvas() {
             { label: t('delete'), icon: Trash2, onClick: handleDelete, disabled: !interactive || !canDelete },
           ] : []),
           { label: t('selectAll'), icon: ListChecks, onClick: selectAll, disabled: !interactive || viewCount === 0 },
-          { label: t('fitView'), icon: Maximize, onClick: () => { void fitView(fitViewOptions) } },
+          { label: t('fitView'), icon: Maximize, onClick: () => { void fitView(animatedFitViewOptions) } },
         ]}
       />
     </div>
