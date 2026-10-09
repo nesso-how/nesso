@@ -1,4 +1,4 @@
-import { app, autoUpdater, BrowserWindow, ipcMain, nativeTheme, net, protocol, session, type IpcMainEvent } from 'electron'
+import { app, autoUpdater, BrowserWindow, ipcMain, nativeTheme, net, protocol, session, shell, type IpcMainEvent } from 'electron'
 import electronUpdater from 'electron-updater'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -6,6 +6,7 @@ import { ElectronError } from './errors.ts'
 import { connectUpdates } from './updates.ts'
 import { connectAi } from './ai.ts'
 import { connectMcp } from './mcp.ts'
+import { connectExternalLinks } from './links.ts'
 
 const dev = !app.isPackaged && process.argv.includes('--dev')
 const root = path.join(app.getAppPath(), 'dist')
@@ -29,7 +30,7 @@ const createWindow = async (): Promise<void> => {
     webPreferences: { preload: path.join(import.meta.dirname, 'preload.cjs'), contextIsolation: true, sandbox: true },
   })
   window.webContents.on('will-navigate', (event) => event.preventDefault())
-  window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
+  connectExternalLinks(window.webContents, (url) => shell.openExternal(url))
   await window.loadURL(dev ? 'http://127.0.0.1:5173' : 'nesso://app/')
 }
 
