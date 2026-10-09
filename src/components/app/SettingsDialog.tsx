@@ -1,12 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { defaultLocale, isLocale, localeNames, locales } from '@nesso/i18n'
-import { Button, Dialog, DialogPopup } from '@nesso/ui'
-import { ArrowUpRight, Check, Settings2, Sparkles, X } from 'lucide-react'
+import { Button, Dialog, DialogPopup, PreferenceSelect } from '@nesso/ui'
+import { ArrowUpRight, Check, MessageCircle, Settings2, X } from 'lucide-react'
 import { plugins } from '@/plugins'
 import { host, useNessoStore } from '@/store'
 import { translate } from '@/i18n'
 import { PersistenceBanner } from './PersistenceBanner'
-import { PreferenceSelect } from './PreferenceSelect'
 import { AiSettings } from './AiSettings'
 import appPackage from '../../../package.json'
 
@@ -16,11 +15,11 @@ const providers = [
   { kind: 'vocab', key: 'activeVocabId', change: host.store.setActiveVocab },
 ] as const
 
-export function SettingsDialog() {
+export function SettingsDialog({ initialPage = 'general' }: { initialPage?: 'general' | 'ai' }) {
   const preferences = useNessoStore((state) => state.preferences)
   const locale = preferences.locale ?? defaultLocale
   const t = translate(locale)
-  const [page, setPage] = useState('general')
+  const [page, setPage] = useState<string>(initialPage)
   const title = useRef<HTMLHeadingElement>(null)
   const pageTitle = useRef<HTMLHeadingElement>(null)
   const navigation = useRef<HTMLElement>(null)
@@ -50,7 +49,7 @@ export function SettingsDialog() {
         <nav ref={navigation} className="settings-sidebar" aria-label={t('settings')}>
           <p className="settings-nav-heading">Nesso</p>
           <Button variant="ghost" className="settings-nav w-full justify-start" aria-current={page === 'general' ? 'page' : undefined} onClick={() => setPage('general')}><Settings2 />{t('general')}</Button>
-          {window.nessoAi && <Button variant="ghost" className="settings-nav w-full justify-start" aria-current={page === 'ai' ? 'page' : undefined} onClick={() => setPage('ai')}><Sparkles />{t('ai')}</Button>}
+          {window.nessoAi && <Button variant="ghost" className="settings-nav w-full justify-start" aria-current={page === 'ai' ? 'page' : undefined} onClick={() => setPage('ai')}><MessageCircle />{t('ai')}</Button>}
           <p className="settings-nav-heading mt-6">{t('plugins')}<span className="ml-auto font-mono text-[10px]">{plugins.length}</span></p>
           {plugins.map((entry) => <Button key={entry.id} variant="ghost" className="settings-nav w-full justify-start" aria-current={page === entry.id ? 'page' : undefined} onClick={() => setPage(entry.id)}>
             <entry.icon /><span className="min-w-0 flex-1 truncate text-left">{entry.metadata(locale).name}</span>
@@ -62,24 +61,23 @@ export function SettingsDialog() {
           </div>
         </nav>
         <div className="settings-content">
-          {page === 'ai' && window.nessoAi && <><h2 ref={pageTitle} tabIndex={-1} className="text-base font-medium outline-none">{t('ai')}</h2><AiSettings bridge={window.nessoAi} /></>}
+          {page === 'ai' && window.nessoAi && <AiSettings bridge={window.nessoAi} />}
           {page === 'general' && <>
-            <h2 ref={pageTitle} tabIndex={-1} className="text-base font-medium outline-none">{t('general')}</h2>
-            <p className="mt-1.5 text-xs leading-[18px] text-muted-foreground">{t('generalDescription')}</p>
-            <section className="mt-4" aria-labelledby="settings-interface">
-              <h3 id="settings-interface" className="text-xs font-medium">{t('interface')}</h3>
+            <h2 ref={pageTitle} tabIndex={-1} className="settings-page-title outline-none">{t('general')}</h2>
+            <p className="settings-page-description">{t('generalDescription')}</p>
+            <section className="settings-section settings-section-first" aria-labelledby="settings-interface">
+              <h3 id="settings-interface" className="settings-section-title">{t('interface')}</h3>
               <div className="mt-3"><PreferenceSelect label={t('language')} items={locales.map((value) => ({ value, label: localeNames[value] }))} value={locale} onChange={(value) => { if (isLocale(value)) host.store.setLocale(value) }} /></div>
             </section>
             <section className="settings-section" aria-labelledby="settings-providers">
-              <h3 id="settings-providers" className="text-xs font-medium">{t('providers')}</h3>
+              <h3 id="settings-providers" className="settings-section-title">{t('providers')}</h3>
               <div className="mt-3 space-y-3">{providers.map(({ kind, key, change }) => {
                 const items = plugins.flatMap((entry) => entry.kind === kind ? [{ value: entry.contribution.id, label: entry.contribution.label }] : [])
                 return <PreferenceSelect key={kind} label={t(kind)} items={items} value={preferences[key]} onChange={change} disabled={items.length < 2} />
               })}</div>
-              <p className="mt-2 text-[11px] leading-4 text-muted-foreground">{t('providerHint')}</p>
             </section>
             <section className="settings-section" aria-labelledby="settings-actions">
-              <h3 id="settings-actions" className="text-xs font-medium">{t('actionPlugins')}</h3>
+              <h3 id="settings-actions" className="settings-section-title">{t('actionPlugins')}</h3>
               <p className="mt-1 text-[11px] leading-4 text-muted-foreground">{t('actionsHint')}</p>
               <div className="mt-2">{plugins.filter((entry) => entry.kind === 'actions').map((entry) => <Button key={entry.id} variant="ghost" className="-mx-2.5 min-h-11 w-full justify-start" onClick={() => setPage(entry.id)}>
                 <entry.icon /><span className="flex-1 text-left"><span className="block">{entry.metadata(locale).name}</span><span className="mt-0.5 block text-[11px] text-muted-foreground">{t('commandCount', { count: entry.contribution.length })}</span></span><ArrowUpRight className="text-muted-foreground" />
@@ -90,7 +88,7 @@ export function SettingsDialog() {
             <div className="flex items-start gap-3">
               <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border bg-canvas"><plugin.icon className="size-5" /></span>
               <div className="min-w-0 flex-1">
-                <div className="flex items-center justify-between gap-3"><h2 ref={pageTitle} tabIndex={-1} className="text-base font-medium outline-none">{metadata.name}</h2><span className="settings-badge">{t(inUse(plugin) ? 'inUse' : 'available')}</span></div>
+                <div className="flex items-center justify-between gap-3"><h2 ref={pageTitle} tabIndex={-1} className="settings-page-title outline-none">{metadata.name}</h2><span className="settings-badge">{t(inUse(plugin) ? 'inUse' : 'available')}</span></div>
                 <p className="mt-1.5 text-xs leading-[18px] text-muted-foreground">{metadata.description}</p>
                 <div className="mt-2 flex items-center gap-2"><span className="font-mono text-[10px] text-muted-foreground">v{plugin.version}</span><span className="settings-badge">{t(plugin.kind)}</span></div>
               </div>
@@ -105,7 +103,7 @@ export function SettingsDialog() {
             </section>}
             <section className="settings-section" aria-labelledby="settings-details">
               <h3 id="settings-details" className="mb-3 text-xs font-medium">{t('details')}</h3>
-              <dl className="space-y-2 text-xs">
+              <dl className="settings-metadata text-xs">
                 <div className="flex justify-between gap-4"><dt className="text-muted-foreground">{t('package')}</dt><dd className="break-all">{plugin.id}</dd></div>
                 <div className="flex justify-between gap-4"><dt className="text-muted-foreground">{t('version')}</dt><dd>{plugin.version}</dd></div>
                 <div className="flex justify-between gap-4"><dt className="text-muted-foreground">{t('origin')}</dt><dd>{t('builtIn')}</dd></div>

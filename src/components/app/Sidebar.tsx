@@ -1,14 +1,14 @@
 import type { SavedView } from '@nesso/plugin'
 import { defaultLocale } from '@nesso/i18n'
-import { Button, Dialog, DialogPopup, Menu, MenuItem, MenuPopup, SectionHeading } from '@nesso/ui'
+import { Button, IconButton, ListRow, ListRowButton, ListRowDetail, ListRowTitle, Menu, MenuItem, MenuPopup, RevealActions, SectionHeading, TextPromptDialog } from '@nesso/ui'
 import { MoreHorizontal, Pencil, Pin, PinOff, Settings2, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Sidebar } from './SidebarLayout'
 import { NewViewButton } from './NewViewButton'
 import { DeleteViewDialog } from './DeleteViewDialog'
-import { ViewNameForm } from './ViewNameForm'
 import { viewActions } from '@/plugins'
 import { host, nessoStore, useNessoStore } from '@/store'
+import { maxViewNameLength } from '@/store/settings'
 import { useTranslation } from '@/i18n'
 
 function ViewActionGroup({ viewId }: { viewId: string | null }) {
@@ -51,22 +51,21 @@ export function AppSidebar({ readonly = false, bare = false, onNavigate, onOpenS
   }
 
   const row = (view: SavedView) => (
-    <div key={view.id} className="group flex min-h-14 items-center gap-1 rounded-sm hover:bg-accent has-[:focus-visible]:bg-accent has-[[aria-current]]:bg-pressed">
-      <button
-        type="button"
+    <ListRow key={view.id} className="has-[[aria-current]]:bg-pressed">
+      <ListRowButton
         onClick={() => navigate(view.id)}
         aria-current={workspace.activeViewId === view.id ? 'page' : undefined}
-        className="min-w-0 flex-1 rounded-sm px-2.5 py-2 text-left"
       >
-        <span className="block text-[13px] leading-[19px] break-words">{view.name}</span>
-        <span className="mt-[3px] block font-mono text-[10px] leading-[14px] text-muted-foreground">{t('conceptCount', { count: view.conceptIds.length })}</span>
-      </button>
+        <ListRowTitle>{view.name}</ListRowTitle>
+        <ListRowDetail>{t('conceptCount', { count: view.conceptIds.length })}</ListRowDetail>
+      </ListRowButton>
       {!readonly && (
-        <Menu.Root open={menu === view.id} onOpenChange={(open) => setMenu(open ? view.id : null)}>
+        <RevealActions className="mr-1">
+          <Menu.Root open={menu === view.id} onOpenChange={(open) => setMenu(open ? view.id : null)}>
           <Menu.Trigger ref={(element: HTMLButtonElement | null) => {
             if (element) menuTriggers.current.set(view.id, element)
             else menuTriggers.current.delete(view.id)
-          }} render={<Button variant="ghost" size="icon-sm" className="mr-1 text-muted-foreground opacity-0 group-hover:opacity-100 group-has-[:focus-visible]:opacity-100 data-popup-open:opacity-100 hover:bg-transparent hover:text-foreground active:bg-transparent [@media(pointer:coarse)]:opacity-100" aria-label={t('actionsFor', { name: view.name })} />}>
+          }} render={<IconButton aria-label={t('actionsFor', { name: view.name })} />}>
             <MoreHorizontal />
           </Menu.Trigger>
           <MenuPopup>
@@ -86,10 +85,11 @@ export function AppSidebar({ readonly = false, bare = false, onNavigate, onOpenS
             <ViewActionGroup viewId={view.id} />
             <Menu.Separator className="my-1 h-px bg-border" />
             <MenuItem onClick={() => { deletingId.current = view.id; setDeleting(view) }}><Trash2 />{t('deleteView')}</MenuItem>
-          </MenuPopup>
-        </Menu.Root>
+            </MenuPopup>
+          </Menu.Root>
+        </RevealActions>
       )}
-    </div>
+    </ListRow>
   )
 
   const heading = (label: string, id: string, open: boolean, toggle: () => void) => (
@@ -103,17 +103,18 @@ export function AppSidebar({ readonly = false, bare = false, onNavigate, onOpenS
         {heading(t('pinnedViews'), 'pinned-views', pinnedOpen, () => host.store.setSectionOpen('sidebar.pinned-views', !pinnedOpen))}
         <div className="explorer-scroll min-h-0 flex-1 overflow-y-auto p-1.5 -mx-1.5" onScroll={() => setMenu(null)}>
           <div id="pinned-views" hidden={!pinnedOpen} className="mt-1 space-y-0.5">
-            <div className="group flex min-h-14 items-center gap-1 rounded-sm hover:bg-accent has-[:focus-visible]:bg-accent has-[[aria-current]]:bg-pressed">
-              <button type="button" onClick={() => navigate(null)} aria-current={workspace.activeViewId === null ? 'page' : undefined} className="min-w-0 flex-1 rounded-sm px-2.5 py-2 text-left">
-                <span className="block text-[13px] leading-[19px]">{t('completeGraph')}</span>
-                <span className="mt-[3px] block font-mono text-[10px] leading-[14px] text-muted-foreground">{t('conceptCount', { count: conceptCount })}</span>
-              </button>
+            <ListRow className="has-[[aria-current]]:bg-pressed">
+              <ListRowButton onClick={() => navigate(null)} aria-current={workspace.activeViewId === null ? 'page' : undefined}>
+                <ListRowTitle>{t('completeGraph')}</ListRowTitle>
+                <ListRowDetail>{t('conceptCount', { count: conceptCount })}</ListRowDetail>
+              </ListRowButton>
               {!readonly && (
+                <RevealActions className="mr-1">
                 <Menu.Root open={menu === 'complete-graph'} onOpenChange={(open) => setMenu(open ? 'complete-graph' : null)}>
                   <Menu.Trigger ref={(element: HTMLButtonElement | null) => {
                     if (element) menuTriggers.current.set('complete-graph', element)
                     else menuTriggers.current.delete('complete-graph')
-                  }} render={<Button variant="ghost" size="icon-sm" className="mr-1 text-muted-foreground opacity-0 group-hover:opacity-100 group-has-[:focus-visible]:opacity-100 data-popup-open:opacity-100 hover:bg-transparent hover:text-foreground active:bg-transparent [@media(pointer:coarse)]:opacity-100" aria-label={t('actionsFor', { name: t('completeGraph') })} />}>
+                  }} render={<IconButton aria-label={t('actionsFor', { name: t('completeGraph') })} />}>
                     <MoreHorizontal />
                   </Menu.Trigger>
                   <MenuPopup>
@@ -122,8 +123,9 @@ export function AppSidebar({ readonly = false, bare = false, onNavigate, onOpenS
                     <MenuItem onClick={() => { deletingId.current = 'complete-graph'; setDeleting('complete-graph') }}><Trash2 />{t('deleteView')}</MenuItem>
                   </MenuPopup>
                 </Menu.Root>
+                </RevealActions>
               )}
-            </div>
+            </ListRow>
             {pinned.map(row)}
           </div>
           <div className="mt-4">
@@ -146,16 +148,10 @@ export function AppSidebar({ readonly = false, bare = false, onNavigate, onOpenS
         </Sidebar>
       )}
       {!readonly && (
-        <Dialog.Root open={renaming !== null} onOpenChange={(open) => { if (!open) setRenaming(null) }}>
-          <DialogPopup finalFocus={() => menuTriggers.current.get(renamingId.current ?? '') ?? createTrigger.current}>
-            <Dialog.Title className="text-sm">{t('renameView')}</Dialog.Title>
-            <Dialog.Description className="mt-2 text-xs text-muted-foreground">{t('renameDescription')}</Dialog.Description>
-            {renaming && <ViewNameForm initialName={renaming.name} submitLabel={t('saveName')} onSubmit={(name) => {
-              host.store.renameView(renaming.id, name)
-              setRenaming(null)
-            }} />}
-          </DialogPopup>
-        </Dialog.Root>
+        <TextPromptDialog open={renaming !== null} onOpenChange={(open) => { if (!open) setRenaming(null) }} title={t('renameView')} description={t('renameDescription')} initialValue={renaming?.name ?? ''} nameLabel={t('name')} submitLabel={t('saveName')} cancelLabel={t('cancel')} maxLength={maxViewNameLength} finalFocus={() => menuTriggers.current.get(renamingId.current ?? '') ?? createTrigger.current} onSubmit={(name) => {
+          if (renaming) host.store.renameView(renaming.id, name)
+          setRenaming(null)
+        }} />
       )}
       {!readonly && <DeleteViewDialog target={deleting} onClose={() => setDeleting(null)} finalFocus={() => menuTriggers.current.get(deletingId.current ?? '') ?? createTrigger.current} />}
     </>

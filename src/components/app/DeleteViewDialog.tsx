@@ -1,5 +1,5 @@
 import type { NessoOperation, SavedView } from '@nesso/plugin'
-import { Button, Dialog, DialogPopup } from '@nesso/ui'
+import { ConfirmDialog } from '@nesso/ui'
 import { useRef, useState } from 'react'
 import { newIri } from '@nesso/schema'
 import { host, useNessoStore } from '@/store'
@@ -35,33 +35,25 @@ export function DeleteViewDialog({ target, onClose, finalFocus }: {
     host.store.applyOperations(operations)
   }
   return (
-    <Dialog.Root open={target !== null} onOpenChange={(open) => { if (!open) close() }}>
-      <DialogPopup initialFocus={cancel} finalFocus={finalFocus}>
-        <Dialog.Title className="text-sm">{t('deleteViewTitle', { name: complete ? t('completeGraph') : target?.name ?? '' })}</Dialog.Title>
-        <Dialog.Description className="mt-2 text-xs text-muted-foreground">{t(complete ? 'resetConfirmation' : 'deleteViewDescription')}</Dialog.Description>
-        {exclusive.length > 0 && (
-          <label className="mt-4 flex cursor-pointer items-center gap-2 text-xs">
-            <input type="checkbox" checked={withConcepts} onChange={(event) => setWithConcepts(event.target.checked)} className="size-4 shrink-0 accent-primary" />
-            {t('deleteViewConcepts')}
-          </label>
-        )}
-        <div className="mt-6 flex justify-end gap-2">
-          <Dialog.Close render={<Button ref={cancel} variant="outline" />}>{t('cancel')}</Dialog.Close>
-          <Button onClick={() => {
-            if (complete) clearGraph()
-            else if (target) {
-              if (withConcepts && exclusive.length > 0) {
-                const operations: NessoOperation[] = [
-                  ...exclusive.map((conceptId) => ({ kind: 'concept.remove' as const, id: conceptId })),
-                  { kind: 'view.remove' as const, id: target.id },
-                ]
-                host.store.applyOperations(operations)
-              } else host.store.deleteView(target.id)
-            }
-            close()
-          }}>{t('deleteView')}</Button>
-        </div>
-      </DialogPopup>
-    </Dialog.Root>
+    <ConfirmDialog open={target !== null} onOpenChange={(open) => { if (!open) close() }} title={t('deleteViewTitle', { name: complete ? t('completeGraph') : target?.name ?? '' })} description={t(complete ? 'resetConfirmation' : 'deleteViewDescription')} cancelLabel={t('cancel')} confirmLabel={t('deleteView')} initialFocus={cancel} finalFocus={finalFocus} onConfirm={() => {
+      if (complete) clearGraph()
+      else if (target) {
+        if (withConcepts && exclusive.length > 0) {
+          const operations: NessoOperation[] = [
+            ...exclusive.map((conceptId) => ({ kind: 'concept.remove' as const, id: conceptId })),
+            { kind: 'view.remove' as const, id: target.id },
+          ]
+          host.store.applyOperations(operations)
+        } else host.store.deleteView(target.id)
+      }
+      close()
+    }}>
+      {exclusive.length > 0 && (
+        <label className="mt-4 flex cursor-pointer items-center gap-2 text-xs">
+          <input type="checkbox" checked={withConcepts} onChange={(event) => setWithConcepts(event.target.checked)} className="size-4 shrink-0 accent-primary" />
+          {t('deleteViewConcepts')}
+        </label>
+      )}
+    </ConfirmDialog>
   )
 }

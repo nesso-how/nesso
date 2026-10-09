@@ -1,4 +1,4 @@
-import { Button, Combobox, ComboboxItem, ComboboxPopup, Input } from '@nesso/ui'
+import { Button, Combobox, ComboboxItem, ComboboxPopup, IconButton, Input } from '@nesso/ui'
 import { Plus, X } from 'lucide-react'
 import type { SavedView } from '@nesso/plugin'
 import { useRef, useState } from 'react'
@@ -25,7 +25,7 @@ export function ConceptViews({ conceptIds, readonly = false }: { conceptIds: rea
           {memberships.map((view) => (
             <li key={view.id} className="flex items-center gap-2">
               <span className="min-w-0 flex-1 break-words">{view.name}{conceptIds.length > 1 && <span className="ml-2 text-xs text-muted-foreground">{conceptIds.filter((id) => view.conceptIds.includes(id)).length}/{conceptIds.length}</span>}</span>
-              {!readonly && <Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:bg-transparent hover:text-foreground" aria-label={t('removeFromView', { name: view.name })} onClick={() => setMembership(view.id, false)}><X /></Button>}
+              {!readonly && <IconButton aria-label={t('removeFromView', { name: view.name })} onClick={() => setMembership(view.id, false)}><X /></IconButton>}
             </li>
           ))}
         </ul>
