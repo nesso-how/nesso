@@ -24,7 +24,7 @@ export function ConceptNodeView({ id, data, selected, isConnectable }: NodeProps
       style={{ minWidth: conceptNodeMinSize.width, height: conceptNodeMinSize.height }}
       onClick={(event) => { if ((event.target as Element).closest('.react-flow__handle')) event.stopPropagation() }}
       className={cn(
-        'concept-node flex items-center justify-center rounded-lg border bg-card px-3 py-1 text-sm font-medium leading-[18px] transition-colors hover:border-(--handle)',
+        'concept-node flex items-center justify-center rounded-lg border bg-card px-3 py-1 text-[13.5px] font-normal leading-[18px] transition-colors hover:border-(--handle)',
         selected ? 'border-primary shadow-[0_0_0_2px_var(--selection-halo)]' : 'border-node-border',
       )}
     >

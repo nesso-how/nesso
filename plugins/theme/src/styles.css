@@ -3,7 +3,7 @@
 :root[data-theme='kernel'] {
   --background: #ffffff;
   --foreground: #292929;
-  --canvas: #f8f8f8;
+  --canvas: var(--background);
   --sidebar: #f2f2f2;
   --primary: #393939;
   --primary-hover: #202020;

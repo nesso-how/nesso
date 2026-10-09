@@ -218,7 +218,7 @@ export function Canvas() {
         minZoom={0.2}
       >
         <Panel position="top-left" className="canvas-label pointer-events-none font-mono text-[10px] text-muted-foreground">{viewName} · {t('conceptCount', { count: viewCount })}</Panel>
-        <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="var(--border)" />
+        <Background variant={BackgroundVariant.Dots} gap={20} size={1.5} color="var(--node-border)" />
         <Controls showZoom={false} showFitView={false} showInteractive={false} orientation="horizontal">
           <ControlButton className="react-flow__controls-fitview" onClick={() => { void fitView(fitViewOptions) }} title={t('fitView')} aria-label={t('fitView')}>
             <Maximize aria-hidden="true" />

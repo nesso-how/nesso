@@ -9,7 +9,7 @@ type RelationView = GraphSnapshot['relations'][number]
 export type ConceptNodeSize = { width: number; height: number }
 type ConceptBounds = ConceptNodeSize & { position: ConceptView['position'] }
 export type ConceptNodeSizes = Record<string, ConceptNodeSize>
-export const conceptNodeMinSize: ConceptNodeSize = { width: 120, height: 50 }
+export const conceptNodeMinSize: ConceptNodeSize = { width: 100, height: 44 }
 
 export const facingSide = (from: ConceptBounds, to: ConceptBounds): Position => {
   const dx = to.position.x + to.width / 2 - from.position.x - from.width / 2
@@ -42,7 +42,7 @@ export function relationEdge(relation: RelationView, selected: boolean, singleSe
     sourceHandle: relation.source === relation.target ? Position.Right : facingSide(source, target),
     targetHandle: relation.source === relation.target ? Position.Top : facingSide(target, source),
     label: relation.predicate === defaultTypeId ? undefined : graph.relationTypes.find((type) => type.id === relation.predicate)?.label,
-    labelStyle: { fontFamily: 'var(--font-mono)', fontSize: 9, fill: selected ? 'var(--foreground)' : 'var(--muted-foreground)' },
+    labelStyle: { fontFamily: 'var(--font-mono)', fontSize: 11, fill: selected ? 'var(--foreground)' : 'var(--muted-foreground)' },
     labelBgStyle: { fill: 'var(--background)', fillOpacity: 0.94 },
     labelBgPadding: [6, 3],
     style: { stroke: selected ? 'var(--primary)' : 'var(--edge)', strokeWidth: selected ? 1.5 : 1.2 },
