@@ -3,12 +3,13 @@ import test from 'node:test'
 import { createAiConnections } from './ai-connections.ts'
 import { aiProviders, type AiConnectionInput, type AiProvider } from '@nesso/ai/providers'
 import { ElectronError } from './errors.ts'
+import type { createChatGptAuth } from './ai-oauth.ts'
 
 const input: AiConnectionInput = { name: 'Local', provider: 'custom', endpoint: 'http://localhost:11434/v1/', model: 'local-model' }
-const fixture = (request?: typeof fetch) => {
+const fixture = (request?: typeof fetch, auth?: ReturnType<typeof createChatGptAuth>) => {
   let raw: string | null = null
   const storage = { read: () => raw, write: (value: string) => { raw = value } }
-  return { storage, connections: createAiConnections(storage, request) }
+  return { storage, connections: createAiConnections(storage, request, auth) }
 }
 
 test('connections persist activation and edits without exposing or transferring stored credentials', () => {
@@ -25,7 +26,116 @@ test('connections persist activation and edits without exposing or transferring 
   assert.equal(JSON.parse(storage.read()!).connections[0].apiKey, '')
   assert.deepEqual(createAiConnections(storage).list(), connections.list())
   assert.equal(connections.remove(second.id).activeId, first.id)
-  assert.deepEqual(connections.remove(first.id), { connections: [], activeId: null })
+  assert.deepEqual(connections.remove(first.id), { connections: [], activeId: null, accounts: [] })
+})
+
+const account = {
+  id: '11111111-1111-4111-8111-111111111111', clientId: 'oaiapp_test', subject: 'test-user', email: 'user@example.com',
+  session: { accessToken: 'access-secret', refreshToken: 'refresh-secret', idToken: 'identity-secret', expiresAt: Date.now() + 3600_000, scopes: ['chatgpt.tokens.use.direct'] },
+}
+const chatGptInput: AiConnectionInput = { name: 'ChatGPT', provider: 'openai', endpoint: aiProviders.openai.endpoint, model: 'model', authentication: 'chatgpt', accountId: account.id }
+
+test('a single ChatGPT connection keeps credentials private and can be edited, disconnected or replaced without changing API keys', async () => {
+  const hostIds: string[] = []
+  let loginAccount = account
+  let finishRevocation!: () => void
+  const revocation = new Promise<void>((resolve) => { finishRevocation = resolve })
+  const auth: ReturnType<typeof createChatGptAuth> = {
+    signIn: async (hostId, previous) => { hostIds.push(hostId); return { ...loginAccount, id: previous?.id ?? loginAccount.id } },
+    refresh: async (entry) => entry,
+    revoke: async () => { await revocation; return true },
+  }
+  const { connections, storage } = fixture(async (_url, options) => {
+    assert.equal(new Headers(options?.headers).get('authorization'), 'Bearer access-secret')
+    return Response.json({ models: [{ slug: 'model', visibility: 'list' }, { slug: 'hidden', visibility: 'hide' }] })
+  }, auth)
+  assert.throws(() => connections.save(chatGptInput), ElectronError)
+  const login = await connections.signIn()
+  assert.deepEqual(login.state.accounts, [{ id: account.id, email: account.email, signedIn: true }])
+  const saved = connections.save(chatGptInput)
+  const beforeDuplicate = storage.read()
+  assert.throws(() => connections.save({ ...chatGptInput, model: 'another-model' }), ElectronError)
+  await assert.rejects(connections.signIn(), ElectronError)
+  assert.equal(storage.read(), beforeDuplicate)
+  assert.equal(hostIds.length, 1)
+  assert.equal(saved.connections[0].hasKey, false)
+  assert.equal(JSON.stringify(saved).includes('secret'), false)
+  assert.equal((await connections.active()).apiKey, 'access-secret')
+  assert.deepEqual(await connections.models({ ...chatGptInput, model: '' }), ['model'])
+  assert.equal(await connections.verify(chatGptInput), true)
+  const api = connections.save({ ...input, apiKey: 'api-secret' }).connections[1]
+  connections.activate(api.id)
+  assert.equal(connections.save({ ...chatGptInput, id: saved.connections[0].id, model: 'another-model' }).activeId, api.id)
+  connections.activate(saved.connections[0].id)
+  for (const change of [{ endpoint: 'https://other.example/v1' }, { provider: 'custom' }, { accountId: '22222222-2222-4222-8222-222222222222' }]) {
+    assert.throws(() => connections.save({ ...chatGptInput, ...change }), ElectronError)
+  }
+  connections.save({ ...chatGptInput, id: saved.connections[0].id, authentication: 'api-key', apiKey: 'api-secret' })
+  assert.equal(JSON.parse(storage.read()!).connections[0].accountId, undefined)
+  connections.save({ ...chatGptInput, id: saved.connections[0].id })
+  const signingOut = connections.signOut(account.id)
+  await assert.rejects(connections.active(), ElectronError)
+  await assert.rejects(connections.signIn(account.id), ElectronError)
+  finishRevocation()
+  const signedOut = await signingOut
+  assert.equal(signedOut.revoked, true)
+  assert.equal(signedOut.state.accounts[0].signedIn, false)
+  assert.equal(JSON.parse(storage.read()!).accounts[0].session, undefined)
+  assert.equal(JSON.parse(storage.read()!).accounts[0].clientId, account.clientId)
+  assert.equal(JSON.parse(storage.read()!).connections[1].apiKey, 'api-secret')
+  await assert.rejects(connections.active(), ElectronError)
+  await connections.signIn(account.id)
+  assert.equal(hostIds[0], hostIds[1])
+  assert.equal((await connections.active()).apiKey, 'access-secret')
+  await connections.signOut(account.id)
+  loginAccount = { ...account, id: '22222222-2222-4222-8222-222222222222', subject: 'another-user', email: 'another@example.com' }
+  const replacement = await connections.signIn()
+  assert.equal(replacement.state.accounts.length, 1)
+  assert.equal(replacement.state.accounts[0].email, loginAccount.email)
+  assert.equal(replacement.state.connections[0].accountId, loginAccount.id)
+  assert.equal(JSON.parse(storage.read()!).connections[1].apiKey, 'api-secret')
+  connections.remove(saved.connections[0].id)
+  assert.equal(connections.list().accounts.length, 1)
+  assert.equal(connections.save({ ...chatGptInput, accountId: loginAccount.id }).connections[1].authentication, 'chatgpt')
+})
+
+test('ChatGPT refresh is serialized, rotates tokens atomically and preserves credentials on failure', async () => {
+  let refreshes = 0
+  let rejectRefresh = false
+  let resolve!: () => void
+  const gate = new Promise<void>((done) => { resolve = done })
+  const auth: ReturnType<typeof createChatGptAuth> = {
+    signIn: async () => ({ ...account, session: { ...account.session, expiresAt: Date.now() - 1 } }),
+    refresh: async (entry) => {
+      refreshes++
+      if (rejectRefresh) throw new ElectronError([{ path: 'oauth', message: 'Session revoked' }])
+      await gate
+      return { ...entry, session: { ...account.session, accessToken: 'new-access', refreshToken: 'new-refresh', expiresAt: Date.now() + 3600_000 } }
+    },
+    revoke: async () => false,
+  }
+  const { connections, storage } = fixture(async () => Response.json({ models: [{ slug: 'model', visibility: 'list' }] }), auth)
+  await connections.signIn()
+  connections.save(chatGptInput)
+  const active = connections.active()
+  const models = connections.models(chatGptInput)
+  connections.save(input)
+  resolve()
+  assert.equal((await active).apiKey, 'new-access')
+  await models
+  assert.equal(refreshes, 1)
+  const record = JSON.parse(storage.read()!)
+  assert.equal(record.accounts[0].session.refreshToken, 'new-refresh')
+  assert.equal(record.connections.length, 2)
+  record.accounts[0].session.expiresAt = Date.now() - 1
+  storage.write(JSON.stringify(record))
+  const before = storage.read()
+  rejectRefresh = true
+  await assert.rejects(connections.active(), ElectronError)
+  assert.equal(storage.read(), before)
+  const signedOut = await connections.signOut(account.id)
+  assert.equal(signedOut.revoked, false)
+  assert.equal(signedOut.state.accounts[0].signedIn, false)
 })
 
 test('connection schemas reject invalid fields, unsafe endpoints and unknown IDs without saving', () => {
@@ -102,7 +212,7 @@ test('model discovery works before choosing a model, follows pagination and leav
         : { data: [{ id: next ? 'a-model' : 'z-model' }], has_more: !next, last_id: 'z-model' })
     })
     assert.deepEqual(await connections.models({ ...input, provider, endpoint: aiProviders[provider].endpoint, model: '', apiKey: 'secret' }), ['a-model', 'z-model'])
-    assert.deepEqual(connections.list(), { connections: [], activeId: null })
+    assert.deepEqual(connections.list(), { connections: [], activeId: null, accounts: [] })
   }
   const { connections } = fixture(async () => new Response(null, { status: 404 }))
   await assert.rejects(connections.models({ ...input, model: '' }), ElectronError)

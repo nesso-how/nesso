@@ -6,17 +6,19 @@ import type { createAiChat } from '@/ai/chat'
 import { createAiApproval } from '@/ai/approval'
 import { host, useNessoStore } from '@/store'
 import { translate, useTranslation } from '@/i18n'
+import { notifications } from '@/notifications'
 import { ChatMarkdown } from './ChatMarkdown'
 
 const outcomes = { applied: 'aiChatApplied', cancelled: 'aiChatCancelled', error: 'aiChatFailed' } as const
 const starters = ['aiStarterAdd', 'aiStarterView', 'aiStarterConnections'] as const
 
-export function Chat({ chat, draft, onDraftChange, onOpenSettings, activeModel }: {
+export function Chat({ chat, draft, onDraftChange, onOpenSettings, activeModel, chatGptPlan }: {
   chat: ReturnType<typeof createAiChat>
   draft: string
   onDraftChange: (value: string) => void
   onOpenSettings: () => void
   activeModel: string | null
+  chatGptPlan: boolean
 }) {
   const state = useSyncExternalStore(chat.subscribe, chat.getSnapshot)
   const messages = useNessoStore((state) => state.conversation.messages)
@@ -27,6 +29,14 @@ export function Chat({ chat, draft, onDraftChange, onOpenSettings, activeModel }
   const input = useRef<HTMLTextAreaElement>(null)
   const follow = useRef(true)
   const busy = state.phase !== 'idle'
+  const usageLimit = state.issues.some(({ path }) => path === 'chatgpt.usage')
+  const manageUsage = async () => {
+    try {
+      const result = await window.nessoAi?.manageUsage()
+      if (result && !('issues' in result)) return
+    } catch {}
+    notifications.api.notify({ tone: 'warning', title: t('aiUsageOpenFailed') })
+  }
   useEffect(() => {
     if (follow.current && scroller.current) scroller.current.scrollTop = scroller.current.scrollHeight
   }, [messages, state.phase, approval])
@@ -73,6 +83,7 @@ export function Chat({ chat, draft, onDraftChange, onOpenSettings, activeModel }
         </div>
         {busy && state.phase !== 'approving' && <div role="status" className="chat-working"><span aria-hidden="true" />{t(state.phase === 'stopping' ? 'aiChatStopping' : 'aiChatWorking')}</div>}
         {state.issues.length > 0 && <p role="alert" className="mb-5 whitespace-pre-line text-xs text-destructive">{state.issues.map(({ message }) => message).join('\n')}</p>}
+        {usageLimit && <div className="mb-5"><Button size="sm" onClick={() => void manageUsage()}>{t('aiManageUsage')}</Button></div>}
       </div>
       <div className="chat-composer-area">
         <form className="chat-composer" onSubmit={(event) => { event.preventDefault(); send() }}>
@@ -87,6 +98,7 @@ export function Chat({ chat, draft, onDraftChange, onOpenSettings, activeModel }
           </div>
         </form>
         <div className="chat-note"><button type="button" onClick={onOpenSettings}>{t('aiConfigure')}</button>{activeModel && <><span aria-hidden="true"> · </span><span title={activeModel}>{activeModel}</span></>}</div>
+        {chatGptPlan && <div className="chat-note"><span>{t('aiUsingChatGptPlan')}</span><span aria-hidden="true"> · </span><button type="button" onClick={() => void manageUsage()}>{t('aiManageUsage')}</button></div>}
       </div>
     </section>
   )

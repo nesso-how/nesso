@@ -126,6 +126,21 @@
 .ai-page-title { overflow-wrap: anywhere; }
 .ai-connections-empty { padding: 16px 0; color: var(--muted-foreground); font-size: 12px; line-height: 20px; }
 .ai-connection-form { margin: 0; }
+.ai-connection-type { display: inline-flex; gap: 2px; padding: 3px; border: 1px solid var(--border); border-radius: var(--radius-object); margin-bottom: 12px; }
+.ai-connection-type button { padding-inline: 15px; color: var(--muted-foreground); }
+.ai-connection-type button[aria-pressed="true"] { background: var(--pressed); color: var(--foreground); font-weight: 500; }
+.ai-chatgpt { margin-top: 4px; }
+.ai-chatgpt .ai-section-heading { margin-bottom: 17px; }
+.ai-account-status { display: inline-flex; align-items: center; gap: 6px; color: var(--muted-foreground); font-size: 11px; }
+.ai-account-status::before { content: ''; width: 5px; height: 5px; border: 1px solid var(--muted-foreground); border-radius: 50%; }
+.ai-account-status.connected::before { background: var(--foreground); border-color: var(--foreground); }
+.ai-account-row { min-height: 36px; }
+.ai-signin-description { max-width: 47ch; margin-bottom: 18px; color: var(--muted-foreground); font-size: 12px; line-height: 18px; }
+.ai-signin-waiting, .ai-signin-waiting > span { display: flex; align-items: center; gap: 9px; }
+.ai-signin-waiting { justify-content: space-between; min-height: 50px; color: var(--muted-foreground); }
+.ai-signin-waiting svg { width: 12px; height: 12px; }
+.ai-reauth { margin-top: 16px; }
+.ai-usage { margin: 16px 0 0 -10px; color: var(--muted-foreground); }
 .ai-connection-form > .nesso-field, .ai-model-field { margin-top: 12px; }
 .ai-connection-form .nesso-field { grid-template-columns: minmax(84px, 112px) minmax(0, 1fr); gap: 20px; }
 .ai-key-field { align-items: start; }

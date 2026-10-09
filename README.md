@@ -47,6 +47,11 @@ Use the Explorer to navigate views, the canvas to build the graph, and the Inspe
 
 In the desktop app, use **AI** with your own provider or a local model, or connect an external assistant through the local MCP server. Provider credentials are encrypted on your device, and chat requests go directly to the chosen endpoint. Graph edits are validated and undoable, with approvals handled inside Nesso.
 
+- **OpenAI**: API key or ChatGPT sign-in (OAuth).
+- **Anthropic, Gemini, OpenRouter**: API key.
+- **OpenAI-compatible endpoints**: hosted or local models, with an optional API key.
+- **External assistants**: connect through the local MCP server.
+
 > [!NOTE]
 > This is pre-alpha software. Stored formats may change without migrations.
 

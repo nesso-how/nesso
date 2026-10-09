@@ -16,7 +16,7 @@ export function PreferenceSelect({ label, items, value, onChange, disabled }: {
   return (
     <Field>
       <Label id={`${id}-label`} htmlFor={id} className="w-fit">{label}</Label>
-      <Combobox.Root items={items} value={items.find((item) => item.value === value)} onValueChange={(item) => { if (item) onChange(item.value) }} filter={null} disabled={disabled}>
+      <Combobox.Root items={items} value={items.find((item) => item.value === value) ?? null} onValueChange={(item) => { if (item) onChange(item.value) }} filter={null} disabled={disabled}>
         <Combobox.Trigger id={id} aria-labelledby={`${id}-label`} render={<Button variant="outline" className="w-full justify-between" />}>
           <Combobox.Value /><ChevronDown className="text-muted-foreground" />
         </Combobox.Trigger>

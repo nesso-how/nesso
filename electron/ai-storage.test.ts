@@ -21,17 +21,17 @@ const fixture = (context: TestContext) => {
 }
 const input = { name: 'OpenAI', provider: 'openai' as const, endpoint: 'https://api.openai.com/v1', model: 'model', apiKey: 'secret' }
 
-test('secure storage is accessed only when saving or reading existing credentials', (context) => {
+test('secure storage is accessed only when saving or reading existing credentials', async (context) => {
   const { file, encryption, storage } = fixture(context)
   const connections = createAiConnections(storage)
-  assert.deepEqual(connections.list(), { connections: [], activeId: null })
+  assert.deepEqual(connections.list(), { connections: [], activeId: null, accounts: [] })
   assert.equal(encryption.isEncryptionAvailable.mock.callCount(), 0)
   connections.save(input)
   assert.equal(encryption.isEncryptionAvailable.mock.callCount(), 1)
   const restarted = createAiConnections(createAiStorage(file, encryption))
   assert.equal(encryption.isEncryptionAvailable.mock.callCount(), 1)
   assert.equal(encryption.decryptString.mock.callCount(), 0)
-  assert.equal(restarted.active().apiKey, input.apiKey)
+  assert.equal((await restarted.active()).apiKey, input.apiKey)
   assert.equal(encryption.decryptString.mock.callCount(), 1)
 })
 

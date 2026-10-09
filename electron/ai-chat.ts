@@ -3,12 +3,26 @@ import { createAnthropic } from '@ai-sdk/anthropic'
 import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { isStepCount, streamText, type ToolSet } from 'ai'
+import { z } from 'zod'
 import { aiChatInstructions, aiChatMessages, aiTools, type AiChatRequest, type AiChatEvent, type AiToolReply } from '@nesso/ai'
 import type { createAiConnections } from './ai-connections.ts'
 import { ElectronError } from './errors.ts'
 
-type Connection = ReturnType<ReturnType<typeof createAiConnections>['active']>
-const failure = () => new ElectronError([{ path: 'chat', message: 'Provider request failed or was incomplete. Check the connection and try again' }])
+type Connection = Awaited<ReturnType<ReturnType<typeof createAiConnections>['active']>>
+const errorCode = z.object({ code: z.string().nullish() })
+const providerError = errorCode.extend({
+  statusCode: z.number().optional(),
+  data: z.object({ error: errorCode.optional(), response: z.object({ error: errorCode.optional() }).optional() }).optional(),
+})
+const failure = (error?: unknown) => {
+  const parsed = providerError.safeParse(error)
+  const code = parsed.success ? parsed.data.code ?? parsed.data.data?.error?.code ?? parsed.data.data?.response?.error?.code : undefined
+  if (code === 'subscription_sharing_usage_limit_exceeded' || code === 'subscription_sharing_usage_unavailable') {
+    return new ElectronError([{ path: 'chatgpt.usage', message: 'ChatGPT plan usage is unavailable or its limit was reached. Manage usage in ChatGPT settings' }])
+  }
+  if (parsed.success && parsed.data.statusCode === 401) return new ElectronError([{ path: 'chat', message: 'Provider authentication expired or was revoked. Update the connection or sign in again' }])
+  return new ElectronError([{ path: 'chat', message: 'Provider request failed or was incomplete. Check the connection and try again' }])
+}
 
 const modelFor = (entry: Connection, request: typeof fetch) => {
   const options = { apiKey: entry.apiKey, baseURL: entry.endpoint, fetch: request }
@@ -27,6 +41,7 @@ export function createAiChatRun(entry: Connection, input: AiChatRequest, emit: (
   const tools: ToolSet = Object.fromEntries(Object.entries(aiTools).map(([name, definition]) => [name, {
     ...definition,
     strict: false,
+    ...(entry.authentication === 'chatgpt' ? { providerOptions: { openai: { namespace: { name: 'nesso', description: 'Explore and edit the Nesso document.' } } } } : {}),
     execute: (value: unknown, { toolCallId: callId }) => new Promise<unknown>((resolve, reject) => {
       signal.throwIfAborted()
       const finish = (result?: AiToolReply['result']) => {
@@ -46,9 +61,9 @@ export function createAiChatRun(entry: Connection, input: AiChatRequest, emit: (
       const safeRequest: typeof fetch = (url, options) => request(url, { ...options, redirect: 'error' })
       const stream = streamText({
         model: modelFor(entry, safeRequest), tools, abortSignal: signal,
-        stopWhen: isStepCount(12), maxOutputTokens: 8192, maxRetries: 0,
+        stopWhen: isStepCount(12), ...(entry.authentication === 'chatgpt' ? { providerOptions: { openai: { store: false, instructions: aiChatInstructions(input) } } } : { maxOutputTokens: 8192 }), maxRetries: 0,
         telemetry: { isEnabled: false }, onError: () => {},
-        instructions: aiChatInstructions(input),
+        instructions: entry.authentication === 'chatgpt' ? undefined : aiChatInstructions(input),
         messages: aiChatMessages(input),
       })
       let length = 0
@@ -59,12 +74,13 @@ export function createAiChatRun(entry: Connection, input: AiChatRequest, emit: (
           length += part.text.length
           if (length > 100_000) throw failure()
           emit({ id: input.id, type: 'text', text: part.text })
-        } else if (part.type === 'error' || part.type === 'tool-error' || part.type === 'abort') throw failure()
+        } else if (part.type === 'error') throw failure(part.error)
+        else if (part.type === 'tool-error' || part.type === 'abort') throw failure()
         else if (part.type === 'finish') complete = part.finishReason === 'stop'
       }
       if (!complete || signal.aborted) throw failure()
       return true
-    } catch { throw failure() } finally { controller.abort() }
+    } catch (error) { throw error instanceof ElectronError ? error : failure(error) } finally { controller.abort() }
   })()
   return {
     id: input.id, result,

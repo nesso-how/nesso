@@ -45,6 +45,7 @@
     "ai": "^7.0.133",
     "cn": "^0.4.0",
     "electron-updater": "^6.8.9",
+    "jose": "^6.2.12",
     "lucide-react": "^1.48.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
