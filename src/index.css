@@ -53,6 +53,20 @@
 .chat-message p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; line-height: 22px; }
 .chat-message.user { display: flex; justify-content: flex-end; }
 .chat-message.user p { max-width: 92%; padding: 10px 12px; border-radius: var(--radius-object); background: var(--sidebar); line-height: 21px; }
+.chat-markdown { font-size: 13px; line-height: 22px; overflow-wrap: anywhere; }
+.chat-markdown > :not(:first-child) { margin-top: 12px; }
+.chat-markdown p { white-space: normal; }
+.chat-markdown :is(h1, h2, h3, h4, h5, h6) { font-size: 14px; font-weight: 600; }
+.chat-markdown :is(ul, ol) { padding-left: 20px; }
+.chat-markdown ul { list-style: disc; }
+.chat-markdown ol { list-style: decimal; }
+.chat-markdown li + li, .chat-markdown li > * + * { margin-top: 4px; }
+.chat-markdown blockquote { padding-left: 12px; border-left: 2px solid var(--border); color: var(--muted-foreground); }
+.chat-markdown code { padding: 2px 4px; border-radius: var(--radius-control); background: var(--sidebar); font-family: var(--font-mono); font-size: 12px; }
+.chat-markdown pre { max-width: 100%; overflow-x: auto; padding: 10px 12px; border-radius: var(--radius-control); background: var(--sidebar); white-space: pre; overflow-wrap: normal; }
+.chat-markdown pre code { padding: 0; border-radius: 0; background: transparent; }
+.chat-markdown a { text-decoration: underline; text-underline-offset: 2px; }
+.chat-markdown hr { border-top: 1px solid var(--border); }
 .chat-confirmation { margin-top: 14px; }
 .chat-confirmation-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
 .chat-confirmation-actions button { min-height: 32px; padding-inline: 12px; }

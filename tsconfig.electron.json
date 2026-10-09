@@ -2,13 +2,13 @@
   "extends": "./tsconfig.node.json",
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.electron.tsbuildinfo",
-    "rootDir": "electron",
+    "rootDir": ".",
     "outDir": "dist-electron",
     "noEmit": false,
     "rewriteRelativeImportExtensions": true,
     "strict": true
   },
   "references": [{ "path": "./packages/ai" }],
-  "include": ["electron/**/*.ts", "electron/**/*.cts"],
+  "include": ["electron/**/*.ts", "electron/**/*.cts", "shared/**/*.ts"],
   "exclude": ["electron/**/*.test.ts"]
 }

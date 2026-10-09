@@ -6,7 +6,7 @@
   "homepage": "https://nesso.how",
   "desktopName": "dev.nesso.desktop",
   "type": "module",
-  "main": "dist-electron/main.js",
+  "main": "dist-electron/electron/main.js",
   "packageManager": "pnpm@10.14.0",
   "scripts": {
     "dev": "vite",
@@ -48,6 +48,7 @@
     "lucide-react": "^1.48.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
+    "react-markdown": "^10.1.0",
     "tailwindcss": "^4.3.3",
     "zod": "^4.6.5",
     "zustand": "^5.0.15"

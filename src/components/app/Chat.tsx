@@ -6,6 +6,7 @@ import type { createAiChat } from '@/ai/chat'
 import { createAiApproval } from '@/ai/approval'
 import { host, useNessoStore } from '@/store'
 import { translate, useTranslation } from '@/i18n'
+import { ChatMarkdown } from './ChatMarkdown'
 
 const outcomes = { applied: 'aiChatApplied', cancelled: 'aiChatCancelled', error: 'aiChatFailed' } as const
 const starters = ['aiStarterAdd', 'aiStarterView', 'aiStarterConnections'] as const
@@ -57,7 +58,7 @@ export function Chat({ chat, draft, onDraftChange, onOpenSettings, activeModel }
         </div>}
         <div className="chat-messages" role="log" aria-label={t('aiConversation')} aria-live="polite" aria-relevant="additions text">
           {messages.map((message, index) => <article key={message.id} className={`chat-message ${message.role}`} aria-label={t(message.role === 'user' ? 'aiYou' : 'aiAssistant')}>
-            {message.content && <p>{message.content}</p>}
+            {message.content && (message.role === 'assistant' ? <ChatMarkdown content={message.content} /> : <p>{message.content}</p>)}
             {message.role === 'assistant' && index === messages.length - 1 && approval && <div className="chat-confirmation">
               <p>{approval.description}</p>
               <div className="chat-confirmation-actions">
