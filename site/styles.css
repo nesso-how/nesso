@@ -74,6 +74,8 @@ h1 span { display: block; }
 .graph .selected .node-shape { stroke: var(--primary); }
 .graph .selected text { font-weight: 500; }
 footer { display: flex; justify-content: space-between; gap: 16px; align-items: center; min-height: 68px; border-top: 1px solid var(--border); color: var(--muted-foreground); padding-bottom: env(safe-area-inset-bottom); }
+.footer-info { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+.agent-link { visibility: hidden; }
 .status { display: inline-flex; align-items: center; gap: 8px; min-width: 0; min-height: 44px; color: inherit; text-align: right; text-decoration: none; overflow-wrap: anywhere; }
 .status:hover { color: var(--foreground); text-decoration: underline; text-underline-offset: 3px; }
 .status::before { content: ''; width: 5px; height: 5px; flex-shrink: 0; border-radius: 50%; background: #858585; animation: status-pulse 2.2s ease-out infinite; }

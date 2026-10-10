@@ -1,0 +1,12 @@
+# Nesso
+
+## Documentation
+
+- [README](https://raw.githubusercontent.com/nesso-how/nesso/main/README.md)
+- [Plugin guide](https://raw.githubusercontent.com/nesso-how/nesso/main/packages/plugin/README.md)
+- [Graph schema and JSON-LD](https://raw.githubusercontent.com/nesso-how/nesso/main/packages/schema/README.md)
+- [AI and MCP](https://raw.githubusercontent.com/nesso-how/nesso/main/packages/ai/README.md)
+
+## Downloads
+
+- [Releases](https://github.com/nesso-how/nesso/releases)
