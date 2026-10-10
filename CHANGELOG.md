@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.0-alpha.10 — 2026-10-10
+
+### Fixes
+
+- **release:** Exclude build tooling from universal mac app
+
 ## 1.0.0-alpha.9 — 2026-10-10
 
 ### Documentation
