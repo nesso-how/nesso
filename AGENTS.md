@@ -11,7 +11,7 @@
 
 ## Release
 
-- Release from clean `main` with `pnpm release [--major|--minor|--patch|--alpha|--beta|<version>]`; the script bumps `package.json`, commits, tags `v<version>`, and pushes.
+- Release from clean `main` using `pnpm release`; see `pnpm release --help` for options and behavior. The script updates `package.json` and `CHANGELOG.md`, commits, tags `v<version>`, and pushes.
 
 ## Product
 

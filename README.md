@@ -91,6 +91,8 @@ Use `pnpm analyze --summary` for a compact Fallow report. Duplication and comple
 
 For desktop development, run `pnpm dev --host 127.0.0.1 --strictPort` and `pnpm desktop:dev` in separate terminals.
 
+For release instructions, run `pnpm release --help`.
+
 ### Create a plugin
 
 Build your own renderers, vocabularies, actions, or themes.

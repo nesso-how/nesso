@@ -112,6 +112,9 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
       - uses: actions/download-artifact@v4
         with:
           pattern: nesso-*
@@ -119,8 +122,9 @@ jobs:
           path: release
       - name: Publish release and update files
         run: |
+          node scripts/release-notes.ts "$GITHUB_REF_NAME" > release-notes.md
           flags=()
           if [[ "$GITHUB_REF_NAME" == *-* ]]; then flags+=(--prerelease --latest=false); fi
-          gh release create "$GITHUB_REF_NAME" release/* --title "$GITHUB_REF_NAME" --generate-notes --verify-tag "${flags[@]}"
+          gh release create "$GITHUB_REF_NAME" release/* --title "$GITHUB_REF_NAME" --notes-file release-notes.md --verify-tag "${flags[@]}"
         env:
           GH_TOKEN: ${{ github.token }}
