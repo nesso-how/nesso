@@ -39,11 +39,11 @@
       <main>
         <section class="intro" aria-labelledby="title">
           <h1 id="title"><span>A second brain</span> <span>built on connections.</span></h1>
-          <p class="description">Connect ideas in one knowledge graph. Built on a small core with an open, extensible plugin architecture.</p>
+          <p class="description">Connect ideas in one knowledge graph with AI assistance. Built on a small core with an open, extensible plugin architecture.</p>
           <nav class="actions" aria-label="Explore Nesso">
-            <a class="button button-primary" href="https://app.nesso.how">
-              Open web app
-              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg>
+            <a class="button button-primary" href="https://github.com/nesso-how/nesso/releases/tag/v%NESSO_VERSION%" data-download-version="%NESSO_VERSION%">
+              <span>Download desktop app</span>
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M5 16v4h14v-4"/></svg>
             </a>
             <a class="button" href="https://github.com/nesso-how/nesso/discussions" target="_blank" rel="noopener noreferrer" aria-label="GitHub Discussions (opens in a new tab)">
               <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M7 8h10M7 12h7"/></svg>
@@ -51,32 +51,11 @@
               <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg>
             </a>
           </nav>
-          <div class="downloads" data-platform="macOS" hidden>
-            <p class="download-label">Download for macOS:</p>
-            <nav class="actions" aria-label="Download Nesso for macOS">
-              <a class="download-link" href="https://github.com/nesso-how/nesso/releases/download/v%NESSO_VERSION%/Nesso-%NESSO_VERSION%-arm64.dmg" aria-label="Download Nesso for macOS, Apple Silicon (.dmg)">
-                Apple Silicon
-              </a>
-              <span aria-hidden="true">·</span>
-              <a class="download-link" href="https://github.com/nesso-how/nesso/releases/download/v%NESSO_VERSION%/Nesso-%NESSO_VERSION%-x64.dmg" aria-label="Download Nesso for macOS, Intel (.dmg)">
-                Intel
-              </a>
-            </nav>
-          </div>
-          <div class="downloads" data-platform="Windows" hidden>
-            <p class="download-label">Download for Windows:</p>
-            <nav class="actions" aria-label="Download Nesso for Windows">
-              <a class="download-link" href="https://github.com/nesso-how/nesso/releases/download/v%NESSO_VERSION%/Nesso-%NESSO_VERSION%-x64.exe" aria-label="Download Nesso for Windows, x64 (.exe)">Installer (.exe)</a>
-            </nav>
-          </div>
-          <div class="downloads" data-platform="Linux" hidden>
-            <p class="download-label">Download for Linux:</p>
-            <nav class="actions" aria-label="Download Nesso for Linux">
-              <a class="download-link" href="https://github.com/nesso-how/nesso/releases/download/v%NESSO_VERSION%/Nesso-%NESSO_VERSION%-x86_64.AppImage" aria-label="Download Nesso for Linux, x64 (.AppImage)">AppImage</a>
-              <span aria-hidden="true">·</span>
-              <a class="download-link" href="https://github.com/nesso-how/nesso/releases/download/v%NESSO_VERSION%/Nesso-%NESSO_VERSION%-amd64.deb" aria-label="Download Nesso for Linux, x64 (.deb)">DEB</a>
-            </nav>
-          </div>
+          <nav class="secondary-links" aria-label="Other ways to try Nesso">
+            <a class="download-link" href="https://github.com/nesso-how/nesso/releases/tag/v%NESSO_VERSION%" target="_blank" rel="noopener noreferrer" aria-label="Other downloads on GitHub releases (opens in a new tab)">Other downloads</a>
+            <span aria-hidden="true">·</span>
+            <span><a class="download-link" href="https://app.nesso.how">Web demo</a> (without AI)</span>
+          </nav>
         </section>
         <figure class="graph">
           <svg viewBox="0 0 500 350" role="img" aria-labelledby="graph-title graph-description">

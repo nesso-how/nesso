@@ -65,11 +65,11 @@ jobs:
       - name: Verify signed and notarized apps
         if: matrix.platform == 'mac'
         run: |
-          for app in release/mac/Nesso.app release/mac-arm64/Nesso.app; do
-            codesign --verify --deep --strict --verbose=2 "$app"
-            xcrun stapler validate "$app"
-            spctl --assess --type execute --verbose=2 "$app"
-          done
+          app=release/mac-universal/Nesso.app
+          lipo -verify_arch arm64 x86_64 "$app/Contents/MacOS/Nesso"
+          codesign --verify --deep --strict --verbose=2 "$app"
+          xcrun stapler validate "$app"
+          spctl --assess --type execute --verbose=2 "$app"
       - name: Verify packages and update metadata
         env:
           VERSION: ${{ steps.release.outputs.version }}
@@ -78,10 +78,8 @@ jobs:
         run: |
           case "$PLATFORM" in
             mac)
-              for arch in arm64 x64; do
-                test -s "release/Nesso-${VERSION}-${arch}.dmg"
-                test -s "release/Nesso-${VERSION}-${arch}.zip"
-              done
+              test -s "release/Nesso-${VERSION}-universal.dmg"
+              test -s "release/Nesso-${VERSION}-universal.zip"
               test -s "release/${CHANNEL}-mac.yml"
               ;;
             win)
