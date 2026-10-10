@@ -3,6 +3,7 @@
   "private": true,
   "version": "1.0.0-alpha.8",
   "description": "A minimal knowledge graph app",
+  "license": "MIT",
   "homepage": "https://nesso.how",
   "desktopName": "dev.nesso.desktop",
   "type": "module",

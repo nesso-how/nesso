@@ -95,3 +95,7 @@ For desktop development, run `pnpm dev --host 127.0.0.1 --strictPort` and `pnpm 
 
 Build your own renderers, vocabularies, actions, or themes.
 See the [plugin guide](packages/plugin/README.md#create-a-plugin) to get started.
+
+## License
+
+[MIT](LICENSE) © 2026 Omar Desogus and Paolo Manfredotti.
