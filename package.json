@@ -42,7 +42,6 @@
     "@nesso/kernel": "workspace:*",
     "@nesso/ui": "workspace:*",
     "@nesso/base-vocab": "workspace:*",
-    "@tailwindcss/vite": "^4.3.3",
     "ai": "^7.0.133",
     "cn": "^0.4.0",
     "electron-updater": "^6.8.9",
@@ -83,6 +82,7 @@
     }
   },
   "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
