@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.0-alpha.11 — 2026-10-11
+
+### Features
+
+- **persistence:** Use indexeddb on web and files on desktop
+
 ## 1.0.0-alpha.10 — 2026-10-10
 
 ### Fixes
