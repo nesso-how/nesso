@@ -13,6 +13,8 @@ test('the site build emits complete localized pages with matching language links
     assert.ok(page?.type === 'asset' && typeof page.source === 'string')
     const html = page.source
     assert.ok(html.includes(`<html lang="${locale}">`))
+    assert.match(html.slice(0, html.indexOf('</head>')), /<style>[\s\S]*?\.graph[\s\S]*?<\/style>/)
+    assert.doesNotMatch(html, /<link[^>]*rel="stylesheet"/)
     assert.ok(html.includes(`<link rel="canonical" href="https://nesso.how${path}">`))
     assert.ok(html.includes(`hreflang="${locale}" aria-current="page"`))
     assert.match(html, /data-download-version="\d+\.\d+\.\d+[^"]*"/)
