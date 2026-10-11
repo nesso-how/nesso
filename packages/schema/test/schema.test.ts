@@ -24,7 +24,9 @@ test('a graph with compact and custom predicates survives a JSON-LD round trip',
   const custom = 'urn:uuid:82d7d311-382c-45ee-9ec6-7e3b247d489b'
   graph.relationTypes.push({ id: custom, label: 'supports' })
   graph.relations.push(...targets.map((target) => ({ source: subject, predicate: custom, target })))
+  const original = structuredClone(graph)
   const restored = parseGraph(serializeGraph(graph))
+  assert.deepEqual(graph, original)
   assert.deepEqual(restored.concepts, graph.concepts)
   assert.deepEqual(restored.relationTypes, graph.relationTypes)
   assert.deepEqual(restored.relations.map(relationKey).sort(), graph.relations.map(relationKey).sort())

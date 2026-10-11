@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, safeStorage, shell, type IpcMainEvent, type IpcMainInvokeEvent } from 'electron'
+import { app, ipcMain, safeStorage, shell } from 'electron'
 import path from 'node:path'
 import { createAiConnections } from './ai-connections.ts'
 import { createAiStorage } from './ai-storage.ts'
@@ -6,14 +6,11 @@ import { aiChatRequest, type AiResult, type AiToolReply } from '@nesso/ai'
 import { ElectronError } from './errors.ts'
 import { createAiChatRun } from './ai-chat.ts'
 import { createChatGptAuth } from './ai-oauth.ts'
+import type { TrustedRequest } from './ipc.ts'
 
-export function connectAi(dev: boolean) {
+export function connectAi(trusted: TrustedRequest) {
   const file = path.join(app.getPath('userData'), 'ai-connections.enc')
   const connections = createAiConnections(createAiStorage(file, safeStorage), fetch, createChatGptAuth((url) => shell.openExternal(url)))
-  const trustedUrl = dev ? 'http://127.0.0.1:5173/' : 'nesso://app/'
-  const trusted = (event: IpcMainEvent | IpcMainInvokeEvent) =>
-    BrowserWindow.getAllWindows().some((window) => window.webContents === event.sender)
-    && event.senderFrame === event.sender.mainFrame && event.senderFrame.url === trustedUrl
   const runs = new Map<number, ReturnType<typeof createAiChatRun> & { accountId?: string }>()
   const preparing = new Map<number, { id: string; controller: AbortController }>()
   let signIn: { senderId: number; controller: AbortController } | undefined

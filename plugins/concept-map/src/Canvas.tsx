@@ -50,7 +50,7 @@ export function Canvas() {
   const flowInteractive = useFlowStore((state) => state.nodesDraggable || state.nodesConnectable || state.elementsSelectable)
   const interactive = !readonly && flowInteractive
   const LockIcon = interactive ? LockOpen : Lock
-  const [initialViewport] = useState(() => store.getState().workspace.viewports.graph)
+  const [initialViewport] = useState(() => store.getState().workspace.viewports['concept-map'])
   const navigation = useRef(view)
   const reconnecting = useRef<RelationEdge | null>(null)
   const [reconnectDrag, setReconnectDrag] = useState(false)
@@ -256,7 +256,7 @@ export function Canvas() {
         proOptions={{ hideAttribution: true }}
         defaultViewport={initialViewport}
         onMoveStart={() => setContextMenu(null)}
-        onMoveEnd={(_event, viewport) => store.setViewport('graph', viewport)}
+        onMoveEnd={(_event, viewport) => store.setViewport('concept-map', viewport)}
         fitView={!initialViewport}
         fitViewOptions={fitViewOptions}
         minZoom={0.2}

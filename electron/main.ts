@@ -1,4 +1,4 @@
-import { app, autoUpdater, BrowserWindow, ipcMain, nativeTheme, net, protocol, session, shell, type IpcMainEvent } from 'electron'
+import { app, autoUpdater, BrowserWindow, ipcMain, nativeTheme, net, protocol, session, shell } from 'electron'
 import electronUpdater from 'electron-updater'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -7,6 +7,8 @@ import { connectUpdates } from './updates.ts'
 import { connectAi } from './ai.ts'
 import { connectMcp } from './mcp.ts'
 import { connectExternalLinks } from './links.ts'
+import { connectDesktopPersistence } from './persistence.ts'
+import { createTrustedRequest } from './ipc.ts'
 
 const dev = !app.isPackaged && process.argv.includes('--dev')
 const root = path.join(app.getAppPath(), 'dist')
@@ -23,20 +25,23 @@ const report = (error: unknown): void => {
   app.exit(1)
 }
 
-const createWindow = async (): Promise<void> => {
+const createWindow = async (connectPersistence: (window: BrowserWindow) => void): Promise<void> => {
   const window = new BrowserWindow({
     width: 1280, height: 800, backgroundColor: '#ffffff',
     icon: path.join(root, 'icon-512.png'),
     webPreferences: { preload: path.join(import.meta.dirname, 'preload.cjs'), contextIsolation: true, sandbox: true },
   })
+  connectPersistence(window)
   window.webContents.on('will-navigate', (event) => event.preventDefault())
   connectExternalLinks(window.webContents, (url) => shell.openExternal(url))
   await window.loadURL(dev ? 'http://127.0.0.1:5173' : 'nesso://app/')
 }
 
 app.whenReady().then(async () => {
-  connectAi(dev)
-  connectMcp(dev)
+  const trusted = createTrustedRequest(dev)
+  const connectPersistence = connectDesktopPersistence(trusted)
+  connectAi(trusted)
+  connectMcp(trusted)
   session.defaultSession.setPermissionCheckHandler(() => false)
   session.defaultSession.setPermissionRequestHandler((_contents, _permission, callback) => callback(false))
   protocol.handle('nesso', async (request) => {
@@ -56,9 +61,6 @@ app.whenReady().then(async () => {
         if (state?.status === 'installing') window.webContents.send('update:prepare')
       }
     })
-    const trusted = (event: IpcMainEvent) =>
-      BrowserWindow.getAllWindows().some((window) => window.webContents === event.sender)
-      && event.senderFrame === event.sender.mainFrame && event.senderFrame.url === 'nesso://app/'
     ipcMain.on('update:subscribe', (event) => {
       if (trusted(event)) event.sender.send('update:state', updates.getState())
     })
@@ -67,13 +69,12 @@ app.whenReady().then(async () => {
     })
     ipcMain.on('update:install', (event, saved: unknown) => {
       if (!trusted(event)) return
-      if (saved === true) event.sender.session.flushStorageData()
       updates.install(saved === true)
     })
   }
-  await createWindow()
+  await createWindow(connectPersistence)
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) void createWindow().catch(report)
+    if (BrowserWindow.getAllWindows().length === 0) void createWindow(connectPersistence).catch(report)
   })
 }).catch(report)
 

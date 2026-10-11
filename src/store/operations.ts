@@ -58,13 +58,13 @@ export const newWorkspace = (): WorkspaceState => ({ activeViewId: null, savedVi
 const sameItems = <T>(left: readonly T[], right: readonly T[], equal: (left: T, right: T) => boolean): boolean =>
   left === right || (left.length === right.length && left.every((item, index) => item === right[index] || equal(item, right[index])))
 
-const sameGraph = (left: GraphSnapshot, right: GraphSnapshot): boolean =>
+export const sameGraph = (left: GraphSnapshot, right: GraphSnapshot): boolean =>
   sameItems(left.concepts, right.concepts, (a, b) =>
     a.id === b.id && a.label === b.label && a.position.x === b.position.x && a.position.y === b.position.y)
   && sameItems(left.relations, right.relations, (a, b) => relationKey(a) === relationKey(b))
   && sameItems(left.relationTypes, right.relationTypes, (a, b) => a.id === b.id && a.label === b.label)
 
-const sameWorkspace = (left: WorkspaceState, right: WorkspaceState): boolean =>
+export const sameWorkspace = (left: WorkspaceState, right: WorkspaceState): boolean =>
   left.activeViewId === right.activeViewId
   && sameItems(left.savedViews, right.savedViews, (a, b) =>
     a.id === b.id && a.name === b.name && a.pinned === b.pinned && sameItems(a.conceptIds, b.conceptIds, (a, b) => a === b))
@@ -74,7 +74,7 @@ const sameWorkspace = (left: WorkspaceState, right: WorkspaceState): boolean =>
     return a === b || (!!a && !!b && a.x === b.x && a.y === b.y && a.zoom === b.zoom)
   })
 
-const samePreferences = (left: Preferences, right: Preferences): boolean =>
+export const samePreferences = (left: Preferences, right: Preferences): boolean =>
   left.locale === right.locale && left.activeVocabId === right.activeVocabId && left.activeRendererId === right.activeRendererId && left.activeThemeId === right.activeThemeId
   && left.panels.explorerWidth === right.panels.explorerWidth && left.panels.inspectorWidth === right.panels.inspectorWidth
   && sameItems(left.collapsedSections ?? [], right.collapsedSections ?? [], (a, b) => a === b)

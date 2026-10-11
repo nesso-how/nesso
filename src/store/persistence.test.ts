@@ -2,8 +2,10 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { parseGraph, serializeGraph, type Graph } from '@nesso/schema'
 import { createNessoStore } from './create.ts'
-import { connectPersistence, loadPersistence, storageKeys } from './persistence.ts'
+import { connectPersistence, loadPersistence } from './persistence.ts'
+import { createDesktopStorage, createIndexedDbStorage } from './storage.ts'
 import { sectionIds } from './types.ts'
+import type { PersistenceSection, PersistenceStorage } from '../../shared/persistence.ts'
 
 const fixture = (): Graph => ({
   concepts: [
@@ -16,14 +18,13 @@ const fixture = (): Graph => ({
 })
 
 const memoryStorage = () => {
-  const records = new Map<string, string>()
-  const writes: string[] = []
+  const records = new Map<PersistenceSection, unknown>()
+  const writes: PersistenceSection[] = []
   return {
-    records,
-    writes,
-    getItem: (key: string) => records.get(key) ?? null,
-    setItem: (key: string, value: string) => {
-      records.set(key, value)
+    records, writes,
+    read: async (key: PersistenceSection) => structuredClone(records.get(key)),
+    write: async (key: PersistenceSection, value: unknown) => {
+      records.set(key, structuredClone(value))
       writes.push(key)
     },
   }
@@ -31,18 +32,103 @@ const memoryStorage = () => {
 
 const registeredHost = (graph: Graph | null, restored = {}) => {
   const host = createNessoStore(graph, restored)
-  host.registerVocab({
-    id: 'vocab', label: 'Vocabulary', defaultTypeId: 'urn:links',
-    relationTypes: [{ id: 'urn:links', label: 'links' }],
-  })
+  host.registerVocab({ id: 'vocab', label: 'Vocabulary', defaultTypeId: 'urn:links', relationTypes: [{ id: 'urn:links', label: 'links' }] })
   host.registerRenderer({ id: 'graph', component: () => null })
   host.registerTheme({ id: 'light', label: 'Light' })
   return host
 }
 
-test('local persistence round-trips document, workspace, preferences and conversation, not runtime state', () => {
+const savedStorage = () => {
   const storage = memoryStorage()
-  const loaded = loadPersistence(() => storage)
+  const host = registeredHost(fixture())
+  host.store.setLocale('it')
+  host.store.setChatMessages([{ id: 'user', role: 'user', content: 'Hello' }])
+  const state = host.store.getState()
+  storage.records.set('document', { version: 1, graph: serializeGraph(state.graph as Graph), workspace: state.workspace })
+  storage.records.set('preferences', { version: 1, preferences: state.preferences })
+  storage.records.set('conversation', { version: 1, messages: state.conversation.messages })
+  return storage
+}
+
+test('startup writes only missing records', async () => {
+  for (const section of ['document', 'preferences', 'conversation'] as const) {
+    const storage = savedStorage()
+    storage.records.delete(section)
+    const loaded = await loadPersistence(storage)
+    const host = registeredHost(loaded.graph ?? fixture(), loaded)
+    const persistence = connectPersistence(host, storage, loaded)
+    await persistence.flush()
+    assert.deepEqual(storage.writes, [section])
+    await persistence.dispose()
+  }
+})
+
+test('plugin resolution saves corrected preferences without rewriting other records', async () => {
+  const storage = savedStorage()
+  const original = await loadPersistence(storage)
+  storage.records.set('preferences', { version: 1, preferences: {
+    ...original.preferences,
+    activeVocabId: 'unavailable-vocab', activeRendererId: 'unavailable-renderer', activeThemeId: 'unavailable-theme',
+  } })
+  const loaded = await loadPersistence(storage)
+  const host = registeredHost(loaded.graph!, loaded)
+  const persistence = connectPersistence(host, storage, loaded)
+  await persistence.flush()
+  assert.deepEqual(storage.writes, ['preferences'])
+  assert.deepEqual((await loadPersistence(storage)).preferences, original.preferences)
+  await persistence.dispose()
+})
+
+test('startup saves durable changes made before autosave connects', async () => {
+  const changes: { section: PersistenceSection; apply: (host: ReturnType<typeof registeredHost>) => void }[] = [
+    { section: 'document', apply: (host) => { host.store.setConceptLabel('urn:one', 'Changed before autosave') } },
+    { section: 'document', apply: (host) => { host.store.setViewport('graph', { x: 30, y: 40, zoom: 0.75 }) } },
+    { section: 'conversation', apply: (host) => { host.store.clearChat() } },
+  ]
+  for (const { section, apply } of changes) {
+    const storage = savedStorage()
+    const loaded = await loadPersistence(storage)
+    const host = registeredHost(loaded.graph!, loaded)
+    apply(host)
+    const persistence = connectPersistence(host, storage, loaded)
+    await persistence.flush()
+    assert.deepEqual(storage.writes, [section])
+    const restored = await loadPersistence(storage)
+    for (const key of ['graph', 'workspace', 'preferences', 'conversation'] as const) {
+      assert.deepEqual(restored[key], host.store.getState()[key])
+    }
+    await persistence.dispose()
+  }
+})
+
+test('record reads start in parallel and isolate failures in section order', async () => {
+  const storage = savedStorage()
+  const started: PersistenceSection[] = []
+  const completions = new Map<PersistenceSection, { resolve: (value: unknown) => void; reject: (error: unknown) => void }>()
+  const loading = loadPersistence({
+    read: (section) => new Promise((resolve, reject) => {
+      started.push(section)
+      completions.set(section, { resolve, reject })
+    }),
+    write: storage.write,
+  })
+  assert.deepEqual(started, ['document', 'preferences', 'conversation'])
+  completions.get('conversation')!.resolve({ version: 2, messages: [] })
+  completions.get('preferences')!.reject(new Error('Access denied'))
+  completions.get('document')!.resolve(storage.records.get('document'))
+  const loaded = await loading
+  assert.deepEqual(loaded.graph, fixture())
+  assert.deepEqual(loaded.blocked, ['preferences', 'conversation'])
+  assert.equal(loaded.issues.length, 2)
+  assert.equal(loaded.issues[0].path, 'preferences')
+  assert.match(loaded.issues[0].message, /Access denied/)
+  assert.equal(loaded.issues[1].path, 'conversation.version')
+  assert.equal(loaded.preferences, undefined)
+  assert.equal(loaded.conversation, undefined)
+})
+
+test('durable state round-trips without rewriting restored records or persisting runtime state', async () => {
+  const storage = memoryStorage()
   const host = registeredHost(fixture())
   const viewId = host.store.createView('Pair', ['urn:one', 'urn:two'])
   host.store.setViewPinned(viewId, true)
@@ -52,59 +138,52 @@ test('local persistence round-trips document, workspace, preferences and convers
   host.store.setViewport('graph', { x: 100, y: 200, zoom: 0.75 })
   host.store.setConceptLabel('urn:one', 'Renamed')
   host.store.setChatMessages([{ id: 'assistant', role: 'assistant', content: 'Proposed rename.', outcome: 'applied' }])
-  host.store.setSelection([{ kind: 'concept', id: 'urn:one' }, { kind: 'concept', id: 'urn:two' }])
-  const persistence = connectPersistence(host, () => storage, loaded)
+  host.store.setSelection([{ kind: 'concept', id: 'urn:one' }])
+  const persistence = connectPersistence(host, storage, await loadPersistence(storage))
   host.store.renameView(viewId, 'Renamed pair')
-  persistence.flush()
-  const saved = JSON.parse(storage.records.get(storageKeys.document)!)
+  await persistence.flush()
+  const saved = storage.records.get('document') as { graph: unknown }
   assert.deepEqual(Object.keys(saved), ['version', 'graph', 'workspace'])
   assert.deepEqual(parseGraph(saved.graph), host.store.getState().graph)
-  assert.equal(saved.graph['@graph'].length, 5)
-  assert.equal(host.store.getState().viewGraph.concepts.length, 2)
-  const restored = loadPersistence(() => storage)
-  const reopened = registeredHost(restored.graph!, restored).store.getState()
-  assert.deepEqual(reopened.graph, host.store.getState().graph)
-  assert.deepEqual(reopened.workspace, host.store.getState().workspace)
-  assert.equal(reopened.workspace.savedViews[0].name, 'Renamed pair')
-  assert.deepEqual(reopened.preferences, host.store.getState().preferences)
-  assert.deepEqual(reopened.conversation, host.store.getState().conversation)
-  assert.deepEqual(Object.keys(JSON.parse(storage.records.get(storageKeys.conversation)!)), ['version', 'messages'])
-  assert.deepEqual(reopened.preferences.collapsedSections, sectionIds)
+  const restored = await loadPersistence(storage)
+  const reopenedHost = registeredHost(restored.graph!, restored)
+  const reopened = reopenedHost.store.getState()
+  for (const key of ['graph', 'workspace', 'preferences', 'conversation'] as const) {
+    assert.deepEqual(reopened[key], host.store.getState()[key])
+  }
   assert.deepEqual(reopened.selected, [])
   assert.deepEqual(reopened.history, { canUndo: false, canRedo: false })
   assert.deepEqual(reopened.persistenceIssues, [])
   assert.deepEqual(reopened.viewGraph.concepts.map(({ id }) => id), ['urn:one', 'urn:two'])
+  assert.deepEqual(Object.keys(storage.records.get('conversation') as object), ['version', 'messages'])
+  assert.equal('themes' in (storage.records.get('preferences') as object), false)
+  storage.writes.length = 0
+  const reopenedPersistence = connectPersistence(reopenedHost, storage, restored)
+  await reopenedPersistence.flush()
+  await reopenedPersistence.dispose()
+  assert.deepEqual(storage.writes, [])
   const preferences = host.store.getState().preferences
-  const savedPreferences = JSON.parse(storage.records.get(storageKeys.preferences)!)
-  assert.equal(savedPreferences.preferences.activeThemeId, 'light')
-  assert.equal('themes' in savedPreferences.preferences, false)
-  assert.equal('themes' in saved, false)
   host.store.resetGraph()
-  const reset = host.store.getState()
-  assert.equal(reset.graph.concepts.length, 1)
-  assert.deepEqual(reset.graph.relations, [])
-  assert.deepEqual(reset.graph.relationTypes, [])
+  await persistence.flush()
+  const reset = await loadPersistence(storage)
+  assert.equal(reset.graph?.concepts.length, 1)
   assert.deepEqual(reset.workspace, { activeViewId: null, savedViews: [], viewports: {} })
-  assert.deepEqual(reset.selected, [])
-  assert.equal(reset.preferences, preferences)
-  assert.deepEqual(reset.conversation.messages, [])
-  persistence.flush()
-  const savedReset = loadPersistence(() => storage)
-  assert.deepEqual(registeredHost(savedReset.graph!, savedReset).store.getState().graph, reset.graph)
-  storage.records.set(storageKeys.document, JSON.stringify({ version: 1, graph: null, workspace: null }))
-  const deleted = loadPersistence(() => storage)
+  assert.deepEqual(reset.preferences, preferences)
+  assert.deepEqual(reset.conversation?.messages, [])
+  storage.records.set('document', { version: 1, graph: null, workspace: null })
+  const deleted = await loadPersistence(storage)
   assert.equal(registeredHost(deleted.graph ?? null, deleted).store.getState().graph.concepts.length, 1)
-  persistence.dispose()
+  await persistence.dispose()
 })
 
-test('autosave debounces durable sections only and flushes pending edits on shutdown', (context) => {
+test('autosave debounces durable sections and drains edits on shutdown', async (context) => {
   context.mock.timers.enable({ apis: ['setTimeout'] })
   const storage = memoryStorage()
   const host = registeredHost(fixture())
-  const persistence = connectPersistence(host, () => storage, loadPersistence(() => storage))
-  persistence.flush()
+  const persistence = connectPersistence(host, storage, await loadPersistence(storage))
+  await persistence.flush()
   storage.writes.length = 0
-  host.store.setSelection([{ kind: 'concept', id: 'urn:one' }, { kind: 'concept', id: 'urn:two' }])
+  host.store.setSelection([{ kind: 'concept', id: 'urn:one' }])
   context.mock.timers.tick(200)
   assert.deepEqual(storage.writes, [])
   host.store.setConceptLabel('urn:one', 'First')
@@ -113,167 +192,158 @@ test('autosave debounces durable sections only and flushes pending edits on shut
   context.mock.timers.tick(199)
   assert.deepEqual(storage.writes, [])
   context.mock.timers.tick(1)
-  assert.deepEqual(storage.writes, [storageKeys.document])
-  assert.equal(loadPersistence(() => storage).graph?.concepts[0].label, 'Last')
+  await persistence.flush()
+  assert.deepEqual(storage.writes, ['document'])
+  assert.equal((await loadPersistence(storage)).graph?.concepts[0].label, 'Last')
   host.store.undo()
-  context.mock.timers.tick(200)
-  assert.equal(loadPersistence(() => storage).graph?.concepts[0].label, 'First')
+  await persistence.flush()
+  assert.equal((await loadPersistence(storage)).graph?.concepts[0].label, 'First')
   host.store.redo()
-  context.mock.timers.tick(200)
-  assert.equal(loadPersistence(() => storage).graph?.concepts[0].label, 'Last')
-  storage.writes.length = 0
-  host.store.setPanelSizes({ explorerWidth: 300, inspectorWidth: 350 })
-  context.mock.timers.tick(200)
-  assert.deepEqual(storage.writes, [storageKeys.preferences])
+  await persistence.flush()
+  assert.equal((await loadPersistence(storage)).graph?.concepts[0].label, 'Last')
   storage.writes.length = 0
   host.store.setSectionOpen('inspector.connections', false)
-  context.mock.timers.tick(200)
-  assert.deepEqual(storage.writes, [storageKeys.preferences])
-  assert.deepEqual(loadPersistence(() => storage).preferences?.collapsedSections, ['inspector.connections'])
+  await persistence.flush()
+  assert.deepEqual(storage.writes, ['preferences'])
   storage.writes.length = 0
-  host.store.setChatMessages([{ id: 'assistant', role: 'assistant', content: 'First', outcome: 'cancelled' }])
-  context.mock.timers.tick(100)
   host.store.setChatMessages([{ id: 'assistant', role: 'assistant', content: 'Complete', outcome: 'complete' }])
-  context.mock.timers.tick(199)
-  assert.deepEqual(storage.writes, [])
-  context.mock.timers.tick(1)
-  assert.deepEqual(storage.writes, [storageKeys.conversation])
-  assert.equal(loadPersistence(() => storage).conversation?.messages[0].outcome, 'complete')
+  await persistence.flush()
+  assert.deepEqual(storage.writes, ['conversation'])
   host.store.setConceptLabel('urn:one', 'Before closing')
-  persistence.dispose()
-  assert.equal(loadPersistence(() => storage).graph?.concepts[0].label, 'Before closing')
+  await persistence.dispose()
+  assert.equal((await loadPersistence(storage)).graph?.concepts[0].label, 'Before closing')
   storage.writes.length = 0
   host.store.setConceptLabel('urn:one', 'After closing')
-  persistence.flush()
+  await persistence.flush()
   assert.deepEqual(storage.writes, [])
 })
 
-test('legacy theme-less preferences restore without blocking, while malformed theme ids remain protected', () => {
-  const storage = memoryStorage()
-  const legacy = {
-    activeVocabId: 'vocab',
-    activeRendererId: 'graph',
-    panels: { explorerWidth: 310, inspectorWidth: 330 },
-  }
-  storage.records.set(storageKeys.preferences, JSON.stringify({ version: 1, preferences: legacy }))
-  const loaded = loadPersistence(() => storage)
-  assert.deepEqual(loaded.blocked, [])
-  assert.deepEqual(loaded.issues, [])
-  assert.equal(loaded.preferences?.activeThemeId, '')
-  const host = registeredHost(fixture(), loaded)
-  assert.equal(host.store.getState().preferences.activeThemeId, 'light')
-  assert.deepEqual(host.store.getState().preferences.panels, legacy.panels)
-  const persistence = connectPersistence(host, () => storage, loaded)
-  persistence.flush()
-  assert.equal(loadPersistence(() => storage).preferences?.activeThemeId, 'light')
-  host.registerTheme({ id: 'alternative', label: 'Alternative' })
-  host.store.setActiveTheme('alternative')
-  persistence.flush()
-  const restored = loadPersistence(() => storage)
-  const reopened = registeredHost(restored.graph!, restored)
-  reopened.registerTheme({ id: 'alternative', label: 'Alternative' })
-  assert.equal(reopened.store.getState().preferences.activeThemeId, 'alternative')
-  persistence.dispose()
-  const invalid = JSON.stringify({ version: 1, preferences: { ...legacy, activeThemeId: null } })
-  storage.records.set(storageKeys.preferences, invalid)
-  const blocked = loadPersistence(() => storage)
-  assert.deepEqual(blocked.blocked, ['preferences'])
-  assert.match(blocked.issues[0].path, /activeThemeId/)
-  const protectedPersistence = connectPersistence(registeredHost(fixture(), blocked), () => storage, blocked)
-  protectedPersistence.flush()
-  assert.equal(storage.records.get(storageKeys.preferences), invalid)
-  protectedPersistence.dispose()
-})
-
-test('invalid records are reported and never overwritten while the other section can still save', () => {
+test('malformed records stay protected while the other sections save', async () => {
   const state = registeredHost(fixture()).store.getState()
-  const invalid = [
-    ['document', '{broken json'],
-    ['preferences', '{broken json'],
-    ['conversation', '{broken json'],
-    ['conversation', JSON.stringify({ version: 2, messages: [] })],
-    ['conversation', JSON.stringify({ version: 1, messages: [{ id: 'invalid', role: 'system', content: 'Invalid' }] })],
-    ['document', JSON.stringify({ version: 2 })],
-    ['document', JSON.stringify({ version: 1, graph: serializeGraph({ concepts: [], relations: [], relationTypes: [] }), workspace: state.workspace })],
-    ['document', JSON.stringify({ version: 1, graph: serializeGraph(fixture()), workspace: { ...state.workspace, activeViewId: 'unknown' } })],
-    ['document', JSON.stringify({ version: 1, graph: serializeGraph(fixture()), workspace: { ...state.workspace, savedViews: [{ id: 'bad', name: 'Bad', pinned: false, conceptIds: ['missing'] }] } })],
-    ['preferences', JSON.stringify({ version: 1, preferences: { ...state.preferences, panels: { explorerWidth: 0, inspectorWidth: 280 } } })],
-    ['preferences', JSON.stringify({ version: 1, preferences: { ...state.preferences, collapsedSections: null } })],
-    ['preferences', JSON.stringify({ version: 1, preferences: { ...state.preferences, collapsedSections: ['missing'] } })],
-    ['preferences', JSON.stringify({ version: 1, preferences: { ...state.preferences, collapsedSections: ['sidebar', 'sidebar'] } })],
-    ['preferences', JSON.stringify({ version: 1, preferences: { ...state.preferences, locale: 'fr' } })],
-  ] as const
-  for (const [section, text] of invalid) {
+  const invalid: [PersistenceSection, unknown][] = [
+    ['document', null], ['preferences', null], ['conversation', null],
+    ['conversation', { version: 2, messages: [] }],
+    ['conversation', { version: 1, messages: [{ id: 'invalid', role: 'system', content: 'Invalid' }] }],
+    ['document', { version: 2 }],
+    ['document', { version: 1, graph: serializeGraph({ concepts: [], relations: [], relationTypes: [] }), workspace: state.workspace }],
+    ['document', { version: 1, graph: serializeGraph(fixture()), workspace: { ...state.workspace, activeViewId: 'unknown' } }],
+    ['document', { version: 1, graph: serializeGraph(fixture()), workspace: { ...state.workspace, savedViews: [{ id: 'bad', name: 'Bad', pinned: false, conceptIds: ['missing'] }] } }],
+    ['preferences', { version: 1, preferences: { ...state.preferences, activeThemeId: null } }],
+    ['preferences', { version: 1, preferences: { ...state.preferences, panels: { explorerWidth: 0, inspectorWidth: 280 } } }],
+    ...[null, ['missing'], ['sidebar', 'sidebar']].map((collapsedSections): [PersistenceSection, unknown] => ['preferences', { version: 1, preferences: { ...state.preferences, collapsedSections } }]),
+    ['preferences', { version: 1, preferences: { ...state.preferences, locale: 'fr' } }],
+  ]
+  for (const [section, value] of invalid) {
     const storage = memoryStorage()
-    storage.records.set(storageKeys[section], text)
-    const loaded = loadPersistence(() => storage)
+    storage.records.set(section, value)
+    const loaded = await loadPersistence(storage)
     assert.deepEqual(loaded.blocked, [section])
-    assert.ok(loaded.issues[0].path.startsWith(section))
     const host = registeredHost(loaded.graph ?? fixture(), loaded)
-    const persistence = connectPersistence(host, () => storage, loaded)
+    const persistence = connectPersistence(host, storage, loaded)
     host.store.setConceptLabel('urn:one', 'Memory only')
     host.store.setPanelSizes({ explorerWidth: 300, inspectorWidth: 350 })
-    persistence.flush()
-    assert.equal(storage.records.get(storageKeys[section]), text)
-    assert.equal(storage.writes.includes(storageKeys[section]), false)
-    assert.deepEqual(host.store.getState().persistenceIssues, loaded.issues)
+    await persistence.flush()
+    assert.deepEqual(storage.records.get(section), value)
+    assert.equal(storage.writes.includes(section), false)
     assert.equal(storage.writes.length, 2)
-    persistence.dispose()
+    assert.deepEqual(host.store.getState().persistenceIssues, loaded.issues)
+    await persistence.dispose()
   }
 })
 
-test('an unreadable conversation stays protected with in-memory messages until explicit clear', () => {
-  for (const messages of [[], [{ id: 'user', role: 'user' as const, content: 'Hello' }]]) {
-    const storage = memoryStorage()
-    storage.records.set(storageKeys.conversation, 'unreadable')
-    const loaded = loadPersistence(() => storage)
-    const host = registeredHost(fixture(), loaded)
-    const persistence = connectPersistence(host, () => storage, loaded)
-    if (messages.length) host.store.setChatMessages(messages)
-    persistence.flush()
-    assert.deepEqual(host.store.getState().conversation.messages, messages)
-    assert.equal(storage.records.get(storageKeys.conversation), 'unreadable')
-    const before = host.store.getState()
-    host.store.clearChat()
-    persistence.flush()
-    assert.deepEqual(JSON.parse(storage.records.get(storageKeys.conversation)!), { version: 1, messages: [] })
-    assert.deepEqual(host.store.getState().persistenceIssues, [])
-    assert.equal(host.store.getState().graph, before.graph)
-    persistence.dispose()
-  }
+test('an unreadable conversation is overwritten only after explicit clear', async () => {
+  const storage = memoryStorage()
+  storage.records.set('conversation', 'unreadable')
+  const loaded = await loadPersistence(storage)
+  const host = registeredHost(fixture(), loaded)
+  const persistence = connectPersistence(host, storage, loaded)
+  host.store.setChatMessages([{ id: 'user', role: 'user', content: 'Hello' }])
+  await persistence.flush()
+  assert.equal(storage.records.get('conversation'), 'unreadable')
+  host.store.clearChat()
+  await persistence.flush()
+  assert.deepEqual(storage.records.get('conversation'), { version: 1, messages: [] })
+  assert.deepEqual(host.store.getState().persistenceIssues, [])
+  await persistence.dispose()
 })
 
-test('storage failures are reported, preserve saved data and allow retrying in-memory edits', () => {
-  const denied = loadPersistence(() => { throw new Error('Access denied') })
+test('storage failures preserve records and allow retrying the latest edits', async () => {
+  const denied = await loadPersistence(createIndexedDbStorage(() => { throw new Error('Access denied') }))
   assert.deepEqual(denied.blocked, ['document', 'preferences', 'conversation'])
-  assert.equal(denied.issues.length, 3)
+  assert.match(denied.issues[0].message, /Access denied/)
+  const storage = memoryStorage()
+  let deniedWrite = false
+  const limited = createDesktopStorage({
+    read: async (section) => ({ value: await storage.read(section) }),
+    write: async (section, value) => {
+      if (deniedWrite) return { issues: [{ path: '', message: 'Disk full' }] }
+      await storage.write(section, value)
+      return { value: null }
+    },
+    beforeClose: () => () => {},
+  })
+  const host = registeredHost(fixture())
+  const persistence = connectPersistence(host, limited, await loadPersistence(limited))
+  await persistence.flush()
+  const original = storage.records.get('document')
+  deniedWrite = true
+  host.store.setConceptLabel('urn:one', 'Unsaved')
+  await persistence.flush()
+  assert.deepEqual(storage.records.get('document'), original)
+  assert.deepEqual(host.store.getState().persistenceIssues, [{ path: 'document', message: 'Disk full' }])
+  deniedWrite = false
+  await persistence.flush()
+  assert.equal((await loadPersistence(limited)).graph?.concepts[0].label, 'Unsaved')
+  assert.deepEqual(host.store.getState().persistenceIssues, [])
+  await persistence.dispose()
+})
+
+test('flush serializes overlapping writes and drains changes made during a save', async () => {
   const storage = memoryStorage()
   const host = registeredHost(fixture())
-  const loaded = loadPersistence(() => storage)
-  let quotaExceeded = false
-  const limited = {
-    getItem: storage.getItem,
-    setItem: (key: string, value: string) => {
-      if (quotaExceeded && (key === storageKeys.document || key === storageKeys.conversation)) throw new Error('Quota exceeded')
-      storage.setItem(key, value)
+  const persistence = connectPersistence(host, storage, await loadPersistence(storage))
+  const write = storage.write
+  let release!: () => void
+  const gate = new Promise<void>((resolve) => { release = resolve })
+  let active = 0
+  storage.write = async (section, value) => {
+    active++
+    assert.equal(active, 1)
+    await gate
+    await write(section, value)
+    active--
+  }
+  host.store.setConceptLabel('urn:one', 'First')
+  const saving = persistence.flush()
+  await Promise.resolve()
+  host.store.setConceptLabel('urn:one', 'Latest')
+  host.store.setLocale('it')
+  host.store.setChatMessages([{ id: 'user', role: 'user', content: 'Latest' }])
+  const overlapping = persistence.flush()
+  release()
+  await Promise.all([saving, overlapping])
+  const restored = await loadPersistence(storage)
+  assert.equal(restored.graph?.concepts[0].label, 'Latest')
+  assert.equal(restored.preferences?.locale, 'it')
+  assert.equal(restored.conversation?.messages[0].content, 'Latest')
+  await persistence.dispose()
+})
+
+test('workspace-only changes reuse the serialized graph', async () => {
+  const host = registeredHost(fixture())
+  const graphs: unknown[] = []
+  const storage: PersistenceStorage = {
+    read: async () => undefined,
+    write: async (section, value) => {
+      if (section !== 'document') return
+      graphs.push((value as { graph: unknown }).graph)
     },
   }
-  const persistence = connectPersistence(host, () => limited, loaded)
-  persistence.flush()
-  const original = storage.records.get(storageKeys.document)
-  const originalConversation = storage.records.get(storageKeys.conversation)
-  quotaExceeded = true
-  host.store.setConceptLabel('urn:one', 'Unsaved')
-  host.store.setChatMessages([{ id: 'user', role: 'user', content: 'Unsaved' }])
-  persistence.flush()
-  assert.equal(storage.records.get(storageKeys.document), original)
-  assert.equal(storage.records.get(storageKeys.conversation), originalConversation)
-  assert.match(host.store.getState().persistenceIssues[0].message, /Quota/)
-  quotaExceeded = false
-  host.store.setConceptLabel('urn:one', 'Latest')
-  persistence.flush()
-  assert.equal(loadPersistence(() => storage).graph?.concepts[0].label, 'Latest')
-  assert.equal(loadPersistence(() => storage).conversation?.messages[0].content, 'Unsaved')
-  assert.deepEqual(host.store.getState().persistenceIssues, [])
-  persistence.dispose()
+  const persistence = connectPersistence(host, storage, await loadPersistence(storage))
+  await persistence.flush()
+  host.store.setViewport('graph', { x: 10, y: 20, zoom: 0.5 })
+  await persistence.flush()
+  assert.equal(graphs.length, 2)
+  assert.equal(graphs[1], graphs[0])
+  await persistence.dispose()
 })

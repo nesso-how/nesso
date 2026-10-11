@@ -1,4 +1,4 @@
-import { app, BrowserWindow, clipboard, ipcMain, safeStorage, type IpcMainEvent, type IpcMainInvokeEvent, type WebContents } from 'electron'
+import { app, clipboard, ipcMain, safeStorage, type IpcMainInvokeEvent, type WebContents } from 'electron'
 import { randomUUID } from 'node:crypto'
 import path from 'node:path'
 import { z } from 'zod'
@@ -8,6 +8,7 @@ import { startMcpServer } from './mcp-server.ts'
 import type { McpEvent, McpState } from './mcp-bridge.ts'
 import { createMcpAccess } from './mcp-access.ts'
 import { createAiStorage } from './ai-storage.ts'
+import type { TrustedRequest } from './ipc.ts'
 
 const replySchema = z.union([
   z.strictObject({ value: z.json() }),
@@ -16,12 +17,8 @@ const replySchema = z.union([
 
 const stoppedUrl = 'http://127.0.0.1:3210/mcp'
 
-export function connectMcp(dev: boolean) {
+export function connectMcp(trusted: TrustedRequest) {
   const access = createMcpAccess(createAiStorage(path.join(app.getPath('userData'), 'mcp-access.enc'), safeStorage))
-  const url = dev ? 'http://127.0.0.1:5173/' : 'nesso://app/'
-  const trusted = (event: IpcMainEvent | IpcMainInvokeEvent) =>
-    BrowserWindow.getAllWindows().some((window) => window.webContents === event.sender)
-    && event.senderFrame === event.sender.mainFrame && event.senderFrame.url === url
   let host: WebContents | undefined
   let server: Awaited<ReturnType<typeof startMcpServer>> | undefined
   let changing = false
