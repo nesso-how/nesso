@@ -14,6 +14,12 @@
   font-display: swap;
 }
 
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: 140ms; }
+
 :root {
   color-scheme: light;
   --background: #fff;
@@ -154,5 +160,6 @@ footer { display: flex; justify-content: space-between; gap: 16px; align-items: 
 }
 
 @media (prefers-reduced-motion: reduce) {
+  @view-transition { navigation: none; }
   * { transition: none !important; animation: none !important; }
 }
