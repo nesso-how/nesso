@@ -22,9 +22,11 @@
 
 ## Persistence
 
-- Persist versioned document/workspace and preference records separately using localStorage. Validate restoration before autosave, resolve active plugin IDs during registration, debounce durable changes, and flush on page hide.
+- Persist versioned snapshots through one asynchronous API: IndexedDB on web, JSON files in Electron userData through restricted IPC on desktop. Keep graph and workspace in one atomic record; preferences and conversation are separate records.
+- Validate restoration and resolve saved plugin IDs before autosave. Save only missing or changed records, debounce durable changes, and serialize writes. Replace desktop files atomically.
+- Web lifecycle flushes are best effort. Desktop close and update installation must await successful saving.
 - Never overwrite unreadable records. Report storage failures visibly and keep editing available in memory.
-- `src/data/seed-graph.json` and `seed-views.json` seed only the first document. Legacy deleted records and unreadable documents start with one fresh concept instead.
+- `src/data/seed-graph.json` and `seed-views.json` seed only the first document. Deleted records and unreadable documents start with one fresh concept instead.
 - `resetGraph` atomically creates a fresh single-concept graph with no saved views, preserving preferences. Do not persist history.
 
 ## Plugins and UI

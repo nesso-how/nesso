@@ -2,8 +2,18 @@ import type { UpdateBridge, UpdateState } from './updates.js'
 import type { AiBridge } from './ai-bridge.js'
 import type { AiChatEvent } from '@nesso/ai'
 import type { McpBridge, McpEvent, McpState } from './mcp-bridge.js'
+import type { PersistenceBridge } from '../shared/persistence.js'
 
 const { contextBridge, ipcRenderer } = require('electron') as typeof import('electron')
+const beforeSave = (request: string, reply: string, save: () => Promise<boolean>) => {
+  const prepare = async () => {
+    const saved = await Promise.resolve().then(save).catch(() => false)
+    ipcRenderer.send(reply, saved)
+  }
+  ipcRenderer.on(request, prepare)
+  return () => { ipcRenderer.removeListener(request, prepare) }
+}
+
 const updater: UpdateBridge = {
   subscribe: (listener) => {
     const receive = (_event: unknown, state: UpdateState) => listener(state)
@@ -12,20 +22,19 @@ const updater: UpdateBridge = {
     return () => { ipcRenderer.removeListener('update:state', receive) }
   },
   restart: () => ipcRenderer.send('update:restart'),
-  beforeInstall: (save) => {
-    const prepare = () => {
-      let saved = false
-      try {
-        saved = save()
-      } finally {
-        ipcRenderer.send('update:install', saved)
-      }
-    }
-    ipcRenderer.on('update:prepare', prepare)
-    return () => { ipcRenderer.removeListener('update:prepare', prepare) }
-  },
+  beforeInstall: (save) => beforeSave('update:prepare', 'update:install', save),
 }
 contextBridge.exposeInMainWorld('nessoUpdater', updater)
+const persistence: PersistenceBridge = {
+  read: (section) => ipcRenderer.invoke('storage:read', section),
+  write: (section, value) => ipcRenderer.invoke('storage:write', section, value),
+  beforeClose: (save) => {
+    const stop = beforeSave('storage:prepare', 'storage:closed', save)
+    ipcRenderer.send('storage:ready')
+    return stop
+  },
+}
+contextBridge.exposeInMainWorld('nessoPersistence', persistence)
 const ai: AiBridge = {
   list: () => ipcRenderer.invoke('ai:list'),
   save: (input) => ipcRenderer.invoke('ai:save', input),

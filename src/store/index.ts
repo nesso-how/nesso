@@ -5,15 +5,18 @@ import seedViews from '../data/seed-views.json'
 import { createNessoStore } from './create.ts'
 import { connectPersistence, loadPersistence } from './persistence.ts'
 import type { HostState } from './types.ts'
+import { createDesktopStorage, createIndexedDbStorage } from './storage.ts'
 
-const storage = () => window.localStorage
-const loaded = loadPersistence(storage)
+const storage = window.nessoPersistence
+  ? createDesktopStorage(window.nessoPersistence)
+  : createIndexedDbStorage(() => window.indexedDB)
+const loaded = await loadPersistence(storage)
 
 const firstRun = loaded.graph === undefined && !loaded.blocked.includes('document')
 const graph = firstRun ? parseGraph(seed) : loaded.graph ?? null
 export const host = createNessoStore(graph, firstRun ? {
   ...loaded,
-    workspace: { activeViewId: null, savedViews: seedViews, viewports: {} },
+  workspace: { activeViewId: null, savedViews: seedViews, viewports: {} },
 } : loaded)
 host.setPersistenceIssues(loaded.issues)
 
@@ -21,21 +24,25 @@ export const { store: nessoStore, registerVocab, registerRenderer, getRenderer, 
 
 export const startAutosave = (): (() => void) => {
   const persistence = connectPersistence(host, storage, loaded)
-  const stopUpdateSave = window.nessoUpdater?.beforeInstall(() => {
+  const save = async () => {
     if (document.activeElement instanceof HTMLElement) document.activeElement.blur()
-    persistence.flush()
+    await persistence.flush()
     return host.store.getState().persistenceIssues.length === 0
-  })
-  const onVisibilityChange = () => {
-    if (document.visibilityState === 'hidden') persistence.flush()
   }
-  window.addEventListener('pagehide', persistence.flush)
+  const stopUpdateSave = window.nessoUpdater?.beforeInstall(save)
+  const stopCloseSave = window.nessoPersistence?.beforeClose(save)
+  const flush = () => { void persistence.flush() }
+  const onVisibilityChange = () => {
+    if (document.visibilityState === 'hidden') flush()
+  }
+  window.addEventListener('pagehide', flush)
   document.addEventListener('visibilitychange', onVisibilityChange)
   return () => {
     stopUpdateSave?.()
-    window.removeEventListener('pagehide', persistence.flush)
+    stopCloseSave?.()
+    window.removeEventListener('pagehide', flush)
     document.removeEventListener('visibilitychange', onVisibilityChange)
-    persistence.dispose()
+    void persistence.dispose()
   }
 }
 

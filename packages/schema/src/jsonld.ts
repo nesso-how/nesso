@@ -99,17 +99,14 @@ export function serializeGraph(graph: Graph): JsonObject {
   const entries: JsonObject[] = graph.relationTypes.map(({ id, label }) => ({
     '@id': id, '@type': 'rdf:Property', 'rdfs:label': label,
   }))
-  for (const concept of graph.concepts) {
-    const entry: JsonObject = {
-      '@id': concept.id,
-      'rdfs:label': concept.label,
-      position: concept.position,
-    }
-    for (const relation of graph.relations.filter((item) => item.source === concept.id)) {
-      const targets = entry[relation.predicate] as { '@id': string }[] | undefined
-      entry[relation.predicate] = [...(targets ?? []), { '@id': relation.target }]
-    }
-    entries.push(entry)
+  const concepts = new Map<string, JsonObject>(graph.concepts.map(({ id, label, position }) => [id, {
+    '@id': id, 'rdfs:label': label, position,
+  }]))
+  for (const relation of graph.relations) {
+    const entry = concepts.get(relation.source)!
+    const targets = entry[relation.predicate] as { '@id': string }[] | undefined
+    if (targets) targets.push({ '@id': relation.target })
+    else entry[relation.predicate] = [{ '@id': relation.target }]
   }
-  return { '@context': structuredClone(schemaContext), '@graph': entries }
+  return { '@context': structuredClone(schemaContext), '@graph': [...entries, ...concepts.values()] }
 }

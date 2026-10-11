@@ -10,7 +10,7 @@ export type UpdateState = {
 export type UpdateBridge = {
   subscribe: (listener: (state: UpdateState) => void) => () => void
   restart: () => void
-  beforeInstall: (save: () => boolean) => () => void
+  beforeInstall: (save: () => Promise<boolean>) => () => void
 }
 
 export function connectUpdates(updater: AppUpdater, nativeUpdater: AutoUpdater | undefined, notify: (state: UpdateState) => void) {

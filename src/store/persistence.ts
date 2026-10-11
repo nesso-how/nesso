@@ -4,16 +4,8 @@ import { NessoError } from './errors.ts'
 import { fail, object, parseConversation, parsePreferences, parseWorkspace } from './settings.ts'
 import type { Preferences, WorkspaceState } from '@nesso/plugin'
 import type { HostState } from './types.ts'
-
-type Section = 'document' | 'preferences' | 'conversation'
-type StorageSource = () => Pick<Storage, 'getItem' | 'setItem'>
-const sections = ['document', 'preferences', 'conversation'] as const
-
-export const storageKeys = {
-  document: 'nesso.document',
-  preferences: 'nesso.preferences',
-  conversation: 'nesso.conversation',
-} as const
+import { persistenceSections as sections, type PersistenceSection as Section, type PersistenceStorage } from '../../shared/persistence.ts'
+import { sameGraph, samePreferences, sameWorkspace } from './operations.ts'
 
 export type LoadedState = {
   graph?: Graph | null
@@ -27,24 +19,27 @@ export type LoadedState = {
 const storageError = (section: Section, error: unknown): NessoError => {
   const issues = error instanceof NessoError || error instanceof SchemaError
     ? error.issues
-    : [{ path: '', message: error instanceof Error ? error.message : 'Local storage failed' }]
+    : [{ path: '', message: error instanceof Error ? error.message : 'Storage failed' }]
   return new NessoError(issues.map(({ path, message }) => ({
     path: path ? `${section}.${path}` : section,
     message,
   })))
 }
 
-export const loadPersistence = (storage: StorageSource): LoadedState => {
+export const loadPersistence = async (storage: PersistenceStorage): Promise<LoadedState> => {
   const loaded: LoadedState = { blocked: [], issues: [] }
-  for (const section of sections) {
+  const records = await Promise.allSettled(sections.map(async (section) => storage.read(section)))
+  for (const [index, section] of sections.entries()) {
     try {
-      const text = storage().getItem(storageKeys[section])
-      if (text === null) continue
+      const record = records[index]
+      if (record.status === 'rejected') throw record.reason
+      const value = record.value
+      if (value === undefined) continue
       if (section === 'conversation') {
-        loaded.conversation = parseConversation(JSON.parse(text))
+        loaded.conversation = parseConversation(value)
         continue
       }
-      const saved = object(JSON.parse(text), '', section === 'document'
+      const saved = object(value, '', section === 'document'
         ? ['version', 'graph', 'workspace'] : ['version', 'preferences'])
       if (saved.version !== 1) fail('version', 'Unsupported storage version')
       if (section === 'document') {
@@ -75,56 +70,78 @@ export const loadPersistence = (storage: StorageSource): LoadedState => {
 
 export const connectPersistence = (
   host: ReturnType<typeof createNessoStore>,
-  storage: StorageSource,
+  storage: PersistenceStorage,
   loaded: LoadedState,
 ) => {
   let previous = host.store.getState()
   const blocked = new Set(loaded.blocked)
   let readIssues = loaded.issues
-  const pending = new Set<Section>(sections.filter((section) => !loaded.blocked.includes(section)))
+  const changed = {
+    document: !loaded.graph || !loaded.workspace
+      || !sameGraph(previous.graph, loaded.graph) || !sameWorkspace(previous.workspace, loaded.workspace),
+    preferences: !loaded.preferences || !samePreferences(previous.preferences, loaded.preferences),
+    conversation: !loaded.conversation || JSON.stringify(previous.conversation) !== JSON.stringify(loaded.conversation),
+  }
+  const pending = new Set(sections.filter((section) => changed[section] && !blocked.has(section)))
   let timer: ReturnType<typeof setTimeout> | undefined
   const writeIssues: Partial<Record<Section, SchemaIssue[]>> = {}
+  let writing: Promise<void> | undefined
+  let serializedGraph: { source: HostState['graph']; value: ReturnType<typeof serializeGraph> } | undefined
 
-  const flush = (): void => {
-    clearTimeout(timer)
-    const state = host.store.getState()
-    for (const section of pending) {
-      try {
-        const saved = section === 'document' ? {
-          version: 1,
-          graph: serializeGraph(structuredClone(state.graph) as Graph),
-          workspace: state.workspace,
-        } : section === 'preferences' ? { version: 1, preferences: state.preferences }
-          : { version: 1, messages: state.conversation.messages }
-        storage().setItem(storageKeys[section], JSON.stringify(saved))
-        pending.delete(section)
-        delete writeIssues[section]
-      } catch (error) {
-        writeIssues[section] = storageError(section, error).issues
+  const save = async (): Promise<void> => {
+    while (pending.size) {
+      const batch = [...pending]
+      pending.clear()
+      const state = host.store.getState()
+      for (const section of batch) {
+        try {
+          if (section === 'document' && serializedGraph?.source !== state.graph) {
+            serializedGraph = { source: state.graph, value: serializeGraph(state.graph as Graph) }
+          }
+          const saved = section === 'document' ? {
+            version: 1, graph: serializedGraph!.value, workspace: state.workspace,
+          } : section === 'preferences' ? { version: 1, preferences: state.preferences }
+            : { version: 1, messages: state.conversation.messages }
+          await storage.write(section, saved)
+          delete writeIssues[section]
+        } catch (error) {
+          writeIssues[section] = storageError(section, error).issues
+        }
       }
+      host.setPersistenceIssues([...readIssues, ...Object.values(writeIssues).flat()])
     }
-    host.setPersistenceIssues([...readIssues, ...Object.values(writeIssues).flat()])
+    for (const section of sections) {
+      if (writeIssues[section]) pending.add(section)
+    }
+  }
+
+  const flush = (): Promise<void> => {
+    clearTimeout(timer)
+    writing ??= Promise.resolve().then(save).finally(() => { writing = undefined })
+    return writing
   }
 
   const schedule = (): void => {
     clearTimeout(timer)
-    timer = setTimeout(flush, 200)
+    timer = setTimeout(() => { void flush() }, 200)
   }
 
   const unsubscribe = host.store.subscribe(() => {
     const state = host.store.getState()
-    const documentChanged = state.graph !== previous.graph || state.workspace !== previous.workspace
-    const preferencesChanged = state.preferences !== previous.preferences
-    const conversationChanged = state.conversation !== previous.conversation
+    const changed = {
+      document: state.graph !== previous.graph || state.workspace !== previous.workspace,
+      preferences: state.preferences !== previous.preferences,
+      conversation: state.conversation !== previous.conversation,
+    }
     previous = state
-    if (conversationChanged && state.conversation.messages.length === 0) {
+    if (changed.conversation && state.conversation.messages.length === 0) {
       blocked.delete('conversation')
       readIssues = readIssues.filter(({ path }) => !path.startsWith('conversation'))
     }
-    if (documentChanged && !blocked.has('document')) pending.add('document')
-    if (preferencesChanged && !blocked.has('preferences')) pending.add('preferences')
-    if (conversationChanged && !blocked.has('conversation')) pending.add('conversation')
-    if ((documentChanged || preferencesChanged || conversationChanged) && pending.size) schedule()
+    for (const section of sections) {
+      if (changed[section] && !blocked.has(section)) pending.add(section)
+    }
+    if (pending.size && sections.some((section) => changed[section])) schedule()
   })
 
   host.setPersistenceIssues(readIssues)
@@ -132,9 +149,9 @@ export const connectPersistence = (
 
   return {
     flush,
-    dispose: (): void => {
+    dispose: async (): Promise<void> => {
       unsubscribe()
-      flush()
+      await flush()
     },
   }
 }
