@@ -24,6 +24,6 @@ test('the site build emits complete localized pages with matching language links
       assert.ok(html.includes(`<link rel="alternate" hreflang="${language}"`))
       assert.ok(html.includes(`lang="${language}" hreflang="${language}"`))
     }
-    if (locale === 'it') assert.ok(html.includes('con l&#39;aiuto dell&#39;IA'))
+    if (locale === 'it') assert.ok(html.includes('con l’aiuto dell’IA'))
   }
 })
