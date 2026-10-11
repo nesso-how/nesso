@@ -1,0 +1,7 @@
+{
+  "pluginName": "导入",
+  "pluginDescription": "从 JSON-LD 文件导入 Nesso 视图。",
+  "pluginDocumentation": "导入功能将 Nesso JSON-LD 文件合并到当前图谱，为概念生成新 ID，并保留标签、位置、关系和缺失的关系类型。导入的概念会加入执行此操作的视图。",
+  "importView": "导入",
+  "importFailure": "无法将此文件导入为 Nesso 视图。"
+}

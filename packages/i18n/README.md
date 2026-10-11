@@ -4,7 +4,7 @@ Framework-independent i18next wrapper with typed keys, interpolation, plurals, a
 
 ## Usage
 
-Create `en.json` and `it.json` alongside your host or plugin:
+Create `en.json`, `it.json`, and `zh-CN.json` alongside your host or plugin:
 
 `en.json`:
 
@@ -27,26 +27,37 @@ Create `en.json` and `it.json` alongside your host or plugin:
 }
 ```
 
+`zh-CN.json`:
+
+```json
+{
+  "greeting": "你好，{{name}}",
+  "conceptCount_other": "{{count}} 个概念"
+}
+```
+
 ```ts
 import { createTranslator } from '@nesso/i18n'
 import en from './en.json' with { type: 'json' }
 import it from './it.json' with { type: 'json' }
+import zhCN from './zh-CN.json' with { type: 'json' }
 
-const translate = createTranslator(en, { it })
+const translate = createTranslator(en, { it, 'zh-CN': zhCN })
 const t = translate('it')
 console.log(t('greeting', { name: 'Omar' }))
 console.log(t('conceptCount', { count: 2 }))
 ```
 
-Catalogs use native i18next JSON: `{{name}}` placeholders and plural suffixes such as `_one`/`_other`, plus `_many` for Italian. Call plural messages by their base key with a finite `count`. Bundled resources initialize synchronously; i18next handles interpolation and plural selection.
+Catalogs use native i18next JSON: `{{name}}` placeholders and plural suffixes such as `_one`/`_other`, plus `_many` for Italian. Simplified Chinese uses only `_other` for every count. Call plural messages by their base key with a finite `count`. Bundled resources initialize synchronously; i18next handles interpolation and plural selection.
 
-The host persists `preferences.locale`, defaulting to English; plugins read and subscribe through their injected store. Translate interface text, not document contents or vocabulary IRIs.
+The host uses a saved `preferences.locale` when available; otherwise it detects a supported locale from `navigator.languages`, falling back to English, and persists the choice. Plugins read and subscribe through their injected store. Translate interface text, not document contents or vocabulary IRIs.
 
 ## API
 
 - `createTranslator`: infer base keys from the English catalog and return a locale-bound translator with English fallback.
-- `locales`, `defaultLocale`, `localeNames`: supported English/Italian locales, English default, and native display names.
+- `locales`, `defaultLocale`, `localeNames`: supported English, Italian, and Simplified Chinese (`zh-CN`) locales, English default, and native display names.
 - `isLocale`: check whether a value is a supported locale.
+- `detectLocale(languages)`: find the first supported language in an ordered list of BCP 47 tags, matching regional variants and Simplified Chinese scripts, with English fallback. Traditional Chinese does not match Simplified Chinese.
 
 Unknown keys, missing interpolation values, and invalid plural counts throw `I18nError` with structured `issues`. Returned strings are unescaped: render them as text, never as HTML. See [src/index.ts](src/index.ts) for signatures and types.
 

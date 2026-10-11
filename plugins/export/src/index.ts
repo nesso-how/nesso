@@ -3,8 +3,9 @@ import { serializeGraph, type Graph } from '@nesso/schema'
 import { createTranslator, defaultLocale } from '@nesso/i18n'
 import en from './i18n/en.json' with { type: 'json' }
 import it from './i18n/it.json' with { type: 'json' }
+import zhCN from './i18n/zh-CN.json' with { type: 'json' }
 
-const translate = createTranslator(en, { it })
+const translate = createTranslator(en, { it, 'zh-CN': zhCN })
 
 export const downloadGraph = (graph: GraphSnapshot, name = 'graph'): void => {
   const blob = new Blob([JSON.stringify(serializeGraph(structuredClone(graph) as Graph), null, 2)], {

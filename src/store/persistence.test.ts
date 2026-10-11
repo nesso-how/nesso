@@ -47,7 +47,7 @@ test('local persistence round-trips document, workspace, preferences and convers
   const viewId = host.store.createView('Pair', ['urn:one', 'urn:two'])
   host.store.setViewPinned(viewId, true)
   host.store.setPanelSizes({ explorerWidth: 310, inspectorWidth: 330 })
-  host.store.setLocale('it')
+  host.store.setLocale('zh-CN')
   for (const id of sectionIds) host.store.setSectionOpen(id, false)
   host.store.setViewport('graph', { x: 100, y: 200, zoom: 0.75 })
   host.store.setConceptLabel('urn:one', 'Renamed')
