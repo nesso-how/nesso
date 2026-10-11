@@ -1,101 +1,105 @@
 <!doctype html>
-<html lang="en">
+<html lang="{{lang}}">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#ffffff">
-    <meta name="description" content="A second brain built on connections. Connect ideas in one knowledge graph. Built on a small core with an open, extensible plugin architecture.">
-    <title>Nesso — A second brain built on connections</title>
+    <meta name="description" content="{{metaDescription}}">
+    <title>{{pageTitle}}</title>
     <meta property="og:type" content="website">
-    <meta property="og:title" content="Nesso — A second brain built on connections">
-    <meta property="og:description" content="Connect ideas in one knowledge graph. Built on a small core with an open, extensible plugin architecture.">
-    <link rel="canonical" href="https://nesso.how/">
+    <meta property="og:title" content="{{pageTitle}}">
+    <meta property="og:description" content="{{socialDescription}}">
+    <link rel="canonical" href="{{pageUrl}}">
+    {{alternateLinks}}
     <link rel="describedby" href="/llms.txt">
-    <meta property="og:url" content="https://nesso.how/">
-    <link rel="icon" type="image/svg+xml" href="./favicon.svg">
-    <link rel="apple-touch-icon" href="./apple-touch-icon.png">
+    <meta property="og:url" content="{{pageUrl}}">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <meta property="og:image" content="https://nesso.how/og.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta property="og:image:alt" content="Nesso logo and tagline">
+    <meta property="og:image:alt" content="{{imageAlt}}">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Nesso — A second brain built on connections">
-    <meta name="twitter:description" content="Connect ideas in one knowledge graph. Built on a small core with an open, extensible plugin architecture.">
+    <meta name="twitter:title" content="{{pageTitle}}">
+    <meta name="twitter:description" content="{{socialDescription}}">
     <meta name="twitter:image" content="https://nesso.how/og.png">
-    <link rel="stylesheet" href="./styles.css">
+    <link rel="stylesheet" href="/styles.css">
   </head>
   <body>
     <div class="page">
       <header class="header">
-        <a class="brand" href="./" aria-label="Nesso home">
-          <img class="brand-mark" src="./favicon.svg" alt="" width="28" height="28" />
+        <a class="brand" href="{{pagePath}}" aria-label="{{home}}">
+          <img class="brand-mark" src="/favicon.svg" alt="" width="28" height="28" />
           <span class="wordmark">nesso<span class="cursor" aria-hidden="true"></span></span>
         </a>
-        <nav aria-label="Project links">
-          <a class="repository-link" href="https://github.com/nesso-how/nesso" target="_blank" rel="noopener noreferrer" aria-label="GitHub repository (opens in a new tab)" title="GitHub repository">
+        <nav aria-label="{{projectLinks}}">
+          <a class="repository-link" href="https://github.com/nesso-how/nesso" target="_blank" rel="noopener noreferrer" aria-label="{{repositoryLabel}}" title="{{repository}}">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M12 .75a11.25 11.25 0 0 0-3.558 21.923c.563.103.768-.244.768-.542 0-.267-.01-.974-.015-1.913-3.13.68-3.79-1.51-3.79-1.51-.512-1.3-1.25-1.646-1.25-1.646-1.023-.7.077-.686.077-.686 1.13.08 1.725 1.16 1.725 1.16 1.005 1.723 2.636 1.225 3.277.937.102-.728.393-1.225.715-1.507-2.5-.284-5.128-1.25-5.128-5.567 0-1.23.44-2.234 1.16-3.022-.117-.284-.502-1.43.11-2.98 0 0 .946-.302 3.095 1.154a10.79 10.79 0 0 1 5.63 0c2.148-1.456 3.092-1.154 3.092-1.154.615 1.55.228 2.696.113 2.98.722.788 1.158 1.793 1.158 3.022 0 4.327-2.633 5.28-5.14 5.558.405.35.766 1.043.766 2.1 0 1.516-.014 2.74-.014 3.112 0 .3.203.65.774.54A11.25 11.25 0 0 0 12 .75Z"/></svg>
           </a>
         </nav>
       </header>
       <main>
         <section class="intro" aria-labelledby="title">
-          <h1 id="title"><span>A second brain</span> <span>built on connections.</span></h1>
-          <p class="description">Connect ideas in one knowledge graph with AI assistance. Built on a small core with an open, extensible plugin architecture.</p>
-          <nav class="actions" aria-label="Explore Nesso">
-            <a class="button button-primary" href="https://github.com/nesso-how/nesso/releases/tag/v%NESSO_VERSION%" data-download-version="%NESSO_VERSION%">
-              <span>Download desktop app</span>
+          <h1 id="title"><span>{{headlineFirst}}</span> <span>{{headlineSecond}}</span></h1>
+          <p class="description">{{description}}</p>
+          <nav class="actions" aria-label="{{explore}}">
+            <a class="button button-primary" href="https://github.com/nesso-how/nesso/releases/tag/v%NESSO_VERSION%" data-download-version="%NESSO_VERSION%" data-download-label="{{downloadPlatform}}">
+              <span>{{download}}</span>
               <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M5 16v4h14v-4"/></svg>
             </a>
-            <a class="button" href="https://github.com/nesso-how/nesso/discussions" target="_blank" rel="noopener noreferrer" aria-label="GitHub Discussions (opens in a new tab)">
+            <a class="button" href="https://github.com/nesso-how/nesso/discussions" target="_blank" rel="noopener noreferrer" aria-label="{{discussionsLabel}}">
               <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M7 8h10M7 12h7"/></svg>
-              Discussions
+              {{discussions}}
               <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg>
             </a>
           </nav>
-          <nav class="secondary-links" aria-label="Other ways to try Nesso">
-            <a class="download-link" href="https://github.com/nesso-how/nesso/releases/tag/v%NESSO_VERSION%" target="_blank" rel="noopener noreferrer" aria-label="Other downloads on GitHub releases (opens in a new tab)">Other downloads</a>
+          <nav class="secondary-links" aria-label="{{otherWays}}">
+            <a class="download-link" href="https://github.com/nesso-how/nesso/releases/tag/v%NESSO_VERSION%" target="_blank" rel="noopener noreferrer" aria-label="{{otherDownloadsLabel}}">{{otherDownloads}}</a>
             <span aria-hidden="true">·</span>
-            <span><a class="download-link" href="https://app.nesso.how">Web demo</a> (without AI)</span>
+            <span><a class="download-link" href="https://app.nesso.how">{{webDemo}}</a> {{withoutAI}}</span>
           </nav>
         </section>
         <figure class="graph">
           <svg viewBox="0 0 500 350" role="img" aria-labelledby="graph-title graph-description">
-            <title id="graph-title">An example knowledge graph with labeled relations</title>
-            <desc id="graph-description">Ideas contribute to understanding; questions deepen understanding; experiences inform understanding; understanding shapes perspectives and sparks new ideas.</desc>
+            <title id="graph-title">{{graphTitle}}</title>
+            <desc id="graph-description">{{graphDescription}}</desc>
             <defs>
               <pattern id="dots" width="18" height="18" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r=".7" fill="#dedede"/></pattern>
-              <marker id="arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto" markerUnits="userSpaceOnUse"><path d="m1 1 4 2.5L1 6" fill="none" stroke="#adadad" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/></marker>
+              <marker id="arrow" viewBox="-10 -10 20 20" markerWidth="14" markerHeight="14" refX="0" refY="0" orient="auto-start-reverse" markerUnits="strokeWidth"><polyline points="-5,-4 0,0 -5,4 -5,-4"/></marker>
             </defs>
             <g aria-hidden="true">
-              <path class="edge" d="M156 86C226 86 169 170 236 170"/>
-              <path class="edge" d="M142 183C176 183 202 170 236 170"/>
-              <path class="edge" d="M205 281C249 281 217 185 236 185"/>
-              <path class="edge" d="M368 170C417 170 368 73 383 73"/>
-              <path class="edge" d="M302 190C302 229 389 207 389 254"/>
+              <path class="edge" d="M156 86C276 86 219 160 270 160H282"/>
+              <path class="edge" d="M116 183C191 183 252 175 270 175H282"/>
+              <path class="edge" d="M205 281C299 281 239 185 270 185H282"/>
+              <path class="edge" d="M422 170C470 170 400 115 400 99V77"/>
+              <path class="edge" d="M352 194C352 227 389 220 389 239V251"/>
             </g>
-            <g class="edge-label"><rect x="147" y="117" width="106" height="22"/><text x="200" y="128">contribute to</text></g>
-            <g class="edge-label"><rect x="160" y="166" width="58" height="22"/><text x="189" y="177">deepen</text></g>
-            <g class="edge-label"><rect x="193" y="222" width="58" height="22"/><text x="222" y="233">inform</text></g>
-            <g class="edge-label"><rect x="361" y="110" width="58" height="22"/><text x="390" y="121">shapes</text></g>
-            <g class="edge-label"><rect x="317" y="208" width="58" height="22"/><text x="346" y="219">sparks</text></g>
-            <g class="node"><rect x="66" y="67" width="90" height="38"/><text x="111" y="86">Ideas</text></g>
-            <g class="node"><rect x="38" y="164" width="104" height="38"/><text x="90" y="183">Questions</text></g>
-            <g class="node"><rect x="87" y="262" width="118" height="38"/><text x="146" y="281">Experiences</text></g>
-            <g class="node selected"><rect class="halo" x="235" y="149" width="134" height="42"/><rect class="node-shape" x="237" y="151" width="130" height="38"/><text x="302" y="170">Understanding</text></g>
-            <g class="node"><rect x="345" y="35" width="110" height="38"/><text x="400" y="54">Perspectives</text></g>
-            <g class="node"><rect x="335" y="255" width="108" height="38"/><text x="389" y="274">New ideas</text></g>
-            <circle cx="367" cy="151" r="4" fill="#fff" stroke="#858585"/>
+            <foreignObject class="edge-label" x="241" y="117" width="1" height="22"><span xmlns="http://www.w3.org/1999/xhtml">{{contribute}}</span></foreignObject>
+            <foreignObject class="edge-label" x="201" y="166" width="1" height="22"><span xmlns="http://www.w3.org/1999/xhtml">{{deepen}}</span></foreignObject>
+            <foreignObject class="edge-label" x="274" y="222" width="1" height="22"><span xmlns="http://www.w3.org/1999/xhtml">{{inform}}</span></foreignObject>
+            <foreignObject class="edge-label" x="420" y="110" width="1" height="22"><span xmlns="http://www.w3.org/1999/xhtml">{{shape}}</span></foreignObject>
+            <foreignObject class="edge-label" x="371" y="208" width="1" height="22"><span xmlns="http://www.w3.org/1999/xhtml">{{spark}}</span></foreignObject>
+            <g class="node"><rect x="66" y="67" width="90" height="38"/><text x="111" y="86">{{ideas}}</text></g>
+            <g class="node"><rect x="12" y="164" width="104" height="38"/><text x="64" y="183">{{questions}}</text></g>
+            <g class="node"><rect x="87" y="262" width="118" height="38"/><text x="146" y="281">{{experiences}}</text></g>
+            <g class="node selected"><rect class="halo" x="285" y="149" width="134" height="42"/><rect class="node-shape" x="287" y="151" width="130" height="38"/><text x="352" y="170">{{understanding}}</text></g>
+            <g class="node"><rect x="345" y="35" width="110" height="38"/><text x="400" y="54">{{perspectives}}</text></g>
+            <g class="node"><rect x="335" y="255" width="108" height="38"/><text x="389" y="274">{{newIdeas}}</text></g>
+            <circle cx="417" cy="151" r="4" fill="#fff" stroke="#858585"/>
           </svg>
         </figure>
       </main>
       <footer class="mono">
         <div class="footer-info">
-          <span>In development.</span>
-          <a class="download-link agent-link" href="/llms.txt">For agents</a>
+          <details class="language-switcher">
+            <summary aria-label="{{language}}: {{languageName}}">{{languageName}}</summary>
+            <nav aria-label="{{language}}">{{languageLinks}}</nav>
+          </details>
+          <a class="download-link agent-link" href="/llms.txt">{{agents}}</a>
         </div>
-        <a class="status" href="https://github.com/nesso-how/nesso/releases/latest" target="_blank" rel="noopener noreferrer" aria-label="Latest Nesso release: v%NESSO_VERSION% (opens in a new tab)">v%NESSO_VERSION%</a>
+        <a class="status" href="https://github.com/nesso-how/nesso/releases/latest" target="_blank" rel="noopener noreferrer" aria-label="{{releaseLabel}}">v%NESSO_VERSION%</a>
       </footer>
     </div>
-    <script type="module" src="./main.ts"></script>
+    <script type="module" src="/main.ts"></script>
   </body>
 </html>

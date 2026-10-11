@@ -54,6 +54,8 @@ The host uses a saved `preferences.locale` when available; otherwise it detects 
 
 ## API
 
+Use `@nesso/i18n/locale` for locale utilities without loading i18next.
+
 - `createTranslator`: infer base keys from the English catalog and return a locale-bound translator with English fallback.
 - `locales`, `defaultLocale`, `localeNames`: supported English, Italian, and Simplified Chinese (`zh-CN`) locales, English default, and native display names.
 - `isLocale`: check whether a value is a supported locale.

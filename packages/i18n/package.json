@@ -8,6 +8,11 @@
       "types": "./dist/index.d.ts",
       "browser": "./src/index.ts",
       "default": "./dist/index.js"
+    },
+    "./locale": {
+      "types": "./dist/locale.d.ts",
+      "browser": "./src/locale.ts",
+      "default": "./dist/locale.js"
     }
   },
   "scripts": {

@@ -65,9 +65,11 @@ h1 span { display: block; }
 .button svg { width: 15px; height: 15px; flex-shrink: 0; }
 .graph { margin: 0; width: 100%; max-width: 530px; min-width: 0; justify-self: end; }
 .graph svg { display: block; width: 100%; height: auto; overflow: visible; }
-.graph .edge { fill: none; stroke: var(--edge); stroke-width: 1.15; marker-end: url(#arrow); }
-.graph .edge-label rect { fill: var(--background); fill-opacity: .94; rx: 2; }
-.graph .edge-label text { fill: var(--muted-foreground); font-family: 'IBM Plex Mono', monospace; font-size: 12px; text-anchor: middle; dominant-baseline: central; }
+.graph .edge, .graph #arrow polyline { stroke: var(--edge); stroke-linecap: round; stroke-linejoin: round; }
+.graph .edge { fill: none; stroke-width: 1.2; marker-end: url(#arrow); }
+.graph #arrow polyline { fill: var(--edge); stroke-width: 1; }
+.graph .edge-label { overflow: visible; }
+.graph .edge-label span { display: block; width: max-content; padding: 4px 8px; border-radius: 2px; background: var(--background); color: var(--muted-foreground); font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 14px; white-space: nowrap; transform: translateX(-50%); }
 .graph .node rect { fill: var(--background); stroke: var(--node-border); stroke-width: 1; rx: var(--radius-object); }
 .graph .node text { fill: var(--foreground); font-size: 13px; font-weight: 450; text-anchor: middle; dominant-baseline: central; }
 .graph .selected .halo { fill: none; stroke: var(--selection-halo); stroke-width: 3; }
@@ -75,6 +77,16 @@ h1 span { display: block; }
 .graph .selected text { font-weight: 500; }
 footer { display: flex; justify-content: space-between; gap: 16px; align-items: center; min-height: 68px; border-top: 1px solid var(--border); color: var(--muted-foreground); padding-bottom: env(safe-area-inset-bottom); }
 .footer-info { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+.language-switcher { position: relative; }
+.language-switcher summary { display: flex; align-items: center; gap: 8px; min-height: 44px; cursor: pointer; list-style: none; }
+.language-switcher summary::-webkit-details-marker { display: none; }
+.language-switcher summary::after { content: ''; width: 5px; height: 5px; border-right: 1px solid currentColor; border-bottom: 1px solid currentColor; transform: rotate(45deg); margin-top: -3px; }
+.language-switcher[open] summary::after { transform: rotate(225deg); margin-top: 3px; }
+.language-switcher nav { position: absolute; bottom: 100%; left: 0; z-index: 2; display: grid; min-width: 140px; padding: 4px; border: 1px solid var(--border); border-radius: var(--radius-control); background: var(--background); box-shadow: 0 4px 16px #0000000a; }
+.language-switcher nav a { display: flex; align-items: center; min-height: 40px; padding: 8px 12px; color: inherit; text-decoration: none; border-radius: var(--radius-control); }
+.language-switcher nav a:hover, .language-switcher nav a[aria-current] { color: var(--foreground); background: var(--canvas); }
+.language-switcher summary:hover { color: var(--foreground); }
+.language-switcher summary:focus-visible, .language-switcher nav a:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 .agent-link { visibility: hidden; }
 .status { display: inline-flex; align-items: center; gap: 8px; min-width: 0; min-height: 44px; color: inherit; text-align: right; text-decoration: none; overflow-wrap: anywhere; }
 .status:hover { color: var(--foreground); text-decoration: underline; text-underline-offset: 3px; }

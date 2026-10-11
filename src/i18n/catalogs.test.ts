@@ -6,9 +6,10 @@ import { locales, type Catalog } from '@nesso/i18n'
 const placeholders = (message: string) => [...message.matchAll(/{{\s*(\w+)\s*}}/g)].map((match) => match[1]).sort()
 const pluralSuffix = /_(zero|one|two|few|many|other)$/
 
-test('catalogs cover the host and every built-in plugin in all supported locales with matching placeholders', () => {
+test('catalogs cover the host, site and every built-in plugin in all supported locales with matching placeholders', () => {
   for (const directory of [
     '.',
+    '../../site/i18n',
     '../../plugins/base-vocab/src/i18n',
     '../../plugins/concept-map/src/i18n',
     '../../plugins/export/src/i18n',
