@@ -32,7 +32,6 @@ test('desktop downloads point directly to the platform package for the release',
     ['Linux', 'x86_64.AppImage'],
   ] as const) {
     assert.deepEqual(desktopDownload(platform, version), {
-      label: `Download for ${platform}`,
       href: `https://github.com/nesso-how/nesso/releases/download/v${version}/Nesso-${version}-${suffix}`,
     })
   }

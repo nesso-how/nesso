@@ -17,7 +17,7 @@ Register `conceptMapPlugin` using the [plugin guide](../../packages/plugin/READM
 - The background menu has no deletion action, and relation menus have no concept creation action. Undo and redo remain in the toolbar, not in context menus.
 - Fit the view or lock canvas gestures with the canvas controls; double-click the background to add a concept.
 
-Canvas controls and accessibility messages use local English/Italian catalogs through `@nesso/i18n`. The renderer subscribes to the injected store's locale preference; concept labels and relation types are displayed unchanged.
+Canvas controls and accessibility messages use local English, Italian, and Simplified Chinese catalogs through `@nesso/i18n`. The renderer subscribes to the injected store's locale preference; concept labels and relation types are displayed unchanged.
 
 Context menus use the shared `MenuPopup` and `MenuItem` primitives from `@nesso/ui`; graph-specific actions and selection stay in the renderer.
 

@@ -1,8 +1,5 @@
-import { parseGraph } from '@nesso/schema'
 import { useSyncExternalStore } from 'react'
-import seed from '../data/seed-graph.json'
-import seedViews from '../data/seed-views.json'
-import { createNessoStore } from './create.ts'
+import { initializeNessoStore } from './initialize.ts'
 import { connectPersistence, loadPersistence } from './persistence.ts'
 import type { HostState } from './types.ts'
 import { createDesktopStorage, createIndexedDbStorage } from './storage.ts'
@@ -12,13 +9,7 @@ const storage = window.nessoPersistence
   : createIndexedDbStorage(() => window.indexedDB)
 const loaded = await loadPersistence(storage)
 
-const firstRun = loaded.graph === undefined && !loaded.blocked.includes('document')
-const graph = firstRun ? parseGraph(seed) : loaded.graph ?? null
-export const host = createNessoStore(graph, firstRun ? {
-  ...loaded,
-  workspace: { activeViewId: null, savedViews: seedViews, viewports: {} },
-} : loaded)
-host.setPersistenceIssues(loaded.issues)
+export const host = initializeNessoStore(loaded, navigator.languages)
 
 export const { store: nessoStore, registerVocab, registerRenderer, getRenderer, registerTheme } = host
 

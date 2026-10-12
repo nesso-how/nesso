@@ -1,0 +1,5 @@
+{
+  "pluginName": "Kernel",
+  "pluginDescription": "通过 Kernel 主题呈现 Nesso 的视觉风格。",
+  "pluginDocumentation": "Kernel 提供应用的浅色主题设计变量和字体，不会改变你的图谱或视图。"
+}

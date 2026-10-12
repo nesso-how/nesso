@@ -2,8 +2,9 @@ import type { Plugin, VocabDefinition } from '@nesso/plugin'
 import { createTranslator } from '@nesso/i18n'
 import en from './i18n/en.json' with { type: 'json' }
 import it from './i18n/it.json' with { type: 'json' }
+import zhCN from './i18n/zh-CN.json' with { type: 'json' }
 
-const translate = createTranslator(en, { it })
+const translate = createTranslator(en, { it, 'zh-CN': zhCN })
 
 export const relationIds = {
   linksTo: 'urn:uuid:c7aeeb73-f438-5bc6-a02b-87c06755a15d',

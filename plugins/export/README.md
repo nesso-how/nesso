@@ -6,7 +6,7 @@ Action plugin exporting a view as a JSON-LD download.
 
 Register `exportPlugin` using the [plugin guide](../../packages/plugin/README.md#register-it). Its **Export** action targets the view it runs on (`null` targets the complete graph), reading that view without changing navigation.
 
-The host lists view-scoped actions in the saved-view menus. Interface labels use local English/Italian catalogs; graph contents are exported unchanged.
+The host lists view-scoped actions in the saved-view menus. Interface labels use local English, Italian, and Simplified Chinese catalogs; graph contents are exported unchanged.
 
 ## API
 

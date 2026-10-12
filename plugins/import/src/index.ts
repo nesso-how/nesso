@@ -3,8 +3,9 @@ import { createTranslator, defaultLocale } from '@nesso/i18n'
 import { newIri, parseGraph, relationKey, type Graph } from '@nesso/schema'
 import en from './i18n/en.json' with { type: 'json' }
 import it from './i18n/it.json' with { type: 'json' }
+import zhCN from './i18n/zh-CN.json' with { type: 'json' }
 
-const translate = createTranslator(en, { it })
+const translate = createTranslator(en, { it, 'zh-CN': zhCN })
 
 export function buildImportOperations(
   snapshot: Graph,
