@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.0-alpha.13 — 2026-10-12
+
+### Features
+
+- **i18n:** Add simplified chinese and localized seeds (#195)
+- **concept-map:** Add copy, cut and paste actions
+
 ## 1.0.0-alpha.12 — 2026-10-12
 
 ### Documentation
