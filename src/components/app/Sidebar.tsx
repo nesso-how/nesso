@@ -9,6 +9,7 @@ import { DeleteViewDialog } from './DeleteViewDialog'
 import { viewActions } from '@/plugins'
 import { host, nessoStore, useNessoStore } from '@/store'
 import { maxViewNameLength } from '@/store/settings'
+import type { HostStore } from '@/store/types'
 import { useTranslation } from '@/i18n'
 
 function ViewActionGroup({ viewId }: { viewId: string | null }) {
@@ -22,11 +23,11 @@ function ViewActionGroup({ viewId }: { viewId: string | null }) {
   )
 }
 
-export function AppSidebar({ readonly = false, bare = false, onNavigate, onOpenSettings }: { readonly?: boolean; bare?: boolean; onNavigate?: () => void; onOpenSettings?: () => void }) {
-  const t = useTranslation()
-  const workspace = useNessoStore((state) => state.workspace)
-  const conceptCount = useNessoStore((state) => state.graph.concepts.length)
-  const collapsed = useNessoStore((state) => state.preferences.collapsedSections)
+export function AppSidebar({ store = nessoStore, readonly = false, bare = false, onNavigate, onOpenSettings }: { store?: HostStore; readonly?: boolean; bare?: boolean; onNavigate?: () => void; onOpenSettings?: () => void }) {
+  const t = useTranslation(store)
+  const workspace = useNessoStore((state) => state.workspace, store)
+  const conceptCount = useNessoStore((state) => state.graph.concepts.length, store)
+  const collapsed = useNessoStore((state) => state.preferences.collapsedSections, store)
   const pinnedOpen = !collapsed?.includes('sidebar.pinned-views')
   const viewsOpen = !collapsed?.includes('sidebar.views')
   const [deleting, setDeleting] = useState<SavedView | 'complete-graph' | null>(null)
@@ -46,7 +47,7 @@ export function AppSidebar({ readonly = false, bare = false, onNavigate, onOpenS
   }, [])
 
   const navigate = (viewId: string | null) => {
-    nessoStore.setView(viewId)
+    store.setView(viewId)
     onNavigate?.()
   }
 
@@ -100,7 +101,7 @@ export function AppSidebar({ readonly = false, bare = false, onNavigate, onOpenS
     <>
       <div className="flex min-h-0 flex-1 flex-col px-3 pt-5">
         {!readonly && <NewViewButton ref={createTrigger} />}
-        {heading(t('pinnedViews'), 'pinned-views', pinnedOpen, () => host.store.setSectionOpen('sidebar.pinned-views', !pinnedOpen))}
+        {heading(t('pinnedViews'), 'pinned-views', pinnedOpen, () => store.setSectionOpen('sidebar.pinned-views', !pinnedOpen))}
         <div className="explorer-scroll min-h-0 flex-1 overflow-y-auto p-1.5 -mx-1.5" onScroll={() => setMenu(null)}>
           <div id="pinned-views" hidden={!pinnedOpen} className="mt-1 space-y-0.5">
             <ListRow className="has-[[aria-current]]:bg-pressed">
@@ -129,14 +130,14 @@ export function AppSidebar({ readonly = false, bare = false, onNavigate, onOpenS
             {pinned.map(row)}
           </div>
           <div className="mt-4">
-            {heading(t('views'), 'saved-views', viewsOpen, () => host.store.setSectionOpen('sidebar.views', !viewsOpen))}
-            <div id="saved-views" hidden={!viewsOpen} className="mt-1 space-y-0.5">{ordinary.map(row)}</div>
+            {heading(t('views'), 'saved-views', viewsOpen, () => store.setSectionOpen('sidebar.views', !viewsOpen))}
+            <div id="saved-views" hidden={!viewsOpen} className="sidebar-views mt-1 space-y-0.5">{ordinary.map(row)}</div>
           </div>
         </div>
       </div>
-      <div className="shrink-0 border-t px-3 py-2">
+      {onOpenSettings && <div className="shrink-0 border-t px-3 py-2">
         <Button data-settings-trigger variant="ghost" className="w-full justify-start text-muted-foreground" onClick={onOpenSettings}><Settings2 />{t('settings')}</Button>
-      </div>
+      </div>}
     </>
   )
 

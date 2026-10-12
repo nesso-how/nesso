@@ -1,33 +1,10 @@
 [
   {
-    "id": "first-try", "name": "First try", "pinned": true,
-    "conceptIds": [
-      "urn:uuid:40ef4920-cf1f-41c6-8cff-6190897f591d",
-      "urn:uuid:f3db5b55-8f74-42eb-bd43-c3a53887a922",
-      "urn:uuid:e64eab51-22fd-433b-93cc-02be7945f31f",
-      "urn:uuid:74896b3c-ac0f-4d06-a9e5-05c7adca21c5",
-      "urn:uuid:96143bed-86b7-4227-af9d-a9831d494d3d",
-      "urn:uuid:5db4f50d-c838-4c49-a229-f8f8c90f0002"
-    ]
+    "id": "energy", "name": "Energy", "pinned": false,
+    "conceptIds": ["urn:nesso:example:coffee", "urn:nesso:example:energy", "urn:nesso:example:focus"]
   },
   {
-    "id": "warm-spot", "name": "Warm spot", "pinned": false,
-    "conceptIds": [
-      "urn:uuid:74896b3c-ac0f-4d06-a9e5-05c7adca21c5",
-      "urn:uuid:69d22e9d-c4fc-48a4-8f7f-2b9f41bb1ddf",
-      "urn:uuid:5db4f50d-c838-4c49-a229-f8f8c90f0002",
-      "urn:uuid:6f9368dd-cc27-41e5-aa52-b51337e86540",
-      "urn:uuid:8ece1d3f-c61a-41d3-b1cb-0bc950d9dbfe"
-    ]
-  },
-  {
-    "id": "fresh-bread", "name": "Fresh bread", "pinned": false,
-    "conceptIds": [
-      "urn:uuid:96143bed-86b7-4227-af9d-a9831d494d3d",
-      "urn:uuid:20c70799-1348-45ba-8cb3-7adfe06567fe",
-      "urn:uuid:b096052c-3024-49ae-81e7-780eb6e0ddc1",
-      "urn:uuid:8ece1d3f-c61a-41d3-b1cb-0bc950d9dbfe",
-      "urn:uuid:9363b22a-aba6-4caf-b999-74d611c2ab68"
-    ]
+    "id": "rest", "name": "Rest", "pinned": false,
+    "conceptIds": ["urn:nesso:example:coffee", "urn:nesso:example:sleep", "urn:nesso:example:focus"]
   }
 ]

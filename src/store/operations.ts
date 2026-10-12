@@ -75,7 +75,7 @@ export const sameWorkspace = (left: WorkspaceState, right: WorkspaceState): bool
   })
 
 export const samePreferences = (left: Preferences, right: Preferences): boolean =>
-  left.locale === right.locale && left.activeVocabId === right.activeVocabId && left.activeRendererId === right.activeRendererId && left.activeThemeId === right.activeThemeId
+  left.locale === right.locale && left.introSeen === right.introSeen && left.activeVocabId === right.activeVocabId && left.activeRendererId === right.activeRendererId && left.activeThemeId === right.activeThemeId
   && left.panels.explorerWidth === right.panels.explorerWidth && left.panels.inspectorWidth === right.panels.inspectorWidth
   && sameItems(left.collapsedSections ?? [], right.collapsedSections ?? [], (a, b) => a === b)
 
@@ -317,6 +317,9 @@ export const applyStateOperations = (state: HostState, operations: readonly Host
       case 'preferences.locale':
         if (!isLocale(operation.value)) fail('preferences.locale', 'Unsupported locale')
         preferences = { ...preferences, locale: operation.value }
+        break
+      case 'preferences.intro-seen':
+        preferences = { ...preferences, introSeen: true }
         break
       case 'preferences.panels':
         preferences = { ...preferences, panels: { ...operation.value } }

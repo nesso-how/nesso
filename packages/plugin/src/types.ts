@@ -1,6 +1,6 @@
 import type { Graph, Position, RelationType } from '@nesso/schema'
 import type { Locale } from '@nesso/i18n'
-import type { ComponentType } from 'react'
+import type { ComponentType, ReactNode } from 'react'
 
 type DeepReadonly<T> = T extends readonly (infer U)[]
   ? readonly DeepReadonly<U>[]
@@ -77,6 +77,7 @@ export type SectionId =
 
 export type Preferences = {
   readonly locale?: Locale
+  readonly introSeen?: boolean
   readonly activeVocabId: string
   readonly activeRendererId: string
   readonly activeThemeId: string
@@ -129,9 +130,14 @@ export type NessoStore = {
   readonly getViewGraph: (id: string) => GraphSnapshot
 }
 
+export type RendererProps = {
+  readonly readOnly?: boolean
+  readonly overlay?: ReactNode
+}
+
 export type RendererDefinition = {
   readonly id: string
-  readonly component: ComponentType
+  readonly component: ComponentType<RendererProps>
 }
 
 export type ActionDefinition = {

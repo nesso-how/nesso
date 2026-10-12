@@ -1,10 +1,10 @@
-import type { Plugin } from '@nesso/plugin'
+import type { Plugin, RendererProps } from '@nesso/plugin'
 import { ReactFlowProvider } from '@xyflow/react'
 import { Canvas } from './Canvas'
 import { StoreContext } from './store'
 import { translate } from './i18n'
 
-export const conceptMapPlugin: Plugin = {
+export const conceptMapPlugin: Extract<Plugin, { kind: 'renderer' }> = {
   kind: 'renderer',
   metadata: (locale) => ({
     name: translate(locale)('pluginName'),
@@ -18,11 +18,11 @@ export const conceptMapPlugin: Plugin = {
   ],
   create: ({ store }) => ({
     id: 'concept-map',
-    component: function ConceptMapRenderer() {
+    component: function ConceptMapRenderer(props: RendererProps) {
       return (
         <StoreContext.Provider value={store}>
           <ReactFlowProvider>
-            <Canvas />
+            <Canvas {...props} />
           </ReactFlowProvider>
         </StoreContext.Provider>
       )

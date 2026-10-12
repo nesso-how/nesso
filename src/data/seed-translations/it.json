@@ -1,31 +1,15 @@
 {
   "conceptLabels": {
-    "urn:uuid:acbddb51-b92e-4676-9ad8-780d3f8bc9c1": "Io",
-    "urn:uuid:5bd57c8d-46b3-4c6a-bcae-a0608f0ff73d": "Posso fare il pane?",
-    "urn:uuid:40ef4920-cf1f-41c6-8cff-6190897f591d": "Ricetta",
-    "urn:uuid:f3db5b55-8f74-42eb-bd43-c3a53887a922": "Farina",
-    "urn:uuid:e64eab51-22fd-433b-93cc-02be7945f31f": "Acqua",
-    "urn:uuid:74896b3c-ac0f-4d06-a9e5-05c7adca21c5": "Lievito",
-    "urn:uuid:69d22e9d-c4fc-48a4-8f7f-2b9f41bb1ddf": "Calore",
-    "urn:uuid:96143bed-86b7-4227-af9d-a9831d494d3d": "Impasto",
-    "urn:uuid:20c70799-1348-45ba-8cb3-7adfe06567fe": "Attesa",
-    "urn:uuid:b096052c-3024-49ae-81e7-780eb6e0ddc1": "Forno",
-    "urn:uuid:5db4f50d-c838-4c49-a229-f8f8c90f0002": "Pane non lievitato",
-    "urn:uuid:6f9368dd-cc27-41e5-aa52-b51337e86540": "Il lievito ama il calore",
-    "urn:uuid:8ece1d3f-c61a-41d3-b1cb-0bc950d9dbfe": "Primo pane",
-    "urn:uuid:9363b22a-aba6-4caf-b999-74d611c2ab68": "Amici"
+    "urn:nesso:example:coffee": "Caffè",
+    "urn:nesso:example:energy": "Energia",
+    "urn:nesso:example:sleep": "Sonno",
+    "urn:nesso:example:focus": "Concentrazione"
   },
   "relationTypeLabels": {
-    "urn:uuid:452ffae2-7492-4946-b71d-501ff75f0c44": "chiede",
-    "urn:uuid:73736d38-ce04-4d2e-bd35-18bfc6126de9": "prova",
-    "urn:uuid:726cd5b1-3581-4fd2-9507-d256192d245e": "richiede",
-    "urn:uuid:9c7baf17-4edb-4117-9327-6b0bcb20a6b5": "diventa",
-    "urn:uuid:55cc8402-9413-47ff-b7a6-95402b7430be": "insegna",
-    "urn:uuid:a25690b5-13fb-467b-bbc4-ad4cebd5abc4": "porta a"
+    "urn:nesso:example:boosts": "aumenta",
+    "urn:nesso:example:helps": "favorisce",
+    "urn:nesso:example:disrupts": "può disturbare",
+    "urn:nesso:example:supports": "sostiene"
   },
-  "viewNames": {
-    "first-try": "Primo tentativo",
-    "warm-spot": "Un posto caldo",
-    "fresh-bread": "Pane fresco"
-  }
+  "viewNames": { "energy": "Energia", "rest": "Riposo" }
 }

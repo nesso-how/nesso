@@ -134,6 +134,7 @@ test('durable state round-trips without rewriting restored records or persisting
   host.store.setViewPinned(viewId, true)
   host.store.setPanelSizes({ explorerWidth: 310, inspectorWidth: 330 })
   host.store.setLocale('zh-CN')
+  host.store.applyOperations([{ kind: 'preferences.intro-seen' }])
   for (const id of sectionIds) host.store.setSectionOpen(id, false)
   host.store.setViewport('graph', { x: 100, y: 200, zoom: 0.75 })
   host.store.setConceptLabel('urn:one', 'Renamed')
@@ -206,6 +207,11 @@ test('autosave debounces durable sections and drains edits on shutdown', async (
   await persistence.flush()
   assert.deepEqual(storage.writes, ['preferences'])
   storage.writes.length = 0
+  host.store.applyOperations([{ kind: 'preferences.intro-seen' }])
+  await persistence.flush()
+  assert.deepEqual(storage.writes, ['preferences'])
+  assert.equal((await loadPersistence(storage)).preferences?.introSeen, true)
+  storage.writes.length = 0
   host.store.setChatMessages([{ id: 'assistant', role: 'assistant', content: 'Complete', outcome: 'complete' }])
   await persistence.flush()
   assert.deepEqual(storage.writes, ['conversation'])
@@ -232,6 +238,7 @@ test('malformed records stay protected while the other sections save', async () 
     ['preferences', { version: 1, preferences: { ...state.preferences, panels: { explorerWidth: 0, inspectorWidth: 280 } } }],
     ...[null, ['missing'], ['sidebar', 'sidebar']].map((collapsedSections): [PersistenceSection, unknown] => ['preferences', { version: 1, preferences: { ...state.preferences, collapsedSections } }]),
     ['preferences', { version: 1, preferences: { ...state.preferences, locale: 'fr' } }],
+    ['preferences', { version: 1, preferences: { ...state.preferences, introSeen: 'true' } }],
   ]
   for (const [section, value] of invalid) {
     const storage = memoryStorage()

@@ -8,10 +8,12 @@ import { SettingsDialog } from '@/components/app/SettingsDialog'
 import { Dialog, SidePanel, useMediaQuery } from '@nesso/ui'
 import { SidebarInset, SidebarProvider } from '@/components/app/SidebarLayout'
 import { getRenderer, host, useNessoStore } from '@/store'
-import { panelLimits } from '@/store/settings'
+import { resolveInspector } from '@/store/settings'
 import { translate } from '@/i18n'
 import { chat } from '@/ai'
 import { AssistantPanel } from '@/components/app/AssistantPanel'
+import { Intro } from '@/components/app/Intro'
+import { completeIntro } from '@/store/intro'
 
 function RendererHost() {
   const activeRendererId = useNessoStore((state) => state.preferences.activeRendererId)
@@ -29,14 +31,16 @@ export default function App() {
   const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale)
   const t = translate(locale)
   const panels = useNessoStore((state) => state.preferences.panels)
+  const { width: inspectorWidth, minWidth: inspectorMinWidth } = resolveInspector(panels, !!chat)
   const [detailsOpen, setDetailsOpen] = useState(true)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [introOpen, setIntroOpen] = useState(() => !host.store.getState().preferences.introSeen)
   const [settingsPage, setSettingsPage] = useState<'general' | 'ai'>('general')
   const readonly = useMediaQuery('(max-width: 767px)')
 
   useEffect(() => { document.documentElement.lang = locale }, [locale])
   useEffect(() => {
-    if (readonly) return
+    if (readonly || introOpen) return
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.defaultPrevented || event.isComposing || event.altKey || !(event.metaKey || event.ctrlKey)) return
       const target = event.target instanceof HTMLElement ? event.target : null
@@ -49,11 +53,17 @@ export default function App() {
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [readonly])
+  }, [readonly, introOpen])
   const openSettings = () => { setSettingsPage('general'); setSettingsOpen(true) }
+  const finishIntro = () => {
+    completeIntro(host.store)
+    setIntroOpen(false)
+    requestAnimationFrame(() => document.querySelector<HTMLElement>('#canvas [tabindex="0"]')?.focus())
+  }
 
   return (
     <>
+      {introOpen ? <Intro onFinish={finishIntro} /> : (
       <SidebarProvider>
         <div className="relative flex min-h-0 flex-1 overflow-hidden">
           {!readonly && <AppSidebar onOpenSettings={openSettings} />}
@@ -67,8 +77,8 @@ export default function App() {
                 id="inspector-panel"
                 side="right"
                 open={detailsOpen}
-                size={chat && panels.inspectorWidth < 300 ? 360 : panels.inspectorWidth}
-                minSize={chat ? 300 : panelLimits.inspectorWidth.min}
+                size={inspectorWidth}
+                minSize={inspectorMinWidth}
                 maxSize="45%"
                 onToggle={() => setDetailsOpen((open) => !open)}
                 onSizeChange={(inspectorWidth) => host.store.setPanelSizes({ ...host.store.getState().preferences.panels, inspectorWidth })}
@@ -82,8 +92,9 @@ export default function App() {
           </SidebarInset>
         </div>
       </SidebarProvider>
+      )}
       <Dialog.Root open={!readonly && settingsOpen} onOpenChange={setSettingsOpen}>
-        {!readonly && settingsOpen && <SettingsDialog initialPage={settingsPage} />}
+        {!readonly && settingsOpen && <SettingsDialog initialPage={settingsPage} onDiscover={() => { setSettingsOpen(false); setIntroOpen(true) }} />}
       </Dialog.Root>
     </>
   )

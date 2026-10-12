@@ -2,24 +2,25 @@ import { Button, Combobox, ComboboxItem, ComboboxPopup, IconButton, Input } from
 import { Plus, X } from 'lucide-react'
 import type { SavedView } from '@nesso/plugin'
 import { useRef, useState } from 'react'
-import { host, useNessoStore } from '@/store'
+import { nessoStore, useNessoStore } from '@/store'
+import type { HostStore } from '@/store/types'
 import { InspectorSection } from './InspectorSection'
 import { useTranslation } from '@/i18n'
 
-export function ConceptViews({ conceptIds, readonly = false }: { conceptIds: readonly string[]; readonly?: boolean }) {
-  const t = useTranslation()
-  const workspace = useNessoStore((state) => state.workspace)
+export function ConceptViews({ store = nessoStore, conceptIds, readonly = false }: { store?: HostStore; conceptIds: readonly string[]; readonly?: boolean }) {
+  const t = useTranslation(store)
+  const workspace = useNessoStore((state) => state.workspace, store)
   const memberships = workspace.savedViews.filter((view) => conceptIds.some((id) => view.conceptIds.includes(id)))
   const available = workspace.savedViews.filter((view) => conceptIds.some((id) => !view.conceptIds.includes(id)))
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const trigger = useRef<HTMLButtonElement>(null)
-  const setMembership = (viewId: string, included: boolean) => host.store.applyOperations(
+  const setMembership = (viewId: string, included: boolean) => store.applyOperations(
     conceptIds.map((conceptId) => ({ kind: 'view.membership', viewId, conceptId, included })),
   )
 
   return (
-    <InspectorSection id="inspector.views" title={t('views')} onOpenChange={(expanded) => { if (!expanded) setOpen(false) }}>
+    <InspectorSection store={store} id="inspector.views" title={t('views')} onOpenChange={(expanded) => { if (!expanded) setOpen(false) }}>
       {memberships.length > 0 && (
         <ul className="mt-2 space-y-1 text-[13px] leading-[19px]">
           {memberships.map((view) => (

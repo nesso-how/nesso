@@ -8,6 +8,7 @@ import { ConceptViews } from './ConceptViews'
 import { ConceptConnections } from './ConceptConnections'
 import { InspectorSection } from './InspectorSection'
 import { nessoStore, useNessoStore } from '@/store'
+import type { HostStore } from '@/store/types'
 import { useTranslation } from '@/i18n'
 
 function RelationInput({ edgeId, typeId, label, defaultTypeId, relationTypes, onSave, onCreate }: {
@@ -96,14 +97,14 @@ function RelationInput({ edgeId, typeId, label, defaultTypeId, relationTypes, on
   )
 }
 
-export function Inspector({ readonly = false }: { readonly?: boolean }) {
-  const t = useTranslation()
+export function Inspector({ store = nessoStore, readonly = false }: { store?: HostStore; readonly?: boolean }) {
+  const t = useTranslation(store)
   const textGroup = useRef<string | undefined>(undefined)
-  const graph = useNessoStore((state) => state.graph)
-  const selected = useNessoStore((state) => state.selected)
-  const viewGraph = useNessoStore((state) => state.viewGraph)
-  const vocabs = useNessoStore((state) => state.vocabs)
-  const activeVocabId = useNessoStore((state) => state.preferences.activeVocabId)
+  const graph = useNessoStore((state) => state.graph, store)
+  const selected = useNessoStore((state) => state.selected, store)
+  const viewGraph = useNessoStore((state) => state.viewGraph, store)
+  const vocabs = useNessoStore((state) => state.vocabs, store)
+  const activeVocabId = useNessoStore((state) => state.preferences.activeVocabId, store)
   const activeVocab = vocabs.find((vocab) => vocab.id === activeVocabId)
   const offered = new Map<string, Readonly<RelationType>>()
   for (const type of [...graph.relationTypes, ...(activeVocab?.relationTypes ?? [])]) {
@@ -134,7 +135,7 @@ export function Inspector({ readonly = false }: { readonly?: boolean }) {
   return (
     <aside id="details-panel" aria-label={t('details')} className="flex h-full flex-col gap-[26px] overflow-y-auto bg-background px-5 py-6 text-sm">
       {selected.length > 0 && <ContextLabel>{t(item ? item.kind : 'selection')}</ContextLabel>}
-      {selected.length === 0 ? <ViewDetails readonly={readonly} /> : selected.length > 1 ? (
+      {selected.length === 0 ? <ViewDetails store={store} readonly={readonly} /> : selected.length > 1 ? (
         <div className="flex flex-col gap-1.5">
           <p className="text-xs text-muted-foreground">{[
             conceptIds.length > 0 ? t('conceptCount', { count: conceptIds.length }) : '',
@@ -159,11 +160,11 @@ export function Inspector({ readonly = false }: { readonly?: boolean }) {
                 value={concept.label}
                 onFocus={() => { textGroup.current = newIri() }}
                 onBlur={() => { textGroup.current = undefined }}
-                onChange={(event) => nessoStore.setConceptLabel(concept.id, event.target.value, textGroup.current ??= newIri())}
+                onChange={(event) => store.setConceptLabel(concept.id, event.target.value, textGroup.current ??= newIri())}
               />
             )}
           </div>
-          <ConceptConnections key={`connections:${concept.id}`} conceptId={concept.id} readonly={readonly} />
+          <ConceptConnections key={`connections:${concept.id}`} store={store} conceptId={concept.id} readonly={readonly} />
         </section>
       ) : selectedEdge ? (
         <section className="flex flex-col gap-[26px]">
@@ -180,11 +181,11 @@ export function Inspector({ readonly = false }: { readonly?: boolean }) {
               label={selectedRelationLabel}
               defaultTypeId={activeVocab?.defaultTypeId}
               relationTypes={relationTypes}
-              onSave={nessoStore.setRelationType}
-              onCreate={nessoStore.createRelationType}
+              onSave={store.setRelationType}
+              onCreate={store.createRelationType}
             />
           )}
-          <InspectorSection id="inspector.nodes" title={t('nodes')}>
+          <InspectorSection store={store} id="inspector.nodes" title={t('nodes')}>
             <div className="mt-2 space-y-3">
               <div className="flex flex-col gap-1"><span className="font-mono text-[10px] leading-[14px] text-muted-foreground">{t('from')}</span><span className="text-[13px] leading-[19px] break-words">{sourceLabel}</span></div>
               <div className="flex flex-col gap-1"><span className="font-mono text-[10px] leading-[14px] text-muted-foreground">{t('to')}</span><span className="text-[13px] leading-[19px] break-words">{targetLabel}</span></div>
@@ -192,12 +193,12 @@ export function Inspector({ readonly = false }: { readonly?: boolean }) {
           </InspectorSection>
         </section>
       ) : null}
-      {conceptIds.length > 0 && <ConceptViews key={JSON.stringify(conceptIds)} conceptIds={conceptIds} readonly={readonly} />}
+      {conceptIds.length > 0 && <ConceptViews key={JSON.stringify(conceptIds)} store={store} conceptIds={conceptIds} readonly={readonly} />}
       {!readonly && concept && (
-        <Button variant="outline" className="w-full justify-start" disabled={graph.concepts.length <= 1} onClick={() => nessoStore.removeConcept(concept.id)}><Trash2 />{t('deleteConcept')}</Button>
+        <Button variant="outline" className="w-full justify-start" disabled={graph.concepts.length <= 1} onClick={() => store.removeConcept(concept.id)}><Trash2 />{t('deleteConcept')}</Button>
       )}
       {!readonly && selectedEdge && (
-        <Button variant="outline" className="w-full justify-start" onClick={() => nessoStore.removeRelation(relationKey(selectedEdge))}><Trash2 />{t('deleteRelation')}</Button>
+        <Button variant="outline" className="w-full justify-start" onClick={() => store.removeRelation(relationKey(selectedEdge))}><Trash2 />{t('deleteRelation')}</Button>
       )}
     </aside>
   )

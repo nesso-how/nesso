@@ -13,6 +13,11 @@ export const maxViewNameLength = aiTextLimits.viewName
 export const maxConceptLabelLength = aiTextLimits.conceptLabel
 export const maxRelationLabelLength = aiTextLimits.relationLabel
 
+export const resolveInspector = (panels: PanelSizes, hasChat: boolean) => ({
+  width: hasChat && panels.inspectorWidth < 300 ? 360 : panels.inspectorWidth,
+  minWidth: hasChat ? 300 : panelLimits.inspectorWidth.min,
+})
+
 export const fail = (path: string, message: string): never => {
   throw new NessoError([{ path, message }])
 }
@@ -43,14 +48,14 @@ const number = (value: unknown, path: string, minimum?: number, maximum?: number
   return result
 }
 
-export const parseViewport = (value: unknown, path: string): Viewport => {
+const parseViewport = (value: unknown, path: string): Viewport => {
   const viewport = object(value, path, ['x', 'y', 'zoom'])
   const zoom = number(viewport.zoom, `${path}.zoom`)
   if (zoom <= 0) fail(`${path}.zoom`, 'Expected a positive zoom')
   return { x: number(viewport.x, `${path}.x`), y: number(viewport.y, `${path}.y`), zoom }
 }
 
-export const parsePanels = (value: unknown): PanelSizes => {
+const parsePanels = (value: unknown): PanelSizes => {
   const panels = object(value, 'preferences.panels', ['explorerWidth', 'inspectorWidth'])
   return {
     explorerWidth: number(panels.explorerWidth, 'preferences.panels.explorerWidth', panelLimits.explorerWidth.min, panelLimits.explorerWidth.max),
@@ -58,7 +63,7 @@ export const parsePanels = (value: unknown): PanelSizes => {
   }
 }
 
-export const parseViewName = (value: unknown, path: string): string => {
+const parseViewName = (value: unknown, path: string): string => {
   const name = string(value, path).trim()
   if (!name || name.length > maxViewNameLength) fail(path, `Expected a name of 1–${maxViewNameLength} characters`)
   return name
@@ -97,9 +102,10 @@ export const parseWorkspace = (value: unknown): WorkspaceState => {
 }
 
 export const parsePreferences = (value: unknown): Preferences => {
-  const preferences = object(value, 'preferences', ['locale', 'activeVocabId', 'activeRendererId', 'activeThemeId', 'panels', 'collapsedSections'])
+  const preferences = object(value, 'preferences', ['locale', 'introSeen', 'activeVocabId', 'activeRendererId', 'activeThemeId', 'panels', 'collapsedSections'])
   const locale = preferences.locale
   if (locale !== undefined && !isLocale(locale)) fail('preferences.locale', 'Unsupported locale')
+  if (preferences.introSeen !== undefined && typeof preferences.introSeen !== 'boolean') fail('preferences.introSeen', 'Expected a boolean')
   let collapsedSections: SectionId[] | undefined
   if (preferences.collapsedSections !== undefined) {
     if (!Array.isArray(preferences.collapsedSections)) fail('preferences.collapsedSections', 'Expected section ids')
@@ -111,6 +117,7 @@ export const parsePreferences = (value: unknown): Preferences => {
   }
   return {
     ...(isLocale(locale) ? { locale } : {}),
+    ...(preferences.introSeen === undefined ? {} : { introSeen: preferences.introSeen as boolean }),
     activeVocabId: string(preferences.activeVocabId, 'preferences.activeVocabId'),
     activeRendererId: string(preferences.activeRendererId, 'preferences.activeRendererId'),
     activeThemeId: preferences.activeThemeId === undefined ? '' : string(preferences.activeThemeId, 'preferences.activeThemeId'),
