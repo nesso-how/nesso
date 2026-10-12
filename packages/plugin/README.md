@@ -87,6 +87,7 @@ Saved views hold concept IDs and pin metadata; `workspace.activeViewId: null` me
 - Declare only needed operation kinds in `operations`. The host copies the allowlist before initialization; every write helper delegates to `applyOperations` and follows the same check. Undeclared writes reject the whole batch. Empty declarations grant no writes, but reads and subscriptions remain available. This is not a security sandbox.
 - `applyOperations` evaluates state writes in order, validates the final candidate, and publishes at most once. Invalid batches throw structured `SchemaError` or host errors; no-ops do not notify.
 - Creation and reset operations require explicit stable IDs, generated with `newIri` from `@nesso/schema`; convenience helpers generate them. New concepts join the view active at their creation. Reuse the host's `conceptPlacementOffset` when placing concepts near the selection.
+- `relation.connect` accepts an optional `type: { id, label }` to preserve an explicit relation type instead of using the active vocabulary's default. Existing definitions keep their labels; missing definitions are added atomically.
 - `reconnectRelation` preserves the predicate and updates selection; unchanged endpoints, self-connections, and duplicates are no-ops.
 - `getViewGraph(id)` asks the host for a saved view without activating it.
 

@@ -208,11 +208,14 @@ export const applyStateOperations = (state: HostState, operations: readonly Host
       }
       case 'relation.connect': {
         if (!operation.source || !operation.target || operation.source === operation.target) break
-        const vocab = activeVocab()
-        const relation = { source: operation.source, predicate: vocab.defaultTypeId, target: operation.target }
+        let type = operation.type
+        if (!type) {
+          const vocab = activeVocab()
+          type = vocab.relationTypes.find((item) => item.id === vocab.defaultTypeId) ?? { id: vocab.defaultTypeId, label: '' }
+        }
+        const relation = { source: operation.source, predicate: type.id, target: operation.target }
         const key = relationKey(relation)
         if (relations.get(key)) break
-        const type = vocab.relationTypes.find((item) => item.id === vocab.defaultTypeId) ?? { id: vocab.defaultTypeId, label: '' }
         withType(type)
         relationOrigins?.delete(key)
         relations.add(relation)

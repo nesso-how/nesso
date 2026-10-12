@@ -12,15 +12,15 @@ export const conceptMapPlugin: Plugin = {
     documentation: translate(locale)('pluginDocumentation'),
   }),
   operations: [
-    'concept.position', 'concept.positions', 'concept.add', 'concept.remove',
+    'concept.label', 'concept.position', 'concept.positions', 'concept.add', 'concept.remove',
     'relation.connect', 'relation.reconnect', 'relation.remove', 'selection.set', 'viewport.set',
     'history.undo', 'history.redo',
   ],
-  create: ({ store }) => ({
+  create: (context) => ({
     id: 'concept-map',
     component: function ConceptMapRenderer() {
       return (
-        <StoreContext.Provider value={store}>
+        <StoreContext.Provider value={context}>
           <ReactFlowProvider>
             <Canvas />
           </ReactFlowProvider>

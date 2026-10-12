@@ -18,7 +18,7 @@ export type NessoOperation =
   | { readonly kind: 'concept.positions'; readonly updates: readonly { readonly id: string; readonly position: Readonly<Position> }[] }
   | { readonly kind: 'concept.add'; readonly id: string; readonly position?: Readonly<Position> }
   | { readonly kind: 'concept.remove'; readonly id: string }
-  | { readonly kind: 'relation.connect'; readonly source: string; readonly target: string }
+  | { readonly kind: 'relation.connect'; readonly source: string; readonly target: string; readonly type?: Readonly<RelationType> }
   | { readonly kind: 'relation.reconnect'; readonly id: string; readonly source: string; readonly target: string }
   | { readonly kind: 'relation.type'; readonly id: string; readonly typeId: string }
   | { readonly kind: 'relation.type.create'; readonly id: string; readonly typeId: string; readonly label: string }

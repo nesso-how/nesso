@@ -1,4 +1,4 @@
-import { app, autoUpdater, BrowserWindow, dialog, ipcMain, net, protocol, session, shell } from 'electron'
+import { app, autoUpdater, BrowserWindow, dialog, ipcMain, net, protocol, session, shell, type WebContents } from 'electron'
 import electronUpdater from 'electron-updater'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -50,8 +50,12 @@ app.whenReady().then(async () => {
   let installingUpdate = false
   const dataLocation = connectDataLocation(trusted, location, () => installingUpdate || ai.busy() || mcp.busy())
   const connectPersistence = connectDesktopPersistence(trusted, location, dataLocation.locked)
-  session.defaultSession.setPermissionCheckHandler(() => false)
-  session.defaultSession.setPermissionRequestHandler((_contents, _permission, callback) => callback(false))
+  const canUseClipboard = (contents: WebContents | null, permission: string, details: { isMainFrame: boolean; requestingUrl?: string }): boolean =>
+    (permission === 'clipboard-read' || permission === 'clipboard-sanitized-write')
+    && details.isMainFrame && details.requestingUrl === (dev ? 'http://127.0.0.1:5173/' : 'nesso://app/')
+    && BrowserWindow.getAllWindows().some((window) => window.webContents === contents && contents.mainFrame.url === details.requestingUrl)
+  session.defaultSession.setPermissionCheckHandler((contents, permission, _origin, details) => canUseClipboard(contents, permission, details))
+  session.defaultSession.setPermissionRequestHandler((contents, permission, callback, details) => callback(canUseClipboard(contents, permission, details)))
   protocol.handle('nesso', async (request) => {
     const url = new URL(request.url)
     const file = path.resolve(root, `.${decodeURIComponent(url.pathname === '/' ? '/index.html' : url.pathname)}`)

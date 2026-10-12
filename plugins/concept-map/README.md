@@ -9,6 +9,7 @@ Register `conceptMapPlugin` using the [plugin guide](../../packages/plugin/READM
 ## Controls
 
 - Hold Shift, Ctrl, or Cmd to add items to the selection. Ctrl/Cmd+A selects the visible graph; Escape clears selection. Drag selected concepts together.
+- Ctrl/Cmd+C, X, and V copy, cut, and paste selected concepts and relations, also available beside undo/redo and in context menus. Pasted concepts join the active view with labels, types, and layout preserved. Cut and paste are undoable; text fields keep native clipboard behavior.
 - **Add concept** creates a concept near a single selected concept, linked with the active vocabulary's default type. Otherwise it starts disconnected at the viewport center. New concepts join the active view.
 - **Delete**, Delete, or Backspace removes selected items, but cannot remove the last concept.
 - Select a single concept to create a relation, or a single relation to reconnect it. Reconnection preserves the relation type; self-connections and duplicates are rejected.
