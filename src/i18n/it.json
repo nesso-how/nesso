@@ -1,4 +1,5 @@
 {
+  "description": "Descrizione",
   "localData": "Dati locali",
   "storageDefault": "Predefinita",
   "storageCustom": "Personalizzata",

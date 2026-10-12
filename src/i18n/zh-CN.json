@@ -1,4 +1,5 @@
 {
+  "description": "描述",
   "localData": "本地数据",
   "storageDefault": "默认",
   "storageCustom": "自定义",

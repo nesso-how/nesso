@@ -34,6 +34,8 @@ Your knowledge lives in one graph.
 
 Use the Explorer to navigate views, the canvas to build the graph, and the Inspector to edit the selection and its memberships.
 
+Concepts can have an optional plain-text description, edited in the Inspector and shared across views. Descriptions stay off the canvas.
+
 ### AI
 
 In the desktop app, use **AI** with your own provider or a local model, or connect an external assistant through the local MCP server. Provider credentials are encrypted on your device, and chat requests go directly to the chosen endpoint. Graph edits are validated and undoable, with approvals handled inside Nesso.

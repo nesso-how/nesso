@@ -12,7 +12,7 @@ export const conceptMapPlugin: Plugin = {
     documentation: translate(locale)('pluginDocumentation'),
   }),
   operations: [
-    'concept.label', 'concept.position', 'concept.positions', 'concept.add', 'concept.remove',
+    'concept.label', 'concept.description', 'concept.position', 'concept.positions', 'concept.add', 'concept.remove',
     'relation.connect', 'relation.reconnect', 'relation.remove', 'selection.set', 'viewport.set',
     'history.undo', 'history.redo',
   ],

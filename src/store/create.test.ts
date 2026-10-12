@@ -27,6 +27,7 @@ test('paste uses one atomic undoable batch, preserves parallel types, and joins 
   store.setSelection([{ kind: 'concept', id: 'urn:n1' }])
   const before = store.getState()
   const copied = fixture()
+  copied.concepts[0].description = 'Definition\nExample'
   copied.relationTypes.push({ id: 'urn:custom', label: 'Custom' })
   copied.relations.push({ ...copied.relations[0], predicate: 'urn:custom' })
   const text = copyGraph(copied, [{ kind: 'concept', id: 'urn:n1' }, { kind: 'concept', id: 'urn:n2' }])!
@@ -36,6 +37,8 @@ test('paste uses one atomic undoable batch, preserves parallel types, and joins 
   const after = store.getState()
   const copies = after.graph.concepts.slice(3)
   const relations = after.graph.relations.slice(2)
+  assert.equal(copies[0].description, copied.concepts[0].description)
+  assert.equal(Object.hasOwn(copies[1], 'description'), false)
   assert.equal(notifications, 1)
   assert.deepEqual(copies.map((concept) => ({ label: concept.label, position: concept.position })), [
     { label: 'One', position: { x: 40, y: 40 } }, { label: 'Two', position: { x: 41, y: 40 } },

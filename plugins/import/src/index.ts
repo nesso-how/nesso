@@ -24,6 +24,7 @@ export function buildImportOperations(
       { kind: 'concept.add', id, position: { ...concept.position } },
       { kind: 'concept.label', id, value: concept.label },
     )
+    if (concept.description !== undefined) operations.push({ kind: 'concept.description', id, value: concept.description })
   }
   const knownTypes = new Set(state.graph.relationTypes.map((item) => item.id))
   const typeLabels = new Map(snapshot.relationTypes.map((item) => [item.id, item.label] as const))
@@ -60,7 +61,7 @@ export const importPlugin: Plugin = {
     description: translate(locale)('pluginDescription'),
     documentation: translate(locale)('pluginDocumentation'),
   }),
-  operations: ['selection.set', 'concept.add', 'concept.label', 'relation.connect', 'relation.type', 'relation.type.create', 'view.membership'],
+  operations: ['selection.set', 'concept.add', 'concept.label', 'concept.description', 'relation.connect', 'relation.type', 'relation.type.create', 'view.membership'],
   create: ({ store }) => {
     const runOnView = (viewId: string | null) => {
       const input = document.createElement('input')

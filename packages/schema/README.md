@@ -24,6 +24,8 @@ console.log(validateGraph(restored), relationKey(restored.relations[0]))
 
 Documents use an inline `@context` and `@graph` entries for concepts and `rdf:Property` relation types, identified by absolute IRIs. The `rdf`, `rdfs`, and `position` mappings must match `schemaContext`.
 
+Concepts have an optional `description` string, serialized as `rdfs:comment`.
+
 Relations use absolute predicate IRIs or local aliases mapped to known relation types with `@type: '@id'`. Remote contexts are not resolved; other non-predicate context terms are ignored. Unsupported document and graph-entry properties are rejected.
 
 ## API

@@ -23,7 +23,7 @@ const state: Pick<NessoState, 'graph' | 'workspace' | 'vocabs' | 'preferences'> 
 
 const snapshot: Graph = {
   concepts: [
-    { id: 'urn:old-a', label: 'Alpha', position: { x: 1, y: 2 } },
+    { id: 'urn:old-a', label: 'Alpha', description: 'Definition\nExample', position: { x: 1, y: 2 } },
     { id: 'urn:old-b', label: 'Beta', position: { x: 3, y: 4 } },
   ],
   relationTypes: [
@@ -48,6 +48,9 @@ test('import remaps concept ids and merges relations with missing types created 
   assert.ok(ids.every((id) => !id.startsWith('urn:old-')))
   const labels = operations.filter((operation) => operation.kind === 'concept.label')
   assert.deepEqual(labels.map((operation) => operation.kind === 'concept.label' ? operation.value : ''), ['Alpha', 'Beta'])
+  assert.deepEqual(operations.filter((operation) => operation.kind === 'concept.description'), [
+    { kind: 'concept.description', id: ids[0], value: 'Definition\nExample' },
+  ])
   const connects = operations.filter((operation) => operation.kind === 'relation.connect')
   assert.equal(connects.length, 3)
   const retypes = operations.filter((operation) => operation.kind === 'relation.type')

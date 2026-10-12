@@ -9,7 +9,7 @@ import type { PersistenceSection, PersistenceStorage } from '../../shared/persis
 
 const fixture = (): Graph => ({
   concepts: [
-    { id: 'urn:one', label: 'One', position: { x: 10, y: 20 } },
+    { id: 'urn:one', label: 'One', description: 'Definition\nExample', position: { x: 10, y: 20 } },
     { id: 'urn:two', label: 'Two', position: { x: 30, y: 40 } },
     { id: 'urn:hidden', label: 'Hidden', position: { x: 50, y: 60 } },
   ],
@@ -82,6 +82,7 @@ test('plugin resolution saves corrected preferences without rewriting other reco
 test('startup saves durable changes made before autosave connects', async () => {
   const changes: { section: PersistenceSection; apply: (host: ReturnType<typeof registeredHost>) => void }[] = [
     { section: 'document', apply: (host) => { host.store.setConceptLabel('urn:one', 'Changed before autosave') } },
+    { section: 'document', apply: (host) => { host.store.setConceptDescription('urn:one', 'Changed description') } },
     { section: 'document', apply: (host) => { host.store.setViewport('graph', { x: 30, y: 40, zoom: 0.75 }) } },
     { section: 'conversation', apply: (host) => { host.store.clearChat() } },
     { section: 'preferences', apply: (host) => { host.store.applyOperations([{ kind: 'preferences.inspectorTab', value: 'chat' }]) } },

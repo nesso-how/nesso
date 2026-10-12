@@ -90,6 +90,7 @@ Saved views hold concept IDs and pin metadata; `workspace.activeViewId: null` me
 - `relation.connect` accepts an optional `type: { id, label }` to preserve an explicit relation type instead of using the active vocabulary's default. Existing definitions keep their labels; missing definitions are added atomically.
 - `reconnectRelation` preserves the predicate and updates selection; unchanged endpoints, self-connections, and duplicates are no-ops.
 - `getViewGraph(id)` asks the host for a saved view without activating it.
+- `setConceptDescription(id, value, historyGroup?)` uses `concept.description`; an empty string removes the description.
 
 ### Notifications
 
@@ -105,7 +106,7 @@ Declare `history.undo` or `history.redo` to use the matching helper. Each must b
 
 History includes graph and saved-view edits, not navigation, selection, viewport, or preferences. Undo/redo restore recorded effects without replaying requests or recording a new edit; empty history is a no-op.
 
-Pass `{ historyGroup: string }` to coalesce adjacent label/position writes from one interaction. Use a fresh ID per text session or drag; this metadata never grants write access.
+Pass `{ historyGroup: string }` to coalesce adjacent label/description/position writes from one interaction. Use a fresh ID per text session or drag; this metadata never grants write access.
 
 ### Contributions and locale
 

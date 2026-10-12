@@ -1,4 +1,5 @@
 {
+  "description": "Description",
   "localData": "Local data",
   "storageDefault": "Default",
   "storageCustom": "Custom",

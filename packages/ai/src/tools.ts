@@ -9,6 +9,7 @@ const scope = z.enum(['active', 'all']).default('active')
 const operation = z.discriminatedUnion('kind', [
   z.strictObject({ kind: z.literal('concept.add'), id, position: position.optional() }),
   z.strictObject({ kind: z.literal('concept.label'), id, value: z.string().max(aiTextLimits.conceptLabel) }),
+  z.strictObject({ kind: z.literal('concept.description'), id, value: z.string() }),
   z.strictObject({ kind: z.literal('concept.position'), id, value: position }),
   z.strictObject({ kind: z.literal('concept.positions'), updates: z.array(z.strictObject({ id, position })).max(500) }),
   z.strictObject({ kind: z.literal('concept.remove'), id }),

@@ -59,8 +59,7 @@ const sameItems = <T>(left: readonly T[], right: readonly T[], equal: (left: T, 
   left === right || (left.length === right.length && left.every((item, index) => item === right[index] || equal(item, right[index])))
 
 export const sameGraph = (left: GraphSnapshot, right: GraphSnapshot): boolean =>
-  sameItems(left.concepts, right.concepts, (a, b) =>
-    a.id === b.id && a.label === b.label && a.position.x === b.position.x && a.position.y === b.position.y)
+  sameItems(left.concepts, right.concepts, sameConcept)
   && sameItems(left.relations, right.relations, (a, b) => relationKey(a) === relationKey(b))
   && sameItems(left.relationTypes, right.relationTypes, (a, b) => a.id === b.id && a.label === b.label)
 
@@ -165,6 +164,15 @@ export const applyStateOperations = (state: HostState, operations: readonly Host
         break
       case 'concept.label':
         updateConcept(operation.id, (concept) => concept.label === operation.value ? concept : { ...concept, label: operation.value })
+        break
+      case 'concept.description':
+        updateConcept(operation.id, (concept) => {
+          if ((concept.description ?? '') === operation.value) return concept
+          const next = { ...concept }
+          if (operation.value === '') delete next.description
+          else next.description = operation.value
+          return next
+        })
         break
       case 'concept.position':
         setPositions([{ id: operation.id, position: operation.value }])
