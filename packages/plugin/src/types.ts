@@ -81,6 +81,7 @@ export type Preferences = {
   readonly activeRendererId: string
   readonly activeThemeId: string
   readonly panels: PanelSizes
+  readonly inspectorTab?: 'details' | 'chat'
   readonly collapsedSections?: readonly SectionId[]
 }
 

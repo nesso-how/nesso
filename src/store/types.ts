@@ -1,4 +1,4 @@
-import type { NessoOperation, NessoState, NessoStore, SectionId } from '@nesso/plugin'
+import type { NessoOperation, NessoState, NessoStore, Preferences, SectionId } from '@nesso/plugin'
 import type { AiChatMessage } from '@nesso/ai'
 import type { SchemaIssue } from '@nesso/schema'
 
@@ -13,6 +13,7 @@ export type HostState = NessoState & {
 }
 
 export type HostOperation = NessoOperation
+  | { readonly kind: 'preferences.inspectorTab'; readonly value: NonNullable<Preferences['inspectorTab']> }
   | { readonly kind: 'conversation.messages'; readonly value: readonly AiChatMessage[] }
   | { readonly kind: 'conversation.clear' }
 

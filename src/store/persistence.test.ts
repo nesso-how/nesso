@@ -84,6 +84,7 @@ test('startup saves durable changes made before autosave connects', async () => 
     { section: 'document', apply: (host) => { host.store.setConceptLabel('urn:one', 'Changed before autosave') } },
     { section: 'document', apply: (host) => { host.store.setViewport('graph', { x: 30, y: 40, zoom: 0.75 }) } },
     { section: 'conversation', apply: (host) => { host.store.clearChat() } },
+    { section: 'preferences', apply: (host) => { host.store.applyOperations([{ kind: 'preferences.inspectorTab', value: 'chat' }]) } },
   ]
   for (const { section, apply } of changes) {
     const storage = savedStorage()
@@ -135,6 +136,7 @@ test('durable state round-trips without rewriting restored records or persisting
   host.store.setPanelSizes({ explorerWidth: 310, inspectorWidth: 330 })
   host.store.setLocale('it')
   for (const id of sectionIds) host.store.setSectionOpen(id, false)
+  host.store.applyOperations([{ kind: 'preferences.inspectorTab', value: 'chat' }])
   host.store.setViewport('graph', { x: 100, y: 200, zoom: 0.75 })
   host.store.setConceptLabel('urn:one', 'Renamed')
   host.store.setChatMessages([{ id: 'assistant', role: 'assistant', content: 'Proposed rename.', outcome: 'applied' }])
@@ -152,6 +154,7 @@ test('durable state round-trips without rewriting restored records or persisting
     assert.deepEqual(reopened[key], host.store.getState()[key])
   }
   assert.deepEqual(reopened.selected, [])
+  assert.equal(reopened.preferences.inspectorTab, 'chat')
   assert.deepEqual(reopened.history, { canUndo: false, canRedo: false })
   assert.deepEqual(reopened.persistenceIssues, [])
   assert.deepEqual(reopened.viewGraph.concepts.map(({ id }) => id), ['urn:one', 'urn:two'])
@@ -206,6 +209,11 @@ test('autosave debounces durable sections and drains edits on shutdown', async (
   await persistence.flush()
   assert.deepEqual(storage.writes, ['preferences'])
   storage.writes.length = 0
+  host.store.applyOperations([{ kind: 'preferences.inspectorTab', value: 'chat' }])
+  await persistence.flush()
+  assert.deepEqual(storage.writes, ['preferences'])
+  assert.equal((await loadPersistence(storage)).preferences?.inspectorTab, 'chat')
+  storage.writes.length = 0
   host.store.setChatMessages([{ id: 'assistant', role: 'assistant', content: 'Complete', outcome: 'complete' }])
   await persistence.flush()
   assert.deepEqual(storage.writes, ['conversation'])
@@ -229,6 +237,7 @@ test('malformed records stay protected while the other sections save', async () 
     ['document', { version: 1, graph: serializeGraph(fixture()), workspace: { ...state.workspace, activeViewId: 'unknown' } }],
     ['document', { version: 1, graph: serializeGraph(fixture()), workspace: { ...state.workspace, savedViews: [{ id: 'bad', name: 'Bad', pinned: false, conceptIds: ['missing'] }] } }],
     ['preferences', { version: 1, preferences: { ...state.preferences, activeThemeId: null } }],
+    ...[null, 'invalid', 1].map((inspectorTab): [PersistenceSection, unknown] => ['preferences', { version: 1, preferences: { ...state.preferences, inspectorTab } }]),
     ['preferences', { version: 1, preferences: { ...state.preferences, panels: { explorerWidth: 0, inspectorWidth: 280 } } }],
     ...[null, ['missing'], ['sidebar', 'sidebar']].map((collapsedSections): [PersistenceSection, unknown] => ['preferences', { version: 1, preferences: { ...state.preferences, collapsedSections } }]),
     ['preferences', { version: 1, preferences: { ...state.preferences, locale: 'fr' } }],
