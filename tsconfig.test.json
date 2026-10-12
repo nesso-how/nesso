@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "lib": ["ES2024", "DOM"],
+    "types": ["node", "vite/client"]
+  },
+  "include": ["**/*.test.ts", "src/desktop.d.ts"],
+  "exclude": ["node_modules"]
+}

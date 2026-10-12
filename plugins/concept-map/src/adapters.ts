@@ -11,6 +11,11 @@ type ConceptBounds = ConceptNodeSize & { position: ConceptView['position'] }
 export type ConceptNodeSizes = Record<string, ConceptNodeSize>
 export const conceptNodeMinSize: ConceptNodeSize = { width: 100, height: 44 }
 
+export const indexGraph = (graph: GraphSnapshot) => ({
+  concepts: new Map(graph.concepts.map((concept) => [concept.id, concept])),
+  relationTypes: new Map(graph.relationTypes.map((type) => [type.id, type])),
+})
+
 export const facingSide = (from: ConceptBounds, to: ConceptBounds): Position => {
   const dx = to.position.x + to.width / 2 - from.position.x - from.width / 2
   const dy = to.position.y + to.height / 2 - from.position.y - from.height / 2
@@ -31,8 +36,8 @@ export function conceptNode(concept: ConceptView, selected: boolean, measured?: 
   }
 }
 
-export function relationEdge(relation: RelationView, selected: boolean, singleSelection: boolean, graph: GraphSnapshot, defaultTypeId?: string, sizes: ConceptNodeSizes = {}): RelationEdge {
-  const bounds = (id: string): ConceptBounds => ({ position: graph.concepts.find((concept) => concept.id === id)!.position, ...(sizes[id] ?? conceptNodeMinSize) })
+export function relationEdge(relation: RelationView, selected: boolean, singleSelection: boolean, graph: ReturnType<typeof indexGraph>, defaultTypeId?: string, sizes: ConceptNodeSizes = {}): RelationEdge {
+  const bounds = (id: string): ConceptBounds => ({ position: graph.concepts.get(id)!.position, ...(sizes[id] ?? conceptNodeMinSize) })
   const source = bounds(relation.source)
   const target = bounds(relation.target)
   return {
@@ -41,7 +46,7 @@ export function relationEdge(relation: RelationView, selected: boolean, singleSe
     target: relation.target,
     sourceHandle: relation.source === relation.target ? Position.Right : facingSide(source, target),
     targetHandle: relation.source === relation.target ? Position.Top : facingSide(target, source),
-    label: relation.predicate === defaultTypeId ? undefined : graph.relationTypes.find((type) => type.id === relation.predicate)?.label,
+    label: relation.predicate === defaultTypeId ? undefined : graph.relationTypes.get(relation.predicate)?.label,
     labelStyle: { fontFamily: 'var(--font-mono)', fontSize: 11, fill: selected ? 'var(--foreground)' : 'var(--muted-foreground)' },
     labelBgStyle: { fill: 'var(--background)', fillOpacity: 0.94 },
     labelBgPadding: [6, 3],

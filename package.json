@@ -14,7 +14,7 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "analyze": "fallow",
-    "test": "tsc -b packages/ai && node --test",
+    "test": "tsc -b packages/ai && tsc -p tsconfig.test.json && node --test",
     "preview": "vite preview",
     "site:dev": "tsc -b packages/i18n && vite --config site/vite.config.ts",
     "site:build": "tsc -b packages/i18n && vite build --config site/vite.config.ts",

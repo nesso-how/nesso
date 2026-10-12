@@ -18,7 +18,7 @@ const fixture = (count = 3) => {
     relationTypes: [{ id: 'urn:links', label: 'links' }],
   }
   const host = createNessoStore(graph)
-  host.registerVocab({ id: 'vocab', label: 'Vocabulary', defaultTypeId: 'urn:links', relationTypes: graph.relationTypes })
+  host.registerVocab({ id: 'vocab', defaultTypeId: 'urn:links', relationTypes: graph.relationTypes })
   return host
 }
 

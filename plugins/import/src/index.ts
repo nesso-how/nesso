@@ -1,6 +1,6 @@
 import type { NessoOperation, NessoState, Plugin } from '@nesso/plugin'
 import { createTranslator, defaultLocale } from '@nesso/i18n'
-import { newIri, parseGraph, relationKey, type Graph } from '@nesso/schema'
+import { newIri, parseGraph, type Graph } from '@nesso/schema'
 import en from './i18n/en.json' with { type: 'json' }
 import it from './i18n/it.json' with { type: 'json' }
 import zhCN from './i18n/zh-CN.json' with { type: 'json' }
@@ -9,39 +9,28 @@ const translate = createTranslator(en, { it, 'zh-CN': zhCN })
 
 export function buildImportOperations(
   snapshot: Graph,
-  state: Pick<NessoState, 'graph' | 'workspace' | 'vocabs' | 'preferences'>,
+  state: Pick<NessoState, 'workspace'>,
   viewId: string | null,
 ): NessoOperation[] {
   if (snapshot.concepts.length === 0) return []
-  const vocab = state.vocabs.find((item) => item.id === state.preferences.activeVocabId)
-  if (!vocab) return []
-  const operations: NessoOperation[] = [{ kind: 'selection.set', value: [] }]
+  const operations: NessoOperation[] = []
   const ids = new Map<string, string>()
   for (const concept of snapshot.concepts) {
     const id = newIri()
     ids.set(concept.id, id)
     operations.push(
+      { kind: 'selection.set', value: [] },
       { kind: 'concept.add', id, position: { ...concept.position } },
       { kind: 'concept.label', id, value: concept.label },
     )
   }
-  const knownTypes = new Set(state.graph.relationTypes.map((item) => item.id))
-  const typeLabels = new Map(snapshot.relationTypes.map((item) => [item.id, item.label] as const))
+  const types = new Map(snapshot.relationTypes.map((type) => [type.id, type]))
   for (const relation of snapshot.relations) {
     const source = ids.get(relation.source)
     const target = ids.get(relation.target)
     if (!source || !target || source === target) continue
-    const label = typeLabels.get(relation.predicate)
-    if (label === undefined) continue
-    operations.push({ kind: 'relation.connect', source, target })
-    if (relation.predicate === vocab.defaultTypeId) continue
-    const id = relationKey({ source, predicate: vocab.defaultTypeId, target })
-    if (knownTypes.has(relation.predicate)) {
-      operations.push({ kind: 'relation.type', id, typeId: relation.predicate })
-    } else {
-      operations.push({ kind: 'relation.type.create', id, typeId: relation.predicate, label })
-      knownTypes.add(relation.predicate)
-    }
+    const type = types.get(relation.predicate)
+    if (type) operations.push({ kind: 'relation.connect', source, target, type })
   }
   const activeViewId = state.workspace.activeViewId
   if (viewId !== null && viewId !== activeViewId) {
@@ -60,7 +49,7 @@ export const importPlugin: Plugin = {
     description: translate(locale)('pluginDescription'),
     documentation: translate(locale)('pluginDocumentation'),
   }),
-  operations: ['selection.set', 'concept.add', 'concept.label', 'relation.connect', 'relation.type', 'relation.type.create', 'view.membership'],
+  operations: ['selection.set', 'concept.add', 'concept.label', 'relation.connect', 'view.membership'],
   create: ({ store }) => {
     const runOnView = (viewId: string | null) => {
       const input = document.createElement('input')
@@ -72,14 +61,11 @@ export const importPlugin: Plugin = {
         const locale = store.getState().preferences.locale ?? defaultLocale
         file.text().then(
           (text) => {
-            let snapshot: Graph
             try {
-              snapshot = parseGraph(JSON.parse(text))
+              store.applyOperations(buildImportOperations(parseGraph(JSON.parse(text)), store.getState(), viewId))
             } catch {
               window.alert(translate(locale)('importFailure'))
-              return
             }
-            store.applyOperations(buildImportOperations(snapshot, store.getState(), viewId))
           },
           () => window.alert(translate(locale)('importFailure')),
         )

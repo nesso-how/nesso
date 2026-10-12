@@ -7,6 +7,8 @@ import { createNessoStore } from './create.ts'
 import { NessoError } from './errors.ts'
 import { sectionIds } from './types.ts'
 import { copyGraph, pasteOperations } from '../../plugins/concept-map/src/clipboard.ts'
+import { buildImportOperations, importPlugin } from '../../plugins/import/src/index.ts'
+import { createPluginStore } from './commands.ts'
 
 const fixture = (): Graph => ({
   concepts: [
@@ -86,6 +88,33 @@ const vocabB: VocabDefinition = {
   relationTypes: [{ id: 'urn:ext', label: 'ext' }],
   defaultTypeId: 'urn:ext',
 }
+
+test('import preserves disconnected concepts and parallel relations in either order as one undoable edit', () => {
+  for (const predicates of [[], ['urn:links', 'urn:custom'], ['urn:custom', 'urn:links']]) {
+    const host = createNessoStore(fixture())
+    host.registerVocab(vocabA)
+    const store = createPluginStore(host.store, importPlugin.operations)
+    const viewId = host.store.createView('Target', ['urn:n1'])
+    store.setSelection([{ kind: 'concept', id: 'urn:n1' }])
+    const before = store.getState()
+    const snapshot: Graph = {
+      concepts: fixture().concepts.slice(0, 2),
+      relationTypes: [{ id: 'urn:links', label: 'links' }, { id: 'urn:custom', label: 'Custom' }],
+      relations: predicates.map((predicate) => ({ source: 'urn:n1', predicate, target: 'urn:n2' })),
+    }
+    store.applyOperations(buildImportOperations(snapshot, before, viewId))
+    const after = store.getState()
+    const copies = after.graph.concepts.slice(before.graph.concepts.length)
+    assert.deepEqual(copies.map((concept) => concept.label), snapshot.concepts.map((concept) => concept.label))
+    assert.deepEqual(after.graph.relations.slice(before.graph.relations.length), snapshot.relations.map((relation) => ({
+      ...relation, source: copies[0].id, target: copies[1].id,
+    })))
+    assert.deepEqual(after.viewGraph.concepts.map((concept) => concept.id), ['urn:n1', ...copies.map((concept) => concept.id)])
+    host.store.undo()
+    assert.deepEqual(host.store.getState().graph, before.graph)
+    assert.deepEqual(host.store.getState().workspace, before.workspace)
+  }
+})
 
 const issuesOf = (run: () => void): SchemaError['issues'] => {
   try {
@@ -532,7 +561,7 @@ test('state batches share ordered graph, view and preference changes, including 
   host.registerVocab(vocabA)
   host.registerVocab(vocabB)
   host.registerRenderer({ id: 'graph', component: () => null })
-  host.registerTheme({ id: 'light', label: 'Light' })
+  host.registerTheme({ id: 'light' })
   const { store } = host
   let notifications = 0
   store.subscribe(() => notifications++)

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ClipboardEvent as ReactClipboardEvent, type MouseEvent as ReactMouseEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type ClipboardEvent as ReactClipboardEvent, type MouseEvent as ReactMouseEvent } from 'react'
 import { Copy, ListChecks, Lock, LockOpen, Maximize, ClipboardPaste, Plus, Redo2, Scissors, Trash2, Undo2 } from 'lucide-react'
 import type { Selection } from '@nesso/plugin'
 import {
@@ -22,7 +22,7 @@ import { newIri, relationKey } from '@nesso/schema'
 import { ConceptNodeView } from './ConceptNodeView'
 import { ConnectionPreview } from './ConnectionPreview'
 import { GraphContextMenu } from './GraphContextMenu'
-import { conceptNode, conceptNodeMinSize, relationEdge, type ConceptNodeSizes } from './adapters'
+import { conceptNode, conceptNodeMinSize, indexGraph, relationEdge, type ConceptNodeSizes } from './adapters'
 import type { ConceptNode, RelationEdge } from './types'
 import { useNesso, usePluginContext } from './store'
 import { copyGraph, isEditableTarget, pasteOperations } from './clipboard'
@@ -39,6 +39,7 @@ type ContextMenuTarget = Selection[number]['kind'] | 'pane' | 'selection'
 export function Canvas() {
   const t = useTranslation()
   const graph = useNesso((state) => state.viewGraph)
+  const indexed = useMemo(() => indexGraph(graph), [graph])
   const selected = useNesso((state) => state.selected)
   const conceptCount = useNesso((state) => state.graph.concepts.length)
   const defaultTypeId = useNesso((state) => state.vocabs.find((vocab) => vocab.id === state.preferences.activeVocabId)?.defaultTypeId)
@@ -70,10 +71,10 @@ export function Canvas() {
     conceptNode(concept, selectedConcepts.has(concept.id), sizes[concept.id]),
   )
   const edges = graph.relations.map((relation) => ({
-    ...relationEdge(relation, selectedRelations.has(relationKey(relation)), singleSelection, graph, defaultTypeId, sizes),
+    ...relationEdge(relation, selectedRelations.has(relationKey(relation)), singleSelection, indexed, defaultTypeId, sizes),
     ariaLabel: t('relationFromTo', {
-      source: graph.concepts.find((concept) => concept.id === relation.source)?.label ?? '',
-      target: graph.concepts.find((concept) => concept.id === relation.target)?.label ?? '',
+      source: indexed.concepts.get(relation.source)?.label ?? '',
+      target: indexed.concepts.get(relation.target)?.label ?? '',
     }),
   }))
 

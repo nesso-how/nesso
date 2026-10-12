@@ -5,6 +5,8 @@ import { createNessoStore } from './create.ts'
 import { connectPersistence, loadPersistence } from './persistence.ts'
 import { createDesktopStorage, createIndexedDbStorage } from './storage.ts'
 import { sectionIds } from './types.ts'
+import { maxConceptLabelLength, maxRelationLabelLength } from './settings.ts'
+import { initializeNessoStore } from './initialize.ts'
 import type { PersistenceSection, PersistenceStorage } from '../../shared/persistence.ts'
 
 const fixture = (): Graph => ({
@@ -32,9 +34,9 @@ const memoryStorage = () => {
 
 const registeredHost = (graph: Graph | null, restored = {}) => {
   const host = createNessoStore(graph, restored)
-  host.registerVocab({ id: 'vocab', label: 'Vocabulary', defaultTypeId: 'urn:links', relationTypes: [{ id: 'urn:links', label: 'links' }] })
+  host.registerVocab({ id: 'vocab', defaultTypeId: 'urn:links', relationTypes: [{ id: 'urn:links', label: 'links' }] })
   host.registerRenderer({ id: 'graph', component: () => null })
-  host.registerTheme({ id: 'light', label: 'Light' })
+  host.registerTheme({ id: 'light' })
   return host
 }
 
@@ -231,11 +233,17 @@ test('autosave debounces durable sections and drains edits on shutdown', async (
 
 test('malformed records stay protected while the other sections save', async () => {
   const state = registeredHost(fixture()).store.getState()
+  const longConcept = fixture()
+  longConcept.concepts[0].label = 'x'.repeat(maxConceptLabelLength + 1)
+  const longType = fixture()
+  longType.relationTypes[0].label = 'x'.repeat(maxRelationLabelLength + 1)
   const invalid: [PersistenceSection, unknown, string?][] = [
     ['document', null], ['preferences', null], ['conversation', null],
     ['conversation', { version: 2, messages: [] }],
     ['conversation', { version: 1, messages: [{ id: 'invalid', role: 'system', content: 'Invalid' }] }],
     ['document', { version: 2 }],
+    ['document', { version: 1, graph: serializeGraph(longConcept), workspace: state.workspace }],
+    ['document', { version: 1, graph: serializeGraph(longType), workspace: state.workspace }],
     ['document', { version: 1, graph: serializeGraph({ concepts: [], relations: [], relationTypes: [] }), workspace: state.workspace }],
     ['document', { version: 1, graph: serializeGraph(fixture()), workspace: { ...state.workspace, activeViewId: 'unknown' } }],
     ['document', { version: 1, graph: serializeGraph(fixture()), workspace: { ...state.workspace, savedViews: [{ id: 'bad', name: 'Bad', pinned: false, conceptIds: ['missing'] }] } }],
@@ -251,6 +259,11 @@ test('malformed records stay protected while the other sections save', async () 
     storage.records.set(section, value)
     const loaded = await loadPersistence(storage)
     assert.deepEqual(loaded.blocked, [section])
+    if (section === 'document') {
+      const restored = initializeNessoStore(loaded, ['en']).store.getState()
+      assert.equal(restored.graph.concepts.length, 1)
+      assert.deepEqual(restored.persistenceIssues, loaded.issues)
+    }
     if (expectedPath) assert.equal(loaded.issues[0].path, expectedPath)
     const host = registeredHost(loaded.graph ?? fixture(), loaded)
     const initial = host.store.getState()
@@ -352,7 +365,7 @@ test('explicit recovery replaces only the chosen record and keeps failed replace
   storage.records.set('preferences', 'unreadable')
   storage.records.set('conversation', 'unreadable')
   const loaded = await loadPersistence(storage)
-  const host = registeredHost(loaded.graph, loaded)
+  const host = registeredHost(loaded.graph!, loaded)
   const write = storage.write
   let denied = true
   storage.write = async (section, value) => {

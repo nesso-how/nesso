@@ -60,7 +60,7 @@ test('undo and redo restore deletion, incident relations, custom types, membersh
 
 test('mixed batches undo only document changes and replay recorded effects, not current selection or vocabulary', () => {
   const host = createNessoStore(fixture())
-  host.registerVocab({ id: 'vocab', label: 'Vocab', defaultTypeId: 'urn:links', relationTypes: [{ id: 'urn:links', label: 'Links' }] })
+  host.registerVocab({ id: 'vocab', defaultTypeId: 'urn:links', relationTypes: [{ id: 'urn:links', label: 'Links' }] })
   host.store.applyOperations([
     { kind: 'view.create', id: 'urn:v', name: 'View', conceptIds: ['urn:n0'] },
     { kind: 'selection.set', value: [{ kind: 'concept', id: 'urn:n0' }] },
@@ -76,7 +76,7 @@ test('mixed batches undo only document changes and replay recorded effects, not 
   assert.equal(host.store.getState().workspace.activeViewId, null)
   assert.equal(host.store.getState().preferences, after.preferences)
   assert.deepEqual(host.store.getState().selected, [])
-  host.registerVocab({ id: 'other', label: 'Other', defaultTypeId: 'urn:other', relationTypes: [{ id: 'urn:other', label: 'Other' }] })
+  host.registerVocab({ id: 'other', defaultTypeId: 'urn:other', relationTypes: [{ id: 'urn:other', label: 'Other' }] })
   host.store.setActiveVocab('other')
   host.store.setSelection([{ kind: 'concept', id: 'urn:n3' }])
   host.store.redo()

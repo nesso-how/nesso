@@ -1,6 +1,3 @@
-import { execFileSync } from 'node:child_process'
-import test from 'node:test'
-import { fileURLToPath } from 'node:url'
 import type { ActionDefinition, Notification, Plugin, PluginContext, RendererDefinition, ThemeDefinition, VocabDefinition } from '@nesso/plugin'
 
 type Reject<T extends false> = T
@@ -27,12 +24,3 @@ export type PluginContract = [
     readonly actions: readonly ActionDefinition[]
   }>>,
 ]
-
-test('plugin contracts reject incomplete confirmations and incompatible contributions', () => {
-  execFileSync(process.execPath, [
-    fileURLToPath(new URL('../../../node_modules/typescript/bin/tsc', import.meta.url)),
-    '--ignoreConfig', '--noEmit', '--strict', '--skipLibCheck', '--types', 'node',
-    '--module', 'preserve', '--moduleResolution', 'bundler', '--allowImportingTsExtensions',
-    fileURLToPath(import.meta.url),
-  ], { stdio: 'inherit' })
-})

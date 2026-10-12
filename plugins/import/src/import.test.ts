@@ -4,21 +4,8 @@ import type { NessoState } from '@nesso/plugin'
 import type { Graph } from '@nesso/schema'
 import { buildImportOperations } from './index.ts'
 
-const state: Pick<NessoState, 'graph' | 'workspace' | 'vocabs' | 'preferences'> = {
-  graph: {
-    concepts: [],
-    relationTypes: [{ id: 'urn:knows', label: 'knows' }],
-    relations: [],
-  },
+const state: Pick<NessoState, 'workspace'> = {
   workspace: { activeViewId: 'urn:active', savedViews: [], viewports: {} },
-  vocabs: [{
-    id: 'urn:vocab', label: 'Vocab', defaultTypeId: 'urn:default',
-    relationTypes: [{ id: 'urn:default', label: 'related to' }],
-  }],
-  preferences: {
-    activeVocabId: 'urn:vocab', activeRendererId: 'urn:renderer', activeThemeId: 'urn:theme',
-    panels: { explorerWidth: 280, inspectorWidth: 280 },
-  },
 }
 
 const snapshot: Graph = {
@@ -40,7 +27,7 @@ const snapshot: Graph = {
   ],
 }
 
-test('import remaps concept ids and merges relations with missing types created once', () => {
+test('import remaps concept ids and connects original types in the target view', () => {
   const operations = buildImportOperations(snapshot, state, 'urn:target')
   const adds = operations.filter((operation) => operation.kind === 'concept.add')
   assert.equal(adds.length, 2)
@@ -50,12 +37,7 @@ test('import remaps concept ids and merges relations with missing types created 
   assert.deepEqual(labels.map((operation) => operation.kind === 'concept.label' ? operation.value : ''), ['Alpha', 'Beta'])
   const connects = operations.filter((operation) => operation.kind === 'relation.connect')
   assert.equal(connects.length, 3)
-  const retypes = operations.filter((operation) => operation.kind === 'relation.type')
-  assert.equal(retypes.length, 2)
-  assert.deepEqual(retypes.map((operation) => operation.kind === 'relation.type' ? operation.typeId : ''), ['urn:knows', 'urn:likes'])
-  const creates = operations.filter((operation) => operation.kind === 'relation.type.create')
-  assert.equal(creates.length, 1)
-  assert.equal(creates[0]?.kind === 'relation.type.create' ? creates[0].typeId : '', 'urn:likes')
+  assert.deepEqual(connects.map((operation) => operation.type?.id), ['urn:knows', 'urn:likes', 'urn:likes'])
   const joins = operations.filter((operation) => operation.kind === 'view.membership' && operation.viewId === 'urn:target')
   assert.equal(joins.length, 2)
   assert.ok(joins.every((operation) => operation.kind === 'view.membership' && operation.included))

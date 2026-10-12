@@ -5,7 +5,7 @@ import { fail, object, parseConversation, parsePreferences, parseWorkspace } fro
 import type { Preferences, WorkspaceState } from '@nesso/plugin'
 import type { HostState } from './types.ts'
 import { persistenceSections as sections, type PersistenceIssue, type PersistenceSection as Section, type PersistenceStorage } from '../../shared/persistence.ts'
-import { sameGraph, samePreferences, sameWorkspace } from './operations.ts'
+import { checkGraph, sameGraph, samePreferences, sameWorkspace } from './operations.ts'
 
 export type LoadedState = {
   graph?: Graph | null
@@ -49,7 +49,7 @@ export const loadPersistence = async (storage: PersistenceStorage): Promise<Load
           continue
         }
         const graph = parseGraph(saved.graph)
-        if (graph.concepts.length === 0) fail('graph.concepts', 'Graph must keep at least one concept')
+        checkGraph(graph)
         const workspace = parseWorkspace(saved.workspace)
         const ids = new Set(graph.concepts.map((concept) => concept.id))
         for (const [index, view] of workspace.savedViews.entries()) {
