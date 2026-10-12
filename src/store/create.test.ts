@@ -20,6 +20,24 @@ const fixture = (): Graph => ({
   ],
 })
 
+test('data transfers pause all public writes without losing state or history and remain instance-local', () => {
+  const host = createNessoStore(fixture())
+  const other = createNessoStore(fixture())
+  host.store.setConceptLabel('urn:n1', 'Edited')
+  const previous = host.store.getState()
+  host.setWritesPaused(true)
+  assert.throws(() => host.store.setConceptLabel('urn:n1', 'Blocked'), NessoError)
+  assert.throws(() => host.store.undo(), NessoError)
+  assert.throws(() => host.store.setLocale('it'), NessoError)
+  assert.equal(host.store.getState(), previous)
+  other.store.setConceptLabel('urn:n1', 'Independent')
+  host.setWritesPaused(false)
+  host.store.undo()
+  assert.equal(host.store.getState().graph.concepts[0].label, 'One')
+  host.store.redo()
+  assert.equal(host.store.getState().graph.concepts[0].label, 'Edited')
+})
+
 const vocabA: VocabDefinition = {
   id: 'a',
   relationTypes: [

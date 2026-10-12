@@ -1,6 +1,6 @@
 import type { NessoOperation, NessoState, NessoStore, Preferences, SectionId } from '@nesso/plugin'
 import type { AiChatMessage } from '@nesso/ai'
-import type { SchemaIssue } from '@nesso/schema'
+import type { PersistenceIssue } from '../../shared/persistence.ts'
 
 export const sectionIds = [
   'sidebar', 'sidebar.pinned-views', 'sidebar.views',
@@ -9,7 +9,7 @@ export const sectionIds = [
 
 export type HostState = NessoState & {
   readonly conversation: { readonly messages: readonly AiChatMessage[] }
-  readonly persistenceIssues: readonly Readonly<SchemaIssue>[]
+  readonly persistenceIssues: readonly Readonly<PersistenceIssue>[]
 }
 
 export type HostOperation = NessoOperation

@@ -26,7 +26,8 @@ export const parseConversation = (value: unknown) => {
 export const object = (value: unknown, path: string, keys?: readonly string[]): Record<string, unknown> => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) fail(path, 'Expected an object')
   const result = value as Record<string, unknown>
-  if (keys && Object.keys(result).some((key) => !keys.includes(key))) fail(path, 'Unsupported property')
+  const unsupported = keys && Object.keys(result).find((key) => !keys.includes(key))
+  if (unsupported !== undefined) fail(path ? `${path}.${unsupported}` : unsupported, 'Unsupported property')
   return result
 }
 

@@ -62,7 +62,7 @@
 .chat-markdown ol { list-style: decimal; }
 .chat-markdown li + li, .chat-markdown li > * + * { margin-top: 4px; }
 .chat-markdown blockquote { padding-left: 12px; border-left: 2px solid var(--border); color: var(--muted-foreground); }
-.chat-markdown code { padding: 2px 4px; border-radius: var(--radius-control); background: var(--sidebar); font-family: var(--font-mono); font-size: 12px; }
+  .chat-markdown code, .inline-code { padding: 2px 4px; border-radius: var(--radius-control); background: var(--sidebar); font-family: var(--font-mono); font-size: 12px; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
 .chat-markdown pre { max-width: 100%; overflow-x: auto; padding: 10px 12px; border-radius: var(--radius-control); background: var(--sidebar); white-space: pre; overflow-wrap: normal; }
 .chat-markdown pre code { padding: 0; border-radius: 0; background: transparent; }
 .chat-markdown a { text-decoration: underline; text-underline-offset: 2px; }

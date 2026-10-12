@@ -3,6 +3,7 @@ import type { AiBridge } from './ai-bridge.js'
 import type { AiChatEvent } from '@nesso/ai'
 import type { McpBridge, McpEvent, McpState } from './mcp-bridge.js'
 import type { PersistenceBridge } from '../shared/persistence.js'
+import type { DataLocationBridge, DataLocationState } from '../shared/data-location.js'
 
 const { contextBridge, ipcRenderer } = require('electron') as typeof import('electron')
 const beforeSave = (request: string, reply: string, save: () => Promise<boolean>) => {
@@ -28,13 +29,39 @@ contextBridge.exposeInMainWorld('nessoUpdater', updater)
 const persistence: PersistenceBridge = {
   read: (section) => ipcRenderer.invoke('storage:read', section),
   write: (section, value) => ipcRenderer.invoke('storage:write', section, value),
-  beforeClose: (save) => {
-    const stop = beforeSave('storage:prepare', 'storage:closed', save)
+  beforeClose: (save, confirm) => {
+    const stop = beforeSave('storage:prepare', 'storage:closed', async () => {
+      if (await Promise.resolve().then(save).catch(() => false)) return true
+      ipcRenderer.send('storage:confirming')
+      return confirm()
+    })
     ipcRenderer.send('storage:ready')
     return stop
   },
 }
 contextBridge.exposeInMainWorld('nessoPersistence', persistence)
+const dataLocation: DataLocationBridge = {
+  getState: () => ipcRenderer.invoke('data-location:state'),
+  choose: () => ipcRenderer.invoke('data-location:choose'),
+  validate: (directory) => ipcRenderer.invoke('data-location:validate', directory),
+  move: (directory) => ipcRenderer.invoke('data-location:move', directory),
+  open: () => ipcRenderer.invoke('data-location:open'),
+  retryCleanup: () => ipcRenderer.invoke('data-location:cleanup'),
+  subscribe: (listener) => {
+    const receive = (_event: unknown, state: DataLocationState) => listener(state)
+    ipcRenderer.on('data-location:state', receive)
+    return () => { ipcRenderer.removeListener('data-location:state', receive) }
+  },
+  beforeMove: (save) => {
+    const prepare = async (_event: unknown, id: string) => {
+      const saved = await Promise.resolve().then(save).catch(() => false)
+      ipcRenderer.send('data-location:prepared', id, saved)
+    }
+    ipcRenderer.on('data-location:prepare', prepare)
+    return () => { ipcRenderer.removeListener('data-location:prepare', prepare) }
+  },
+}
+contextBridge.exposeInMainWorld('nessoDataLocation', dataLocation)
 const ai: AiBridge = {
   list: () => ipcRenderer.invoke('ai:list'),
   save: (input) => ipcRenderer.invoke('ai:save', input),
