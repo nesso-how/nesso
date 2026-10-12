@@ -5,6 +5,12 @@
     "urn:nesso:example:sleep": "睡眠",
     "urn:nesso:example:focus": "专注"
   },
+  "conceptDescriptions": {
+    "urn:nesso:example:coffee": "一种常见的饮品，能提升精力，但也可能干扰睡眠。",
+    "urn:nesso:example:energy": "让思维更敏锐、把事情做成的动力。",
+    "urn:nesso:example:sleep": "恢复精力、有助于专注的休息。",
+    "urn:nesso:example:focus": "把注意力集中在重要事情上的能力。"
+  },
   "relationTypeLabels": {
     "urn:nesso:example:boosts": "提升",
     "urn:nesso:example:helps": "有助于",

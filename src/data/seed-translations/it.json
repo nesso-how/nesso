@@ -5,6 +5,12 @@
     "urn:nesso:example:sleep": "Sonno",
     "urn:nesso:example:focus": "Concentrazione"
   },
+  "conceptDescriptions": {
+    "urn:nesso:example:coffee": "Una bevanda comune che dà energia, ma può disturbare il sonno.",
+    "urn:nesso:example:energy": "La spinta per pensare con lucidità e portare a termine le cose.",
+    "urn:nesso:example:sleep": "Il riposo che ristora l'energia e sostiene la concentrazione.",
+    "urn:nesso:example:focus": "La capacità di mantenere l'attenzione su ciò che conta."
+  },
   "relationTypeLabels": {
     "urn:nesso:example:boosts": "aumenta",
     "urn:nesso:example:helps": "favorisce",
