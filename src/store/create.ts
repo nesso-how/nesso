@@ -17,6 +17,7 @@ import { createHistory } from './history.ts'
 import { applyStateOperations, checkGraph, materialize, newGraph, newWorkspace } from './operations.ts'
 import { defaultPanels, fail, maxRelationLabelLength, parseConversation, parsePreferences, parseWorkspace } from './settings.ts'
 import type { HostState, HostStore, RestoredState } from './types.ts'
+import type { PersistenceIssue } from '../../shared/persistence.ts'
 
 export const createNessoStore = (graph: Graph | null, restored: RestoredState = {}) => {
   if (graph) checkGraph(graph)
@@ -45,8 +46,10 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
   }))
 
   const history = createHistory(store.getState, (next) => store.setState({ ...next, history: history.flags() }))
+  let writesPaused = false
 
   const applyOperations: HostStore['applyOperations'] = (operations, options) => {
+    if (writesPaused && operations.length) fail('storage', 'Local data is being moved; try again when the transfer completes')
     const historyOperation = operations.find(({ kind }) => kind === 'history.undo' || kind === 'history.redo')
     if (historyOperation) {
       if (operations.length !== 1) fail('operations', 'History operations must be applied alone')
@@ -136,7 +139,7 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
     })
   }
 
-  const setPersistenceIssues = (issues: readonly Readonly<SchemaIssue>[]): void => {
+  const setPersistenceIssues = (issues: readonly Readonly<PersistenceIssue>[]): void => {
     if (JSON.stringify(issues) !== JSON.stringify(store.getState().persistenceIssues)) {
       store.setState({ persistenceIssues: issues.map((issue) => ({ ...issue })) })
     }
@@ -145,5 +148,6 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
   const previewOperations = (state: Parameters<typeof applyStateOperations>[0], operations: Parameters<typeof applyStateOperations>[1]) =>
     applyStateOperations(state, operations, { renderers, themes })
 
-  return { store: nessoStore, previewOperations, setPersistenceIssues, registerVocab, registerRenderer, getRenderer, registerTheme, getTheme, listThemes }
+  const setWritesPaused = (value: boolean) => { writesPaused = value }
+  return { store: nessoStore, previewOperations, setPersistenceIssues, setWritesPaused, registerVocab, registerRenderer, getRenderer, registerTheme, getTheme, listThemes }
 }

@@ -9,6 +9,7 @@ import type { McpEvent, McpState } from './mcp-bridge.ts'
 import { createMcpAccess } from './mcp-access.ts'
 import { createAiStorage } from './ai-storage.ts'
 import type { TrustedRequest } from './ipc.ts'
+import type { DataLocation } from './data-location.ts'
 
 const replySchema = z.union([
   z.strictObject({ value: z.json() }),
@@ -17,7 +18,7 @@ const replySchema = z.union([
 
 const stoppedUrl = 'http://127.0.0.1:3210/mcp'
 
-export function connectMcp(trusted: TrustedRequest) {
+export function connectMcp(trusted: TrustedRequest, location: DataLocation) {
   const access = createMcpAccess(createAiStorage(path.join(app.getPath('userData'), 'mcp-access.enc'), safeStorage))
   let host: WebContents | undefined
   let server: Awaited<ReturnType<typeof startMcpServer>> | undefined
@@ -47,6 +48,7 @@ export function connectMcp(trusted: TrustedRequest) {
   }
   const start = async (owner: WebContents) => {
     const next = await startMcpServer((name, input, signal) => new Promise((resolve) => {
+      if (location.state().moving) { resolve({ issues: [{ path: 'dataLocation', message: 'storageBusy' }] }); return }
       if (signal.aborted || host !== owner || owner.isDestroyed()) { resolve({ issues: [{ path: 'mcp', message: 'The document is unavailable' }] }); return }
       if (pending) { resolve({ issues: [{ path: 'mcp', message: 'Another MCP request is running' }] }); return }
       const id = randomUUID()
@@ -131,5 +133,6 @@ export function connectMcp(trusted: TrustedRequest) {
       return { issues: error instanceof ElectronError ? error.issues : [{ path: 'mcp', message: 'MCP server operation failed' }] }
     } finally { changing = false }
   })
-  app.on('before-quit', () => { void stop() })
+  app.on('before-quit', () => { if (!location.state().moving) void stop() })
+  return { busy: () => !!pending }
 }

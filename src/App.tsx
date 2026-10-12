@@ -7,11 +7,12 @@ import { AppSidebar } from '@/components/app/Sidebar'
 import { SettingsDialog } from '@/components/app/SettingsDialog'
 import { Dialog, SidePanel, useMediaQuery } from '@nesso/ui'
 import { SidebarInset, SidebarProvider } from '@/components/app/SidebarLayout'
-import { getRenderer, host, useNessoStore } from '@/store'
+import { getRenderer, host, useNessoStore, type startAutosave } from '@/store'
 import { resolveInspector } from '@/store/settings'
 import { translate } from '@/i18n'
 import { chat } from '@/ai'
 import { AssistantPanel } from '@/components/app/AssistantPanel'
+import { DataTransferDialog } from '@/components/app/LocalDataSettings'
 import { Intro } from '@/components/app/Intro'
 import { completeIntro } from '@/store/intro'
 
@@ -27,12 +28,12 @@ function RendererHost() {
   )
 }
 
-export default function App() {
+export default function App({ persistence }: { persistence: ReturnType<typeof startAutosave> }) {
   const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale)
   const t = translate(locale)
   const panels = useNessoStore((state) => state.preferences.panels)
   const { width: inspectorWidth, minWidth: inspectorMinWidth } = resolveInspector(panels, !!chat)
-  const [detailsOpen, setDetailsOpen] = useState(true)
+  const detailsOpen = useNessoStore((state) => !state.preferences.collapsedSections?.includes('inspector'))
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [introOpen, setIntroOpen] = useState(() => !host.store.getState().preferences.introSeen)
   const [settingsPage, setSettingsPage] = useState<'general' | 'ai'>('general')
@@ -42,6 +43,7 @@ export default function App() {
   useEffect(() => {
     if (readonly || introOpen) return
     const onKeyDown = (event: KeyboardEvent) => {
+      if (document.querySelector('[data-data-transfer][data-open]')) return
       if (event.defaultPrevented || event.isComposing || event.altKey || !(event.metaKey || event.ctrlKey)) return
       const target = event.target instanceof HTMLElement ? event.target : null
       if (target?.closest('input, textarea, [contenteditable="true"]') && !target.hasAttribute('data-document-edit')) return
@@ -80,15 +82,15 @@ export default function App() {
                 size={inspectorWidth}
                 minSize={inspectorMinWidth}
                 maxSize="45%"
-                onToggle={() => setDetailsOpen((open) => !open)}
+                onToggle={() => host.store.setSectionOpen('inspector', !detailsOpen)}
                 onSizeChange={(inspectorWidth) => host.store.setPanelSizes({ ...host.store.getState().preferences.panels, inspectorWidth })}
                 toggleLabel={t(detailsOpen ? 'collapseDetails' : 'expandDetails')}
                 resizeLabel={t('resizeInspector')}
               >
-                {chat ? <AssistantPanel chat={chat} onClose={() => setDetailsOpen(false)} onOpenSettings={() => { setSettingsPage('ai'); setSettingsOpen(true) }} settingsOpen={settingsOpen} /> : <Inspector />}
+                {chat ? <AssistantPanel chat={chat} onClose={() => host.store.setSectionOpen('inspector', false)} onOpenSettings={() => { setSettingsPage('ai'); setSettingsOpen(true) }} settingsOpen={settingsOpen} /> : <Inspector />}
               </SidePanel>}
             </div>
-            <PersistenceBanner />
+            <PersistenceBanner persistence={persistence} />
           </SidebarInset>
         </div>
       </SidebarProvider>
@@ -96,6 +98,7 @@ export default function App() {
       <Dialog.Root open={!readonly && settingsOpen} onOpenChange={setSettingsOpen}>
         {!readonly && settingsOpen && <SettingsDialog initialPage={settingsPage} onDiscover={() => { setSettingsOpen(false); setIntroOpen(true) }} />}
       </Dialog.Root>
+      {window.nessoDataLocation && <DataTransferDialog bridge={window.nessoDataLocation} />}
     </>
   )
 }

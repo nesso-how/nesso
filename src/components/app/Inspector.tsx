@@ -164,6 +164,24 @@ export function Inspector({ store = nessoStore, readonly = false }: { store?: Ho
               />
             )}
           </div>
+          {(!readonly || concept.description) && <div className="flex flex-col gap-1.5">
+            <Label htmlFor="concept-description">{t('description')}</Label>
+            {readonly ? (
+              <p className="text-[13px] leading-[19px] whitespace-pre-wrap break-words">{concept.description}</p>
+            ) : (
+              <textarea
+                key={concept.id}
+                id="concept-description"
+                className="nesso-input min-h-24 w-full resize-y border border-input bg-background px-2.5 py-2 focus-visible:border-muted-foreground"
+                rows={4}
+                data-document-edit
+                value={concept.description ?? ''}
+                onFocus={() => { textGroup.current = newIri() }}
+                onBlur={() => { textGroup.current = undefined }}
+                onChange={(event) => store.setConceptDescription(concept.id, event.target.value, textGroup.current ??= newIri())}
+              />
+            )}
+          </div>}
           <ConceptConnections key={`connections:${concept.id}`} store={store} conceptId={concept.id} readonly={readonly} />
         </section>
       ) : selectedEdge ? (

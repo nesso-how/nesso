@@ -14,11 +14,12 @@ export type GraphSnapshot = DeepReadonly<Graph>
 
 export type NessoOperation =
   | { readonly kind: 'concept.label'; readonly id: string; readonly value: string }
+  | { readonly kind: 'concept.description'; readonly id: string; readonly value: string }
   | { readonly kind: 'concept.position'; readonly id: string; readonly value: Readonly<Position> }
   | { readonly kind: 'concept.positions'; readonly updates: readonly { readonly id: string; readonly position: Readonly<Position> }[] }
   | { readonly kind: 'concept.add'; readonly id: string; readonly position?: Readonly<Position> }
   | { readonly kind: 'concept.remove'; readonly id: string }
-  | { readonly kind: 'relation.connect'; readonly source: string; readonly target: string }
+  | { readonly kind: 'relation.connect'; readonly source: string; readonly target: string; readonly type?: Readonly<RelationType> }
   | { readonly kind: 'relation.reconnect'; readonly id: string; readonly source: string; readonly target: string }
   | { readonly kind: 'relation.type'; readonly id: string; readonly typeId: string }
   | { readonly kind: 'relation.type.create'; readonly id: string; readonly typeId: string; readonly label: string }
@@ -73,7 +74,7 @@ export type PanelSizes = {
 
 export type SectionId =
   | 'sidebar' | 'sidebar.pinned-views' | 'sidebar.views'
-  | 'inspector.connections' | 'inspector.views' | 'inspector.nodes'
+  | 'inspector' | 'inspector.connections' | 'inspector.views' | 'inspector.nodes'
 
 export type Preferences = {
   readonly locale?: Locale
@@ -82,6 +83,7 @@ export type Preferences = {
   readonly activeRendererId: string
   readonly activeThemeId: string
   readonly panels: PanelSizes
+  readonly inspectorTab?: 'details' | 'chat'
   readonly collapsedSections?: readonly SectionId[]
 }
 
@@ -105,6 +107,7 @@ export type NessoStore = {
   readonly setConceptPosition: (id: string, position: Readonly<Position>, historyGroup?: string) => void
   readonly setConceptPositions: (updates: readonly { readonly id: string; readonly position: Readonly<Position> }[], historyGroup?: string) => void
   readonly setConceptLabel: (id: string, label: string, historyGroup?: string) => void
+  readonly setConceptDescription: (id: string, description: string, historyGroup?: string) => void
   readonly addConcept: (position?: Readonly<Position>, historyGroup?: string) => string
   readonly connect: (source: string, target: string) => void
   readonly reconnectRelation: (id: string, source: string, target: string) => void

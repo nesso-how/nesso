@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react'
-import { ListChecks, Lock, LockOpen, Maximize, Plus, Redo2, Trash2, Undo2 } from 'lucide-react'
+import { useEffect, useRef, useState, type ClipboardEvent as ReactClipboardEvent, type MouseEvent as ReactMouseEvent } from 'react'
+import { Copy, ListChecks, Lock, LockOpen, Maximize, ClipboardPaste, Plus, Redo2, Scissors, Trash2, Undo2 } from 'lucide-react'
 import type { RendererProps, Selection } from '@nesso/plugin'
 import {
   Background,
@@ -26,7 +26,8 @@ import { ConnectionPreview } from './ConnectionPreview'
 import { GraphContextMenu } from './GraphContextMenu'
 import { conceptNode, conceptNodeMinSize, relationEdge, type ConceptNodeSizes } from './adapters'
 import type { ConceptNode, RelationEdge } from './types'
-import { useNesso, useStore } from './store'
+import { useNesso, usePluginContext } from './store'
+import { copyGraph, isEditableTarget, pasteOperations } from './clipboard'
 import { useIsCompact } from './media'
 import { selectionForContextMenu, selectionFromChanges } from './selection'
 import { useTranslation } from './i18n'
@@ -45,7 +46,7 @@ export function Canvas({ readOnly = false, overlay }: RendererProps) {
   const view = useNesso((state) => state.workspace.activeViewId)
   const viewName = useNesso((state) => state.workspace.savedViews.find((saved) => saved.id === state.workspace.activeViewId)?.name) ?? t('completeGraph')
   const viewCount = graph.concepts.length
-  const store = useStore()
+  const { store, notifications } = usePluginContext()
   const flow = useStoreApi()
   const readonly = useIsCompact() || readOnly
   const flowInteractive = useFlowStore((state) => state.nodesDraggable || state.nodesConnectable || state.elementsSelectable)
@@ -66,6 +67,7 @@ export function Canvas({ readOnly = false, overlay }: RendererProps) {
   const nodesInitialized = useNodesInitialized()
   const duration = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 300
   const animatedFraming = { ...fitViewOptions, duration }
+  const pasted = useRef({ text: '', count: 0 })
   const { fitView, screenToFlowPosition, getNodes, getNodesBounds, setViewport } = useReactFlow()
   const zoom = useFlowStore((state) => state.transform[2])
   const [sizes, setSizes] = useState<ConceptNodeSizes>({})
@@ -164,6 +166,47 @@ export function Canvas({ readOnly = false, overlay }: RendererProps) {
     ])
   }
 
+  const paste = (text: string, point?: { x: number; y: number }) => {
+    const count = pasted.current.text === text ? pasted.current.count + 1 : 1
+    try {
+      store.applyOperations(pasteOperations(text, point ? screenToFlowPosition(point) : undefined, count * 40))
+      pasted.current = { text, count }
+      canvas.current?.focus()
+    } catch {
+      notifications.notify({ tone: 'warning', title: t('pasteFailed') })
+    }
+  }
+
+  const copyToClipboard = async (cut = false, event?: ReactClipboardEvent<HTMLDivElement>) => {
+    if (cut && (!interactive || !canDelete)) return
+    if (event && (isEditableTarget(event.target) || window.getSelection()?.isCollapsed === false)) return
+    const before = store.getState()
+    try {
+      const text = copyGraph(before.graph, before.selected)
+      if (!text) return
+      if (event) {
+        event.preventDefault()
+        event.clipboardData.setData('text/plain', text)
+      } else await navigator.clipboard.writeText(text)
+      const state = store.getState()
+      if (cut && flow.getState().elementsSelectable && state.graph === before.graph && state.selected === before.selected) handleDelete()
+    } catch {
+      notifications.notify({ tone: 'warning', title: t('clipboardUnavailable') })
+    }
+  }
+
+  const pasteFromClipboard = async (point?: { x: number; y: number }) => {
+    const view = store.getState().workspace.activeViewId
+    try {
+      const text = await navigator.clipboard.readText()
+      const state = flow.getState()
+      if (store.getState().workspace.activeViewId === view && !readonly
+        && (state.nodesDraggable || state.nodesConnectable || state.elementsSelectable)) paste(text, point)
+    } catch {
+      notifications.notify({ tone: 'warning', title: t('clipboardUnavailable') })
+    }
+  }
+
   const addConceptAt = (point: { x: number; y: number }) => {
     const position = screenToFlowPosition(point)
     store.addConcept({ x: position.x - conceptNodeMinSize.width / 2, y: position.y - conceptNodeMinSize.height / 2 })
@@ -227,8 +270,13 @@ export function Canvas({ readOnly = false, overlay }: RendererProps) {
   }, [hasOverlay, overlayHeight, nodesInitialized, width, height, graph, getNodes, getNodesBounds, setViewport, duration])
 
   return (
-    <div ref={canvas} tabIndex={0} className={reconnectDrag ? 'h-full w-full outline-none graph-reconnecting' : 'h-full w-full outline-none'} onKeyDown={(event) => {
+    <div ref={canvas} tabIndex={0} className={reconnectDrag ? 'h-full w-full outline-none graph-reconnecting' : 'h-full w-full outline-none'} onCopy={(event) => { void copyToClipboard(false, event) }} onCut={(event) => { void copyToClipboard(true, event) }} onPaste={(event) => {
+      if (!interactive || isEditableTarget(event.target)) return
+      event.preventDefault()
+      paste(event.clipboardData.getData('text/plain'))
+    }} onKeyDown={(event) => {
       if (readOnly) return
+      if (isEditableTarget(event.target)) return
       if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) {
         event.preventDefault()
         openKeyboardContextMenu(event.target as Element)
@@ -323,6 +371,15 @@ export function Canvas({ readOnly = false, overlay }: RendererProps) {
             <ControlButton onClick={store.redo} disabled={!canRedo} title={t('redo')} aria-label={t('redo')}>
               <Redo2 aria-hidden="true" />
             </ControlButton>
+            <ControlButton onClick={() => { void copyToClipboard() }} disabled={selected.length === 0} title={t('copy')} aria-label={t('copy')}>
+              <Copy aria-hidden="true" />
+            </ControlButton>
+            <ControlButton onClick={() => { void copyToClipboard(true) }} disabled={!interactive || !canDelete} title={t('cut')} aria-label={t('cut')}>
+              <Scissors aria-hidden="true" />
+            </ControlButton>
+            <ControlButton onClick={() => { void pasteFromClipboard() }} disabled={!interactive} title={t('paste')} aria-label={t('paste')}>
+              <ClipboardPaste aria-hidden="true" />
+            </ControlButton>
             <ControlButton onClick={handleDelete} disabled={!canDelete} title={t('delete')} aria-label={t('delete')}>
               <Trash2 aria-hidden="true" />
             </ControlButton>
@@ -338,6 +395,11 @@ export function Canvas({ readOnly = false, overlay }: RendererProps) {
         onClose={() => setContextMenu(null)}
         finalFocus={canvas}
         actions={[
+          { label: t('copy'), icon: Copy, onClick: () => { void copyToClipboard() }, disabled: selected.length === 0 },
+          ...(!readonly ? [
+            { label: t('cut'), icon: Scissors, onClick: () => { void copyToClipboard(true) }, disabled: !interactive || !canDelete },
+            { label: t('paste'), icon: ClipboardPaste, onClick: () => { void pasteFromClipboard(contextMenu?.target === 'pane' ? contextMenu : undefined) }, disabled: !interactive },
+          ] : []),
           ...(!readonly && contextMenu && contextMenu.target !== 'relation' ? [
             { label: t(singleSelection && selected[0].kind === 'concept' ? 'addLinkedConcept' : 'addConcept'), icon: Plus, onClick: () => { if (contextMenu.target === 'pane') addConceptAt(contextMenu); else handleAdd() }, disabled: !interactive },
           ] : []),

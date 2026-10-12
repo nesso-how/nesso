@@ -12,6 +12,7 @@ const fixture = {
     { '@id': predicate, '@type': 'rdf:Property', 'rdfs:label': 'connects' },
     {
       '@id': subject, 'rdfs:label': 'One', position: { x: 10, y: 20 },
+      'rdfs:comment': 'A definition.\nAn example.',
       connects: targets.map((id) => ({ '@id': id })),
     },
     { '@id': targets[0], 'rdfs:label': 'Two', position: { x: 30, y: 40 } },
@@ -21,6 +22,7 @@ const fixture = {
 
 test('a graph with compact and custom predicates survives a JSON-LD round trip', () => {
   const graph = parseGraph(fixture)
+  assert.equal(graph.concepts[0].description, 'A definition.\nAn example.')
   const custom = 'urn:uuid:82d7d311-382c-45ee-9ec6-7e3b247d489b'
   graph.relationTypes.push({ id: custom, label: 'supports' })
   graph.relations.push(...targets.map((target) => ({ source: subject, predicate: custom, target })))
@@ -50,4 +52,14 @@ test('parse failures report structured issues', () => {
       error instanceof SchemaError &&
       error.issues.some(({ path, message }) => path === '@graph[4].position' && message === 'Invalid position: urn:uuid:broken'),
   )
+})
+
+test('descriptions must be strings at graph and JSON-LD boundaries', () => {
+  const graph = parseGraph(fixture)
+  graph.concepts[0].description = 42 as never
+  assert.throws(() => serializeGraph(graph), (error: unknown) => error instanceof SchemaError
+    && error.issues.some(({ path }) => path === 'concepts[0].description'))
+  assert.throws(() => parseGraph({ ...fixture, '@graph': fixture['@graph'].map((entry) =>
+    entry['@id'] === subject ? { ...entry, 'rdfs:comment': 42 } : entry) }), (error: unknown) => error instanceof SchemaError
+    && error.issues.some(({ path }) => path === '@graph[1].rdfs:comment'))
 })

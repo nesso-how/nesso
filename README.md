@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="public/logo.svg" alt="Nesso" width="350">
+<img src="public/icon.svg" alt="Nesso" width="96">
 
 </br>
 A second brain for connecting ideas and building understanding in one knowledge graph, with AI assistance. Built on a small core with a simple plugin system.
@@ -8,11 +8,7 @@ A second brain for connecting ideas and building understanding in one knowledge 
 
 [![CI](https://github.com/nesso-how/nesso/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/nesso-how/nesso/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/nesso-how/nesso?include_prereleases)](https://github.com/nesso-how/nesso/releases)
-
-[![Download desktop app](https://img.shields.io/badge/Download_desktop_app-nesso-393939)](https://github.com/nesso-how/nesso/releases)
-[![Web demo (without AI)](https://img.shields.io/badge/Web_demo-without_AI-555)](https://app.nesso.how)
-[![Website](https://img.shields.io/badge/Website-nesso.how-555)](https://nesso.how)
-[![Discussions](https://img.shields.io/badge/Discussions-GitHub-555)](https://github.com/nesso-how/nesso/discussions)
+[![Discussions](https://img.shields.io/badge/-Discussions-555?logo=github&logoColor=white)](https://github.com/nesso-how/nesso/discussions)
 
 </div>
 
@@ -37,6 +33,8 @@ Your knowledge lives in one graph.
 - **Plugins** provide the canvas, vocabularies, themes, and any actions on the current view.
 
 Use the Explorer to navigate views, the canvas to build the graph, and the Inspector to edit the selection and its memberships.
+
+Concepts can have an optional plain-text description, edited in the Inspector and shared across views. Descriptions stay off the canvas.
 
 ### AI
 

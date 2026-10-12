@@ -13,28 +13,36 @@ export const host = initializeNessoStore(loaded, navigator.languages)
 
 export const { store: nessoStore, registerVocab, registerRenderer, getRenderer, registerTheme } = host
 
-export const startAutosave = (): (() => void) => {
+export const startAutosave = () => {
   const persistence = connectPersistence(host, storage, loaded)
   const save = async () => {
     if (document.activeElement instanceof HTMLElement) document.activeElement.blur()
-    await persistence.flush()
-    return host.store.getState().persistenceIssues.length === 0
+    return persistence.flush()
   }
   const stopUpdateSave = window.nessoUpdater?.beforeInstall(save)
-  const stopCloseSave = window.nessoPersistence?.beforeClose(save)
+  const stopMoveSave = window.nessoDataLocation?.beforeMove(async () => {
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur()
+    host.setWritesPaused(true)
+    return persistence.flush()
+  })
+  const stopMoveState = window.nessoDataLocation?.subscribe((state) => {
+    if (!state.moving) host.setWritesPaused(false)
+  })
   const flush = () => { void persistence.flush() }
   const onVisibilityChange = () => {
     if (document.visibilityState === 'hidden') flush()
   }
   window.addEventListener('pagehide', flush)
   document.addEventListener('visibilitychange', onVisibilityChange)
-  return () => {
+  return { ...persistence, dispose: () => {
     stopUpdateSave?.()
-    stopCloseSave?.()
+    stopMoveSave?.()
+    stopMoveState?.()
+    host.setWritesPaused(false)
     window.removeEventListener('pagehide', flush)
     document.removeEventListener('visibilitychange', onVisibilityChange)
     void persistence.dispose()
-  }
+  } }
 }
 
 export function useNessoStore<T>(selector: (state: HostState) => T, store: HostStore = nessoStore): T {

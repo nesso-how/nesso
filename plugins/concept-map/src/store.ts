@@ -1,15 +1,15 @@
-import type { NessoState, NessoStore } from '@nesso/plugin'
+import type { NessoState, PluginContext } from '@nesso/plugin'
 import { createContext, useContext, useSyncExternalStore } from 'react'
 
-export const StoreContext = createContext<NessoStore | null>(null)
+export const StoreContext = createContext<PluginContext | null>(null)
 
-export function useStore(): NessoStore {
-  const store = useContext(StoreContext)
-  if (!store) throw new Error('Graph renderer rendered outside its provider')
-  return store
+export function usePluginContext(): PluginContext {
+  const context = useContext(StoreContext)
+  if (!context) throw new Error('Graph renderer rendered outside its provider')
+  return context
 }
 
 export function useNesso<T>(selector: (state: NessoState) => T): T {
-  const store = useStore()
+  const { store } = usePluginContext()
   return useSyncExternalStore(store.subscribe, () => selector(store.getState()))
 }

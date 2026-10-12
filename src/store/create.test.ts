@@ -6,6 +6,7 @@ import { maxConceptLabelLength, maxRelationLabelLength } from './settings.ts'
 import { createNessoStore } from './create.ts'
 import { NessoError } from './errors.ts'
 import { sectionIds } from './types.ts'
+import { copyGraph, pasteOperations } from '../../plugins/concept-map/src/clipboard.ts'
 
 const fixture = (): Graph => ({
   concepts: [
@@ -18,6 +19,59 @@ const fixture = (): Graph => ({
     { source: 'urn:n1', predicate: 'urn:links', target: 'urn:n2' },
     { source: 'urn:n1', predicate: 'urn:links', target: 'urn:n3' },
   ],
+})
+
+test('paste uses one atomic undoable batch, preserves parallel types, and joins the active view without implicit links', () => {
+  const { store } = createNessoStore(fixture())
+  store.createView('Active', ['urn:n1'])
+  store.setSelection([{ kind: 'concept', id: 'urn:n1' }])
+  const before = store.getState()
+  const copied = fixture()
+  copied.concepts[0].description = 'Definition\nExample'
+  copied.relationTypes.push({ id: 'urn:custom', label: 'Custom' })
+  copied.relations.push({ ...copied.relations[0], predicate: 'urn:custom' })
+  const text = copyGraph(copied, [{ kind: 'concept', id: 'urn:n1' }, { kind: 'concept', id: 'urn:n2' }])!
+  let notifications = 0
+  store.subscribe(() => notifications++)
+  store.applyOperations(pasteOperations(text))
+  const after = store.getState()
+  const copies = after.graph.concepts.slice(3)
+  const relations = after.graph.relations.slice(2)
+  assert.equal(copies[0].description, copied.concepts[0].description)
+  assert.equal(Object.hasOwn(copies[1], 'description'), false)
+  assert.equal(notifications, 1)
+  assert.deepEqual(copies.map((concept) => ({ label: concept.label, position: concept.position })), [
+    { label: 'One', position: { x: 40, y: 40 } }, { label: 'Two', position: { x: 41, y: 40 } },
+  ])
+  assert.deepEqual(relations, copied.relations.filter((relation) => relation.target === 'urn:n2')
+    .map((relation) => ({ ...relation, source: copies[0].id, target: copies[1].id })))
+  assert.deepEqual(after.graph.relationTypes, copied.relationTypes)
+  assert.deepEqual(after.viewGraph.concepts.map((concept) => concept.id), ['urn:n1', ...copies.map((concept) => concept.id)])
+  assert.deepEqual(after.selected, [
+    ...copies.map((concept) => ({ kind: 'concept', id: concept.id })),
+    ...relations.map((relation) => ({ kind: 'relation', id: relationKey(relation) })),
+  ])
+  store.undo()
+  assert.deepEqual(store.getState().graph, before.graph)
+  assert.deepEqual(store.getState().workspace.savedViews, before.workspace.savedViews)
+})
+
+test('data transfers pause all public writes without losing state or history and remain instance-local', () => {
+  const host = createNessoStore(fixture())
+  const other = createNessoStore(fixture())
+  host.store.setConceptLabel('urn:n1', 'Edited')
+  const previous = host.store.getState()
+  host.setWritesPaused(true)
+  assert.throws(() => host.store.setConceptLabel('urn:n1', 'Blocked'), NessoError)
+  assert.throws(() => host.store.undo(), NessoError)
+  assert.throws(() => host.store.setLocale('it'), NessoError)
+  assert.equal(host.store.getState(), previous)
+  other.store.setConceptLabel('urn:n1', 'Independent')
+  host.setWritesPaused(false)
+  host.store.undo()
+  assert.equal(host.store.getState().graph.concepts[0].label, 'One')
+  host.store.redo()
+  assert.equal(host.store.getState().graph.concepts[0].label, 'Edited')
 })
 
 const vocabA: VocabDefinition = {
@@ -818,6 +872,28 @@ test('locale changes leave document data, selection and history untouched', () =
   for (const key of ['graph', 'workspace', 'viewGraph', 'selected', 'history'] as const) assert.equal(after[key], before[key])
   host.store.setLocale('it')
   assert.equal(host.store.getState(), after)
+})
+
+test('inspector tab defaults to details and changes only preferences', () => {
+  const host = createNessoStore(fixture())
+  host.store.setSelection([{ kind: 'concept', id: 'urn:n1' }])
+  const before = host.store.getState()
+  assert.equal(before.preferences.inspectorTab ?? 'details', 'details')
+  host.store.applyOperations([{ kind: 'preferences.inspectorTab', value: 'details' }])
+  assert.equal(host.store.getState(), before)
+  host.store.applyOperations([{ kind: 'preferences.inspectorTab', value: 'chat' }])
+  const after = host.store.getState()
+  assert.deepEqual(after, { ...before, preferences: { ...before.preferences, inspectorTab: 'chat' } })
+  for (const key of ['graph', 'workspace', 'viewGraph', 'selected', 'history'] as const) assert.equal(after[key], before[key])
+  host.store.applyOperations([{ kind: 'preferences.inspectorTab', value: 'chat' }])
+  assert.equal(host.store.getState(), after)
+  assert.throws(() => host.store.applyOperations([
+    { kind: 'concept.label', id: 'urn:n1', value: 'Changed' },
+    { kind: 'preferences.inspectorTab', value: 'invalid' as 'chat' },
+  ]), (error: unknown) => error instanceof NessoError && error.issues[0].path === 'preferences.inspectorTab')
+  assert.equal(host.store.getState(), after)
+  host.store.applyOperations([{ kind: 'preferences.inspectorTab', value: 'details' }])
+  assert.equal(host.store.getState().preferences.inspectorTab, 'details')
 })
 
 test('section preferences are global, immutable, validated and independent of the document', () => {

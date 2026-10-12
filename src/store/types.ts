@@ -1,19 +1,20 @@
-import type { NessoOperation, NessoState, NessoStore, SectionId } from '@nesso/plugin'
+import type { NessoOperation, NessoState, NessoStore, Preferences, SectionId } from '@nesso/plugin'
 import type { AiChatMessage } from '@nesso/ai'
-import type { SchemaIssue } from '@nesso/schema'
+import type { PersistenceIssue } from '../../shared/persistence.ts'
 
 export const sectionIds = [
   'sidebar', 'sidebar.pinned-views', 'sidebar.views',
-  'inspector.connections', 'inspector.views', 'inspector.nodes',
+  'inspector', 'inspector.connections', 'inspector.views', 'inspector.nodes',
 ] as const satisfies readonly SectionId[]
 
 export type HostState = NessoState & {
   readonly conversation: { readonly messages: readonly AiChatMessage[] }
-  readonly persistenceIssues: readonly Readonly<SchemaIssue>[]
+  readonly persistenceIssues: readonly Readonly<PersistenceIssue>[]
 }
 
 export type HostOperation = NessoOperation
   | { readonly kind: 'preferences.intro-seen' }
+  | { readonly kind: 'preferences.inspectorTab'; readonly value: NonNullable<Preferences['inspectorTab']> }
   | { readonly kind: 'conversation.messages'; readonly value: readonly AiChatMessage[] }
   | { readonly kind: 'conversation.clear' }
 
