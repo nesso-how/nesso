@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.0.0-alpha.12 — 2026-10-12
+
+### Documentation
+
+- **readme:** Trim header badges and use app icon
+
+### Features
+
+- **inspector:** Remember active tab and default to details
+- **data:** Move local data directory without restart
+
+### Fixes
+
+- **inspector:** Persist inspector open state
+
 ## 1.0.0-alpha.11 — 2026-10-11
 
 ### Features
