@@ -20,6 +20,24 @@ const fixture = (): Graph => ({
   ],
 })
 
+test('data transfers pause all public writes without losing state or history and remain instance-local', () => {
+  const host = createNessoStore(fixture())
+  const other = createNessoStore(fixture())
+  host.store.setConceptLabel('urn:n1', 'Edited')
+  const previous = host.store.getState()
+  host.setWritesPaused(true)
+  assert.throws(() => host.store.setConceptLabel('urn:n1', 'Blocked'), NessoError)
+  assert.throws(() => host.store.undo(), NessoError)
+  assert.throws(() => host.store.setLocale('it'), NessoError)
+  assert.equal(host.store.getState(), previous)
+  other.store.setConceptLabel('urn:n1', 'Independent')
+  host.setWritesPaused(false)
+  host.store.undo()
+  assert.equal(host.store.getState().graph.concepts[0].label, 'One')
+  host.store.redo()
+  assert.equal(host.store.getState().graph.concepts[0].label, 'Edited')
+})
+
 const vocabA: VocabDefinition = {
   id: 'a',
   relationTypes: [
@@ -818,6 +836,28 @@ test('locale changes leave document data, selection and history untouched', () =
   for (const key of ['graph', 'workspace', 'viewGraph', 'selected', 'history'] as const) assert.equal(after[key], before[key])
   host.store.setLocale('it')
   assert.equal(host.store.getState(), after)
+})
+
+test('inspector tab defaults to details and changes only preferences', () => {
+  const host = createNessoStore(fixture())
+  host.store.setSelection([{ kind: 'concept', id: 'urn:n1' }])
+  const before = host.store.getState()
+  assert.equal(before.preferences.inspectorTab ?? 'details', 'details')
+  host.store.applyOperations([{ kind: 'preferences.inspectorTab', value: 'details' }])
+  assert.equal(host.store.getState(), before)
+  host.store.applyOperations([{ kind: 'preferences.inspectorTab', value: 'chat' }])
+  const after = host.store.getState()
+  assert.deepEqual(after, { ...before, preferences: { ...before.preferences, inspectorTab: 'chat' } })
+  for (const key of ['graph', 'workspace', 'viewGraph', 'selected', 'history'] as const) assert.equal(after[key], before[key])
+  host.store.applyOperations([{ kind: 'preferences.inspectorTab', value: 'chat' }])
+  assert.equal(host.store.getState(), after)
+  assert.throws(() => host.store.applyOperations([
+    { kind: 'concept.label', id: 'urn:n1', value: 'Changed' },
+    { kind: 'preferences.inspectorTab', value: 'invalid' as 'chat' },
+  ]), (error: unknown) => error instanceof NessoError && error.issues[0].path === 'preferences.inspectorTab')
+  assert.equal(host.store.getState(), after)
+  host.store.applyOperations([{ kind: 'preferences.inspectorTab', value: 'details' }])
+  assert.equal(host.store.getState().preferences.inspectorTab, 'details')
 })
 
 test('section preferences are global, immutable, validated and independent of the document', () => {

@@ -5,9 +5,9 @@ import { ArrowUpRight, Check, MessageCircle, Settings2, X } from 'lucide-react'
 import { plugins } from '@/plugins'
 import { host, useNessoStore } from '@/store'
 import { translate } from '@/i18n'
-import { PersistenceBanner } from './PersistenceBanner'
 import { AiSettings } from './AiSettings'
 import { McpSettings } from './McpSettings'
+import { LocalDataSettings } from './LocalDataSettings'
 import type { AiBridge } from '../../../electron/ai-bridge'
 import type { McpBridge } from '../../../electron/mcp-bridge'
 import appPackage from '../../../package.json'
@@ -80,6 +80,7 @@ export function SettingsDialog({ initialPage = 'general' }: { initialPage?: 'gen
               <h3 id="settings-interface" className="settings-section-title">{t('interface')}</h3>
               <div className="mt-3"><PreferenceSelect label={t('language')} items={locales.map((value) => ({ value, label: localeNames[value] }))} value={locale} onChange={(value) => { if (isLocale(value)) host.store.setLocale(value) }} /></div>
             </section>
+            {window.nessoDataLocation && <LocalDataSettings bridge={window.nessoDataLocation} />}
             <section className="settings-section" aria-labelledby="settings-providers">
               <h3 id="settings-providers" className="settings-section-title">{t('providers')}</h3>
               <div className="mt-3 space-y-3">{providers.map(({ kind, key, change }) => {
@@ -124,7 +125,6 @@ export function SettingsDialog({ initialPage = 'general' }: { initialPage?: 'gen
           </>}
         </div>
       </div>
-      <PersistenceBanner />
     </DialogPopup>
   )
 }

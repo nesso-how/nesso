@@ -26,7 +26,8 @@ export const parseConversation = (value: unknown) => {
 export const object = (value: unknown, path: string, keys?: readonly string[]): Record<string, unknown> => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) fail(path, 'Expected an object')
   const result = value as Record<string, unknown>
-  if (keys && Object.keys(result).some((key) => !keys.includes(key))) fail(path, 'Unsupported property')
+  const unsupported = keys && Object.keys(result).find((key) => !keys.includes(key))
+  if (unsupported !== undefined) fail(path ? `${path}.${unsupported}` : unsupported, 'Unsupported property')
   return result
 }
 
@@ -97,9 +98,11 @@ export const parseWorkspace = (value: unknown): WorkspaceState => {
 }
 
 export const parsePreferences = (value: unknown): Preferences => {
-  const preferences = object(value, 'preferences', ['locale', 'activeVocabId', 'activeRendererId', 'activeThemeId', 'panels', 'collapsedSections'])
+  const preferences = object(value, 'preferences', ['locale', 'activeVocabId', 'activeRendererId', 'activeThemeId', 'panels', 'inspectorTab', 'collapsedSections'])
   const locale = preferences.locale
   if (locale !== undefined && !isLocale(locale)) fail('preferences.locale', 'Unsupported locale')
+  const inspectorTab = preferences.inspectorTab
+  if (inspectorTab !== undefined && inspectorTab !== 'details' && inspectorTab !== 'chat') fail('preferences.inspectorTab', 'Unknown inspector tab')
   let collapsedSections: SectionId[] | undefined
   if (preferences.collapsedSections !== undefined) {
     if (!Array.isArray(preferences.collapsedSections)) fail('preferences.collapsedSections', 'Expected section ids')
@@ -115,6 +118,7 @@ export const parsePreferences = (value: unknown): Preferences => {
     activeRendererId: string(preferences.activeRendererId, 'preferences.activeRendererId'),
     activeThemeId: preferences.activeThemeId === undefined ? '' : string(preferences.activeThemeId, 'preferences.activeThemeId'),
     panels: parsePanels(preferences.panels),
+    ...(inspectorTab === 'details' || inspectorTab === 'chat' ? { inspectorTab } : {}),
     ...(collapsedSections === undefined ? {} : { collapsedSections }),
   }
 }

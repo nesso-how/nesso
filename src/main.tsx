@@ -14,7 +14,7 @@ import './index.css'
 import App from './App'
 
 const stopTheme = connectTheme(host, document.documentElement)
-const stopAutosave = startAutosave()
+const persistence = startAutosave()
 const stopUpdateNotifications = connectUpdateNotifications(
   window.nessoUpdater,
   notifications.api,
@@ -32,7 +32,7 @@ window.addEventListener('pagehide', stopChat)
 window.addEventListener('pagehide', stopMcp)
 import.meta.hot?.dispose(() => {
   stopTheme()
-  stopAutosave()
+  persistence.dispose()
   stopUpdateNotifications()
   chat?.dispose()
   stopMcp()
@@ -42,6 +42,6 @@ import.meta.hot?.dispose(() => {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <App persistence={persistence} />
   </StrictMode>,
 )

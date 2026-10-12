@@ -7,10 +7,10 @@ import { ElectronError } from './errors.ts'
 import { createAiChatRun } from './ai-chat.ts'
 import { createChatGptAuth } from './ai-oauth.ts'
 import type { TrustedRequest } from './ipc.ts'
+import type { DataLocation } from './data-location.ts'
 
-export function connectAi(trusted: TrustedRequest) {
-  const file = path.join(app.getPath('userData'), 'ai-connections.enc')
-  const connections = createAiConnections(createAiStorage(file, safeStorage), fetch, createChatGptAuth((url) => shell.openExternal(url)))
+export function connectAi(trusted: TrustedRequest, location: DataLocation) {
+  const connections = createAiConnections(createAiStorage(path.join(app.getPath('userData'), 'ai-connections.enc'), safeStorage), fetch, createChatGptAuth((url) => shell.openExternal(url)))
   const runs = new Map<number, ReturnType<typeof createAiChatRun> & { accountId?: string }>()
   const preparing = new Map<number, { id: string; controller: AbortController }>()
   let signIn: { senderId: number; controller: AbortController } | undefined
@@ -56,6 +56,7 @@ export function connectAi(trusted: TrustedRequest) {
   }
   ipcMain.handle('ai:chat', async (event, value: unknown): Promise<AiResult<true>> => {
     if (!trusted(event)) return { issues: [{ path: 'desktop', message: 'Untrusted request' }] }
+    if (location.state().moving) return { issues: [{ path: 'dataLocation', message: 'storageBusy' }] }
     const senderId = event.sender.id
     if (runs.has(senderId) || preparing.has(senderId)) return { issues: [{ path: 'chat', message: 'A request is already running' }] }
     const parsed = aiChatRequest.safeParse(value)
@@ -98,4 +99,5 @@ export function connectAi(trusted: TrustedRequest) {
     for (const run of runs.values()) run.cancel()
     for (const pending of preparing.values()) pending.controller.abort()
   })
+  return { busy: () => runs.size > 0 || preparing.size > 0 }
 }

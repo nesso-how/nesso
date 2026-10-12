@@ -2,7 +2,7 @@ import { useEffect, useState, useSyncExternalStore } from 'react'
 import { IconButton, Tabs } from '@nesso/ui'
 import { SquarePen, X } from 'lucide-react'
 import type { createAiChat } from '@/ai/chat'
-import { useNessoStore } from '@/store'
+import { host, useNessoStore } from '@/store'
 import { useTranslation } from '@/i18n'
 import { Inspector } from './Inspector'
 import { Chat } from './Chat'
@@ -15,7 +15,7 @@ export function AssistantPanel({ chat, onClose, onOpenSettings, settingsOpen }: 
 }) {
   const t = useTranslation()
   const selected = useNessoStore((state) => state.selected.length > 0)
-  const [tab, setTab] = useState<'chat' | 'details'>('chat')
+  const tab = useNessoStore((state) => state.preferences.inspectorTab ?? 'details')
   const [draft, setDraft] = useState('')
   const [activeModel, setActiveModel] = useState<string | null>(null)
   const [chatGptPlan, setChatGptPlan] = useState(false)
@@ -32,19 +32,19 @@ export function AssistantPanel({ chat, onClose, onOpenSettings, settingsOpen }: 
     return () => { mounted = false }
   }, [tab, settingsOpen, busy])
   return (
-    <Tabs.Root value={tab} onValueChange={(value) => setTab(value as typeof tab)} className="flex h-full min-h-0 flex-col">
+    <Tabs.Root value={tab} onValueChange={(value) => host.store.applyOperations([{ kind: 'preferences.inspectorTab', value: value as typeof tab }])} className="flex h-full min-h-0 flex-col">
       <header className="assistant-header">
         <Tabs.List aria-label={t('aiInspectorTabs')} className="assistant-tabs">
-          <Tabs.Tab value="chat">{t('chat')}</Tabs.Tab>
           <Tabs.Tab value="details">{t('details')}{selected && <span className="assistant-selection-dot" aria-hidden="true" />}</Tabs.Tab>
+          <Tabs.Tab value="chat">{t('chat')}</Tabs.Tab>
         </Tabs.List>
         <div className="assistant-actions">
           {tab === 'chat' && <IconButton aria-label={t('aiNewChat')} title={t('aiNewChat')} onClick={() => { chat.clear(); setDraft('') }}><SquarePen /></IconButton>}
           <IconButton aria-label={t('collapseDetails')} title={t('collapseDetails')} onClick={onClose}><X /></IconButton>
         </div>
       </header>
-      <Tabs.Panel value="chat" keepMounted className="min-h-0 flex-1 data-[hidden]:hidden"><Chat chat={chat} draft={draft} onDraftChange={setDraft} onOpenSettings={onOpenSettings} activeModel={activeModel} chatGptPlan={chatGptPlan} /></Tabs.Panel>
       <Tabs.Panel value="details" className="min-h-0 flex-1"><Inspector /></Tabs.Panel>
+      <Tabs.Panel value="chat" keepMounted className="min-h-0 flex-1 data-[hidden]:hidden"><Chat chat={chat} draft={draft} onDraftChange={setDraft} onOpenSettings={onOpenSettings} activeModel={activeModel} chatGptPlan={chatGptPlan} /></Tabs.Panel>
     </Tabs.Root>
   )
 }

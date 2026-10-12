@@ -1,10 +1,10 @@
-import { parseGraph, SchemaError, serializeGraph, type Graph, type SchemaIssue } from '@nesso/schema'
+import { parseGraph, SchemaError, serializeGraph, type Graph } from '@nesso/schema'
 import type { createNessoStore } from './create.ts'
 import { NessoError } from './errors.ts'
 import { fail, object, parseConversation, parsePreferences, parseWorkspace } from './settings.ts'
 import type { Preferences, WorkspaceState } from '@nesso/plugin'
 import type { HostState } from './types.ts'
-import { persistenceSections as sections, type PersistenceSection as Section, type PersistenceStorage } from '../../shared/persistence.ts'
+import { persistenceSections as sections, type PersistenceIssue, type PersistenceSection as Section, type PersistenceStorage } from '../../shared/persistence.ts'
 import { sameGraph, samePreferences, sameWorkspace } from './operations.ts'
 
 export type LoadedState = {
@@ -13,17 +13,17 @@ export type LoadedState = {
   preferences?: Preferences
   conversation?: HostState['conversation']
   blocked: Section[]
-  issues: SchemaIssue[]
+  issues: PersistenceIssue[]
 }
 
-const storageError = (section: Section, error: unknown): NessoError => {
+const storageIssues = (section: Section, error: unknown, operation: PersistenceIssue['operation']): PersistenceIssue[] => {
   const issues = error instanceof NessoError || error instanceof SchemaError
     ? error.issues
     : [{ path: '', message: error instanceof Error ? error.message : 'Storage failed' }]
-  return new NessoError(issues.map(({ path, message }) => ({
-    path: path ? `${section}.${path}` : section,
-    message,
-  })))
+  return issues.map(({ path, message }) => ({
+    path: path === section || path.startsWith(`${section}.`) ? path : path ? `${section}.${path}` : section,
+    message, section, operation,
+  }))
 }
 
 export const loadPersistence = async (storage: PersistenceStorage): Promise<LoadedState> => {
@@ -62,7 +62,7 @@ export const loadPersistence = async (storage: PersistenceStorage): Promise<Load
       }
     } catch (error) {
       loaded.blocked.push(section)
-      loaded.issues.push(...storageError(section, error).issues)
+      loaded.issues.push(...storageIssues(section, error, 'read'))
     }
   }
   return loaded
@@ -73,8 +73,10 @@ export const connectPersistence = (
   storage: PersistenceStorage,
   loaded: LoadedState,
 ) => {
-  let previous = host.store.getState()
+  const initial = host.store.getState()
+  let previous = initial
   const blocked = new Set(loaded.blocked)
+  const replacements = new Set<Section>()
   let readIssues = loaded.issues
   const changed = {
     document: !loaded.graph || !loaded.workspace
@@ -84,7 +86,7 @@ export const connectPersistence = (
   }
   const pending = new Set(sections.filter((section) => changed[section] && !blocked.has(section)))
   let timer: ReturnType<typeof setTimeout> | undefined
-  const writeIssues: Partial<Record<Section, SchemaIssue[]>> = {}
+  const writeIssues: Partial<Record<Section, PersistenceIssue[]>> = {}
   let writing: Promise<void> | undefined
   let serializedGraph: { source: HostState['graph']; value: ReturnType<typeof serializeGraph> } | undefined
 
@@ -94,6 +96,8 @@ export const connectPersistence = (
       pending.clear()
       const state = host.store.getState()
       for (const section of batch) {
+        const replace = replacements.delete(section)
+        if (blocked.has(section) && !replace) continue
         try {
           if (section === 'document' && serializedGraph?.source !== state.graph) {
             serializedGraph = { source: state.graph, value: serializeGraph(state.graph as Graph) }
@@ -103,22 +107,32 @@ export const connectPersistence = (
           } : section === 'preferences' ? { version: 1, preferences: state.preferences }
             : { version: 1, messages: state.conversation.messages }
           await storage.write(section, saved)
+          if (replace) {
+            blocked.delete(section)
+            readIssues = readIssues.filter((issue) => issue.section !== section)
+          }
           delete writeIssues[section]
         } catch (error) {
-          writeIssues[section] = storageError(section, error).issues
+          writeIssues[section] = storageIssues(section, error, 'write')
         }
       }
       host.setPersistenceIssues([...readIssues, ...Object.values(writeIssues).flat()])
     }
     for (const section of sections) {
-      if (writeIssues[section]) pending.add(section)
+      if (writeIssues[section] && !blocked.has(section)) pending.add(section)
     }
   }
 
-  const flush = (): Promise<void> => {
+  const flush = (): Promise<boolean> => {
     clearTimeout(timer)
     writing ??= Promise.resolve().then(save).finally(() => { writing = undefined })
-    return writing
+    return writing.then(() => {
+      const state = host.store.getState()
+      return pending.size === 0 && [...blocked].every((section) => section === 'document'
+        ? sameGraph(state.graph, initial.graph) && sameWorkspace(state.workspace, initial.workspace)
+        : section === 'preferences' ? samePreferences(state.preferences, initial.preferences)
+          : JSON.stringify(state.conversation) === JSON.stringify(initial.conversation))
+    })
   }
 
   const schedule = (): void => {
@@ -136,7 +150,7 @@ export const connectPersistence = (
     previous = state
     if (changed.conversation && state.conversation.messages.length === 0) {
       blocked.delete('conversation')
-      readIssues = readIssues.filter(({ path }) => !path.startsWith('conversation'))
+      readIssues = readIssues.filter((issue) => issue.section !== 'conversation')
     }
     for (const section of sections) {
       if (changed[section] && !blocked.has(section)) pending.add(section)
@@ -149,6 +163,12 @@ export const connectPersistence = (
 
   return {
     flush,
+    recover: async (section: Section) => {
+      if (blocked.has(section)) replacements.add(section)
+      pending.add(section)
+      await flush()
+      return !blocked.has(section) && !writeIssues[section]
+    },
     dispose: async (): Promise<void> => {
       unsubscribe()
       await flush()

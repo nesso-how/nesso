@@ -77,6 +77,7 @@ export const sameWorkspace = (left: WorkspaceState, right: WorkspaceState): bool
 export const samePreferences = (left: Preferences, right: Preferences): boolean =>
   left.locale === right.locale && left.activeVocabId === right.activeVocabId && left.activeRendererId === right.activeRendererId && left.activeThemeId === right.activeThemeId
   && left.panels.explorerWidth === right.panels.explorerWidth && left.panels.inspectorWidth === right.panels.inspectorWidth
+  && (left.inspectorTab ?? 'details') === (right.inspectorTab ?? 'details')
   && sameItems(left.collapsedSections ?? [], right.collapsedSections ?? [], (a, b) => a === b)
 
 export const applyStateOperations = (state: HostState, operations: readonly HostOperation[], registry: {
@@ -320,6 +321,9 @@ export const applyStateOperations = (state: HostState, operations: readonly Host
         break
       case 'preferences.panels':
         preferences = { ...preferences, panels: { ...operation.value } }
+        break
+      case 'preferences.inspectorTab':
+        preferences = { ...preferences, inspectorTab: operation.value }
         break
       case 'preferences.section': {
         if (!sectionIds.includes(operation.id)) fail('preferences.collapsedSections', 'Unknown section')
