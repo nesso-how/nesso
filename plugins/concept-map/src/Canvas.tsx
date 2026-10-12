@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ClipboardEvent as ReactClipboardEvent, type MouseEvent as ReactMouseEvent } from 'react'
 import { Copy, ListChecks, Lock, LockOpen, Maximize, ClipboardPaste, Plus, Redo2, Scissors, Trash2, Undo2 } from 'lucide-react'
-import type { Selection } from '@nesso/plugin'
+import type { RendererProps, Selection } from '@nesso/plugin'
 import {
   Background,
   BackgroundVariant,
@@ -9,6 +9,8 @@ import {
   ConnectionMode,
   Panel,
   ReactFlow,
+  getViewportForBounds,
+  useNodesInitialized,
   useReactFlow,
   useStore as useFlowStore,
   useStoreApi,
@@ -32,11 +34,10 @@ import { useTranslation } from './i18n'
 
 const nodeTypes: NodeTypes = { concept: ConceptNodeView }
 const fitViewOptions = { padding: 0.3, maxZoom: 1.2 }
-const animatedFitViewOptions = { ...fitViewOptions, duration: 300 }
 const multiSelectionKeys = ['Meta', 'Control', 'Shift']
 type ContextMenuTarget = Selection[number]['kind'] | 'pane' | 'selection'
 
-export function Canvas() {
+export function Canvas({ readOnly = false, overlay }: RendererProps) {
   const t = useTranslation()
   const graph = useNesso((state) => state.viewGraph)
   const indexed = useMemo(() => indexGraph(graph), [graph])
@@ -48,7 +49,7 @@ export function Canvas() {
   const viewCount = graph.concepts.length
   const { store, notifications } = usePluginContext()
   const flow = useStoreApi()
-  const readonly = useIsCompact()
+  const readonly = useIsCompact() || readOnly
   const flowInteractive = useFlowStore((state) => state.nodesDraggable || state.nodesConnectable || state.elementsSelectable)
   const interactive = !readonly && flowInteractive
   const LockIcon = interactive ? LockOpen : Lock
@@ -58,8 +59,17 @@ export function Canvas() {
   const [reconnectDrag, setReconnectDrag] = useState(false)
   const dragGroup = useRef<string | undefined>(undefined)
   const canvas = useRef<HTMLDivElement>(null)
+  const overlayElement = useRef<HTMLDivElement>(null)
+  const [overlayHeight, setOverlayHeight] = useState(0)
+  const hasOverlay = Boolean(overlay)
+  const framed = useRef(false)
+  const width = useFlowStore((state) => state.width)
+  const height = useFlowStore((state) => state.height)
+  const nodesInitialized = useNodesInitialized()
+  const duration = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 300
+  const animatedFraming = { ...fitViewOptions, duration }
   const pasted = useRef({ text: '', count: 0 })
-  const { fitView, screenToFlowPosition } = useReactFlow()
+  const { fitView, screenToFlowPosition, getNodes, getNodesBounds, setViewport } = useReactFlow()
   const zoom = useFlowStore((state) => state.transform[2])
   const [sizes, setSizes] = useState<ConceptNodeSizes>({})
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; target: ContextMenuTarget } | null>(null)
@@ -79,6 +89,7 @@ export function Canvas() {
   }))
 
   const onObjectChanges = (kind: 'concept' | 'relation', changes: (NodeChange<ConceptNode> | EdgeChange<RelationEdge>)[]) => {
+    if (readOnly) return
     const current = store.getState().selected
     const next = selectionFromChanges(current, kind, changes)
     if (next !== current) store.setSelection(next)
@@ -208,6 +219,7 @@ export function Canvas() {
   }
 
   const handleContextMenu = (event: Pick<ReactMouseEvent, 'preventDefault' | 'clientX' | 'clientY'>, item?: Selection[number], target?: ContextMenuTarget) => {
+    if (readOnly) return
     event.preventDefault()
     openContextMenu({ x: event.clientX, y: event.clientY }, item, target)
   }
@@ -229,14 +241,34 @@ export function Canvas() {
   }
 
   useEffect(() => {
-    if (navigation.current === view) return
+    if (hasOverlay || navigation.current === view) return
     navigation.current = view
     setContextMenu(null)
     const frame = requestAnimationFrame(() => {
-      void fitView(animatedFitViewOptions)
+      void fitView(animatedFraming)
     })
     return () => cancelAnimationFrame(frame)
-  }, [view, fitView])
+  }, [view, fitView, hasOverlay, animatedFraming])
+
+  useEffect(() => {
+    const element = overlayElement.current
+    if (!element) return
+    const observer = new ResizeObserver(([entry]) => setOverlayHeight(entry.borderBoxSize[0]?.blockSize ?? entry.contentRect.height))
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [hasOverlay])
+
+  useEffect(() => {
+    if (!hasOverlay || !overlayHeight || !nodesInitialized || !width || !height) return
+    const frame = requestAnimationFrame(() => {
+      const panel = overlayElement.current!.parentElement!
+      const margin = parseFloat(getComputedStyle(panel).marginBottom)
+      const viewport = getViewportForBounds(getNodesBounds(getNodes()), width, Math.max(1, height - overlayHeight - margin), 0.2, 1.2, '40px')
+      void setViewport(viewport, { duration: framed.current ? duration : 0 })
+      framed.current = true
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [hasOverlay, overlayHeight, nodesInitialized, width, height, graph, getNodes, getNodesBounds, setViewport, duration])
 
   return (
     <div ref={canvas} tabIndex={0} className={reconnectDrag ? 'h-full w-full outline-none graph-reconnecting' : 'h-full w-full outline-none'} onCopy={(event) => { void copyToClipboard(false, event) }} onCut={(event) => { void copyToClipboard(true, event) }} onPaste={(event) => {
@@ -244,6 +276,7 @@ export function Canvas() {
       event.preventDefault()
       paste(event.clipboardData.getData('text/plain'))
     }} onKeyDown={(event) => {
+      if (readOnly) return
       if (isEditableTarget(event.target)) return
       if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) {
         event.preventDefault()
@@ -263,6 +296,7 @@ export function Canvas() {
       }
     }}>
       <ReactFlow
+        className={hasOverlay ? 'graph-presentation' : undefined}
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
@@ -277,6 +311,10 @@ export function Canvas() {
         }}
         nodesDraggable={interactive}
         nodesConnectable={interactive && singleSelection}
+        elementsSelectable={!readOnly}
+        nodesFocusable={!readOnly}
+        edgesFocusable={!readOnly}
+        edgesReconnectable={interactive}
         multiSelectionKeyCode={multiSelectionKeys}
         deleteKeyCode={null}
         onNodesChange={onNodesChange}
@@ -292,7 +330,7 @@ export function Canvas() {
           const predicate = relations.find((relation) => relationKey(relation) === reconnecting.current?.id)?.predicate ?? defaultTypeId
           return source !== target && !relations.some((relation) => relationKey(relation) !== reconnecting.current?.id && relation.source === source && relation.target === target && relation.predicate === predicate)
         }}
-        onPaneClick={() => { clearSelection(); canvas.current?.focus() }}
+        onPaneClick={() => { if (!readOnly) clearSelection(); canvas.current?.focus() }}
         onPaneContextMenu={(event) => handleContextMenu(event)}
         onNodeContextMenu={(event, node) => handleContextMenu(event, { kind: 'concept', id: node.id })}
         onEdgeContextMenu={(event, edge) => handleContextMenu(event, { kind: 'relation', id: edge.id })}
@@ -305,24 +343,27 @@ export function Canvas() {
         proOptions={{ hideAttribution: true }}
         defaultViewport={initialViewport}
         onMoveStart={() => setContextMenu(null)}
-        onMoveEnd={(_event, viewport) => store.setViewport('concept-map', viewport)}
-        fitView={!initialViewport}
+        onMoveEnd={readOnly ? undefined : (_event, viewport) => store.setViewport('concept-map', viewport)}
+        fitView={!initialViewport && !hasOverlay}
         fitViewOptions={fitViewOptions}
         minZoom={0.2}
       >
-        <Panel position="top-left" className="canvas-label pointer-events-none font-mono text-[10px] text-muted-foreground">{viewName} · {t('conceptCount', { count: viewCount })}</Panel>
+        {overlay ? <Panel position="bottom-left" className="canvas-overlay"><div ref={overlayElement}>{overlay}</div></Panel>
+          : <Panel position="top-left" className="canvas-label pointer-events-none font-mono text-[10px] text-muted-foreground">{viewName} · {t('conceptCount', { count: viewCount })}</Panel>}
         <Background variant={BackgroundVariant.Dots} gap={20} size={1.5} color="var(--node-border)" />
-        <Controls showZoom={false} showFitView={false} showInteractive={false} orientation="horizontal">
-          <ControlButton className="react-flow__controls-fitview" onClick={() => { void fitView(animatedFitViewOptions) }} title={t('fitView')} aria-label={t('fitView')}>
-            <Maximize aria-hidden="true" />
-          </ControlButton>
-          {!readonly && (
-            <ControlButton className="react-flow__controls-interactive" onClick={() => flow.setState({ nodesDraggable: !interactive, nodesConnectable: !interactive && singleSelection, elementsSelectable: !interactive })} title={t(interactive ? 'lockInteractions' : 'unlockInteractions')} aria-label={t(interactive ? 'lockInteractions' : 'unlockInteractions')} aria-pressed={!interactive}>
-              <LockIcon aria-hidden="true" />
+        {!overlay && (
+          <Controls showZoom={false} showFitView={false} showInteractive={false} orientation="horizontal">
+            <ControlButton className="react-flow__controls-fitview" onClick={() => { void fitView(animatedFraming) }} title={t('fitView')} aria-label={t('fitView')}>
+              <Maximize aria-hidden="true" />
             </ControlButton>
-          )}
-        </Controls>
-        <Panel position="bottom-right" className="canvas-label pointer-events-none font-mono text-[10px] text-muted-foreground" aria-label={t('zoomLevel')}>{Math.round(zoom * 100)}%</Panel>
+            {!readonly && (
+              <ControlButton className="react-flow__controls-interactive" onClick={() => flow.setState({ nodesDraggable: !interactive, nodesConnectable: !interactive && singleSelection, elementsSelectable: !interactive })} title={t(interactive ? 'lockInteractions' : 'unlockInteractions')} aria-label={t(interactive ? 'lockInteractions' : 'unlockInteractions')} aria-pressed={!interactive}>
+                <LockIcon aria-hidden="true" />
+              </ControlButton>
+            )}
+          </Controls>
+        )}
+        {!overlay && <Panel position="bottom-right" className="canvas-label pointer-events-none font-mono text-[10px] text-muted-foreground" aria-label={t('zoomLevel')}>{Math.round(zoom * 100)}%</Panel>}
         {!readonly && (
           <Controls position="top-right" orientation="horizontal" showZoom={false} showFitView={false} showInteractive={false}>
             <ControlButton onClick={store.undo} disabled={!canUndo} title={t('undo')} aria-label={t('undo')}>
@@ -367,7 +408,7 @@ export function Canvas() {
             { label: t('delete'), icon: Trash2, onClick: handleDelete, disabled: !interactive || !canDelete },
           ] : []),
           { label: t('selectAll'), icon: ListChecks, onClick: selectAll, disabled: !interactive || viewCount === 0 },
-          { label: t('fitView'), icon: Maximize, onClick: () => { void fitView(animatedFitViewOptions) } },
+          { label: t('fitView'), icon: Maximize, onClick: () => { void fitView(animatedFraming) } },
         ]}
       />
     </div>

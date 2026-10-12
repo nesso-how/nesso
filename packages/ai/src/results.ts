@@ -24,6 +24,7 @@ export type AiToolResults = {
   readonly concepts: Page<{
     readonly id: string
     readonly label: string
+    readonly description?: string
     readonly position: { readonly x: number; readonly y: number }
   }>
   readonly relations: Page<{

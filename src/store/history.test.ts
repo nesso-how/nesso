@@ -58,6 +58,44 @@ test('undo and redo restore deletion, incident relations, custom types, membersh
   assert.deepEqual(before, snapshot)
 })
 
+test('description edits share view data, group history, clear cleanly and preserve no-op references', () => {
+  const { store } = createNessoStore(fixture())
+  const viewId = store.createView('View', ['urn:n0'])
+  const before = store.getState()
+  for (const value of ['Definition', 'Definition\nExample']) store.setConceptDescription('urn:n0', value, 'description-1')
+  const after = store.getState()
+  assert.equal(after.viewGraph.concepts[0].description, 'Definition\nExample')
+  assert.equal(after.graph.concepts[1], before.graph.concepts[1])
+  assert.equal(after.graph.relations, before.graph.relations)
+  assert.equal(after.workspace, before.workspace)
+  store.setConceptDescription('urn:n0', 'Definition\nExample')
+  store.setConceptDescription('urn:missing', 'Ignored')
+  store.applyOperations([
+    { kind: 'concept.description', id: 'urn:n0', value: 'Temporary' },
+    { kind: 'concept.description', id: 'urn:n0', value: 'Definition\nExample' },
+  ])
+  assert.equal(store.getState(), after)
+  assert.throws(() => store.applyOperations([
+    { kind: 'concept.label', id: 'urn:n0', value: 'Must not commit' },
+    { kind: 'concept.description', id: 'urn:n0', value: 42 as never },
+  ]), SchemaError)
+  assert.equal(store.getState(), after)
+  store.undo()
+  assert.deepEqual(store.getState().graph, before.graph)
+  store.redo()
+  assert.deepEqual(store.getState().graph, after.graph)
+  store.setConceptDescription('urn:n0', '')
+  assert.equal(Object.hasOwn(store.getState().graph.concepts[0], 'description'), false)
+  const cleared = store.getState()
+  store.setConceptDescription('urn:n0', '')
+  assert.equal(store.getState(), cleared)
+  store.undo()
+  assert.equal(store.getState().viewGraph.concepts[0].description, 'Definition\nExample')
+  store.setView(null)
+  assert.equal(store.getState().graph.concepts[0].description, 'Definition\nExample')
+  assert.equal(store.getViewGraph(viewId).concepts[0].description, 'Definition\nExample')
+})
+
 test('mixed batches undo only document changes and replay recorded effects, not current selection or vocabulary', () => {
   const host = createNessoStore(fixture())
   host.registerVocab({ id: 'vocab', defaultTypeId: 'urn:links', relationTypes: [{ id: 'urn:links', label: 'Links' }] })

@@ -23,6 +23,7 @@ export function buildImportOperations(
       { kind: 'concept.add', id, position: { ...concept.position } },
       { kind: 'concept.label', id, value: concept.label },
     )
+    if (concept.description !== undefined) operations.push({ kind: 'concept.description', id, value: concept.description })
   }
   const types = new Map(snapshot.relationTypes.map((type) => [type.id, type]))
   for (const relation of snapshot.relations) {
@@ -49,7 +50,7 @@ export const importPlugin: Plugin = {
     description: translate(locale)('pluginDescription'),
     documentation: translate(locale)('pluginDocumentation'),
   }),
-  operations: ['selection.set', 'concept.add', 'concept.label', 'relation.connect', 'view.membership'],
+  operations: ['selection.set', 'concept.add', 'concept.label', 'concept.description', 'relation.connect', 'view.membership'],
   create: ({ store }) => {
     const runOnView = (viewId: string | null) => {
       const input = document.createElement('input')

@@ -1,16 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
 import { defaultLocale, isLocale, localeNames, locales } from '@nesso/i18n'
 import { Button, Dialog, DialogPopup, PreferenceSelect } from '@nesso/ui'
-import { ArrowUpRight, Check, MessageCircle, Settings2, X } from 'lucide-react'
+import { ArrowUpRight, Check, Info, MessageCircle, Settings2, X } from 'lucide-react'
 import { plugins } from '@/plugins'
 import { host, useNessoStore } from '@/store'
 import { translate } from '@/i18n'
 import { AiSettings } from './AiSettings'
 import { McpSettings } from './McpSettings'
+import { About } from './About'
 import { LocalDataSettings } from './LocalDataSettings'
 import type { AiBridge } from '../../../electron/ai-bridge'
 import type { McpBridge } from '../../../electron/mcp-bridge'
-import appPackage from '../../../package.json'
 
 function AiPage({ ai, mcp }: { ai: AiBridge; mcp: McpBridge | undefined }) {
   const [editing, setEditing] = useState(false)
@@ -26,7 +26,7 @@ const providers = [
   { kind: 'vocab', key: 'activeVocabId', change: host.store.setActiveVocab },
 ] as const
 
-export function SettingsDialog({ initialPage = 'general' }: { initialPage?: 'general' | 'ai' }) {
+export function SettingsDialog({ initialPage = 'general', onDiscover }: { initialPage?: 'general' | 'ai'; onDiscover: () => void }) {
   const preferences = useNessoStore((state) => state.preferences)
   const locale = preferences.locale ?? defaultLocale
   const t = translate(locale)
@@ -65,13 +65,12 @@ export function SettingsDialog({ initialPage = 'general' }: { initialPage?: 'gen
           {plugins.map((entry) => <Button key={entry.id} variant="ghost" className="settings-nav w-full justify-start" aria-current={page === entry.id ? 'page' : undefined} onClick={() => setPage(entry.id)}>
             <entry.icon /><span className="min-w-0 flex-1 truncate text-left">{entry.metadata(locale).name}</span>
           </Button>)}
-          <div className="settings-version">
-            <a href="https://github.com/nesso-how/nesso/releases/latest" target="_blank" rel="noopener noreferrer" aria-label={t('latest')}>
-              <span className="font-mono">v{appPackage.version}</span><ArrowUpRight className="size-3" aria-hidden="true" />
-            </a>
+          <div className="settings-footer">
+            <Button variant="ghost" className="settings-nav w-full justify-start" aria-current={page === 'about' ? 'page' : undefined} onClick={() => setPage('about')}><Info />{t('about')}</Button>
           </div>
         </nav>
         <div className="settings-content">
+          {page === 'about' && <About titleRef={pageTitle} onDiscover={onDiscover} />}
           {page === 'ai' && window.nessoAi && <AiPage ai={window.nessoAi} mcp={window.nessoMcp} />}
           {page === 'general' && <>
             <h2 ref={pageTitle} tabIndex={-1} className="settings-page-title outline-none">{t('general')}</h2>

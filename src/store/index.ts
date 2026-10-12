@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from 'react'
 import { initializeNessoStore } from './initialize.ts'
 import { connectPersistence, loadPersistence } from './persistence.ts'
-import type { HostState } from './types.ts'
+import type { HostState, HostStore } from './types.ts'
 import { createDesktopStorage, createIndexedDbStorage } from './storage.ts'
 
 const storage = window.nessoPersistence
@@ -45,6 +45,6 @@ export const startAutosave = () => {
   } }
 }
 
-export function useNessoStore<T>(selector: (state: HostState) => T): T {
-  return useSyncExternalStore(nessoStore.subscribe, () => selector(nessoStore.getState()))
+export function useNessoStore<T>(selector: (state: HostState) => T, store: HostStore = nessoStore): T {
+  return useSyncExternalStore(store.subscribe, () => selector(store.getState()))
 }

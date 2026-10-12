@@ -23,6 +23,7 @@ test('plugin stores enforce isolated declaration snapshots for helpers and entir
   const before = host.store.getState()
   for (const write of [
     () => reader.setConceptLabel(id, 'Denied'),
+    () => reader.setConceptDescription(id, 'Denied'),
     () => reader.reconnectRelation('missing', id, id),
     () => reader.undo(),
     () => reader.redo(),

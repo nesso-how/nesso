@@ -1,9 +1,9 @@
 import { relationKey } from './core.ts'
 import type { SchemaIssue } from './errors.ts'
-import type { Position, Relation, RelationType } from './types.ts'
+import type { Concept, Relation, RelationType } from './types.ts'
 
 export function validateGraph(graph: {
-  readonly concepts: readonly { readonly id: string; readonly label: string; readonly position: Readonly<Position> }[]
+  readonly concepts: readonly Readonly<Concept>[]
   readonly relationTypes: readonly Readonly<RelationType>[]
   readonly relations: readonly Readonly<Relation>[]
 }): SchemaIssue[] {
@@ -17,6 +17,9 @@ export function validateGraph(graph: {
       issues.push({ path: `concepts[${index}].id`, message: `Duplicate or missing concept IRI: ${concept.id}` })
     }
     concepts.add(concept.id)
+    if (concept.description !== undefined && typeof concept.description !== 'string') {
+      issues.push({ path: `concepts[${index}].description`, message: 'Expected a string' })
+    }
     if (!Number.isFinite(concept.position.x) || !Number.isFinite(concept.position.y)) {
       issues.push({ path: `concepts[${index}].position`, message: `Invalid position: ${concept.id}` })
     }

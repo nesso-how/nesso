@@ -12,6 +12,7 @@ export type {
   PluginContext,
   Preferences,
   RendererDefinition,
+  RendererProps,
   SavedView,
   SectionId,
   Selection,

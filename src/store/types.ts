@@ -13,6 +13,7 @@ export type HostState = NessoState & {
 }
 
 export type HostOperation = NessoOperation
+  | { readonly kind: 'preferences.intro-seen' }
   | { readonly kind: 'preferences.inspectorTab'; readonly value: NonNullable<Preferences['inspectorTab']> }
   | { readonly kind: 'conversation.messages'; readonly value: readonly AiChatMessage[] }
   | { readonly kind: 'conversation.clear' }

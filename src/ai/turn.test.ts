@@ -31,10 +31,15 @@ test('staged edits stay private and apply as one undoable document edit', async 
   host.store.subscribe(() => publications++)
   const turn = createAiTurn(host, async () => assert.fail('Unexpected approval'))
   turn.execute('edit', { operations: [{ kind: 'concept.add', id: 'urn:new' }] })
-  turn.execute('edit', { operations: [{ kind: 'concept.label', id: 'urn:new', value: 'New concept' }, { kind: 'view.rename', id: view, name: 'Renamed' }] })
+  turn.execute('edit', { operations: [
+    { kind: 'concept.label', id: 'urn:new', value: 'New concept' },
+    { kind: 'concept.description', id: 'urn:new', value: 'Definition\nExample' },
+    { kind: 'view.rename', id: view, name: 'Renamed' },
+  ] })
   assert.equal(host.store.getState(), before)
   const staged = turn.execute('concepts', { ids: ['urn:new'] }) as AiToolResults['concepts']
   assert.equal(staged.items[0].label, 'New concept')
+  assert.equal(staged.items[0].description, 'Definition\nExample')
   assert.equal((await turn.commit()).status, 'applied')
   assert.equal(publications, 1)
   host.store.undo()

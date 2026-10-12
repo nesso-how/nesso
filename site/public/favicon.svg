@@ -1,3 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" shape-rendering="crispEdges">
-<path fill="#393939" d="M6 6h4v4H6zM22 6h4v4h-4zM6 10h4v4H6zM10 10h4v4h-4zM22 10h4v4h-4zM6 14h4v4H6zM14 14h4v4h-4zM22 14h4v4h-4zM6 18h4v4H6zM18 18h4v4h-4zM22 18h4v4h-4zM6 22h4v4H6zM22 22h4v4h-4z"/>
+<style>
+  path { fill: #393939; }
+  @media (prefers-color-scheme: dark) {
+    path { fill: #f5f5f5; }
+  }
+</style>
+<path d="M6 6h4v4H6zM22 6h4v4h-4zM6 10h4v4H6zM10 10h4v4h-4zM22 10h4v4h-4zM6 14h4v4H6zM14 14h4v4h-4zM22 14h4v4h-4zM6 18h4v4H6zM18 18h4v4h-4zM22 18h4v4h-4zM6 22h4v4H6zM22 22h4v4h-4z"/>
 </svg>

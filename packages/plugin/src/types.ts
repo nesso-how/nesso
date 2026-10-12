@@ -1,6 +1,6 @@
 import type { Graph, Position, RelationType } from '@nesso/schema'
 import type { Locale } from '@nesso/i18n'
-import type { ComponentType } from 'react'
+import type { ComponentType, ReactNode } from 'react'
 
 type DeepReadonly<T> = T extends readonly (infer U)[]
   ? readonly DeepReadonly<U>[]
@@ -14,6 +14,7 @@ export type GraphSnapshot = DeepReadonly<Graph>
 
 export type NessoOperation =
   | { readonly kind: 'concept.label'; readonly id: string; readonly value: string }
+  | { readonly kind: 'concept.description'; readonly id: string; readonly value: string }
   | { readonly kind: 'concept.position'; readonly id: string; readonly value: Readonly<Position> }
   | { readonly kind: 'concept.positions'; readonly updates: readonly { readonly id: string; readonly position: Readonly<Position> }[] }
   | { readonly kind: 'concept.add'; readonly id: string; readonly position?: Readonly<Position> }
@@ -77,6 +78,7 @@ export type SectionId =
 
 export type Preferences = {
   readonly locale?: Locale
+  readonly introSeen?: boolean
   readonly activeVocabId: string
   readonly activeRendererId: string
   readonly activeThemeId: string
@@ -105,6 +107,7 @@ export type NessoStore = {
   readonly setConceptPosition: (id: string, position: Readonly<Position>, historyGroup?: string) => void
   readonly setConceptPositions: (updates: readonly { readonly id: string; readonly position: Readonly<Position> }[], historyGroup?: string) => void
   readonly setConceptLabel: (id: string, label: string, historyGroup?: string) => void
+  readonly setConceptDescription: (id: string, description: string, historyGroup?: string) => void
   readonly addConcept: (position?: Readonly<Position>, historyGroup?: string) => string
   readonly connect: (source: string, target: string) => void
   readonly reconnectRelation: (id: string, source: string, target: string) => void
@@ -130,9 +133,14 @@ export type NessoStore = {
   readonly getViewGraph: (id: string) => GraphSnapshot
 }
 
+export type RendererProps = {
+  readonly readOnly?: boolean
+  readonly overlay?: ReactNode
+}
+
 export type RendererDefinition = {
   readonly id: string
-  readonly component: ComponentType
+  readonly component: ComponentType<RendererProps>
 }
 
 export type ActionDefinition = {

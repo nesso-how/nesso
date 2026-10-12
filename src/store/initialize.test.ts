@@ -29,7 +29,7 @@ test('a saved language choice takes precedence over browser preferences when see
 test('restored documents retain their content and edits even when detecting a different interface language', () => {
   const host = initializeNessoStore(empty, ['zh-CN'])
   host.store.setConceptLabel(host.store.getState().graph.concepts[0].id, 'My edited concept')
-  host.store.renameView('first-try', 'My edited view')
+  host.store.renameView('energy', 'My edited view')
   const before = host.store.getState()
   const restored = initializeNessoStore({ ...empty, graph: structuredClone(before.graph) as Graph, workspace: before.workspace }, ['it-IT']).store.getState()
   assert.equal(restored.preferences.locale, 'it')

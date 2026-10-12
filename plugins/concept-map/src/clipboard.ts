@@ -46,6 +46,7 @@ export function pasteOperations(text: string, position?: Readonly<Position>, off
       { kind: 'selection.set', value: [] },
       { kind: 'concept.add', id: concept.id, position: concept.position },
       { kind: 'concept.label', id: concept.id, value: concept.label },
+      ...(concept.description === undefined ? [] : [{ kind: 'concept.description' as const, id: concept.id, value: concept.description }]),
     ]),
     ...relations.map((relation): NessoOperation => ({
       kind: 'relation.connect', source: relation.source, target: relation.target,
