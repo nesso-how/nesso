@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.0.0-alpha.14 — 2026-10-12
+
+### Features
+
+- **i18n:** Add simplified chinese and localized seeds
+- **site:** Add localized pages and language detection
+- **intro:** Add guided introduction and About page
+- **concepts:** Add optional descriptions
+- **seed:** Add concept descriptions in en, it, zh
+
+### Fixes
+
+- **graph:** Preserve parallel relations through import and restore
+- **site:** Reduce flicker when switching languages
+- **site:** Inline styles to prevent unstyled graph flashes
+- **i18n:** Correct Italian and Chinese translations
+- **i18n:** Polish italian and chinese copy
+- **assets:** Adapt favicon to browser color scheme
+- **app:** Capitalize tab title
+
 ## 1.0.0-alpha.13 — 2026-10-12
 
 ### Features
