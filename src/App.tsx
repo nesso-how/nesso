@@ -30,7 +30,7 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
   const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale)
   const t = translate(locale)
   const panels = useNessoStore((state) => state.preferences.panels)
-  const [detailsOpen, setDetailsOpen] = useState(true)
+  const detailsOpen = useNessoStore((state) => !state.preferences.collapsedSections?.includes('inspector'))
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [settingsPage, setSettingsPage] = useState<'general' | 'ai'>('general')
   const readonly = useMediaQuery('(max-width: 767px)')
@@ -72,12 +72,12 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
                 size={chat && panels.inspectorWidth < 300 ? 360 : panels.inspectorWidth}
                 minSize={chat ? 300 : panelLimits.inspectorWidth.min}
                 maxSize="45%"
-                onToggle={() => setDetailsOpen((open) => !open)}
+                onToggle={() => host.store.setSectionOpen('inspector', !detailsOpen)}
                 onSizeChange={(inspectorWidth) => host.store.setPanelSizes({ ...host.store.getState().preferences.panels, inspectorWidth })}
                 toggleLabel={t(detailsOpen ? 'collapseDetails' : 'expandDetails')}
                 resizeLabel={t('resizeInspector')}
               >
-                {chat ? <AssistantPanel chat={chat} onClose={() => setDetailsOpen(false)} onOpenSettings={() => { setSettingsPage('ai'); setSettingsOpen(true) }} settingsOpen={settingsOpen} /> : <Inspector />}
+                {chat ? <AssistantPanel chat={chat} onClose={() => host.store.setSectionOpen('inspector', false)} onOpenSettings={() => { setSettingsPage('ai'); setSettingsOpen(true) }} settingsOpen={settingsOpen} /> : <Inspector />}
               </SidePanel>}
             </div>
             <PersistenceBanner persistence={persistence} />

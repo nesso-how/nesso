@@ -4,7 +4,7 @@ import type { PersistenceIssue } from '../../shared/persistence.ts'
 
 export const sectionIds = [
   'sidebar', 'sidebar.pinned-views', 'sidebar.views',
-  'inspector.connections', 'inspector.views', 'inspector.nodes',
+  'inspector', 'inspector.connections', 'inspector.views', 'inspector.nodes',
 ] as const satisfies readonly SectionId[]
 
 export type HostState = NessoState & {

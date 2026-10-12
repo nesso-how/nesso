@@ -73,7 +73,7 @@ export type PanelSizes = {
 
 export type SectionId =
   | 'sidebar' | 'sidebar.pinned-views' | 'sidebar.views'
-  | 'inspector.connections' | 'inspector.views' | 'inspector.nodes'
+  | 'inspector' | 'inspector.connections' | 'inspector.views' | 'inspector.nodes'
 
 export type Preferences = {
   readonly locale?: Locale
