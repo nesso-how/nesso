@@ -9,6 +9,8 @@
   "fitView": "Adatta alla vista",
   "lockInteractions": "Blocca interazioni",
   "unlockInteractions": "Sblocca interazioni",
+  "showRestOfGraph": "Mostra il resto del grafo",
+  "hideRestOfGraph": "Nascondi il resto del grafo",
   "zoomLevel": "Livello di zoom",
   "undo": "Annulla",
   "redo": "Ripeti",

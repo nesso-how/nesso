@@ -47,6 +47,14 @@
   outline: none;
 }
 
+.react-flow__node.graph-outside-node {
+  opacity: 0.45;
+}
+
+.react-flow__edge.graph-outside-edge {
+  opacity: 0.35;
+}
+
 .react-flow .react-flow__panel.canvas-label {
   z-index: 1;
 }

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ClipboardEvent as ReactClipboardEvent, type MouseEvent as ReactMouseEvent } from 'react'
-import { Copy, ListChecks, Lock, LockOpen, Maximize, ClipboardPaste, Plus, Redo2, Scissors, Trash2, Undo2 } from 'lucide-react'
+import { Copy, ListChecks, Lock, LockOpen, Layers, Maximize, ClipboardPaste, Plus, Redo2, Scissors, Trash2, Undo2 } from 'lucide-react'
 import type { RendererProps, Selection } from '@nesso/plugin'
 import {
   Background,
@@ -24,7 +24,7 @@ import { newIri, relationKey } from '@nesso/schema'
 import { ConceptNodeView } from './ConceptNodeView'
 import { ConnectionPreview } from './ConnectionPreview'
 import { GraphContextMenu } from './GraphContextMenu'
-import { conceptNode, conceptNodeMinSize, indexGraph, relationEdge, type ConceptNodeSizes } from './adapters'
+import { conceptNode, conceptNodeMinSize, containsPoint, indexGraph, outsideEdge, outsideNode, relationEdge, type ConceptNodeSizes } from './adapters'
 import type { ConceptNode, RelationEdge } from './types'
 import { useNesso, usePluginContext } from './store'
 import { copyGraph, isEditableTarget, pasteOperations } from './clipboard'
@@ -42,7 +42,8 @@ export function Canvas({ readOnly = false, overlay }: RendererProps) {
   const graph = useNesso((state) => state.viewGraph)
   const indexed = useMemo(() => indexGraph(graph), [graph])
   const selected = useNesso((state) => state.selected)
-  const conceptCount = useNesso((state) => state.graph.concepts.length)
+  const fullGraph = useNesso((state) => state.graph)
+  const conceptCount = fullGraph.concepts.length
   const defaultTypeId = useNesso((state) => state.vocabs.find((vocab) => vocab.id === state.preferences.activeVocabId)?.defaultTypeId)
   const view = useNesso((state) => state.workspace.activeViewId)
   const viewName = useNesso((state) => state.workspace.savedViews.find((saved) => saved.id === state.workspace.activeViewId)?.name) ?? t('completeGraph')
@@ -73,20 +74,35 @@ export function Canvas({ readOnly = false, overlay }: RendererProps) {
   const zoom = useFlowStore((state) => state.transform[2])
   const [sizes, setSizes] = useState<ConceptNodeSizes>({})
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; target: ContextMenuTarget } | null>(null)
+  const [outside, setOutside] = useState(false)
+  const outsideActive = outside && view !== null
 
   const selectedConcepts = new Set(selected.filter((item) => item.kind === 'concept').map((item) => item.id))
   const selectedRelations = new Set(selected.filter((item) => item.kind === 'relation').map((item) => item.id))
   const singleSelection = selected.length === 1
-  const nodes = graph.concepts.map((concept) =>
-    conceptNode(concept, selectedConcepts.has(concept.id), sizes[concept.id]),
-  )
-  const edges = graph.relations.map((relation) => ({
-    ...relationEdge(relation, selectedRelations.has(relationKey(relation)), singleSelection, indexed, defaultTypeId, sizes),
-    ariaLabel: t('relationFromTo', {
-      source: indexed.concepts.get(relation.source)?.label ?? '',
-      target: indexed.concepts.get(relation.target)?.label ?? '',
-    }),
-  }))
+  const outsideGraph = useMemo(() => {
+    if (!outsideActive) return null
+    const visible = new Set(graph.concepts.map((concept) => concept.id))
+    return {
+      indexed: indexGraph(fullGraph),
+      concepts: fullGraph.concepts.filter((concept) => !visible.has(concept.id)),
+      relations: fullGraph.relations.filter((relation) => !(visible.has(relation.source) && visible.has(relation.target))),
+    }
+  }, [outsideActive, graph, fullGraph])
+  const nodes = [
+    ...(outsideGraph?.concepts.map((concept) => outsideNode(concept, sizes[concept.id])) ?? []),
+    ...graph.concepts.map((concept) => conceptNode(concept, selectedConcepts.has(concept.id), sizes[concept.id])),
+  ]
+  const edges = [
+    ...(outsideGraph?.relations.map((relation) => outsideEdge(relation, outsideGraph.indexed, defaultTypeId, sizes)) ?? []),
+    ...graph.relations.map((relation) => ({
+      ...relationEdge(relation, selectedRelations.has(relationKey(relation)), singleSelection, indexed, defaultTypeId, sizes),
+      ariaLabel: t('relationFromTo', {
+        source: indexed.concepts.get(relation.source)?.label ?? '',
+        target: indexed.concepts.get(relation.target)?.label ?? '',
+      }),
+    })),
+  ]
 
   const onObjectChanges = (kind: 'concept' | 'relation', changes: (NodeChange<ConceptNode> | EdgeChange<RelationEdge>)[]) => {
     const current = store.getState().selected
@@ -123,6 +139,13 @@ export function Canvas({ readOnly = false, overlay }: RendererProps) {
   const canDelete = selected.length > 0 && selectedConcepts.size < conceptCount
   const canUndo = useNesso((state) => state.history.canUndo)
   const canRedo = useNesso((state) => state.history.canRedo)
+
+  const outsideFit = useRef(false)
+  const outsideLabel = t(outsideActive ? 'hideRestOfGraph' : 'showRestOfGraph')
+  const toggleOutside = () => {
+    outsideFit.current = true
+    setOutside((value) => !value)
+  }
 
   const handleAdd = () => {
     const element = canvas.current
@@ -236,6 +259,8 @@ export function Canvas({ readOnly = false, overlay }: RendererProps) {
     if (!interactive) return
     const target = event.target as HTMLElement | null
     if (target?.closest?.('.react-flow__node, .react-flow__edge, .react-flow__controls, .react-flow__panel, button')) return
+    const point = screenToFlowPosition({ x: event.clientX, y: event.clientY })
+    if (outsideGraph?.concepts.some((concept) => containsPoint(concept, sizes[concept.id] ?? conceptNodeMinSize, point))) return
     addConceptAt({ x: event.clientX, y: event.clientY })
   }
 
@@ -248,6 +273,12 @@ export function Canvas({ readOnly = false, overlay }: RendererProps) {
     })
     return () => cancelAnimationFrame(frame)
   }, [view, fitView, hasOverlay, animatedFraming])
+
+  useEffect(() => {
+    if (!outsideFit.current) return
+    outsideFit.current = false
+    void fitView(animatedFraming)
+  })
 
   useEffect(() => {
     const element = overlayElement.current
@@ -356,9 +387,14 @@ export function Canvas({ readOnly = false, overlay }: RendererProps) {
               <Maximize aria-hidden="true" />
             </ControlButton>
             {!readonly && (
-              <ControlButton className="react-flow__controls-interactive" onClick={() => flow.setState({ nodesDraggable: !interactive, nodesConnectable: !interactive && singleSelection, elementsSelectable: !interactive })} title={t(interactive ? 'lockInteractions' : 'unlockInteractions')} aria-label={t(interactive ? 'lockInteractions' : 'unlockInteractions')} aria-pressed={!interactive}>
-                <LockIcon aria-hidden="true" />
-              </ControlButton>
+              <>
+                <ControlButton className="react-flow__controls-interactive" onClick={() => flow.setState({ nodesDraggable: !interactive, nodesConnectable: !interactive && singleSelection, elementsSelectable: !interactive })} title={t(interactive ? 'lockInteractions' : 'unlockInteractions')} aria-label={t(interactive ? 'lockInteractions' : 'unlockInteractions')} aria-pressed={!interactive}>
+                  <LockIcon aria-hidden="true" />
+                </ControlButton>
+                <ControlButton className="react-flow__controls-outside" onClick={toggleOutside} disabled={view === null} title={outsideLabel} aria-label={outsideLabel} aria-pressed={outsideActive}>
+                  <Layers aria-hidden="true" />
+                </ControlButton>
+              </>
             )}
           </Controls>
         )}

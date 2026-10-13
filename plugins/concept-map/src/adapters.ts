@@ -24,6 +24,10 @@ export const facingSide = (from: ConceptBounds, to: ConceptBounds): Position => 
     : dy >= 0 ? Position.Bottom : Position.Top
 }
 
+export const containsPoint = (concept: ConceptView, size: ConceptNodeSize, point: ConceptView['position']) =>
+  point.x >= concept.position.x && point.x <= concept.position.x + size.width
+  && point.y >= concept.position.y && point.y <= concept.position.y + size.height
+
 export function conceptNode(concept: ConceptView, selected: boolean, measured?: ConceptNodeSize): ConceptNode {
   return {
     id: concept.id,
@@ -33,6 +37,19 @@ export function conceptNode(concept: ConceptView, selected: boolean, measured?: 
     data: { label: concept.label },
     ariaLabel: concept.label,
     selected,
+  }
+}
+
+export function outsideNode(concept: ConceptView, measured?: ConceptNodeSize): ConceptNode {
+  return {
+    ...conceptNode(concept, false, measured),
+    className: 'graph-outside-node',
+    selectable: false,
+    draggable: false,
+    connectable: false,
+    deletable: false,
+    focusable: false,
+    domAttributes: { 'aria-hidden': true },
   }
 }
 
@@ -55,5 +72,17 @@ export function relationEdge(relation: RelationView, selected: boolean, singleSe
     selected,
     reconnectable: selected && singleSelection,
     markerEnd: { type: MarkerType.ArrowClosed, width: 14, height: 14, color: selected ? 'var(--primary)' : 'var(--edge)' },
+  }
+}
+
+export function outsideEdge(relation: RelationView, graph: ReturnType<typeof indexGraph>, defaultTypeId?: string, sizes: ConceptNodeSizes = {}): RelationEdge {
+  return {
+    ...relationEdge(relation, false, false, graph, defaultTypeId, sizes),
+    className: 'graph-outside-edge',
+    selectable: false,
+    focusable: false,
+    deletable: false,
+    interactionWidth: 0,
+    domAttributes: { 'aria-hidden': true },
   }
 }
