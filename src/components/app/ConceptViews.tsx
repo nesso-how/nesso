@@ -26,13 +26,13 @@ export function ConceptViews({ store = nessoStore, conceptIds, readonly = false 
           {memberships.map((view) => (
             <li key={view.id} className="flex items-center gap-2">
               <span className="min-w-0 flex-1 break-words">{view.name}{conceptIds.length > 1 && <span className="ml-2 text-xs text-muted-foreground">{conceptIds.filter((id) => view.conceptIds.includes(id)).length}/{conceptIds.length}</span>}</span>
-              {!readonly && <IconButton aria-label={t('removeFromView', { name: view.name })} onClick={() => setMembership(view.id, false)}><X /></IconButton>}
+              <IconButton disabled={readonly} aria-label={t('removeFromView', { name: view.name })} onClick={() => setMembership(view.id, false)}><X /></IconButton>
             </li>
           ))}
         </ul>
       )}
-      {!readonly && (
-        <Combobox.Root<SavedView>
+      <Combobox.Root<SavedView>
+        disabled={readonly}
         items={available}
         itemToStringLabel={(view) => view.name}
         value={null}
@@ -59,7 +59,6 @@ export function ConceptViews({ store = nessoStore, conceptIds, readonly = false 
           </Combobox.Empty>
         </ComboboxPopup>
       </Combobox.Root>
-      )}
     </InspectorSection>
   )
 }

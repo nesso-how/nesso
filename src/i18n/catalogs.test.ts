@@ -6,6 +6,18 @@ import { locales, type Catalog } from '@nesso/i18n'
 const placeholders = (message: string) => [...message.matchAll(/{{\s*(\w+)\s*}}/g)].map((match) => match[1]).sort()
 const pluralSuffix = /_(zero|one|two|few|many|other)$/
 
+test('intro descriptions have balanced, nonempty keyword emphasis in every locale', () => {
+  for (const locale of locales) {
+    const catalog: Catalog = JSON.parse(readFileSync(new URL(`./${locale}.json`, import.meta.url), 'utf8'))
+    for (const key of ['introConceptDescription', 'introConnectionsDescription', 'introUnderstandingDescription', 'introUnderstandingDesktopDescription']) {
+      const parts = catalog[key].split('**')
+      assert.ok(parts.length > 1, `${locale}:${key}`)
+      assert.equal(parts.length % 2, 1, `${locale}:${key}`)
+      assert.ok(parts.filter((_, index) => index % 2).every((part) => part.trim()), `${locale}:${key}`)
+    }
+  }
+})
+
 test('catalogs cover the host, site and every built-in plugin in all supported locales with matching placeholders', () => {
   for (const directory of [
     '.',

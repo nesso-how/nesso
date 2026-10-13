@@ -89,7 +89,6 @@ export function Canvas({ readOnly = false, overlay }: RendererProps) {
   }))
 
   const onObjectChanges = (kind: 'concept' | 'relation', changes: (NodeChange<ConceptNode> | EdgeChange<RelationEdge>)[]) => {
-    if (readOnly) return
     const current = store.getState().selected
     const next = selectionFromChanges(current, kind, changes)
     if (next !== current) store.setSelection(next)
@@ -276,8 +275,11 @@ export function Canvas({ readOnly = false, overlay }: RendererProps) {
       event.preventDefault()
       paste(event.clipboardData.getData('text/plain'))
     }} onKeyDown={(event) => {
-      if (readOnly) return
       if (isEditableTarget(event.target)) return
+      if (readOnly) {
+        if (event.key === 'Escape') clearSelection()
+        return
+      }
       if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) {
         event.preventDefault()
         openKeyboardContextMenu(event.target as Element)
@@ -311,9 +313,6 @@ export function Canvas({ readOnly = false, overlay }: RendererProps) {
         }}
         nodesDraggable={interactive}
         nodesConnectable={interactive && singleSelection}
-        elementsSelectable={!readOnly}
-        nodesFocusable={!readOnly}
-        edgesFocusable={!readOnly}
         edgesReconnectable={interactive}
         multiSelectionKeyCode={multiSelectionKeys}
         deleteKeyCode={null}
@@ -330,7 +329,7 @@ export function Canvas({ readOnly = false, overlay }: RendererProps) {
           const predicate = relations.find((relation) => relationKey(relation) === reconnecting.current?.id)?.predicate ?? defaultTypeId
           return source !== target && !relations.some((relation) => relationKey(relation) !== reconnecting.current?.id && relation.source === source && relation.target === target && relation.predicate === predicate)
         }}
-        onPaneClick={() => { if (!readOnly) clearSelection(); canvas.current?.focus() }}
+        onPaneClick={() => { clearSelection(); canvas.current?.focus() }}
         onPaneContextMenu={(event) => handleContextMenu(event)}
         onNodeContextMenu={(event, node) => handleContextMenu(event, { kind: 'concept', id: node.id })}
         onEdgeContextMenu={(event, edge) => handleContextMenu(event, { kind: 'relation', id: edge.id })}

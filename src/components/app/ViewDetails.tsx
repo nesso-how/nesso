@@ -10,14 +10,15 @@ import { viewActions } from '@/plugins'
 import { maxViewNameLength } from '@/store/settings'
 import { useTranslation } from '@/i18n'
 
-function ViewName({ store, view }: { store: HostStore; view: SavedView }) {
+function ViewName({ store, view, readonly }: { store: HostStore; view: SavedView; readonly: boolean }) {
   const t = useTranslation(store)
   const [name, setName] = useState(view.name)
 
   return (
     <div className="flex flex-col gap-1.5">
       <Label htmlFor="view-name">{t('name')}</Label>
-      <Input id="view-name" value={name} maxLength={maxViewNameLength} onChange={(event) => setName(event.target.value)} onBlur={() => {
+      <Input id="view-name" readOnly={readonly} value={name} maxLength={maxViewNameLength} onChange={(event) => setName(event.target.value)} onBlur={() => {
+        if (readonly) return
         const value = name.trim()
         if (value && value !== view.name) store.renameView(view.id, value)
         setName(value || view.name)
@@ -45,7 +46,7 @@ export function ViewDetails({ store = nessoStore, readonly = false }: { store?: 
   return (
     <>
       <ContextLabel>{t(view ? 'activeView' : 'graphOverview')}</ContextLabel>
-      {view && !readonly ? <ViewName key={`${view.id}:${view.name}`} store={store} view={view} /> : view ? <h3 className="font-medium break-words">{view.name}</h3> : null}
+      {view && <ViewName key={`${view.id}:${view.name}`} store={store} view={view} readonly={readonly} />}
       <section aria-labelledby="view-content-heading">
         <h3 id="view-content-heading" className="text-xs font-medium">{t('content')}</h3>
         <dl className="mt-3 space-y-2">
@@ -58,15 +59,15 @@ export function ViewDetails({ store = nessoStore, readonly = false }: { store?: 
           <span className="size-3 rounded-[2px] bg-muted-foreground transition-transform [[aria-checked=true]_&]:translate-x-1.5 [[aria-checked=true]_&]:bg-foreground [[aria-checked=false]_&]:-translate-x-1.5" />
         </Button>
       </div>}
-      {!readonly && <section aria-labelledby="view-actions-heading">
+      <section aria-labelledby="view-actions-heading">
         <h3 id="view-actions-heading" className="text-xs font-medium">{t('actions')}</h3>
         <div className="mt-3 flex flex-col gap-2">
-          {viewActions.map((action) => <Button key={action.id} variant="outline" className="w-full justify-start" onClick={() => action.runOnView?.(workspace.activeViewId)}>{action.label(locale)}</Button>)}
+          {viewActions.map((action) => <Button key={action.id} disabled={readonly} variant="outline" className="w-full justify-start" onClick={() => action.runOnView?.(workspace.activeViewId)}>{action.label(locale)}</Button>)}
         </div>
-      </section>}
-      {view && !readonly && <Button variant="outline" className="w-full justify-start" onClick={() => store.deleteView(view.id)}><Trash2 />{t('deleteView')}</Button>}
-      {!view && !readonly && <>
-        <Button ref={deleteTrigger} variant="outline" className="w-full justify-start" onClick={() => setConfirmingDelete(true)}><Trash2 />{t('deleteView')}</Button>
+      </section>
+      {view && <Button disabled={readonly} variant="outline" className="w-full justify-start" onClick={() => store.deleteView(view.id)}><Trash2 />{t('deleteView')}</Button>}
+      {!view && <>
+        <Button ref={deleteTrigger} disabled={readonly} variant="outline" className="w-full justify-start" onClick={() => setConfirmingDelete(true)}><Trash2 />{t('deleteView')}</Button>
         <DeleteViewDialog target={confirmingDelete ? 'complete-graph' : null} onClose={() => setConfirmingDelete(false)} finalFocus={() => deleteTrigger.current} />
       </>}
     </>

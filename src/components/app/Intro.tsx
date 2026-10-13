@@ -12,6 +12,7 @@ import { resolveInspector } from '@/store/settings'
 import { chat } from '@/ai'
 import { AppSidebar } from './Sidebar'
 import { Inspector } from './Inspector'
+import { AssistantPanel } from './AssistantPanel'
 
 const chapters = [
   { title: 'introConceptTitle', description: 'introConceptDescription' },
@@ -30,7 +31,7 @@ export function Intro({ onFinish }: { onFinish: () => void }) {
   const title = useRef<HTMLHeadingElement>(null)
   const { store, Component } = useMemo(() => {
     const store = createIntroStore(locale)
-    const renderer = conceptMapPlugin.create({ store: createPluginStore(store, []), notifications: notifications.api })
+    const renderer = conceptMapPlugin.create({ store: createPluginStore(store, ['selection.set']), notifications: notifications.api })
     return { store, Component: renderer.component }
   }, [locale])
 
@@ -40,20 +41,22 @@ export function Intro({ onFinish }: { onFinish: () => void }) {
   }, [store, step])
 
   const progress = { step: step + 1, total: chapters.length }
+  const description = t(step === lastStep && chat ? 'introUnderstandingDesktopDescription' : chapters[step].description)
   const [desktopBefore, desktopAfter] = t('introDesktopDescription', { website: '<website>' }).split('<website>')
 
-  return <section className="intro" aria-label={t('discoverNesso')} style={{
+  return <section className="intro" data-step={step} aria-label={t('discoverNesso')} style={{
     '--intro-explorer-width': `${panels.explorerWidth}px`,
     '--intro-inspector-width': `${inspectorWidth}px`,
     '--intro-inspector-min-width': `${inspectorMinWidth}px`,
   } as CSSProperties} onKeyDown={(event) => {
     if (event.defaultPrevented || event.nativeEvent.isComposing || event.altKey || event.ctrlKey || event.metaKey) return
-    if (event.target instanceof Element && event.target.closest('input, textarea, a, aside, .react-flow__controls')) return
+    if (event.target instanceof Element && event.target.closest('input, textarea, a, aside, [role="tablist"], [role="tabpanel"], .react-flow__controls')) return
     if (event.key === 'ArrowRight' && step < lastStep) { event.preventDefault(); setStep(step + 1) }
     if (event.key === 'ArrowLeft' && step > 0) { event.preventDefault(); setStep(step - 1) }
   }}>
     <header className="intro-header">
       <img src="/logo.svg" width="94" height="24" alt="Nesso" />
+      <span className="intro-mode">{t('introReadonly')}</span>
       <Button variant="ghost" size="sm" onClick={onFinish}>{t('introSkip')}<X aria-hidden="true" /></Button>
     </header>
     <div className="intro-body">
@@ -65,8 +68,8 @@ export function Intro({ onFinish }: { onFinish: () => void }) {
           <Component readOnly overlay={<section className="intro-narrative" aria-labelledby="intro-title">
             <div className="intro-copy" key={step}>
               <h1 ref={title} id="intro-title" tabIndex={-1}>{t(chapters[step].title)}</h1>
-              <p>{t(chapters[step].description)}</p>
-              {step === lastStep && <p className="intro-desktop-note">{desktopBefore}<a href="https://nesso.how" target="_blank" rel="noopener noreferrer">nesso.how</a>{desktopAfter}</p>}
+              <p>{description.split('**').map((part, index) => index % 2 ? <strong key={index}>{part}</strong> : part)}</p>
+              {step === lastStep && !chat && <p className="intro-desktop-note">{desktopBefore}<a href="https://nesso.how" target="_blank" rel="noopener noreferrer">nesso.how</a>{desktopAfter}</p>}
             </div>
             <nav className="intro-navigation" aria-label={t('introNavigation')}>
               <span aria-label={t('introStep', progress)}>{t('introStepCount', progress)}</span>
@@ -77,7 +80,7 @@ export function Intro({ onFinish }: { onFinish: () => void }) {
           </section>} />
         </div>
         <div className="intro-inspector-slot" data-open={step === lastStep} inert={step !== lastStep} aria-hidden={step !== lastStep}>
-          <div className="intro-inspector">{step === lastStep && <Inspector store={store} readonly />}</div>
+          <div className="intro-inspector">{step === lastStep && (chat ? <AssistantPanel chat={chat} store={store} readonly /> : <Inspector store={store} readonly />)}</div>
         </div>
       </div>
     </div>

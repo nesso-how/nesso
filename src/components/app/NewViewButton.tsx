@@ -5,14 +5,14 @@ import { host } from '@/store'
 import { maxViewNameLength } from '@/store/settings'
 import { useTranslation } from '@/i18n'
 
-export function NewViewButton({ ref }: { ref?: Ref<HTMLButtonElement> }) {
+export function NewViewButton({ ref, disabled = false }: { ref?: Ref<HTMLButtonElement>; disabled?: boolean }) {
   const t = useTranslation()
   const [open, setOpen] = useState(false)
   const [conceptIds, setConceptIds] = useState<readonly string[]>([])
 
   return (
     <TextPromptDialog trigger={
-      <Dialog.Trigger ref={ref} render={<Button
+      <Dialog.Trigger ref={ref} disabled={disabled} render={<Button
         variant="ghost"
         className="mb-3 w-full justify-start"
         aria-label={t('newView')}

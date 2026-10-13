@@ -37,7 +37,7 @@ export function ConceptConnections({ store = nessoStore, conceptId, readonly = f
                 <span className="min-w-0 break-words">{label}</span>
               </span>
               <span className="col-start-1 row-start-2 min-h-6 min-w-0 max-w-full justify-self-start text-[13px] leading-[19px] break-words">{other?.label}</span>
-              {activeViewId !== null && !readonly && <IconButton className="col-start-2 row-span-2 row-start-1 self-center" title={t(included ? 'removeFromCurrentView' : 'addToCurrentView')} aria-label={t(included ? 'removeConceptFromCurrentView' : 'addConceptToCurrentView', { name: other?.label ?? '' })} onClick={() => store.setViewMembership(activeViewId, otherId, !included)}><MembershipIcon /></IconButton>}
+              {activeViewId !== null && <IconButton disabled={readonly} className="col-start-2 row-span-2 row-start-1 self-center" title={t(included ? 'removeFromCurrentView' : 'addToCurrentView')} aria-label={t(included ? 'removeConceptFromCurrentView' : 'addConceptToCurrentView', { name: other?.label ?? '' })} onClick={() => store.setViewMembership(activeViewId, otherId, !included)}><MembershipIcon /></IconButton>}
             </div>
           )
         })}

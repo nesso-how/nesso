@@ -5,6 +5,7 @@ import { defaultLocale } from '@nesso/i18n'
 import type { createAiChat } from '@/ai/chat'
 import { createAiApproval } from '@/ai/approval'
 import { host, useNessoStore } from '@/store'
+import type { HostStore } from '@/store/types'
 import { translate, useTranslation } from '@/i18n'
 import { notifications } from '@/notifications'
 import { ChatMarkdown } from './ChatMarkdown'
@@ -12,24 +13,26 @@ import { ChatMarkdown } from './ChatMarkdown'
 const outcomes = { applied: 'aiChatApplied', cancelled: 'aiChatCancelled', error: 'aiChatFailed' } as const
 const starters = ['aiStarterAdd', 'aiStarterView', 'aiStarterConnections'] as const
 
-export function Chat({ chat, draft, onDraftChange, onOpenSettings, activeModel, chatGptPlan }: {
+export function Chat({ chat, draft, onDraftChange, onOpenSettings, activeModel, chatGptPlan, store = host.store, readonly = false }: {
   chat: ReturnType<typeof createAiChat>
   draft: string
   onDraftChange: (value: string) => void
-  onOpenSettings: () => void
+  onOpenSettings?: () => void
   activeModel: string | null
   chatGptPlan: boolean
+  store?: HostStore
+  readonly?: boolean
 }) {
   const state = useSyncExternalStore(chat.subscribe, chat.getSnapshot)
-  const messages = useNessoStore((state) => state.conversation.messages)
+  const messages = useNessoStore((state) => state.conversation.messages, store)
   const approval = useSyncExternalStore(chat.approvals.subscribe, chat.approvals.getSnapshot).find((item) => item.tone === 'confirmation')
-  const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale)
-  const t = useTranslation()
+  const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale, store)
+  const t = useTranslation(store)
   const scroller = useRef<HTMLDivElement>(null)
   const input = useRef<HTMLTextAreaElement>(null)
   const follow = useRef(true)
-  const busy = state.phase !== 'idle'
-  const usageLimit = state.issues.some(({ path }) => path === 'chatgpt.usage')
+  const busy = !readonly && state.phase !== 'idle'
+  const usageLimit = !readonly && state.issues.some(({ path }) => path === 'chatgpt.usage')
   const manageUsage = async () => {
     try {
       const result = await window.nessoAi?.manageUsage()
@@ -47,7 +50,7 @@ export function Chat({ chat, draft, onDraftChange, onOpenSettings, activeModel, 
   }, [draft])
   useEffect(() => { if (messages.length === 0) onDraftChange('') }, [messages, onDraftChange])
   const send = () => {
-    if (!draft.trim() || busy) return
+    if (readonly || !draft.trim() || busy) return
     follow.current = true
     void chat.send(draft, host, createAiApproval(chat.approvals.api, () => translate(host.store.getState().preferences.locale ?? defaultLocale)), locale)
     onDraftChange('')
@@ -63,13 +66,13 @@ export function Chat({ chat, draft, onDraftChange, onOpenSettings, activeModel, 
           <h1>{t('aiChatTitle')}</h1>
           <p>{t('aiChatEmpty')}</p>
           <div className="chat-starters" aria-label={t('aiStarterPrompts')}>
-            {starters.map((starter) => <Button key={starter} variant="ghost" className="chat-starter" onClick={() => { onDraftChange(t(`${starter}Prompt`)); input.current?.focus() }}><span>{t(starter)}</span><ArrowUpRight aria-hidden="true" /></Button>)}
+             {starters.map((starter) => <Button key={starter} disabled={readonly} variant="ghost" className="chat-starter" onClick={() => { onDraftChange(t(`${starter}Prompt`)); input.current?.focus() }}><span>{t(starter)}</span><ArrowUpRight aria-hidden="true" /></Button>)}
           </div>
         </div>}
         <div className="chat-messages" role="log" aria-label={t('aiConversation')} aria-live="polite" aria-relevant="additions text">
           {messages.map((message, index) => <article key={message.id} className={`chat-message ${message.role}`} aria-label={t(message.role === 'user' ? 'aiYou' : 'aiAssistant')}>
             {message.content && (message.role === 'assistant' ? <ChatMarkdown content={message.content} /> : <p>{message.content}</p>)}
-            {message.role === 'assistant' && index === messages.length - 1 && approval && <div className="chat-confirmation">
+            {!readonly && message.role === 'assistant' && index === messages.length - 1 && approval && <div className="chat-confirmation">
               <p>{approval.description}</p>
               <div className="chat-confirmation-actions">
                 <Button size="sm" onClick={approval.action.onClick}>{approval.action.label}</Button>
@@ -82,22 +85,22 @@ export function Chat({ chat, draft, onDraftChange, onOpenSettings, activeModel, 
           </article>)}
         </div>
         {busy && state.phase !== 'approving' && <div role="status" className="chat-working"><span aria-hidden="true" />{t(state.phase === 'stopping' ? 'aiChatStopping' : 'aiChatWorking')}</div>}
-        {state.issues.length > 0 && <p role="alert" className="mb-5 whitespace-pre-line text-xs text-destructive">{state.issues.map(({ message }) => message).join('\n')}</p>}
+        {!readonly && state.issues.length > 0 && <p role="alert" className="mb-5 whitespace-pre-line text-xs text-destructive">{state.issues.map(({ message }) => message).join('\n')}</p>}
         {usageLimit && <div className="mb-5"><Button size="sm" onClick={() => void manageUsage()}>{t('aiManageUsage')}</Button></div>}
       </div>
       <div className="chat-composer-area">
         <form className="chat-composer" onSubmit={(event) => { event.preventDefault(); send() }}>
-          <textarea ref={input} aria-label={t('aiMessage')} placeholder={t('aiMessagePlaceholder')} value={draft} maxLength={16_000} rows={2}
+          <textarea ref={input} readOnly={readonly} aria-label={t('aiMessage')} placeholder={t('aiMessagePlaceholder')} value={draft} maxLength={16_000} rows={2}
             onChange={(event) => onDraftChange(event.target.value)} onKeyDown={(event) => {
               if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); send() }
             }} />
           <div className="chat-composer-bottom">
             <span>{t('aiSendHint')}</span>
             {busy ? <Button type="button" size="icon-sm" className="chat-send" disabled={state.phase === 'stopping'} aria-label={t('aiStop')} title={t('aiStop')} onClick={chat.stop}><Square aria-hidden="true" /></Button>
-              : <Button type="submit" size="icon-sm" className="chat-send" disabled={!draft.trim()} aria-label={t('aiSend')} title={t('aiSend')}><ArrowUp aria-hidden="true" /></Button>}
+              : <Button type="submit" size="icon-sm" className="chat-send" disabled={readonly || !draft.trim()} aria-label={t('aiSend')} title={t('aiSend')}><ArrowUp aria-hidden="true" /></Button>}
           </div>
         </form>
-        <div className="chat-note"><button type="button" onClick={onOpenSettings}>{t('aiConfigure')}</button>{activeModel && <><span aria-hidden="true"> · </span><span title={activeModel}>{activeModel}</span></>}</div>
+        <div className="chat-note"><button type="button" disabled={readonly || !onOpenSettings} onClick={onOpenSettings}>{t('aiConfigure')}</button>{activeModel && <><span aria-hidden="true"> · </span><span title={activeModel}>{activeModel}</span></>}</div>
         {chatGptPlan && <div className="chat-note"><span>{t('aiUsingChatGptPlan')}</span><span aria-hidden="true"> · </span><button type="button" onClick={() => void manageUsage()}>{t('aiManageUsage')}</button></div>}
       </div>
     </section>

@@ -11,7 +11,7 @@ import { nessoStore, useNessoStore } from '@/store'
 import type { HostStore } from '@/store/types'
 import { useTranslation } from '@/i18n'
 
-function RelationInput({ edgeId, typeId, label, defaultTypeId, relationTypes, onSave, onCreate }: {
+function RelationInput({ edgeId, typeId, label, defaultTypeId, relationTypes, onSave, onCreate, readonly }: {
   edgeId: string
   typeId: string
   label: string
@@ -19,6 +19,7 @@ function RelationInput({ edgeId, typeId, label, defaultTypeId, relationTypes, on
   relationTypes: readonly Readonly<RelationType>[]
   onSave: (id: string, typeId: string) => void
   onCreate: (id: string, label: string) => void
+  readonly: boolean
 }) {
   const t = useTranslation()
   const [value, setValue] = useState(label)
@@ -30,6 +31,7 @@ function RelationInput({ edgeId, typeId, label, defaultTypeId, relationTypes, on
     item.id !== typeId && item.label.toLowerCase().includes(query))
 
   const save = (raw: string) => {
+    if (readonly) return
     const trimmed = raw.trim()
     if (trimmed.toLowerCase() === label.trim().toLowerCase()) return
     if (!trimmed) {
@@ -55,19 +57,21 @@ function RelationInput({ edgeId, typeId, label, defaultTypeId, relationTypes, on
         filteredItems={visible}
         itemToStringValue={(item) => item.label}
         value={value}
-        open={open && visible.length > 0}
+        open={!readonly && open && visible.length > 0}
         onOpenChange={setOpen}
         onValueChange={(next, details) => {
+          if (readonly) return
           setValue(next)
           setError(false)
           if (details.reason === 'clear-press' && defaultTypeId) onSave(edgeId, defaultTypeId)
         }}
         onItemHighlighted={(item) => { highlighted.current = item }}
-        openOnInputClick
+        openOnInputClick={!readonly}
       >
         <div className="relative">
           <Autocomplete.Input
             id="relation-label"
+            readOnly={readonly}
             maxLength={maxRelationLabelLength}
             aria-invalid={Boolean(error)}
             render={<Input className="pr-7" />}
@@ -77,7 +81,7 @@ function RelationInput({ edgeId, typeId, label, defaultTypeId, relationTypes, on
             }}
             placeholder={t('relationPlaceholder')}
           />
-          <AutocompleteClear aria-label={t('clearRelation')} />
+          <AutocompleteClear disabled={readonly} aria-label={t('clearRelation')} />
         </div>
         <AutocompletePopup>
           <Autocomplete.List>
@@ -149,60 +153,48 @@ export function Inspector({ store = nessoStore, readonly = false }: { store?: Ho
           {outsideCount > 0 && <p className="text-xs text-muted-foreground">{t('outsideConcept')}</p>}
           <div className="flex flex-col gap-1.5">
             <Label>{t('label')}</Label>
-            {readonly ? (
-              <p className="text-[13px] leading-[19px] break-words">{concept.label}</p>
-            ) : (
-              <Input
-                key={concept.id}
-                id="concept-label"
-                maxLength={maxConceptLabelLength}
-                data-document-edit
-                value={concept.label}
-                onFocus={() => { textGroup.current = newIri() }}
-                onBlur={() => { textGroup.current = undefined }}
-                onChange={(event) => store.setConceptLabel(concept.id, event.target.value, textGroup.current ??= newIri())}
-              />
-            )}
+            <Input
+              key={concept.id}
+              id="concept-label"
+              maxLength={maxConceptLabelLength}
+              data-document-edit
+              value={concept.label}
+              readOnly={readonly}
+              onFocus={() => { textGroup.current = newIri() }}
+              onBlur={() => { textGroup.current = undefined }}
+              onChange={(event) => { if (!readonly) store.setConceptLabel(concept.id, event.target.value, textGroup.current ??= newIri()) }}
+            />
           </div>
-          {(!readonly || concept.description) && <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-1.5">
             <Label htmlFor="concept-description">{t('description')}</Label>
-            {readonly ? (
-              <p className="text-[13px] leading-[19px] whitespace-pre-wrap break-words">{concept.description}</p>
-            ) : (
-              <textarea
-                key={concept.id}
-                id="concept-description"
-                className="nesso-input min-h-24 w-full resize-y border border-input bg-background px-2.5 py-2 focus-visible:border-muted-foreground"
-                rows={4}
-                data-document-edit
-                value={concept.description ?? ''}
-                onFocus={() => { textGroup.current = newIri() }}
-                onBlur={() => { textGroup.current = undefined }}
-                onChange={(event) => store.setConceptDescription(concept.id, event.target.value, textGroup.current ??= newIri())}
-              />
-            )}
-          </div>}
+            <textarea
+              key={concept.id}
+              id="concept-description"
+              className="nesso-input min-h-24 w-full resize-y border border-input bg-background px-2.5 py-2 focus-visible:border-muted-foreground"
+              rows={4}
+              data-document-edit
+              value={concept.description ?? ''}
+              readOnly={readonly}
+              onFocus={() => { textGroup.current = newIri() }}
+              onBlur={() => { textGroup.current = undefined }}
+              onChange={(event) => { if (!readonly) store.setConceptDescription(concept.id, event.target.value, textGroup.current ??= newIri()) }}
+            />
+          </div>
           <ConceptConnections key={`connections:${concept.id}`} store={store} conceptId={concept.id} readonly={readonly} />
         </section>
       ) : selectedEdge ? (
         <section className="flex flex-col gap-[26px]">
-          {readonly ? (
-            <div className="flex flex-col gap-1.5">
-              <Label>{t('relation')}</Label>
-              {selectedRelationLabel && <p className="text-[13px] leading-[19px] break-words">{selectedRelationLabel}</p>}
-            </div>
-          ) : (
-            <RelationInput
-              key={`${relationKey(selectedEdge)}:${selectedRelationLabel}`}
-              edgeId={relationKey(selectedEdge)}
-              typeId={selectedEdge.predicate}
-              label={selectedRelationLabel}
-              defaultTypeId={activeVocab?.defaultTypeId}
-              relationTypes={relationTypes}
-              onSave={store.setRelationType}
-              onCreate={store.createRelationType}
-            />
-          )}
+          <RelationInput
+            key={`${relationKey(selectedEdge)}:${selectedRelationLabel}`}
+            edgeId={relationKey(selectedEdge)}
+            typeId={selectedEdge.predicate}
+            label={selectedRelationLabel}
+            defaultTypeId={activeVocab?.defaultTypeId}
+            relationTypes={relationTypes}
+            onSave={store.setRelationType}
+            onCreate={store.createRelationType}
+            readonly={readonly}
+          />
           <InspectorSection store={store} id="inspector.nodes" title={t('nodes')}>
             <div className="mt-2 space-y-3">
               <div className="flex flex-col gap-1"><span className="font-mono text-[10px] leading-[14px] text-muted-foreground">{t('from')}</span><span className="text-[13px] leading-[19px] break-words">{sourceLabel}</span></div>
@@ -212,11 +204,11 @@ export function Inspector({ store = nessoStore, readonly = false }: { store?: Ho
         </section>
       ) : null}
       {conceptIds.length > 0 && <ConceptViews key={JSON.stringify(conceptIds)} store={store} conceptIds={conceptIds} readonly={readonly} />}
-      {!readonly && concept && (
-        <Button variant="outline" className="w-full justify-start" disabled={graph.concepts.length <= 1} onClick={() => store.removeConcept(concept.id)}><Trash2 />{t('deleteConcept')}</Button>
+      {concept && (
+        <Button variant="outline" className="w-full justify-start" disabled={readonly || graph.concepts.length <= 1} onClick={() => store.removeConcept(concept.id)}><Trash2 />{t('deleteConcept')}</Button>
       )}
-      {!readonly && selectedEdge && (
-        <Button variant="outline" className="w-full justify-start" onClick={() => store.removeRelation(relationKey(selectedEdge))}><Trash2 />{t('deleteRelation')}</Button>
+      {selectedEdge && (
+        <Button disabled={readonly} variant="outline" className="w-full justify-start" onClick={() => store.removeRelation(relationKey(selectedEdge))}><Trash2 />{t('deleteRelation')}</Button>
       )}
     </aside>
   )

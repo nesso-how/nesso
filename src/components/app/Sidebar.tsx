@@ -60,10 +60,9 @@ export function AppSidebar({ store = nessoStore, readonly = false, bare = false,
         <ListRowTitle>{view.name}</ListRowTitle>
         <ListRowDetail>{t('conceptCount', { count: view.conceptIds.length })}</ListRowDetail>
       </ListRowButton>
-      {!readonly && (
-        <RevealActions className="mr-1">
-          <Menu.Root open={menu === view.id} onOpenChange={(open) => setMenu(open ? view.id : null)}>
-          <Menu.Trigger ref={(element: HTMLButtonElement | null) => {
+      <RevealActions className="mr-1">
+        <Menu.Root open={menu === view.id} onOpenChange={(open) => setMenu(open ? view.id : null)}>
+          <Menu.Trigger disabled={readonly} ref={(element: HTMLButtonElement | null) => {
             if (element) menuTriggers.current.set(view.id, element)
             else menuTriggers.current.delete(view.id)
           }} render={<IconButton aria-label={t('actionsFor', { name: view.name })} />}>
@@ -86,10 +85,9 @@ export function AppSidebar({ store = nessoStore, readonly = false, bare = false,
             <ViewActionGroup viewId={view.id} />
             <Menu.Separator className="my-1 h-px bg-border" />
             <MenuItem onClick={() => { deletingId.current = view.id; setDeleting(view) }}><Trash2 />{t('deleteView')}</MenuItem>
-            </MenuPopup>
-          </Menu.Root>
-        </RevealActions>
-      )}
+          </MenuPopup>
+        </Menu.Root>
+      </RevealActions>
     </ListRow>
   )
 
@@ -100,7 +98,7 @@ export function AppSidebar({ store = nessoStore, readonly = false, bare = false,
   const content = (
     <>
       <div className="flex min-h-0 flex-1 flex-col px-3 pt-5">
-        {!readonly && <NewViewButton ref={createTrigger} />}
+        <NewViewButton ref={createTrigger} disabled={readonly} />
         {heading(t('pinnedViews'), 'pinned-views', pinnedOpen, () => store.setSectionOpen('sidebar.pinned-views', !pinnedOpen))}
         <div className="explorer-scroll min-h-0 flex-1 overflow-y-auto p-1.5 -mx-1.5" onScroll={() => setMenu(null)}>
           <div id="pinned-views" hidden={!pinnedOpen} className="mt-1 space-y-0.5">
@@ -109,10 +107,9 @@ export function AppSidebar({ store = nessoStore, readonly = false, bare = false,
                 <ListRowTitle>{t('completeGraph')}</ListRowTitle>
                 <ListRowDetail>{t('conceptCount', { count: conceptCount })}</ListRowDetail>
               </ListRowButton>
-              {!readonly && (
-                <RevealActions className="mr-1">
+              <RevealActions className="mr-1">
                 <Menu.Root open={menu === 'complete-graph'} onOpenChange={(open) => setMenu(open ? 'complete-graph' : null)}>
-                  <Menu.Trigger ref={(element: HTMLButtonElement | null) => {
+                  <Menu.Trigger disabled={readonly} ref={(element: HTMLButtonElement | null) => {
                     if (element) menuTriggers.current.set('complete-graph', element)
                     else menuTriggers.current.delete('complete-graph')
                   }} render={<IconButton aria-label={t('actionsFor', { name: t('completeGraph') })} />}>
@@ -124,8 +121,7 @@ export function AppSidebar({ store = nessoStore, readonly = false, bare = false,
                     <MenuItem onClick={() => { deletingId.current = 'complete-graph'; setDeleting('complete-graph') }}><Trash2 />{t('deleteView')}</MenuItem>
                   </MenuPopup>
                 </Menu.Root>
-                </RevealActions>
-              )}
+              </RevealActions>
             </ListRow>
             {pinned.map(row)}
           </div>
@@ -135,8 +131,8 @@ export function AppSidebar({ store = nessoStore, readonly = false, bare = false,
           </div>
         </div>
       </div>
-      {onOpenSettings && <div className="shrink-0 border-t px-3 py-2">
-        <Button data-settings-trigger variant="ghost" className="w-full justify-start text-muted-foreground" onClick={onOpenSettings}><Settings2 />{t('settings')}</Button>
+      {(onOpenSettings || readonly) && <div className="shrink-0 border-t px-3 py-2">
+        <Button data-settings-trigger disabled={readonly} variant="ghost" className="w-full justify-start text-muted-foreground" onClick={onOpenSettings}><Settings2 />{t('settings')}</Button>
       </div>}
     </>
   )
