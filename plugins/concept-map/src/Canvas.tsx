@@ -233,7 +233,7 @@ export function Canvas({ readOnly = false, overlay }: RendererProps) {
   }
 
   const handlePaneDoubleClick = (event: ReactMouseEvent) => {
-    if (readonly) return
+    if (!interactive) return
     const target = event.target as HTMLElement | null
     if (target?.closest?.('.react-flow__node, .react-flow__edge, .react-flow__controls, .react-flow__panel, button')) return
     addConceptAt({ x: event.clientX, y: event.clientY })
@@ -383,7 +383,7 @@ export function Canvas({ readOnly = false, overlay }: RendererProps) {
             <ControlButton onClick={handleDelete} disabled={!canDelete} title={t('delete')} aria-label={t('delete')}>
               <Trash2 aria-hidden="true" />
             </ControlButton>
-            <ControlButton onClick={handleAdd} title={t('addConcept')} aria-label={t('addConcept')}>
+            <ControlButton onClick={handleAdd} disabled={!interactive} title={t('addConcept')} aria-label={t('addConcept')}>
               <Plus aria-hidden="true" />
             </ControlButton>
           </Controls>
