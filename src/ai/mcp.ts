@@ -1,4 +1,4 @@
-import type { AiResult } from '@nesso/ai'
+import type { AiResult, AiToolResults } from '@nesso/ai'
 import type { McpBridge } from '../../electron/mcp-bridge.ts'
 import { NessoError } from '../store/errors.ts'
 import { createAiTurn } from './turn.ts'
@@ -6,7 +6,7 @@ import { createAiTurn } from './turn.ts'
 export function connectMcpHost(
   bridge: McpBridge,
   boundary: Parameters<typeof createAiTurn>[0],
-  approve: Parameters<typeof createAiTurn>[1],
+  approve: (effects: AiToolResults['edit'], signal: AbortSignal) => Promise<boolean>,
   approveHistory: (action: 'undo' | 'redo', signal: AbortSignal) => Promise<boolean>,
   busy: () => boolean,
 ) {
@@ -17,19 +17,22 @@ export function connectMcpHost(
     const controller = new AbortController()
     const signal = controller.signal
     active = { id: event.id, controller }
-    const turn = createAiTurn(boundary, async () => true, signal)
+    const turn = createAiTurn(boundary, signal)
     let result: AiResult<unknown>
     try {
       const value = turn.execute(event.name, event.input)
       if (event.name === 'edit' || event.name === 'history') {
-        const approved = 'requiresApproval' in value ? await approve(value, signal)
-          : 'action' in value ? await approveHistory(value.action, signal) : false
+        const approved = event.name === 'edit'
+          ? await approve(value as AiToolResults['edit'], signal)
+          : await approveHistory((value as AiToolResults['history']).action, signal)
         if (!approved || signal.aborted) result = { value: { status: 'cancelled' } }
         else {
           const commit = await turn.commit()
-          const changed = 'action' in value ? value.available : 'requiresApproval' in value && (value.memberships > 0
-            || [value.concepts, value.relations, value.relationTypes, value.views].some((group) => group.added + group.updated + group.removed > 0))
-          result = { value: { ...commit, status: commit.status === 'applied' && !changed ? 'unchanged' : commit.status, ...('action' in value ? value : {}) } }
+          const effects = value as AiToolResults['edit']
+          const changed = event.name === 'history'
+            ? (value as AiToolResults['history']).available
+            : effects.memberships > 0 || [effects.concepts, effects.relations, effects.relationTypes, effects.views].some((group) => group.added + group.updated + group.removed > 0)
+          result = { value: { ...commit, status: commit.status === 'applied' && !changed ? 'unchanged' : commit.status, ...(event.name === 'history' ? value : {}) } }
         }
       } else result = { value }
     } catch (error) {

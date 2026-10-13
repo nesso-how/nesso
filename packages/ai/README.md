@@ -20,7 +20,7 @@ Tool schemas validate input; the host supplies execution. Reads are paginated an
 - `AiToolResults`, `AiEffects`: tool result and document effect types.
 - `aiConversation`, `aiChatRequest`: persisted conversation and transport request schemas, with derived message/request types and event/reply contracts.
 - `aiChatInstructions`, `aiChatMessages`: assistant instructions and provider-bound messages with document context and host outcomes.
-- `aiRewriteApprovalThreshold`, `aiTextLimits`: shared approval threshold and text limits.
+- `aiTextLimits`: shared text limits.
 - `aiProviders`: provider defaults, with connection and result types.
 
 `@nesso/ai/providers` also exposes the connection input schema and derived types without loading tool schemas. See [src/index.ts](src/index.ts) and [src/providers.ts](src/providers.ts) for exports and signatures.
@@ -29,7 +29,7 @@ Tool schemas validate input; the host supplies execution. Reads are paginated an
 
 Shared contracts and instructions only: no app state, execution, approvals, credentials, IPC or network access. Document edits and approvals belong to the host; provider requests and transport belong to Electron.
 
-The host store owns conversation messages and outcomes, persisted separately as `nesso.conversation` and excluded from document history. The chat controller owns transient requests and approvals; Electron stores encrypted connections and credentials.
+The host store owns conversation messages and outcomes, persisted separately as `nesso.conversation` and excluded from document history. The chat controller owns transient requests; Electron stores encrypted connections and credentials.
 
 The local MCP server reuses `aiTools` schemas; each call commits independently after in-app approval.
 

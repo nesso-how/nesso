@@ -1,6 +1,7 @@
 import type { Notifications } from '@nesso/plugin'
 import type { AiEffects } from '@nesso/ai'
 import type { translate } from '../i18n/index.ts'
+import { summarizeCounts } from './effects.ts'
 
 const confirm = (notifications: Notifications, signal: AbortSignal, title: string, description: string, t: ReturnType<typeof translate>): Promise<boolean> =>
   new Promise((resolve) => {
@@ -25,16 +26,10 @@ const confirm = (notifications: Notifications, signal: AbortSignal, title: strin
     if (signal.aborted) cancel()
   })
 
-export function createAiApproval(notifications: Notifications, getTranslation: () => ReturnType<typeof translate>, title: 'aiApproval' | 'mcpApproval' = 'aiApproval') {
+export function createAiApproval(notifications: Notifications, getTranslation: () => ReturnType<typeof translate>, title: 'mcpApproval') {
   return (effects: AiEffects, signal: AbortSignal) => {
     const t = getTranslation()
-    const groups = [effects.concepts, effects.relations, effects.relationTypes, effects.views]
-    return confirm(notifications, signal, t(title), t('aiEditApproval', {
-      added: groups.reduce((total, group) => total + group.added, 0),
-      updated: groups.reduce((total, group) => total + group.updated, 0),
-      removed: groups.reduce((total, group) => total + group.removed, 0),
-      memberships: effects.memberships,
-    }), t)
+    return confirm(notifications, signal, t(title), t('aiEditApproval', summarizeCounts(effects)), t)
   }
 }
 

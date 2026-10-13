@@ -23,12 +23,13 @@ const fixture = () => {
     chat, host, replies, finish: (result: AiResult<true>) => finish(result),
     emit: (text: string) => receive({ id: input.id, type: 'text', text }),
     edit: (operations: unknown[]) => receive({ id: input.id, type: 'tool', callId: 'edit', name: 'edit', input: { operations } }),
+    history: (action: unknown) => receive({ id: input.id, type: 'tool', callId: 'history', name: 'history', input: { action } }),
   }
 }
 
 test('chat commits only after generation and clears its conversation on document reset, not navigation', async () => {
   const f = fixture()
-  const task = f.chat.send('Rename it', f.host, async () => true, 'en')
+  const task = f.chat.send('Rename it', f.host, 'en')
   f.emit('Proposed rename.')
   f.edit([{ kind: 'concept.label', id: 'urn:first', value: 'Renamed' }])
   assert.equal(f.host.store.getState().graph.concepts[0].label, 'First')
@@ -37,10 +38,11 @@ test('chat commits only after generation and clears its conversation on document
   await task
   assert.equal(f.host.store.getState().graph.concepts[0].label, 'Renamed')
   assert.equal(f.host.store.getState().conversation.messages.at(-1)?.outcome, 'applied')
+  assert.deepEqual(f.host.store.getState().conversation.messages.at(-1)?.summary, { added: 0, updated: 1, removed: 0, memberships: 0 })
   f.host.store.undo()
   f.host.store.setSelection([{ kind: 'concept', id: 'urn:first' }])
   assert.equal(f.host.store.getState().conversation.messages.length, 2)
-  const reset = f.chat.send('Reset', f.host, async () => true, 'en')
+  const reset = f.chat.send('Reset', f.host, 'en')
   f.host.store.resetGraph()
   f.finish({ value: true })
   await reset
@@ -49,10 +51,33 @@ test('chat commits only after generation and clears its conversation on document
   f.chat.dispose()
 })
 
+test('history turns report completion instead of applied, leaving action buttons on the edited message', async () => {
+  const f = fixture()
+  const edit = f.chat.send('Rename it', f.host, 'en')
+  f.emit('Proposed rename.')
+  f.edit([{ kind: 'concept.label', id: 'urn:first', value: 'Renamed' }])
+  f.finish({ value: true })
+  await edit
+  assert.equal(f.host.store.getState().graph.concepts[0].label, 'Renamed')
+  assert.equal(f.host.store.getState().conversation.messages.at(-1)?.outcome, 'applied')
+  const undo = f.chat.send('Undo that', f.host, 'en')
+  f.emit('Undone.')
+  f.history('undo')
+  f.finish({ value: true })
+  await undo
+  const messages = f.host.store.getState().conversation.messages
+  assert.equal(messages.at(-1)?.outcome, 'complete')
+  assert.equal(messages.at(-1)?.summary, undefined)
+  assert.equal(messages.filter(({ outcome }) => outcome === 'applied').length, 1)
+  assert.equal(f.host.store.getState().graph.concepts[0].label, 'First')
+  assert.deepEqual(f.host.store.getState().history, { canUndo: false, canRedo: true })
+  f.chat.dispose()
+})
+
 test('Stop, clear and generation failure discard staged edits and cannot resurrect a cleared conversation', async () => {
   for (const action of ['stop', 'clear', 'store-clear', 'failure']) {
     const f = fixture()
-    const task = f.chat.send('Rename it', f.host, async () => true, 'en')
+    const task = f.chat.send('Rename it', f.host, 'en')
     f.edit([{ kind: 'concept.label', id: 'urn:first', value: 'Discarded' }])
     if (action === 'failure') f.finish({ issues: [{ path: 'chat', message: 'Provider failed' }] })
     else if (action === 'store-clear') f.host.store.clearChat()

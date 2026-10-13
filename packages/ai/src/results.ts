@@ -8,7 +8,6 @@ export type AiEffects = {
   readonly relationTypes: Counts
   readonly views: Counts
   readonly memberships: number
-  readonly requiresApproval: boolean
 }
 
 export type AiToolResults = {

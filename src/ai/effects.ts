@@ -1,4 +1,4 @@
-import { aiRewriteApprovalThreshold, type AiEffects } from '@nesso/ai'
+import { type AiChatMessage, type AiEffects } from '@nesso/ai'
 import type { Change } from '../store/delta.ts'
 import type { applyStateOperations } from '../store/operations.ts'
 
@@ -20,12 +20,15 @@ export function summarizeEffects({ delta, relationRewrites }: ReturnType<typeof 
   }
   const updatedViews = delta.views.filter((view) => view.before && view.after)
   const memberships = updatedViews.reduce((total, view) => total + view.members.length, 0)
-  const addedConcepts = new Set(delta.concepts.filter(({ before, after }) => !before && after).map(({ id }) => id))
-  const rewrittenMemberships = updatedViews.reduce((total, view) => total + view.members.filter((member) => member.before || !addedConcepts.has(member.id)).length, 0)
-  const counts = Object.values(groups)
+  return { ...groups, memberships }
+}
+
+export function summarizeCounts(effects: AiEffects): NonNullable<AiChatMessage['summary']> {
+  const groups = [effects.concepts, effects.relations, effects.relationTypes, effects.views]
   return {
-    ...groups, memberships,
-    requiresApproval: groups.concepts.removed + groups.relations.removed + groups.views.removed > 0
-      || counts.reduce((total, group) => total + group.updated, rewrittenMemberships) > aiRewriteApprovalThreshold,
+    added: groups.reduce((total, group) => total + group.added, 0),
+    updated: groups.reduce((total, group) => total + group.updated, 0),
+    removed: groups.reduce((total, group) => total + group.removed, 0),
+    memberships: effects.memberships,
   }
 }

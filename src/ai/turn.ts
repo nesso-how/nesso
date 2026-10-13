@@ -1,14 +1,13 @@
 import type { NessoOperation, NessoState } from '@nesso/plugin'
 import { SchemaError } from '@nesso/schema'
 import { ZodError } from 'zod'
-import { aiTools, type AiEffects, type AiToolResults } from '@nesso/ai'
+import { aiTools, type AiToolResults } from '@nesso/ai'
 import type { createNessoStore } from '../store/create.ts'
 import { NessoError } from '../store/errors.ts'
 import { summarizeEffects } from './effects.ts'
 import { readAiTool } from './read.ts'
 
 type Boundary = Pick<ReturnType<typeof createNessoStore>, 'store' | 'previewOperations'>
-type Approval = (effects: AiEffects, signal: AbortSignal) => Promise<boolean>
 const fail = (path: string, message: string): never => { throw new NessoError([{ path: `ai.${path}`, message }]) }
 const errorOf = (error: unknown): NessoError => {
   if (error instanceof NessoError) return error
@@ -22,9 +21,8 @@ const sameContext = (before: NessoState, after: NessoState): boolean =>
   && before.vocabs === after.vocabs && before.preferences.activeVocabId === after.preferences.activeVocabId
   && before.history === after.history
 
-export function createAiTurn(boundary: Boundary, approve: Approval, signal?: AbortSignal) {
+export function createAiTurn(boundary: Boundary, signal?: AbortSignal) {
   const base = boundary.store.getState()
-  const controller = new AbortController()
   let operations: readonly NessoOperation[] = []
   let history: 'undo' | 'redo' | undefined
   let candidate: NessoState = base
@@ -35,7 +33,6 @@ export function createAiTurn(boundary: Boundary, approve: Approval, signal?: Abo
     history = undefined
     candidate = base
     signal?.removeEventListener('abort', cancel)
-    controller.abort()
   }
   signal?.addEventListener('abort', cancel, { once: true })
   if (signal?.aborted) cancel()
@@ -76,8 +73,6 @@ export function createAiTurn(boundary: Boundary, approve: Approval, signal?: Abo
         current()
         const preview = boundary.previewOperations(base, operations)
         const effects = summarizeEffects(preview)
-        if (effects.requiresApproval && !await approve(effects, controller.signal)) return { status: 'cancelled' as const, effects }
-        if (controller.signal.aborted) return { status: 'cancelled' as const, effects }
         current()
         boundary.store.applyOperations(history ? [{ kind: history === 'undo' ? 'history.undo' : 'history.redo' }] : operations)
         return { status: 'applied' as const, effects }

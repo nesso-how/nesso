@@ -51,7 +51,7 @@ export const aiTools = {
     inputSchema: z.strictObject({ ...page }),
   },
   edit: {
-    description: 'Stage ordered undoable graph and saved-view operations, not live writes. Supply unique absolute IRIs for new concepts and types. New concepts join the active view and link to a single selected concept using the default type. All edits in a turn apply together after validation and any in-app approval, as a single undoable batch.',
+    description: 'Stage ordered undoable graph and saved-view operations, not live writes. Supply unique absolute IRIs for new concepts and types. New concepts join the active view and link to a single selected concept using the default type. All edits in a turn apply together after validation and any required approval, as a single undoable batch. All edit calls in a turn merge into one batch that can only be undone together.',
     inputSchema: z.strictObject({ operations: z.array(operation).min(1).max(500) }),
   },
   history: {

@@ -129,7 +129,6 @@
 .chat-markdown pre code { padding: 0; border-radius: 0; background: transparent; }
 .chat-markdown a { text-decoration: underline; text-underline-offset: 2px; }
 .chat-markdown hr { border-top: 1px solid var(--border); }
-.chat-confirmation { margin-top: 14px; }
 .chat-confirmation-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
 .chat-confirmation-actions button { min-height: 32px; padding-inline: 12px; }
 .chat-outcome { display: flex; align-items: baseline; gap: 5px; margin-top: 12px; color: var(--muted-foreground); font: 10px/16px var(--font-mono); }

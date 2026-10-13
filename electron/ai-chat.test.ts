@@ -39,7 +39,7 @@ test('provider streaming shares tool schemas, waits for host replies and keeps l
     if (event.type === 'tool') {
       assert.equal(event.callId, 'edit-call')
       const counts = { added: 0, updated: 0, removed: 0 }
-      const effects: AiEffects = { concepts: { ...counts, added: 1 }, relations: counts, relationTypes: counts, views: counts, memberships: 0, requiresApproval: false }
+      const effects: AiEffects = { concepts: { ...counts, added: 1 }, relations: counts, relationTypes: counts, views: counts, memberships: 0 }
       run.reply({ id: 'unrelated', callId: event.callId, result: { value: effects } })
       run.reply({ id: input.id, callId: 'unrelated', result: { value: effects } })
       run.reply({ id: input.id, callId: event.callId, result: { value: effects } })

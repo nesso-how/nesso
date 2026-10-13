@@ -7,6 +7,12 @@ const aiChatMessage = z.strictObject({
   role: z.enum(['user', 'assistant']),
   content: z.string().max(100_000),
   outcome: z.enum(['complete', 'applied', 'cancelled', 'error']).optional(),
+  summary: z.strictObject({
+    added: z.number().int().min(0),
+    updated: z.number().int().min(0),
+    removed: z.number().int().min(0),
+    memberships: z.number().int().min(0),
+  }).optional(),
 })
 export const aiConversation = z.strictObject({ version: z.literal(1), messages: z.array(aiChatMessage).max(500) })
 export const aiChatRequest = z.strictObject({

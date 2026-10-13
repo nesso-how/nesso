@@ -1,17 +1,26 @@
 import { useEffect, useRef, useSyncExternalStore } from 'react'
 import { Button } from '@nesso/ui'
-import { ArrowUp, ArrowUpRight, Check, MessageCircle, Square, X } from 'lucide-react'
+import { ArrowUp, ArrowUpRight, Check, MessageCircle, Redo2, Square, Undo2, X } from 'lucide-react'
 import { defaultLocale } from '@nesso/i18n'
+import type { AiChatMessage } from '@nesso/ai'
 import type { createAiChat } from '@/ai/chat'
-import { createAiApproval } from '@/ai/approval'
 import { host, useNessoStore } from '@/store'
 import type { HostStore } from '@/store/types'
-import { translate, useTranslation } from '@/i18n'
+import { useTranslation } from '@/i18n'
 import { notifications } from '@/notifications'
 import { ChatMarkdown } from './ChatMarkdown'
 
 const outcomes = { applied: 'aiChatApplied', cancelled: 'aiChatCancelled', error: 'aiChatFailed' } as const
 const starters = ['aiStarterAdd', 'aiStarterView', 'aiStarterConnections'] as const
+
+const describeChanges = (summary: NonNullable<AiChatMessage['summary']>, t: ReturnType<typeof useTranslation>): string => {
+  const parts: string[] = []
+  if (summary.added > 0) parts.push(t('aiChangeAdded', { count: summary.added }))
+  if (summary.updated > 0) parts.push(t('aiChangeUpdated', { count: summary.updated }))
+  if (summary.removed > 0) parts.push(t('aiChangeRemoved', { count: summary.removed }))
+  if (summary.memberships > 0) parts.push(t('aiChangeMembership', { count: summary.memberships }))
+  return parts.join(' · ')
+}
 
 export function Chat({ chat, draft, onDraftChange, onOpenSettings, activeModel, chatGptPlan, store = host.store, readonly = false }: {
   chat: ReturnType<typeof createAiChat>
@@ -25,13 +34,16 @@ export function Chat({ chat, draft, onDraftChange, onOpenSettings, activeModel, 
 }) {
   const state = useSyncExternalStore(chat.subscribe, chat.getSnapshot)
   const messages = useNessoStore((state) => state.conversation.messages, store)
-  const approval = useSyncExternalStore(chat.approvals.subscribe, chat.approvals.getSnapshot).find((item) => item.tone === 'confirmation')
   const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale, store)
   const t = useTranslation(store)
   const scroller = useRef<HTMLDivElement>(null)
   const input = useRef<HTMLTextAreaElement>(null)
   const follow = useRef(true)
   const busy = !readonly && state.phase !== 'idle'
+  const canUndo = useNessoStore((state) => state.history.canUndo, store)
+  const canRedo = useNessoStore((state) => state.history.canRedo, store)
+  let lastAppliedId: string | undefined
+  for (const message of messages) if (message.role === 'assistant' && message.outcome === 'applied') lastAppliedId = message.id
   const usageLimit = !readonly && state.issues.some(({ path }) => path === 'chatgpt.usage')
   const manageUsage = async () => {
     try {
@@ -42,7 +54,7 @@ export function Chat({ chat, draft, onDraftChange, onOpenSettings, activeModel, 
   }
   useEffect(() => {
     if (follow.current && scroller.current) scroller.current.scrollTop = scroller.current.scrollHeight
-  }, [messages, state.phase, approval])
+  }, [messages, state.phase])
   useEffect(() => {
     if (!input.current) return
     input.current.style.height = 'auto'
@@ -52,7 +64,7 @@ export function Chat({ chat, draft, onDraftChange, onOpenSettings, activeModel, 
   const send = () => {
     if (readonly || !draft.trim() || busy) return
     follow.current = true
-    void chat.send(draft, host, createAiApproval(chat.approvals.api, () => translate(host.store.getState().preferences.locale ?? defaultLocale)), locale)
+    void chat.send(draft, host, locale)
     onDraftChange('')
   }
   return (
@@ -72,19 +84,17 @@ export function Chat({ chat, draft, onDraftChange, onOpenSettings, activeModel, 
         <div className="chat-messages" role="log" aria-label={t('aiConversation')} aria-live="polite" aria-relevant="additions text">
           {messages.map((message, index) => <article key={message.id} className={`chat-message ${message.role}`} aria-label={t(message.role === 'user' ? 'aiYou' : 'aiAssistant')}>
             {message.content && (message.role === 'assistant' ? <ChatMarkdown content={message.content} /> : <p>{message.content}</p>)}
-            {!readonly && message.role === 'assistant' && index === messages.length - 1 && approval && <div className="chat-confirmation">
-              <p>{approval.description}</p>
-              <div className="chat-confirmation-actions">
-                <Button size="sm" onClick={approval.action.onClick}>{approval.action.label}</Button>
-                <Button variant="outline" size="sm" onClick={approval.cancelAction.onClick}>{t('aiKeep')}</Button>
-              </div>
-            </div>}
             {message.role === 'assistant' && (index !== messages.length - 1 || !busy) && message.outcome && message.outcome !== 'complete' && <div className="chat-outcome">
               {message.outcome === 'applied' ? <Check aria-hidden="true" /> : <X aria-hidden="true" />}{t(outcomes[message.outcome])}
+              {message.outcome === 'applied' && message.summary ? <span>{describeChanges(message.summary, t)}</span> : null}
+            </div>}
+            {!readonly && !busy && (canUndo || canRedo) && message.role === 'assistant' && message.outcome === 'applied' && message.id === lastAppliedId && <div className="chat-confirmation-actions">
+              {canUndo && <Button type="button" size="sm" variant="outline" title={t('aiUndoTitle')} aria-label={t('aiUndoTitle')} onClick={() => store.undo()}><Undo2 aria-hidden="true" />{t('aiUndo')}</Button>}
+              {canRedo && <Button type="button" size="sm" variant="outline" title={t('aiRedoTitle')} aria-label={t('aiRedoTitle')} onClick={() => store.redo()}><Redo2 aria-hidden="true" />{t('aiRedo')}</Button>}
             </div>}
           </article>)}
         </div>
-        {busy && state.phase !== 'approving' && <div role="status" className="chat-working"><span aria-hidden="true" />{t(state.phase === 'stopping' ? 'aiChatStopping' : 'aiChatWorking')}</div>}
+        {busy && <div role="status" className="chat-working"><span aria-hidden="true" />{t(state.phase === 'stopping' ? 'aiChatStopping' : 'aiChatWorking')}</div>}
         {!readonly && state.issues.length > 0 && <p role="alert" className="mb-5 whitespace-pre-line text-xs text-destructive">{state.issues.map(({ message }) => message).join('\n')}</p>}
         {usageLimit && <div className="mb-5"><Button size="sm" onClick={() => void manageUsage()}>{t('aiManageUsage')}</Button></div>}
       </div>

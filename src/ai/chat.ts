@@ -2,16 +2,15 @@ import type { AiChatMessage, AiChatRequest } from '@nesso/ai'
 import type { AiBridge } from '../../electron/ai-bridge.ts'
 import { NessoError } from '../store/errors.ts'
 import { createAiTurn } from './turn.ts'
-import { createNotifications } from '../notifications/create.ts'
+import { summarizeCounts } from './effects.ts'
 import type { HostStore } from '../store/types.ts'
 
 type Snapshot = {
-  readonly phase: 'idle' | 'generating' | 'approving' | 'stopping'
+  readonly phase: 'idle' | 'generating' | 'stopping'
   readonly issues: readonly { path: string; message: string }[]
 }
 
 export function createAiChat(bridge: Pick<AiBridge, 'chat' | 'stop' | 'reply' | 'subscribeChat'>, store: HostStore) {
-  const approvals = createNotifications()
   let state: Snapshot = { phase: 'idle', issues: [] }
   let active: { id: string; messageId: string; controller: AbortController; turn: ReturnType<typeof createAiTurn>; historyAvailable: boolean; failure?: NessoError } | undefined
   const listeners = new Set<() => void>()
@@ -61,12 +60,11 @@ export function createAiChat(bridge: Pick<AiBridge, 'chat' | 'stop' | 'reply' | 
     publish({ ...state, issues: [] })
   }
   return {
-    approvals,
     getSnapshot: () => state,
     subscribe: (listener: () => void) => { listeners.add(listener); return () => { listeners.delete(listener) } },
     stop, clear,
     dispose: () => { stop(); unsubscribe(); unsubscribeStore() },
-    send: async (content: string, boundary: Parameters<typeof createAiTurn>[0], approve: Parameters<typeof createAiTurn>[1], locale: AiChatRequest['locale']) => {
+    send: async (content: string, boundary: Parameters<typeof createAiTurn>[0], locale: AiChatRequest['locale']) => {
       const text = content.trim()
       if (!text || active) return
       const messages = store.getState().conversation.messages
@@ -75,16 +73,14 @@ export function createAiChat(bridge: Pick<AiBridge, 'chat' | 'stop' | 'reply' | 
         return
       }
       const controller = new AbortController()
-      const turn = createAiTurn(boundary, (effects, signal) => {
-        publish({ ...state, phase: 'approving' })
-        return approve(effects, signal)
-      }, controller.signal)
+      const turn = createAiTurn(boundary, controller.signal)
       const run = { id: crypto.randomUUID(), messageId: crypto.randomUUID(), controller, turn, historyAvailable: false, failure: undefined as NessoError | undefined }
       active = run
       const history = [...messages, { id: crypto.randomUUID(), role: 'user' as const, content: text }]
       store.setChatMessages([...history, { id: run.messageId, role: 'assistant', content: '', outcome: 'cancelled' }])
       publish({ ...state, phase: 'generating', issues: [] })
       let outcome: AiChatMessage['outcome'] = 'cancelled'
+      let summary: AiChatMessage['summary']
       try {
         const result = await bridge.chat({ id: run.id, messages: history, context: JSON.stringify(turn.execute('context', {})), locale })
         if (run.failure) throw run.failure
@@ -94,7 +90,8 @@ export function createAiChat(bridge: Pick<AiBridge, 'chat' | 'stop' | 'reply' | 
         const { effects } = commit
         const changed = run.historyAvailable || effects.memberships > 0
           || [effects.concepts, effects.relations, effects.relationTypes, effects.views].some((group) => group.added + group.updated + group.removed > 0)
-        outcome = commit.status === 'cancelled' ? 'cancelled' : changed ? 'applied' : 'complete'
+        outcome = changed && !run.historyAvailable ? 'applied' : 'complete'
+        if (outcome === 'applied') summary = summarizeCounts(effects)
       } catch (error) {
         if (run.failure || !controller.signal.aborted) {
           outcome = 'error'
@@ -103,7 +100,7 @@ export function createAiChat(bridge: Pick<AiBridge, 'chat' | 'stop' | 'reply' | 
         }
       } finally {
         turn.cancel()
-        update(run.messageId, (message) => ({ ...message, outcome }))
+        update(run.messageId, (message) => ({ ...message, outcome, ...(summary ? { summary } : {}) }))
         active = undefined
         publish({ ...state, phase: 'idle' })
       }
