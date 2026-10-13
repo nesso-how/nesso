@@ -34,6 +34,7 @@ import { useTranslation } from './i18n'
 
 const nodeTypes: NodeTypes = { concept: ConceptNodeView }
 const fitViewOptions = { padding: 0.3, maxZoom: 1.2 }
+const easeOut = (t: number) => 1 - Math.pow(1 - t, 3)
 const multiSelectionKeys = ['Meta', 'Control', 'Shift']
 type ContextMenuTarget = Selection[number]['kind'] | 'pane' | 'selection'
 
@@ -64,11 +65,12 @@ export function Canvas({ readOnly = false, overlay }: RendererProps) {
   const [overlayHeight, setOverlayHeight] = useState(0)
   const hasOverlay = Boolean(overlay)
   const framed = useRef(false)
+  const framedGraph = useRef(graph)
   const width = useFlowStore((state) => state.width)
   const height = useFlowStore((state) => state.height)
   const nodesInitialized = useNodesInitialized()
   const duration = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 300
-  const animatedFraming = { ...fitViewOptions, duration }
+  const animatedFraming = { ...fitViewOptions, duration, ease: easeOut, interpolate: 'linear' as const }
   const pasted = useRef({ text: '', count: 0 })
   const { fitView, screenToFlowPosition, getNodes, getNodesBounds, setViewport } = useReactFlow()
   const zoom = useFlowStore((state) => state.transform[2])
@@ -290,14 +292,14 @@ export function Canvas({ readOnly = false, overlay }: RendererProps) {
 
   useEffect(() => {
     if (!hasOverlay || !overlayHeight || !nodesInitialized || !width || !height) return
-    const frame = requestAnimationFrame(() => {
-      const panel = overlayElement.current!.parentElement!
-      const margin = parseFloat(getComputedStyle(panel).marginBottom)
-      const viewport = getViewportForBounds(getNodesBounds(getNodes()), width, Math.max(1, height - overlayHeight - margin), 0.2, 1.2, '40px')
-      void setViewport(viewport, { duration: framed.current ? duration : 0 })
-      framed.current = true
-    })
-    return () => cancelAnimationFrame(frame)
+    const panel = overlayElement.current!.parentElement!
+    const margin = parseFloat(getComputedStyle(panel).marginBottom)
+    const viewport = getViewportForBounds(getNodesBounds(getNodes()), width, Math.max(1, height - overlayHeight - margin), 0.2, 1.2, '40px')
+    const changed = framedGraph.current !== graph
+    framedGraph.current = graph
+    const animate = framed.current && changed
+    void setViewport(viewport, animate ? { duration, ease: easeOut, interpolate: 'linear' } : { duration: 0 })
+    framed.current = true
   }, [hasOverlay, overlayHeight, nodesInitialized, width, height, graph, getNodes, getNodesBounds, setViewport, duration])
 
   return (
