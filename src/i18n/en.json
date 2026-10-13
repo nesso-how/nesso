@@ -15,7 +15,7 @@
   "introUnderstandingDesktopDescription": "In the Inspector, use **Details** to explore and edit concepts, connections, and views. Switch to **Chat** to ask questions and build your graph with AI.",
   "introDesktopDescription": "Nesso also supports AI chat and an MCP server. Download the desktop app from {{website}} for the full experience.",
   "introSkip": "Skip intro",
-  "introReadonly": "Preview · changes disabled",
+  "introReadonly": "Preview · Changes disabled",
   "introContinue": "Continue",
   "introExplore": "Explore Nesso",
   "introPrevious": "Previous step",
