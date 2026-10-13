@@ -50,12 +50,13 @@ app.whenReady().then(async () => {
   let installingUpdate = false
   const dataLocation = connectDataLocation(trusted, location, () => installingUpdate || ai.busy() || mcp.busy())
   const connectPersistence = connectDesktopPersistence(trusted, location, dataLocation.locked)
-  const canUseClipboard = (contents: WebContents | null, permission: string, details: { isMainFrame: boolean; requestingUrl?: string }): boolean =>
-    (permission === 'clipboard-read' || permission === 'clipboard-sanitized-write')
+  const allowedPermissions = ['clipboard-read', 'clipboard-sanitized-write', 'fileSystem']
+  const canUsePermission = (contents: WebContents | null, permission: string, details: { isMainFrame: boolean; requestingUrl?: string }): boolean =>
+    allowedPermissions.includes(permission)
     && details.isMainFrame && details.requestingUrl === (dev ? 'http://127.0.0.1:5173/' : 'nesso://app/')
     && BrowserWindow.getAllWindows().some((window) => window.webContents === contents && contents.mainFrame.url === details.requestingUrl)
-  session.defaultSession.setPermissionCheckHandler((contents, permission, _origin, details) => canUseClipboard(contents, permission, details))
-  session.defaultSession.setPermissionRequestHandler((contents, permission, callback, details) => callback(canUseClipboard(contents, permission, details)))
+  session.defaultSession.setPermissionCheckHandler((contents, permission, _origin, details) => canUsePermission(contents, permission, details))
+  session.defaultSession.setPermissionRequestHandler((contents, permission, callback, details) => callback(canUsePermission(contents, permission, details)))
   protocol.handle('nesso', async (request) => {
     const url = new URL(request.url)
     const file = path.resolve(root, `.${decodeURIComponent(url.pathname === '/' ? '/index.html' : url.pathname)}`)
