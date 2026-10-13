@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.0.0-alpha.15 — 2026-10-13
+
+### Documentation
+
+- **ai:** Require paid plan for chatgpt sign-in
+
+### Features
+
+- **intro:** Preview the real inspector without writes
+- **concept-map:** Reveal the rest of the graph as context
+- **chat:** Apply AI edits directly with undo and summaries
+
+### Fixes
+
+- **app:** Keep unsaved-changes handling during the intro
+- **i18n:** Capitalize the preview label in English
+- **concept-map:** Block concept creation when interactions are locked
+- **export:** Notify only after save picker confirms download
+- **concept-map:** Ease out graph framing in intro
+
 ## 1.0.0-alpha.14 — 2026-10-12
 
 ### Features
