@@ -44,7 +44,7 @@ export function Intro({ onFinish }: { onFinish: () => void }) {
   const description = t(step === lastStep && chat ? 'introUnderstandingDesktopDescription' : chapters[step].description)
   const [desktopBefore, desktopAfter] = t('introDesktopDescription', { website: '<website>' }).split('<website>')
 
-  return <section className="intro" data-step={step} aria-label={t('discoverNesso')} style={{
+  return <section className="intro" aria-label={t('discoverNesso')} style={{
     '--intro-explorer-width': `${panels.explorerWidth}px`,
     '--intro-inspector-width': `${inspectorWidth}px`,
     '--intro-inspector-min-width': `${inspectorMinWidth}px`,
