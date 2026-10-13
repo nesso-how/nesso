@@ -65,8 +65,8 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
 
   return (
     <>
-      {introOpen ? <Intro onFinish={finishIntro} /> : (
       <SidebarProvider>
+        {introOpen ? <Intro onFinish={finishIntro} /> : (
         <div className="relative flex min-h-0 flex-1 overflow-hidden">
           {!readonly && <AppSidebar onOpenSettings={openSettings} />}
           <SidebarInset className="relative min-w-0 overflow-hidden">
@@ -90,11 +90,11 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
                 {chat ? <AssistantPanel chat={chat} onClose={() => host.store.setSectionOpen('inspector', false)} onOpenSettings={() => { setSettingsPage('ai'); setSettingsOpen(true) }} settingsOpen={settingsOpen} /> : <Inspector />}
               </SidePanel>}
             </div>
-            <PersistenceBanner persistence={persistence} />
           </SidebarInset>
         </div>
+        )}
+        <PersistenceBanner persistence={persistence} />
       </SidebarProvider>
-      )}
       <Dialog.Root open={!readonly && settingsOpen} onOpenChange={setSettingsOpen}>
         {!readonly && settingsOpen && <SettingsDialog initialPage={settingsPage} onDiscover={() => { setSettingsOpen(false); setIntroOpen(true) }} />}
       </Dialog.Root>
