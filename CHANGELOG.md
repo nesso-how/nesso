@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.0.0-alpha.16 — 2026-10-14
+
+### Features
+
+- **app:** Delete shared concepts with view
+- **plugin:** Route full-view delete to view dialog
+- **concept-map:** Link creation to selection and confirm full delete
+- **plugin:** Cap concept label length in renderer
+- **app:** Pass concept label limit to renderer
+- **concept-map:** Edit concept labels inline
+
 ## 1.0.0-alpha.15 — 2026-10-13
 
 ### Documentation

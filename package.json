@@ -1,7 +1,7 @@
 {
   "name": "nesso",
   "private": true,
-  "version": "1.0.0-alpha.15",
+  "version": "1.0.0-alpha.16",
   "description": "A minimal knowledge graph app",
   "license": "MIT",
   "homepage": "https://nesso.how",
