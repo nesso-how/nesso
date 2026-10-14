@@ -23,6 +23,7 @@
   "clipboardUnavailable": "无法访问剪贴板。请在画布上尝试 Ctrl/Cmd+C、Ctrl/Cmd+X 或 Ctrl/Cmd+V。",
   "connectTo": "连接到 {{name}}",
   "connectFrom": "从 {{name}} 连接",
+  "editConceptLabel": "编辑概念标签",
   "nodeInstructions": "按 Enter 或空格键选择概念。使用方向键移动，按 Delete 删除，或按 Escape 清除选择。",
   "nodeSelectionInstructions": "按 Enter 或空格键选择概念。按 Delete 删除，或按 Escape 清除选择。",
   "nodeMoved": "概念已移动。新坐标：x {{x}}，y {{y}}",

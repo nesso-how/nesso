@@ -24,6 +24,7 @@
   "clipboardUnavailable": "Clipboard access failed. Try Ctrl/Cmd+C, Ctrl/Cmd+X, or Ctrl/Cmd+V on the canvas.",
   "connectTo": "Connect to {{name}}",
   "connectFrom": "Connect from {{name}}",
+  "editConceptLabel": "Edit concept label",
   "nodeInstructions": "Press Enter or Space to select a concept. Use the arrow keys to move it, Delete to remove it, or Escape to clear the selection.",
   "nodeSelectionInstructions": "Press Enter or Space to select a concept. Press Delete to remove it or Escape to clear the selection.",
   "nodeMoved": "Concept moved. New position, x: {{x}}, y: {{y}}",

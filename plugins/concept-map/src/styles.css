@@ -102,6 +102,16 @@
   outline-offset: 3px;
 }
 
+.concept-node input {
+  min-width: 2ch;
+  max-width: 100%;
+  background: transparent;
+  text-align: center;
+  font: inherit;
+  field-sizing: content;
+  outline: none;
+}
+
 .react-flow__controls {
   overflow: hidden;
   padding: 2px;

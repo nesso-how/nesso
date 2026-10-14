@@ -25,6 +25,7 @@
   "clipboardUnavailable": "Accesso agli appunti non riuscito. Prova Ctrl/Cmd+C, Ctrl/Cmd+X o Ctrl/Cmd+V sul canvas.",
   "connectTo": "Collega a {{name}}",
   "connectFrom": "Collega da {{name}}",
+  "editConceptLabel": "Modifica etichetta concetto",
   "nodeInstructions": "Premi Invio o Spazio per selezionare un concetto. Usa le frecce per spostarlo, Canc per eliminarlo o Esc per annullare la selezione.",
   "nodeSelectionInstructions": "Premi Invio o Spazio per selezionare un concetto. Premi Canc per eliminarlo o Esc per annullare la selezione.",
   "nodeMoved": "Concetto spostato. Nuova posizione, x: {{x}}, y: {{y}}",

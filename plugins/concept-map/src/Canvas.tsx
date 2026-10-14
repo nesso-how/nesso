@@ -38,7 +38,7 @@ const easeOut = (t: number) => 1 - Math.pow(1 - t, 3)
 const multiSelectionKeys = ['Meta', 'Control', 'Shift']
 type ContextMenuTarget = Selection[number]['kind'] | 'pane' | 'selection'
 
-export function Canvas({ readOnly = false, overlay, onDeleteView }: RendererProps) {
+export function Canvas({ readOnly = false, overlay, onDeleteView, conceptLabelMaxLength }: RendererProps) {
   const t = useTranslation()
   const graph = useNesso((state) => state.viewGraph)
   const indexed = useMemo(() => indexGraph(graph), [graph])
@@ -73,6 +73,7 @@ export function Canvas({ readOnly = false, overlay, onDeleteView }: RendererProp
   const animatedFraming = { ...fitViewOptions, duration, ease: easeOut, interpolate: 'linear' as const }
   const pasted = useRef({ text: '', count: 0 })
   const paneSelection = useRef<Selection>([])
+  const [editId, setEditId] = useState<string | null>(null)
   const { fitView, screenToFlowPosition, getNodes, getNodesBounds, setViewport } = useReactFlow()
   const zoom = useFlowStore((state) => state.transform[2])
   const [sizes, setSizes] = useState<ConceptNodeSizes>({})
@@ -94,7 +95,19 @@ export function Canvas({ readOnly = false, overlay, onDeleteView }: RendererProp
   }, [outsideActive, graph, fullGraph])
   const nodes = [
     ...(outsideGraph?.concepts.map((concept) => outsideNode(concept, sizes[concept.id])) ?? []),
-    ...graph.concepts.map((concept) => conceptNode(concept, selectedConcepts.has(concept.id), sizes[concept.id])),
+    ...graph.concepts.map((concept) => {
+      const node = conceptNode(concept, selectedConcepts.has(concept.id), sizes[concept.id])
+      return {
+        ...node,
+        data: {
+          ...node.data,
+          editable: interactive,
+          maxLength: conceptLabelMaxLength,
+          editing: interactive && editId === concept.id,
+          onEditingChange: (editing: boolean) => setEditId((prev) => editing ? concept.id : (prev === concept.id ? null : prev)),
+        },
+      }
+    }),
   ]
   const edges = [
     ...(outsideGraph?.relations.map((relation) => outsideEdge(relation, outsideGraph.indexed, defaultTypeId, sizes)) ?? []),
@@ -174,6 +187,7 @@ export function Canvas({ readOnly = false, overlay, onDeleteView }: RendererProp
     }
     const historyGroup = newIri()
     const id = store.addConcept(placement(), historyGroup)
+    setEditId(id)
     requestAnimationFrame(() => {
       if (canvas.current === element) store.setConceptPosition(id, placement(), historyGroup)
     })
@@ -244,10 +258,12 @@ export function Canvas({ readOnly = false, overlay, onDeleteView }: RendererProp
 
   const addConceptAt = (point: { x: number; y: number }, selection = store.getState().selected) => {
     const position = screenToFlowPosition(point)
+    const id = newIri()
     store.applyOperations([
       { kind: 'selection.set', value: selection },
-      { kind: 'concept.add', id: newIri(), position: { x: position.x - conceptNodeMinSize.width / 2, y: position.y - conceptNodeMinSize.height / 2 } },
+      { kind: 'concept.add', id, position: { x: position.x - conceptNodeMinSize.width / 2, y: position.y - conceptNodeMinSize.height / 2 } },
     ])
+    setEditId(id)
   }
 
   const openContextMenu = (point: { x: number; y: number }, item?: Selection[number], target: ContextMenuTarget = item?.kind ?? 'pane') => {
