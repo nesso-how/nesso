@@ -137,6 +137,7 @@ export type RendererProps = {
   readonly readOnly?: boolean
   readonly overlay?: ReactNode
   readonly onDeleteView?: () => void
+  readonly conceptLabelMaxLength?: number
 }
 
 export type RendererDefinition = {
