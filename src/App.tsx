@@ -9,7 +9,7 @@ import { SettingsDialog } from '@/components/app/SettingsDialog'
 import { Dialog, SidePanel, useMediaQuery } from '@nesso/ui'
 import { SidebarInset, SidebarProvider } from '@/components/app/SidebarLayout'
 import { getRenderer, host, useNessoStore, type startAutosave } from '@/store'
-import { resolveInspector } from '@/store/settings'
+import { maxConceptLabelLength, resolveInspector } from '@/store/settings'
 import { translate } from '@/i18n'
 import { chat } from '@/ai'
 import { AssistantPanel } from '@/components/app/AssistantPanel'
@@ -30,7 +30,7 @@ function RendererHost() {
       <Component onDeleteView={() => {
         const { workspace } = host.store.getState()
         setDeleting(workspace.activeViewId === null ? 'complete-graph' : workspace.savedViews.find((view) => view.id === workspace.activeViewId) ?? null)
-      }} />
+      }} conceptLabelMaxLength={maxConceptLabelLength} />
       <DeleteViewDialog target={deleting} onClose={() => setDeleting(null)} finalFocus={() => canvas.current?.querySelector<HTMLElement>('[tabindex="0"]') ?? null} />
     </div>
   )
