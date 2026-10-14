@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import type { SavedView } from '@nesso/plugin'
 import { defaultLocale } from '@nesso/i18n'
 import { Inspector } from '@/components/app/Inspector'
 import { ToastsHost } from '@/components/app/Toasts'
@@ -15,15 +16,22 @@ import { AssistantPanel } from '@/components/app/AssistantPanel'
 import { DataTransferDialog } from '@/components/app/LocalDataSettings'
 import { Intro } from '@/components/app/Intro'
 import { completeIntro } from '@/store/intro'
+import { DeleteViewDialog } from '@/components/app/DeleteViewDialog'
 
 function RendererHost() {
   const activeRendererId = useNessoStore((state) => state.preferences.activeRendererId)
+  const [deleting, setDeleting] = useState<SavedView | 'complete-graph' | null>(null)
+  const canvas = useRef<HTMLDivElement>(null)
   const renderer = getRenderer(activeRendererId)
   if (!renderer) return null
   const Component = renderer.component
   return (
-    <div className="h-full">
-      <Component />
+    <div ref={canvas} className="h-full">
+      <Component onDeleteView={() => {
+        const { workspace } = host.store.getState()
+        setDeleting(workspace.activeViewId === null ? 'complete-graph' : workspace.savedViews.find((view) => view.id === workspace.activeViewId) ?? null)
+      }} />
+      <DeleteViewDialog target={deleting} onClose={() => setDeleting(null)} finalFocus={() => canvas.current?.querySelector<HTMLElement>('[tabindex="0"]') ?? null} />
     </div>
   )
 }

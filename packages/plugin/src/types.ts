@@ -136,6 +136,7 @@ export type NessoStore = {
 export type RendererProps = {
   readonly readOnly?: boolean
   readonly overlay?: ReactNode
+  readonly onDeleteView?: () => void
 }
 
 export type RendererDefinition = {

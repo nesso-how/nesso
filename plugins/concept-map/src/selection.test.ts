@@ -1,7 +1,18 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import type { Selection } from '@nesso/plugin'
-import { selectionForContextMenu, selectionFromChanges } from './selection.ts'
+import { selectionCoversGraph, selectionForContextMenu, selectionFromChanges } from './selection.ts'
+
+test('deleting every visible concept covers the view regardless of relations or off-view selections', () => {
+  const graph = { concepts: ['one', 'two'].map((id) => ({ id, label: id, position: { x: 0, y: 0 } })), relations: [], relationTypes: [] }
+  const selected: Selection = [{ kind: 'concept', id: 'one' }, { kind: 'concept', id: 'two' }]
+  assert.equal(selectionCoversGraph(selected, graph), true)
+  assert.equal(selectionCoversGraph([...selected, { kind: 'relation', id: 'edge' }, { kind: 'concept', id: 'outside' }], graph), true)
+  assert.equal(selectionCoversGraph([selected[0], { kind: 'concept', id: 'outside' }], graph), false)
+  assert.equal(selectionCoversGraph([selected[0], { kind: 'relation', id: 'two' }], graph), false)
+  assert.equal(selectionCoversGraph([], graph), false)
+  assert.equal(selectionCoversGraph(selected, { ...graph, concepts: [] }), false)
+})
 
 test('renderer selection batches retain every selected item and toggle only their own kind', () => {
   const original: Selection = [{ kind: 'concept', id: 'one' }, { kind: 'relation', id: 'edge' }]
