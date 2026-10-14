@@ -29,7 +29,7 @@ import type { ConceptNode, RelationEdge } from './types'
 import { useNesso, usePluginContext } from './store'
 import { copyGraph, isEditableTarget, pasteOperations } from './clipboard'
 import { useIsCompact } from './media'
-import { selectionForContextMenu, selectionFromChanges } from './selection'
+import { selectionCoversGraph, selectionForContextMenu, selectionFromChanges } from './selection'
 import { useTranslation } from './i18n'
 
 const nodeTypes: NodeTypes = { concept: ConceptNodeView }
@@ -38,7 +38,7 @@ const easeOut = (t: number) => 1 - Math.pow(1 - t, 3)
 const multiSelectionKeys = ['Meta', 'Control', 'Shift']
 type ContextMenuTarget = Selection[number]['kind'] | 'pane' | 'selection'
 
-export function Canvas({ readOnly = false, overlay }: RendererProps) {
+export function Canvas({ readOnly = false, overlay, onDeleteView }: RendererProps) {
   const t = useTranslation()
   const graph = useNesso((state) => state.viewGraph)
   const indexed = useMemo(() => indexGraph(graph), [graph])
@@ -72,6 +72,7 @@ export function Canvas({ readOnly = false, overlay }: RendererProps) {
   const duration = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 300
   const animatedFraming = { ...fitViewOptions, duration, ease: easeOut, interpolate: 'linear' as const }
   const pasted = useRef({ text: '', count: 0 })
+  const paneSelection = useRef<Selection>([])
   const { fitView, screenToFlowPosition, getNodes, getNodesBounds, setViewport } = useReactFlow()
   const zoom = useFlowStore((state) => state.transform[2])
   const [sizes, setSizes] = useState<ConceptNodeSizes>({})
@@ -138,7 +139,8 @@ export function Canvas({ readOnly = false, overlay }: RendererProps) {
     store.setSelection([])
   }
 
-  const canDelete = selected.length > 0 && selectedConcepts.size < conceptCount
+  const canDelete = selected.length > 0 && (!selectionCoversGraph(selected, graph) || Boolean(onDeleteView))
+  const canCut = selected.length > 0 && selectedConcepts.size < conceptCount
   const canUndo = useNesso((state) => state.history.canUndo)
   const canRedo = useNesso((state) => state.history.canRedo)
 
@@ -177,10 +179,18 @@ export function Canvas({ readOnly = false, overlay }: RendererProps) {
     })
   }
 
-  const handleDelete = () => {
+  const removeSelected = () => {
     const { selected, graph } = store.getState()
     if (selected.filter((item) => item.kind === 'concept').length >= graph.concepts.length) return
     store.applyOperations(selected.map(({ kind, id }) => ({ kind: kind === 'concept' ? 'concept.remove' : 'relation.remove', id })))
+  }
+
+  const handleDelete = () => {
+    const { selected, viewGraph } = store.getState()
+    if (selectionCoversGraph(selected, viewGraph)) {
+      setContextMenu(null)
+      onDeleteView?.()
+    } else removeSelected()
   }
 
   const selectAll = () => {
@@ -203,7 +213,7 @@ export function Canvas({ readOnly = false, overlay }: RendererProps) {
   }
 
   const copyToClipboard = async (cut = false, event?: ReactClipboardEvent<HTMLDivElement>) => {
-    if (cut && (!interactive || !canDelete)) return
+    if (cut && (!interactive || !canCut)) return
     if (event && (isEditableTarget(event.target) || window.getSelection()?.isCollapsed === false)) return
     const before = store.getState()
     try {
@@ -214,7 +224,7 @@ export function Canvas({ readOnly = false, overlay }: RendererProps) {
         event.clipboardData.setData('text/plain', text)
       } else await navigator.clipboard.writeText(text)
       const state = store.getState()
-      if (cut && flow.getState().elementsSelectable && state.graph === before.graph && state.selected === before.selected) handleDelete()
+      if (cut && flow.getState().elementsSelectable && state.graph === before.graph && state.selected === before.selected) removeSelected()
     } catch {
       notifications.notify({ tone: 'warning', title: t('clipboardUnavailable') })
     }
@@ -232,9 +242,12 @@ export function Canvas({ readOnly = false, overlay }: RendererProps) {
     }
   }
 
-  const addConceptAt = (point: { x: number; y: number }) => {
+  const addConceptAt = (point: { x: number; y: number }, selection = store.getState().selected) => {
     const position = screenToFlowPosition(point)
-    store.addConcept({ x: position.x - conceptNodeMinSize.width / 2, y: position.y - conceptNodeMinSize.height / 2 })
+    store.applyOperations([
+      { kind: 'selection.set', value: selection },
+      { kind: 'concept.add', id: newIri(), position: { x: position.x - conceptNodeMinSize.width / 2, y: position.y - conceptNodeMinSize.height / 2 } },
+    ])
   }
 
   const openContextMenu = (point: { x: number; y: number }, item?: Selection[number], target: ContextMenuTarget = item?.kind ?? 'pane') => {
@@ -263,7 +276,7 @@ export function Canvas({ readOnly = false, overlay }: RendererProps) {
     if (target?.closest?.('.react-flow__node, .react-flow__edge, .react-flow__controls, .react-flow__panel, button')) return
     const point = screenToFlowPosition({ x: event.clientX, y: event.clientY })
     if (outsideGraph?.concepts.some((concept) => containsPoint(concept, sizes[concept.id] ?? conceptNodeMinSize, point))) return
-    addConceptAt({ x: event.clientX, y: event.clientY })
+    addConceptAt({ x: event.clientX, y: event.clientY }, paneSelection.current)
   }
 
   useEffect(() => {
@@ -362,7 +375,11 @@ export function Canvas({ readOnly = false, overlay }: RendererProps) {
           const predicate = relations.find((relation) => relationKey(relation) === reconnecting.current?.id)?.predicate ?? defaultTypeId
           return source !== target && !relations.some((relation) => relationKey(relation) !== reconnecting.current?.id && relation.source === source && relation.target === target && relation.predicate === predicate)
         }}
-        onPaneClick={() => { clearSelection(); canvas.current?.focus() }}
+        onPaneClick={(event) => {
+          if (event.detail === 1) paneSelection.current = store.getState().selected
+          clearSelection()
+          canvas.current?.focus()
+        }}
         onPaneContextMenu={(event) => handleContextMenu(event)}
         onNodeContextMenu={(event, node) => handleContextMenu(event, { kind: 'concept', id: node.id })}
         onEdgeContextMenu={(event, edge) => handleContextMenu(event, { kind: 'relation', id: edge.id })}
@@ -412,7 +429,7 @@ export function Canvas({ readOnly = false, overlay }: RendererProps) {
             <ControlButton onClick={() => { void copyToClipboard() }} disabled={selected.length === 0} title={t('copy')} aria-label={t('copy')}>
               <Copy aria-hidden="true" />
             </ControlButton>
-            <ControlButton onClick={() => { void copyToClipboard(true) }} disabled={!interactive || !canDelete} title={t('cut')} aria-label={t('cut')}>
+            <ControlButton onClick={() => { void copyToClipboard(true) }} disabled={!interactive || !canCut} title={t('cut')} aria-label={t('cut')}>
               <Scissors aria-hidden="true" />
             </ControlButton>
             <ControlButton onClick={() => { void pasteFromClipboard() }} disabled={!interactive} title={t('paste')} aria-label={t('paste')}>
@@ -435,11 +452,11 @@ export function Canvas({ readOnly = false, overlay }: RendererProps) {
         actions={[
           { label: t('copy'), icon: Copy, onClick: () => { void copyToClipboard() }, disabled: selected.length === 0 },
           ...(!readonly ? [
-            { label: t('cut'), icon: Scissors, onClick: () => { void copyToClipboard(true) }, disabled: !interactive || !canDelete },
+            { label: t('cut'), icon: Scissors, onClick: () => { void copyToClipboard(true) }, disabled: !interactive || !canCut },
             { label: t('paste'), icon: ClipboardPaste, onClick: () => { void pasteFromClipboard(contextMenu?.target === 'pane' ? contextMenu : undefined) }, disabled: !interactive },
           ] : []),
           ...(!readonly && contextMenu && contextMenu.target !== 'relation' ? [
-            { label: t(singleSelection && selected[0].kind === 'concept' ? 'addLinkedConcept' : 'addConcept'), icon: Plus, onClick: () => { if (contextMenu.target === 'pane') addConceptAt(contextMenu); else handleAdd() }, disabled: !interactive },
+            { label: t('addConcept'), icon: Plus, onClick: () => { if (contextMenu.target === 'pane') addConceptAt(contextMenu); else handleAdd() }, disabled: !interactive },
           ] : []),
           ...(!readonly && contextMenu && contextMenu.target !== 'pane' ? [
             { label: t('delete'), icon: Trash2, onClick: handleDelete, disabled: !interactive || !canDelete },
