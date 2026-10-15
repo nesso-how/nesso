@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.0-alpha.18 — 2026-10-15
+
+### Features
+
+- **inspector:** Auto-grow concept description textarea
+
 ## 1.0.0-alpha.17 — 2026-10-15
 
 ### Features
