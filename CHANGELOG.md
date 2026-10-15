@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.0-alpha.17 — 2026-10-15
+
+### Features
+
+- **concept:** Add color picker with multi-select and seed colors
+
 ## 1.0.0-alpha.16 — 2026-10-14
 
 ### Features
