@@ -134,7 +134,7 @@ export const mergeChanges = <T>(left: readonly Change<T>[], right: readonly Chan
 }
 
 export const sameConcept = (a: GraphSnapshot['concepts'][number], b: GraphSnapshot['concepts'][number]): boolean =>
-  a.id === b.id && a.label === b.label && a.description === b.description && a.position.x === b.position.x && a.position.y === b.position.y
+  a.id === b.id && a.label === b.label && a.description === b.description && a.color === b.color && a.position.x === b.position.x && a.position.y === b.position.y
 export const sameType = (a: GraphSnapshot['relationTypes'][number], b: GraphSnapshot['relationTypes'][number]): boolean => a.id === b.id && a.label === b.label
 export const sameIds = (a: readonly string[], b: readonly string[]): boolean => a === b || (a.length === b.length && a.every((id, index) => id === b[index]))
 export const sameView = (a: SavedView, b: SavedView): boolean => a.id === b.id && a.name === b.name && a.pinned === b.pinned && sameIds(a.conceptIds, b.conceptIds)

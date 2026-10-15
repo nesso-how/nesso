@@ -13,9 +13,9 @@
     { "@id": "urn:nesso:example:helps", "@type": "rdf:Property", "rdfs:label": "helps" },
     { "@id": "urn:nesso:example:disrupts", "@type": "rdf:Property", "rdfs:label": "can disrupt" },
     { "@id": "urn:nesso:example:supports", "@type": "rdf:Property", "rdfs:label": "supports" },
-    { "@id": "urn:nesso:example:coffee", "rdfs:label": "Coffee", "rdfs:comment": "A familiar drink that boosts energy but can disrupt sleep.", "position": { "x": 0, "y": 0 }, "boosts": { "@id": "urn:nesso:example:energy" }, "disrupts": { "@id": "urn:nesso:example:sleep" } },
-    { "@id": "urn:nesso:example:energy", "rdfs:label": "Energy", "rdfs:comment": "Fuel for sharper thinking and getting things done.", "position": { "x": 380, "y": 0 }, "helps": { "@id": "urn:nesso:example:focus" } },
-    { "@id": "urn:nesso:example:sleep", "rdfs:label": "Sleep", "rdfs:comment": "Rest that restores energy and supports focus.", "position": { "x": 0, "y": 230 }, "supports": { "@id": "urn:nesso:example:focus" } },
-    { "@id": "urn:nesso:example:focus", "rdfs:label": "Focus", "rdfs:comment": "The ability to keep attention on what matters.", "position": { "x": 380, "y": 230 } }
+    { "@id": "urn:nesso:example:coffee", "rdfs:label": "Coffee", "rdfs:comment": "A familiar drink that boosts energy but can disrupt sleep.", "color": "#f5f1ee", "position": { "x": 0, "y": 0 }, "boosts": { "@id": "urn:nesso:example:energy" }, "disrupts": { "@id": "urn:nesso:example:sleep" } },
+    { "@id": "urn:nesso:example:energy", "rdfs:label": "Energy", "rdfs:comment": "Fuel for sharper thinking and getting things done.", "color": "#f2f5f7", "position": { "x": 380, "y": 0 }, "helps": { "@id": "urn:nesso:example:focus" } },
+    { "@id": "urn:nesso:example:sleep", "rdfs:label": "Sleep", "rdfs:comment": "Rest that restores energy and supports focus.", "color": "#f9f5f9", "position": { "x": 0, "y": 230 }, "supports": { "@id": "urn:nesso:example:focus" } },
+    { "@id": "urn:nesso:example:focus", "rdfs:label": "Focus", "rdfs:comment": "The ability to keep attention on what matters.", "color": "#f4f7f2", "position": { "x": 380, "y": 230 } }
   ]
 }

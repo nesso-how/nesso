@@ -68,8 +68,10 @@ export function parseGraph(value: unknown): Graph {
     if (typeof position.x !== 'number' || typeof position.y !== 'number') {
       fail(`${path}.position`, `Invalid position: ${id}`)
     }
+    const color = entry.color === undefined ? undefined : string(entry.color, `${path}.color`).toLowerCase()
     concepts.push({
       id, label, position: { x: position.x, y: position.y },
+      ...(color === undefined ? {} : { color }),
       ...(entry['rdfs:comment'] === undefined ? {} : { description: string(entry['rdfs:comment'], `${path}.rdfs:comment`) }),
     })
   }
@@ -80,7 +82,7 @@ export function parseGraph(value: unknown): Graph {
     if (entry['@type'] === 'rdf:Property') continue
     const id = iri(entry['@id'], `@graph[${index}].@id`)
     for (const [term, value] of Object.entries(entry)) {
-      if (['@id', 'rdfs:label', 'rdfs:comment', 'position'].includes(term)) continue
+      if (['@id', 'rdfs:label', 'rdfs:comment', 'position', 'color'].includes(term)) continue
       const path = `@graph[${index}].${term}`
       const predicate = predicates.get(term) ?? (known.has(term) ? term : undefined)
       if (!predicate || !known.has(predicate)) fail(path, `Unsupported property: ${term}`)
@@ -102,8 +104,9 @@ export function serializeGraph(graph: Graph): JsonObject {
   const entries: JsonObject[] = graph.relationTypes.map(({ id, label }) => ({
     '@id': id, '@type': 'rdf:Property', 'rdfs:label': label,
   }))
-  const concepts = new Map<string, JsonObject>(graph.concepts.map(({ id, label, description, position }) => [id, {
+  const concepts = new Map<string, JsonObject>(graph.concepts.map(({ id, label, description, color, position }) => [id, {
     '@id': id, 'rdfs:label': label, position,
+    ...(color === undefined ? {} : { color }),
     ...(description === undefined ? {} : { 'rdfs:comment': description }),
   }]))
   for (const relation of graph.relations) {

@@ -15,6 +15,7 @@ export const createCommands = (applyOperations: NessoStore['applyOperations']): 
   setConceptPositions: (updates, historyGroup) => applyOperations([{ kind: 'concept.positions', updates }], historyGroup ? { historyGroup } : undefined),
   setConceptLabel: (id, value, historyGroup) => applyOperations([{ kind: 'concept.label', id, value }], historyGroup ? { historyGroup } : undefined),
   setConceptDescription: (id, value, historyGroup) => applyOperations([{ kind: 'concept.description', id, value }], historyGroup ? { historyGroup } : undefined),
+  setConceptColor: (id, value, historyGroup) => applyOperations([{ kind: 'concept.color', id, value }], historyGroup ? { historyGroup } : undefined),
   addConcept: (position, historyGroup) => {
     const id = newIri()
     applyOperations([{ kind: 'concept.add', id, position }], historyGroup ? { historyGroup } : undefined)

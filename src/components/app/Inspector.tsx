@@ -6,6 +6,7 @@ import { Trash2 } from 'lucide-react'
 import { ViewDetails } from './ViewDetails'
 import { ConceptViews } from './ConceptViews'
 import { ConceptConnections } from './ConceptConnections'
+import { ConceptColor } from './ConceptColor'
 import { InspectorSection } from './InspectorSection'
 import { nessoStore, useNessoStore } from '@/store'
 import type { HostStore } from '@/store/types'
@@ -180,7 +181,6 @@ export function Inspector({ store = nessoStore, readonly = false }: { store?: Ho
               onChange={(event) => { if (!readonly) store.setConceptDescription(concept.id, event.target.value, textGroup.current ??= newIri()) }}
             />
           </div>
-          <ConceptConnections key={`connections:${concept.id}`} store={store} conceptId={concept.id} readonly={readonly} />
         </section>
       ) : selectedEdge ? (
         <section className="flex flex-col gap-[26px]">
@@ -203,6 +203,8 @@ export function Inspector({ store = nessoStore, readonly = false }: { store?: Ho
           </InspectorSection>
         </section>
       ) : null}
+      {conceptIds.length > 0 && <ConceptColor key={`color:${JSON.stringify(conceptIds)}`} store={store} concepts={graph.concepts.filter((concept) => conceptIds.includes(concept.id))} readonly={readonly} />}
+      {concept && <ConceptConnections key={`connections:${concept.id}`} store={store} conceptId={concept.id} readonly={readonly} />}
       {conceptIds.length > 0 && <ConceptViews key={JSON.stringify(conceptIds)} store={store} conceptIds={conceptIds} readonly={readonly} />}
       {concept && (
         <Button variant="outline" className="w-full justify-start" disabled={readonly || graph.concepts.length <= 1} onClick={() => store.removeConcept(concept.id)}><Trash2 />{t('deleteConcept')}</Button>

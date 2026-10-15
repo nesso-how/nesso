@@ -166,11 +166,14 @@ export const applyStateOperations = (state: HostState, operations: readonly Host
         updateConcept(operation.id, (concept) => concept.label === operation.value ? concept : { ...concept, label: operation.value })
         break
       case 'concept.description':
+      case 'concept.color':
         updateConcept(operation.id, (concept) => {
-          if ((concept.description ?? '') === operation.value) return concept
+          const key = operation.kind === 'concept.color' ? 'color' : 'description'
+          const value = key === 'color' ? operation.value.toLowerCase() : operation.value
+          if ((concept[key] ?? '') === value) return concept
           const next = { ...concept }
-          if (operation.value === '') delete next.description
-          else next.description = operation.value
+          if (value === '') delete next[key]
+          else next[key] = value
           return next
         })
         break
@@ -191,6 +194,7 @@ export const applyStateOperations = (state: HostState, operations: readonly Host
         concepts.add({
           id: operation.id,
           label: `Concept ${concepts.items.length + 1}`,
+          ...(source?.color === undefined ? {} : { color: source.color }),
           position: operation.position ? { x: operation.position.x, y: operation.position.y } : {
             x: (source?.position.x ?? 0) + conceptPlacementOffset.x,
             y: (source?.position.y ?? 0) + conceptPlacementOffset.y,

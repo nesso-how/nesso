@@ -58,6 +58,46 @@ test('paste uses one atomic undoable batch, preserves parallel types, and joins 
   assert.deepEqual(store.getState().workspace.savedViews, before.workspace.savedViews)
 })
 
+test('concept colors normalize hex, reject invalid batches atomically and reset with undo', () => {
+  const { store } = createNessoStore(fixture())
+  store.setConceptColor('urn:n1', '#E1ECDE')
+  store.setConceptColor('urn:n2', '#e9e2f3')
+  const before = store.getState()
+  assert.equal(before.graph.concepts[0].color, '#e1ecde')
+  assert.throws(() => store.applyOperations([
+    { kind: 'concept.color', id: 'urn:n1', value: '#fceec2' },
+    { kind: 'concept.color', id: 'urn:n2', value: '#bad' },
+  ]), SchemaError)
+  assert.equal(store.getState(), before)
+  store.applyOperations(['urn:n1', 'urn:n2'].map((id) => ({ kind: 'concept.color', id, value: '' })))
+  assert.ok(store.getState().graph.concepts.every((concept) => !Object.hasOwn(concept, 'color')))
+  store.undo()
+  assert.deepEqual(store.getState().graph, before.graph)
+  store.redo()
+  assert.ok(store.getState().graph.concepts.every((concept) => !Object.hasOwn(concept, 'color')))
+})
+
+test('bulk color drags publish once per batch and undo to the original mixed colors', () => {
+  const graph = fixture()
+  graph.concepts[0].color = '#e1ecde'
+  const { store } = createNessoStore(graph)
+  const before = store.getState()
+  let publications = 0
+  store.subscribe(() => publications++)
+  for (const value of ['#fceec2', '#e9e2f3']) {
+    store.applyOperations(['urn:n1', 'urn:n2'].map((id) => ({ kind: 'concept.color', id, value })), { historyGroup: 'bulk-drag' })
+  }
+  assert.equal(publications, 2)
+  assert.deepEqual(store.getState().graph.concepts.map(({ color }) => color), ['#e9e2f3', '#e9e2f3', undefined])
+  assert.equal(store.getState().graph.concepts[2], before.graph.concepts[2])
+  assert.equal(store.getState().graph.relations, before.graph.relations)
+  store.undo()
+  assert.deepEqual(store.getState().graph, before.graph)
+  assert.equal(store.getState().history.canUndo, false)
+  store.redo()
+  assert.deepEqual(store.getState().graph.concepts.map(({ color }) => color), ['#e9e2f3', '#e9e2f3', undefined])
+})
+
 test('data transfers pause all public writes without losing state or history and remain instance-local', () => {
   const host = createNessoStore(fixture())
   const other = createNessoStore(fixture())
@@ -333,11 +373,12 @@ test('switching views preserves visible selections, including every selection in
   assert.deepEqual(host.store.getState().selected, [])
 })
 
-test('new concepts link only to a selected concept and join the active view atomically', () => {
+test('new concepts link to and inherit color only from a single selected concept and join the active view atomically', () => {
   for (const subset of [false, true]) {
     for (const kind of ['concept', 'relation', 'concepts', 'mixed', null] as const) {
       const host = createNessoStore(fixture())
       host.registerVocab(vocabB)
+      host.store.setConceptColor('urn:n2', '#e1ecde')
       const viewId = subset ? host.store.createView('Pair', ['urn:n1', 'urn:n2']) : null
       const relation = { kind: 'relation' as const, id: relationKey(host.store.getState().graph.relations[0]) }
       host.store.setSelection(kind === 'concept' ? [{ kind, id: 'urn:n2' }]
@@ -357,6 +398,7 @@ test('new concepts link only to a selected concept and join the active view atom
       assert.deepEqual(after.selected, [{ kind: 'concept', id }])
       assert.equal(after.graph.concepts.length, before.graph.concepts.length + 1)
       assert.deepEqual(after.graph.concepts.at(-1)?.position, { x: kind === 'concept' ? 161 : 160, y: 100 })
+      assert.equal(after.graph.concepts.at(-1)?.color, kind === 'concept' ? '#e1ecde' : undefined)
       if (kind === 'concept') {
         const relation = { source: 'urn:n2', predicate: vocabB.defaultTypeId, target: id }
         assert.deepEqual(after.graph.relations.at(-1), relation)
@@ -374,6 +416,24 @@ test('new concepts link only to a selected concept and join the active view atom
       }
     }
   }
+})
+
+test('inherited concept colors are independent and restored with creation history', () => {
+  const host = createNessoStore(fixture())
+  host.registerVocab(vocabB)
+  const { store } = host
+  store.setConceptColor('urn:n1', '#e1ecde')
+  store.setSelection([{ kind: 'concept', id: 'urn:n1' }])
+  const id = store.addConcept()
+  store.undo()
+  assert.equal(store.getState().graph.concepts.some((concept) => concept.id === id), false)
+  store.redo()
+  assert.equal(store.getState().graph.concepts.at(-1)?.color, '#e1ecde')
+  store.setConceptColor('urn:n1', '#dfeaf5')
+  assert.equal(store.getState().graph.concepts.at(-1)?.color, '#e1ecde')
+  store.setSelection([{ kind: 'concept', id: 'urn:n2' }])
+  store.addConcept()
+  assert.equal(Object.hasOwn(store.getState().graph.concepts.at(-1)!, 'color'), false)
 })
 
 test('renderer registration rejects duplicate ids and unknown activation, first one becomes active', () => {

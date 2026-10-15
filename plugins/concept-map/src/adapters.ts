@@ -34,7 +34,7 @@ export function conceptNode(concept: ConceptView, selected: boolean, measured?: 
     type: 'concept',
     position: concept.position,
     measured,
-    data: { label: concept.label },
+    data: { label: concept.label, color: concept.color },
     ariaLabel: concept.label,
     selected,
   }

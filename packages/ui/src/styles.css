@@ -55,6 +55,12 @@
     background: var(--hover);
   }
 
+  .nesso-color-hue { appearance: none; background: transparent; --hue-track: linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00); }
+  .nesso-color-hue::-webkit-slider-runnable-track { height: 8px; border-radius: 2px; background: var(--hue-track); }
+  .nesso-color-hue::-moz-range-track { height: 8px; border-radius: 2px; background: var(--hue-track); }
+  .nesso-color-hue::-webkit-slider-thumb { appearance: none; width: 12px; height: 12px; margin-top: -2px; border: 1px solid var(--primary); border-radius: 50%; background: var(--background); }
+  .nesso-color-hue::-moz-range-thumb { width: 10px; height: 10px; border: 1px solid var(--primary); border-radius: 50%; background: var(--background); }
+
   @media (pointer: coarse) {
     .nesso-button,
     .nesso-input,

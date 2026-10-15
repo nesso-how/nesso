@@ -23,6 +23,9 @@ export function validateGraph(graph: {
     if (!Number.isFinite(concept.position.x) || !Number.isFinite(concept.position.y)) {
       issues.push({ path: `concepts[${index}].position`, message: `Invalid position: ${concept.id}` })
     }
+    if (concept.color !== undefined && !/^#[0-9a-fA-F]{6}$/.test(concept.color)) {
+      issues.push({ path: `concepts[${index}].color`, message: `Invalid color: ${concept.id}` })
+    }
   }
   for (const [index, type] of graph.relationTypes.entries()) {
     if (!type.id || types.has(type.id) || concepts.has(type.id)) {

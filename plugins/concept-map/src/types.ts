@@ -2,6 +2,7 @@ import type { Edge, Node } from '@xyflow/react'
 
 export type ConceptData = {
   label: string
+  color?: string
   editable?: boolean
   maxLength?: number
   editing?: boolean

@@ -13,6 +13,7 @@ const fixture = {
     {
       '@id': subject, 'rdfs:label': 'One', position: { x: 10, y: 20 },
       'rdfs:comment': 'A definition.\nAn example.',
+      color: '#E1ECDE',
       connects: targets.map((id) => ({ '@id': id })),
     },
     { '@id': targets[0], 'rdfs:label': 'Two', position: { x: 30, y: 40 } },
@@ -23,6 +24,8 @@ const fixture = {
 test('a graph with compact and custom predicates survives a JSON-LD round trip', () => {
   const graph = parseGraph(fixture)
   assert.equal(graph.concepts[0].description, 'A definition.\nAn example.')
+  assert.equal(graph.concepts[0].color, '#e1ecde')
+  assert.equal(Object.hasOwn(graph.concepts[1], 'color'), false)
   const custom = 'urn:uuid:82d7d311-382c-45ee-9ec6-7e3b247d489b'
   graph.relationTypes.push({ id: custom, label: 'supports' })
   graph.relations.push(...targets.map((target) => ({ source: subject, predicate: custom, target })))
@@ -62,4 +65,14 @@ test('descriptions must be strings at graph and JSON-LD boundaries', () => {
   assert.throws(() => parseGraph({ ...fixture, '@graph': fixture['@graph'].map((entry) =>
     entry['@id'] === subject ? { ...entry, 'rdfs:comment': 42 } : entry) }), (error: unknown) => error instanceof SchemaError
     && error.issues.some(({ path }) => path === '@graph[1].rdfs:comment'))
+})
+
+test('colors must be six-digit hex strings at graph and JSON-LD boundaries', () => {
+  for (const color of ['e1ecde', '#abc', 42]) {
+    const graph = parseGraph(fixture)
+    graph.concepts[0].color = color as never
+    assert.throws(() => serializeGraph(graph), SchemaError)
+    assert.throws(() => parseGraph({ ...fixture, '@graph': fixture['@graph'].map((entry) =>
+      entry['@id'] === subject ? { ...entry, color } : entry) }), SchemaError)
+  }
 })
