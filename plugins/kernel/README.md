@@ -4,15 +4,12 @@ Kernel, Nesso's default light-only theme, providing semantic tokens and bundled 
 
 ## Usage
 
-Register `kernelPlugin` using the [plugin guide](../../packages/plugin/README.md#register-it) and import `@nesso/kernel/styles.css` in [src/index.css](../../src/index.css).
+The build supplies the manifest, autonomous module, and local WOFF2 assets. The host calls `create(context)` inside an isolated definition frame, validates the contribution, then destroys the frame. No Kernel stylesheet or executable module is imported into the host.
 
-Registration contributes identity metadata, not CSS loading. Stylesheets and fonts are bundled statically; tokens are scoped to `:root[data-theme='kernel']`. The host applies `activeThemeId` as `data-theme` on the document root. Component recipes and layout stay outside this plugin; there is currently one theme and no theme selector.
+The host applies only validated tokens and generates font rules with content-scoped family names. The trusted renderer inherits these directly from the host. Component recipes and layout stay outside this plugin; Kernel is the bundled fallback theme.
 
 ## API
 
-- `kernelTheme`: Kernel's ID.
-- `kernelPlugin`: declares no writes and returns the theme identity.
-- `styles.css`: semantic theme tokens and font imports.
-- `fonts.css`: bundled Geist and IBM Plex Mono imports.
+- `create`: returns Kernel's concrete colors, numeric metrics, and local font-face descriptors. Metadata and empty access declarations live in `package.json`.
 
-See [src/index.ts](src/index.ts) and [src/styles.css](src/styles.css) for definitions.
+See [src/index.ts](src/index.ts) for definitions and the [plugin guide](../../packages/plugin/README.md).

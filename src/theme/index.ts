@@ -1,15 +1,17 @@
 import type { createNessoStore } from '../store/create.ts'
+import type { ThemeDefinition } from '@nesso/plugin'
 
 export const connectTheme = (
   host: ReturnType<typeof createNessoStore>,
-  root: Pick<HTMLElement, 'setAttribute'>,
+  applyTheme: (definition: ThemeDefinition) => void,
 ): (() => void) => {
-  let appliedId: string | undefined
+  let applied: ThemeDefinition | undefined
   const apply = (): void => {
     const id = host.store.getState().preferences.activeThemeId
-    if (id === appliedId || !host.getTheme(id)) return
-    root.setAttribute('data-theme', id)
-    appliedId = id
+    const definition = host.getTheme(id)
+    if (definition === applied || !definition) return
+    applyTheme(definition)
+    applied = definition
   }
   apply()
   return host.store.subscribe(apply)

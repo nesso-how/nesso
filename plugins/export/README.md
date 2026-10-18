@@ -1,16 +1,15 @@
 # @nesso/export
 
-Action plugin exporting a view as a JSON-LD download.
+Isolated action plugin exporting a view as JSON-LD.
 
 ## Usage
 
-Register `exportPlugin` using the [plugin guide](../../packages/plugin/README.md#register-it). Its **Export** action targets the view it runs on (`null` targets the complete graph), reading that view without changing navigation.
+The bundled **Export** action runs in a fresh worker. It receives only the invoked view (`null` targets the complete graph), without changing navigation. The host saves the JSON-LD through a native desktop dialog or browser download.
 
-The host lists view-scoped actions in the saved-view menus. Interface labels use local English, Italian, and Simplified Chinese catalogs; graph contents are exported unchanged.
+The host lists view-scoped actions in the saved-view menus and resolves labels and notifications from the English, Italian, and Simplified Chinese messages in `package.json.i18n`. Graph contents are exported unchanged. A completion notification is sent only after the host accepts the save, not on cancellation or failure.
 
 ## API
 
-- `exportPlugin`: read-only operation declaration and factory contributing the `export-view` action.
-- `downloadGraph(graph, name = 'graph')`: download JSON-LD as `nesso-<name>.jsonld`, sanitizing the supplied name for the filename.
+- `create(context)`: factory contributing the `export-view` action. Declarations live in `package.json`: `view` reads, no writes, and `files.save`/`notifications.notify` capabilities.
 
 See [src/index.ts](src/index.ts) for definitions.

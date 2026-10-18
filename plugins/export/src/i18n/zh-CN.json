@@ -1,8 +1,0 @@
-{
-  "pluginName": "导出",
-  "pluginDescription": "将视图导出为 JSON-LD 格式。",
-  "pluginDocumentation": "导出功能将视图下载为 JSON-LD 文件，包含其中的概念、内部关系和关系类型定义。可从已保存视图的菜单或检查器中运行；视图为 null 时会导出完整图谱。",
-  "exportView": "导出",
-  "viewExported": "视图已导出",
-  "viewExportedDescription": "JSON-LD 下载已开始。"
-}

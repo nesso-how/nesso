@@ -8,8 +8,8 @@ import { AppSidebar } from '@/components/app/Sidebar'
 import { SettingsDialog } from '@/components/app/SettingsDialog'
 import { Dialog, SidePanel, useMediaQuery } from '@nesso/ui'
 import { SidebarInset, SidebarProvider } from '@/components/app/SidebarLayout'
-import { getRenderer, host, useNessoStore, type startAutosave } from '@/store'
-import { maxConceptLabelLength, resolveInspector } from '@/store/settings'
+import { host, useNessoStore, type startAutosave } from '@/store'
+import { resolveInspector } from '@/store/settings'
 import { translate } from '@/i18n'
 import { chat } from '@/ai'
 import { AssistantPanel } from '@/components/app/AssistantPanel'
@@ -17,24 +17,7 @@ import { DataTransferDialog } from '@/components/app/LocalDataSettings'
 import { Intro } from '@/components/app/Intro'
 import { completeIntro } from '@/store/intro'
 import { DeleteViewDialog } from '@/components/app/DeleteViewDialog'
-
-function RendererHost() {
-  const activeRendererId = useNessoStore((state) => state.preferences.activeRendererId)
-  const [deleting, setDeleting] = useState<SavedView | 'complete-graph' | null>(null)
-  const canvas = useRef<HTMLDivElement>(null)
-  const renderer = getRenderer(activeRendererId)
-  if (!renderer) return null
-  const Component = renderer.component
-  return (
-    <div ref={canvas} className="h-full">
-      <Component onDeleteView={() => {
-        const { workspace } = host.store.getState()
-        setDeleting(workspace.activeViewId === null ? 'complete-graph' : workspace.savedViews.find((view) => view.id === workspace.activeViewId) ?? null)
-      }} conceptLabelMaxLength={maxConceptLabelLength} />
-      <DeleteViewDialog target={deleting} onClose={() => setDeleting(null)} finalFocus={() => canvas.current?.querySelector<HTMLElement>('[tabindex="0"]') ?? null} />
-    </div>
-  )
-}
+import { ConceptMapSurface } from '@/components/app/ConceptMapSurface'
 
 export default function App({ persistence }: { persistence: ReturnType<typeof startAutosave> }) {
   const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale)
@@ -45,6 +28,8 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [introOpen, setIntroOpen] = useState(() => !host.store.getState().preferences.introSeen)
   const [settingsPage, setSettingsPage] = useState<'general' | 'ai'>('general')
+  const [deleting, setDeleting] = useState<SavedView | 'complete-graph' | null>(null)
+  const canvas = useRef<HTMLDivElement>(null)
   const readonly = useMediaQuery('(max-width: 767px)')
 
   useEffect(() => { document.documentElement.lang = locale }, [locale])
@@ -79,8 +64,11 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
           {!readonly && <AppSidebar onOpenSettings={openSettings} />}
           <SidebarInset className="relative min-w-0 overflow-hidden">
             <div className="flex min-h-0 flex-1">
-              <div id="canvas" className="relative min-h-0 min-w-0 flex-1">
-                <RendererHost />
+              <div ref={canvas} id="canvas" className="relative min-h-0 min-w-0 flex-1">
+                <ConceptMapSurface store={host.store} onDeleteView={() => {
+                  const { workspace } = host.store.getState()
+                  setDeleting(workspace.activeViewId === null ? 'complete-graph' : workspace.savedViews.find((view) => view.id === workspace.activeViewId) ?? null)
+                }} />
                 <ToastsHost />
               </div>
               {!readonly && <SidePanel
@@ -104,9 +92,10 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
         <PersistenceBanner persistence={persistence} />
       </SidebarProvider>
       <Dialog.Root open={!readonly && settingsOpen} onOpenChange={setSettingsOpen}>
-        {!readonly && settingsOpen && <SettingsDialog initialPage={settingsPage} onDiscover={() => { setSettingsOpen(false); setIntroOpen(true) }} />}
+        {!readonly && settingsOpen && <SettingsDialog initialPage={settingsPage} onDiscover={() => { setSettingsOpen(false); setIntroOpen(true) }} onBeforeReload={persistence.save} />}
       </Dialog.Root>
       {window.nessoDataLocation && <DataTransferDialog bridge={window.nessoDataLocation} />}
+      <DeleteViewDialog target={deleting} onClose={() => setDeleting(null)} finalFocus={() => canvas.current?.querySelector<HTMLElement>('[tabindex="0"]') ?? null} />
     </>
   )
 }

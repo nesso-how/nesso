@@ -1,8 +1,8 @@
-import type { GraphSnapshot, NessoOperation, NessoState, Preferences, RendererDefinition, SavedView, Selection, ThemeDefinition, WorkspaceState } from '@nesso/plugin'
+import type { GraphSnapshot, NessoOperation, NessoState, Preferences, SavedView, Selection, ThemeDefinition, WorkspaceState } from '@nesso/plugin'
 import { relationKey, SchemaError, validateGraph, type Graph, type Relation, type RelationType } from '@nesso/schema'
 import { isLocale } from '@nesso/i18n'
 import { fail, maxConceptLabelLength, maxRelationLabelLength, parseConversation, parsePreferences, parseWorkspace } from './settings.ts'
-import { sectionIds, type HostOperation, type HostState } from './types.ts'
+import { sectionIds, type HostOperation, type HostState, type RendererDefinition } from './types.ts'
 import { ListEdit, sameConcept, sameIds, sameType, sameView, viewChanges } from './delta.ts'
 
 export const conceptPlacementOffset = Object.freeze({ x: 160, y: 100 })

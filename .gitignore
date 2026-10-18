@@ -15,6 +15,9 @@ dist-electron
 release
 *.local
 /docs/
+/public/plugin-runner/
+/public/preinstalled/
+/plugins/kernel/fonts/
 
 # Editor directories and files
 .vscode/*

@@ -4,6 +4,7 @@
 
 - Do not add backward-compatibility code or migration ladders.
 - Prefer the smallest clear implementation. Reuse existing code; avoid unnecessary abstractions, duplication, and redundant tests without sacrificing readability, correctness, or essential coverage.
+- Keep AGENTS.md files minimal: durable development rules and architectural boundaries only. Do not duplicate inherited instructions, implementation details, functional specifications, or progress reports; keep supported behavior in READMEs, types, validators, and tests.
 - Use English and TypeScript for code, tests, and scripts; JavaScript only when required by tooling. Keep data and documentation in native formats. No code comments.
 - Report failures with a package-scoped `<Package>Error extends Error` carrying `readonly issues: { path: string; message: string }[]`, joined into the message; follow `SchemaError`.
 - When adding or changing an external link in the app, review `electron/links.ts` and update its allowlist if the destination is not already covered. Keep external links restricted to trusted HTTPS destinations and open them in the system browser.
@@ -24,7 +25,7 @@
 ## Architecture
 
 - Consolidate repeated app UI in `@nesso/ui`; keep app-specific state and domain logic in the host.
-- Plugins use only the injected APIs, never app internals or a concrete store. Keep instances isolated; no module-global mutable store. React subscriptions use the injected instance with `useSyncExternalStore`.
+- Plugins and trusted renderers use only injected APIs, never app internals or a concrete store. Keep instances independent; no module-global mutable store. React subscriptions use the injected instance with `useSyncExternalStore`.
 - Only the host materializes `viewGraph`; plugins never recompute it. Do not persist selection, plugin definitions, or `viewGraph`.
 - The host owns editing forms and reset confirmation. Navbar actions read current state at invocation. The canvas handles selection-aware graph commands, viewport gestures, and shared history controls.
-- React Flow components, types, event mapping, and renderer-specific styles stay in `plugins/concept-map`; the host never imports React Flow. The graph plugin consumes theme tokens.
+- React Flow components, types, event mapping, and renderer-specific styles stay in trusted `packages/concept-map`; the host never imports React Flow. The renderer inherits host theme tokens and uses synchronous store APIs; only actions, vocabularies, and themes use the isolated plugin runtime.

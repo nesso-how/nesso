@@ -1,7 +1,6 @@
-import { app, autoUpdater, BrowserWindow, dialog, ipcMain, net, protocol, session, shell, type WebContents } from 'electron'
+import { app, autoUpdater, BrowserWindow, dialog, ipcMain, protocol, session, shell, type WebContents } from 'electron'
 import electronUpdater from 'electron-updater'
 import path from 'node:path'
-import { pathToFileURL } from 'node:url'
 import { ElectronError } from './errors.ts'
 import { connectUpdates } from './updates.ts'
 import { connectAi } from './ai.ts'
@@ -11,10 +10,12 @@ import { connectDesktopPersistence } from './persistence.ts'
 import { createTrustedRequest } from './ipc.ts'
 import { createDataLocation } from './data-location.ts'
 import { connectDataLocation } from './data-location-ipc.ts'
+import { serveAppAsset } from './asset-protocol.ts'
+import { connectFiles } from './files.ts'
+import { connectPlugins } from './plugins.ts'
 
 const dev = !app.isPackaged && process.argv.includes('--dev')
 const root = path.join(app.getAppPath(), 'dist')
-const csp = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-src 'none'"
 
 if (!app.requestSingleInstanceLock()) app.exit(0)
 
@@ -31,19 +32,22 @@ const report = (error: unknown): void => {
 }
 
 const createWindow = async (connectPersistence: (window: BrowserWindow) => void): Promise<void> => {
+  const url = dev ? 'http://127.0.0.1:5173/' : 'nesso://app/'
   const window = new BrowserWindow({
     width: 1280, height: 800, backgroundColor: '#ffffff',
     icon: path.join(root, 'icon-512.png'),
     webPreferences: { preload: path.join(import.meta.dirname, 'preload.cjs'), contextIsolation: true, sandbox: true },
   })
   connectPersistence(window)
-  window.webContents.on('will-navigate', (event) => event.preventDefault())
+  window.webContents.on('will-navigate', (event) => { if (event.url !== url) event.preventDefault() })
   connectExternalLinks(window.webContents, (url) => shell.openExternal(url))
-  await window.loadURL(dev ? 'http://127.0.0.1:5173' : 'nesso://app/')
+  await window.loadURL(url)
 }
 
 app.whenReady().then(async () => {
   const trusted = createTrustedRequest(dev)
+  connectFiles(trusted)
+  connectPlugins(trusted)
   const location = await createDataLocation(app.getPath('userData'))
   const ai = connectAi(trusted, location)
   const mcp = connectMcp(trusted, location)
@@ -57,16 +61,7 @@ app.whenReady().then(async () => {
     && BrowserWindow.getAllWindows().some((window) => window.webContents === contents && contents.mainFrame.url === details.requestingUrl)
   session.defaultSession.setPermissionCheckHandler((contents, permission, _origin, details) => canUsePermission(contents, permission, details))
   session.defaultSession.setPermissionRequestHandler((contents, permission, callback, details) => callback(canUsePermission(contents, permission, details)))
-  protocol.handle('nesso', async (request) => {
-    const url = new URL(request.url)
-    const file = path.resolve(root, `.${decodeURIComponent(url.pathname === '/' ? '/index.html' : url.pathname)}`)
-    if (url.host !== 'app' || !file.startsWith(`${root}${path.sep}`)) {
-      return new Response(null, { status: 403 })
-    }
-    const response = await net.fetch(pathToFileURL(file).href)
-    response.headers.set('Content-Security-Policy', csp)
-    return response
-  })
+  protocol.handle('nesso', (request) => serveAppAsset(root, request))
   if (app.isPackaged) {
     const updates = connectUpdates(electronUpdater.autoUpdater, process.platform === 'darwin' ? autoUpdater : undefined, (state) => {
       installingUpdate = state?.status === 'installing'

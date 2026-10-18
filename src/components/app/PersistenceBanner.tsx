@@ -24,10 +24,7 @@ export function PersistenceBanner({ persistence }: { persistence: ReturnType<typ
     .map((operation) => t(operation === 'read' ? 'readFailure' : 'saveFailure', { data: t(failureLabels[section]) })))
 
   useEffect(() => {
-    const stop = window.nessoPersistence?.beforeClose(async () => {
-      if (document.activeElement instanceof HTMLElement) document.activeElement.blur()
-      return persistence.flush()
-    }, () => new Promise<boolean>((resolve) => {
+    const stop = window.nessoPersistence?.beforeClose(persistence.save, () => new Promise<boolean>((resolve) => {
       close.current = resolve
       setFailed(false)
       setDialog('close')

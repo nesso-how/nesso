@@ -1,5 +1,0 @@
-{
-  "pluginName": "基础词汇表",
-  "pluginDescription": "用于表达概念之间关系的通用语言。",
-  "pluginDocumentation": "基础词汇表提供 linksTo、partOf、causes 和 kindOf 关系类型。默认的 linksTo 关系不显示标签。切换词汇表不会改变现有关系。"
-}

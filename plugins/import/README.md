@@ -4,11 +4,11 @@ Action plugin importing a Nesso JSON-LD file into the current graph.
 
 ## Usage
 
-Register `importPlugin` using the [plugin guide](../../packages/plugin/README.md#register-it). Its **Import** action reads a user-selected file, merges its concepts, relations, and missing relation types with fresh concept IDs, and joins the imported concepts to the view it runs on. Invalid files report a localized alert without touching the graph.
+The bundled **Import** action runs in an isolated worker and reads a user-selected file through the host. It merges concepts, relations, and missing relation types with fresh concept IDs into one atomic history entry. Imported concepts join the invoked view even if navigation changes during file selection. Invalid files report a localized failure without touching the graph.
 
 ## API
 
-- `importPlugin`: operation declaration and factory contributing the `import-view` action.
-- `buildImportOperations(snapshot, state, viewId)`: pure merge of a parsed graph into one atomic operation batch.
+- `create(context)`: factory contributing the `import-view` action. Access declarations and localized labels/failure text live in `package.json`; Nesso resolves the current language with an English fallback.
+- `buildImportOperations(snapshot, activeViewId, viewId)`: pure merge of a parsed graph into one atomic operation batch.
 
 See [src/index.ts](src/index.ts) for definitions.

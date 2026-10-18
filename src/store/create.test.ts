@@ -6,9 +6,9 @@ import { maxConceptLabelLength, maxRelationLabelLength } from './settings.ts'
 import { createNessoStore } from './create.ts'
 import { NessoError } from './errors.ts'
 import { sectionIds } from './types.ts'
-import { copyGraph, pasteOperations } from '../../plugins/concept-map/src/clipboard.ts'
-import { buildImportOperations, importPlugin } from '../../plugins/import/src/index.ts'
-import { createPluginStore } from './commands.ts'
+import { copyGraph, pasteOperations } from '../../packages/concept-map/src/clipboard.ts'
+import { buildImportOperations } from '../../plugins/import/src/index.ts'
+import themeFixture from '../../packages/plugin/test/theme.json' with { type: 'json' }
 
 const fixture = (): Graph => ({
   concepts: [
@@ -136,7 +136,7 @@ test('import preserves disconnected concepts and parallel relations in either or
   for (const predicates of [[], ['urn:links', 'urn:custom'], ['urn:custom', 'urn:links']]) {
     const host = createNessoStore(fixture())
     host.registerVocab(vocabA)
-    const store = createPluginStore(host.store, importPlugin.operations)
+    const store = host.store
     const viewId = host.store.createView('Target', ['urn:n1'])
     store.setSelection([{ kind: 'concept', id: 'urn:n1' }])
     const before = store.getState()
@@ -145,7 +145,7 @@ test('import preserves disconnected concepts and parallel relations in either or
       relationTypes: [{ id: 'urn:links', label: 'links' }, { id: 'urn:custom', label: 'Custom' }],
       relations: predicates.map((predicate) => ({ source: 'urn:n1', predicate, target: 'urn:n2' })),
     }
-    store.applyOperations(buildImportOperations(snapshot, before, viewId))
+    store.applyOperations(buildImportOperations(snapshot, before.workspace.activeViewId, viewId))
     const after = store.getState()
     const copies = after.graph.concepts.slice(before.graph.concepts.length)
     assert.deepEqual(copies.map((concept) => concept.label), snapshot.concepts.map((concept) => concept.label))
@@ -313,6 +313,44 @@ test('vocab registration validates, switching never rewrites the document, and u
   assert.ok(state.graph.relationTypes.some(({ id: typeId }) => typeId === 'urn:links'))
 })
 
+test('provider replacement is atomic, restores saved choices once, and falls back without rewriting document or history', () => {
+  const baseTheme = themeFixture
+  const externalTheme = { ...baseTheme, id: 'external-theme' }
+  const host = createNessoStore(fixture(), { preferences: { activeVocabId: vocabB.id, activeRendererId: '', activeThemeId: externalTheme.id, panels: { explorerWidth: 240, inspectorWidth: 320 } } })
+  host.registerVocab(vocabA)
+  host.registerTheme(baseTheme)
+  host.store.setConceptLabel('urn:n1', 'Edited')
+  host.store.setSelection([{ kind: 'concept', id: 'urn:n1' }])
+  const before = host.store.getState()
+  let calls = 0
+  host.store.subscribe(() => calls++)
+  host.replacePluginDefinitions([vocabA, vocabB, baseTheme, externalTheme], true)
+  assert.equal(calls, 1)
+  assert.equal(host.store.getState().preferences.activeVocabId, vocabB.id)
+  assert.equal(host.store.getState().preferences.activeThemeId, externalTheme.id)
+  assert.equal(host.store.getState().graph, before.graph)
+  host.store.connect('urn:n2', 'urn:n3')
+  assert.equal(host.store.getState().graph.relations.at(-1)!.predicate, vocabB.defaultTypeId)
+  const current = host.store.getState()
+  assert.throws(() => host.replacePluginDefinitions([vocabA, { ...vocabB, defaultTypeId: 'urn:unknown' }, baseTheme]))
+  assert.throws(() => host.replacePluginDefinitions([vocabA, baseTheme, baseTheme]))
+  assert.equal(host.store.getState(), current)
+  assert.ok(host.getTheme(externalTheme.id))
+  host.replacePluginDefinitions([vocabA, baseTheme])
+  const fallback = host.store.getState()
+  assert.equal(fallback.preferences.activeVocabId, vocabA.id)
+  assert.equal(fallback.preferences.activeThemeId, baseTheme.id)
+  for (const key of ['graph', 'viewGraph', 'workspace', 'selected', 'history'] as const) assert.equal(fallback[key], current[key])
+  assert.equal(host.getTheme(externalTheme.id), undefined)
+  host.replacePluginDefinitions([vocabA, vocabB, baseTheme, externalTheme])
+  assert.equal(host.store.getState().preferences.activeVocabId, vocabA.id)
+  assert.equal(host.store.getState().preferences.activeThemeId, baseTheme.id)
+  host.store.undo()
+  assert.equal(host.store.getState().graph.relations.length, before.graph.relations.length)
+  host.store.undo()
+  assert.equal(host.store.getState().graph.concepts[0].label, 'One')
+})
+
 test('saved views materialize shared subsets, reconcile membership and never change the graph', () => {
   const host = createNessoStore(fixture())
   host.registerVocab(vocabA)
@@ -438,7 +476,7 @@ test('inherited concept colors are independent and restored with creation histor
 
 test('renderer registration rejects duplicate ids and unknown activation, first one becomes active', () => {
   const host = createNessoStore(fixture())
-  const renderer = { id: 'graph', component: () => null }
+  const renderer = { id: 'graph' }
   host.registerRenderer(renderer)
   assert.equal(host.store.getState().preferences.activeRendererId, 'graph')
   const issues = issuesOf(() => host.registerRenderer({ ...renderer }))
@@ -623,8 +661,8 @@ test('state batches share ordered graph, view and preference changes, including 
   const host = createNessoStore(fixture())
   host.registerVocab(vocabA)
   host.registerVocab(vocabB)
-  host.registerRenderer({ id: 'graph', component: () => null })
-  host.registerTheme({ id: 'light' })
+  host.registerRenderer({ id: 'graph' })
+  host.registerTheme(themeFixture)
   const { store } = host
   let notifications = 0
   store.subscribe(() => notifications++)
@@ -706,7 +744,7 @@ test('invalid state batches reject every preceding change without notification',
 test('empty and cancelling batches preserve state identity and do not notify', () => {
   const host = createNessoStore(fixture())
   host.registerVocab(vocabA)
-  host.registerRenderer({ id: 'graph', component: () => null })
+  host.registerRenderer({ id: 'graph' })
   const viewId = host.store.createView('Pair', ['urn:n1', 'urn:n2'])
   host.store.setViewport('graph', { x: 0, y: 0, zoom: 1 })
   host.store.setSelection([{ kind: 'concept', id: 'urn:n1' }])
@@ -938,8 +976,8 @@ test('restoration resolves saved plugin preferences, falling back when unavailab
     })
     host.registerVocab(vocabA)
     host.registerVocab(vocabB)
-    for (const id of ['graph', 'other']) host.registerRenderer({ id, component: () => null })
-    for (const id of ['light', 'alternative']) host.registerTheme({ id })
+    for (const id of ['graph', 'other']) host.registerRenderer({ id })
+    for (const id of ['light', 'alternative']) host.registerTheme({ ...themeFixture, id })
     const state = host.store.getState()
     assert.equal(state.preferences.activeVocabId, missing ? 'a' : 'b')
     assert.equal(state.preferences.activeRendererId, missing ? 'graph' : 'other')
@@ -1040,7 +1078,7 @@ test('view renaming changes only the name and ignores no-ops', () => {
 test('UI and viewport writes own their inputs, ignore no-ops and reject invalid changes atomically', () => {
   const host = createNessoStore(fixture())
   assert.deepEqual(host.store.getState().preferences.panels, { explorerWidth: 180, inspectorWidth: 210 })
-  host.registerRenderer({ id: 'graph', component: () => null })
+  host.registerRenderer({ id: 'graph' })
   const graph = host.store.getState().graph
   const conceptIds = ['urn:n1', 'urn:n2']
   const panels = { explorerWidth: 300, inspectorWidth: 350 }
@@ -1097,22 +1135,22 @@ test('theme registration and activation are validated, isolated, and leave the d
   const host = createNessoStore(fixture())
   const other = createNessoStore(fixture())
   const before = host.store.getState()
-  const theme = { id: 'light' }
+  const theme = structuredClone(themeFixture)
   host.registerTheme(theme)
   theme.id = 'Changed externally'
-  assert.deepEqual(host.getTheme('light'), { id: 'light' })
+  assert.deepEqual(host.getTheme('light'), themeFixture)
   assert.deepEqual(other.listThemes(), [])
   assert.equal(other.store.getState().preferences.activeThemeId, '')
-  host.registerTheme({ id: 'alternative' })
+  host.registerTheme({ ...themeFixture, id: 'alternative' })
   assert.deepEqual(host.listThemes().map(({ id }) => id), ['light', 'alternative'])
   assert.equal(host.store.getState().preferences.activeThemeId, 'light')
   const snapshot = host.store.getState()
   let notifications = 0
   host.store.subscribe(() => notifications++)
   for (const invalid of [
-    { id: 'light' },
-    { id: '' },
-    { id: ' ' },
+    { ...themeFixture, id: 'light' },
+    { ...themeFixture, id: '' },
+    { ...themeFixture, id: ' ' },
   ]) {
     assert.throws(() => host.registerTheme(invalid), NessoError)
     assert.equal(host.store.getState(), snapshot)

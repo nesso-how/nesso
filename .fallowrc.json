@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/fallow/schema.json",
-  "entry": ["src/lib/utils.ts", "site/index.html", "electron/preload.cts"],
+  "entry": ["src/lib/utils.ts", "site/index.html", "electron/preload.cts", "packages/plugin/src/runner.ts", "packages/plugin/src/guard.ts", "packages/plugin/src/worker.ts", "packages/plugin/src/action-relay.ts", "packages/plugin/example/src/index.ts"],
   "ignoreDependencies": ["shadcn"],
   "rules": {
     "unused-exports": "warn",

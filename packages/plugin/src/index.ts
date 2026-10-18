@@ -1,5 +1,4 @@
 export type {
-  ActionDefinition,
   GraphSnapshot,
   NessoOperation,
   NessoState,
@@ -8,11 +7,7 @@ export type {
   NotificationAction,
   Notifications,
   PanelSizes,
-  Plugin,
-  PluginContext,
   Preferences,
-  RendererDefinition,
-  RendererProps,
   SavedView,
   SectionId,
   Selection,
@@ -21,3 +16,6 @@ export type {
   VocabDefinition,
   WorkspaceState,
 } from './types.ts'
+export { PluginError } from './errors.ts'
+export { createWriteCommands } from './commands.ts'
+export type { ActionContext, ActionContribution, ActionDescriptor, ActionState, BaseState, LocalizedText, PluginContext, PluginI18n, PluginManifest, ViewState } from './runtime.ts'

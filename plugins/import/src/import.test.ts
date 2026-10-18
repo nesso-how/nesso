@@ -1,12 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import type { NessoState } from '@nesso/plugin'
 import type { Graph } from '@nesso/schema'
 import { buildImportOperations } from './index.ts'
-
-const state: Pick<NessoState, 'workspace'> = {
-  workspace: { activeViewId: 'urn:active', savedViews: [], viewports: {} },
-}
 
 const snapshot: Graph = {
   concepts: [
@@ -28,7 +23,7 @@ const snapshot: Graph = {
 }
 
 test('import remaps concept ids and connects original types in the target view', () => {
-  const operations = buildImportOperations(snapshot, state, 'urn:target')
+  const operations = buildImportOperations(snapshot, 'urn:active', 'urn:target')
   const adds = operations.filter((operation) => operation.kind === 'concept.add')
   assert.equal(adds.length, 2)
   const ids = adds.map((operation) => operation.kind === 'concept.add' ? operation.id : '')
@@ -50,9 +45,9 @@ test('import remaps concept ids and connects original types in the target view',
 })
 
 test('import into the active view skips membership edits and empty snapshots are no-ops', () => {
-  const same = buildImportOperations(snapshot, state, 'urn:active')
+  const same = buildImportOperations(snapshot, 'urn:active', 'urn:active')
   assert.ok(same.every((operation) => operation.kind !== 'view.membership'))
-  assert.deepEqual(buildImportOperations({ concepts: [], relationTypes: [], relations: [] }, state, null), [])
-  const complete = buildImportOperations(snapshot, { ...state, workspace: { ...state.workspace, activeViewId: null } }, null)
+  assert.deepEqual(buildImportOperations({ concepts: [], relationTypes: [], relations: [] }, 'urn:active', null), [])
+  const complete = buildImportOperations(snapshot, null, null)
   assert.ok(complete.every((operation) => operation.kind !== 'view.membership'))
 })

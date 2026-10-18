@@ -1,8 +1,8 @@
 import type { Graph, Position, RelationType } from '@nesso/schema'
 import type { Locale } from '@nesso/i18n'
-import type { ComponentType, ReactNode } from 'react'
+export type { ThemeDefinition } from './definitions.ts'
 
-type DeepReadonly<T> = T extends readonly (infer U)[]
+export type DeepReadonly<T> = T extends readonly (infer U)[]
   ? readonly DeepReadonly<U>[]
   : T extends object
     ? { readonly [K in keyof T]: DeepReadonly<T[K]> }
@@ -135,29 +135,6 @@ export type NessoStore = {
   readonly getViewGraph: (id: string) => GraphSnapshot
 }
 
-export type RendererProps = {
-  readonly readOnly?: boolean
-  readonly overlay?: ReactNode
-  readonly onDeleteView?: () => void
-  readonly conceptLabelMaxLength?: number
-}
-
-export type RendererDefinition = {
-  readonly id: string
-  readonly component: ComponentType<RendererProps>
-}
-
-export type ActionDefinition = {
-  readonly id: string
-  readonly label: (locale: Locale) => string
-  readonly run: () => void | Promise<void>
-  readonly runOnView?: (viewId: string | null) => void | Promise<void>
-}
-
-export type ThemeDefinition = {
-  readonly id: string
-}
-
 export type NotificationAction = {
   readonly label: string
   readonly onClick: () => void
@@ -175,22 +152,3 @@ export type Notifications = {
   readonly notify: (notification: Notification) => string
   readonly dismiss: (id: string) => void
 }
-
-export type PluginContext = {
-  readonly store: NessoStore
-  readonly notifications: Notifications
-}
-
-export type Plugin = {
-  readonly metadata: (locale: Locale) => {
-    readonly name: string
-    readonly description: string
-    readonly documentation: string
-  }
-  readonly operations: readonly NessoOperation['kind'][]
-} & (
-  | { readonly kind: 'renderer'; readonly create: (context: PluginContext) => RendererDefinition }
-  | { readonly kind: 'theme'; readonly create: (context: PluginContext) => ThemeDefinition }
-  | { readonly kind: 'vocab'; readonly create: (context: PluginContext) => VocabDefinition }
-  | { readonly kind: 'actions'; readonly create: (context: PluginContext) => readonly ActionDefinition[] }
-)

@@ -8,6 +8,7 @@ export const sectionIds = [
 ] as const satisfies readonly SectionId[]
 
 export type HostState = NessoState & {
+  readonly documentEpoch: number
   readonly conversation: { readonly messages: readonly AiChatMessage[] }
   readonly persistenceIssues: readonly Readonly<PersistenceIssue>[]
 }
@@ -26,3 +27,5 @@ export type HostStore = Omit<NessoStore, 'getState' | 'applyOperations'> & {
 }
 
 export type RestoredState = Partial<Pick<HostState, 'workspace' | 'preferences' | 'conversation'>>
+
+export type RendererDefinition = { readonly id: string }

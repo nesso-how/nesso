@@ -11,16 +11,20 @@ const loaded = await loadPersistence(storage)
 
 export const host = initializeNessoStore(loaded, navigator.languages)
 
-export const { store: nessoStore, registerVocab, registerRenderer, getRenderer, registerTheme } = host
+host.registerRenderer({ id: 'concept-map' })
 
-export const startAutosave = () => {
+export const { store: nessoStore, registerVocab, registerTheme } = host
+
+export const startAutosave = (prepare: () => void) => {
   const persistence = connectPersistence(host, storage, loaded)
   const save = async () => {
+    prepare()
     if (document.activeElement instanceof HTMLElement) document.activeElement.blur()
     return persistence.flush()
   }
   const stopUpdateSave = window.nessoUpdater?.beforeInstall(save)
   const stopMoveSave = window.nessoDataLocation?.beforeMove(async () => {
+    prepare()
     if (document.activeElement instanceof HTMLElement) document.activeElement.blur()
     host.setWritesPaused(true)
     return persistence.flush()
@@ -34,7 +38,7 @@ export const startAutosave = () => {
   }
   window.addEventListener('pagehide', flush)
   document.addEventListener('visibilitychange', onVisibilityChange)
-  return { ...persistence, dispose: () => {
+  return { ...persistence, save, dispose: () => {
     stopUpdateSave?.()
     stopMoveSave?.()
     stopMoveState?.()

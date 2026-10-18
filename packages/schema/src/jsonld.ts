@@ -1,4 +1,4 @@
-import { schemaContext } from './core.ts'
+import { isAbsoluteIri, schemaContext } from './core.ts'
 import { fail, SchemaError } from './errors.ts'
 import { validateGraph } from './validate.ts'
 import type { Concept, Graph, Relation, RelationType } from './types.ts'
@@ -17,7 +17,7 @@ function string(value: unknown, path: string): string {
 
 function iri(value: unknown, path: string): string {
   const id = string(value, path)
-  if (!/^[a-z][a-z0-9+.-]*:/i.test(id)) fail(path, `Expected an absolute IRI: ${id}`)
+  if (!isAbsoluteIri(id)) fail(path, `Expected an absolute IRI: ${id}`)
   return id
 }
 

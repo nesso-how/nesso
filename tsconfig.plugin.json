@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "strict": true,
+    "noEmit": true,
+    "types": [],
+    "paths": {
+      "@nesso/schema": ["./packages/schema/src/index.ts"],
+      "@nesso/i18n": ["./packages/i18n/src/index.ts"]
+    }
+  },
+  "include": ["packages/plugin/src/index.ts", "packages/plugin/src/runtime.ts", "packages/plugin/src/package.ts"]
+}

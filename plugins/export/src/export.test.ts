@@ -1,114 +1,41 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import type { NessoStore, Notification } from '@nesso/plugin'
-import { exportPlugin } from './index.ts'
+import { themeTokens, type ActionContext, type FileSaveOptions, type ViewState } from '@nesso/plugin/runtime'
+import { createWriteCommands } from '@nesso/plugin'
+import { create } from './index.ts'
 
-const graph = { concepts: [{ id: 'urn:concept', label: 'One', position: { x: 0, y: 0 } }], relations: [], relationTypes: [] }
-const setupState = () => ({
-  viewGraph: graph,
-  workspace: { activeViewId: null, savedViews: [{ id: 'urn:view', name: 'Test view' }] },
-  preferences: { locale: 'it' },
-})
-
-test('export notifies only after successful downloads, using its injected API and current locale', async (context) => {
-  const state = setupState()
-  const getViewGraph = context.mock.fn(() => graph)
-  const store = { getState: () => state, getViewGraph } as unknown as NessoStore
-  const anchor = { href: '', download: '', click: context.mock.fn() }
-  Object.defineProperty(globalThis, 'document', { configurable: true, value: { createElement: () => anchor } })
-  context.after(() => { Reflect.deleteProperty(globalThis, 'document') })
-  context.mock.method(URL, 'createObjectURL', () => 'blob:export')
-  context.mock.method(URL, 'revokeObjectURL', () => {})
-  const notify = context.mock.fn((_notification: Notification) => {
-    assert.ok(anchor.click.mock.callCount() > 0)
-    return 'export-notification'
-  })
-  const dismiss = context.mock.fn()
-  assert.ok(exportPlugin.kind === 'actions')
-  const [action] = exportPlugin.create({ store, notifications: { notify, dismiss } })
-  const otherNotify = context.mock.fn(() => 'other-notification')
-  exportPlugin.create({ store, notifications: { notify: otherNotify, dismiss } })
-  await action.runOnView?.('urn:view')
-  assert.equal(anchor.download, 'nesso-test-view.jsonld')
-  assert.deepEqual(getViewGraph.mock.calls[0].arguments, ['urn:view'])
-  assert.deepEqual(notify.mock.calls[0].arguments[0], {
-    tone: 'info', title: 'Vista esportata', description: 'Download JSON-LD avviato.',
-  })
-  state.preferences.locale = 'en'
-  await action.run()
-  assert.equal(anchor.download, 'nesso-graph.jsonld')
-  assert.deepEqual(notify.mock.calls[1].arguments[0], {
-    tone: 'info', title: 'View exported', description: 'JSON-LD download started.',
-  })
-  assert.equal(otherNotify.mock.callCount(), 0)
-  anchor.click.mock.mockImplementationOnce(() => { throw new Error('Download failed') })
-  await assert.rejects(Promise.resolve(action.run()), /Download failed/)
-  assert.equal(notify.mock.callCount(), 2)
-})
-
-test('export waits for the save picker before notifying', async (context) => {
-  const state = setupState()
-  const getViewGraph = context.mock.fn(() => graph)
-  const store = { getState: () => state, getViewGraph } as unknown as NessoStore
-  const written: string[] = []
-  const writable = {
-    write: context.mock.fn(async (data: string) => { written.push(data) }),
-    close: context.mock.fn(async () => {}),
+test('export uses only the supplied target graph and notifies after accepted saves, not cancellation or failure', async (context) => {
+  const state: ViewState = {
+    revision: 0, contextId: 'export', locale: 'it', theme: Object.fromEntries(themeTokens.map((token) => [token, ''])), conceptPlacementOffset: { x: 160, y: 100 },
+    viewGraph: { concepts: [{ id: 'urn:concept', label: 'One', position: { x: 0, y: 0 } }], relations: [], relationTypes: [] },
+    targetViewId: 'urn:view', selected: [], activeVocab: null, history: { canUndo: false, canRedo: false },
+    workspace: { activeViewId: 'urn:another', savedViews: [{ id: 'urn:view', name: 'Test view', pinned: false }] },
   }
-  const handle = { createWritable: context.mock.fn(async () => writable) }
-  const picker = context.mock.fn(async (_options: unknown) => handle)
-  Object.defineProperty(globalThis, 'showSaveFilePicker', { configurable: true, value: picker })
-  context.after(() => { Reflect.deleteProperty(globalThis, 'showSaveFilePicker') })
-  const createElement = context.mock.fn(() => { throw new Error('fallback download must not run') })
-  Object.defineProperty(globalThis, 'document', { configurable: true, value: { createElement } })
-  context.after(() => { Reflect.deleteProperty(globalThis, 'document') })
-  const notify = context.mock.fn((_notification: Notification) => {
-    assert.ok(writable.close.mock.callCount() > 0)
-    return 'export-notification'
-  })
-  const dismiss = context.mock.fn()
-  assert.ok(exportPlugin.kind === 'actions')
-  const [action] = exportPlugin.create({ store, notifications: { notify, dismiss } })
-  await action.runOnView?.('urn:view')
-  assert.equal(picker.mock.callCount(), 1)
-  assert.deepEqual(picker.mock.calls[0].arguments[0], { suggestedName: 'nesso-test-view.jsonld' })
-  assert.deepEqual(getViewGraph.mock.calls[0].arguments, ['urn:view'])
-  assert.equal(createElement.mock.callCount(), 0)
-  assert.equal(written.length, 1)
-  assert.ok(written[0].includes('urn:concept'))
-  assert.equal(writable.close.mock.callCount(), 1)
-  assert.deepEqual(notify.mock.calls[0].arguments[0], {
-    tone: 'info', title: 'Vista esportata', description: 'Download JSON-LD avviato.',
-  })
-})
-
-test('export stays silent when the save picker is cancelled', async (context) => {
-  const state = setupState()
-  const store = { getState: () => state, getViewGraph: context.mock.fn(() => graph) } as unknown as NessoStore
-  const picker = context.mock.fn(async () => { throw new DOMException('Cancelled', 'AbortError') })
-  Object.defineProperty(globalThis, 'showSaveFilePicker', { configurable: true, value: picker })
-  context.after(() => { Reflect.deleteProperty(globalThis, 'showSaveFilePicker') })
-  const createElement = context.mock.fn(() => { throw new Error('fallback download must not run') })
-  Object.defineProperty(globalThis, 'document', { configurable: true, value: { createElement } })
-  context.after(() => { Reflect.deleteProperty(globalThis, 'document') })
-  const notify = context.mock.fn((_notification: Notification) => 'export-notification')
-  assert.ok(exportPlugin.kind === 'actions')
-  const [action] = exportPlugin.create({ store, notifications: { notify, dismiss: context.mock.fn() } })
-  await action.runOnView?.('urn:view')
-  assert.equal(picker.mock.callCount(), 1)
-  assert.equal(createElement.mock.callCount(), 0)
+  let finish: (value: { saved: boolean }) => void = () => {}
+  const save = context.mock.fn((_options: FileSaveOptions) => new Promise<{ saved: boolean }>((resolve) => { finish = resolve }))
+  const notify = context.mock.fn(async (_value: Parameters<ActionContext['notifications']['notify']>[0]) => 'notification')
+  const api: ActionContext = {
+    store: { ...createWriteCommands(async () => assert.fail('Export must not write'), async (id, committed) => { await committed; return id }), getState: () => state, refresh: async () => state, subscribe: () => () => {}, applyOperations: async () => assert.fail('Export must not write'), getViewGraph: async () => assert.fail('Export must not fetch another graph') },
+    files: { open: async () => assert.fail('Export must not open files'), save },
+    notifications: { notify }, signal: new AbortController().signal,
+  }
+  const [action] = create(api)
+  assert.equal(save.mock.callCount(), 0)
+  assert.equal(action.label.en, 'Export')
+  const exporting = action.run({ viewId: 'urn:view' })
+  await Promise.resolve()
+  assert.equal(save.mock.callCount(), 1)
   assert.equal(notify.mock.callCount(), 0)
-})
-
-test('export stays silent when writing the picked file fails', async (context) => {
-  const state = setupState()
-  const store = { getState: () => state, getViewGraph: context.mock.fn(() => graph) } as unknown as NessoStore
-  const handle = { createWritable: context.mock.fn(async () => { throw new Error('Write failed') }) }
-  Object.defineProperty(globalThis, 'showSaveFilePicker', { configurable: true, value: context.mock.fn(async () => handle) })
-  context.after(() => { Reflect.deleteProperty(globalThis, 'showSaveFilePicker') })
-  const notify = context.mock.fn((_notification: Notification) => 'export-notification')
-  assert.ok(exportPlugin.kind === 'actions')
-  const [action] = exportPlugin.create({ store, notifications: { notify, dismiss: context.mock.fn() } })
-  await assert.rejects(Promise.resolve(action.runOnView?.('urn:view')), /Write failed/)
-  assert.equal(notify.mock.callCount(), 0)
+  finish({ saved: true })
+  await exporting
+  assert.equal(save.mock.calls[0].arguments[0].name, 'nesso-test-view.jsonld')
+  assert.equal(save.mock.calls[0].arguments[0].mediaType, 'application/ld+json')
+  assert.ok(save.mock.calls[0].arguments[0].text.includes('urn:concept'))
+  assert.deepEqual(notify.mock.calls[0].arguments[0].title, { en: 'View exported', it: 'Vista esportata', 'zh-CN': '视图已导出' })
+  save.mock.mockImplementationOnce(async () => ({ saved: false }))
+  await action.run({ viewId: 'urn:view' })
+  assert.equal(notify.mock.callCount(), 1)
+  save.mock.mockImplementationOnce(async () => { throw new Error('Unavailable') })
+  await assert.rejects(async () => action.run({ viewId: 'urn:view' }))
+  assert.equal(notify.mock.callCount(), 1)
 })

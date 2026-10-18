@@ -6,7 +6,7 @@ import { useRef, useState } from 'react'
 import { nessoStore, useNessoStore } from '@/store'
 import type { HostStore } from '@/store/types'
 import { DeleteViewDialog } from './DeleteViewDialog'
-import { viewActions } from '@/plugins'
+import { invokeAction, useViewActions } from '@/plugins'
 import { maxViewNameLength } from '@/store/settings'
 import { useTranslation } from '@/i18n'
 
@@ -35,6 +35,7 @@ export function ViewDetails({ store = nessoStore, readonly = false }: { store?: 
   const deleteTrigger = useRef<HTMLButtonElement>(null)
   const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale, store)
   const workspace = useNessoStore((state) => state.workspace, store)
+  const actions = useViewActions()
   const viewGraph = useNessoStore((state) => state.viewGraph, store)
   const view = workspace.savedViews.find((view) => view.id === workspace.activeViewId)
   const stats = [
@@ -62,7 +63,7 @@ export function ViewDetails({ store = nessoStore, readonly = false }: { store?: 
       <section aria-labelledby="view-actions-heading">
         <h3 id="view-actions-heading" className="text-xs font-medium">{t('actions')}</h3>
         <div className="mt-3 flex flex-col gap-2">
-          {viewActions.map((action) => <Button key={action.id} disabled={readonly} variant="outline" className="w-full justify-start" onClick={() => action.runOnView?.(workspace.activeViewId)}>{action.label(locale)}</Button>)}
+          {actions.map((action) => <Button key={action.id} disabled={readonly} variant="outline" className="w-full justify-start" onClick={() => { void invokeAction(action.id) }}>{action.label[locale] ?? action.label.en}</Button>)}
         </div>
       </section>
       {view && <Button disabled={readonly} variant="outline" className="w-full justify-start" onClick={() => store.deleteView(view.id)}><Trash2 />{t('deleteView')}</Button>}

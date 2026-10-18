@@ -1,6 +1,5 @@
 import type {
   Preferences,
-  RendererDefinition,
   ThemeDefinition,
   VocabDefinition,
 } from '@nesso/plugin'
@@ -16,8 +15,9 @@ import { createCommands } from './commands.ts'
 import { createHistory } from './history.ts'
 import { applyStateOperations, checkGraph, materialize, newGraph, newWorkspace } from './operations.ts'
 import { defaultPanels, fail, maxRelationLabelLength, parseConversation, parsePreferences, parseWorkspace } from './settings.ts'
-import type { HostState, HostStore, RestoredState } from './types.ts'
+import type { HostState, HostStore, RendererDefinition, RestoredState } from './types.ts'
 import type { PersistenceIssue } from '../../shared/persistence.ts'
+import { parseDefinition } from '@nesso/plugin/runtime'
 
 export const createNessoStore = (graph: Graph | null, restored: RestoredState = {}) => {
   if (graph) checkGraph(graph)
@@ -35,6 +35,7 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
   }
   const store = createStore<HostState>()(() => ({
     graph: initial,
+    documentEpoch: 0,
     workspace,
     conversation: parseConversation({ version: 1, messages: restored.conversation?.messages ?? [] }),
     preferences: { ...preferences, activeVocabId: '', activeRendererId: '', activeThemeId: '' },
@@ -62,7 +63,7 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
     history.record(delta, options?.historyGroup, reset)
     const flags = history.flags()
     const historyState = flags.canUndo === state.history.canUndo && flags.canRedo === state.history.canRedo ? state.history : flags
-    if (next !== state || historyState !== state.history) store.setState({ ...next, history: historyState })
+    if (next !== state || historyState !== state.history || reset) store.setState({ ...next, documentEpoch: state.documentEpoch + (reset ? 1 : 0), history: historyState })
   }
 
   const renderers = new Map<string, RendererDefinition>()
@@ -80,13 +81,13 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
 
   const getRenderer = (id: string): RendererDefinition | undefined => renderers.get(id)
 
-  const themes = new Map<string, ThemeDefinition>()
+  let themes = new Map<string, ThemeDefinition>()
 
   const registerTheme = (theme: ThemeDefinition): void => {
     if (typeof theme.id !== 'string' || !theme.id.trim() || themes.has(theme.id)) {
       fail('theme.id', `Duplicate or missing theme id: ${theme.id}`)
     }
-    themes.set(theme.id, { id: theme.id })
+    themes.set(theme.id, parseDefinition('theme', theme))
     const state = store.getState()
     if (!state.preferences.activeThemeId || theme.id === preferences.activeThemeId) {
       store.setState({ preferences: { ...state.preferences, activeThemeId: theme.id } })
@@ -111,14 +112,13 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
     },
   }
 
-  const registerVocab = (vocab: VocabDefinition): void => {
-    const state = store.getState()
+  const prepareVocab = (vocab: VocabDefinition, existing: readonly VocabDefinition[]): VocabDefinition => {
     const issues: SchemaIssue[] = validateGraph({
       concepts: [],
       relationTypes: vocab.relationTypes,
       relations: [],
     })
-    if (!vocab.id || state.vocabs.some((item) => item.id === vocab.id)) {
+    if (!vocab.id || existing.some((item) => item.id === vocab.id)) {
       issues.push({ path: 'id', message: `Duplicate or missing vocabulary id: ${vocab.id}` })
     }
     if (!vocab.defaultTypeId || !vocab.relationTypes.some((type) => type.id === vocab.defaultTypeId)) {
@@ -130,13 +130,37 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
       }
     })
     if (issues.length > 0) throw new SchemaError(issues)
+    return structuredClone(vocab)
+  }
+
+  const registerVocab = (vocab: VocabDefinition): void => {
+    const state = store.getState()
+    const prepared = prepareVocab(vocab, state.vocabs)
     store.setState({
-      vocabs: [...state.vocabs, structuredClone(vocab)],
+      vocabs: [...state.vocabs, prepared],
       preferences: {
         ...state.preferences,
         activeVocabId: vocab.id === preferences.activeVocabId ? vocab.id : state.preferences.activeVocabId || vocab.id,
       },
     })
+  }
+
+  const replacePluginDefinitions = (definitions: readonly (VocabDefinition | ThemeDefinition)[], restoring = false): void => {
+    const vocabs: VocabDefinition[] = []
+    const nextThemes = new Map<string, ThemeDefinition>()
+    for (const definition of definitions) {
+      if ('relationTypes' in definition) vocabs.push(prepareVocab(definition, vocabs))
+      else {
+        if (nextThemes.has(definition.id)) fail('theme.id', `Duplicate theme id: ${definition.id}`)
+        nextThemes.set(definition.id, parseDefinition('theme', definition))
+      }
+    }
+    const state = store.getState()
+    const vocabIds = vocabs.map(({ id }) => id)
+    const activeVocabId = restoring && vocabIds.includes(preferences.activeVocabId) ? preferences.activeVocabId : vocabIds.includes(state.preferences.activeVocabId) ? state.preferences.activeVocabId : vocabIds[0] ?? ''
+    const activeThemeId = restoring && nextThemes.has(preferences.activeThemeId) ? preferences.activeThemeId : nextThemes.has(state.preferences.activeThemeId) ? state.preferences.activeThemeId : nextThemes.keys().next().value ?? ''
+    themes = nextThemes
+    store.setState({ vocabs, preferences: activeVocabId === state.preferences.activeVocabId && activeThemeId === state.preferences.activeThemeId ? state.preferences : { ...state.preferences, activeVocabId, activeThemeId } })
   }
 
   const setPersistenceIssues = (issues: readonly Readonly<PersistenceIssue>[]): void => {
@@ -149,5 +173,5 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
     applyStateOperations(state, operations, { renderers, themes })
 
   const setWritesPaused = (value: boolean) => { writesPaused = value }
-  return { store: nessoStore, previewOperations, setPersistenceIssues, setWritesPaused, registerVocab, registerRenderer, getRenderer, registerTheme, getTheme, listThemes }
+  return { store: nessoStore, previewOperations, setPersistenceIssues, setWritesPaused, registerVocab, registerRenderer, getRenderer, registerTheme, getTheme, listThemes, replacePluginDefinitions }
 }
