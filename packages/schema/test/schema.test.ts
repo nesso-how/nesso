@@ -57,6 +57,17 @@ test('parse failures report structured issues', () => {
   )
 })
 
+test('graph validation and serialization reject relative concept and relation-type identifiers', () => {
+  for (const id of ['', 'relative', '/relative', '#fragment', '1invalid:scheme', 42]) {
+    for (const kind of ['concepts', 'relationTypes'] as const) {
+      const graph = parseGraph(fixture)
+      graph[kind][0].id = id as never
+      assert.ok(validateGraph(graph).some((issue) => issue.path === `${kind}[0].id` && /absolute IRI/.test(issue.message)))
+      assert.throws(() => serializeGraph(graph), SchemaError)
+    }
+  }
+})
+
 test('descriptions must be strings at graph and JSON-LD boundaries', () => {
   const graph = parseGraph(fixture)
   graph.concepts[0].description = 42 as never

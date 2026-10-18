@@ -8,6 +8,7 @@ import { sectionIds } from './types.ts'
 import { maxConceptLabelLength, maxRelationLabelLength } from './settings.ts'
 import { initializeNessoStore } from './initialize.ts'
 import type { PersistenceSection, PersistenceStorage } from '../../shared/persistence.ts'
+import themeFixture from '../../packages/plugin/test/theme.json' with { type: 'json' }
 
 const fixture = (): Graph => ({
   concepts: [
@@ -35,8 +36,8 @@ const memoryStorage = () => {
 const registeredHost = (graph: Graph | null, restored = {}) => {
   const host = createNessoStore(graph, restored)
   host.registerVocab({ id: 'vocab', defaultTypeId: 'urn:links', relationTypes: [{ id: 'urn:links', label: 'links' }] })
-  host.registerRenderer({ id: 'graph', component: () => null })
-  host.registerTheme({ id: 'light' })
+  host.registerRenderer({ id: 'graph' })
+  host.registerTheme(themeFixture)
   return host
 }
 

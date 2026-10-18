@@ -24,7 +24,7 @@
 ## Architecture
 
 - Consolidate repeated app UI in `@nesso/ui`; keep app-specific state and domain logic in the host.
-- Plugins use only the injected APIs, never app internals or a concrete store. Keep instances isolated; no module-global mutable store. React subscriptions use the injected instance with `useSyncExternalStore`.
+- Plugins and trusted renderers use only injected APIs, never app internals or a concrete store. Keep instances independent; no module-global mutable store. React subscriptions use the injected instance with `useSyncExternalStore`.
 - Only the host materializes `viewGraph`; plugins never recompute it. Do not persist selection, plugin definitions, or `viewGraph`.
 - The host owns editing forms and reset confirmation. Navbar actions read current state at invocation. The canvas handles selection-aware graph commands, viewport gestures, and shared history controls.
-- React Flow components, types, event mapping, and renderer-specific styles stay in `plugins/concept-map`; the host never imports React Flow. The graph plugin consumes theme tokens.
+- React Flow components, types, event mapping, and renderer-specific styles stay in trusted `packages/concept-map`; the host never imports React Flow. The renderer inherits host theme tokens and uses synchronous store APIs; only actions, vocabularies, and themes use the isolated plugin runtime.

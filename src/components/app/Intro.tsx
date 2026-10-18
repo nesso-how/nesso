@@ -1,10 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
-import { conceptMapPlugin } from '@nesso/concept-map'
 import { Button } from '@nesso/ui'
 import { ArrowLeft, ArrowRight, X } from 'lucide-react'
 import { createIntroStore, setIntroStep } from '@/store/intro'
-import { createPluginStore } from '@/store/commands'
-import { notifications } from '@/notifications'
 import { useTranslation } from '@/i18n'
 import { defaultLocale } from '@nesso/i18n'
 import { useNessoStore } from '@/store'
@@ -13,6 +10,7 @@ import { chat } from '@/ai'
 import { AppSidebar } from './Sidebar'
 import { Inspector } from './Inspector'
 import { AssistantPanel } from './AssistantPanel'
+import { ConceptMapSurface } from './ConceptMapSurface'
 
 const chapters = [
   { title: 'introConceptTitle', description: 'introConceptDescription' },
@@ -29,11 +27,14 @@ export function Intro({ onFinish }: { onFinish: () => void }) {
   const { width: inspectorWidth, minWidth: inspectorMinWidth } = resolveInspector(panels, !!chat)
   const [step, setStep] = useState(0)
   const title = useRef<HTMLHeadingElement>(null)
-  const { store, Component } = useMemo(() => {
-    const store = createIntroStore(locale)
-    const renderer = conceptMapPlugin.create({ store: createPluginStore(store, ['selection.set']), notifications: notifications.api })
-    return { store, Component: renderer.component }
-  }, [locale])
+  const store = useMemo(() => createIntroStore(locale), [locale])
+  const narrative = useRef<HTMLElement>(null)
+  const [bottomInset, setBottomInset] = useState(0)
+  useEffect(() => {
+    const observer = new ResizeObserver(([entry]) => setBottomInset(entry.contentRect.height + 56))
+    observer.observe(narrative.current!)
+    return () => observer.disconnect()
+  }, [])
 
   useEffect(() => {
     setIntroStep(store, step)
@@ -65,7 +66,8 @@ export function Intro({ onFinish }: { onFinish: () => void }) {
       </div>
       <div className="intro-workspace flex min-h-0 min-w-0 flex-1">
         <div className="intro-canvas min-h-0 min-w-0 flex-1">
-          <Component readOnly overlay={<section className="intro-narrative" aria-labelledby="intro-title">
+          <ConceptMapSurface store={store} preview bottomInset={bottomInset} />
+          <section ref={narrative} className="intro-narrative intro-overlay" aria-labelledby="intro-title">
             <div className="intro-copy" key={step}>
               <h1 ref={title} id="intro-title" tabIndex={-1}>{t(chapters[step].title)}</h1>
               <p>{description.split('**').map((part, index) => index % 2 ? <strong key={index}>{part}</strong> : part)}</p>
@@ -77,7 +79,7 @@ export function Intro({ onFinish }: { onFinish: () => void }) {
               <Button size="sm" onClick={() => step === lastStep ? onFinish() : setStep(step + 1)}>{t(step === lastStep ? 'introExplore' : 'introContinue')}<ArrowRight aria-hidden="true" /></Button>
             </nav>
             <span className="sr-only" role="status">{t('introStep', progress)}. {t(chapters[step].title)}</span>
-          </section>} />
+          </section>
         </div>
         <div className="intro-inspector-slot" data-open={step === lastStep} inert={step !== lastStep} aria-hidden={step !== lastStep}>
           <div className="intro-inspector">{step === lastStep && (chat ? <AssistantPanel chat={chat} store={store} readonly /> : <Inspector store={store} readonly />)}</div>

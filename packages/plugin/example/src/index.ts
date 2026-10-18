@@ -1,0 +1,14 @@
+import type { ActionContext, ActionContribution, NessoOperation } from '@nesso/plugin'
+import source from '../package.json' with { type: 'json' }
+
+export const create = ({ store }: ActionContext): readonly ActionContribution[] => [{
+  id: 'uppercase-labels',
+  label: source.i18n.metadata.name,
+  supportsViews: true,
+  run: async () => {
+    const state = store.getState()
+    if (!('viewGraph' in state)) return
+    const operations: readonly NessoOperation[] = state.viewGraph.concepts.map(({ id, label }) => ({ kind: 'concept.label', id, value: label.toUpperCase() }))
+    await store.applyOperations(operations, { atRevision: state.revision })
+  },
+}]

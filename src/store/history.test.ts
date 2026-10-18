@@ -4,7 +4,6 @@ import type { NessoOperation } from '@nesso/plugin'
 import { relationKey, SchemaError, type Graph } from '@nesso/schema'
 import { createNessoStore } from './create.ts'
 import { historyLimit } from './history.ts'
-import { createPluginStore } from './commands.ts'
 import { NessoError } from './errors.ts'
 import { applyStateOperations } from './operations.ts'
 
@@ -159,32 +158,30 @@ test('view metadata, membership reordering and removal round-trip without changi
   assert.deepEqual(host.store.getState().workspace.savedViews, [])
 })
 
-test('declared history commands restore global edits through helpers and operations without recording new edits', () => {
+test('history commands restore global edits through helpers and operations without recording new edits', () => {
   const host = createNessoStore(fixture())
-  const plugin = createPluginStore(host.store, ['history.undo', 'history.redo'])
+  const store = host.store
   let notifications = 0
   host.store.subscribe(() => notifications++)
   const initial = host.store.getState()
-  plugin.undo()
-  plugin.redo()
+  store.undo()
+  store.redo()
   assert.equal(host.store.getState(), initial)
   assert.equal(notifications, 0)
   host.store.setConceptLabel('urn:n0', 'Changed')
   assert.deepEqual(host.store.getState().history, { canUndo: true, canRedo: false })
-  assert.throws(() => createPluginStore(host.store, ['history.redo']).undo(), NessoError)
-  plugin.undo()
+  store.undo()
   assert.equal(host.store.getState().graph.concepts[0].label, '0')
   assert.deepEqual(host.store.getState().history, { canUndo: false, canRedo: true })
-  assert.throws(() => createPluginStore(host.store, ['history.undo']).redo(), NessoError)
-  plugin.applyOperations([{ kind: 'history.redo' }])
+  store.applyOperations([{ kind: 'history.redo' }])
   assert.equal(host.store.getState().graph.concepts[0].label, 'Changed')
   host.store.applyOperations([{ kind: 'history.undo' }], { historyGroup: 'ignored' })
   assert.equal(host.store.getState().graph.concepts[0].label, '0')
-  plugin.redo()
+  store.redo()
   assert.equal(host.store.getState().graph.concepts[0].label, 'Changed')
   assert.deepEqual(host.store.getState().history, { canUndo: true, canRedo: false })
   const restored = host.store.getState()
-  plugin.redo()
+  store.redo()
   assert.equal(host.store.getState(), restored)
   assert.equal(notifications, 5)
 })
@@ -286,12 +283,10 @@ test('explicit text and drag groups merge adjacent edits, cancel net changes and
   assert.deepEqual(host.store.getState().graph.concepts[0].position, { x: 0, y: 0 })
 })
 
-test('history is bounded, instance-local and plugin batches still enforce their allowlist', () => {
+test('history is bounded and instance-local', () => {
   const a = createNessoStore(fixture())
   const b = createNessoStore(fixture())
-  const plugin = createPluginStore(a.store, ['concept.label'])
-  for (let i = 1; i <= historyLimit + 2; i++) plugin.setConceptLabel('urn:n0', `${i}`)
-  assert.throws(() => plugin.applyOperations([{ kind: 'relation.remove', id: relationKey(fixture().relations[0]) }], { historyGroup: 'denied' }))
+  for (let i = 1; i <= historyLimit + 2; i++) a.store.setConceptLabel('urn:n0', `${i}`)
   for (let i = 0; i < historyLimit + 1; i++) a.store.undo()
   assert.equal(a.store.getState().graph.concepts[0].label, '2')
   assert.equal(a.store.getState().history.canUndo, false)

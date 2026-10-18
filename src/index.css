@@ -1,7 +1,6 @@
 @import "tailwindcss";
 @import "@nesso/ui/styles.css";
-@import "@nesso/kernel/styles.css";
-@source "../plugins";
+@source "../packages/concept-map/src";
 
 @layer base {
   * {
@@ -40,6 +39,8 @@
 .intro-inspector-slot[data-open='true'] { width: var(--intro-inspector-width); max-width: max(var(--intro-inspector-min-width), 45%); }
 .intro-inspector { width: 100%; border-left: 1px solid var(--border); background: var(--background); transform: translateX(12px); }
 .intro-explorer-slot[data-open='true'] .intro-explorer, .intro-inspector-slot[data-open='true'] .intro-inspector { opacity: 1; transform: none; }
+.intro-canvas { position: relative; }
+.intro-overlay { position: absolute; bottom: 28px; left: 28px; width: min(382px, calc(100% - 56px)); }
 .intro-narrative { padding: 18px 20px; background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-object); }
 .intro-copy { animation: intro-copy-in 260ms ease-out; }
 @keyframes intro-copy-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }

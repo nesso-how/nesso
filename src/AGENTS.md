@@ -31,9 +31,12 @@
 
 ## Plugins and UI
 
-- Keep the static plugin registry in `src/plugins`, the host notification queue and updater adapter in `src/notifications`, and DOM theme application in `src/theme`. Keep tests beside their implementation; plugin contract tests belong to `packages/plugin/test`.
-- Use static registration and small lookups; no lifecycle, runtime loading, uninstall, dynamic permission system, or event bus.
-- Snapshot each plugin's operation allowlist before initialization and check the whole batch before applying it. Host and plugin stores share command helpers; no helper bypasses the check.
-- Support multiple renderer, vocabulary, and theme definitions. Validate registration and activation, keeping one valid active ID for each registered kind; renderer components stay in the registry.
+- Keep the plugin registry and instance lifecycle in `src/plugins`, the host notification queue and updater adapter in `src/notifications`, and DOM theme application in `src/theme`. Keep tests beside their implementation; plugin contract tests belong to `packages/plugin/test`.
+- Follow the supported contract in `packages/plugin/README.md`, types, validators, and tests. All bundled plugins use the isolated runtime; do not import executable plugin modules into the host or retain privileged bundled-plugin shortcuts.
+- Bind accepted declarations to host-owned channels and modes. Validate raw requests, project only authorized data, and check entire batches immediately before committing. Keep the internal store synchronous; plugin commands are asynchronous.
+- Require installation consent before executing received code. Reject undeclared access without dynamic permission prompts; keep product confirmations separate from authorization.
+- Revoke channels before instance teardown or replacement; cancel pending UI and ignore late replies. Do not rely on plugin cleanup or the official client for enforcement.
+- Keep registry entries data-only, with valid active providers and preinstalled fallback. Uninstall never deletes document data. Keep recovery available without user-installed code.
+- Apply only validated theme tokens/fonts to host DOM. Render trusted `@nesso/concept-map` directly with injected synchronous APIs; keep its React Flow objects and styles in its package. Compose host overlays outside the canvas; no renderer iframe or plugin permissions.
 - Keep app-specific components in `src/components/app`. Concept/relation editing and membership forms live in the Inspector; view creation lives in the Explorer. Map canvas commands and gestures to domain writes.
 - Keep canvas undo/redo controls next to delete.

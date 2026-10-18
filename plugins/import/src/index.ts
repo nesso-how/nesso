@@ -1,15 +1,13 @@
-import type { NessoOperation, NessoState, Plugin } from '@nesso/plugin'
-import { createTranslator, defaultLocale } from '@nesso/i18n'
+import { PluginError, type NessoOperation } from '@nesso/plugin'
+import type { ActionContext, ActionContribution } from '@nesso/plugin/runtime'
 import { newIri, parseGraph, type Graph } from '@nesso/schema'
-import en from './i18n/en.json' with { type: 'json' }
-import it from './i18n/it.json' with { type: 'json' }
-import zhCN from './i18n/zh-CN.json' with { type: 'json' }
+import source from '../package.json' with { type: 'json' }
 
-const translate = createTranslator(en, { it, 'zh-CN': zhCN })
+const { i18n } = source
 
 export function buildImportOperations(
   snapshot: Graph,
-  state: Pick<NessoState, 'workspace'>,
+  activeViewId: string | null,
   viewId: string | null,
 ): NessoOperation[] {
   if (snapshot.concepts.length === 0) return []
@@ -33,7 +31,6 @@ export function buildImportOperations(
     const type = types.get(relation.predicate)
     if (type) operations.push({ kind: 'relation.connect', source, target, type })
   }
-  const activeViewId = state.workspace.activeViewId
   if (viewId !== null && viewId !== activeViewId) {
     for (const id of ids.values()) operations.push({ kind: 'view.membership', viewId, conceptId: id, included: true })
   }
@@ -43,41 +40,20 @@ export function buildImportOperations(
   return operations
 }
 
-export const importPlugin: Plugin = {
-  kind: 'actions',
-  metadata: (locale) => ({
-    name: translate(locale)('pluginName'),
-    description: translate(locale)('pluginDescription'),
-    documentation: translate(locale)('pluginDocumentation'),
-  }),
-  operations: ['selection.set', 'concept.add', 'concept.label', 'concept.description', 'relation.connect', 'view.membership'],
-  create: ({ store }) => {
-    const runOnView = (viewId: string | null) => {
-      const input = document.createElement('input')
-      input.type = 'file'
-      input.accept = '.jsonld,.json,application/ld+json'
-      input.onchange = () => {
-        const file = input.files?.[0]
-        if (!file) return
-        const locale = store.getState().preferences.locale ?? defaultLocale
-        file.text().then(
-          (text) => {
-            try {
-              store.applyOperations(buildImportOperations(parseGraph(JSON.parse(text)), store.getState(), viewId))
-            } catch {
-              window.alert(translate(locale)('importFailure'))
-            }
-          },
-          () => window.alert(translate(locale)('importFailure')),
-        )
-      }
-      input.click()
-    }
-    return [{
-      id: 'import-view',
-      label: (locale) => translate(locale)('importView'),
-      run: () => runOnView(store.getState().workspace.activeViewId),
-      runOnView,
-    }]
-  },
+class ImportError extends PluginError {
+  override name = 'ImportError'
+  constructor() { super('failed', [{ path: 'import', message: i18n.importFailure.en }], i18n.importFailure) }
 }
+
+export const create = ({ store, files }: ActionContext): readonly ActionContribution[] => [{
+  id: 'import-view', label: i18n.label, supportsViews: true,
+  run: async ({ viewId }) => {
+    const file = await files.open({ extensions: ['jsonld', 'json'], mimeTypes: ['application/ld+json', 'application/json'] })
+    if (!file) return
+    const state = await store.refresh()
+    try {
+      if (!('viewGraph' in state)) throw new ImportError()
+      await store.applyOperations(buildImportOperations(parseGraph(JSON.parse(file.text)), state.workspace.activeViewId, viewId), { atRevision: state.revision })
+    } catch { throw new ImportError() }
+  },
+}]

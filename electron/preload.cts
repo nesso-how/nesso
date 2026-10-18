@@ -4,6 +4,8 @@ import type { AiChatEvent } from '@nesso/ai'
 import type { McpBridge, McpEvent, McpState } from './mcp-bridge.js'
 import type { PersistenceBridge } from '../shared/persistence.js'
 import type { DataLocationBridge, DataLocationState } from '../shared/data-location.js'
+import type { FileBridge } from '../shared/files.js'
+import type { PluginBridge } from '../shared/plugins.js'
 
 const { contextBridge, ipcRenderer } = require('electron') as typeof import('electron')
 const beforeSave = (request: string, reply: string, save: () => Promise<boolean>) => {
@@ -62,6 +64,28 @@ const dataLocation: DataLocationBridge = {
   },
 }
 contextBridge.exposeInMainWorld('nessoDataLocation', dataLocation)
+const files: FileBridge = {
+  open: (id, options) => ipcRenderer.invoke('files:open', id, options),
+  save: (id, options) => ipcRenderer.invoke('files:save', id, options),
+  cancel: (id) => ipcRenderer.send('files:cancel', id),
+}
+contextBridge.exposeInMainWorld('nessoFiles', files)
+const plugins: PluginBridge = {
+  list: () => ipcRenderer.invoke('plugins:list'),
+  propose: (id, input, locale, replacing) => ipcRenderer.invoke('plugins:propose', id, input, locale, replacing),
+  installNpm: (id, input, locale, replacing) => ipcRenderer.invoke('plugins:npm', id, input, locale, replacing),
+  settle: (id, contentId, valid) => ipcRenderer.invoke('plugins:settle', id, contentId, valid),
+  cancel: (id) => ipcRenderer.send('plugins:cancel', id),
+  remove: (contentId) => ipcRenderer.invoke('plugins:remove', contentId),
+  setEnabled: (contentId, enabled) => ipcRenderer.invoke('plugins:enabled', contentId, enabled),
+  subscribe: (listener) => {
+    const receive = (_event: unknown, event: Parameters<typeof listener>[0]) => listener(event)
+    ipcRenderer.on('plugins:event', receive)
+    ipcRenderer.send('plugins:ready')
+    return () => { ipcRenderer.removeListener('plugins:event', receive); ipcRenderer.send('plugins:disconnect') }
+  },
+}
+contextBridge.exposeInMainWorld('nessoPlugins', plugins)
 const ai: AiBridge = {
   list: () => ipcRenderer.invoke('ai:list'),
   save: (input) => ipcRenderer.invoke('ai:save', input),

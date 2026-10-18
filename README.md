@@ -30,7 +30,7 @@ Your knowledge lives in one graph.
 - **Concepts** represent ideas, connected by directed, typed **relations**.
 - **Views** are named subsets of that graph.
 - **Vocabularies** provide relation types. You can also name your own.
-- **Plugins** provide the canvas, vocabularies, themes, and any actions on the current view.
+- **Plugins** provide vocabularies, themes, and actions on the current view. The canvas is a trusted Nesso renderer.
 
 Use the Explorer to navigate views, the canvas to build the graph, and the Inspector to edit the selection and its memberships.
 
@@ -53,22 +53,23 @@ flowchart TD
   Host --> Schema["@nesso/schema"]
   Host --> UI["@nesso/ui"]
   Host --> I18n["@nesso/i18n"]
-  Host <-->|Injected store| Plugins["Plugins<br/>(renderers, vocabs, themes, actions"]
-  Plugins --> I18n
+  Host <-->|Direct injected store| Renderer["@nesso/concept-map<br/>(trusted renderer)"]
+  Host <-->|Isolated channels| Plugins["Plugins<br/>(vocabs, themes, actions)"]
+  Renderer --> I18n
   Host -.-> Contract["@nesso/plugin"]
   Plugins -.-> Contract
 ```
 
-The host owns state, materializes `viewGraph`, and registers plugins statically. Plugins use the injected store, never host internals. Dashed arrows show the types-only contract.
+The host owns state and materializes `viewGraph`. The trusted renderer uses injected synchronous APIs; plugins use isolated, validated channels. External package installation is desktop bridge-only, without installation controls in Settings. Dashed arrows show shared contract types.
 
 | Package | Kind | Responsibility |
 | --- | --- | --- |
 | [`@nesso/schema`](packages/schema/README.md) | Core | Graph model, validation, and JSON-LD. |
-| [`@nesso/plugin`](packages/plugin/README.md) | Core | Types-only plugin and store contract. |
+| [`@nesso/plugin`](packages/plugin/README.md) | Core | Public types, plugin validation, and asynchronous clients. |
 | [`@nesso/i18n`](packages/i18n/README.md) | Core | i18next with typed keys, isolated translators, and English fallback. |
 | [`@nesso/ui`](packages/ui/README.md) | Core | Shared React controls and styles. |
 | [`@nesso/ai`](packages/ai/README.md) | Core | Shared chat and MCP tool contracts, policies, and assistant instructions. |
-| [`@nesso/concept-map`](plugins/concept-map/README.md) | Plugin | React Flow canvas for the host-provided visible graph. |
+| [`@nesso/concept-map`](packages/concept-map/README.md) | Renderer | Trusted React Flow canvas for the host-provided visible graph. |
 | [`@nesso/base-vocab`](plugins/base-vocab/README.md) | Plugin | Default relation vocabulary. |
 | [`@nesso/export`](plugins/export/README.md) | Plugin | Graph and view export as JSON-LD. |
 | [`@nesso/import`](plugins/import/README.md) | Plugin | Merge a Nesso JSON-LD file into the current graph. |
@@ -85,7 +86,7 @@ pnpm desktop
 
 `pnpm desktop` builds and runs the desktop app. Use `pnpm dev` to run the web demo locally.
 
-Build and checks: `pnpm build`, `pnpm lint`, `pnpm test`, `pnpm analyze`.
+Build and checks: `pnpm build`, `pnpm lint`, `pnpm test`, `pnpm test:plugins`, `pnpm analyze`.
 
 Use `pnpm analyze --summary` for a compact Fallow report. Duplication and complexity are advisory.
 
@@ -95,7 +96,7 @@ For release instructions, run `pnpm release --help`.
 
 ### Create a plugin
 
-Build your own renderers, vocabularies, actions, or themes.
+Plugins contribute vocabularies, actions, or themes. Renderers are trusted Nesso packages, not installable plugins.
 See the [plugin guide](packages/plugin/README.md#create-a-plugin) to get started.
 
 ## License

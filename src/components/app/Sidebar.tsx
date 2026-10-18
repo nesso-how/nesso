@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Sidebar } from './SidebarLayout'
 import { NewViewButton } from './NewViewButton'
 import { DeleteViewDialog } from './DeleteViewDialog'
-import { viewActions } from '@/plugins'
+import { invokeAction, useViewActions } from '@/plugins'
 import { host, nessoStore, useNessoStore } from '@/store'
 import { maxViewNameLength } from '@/store/settings'
 import type { HostStore } from '@/store/types'
@@ -15,10 +15,11 @@ import { useTranslation } from '@/i18n'
 function ViewActionGroup({ viewId }: { viewId: string | null }) {
   const t = useTranslation()
   const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale)
+  const actions = useViewActions()
   return (
     <Menu.Group>
       <Menu.GroupLabel className="px-2.5 pt-1 pb-0.5 text-[11px] leading-4 text-muted-foreground">{t('actions')}</Menu.GroupLabel>
-      {viewActions.map((action) => <MenuItem key={action.id} className="pl-4" onClick={() => action.runOnView?.(viewId)}>{action.label(locale)}</MenuItem>)}
+      {actions.map((action) => <MenuItem key={action.id} className="pl-4" onClick={() => { void invokeAction(action.id, viewId) }}>{action.label[locale] ?? action.label.en}</MenuItem>)}
     </Menu.Group>
   )
 }

@@ -1,19 +1,38 @@
 {
   "name": "@nesso/plugin",
   "version": "0.0.0",
+  "description": "Types, validation, and asynchronous clients for isolated Nesso plugins",
   "license": "MIT",
   "type": "module",
+  "files": ["dist", "example"],
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./runtime": "./src/runtime.ts",
+    "./package": "./src/package.ts"
   },
-  "peerDependencies": {
-    "@nesso/i18n": "workspace:*",
-    "@nesso/schema": "workspace:*",
-    "react": "^19.2.8"
+  "publishConfig": {
+    "access": "public",
+    "exports": {
+      ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
+      "./runtime": { "types": "./dist/runtime.d.ts", "default": "./dist/runtime.js" },
+      "./package": { "types": "./dist/package.d.ts", "default": "./dist/package.js" }
+    }
+  },
+  "scripts": {
+    "build": "tsc -p ../../tsconfig.plugin.json && tsdown",
+    "prepack": "pnpm run build"
+  },
+  "dependencies": {
+    "semver": "^7.8.5",
+    "validate-npm-package-name": "^8.0.0",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@nesso/i18n": "workspace:*",
     "@nesso/schema": "workspace:*",
-    "@types/react": "^19.2.18"
+    "@types/semver": "^7.8.0",
+    "@types/validate-npm-package-name": "^4.0.2",
+    "tsdown": "^0.23.1"
   }
 }

@@ -1,4 +1,4 @@
-import { relationKey } from './core.ts'
+import { isAbsoluteIri, relationKey } from './core.ts'
 import type { SchemaIssue } from './errors.ts'
 import type { Concept, Relation, RelationType } from './types.ts'
 
@@ -13,8 +13,10 @@ export function validateGraph(graph: {
   const relations = new Set<string>()
 
   for (const [index, concept] of graph.concepts.entries()) {
-    if (!concept.id || concepts.has(concept.id)) {
-      issues.push({ path: `concepts[${index}].id`, message: `Duplicate or missing concept IRI: ${concept.id}` })
+    if (!isAbsoluteIri(concept.id)) {
+      issues.push({ path: `concepts[${index}].id`, message: `Expected an absolute IRI: ${concept.id}` })
+    } else if (concepts.has(concept.id)) {
+      issues.push({ path: `concepts[${index}].id`, message: `Duplicate concept IRI: ${concept.id}` })
     }
     concepts.add(concept.id)
     if (concept.description !== undefined && typeof concept.description !== 'string') {
@@ -28,8 +30,10 @@ export function validateGraph(graph: {
     }
   }
   for (const [index, type] of graph.relationTypes.entries()) {
-    if (!type.id || types.has(type.id) || concepts.has(type.id)) {
-      issues.push({ path: `relationTypes[${index}].id`, message: `Duplicate or missing relation IRI: ${type.id}` })
+    if (!isAbsoluteIri(type.id)) {
+      issues.push({ path: `relationTypes[${index}].id`, message: `Expected an absolute IRI: ${type.id}` })
+    } else if (types.has(type.id) || concepts.has(type.id)) {
+      issues.push({ path: `relationTypes[${index}].id`, message: `Duplicate relation IRI: ${type.id}` })
     }
     types.add(type.id)
   }

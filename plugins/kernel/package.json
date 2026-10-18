@@ -3,13 +3,27 @@
   "version": "0.0.0",
   "license": "MIT",
   "type": "module",
+  "nesso": {
+    "apiVersion": 1,
+    "kind": "theme",
+    "entry": "dist/index.js",
+    "styles": [], "reads": [], "writes": [], "capabilities": []
+  },
+  "i18n": {
+    "metadata": {
+      "name": { "en": "Kernel", "it": "Kernel", "zh-CN": "Kernel" },
+      "description": { "en": "Nesso's visual identity, with the Kernel theme.", "it": "L’identità visiva di Nesso, con il tema Kernel.", "zh-CN": "通过 Kernel 主题呈现 Nesso 的视觉风格。" },
+      "documentation": {
+        "en": "Kernel supplies the app's light theme tokens and fonts. It does not change your graph or views.",
+        "it": "Kernel fornisce i token del tema chiaro e i font dell’app. Non modifica il grafo o le viste.",
+        "zh-CN": "Kernel 提供应用的浅色主题设计变量和字体，不会改变你的图谱或视图。"
+      }
+    }
+  },
   "exports": {
-    ".": "./src/index.ts",
-    "./styles.css": "./src/styles.css",
-    "./fonts.css": "./src/fonts.css"
+    ".": "./src/index.ts"
   },
   "dependencies": {
-    "@nesso/i18n": "workspace:*",
     "@fontsource-variable/geist": "^5.3.0",
     "@fontsource/ibm-plex-mono": "^5.2.7"
   },

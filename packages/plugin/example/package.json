@@ -1,0 +1,34 @@
+{
+  "name": "nesso-plugin-uppercase",
+  "version": "1.0.0",
+  "description": "Uppercase concept labels in the invoked Nesso view",
+  "license": "MIT",
+  "type": "module",
+  "keywords": ["nesso-plugin"],
+  "files": ["dist"],
+  "scripts": {
+    "check": "tsc",
+    "build": "npm run check && esbuild src/index.ts --bundle --format=esm --platform=browser --target=es2022 --outfile=dist/index.js"
+  },
+  "devDependencies": {
+    "@nesso/plugin": "0.0.0",
+    "esbuild": "^0.28.2",
+    "typescript": "~7.0.2"
+  },
+  "nesso": {
+    "apiVersion": 1,
+    "kind": "actions",
+    "entry": "dist/index.js",
+    "styles": [],
+    "reads": ["view"],
+    "writes": ["concept.label"],
+    "capabilities": []
+  },
+  "i18n": {
+    "metadata": {
+      "name": { "en": "Uppercase labels" },
+      "description": { "en": "Uppercase concept labels in the invoked view." },
+      "documentation": { "en": "Changes the labels of concepts in the invoked view in one undoable transaction. Concepts shared with other views change there too." }
+    }
+  }
+}

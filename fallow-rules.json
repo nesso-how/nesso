@@ -7,16 +7,17 @@
       "id": "react-flow-isolation",
       "kind": "banned-import",
       "specifiers": ["@xyflow/react"],
-      "exclude": ["plugins/concept-map/**"],
-      "message": "Keep React Flow imports in plugins/concept-map.",
+      "exclude": ["packages/concept-map/**"],
+      "message": "Keep React Flow imports in packages/concept-map.",
       "severity": "error"
     },
     {
-      "id": "plugin-types-only",
+      "id": "plugin-runtime-isolation",
       "kind": "banned-import",
-      "specifiers": ["@nesso/plugin"],
+      "specifiers": ["@nesso/kernel", "@nesso/base-vocab", "@nesso/import", "@nesso/export"],
       "ignoreTypeOnly": true,
-      "message": "Import only types from @nesso/plugin.",
+      "exclude": ["plugins/**"],
+      "message": "Load plugin code inside its isolated runtime, not the host.",
       "severity": "error"
     }
   ]

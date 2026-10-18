@@ -3,8 +3,6 @@ import test from 'node:test'
 import { createSeedDocument } from '../data/seed.ts'
 import { createNessoStore } from './create.ts'
 import { completeIntro, createIntroStore, focusConceptId, setIntroStep } from './intro.ts'
-import { createPluginStore } from './commands.ts'
-import { NessoError } from './errors.ts'
 
 test('intro steps reuse one graph and restore the seed views when moving forward and back', () => {
   const store = createIntroStore('en')
@@ -30,7 +28,7 @@ test('intro steps reuse one graph and restore the seed views when moving forward
 test('intro navigation stays isolated from the user document and its viewport', () => {
   const seed = createSeedDocument('it')
   const host = createNessoStore(seed.graph, { workspace: seed.workspace })
-  host.registerRenderer({ id: 'concept-map', component: () => null })
+  host.registerRenderer({ id: 'concept-map' })
   host.store.setConceptLabel(seed.graph.concepts[0].id, 'My concept')
   host.store.setView('rest')
   host.store.setSelection([{ kind: 'concept', id: seed.graph.concepts[0].id }])
@@ -45,12 +43,10 @@ test('intro navigation stays isolated from the user document and its viewport', 
   setIntroStep(intro, 2)
   assert.equal(intro.getState().workspace.activeViewId, null)
   assert.deepEqual(intro.getState().viewGraph.concepts, seed.graph.concepts)
-  const renderer = createPluginStore(intro, ['selection.set'])
-  renderer.setSelection([{ kind: 'concept', id: seed.graph.concepts[0].id }])
+  intro.setSelection([{ kind: 'concept', id: seed.graph.concepts[0].id }])
   assert.deepEqual(intro.getState().selected, [{ kind: 'concept', id: seed.graph.concepts[0].id }])
   intro.applyOperations([{ kind: 'preferences.inspectorTab', value: 'chat' }])
   assert.equal(intro.getState().preferences.inspectorTab, 'chat')
-  assert.throws(() => renderer.setConceptLabel(seed.graph.concepts[0].id, 'Changed'), NessoError)
   assert.equal(host.store.getState(), original)
   assert.equal(intro.getState().preferences.locale, 'it')
   assert.deepEqual(intro.getState().graph, seed.graph)
