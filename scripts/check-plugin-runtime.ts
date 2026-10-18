@@ -8,7 +8,6 @@ import assert from 'node:assert/strict'
 import { serveAppAsset } from '../electron/asset-protocol.ts'
 import { parseGraph, serializeGraph } from '@nesso/schema'
 import { themeTokens } from '../packages/plugin/src/runtime.ts'
-import { connectPlugins } from '../electron/plugins.ts'
 import { createTrustedRequest } from '../electron/ipc.ts'
 import { createDataLocation } from '../electron/data-location.ts'
 import { connectDataLocation } from '../electron/data-location-ipc.ts'
@@ -16,6 +15,8 @@ import { connectDesktopPersistence } from '../electron/persistence.ts'
 import { connectFiles } from '../electron/files.ts'
 import { maxConceptLabelLength } from '../src/store/settings.ts'
 import themeFixture from '../packages/plugin/test/theme.json' with { type: 'json' }
+
+const { connectPlugins } = await import(new URL('../dist-electron/electron/plugins.js', import.meta.url).href) as typeof import('../electron/plugins.ts')
 
 const profile = mkdtempSync(path.join(tmpdir(), 'nesso-plugin-test-'))
 const attempted: string[] = []
