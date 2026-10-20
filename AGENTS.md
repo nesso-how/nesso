@@ -24,6 +24,7 @@
 
 ## Architecture
 
+- Keep modules focused and interfaces small and cohesive. Depend on explicit contracts at architectural boundaries; introduce abstractions only for concrete needs.
 - Consolidate repeated app UI in `@nesso/ui`; keep app-specific state and domain logic in the host.
 - Plugins and trusted renderers use only injected APIs, never app internals or a concrete store. Keep instances independent; no module-global mutable store. React subscriptions use the injected instance with `useSyncExternalStore`.
 - Only the host materializes `viewGraph`; plugins never recompute it. Do not persist selection, plugin definitions, or `viewGraph`.
