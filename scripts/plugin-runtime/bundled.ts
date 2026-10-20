@@ -1,0 +1,83 @@
+import assert from 'node:assert/strict'
+import { parseGraph } from '@nesso/schema'
+import { parseContribution, type ViewState } from '../../packages/plugin/src/runtime.ts'
+import { baseState, waitFor, type CheckContext } from './helpers.ts'
+
+type Probe = {
+  done: boolean
+  contribution: unknown
+  discoveryRequests: number
+  requests: { method: string; params: { name?: string; text?: string } }[]
+  complete?: { ok: boolean }
+  error?: string
+}
+
+export async function verifyBundled({ window, url }: CheckContext) {
+  const base = baseState()
+  const graph = { concepts: [{ id: 'urn:probe:concept', label: 'Probe', position: { x: 0, y: 0 } }], relations: [], relationTypes: [] }
+  const state: ViewState = { ...base, viewGraph: graph, targetViewId: null, workspace: { activeViewId: null, savedViews: [] }, selected: [], activeVocab: null, history: { canUndo: false, canRedo: false } }
+  for (const [name, kind, invocation] of [
+    ['kernel', 'theme', false], ['base-vocab', 'vocab', false],
+    ['import', 'actions', false], ['export', 'actions', false],
+    ['import', 'actions', true], ['export', 'actions', true],
+  ] as const) {
+    const runner = new URL(kind === 'actions' ? 'plugin-runner/actions.html' : 'plugin-runner/index.html', url)
+    await window.webContents.executeJavaScript(`(async()=>{
+      window.__bundled={done:false,contribution:null,discoveryRequests:0,requests:[]};
+      const response=await fetch(${JSON.stringify(new URL(`preinstalled/${name}/index.js`, url).href)});
+      if(!response.ok)throw new Error('Could not load bundled plugin: '+${JSON.stringify(name)});
+      const bytes=new Uint8Array(await response.arrayBuffer());
+      const entry='data:text/javascript;base64,'+btoa(Array.from(bytes,byte=>String.fromCharCode(byte)).join(''));
+      const frame=document.createElement('iframe');frame.id='bundled-probe';frame.sandbox='allow-scripts';frame.hidden=true;
+      const loaded=new Promise(resolve=>frame.onload=resolve);frame.src=${JSON.stringify(`${runner}#probe`)};document.body.append(frame);await loaded;
+      const channel=new MessageChannel();window.__bundledPort=channel.port1;
+      channel.port1.onmessage=({data})=>{
+        const result=window.__bundled;
+        if(data.type==='contribution'){
+          result.contribution=data.value;result.discoveryRequests=result.requests.length;
+          if(${invocation}){
+            channel.port1.postMessage({type:'invoke',actionId:data.value[0].id,invocation:{viewId:null}});
+          }else result.done=true;
+        }
+        if(data.type==='request'){
+          result.requests.push({method:data.method,params:data.params});
+          if(data.method==='store.refresh')channel.port1.postMessage({type:'state',state:${JSON.stringify(state)}});
+          const allowed=['store.refresh','files.open','files.save'].includes(data.method);
+          channel.port1.postMessage({type:'response',id:data.id,ok:allowed,...(allowed?{value:data.method==='files.save'?{saved:false}:null}:{error:{code:'denied',issues:[{path:'probe',message:'Unexpected request'}]}})});
+        }
+        if(data.type==='complete'){result.complete=data;result.done=true}
+        if(data.type==='close'){result.error=data.reason;result.done=true}
+      };
+      frame.contentWindow.postMessage({type:'bootstrap',token:'probe',mode:${JSON.stringify(kind === 'actions' ? 'actions' : 'definition')},kind:${JSON.stringify(kind)},state:${JSON.stringify(invocation ? state : base)},entry},'*',[channel.port2]);
+    })()`)
+    try {
+      const result = await waitFor(async () => window.webContents.executeJavaScript('window.__bundled') as Promise<Probe>, (value) => value.done)
+      assert.equal(result.error, undefined, name)
+      assert.equal(result.discoveryRequests, 0, name)
+      if (kind === 'actions') {
+        const descriptors = parseContribution(kind, result.contribution)
+        assert.deepEqual(descriptors.map(({ id }) => id), [`${name}-view`])
+        if (invocation) {
+          assert.equal(result.complete?.ok, true, name)
+          assert.deepEqual(result.requests.map(({ method }) => method), name === 'import' ? ['files.open'] : ['store.refresh', 'files.save'])
+          if (name === 'export') {
+            const saved = result.requests.find(({ method }) => method === 'files.save')!.params
+            assert.equal(saved.name, 'nesso-graph.jsonld')
+            assert.deepEqual(parseGraph(JSON.parse(saved.text!)), graph)
+          }
+        } else assert.deepEqual(result.requests, [])
+      } else {
+        const definition = parseContribution(kind, result.contribution)
+        assert.equal(definition.id, name)
+        assert.deepEqual(result.requests, [])
+        if ('fonts' in definition) {
+          const paths = [...new Set([...definition.fonts.sans.faces, ...definition.fonts.mono.faces].map(({ path }) => `preinstalled/${name}/${path}`))]
+          assert.ok(paths.length > 0)
+          await window.webContents.executeJavaScript(`Promise.all(${JSON.stringify(paths)}.map(async path=>{const response=await fetch(path);if(!response.ok)throw new Error('Could not load bundled font');await new FontFace('probe',await response.arrayBuffer()).load()})).then(()=>true)`)
+        }
+      }
+    } finally {
+      await window.webContents.executeJavaScript("window.__bundledPort.close();document.querySelector('#bundled-probe').remove()")
+    }
+  }
+}
