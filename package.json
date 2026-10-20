@@ -16,6 +16,8 @@
     "lint": "oxlint",
     "analyze": "fallow",
     "test": "tsc -b packages/ai && tsc -p tsconfig.test.json && node --test",
+    "test:unit": "tsc -b packages/ai && tsc -p tsconfig.test.json && node --test \"**/!(*.integration).test.ts\"",
+    "test:integration": "tsc -b packages/ai && tsc -p tsconfig.test.json && node --test \"**/*.integration.test.ts\"",
     "test:plugins": "pnpm build && electron scripts/check-plugin-runtime.ts",
     "preview": "vite preview",
     "site:dev": "tsc -b packages/i18n && vite --config site/vite.config.ts",

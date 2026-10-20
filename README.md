@@ -88,6 +88,8 @@ pnpm desktop
 
 Build and checks: `pnpm build`, `pnpm lint`, `pnpm test`, `pnpm test:plugins`, `pnpm analyze`.
 
+Test scripts: `pnpm test:unit` for unit tests, `pnpm test:integration` for Node integration tests, and `pnpm test:plugins` for Electron/browser integration tests. `pnpm test` runs both Node test groups.
+
 Use `pnpm analyze --summary` for a compact Fallow report. Duplication and complexity are advisory.
 
 For desktop development, run `pnpm dev --host 127.0.0.1 --strictPort` and `pnpm desktop:dev` in separate terminals.
