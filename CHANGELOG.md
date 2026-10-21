@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.0-alpha.20 — 2026-10-21
+
+### Features
+
+- **splash:** Show on every launch except refresh
+
+### Fixes
+
+- **desktop:** Compile workspace errors and verify packaged startup
+
 ## 1.0.0-alpha.19 — 2026-10-21
 
 ### Breaking Changes
