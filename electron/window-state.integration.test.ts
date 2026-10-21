@@ -33,10 +33,12 @@ test('closing and reopening restores window bounds', (context) => {
 
 test('maximized and minimized windows retain their normal bounds', (context) => {
   const { open, bounds, window } = fixture(context)
+  window.isMaximized = () => true
   window.emit('maximize')
   window.emit('close')
   assert.equal(open().maximized, true)
   window.isMinimized = () => true
+  window.isMaximized = () => false
   window.emit('unmaximize')
   window.emit('close')
   assert.deepEqual(open().bounds, bounds)
@@ -44,6 +46,19 @@ test('maximized and minimized windows retain their normal bounds', (context) => 
   window.isMinimized = () => false
   window.emit('unmaximize')
   window.emit('close')
+  assert.equal(open().maximized, false)
+})
+
+test('resizing a maximized window without an unmaximize event restores its new bounds', (context) => {
+  const { open, bounds, window } = fixture(context)
+  window.isMaximized = () => true
+  window.emit('maximize')
+  window.isMaximized = () => false
+  Object.assign(bounds, { x: 300, y: 150, width: 950, height: 640 })
+  window.emit('resize')
+  window.isMinimized = () => true
+  window.emit('close')
+  assert.deepEqual(open().bounds, bounds)
   assert.equal(open().maximized, false)
 })
 

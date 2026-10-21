@@ -38,10 +38,13 @@ export function createWindowState(directory: string, getWorkArea: (bounds: Recta
     maximized: state?.maximized ?? false,
     track: (window: BrowserWindow) => {
       let maximized = window.isMaximized()
-      window.on('maximize', () => { maximized = true })
-      window.on('unmaximize', () => { if (!window.isMinimized()) maximized = false })
+      const updateMaximized = () => { if (!window.isMinimized()) maximized = window.isMaximized() }
+      window.on('maximize', updateMaximized)
+      window.on('unmaximize', updateMaximized)
+      window.on('resize', updateMaximized)
       window.on('close', () => {
         try {
+          updateMaximized()
           const value = { bounds: window.getNormalBounds(), maximized }
           writeFileSync(`${file}.tmp`, JSON.stringify(value), { mode: 0o600 })
           renameSync(`${file}.tmp`, file)
