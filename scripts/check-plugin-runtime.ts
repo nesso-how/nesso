@@ -7,13 +7,13 @@ import path from 'node:path'
 import assert from 'node:assert/strict'
 import { serveAppAsset } from '../electron/asset-protocol.ts'
 import { parseGraph, serializeGraph } from '@nesso/schema'
+import { aiTextLimits } from '@nesso/ai'
 import { themeTokens } from '../packages/plugin/src/runtime.ts'
 import { createTrustedRequest } from '../electron/ipc.ts'
 import { createDataLocation } from '../electron/data-location.ts'
 import { connectDataLocation } from '../electron/data-location-ipc.ts'
 import { connectDesktopPersistence } from '../electron/persistence.ts'
 import { connectFiles } from '../electron/files.ts'
-import { maxConceptLabelLength } from '../src/store/settings.ts'
 import themeFixture from '../packages/plugin/test/theme.json' with { type: 'json' }
 
 const { connectPlugins } = await import(new URL('../dist-electron/electron/plugins.js', import.meta.url).href) as typeof import('../electron/plugins.ts')
@@ -637,7 +637,7 @@ async function verify(url: string, name: string) {
     stage = 'inline concept editing'
     await waitFor(async () => canvas.executeJavaScript("!!document.querySelector('.concept-node input')") as Promise<boolean>, (value) => value)
     const editing = await canvas.executeJavaScript("(()=>{const input=document.querySelector('.concept-node input');return {id:input.closest('.react-flow__node').dataset.id,label:input.value,maxLength:input.maxLength}})()") as { id: string; label: string; maxLength: number }
-    assert.equal(editing.maxLength, maxConceptLabelLength)
+    assert.equal(editing.maxLength, aiTextLimits.conceptLabel)
     const editedLabel = () => canvas.executeJavaScript(`document.querySelector(${JSON.stringify(`.react-flow__node[data-id="${editing.id}"]`)}).getAttribute('aria-label')`) as Promise<string>
     await canvas.executeJavaScript("(()=>{const input=document.querySelector('.concept-node input');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(input,'Inline label');input.dispatchEvent(new Event('input',{bubbles:true}))})()")
     await canvas.executeJavaScript("document.querySelector('.concept-node input').dispatchEvent(new FocusEvent('focusout',{bubbles:true}))")
