@@ -29,7 +29,7 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
   const detailsOpen = useNessoStore((state) => !state.preferences.collapsedSections?.includes('inspector'))
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [introOpen, setIntroOpen] = useState(() => !host.store.getState().preferences.introSeen)
-  const [splashOpen, setSplashOpen] = useState(() => !host.store.getState().preferences.introSeen)
+  const [splashOpen, setSplashOpen] = useState(() => (performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined)?.type !== 'reload')
   const [settingsPage, setSettingsPage] = useState('general')
   const [deleting, setDeleting] = useState<SavedView | 'complete-graph' | null>(null)
   const canvas = useRef<HTMLDivElement>(null)
