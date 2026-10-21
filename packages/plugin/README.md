@@ -1,14 +1,14 @@
 # @nesso/plugin
 
-Types, validation, and asynchronous clients for isolated Nesso actions, vocabularies, and themes. The canvas is a trusted renderer, not a plugin.
+Types, validation, and asynchronous clients for isolated Nesso actions plus data-only vocabularies and themes. The canvas is a trusted renderer, not a plugin.
 
 ## Create a plugin
 
-Start with the [standalone action example](example/README.md). Export `create(context)` and build one self-contained browser JavaScript entry, bundling any dependencies. Nesso does not install dependencies, run package scripts, compile received source, or load module graphs.
+Start with the [standalone action example](example/README.md). Actions export `create(context)` and build one self-contained browser JavaScript entry, bundling any dependencies. Nesso does not install dependencies, run package scripts, compile received source, or load module graphs. Themes and vocabularies ship a JSON definition file instead; the host validates it and never executes it.
 
 - **Actions** return `{ id, label, supportsViews, run }` records. Discovery has no document access or effects; each invocation runs in a fresh worker. See [Import](../../plugins/import) and [Export](../../plugins/export).
-- **Vocabularies** return a `VocabDefinition` with stable absolute relation-type IRIs and a default among their own types. See [Base Vocab](../../plugins/base-vocab).
-- **Themes** return a light-only `ThemeDefinition` with colors, metrics, and local WOFF2 font descriptors. Include exactly the referenced fonts: at most 32 files, 4 MiB each. The host validates and applies them; arbitrary CSS and remote fonts are not supported. See [Kernel](../../plugins/kernel).
+- **Vocabularies** ship a `VocabDefinition` JSON file with stable absolute relation-type IRIs and a default among their own types. See [Base Vocab](../../plugins/base-vocab).
+- **Themes** ship a light-only `ThemeDefinition` JSON file with colors, metrics, and local WOFF2 font descriptors. Include exactly the referenced fonts: at most 32 files, 4 MiB each. The host validates and applies them; arbitrary CSS and remote fonts are not supported. See [Kernel](../../plugins/kernel).
 
 Nesso injects the context. Import types such as `ActionContext` and `ActionContribution` from `@nesso/plugin`; there is no need to create a client yourself.
 
@@ -20,7 +20,7 @@ Use the [example package.json](example/package.json). Package names must be vali
 | --- | --- |
 | `apiVersion` | `1` |
 | `kind` | `actions`, `vocab`, or `theme` |
-| `entry` | Package-local `.js` path, such as `dist/index.js` |
+| `entry` | Actions: package-local `.js` path, such as `dist/index.js`. Themes and vocabularies: package-local `.json` definition path, such as `dist/definition.json` |
 | `styles` | `[]` |
 | `reads` | `[]`, `["view"]`, or `["graph"]` |
 | `writes` | Supported operation kinds, without duplicates |
@@ -50,7 +50,7 @@ External installation is desktop-only through the internal bridge; web runs bund
 
 Native consent binds exact content and declared access before execution. Every changed package needs fresh consent; failed updates preserve the previous installation. Settings can enable, disable, or remove installed packages without deleting document data. Launch with `--safe-plugins` for recovery without external code.
 
-The host validates requests and revokes effects before teardown. Plugins receive no Node, host DOM, credentials, arbitrary filesystem, or network access. Actions use interruptible workers; definitions use sandboxed frames. This does not guarantee hard CPU/RAM containment or host responsiveness.
+The host validates requests and revokes effects before teardown. Plugins receive no Node, host DOM, credentials, arbitrary filesystem, or network access. Actions use interruptible workers; themes and vocabularies are validated data and never executed. This does not guarantee hard CPU/RAM containment or host responsiveness.
 
 ## SDK development
 

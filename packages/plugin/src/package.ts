@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import parseVersion from 'semver/functions/parse.js'
 import validateName from 'validate-npm-package-name'
-import { checkMessageSize, parsePluginI18n, parsePluginManifest, PluginError, type PluginI18n, type PluginManifest } from './runtime.ts'
+import { checkMessageSize, parseDefinition, parsePluginI18n, parsePluginManifest, PluginError, type PluginI18n, type PluginManifest } from './runtime.ts'
 
 export const packageLimits = { entry: 16 * 1024 * 1024, font: 4 * 1024 * 1024, fonts: 32, record: 32 * 1024 * 1024, installed: 32, total: 128 * 1024 * 1024 } as const
 export type PluginPackageInput = { readonly manifest: unknown; readonly files: readonly { readonly path: string; readonly bytes: Uint8Array }[] }
@@ -43,7 +43,7 @@ export async function preparePluginPackage(input: PluginPackageInput): Promise<P
   const nesso = parsePluginManifest(declaration)
   const i18n = parsePluginI18n(translations)
   if (nesso.kind === 'actions' && nesso.writes.includes('document.reset')) throw new PluginError('unavailable', [{ path: 'nesso.writes', message: 'Plugin reset is not supported' }])
-  if (!Array.isArray(input.files) || !input.files.length || input.files.length > (nesso.kind === 'theme' ? packageLimits.fonts + 1 : 1)) throw new PluginError('invalid-input', [{ path: 'files', message: 'Expected one compiled entry and supported local theme fonts only' }])
+  if (!Array.isArray(input.files) || !input.files.length || input.files.length > (nesso.kind === 'theme' ? packageLimits.fonts + 1 : 1)) throw new PluginError('invalid-input', [{ path: 'files', message: 'Expected one entry and supported local theme fonts only' }])
   const paths = new Set<string>()
   const fonts: { path: string; data: string }[] = []
   const files: { path: string; size: number; sha256: string }[] = []
@@ -64,10 +64,16 @@ export async function preparePluginPackage(input: PluginPackageInput): Promise<P
     }
     files.push({ path: file.path, size: content.byteLength, sha256: await hash(content) })
   }
-  if (!bytes) throw new PluginError('invalid-input', [{ path: 'nesso.entry', message: 'Missing compiled JavaScript entry' }])
+  if (!bytes) throw new PluginError('invalid-input', [{ path: 'nesso.entry', message: 'Missing plugin entry' }])
   let code: string
   try { code = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes) }
-  catch { throw new PluginError('invalid-input', [{ path: 'files', message: 'Expected UTF-8 JavaScript' }]) }
+  catch { throw new PluginError('invalid-input', [{ path: 'files', message: 'Expected UTF-8 entry text' }]) }
+  if (nesso.kind !== 'actions') {
+    let raw: unknown
+    try { raw = JSON.parse(code) }
+    catch { throw new PluginError('invalid-input', [{ path: nesso.entry, message: 'Expected a JSON definition' }]) }
+    parseDefinition(nesso.kind, raw)
+  }
   const order = (left: { path: string }, right: { path: string }) => left.path < right.path ? -1 : left.path > right.path ? 1 : 0
   const index = { name, version, nesso, i18n, files: files.sort(order) }
   const prepared = { name, version, nesso, i18n, code, fonts: fonts.sort(order), contentId: await hash(new TextEncoder().encode(canonical(index))) }

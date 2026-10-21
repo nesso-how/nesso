@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { preparePluginPackage } from '../packages/plugin/src/package.ts'
 import { createPluginStorage } from './plugin-storage.ts'
+import themeFixture from '../packages/plugin/test/theme.json' with { type: 'json' }
 
 test('installed actions restore verified bytes offline, reject conflicts and cancellation, and preserve valid records on failure or removal', async (t) => {
   const directory = await mkdtemp(path.join(tmpdir(), 'nesso-packages-'))
@@ -87,8 +88,11 @@ test('definition records restore offline with exact font bytes and reject tamper
   t.after(() => rm(directory, { recursive: true, force: true }))
   const storage = createPluginStorage(directory)
   for (const kind of ['vocab', 'theme']) {
-    const manifest = { name: `nesso-test-${kind}`, version: '1.0.0', nesso: { apiVersion: 1, kind, entry: 'index.js', styles: [], reads: [], writes: [], capabilities: [] }, i18n: { metadata: { name: { en: 'Test' }, description: { en: 'Test' }, documentation: { en: 'Test' } } } }
-    const files = [{ path: 'index.js', bytes: new TextEncoder().encode('throw new Error("Never execute in storage")') }, ...(kind === 'theme' ? [{ path: 'fonts/sans.woff2', bytes: new TextEncoder().encode('wOF2font') }] : [])]
+    const manifest = { name: `nesso-test-${kind}`, version: '1.0.0', nesso: { apiVersion: 1, kind, entry: 'definition.json', styles: [], reads: [], writes: [], capabilities: [] }, i18n: { metadata: { name: { en: 'Test' }, description: { en: 'Test' }, documentation: { en: 'Test' } } } }
+    const definition = kind === 'theme'
+      ? { ...themeFixture, id: 'test-theme' }
+      : { id: 'test-vocab', relationTypes: [{ id: 'urn:nesso:test', label: 'Test' }], defaultTypeId: 'urn:nesso:test' }
+    const files = [{ path: 'definition.json', bytes: new TextEncoder().encode(JSON.stringify(definition)) }, ...(kind === 'theme' ? [{ path: 'fonts/sans.woff2', bytes: new TextEncoder().encode('wOF2font') }] : [])]
     const prepared = await preparePluginPackage({ manifest, files })
     await storage.install(prepared, () => true)
     await storage.setEnabled(prepared.contentId, false)

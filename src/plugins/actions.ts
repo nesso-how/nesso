@@ -29,7 +29,7 @@ export function loadActions(store: HostStore, source: ActionPackage, notificatio
       theme: Object.fromEntries(themeTokens.map((token) => [token, theme.getPropertyValue(`--${token}`).trim()])),
       conceptPlacementOffset,
     }
-    const stop = loadPluginFrame(frame, { entry: source.entry, runner: 'actions' }, (port, ready, failed) => {
+    const stop = loadPluginFrame(frame, { entry: source.entry }, (port, ready, failed) => {
       if (invocation?.viewId !== null && invocation?.viewId !== undefined && !store.getState().workspace.savedViews.some(({ id }) => id === invocation.viewId)) throw new PluginError('stale-context', [{ path: 'action', message: 'The target view no longer exists' }])
       let files: ReturnType<typeof createPluginFiles>
       const runtime = connectActionChannel(port, store, { ...source.manifest, invocation }, base, {

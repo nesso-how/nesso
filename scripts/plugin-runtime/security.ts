@@ -1,47 +1,6 @@
 import assert from 'node:assert/strict'
 import { baseState, waitFor, type CheckContext } from './helpers.ts'
 
-export async function verifyDefinitions({ window, url, attempted }: CheckContext) {
-  const state = baseState()
-  const code = `export const create=async()=>{
-    const result={};const target='http://127.0.0.1:5191/plugin-probe';
-    for(const [name,run] of Object.entries({
-      parentDOM:()=>parent.document.body,storage:()=>localStorage.length,
-      fetch:()=>fetch(target),module:()=>import(target),
-      worker:()=>new Promise((resolve,reject)=>{const worker=new Worker('data:text/javascript,postMessage(1)');worker.onmessage=resolve;worker.onerror=reject}),
-      font:()=>new FontFace('probe','url('+target+')').load(),
-      xhr:()=>new Promise((resolve,reject)=>{const xhr=new XMLHttpRequest();xhr.open('GET',target);xhr.onload=resolve;xhr.onerror=reject;xhr.send()}),
-    })){try{await run();result[name]=false}catch{result[name]=true}}
-    result.bridges=typeof window.nessoPersistence==='undefined'&&typeof window.nessoAi==='undefined'&&typeof window.nessoFiles==='undefined'&&typeof window.nessoPlugins==='undefined'&&typeof require==='undefined';
-    const image=new Image();image.src=target;document.body.append(image);
-    const link=document.createElement('link');link.rel='stylesheet';link.href=target;document.head.append(link);
-    const form=document.createElement('form');form.action=target;document.body.append(form);form.submit();
-    try{navigator.sendBeacon(target,'probe')}catch{}
-    try{new WebSocket('ws://127.0.0.1:5191/plugin-probe')}catch{}
-    result.popup=window.open(target)===null;
-    try{top.location.href=target;result.topNavigation=false}catch{result.topNavigation=true}
-    return {id:'probe',relationTypes:Object.entries(result).map(([name,value])=>({id:'urn:probe:'+name,label:name+':'+value})),defaultTypeId:'urn:probe:parentDOM'};
-  }`
-  const runner = new URL('plugin-runner/index.html', url).href
-  await window.webContents.executeJavaScript(`(async()=>{
-    window.__definition=null;window.__definitionClosed=false;
-    const frame=document.createElement('iframe');frame.id='definition-probe';frame.sandbox='allow-scripts';frame.hidden=true;
-    window.addEventListener('message',event=>{if(event.source===frame.contentWindow&&event.data?.type==='plugin-closed'&&event.data.token==='probe')window.__definitionClosed=true});
-    const loaded=new Promise(resolve=>frame.onload=resolve);frame.src=${JSON.stringify(`${runner}#probe`)};document.body.append(frame);await loaded;
-    const channel=new MessageChannel();window.__definitionPort=channel.port1;channel.port1.onmessage=({data})=>{window.__definition=data};
-    frame.contentWindow.postMessage({type:'bootstrap',mode:'definition',kind:'vocab',token:'probe',state:${JSON.stringify(state)},entry:${JSON.stringify(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`)}},'*',[channel.port2]);
-  })()`)
-  const definition = await waitFor(async () => window.webContents.executeJavaScript('window.__definition') as Promise<{ type: string; value: { relationTypes: { label: string }[] } } | null>, (value) => !!value)
-  assert.equal(definition!.type, 'contribution')
-  assert.deepEqual(Object.fromEntries(definition!.value.relationTypes.map(({ label }) => { const [name, value] = label.split(':'); return [name, value === 'true'] })), { parentDOM: true, storage: true, fetch: true, module: true, worker: true, font: true, xhr: true, bridges: true, popup: true, topNavigation: true })
-  const guard = window.webContents.mainFrame.frames.find((frame) => frame.url === `${runner}#probe`)!
-  const child = guard.frames.find((frame) => frame.url === 'about:srcdoc')!
-  await child.executeJavaScript(`document.querySelectorAll('meta[http-equiv="Content-Security-Policy"]').forEach(element=>element.remove());location.href=${JSON.stringify(`${runner}?plugin-probe=secret`)}`)
-  await waitFor(async () => window.webContents.executeJavaScript('window.__definitionClosed') as Promise<boolean>, (value) => value)
-  await window.webContents.executeJavaScript("window.__definitionPort.close();document.querySelector('#definition-probe').remove()")
-  assert.equal(attempted.length, 0)
-}
-
 export async function verifyWorker({ window, url, name, attempted }: CheckContext) {
   const code = `export const create=({store,notifications,clipboard})=>{
     if(clipboard!==undefined||navigator.clipboard!==undefined)throw new Error('Unexpected clipboard access');return [{

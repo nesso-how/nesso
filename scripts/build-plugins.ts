@@ -1,8 +1,9 @@
 import { build } from 'vite'
 import { readFile, writeFile, mkdir, mkdtemp, rename, rm } from 'node:fs/promises'
 import path from 'node:path'
-import { actionRunnerCsp, pluginRunnerCsp } from '../shared/plugin-policy.ts'
-import { parsePluginI18n, parsePluginManifest } from '../packages/plugin/src/runtime.ts'
+import { pathToFileURL } from 'node:url'
+import { actionRunnerCsp } from '../shared/plugin-policy.ts'
+import { parseDefinition, parsePluginI18n, parsePluginManifest } from '../packages/plugin/src/runtime.ts'
 
 const root = path.resolve(import.meta.dirname, '..')
 const script = (code: string) => `<script>${code.replace(/<\/script/gi, '<\\/script')}</script>`
@@ -17,7 +18,7 @@ const publish = async (file: string, content: string | Uint8Array) => {
   await rename(temporary, file)
 }
 try {
-  for (const name of ['kernel', 'base-vocab', 'import', 'export']) {
+  for (const name of ['import', 'export']) {
     const directory = path.join(root, 'plugins', name)
     const source = JSON.parse(await readFile(path.join(directory, 'package.json'), 'utf8'))
     const manifest = parsePluginManifest(source.nesso)
@@ -33,6 +34,17 @@ try {
     })
     const bytes = await readFile(path.join(staging, name, 'index.js'))
     await Promise.all([publish(path.join(root, 'public/preinstalled', name, 'index.js'), bytes), publish(path.join(directory, manifest.entry), bytes)])
+  }
+  for (const [name, kind] of [['kernel', 'theme'], ['base-vocab', 'vocab']] as const) {
+    const directory = path.join(root, 'plugins', name)
+    const source = JSON.parse(await readFile(path.join(directory, 'package.json'), 'utf8'))
+    const manifest = parsePluginManifest(source.nesso)
+    if (manifest.kind !== kind) throw new Error(`Expected a ${kind} package: ${name}`)
+    parsePluginI18n(source.i18n)
+    const module = await import(pathToFileURL(path.join(directory, 'src/index.ts')).href) as { create: () => unknown }
+    const definition = parseDefinition(kind, await module.create())
+    const text = JSON.stringify(definition)
+    await Promise.all([publish(path.join(root, 'public/preinstalled', name, 'definition.json'), text), publish(path.join(directory, manifest.entry), text)])
     if (name === 'kernel') {
       for (const [font, stem] of [['@fontsource-variable/geist', 'geist-{subset}-wght-normal'], ['@fontsource/ibm-plex-mono', 'ibm-plex-mono-{subset}-400-normal']]) {
         const fontRoot = path.join(directory, 'node_modules', font)
@@ -46,7 +58,7 @@ try {
     }
   }
   const output = path.join(root, 'public/plugin-runner')
-  for (const [entry, name] of [['runner', 'NessoRunner'], ['guard', 'NessoGuard'], ['worker', 'NessoWorker'], ['action-relay', 'NessoActionRelay']]) {
+  for (const [entry, name] of [['guard', 'NessoGuard'], ['worker', 'NessoWorker'], ['action-relay', 'NessoActionRelay']]) {
     await build({
       configFile: false, publicDir: false,
       build: {
@@ -56,11 +68,8 @@ try {
       },
     })
   }
-  const code = await readFile(path.join(staging, 'runner/runner.js'), 'utf8')
   const guard = await readFile(path.join(staging, 'runner/guard.js'), 'utf8')
   const guarded = (csp: string, title: string, content: string) => html(csp, `<iframe title="${title}" sandbox="allow-scripts" referrerpolicy="no-referrer"></iframe><template id="runner">${content}</template>${script(guard)}`, 'html,body,iframe{display:block;margin:0;height:100%;width:100%;border:0;overflow:hidden}')
-  const definition = html(pluginRunnerCsp, script(code))
-  await publish(path.join(output, 'index.html'), guarded(pluginRunnerCsp, 'Definition', definition))
   const worker = await readFile(path.join(staging, 'runner/worker.js'))
   const relay = await readFile(path.join(staging, 'runner/action-relay.js'), 'utf8')
   const action = html(actionRunnerCsp, `<script id="worker-source" type="application/json">data:text/javascript;base64,${worker.toString('base64')}</script>${script(relay)}`)

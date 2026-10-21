@@ -6,7 +6,7 @@
   "nesso": {
     "apiVersion": 1,
     "kind": "theme",
-    "entry": "dist/index.js",
+    "entry": "dist/definition.json",
     "styles": [], "reads": [], "writes": [], "capabilities": []
   },
   "i18n": {

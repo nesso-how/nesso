@@ -12,6 +12,7 @@ import registryFetch from 'npm-registry-fetch'
 import { Header, type HeaderData } from 'tar'
 import { acquireNpmPlugin } from './plugin-npm.ts'
 import { preparePluginPackage } from '../packages/plugin/src/package.ts'
+import themeFixture from '../packages/plugin/test/theme.json' with { type: 'json' }
 
 const manifest = { name: '@nesso/test', version: '1.0.0-alpha.1+build.1', scripts: { install: 'never run' }, dependencies: { anything: '*' }, nesso: { apiVersion: 1, kind: 'actions', entry: 'dist/index.js', styles: [], reads: [], writes: [], capabilities: [] }, i18n: { metadata: { name: { en: 'Test' }, description: { en: 'Test' }, documentation: { en: 'Test' } } } }
 const code = 'throw new Error("Never run in the host")'
@@ -61,14 +62,18 @@ test('npm definition acquisition shares validation and binds only local WOFF2 th
   let received = manifest
   let bytes = archive(entries)
   const request = await registry(t, (req, res) => res.end(req.url?.endsWith('.tgz') ? bytes : JSON.stringify({ ...metadata(bytes), ...received })))
+  const vocab = { id: 'test-vocab', relationTypes: [{ id: 'urn:nesso:test', label: 'Test' }], defaultTypeId: 'urn:nesso:test' }
+  const theme = { ...themeFixture, id: 'test-theme' }
   for (const kind of ['vocab', 'theme']) {
-    received = { ...manifest, nesso: { ...manifest.nesso, kind } }
+    const definition = kind === 'theme' ? theme : vocab
+    received = { ...manifest, nesso: { ...manifest.nesso, kind, entry: 'definition.json' } }
+    const definitionFile = { path: 'package/definition.json', data: JSON.stringify(definition) }
     const fonts = kind === 'theme' ? [{ path: 'fonts/sans.woff2', bytes: Buffer.from('wOF2font') }] : []
-    bytes = archive([{ path: 'package/package.json', data: JSON.stringify(received) }, entries[0], ...fonts.map(({ path, bytes }) => ({ path: `package/${path}`, data: bytes }))])
+    bytes = archive([{ path: 'package/package.json', data: JSON.stringify(received) }, definitionFile, ...fonts.map(({ path, bytes }) => ({ path: `package/${path}`, data: bytes }))])
     const prepared = await acquireNpmPlugin(spec, new AbortController().signal, request)
-    assert.deepEqual(prepared, { ...await preparePluginPackage({ manifest: received, files: [{ path: manifest.nesso.entry, bytes: Buffer.from(code) }, ...fonts] }), npmIntegrity: metadata(bytes).dist.integrity })
+    assert.deepEqual(prepared, { ...await preparePluginPackage({ manifest: received, files: [{ path: 'definition.json', bytes: Buffer.from(definitionFile.data) }, ...fonts] }), npmIntegrity: metadata(bytes).dist.integrity })
   }
-  bytes = archive([{ path: 'package/package.json', data: JSON.stringify(received) }, entries[0], { path: 'package/fonts/bad.woff2', data: 'invalid' }])
+  bytes = archive([{ path: 'package/package.json', data: JSON.stringify(received) }, { path: 'package/definition.json', data: JSON.stringify(theme) }, { path: 'package/fonts/bad.woff2', data: 'invalid' }])
   await assert.rejects(acquireNpmPlugin(spec, new AbortController().signal, request))
 })
 

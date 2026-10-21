@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { parseGraph } from '@nesso/schema'
-import { parseContribution, type ViewState } from '../../packages/plugin/src/runtime.ts'
+import { parseContribution, parseDefinition, type ViewState } from '../../packages/plugin/src/runtime.ts'
 import { baseState, waitFor, type CheckContext } from './helpers.ts'
 
 type Probe = {
@@ -16,12 +16,8 @@ export async function verifyBundled({ window, url }: CheckContext) {
   const base = baseState()
   const graph = { concepts: [{ id: 'urn:probe:concept', label: 'Probe', position: { x: 0, y: 0 } }], relations: [], relationTypes: [] }
   const state: ViewState = { ...base, viewGraph: graph, targetViewId: null, workspace: { activeViewId: null, savedViews: [] }, selected: [], activeVocab: null, history: { canUndo: false, canRedo: false } }
-  for (const [name, kind, invocation] of [
-    ['kernel', 'theme', false], ['base-vocab', 'vocab', false],
-    ['import', 'actions', false], ['export', 'actions', false],
-    ['import', 'actions', true], ['export', 'actions', true],
-  ] as const) {
-    const runner = new URL(kind === 'actions' ? 'plugin-runner/actions.html' : 'plugin-runner/index.html', url)
+  for (const [name, invocation] of [['import', false], ['export', false], ['import', true], ['export', true]] as const) {
+    const runner = new URL('plugin-runner/actions.html', url)
     await window.webContents.executeJavaScript(`(async()=>{
       window.__bundled={done:false,contribution:null,discoveryRequests:0,requests:[]};
       const response=await fetch(${JSON.stringify(new URL(`preinstalled/${name}/index.js`, url).href)});
@@ -48,36 +44,36 @@ export async function verifyBundled({ window, url }: CheckContext) {
         if(data.type==='complete'){result.complete=data;result.done=true}
         if(data.type==='close'){result.error=data.reason;result.done=true}
       };
-      frame.contentWindow.postMessage({type:'bootstrap',token:'probe',mode:${JSON.stringify(kind === 'actions' ? 'actions' : 'definition')},kind:${JSON.stringify(kind)},state:${JSON.stringify(invocation ? state : base)},entry},'*',[channel.port2]);
+      frame.contentWindow.postMessage({type:'bootstrap',token:'probe',mode:'actions',kind:'actions',state:${JSON.stringify(invocation ? state : base)},entry},'*',[channel.port2]);
     })()`)
     try {
       const result = await waitFor(async () => window.webContents.executeJavaScript('window.__bundled') as Promise<Probe>, (value) => value.done)
       assert.equal(result.error, undefined, name)
       assert.equal(result.discoveryRequests, 0, name)
-      if (kind === 'actions') {
-        const descriptors = parseContribution(kind, result.contribution)
-        assert.deepEqual(descriptors.map(({ id }) => id), [`${name}-view`])
-        if (invocation) {
-          assert.equal(result.complete?.ok, true, name)
-          assert.deepEqual(result.requests.map(({ method }) => method), name === 'import' ? ['files.open'] : ['store.refresh', 'files.save'])
-          if (name === 'export') {
-            const saved = result.requests.find(({ method }) => method === 'files.save')!.params
-            assert.equal(saved.name, 'nesso-graph.jsonld')
-            assert.deepEqual(parseGraph(JSON.parse(saved.text!)), graph)
-          }
-        } else assert.deepEqual(result.requests, [])
-      } else {
-        const definition = parseContribution(kind, result.contribution)
-        assert.equal(definition.id, name)
-        assert.deepEqual(result.requests, [])
-        if ('fonts' in definition) {
-          const paths = [...new Set([...definition.fonts.sans.faces, ...definition.fonts.mono.faces].map(({ path }) => `preinstalled/${name}/${path}`))]
-          assert.ok(paths.length > 0)
-          await window.webContents.executeJavaScript(`Promise.all(${JSON.stringify(paths)}.map(async path=>{const response=await fetch(path);if(!response.ok)throw new Error('Could not load bundled font');await new FontFace('probe',await response.arrayBuffer()).load()})).then(()=>true)`)
+      const descriptors = parseContribution('actions', result.contribution)
+      assert.deepEqual(descriptors.map(({ id }) => id), [`${name}-view`])
+      if (invocation) {
+        assert.equal(result.complete?.ok, true, name)
+        assert.deepEqual(result.requests.map(({ method }) => method), name === 'import' ? ['files.open'] : ['store.refresh', 'files.save'])
+        if (name === 'export') {
+          const saved = result.requests.find(({ method }) => method === 'files.save')!.params
+          assert.equal(saved.name, 'nesso-graph.jsonld')
+          assert.deepEqual(parseGraph(JSON.parse(saved.text!)), graph)
         }
-      }
+      } else assert.deepEqual(result.requests, [])
     } finally {
       await window.webContents.executeJavaScript("window.__bundledPort.close();document.querySelector('#bundled-probe').remove()")
+    }
+  }
+  for (const [name, kind] of [['kernel', 'theme'], ['base-vocab', 'vocab']] as const) {
+    const response = await window.webContents.executeJavaScript(`fetch(${JSON.stringify(new URL(`preinstalled/${name}/definition.json`, url).href)}).then(async response=>({ok:response.ok,text:await response.text()}))`) as { ok: boolean; text: string }
+    assert.equal(response.ok, true, name)
+    const definition = parseDefinition(kind, JSON.parse(response.text))
+    assert.equal(definition.id, name)
+    if ('fonts' in definition) {
+      const paths = [...new Set([...definition.fonts.sans.faces, ...definition.fonts.mono.faces].map(({ path }) => `preinstalled/${name}/${path}`))]
+      assert.ok(paths.length > 0)
+      await window.webContents.executeJavaScript(`Promise.all(${JSON.stringify(paths)}.map(async path=>{const response=await fetch(path);if(!response.ok)throw new Error('Could not load bundled font');await new FontFace('probe',await response.arrayBuffer()).load()})).then(()=>true)`)
     }
   }
 }

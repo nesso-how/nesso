@@ -1,15 +1,13 @@
 import { useSyncExternalStore } from 'react'
 import { host, nessoStore, registerTheme, registerVocab } from '@/store'
 import type { ThemeDefinition, VocabDefinition } from '@nesso/plugin'
-import { parsePluginI18n, parsePluginManifest, PluginError, resolvePluginText, themeTokens, type BaseState } from '@nesso/plugin/runtime'
+import { parseContribution, parsePluginI18n, parsePluginManifest, PluginError, resolvePluginText } from '@nesso/plugin/runtime'
 import { defaultLocale, type Locale } from '@nesso/i18n'
 import kernelPackage from '../../plugins/kernel/package.json'
 import baseVocabPackage from '../../plugins/base-vocab/package.json'
 import exportPackage from '../../plugins/export/package.json'
 import importPackage from '../../plugins/import/package.json'
 import { notifications } from '../notifications/index.ts'
-import { loadDefinition } from './definition.ts'
-import { conceptPlacementOffset } from '../store/operations.ts'
 import { prepareTheme, type ThemePresentation } from '../theme/prepare.ts'
 import { createPluginRegistry, type PluginEntry } from './registry.ts'
 import { loadActions, type ActionPackage } from './actions.ts'
@@ -44,10 +42,12 @@ const preparePresentation = async (definition: ThemeDefinition, assets: Readonly
   }
   return prepareTheme(definition, assets)
 }
-const baseState = (): BaseState => ({
-  revision: 0, contextId: crypto.randomUUID(), locale: nessoStore.getState().preferences.locale ?? defaultLocale,
-  theme: Object.fromEntries(themeTokens.map((token) => [token, ''])), conceptPlacementOffset,
-})
+const parseDefinitionCode = (kind: 'theme' | 'vocab', code: string, path: string) => {
+  let raw: unknown
+  try { raw = JSON.parse(code) }
+  catch { throw new PluginError('invalid-input', [{ path, message: 'Expected a JSON definition' }]) }
+  return parseContribution(kind, raw)
+}
 const externalEntry = (prepared: InstalledPlugin, error?: string): PluginEntry => {
   const entry = { id: prepared.name, version: prepared.version, i18n: prepared.i18n, contentId: prepared.contentId, npmIntegrity: prepared.npmIntegrity, disabled: !prepared.enabled, ...(error ? { error } : {}) }
   return prepared.nesso.kind === 'actions' ? { ...entry, kind: 'actions', contribution: [] } : { ...entry, kind: prepared.nesso.kind }
@@ -62,7 +62,7 @@ const discoverExternal = async (prepared: InstalledPlugin, signal: AbortSignal, 
     const contribution = await loadActions(nessoStore, source, notifications.api, getTranslation, undefined, undefined, signal)
     discovered = { source, entry: { ...externalEntry(prepared), kind: 'actions', contribution } }
   } else {
-    const contribution = await loadDefinition({ id: verified.name, kind: verified.nesso.kind, entry: bytes }, baseState(), signal)
+    const contribution = parseDefinitionCode(verified.nesso.kind, verified.code, verified.nesso.entry)
     if ('relationTypes' in contribution) discovered = { entry: { ...externalEntry(prepared), kind: 'vocab', contribution } }
     else {
       const assets = packageFonts(verified)
@@ -172,7 +172,10 @@ export async function initializeBundledPlugins() {
   const entries = await Promise.all([{ package: kernelPackage, id: 'kernel' }, { package: baseVocabPackage, id: 'base-vocab' }].map(async ({ package: source, id }): Promise<PluginEntry> => {
     const manifest = parsePluginManifest(source.nesso)
     if (manifest.kind !== 'theme' && manifest.kind !== 'vocab') throw new PluginError('invalid-input', [{ path: 'manifest.kind', message: 'Expected a definition package' }])
-    const contribution = await loadDefinition({ id, expectedId: id, kind: manifest.kind, entry: `preinstalled/${id}/index.js` }, baseState())
+    const response = await fetch(new URL(`preinstalled/${id}/definition.json`, document.baseURI))
+    if (!response.ok) throw new PluginError('failed', [{ path: 'definition', message: 'Could not load bundled definition' }])
+    const contribution = parseDefinitionCode(manifest.kind, await response.text(), `preinstalled/${id}/definition.json`)
+    if (contribution.id !== id) throw new PluginError('denied', [{ path: 'contribution.id', message: 'Unexpected definition identity' }])
     const entry = { id: source.name, version: source.version, i18n: parsePluginI18n(source.i18n) }
     if ('relationTypes' in contribution) return { ...entry, kind: 'vocab', contribution }
     const paths = [...new Set([...contribution.fonts.sans.faces, ...contribution.fonts.mono.faces].map(({ path }) => path))]

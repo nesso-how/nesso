@@ -24,10 +24,11 @@ test('manifests and action descriptors reject unknown authority, duplicates and 
   assert.deepEqual(parseContribution('actions', [descriptor]), [descriptor])
   for (const value of [[], [descriptor, descriptor], [{ ...descriptor, run: true }]]) assert.throws(() => parseContribution('actions', value), PluginError)
   for (const kind of ['theme', 'vocab']) {
-    const definition = { ...manifest, kind, reads: [], writes: [] }
+    const definition = { ...manifest, kind, entry: 'definition.json', reads: [], writes: [] }
     assert.equal(parsePluginManifest(definition).kind, kind)
-    for (const change of [{ reads: ['graph'] }, { writes: ['concept.add'] }, { capabilities: ['files.open'] }, { capabilities: ['notifications.notify'] }, { styles: ['dist/index.css'] }]) assert.throws(() => parsePluginManifest({ ...definition, ...change }), PluginError)
+    for (const change of [{ entry: 'dist/index.js' }, { entry: 'definition.js' }, { reads: ['graph'] }, { writes: ['concept.add'] }, { capabilities: ['files.open'] }, { capabilities: ['notifications.notify'] }, { styles: ['dist/index.css'] }]) assert.throws(() => parsePluginManifest({ ...definition, ...change }), PluginError)
   }
+  for (const entry of ['../index.js', 'dist/index.jsx', 'dist/index.ts']) assert.throws(() => parsePluginManifest({ ...manifest, entry }), PluginError)
 })
 
 test('package translations require localized metadata and admit only bounded plain-text runtime messages', () => {

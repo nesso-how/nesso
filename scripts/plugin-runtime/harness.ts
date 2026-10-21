@@ -7,7 +7,7 @@ import { serveAppAsset } from '../../electron/asset-protocol.ts'
 import { desktopHostCsp } from '../../shared/plugin-policy.ts'
 import { cases, type Platform, type Scenario } from './cases.ts'
 import type { CheckContext } from './helpers.ts'
-import { verifyDefinitions, verifyWorker } from './security.ts'
+import { verifyWorker } from './security.ts'
 import { verifyBundled } from './bundled.ts'
 
 const [scenario, name, profile] = process.argv.slice(2) as [Scenario, Platform, string]
@@ -36,7 +36,7 @@ app.whenReady().then(async () => {
       if (url.pathname === '/') { response.writeHead(200, { 'Content-Type': 'text/html' }).end(host); return }
       const file = path.resolve(root, `.${decodeURIComponent(url.pathname)}`)
       if (!file.startsWith(`${root}${path.sep}`)) { response.writeHead(403).end(); return }
-      const types: Record<string, string> = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.woff2': 'font/woff2', '.woff': 'font/woff', '.svg': 'image/svg+xml', '.png': 'image/png' }
+      const types: Record<string, string> = { '.html': 'text/html', '.js': 'text/javascript', '.json': 'application/json', '.css': 'text/css', '.woff2': 'font/woff2', '.woff': 'font/woff', '.svg': 'image/svg+xml', '.png': 'image/png' }
       response.writeHead(200, { 'Content-Type': types[path.extname(file)] ?? 'application/octet-stream' }).end(await readFile(file))
     } catch { response.writeHead(404).end() }
   })
@@ -60,7 +60,6 @@ app.whenReady().then(async () => {
     }
     stage = scenario
     switch (scenario) {
-      case 'definitions': await verifyDefinitions(context); break
       case 'worker': await verifyWorker(context); break
       case 'bundled': await verifyBundled(context); break
     }

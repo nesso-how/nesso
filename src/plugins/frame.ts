@@ -1,8 +1,8 @@
 import { PluginError, runtimeLimits, type BaseState } from '@nesso/plugin/runtime'
 
-export function loadPluginFrame(element: HTMLIFrameElement, assets: { entry: string | Uint8Array; runner?: 'actions' }, connect: (port: MessagePort, ready: () => void, failed: (error: PluginError) => void) => {
+export function loadPluginFrame(element: HTMLIFrameElement, assets: { entry: string | Uint8Array }, connect: (port: MessagePort, ready: () => void, failed: (error: PluginError) => void) => {
   close: () => void
-  bootstrap: { state: BaseState; mode: 'definition' | 'actions'; kind: 'theme' | 'vocab' | 'actions' }
+  bootstrap: { state: BaseState; mode: 'actions'; kind: 'actions' }
 }, failed: (error: PluginError) => void) {
   const controller = new AbortController()
   const token = crypto.randomUUID()
@@ -50,7 +50,7 @@ export function loadPluginFrame(element: HTMLIFrameElement, assets: { entry: str
         fail(error instanceof PluginError ? error : new PluginError('failed', [{ path: 'plugin', message: 'Could not connect plugin' }]))
       }
     }
-    const url = new URL(assets.runner === 'actions' ? 'plugin-runner/actions.html' : 'plugin-runner/index.html', document.baseURI)
+    const url = new URL('plugin-runner/actions.html', document.baseURI)
     url.hash = token
     element.src = url.href
   }).catch((error: unknown) => fail(error instanceof PluginError ? error : new PluginError('failed', [{ path: 'plugin', message: 'Could not initialize plugin' }])))

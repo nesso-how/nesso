@@ -61,12 +61,14 @@ export function parsePluginI18n(value: unknown): PluginI18n {
 }
 
 const manifestFields = {
-  apiVersion: z.literal(1), entry: z.string().max(240).regex(/^(?:[\w-]+\/)*[\w-]+\.js$/),
+  apiVersion: z.literal(1),
 }
+const jsEntry = z.string().max(240).regex(/^(?:[\w-]+\/)*[\w-]+\.js$/)
+const jsonEntry = z.string().max(240).regex(/^(?:[\w-]+\/)*[\w-]+\.json$/)
 const operationDeclarations = z.array(z.enum(operation.options.map((schema) => schema.shape.kind.value)))
 const manifest = z.discriminatedUnion('kind', [
-  z.strictObject({ ...manifestFields, kind: z.literal('actions'), styles: z.tuple([]), reads: z.union([z.tuple([]), z.tuple([z.literal('view')]), z.tuple([z.literal('graph')])]), writes: operationDeclarations, capabilities: z.array(z.enum(['files.open', 'files.save', 'notifications.notify'])) }),
-  ...(['theme', 'vocab'] as const).map((kind) => z.strictObject({ ...manifestFields, kind: z.literal(kind), styles: z.tuple([]), reads: z.tuple([]), writes: z.tuple([]), capabilities: z.tuple([]) })),
+  z.strictObject({ ...manifestFields, kind: z.literal('actions'), entry: jsEntry, styles: z.tuple([]), reads: z.union([z.tuple([]), z.tuple([z.literal('view')]), z.tuple([z.literal('graph')])]), writes: operationDeclarations, capabilities: z.array(z.enum(['files.open', 'files.save', 'notifications.notify'])) }),
+  ...(['theme', 'vocab'] as const).map((kind) => z.strictObject({ ...manifestFields, kind: z.literal(kind), entry: jsonEntry, styles: z.tuple([]), reads: z.tuple([]), writes: z.tuple([]), capabilities: z.tuple([]) })),
 ]).refine((value) => new Set(value.writes).size === value.writes.length && new Set(value.capabilities).size === value.capabilities.length, 'Declarations must be unique')
 
 export type PluginManifest = DeepReadonly<z.infer<typeof manifest>>

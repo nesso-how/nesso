@@ -15,7 +15,7 @@ import App from './App'
 
 const framePolicy = document.createElement('meta')
 framePolicy.httpEquiv = 'Content-Security-Policy'
-framePolicy.content = `frame-src ${['index.html', 'actions.html'].map((file) => new URL(`plugin-runner/${file}`, document.baseURI).href).join(' ')}`
+framePolicy.content = `frame-src ${new URL('plugin-runner/actions.html', document.baseURI).href}`
 document.head.append(framePolicy)
 
 const showPluginRecovery = (message: string, label: string, action: () => void) => {
