@@ -13,9 +13,12 @@ import { connectDataLocation } from './data-location-ipc.ts'
 import { serveAppAsset } from './asset-protocol.ts'
 import { connectFiles } from './files.ts'
 import { connectPlugins } from './plugins.ts'
+import { connectStartupCheck } from './startup-check.ts'
 
 const dev = !app.isPackaged && process.argv.includes('--dev')
 const root = path.join(app.getAppPath(), 'dist')
+const startupCheckProfile = process.env.NESSO_STARTUP_CHECK_PROFILE
+if (startupCheckProfile) connectStartupCheck(startupCheckProfile)
 
 if (!app.requestSingleInstanceLock()) app.exit(0)
 
@@ -62,7 +65,7 @@ app.whenReady().then(async () => {
   session.defaultSession.setPermissionCheckHandler((contents, permission, _origin, details) => canUsePermission(contents, permission, details))
   session.defaultSession.setPermissionRequestHandler((contents, permission, callback, details) => callback(canUsePermission(contents, permission, details)))
   protocol.handle('nesso', (request) => serveAppAsset(root, request))
-  if (app.isPackaged) {
+  if (app.isPackaged && !startupCheckProfile) {
     const updates = connectUpdates(electronUpdater.autoUpdater, process.platform === 'darwin' ? autoUpdater : undefined, (state) => {
       installingUpdate = state?.status === 'installing'
       for (const window of BrowserWindow.getAllWindows()) {

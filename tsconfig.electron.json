@@ -8,7 +8,7 @@
     "rewriteRelativeImportExtensions": true,
     "strict": true
   },
-  "references": [{ "path": "./packages/ai" }],
+  "references": [{ "path": "./packages/ai" }, { "path": "./packages/errors" }],
   "include": ["electron/**/*.ts", "electron/**/*.cts", "shared/**/*.ts"],
   "exclude": ["electron/**/*.test.ts"]
 }

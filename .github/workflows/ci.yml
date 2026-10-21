@@ -24,6 +24,12 @@ jobs:
       - run: pnpm lint
       - run: pnpm build
       - run: pnpm test
+      - name: Package desktop app
+        run: pnpm exec electron-builder --linux --dir --x64 --publish never
+      - name: Check packaged desktop startup and restart
+        run: |
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          xvfb-run -a pnpm test:desktop release/linux-unpacked/nesso
       - run: pnpm analyze --format github-annotations --quiet
 
   review:
@@ -49,6 +55,7 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile --ignore-scripts
+      - run: pnpm build:packages
       - run: npm install --global @opencode/cli@2.1.1
       - name: Review pull request
         id: review

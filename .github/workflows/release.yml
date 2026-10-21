@@ -70,6 +70,16 @@ jobs:
           codesign --verify --deep --strict --verbose=2 "$app"
           xcrun stapler validate "$app"
           spctl --assess --type execute --verbose=2 "$app"
+      - name: Check packaged desktop startup and restart
+        run: |
+          case "${{ matrix.platform }}" in
+            mac) pnpm test:desktop release/mac-universal/Nesso.app/Contents/MacOS/Nesso ;;
+            win) pnpm test:desktop release/win-unpacked/Nesso.exe ;;
+            linux)
+              sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+              xvfb-run -a pnpm test:desktop release/linux-unpacked/nesso
+              ;;
+          esac
       - name: Verify packages and update metadata
         env:
           VERSION: ${{ steps.release.outputs.version }}
@@ -116,6 +126,7 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile --ignore-scripts
+      - run: pnpm build:packages
       - uses: actions/download-artifact@v4
         with:
           pattern: nesso-*
