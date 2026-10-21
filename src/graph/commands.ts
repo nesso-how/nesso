@@ -1,6 +1,11 @@
 import type { GraphSnapshot, NessoOperation, Selection } from '@nesso/plugin'
 import { newIri, parseGraph, relationKey, SchemaError, serializeGraph, type Position } from '@nesso/schema'
 
+export const selectionCoversGraph = (selected: Selection, graph: GraphSnapshot): boolean => {
+  const concepts = new Set(selected.filter((item) => item.kind === 'concept').map((item) => item.id))
+  return graph.concepts.length > 0 && graph.concepts.every((concept) => concepts.has(concept.id))
+}
+
 export function copyGraph(graph: GraphSnapshot, selected: Selection): string | null {
   const concepts = new Set(selected.filter((item) => item.kind === 'concept').map((item) => item.id))
   const selectedRelations = new Set(selected.filter((item) => item.kind === 'relation').map((item) => item.id))
@@ -47,6 +52,7 @@ export function pasteOperations(text: string, position?: Readonly<Position>, off
       { kind: 'concept.add', id: concept.id, position: concept.position },
       { kind: 'concept.label', id: concept.id, value: concept.label },
       ...(concept.description === undefined ? [] : [{ kind: 'concept.description' as const, id: concept.id, value: concept.description }]),
+      ...(concept.color === undefined ? [] : [{ kind: 'concept.color' as const, id: concept.id, value: concept.color }]),
     ]),
     ...relations.map((relation): NessoOperation => ({
       kind: 'relation.connect', source: relation.source, target: relation.target,
@@ -58,6 +64,3 @@ export function pasteOperations(text: string, position?: Readonly<Position>, off
     ] },
   ]
 }
-
-export const isEditableTarget = (target: EventTarget | null): boolean =>
-  target instanceof Element && !!target.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"])')

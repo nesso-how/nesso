@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ClipboardEvent as ReactClipboardEvent, type MouseEvent as ReactMouseEvent } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react'
 import { Copy, ListChecks, Lock, LockOpen, Layers, Maximize, ClipboardPaste, Plus, Redo2, Scissors, Trash2, Undo2 } from 'lucide-react'
 import type { Selection } from '@nesso/plugin'
 import {
@@ -27,8 +27,7 @@ import { GraphContextMenu } from './GraphContextMenu'
 import { createGraphElements, conceptNodeMinSize, containsPoint, indexGraph, outsideEdge, outsideNode, type ConceptNodeSizes } from './adapters'
 import type { ConceptNode, RelationEdge } from './types'
 import { useNesso, useCanvasContext, type CanvasProps } from './store'
-import { copyGraph, isEditableTarget, pasteOperations } from './clipboard'
-import { selectionCoversGraph, selectionForContextMenu, selectionFromChanges } from './selection'
+import { selectionForContextMenu, selectionFromChanges } from './selection'
 import { useTranslation } from './i18n'
 
 const nodeTypes: NodeTypes = { concept: ConceptNodeView }
@@ -37,30 +36,27 @@ const easeOut = (t: number) => 1 - Math.pow(1 - t, 3)
 const multiSelectionKeys = ['Meta', 'Control', 'Shift']
 type ContextMenuTarget = Selection[number]['kind'] | 'pane' | 'selection'
 
-export function Canvas({ readOnly = false, preview = false, bottomInset = 0, onDeleteView, conceptLabelMaxLength }: CanvasProps) {
+export function Canvas({ readOnly = false, preview = false, bottomInset = 0, conceptLabelMaxLength, focusRef: canvas }: CanvasProps) {
   const t = useTranslation()
   const graph = useNesso((state) => state.viewGraph)
   const indexed = useMemo(() => indexGraph(graph), [graph])
   const selected = useNesso((state) => state.selected)
   const fullGraph = useNesso((state) => state.graph)
-  const conceptCount = fullGraph.concepts.length
   const view = useNesso((state) => state.workspace.activeViewId)
   const defaultTypeId = useNesso((state) => state.vocabs.find(({ id }) => id === state.preferences.activeVocabId)?.defaultTypeId)
   const viewName = useNesso((state) => state.workspace.savedViews.find((saved) => saved.id === state.workspace.activeViewId)?.name) ?? t('completeGraph')
   const viewCount = graph.concepts.length
-  const { store, notifications, clipboard } = useCanvasContext()
+  const { store, commands } = useCanvasContext()
   const write = store.applyOperations
   const flow = useStoreApi()
-  const flowInteractive = useFlowStore((state) => state.nodesDraggable || state.nodesConnectable || state.elementsSelectable)
-  const interactive = !readOnly && flowInteractive
+  const [locked, setLocked] = useState(false)
+  const interactive = !readOnly && !locked
   const LockIcon = interactive ? LockOpen : Lock
   const [initialViewport] = useState(() => store.getState().workspace.viewports['concept-map'])
   const navigation = useRef(view)
   const reconnecting = useRef<RelationEdge | null>(null)
   const [reconnectDrag, setReconnectDrag] = useState(false)
   const dragGroup = useRef<string | undefined>(undefined)
-  const canvas = useRef<HTMLDivElement>(null)
-  const editable = useRef(!readOnly)
   const hasOverlay = preview
   const framed = useRef(false)
   const framedGraph = useRef(graph)
@@ -69,7 +65,6 @@ export function Canvas({ readOnly = false, preview = false, bottomInset = 0, onD
   const nodesInitialized = useNodesInitialized()
   const duration = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 300
   const animatedFraming = useMemo(() => ({ ...fitViewOptions, duration, ease: easeOut, interpolate: 'linear' as const }), [duration])
-  const pasted = useRef({ text: '', count: 0 })
   const paneSelection = useRef<Selection>([])
   const [editId, setEditId] = useState<string | null>(null)
   const { fitView, screenToFlowPosition, getNodes, getNodesBounds, setViewport } = useReactFlow()
@@ -93,7 +88,6 @@ export function Canvas({ readOnly = false, preview = false, bottomInset = 0, onD
     'controls.interactive.ariaLabel': t('toggleInteractions'),
   }), [t])
 
-  const selectedConcepts = new Set(selected.filter((item) => item.kind === 'concept').map((item) => item.id))
   const singleSelection = selected.length === 1
   const outsideGraph = useMemo(() => {
     if (!outsideActive) return null
@@ -144,16 +138,15 @@ export function Canvas({ readOnly = false, preview = false, bottomInset = 0, onD
     onObjectChanges('concept', changes)
   }, [readOnly, write, onObjectChanges])
 
-  const clearSelection = () => {
+  const cancelConnection = () => {
     reconnecting.current = null
     setReconnectDrag(false)
     flow.getState().cancelConnection()
     flow.setState({ connectionClickStartHandle: null })
-    selection([])
   }
 
-  const canDelete = selected.length > 0 && (!selectionCoversGraph(selected, graph) || Boolean(onDeleteView))
-  const canCut = selected.length > 0 && selectedConcepts.size < conceptCount
+  const canDelete = interactive && selected.length > 0
+  const canCut = canDelete && selected.filter(({ kind }) => kind === 'concept').length < fullGraph.concepts.length
   const canUndo = useNesso((state) => state.history.canUndo)
   const canRedo = useNesso((state) => state.history.canRedo)
 
@@ -195,79 +188,17 @@ export function Canvas({ readOnly = false, preview = false, bottomInset = 0, onD
     })
   }
 
-  const removeSelected = () => {
-    const { selected, graph } = store.getState()
-    if (selected.filter((item) => item.kind === 'concept').length >= graph.concepts.length) return
-    write(selected.map(({ kind, id }) => ({ kind: kind === 'concept' ? 'concept.remove' : 'relation.remove', id })))
-  }
-
   const handleDelete = () => {
-    const { selected, viewGraph } = store.getState()
-    if (selectionCoversGraph(selected, viewGraph)) {
-      setContextMenu(null)
-      onDeleteView?.()
-    } else removeSelected()
+    setContextMenu(null)
+    commands.deleteSelection()
   }
 
   const selectAll = () => {
-    const visible = store.getState().viewGraph
+    const { viewGraph } = store.getState()
     selection([
-      ...visible.concepts.map((concept) => ({ kind: 'concept' as const, id: concept.id })),
-      ...visible.relations.map((relation) => ({ kind: 'relation' as const, id: relationKey(relation) })),
+      ...viewGraph.concepts.map(({ id }) => ({ kind: 'concept' as const, id })),
+      ...viewGraph.relations.map((relation) => ({ kind: 'relation' as const, id: relationKey(relation) })),
     ])
-  }
-
-  const paste = (text: string, point?: { x: number; y: number }) => {
-    const count = pasted.current.text === text ? pasted.current.count + 1 : 1
-    let operations: ReturnType<typeof pasteOperations>
-    try { operations = pasteOperations(text, point ? screenToFlowPosition(point) : undefined, count * 40) }
-    catch {
-      notifications.notify({ tone: 'warning', title: t('pasteFailed') })
-      return
-    }
-    try { write(operations) }
-    catch {
-      notifications.notify({ tone: 'warning', title: t('commandFailed') })
-      return
-    }
-    pasted.current = { text, count }
-    canvas.current?.focus()
-  }
-
-  const copyToClipboard = async (cut = false, event?: ReactClipboardEvent<HTMLDivElement>) => {
-    if (cut && (!interactive || !canCut)) return
-    if (event && (isEditableTarget(event.target) || window.getSelection()?.isCollapsed === false)) return
-    const before = store.getState()
-    const element = canvas.current
-    try {
-      const text = copyGraph(before.graph, before.selected)
-      if (!text) return
-      if (event) {
-        event.preventDefault()
-        event.clipboardData.setData('text/plain', text)
-      } else await clipboard.writeText(text)
-    } catch {
-      if (canvas.current === element) notifications.notify({ tone: 'warning', title: t('clipboardUnavailable') })
-      return
-    }
-    if (canvas.current !== element || store.getState() !== before) return
-    if (cut && editable.current && flow.getState().elementsSelectable) write(before.selected.map(({ kind, id }) => ({ kind: kind === 'concept' ? 'concept.remove' : 'relation.remove', id })))
-    canvas.current?.focus()
-  }
-
-  const pasteFromClipboard = async (point?: { x: number; y: number }) => {
-    const before = store.getState()
-    const element = canvas.current
-    let text: string
-    try {
-      text = await clipboard.readText()
-    } catch {
-      if (canvas.current === element) notifications.notify({ tone: 'warning', title: t('clipboardUnavailable') })
-      return
-    }
-    const state = flow.getState()
-    if (canvas.current === element && store.getState() === before && editable.current
-      && (state.nodesDraggable || state.nodesConnectable || state.elementsSelectable)) paste(text, point)
   }
 
   const addConceptAt = (point: { x: number; y: number }, selection = store.getState().selected) => {
@@ -317,17 +248,12 @@ export function Canvas({ readOnly = false, preview = false, bottomInset = 0, onD
   }
 
   useEffect(() => {
-    editable.current = !readOnly
-    return () => { editable.current = false }
-  }, [readOnly])
-
-  useEffect(() => {
     if (readOnly) return
     const focus = () => canvas.current?.focus()
     focus()
     window.addEventListener('focus', focus)
     return () => window.removeEventListener('focus', focus)
-  }, [readOnly])
+  }, [readOnly, canvas])
 
   useEffect(() => {
     if (hasOverlay || navigation.current === view) return
@@ -357,36 +283,25 @@ export function Canvas({ readOnly = false, preview = false, bottomInset = 0, onD
   }, [hasOverlay, bottomInset, nodesInitialized, width, height, graph, getNodes, getNodesBounds, setViewport, duration])
 
   return (
-    <div ref={canvas} tabIndex={0} className={reconnectDrag ? 'h-full w-full outline-none graph-reconnecting' : 'h-full w-full outline-none'} onCopy={(event) => { void copyToClipboard(false, event) }} onCut={(event) => { void copyToClipboard(true, event) }} onPaste={(event) => {
-      if (!interactive || isEditableTarget(event.target)) return
-      event.preventDefault()
-      void paste(event.clipboardData.getData('text/plain'))
-    }} onKeyDown={(event) => {
-      if (isEditableTarget(event.target)) return
-      if (readOnly) {
-        if (event.key === 'Escape') clearSelection()
-        return
-      }
+    <div ref={canvas} tabIndex={0} className={reconnectDrag ? 'h-full w-full outline-none graph-reconnecting' : 'h-full w-full outline-none'} onKeyDown={(event) => {
+      if (event.defaultPrevented || event.nativeEvent.isComposing) return
+      if (event.target instanceof Element && event.target.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"])')) return
+      if (readOnly) return
       if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) {
         event.preventDefault()
         openKeyboardContextMenu(event.target as Element)
         return
       }
-      if (contextMenu) return
-      if ((event.metaKey || event.ctrlKey) && (event.key.toLowerCase() === 'z' || event.key.toLowerCase() === 'y')) {
-        event.preventDefault()
-        write([{ kind: event.shiftKey || event.key.toLowerCase() === 'y' ? 'history.redo' : 'history.undo' }])
+      if (contextMenu) {
+        event.stopPropagation()
         return
       }
-      if (event.key === 'Escape') clearSelection()
-      if (!interactive) return
-      if (event.key === 'Delete' || event.key === 'Backspace') {
-        event.preventDefault()
-        handleDelete()
-      }
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'a') {
-        event.preventDefault()
-        selectAll()
+      if (event.key === 'Escape') {
+        const state = flow.getState()
+        if (state.connection.inProgress || state.connectionClickStartHandle || reconnecting.current) {
+          cancelConnection()
+          event.preventDefault()
+        }
       }
     }}>
       <ReactFlow
@@ -396,6 +311,7 @@ export function Canvas({ readOnly = false, preview = false, bottomInset = 0, onD
         nodeTypes={nodeTypes}
         ariaLabelConfig={ariaLabelConfig}
         nodesDraggable={interactive}
+        elementsSelectable={interactive || hasOverlay}
         nodesConnectable={interactive && singleSelection}
         edgesReconnectable={interactive}
         multiSelectionKeyCode={multiSelectionKeys}
@@ -413,7 +329,8 @@ export function Canvas({ readOnly = false, preview = false, bottomInset = 0, onD
         }}
         onPaneClick={(event) => {
           if (event.detail === 1) paneSelection.current = store.getState().selected
-          clearSelection()
+          cancelConnection()
+          selection([])
           canvas.current?.focus()
         }}
         onPaneContextMenu={(event) => handleContextMenu(event)}
@@ -440,7 +357,7 @@ export function Canvas({ readOnly = false, preview = false, bottomInset = 0, onD
             </ControlButton>
             {!readOnly && (
               <>
-                <ControlButton className="react-flow__controls-interactive" onClick={() => flow.setState({ nodesDraggable: !interactive, nodesConnectable: !interactive && singleSelection, elementsSelectable: !interactive })} title={t(interactive ? 'lockInteractions' : 'unlockInteractions')} aria-label={t(interactive ? 'lockInteractions' : 'unlockInteractions')} aria-pressed={!interactive}>
+                <ControlButton className="react-flow__controls-interactive" onClick={() => setLocked((value) => !value)} title={t(interactive ? 'lockInteractions' : 'unlockInteractions')} aria-label={t(interactive ? 'lockInteractions' : 'unlockInteractions')} aria-pressed={!interactive}>
                   <LockIcon aria-hidden="true" />
                 </ControlButton>
                 <ControlButton className="react-flow__controls-outside" onClick={toggleOutside} disabled={view === null} title={outsideLabel} aria-label={outsideLabel} aria-pressed={outsideActive}>
@@ -453,19 +370,19 @@ export function Canvas({ readOnly = false, preview = false, bottomInset = 0, onD
         {!hasOverlay && <Panel position="bottom-right" className="canvas-label pointer-events-none font-mono text-[10px] text-muted-foreground" aria-label={t('zoomLevel')}>{Math.round(zoom * 100)}%</Panel>}
         {!readOnly && (
           <Controls position="top-right" orientation="horizontal" showZoom={false} showFitView={false} showInteractive={false}>
-            <ControlButton onClick={() => write([{ kind: 'history.undo' }])} disabled={!canUndo} title={t('undo')} aria-label={t('undo')}>
+            <ControlButton onClick={store.undo} disabled={!canUndo} title={t('undo')} aria-label={t('undo')}>
               <Undo2 aria-hidden="true" />
             </ControlButton>
-            <ControlButton onClick={() => write([{ kind: 'history.redo' }])} disabled={!canRedo} title={t('redo')} aria-label={t('redo')}>
+            <ControlButton onClick={store.redo} disabled={!canRedo} title={t('redo')} aria-label={t('redo')}>
               <Redo2 aria-hidden="true" />
             </ControlButton>
-            <ControlButton onClick={() => { void copyToClipboard() }} disabled={selected.length === 0} title={t('copy')} aria-label={t('copy')}>
+            <ControlButton onClick={() => { void commands.copy() }} disabled={selected.length === 0} title={t('copy')} aria-label={t('copy')}>
               <Copy aria-hidden="true" />
             </ControlButton>
-            <ControlButton onClick={() => { void copyToClipboard(true) }} disabled={!interactive || !canCut} title={t('cut')} aria-label={t('cut')}>
+            <ControlButton onClick={() => { void commands.copy(true) }} disabled={!canCut} title={t('cut')} aria-label={t('cut')}>
               <Scissors aria-hidden="true" />
             </ControlButton>
-            <ControlButton onClick={() => { void pasteFromClipboard() }} disabled={!interactive} title={t('paste')} aria-label={t('paste')}>
+            <ControlButton onClick={() => { void commands.paste() }} disabled={!interactive} title={t('paste')} aria-label={t('paste')}>
               <ClipboardPaste aria-hidden="true" />
             </ControlButton>
             <ControlButton onClick={handleDelete} disabled={!canDelete} title={t('delete')} aria-label={t('delete')}>
@@ -483,16 +400,16 @@ export function Canvas({ readOnly = false, preview = false, bottomInset = 0, onD
         onClose={() => setContextMenu(null)}
         finalFocus={canvas}
         actions={[
-          { label: t('copy'), icon: Copy, onClick: () => { void copyToClipboard() }, disabled: selected.length === 0 },
-           ...(!readOnly ? [
-             { label: t('cut'), icon: Scissors, onClick: () => { void copyToClipboard(true) }, disabled: !interactive || !canCut },
-            { label: t('paste'), icon: ClipboardPaste, onClick: () => { void pasteFromClipboard(contextMenu?.target === 'pane' ? contextMenu : undefined) }, disabled: !interactive },
+          { label: t('copy'), icon: Copy, onClick: () => { void commands.copy() }, disabled: selected.length === 0 },
+          ...(!readOnly ? [
+            { label: t('cut'), icon: Scissors, onClick: () => { void commands.copy(true) }, disabled: !canCut },
+            { label: t('paste'), icon: ClipboardPaste, onClick: () => { void commands.paste(undefined, contextMenu?.target === 'pane' ? screenToFlowPosition(contextMenu) : undefined) }, disabled: !interactive },
           ] : []),
-           ...(!readOnly && contextMenu && contextMenu.target !== 'relation' ? [
-              { label: t('addConcept'), icon: Plus, onClick: () => { if (contextMenu.target === 'pane') addConceptAt(contextMenu); else handleAdd() }, disabled: !interactive },
+          ...(!readOnly && contextMenu && contextMenu.target !== 'relation' ? [
+            { label: t('addConcept'), icon: Plus, onClick: () => { if (contextMenu.target === 'pane') addConceptAt(contextMenu); else handleAdd() }, disabled: !interactive },
           ] : []),
-           ...(!readOnly && contextMenu && contextMenu.target !== 'pane' ? [
-            { label: t('delete'), icon: Trash2, onClick: handleDelete, disabled: !interactive || !canDelete },
+          ...(!readOnly && contextMenu && contextMenu.target !== 'pane' ? [
+            { label: t('delete'), icon: Trash2, onClick: handleDelete, disabled: !canDelete },
           ] : []),
           { label: t('selectAll'), icon: ListChecks, onClick: selectAll, disabled: !interactive || viewCount === 0 },
           { label: t('fitView'), icon: Maximize, onClick: () => { void fitView(animatedFraming) } },

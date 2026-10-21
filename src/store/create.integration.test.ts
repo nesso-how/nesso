@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { relationKey, type Graph } from '@nesso/schema'
 import { createNessoStore } from './create.ts'
-import { copyGraph, pasteOperations } from '../../packages/concept-map/src/clipboard.ts'
+import { copyGraph, pasteOperations } from '../graph/commands.ts'
 import { buildImportOperations } from '../../plugins/import/src/index.ts'
 
 const fixture = (): Graph => ({

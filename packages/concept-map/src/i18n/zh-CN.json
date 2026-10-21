@@ -1,5 +1,4 @@
 {
-  "commandFailed": "无法应用画布命令。",
   "completeGraph": "全部",
   "conceptCount_other": "{{count}} 个概念",
   "fitView": "适应视图",
@@ -17,8 +16,6 @@
   "copy": "复制",
   "cut": "剪切",
   "paste": "粘贴",
-  "pasteFailed": "无法粘贴：剪贴板必须包含有效的 Nesso 图谱。",
-  "clipboardUnavailable": "无法访问剪贴板。请在画布上尝试 Ctrl/Cmd+C、Ctrl/Cmd+X 或 Ctrl/Cmd+V。",
   "connectTo": "连接到 {{name}}",
   "connectFrom": "从 {{name}} 连接",
   "editConceptLabel": "编辑概念标签",

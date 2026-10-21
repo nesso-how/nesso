@@ -1,5 +1,4 @@
 {
-  "commandFailed": "Impossibile applicare il comando del canvas.",
   "completeGraph": "Tutto",
   "conceptCount_one": "{{count}} concetto",
   "conceptCount_many": "{{count}} concetti",
@@ -19,8 +18,6 @@
   "copy": "Copia",
   "cut": "Taglia",
   "paste": "Incolla",
-  "pasteFailed": "Impossibile incollare: gli appunti devono contenere un grafo Nesso valido.",
-  "clipboardUnavailable": "Accesso agli appunti non riuscito. Prova Ctrl/Cmd+C, Ctrl/Cmd+X o Ctrl/Cmd+V sul canvas.",
   "connectTo": "Collega a {{name}}",
   "connectFrom": "Collega da {{name}}",
   "editConceptLabel": "Modifica etichetta concetto",

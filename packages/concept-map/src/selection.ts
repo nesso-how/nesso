@@ -1,10 +1,5 @@
-import type { GraphSnapshot, Selection } from '@nesso/plugin'
+import type { Selection } from '@nesso/plugin'
 import type { EdgeChange, NodeChange } from '@xyflow/react'
-
-export const selectionCoversGraph = (selected: Selection, graph: GraphSnapshot): boolean => {
-  const concepts = new Set(selected.filter((item) => item.kind === 'concept').map((item) => item.id))
-  return graph.concepts.length > 0 && graph.concepts.every((concept) => concepts.has(concept.id))
-}
 
 export const selectionForContextMenu = (selected: Selection, item: Selection[number]): Selection =>
   selected.some((current) => current.kind === item.kind && current.id === item.id) ? selected : [item]

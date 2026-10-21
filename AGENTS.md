@@ -28,5 +28,5 @@
 - Consolidate repeated app UI in `@nesso/ui`; keep app-specific state and domain logic in the host.
 - Plugins and trusted renderers use only injected APIs, never app internals or a concrete store. Keep instances independent; no module-global mutable store. React subscriptions use the injected instance with `useSyncExternalStore`.
 - Only the host materializes `viewGraph`; plugins never recompute it. Do not persist selection, plugin definitions, or `viewGraph`.
-- The host owns editing forms and reset confirmation. Navbar actions read current state at invocation. The canvas handles selection-aware graph commands, viewport gestures, and shared history controls.
+- The host workspace owns editing policy, shortcuts, clipboard I/O, confirmations, and editing forms independently of the active renderer. Navbar actions read current state at invocation. Renderers own geometry and local gestures, subscribe to injected state, map gestures to store operations, and request host actions only for behavior outside the store.
 - React Flow components, types, event mapping, and renderer-specific styles stay in trusted `packages/concept-map`; the host never imports React Flow. The renderer inherits host theme tokens and uses synchronous store APIs; only actions, vocabularies, and themes use the isolated plugin runtime.
