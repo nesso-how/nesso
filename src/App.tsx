@@ -15,6 +15,7 @@ import { chat } from '@/ai'
 import { AssistantPanel } from '@/components/app/AssistantPanel'
 import { DataTransferDialog } from '@/components/app/LocalDataSettings'
 import { Intro } from '@/components/app/Intro'
+import { Splash } from '@/components/app/Splash'
 import { completeIntro } from '@/store/intro'
 import { DeleteViewDialog } from '@/components/app/DeleteViewDialog'
 import { GraphWorkspace } from '@/components/app/GraphWorkspace'
@@ -28,6 +29,7 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
   const detailsOpen = useNessoStore((state) => !state.preferences.collapsedSections?.includes('inspector'))
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [introOpen, setIntroOpen] = useState(() => !host.store.getState().preferences.introSeen)
+  const [splashOpen, setSplashOpen] = useState(() => !host.store.getState().preferences.introSeen)
   const [settingsPage, setSettingsPage] = useState('general')
   const [deleting, setDeleting] = useState<SavedView | 'complete-graph' | null>(null)
   const canvas = useRef<HTMLDivElement>(null)
@@ -51,7 +53,7 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
         setSettingsOpen(true)
         return
       }
-      if (introOpen || !(event.metaKey || event.ctrlKey)) return
+      if (introOpen || splashOpen || !(event.metaKey || event.ctrlKey)) return
       if (isEditableTarget(target) && !target?.hasAttribute('data-document-edit')) return
       const key = event.key.toLowerCase()
       if (key !== 'z' && !(key === 'y' && event.ctrlKey && !event.metaKey)) return
@@ -61,7 +63,7 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [readonly, introOpen])
+  }, [readonly, introOpen, splashOpen])
   const openSettings = () => { setSettingsPage('general'); setSettingsOpen(true) }
   const finishIntro = () => {
     completeIntro(host.store)
@@ -72,8 +74,8 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
   return (
     <>
       <SidebarProvider>
-        {introOpen ? <Intro onFinish={finishIntro} /> : (
-        <div className="relative flex min-h-0 flex-1 overflow-hidden">
+        {splashOpen ? <Splash onDone={() => setSplashOpen(false)} /> : introOpen ? <Intro onFinish={finishIntro} /> : (
+        <div className="workspace-boot relative flex min-h-0 flex-1 overflow-hidden">
           {!readonly && <AppSidebar onOpenSettings={openSettings} />}
           <SidebarInset className="relative min-w-0 overflow-hidden">
             <div className="flex min-h-0 flex-1">
