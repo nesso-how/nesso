@@ -47,6 +47,10 @@
   outline: none;
 }
 
+.react-flow .react-flow__nodesselection-rect {
+  display: none;
+}
+
 .react-flow__node.graph-outside-node {
   opacity: 0.45;
 }

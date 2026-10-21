@@ -10,7 +10,7 @@ The host's `GraphWorkspace` configures `ConceptMap` and mounts the renderer-inde
 
 ## Controls
 
-- Hold Shift, Ctrl, or Cmd to add items to the selection. Ctrl/Cmd+A selects the visible graph; Escape clears selection. Drag selected concepts together.
+- Shift-drag the background to box-select. Shift-, Ctrl-, or Cmd-click toggles individual items, including after box-selection. Ctrl/Cmd+A selects the visible graph; Escape clears selection. No group outline is shown; selected concepts share the same highlight. Drag any selected concept to move the group together.
 - Ctrl/Cmd+C, X, and V copy, cut, and paste selected concepts and relations, also available beside undo/redo and in context menus. Pasted concepts join the active view with labels, types, and layout preserved. Cut and paste are undoable; text fields keep native clipboard behavior.
 - **Add concept** creates a concept near a single selected concept, linked with the active vocabulary's default type. Otherwise it starts disconnected at the viewport center. New concepts join the active view.
 - **Delete**, Delete, or Backspace removes selected items. Deleting a selection containing every visible concept requests the host's view-deletion confirmation; clearing the complete graph leaves one fresh concept and remains undoable. Cut never invokes that dialog or removes the last concept.
