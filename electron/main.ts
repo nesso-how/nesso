@@ -1,4 +1,4 @@
-import { app, autoUpdater, BrowserWindow, dialog, ipcMain, protocol, session, shell, type WebContents } from 'electron'
+import { app, autoUpdater, BrowserWindow, dialog, ipcMain, protocol, screen, session, shell, type WebContents } from 'electron'
 import electronUpdater from 'electron-updater'
 import path from 'node:path'
 import { ElectronError } from './errors.ts'
@@ -14,6 +14,7 @@ import { serveAppAsset } from './asset-protocol.ts'
 import { connectFiles } from './files.ts'
 import { connectPlugins } from './plugins.ts'
 import { connectStartupCheck } from './startup-check.ts'
+import { createWindowState } from './window-state.ts'
 
 const dev = !app.isPackaged && process.argv.includes('--dev')
 const root = path.join(app.getAppPath(), 'dist')
@@ -36,11 +37,14 @@ const report = (error: unknown): void => {
 
 const createWindow = async (connectPersistence: (window: BrowserWindow) => void): Promise<void> => {
   const url = dev ? 'http://127.0.0.1:5173/' : 'nesso://app/'
+  const state = createWindowState(app.getPath('userData'), (bounds) => screen.getDisplayMatching(bounds).workArea)
   const window = new BrowserWindow({
-    width: 1280, height: 800, backgroundColor: '#ffffff',
+    ...state.bounds, backgroundColor: '#ffffff',
     icon: path.join(root, 'icon-512.png'),
     webPreferences: { preload: path.join(import.meta.dirname, 'preload.cjs'), contextIsolation: true, sandbox: true },
   })
+  state.track(window)
+  if (state.maximized) window.maximize()
   connectPersistence(window)
   window.webContents.on('will-navigate', (event) => { if (event.url !== url) event.preventDefault() })
   connectExternalLinks(window.webContents, (url) => shell.openExternal(url))
