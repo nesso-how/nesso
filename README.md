@@ -86,7 +86,9 @@ pnpm desktop
 
 `pnpm desktop` builds and runs the desktop app. Use `pnpm dev` to run the web demo locally.
 
-Build and checks: `pnpm build`, `pnpm lint`, `pnpm test`, `pnpm test:plugins`, `pnpm analyze`.
+Build and checks: `pnpm build`, `pnpm lint`, `pnpm test`, `pnpm test:plugin-runtime`, `pnpm analyze`.
+
+Test scripts: `pnpm test:unit` for unit tests, `pnpm test:integration` for Node integration tests, and `pnpm test:plugin-runtime` for plugin runtime integration tests. `pnpm test` runs both Node test groups.
 
 Use `pnpm analyze --summary` for a compact Fallow report. Duplication and complexity are advisory.
 

@@ -63,4 +63,4 @@ pnpm --dir packages/plugin pack --pack-destination /absolute/output
 
 Use **pnpm pack** so workspace exports become compiled ESM and declarations. The SDK exposes `@nesso/plugin` for authors, `/runtime` for runtime validation/client code, and `/package` for package tooling. Consumers do not need other Nesso workspace packages.
 
-Run `pnpm test` for contract tests and `pnpm test:plugins` for desktop/web integration checks.
+Run `pnpm test` for contract tests and `pnpm test:plugin-runtime` for desktop/web integration checks.
