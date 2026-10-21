@@ -26,5 +26,10 @@
   "relationInstructions": "Press Enter or Space to select a relation. Press Delete to remove it or Escape to clear the selection.",
   "relationFromTo": "Relation from {{source}} to {{target}}",
   "controls": "Graph controls",
-  "toggleInteractions": "Toggle interactions"
+  "toggleInteractions": "Toggle interactions",
+  "shortcutsTitle": "Concept map",
+  "shortcutRename": "Rename selected concept",
+  "shortcutFitView": "Fit view",
+  "shortcutOutside": "Toggle background views",
+  "shortcutMove": "Move selected concepts"
 }

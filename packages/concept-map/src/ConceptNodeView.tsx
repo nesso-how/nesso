@@ -1,6 +1,6 @@
 import { Handle, Position, useStore, type NodeProps } from '@xyflow/react'
 import { cn } from 'cn'
-import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent } from 'react'
+import { useEffect, useRef, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent } from 'react'
 import { newIri } from '@nesso/schema'
 import { contrastColor } from '@nesso/ui'
 import type { ConceptNode } from './types'
@@ -24,41 +24,49 @@ export function ConceptNodeView({ id, data, selected, isConnectable }: NodeProps
     ? state.connectionClickStartHandle.nodeId !== id
     : state.connection.inProgress && state.connection.fromNode.id !== id)
   const editing = !!data.editable && !!data.editing
-  const [draft, setDraft] = useState(data.label)
   const inputRef = useRef<HTMLInputElement | null>(null)
+  const rootRef = useRef<HTMLDivElement>(null)
+  const refocus = useRef(false)
 
   useEffect(() => {
-    if (!editing) return
+    if (!editing) {
+      if (refocus.current) {
+        refocus.current = false
+        rootRef.current?.focus({ preventScroll: true })
+      }
+      return
+    }
     const timer = setTimeout(() => inputRef.current?.focus(), 0)
     return () => clearTimeout(timer)
-  })
+  }, [editing])
 
   const startEditing = (event?: ReactMouseEvent) => {
     if (!data.editable || editing) return
     if (event && (event.target as Element).closest('.react-flow__handle')) return
     event?.stopPropagation()
-    setDraft(data.label)
     data.onEditingChange?.(id)
   }
 
-  const commitEditing = () => {
+  const commitEditing = (input: HTMLInputElement) => {
     data.onEditingChange?.(null)
-    if (draft === data.label) return
+    if (input.value === data.label) return
     try {
-      store.applyOperations([{ kind: 'concept.label', id, value: draft }], { historyGroup: newIri() })
+      store.applyOperations([{ kind: 'concept.label', id, value: input.value }], { historyGroup: newIri() })
     } catch {
-      setDraft(data.label)
+      input.value = data.label
     }
   }
 
   const onEditKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
     event.stopPropagation()
-    if (event.key === 'Enter') event.currentTarget.blur()
-    else if (event.key === 'Escape') data.onEditingChange?.(null)
+    if (event.key === 'Enter') { refocus.current = true; event.currentTarget.blur() }
+    else if (event.key === 'Escape') { refocus.current = true; data.onEditingChange?.(null) }
   }
 
   return (
     <div
+      ref={rootRef}
+      tabIndex={-1}
       style={{
         minWidth: conceptNodeMinSize.width,
         height: conceptNodeMinSize.height,
@@ -79,13 +87,12 @@ export function ConceptNodeView({ id, data, selected, isConnectable }: NodeProps
       {editing ? (
         <input
           ref={inputRef}
-          value={draft}
+          defaultValue={data.label}
           maxLength={data.maxLength}
           aria-label={t('editConceptLabel')}
           data-document-edit
           onFocus={(event) => event.currentTarget.select()}
-          onChange={(event) => setDraft(event.target.value)}
-          onBlur={commitEditing}
+          onBlur={(event) => commitEditing(event.currentTarget)}
           onKeyDown={onEditKeyDown}
           onDoubleClick={(event) => event.stopPropagation()}
           className="nodrag"

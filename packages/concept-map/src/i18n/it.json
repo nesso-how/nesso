@@ -27,5 +27,10 @@
   "relationInstructions": "Premi Invio o Spazio per selezionare una relazione. Premi Canc per eliminarla o Esc per annullare la selezione.",
   "relationFromTo": "Relazione da {{source}} a {{target}}",
   "controls": "Controlli del grafo",
-  "toggleInteractions": "Attiva o disattiva interazioni"
+  "toggleInteractions": "Attiva o disattiva interazioni",
+  "shortcutsTitle": "Mappa concettuale",
+  "shortcutRename": "Rinomina il concetto selezionato",
+  "shortcutFitView": "Adatta la vista",
+  "shortcutOutside": "Attiva/disattiva viste di sfondo",
+  "shortcutMove": "Sposta i concetti selezionati"
 }

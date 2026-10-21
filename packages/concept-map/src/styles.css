@@ -94,6 +94,10 @@
   outline-offset: 3px;
 }
 
+.concept-node:focus {
+  outline: none;
+}
+
 .concept-node input {
   min-width: 2ch;
   max-width: 100%;

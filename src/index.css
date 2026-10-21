@@ -166,7 +166,7 @@
 .settings-nav { min-height: 36px; margin: 2px 0; }
 .settings-nav[aria-current="page"] { background: var(--pressed); font-weight: 500; color: var(--foreground); }
 .settings-nav:not([aria-current]) { color: var(--muted-foreground); }
-.settings-footer { margin-top: auto; padding-top: 12px; }
+.settings-footer { display: flex; flex-direction: column; margin-top: auto; padding-top: 12px; border-top: 1px solid var(--border); }
 .settings-content { flex: 1; min-width: 0; overflow-y: auto; padding: 28px 32px; scrollbar-width: thin; scrollbar-color: var(--border) transparent; overscroll-behavior: contain; scroll-padding-block: 24px; }
 .settings-page-title { margin: 0; font-size: 18px; font-weight: 500; line-height: 26px; letter-spacing: -.4px; }
 .settings-page-description { margin-top: 8px; max-width: 56ch; color: var(--muted-foreground); font-size: 12px; line-height: 18px; text-wrap: pretty; }
@@ -228,7 +228,7 @@
   .settings-sidebar { display: flex; flex-direction: row; gap: 4px; width: 100%; padding: 8px 12px; overflow-x: auto; overflow-y: hidden; border-right: 0; border-bottom: 1px solid var(--border); }
   .settings-nav-heading { display: none; }
   .settings-nav { width: auto; margin: 0; flex-shrink: 0; }
-  .settings-footer { margin: 0 0 0 auto; padding: 0 0 0 12px; flex-shrink: 0; align-self: center; }
+  .settings-footer { flex-direction: row; gap: 4px; margin: 0 0 0 auto; padding: 0 0 0 12px; border-top: 0; border-left: 1px solid var(--border); flex-shrink: 0; align-self: center; }
   .settings-content { padding: 22px 20px; }
   .ai-connection-form .nesso-field { grid-template-columns: minmax(72px, 92px) minmax(0, 1fr); gap: 12px; }
   .mcp-field.nesso-field { grid-template-columns: 48px minmax(0, 1fr); gap: 10px; }

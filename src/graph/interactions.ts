@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, type ClipboardEvent, type ComponentProps, type RefObject } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, type ClipboardEvent, type ComponentProps, type RefObject } from 'react'
 import { defaultLocale } from '@nesso/i18n'
 import { relationKey, type Position } from '@nesso/schema'
 import type { HostStore } from '../store/types.ts'
@@ -23,13 +23,28 @@ export function useGraphInteractions(store: HostStore, { readOnly, preview, onDe
     return selected.length > 0 && selected.filter(({ kind }) => kind === 'concept').length < graph.concepts.length
   }
   const remove = () => store.applyOperations(store.getState().selected.map(({ kind, id }) => ({ kind: kind === 'concept' ? 'concept.remove' : 'relation.remove', id })))
-  const selectAll = () => {
+  const selectAll = useCallback(() => {
     const { viewGraph } = store.getState()
     store.setSelection([
       ...viewGraph.concepts.map(({ id }) => ({ kind: 'concept' as const, id })),
       ...viewGraph.relations.map((relation) => ({ kind: 'relation' as const, id: relationKey(relation) })),
     ])
-  }
+  }, [store])
+  useEffect(() => {
+    if (readOnly) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || event.isComposing || event.altKey || event.shiftKey || !(event.metaKey || event.ctrlKey)) return
+      if (event.key.toLowerCase() !== 'a') return
+      if (document.querySelector('[data-data-transfer][data-open]')) return
+      if (document.querySelector('[role="dialog"], [role="alertdialog"]')) return
+      if (isEditableTarget(event.target)) return
+      event.preventDefault()
+      selectAll()
+      focusRef.current?.focus()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [readOnly, store, focusRef, selectAll])
   const commands = {
     deleteSelection: () => {
       if (readOnly) return
@@ -88,7 +103,13 @@ export function useGraphInteractions(store: HostStore, { readOnly, preview, onDe
         if (event.defaultPrevented || event.nativeEvent.isComposing || event.altKey || event.shiftKey || isEditableTarget(event.target)) return
         if (document.querySelector('[data-data-transfer][data-open]')) return
         if (event.metaKey || event.ctrlKey) {
-          if (!readOnly && event.key.toLowerCase() === 'a') { event.preventDefault(); selectAll() }
+          if (!readOnly && event.key === 'Enter') {
+            event.preventDefault()
+            if (event.repeat) return
+            try { store.addConcept() }
+            catch { notify('commandFailed'); return }
+            focus()
+          }
         } else if (event.key === 'Escape' && (!readOnly || preview)) { event.preventDefault(); store.setSelection([]) }
         else if (!readOnly && (event.key === 'Delete' || event.key === 'Backspace')) { event.preventDefault(); commands.deleteSelection() }
       },

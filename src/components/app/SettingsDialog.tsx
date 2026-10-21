@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { defaultLocale, isLocale, localeNames, locales } from '@nesso/i18n'
 import { Button, Dialog, DialogPopup, PreferenceSelect } from '@nesso/ui'
-import { ArrowUpRight, Check, Info, MessageCircle, Settings2, X, Palette, Shapes, Zap } from 'lucide-react'
+import { ArrowUpRight, Check, Info, Keyboard, MessageCircle, Settings2, X, Palette, Shapes, Zap } from 'lucide-react'
 import { pluginMetadata, removeExternalPlugin, setExternalPluginEnabled, stopExternalActions, usePlugins } from '@/plugins'
 import { host, useNessoStore } from '@/store'
 import { translate } from '@/i18n'
 import { AiSettings } from './AiSettings'
 import { McpSettings } from './McpSettings'
 import { About } from './About'
+import { ShortcutSettings } from './ShortcutSettings'
 import { LocalDataSettings } from './LocalDataSettings'
 import type { AiBridge } from '../../../electron/ai-bridge'
 import type { McpBridge } from '../../../electron/mcp-bridge'
@@ -26,12 +27,11 @@ const providers = [
 ] as const
 const pluginIcons = { theme: Palette, vocab: Shapes, actions: Zap }
 
-export function SettingsDialog({ initialPage = 'general', onDiscover, onBeforeReload }: { initialPage?: 'general' | 'ai'; onDiscover: () => void; onBeforeReload: () => Promise<boolean> }) {
+export function SettingsDialog({ page, onPageChange: setPage, onDiscover, onBeforeReload }: { page: string; onPageChange: (page: string) => void; onDiscover: () => void; onBeforeReload: () => Promise<boolean> }) {
   const preferences = useNessoStore((state) => state.preferences)
   const plugins = usePlugins()
   const locale = preferences.locale ?? defaultLocale
   const t = translate(locale)
-  const [page, setPage] = useState<string>(initialPage)
   const [reloading, setReloading] = useState(false)
   const [reloadFailed, setReloadFailed] = useState(false)
   const title = useRef<HTMLHeadingElement>(null)
@@ -85,10 +85,12 @@ export function SettingsDialog({ initialPage = 'general', onDiscover, onBeforeRe
             </Button>
           })}
           <div className="settings-footer">
+            <Button variant="ghost" className="settings-nav w-full justify-start" aria-current={page === 'shortcuts' ? 'page' : undefined} aria-keyshortcuts="?" title={`${t('shortcuts')} (?)`} onClick={() => setPage('shortcuts')}><Keyboard />{t('shortcuts')}</Button>
             <Button variant="ghost" className="settings-nav w-full justify-start" aria-current={page === 'about' ? 'page' : undefined} onClick={() => setPage('about')}><Info />{t('about')}</Button>
           </div>
         </nav>
         <div className="settings-content">
+          {page === 'shortcuts' && <ShortcutSettings titleRef={pageTitle} />}
           {page === 'about' && <About titleRef={pageTitle} onDiscover={onDiscover} />}
           {page === 'ai' && window.nessoAi && <AiPage ai={window.nessoAi} mcp={window.nessoMcp} />}
           {page === 'general' && <>

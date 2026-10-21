@@ -25,5 +25,10 @@
   "relationInstructions": "按 Enter 或空格键选择关系。按 Delete 删除，或按 Escape 清除选择。",
   "relationFromTo": "从 {{source}} 到 {{target}} 的关系",
   "controls": "图谱控件",
-  "toggleInteractions": "切换交互状态"
+  "toggleInteractions": "切换交互状态",
+  "shortcutsTitle": "概念图",
+  "shortcutRename": "重命名所选概念",
+  "shortcutFitView": "适应视图",
+  "shortcutOutside": "切换背景视图",
+  "shortcutMove": "移动所选概念"
 }

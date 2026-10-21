@@ -229,15 +229,6 @@ export function Canvas({ readOnly = false, preview = false, bottomInset = 0, con
     onReconnectEnd: () => { reconnecting.current = null; setReconnectDrag(false) },
   }), [handleContextMenu, interactive, write])
 
-  const openKeyboardContextMenu = (target: Element) => {
-    if (target.closest('button')) return
-    const object = target.closest('.react-flow__node, .react-flow__edge')
-    const bounds = (object ?? target).getBoundingClientRect()
-    const id = object?.getAttribute('data-id')
-    const item = object && id ? { kind: object.classList.contains('react-flow__node') ? 'concept' as const : 'relation' as const, id } : undefined
-    openContextMenu({ x: bounds.left + bounds.width / 2, y: bounds.top + bounds.height / 2 }, item)
-  }
-
   const handlePaneDoubleClick = (event: ReactMouseEvent) => {
     if (!interactive) return
     const target = event.target as HTMLElement | null
@@ -286,15 +277,28 @@ export function Canvas({ readOnly = false, preview = false, bottomInset = 0, con
     <div ref={canvas} tabIndex={0} className={reconnectDrag ? 'h-full w-full outline-none graph-reconnecting' : 'h-full w-full outline-none'} onKeyDown={(event) => {
       if (event.defaultPrevented || event.nativeEvent.isComposing) return
       if (event.target instanceof Element && event.target.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"])')) return
-      if (readOnly) return
-      if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) {
-        event.preventDefault()
-        openKeyboardContextMenu(event.target as Element)
-        return
-      }
       if (contextMenu) {
         event.stopPropagation()
         return
+      }
+      if (!hasOverlay && !event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey && event.key.toLowerCase() === 'f') {
+        event.preventDefault()
+        void fitView(animatedFraming)
+        return
+      }
+      if (!readOnly && !hasOverlay && view !== null && !event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey && event.key.toLowerCase() === 'o') {
+        event.preventDefault()
+        toggleOutside()
+        return
+      }
+      if (readOnly) return
+      if (!event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey && event.key === 'Enter' && interactive && !(event.target instanceof Element && event.target.closest('button'))) {
+        const current = store.getState().selected
+        if (current.length === 1 && current[0].kind === 'concept') {
+          event.preventDefault()
+          setEditId(current[0].id)
+          return
+        }
       }
       if (event.key === 'Escape') {
         const state = flow.getState()
@@ -352,7 +356,7 @@ export function Canvas({ readOnly = false, preview = false, bottomInset = 0, con
         <Background variant={BackgroundVariant.Dots} gap={20} size={1.5} color="var(--node-border)" />
         {!hasOverlay && (
           <Controls showZoom={false} showFitView={false} showInteractive={false} orientation="horizontal">
-            <ControlButton className="react-flow__controls-fitview" onClick={() => { void fitView(animatedFraming) }} title={t('fitView')} aria-label={t('fitView')}>
+            <ControlButton className="react-flow__controls-fitview" onClick={() => { void fitView(animatedFraming) }} title={`${t('fitView')} (F)`} aria-label={t('fitView')} aria-keyshortcuts="f">
               <Maximize aria-hidden="true" />
             </ControlButton>
             {!readOnly && (
@@ -360,7 +364,7 @@ export function Canvas({ readOnly = false, preview = false, bottomInset = 0, con
                 <ControlButton className="react-flow__controls-interactive" onClick={() => setLocked((value) => !value)} title={t(interactive ? 'lockInteractions' : 'unlockInteractions')} aria-label={t(interactive ? 'lockInteractions' : 'unlockInteractions')} aria-pressed={!interactive}>
                   <LockIcon aria-hidden="true" />
                 </ControlButton>
-                <ControlButton className="react-flow__controls-outside" onClick={toggleOutside} disabled={view === null} title={outsideLabel} aria-label={outsideLabel} aria-pressed={outsideActive}>
+                <ControlButton className="react-flow__controls-outside" onClick={toggleOutside} disabled={view === null} title={`${outsideLabel} (O)`} aria-label={outsideLabel} aria-keyshortcuts="o" aria-pressed={outsideActive}>
                   <Layers aria-hidden="true" />
                 </ControlButton>
               </>

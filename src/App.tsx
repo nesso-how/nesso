@@ -28,7 +28,7 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
   const detailsOpen = useNessoStore((state) => !state.preferences.collapsedSections?.includes('inspector'))
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [introOpen, setIntroOpen] = useState(() => !host.store.getState().preferences.introSeen)
-  const [settingsPage, setSettingsPage] = useState<'general' | 'ai'>('general')
+  const [settingsPage, setSettingsPage] = useState('general')
   const [deleting, setDeleting] = useState<SavedView | 'complete-graph' | null>(null)
   const canvas = useRef<HTMLDivElement>(null)
   const readonly = useMediaQuery('(max-width: 767px)')
@@ -39,11 +39,19 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
 
   useEffect(() => { document.documentElement.lang = locale }, [locale])
   useEffect(() => {
-    if (readonly || introOpen) return
+    if (readonly) return
     const onKeyDown = (event: KeyboardEvent) => {
       if (document.querySelector('[data-data-transfer][data-open]')) return
-      if (event.defaultPrevented || event.isComposing || event.altKey || !(event.metaKey || event.ctrlKey)) return
+      if (event.defaultPrevented || event.isComposing || event.altKey) return
       const target = event.target instanceof HTMLElement ? event.target : null
+      if (event.key === '?' && !event.metaKey && !event.ctrlKey) {
+        if (event.repeat || isEditableTarget(target) || target?.closest('[role="dialog"]:not(.settings-popup), [role="alertdialog"]')) return
+        event.preventDefault()
+        setSettingsPage('shortcuts')
+        setSettingsOpen(true)
+        return
+      }
+      if (introOpen || !(event.metaKey || event.ctrlKey)) return
       if (isEditableTarget(target) && !target?.hasAttribute('data-document-edit')) return
       const key = event.key.toLowerCase()
       if (key !== 'z' && !(key === 'y' && event.ctrlKey && !event.metaKey)) return
@@ -94,7 +102,7 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
         <PersistenceBanner persistence={persistence} />
       </SidebarProvider>
       <Dialog.Root open={!readonly && settingsOpen} onOpenChange={setSettingsOpen}>
-        {!readonly && settingsOpen && <SettingsDialog initialPage={settingsPage} onDiscover={() => { setSettingsOpen(false); setIntroOpen(true) }} onBeforeReload={persistence.save} />}
+        {!readonly && settingsOpen && <SettingsDialog page={settingsPage} onPageChange={setSettingsPage} onDiscover={() => { setSettingsOpen(false); setIntroOpen(true) }} onBeforeReload={persistence.save} />}
       </Dialog.Root>
       {window.nessoDataLocation && <DataTransferDialog bridge={window.nessoDataLocation} />}
       <DeleteViewDialog target={deleting} onClose={() => setDeleting(null)} finalFocus={() => canvas.current} />
