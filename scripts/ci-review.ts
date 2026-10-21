@@ -1,4 +1,4 @@
-import { execFileSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import { appendFileSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { NessoError } from '@nesso/errors';
@@ -36,7 +36,11 @@ async function main(): Promise<void> {
   const root = resolve(import.meta.dirname, '..');
   const configHome = mkdtempSync(join(temporary, 'nesso-review-'));
   const config = join(configHome, 'opencode');
-  const git = (...args: string[]) => execFileSync('git', args, { cwd: root, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  const git = (...args: string[]) => {
+    const result = spawnSync('git', args, { cwd: root, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+    if (result.status !== 0) throw new NessoError([{ path: 'git', message: (result.stderr || 'git failed').trim().slice(-1000) }]);
+    return result.stdout;
+  };
 
   mkdirSync(config, { recursive: true });
   const diff = join(configHome, 'changes.diff');
@@ -55,13 +59,18 @@ async function main(): Promise<void> {
     snapshots: false,
   }));
 
-  const env: NodeJS.ProcessEnv = { ...process.env, XDG_CONFIG_HOME: configHome };
+  const env: NodeJS.ProcessEnv = { ...process.env, XDG_CONFIG_HOME: configHome, OPENCODE_API_KEY: token };
   delete env.GITHUB_TOKEN;
   delete env.GH_TOKEN;
-  const result = execFileSync('opencode', [
+  const review = spawnSync('opencode', [
     'run', '--standalone', '--agent', 'review', '--model', model, '--format', 'json',
     '--file', diff, 'Review the attached PR diff against the checked-out repository.',
   ], { cwd: root, env, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  if (review.status !== 0) {
+    const output = (review.stderr || review.stdout || 'no output').trim().slice(-4000);
+    throw new NessoError([{ path: 'opencode', message: `review exited (${review.status ?? review.signal}): ${output}` }]);
+  }
+  const result = review.stdout;
   writeFileSync(join(temporary, 'review.md'), formatReport(result, head));
   appendFileSync(output, 'ready=true\n');
 }
