@@ -1,8 +1,8 @@
 import { checkMessageSize, parseContribution, PluginError, resolvePluginText, runtimeLimits, type ActionDescriptor, type ActionState, type BaseState, type FileOpenOptions, type FileOpenResult, type FileSaveOptions } from '@nesso/plugin/runtime'
-import { SchemaError, relationKey } from '@nesso/schema'
+import { relationKey } from '@nesso/schema'
 import type { NessoOperation } from '@nesso/plugin'
 import type { HostStore } from '../store/types.ts'
-import { NessoError } from '../store/errors.ts'
+import { NessoError } from '@nesso/errors'
 import { materialize } from '../store/operations.ts'
 import { listenPluginPort, type PluginMessage } from './messages.ts'
 
@@ -179,7 +179,7 @@ export function connectActionChannel(port: MessagePort, store: HostStore, grant:
       checkMessageSize(value, runtimeLimits.snapshot)
       if (!controller.signal.aborted) port.postMessage({ type: 'response', id: message.id, ok: true, value })
     } catch (error) {
-      const safe = error instanceof PluginError ? error : error instanceof SchemaError || error instanceof NessoError ? new PluginError('invalid-input', error.issues) : new PluginError('failed', [{ path: 'action', message: 'Action request failed' }])
+      const safe = error instanceof PluginError ? error : error instanceof NessoError ? new PluginError('invalid-input', error.issues) : new PluginError('failed', [{ path: 'action', message: 'Action request failed' }])
       if (!controller.signal.aborted) port.postMessage({ type: 'response', id: message.id, ok: false, error: { code: safe.code, issues: safe.issues } })
     } finally { clearTimeout(timer); pending.delete(timer) }
   }

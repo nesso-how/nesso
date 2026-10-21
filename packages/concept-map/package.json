@@ -8,6 +8,7 @@
     ".": "./src/index.tsx"
   },
   "dependencies": {
+    "@nesso/errors": "workspace:*",
     "@nesso/i18n": "workspace:*",
     "@nesso/schema": "workspace:*",
     "@nesso/ui": "workspace:*",

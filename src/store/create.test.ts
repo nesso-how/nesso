@@ -4,7 +4,7 @@ import type { NessoOperation, SectionId, Selection, VocabDefinition } from '@nes
 import { relationKey, SchemaError, type Graph } from '@nesso/schema'
 import { maxConceptLabelLength, maxRelationLabelLength } from './settings.ts'
 import { createNessoStore } from './create.ts'
-import { NessoError } from './errors.ts'
+import { NessoError } from '@nesso/errors'
 import { sectionIds } from './types.ts'
 import { copyGraph, pasteOperations } from '../../packages/concept-map/src/clipboard.ts'
 import { buildImportOperations } from '../../plugins/import/src/index.ts'

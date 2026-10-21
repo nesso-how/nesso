@@ -4,7 +4,7 @@ import type { NessoOperation } from '@nesso/plugin'
 import { relationKey, SchemaError, type Graph } from '@nesso/schema'
 import { createNessoStore } from './create.ts'
 import { historyLimit } from './history.ts'
-import { NessoError } from './errors.ts'
+import { NessoError } from '@nesso/errors'
 import { applyStateOperations } from './operations.ts'
 
 const fixture = (): Graph => ({

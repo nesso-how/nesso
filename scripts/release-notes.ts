@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { NessoError } from '../src/store/errors.ts';
+import { NessoError } from '@nesso/errors';
 
 export function releaseNotes(changelog: string, tag: string): string {
   const version = tag.replace(/^v/, '');

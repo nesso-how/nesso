@@ -1,12 +1,9 @@
-export type SchemaIssue = { path: string; message: string }
+import { NessoError, type ErrorIssue } from '@nesso/errors'
 
-export class SchemaError extends Error {
+export type SchemaIssue = ErrorIssue
+
+export class SchemaError extends NessoError {
   override name = 'SchemaError'
-  readonly issues: SchemaIssue[]
-  constructor(issues: SchemaIssue[]) {
-    super(issues.map(({ path, message }) => (path ? `${path}: ${message}` : message)).join('\n'))
-    this.issues = issues
-  }
 }
 
 export function fail(path: string, message: string): never {

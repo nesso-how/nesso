@@ -1,3 +1,4 @@
+import { NessoError, type ErrorIssue } from '@nesso/errors'
 import type { LocalizedText } from './i18n.ts'
 
 const boundText = (text: string, limit: number) => {
@@ -12,16 +13,14 @@ const boundText = (text: string, limit: number) => {
   return result
 }
 
-export class PluginError extends Error {
+export class PluginError extends NessoError {
   override name = 'PluginError'
-  readonly issues: { path: string; message: string }[]
   readonly code: string
   readonly displayMessage?: LocalizedText
-  constructor(code: string, issues: { path: string; message: string }[], displayMessage?: LocalizedText) {
+  constructor(code: string, issues: ErrorIssue[], displayMessage?: LocalizedText) {
     const bounded = issues.slice(0, 32).map(({ path, message }) => ({ path: boundText(path, 256), message: boundText(message, 2048) }))
     if (!bounded.length) bounded.push({ path: 'plugin', message: 'Plugin request failed' })
-    super(bounded.map(({ path, message }) => `${path}: ${message}`).join('\n'))
-    this.issues = bounded
+    super(bounded)
     this.code = code
     if (displayMessage) this.displayMessage = { en: boundText(displayMessage.en, 2048), ...(displayMessage.it !== undefined ? { it: boundText(displayMessage.it, 2048) } : {}), ...(displayMessage['zh-CN'] !== undefined ? { 'zh-CN': boundText(displayMessage['zh-CN'], 2048) } : {}) }
   }

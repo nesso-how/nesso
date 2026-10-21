@@ -1,10 +1,10 @@
-import type { SchemaIssue } from '@nesso/schema'
+export type ErrorIssue = { path: string; message: string }
 
 export class NessoError extends Error {
   override name = 'NessoError'
-  readonly issues: SchemaIssue[]
+  readonly issues: ErrorIssue[]
 
-  constructor(issues: SchemaIssue[]) {
+  constructor(issues: ErrorIssue[]) {
     super(issues.map(({ path, message }) => path ? `${path}: ${message}` : message).join('\n'))
     this.issues = issues
   }

@@ -1,6 +1,6 @@
-import { parseGraph, SchemaError, serializeGraph, type Graph } from '@nesso/schema'
+import { parseGraph, serializeGraph, type Graph } from '@nesso/schema'
 import type { createNessoStore } from './create.ts'
-import { NessoError } from './errors.ts'
+import { NessoError } from '@nesso/errors'
 import { fail, object, parseConversation, parsePreferences, parseWorkspace } from './settings.ts'
 import type { Preferences, WorkspaceState } from '@nesso/plugin'
 import type { HostState } from './types.ts'
@@ -17,7 +17,7 @@ export type LoadedState = {
 }
 
 const storageIssues = (section: Section, error: unknown, operation: PersistenceIssue['operation']): PersistenceIssue[] => {
-  const issues = error instanceof NessoError || error instanceof SchemaError
+  const issues = error instanceof NessoError
     ? error.issues
     : [{ path: '', message: error instanceof Error ? error.message : 'Storage failed' }]
   return issues.map(({ path, message }) => ({

@@ -13,13 +13,15 @@
     "zones": [
       { "name": "host", "patterns": ["src/**", "electron/**"] },
       { "name": "schema", "patterns": ["packages/schema/**"] },
+      { "name": "errors", "patterns": ["packages/errors/**"] },
       { "name": "shared", "patterns": ["packages/**"] },
       { "name": "plugins", "patterns": ["plugins/**"] }
     ],
     "rules": [
-      { "from": "schema", "allow": [] },
-      { "from": "shared", "allow": ["schema"] },
-      { "from": "plugins", "allow": ["schema", "shared"] }
+      { "from": "schema", "allow": ["errors"] },
+      { "from": "errors", "allow": [] },
+      { "from": "shared", "allow": ["schema", "errors"] },
+      { "from": "plugins", "allow": ["schema", "errors", "shared"] }
     ]
   },
   "rulePacks": ["fallow-rules.json"]

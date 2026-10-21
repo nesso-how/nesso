@@ -29,6 +29,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@nesso/errors": "workspace:*",
     "@nesso/i18n": "workspace:*",
     "@nesso/schema": "workspace:*",
     "@types/semver": "^7.8.0",

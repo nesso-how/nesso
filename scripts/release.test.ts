@@ -12,8 +12,7 @@ function fixture(context: TestContext) {
   context.after(() => rmSync(directory, { recursive: true, force: true }));
   const cwd = join(directory, 'project');
   mkdirSync(join(cwd, 'scripts'), { recursive: true });
-  mkdirSync(join(cwd, 'src/store'), { recursive: true });
-  for (const file of ['scripts/release.ts', 'scripts/release-notes.ts', 'src/store/errors.ts', 'cliff.toml']) {
+  for (const file of ['scripts/release.ts', 'scripts/release-notes.ts', 'cliff.toml']) {
     copyFileSync(new URL(`../${file}`, import.meta.url), join(cwd, file));
   }
   symlinkSync(fileURLToPath(new URL('../node_modules', import.meta.url)), join(cwd, 'node_modules'), 'junction');

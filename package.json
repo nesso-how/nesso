@@ -36,6 +36,7 @@
     "@modelcontextprotocol/sdk": "^1.32.1",
     "@nesso/ai": "workspace:*",
     "@nesso/concept-map": "workspace:*",
+    "@nesso/errors": "workspace:*",
     "@nesso/i18n": "workspace:*",
     "@nesso/plugin": "workspace:*",
     "@nesso/schema": "workspace:*",

@@ -1,6 +1,6 @@
 import type { AiResult, AiToolResults } from '@nesso/ai'
 import type { McpBridge } from '../../electron/mcp-bridge.ts'
-import { NessoError } from '../store/errors.ts'
+import { NessoError } from '@nesso/errors'
 import { createAiTurn } from './turn.ts'
 
 export function connectMcpHost(

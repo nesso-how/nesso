@@ -1,9 +1,8 @@
 import type { NessoOperation, NessoState } from '@nesso/plugin'
-import { SchemaError } from '@nesso/schema'
 import { ZodError } from 'zod'
 import { aiTools, type AiToolResults } from '@nesso/ai'
 import type { createNessoStore } from '../store/create.ts'
-import { NessoError } from '../store/errors.ts'
+import { NessoError } from '@nesso/errors'
 import { summarizeEffects } from './effects.ts'
 import { readAiTool } from './read.ts'
 
@@ -11,7 +10,6 @@ type Boundary = Pick<ReturnType<typeof createNessoStore>, 'store' | 'previewOper
 const fail = (path: string, message: string): never => { throw new NessoError([{ path: `ai.${path}`, message }]) }
 const errorOf = (error: unknown): NessoError => {
   if (error instanceof NessoError) return error
-  if (error instanceof SchemaError) return new NessoError(error.issues)
   if (error instanceof ZodError) return new NessoError(error.issues.map(({ path, message }) => ({ path: `ai.${path.join('.')}`, message })))
   return new NessoError([{ path: 'ai', message: 'Tool execution failed' }])
 }

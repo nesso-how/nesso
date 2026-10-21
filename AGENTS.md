@@ -6,7 +6,7 @@
 - Prefer the smallest clear implementation. Reuse existing code; avoid unnecessary abstractions, duplication, and redundant tests without sacrificing readability, correctness, or essential coverage.
 - Keep AGENTS.md files minimal: durable development rules and architectural boundaries only. Do not duplicate inherited instructions, implementation details, functional specifications, or progress reports; keep supported behavior in READMEs, types, validators, and tests.
 - Use English and TypeScript for code, tests, and scripts; JavaScript only when required by tooling. Keep data and documentation in native formats. No code comments.
-- Report failures with a package-scoped `<Package>Error extends Error` carrying `readonly issues: { path: string; message: string }[]`, joined into the message; follow `SchemaError`.
+- Use `NessoError` from `@nesso/errors` for structured failures. Package-scoped errors extend it, retaining domain-specific identity and validation.
 - When adding or changing an external link in the app, review `electron/links.ts` and update its allowlist if the destination is not already covered. Keep external links restricted to trusted HTTPS destinations and open them in the system browser.
 - After code changes, run `pnpm analyze --summary`. Inspect scoped findings with `pnpm analyze --changed-since origin/main --format json --quiet` and verify unused exports with `pnpm analyze dead-code --trace FILE:EXPORT` before deleting them. Do not run Fallow autofix or add suppressions to make a check pass.
 

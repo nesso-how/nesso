@@ -1,4 +1,5 @@
 import type { NessoState, NessoStore, Notifications } from '@nesso/plugin'
+import { NessoError } from '@nesso/errors'
 import { createContext, useContext, useSyncExternalStore } from 'react'
 
 export type ConceptMapContext = {
@@ -17,13 +18,8 @@ export type CanvasProps = {
 
 export const StoreContext = createContext<ConceptMapContext | null>(null)
 
-class ConceptMapError extends Error {
+class ConceptMapError extends NessoError {
   override name = 'ConceptMapError'
-  readonly issues: { path: string; message: string }[]
-  constructor(issues: { path: string; message: string }[]) {
-    super(issues.map(({ path, message }) => `${path}: ${message}`).join('\n'))
-    this.issues = issues
-  }
 }
 
 export function useCanvasContext(): ConceptMapContext {

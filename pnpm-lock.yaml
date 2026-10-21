@@ -29,6 +29,9 @@ importers:
       '@nesso/concept-map':
         specifier: workspace:*
         version: link:packages/concept-map
+      '@nesso/errors':
+        specifier: workspace:*
+        version: link:packages/errors
       '@nesso/i18n':
         specifier: workspace:*
         version: link:packages/i18n
@@ -141,6 +144,9 @@ importers:
 
   packages/concept-map:
     dependencies:
+      '@nesso/errors':
+        specifier: workspace:*
+        version: link:../errors
       '@nesso/i18n':
         specifier: workspace:*
         version: link:../i18n
@@ -173,8 +179,13 @@ importers:
         specifier: ^19.2.18
         version: 19.3.0
 
+  packages/errors: {}
+
   packages/i18n:
     dependencies:
+      '@nesso/errors':
+        specifier: workspace:*
+        version: link:../errors
       i18next:
         specifier: ^26.4.2
         version: 26.4.2(typescript@7.0.2)
@@ -191,6 +202,9 @@ importers:
         specifier: ^4.6.5
         version: 4.6.5
     devDependencies:
+      '@nesso/errors':
+        specifier: workspace:*
+        version: link:../errors
       '@nesso/i18n':
         specifier: workspace:*
         version: link:../i18n
@@ -207,7 +221,11 @@ importers:
         specifier: ^0.23.1
         version: 0.23.1(typescript@7.0.2)
 
-  packages/schema: {}
+  packages/schema:
+    dependencies:
+      '@nesso/errors':
+        specifier: workspace:*
+        version: link:../errors
 
   packages/ui:
     dependencies:

@@ -1,7 +1,7 @@
 import { createContext, useContext, type ComponentProps } from 'react'
 import { SidePanel } from '@nesso/ui'
 import { cn } from 'cn'
-import { NessoError } from '@/store/errors'
+import { NessoError } from '@nesso/errors'
 import { host, useNessoStore } from '@/store'
 import { useTranslation } from '@/i18n'
 import { panelLimits } from '@/store/settings'

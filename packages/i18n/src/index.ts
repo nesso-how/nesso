@@ -1,4 +1,5 @@
 import { createInstance } from 'i18next'
+import { NessoError } from '@nesso/errors'
 import { defaultLocale, locales, type Locale } from './locale.ts'
 
 export { defaultLocale, detectLocale, isLocale, localeNames, locales, type Locale } from './locale.ts'
@@ -10,13 +11,8 @@ type TranslationKey<C extends Catalog> = BaseKey<keyof C & string>
 export type Translation<C extends Catalog> = Readonly<Partial<Record<keyof C | `${TranslationKey<C>}_${PluralForm}`, string>>>
 export type Values = Readonly<Record<string, string | number>>
 
-export class I18nError extends Error {
+export class I18nError extends NessoError {
   override name = 'I18nError'
-  readonly issues: { path: string; message: string }[]
-  constructor(issues: { path: string; message: string }[]) {
-    super(issues.map(({ path, message }) => (path ? `${path}: ${message}` : message)).join('\n'))
-    this.issues = issues
-  }
 }
 
 export function createTranslator<C extends Catalog>(english: C, translations: Readonly<Partial<Record<Locale, Translation<C>>>> = {}) {

@@ -10,6 +10,7 @@
     "noEmit": true,
     "types": [],
     "paths": {
+      "@nesso/errors": ["./packages/errors/src/index.ts"],
       "@nesso/schema": ["./packages/schema/src/index.ts"],
       "@nesso/i18n": ["./packages/i18n/src/index.ts"]
     }

@@ -19,6 +19,7 @@
     "build": "tsc -b"
   },
   "dependencies": {
+    "@nesso/errors": "workspace:*",
     "i18next": "^26.4.2"
   }
 }

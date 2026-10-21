@@ -1,6 +1,6 @@
 # @nesso/schema
 
-A framework-independent graph model, validation, and a minimal JSON-LD profile. No runtime dependencies.
+A framework-independent graph model, validation, and a minimal JSON-LD profile. Its only runtime dependency is the dependency-free `@nesso/errors` package.
 
 ## Usage
 
