@@ -4,7 +4,7 @@
   "license": "MIT",
   "type": "module",
   "nesso": {
-    "apiVersion": 1, "kind": "actions", "entry": "dist/index.js", "styles": [],
+    "apiVersion": 1, "kind": "actions", "entry": "dist/index.js",
     "writes": ["selection.set", "concept.add", "concept.label", "concept.description", "relation.connect", "view.membership"],
     "capabilities": ["files.open"]
   },

@@ -11,7 +11,7 @@ test('installed actions restore verified bytes offline, reject conflicts and can
   const directory = await mkdtemp(path.join(tmpdir(), 'nesso-packages-'))
   t.after(() => rm(directory, { recursive: true, force: true }))
   const storage = createPluginStorage(directory)
-  const manifest = { name: 'nesso-plugin-test', version: '1.0.0', nesso: { apiVersion: 1, kind: 'actions', entry: 'dist/index.js', styles: [], writes: [], capabilities: [] }, i18n: { metadata: { name: { en: 'Test' }, description: { en: 'Test' }, documentation: { en: 'Test' } } } }
+  const manifest = { name: 'nesso-plugin-test', version: '1.0.0', nesso: { apiVersion: 1, kind: 'actions', entry: 'dist/index.js', writes: [], capabilities: [] }, i18n: { metadata: { name: { en: 'Test' }, description: { en: 'Test' }, documentation: { en: 'Test' } } } }
   const prepared = await preparePluginPackage({ manifest, files: [{ path: 'dist/index.js', bytes: new TextEncoder().encode('throw new Error("Never execute in main")') }] })
   await assert.rejects(storage.install(prepared, () => false))
   assert.deepEqual(await storage.list(), [])
@@ -42,7 +42,7 @@ test('manual updates atomically replace one exact package, preserve disabled sta
   const directory = await mkdtemp(path.join(tmpdir(), 'nesso-package-updates-'))
   t.after(() => rm(directory, { recursive: true, force: true }))
   const storage = createPluginStorage(directory)
-  const manifest = { name: 'nesso-plugin-test', version: '1.0.0', nesso: { apiVersion: 1, kind: 'actions', entry: 'index.js', styles: [], writes: [], capabilities: [] }, i18n: { metadata: { name: { en: 'Test' }, description: { en: 'Test' }, documentation: { en: 'Test' } } } }
+  const manifest = { name: 'nesso-plugin-test', version: '1.0.0', nesso: { apiVersion: 1, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] }, i18n: { metadata: { name: { en: 'Test' }, description: { en: 'Test' }, documentation: { en: 'Test' } } } }
   const prepare = (version: string) => preparePluginPackage({ manifest: { ...manifest, version }, files: [{ path: 'index.js', bytes: new TextEncoder().encode(`throw new Error('${version}')`) }] })
   const previous = await prepare('1.0.0')
   const next = await prepare('1.1.0')
@@ -88,7 +88,7 @@ test('definition records restore offline with exact font bytes and reject tamper
   t.after(() => rm(directory, { recursive: true, force: true }))
   const storage = createPluginStorage(directory)
   for (const kind of ['vocab', 'theme']) {
-    const manifest = { name: `nesso-test-${kind}`, version: '1.0.0', nesso: { apiVersion: 1, kind, entry: 'definition.json', styles: [], writes: [], capabilities: [] }, i18n: { metadata: { name: { en: 'Test' }, description: { en: 'Test' }, documentation: { en: 'Test' } } } }
+    const manifest = { name: `nesso-test-${kind}`, version: '1.0.0', nesso: { apiVersion: 1, kind, entry: 'definition.json', writes: [], capabilities: [] }, i18n: { metadata: { name: { en: 'Test' }, description: { en: 'Test' }, documentation: { en: 'Test' } } } }
     const definition = kind === 'theme'
       ? { ...themeFixture, id: 'test-theme' }
       : { id: 'test-vocab', relationTypes: [{ id: 'urn:nesso:test', label: 'Test' }], defaultTypeId: 'urn:nesso:test' }

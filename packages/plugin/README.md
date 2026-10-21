@@ -21,7 +21,6 @@ Use the [example package.json](example/package.json). Package names must be vali
 | `apiVersion` | `1` |
 | `kind` | `actions`, `vocab`, or `theme` |
 | `entry` | Actions: package-local `.js` path, such as `dist/index.js`. Themes and vocabularies: package-local `.json` definition path, such as `dist/definition.json` |
-| `styles` | `[]` |
 | `writes` | Document-content operation kinds, without duplicates |
 | `capabilities` | Subset of `files.open`, `files.save`, `notifications.notify`, without duplicates |
 

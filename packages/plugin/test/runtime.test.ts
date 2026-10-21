@@ -3,23 +3,23 @@ import assert from 'node:assert/strict'
 import { checkMessageSize, parseContribution, parsePluginI18n, parsePluginManifest, parsePluginMessage, PluginError, resolvePluginText } from '../src/runtime.ts'
 
 const manifest = {
-  apiVersion: 1, kind: 'actions', entry: 'dist/index.js', styles: [],
+  apiVersion: 1, kind: 'actions', entry: 'dist/index.js',
   writes: ['selection.set'], capabilities: [],
 }
 
 test('manifests and action descriptors reject unknown authority, duplicates and oversized labels', () => {
   assert.equal(parsePluginManifest(manifest).kind, 'actions')
   assert.deepEqual(parsePluginManifest({ ...manifest, capabilities: ['files.open', 'files.save', 'notifications.notify'] }).capabilities, ['files.open', 'files.save', 'notifications.notify'])
-  assert.deepEqual(parsePluginManifest({ ...manifest, writes: ['concept.label', 'concept.description', 'concept.color', 'concept.position', 'concept.positions', 'concept.add', 'concept.remove', 'relation.connect', 'relation.reconnect', 'relation.type', 'relation.type.create', 'relation.remove', 'selection.set', 'view.activate', 'view.membership'] }).writes.length, 15)
+  assert.deepEqual(parsePluginManifest({ ...manifest, writes: ['concept.label', 'concept.description', 'concept.color', 'concept.position', 'concept.positions', 'concept.add', 'concept.remove', 'relation.connect', 'relation.reconnect', 'relation.type', 'relation.type.create', 'relation.remove', 'selection.set', 'view.membership'] }).writes.length, 14)
   for (const value of [
     { ...manifest, apiVersion: 2 }, { ...manifest, network: true },
     { ...manifest, writes: ['selection.set', 'selection.set'] }, { ...manifest, operations: [] },
-    { ...manifest, kind: 'renderer' }, { ...manifest, styles: ['dist/index.css'] },
+    { ...manifest, kind: 'renderer' }, { ...manifest, styles: [] }, { ...manifest, styles: ['dist/index.css'] },
     { ...manifest, writes: ['viewport.set'] }, { ...manifest, writes: ['preferences.renderer'] },
     { ...manifest, writes: ['document.reset'] }, { ...manifest, writes: ['history.undo'] }, { ...manifest, writes: ['history.redo'] },
     { ...manifest, writes: ['preferences.locale'] }, { ...manifest, writes: ['preferences.vocab'] }, { ...manifest, writes: ['preferences.theme'] },
     { ...manifest, writes: ['preferences.panels'] }, { ...manifest, writes: ['preferences.section'] },
-    { ...manifest, writes: ['view.create'] }, { ...manifest, writes: ['view.rename'] }, { ...manifest, writes: ['view.pin'] }, { ...manifest, writes: ['view.remove'] },
+    { ...manifest, writes: ['view.create'] }, { ...manifest, writes: ['view.rename'] }, { ...manifest, writes: ['view.pin'] }, { ...manifest, writes: ['view.remove'] }, { ...manifest, writes: ['view.activate'] },
     { ...manifest, reads: [] },
     { ...manifest, capabilities: ['network'] },
     { ...manifest, capabilities: ['notifications.notify', 'notifications.notify'] },
@@ -32,7 +32,7 @@ test('manifests and action descriptors reject unknown authority, duplicates and 
   for (const kind of ['theme', 'vocab']) {
     const definition = { ...manifest, kind, entry: 'definition.json', writes: [] }
     assert.equal(parsePluginManifest(definition).kind, kind)
-    for (const change of [{ entry: 'dist/index.js' }, { entry: 'definition.js' }, { reads: [] }, { writes: ['concept.add'] }, { capabilities: ['files.open'] }, { capabilities: ['notifications.notify'] }, { styles: ['dist/index.css'] }]) assert.throws(() => parsePluginManifest({ ...definition, ...change }), PluginError)
+    for (const change of [{ entry: 'dist/index.js' }, { entry: 'definition.js' }, { reads: [] }, { writes: ['concept.add'] }, { capabilities: ['files.open'] }, { capabilities: ['notifications.notify'] }, { styles: [] }, { styles: ['dist/index.css'] }]) assert.throws(() => parsePluginManifest({ ...definition, ...change }), PluginError)
   }
   for (const entry of ['../index.js', 'dist/index.jsx', 'dist/index.ts']) assert.throws(() => parsePluginManifest({ ...manifest, entry }), PluginError)
 })

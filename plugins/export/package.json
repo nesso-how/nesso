@@ -4,7 +4,7 @@
   "license": "MIT",
   "type": "module",
   "nesso": {
-    "apiVersion": 1, "kind": "actions", "entry": "dist/index.js", "styles": [], "writes": [], "capabilities": ["files.save", "notifications.notify"]
+    "apiVersion": 1, "kind": "actions", "entry": "dist/index.js", "writes": [], "capabilities": ["files.save", "notifications.notify"]
   },
   "i18n": {
     "metadata": {

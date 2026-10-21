@@ -145,6 +145,7 @@ test('typed plugin writes are asynchronous, synchronize snapshots and preserve v
   const committed = instance.host.store.getState()
   await assert.rejects(store.addConcept(), { code: 'denied' })
   assert.equal('createView' in store, false)
+  assert.equal('setView' in store, false)
   assert.equal('undo' in store, false)
   assert.equal(instance.host.store.getState(), committed)
   await store.setConceptColor('urn:a', '#123456')

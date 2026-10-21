@@ -19,7 +19,6 @@
     "apiVersion": 1,
     "kind": "actions",
     "entry": "dist/index.js",
-    "styles": [],
     "writes": ["concept.label"],
     "capabilities": []
   },

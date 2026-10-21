@@ -3,7 +3,7 @@ import test from 'node:test'
 import { packageFonts, preparePluginPackage, verifyPluginPackage } from '../src/package.ts'
 import themeFixture from './theme.json' with { type: 'json' }
 
-const manifest = { name: 'nesso-plugin-test', version: '1.0.0', nesso: { apiVersion: 1, kind: 'actions', entry: 'index.js', styles: [], writes: ['concept.label'], capabilities: [] }, i18n: { metadata: { name: { en: 'Test' }, description: { en: 'Test' }, documentation: { en: 'Test' } }, action: { en: 'Test action' } } }
+const manifest = { name: 'nesso-plugin-test', version: '1.0.0', nesso: { apiVersion: 1, kind: 'actions', entry: 'index.js', writes: ['concept.label'], capabilities: [] }, i18n: { metadata: { name: { en: 'Test' }, description: { en: 'Test' }, documentation: { en: 'Test' } }, action: { en: 'Test action' } } }
 const code = 'export const create=()=>[]'
 const files = [{ path: 'index.js', bytes: new TextEncoder().encode(code) }]
 
