@@ -54,15 +54,17 @@
 .intro-navigation > span { margin-right: auto; color: var(--muted-foreground); font-family: var(--font-mono); font-size: 10px; }
 .intro-navigation > button:last-child { min-height: 36px; gap: 20px; font-size: 11px; }
 .intro-copy > .intro-desktop-note { margin-top: 19px; padding-top: 15px; border-top: 1px solid var(--border); font-size: 11px; line-height: 1.7; }
-.splash { --splash-pixel-base: 60ms; --splash-pixel-step: 28ms; --splash-pixel-dur: 200ms; --splash-word-delay: 360ms; --splash-word-dur: 260ms; --splash-line-delay: 500ms; --splash-line-dur: 180ms; position: relative; z-index: 30; display: grid; flex: 1; min-height: 0; place-items: center; background: var(--background); }
+.splash { --splash-pixel-base: 60ms; --splash-pixel-step: 28ms; --splash-pixel-dur: 200ms; --splash-word-delay: 360ms; --splash-word-dur: 260ms; --splash-line-delay: 500ms; --splash-line-dur: 180ms; position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; background: var(--background, #fff); }
 .splash-logo { width: 240px; height: auto; }
 .splash-pixel { transform-box: fill-box; transform-origin: center; }
-.splash-wordmark { font-family: var(--font-mono); transform-box: fill-box; }
+.splash-wordmark { font-family: var(--font-mono, monospace); transform-box: fill-box; }
 .splash-underline { transform-box: fill-box; transform-origin: left center; }
 .splash.is-playing .splash-pixel { opacity: 0; animation: splash-pixel-in var(--splash-pixel-dur) ease-out both; animation-delay: calc(var(--splash-pixel-base) + var(--i) * var(--splash-pixel-step)); }
 .splash.is-playing .splash-wordmark { opacity: 0; animation: splash-word-in var(--splash-word-dur) ease-out both; animation-delay: var(--splash-word-delay); }
 .splash.is-playing .splash-underline { opacity: 0; animation: splash-line-in var(--splash-line-dur) ease-out both; animation-delay: var(--splash-line-delay); }
 .splash.is-fading { opacity: 0; transition: opacity 180ms ease-out; }
+.startup-recovery { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 24px; background: #fff; color: #292929; font: 14px system-ui; text-align: center; }
+.startup-recovery button { padding: 8px 16px; border: 1px solid #dedede; border-radius: 3px; cursor: pointer; }
 @keyframes splash-pixel-in { from { opacity: 0; transform: scale(.3); } to { opacity: 1; transform: scale(1); } }
 @keyframes splash-word-in { from { opacity: 0; transform: translateX(8px); } to { opacity: 1; transform: none; } }
 @keyframes splash-line-in { from { opacity: 0; transform: scaleX(0); } to { opacity: 1; transform: scaleX(1); } }

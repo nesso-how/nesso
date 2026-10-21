@@ -12,6 +12,13 @@ import { connectMcpHost } from '@/ai/mcp'
 import { createAiApproval, createAiHistoryApproval } from '@/ai/approval'
 import './index.css'
 import App from './App'
+import { Splash } from '@/components/app/Splash'
+
+const root = createRoot(document.getElementById('root')!)
+const animate = (performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined)?.type !== 'reload'
+const showApp = () => root.render(<StrictMode><App persistence={persistence} /></StrictMode>)
+const showSplash = (ready: boolean) => root.render(<StrictMode><Splash ready={ready} animate={animate} onDone={showApp} /></StrictMode>)
+showSplash(false)
 
 const framePolicy = document.createElement('meta')
 framePolicy.httpEquiv = 'Content-Security-Policy'
@@ -19,15 +26,7 @@ framePolicy.content = `frame-src ${new URL('plugin-runner/actions.html', documen
 document.head.append(framePolicy)
 
 const showPluginRecovery = (message: string, label: string, action: () => void) => {
-  const recovery = document.createElement('div')
-  recovery.style.cssText = 'position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:#fff;color:#292929;font:14px system-ui'
-  const description = document.createElement('p')
-  description.textContent = message
-  const button = document.createElement('button')
-  button.textContent = label
-  button.onclick = action
-  recovery.append(description, button)
-  document.getElementById('root')!.replaceChildren(recovery)
+  root.render(<div role="alert" className="startup-recovery"><p>{message}</p><button onClick={action}>{label}</button></div>)
 }
 
 try { await initializeBundledPlugins() }
@@ -46,13 +45,6 @@ const stopTheme = connectTheme(host, (definition) => {
 })
 const externalStartup = new AbortController()
 if (sessionStorage.getItem('nesso:skip-external-plugins')) externalStartup.abort()
-if (window.nessoPlugins && !externalStartup.signal.aborted) {
-  const t = translate(host.store.getState().preferences.locale ?? defaultLocale)
-  showPluginRecovery(t('pluginLoadingExternal'), t('pluginSkipExternal'), () => {
-    externalStartup.abort()
-    sessionStorage.setItem('nesso:skip-external-plugins', 'true')
-  })
-}
 const stopExternalPlugins = await initializeExternalPlugins(externalStartup.signal)
 const persistence = startAutosave(stopPluginActions)
 const stopUpdateNotifications = connectUpdateNotifications(
@@ -87,8 +79,4 @@ import.meta.hot?.dispose(() => {
   window.removeEventListener('pagehide', stopExternalPlugins)
 })
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App persistence={persistence} />
-  </StrictMode>,
-)
+showSplash(true)

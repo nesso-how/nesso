@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 
 const pixels = [
   { x: 6, y: 6 },
@@ -16,48 +16,42 @@ const pixels = [
   { x: 22, y: 22 },
 ]
 
-export function Splash({ onDone }: { onDone: () => void }) {
-  const saved = useRef(onDone)
-  const finished = useRef(false)
+export function Splash({ ready, animate, onDone }: { ready: boolean; animate: boolean; onDone: () => void }) {
   const [reduced] = useState(() => matchMedia('(prefers-reduced-motion: reduce)').matches)
-  const [fading, setFading] = useState(false)
+  const [elapsed, setElapsed] = useState(!animate)
+  const fading = ready && elapsed && animate && !reduced
   const title = useRef<HTMLHeadingElement>(null)
   useEffect(() => {
-    saved.current = onDone
-  })
-  const finish = useCallback(() => {
-    if (finished.current) return
-    finished.current = true
-    if (reduced) {
-      saved.current()
-      return
-    }
-    setFading(true)
-    setTimeout(() => saved.current(), 180)
-  }, [reduced])
-  useEffect(() => {
     title.current?.focus({ preventScroll: true })
-    const id = setTimeout(finish, reduced ? 400 : 900)
+    if (!animate) return
+    const id = setTimeout(() => setElapsed(true), reduced ? 400 : 900)
     return () => clearTimeout(id)
-  }, [finish, reduced])
+  }, [animate, reduced])
+  useEffect(() => {
+    if (!ready || !elapsed) return
+    if (reduced || !animate) { onDone(); return }
+    const id = setTimeout(onDone, 180)
+    return () => clearTimeout(id)
+  }, [ready, elapsed, reduced, animate, onDone])
   return (
     <section
-      className={['splash', reduced ? null : 'is-playing', fading ? 'is-fading' : null].filter(Boolean).join(' ')}
+      className={['splash', animate && !reduced ? 'is-playing' : null, fading ? 'is-fading' : null].filter(Boolean).join(' ')}
       aria-labelledby="splash-title"
+      aria-busy={!ready}
       onKeyDown={(event) => {
         if (event.key !== 'Escape' || event.defaultPrevented) return
         event.preventDefault()
-        finish()
+        setElapsed(true)
       }}
     >
       <svg className="splash-logo" viewBox="0 0 148 32" role="img" aria-label="Nesso">
-        <g fill="var(--primary)">
+        <g fill="var(--primary, #393939)">
           {pixels.map(({ x, y }, index) => (
             <rect key={`${x}-${y}`} className="splash-pixel" style={{ '--i': index } as CSSProperties} x={x} y={y} width={4} height={4} />
           ))}
         </g>
-        <text className="splash-wordmark" x={36} y={22} fontSize={19} fontWeight={500} fill="var(--foreground)">nesso</text>
-        <rect className="splash-underline" x={95} y={25} width={15} height={2} fill="var(--primary)" />
+        <text className="splash-wordmark" x={36} y={22} fontSize={19} fontWeight={500} fill="var(--foreground, #292929)">nesso</text>
+        <rect className="splash-underline" x={95} y={25} width={15} height={2} fill="var(--primary, #393939)" />
       </svg>
       <h1 id="splash-title" ref={title} tabIndex={-1} className="sr-only">Nesso</h1>
     </section>

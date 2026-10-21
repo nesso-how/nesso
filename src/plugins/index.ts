@@ -11,6 +11,7 @@ import { notifications } from '../notifications/index.ts'
 import { prepareTheme, type ThemePresentation } from '../theme/prepare.ts'
 import { createPluginRegistry, type PluginEntry } from './registry.ts'
 import { loadActions, type ActionPackage } from './actions.ts'
+import { withInitializationTimeout } from './initialization.ts'
 import { translate } from '../i18n/index.ts'
 import { packageFonts, verifyPluginPackage } from '@nesso/plugin/package'
 import type { InstalledPlugin, PluginResult } from '../../shared/plugins.ts'
@@ -55,6 +56,7 @@ const externalEntry = (prepared: InstalledPlugin, error?: string): PluginEntry =
 type DiscoveredPlugin = { entry: PluginEntry; source?: ActionPackage; presentation?: ThemePresentation }
 const discoverExternal = async (prepared: InstalledPlugin, signal: AbortSignal, restoring: readonly PluginEntry[] = [], replacing?: string): Promise<DiscoveredPlugin> => {
   const verified = await verifyPluginPackage(prepared)
+  signal.throwIfAborted()
   const bytes = new TextEncoder().encode(verified.code)
   let discovered: DiscoveredPlugin
   if (verified.nesso.kind === 'actions') {
@@ -72,6 +74,7 @@ const discoverExternal = async (prepared: InstalledPlugin, signal: AbortSignal, 
       discovered = { entry: { ...externalEntry(prepared), kind: 'theme', contribution }, presentation }
     }
   }
+  signal.throwIfAborted()
   registry.check([...registry.getSnapshot().filter((entry) => !replacing || entry.contentId !== replacing), ...restoring, discovered.entry])
   return prepared.enabled ? discovered : { entry: externalEntry(prepared) }
 }
@@ -96,7 +99,7 @@ export async function initializeExternalPlugins(signal: AbortSignal) {
   if (!bridge || signal.aborted) return () => {}
   const t = getTranslation()
   try {
-    const stored = result(await bridge.list())
+    const stored = result(await withInitializationTimeout(() => bridge.list(), signal))
     if (stored.safeMode) return () => {}
     const entries: PluginEntry[] = []
     const staged: DiscoveredPlugin[] = []
@@ -104,14 +107,15 @@ export async function initializeExternalPlugins(signal: AbortSignal) {
       if (signal.aborted) return () => {}
       if (!prepared.enabled) { entries.push(externalEntry(prepared)); continue }
       try {
-        const discovered = await discoverExternal(prepared, signal, entries)
+        const discovered = await withInitializationTimeout((loading) => discoverExternal(prepared, loading, entries), signal)
         entries.push(discovered.entry)
         staged.push(discovered)
       } catch { entries.push(externalEntry(prepared, t('pluginUnavailable'))) }
     }
     if (signal.aborted) return () => {}
     publish([...registry.getSnapshot(), ...entries], staged, true)
-    if (entries.some((entry) => entry.error)) notifications.api.notify({ tone: 'warning', title: t('pluginExternalFailed') })
+    const failed = entries.filter((entry) => entry.error)
+    if (failed.length) notifications.api.notify({ tone: 'warning', title: t('pluginExternalFailed'), description: failed.map((entry) => pluginMetadata(entry, nessoStore.getState().preferences.locale ?? defaultLocale).name).join(', ') })
   } catch { notifications.api.notify({ tone: 'warning', title: t('pluginExternalFailed') }) }
   if (signal.aborted) return () => {}
   return bridge.subscribe((event) => {
