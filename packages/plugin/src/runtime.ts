@@ -67,8 +67,8 @@ const jsEntry = z.string().max(240).regex(/^(?:[\w-]+\/)*[\w-]+\.js$/)
 const jsonEntry = z.string().max(240).regex(/^(?:[\w-]+\/)*[\w-]+\.json$/)
 const operationDeclarations = z.array(z.enum(operation.options.map((schema) => schema.shape.kind.value)))
 const manifest = z.discriminatedUnion('kind', [
-  z.strictObject({ ...manifestFields, kind: z.literal('actions'), entry: jsEntry, styles: z.tuple([]), reads: z.union([z.tuple([]), z.tuple([z.literal('view')]), z.tuple([z.literal('graph')])]), writes: operationDeclarations, capabilities: z.array(z.enum(['files.open', 'files.save', 'notifications.notify'])) }),
-  ...(['theme', 'vocab'] as const).map((kind) => z.strictObject({ ...manifestFields, kind: z.literal(kind), entry: jsonEntry, styles: z.tuple([]), reads: z.tuple([]), writes: z.tuple([]), capabilities: z.tuple([]) })),
+  z.strictObject({ ...manifestFields, kind: z.literal('actions'), entry: jsEntry, styles: z.tuple([]), writes: operationDeclarations, capabilities: z.array(z.enum(['files.open', 'files.save', 'notifications.notify'])) }),
+  ...(['theme', 'vocab'] as const).map((kind) => z.strictObject({ ...manifestFields, kind: z.literal(kind), entry: jsonEntry, styles: z.tuple([]), writes: z.tuple([]), capabilities: z.tuple([]) })),
 ]).refine((value) => new Set(value.writes).size === value.writes.length && new Set(value.capabilities).size === value.capabilities.length, 'Declarations must be unique')
 
 export type PluginManifest = DeepReadonly<z.infer<typeof manifest>>
@@ -83,7 +83,6 @@ const envelope = { type: z.literal('request'), id: z.number().int().positive(), 
 const request = z.discriminatedUnion('method', [
   z.strictObject({ ...envelope, method: z.literal('store.applyOperations'), params: z.strictObject({ operations: z.array(operation).max(50_000), options: options.optional() }) }),
   z.strictObject({ ...envelope, method: z.literal('store.refresh'), params: z.strictObject({}) }),
-  z.strictObject({ ...envelope, method: z.literal('store.getViewGraph'), params: z.strictObject({ id: id.nullable() }) }),
   z.strictObject({ ...envelope, method: z.literal('notifications.notify'), params: z.strictObject({ tone: z.enum(['info', 'warning']), title: localizedText(256), description: localizedText(4096).optional() }) }),
   z.strictObject({ ...envelope, method: z.literal('files.open'), params: fileOpenOptions }),
   z.strictObject({ ...envelope, method: z.literal('files.save'), params: fileSaveOptions }),
@@ -122,7 +121,7 @@ export type ViewState = BaseState & {
   readonly history: { readonly canUndo: boolean; readonly canRedo: boolean }
 }
 
-export type ActionState = BaseState | ViewState | (ViewState & { readonly graph: GraphSnapshot; readonly workspace: { readonly activeViewId: string | null; readonly savedViews: readonly SavedView[] } })
+export type ActionState = BaseState | ViewState
 
 type WriteOptions = { readonly historyGroup?: string; readonly atRevision?: number }
 export type PluginContext<S extends BaseState = BaseState> = {
@@ -130,7 +129,6 @@ export type PluginContext<S extends BaseState = BaseState> = {
     readonly getState: () => S
     readonly subscribe: (listener: () => void) => () => void
     readonly refresh: () => Promise<S>
-    readonly getViewGraph: (id: string | null) => Promise<GraphSnapshot>
     readonly applyOperations: (operations: readonly NessoOperation[], options?: WriteOptions) => Promise<{ readonly revision: number; readonly changed: boolean }>
   }
   readonly notifications: { readonly notify: (value: { readonly tone: 'info' | 'warning'; readonly title: LocalizedText; readonly description?: LocalizedText }) => Promise<string> }
@@ -145,7 +143,7 @@ const baseStateSchema = z.strictObject({
   theme: z.strictObject(Object.fromEntries(themeTokens.map((token) => [token, z.string().max(512).regex(/^[#\w\s.,()%/"'-]*$/)]))),
   conceptPlacementOffset: position,
 })
-const viewStateSchema = baseStateSchema.extend({ viewGraph: graph, selected: selection, targetViewId: id.nullable(), activeVocab: z.strictObject({ id, relationTypes: z.array(relationType), defaultTypeId: id }).nullable(), history: z.strictObject({ canUndo: z.boolean(), canRedo: z.boolean() }), workspace: z.strictObject({ activeViewId: id.nullable(), savedViews: z.array(z.strictObject({ id, name: z.string(), pinned: z.boolean(), conceptIds: z.array(id).optional() })) }), graph: graph.optional() })
+const viewStateSchema = baseStateSchema.extend({ viewGraph: graph, selected: selection, targetViewId: id.nullable(), activeVocab: z.strictObject({ id, relationTypes: z.array(relationType), defaultTypeId: id }).nullable(), history: z.strictObject({ canUndo: z.boolean(), canRedo: z.boolean() }), workspace: z.strictObject({ activeViewId: id.nullable(), savedViews: z.array(z.strictObject({ id, name: z.string(), pinned: z.boolean(), conceptIds: z.array(id).optional() })) }) })
 const replies = (state: z.ZodType) => z.union([
   z.strictObject({ type: z.literal('state'), state }),
   z.strictObject({ type: z.literal('response'), id: z.number().int().positive(), ok: z.literal(true), value: z.unknown() }),
@@ -157,7 +155,6 @@ type RequestMethod = z.infer<typeof request>['method']
 const results = {
   'store.applyOperations': z.strictObject({ revision: z.number().int().nonnegative(), changed: z.boolean() }),
   'store.refresh': z.null(),
-  'store.getViewGraph': graph,
   'notifications.notify': id,
   'files.open': fileOpenResult,
   'files.save': z.strictObject({ saved: z.boolean() }),
@@ -252,7 +249,6 @@ export function createPluginClient<S extends BaseState>(port: MessagePort, initi
       getState: () => state,
       subscribe: (listener) => { listeners.add(listener); return () => listeners.delete(listener) },
       refresh: async () => { await call('store.refresh', {}); return state },
-      getViewGraph: (id) => call('store.getViewGraph', { id }),
       applyOperations,
     },
     notifications: { notify: (value) => call('notifications.notify', value) },

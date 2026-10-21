@@ -10,6 +10,6 @@ The host lists view-scoped actions in the saved-view menus and resolves labels a
 
 ## API
 
-- `create(context)`: factory contributing the `export-view` action. Declarations live in `package.json`: `view` reads, no writes, and `files.save`/`notifications.notify` capabilities.
+- `create(context)`: factory contributing the `export-view` action. Declarations live in `package.json`: no writes, and `files.save`/`notifications.notify` capabilities.
 
 See [src/index.ts](src/index.ts) for definitions.

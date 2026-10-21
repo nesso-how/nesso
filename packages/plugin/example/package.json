@@ -20,7 +20,6 @@
     "kind": "actions",
     "entry": "dist/index.js",
     "styles": [],
-    "reads": ["view"],
     "writes": ["concept.label"],
     "capabilities": []
   },

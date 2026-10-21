@@ -14,7 +14,7 @@ import { acquireNpmPlugin } from './plugin-npm.ts'
 import { preparePluginPackage } from '../packages/plugin/src/package.ts'
 import themeFixture from '../packages/plugin/test/theme.json' with { type: 'json' }
 
-const manifest = { name: '@nesso/test', version: '1.0.0-alpha.1+build.1', scripts: { install: 'never run' }, dependencies: { anything: '*' }, nesso: { apiVersion: 1, kind: 'actions', entry: 'dist/index.js', styles: [], reads: [], writes: [], capabilities: [] }, i18n: { metadata: { name: { en: 'Test' }, description: { en: 'Test' }, documentation: { en: 'Test' } } } }
+const manifest = { name: '@nesso/test', version: '1.0.0-alpha.1+build.1', scripts: { install: 'never run' }, dependencies: { anything: '*' }, nesso: { apiVersion: 1, kind: 'actions', entry: 'dist/index.js', styles: [], writes: [], capabilities: [] }, i18n: { metadata: { name: { en: 'Test' }, description: { en: 'Test' }, documentation: { en: 'Test' } } } }
 const code = 'throw new Error("Never run in the host")'
 const spec = { name: manifest.name, version: manifest.version }
 const url = 'https://registry.npmjs.org/test/-/test.tgz'

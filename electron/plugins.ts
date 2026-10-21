@@ -72,8 +72,7 @@ export function connectPlugins(trusted: TrustedRequest) {
         const language = locale === 'it' || locale === 'zh-CN' ? locale : 'en'
         const t = language === 'it' ? it : language === 'zh-CN' ? zhCN : en
         const metadata = { name: resolvePluginText(prepared.i18n.metadata.name, language), description: resolvePluginText(prepared.i18n.metadata.description, language), documentation: resolvePluginText(prepared.i18n.metadata.documentation, language) }
-        const read = prepared.nesso.reads[0]
-        const detail = [metadata.description, metadata.documentation, source === 'npm' ? t.pluginNpmSource : t.pluginDevelopmentSource, t[prepared.nesso.kind], t[read === 'graph' ? 'pluginReadGraph' : read === 'view' ? 'pluginReadView' : 'pluginReadNone'], ...(prepared.nesso.kind === 'actions' ? [t.pluginWriteScope] : []), `${t.pluginWrites}: ${prepared.nesso.writes.join(', ') || '—'}`, `${t.pluginCapabilities}: ${prepared.nesso.capabilities.join(', ') || '—'}`, ...(prepared.fonts.length ? [`WOFF2: ${prepared.fonts.map(({ path }) => path).join(', ')}`] : []), `SHA-256: ${prepared.contentId}`, t.pluginInstallWarning].join('\n\n')
+        const detail = [metadata.description, metadata.documentation, source === 'npm' ? t.pluginNpmSource : t.pluginDevelopmentSource, t[prepared.nesso.kind], ...(prepared.nesso.kind === 'actions' ? [t.pluginWriteScope] : []), `${t.pluginWrites}: ${prepared.nesso.writes.join(', ') || '—'}`, `${t.pluginCapabilities}: ${prepared.nesso.capabilities.join(', ') || '—'}`, ...(prepared.fonts.length ? [`WOFF2: ${prepared.fonts.map(({ path }) => path).join(', ')}`] : []), `SHA-256: ${prepared.contentId}`, t.pluginInstallWarning].join('\n\n')
         const dialogController = new AbortController()
         const closeDialog = () => dialogController.abort()
         controller.signal.addEventListener('abort', closeDialog, { once: true })

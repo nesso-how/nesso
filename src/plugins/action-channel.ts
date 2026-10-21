@@ -9,7 +9,6 @@ import { listenPluginPort, type PluginMessage } from './messages.ts'
 type Grant = {
   readonly writes: readonly NessoOperation['kind'][]
   readonly capabilities: readonly string[]
-  readonly reads: readonly ('view' | 'graph')[]
   readonly invocation?: { readonly actionId: string; readonly viewId: string | null; readonly descriptors: readonly ActionDescriptor[] }
 }
 
@@ -43,18 +42,17 @@ export function connectActionChannel(port: MessagePort, store: HostStore, grant:
   const snapshot = (): ActionState => {
     const state = store.getState()
     const projection = { ...base, revision, locale: state.preferences.locale ?? base.locale }
-    if (!grant.invocation || !grant.reads.length) return projection
+    if (!grant.invocation) return projection
     const viewGraph = materialize(state.graph, { ...state.workspace, activeViewId: target })
     const concepts = new Set(viewGraph.concepts.map(({ id }) => id))
     const relations = new Set(viewGraph.relations.map(relationKey))
     return {
       ...projection,
-      workspace: { activeViewId: state.workspace.activeViewId, savedViews: grant.reads.includes('graph') ? state.workspace.savedViews : state.workspace.savedViews.map(({ id, name, pinned }) => ({ id, name, pinned })) },
+      workspace: { activeViewId: state.workspace.activeViewId, savedViews: state.workspace.savedViews.map(({ id, name, pinned }) => ({ id, name, pinned })) },
       targetViewId: target, viewGraph,
-      selected: grant.reads.includes('graph') ? state.selected : state.selected.filter(({ kind, id }) => (kind === 'concept' ? concepts : relations).has(id)),
+      selected: state.selected.filter(({ kind, id }) => (kind === 'concept' ? concepts : relations).has(id)),
       activeVocab: state.vocabs.find(({ id }) => id === state.preferences.activeVocabId) ?? null,
       history: state.history,
-      ...(grant.reads.includes('graph') ? { graph: state.graph } : {}),
     }
   }
   const sendState = () => {
@@ -104,11 +102,6 @@ export function connectActionChannel(port: MessagePort, store: HostStore, grant:
   }
   const execute = async (message: Extract<PluginMessage, { type: 'request' }>) => {
     if (message.method === 'store.refresh') { sendState(); return null }
-    if (message.method === 'store.getViewGraph') {
-      if (!grant.invocation || !grant.reads.includes('graph')) fail('denied', 'Full graph read was not declared')
-      sendState()
-      return message.params.id === null ? store.getState().graph : store.getViewGraph(message.params.id)
-    }
     assertCurrent(message.contextId)
     if (message.method === 'store.applyOperations') {
       const { operations, options } = message.params

@@ -22,11 +22,10 @@ Use the [example package.json](example/package.json). Package names must be vali
 | `kind` | `actions`, `vocab`, or `theme` |
 | `entry` | Actions: package-local `.js` path, such as `dist/index.js`. Themes and vocabularies: package-local `.json` definition path, such as `dist/definition.json` |
 | `styles` | `[]` |
-| `reads` | `[]`, `["view"]`, or `["graph"]` |
 | `writes` | Supported operation kinds, without duplicates |
 | `capabilities` | Subset of `files.open`, `files.save`, `notifications.notify`, without duplicates |
 
-Themes and vocabularies require empty `reads`, `writes`, and `capabilities`. Unknown declarations are rejected. Contribution IDs are unique by kind and use lowercase kebab-case.
+Themes and vocabularies require empty `writes` and `capabilities`. Unknown declarations are rejected. Contribution IDs are unique by kind and use lowercase kebab-case.
 
 The top-level `i18n.metadata` requires `name`, `description`, and `documentation`. Each is a `LocalizedText` object: `{ en: string, it?: string, 'zh-CN'?: string }`. Other `i18n` keys use the same shape. Nesso resolves the current language with an English fallback; no translation library is needed. Bundle JSON imports at build time.
 
@@ -36,9 +35,9 @@ Use `label: i18n.label` for an action, or reuse `i18n.metadata.name` when the wo
 
 `create` receives `{ store, files, notifications, signal }`. Keep discovery free of effects and return stable descriptors. Actions have no persistent background instance.
 
-- `store.getState()` and `subscribe()` are synchronous. Narrow with `'viewGraph' in state` before accessing invocation data. `view` grants the invoked view; `graph` adds the complete graph and `getViewGraph(id)`.
+- `store.getState()` and `subscribe()` are synchronous. Narrow with `'viewGraph' in state` before accessing invocation data. Actions always receive the invoked view; invoking on All exposes the complete graph.
 - Await write helpers such as `setConceptLabel`, `addConcept`, and `undo`. Use `applyOperations(operations, { atRevision })` for one atomic, revision-checked batch. Separate calls are separate transactions; never retry mutations automatically.
-- Reads and writes are separate grants: `view` is not a write sandbox. Declared writes can affect the whole document; undo/redo use global history and must each be alone in a batch.
+- Receiving the invoked view is not a write sandbox. Declared writes can affect the whole document; undo/redo use global history and must each be alone in a batch.
 - `run({ viewId })` keeps its invocation target despite navigation; `null` means All. Target deletion or document reset revokes the context. Use `refresh()` after deferred work and honor `signal`.
 - `files.open()`/`save()` mediate UTF-8 text files up to 16 MiB through the host, returning `null`/`{ saved: false }` on cancellation. `notifications.notify()` posts internal `info`/`warning` messages. Each effect requires its declared capability and must be awaited before returning.
 

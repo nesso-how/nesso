@@ -4,7 +4,7 @@ import { checkMessageSize, parseContribution, parsePluginI18n, parsePluginManife
 
 const manifest = {
   apiVersion: 1, kind: 'actions', entry: 'dist/index.js', styles: [],
-  reads: ['graph'], writes: ['selection.set'], capabilities: [],
+  writes: ['selection.set'], capabilities: [],
 }
 
 test('manifests and action descriptors reject unknown authority, duplicates and oversized labels', () => {
@@ -15,6 +15,7 @@ test('manifests and action descriptors reject unknown authority, duplicates and 
     { ...manifest, writes: ['selection.set', 'selection.set'] }, { ...manifest, operations: [] },
     { ...manifest, kind: 'renderer' }, { ...manifest, styles: ['dist/index.css'] },
     { ...manifest, writes: ['viewport.set'] }, { ...manifest, writes: ['preferences.renderer'] },
+    { ...manifest, reads: [] },
     { ...manifest, capabilities: ['network'] },
     { ...manifest, capabilities: ['notifications.notify', 'notifications.notify'] },
     { ...manifest, capabilities: ['clipboard.read'] }, { ...manifest, capabilities: ['clipboard.write'] },
@@ -24,9 +25,9 @@ test('manifests and action descriptors reject unknown authority, duplicates and 
   assert.deepEqual(parseContribution('actions', [descriptor]), [descriptor])
   for (const value of [[], [descriptor, descriptor], [{ ...descriptor, run: true }]]) assert.throws(() => parseContribution('actions', value), PluginError)
   for (const kind of ['theme', 'vocab']) {
-    const definition = { ...manifest, kind, entry: 'definition.json', reads: [], writes: [] }
+    const definition = { ...manifest, kind, entry: 'definition.json', writes: [] }
     assert.equal(parsePluginManifest(definition).kind, kind)
-    for (const change of [{ entry: 'dist/index.js' }, { entry: 'definition.js' }, { reads: ['graph'] }, { writes: ['concept.add'] }, { capabilities: ['files.open'] }, { capabilities: ['notifications.notify'] }, { styles: ['dist/index.css'] }]) assert.throws(() => parsePluginManifest({ ...definition, ...change }), PluginError)
+    for (const change of [{ entry: 'dist/index.js' }, { entry: 'definition.js' }, { reads: [] }, { writes: ['concept.add'] }, { capabilities: ['files.open'] }, { capabilities: ['notifications.notify'] }, { styles: ['dist/index.css'] }]) assert.throws(() => parsePluginManifest({ ...definition, ...change }), PluginError)
   }
   for (const entry of ['../index.js', 'dist/index.jsx', 'dist/index.ts']) assert.throws(() => parsePluginManifest({ ...manifest, entry }), PluginError)
 })

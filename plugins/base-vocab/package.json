@@ -7,7 +7,7 @@
     "apiVersion": 1,
     "kind": "vocab",
     "entry": "dist/definition.json",
-    "styles": [], "reads": [], "writes": [], "capabilities": []
+    "styles": [], "writes": [], "capabilities": []
   },
   "i18n": {
     "metadata": {

@@ -3,7 +3,7 @@ import test from 'node:test'
 import { packageFonts, preparePluginPackage, verifyPluginPackage } from '../src/package.ts'
 import themeFixture from './theme.json' with { type: 'json' }
 
-const manifest = { name: 'nesso-plugin-test', version: '1.0.0', nesso: { apiVersion: 1, kind: 'actions', entry: 'index.js', styles: [], reads: ['view'], writes: ['concept.label'], capabilities: [] }, i18n: { metadata: { name: { en: 'Test' }, description: { en: 'Test' }, documentation: { en: 'Test' } }, action: { en: 'Test action' } } }
+const manifest = { name: 'nesso-plugin-test', version: '1.0.0', nesso: { apiVersion: 1, kind: 'actions', entry: 'index.js', styles: [], writes: ['concept.label'], capabilities: [] }, i18n: { metadata: { name: { en: 'Test' }, description: { en: 'Test' }, documentation: { en: 'Test' } }, action: { en: 'Test action' } } }
 const code = 'export const create=()=>[]'
 const files = [{ path: 'index.js', bytes: new TextEncoder().encode(code) }]
 
@@ -38,7 +38,7 @@ test('definition packages bind local font bytes and sorted paths to approval wit
   const font = { path: 'fonts/sans.woff2', bytes: new TextEncoder().encode('wOF2font') }
   const vocab = { id: 'test-vocab', relationTypes: [{ id: 'urn:nesso:test', label: 'Test' }], defaultTypeId: 'urn:nesso:test' }
   for (const kind of ['vocab', 'theme'] as const) {
-    const source = { ...manifest, nesso: { ...manifest.nesso, kind, entry: 'definition.json', reads: [], writes: [], capabilities: [] } }
+    const source = { ...manifest, nesso: { ...manifest.nesso, kind, entry: 'definition.json', writes: [], capabilities: [] } }
     const definition = kind === 'theme' ? { ...themeFixture, id: 'test-theme' } : vocab
     const entry = { path: 'definition.json', bytes: new TextEncoder().encode(JSON.stringify(definition)) }
     const prepared = await preparePluginPackage({ manifest: source, files: kind === 'theme' ? [entry, font] : [entry] })

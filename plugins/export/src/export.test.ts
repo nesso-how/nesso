@@ -15,7 +15,7 @@ test('export uses only the supplied target graph and notifies after accepted sav
   const save = context.mock.fn((_options: FileSaveOptions) => new Promise<{ saved: boolean }>((resolve) => { finish = resolve }))
   const notify = context.mock.fn(async (_value: Parameters<ActionContext['notifications']['notify']>[0]) => 'notification')
   const api: ActionContext = {
-    store: { ...createWriteCommands(async () => assert.fail('Export must not write'), async (id, committed) => { await committed; return id }), getState: () => state, refresh: async () => state, subscribe: () => () => {}, applyOperations: async () => assert.fail('Export must not write'), getViewGraph: async () => assert.fail('Export must not fetch another graph') },
+    store: { ...createWriteCommands(async () => assert.fail('Export must not write'), async (id, committed) => { await committed; return id }), getState: () => state, refresh: async () => state, subscribe: () => () => {}, applyOperations: async () => assert.fail('Export must not write') },
     files: { open: async () => assert.fail('Export must not open files'), save },
     notifications: { notify }, signal: new AbortController().signal,
   }

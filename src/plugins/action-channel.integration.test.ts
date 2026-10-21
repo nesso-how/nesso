@@ -20,7 +20,7 @@ function fixture(discovery = false, open: () => Promise<FileOpenResult> = async 
   const notified: string[] = []
   const descriptions: (string | undefined)[] = []
   const dismissed: string[] = []
-  const runtime = connectActionChannel(channel.port1, host.store, { reads: ['view'], writes, capabilities, invocation: discovery ? undefined : { actionId: 'example', viewId: target, descriptors } }, base, {
+  const runtime = connectActionChannel(channel.port1, host.store, { writes, capabilities, invocation: discovery ? undefined : { actionId: 'example', viewId: target, descriptors } }, base, {
     files: { open, save: async () => ({ saved: true }) },
     notify: ({ title, description }) => { notified.push(title); descriptions.push(description); return title }, dismiss: (id) => { dismissed.push(id) },
     discovered: (value) => found.push(value), activated: () => {}, complete: () => {}, failed: (error) => failures.push(error),
@@ -51,7 +51,7 @@ test('action projections stay bound to the invoked view, filter off-view selecti
   assert.ok('viewGraph' in state)
   assert.equal(state.targetViewId, instance.target)
   assert.equal(state.viewGraph.concepts[0].label, 'Changed')
-  await assert.rejects(store.getViewGraph(null), { code: 'denied' })
+  assert.equal('getViewGraph' in store, false)
   await assert.rejects(store.applyOperations([{ kind: 'concept.label', id: 'urn:a', value: 'Stale' }], { atRevision: before.revision }), { code: 'stale-state' })
   await assert.rejects(store.applyOperations([{ kind: 'concept.label', id: 'urn:a', value: 'No' }, { kind: 'concept.remove', id: 'urn:b' }]), { code: 'denied' })
   await store.applyOperations([{ kind: 'history.undo' }])
