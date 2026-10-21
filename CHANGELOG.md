@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.0-alpha.21 — 2026-10-21
+
+### Fixes
+
+- **build:** Quote workspace filter for windows
+
 ## 1.0.0-alpha.20 — 2026-10-21
 
 ### Features
