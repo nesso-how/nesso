@@ -59,7 +59,7 @@ const discoverExternal = async (prepared: InstalledPlugin, signal: AbortSignal, 
   let discovered: DiscoveredPlugin
   if (verified.nesso.kind === 'actions') {
     const source: ActionPackage = { name: verified.name, entry: bytes, manifest: verified.nesso, i18n: verified.i18n }
-    const contribution = await loadActions(nessoStore, source, notifications.api, getTranslation, undefined, undefined, signal)
+    const contribution = await loadActions(nessoStore, source, notifications.api, undefined, undefined, signal)
     discovered = { source, entry: { ...externalEntry(prepared), kind: 'actions', contribution } }
   } else {
     const contribution = parseDefinitionCode(verified.nesso.kind, verified.code, verified.nesso.entry)
@@ -196,7 +196,7 @@ export async function initializeBundledPlugins() {
     if (manifest.kind !== 'actions') throw new PluginError('invalid-input', [{ path: 'manifest.kind', message: 'Expected an action package' }])
     const i18n = parsePluginI18n(source.i18n)
     const packageEntry = { name: source.name, entry: `preinstalled/${id}/index.js`, manifest, i18n }
-    const descriptors = await loadActions(nessoStore, packageEntry, notifications.api, getTranslation)
+    const descriptors = await loadActions(nessoStore, packageEntry, notifications.api)
     actions.set(source.name, packageEntry)
     return { id: source.name, version: source.version, kind: 'actions', i18n, contribution: descriptors }
   }))
@@ -209,7 +209,7 @@ export async function invokeAction(actionId: string, viewId = nessoStore.getStat
   if (!source || plugin?.kind !== 'actions' || changing.has(plugin.id)) return
   const controller = new AbortController()
   active.set(controller, source.name)
-  try { await loadActions(nessoStore, source, notifications.api, getTranslation, window.nessoFiles, { actionId, viewId, descriptors: plugin.contribution }, controller.signal) }
+  try { await loadActions(nessoStore, source, notifications.api, window.nessoFiles, { actionId, viewId, descriptors: plugin.contribution }, controller.signal) }
   catch (error) {
     if (error instanceof PluginError && error.code === 'cancelled') return
     const t = getTranslation()

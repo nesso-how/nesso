@@ -3,7 +3,6 @@ import { defaultLocale } from '@nesso/i18n'
 import type { HostStore } from '../store/types.ts'
 import type { Notifications } from '@nesso/plugin'
 import type { PluginI18n, PluginManifest } from '@nesso/plugin'
-import type { translate } from '../i18n/index.ts'
 import type { FileBridge } from '../../shared/files.ts'
 import { conceptPlacementOffset } from '../store/operations.ts'
 import { connectActionChannel } from './action-channel.ts'
@@ -12,7 +11,7 @@ import { createPluginFiles } from './files.ts'
 
 export type ActionPackage = { readonly name: string; readonly entry: string | Uint8Array; readonly manifest: Extract<PluginManifest, { kind: 'actions' }>; readonly i18n: PluginI18n }
 
-export function loadActions(store: HostStore, source: ActionPackage, notifications: Notifications, getTranslation: () => ReturnType<typeof translate>, bridge?: FileBridge, invocation?: { actionId: string; viewId: string | null; descriptors: readonly ActionDescriptor[] }, signal?: AbortSignal) {
+export function loadActions(store: HostStore, source: ActionPackage, notifications: Notifications, bridge?: FileBridge, invocation?: { actionId: string; viewId: string | null; descriptors: readonly ActionDescriptor[] }, signal?: AbortSignal) {
   return new Promise<readonly ActionDescriptor[]>((resolve, reject) => {
     if (signal?.aborted) { reject(new PluginError('cancelled', [{ path: 'action', message: 'Action cancelled' }])); return }
     const frame = document.createElement('iframe')
@@ -41,7 +40,7 @@ export function loadActions(store: HostStore, source: ActionPackage, notificatio
         complete: () => { cleanup(); resolve(invocation!.descriptors) },
         failed,
       })
-      files = createPluginFiles(bridge, notifications, runtime.signal, getTranslation)
+      files = createPluginFiles(bridge, runtime.signal)
       return { close: runtime.close, bootstrap: { mode: 'actions', kind: 'actions', state: runtime.snapshot() } }
     }, (error) => { cleanup(); reject(error) })
     signal?.addEventListener('abort', cancel, { once: true })

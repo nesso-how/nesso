@@ -1,70 +1,47 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { createTranslator } from '@nesso/i18n'
-import en from '../i18n/en.json' with { type: 'json' }
-import { createNotifications } from '../notifications/create.ts'
 import { createPluginFiles } from './files.ts'
 
-const translate = createTranslator(en)
-
-test('file gestures run once, cancellation returns no file and synchronous adapter failures clear the UI', async () => {
-  const notifications = createNotifications()
+test('desktop files call the native bridge directly and forward abort as cancellation', async () => {
   let calls = 0
+  const seen: string[] = []
   const files = createPluginFiles({
-    open: () => { if (++calls > 1) throw new Error('Unavailable'); return Promise.resolve({ name: 'file.json', mediaType: 'application/json', text: '{}' }) },
-    save: async () => ({ saved: true }), cancel: () => {},
-  }, notifications.api, new AbortController().signal, () => translate('en'))
+    open: (id) => { calls++; seen.push(id); return Promise.resolve({ name: 'file.json', mediaType: 'application/json', text: '{}' }) },
+    save: async () => ({ saved: true }), cancel: (id) => { seen.push(`cancel:${id}`) },
+  }, new AbortController().signal)
   const result = files.open({ extensions: ['json'], mimeTypes: [] })
-  assert.equal(calls, 0)
-  const prompt = notifications.getSnapshot()[0]
-  assert.ok(prompt.tone === 'confirmation')
-  prompt.action.onClick()
-  prompt.action.onClick()
-  assert.equal((await result)?.name, 'file.json')
   assert.equal(calls, 1)
-  const cancelled = files.open({ extensions: ['json'], mimeTypes: [] })
-  const next = notifications.getSnapshot()[0]
-  assert.ok(next.tone === 'confirmation')
-  next.cancelAction.onClick()
-  assert.equal(await cancelled, null)
-  const failed = files.open({ extensions: ['json'], mimeTypes: [] })
-  const failurePrompt = notifications.getSnapshot()[0]
-  assert.ok(failurePrompt.tone === 'confirmation')
-  failurePrompt.action.onClick()
-  await assert.rejects(failed, { code: 'unavailable' })
-  assert.equal(notifications.getSnapshot().length, 0)
-})
-
-test('cancellation and revocation cancel pending desktop requests and ignore late results', async () => {
-  const notifications = createNotifications()
+  assert.equal((await result)?.name, 'file.json')
+  assert.match(seen[0], /^[a-f0-9-]{36}$/)
   const controller = new AbortController()
   const cancelled: string[] = []
   let finish: (value: { saved: boolean }) => void = () => {}
-  const files = createPluginFiles({ open: async () => null, save: () => new Promise((resolve) => { finish = resolve }), cancel: (id) => cancelled.push(id) }, notifications.api, controller.signal, () => translate('en'))
-  const result = files.save({ name: 'file.json', mediaType: 'application/json', text: '{}' })
-  const prompt = notifications.getSnapshot()[0]
-  assert.ok(prompt.tone === 'confirmation')
-  prompt.action.onClick()
-  prompt.cancelAction.onClick()
-  assert.deepEqual(await result, { saved: false })
-  prompt.cancelAction.onClick()
-  assert.equal(cancelled.length, 1)
-  finish({ saved: true })
-  const revoked = files.save({ name: 'file.json', mediaType: 'application/json', text: '{}' })
-  const next = notifications.getSnapshot()[0]
-  assert.ok(next.tone === 'confirmation')
-  next.action.onClick()
+  const abortable = createPluginFiles({ open: async () => null, save: () => new Promise((resolve) => { finish = resolve }), cancel: (id) => cancelled.push(id) }, controller.signal)
+  const pending = abortable.save({ name: 'file.json', mediaType: 'application/json', text: '{}' })
   controller.abort()
-  await assert.rejects(revoked, { code: 'closed' })
-  assert.equal(cancelled.length, 2)
-  assert.equal(notifications.getSnapshot().length, 0)
-  finish({ saved: true })
+  assert.equal(cancelled.length, 1)
+  finish({ saved: false })
+  assert.deepEqual(await pending, { saved: false })
+  const aborted = createPluginFiles({ open: async () => null, save: async () => ({ saved: true }), cancel: () => {} }, controller.signal)
+  await assert.rejects(aborted.save({ name: 'file.json', mediaType: 'application/json', text: '{}' }), { code: 'closed' })
+  const failed = createPluginFiles({
+    open: () => Promise.reject(new Error('Unavailable')),
+    save: async () => ({ saved: true }), cancel: () => {},
+  }, new AbortController().signal)
+  await assert.rejects(failed.open({ extensions: ['json'], mimeTypes: [] }), { code: 'unavailable' })
 })
 
-test('browser saves await picker and close, propagate failure, and cancel without late writes', async (t) => {
-  const notifications = createNotifications()
+test('browser file calls reject when the channel is already closed', async () => {
   const controller = new AbortController()
-  const files = createPluginFiles(undefined, notifications.api, controller.signal, () => translate('en'))
+  controller.abort()
+  const files = createPluginFiles(undefined, controller.signal)
+  await assert.rejects(files.open({ extensions: ['json'], mimeTypes: [] }), { code: 'closed' })
+  await assert.rejects(files.save({ name: 'file.json', mediaType: 'application/json', text: '{}' }), { code: 'closed' })
+})
+
+test('browser saves use the picker immediately and fall back to download without activation', async (t) => {
+  const controller = new AbortController()
+  const files = createPluginFiles(undefined, controller.signal)
   const options = { name: 'file.json', mediaType: 'application/json', text: '{}' }
   let finish: () => void = () => {}
   let closing: () => void = () => {}
@@ -79,39 +56,30 @@ test('browser saves await picker and close, propagate failure, and cancel withou
   const descriptor = Object.getOwnPropertyDescriptor(globalThis, 'showSaveFilePicker')
   Object.defineProperty(globalThis, 'showSaveFilePicker', { configurable: true, value: picker })
   t.after(() => { if (descriptor) Object.defineProperty(globalThis, 'showSaveFilePicker', descriptor); else Reflect.deleteProperty(globalThis, 'showSaveFilePicker') })
-  const accept = () => {
-    const prompt = notifications.getSnapshot()[0]
-    assert.ok(prompt.tone === 'confirmation')
-    prompt.action.onClick()
-    return prompt
-  }
   const saved = files.save(options)
-  assert.equal(picker.mock.callCount(), 0)
-  accept()
+  assert.equal(picker.mock.callCount(), 1)
   await closeStarted
   assert.deepEqual(picker.mock.calls[0].arguments[0], { suggestedName: options.name })
-  assert.equal(writable.close.mock.callCount(), 1)
-  assert.equal(notifications.getSnapshot().length, 1)
   assert.deepEqual(writable.write.mock.calls[0].arguments, [options.text])
   finish()
   assert.deepEqual(await saved, { saved: true })
   picker.mock.mockImplementationOnce(async () => { throw new DOMException('Cancelled', 'AbortError') })
-  const cancelled = files.save(options)
-  accept()
-  assert.deepEqual(await cancelled, { saved: false })
-  assert.equal(handle.createWritable.mock.callCount(), 1)
+  assert.deepEqual(await files.save(options), { saved: false })
   handle.createWritable.mock.mockImplementationOnce(async () => { throw new Error('Write failed') })
-  const failed = files.save(options)
-  accept()
-  await assert.rejects(failed, { code: 'unavailable' })
+  await assert.rejects(files.save(options), { code: 'unavailable' })
+  picker.mock.mockImplementationOnce(async () => { throw new DOMException('Denied', 'SecurityError') })
+  const anchor = { click: t.mock.fn() }
+  const documentDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'document')
+  Object.defineProperty(globalThis, 'document', { configurable: true, value: { createElement: () => anchor } })
+  t.after(() => { if (documentDescriptor) Object.defineProperty(globalThis, 'document', documentDescriptor); else Reflect.deleteProperty(globalThis, 'document') })
+  assert.deepEqual(await files.save(options), { saved: true })
+  assert.equal(anchor.click.mock.callCount(), 1)
   let select: (value: typeof handle) => void = () => {}
   picker.mock.mockImplementationOnce(() => new Promise((resolve) => { select = resolve }))
   const revoked = files.save(options)
-  accept()
   controller.abort()
   await assert.rejects(revoked, { code: 'closed' })
   select(handle)
   await Promise.resolve()
   assert.equal(handle.createWritable.mock.callCount(), 2)
-  assert.equal(notifications.getSnapshot().length, 0)
 })
