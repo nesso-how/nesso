@@ -32,7 +32,6 @@ function conceptNode(concept: ConceptView, selected: boolean, measured?: Concept
   return {
     id: concept.id,
     type: 'concept',
-    className: 'nokey',
     position: concept.position,
     measured,
     data: { label: concept.label, color: concept.color },

@@ -20,9 +20,7 @@
   "connectTo": "Connect to {{name}}",
   "connectFrom": "Connect from {{name}}",
   "editConceptLabel": "Edit concept label",
-  "nodeInstructions": "Press Enter or Space to select a concept. Use the arrow keys to move it, Delete to remove it, or Escape to clear the selection.",
   "nodeSelectionInstructions": "Press Enter or Space to select a concept. Press Delete to remove it or Escape to clear the selection.",
-  "nodeMoved": "Concept moved. New position, x: {{x}}, y: {{y}}",
   "relationInstructions": "Press Enter or Space to select a relation. Press Delete to remove it or Escape to clear the selection.",
   "relationFromTo": "Relation from {{source}} to {{target}}",
   "controls": "Graph controls",
@@ -30,6 +28,5 @@
   "shortcutsTitle": "Concept map",
   "shortcutRename": "Rename selected concept",
   "shortcutFitView": "Fit view",
-  "shortcutOutside": "Toggle background views",
-  "shortcutMove": "Move selected concepts"
+  "shortcutOutside": "Toggle background views"
 }

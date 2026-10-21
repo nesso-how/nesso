@@ -31,7 +31,6 @@ test('graph elements preserve dimensions and unchanged identities across snapsho
   assert.equal(translated.edges[0].ariaLabel, 'A verso B')
   const selected = adapt({ ...options, graph: cloned, indexed: indexGraph(cloned), selected: [{ kind: 'concept', id: 'urn:b' }] })
   assert.equal(selected.nodes[1].selected, true)
-  assert.equal(selected.nodes[1].className, 'nokey')
   const isolated = createGraphElements()({ ...options, graph, indexed: indexGraph(graph) })
   assert.notEqual(isolated.nodes[1], before.nodes[1])
   const editing = { enabled: true, id: null as string | null, maxLength: 120, onChange: (_id: string | null) => {} }

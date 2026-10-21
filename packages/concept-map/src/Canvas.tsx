@@ -80,8 +80,6 @@ export function Canvas({ readOnly = false, preview = false, bottomInset = 0, con
   }, [write, readOnly, hasOverlay])
   const ariaLabelConfig = useMemo(() => ({
     'node.a11yDescription.default': t('nodeSelectionInstructions'),
-    'node.a11yDescription.keyboardDisabled': t('nodeInstructions'),
-    'node.a11yDescription.ariaLiveMessage': ({ x, y }: { x: number; y: number }) => t('nodeMoved', { x, y }),
     'edge.a11yDescription.default': t('relationInstructions'),
     'controls.ariaLabel': t('controls'),
     'controls.fitView.ariaLabel': t('fitView'),
@@ -320,6 +318,7 @@ export function Canvas({ readOnly = false, preview = false, bottomInset = 0, con
         edgesReconnectable={interactive}
         multiSelectionKeyCode={multiSelectionKeys}
         deleteKeyCode={null}
+        disableKeyboardA11y
         onNodesChange={onNodesChange}
         onEdgesChange={(changes) => onObjectChanges('relation', changes)}
         onConnect={interactive ? ({ source, target }) => { write([{ kind: 'relation.connect', source, target }]) } : undefined}

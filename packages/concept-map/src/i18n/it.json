@@ -21,9 +21,7 @@
   "connectTo": "Collega a {{name}}",
   "connectFrom": "Collega da {{name}}",
   "editConceptLabel": "Modifica etichetta concetto",
-  "nodeInstructions": "Premi Invio o Spazio per selezionare un concetto. Usa le frecce per spostarlo, Canc per eliminarlo o Esc per annullare la selezione.",
   "nodeSelectionInstructions": "Premi Invio o Spazio per selezionare un concetto. Premi Canc per eliminarlo o Esc per annullare la selezione.",
-  "nodeMoved": "Concetto spostato. Nuova posizione, x: {{x}}, y: {{y}}",
   "relationInstructions": "Premi Invio o Spazio per selezionare una relazione. Premi Canc per eliminarla o Esc per annullare la selezione.",
   "relationFromTo": "Relazione da {{source}} a {{target}}",
   "controls": "Controlli del grafo",
@@ -31,6 +29,5 @@
   "shortcutsTitle": "Mappa concettuale",
   "shortcutRename": "Rinomina il concetto selezionato",
   "shortcutFitView": "Adatta la vista",
-  "shortcutOutside": "Attiva/disattiva viste di sfondo",
-  "shortcutMove": "Sposta i concetti selezionati"
+  "shortcutOutside": "Attiva/disattiva viste di sfondo"
 }

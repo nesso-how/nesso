@@ -9,7 +9,6 @@ export function conceptMapShortcuts(locale: Locale) {
       { label: t('shortcutRename'), keys: [['Enter']] },
       { label: t('shortcutFitView'), keys: [['F']] },
       { label: t('shortcutOutside'), keys: [['O']] },
-      { label: t('shortcutMove'), keys: [['←', '↑', '→', '↓']] },
     ],
   }
 }

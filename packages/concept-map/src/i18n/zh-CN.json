@@ -19,9 +19,7 @@
   "connectTo": "连接到 {{name}}",
   "connectFrom": "从 {{name}} 连接",
   "editConceptLabel": "编辑概念标签",
-  "nodeInstructions": "按 Enter 或空格键选择概念。使用方向键移动，按 Delete 删除，或按 Escape 清除选择。",
   "nodeSelectionInstructions": "按 Enter 或空格键选择概念。按 Delete 删除，或按 Escape 清除选择。",
-  "nodeMoved": "概念已移动。新坐标：x {{x}}，y {{y}}",
   "relationInstructions": "按 Enter 或空格键选择关系。按 Delete 删除，或按 Escape 清除选择。",
   "relationFromTo": "从 {{source}} 到 {{target}} 的关系",
   "controls": "图谱控件",
@@ -29,6 +27,5 @@
   "shortcutsTitle": "概念图",
   "shortcutRename": "重命名所选概念",
   "shortcutFitView": "适应视图",
-  "shortcutOutside": "切换背景视图",
-  "shortcutMove": "移动所选概念"
+  "shortcutOutside": "切换背景视图"
 }
