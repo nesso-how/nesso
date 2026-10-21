@@ -5,6 +5,7 @@ import { Trash2 } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { nessoStore, useNessoStore } from '@/store'
 import type { HostStore } from '@/store/types'
+import { ConceptColor } from './ConceptColor'
 import { DeleteViewDialog } from './DeleteViewDialog'
 import { invokeAction, useViewActions } from '@/plugins'
 import { maxViewNameLength } from '@/store/settings'
@@ -48,6 +49,7 @@ export function ViewDetails({ store = nessoStore, readonly = false }: { store?: 
     <>
       <ContextLabel>{t(view ? 'activeView' : 'graphOverview')}</ContextLabel>
       {view && <ViewName key={`${view.id}:${view.name}`} store={store} view={view} readonly={readonly} />}
+      <ConceptColor key={view?.id ?? 'complete-graph'} store={store} concepts={viewGraph.concepts} readonly={readonly || viewGraph.concepts.length === 0} />
       <section aria-labelledby="view-content-heading">
         <h3 id="view-content-heading" className="text-xs font-medium">{t('content')}</h3>
         <dl className="mt-3 space-y-2">
