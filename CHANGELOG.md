@@ -1,5 +1,33 @@
 # Changelog
 
+## 1.0.0-alpha.19 — 2026-10-21
+
+### Breaking Changes
+
+- **plugins:** Ship themes and vocabs as data
+  ship themes and vocabs as data
+- **plugins:** Remove the reads declaration
+  remove the reads declaration
+- **plugins:** Narrow action writes to content ops
+  narrow action writes to content ops
+- **plugins:** Drop styles field and view.activate write
+  drop styles field and view.activate write
+
+### Documentation
+
+- **agents:** Add pragmatic design guidance
+
+### Features
+
+- **plugins:** Isolate execution and add desktop npm acquisition (#198)
+- **inspector:** Add view-wide concept color input
+- **graph:** Add canvas shortcuts and shortcuts reference
+- **splash:** Add first-run logo splash before intro (#199)
+
+### Fixes
+
+- **canvas:** Drop group selection outline
+
 ## 1.0.0-alpha.18 — 2026-10-15
 
 ### Features
