@@ -60,7 +60,7 @@ flowchart TD
   Plugins -.-> Contract
 ```
 
-The host owns state and materializes `viewGraph`. The trusted renderer uses injected synchronous APIs; plugins use isolated, validated channels. External package installation is desktop bridge-only, without installation controls in Settings. Dashed arrows show shared contract types.
+The host owns state, materializes `viewGraph`, and handles deletion confirmation, clipboard access, and shortcut routing. The trusted renderer owns geometry and gestures, updates selection through the store, and delegates deletion and clipboard actions to the host; plugins use isolated, validated channels. External package installation is desktop bridge-only, without installation controls in Settings. Dashed arrows show shared contract types.
 
 | Package | Kind | Responsibility |
 | --- | --- | --- |

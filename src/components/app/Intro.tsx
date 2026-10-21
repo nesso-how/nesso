@@ -10,7 +10,7 @@ import { chat } from '@/ai'
 import { AppSidebar } from './Sidebar'
 import { Inspector } from './Inspector'
 import { AssistantPanel } from './AssistantPanel'
-import { ConceptMapSurface } from './ConceptMapSurface'
+import { GraphWorkspace } from './GraphWorkspace'
 
 const chapters = [
   { title: 'introConceptTitle', description: 'introConceptDescription' },
@@ -66,7 +66,7 @@ export function Intro({ onFinish }: { onFinish: () => void }) {
       </div>
       <div className="intro-workspace flex min-h-0 min-w-0 flex-1">
         <div className="intro-canvas min-h-0 min-w-0 flex-1">
-          <ConceptMapSurface store={store} preview bottomInset={bottomInset} />
+          <GraphWorkspace store={store} preview bottomInset={bottomInset} />
           <section ref={narrative} className="intro-narrative intro-overlay" aria-labelledby="intro-title">
             <div className="intro-copy" key={step}>
               <h1 ref={title} id="intro-title" tabIndex={-1}>{t(chapters[step].title)}</h1>

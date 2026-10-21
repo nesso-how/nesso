@@ -1,4 +1,7 @@
 {
+  "commandFailed": "Impossibile applicare il comando del canvas.",
+  "pasteFailed": "Impossibile incollare: gli appunti devono contenere un grafo Nesso valido.",
+  "clipboardUnavailable": "Accesso agli appunti non riuscito. Prova Ctrl/Cmd+C, Ctrl/Cmd+X o Ctrl/Cmd+V sul canvas.",
   "pluginInstallTitle": "Installare questo pacchetto di azioni esterno?",
   "pluginUpdateTitle": "Sostituire questo pacchetto di azioni installato?",
   "pluginUpdate": "Accetta accesso e aggiorna",

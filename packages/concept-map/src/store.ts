@@ -1,17 +1,23 @@
-import type { NessoState, NessoStore, Notifications } from '@nesso/plugin'
-import { createContext, useContext, useSyncExternalStore } from 'react'
+import type { NessoState, NessoStore } from '@nesso/plugin'
+import type { Position } from '@nesso/schema'
+import { createContext, useContext, useSyncExternalStore, type RefObject } from 'react'
+
+export type GraphCommands = {
+  readonly deleteSelection: () => void
+  readonly copy: (cut?: boolean) => Promise<void>
+  readonly paste: (text?: string, position?: Position) => Promise<void>
+}
 
 export type ConceptMapContext = {
-  readonly store: Pick<NessoStore, 'getState' | 'subscribe' | 'applyOperations' | 'conceptPlacementOffset'>
-  readonly notifications: Pick<Notifications, 'notify'>
-  readonly clipboard: Pick<Clipboard, 'readText' | 'writeText'>
+  readonly store: Pick<NessoStore, 'getState' | 'subscribe' | 'applyOperations' | 'conceptPlacementOffset' | 'undo' | 'redo'>
+  readonly commands: GraphCommands
 }
 
 export type CanvasProps = {
+  readonly focusRef: RefObject<HTMLDivElement | null>
   readonly readOnly?: boolean
   readonly preview?: boolean
   readonly bottomInset?: number
-  readonly onDeleteView?: () => void
   readonly conceptLabelMaxLength?: number
 }
 

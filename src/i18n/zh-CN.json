@@ -1,4 +1,7 @@
 {
+  "commandFailed": "无法应用画布命令。",
+  "pasteFailed": "无法粘贴：剪贴板必须包含有效的 Nesso 图谱。",
+  "clipboardUnavailable": "无法访问剪贴板。请在画布上尝试 Ctrl/Cmd+C、Ctrl/Cmd+X 或 Ctrl/Cmd+V。",
   "pluginInstallTitle": "安装此外部操作包？",
   "pluginUpdateTitle": "替换已安装的操作包？",
   "pluginUpdate": "接受访问权限并更新",

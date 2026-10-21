@@ -1,5 +1,4 @@
 {
-  "commandFailed": "The canvas command could not be applied.",
   "completeGraph": "All",
   "conceptCount_one": "{{count}} concept",
   "conceptCount_other": "{{count}} concepts",
@@ -18,8 +17,6 @@
   "copy": "Copy",
   "cut": "Cut",
   "paste": "Paste",
-  "pasteFailed": "Could not paste: the clipboard must contain a valid Nesso graph.",
-  "clipboardUnavailable": "Clipboard access failed. Try Ctrl/Cmd+C, Ctrl/Cmd+X, or Ctrl/Cmd+V on the canvas.",
   "connectTo": "Connect to {{name}}",
   "connectFrom": "Connect from {{name}}",
   "editConceptLabel": "Edit concept label",

@@ -4,6 +4,7 @@
 
 - Keep Zustand state data-only in `src/store`; methods live on `NessoStore`, with `useNessoStore` for React.
 - Route all public writes through `applyOperations`, including undo/redo. Keep registration and persistence diagnostics internal.
+- Store operations remain synchronous and UI-free; confirmations and clipboard I/O happen outside them.
 - Apply ordered operations to immutable candidates, validate the final document, reconcile derived state, and publish at most once. Failures and net no-ops must leave state and history unchanged; preserve references to unchanged data.
 - Keep document history host-owned and in memory. Restore recorded deltas rather than replaying commands against current state; exclude navigation, selection, and preferences from document history.
 

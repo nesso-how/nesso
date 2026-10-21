@@ -1,4 +1,7 @@
 {
+  "commandFailed": "The canvas command could not be applied.",
+  "pasteFailed": "Could not paste: the clipboard must contain a valid Nesso graph.",
+  "clipboardUnavailable": "Clipboard access failed. Try Ctrl/Cmd+C, Ctrl/Cmd+X, or Ctrl/Cmd+V on the canvas.",
   "pluginInstallTitle": "Install this external action package?",
   "pluginUpdateTitle": "Replace this installed action package?",
   "pluginUpdate": "Accept access and update",

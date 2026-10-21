@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { parseGraph, relationKey, SchemaError, type Graph } from '@nesso/schema'
-import { copyGraph, pasteOperations } from './clipboard.ts'
+import { copyGraph, pasteOperations, selectionCoversGraph } from './commands.ts'
 
 const graph: Graph = {
   concepts: [
@@ -35,4 +35,15 @@ test('paste positions the group at the requested point and rejects non-JSON clip
   const additions = pasteOperations(text, { x: 500, y: 600 }).filter((operation) => operation.kind === 'concept.add')
   assert.deepEqual(additions.map((operation) => operation.position), [{ x: 500, y: 600 }, { x: 600, y: 650 }])
   assert.throws(() => pasteOperations('not a graph'), SchemaError)
+})
+
+test('deletion covers every visible concept regardless of relations or off-view selections', () => {
+  const view = { ...graph, concepts: graph.concepts.slice(0, 2) }
+  const selected = view.concepts.map(({ id }) => ({ kind: 'concept' as const, id }))
+  assert.equal(selectionCoversGraph(selected, view), true)
+  assert.equal(selectionCoversGraph([...selected, { kind: 'relation', id: 'edge' }, { kind: 'concept', id: 'urn:c' }], view), true)
+  assert.equal(selectionCoversGraph([selected[0], { kind: 'concept', id: 'urn:c' }], view), false)
+  assert.equal(selectionCoversGraph([selected[0], { kind: 'relation', id: 'urn:b' }], view), false)
+  assert.equal(selectionCoversGraph([], view), false)
+  assert.equal(selectionCoversGraph(selected, { ...view, concepts: [] }), false)
 })

@@ -17,7 +17,8 @@ import { DataTransferDialog } from '@/components/app/LocalDataSettings'
 import { Intro } from '@/components/app/Intro'
 import { completeIntro } from '@/store/intro'
 import { DeleteViewDialog } from '@/components/app/DeleteViewDialog'
-import { ConceptMapSurface } from '@/components/app/ConceptMapSurface'
+import { GraphWorkspace } from '@/components/app/GraphWorkspace'
+import { isEditableTarget } from '@/graph/interactions'
 
 export default function App({ persistence }: { persistence: ReturnType<typeof startAutosave> }) {
   const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale)
@@ -31,6 +32,10 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
   const [deleting, setDeleting] = useState<SavedView | 'complete-graph' | null>(null)
   const canvas = useRef<HTMLDivElement>(null)
   const readonly = useMediaQuery('(max-width: 767px)')
+  const deleteView = () => {
+    const { workspace } = host.store.getState()
+    setDeleting(workspace.activeViewId === null ? 'complete-graph' : workspace.savedViews.find((view) => view.id === workspace.activeViewId) ?? null)
+  }
 
   useEffect(() => { document.documentElement.lang = locale }, [locale])
   useEffect(() => {
@@ -39,7 +44,7 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
       if (document.querySelector('[data-data-transfer][data-open]')) return
       if (event.defaultPrevented || event.isComposing || event.altKey || !(event.metaKey || event.ctrlKey)) return
       const target = event.target instanceof HTMLElement ? event.target : null
-      if (target?.closest('input, textarea, [contenteditable="true"]') && !target.hasAttribute('data-document-edit')) return
+      if (isEditableTarget(target) && !target?.hasAttribute('data-document-edit')) return
       const key = event.key.toLowerCase()
       if (key !== 'z' && !(key === 'y' && event.ctrlKey && !event.metaKey)) return
       event.preventDefault()
@@ -53,7 +58,7 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
   const finishIntro = () => {
     completeIntro(host.store)
     setIntroOpen(false)
-    requestAnimationFrame(() => document.querySelector<HTMLElement>('#canvas [tabindex="0"]')?.focus())
+    requestAnimationFrame(() => canvas.current?.focus())
   }
 
   return (
@@ -64,11 +69,8 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
           {!readonly && <AppSidebar onOpenSettings={openSettings} />}
           <SidebarInset className="relative min-w-0 overflow-hidden">
             <div className="flex min-h-0 flex-1">
-              <div ref={canvas} id="canvas" className="relative min-h-0 min-w-0 flex-1">
-                <ConceptMapSurface store={host.store} onDeleteView={() => {
-                  const { workspace } = host.store.getState()
-                  setDeleting(workspace.activeViewId === null ? 'complete-graph' : workspace.savedViews.find((view) => view.id === workspace.activeViewId) ?? null)
-                }} />
+              <div id="canvas" className="relative min-h-0 min-w-0 flex-1">
+                <GraphWorkspace store={host.store} onDeleteView={deleteView} focusRef={canvas} />
                 <ToastsHost />
               </div>
               {!readonly && <SidePanel
@@ -95,7 +97,7 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
         {!readonly && settingsOpen && <SettingsDialog initialPage={settingsPage} onDiscover={() => { setSettingsOpen(false); setIntroOpen(true) }} onBeforeReload={persistence.save} />}
       </Dialog.Root>
       {window.nessoDataLocation && <DataTransferDialog bridge={window.nessoDataLocation} />}
-      <DeleteViewDialog target={deleting} onClose={() => setDeleting(null)} finalFocus={() => canvas.current?.querySelector<HTMLElement>('[tabindex="0"]') ?? null} />
+      <DeleteViewDialog target={deleting} onClose={() => setDeleting(null)} finalFocus={() => canvas.current} />
     </>
   )
 }
