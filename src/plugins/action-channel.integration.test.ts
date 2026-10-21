@@ -9,7 +9,7 @@ const descriptors: readonly ActionDescriptor[] = [{ id: 'example', label: { en: 
 const base: BaseState = { revision: 0, contextId: 'context', locale: 'en', theme: Object.fromEntries(themeTokens.map((token) => [token, ''])), conceptPlacementOffset: { x: 160, y: 100 } }
 const graph = { concepts: [{ id: 'urn:a', label: 'A', position: { x: 0, y: 0 } }, { id: 'urn:b', label: 'B', position: { x: 100, y: 0 } }], relationTypes: [], relations: [] }
 
-function fixture(discovery = false, open: () => Promise<FileOpenResult> = async () => null, writes: readonly NessoOperation['kind'][] = ['concept.label', 'history.undo'], capabilities: readonly string[] = ['files.open']) {
+function fixture(discovery = false, open: () => Promise<FileOpenResult> = async () => null, writes: readonly NessoOperation['kind'][] = ['concept.label', 'concept.color'], capabilities: readonly string[] = ['files.open']) {
   const host = createNessoStore(graph)
   const target = host.store.createView('Target', ['urn:a'])
   host.store.setView(null)
@@ -54,8 +54,8 @@ test('action projections stay bound to the invoked view, filter off-view selecti
   assert.equal('getViewGraph' in store, false)
   await assert.rejects(store.applyOperations([{ kind: 'concept.label', id: 'urn:a', value: 'Stale' }], { atRevision: before.revision }), { code: 'stale-state' })
   await assert.rejects(store.applyOperations([{ kind: 'concept.label', id: 'urn:a', value: 'No' }, { kind: 'concept.remove', id: 'urn:b' }]), { code: 'denied' })
-  await store.applyOperations([{ kind: 'history.undo' }])
-  assert.equal(instance.host.store.getState().graph.concepts[0].label, 'A')
+  await store.applyOperations([{ kind: 'concept.color', id: 'urn:a', value: '#123456' }])
+  assert.equal(instance.host.store.getState().graph.concepts[0].color, '#123456')
 })
 
 test('isolated clients have no clipboard API and raw clipboard requests close the channel without effects', async (t) => {
@@ -126,7 +126,7 @@ test('discovery has only base state and no effects; invocation rejects descripto
 })
 
 test('typed plugin writes are asynchronous, synchronize snapshots and preserve validation, declarations and history groups', async (t) => {
-  const instance = fixture(false, undefined, ['concept.label', 'history.undo', 'history.redo'])
+  const instance = fixture(false, undefined, ['concept.label', 'concept.color', 'concept.description'])
   t.after(instance.close)
   const { store } = instance.client.context
   await instance.start()
@@ -144,25 +144,25 @@ test('typed plugin writes are asynchronous, synchronize snapshots and preserve v
   await assert.rejects(store.setConceptLabel('urn:a', 'x'.repeat(300)), { code: 'invalid-input' })
   const committed = instance.host.store.getState()
   await assert.rejects(store.addConcept(), { code: 'denied' })
-  await assert.rejects(store.createView('Denied', []), { code: 'denied' })
+  assert.equal('createView' in store, false)
+  assert.equal('undo' in store, false)
   assert.equal(instance.host.store.getState(), committed)
-  await store.undo()
-  assert.equal(instance.host.store.getState().graph.concepts[0].label, 'A')
-  await store.redo()
-  assert.equal(instance.host.store.getState().graph.concepts[0].label, 'Second')
+  await store.setConceptColor('urn:a', '#123456')
+  assert.equal(instance.host.store.getState().graph.concepts[0].color, '#123456')
+  await store.setConceptDescription('urn:a', 'Described')
+  assert.equal(instance.host.store.getState().graph.concepts[0].description, 'Described')
   instance.host.store.setConceptLabel('urn:a', 'Host edit', 'edit')
   await store.setConceptLabel('urn:a', 'Plugin edit', 'edit')
-  await store.undo()
-  assert.equal(instance.host.store.getState().graph.concepts[0].label, 'Host edit')
+  assert.equal(instance.host.store.getState().graph.concepts[0].label, 'Plugin edit')
   assert.equal('resetGraph' in store || 'setViewport' in store || 'setActiveRenderer' in store, false)
 })
 
-test('concept colors cross isolated snapshots and declared commands with atomic validation and undo', async (t) => {
-  const denied = fixture()
+test('concept colors cross isolated snapshots and declared commands with atomic validation', async (t) => {
+  const denied = fixture(false, undefined, ['concept.label'])
   t.after(denied.close)
   await denied.start()
-  await assert.rejects(denied.client.context.store.setConceptColor('urn:a', '#123456'), { code: 'denied' })
-  const instance = fixture(false, undefined, ['concept.color', 'history.undo'])
+  await assert.rejects(denied.client.context.store.setConceptColor('urn:a', '#654321'), { code: 'denied' })
+  const instance = fixture(false, undefined, ['concept.color', 'concept.label'])
   t.after(instance.close)
   instance.host.store.setConceptColor('urn:a', '#123456')
   await instance.start()
@@ -180,9 +180,9 @@ test('concept colors cross isolated snapshots and declared commands with atomic 
   assert.equal(instance.host.store.getState(), before)
   await store.setConceptColor('urn:a', '')
   assert.equal(color(), undefined)
-  await store.undo()
+  await store.setConceptColor('urn:a', '#abcdef')
   assert.equal(color(), '#abcdef')
-  await store.undo()
+  await store.setConceptColor('urn:a', '#123456')
   assert.equal(color(), '#123456')
 })
 
@@ -204,29 +204,30 @@ test('declared writes reject relative graph identifiers atomically without chang
 })
 
 test('plugin creation helpers resolve stable IDs after commit and reject failed or closed requests without publishing IDs', async (t) => {
-  const instance = fixture(false, undefined, ['concept.add', 'view.create'])
+  const instance = fixture(false, undefined, ['concept.add', 'concept.label'])
   t.after(instance.close)
   await instance.start()
   instance.host.store.setView(instance.target)
   instance.host.store.setSelection([])
   const { store } = instance.client.context
+  assert.equal('createView' in store, false)
   const concept = await store.addConcept({ x: 40, y: 50 })
   const state = store.getState()
   assert.ok('viewGraph' in state)
   assert.ok(state.viewGraph.concepts.some(({ id }) => id === concept))
   assert.ok(instance.host.store.getState().workspace.savedViews[0].conceptIds.includes(concept))
-  const view = await store.createView('Created view', [concept])
+  await store.setConceptLabel(concept, 'Created', 'edit')
   const created = store.getState()
   assert.ok('viewGraph' in created)
-  assert.ok(created.workspace.savedViews.some(({ id }) => id === view))
+  assert.equal(created.viewGraph.concepts.find(({ id }) => id === concept)?.label, 'Created')
   const committed = instance.host.store.getState()
-  assert.deepEqual(committed.workspace.savedViews.find(({ id }) => id === view), { id: view, name: 'Created view', pinned: false, conceptIds: [concept] })
+  assert.equal(committed.graph.concepts.find(({ id }) => id === concept)?.label, 'Created')
   await assert.rejects(store.addConcept({ x: NaN, y: 0 }), { code: 'invalid-input' })
-  await assert.rejects(store.createView('x'.repeat(300), []), { code: 'invalid-input' })
+  await assert.rejects(store.setConceptLabel(concept, 'x'.repeat(300)), { code: 'invalid-input' })
   assert.equal(instance.host.store.getState(), committed)
   instance.runtime.close()
   await assert.rejects(store.addConcept(), { code: 'closed' })
-  await assert.rejects(store.createView('Closed', []), { code: 'closed' })
+  await assert.rejects(store.setConceptLabel(concept, 'Closed'), { code: 'closed' })
   assert.equal(instance.host.store.getState(), committed)
 })
 

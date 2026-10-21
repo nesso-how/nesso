@@ -42,7 +42,6 @@ export async function preparePluginPackage(input: PluginPackageInput): Promise<P
   const { name, version, nesso: declaration, i18n: translations } = parsePackageIdentity(input.manifest)
   const nesso = parsePluginManifest(declaration)
   const i18n = parsePluginI18n(translations)
-  if (nesso.kind === 'actions' && nesso.writes.includes('document.reset')) throw new PluginError('unavailable', [{ path: 'nesso.writes', message: 'Plugin reset is not supported' }])
   if (!Array.isArray(input.files) || !input.files.length || input.files.length > (nesso.kind === 'theme' ? packageLimits.fonts + 1 : 1)) throw new PluginError('invalid-input', [{ path: 'files', message: 'Expected one entry and supported local theme fonts only' }])
   const paths = new Set<string>()
   const fonts: { path: string; data: string }[] = []

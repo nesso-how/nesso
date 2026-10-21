@@ -11,7 +11,7 @@
   "pluginInstall": "Accept access and install",
   "pluginDevelopmentSource": "Source: internal development proposal. Not reviewed by Nesso.",
   "pluginNpmSource": "Source: public npm registry (registry.npmjs.org). Integrity checked; not reviewed by Nesso.",
-  "pluginWriteScope": "Declared writes can affect the complete document, not just the invoked view. Creation may link to the selection and join the active view; deletion may remove relations and memberships. Undo/redo control shared document history.",
+  "pluginWriteScope": "Declared writes can affect the complete document, not just the invoked view. Creation may link to the selection and join the active view; deletion may remove relations and memberships.",
   "pluginWrites": "Allowed writes",
   "pluginCapabilities": "Clipboard and file access",
   "pluginInstallWarning": "Approval applies only to this exact content and its declared access. Discovery runs after approval. Installation stores the package on this device for offline use; dependencies and lifecycle scripts are never installed or executed.",

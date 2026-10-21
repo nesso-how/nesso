@@ -106,7 +106,6 @@ export function connectActionChannel(port: MessagePort, store: HostStore, grant:
     if (message.method === 'store.applyOperations') {
       const { operations, options } = message.params
       if (operations.some(({ kind }) => !allowed.has(kind))) fail('denied', 'Operation not declared')
-      if (operations.some(({ kind }) => kind === 'document.reset')) fail('unavailable', 'Plugin reset confirmation is not available')
       if (options?.atRevision !== undefined && options.atRevision !== revision) fail('stale-state', 'Snapshot changed before commit')
       const before = revision
       store.applyOperations(operations, { historyGroup: options?.historyGroup ? `${instanceId}:${options.historyGroup}` : undefined })

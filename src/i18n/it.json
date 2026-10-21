@@ -11,7 +11,7 @@
   "pluginInstall": "Accetta accessi e installa",
   "pluginDevelopmentSource": "Origine: proposta interna di sviluppo. Non verificata da Nesso.",
   "pluginNpmSource": "Origine: registro npm pubblico (registry.npmjs.org). Integrità verificata; non revisionato da Nesso.",
-  "pluginWriteScope": "Le scritture dichiarate possono modificare l'intero documento, non solo la vista invocata. La creazione può collegarsi alla selezione ed entrare nella vista attiva; l'eliminazione può rimuovere relazioni e appartenenze. Annulla/ripeti controllano la cronologia condivisa.",
+  "pluginWriteScope": "Le scritture dichiarate possono modificare l'intero documento, non solo la vista invocata. La creazione può collegarsi alla selezione ed entrare nella vista attiva; l'eliminazione può rimuovere relazioni e appartenenze.",
   "pluginWrites": "Scritture consentite",
   "pluginCapabilities": "Accesso ad appunti e file",
   "pluginInstallWarning": "Il consenso vale solo per questo contenuto esatto e gli accessi dichiarati. La discovery avviene dopo il consenso. Il pacchetto viene conservato su questo dispositivo per l'uso offline; dipendenze e script lifecycle non vengono mai installati o eseguiti.",

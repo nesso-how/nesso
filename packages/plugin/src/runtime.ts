@@ -65,7 +65,8 @@ const manifestFields = {
 }
 const jsEntry = z.string().max(240).regex(/^(?:[\w-]+\/)*[\w-]+\.js$/)
 const jsonEntry = z.string().max(240).regex(/^(?:[\w-]+\/)*[\w-]+\.json$/)
-const operationDeclarations = z.array(z.enum(operation.options.map((schema) => schema.shape.kind.value)))
+const pluginWriteKinds = ['concept.label', 'concept.description', 'concept.color', 'concept.position', 'concept.positions', 'concept.add', 'concept.remove', 'relation.connect', 'relation.reconnect', 'relation.type', 'relation.type.create', 'relation.remove', 'selection.set', 'view.activate', 'view.membership'] as const
+const operationDeclarations = z.array(z.enum(pluginWriteKinds))
 const manifest = z.discriminatedUnion('kind', [
   z.strictObject({ ...manifestFields, kind: z.literal('actions'), entry: jsEntry, styles: z.tuple([]), writes: operationDeclarations, capabilities: z.array(z.enum(['files.open', 'files.save', 'notifications.notify'])) }),
   ...(['theme', 'vocab'] as const).map((kind) => z.strictObject({ ...manifestFields, kind: z.literal(kind), entry: jsonEntry, styles: z.tuple([]), writes: z.tuple([]), capabilities: z.tuple([]) })),
@@ -124,8 +125,9 @@ export type ViewState = BaseState & {
 export type ActionState = BaseState | ViewState
 
 type WriteOptions = { readonly historyGroup?: string; readonly atRevision?: number }
+type PluginWrites = Omit<ReturnType<typeof createWriteCommands<Promise<void>, Promise<string>>>, 'undo' | 'redo' | 'setActiveVocab' | 'setActiveTheme' | 'setLocale' | 'setPanelSizes' | 'setSectionOpen' | 'createView' | 'renameView' | 'setViewPinned' | 'deleteView'>
 export type PluginContext<S extends BaseState = BaseState> = {
-  readonly store: ReturnType<typeof createWriteCommands<Promise<void>, Promise<string>>> & {
+  readonly store: PluginWrites & {
     readonly getState: () => S
     readonly subscribe: (listener: () => void) => () => void
     readonly refresh: () => Promise<S>
@@ -243,9 +245,10 @@ export function createPluginClient<S extends BaseState>(port: MessagePort, initi
   port.onmessageerror = close
   port.start()
   const applyOperations: PluginContext<S>['store']['applyOperations'] = (operations, options) => call('store.applyOperations', { operations, ...(options ? { options } : {}) })
+  const { undo: _undo, redo: _redo, setActiveVocab: _vocab, setActiveTheme: _theme, setLocale: _locale, setPanelSizes: _panels, setSectionOpen: _section, createView: _createView, renameView: _renameView, setViewPinned: _pin, deleteView: _deleteView, ...writes } = createWriteCommands(async (operations, options) => { await applyOperations(operations, options) }, async (id, committed) => { await committed; return id })
   const context: PluginContext<S> = {
     store: {
-      ...createWriteCommands(async (operations, options) => { await applyOperations(operations, options) }, async (id, committed) => { await committed; return id }),
+      ...writes,
       getState: () => state,
       subscribe: (listener) => { listeners.add(listener); return () => listeners.delete(listener) },
       refresh: async () => { await call('store.refresh', {}); return state },

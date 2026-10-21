@@ -11,7 +11,7 @@
   "pluginInstall": "接受访问权限并安装",
   "pluginDevelopmentSource": "来源：内部开发提案。未经 Nesso 审核。",
   "pluginNpmSource": "来源：公共 npm 注册表（registry.npmjs.org）。已校验完整性，未经 Nesso 审核。",
-  "pluginWriteScope": "声明的写入可影响整个文档，而不只是调用视图。创建可能连接到选择并加入当前视图；删除可能移除关系和视图成员。撤销和重做控制共享文档历史。",
+  "pluginWriteScope": "声明的写入可影响整个文档，而不只是调用视图。创建可能连接到选择并加入当前视图；删除可能移除关系和视图成员。",
   "pluginWrites": "允许的写入",
   "pluginCapabilities": "剪贴板和文件访问",
   "pluginInstallWarning": "批准仅适用于此确切内容及其声明的访问权限。发现操作将在批准后运行。安装会将包保存在本机以供离线使用；不会安装依赖项或执行生命周期脚本。",

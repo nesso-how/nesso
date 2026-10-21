@@ -10,11 +10,16 @@ const manifest = {
 test('manifests and action descriptors reject unknown authority, duplicates and oversized labels', () => {
   assert.equal(parsePluginManifest(manifest).kind, 'actions')
   assert.deepEqual(parsePluginManifest({ ...manifest, capabilities: ['files.open', 'files.save', 'notifications.notify'] }).capabilities, ['files.open', 'files.save', 'notifications.notify'])
+  assert.deepEqual(parsePluginManifest({ ...manifest, writes: ['concept.label', 'concept.description', 'concept.color', 'concept.position', 'concept.positions', 'concept.add', 'concept.remove', 'relation.connect', 'relation.reconnect', 'relation.type', 'relation.type.create', 'relation.remove', 'selection.set', 'view.activate', 'view.membership'] }).writes.length, 15)
   for (const value of [
     { ...manifest, apiVersion: 2 }, { ...manifest, network: true },
     { ...manifest, writes: ['selection.set', 'selection.set'] }, { ...manifest, operations: [] },
     { ...manifest, kind: 'renderer' }, { ...manifest, styles: ['dist/index.css'] },
     { ...manifest, writes: ['viewport.set'] }, { ...manifest, writes: ['preferences.renderer'] },
+    { ...manifest, writes: ['document.reset'] }, { ...manifest, writes: ['history.undo'] }, { ...manifest, writes: ['history.redo'] },
+    { ...manifest, writes: ['preferences.locale'] }, { ...manifest, writes: ['preferences.vocab'] }, { ...manifest, writes: ['preferences.theme'] },
+    { ...manifest, writes: ['preferences.panels'] }, { ...manifest, writes: ['preferences.section'] },
+    { ...manifest, writes: ['view.create'] }, { ...manifest, writes: ['view.rename'] }, { ...manifest, writes: ['view.pin'] }, { ...manifest, writes: ['view.remove'] },
     { ...manifest, reads: [] },
     { ...manifest, capabilities: ['network'] },
     { ...manifest, capabilities: ['notifications.notify', 'notifications.notify'] },
