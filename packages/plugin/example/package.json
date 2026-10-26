@@ -11,7 +11,7 @@
     "build": "npm run check && esbuild src/index.ts --bundle --format=esm --platform=browser --target=es2022 --outfile=dist/index.js"
   },
   "devDependencies": {
-    "@nesso-how/plugin": "0.0.0",
+    "@nesso-how/plugin": "^0.1.0",
     "esbuild": "^0.28.2",
     "typescript": "~7.0.2"
   },

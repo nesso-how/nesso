@@ -1,0 +1,31 @@
+name: Plugin release
+
+on:
+  push:
+    tags: ['plugin-v*']
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Tag matches package version
+        run: |
+          tag="${GITHUB_REF_NAME#plugin-v}"
+          pkg="$(node -p "require('./packages/plugin/package.json').version")"
+          [ "$tag" = "$pkg" ] || { echo "tag $tag does not match package version $pkg"; exit 1; }
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+          registry-url: 'https://registry.npmjs.org'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm test
+      - run: npm publish
+        working-directory: packages/plugin

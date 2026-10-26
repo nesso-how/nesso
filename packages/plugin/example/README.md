@@ -2,10 +2,10 @@
 
 Uppercases labels in the invoked view with one undoable batch. Shared concepts change in every view containing them.
 
-Copy this directory outside the workspace, [pack the SDK](../README.md#sdk-development), then build:
+Copy this directory outside the workspace, then install the published SDK and build:
 
 ```sh
-npm install --ignore-scripts --save-dev /absolute/path/to/artifacts/nesso-plugin-0.0.0.tgz
+npm install --save-dev @nesso-how/plugin@^0.1.0
 npm run build
 ```
 
