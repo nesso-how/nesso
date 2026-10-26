@@ -1,5 +1,31 @@
 # Changelog
 
+## 1.0.0-alpha.22 — 2026-10-26
+
+### Breaking Changes
+
+- **plugin:** Rename npm scope from @nesso to @nesso-how
+  rename npm scope from @nesso to @nesso-how
+
+### Documentation
+
+- **agents:** Drop readmes from supported behavior sources
+
+### Features
+
+- **plugins:** Add npm discovery and lifecycle management (#200)
+- **plugin:** Add optional action icons to view actions
+- **vocab:** Extend base vocabulary to ten relation types
+- **plugins:** Add paper theme and clarify desktop-only features
+
+### Fixes
+
+- **desktop:** Remember window size and position
+- **startup:** Cover plugin loading with the splash
+- **desktop:** Refresh maximized state after resizing
+- **plugins:** Retain updated state across batch targets
+- **plugin:** Add repository metadata for npm provenance
+
 ## 1.0.0-alpha.21 — 2026-10-21
 
 ### Fixes
