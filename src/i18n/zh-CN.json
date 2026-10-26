@@ -436,7 +436,6 @@
   "shortcutSelectAll": "全选",
   "shortcutClearSelection": "清除选择",
   "shortcutOr": "或",
-  "shortcutsScope": "全选、撤销、重做和打开此列表可在整个应用中使用。其他图谱快捷键需要画布获得焦点。文本字段保留原生快捷键。",
   "general": "常规",
   "generalDescription": "选择语言、主题和词汇表。",
   "interface": "界面",

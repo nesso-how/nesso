@@ -59,6 +59,5 @@ export function ShortcutSettings({ titleRef }: { titleRef: Ref<HTMLHeadingElemen
         </div>)}
       </dl>
     </section>)}
-    <p className="mt-5 text-[11px] leading-[17px] text-muted-foreground">{t('shortcutsScope')}</p>
   </>
 }

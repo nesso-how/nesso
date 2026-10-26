@@ -454,7 +454,6 @@
   "shortcutSelectAll": "Seleziona tutto",
   "shortcutClearSelection": "Deseleziona tutto",
   "shortcutOr": "o",
-  "shortcutsScope": "Seleziona tutto, Annulla, Ripeti e l’apertura di questa guida funzionano in tutta l’app. Le altre scorciatoie del grafo richiedono il focus sull’area del grafo. I campi di testo mantengono le scorciatoie native.",
   "general": "Generale",
   "generalDescription": "Scegli la lingua, il tema e il vocabolario.",
   "interface": "Interfaccia",

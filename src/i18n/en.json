@@ -445,7 +445,6 @@
   "shortcutSelectAll": "Select all",
   "shortcutClearSelection": "Clear selection",
   "shortcutOr": "or",
-  "shortcutsScope": "Select all, undo, redo, and opening this reference work across the app. Other graph shortcuts require canvas focus. Text fields keep their native shortcuts.",
   "general": "General",
   "generalDescription": "Choose your language, theme, and vocabulary.",
   "interface": "Interface",
