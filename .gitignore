@@ -17,7 +17,7 @@ release
 /docs/
 /public/plugin-runner/
 /public/preinstalled/
-/plugins/kernel/fonts/
+/plugins/kernel-theme/fonts/
 
 # Editor directories and files
 .vscode/*

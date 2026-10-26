@@ -1,4 +1,4 @@
-# @nesso-how/kernel
+# @nesso-how/kernel-theme
 
 Kernel, Nesso's default light-only theme, providing semantic tokens and bundled fonts.
 

@@ -36,7 +36,7 @@ test('UI catalogs cover the host, site and bundled plugin interfaces in all supp
     '../../plugins/export/package.json',
     '../../plugins/import/package.json',
     '../../plugins/base-vocab/package.json',
-    '../../plugins/kernel/package.json',
+    '../../plugins/kernel-theme/package.json',
   ]) {
     const english = readCatalog(directory, 'en')
     const keys = [...new Set(Object.keys(english).map((key) => key.replace(pluralSuffix, '')))]

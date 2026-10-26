@@ -35,7 +35,7 @@ try {
     const bytes = await readFile(path.join(staging, name, 'index.js'))
     await Promise.all([publish(path.join(root, 'public/preinstalled', name, 'index.js'), bytes), publish(path.join(directory, manifest.entry), bytes)])
   }
-  for (const [name, kind] of [['kernel', 'theme'], ['base-vocab', 'vocab']] as const) {
+  for (const [name, kind] of [['kernel-theme', 'theme'], ['base-vocab', 'vocab']] as const) {
     const directory = path.join(root, 'plugins', name)
     const source = JSON.parse(await readFile(path.join(directory, 'package.json'), 'utf8'))
     const manifest = parsePluginManifest(source.nesso)
@@ -45,14 +45,14 @@ try {
     const definition = parseDefinition(kind, await module.create())
     const text = JSON.stringify(definition)
     await Promise.all([publish(path.join(root, 'public/preinstalled', name, 'definition.json'), text), publish(path.join(directory, manifest.entry), text)])
-    if (name === 'kernel') {
+    if (name === 'kernel-theme') {
       for (const [font, stem] of [['@fontsource-variable/geist', 'geist-{subset}-wght-normal'], ['@fontsource/ibm-plex-mono', 'ibm-plex-mono-{subset}-400-normal']]) {
         const fontRoot = path.join(directory, 'node_modules', font)
         const ranges = JSON.parse(await readFile(path.join(fontRoot, 'unicode.json'), 'utf8'))
         for (const subset of Object.keys(ranges)) {
           const filename = `${stem.replace('{subset}', subset)}.woff2`
           const bytes = await readFile(path.join(fontRoot, 'files', filename))
-          await Promise.all([publish(path.join(root, 'public/preinstalled/kernel/fonts', filename), bytes), publish(path.join(directory, 'fonts', filename), bytes)])
+          await Promise.all([publish(path.join(root, 'public/preinstalled/kernel-theme/fonts', filename), bytes), publish(path.join(directory, 'fonts', filename), bytes)])
         }
       }
     }

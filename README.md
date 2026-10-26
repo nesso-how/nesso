@@ -73,7 +73,7 @@ The host owns state, materializes `viewGraph`, and handles deletion confirmation
 | [`@nesso-how/base-vocab`](plugins/base-vocab/README.md) | Plugin | Default relation vocabulary. |
 | [`@nesso-how/export`](plugins/export/README.md) | Plugin | Graph and view export as JSON-LD. |
 | [`@nesso-how/import`](plugins/import/README.md) | Plugin | Merge a Nesso JSON-LD file into the current graph. |
-| [`@nesso-how/kernel`](plugins/kernel/README.md) | Plugin | Kernel theme tokens and bundled fonts. |
+| [`@nesso-how/kernel-theme`](plugins/kernel-theme/README.md) | Plugin | Kernel theme tokens and bundled fonts. |
 
 ## Development
 

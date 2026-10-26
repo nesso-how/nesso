@@ -146,7 +146,7 @@ function setupInstallation(window: BrowserWindow, saved: Map<string, unknown>): 
 }
 
 async function verifyBundledDetails(driver: Driver) {
-  for (const name of ['@nesso-how/kernel', '@nesso-how/base-vocab', '@nesso-how/import', '@nesso-how/export']) {
+  for (const name of ['@nesso-how/kernel-theme', '@nesso-how/base-vocab', '@nesso-how/import', '@nesso-how/export']) {
     await driver.open(name)
     const actions = name === '@nesso-how/import' || name === '@nesso-how/export'
     const badges = await driver.evaluate<string[]>(`[...document.querySelector('.plugin-scroll:not([hidden]) .settings-page-title').parentElement.querySelectorAll('.settings-badge')].map(badge => badge.textContent)`)
@@ -353,7 +353,7 @@ async function verifyUndoGuards(driver: Driver, state: InstallState) {
   console.log('installation/desktop: Use undo does not overwrite a newer selection')
   await driver.dismissToasts()
   const beforeSupersededUndo = structuredClone(state.saved.get('document'))
-  await driver.activateTheme('@nesso-how/kernel')
+  await driver.activateTheme('@nesso-how/kernel-theme')
   await driver.activateTheme('test-theme')
   await driver.headerReady('Disable')
   await driver.evaluate(`(() => { const card = [...document.querySelectorAll('[data-slot="toast"]:not([data-leaving])')].find(card => card.querySelector('.toast-description')?.textContent === 'You’re now using Kernel. Your document is unchanged.'); [...card.querySelectorAll('button')].find(button => button.textContent === 'Undo').click(); })()`)
@@ -363,7 +363,7 @@ async function verifyUndoGuards(driver: Driver, state: InstallState) {
   console.log('installation/desktop: Use undo does not restore an unavailable provider')
   await driver.dismissToasts()
   const beforeUnavailableUndo = structuredClone(state.saved.get('document'))
-  await driver.activateTheme('@nesso-how/kernel')
+  await driver.activateTheme('@nesso-how/kernel-theme')
   await driver.click('Plugins', '.settings-sidebar')
   await driver.open('test-theme')
   await driver.click('Disable', '.plugin-detail-footer')
@@ -372,7 +372,7 @@ async function verifyUndoGuards(driver: Driver, state: InstallState) {
   await driver.click('Undo', '.toast-viewport')
   await driver.toast('Could not undo selection')
   assert.equal(await driver.toastDescription('Could not undo selection'), 'Your selection has changed or the previous option is unavailable. Choose a theme or vocabulary in General settings.')
-  await waitFor(async () => state.saved.get('preferences') as { preferences: { activeThemeId: string } }, (record) => record?.preferences.activeThemeId === 'kernel')
+  await waitFor(async () => state.saved.get('preferences') as { preferences: { activeThemeId: string } }, (record) => record?.preferences.activeThemeId === 'kernel-theme')
   assert.deepEqual(state.saved.get('document'), beforeUnavailableUndo)
   await driver.dismissToasts()
   await driver.click('Enable', '.plugin-detail-footer')

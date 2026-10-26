@@ -9,8 +9,8 @@ export default defineConfig({
   plugins: [react(), tailwindcss(), {
     name: 'bundled-plugins',
     configureServer(server) {
-      const roots = ['plugins/kernel/src', 'plugins/base-vocab/src', 'plugins/import/src', 'plugins/export/src', 'packages/plugin/src', 'packages/schema/src', 'packages/i18n/src'].map((directory) => path.resolve(import.meta.dirname, directory) + path.sep)
-      const manifests = ['kernel', 'base-vocab', 'import', 'export'].map((name) => path.resolve(import.meta.dirname, 'plugins', name, 'package.json'))
+      const roots = ['plugins/kernel-theme/src', 'plugins/base-vocab/src', 'plugins/import/src', 'plugins/export/src', 'packages/plugin/src', 'packages/schema/src', 'packages/i18n/src'].map((directory) => path.resolve(import.meta.dirname, directory) + path.sep)
+      const manifests = ['kernel-theme', 'base-vocab', 'import', 'export'].map((name) => path.resolve(import.meta.dirname, 'plugins', name, 'package.json'))
       const script = path.resolve(import.meta.dirname, 'scripts/build-plugins.ts')
       let timer: ReturnType<typeof setTimeout> | undefined
       let running = false

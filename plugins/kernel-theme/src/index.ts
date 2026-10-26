@@ -13,7 +13,7 @@ const faces = (ranges: Record<string, string>, stem: string, weight: [number, nu
 })
 
 export const create = (): ThemeDefinition => ({
-  id: 'kernel',
+  id: 'kernel-theme',
   colors: {
     background: '#ffffff', foreground: '#292929', canvas: '#ffffff', sidebar: '#f5f5f5',
     primary: '#393939', 'primary-hover': '#202020', 'primary-foreground': '#ffffff',
