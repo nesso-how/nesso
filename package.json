@@ -31,7 +31,8 @@
     "dist:mac": "pnpm build && electron-builder --mac dmg zip --universal --publish never",
     "dist:win": "pnpm build && electron-builder --win nsis --x64 --publish never",
     "dist:linux": "pnpm build && electron-builder --linux AppImage deb --x64 --publish never",
-    "release": "node scripts/release.ts"
+    "release": "node scripts/release.ts",
+    "release:plugin": "node scripts/release-plugin.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.76",

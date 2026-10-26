@@ -14,6 +14,7 @@
 ## Release
 
 - Release from clean `main` using `pnpm release`; see `pnpm release --help` for options and behavior. The script updates `package.json` and `CHANGELOG.md`, commits, tags `v<version>`, and pushes.
+- Release the plugin SDK separately using `pnpm release:plugin`; see `pnpm release:plugin --help` for options and behavior. The script bumps `packages/plugin/package.json`, commits, tags `plugin-v<version>`, and pushes. Never reuse a `plugin-v*` tag for a version already on the registry.
 
 ## Product
 
