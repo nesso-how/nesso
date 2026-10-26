@@ -21,7 +21,7 @@ A second brain for connecting ideas and building understanding in one knowledge 
 
 Nesso is primarily a desktop app for **macOS, Windows, and Linux**. Download it from [nesso.how](https://nesso.how) or [GitHub releases](https://github.com/nesso-how/nesso/releases).
 
-The [web demo](https://app.nesso.how) lets you try the graph editor in your browser, without AI assistance or the local MCP server.
+The [web demo](https://app.nesso.how) lets you try the graph editor in your browser. AI assistance, plugin installation, and the local MCP server are available in the desktop app.
 
 ## Usage
 
