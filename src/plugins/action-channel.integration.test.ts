@@ -5,7 +5,7 @@ import { createNessoStore } from '../store/create.ts'
 import { connectActionChannel } from './action-channel.ts'
 import type { NessoOperation } from '@nesso-how/plugin'
 
-const descriptors: readonly ActionDescriptor[] = [{ id: 'example', label: { en: 'Example' }, supportsViews: true }]
+const descriptors: readonly ActionDescriptor[] = [{ id: 'example', label: { en: 'Example' } }]
 const base: BaseState = { revision: 0, contextId: 'context', locale: 'en', theme: Object.fromEntries(themeTokens.map((token) => [token, ''])), conceptPlacementOffset: { x: 160, y: 100 } }
 const graph = { concepts: [{ id: 'urn:a', label: 'A', position: { x: 0, y: 0 } }, { id: 'urn:b', label: 'B', position: { x: 100, y: 0 } }], relationTypes: [], relations: [] }
 

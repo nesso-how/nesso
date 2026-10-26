@@ -30,7 +30,7 @@ export const getThemePresentation = (id: string) => themes.get(id)
 export const usePlugins = () => useSyncExternalStore(registry.subscribe, registry.getSnapshot)
 export const useExternalPluginsAvailable = () => useSyncExternalStore(registry.subscribe, registry.getExternalAvailable)
 export const usePluginActionsRunning = (name: string) => useSyncExternalStore(subscribeActions, () => [...active].some(([controller, source]) => source === name && !controller.signal.aborted))
-export const useViewActions = () => usePlugins().flatMap((plugin) => plugin.kind === 'actions' ? plugin.contribution.filter(({ supportsViews }) => supportsViews) : [])
+export const useViewActions = () => usePlugins().flatMap((plugin) => plugin.kind === 'actions' ? plugin.contribution : [])
 export const pluginMetadata = (plugin: Pick<PluginEntry, 'i18n'>, locale: Locale) => ({ name: resolvePluginText(plugin.i18n.metadata.name, locale), description: resolvePluginText(plugin.i18n.metadata.description, locale), documentation: resolvePluginText(plugin.i18n.metadata.documentation, locale) })
 export const stopPluginActions = () => {
   for (const controller of active.keys()) controller.abort()

@@ -29,7 +29,7 @@ const bootstrap = async (event: MessageEvent) => {
         },
       )
     })
-    port.postMessage({ type: 'contribution', value: parseContribution('actions', actions.map(({ id, label, supportsViews }) => ({ id, label, supportsViews }))) })
+    port.postMessage({ type: 'contribution', value: parseContribution('actions', actions.map(({ id, label }) => ({ id, label }))) })
   } catch {
     port.postMessage({ type: 'close', reason: 'Action initialization failed' })
     close?.()

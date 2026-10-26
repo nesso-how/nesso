@@ -16,7 +16,7 @@ export async function verifyCorruptRecords({ window, url }: CheckContext) {
   const storage = createPluginStorage(directory)
   for (const kind of ['actions', 'theme', 'vocab'] as const) {
     const entry = kind === 'actions' ? 'index.js' : 'definition.json'
-    const content = kind === 'actions' ? 'export const create=()=>[{id:"restored-action",label:{en:"Restored action"},supportsViews:true,run(){}}]'
+    const content = kind === 'actions' ? 'export const create=()=>[{id:"restored-action",label:{en:"Restored action"},run(){}}]'
       : JSON.stringify(kind === 'theme' ? { ...theme, id: 'restored-theme' } : { id: 'restored-vocab', relationTypes: [{ id: 'urn:nesso:restored', label: 'Restored' }], defaultTypeId: 'urn:nesso:restored' })
     await storage.install(await preparePluginPackage({
       manifest: { name: `test-restored-${kind}`, version: '1.0.0', nesso: { apiVersion: 1, kind, entry, writes: [], capabilities: [] }, i18n: { metadata: { name: { en: `Restored ${kind}` }, description: { en: 'Restoration check' }, documentation: { en: 'Restoration check' } } } },

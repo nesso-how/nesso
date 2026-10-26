@@ -26,7 +26,7 @@ test('manifests and action descriptors reject unknown authority, duplicates and 
     { ...manifest, capabilities: ['clipboard.read'] }, { ...manifest, capabilities: ['clipboard.write'] },
     { ...manifest, metadata: {} },
   ]) assert.throws(() => parsePluginManifest(value), PluginError)
-  const descriptor = { id: 'example', label: { en: 'Example' }, supportsViews: true }
+  const descriptor = { id: 'example', label: { en: 'Example' } }
   assert.deepEqual(parseContribution('actions', [descriptor]), [descriptor])
   for (const value of [[], [descriptor, descriptor], [{ ...descriptor, run: true }]]) assert.throws(() => parseContribution('actions', value), PluginError)
   for (const kind of ['theme', 'vocab']) {

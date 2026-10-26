@@ -4,7 +4,7 @@ import { baseState, countWorkers, waitFor, type CheckContext } from './helpers.t
 export async function verifyWorker({ window, url, name, attempted }: CheckContext) {
   const code = `export const create=({store,notifications,clipboard})=>{
     if(clipboard!==undefined||navigator.clipboard!==undefined)throw new Error('Unexpected clipboard access');return [{
-    id:'probe',label:{en:'Probe'},supportsViews:false,
+    id:'probe',label:{en:'Probe'},
     run:async()=>{
       const id=await store.addConcept({x:12,y:34});
       const result={helper:/^urn:uuid:/.test(id),dom:typeof document==='undefined'&&typeof parent==='undefined',bridges:typeof require==='undefined'&&typeof window==='undefined'&&typeof process==='undefined'&&typeof self.nessoPlugins==='undefined',origin:location.origin};
