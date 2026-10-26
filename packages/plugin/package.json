@@ -3,6 +3,11 @@
   "version": "0.1.1",
   "description": "Types, validation, and asynchronous clients for isolated Nesso plugins",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nesso-how/nesso.git",
+    "directory": "packages/plugin"
+  },
   "type": "module",
   "files": ["dist", "example"],
   "types": "./dist/index.d.ts",
