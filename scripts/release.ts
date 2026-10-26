@@ -1,7 +1,7 @@
-import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { NessoError } from '@nesso-how/errors';
+import { commitTagPush, fail, guardRelease, run } from './release-common.ts';
 import { releaseNotes } from './release-notes.ts';
 
 type Channel = 'alpha' | 'beta';
@@ -79,19 +79,6 @@ function resolveTarget(args: string[], current: Version): Version {
   }
 }
 
-function fail(path: string, message: string): never {
-  throw new NessoError([{ path, message }]);
-}
-
-function run(command: string, args: string[]): string {
-  try {
-    return execFileSync(command, args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
-  } catch (unknownError) {
-    const message = unknownError instanceof Error ? unknownError.message : String(unknownError);
-    return fail(`${command} ${args.join(' ')}`, message);
-  }
-}
-
 function main(): void {
   const args = process.argv.slice(2);
   if (args.length === 1 && (args[0] === '--help' || args[0] === '-h')) {
@@ -107,9 +94,7 @@ function main(): void {
   if (compareVersions(target, current) < 0) fail('version', `target ${formatVersion(target)} is older than current ${formatVersion(current)}`);
   const version = formatVersion(target);
   const tag = `v${version}`;
-  if (run('git', ['rev-parse', '--abbrev-ref', 'HEAD']) !== 'main') fail('git', 'must release from main');
-  if (run('git', ['status', '--porcelain']) !== '') fail('git', 'working tree is not clean');
-  if (run('git', ['tag', '--list', tag]) !== '') fail('git', `tag ${tag} already exists`);
+  guardRelease(tag);
   const tags = run('git', ['tag', '--merged', 'HEAD', '--sort=-version:refname']).split('\n');
   const previous = tags.find((candidate) => {
     if (!/^v\d+\.\d+\.\d+(?:-(alpha|beta)\.\d+)?$/.test(candidate)) return false;
@@ -146,11 +131,7 @@ function main(): void {
     synced.push(path);
   }
   writeFileSync(changelogLocation, `# Changelog\n\n${entry}\n\n${changelog.replace(/^# Changelog\s*/, '')}`);
-  run('git', ['add', 'package.json', 'CHANGELOG.md', ...synced]);
-  run('git', ['commit', '-m', `chore: release ${version}`]);
-  run('git', ['tag', tag]);
-  run('git', ['push', '--atomic', 'origin', 'main', tag]);
-  console.log(tag);
+  commitTagPush(['package.json', 'CHANGELOG.md', ...synced], `chore: release ${version}`, tag);
 }
 
 try {
