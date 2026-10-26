@@ -2,6 +2,7 @@
 
 ## Code
 
+- Leave changes uncommitted and unpushed unless the user explicitly requests a commit or push.
 - Do not add backward-compatibility code or migration ladders.
 - Prefer the smallest clear implementation. Reuse existing code; avoid unnecessary abstractions, duplication, and redundant tests without sacrificing readability, correctness, or essential coverage.
 - Keep AGENTS.md files minimal: durable development rules and architectural boundaries only. Do not duplicate inherited instructions, implementation details, functional specifications, or progress reports; keep supported behavior in READMEs, types, validators, and tests.
