@@ -1,4 +1,4 @@
-import type { VocabDefinition } from '@nesso/plugin'
+import type { VocabDefinition } from '@nesso-how/plugin'
 
 export const relationIds = {
   linksTo: 'urn:uuid:c7aeeb73-f438-5bc6-a02b-87c06755a15d',

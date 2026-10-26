@@ -1,6 +1,6 @@
-import { PluginError, type NessoOperation } from '@nesso/plugin'
-import type { ActionContext, ActionContribution } from '@nesso/plugin/runtime'
-import { newIri, parseGraph, type Graph } from '@nesso/schema'
+import { PluginError, type NessoOperation } from '@nesso-how/plugin'
+import type { ActionContext, ActionContribution } from '@nesso-how/plugin/runtime'
+import { newIri, parseGraph, type Graph } from '@nesso-how/schema'
 import source from '../package.json' with { type: 'json' }
 
 const { i18n } = source

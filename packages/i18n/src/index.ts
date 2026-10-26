@@ -1,5 +1,5 @@
 import { createInstance } from 'i18next'
-import { NessoError } from '@nesso/errors'
+import { NessoError } from '@nesso-how/errors'
 import { defaultLocale, locales, type Locale } from './locale.ts'
 
 export { defaultLocale, detectLocale, isLocale, localeNames, locales, type Locale } from './locale.ts'

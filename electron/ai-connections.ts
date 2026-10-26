@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { z } from 'zod'
-import { aiConnectionInput, type AiConnections, type AiSignIn } from '@nesso/ai/providers'
+import { aiConnectionInput, type AiConnections, type AiSignIn } from '@nesso-how/ai/providers'
 import { ElectronError } from './errors.ts'
 import { chatGptAccount, type createChatGptAuth } from './ai-oauth.ts'
 

@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react'
-import { ToastViewport as Viewport } from '@nesso/ui'
+import { ToastViewport as Viewport } from '@nesso-how/ui'
 import { useTranslation } from '@/i18n'
 import { notifications } from '@/notifications'
 

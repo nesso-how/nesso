@@ -1,4 +1,4 @@
-import type { AiConnectionInput, AiConnections, AiResult, AiChatRequest, AiChatEvent, AiToolReply, AiSignIn } from '@nesso/ai'
+import type { AiConnectionInput, AiConnections, AiResult, AiChatRequest, AiChatEvent, AiToolReply, AiSignIn } from '@nesso-how/ai'
 
 export type AiBridge = {
   readonly list: () => Promise<AiResult<AiConnections>>

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import type { ThemeDefinition } from '@nesso/plugin'
+import type { ThemeDefinition } from '@nesso-how/plugin'
 import { prepareTheme } from './prepare.ts'
 import theme from '../../packages/plugin/test/theme.json' with { type: 'json' }
 

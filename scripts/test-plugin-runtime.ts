@@ -4,7 +4,7 @@ import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { NessoError } from '@nesso/errors'
+import { NessoError } from '@nesso-how/errors'
 import { cases } from './plugin-runtime/cases.ts'
 
 const electron: string = createRequire(import.meta.url)('electron')

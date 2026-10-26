@@ -1,5 +1,5 @@
 import type { PersistenceBridge, PersistenceSection, PersistenceStorage } from '../../shared/persistence.ts'
-import { NessoError } from '@nesso/errors'
+import { NessoError } from '@nesso-how/errors'
 
 export function createIndexedDbStorage(source: () => IDBFactory): PersistenceStorage {
   let database: Promise<IDBDatabase> | undefined

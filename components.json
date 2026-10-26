@@ -15,7 +15,7 @@
   "aliases": {
     "components": "@/components",
     "utils": "@/lib/utils",
-    "ui": "@nesso/ui",
+    "ui": "@nesso-how/ui",
     "lib": "@/lib",
     "hooks": "@/hooks"
   },

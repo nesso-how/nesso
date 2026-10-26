@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useSyncExternalStore, type Dispatch, type RefObject, type SetStateAction } from 'react'
-import { defaultLocale, type Locale } from '@nesso/i18n'
-import { Button } from '@nesso/ui'
+import { defaultLocale, type Locale } from '@nesso-how/i18n'
+import { Button } from '@nesso-how/ui'
 import { RefreshCw } from 'lucide-react'
 import gt from 'semver/functions/gt.js'
 import type { InstalledPlugin, NpmPlugin, PluginBridge, PluginResult } from '../../../shared/plugins.ts'

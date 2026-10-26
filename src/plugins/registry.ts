@@ -1,5 +1,5 @@
-import type { ThemeDefinition, VocabDefinition } from '@nesso/plugin'
-import { PluginError, type ActionDescriptor, type PluginI18n } from '@nesso/plugin/runtime'
+import type { ThemeDefinition, VocabDefinition } from '@nesso-how/plugin'
+import { PluginError, type ActionDescriptor, type PluginI18n } from '@nesso-how/plugin/runtime'
 import type { PluginAccess } from '../../shared/plugins.ts'
 
 export type PluginEntry = {

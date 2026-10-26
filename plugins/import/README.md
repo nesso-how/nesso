@@ -1,4 +1,4 @@
-# @nesso/import
+# @nesso-how/import
 
 Action plugin importing a Nesso JSON-LD file into the current graph.
 

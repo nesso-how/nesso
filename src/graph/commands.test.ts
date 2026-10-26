@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { parseGraph, relationKey, SchemaError, type Graph } from '@nesso/schema'
+import { parseGraph, relationKey, SchemaError, type Graph } from '@nesso-how/schema'
 import { copyGraph, pasteOperations, selectionCoversGraph } from './commands.ts'
 
 const graph: Graph = {

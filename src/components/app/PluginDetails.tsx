@@ -1,6 +1,6 @@
 import { useState, type ReactNode, type RefObject } from 'react'
-import { defaultLocale } from '@nesso/i18n'
-import { Button, ConfirmDialog } from '@nesso/ui'
+import { defaultLocale } from '@nesso-how/i18n'
+import { Button, ConfirmDialog } from '@nesso-how/ui'
 import { ArrowLeft, Check, ExternalLink } from 'lucide-react'
 import type { NpmPlugin, PluginAccess } from '../../../shared/plugins.ts'
 import { pluginMetadata, removeExternalPlugin, setExternalPluginEnabled, stopExternalActions, usePluginActionsRunning } from '@/plugins'

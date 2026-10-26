@@ -1,4 +1,4 @@
-import { ColorPicker, presetColors } from '@nesso/ui'
+import { ColorPicker, presetColors } from '@nesso-how/ui'
 import { useTranslation } from '@/i18n'
 import { notifications } from '@/notifications'
 import { nessoStore } from '@/store'

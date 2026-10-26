@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { locales } from '@nesso/i18n'
+import { locales } from '@nesso-how/i18n'
 import type { AiToolResults } from './results.ts'
 
 const aiChatMessage = z.strictObject({

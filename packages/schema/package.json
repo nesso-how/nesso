@@ -1,5 +1,5 @@
 {
-  "name": "@nesso/schema",
+  "name": "@nesso-how/schema",
   "version": "0.0.0",
   "license": "MIT",
   "type": "module",
@@ -7,6 +7,6 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@nesso/errors": "workspace:*"
+    "@nesso-how/errors": "workspace:*"
   }
 }

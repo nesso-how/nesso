@@ -1,4 +1,4 @@
-import type { GraphSnapshot, SavedView } from '@nesso/plugin'
+import type { GraphSnapshot, SavedView } from '@nesso-how/plugin'
 
 type Entry<T> = { readonly index: number; readonly value: T }
 export type Change<T> = { readonly id: string; readonly before?: Entry<T>; readonly after?: Entry<T> }

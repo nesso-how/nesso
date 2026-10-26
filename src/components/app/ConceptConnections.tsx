@@ -1,5 +1,5 @@
-import { IconButton } from '@nesso/ui'
-import { relationKey } from '@nesso/schema'
+import { IconButton } from '@nesso-how/ui'
+import { relationKey } from '@nesso-how/schema'
 import { ArrowLeft, ArrowRight, Minus, Plus } from 'lucide-react'
 import { nessoStore, useNessoStore } from '@/store'
 import type { HostStore } from '@/store/types'

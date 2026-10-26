@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Button, Dialog, DialogActions, DialogPopup } from '@nesso/ui'
+import { Button, Dialog, DialogActions, DialogPopup } from '@nesso-how/ui'
 import type { PluginApproval, PluginBridge } from '../../../shared/plugins.ts'
 import { useTranslation } from '@/i18n'
 import { pluginAccessLabels } from '@/plugins/access'

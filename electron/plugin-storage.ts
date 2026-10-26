@@ -60,7 +60,7 @@ export function createPluginStorage(directory: string) {
     return result
   }
   const check = async (prepared: PreparedPlugin & Pick<InstalledPlugin, 'npmIntegrity'>, replacing?: string) => {
-    if (['@nesso/kernel', '@nesso/base-vocab', '@nesso/import', '@nesso/export'].includes(prepared.name)) fail('Bundled package identities are reserved')
+    if (['@nesso-how/kernel', '@nesso-how/base-vocab', '@nesso-how/import', '@nesso-how/export'].includes(prepared.name)) fail('Bundled package identities are reserved')
     const { installed, total, sizes } = await scan()
     const previous = installed.find(({ name }) => name === prepared.name)
     if (replacing === undefined ? previous : !previous || previous.contentId !== replacing || previous.contentId === prepared.contentId) fail('Package identity changed or is already installed')

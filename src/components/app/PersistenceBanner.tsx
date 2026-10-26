@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Banner, Button, Dialog, DialogActions, DialogPopup } from '@nesso/ui'
+import { Banner, Button, Dialog, DialogActions, DialogPopup } from '@nesso-how/ui'
 import { ChevronRight } from 'lucide-react'
 import { useNessoStore, type startAutosave } from '@/store'
 import { useTranslation } from '@/i18n'

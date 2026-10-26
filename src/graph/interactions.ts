@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, type ClipboardEvent, type ComponentProps, type RefObject } from 'react'
-import { defaultLocale } from '@nesso/i18n'
-import { relationKey, type Position } from '@nesso/schema'
+import { defaultLocale } from '@nesso-how/i18n'
+import { relationKey, type Position } from '@nesso-how/schema'
 import type { HostStore } from '../store/types.ts'
 import { notifications } from '../notifications/index.ts'
 import { useNessoStore } from '../store/index.ts'

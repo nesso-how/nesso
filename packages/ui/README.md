@@ -1,18 +1,18 @@
-# @nesso/ui
+# @nesso-how/ui
 
 Reusable React primitives and shared styles. Base UI-backed controls use Nesso's semantic theme tokens; graph components and app layout remain outside this package.
 
 ## Usage
 
 ```tsx
-import { Banner } from '@nesso/ui'
+import { Banner } from '@nesso-how/ui'
 
 export function SaveWarning() {
   return <Banner tone="warning">Some changes couldn't be saved locally.</Banner>
 }
 ```
 
-Import `@nesso/ui/styles.css` after Tailwind in the host stylesheet. The host supplies the theme tokens and fonts. React and React DOM are peers.
+Import `@nesso-how/ui/styles.css` after Tailwind in the host stylesheet. The host supplies the theme tokens and fonts. React and React DOM are peers.
 
 ## API
 

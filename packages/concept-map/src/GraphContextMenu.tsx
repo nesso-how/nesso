@@ -1,4 +1,4 @@
-import { Menu, MenuItem, MenuPopup } from '@nesso/ui'
+import { Menu, MenuItem, MenuPopup } from '@nesso-how/ui'
 import type { LucideIcon } from 'lucide-react'
 import type { RefObject } from 'react'
 

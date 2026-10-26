@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { aiChatInstructions, aiChatMessages, type AiChatRequest, type AiChatEvent, type AiEffects } from '@nesso/ai'
+import { aiChatInstructions, aiChatMessages, type AiChatRequest, type AiChatEvent, type AiEffects } from '@nesso-how/ai'
 import { createAiChatRun } from './ai-chat.ts'
 import { ElectronError } from './errors.ts'
 

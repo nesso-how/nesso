@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { parseGraph, serializeGraph, type Graph } from '@nesso/schema'
+import { parseGraph, serializeGraph, type Graph } from '@nesso-how/schema'
 import { createNessoStore } from './create.ts'
 import { connectPersistence, loadPersistence } from './persistence.ts'
 import { createDesktopStorage, createIndexedDbStorage } from './storage.ts'

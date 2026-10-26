@@ -57,7 +57,7 @@ test('optional authors and GitHub repositories normalize to bounded display meta
 test('action packages reject unsafe paths, extra assets, unsupported authority, non-UTF-8 code and inexact identities', async () => {
   for (const entry of ['../index.js', '/index.js', 'a//index.js', 'a\\index.js', 'index.js?q', 'index.ts', 'a/%2e/index.js']) await assert.rejects(preparePluginPackage({ manifest: { ...manifest, nesso: { ...manifest.nesso, entry } }, files }))
   for (const version of ['^1.0.0', '1.0.0-01', 'latest', 'v1.0.0', '=1.0.0', ' 1.0.0', '1.0.0 ', '1.0', '9007199254740992.0.0']) await assert.rejects(preparePluginPackage({ manifest: { ...manifest, version }, files }))
-  for (const name of ['../private', '@nesso', 'node_modules', 'favicon.ico', 'http', 'Uppercase', '-private', '@nesso/../private', 'plugin?query']) await assert.rejects(preparePluginPackage({ manifest: { ...manifest, name }, files }))
+  for (const name of ['../private', '@nesso', 'node_modules', 'favicon.ico', 'http', 'Uppercase', '-private', '@nesso-how/../private', 'plugin?query']) await assert.rejects(preparePluginPackage({ manifest: { ...manifest, name }, files }))
   for (const version of ['1.0.0', '1.0.0-alpha.1', '1.0.0+build.1', '1.0.0-alpha.1+build.1']) assert.equal((await preparePluginPackage({ manifest: { ...manifest, name: '@nesso/test', version }, files })).version, version)
   await assert.rejects(preparePluginPackage({ manifest: { ...manifest, nesso: { ...manifest.nesso, writes: ['document.reset'] } }, files }))
   for (const entries of [[], [...files, ...files], [{ path: 'different.js', bytes: files[0].bytes }], [{ path: 'index.js', bytes: new Uint8Array([0xff]) }]]) await assert.rejects(preparePluginPackage({ manifest, files: entries }))

@@ -1,4 +1,4 @@
-import { createTranslator, defaultLocale, localeNames, locales, type Locale } from '@nesso/i18n'
+import { createTranslator, defaultLocale, localeNames, locales, type Locale } from '@nesso-how/i18n'
 import en from './i18n/en.json' with { type: 'json' }
 import it from './i18n/it.json' with { type: 'json' }
 import zhCN from './i18n/zh-CN.json' with { type: 'json' }

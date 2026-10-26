@@ -1,4 +1,4 @@
-import type { Locale } from '@nesso/i18n'
+import type { Locale } from '@nesso-how/i18n'
 import { z } from 'zod'
 import type { PluginPackageInput, PreparedPlugin } from '../packages/plugin/src/package.ts'
 import type { PluginManifest } from '../packages/plugin/src/runtime.ts'

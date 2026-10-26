@@ -3,7 +3,7 @@ import test from 'node:test'
 import { request } from 'node:http'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
-import { aiTools } from '@nesso/ai'
+import { aiTools } from '@nesso-how/ai'
 import { startMcpServer } from './mcp-server.ts'
 
 const headers = (token: string) => ({ Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', Accept: 'application/json, text/event-stream' })

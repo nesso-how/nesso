@@ -1,5 +1,5 @@
 {
-  "name": "@nesso/kernel",
+  "name": "@nesso-how/kernel",
   "version": "1.0.0-alpha.21",
   "license": "MIT",
   "type": "module",
@@ -28,9 +28,9 @@
     "@fontsource/ibm-plex-mono": "^5.2.7"
   },
   "peerDependencies": {
-    "@nesso/plugin": "workspace:*"
+    "@nesso-how/plugin": "workspace:*"
   },
   "devDependencies": {
-    "@nesso/plugin": "workspace:*"
+    "@nesso-how/plugin": "workspace:*"
   }
 }

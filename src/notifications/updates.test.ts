@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { createTranslator } from '@nesso/i18n'
+import { createTranslator } from '@nesso-how/i18n'
 import type { UpdateBridge, UpdateState } from '../../electron/updates.ts'
 import en from '../i18n/en.json' with { type: 'json' }
 import { createNotifications } from './create.ts'

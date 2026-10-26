@@ -1,5 +1,5 @@
 {
-  "name": "@nesso/concept-map",
+  "name": "@nesso-how/concept-map",
   "version": "0.0.0",
   "license": "MIT",
   "type": "module",
@@ -8,21 +8,21 @@
     ".": "./src/index.tsx"
   },
   "dependencies": {
-    "@nesso/errors": "workspace:*",
-    "@nesso/i18n": "workspace:*",
-    "@nesso/schema": "workspace:*",
-    "@nesso/ui": "workspace:*",
+    "@nesso-how/errors": "workspace:*",
+    "@nesso-how/i18n": "workspace:*",
+    "@nesso-how/schema": "workspace:*",
+    "@nesso-how/ui": "workspace:*",
     "@xyflow/react": "^12.12.0",
     "cn": "^0.4.0",
     "lucide-react": "^1.48.0"
   },
   "peerDependencies": {
-    "@nesso/plugin": "workspace:*",
+    "@nesso-how/plugin": "workspace:*",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },
   "devDependencies": {
-    "@nesso/plugin": "workspace:*",
+    "@nesso-how/plugin": "workspace:*",
     "@types/react": "^19.2.18"
   }
 }

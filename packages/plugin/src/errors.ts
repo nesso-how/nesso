@@ -1,4 +1,4 @@
-import { NessoError, type ErrorIssue } from '@nesso/errors'
+import { NessoError, type ErrorIssue } from '@nesso-how/errors'
 import type { ZodType } from 'zod'
 import type { LocalizedText } from './i18n.ts'
 

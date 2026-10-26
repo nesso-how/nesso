@@ -2,7 +2,7 @@ import { spawnSync } from 'node:child_process'
 import { existsSync, mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
-import { NessoError } from '@nesso/errors'
+import { NessoError } from '@nesso-how/errors'
 
 const [executable] = process.argv.slice(2)
 if (!executable || !existsSync(executable)) throw new NessoError([{ path: 'startup-check', message: 'Expected a packaged app executable path' }])

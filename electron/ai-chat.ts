@@ -4,7 +4,7 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { isStepCount, streamText, type ToolSet } from 'ai'
 import { z } from 'zod'
-import { aiChatInstructions, aiChatMessages, aiTools, type AiChatRequest, type AiChatEvent, type AiToolReply } from '@nesso/ai'
+import { aiChatInstructions, aiChatMessages, aiTools, type AiChatRequest, type AiChatEvent, type AiToolReply } from '@nesso-how/ai'
 import type { createAiConnections } from './ai-connections.ts'
 import { ElectronError } from './errors.ts'
 

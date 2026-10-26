@@ -1,6 +1,6 @@
-import { Button, Combobox, ComboboxItem, ComboboxPopup, IconButton, Input } from '@nesso/ui'
+import { Button, Combobox, ComboboxItem, ComboboxPopup, IconButton, Input } from '@nesso-how/ui'
 import { Plus, X } from 'lucide-react'
-import type { SavedView } from '@nesso/plugin'
+import type { SavedView } from '@nesso-how/plugin'
 import { useRef, useState } from 'react'
 import { nessoStore, useNessoStore } from '@/store'
 import type { HostStore } from '@/store/types'

@@ -1,4 +1,4 @@
-import type { Locale } from '@nesso/i18n'
+import type { Locale } from '@nesso-how/i18n'
 import { translate } from './i18n/index.ts'
 
 export function conceptMapShortcuts(locale: Locale) {

@@ -1,8 +1,8 @@
-import { checkMessageSize, parseContribution, PluginError, resolvePluginText, runtimeLimits, type ActionDescriptor, type ActionState, type BaseState, type FileOpenOptions, type FileOpenResult, type FileSaveOptions } from '@nesso/plugin/runtime'
-import { relationKey } from '@nesso/schema'
-import type { NessoOperation } from '@nesso/plugin'
+import { checkMessageSize, parseContribution, PluginError, resolvePluginText, runtimeLimits, type ActionDescriptor, type ActionState, type BaseState, type FileOpenOptions, type FileOpenResult, type FileSaveOptions } from '@nesso-how/plugin/runtime'
+import { relationKey } from '@nesso-how/schema'
+import type { NessoOperation } from '@nesso-how/plugin'
 import type { HostStore } from '../store/types.ts'
-import { NessoError } from '@nesso/errors'
+import { NessoError } from '@nesso-how/errors'
 import { materialize } from '../store/operations.ts'
 import { listenPluginPort, type PluginMessage } from './messages.ts'
 

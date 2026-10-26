@@ -1,8 +1,8 @@
-import type { NessoOperation, NessoState } from '@nesso/plugin'
+import type { NessoOperation, NessoState } from '@nesso-how/plugin'
 import { ZodError } from 'zod'
-import { aiTools, type AiToolResults } from '@nesso/ai'
+import { aiTools, type AiToolResults } from '@nesso-how/ai'
 import type { createNessoStore } from '../store/create.ts'
-import { NessoError } from '@nesso/errors'
+import { NessoError } from '@nesso-how/errors'
 import { summarizeEffects } from './effects.ts'
 import { readAiTool } from './read.ts'
 

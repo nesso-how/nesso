@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vite'
-import { defaultLocale, locales } from '@nesso/i18n'
+import { defaultLocale, locales } from '@nesso-how/i18n'
 import { renderSite } from './i18n.ts'
 
 const root = import.meta.dirname

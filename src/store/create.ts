@@ -2,14 +2,14 @@ import type {
   Preferences,
   ThemeDefinition,
   VocabDefinition,
-} from '@nesso/plugin'
+} from '@nesso-how/plugin'
 import {
   newIri,
   SchemaError,
   validateGraph,
   type Graph,
   type SchemaIssue,
-} from '@nesso/schema'
+} from '@nesso-how/schema'
 import { createStore } from 'zustand/vanilla'
 import { createCommands } from './commands.ts'
 import { createHistory } from './history.ts'
@@ -17,7 +17,7 @@ import { applyStateOperations, checkGraph, materialize, newGraph, newWorkspace }
 import { defaultPanels, fail, maxRelationLabelLength, parseConversation, parsePreferences, parseWorkspace } from './settings.ts'
 import type { HostState, HostStore, RendererDefinition, RestoredState } from './types.ts'
 import type { PersistenceIssue } from '../../shared/persistence.ts'
-import { parseDefinition } from '@nesso/plugin/runtime'
+import { parseDefinition } from '@nesso-how/plugin/runtime'
 
 export const createNessoStore = (graph: Graph | null, restored: RestoredState = {}) => {
   if (graph) checkGraph(graph)

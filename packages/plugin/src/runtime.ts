@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import type { DeepReadonly, GraphSnapshot, NessoOperation, Selection, SavedView, VocabDefinition } from './types.ts'
-import type { Locale } from '@nesso/i18n'
+import type { Locale } from '@nesso-how/i18n'
 import { parseOrThrow, PluginError } from './errors.ts'
 import { parseDefinition, themeColors, type Definition } from './definitions.ts'
 import { fileOpenOptions, fileOpenResult, fileSaveOptions, type FileOpenOptions, type FileOpenResult, type FileSaveOptions } from './files.ts'

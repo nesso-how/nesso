@@ -1,5 +1,5 @@
-import type { NessoState, SavedView } from '@nesso/plugin'
-import { relationKey } from '@nesso/schema'
+import type { NessoState, SavedView } from '@nesso-how/plugin'
+import { relationKey } from '@nesso-how/schema'
 import { applyChanges, hasDelta, mergeChanges, sameConcept, type Change, type DocumentDelta, type ViewChange } from './delta.ts'
 import { checkGraph, materialize, reconcileSelection } from './operations.ts'
 import { parseWorkspace } from './settings.ts'

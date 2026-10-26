@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import type { Graph } from '@nesso/schema'
+import type { Graph } from '@nesso-how/schema'
 import { createSeedDocument } from '../data/seed.ts'
 import { initializeNessoStore } from './initialize.ts'
 import type { LoadedState } from './persistence.ts'

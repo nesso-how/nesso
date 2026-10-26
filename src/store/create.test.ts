@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import type { NessoOperation, SectionId, Selection, VocabDefinition } from '@nesso/plugin'
-import { relationKey, SchemaError, type Graph } from '@nesso/schema'
+import type { NessoOperation, SectionId, Selection, VocabDefinition } from '@nesso-how/plugin'
+import { relationKey, SchemaError, type Graph } from '@nesso-how/schema'
 import { maxConceptLabelLength, maxRelationLabelLength } from './settings.ts'
 import { createNessoStore } from './create.ts'
-import { NessoError } from '@nesso/errors'
+import { NessoError } from '@nesso-how/errors'
 import { sectionIds } from './types.ts'
 import themeFixture from '../../packages/plugin/test/theme.json' with { type: 'json' }
 

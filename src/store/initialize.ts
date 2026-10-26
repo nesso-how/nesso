@@ -1,4 +1,4 @@
-import { detectLocale } from '@nesso/i18n'
+import { detectLocale } from '@nesso-how/i18n'
 import { createSeedDocument } from '../data/seed.ts'
 import { createNessoStore } from './create.ts'
 import type { LoadedState } from './persistence.ts'

@@ -1,11 +1,11 @@
-# @nesso/ai
+# @nesso-how/ai
 
 Framework-independent tool contracts, chat schemas, and assistant instructions for Nesso's desktop AI chat and local MCP server. State, execution, and transport remain outside this package.
 
 ## Usage
 
 ```ts
-import { aiChatInstructions, aiTools } from '@nesso/ai'
+import { aiChatInstructions, aiTools } from '@nesso-how/ai'
 
 const input = aiTools.concepts.inputSchema.parse({ query: 'Learning' })
 const instructions = aiChatInstructions({ locale: 'en' })
@@ -23,7 +23,7 @@ Tool schemas validate input; the host supplies execution. Reads are paginated an
 - `aiTextLimits`: shared text limits.
 - `aiProviders`: provider defaults, with connection and result types.
 
-`@nesso/ai/providers` also exposes the connection input schema and derived types without loading tool schemas. See [src/index.ts](src/index.ts) and [src/providers.ts](src/providers.ts) for exports and signatures.
+`@nesso-how/ai/providers` also exposes the connection input schema and derived types without loading tool schemas. See [src/index.ts](src/index.ts) and [src/providers.ts](src/providers.ts) for exports and signatures.
 
 ## Boundary
 
@@ -35,6 +35,6 @@ The local MCP server reuses `aiTools` schemas; each call commits independently a
 
 ## Build
 
-`pnpm --filter @nesso/ai build`
+`pnpm --filter @nesso-how/ai build`
 
 Vite uses TypeScript sources; Node and Electron use compiled JavaScript. Root build, test and desktop development commands build this package automatically.

@@ -1,5 +1,5 @@
 {
-  "name": "@nesso/i18n",
+  "name": "@nesso-how/i18n",
   "version": "0.0.0",
   "license": "MIT",
   "type": "module",
@@ -19,7 +19,7 @@
     "build": "tsc -b"
   },
   "dependencies": {
-    "@nesso/errors": "workspace:*",
+    "@nesso-how/errors": "workspace:*",
     "i18next": "^26.4.2"
   }
 }

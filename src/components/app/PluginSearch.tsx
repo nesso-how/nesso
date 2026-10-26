@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { defaultLocale } from '@nesso/i18n'
-import { Button, IconButton, Input } from '@nesso/ui'
+import { defaultLocale } from '@nesso-how/i18n'
+import { Button, IconButton, Input } from '@nesso-how/ui'
 import { LoaderCircle, Search } from 'lucide-react'
 import type { NpmPlugin, PluginBridge } from '../../../shared/plugins.ts'
 import { usePlugins } from '@/plugins'

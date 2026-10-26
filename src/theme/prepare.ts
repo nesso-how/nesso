@@ -1,5 +1,5 @@
-import { PluginError, sha256Hex, themeTokens } from '@nesso/plugin/runtime'
-import type { ThemeDefinition } from '@nesso/plugin'
+import { PluginError, sha256Hex, themeTokens } from '@nesso-how/plugin/runtime'
+import type { ThemeDefinition } from '@nesso-how/plugin'
 
 export type ThemePresentation = { readonly tokens: Readonly<Record<typeof themeTokens[number], string>>; readonly fontStyles: string }
 

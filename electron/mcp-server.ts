@@ -3,7 +3,7 @@ import { createServer, type IncomingMessage } from 'node:http'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import { isInitializeRequest, isJSONRPCRequest, JSONRPCMessageSchema, type RequestId } from '@modelcontextprotocol/sdk/types.js'
-import { aiTools, type AiResult } from '@nesso/ai'
+import { aiTools, type AiResult } from '@nesso-how/ai'
 import { ElectronError } from './errors.ts'
 
 type Execute = (name: keyof typeof aiTools, input: unknown, signal: AbortSignal) => Promise<AiResult<unknown>>

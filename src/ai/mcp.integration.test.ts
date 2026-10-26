@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import type { AiResult } from '@nesso/ai'
+import type { AiResult } from '@nesso-how/ai'
 import type { McpBridge, McpEvent } from '../../electron/mcp-bridge.ts'
 import { createNessoStore } from '../store/create.ts'
 import { connectMcpHost } from './mcp.ts'

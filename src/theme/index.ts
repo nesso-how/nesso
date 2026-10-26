@@ -1,5 +1,5 @@
 import type { createNessoStore } from '../store/create.ts'
-import type { ThemeDefinition } from '@nesso/plugin'
+import type { ThemeDefinition } from '@nesso-how/plugin'
 
 export const connectTheme = (
   host: ReturnType<typeof createNessoStore>,

@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { NessoError } from '@nesso/errors';
+import { NessoError } from '@nesso-how/errors';
 import { releaseNotes } from './release-notes.ts';
 
 type Channel = 'alpha' | 'beta';

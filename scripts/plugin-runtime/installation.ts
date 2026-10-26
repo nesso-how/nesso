@@ -146,13 +146,13 @@ function setupInstallation(window: BrowserWindow, saved: Map<string, unknown>): 
 }
 
 async function verifyBundledDetails(driver: Driver) {
-  for (const name of ['@nesso/kernel', '@nesso/base-vocab', '@nesso/import', '@nesso/export']) {
+  for (const name of ['@nesso-how/kernel', '@nesso-how/base-vocab', '@nesso-how/import', '@nesso-how/export']) {
     await driver.open(name)
-    const actions = name === '@nesso/import' || name === '@nesso/export'
+    const actions = name === '@nesso-how/import' || name === '@nesso-how/export'
     const badges = await driver.evaluate<string[]>(`[...document.querySelector('.plugin-scroll:not([hidden]) .settings-page-title').parentElement.querySelectorAll('.settings-badge')].map(badge => badge.textContent)`)
     assert.deepEqual(badges, actions ? ['Enabled'] : ['Enabled', 'In use'])
     assert.deepEqual((await driver.attribution()).links, [])
-    if (actions) assert.deepEqual((await driver.declaredAccess())?.notes, name === '@nesso/import' ? [readScope, effectScope, fileScope] : [readScope, fileScope, notificationScope])
+    if (actions) assert.deepEqual((await driver.declaredAccess())?.notes, name === '@nesso-how/import' ? [readScope, effectScope, fileScope] : [readScope, fileScope, notificationScope])
     else assert.equal(await driver.declaredAccess(), null)
     assert.equal(await driver.evaluate<boolean>(`[...document.querySelectorAll('.plugin-scroll p')].some(paragraph => paragraph.textContent.trim() === 'In use')`), false)
     assert.equal(await driver.evaluate<boolean>(`[...document.querySelectorAll('.plugin-detail-footer button')].some(button => button.textContent.trim() === 'Use' && button.disabled)`), !actions)
@@ -353,7 +353,7 @@ async function verifyUndoGuards(driver: Driver, state: InstallState) {
   console.log('installation/desktop: Use undo does not overwrite a newer selection')
   await driver.dismissToasts()
   const beforeSupersededUndo = structuredClone(state.saved.get('document'))
-  await driver.activateTheme('@nesso/kernel')
+  await driver.activateTheme('@nesso-how/kernel')
   await driver.activateTheme('test-theme')
   await driver.headerReady('Disable')
   await driver.evaluate(`(() => { const card = [...document.querySelectorAll('[data-slot="toast"]:not([data-leaving])')].find(card => card.querySelector('.toast-description')?.textContent === 'You’re now using Kernel. Your document is unchanged.'); [...card.querySelectorAll('button')].find(button => button.textContent === 'Undo').click(); })()`)
@@ -363,7 +363,7 @@ async function verifyUndoGuards(driver: Driver, state: InstallState) {
   console.log('installation/desktop: Use undo does not restore an unavailable provider')
   await driver.dismissToasts()
   const beforeUnavailableUndo = structuredClone(state.saved.get('document'))
-  await driver.activateTheme('@nesso/kernel')
+  await driver.activateTheme('@nesso-how/kernel')
   await driver.click('Plugins', '.settings-sidebar')
   await driver.open('test-theme')
   await driver.click('Disable', '.plugin-detail-footer')

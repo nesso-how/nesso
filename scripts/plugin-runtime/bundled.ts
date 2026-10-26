@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { parseGraph } from '@nesso/schema'
+import { parseGraph } from '@nesso-how/schema'
 import { parseContribution, parseDefinition, type ViewState } from '../../packages/plugin/src/runtime.ts'
 import { baseState, waitFor, type CheckContext } from './helpers.ts'
 

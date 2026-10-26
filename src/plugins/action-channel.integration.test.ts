@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { createPluginClient, themeTokens, runtimeLimits, type ActionDescriptor, type BaseState, type FileOpenResult, type PluginError } from '@nesso/plugin/runtime'
+import { createPluginClient, themeTokens, runtimeLimits, type ActionDescriptor, type BaseState, type FileOpenResult, type PluginError } from '@nesso-how/plugin/runtime'
 import { createNessoStore } from '../store/create.ts'
 import { connectActionChannel } from './action-channel.ts'
-import type { NessoOperation } from '@nesso/plugin'
+import type { NessoOperation } from '@nesso-how/plugin'
 
 const descriptors: readonly ActionDescriptor[] = [{ id: 'example', label: { en: 'Example' }, supportsViews: true }]
 const base: BaseState = { revision: 0, contextId: 'context', locale: 'en', theme: Object.fromEntries(themeTokens.map((token) => [token, ''])), conceptPlacementOffset: { x: 160, y: 100 } }

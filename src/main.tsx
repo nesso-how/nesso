@@ -1,6 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { defaultLocale } from '@nesso/i18n'
+import { defaultLocale } from '@nesso-how/i18n'
 import { getThemePresentation, initializeBundledPlugins, initializeExternalPlugins, stopPluginActions } from '@/plugins'
 import { notifications } from '@/notifications'
 import { host, startAutosave } from '@/store'

@@ -50,13 +50,13 @@ In the desktop app, use **AI** with your own provider or a local model, or conne
 ```mermaid
 flowchart TD
   Host["Host (UI, store, persistence)"]
-  Host --> Schema["@nesso/schema"]
-  Host --> UI["@nesso/ui"]
-  Host --> I18n["@nesso/i18n"]
-  Host <-->|Direct injected store| Renderer["@nesso/concept-map<br/>(trusted renderer)"]
+  Host --> Schema["@nesso-how/schema"]
+  Host --> UI["@nesso-how/ui"]
+  Host --> I18n["@nesso-how/i18n"]
+  Host <-->|Direct injected store| Renderer["@nesso-how/concept-map<br/>(trusted renderer)"]
   Host <-->|Isolated channels| Plugins["Plugins<br/>(vocabs, themes, actions)"]
   Renderer --> I18n
-  Host -.-> Contract["@nesso/plugin"]
+  Host -.-> Contract["@nesso-how/plugin"]
   Plugins -.-> Contract
 ```
 
@@ -64,16 +64,16 @@ The host owns state, materializes `viewGraph`, and handles deletion confirmation
 
 | Package | Kind | Responsibility |
 | --- | --- | --- |
-| [`@nesso/schema`](packages/schema/README.md) | Core | Graph model, validation, and JSON-LD. |
-| [`@nesso/plugin`](packages/plugin/README.md) | Core | Public types, plugin validation, and asynchronous clients. |
-| [`@nesso/i18n`](packages/i18n/README.md) | Core | i18next with typed keys, isolated translators, and English fallback. |
-| [`@nesso/ui`](packages/ui/README.md) | Core | Shared React controls and styles. |
-| [`@nesso/ai`](packages/ai/README.md) | Core | Shared chat and MCP tool contracts, policies, and assistant instructions. |
-| [`@nesso/concept-map`](packages/concept-map/README.md) | Renderer | Trusted React Flow canvas for the host-provided visible graph. |
-| [`@nesso/base-vocab`](plugins/base-vocab/README.md) | Plugin | Default relation vocabulary. |
-| [`@nesso/export`](plugins/export/README.md) | Plugin | Graph and view export as JSON-LD. |
-| [`@nesso/import`](plugins/import/README.md) | Plugin | Merge a Nesso JSON-LD file into the current graph. |
-| [`@nesso/kernel`](plugins/kernel/README.md) | Plugin | Kernel theme tokens and bundled fonts. |
+| [`@nesso-how/schema`](packages/schema/README.md) | Core | Graph model, validation, and JSON-LD. |
+| [`@nesso-how/plugin`](packages/plugin/README.md) | Core | Public types, plugin validation, and asynchronous clients. |
+| [`@nesso-how/i18n`](packages/i18n/README.md) | Core | i18next with typed keys, isolated translators, and English fallback. |
+| [`@nesso-how/ui`](packages/ui/README.md) | Core | Shared React controls and styles. |
+| [`@nesso-how/ai`](packages/ai/README.md) | Core | Shared chat and MCP tool contracts, policies, and assistant instructions. |
+| [`@nesso-how/concept-map`](packages/concept-map/README.md) | Renderer | Trusted React Flow canvas for the host-provided visible graph. |
+| [`@nesso-how/base-vocab`](plugins/base-vocab/README.md) | Plugin | Default relation vocabulary. |
+| [`@nesso-how/export`](plugins/export/README.md) | Plugin | Graph and view export as JSON-LD. |
+| [`@nesso-how/import`](plugins/import/README.md) | Plugin | Merge a Nesso JSON-LD file into the current graph. |
+| [`@nesso-how/kernel`](plugins/kernel/README.md) | Plugin | Kernel theme tokens and bundled fonts. |
 
 ## Development
 

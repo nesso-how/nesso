@@ -1,5 +1,5 @@
-import type { SavedView } from '@nesso/plugin'
-import { ConfirmDialog } from '@nesso/ui'
+import type { SavedView } from '@nesso-how/plugin'
+import { ConfirmDialog } from '@nesso-how/ui'
 import { useRef, useState } from 'react'
 import { host } from '@/store'
 import { buildDeleteViewOperations } from '@/store/views'

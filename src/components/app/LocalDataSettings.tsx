@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Button, Dialog, DialogActions, DialogPopup, Input } from '@nesso/ui'
+import { Button, Dialog, DialogActions, DialogPopup, Input } from '@nesso-how/ui'
 import { ArrowUpRight, Folder, RotateCcw } from 'lucide-react'
 import { useTranslation } from '@/i18n'
 import { notifications } from '@/notifications'

@@ -1,5 +1,5 @@
-import type { NessoOperation, NessoState } from '@nesso/plugin'
-import { newIri } from '@nesso/schema'
+import type { NessoOperation, NessoState } from '@nesso-how/plugin'
+import { newIri } from '@nesso-how/schema'
 
 export const buildDeleteViewOperations = (state: NessoState, viewId: string | null, withConcepts: boolean): NessoOperation[] => {
   const view = state.workspace.savedViews.find((view) => view.id === viewId)

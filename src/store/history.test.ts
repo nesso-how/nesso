@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import type { NessoOperation } from '@nesso/plugin'
-import { relationKey, SchemaError, type Graph } from '@nesso/schema'
+import type { NessoOperation } from '@nesso-how/plugin'
+import { relationKey, SchemaError, type Graph } from '@nesso-how/schema'
 import { createNessoStore } from './create.ts'
 import { historyLimit } from './history.ts'
-import { NessoError } from '@nesso/errors'
+import { NessoError } from '@nesso-how/errors'
 import { applyStateOperations } from './operations.ts'
 
 const fixture = (): Graph => ({

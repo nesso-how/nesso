@@ -1,4 +1,4 @@
-# @nesso/errors
+# @nesso-how/errors
 
 Shared structured errors for Nesso packages, the host, and repository scripts, with no runtime dependencies.
 

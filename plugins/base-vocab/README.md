@@ -1,4 +1,4 @@
-# @nesso/base-vocab
+# @nesso-how/base-vocab
 
 Base's default relation vocabulary plugin: `linksTo`, `partOf`, `causes`, and `kindOf`.
 

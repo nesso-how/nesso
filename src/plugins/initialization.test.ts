@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { PluginError, runtimeLimits } from '@nesso/plugin/runtime'
+import { PluginError, runtimeLimits } from '@nesso-how/plugin/runtime'
 import { withInitializationTimeout } from './initialization.ts'
 
 test('plugin initialization aborts stalled work on timeout', async (context) => {

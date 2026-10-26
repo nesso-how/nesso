@@ -2,7 +2,7 @@ import { spawnSync } from 'node:child_process';
 import { appendFileSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { NessoError } from '@nesso/errors';
+import { NessoError } from '@nesso-how/errors';
 
 type ReviewEvent = { type: string; part?: { messageID: string; text: string } };
 

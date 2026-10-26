@@ -1,7 +1,7 @@
-import type { PanelSizes, Preferences, SectionId, Viewport, WorkspaceState } from '@nesso/plugin'
-import { isLocale } from '@nesso/i18n'
-import { aiConversation, aiTextLimits } from '@nesso/ai'
-import { NessoError } from '@nesso/errors'
+import type { PanelSizes, Preferences, SectionId, Viewport, WorkspaceState } from '@nesso-how/plugin'
+import { isLocale } from '@nesso-how/i18n'
+import { aiConversation, aiTextLimits } from '@nesso-how/ai'
+import { NessoError } from '@nesso-how/errors'
 import { sectionIds } from './types.ts'
 
 export const defaultPanels: PanelSizes = { explorerWidth: 180, inspectorWidth: 210 }

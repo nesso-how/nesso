@@ -1,4 +1,4 @@
-import { fileTextLimit, parseFileOptions, PluginError, type FileOpenOptions, type FileOpenResult, type FileSaveOptions } from '@nesso/plugin/runtime'
+import { fileTextLimit, parseFileOptions, PluginError, type FileOpenOptions, type FileOpenResult, type FileSaveOptions } from '@nesso-how/plugin/runtime'
 import type { FileBridge } from '../../shared/files.ts'
 
 type PickerHost = {

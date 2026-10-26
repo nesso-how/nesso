@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react'
 import { Copy, ListChecks, Lock, LockOpen, Layers, Maximize, ClipboardPaste, Plus, Redo2, Scissors, Trash2, Undo2 } from 'lucide-react'
-import type { Selection } from '@nesso/plugin'
+import type { Selection } from '@nesso-how/plugin'
 import {
   Background,
   BackgroundVariant,
@@ -20,7 +20,7 @@ import {
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import './styles.css'
-import { newIri, relationKey } from '@nesso/schema'
+import { newIri, relationKey } from '@nesso-how/schema'
 import { ConceptNodeView } from './ConceptNodeView'
 import { ConnectionPreview } from './ConnectionPreview'
 import { GraphContextMenu } from './GraphContextMenu'

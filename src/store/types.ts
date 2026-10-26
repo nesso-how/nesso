@@ -1,5 +1,5 @@
-import type { NessoOperation, NessoState, NessoStore, Preferences, SectionId } from '@nesso/plugin'
-import type { AiChatMessage } from '@nesso/ai'
+import type { NessoOperation, NessoState, NessoStore, Preferences, SectionId } from '@nesso-how/plugin'
+import type { AiChatMessage } from '@nesso-how/ai'
 import type { PersistenceIssue } from '../../shared/persistence.ts'
 
 export const sectionIds = [

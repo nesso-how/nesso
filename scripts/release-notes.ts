@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { NessoError } from '@nesso/errors';
+import { NessoError } from '@nesso-how/errors';
 
 export function releaseNotes(changelog: string, tag: string): string {
   const version = tag.replace(/^v/, '');

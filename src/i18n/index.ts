@@ -1,4 +1,4 @@
-import { createTranslator, defaultLocale } from '@nesso/i18n'
+import { createTranslator, defaultLocale } from '@nesso-how/i18n'
 import { useNessoStore } from '@/store'
 import type { HostStore } from '@/store/types'
 import en from './en.json'

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { createAiConnections } from './ai-connections.ts'
-import { aiProviders, type AiConnectionInput, type AiProvider } from '@nesso/ai/providers'
+import { aiProviders, type AiConnectionInput, type AiProvider } from '@nesso-how/ai/providers'
 import { ElectronError } from './errors.ts'
 import type { createChatGptAuth } from './ai-oauth.ts'
 

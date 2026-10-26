@@ -1,6 +1,6 @@
-import type { NessoState, NessoStore } from '@nesso/plugin'
-import { NessoError } from '@nesso/errors'
-import type { Position } from '@nesso/schema'
+import type { NessoState, NessoStore } from '@nesso-how/plugin'
+import { NessoError } from '@nesso-how/errors'
+import type { Position } from '@nesso-how/schema'
 import { createContext, useContext, useSyncExternalStore, type RefObject } from 'react'
 
 export type GraphCommands = {

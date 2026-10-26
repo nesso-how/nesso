@@ -1,5 +1,5 @@
-import type { GraphSnapshot, NessoOperation, Selection } from '@nesso/plugin'
-import { newIri, parseGraph, relationKey, SchemaError, serializeGraph, type Position } from '@nesso/schema'
+import type { GraphSnapshot, NessoOperation, Selection } from '@nesso-how/plugin'
+import { newIri, parseGraph, relationKey, SchemaError, serializeGraph, type Position } from '@nesso-how/schema'
 
 export const selectionCoversGraph = (selected: Selection, graph: GraphSnapshot): boolean => {
   const concepts = new Set(selected.filter((item) => item.kind === 'concept').map((item) => item.id))

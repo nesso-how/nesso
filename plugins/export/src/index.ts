@@ -1,6 +1,6 @@
-import type { ActionContext, ActionContribution } from '@nesso/plugin/runtime'
-import { PluginError } from '@nesso/plugin'
-import { serializeGraph, type Graph } from '@nesso/schema'
+import type { ActionContext, ActionContribution } from '@nesso-how/plugin/runtime'
+import { PluginError } from '@nesso-how/plugin'
+import { serializeGraph, type Graph } from '@nesso-how/schema'
 import source from '../package.json' with { type: 'json' }
 
 const { i18n } = source

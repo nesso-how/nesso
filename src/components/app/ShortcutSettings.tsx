@@ -1,7 +1,7 @@
 import type { Ref } from 'react'
-import { defaultLocale } from '@nesso/i18n'
-import { Kbd } from '@nesso/ui'
-import { conceptMapShortcuts } from '@nesso/concept-map'
+import { defaultLocale } from '@nesso-how/i18n'
+import { Kbd } from '@nesso-how/ui'
+import { conceptMapShortcuts } from '@nesso-how/concept-map'
 import { useNessoStore } from '@/store'
 import { useTranslation } from '@/i18n'
 

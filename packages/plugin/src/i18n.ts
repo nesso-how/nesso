@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import type { Locale } from '@nesso/i18n'
+import type { Locale } from '@nesso-how/i18n'
 
 export type LocalizedText = Readonly<{ en: string } & Partial<Record<Locale, string>>>
 

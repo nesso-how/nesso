@@ -1,5 +1,5 @@
-import { createWriteCommands, type NessoStore } from '@nesso/plugin'
-import { newIri } from '@nesso/schema'
+import { createWriteCommands, type NessoStore } from '@nesso-how/plugin'
+import { newIri } from '@nesso-how/schema'
 import { conceptPlacementOffset } from './operations.ts'
 
 export const createCommands = (applyOperations: NessoStore['applyOperations']): Omit<NessoStore, 'getState' | 'subscribe' | 'getViewGraph'> => ({

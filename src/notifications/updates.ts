@@ -1,4 +1,4 @@
-import type { Notifications } from '@nesso/plugin'
+import type { Notifications } from '@nesso-how/plugin'
 import type { UpdateBridge } from '../../electron/updates.ts'
 import type { translate } from '../i18n/index.ts'
 

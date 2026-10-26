@@ -1,11 +1,11 @@
-# @nesso/schema
+# @nesso-how/schema
 
-A framework-independent graph model, validation, and a minimal JSON-LD profile. Its only runtime dependency is the dependency-free `@nesso/errors` package.
+A framework-independent graph model, validation, and a minimal JSON-LD profile. Its only runtime dependency is the dependency-free `@nesso-how/errors` package.
 
 ## Usage
 
 ```ts
-import { parseGraph, relationKey, serializeGraph, validateGraph, type Graph } from '@nesso/schema'
+import { parseGraph, relationKey, serializeGraph, validateGraph, type Graph } from '@nesso-how/schema'
 
 const graph: Graph = {
   concepts: [

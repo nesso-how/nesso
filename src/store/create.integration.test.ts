@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { relationKey, type Graph } from '@nesso/schema'
+import { relationKey, type Graph } from '@nesso-how/schema'
 import { createNessoStore } from './create.ts'
 import { copyGraph, pasteOperations } from '../graph/commands.ts'
 import { buildImportOperations } from '../../plugins/import/src/index.ts'

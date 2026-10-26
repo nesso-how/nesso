@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react'
-import { Button, ConfirmDialog, Field, IconButton, Input, Label } from '@nesso/ui'
+import { Button, ConfirmDialog, Field, IconButton, Input, Label } from '@nesso-how/ui'
 import { Check, Copy, Eye, EyeOff, Play, RefreshCw, Square } from 'lucide-react'
-import type { AiResult } from '@nesso/ai'
+import type { AiResult } from '@nesso-how/ai'
 import type { McpBridge, McpState } from '../../../electron/mcp-bridge'
 import { useTranslation } from '@/i18n'
 

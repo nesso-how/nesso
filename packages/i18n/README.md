@@ -1,4 +1,4 @@
-# @nesso/i18n
+# @nesso-how/i18n
 
 Framework-independent i18next wrapper with typed keys, interpolation, plurals, and English fallback. Each translator owns an isolated instance; locale selection never changes shared state.
 
@@ -37,7 +37,7 @@ Create `en.json`, `it.json`, and `zh-CN.json` alongside your host or plugin:
 ```
 
 ```ts
-import { createTranslator } from '@nesso/i18n'
+import { createTranslator } from '@nesso-how/i18n'
 import en from './en.json' with { type: 'json' }
 import it from './it.json' with { type: 'json' }
 import zhCN from './zh-CN.json' with { type: 'json' }
@@ -54,7 +54,7 @@ The host uses a saved `preferences.locale` when available; otherwise it detects 
 
 ## API
 
-Use `@nesso/i18n/locale` for locale utilities without loading i18next.
+Use `@nesso-how/i18n/locale` for locale utilities without loading i18next.
 
 - `createTranslator`: infer base keys from the English catalog and return a locale-bound translator with English fallback.
 - `locales`, `defaultLocale`, `localeNames`: supported English, Italian, and Simplified Chinese (`zh-CN`) locales, English default, and native display names.
@@ -65,6 +65,6 @@ Unknown keys, missing interpolation values, and invalid plural counts throw `I18
 
 ## Build
 
-`pnpm --filter @nesso/i18n build`
+`pnpm --filter @nesso-how/i18n build`
 
 Vite uses TypeScript sources; Node and Electron use compiled JavaScript. The AI package builds this dependency automatically.

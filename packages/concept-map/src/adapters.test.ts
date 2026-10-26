@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { Position } from '@xyflow/react'
-import type { Graph } from '@nesso/schema'
+import type { Graph } from '@nesso-how/schema'
 import { containsPoint, createGraphElements, facingSide, indexGraph, outsideEdge, outsideNode, relationEdge } from './adapters.ts'
 
 test('graph elements preserve dimensions and unchanged identities across snapshots without sharing instance caches', () => {

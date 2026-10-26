@@ -1,4 +1,4 @@
-import { parsePluginMessage, PluginError } from '@nesso/plugin/runtime'
+import { parsePluginMessage, PluginError } from '@nesso-how/plugin/runtime'
 
 export type PluginMessage = ReturnType<typeof parsePluginMessage>
 

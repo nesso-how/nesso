@@ -1,4 +1,4 @@
-import { createTranslator, defaultLocale } from '@nesso/i18n'
+import { createTranslator, defaultLocale } from '@nesso-how/i18n'
 import { useNesso } from '../store'
 import { useMemo } from 'react'
 import en from './en.json'

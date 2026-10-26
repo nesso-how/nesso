@@ -1,4 +1,4 @@
-import type { Locale } from '@nesso/i18n'
+import type { Locale } from '@nesso-how/i18n'
 import type { NpmPlugin, PluginBridge, PluginResult, InstalledPlugin } from '../../shared/plugins.ts'
 
 type Target = { readonly package: NpmPlugin; readonly replacing?: string }

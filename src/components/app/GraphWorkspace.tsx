@@ -1,6 +1,6 @@
 import { useRef, type RefObject } from 'react'
-import { ConceptMap } from '@nesso/concept-map'
-import { useMediaQuery } from '@nesso/ui'
+import { ConceptMap } from '@nesso-how/concept-map'
+import { useMediaQuery } from '@nesso-how/ui'
 import { useGraphInteractions } from '../../graph/interactions.ts'
 import type { HostStore } from '../../store/types.ts'
 import { maxConceptLabelLength } from '../../store/settings.ts'

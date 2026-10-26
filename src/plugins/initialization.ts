@@ -1,4 +1,4 @@
-import { PluginError, runtimeLimits } from '@nesso/plugin/runtime'
+import { PluginError, runtimeLimits } from '@nesso-how/plugin/runtime'
 
 export async function withInitializationTimeout<T>(load: (signal: AbortSignal) => Promise<T>, parent: AbortSignal): Promise<T> {
   const controller = new AbortController()

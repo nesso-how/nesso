@@ -1,4 +1,4 @@
-# @nesso/plugin
+# @nesso-how/plugin
 
 ## Boundary
 

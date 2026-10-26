@@ -1,5 +1,5 @@
 {
-  "name": "@nesso/ai",
+  "name": "@nesso-how/ai",
   "private": true,
   "version": "0.0.0",
   "license": "MIT",
@@ -20,7 +20,7 @@
     "build": "tsc -b"
   },
   "dependencies": {
-    "@nesso/i18n": "workspace:*",
+    "@nesso-how/i18n": "workspace:*",
     "zod": "^4.6.5"
   }
 }

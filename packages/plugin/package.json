@@ -1,6 +1,6 @@
 {
-  "name": "@nesso/plugin",
-  "version": "0.0.0",
+  "name": "@nesso-how/plugin",
+  "version": "0.1.0",
   "description": "Types, validation, and asynchronous clients for isolated Nesso plugins",
   "license": "MIT",
   "type": "module",
@@ -29,9 +29,9 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
-    "@nesso/errors": "workspace:*",
-    "@nesso/i18n": "workspace:*",
-    "@nesso/schema": "workspace:*",
+    "@nesso-how/errors": "workspace:*",
+    "@nesso-how/i18n": "workspace:*",
+    "@nesso-how/schema": "workspace:*",
     "@types/semver": "^7.8.0",
     "@types/validate-npm-package-name": "^4.0.2",
     "tsdown": "^0.23.1"

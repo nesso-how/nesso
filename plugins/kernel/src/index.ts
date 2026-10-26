@@ -1,4 +1,4 @@
-import type { ThemeDefinition } from '@nesso/plugin'
+import type { ThemeDefinition } from '@nesso-how/plugin'
 import sansRanges from '@fontsource-variable/geist/unicode.json' with { type: 'json' }
 import monoRanges from '@fontsource/ibm-plex-mono/unicode.json' with { type: 'json' }
 

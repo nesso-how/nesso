@@ -1,4 +1,4 @@
-# @nesso/export
+# @nesso-how/export
 
 Isolated action plugin exporting a view as JSON-LD.
 

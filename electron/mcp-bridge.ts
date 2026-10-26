@@ -1,4 +1,4 @@
-import type { aiTools, AiResult } from '@nesso/ai'
+import type { aiTools, AiResult } from '@nesso-how/ai'
 
 export type McpState = { readonly url: string; readonly token: string; readonly running: boolean }
 export type McpEvent =

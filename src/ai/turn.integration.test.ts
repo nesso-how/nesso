@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import type { AiEffects, AiToolResults } from '@nesso/ai'
-import type { Graph } from '@nesso/schema'
-import { relationKey } from '@nesso/schema'
+import type { AiEffects, AiToolResults } from '@nesso-how/ai'
+import type { Graph } from '@nesso-how/schema'
+import { relationKey } from '@nesso-how/schema'
 import { createNessoStore } from '../store/create.ts'
-import { NessoError } from '@nesso/errors'
+import { NessoError } from '@nesso-how/errors'
 import { createAiTurn } from './turn.ts'
 
 const fixture = (count = 3) => {

@@ -1,4 +1,4 @@
-import { PluginError, runtimeLimits, type BaseState } from '@nesso/plugin/runtime'
+import { PluginError, runtimeLimits, type BaseState } from '@nesso-how/plugin/runtime'
 
 export function loadPluginFrame(element: HTMLIFrameElement, assets: { entry: string | Uint8Array }, connect: (port: MessagePort, ready: () => void, failed: (error: PluginError) => void) => {
   close: () => void

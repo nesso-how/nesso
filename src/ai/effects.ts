@@ -1,4 +1,4 @@
-import { type AiChatMessage, type AiEffects } from '@nesso/ai'
+import { type AiChatMessage, type AiEffects } from '@nesso-how/ai'
 import type { Change } from '../store/delta.ts'
 import type { applyStateOperations } from '../store/operations.ts'
 

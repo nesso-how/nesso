@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { defaultLocale, isLocale, localeNames, locales } from '@nesso/i18n'
-import { Button, Dialog, DialogPopup, PreferenceSelect } from '@nesso/ui'
+import { defaultLocale, isLocale, localeNames, locales } from '@nesso-how/i18n'
+import { Button, Dialog, DialogPopup, PreferenceSelect } from '@nesso-how/ui'
 import { Info, Keyboard, MessageCircle, Package, Settings2, X } from 'lucide-react'
 import { pluginMetadata, usePlugins } from '@/plugins'
 import { host, useNessoStore } from '@/store'

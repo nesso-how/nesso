@@ -1,5 +1,5 @@
 {
-  "name": "@nesso/export",
+  "name": "@nesso-how/export",
   "version": "1.0.0-alpha.21",
   "license": "MIT",
   "type": "module",
@@ -24,12 +24,12 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@nesso/schema": "workspace:*"
+    "@nesso-how/schema": "workspace:*"
   },
   "peerDependencies": {
-    "@nesso/plugin": "workspace:*"
+    "@nesso-how/plugin": "workspace:*"
   },
   "devDependencies": {
-    "@nesso/plugin": "workspace:*"
+    "@nesso-how/plugin": "workspace:*"
   }
 }

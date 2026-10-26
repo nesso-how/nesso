@@ -1,4 +1,4 @@
-import type { ActionContext, ActionContribution, NessoOperation } from '@nesso/plugin'
+import type { ActionContext, ActionContribution, NessoOperation } from '@nesso-how/plugin'
 import source from '../package.json' with { type: 'json' }
 
 export const create = ({ store }: ActionContext): readonly ActionContribution[] => [{

@@ -23,25 +23,25 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.32.1
         version: 1.32.1(zod@4.6.5)
-      '@nesso/ai':
+      '@nesso-how/ai':
         specifier: workspace:*
         version: link:packages/ai
-      '@nesso/concept-map':
+      '@nesso-how/concept-map':
         specifier: workspace:*
         version: link:packages/concept-map
-      '@nesso/errors':
+      '@nesso-how/errors':
         specifier: workspace:*
         version: link:packages/errors
-      '@nesso/i18n':
+      '@nesso-how/i18n':
         specifier: workspace:*
         version: link:packages/i18n
-      '@nesso/plugin':
+      '@nesso-how/plugin':
         specifier: workspace:*
         version: link:packages/plugin
-      '@nesso/schema':
+      '@nesso-how/schema':
         specifier: workspace:*
         version: link:packages/schema
-      '@nesso/ui':
+      '@nesso-how/ui':
         specifier: workspace:*
         version: link:packages/ui
       ai:
@@ -135,7 +135,7 @@ importers:
 
   packages/ai:
     dependencies:
-      '@nesso/i18n':
+      '@nesso-how/i18n':
         specifier: workspace:*
         version: link:../i18n
       zod:
@@ -144,16 +144,16 @@ importers:
 
   packages/concept-map:
     dependencies:
-      '@nesso/errors':
+      '@nesso-how/errors':
         specifier: workspace:*
         version: link:../errors
-      '@nesso/i18n':
+      '@nesso-how/i18n':
         specifier: workspace:*
         version: link:../i18n
-      '@nesso/schema':
+      '@nesso-how/schema':
         specifier: workspace:*
         version: link:../schema
-      '@nesso/ui':
+      '@nesso-how/ui':
         specifier: workspace:*
         version: link:../ui
       '@xyflow/react':
@@ -172,7 +172,7 @@ importers:
         specifier: ^19.2.8
         version: 19.3.0(react@19.3.0)
     devDependencies:
-      '@nesso/plugin':
+      '@nesso-how/plugin':
         specifier: workspace:*
         version: link:../plugin
       '@types/react':
@@ -183,7 +183,7 @@ importers:
 
   packages/i18n:
     dependencies:
-      '@nesso/errors':
+      '@nesso-how/errors':
         specifier: workspace:*
         version: link:../errors
       i18next:
@@ -202,13 +202,13 @@ importers:
         specifier: ^4.6.5
         version: 4.6.5
     devDependencies:
-      '@nesso/errors':
+      '@nesso-how/errors':
         specifier: workspace:*
         version: link:../errors
-      '@nesso/i18n':
+      '@nesso-how/i18n':
         specifier: workspace:*
         version: link:../i18n
-      '@nesso/schema':
+      '@nesso-how/schema':
         specifier: workspace:*
         version: link:../schema
       '@types/semver':
@@ -223,7 +223,7 @@ importers:
 
   packages/schema:
     dependencies:
-      '@nesso/errors':
+      '@nesso-how/errors':
         specifier: workspace:*
         version: link:../errors
 
@@ -254,27 +254,27 @@ importers:
 
   plugins/base-vocab:
     devDependencies:
-      '@nesso/plugin':
+      '@nesso-how/plugin':
         specifier: workspace:*
         version: link:../../packages/plugin
 
   plugins/export:
     dependencies:
-      '@nesso/schema':
+      '@nesso-how/schema':
         specifier: workspace:*
         version: link:../../packages/schema
     devDependencies:
-      '@nesso/plugin':
+      '@nesso-how/plugin':
         specifier: workspace:*
         version: link:../../packages/plugin
 
   plugins/import:
     dependencies:
-      '@nesso/schema':
+      '@nesso-how/schema':
         specifier: workspace:*
         version: link:../../packages/schema
     devDependencies:
-      '@nesso/plugin':
+      '@nesso-how/plugin':
         specifier: workspace:*
         version: link:../../packages/plugin
 
@@ -287,7 +287,7 @@ importers:
         specifier: ^5.2.7
         version: 5.3.0
     devDependencies:
-      '@nesso/plugin':
+      '@nesso-how/plugin':
         specifier: workspace:*
         version: link:../../packages/plugin
 

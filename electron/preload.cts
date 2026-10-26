@@ -1,6 +1,6 @@
 import type { UpdateBridge, UpdateState } from './updates.js'
 import type { AiBridge } from './ai-bridge.js'
-import type { AiChatEvent } from '@nesso/ai'
+import type { AiChatEvent } from '@nesso-how/ai'
 import type { McpBridge, McpEvent, McpState } from './mcp-bridge.js'
 import type { PersistenceBridge } from '../shared/persistence.js'
 import type { DataLocationBridge, DataLocationState } from '../shared/data-location.js'

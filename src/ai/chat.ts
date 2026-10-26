@@ -1,6 +1,6 @@
-import type { AiChatMessage, AiChatRequest } from '@nesso/ai'
+import type { AiChatMessage, AiChatRequest } from '@nesso-how/ai'
 import type { AiBridge } from '../../electron/ai-bridge.ts'
-import { NessoError } from '@nesso/errors'
+import { NessoError } from '@nesso-how/errors'
 import { createAiTurn } from './turn.ts'
 import { summarizeCounts } from './effects.ts'
 import type { HostStore } from '../store/types.ts'

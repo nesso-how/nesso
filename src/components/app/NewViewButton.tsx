@@ -1,6 +1,6 @@
 import { useState, type Ref } from 'react'
 import { LayersPlus } from 'lucide-react'
-import { Button, Dialog, TextPromptDialog } from '@nesso/ui'
+import { Button, Dialog, TextPromptDialog } from '@nesso-how/ui'
 import { host } from '@/store'
 import { maxViewNameLength } from '@/store/settings'
 import { useTranslation } from '@/i18n'

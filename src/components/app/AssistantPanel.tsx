@@ -1,5 +1,5 @@
 import { useEffect, useState, useSyncExternalStore } from 'react'
-import { IconButton, Tabs } from '@nesso/ui'
+import { IconButton, Tabs } from '@nesso-how/ui'
 import { SquarePen, X } from 'lucide-react'
 import type { createAiChat } from '@/ai/chat'
 import { host, useNessoStore } from '@/store'

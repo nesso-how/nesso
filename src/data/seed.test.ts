@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import test from 'node:test'
-import { parseGraph } from '@nesso/schema'
+import { parseGraph } from '@nesso-how/schema'
 import seed from './seed-graph.json' with { type: 'json' }
 import seedViews from './seed-views.json' with { type: 'json' }
 import { createSeedDocument } from './seed.ts'

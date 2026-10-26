@@ -2,7 +2,7 @@ import { app, clipboard, ipcMain, safeStorage, type IpcMainInvokeEvent, type Web
 import { randomUUID } from 'node:crypto'
 import path from 'node:path'
 import { z } from 'zod'
-import type { AiResult } from '@nesso/ai'
+import type { AiResult } from '@nesso-how/ai'
 import { ElectronError } from './errors.ts'
 import { startMcpServer } from './mcp-server.ts'
 import type { McpEvent, McpState } from './mcp-bridge.ts'

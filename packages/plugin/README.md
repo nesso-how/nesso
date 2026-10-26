@@ -1,4 +1,4 @@
-# @nesso/plugin
+# @nesso-how/plugin
 
 Types, validation, and asynchronous clients for isolated Nesso actions plus data-only vocabularies and themes. The canvas is a trusted renderer, not a plugin.
 
@@ -10,7 +10,7 @@ Start with the [standalone action example](example/README.md). Actions export `c
 - **Vocabularies** ship a `VocabDefinition` JSON file with stable absolute relation-type IRIs and a default among their own types. See [Base Vocab](../../plugins/base-vocab).
 - **Themes** ship a light-only `ThemeDefinition` JSON file with colors, metrics, and local WOFF2 font descriptors. Include exactly the referenced fonts: at most 32 files, 4 MiB each. The host validates and applies them; arbitrary CSS and remote fonts are not supported. See [Kernel](../../plugins/kernel).
 
-Nesso injects the context. Import types such as `ActionContext` and `ActionContribution` from `@nesso/plugin`; there is no need to create a client yourself.
+Nesso injects the context. Import types such as `ActionContext` and `ActionContribution` from `@nesso-how/plugin`; there is no need to create a client yourself.
 
 ## Manifest and translations
 
@@ -59,6 +59,6 @@ pnpm --dir packages/plugin build
 pnpm --dir packages/plugin pack --pack-destination /absolute/output
 ```
 
-Use **pnpm pack** so workspace exports become compiled ESM and declarations. The SDK exposes `@nesso/plugin` for authors, `/runtime` for runtime validation/client code, and `/package` for package tooling. Consumers do not need other Nesso workspace packages.
+Use **pnpm pack** so workspace exports become compiled ESM and declarations. The SDK exposes `@nesso-how/plugin` for authors, `/runtime` for runtime validation/client code, and `/package` for package tooling. Consumers do not need other Nesso workspace packages.
 
 Run `pnpm test` for contract tests and `pnpm test:plugin-runtime` for desktop/web integration checks.

@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import test from 'node:test'
-import { locales, type Catalog, type Locale } from '@nesso/i18n'
-import { parsePluginI18n } from '@nesso/plugin/runtime'
+import { locales, type Catalog, type Locale } from '@nesso-how/i18n'
+import { parsePluginI18n } from '@nesso-how/plugin/runtime'
 
 const placeholders = (message: string) => [...message.matchAll(/{{\s*(\w+)\s*}}/g)].map((match) => match[1]).sort()
 const pluralSuffix = /_(zero|one|two|few|many|other)$/

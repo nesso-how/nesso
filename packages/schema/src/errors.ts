@@ -1,4 +1,4 @@
-import { NessoError, type ErrorIssue } from '@nesso/errors'
+import { NessoError, type ErrorIssue } from '@nesso-how/errors'
 
 export type SchemaIssue = ErrorIssue
 

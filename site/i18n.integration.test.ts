@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { locales } from '@nesso/i18n'
+import { locales } from '@nesso-how/i18n'
 import { build } from 'vite'
 import config from './vite.config.ts'
 

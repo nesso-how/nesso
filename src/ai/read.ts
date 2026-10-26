@@ -1,6 +1,6 @@
-import type { NessoState } from '@nesso/plugin'
-import { relationKey } from '@nesso/schema'
-import { aiTools, type AiToolResults } from '@nesso/ai'
+import type { NessoState } from '@nesso-how/plugin'
+import { relationKey } from '@nesso-how/schema'
+import { aiTools, type AiToolResults } from '@nesso-how/ai'
 
 const page = <T>(items: readonly T[], { offset, limit }: { offset: number; limit: number }) => ({
   items: items.slice(offset, offset + limit), total: items.length,

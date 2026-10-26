@@ -1,4 +1,4 @@
-import type { Notification, NotificationAction, Notifications } from '@nesso/plugin'
+import type { Notification, NotificationAction, Notifications } from '@nesso-how/plugin'
 
 type HostNotification = Notification & { readonly action?: NotificationAction }
 
