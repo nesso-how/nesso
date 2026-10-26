@@ -449,6 +449,19 @@ importers:
         specifier: workspace:*
         version: link:../../packages/plugin
 
+  plugins/paper-theme:
+    dependencies:
+      '@fontsource-variable/geist':
+        specifier: ^5.3.0
+        version: 5.3.0
+      '@fontsource/ibm-plex-mono':
+        specifier: ^5.2.7
+        version: 5.3.0
+    devDependencies:
+      '@nesso-how/plugin':
+        specifier: workspace:*
+        version: link:../../packages/plugin
+
 packages:
 
   '@ai-sdk/anthropic@4.0.76':

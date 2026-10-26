@@ -146,18 +146,32 @@ function setupInstallation(window: BrowserWindow, saved: Map<string, unknown>): 
 }
 
 async function verifyBundledDetails(driver: Driver) {
-  for (const name of ['@nesso-how/kernel-theme', '@nesso-how/base-vocab', '@nesso-how/import', '@nesso-how/export']) {
+  for (const name of ['@nesso-how/kernel-theme', '@nesso-how/paper-theme', '@nesso-how/base-vocab', '@nesso-how/import', '@nesso-how/export']) {
     await driver.open(name)
     const actions = name === '@nesso-how/import' || name === '@nesso-how/export'
+    const inUse = !actions && name !== '@nesso-how/paper-theme'
     const badges = await driver.evaluate<string[]>(`[...document.querySelector('.plugin-scroll:not([hidden]) .settings-page-title').parentElement.querySelectorAll('.settings-badge')].map(badge => badge.textContent)`)
-    assert.deepEqual(badges, actions ? ['Enabled'] : ['Enabled', 'In use'])
+    assert.deepEqual(badges, inUse ? ['Enabled', 'In use'] : ['Enabled'])
     assert.deepEqual((await driver.attribution()).links, [])
     if (actions) assert.deepEqual((await driver.declaredAccess())?.notes, name === '@nesso-how/import' ? [readScope, effectScope, fileScope] : [readScope, fileScope, notificationScope])
     else assert.equal(await driver.declaredAccess(), null)
     assert.equal(await driver.evaluate<boolean>(`[...document.querySelectorAll('.plugin-scroll p')].some(paragraph => paragraph.textContent.trim() === 'In use')`), false)
-    assert.equal(await driver.evaluate<boolean>(`[...document.querySelectorAll('.plugin-detail-footer button')].some(button => button.textContent.trim() === 'Use' && button.disabled)`), !actions)
+    assert.equal(await driver.evaluate<boolean>(`[...document.querySelectorAll('.plugin-detail-footer button')].some(button => button.textContent.trim() === 'Use' && button.disabled)`), inUse)
     await driver.click('Plugins', '.settings-sidebar')
   }
+}
+
+async function verifyBundledThemeSwitch(driver: Driver, state: InstallState) {
+  await waitFor(async () => state.saved.get('document') as { workspace: { viewports: Record<string, unknown> } }, (record) => Object.keys(record?.workspace.viewports ?? {}).length > 0)
+  const before = structuredClone(state.saved.get('document'))
+  for (const [id, primary] of [['paper-theme', '#934a35'], ['kernel-theme', '#393939']]) {
+    await driver.activateTheme(`@nesso-how/${id}`)
+    await waitFor(async () => state.saved.get('preferences') as { preferences: { activeThemeId: string } }, (record) => record?.preferences.activeThemeId === id)
+    assert.equal(await driver.evaluate<string>(`getComputedStyle(document.documentElement).getPropertyValue('--primary').trim()`), primary)
+    assert.deepEqual(state.saved.get('document'), before)
+    await driver.dismissToasts()
+  }
+  await driver.click('Plugins', '.settings-sidebar')
 }
 
 async function verifyBrowse(driver: Driver, state: InstallState) {
@@ -488,7 +502,7 @@ async function verifyFailures(driver: Driver, state: InstallState, window: Brows
   window.reload()
   await reloaded
   await driver.settings()
-  await waitFor(() => driver.evaluate<number>(`[...document.querySelectorAll('.plugin-row')].filter(row => row.getClientRects().length).length`), (count) => count === 7)
+  await waitFor(() => driver.evaluate<number>(`[...document.querySelectorAll('.plugin-row')].filter(row => row.getClientRects().length).length`), (count) => count === 8)
   assert.equal(state.metadataRequests, requestsBeforeReload)
   assert.equal(await driver.evaluate<boolean>(`!!document.querySelector('.plugin-approval[data-open]')`), false)
   await driver.open('test-actions')
@@ -534,12 +548,13 @@ export async function verifyInstallation({ window, url }: CheckContext) {
   await driver.settings()
   await driver.click('General', '.settings-sidebar')
   assert.deepEqual(await driver.preferenceSections(), [
-    { title: 'Interface', fields: [{ label: 'Language', value: 'English', disabled: false }, { label: 'Theme', value: 'Kernel', disabled: true }] },
+    { title: 'Interface', fields: [{ label: 'Language', value: 'English', disabled: false }, { label: 'Theme', value: 'Kernel', disabled: false }] },
     { title: 'Vocabulary', fields: [{ label: 'Active vocabulary', value: 'Base Vocabulary', disabled: true }] },
   ])
   assert.equal(await driver.evaluate<boolean>(`!!document.getElementById('settings-providers')`), false)
   await driver.click('Plugins', '.settings-sidebar')
   await verifyBundledDetails(driver)
+  await verifyBundledThemeSwitch(driver, state)
   await verifyBrowse(driver, state)
   const firstInstallApprovals = await verifyFirstInstall(driver, state, window)
   await verifyUpdateToasts(driver)

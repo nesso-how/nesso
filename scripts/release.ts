@@ -118,7 +118,7 @@ function main(): void {
     writeFileSync(location, raw.replace(/("version":\s*")[^"]*(")/, `$1${version}$2`));
   }
   const synced: string[] = [];
-  for (const plugin of ['kernel-theme', 'base-vocab', 'import', 'export']) {
+  for (const plugin of ['kernel-theme', 'paper-theme', 'base-vocab', 'import', 'export']) {
     const path = `plugins/${plugin}/package.json`;
     const pluginLocation = new URL(`../${path}`, import.meta.url);
     if (!existsSync(pluginLocation)) continue;

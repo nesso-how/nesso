@@ -37,7 +37,7 @@ export async function verifyCorruptRecords({ window, url }: CheckContext) {
   await evaluate(`document.querySelector('[data-settings-trigger]').click()`)
   await evaluate(`[...document.querySelectorAll('.settings-sidebar button')].find(button => button.textContent.trim() === 'Plugins').click()`)
   const rows = await evaluate<string[]>(`[...document.querySelectorAll('.plugin-row')].filter(row => row.getClientRects().length).map(row => row.innerText)`)
-  assert.equal(rows.length, 7)
+  assert.equal(rows.length, 8)
   for (const kind of ['actions', 'theme', 'vocab']) assert.ok(rows.some((text) => text.includes(`test-restored-${kind}`) && text.includes('Enabled')))
   assert.equal(await evaluate<boolean>(`window.nessoPlugins.remove(${JSON.stringify((await storage.list()).packages[0].contentId)}).then(result => 'issues' in result)`), true)
   await evaluate(`[...document.querySelectorAll('.plugin-row button')].find(button => button.textContent.includes('test-restored-actions')).click()`)

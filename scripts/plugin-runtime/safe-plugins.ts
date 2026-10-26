@@ -26,7 +26,7 @@ export async function verifySafePlugins({ window, url }: CheckContext) {
   await evaluate(`const plugins = [...document.querySelectorAll('.settings-sidebar button')].find(button => button.textContent.trim() === 'Plugins'); plugins.click()`)
   const text = await evaluate<string>(`document.querySelector('.plugin-settings').innerText`)
   assert.match(text, /External plugins are skipped for this session/)
-  assert.equal(await evaluate<number>(`[...document.querySelectorAll('.plugin-row')].filter(row => row.getClientRects().length).length`), 4)
+  assert.equal(await evaluate<number>(`[...document.querySelectorAll('.plugin-row')].filter(row => row.getClientRects().length).length`), 5)
   assert.equal(await evaluate<boolean>(`!!document.querySelector('#plugin-search') || [...document.querySelectorAll('.plugin-tabs button')].some(button => button.textContent.includes('Find on npm'))`), false)
   assert.equal(await evaluate<number>(`document.querySelectorAll('[data-slot="toast"][data-tone="warning"]').length`), 0)
   assert.deepEqual(await evaluate(`window.nessoPlugins.list()`), { value: { safeMode: true, packages: [], issues: [] } })

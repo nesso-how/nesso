@@ -8,7 +8,7 @@ Start with the [standalone action example](example/README.md). Actions export `c
 
 - **Actions** return `{ id, label, icon?, run }` records. `icon` is an optional `ActionIconName`: `arrow-right`, `book-open`, `clipboard-paste`, `copy`, `download`, `file-down`, `file-up`, `folder`, `globe`, `layers`, `pencil`, `play`, `plus`, `refresh`, `scissors`, `search`, `share`, `sparkles`, `upload`, `zap` (unknown keys render as `zap`). Discovery has no document access or effects; each invocation runs in a fresh worker. See [Import](../../plugins/import) and [Export](../../plugins/export).
 - **Vocabularies** ship a `VocabDefinition` JSON file with stable absolute relation-type IRIs and a default among their own types. See [Base Vocab](../../plugins/base-vocab).
-- **Themes** ship a light-only `ThemeDefinition` JSON file with colors, metrics, and local WOFF2 font descriptors. Include exactly the referenced fonts: at most 32 files, 4 MiB each. The host validates and applies them; arbitrary CSS and remote fonts are not supported. See [Kernel](../../plugins/kernel-theme).
+- **Themes** ship a light-only `ThemeDefinition` JSON file with colors, metrics, and local WOFF2 font descriptors. Include exactly the referenced fonts: at most 32 files, 4 MiB each. The host validates and applies them; arbitrary CSS and remote fonts are not supported. See [Kernel](../../plugins/kernel-theme) and [Paper](../../plugins/paper-theme).
 
 Nesso injects the context. Import types such as `ActionContext` and `ActionContribution` from `@nesso-how/plugin`; there is no need to create a client yourself.
 

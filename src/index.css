@@ -203,6 +203,7 @@
 
 .settings-plugin-content { display: flex; padding: 0; overflow: hidden; }
 .plugin-settings { display: flex; flex: 1; flex-direction: column; min-width: 0; min-height: 0; }
+.plugin-settings .settings-page-description { max-width: none; }
 .plugin-scroll { flex: 1; min-height: 0; padding: 28px 32px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
 .plugin-scroll:has(> .plugin-search:not([hidden])) { display: flex; flex-direction: column; }
 .plugin-scroll:has(> .plugin-search:not([hidden])) > * { flex-shrink: 0; }

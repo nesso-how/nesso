@@ -4,6 +4,7 @@ import type { ThemeDefinition, VocabDefinition } from '@nesso-how/plugin'
 import { parseContribution, parsePluginI18n, parsePluginManifest, PluginError, resolvePluginText } from '@nesso-how/plugin/runtime'
 import { defaultLocale, type Locale } from '@nesso-how/i18n'
 import kernelPackage from '../../plugins/kernel-theme/package.json'
+import paperPackage from '../../plugins/paper-theme/package.json'
 import baseVocabPackage from '../../plugins/base-vocab/package.json'
 import exportPackage from '../../plugins/export/package.json'
 import importPackage from '../../plugins/import/package.json'
@@ -194,7 +195,7 @@ export async function removeExternalPlugin(contentId: string) {
 }
 
 export async function initializeBundledPlugins() {
-  const entries = await Promise.all([{ package: kernelPackage, id: 'kernel-theme' }, { package: baseVocabPackage, id: 'base-vocab' }].map(async ({ package: source, id }): Promise<PluginEntry> => {
+  const entries = await Promise.all([{ package: kernelPackage, id: 'kernel-theme' }, { package: paperPackage, id: 'paper-theme' }, { package: baseVocabPackage, id: 'base-vocab' }].map(async ({ package: source, id }): Promise<PluginEntry> => {
     const manifest = parsePluginManifest(source.nesso)
     if (manifest.kind !== 'theme' && manifest.kind !== 'vocab') throw new PluginError('invalid-input', [{ path: 'manifest.kind', message: 'Expected a definition package' }])
     const response = await fetch(new URL(`preinstalled/${id}/definition.json`, document.baseURI))

@@ -90,7 +90,7 @@ test('releasing the current version still commits its changelog before tagging',
 
 test('releases sync built-in plugin versions with the app version', (context) => {
   const project = fixture(context);
-  const plugins = ['kernel-theme', 'base-vocab', 'import', 'export'];
+  const plugins = ['kernel-theme', 'paper-theme', 'base-vocab', 'import', 'export'];
   for (const plugin of plugins) {
     mkdirSync(join(project.cwd, 'plugins', plugin), { recursive: true });
     writeFileSync(join(project.cwd, 'plugins', plugin, 'package.json'), '{"name":"@nesso/test","version":"1.0.0-alpha.1"}\n');

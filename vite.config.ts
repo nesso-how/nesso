@@ -9,8 +9,8 @@ export default defineConfig({
   plugins: [react(), tailwindcss(), {
     name: 'bundled-plugins',
     configureServer(server) {
-      const roots = ['plugins/kernel-theme/src', 'plugins/base-vocab/src', 'plugins/import/src', 'plugins/export/src', 'packages/plugin/src', 'packages/schema/src', 'packages/i18n/src'].map((directory) => path.resolve(import.meta.dirname, directory) + path.sep)
-      const manifests = ['kernel-theme', 'base-vocab', 'import', 'export'].map((name) => path.resolve(import.meta.dirname, 'plugins', name, 'package.json'))
+      const roots = ['plugins/kernel-theme/src', 'plugins/paper-theme/src', 'plugins/base-vocab/src', 'plugins/import/src', 'plugins/export/src', 'packages/plugin/src', 'packages/schema/src', 'packages/i18n/src'].map((directory) => path.resolve(import.meta.dirname, directory) + path.sep)
+      const manifests = ['kernel-theme', 'paper-theme', 'base-vocab', 'import', 'export'].map((name) => path.resolve(import.meta.dirname, 'plugins', name, 'package.json'))
       const script = path.resolve(import.meta.dirname, 'scripts/build-plugins.ts')
       let timer: ReturnType<typeof setTimeout> | undefined
       let running = false
@@ -28,7 +28,7 @@ export default defineConfig({
         })
       }
       const onChange = (file: string) => {
-        if (!roots.some((root) => file.startsWith(root)) && !manifests.includes(file) && file !== script && file !== path.resolve(import.meta.dirname, 'shared/plugin-policy.ts')) return
+        if (!roots.some((root) => file.startsWith(root)) && !manifests.includes(file) && file !== script && file !== path.resolve(import.meta.dirname, 'shared/plugin-policy.ts') && file !== path.resolve(import.meta.dirname, 'shared/theme-fonts.ts')) return
         clearTimeout(timer)
         timer = setTimeout(rebuild, 50)
       }

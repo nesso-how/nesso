@@ -1,16 +1,7 @@
 import type { ThemeDefinition } from '@nesso-how/plugin'
 import sansRanges from '@fontsource-variable/geist/unicode.json' with { type: 'json' }
 import monoRanges from '@fontsource/ibm-plex-mono/unicode.json' with { type: 'json' }
-
-const faces = (ranges: Record<string, string>, stem: string, weight: [number, number]): ThemeDefinition['fonts']['sans'] => ({
-  faces: Object.entries(ranges).map(([subset, intervals]) => ({
-    path: `fonts/${stem.replace('{subset}', subset)}.woff2`, weight, style: 'normal',
-    unicodeRange: intervals.split(',').map((interval): [number, number] => {
-      const [from, to = from] = interval.slice(2).split('-')
-      return [parseInt(from, 16), parseInt(to, 16)]
-    }),
-  })),
-})
+import { fontFaces } from '../../../shared/theme-fonts.ts'
 
 export const create = (): ThemeDefinition => ({
   id: 'kernel-theme',
@@ -22,5 +13,5 @@ export const create = (): ThemeDefinition => ({
     'node-border': '#cdcdcd', edge: '#adadad', handle: '#858585',
   },
   metrics: { 'radius-control': 3, 'radius-object': 4, 'duration-state': 140 },
-  fonts: { sans: faces(sansRanges, 'geist-{subset}-wght-normal', [100, 900]), mono: faces(monoRanges, 'ibm-plex-mono-{subset}-400-normal', [400, 400]) },
+  fonts: { sans: fontFaces(sansRanges, 'geist-{subset}-wght-normal', [100, 900]), mono: fontFaces(monoRanges, 'ibm-plex-mono-{subset}-400-normal', [400, 400]) },
 })

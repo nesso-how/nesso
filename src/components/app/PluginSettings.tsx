@@ -79,12 +79,14 @@ function usePluginUpdateCheck(bridge: Pick<PluginBridge, 'latest'> | undefined, 
   return { updates, checking, checkUpdates }
 }
 
-function InstalledGroups({ external, plugins, updates, locale, onOpen }: { external: readonly PluginEntry[]; plugins: readonly PluginEntry[]; updates: readonly NpmPlugin[]; locale: Locale; onOpen: (name: string, from: string, target?: NpmPlugin) => void }) {
+function InstalledGroups({ external, plugins, updates, showExternal, locale, onOpen }: { external: readonly PluginEntry[]; plugins: readonly PluginEntry[]; updates: readonly NpmPlugin[]; showExternal: boolean; locale: Locale; onOpen: (name: string, from: string, target?: NpmPlugin) => void }) {
   const t = translate(locale)
   return <section className="plugin-installed">
-    <h3 className="settings-section-title mt-6 mb-2">{t('pluginExternalPackages')}</h3>
-    {!external.length && <p className="plugin-empty">{t('pluginEmpty')}</p>}
-    {external.map((entry) => { const update = updates.find(({ name }) => name === entry.id); return <PluginRow key={entry.id} entry={{ ...entry, name: entry.id }} locale={locale} status={t(entry.disabled ? 'pluginDisabled' : entry.error ? 'pluginUnavailable' : 'pluginEnabled')} update={update && t('pluginUpdateAvailable')} onClick={() => onOpen(entry.id, 'plugins', update)} /> })}
+    {showExternal && <>
+      <h3 className="settings-section-title mt-6 mb-2">{t('pluginExternalPackages')}</h3>
+      {!external.length && <p className="plugin-empty">{t('pluginEmpty')}</p>}
+      {external.map((entry) => { const update = updates.find(({ name }) => name === entry.id); return <PluginRow key={entry.id} entry={{ ...entry, name: entry.id }} locale={locale} status={t(entry.disabled ? 'pluginDisabled' : entry.error ? 'pluginUnavailable' : 'pluginEnabled')} update={update && t('pluginUpdateAvailable')} onClick={() => onOpen(entry.id, 'plugins', update)} /> })}
+    </>}
     <h3 className="settings-section-title mt-6 mb-2">{t('pluginBuiltInPackages')}</h3>
     {plugins.filter((entry) => !entry.contentId).map((entry) => <PluginRow key={entry.id} entry={{ ...entry, name: entry.id }} locale={locale} status={t('pluginEnabled')} onClick={() => onOpen(entry.id, 'plugins')} />)}
   </section>
@@ -121,12 +123,12 @@ export function PluginSettings({ page, onPageChange, titleRef }: { page: string;
           {page === 'plugin-find' && <Button variant="ghost" size="sm" disabled={checking} onClick={() => setSearchKey((key) => key + 1)}><RefreshCw />{t('pluginBrowseAll')}</Button>}
         </>}
       </div>
-      <p className="settings-page-description">{t(page === 'plugin-find' ? 'pluginFindDescription' : 'pluginManageDescription')}</p>
-      <nav className="plugin-tabs" aria-label={t('plugins')}><Button variant="ghost" aria-current={page === 'plugins' ? 'page' : undefined} onClick={() => onPageChange('plugins')}>{t('pluginInstalled')}<span className="font-mono text-[10px] text-muted-foreground">{plugins.length}</span></Button>{bridge && externalAvailable && <Button variant="ghost" aria-current={page === 'plugin-find' ? 'page' : undefined} onClick={() => onPageChange('plugin-find')}>{t('pluginFind')}</Button>}</nav>
+      <p className="settings-page-description">{t(page === 'plugin-find' ? 'pluginFindDescription' : bridge ? 'pluginManageDescription' : 'pluginManageWebDescription')}</p>
+      {bridge && <nav className="plugin-tabs" aria-label={t('plugins')}><Button variant="ghost" aria-current={page === 'plugins' ? 'page' : undefined} onClick={() => onPageChange('plugins')}>{t('pluginInstalled')}<span className="font-mono text-[10px] text-muted-foreground">{plugins.length}</span></Button>{externalAvailable && <Button variant="ghost" aria-current={page === 'plugin-find' ? 'page' : undefined} onClick={() => onPageChange('plugin-find')}>{t('pluginFind')}</Button>}</nav>}
       {bridge && !externalAvailable && <p className="mt-5 rounded border p-3 text-xs leading-5" role="status">{t('pluginSessionSkipped')}</p>}
       {page === 'plugins' && !!installation.skipped?.length && <div className="mt-5 rounded border p-3 text-xs leading-5" role="status"><p>{t('pluginUpdatesSkipped')}</p><ul className="mt-1 list-inside list-disc">{installation.skipped.map((name) => <li key={name}>{name}</li>)}</ul></div>}
       {bridge && externalAvailable && <PluginSearch key={searchKey} bridge={bridge} visible={page === 'plugin-find'} disabled={checking} onOpen={(target) => open(target.name, 'plugin-find', target)} />}
-      <div hidden={page === 'plugin-find'}><InstalledGroups external={external} plugins={plugins} updates={updates} locale={locale} onOpen={open} /></div>
+      <div hidden={page === 'plugin-find'}><InstalledGroups external={external} plugins={plugins} updates={updates} showExternal={!!bridge} locale={locale} onOpen={open} /></div>
     </div>
     {page === 'plugin-find' && <footer className="plugin-search-footer">{t('pluginUnreviewed')}</footer>}
     {detail && <PluginDetails key={name} installed={installed} target={target} titleRef={titleRef} back={back} checking={checking} installation={installation} onBack={() => onPageChange(back)} onStart={(target) => start([target])} onCheck={() => void checkUpdates(name)} onCancel={() => installer?.cancel()} onLifecycle={(action) => { if (action === 'disable' || action === 'remove') setSelected(undefined); if (action === 'remove') onPageChange('plugins') }} />}

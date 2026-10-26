@@ -65,7 +65,7 @@ export async function verifyBundled({ window, url }: CheckContext) {
       await window.webContents.executeJavaScript("window.__bundledPort.close();document.querySelector('#bundled-probe').remove()")
     }
   }
-  for (const [name, kind] of [['kernel-theme', 'theme'], ['base-vocab', 'vocab']] as const) {
+  for (const [name, kind] of [['kernel-theme', 'theme'], ['paper-theme', 'theme'], ['base-vocab', 'vocab']] as const) {
     const response = await window.webContents.executeJavaScript(`fetch(${JSON.stringify(new URL(`preinstalled/${name}/definition.json`, url).href)}).then(async response=>({ok:response.ok,text:await response.text()}))`) as { ok: boolean; text: string }
     assert.equal(response.ok, true, name)
     const definition = parseDefinition(kind, JSON.parse(response.text))
