@@ -14,9 +14,9 @@
       "name": { "en": "Base Vocabulary", "it": "Base Vocabulary", "zh-CN": "基础词汇表" },
       "description": { "en": "A shared language for relationships between concepts.", "it": "Un linguaggio condiviso per le relazioni tra concetti.", "zh-CN": "用于表达概念之间关系的通用语言。" },
       "documentation": {
-        "en": "Base provides linksTo, partOf, causes, and kindOf relation types. Its default linksTo relation is displayed without a label. Switching vocabulary leaves existing relations unchanged.",
-        "it": "Base fornisce i tipi di relazione linksTo, partOf, causes e kindOf. La relazione predefinita linksTo viene visualizzata senza etichetta. Cambiare vocabolario lascia invariate le relazioni esistenti.",
-        "zh-CN": "基础词汇表提供 linksTo、partOf、causes 和 kindOf 关系类型。默认的 linksTo 关系不显示标签。切换词汇表不会改变现有关系。"
+        "en": "Base provides linksTo, partOf, causes, kindOf, dependsOn, exampleOf, contradicts, defines, enables, and precedes relation types. Its default linksTo relation is displayed without a label. Switching vocabulary leaves existing relations unchanged.",
+        "it": "Base fornisce i tipi di relazione linksTo, partOf, causes, kindOf, dependsOn, exampleOf, contradicts, defines, enables e precedes. La relazione predefinita linksTo viene visualizzata senza etichetta. Cambiare vocabolario lascia invariate le relazioni esistenti.",
+        "zh-CN": "基础词汇表提供 linksTo、partOf、causes、kindOf、dependsOn、exampleOf、contradicts、defines、enables 和 precedes 关系类型。默认的 linksTo 关系不显示标签。切换词汇表不会改变现有关系。"
       }
     }
   },

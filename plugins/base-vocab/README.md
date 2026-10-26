@@ -1,6 +1,6 @@
 # @nesso-how/base-vocab
 
-Base's default relation vocabulary plugin: `linksTo`, `partOf`, `causes`, and `kindOf`.
+Base's default relation vocabulary plugin: `linksTo`, `partOf`, `causes`, `kindOf`, `dependsOn`, `exampleOf`, `contradicts`, `defines`, `enables`, and `precedes`.
 
 ## Usage
 
@@ -8,7 +8,7 @@ The build supplies the manifest and `definition.json` data. The host parses and 
 
 ## API
 
-- `relationIds`: stable IRIs for the four relation types.
+- `relationIds`: stable IRIs for the ten relation types.
 - `defaultRelationId`: the IRI of `linksTo`.
 - `defaultRelationTypes`: the same types as `{ id, label }` entries.
 - `definition.json`: the static vocabulary contribution, generated from `src/index.ts` at build time. Metadata and empty access declarations live in `package.json`.
