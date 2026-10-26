@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.0-alpha.23 — 2026-10-26
+
+### Fixes
+
+- **test:** Link release fixture dependencies directly on windows
+
 ## 1.0.0-alpha.22 — 2026-10-26
 
 ### Breaking Changes
