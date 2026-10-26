@@ -177,6 +177,17 @@ export const applyStateOperations = (state: HostState, operations: readonly Host
           return next
         })
         break
+      case 'concept.bold':
+      case 'concept.italic':
+        updateConcept(operation.id, (concept) => {
+          const key = operation.kind === 'concept.bold' ? 'bold' : 'italic'
+          if ((concept[key] ?? false) === operation.value) return concept
+          const next = { ...concept }
+          if (!operation.value) delete next[key]
+          else next[key] = true
+          return next
+        })
+        break
       case 'concept.position':
         setPositions([{ id: operation.id, position: operation.value }])
         break

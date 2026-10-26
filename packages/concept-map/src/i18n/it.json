@@ -18,6 +18,8 @@
   "copy": "Copia",
   "cut": "Taglia",
   "paste": "Incolla",
+  "bold": "Grassetto",
+  "italic": "Corsivo",
   "connectTo": "Collega a {{name}}",
   "connectFrom": "Collega da {{name}}",
   "editConceptLabel": "Modifica etichetta concetto",

@@ -17,6 +17,8 @@ export function createWriteCommands<Commit, Created>(
     setConceptLabel: (id, value, historyGroup) => applyOperations([{ kind: 'concept.label', id, value }], historyGroup ? { historyGroup } : undefined),
     setConceptDescription: (id, value, historyGroup) => applyOperations([{ kind: 'concept.description', id, value }], historyGroup ? { historyGroup } : undefined),
     setConceptColor: (id, value, historyGroup) => applyOperations([{ kind: 'concept.color', id, value }], historyGroup ? { historyGroup } : undefined),
+    setConceptBold: (id, value, historyGroup) => applyOperations([{ kind: 'concept.bold', id, value }], historyGroup ? { historyGroup } : undefined),
+    setConceptItalic: (id, value, historyGroup) => applyOperations([{ kind: 'concept.italic', id, value }], historyGroup ? { historyGroup } : undefined),
     addConcept: (position, historyGroup) => {
       const id = newIri()
       return created(id, applyOperations([{ kind: 'concept.add', id, position }], historyGroup ? { historyGroup } : undefined))

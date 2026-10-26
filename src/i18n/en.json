@@ -17,6 +17,7 @@
   "pluginAccessLabel": "Rename concepts",
   "pluginAccessDescription": "Edit concept descriptions",
   "pluginAccessColor": "Recolor concepts",
+  "pluginAccessEmphasis": "Style concepts",
   "pluginAccessPosition": "Move concepts",
   "pluginAccessPositions": "Arrange concepts",
   "pluginAccessAdd": "Create concepts",

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react'
-import { Copy, ListChecks, Lock, LockOpen, Layers, Maximize, ClipboardPaste, Plus, Redo2, Scissors, Trash2, Undo2 } from 'lucide-react'
+import { Bold, Copy, Italic, ListChecks, Lock, LockOpen, Layers, Maximize, ClipboardPaste, Plus, Redo2, Scissors, Trash2, Undo2 } from 'lucide-react'
 import type { Selection } from '@nesso-how/plugin'
 import {
   Background,
@@ -145,6 +145,10 @@ export function Canvas({ readOnly = false, preview = false, bottomInset = 0, con
 
   const canDelete = interactive && selected.length > 0
   const canCut = canDelete && selected.filter(({ kind }) => kind === 'concept').length < fullGraph.concepts.length
+  const selectedConcepts = fullGraph.concepts.filter((concept) => selected.some(({ kind, id }) => kind === 'concept' && id === concept.id))
+  const allBold = selectedConcepts.length > 0 && selectedConcepts.every((concept) => concept.bold)
+  const allItalic = selectedConcepts.length > 0 && selectedConcepts.every((concept) => concept.italic)
+  const canEmphasize = interactive && selectedConcepts.length > 0
   const canUndo = useNesso((state) => state.history.canUndo)
   const canRedo = useNesso((state) => state.history.canRedo)
 
@@ -378,6 +382,12 @@ export function Canvas({ readOnly = false, preview = false, bottomInset = 0, con
             </ControlButton>
             <ControlButton onClick={store.redo} disabled={!canRedo} title={t('redo')} aria-label={t('redo')}>
               <Redo2 aria-hidden="true" />
+            </ControlButton>
+            <ControlButton onClick={() => { write(selectedConcepts.map(({ id }) => ({ kind: 'concept.bold', id, value: !allBold }))) }} disabled={!canEmphasize} title={t('bold')} aria-label={t('bold')} aria-pressed={allBold}>
+              <Bold aria-hidden="true" />
+            </ControlButton>
+            <ControlButton onClick={() => { write(selectedConcepts.map(({ id }) => ({ kind: 'concept.italic', id, value: !allItalic }))) }} disabled={!canEmphasize} title={t('italic')} aria-label={t('italic')} aria-pressed={allItalic}>
+              <Italic aria-hidden="true" />
             </ControlButton>
             <ControlButton onClick={() => { void commands.copy() }} disabled={selected.length === 0} title={t('copy')} aria-label={t('copy')}>
               <Copy aria-hidden="true" />

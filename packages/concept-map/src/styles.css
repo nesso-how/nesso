@@ -111,6 +111,8 @@
 .react-flow__controls {
   overflow: hidden;
   padding: 2px;
+  display: flex;
+  gap: 2px;
   background: var(--background);
   border: 1px solid var(--border);
   border-radius: var(--radius-control);

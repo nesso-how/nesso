@@ -28,6 +28,12 @@ export function validateGraph(graph: {
     if (concept.color !== undefined && !/^#[0-9a-fA-F]{6}$/.test(concept.color)) {
       issues.push({ path: `concepts[${index}].color`, message: `Invalid color: ${concept.id}` })
     }
+    if (concept.bold !== undefined && typeof concept.bold !== 'boolean') {
+      issues.push({ path: `concepts[${index}].bold`, message: 'Expected a boolean' })
+    }
+    if (concept.italic !== undefined && typeof concept.italic !== 'boolean') {
+      issues.push({ path: `concepts[${index}].italic`, message: 'Expected a boolean' })
+    }
   }
   for (const [index, type] of graph.relationTypes.entries()) {
     if (!isAbsoluteIri(type.id)) {

@@ -5,6 +5,8 @@ const writes = {
   'concept.label': 'pluginAccessLabel',
   'concept.description': 'pluginAccessDescription',
   'concept.color': 'pluginAccessColor',
+  'concept.bold': 'pluginAccessEmphasis',
+  'concept.italic': 'pluginAccessEmphasis',
   'concept.position': 'pluginAccessPosition',
   'concept.positions': 'pluginAccessPositions',
   'concept.add': 'pluginAccessAdd',
@@ -20,6 +22,5 @@ const writes = {
 const capabilities = { 'files.open': 'pluginAccessOpen', 'files.save': 'pluginAccessSave', 'notifications.notify': 'pluginAccessNotify' } as const
 
 export const pluginAccessLabels = (access: PluginAccess, t: ReturnType<typeof translate>) => [
-  ...access.writes.map((value) => t(writes[value])),
-  ...access.capabilities.map((value) => t(capabilities[value])),
+  ...new Set([...access.writes.map((value) => t(writes[value])), ...access.capabilities.map((value) => t(capabilities[value]))]),
 ]

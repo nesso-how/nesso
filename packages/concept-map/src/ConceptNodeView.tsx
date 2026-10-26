@@ -75,7 +75,9 @@ export function ConceptNodeView({ id, data, selected, isConnectable }: NodeProps
       onClick={(event) => { if ((event.target as Element).closest('.react-flow__handle')) event.stopPropagation() }}
       onDoubleClick={startEditing}
       className={cn(
-        'concept-node flex items-center justify-center rounded-lg border bg-card px-3 py-1 text-[13.5px] font-normal leading-[18px] hover:border-(--handle)',
+        'concept-node flex items-center justify-center rounded-lg border bg-card px-3 py-1 text-[13.5px] leading-[18px] hover:border-(--handle)',
+        data.bold ? 'font-semibold' : 'font-normal',
+        data.italic && 'italic',
         !data.color && 'transition-colors',
         selected ? 'border-primary shadow-[0_0_0_2px_var(--selection-halo)]' : 'border-node-border',
       )}

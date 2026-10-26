@@ -23,6 +23,8 @@ const operation = z.discriminatedUnion('kind', [
   z.strictObject({ kind: z.literal('concept.label'), id, value: z.string() }),
   z.strictObject({ kind: z.literal('concept.description'), id, value: z.string() }),
   z.strictObject({ kind: z.literal('concept.color'), id, value: z.string() }),
+  z.strictObject({ kind: z.literal('concept.bold'), id, value: z.boolean() }),
+  z.strictObject({ kind: z.literal('concept.italic'), id, value: z.boolean() }),
   z.strictObject({ kind: z.literal('concept.position'), id, value: position }),
   z.strictObject({ kind: z.literal('concept.positions'), updates: z.array(z.strictObject({ id, position })) }),
   z.strictObject({ kind: z.literal('concept.add'), id, position: position.optional() }),
@@ -63,7 +65,7 @@ const manifestFields = {
 }
 const jsEntry = z.string().max(240).regex(/^(?:[\w-]+\/)*[\w-]+\.js$/)
 const jsonEntry = z.string().max(240).regex(/^(?:[\w-]+\/)*[\w-]+\.json$/)
-const pluginWriteKinds = ['concept.label', 'concept.description', 'concept.color', 'concept.position', 'concept.positions', 'concept.add', 'concept.remove', 'relation.connect', 'relation.reconnect', 'relation.type', 'relation.type.create', 'relation.remove', 'selection.set', 'view.membership'] as const
+const pluginWriteKinds = ['concept.label', 'concept.description', 'concept.color', 'concept.bold', 'concept.italic', 'concept.position', 'concept.positions', 'concept.add', 'concept.remove', 'relation.connect', 'relation.reconnect', 'relation.type', 'relation.type.create', 'relation.remove', 'selection.set', 'view.membership'] as const
 const operationDeclarations = z.array(z.enum(pluginWriteKinds))
 const manifest = z.discriminatedUnion('kind', [
   z.strictObject({ ...manifestFields, kind: z.literal('actions'), entry: jsEntry, writes: operationDeclarations, capabilities: z.array(z.enum(['files.open', 'files.save', 'notifications.notify'])) }),
@@ -135,7 +137,7 @@ export type PluginContext<S extends BaseState = BaseState> = {
 }
 export type ActionContext = PluginContext<ActionState>
 
-const graph = z.strictObject({ concepts: z.array(z.strictObject({ id, label: z.string(), description: z.string().optional(), color: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(), position })), relationTypes: z.array(relationType), relations: z.array(z.strictObject({ source: id, predicate: id, target: id })) })
+const graph = z.strictObject({ concepts: z.array(z.strictObject({ id, label: z.string(), description: z.string().optional(), color: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(), bold: z.boolean().optional(), italic: z.boolean().optional(), position })), relationTypes: z.array(relationType), relations: z.array(z.strictObject({ source: id, predicate: id, target: id })) })
 const baseStateSchema = z.strictObject({
   revision: z.number().int().nonnegative(), contextId: id, locale,
   theme: z.strictObject(Object.fromEntries(themeTokens.map((token) => [token, z.string().max(512).regex(/^[#\w\s.,()%/"'-]*$/)]))),
