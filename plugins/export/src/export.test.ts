@@ -21,7 +21,7 @@ test('export uses only the supplied target graph and notifies after accepted sav
   }
   const [action] = create(api)
   assert.equal(save.mock.callCount(), 0)
-  assert.equal(action.label.en, 'Export')
+  assert.equal(action.label.en, 'Export json')
   const exporting = action.run({ viewId: 'urn:view' })
   await Promise.resolve()
   assert.equal(save.mock.callCount(), 1)

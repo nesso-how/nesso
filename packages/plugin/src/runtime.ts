@@ -86,7 +86,9 @@ const request = z.discriminatedUnion('method', [
 ])
 const wireError = z.strictObject({ code: z.enum(['invalid-input', 'denied', 'stale-state', 'stale-context', 'unavailable', 'cancelled', 'timeout', 'closed', 'failed']), issues: z.array(z.strictObject({ path: text(256), message: text(2048) })).min(1).max(32), displayMessage: localizedText(2048).optional() })
 const message = z.union([request, z.strictObject({ type: z.literal('contribution'), value: z.unknown() }), z.strictObject({ type: z.literal('close'), reason: z.string().max(2048) }), z.strictObject({ type: z.literal('complete'), ok: z.literal(true) }), z.strictObject({ type: z.literal('complete'), ok: z.literal(false), error: wireError })])
-const actionDescriptor = z.strictObject({ id: z.string().max(64).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/), label: localizedText(128) })
+const actionDescriptor = z.strictObject({ id: z.string().max(64).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/), label: localizedText(128), icon: z.string().min(1).max(32).regex(/^[a-z]+(?:-[a-z]+)*$/).optional() })
+export const actionIconNames = ['arrow-right', 'book-open', 'clipboard-paste', 'copy', 'download', 'file-down', 'file-up', 'folder', 'globe', 'layers', 'pencil', 'play', 'plus', 'refresh', 'scissors', 'search', 'share', 'sparkles', 'upload', 'zap'] as const
+export type ActionIconName = typeof actionIconNames[number]
 const actionDescriptors = z.array(actionDescriptor).min(1).max(64).refine((value) => new Set(value.map(({ id }) => id)).size === value.length, 'Action IDs must be unique')
 export type ActionDescriptor = DeepReadonly<z.infer<typeof actionDescriptor>>
 export type ActionContribution = ActionDescriptor & { readonly run: (invocation: { readonly viewId: string | null }) => void | Promise<void> }

@@ -16,7 +16,7 @@
         "zh-CN": "导出功能将调用的视图保存为 JSON-LD，包括概念、内部关系和类型。全部视图导出完整图谱。"
       }
     },
-    "label": { "en": "Export", "it": "Esporta", "zh-CN": "导出" },
+    "label": { "en": "Export json", "it": "Esporta json", "zh-CN": "导出 json" },
     "viewExported": { "en": "View exported", "it": "Vista esportata", "zh-CN": "视图已导出" },
     "viewExportedDescription": { "en": "JSON-LD file saved or download requested.", "it": "File JSON-LD salvato o download avviato.", "zh-CN": "JSON-LD 文件已保存或下载已开始。" }
   },

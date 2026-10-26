@@ -11,7 +11,7 @@ class ExportError extends PluginError {
 }
 
 export const create = ({ store, files, notifications }: ActionContext): readonly ActionContribution[] => [{
-  id: 'export-view', label: i18n.label,
+  id: 'export-view', label: i18n.label, icon: 'download',
   run: async ({ viewId }) => {
     const state = await store.refresh()
     if (!('viewGraph' in state)) throw new ExportError()

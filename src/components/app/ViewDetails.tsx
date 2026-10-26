@@ -1,8 +1,8 @@
 import type { SavedView } from '@nesso-how/plugin'
 import { defaultLocale } from '@nesso-how/i18n'
-import { Button, ContextLabel, Input, Label } from '@nesso-how/ui'
+import { ActionIcon, Button, ContextLabel, Input, Label } from '@nesso-how/ui'
 import { Trash2 } from 'lucide-react'
-import { useRef, useState } from 'react'
+import { Fragment, useRef, useState } from 'react'
 import { nessoStore, useNessoStore } from '@/store'
 import type { HostStore } from '@/store/types'
 import { ConceptColor } from './ConceptColor'
@@ -64,8 +64,13 @@ export function ViewDetails({ store = nessoStore, readonly = false }: { store?: 
       </div>}
       <section aria-labelledby="view-actions-heading">
         <h3 id="view-actions-heading" className="text-xs font-medium">{t('actions')}</h3>
-        <div className="mt-3 flex flex-col gap-2">
-          {actions.map((action) => <Button key={action.id} disabled={readonly} variant="outline" className="w-full justify-start" onClick={() => { void invokeAction(action.id) }}>{action.label[locale] ?? action.label.en}</Button>)}
+        <div className="mt-3 flex flex-col">
+          {actions.map((action, index) => (
+            <Fragment key={action.id}>
+              {index > 0 && <div aria-hidden="true" className="h-px bg-border opacity-60" />}
+              <Button disabled={readonly} variant="ghost" className="w-full justify-start text-foreground/80 hover:text-foreground" onClick={() => { void invokeAction(action.id) }}><ActionIcon name={action.icon} />{action.label[locale] ?? action.label.en}</Button>
+            </Fragment>
+          ))}
         </div>
       </section>
       {view && <Button disabled={readonly} variant="outline" className="w-full justify-start" onClick={() => store.deleteView(view.id)}><Trash2 />{t('deleteView')}</Button>}

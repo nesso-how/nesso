@@ -46,7 +46,7 @@ class ImportError extends PluginError {
 }
 
 export const create = ({ store, files }: ActionContext): readonly ActionContribution[] => [{
-  id: 'import-view', label: i18n.label,
+  id: 'import-view', label: i18n.label, icon: 'upload',
   run: async ({ viewId }) => {
     const file = await files.open({ extensions: ['jsonld', 'json'], mimeTypes: ['application/ld+json', 'application/json'] })
     if (!file) return

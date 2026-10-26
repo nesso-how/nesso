@@ -28,7 +28,8 @@ test('manifests and action descriptors reject unknown authority, duplicates and 
   ]) assert.throws(() => parsePluginManifest(value), PluginError)
   const descriptor = { id: 'example', label: { en: 'Example' } }
   assert.deepEqual(parseContribution('actions', [descriptor]), [descriptor])
-  for (const value of [[], [descriptor, descriptor], [{ ...descriptor, run: true }]]) assert.throws(() => parseContribution('actions', value), PluginError)
+  assert.deepEqual(parseContribution('actions', [{ ...descriptor, icon: 'download' }]), [{ ...descriptor, icon: 'download' }])
+  for (const value of [[], [descriptor, descriptor], [{ ...descriptor, icon: 'Download' }], [{ ...descriptor, run: true }]]) assert.throws(() => parseContribution('actions', value), PluginError)
   for (const kind of ['theme', 'vocab']) {
     const definition = { ...manifest, kind, entry: 'definition.json', writes: [] }
     assert.equal(parsePluginManifest(definition).kind, kind)

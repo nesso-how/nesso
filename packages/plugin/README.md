@@ -6,7 +6,7 @@ Types, validation, and asynchronous clients for isolated Nesso actions plus data
 
 Start with the [standalone action example](example/README.md). Actions export `create(context)` and build one self-contained browser JavaScript entry, bundling any dependencies. Nesso does not install dependencies, run package scripts, compile received source, or load module graphs. Themes and vocabularies ship a JSON definition file instead; the host validates it and never executes it.
 
-- **Actions** return `{ id, label, run }` records. Discovery has no document access or effects; each invocation runs in a fresh worker. See [Import](../../plugins/import) and [Export](../../plugins/export).
+- **Actions** return `{ id, label, icon?, run }` records. `icon` is an optional `ActionIconName`: `arrow-right`, `book-open`, `clipboard-paste`, `copy`, `download`, `file-down`, `file-up`, `folder`, `globe`, `layers`, `pencil`, `play`, `plus`, `refresh`, `scissors`, `search`, `share`, `sparkles`, `upload`, `zap` (unknown keys render as `zap`). Discovery has no document access or effects; each invocation runs in a fresh worker. See [Import](../../plugins/import) and [Export](../../plugins/export).
 - **Vocabularies** ship a `VocabDefinition` JSON file with stable absolute relation-type IRIs and a default among their own types. See [Base Vocab](../../plugins/base-vocab).
 - **Themes** ship a light-only `ThemeDefinition` JSON file with colors, metrics, and local WOFF2 font descriptors. Include exactly the referenced fonts: at most 32 files, 4 MiB each. The host validates and applies them; arbitrary CSS and remote fonts are not supported. See [Kernel](../../plugins/kernel).
 

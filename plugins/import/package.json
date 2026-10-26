@@ -18,7 +18,7 @@
         "zh-CN": "导入功能将 JSON-LD 文件合并到图谱，创建新概念 ID 并保留标签、位置、关系和类型。导入的概念加入执行操作的视图。"
       }
     },
-    "label": { "en": "Import", "it": "Importa", "zh-CN": "导入" },
+    "label": { "en": "Import json", "it": "Importa json", "zh-CN": "导入 json" },
     "importFailure": { "en": "Could not import this file as a Nesso view.", "it": "Impossibile importare questo file come vista di Nesso.", "zh-CN": "无法将此文件导入为 Nesso 视图。" }
   },
   "exports": {

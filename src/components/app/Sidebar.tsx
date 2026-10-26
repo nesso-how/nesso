@@ -1,6 +1,6 @@
 import type { SavedView } from '@nesso-how/plugin'
 import { defaultLocale } from '@nesso-how/i18n'
-import { Button, IconButton, ListRow, ListRowButton, ListRowDetail, ListRowTitle, Menu, MenuItem, MenuPopup, RevealActions, SectionHeading, TextPromptDialog } from '@nesso-how/ui'
+import { ActionIcon, Button, IconButton, ListRow, ListRowButton, ListRowDetail, ListRowTitle, Menu, MenuItem, MenuPopup, RevealActions, SectionHeading, TextPromptDialog } from '@nesso-how/ui'
 import { MoreHorizontal, Pencil, Pin, PinOff, Settings2, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Sidebar } from './SidebarLayout'
@@ -19,7 +19,7 @@ function ViewActionGroup({ viewId }: { viewId: string | null }) {
   return (
     <Menu.Group>
       <Menu.GroupLabel className="px-2.5 pt-1 pb-0.5 text-[11px] leading-4 text-muted-foreground">{t('actions')}</Menu.GroupLabel>
-      {actions.map((action) => <MenuItem key={action.id} className="pl-4" onClick={() => { void invokeAction(action.id, viewId) }}>{action.label[locale] ?? action.label.en}</MenuItem>)}
+      {actions.map((action) => <MenuItem key={action.id} className="pl-4" onClick={() => { void invokeAction(action.id, viewId) }}><ActionIcon name={action.icon} />{action.label[locale] ?? action.label.en}</MenuItem>)}
     </Menu.Group>
   )
 }
