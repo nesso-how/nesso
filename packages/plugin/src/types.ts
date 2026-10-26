@@ -16,6 +16,8 @@ export type NessoOperation =
   | { readonly kind: 'concept.label'; readonly id: string; readonly value: string }
   | { readonly kind: 'concept.description'; readonly id: string; readonly value: string }
   | { readonly kind: 'concept.color'; readonly id: string; readonly value: string }
+  | { readonly kind: 'concept.bold'; readonly id: string; readonly value: boolean }
+  | { readonly kind: 'concept.italic'; readonly id: string; readonly value: boolean }
   | { readonly kind: 'concept.position'; readonly id: string; readonly value: Readonly<Position> }
   | { readonly kind: 'concept.positions'; readonly updates: readonly { readonly id: string; readonly position: Readonly<Position> }[] }
   | { readonly kind: 'concept.add'; readonly id: string; readonly position?: Readonly<Position> }
@@ -110,6 +112,8 @@ export type NessoStore = {
   readonly setConceptLabel: (id: string, label: string, historyGroup?: string) => void
   readonly setConceptDescription: (id: string, description: string, historyGroup?: string) => void
   readonly setConceptColor: (id: string, color: string, historyGroup?: string) => void
+  readonly setConceptBold: (id: string, value: boolean, historyGroup?: string) => void
+  readonly setConceptItalic: (id: string, value: boolean, historyGroup?: string) => void
   readonly addConcept: (position?: Readonly<Position>, historyGroup?: string) => string
   readonly connect: (source: string, target: string) => void
   readonly reconnectRelation: (id: string, source: string, target: string) => void

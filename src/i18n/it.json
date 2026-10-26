@@ -17,6 +17,7 @@
   "pluginAccessLabel": "Rinominare concetti",
   "pluginAccessDescription": "Modificare le descrizioni dei concetti",
   "pluginAccessColor": "Cambiare colore ai concetti",
+  "pluginAccessEmphasis": "Applicare stile ai concetti",
   "pluginAccessPosition": "Spostare concetti",
   "pluginAccessPositions": "Disporre concetti",
   "pluginAccessAdd": "Creare concetti",

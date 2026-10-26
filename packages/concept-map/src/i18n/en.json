@@ -17,6 +17,8 @@
   "copy": "Copy",
   "cut": "Cut",
   "paste": "Paste",
+  "bold": "Bold",
+  "italic": "Italic",
   "connectTo": "Connect to {{name}}",
   "connectFrom": "Connect from {{name}}",
   "editConceptLabel": "Edit concept label",

@@ -17,6 +17,7 @@
   "pluginAccessLabel": "重命名概念",
   "pluginAccessDescription": "编辑概念描述",
   "pluginAccessColor": "更改概念颜色",
+  "pluginAccessEmphasis": "设置概念样式",
   "pluginAccessPosition": "移动概念",
   "pluginAccessPositions": "排列概念",
   "pluginAccessAdd": "创建概念",

@@ -34,7 +34,7 @@ function conceptNode(concept: ConceptView, selected: boolean, measured?: Concept
     type: 'concept',
     position: concept.position,
     measured,
-    data: { label: concept.label, color: concept.color },
+    data: { label: concept.label, color: concept.color, bold: concept.bold, italic: concept.italic },
     ariaLabel: concept.label,
     selected,
   }
@@ -107,7 +107,7 @@ export function createGraphElements() {
       const node = conceptNode(concept, selectedConcepts.has(concept.id), sizes[concept.id])
       node.data = { ...node.data, editable: editing?.enabled, editing: editing?.id === concept.id, maxLength: editing?.maxLength, onEditingChange: editing?.onChange }
       const previous = previousNodes.get(node.id)
-      return previous && previous.position.x === node.position.x && previous.position.y === node.position.y && previous.data.label === node.data.label && previous.data.color === node.data.color && previous.data.editable === node.data.editable && previous.data.editing === node.data.editing && previous.data.maxLength === node.data.maxLength && previous.data.onEditingChange === node.data.onEditingChange && previous.selected === node.selected && previous.measured?.width === node.measured?.width && previous.measured?.height === node.measured?.height ? previous : node
+      return previous && previous.position.x === node.position.x && previous.position.y === node.position.y && previous.data.label === node.data.label && previous.data.color === node.data.color && previous.data.bold === node.data.bold && previous.data.italic === node.data.italic && previous.data.editable === node.data.editable && previous.data.editing === node.data.editing && previous.data.maxLength === node.data.maxLength && previous.data.onEditingChange === node.data.onEditingChange && previous.selected === node.selected && previous.measured?.width === node.measured?.width && previous.measured?.height === node.measured?.height ? previous : node
     })
     const edges = graph.relations.map((relation) => {
       const edge = { ...relationEdge(relation, selectedRelations.has(relationKey(relation)), selected.length === 1, indexed, defaultTypeId, sizes), ariaLabel: label(relation) }

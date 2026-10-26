@@ -16,6 +16,8 @@
   "copy": "复制",
   "cut": "剪切",
   "paste": "粘贴",
+  "bold": "粗体",
+  "italic": "斜体",
   "connectTo": "连接到 {{name}}",
   "connectFrom": "从 {{name}} 连接",
   "editConceptLabel": "编辑概念标签",

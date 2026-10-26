@@ -53,6 +53,8 @@ export function pasteOperations(text: string, position?: Readonly<Position>, off
       { kind: 'concept.label', id: concept.id, value: concept.label },
       ...(concept.description === undefined ? [] : [{ kind: 'concept.description' as const, id: concept.id, value: concept.description }]),
       ...(concept.color === undefined ? [] : [{ kind: 'concept.color' as const, id: concept.id, value: concept.color }]),
+      ...(concept.bold === undefined ? [] : [{ kind: 'concept.bold' as const, id: concept.id, value: concept.bold }]),
+      ...(concept.italic === undefined ? [] : [{ kind: 'concept.italic' as const, id: concept.id, value: concept.italic }]),
     ]),
     ...relations.map((relation): NessoOperation => ({
       kind: 'relation.connect', source: relation.source, target: relation.target,
