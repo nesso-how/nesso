@@ -3,7 +3,7 @@
 <img src="public/icon.svg" alt="Nesso" width="96">
 
 </br>
-A second brain for connecting ideas and building understanding in one knowledge graph, with AI assistance. Built on a small core with a simple plugin system.
+A second brain for connecting ideas and building understanding in one knowledge graph. Built on a small core with a simple plugin system.
 </br></br>
 
 [![CI](https://github.com/nesso-how/nesso/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/nesso-how/nesso/actions/workflows/ci.yml)
