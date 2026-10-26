@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test, { type TestContext } from 'node:test';
@@ -15,7 +15,9 @@ function fixture(context: TestContext) {
   for (const file of ['scripts/release.ts', 'scripts/release-common.ts', 'scripts/release-notes.ts', 'cliff.toml']) {
     copyFileSync(new URL(`../${file}`, import.meta.url), join(cwd, file));
   }
-  symlinkSync(fileURLToPath(new URL('../node_modules', import.meta.url)), join(cwd, 'node_modules'), 'junction');
+  mkdirSync(join(cwd, 'node_modules', '@nesso-how'), { recursive: true });
+  symlinkSync(fileURLToPath(new URL('../packages/errors', import.meta.url)), join(cwd, 'node_modules', '@nesso-how', 'errors'), 'junction');
+  symlinkSync(realpathSync(fileURLToPath(new URL('../node_modules/git-cliff', import.meta.url))), join(cwd, 'node_modules', 'git-cliff'), 'junction');
   writeFileSync(join(cwd, '.gitignore'), 'node_modules\n');
   writeFileSync(join(cwd, 'package.json'), '{"type":"module","version":"1.0.0-alpha.1"}\n');
   writeFileSync(join(cwd, 'CHANGELOG.md'), '# Changelog\n\n');
@@ -116,6 +118,7 @@ test('changelog generation failures leave the version, history and tags unchange
   const head = project.git('rev-parse', 'HEAD');
   const result = spawnSync(process.execPath, ['scripts/release.ts', '--alpha'], { cwd: project.cwd, encoding: 'utf8' });
   assert.equal(result.status, 1);
+  assert.match(result.stderr, /TOML parse error/);
   assert.equal(project.git('status', '--porcelain'), '');
   assert.equal(project.git('rev-parse', 'HEAD'), head);
   assert.equal(project.git('tag', '--list', 'v1.0.0-alpha.2'), '');
