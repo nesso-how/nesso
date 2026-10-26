@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.0-alpha.24 — 2026-10-26
+
+### Documentation
+
+- **readme:** Clarify desktop-only plugin installation
+
+### Features
+
+- **graph:** Add bold and italic node emphasis (#201)
+
 ## 1.0.0-alpha.23 — 2026-10-26
 
 ### Fixes
