@@ -88,6 +88,26 @@ test('releasing the current version still commits its changelog before tagging',
   assert.match(releaseNotes(project.changelog(), 'v1.0.0-alpha.2'), /No user-facing changes/);
 });
 
+test('releases sync built-in plugin versions with the app version', (context) => {
+  const project = fixture(context);
+  const plugins = ['kernel', 'base-vocab', 'import', 'export'];
+  for (const plugin of plugins) {
+    mkdirSync(join(project.cwd, 'plugins', plugin), { recursive: true });
+    writeFileSync(join(project.cwd, 'plugins', plugin, 'package.json'), '{"name":"@nesso/test","version":"1.0.0-alpha.1"}\n');
+  }
+  project.git('add', '.');
+  project.commit('feat: add built-in plugins');
+  project.commit('fix: adjust theme');
+  project.release('--alpha');
+  for (const plugin of plugins) {
+    const manifest = JSON.parse(readFileSync(join(project.cwd, 'plugins', plugin, 'package.json'), 'utf8')) as { version?: unknown };
+    assert.equal(manifest.version, '1.0.0-alpha.2');
+  }
+  const committed = project.git('show', '--format=', '--name-only', 'HEAD');
+  for (const plugin of plugins) assert.match(committed, new RegExp(`plugins/${plugin}/package\\.json`));
+  assert.equal(project.git('status', '--porcelain'), '');
+});
+
 test('changelog generation failures leave the version, history and tags unchanged', (context) => {
   const project = fixture(context);
   writeFileSync(join(project.cwd, 'cliff.toml'), 'invalid = [');

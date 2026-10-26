@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { NessoError } from '@nesso/errors';
 import { releaseNotes } from './release-notes.ts';
@@ -13,8 +13,9 @@ const help = `${usage}
 Release from a clean main branch. Without an argument, release the current version.
 Choose an explicit version or bump with --major, --minor, --patch, --alpha or --beta.
 
-Generate CHANGELOG.md from Conventional Commits using cliff.toml, commit it with
-the version bump, then tag and atomically push main and the tag to origin.
+Generate CHANGELOG.md from Conventional Commits using cliff.toml, sync built-in
+plugin versions, commit them with the version bump, then tag and atomically
+push main and the tag to origin.
 Alpha/beta notes cover changes since the previous release. Stable notes cover
 changes since the previous stable release, or all history for the first stable
 release. Internal changes are omitted unless breaking.
@@ -131,8 +132,21 @@ function main(): void {
     if (matches.length !== 1) fail('package.json', 'expected exactly one version field');
     writeFileSync(location, raw.replace(/("version":\s*")[^"]*(")/, `$1${version}$2`));
   }
+  const synced: string[] = [];
+  for (const plugin of ['kernel', 'base-vocab', 'import', 'export']) {
+    const path = `plugins/${plugin}/package.json`;
+    const pluginLocation = new URL(`../${path}`, import.meta.url);
+    if (!existsSync(pluginLocation)) continue;
+    const pluginRaw = readFileSync(pluginLocation, 'utf8');
+    const matches = pluginRaw.match(/"version":\s*"[^"]*"/g) ?? [];
+    if (matches.length !== 1) fail(path, 'expected exactly one version field');
+    if ((JSON.parse(pluginRaw) as { version?: unknown }).version !== version) {
+      writeFileSync(pluginLocation, pluginRaw.replace(/("version":\s*")[^"]*(")/, `$1${version}$2`));
+    }
+    synced.push(path);
+  }
   writeFileSync(changelogLocation, `# Changelog\n\n${entry}\n\n${changelog.replace(/^# Changelog\s*/, '')}`);
-  run('git', ['add', 'package.json', 'CHANGELOG.md']);
+  run('git', ['add', 'package.json', 'CHANGELOG.md', ...synced]);
   run('git', ['commit', '-m', `chore: release ${version}`]);
   run('git', ['tag', tag]);
   run('git', ['push', '--atomic', 'origin', 'main', tag]);
