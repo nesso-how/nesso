@@ -1,7 +1,7 @@
 ---
 description: Reviews Nesso changes for regressions, data integrity, and security boundaries
 mode: primary
-steps: 40
+steps: 60
 permissions:
   - { action: '*', resource: '*', effect: deny }
   - { action: read, resource: '*', effect: allow }

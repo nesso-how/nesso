@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import type { BrowserWindow } from 'electron'
+import { ipcMain, type BrowserWindow } from 'electron'
 import type { Platform } from './cases.ts'
 import { themeTokens, type BaseState } from '../../packages/plugin/src/runtime.ts'
 
@@ -8,6 +8,30 @@ export type CheckContext = {
   url: string
   name: Platform
   attempted: readonly string[]
+}
+
+export function connectFixtureStorage() {
+  const saved = new Map<string, unknown>()
+  ipcMain.handle('storage:read', (_event, section: string) => ({ value: saved.get(section) }))
+  ipcMain.handle('storage:write', (_event, section: string, value: unknown) => { saved.set(section, value); return { value: null } })
+  ipcMain.handle('data-location:state', () => ({ value: { directory: 'test-profile', defaultDirectory: 'test-profile', moving: false, cleanupPending: false } }))
+  return saved
+}
+
+export async function openFixtureWorkspace({ window, url }: Pick<CheckContext, 'window' | 'url'>) {
+  const saved = connectFixtureStorage()
+  const evaluate = <T>(script: string) => window.webContents.executeJavaScript(script) as Promise<T>
+  await window.loadURL(url)
+  await waitFor(() => evaluate<boolean>(`!!document.querySelector('.intro')`), Boolean)
+  await evaluate(`document.querySelector('.intro-header button').click()`)
+  await waitFor(() => evaluate<boolean>(`!!document.querySelector('#canvas .react-flow')`), Boolean)
+  await waitFor(async () => saved.has('document'), Boolean)
+  return { saved, evaluate }
+}
+
+export async function countWorkers(window: BrowserWindow) {
+  const { targetInfos } = await window.webContents.debugger.sendCommand('Target.getTargets')
+  return targetInfos.filter((target: { type: string }) => target.type === 'worker').length as number
 }
 
 export const baseState = (): BaseState => ({

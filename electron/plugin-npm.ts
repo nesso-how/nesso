@@ -8,14 +8,16 @@ import registryFetch from 'npm-registry-fetch'
 import { Parser, type ReadEntry } from 'tar'
 import { z } from 'zod'
 import { packageLimits, parsePackageIdentity, preparePluginPackage } from '../packages/plugin/src/package.ts'
-import { parsePluginManifest } from '../packages/plugin/src/runtime.ts'
+import { parsePluginI18n, parsePluginManifest, PluginError } from '../packages/plugin/src/runtime.ts'
+import prerelease from 'semver/functions/prerelease.js'
 import { ElectronError } from './errors.ts'
 import { npmIntegrity } from '../shared/plugins.ts'
+import type { NpmPlugin } from '../shared/plugins.ts'
 
 const registry = 'https://registry.npmjs.org'
 const limits = { metadata: 64 * 1024, compressed: 32 * 1024 * 1024, expanded: 128 * 1024 * 1024, files: 1024, deadline: 60_000 }
 type RegistryRequest = (url: string, options: registryFetch.Options & { signal: AbortSignal }) => ReturnType<typeof registryFetch>
-const failure = () => new ElectronError([{ path: 'npm', message: 'Package acquisition failed validation, integrity, network, or resource checks' }])
+const failure = () => new ElectronError([{ path: 'npm', message: 'Could not download or validate the package. Check the connection and package compatibility, then retry.' }])
 const trustedUrl = (value: string) => {
   const url = new URL(value)
   if (url.origin !== registry || url.username || url.password || url.hash) throw failure()
@@ -57,6 +59,44 @@ async function download(url: string, limit: number, signal: AbortSignal, request
     signal.throwIfAborted()
     return Buffer.concat(chunks, size)
   } finally { agent.destroy() }
+}
+
+const json = async (url: string, limit: number, signal: AbortSignal, request: RegistryRequest) => JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(await download(url, limit, signal, request)))
+
+export async function latestNpmPlugin(name: unknown, cancellation: AbortSignal, request: RegistryRequest = registryFetch): Promise<NpmPlugin> {
+  const identity = parsePackageIdentity({ name, version: '0.0.0' })
+  const signal = AbortSignal.any([cancellation, AbortSignal.timeout(limits.deadline)])
+  const metadata = await json(`${registry}/${encodeURIComponent(identity.name)}/latest`, limits.metadata, signal, request)
+  try {
+    const received = parsePackageIdentity(metadata)
+    if (received.name !== identity.name || prerelease(received.version)) throw failure()
+    return { name: received.name, version: received.version, author: received.author, repository: received.repository, nesso: parsePluginManifest(received.nesso), i18n: parsePluginI18n(received.i18n) }
+  } catch {
+    throw new PluginError('invalid-input', [{ path: 'npm', message: 'The latest version is not a compatible stable Nesso plugin.' }])
+  }
+}
+
+export async function searchNpmPlugins(input: unknown, cancellation: AbortSignal, request: RegistryRequest = registryFetch) {
+  const { query, offset } = z.object({ query: z.string().trim().max(128), offset: z.number().int().min(0).max(10_000).default(0) }).parse(input)
+  const signal = AbortSignal.any([cancellation, AbortSignal.timeout(limits.deadline)])
+  try {
+    const params = new URLSearchParams({ text: 'keywords:nesso-plugin', size: '10', from: String(offset) })
+    const result = z.object({ objects: z.array(z.object({ package: z.object({ name: z.string().max(214), keywords: z.array(z.string()).optional() }) })).max(10), total: z.number().int().nonnegative() }).parse(await json(`${registry}/-/v1/search?${params}`, 512 * 1024, signal, request))
+    const packages: NpmPlugin[] = []
+    for (const { package: entry } of result.objects) {
+      signal.throwIfAborted()
+      if (!entry.keywords?.includes('nesso-plugin')) continue
+      let plugin: NpmPlugin
+      try { plugin = await latestNpmPlugin(entry.name, signal, request) }
+      catch (error) { signal.throwIfAborted(); if (error instanceof PluginError) continue; throw error }
+      const names = [plugin.name, ...Object.values(plugin.i18n.metadata.name)].join(' ').toLowerCase()
+      if (names.includes(query.toLowerCase())) packages.push(plugin)
+    }
+    const next = offset + result.objects.length
+    return { packages, ...(result.objects.length && next < result.total && next <= 10_000 ? { next } : {}) }
+  } catch {
+    throw new ElectronError([{ path: 'npm', message: 'Could not search npm. Check the connection and try again; installed plugins remain available offline.' }])
+  }
 }
 
 async function readArchive(bytes: Buffer, signal: AbortSignal) {
@@ -114,7 +154,7 @@ export async function acquireNpmPlugin(input: unknown, cancellation: AbortSignal
   const signal = AbortSignal.any([cancellation, AbortSignal.timeout(limits.deadline)])
   try {
     const { name, version } = parsePackageIdentity(input)
-    const metadata = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(await download(`${registry}/${encodeURIComponent(name)}/${encodeURIComponent(version)}`, limits.metadata, signal, request)))
+    const metadata = await json(`${registry}/${encodeURIComponent(name)}/${encodeURIComponent(version)}`, limits.metadata, signal, request)
     const identity = parsePackageIdentity(metadata)
     if (identity.name !== name || identity.version !== version) throw failure()
     const dist = z.object({ tarball: z.string().max(2048), integrity: npmIntegrity }).parse(metadata.dist)

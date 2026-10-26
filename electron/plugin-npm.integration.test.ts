@@ -10,11 +10,11 @@ import { Readable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
 import registryFetch from 'npm-registry-fetch'
 import { Header, type HeaderData } from 'tar'
-import { acquireNpmPlugin } from './plugin-npm.ts'
+import { acquireNpmPlugin, latestNpmPlugin, searchNpmPlugins } from './plugin-npm.ts'
 import { preparePluginPackage } from '../packages/plugin/src/package.ts'
 import themeFixture from '../packages/plugin/test/theme.json' with { type: 'json' }
 
-const manifest = { name: '@nesso/test', version: '1.0.0-alpha.1+build.1', scripts: { install: 'never run' }, dependencies: { anything: '*' }, nesso: { apiVersion: 1, kind: 'actions', entry: 'dist/index.js', writes: [], capabilities: [] }, i18n: { metadata: { name: { en: 'Test' }, description: { en: 'Test' }, documentation: { en: 'Test' } } } }
+const manifest = { name: '@nesso/test', version: '1.0.0-alpha.1+build.1', author: { name: 'Test Author', email: 'private@example.test' }, repository: { type: 'git', url: 'git+https://github.com/example/plugin.git' }, scripts: { install: 'never run' }, dependencies: { anything: '*' }, nesso: { apiVersion: 1, kind: 'actions', entry: 'dist/index.js', writes: [], capabilities: [] }, i18n: { metadata: { name: { en: 'Test' }, description: { en: 'Test' }, documentation: { en: 'Test' } } } }
 const code = 'throw new Error("Never run in the host")'
 const spec = { name: manifest.name, version: manifest.version }
 const url = 'https://registry.npmjs.org/test/-/test.tgz'
@@ -42,6 +42,56 @@ async function registry(t: TestContext, listener: RequestListener) {
   }
   return request
 }
+
+test('latest metadata admits all supported kinds and rejects prereleases, mismatched identities and APIs', async (t) => {
+  let document = { ...manifest, version: '1.2.0' }
+  const request = await registry(t, (_req, res) => res.end(JSON.stringify(document)))
+  for (const kind of ['actions', 'theme', 'vocab']) {
+    document = { ...document, nesso: { ...manifest.nesso, kind, entry: kind === 'actions' ? 'index.js' : 'definition.json' } }
+    const plugin = await latestNpmPlugin(manifest.name, new AbortController().signal, request)
+    assert.equal(plugin.name, manifest.name)
+    assert.equal(plugin.version, '1.2.0')
+    assert.equal(plugin.nesso.kind, kind)
+    assert.equal(plugin.author, 'Test Author')
+    assert.equal(plugin.repository, 'https://github.com/example/plugin')
+  }
+  for (const invalid of [{ ...manifest, version: '1.3.0-beta.1' }, { ...manifest, name: 'other-package' }, { ...manifest, nesso: { ...manifest.nesso, apiVersion: 2 } }]) {
+    document = invalid
+    await assert.rejects(latestNpmPlugin(manifest.name, new AbortController().signal, request))
+  }
+})
+
+test('discovery enforces the exact keyword, filters names rather than descriptions, and preserves pagination', async (t) => {
+  const requested: URL[] = []
+  let offline = false
+  const request = await registry(t, (req, res) => {
+    const url = new URL(req.url!, 'https://registry.npmjs.org')
+    requested.push(url)
+    if (url.pathname === '/-/v1/search') {
+      res.end(JSON.stringify({ total: 30, objects: [
+        { package: { name: manifest.name, keywords: ['nesso-plugin'] } },
+        { package: { name: 'untagged', keywords: ['nesso-plugin-other'] } },
+        { package: { name: 'future', keywords: ['nesso-plugin'] } },
+      ] }))
+    } else {
+      if (offline) { res.writeHead(503).end(); return }
+      const name = decodeURIComponent(url.pathname.split('/')[1])
+      res.end(JSON.stringify({ ...manifest, name, version: '1.2.0', description: 'Description-only match', i18n: { metadata: { ...manifest.i18n.metadata, name: { en: 'Visible display name' } } }, nesso: { ...manifest.nesso, apiVersion: name === 'future' ? 2 : 1 } }))
+    }
+  })
+  const found = await searchNpmPlugins({ query: 'Visible display', offset: 10 }, new AbortController().signal, request)
+  assert.deepEqual(found.packages.map(({ name }) => name), [manifest.name])
+  assert.equal(found.next, 13)
+  assert.equal(requested[0].searchParams.get('from'), '10')
+  assert.equal(requested[0].searchParams.get('text'), 'keywords:nesso-plugin')
+  assert.equal(requested.some(({ pathname }) => pathname.includes('untagged')), false)
+  const descriptions = await searchNpmPlugins({ query: 'Description-only' }, new AbortController().signal, request)
+  assert.equal(descriptions.packages.length, 0)
+  offline = true
+  await assert.rejects(searchNpmPlugins({ query: '' }, new AbortController().signal, request))
+  await assert.rejects(searchNpmPlugins({ query: 'x'.repeat(129) }, new AbortController().signal, request))
+  await assert.rejects(searchNpmPlugins({ query: '', offset: -1 }, new AbortController().signal, request))
+})
 
 test('npm acquisition streams real registry-fetch responses, verifies SHA-512, and admits only the declared entry without executing scripts', async (t) => {
   const bytes = archive(entries)

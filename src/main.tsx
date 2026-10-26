@@ -44,7 +44,6 @@ const stopTheme = connectTheme(host, (definition) => {
   document.documentElement.setAttribute('data-theme', definition.id)
 })
 const externalStartup = new AbortController()
-if (sessionStorage.getItem('nesso:skip-external-plugins')) externalStartup.abort()
 const stopExternalPlugins = await initializeExternalPlugins(externalStartup.signal)
 const persistence = startAutosave(stopPluginActions)
 const stopUpdateNotifications = connectUpdateNotifications(

@@ -17,34 +17,42 @@ export function createPluginStorage(directory: string) {
     return { npmIntegrity: parsed.data }
   }
   const filename = (name: string) => path.join(directory, `${createHash('sha256').update(name).digest('hex')}.json`)
-  const scan = async () => {
+  const scan = async (strict = true) => {
     const entries = await readdir(directory, { withFileTypes: true }).catch((error: NodeJS.ErrnoException) => { if (error.code === 'ENOENT') return []; throw error })
+    const records = entries.filter(({ name }) => name.endsWith('.json'))
+    if (records.length > packageLimits.installed) fail('Installed package budget exceeded')
     const installed: InstalledPlugin[] = []
+    const issues: { path: string; message: string }[] = []
     const sizes = new Map<string, number>()
     let total = 0
-    for (const entry of entries.filter(({ name }) => name.endsWith('.json'))) {
-      if (!entry.isFile() || !/^[a-f0-9]{64}\.json$/.test(entry.name) || installed.length >= packageLimits.installed) fail('Invalid installed package record')
-      const file = await open(path.join(directory, entry.name), constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK)
-      let text: string
-      let size = 0
+    for (const entry of records) {
       try {
-        const chunks: Uint8Array[] = []
-        if (!(await file.stat()).isFile()) fail('Invalid installed package record')
-        for await (const chunk of file.createReadStream({ autoClose: false, end: packageLimits.record })) {
-          size += chunk.byteLength
-          if (size > packageLimits.record || total + size > packageLimits.total) fail('Installed package budget exceeded')
-          chunks.push(chunk)
-        }
-        total += size
-        text = new TextDecoder('utf-8', { fatal: true }).decode(Buffer.concat(chunks, size))
-      } finally { await file.close() }
-      const record = JSON.parse(text)
-      const prepared = await verifyPluginPackage(record)
-      if (typeof record.enabled !== 'boolean' || entry.name !== path.basename(filename(prepared.name)) || installed.some(({ name }) => name === prepared.name)) fail('Invalid installed package record')
-      installed.push({ ...prepared, ...origin(record.npmIntegrity), enabled: record.enabled })
-      sizes.set(prepared.name, size)
+        if (!entry.isFile() || !/^[a-f0-9]{64}\.json$/.test(entry.name)) fail('Invalid installed package record')
+        const file = await open(path.join(directory, entry.name), constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK)
+        let text: string
+        let size = 0
+        try {
+          const chunks: Uint8Array[] = []
+          if (!(await file.stat()).isFile()) fail('Invalid installed package record')
+          for await (const chunk of file.createReadStream({ autoClose: false, end: packageLimits.record })) {
+            size += chunk.byteLength
+            total += chunk.byteLength
+            if (size > packageLimits.record || total > packageLimits.total) fail('Installed package budget exceeded')
+            chunks.push(chunk)
+          }
+          text = new TextDecoder('utf-8', { fatal: true }).decode(Buffer.concat(chunks, size))
+        } finally { await file.close() }
+        const record = JSON.parse(text)
+        const prepared = await verifyPluginPackage(record)
+        if (typeof record.enabled !== 'boolean' || entry.name !== path.basename(filename(prepared.name)) || installed.some(({ name }) => name === prepared.name)) fail('Invalid installed package record')
+        installed.push({ ...prepared, ...origin(record.npmIntegrity), enabled: record.enabled })
+        sizes.set(prepared.name, size)
+      } catch (error) {
+        if (strict || total > packageLimits.total) throw error
+        issues.push({ path: entry.name, message: 'Could not read installed package record' })
+      }
     }
-    return { installed, total, sizes }
+    return { installed, total, sizes, issues }
   }
   const change = <T>(run: () => Promise<T>) => {
     const result = queue.then(run)
@@ -77,7 +85,7 @@ export function createPluginStorage(directory: string) {
     return record
   }
   return {
-    list: async () => { await queue; return (await scan()).installed },
+    list: async () => { await queue; const { installed, issues } = await scan(false); return { packages: installed, issues } },
     check: async (prepared: PreparedPlugin & Pick<InstalledPlugin, 'npmIntegrity'>, replacing?: string) => { await queue; return (await check(prepared, replacing)).record },
     install: (input: PreparedPlugin & Pick<InstalledPlugin, 'npmIntegrity'>, current: () => boolean, replacing?: string) => change(async () => {
       const prepared = await verifyPluginPackage(input)

@@ -44,9 +44,9 @@ Failures reject with `PluginError`, carrying `code` and bounded `issues`. Public
 
 ## Installation and isolation
 
-External installation is desktop-only through the internal bridge; web runs bundled plugins only. `window.nessoPlugins.installNpm(requestId, { name, version }, locale, replacing?)` accepts exact versions from public `registry.npmjs.org`. For local development, see the example's `propose` call. Updates pass the installed `contentId` as `replacing`.
+External installation is desktop-only; web runs bundled plugins only. Publish versioned npm packages; every installation pins an exact version and the host revalidates the received files. Nesso never installs dependencies or runs package scripts. For local development, see the example's `propose` call.
 
-Native consent binds exact content and declared access before execution. Every changed package needs fresh consent; failed updates preserve the previous installation. Settings can enable, disable, or remove installed packages without deleting document data. Launch with `--safe-plugins` for recovery without external code.
+Each action invocation runs in a fresh isolated worker; themes and vocabularies are validated data and never executed. Installation binds approval to the exact received content and its declarations; failed updates keep the previous installation.
 
 The host validates requests and revokes effects before teardown. Plugins receive no Node, host DOM, credentials, arbitrary filesystem, or network access. Actions use interruptible workers; themes and vocabularies are validated data and never executed. This does not guarantee hard CPU/RAM containment or host responsiveness.
 

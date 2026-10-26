@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { validateGraph } from '../../schema/src/validate.ts'
-import { PluginError } from './errors.ts'
+import { parseOrThrow } from './errors.ts'
 import type { DeepReadonly, VocabDefinition } from './types.ts'
 
 export const themeColors = ['background', 'foreground', 'canvas', 'sidebar', 'primary', 'primary-hover', 'primary-foreground', 'muted', 'muted-foreground', 'hover', 'pressed', 'border', 'ring', 'selection-halo', 'node-border', 'edge', 'handle'] as const
@@ -51,7 +51,5 @@ export function parseDefinition(kind: 'theme', value: unknown): ThemeDefinition
 export function parseDefinition(kind: 'vocab', value: unknown): VocabDefinition
 export function parseDefinition(kind: 'theme' | 'vocab', value: unknown): Definition
 export function parseDefinition(kind: 'theme' | 'vocab', value: unknown): Definition {
-  const parsed = (kind === 'theme' ? themeDefinition : vocabDefinition).safeParse(value)
-  if (!parsed.success) throw new PluginError('invalid-input', parsed.error.issues.map((issue) => ({ path: issue.path.join('.'), message: issue.message })))
-  return parsed.data
+  return parseOrThrow(kind === 'theme' ? themeDefinition : vocabDefinition, value) as Definition
 }

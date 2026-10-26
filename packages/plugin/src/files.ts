@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { PluginError } from './errors.ts'
+import { parseOrThrow } from './errors.ts'
 
 export const fileTextLimit = 16 * 1024 * 1024
 const mediaType = z.string().max(128).regex(/^[\w!#$&^.+-]+\/[\w!#$&^.+-]+$/)
@@ -15,7 +15,5 @@ export type FileSaveOptions = z.infer<typeof fileSaveOptions>
 export type FileOpenResult = z.infer<typeof fileOpenResult>
 
 export function parseFileOptions<K extends 'open' | 'save'>(kind: K, value: unknown): K extends 'open' ? FileOpenOptions : FileSaveOptions {
-  const parsed = (kind === 'open' ? fileOpenOptions : fileSaveOptions).safeParse(value)
-  if (!parsed.success) throw new PluginError('invalid-input', parsed.error.issues.slice(0, 32).map((issue) => ({ path: issue.path.join('.'), message: issue.message })))
-  return parsed.data as K extends 'open' ? FileOpenOptions : FileSaveOptions
+  return parseOrThrow(kind === 'open' ? fileOpenOptions : fileSaveOptions, value) as K extends 'open' ? FileOpenOptions : FileSaveOptions
 }

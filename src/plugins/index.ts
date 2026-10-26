@@ -13,25 +13,34 @@ import { createPluginRegistry, type PluginEntry } from './registry.ts'
 import { loadActions, type ActionPackage } from './actions.ts'
 import { withInitializationTimeout } from './initialization.ts'
 import { translate } from '../i18n/index.ts'
-import { packageFonts, verifyPluginPackage } from '@nesso/plugin/package'
+import { packageFonts, parsePackageIdentity, verifyPluginPackage } from '@nesso/plugin/package'
 import type { InstalledPlugin, PluginResult } from '../../shared/plugins.ts'
 
 const themes = new Map<string, ThemePresentation>()
 const actions = new Map<string, ActionPackage>()
 const active = new Map<AbortController, string>()
+const actionListeners = new Set<() => void>()
+const subscribeActions = (listener: () => void) => { actionListeners.add(listener); return () => { actionListeners.delete(listener) } }
+const publishActions = () => { for (const listener of actionListeners) listener() }
 const installations = new Map<string, AbortController>()
 const changing = new Set<string>()
 const registry = createPluginRegistry()
 const getTranslation = () => translate(nessoStore.getState().preferences.locale ?? defaultLocale)
 export const getThemePresentation = (id: string) => themes.get(id)
 export const usePlugins = () => useSyncExternalStore(registry.subscribe, registry.getSnapshot)
+export const useExternalPluginsAvailable = () => useSyncExternalStore(registry.subscribe, registry.getExternalAvailable)
+export const usePluginActionsRunning = (name: string) => useSyncExternalStore(subscribeActions, () => [...active].some(([controller, source]) => source === name && !controller.signal.aborted))
 export const useViewActions = () => usePlugins().flatMap((plugin) => plugin.kind === 'actions' ? plugin.contribution.filter(({ supportsViews }) => supportsViews) : [])
-export const pluginMetadata = (plugin: PluginEntry, locale: Locale) => ({ name: resolvePluginText(plugin.i18n.metadata.name, locale), description: resolvePluginText(plugin.i18n.metadata.description, locale), documentation: resolvePluginText(plugin.i18n.metadata.documentation, locale) })
+export const pluginMetadata = (plugin: Pick<PluginEntry, 'i18n'>, locale: Locale) => ({ name: resolvePluginText(plugin.i18n.metadata.name, locale), description: resolvePluginText(plugin.i18n.metadata.description, locale), documentation: resolvePluginText(plugin.i18n.metadata.documentation, locale) })
 export const stopPluginActions = () => {
   for (const controller of active.keys()) controller.abort()
   for (const [id, controller] of installations) { controller.abort(); window.nessoPlugins?.cancel(id) }
 }
-export const stopExternalActions = (name: string) => { for (const [controller, source] of active) if (source === name) controller.abort() }
+export const stopExternalActions = (name: string) => {
+  let stopped = 0
+  for (const [controller, source] of active) if (source === name && !controller.signal.aborted) { controller.abort(); stopped++ }
+  return stopped
+}
 const result = <T>(reply: PluginResult<T>): T => {
   if ('issues' in reply) throw new PluginError('failed', [...reply.issues])
   return reply.value
@@ -50,7 +59,7 @@ const parseDefinitionCode = (kind: 'theme' | 'vocab', code: string, path: string
   return parseContribution(kind, raw)
 }
 const externalEntry = (prepared: InstalledPlugin, error?: string): PluginEntry => {
-  const entry = { id: prepared.name, version: prepared.version, i18n: prepared.i18n, contentId: prepared.contentId, npmIntegrity: prepared.npmIntegrity, disabled: !prepared.enabled, ...(error ? { error } : {}) }
+  const entry = { id: prepared.name, version: prepared.version, author: prepared.author, repository: prepared.repository, i18n: prepared.i18n, access: { writes: prepared.nesso.writes, capabilities: prepared.nesso.capabilities }, contentId: prepared.contentId, npmIntegrity: prepared.npmIntegrity, disabled: !prepared.enabled, ...(error ? { error } : {}) }
   return prepared.nesso.kind === 'actions' ? { ...entry, kind: 'actions', contribution: [] } : { ...entry, kind: prepared.nesso.kind }
 }
 type DiscoveredPlugin = { entry: PluginEntry; source?: ActionPackage; presentation?: ThemePresentation }
@@ -114,12 +123,13 @@ export async function initializeExternalPlugins(signal: AbortSignal) {
     }
     if (signal.aborted) return () => {}
     publish([...registry.getSnapshot(), ...entries], staged, true)
-    const failed = entries.filter((entry) => entry.error)
-    if (failed.length) notifications.api.notify({ tone: 'warning', title: t('pluginExternalFailed'), description: failed.map((entry) => pluginMetadata(entry, nessoStore.getState().preferences.locale ?? defaultLocale).name).join(', ') })
-  } catch { notifications.api.notify({ tone: 'warning', title: t('pluginExternalFailed') }) }
+    const failed = [...stored.issues.map(({ path }) => path), ...entries.filter((entry) => entry.error).map((entry) => pluginMetadata(entry, nessoStore.getState().preferences.locale ?? defaultLocale).name)]
+    if (failed.length) notifications.api.notify({ tone: 'warning', title: t('pluginExternalFailed'), description: `${t('pluginExternalFailedDescription')}\n\n${failed.join(', ')}` })
+  } catch { notifications.api.notify({ tone: 'warning', title: t('pluginExternalFailed'), description: t('pluginExternalFailedDescription') }) }
   if (signal.aborted) return () => {}
-  return bridge.subscribe((event) => {
+  const stop = bridge.subscribe((event) => {
     if (event.type === 'cancel') { installations.get(event.id)?.abort(); return }
+    if (event.type === 'approval') return
     const controller = new AbortController()
     installations.set(event.id, controller)
     void (async () => {
@@ -137,10 +147,11 @@ export async function initializeExternalPlugins(signal: AbortSignal) {
         publish([...registry.getSnapshot().filter((previous) => previous.id !== entry.id), entry], [discovered])
       } catch {
         await bridge.settle(event.id, event.package.contentId, false).catch(() => {})
-        notifications.api.notify({ tone: 'warning', title: t('pluginActionFailed') })
       } finally { if (locked) changing.delete(event.package.name); controller.abort(); installations.delete(event.id) }
     })()
-  })
+  }, true)
+  registry.setExternalAvailable(true)
+  return () => { registry.setExternalAvailable(false); stop() }
 }
 
 export async function setExternalPluginEnabled(contentId: string, enabled: boolean) {
@@ -156,7 +167,12 @@ export async function setExternalPluginEnabled(contentId: string, enabled: boole
     const discovered = enabled ? await discoverExternal({ ...prepared, enabled }, controller.signal, [], contentId) : undefined
     const record = result(await bridge.setEnabled(contentId, enabled))
     publish(registry.getSnapshot().map((previous) => previous.id === entry.id ? discovered?.entry ?? externalEntry(record) : previous), discovered ? [discovered] : [])
-  } catch { notifications.api.notify({ tone: 'warning', title: getTranslation()('pluginActionFailed') }) }
+    return true
+  } catch {
+    const t = getTranslation()
+    notifications.api.notify({ tone: 'warning', title: t(enabled ? 'pluginEnableFailed' : 'pluginDisableFailed'), description: t(enabled ? 'pluginEnableFailedDescription' : 'pluginDisableFailedDescription', { name: pluginMetadata(entry, nessoStore.getState().preferences.locale ?? defaultLocale).name }) })
+    return false
+  }
   finally { controller.abort(); changing.delete(entry.id) }
 }
 
@@ -168,7 +184,12 @@ export async function removeExternalPlugin(contentId: string) {
   try {
     result(await window.nessoPlugins.remove(contentId))
     publish(registry.getSnapshot().filter((plugin) => plugin.contentId !== contentId))
-  } catch { notifications.api.notify({ tone: 'warning', title: getTranslation()('pluginActionFailed') }) }
+    return true
+  } catch {
+    const t = getTranslation()
+    notifications.api.notify({ tone: 'warning', title: t('pluginRemoveFailed'), description: t('pluginRemoveFailedDescription', { name: pluginMetadata(entry, nessoStore.getState().preferences.locale ?? defaultLocale).name }) })
+    return false
+  }
   finally { changing.delete(entry.id) }
 }
 
@@ -180,7 +201,8 @@ export async function initializeBundledPlugins() {
     if (!response.ok) throw new PluginError('failed', [{ path: 'definition', message: 'Could not load bundled definition' }])
     const contribution = parseDefinitionCode(manifest.kind, await response.text(), `preinstalled/${id}/definition.json`)
     if (contribution.id !== id) throw new PluginError('denied', [{ path: 'contribution.id', message: 'Unexpected definition identity' }])
-    const entry = { id: source.name, version: source.version, i18n: parsePluginI18n(source.i18n) }
+    const { author, repository } = parsePackageIdentity(source)
+    const entry = { id: source.name, version: source.version, author, repository, i18n: parsePluginI18n(source.i18n) }
     if ('relationTypes' in contribution) return { ...entry, kind: 'vocab', contribution }
     const paths = [...new Set([...contribution.fonts.sans.faces, ...contribution.fonts.mono.faces].map(({ path }) => path))]
     const assets = new Map(await Promise.all(paths.map(async (path): Promise<[string, Uint8Array]> => {
@@ -202,7 +224,8 @@ export async function initializeBundledPlugins() {
     const packageEntry = { name: source.name, entry: `preinstalled/${id}/index.js`, manifest, i18n }
     const descriptors = await loadActions(nessoStore, packageEntry, notifications.api)
     actions.set(source.name, packageEntry)
-    return { id: source.name, version: source.version, kind: 'actions', i18n, contribution: descriptors }
+    const { author, repository } = parsePackageIdentity(source)
+    return { id: source.name, version: source.version, author, repository, kind: 'actions', i18n, access: { writes: manifest.writes, capabilities: manifest.capabilities }, contribution: descriptors }
   }))
   registry.replace([...entries, ...commands])
 }
@@ -213,12 +236,13 @@ export async function invokeAction(actionId: string, viewId = nessoStore.getStat
   if (!source || plugin?.kind !== 'actions' || changing.has(plugin.id)) return
   const controller = new AbortController()
   active.set(controller, source.name)
+  publishActions()
   try { await loadActions(nessoStore, source, notifications.api, window.nessoFiles, { actionId, viewId, descriptors: plugin.contribution }, controller.signal) }
   catch (error) {
     if (error instanceof PluginError && error.code === 'cancelled') return
     const t = getTranslation()
     const locale = nessoStore.getState().preferences.locale ?? defaultLocale
-    notifications.api.notify({ tone: 'warning', title: `${pluginMetadata(plugin, locale).name}: ${t('pluginActionFailed')}`, description: error instanceof PluginError ? error.displayMessage ? resolvePluginText(error.displayMessage, locale) : error.message : undefined })
+    notifications.api.notify({ tone: 'warning', title: t('pluginActionFailed'), description: [t('pluginActionFailedDescription', { name: pluginMetadata(plugin, locale).name }), error instanceof PluginError ? error.displayMessage ? resolvePluginText(error.displayMessage, locale) : error.message : undefined].filter(Boolean).join('\n\n') })
   }
-  finally { active.delete(controller) }
+  finally { active.delete(controller); publishActions() }
 }

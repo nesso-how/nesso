@@ -25,6 +25,35 @@ test('package identity binds normalized metadata, declarations, paths and exact 
   assert.deepEqual(prepared.i18n, manifest.i18n)
 })
 
+test('optional authors and GitHub repositories normalize to bounded display metadata bound to package identity', async () => {
+  const prepared = await preparePluginPackage({ manifest: { ...manifest, author: { name: 'Test Author', email: 'private@example.test', url: 'https://example.test' }, repository: { type: 'git', url: 'git+https://github.com/example/plugin.git', directory: 'packages/plugin' } }, files })
+  assert.equal(prepared.author, 'Test Author')
+  assert.equal(prepared.repository, 'https://github.com/example/plugin')
+  assert.deepEqual(await verifyPluginPackage(prepared), prepared)
+  for (const repository of ['https://github.com/example/plugin', 'https://github.com/example/plugin.git/', 'git+https://github.com/example/plugin.git', 'github:example/plugin']) {
+    const normalized = await preparePluginPackage({ manifest: { ...manifest, author: 'Test Author <private@example.test> (https://example.test)', repository }, files })
+    assert.equal(normalized.contentId, prepared.contentId)
+  }
+  for (const name of ['Test Author (fictional test author)', 'Test Author <private@example.test>', ' Test Author (https://example.test) ']) {
+    for (const author of [name, { name }]) {
+      const normalized = await preparePluginPackage({ manifest: { ...manifest, author }, files })
+      assert.equal(normalized.author, 'Test Author')
+      assert.deepEqual(await verifyPluginPackage(JSON.parse(JSON.stringify(normalized))), normalized)
+    }
+  }
+  for (const changed of [{ ...prepared, author: 'Someone else' }, { ...prepared, repository: 'https://github.com/example/another' }]) await assert.rejects(verifyPluginPackage(changed), { code: 'denied' })
+  const missing = await preparePluginPackage({ manifest, files })
+  assert.equal(missing.author, undefined)
+  assert.equal(missing.repository, undefined)
+  assert.notEqual(missing.contentId, prepared.contentId)
+  for (const author of [null, 12, {}, { name: '' }, '', ' '.repeat(8), 'a'.repeat(513), { name: 'a'.repeat(129) }, 'Name\nAnother']) {
+    assert.equal((await preparePluginPackage({ manifest: { ...manifest, author }, files })).author, undefined)
+  }
+  for (const repository of [null, 12, {}, { url: 12 }, 'a'.repeat(2049), 'http://github.com/example/plugin', 'git+ssh://git@github.com/example/plugin.git', 'https://github.com.evil.test/example/plugin', 'https://user:pass@github.com/example/plugin', 'https://github.com:444/example/plugin', 'https://github.com/example/plugin?redirect=other', 'https://github.com/example/plugin#main', 'https://github.com/example/plugin/tree/main', 'https://github.com/example', 'https://gitlab.com/example/plugin', 'javascript:alert(1)', 'https://github.com/example/plug\nin']) {
+    assert.equal((await preparePluginPackage({ manifest: { ...manifest, repository }, files })).repository, undefined)
+  }
+})
+
 test('action packages reject unsafe paths, extra assets, unsupported authority, non-UTF-8 code and inexact identities', async () => {
   for (const entry of ['../index.js', '/index.js', 'a//index.js', 'a\\index.js', 'index.js?q', 'index.ts', 'a/%2e/index.js']) await assert.rejects(preparePluginPackage({ manifest: { ...manifest, nesso: { ...manifest.nesso, entry } }, files }))
   for (const version of ['^1.0.0', '1.0.0-01', 'latest', 'v1.0.0', '=1.0.0', ' 1.0.0', '1.0.0 ', '1.0', '9007199254740992.0.0']) await assert.rejects(preparePluginPackage({ manifest: { ...manifest, version }, files }))

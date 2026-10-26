@@ -1,13 +1,17 @@
 import type { ThemeDefinition, VocabDefinition } from '@nesso/plugin'
 import { PluginError, type ActionDescriptor, type PluginI18n } from '@nesso/plugin/runtime'
+import type { PluginAccess } from '../../shared/plugins.ts'
 
 export type PluginEntry = {
   readonly id: string
   readonly version: string
+  readonly author?: string
+  readonly repository?: string
   readonly contentId?: string
   readonly npmIntegrity?: string
   readonly error?: string
   readonly disabled?: boolean
+  readonly access?: PluginAccess
   readonly i18n: PluginI18n
 } & (
   | { readonly kind: 'theme'; readonly contribution?: ThemeDefinition }
@@ -17,6 +21,7 @@ export type PluginEntry = {
 
 export function createPluginRegistry() {
   let entries: readonly PluginEntry[] = []
+  let externalAvailable = false
   const listeners = new Set<() => void>()
   const check = (next: readonly PluginEntry[]) => {
     const packages = new Set<string>()
@@ -33,6 +38,12 @@ export function createPluginRegistry() {
   }
   return {
     getSnapshot: () => entries,
+    getExternalAvailable: () => externalAvailable,
+    setExternalAvailable: (available: boolean) => {
+      if (externalAvailable === available) return
+      externalAvailable = available
+      for (const listener of listeners) listener()
+    },
     subscribe: (listener: () => void) => { listeners.add(listener); return () => listeners.delete(listener) },
     check,
     replace: (next: readonly PluginEntry[]) => {

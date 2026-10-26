@@ -20,6 +20,6 @@
 - Keep registry/lifecycle in `src/plugins`, notifications in `src/notifications`, theme application in `src/theme`, and app-specific UI in `src/components/app`. Keep implementation tests nearby and contract tests in `packages/plugin/test`.
 - Use the same isolated runtime for bundled and external actions; never import executable plugin modules into the host. Keep registry entries data-only, with preinstalled fallback and recovery independent of external code. Themes and vocabularies are validated JSON data, never executed.
 - Enforce accepted declarations on host-owned channels: validate raw requests, project only authorized data, and check entire batches before committing. Never trust the client as the security boundary.
-- Require exact-content installation consent before executing received code. Reject undeclared access without dynamic permission prompts; keep product confirmations separate from authorization.
+- Require host authorization bound to exact received content and declarations before executing received code. Reject undeclared access without dynamic permission prompts; keep product confirmations separate from authorization.
 - Revoke channels before teardown or replacement, cancel pending interactions, and ignore late replies without relying on plugin cleanup. Removing or failing a plugin must not delete document data.
 - Apply only validated theme tokens/fonts to host DOM; compose host overlays outside the trusted canvas.

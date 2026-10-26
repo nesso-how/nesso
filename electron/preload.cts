@@ -70,19 +70,29 @@ const files: FileBridge = {
   cancel: (id) => ipcRenderer.send('files:cancel', id),
 }
 contextBridge.exposeInMainWorld('nessoFiles', files)
+let pluginSubscribers = 0
 const plugins: PluginBridge = {
   list: () => ipcRenderer.invoke('plugins:list'),
+  search: (query, offset) => ipcRenderer.invoke('plugins:search', query, offset),
+  latest: (name) => ipcRenderer.invoke('plugins:latest', name),
   propose: (id, input, locale, replacing) => ipcRenderer.invoke('plugins:propose', id, input, locale, replacing),
   installNpm: (id, input, locale, replacing) => ipcRenderer.invoke('plugins:npm', id, input, locale, replacing),
   settle: (id, contentId, valid) => ipcRenderer.invoke('plugins:settle', id, contentId, valid),
   cancel: (id) => ipcRenderer.send('plugins:cancel', id),
+  approve: (challenge, allow) => ipcRenderer.invoke('plugins:approve', challenge, allow),
   remove: (contentId) => ipcRenderer.invoke('plugins:remove', contentId),
   setEnabled: (contentId, enabled) => ipcRenderer.invoke('plugins:enabled', contentId, enabled),
-  subscribe: (listener) => {
+  subscribe: (listener, runtime = false) => {
     const receive = (_event: unknown, event: Parameters<typeof listener>[0]) => listener(event)
+    let active = true
     ipcRenderer.on('plugins:event', receive)
-    ipcRenderer.send('plugins:ready')
-    return () => { ipcRenderer.removeListener('plugins:event', receive); ipcRenderer.send('plugins:disconnect') }
+    if (runtime && ++pluginSubscribers === 1) ipcRenderer.send('plugins:ready')
+    return () => {
+      if (!active) return
+      active = false
+      ipcRenderer.removeListener('plugins:event', receive)
+      if (runtime && --pluginSubscribers === 0) ipcRenderer.send('plugins:disconnect')
+    }
   },
 }
 contextBridge.exposeInMainWorld('nessoPlugins', plugins)

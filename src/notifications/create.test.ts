@@ -40,3 +40,16 @@ test('notification queues own messages and actions, stay isolated and notify onl
   assert.equal(confirm.mock.callCount(), 0)
   assert.equal(cancel.mock.callCount(), 0)
 })
+
+test('host informational notifications own their optional actions', (context) => {
+  const queue = createNotifications()
+  const undo = context.mock.fn()
+  const draft = { tone: 'info' as const, title: 'Theme changed', action: { label: 'Undo', onClick: undo } }
+  queue.api.notify(draft)
+  draft.action.label = 'Changed'
+  draft.action.onClick = context.mock.fn()
+  const [item] = queue.getSnapshot()
+  assert.equal(item.action?.label, 'Undo')
+  item.action?.onClick()
+  assert.equal(undo.mock.callCount(), 1)
+})

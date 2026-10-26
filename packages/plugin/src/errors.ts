@@ -1,4 +1,5 @@
 import { NessoError, type ErrorIssue } from '@nesso/errors'
+import type { ZodType } from 'zod'
 import type { LocalizedText } from './i18n.ts'
 
 const boundText = (text: string, limit: number) => {
@@ -24,4 +25,10 @@ export class PluginError extends NessoError {
     this.code = code
     if (displayMessage) this.displayMessage = { en: boundText(displayMessage.en, 2048), ...(displayMessage.it !== undefined ? { it: boundText(displayMessage.it, 2048) } : {}), ...(displayMessage['zh-CN'] !== undefined ? { 'zh-CN': boundText(displayMessage['zh-CN'], 2048) } : {}) }
   }
+}
+
+export function parseOrThrow(schema: ZodType, value: unknown, prefix = ''): any {
+  const parsed = schema.safeParse(value)
+  if (!parsed.success) throw new PluginError('invalid-input', parsed.error.issues.map((issue) => ({ path: `${prefix}${issue.path.join('.')}`, message: issue.message })))
+  return parsed.data
 }

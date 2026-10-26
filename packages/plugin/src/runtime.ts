@@ -1,13 +1,13 @@
 import { z } from 'zod'
 import type { DeepReadonly, GraphSnapshot, NessoOperation, Selection, SavedView, VocabDefinition } from './types.ts'
 import type { Locale } from '@nesso/i18n'
-import { PluginError } from './errors.ts'
+import { parseOrThrow, PluginError } from './errors.ts'
 import { parseDefinition, themeColors, type Definition } from './definitions.ts'
 import { fileOpenOptions, fileOpenResult, fileSaveOptions, type FileOpenOptions, type FileOpenResult, type FileSaveOptions } from './files.ts'
 import { createWriteCommands } from './commands.ts'
 import { localizedText, text, type LocalizedText } from './i18n.ts'
 export { resolvePluginText, type LocalizedText } from './i18n.ts'
-export { PluginError } from './errors.ts'
+export { parseOrThrow, PluginError } from './errors.ts'
 export { parseDefinition, themeColors, type Definition } from './definitions.ts'
 export { parseFileOptions, fileTextLimit, type FileOpenOptions, type FileSaveOptions, type FileOpenResult } from './files.ts'
 
@@ -55,9 +55,7 @@ export type PluginI18n = DeepReadonly<{ metadata: z.infer<typeof metadata>; [key
 
 export function parsePluginI18n(value: unknown): PluginI18n {
   checkMessageSize(value, 64 * 1024)
-  const parsed = pluginI18n.safeParse(value)
-  if (!parsed.success) throw new PluginError('invalid-input', parsed.error.issues.slice(0, 32).map((issue) => ({ path: `i18n.${issue.path.join('.')}`, message: issue.message })))
-  return parsed.data
+  return parseOrThrow(pluginI18n, value, 'i18n.')
 }
 
 const manifestFields = {
@@ -76,9 +74,7 @@ export type PluginManifest = DeepReadonly<z.infer<typeof manifest>>
 
 export function parsePluginManifest(value: unknown): z.infer<typeof manifest> {
   checkMessageSize(value, 64 * 1024)
-  const parsed = manifest.safeParse(value)
-  if (!parsed.success) throw new PluginError('invalid-input', parsed.error.issues.slice(0, 32).map((issue) => ({ path: issue.path.join('.'), message: issue.message })))
-  return parsed.data
+  return parseOrThrow(manifest, value)
 }
 const envelope = { type: z.literal('request'), id: z.number().int().positive(), contextId: id }
 const request = z.discriminatedUnion('method', [
@@ -100,9 +96,7 @@ export function parseContribution(kind: 'actions', value: unknown): readonly Act
 export function parseContribution(kind: 'theme' | 'vocab' | 'actions', value: unknown): Definition | readonly ActionDescriptor[] {
   checkMessageSize(value, 1024 * 1024)
   if (kind === 'theme' || kind === 'vocab') return parseDefinition(kind, value)
-  const parsed = actionDescriptors.safeParse(value)
-  if (!parsed.success) throw new PluginError('invalid-input', parsed.error.issues.map((issue) => ({ path: issue.path.join('.'), message: issue.message })))
-  return parsed.data
+  return parseOrThrow(actionDescriptors, value)
 }
 
 export type BaseState = {
@@ -164,9 +158,12 @@ const results = {
 
 export function parsePluginMessage(value: unknown): z.infer<typeof message> {
   checkMessageSize(value, runtimeLimits.request)
-  const parsed = message.safeParse(value)
-  if (!parsed.success) throw new PluginError('invalid-input', parsed.error.issues.slice(0, 32).map((issue) => ({ path: issue.path.join('.'), message: issue.message })))
-  return parsed.data
+  return parseOrThrow(message, value)
+}
+
+export async function sha256Hex(bytes: Uint8Array): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', new Uint8Array(bytes))
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('')
 }
 
 export function checkMessageSize(value: unknown, limit: number): void {
@@ -185,9 +182,8 @@ export function checkMessageSize(value: unknown, limit: number): void {
 export function createPluginClient<S extends BaseState>(port: MessagePort, initial: S) {
   const schema = 'viewGraph' in initial ? viewStateSchema : baseStateSchema
   const reply = replies(schema)
-  const parsedState = schema.safeParse(initial)
-  if (!parsedState.success) throw new PluginError('invalid-input', parsedState.error.issues.slice(0, 32).map((issue) => ({ path: issue.path.join('.'), message: issue.message })))
-  let state = parsedState.data as S
+  const parsedState = parseOrThrow(schema, initial) as S
+  let state = parsedState
   let sequence = 0
   const listeners = new Set<() => void>()
   const controller = new AbortController()
