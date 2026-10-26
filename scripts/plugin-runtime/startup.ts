@@ -5,7 +5,7 @@ import { waitFor, type CheckContext } from './helpers.ts'
 
 export async function verifyStartup({ window, url }: CheckContext) {
   let release = () => {}
-  const hold = () => new Promise((resolve) => { release = () => resolve({ value: { safeMode: false, packages: [] } }) })
+  const hold = () => new Promise((resolve) => { release = () => resolve({ value: { safeMode: false, packages: [], issues: [] } }) })
   let listing = hold()
   ipcMain.handle('plugins:list', () => listing)
   ipcMain.handle('storage:read', () => ({ value: undefined }))

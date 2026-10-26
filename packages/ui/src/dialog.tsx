@@ -1,6 +1,6 @@
 import { Dialog } from '@base-ui/react/dialog'
 import { cn } from 'cn'
-import type { ReactNode } from 'react'
+import { useRef, type ReactNode } from 'react'
 import { Button } from './button'
 
 export { Dialog }
@@ -30,14 +30,15 @@ export function ConfirmDialog({ open, onOpenChange, title, description, cancelLa
   finalFocus?: Dialog.Popup.Props['finalFocus']
   children?: ReactNode
 }) {
+  const cancel = useRef<HTMLButtonElement>(null)
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
-      <DialogPopup initialFocus={initialFocus} finalFocus={finalFocus}>
+      <DialogPopup initialFocus={initialFocus ?? cancel} finalFocus={finalFocus}>
         <Dialog.Title className="text-sm">{title}</Dialog.Title>
         <Dialog.Description className="mt-2 text-xs text-muted-foreground">{description}</Dialog.Description>
         {children}
         <DialogActions>
-          <Dialog.Close render={<Button variant="outline" />}>{cancelLabel}</Dialog.Close>
+          <Dialog.Close render={<Button ref={cancel} variant="outline" />}>{cancelLabel}</Dialog.Close>
           <Button onClick={onConfirm}>{confirmLabel}</Button>
         </DialogActions>
       </DialogPopup>

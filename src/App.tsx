@@ -19,6 +19,7 @@ import { completeIntro } from '@/store/intro'
 import { DeleteViewDialog } from '@/components/app/DeleteViewDialog'
 import { GraphWorkspace } from '@/components/app/GraphWorkspace'
 import { isEditableTarget } from '@/graph/interactions'
+import { PluginApprovalDialog } from '@/components/app/PluginApprovalDialog'
 
 export default function App({ persistence }: { persistence: ReturnType<typeof startAutosave> }) {
   const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale)
@@ -100,10 +101,11 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
         )}
         <PersistenceBanner persistence={persistence} />
       </SidebarProvider>
-      <ToastsHost />
+      {(readonly || !settingsOpen) && <ToastsHost />}
       <Dialog.Root open={!readonly && settingsOpen} onOpenChange={setSettingsOpen}>
-        {!readonly && settingsOpen && <SettingsDialog page={settingsPage} onPageChange={setSettingsPage} onDiscover={() => { setSettingsOpen(false); setIntroOpen(true) }} onBeforeReload={persistence.save} />}
+        {!readonly && settingsOpen && <SettingsDialog page={settingsPage} onPageChange={setSettingsPage} onDiscover={() => { setSettingsOpen(false); setIntroOpen(true) }} />}
       </Dialog.Root>
+      {window.nessoPlugins && <PluginApprovalDialog bridge={window.nessoPlugins} />}
       {window.nessoDataLocation && <DataTransferDialog bridge={window.nessoDataLocation} />}
       <DeleteViewDialog target={deleting} onClose={() => setDeleting(null)} finalFocus={() => canvas.current} />
     </>

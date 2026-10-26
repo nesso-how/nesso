@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { baseState, waitFor, type CheckContext } from './helpers.ts'
+import { baseState, countWorkers, waitFor, type CheckContext } from './helpers.ts'
 
 export async function verifyWorker({ window, url, name, attempted }: CheckContext) {
   const code = `export const create=({store,notifications,clipboard})=>{
@@ -23,10 +23,7 @@ export async function verifyWorker({ window, url, name, attempted }: CheckContex
   }]}`
   await window.loadURL(`${new URL('plugin-runner/actions.html', url)}#probe`)
   window.webContents.debugger.attach()
-  const workers = async () => {
-    const { targetInfos } = await window.webContents.debugger.sendCommand('Target.getTargets')
-    return targetInfos.filter((target: { type: string }) => target.type === 'worker').length as number
-  }
+  const workers = () => countWorkers(window)
   const before = await workers()
   const state = baseState()
   await window.webContents.executeJavaScript(`

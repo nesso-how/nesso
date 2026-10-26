@@ -1,9 +1,7 @@
-import { PluginError, themeTokens } from '@nesso/plugin/runtime'
+import { PluginError, sha256Hex, themeTokens } from '@nesso/plugin/runtime'
 import type { ThemeDefinition } from '@nesso/plugin'
 
 export type ThemePresentation = { readonly tokens: Readonly<Record<typeof themeTokens[number], string>>; readonly fontStyles: string }
-
-const digest = async (bytes: Uint8Array) => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new Uint8Array(bytes))), (byte) => byte.toString(16).padStart(2, '0')).join('')
 
 export async function prepareTheme(theme: ThemeDefinition, assets: ReadonlyMap<string, Uint8Array>): Promise<ThemePresentation> {
   const paths = [...new Set([...theme.fonts.sans.faces, ...theme.fonts.mono.faces].map(({ path }) => path))].sort()
@@ -11,9 +9,9 @@ export async function prepareTheme(theme: ThemeDefinition, assets: ReadonlyMap<s
   for (const path of paths) {
     const bytes = assets.get(path)
     if (!bytes || bytes.byteLength > 4 * 1024 * 1024 || new TextDecoder().decode(bytes.subarray(0, 4)) !== 'wOF2') throw new PluginError('invalid-input', [{ path, message: 'Expected an admitted WOFF2 font within the font budget' }])
-    fingerprints.push(await digest(bytes))
+    fingerprints.push(await sha256Hex(bytes))
   }
-  const hash = await digest(new TextEncoder().encode(fingerprints.join('\n')))
+  const hash = await sha256Hex(new TextEncoder().encode(fingerprints.join('\n')))
   const tokens: Record<string, string> = { ...theme.colors }
   for (const [key, value] of Object.entries(theme.metrics)) tokens[key] = `${value}${key === 'duration-state' ? 'ms' : 'px'}`
   const rules: string[] = []

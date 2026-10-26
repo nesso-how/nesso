@@ -21,4 +21,4 @@ await window.nessoPlugins.propose(
 )
 ```
 
-Approve the native consent dialog. Installation persists; disable or remove it in Settings. To replace a build, pass its installed `contentId` as the fourth argument; changed content requires fresh consent.
+Approve the Nesso access dialog. Installation persists; disable or remove it in Settings. To replace a build, pass its installed `contentId` as the fourth argument; development proposals require fresh approval.

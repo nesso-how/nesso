@@ -20,7 +20,7 @@ for (const { scenario, platform } of selected) {
   const name = `${scenario}/${platform}`
   const profile = mkdtempSync(path.join(tmpdir(), `nesso-${scenario}-${platform}-`))
   console.log(`${name}: starting`)
-  const result = spawnSync(electron, [harness, scenario, platform, profile], { stdio: 'inherit', timeout: 75_000, killSignal: 'SIGKILL' })
+  const result = spawnSync(electron, [harness, scenario, platform, profile, ...(scenario === 'safe-plugins' ? ['--safe-plugins'] : [])], { stdio: 'inherit', timeout: 75_000, killSignal: 'SIGKILL' })
   if (result.status === 0) rmSync(profile, { recursive: true, force: true })
   else {
     const message = result.error?.message ?? (result.signal ? `Terminated by ${result.signal}` : `Exited with status ${result.status}`)

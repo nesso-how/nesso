@@ -60,7 +60,7 @@ flowchart TD
   Plugins -.-> Contract
 ```
 
-The host owns state, materializes `viewGraph`, and handles deletion confirmation, clipboard access, and shortcut routing. The trusted renderer owns geometry and gestures, updates selection through the store, and delegates deletion and clipboard actions to the host; plugins use isolated, validated channels. External package installation is desktop bridge-only, without installation controls in Settings. Dashed arrows show shared contract types.
+The host owns state, materializes `viewGraph`, and handles deletion confirmation, clipboard access, and shortcut routing. The trusted renderer owns geometry and gestures, updates selection through the store, and delegates deletion and clipboard actions to the host; plugins use isolated, validated channels. Settings → Plugins manages external npm packages through the desktop bridge; web runs bundled plugins only. Dashed arrows show shared contract types.
 
 | Package | Kind | Responsibility |
 | --- | --- | --- |
@@ -100,6 +100,16 @@ For release instructions, run `pnpm release --help`.
 
 Plugins contribute vocabularies, actions, or themes. Renderers are trusted Nesso packages, not installable plugins.
 See the [plugin guide](packages/plugin/README.md#create-a-plugin) to get started.
+
+## Troubleshooting
+
+If a suspected plugin problem prevents startup, quit Nesso completely and relaunch it with `--safe-plugins`:
+
+- **macOS:** `open -a Nesso --args --safe-plugins`
+- **Windows (PowerShell):** `& "C:\path\to\Nesso.exe" --safe-plugins`
+- **Linux:** `nesso --safe-plugins`, or `./Nesso-<version>-<arch>.AppImage` for an AppImage.
+
+Installed packages and documents are preserved. Quit and relaunch without the flag to resume normal operation.
 
 ## License
 
