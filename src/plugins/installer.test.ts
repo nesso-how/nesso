@@ -61,6 +61,21 @@ test('cancellation skips queued packages but reports an already committed update
   assert.deepEqual(installer.getSnapshot().skipped, ['second@1.2.0'])
 })
 
+test('successful updates retain earlier results while later batch items run', async () => {
+  const pending: Array<PromiseWithResolvers<PluginResult<InstalledPlugin | null>>> = []
+  const installer = createPluginInstaller({ cancel: () => {}, installNpm: async () => { const next = Promise.withResolvers<PluginResult<InstalledPlugin | null>>(); pending.push(next); return next.promise } }, () => 'en', () => {})
+  const running = installer.start([target('first'), target('second')])
+  while (pending.length < 1) await new Promise((resolve) => setTimeout(resolve, 0))
+  pending[0].resolve({ value: { ...target('first').package, code: 'test', contentId: 'first-content', fonts: [], enabled: false } })
+  while (pending.length < 2) await new Promise((resolve) => setTimeout(resolve, 0))
+  assert.equal(installer.getSnapshot().attempt?.name, 'second')
+  assert.equal(installer.getSnapshot().updated, 'first@1.2.0')
+  pending[1].resolve({ value: { ...target('second').package, code: 'test', contentId: 'second-content', fonts: [], enabled: false } })
+  await running
+  assert.equal(installer.getSnapshot().updated, 'second@1.2.0')
+  assert.equal(installer.getSnapshot().running, false)
+})
+
 test('cancelled update batches retain attempted and queued skips until the next attempt', async () => {
   const pending = Promise.withResolvers<PluginResult<InstalledPlugin | null>>()
   const installer = createPluginInstaller({ cancel: () => {}, installNpm: async () => pending.promise }, () => 'en', () => {})

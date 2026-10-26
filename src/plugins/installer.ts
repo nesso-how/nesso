@@ -22,6 +22,7 @@ export function createPluginInstaller(bridge: Pick<PluginBridge, 'installNpm' | 
       cancelled = false
       const queue = targets.map((target) => ({ ...target, package: { ...target.package } }))
       let skipped: readonly string[] = []
+      let updated: string | undefined
       publish({ running: true })
       for (const [index, target] of queue.entries()) {
         if (cancelled) {
@@ -29,15 +30,16 @@ export function createPluginInstaller(bridge: Pick<PluginBridge, 'installNpm' | 
           break
         }
         const id = crypto.randomUUID()
-        publish({ running: true, skipped, attempt: { id, name: target.package.name, version: target.package.version, replacing: target.replacing, installing: false } })
+        publish({ running: true, skipped, ...(updated ? { updated } : {}), attempt: { id, name: target.package.name, version: target.package.version, replacing: target.replacing, installing: false } })
         let result: Outcome['result']
         try { result = await bridge.installNpm(id, { name: target.package.name, version: target.package.version }, locale(), target.replacing) }
         catch { result = { issues: [{ path: 'plugins', message: 'Could not install the package. The previous installation is unchanged.' }] } }
         notify({ target, result })
         if ('value' in result && !result.value && target.replacing) skipped = [...skipped, `${target.package.name}@${target.package.version}`]
-        publish({ running: true, skipped, ...('value' in result && result.value ? { updated: `${result.value.name}@${result.value.version}` } : {}) })
+        if ('value' in result && result.value) updated = `${result.value.name}@${result.value.version}`
+        publish({ running: true, skipped, ...(updated ? { updated } : {}) })
       }
-      publish({ running: false, updated: state.updated, skipped })
+      publish({ running: false, updated, skipped })
     },
   }
 }
