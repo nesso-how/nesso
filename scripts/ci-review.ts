@@ -1,6 +1,7 @@
 import { spawnSync } from 'node:child_process';
 import { appendFileSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { NessoError } from '@nesso/errors';
 
 type ReviewEvent = { type: string; part?: { messageID: string; text: string } };
@@ -11,13 +12,22 @@ function required(name: string): string {
   return value;
 }
 
-function formatReport(result: string, head: string): string {
+function sanitizeReport(report: string): string {
+  const cleaned = report.replace(/<think>[\s\S]*?(<\/think>|$)/gi, '').replace(/<!--[\s\S]*?-->/g, '').trim();
+  if (!cleaned) throw new NessoError([{ path: 'opencode', message: 'review returned no final text' }]);
+  if (/｜DSML｜/.test(cleaned)) throw new NessoError([{ path: 'opencode', message: 'review leaked internal reasoning' }]);
+  if (!/verdict/i.test(cleaned)) throw new NessoError([{ path: 'opencode', message: 'review returned no verdict' }]);
+  return cleaned;
+}
+
+export function formatReport(result: string, head: string): string {
   const events = result.split('\n').filter(line => line.trim()).map(line => JSON.parse(line) as ReviewEvent);
   if (events.some(event => event.type === 'error')) throw new NessoError([{ path: 'opencode', message: 'review failed' }]);
   const parts = events.flatMap(event => event.type === 'text' && event.part ? [event.part] : []);
   const message = parts.at(-1)?.messageID;
-  const report = parts.filter(part => part.messageID === message).map(part => part.text).join('\n').trim();
-  if (!report) throw new NessoError([{ path: 'opencode', message: 'review returned no final text' }]);
+  const raw = parts.filter(part => part.messageID === message).map(part => part.text).join('\n').trim();
+  if (!raw) throw new NessoError([{ path: 'opencode', message: 'review returned no final text' }]);
+  const report = sanitizeReport(raw);
   const body = report.length > 55000 ? `${report.slice(0, 55000)}\n\nReport truncated.` : report;
   return `## OpenCode advisory review\n\nCommit: ${head}\n\n${body}\n`;
 }
@@ -44,7 +54,8 @@ async function main(): Promise<void> {
 
   mkdirSync(config, { recursive: true });
   const diff = join(configHome, 'changes.diff');
-  writeFileSync(diff, git('diff', '--no-ext-diff', '--no-textconv', `${base}...${head}`));
+  const history = git('log', '--reverse', '--format=- %h %s', '--shortstat', `${base}..${head}`);
+  writeFileSync(diff, `Commits under review (oldest first):\n\n${history}\n\n${git('diff', '--no-ext-diff', '--no-textconv', `${base}...${head}`)}`);
 
   const response = await fetch('https://opencode.ai/console/api/v2/config', {
     headers: { Authorization: `Bearer ${token}` },
@@ -64,7 +75,7 @@ async function main(): Promise<void> {
   delete env.GH_TOKEN;
   const review = spawnSync('opencode', [
     'run', '--standalone', '--agent', 'review', '--model', model, '--format', 'json',
-    '--file', diff, 'Review the attached PR diff against the checked-out repository.',
+    '--file', diff, 'Review the attached PR diff against the checked-out repository. The attachment starts with the commit list; walk related changes commit by commit, highest-risk paths first. Reply with only the finished Markdown review: a Summary, a Findings section listing each issue with file paths and severity (or state that no blocking issues were found), and a Verdict section with exactly one of approve, request changes, or comment. Do not include reasoning, tool calls, or anything outside the review.',
   ], { cwd: root, env, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
   if (review.status !== 0) {
     const output = (review.stderr || review.stdout || 'no output').trim().slice(-4000);
@@ -75,10 +86,12 @@ async function main(): Promise<void> {
   appendFileSync(output, 'ready=true\n');
 }
 
-try {
-  await main();
-} catch (error) {
-  const failure = error instanceof NessoError ? error : new NessoError([{ path: 'ci-review', message: error instanceof Error ? error.message : String(error) }]);
-  console.error(failure.message);
-  process.exitCode = 1;
+if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
+  try {
+    await main();
+  } catch (error) {
+    const failure = error instanceof NessoError ? error : new NessoError([{ path: 'ci-review', message: error instanceof Error ? error.message : String(error) }]);
+    console.error(failure.message);
+    process.exitCode = 1;
+  }
 }
