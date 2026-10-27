@@ -28,6 +28,8 @@
   "toggleInteractions": "切换交互状态",
   "shortcutsTitle": "概念图",
   "shortcutRename": "重命名所选概念",
+  "shortcutBold": "切换粗体",
+  "shortcutItalic": "切换斜体",
   "shortcutFitView": "适应视图",
   "shortcutOutside": "切换背景视图"
 }

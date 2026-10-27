@@ -149,6 +149,15 @@ export function Canvas({ readOnly = false, preview = false, bottomInset = 0, con
   const allBold = selectedConcepts.length > 0 && selectedConcepts.every((concept) => concept.bold)
   const allItalic = selectedConcepts.length > 0 && selectedConcepts.every((concept) => concept.italic)
   const canEmphasize = interactive && selectedConcepts.length > 0
+  const toggleBold = () => {
+    if (!canEmphasize) return
+    write(selectedConcepts.map(({ id }) => ({ kind: 'concept.bold', id, value: !allBold })))
+  }
+  const toggleItalic = () => {
+    if (!canEmphasize) return
+    write(selectedConcepts.map(({ id }) => ({ kind: 'concept.italic', id, value: !allItalic })))
+  }
+  const emphasizeModifier = /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl'
   const canUndo = useNesso((state) => state.history.canUndo)
   const canRedo = useNesso((state) => state.history.canRedo)
 
@@ -294,6 +303,16 @@ export function Canvas({ readOnly = false, preview = false, bottomInset = 0, con
         return
       }
       if (readOnly) return
+      if ((event.metaKey || event.ctrlKey) && !event.altKey && !event.shiftKey && !hasOverlay) {
+        const key = event.key.toLowerCase()
+        if (key === 'b' || key === 'i') {
+          if (!interactive || !canEmphasize || event.repeat) return
+          event.preventDefault()
+          if (key === 'b') toggleBold()
+          else toggleItalic()
+          return
+        }
+      }
       if (!event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey && event.key === 'Enter' && interactive && !(event.target instanceof Element && event.target.closest('button'))) {
         const current = store.getState().selected
         if (current.length === 1 && current[0].kind === 'concept') {
@@ -383,10 +402,10 @@ export function Canvas({ readOnly = false, preview = false, bottomInset = 0, con
             <ControlButton onClick={store.redo} disabled={!canRedo} title={t('redo')} aria-label={t('redo')}>
               <Redo2 aria-hidden="true" />
             </ControlButton>
-            <ControlButton onClick={() => { write(selectedConcepts.map(({ id }) => ({ kind: 'concept.bold', id, value: !allBold }))) }} disabled={!canEmphasize} title={t('bold')} aria-label={t('bold')} aria-pressed={allBold}>
+            <ControlButton onClick={toggleBold} disabled={!canEmphasize} title={`${t('bold')} (${emphasizeModifier === '⌘' ? '⌘B' : 'Ctrl+B'})`} aria-label={t('bold')} aria-keyshortcuts="Control+b Meta+b" aria-pressed={allBold}>
               <Bold aria-hidden="true" />
             </ControlButton>
-            <ControlButton onClick={() => { write(selectedConcepts.map(({ id }) => ({ kind: 'concept.italic', id, value: !allItalic }))) }} disabled={!canEmphasize} title={t('italic')} aria-label={t('italic')} aria-pressed={allItalic}>
+            <ControlButton onClick={toggleItalic} disabled={!canEmphasize} title={`${t('italic')} (${emphasizeModifier === '⌘' ? '⌘I' : 'Ctrl+I'})`} aria-label={t('italic')} aria-keyshortcuts="Control+i Meta+i" aria-pressed={allItalic}>
               <Italic aria-hidden="true" />
             </ControlButton>
             <ControlButton onClick={() => { void commands.copy() }} disabled={selected.length === 0} title={t('copy')} aria-label={t('copy')}>

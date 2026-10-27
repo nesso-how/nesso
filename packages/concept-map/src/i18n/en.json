@@ -29,6 +29,8 @@
   "toggleInteractions": "Toggle interactions",
   "shortcutsTitle": "Concept map",
   "shortcutRename": "Rename selected concept",
+  "shortcutBold": "Toggle bold",
+  "shortcutItalic": "Toggle italic",
   "shortcutFitView": "Fit view",
   "shortcutOutside": "Toggle background views"
 }
