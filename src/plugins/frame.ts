@@ -1,8 +1,7 @@
-import { PluginError, runtimeLimits, type BaseState } from '@nesso-how/plugin/runtime'
+import { PluginError, runtimeLimits } from '@nesso-how/plugin/runtime'
 
 export function loadPluginFrame(element: HTMLIFrameElement, assets: { entry: string | Uint8Array }, connect: (port: MessagePort, ready: () => void, failed: (error: PluginError) => void) => {
   close: () => void
-  bootstrap: { state: BaseState; mode: 'actions'; kind: 'actions' }
 }, failed: (error: PluginError) => void) {
   const controller = new AbortController()
   const token = crypto.randomUUID()
@@ -43,7 +42,7 @@ export function loadPluginFrame(element: HTMLIFrameElement, assets: { entry: str
       const channel = new MessageChannel()
       try {
         connection = connect(channel.port1, () => clearTimeout(deadline), fail)
-        element.contentWindow!.postMessage({ ...connection.bootstrap, type: 'bootstrap', token, entry: source }, '*', [channel.port2])
+        element.contentWindow!.postMessage({ type: 'bootstrap', token, entry: source }, '*', [channel.port2])
       } catch (error) {
         channel.port1.close()
         channel.port2.close()

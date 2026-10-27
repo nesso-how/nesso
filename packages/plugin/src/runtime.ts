@@ -93,7 +93,7 @@ export const actionIconNames = ['arrow-right', 'book-open', 'clipboard-paste', '
 export type ActionIconName = typeof actionIconNames[number]
 const actionDescriptors = z.array(actionDescriptor).min(1).max(64).refine((value) => new Set(value.map(({ id }) => id)).size === value.length, 'Action IDs must be unique')
 export type ActionDescriptor = DeepReadonly<z.infer<typeof actionDescriptor>>
-export type ActionContribution = ActionDescriptor & { readonly run: (invocation: { readonly viewId: string | null }) => void | Promise<void> }
+export type ActionContribution = ActionDescriptor & { readonly run: (context: ActionContext) => void | Promise<void> }
 
 export function parseContribution(kind: 'theme' | 'vocab', value: unknown): Definition
 export function parseContribution(kind: 'actions', value: unknown): readonly ActionDescriptor[]
@@ -103,15 +103,12 @@ export function parseContribution(kind: 'theme' | 'vocab' | 'actions', value: un
   return parseOrThrow(actionDescriptors, value)
 }
 
-export type BaseState = {
+export type ActionState = {
   readonly revision: number
   readonly contextId: string
   readonly locale: Locale
   readonly theme: Readonly<Record<string, string>>
   readonly conceptPlacementOffset: Readonly<{ x: number; y: number }>
-}
-
-export type ViewState = BaseState & {
   readonly viewGraph: GraphSnapshot
   readonly selected: Selection
   readonly workspace: { readonly activeViewId: string | null; readonly savedViews: readonly Pick<SavedView, 'id' | 'name' | 'pinned'>[] }
@@ -120,35 +117,37 @@ export type ViewState = BaseState & {
   readonly history: { readonly canUndo: boolean; readonly canRedo: boolean }
 }
 
-export type ActionState = BaseState | ViewState
-
 type WriteOptions = { readonly historyGroup?: string }
 type PluginWrites = Omit<ReturnType<typeof createWriteCommands<Promise<void>, Promise<string>>>, 'undo' | 'redo' | 'setView' | 'setActiveVocab' | 'setActiveTheme' | 'setLocale' | 'setPanelSizes' | 'setSectionOpen' | 'createView' | 'renameView' | 'setViewPinned' | 'deleteView'>
-export type PluginContext<S extends BaseState = BaseState> = {
+export type ActionContext = {
+  readonly viewId: string | null
   readonly store: PluginWrites & {
-    readonly getState: () => S
+    readonly getState: () => ActionState
     readonly subscribe: (listener: () => void) => () => void
-    readonly refresh: () => Promise<S>
+    readonly refresh: () => Promise<ActionState>
     readonly applyOperations: (operations: readonly NessoOperation[], options?: WriteOptions) => Promise<{ readonly revision: number; readonly changed: boolean }>
   }
   readonly notifications: { readonly notify: (value: { readonly tone: 'info' | 'warning'; readonly title: LocalizedText; readonly description?: LocalizedText }) => Promise<string> }
   readonly files: { readonly open: (options: FileOpenOptions) => Promise<FileOpenResult>; readonly save: (options: FileSaveOptions) => Promise<{ readonly saved: boolean }> }
   readonly signal: AbortSignal
 }
-export type ActionContext = PluginContext<ActionState>
 
 const graph = z.strictObject({ concepts: z.array(z.strictObject({ id, label: z.string(), description: z.string().optional(), color: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(), bold: z.boolean().optional(), italic: z.boolean().optional(), position })), relationTypes: z.array(relationType), relations: z.array(z.strictObject({ source: id, predicate: id, target: id })) })
-const baseStateSchema = z.strictObject({
+const actionStateSchema = z.strictObject({
   revision: z.number().int().nonnegative(), contextId: id, locale,
   theme: z.strictObject(Object.fromEntries(themeTokens.map((token) => [token, z.string().max(512).regex(/^[#\w\s.,()%/"'-]*$/)]))),
   conceptPlacementOffset: position,
+  viewGraph: graph,
+  selected: selection,
+  targetViewId: id.nullable(),
+  activeVocab: z.strictObject({ id, relationTypes: z.array(relationType), defaultTypeId: id }).nullable(),
+  history: z.strictObject({ canUndo: z.boolean(), canRedo: z.boolean() }),
+  workspace: z.strictObject({ activeViewId: id.nullable(), savedViews: z.array(z.strictObject({ id, name: z.string(), pinned: z.boolean() })) }),
 })
-const viewStateSchema = baseStateSchema.extend({ viewGraph: graph, selected: selection, targetViewId: id.nullable(), activeVocab: z.strictObject({ id, relationTypes: z.array(relationType), defaultTypeId: id }).nullable(), history: z.strictObject({ canUndo: z.boolean(), canRedo: z.boolean() }), workspace: z.strictObject({ activeViewId: id.nullable(), savedViews: z.array(z.strictObject({ id, name: z.string(), pinned: z.boolean(), conceptIds: z.array(id).optional() })) }) })
-const replies = (state: z.ZodType) => z.union([
-  z.strictObject({ type: z.literal('state'), state }),
+const reply = z.union([
+  z.strictObject({ type: z.literal('state'), state: actionStateSchema }),
   z.strictObject({ type: z.literal('response'), id: z.number().int().positive(), ok: z.literal(true), value: z.unknown() }),
   z.strictObject({ type: z.literal('response'), id: z.number().int().positive(), ok: z.literal(false), error: wireError }),
-  z.strictObject({ type: z.literal('invoke'), actionId: id, invocation: z.strictObject({ viewId: id.nullable() }) }),
   z.strictObject({ type: z.literal('close'), reason: z.string().max(2048) }),
 ])
 type RequestMethod = z.infer<typeof request>['method']
@@ -183,11 +182,8 @@ export function checkMessageSize(value: unknown, limit: number): void {
   if (new TextEncoder().encode(JSON.stringify(value)).byteLength > limit) throw new PluginError('invalid-input', [{ path: 'message', message: 'Message limit exceeded' }])
 }
 
-export function createPluginClient<S extends BaseState>(port: MessagePort, initial: S) {
-  const schema = 'viewGraph' in initial ? viewStateSchema : baseStateSchema
-  const reply = replies(schema)
-  const parsedState = parseOrThrow(schema, initial) as S
-  let state = parsedState
+export function createPluginClient(port: MessagePort, initial: unknown) {
+  let state: ActionState = parseOrThrow(actionStateSchema, initial)
   let readRevision = state.revision
   let sequence = 0
   const listeners = new Set<() => void>()
@@ -228,8 +224,8 @@ export function createPluginClient<S extends BaseState>(port: MessagePort, initi
     }
     const data = parsed.data
     if (data.type === 'close') { close(); return }
-    if (data.type === 'state' && (data.state as S).revision > state.revision) {
-      state = data.state as S
+    if (data.type === 'state' && data.state.revision > state.revision) {
+      state = data.state
       for (const listener of listeners) {
         try { listener() } catch { console.error(new PluginError('failed', [{ path: 'subscriber', message: 'Plugin state subscriber failed' }])) }
       }
@@ -246,13 +242,14 @@ export function createPluginClient<S extends BaseState>(port: MessagePort, initi
   port.onmessageerror = close
   port.start()
   const getState = () => { readRevision = state.revision; return state }
-  const applyOperations: PluginContext<S>['store']['applyOperations'] = async (operations, options) => {
+  const applyOperations: ActionContext['store']['applyOperations'] = async (operations, options) => {
     const result = await call<{ readonly revision: number; readonly changed: boolean }>('store.applyOperations', { operations, revision: readRevision, ...(options ? { options } : {}) })
     readRevision = Math.max(readRevision, result.revision)
     return result
   }
   const { undo: _undo, redo: _redo, setView: _view, setActiveVocab: _vocab, setActiveTheme: _theme, setLocale: _locale, setPanelSizes: _panels, setSectionOpen: _section, createView: _createView, renameView: _renameView, setViewPinned: _pin, deleteView: _deleteView, ...writes } = createWriteCommands(async (operations, options) => { await applyOperations(operations, options) }, async (id, committed) => { await committed; return id })
-  const context: PluginContext<S> = {
+  const context: ActionContext = {
+    viewId: state.targetViewId,
     store: {
       ...writes,
       getState,

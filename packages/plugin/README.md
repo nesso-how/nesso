@@ -14,16 +14,15 @@ npm run build
 Choose your own package name and action ID, then edit `src/index.ts`:
 
 ```ts
-import type { ActionContext, ActionContribution, NessoOperation } from '@nesso-how/plugin'
+import type { ActionContribution, NessoOperation } from '@nesso-how/plugin'
 import source from '../package.json' with { type: 'json' }
 
-export const create = ({ store }: ActionContext): readonly ActionContribution[] => {
+export const create = (): readonly ActionContribution[] => {
   const action: ActionContribution = {
     id: 'uppercase-labels',
     label: source.i18n.metadata.name,
-    run: async () => {
+    run: async ({ store }) => {
       const state = store.getState()
-      if (!('viewGraph' in state)) return
 
       const operations: readonly NessoOperation[] = state.viewGraph.concepts.map(({ id, label }) => ({
         kind: 'concept.label',
@@ -43,7 +42,7 @@ This changes labels in the invoked view in one undoable batch. Shared concepts c
 
 How the example works:
 
-- `viewGraph` is available during `run`, but not when Nesso first discovers the plugin's actions. `ActionContext` covers both phases, so the check lets TypeScript safely access graph data.
+- `create()` defines the actions. Nesso supplies the execution context to `run`, where graph data is always available.
 - `applyOperations` takes an array of edits. Here, `.map()` creates one `concept.label` edit per concept, with its ID and new label.
 - Writes automatically check that the snapshot you read is still current. If it changed, the entire batch is rejected rather than overwriting newer edits.
 
@@ -85,9 +84,9 @@ Actions must ship one self-contained browser ES module with dependencies bundled
 
 ## Action API
 
-Nesso provides `{ store, files, notifications, signal }` through `ActionContext`.
+Nesso passes `{ store, files, notifications, signal, viewId }` to `run` as `ActionContext`.
 
-`create` returns an array of actions with unique lowercase kebab-case IDs, localized labels, optional icons, and `run({ viewId })` handlers. Use `ActionIconName` for supported icons.
+`create()` receives no arguments and returns an array of actions with unique lowercase kebab-case IDs, localized labels, optional icons, and `run(context)` handlers. Use `ActionIconName` for supported icons.
 
 Keep graph reads and effects inside `run`. **Await every write, file dialog, and notification** before returning; the action ends when `run` finishes. Use `signal` to detect cancellation.
 

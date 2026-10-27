@@ -7,7 +7,7 @@ const bootstrap = (event: MessageEvent) => {
     parent.postMessage({ type: 'worker-failed', token: event.data.token }, '*')
     worker?.terminate()
   }
-  worker.postMessage({ type: 'bootstrap', entry: event.data.entry, state: event.data.state }, [event.ports[0]])
+  worker.postMessage({ type: 'bootstrap', entry: event.data.entry }, [event.ports[0]])
 }
 window.addEventListener('message', bootstrap)
 window.addEventListener('pagehide', () => worker?.terminate(), { once: true })

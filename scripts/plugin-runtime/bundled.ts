@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { parseGraph, serializeGraph } from '@nesso-how/schema'
-import { parseContribution, parseDefinition, type ViewState } from '../../packages/plugin/src/runtime.ts'
-import { baseState, waitFor, type CheckContext } from './helpers.ts'
+import { parseContribution, parseDefinition, type ActionState } from '../../packages/plugin/src/runtime.ts'
+import { actionState, waitFor, type CheckContext } from './helpers.ts'
 
 type Probe = {
   done: boolean
@@ -13,9 +13,8 @@ type Probe = {
 }
 
 export async function verifyBundled({ window, url }: CheckContext) {
-  const base = baseState()
   const graph = { concepts: [{ id: 'urn:probe:concept', label: 'Probe', position: { x: 0, y: 0 } }], relations: [], relationTypes: [] }
-  const state: ViewState = { ...base, viewGraph: graph, targetViewId: null, workspace: { activeViewId: null, savedViews: [] }, selected: [], activeVocab: null, history: { canUndo: false, canRedo: false } }
+  const state: ActionState = { ...actionState(), viewGraph: graph }
   const file = { name: 'graph.jsonld', mediaType: 'application/ld+json', text: JSON.stringify(serializeGraph(graph)) }
   for (const [name, phase] of [['import', 'discovery'], ['export', 'discovery'], ['import', 'run'], ['export', 'run'], ['import', 'conflict']] as const) {
     const invocation = phase !== 'discovery'
@@ -35,7 +34,7 @@ export async function verifyBundled({ window, url }: CheckContext) {
         if(data.type==='contribution'){
           result.contribution=data.value;result.discoveryRequests=result.requests.length;
           if(${invocation}){
-            channel.port1.postMessage({type:'invoke',actionId:data.value[0].id,invocation:{viewId:null}});
+            channel.port1.postMessage({type:'invoke',actionId:data.value[0].id,state:${JSON.stringify(state)}});
           }else result.done=true;
         }
         if(data.type==='request'){
@@ -53,7 +52,7 @@ export async function verifyBundled({ window, url }: CheckContext) {
         if(data.type==='complete'){result.complete=data;result.done=true}
         if(data.type==='close'){result.error=data.reason;result.done=true}
       };
-      frame.contentWindow.postMessage({type:'bootstrap',token:'probe',mode:'actions',kind:'actions',state:${JSON.stringify(invocation ? state : base)},entry},'*',[channel.port2]);
+      frame.contentWindow.postMessage({type:'bootstrap',token:'probe',entry},'*',[channel.port2]);
     })()`)
     try {
       const result = await waitFor(async () => window.webContents.executeJavaScript('window.__bundled') as Promise<Probe>, (value) => value.done)

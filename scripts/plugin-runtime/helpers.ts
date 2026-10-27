@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { ipcMain, type BrowserWindow } from 'electron'
 import type { Platform } from './cases.ts'
-import { themeTokens, type BaseState } from '../../packages/plugin/src/runtime.ts'
+import { themeTokens, type ActionState } from '../../packages/plugin/src/runtime.ts'
 
 export type CheckContext = {
   window: BrowserWindow
@@ -34,10 +34,14 @@ export async function countWorkers(window: BrowserWindow) {
   return targetInfos.filter((target: { type: string }) => target.type === 'worker').length as number
 }
 
-export const baseState = (): BaseState => ({
+export const actionState = (): ActionState => ({
   revision: 0, contextId: 'probe', locale: 'en',
   theme: Object.fromEntries(themeTokens.map((token) => [token, ''])),
   conceptPlacementOffset: { x: 160, y: 100 },
+  viewGraph: { concepts: [], relations: [], relationTypes: [] },
+  targetViewId: null,
+  workspace: { activeViewId: null, savedViews: [] },
+  selected: [], activeVocab: null, history: { canUndo: false, canRedo: false },
 })
 
 export async function waitFor<T>(read: () => Promise<T>, ready: (value: T) => boolean): Promise<T> {
