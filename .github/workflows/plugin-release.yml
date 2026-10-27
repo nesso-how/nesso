@@ -34,14 +34,17 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
       - run: pnpm test
+      - name: Pack SDK for example build
+        run: pnpm pack --out "$RUNNER_TEMP/plugin-sdk.tgz"
+        working-directory: packages/plugin
       - name: Prepare standalone example
         run: cp -R packages/plugin/example "$RUNNER_TEMP/plugin-example"
+      - name: Install example build dependencies
+        run: npm install --no-save --package-lock=false "$RUNNER_TEMP/plugin-sdk.tgz"
+        working-directory: ${{ runner.temp }}/plugin-example
       - name: Publish SDK
         run: pnpm publish
         working-directory: packages/plugin
-      - name: Install example dependencies from npm
-        run: npm install --package-lock=false
-        working-directory: ${{ runner.temp }}/plugin-example
       - name: Publish example
         run: npm publish
         working-directory: ${{ runner.temp }}/plugin-example
