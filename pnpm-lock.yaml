@@ -238,6 +238,9 @@ importers:
       tar:
         specifier: ^7.5.22
         version: 7.5.22
+      validate-npm-package-name:
+        specifier: ^8.0.0
+        version: 8.0.0
       zod:
         specifier: ^4.6.5
         version: 4.6.5
@@ -263,6 +266,9 @@ importers:
       '@types/semver':
         specifier: ^7.8.0
         version: 7.8.0
+      '@types/validate-npm-package-name':
+        specifier: ^4.0.2
+        version: 4.0.2
       '@vitejs/plugin-react':
         specifier: ^6.1.1
         version: 6.1.1(vite@8.3.1(@types/node@24.19.0)(jiti@2.7.0))

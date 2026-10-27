@@ -7,11 +7,12 @@ type Version = { major: number; minor: number; patch: number };
 const usage = 'usage: pnpm release:plugin [version|--major|--minor|--patch|--help]';
 const help = `${usage}
 
-Release the plugin SDK from a clean main branch. Without an argument, release the current version.
+Release the plugin SDK and official example from a clean main branch. Without an argument, release the current version.
 Choose an explicit version or bump with --major, --minor or --patch.
 
-Update packages/plugin/package.json, commit the bump, then tag and atomically
-push main and the tag to origin. CI publishes @nesso-how/plugin for plugin-v* tags.
+Update both package versions and the example's SDK dependency, commit both,
+then tag and atomically push main and the tag to origin. CI publishes
+@nesso-how/plugin first, then @nesso-how/plugin-example for plugin-v* tags.
 Never reuse a tag for a version already on the registry.
 
 --help, -h  Show this help without changing files or publishing a release.`;
@@ -24,6 +25,12 @@ function parseVersion(input: string): Version {
 
 function formatVersion(version: Version): string {
   return `${version.major}.${version.minor}.${version.patch}`;
+}
+
+function updateVersion(raw: string, path: string, version: string): string {
+  const matches = raw.match(/"version":\s*"[^"]*"/g) ?? [];
+  if (matches.length !== 1) fail(path, 'expected exactly one version field');
+  return raw.replace(/("version":\s*")[^"]*(")/, `$1${version}$2`);
 }
 
 function compareVersions(a: Version, b: Version): number {
@@ -66,12 +73,18 @@ function main(): void {
   const version = formatVersion(target);
   const tag = `plugin-v${version}`;
   guardRelease(tag);
-  const matches = raw.match(/"version":\s*"[^"]*"/g) ?? [];
-  if (matches.length !== 1) fail('packages/plugin/package.json', 'expected exactly one version field');
-  if (version !== data.version) {
-    writeFileSync(location, raw.replace(/("version":\s*")[^"]*(")/, `$1${version}$2`));
-  }
-  commitTagPush(['packages/plugin/package.json'], `chore(plugin): release ${version}`, tag);
+  const updatedSdk = updateVersion(raw, 'packages/plugin/package.json', version);
+  const examplePath = 'packages/plugin/example/package.json';
+  const exampleLocation = new URL(`../${examplePath}`, import.meta.url);
+  const exampleRaw = readFileSync(exampleLocation, 'utf8');
+  const example = JSON.parse(exampleRaw) as { devDependencies?: Record<string, unknown> };
+  if (typeof example.devDependencies?.['@nesso-how/plugin'] !== 'string') fail(examplePath, 'missing SDK development dependency');
+  const dependencies = exampleRaw.match(/"@nesso-how\/plugin":\s*"[^"]*"/g) ?? [];
+  if (dependencies.length !== 1) fail(examplePath, 'expected exactly one SDK dependency');
+  const updatedExample = updateVersion(exampleRaw, examplePath, version).replace(/("@nesso-how\/plugin":\s*")[^"]*(")/, `$1${version}$2`);
+  writeFileSync(location, updatedSdk);
+  writeFileSync(exampleLocation, updatedExample);
+  commitTagPush(['packages/plugin/package.json', examplePath], `chore(plugin): release ${version}`, tag);
 }
 
 try {

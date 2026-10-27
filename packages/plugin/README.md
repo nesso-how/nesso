@@ -2,6 +2,8 @@
 
 Types, validation, and asynchronous clients for isolated Nesso actions plus data-only vocabularies and themes.
 
+The [standalone example](example/) is a real plugin published as [`@nesso-how/plugin-example`](https://www.npmjs.com/package/@nesso-how/plugin-example). You can try it from Settings → Plugins in the desktop app or use its source as a starting point for your own plugin.
+
 ## Create a plugin
 
 - **Actions** export `create(context)`, returning `{ id, label, icon?, run }` records. See [Write an action](#write-an-action) and the [standalone example](example/README.md).

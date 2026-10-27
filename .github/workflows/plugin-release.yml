@@ -16,11 +16,15 @@ jobs:
         shell: bash
     steps:
       - uses: actions/checkout@v6
-      - name: Tag matches package version
+      - name: Tag matches SDK and example versions
         run: |
           tag="${GITHUB_REF_NAME#plugin-v}"
           pkg="$(node -p "require('./packages/plugin/package.json').version")"
           [ "$tag" = "$pkg" ] || { echo "tag $tag does not match package version $pkg"; exit 1; }
+          example="$(node -p "require('./packages/plugin/example/package.json').version")"
+          [ "$tag" = "$example" ] || { echo "tag $tag does not match example version $example"; exit 1; }
+          dependency="$(node -p "require('./packages/plugin/example/package.json').devDependencies['@nesso-how/plugin']")"
+          [ "$tag" = "$dependency" ] || { echo "tag $tag does not match example SDK dependency $dependency"; exit 1; }
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
@@ -30,5 +34,14 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
       - run: pnpm test
-      - run: pnpm publish
+      - name: Prepare standalone example
+        run: cp -R packages/plugin/example "$RUNNER_TEMP/plugin-example"
+      - name: Publish SDK
+        run: pnpm publish
         working-directory: packages/plugin
+      - name: Install example dependencies from npm
+        run: npm install --package-lock=false
+        working-directory: ${{ runner.temp }}/plugin-example
+      - name: Publish example
+        run: npm publish
+        working-directory: ${{ runner.temp }}/plugin-example

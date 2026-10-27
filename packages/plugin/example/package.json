@@ -1,17 +1,27 @@
 {
-  "name": "nesso-plugin-uppercase",
-  "version": "1.0.0",
+  "name": "@nesso-how/plugin-example",
+  "version": "0.2.0",
   "description": "Uppercase concept labels in the invoked Nesso view",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nesso-how/nesso.git",
+    "directory": "packages/plugin/example"
+  },
   "type": "module",
   "keywords": ["nesso-plugin"],
-  "files": ["dist"],
+  "files": ["dist", "src", "tsconfig.json"],
   "scripts": {
     "check": "tsc",
-    "build": "npm run check && esbuild src/index.ts --bundle --format=esm --platform=browser --target=es2022 --outfile=dist/index.js"
+    "build": "npm run check && esbuild src/index.ts --bundle --format=esm --platform=browser --target=es2022 --outfile=dist/index.js",
+    "prepack": "npm run build"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   },
   "devDependencies": {
-    "@nesso-how/plugin": "^0.1.0",
+    "@nesso-how/plugin": "0.2.0",
     "esbuild": "^0.28.2",
     "typescript": "~7.0.2"
   },

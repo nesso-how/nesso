@@ -5,6 +5,7 @@ import { pipeline } from 'node:stream/promises'
 import { once } from 'node:events'
 import { createGunzip } from 'node:zlib'
 import registryFetch from 'npm-registry-fetch'
+import validateName from 'validate-npm-package-name'
 import { Parser, type ReadEntry } from 'tar'
 import { z } from 'zod'
 import { packageLimits, parsePackageIdentity, preparePluginPackage } from '../packages/plugin/src/package.ts'
@@ -64,12 +65,15 @@ async function download(url: string, limit: number, signal: AbortSignal, request
 const json = async (url: string, limit: number, signal: AbortSignal, request: RegistryRequest) => JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(await download(url, limit, signal, request)))
 
 export async function latestNpmPlugin(name: unknown, cancellation: AbortSignal, request: RegistryRequest = registryFetch): Promise<NpmPlugin> {
-  const identity = parsePackageIdentity({ name, version: '0.0.0' })
+  if (typeof name !== 'string' || !validateName(name).validForNewPackages) {
+    throw new PluginError('invalid-input', [{ path: 'name', message: 'Expected a valid npm package name' }])
+  }
   const signal = AbortSignal.any([cancellation, AbortSignal.timeout(limits.deadline)])
-  const metadata = await json(`${registry}/${encodeURIComponent(identity.name)}/latest`, limits.metadata, signal, request)
+  const metadata = await json(`${registry}/${encodeURIComponent(name)}/latest`, limits.metadata, signal, request)
   try {
+    const { deprecated } = z.object({ deprecated: z.string().optional() }).parse(metadata)
     const received = parsePackageIdentity(metadata)
-    if (received.name !== identity.name || prerelease(received.version)) throw failure()
+    if (deprecated || received.name !== name || prerelease(received.version)) throw failure()
     return { name: received.name, version: received.version, author: received.author, repository: received.repository, nesso: parsePluginManifest(received.nesso), i18n: parsePluginI18n(received.i18n) }
   } catch {
     throw new PluginError('invalid-input', [{ path: 'npm', message: 'The latest version is not a compatible stable Nesso plugin.' }])
