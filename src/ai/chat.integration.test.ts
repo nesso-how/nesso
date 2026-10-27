@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import type { AiChatEvent, AiChatRequest, AiResult, AiToolReply } from '@nesso-how/ai'
+import { aiTools, type AiChatEvent, type AiChatRequest, type AiDocumentation, type AiResult, type AiToolReply } from '@nesso-how/ai'
 import type { AiBridge } from '../../electron/ai-bridge.ts'
 import { createNessoStore } from '../store/create.ts'
 import { createAiChat } from './chat.ts'
@@ -18,14 +18,54 @@ const fixture = () => {
     subscribeChat: (listener) => { listeners.add(listener); return () => { listeners.delete(listener) } },
   }
   const host = createNessoStore({ concepts: [{ id: 'urn:first', label: 'First', position: { x: 0, y: 0 } }], relations: [], relationTypes: [] })
-  const chat = createAiChat(bridge, host.store)
+  const documentation = Object.fromEntries(aiTools.read_docs.inputSchema.shape.topic.options.map((topic) => [topic, `# ${topic}`])) as AiDocumentation
+  const chat = createAiChat(bridge, host.store, documentation)
   return {
     chat, host, replies, finish: (result: AiResult<true>) => finish(result),
+    tool: (name: string, value: unknown) => receive({ id: input.id, type: 'tool', callId: name, name, input: value }),
+    activity: (tool: keyof typeof aiTools | null, id = input.id) => receive({ id, type: 'activity', tool }),
     emit: (text: string) => receive({ id: input.id, type: 'text', text }),
     edit: (operations: unknown[]) => receive({ id: input.id, type: 'tool', callId: 'edit', name: 'edit', input: { operations } }),
     history: (action: unknown) => receive({ id: input.id, type: 'tool', callId: 'history', name: 'history', input: { action } }),
   }
 }
+
+test('chat reads documentation with transient activity, ignores unrelated events and clears between turns', async () => {
+  const f = fixture()
+  const sending = f.chat.send('Explain Nesso', f.host, 'en')
+  const before = f.host.store.getState()
+  let publications = 0
+  const unsubscribe = f.chat.subscribe(() => publications++)
+  assert.equal(f.chat.getSnapshot().tool, null)
+  f.activity('read_docs', 'another-request')
+  assert.equal(publications, 0)
+  f.activity('read_docs')
+  assert.equal(f.chat.getSnapshot().tool, 'read_docs')
+  f.activity('read_docs')
+  assert.equal(publications, 1)
+  f.tool('read_docs', { topic: 'nesso' })
+  assert.deepEqual(f.replies.at(-1)?.result, { value: { topic: 'nesso', content: '# nesso' } })
+  f.activity(null)
+  assert.equal(f.chat.getSnapshot().tool, null)
+  assert.equal(f.host.store.getState(), before)
+  f.activity('concepts')
+  f.finish({ value: true })
+  await sending
+  assert.equal(f.host.store.getState().graph, before.graph)
+  assert.equal(f.host.store.getState().history, before.history)
+  assert.equal(f.chat.getSnapshot().tool, null)
+  const next = f.chat.send('Explain relations', f.host, 'en')
+  assert.equal(f.chat.getSnapshot().tool, null)
+  f.activity('relations')
+  f.chat.stop()
+  assert.equal(f.chat.getSnapshot().phase, 'stopping')
+  assert.equal(f.chat.getSnapshot().tool, null)
+  f.activity('edit')
+  assert.equal(f.chat.getSnapshot().tool, null)
+  await next
+  unsubscribe()
+  f.chat.dispose()
+})
 
 test('chat commits only after generation and clears its conversation on document reset, not navigation', async () => {
   const f = fixture()
@@ -79,6 +119,7 @@ test('Stop, clear and generation failure discard staged edits and cannot resurre
     const f = fixture()
     const task = f.chat.send('Rename it', f.host, 'en')
     f.edit([{ kind: 'concept.label', id: 'urn:first', value: 'Discarded' }])
+    f.activity('edit')
     if (action === 'failure') f.finish({ issues: [{ path: 'chat', message: 'Provider failed' }] })
     else if (action === 'store-clear') f.host.store.clearChat()
     else f.chat[action as 'stop' | 'clear']()
@@ -86,6 +127,7 @@ test('Stop, clear and generation failure discard staged edits and cannot resurre
     await task
     assert.equal(f.host.store.getState().graph.concepts[0].label, 'First')
     assert.equal(f.chat.getSnapshot().phase, 'idle')
+    assert.equal(f.chat.getSnapshot().tool, null)
     if (action === 'clear' || action === 'store-clear') assert.deepEqual(f.host.store.getState().conversation.messages, [])
     else assert.equal(f.host.store.getState().conversation.messages.at(-1)?.outcome, action === 'failure' ? 'error' : 'cancelled')
     f.chat.dispose()

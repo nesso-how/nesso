@@ -68,9 +68,23 @@ export function createAiChatRun(entry: Connection, input: AiChatRequest, emit: (
       })
       let length = 0
       let complete = false
+      const activeTools = new Map<string, keyof typeof aiTools>()
+      let activity: keyof typeof aiTools | null = null
+      const reportActivity = () => {
+        const tool = [...activeTools.values()].at(-1) ?? null
+        if (tool === activity) return
+        activity = tool
+        emit({ id: input.id, type: 'activity', tool })
+      }
       for await (const part of stream.fullStream) {
         signal.throwIfAborted()
-        if (part.type === 'text-delta') {
+        if (part.type === 'tool-input-start' && Object.hasOwn(aiTools, part.toolName)) {
+          activeTools.set(part.id, part.toolName as keyof typeof aiTools)
+          reportActivity()
+        } else if (part.type === 'tool-result' && !part.preliminary) {
+          activeTools.delete(part.toolCallId)
+          reportActivity()
+        } else if (part.type === 'text-delta') {
           length += part.text.length
           if (length > 100_000) throw failure()
           emit({ id: input.id, type: 'text', text: part.text })

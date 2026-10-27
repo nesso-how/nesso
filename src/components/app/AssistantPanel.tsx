@@ -21,7 +21,6 @@ export function AssistantPanel({ chat, onClose, onOpenSettings, settingsOpen = f
   const tab = useNessoStore((state) => state.preferences.inspectorTab ?? 'details', store)
   const [draft, setDraft] = useState('')
   const [activeModel, setActiveModel] = useState<string | null>(null)
-  const [chatGptPlan, setChatGptPlan] = useState(false)
   const busy = useSyncExternalStore(chat.subscribe, chat.getSnapshot).phase !== 'idle'
   useEffect(() => {
     if (readonly || tab !== 'chat' || settingsOpen || !window.nessoAi) return
@@ -30,7 +29,6 @@ export function AssistantPanel({ chat, onClose, onOpenSettings, settingsOpen = f
       if (!mounted || 'issues' in result) return
       const active = result.value.connections.find((entry) => entry.id === result.value.activeId)
       setActiveModel(active ? `${active.name} · ${active.model}` : null)
-      setChatGptPlan(active?.authentication === 'chatgpt')
     }).catch(() => {})
     return () => { mounted = false }
   }, [tab, settingsOpen, busy, readonly])
@@ -47,7 +45,7 @@ export function AssistantPanel({ chat, onClose, onOpenSettings, settingsOpen = f
         </div>
       </header>
       <Tabs.Panel value="details" className="min-h-0 flex-1"><Inspector store={store} readonly={readonly} /></Tabs.Panel>
-      <Tabs.Panel value="chat" keepMounted className="min-h-0 flex-1 data-[hidden]:hidden"><Chat chat={chat} store={store} readonly={readonly} draft={draft} onDraftChange={setDraft} onOpenSettings={onOpenSettings} activeModel={activeModel} chatGptPlan={chatGptPlan} /></Tabs.Panel>
+      <Tabs.Panel value="chat" keepMounted className="min-h-0 flex-1 data-[hidden]:hidden"><Chat chat={chat} store={store} readonly={readonly} draft={draft} onDraftChange={setDraft} onOpenSettings={onOpenSettings} activeModel={activeModel} /></Tabs.Panel>
     </Tabs.Root>
   )
 }

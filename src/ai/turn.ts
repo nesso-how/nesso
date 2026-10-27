@@ -1,6 +1,6 @@
 import type { NessoOperation, NessoState } from '@nesso-how/plugin'
 import { ZodError } from 'zod'
-import { aiTools, type AiToolResults } from '@nesso-how/ai'
+import { aiTools, type AiDocumentation, type AiToolResults } from '@nesso-how/ai'
 import type { createNessoStore } from '../store/create.ts'
 import { NessoError } from '@nesso-how/errors'
 import { summarizeEffects } from './effects.ts'
@@ -19,7 +19,7 @@ const sameContext = (before: NessoState, after: NessoState): boolean =>
   && before.vocabs === after.vocabs && before.preferences.activeVocabId === after.preferences.activeVocabId
   && before.history === after.history
 
-export function createAiTurn(boundary: Boundary, signal?: AbortSignal) {
+export function createAiTurn(boundary: Boundary, signal?: AbortSignal, documentation?: AiDocumentation) {
   const base = boundary.store.getState()
   let operations: readonly NessoOperation[] = []
   let history: 'undo' | 'redo' | undefined
@@ -44,6 +44,10 @@ export function createAiTurn(boundary: Boundary, signal?: AbortSignal) {
       try {
         if (status !== 'staging') fail('turn', 'Turn is closed or applying')
         current()
+        if (name === 'read_docs') {
+          const { topic } = aiTools.read_docs.inputSchema.parse(input)
+          return { topic, content: documentation?.[topic] ?? fail('docs', 'Documentation is unavailable') }
+        }
         if (name === 'edit') {
           if (history) fail('operations', 'History must be the only write in a turn')
           const batch = aiTools.edit.inputSchema.parse(input).operations

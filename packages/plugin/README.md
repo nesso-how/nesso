@@ -1,64 +1,146 @@
 # @nesso-how/plugin
 
-Types, validation, and asynchronous clients for isolated Nesso actions plus data-only vocabularies and themes. The canvas is a trusted renderer, not a plugin.
+Types, validation, and asynchronous clients for isolated Nesso actions plus data-only vocabularies and themes.
 
 ## Create a plugin
 
-Start with the [standalone action example](example/README.md). Actions export `create(context)` and build one self-contained browser JavaScript entry, bundling any dependencies. Nesso does not install dependencies, run package scripts, compile received source, or load module graphs. Themes and vocabularies ship a JSON definition file instead; the host validates it and never executes it.
-
-- **Actions** return `{ id, label, icon?, run }` records. `icon` is an optional `ActionIconName`: `arrow-right`, `book-open`, `clipboard-paste`, `copy`, `download`, `file-down`, `file-up`, `folder`, `globe`, `layers`, `pencil`, `play`, `plus`, `refresh`, `scissors`, `search`, `share`, `sparkles`, `upload`, `zap` (unknown keys render as `zap`). Discovery has no document access or effects; each invocation runs in a fresh worker. See [Import](../../plugins/import) and [Export](../../plugins/export).
+- **Actions** export `create(context)`, returning `{ id, label, icon?, run }` records. See [Write an action](#write-an-action) and the [standalone example](example/README.md).
 - **Vocabularies** ship a `VocabDefinition` JSON file with stable absolute relation-type IRIs and a default among their own types. See [Base Vocab](../../plugins/base-vocab).
-- **Themes** ship a light-only `ThemeDefinition` JSON file with colors, metrics, and local WOFF2 font descriptors. Include exactly the referenced fonts: at most 32 files, 4 MiB each. The host validates and applies them; arbitrary CSS and remote fonts are not supported. See [Kernel](../../plugins/kernel-theme) and [Paper](../../plugins/paper-theme).
+- **Themes** ship a light-only `ThemeDefinition` JSON file with colors, metrics, and local WOFF2 fonts; arbitrary CSS and remote fonts are unsupported. See [Kernel](../../plugins/kernel-theme) and [Paper](../../plugins/paper-theme).
 
-Nesso injects the context. Import types such as `ActionContext` and `ActionContribution` from `@nesso-how/plugin`; there is no need to create a client yourself.
+Actions build one self-contained browser JavaScript ES module with dependencies bundled. Nesso does not install dependencies, run package scripts, compile received source, or load module graphs. It validates vocabulary and theme JSON without executing it.
+
+## Write an action
+
+This module uppercases labels in the invoked view with one atomic write. It requires `writes: ['concept.label']` and `capabilities: []`.
+
+```js
+export function create({ store }) {
+  return [{
+    id: 'uppercase-labels',
+    label: { en: 'Uppercase labels' },
+    run: async () => {
+      const state = await store.refresh()
+      const operations = state.viewGraph.concepts.map(({ id, label }) => ({
+        kind: 'concept.label',
+        id,
+        value: label.toUpperCase(),
+      }))
+      await store.applyOperations(operations, { atRevision: state.revision })
+    },
+  }]
+}
+```
+
+`create(context)` returns an array of 1–64 actions, even for one. IDs are unique lowercase kebab-case strings of at most 64 characters; labels are localized text with an English fallback. The optional `icon` uses an [`ActionIconName`](src/runtime.ts); unknown values render as `zap`.
+
+### Discovery and invocation
+
+Discovery calls `create(context)` to collect descriptors without graph access, writes, files, or notifications. Keep document reads and effects inside `run`, not at module scope or in `create`.
+
+Each invocation loads a fresh isolated worker, calls `create` again, verifies unchanged descriptors, and calls the selected `run({ viewId })`. The instance closes when `run` finishes: await all writes and host effects; return values are ignored. There is no persistent background instance.
+
+## Action context
+
+Nesso injects `{ store, files, notifications, signal }`; do not create a client or import the host store. TypeScript authors can bundle `ActionContext`, `ActionContribution`, and `NessoOperation` types from `@nesso-how/plugin`.
+
+`signal` is a standard `AbortSignal` for the action instance. When the instance closes, `signal.aborted` becomes `true` and an `abort` event fires. Use it to stop ongoing work and avoid starting further writes or effects.
+
+### Read state
+
+| API | Behavior |
+| --- | --- |
+| `store.getState()` | Returns the latest local snapshot synchronously. Snapshots are readonly; mutating them does not change Nesso. |
+| `await store.refresh()` | Returns a fresh host snapshot. Use before edits and after deferred work such as a file dialog. |
+| `store.subscribe(listener)` | Returns an unsubscribe function. The listener receives no arguments; read with `getState()`. |
+
+Discovery exposes only `revision`, `contextId`, `locale`, `theme`, and `conceptPlacementOffset`. Invocation adds:
+
+| State field | Meaning |
+| --- | --- |
+| `viewGraph` | Host-materialized `{ concepts, relations, relationTypes }` for the invoked view. Concept and relation-type IDs are absolute IRIs; relations are `{ source, predicate, target }` triples without an `id`. |
+| `selected` | Concept or relation selections in the invoked view. A relation ID is `JSON.stringify([source, predicate, target])`. |
+| `targetViewId` | Invoked saved-view ID, or `null` for All. |
+| `workspace` | `{ activeViewId, savedViews }`; saved-view summaries contain `{ id, name, pinned }`, and the active view may differ from the invoked view. |
+| `activeVocab` | `{ id, relationTypes, defaultTypeId }`, or `null`. Preserve existing type IRIs. |
+| `history` | `{ canUndo, canRedo }` metadata, not permission to invoke history. |
+
+`ActionState` covers both phases; narrow with `'viewGraph' in state` when needed. The host's complete graph, preferences, renderer state, and store are not exposed.
+
+`run({ viewId })` retains its target despite navigation; `null` exposes the complete graph. Saved views share concepts, so edits appear in every view containing them. Deleting the target view or resetting the document revokes the context.
+
+### Write state
+
+Every write is asynchronous and requires its declared operation kind:
+
+| Helper | Required `writes` entry |
+| --- | --- |
+| `setConceptLabel(id, value)` | `concept.label` |
+| `setConceptDescription(id, value)` | `concept.description` |
+| `setConceptColor(id, value)` | `concept.color` |
+| `setConceptBold(id, value)` | `concept.bold` |
+| `setConceptItalic(id, value)` | `concept.italic` |
+| `setConceptPosition(id, { x, y })` | `concept.position` |
+| `setConceptPositions([{ id, position: { x, y } }])` | `concept.positions` |
+| `addConcept(position?)` | `concept.add` |
+| `removeConcept(id)` | `concept.remove` |
+| `connect(source, target)` | `relation.connect` |
+| `reconnectRelation(id, source, target)` | `relation.reconnect` |
+| `setRelationType(id, typeId)` | `relation.type` |
+| `createRelationType(id, label)` | `relation.type.create` |
+| `removeRelation(id)` | `relation.remove` |
+| `setSelection([{ kind, id }])` | `selection.set` |
+| `setViewMembership(viewId, conceptId, included)` | `view.membership` |
+
+Await helpers on `store`. `addConcept` resolves to the new IRI; other helpers return no value. Relation IDs identify existing triples. `createRelationType` also assigns the new type to that relation, while `connect` uses the active vocabulary's default. New concepts join the active saved view and, with exactly one concept selected, link to it using that default.
+
+For multiple edits, prefer `store.applyOperations(operations, { atRevision: state.revision })`. Operations follow `NessoOperation`: `concept.add` needs an explicit new absolute IRI, and `relation.connect` accepts an optional `{ id, label }` type. The complete ordered batch is validated atomically and resolves to `{ revision, changed }`.
+
+`state.revision` is local to the action instance, not a persisted document version. A stale `atRevision` rejects with `stale-state` and applies nothing; without it, the batch uses current state. Never retry mutations automatically. Separate write calls are separate transactions.
+
+The invoked view is **not a write sandbox**: declared writes can affect the whole document, and undeclared operations are rejected. Reset, history, view management/navigation, preferences, viewport, and renderer APIs are unavailable.
+
+### Files, notifications, and failures
+
+| API | Required capability | Result |
+| --- | --- | --- |
+| `files.open({ extensions: ['json'], mimeTypes: ['application/json'] })` | `files.open` | `{ name, mediaType, text }`, or `null` on cancellation. Extensions omit the dot. |
+| `files.save({ name: 'graph.json', mediaType: 'application/json', text })` | `files.save` | `{ saved: boolean }`; cancellation returns `false`. |
+| `notifications.notify({ tone: 'info', title: { en: 'Done' }, description: { en: 'Labels updated' } })` | `notifications.notify` | A notification ID. Tone is `info` or `warning`; description is optional. |
+
+Await these host-mediated effects. Files are UTF-8 text up to 16 MiB; arbitrary paths, filesystem, clipboard, network, navigation, and host UI are unavailable. Refresh state after a file dialog before computing edits.
+
+Host requests reject with `PluginError`, containing `code` and bounded `{ path, message }[]` issues. Authors can throw it with an optional localized display message. Let failures propagate instead of reporting success. File and notification effects cannot be rolled back with document transactions.
 
 ## Manifest and translations
 
-Use the [example package.json](example/package.json). Package names must be valid npm names and versions exact SemVer. Technical declarations live under `nesso`; all fields below are required.
+Use the [example package.json](example/package.json). Package names are valid npm names and versions exact SemVer. All technical declarations under `nesso` are required:
 
 | `nesso` field | Supported value |
 | --- | --- |
 | `apiVersion` | `1` |
 | `kind` | `actions`, `vocab`, or `theme` |
-| `entry` | Actions: package-local `.js` path, such as `dist/index.js`. Themes and vocabularies: package-local `.json` definition path, such as `dist/definition.json` |
-| `writes` | Document-content operation kinds, without duplicates |
-| `capabilities` | Subset of `files.open`, `files.save`, `notifications.notify`, without duplicates |
+| `entry` | Package-local `.js` for actions or `.json` for themes/vocabularies |
+| `writes` | Unique operation kinds from the helper table |
+| `capabilities` | Unique subset of `files.open`, `files.save`, `notifications.notify` |
 
-Themes and vocabularies require empty `writes` and `capabilities`. Unknown declarations are rejected. Contribution IDs are unique by kind and use lowercase kebab-case.
+Themes and vocabularies require empty `writes` and `capabilities`; unknown declarations are rejected. Contribution IDs are unique by kind.
 
-The top-level `i18n.metadata` requires `name`, `description`, and `documentation`. Each is a `LocalizedText` object: `{ en: string, it?: string, 'zh-CN'?: string }`. Other `i18n` keys use the same shape. Nesso resolves the current language with an English fallback; no translation library is needed. Bundle JSON imports at build time.
-
-Use `label: i18n.label` for an action, or reuse `i18n.metadata.name` when the wording matches. Notification titles/descriptions and `PluginError`'s optional third argument also accept localized text. Diagnostic `issues` remain `{ path, message }[]` strings.
-
-## Action context
-
-`create` receives `{ store, files, notifications, signal }`. Keep discovery free of effects and return stable descriptors. Actions have no persistent background instance.
-
-- `store.getState()` and `subscribe()` are synchronous. Narrow with `'viewGraph' in state` before accessing invocation data. Actions always receive the invoked view; invoking on All exposes the complete graph.
-- Await write helpers such as `setConceptLabel`, `addConcept`, and `setViewMembership`. Use `applyOperations(operations, { atRevision })` for one atomic, revision-checked batch. Separate calls are separate transactions; never retry mutations automatically.
-- Receiving the invoked view is not a write sandbox. Declared writes can affect the whole document.
-- `run({ viewId })` keeps its invocation target despite navigation; `null` means All. Target deletion or document reset revokes the context. Use `refresh()` after deferred work and honor `signal`.
-- `files.open()`/`save()` mediate UTF-8 text files up to 16 MiB through the host, returning `null`/`{ saved: false }` on cancellation. `notifications.notify()` posts internal `info`/`warning` messages. Each effect requires its declared capability and must be awaited before returning.
-
-Failures reject with `PluginError`, carrying `code` and bounded `issues`. Public types, validators, and tests define the full contract and limits: see `src/runtime.ts`, `src/definitions.ts`, and `test/`.
+`i18n.metadata` requires localized `name`, `description`, and `documentation`. `LocalizedText` has `{ en: string, it?: string, 'zh-CN'?: string }` shape, with English fallback. Use it for action labels, notification text, and `PluginError` display messages; diagnostic issues remain strings. Bundle JSON imports at build time.
 
 ## Installation and isolation
 
-External installation is desktop-only; web runs bundled plugins only. Publish versioned npm packages; every installation pins an exact version and the host revalidates the received files. Nesso never installs dependencies or runs package scripts. For local development, see the example's `propose` call.
+External installation is desktop-only; web runs bundled plugins. Publish versioned npm packages: installation pins an exact version and revalidates received files. Approval covers the exact code and access declarations before any execution; failed updates retain the previous installation. For local development, use the example's `propose` call.
 
-Each action invocation runs in a fresh isolated worker; themes and vocabularies are validated data and never executed. Installation binds approval to the exact received content and its declarations; failed updates keep the previous installation.
-
-The host validates requests and revokes effects before teardown. Plugins receive no Node, host DOM, credentials, arbitrary filesystem, or network access. Actions use interruptible workers; themes and vocabularies are validated data and never executed. This does not guarantee hard CPU/RAM containment or host responsiveness.
+Plugins receive no Node, host DOM, credentials, arbitrary filesystem, or network access. Actions use interruptible workers, and the host revokes effects before teardown. This does not guarantee hard CPU/RAM containment or host responsiveness.
 
 ## SDK development
-
-From the Nesso repository:
 
 ```sh
 pnpm --dir packages/plugin build
 pnpm --dir packages/plugin pack --pack-destination /absolute/output
 ```
 
-Use **pnpm pack** so workspace exports become compiled ESM and declarations. The SDK exposes `@nesso-how/plugin` for authors, `/runtime` for runtime validation/client code, and `/package` for package tooling. Consumers do not need other Nesso workspace packages.
+Use **pnpm pack** so workspace exports become compiled ESM and declarations. The SDK exposes `@nesso-how/plugin` for authors, `/runtime` for validation/client code, and `/package` for package tooling, without other workspace dependencies.
 
-Run `pnpm test` for contract tests and `pnpm test:plugin-runtime` for desktop/web integration checks.
+See `src/runtime.ts`, `src/definitions.ts`, and `test/` for the complete contract and limits. Run `pnpm test` for contract tests and `pnpm test:plugin-runtime` for desktop/web integration checks.

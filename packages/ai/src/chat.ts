@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { locales } from '@nesso-how/i18n'
 import type { AiToolResults } from './results.ts'
+import type { aiTools } from './tools.ts'
 
 const aiChatMessage = z.strictObject({
   id: z.string().min(1).max(128),
@@ -25,6 +26,7 @@ export type AiChatMessage = z.infer<typeof aiChatMessage>
 export type AiChatRequest = z.infer<typeof aiChatRequest>
 export type AiChatEvent = { readonly id: string } & (
   | { readonly type: 'text'; readonly text: string }
+  | { readonly type: 'activity'; readonly tool: keyof typeof aiTools | null }
   | { readonly type: 'tool'; readonly callId: string; readonly name: string; readonly input: unknown }
 )
 export type AiToolReply = { readonly id: string; readonly callId: string; readonly result: import('./providers.ts').AiResult<AiToolResults[keyof AiToolResults]> }
