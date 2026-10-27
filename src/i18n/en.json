@@ -345,6 +345,7 @@
   "deleteViewConcepts": "Also delete the concepts in this view",
   "deleteConcept": "Delete",
   "deleteRelation": "Delete",
+  "invertRelation": "Invert direction",
   "pinnedViews": "Pinned views",
   "completeGraph": "All",
   "default": "Default",

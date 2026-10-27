@@ -2,7 +2,7 @@ import { newIri, relationKey, type RelationType } from '@nesso-how/schema'
 import { maxConceptLabelLength, maxRelationLabelLength } from '@/store/settings'
 import { useRef, useState } from 'react'
 import { Autocomplete, AutocompleteClear, AutocompleteItem, AutocompletePopup, Button, ContextLabel, Input, Label } from '@nesso-how/ui'
-import { Trash2 } from 'lucide-react'
+import { ArrowUpDown, Trash2 } from 'lucide-react'
 import { ViewDetails } from './ViewDetails'
 import { ConceptViews } from './ConceptViews'
 import { ConceptConnections } from './ConceptConnections'
@@ -136,6 +136,9 @@ export function Inspector({ store = nessoStore, readonly = false }: { store?: Ho
   const selectedRelationLabel = selectedRelationId === activeVocab?.defaultTypeId
     ? ''
     : relationTypes.find((item) => item.id === selectedRelationId)?.label ?? ''
+  const invertedExists = selectedEdge
+    ? graph.relations.some((relation) => relation !== selectedEdge && relation.source === selectedEdge.target && relation.target === selectedEdge.source && relation.predicate === selectedEdge.predicate)
+    : false
 
   return (
     <aside id="details-panel" aria-label={t('details')} className="flex h-full flex-col gap-[26px] overflow-y-auto bg-background px-5 py-6 text-sm">
@@ -199,6 +202,7 @@ export function Inspector({ store = nessoStore, readonly = false }: { store?: Ho
             <div className="mt-2 space-y-3">
               <div className="flex flex-col gap-1"><span className="font-mono text-[10px] leading-[14px] text-muted-foreground">{t('from')}</span><span className="text-[13px] leading-[19px] break-words">{sourceLabel}</span></div>
               <div className="flex flex-col gap-1"><span className="font-mono text-[10px] leading-[14px] text-muted-foreground">{t('to')}</span><span className="text-[13px] leading-[19px] break-words">{targetLabel}</span></div>
+              <Button variant="outline" className="w-full justify-start" disabled={readonly || invertedExists} onClick={() => { if (selectedEdge) store.reconnectRelation(relationKey(selectedEdge), selectedEdge.target, selectedEdge.source) }}><ArrowUpDown />{t('invertRelation')}</Button>
             </div>
           </InspectorSection>
         </section>

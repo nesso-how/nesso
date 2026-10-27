@@ -351,6 +351,7 @@
   "deleteViewConcepts": "Elimina anche i concetti di questa vista",
   "deleteConcept": "Elimina",
   "deleteRelation": "Elimina",
+  "invertRelation": "Inverti direzione",
   "pinnedViews": "Viste fissate",
   "completeGraph": "Tutto",
   "default": "Predefinito",

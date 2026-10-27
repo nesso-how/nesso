@@ -339,6 +339,7 @@
   "deleteViewConcepts": "同时删除此视图中的概念",
   "deleteConcept": "删除",
   "deleteRelation": "删除",
+  "invertRelation": "反转方向",
   "pinnedViews": "置顶视图",
   "completeGraph": "全部",
   "default": "默认",
