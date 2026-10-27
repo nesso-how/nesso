@@ -104,9 +104,9 @@ export function connectActionChannel(port: MessagePort, store: HostStore, grant:
     if (message.method === 'store.refresh') { sendState(); return null }
     assertCurrent(message.contextId)
     if (message.method === 'store.applyOperations') {
-      const { operations, options } = message.params
+      const { operations, revision: expectedRevision, options } = message.params
       if (operations.some(({ kind }) => !allowed.has(kind))) fail('denied', 'Operation not declared')
-      if (options?.atRevision !== undefined && options.atRevision !== revision) fail('stale-state', 'Snapshot changed before commit')
+      if (expectedRevision !== revision) fail('stale-state', 'Snapshot changed before commit')
       const before = revision
       store.applyOperations(operations, { historyGroup: options?.historyGroup ? `${instanceId}:${options.historyGroup}` : undefined })
       if (before === revision) sendState()

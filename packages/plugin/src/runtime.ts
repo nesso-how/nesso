@@ -50,7 +50,7 @@ const operation = z.discriminatedUnion('kind', [
   z.strictObject({ kind: z.literal('preferences.section'), id: z.enum(['sidebar', 'sidebar.pinned-views', 'sidebar.views', 'inspector', 'inspector.connections', 'inspector.views', 'inspector.nodes']), open: z.boolean() }),
 ])
 
-const options = z.strictObject({ historyGroup: id.optional(), atRevision: z.number().int().nonnegative().optional() })
+const options = z.strictObject({ historyGroup: id.optional() })
 const metadata = z.strictObject({ name: localizedText(128), description: localizedText(2048), documentation: localizedText(16_384) })
 const pluginI18n = z.object({ metadata }).catchall(localizedText(16_384))
 export type PluginI18n = DeepReadonly<{ metadata: z.infer<typeof metadata>; [key: string]: LocalizedText | z.infer<typeof metadata> }>
@@ -80,7 +80,7 @@ export function parsePluginManifest(value: unknown): z.infer<typeof manifest> {
 }
 const envelope = { type: z.literal('request'), id: z.number().int().positive(), contextId: id }
 const request = z.discriminatedUnion('method', [
-  z.strictObject({ ...envelope, method: z.literal('store.applyOperations'), params: z.strictObject({ operations: z.array(operation).max(50_000), options: options.optional() }) }),
+  z.strictObject({ ...envelope, method: z.literal('store.applyOperations'), params: z.strictObject({ operations: z.array(operation).max(50_000), revision: z.number().int().nonnegative(), options: options.optional() }) }),
   z.strictObject({ ...envelope, method: z.literal('store.refresh'), params: z.strictObject({}) }),
   z.strictObject({ ...envelope, method: z.literal('notifications.notify'), params: z.strictObject({ tone: z.enum(['info', 'warning']), title: localizedText(256), description: localizedText(4096).optional() }) }),
   z.strictObject({ ...envelope, method: z.literal('files.open'), params: fileOpenOptions }),
@@ -122,7 +122,7 @@ export type ViewState = BaseState & {
 
 export type ActionState = BaseState | ViewState
 
-type WriteOptions = { readonly historyGroup?: string; readonly atRevision?: number }
+type WriteOptions = { readonly historyGroup?: string }
 type PluginWrites = Omit<ReturnType<typeof createWriteCommands<Promise<void>, Promise<string>>>, 'undo' | 'redo' | 'setView' | 'setActiveVocab' | 'setActiveTheme' | 'setLocale' | 'setPanelSizes' | 'setSectionOpen' | 'createView' | 'renameView' | 'setViewPinned' | 'deleteView'>
 export type PluginContext<S extends BaseState = BaseState> = {
   readonly store: PluginWrites & {
@@ -188,6 +188,7 @@ export function createPluginClient<S extends BaseState>(port: MessagePort, initi
   const reply = replies(schema)
   const parsedState = parseOrThrow(schema, initial) as S
   let state = parsedState
+  let readRevision = state.revision
   let sequence = 0
   const listeners = new Set<() => void>()
   const controller = new AbortController()
@@ -244,14 +245,19 @@ export function createPluginClient<S extends BaseState>(port: MessagePort, initi
   }
   port.onmessageerror = close
   port.start()
-  const applyOperations: PluginContext<S>['store']['applyOperations'] = (operations, options) => call('store.applyOperations', { operations, ...(options ? { options } : {}) })
+  const getState = () => { readRevision = state.revision; return state }
+  const applyOperations: PluginContext<S>['store']['applyOperations'] = async (operations, options) => {
+    const result = await call<{ readonly revision: number; readonly changed: boolean }>('store.applyOperations', { operations, revision: readRevision, ...(options ? { options } : {}) })
+    readRevision = Math.max(readRevision, result.revision)
+    return result
+  }
   const { undo: _undo, redo: _redo, setView: _view, setActiveVocab: _vocab, setActiveTheme: _theme, setLocale: _locale, setPanelSizes: _panels, setSectionOpen: _section, createView: _createView, renameView: _renameView, setViewPinned: _pin, deleteView: _deleteView, ...writes } = createWriteCommands(async (operations, options) => { await applyOperations(operations, options) }, async (id, committed) => { await committed; return id })
   const context: PluginContext<S> = {
     store: {
       ...writes,
-      getState: () => state,
+      getState,
       subscribe: (listener) => { listeners.add(listener); return () => listeners.delete(listener) },
-      refresh: async () => { await call('store.refresh', {}); return state },
+      refresh: async () => { await call('store.refresh', {}); return getState() },
       applyOperations,
     },
     notifications: { notify: (value) => call('notifications.notify', value) },

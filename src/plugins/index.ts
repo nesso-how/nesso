@@ -243,7 +243,9 @@ export async function invokeAction(actionId: string, viewId = nessoStore.getStat
     if (error instanceof PluginError && error.code === 'cancelled') return
     const t = getTranslation()
     const locale = nessoStore.getState().preferences.locale ?? defaultLocale
-    notifications.api.notify({ tone: 'warning', title: t('pluginActionFailed'), description: [t('pluginActionFailedDescription', { name: pluginMetadata(plugin, locale).name }), error instanceof PluginError ? error.displayMessage ? resolvePluginText(error.displayMessage, locale) : error.message : undefined].filter(Boolean).join('\n\n') })
+    notifications.api.notify({ tone: 'warning', title: t('pluginActionFailed'), description: error instanceof PluginError && error.code === 'stale-state'
+      ? t('pluginActionConflictDescription', { name: pluginMetadata(plugin, locale).name })
+      : [t('pluginActionFailedDescription', { name: pluginMetadata(plugin, locale).name }), error instanceof PluginError ? error.displayMessage ? resolvePluginText(error.displayMessage, locale) : error.message : undefined].filter(Boolean).join('\n\n') })
   }
   finally { active.delete(controller); publishActions() }
 }

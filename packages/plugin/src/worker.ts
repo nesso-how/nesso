@@ -24,7 +24,7 @@ const bootstrap = async (event: MessageEvent) => {
         (error: unknown) => {
           const issues = error instanceof Error && 'issues' in error && Array.isArray(error.issues) && error.issues.every((issue) => typeof issue?.path === 'string' && typeof issue?.message === 'string') ? error.issues : [{ path: 'action', message: 'Action execution failed' }]
           const display = localizedText(2048).safeParse(error instanceof Error && 'displayMessage' in error ? error.displayMessage : undefined)
-          const safe = new PluginError('failed', issues, display.success ? display.data : undefined)
+          const safe = new PluginError(error instanceof PluginError ? error.code : 'failed', issues, display.success ? display.data : undefined)
           port.postMessage({ type: 'complete', ok: false, error: { code: safe.code, issues: safe.issues, ...(safe.displayMessage ? { displayMessage: safe.displayMessage } : {}) } })
         },
       )

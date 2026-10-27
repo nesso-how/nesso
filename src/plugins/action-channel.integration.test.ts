@@ -46,16 +46,42 @@ test('action projections stay bound to the invoked view, filter off-view selecti
   await instance.start()
   instance.host.store.setView(instance.target)
   await store.refresh()
-  await store.applyOperations([{ kind: 'concept.label', id: 'urn:a', value: 'Changed' }], { atRevision: store.getState().revision })
+  await store.applyOperations([{ kind: 'concept.label', id: 'urn:a', value: 'Changed' }])
   const state = store.getState()
   assert.ok('viewGraph' in state)
   assert.equal(state.targetViewId, instance.target)
   assert.equal(state.viewGraph.concepts[0].label, 'Changed')
   assert.equal('getViewGraph' in store, false)
-  await assert.rejects(store.applyOperations([{ kind: 'concept.label', id: 'urn:a', value: 'Stale' }], { atRevision: before.revision }), { code: 'stale-state' })
   await assert.rejects(store.applyOperations([{ kind: 'concept.label', id: 'urn:a', value: 'No' }, { kind: 'concept.remove', id: 'urn:b' }]), { code: 'denied' })
   await store.applyOperations([{ kind: 'concept.color', id: 'urn:a', value: '#123456' }])
   assert.equal(instance.host.store.getState().graph.concepts[0].color, '#123456')
+})
+
+test('plugin batches and helpers automatically reject stale reads without changes or retries', async (t) => {
+  for (const delivered of [false, true]) {
+    const instance = fixture()
+    t.after(instance.close)
+    await instance.start()
+    const { store, files } = instance.client.context
+    const snapshot = store.getState()
+    assert.ok('viewGraph' in snapshot)
+    instance.host.store.setConceptLabel('urn:a', 'Newer edit')
+    if (delivered) await files.open({ extensions: ['json'], mimeTypes: [] })
+    const before = instance.host.store.getState()
+    await assert.rejects(store.applyOperations([
+      { kind: 'concept.color', id: 'urn:a', value: '#123456' },
+      { kind: 'concept.label', id: 'urn:a', value: snapshot.viewGraph.concepts[0].label.toUpperCase() },
+    ]), { code: 'stale-state' })
+    await assert.rejects(store.setConceptLabel('urn:a', 'Still stale'), { code: 'stale-state' })
+    assert.equal(instance.host.store.getState(), before)
+    assert.equal(instance.host.store.getState().graph.concepts[0].label, 'Newer edit')
+    if (delivered) store.getState()
+    else await store.refresh()
+    await store.setConceptLabel('urn:a', 'Recomputed')
+    await store.setConceptColor('urn:a', '#123456')
+    assert.equal(instance.host.store.getState().graph.concepts[0].label, 'Recomputed')
+    assert.equal(instance.host.store.getState().graph.concepts[0].color, '#123456')
+  }
 })
 
 test('isolated clients have no clipboard API and raw clipboard requests close the channel without effects', async (t) => {
@@ -153,6 +179,7 @@ test('typed plugin writes are asynchronous, synchronize snapshots and preserve v
   await store.setConceptDescription('urn:a', 'Described')
   assert.equal(instance.host.store.getState().graph.concepts[0].description, 'Described')
   instance.host.store.setConceptLabel('urn:a', 'Host edit', 'edit')
+  await store.refresh()
   await store.setConceptLabel('urn:a', 'Plugin edit', 'edit')
   assert.equal(instance.host.store.getState().graph.concepts[0].label, 'Plugin edit')
   assert.equal('resetGraph' in store || 'setViewport' in store || 'setActiveRenderer' in store, false)
@@ -211,6 +238,7 @@ test('plugin creation helpers resolve stable IDs after commit and reject failed 
   instance.host.store.setView(instance.target)
   instance.host.store.setSelection([])
   const { store } = instance.client.context
+  await store.refresh()
   assert.equal('createView' in store, false)
   const concept = await store.addConcept({ x: 40, y: 50 })
   const state = store.getState()

@@ -117,6 +117,7 @@
   "pluginsRetry": "Ricarica Nesso",
   "pluginActionFailed": "Azione del plugin non riuscita",
   "pluginActionFailedDescription": "{{name}} non è riuscito a completare l’azione. Riprova.",
+  "pluginActionConflictDescription": "{{name}} non ha potuto applicare le ultime modifiche perché il documento è cambiato. Esegui di nuovo l’azione.",
   "about": "Informazioni",
   "aboutDescription": "Un secondo cervello per connettere idee e costruire comprensione in un unico grafo di conoscenza, basato su un piccolo nucleo con un semplice sistema di plugin.",
   "aboutWebsite": "Sito web",

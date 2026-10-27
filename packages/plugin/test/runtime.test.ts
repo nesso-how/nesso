@@ -64,8 +64,11 @@ test('messages reject non-data values, excessive nesting, unknown methods and ex
   const request = { type: 'request', id: 1, contextId: 'context', method: 'store.refresh', params: {} }
   assert.equal(parsePluginMessage(request).type, 'request')
   for (const value of [{ ...request, pluginId: 'another' }, { ...request, method: 'host.setState' }, { ...request, id: Number.MAX_SAFE_INTEGER + 1 }]) assert.throws(() => parsePluginMessage(value), PluginError)
-  assert.throws(() => parsePluginMessage({ ...request, method: 'store.applyOperations', params: { operations: [{ kind: 'concept.label', id: 'urn:nesso:probe', value: 42 }] } }), PluginError)
-  for (const operation of [{ kind: 'viewport.set', rendererId: 'concept-map', value: { x: 0, y: 0, zoom: 1 } }, { kind: 'preferences.renderer', id: 'concept-map' }]) assert.throws(() => parsePluginMessage({ ...request, method: 'store.applyOperations', params: { operations: [operation] } }), PluginError)
+  const write = { ...request, method: 'store.applyOperations', params: { operations: [{ kind: 'concept.label', id: 'urn:nesso:probe', value: 'Label' }], revision: 0 } }
+  assert.deepEqual(parsePluginMessage(write), write)
+  for (const revision of [undefined, -1, 0.5]) assert.throws(() => parsePluginMessage({ ...write, params: { ...write.params, revision } }), PluginError)
+  assert.throws(() => parsePluginMessage({ ...write, params: { ...write.params, operations: [{ kind: 'concept.label', id: 'urn:nesso:probe', value: 42 }] } }), PluginError)
+  for (const operation of [{ kind: 'viewport.set', rendererId: 'concept-map', value: { x: 0, y: 0, zoom: 1 } }, { kind: 'preferences.renderer', id: 'concept-map' }]) assert.throws(() => parsePluginMessage({ ...write, params: { ...write.params, operations: [operation] } }), PluginError)
   assert.throws(() => parsePluginMessage({ type: 'ready' }), PluginError)
   const notification = { ...request, method: 'notifications.notify', params: { tone: 'info', title: { en: 'Title', it: 'Titolo' }, description: { en: 'Description' } } }
   assert.equal(parsePluginMessage(notification).type, 'request')

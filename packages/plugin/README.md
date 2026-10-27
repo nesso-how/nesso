@@ -1,79 +1,114 @@
-# @nesso-how/plugin
+# Nesso Plugin SDK
 
-Types, validation, and asynchronous clients for isolated Nesso actions plus data-only vocabularies and themes.
-
-The [standalone example](example/) is a real plugin published as [`@nesso-how/plugin-example`](https://www.npmjs.com/package/@nesso-how/plugin-example). You can try it from Settings → Plugins in the desktop app or use its source as a starting point for your own plugin.
+Build Nesso plugins with TypeScript: **actions** read and edit graphs, **vocabularies** define relation types, and **themes** customize appearance.
 
 ## Create a plugin
 
-- **Actions** export `create(context)`, returning `{ id, label, icon?, run }` records. See [Write an action](#write-an-action) and the [standalone example](example/README.md).
-- **Vocabularies** ship a `VocabDefinition` JSON file with stable absolute relation-type IRIs and a default among their own types. See [Base Vocab](../../plugins/base-vocab).
-- **Themes** ship a light-only `ThemeDefinition` JSON file with colors, metrics, and local WOFF2 fonts; arbitrary CSS and remote fonts are unsupported. See [Kernel](../../plugins/kernel-theme) and [Paper](../../plugins/paper-theme).
+Copy the [standalone action example](example/) into a separate project. It includes the SDK, TypeScript configuration, and bundler setup:
 
-Actions build one self-contained browser JavaScript ES module with dependencies bundled. Nesso does not install dependencies, run package scripts, compile received source, or load module graphs. It validates vocabulary and theme JSON without executing it.
+```sh
+npm install
+npm run build
+```
 
-## Write an action
+Choose your own package name and action ID, then edit `src/index.ts`:
 
-This module uppercases labels in the invoked view with one atomic write. It requires `writes: ['concept.label']` and `capabilities: []`.
+```ts
+import type { ActionContext, ActionContribution, NessoOperation } from '@nesso-how/plugin'
+import source from '../package.json' with { type: 'json' }
 
-```js
-export function create({ store }) {
-  return [{
+export const create = ({ store }: ActionContext): readonly ActionContribution[] => {
+  const action: ActionContribution = {
     id: 'uppercase-labels',
-    label: { en: 'Uppercase labels' },
+    label: source.i18n.metadata.name,
     run: async () => {
-      const state = await store.refresh()
-      const operations = state.viewGraph.concepts.map(({ id, label }) => ({
+      const state = store.getState()
+      if (!('viewGraph' in state)) return
+
+      const operations: readonly NessoOperation[] = state.viewGraph.concepts.map(({ id, label }) => ({
         kind: 'concept.label',
         id,
         value: label.toUpperCase(),
       }))
-      await store.applyOperations(operations, { atRevision: state.revision })
+
+      await store.applyOperations(operations)
     },
-  }]
+  }
+
+  return [action]
 }
 ```
 
-`create(context)` returns an array of 1–64 actions, even for one. IDs are unique lowercase kebab-case strings of at most 64 characters; labels are localized text with an English fallback. The optional `icon` uses an [`ActionIconName`](src/runtime.ts); unknown values render as `zap`.
+This changes labels in the invoked view in one undoable batch. Shared concepts change in every view containing them.
 
-### Discovery and invocation
+How the example works:
 
-Discovery calls `create(context)` to collect descriptors without graph access, writes, files, or notifications. Keep document reads and effects inside `run`, not at module scope or in `create`.
+- `viewGraph` is available during `run`, but not when Nesso first discovers the plugin's actions. `ActionContext` covers both phases, so the check lets TypeScript safely access graph data.
+- `applyOperations` takes an array of edits. Here, `.map()` creates one `concept.label` edit per concept, with its ID and new label.
+- Writes automatically check that the snapshot you read is still current. If it changed, the entire batch is rejected rather than overwriting newer edits.
 
-Each invocation loads a fresh isolated worker, calls `create` again, verifies unchanged descriptors, and calls the selected `run({ viewId })`. The instance closes when `run` finishes: await all writes and host effects; return values are ignored. There is no persistent background instance.
+### Package metadata and permissions
 
-## Action context
+Keep the example's build configuration and set these fields in `package.json`:
 
-Nesso injects `{ store, files, notifications, signal }`; do not create a client or import the host store. TypeScript authors can bundle `ActionContext`, `ActionContribution`, and `NessoOperation` types from `@nesso-how/plugin`.
+```json
+{
+  "name": "nesso-plugin-my-action",
+  "version": "1.0.0",
+  "keywords": ["nesso-plugin"],
+  "nesso": {
+    "apiVersion": 1,
+    "kind": "actions",
+    "entry": "dist/index.js",
+    "writes": ["concept.label"],
+    "capabilities": []
+  },
+  "i18n": {
+    "metadata": {
+      "name": { "en": "Uppercase labels" },
+      "description": { "en": "Uppercase concept labels in a view." },
+      "documentation": { "en": "Updates labels in one undoable batch." }
+    }
+  }
+}
+```
 
-`signal` is a standard `AbortSignal` for the action instance. When the instance closes, `signal.aborted` becomes `true` and an `abort` event fires. Use it to stop ongoing work and avoid starting further writes or effects.
+Declare the operations your action uses in `writes` and file/notification access in `capabilities`. All fields shown under `nesso` and `i18n.metadata` are required. Add the `nesso-plugin` keyword for discovery in Settings → Plugins.
 
-### Read state
+Labels and metadata use `{ en: string, it?: string, 'zh-CN'?: string }`, with English required as the fallback.
 
-| API | Behavior |
-| --- | --- |
-| `store.getState()` | Returns the latest local snapshot synchronously. Snapshots are readonly; mutating them does not change Nesso. |
-| `await store.refresh()` | Returns a fresh host snapshot. Use before edits and after deferred work such as a file dialog. |
-| `store.subscribe(listener)` | Returns an unsubscribe function. The listener receives no arguments; read with `getState()`. |
+### Build and test
 
-Discovery exposes only `revision`, `contextId`, `locale`, `theme`, and `conceptPlacementOffset`. Invocation adds:
+Run `npm run build`, then follow the example's [local testing instructions](example/README.md#test-an-unpublished-build).
 
-| State field | Meaning |
-| --- | --- |
-| `viewGraph` | Host-materialized `{ concepts, relations, relationTypes }` for the invoked view. Concept and relation-type IDs are absolute IRIs; relations are `{ source, predicate, target }` triples without an `id`. |
-| `selected` | Concept or relation selections in the invoked view. A relation ID is `JSON.stringify([source, predicate, target])`. |
-| `targetViewId` | Invoked saved-view ID, or `null` for All. |
-| `workspace` | `{ activeViewId, savedViews }`; saved-view summaries contain `{ id, name, pinned }`, and the active view may differ from the invoked view. |
-| `activeVocab` | `{ id, relationTypes, defaultTypeId }`, or `null`. Preserve existing type IRIs. |
-| `history` | `{ canUndo, canRedo }` metadata, not permission to invoke history. |
+Actions must ship one self-contained browser ES module with dependencies bundled; the example's build handles this. Test and install external plugins in the desktop app.
 
-`ActionState` covers both phases; narrow with `'viewGraph' in state` when needed. The host's complete graph, preferences, renderer state, and store are not exposed.
+## Action API
 
-`run({ viewId })` retains its target despite navigation; `null` exposes the complete graph. Saved views share concepts, so edits appear in every view containing them. Deleting the target view or resetting the document revokes the context.
+Nesso provides `{ store, files, notifications, signal }` through `ActionContext`.
 
-### Write state
+`create` returns an array of actions with unique lowercase kebab-case IDs, localized labels, optional icons, and `run({ viewId })` handlers. Use `ActionIconName` for supported icons.
 
-Every write is asynchronous and requires its declared operation kind:
+Keep graph reads and effects inside `run`. **Await every write, file dialog, and notification** before returning; the action ends when `run` finishes. Use `signal` to detect cancellation.
+
+### Read the invoked view
+
+- `store.getState()` returns the latest readonly local snapshot synchronously and makes it the basis for subsequent writes.
+- `await store.refresh()` fetches and reads a fresh snapshot. Use it after deferred work, such as a file dialog, before computing edits.
+- `store.subscribe(listener)` notifies you of snapshot changes and returns an unsubscribe function. Read the new state with `getState()`.
+
+The graph snapshot provides:
+
+- `viewGraph`: `{ concepts, relations, relationTypes }` for the invoked view.
+- `selected`: the invoked view's selection.
+- `targetViewId`: the invoked view's ID, or `null` for All; navigation does not change the target.
+- `activeVocab`: the current vocabulary, or `null`.
+
+Concept and relation-type IDs are absolute IRIs. Relations are `{ source, predicate, target }` triples; use `JSON.stringify([source, predicate, target])` as their selection/write ID.
+
+### Write the graph
+
+Call helpers on `store` and declare their operation kinds in `nesso.writes`:
 
 | Helper | Required `writes` entry |
 | --- | --- |
@@ -94,13 +129,13 @@ Every write is asynchronous and requires its declared operation kind:
 | `setSelection([{ kind, id }])` | `selection.set` |
 | `setViewMembership(viewId, conceptId, included)` | `view.membership` |
 
-Await helpers on `store`. `addConcept` resolves to the new IRI; other helpers return no value. Relation IDs identify existing triples. `createRelationType` also assigns the new type to that relation, while `connect` uses the active vocabulary's default. New concepts join the active saved view and, with exactly one concept selected, link to it using that default.
+`addConcept` returns the new IRI. New concepts join the active saved view and link to the single selected concept, if any. These links and `connect` use the vocabulary's default relation type. `createRelationType` creates and assigns a type to the given relation.
 
-For multiple edits, prefer `store.applyOperations(operations, { atRevision: state.revision })`. Operations follow `NessoOperation`: `concept.add` needs an explicit new absolute IRI, and `relation.connect` accepts an optional `{ id, label }` type. The complete ordered batch is validated atomically and resolves to `{ revision, changed }`.
+For related edits, use `store.applyOperations(operations)` as in the quickstart. The entire batch succeeds or changes nothing. Separate calls are separate transactions. Raw `concept.add` operations require an explicit new absolute IRI.
 
-`state.revision` is local to the action instance, not a persisted document version. A stale `atRevision` rejects with `stale-state` and applies nothing; without it, the batch uses current state. Never retry mutations automatically. Separate write calls are separate transactions.
+Every write checks against the last snapshot you read, or the initial snapshot if you haven't read one. Successful writes advance that baseline, so awaited sequential writes work normally. Incoming updates alone do not advance it. A conflict rejects with `stale-state`; let the failure propagate so Nesso can ask the user to run the action again. Never retry mutations automatically or read a new snapshot just to submit edits calculated from old data.
 
-The invoked view is **not a write sandbox**: declared writes can affect the whole document, and undeclared operations are rejected. Reset, history, view management/navigation, preferences, viewport, and renderer APIs are unavailable.
+The invoked view is **not a write sandbox**: permitted writes can affect the whole document. Only the operations listed above are available to plugins.
 
 ### Files, notifications, and failures
 
@@ -110,39 +145,35 @@ The invoked view is **not a write sandbox**: declared writes can affect the whol
 | `files.save({ name: 'graph.json', mediaType: 'application/json', text })` | `files.save` | `{ saved: boolean }`; cancellation returns `false`. |
 | `notifications.notify({ tone: 'info', title: { en: 'Done' }, description: { en: 'Labels updated' } })` | `notifications.notify` | A notification ID. Tone is `info` or `warning`; description is optional. |
 
-Await these host-mediated effects. Files are UTF-8 text up to 16 MiB; arbitrary paths, filesystem, clipboard, network, navigation, and host UI are unavailable. Refresh state after a file dialog before computing edits.
+Files use UTF-8 text. Plugins have no Node, host DOM, direct filesystem, clipboard, or network access.
 
-Host requests reject with `PluginError`, containing `code` and bounded `{ path, message }[]` issues. Authors can throw it with an optional localized display message. Let failures propagate instead of reporting success. File and notification effects cannot be rolled back with document transactions.
+Failures throw `PluginError` with `code` and `{ path, message }[]` issues. Let them propagate instead of reporting success. Files and notifications cannot be rolled back with graph edits.
 
-## Manifest and translations
+## Vocabularies
 
-Use the [example package.json](example/package.json). Package names are valid npm names and versions exact SemVer. All technical declarations under `nesso` are required:
+Set `nesso.kind` to `"vocab"`, `entry` to a package-local JSON file such as `"dist/definition.json"`, and both `writes` and `capabilities` to `[]`. Keep the same package metadata structure. The entry contains a `VocabDefinition`:
 
-| `nesso` field | Supported value |
-| --- | --- |
-| `apiVersion` | `1` |
-| `kind` | `actions`, `vocab`, or `theme` |
-| `entry` | Package-local `.js` for actions or `.json` for themes/vocabularies |
-| `writes` | Unique operation kinds from the helper table |
-| `capabilities` | Unique subset of `files.open`, `files.save`, `notifications.notify` |
-
-Themes and vocabularies require empty `writes` and `capabilities`; unknown declarations are rejected. Contribution IDs are unique by kind.
-
-`i18n.metadata` requires localized `name`, `description`, and `documentation`. `LocalizedText` has `{ en: string, it?: string, 'zh-CN'?: string }` shape, with English fallback. Use it for action labels, notification text, and `PluginError` display messages; diagnostic issues remain strings. Bundle JSON imports at build time.
-
-## Installation and isolation
-
-External installation is desktop-only; web runs bundled plugins. Publish versioned npm packages: installation pins an exact version and revalidates received files. Approval covers the exact code and access declarations before any execution; failed updates retain the previous installation. For local development, use the example's `propose` call.
-
-Plugins receive no Node, host DOM, credentials, arbitrary filesystem, or network access. Actions use interruptible workers, and the host revokes effects before teardown. This does not guarantee hard CPU/RAM containment or host responsiveness.
-
-## SDK development
-
-```sh
-pnpm --dir packages/plugin build
-pnpm --dir packages/plugin pack --pack-destination /absolute/output
+```json
+{
+  "id": "my-vocab",
+  "relationTypes": [
+    { "id": "urn:my-vocab:depends-on", "label": "depends on" }
+  ],
+  "defaultTypeId": "urn:my-vocab:depends-on"
+}
 ```
 
-Use **pnpm pack** so workspace exports become compiled ESM and declarations. The SDK exposes `@nesso-how/plugin` for authors, `/runtime` for validation/client code, and `/package` for package tooling, without other workspace dependencies.
+Use stable absolute IRIs for relation types and choose a default from your own list. See [Base Vocab](../../plugins/base-vocab/) for a larger example.
 
-See `src/runtime.ts`, `src/definitions.ts`, and `test/` for the complete contract and limits. Run `pnpm test` for contract tests and `pnpm test:plugin-runtime` for desktop/web integration checks.
+## Themes
+
+Set `nesso.kind` to `"theme"`, point `entry` to your JSON definition, and use empty `writes` and `capabilities`. A `ThemeDefinition` contains:
+
+- `id`: a lowercase kebab-case contribution ID.
+- `colors`: every required token, using `#RRGGBB` or `#RRGGBBAA`. Start with [Paper's palette](../../plugins/paper-theme/src/index.ts) or [Kernel's](../../plugins/kernel-theme/src/index.ts).
+- `metrics`: `radius-control` and `radius-object` in pixels, and `duration-state` in milliseconds.
+- `fonts`: `sans` and `mono`, each with a `faces` array. Use `[]` for system fallbacks, or include local WOFF2 files with package-relative `path`, `weight: [min, max]`, and `style: "normal"` or `"italic"`.
+
+Only light themes are supported. Use readable text contrast; arbitrary CSS and remote fonts are unsupported.
+
+For the full API and validation rules, see [action types](src/runtime.ts), [graph operations](src/types.ts), and [theme/vocabulary schemas](src/definitions.ts).
