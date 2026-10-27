@@ -43,9 +43,14 @@ async function registry(t: TestContext, listener: RequestListener) {
   return request
 }
 
-test('latest metadata admits all supported kinds and rejects prereleases, mismatched identities and APIs', async (t) => {
+test('latest metadata admits all supported kinds and rejects deprecated versions, prereleases, mismatched identities and APIs', async (t) => {
   let document = { ...manifest, version: '1.2.0' }
-  const request = await registry(t, (_req, res) => res.end(JSON.stringify(document)))
+  let requests = 0
+  const request = await registry(t, (_req, res) => { requests++; res.end(JSON.stringify(document)) })
+  for (const name of [null, 42, '', 'has spaces', 'a'.repeat(215), 'https://example.com/plugin']) {
+    await assert.rejects(latestNpmPlugin(name, new AbortController().signal, request), { code: 'invalid-input' })
+  }
+  assert.equal(requests, 0)
   for (const kind of ['actions', 'theme', 'vocab']) {
     document = { ...document, nesso: { ...manifest.nesso, kind, entry: kind === 'actions' ? 'index.js' : 'definition.json' } }
     const plugin = await latestNpmPlugin(manifest.name, new AbortController().signal, request)
@@ -55,13 +60,13 @@ test('latest metadata admits all supported kinds and rejects prereleases, mismat
     assert.equal(plugin.author, 'Test Author')
     assert.equal(plugin.repository, 'https://github.com/example/plugin')
   }
-  for (const invalid of [{ ...manifest, version: '1.3.0-beta.1' }, { ...manifest, name: 'other-package' }, { ...manifest, nesso: { ...manifest.nesso, apiVersion: 2 } }]) {
+  for (const invalid of [{ ...manifest, version: '1.2.0', deprecated: 'Temporary test package' }, { ...manifest, version: '1.3.0-beta.1' }, { ...manifest, name: 'other-package' }, { ...manifest, nesso: { ...manifest.nesso, apiVersion: 2 } }]) {
     document = invalid
     await assert.rejects(latestNpmPlugin(manifest.name, new AbortController().signal, request))
   }
 })
 
-test('discovery enforces the exact keyword, filters names rather than descriptions, and preserves pagination', async (t) => {
+test('discovery enforces the exact keyword, excludes deprecated plugins, filters names rather than descriptions, and preserves pagination', async (t) => {
   const requested: URL[] = []
   let offline = false
   const request = await registry(t, (req, res) => {
@@ -72,16 +77,17 @@ test('discovery enforces the exact keyword, filters names rather than descriptio
         { package: { name: manifest.name, keywords: ['nesso-plugin'] } },
         { package: { name: 'untagged', keywords: ['nesso-plugin-other'] } },
         { package: { name: 'future', keywords: ['nesso-plugin'] } },
+        { package: { name: 'deprecated', keywords: ['nesso-plugin'] } },
       ] }))
     } else {
       if (offline) { res.writeHead(503).end(); return }
       const name = decodeURIComponent(url.pathname.split('/')[1])
-      res.end(JSON.stringify({ ...manifest, name, version: '1.2.0', description: 'Description-only match', i18n: { metadata: { ...manifest.i18n.metadata, name: { en: 'Visible display name' } } }, nesso: { ...manifest.nesso, apiVersion: name === 'future' ? 2 : 1 } }))
+      res.end(JSON.stringify({ ...manifest, name, version: '1.2.0', deprecated: name === 'deprecated' ? 'Temporary test package' : undefined, description: 'Description-only match', i18n: { metadata: { ...manifest.i18n.metadata, name: { en: 'Visible display name' } } }, nesso: { ...manifest.nesso, apiVersion: name === 'future' ? 2 : 1 } }))
     }
   })
   const found = await searchNpmPlugins({ query: 'Visible display', offset: 10 }, new AbortController().signal, request)
   assert.deepEqual(found.packages.map(({ name }) => name), [manifest.name])
-  assert.equal(found.next, 13)
+  assert.equal(found.next, 14)
   assert.equal(requested[0].searchParams.get('from'), '10')
   assert.equal(requested[0].searchParams.get('text'), 'keywords:nesso-plugin')
   assert.equal(requested.some(({ pathname }) => pathname.includes('untagged')), false)

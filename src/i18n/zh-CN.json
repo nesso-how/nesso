@@ -117,6 +117,7 @@
   "pluginsRetry": "重新加载 Nesso",
   "pluginActionFailed": "插件操作失败",
   "pluginActionFailedDescription": "{{name}} 无法完成此操作。请重试。",
+  "pluginActionConflictDescription": "文档已更改，{{name}} 无法应用本次提交的修改。请重新运行此操作。",
   "about": "关于",
   "aboutDescription": "一个连接想法、在同一个知识图谱中增进理解的第二大脑，以精简的内核和简单的插件系统为基础。",
   "aboutWebsite": "网站",

@@ -1,4 +1,4 @@
-import { checkMessageSize, parseContribution, PluginError, resolvePluginText, runtimeLimits, type ActionDescriptor, type ActionState, type BaseState, type FileOpenOptions, type FileOpenResult, type FileSaveOptions } from '@nesso-how/plugin/runtime'
+import { checkMessageSize, parseContribution, PluginError, resolvePluginText, runtimeLimits, type ActionDescriptor, type ActionState, type FileOpenOptions, type FileOpenResult, type FileSaveOptions } from '@nesso-how/plugin/runtime'
 import { relationKey } from '@nesso-how/schema'
 import type { NessoOperation } from '@nesso-how/plugin'
 import type { HostStore } from '../store/types.ts'
@@ -12,7 +12,7 @@ type Grant = {
   readonly invocation?: { readonly actionId: string; readonly viewId: string | null; readonly descriptors: readonly ActionDescriptor[] }
 }
 
-export function connectActionChannel(port: MessagePort, store: HostStore, grant: Grant, base: BaseState, effects: {
+export function connectActionChannel(port: MessagePort, store: HostStore, grant: Grant, base: Pick<ActionState, 'contextId' | 'locale' | 'theme' | 'conceptPlacementOffset'>, effects: {
   files: { open: (options: FileOpenOptions) => Promise<FileOpenResult>; save: (options: FileSaveOptions) => Promise<{ saved: boolean }> }
   notify: (value: { tone: 'info' | 'warning'; title: string; description?: string }) => string
   dismiss: (id: string) => void
@@ -29,7 +29,7 @@ export function connectActionChannel(port: MessagePort, store: HostStore, grant:
   const instanceId = crypto.randomUUID()
   const target = grant.invocation?.viewId ?? null
   let previous = store.getState()
-  let revision = base.revision
+  let revision = 0
   let registered = false
   let running = false
   let interaction = false
@@ -41,13 +41,11 @@ export function connectActionChannel(port: MessagePort, store: HostStore, grant:
   function fail(code: string, message: string): never { throw new PluginError(code, [{ path: 'action', message }]) }
   const snapshot = (): ActionState => {
     const state = store.getState()
-    const projection = { ...base, revision, locale: state.preferences.locale ?? base.locale }
-    if (!grant.invocation) return projection
     const viewGraph = materialize(state.graph, { ...state.workspace, activeViewId: target })
     const concepts = new Set(viewGraph.concepts.map(({ id }) => id))
     const relations = new Set(viewGraph.relations.map(relationKey))
     return {
-      ...projection,
+      ...base, revision, locale: state.preferences.locale ?? base.locale,
       workspace: { activeViewId: state.workspace.activeViewId, savedViews: state.workspace.savedViews.map(({ id, name, pinned }) => ({ id, name, pinned })) },
       targetViewId: target, viewGraph,
       selected: state.selected.filter(({ kind, id }) => (kind === 'concept' ? concepts : relations).has(id)),
@@ -73,7 +71,7 @@ export function connectActionChannel(port: MessagePort, store: HostStore, grant:
     previous = state
     if (changed && !controller.signal.aborted) {
       revision++
-      try { sendState() } catch { failed(new PluginError('failed', [{ path: 'state', message: 'Could not deliver action state' }])) }
+      try { if (running) sendState() } catch { failed(new PluginError('failed', [{ path: 'state', message: 'Could not deliver action state' }])) }
     }
   })
   const close = (completed = false) => {
@@ -101,12 +99,12 @@ export function connectActionChannel(port: MessagePort, store: HostStore, grant:
     if (context !== base.contextId) fail('stale-context', 'Action context changed')
   }
   const execute = async (message: Extract<PluginMessage, { type: 'request' }>) => {
-    if (message.method === 'store.refresh') { sendState(); return null }
     assertCurrent(message.contextId)
+    if (message.method === 'store.refresh') { sendState(); return null }
     if (message.method === 'store.applyOperations') {
-      const { operations, options } = message.params
+      const { operations, revision: expectedRevision, options } = message.params
       if (operations.some(({ kind }) => !allowed.has(kind))) fail('denied', 'Operation not declared')
-      if (options?.atRevision !== undefined && options.atRevision !== revision) fail('stale-state', 'Snapshot changed before commit')
+      if (expectedRevision !== revision) fail('stale-state', 'Snapshot changed before commit')
       const before = revision
       store.applyOperations(operations, { historyGroup: options?.historyGroup ? `${instanceId}:${options.historyGroup}` : undefined })
       if (before === revision) sendState()
@@ -152,7 +150,9 @@ export function connectActionChannel(port: MessagePort, store: HostStore, grant:
       running = true
       effects.activated()
       resume()
-      port.postMessage({ type: 'invoke', actionId: grant.invocation.actionId, invocation: { viewId: target } })
+      const state = snapshot()
+      checkMessageSize(state, runtimeLimits.snapshot)
+      port.postMessage({ type: 'invoke', actionId: grant.invocation.actionId, state })
       return
     }
     if (message.type === 'complete') {
@@ -176,5 +176,5 @@ export function connectActionChannel(port: MessagePort, store: HostStore, grant:
     } finally { clearTimeout(timer); pending.delete(timer) }
   }
   listenPluginPort(port, () => controller.signal.aborted, handle, failed)
-  return { snapshot, close, signal: controller.signal }
+  return { close, signal: controller.signal }
 }

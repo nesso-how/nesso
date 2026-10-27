@@ -1,4 +1,4 @@
-import { PluginError, resolvePluginText, themeTokens, type ActionDescriptor, type BaseState } from '@nesso-how/plugin/runtime'
+import { PluginError, resolvePluginText, themeTokens, type ActionDescriptor } from '@nesso-how/plugin/runtime'
 import { defaultLocale } from '@nesso-how/i18n'
 import type { HostStore } from '../store/types.ts'
 import type { Notifications } from '@nesso-how/plugin'
@@ -23,8 +23,8 @@ export function loadActions(store: HostStore, source: ActionPackage, notificatio
     const cleanup = () => { signal?.removeEventListener('abort', cancel); stop(); frame.remove() }
     const cancel = () => { cleanup(); reject(new PluginError('cancelled', [{ path: 'action', message: 'Action cancelled' }])) }
     const theme = getComputedStyle(document.documentElement)
-    const base: BaseState = {
-      revision: 0, contextId: crypto.randomUUID(), locale: store.getState().preferences.locale ?? defaultLocale,
+    const base = {
+      contextId: crypto.randomUUID(), locale: store.getState().preferences.locale ?? defaultLocale,
       theme: Object.fromEntries(themeTokens.map((token) => [token, theme.getPropertyValue(`--${token}`).trim()])),
       conceptPlacementOffset,
     }
@@ -41,7 +41,7 @@ export function loadActions(store: HostStore, source: ActionPackage, notificatio
         failed,
       })
       files = createPluginFiles(bridge, runtime.signal)
-      return { close: runtime.close, bootstrap: { mode: 'actions', kind: 'actions', state: runtime.snapshot() } }
+      return { close: runtime.close }
     }, (error) => { cleanup(); reject(error) })
     signal?.addEventListener('abort', cancel, { once: true })
   })

@@ -12,6 +12,21 @@ A second brain for connecting ideas and building understanding in one knowledge 
 
 </div>
 
+We often understand and remember through associations: one idea brings another to mind, and new knowledge gains meaning through what we already know. Nesso gives you a place to map these associations, follow the relations between ideas, and build on them.
+
+Your knowledge isn’t scattered across files and folders but lives in **one connected graph that grows with your understanding**. **Views** let you focus on a project, question, or theme without splitting that knowledge into separate copies. The same concept can appear in several views, with edits shared across them.
+
+Nesso keeps things minimal and efficient, with just a few key elements:
+
+- **Concepts** represent ideas. You can change their color, make their labels bold or italic, and add a plain-text description.
+- **Relations** connect concepts with a direction and a type that describes the connection.
+- **Views** offer different perspectives on the same graph. The default **All** view contains the complete graph and cannot be deleted. Saved views are named subsets of its concepts.
+- **Vocabularies** provide relation types. You can name your own relation types or define vocabularies as plugins.
+- **Plugins** are npm packages providing vocabularies, themes, or actions on the current view. Install them from Settings → Plugins on desktop, or [create your own](packages/plugin/README.md#create-a-plugin).
+- **AI** helps you explore, expand, and organize your graph on desktop. Chat using your own API key (BYOK), a local model, or ChatGPT sign-in, or connect external assistants through the local MCP server.
+
+Use the Explorer to navigate views, the canvas to build the graph, and the Inspector to edit the selection, manage views, or chat with AI on desktop.
+
 > [!WARNING]
 > This is pre-alpha software. Stored formats may change without migrations.
 >
@@ -22,23 +37,6 @@ A second brain for connecting ideas and building understanding in one knowledge 
 Nesso is primarily a desktop app for **macOS, Windows, and Linux**. Download it from [nesso.how](https://nesso.how) or [GitHub releases](https://github.com/nesso-how/nesso/releases).
 
 The [web demo](https://app.nesso.how) lets you try the graph editor in your browser. AI assistance, plugin installation, and the local MCP server are available in the desktop app.
-
-## Usage
-
-We often understand and remember through associations: one idea brings another to mind, and new knowledge gains meaning through what we already know. Nesso gives you a place to map these associations, follow the relations between ideas, and build on them.
-
-Your knowledge lives in **one graph**: your second brain. **Views** let you focus on a project, question, or theme without splitting that knowledge into separate copies. The same concept can appear in several views, with edits shared across them.
-
-Nesso keeps things minimal and efficient, with just a few key elements:
-
-- **Concepts** represent ideas. You can change their color, make their labels bold or italic, and add a plain-text description.
-- **Relations** connect concepts with a direction and a type that describes the connection.
-- **Views** offer different perspectives on the same graph. The default **All** view contains the complete graph and cannot be deleted. Saved views are named subsets of its concepts.
-- **Vocabularies** provide relation types. You can name your own relation types or define vocabularies as plugins.
-- **Plugins** are npm packages providing vocabularies, themes, or actions on the current view. Install them from Settings → Plugins on desktop, or [create your own](packages/plugin/README.md#create-a-plugin).
-- **AI** helps you explore, expand, and organize your graph on desktop. Chat using your own API key (BYOK), a local model, or ChatGPT sign-in, or connect external assistants through the local MCP server. See the [AI guide](packages/ai/README.md).
-
-Use the Explorer to navigate views, the canvas to build the graph, and the Inspector to edit the selection, manage views, or chat with AI on desktop.
 
 ## Architecture
 
@@ -74,32 +72,52 @@ flowchart TB
   class Desktop desktop
 ```
 
-Nesso keeps a small core responsible for the document and the rules for changing it. Every edit goes through the same validation and history mechanism, whether it starts with a user gesture, a plugin action, or an AI request. Changes are applied atomically, so a failed edit leaves the document intact.
+Nesso is organized around a small core, trusted renderers, and plugins:
 
-Renderers and plugins build on those rules through explicit contracts. A renderer can shape how you work with the graph without redefining editing policy. Plugins receive a scoped view of the data and request operations from the host, which checks their permissions before acting. They never access app internals directly. Contributions that only need data, such as a vocabulary or a theme, require no executable code.
+- **Core** owns application state and editing rules.
+- **Renderers** handle graph presentation and gestures.
+- **Plugins** contribute actions, vocabularies, and themes through explicit contracts.
 
-Native privileges sit behind a narrow desktop bridge that exposes specific operations rather than unrestricted system access. This keeps the document model independent of the operating system and AI provider, and lets the same app core run in the browser. New capabilities can be added at these boundaries without making them dependencies of the core.
+On desktop, these run in Electron’s renderer process, while the main process handles native services such as file access, plugin management, AI credentials, and provider connections.
 
-## Documentation
+All graph edits go through one API: `applyOperations`. The UI, trusted renderers, AI tools, and plugin actions submit ordered batches, directly or through convenience helpers built on the same API. The host validates each complete batch before publishing a single atomic update: either the changes succeed together, or state and history remain unchanged. Plugin permissions are checked before operations reach this shared editing path.
 
-The app lives in `src/`, with desktop services in `electron/`. Shared packages live in `packages/`: **Core** packages provide contracts and reusable building blocks, while **Renderer** packages provide trusted graph interfaces. Bundled **Plugin** packages live in `plugins/` and deliberately use the same contracts as external plugins, so Nesso tests those contracts through its own everyday features before others build on them. Each package links to its own README below.
+The same mechanism supports efficient, delta-based undo and redo. History records only what changed instead of storing a full copy of the graph for every edit. AI-generated edits also use this shared history and can be undone or redone just like manual changes.
+
+### Plugins
+
+Plugins are central to Nesso’s design. They let the project grow through community contributions, adding new capabilities while keeping the core small and focused.
+
+Plugins contribute actions, vocabularies, and themes. Actions run in isolated workers and access graph data and operations through permission-checked APIs. Vocabularies and themes are validated data and require no executable code.
+
+The [plugin SDK](packages/plugin/) provides TypeScript contracts, validation, and clients for building plugins. Bundled and external plugins use the same contracts and runtime.
+
+For a complete action package you can build and install, see the [standalone plugin example](packages/plugin/example/).
+
+### AI
+
+AI in Nesso is a supporting tool, not a replacement for the process of learning and building knowledge. It can help you explore ideas, find connections, and organize your graph, while you remain responsible for questioning, understanding, and deciding what belongs in it.
+
+On desktop, chat with your own API key (BYOK), a local model, or ChatGPT sign-in, or connect an external assistant through the local MCP server. Provider credentials are encrypted on your device, and requests go directly to the chosen endpoint. Graph edits are validated and undoable.
+
+## Code organization
+
+The app lives in `src/`, with desktop services in `electron/`. Shared packages live in `packages/`: **Core** packages provide contracts and reusable building blocks, while **Renderer** packages provide trusted graph interfaces. Bundled **Plugin** packages live in `plugins/` and deliberately use the same contracts as external plugins, so Nesso tests those contracts through its own everyday features before others build on them.
 
 | Package | Kind | Responsibility |
 | --- | --- | --- |
-| [`@nesso-how/schema`](packages/schema/README.md) | Core | Graph model, validation, and JSON-LD. |
-| [`@nesso-how/plugin`](packages/plugin/README.md) | Core | Public types, plugin validation, and asynchronous clients. |
-| [`@nesso-how/errors`](packages/errors/README.md) | Core | Shared structured errors with issue paths and messages. |
-| [`@nesso-how/i18n`](packages/i18n/README.md) | Core | i18next with typed keys, isolated translators, and English fallback. |
-| [`@nesso-how/ui`](packages/ui/README.md) | Core | Shared React controls and styles. |
-| [`@nesso-how/ai`](packages/ai/README.md) | Core | Shared chat and MCP tool contracts, policies, and assistant instructions. |
-| [`@nesso-how/concept-map`](packages/concept-map/README.md) | Renderer | Trusted React Flow canvas for the host-provided visible graph. |
-| [`@nesso-how/base-vocab`](plugins/base-vocab/README.md) | Plugin | Default relation vocabulary. |
-| [`@nesso-how/export`](plugins/export/README.md) | Plugin | Graph and view export as JSON-LD. |
-| [`@nesso-how/import`](plugins/import/README.md) | Plugin | Merge a Nesso JSON-LD file into the current graph. |
-| [`@nesso-how/kernel-theme`](plugins/kernel-theme/README.md) | Plugin | Kernel theme tokens and bundled fonts. |
-| [`@nesso-how/paper-theme`](plugins/paper-theme/README.md) | Plugin | Warm ivory surfaces and restrained terracotta accents. |
-
-For a complete action package you can build and install, see the [standalone plugin example](packages/plugin/example/README.md).
+| [`@nesso-how/schema`](packages/schema/) | Core | Graph model, validation, and JSON-LD. |
+| [`@nesso-how/plugin`](packages/plugin/) | Core | Public types, plugin validation, and asynchronous clients. |
+| [`@nesso-how/errors`](packages/errors/) | Core | Shared structured errors with issue paths and messages. |
+| [`@nesso-how/i18n`](packages/i18n/) | Core | i18next with typed keys, isolated translators, and English fallback. |
+| [`@nesso-how/ui`](packages/ui/) | Core | Shared React controls and styles. |
+| [`@nesso-how/ai`](packages/ai/) | Core | Shared chat and MCP tool contracts, policies, and assistant instructions. |
+| [`@nesso-how/concept-map`](packages/concept-map/) | Renderer | Trusted React Flow canvas for the host-provided visible graph. |
+| [`@nesso-how/base-vocab`](plugins/base-vocab/) | Plugin | Default relation vocabulary. |
+| [`@nesso-how/export`](plugins/export/) | Plugin | Graph and view export as JSON-LD. |
+| [`@nesso-how/import`](plugins/import/) | Plugin | Merge a Nesso JSON-LD file into the current graph. |
+| [`@nesso-how/kernel-theme`](plugins/kernel-theme/) | Plugin | Kernel theme tokens and bundled fonts. |
+| [`@nesso-how/paper-theme`](plugins/paper-theme/) | Plugin | Warm ivory surfaces and restrained terracotta accents. |
 
 ## Development
 

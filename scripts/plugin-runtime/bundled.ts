@@ -1,22 +1,24 @@
 import assert from 'node:assert/strict'
-import { parseGraph } from '@nesso-how/schema'
-import { parseContribution, parseDefinition, type ViewState } from '../../packages/plugin/src/runtime.ts'
-import { baseState, waitFor, type CheckContext } from './helpers.ts'
+import { parseGraph, serializeGraph } from '@nesso-how/schema'
+import { parseContribution, parseDefinition, type ActionState } from '../../packages/plugin/src/runtime.ts'
+import { actionState, waitFor, type CheckContext } from './helpers.ts'
 
 type Probe = {
   done: boolean
   contribution: unknown
   discoveryRequests: number
   requests: { method: string; params: { name?: string; text?: string } }[]
-  complete?: { ok: boolean }
+  complete?: { ok: boolean; error?: { code: string } }
   error?: string
 }
 
 export async function verifyBundled({ window, url }: CheckContext) {
-  const base = baseState()
   const graph = { concepts: [{ id: 'urn:probe:concept', label: 'Probe', position: { x: 0, y: 0 } }], relations: [], relationTypes: [] }
-  const state: ViewState = { ...base, viewGraph: graph, targetViewId: null, workspace: { activeViewId: null, savedViews: [] }, selected: [], activeVocab: null, history: { canUndo: false, canRedo: false } }
-  for (const [name, invocation] of [['import', false], ['export', false], ['import', true], ['export', true]] as const) {
+  const state: ActionState = { ...actionState(), viewGraph: graph }
+  const file = { name: 'graph.jsonld', mediaType: 'application/ld+json', text: JSON.stringify(serializeGraph(graph)) }
+  for (const [name, phase] of [['import', 'discovery'], ['export', 'discovery'], ['import', 'run'], ['export', 'run'], ['import', 'conflict']] as const) {
+    const invocation = phase !== 'discovery'
+    const conflict = phase === 'conflict'
     const runner = new URL('plugin-runner/actions.html', url)
     await window.webContents.executeJavaScript(`(async()=>{
       window.__bundled={done:false,contribution:null,discoveryRequests:0,requests:[]};
@@ -32,19 +34,25 @@ export async function verifyBundled({ window, url }: CheckContext) {
         if(data.type==='contribution'){
           result.contribution=data.value;result.discoveryRequests=result.requests.length;
           if(${invocation}){
-            channel.port1.postMessage({type:'invoke',actionId:data.value[0].id,invocation:{viewId:null}});
+            channel.port1.postMessage({type:'invoke',actionId:data.value[0].id,state:${JSON.stringify(state)}});
           }else result.done=true;
         }
         if(data.type==='request'){
           result.requests.push({method:data.method,params:data.params});
           if(data.method==='store.refresh')channel.port1.postMessage({type:'state',state:${JSON.stringify(state)}});
+          if(${conflict}&&data.method==='files.open'){
+            channel.port1.postMessage({type:'response',id:data.id,ok:true,value:${JSON.stringify(file)}});return;
+          }
+          if(${conflict}&&data.method==='store.applyOperations'){
+            channel.port1.postMessage({type:'response',id:data.id,ok:false,error:{code:'stale-state',issues:[{path:'action',message:'Snapshot changed before commit'}]}});return;
+          }
           const allowed=['store.refresh','files.open','files.save'].includes(data.method);
           channel.port1.postMessage({type:'response',id:data.id,ok:allowed,...(allowed?{value:data.method==='files.save'?{saved:false}:null}:{error:{code:'denied',issues:[{path:'probe',message:'Unexpected request'}]}})});
         }
         if(data.type==='complete'){result.complete=data;result.done=true}
         if(data.type==='close'){result.error=data.reason;result.done=true}
       };
-      frame.contentWindow.postMessage({type:'bootstrap',token:'probe',mode:'actions',kind:'actions',state:${JSON.stringify(invocation ? state : base)},entry},'*',[channel.port2]);
+      frame.contentWindow.postMessage({type:'bootstrap',token:'probe',entry},'*',[channel.port2]);
     })()`)
     try {
       const result = await waitFor(async () => window.webContents.executeJavaScript('window.__bundled') as Promise<Probe>, (value) => value.done)
@@ -53,8 +61,9 @@ export async function verifyBundled({ window, url }: CheckContext) {
       const descriptors = parseContribution('actions', result.contribution)
       assert.deepEqual(descriptors.map(({ id }) => id), [`${name}-view`])
       if (invocation) {
-        assert.equal(result.complete?.ok, true, name)
-        assert.deepEqual(result.requests.map(({ method }) => method), name === 'import' ? ['files.open'] : ['store.refresh', 'files.save'])
+        assert.equal(result.complete?.ok, !conflict, name)
+        if (conflict) assert.equal(result.complete?.error?.code, 'stale-state')
+        assert.deepEqual(result.requests.map(({ method }) => method), conflict ? ['files.open', 'store.refresh', 'store.applyOperations'] : name === 'import' ? ['files.open'] : ['store.refresh', 'files.save'])
         if (name === 'export') {
           const saved = result.requests.find(({ method }) => method === 'files.save')!.params
           assert.equal(saved.name, 'nesso-graph.jsonld')

@@ -1,5 +1,5 @@
 import { PluginError, type NessoOperation } from '@nesso-how/plugin'
-import type { ActionContext, ActionContribution } from '@nesso-how/plugin/runtime'
+import type { ActionContribution } from '@nesso-how/plugin/runtime'
 import { newIri, parseGraph, type Graph } from '@nesso-how/schema'
 import source from '../package.json' with { type: 'json' }
 
@@ -45,15 +45,16 @@ class ImportError extends PluginError {
   constructor() { super('failed', [{ path: 'import', message: i18n.importFailure.en }], i18n.importFailure) }
 }
 
-export const create = ({ store, files }: ActionContext): readonly ActionContribution[] => [{
+export const create = (): readonly ActionContribution[] => [{
   id: 'import-view', label: i18n.label, icon: 'upload',
-  run: async ({ viewId }) => {
+  run: async ({ store, files, viewId }) => {
     const file = await files.open({ extensions: ['jsonld', 'json'], mimeTypes: ['application/ld+json', 'application/json'] })
     if (!file) return
     const state = await store.refresh()
+    let operations: NessoOperation[]
     try {
-      if (!('viewGraph' in state)) throw new ImportError()
-      await store.applyOperations(buildImportOperations(parseGraph(JSON.parse(file.text)), state.workspace.activeViewId, viewId), { atRevision: state.revision })
+      operations = buildImportOperations(parseGraph(JSON.parse(file.text)), state.workspace.activeViewId, viewId)
     } catch { throw new ImportError() }
+    await store.applyOperations(operations)
   },
 }]

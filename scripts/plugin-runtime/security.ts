@@ -1,11 +1,13 @@
 import assert from 'node:assert/strict'
-import { baseState, countWorkers, waitFor, type CheckContext } from './helpers.ts'
+import { actionState, countWorkers, waitFor, type CheckContext } from './helpers.ts'
 
 export async function verifyWorker({ window, url, name, attempted }: CheckContext) {
-  const code = `export const create=({store,notifications,clipboard})=>{
-    if(clipboard!==undefined||navigator.clipboard!==undefined)throw new Error('Unexpected clipboard access');return [{
+  const code = `export const create=(...args)=>{
+    if(args.length)throw new Error('Discovery must not receive context');return [{
     id:'probe',label:{en:'Probe'},
-    run:async()=>{
+    run:async({store,notifications,clipboard,viewId})=>{
+      if(clipboard!==undefined||navigator.clipboard!==undefined)throw new Error('Unexpected clipboard access');
+      if(viewId!==null||!store.getState().viewGraph)throw new Error('Missing execution state');
       const id=await store.addConcept({x:12,y:34});
       const result={helper:/^urn:uuid:/.test(id),dom:typeof document==='undefined'&&typeof parent==='undefined',bridges:typeof require==='undefined'&&typeof window==='undefined'&&typeof process==='undefined'&&typeof self.nessoPlugins==='undefined',origin:location.origin};
       try{indexedDB.open('worker-probe');result.storage=false}catch{result.storage=true}
@@ -25,19 +27,19 @@ export async function verifyWorker({ window, url, name, attempted }: CheckContex
   window.webContents.debugger.attach()
   const workers = () => countWorkers(window)
   const before = await workers()
-  const state = baseState()
+  const state = actionState()
   await window.webContents.executeJavaScript(`
     window.__probe=[];window.__complete=false;
     const channel=new MessageChannel();window.__port=channel.port1;
     channel.port1.onmessage=({data})=>{
-      if(data.type==='contribution')channel.port1.postMessage({type:'invoke',actionId:'probe',invocation:{viewId:null}});
+      if(data.type==='contribution')channel.port1.postMessage({type:'invoke',actionId:'probe',state:${JSON.stringify(state)}});
       if(data.type==='request'){
         window.__probe.push(data.params);
         channel.port1.postMessage({type:'response',id:data.id,ok:true,value:data.method==='store.applyOperations'?{revision:0,changed:true}:'notification'});
       }
       if(data.type==='complete')window.__complete=true;
     };
-    window.postMessage({type:'bootstrap',token:'probe',state:${JSON.stringify(state)},entry:${JSON.stringify(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`)}},'*',[channel.port2]);
+    window.postMessage({type:'bootstrap',token:'probe',entry:${JSON.stringify(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`)}},'*',[channel.port2]);
   `)
   await waitFor(async () => window.webContents.executeJavaScript("window.__probe.some(value=>value.title?.en==='Busy')") as Promise<boolean>, (value) => value)
   assert.deepEqual(await window.webContents.executeJavaScript("JSON.parse(window.__probe.find(value=>value.title?.en==='Probe').description.en)"), { helper: true, dom: true, bridges: true, origin: 'null', storage: true, fetch: true, module: true, xhr: true, socket: true, navigation: true })
