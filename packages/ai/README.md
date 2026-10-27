@@ -2,15 +2,6 @@
 
 Framework-independent tool contracts, message formats, provider settings, and assistant instructions for Nesso's desktop AI chat and local MCP server. The host owns state and execution; Electron handles credentials and transport.
 
-## AI in Nesso
-
-On desktop, chat with your own API key (BYOK), a local model, or ChatGPT sign-in, or connect an external assistant through the local MCP server. Provider credentials are encrypted on your device, and requests go directly to the chosen endpoint. Graph edits are validated and undoable.
-
-- **OpenAI**: API key or ChatGPT sign-in (OAuth, paid plan required: Go, Plus, or Pro).
-- **Anthropic, Gemini, OpenRouter**: API key.
-- **OpenAI-compatible endpoints**: hosted or local models, with an optional API key.
-- **External assistants**: connect through the local MCP server.
-
 ## Usage
 
 ```ts
