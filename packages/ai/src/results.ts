@@ -1,3 +1,5 @@
+import type { AiDocumentation } from './docs.ts'
+
 type Counts = { readonly added: number; readonly updated: number; readonly removed: number }
 type Page<T> = { readonly items: readonly T[]; readonly total: number; readonly nextOffset: number | null }
 type View = { readonly id: string | null; readonly name: string }
@@ -11,6 +13,7 @@ export type AiEffects = {
 }
 
 export type AiToolResults = {
+  readonly read_docs: { readonly topic: keyof AiDocumentation; readonly content: string }
   readonly context: {
     readonly activeView: View
     readonly counts: { readonly concepts: number; readonly relations: number; readonly views: number }

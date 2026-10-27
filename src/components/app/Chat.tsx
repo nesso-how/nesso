@@ -2,7 +2,7 @@ import { useEffect, useRef, useSyncExternalStore } from 'react'
 import { Button } from '@nesso-how/ui'
 import { ArrowUp, ArrowUpRight, Check, MessageCircle, Redo2, Square, Undo2, X } from 'lucide-react'
 import { defaultLocale } from '@nesso-how/i18n'
-import type { AiChatMessage } from '@nesso-how/ai'
+import type { aiTools, AiChatMessage } from '@nesso-how/ai'
 import type { createAiChat } from '@/ai/chat'
 import { host, useNessoStore } from '@/store'
 import type { HostStore } from '@/store/types'
@@ -11,7 +11,12 @@ import { notifications } from '@/notifications'
 import { ChatMarkdown } from './ChatMarkdown'
 
 const outcomes = { applied: 'aiChatApplied', cancelled: 'aiChatCancelled', error: 'aiChatFailed' } as const
-const starters = ['aiStarterAdd', 'aiStarterView', 'aiStarterConnections'] as const
+const starters = ['aiStarterHelp', 'aiStarterAnalysis', 'aiStarterAdd', 'aiStarterView'] as const
+const activities = {
+  read_docs: 'aiChatReadingDocs', context: 'aiChatReadingContext', concepts: 'aiChatReadingConcepts',
+  relations: 'aiChatReadingRelations', views: 'aiChatReadingViews', relation_types: 'aiChatReadingRelationTypes',
+  selection: 'aiChatReadingSelection', edit: 'aiChatPreparingEdits', history: 'aiChatPreparingHistory',
+} as const satisfies Record<keyof typeof aiTools, string>
 
 const describeChanges = (summary: NonNullable<AiChatMessage['summary']>, t: ReturnType<typeof useTranslation>): string => {
   const parts: string[] = []
@@ -22,13 +27,12 @@ const describeChanges = (summary: NonNullable<AiChatMessage['summary']>, t: Retu
   return parts.join(' · ')
 }
 
-export function Chat({ chat, draft, onDraftChange, onOpenSettings, activeModel, chatGptPlan, store = host.store, readonly = false }: {
+export function Chat({ chat, draft, onDraftChange, onOpenSettings, activeModel, store = host.store, readonly = false }: {
   chat: ReturnType<typeof createAiChat>
   draft: string
   onDraftChange: (value: string) => void
   onOpenSettings?: () => void
   activeModel: string | null
-  chatGptPlan: boolean
   store?: HostStore
   readonly?: boolean
 }) {
@@ -54,7 +58,7 @@ export function Chat({ chat, draft, onDraftChange, onOpenSettings, activeModel, 
   }
   useEffect(() => {
     if (follow.current && scroller.current) scroller.current.scrollTop = scroller.current.scrollHeight
-  }, [messages, state.phase])
+  }, [messages, state.phase, state.tool])
   useEffect(() => {
     if (!input.current) return
     input.current.style.height = 'auto'
@@ -94,7 +98,7 @@ export function Chat({ chat, draft, onDraftChange, onOpenSettings, activeModel, 
             </div>}
           </article>)}
         </div>
-        {busy && <div role="status" className="chat-working"><span aria-hidden="true" />{t(state.phase === 'stopping' ? 'aiChatStopping' : 'aiChatWorking')}</div>}
+        {busy && <div role="status" className="chat-working"><span aria-hidden="true" />{t(state.phase === 'stopping' ? 'aiChatStopping' : state.tool ? activities[state.tool] : 'aiChatWorking')}</div>}
         {!readonly && state.issues.length > 0 && <p role="alert" className="mb-5 whitespace-pre-line text-xs text-destructive">{state.issues.map(({ message }) => message).join('\n')}</p>}
         {usageLimit && <div className="mb-5"><Button size="sm" onClick={() => void manageUsage()}>{t('aiManageUsage')}</Button></div>}
       </div>
@@ -111,7 +115,6 @@ export function Chat({ chat, draft, onDraftChange, onOpenSettings, activeModel, 
           </div>
         </form>
         <div className="chat-note"><button type="button" disabled={readonly || !onOpenSettings} onClick={onOpenSettings}>{t('aiConfigure')}</button>{activeModel && <><span aria-hidden="true"> · </span><span title={activeModel}>{activeModel}</span></>}</div>
-        {chatGptPlan && <div className="chat-note"><span>{t('aiUsingChatGptPlan')}</span><span aria-hidden="true"> · </span><button type="button" onClick={() => void manageUsage()}>{t('aiManageUsage')}</button></div>}
       </div>
     </section>
   )

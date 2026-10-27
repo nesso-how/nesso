@@ -47,7 +47,10 @@ test('provider streaming shares tool schemas, waits for host replies and keeps l
   }, request)
   assert.equal(await run.result, true)
   assert.equal(calls, 2)
-  assert.deepEqual(events.map(({ type }) => type), ['tool', 'text'])
+  assert.deepEqual(events.filter(({ type }) => type !== 'activity').map(({ type }) => type), ['tool', 'text'])
+  assert.deepEqual(events.filter(({ type }) => type === 'activity'), [
+    { id: input.id, type: 'activity', tool: 'edit' }, { id: input.id, type: 'activity', tool: null },
+  ])
 })
 
 test('Stop, tool failure and incomplete provider replies never report successful generation or leak response bodies', async () => {
@@ -103,7 +106,35 @@ test('ChatGPT streaming uses stateless Responses, namespaced tools and preserves
   }, request)
   assert.equal(await run.result, true)
   assert.equal(calls, 2)
-  assert.deepEqual(events.map(({ type }) => type), ['tool', 'text'])
+  assert.deepEqual(events.filter(({ type }) => type !== 'activity').map(({ type }) => type), ['tool', 'text'])
+  assert.deepEqual(events.filter(({ type }) => type === 'activity'), [
+    { id: input.id, type: 'activity', tool: 'concepts' }, { id: input.id, type: 'activity', tool: null },
+  ])
+})
+
+test('activity tracks parallel tool calls until all results arrive', { timeout: 5000 }, async () => {
+  const toolsReady = Promise.withResolvers<void>()
+  const readingConcepts = Promise.withResolvers<void>()
+  const readingContext = Promise.withResolvers<void>()
+  const activities: unknown[] = []
+  let calls = 0
+  let tools = 0
+  const run = createAiChatRun(entry, input, (event) => {
+    if (event.type === 'tool' && ++tools === 2) toolsReady.resolve()
+    if (event.type !== 'activity') return
+    activities.push(event.tool)
+    if (event.tool === 'concepts') readingConcepts.resolve()
+    if (event.tool === 'context' && activities.length > 1) readingContext.resolve()
+  }, async () => ++calls === 1 ? completion({ tool_calls: [
+    { index: 0, id: 'context-call', type: 'function', function: { name: 'context', arguments: '{}' } },
+    { index: 1, id: 'concepts-call', type: 'function', function: { name: 'concepts', arguments: '{}' } },
+  ] }, 'tool_calls') : completion({ content: 'A reply.' }))
+  await Promise.all([toolsReady.promise, readingConcepts.promise])
+  run.reply({ id: input.id, callId: 'concepts-call', result: { value: { items: [], total: 0, nextOffset: null } } })
+  await readingContext.promise
+  run.reply({ id: input.id, callId: 'context-call', result: { value: { items: [], total: 0, nextOffset: null } } })
+  assert.equal(await run.result, true)
+  assert.deepEqual(activities, ['context', 'concepts', 'context', null])
 })
 
 test('ChatGPT usage errors after output are actionable and interrupted streams never count as completed', async () => {

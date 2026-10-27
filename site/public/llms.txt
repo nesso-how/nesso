@@ -3,9 +3,11 @@
 ## Documentation
 
 - [README](https://raw.githubusercontent.com/nesso-how/nesso/main/README.md)
-- [Plugin guide](https://raw.githubusercontent.com/nesso-how/nesso/main/packages/plugin/README.md)
-- [Graph schema and JSON-LD](https://raw.githubusercontent.com/nesso-how/nesso/main/packages/schema/README.md)
 - [AI and MCP](https://raw.githubusercontent.com/nesso-how/nesso/main/packages/ai/README.md)
+- [Plugin guide](https://raw.githubusercontent.com/nesso-how/nesso/main/packages/plugin/README.md)
+- [Plugin example](https://raw.githubusercontent.com/nesso-how/nesso/main/packages/plugin/example/README.md)
+- [Graph schema and JSON-LD](https://raw.githubusercontent.com/nesso-how/nesso/main/packages/schema/README.md)
+- [Concept map renderer](https://raw.githubusercontent.com/nesso-how/nesso/main/packages/concept-map/README.md)
 
 ## Downloads
 

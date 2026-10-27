@@ -38,6 +38,10 @@ test('MCP authenticates local requests and exposes validated tools with host res
   await client.connect(new StreamableHTTPClientTransport(new URL(server.state.url), { requestInit: { headers: headers(server.token) } }))
   const { tools } = await client.listTools()
   assert.deepEqual(tools.map(({ name }) => name).sort(), Object.keys(aiTools).sort())
+  assert.equal(tools.find(({ name }) => name === 'read_docs')?.annotations?.readOnlyHint, true)
+  assert.deepEqual(tools.find(({ name }) => name === 'read_docs')?.inputSchema.properties?.topic, {
+    type: 'string', enum: aiTools.read_docs.inputSchema.shape.topic.options,
+  })
   const read = await client.callTool({ name: 'concepts', arguments: { query: 'One' } })
   assert.deepEqual(read.content, [{ type: 'text', text: '{"status":"applied"}' }])
   assert.deepEqual(calls[0], { name: 'concepts', input: aiTools.concepts.inputSchema.parse({ query: 'One' }) })
@@ -45,6 +49,8 @@ test('MCP authenticates local requests and exposes validated tools with host res
   assert.equal(rejected.isError, true)
   const invalid = await client.callTool({ name: 'edit', arguments: { operations: [{ kind: 'document.reset', id: 'urn:fresh' }] } })
   assert.equal(invalid.isError, true)
+  const invalidDocs = await client.callTool({ name: 'read_docs', arguments: { topic: '../../packages/plugin/README.md' } })
+  assert.equal(invalidDocs.isError, true)
   assert.equal(calls.length, 2)
 })
 

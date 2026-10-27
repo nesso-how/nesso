@@ -7,7 +7,7 @@ import { host, startAutosave } from '@/store'
 import { connectTheme } from '@/theme'
 import { connectUpdateNotifications } from '@/notifications/updates'
 import { translate } from '@/i18n'
-import { chat } from '@/ai'
+import { chat, documentation } from '@/ai'
 import { connectMcpHost } from '@/ai/mcp'
 import { createAiApproval, createAiHistoryApproval } from '@/ai/approval'
 import './index.css'
@@ -58,6 +58,7 @@ const stopMcp = window.nessoMcp ? connectMcpHost(
   createAiApproval(notifications.api, getTranslation, 'mcpApproval'),
   createAiHistoryApproval(notifications.api, getTranslation),
   () => !!chat && chat.getSnapshot().phase !== 'idle',
+  documentation,
 ) : () => {}
 window.addEventListener('pagehide', stopChat)
 window.addEventListener('pagehide', stopMcp)

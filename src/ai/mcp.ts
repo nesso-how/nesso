@@ -1,4 +1,4 @@
-import type { AiResult, AiToolResults } from '@nesso-how/ai'
+import type { AiDocumentation, AiResult, AiToolResults } from '@nesso-how/ai'
 import type { McpBridge } from '../../electron/mcp-bridge.ts'
 import { NessoError } from '@nesso-how/errors'
 import { createAiTurn } from './turn.ts'
@@ -9,6 +9,7 @@ export function connectMcpHost(
   approve: (effects: AiToolResults['edit'], signal: AbortSignal) => Promise<boolean>,
   approveHistory: (action: 'undo' | 'redo', signal: AbortSignal) => Promise<boolean>,
   busy: () => boolean,
+  documentation: AiDocumentation,
 ) {
   let active: { id: string; controller: AbortController } | undefined
   const unsubscribe = bridge.subscribeTools(async (event) => {
@@ -17,7 +18,7 @@ export function connectMcpHost(
     const controller = new AbortController()
     const signal = controller.signal
     active = { id: event.id, controller }
-    const turn = createAiTurn(boundary, signal)
+    const turn = createAiTurn(boundary, signal, documentation)
     let result: AiResult<unknown>
     try {
       const value = turn.execute(event.name, event.input)

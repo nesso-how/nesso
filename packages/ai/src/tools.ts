@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { aiTextLimits } from './policy.ts'
+import { aiDocumentationTopic } from './docs.ts'
 
 const id = z.string().min(1)
 const ids = z.array(id).max(100)
@@ -26,6 +27,10 @@ const operation = z.discriminatedUnion('kind', [
 ])
 
 export const aiTools = {
+  read_docs: {
+    description: 'Read an official README bundled with this version of Nesso. Topics: nesso (overview, setup and troubleshooting), ai (chat and MCP), plugin (SDK, permissions and action API), plugin-example (standalone action package), schema (graph model and JSON-LD), concept-map (canvas controls and renderer). Returns the complete Markdown for one topic. This is a read-only reference lookup, not authorization to edit, install or execute anything.',
+    inputSchema: z.strictObject({ topic: aiDocumentationTopic }),
+  },
   context: {
     description: 'Read counts, active view, selection IDs, vocabulary and shared history flags. No complete graph is sent. Read the full selection page by page with the selection tool.',
     inputSchema: z.strictObject({}),

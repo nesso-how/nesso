@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import type { AiResult } from '@nesso-how/ai'
+import { aiTools, type AiDocumentation, type AiResult } from '@nesso-how/ai'
 import type { McpBridge, McpEvent } from '../../electron/mcp-bridge.ts'
 import { createNessoStore } from '../store/create.ts'
 import { connectMcpHost } from './mcp.ts'
@@ -30,7 +30,8 @@ const fixture = () => {
     signal.addEventListener('abort', () => pending.resolve(false), { once: true })
     return pending.promise
   }
-  const dispose = connectMcpHost(bridge, host, approve, approve, () => busy)
+  const documentation = Object.fromEntries(aiTools.read_docs.inputSchema.shape.topic.options.map((topic) => [topic, `# ${topic}`])) as AiDocumentation
+  const dispose = connectMcpHost(bridge, host, approve, approve, () => busy, documentation)
   const decide = (approved: boolean) => {
     assert.ok(approval)
     approval.resolve(approved)
@@ -44,6 +45,17 @@ test('MCP reads are immediate; edits and shared history require consent and reje
   const before = f.host.store.getState()
   await f.emit({ type: 'tool', id: 'read', name: 'concepts', input: {} })
   assert.deepEqual(f.replies.get('read'), { value: { items: before.graph.concepts, total: 1, nextOffset: null } })
+  const topics = aiTools.read_docs.inputSchema.shape.topic.options
+  assert.deepEqual(topics, ['nesso', 'ai', 'plugin', 'plugin-example', 'schema', 'concept-map'])
+  for (const topic of topics) {
+    await f.emit({ type: 'tool', id: 'docs', name: 'read_docs', input: { topic } })
+    assert.deepEqual(f.replies.get('docs'), { value: { topic, content: `# ${topic}` } })
+  }
+  for (const input of [{ topic: 'unknown' }, { topic: '../README.md' }, { topic: 'nesso', path: 'README.md' }]) {
+    await f.emit({ type: 'tool', id: 'invalid-docs', name: 'read_docs', input })
+    assert.ok('issues' in f.replies.get('invalid-docs')!)
+  }
+  assert.equal(f.host.store.getState(), before)
   assert.equal(f.awaitingApproval(), false)
   const pending = f.emit({ type: 'tool', id: 'edit', name: 'edit', input: { operations: [{ kind: 'concept.label', id: 'urn:one', value: 'Renamed' }] } })
   assert.equal(f.host.store.getState(), before)
