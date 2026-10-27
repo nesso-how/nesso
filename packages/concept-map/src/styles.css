@@ -73,15 +73,19 @@
 
 .react-flow__edgeupdater {
   fill: var(--background);
+  fill-opacity: 0.85;
   stroke: var(--handle);
   stroke-width: 1;
   vector-effect: non-scaling-stroke;
   cursor: crosshair;
 }
 
-.react-flow__edgeupdater:hover {
+.react-flow__edgeupdater:hover,
+.react-flow__edgeupdater:focus-visible {
   fill: var(--foreground);
+  fill-opacity: 1;
   stroke: var(--foreground);
+  stroke-opacity: 1;
 }
 
 .graph-reconnecting .react-flow__edgeupdater {
