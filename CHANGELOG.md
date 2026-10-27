@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.0.0-alpha.25 — 2026-10-27
+
+### Features
+
+- **graph:** Add bold and italic shortcuts for nodes
+- **ai:** Add bundled docs and chat activity (#202)
+- **plugin:** Streamline authoring and example releases (#204)
+
+### Fixes
+
+- **plugin:** Build example from local SDK artifact
+
 ## 1.0.0-alpha.24 — 2026-10-26
 
 ### Documentation
