@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.0.0-alpha.26 — 2026-10-28
+
+### Documentation
+
+- **site:** Remove ai from descriptions and demo label
+
+### Features
+
+- **inspector:** Add invert direction button for relations
+- **canvas:** Fade selected edge handles to reveal arrow
+
 ## 1.0.0-alpha.25 — 2026-10-27
 
 ### Features
