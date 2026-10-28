@@ -1,7 +1,7 @@
 {
   "name": "nesso",
   "private": true,
-  "version": "1.0.0-alpha.26",
+  "version": "1.0.0-alpha.27",
   "description": "A local-first desktop app for connecting ideas and building understanding through a personal knowledge graph.",
   "license": "MIT",
   "homepage": "https://nesso.how",

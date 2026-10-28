@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.0-alpha.27 — 2026-10-28
+
+### Documentation
+
+- Refresh product descriptions across app and site
+
 ## 1.0.0-alpha.26 — 2026-10-28
 
 ### Documentation
