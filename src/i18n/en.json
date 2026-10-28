@@ -119,7 +119,7 @@
   "pluginActionFailedDescription": "{{name}} could not complete the action. Try again.",
   "pluginActionConflictDescription": "{{name}} could not apply its latest edits because the document changed. Run the action again.",
   "about": "About",
-  "aboutDescription": "A second brain for connecting ideas and building understanding in one knowledge graph, built on a small core with a simple plugin system.",
+  "aboutDescription": "A local-first desktop app for connecting ideas and building understanding through a personal knowledge graph.",
   "aboutWebsite": "Website",
   "aboutDiscussions": "Discussions",
   "discoverNesso": "Discover Nesso",

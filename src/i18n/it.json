@@ -119,7 +119,7 @@
   "pluginActionFailedDescription": "{{name}} non è riuscito a completare l’azione. Riprova.",
   "pluginActionConflictDescription": "{{name}} non ha potuto applicare le ultime modifiche perché il documento è cambiato. Esegui di nuovo l’azione.",
   "about": "Informazioni",
-  "aboutDescription": "Un secondo cervello per connettere idee e costruire comprensione in un unico grafo di conoscenza, basato su un piccolo nucleo con un semplice sistema di plugin.",
+  "aboutDescription": "Un’app desktop local-first per collegare idee e costruire comprensione attraverso un grafo di conoscenza personale.",
   "aboutWebsite": "Sito web",
   "aboutDiscussions": "Discussioni",
   "discoverNesso": "Scopri Nesso",
