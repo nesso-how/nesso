@@ -71,10 +71,10 @@ app.whenReady().then(async () => {
   protocol.handle('nesso', (request) => serveAppAsset(root, request))
   if (app.isPackaged && !startupCheckProfile) {
     const updates = connectUpdates(electronUpdater.autoUpdater, process.platform === 'darwin' ? autoUpdater : undefined, (state) => {
-      installingUpdate = state?.status === 'installing'
+      installingUpdate = state?.status === 'saving' || state?.status === 'installing'
       for (const window of BrowserWindow.getAllWindows()) {
         window.webContents.send('update:state', state)
-        if (state?.status === 'installing') window.webContents.send('update:prepare')
+        if (state?.status === 'saving') window.webContents.send('update:prepare')
       }
     })
     ipcMain.on('update:subscribe', (event) => {
