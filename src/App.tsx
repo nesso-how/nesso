@@ -20,6 +20,7 @@ import { DeleteViewDialog } from '@/components/app/DeleteViewDialog'
 import { GraphWorkspace } from '@/components/app/GraphWorkspace'
 import { isEditableTarget } from '@/graph/interactions'
 import { PluginApprovalDialog } from '@/components/app/PluginApprovalDialog'
+import { UpdateBar } from '@/components/app/UpdateBar'
 
 export default function App({ persistence }: { persistence: ReturnType<typeof startAutosave> }) {
   const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale)
@@ -102,6 +103,7 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
         <PersistenceBanner persistence={persistence} />
       </SidebarProvider>
       {(readonly || !settingsOpen) && <ToastsHost />}
+      {window.nessoUpdater && <UpdateBar updater={window.nessoUpdater} />}
       <Dialog.Root open={!readonly && settingsOpen} onOpenChange={setSettingsOpen}>
         {!readonly && settingsOpen && <SettingsDialog page={settingsPage} onPageChange={setSettingsPage} onDiscover={() => { setSettingsOpen(false); setIntroOpen(true) }} />}
       </Dialog.Root>

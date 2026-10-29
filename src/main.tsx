@@ -5,7 +5,6 @@ import { getThemePresentation, initializeBundledPlugins, initializeExternalPlugi
 import { notifications } from '@/notifications'
 import { host, startAutosave } from '@/store'
 import { connectTheme } from '@/theme'
-import { connectUpdateNotifications } from '@/notifications/updates'
 import { translate } from '@/i18n'
 import { chat, documentation } from '@/ai'
 import { connectMcpHost } from '@/ai/mcp'
@@ -46,11 +45,6 @@ const stopTheme = connectTheme(host, (definition) => {
 const externalStartup = new AbortController()
 const stopExternalPlugins = await initializeExternalPlugins(externalStartup.signal)
 const persistence = startAutosave(stopPluginActions)
-const stopUpdateNotifications = connectUpdateNotifications(
-  window.nessoUpdater,
-  notifications.api,
-  () => translate(host.store.getState().preferences.locale ?? defaultLocale),
-)
 const stopChat = () => chat?.stop()
 const getTranslation = () => translate(host.store.getState().preferences.locale ?? defaultLocale)
 const stopMcp = window.nessoMcp ? connectMcpHost(
@@ -68,7 +62,6 @@ import.meta.hot?.dispose(() => {
   stopTheme()
   fonts.remove()
   persistence.dispose()
-  stopUpdateNotifications()
   chat?.dispose()
   stopMcp()
   stopPluginActions()
