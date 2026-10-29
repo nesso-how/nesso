@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.0.0-alpha.28 — 2026-10-29
+
+### Documentation
+
+- **readme:** Add learning graph screenshot
+- **readme:** Add border to screenshot
+
+### Features
+
+- **updates:** Replace reminders with an update bar (#210)
+
+### Fixes
+
+- **desktop:** Restore windows on their saved monitor (#209)
+
 ## 1.0.0-alpha.27 — 2026-10-28
 
 ### Documentation
