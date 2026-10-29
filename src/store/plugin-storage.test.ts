@@ -42,6 +42,7 @@ test('storage writes are immutable and outside graph history, including net no-o
   for (const operation of [
     set(host, 'progress', 2, undefined, 0),
     set(host, 'invalid', 0, 'urn:missing', 5),
+    set(host, 'relative-id', 0, 'relative', 5),
     { ...set(host, 'progress', 2, undefined, 5), documentId: 'urn:other' },
     { ...set(host, 'progress', 2, undefined, 5), pluginId: '../other' },
   ]) {

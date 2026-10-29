@@ -1,5 +1,4 @@
 import { z } from 'zod'
-import { isAbsoluteIri } from '@nesso-how/schema'
 import { checkMessageSize } from './data.ts'
 import { parseOrThrow, PluginError } from './errors.ts'
 import type { DeepReadonly } from './types.ts'
@@ -20,7 +19,7 @@ const isJsonValue = (value: unknown, depth = 0): value is JsonValue => {
 
 const fields = {
   key: z.string().min(1).max(128),
-  conceptId: z.string().max(2048).refine(isAbsoluteIri, 'Expected an absolute concept IRI').optional(),
+  conceptId: z.string().max(2048).optional(),
 }
 export const pluginStorageKey = z.strictObject(fields)
 export const pluginStorageRecord = z.strictObject({ ...fields, value: z.custom<JsonValue>((value) => isJsonValue(value), 'Expected a bounded JSON value').transform((value) => structuredClone(value)) }).superRefine((value, context) => {

@@ -61,6 +61,7 @@ export function applyPluginStorage(
     records.delete(recordId(key))
   } else {
     const record = parsePluginStorageRecord(write.record)
+    if (record.conceptId !== undefined && !isAbsoluteIri(record.conceptId)) fail('storage.conceptId', 'Expected an absolute concept IRI')
     if (record.conceptId !== undefined && !conceptIds.has(record.conceptId)) fail('storage.conceptId', 'Unknown concept')
     records.set(recordId(record), record)
   }

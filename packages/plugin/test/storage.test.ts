@@ -7,6 +7,7 @@ test('storage contracts accept JSON records, concept keys and single writes with
   assert.deepEqual(parsePluginStorageRecord({ key: 'settings', value: { retention: 0.9, steps: [1, true, null, 'text'] } }), { key: 'settings', value: { retention: 0.9, steps: [1, true, null, 'text'] } })
   assert.deepEqual(parsePluginStorageRecord({ key: 'progress', conceptId: 'urn:concept', value: { due: 10 } }), { key: 'progress', conceptId: 'urn:concept', value: { due: 10 } })
   assert.deepEqual(parsePluginStorageKey({ key: 'obsolete', conceptId: 'urn:concept' }), { key: 'obsolete', conceptId: 'urn:concept' })
+  assert.deepEqual(parsePluginStorageRecord({ key: 'progress', conceptId: 'relative', value: null }), { key: 'progress', conceptId: 'relative', value: null })
   const list = { type: 'request', id: 1, contextId: 'context', method: 'storage.list', params: {} }
   assert.deepEqual(parsePluginMessage(list), list)
   const set = { ...list, method: 'storage.set', params: { revision: 0, key: 'settings', value: null } }
@@ -32,10 +33,10 @@ test('storage payloads reject non-JSON values, unsupported fields, excessive nes
     new Array<unknown>(1), Object.assign([1], { extra: true }), { [Symbol('extra')]: true }, Object.create(null),
     'x'.repeat(pluginStorageLimits.record),
   ]) assert.throws(() => parsePluginStorageRecord({ ...key, value }), PluginError)
-  for (const change of [{ key: '' }, { key: 'x'.repeat(129) }, { conceptId: 'relative' }, { conceptId: null }, { namespace: 'other' }]) {
+  for (const change of [{ key: '' }, { key: 'x'.repeat(129) }, { conceptId: null }, { conceptId: 'x'.repeat(2049) }, { namespace: 'other' }]) {
     assert.throws(() => parsePluginStorageRecord({ ...key, value: null, ...change }), PluginError)
   }
-  for (const change of [{ key: '' }, { conceptId: 'relative' }, { value: null }]) {
+  for (const change of [{ key: '' }, { conceptId: null }, { value: null }]) {
     assert.throws(() => parsePluginStorageKey({ ...key, ...change }), PluginError)
   }
   for (const revision of [-1, 0.5, Number.MAX_SAFE_INTEGER + 1]) assert.throws(() => parsePluginStorageSnapshot({ revision, records: [] }), PluginError)
