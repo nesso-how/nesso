@@ -39,14 +39,14 @@ export async function verifyBundled({ window, url }: CheckContext) {
         }
         if(data.type==='request'){
           result.requests.push({method:data.method,params:data.params});
-          if(data.method==='store.refresh')channel.port1.postMessage({type:'state',state:${JSON.stringify(state)}});
+          if(data.method==='document.refresh')channel.port1.postMessage({type:'state',state:${JSON.stringify(state)}});
           if(${conflict}&&data.method==='files.open'){
             channel.port1.postMessage({type:'response',id:data.id,ok:true,value:${JSON.stringify(file)}});return;
           }
-          if(${conflict}&&data.method==='store.applyOperations'){
+          if(${conflict}&&data.method==='document.applyOperations'){
             channel.port1.postMessage({type:'response',id:data.id,ok:false,error:{code:'stale-state',issues:[{path:'action',message:'Snapshot changed before commit'}]}});return;
           }
-          const allowed=['store.refresh','files.open','files.save'].includes(data.method);
+          const allowed=['document.refresh','files.open','files.save'].includes(data.method);
           channel.port1.postMessage({type:'response',id:data.id,ok:allowed,...(allowed?{value:data.method==='files.save'?{saved:false}:null}:{error:{code:'denied',issues:[{path:'probe',message:'Unexpected request'}]}})});
         }
         if(data.type==='complete'){result.complete=data;result.done=true}
@@ -63,7 +63,7 @@ export async function verifyBundled({ window, url }: CheckContext) {
       if (invocation) {
         assert.equal(result.complete?.ok, !conflict, name)
         if (conflict) assert.equal(result.complete?.error?.code, 'stale-state')
-        assert.deepEqual(result.requests.map(({ method }) => method), conflict ? ['files.open', 'store.refresh', 'store.applyOperations'] : name === 'import' ? ['files.open'] : ['store.refresh', 'files.save'])
+        assert.deepEqual(result.requests.map(({ method }) => method), conflict ? ['files.open', 'document.refresh', 'document.applyOperations'] : name === 'import' ? ['files.open'] : ['document.refresh', 'files.save'])
         if (name === 'export') {
           const saved = result.requests.find(({ method }) => method === 'files.save')!.params
           assert.equal(saved.name, 'nesso-graph.jsonld')

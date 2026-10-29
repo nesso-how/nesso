@@ -5,6 +5,7 @@ import type {
 } from '@nesso-how/plugin'
 import {
   newIri,
+  isAbsoluteIri,
   SchemaError,
   validateGraph,
   type Graph,
@@ -18,10 +19,14 @@ import { defaultPanels, fail, maxRelationLabelLength, parseConversation, parsePr
 import type { HostState, HostStore, RendererDefinition, RestoredState } from './types.ts'
 import type { PersistenceIssue } from '../../shared/persistence.ts'
 import { parseDefinition } from '@nesso-how/plugin/runtime'
+import { parsePluginStorage } from './plugin-storage.ts'
 
 export const createNessoStore = (graph: Graph | null, restored: RestoredState = {}) => {
   if (graph) checkGraph(graph)
   const initial = graph ? structuredClone(graph) : newGraph(newIri())
+  const documentId = graph && restored.documentId ? restored.documentId : newIri()
+  if (!isAbsoluteIri(documentId)) fail('documentId', 'Expected an absolute document IRI')
+  const pluginStorage = graph && restored.pluginStorage ? parsePluginStorage({ version: 1, documentId, plugins: restored.pluginStorage }).plugins : []
   const workspace = graph && restored.workspace ? parseWorkspace(restored.workspace) : newWorkspace()
   const initialIds = new Set(initial.concepts.map((concept) => concept.id))
   if (workspace.savedViews.some((view) => view.conceptIds.some((id) => !initialIds.has(id)))) {
@@ -36,6 +41,8 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
   const store = createStore<HostState>()(() => ({
     graph: initial,
     documentEpoch: 0,
+    documentId,
+    pluginStorage,
     workspace,
     conversation: parseConversation({ version: 1, messages: restored.conversation?.messages ?? [] }),
     preferences: { ...preferences, activeVocabId: '', activeRendererId: '', activeThemeId: '' },

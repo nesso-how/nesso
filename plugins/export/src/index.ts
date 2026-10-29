@@ -6,8 +6,8 @@ const { i18n } = source
 
 export const create = (): readonly ActionContribution[] => [{
   id: 'export-view', label: i18n.label, icon: 'download',
-  run: async ({ store, files, notifications, viewId }) => {
-    const state = await store.refresh()
+  run: async ({ document, files, notifications, viewId }) => {
+    const state = await document.refresh()
     const name = state.workspace.savedViews.find(({ id }) => id === viewId)?.name ?? 'graph'
     const filename = name.trim().toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-|-$/g, '') || 'view'
     const result = await files.save({ name: `nesso-${filename}.jsonld`, mediaType: 'application/ld+json', text: JSON.stringify(serializeGraph(structuredClone(state.viewGraph) as Graph), null, 2) })

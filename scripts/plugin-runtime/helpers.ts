@@ -26,6 +26,7 @@ export async function openFixtureWorkspace({ window, url }: Pick<CheckContext, '
   await evaluate(`document.querySelector('.intro-header button').click()`)
   await waitFor(() => evaluate<boolean>(`!!document.querySelector('#canvas .react-flow')`), Boolean)
   await waitFor(async () => saved.has('document'), Boolean)
+  await waitFor(async () => !!(saved.get('preferences') as { preferences?: { introSeen?: boolean } } | undefined)?.preferences?.introSeen, Boolean)
   return { saved, evaluate }
 }
 

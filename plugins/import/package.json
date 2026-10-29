@@ -6,7 +6,7 @@
   "nesso": {
     "apiVersion": 1, "kind": "actions", "entry": "dist/index.js",
     "writes": ["selection.set", "concept.add", "concept.label", "concept.description", "relation.connect", "view.membership"],
-    "capabilities": ["files.open"]
+    "capabilities": ["files"]
   },
   "i18n": {
     "metadata": {

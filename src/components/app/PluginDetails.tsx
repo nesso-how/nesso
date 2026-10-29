@@ -50,8 +50,8 @@ function DeclaredAccess({ access }: { access: PluginAccess }) {
     {labels.length ? <ul className="mt-3 space-y-1 text-xs text-muted-foreground">{labels.map((label) => <li key={label}>{label}</li>)}</ul> : <p className="mt-3 text-xs text-muted-foreground">{t('pluginNoAccess')}</p>}
     <p className="mt-3 text-xs leading-5 text-muted-foreground">{t('pluginReadScope', { view: t('completeGraph') })}</p>
     {access.writes.some((kind) => kind !== 'selection.set') && <p className="mt-3 text-xs leading-5 text-muted-foreground">{t('pluginEffectScope')}</p>}
-    {(access.capabilities.includes('files.open') || access.capabilities.includes('files.save')) && <p className="mt-3 text-xs leading-5 text-muted-foreground">{t('pluginFileScope')}</p>}
-    {access.capabilities.includes('notifications.notify') && <p className="mt-3 text-xs leading-5 text-muted-foreground">{t('pluginNotificationScope')}</p>}
+    {access.capabilities.includes('files') && <p className="mt-3 text-xs leading-5 text-muted-foreground">{t('pluginFileScope')}</p>}
+    {access.capabilities.includes('notifications') && <p className="mt-3 text-xs leading-5 text-muted-foreground">{t('pluginNotificationScope')}</p>}
   </section>
 }
 

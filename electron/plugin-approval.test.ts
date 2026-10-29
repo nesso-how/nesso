@@ -29,7 +29,7 @@ test('first installation requires one content-bound approval, even without decla
 })
 
 test('unchanged and reduced verified npm access need no new prompt and retain only the new baseline', async () => {
-  const previous = await make('1.0.0', { writes: ['concept.label'], capabilities: ['files.save'] })
+  const previous = await make('1.0.0', { writes: ['concept.label'], capabilities: ['files'] })
   for (const access of [previous.nesso, { writes: [], capabilities: [] }] satisfies PluginAccess[]) {
     const received = await make('1.1.0', access)
     const approval = createPluginApproval(received, previous, true)
@@ -46,17 +46,17 @@ test('unchanged and reduced verified npm access need no new prompt and retain on
 
 test('expansions list only additions; unknown provenance and development updates require full review', async () => {
   const previous = await make('1.0.0', { writes: ['concept.label'], capabilities: [] })
-  const received = await make('1.1.0', { writes: ['concept.label'], capabilities: ['files.save'] })
+  const received = await make('1.1.0', { writes: ['concept.label'], capabilities: ['files'] })
   const expansion = createPluginApproval(received, previous, true)
   assert.equal(expansion.additional, true)
-  assert.deepEqual(expansion.access, { writes: [], capabilities: ['files.save'] })
+  assert.deepEqual(expansion.access, { writes: [], capabilities: ['files'] })
   assert.equal(expansion.authorized(received, previous), false)
   assert.equal(expansion.respond(expansion.challenge, false), true)
   assert.equal(expansion.respond(expansion.challenge, true), false)
   assert.equal(expansion.authorized(received, previous), false)
   for (const approval of [createPluginApproval(received, { ...previous, npmIntegrity: undefined }, true), createPluginApproval(received, previous, false)]) {
     assert.equal(approval.additional, false)
-    assert.deepEqual(approval.access, { writes: ['concept.label'], capabilities: ['files.save'] })
+    assert.deepEqual(approval.access, { writes: ['concept.label'], capabilities: ['files'] })
     assert.equal(approval.authorized(received, previous), false)
   }
 })

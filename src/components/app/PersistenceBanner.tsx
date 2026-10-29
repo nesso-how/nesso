@@ -6,9 +6,9 @@ import { useTranslation } from '@/i18n'
 import { notifications } from '@/notifications'
 import { persistenceSections, type PersistenceSection } from '../../../shared/persistence'
 
-const labels = { document: 'persistenceDocument', preferences: 'persistencePreferences', conversation: 'persistenceConversation' } as const
-const failureLabels = { document: 'persistenceFailureDocument', preferences: 'persistenceFailurePreferences', conversation: 'persistenceFailureConversation' } as const
-const replaceTitles = { document: 'persistenceReplaceTitleDocument', preferences: 'persistenceReplaceTitlePreferences', conversation: 'persistenceReplaceTitleConversation' } as const
+const labels = { document: 'persistenceDocument', preferences: 'persistencePreferences', conversation: 'persistenceConversation', 'plugin-storage': 'persistencePluginStorage' } as const
+const failureLabels = { document: 'persistenceFailureDocument', preferences: 'persistenceFailurePreferences', conversation: 'persistenceFailureConversation', 'plugin-storage': 'persistenceFailurePluginStorage' } as const
+const replaceTitles = { document: 'persistenceReplaceTitleDocument', preferences: 'persistenceReplaceTitlePreferences', conversation: 'persistenceReplaceTitleConversation', 'plugin-storage': 'persistenceReplaceTitlePluginStorage' } as const
 
 export function PersistenceBanner({ persistence }: { persistence: ReturnType<typeof startAutosave> }) {
   const t = useTranslation()

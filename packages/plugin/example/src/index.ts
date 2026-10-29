@@ -5,8 +5,8 @@ export const create = (): readonly ActionContribution[] => {
   const action: ActionContribution = {
     id: 'uppercase-labels',
     label: source.i18n.metadata.name,
-    run: async ({ store }) => {
-      const state = store.getState()
+    run: async ({ document }) => {
+      const state = document.getState()
 
       const operations: readonly NessoOperation[] = state.viewGraph.concepts.map(({ id, label }) => ({
         kind: 'concept.label',
@@ -14,7 +14,7 @@ export const create = (): readonly ActionContribution[] => {
         value: label.toUpperCase(),
       }))
 
-      await store.applyOperations(operations)
+      await document.applyOperations(operations)
     },
   }
 

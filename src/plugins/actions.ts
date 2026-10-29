@@ -31,7 +31,7 @@ export function loadActions(store: HostStore, source: ActionPackage, notificatio
     const stop = loadPluginFrame(frame, { entry: source.entry }, (port, ready, failed) => {
       if (invocation?.viewId !== null && invocation?.viewId !== undefined && !store.getState().workspace.savedViews.some(({ id }) => id === invocation.viewId)) throw new PluginError('stale-context', [{ path: 'action', message: 'The target view no longer exists' }])
       let files: ReturnType<typeof createPluginFiles>
-      const runtime = connectActionChannel(port, store, { ...source.manifest, invocation }, base, {
+      const runtime = connectActionChannel(port, store, { ...source.manifest, pluginId: source.name, invocation }, base, {
         files: { open: (options) => files.open(options), save: (options) => files.save(options) },
         notify: (value) => notifications.notify({ ...value, title: `${resolvePluginText(source.i18n.metadata.name, store.getState().preferences.locale ?? defaultLocale)}: ${value.title}` }),
         dismiss: notifications.dismiss,

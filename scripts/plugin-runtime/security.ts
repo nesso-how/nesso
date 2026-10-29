@@ -5,11 +5,11 @@ export async function verifyWorker({ window, url, name, attempted }: CheckContex
   const code = `export const create=(...args)=>{
     if(args.length)throw new Error('Discovery must not receive context');return [{
     id:'probe',label:{en:'Probe'},
-    run:async({store,notifications,clipboard,viewId})=>{
+    run:async({document,notifications,clipboard,viewId})=>{
       if(clipboard!==undefined||navigator.clipboard!==undefined)throw new Error('Unexpected clipboard access');
-      if(viewId!==null||!store.getState().viewGraph)throw new Error('Missing execution state');
-      const id=await store.addConcept({x:12,y:34});
-      const result={helper:/^urn:uuid:/.test(id),dom:typeof document==='undefined'&&typeof parent==='undefined',bridges:typeof require==='undefined'&&typeof window==='undefined'&&typeof process==='undefined'&&typeof self.nessoPlugins==='undefined',origin:location.origin};
+      if(viewId!==null||!document.getState().viewGraph)throw new Error('Missing execution state');
+      const id=await document.addConcept({x:12,y:34});
+      const result={helper:/^urn:uuid:/.test(id),dom:typeof globalThis.document==='undefined'&&typeof parent==='undefined',bridges:typeof require==='undefined'&&typeof window==='undefined'&&typeof process==='undefined'&&typeof self.nessoPlugins==='undefined',origin:location.origin};
       try{indexedDB.open('worker-probe');result.storage=false}catch{result.storage=true}
       const target='http://127.0.0.1:5191/plugin-probe';
       for(const [name,run] of Object.entries({
@@ -35,7 +35,7 @@ export async function verifyWorker({ window, url, name, attempted }: CheckContex
       if(data.type==='contribution')channel.port1.postMessage({type:'invoke',actionId:'probe',state:${JSON.stringify(state)}});
       if(data.type==='request'){
         window.__probe.push(data.params);
-        channel.port1.postMessage({type:'response',id:data.id,ok:true,value:data.method==='store.applyOperations'?{revision:0,changed:true}:'notification'});
+        channel.port1.postMessage({type:'response',id:data.id,ok:true,value:data.method==='document.applyOperations'?{revision:0,changed:true}:'notification'});
       }
       if(data.type==='complete')window.__complete=true;
     };

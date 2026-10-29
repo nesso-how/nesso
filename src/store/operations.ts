@@ -1,9 +1,10 @@
 import type { GraphSnapshot, NessoOperation, NessoState, Preferences, SavedView, Selection, ThemeDefinition, WorkspaceState } from '@nesso-how/plugin'
-import { relationKey, SchemaError, validateGraph, type Graph, type Relation, type RelationType } from '@nesso-how/schema'
+import { newIri, relationKey, SchemaError, validateGraph, type Graph, type Relation, type RelationType } from '@nesso-how/schema'
 import { isLocale } from '@nesso-how/i18n'
 import { fail, maxConceptLabelLength, maxRelationLabelLength, parseConversation, parsePreferences, parseWorkspace } from './settings.ts'
 import { sectionIds, type HostOperation, type HostState, type RendererDefinition } from './types.ts'
 import { ListEdit, sameConcept, sameIds, sameType, sameView, viewChanges } from './delta.ts'
+import { applyPluginStorage } from './plugin-storage.ts'
 
 export const conceptPlacementOffset = Object.freeze({ x: 160, y: 100 })
 
@@ -95,6 +96,8 @@ export const applyStateOperations = (state: HostState, operations: readonly Host
   let workspace = state.workspace
   let preferences = state.preferences
   let conversation = state.conversation
+  let documentId = state.documentId
+  let pluginStorage = state.pluginStorage
   let selected = state.selected
   let explicitSelection = state.selected
   let reset = false
@@ -156,6 +159,11 @@ export const applyStateOperations = (state: HostState, operations: readonly Host
 
   for (const operation of operations) {
     switch (operation.kind) {
+      case 'plugin-storage.set':
+      case 'plugin-storage.delete':
+        if (operation.documentId !== documentId) fail('storage.documentId', 'Plugin storage belongs to another document')
+        pluginStorage = applyPluginStorage(pluginStorage, operation, new Set(concepts.items.map(({ id }) => id)))
+        break
       case 'conversation.messages':
         conversation = parseConversation({ version: 1, messages: operation.value })
         break
@@ -272,6 +280,8 @@ export const applyStateOperations = (state: HostState, operations: readonly Host
         break
       }
       case 'document.reset':
+        documentId = newIri()
+        pluginStorage = []
         relationOrigins?.clear()
         concepts = new ListEdit(newGraph(operation.id).concepts, (item) => item.id, sameConcept)
         relations = new ListEdit([], relationKey, (a, b) => relationKey(a) === relationKey(b))
@@ -399,8 +409,9 @@ export const applyStateOperations = (state: HostState, operations: readonly Host
   if (conversation !== state.conversation && JSON.stringify(conversation) === JSON.stringify(state.conversation)
     && !state.persistenceIssues.some(({ path }) => path.startsWith('conversation'))) conversation = state.conversation
   if (sameItems(selected, state.selected, (a, b) => a.kind === b.kind && a.id === b.id)) selected = state.selected
-  const unchanged = candidate === state.graph && workspace === state.workspace && preferences === state.preferences && selected === state.selected && conversation === state.conversation
-  const next = unchanged ? state : { ...state, graph: candidate, workspace, preferences, conversation, selected, viewGraph: materialize(candidate, workspace, state) }
+  if (pluginStorage !== state.pluginStorage && JSON.stringify(pluginStorage) === JSON.stringify(state.pluginStorage)) pluginStorage = state.pluginStorage
+  const unchanged = candidate === state.graph && workspace === state.workspace && preferences === state.preferences && selected === state.selected && conversation === state.conversation && documentId === state.documentId && pluginStorage === state.pluginStorage
+  const next = unchanged ? state : { ...state, graph: candidate, workspace, preferences, conversation, documentId, pluginStorage, selected, viewGraph: materialize(candidate, workspace, state) }
   let relationRewrites: { before: string; after: string }[] = []
   if (relationOrigins?.size) {
     const originalKeys = new Set(state.graph.relations.map(relationKey))

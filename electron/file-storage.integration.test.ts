@@ -15,9 +15,11 @@ test('file storage round-trips independent records, orders writes and preserves 
     storage.write('document', { version: 1, value: 'first' }),
     storage.write('document', { version: 1, value: 'last' }),
     storage.write('preferences', { version: 1 }),
+    storage.write('plugin-storage', { version: 1, documentId: 'urn:document', plugins: [] }),
   ])
   assert.deepEqual(await storage.read('document'), { version: 1, value: 'last' })
   assert.deepEqual(await storage.read('preferences'), { version: 1 })
+  assert.deepEqual(await storage.read('plugin-storage'), { version: 1, documentId: 'urn:document', plugins: [] })
   if (process.platform !== 'win32') assert.equal((await stat(path.join(directory, 'document.json'))).mode & 0o777, 0o600)
   await writeFile(path.join(directory, 'document.json'), 'unreadable')
   await assert.rejects(storage.read('document'), ElectronError)

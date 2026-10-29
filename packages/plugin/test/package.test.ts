@@ -16,8 +16,8 @@ test('package identity binds normalized metadata, declarations, paths and exact 
   assert.equal((await preparePluginPackage({ manifest: { ...manifest, i18n: { ...manifest.i18n, action: { ...manifest.i18n.action, it: undefined } } }, files })).contentId, prepared.contentId)
   for (const changed of [
     { ...prepared, code: `${code}\n` }, { ...prepared, version: '1.0.1' },
-    { ...prepared, nesso: { ...prepared.nesso, capabilities: ['files.open'] as const } },
-    { ...prepared, nesso: { ...prepared.nesso, capabilities: ['notifications.notify'] as const } },
+    { ...prepared, nesso: { ...prepared.nesso, capabilities: ['files'] as const } },
+    { ...prepared, nesso: { ...prepared.nesso, capabilities: ['notifications'] as const } },
     { ...prepared, nesso: { ...prepared.nesso, writes: ['concept.add'] as const } },
     { ...prepared, i18n: { ...manifest.i18n, metadata: { ...manifest.i18n.metadata, name: { en: 'Changed' } } } },
     { ...prepared, i18n: { ...manifest.i18n, action: { en: 'Changed action' } } },
