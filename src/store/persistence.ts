@@ -1,4 +1,4 @@
-import { parseGraph, serializeGraph, type Graph } from '@nesso-how/schema'
+import { isAbsoluteIri, parseGraph, serializeGraph, type Graph } from '@nesso-how/schema'
 import type { createNessoStore } from './create.ts'
 import { NessoError } from '@nesso-how/errors'
 import { fail, object, parseConversation, parsePreferences, parseWorkspace } from './settings.ts'
@@ -6,9 +6,12 @@ import type { Preferences, WorkspaceState } from '@nesso-how/plugin'
 import type { HostState } from './types.ts'
 import { persistenceSections as sections, type PersistenceIssue, type PersistenceSection as Section, type PersistenceStorage } from '../../shared/persistence.ts'
 import { checkGraph, sameGraph, samePreferences, sameWorkspace } from './operations.ts'
+import { parsePluginStorage } from './plugin-storage.ts'
 
 export type LoadedState = {
   graph?: Graph | null
+  documentId?: string
+  pluginStorage?: HostState['pluginStorage']
   workspace?: WorkspaceState
   preferences?: Preferences
   conversation?: HostState['conversation']
@@ -39,10 +42,18 @@ export const loadPersistence = async (storage: PersistenceStorage): Promise<Load
         loaded.conversation = parseConversation(value)
         continue
       }
+      if (section === 'plugin-storage') {
+        const saved = parsePluginStorage(value)
+        if (!loaded.graph || loaded.blocked.includes('document')) fail('documentId', 'The document must load successfully before restoring plugin storage')
+        if (saved.documentId !== loaded.documentId) fail('documentId', 'Plugin storage belongs to another document')
+        loaded.pluginStorage = saved.plugins
+        continue
+      }
       const saved = object(value, '', section === 'document'
-        ? ['version', 'graph', 'workspace'] : ['version', 'preferences'])
-      if (saved.version !== 1) fail('version', 'Unsupported storage version')
+        ? ['version', 'documentId', 'graph', 'workspace'] : ['version', 'preferences'])
+      if (saved.version !== (section === 'document' ? 2 : 1)) fail('version', 'Unsupported storage version')
       if (section === 'document') {
+        if (typeof saved.documentId !== 'string' || !isAbsoluteIri(saved.documentId)) fail('documentId', 'Expected an absolute document IRI')
         if (saved.graph === null) {
           if (saved.workspace !== null) fail('workspace', 'Expected no workspace without a graph')
           loaded.graph = null
@@ -56,6 +67,7 @@ export const loadPersistence = async (storage: PersistenceStorage): Promise<Load
           if (view.conceptIds.some((id) => !ids.has(id))) fail(`workspace.savedViews[${index}].conceptIds`, 'Unknown concept')
         }
         loaded.graph = graph
+        loaded.documentId = saved.documentId as string
         loaded.workspace = workspace
       } else {
         loaded.preferences = parsePreferences(saved.preferences)
@@ -80,33 +92,40 @@ export const connectPersistence = (
   let readIssues = loaded.issues
   const changed = {
     document: !loaded.graph || !loaded.workspace
-      || !sameGraph(previous.graph, loaded.graph) || !sameWorkspace(previous.workspace, loaded.workspace),
+      || previous.documentId !== loaded.documentId || !sameGraph(previous.graph, loaded.graph) || !sameWorkspace(previous.workspace, loaded.workspace),
     preferences: !loaded.preferences || !samePreferences(previous.preferences, loaded.preferences),
     conversation: !loaded.conversation || JSON.stringify(previous.conversation) !== JSON.stringify(loaded.conversation),
+    'plugin-storage': loaded.pluginStorage === undefined ? previous.pluginStorage.length > 0 : JSON.stringify(previous.pluginStorage) !== JSON.stringify(loaded.pluginStorage),
   }
   const pending = new Set(sections.filter((section) => changed[section] && !blocked.has(section)))
   let timer: ReturnType<typeof setTimeout> | undefined
   const writeIssues: Partial<Record<Section, PersistenceIssue[]>> = {}
   let writing: Promise<void> | undefined
   let serializedGraph: { source: HostState['graph']; value: ReturnType<typeof serializeGraph> } | undefined
+  let savedDocumentId = loaded.documentId
 
   const save = async (): Promise<void> => {
     while (pending.size) {
-      const batch = [...pending]
+      const batch = sections.filter((section) => pending.has(section))
       pending.clear()
       const state = host.store.getState()
       for (const section of batch) {
         const replace = replacements.delete(section)
         if (blocked.has(section) && !replace) continue
         try {
+          if (section === 'plugin-storage' && (blocked.has('document') || savedDocumentId !== state.documentId)) {
+            fail('documentId', 'Save the document before saving its plugin storage')
+          }
           if (section === 'document' && serializedGraph?.source !== state.graph) {
             serializedGraph = { source: state.graph, value: serializeGraph(state.graph as Graph) }
           }
           const saved = section === 'document' ? {
-            version: 1, graph: serializedGraph!.value, workspace: state.workspace,
+            version: 2, documentId: state.documentId, graph: serializedGraph!.value, workspace: state.workspace,
           } : section === 'preferences' ? { version: 1, preferences: state.preferences }
-            : { version: 1, messages: state.conversation.messages }
+            : section === 'conversation' ? { version: 1, messages: state.conversation.messages }
+              : { version: 1, documentId: state.documentId, plugins: state.pluginStorage }
           await storage.write(section, saved)
+          if (section === 'document') savedDocumentId = state.documentId
           if (replace) {
             blocked.delete(section)
             readIssues = readIssues.filter((issue) => issue.section !== section)
@@ -129,9 +148,10 @@ export const connectPersistence = (
     return writing.then(() => {
       const state = host.store.getState()
       return pending.size === 0 && [...blocked].every((section) => section === 'document'
-        ? sameGraph(state.graph, initial.graph) && sameWorkspace(state.workspace, initial.workspace)
+        ? state.documentId === initial.documentId && sameGraph(state.graph, initial.graph) && sameWorkspace(state.workspace, initial.workspace)
         : section === 'preferences' ? samePreferences(state.preferences, initial.preferences)
-          : JSON.stringify(state.conversation) === JSON.stringify(initial.conversation))
+          : section === 'conversation' ? JSON.stringify(state.conversation) === JSON.stringify(initial.conversation)
+            : state.documentId === initial.documentId && JSON.stringify(state.pluginStorage) === JSON.stringify(initial.pluginStorage))
     })
   }
 
@@ -143,9 +163,10 @@ export const connectPersistence = (
   const unsubscribe = host.store.subscribe(() => {
     const state = host.store.getState()
     const changed = {
-      document: state.graph !== previous.graph || state.workspace !== previous.workspace,
+      document: state.documentId !== previous.documentId || state.graph !== previous.graph || state.workspace !== previous.workspace,
       preferences: state.preferences !== previous.preferences,
       conversation: state.conversation !== previous.conversation,
+      'plugin-storage': state.documentId !== previous.documentId || state.pluginStorage !== previous.pluginStorage,
     }
     previous = state
     if (changed.conversation && state.conversation.messages.length === 0) {

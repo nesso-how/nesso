@@ -6,6 +6,10 @@ import { parseDefinition, themeColors, type Definition } from './definitions.ts'
 import { fileOpenOptions, fileOpenResult, fileSaveOptions, type FileOpenOptions, type FileOpenResult, type FileSaveOptions } from './files.ts'
 import { createWriteCommands } from './commands.ts'
 import { localizedText, text, type LocalizedText } from './i18n.ts'
+import { checkMessageSize } from './data.ts'
+import { pluginStorageKey, pluginStorageRecord, pluginStorageRevision, pluginStorageSnapshot, type PluginStorage } from './storage.ts'
+export { checkMessageSize } from './data.ts'
+export { parsePluginStorageKey, parsePluginStorageRecord, parsePluginStorageSnapshot, pluginStorageLimits } from './storage.ts'
 export { resolvePluginText, type LocalizedText } from './i18n.ts'
 export { parseOrThrow, PluginError } from './errors.ts'
 export { parseDefinition, themeColors, type Definition } from './definitions.ts'
@@ -68,7 +72,7 @@ const jsonEntry = z.string().max(240).regex(/^(?:[\w-]+\/)*[\w-]+\.json$/)
 const pluginWriteKinds = ['concept.label', 'concept.description', 'concept.color', 'concept.bold', 'concept.italic', 'concept.position', 'concept.positions', 'concept.add', 'concept.remove', 'relation.connect', 'relation.reconnect', 'relation.type', 'relation.type.create', 'relation.remove', 'selection.set', 'view.membership'] as const
 const operationDeclarations = z.array(z.enum(pluginWriteKinds))
 const manifest = z.discriminatedUnion('kind', [
-  z.strictObject({ ...manifestFields, kind: z.literal('actions'), entry: jsEntry, writes: operationDeclarations, capabilities: z.array(z.enum(['files.open', 'files.save', 'notifications.notify'])) }),
+  z.strictObject({ ...manifestFields, kind: z.literal('actions'), entry: jsEntry, writes: operationDeclarations, capabilities: z.array(z.enum(['files', 'notifications', 'storage'])) }),
   ...(['theme', 'vocab'] as const).map((kind) => z.strictObject({ ...manifestFields, kind: z.literal(kind), entry: jsonEntry, writes: z.tuple([]), capabilities: z.tuple([]) })),
 ]).refine((value) => new Set(value.writes).size === value.writes.length && new Set(value.capabilities).size === value.capabilities.length, 'Declarations must be unique')
 
@@ -80,8 +84,11 @@ export function parsePluginManifest(value: unknown): z.infer<typeof manifest> {
 }
 const envelope = { type: z.literal('request'), id: z.number().int().positive(), contextId: id }
 const request = z.discriminatedUnion('method', [
-  z.strictObject({ ...envelope, method: z.literal('store.applyOperations'), params: z.strictObject({ operations: z.array(operation).max(50_000), revision: z.number().int().nonnegative(), options: options.optional() }) }),
-  z.strictObject({ ...envelope, method: z.literal('store.refresh'), params: z.strictObject({}) }),
+  z.strictObject({ ...envelope, method: z.literal('document.applyOperations'), params: z.strictObject({ operations: z.array(operation).max(50_000), revision: z.number().int().nonnegative(), options: options.optional() }) }),
+  z.strictObject({ ...envelope, method: z.literal('document.refresh'), params: z.strictObject({}) }),
+  z.strictObject({ ...envelope, method: z.literal('storage.list'), params: z.strictObject({}) }),
+  z.strictObject({ ...envelope, method: z.literal('storage.set'), params: pluginStorageRecord.extend({ revision: pluginStorageRevision }) }),
+  z.strictObject({ ...envelope, method: z.literal('storage.delete'), params: pluginStorageKey.extend({ revision: pluginStorageRevision }) }),
   z.strictObject({ ...envelope, method: z.literal('notifications.notify'), params: z.strictObject({ tone: z.enum(['info', 'warning']), title: localizedText(256), description: localizedText(4096).optional() }) }),
   z.strictObject({ ...envelope, method: z.literal('files.open'), params: fileOpenOptions }),
   z.strictObject({ ...envelope, method: z.literal('files.save'), params: fileSaveOptions }),
@@ -121,7 +128,7 @@ type WriteOptions = { readonly historyGroup?: string }
 type PluginWrites = Omit<ReturnType<typeof createWriteCommands<Promise<void>, Promise<string>>>, 'undo' | 'redo' | 'setView' | 'setActiveVocab' | 'setActiveTheme' | 'setLocale' | 'setPanelSizes' | 'setSectionOpen' | 'createView' | 'renameView' | 'setViewPinned' | 'deleteView'>
 export type ActionContext = {
   readonly viewId: string | null
-  readonly store: PluginWrites & {
+  readonly document: PluginWrites & {
     readonly getState: () => ActionState
     readonly subscribe: (listener: () => void) => () => void
     readonly refresh: () => Promise<ActionState>
@@ -129,6 +136,7 @@ export type ActionContext = {
   }
   readonly notifications: { readonly notify: (value: { readonly tone: 'info' | 'warning'; readonly title: LocalizedText; readonly description?: LocalizedText }) => Promise<string> }
   readonly files: { readonly open: (options: FileOpenOptions) => Promise<FileOpenResult>; readonly save: (options: FileSaveOptions) => Promise<{ readonly saved: boolean }> }
+  readonly storage: PluginStorage
   readonly signal: AbortSignal
 }
 
@@ -152,8 +160,11 @@ const reply = z.union([
 ])
 type RequestMethod = z.infer<typeof request>['method']
 const results = {
-  'store.applyOperations': z.strictObject({ revision: z.number().int().nonnegative(), changed: z.boolean() }),
-  'store.refresh': z.null(),
+  'document.applyOperations': z.strictObject({ revision: z.number().int().nonnegative(), changed: z.boolean() }),
+  'document.refresh': z.null(),
+  'storage.list': pluginStorageSnapshot,
+  'storage.set': z.strictObject({ revision: pluginStorageRevision, changed: z.boolean() }),
+  'storage.delete': z.strictObject({ revision: pluginStorageRevision, changed: z.boolean() }),
   'notifications.notify': id,
   'files.open': fileOpenResult,
   'files.save': z.strictObject({ saved: z.boolean() }),
@@ -169,22 +180,10 @@ export async function sha256Hex(bytes: Uint8Array): Promise<string> {
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('')
 }
 
-export function checkMessageSize(value: unknown, limit: number): void {
-  const visit = (value: unknown, depth: number): void => {
-    if (depth > 32) throw new PluginError('invalid-input', [{ path: 'message', message: 'Nesting limit exceeded' }])
-    if (value === null) return
-    if (typeof value === 'object') {
-      if (!Array.isArray(value) && Object.getPrototypeOf(value) !== Object.prototype) throw new PluginError('invalid-input', [{ path: 'message', message: 'Expected plain data' }])
-      for (const item of Object.values(value)) visit(item, depth + 1)
-    } else if (!['string', 'number', 'boolean', 'undefined'].includes(typeof value)) throw new PluginError('invalid-input', [{ path: 'message', message: 'Expected serializable data' }])
-  }
-  visit(value, 0)
-  if (new TextEncoder().encode(JSON.stringify(value)).byteLength > limit) throw new PluginError('invalid-input', [{ path: 'message', message: 'Message limit exceeded' }])
-}
-
 export function createPluginClient(port: MessagePort, initial: unknown) {
   let state: ActionState = parseOrThrow(actionStateSchema, initial)
   let readRevision = state.revision
+  let storageRevision: number | undefined
   let sequence = 0
   const listeners = new Set<() => void>()
   const controller = new AbortController()
@@ -242,23 +241,39 @@ export function createPluginClient(port: MessagePort, initial: unknown) {
   port.onmessageerror = close
   port.start()
   const getState = () => { readRevision = state.revision; return state }
-  const applyOperations: ActionContext['store']['applyOperations'] = async (operations, options) => {
-    const result = await call<{ readonly revision: number; readonly changed: boolean }>('store.applyOperations', { operations, revision: readRevision, ...(options ? { options } : {}) })
+  const applyOperations: ActionContext['document']['applyOperations'] = async (operations, options) => {
+    const result = await call<{ readonly revision: number; readonly changed: boolean }>('document.applyOperations', { operations, revision: readRevision, ...(options ? { options } : {}) })
     readRevision = Math.max(readRevision, result.revision)
     return result
   }
   const { undo: _undo, redo: _redo, setView: _view, setActiveVocab: _vocab, setActiveTheme: _theme, setLocale: _locale, setPanelSizes: _panels, setSectionOpen: _section, createView: _createView, renameView: _renameView, setViewPinned: _pin, deleteView: _deleteView, ...writes } = createWriteCommands(async (operations, options) => { await applyOperations(operations, options) }, async (id, committed) => { await committed; return id })
+  const listStorage: PluginStorage['list'] = async () => {
+    const snapshot = await call<z.infer<typeof pluginStorageSnapshot>>('storage.list', {})
+    storageRevision = Math.max(storageRevision ?? 0, snapshot.revision)
+    return snapshot.records
+  }
+  const mutateStorage = async (method: 'storage.set' | 'storage.delete', params: { readonly key: string; readonly value?: unknown; readonly conceptId?: string }) => {
+    if (storageRevision === undefined) await listStorage()
+    const result = await call<{ readonly revision: number; readonly changed: boolean }>(method, { ...params, revision: storageRevision })
+    storageRevision = Math.max(storageRevision ?? 0, result.revision)
+    return result.changed
+  }
   const context: ActionContext = {
     viewId: state.targetViewId,
-    store: {
+    document: {
       ...writes,
       getState,
       subscribe: (listener) => { listeners.add(listener); return () => listeners.delete(listener) },
-      refresh: async () => { await call('store.refresh', {}); return getState() },
+      refresh: async () => { await call('document.refresh', {}); return getState() },
       applyOperations,
     },
     notifications: { notify: (value) => call('notifications.notify', value) },
     files: { open: (options) => call('files.open', options), save: (options) => call('files.save', options) },
+    storage: {
+      list: listStorage,
+      set: (key, value, conceptId) => mutateStorage('storage.set', conceptId === undefined ? { key, value } : { key, value, conceptId }),
+      delete: (key, conceptId) => mutateStorage('storage.delete', conceptId === undefined ? { key } : { key, conceptId }),
+    },
     signal: controller.signal,
   }
   return { context, close }

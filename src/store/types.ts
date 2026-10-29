@@ -1,6 +1,7 @@
 import type { NessoOperation, NessoState, NessoStore, Preferences, SectionId } from '@nesso-how/plugin'
 import type { AiChatMessage } from '@nesso-how/ai'
 import type { PersistenceIssue } from '../../shared/persistence.ts'
+import type { PluginStorageNamespace, PluginStorageWrite } from './plugin-storage.ts'
 
 export const sectionIds = [
   'sidebar', 'sidebar.pinned-views', 'sidebar.views',
@@ -9,11 +10,14 @@ export const sectionIds = [
 
 export type HostState = NessoState & {
   readonly documentEpoch: number
+  readonly documentId: string
+  readonly pluginStorage: readonly PluginStorageNamespace[]
   readonly conversation: { readonly messages: readonly AiChatMessage[] }
   readonly persistenceIssues: readonly Readonly<PersistenceIssue>[]
 }
 
 export type HostOperation = NessoOperation
+  | PluginStorageWrite
   | { readonly kind: 'preferences.intro-seen' }
   | { readonly kind: 'preferences.inspectorTab'; readonly value: NonNullable<Preferences['inspectorTab']> }
   | { readonly kind: 'conversation.messages'; readonly value: readonly AiChatMessage[] }
@@ -26,6 +30,6 @@ export type HostStore = Omit<NessoStore, 'getState' | 'applyOperations'> & {
   readonly clearChat: () => void
 }
 
-export type RestoredState = Partial<Pick<HostState, 'workspace' | 'preferences' | 'conversation'>>
+export type RestoredState = Partial<Pick<HostState, 'documentId' | 'workspace' | 'preferences' | 'conversation' | 'pluginStorage'>>
 
 export type RendererDefinition = { readonly id: string }

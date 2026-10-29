@@ -4,10 +4,11 @@ import { lstat, mkdir, open, readFile, readdir, realpath, rename, unlink } from 
 import path from 'node:path'
 import { z } from 'zod'
 import type { DataLocationState } from '../shared/data-location.ts'
+import { persistenceSections } from '../shared/persistence.ts'
 import { ElectronError } from './errors.ts'
 
 const marker = '.nesso-data-id'
-const names = ['document.json', 'preferences.json', 'conversation.json', marker] as const
+const names = [...persistenceSections.map((section) => `${section}.json` as const), marker] as const
 const fileSchema = z.strictObject({ name: z.enum(names), hash: z.string().regex(/^[0-9a-f]{64}$/) })
 const configSchema = z.strictObject({
   directory: z.string(), identity: z.uuid(),

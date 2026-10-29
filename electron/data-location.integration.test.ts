@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { createDataLocation } from './data-location.ts'
 import { createFileStorage } from './file-storage.ts'
+import { persistenceSections } from '../shared/persistence.ts'
 
 async function fixture(context: TestContext, committed?: boolean) {
   const root = await realpath(await mkdtemp(path.join(tmpdir(), 'nesso-location-')))
@@ -38,15 +39,16 @@ test('moves JSON records live and restores the default, leaving credentials and 
   for (const name of ['ai-connections.enc', 'mcp-access.enc']) await writeFile(path.join(source, name), 'local secret')
   const location = await createDataLocation(source)
   const storage = createFileStorage(location.directory)
-  for (const section of ['document', 'preferences', 'conversation'] as const) await storage.write(section, { version: 1 })
+  for (const section of persistenceSections) await storage.write(section, { version: 1 })
   await location.move(destination)
   assert.equal(location.state().directory, destination)
   assert.equal(location.state().cleanupPending, false)
   assert.deepEqual((await readdir(source)).sort(), ['Cache', 'ai-connections.enc', 'data-location.json', 'mcp-access.enc'])
-  assert.deepEqual((await readdir(destination)).sort(), ['.nesso-data-id', 'conversation.json', 'document.json', 'preferences.json'])
+  assert.deepEqual((await readdir(destination)).sort(), ['.nesso-data-id', ...persistenceSections.map((section) => `${section}.json`)].sort())
   await storage.write('document', { version: 2 })
   assert.equal((await createDataLocation(source)).state().directory, destination)
   assert.deepEqual(await storage.read('document'), { version: 2 })
+  assert.deepEqual(await storage.read('plugin-storage'), { version: 1 })
   await location.move(source)
   assert.deepEqual(await readdir(destination), [])
   assert.deepEqual(await storage.read('document'), { version: 2 })

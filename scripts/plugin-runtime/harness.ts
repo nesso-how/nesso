@@ -13,6 +13,7 @@ import { verifyStartup } from './startup.ts'
 import { verifyInstallation } from './installation.ts'
 import { verifySafePlugins } from './safe-plugins.ts'
 import { verifyCorruptRecords } from './corrupt-records.ts'
+import { verifyStorage } from './storage.ts'
 
 const [scenario, name, profile] = process.argv.slice(2) as [Scenario, Platform, string]
 assert.ok(Object.hasOwn(cases, scenario) && (cases[scenario] as readonly string[]).includes(name) && profile)
@@ -29,7 +30,8 @@ const deadline = setTimeout(() => {
 app.whenReady().then(async () => {
   const root = path.resolve(import.meta.dirname, '../../dist')
   const host = '<!doctype html><html><head><meta http-equiv="Content-Security-Policy" content="frame-src \'self\'; object-src \'none\'"></head><body></body></html>'
-  protocol.handle('nesso', (request) => !['startup', 'installation', 'safe-plugins', 'corrupt-records'].includes(scenario) && new URL(request.url).pathname === '/'
+  const workspace = ['startup', 'installation', 'safe-plugins', 'corrupt-records', 'storage'].includes(scenario)
+  protocol.handle('nesso', (request) => !workspace && new URL(request.url).pathname === '/'
     ? new Response(host, { headers: { 'Content-Type': 'text/html', 'Content-Security-Policy': desktopHostCsp } })
     : serveAppAsset(root, request))
   const attempted: string[] = []
@@ -37,8 +39,8 @@ app.whenReady().then(async () => {
   const server = createServer(async (request, response) => {
     try {
       const url = new URL(request.url ?? '/', 'http://localhost')
-      if (url.pathname === '/') { response.writeHead(200, { 'Content-Type': 'text/html' }).end(host); return }
-      const file = path.resolve(root, `.${decodeURIComponent(url.pathname)}`)
+       if (url.pathname === '/' && !workspace) { response.writeHead(200, { 'Content-Type': 'text/html' }).end(host); return }
+       const file = path.resolve(root, url.pathname === '/' ? 'index.html' : `.${decodeURIComponent(url.pathname)}`)
       if (!file.startsWith(`${root}${path.sep}`)) { response.writeHead(403).end(); return }
       const types: Record<string, string> = { '.html': 'text/html', '.js': 'text/javascript', '.json': 'application/json', '.css': 'text/css', '.woff2': 'font/woff2', '.woff': 'font/woff', '.svg': 'image/svg+xml', '.png': 'image/png' }
       response.writeHead(200, { 'Content-Type': types[path.extname(file)] ?? 'application/octet-stream' }).end(await readFile(file))
@@ -70,6 +72,7 @@ app.whenReady().then(async () => {
       case 'installation': await verifyInstallation(context); break
       case 'safe-plugins': await verifySafePlugins(context); break
       case 'corrupt-records': await verifyCorruptRecords(context); break
+      case 'storage': await verifyStorage(context); break
     }
   } finally {
     window.destroy()

@@ -7,6 +7,7 @@ import { materialize } from '../store/operations.ts'
 import { listenPluginPort, type PluginMessage } from './messages.ts'
 
 type Grant = {
+  readonly pluginId: string
   readonly writes: readonly NessoOperation['kind'][]
   readonly capabilities: readonly string[]
   readonly invocation?: { readonly actionId: string; readonly viewId: string | null; readonly descriptors: readonly ActionDescriptor[] }
@@ -28,6 +29,7 @@ export function connectActionChannel(port: MessagePort, store: HostStore, grant:
   const notifications: { id: string; tone: 'info' | 'warning' }[] = []
   const instanceId = crypto.randomUUID()
   const target = grant.invocation?.viewId ?? null
+  const documentId = store.getState().documentId
   let previous = store.getState()
   let revision = 0
   let registered = false
@@ -61,7 +63,7 @@ export function connectActionChannel(port: MessagePort, store: HostStore, grant:
   const unsubscribe = store.subscribe(() => {
     const state = store.getState()
     if (!grant.invocation) { previous = state; return }
-    if (state.documentEpoch !== previous.documentEpoch || target !== null && !state.workspace.savedViews.some(({ id }) => id === target)) {
+    if (state.documentEpoch !== previous.documentEpoch || state.documentId !== documentId || target !== null && !state.workspace.savedViews.some(({ id }) => id === target)) {
       failed(new PluginError('stale-context', [{ path: 'action', message: 'The action document or target view changed' }]))
       return
     }
@@ -100,8 +102,8 @@ export function connectActionChannel(port: MessagePort, store: HostStore, grant:
   }
   const execute = async (message: Extract<PluginMessage, { type: 'request' }>) => {
     assertCurrent(message.contextId)
-    if (message.method === 'store.refresh') { sendState(); return null }
-    if (message.method === 'store.applyOperations') {
+    if (message.method === 'document.refresh') { sendState(); return null }
+    if (message.method === 'document.applyOperations') {
       const { operations, revision: expectedRevision, options } = message.params
       if (operations.some(({ kind }) => !allowed.has(kind))) fail('denied', 'Operation not declared')
       if (expectedRevision !== revision) fail('stale-state', 'Snapshot changed before commit')
@@ -110,8 +112,26 @@ export function connectActionChannel(port: MessagePort, store: HostStore, grant:
       if (before === revision) sendState()
       return { revision, changed: revision !== before }
     }
-    if (!capabilities.has(message.method)) fail('denied', 'Capability not declared')
+    if (message.method === 'storage.list' || message.method === 'storage.set' || message.method === 'storage.delete') {
+      if (!capabilities.has('storage')) fail('denied', 'Capability not declared')
+      const snapshot = () => {
+        const entry = store.getState().pluginStorage.find(({ pluginId }) => pluginId === grant.pluginId)
+        return { revision: entry?.revision ?? 0, records: entry?.records ?? [] }
+      }
+      if (message.method === 'storage.list') return snapshot()
+      const before = snapshot().revision
+      if (message.method === 'storage.set') {
+        const { revision, ...record } = message.params
+        store.applyOperations([{ kind: 'plugin-storage.set', pluginId: grant.pluginId, documentId, revision, record }])
+      } else {
+        const { revision, ...key } = message.params
+        store.applyOperations([{ kind: 'plugin-storage.delete', pluginId: grant.pluginId, documentId, revision, key }])
+      }
+      const revision = snapshot().revision
+      return { revision, changed: revision !== before }
+    }
     if (message.method === 'notifications.notify') {
+      if (!capabilities.has('notifications')) fail('denied', 'Capability not declared')
       if (Date.now() - notificationBudget.start >= 60_000) notificationBudget = { start: Date.now(), count: 0 }
       if (++notificationBudget.count > 10) fail('denied', 'Notification rate limit exceeded')
       if (notifications.length === 5) effects.dismiss(notifications.shift()!.id)
@@ -121,6 +141,7 @@ export function connectActionChannel(port: MessagePort, store: HostStore, grant:
       notifications.push({ id, tone: message.params.tone })
       return id
     }
+    if (!capabilities.has('files')) fail('denied', 'Capability not declared')
     if (interaction) fail('unavailable', 'Another host interaction is pending')
     interaction = true
     remaining -= Date.now() - started

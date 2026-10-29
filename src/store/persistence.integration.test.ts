@@ -41,13 +41,18 @@ const registeredHost = (graph: Graph | null, restored = {}) => {
   return host
 }
 
+const setPluginData = (host: ReturnType<typeof createNessoStore>, value: string, revision = 0) => host.store.applyOperations([{
+  kind: 'plugin-storage.set', pluginId: 'nesso-plugin-example', documentId: host.store.getState().documentId,
+  revision, record: { key: 'settings', value },
+}])
+
 const savedStorage = () => {
   const storage = memoryStorage()
   const host = registeredHost(fixture())
   host.store.setLocale('it')
   host.store.setChatMessages([{ id: 'user', role: 'user', content: 'Hello' }])
   const state = host.store.getState()
-  storage.records.set('document', { version: 1, graph: serializeGraph(state.graph as Graph), workspace: state.workspace })
+  storage.records.set('document', { version: 2, documentId: state.documentId, graph: serializeGraph(state.graph as Graph), workspace: state.workspace })
   storage.records.set('preferences', { version: 1, preferences: state.preferences })
   storage.records.set('conversation', { version: 1, messages: state.conversation.messages })
   return storage
@@ -117,7 +122,8 @@ test('record reads start in parallel and isolate failures in section order', asy
     }),
     write: storage.write,
   })
-  assert.deepEqual(started, ['document', 'preferences', 'conversation'])
+  assert.deepEqual(started, ['document', 'preferences', 'conversation', 'plugin-storage'])
+  completions.get('plugin-storage')!.resolve(undefined)
   completions.get('conversation')!.resolve({ version: 2, messages: [] })
   completions.get('preferences')!.reject(new Error('Access denied'))
   completions.get('document')!.resolve(storage.records.get('document'))
@@ -153,7 +159,7 @@ test('durable state round-trips without rewriting restored records or persisting
   host.store.renameView(viewId, 'Renamed pair')
   await persistence.flush()
   const saved = storage.records.get('document') as { graph: unknown }
-  assert.deepEqual(Object.keys(saved), ['version', 'graph', 'workspace'])
+  assert.deepEqual(Object.keys(saved), ['version', 'documentId', 'graph', 'workspace'])
   assert.deepEqual(parseGraph(saved.graph), host.store.getState().graph)
   const restored = await loadPersistence(storage)
   const reopenedHost = registeredHost(restored.graph!, restored)
@@ -181,7 +187,7 @@ test('durable state round-trips without rewriting restored records or persisting
   assert.deepEqual(reset.workspace, { activeViewId: null, savedViews: [], viewports: {} })
   assert.deepEqual(reset.preferences, preferences)
   assert.deepEqual(reset.conversation?.messages, [])
-  storage.records.set('document', { version: 1, graph: null, workspace: null })
+  storage.records.set('document', { version: 2, documentId: 'urn:deleted', graph: null, workspace: null })
   const deleted = await loadPersistence(storage)
   assert.equal(registeredHost(deleted.graph ?? null, deleted).store.getState().graph.concepts.length, 1)
   await persistence.dispose()
@@ -250,11 +256,12 @@ test('malformed records stay protected while the other sections save', async () 
     ['conversation', { version: 2, messages: [] }],
     ['conversation', { version: 1, messages: [{ id: 'invalid', role: 'system', content: 'Invalid' }] }],
     ['document', { version: 2 }],
-    ['document', { version: 1, graph: serializeGraph(longConcept), workspace: state.workspace }],
-    ['document', { version: 1, graph: serializeGraph(longType), workspace: state.workspace }],
-    ['document', { version: 1, graph: serializeGraph({ concepts: [], relations: [], relationTypes: [] }), workspace: state.workspace }],
-    ['document', { version: 1, graph: serializeGraph(fixture()), workspace: { ...state.workspace, activeViewId: 'unknown' } }],
-    ['document', { version: 1, graph: serializeGraph(fixture()), workspace: { ...state.workspace, savedViews: [{ id: 'bad', name: 'Bad', pinned: false, conceptIds: ['missing'] }] } }],
+    ['document', { version: 1, graph: serializeGraph(fixture()), workspace: state.workspace }, 'document.version'],
+    ['document', { version: 2, documentId: state.documentId, graph: serializeGraph(longConcept), workspace: state.workspace }],
+    ['document', { version: 2, documentId: state.documentId, graph: serializeGraph(longType), workspace: state.workspace }],
+    ['document', { version: 2, documentId: state.documentId, graph: serializeGraph({ concepts: [], relations: [], relationTypes: [] }), workspace: state.workspace }],
+    ['document', { version: 2, documentId: state.documentId, graph: serializeGraph(fixture()), workspace: { ...state.workspace, activeViewId: 'unknown' } }],
+    ['document', { version: 2, documentId: state.documentId, graph: serializeGraph(fixture()), workspace: { ...state.workspace, savedViews: [{ id: 'bad', name: 'Bad', pinned: false, conceptIds: ['missing'] }] } }],
     ['preferences', { version: 1, preferences: { ...state.preferences, activeThemeId: null } }],
     ...[null, 'invalid', 1].map((inspectorTab): [PersistenceSection, unknown] => ['preferences', { version: 1, preferences: { ...state.preferences, inspectorTab } }]),
     ['preferences', { version: 1, preferences: { ...state.preferences, panels: { explorerWidth: 0, inspectorWidth: 280 } } }],
@@ -309,7 +316,7 @@ test('an unreadable conversation is overwritten only after explicit clear', asyn
 
 test('storage failures preserve records and allow retrying the latest edits', async () => {
   const denied = await loadPersistence(createIndexedDbStorage(() => { throw new Error('Access denied') }))
-  assert.deepEqual(denied.blocked, ['document', 'preferences', 'conversation'])
+  assert.deepEqual(denied.blocked, ['document', 'preferences', 'conversation', 'plugin-storage'])
   assert.match(denied.issues[0].message, /Access denied/)
   const storage = memoryStorage()
   let deniedWrite = false
@@ -354,9 +361,11 @@ test('flush serializes overlapping writes and drains changes made during a save'
     active--
   }
   host.store.setConceptLabel('urn:one', 'First')
+  setPluginData(host, 'First')
   const saving = persistence.flush()
   await Promise.resolve()
   host.store.setConceptLabel('urn:one', 'Latest')
+  setPluginData(host, 'Latest', 1)
   host.store.setLocale('it')
   host.store.setChatMessages([{ id: 'user', role: 'user', content: 'Latest' }])
   const overlapping = persistence.flush()
@@ -366,6 +375,7 @@ test('flush serializes overlapping writes and drains changes made during a save'
   assert.equal(restored.graph?.concepts[0].label, 'Latest')
   assert.equal(restored.preferences?.locale, 'it')
   assert.equal(restored.conversation?.messages[0].content, 'Latest')
+  assert.deepEqual(restored.pluginStorage, host.store.getState().pluginStorage)
   await persistence.dispose()
 })
 
@@ -373,6 +383,7 @@ test('explicit recovery replaces only the chosen record and keeps failed replace
   const storage = savedStorage()
   storage.records.set('preferences', 'unreadable')
   storage.records.set('conversation', 'unreadable')
+  storage.records.set('plugin-storage', 'unreadable')
   const loaded = await loadPersistence(storage)
   const host = registeredHost(loaded.graph!, loaded)
   const write = storage.write
@@ -389,11 +400,19 @@ test('explicit recovery replaces only the chosen record and keeps failed replace
   assert.deepEqual(storage.writes, [])
   assert.equal(await persistence.recover('preferences'), true)
   assert.deepEqual(storage.writes, ['preferences'])
-  assert.deepEqual((await loadPersistence(storage)).blocked, ['conversation'])
+  assert.deepEqual((await loadPersistence(storage)).blocked, ['conversation', 'plugin-storage'])
   assert.equal(host.store.getState().persistenceIssues.some((issue) => issue.section === 'preferences'), false)
   host.store.setLocale('en')
   assert.equal(await persistence.flush(), true)
   assert.deepEqual(storage.writes, ['preferences', 'preferences'])
+  setPluginData(host, 'New')
+  assert.equal(await persistence.flush(), false)
+  assert.equal(storage.records.get('plugin-storage'), 'unreadable')
+  assert.equal(await persistence.recover('plugin-storage'), true)
+  const restored = await loadPersistence(storage)
+  assert.deepEqual(restored.blocked, ['conversation'])
+  assert.deepEqual(restored.pluginStorage, host.store.getState().pluginStorage)
+  assert.deepEqual(storage.writes, ['preferences', 'preferences', 'plugin-storage'])
   await persistence.dispose()
 })
 

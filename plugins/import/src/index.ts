@@ -47,14 +47,14 @@ class ImportError extends PluginError {
 
 export const create = (): readonly ActionContribution[] => [{
   id: 'import-view', label: i18n.label, icon: 'upload',
-  run: async ({ store, files, viewId }) => {
+  run: async ({ document, files, viewId }) => {
     const file = await files.open({ extensions: ['jsonld', 'json'], mimeTypes: ['application/ld+json', 'application/json'] })
     if (!file) return
-    const state = await store.refresh()
+    const state = await document.refresh()
     let operations: NessoOperation[]
     try {
       operations = buildImportOperations(parseGraph(JSON.parse(file.text)), state.workspace.activeViewId, viewId)
     } catch { throw new ImportError() }
-    await store.applyOperations(operations)
+    await document.applyOperations(operations)
   },
 }]

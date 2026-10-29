@@ -9,7 +9,7 @@ const manifest = {
 
 test('manifests and action descriptors reject unknown authority, duplicates and oversized labels', () => {
   assert.equal(parsePluginManifest(manifest).kind, 'actions')
-  assert.deepEqual(parsePluginManifest({ ...manifest, capabilities: ['files.open', 'files.save', 'notifications.notify'] }).capabilities, ['files.open', 'files.save', 'notifications.notify'])
+  assert.deepEqual(parsePluginManifest({ ...manifest, capabilities: ['files', 'notifications', 'storage'] }).capabilities, ['files', 'notifications', 'storage'])
   assert.deepEqual(parsePluginManifest({ ...manifest, writes: ['concept.label', 'concept.description', 'concept.color', 'concept.position', 'concept.positions', 'concept.add', 'concept.remove', 'relation.connect', 'relation.reconnect', 'relation.type', 'relation.type.create', 'relation.remove', 'selection.set', 'view.membership'] }).writes.length, 14)
   for (const value of [
     { ...manifest, apiVersion: 2 }, { ...manifest, network: true },
@@ -22,7 +22,8 @@ test('manifests and action descriptors reject unknown authority, duplicates and 
     { ...manifest, writes: ['view.create'] }, { ...manifest, writes: ['view.rename'] }, { ...manifest, writes: ['view.pin'] }, { ...manifest, writes: ['view.remove'] }, { ...manifest, writes: ['view.activate'] },
     { ...manifest, reads: [] },
     { ...manifest, capabilities: ['network'] },
-    { ...manifest, capabilities: ['notifications.notify', 'notifications.notify'] },
+    { ...manifest, capabilities: ['notifications', 'notifications'] },
+    ...['files.open', 'files.save', 'notifications.notify', 'storage.read', 'storage.write'].map((capability) => ({ ...manifest, capabilities: [capability] })),
     { ...manifest, capabilities: ['clipboard.read'] }, { ...manifest, capabilities: ['clipboard.write'] },
     { ...manifest, metadata: {} },
   ]) assert.throws(() => parsePluginManifest(value), PluginError)
@@ -33,7 +34,7 @@ test('manifests and action descriptors reject unknown authority, duplicates and 
   for (const kind of ['theme', 'vocab']) {
     const definition = { ...manifest, kind, entry: 'definition.json', writes: [] }
     assert.equal(parsePluginManifest(definition).kind, kind)
-    for (const change of [{ entry: 'dist/index.js' }, { entry: 'definition.js' }, { reads: [] }, { writes: ['concept.add'] }, { capabilities: ['files.open'] }, { capabilities: ['notifications.notify'] }, { styles: [] }, { styles: ['dist/index.css'] }]) assert.throws(() => parsePluginManifest({ ...definition, ...change }), PluginError)
+    for (const change of [{ entry: 'dist/index.js' }, { entry: 'definition.js' }, { reads: [] }, { writes: ['concept.add'] }, { capabilities: ['files'] }, { capabilities: ['notifications'] }, { capabilities: ['storage'] }, { styles: [] }, { styles: ['dist/index.css'] }]) assert.throws(() => parsePluginManifest({ ...definition, ...change }), PluginError)
   }
   for (const entry of ['../index.js', 'dist/index.jsx', 'dist/index.ts']) assert.throws(() => parsePluginManifest({ ...manifest, entry }), PluginError)
 })
@@ -61,10 +62,10 @@ test('messages reject non-data values, excessive nesting, unknown methods and ex
   let nested: unknown = null
   for (let index = 0; index < 34; index++) nested = { nested }
   assert.throws(() => checkMessageSize(nested, 1024), PluginError)
-  const request = { type: 'request', id: 1, contextId: 'context', method: 'store.refresh', params: {} }
+  const request = { type: 'request', id: 1, contextId: 'context', method: 'document.refresh', params: {} }
   assert.equal(parsePluginMessage(request).type, 'request')
   for (const value of [{ ...request, pluginId: 'another' }, { ...request, method: 'host.setState' }, { ...request, id: Number.MAX_SAFE_INTEGER + 1 }]) assert.throws(() => parsePluginMessage(value), PluginError)
-  const write = { ...request, method: 'store.applyOperations', params: { operations: [{ kind: 'concept.label', id: 'urn:nesso:probe', value: 'Label' }], revision: 0 } }
+  const write = { ...request, method: 'document.applyOperations', params: { operations: [{ kind: 'concept.label', id: 'urn:nesso:probe', value: 'Label' }], revision: 0 } }
   assert.deepEqual(parsePluginMessage(write), write)
   for (const revision of [undefined, -1, 0.5]) assert.throws(() => parsePluginMessage({ ...write, params: { ...write.params, revision } }), PluginError)
   assert.throws(() => parsePluginMessage({ ...write, params: { ...write.params, operations: [{ kind: 'concept.label', id: 'urn:nesso:probe', value: 42 }] } }), PluginError)

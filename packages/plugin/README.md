@@ -21,8 +21,8 @@ export const create = (): readonly ActionContribution[] => {
   const action: ActionContribution = {
     id: 'uppercase-labels',
     label: source.i18n.metadata.name,
-    run: async ({ store }) => {
-      const state = store.getState()
+    run: async ({ document }) => {
+      const state = document.getState()
 
       const operations: readonly NessoOperation[] = state.viewGraph.concepts.map(({ id, label }) => ({
         kind: 'concept.label',
@@ -30,7 +30,7 @@ export const create = (): readonly ActionContribution[] => {
         value: label.toUpperCase(),
       }))
 
-      await store.applyOperations(operations)
+      await document.applyOperations(operations)
     },
   }
 
@@ -72,7 +72,7 @@ Keep the example's build configuration and set these fields in `package.json`:
 }
 ```
 
-Declare the operations your action uses in `writes` and file/notification access in `capabilities`. All fields shown under `nesso` and `i18n.metadata` are required. Add the `nesso-plugin` keyword for discovery in Settings → Plugins.
+Declare the operations your action uses in `writes`. The optional permissions listed in `capabilities` are `files`, `notifications`, and `storage`; each authorizes all methods of that API. All fields shown under `nesso` and `i18n.metadata` are required. Add the `nesso-plugin` keyword for discovery in Settings → Plugins.
 
 Labels and metadata use `{ en: string, it?: string, 'zh-CN'?: string }`, with English required as the fallback.
 
@@ -84,7 +84,7 @@ Actions must ship one self-contained browser ES module with dependencies bundled
 
 ## Action API
 
-Nesso passes `{ store, files, notifications, signal, viewId }` to `run` as `ActionContext`.
+Nesso passes `{ document, storage, files, notifications, signal, viewId }` to `run` as `ActionContext`. `document` exposes the shared graph, view membership, and transient selection; `storage` holds the plugin's private data for that document.
 
 `create()` receives no arguments and returns an array of actions with unique lowercase kebab-case IDs, localized labels, optional icons, and `run(context)` handlers. Use `ActionIconName` for supported icons.
 
@@ -92,9 +92,9 @@ Keep graph reads and effects inside `run`. **Await every write, file dialog, and
 
 ### Read the invoked view
 
-- `store.getState()` returns the latest readonly local snapshot synchronously and makes it the basis for subsequent writes.
-- `await store.refresh()` fetches and reads a fresh snapshot. Use it after deferred work, such as a file dialog, before computing edits.
-- `store.subscribe(listener)` notifies you of snapshot changes and returns an unsubscribe function. Read the new state with `getState()`.
+- `document.getState()` returns the latest readonly local snapshot synchronously and makes it the basis for subsequent writes.
+- `await document.refresh()` fetches and reads a fresh snapshot. Use it after deferred work, such as a file dialog, before computing edits.
+- `document.subscribe(listener)` notifies you of snapshot changes and returns an unsubscribe function. Read the new state with `getState()`.
 
 The graph snapshot provides:
 
@@ -107,7 +107,7 @@ Concept and relation-type IDs are absolute IRIs. Relations are `{ source, predic
 
 ### Write the graph
 
-Call helpers on `store` and declare their operation kinds in `nesso.writes`:
+Call helpers on `document` and declare their operation kinds in `nesso.writes`:
 
 | Helper | Required `writes` entry |
 | --- | --- |
@@ -130,7 +130,7 @@ Call helpers on `store` and declare their operation kinds in `nesso.writes`:
 
 `addConcept` returns the new IRI. New concepts join the active saved view and link to the single selected concept, if any. These links and `connect` use the vocabulary's default relation type. `createRelationType` creates and assigns a type to the given relation.
 
-For related edits, use `store.applyOperations(operations)` as in the quickstart. The entire batch succeeds or changes nothing. Separate calls are separate transactions. Raw `concept.add` operations require an explicit new absolute IRI.
+For related edits, use `document.applyOperations(operations)` as in the quickstart. The entire batch succeeds or changes nothing. Separate calls are separate transactions. Raw `concept.add` operations require an explicit new absolute IRI.
 
 Every write checks against the last snapshot you read, or the initial snapshot if you haven't read one. Successful writes advance that baseline, so awaited sequential writes work normally. Incoming updates alone do not advance it. A conflict rejects with `stale-state`; let the failure propagate so Nesso can ask the user to run the action again. Never retry mutations automatically or read a new snapshot just to submit edits calculated from old data.
 
@@ -140,13 +140,63 @@ The invoked view is **not a write sandbox**: permitted writes can affect the who
 
 | API | Required capability | Result |
 | --- | --- | --- |
-| `files.open({ extensions: ['json'], mimeTypes: ['application/json'] })` | `files.open` | `{ name, mediaType, text }`, or `null` on cancellation. Extensions omit the dot. |
-| `files.save({ name: 'graph.json', mediaType: 'application/json', text })` | `files.save` | `{ saved: boolean }`; cancellation returns `false`. |
-| `notifications.notify({ tone: 'info', title: { en: 'Done' }, description: { en: 'Labels updated' } })` | `notifications.notify` | A notification ID. Tone is `info` or `warning`; description is optional. |
+| `files.open({ extensions: ['json'], mimeTypes: ['application/json'] })` | `files` | `{ name, mediaType, text }`, or `null` on cancellation. Extensions omit the dot. |
+| `files.save({ name: 'graph.json', mediaType: 'application/json', text })` | `files` | `{ saved: boolean }`; cancellation returns `false`. |
+| `notifications.notify({ tone: 'info', title: { en: 'Done' }, description: { en: 'Labels updated' } })` | `notifications` | A notification ID. Tone is `info` or `warning`; description is optional. |
 
-Files use UTF-8 text. Plugins have no Node, host DOM, direct filesystem, clipboard, or network access.
+Files use UTF-8 text and host-managed dialogs or browser downloads; `files` grants no unrestricted filesystem access. Plugins have no Node, host DOM, direct filesystem, clipboard, or network access.
 
 Failures throw `PluginError` with `code` and `{ path, message }[]` issues. Let them propagate instead of reporting success. Files and notifications cannot be rolled back with graph edits.
+
+### Private persistent storage
+
+Declare `storage` to read, write, or delete your plugin's private data. Nesso derives the namespace from the authorized npm package name and current document, never from plugin-provided identity fields. Different versions and action instances of the same package share data; different packages and documents do not.
+
+```ts
+const records = await storage.list()
+
+await storage.set('progress', { attempts: 1, answers: ['good'] }, concept.id)
+await storage.set('settings', { enabled: true })
+await storage.delete('progress', concept.id)
+```
+
+`storage.list()` returns all records as an array. Each record has a `key`, a JSON `value`, and optionally a `conceptId`:
+
+- Without `conceptId`, the record belongs to the document, for example plugin configuration.
+- With `conceptId`, it belongs to that concept in the document. The same key can be used for different concepts and for document-level data.
+- Views do not create storage namespaces. A concept's data is shared across all views containing it.
+- Payloads belong to the plugin: the host does not interpret their fields or implement domain logic.
+
+`storage.set(key, value, conceptId?)` saves one record and `storage.delete(key, conceptId?)` removes one. Each call is a single transaction returning `true` when storage changed and `false` for valid net-no-op writes, such as saving an identical value or deleting a missing record. Failed writes throw instead of returning `false`.
+
+The SDK tracks storage revisions internally. Every mutation checks against the last listed snapshot or the preceding successful mutation. If you haven't listed storage, the first mutation reads its baseline automatically. Concurrent changes reject stale writes with `stale-state`, without refreshing the baseline or retrying automatically. List storage again before recomputing edits; never refresh just to resubmit edits calculated from old data. Document reads do not refresh the storage baseline, and storage writes do not invalidate the document snapshot. Document edits and private storage calls are separate transactions.
+
+Await all storage calls before the action returns. Success means the validated change was committed in memory, not that a disk write has finished. Nesso autosaves through its shared persistence API, reports failures in its persistence banner, and waits for saving before desktop close, update installation, and data-folder transfers. Unreadable records are protected until explicit recovery; in-memory editing can continue but may remain unsaved.
+
+#### Data lifecycle
+
+- A document has a persistent identity outside graph JSON-LD. Resetting it creates a new identity and empty plugin storage; a mismatched saved identity is reported and protected, never silently attached to another document.
+- Removing a view or changing membership does not delete concept data.
+- Deleting a concept retains its records during the current app session so document Undo/Redo can recover it. Private storage changes themselves do not enter graph history.
+- On startup, after the document and plugin storage restore successfully, Nesso removes records whose explicit `conceptId` is absent from the graph. Graph history does not survive restart. Cleanup is skipped after failed restoration and does not execute plugin code.
+- Put data that should be cleaned with a concept, including its logs, inside concept-associated records. IDs embedded in arbitrary payloads are opaque and cannot be cleaned by the host.
+- Disabling, uninstalling, replacing, or crashing a plugin does not delete its stored data. Startup reference cleanup still applies even when the plugin is absent.
+
+#### Limits
+
+Storage accepts finite JSON primitives, dense arrays, and plain objects, including `null`; not `undefined`, dates, maps, functions, cyclic data, or custom prototypes. Returned snapshots and stored payloads are independent copies.
+
+| Budget | Limit |
+| --- | --- |
+| Record, encoded as UTF-8 JSON | 256 KiB |
+| Namespace snapshot | 8 MiB |
+| Total plugin storage per document | 64 MiB |
+| Records per plugin | 10,000 |
+| Plugin namespaces per document | 128 |
+| Record nesting | 24 levels |
+| Record key | 1–128 characters |
+
+Concept IDs must be absolute IRIs and refer to an existing document concept when writing. Deletes may remove retained orphan records. Keys are logical identifiers, not paths. Normal action channel request, deadline, rate, and cancellation limits also apply.
 
 ## Vocabularies
 
