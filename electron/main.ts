@@ -37,18 +37,20 @@ const report = (error: unknown): void => {
 
 const createWindow = async (connectPersistence: (window: BrowserWindow) => void): Promise<void> => {
   const url = dev ? 'http://127.0.0.1:5173/' : 'nesso://app/'
-  const state = createWindowState(app.getPath('userData'), (bounds) => screen.getDisplayMatching(bounds).workArea)
+  const state = createWindowState(app.getPath('userData'), screen)
   const window = new BrowserWindow({
-    ...state.bounds, backgroundColor: '#ffffff',
+    ...state.bounds, show: false, backgroundColor: '#ffffff',
     icon: path.join(root, 'icon-512.png'),
     webPreferences: { preload: path.join(import.meta.dirname, 'preload.cjs'), contextIsolation: true, sandbox: true },
   })
   state.track(window)
-  if (state.maximized) window.maximize()
   connectPersistence(window)
   window.webContents.on('will-navigate', (event) => { if (event.url !== url) event.preventDefault() })
   connectExternalLinks(window.webContents, (url) => shell.openExternal(url))
   await window.loadURL(url)
+  window.setBounds(state.bounds)
+  if (state.maximized) window.maximize()
+  window.show()
 }
 
 app.whenReady().then(async () => {
