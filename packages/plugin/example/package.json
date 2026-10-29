@@ -1,6 +1,6 @@
 {
   "name": "@nesso-how/plugin-example",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "Uppercase concept labels in the invoked Nesso view",
   "license": "MIT",
   "repository": {
@@ -21,7 +21,7 @@
     "registry": "https://registry.npmjs.org/"
   },
   "devDependencies": {
-    "@nesso-how/plugin": "0.3.1",
+    "@nesso-how/plugin": "0.4.0",
     "esbuild": "^0.28.2",
     "typescript": "~7.0.2"
   },
