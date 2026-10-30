@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.0-alpha.31 — 2026-10-30
+
+No user-facing changes.
+
 ## 1.0.0-alpha.30 — 2026-10-30
 
 ### Features
