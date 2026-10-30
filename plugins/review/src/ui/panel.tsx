@@ -10,9 +10,11 @@ export function ReviewPanel(context: ActionContext) {
   const state = useSyncExternalStore(context.document.subscribe, context.document.getState)
   const t = messages[state.locale]
   const [review, setReview] = useState<Review | 'failed' | null>(null)
+  const [slow, setSlow] = useState(false)
   const [attempt, setAttempt] = useState(0)
   const reload = () => {
     setReview(null)
+    setSlow(false)
     setAttempt((attempt) => attempt + 1)
   }
   useEffect(() => {
@@ -29,10 +31,15 @@ export function ReviewPanel(context: ActionContext) {
       active = false
     }
   }, [context.storage, context.signal, attempt])
+  useEffect(() => {
+    if (review) return
+    const timer = setTimeout(() => setSlow(true), 250)
+    return () => clearTimeout(timer)
+  }, [review])
   if (!review || review === 'failed')
     return (
       <div className="review-status" role={review === 'failed' ? 'alert' : 'status'}>
-        <p>{review === 'failed' ? t.restoreError : t.loading}</p>
+        {(slow || review === 'failed') && <p>{review === 'failed' ? t.restoreError : t.loading}</p>}
         {review === 'failed' && (
           <Button variant="outline" onClick={reload}>
             {t.reload}
