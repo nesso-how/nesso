@@ -21,7 +21,7 @@ showSplash(false)
 
 const framePolicy = document.createElement('meta')
 framePolicy.httpEquiv = 'Content-Security-Policy'
-framePolicy.content = `frame-src ${new URL('plugin-runner/actions.html', document.baseURI).href}`
+framePolicy.content = `frame-src ${['actions', 'panel'].map((name) => new URL(`plugin-runner/${name}.html`, document.baseURI).href).join(' ')}`
 document.head.append(framePolicy)
 
 const showPluginRecovery = (message: string, label: string, action: () => void) => {

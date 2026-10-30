@@ -90,7 +90,7 @@ The same mechanism supports efficient, delta-based undo and redo. History record
 
 Plugins are central to Nesso’s design. They let the project grow through community contributions, adding new capabilities while keeping the core small and focused.
 
-Plugins contribute actions, vocabularies, and themes. Actions run in isolated workers, using permission-checked APIs for graph operations and private storage scoped to each plugin and document. The host manages storage persistence and concept-orphan cleanup separately from graph data and history. Vocabularies and themes are validated data and require no executable code.
+Plugins contribute actions, vocabularies, and themes. Actions run in isolated workers or open plugin-owned interactive UI in a sandboxed central panel, using permission-checked APIs for graph operations and private storage scoped to each plugin and document. The host owns panel navigation and lifecycle, storage persistence, and concept-orphan cleanup separately from graph data and history. Vocabularies and themes are validated data and require no executable code.
 
 The [plugin SDK](packages/plugin/) provides TypeScript contracts, validation, and clients for building plugins. Bundled and external plugins use the same contracts and runtime.
 

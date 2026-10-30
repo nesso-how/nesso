@@ -1,0 +1,8 @@
+.quiz { display: grid; min-height: 100dvh; place-items: center; padding: 24px; color: var(--foreground); font: 13px/1.5 var(--font-sans), system-ui, sans-serif; }
+.quiz-card { width: 100%; max-width: 560px; overflow-wrap: anywhere; text-align: center; }
+.quiz h1 { margin: 0 0 4px; font-size: 20px; font-weight: 500; }
+.quiz [data-step] { margin: 0 0 16px; color: var(--muted-foreground); }
+.quiz [data-question] { margin: 0; color: var(--muted-foreground); }
+.quiz [data-answer] { min-height: 1.5em; margin: 16px 0; font-size: 18px; }
+.quiz [data-result] { width: fit-content; margin: 8px auto 24px; padding: 16px 24px; border: 1px solid var(--border); border-radius: 12px; background: var(--muted); font-size: 18px; font-weight: 500; }
+.quiz footer { display: flex; justify-content: center; gap: 8px; }

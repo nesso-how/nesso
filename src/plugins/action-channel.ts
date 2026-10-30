@@ -10,6 +10,7 @@ type Grant = {
   readonly pluginId: string
   readonly writes: readonly NessoOperation['kind'][]
   readonly capabilities: readonly string[]
+  readonly mode?: 'panel'
   readonly invocation?: { readonly actionId: string; readonly viewId: string | null; readonly descriptors: readonly ActionDescriptor[] }
 }
 
@@ -21,6 +22,7 @@ export function connectActionChannel(port: MessagePort, store: HostStore, grant:
   activated: () => void
   complete: () => void
   failed: (error: PluginError) => void
+  theme?: () => Readonly<Record<string, string>>
 }) {
   const controller = new AbortController()
   const allowed = new Set(grant.writes)
@@ -39,6 +41,10 @@ export function connectActionChannel(port: MessagePort, store: HostStore, grant:
   let started = 0
   let waiting = 0
   let actionTimer: ReturnType<typeof setTimeout> | undefined
+  let heartbeat: ReturnType<typeof setInterval> | undefined
+  let ping = 0
+  let pong = 0
+  let mounted = false
   let notificationBudget = { start: Date.now(), count: 0 }
   function fail(code: string, message: string): never { throw new PluginError(code, [{ path: 'action', message }]) }
   const snapshot = (): ActionState => {
@@ -47,7 +53,7 @@ export function connectActionChannel(port: MessagePort, store: HostStore, grant:
     const concepts = new Set(viewGraph.concepts.map(({ id }) => id))
     const relations = new Set(viewGraph.relations.map(relationKey))
     return {
-      ...base, revision, locale: state.preferences.locale ?? base.locale,
+      ...base, revision, locale: state.preferences.locale ?? base.locale, theme: effects.theme?.() ?? base.theme,
       workspace: { activeViewId: state.workspace.activeViewId, savedViews: state.workspace.savedViews.map(({ id, name, pinned }) => ({ id, name, pinned })) },
       targetViewId: target, viewGraph,
       selected: state.selected.filter(({ kind, id }) => (kind === 'concept' ? concepts : relations).has(id)),
@@ -83,6 +89,7 @@ export function connectActionChannel(port: MessagePort, store: HostStore, grant:
     unsubscribe()
     clearTimeout(initialization)
     clearTimeout(actionTimer)
+    clearInterval(heartbeat)
     for (const timer of pending) clearTimeout(timer)
     pending.clear()
     for (const { id, tone } of notifications) if (!completed || tone !== 'info') effects.dismiss(id)
@@ -92,6 +99,7 @@ export function connectActionChannel(port: MessagePort, store: HostStore, grant:
   const failed = (error: PluginError) => { if (!controller.signal.aborted) { close(); effects.failed(error) } }
   const initialization = setTimeout(() => failed(new PluginError('timeout', [{ path: 'action', message: 'Action initialization timed out' }])), runtimeLimits.initialization)
   const resume = () => {
+    if (grant.mode === 'panel') return
     started = Date.now()
     actionTimer = setTimeout(() => failed(new PluginError('timeout', [{ path: 'action', message: 'Action execution timed out' }])), Math.max(0, remaining))
   }
@@ -144,7 +152,7 @@ export function connectActionChannel(port: MessagePort, store: HostStore, grant:
     if (!capabilities.has('files')) fail('denied', 'Capability not declared')
     if (interaction) fail('unavailable', 'Another host interaction is pending')
     interaction = true
-    remaining -= Date.now() - started
+    if (grant.mode !== 'panel') remaining -= Date.now() - started
     clearTimeout(actionTimer)
     const began = Date.now()
     try {
@@ -155,19 +163,46 @@ export function connectActionChannel(port: MessagePort, store: HostStore, grant:
       waiting += Date.now() - began
       interaction = false
       if (!controller.signal.aborted) {
-        if (waiting > runtimeLimits.interaction) failed(new PluginError('timeout', [{ path: 'action', message: 'Action host interaction budget exceeded' }]))
+        if (grant.mode !== 'panel' && waiting > runtimeLimits.interaction) failed(new PluginError('timeout', [{ path: 'action', message: 'Action host interaction budget exceeded' }]))
         else resume()
       }
     }
   }
   const handle = async (message: PluginMessage) => {
+    if (message.type === 'pong') {
+      if (grant.mode !== 'panel' || !mounted || message.id !== ping || pong === ping) fail('invalid-input', 'Unexpected heartbeat')
+      pong = message.id
+      return
+    }
+    if (message.type === 'panel-ready') {
+      if (grant.mode !== 'panel' || !grant.invocation || !capabilities.has('ui') || !grant.invocation.descriptors.some(({ id, ui }) => id === grant.invocation!.actionId && ui)) fail('denied', 'UI not authorized')
+      if (!running) {
+        running = true
+        const state = snapshot()
+        checkMessageSize(state, runtimeLimits.snapshot)
+        port.postMessage({ type: 'invoke', actionId: grant.invocation.actionId, state })
+      } else {
+        if (mounted) fail('invalid-input', 'Repeated panel initialization')
+        mounted = true
+        clearTimeout(initialization)
+        effects.activated()
+        heartbeat = setInterval(() => {
+          if (ping !== pong) { failed(new PluginError('timeout', [{ path: 'panel', message: 'Plugin panel stopped responding' }])); return }
+          port.postMessage({ type: 'ping', id: ++ping })
+        }, runtimeLimits.heartbeat)
+      }
+      return
+    }
     if (message.type === 'contribution') {
+      if (grant.mode === 'panel') fail('denied', 'Panel discovery is disabled')
       if (registered) fail('invalid-input', 'Repeated action contribution')
       const descriptors = parseContribution('actions', message.value)
+      if (descriptors.some(({ ui }) => ui) && !capabilities.has('ui')) fail('denied', 'UI capability not declared')
       registered = true
       clearTimeout(initialization)
       if (!grant.invocation) { close(true); effects.discovered(descriptors); return }
       if (JSON.stringify(descriptors) !== JSON.stringify(grant.invocation.descriptors) || !descriptors.some(({ id }) => id === grant.invocation!.actionId)) fail('denied', 'Action descriptors changed after discovery')
+      if (descriptors.some(({ id, ui }) => id === grant.invocation!.actionId && ui)) fail('denied', 'UI actions require a panel channel')
       running = true
       effects.activated()
       resume()
@@ -177,15 +212,16 @@ export function connectActionChannel(port: MessagePort, store: HostStore, grant:
       return
     }
     if (message.type === 'complete') {
-      if (!running || !grant.invocation || pending.size) fail('invalid-input', 'Unexpected action completion')
+      if (grant.mode === 'panel' || !running || !grant.invocation || pending.size) fail('invalid-input', 'Unexpected action completion')
       if (!message.ok) { failed(new PluginError(message.error.code, message.error.issues, message.error.displayMessage)); return }
       close(true)
       effects.complete()
       return
     }
+    if (message.type === 'close') fail('failed', message.reason)
     if (message.type !== 'request') fail('invalid-input', 'Unexpected action message')
     if (pending.size >= runtimeLimits.pending) fail('invalid-input', 'Pending request limit exceeded')
-    const timer = setTimeout(() => failed(new PluginError('timeout', [{ path: 'action', message: 'Action request timed out' }])), message.method.startsWith('files.') ? Math.max(0, runtimeLimits.interaction - waiting) : runtimeLimits.deadline)
+    const timer = setTimeout(() => failed(new PluginError('timeout', [{ path: 'action', message: 'Action request timed out' }])), message.method.startsWith('files.') ? Math.max(0, runtimeLimits.interaction - (grant.mode === 'panel' ? 0 : waiting)) : runtimeLimits.deadline)
     pending.add(timer)
     try {
       const value = await execute(message)
@@ -197,5 +233,9 @@ export function connectActionChannel(port: MessagePort, store: HostStore, grant:
     } finally { clearTimeout(timer); pending.delete(timer) }
   }
   listenPluginPort(port, () => controller.signal.aborted, handle, failed)
-  return { close, signal: controller.signal }
+  return { close, signal: controller.signal, refreshTheme: () => {
+    if (!running || controller.signal.aborted) return
+    revision++
+    try { sendState() } catch { failed(new PluginError('failed', [{ path: 'state', message: 'Could not deliver panel theme' }])) }
+  } }
 }

@@ -19,7 +19,7 @@ const writes = {
   'selection.set': 'pluginAccessSelection',
   'view.membership': 'pluginAccessMembership',
 } as const
-const capabilities = { files: 'pluginAccessFiles', notifications: 'pluginAccessNotify', storage: 'pluginAccessStorage' } as const
+const capabilities = { files: 'pluginAccessFiles', notifications: 'pluginAccessNotify', storage: 'pluginAccessStorage', ui: 'pluginAccessUI' } as const
 
 export const pluginAccessLabels = (access: PluginAccess, t: ReturnType<typeof translate>) => [
   ...new Set([...access.writes.map((value) => t(writes[value])), ...access.capabilities.map((value) => t(capabilities[value]))]),

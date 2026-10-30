@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { NessoError } from '@nesso-how/errors';
 import { commitTagPush, fail, guardRelease, run } from './release-common.ts';
 import { releaseNotes } from './release-notes.ts';
+import releasePackages from './release-packages.json' with { type: 'json' };
 
 type Channel = 'alpha' | 'beta';
 type Version = { major: number; minor: number; patch: number; channel?: Channel; prerelease?: number };
@@ -14,8 +15,10 @@ Release from a clean main branch. Without an argument, release the current versi
 Choose an explicit version or bump with --major, --minor, --patch, --alpha or --beta.
 
 Generate CHANGELOG.md from Conventional Commits using cliff.toml, sync built-in
-plugin versions, commit them with the version bump, then tag and atomically
-push main and the tag to origin.
+plugins, the packages in scripts/release-packages.json and the example's UI
+dependency, commit them with the version bump, then tag and atomically push
+main and the tag to origin. CI publishes the listed packages with the app's
+version and release channel, in list order.
 Alpha/beta notes cover changes since the previous release. Stable notes cover
 changes since the previous stable release, or all history for the first stable
 release. Internal changes are omitted unless breaking.
@@ -118,17 +121,29 @@ function main(): void {
     writeFileSync(location, raw.replace(/("version":\s*")[^"]*(")/, `$1${version}$2`));
   }
   const synced: string[] = [];
-  for (const plugin of ['kernel-theme', 'paper-theme', 'base-vocab', 'import', 'export']) {
-    const path = `plugins/${plugin}/package.json`;
-    const pluginLocation = new URL(`../${path}`, import.meta.url);
-    if (!existsSync(pluginLocation)) continue;
-    const pluginRaw = readFileSync(pluginLocation, 'utf8');
-    const matches = pluginRaw.match(/"version":\s*"[^"]*"/g) ?? [];
+  for (const directory of [...releasePackages, ...['kernel-theme', 'paper-theme', 'base-vocab', 'import', 'export'].map((plugin) => `plugins/${plugin}`)]) {
+    const path = `${directory}/package.json`;
+    const packageLocation = new URL(`../${path}`, import.meta.url);
+    if (!existsSync(packageLocation)) {
+      if (releasePackages.includes(directory)) fail(path, 'release package is missing');
+      continue;
+    }
+    const packageRaw = readFileSync(packageLocation, 'utf8');
+    const matches = packageRaw.match(/"version":\s*"[^"]*"/g) ?? [];
     if (matches.length !== 1) fail(path, 'expected exactly one version field');
-    if ((JSON.parse(pluginRaw) as { version?: unknown }).version !== version) {
-      writeFileSync(pluginLocation, pluginRaw.replace(/("version":\s*")[^"]*(")/, `$1${version}$2`));
+    if ((JSON.parse(packageRaw) as { version?: unknown }).version !== version) {
+      writeFileSync(packageLocation, packageRaw.replace(/("version":\s*")[^"]*(")/, `$1${version}$2`));
     }
     synced.push(path);
+  }
+  const examplePath = 'packages/plugin/example/package.json';
+  const exampleLocation = new URL(`../${examplePath}`, import.meta.url);
+  if (existsSync(exampleLocation)) {
+    const exampleRaw = readFileSync(exampleLocation, 'utf8');
+    const dependencies = exampleRaw.match(/"@nesso-how\/ui":\s*"[^"]*"/g) ?? [];
+    if (dependencies.length !== 1) fail(examplePath, 'expected exactly one UI dependency');
+    writeFileSync(exampleLocation, exampleRaw.replace(/("@nesso-how\/ui":\s*")[^"]*(")/, `$1${version}$2`));
+    synced.push(examplePath);
   }
   writeFileSync(changelogLocation, `# Changelog\n\n${entry}\n\n${changelog.replace(/^# Changelog\s*/, '')}`);
   commitTagPush(['package.json', 'CHANGELOG.md', ...synced], `chore: release ${version}`, tag);

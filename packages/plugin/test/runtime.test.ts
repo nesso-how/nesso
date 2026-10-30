@@ -9,7 +9,7 @@ const manifest = {
 
 test('manifests and action descriptors reject unknown authority, duplicates and oversized labels', () => {
   assert.equal(parsePluginManifest(manifest).kind, 'actions')
-  assert.deepEqual(parsePluginManifest({ ...manifest, capabilities: ['files', 'notifications', 'storage'] }).capabilities, ['files', 'notifications', 'storage'])
+  assert.deepEqual(parsePluginManifest({ ...manifest, capabilities: ['files', 'notifications', 'storage', 'ui'] }).capabilities, ['files', 'notifications', 'storage', 'ui'])
   assert.deepEqual(parsePluginManifest({ ...manifest, writes: ['concept.label', 'concept.description', 'concept.color', 'concept.position', 'concept.positions', 'concept.add', 'concept.remove', 'relation.connect', 'relation.reconnect', 'relation.type', 'relation.type.create', 'relation.remove', 'selection.set', 'view.membership'] }).writes.length, 14)
   for (const value of [
     { ...manifest, apiVersion: 2 }, { ...manifest, network: true },
@@ -30,11 +30,12 @@ test('manifests and action descriptors reject unknown authority, duplicates and 
   const descriptor = { id: 'example', label: { en: 'Example' } }
   assert.deepEqual(parseContribution('actions', [descriptor]), [descriptor])
   assert.deepEqual(parseContribution('actions', [{ ...descriptor, icon: 'download' }]), [{ ...descriptor, icon: 'download' }])
-  for (const value of [[], [descriptor, descriptor], [{ ...descriptor, icon: 'Download' }], [{ ...descriptor, run: true }]]) assert.throws(() => parseContribution('actions', value), PluginError)
+  assert.deepEqual(parseContribution('actions', [{ ...descriptor, ui: true }]), [{ ...descriptor, ui: true }])
+  for (const value of [[], [descriptor, descriptor], [{ ...descriptor, icon: 'Download' }], [{ ...descriptor, run: true }], [{ ...descriptor, ui: false }], [{ ...descriptor, ui: 'sidebar' }], [{ ...descriptor, ui: () => null }]]) assert.throws(() => parseContribution('actions', value), PluginError)
   for (const kind of ['theme', 'vocab']) {
     const definition = { ...manifest, kind, entry: 'definition.json', writes: [] }
     assert.equal(parsePluginManifest(definition).kind, kind)
-    for (const change of [{ entry: 'dist/index.js' }, { entry: 'definition.js' }, { reads: [] }, { writes: ['concept.add'] }, { capabilities: ['files'] }, { capabilities: ['notifications'] }, { capabilities: ['storage'] }, { styles: [] }, { styles: ['dist/index.css'] }]) assert.throws(() => parsePluginManifest({ ...definition, ...change }), PluginError)
+    for (const change of [{ entry: 'dist/index.js' }, { entry: 'definition.js' }, { reads: [] }, { writes: ['concept.add'] }, { capabilities: ['files'] }, { capabilities: ['notifications'] }, { capabilities: ['storage'] }, { capabilities: ['ui'] }, { styles: [] }, { styles: ['dist/index.css'] }]) assert.throws(() => parsePluginManifest({ ...definition, ...change }), PluginError)
   }
   for (const entry of ['../index.js', 'dist/index.jsx', 'dist/index.ts']) assert.throws(() => parsePluginManifest({ ...manifest, entry }), PluginError)
 })

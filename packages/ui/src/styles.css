@@ -1,4 +1,4 @@
-@source "./**/*.{ts,tsx}";
+@source "./**/*.{js,ts,tsx}";
 
 @theme inline {
   --color-background: var(--background);
@@ -72,6 +72,10 @@
 }
 
 @layer components {
+.nesso-panel-header { display: flex; flex-shrink: 0; align-items: center; justify-content: space-between; gap: 12px; height: 49px; padding: 0 14px 0 20px; border-bottom: 1px solid var(--border); }
+.nesso-panel-actions { display: flex; flex-shrink: 0; gap: 2px; color: var(--muted-foreground); }
+.nesso-panel-actions button { width: 26px; height: 28px; }
+
 .side-panel { position: relative; flex-shrink: 0; width: var(--panel-size); height: 100%; transition: width var(--duration-state) linear; }
 .side-panel[data-open='false'] { width: 0; }
 .side-panel-content { position: absolute; inset-block: 0; width: var(--panel-size); overflow: hidden; background: var(--background); transition: transform var(--duration-state) linear; }
@@ -120,6 +124,14 @@
     animation-duration: 0s !important;
   }
 }
+
+.nesso-spinner { display: grid; grid-template-columns: repeat(2, 8px); gap: 4px; }
+.nesso-spinner > span { width: 8px; height: 8px; background: currentColor; opacity: .25; animation: nesso-spinner-pulse 1.2s ease-in-out infinite; }
+.nesso-spinner > span:nth-child(2) { animation-delay: -.9s; }
+.nesso-spinner > span:nth-child(3) { animation-delay: -.3s; }
+.nesso-spinner > span:nth-child(4) { animation-delay: -.6s; }
+
+@keyframes nesso-spinner-pulse { 0%, 60%, 100% { opacity: .25; } 30% { opacity: 1; } }
 
 .toast-viewport {
   position: fixed;
@@ -181,6 +193,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .nesso-spinner > span { animation: none; opacity: .65; }
   .nesso-toast { animation: none; }
   .toast-progress { display: none; }
 }

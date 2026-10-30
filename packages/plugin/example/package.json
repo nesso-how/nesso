@@ -1,7 +1,7 @@
 {
   "name": "@nesso-how/plugin-example",
   "version": "0.4.0",
-  "description": "Uppercase concept labels in the invoked Nesso view",
+  "description": "Official example showing how to build Nesso plugins with the SDK and plugin APIs",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -10,33 +10,41 @@
   },
   "type": "module",
   "keywords": ["nesso-plugin"],
-  "files": ["dist", "src", "tsconfig.json"],
+  "files": ["dist", "src", "tsconfig.json", "vite.config.ts"],
   "scripts": {
     "check": "tsc",
-    "build": "npm run check && esbuild src/index.ts --bundle --format=esm --platform=browser --target=es2022 --outfile=dist/index.js",
+    "build": "npm run check && vite build",
     "prepack": "npm run build"
   },
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
   },
+  "dependencies": {
+    "@nesso-how/ui": "1.0.0-alpha.29",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
   "devDependencies": {
     "@nesso-how/plugin": "0.4.0",
-    "esbuild": "^0.28.2",
-    "typescript": "~7.0.2"
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "typescript": "~7.0.2",
+    "vite": "^8.3.0",
+    "vite-plugin-css-injected-by-js": "^5.0.3"
   },
   "nesso": {
     "apiVersion": 1,
     "kind": "actions",
     "entry": "dist/index.js",
     "writes": ["concept.label"],
-    "capabilities": []
+    "capabilities": ["ui", "storage"]
   },
   "i18n": {
     "metadata": {
-      "name": { "en": "Uppercase labels" },
-      "description": { "en": "Uppercase concept labels in the invoked view." },
-      "documentation": { "en": "Changes the labels of concepts in the invoked view in one undoable transaction. Concepts shared with other views change there too." }
+      "name": { "en": "Plugin Example" },
+      "description": { "en": "Learn how to build Nesso plugins with the SDK and plugin APIs." },
+      "documentation": { "en": "A reference plugin for developers, with practical examples of using Nesso's SDK and plugin APIs to define actions, interact with graph data, and build custom interfaces." }
     }
   }
 }

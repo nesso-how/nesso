@@ -16,6 +16,10 @@ import { withInitializationTimeout } from './initialization.ts'
 import { translate } from '../i18n/index.ts'
 import { packageFonts, parsePackageIdentity, verifyPluginPackage } from '@nesso-how/plugin/package'
 import type { InstalledPlugin, PluginResult } from '../../shared/plugins.ts'
+import { createPluginPanel } from './panel.ts'
+
+export const pluginPanel = createPluginPanel(nessoStore, notifications.api, window.nessoFiles)
+export const usePluginPanel = () => useSyncExternalStore(pluginPanel.subscribe, pluginPanel.getSnapshot)
 
 const themes = new Map<string, ThemePresentation>()
 const actions = new Map<string, ActionPackage>()
@@ -238,7 +242,11 @@ export async function invokeAction(actionId: string, viewId = nessoStore.getStat
   const controller = new AbortController()
   active.set(controller, source.name)
   publishActions()
-  try { await loadActions(nessoStore, source, notifications.api, window.nessoFiles, { actionId, viewId, descriptors: plugin.contribution }, controller.signal) }
+  try {
+    const invocation = { actionId, viewId, descriptors: plugin.contribution }
+    if (plugin.contribution.find(({ id }) => id === actionId)?.ui) await pluginPanel.open(source, invocation, controller.signal)
+    else await loadActions(nessoStore, source, notifications.api, window.nessoFiles, invocation, controller.signal)
+  }
   catch (error) {
     if (error instanceof PluginError && error.code === 'cancelled') return
     const t = getTranslation()

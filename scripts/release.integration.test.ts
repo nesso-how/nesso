@@ -20,6 +20,7 @@ function fixture(context: TestContext) {
   symlinkSync(realpathSync(fileURLToPath(new URL('../node_modules/git-cliff', import.meta.url))), join(cwd, 'node_modules', 'git-cliff'), 'junction');
   writeFileSync(join(cwd, '.gitignore'), 'node_modules\n');
   writeFileSync(join(cwd, 'package.json'), '{"type":"module","version":"1.0.0-alpha.1"}\n');
+  writeFileSync(join(cwd, 'scripts/release-packages.json'), '[]\n');
   writeFileSync(join(cwd, 'CHANGELOG.md'), '# Changelog\n\n');
   const git = (...args: string[]) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
   git('init', '-b', 'main');
@@ -90,23 +91,33 @@ test('releasing the current version still commits its changelog before tagging',
   assert.match(releaseNotes(project.changelog(), 'v1.0.0-alpha.2'), /No user-facing changes/);
 });
 
-test('releases sync built-in plugin versions with the app version', (context) => {
+test('releases sync listed packages, built-in plugins and the example UI dependency with the app version', (context) => {
   const project = fixture(context);
-  const plugins = ['kernel-theme', 'paper-theme', 'base-vocab', 'import', 'export'];
-  for (const plugin of plugins) {
-    mkdirSync(join(project.cwd, 'plugins', plugin), { recursive: true });
-    writeFileSync(join(project.cwd, 'plugins', plugin, 'package.json'), '{"name":"@nesso/test","version":"1.0.0-alpha.1"}\n');
+  const listed = ['packages/ui', 'packages/extra'];
+  writeFileSync(join(project.cwd, 'scripts/release-packages.json'), JSON.stringify(listed));
+  const packages = [...listed, ...['kernel-theme', 'paper-theme', 'base-vocab', 'import', 'export'].map((plugin) => `plugins/${plugin}`)];
+  for (const path of packages) {
+    mkdirSync(join(project.cwd, path), { recursive: true });
+    writeFileSync(join(project.cwd, path, 'package.json'), '{"name":"@nesso/test","version":"1.0.0-alpha.1"}\n');
   }
+  const examplePath = 'packages/plugin/example/package.json';
+  mkdirSync(join(project.cwd, 'packages/plugin/example'), { recursive: true });
+  writeFileSync(join(project.cwd, examplePath), '{"version":"0.4.0","dependencies":{"@nesso-how/ui":"1.0.0-alpha.1"},"devDependencies":{"@nesso-how/plugin":"0.4.0"}}\n');
   project.git('add', '.');
-  project.commit('feat: add built-in plugins');
+  project.commit('feat: add built-in plugins and UI');
   project.commit('fix: adjust theme');
   project.release('--alpha');
-  for (const plugin of plugins) {
-    const manifest = JSON.parse(readFileSync(join(project.cwd, 'plugins', plugin, 'package.json'), 'utf8')) as { version?: unknown };
+  for (const path of packages) {
+    const manifest = JSON.parse(readFileSync(join(project.cwd, path, 'package.json'), 'utf8')) as { version?: unknown };
     assert.equal(manifest.version, '1.0.0-alpha.2');
   }
-  const committed = project.git('show', '--format=', '--name-only', 'HEAD');
-  for (const plugin of plugins) assert.match(committed, new RegExp(`plugins/${plugin}/package\\.json`));
+  const example = JSON.parse(readFileSync(join(project.cwd, examplePath), 'utf8')) as { version: string; dependencies: Record<string, string>; devDependencies: Record<string, string> };
+  assert.equal(example.dependencies['@nesso-how/ui'], '1.0.0-alpha.2');
+  assert.equal(example.version, '0.4.0');
+  assert.equal(example.devDependencies['@nesso-how/plugin'], '0.4.0');
+  const committed = project.git('show', '--format=', '--name-only', 'HEAD').split('\n');
+  for (const path of packages) assert.ok(committed.includes(`${path}/package.json`));
+  assert.ok(committed.includes(examplePath));
   assert.equal(project.git('status', '--porcelain'), '');
 });
 

@@ -1,5 +1,7 @@
 export { Button, IconButton } from './button'
 export { SidePanel } from './side-panel'
+export { PanelHeader } from './panel-header'
+export { Spinner } from './spinner'
 export { useMediaQuery } from './media'
 export { Input } from './input'
 export { Label } from './label'
