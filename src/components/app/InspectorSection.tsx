@@ -2,7 +2,7 @@ import { Collapsible, SectionHeading } from '@nesso-how/ui'
 import type { ReactNode } from 'react'
 import { nessoStore, useNessoStore } from '@/store'
 import type { HostStore } from '@/store/types'
-import type { SectionId } from '@nesso-how/plugin'
+import type { SectionId } from '@nesso-how/core'
 
 export function InspectorSection({
   store = nessoStore,

@@ -1,4 +1,4 @@
-import type { SavedView } from '@nesso-how/plugin'
+import type { SavedView } from '@nesso-how/core'
 import { defaultLocale } from '@nesso-how/i18n'
 import { ActionIcon, Button, ContextLabel, Input, Label } from '@nesso-how/ui'
 import { Trash2 } from 'lucide-react'

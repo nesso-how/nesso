@@ -1,4 +1,4 @@
-import { createWriteCommands, type NessoStore } from '@nesso-how/plugin'
+import { createWriteCommands, type NessoStore } from '@nesso-how/core'
 import { newIri } from '@nesso-how/schema'
 import { conceptPlacementOffset } from './operations.ts'
 

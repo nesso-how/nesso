@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import type { NessoOperation, SectionId, Selection, VocabDefinition } from '@nesso-how/plugin'
+import type { NessoOperation, SectionId, Selection, VocabDefinition } from '@nesso-how/core'
 import { relationKey, SchemaError, type Graph } from '@nesso-how/schema'
 import { maxConceptLabelLength, maxRelationLabelLength } from './settings.ts'
 import { createNessoStore } from './create.ts'

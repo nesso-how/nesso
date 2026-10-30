@@ -1,6 +1,6 @@
 import { defaultLocale } from '@nesso-how/i18n'
 import { PluginError, resolvePluginText, type ActionDescriptor } from '@nesso-how/plugin/runtime'
-import type { Notifications } from '@nesso-how/plugin'
+import type { Notifications } from '@nesso-how/core'
 import type { FileBridge } from '../../shared/files.ts'
 import type { HostStore } from '../store/types.ts'
 import { loadActions, type ActionPackage } from './actions.ts'

@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { checkMessageSize } from './data.ts'
 import { parseOrThrow, PluginError } from './errors.ts'
-import type { DeepReadonly } from './types.ts'
+import type { DeepReadonly } from '@nesso-how/core'
 
 export const pluginStorageLimits = {
   record: 256 * 1024,

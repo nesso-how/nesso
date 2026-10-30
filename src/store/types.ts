@@ -4,7 +4,7 @@ import type {
   NessoStore,
   Preferences,
   SectionId,
-} from '@nesso-how/plugin'
+} from '@nesso-how/core'
 import type { AiChatMessage } from '@nesso-how/ai'
 import type { PersistenceIssue } from '../../shared/persistence.ts'
 import type { PluginStorageNamespace, PluginStorageWrite } from './plugin-storage.ts'

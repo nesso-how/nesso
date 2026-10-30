@@ -1,4 +1,4 @@
-import type { NessoOperation, NessoState } from '@nesso-how/plugin'
+import type { NessoOperation, NessoState } from '@nesso-how/core'
 import { newIri } from '@nesso-how/schema'
 
 export const buildDeleteViewOperations = (

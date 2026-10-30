@@ -47,6 +47,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@nesso-how/core": "workspace:*",
     "@nesso-how/errors": "workspace:*",
     "@nesso-how/i18n": "workspace:*",
     "@nesso-how/schema": "workspace:*",

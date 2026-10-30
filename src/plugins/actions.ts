@@ -6,7 +6,7 @@ import {
 } from '@nesso-how/plugin/runtime'
 import { defaultLocale } from '@nesso-how/i18n'
 import type { HostStore } from '../store/types.ts'
-import type { Notifications } from '@nesso-how/plugin'
+import type { Notifications } from '@nesso-how/core'
 import type { PluginI18n, PluginManifest } from '@nesso-how/plugin'
 import type { FileBridge } from '../../shared/files.ts'
 import { conceptPlacementOffset } from '../store/operations.ts'

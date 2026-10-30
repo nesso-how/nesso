@@ -22,7 +22,7 @@ import {
   Trash2,
   Undo2,
 } from 'lucide-react'
-import type { Selection } from '@nesso-how/plugin'
+import type { Selection } from '@nesso-how/core'
 import {
   Background,
   BackgroundVariant,

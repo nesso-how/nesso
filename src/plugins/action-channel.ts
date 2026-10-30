@@ -11,7 +11,7 @@ import {
   type FileSaveOptions,
 } from '@nesso-how/plugin/runtime'
 import { relationKey } from '@nesso-how/schema'
-import type { NessoOperation } from '@nesso-how/plugin'
+import type { NessoOperation } from '@nesso-how/core'
 import type { HostStore } from '../store/types.ts'
 import { NessoError } from '@nesso-how/errors'
 import { materialize } from '../store/operations.ts'

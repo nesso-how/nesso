@@ -1,4 +1,4 @@
-import type { NessoState, SavedView } from '@nesso-how/plugin'
+import type { NessoState, SavedView } from '@nesso-how/core'
 import { relationKey } from '@nesso-how/schema'
 import {
   applyChanges,

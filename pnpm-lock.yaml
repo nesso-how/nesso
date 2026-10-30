@@ -187,6 +187,9 @@ importers:
       '@nesso-how/concept-map':
         specifier: workspace:*
         version: link:packages/concept-map
+      '@nesso-how/core':
+        specifier: workspace:*
+        version: link:packages/core
       '@nesso-how/errors':
         specifier: workspace:*
         version: link:packages/errors
@@ -314,6 +317,9 @@ importers:
 
   packages/concept-map:
     dependencies:
+      '@nesso-how/core':
+        specifier: workspace:*
+        version: link:../core
       '@nesso-how/errors':
         specifier: workspace:*
         version: link:../errors
@@ -342,12 +348,18 @@ importers:
         specifier: ^19.2.8
         version: 19.3.0(react@19.3.0)
     devDependencies:
-      '@nesso-how/plugin':
-        specifier: workspace:*
-        version: link:../plugin
       '@types/react':
         specifier: ^19.2.18
         version: 19.3.0
+
+  packages/core:
+    dependencies:
+      '@nesso-how/i18n':
+        specifier: workspace:*
+        version: link:../i18n
+      '@nesso-how/schema':
+        specifier: workspace:*
+        version: link:../schema
 
   packages/errors: {}
 
@@ -375,6 +387,9 @@ importers:
         specifier: ^4.6.5
         version: 4.6.5
     devDependencies:
+      '@nesso-how/core':
+        specifier: workspace:*
+        version: link:../core
       '@nesso-how/errors':
         specifier: workspace:*
         version: link:../errors
@@ -452,6 +467,9 @@ importers:
         specifier: workspace:*
         version: link:../../packages/schema
     devDependencies:
+      '@nesso-how/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       '@nesso-how/plugin':
         specifier: workspace:*
         version: link:../../packages/plugin

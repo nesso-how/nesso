@@ -1,4 +1,5 @@
-import type { Preferences, ThemeDefinition, VocabDefinition } from '@nesso-how/plugin'
+import type { Preferences, VocabDefinition } from '@nesso-how/core'
+import type { ThemeDefinition } from '@nesso-how/plugin'
 import {
   newIri,
   isAbsoluteIri,

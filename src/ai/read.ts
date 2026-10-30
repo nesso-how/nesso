@@ -1,4 +1,4 @@
-import type { NessoState } from '@nesso-how/plugin'
+import type { NessoState } from '@nesso-how/core'
 import { relationKey } from '@nesso-how/schema'
 import { aiTools, type AiToolResults } from '@nesso-how/ai'
 
