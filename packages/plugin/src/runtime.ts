@@ -19,7 +19,7 @@ import {
   type FileOpenResult,
   type FileSaveOptions,
 } from './files.ts'
-import { createWriteCommands } from '@nesso-how/core'
+import { createWriteCommands } from '../../core/src/commands.ts'
 import { localizedText, text, type LocalizedText } from './i18n.ts'
 import { checkMessageSize } from './data.ts'
 import {

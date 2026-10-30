@@ -1,5 +1,5 @@
 import type { NessoStore } from './types.ts'
-import { newIri } from '@nesso-how/schema'
+import { newIri } from '../../schema/src/core.ts'
 
 type WriteMethods = Omit<
   NessoStore,
