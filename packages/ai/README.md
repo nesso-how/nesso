@@ -18,7 +18,7 @@ Tool schemas validate input; the host supplies execution. Assistants cannot rese
 
 - **Read**: `context` summarizes the active view, selection, vocabulary, and history. `concepts`, `relations`, `views`, `relation_types`, and `selection` provide paginated details; concept and relation queries default to the active view.
 - **Write**: `edit` stages ordered graph and saved-view operations. `history` stages shared undo or redo as the only write in a turn.
-- **Documentation**: `read_docs` returns a bundled README for `nesso`, `ai`, `plugin`, `plugin-example`, `schema`, or `concept-map`, without filesystem or network access.
+- **Documentation**: `read_docs` returns a bundled README for `nesso`, `ai`, `plugin`, `plugin-example`, `schema`, `concept-map`, or `ui`, without filesystem or network access.
 
 Chat applies a turn's writes together only after the response completes successfully. MCP reads are immediate; each `edit` or `history` call requires in-app approval and commits independently.
 

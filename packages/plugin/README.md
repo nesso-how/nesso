@@ -2,6 +2,16 @@
 
 Build Nesso plugins with TypeScript: **actions** read and edit graphs, **vocabularies** define relation types, and **themes** customize appearance.
 
+## Install
+
+With Node.js and npm installed, add the SDK to your TypeScript project:
+
+```sh
+npm install --save-dev @nesso-how/plugin
+```
+
+This installs the development SDK, not a plugin in Nesso. If you are starting a new plugin, use the example below for TypeScript and bundler configuration, including React UI support. To install and try your built plugin in the desktop app, follow the [local testing instructions](example/README.md#test-an-unpublished-build).
+
 ## Create a plugin
 
 Copy the [standalone action example](example/) into a separate project. It includes the SDK, TypeScript configuration, and bundler setup:
@@ -15,12 +25,11 @@ Choose your own package name and action ID, then edit `src/index.ts`:
 
 ```ts
 import type { ActionContribution, NessoOperation } from '@nesso-how/plugin'
-import source from '../package.json' with { type: 'json' }
 
 export const create = (): readonly ActionContribution[] => {
   const action: ActionContribution = {
     id: 'uppercase-labels',
-    label: source.i18n.metadata.name,
+    label: { en: 'Uppercase labels' },
     run: async ({ document }) => {
       const state = document.getState()
 
@@ -64,7 +73,7 @@ Keep the example's build configuration and set these fields in `package.json`:
   },
   "i18n": {
     "metadata": {
-      "name": { "en": "Uppercase labels" },
+      "name": { "en": "Label tools" },
       "description": { "en": "Uppercase concept labels in a view." },
       "documentation": { "en": "Updates labels in one undoable batch." }
     }
@@ -72,23 +81,53 @@ Keep the example's build configuration and set these fields in `package.json`:
 }
 ```
 
-Declare the operations your action uses in `writes`. The optional permissions listed in `capabilities` are `files`, `notifications`, and `storage`; each authorizes all methods of that API. All fields shown under `nesso` and `i18n.metadata` are required. Add the `nesso-plugin` keyword for discovery in Settings → Plugins.
+Declare the operations your action uses in `writes`. The optional permissions listed in `capabilities` are `files`, `notifications`, `storage`, and `ui`. The first three authorize their APIs; `ui` authorizes interactive UI contributions. All fields shown under `nesso` and `i18n.metadata` are required. Add the `nesso-plugin` keyword for discovery in Settings → Plugins.
 
-Labels and metadata use `{ en: string, it?: string, 'zh-CN'?: string }`, with English required as the fallback.
+`i18n.metadata.name` names the plugin in Settings. Each action defines its own `label` for menus, independently of the plugin name. Labels and metadata use `{ en: string, it?: string, 'zh-CN'?: string }`, with English required as the fallback.
 
 ### Build and test
 
 Run `npm run build`, then follow the example's [local testing instructions](example/README.md#test-an-unpublished-build).
 
-Actions must ship one self-contained browser ES module with dependencies bundled; the example's build handles this. Test and install external plugins in the desktop app.
+Actions ship one browser ES module with dependencies bundled except React and React DOM, which Nesso supplies inside the sandbox. Keep `react`, `react/*`, `react-dom`, and `react-dom/*` external in your bundler; the example's build handles this. The runtime supports React 19. Test and install external plugins in the desktop app.
 
 ## Action API
 
 Nesso passes `{ document, storage, files, notifications, signal, viewId }` to `run` as `ActionContext`. `document` exposes the shared graph, view membership, and transient selection; `storage` holds the plugin's private data for that document.
 
-`create()` receives no arguments and returns an array of actions with unique lowercase kebab-case IDs, localized labels, optional icons, and `run(context)` handlers. Use `ActionIconName` for supported icons.
+`create()` receives no arguments and returns an array of actions with unique lowercase kebab-case IDs, localized labels, optional icons, and either a `run(context)` handler or a React component in `ui`. The two forms are mutually exclusive. Use `ActionIconName` for supported icons.
 
 Keep graph reads and effects inside `run`. **Await every write, file dialog, and notification** before returning; the action ends when `run` finishes. Use `signal` to detect cancellation.
+
+### Action UI
+
+Declare the `ui` capability and set the action's `ui` property to a React component instead of a `run` handler. Nesso mounts it in an isolated central panel and unmounts it when the session ends.
+
+```tsx
+import { useSyncExternalStore } from 'react'
+import type { ActionContext, ActionContribution } from '@nesso-how/plugin'
+
+function Browse({ document }: ActionContext) {
+  const state = useSyncExternalStore(document.subscribe, document.getState)
+  return <ul>{state.viewGraph.concepts.map(({ id, label }) => <li key={id}>{label}</li>)}</ul>
+}
+
+export const create = (): readonly ActionContribution[] => [
+  { id: 'browse', label: { en: 'Browse concepts' }, ui: Browse },
+]
+```
+
+#### Context
+
+Components receive `ActionContext` directly as props, with the same APIs and permissions as `run`. `viewId` and the supplied `viewGraph` refer to the invoked view. Subscribe with `useSyncExternalStore` when rendering snapshot data. Discovery runs `create()` in a Worker, so keep DOM access and effects inside components or `run`, not at module scope or in `create()`. The panel can access its own DOM, but not the host DOM, native bridge, network, or direct persistent storage; use the injected APIs for files and storage.
+
+#### Styling
+
+Nesso supplies React, the `@nesso-how/ui` component stylesheet, and theme CSS variables such as `var(--background)` and `var(--foreground)`. Import your own CSS normally; the [standalone example](example/) bundles and injects it. Bundle dependencies other than React/React DOM and inline assets; remote or separate assets are not supported. The host does not compile plugin Tailwind classes. Read `locale` from `document.getState()` for translated content. Label inputs and preserve Tab/Shift+Tab navigation.
+
+#### Lifecycle
+
+Use React effects to clean up subscriptions and resources. Panels have no action execution timeout, but initialization and API requests have deadlines. Uncaught errors or rejected promises fail the session; handle expected errors in your UI. Nesso provides the title, close control, and loading/failure screens. Closing or replacing a panel discards its React state: save progress through `storage` during use, not during cleanup, which is best effort.
 
 ### Read the invoked view
 

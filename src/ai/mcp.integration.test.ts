@@ -46,7 +46,7 @@ test('MCP reads are immediate; edits and shared history require consent and reje
   await f.emit({ type: 'tool', id: 'read', name: 'concepts', input: {} })
   assert.deepEqual(f.replies.get('read'), { value: { items: before.graph.concepts, total: 1, nextOffset: null } })
   const topics = aiTools.read_docs.inputSchema.shape.topic.options
-  assert.deepEqual(topics, ['nesso', 'ai', 'plugin', 'plugin-example', 'schema', 'concept-map'])
+  assert.deepEqual(topics, ['nesso', 'ai', 'plugin', 'plugin-example', 'schema', 'concept-map', 'ui'])
   for (const topic of topics) {
     await f.emit({ type: 'tool', id: 'docs', name: 'read_docs', input: { topic } })
     assert.deepEqual(f.replies.get('docs'), { value: { topic, content: `# ${topic}` } })

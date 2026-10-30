@@ -21,6 +21,8 @@ import { GraphWorkspace } from '@/components/app/GraphWorkspace'
 import { isEditableTarget } from '@/graph/interactions'
 import { PluginApprovalDialog } from '@/components/app/PluginApprovalDialog'
 import { UpdateBar } from '@/components/app/UpdateBar'
+import { PluginPanel } from '@/components/app/PluginPanel'
+import { usePluginPanel } from '@/plugins'
 
 export default function App({ persistence }: { persistence: ReturnType<typeof startAutosave> }) {
   const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale)
@@ -33,6 +35,7 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
   const [settingsPage, setSettingsPage] = useState('general')
   const [deleting, setDeleting] = useState<SavedView | 'complete-graph' | null>(null)
   const canvas = useRef<HTMLDivElement>(null)
+  const pluginPanel = usePluginPanel()
   const readonly = useMediaQuery('(max-width: 767px)')
   const deleteView = () => {
     const { workspace } = host.store.getState()
@@ -43,7 +46,7 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
   useEffect(() => {
     if (readonly) return
     const onKeyDown = (event: KeyboardEvent) => {
-      if (document.querySelector('[data-data-transfer][data-open]')) return
+      if (pluginPanel || document.querySelector('[data-data-transfer][data-open]')) return
       if (event.defaultPrevented || event.isComposing || event.altKey) return
       const target = event.target instanceof HTMLElement ? event.target : null
       if (event.key === '?' && !event.metaKey && !event.ctrlKey) {
@@ -63,7 +66,7 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [readonly, introOpen])
+  }, [readonly, introOpen, pluginPanel])
   const openSettings = () => { setSettingsPage('general'); setSettingsOpen(true) }
   const finishIntro = () => {
     completeIntro(host.store)
@@ -80,7 +83,10 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
           <SidebarInset className="relative min-w-0 overflow-hidden">
             <div className="flex min-h-0 flex-1">
               <div id="canvas" className="relative min-h-0 min-w-0 flex-1">
-                <GraphWorkspace store={host.store} onDeleteView={deleteView} focusRef={canvas} />
+                <div className="h-full w-full" hidden={!!pluginPanel} inert={!!pluginPanel}>
+                  <GraphWorkspace store={host.store} suspended={!!pluginPanel} onDeleteView={deleteView} focusRef={canvas} />
+                </div>
+                <PluginPanel canvas={canvas} />
               </div>
               {!readonly && <SidePanel
                 id="inspector-panel"

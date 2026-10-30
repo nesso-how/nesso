@@ -1,10 +1,10 @@
 import type { ActionContribution, NessoOperation } from '@nesso-how/plugin'
-import source from '../package.json' with { type: 'json' }
+import { Quiz } from './Quiz.js'
 
 export const create = (): readonly ActionContribution[] => {
-  const action: ActionContribution = {
+  const uppercase: ActionContribution = {
     id: 'uppercase-labels',
-    label: source.i18n.metadata.name,
+    label: { en: 'Uppercase labels' },
     run: async ({ document }) => {
       const state = document.getState()
 
@@ -18,5 +18,12 @@ export const create = (): readonly ActionContribution[] => {
     },
   }
 
-  return [action]
+  const quiz: ActionContribution = {
+    id: 'concept-quiz',
+    label: { en: 'Concept Quiz' },
+    ui: Quiz,
+    icon: 'play',
+  }
+
+  return [uppercase, quiz]
 }

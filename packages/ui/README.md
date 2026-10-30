@@ -1,33 +1,53 @@
-# @nesso-how/ui
+# Nesso UI
 
-Reusable React primitives and shared styles. Base UI-backed controls use Nesso's semantic theme tokens; graph components and app layout remain outside this package.
+React components styled for Nesso, including buttons, forms, menus, dialogs, and panels. Many controls build on [Base UI](https://base-ui.com/). The package depends on Nesso's theme tokens; it does not include a standalone theme.
 
-## Usage
+## Install
+
+```sh
+npm install @nesso-how/ui@alpha
+```
+
+Requires React and React DOM `^19.2.8`. The package follows Nesso's app version; test against the app versions you support rather than assuming compatibility from matching version numbers.
+
+## Use in a Nesso plugin
+
+Nesso supplies React, component styles, and theme tokens inside plugin UI panels. No package stylesheet import is needed:
 
 ```tsx
-import { Banner } from '@nesso-how/ui'
+import { Button } from '@nesso-how/ui'
 
-export function SaveWarning() {
-  return <Banner tone="warning">Some changes couldn't be saved locally.</Banner>
+export function PluginUI() {
+  return <Button>Hello</Button>
 }
 ```
 
-Import `@nesso-how/ui/styles.css` after Tailwind in the host stylesheet. The host supplies the theme tokens and fonts. React and React DOM are peers.
+Keep React and React DOM external in your plugin bundle. Import your own layout CSS normally; Nesso does not compile arbitrary Tailwind classes from plugin source. Start with the [standalone plugin example](https://github.com/nesso-how/nesso/tree/main/packages/plugin/example) and see the [SDK UI contract](https://github.com/nesso-how/nesso/blob/main/packages/plugin/README.md#action-ui) for setup and permissions.
 
-## API
+## Use outside Nesso
 
-- `Button`: default, outline, and ghost variants; text and icon sizes.
-- `Input`, `Label`: shared form primitives.
-- `Kbd`: a semantic keycap styled with the host's theme tokens.
-- `Menu`, `MenuItem`, `MenuPopup`, `MenuRadioItem`: Base UI menu parts, styled items/popup, and radio choices. `MenuPopup` accepts `anchor`, `align`, and `sideOffset` for trigger-based or virtual-anchor positioning, including context menus.
-- `Combobox`, `ComboboxItem`, `ComboboxPopup`: Base UI searchable selection parts and styled items/popup.
-- `Autocomplete`, `AutocompleteClear`, `AutocompleteItem`, `AutocompletePopup`: Base UI text suggestion parts with styled clear control, items, and popup; filtering and saving remain caller-owned.
-- `Collapsible`: Base UI disclosure parts.
-- `SectionHeading`: controlled disclosure heading with chevron, `aria-expanded`, and transparent hover/active backgrounds; open state remains caller-owned.
-- `Dialog`, `DialogPopup`: Base UI dialog parts and styled popup/backdrop.
-- `Banner`: inline strip messages; `info` (default) uses a polite status, while `warning` and `error` use alerts. Content, actions, dismissal, and disclosure remain caller-owned.
-- `ToastViewport`: floating bottom-center info, warning, and confirmation toasts. Info auto-dismisses with a pausable timer; warnings and confirmations persist until acted upon. Queueing and content remain caller-owned; the viewport manages timers.
-- `ResizeHandle`, `ResizableHandle`, `ResizablePanel`, `ResizablePanelGroup`: panel layout primitives.
-- `styles.css`: semantic token mappings, shared interaction states, touch targets, and reduced-motion styles.
+Install React/React DOM and configure [Tailwind CSS 4](https://tailwindcss.com/docs/installation) in your application. Import the package's source CSS after Tailwind in your main stylesheet:
 
-See [src/index.ts](src/index.ts) for all component exports.
+```css
+@import "tailwindcss";
+@import "@nesso-how/ui/styles.css";
+```
+
+Your build must compile this CSS; it is not a precompiled stylesheet. Supply the theme CSS variables on your document or component container: colors such as `--background`, `--foreground`, and `--border`; `--font-sans` and `--font-mono`; `--radius-control` and `--radius-object` with length units; and `--duration-state` with time units. No theme values or font files are included. See the [theme schema](https://github.com/nesso-how/nesso/blob/main/packages/plugin/src/definitions.ts) for all color tokens and [Paper's theme](https://github.com/nesso-how/nesso/blob/main/plugins/paper-theme/src/index.ts) for example values.
+
+## Components
+
+| Area | Exports |
+| --- | --- |
+| Buttons and inputs | `Button`, `IconButton`, `Input`, `Label`, `PreferenceSelect`, `ColorPicker` |
+| Forms and rows | `Field`, `FieldHint`, `ListRow`, `ListRowButton`, `ListRowDetail`, `ListRowTitle`, `RevealActions`, `PromptForm` |
+| Menus and popovers | `Menu`, `MenuItem`, `MenuPopup`, `MenuRadioItem`, `Popover`, `PopoverPopup` |
+| Search and suggestions | `Combobox`, `ComboboxItem`, `ComboboxPopup`, `Autocomplete`, `AutocompleteClear`, `AutocompleteItem`, `AutocompletePopup` |
+| Dialogs | `Dialog`, `DialogActions`, `DialogPopup`, `ConfirmDialog`, `TextPromptDialog` |
+| Panels and disclosure | `SidePanel`, `PanelHeader`, `SectionHeading`, `Collapsible`, `Tabs` |
+| Feedback | `Banner`, `ToastViewport`, `Spinner` |
+| Labels and icons | `Kbd`, `ContextLabel`, `ActionIcon` |
+
+`Button` supports `default`, `outline`, and `ghost` variants. `SidePanel` supports controlled resizing and collapse. `Spinner` accepts an accessible `label` and respects reduced motion. State, content, and event handling remain yours to provide.
+
+The package also exports `useMediaQuery`, `contrastColor`, `presetColors`, and the `ActionIconName` and `ToastItem` types. See the [public exports](https://github.com/nesso-how/nesso/blob/main/packages/ui/src/index.ts) and component source files for prop definitions; published TypeScript declarations provide editor completion.

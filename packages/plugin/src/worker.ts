@@ -1,5 +1,6 @@
 import { createPluginClient, parseContribution, PluginError, type ActionContribution } from './runtime.ts'
 import { localizedText } from './i18n.ts'
+import { validateActions } from './module.ts'
 
 const bootstrap = async (event: MessageEvent) => {
   if (event.data?.type !== 'bootstrap' || event.ports.length !== 1) return
@@ -8,14 +9,14 @@ const bootstrap = async (event: MessageEvent) => {
   try {
     const module: { create: () => readonly ActionContribution[] | Promise<readonly ActionContribution[]> } = await import(event.data.entry)
     const actions = await module.create()
-    if (!Array.isArray(actions) || actions.some((action) => typeof action.run !== 'function')) throw new PluginError('invalid-input', [{ path: 'actions', message: 'Expected local action functions' }])
+    validateActions(actions)
     const invoke = async ({ data }: MessageEvent) => {
       if (data?.type !== 'invoke') return
       port.removeEventListener('message', invoke)
       try {
         const client = createPluginClient(port, data.state)
         const action = actions.find(({ id }) => id === data.actionId)
-        if (!action) { client.close(); return }
+        if (!action || action.ui) { client.close(); return }
         await action.run(client.context)
         port.postMessage({ type: 'complete', ok: true })
       } catch (error) {
@@ -27,7 +28,7 @@ const bootstrap = async (event: MessageEvent) => {
     }
     port.addEventListener('message', invoke)
     port.start()
-    port.postMessage({ type: 'contribution', value: parseContribution('actions', actions.map(({ id, label, icon }) => ({ id, label, ...(icon !== undefined ? { icon } : {}) }))) })
+    port.postMessage({ type: 'contribution', value: parseContribution('actions', actions.map(({ id, label, icon, ui }) => ({ id, label, ...(icon !== undefined ? { icon } : {}), ...(ui ? { ui: true } : {}) }))) })
   } catch {
     port.postMessage({ type: 'close', reason: 'Action initialization failed' })
     port.close()

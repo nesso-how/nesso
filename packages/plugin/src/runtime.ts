@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import type { ComponentType } from 'react'
 import type { DeepReadonly, GraphSnapshot, NessoOperation, Selection, SavedView, VocabDefinition } from './types.ts'
 import type { Locale } from '@nesso-how/i18n'
 import { parseOrThrow, PluginError } from './errors.ts'
@@ -15,7 +16,7 @@ export { parseOrThrow, PluginError } from './errors.ts'
 export { parseDefinition, themeColors, type Definition } from './definitions.ts'
 export { parseFileOptions, fileTextLimit, type FileOpenOptions, type FileSaveOptions, type FileOpenResult } from './files.ts'
 
-export const runtimeLimits = { request: 32 * 1024 * 1024, snapshot: 64 * 1024 * 1024, pending: 64, deadline: 30_000, interaction: 300_000, initialization: 10_000, action: 120_000 } as const
+export const runtimeLimits = { request: 32 * 1024 * 1024, snapshot: 64 * 1024 * 1024, pending: 64, deadline: 30_000, interaction: 300_000, initialization: 10_000, action: 120_000, heartbeat: 15_000 } as const
 export const themeTokens = [...themeColors, 'font-sans', 'font-mono', 'radius-control', 'radius-object', 'duration-state'] as const
 
 const id = z.string().min(1).max(2048)
@@ -72,7 +73,7 @@ const jsonEntry = z.string().max(240).regex(/^(?:[\w-]+\/)*[\w-]+\.json$/)
 const pluginWriteKinds = ['concept.label', 'concept.description', 'concept.color', 'concept.bold', 'concept.italic', 'concept.position', 'concept.positions', 'concept.add', 'concept.remove', 'relation.connect', 'relation.reconnect', 'relation.type', 'relation.type.create', 'relation.remove', 'selection.set', 'view.membership'] as const
 const operationDeclarations = z.array(z.enum(pluginWriteKinds))
 const manifest = z.discriminatedUnion('kind', [
-  z.strictObject({ ...manifestFields, kind: z.literal('actions'), entry: jsEntry, writes: operationDeclarations, capabilities: z.array(z.enum(['files', 'notifications', 'storage'])) }),
+  z.strictObject({ ...manifestFields, kind: z.literal('actions'), entry: jsEntry, writes: operationDeclarations, capabilities: z.array(z.enum(['files', 'notifications', 'storage', 'ui'])) }),
   ...(['theme', 'vocab'] as const).map((kind) => z.strictObject({ ...manifestFields, kind: z.literal(kind), entry: jsonEntry, writes: z.tuple([]), capabilities: z.tuple([]) })),
 ]).refine((value) => new Set(value.writes).size === value.writes.length && new Set(value.capabilities).size === value.capabilities.length, 'Declarations must be unique')
 
@@ -94,13 +95,13 @@ const request = z.discriminatedUnion('method', [
   z.strictObject({ ...envelope, method: z.literal('files.save'), params: fileSaveOptions }),
 ])
 const wireError = z.strictObject({ code: z.enum(['invalid-input', 'denied', 'stale-state', 'stale-context', 'unavailable', 'cancelled', 'timeout', 'closed', 'failed']), issues: z.array(z.strictObject({ path: text(256), message: text(2048) })).min(1).max(32), displayMessage: localizedText(2048).optional() })
-const message = z.union([request, z.strictObject({ type: z.literal('contribution'), value: z.unknown() }), z.strictObject({ type: z.literal('close'), reason: z.string().max(2048) }), z.strictObject({ type: z.literal('complete'), ok: z.literal(true) }), z.strictObject({ type: z.literal('complete'), ok: z.literal(false), error: wireError })])
-const actionDescriptor = z.strictObject({ id: z.string().max(64).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/), label: localizedText(128), icon: z.string().min(1).max(32).regex(/^[a-z]+(?:-[a-z]+)*$/).optional() })
+const message = z.union([request, z.strictObject({ type: z.literal('panel-ready') }), z.strictObject({ type: z.literal('pong'), id: z.number().int().positive() }), z.strictObject({ type: z.literal('contribution'), value: z.unknown() }), z.strictObject({ type: z.literal('close'), reason: z.string().max(2048) }), z.strictObject({ type: z.literal('complete'), ok: z.literal(true) }), z.strictObject({ type: z.literal('complete'), ok: z.literal(false), error: wireError })])
+const actionDescriptor = z.strictObject({ id: z.string().max(64).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/), label: localizedText(128), icon: z.string().min(1).max(32).regex(/^[a-z]+(?:-[a-z]+)*$/).optional(), ui: z.literal(true).optional() })
 export const actionIconNames = ['arrow-right', 'book-open', 'clipboard-paste', 'copy', 'download', 'file-down', 'file-up', 'folder', 'globe', 'layers', 'pencil', 'play', 'plus', 'refresh', 'scissors', 'search', 'share', 'sparkles', 'upload', 'zap'] as const
 export type ActionIconName = typeof actionIconNames[number]
 const actionDescriptors = z.array(actionDescriptor).min(1).max(64).refine((value) => new Set(value.map(({ id }) => id)).size === value.length, 'Action IDs must be unique')
 export type ActionDescriptor = DeepReadonly<z.infer<typeof actionDescriptor>>
-export type ActionContribution = ActionDescriptor & { readonly run: (context: ActionContext) => void | Promise<void> }
+export type ActionContribution = Omit<ActionDescriptor, 'ui'> & ({ readonly ui: ComponentType<ActionContext>; readonly run?: never } | { readonly ui?: never; readonly run: (context: ActionContext) => void | Promise<void> })
 
 export function parseContribution(kind: 'theme' | 'vocab', value: unknown): Definition
 export function parseContribution(kind: 'actions', value: unknown): readonly ActionDescriptor[]
@@ -153,6 +154,7 @@ const actionStateSchema = z.strictObject({
   workspace: z.strictObject({ activeViewId: id.nullable(), savedViews: z.array(z.strictObject({ id, name: z.string(), pinned: z.boolean() })) }),
 })
 const reply = z.union([
+  z.strictObject({ type: z.literal('ping'), id: z.number().int().positive() }),
   z.strictObject({ type: z.literal('state'), state: actionStateSchema }),
   z.strictObject({ type: z.literal('response'), id: z.number().int().positive(), ok: z.literal(true), value: z.unknown() }),
   z.strictObject({ type: z.literal('response'), id: z.number().int().positive(), ok: z.literal(false), error: wireError }),
@@ -222,6 +224,7 @@ export function createPluginClient(port: MessagePort, initial: unknown) {
       return
     }
     const data = parsed.data
+    if (data.type === 'ping') { port.postMessage({ type: 'pong', id: data.id }); return }
     if (data.type === 'close') { close(); return }
     if (data.type === 'state' && data.state.revision > state.revision) {
       state = data.state
@@ -276,5 +279,5 @@ export function createPluginClient(port: MessagePort, initial: unknown) {
     },
     signal: controller.signal,
   }
-  return { context, close }
+  return { context, close, getPresentation: (): Pick<ActionState, 'theme' | 'locale'> => ({ theme: state.theme, locale: state.locale }) }
 }

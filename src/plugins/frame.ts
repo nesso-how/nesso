@@ -1,6 +1,6 @@
 import { PluginError, runtimeLimits } from '@nesso-how/plugin/runtime'
 
-export function loadPluginFrame(element: HTMLIFrameElement, assets: { entry: string | Uint8Array }, connect: (port: MessagePort, ready: () => void, failed: (error: PluginError) => void) => {
+export function loadPluginFrame(element: HTMLIFrameElement, assets: { entry: string | Uint8Array; panel?: boolean }, connect: (port: MessagePort, ready: () => void, failed: (error: PluginError) => void) => {
   close: () => void
 }, failed: (error: PluginError) => void) {
   const controller = new AbortController()
@@ -49,7 +49,7 @@ export function loadPluginFrame(element: HTMLIFrameElement, assets: { entry: str
         fail(error instanceof PluginError ? error : new PluginError('failed', [{ path: 'plugin', message: 'Could not connect plugin' }]))
       }
     }
-    const url = new URL('plugin-runner/actions.html', document.baseURI)
+    const url = new URL(`plugin-runner/${assets.panel ? 'panel' : 'actions'}.html`, document.baseURI)
     url.hash = token
     element.src = url.href
   }).catch((error: unknown) => fail(error instanceof PluginError ? error : new PluginError('failed', [{ path: 'plugin', message: 'Could not initialize plugin' }])))

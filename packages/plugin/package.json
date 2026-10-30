@@ -29,6 +29,7 @@
     "prepack": "pnpm run build"
   },
   "dependencies": {
+    "@types/react": "^19.3.0",
     "semver": "^7.8.5",
     "validate-npm-package-name": "^8.0.0",
     "zod": "^4.6.5"
@@ -37,8 +38,12 @@
     "@nesso-how/errors": "workspace:*",
     "@nesso-how/i18n": "workspace:*",
     "@nesso-how/schema": "workspace:*",
+    "@types/react-dom": "^19.3.0",
     "@types/semver": "^7.8.0",
     "@types/validate-npm-package-name": "^4.0.2",
+    "es-module-lexer": "^3.0.4",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
     "tsdown": "^0.23.1"
   }
 }

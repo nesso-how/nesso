@@ -23,6 +23,7 @@ test('export uses only the supplied target graph and notifies after accepted sav
     notifications: { notify }, signal: new AbortController().signal,
   }
   const [action] = create()
+  assert.ok(action.run)
   assert.equal(save.mock.callCount(), 0)
   assert.equal(action.label.en, 'Export json')
   const exporting = action.run(api)

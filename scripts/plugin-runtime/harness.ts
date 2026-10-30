@@ -14,6 +14,8 @@ import { verifyInstallation } from './installation.ts'
 import { verifySafePlugins } from './safe-plugins.ts'
 import { verifyCorruptRecords } from './corrupt-records.ts'
 import { verifyStorage } from './storage.ts'
+import { verifyPanel } from './panel.ts'
+import { verifyPanelWorkspace } from './panel-workspace.ts'
 
 const [scenario, name, profile] = process.argv.slice(2) as [Scenario, Platform, string]
 assert.ok(Object.hasOwn(cases, scenario) && (cases[scenario] as readonly string[]).includes(name) && profile)
@@ -30,7 +32,7 @@ const deadline = setTimeout(() => {
 app.whenReady().then(async () => {
   const root = path.resolve(import.meta.dirname, '../../dist')
   const host = '<!doctype html><html><head><meta http-equiv="Content-Security-Policy" content="frame-src \'self\'; object-src \'none\'"></head><body></body></html>'
-  const workspace = ['startup', 'installation', 'safe-plugins', 'corrupt-records', 'storage'].includes(scenario)
+  const workspace = ['startup', 'installation', 'safe-plugins', 'corrupt-records', 'storage', 'panel-workspace'].includes(scenario)
   protocol.handle('nesso', (request) => !workspace && new URL(request.url).pathname === '/'
     ? new Response(host, { headers: { 'Content-Type': 'text/html', 'Content-Security-Policy': desktopHostCsp } })
     : serveAppAsset(root, request))
@@ -67,6 +69,8 @@ app.whenReady().then(async () => {
     stage = scenario
     switch (scenario) {
       case 'worker': await verifyWorker(context); break
+      case 'panel': await verifyPanel(context); break
+      case 'panel-workspace': await verifyPanelWorkspace(context); break
       case 'bundled': await verifyBundled(context); break
       case 'startup': await verifyStartup(context); break
       case 'installation': await verifyInstallation(context); break

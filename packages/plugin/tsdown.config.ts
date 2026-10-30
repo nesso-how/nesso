@@ -8,6 +8,6 @@ export default defineConfig({
   dts: true,
   deps: {
     alwaysBundle: ['@nesso-how/errors', '@nesso-how/schema', '@nesso-how/i18n'],
-    onlyImport: ['zod', 'semver', 'validate-npm-package-name'],
+    onlyImport: ['zod', 'semver', 'validate-npm-package-name', 'react'],
   },
 })

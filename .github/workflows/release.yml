@@ -122,6 +122,9 @@ jobs:
   publish:
     needs: build
     runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      id-token: write
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v4
@@ -129,6 +132,7 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
+          registry-url: 'https://registry.npmjs.org'
       - run: pnpm install --frozen-lockfile --ignore-scripts
       - run: pnpm build:packages
       - uses: actions/download-artifact@v4
@@ -136,6 +140,24 @@ jobs:
           pattern: nesso-*
           merge-multiple: true
           path: release
+      - name: Publish npm packages
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          packages="$(node -p "require('./scripts/release-packages.json').join(' ')")"
+          for directory in $packages; do
+            package="$(node -p "require('./$directory/package.json').version")"
+            [ "$version" = "$package" ] || { echo "tag $version does not match $directory version $package"; exit 1; }
+            private="$(node -p "require('./$directory/package.json').private === true")"
+            [ "$private" = false ] || { echo "$directory is private"; exit 1; }
+          done
+          channel=latest
+          if [[ "$version" == *-* ]]; then
+            channel="${version#*-}"
+            channel="${channel%%.*}"
+          fi
+          for directory in $packages; do
+            pnpm --dir "$directory" publish --tag "$channel" --no-git-checks
+          done
       - name: Publish release and update files
         run: |
           node scripts/release-notes.ts "$GITHUB_REF_NAME" > release-notes.md

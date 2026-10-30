@@ -9,7 +9,8 @@ const descriptors: readonly ActionDescriptor[] = [{ id: 'example', label: { en: 
 const base = { contextId: 'context', locale: 'en' as const, theme: Object.fromEntries(themeTokens.map((token) => [token, ''])), conceptPlacementOffset: { x: 160, y: 100 } }
 const graph = { concepts: [{ id: 'urn:a', label: 'A', position: { x: 0, y: 0 } }, { id: 'urn:b', label: 'B', position: { x: 100, y: 0 } }], relationTypes: [], relations: [] }
 
-function fixture(discovery = false, open: () => Promise<FileOpenResult> = async () => null, writes: readonly NessoOperation['kind'][] = ['concept.label', 'concept.color'], capabilities: readonly string[] = ['files'], host = createNessoStore(graph), pluginId = 'nesso-plugin-example') {
+function fixture(discovery = false, open: () => Promise<FileOpenResult> = async () => null, writes: readonly NessoOperation['kind'][] = ['concept.label', 'concept.color'], capabilities: readonly string[] = ['files'], host = createNessoStore(graph), pluginId = 'nesso-plugin-example', panel = false) {
+  const contributions = panel ? descriptors.map((action) => ({ ...action, ui: true as const })) : descriptors
   const target = host.store.createView('Target', ['urn:a'])
   host.store.setView(null)
   host.store.setSelection([{ kind: 'concept', id: 'urn:b' }])
@@ -19,7 +20,7 @@ function fixture(discovery = false, open: () => Promise<FileOpenResult> = async 
   const notified: string[] = []
   const descriptions: (string | undefined)[] = []
   const dismissed: string[] = []
-  const runtime = connectActionChannel(channel.port1, host.store, { pluginId, writes, capabilities, invocation: discovery ? undefined : { actionId: 'example', viewId: target, descriptors } }, base, {
+  const runtime = connectActionChannel(channel.port1, host.store, { pluginId, writes, capabilities, ...(panel ? { mode: 'panel' } : {}), invocation: discovery ? undefined : { actionId: 'example', viewId: target, descriptors: contributions } }, base, {
     files: { open, save: async () => ({ saved: true }) },
     notify: ({ title, description }) => { notified.push(title); descriptions.push(description); return title }, dismiss: (id) => { dismissed.push(id) },
     discovered: (value) => found.push(value), activated: () => {}, complete: () => {}, failed: (error) => failures.push(error),
@@ -28,15 +29,15 @@ function fixture(discovery = false, open: () => Promise<FileOpenResult> = async 
   const messages: { type: string }[] = []
   channel.port2.addEventListener('message', ({ data }) => messages.push(data))
   channel.port2.start()
-  const start = (value = descriptors) => new Promise<void>((resolve, reject) => {
+  const start = (value = contributions) => new Promise<void>((resolve, reject) => {
     channel.port2.onmessage = ({ data }) => {
-      if (data.type === 'invoke') { client = createPluginClient(channel.port2, data.state); resolve() }
+      if (data.type === 'invoke') { client = createPluginClient(channel.port2, data.state); if (panel) channel.port2.postMessage({ type: 'panel-ready' }); resolve() }
       if (data.type === 'close') {
         if (discovery) resolve()
         else reject(new PluginError('closed', [{ path: 'channel', message: data.reason }]))
       }
     }
-    channel.port2.postMessage({ type: 'contribution', value })
+    channel.port2.postMessage(panel ? { type: 'panel-ready' } : { type: 'contribution', value })
   })
   const close = () => { runtime.close(); client?.close(); channel.port2.close() }
   return { host, target, channel, runtime, get client() { assert.ok(client); return client }, messages, failures, found, notified, descriptions, dismissed, start, close }
@@ -67,6 +68,50 @@ test('action projections stay bound to the invoked view, filter off-view selecti
   await assert.rejects(document.applyOperations([{ kind: 'concept.label', id: 'urn:a', value: 'No' }, { kind: 'concept.remove', id: 'urn:b' }]), { code: 'denied' })
   await document.applyOperations([{ kind: 'concept.color', id: 'urn:a', value: '#123456' }])
   assert.equal(instance.host.store.getState().graph.concepts[0].color, '#123456')
+})
+
+test('injected panel presentation updates never advance the graph write baseline', async (t) => {
+  const instance = fixture(false, undefined, ['concept.label'], ['ui'], undefined, undefined, true)
+  t.after(instance.close)
+  await instance.start()
+  const { document } = instance.client.context
+  const original = document.getState().viewGraph.concepts[0].label
+  document.subscribe(() => instance.client.getPresentation())
+  instance.host.store.setConceptLabel('urn:a', 'Concurrent edit')
+  instance.host.store.setLocale('it')
+  await assert.rejects(instance.client.context.storage.list(), { code: 'denied' })
+  assert.equal(instance.client.getPresentation().locale, 'it')
+  await assert.rejects(document.setConceptLabel('urn:a', original.toUpperCase()), { code: 'stale-state' })
+  assert.equal(instance.host.store.getState().graph.concepts[0].label, 'Concurrent edit')
+})
+
+test('panel sessions have heartbeats rather than a bounded action lifetime', async (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout', 'setInterval', 'Date'] })
+  const instance = fixture(false, undefined, [], ['ui'], undefined, undefined, true)
+  t.after(instance.close)
+  await instance.start()
+  await instance.client.context.document.refresh()
+  for (let time = 0; time <= runtimeLimits.action * 2; time += runtimeLimits.heartbeat) {
+    t.mock.timers.tick(runtimeLimits.heartbeat)
+    await instance.client.context.document.refresh()
+  }
+  assert.equal(instance.failures.length, 0)
+  instance.channel.port2.onmessage = null
+  t.mock.timers.tick(runtimeLimits.heartbeat * 2)
+  assert.equal(instance.failures[0].code, 'timeout')
+  assert.equal(instance.runtime.signal.aborted, true)
+})
+
+test('panel initialization and action execution cannot bypass their accepted execution modes', async (t) => {
+  const undeclared = fixture(false, undefined, [], [], undefined, undefined, true)
+  t.after(undeclared.close)
+  await assert.rejects(undeclared.start(), { code: 'closed' })
+  assert.equal(undeclared.failures[0].code, 'denied')
+  const discovery = fixture(true)
+  t.after(discovery.close)
+  discovery.channel.port2.postMessage({ type: 'panel-ready' })
+  await new Promise<void>((resolve) => { discovery.channel.port2.onmessage = () => resolve() })
+  assert.equal(discovery.failures[0].code, 'denied')
 })
 
 test('plugin batches and helpers automatically reject stale reads without changes or retries', async (t) => {

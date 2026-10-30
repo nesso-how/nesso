@@ -1,12 +1,12 @@
-# Uppercase labels
+# Plugin Example
 
-The official Nesso action plugin example, published as [`@nesso-how/plugin-example`](https://www.npmjs.com/package/@nesso-how/plugin-example). It uppercases labels in the invoked view with one undoable batch. Shared concepts change in every view containing them.
+The official Nesso plugin example: an **Uppercase labels** action and a React **Concept Quiz** with persistent progress. See [`src/index.ts`](src/index.ts) and [`src/Quiz.tsx`](src/Quiz.tsx).
 
 ## Install and try
 
-In the desktop app, open Settings → Plugins, search for `@nesso-how/plugin-example`, and install it. Approve its declared access to concept labels.
+In the desktop app, open Settings → Plugins, search for `@nesso-how/plugin-example`, and install it. Approve its declared access to concept labels, interactive panels, and private storage. The panel example requires the SDK and app versions containing central-panel support; build from this checkout until that SDK release is published.
 
-Run **Uppercase labels** from a view's context menu in the Explorer, or from the view's actions in the Inspector with no concepts or relations selected. Use Undo to restore the original labels.
+Run either action from a view's context menu in the Explorer, or from its actions in the Inspector with nothing selected.
 
 ## Build your own
 
@@ -17,9 +17,9 @@ npm install
 npm run build
 ```
 
-The build typechecks `src/index.ts` and bundles it with the package metadata into a self-contained `dist/index.js`.
+The Vite configuration bundles code and imported CSS into `dist/index.js`, leaving React and React DOM to Nesso. See the [UI contract](../README.md#action-ui) for runtime requirements.
 
-Choose your own package name and action ID before publishing a derived plugin.
+Choose your own package name, plugin metadata, and action IDs and labels before publishing.
 
 ## Test an unpublished build
 

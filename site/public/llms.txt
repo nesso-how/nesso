@@ -8,6 +8,7 @@
 - [Plugin example](https://raw.githubusercontent.com/nesso-how/nesso/main/packages/plugin/example/README.md)
 - [Graph schema and JSON-LD](https://raw.githubusercontent.com/nesso-how/nesso/main/packages/schema/README.md)
 - [Concept map renderer](https://raw.githubusercontent.com/nesso-how/nesso/main/packages/concept-map/README.md)
+- [UI components and shared styles](https://raw.githubusercontent.com/nesso-how/nesso/main/packages/ui/README.md)
 
 ## Downloads
 

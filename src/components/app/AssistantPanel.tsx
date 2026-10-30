@@ -1,5 +1,5 @@
 import { useEffect, useState, useSyncExternalStore } from 'react'
-import { IconButton, Tabs } from '@nesso-how/ui'
+import { IconButton, PanelHeader, Tabs } from '@nesso-how/ui'
 import { SquarePen, X } from 'lucide-react'
 import type { createAiChat } from '@/ai/chat'
 import { host, useNessoStore } from '@/store'
@@ -34,16 +34,15 @@ export function AssistantPanel({ chat, onClose, onOpenSettings, settingsOpen = f
   }, [tab, settingsOpen, busy, readonly])
   return (
     <Tabs.Root value={tab} onValueChange={(value) => store.applyOperations([{ kind: 'preferences.inspectorTab', value: value as typeof tab }])} className="flex h-full min-h-0 flex-col">
-      <header className="assistant-header">
+      <PanelHeader actions={<>
+        {tab === 'chat' && <IconButton disabled={readonly} aria-label={t('aiNewChat')} title={t('aiNewChat')} onClick={() => { chat.clear(); setDraft('') }}><SquarePen /></IconButton>}
+        <IconButton disabled={readonly || !onClose} aria-label={t('collapseDetails')} title={t('collapseDetails')} onClick={onClose}><X /></IconButton>
+      </>}>
         <Tabs.List aria-label={t('aiInspectorTabs')} className="assistant-tabs">
           <Tabs.Tab value="details">{t('details')}{selected && <span className="assistant-selection-dot" aria-hidden="true" />}</Tabs.Tab>
           <Tabs.Tab value="chat">{t('chat')}</Tabs.Tab>
         </Tabs.List>
-        <div className="assistant-actions">
-          {tab === 'chat' && <IconButton disabled={readonly} aria-label={t('aiNewChat')} title={t('aiNewChat')} onClick={() => { chat.clear(); setDraft('') }}><SquarePen /></IconButton>}
-          <IconButton disabled={readonly || !onClose} aria-label={t('collapseDetails')} title={t('collapseDetails')} onClick={onClose}><X /></IconButton>
-        </div>
-      </header>
+      </PanelHeader>
       <Tabs.Panel value="details" className="min-h-0 flex-1"><Inspector store={store} readonly={readonly} /></Tabs.Panel>
       <Tabs.Panel value="chat" keepMounted className="min-h-0 flex-1 data-[hidden]:hidden"><Chat chat={chat} store={store} readonly={readonly} draft={draft} onDraftChange={setDraft} onOpenSettings={onOpenSettings} activeModel={activeModel} /></Tabs.Panel>
     </Tabs.Root>
