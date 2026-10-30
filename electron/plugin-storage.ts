@@ -97,6 +97,7 @@ export function createPluginStorage(directory: string) {
       [
         '@nesso-how/kernel-theme',
         '@nesso-how/paper-theme',
+        '@nesso-how/mist-theme',
         '@nesso-how/base-vocab',
         '@nesso-how/import',
         '@nesso-how/export',

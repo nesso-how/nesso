@@ -121,6 +121,7 @@ The app lives in `src/`, with desktop services in `electron/`. Shared packages l
 | [`@nesso-how/import`](plugins/import/)             | Plugin   | Merge a Nesso JSON-LD file into the current graph.                        |
 | [`@nesso-how/kernel-theme`](plugins/kernel-theme/) | Plugin   | Kernel theme tokens and bundled fonts.                                    |
 | [`@nesso-how/paper-theme`](plugins/paper-theme/)   | Plugin   | Warm ivory surfaces and restrained terracotta accents.                    |
+| [`@nesso-how/mist-theme`](plugins/mist-theme/)     | Plugin   | Cool misty blue surfaces and steel blue accents.                          |
 
 ## Development
 
