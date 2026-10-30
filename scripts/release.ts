@@ -157,9 +157,15 @@ function main(): void {
   const synced: string[] = []
   for (const directory of [
     ...releasePackages,
-    ...['kernel-theme', 'paper-theme', 'base-vocab', 'import', 'export'].map(
-      (plugin) => `plugins/${plugin}`,
-    ),
+    ...[
+      'kernel-theme',
+      'paper-theme',
+      'mist-theme',
+      'base-vocab',
+      'import',
+      'export',
+      'review',
+    ].map((plugin) => `plugins/${plugin}`),
   ]) {
     const path = `${directory}/package.json`
     const packageLocation = new URL(`../${path}`, import.meta.url)
