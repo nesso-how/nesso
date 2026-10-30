@@ -1,11 +1,4 @@
-import {
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-  useSyncExternalStore,
-  type MouseEvent,
-} from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { Button, Kbd } from '@nesso-how/ui'
 import type { ActionContext, ActionState } from '@nesso-how/plugin'
 import type { Review } from '../scheduler.ts'
@@ -32,7 +25,6 @@ export function Practice({
   const heading = useRef<HTMLHeadingElement>(null)
   const reading = useRef<HTMLDivElement>(null)
   const controls = useRef<HTMLDivElement>(null)
-  const pointer = useRef(false)
   const previous = useRef<{ id: string; content: HTMLElement } | null>(null)
   const { session, busy, failed } = snapshot
   const concepts = state.viewGraph.concepts
@@ -65,34 +57,20 @@ export function Practice({
     previous.current = currentId
       ? { id: currentId, content: area.cloneNode(true) as HTMLElement }
       : null
-    if (!pointer.current) return
-    pointer.current = false
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)')
     const animations: Animation[] = []
     let outgoing: HTMLElement | undefined
-    const animate = (
-      element: HTMLElement | null,
-      displacement: string,
-      duration: number,
-      delay = 0,
-    ) => {
+    const fade = (element: HTMLElement | null, duration: number, delay = 0) => {
       if (!element) return
       animations.push(
-        element.animate(
-          [
-            { opacity: 0, transform: reduced.matches ? 'none' : displacement },
-            { opacity: 1, transform: 'none' },
-          ],
-          {
-            duration: reduced.matches ? 125 : duration,
-            delay: reduced.matches ? 0 : delay,
-            easing: 'cubic-bezier(0.23, 1, 0.32, 1)',
-            fill: 'backwards',
-          },
-        ),
+        element.animate([{ opacity: 0 }, { opacity: 1 }], {
+          duration,
+          delay,
+          easing: 'cubic-bezier(0.23, 1, 0.32, 1)',
+          fill: 'backwards',
+        }),
       )
     }
-    if (old?.id && old.id !== currentId && !reduced.matches) {
+    if (old?.id && old.id !== currentId) {
       outgoing = old.content
       outgoing.classList.add('review-exit')
       outgoing.inert = true
@@ -100,31 +78,19 @@ export function Practice({
       outgoing.querySelectorAll('[id]').forEach((element) => element.removeAttribute('id'))
       area.parentElement?.append(outgoing)
       outgoing.scrollTop = scrollTop
-      const exit = outgoing.animate(
-        [
-          { opacity: 1, transform: 'none' },
-          { opacity: 0, transform: 'translateX(-8px)' },
-        ],
-        { duration: 125 },
-      )
+      const exit = outgoing.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 125 })
       exit.onfinish = () => outgoing?.remove()
       animations.push(exit)
     }
-    animate(
-      revealed ? area.querySelector('.review-answer') : area,
-      revealed ? 'translateY(6px)' : 'translateX(8px)',
-      180,
+    fade(
+      revealed ? area.querySelector<HTMLElement>('.review-answer') : area,
+      125,
       outgoing ? 80 : 0,
     )
-    animate(controls.current, 'none', 125, revealed ? 40 : 0)
-    const clear = () => {
+    fade(controls.current, 125, revealed ? 40 : 0)
+    return () => {
       animations.forEach((animation) => animation.cancel())
       outgoing?.remove()
-    }
-    reduced.addEventListener('change', clear)
-    return () => {
-      clear()
-      reduced.removeEventListener('change', clear)
     }
   }, [currentId, revealed])
   const rate = (grade: 1 | 2 | 3 | 4) => {
@@ -159,10 +125,6 @@ export function Practice({
     document.addEventListener('keydown', keydown)
     return () => document.removeEventListener('keydown', keydown)
   })
-  const action = (event: MouseEvent, run: () => void) => {
-    pointer.current = event.detail > 0
-    run()
-  }
   const previews = current ? review.preview(current.id, time) : []
   const ratings = { 1: t.again, 2: t.hard, 3: t.good, 4: t.easy }
   return (
@@ -202,7 +164,7 @@ export function Practice({
               time={time}
               title={title}
               heading={heading}
-              onStart={(event) => action(event, start)}
+              onStart={() => start()}
             />
           )}
         </div>
@@ -222,7 +184,7 @@ export function Practice({
                       variant="outline"
                       disabled={busy || failed}
                       aria-keyshortcuts={String(grade)}
-                      onClick={(event) => action(event, () => rate(grade))}
+                      onClick={() => rate(grade)}
                     >
                       <span>{ratings[grade]}</span>
                       <span className="review-rating-interval">
@@ -237,7 +199,7 @@ export function Practice({
                 <Button
                   disabled={busy || failed}
                   aria-keyshortcuts="Space"
-                  onClick={(event) => action(event, review.reveal)}
+                  onClick={() => review.reveal()}
                 >
                   {t.reveal}
                 </Button>
@@ -249,7 +211,7 @@ export function Practice({
               variant="ghost"
               disabled={busy}
               aria-keyshortcuts="Escape"
-              onClick={(event) => action(event, review.finish)}
+              onClick={() => review.finish()}
             >
               {t.end}
             </Button>
