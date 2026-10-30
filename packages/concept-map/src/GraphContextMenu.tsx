@@ -17,9 +17,24 @@ type Props = {
 
 export function GraphContextMenu({ position, label, onClose, finalFocus, actions }: Props) {
   return (
-    <Menu.Root open={position !== null} modal={false} onOpenChange={(open) => { if (!open) onClose() }}>
+    <Menu.Root
+      open={position !== null}
+      modal={false}
+      onOpenChange={(open) => {
+        if (!open) onClose()
+      }}
+    >
       {position && (
-        <MenuPopup anchor={{ getBoundingClientRect: () => DOMRect.fromRect({ ...position, width: 0, height: 0 }) }} sideOffset={2} aria-label={label} finalFocus={finalFocus} onKeyDown={(event) => event.stopPropagation()} onContextMenu={(event) => event.preventDefault()}>
+        <MenuPopup
+          anchor={{
+            getBoundingClientRect: () => DOMRect.fromRect({ ...position, width: 0, height: 0 }),
+          }}
+          sideOffset={2}
+          aria-label={label}
+          finalFocus={finalFocus}
+          onKeyDown={(event) => event.stopPropagation()}
+          onContextMenu={(event) => event.preventDefault()}
+        >
           {actions.map(({ label, icon: Icon, onClick, disabled }) => (
             <MenuItem key={label} onClick={onClick} disabled={disabled}>
               <Icon aria-hidden="true" />

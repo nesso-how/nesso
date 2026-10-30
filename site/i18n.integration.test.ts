@@ -5,7 +5,12 @@ import { build } from 'vite'
 import config from './vite.config.ts'
 
 test('the site build emits complete localized pages with matching language links, metadata and download labels', async () => {
-  const result = await build({ ...config, configFile: false, logLevel: 'silent', build: { write: false } })
+  const result = await build({
+    ...config,
+    configFile: false,
+    logLevel: 'silent',
+    build: { write: false },
+  })
   assert.ok('output' in result)
   for (const locale of locales) {
     const path = locale === 'en' ? '/' : `/${locale}/`

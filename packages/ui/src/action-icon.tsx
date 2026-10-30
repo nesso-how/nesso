@@ -1,4 +1,26 @@
-import { ArrowRight, BookOpen, ClipboardPaste, Copy, Download, FileDown, FileUp, Folder, Globe, Layers, Pencil, Play, Plus, RefreshCw, Scissors, Search, Share2, Sparkles, Upload, Zap, type LucideIcon } from 'lucide-react'
+import {
+  ArrowRight,
+  BookOpen,
+  ClipboardPaste,
+  Copy,
+  Download,
+  FileDown,
+  FileUp,
+  Folder,
+  Globe,
+  Layers,
+  Pencil,
+  Play,
+  Plus,
+  RefreshCw,
+  Scissors,
+  Search,
+  Share2,
+  Sparkles,
+  Upload,
+  Zap,
+  type LucideIcon,
+} from 'lucide-react'
 import type { ComponentProps } from 'react'
 
 const icons = {

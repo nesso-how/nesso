@@ -1,7 +1,16 @@
 import { newIri, relationKey, type RelationType } from '@nesso-how/schema'
 import { maxConceptLabelLength, maxRelationLabelLength } from '@/store/settings'
 import { useRef, useState } from 'react'
-import { Autocomplete, AutocompleteClear, AutocompleteItem, AutocompletePopup, Button, ContextLabel, Input, Label } from '@nesso-how/ui'
+import {
+  Autocomplete,
+  AutocompleteClear,
+  AutocompleteItem,
+  AutocompletePopup,
+  Button,
+  ContextLabel,
+  Input,
+  Label,
+} from '@nesso-how/ui'
 import { ArrowUpDown, Trash2 } from 'lucide-react'
 import { ViewDetails } from './ViewDetails'
 import { ConceptViews } from './ConceptViews'
@@ -12,7 +21,16 @@ import { nessoStore, useNessoStore } from '@/store'
 import type { HostStore } from '@/store/types'
 import { useTranslation } from '@/i18n'
 
-function RelationInput({ edgeId, typeId, label, defaultTypeId, relationTypes, onSave, onCreate, readonly }: {
+function RelationInput({
+  edgeId,
+  typeId,
+  label,
+  defaultTypeId,
+  relationTypes,
+  onSave,
+  onCreate,
+  readonly,
+}: {
   edgeId: string
   typeId: string
   label: string
@@ -28,8 +46,9 @@ function RelationInput({ edgeId, typeId, label, defaultTypeId, relationTypes, on
   const [error, setError] = useState(false)
   const highlighted = useRef<Readonly<RelationType> | undefined>(undefined)
   const query = value.trim().toLowerCase()
-  const visible = relationTypes.filter((item) =>
-    item.id !== typeId && item.label.toLowerCase().includes(query))
+  const visible = relationTypes.filter(
+    (item) => item.id !== typeId && item.label.toLowerCase().includes(query),
+  )
 
   const save = (raw: string) => {
     if (readonly) return
@@ -39,7 +58,9 @@ function RelationInput({ edgeId, typeId, label, defaultTypeId, relationTypes, on
       if (defaultTypeId) onSave(edgeId, defaultTypeId)
       return
     }
-    const matches = relationTypes.filter((item) => item.label.toLowerCase() === trimmed.toLowerCase())
+    const matches = relationTypes.filter(
+      (item) => item.label.toLowerCase() === trimmed.toLowerCase(),
+    )
     if (matches.length > 1) {
       setError(true)
       setOpen(true)
@@ -66,7 +87,9 @@ function RelationInput({ edgeId, typeId, label, defaultTypeId, relationTypes, on
           setError(false)
           if (details.reason === 'clear-press' && defaultTypeId) onSave(edgeId, defaultTypeId)
         }}
-        onItemHighlighted={(item) => { highlighted.current = item }}
+        onItemHighlighted={(item) => {
+          highlighted.current = item
+        }}
         openOnInputClick={!readonly}
       >
         <div className="relative">
@@ -89,20 +112,31 @@ function RelationInput({ edgeId, typeId, label, defaultTypeId, relationTypes, on
             {(item: Readonly<RelationType>) => (
               <AutocompleteItem key={item.id} value={item} onClick={() => onSave(edgeId, item.id)}>
                 {item.label}
-                {relationTypes.some((type) => type.id !== item.id && type.label.toLowerCase() === item.label.toLowerCase()) && (
-                  <span className="ml-2 text-xs text-muted-foreground">{item.id}</span>
-                )}
+                {relationTypes.some(
+                  (type) =>
+                    type.id !== item.id && type.label.toLowerCase() === item.label.toLowerCase(),
+                ) && <span className="ml-2 text-xs text-muted-foreground">{item.id}</span>}
               </AutocompleteItem>
             )}
           </Autocomplete.List>
         </AutocompletePopup>
       </Autocomplete.Root>
-      {error && <p role="alert" className="text-xs text-destructive">{t('ambiguousRelation')}</p>}
+      {error && (
+        <p role="alert" className="text-xs text-destructive">
+          {t('ambiguousRelation')}
+        </p>
+      )}
     </div>
   )
 }
 
-export function Inspector({ store = nessoStore, readonly = false }: { store?: HostStore; readonly?: boolean }) {
+export function Inspector({
+  store = nessoStore,
+  readonly = false,
+}: {
+  store?: HostStore
+  readonly?: boolean
+}) {
   const t = useTranslation(store)
   const textGroup = useRef<string | undefined>(undefined)
   const graph = useNessoStore((state) => state.graph, store)
@@ -119,13 +153,15 @@ export function Inspector({ store = nessoStore, readonly = false }: { store?: Ho
   const item = selected.length === 1 ? selected[0] : undefined
   const conceptIds = selected.filter((item) => item.kind === 'concept').map((item) => item.id)
   const relationCount = selected.length - conceptIds.length
-  const outsideCount = conceptIds.filter((id) => !viewGraph.concepts.some((concept) => concept.id === id)).length
-  const concept = item?.kind === 'concept'
-    ? graph.concepts.find((concept) => concept.id === item.id)
-    : undefined
-  const selectedEdge = item?.kind === 'relation'
-    ? graph.relations.find((relation) => relationKey(relation) === item.id)
-    : undefined
+  const outsideCount = conceptIds.filter(
+    (id) => !viewGraph.concepts.some((concept) => concept.id === id),
+  ).length
+  const concept =
+    item?.kind === 'concept' ? graph.concepts.find((concept) => concept.id === item.id) : undefined
+  const selectedEdge =
+    item?.kind === 'relation'
+      ? graph.relations.find((relation) => relationKey(relation) === item.id)
+      : undefined
   const sourceLabel = selectedEdge
     ? (graph.concepts.find((item) => item.id === selectedEdge.source)?.label ?? '?')
     : null
@@ -133,28 +169,51 @@ export function Inspector({ store = nessoStore, readonly = false }: { store?: Ho
     ? (graph.concepts.find((item) => item.id === selectedEdge.target)?.label ?? '?')
     : null
   const selectedRelationId = selectedEdge?.predicate
-  const selectedRelationLabel = selectedRelationId === activeVocab?.defaultTypeId
-    ? ''
-    : relationTypes.find((item) => item.id === selectedRelationId)?.label ?? ''
+  const selectedRelationLabel =
+    selectedRelationId === activeVocab?.defaultTypeId
+      ? ''
+      : (relationTypes.find((item) => item.id === selectedRelationId)?.label ?? '')
   const invertedExists = selectedEdge
-    ? graph.relations.some((relation) => relation !== selectedEdge && relation.source === selectedEdge.target && relation.target === selectedEdge.source && relation.predicate === selectedEdge.predicate)
+    ? graph.relations.some(
+        (relation) =>
+          relation !== selectedEdge &&
+          relation.source === selectedEdge.target &&
+          relation.target === selectedEdge.source &&
+          relation.predicate === selectedEdge.predicate,
+      )
     : false
 
   return (
-    <aside id="details-panel" aria-label={t('details')} className="flex h-full flex-col gap-[26px] overflow-y-auto bg-background px-5 py-6 text-sm">
+    <aside
+      id="details-panel"
+      aria-label={t('details')}
+      className="flex h-full flex-col gap-[26px] overflow-y-auto bg-background px-5 py-6 text-sm"
+    >
       {selected.length > 0 && <ContextLabel>{t(item ? item.kind : 'selection')}</ContextLabel>}
-      {selected.length === 0 ? <ViewDetails store={store} readonly={readonly} /> : selected.length > 1 ? (
+      {selected.length === 0 ? (
+        <ViewDetails store={store} readonly={readonly} />
+      ) : selected.length > 1 ? (
         <div className="flex flex-col gap-1.5">
-          <p className="text-xs text-muted-foreground">{[
-            conceptIds.length > 0 ? t('conceptCount', { count: conceptIds.length }) : '',
-            relationCount > 0 ? t('relationCount', { count: relationCount }) : '',
-          ].filter(Boolean).join(' · ')}</p>
+          <p className="text-xs text-muted-foreground">
+            {[
+              conceptIds.length > 0 ? t('conceptCount', { count: conceptIds.length }) : '',
+              relationCount > 0 ? t('relationCount', { count: relationCount }) : '',
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+          </p>
           <p className="text-xs text-muted-foreground">{t('singleSelectionHint')}</p>
-          {outsideCount > 0 && <p className="text-xs text-muted-foreground">{t('outsideConceptCount', { count: outsideCount })}</p>}
+          {outsideCount > 0 && (
+            <p className="text-xs text-muted-foreground">
+              {t('outsideConceptCount', { count: outsideCount })}
+            </p>
+          )}
         </div>
       ) : concept ? (
         <section className="flex flex-col gap-[26px]">
-          {outsideCount > 0 && <p className="text-xs text-muted-foreground">{t('outsideConcept')}</p>}
+          {outsideCount > 0 && (
+            <p className="text-xs text-muted-foreground">{t('outsideConcept')}</p>
+          )}
           <div className="flex flex-col gap-1.5">
             <Label>{t('label')}</Label>
             <Input
@@ -164,9 +223,20 @@ export function Inspector({ store = nessoStore, readonly = false }: { store?: Ho
               data-document-edit
               value={concept.label}
               readOnly={readonly}
-              onFocus={() => { textGroup.current = newIri() }}
-              onBlur={() => { textGroup.current = undefined }}
-              onChange={(event) => { if (!readonly) store.setConceptLabel(concept.id, event.target.value, textGroup.current ??= newIri()) }}
+              onFocus={() => {
+                textGroup.current = newIri()
+              }}
+              onBlur={() => {
+                textGroup.current = undefined
+              }}
+              onChange={(event) => {
+                if (!readonly)
+                  store.setConceptLabel(
+                    concept.id,
+                    event.target.value,
+                    (textGroup.current ??= newIri()),
+                  )
+              }}
             />
           </div>
           <div className="flex flex-col gap-1.5">
@@ -179,9 +249,20 @@ export function Inspector({ store = nessoStore, readonly = false }: { store?: Ho
               data-document-edit
               value={concept.description ?? ''}
               readOnly={readonly}
-              onFocus={() => { textGroup.current = newIri() }}
-              onBlur={() => { textGroup.current = undefined }}
-              onChange={(event) => { if (!readonly) store.setConceptDescription(concept.id, event.target.value, textGroup.current ??= newIri()) }}
+              onFocus={() => {
+                textGroup.current = newIri()
+              }}
+              onBlur={() => {
+                textGroup.current = undefined
+              }}
+              onChange={(event) => {
+                if (!readonly)
+                  store.setConceptDescription(
+                    concept.id,
+                    event.target.value,
+                    (textGroup.current ??= newIri()),
+                  )
+              }}
             />
           </div>
         </section>
@@ -200,21 +281,83 @@ export function Inspector({ store = nessoStore, readonly = false }: { store?: Ho
           />
           <InspectorSection store={store} id="inspector.nodes" title={t('nodes')}>
             <div className="mt-2 space-y-3">
-              <div className="flex flex-col gap-1"><span className="font-mono text-[10px] leading-[14px] text-muted-foreground">{t('from')}</span><span className="text-[13px] leading-[19px] break-words">{sourceLabel}</span></div>
-              <div className="flex flex-col gap-1"><span className="font-mono text-[10px] leading-[14px] text-muted-foreground">{t('to')}</span><span className="text-[13px] leading-[19px] break-words">{targetLabel}</span></div>
-              <Button variant="outline" className="w-full justify-start" disabled={readonly || invertedExists} onClick={() => { if (selectedEdge) store.reconnectRelation(relationKey(selectedEdge), selectedEdge.target, selectedEdge.source) }}><ArrowUpDown />{t('invertRelation')}</Button>
+              <div className="flex flex-col gap-1">
+                <span className="font-mono text-[10px] leading-[14px] text-muted-foreground">
+                  {t('from')}
+                </span>
+                <span className="text-[13px] leading-[19px] break-words">{sourceLabel}</span>
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="font-mono text-[10px] leading-[14px] text-muted-foreground">
+                  {t('to')}
+                </span>
+                <span className="text-[13px] leading-[19px] break-words">{targetLabel}</span>
+              </div>
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                disabled={readonly || invertedExists}
+                onClick={() => {
+                  if (selectedEdge)
+                    store.reconnectRelation(
+                      relationKey(selectedEdge),
+                      selectedEdge.target,
+                      selectedEdge.source,
+                    )
+                }}
+              >
+                <ArrowUpDown />
+                {t('invertRelation')}
+              </Button>
             </div>
           </InspectorSection>
         </section>
       ) : null}
-      {conceptIds.length > 0 && <ConceptColor key={`color:${JSON.stringify(conceptIds)}`} store={store} concepts={graph.concepts.filter((concept) => conceptIds.includes(concept.id))} readonly={readonly} />}
-      {concept && <ConceptConnections key={`connections:${concept.id}`} store={store} conceptId={concept.id} readonly={readonly} />}
-      {conceptIds.length > 0 && <ConceptViews key={JSON.stringify(conceptIds)} store={store} conceptIds={conceptIds} readonly={readonly} />}
+      {conceptIds.length > 0 && (
+        <ConceptColor
+          key={`color:${JSON.stringify(conceptIds)}`}
+          store={store}
+          concepts={graph.concepts.filter((concept) => conceptIds.includes(concept.id))}
+          readonly={readonly}
+        />
+      )}
       {concept && (
-        <Button variant="outline" className="w-full justify-start" disabled={readonly || graph.concepts.length <= 1} onClick={() => store.removeConcept(concept.id)}><Trash2 />{t('deleteConcept')}</Button>
+        <ConceptConnections
+          key={`connections:${concept.id}`}
+          store={store}
+          conceptId={concept.id}
+          readonly={readonly}
+        />
+      )}
+      {conceptIds.length > 0 && (
+        <ConceptViews
+          key={JSON.stringify(conceptIds)}
+          store={store}
+          conceptIds={conceptIds}
+          readonly={readonly}
+        />
+      )}
+      {concept && (
+        <Button
+          variant="outline"
+          className="w-full justify-start"
+          disabled={readonly || graph.concepts.length <= 1}
+          onClick={() => store.removeConcept(concept.id)}
+        >
+          <Trash2 />
+          {t('deleteConcept')}
+        </Button>
       )}
       {selectedEdge && (
-        <Button disabled={readonly} variant="outline" className="w-full justify-start" onClick={() => store.removeRelation(relationKey(selectedEdge))}><Trash2 />{t('deleteRelation')}</Button>
+        <Button
+          disabled={readonly}
+          variant="outline"
+          className="w-full justify-start"
+          onClick={() => store.removeRelation(relationKey(selectedEdge))}
+        >
+          <Trash2 />
+          {t('deleteRelation')}
+        </Button>
       )}
     </aside>
   )

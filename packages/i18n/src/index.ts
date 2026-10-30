@@ -2,20 +2,32 @@ import { createInstance } from 'i18next'
 import { NessoError } from '@nesso-how/errors'
 import { defaultLocale, locales, type Locale } from './locale.ts'
 
-export { defaultLocale, detectLocale, isLocale, localeNames, locales, type Locale } from './locale.ts'
+export {
+  defaultLocale,
+  detectLocale,
+  isLocale,
+  localeNames,
+  locales,
+  type Locale,
+} from './locale.ts'
 
 export type Catalog = Readonly<Record<string, string>>
 type PluralForm = 'zero' | 'one' | 'two' | 'few' | 'many' | 'other'
 type BaseKey<K extends string> = K extends `${infer Key}_${PluralForm}` ? Key : K
 type TranslationKey<C extends Catalog> = BaseKey<keyof C & string>
-export type Translation<C extends Catalog> = Readonly<Partial<Record<keyof C | `${TranslationKey<C>}_${PluralForm}`, string>>>
+export type Translation<C extends Catalog> = Readonly<
+  Partial<Record<keyof C | `${TranslationKey<C>}_${PluralForm}`, string>>
+>
 export type Values = Readonly<Record<string, string | number>>
 
 export class I18nError extends NessoError {
   override name = 'I18nError'
 }
 
-export function createTranslator<C extends Catalog>(english: C, translations: Readonly<Partial<Record<Locale, Translation<C>>>> = {}) {
+export function createTranslator<C extends Catalog>(
+  english: C,
+  translations: Readonly<Partial<Record<Locale, Translation<C>>>> = {},
+) {
   const instance = createInstance()
   void instance.init({
     initAsync: false,
@@ -25,20 +37,38 @@ export function createTranslator<C extends Catalog>(english: C, translations: Re
     keySeparator: false,
     nsSeparator: false,
     interpolation: { escapeValue: false },
-    resources: Object.fromEntries(Object.entries({ ...translations, en: english }).map(([locale, catalog]) => [locale, { translation: catalog }])),
+    resources: Object.fromEntries(
+      Object.entries({ ...translations, en: english }).map(([locale, catalog]) => [
+        locale,
+        { translation: catalog },
+      ]),
+    ),
   })
 
-  return (locale: Locale) => (key: TranslationKey<C>, values: Values = {}): string => {
-    if (english[`${key}_other`] !== undefined && (typeof values.count !== 'number' || !Number.isFinite(values.count))) {
-      throw new I18nError([{ path: `${key}.count`, message: 'Expected a finite count for a plural message' }])
+  return (locale: Locale) =>
+    (key: TranslationKey<C>, values: Values = {}): string => {
+      if (
+        english[`${key}_other`] !== undefined &&
+        (typeof values.count !== 'number' || !Number.isFinite(values.count))
+      ) {
+        throw new I18nError([
+          { path: `${key}.count`, message: 'Expected a finite count for a plural message' },
+        ])
+      }
+      const options = {
+        lng: locale,
+        count: typeof values.count === 'number' ? values.count : undefined,
+        replace: values,
+      }
+      if (!instance.exists(key, options))
+        throw new I18nError([{ path: key, message: 'Unknown translation key' }])
+      return instance.t(key, {
+        ...options,
+        missingInterpolationHandler: (_: string, match: RegExpExecArray) => {
+          throw new I18nError([
+            { path: `${key}.${match[1].trim()}`, message: 'Missing interpolation value' },
+          ])
+        },
+      })
     }
-    const options = { lng: locale, count: typeof values.count === 'number' ? values.count : undefined, replace: values }
-    if (!instance.exists(key, options)) throw new I18nError([{ path: key, message: 'Unknown translation key' }])
-    return instance.t(key, {
-      ...options,
-      missingInterpolationHandler: (_: string, match: RegExpExecArray) => {
-        throw new I18nError([{ path: `${key}.${match[1].trim()}`, message: 'Missing interpolation value' }])
-      },
-    })
-  }
 }

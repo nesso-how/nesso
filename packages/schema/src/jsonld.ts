@@ -6,7 +6,8 @@ import type { Concept, Graph, Relation, RelationType } from './types.ts'
 type JsonObject = Record<string, unknown>
 
 function object(value: unknown, path: string): JsonObject {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) fail(path, 'Expected a JSON object')
+  if (!value || typeof value !== 'object' || Array.isArray(value))
+    fail(path, 'Expected a JSON object')
   return value as JsonObject
 }
 
@@ -50,13 +51,16 @@ export function parseGraph(value: unknown): Graph {
   for (const [term, definition] of Object.entries(context)) {
     if (definition && typeof definition === 'object' && !Array.isArray(definition)) {
       const mapping = object(definition, `@context.${term}`)
-      if (mapping['@type'] === '@id') predicates.set(term, iri(mapping['@id'], `@context.${term}.@id`))
+      if (mapping['@type'] === '@id')
+        predicates.set(term, iri(mapping['@id'], `@context.${term}.@id`))
     }
   }
 
   const concepts: Concept[] = []
   const relationTypes: RelationType[] = []
-  const entries: JsonObject[] = document['@graph'].map((entry, index) => object(entry, `@graph[${index}]`))
+  const entries: JsonObject[] = document['@graph'].map((entry, index) =>
+    object(entry, `@graph[${index}]`),
+  )
   for (const [index, entry] of entries.entries()) {
     const path = `@graph[${index}]`
     const id = iri(entry['@id'], `${path}.@id`)
@@ -69,19 +73,25 @@ export function parseGraph(value: unknown): Graph {
       continue
     }
     if (entry['@type'] !== undefined) fail(`${path}.@type`, `Unsupported concept type: ${id}`)
-    const position = entry.position === undefined ? { x: 0, y: 0 } : object(entry.position, `${path}.position`)
+    const position =
+      entry.position === undefined ? { x: 0, y: 0 } : object(entry.position, `${path}.position`)
     if (typeof position.x !== 'number' || typeof position.y !== 'number') {
       fail(`${path}.position`, `Invalid position: ${id}`)
     }
-    const color = entry.color === undefined ? undefined : string(entry.color, `${path}.color`).toLowerCase()
+    const color =
+      entry.color === undefined ? undefined : string(entry.color, `${path}.color`).toLowerCase()
     const bold = entry.bold === undefined ? undefined : boolean(entry.bold, `${path}.bold`)
     const italic = entry.italic === undefined ? undefined : boolean(entry.italic, `${path}.italic`)
     concepts.push({
-      id, label, position: { x: position.x, y: position.y },
+      id,
+      label,
+      position: { x: position.x, y: position.y },
       ...(color === undefined ? {} : { color }),
       ...(bold === undefined ? {} : { bold }),
       ...(italic === undefined ? {} : { italic }),
-      ...(entry['rdfs:comment'] === undefined ? {} : { description: string(entry['rdfs:comment'], `${path}.rdfs:comment`) }),
+      ...(entry['rdfs:comment'] === undefined
+        ? {}
+        : { description: string(entry['rdfs:comment'], `${path}.rdfs:comment`) }),
     })
   }
 
@@ -91,7 +101,10 @@ export function parseGraph(value: unknown): Graph {
     if (entry['@type'] === 'rdf:Property') continue
     const id = iri(entry['@id'], `@graph[${index}].@id`)
     for (const [term, value] of Object.entries(entry)) {
-      if (['@id', 'rdfs:label', 'rdfs:comment', 'position', 'color', 'bold', 'italic'].includes(term)) continue
+      if (
+        ['@id', 'rdfs:label', 'rdfs:comment', 'position', 'color', 'bold', 'italic'].includes(term)
+      )
+        continue
       const path = `@graph[${index}].${term}`
       const predicate = predicates.get(term) ?? (known.has(term) ? term : undefined)
       if (!predicate || !known.has(predicate)) fail(path, `Unsupported property: ${term}`)
@@ -111,20 +124,32 @@ export function serializeGraph(graph: Graph): JsonObject {
   if (issues.length) throw new SchemaError(issues)
 
   const entries: JsonObject[] = graph.relationTypes.map(({ id, label }) => ({
-    '@id': id, '@type': 'rdf:Property', 'rdfs:label': label,
+    '@id': id,
+    '@type': 'rdf:Property',
+    'rdfs:label': label,
   }))
-  const concepts = new Map<string, JsonObject>(graph.concepts.map(({ id, label, description, color, bold, italic, position }) => [id, {
-    '@id': id, 'rdfs:label': label, position,
-    ...(color === undefined ? {} : { color }),
-    ...(bold === undefined ? {} : { bold }),
-    ...(italic === undefined ? {} : { italic }),
-    ...(description === undefined ? {} : { 'rdfs:comment': description }),
-  }]))
+  const concepts = new Map<string, JsonObject>(
+    graph.concepts.map(({ id, label, description, color, bold, italic, position }) => [
+      id,
+      {
+        '@id': id,
+        'rdfs:label': label,
+        position,
+        ...(color === undefined ? {} : { color }),
+        ...(bold === undefined ? {} : { bold }),
+        ...(italic === undefined ? {} : { italic }),
+        ...(description === undefined ? {} : { 'rdfs:comment': description }),
+      },
+    ]),
+  )
   for (const relation of graph.relations) {
     const entry = concepts.get(relation.source)!
     const targets = entry[relation.predicate] as { '@id': string }[] | undefined
     if (targets) targets.push({ '@id': relation.target })
     else entry[relation.predicate] = [{ '@id': relation.target }]
   }
-  return { '@context': structuredClone(schemaContext), '@graph': [...entries, ...concepts.values()] }
+  return {
+    '@context': structuredClone(schemaContext),
+    '@graph': [...entries, ...concepts.values()],
+  }
 }

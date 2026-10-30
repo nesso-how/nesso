@@ -1,7 +1,11 @@
 import type { GraphSnapshot, SavedView } from '@nesso-how/plugin'
 
 type Entry<T> = { readonly index: number; readonly value: T }
-export type Change<T> = { readonly id: string; readonly before?: Entry<T>; readonly after?: Entry<T> }
+export type Change<T> = {
+  readonly id: string
+  readonly before?: Entry<T>
+  readonly after?: Entry<T>
+}
 
 export class ListEdit<T> {
   private current: readonly T[]
@@ -12,18 +16,16 @@ export class ListEdit<T> {
   private readonly key: (item: T) => string
   private readonly equal: (a: T, b: T) => boolean
 
-  constructor(
-    original: readonly T[],
-    key: (item: T) => string,
-    equal: (a: T, b: T) => boolean,
-  ) {
+  constructor(original: readonly T[], key: (item: T) => string, equal: (a: T, b: T) => boolean) {
     this.original = original
     this.key = key
     this.equal = equal
     this.current = original
   }
 
-  get items(): readonly T[] { return this.current }
+  get items(): readonly T[] {
+    return this.current
+  }
 
   private index(id: string): number | undefined {
     this.indices ??= new Map(this.current.map((item, index) => [this.key(item), index]))
@@ -88,17 +90,33 @@ export class ListEdit<T> {
       const index = this.index(id)
       const after = index === undefined ? undefined : { index, value: this.current[index] }
       if (!before && !after) continue
-      if (before && after && before.index === after.index && this.equal(before.value, after.value)) {
+      if (
+        before &&
+        after &&
+        before.index === after.index &&
+        this.equal(before.value, after.value)
+      ) {
         this.writable()[index!] = before.value
         continue
       }
       changes.push({ id, before, after })
     }
-    return { items: changes.length === 0 && this.current.length === this.original.length ? this.original : this.current, changes }
+    return {
+      items:
+        changes.length === 0 && this.current.length === this.original.length
+          ? this.original
+          : this.current,
+      changes,
+    }
   }
 }
 
-export const applyChanges = <T>(items: readonly T[], changes: readonly Change<T>[], key: (item: T) => string, forward: boolean): readonly T[] => {
+export const applyChanges = <T>(
+  items: readonly T[],
+  changes: readonly Change<T>[],
+  key: (item: T) => string,
+  forward: boolean,
+): readonly T[] => {
   if (changes.length === 0) return items
   if (changes.every(({ before, after }) => before && after && before.index === after.index)) {
     const next = [...items]
@@ -109,10 +127,12 @@ export const applyChanges = <T>(items: readonly T[], changes: readonly Change<T>
     return next
   }
   const ids = new Set(changes.map((change) => change.id))
-  const entries = changes.flatMap((change) => {
-    const entry = forward ? change.after : change.before
-    return entry ? [entry] : []
-  }).sort((a, b) => a.index - b.index)
+  const entries = changes
+    .flatMap((change) => {
+      const entry = forward ? change.after : change.before
+      return entry ? [entry] : []
+    })
+    .sort((a, b) => a.index - b.index)
   const remaining = items.filter((item) => !ids.has(key(item)))
   const next: T[] = []
   let cursor = 0
@@ -123,21 +143,43 @@ export const applyChanges = <T>(items: readonly T[], changes: readonly Change<T>
   return next
 }
 
-export const mergeChanges = <T>(left: readonly Change<T>[], right: readonly Change<T>[], equal: (a: T, b: T) => boolean): Change<T>[] => {
+export const mergeChanges = <T>(
+  left: readonly Change<T>[],
+  right: readonly Change<T>[],
+  equal: (a: T, b: T) => boolean,
+): Change<T>[] => {
   const merged = new Map(left.map((change) => [change.id, change]))
   for (const change of right) {
     const previous = merged.get(change.id)
     merged.set(change.id, previous ? { ...change, before: previous.before } : change)
   }
   return [...merged.values()].filter(({ before, after }) =>
-    before && after ? before.index !== after.index || !equal(before.value, after.value) : !!before || !!after)
+    before && after
+      ? before.index !== after.index || !equal(before.value, after.value)
+      : !!before || !!after,
+  )
 }
 
-export const sameConcept = (a: GraphSnapshot['concepts'][number], b: GraphSnapshot['concepts'][number]): boolean =>
-  a.id === b.id && a.label === b.label && a.description === b.description && a.color === b.color && a.bold === b.bold && a.italic === b.italic && a.position.x === b.position.x && a.position.y === b.position.y
-export const sameType = (a: GraphSnapshot['relationTypes'][number], b: GraphSnapshot['relationTypes'][number]): boolean => a.id === b.id && a.label === b.label
-export const sameIds = (a: readonly string[], b: readonly string[]): boolean => a === b || (a.length === b.length && a.every((id, index) => id === b[index]))
-export const sameView = (a: SavedView, b: SavedView): boolean => a.id === b.id && a.name === b.name && a.pinned === b.pinned && sameIds(a.conceptIds, b.conceptIds)
+export const sameConcept = (
+  a: GraphSnapshot['concepts'][number],
+  b: GraphSnapshot['concepts'][number],
+): boolean =>
+  a.id === b.id &&
+  a.label === b.label &&
+  a.description === b.description &&
+  a.color === b.color &&
+  a.bold === b.bold &&
+  a.italic === b.italic &&
+  a.position.x === b.position.x &&
+  a.position.y === b.position.y
+export const sameType = (
+  a: GraphSnapshot['relationTypes'][number],
+  b: GraphSnapshot['relationTypes'][number],
+): boolean => a.id === b.id && a.label === b.label
+export const sameIds = (a: readonly string[], b: readonly string[]): boolean =>
+  a === b || (a.length === b.length && a.every((id, index) => id === b[index]))
+export const sameView = (a: SavedView, b: SavedView): boolean =>
+  a.id === b.id && a.name === b.name && a.pinned === b.pinned && sameIds(a.conceptIds, b.conceptIds)
 
 type ViewMetadata = Omit<SavedView, 'conceptIds'>
 export type ViewChange = Change<ViewMetadata> & { readonly members: readonly Change<string>[] }
@@ -148,23 +190,37 @@ export type DocumentDelta = {
   readonly views: readonly ViewChange[]
 }
 
-export const viewChanges = (changes: readonly Change<SavedView>[]): ViewChange[] => changes.map(({ id, before, after }) => {
-  const oldIds = before?.value.conceptIds ?? []
-  const newIds = after?.value.conceptIds ?? []
-  const oldIndices = new Map(oldIds.map((id, index) => [id, index]))
-  const newIndices = new Map(newIds.map((id, index) => [id, index]))
-  const reordered = !sameIds(oldIds.filter((id) => newIndices.has(id)), newIds.filter((id) => oldIndices.has(id)))
-  const members = [...new Set([...oldIds, ...newIds])].flatMap((id): Change<string>[] => {
-    const oldIndex = oldIndices.get(id)
-    const newIndex = newIndices.get(id)
-    if (oldIndex === newIndex || (!reordered && oldIndex !== undefined && newIndex !== undefined)) return []
-    return [{ id, before: oldIndex === undefined ? undefined : { index: oldIndex, value: id }, after: newIndex === undefined ? undefined : { index: newIndex, value: id } }]
+export const viewChanges = (changes: readonly Change<SavedView>[]): ViewChange[] =>
+  changes.map(({ id, before, after }) => {
+    const oldIds = before?.value.conceptIds ?? []
+    const newIds = after?.value.conceptIds ?? []
+    const oldIndices = new Map(oldIds.map((id, index) => [id, index]))
+    const newIndices = new Map(newIds.map((id, index) => [id, index]))
+    const reordered = !sameIds(
+      oldIds.filter((id) => newIndices.has(id)),
+      newIds.filter((id) => oldIndices.has(id)),
+    )
+    const members = [...new Set([...oldIds, ...newIds])].flatMap((id): Change<string>[] => {
+      const oldIndex = oldIndices.get(id)
+      const newIndex = newIndices.get(id)
+      if (oldIndex === newIndex || (!reordered && oldIndex !== undefined && newIndex !== undefined))
+        return []
+      return [
+        {
+          id,
+          before: oldIndex === undefined ? undefined : { index: oldIndex, value: id },
+          after: newIndex === undefined ? undefined : { index: newIndex, value: id },
+        },
+      ]
+    })
+    const metadata = (entry: Entry<SavedView> | undefined): Entry<ViewMetadata> | undefined =>
+      entry && {
+        index: entry.index,
+        value: { id: entry.value.id, name: entry.value.name, pinned: entry.value.pinned },
+      }
+    return { id, before: metadata(before), after: metadata(after), members }
   })
-  const metadata = (entry: Entry<SavedView> | undefined): Entry<ViewMetadata> | undefined => entry && {
-    index: entry.index, value: { id: entry.value.id, name: entry.value.name, pinned: entry.value.pinned },
-  }
-  return { id, before: metadata(before), after: metadata(after), members }
-})
 
 export const hasDelta = (delta: DocumentDelta): boolean =>
-  delta.concepts.length + delta.relations.length + delta.relationTypes.length + delta.views.length > 0
+  delta.concepts.length + delta.relations.length + delta.relationTypes.length + delta.views.length >
+  0

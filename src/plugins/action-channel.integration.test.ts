@@ -1,16 +1,45 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { createPluginClient, themeTokens, runtimeLimits, PluginError, type ActionDescriptor, type FileOpenResult } from '@nesso-how/plugin/runtime'
+import {
+  createPluginClient,
+  themeTokens,
+  runtimeLimits,
+  PluginError,
+  type ActionDescriptor,
+  type FileOpenResult,
+} from '@nesso-how/plugin/runtime'
 import { createNessoStore } from '../store/create.ts'
 import { connectActionChannel } from './action-channel.ts'
 import type { NessoOperation } from '@nesso-how/plugin'
 
 const descriptors: readonly ActionDescriptor[] = [{ id: 'example', label: { en: 'Example' } }]
-const base = { contextId: 'context', locale: 'en' as const, theme: Object.fromEntries(themeTokens.map((token) => [token, ''])), conceptPlacementOffset: { x: 160, y: 100 } }
-const graph = { concepts: [{ id: 'urn:a', label: 'A', position: { x: 0, y: 0 } }, { id: 'urn:b', label: 'B', position: { x: 100, y: 0 } }], relationTypes: [], relations: [] }
+const base = {
+  contextId: 'context',
+  locale: 'en' as const,
+  theme: Object.fromEntries(themeTokens.map((token) => [token, ''])),
+  conceptPlacementOffset: { x: 160, y: 100 },
+}
+const graph = {
+  concepts: [
+    { id: 'urn:a', label: 'A', position: { x: 0, y: 0 } },
+    { id: 'urn:b', label: 'B', position: { x: 100, y: 0 } },
+  ],
+  relationTypes: [],
+  relations: [],
+}
 
-function fixture(discovery = false, open: () => Promise<FileOpenResult> = async () => null, writes: readonly NessoOperation['kind'][] = ['concept.label', 'concept.color'], capabilities: readonly string[] = ['files'], host = createNessoStore(graph), pluginId = 'nesso-plugin-example', panel = false) {
-  const contributions = panel ? descriptors.map((action) => ({ ...action, ui: true as const })) : descriptors
+function fixture(
+  discovery = false,
+  open: () => Promise<FileOpenResult> = async () => null,
+  writes: readonly NessoOperation['kind'][] = ['concept.label', 'concept.color'],
+  capabilities: readonly string[] = ['files'],
+  host = createNessoStore(graph),
+  pluginId = 'nesso-plugin-example',
+  panel = false,
+) {
+  const contributions = panel
+    ? descriptors.map((action) => ({ ...action, ui: true as const }))
+    : descriptors
   const target = host.store.createView('Target', ['urn:a'])
   host.store.setView(null)
   host.store.setSelection([{ kind: 'concept', id: 'urn:b' }])
@@ -20,27 +49,77 @@ function fixture(discovery = false, open: () => Promise<FileOpenResult> = async 
   const notified: string[] = []
   const descriptions: (string | undefined)[] = []
   const dismissed: string[] = []
-  const runtime = connectActionChannel(channel.port1, host.store, { pluginId, writes, capabilities, ...(panel ? { mode: 'panel' } : {}), invocation: discovery ? undefined : { actionId: 'example', viewId: target, descriptors: contributions } }, base, {
-    files: { open, save: async () => ({ saved: true }) },
-    notify: ({ title, description }) => { notified.push(title); descriptions.push(description); return title }, dismiss: (id) => { dismissed.push(id) },
-    discovered: (value) => found.push(value), activated: () => {}, complete: () => {}, failed: (error) => failures.push(error),
-  })
+  const runtime = connectActionChannel(
+    channel.port1,
+    host.store,
+    {
+      pluginId,
+      writes,
+      capabilities,
+      ...(panel ? { mode: 'panel' } : {}),
+      invocation: discovery
+        ? undefined
+        : { actionId: 'example', viewId: target, descriptors: contributions },
+    },
+    base,
+    {
+      files: { open, save: async () => ({ saved: true }) },
+      notify: ({ title, description }) => {
+        notified.push(title)
+        descriptions.push(description)
+        return title
+      },
+      dismiss: (id) => {
+        dismissed.push(id)
+      },
+      discovered: (value) => found.push(value),
+      activated: () => {},
+      complete: () => {},
+      failed: (error) => failures.push(error),
+    },
+  )
   let client: ReturnType<typeof createPluginClient> | undefined
   const messages: { type: string }[] = []
   channel.port2.addEventListener('message', ({ data }) => messages.push(data))
   channel.port2.start()
-  const start = (value = contributions) => new Promise<void>((resolve, reject) => {
-    channel.port2.onmessage = ({ data }) => {
-      if (data.type === 'invoke') { client = createPluginClient(channel.port2, data.state); if (panel) channel.port2.postMessage({ type: 'panel-ready' }); resolve() }
-      if (data.type === 'close') {
-        if (discovery) resolve()
-        else reject(new PluginError('closed', [{ path: 'channel', message: data.reason }]))
+  const start = (value = contributions) =>
+    new Promise<void>((resolve, reject) => {
+      channel.port2.onmessage = ({ data }) => {
+        if (data.type === 'invoke') {
+          client = createPluginClient(channel.port2, data.state)
+          if (panel) channel.port2.postMessage({ type: 'panel-ready' })
+          resolve()
+        }
+        if (data.type === 'close') {
+          if (discovery) resolve()
+          else reject(new PluginError('closed', [{ path: 'channel', message: data.reason }]))
+        }
       }
-    }
-    channel.port2.postMessage(panel ? { type: 'panel-ready' } : { type: 'contribution', value })
-  })
-  const close = () => { runtime.close(); client?.close(); channel.port2.close() }
-  return { host, target, channel, runtime, get client() { assert.ok(client); return client }, messages, failures, found, notified, descriptions, dismissed, start, close }
+      channel.port2.postMessage(panel ? { type: 'panel-ready' } : { type: 'contribution', value })
+    })
+  const close = () => {
+    runtime.close()
+    client?.close()
+    channel.port2.close()
+  }
+  return {
+    host,
+    target,
+    channel,
+    runtime,
+    get client() {
+      assert.ok(client)
+      return client
+    },
+    messages,
+    failures,
+    found,
+    notified,
+    descriptions,
+    dismissed,
+    start,
+    close,
+  }
 }
 
 test('action projections stay bound to the invoked view, filter off-view selection and synchronize atomic writes', async (t) => {
@@ -55,7 +134,10 @@ test('action projections stay bound to the invoked view, filter off-view selecti
   assert.equal('graph' in before, false)
   assert.equal('conversation' in before, false)
   assert.equal('pluginStorage' in before, false)
-  assert.deepEqual(before.viewGraph.concepts.map(({ id }) => id), ['urn:a'])
+  assert.deepEqual(
+    before.viewGraph.concepts.map(({ id }) => id),
+    ['urn:a'],
+  )
   assert.deepEqual(before.selected, [])
   assert.equal('conceptIds' in before.workspace.savedViews[0], false)
   instance.host.store.setView(instance.target)
@@ -65,7 +147,13 @@ test('action projections stay bound to the invoked view, filter off-view selecti
   assert.equal(state.targetViewId, instance.target)
   assert.equal(state.viewGraph.concepts[0].label, 'Changed')
   assert.equal('getViewGraph' in document, false)
-  await assert.rejects(document.applyOperations([{ kind: 'concept.label', id: 'urn:a', value: 'No' }, { kind: 'concept.remove', id: 'urn:b' }]), { code: 'denied' })
+  await assert.rejects(
+    document.applyOperations([
+      { kind: 'concept.label', id: 'urn:a', value: 'No' },
+      { kind: 'concept.remove', id: 'urn:b' },
+    ]),
+    { code: 'denied' },
+  )
   await document.applyOperations([{ kind: 'concept.color', id: 'urn:a', value: '#123456' }])
   assert.equal(instance.host.store.getState().graph.concepts[0].color, '#123456')
 })
@@ -81,7 +169,9 @@ test('injected panel presentation updates never advance the graph write baseline
   instance.host.store.setLocale('it')
   await assert.rejects(instance.client.context.storage.list(), { code: 'denied' })
   assert.equal(instance.client.getPresentation().locale, 'it')
-  await assert.rejects(document.setConceptLabel('urn:a', original.toUpperCase()), { code: 'stale-state' })
+  await assert.rejects(document.setConceptLabel('urn:a', original.toUpperCase()), {
+    code: 'stale-state',
+  })
   assert.equal(instance.host.store.getState().graph.concepts[0].label, 'Concurrent edit')
 })
 
@@ -110,7 +200,9 @@ test('panel initialization and action execution cannot bypass their accepted exe
   const discovery = fixture(true)
   t.after(discovery.close)
   discovery.channel.port2.postMessage({ type: 'panel-ready' })
-  await new Promise<void>((resolve) => { discovery.channel.port2.onmessage = () => resolve() })
+  await new Promise<void>((resolve) => {
+    discovery.channel.port2.onmessage = () => resolve()
+  })
   assert.equal(discovery.failures[0].code, 'denied')
 })
 
@@ -124,10 +216,17 @@ test('plugin batches and helpers automatically reject stale reads without change
     instance.host.store.setConceptLabel('urn:a', 'Newer edit')
     if (delivered) await files.open({ extensions: ['json'], mimeTypes: [] })
     const before = instance.host.store.getState()
-    await assert.rejects(document.applyOperations([
-      { kind: 'concept.color', id: 'urn:a', value: '#123456' },
-      { kind: 'concept.label', id: 'urn:a', value: snapshot.viewGraph.concepts[0].label.toUpperCase() },
-    ]), { code: 'stale-state' })
+    await assert.rejects(
+      document.applyOperations([
+        { kind: 'concept.color', id: 'urn:a', value: '#123456' },
+        {
+          kind: 'concept.label',
+          id: 'urn:a',
+          value: snapshot.viewGraph.concepts[0].label.toUpperCase(),
+        },
+      ]),
+      { code: 'stale-state' },
+    )
     await assert.rejects(document.setConceptLabel('urn:a', 'Still stale'), { code: 'stale-state' })
     assert.equal(instance.host.store.getState(), before)
     assert.equal(instance.host.store.getState().graph.concepts[0].label, 'Newer edit')
@@ -147,7 +246,13 @@ test('isolated clients have no clipboard API and raw clipboard requests close th
     await instance.start()
     assert.equal('clipboard' in instance.client.context, false)
     const before = instance.host.store.getState()
-    instance.channel.port2.postMessage({ type: 'request', id: 1000, contextId: base.contextId, method, params: method === 'clipboard.writeText' ? { text: 'Forbidden' } : {} })
+    instance.channel.port2.postMessage({
+      type: 'request',
+      id: 1000,
+      contextId: base.contextId,
+      method,
+      params: method === 'clipboard.writeText' ? { text: 'Forbidden' } : {},
+    })
     await assert.rejects(instance.client.context.document.refresh(), { code: 'closed' })
     assert.equal(instance.failures[0].code, 'invalid-input')
     assert.equal(instance.host.store.getState(), before)
@@ -158,7 +263,10 @@ test('files capability is required for both opening and saving', async (t) => {
   const open = t.mock.fn(async () => null)
   const denied = fixture(false, open, [], ['storage', 'notifications'])
   const allowed = fixture(false, open, [], ['files'])
-  for (const instance of [denied, allowed]) { t.after(instance.close); await instance.start() }
+  for (const instance of [denied, allowed]) {
+    t.after(instance.close)
+    await instance.start()
+  }
   const read = { extensions: ['json'], mimeTypes: [] }
   const write = { name: 'example.json', mediaType: 'application/json', text: '{}' }
   await assert.rejects(denied.client.context.files.open(read), { code: 'denied' })
@@ -173,17 +281,33 @@ test('notifications require a declared capability and retain host rate limits an
   const denied = fixture()
   t.after(denied.close)
   await denied.start()
-  await assert.rejects(denied.client.context.notifications.notify({ tone: 'info', title: { en: 'Undeclared' } }), { code: 'denied' })
+  await assert.rejects(
+    denied.client.context.notifications.notify({ tone: 'info', title: { en: 'Undeclared' } }),
+    { code: 'denied' },
+  )
   assert.deepEqual(denied.notified, [])
   const allowed = fixture(false, undefined, [], ['notifications'])
   t.after(allowed.close)
   await allowed.start()
-  for (let index = 0; index < 10; index++) assert.equal(await allowed.client.context.notifications.notify({ tone: 'info', title: { en: `Notice ${index}` } }), `Notice ${index}`)
-  await assert.rejects(allowed.client.context.notifications.notify({ tone: 'info', title: { en: 'Over limit' } }), { code: 'denied' })
+  for (let index = 0; index < 10; index++)
+    assert.equal(
+      await allowed.client.context.notifications.notify({
+        tone: 'info',
+        title: { en: `Notice ${index}` },
+      }),
+      `Notice ${index}`,
+    )
+  await assert.rejects(
+    allowed.client.context.notifications.notify({ tone: 'info', title: { en: 'Over limit' } }),
+    { code: 'denied' },
+  )
   assert.equal(allowed.notified.length, 10)
   assert.deepEqual(allowed.dismissed, allowed.notified.slice(0, 5))
   allowed.runtime.close()
-  await assert.rejects(allowed.client.context.notifications.notify({ tone: 'info', title: { en: 'Late' } }), { code: 'closed' })
+  await assert.rejects(
+    allowed.client.context.notifications.notify({ tone: 'info', title: { en: 'Late' } }),
+    { code: 'closed' },
+  )
   assert.equal(allowed.notified.length, 10)
   assert.deepEqual(allowed.dismissed, allowed.notified)
 })
@@ -193,14 +317,26 @@ test('the host resolves notification text in the current locale and preserves lo
   t.after(instance.close)
   await instance.start()
   instance.host.store.setLocale('it')
-  const notification = { tone: 'info' as const, title: { en: 'Notice', it: 'Avviso' }, description: { en: 'English fallback' } }
+  const notification = {
+    tone: 'info' as const,
+    title: { en: 'Notice', it: 'Avviso' },
+    description: { en: 'English fallback' },
+  }
   assert.equal(await instance.client.context.notifications.notify(notification), 'Avviso')
   instance.host.store.setLocale('zh-CN')
   assert.equal(await instance.client.context.notifications.notify(notification), 'Notice')
   assert.deepEqual(instance.notified, ['Avviso', 'Notice'])
   assert.deepEqual(instance.descriptions, ['English fallback', 'English fallback'])
   const displayMessage = { en: 'Failed', it: 'Operazione fallita' }
-  instance.channel.port2.postMessage({ type: 'complete', ok: false, error: { code: 'failed', issues: [{ path: 'action', message: 'Technical failure' }], displayMessage } })
+  instance.channel.port2.postMessage({
+    type: 'complete',
+    ok: false,
+    error: {
+      code: 'failed',
+      issues: [{ path: 'action', message: 'Technical failure' }],
+      displayMessage,
+    },
+  })
   await assert.rejects(instance.client.context.document.refresh(), { code: 'closed' })
   assert.deepEqual(instance.failures[0].displayMessage, displayMessage)
   assert.deepEqual(instance.failures[0].issues, [{ path: 'action', message: 'Technical failure' }])
@@ -219,9 +355,27 @@ test('discovery sends no state and denies requests; invocation rejects changed d
     ['storage.set', { revision: 0, key: 'denied', value: 0 }],
     ['storage.delete', { revision: 0, key: 'denied' }],
   ]) {
-    const response = new Promise((resolve) => discovery.channel.port2.addEventListener('message', ({ data }) => resolve(data), { once: true }))
-    discovery.channel.port2.postMessage({ type: 'request', id: ++id, contextId: base.contextId, method, params })
-    assert.deepEqual(await response, { type: 'response', id, ok: false, error: { code: 'denied', issues: [{ path: 'action', message: 'Action effects are disabled' }] } })
+    const response = new Promise((resolve) =>
+      discovery.channel.port2.addEventListener('message', ({ data }) => resolve(data), {
+        once: true,
+      }),
+    )
+    discovery.channel.port2.postMessage({
+      type: 'request',
+      id: ++id,
+      contextId: base.contextId,
+      method,
+      params,
+    })
+    assert.deepEqual(await response, {
+      type: 'response',
+      id,
+      ok: false,
+      error: {
+        code: 'denied',
+        issues: [{ path: 'action', message: 'Action effects are disabled' }],
+      },
+    })
   }
   discovery.host.store.setConceptLabel('urn:a', 'Not exposed')
   await discovery.start()
@@ -229,12 +383,18 @@ test('discovery sends no state and denies requests; invocation rejects changed d
   assert.deepEqual(discovery.found, [descriptors])
   const invocation = fixture()
   t.after(invocation.close)
-  await assert.rejects(invocation.start([{ ...descriptors[0], label: { en: 'Changed' } }]), { code: 'closed' })
+  await assert.rejects(invocation.start([{ ...descriptors[0], label: { en: 'Changed' } }]), {
+    code: 'closed',
+  })
   assert.equal(invocation.failures[0].code, 'denied')
 })
 
 test('typed plugin writes are asynchronous, synchronize snapshots and preserve validation, declarations and history groups', async (t) => {
-  const instance = fixture(false, undefined, ['concept.label', 'concept.color', 'concept.description'])
+  const instance = fixture(false, undefined, [
+    'concept.label',
+    'concept.color',
+    'concept.description',
+  ])
   t.after(instance.close)
   await instance.start()
   const { document } = instance.client.context
@@ -248,7 +408,9 @@ test('typed plugin writes are asynchronous, synchronize snapshots and preserve v
   assert.equal(state.viewGraph.concepts[0].label, 'Second')
   await document.setConceptLabel('urn:a', 'Second', 'edit')
   assert.equal(document.getState(), state)
-  await assert.rejects(document.setConceptLabel('urn:a', 'x'.repeat(300)), { code: 'invalid-input' })
+  await assert.rejects(document.setConceptLabel('urn:a', 'x'.repeat(300)), {
+    code: 'invalid-input',
+  })
   const committed = instance.host.store.getState()
   await assert.rejects(document.addConcept(), { code: 'denied' })
   assert.equal('createView' in document, false)
@@ -263,14 +425,19 @@ test('typed plugin writes are asynchronous, synchronize snapshots and preserve v
   await document.refresh()
   await document.setConceptLabel('urn:a', 'Plugin edit', 'edit')
   assert.equal(instance.host.store.getState().graph.concepts[0].label, 'Plugin edit')
-  assert.equal('resetGraph' in document || 'setViewport' in document || 'setActiveRenderer' in document, false)
+  assert.equal(
+    'resetGraph' in document || 'setViewport' in document || 'setActiveRenderer' in document,
+    false,
+  )
 })
 
 test('concept colors cross isolated snapshots and declared commands with atomic validation', async (t) => {
   const denied = fixture(false, undefined, ['concept.label'])
   t.after(denied.close)
   await denied.start()
-  await assert.rejects(denied.client.context.document.setConceptColor('urn:a', '#654321'), { code: 'denied' })
+  await assert.rejects(denied.client.context.document.setConceptColor('urn:a', '#654321'), {
+    code: 'denied',
+  })
   const instance = fixture(false, undefined, ['concept.color', 'concept.label'])
   t.after(instance.close)
   instance.host.store.setConceptColor('urn:a', '#123456')
@@ -303,9 +470,20 @@ test('declared writes reject relative graph identifiers atomically without chang
   const snapshot = document.getState()
   for (const operation of [
     { kind: 'concept.add', id: 'relative-concept' },
-    { kind: 'relation.connect', source: 'urn:a', target: 'urn:b', type: { id: 'relative-type', label: 'Invalid' } },
+    {
+      kind: 'relation.connect',
+      source: 'urn:a',
+      target: 'urn:b',
+      type: { id: 'relative-type', label: 'Invalid' },
+    },
   ] satisfies NessoOperation[]) {
-    await assert.rejects(document.applyOperations([{ kind: 'concept.label', id: 'urn:a', value: 'Must roll back' }, operation]), { code: 'invalid-input' })
+    await assert.rejects(
+      document.applyOperations([
+        { kind: 'concept.label', id: 'urn:a', value: 'Must roll back' },
+        operation,
+      ]),
+      { code: 'invalid-input' },
+    )
     assert.equal(instance.host.store.getState(), before)
     assert.equal(document.getState(), snapshot)
   }
@@ -330,7 +508,9 @@ test('plugin creation helpers resolve stable IDs after commit and reject failed 
   const committed = instance.host.store.getState()
   assert.equal(committed.graph.concepts.find(({ id }) => id === concept)?.label, 'Created')
   await assert.rejects(document.addConcept({ x: NaN, y: 0 }), { code: 'invalid-input' })
-  await assert.rejects(document.setConceptLabel(concept, 'x'.repeat(300)), { code: 'invalid-input' })
+  await assert.rejects(document.setConceptLabel(concept, 'x'.repeat(300)), {
+    code: 'invalid-input',
+  })
   assert.equal(instance.host.store.getState(), committed)
   instance.runtime.close()
   await assert.rejects(document.addConcept(), { code: 'closed' })
@@ -341,20 +521,35 @@ test('plugin creation helpers resolve stable IDs after commit and reject failed 
 test('pending file work survives navigation but target deletion revokes it and prevents late effects', async (t) => {
   let resolve: (value: FileOpenResult) => void = () => {}
   let began: () => void = () => {}
-  const started = new Promise<void>((done) => { began = done })
-  const instance = fixture(false, () => { began(); return new Promise((done) => { resolve = done }) })
+  const started = new Promise<void>((done) => {
+    began = done
+  })
+  const instance = fixture(false, () => {
+    began()
+    return new Promise((done) => {
+      resolve = done
+    })
+  })
   t.after(instance.close)
   await instance.start()
   const result = instance.client.context.files.open({ extensions: ['json'], mimeTypes: [] })
   await started
   instance.host.store.setView(instance.target)
   await instance.client.context.document.refresh()
-  await assert.rejects(instance.client.context.files.open({ extensions: ['json'], mimeTypes: [] }), { code: 'unavailable' })
+  await assert.rejects(
+    instance.client.context.files.open({ extensions: ['json'], mimeTypes: [] }),
+    { code: 'unavailable' },
+  )
   instance.host.store.deleteView(instance.target)
   await assert.rejects(result, { code: 'closed' })
   assert.equal(instance.failures[0].code, 'stale-context')
   resolve({ name: 'late.json', mediaType: 'application/json', text: '{}' })
-  await assert.rejects(instance.client.context.document.applyOperations([{ kind: 'concept.label', id: 'urn:a', value: 'Late' }]), { code: 'closed' })
+  await assert.rejects(
+    instance.client.context.document.applyOperations([
+      { kind: 'concept.label', id: 'urn:a', value: 'Late' },
+    ]),
+    { code: 'closed' },
+  )
   assert.equal(instance.host.store.getState().graph.concepts[0].label, 'A')
 })
 
@@ -367,8 +562,13 @@ test('host deadlines revoke running actions and pause only within the bounded fi
   assert.equal(running.runtime.signal.aborted, true)
   assert.equal(running.failures[0].code, 'timeout')
   let began: () => void = () => {}
-  const started = new Promise<void>((resolve) => { began = resolve })
-  const waiting = fixture(false, () => { began(); return new Promise(() => {}) })
+  const started = new Promise<void>((resolve) => {
+    began = resolve
+  })
+  const waiting = fixture(false, () => {
+    began()
+    return new Promise(() => {})
+  })
   t.after(waiting.close)
   await waiting.start()
   const result = waiting.client.context.files.open({ extensions: ['json'], mimeTypes: [] })
@@ -403,8 +603,12 @@ test('storage capability authorizes listing and single writes independently of g
   assert.equal(writable.client.context.document.getState(), snapshot)
   await writable.client.context.document.setConceptLabel('urn:a', 'Still current')
   assert.equal(await writable.client.context.storage.set('settings', { retention: 0.9 }), false)
-  await assert.rejects(writable.client.context.storage.set('bad', null, 'urn:missing'), { code: 'invalid-input' })
-  await assert.rejects(writable.client.context.storage.set('bad', null, 'relative'), { code: 'invalid-input' })
+  await assert.rejects(writable.client.context.storage.set('bad', null, 'urn:missing'), {
+    code: 'invalid-input',
+  })
+  await assert.rejects(writable.client.context.storage.set('bad', null, 'relative'), {
+    code: 'invalid-input',
+  })
   assert.equal(await writable.client.context.storage.delete('settings', 'relative'), false)
   assert.equal(await writable.client.context.storage.delete('settings'), true)
   assert.deepEqual(await writable.client.context.storage.list(), [])
@@ -415,7 +619,10 @@ test('storage namespaces follow granted package identity, synchronize across ins
   const first = fixture(false, undefined, [], capabilities)
   const second = fixture(false, undefined, [], capabilities, first.host)
   const other = fixture(false, undefined, [], capabilities, first.host, 'nesso-plugin-other')
-  for (const instance of [first, second, other]) { t.after(instance.close); await instance.start() }
+  for (const instance of [first, second, other]) {
+    t.after(instance.close)
+    await instance.start()
+  }
   const firstStorage = first.client.context.storage
   const secondStorage = second.client.context.storage
   assert.deepEqual(await firstStorage.list(), [])
@@ -431,19 +638,28 @@ test('storage namespaces follow granted package identity, synchronize across ins
   await second.client.context.document.refresh()
   await assert.rejects(secondStorage.delete('settings'), { code: 'stale-state' })
   assert.equal(first.host.store.getState(), before)
-  assert.deepEqual((await secondStorage.list()).find(({ key }) => key === 'settings')?.value, { enabled: false })
+  assert.deepEqual((await secondStorage.list()).find(({ key }) => key === 'settings')?.value, {
+    enabled: false,
+  })
   assert.equal(await secondStorage.set('settings', { enabled: true }), true)
   await other.client.context.storage.set('settings', 'private')
   assert.equal((await firstStorage.list()).length, 2)
-  assert.deepEqual(await other.client.context.storage.list(), [{ key: 'settings', value: 'private' }])
+  assert.deepEqual(await other.client.context.storage.list(), [
+    { key: 'settings', value: 'private' },
+  ])
 })
 
 test('storage initializes the write baseline lazily and rejects overlapping writes without retries', async (t) => {
   const host = createNessoStore(graph)
-  host.store.applyOperations([{
-    kind: 'plugin-storage.set', pluginId: 'nesso-plugin-example', documentId: host.store.getState().documentId,
-    revision: 0, record: { key: 'settings', value: 'saved' },
-  }])
+  host.store.applyOperations([
+    {
+      kind: 'plugin-storage.set',
+      pluginId: 'nesso-plugin-example',
+      documentId: host.store.getState().documentId,
+      revision: 0,
+      record: { key: 'settings', value: 'saved' },
+    },
+  ])
   const instance = fixture(false, undefined, [], ['storage'], host)
   t.after(instance.close)
   await instance.start()
@@ -465,14 +681,34 @@ test('raw storage identity injection and internal store mutations are rejected w
   for (const [method, params] of [
     ['storage.list', { pluginId: 'nesso-plugin-other' }],
     ['storage.set', { documentId: 'urn:other', revision: 0, key: 'x', value: 0 }],
-    ['document.applyOperations', { revision: 0, operations: [{ kind: 'plugin-storage.set', pluginId: 'nesso-plugin-other', documentId: 'urn:other', revision: 0, record: { key: 'x', value: 0 } }] }],
+    [
+      'document.applyOperations',
+      {
+        revision: 0,
+        operations: [
+          {
+            kind: 'plugin-storage.set',
+            pluginId: 'nesso-plugin-other',
+            documentId: 'urn:other',
+            revision: 0,
+            record: { key: 'x', value: 0 },
+          },
+        ],
+      },
+    ],
     ['storage.set', { revision: 0, key: 'bad', value: undefined }],
   ]) {
     const instance = fixture(false, undefined, [], ['storage'])
     t.after(instance.close)
     await instance.start()
     const before = instance.host.store.getState()
-    instance.channel.port2.postMessage({ type: 'request', id: 1000, contextId: base.contextId, method, params })
+    instance.channel.port2.postMessage({
+      type: 'request',
+      id: 1000,
+      contextId: base.contextId,
+      method,
+      params,
+    })
     await assert.rejects(instance.client.context.storage.list(), { code: 'closed' })
     assert.equal(instance.failures[0].code, 'invalid-input')
     assert.equal(instance.host.store.getState(), before)

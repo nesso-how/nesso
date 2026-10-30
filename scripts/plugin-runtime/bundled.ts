@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict'
 import { parseGraph, serializeGraph } from '@nesso-how/schema'
-import { parseContribution, parseDefinition, type ActionState } from '../../packages/plugin/src/runtime.ts'
+import {
+  parseContribution,
+  parseDefinition,
+  type ActionState,
+} from '../../packages/plugin/src/runtime.ts'
 import { actionState, waitFor, type CheckContext } from './helpers.ts'
 
 type Probe = {
@@ -13,10 +17,24 @@ type Probe = {
 }
 
 export async function verifyBundled({ window, url }: CheckContext) {
-  const graph = { concepts: [{ id: 'urn:probe:concept', label: 'Probe', position: { x: 0, y: 0 } }], relations: [], relationTypes: [] }
+  const graph = {
+    concepts: [{ id: 'urn:probe:concept', label: 'Probe', position: { x: 0, y: 0 } }],
+    relations: [],
+    relationTypes: [],
+  }
   const state: ActionState = { ...actionState(), viewGraph: graph }
-  const file = { name: 'graph.jsonld', mediaType: 'application/ld+json', text: JSON.stringify(serializeGraph(graph)) }
-  for (const [name, phase] of [['import', 'discovery'], ['export', 'discovery'], ['import', 'run'], ['export', 'run'], ['import', 'conflict']] as const) {
+  const file = {
+    name: 'graph.jsonld',
+    mediaType: 'application/ld+json',
+    text: JSON.stringify(serializeGraph(graph)),
+  }
+  for (const [name, phase] of [
+    ['import', 'discovery'],
+    ['export', 'discovery'],
+    ['import', 'run'],
+    ['export', 'run'],
+    ['import', 'conflict'],
+  ] as const) {
     const invocation = phase !== 'discovery'
     const conflict = phase === 'conflict'
     const runner = new URL('plugin-runner/actions.html', url)
@@ -55,15 +73,28 @@ export async function verifyBundled({ window, url }: CheckContext) {
       frame.contentWindow.postMessage({type:'bootstrap',token:'probe',entry},'*',[channel.port2]);
     })()`)
     try {
-      const result = await waitFor(async () => window.webContents.executeJavaScript('window.__bundled') as Promise<Probe>, (value) => value.done)
+      const result = await waitFor(
+        async () => window.webContents.executeJavaScript('window.__bundled') as Promise<Probe>,
+        (value) => value.done,
+      )
       assert.equal(result.error, undefined, name)
       assert.equal(result.discoveryRequests, 0, name)
       const descriptors = parseContribution('actions', result.contribution)
-      assert.deepEqual(descriptors.map(({ id }) => id), [`${name}-view`])
+      assert.deepEqual(
+        descriptors.map(({ id }) => id),
+        [`${name}-view`],
+      )
       if (invocation) {
         assert.equal(result.complete?.ok, !conflict, name)
         if (conflict) assert.equal(result.complete?.error?.code, 'stale-state')
-        assert.deepEqual(result.requests.map(({ method }) => method), conflict ? ['files.open', 'document.refresh', 'document.applyOperations'] : name === 'import' ? ['files.open'] : ['document.refresh', 'files.save'])
+        assert.deepEqual(
+          result.requests.map(({ method }) => method),
+          conflict
+            ? ['files.open', 'document.refresh', 'document.applyOperations']
+            : name === 'import'
+              ? ['files.open']
+              : ['document.refresh', 'files.save'],
+        )
         if (name === 'export') {
           const saved = result.requests.find(({ method }) => method === 'files.save')!.params
           assert.equal(saved.name, 'nesso-graph.jsonld')
@@ -71,18 +102,34 @@ export async function verifyBundled({ window, url }: CheckContext) {
         }
       } else assert.deepEqual(result.requests, [])
     } finally {
-      await window.webContents.executeJavaScript("window.__bundledPort.close();document.querySelector('#bundled-probe').remove()")
+      await window.webContents.executeJavaScript(
+        "window.__bundledPort.close();document.querySelector('#bundled-probe').remove()",
+      )
     }
   }
-  for (const [name, kind] of [['kernel-theme', 'theme'], ['paper-theme', 'theme'], ['base-vocab', 'vocab']] as const) {
-    const response = await window.webContents.executeJavaScript(`fetch(${JSON.stringify(new URL(`preinstalled/${name}/definition.json`, url).href)}).then(async response=>({ok:response.ok,text:await response.text()}))`) as { ok: boolean; text: string }
+  for (const [name, kind] of [
+    ['kernel-theme', 'theme'],
+    ['paper-theme', 'theme'],
+    ['base-vocab', 'vocab'],
+  ] as const) {
+    const response = (await window.webContents.executeJavaScript(
+      `fetch(${JSON.stringify(new URL(`preinstalled/${name}/definition.json`, url).href)}).then(async response=>({ok:response.ok,text:await response.text()}))`,
+    )) as { ok: boolean; text: string }
     assert.equal(response.ok, true, name)
     const definition = parseDefinition(kind, JSON.parse(response.text))
     assert.equal(definition.id, name)
     if ('fonts' in definition) {
-      const paths = [...new Set([...definition.fonts.sans.faces, ...definition.fonts.mono.faces].map(({ path }) => `preinstalled/${name}/${path}`))]
+      const paths = [
+        ...new Set(
+          [...definition.fonts.sans.faces, ...definition.fonts.mono.faces].map(
+            ({ path }) => `preinstalled/${name}/${path}`,
+          ),
+        ),
+      ]
       assert.ok(paths.length > 0)
-      await window.webContents.executeJavaScript(`Promise.all(${JSON.stringify(paths)}.map(async path=>{const response=await fetch(path);if(!response.ok)throw new Error('Could not load bundled font');await new FontFace('probe',await response.arrayBuffer()).load()})).then(()=>true)`)
+      await window.webContents.executeJavaScript(
+        `Promise.all(${JSON.stringify(paths)}.map(async path=>{const response=await fetch(path);if(!response.ok)throw new Error('Could not load bundled font');await new FontFace('probe',await response.arrayBuffer()).load()})).then(()=>true)`,
+      )
     }
   }
 }

@@ -15,5 +15,9 @@
       "@nesso-how/i18n": ["./packages/i18n/src/index.ts"]
     }
   },
-  "include": ["packages/plugin/src/index.ts", "packages/plugin/src/runtime.ts", "packages/plugin/src/package.ts"]
+  "include": [
+    "packages/plugin/src/index.ts",
+    "packages/plugin/src/runtime.ts",
+    "packages/plugin/src/package.ts"
+  ]
 }

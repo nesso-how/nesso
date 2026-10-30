@@ -26,11 +26,18 @@ export function createSeedDocument(locale: Locale): { graph: Graph; workspace: W
         label: translation?.conceptLabels[concept.id] ?? concept.label,
         description: translation?.conceptDescriptions[concept.id] ?? concept.description,
       })),
-      relationTypes: graph.relationTypes.map((type) => ({ ...type, label: translation?.relationTypeLabels[type.id] ?? type.label })),
+      relationTypes: graph.relationTypes.map((type) => ({
+        ...type,
+        label: translation?.relationTypeLabels[type.id] ?? type.label,
+      })),
     },
     workspace: {
       activeViewId: null,
-      savedViews: seedViews.map((view) => ({ ...view, name: translation?.viewNames[view.id] ?? view.name, conceptIds: [...view.conceptIds] })),
+      savedViews: seedViews.map((view) => ({
+        ...view,
+        name: translation?.viewNames[view.id] ?? view.name,
+        conceptIds: [...view.conceptIds],
+      })),
       viewports: {},
     },
   }

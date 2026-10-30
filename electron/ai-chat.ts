@@ -4,7 +4,14 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { isStepCount, streamText, type ToolSet } from 'ai'
 import { z } from 'zod'
-import { aiChatInstructions, aiChatMessages, aiTools, type AiChatRequest, type AiChatEvent, type AiToolReply } from '@nesso-how/ai'
+import {
+  aiChatInstructions,
+  aiChatMessages,
+  aiTools,
+  type AiChatRequest,
+  type AiChatEvent,
+  type AiToolReply,
+} from '@nesso-how/ai'
 import type { createAiConnections } from './ai-connections.ts'
 import { ElectronError } from './errors.ts'
 
@@ -12,57 +19,120 @@ type Connection = Awaited<ReturnType<ReturnType<typeof createAiConnections>['act
 const errorCode = z.object({ code: z.string().nullish() })
 const providerError = errorCode.extend({
   statusCode: z.number().optional(),
-  data: z.object({ error: errorCode.optional(), response: z.object({ error: errorCode.optional() }).optional() }).optional(),
+  data: z
+    .object({
+      error: errorCode.optional(),
+      response: z.object({ error: errorCode.optional() }).optional(),
+    })
+    .optional(),
 })
 const failure = (error?: unknown) => {
   const parsed = providerError.safeParse(error)
-  const code = parsed.success ? parsed.data.code ?? parsed.data.data?.error?.code ?? parsed.data.data?.response?.error?.code : undefined
-  if (code === 'subscription_sharing_usage_limit_exceeded' || code === 'subscription_sharing_usage_unavailable') {
-    return new ElectronError([{ path: 'chatgpt.usage', message: 'ChatGPT plan usage is unavailable or its limit was reached. Manage usage in ChatGPT settings' }])
+  const code = parsed.success
+    ? (parsed.data.code ?? parsed.data.data?.error?.code ?? parsed.data.data?.response?.error?.code)
+    : undefined
+  if (
+    code === 'subscription_sharing_usage_limit_exceeded' ||
+    code === 'subscription_sharing_usage_unavailable'
+  ) {
+    return new ElectronError([
+      {
+        path: 'chatgpt.usage',
+        message:
+          'ChatGPT plan usage is unavailable or its limit was reached. Manage usage in ChatGPT settings',
+      },
+    ])
   }
-  if (parsed.success && parsed.data.statusCode === 401) return new ElectronError([{ path: 'chat', message: 'Provider authentication expired or was revoked. Update the connection or sign in again' }])
-  return new ElectronError([{ path: 'chat', message: 'Provider request failed or was incomplete. Check the connection and try again' }])
+  if (parsed.success && parsed.data.statusCode === 401)
+    return new ElectronError([
+      {
+        path: 'chat',
+        message:
+          'Provider authentication expired or was revoked. Update the connection or sign in again',
+      },
+    ])
+  return new ElectronError([
+    {
+      path: 'chat',
+      message: 'Provider request failed or was incomplete. Check the connection and try again',
+    },
+  ])
 }
 
 const modelFor = (entry: Connection, request: typeof fetch) => {
   const options = { apiKey: entry.apiKey, baseURL: entry.endpoint, fetch: request }
   switch (entry.provider) {
-    case 'openai': return createOpenAI(options).responses(entry.model)
-    case 'anthropic': return createAnthropic(options)(entry.model)
-    case 'gemini': return createGoogleGenerativeAI(options)(entry.model.replace(/^models\//, ''))
-    default: return createOpenAICompatible({ ...options, name: entry.provider }).chatModel(entry.model)
+    case 'openai':
+      return createOpenAI(options).responses(entry.model)
+    case 'anthropic':
+      return createAnthropic(options)(entry.model)
+    case 'gemini':
+      return createGoogleGenerativeAI(options)(entry.model.replace(/^models\//, ''))
+    default:
+      return createOpenAICompatible({ ...options, name: entry.provider }).chatModel(entry.model)
   }
 }
 
-export function createAiChatRun(entry: Connection, input: AiChatRequest, emit: (event: AiChatEvent) => void, request: typeof fetch = fetch) {
+export function createAiChatRun(
+  entry: Connection,
+  input: AiChatRequest,
+  emit: (event: AiChatEvent) => void,
+  request: typeof fetch = fetch,
+) {
   const controller = new AbortController()
   const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(300_000)])
   const pending = new Map<string, (result: AiToolReply['result']) => void>()
-  const tools: ToolSet = Object.fromEntries(Object.entries(aiTools).map(([name, definition]) => [name, {
-    ...definition,
-    strict: false,
-    ...(entry.authentication === 'chatgpt' ? { providerOptions: { openai: { namespace: { name: 'nesso', description: 'Explore and edit the Nesso document.' } } } } : {}),
-    execute: (value: unknown, { toolCallId: callId }) => new Promise<unknown>((resolve, reject) => {
-      signal.throwIfAborted()
-      const finish = (result?: AiToolReply['result']) => {
-        pending.delete(callId)
-        signal.removeEventListener('abort', abort)
-        if (!result || 'issues' in result) reject(failure())
-        else resolve(result.value)
-      }
-      const abort = () => finish()
-      pending.set(callId, finish)
-      signal.addEventListener('abort', abort, { once: true })
-      emit({ id: input.id, type: 'tool', callId, name, input: value })
-    }),
-  }]))
+  const tools: ToolSet = Object.fromEntries(
+    Object.entries(aiTools).map(([name, definition]) => [
+      name,
+      {
+        ...definition,
+        strict: false,
+        ...(entry.authentication === 'chatgpt'
+          ? {
+              providerOptions: {
+                openai: {
+                  namespace: { name: 'nesso', description: 'Explore and edit the Nesso document.' },
+                },
+              },
+            }
+          : {}),
+        execute: (value: unknown, { toolCallId: callId }) =>
+          new Promise<unknown>((resolve, reject) => {
+            signal.throwIfAborted()
+            const finish = (result?: AiToolReply['result']) => {
+              pending.delete(callId)
+              signal.removeEventListener('abort', abort)
+              if (!result || 'issues' in result) reject(failure())
+              else resolve(result.value)
+            }
+            const abort = () => finish()
+            pending.set(callId, finish)
+            signal.addEventListener('abort', abort, { once: true })
+            emit({ id: input.id, type: 'tool', callId, name, input: value })
+          }),
+      },
+    ]),
+  )
   const result = (async (): Promise<true> => {
     try {
-      const safeRequest: typeof fetch = (url, options) => request(url, { ...options, redirect: 'error' })
+      const safeRequest: typeof fetch = (url, options) =>
+        request(url, { ...options, redirect: 'error' })
       const stream = streamText({
-        model: modelFor(entry, safeRequest), tools, abortSignal: signal,
-        stopWhen: isStepCount(12), ...(entry.authentication === 'chatgpt' ? { providerOptions: { openai: { store: false, instructions: aiChatInstructions(input) } } } : { maxOutputTokens: 8192 }), maxRetries: 0,
-        telemetry: { isEnabled: false }, onError: () => {},
+        model: modelFor(entry, safeRequest),
+        tools,
+        abortSignal: signal,
+        stopWhen: isStepCount(12),
+        ...(entry.authentication === 'chatgpt'
+          ? {
+              providerOptions: {
+                openai: { store: false, instructions: aiChatInstructions(input) },
+              },
+            }
+          : { maxOutputTokens: 8192 }),
+        maxRetries: 0,
+        telemetry: { isEnabled: false },
+        onError: () => {},
         instructions: entry.authentication === 'chatgpt' ? undefined : aiChatInstructions(input),
         messages: aiChatMessages(input),
       })
@@ -94,11 +164,18 @@ export function createAiChatRun(entry: Connection, input: AiChatRequest, emit: (
       }
       if (!complete || signal.aborted) throw failure()
       return true
-    } catch (error) { throw error instanceof ElectronError ? error : failure(error) } finally { controller.abort() }
+    } catch (error) {
+      throw error instanceof ElectronError ? error : failure(error)
+    } finally {
+      controller.abort()
+    }
   })()
   return {
-    id: input.id, result,
+    id: input.id,
+    result,
     cancel: () => controller.abort(),
-    reply: (reply: AiToolReply) => { if (reply.id === input.id) pending.get(reply.callId)?.(reply.result) },
+    reply: (reply: AiToolReply) => {
+      if (reply.id === input.id) pending.get(reply.callId)?.(reply.result)
+    },
   }
 }

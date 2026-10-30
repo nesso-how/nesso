@@ -5,11 +5,41 @@ import type { UpdateBridge, UpdateState } from '../../../electron/updates'
 import { useTranslation } from '@/i18n'
 
 const presentations = {
-  ready: { message: 'updateReady', action: 'updateAction', hint: 'updateReadyDescription', busy: false, Icon: Download },
-  saving: { message: 'updateReady', action: 'updateSaving', hint: null, busy: true, Icon: Download },
-  installing: { message: 'updateReady', action: 'updateRestarting', hint: null, busy: true, Icon: Download },
-  save: { message: 'updateSaveFailure', action: 'updateRetry', hint: 'updateFailureDescription', busy: false, Icon: CircleAlert },
-  install: { message: 'updateInstallFailure', action: 'updateRetry', hint: 'updateFailureDescription', busy: false, Icon: CircleAlert },
+  ready: {
+    message: 'updateReady',
+    action: 'updateAction',
+    hint: 'updateReadyDescription',
+    busy: false,
+    Icon: Download,
+  },
+  saving: {
+    message: 'updateReady',
+    action: 'updateSaving',
+    hint: null,
+    busy: true,
+    Icon: Download,
+  },
+  installing: {
+    message: 'updateReady',
+    action: 'updateRestarting',
+    hint: null,
+    busy: true,
+    Icon: Download,
+  },
+  save: {
+    message: 'updateSaveFailure',
+    action: 'updateRetry',
+    hint: 'updateFailureDescription',
+    busy: false,
+    Icon: CircleAlert,
+  },
+  install: {
+    message: 'updateInstallFailure',
+    action: 'updateRetry',
+    hint: 'updateFailureDescription',
+    busy: false,
+    Icon: CircleAlert,
+  },
 } as const
 
 export function UpdateBar({ updater }: { updater: UpdateBridge }) {
@@ -34,7 +64,9 @@ export function UpdateBar({ updater }: { updater: UpdateBridge }) {
             <span>{t(message)}</span>
             {!state.error && <span className="update-version">v{state.version}</span>}
           </div>
-          <span className="sr-only">{label} {hint}</span>
+          <span className="sr-only">
+            {label} {hint}
+          </span>
         </div>
         <Button
           size="sm"
@@ -45,10 +77,17 @@ export function UpdateBar({ updater }: { updater: UpdateBridge }) {
           onClick={() => updater.restart()}
         >
           {label}
-          <ActionIcon aria-hidden="true" className={busy ? 'motion-safe:animate-spin' : undefined} />
+          <ActionIcon
+            aria-hidden="true"
+            className={busy ? 'motion-safe:animate-spin' : undefined}
+          />
         </Button>
       </div>
-      {hint && <p className="update-hint" id={hintId}>{hint}</p>}
+      {hint && (
+        <p className="update-hint" id={hintId}>
+          {hint}
+        </p>
+      )}
     </div>
   )
 }

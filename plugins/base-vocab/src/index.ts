@@ -15,8 +15,9 @@ export const relationIds = {
 
 export const defaultRelationId = relationIds.linksTo
 
-export const defaultRelationTypes: VocabDefinition['relationTypes'] =
-  Object.entries(relationIds).map(([label, id]) => ({ id, label }))
+export const defaultRelationTypes: VocabDefinition['relationTypes'] = Object.entries(
+  relationIds,
+).map(([label, id]) => ({ id, label }))
 
 export const create = (): VocabDefinition => ({
   id: 'base-vocab',

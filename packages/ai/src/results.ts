@@ -1,7 +1,11 @@
 import type { AiDocumentation } from './docs.ts'
 
 type Counts = { readonly added: number; readonly updated: number; readonly removed: number }
-type Page<T> = { readonly items: readonly T[]; readonly total: number; readonly nextOffset: number | null }
+type Page<T> = {
+  readonly items: readonly T[]
+  readonly total: number
+  readonly nextOffset: number | null
+}
 type View = { readonly id: string | null; readonly name: string }
 
 export type AiEffects = {
@@ -16,7 +20,11 @@ export type AiToolResults = {
   readonly read_docs: { readonly topic: keyof AiDocumentation; readonly content: string }
   readonly context: {
     readonly activeView: View
-    readonly counts: { readonly concepts: number; readonly relations: number; readonly views: number }
+    readonly counts: {
+      readonly concepts: number
+      readonly relations: number
+      readonly views: number
+    }
     readonly visible: { readonly concepts: number; readonly relations: number }
     readonly selection: readonly { readonly kind: 'concept' | 'relation'; readonly id: string }[]
     readonly selectionCount: number
@@ -35,7 +43,8 @@ export type AiToolResults = {
     readonly predicate: string
     readonly target: string
   }>
-  readonly views: Page<View & { readonly concepts: number; readonly pinned: boolean }>
+  readonly views:
+    | Page<View & { readonly concepts: number; readonly pinned: boolean }>
     | (View & { readonly members: Page<string> })
   readonly relation_types: Page<{ readonly id: string; readonly label: string }>
   readonly selection: Page<{ readonly kind: 'concept' | 'relation'; readonly id: string }>

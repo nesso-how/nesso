@@ -14,10 +14,15 @@ export function PluginPanel({ canvas }: { canvas: RefObject<HTMLDivElement | nul
   const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale)
   const t = translate(locale)
   const id = panel?.id
-  useEffect(() => { if (panel?.status === 'failed') close.current?.focus() }, [panel?.status])
+  useEffect(() => {
+    if (panel?.status === 'failed') close.current?.focus()
+  }, [panel?.status])
   useEffect(() => {
     if (!id) {
-      if (opened.current) requestAnimationFrame(() => { if (!pluginPanel.getSnapshot()) canvas.current?.focus() })
+      if (opened.current)
+        requestAnimationFrame(() => {
+          if (!pluginPanel.getSnapshot()) canvas.current?.focus()
+        })
       opened.current = false
       return
     }
@@ -29,21 +34,69 @@ export function PluginPanel({ canvas }: { canvas: RefObject<HTMLDivElement | nul
   if (!panel) return null
   const viewName = panel.viewName ?? t('completeGraph')
   const title = `${panel.pluginName}: ${panel.title} — ${viewName}`
-  return <section className="absolute inset-0 flex min-h-0 flex-col bg-background" aria-labelledby="plugin-panel-title" data-plugin-panel>
-    <PanelHeader actions={<IconButton ref={close} aria-label={t('pluginPanelReturn')} title={t('pluginPanelReturn')} onClick={pluginPanel.close}><X /></IconButton>}>
-      <div className="flex min-w-0 items-center gap-3">
-        <h2 id="plugin-panel-title" aria-label={title} title={title} className="flex min-w-0 items-center gap-2 text-[13px]">
-          <span className="shrink-0 text-xs text-muted-foreground">{panel.pluginName}</span>
-          <ChevronRight aria-hidden="true" className="size-3 shrink-0 text-muted-foreground" />
-          <span className="truncate font-medium">{panel.title}</span>
-        </h2>
-        <span title={viewName} className="max-w-[30%] truncate border-l pl-3 text-xs text-muted-foreground">{viewName}</span>
+  return (
+    <section
+      className="absolute inset-0 flex min-h-0 flex-col bg-background"
+      aria-labelledby="plugin-panel-title"
+      data-plugin-panel
+    >
+      <PanelHeader
+        actions={
+          <IconButton
+            ref={close}
+            aria-label={t('pluginPanelReturn')}
+            title={t('pluginPanelReturn')}
+            onClick={pluginPanel.close}
+          >
+            <X />
+          </IconButton>
+        }
+      >
+        <div className="flex min-w-0 items-center gap-3">
+          <h2
+            id="plugin-panel-title"
+            aria-label={title}
+            title={title}
+            className="flex min-w-0 items-center gap-2 text-[13px]"
+          >
+            <span className="shrink-0 text-xs text-muted-foreground">{panel.pluginName}</span>
+            <ChevronRight aria-hidden="true" className="size-3 shrink-0 text-muted-foreground" />
+            <span className="truncate font-medium">{panel.title}</span>
+          </h2>
+          <span
+            title={viewName}
+            className="max-w-[30%] truncate border-l pl-3 text-xs text-muted-foreground"
+          >
+            {viewName}
+          </span>
+        </div>
+      </PanelHeader>
+      <div className="relative flex min-h-0 flex-1" aria-busy={panel.status === 'loading'}>
+        {panel.status === 'loading' && (
+          <Spinner
+            key={`loading-${panel.id}`}
+            className="plugin-panel-loading absolute inset-0"
+            label={t('pluginPanelLoading')}
+          />
+        )}
+        {panel.status === 'failed' && (
+          <p role="alert" className="absolute inset-0 p-4 text-sm">
+            {t('pluginPanelFailed')}
+          </p>
+        )}
+        <iframe
+          key={panel.id}
+          ref={frame}
+          title={title}
+          sandbox="allow-scripts"
+          referrerPolicy="no-referrer"
+          className="min-h-0 w-full flex-1 border-0 transition-opacity duration-150 motion-reduce:transition-none"
+          style={{
+            visibility: panel.status === 'ready' ? 'visible' : 'hidden',
+            opacity: panel.status === 'ready' ? 1 : 0,
+          }}
+        />
       </div>
-    </PanelHeader>
-    <div className="relative flex min-h-0 flex-1" aria-busy={panel.status === 'loading'}>
-      {panel.status === 'loading' && <Spinner key={`loading-${panel.id}`} className="plugin-panel-loading absolute inset-0" label={t('pluginPanelLoading')} />}
-      {panel.status === 'failed' && <p role="alert" className="absolute inset-0 p-4 text-sm">{t('pluginPanelFailed')}</p>}
-      <iframe key={panel.id} ref={frame} title={title} sandbox="allow-scripts" referrerPolicy="no-referrer" className="min-h-0 w-full flex-1 border-0 transition-opacity duration-150 motion-reduce:transition-none" style={{ visibility: panel.status === 'ready' ? 'visible' : 'hidden', opacity: panel.status === 'ready' ? 1 : 0 }} />
-    </div>
-  </section>
+    </section>
+  )
 }

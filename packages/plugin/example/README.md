@@ -28,8 +28,11 @@ Open `package.json` and `dist/index.js` in a text editor. In desktop DevTools, s
 ```ts
 const result = await window.nessoPlugins.propose(
   crypto.randomUUID(),
-  { manifest, files: [{ path: manifest.nesso.entry, bytes: new TextEncoder().encode(compiledCode) }] },
-  'en'
+  {
+    manifest,
+    files: [{ path: manifest.nesso.entry, bytes: new TextEncoder().encode(compiledCode) }],
+  },
+  'en',
 )
 ```
 

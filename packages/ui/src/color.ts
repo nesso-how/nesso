@@ -1,5 +1,8 @@
 const colorLuminance = (hex: string): number => {
-  const channels = hex.slice(1).match(/.{2}/g)!.map((value) => parseInt(value, 16) / 255)
+  const channels = hex
+    .slice(1)
+    .match(/.{2}/g)!
+    .map((value) => parseInt(value, 16) / 255)
     .map((value) => (value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4))
   return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722
 }
@@ -14,7 +17,10 @@ export const contrastColor = (hex: string): string => {
 export type Hsv = { h: number; s: number; v: number }
 
 export const hexToHsv = (hex: string, previousHue: number): Hsv => {
-  const [red, green, blue] = hex.slice(1).match(/.{2}/g)!.map((value) => parseInt(value, 16) / 255)
+  const [red, green, blue] = hex
+    .slice(1)
+    .match(/.{2}/g)!
+    .map((value) => parseInt(value, 16) / 255)
   const max = Math.max(red, green, blue)
   const delta = max - Math.min(red, green, blue)
   let hue = previousHue
@@ -30,7 +36,9 @@ export const hsvToHex = ({ h, s, v }: Hsv): string => {
   const channel = (offset: number) => {
     const position = (offset + h / 60) % 6
     const value = v - v * s * Math.max(0, Math.min(position, 4 - position, 1))
-    return Math.round(value * 255).toString(16).padStart(2, '0')
+    return Math.round(value * 255)
+      .toString(16)
+      .padStart(2, '0')
   }
   return `#${channel(5)}${channel(3)}${channel(1)}`
 }

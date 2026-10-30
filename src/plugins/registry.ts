@@ -27,11 +27,21 @@ export function createPluginRegistry() {
     const packages = new Set<string>()
     const contributions = new Set<string>()
     for (const entry of next) {
-      if (packages.has(entry.id)) throw new PluginError('denied', [{ path: 'registry', message: 'Duplicate package identity' }])
+      if (packages.has(entry.id))
+        throw new PluginError('denied', [
+          { path: 'registry', message: 'Duplicate package identity' },
+        ])
       packages.add(entry.id)
-      for (const contribution of entry.kind === 'actions' ? entry.contribution : entry.contribution ? [entry.contribution] : []) {
+      for (const contribution of entry.kind === 'actions'
+        ? entry.contribution
+        : entry.contribution
+          ? [entry.contribution]
+          : []) {
         const key = `${entry.kind}:${contribution.id}`
-        if (contributions.has(key)) throw new PluginError('denied', [{ path: 'registry', message: 'Duplicate contribution identity' }])
+        if (contributions.has(key))
+          throw new PluginError('denied', [
+            { path: 'registry', message: 'Duplicate contribution identity' },
+          ])
         contributions.add(key)
       }
     }
@@ -44,7 +54,10 @@ export function createPluginRegistry() {
       externalAvailable = available
       for (const listener of listeners) listener()
     },
-    subscribe: (listener: () => void) => { listeners.add(listener); return () => listeners.delete(listener) },
+    subscribe: (listener: () => void) => {
+      listeners.add(listener)
+      return () => listeners.delete(listener)
+    },
     check,
     replace: (next: readonly PluginEntry[]) => {
       check(next)

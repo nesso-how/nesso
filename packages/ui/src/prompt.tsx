@@ -5,7 +5,14 @@ import { DialogActions, DialogPopup } from './dialog'
 import { Input } from './input'
 import { Label } from './label'
 
-export function PromptForm({ initialValue = '', nameLabel, submitLabel, cancelLabel, maxLength, onSubmit }: {
+export function PromptForm({
+  initialValue = '',
+  nameLabel,
+  submitLabel,
+  cancelLabel,
+  maxLength,
+  onSubmit,
+}: {
   initialValue?: string
   nameLabel: string
   submitLabel: string
@@ -16,21 +23,46 @@ export function PromptForm({ initialValue = '', nameLabel, submitLabel, cancelLa
   const [value, setValue] = useState(initialValue)
   const id = useId()
   return (
-    <form className="mt-6" onSubmit={(event) => {
-      event.preventDefault()
-      if (value.trim()) onSubmit(value)
-    }}>
+    <form
+      className="mt-6"
+      onSubmit={(event) => {
+        event.preventDefault()
+        if (value.trim()) onSubmit(value)
+      }}
+    >
       <Label htmlFor={id}>{nameLabel}</Label>
-      <Input id={id} value={value} onChange={(event) => setValue(event.target.value)} onFocus={(event) => event.target.select()} maxLength={maxLength} className="mt-2" />
+      <Input
+        id={id}
+        value={value}
+        onChange={(event) => setValue(event.target.value)}
+        onFocus={(event) => event.target.select()}
+        maxLength={maxLength}
+        className="mt-2"
+      />
       <DialogActions>
         <Dialog.Close render={<Button variant="outline" />}>{cancelLabel}</Dialog.Close>
-        <Button type="submit" disabled={!value.trim()}>{submitLabel}</Button>
+        <Button type="submit" disabled={!value.trim()}>
+          {submitLabel}
+        </Button>
       </DialogActions>
     </form>
   )
 }
 
-export function TextPromptDialog({ open, onOpenChange, title, description, initialValue, nameLabel, submitLabel, cancelLabel, maxLength, onSubmit, finalFocus, trigger }: {
+export function TextPromptDialog({
+  open,
+  onOpenChange,
+  title,
+  description,
+  initialValue,
+  nameLabel,
+  submitLabel,
+  cancelLabel,
+  maxLength,
+  onSubmit,
+  finalFocus,
+  trigger,
+}: {
   open: boolean
   onOpenChange: (open: boolean) => void
   title: string
@@ -49,8 +81,17 @@ export function TextPromptDialog({ open, onOpenChange, title, description, initi
       {trigger}
       <DialogPopup finalFocus={finalFocus}>
         <Dialog.Title className="text-sm">{title}</Dialog.Title>
-        <Dialog.Description className="mt-2 text-xs text-muted-foreground">{description}</Dialog.Description>
-        <PromptForm initialValue={initialValue} nameLabel={nameLabel} submitLabel={submitLabel} cancelLabel={cancelLabel} maxLength={maxLength} onSubmit={onSubmit} />
+        <Dialog.Description className="mt-2 text-xs text-muted-foreground">
+          {description}
+        </Dialog.Description>
+        <PromptForm
+          initialValue={initialValue}
+          nameLabel={nameLabel}
+          submitLabel={submitLabel}
+          cancelLabel={cancelLabel}
+          maxLength={maxLength}
+          onSubmit={onSubmit}
+        />
       </DialogPopup>
     </Dialog.Root>
   )

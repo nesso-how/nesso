@@ -3,9 +3,18 @@ import type { AiEffects } from '@nesso-how/ai'
 import type { translate } from '../i18n/index.ts'
 import { summarizeCounts } from './effects.ts'
 
-const confirm = (notifications: Notifications, signal: AbortSignal, title: string, description: string, t: ReturnType<typeof translate>): Promise<boolean> =>
+const confirm = (
+  notifications: Notifications,
+  signal: AbortSignal,
+  title: string,
+  description: string,
+  t: ReturnType<typeof translate>,
+): Promise<boolean> =>
   new Promise((resolve) => {
-    if (signal.aborted) { resolve(false); return }
+    if (signal.aborted) {
+      resolve(false)
+      return
+    }
     let settled = false
     let id: string | undefined
     const finish = (approved: boolean) => {
@@ -17,7 +26,9 @@ const confirm = (notifications: Notifications, signal: AbortSignal, title: strin
     }
     const cancel = () => finish(false)
     id = notifications.notify({
-      tone: 'confirmation', title, description,
+      tone: 'confirmation',
+      title,
+      description,
       action: { label: t('aiApply'), onClick: () => finish(true) },
       cancelAction: { label: t('cancel'), onClick: cancel },
     })
@@ -26,16 +37,35 @@ const confirm = (notifications: Notifications, signal: AbortSignal, title: strin
     if (signal.aborted) cancel()
   })
 
-export function createAiApproval(notifications: Notifications, getTranslation: () => ReturnType<typeof translate>, title: 'mcpApproval') {
+export function createAiApproval(
+  notifications: Notifications,
+  getTranslation: () => ReturnType<typeof translate>,
+  title: 'mcpApproval',
+) {
   return (effects: AiEffects, signal: AbortSignal) => {
     const t = getTranslation()
-    return confirm(notifications, signal, t(title), t('aiEditApproval', summarizeCounts(effects)), t)
+    return confirm(
+      notifications,
+      signal,
+      t(title),
+      t('aiEditApproval', summarizeCounts(effects)),
+      t,
+    )
   }
 }
 
-export function createAiHistoryApproval(notifications: Notifications, getTranslation: () => ReturnType<typeof translate>) {
+export function createAiHistoryApproval(
+  notifications: Notifications,
+  getTranslation: () => ReturnType<typeof translate>,
+) {
   return (action: 'undo' | 'redo', signal: AbortSignal) => {
     const t = getTranslation()
-    return confirm(notifications, signal, t('mcpApproval'), t(action === 'undo' ? 'mcpUndoApproval' : 'mcpRedoApproval'), t)
+    return confirm(
+      notifications,
+      signal,
+      t('mcpApproval'),
+      t(action === 'undo' ? 'mcpUndoApproval' : 'mcpRedoApproval'),
+      t,
+    )
   }
 }

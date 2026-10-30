@@ -5,24 +5,50 @@ import { createNessoStore } from './create.ts'
 import { initializeNessoStore } from './initialize.ts'
 import { connectPersistence, loadPersistence } from './persistence.ts'
 
-const graph = { concepts: [{ id: 'urn:a', label: 'A', position: { x: 0, y: 0 } }, { id: 'urn:b', label: 'B', position: { x: 100, y: 0 } }], relations: [], relationTypes: [] }
+const graph = {
+  concepts: [
+    { id: 'urn:a', label: 'A', position: { x: 0, y: 0 } },
+    { id: 'urn:b', label: 'B', position: { x: 100, y: 0 } },
+  ],
+  relations: [],
+  relationTypes: [],
+}
 
 const memoryStorage = () => {
   const records = new Map<PersistenceSection, unknown>()
   const writes: PersistenceSection[] = []
   return {
-    records, writes,
+    records,
+    writes,
     read: async (section: PersistenceSection) => structuredClone(records.get(section)),
-    write: async (section: PersistenceSection, value: unknown) => { records.set(section, structuredClone(value)); writes.push(section) },
+    write: async (section: PersistenceSection, value: unknown) => {
+      records.set(section, structuredClone(value))
+      writes.push(section)
+    },
   }
 }
 
-const put = (host: ReturnType<typeof createNessoStore>, key: string, value: unknown, conceptId?: string) => {
-  const revision = host.store.getState().pluginStorage.find(({ pluginId }) => pluginId === 'nesso-plugin-example')?.revision ?? 0
-  host.store.applyOperations([{
-    kind: 'plugin-storage.set', pluginId: 'nesso-plugin-example', documentId: host.store.getState().documentId, revision,
-    record: conceptId === undefined ? { key, value: value as never } : { key, value: value as never, conceptId },
-  }])
+const put = (
+  host: ReturnType<typeof createNessoStore>,
+  key: string,
+  value: unknown,
+  conceptId?: string,
+) => {
+  const revision =
+    host.store.getState().pluginStorage.find(({ pluginId }) => pluginId === 'nesso-plugin-example')
+      ?.revision ?? 0
+  host.store.applyOperations([
+    {
+      kind: 'plugin-storage.set',
+      pluginId: 'nesso-plugin-example',
+      documentId: host.store.getState().documentId,
+      revision,
+      record:
+        conceptId === undefined
+          ? { key, value: value as never }
+          : { key, value: value as never, conceptId },
+    },
+  ])
 }
 
 async function fixture() {
@@ -74,7 +100,10 @@ test('startup removes only concept orphans after successful restoration and pers
   assert.equal(await restoredPersistence.flush(), true)
   assert.deepEqual(storage.writes, ['plugin-storage'])
   const cleaned = await loadPersistence(storage)
-  assert.deepEqual(cleaned.pluginStorage?.[0].records.map(({ conceptId }) => conceptId), [undefined, 'urn:a'])
+  assert.deepEqual(
+    cleaned.pluginStorage?.[0].records.map(({ conceptId }) => conceptId),
+    [undefined, 'urn:a'],
+  )
   await restoredPersistence.dispose()
 })
 
@@ -87,7 +116,11 @@ test('failed, missing or mismatched document/storage restoration never overwrite
     if (failure === 'document') storage.records.set('document', 'unreadable')
     if (failure === 'plugin-storage') storage.records.set('plugin-storage', 'unreadable')
     if (failure === 'missing-document') storage.records.delete('document')
-    if (failure === 'wrong-document') storage.records.set('plugin-storage', { ...(storage.records.get('plugin-storage') as object), documentId: 'urn:other-document' })
+    if (failure === 'wrong-document')
+      storage.records.set('plugin-storage', {
+        ...(storage.records.get('plugin-storage') as object),
+        documentId: 'urn:other-document',
+      })
     const original = structuredClone(storage.records.get('plugin-storage'))
     const loaded = await loadPersistence(storage)
     assert.ok(loaded.blocked.includes('plugin-storage'))
@@ -96,7 +129,11 @@ test('failed, missing or mismatched document/storage restoration never overwrite
     const restoredPersistence = connectPersistence(reopened, storage, loaded)
     await restoredPersistence.flush()
     assert.deepEqual(storage.records.get('plugin-storage'), original)
-    assert.ok(reopened.store.getState().persistenceIssues.some(({ section }) => section === 'plugin-storage'))
+    assert.ok(
+      reopened.store
+        .getState()
+        .persistenceIssues.some(({ section }) => section === 'plugin-storage'),
+    )
     await restoredPersistence.dispose()
   }
 })

@@ -10,25 +10,43 @@ import { cases } from './plugin-runtime/cases.ts'
 const electron: string = createRequire(import.meta.url)('electron')
 const harness = fileURLToPath(new URL('./plugin-runtime/harness.ts', import.meta.url))
 const filters = process.argv.slice(2)
-const selected = Object.entries(cases).flatMap(([scenario, platforms]) => platforms.map((platform) => ({ scenario, platform })))
-  .filter(({ scenario, platform }) => filters.every((filter) => filter === scenario || filter === platform))
+const selected = Object.entries(cases)
+  .flatMap(([scenario, platforms]) => platforms.map((platform) => ({ scenario, platform })))
+  .filter(({ scenario, platform }) =>
+    filters.every((filter) => filter === scenario || filter === platform),
+  )
 
-if (!selected.length) throw new NessoError([{ path: 'tests', message: 'No matching scenario or platform' }])
+if (!selected.length)
+  throw new NessoError([{ path: 'tests', message: 'No matching scenario or platform' }])
 
 const failures: { path: string; message: string }[] = []
 for (const { scenario, platform } of selected) {
   const name = `${scenario}/${platform}`
   const profile = mkdtempSync(path.join(tmpdir(), `nesso-${scenario}-${platform}-`))
   console.log(`${name}: starting`)
-  const result = spawnSync(electron, [harness, scenario, platform, profile, ...(scenario === 'safe-plugins' ? ['--safe-plugins'] : [])], { stdio: 'inherit', timeout: 75_000, killSignal: 'SIGKILL' })
+  const result = spawnSync(
+    electron,
+    [
+      harness,
+      scenario,
+      platform,
+      profile,
+      ...(scenario === 'safe-plugins' ? ['--safe-plugins'] : []),
+    ],
+    { stdio: 'inherit', timeout: 75_000, killSignal: 'SIGKILL' },
+  )
   if (result.status === 0) rmSync(profile, { recursive: true, force: true })
   else {
-    const message = result.error?.message ?? (result.signal ? `Terminated by ${result.signal}` : `Exited with status ${result.status}`)
+    const message =
+      result.error?.message ??
+      (result.signal ? `Terminated by ${result.signal}` : `Exited with status ${result.status}`)
     failures.push({ path: name, message })
     console.error(`${name}: failed; profile retained at ${profile}`)
   }
 }
-console.log(`Plugin runtime checks: ${selected.length - failures.length} passed, ${failures.length} failed`)
+console.log(
+  `Plugin runtime checks: ${selected.length - failures.length} passed, ${failures.length} failed`,
+)
 if (failures.length) {
   console.error(new NessoError(failures))
   process.exitCode = 1

@@ -2,22 +2,25 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { createTranslator, detectLocale, I18nError } from './index.ts'
 
-const translate = createTranslator({
-  greeting: 'Hello, {{name}}',
-  fallback: 'English fallback',
-  count_one: '{{count}} concept',
-  count_other: '{{count}} concepts',
-}, {
-  it: {
-    greeting: 'Ciao, {{name}}',
-    count_one: '{{count}} concetto',
-    count_many: '{{count}} concetti',
-    count_other: '{{count}} concetti',
+const translate = createTranslator(
+  {
+    greeting: 'Hello, {{name}}',
+    fallback: 'English fallback',
+    count_one: '{{count}} concept',
+    count_other: '{{count}} concepts',
   },
-  'zh-CN': {
-    count_other: '{{count}} 个概念',
+  {
+    it: {
+      greeting: 'Ciao, {{name}}',
+      count_one: '{{count}} concetto',
+      count_many: '{{count}} concetti',
+      count_other: '{{count}} concetti',
+    },
+    'zh-CN': {
+      count_other: '{{count}} 个概念',
+    },
   },
-})
+)
 
 test('locale detection follows language preference order, matches regional variants and falls back to English', () => {
   for (const [languages, expected] of [
@@ -26,7 +29,8 @@ test('locale detection follows language preference order, matches regional varia
     [['en-GB', 'it-IT'], 'en'],
     [['it-CH', 'en-US'], 'it'],
     [['fr-FR', 'it-IT'], 'it'],
-  ] as const) assert.equal(detectLocale(languages), expected, languages.join(', '))
+  ] as const)
+    assert.equal(detectLocale(languages), expected, languages.join(', '))
 })
 
 test('locale detection recognizes Simplified Chinese without treating Traditional Chinese as Simplified', () => {
@@ -47,8 +51,14 @@ test('isolated translators handle interpolation, English fallback and native plu
   assert.equal(t('count', { count: 1 }), '1 concetto')
   assert.equal(t('count', { count: 2 }), '2 concetti')
   assert.equal(t('count', { count: 1_000_000 }), '1000000 concetti')
-  assert.equal(t('greeting', { name: '<strong>{{name}}</strong>' }), 'Ciao, <strong>{{name}}</strong>')
-  assert.equal(createTranslator({ greeting: 'Different catalog' })('it')('greeting'), 'Different catalog')
+  assert.equal(
+    t('greeting', { name: '<strong>{{name}}</strong>' }),
+    'Ciao, <strong>{{name}}</strong>',
+  )
+  assert.equal(
+    createTranslator({ greeting: 'Different catalog' })('it')('greeting'),
+    'Different catalog',
+  )
   assert.equal(t('greeting', { name: 'Omar' }), 'Ciao, Omar')
 })
 
@@ -59,7 +69,16 @@ test('Simplified Chinese uses the same plural form for every count', () => {
 
 test('unknown keys, missing interpolation values and invalid counts throw structured errors', () => {
   const t = translate('en')
-  assert.throws(() => t('greeting'), (error: unknown) => error instanceof I18nError && error.issues[0].path === 'greeting.name')
-  assert.throws(() => t('count', { count: NaN }), (error: unknown) => error instanceof I18nError && error.issues[0].path === 'count.count')
-  assert.throws(() => t('unknown' as never), (error: unknown) => error instanceof I18nError && error.issues[0].path === 'unknown')
+  assert.throws(
+    () => t('greeting'),
+    (error: unknown) => error instanceof I18nError && error.issues[0].path === 'greeting.name',
+  )
+  assert.throws(
+    () => t('count', { count: NaN }),
+    (error: unknown) => error instanceof I18nError && error.issues[0].path === 'count.count',
+  )
+  assert.throws(
+    () => t('unknown' as never),
+    (error: unknown) => error instanceof I18nError && error.issues[0].path === 'unknown',
+  )
 })

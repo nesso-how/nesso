@@ -27,7 +27,10 @@ test('paste uses one atomic undoable batch, preserves parallel types, and joins 
   copied.concepts[0].description = 'Definition\nExample'
   copied.relationTypes.push({ id: 'urn:custom', label: 'Custom' })
   copied.relations.push({ ...copied.relations[0], predicate: 'urn:custom' })
-  const text = copyGraph(copied, [{ kind: 'concept', id: 'urn:n1' }, { kind: 'concept', id: 'urn:n2' }])!
+  const text = copyGraph(copied, [
+    { kind: 'concept', id: 'urn:n1' },
+    { kind: 'concept', id: 'urn:n2' },
+  ])!
   let notifications = 0
   store.subscribe(() => notifications++)
   store.applyOperations(pasteOperations(text))
@@ -37,13 +40,24 @@ test('paste uses one atomic undoable batch, preserves parallel types, and joins 
   assert.equal(copies[0].description, copied.concepts[0].description)
   assert.equal(Object.hasOwn(copies[1], 'description'), false)
   assert.equal(notifications, 1)
-  assert.deepEqual(copies.map((concept) => ({ label: concept.label, position: concept.position })), [
-    { label: 'One', position: { x: 40, y: 40 } }, { label: 'Two', position: { x: 41, y: 40 } },
-  ])
-  assert.deepEqual(relations, copied.relations.filter((relation) => relation.target === 'urn:n2')
-    .map((relation) => ({ ...relation, source: copies[0].id, target: copies[1].id })))
+  assert.deepEqual(
+    copies.map((concept) => ({ label: concept.label, position: concept.position })),
+    [
+      { label: 'One', position: { x: 40, y: 40 } },
+      { label: 'Two', position: { x: 41, y: 40 } },
+    ],
+  )
+  assert.deepEqual(
+    relations,
+    copied.relations
+      .filter((relation) => relation.target === 'urn:n2')
+      .map((relation) => ({ ...relation, source: copies[0].id, target: copies[1].id })),
+  )
   assert.deepEqual(after.graph.relationTypes, copied.relationTypes)
-  assert.deepEqual(after.viewGraph.concepts.map((concept) => concept.id), ['urn:n1', ...copies.map((concept) => concept.id)])
+  assert.deepEqual(
+    after.viewGraph.concepts.map((concept) => concept.id),
+    ['urn:n1', ...copies.map((concept) => concept.id)],
+  )
   assert.deepEqual(after.selected, [
     ...copies.map((concept) => ({ kind: 'concept', id: concept.id })),
     ...relations.map((relation) => ({ kind: 'relation', id: relationKey(relation) })),
@@ -71,17 +85,31 @@ test('import preserves disconnected concepts and parallel relations in either or
     const before = store.getState()
     const snapshot: Graph = {
       concepts: fixture().concepts.slice(0, 2),
-      relationTypes: [{ id: 'urn:links', label: 'links' }, { id: 'urn:custom', label: 'Custom' }],
+      relationTypes: [
+        { id: 'urn:links', label: 'links' },
+        { id: 'urn:custom', label: 'Custom' },
+      ],
       relations: predicates.map((predicate) => ({ source: 'urn:n1', predicate, target: 'urn:n2' })),
     }
     store.applyOperations(buildImportOperations(snapshot, before.workspace.activeViewId, viewId))
     const after = store.getState()
     const copies = after.graph.concepts.slice(before.graph.concepts.length)
-    assert.deepEqual(copies.map((concept) => concept.label), snapshot.concepts.map((concept) => concept.label))
-    assert.deepEqual(after.graph.relations.slice(before.graph.relations.length), snapshot.relations.map((relation) => ({
-      ...relation, source: copies[0].id, target: copies[1].id,
-    })))
-    assert.deepEqual(after.viewGraph.concepts.map((concept) => concept.id), ['urn:n1', ...copies.map((concept) => concept.id)])
+    assert.deepEqual(
+      copies.map((concept) => concept.label),
+      snapshot.concepts.map((concept) => concept.label),
+    )
+    assert.deepEqual(
+      after.graph.relations.slice(before.graph.relations.length),
+      snapshot.relations.map((relation) => ({
+        ...relation,
+        source: copies[0].id,
+        target: copies[1].id,
+      })),
+    )
+    assert.deepEqual(
+      after.viewGraph.concepts.map((concept) => concept.id),
+      ['urn:n1', ...copies.map((concept) => concept.id)],
+    )
     host.store.undo()
     assert.deepEqual(host.store.getState().graph, before.graph)
     assert.deepEqual(host.store.getState().workspace, before.workspace)

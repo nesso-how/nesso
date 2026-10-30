@@ -8,14 +8,19 @@ const aiChatMessage = z.strictObject({
   role: z.enum(['user', 'assistant']),
   content: z.string().max(100_000),
   outcome: z.enum(['complete', 'applied', 'cancelled', 'error']).optional(),
-  summary: z.strictObject({
-    added: z.number().int().min(0),
-    updated: z.number().int().min(0),
-    removed: z.number().int().min(0),
-    memberships: z.number().int().min(0),
-  }).optional(),
+  summary: z
+    .strictObject({
+      added: z.number().int().min(0),
+      updated: z.number().int().min(0),
+      removed: z.number().int().min(0),
+      memberships: z.number().int().min(0),
+    })
+    .optional(),
 })
-export const aiConversation = z.strictObject({ version: z.literal(1), messages: z.array(aiChatMessage).max(500) })
+export const aiConversation = z.strictObject({
+  version: z.literal(1),
+  messages: z.array(aiChatMessage).max(500),
+})
 export const aiChatRequest = z.strictObject({
   id: z.string().min(1).max(128),
   messages: z.array(aiChatMessage).min(1).max(500),
@@ -27,6 +32,15 @@ export type AiChatRequest = z.infer<typeof aiChatRequest>
 export type AiChatEvent = { readonly id: string } & (
   | { readonly type: 'text'; readonly text: string }
   | { readonly type: 'activity'; readonly tool: keyof typeof aiTools | null }
-  | { readonly type: 'tool'; readonly callId: string; readonly name: string; readonly input: unknown }
+  | {
+      readonly type: 'tool'
+      readonly callId: string
+      readonly name: string
+      readonly input: unknown
+    }
 )
-export type AiToolReply = { readonly id: string; readonly callId: string; readonly result: import('./providers.ts').AiResult<AiToolResults[keyof AiToolResults]> }
+export type AiToolReply = {
+  readonly id: string
+  readonly callId: string
+  readonly result: import('./providers.ts').AiResult<AiToolResults[keyof AiToolResults]>
+}

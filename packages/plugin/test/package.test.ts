@@ -3,86 +3,305 @@ import test from 'node:test'
 import { packageFonts, preparePluginPackage, verifyPluginPackage } from '../src/package.ts'
 import themeFixture from './theme.json' with { type: 'json' }
 
-const manifest = { name: 'nesso-plugin-test', version: '1.0.0', nesso: { apiVersion: 1, kind: 'actions', entry: 'index.js', writes: ['concept.label'], capabilities: [] }, i18n: { metadata: { name: { en: 'Test' }, description: { en: 'Test' }, documentation: { en: 'Test' } }, action: { en: 'Test action' } } }
+const manifest = {
+  name: 'nesso-plugin-test',
+  version: '1.0.0',
+  nesso: {
+    apiVersion: 1,
+    kind: 'actions',
+    entry: 'index.js',
+    writes: ['concept.label'],
+    capabilities: [],
+  },
+  i18n: {
+    metadata: { name: { en: 'Test' }, description: { en: 'Test' }, documentation: { en: 'Test' } },
+    action: { en: 'Test action' },
+  },
+}
 const code = 'export const create=()=>[]'
 const files = [{ path: 'index.js', bytes: new TextEncoder().encode(code) }]
 
 test('package identity binds normalized metadata, declarations, paths and exact entry bytes without executing code', async () => {
-  const prepared = await preparePluginPackage({ manifest: { ...manifest, scripts: { install: 'must not run' }, dependencies: { anything: '*' } }, files })
+  const prepared = await preparePluginPackage({
+    manifest: {
+      ...manifest,
+      scripts: { install: 'must not run' },
+      dependencies: { anything: '*' },
+    },
+    files,
+  })
   assert.match(prepared.contentId, /^[a-f0-9]{64}$/)
   assert.deepEqual(await verifyPluginPackage(prepared), prepared)
   if (prepared.nesso.kind !== 'actions') assert.fail('Expected actions')
-  assert.equal((await preparePluginPackage({ manifest: { i18n: manifest.i18n, nesso: manifest.nesso, version: '1.0.0', name: manifest.name }, files })).contentId, prepared.contentId)
-  assert.equal((await preparePluginPackage({ manifest: { ...manifest, i18n: { ...manifest.i18n, action: { ...manifest.i18n.action, it: undefined } } }, files })).contentId, prepared.contentId)
+  assert.equal(
+    (
+      await preparePluginPackage({
+        manifest: {
+          i18n: manifest.i18n,
+          nesso: manifest.nesso,
+          version: '1.0.0',
+          name: manifest.name,
+        },
+        files,
+      })
+    ).contentId,
+    prepared.contentId,
+  )
+  assert.equal(
+    (
+      await preparePluginPackage({
+        manifest: {
+          ...manifest,
+          i18n: { ...manifest.i18n, action: { ...manifest.i18n.action, it: undefined } },
+        },
+        files,
+      })
+    ).contentId,
+    prepared.contentId,
+  )
   for (const changed of [
-    { ...prepared, code: `${code}\n` }, { ...prepared, version: '1.0.1' },
+    { ...prepared, code: `${code}\n` },
+    { ...prepared, version: '1.0.1' },
     { ...prepared, nesso: { ...prepared.nesso, capabilities: ['files'] as const } },
     { ...prepared, nesso: { ...prepared.nesso, capabilities: ['notifications'] as const } },
     { ...prepared, nesso: { ...prepared.nesso, writes: ['concept.add'] as const } },
-    { ...prepared, i18n: { ...manifest.i18n, metadata: { ...manifest.i18n.metadata, name: { en: 'Changed' } } } },
+    {
+      ...prepared,
+      i18n: { ...manifest.i18n, metadata: { ...manifest.i18n.metadata, name: { en: 'Changed' } } },
+    },
     { ...prepared, i18n: { ...manifest.i18n, action: { en: 'Changed action' } } },
-  ]) await assert.rejects(verifyPluginPackage(changed), { code: 'denied' })
+  ])
+    await assert.rejects(verifyPluginPackage(changed), { code: 'denied' })
   assert.deepEqual(prepared.i18n, manifest.i18n)
 })
 
 test('optional authors and GitHub repositories normalize to bounded display metadata bound to package identity', async () => {
-  const prepared = await preparePluginPackage({ manifest: { ...manifest, author: { name: 'Test Author', email: 'private@example.test', url: 'https://example.test' }, repository: { type: 'git', url: 'git+https://github.com/example/plugin.git', directory: 'packages/plugin' } }, files })
+  const prepared = await preparePluginPackage({
+    manifest: {
+      ...manifest,
+      author: { name: 'Test Author', email: 'private@example.test', url: 'https://example.test' },
+      repository: {
+        type: 'git',
+        url: 'git+https://github.com/example/plugin.git',
+        directory: 'packages/plugin',
+      },
+    },
+    files,
+  })
   assert.equal(prepared.author, 'Test Author')
   assert.equal(prepared.repository, 'https://github.com/example/plugin')
   assert.deepEqual(await verifyPluginPackage(prepared), prepared)
-  for (const repository of ['https://github.com/example/plugin', 'https://github.com/example/plugin.git/', 'git+https://github.com/example/plugin.git', 'github:example/plugin']) {
-    const normalized = await preparePluginPackage({ manifest: { ...manifest, author: 'Test Author <private@example.test> (https://example.test)', repository }, files })
+  for (const repository of [
+    'https://github.com/example/plugin',
+    'https://github.com/example/plugin.git/',
+    'git+https://github.com/example/plugin.git',
+    'github:example/plugin',
+  ]) {
+    const normalized = await preparePluginPackage({
+      manifest: {
+        ...manifest,
+        author: 'Test Author <private@example.test> (https://example.test)',
+        repository,
+      },
+      files,
+    })
     assert.equal(normalized.contentId, prepared.contentId)
   }
-  for (const name of ['Test Author (fictional test author)', 'Test Author <private@example.test>', ' Test Author (https://example.test) ']) {
+  for (const name of [
+    'Test Author (fictional test author)',
+    'Test Author <private@example.test>',
+    ' Test Author (https://example.test) ',
+  ]) {
     for (const author of [name, { name }]) {
       const normalized = await preparePluginPackage({ manifest: { ...manifest, author }, files })
       assert.equal(normalized.author, 'Test Author')
-      assert.deepEqual(await verifyPluginPackage(JSON.parse(JSON.stringify(normalized))), normalized)
+      assert.deepEqual(
+        await verifyPluginPackage(JSON.parse(JSON.stringify(normalized))),
+        normalized,
+      )
     }
   }
-  for (const changed of [{ ...prepared, author: 'Someone else' }, { ...prepared, repository: 'https://github.com/example/another' }]) await assert.rejects(verifyPluginPackage(changed), { code: 'denied' })
+  for (const changed of [
+    { ...prepared, author: 'Someone else' },
+    { ...prepared, repository: 'https://github.com/example/another' },
+  ])
+    await assert.rejects(verifyPluginPackage(changed), { code: 'denied' })
   const missing = await preparePluginPackage({ manifest, files })
   assert.equal(missing.author, undefined)
   assert.equal(missing.repository, undefined)
   assert.notEqual(missing.contentId, prepared.contentId)
-  for (const author of [null, 12, {}, { name: '' }, '', ' '.repeat(8), 'a'.repeat(513), { name: 'a'.repeat(129) }, 'Name\nAnother']) {
-    assert.equal((await preparePluginPackage({ manifest: { ...manifest, author }, files })).author, undefined)
+  for (const author of [
+    null,
+    12,
+    {},
+    { name: '' },
+    '',
+    ' '.repeat(8),
+    'a'.repeat(513),
+    { name: 'a'.repeat(129) },
+    'Name\nAnother',
+  ]) {
+    assert.equal(
+      (await preparePluginPackage({ manifest: { ...manifest, author }, files })).author,
+      undefined,
+    )
   }
-  for (const repository of [null, 12, {}, { url: 12 }, 'a'.repeat(2049), 'http://github.com/example/plugin', 'git+ssh://git@github.com/example/plugin.git', 'https://github.com.evil.test/example/plugin', 'https://user:pass@github.com/example/plugin', 'https://github.com:444/example/plugin', 'https://github.com/example/plugin?redirect=other', 'https://github.com/example/plugin#main', 'https://github.com/example/plugin/tree/main', 'https://github.com/example', 'https://gitlab.com/example/plugin', 'javascript:alert(1)', 'https://github.com/example/plug\nin']) {
-    assert.equal((await preparePluginPackage({ manifest: { ...manifest, repository }, files })).repository, undefined)
+  for (const repository of [
+    null,
+    12,
+    {},
+    { url: 12 },
+    'a'.repeat(2049),
+    'http://github.com/example/plugin',
+    'git+ssh://git@github.com/example/plugin.git',
+    'https://github.com.evil.test/example/plugin',
+    'https://user:pass@github.com/example/plugin',
+    'https://github.com:444/example/plugin',
+    'https://github.com/example/plugin?redirect=other',
+    'https://github.com/example/plugin#main',
+    'https://github.com/example/plugin/tree/main',
+    'https://github.com/example',
+    'https://gitlab.com/example/plugin',
+    'javascript:alert(1)',
+    'https://github.com/example/plug\nin',
+  ]) {
+    assert.equal(
+      (await preparePluginPackage({ manifest: { ...manifest, repository }, files })).repository,
+      undefined,
+    )
   }
 })
 
 test('action packages reject unsafe paths, extra assets, unsupported authority, non-UTF-8 code and inexact identities', async () => {
-  for (const entry of ['../index.js', '/index.js', 'a//index.js', 'a\\index.js', 'index.js?q', 'index.ts', 'a/%2e/index.js']) await assert.rejects(preparePluginPackage({ manifest: { ...manifest, nesso: { ...manifest.nesso, entry } }, files }))
-  for (const version of ['^1.0.0', '1.0.0-01', 'latest', 'v1.0.0', '=1.0.0', ' 1.0.0', '1.0.0 ', '1.0', '9007199254740992.0.0']) await assert.rejects(preparePluginPackage({ manifest: { ...manifest, version }, files }))
-  for (const name of ['../private', '@nesso', 'node_modules', 'favicon.ico', 'http', 'Uppercase', '-private', '@nesso-how/../private', 'plugin?query']) await assert.rejects(preparePluginPackage({ manifest: { ...manifest, name }, files }))
-  for (const version of ['1.0.0', '1.0.0-alpha.1', '1.0.0+build.1', '1.0.0-alpha.1+build.1']) assert.equal((await preparePluginPackage({ manifest: { ...manifest, name: '@nesso/test', version }, files })).version, version)
-  await assert.rejects(preparePluginPackage({ manifest: { ...manifest, nesso: { ...manifest.nesso, writes: ['document.reset'] } }, files }))
-  for (const entries of [[], [...files, ...files], [{ path: 'different.js', bytes: files[0].bytes }], [{ path: 'index.js', bytes: new Uint8Array([0xff]) }]]) await assert.rejects(preparePluginPackage({ manifest, files: entries }))
+  for (const entry of [
+    '../index.js',
+    '/index.js',
+    'a//index.js',
+    'a\\index.js',
+    'index.js?q',
+    'index.ts',
+    'a/%2e/index.js',
+  ])
+    await assert.rejects(
+      preparePluginPackage({
+        manifest: { ...manifest, nesso: { ...manifest.nesso, entry } },
+        files,
+      }),
+    )
+  for (const version of [
+    '^1.0.0',
+    '1.0.0-01',
+    'latest',
+    'v1.0.0',
+    '=1.0.0',
+    ' 1.0.0',
+    '1.0.0 ',
+    '1.0',
+    '9007199254740992.0.0',
+  ])
+    await assert.rejects(preparePluginPackage({ manifest: { ...manifest, version }, files }))
+  for (const name of [
+    '../private',
+    '@nesso',
+    'node_modules',
+    'favicon.ico',
+    'http',
+    'Uppercase',
+    '-private',
+    '@nesso-how/../private',
+    'plugin?query',
+  ])
+    await assert.rejects(preparePluginPackage({ manifest: { ...manifest, name }, files }))
+  for (const version of ['1.0.0', '1.0.0-alpha.1', '1.0.0+build.1', '1.0.0-alpha.1+build.1'])
+    assert.equal(
+      (
+        await preparePluginPackage({
+          manifest: { ...manifest, name: '@nesso/test', version },
+          files,
+        })
+      ).version,
+      version,
+    )
+  await assert.rejects(
+    preparePluginPackage({
+      manifest: { ...manifest, nesso: { ...manifest.nesso, writes: ['document.reset'] } },
+      files,
+    }),
+  )
+  for (const entries of [
+    [],
+    [...files, ...files],
+    [{ path: 'different.js', bytes: files[0].bytes }],
+    [{ path: 'index.js', bytes: new Uint8Array([0xff]) }],
+  ])
+    await assert.rejects(preparePluginPackage({ manifest, files: entries }))
 })
 
 test('definition packages bind local font bytes and sorted paths to approval without executing definitions', async () => {
   const font = { path: 'fonts/sans.woff2', bytes: new TextEncoder().encode('wOF2font') }
-  const vocab = { id: 'test-vocab', relationTypes: [{ id: 'urn:nesso:test', label: 'Test' }], defaultTypeId: 'urn:nesso:test' }
+  const vocab = {
+    id: 'test-vocab',
+    relationTypes: [{ id: 'urn:nesso:test', label: 'Test' }],
+    defaultTypeId: 'urn:nesso:test',
+  }
   for (const kind of ['vocab', 'theme'] as const) {
-    const source = { ...manifest, nesso: { ...manifest.nesso, kind, entry: 'definition.json', writes: [], capabilities: [] } }
+    const source = {
+      ...manifest,
+      nesso: { ...manifest.nesso, kind, entry: 'definition.json', writes: [], capabilities: [] },
+    }
     const definition = kind === 'theme' ? { ...themeFixture, id: 'test-theme' } : vocab
-    const entry = { path: 'definition.json', bytes: new TextEncoder().encode(JSON.stringify(definition)) }
-    const prepared = await preparePluginPackage({ manifest: source, files: kind === 'theme' ? [entry, font] : [entry] })
+    const entry = {
+      path: 'definition.json',
+      bytes: new TextEncoder().encode(JSON.stringify(definition)),
+    }
+    const prepared = await preparePluginPackage({
+      manifest: source,
+      files: kind === 'theme' ? [entry, font] : [entry],
+    })
     assert.deepEqual(await verifyPluginPackage(prepared), prepared)
-    await assert.rejects(preparePluginPackage({ manifest: source, files: [{ path: 'definition.json', bytes: new TextEncoder().encode('{invalid') }] }))
-    await assert.rejects(preparePluginPackage({ manifest: source, files: [{ path: 'definition.json', bytes: new TextEncoder().encode(JSON.stringify({ ...definition, id: 42 })) }] }))
+    await assert.rejects(
+      preparePluginPackage({
+        manifest: source,
+        files: [{ path: 'definition.json', bytes: new TextEncoder().encode('{invalid') }],
+      }),
+    )
+    await assert.rejects(
+      preparePluginPackage({
+        manifest: source,
+        files: [
+          {
+            path: 'definition.json',
+            bytes: new TextEncoder().encode(JSON.stringify({ ...definition, id: 42 })),
+          },
+        ],
+      }),
+    )
     if (kind === 'vocab') {
       await assert.rejects(preparePluginPackage({ manifest: source, files: [entry, font] }))
       continue
     }
     assert.deepEqual(packageFonts(prepared).get(font.path), font.bytes)
-    assert.equal((await preparePluginPackage({ manifest: source, files: [font, entry] })).contentId, prepared.contentId)
-    await assert.rejects(verifyPluginPackage({ ...prepared, fonts: [{ ...prepared.fonts[0], data: btoa('wOF2changed') }] }), { code: 'denied' })
-    await assert.rejects(verifyPluginPackage({ ...prepared, fonts: [...prepared.fonts, ...prepared.fonts] }))
-    for (const path of ['../font.woff2', 'fonts/a.woff', 'fonts/a.woff2?x', 'fonts//a.woff2']) await assert.rejects(preparePluginPackage({ manifest: source, files: [entry, { ...font, path }] }))
-    for (const bytes of [new TextEncoder().encode('invalid'), new Uint8Array(4 * 1024 * 1024 + 1)]) await assert.rejects(preparePluginPackage({ manifest: source, files: [entry, { ...font, bytes }] }))
+    assert.equal(
+      (await preparePluginPackage({ manifest: source, files: [font, entry] })).contentId,
+      prepared.contentId,
+    )
+    await assert.rejects(
+      verifyPluginPackage({
+        ...prepared,
+        fonts: [{ ...prepared.fonts[0], data: btoa('wOF2changed') }],
+      }),
+      { code: 'denied' },
+    )
+    await assert.rejects(
+      verifyPluginPackage({ ...prepared, fonts: [...prepared.fonts, ...prepared.fonts] }),
+    )
+    for (const path of ['../font.woff2', 'fonts/a.woff', 'fonts/a.woff2?x', 'fonts//a.woff2'])
+      await assert.rejects(
+        preparePluginPackage({ manifest: source, files: [entry, { ...font, path }] }),
+      )
+    for (const bytes of [new TextEncoder().encode('invalid'), new Uint8Array(4 * 1024 * 1024 + 1)])
+      await assert.rejects(
+        preparePluginPackage({ manifest: source, files: [entry, { ...font, bytes }] }),
+      )
   }
 })

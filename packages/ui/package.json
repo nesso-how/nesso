@@ -8,20 +8,25 @@
     "url": "git+https://github.com/nesso-how/nesso.git",
     "directory": "packages/ui"
   },
+  "files": [
+    "dist"
+  ],
   "type": "module",
   "sideEffects": false,
-  "files": ["dist"],
   "types": "./dist/index.d.ts",
   "exports": {
     ".": "./src/index.ts",
     "./styles.css": "./src/styles.css"
   },
   "publishConfig": {
-    "access": "public",
     "exports": {
-      ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
+      ".": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
       "./styles.css": "./dist/styles.css"
-    }
+    },
+    "access": "public"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json && tsdown",
@@ -33,12 +38,12 @@
     "cn": "^0.4.0",
     "lucide-react": "^1.48.0"
   },
-  "peerDependencies": {
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8"
-  },
   "devDependencies": {
     "@types/react": "^19.2.18",
     "tsdown": "^0.23.1"
+  },
+  "peerDependencies": {
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
   }
 }

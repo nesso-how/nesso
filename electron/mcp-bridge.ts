@@ -2,7 +2,12 @@ import type { aiTools, AiResult } from '@nesso-how/ai'
 
 export type McpState = { readonly url: string; readonly token: string; readonly running: boolean }
 export type McpEvent =
-  | { readonly type: 'tool'; readonly id: string; readonly name: keyof typeof aiTools; readonly input: unknown }
+  | {
+      readonly type: 'tool'
+      readonly id: string
+      readonly name: keyof typeof aiTools
+      readonly input: unknown
+    }
   | { readonly type: 'cancel'; readonly id: string }
 
 export type McpBridge = {

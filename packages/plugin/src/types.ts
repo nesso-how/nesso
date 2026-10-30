@@ -19,23 +19,51 @@ export type NessoOperation =
   | { readonly kind: 'concept.bold'; readonly id: string; readonly value: boolean }
   | { readonly kind: 'concept.italic'; readonly id: string; readonly value: boolean }
   | { readonly kind: 'concept.position'; readonly id: string; readonly value: Readonly<Position> }
-  | { readonly kind: 'concept.positions'; readonly updates: readonly { readonly id: string; readonly position: Readonly<Position> }[] }
+  | {
+      readonly kind: 'concept.positions'
+      readonly updates: readonly { readonly id: string; readonly position: Readonly<Position> }[]
+    }
   | { readonly kind: 'concept.add'; readonly id: string; readonly position?: Readonly<Position> }
   | { readonly kind: 'concept.remove'; readonly id: string }
-  | { readonly kind: 'relation.connect'; readonly source: string; readonly target: string; readonly type?: Readonly<RelationType> }
-  | { readonly kind: 'relation.reconnect'; readonly id: string; readonly source: string; readonly target: string }
+  | {
+      readonly kind: 'relation.connect'
+      readonly source: string
+      readonly target: string
+      readonly type?: Readonly<RelationType>
+    }
+  | {
+      readonly kind: 'relation.reconnect'
+      readonly id: string
+      readonly source: string
+      readonly target: string
+    }
   | { readonly kind: 'relation.type'; readonly id: string; readonly typeId: string }
-  | { readonly kind: 'relation.type.create'; readonly id: string; readonly typeId: string; readonly label: string }
+  | {
+      readonly kind: 'relation.type.create'
+      readonly id: string
+      readonly typeId: string
+      readonly label: string
+    }
   | { readonly kind: 'relation.remove'; readonly id: string }
   | { readonly kind: 'document.reset'; readonly id: string }
   | { readonly kind: 'history.undo' }
   | { readonly kind: 'history.redo' }
   | { readonly kind: 'selection.set'; readonly value: Selection }
   | { readonly kind: 'view.activate'; readonly id: string | null }
-  | { readonly kind: 'view.create'; readonly id: string; readonly name: string; readonly conceptIds: readonly string[] }
+  | {
+      readonly kind: 'view.create'
+      readonly id: string
+      readonly name: string
+      readonly conceptIds: readonly string[]
+    }
   | { readonly kind: 'view.rename'; readonly id: string; readonly name: string }
   | { readonly kind: 'view.pin'; readonly id: string; readonly pinned: boolean }
-  | { readonly kind: 'view.membership'; readonly viewId: string; readonly conceptId: string; readonly included: boolean }
+  | {
+      readonly kind: 'view.membership'
+      readonly viewId: string
+      readonly conceptId: string
+      readonly included: boolean
+    }
   | { readonly kind: 'view.remove'; readonly id: string }
   | { readonly kind: 'viewport.set'; readonly rendererId: string; readonly value: Viewport }
   | { readonly kind: 'preferences.vocab'; readonly id: string }
@@ -76,8 +104,13 @@ export type PanelSizes = {
 }
 
 export type SectionId =
-  | 'sidebar' | 'sidebar.pinned-views' | 'sidebar.views'
-  | 'inspector' | 'inspector.connections' | 'inspector.views' | 'inspector.nodes'
+  | 'sidebar'
+  | 'sidebar.pinned-views'
+  | 'sidebar.views'
+  | 'inspector'
+  | 'inspector.connections'
+  | 'inspector.views'
+  | 'inspector.nodes'
 
 export type Preferences = {
   readonly locale?: Locale
@@ -107,8 +140,15 @@ export type NessoStore = {
   readonly setSelection: (selection: Selection) => void
   readonly setView: (id: string | null) => void
   readonly setViewport: (rendererId: string, viewport: Viewport) => void
-  readonly setConceptPosition: (id: string, position: Readonly<Position>, historyGroup?: string) => void
-  readonly setConceptPositions: (updates: readonly { readonly id: string; readonly position: Readonly<Position> }[], historyGroup?: string) => void
+  readonly setConceptPosition: (
+    id: string,
+    position: Readonly<Position>,
+    historyGroup?: string,
+  ) => void
+  readonly setConceptPositions: (
+    updates: readonly { readonly id: string; readonly position: Readonly<Position> }[],
+    historyGroup?: string,
+  ) => void
   readonly setConceptLabel: (id: string, label: string, historyGroup?: string) => void
   readonly setConceptDescription: (id: string, description: string, historyGroup?: string) => void
   readonly setConceptColor: (id: string, color: string, historyGroup?: string) => void
@@ -121,7 +161,10 @@ export type NessoStore = {
   readonly createRelationType: (id: string, label: string) => void
   readonly removeConcept: (id: string) => void
   readonly removeRelation: (id: string) => void
-  readonly applyOperations: (operations: readonly NessoOperation[], options?: { readonly historyGroup?: string }) => void
+  readonly applyOperations: (
+    operations: readonly NessoOperation[],
+    options?: { readonly historyGroup?: string },
+  ) => void
   readonly undo: () => void
   readonly redo: () => void
   readonly setActiveVocab: (id: string) => void
@@ -149,7 +192,11 @@ export type Notification = {
   readonly description?: string
 } & (
   | { readonly tone: 'info' | 'warning' }
-  | { readonly tone: 'confirmation'; readonly action: NotificationAction; readonly cancelAction: NotificationAction }
+  | {
+      readonly tone: 'confirmation'
+      readonly action: NotificationAction
+      readonly cancelAction: NotificationAction
+    }
 )
 
 export type Notifications = {

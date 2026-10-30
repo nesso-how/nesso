@@ -12,9 +12,19 @@ export function createNotifications() {
   const api = {
     notify: (notification: HostNotification) => {
       const id = crypto.randomUUID()
-      const item = notification.tone === 'confirmation'
-        ? { ...notification, id, action: { ...notification.action }, cancelAction: { ...notification.cancelAction } }
-        : { ...notification, id, ...(notification.action ? { action: { ...notification.action } } : {}) }
+      const item =
+        notification.tone === 'confirmation'
+          ? {
+              ...notification,
+              id,
+              action: { ...notification.action },
+              cancelAction: { ...notification.cancelAction },
+            }
+          : {
+              ...notification,
+              id,
+              ...(notification.action ? { action: { ...notification.action } } : {}),
+            }
       publish([...items, item])
       return id
     },
@@ -28,7 +38,9 @@ export function createNotifications() {
     getSnapshot: () => items,
     subscribe: (listener: () => void) => {
       listeners.add(listener)
-      return () => { listeners.delete(listener) }
+      return () => {
+        listeners.delete(listener)
+      }
     },
   }
 }

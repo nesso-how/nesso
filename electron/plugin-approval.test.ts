@@ -5,8 +5,27 @@ import { preparePluginPackage } from '../packages/plugin/src/package.ts'
 import type { InstalledPlugin, PluginAccess } from '../shared/plugins.ts'
 
 const integrity = `sha512-${Buffer.alloc(64).toString('base64')}`
-const make = async (version: string, access: PluginAccess = { writes: [], capabilities: [] }): Promise<InstalledPlugin> => ({
-  ...await preparePluginPackage({ manifest: { name: 'test-plugin', version, nesso: { apiVersion: 1, kind: 'actions', entry: 'index.js', ...access }, i18n: { metadata: { name: { en: 'Test' }, description: { en: 'Test plugin' }, documentation: { en: 'Test documentation' } } } }, files: [{ path: 'index.js', bytes: new TextEncoder().encode(`export const version = '${version}'`) }] }),
+const make = async (
+  version: string,
+  access: PluginAccess = { writes: [], capabilities: [] },
+): Promise<InstalledPlugin> => ({
+  ...(await preparePluginPackage({
+    manifest: {
+      name: 'test-plugin',
+      version,
+      nesso: { apiVersion: 1, kind: 'actions', entry: 'index.js', ...access },
+      i18n: {
+        metadata: {
+          name: { en: 'Test' },
+          description: { en: 'Test plugin' },
+          documentation: { en: 'Test documentation' },
+        },
+      },
+    },
+    files: [
+      { path: 'index.js', bytes: new TextEncoder().encode(`export const version = '${version}'`) },
+    ],
+  })),
   enabled: false,
   npmIntegrity: integrity,
 })
@@ -30,7 +49,10 @@ test('first installation requires one content-bound approval, even without decla
 
 test('unchanged and reduced verified npm access need no new prompt and retain only the new baseline', async () => {
   const previous = await make('1.0.0', { writes: ['concept.label'], capabilities: ['files'] })
-  for (const access of [previous.nesso, { writes: [], capabilities: [] }] satisfies PluginAccess[]) {
+  for (const access of [
+    previous.nesso,
+    { writes: [], capabilities: [] },
+  ] satisfies PluginAccess[]) {
     const received = await make('1.1.0', access)
     const approval = createPluginApproval(received, previous, true)
     assert.equal(approval.challenge, undefined)
@@ -39,7 +61,11 @@ test('unchanged and reduced verified npm access need no new prompt and retain on
     assert.equal(approval.authorized(received, { ...previous, contentId: 'changed' }), false)
   }
   const reduced = await make('1.1.0')
-  const reintroduced = createPluginApproval(await make('1.2.0', { writes: ['concept.label'], capabilities: [] }), reduced, true)
+  const reintroduced = createPluginApproval(
+    await make('1.2.0', { writes: ['concept.label'], capabilities: [] }),
+    reduced,
+    true,
+  )
   assert.ok(reintroduced.challenge)
   assert.deepEqual(reintroduced.access, { writes: ['concept.label'], capabilities: [] })
 })
@@ -54,7 +80,10 @@ test('expansions list only additions; unknown provenance and development updates
   assert.equal(expansion.respond(expansion.challenge, false), true)
   assert.equal(expansion.respond(expansion.challenge, true), false)
   assert.equal(expansion.authorized(received, previous), false)
-  for (const approval of [createPluginApproval(received, { ...previous, npmIntegrity: undefined }, true), createPluginApproval(received, previous, false)]) {
+  for (const approval of [
+    createPluginApproval(received, { ...previous, npmIntegrity: undefined }, true),
+    createPluginApproval(received, previous, false),
+  ]) {
     assert.equal(approval.additional, false)
     assert.deepEqual(approval.access, { writes: ['concept.label'], capabilities: ['files'] })
     assert.equal(approval.authorized(received, previous), false)
@@ -64,7 +93,22 @@ test('expansions list only additions; unknown provenance and development updates
 test('stale, changed-kind, nonmatching, prerelease and non-newer npm targets are rejected', async () => {
   const previous = await make('1.0.0')
   const next = await make('1.1.0')
-  for (const received of [previous, { ...next, name: 'other-plugin' }, { ...next, nesso: { apiVersion: 1, kind: 'vocab', entry: 'definition.json', writes: [], capabilities: [] } } satisfies InstalledPlugin, await make('0.9.0'), await make('1.2.0-beta.1')]) {
+  for (const received of [
+    previous,
+    { ...next, name: 'other-plugin' },
+    {
+      ...next,
+      nesso: {
+        apiVersion: 1,
+        kind: 'vocab',
+        entry: 'definition.json',
+        writes: [],
+        capabilities: [],
+      },
+    } satisfies InstalledPlugin,
+    await make('0.9.0'),
+    await make('1.2.0-beta.1'),
+  ]) {
     assert.throws(() => createPluginApproval(received, previous, true))
   }
   const routine = createPluginApproval(next, previous, true)
@@ -76,7 +120,10 @@ test('stale, changed-kind, nonmatching, prerelease and non-newer npm targets are
 test('theme and vocabulary declarations use the same first-install and routine-update policy', async () => {
   const actions = await make('1.0.0')
   for (const kind of ['theme', 'vocab'] as const) {
-    const previous: InstalledPlugin = { ...actions, nesso: { apiVersion: 1, kind, entry: 'definition.json', writes: [], capabilities: [] } }
+    const previous: InstalledPlugin = {
+      ...actions,
+      nesso: { apiVersion: 1, kind, entry: 'definition.json', writes: [], capabilities: [] },
+    }
     const received = { ...previous, version: '1.1.0', contentId: 'new-content' }
     assert.ok(createPluginApproval(received, undefined, true).challenge)
     const approval = createPluginApproval(received, previous, true)

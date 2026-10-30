@@ -1,10 +1,18 @@
 [
   {
-    "id": "energy", "name": "Energy", "pinned": false,
-    "conceptIds": ["urn:nesso:example:coffee", "urn:nesso:example:energy", "urn:nesso:example:focus"]
+    "id": "energy",
+    "name": "Energy",
+    "pinned": false,
+    "conceptIds": [
+      "urn:nesso:example:coffee",
+      "urn:nesso:example:energy",
+      "urn:nesso:example:focus"
+    ]
   },
   {
-    "id": "rest", "name": "Rest", "pinned": false,
+    "id": "rest",
+    "name": "Rest",
+    "pinned": false,
     "conceptIds": ["urn:nesso:example:coffee", "urn:nesso:example:sleep", "urn:nesso:example:focus"]
   }
 ]

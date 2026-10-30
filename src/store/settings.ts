@@ -1,4 +1,10 @@
-import type { PanelSizes, Preferences, SectionId, Viewport, WorkspaceState } from '@nesso-how/plugin'
+import type {
+  PanelSizes,
+  Preferences,
+  SectionId,
+  Viewport,
+  WorkspaceState,
+} from '@nesso-how/plugin'
 import { isLocale } from '@nesso-how/i18n'
 import { aiConversation, aiTextLimits } from '@nesso-how/ai'
 import { NessoError } from '@nesso-how/errors'
@@ -24,15 +30,23 @@ export const fail = (path: string, message: string): never => {
 
 export const parseConversation = (value: unknown) => {
   const parsed = aiConversation.safeParse(value)
-  if (!parsed.success) throw new NessoError(parsed.error.issues.map(({ path, message }) => ({ path: path.join('.'), message })))
+  if (!parsed.success)
+    throw new NessoError(
+      parsed.error.issues.map(({ path, message }) => ({ path: path.join('.'), message })),
+    )
   return { messages: parsed.data.messages }
 }
 
-export const object = (value: unknown, path: string, keys?: readonly string[]): Record<string, unknown> => {
+export const object = (
+  value: unknown,
+  path: string,
+  keys?: readonly string[],
+): Record<string, unknown> => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) fail(path, 'Expected an object')
   const result = value as Record<string, unknown>
   const unsupported = keys && Object.keys(result).find((key) => !keys.includes(key))
-  if (unsupported !== undefined) fail(path ? `${path}.${unsupported}` : unsupported, 'Unsupported property')
+  if (unsupported !== undefined)
+    fail(path ? `${path}.${unsupported}` : unsupported, 'Unsupported property')
   return result
 }
 
@@ -59,14 +73,24 @@ const parseViewport = (value: unknown, path: string): Viewport => {
 const parsePanels = (value: unknown): PanelSizes => {
   const panels = object(value, 'preferences.panels', ['explorerWidth', 'inspectorWidth'])
   return {
-    explorerWidth: number(panels.explorerWidth, 'preferences.panels.explorerWidth', panelLimits.explorerWidth.min, panelLimits.explorerWidth.max),
-    inspectorWidth: number(panels.inspectorWidth, 'preferences.panels.inspectorWidth', panelLimits.inspectorWidth.min),
+    explorerWidth: number(
+      panels.explorerWidth,
+      'preferences.panels.explorerWidth',
+      panelLimits.explorerWidth.min,
+      panelLimits.explorerWidth.max,
+    ),
+    inspectorWidth: number(
+      panels.inspectorWidth,
+      'preferences.panels.inspectorWidth',
+      panelLimits.inspectorWidth.min,
+    ),
   }
 }
 
 const parseViewName = (value: unknown, path: string): string => {
   const name = string(value, path).trim()
-  if (!name || name.length > maxViewNameLength) fail(path, `Expected a name of 1–${maxViewNameLength} characters`)
+  if (!name || name.length > maxViewNameLength)
+    fail(path, `Expected a name of 1–${maxViewNameLength} characters`)
   return name
 }
 
@@ -85,45 +109,69 @@ export const parseWorkspace = (value: unknown): WorkspaceState => {
       fail(`${path}.conceptIds`, 'Expected concept ids')
     }
     const conceptIds = view.conceptIds as string[]
-    if (new Set(conceptIds).size !== conceptIds.length) fail(`${path}.conceptIds`, 'Duplicate concept id')
+    if (new Set(conceptIds).size !== conceptIds.length)
+      fail(`${path}.conceptIds`, 'Duplicate concept id')
     if (typeof view.pinned !== 'boolean') fail(`${path}.pinned`, 'Expected a boolean')
     return { id, name, conceptIds: [...conceptIds], pinned: view.pinned as boolean }
   })
-  const activeViewId = workspace.activeViewId === null ? null : string(workspace.activeViewId, 'workspace.activeViewId')
-  if (activeViewId !== null && !ids.has(activeViewId)) fail('workspace.activeViewId', 'Unknown view')
+  const activeViewId =
+    workspace.activeViewId === null
+      ? null
+      : string(workspace.activeViewId, 'workspace.activeViewId')
+  if (activeViewId !== null && !ids.has(activeViewId))
+    fail('workspace.activeViewId', 'Unknown view')
   const viewports = object(workspace.viewports, 'workspace.viewports')
   return {
     activeViewId,
     savedViews,
-    viewports: Object.fromEntries(Object.entries(viewports).map(([id, viewport]) => {
-      if (!id) fail('workspace.viewports', 'Expected a renderer id')
-      return [id, parseViewport(viewport, `workspace.viewports.${id}`)]
-    })),
+    viewports: Object.fromEntries(
+      Object.entries(viewports).map(([id, viewport]) => {
+        if (!id) fail('workspace.viewports', 'Expected a renderer id')
+        return [id, parseViewport(viewport, `workspace.viewports.${id}`)]
+      }),
+    ),
   }
 }
 
 export const parsePreferences = (value: unknown): Preferences => {
-  const preferences = object(value, 'preferences', ['locale', 'introSeen', 'activeVocabId', 'activeRendererId', 'activeThemeId', 'panels', 'inspectorTab', 'collapsedSections'])
+  const preferences = object(value, 'preferences', [
+    'locale',
+    'introSeen',
+    'activeVocabId',
+    'activeRendererId',
+    'activeThemeId',
+    'panels',
+    'inspectorTab',
+    'collapsedSections',
+  ])
   const locale = preferences.locale
   if (locale !== undefined && !isLocale(locale)) fail('preferences.locale', 'Unsupported locale')
-  if (preferences.introSeen !== undefined && typeof preferences.introSeen !== 'boolean') fail('preferences.introSeen', 'Expected a boolean')
+  if (preferences.introSeen !== undefined && typeof preferences.introSeen !== 'boolean')
+    fail('preferences.introSeen', 'Expected a boolean')
   const inspectorTab = preferences.inspectorTab
-  if (inspectorTab !== undefined && inspectorTab !== 'details' && inspectorTab !== 'chat') fail('preferences.inspectorTab', 'Unknown inspector tab')
+  if (inspectorTab !== undefined && inspectorTab !== 'details' && inspectorTab !== 'chat')
+    fail('preferences.inspectorTab', 'Unknown inspector tab')
   let collapsedSections: SectionId[] | undefined
   if (preferences.collapsedSections !== undefined) {
-    if (!Array.isArray(preferences.collapsedSections)) fail('preferences.collapsedSections', 'Expected section ids')
+    if (!Array.isArray(preferences.collapsedSections))
+      fail('preferences.collapsedSections', 'Expected section ids')
     collapsedSections = (preferences.collapsedSections as unknown[]).map((id, index) => {
-      if (!(sectionIds as readonly unknown[]).includes(id)) fail(`preferences.collapsedSections[${index}]`, 'Unknown section')
+      if (!(sectionIds as readonly unknown[]).includes(id))
+        fail(`preferences.collapsedSections[${index}]`, 'Unknown section')
       return id as SectionId
     })
-    if (new Set(collapsedSections).size !== collapsedSections.length) fail('preferences.collapsedSections', 'Duplicate section id')
+    if (new Set(collapsedSections).size !== collapsedSections.length)
+      fail('preferences.collapsedSections', 'Duplicate section id')
   }
   return {
     ...(isLocale(locale) ? { locale } : {}),
     ...(preferences.introSeen === undefined ? {} : { introSeen: preferences.introSeen as boolean }),
     activeVocabId: string(preferences.activeVocabId, 'preferences.activeVocabId'),
     activeRendererId: string(preferences.activeRendererId, 'preferences.activeRendererId'),
-    activeThemeId: preferences.activeThemeId === undefined ? '' : string(preferences.activeThemeId, 'preferences.activeThemeId'),
+    activeThemeId:
+      preferences.activeThemeId === undefined
+        ? ''
+        : string(preferences.activeThemeId, 'preferences.activeThemeId'),
     panels: parsePanels(preferences.panels),
     ...(inspectorTab === 'details' || inspectorTab === 'chat' ? { inspectorTab } : {}),
     ...(collapsedSections === undefined ? {} : { collapsedSections }),

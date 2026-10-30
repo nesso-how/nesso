@@ -6,13 +6,23 @@ import type { HostStore } from '@/store/types'
 import { InspectorSection } from './InspectorSection'
 import { useTranslation } from '@/i18n'
 
-export function ConceptConnections({ store = nessoStore, conceptId, readonly = false }: { store?: HostStore; conceptId: string; readonly?: boolean }) {
+export function ConceptConnections({
+  store = nessoStore,
+  conceptId,
+  readonly = false,
+}: {
+  store?: HostStore
+  conceptId: string
+  readonly?: boolean
+}) {
   const t = useTranslation(store)
   const graph = useNessoStore((state) => state.graph, store)
   const viewGraph = useNessoStore((state) => state.viewGraph, store)
   const activeViewId = useNessoStore((state) => state.workspace.activeViewId, store)
   const visible = new Set(viewGraph.concepts.map((concept) => concept.id))
-  const connections = graph.relations.filter((relation) => relation.source === conceptId || relation.target === conceptId)
+  const connections = graph.relations.filter(
+    (relation) => relation.source === conceptId || relation.target === conceptId,
+  )
   if (connections.length === 0) return null
 
   return (
@@ -23,21 +33,42 @@ export function ConceptConnections({ store = nessoStore, conceptId, readonly = f
           const Direction = outgoing ? ArrowRight : ArrowLeft
           const otherId = outgoing ? relation.target : relation.source
           const other = graph.concepts.find((concept) => concept.id === otherId)
-          const label = graph.relationTypes.find((type) => type.id === relation.predicate)?.label ?? ''
+          const label =
+            graph.relationTypes.find((type) => type.id === relation.predicate)?.label ?? ''
           const included = visible.has(otherId)
           const MembershipIcon = included ? Minus : Plus
           return (
-            <div key={relationKey(relation)} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 gap-y-1 text-xs">
+            <div
+              key={relationKey(relation)}
+              className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 gap-y-1 text-xs"
+            >
               <span
                 title={t(outgoing ? 'outgoingRelation' : 'incomingRelation')}
                 className="col-start-1 inline-flex min-h-6 max-w-full items-center gap-1.5 justify-self-start font-mono text-[10px] leading-[14px] text-muted-foreground"
               >
                 <Direction aria-hidden="true" className="size-3 shrink-0" />
-                <span className="sr-only">{t(outgoing ? 'outgoingRelation' : 'incomingRelation')}: </span>
+                <span className="sr-only">
+                  {t(outgoing ? 'outgoingRelation' : 'incomingRelation')}:{' '}
+                </span>
                 <span className="min-w-0 break-words">{label}</span>
               </span>
-              <span className="col-start-1 row-start-2 min-h-6 min-w-0 max-w-full justify-self-start text-[13px] leading-[19px] break-words">{other?.label}</span>
-              {activeViewId !== null && <IconButton disabled={readonly} className="col-start-2 row-span-2 row-start-1 self-center" title={t(included ? 'removeFromCurrentView' : 'addToCurrentView')} aria-label={t(included ? 'removeConceptFromCurrentView' : 'addConceptToCurrentView', { name: other?.label ?? '' })} onClick={() => store.setViewMembership(activeViewId, otherId, !included)}><MembershipIcon /></IconButton>}
+              <span className="col-start-1 row-start-2 min-h-6 min-w-0 max-w-full justify-self-start text-[13px] leading-[19px] break-words">
+                {other?.label}
+              </span>
+              {activeViewId !== null && (
+                <IconButton
+                  disabled={readonly}
+                  className="col-start-2 row-span-2 row-start-1 self-center"
+                  title={t(included ? 'removeFromCurrentView' : 'addToCurrentView')}
+                  aria-label={t(
+                    included ? 'removeConceptFromCurrentView' : 'addConceptToCurrentView',
+                    { name: other?.label ?? '' },
+                  )}
+                  onClick={() => store.setViewMembership(activeViewId, otherId, !included)}
+                >
+                  <MembershipIcon />
+                </IconButton>
+              )}
             </div>
           )
         })}

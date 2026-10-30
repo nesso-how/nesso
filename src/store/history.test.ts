@@ -8,16 +8,26 @@ import { NessoError } from '@nesso-how/errors'
 import { applyStateOperations } from './operations.ts'
 
 const fixture = (): Graph => ({
-  concepts: Array.from({ length: 4 }, (_, i) => ({ id: `urn:n${i}`, label: `${i}`, position: { x: i, y: 0 } })),
+  concepts: Array.from({ length: 4 }, (_, i) => ({
+    id: `urn:n${i}`,
+    label: `${i}`,
+    position: { x: i, y: 0 },
+  })),
   relationTypes: [{ id: 'urn:custom', label: 'Custom' }],
   relations: [{ source: 'urn:n0', predicate: 'urn:custom', target: 'urn:n1' }],
 })
 
 test('undo and redo restore deletion, incident relations, custom types, memberships and order atomically', () => {
-  const host = createNessoStore(fixture(), { workspace: { activeViewId: 'urn:v1', viewports: {}, savedViews: [
-    { id: 'urn:v1', name: 'First', pinned: true, conceptIds: ['urn:n0', 'urn:n1', 'urn:n2'] },
-    { id: 'urn:v2', name: 'Second', pinned: false, conceptIds: ['urn:n3', 'urn:n1'] },
-  ] } })
+  const host = createNessoStore(fixture(), {
+    workspace: {
+      activeViewId: 'urn:v1',
+      viewports: {},
+      savedViews: [
+        { id: 'urn:v1', name: 'First', pinned: true, conceptIds: ['urn:n0', 'urn:n1', 'urn:n2'] },
+        { id: 'urn:v2', name: 'Second', pinned: false, conceptIds: ['urn:n3', 'urn:n1'] },
+      ],
+    },
+  })
   const before = host.store.getState()
   const snapshot = structuredClone(before)
   const selected = [
@@ -61,7 +71,8 @@ test('description edits share view data, group history, clear cleanly and preser
   const { store } = createNessoStore(fixture())
   const viewId = store.createView('View', ['urn:n0'])
   const before = store.getState()
-  for (const value of ['Definition', 'Definition\nExample']) store.setConceptDescription('urn:n0', value, 'description-1')
+  for (const value of ['Definition', 'Definition\nExample'])
+    store.setConceptDescription('urn:n0', value, 'description-1')
   const after = store.getState()
   assert.equal(after.viewGraph.concepts[0].description, 'Definition\nExample')
   assert.equal(after.graph.concepts[1], before.graph.concepts[1])
@@ -74,10 +85,14 @@ test('description edits share view data, group history, clear cleanly and preser
     { kind: 'concept.description', id: 'urn:n0', value: 'Definition\nExample' },
   ])
   assert.equal(store.getState(), after)
-  assert.throws(() => store.applyOperations([
-    { kind: 'concept.label', id: 'urn:n0', value: 'Must not commit' },
-    { kind: 'concept.description', id: 'urn:n0', value: 42 as never },
-  ]), SchemaError)
+  assert.throws(
+    () =>
+      store.applyOperations([
+        { kind: 'concept.label', id: 'urn:n0', value: 'Must not commit' },
+        { kind: 'concept.description', id: 'urn:n0', value: 42 as never },
+      ]),
+    SchemaError,
+  )
   assert.equal(store.getState(), after)
   store.undo()
   assert.deepEqual(store.getState().graph, before.graph)
@@ -97,7 +112,11 @@ test('description edits share view data, group history, clear cleanly and preser
 
 test('mixed batches undo only document changes and replay recorded effects, not current selection or vocabulary', () => {
   const host = createNessoStore(fixture())
-  host.registerVocab({ id: 'vocab', defaultTypeId: 'urn:links', relationTypes: [{ id: 'urn:links', label: 'Links' }] })
+  host.registerVocab({
+    id: 'vocab',
+    defaultTypeId: 'urn:links',
+    relationTypes: [{ id: 'urn:links', label: 'Links' }],
+  })
   host.store.applyOperations([
     { kind: 'view.create', id: 'urn:v', name: 'View', conceptIds: ['urn:n0'] },
     { kind: 'selection.set', value: [{ kind: 'concept', id: 'urn:n0' }] },
@@ -113,7 +132,11 @@ test('mixed batches undo only document changes and replay recorded effects, not 
   assert.equal(host.store.getState().workspace.activeViewId, null)
   assert.equal(host.store.getState().preferences, after.preferences)
   assert.deepEqual(host.store.getState().selected, [])
-  host.registerVocab({ id: 'other', defaultTypeId: 'urn:other', relationTypes: [{ id: 'urn:other', label: 'Other' }] })
+  host.registerVocab({
+    id: 'other',
+    defaultTypeId: 'urn:other',
+    relationTypes: [{ id: 'urn:other', label: 'Other' }],
+  })
   host.store.setActiveVocab('other')
   host.store.setSelection([{ kind: 'concept', id: 'urn:n3' }])
   host.store.redo()
@@ -125,19 +148,47 @@ test('mixed batches undo only document changes and replay recorded effects, not 
 })
 
 test('membership deltas contain changed IDs rather than copies of all view members', () => {
-  const host = createNessoStore(fixture(), { workspace: { activeViewId: 'urn:v', viewports: {}, savedViews: [
-    { id: 'urn:v', name: 'View', pinned: false, conceptIds: ['urn:n0', 'urn:n1', 'urn:n2', 'urn:n3'] },
-  ] } })
-  const { delta } = applyStateOperations(host.store.getState(), [{ kind: 'concept.remove', id: 'urn:n0' }], { renderers: new Map(), themes: new Map() })
+  const host = createNessoStore(fixture(), {
+    workspace: {
+      activeViewId: 'urn:v',
+      viewports: {},
+      savedViews: [
+        {
+          id: 'urn:v',
+          name: 'View',
+          pinned: false,
+          conceptIds: ['urn:n0', 'urn:n1', 'urn:n2', 'urn:n3'],
+        },
+      ],
+    },
+  })
+  const { delta } = applyStateOperations(
+    host.store.getState(),
+    [{ kind: 'concept.remove', id: 'urn:n0' }],
+    { renderers: new Map(), themes: new Map() },
+  )
   assert.equal(delta.concepts.length, 1)
-  assert.deepEqual(delta.views[0].members, [{ id: 'urn:n0', before: { index: 0, value: 'urn:n0' }, after: undefined }])
+  assert.deepEqual(delta.views[0].members, [
+    { id: 'urn:n0', before: { index: 0, value: 'urn:n0' }, after: undefined },
+  ])
   assert.equal('conceptIds' in delta.views[0].before!.value, false)
 })
 
 test('view metadata, membership reordering and removal round-trip without changing the graph', () => {
-  const host = createNessoStore(fixture(), { workspace: { activeViewId: 'urn:v', viewports: {}, savedViews: [
-    { id: 'urn:v', name: 'View', pinned: false, conceptIds: ['urn:n0', 'urn:n1', 'urn:n2', 'urn:n3'] },
-  ] } })
+  const host = createNessoStore(fixture(), {
+    workspace: {
+      activeViewId: 'urn:v',
+      viewports: {},
+      savedViews: [
+        {
+          id: 'urn:v',
+          name: 'View',
+          pinned: false,
+          conceptIds: ['urn:n0', 'urn:n1', 'urn:n2', 'urn:n3'],
+        },
+      ],
+    },
+  })
   const before = host.store.getState()
   host.store.applyOperations([
     { kind: 'view.membership', viewId: 'urn:v', conceptId: 'urn:n0', included: false },
@@ -204,8 +255,10 @@ test('history operations reject mixed and multiple-operation batches without cha
       [{ kind: 'document.reset', id: 'urn:reset' }, { kind }],
     ]
     for (const operations of batches) {
-      assert.throws(() => host.store.applyOperations(operations), (error: unknown) =>
-        error instanceof NessoError && error.issues[0].path === 'operations')
+      assert.throws(
+        () => host.store.applyOperations(operations),
+        (error: unknown) => error instanceof NessoError && error.issues[0].path === 'operations',
+      )
       assert.equal(host.store.getState(), before)
     }
   }
@@ -253,8 +306,13 @@ test('mixed structural batches restore original indices and merge a creation wit
   assert.deepEqual(host.store.getState().graph, before)
   host.store.redo()
   assert.deepEqual(host.store.getState().graph, after)
-  host.store.applyOperations([{ kind: 'concept.add', id: 'urn:placed' }], { historyGroup: 'placement' })
-  host.store.applyOperations([{ kind: 'concept.position', id: 'urn:placed', value: { x: 80, y: 90 } }], { historyGroup: 'placement' })
+  host.store.applyOperations([{ kind: 'concept.add', id: 'urn:placed' }], {
+    historyGroup: 'placement',
+  })
+  host.store.applyOperations(
+    [{ kind: 'concept.position', id: 'urn:placed', value: { x: 80, y: 90 } }],
+    { historyGroup: 'placement' },
+  )
   const placed = host.store.getState().graph
   host.store.undo()
   assert.deepEqual(host.store.getState().graph, after)
@@ -264,10 +322,23 @@ test('mixed structural batches restore original indices and merge a creation wit
 
 test('explicit text and drag groups merge adjacent edits, cancel net changes and separate sessions', () => {
   const host = createNessoStore(fixture())
-  for (const value of ['A', 'AB', 'ABC']) host.store.applyOperations([{ kind: 'concept.label', id: 'urn:n0', value }], { historyGroup: 'text-1' })
-  for (const x of [10, 20, 30]) host.store.applyOperations([{ kind: 'concept.positions', updates: [
-    { id: 'urn:n0', position: { x, y: 0 } }, { id: 'urn:n1', position: { x, y: 1 } },
-  ] }], { historyGroup: 'drag-1' })
+  for (const value of ['A', 'AB', 'ABC'])
+    host.store.applyOperations([{ kind: 'concept.label', id: 'urn:n0', value }], {
+      historyGroup: 'text-1',
+    })
+  for (const x of [10, 20, 30])
+    host.store.applyOperations(
+      [
+        {
+          kind: 'concept.positions',
+          updates: [
+            { id: 'urn:n0', position: { x, y: 0 } },
+            { id: 'urn:n1', position: { x, y: 1 } },
+          ],
+        },
+      ],
+      { historyGroup: 'drag-1' },
+    )
   host.store.undo()
   assert.equal(host.store.getState().graph.concepts[0].label, 'ABC')
   assert.deepEqual(host.store.getState().graph.concepts[0].position, { x: 0, y: 0 })
@@ -277,7 +348,10 @@ test('explicit text and drag groups merge adjacent edits, cancel net changes and
   host.store.redo()
   host.store.redo()
   assert.deepEqual(host.store.getState().graph.concepts[1].position, { x: 30, y: 1 })
-  for (const value of ['Temporary', 'ABC']) host.store.applyOperations([{ kind: 'concept.label', id: 'urn:n0', value }], { historyGroup: 'text-2' })
+  for (const value of ['Temporary', 'ABC'])
+    host.store.applyOperations([{ kind: 'concept.label', id: 'urn:n0', value }], {
+      historyGroup: 'text-2',
+    })
   host.store.undo()
   assert.equal(host.store.getState().graph.concepts[0].label, 'ABC')
   assert.deepEqual(host.store.getState().graph.concepts[0].position, { x: 0, y: 0 })

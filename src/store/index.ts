@@ -32,23 +32,32 @@ export const startAutosave = (prepare: () => void) => {
   const stopMoveState = window.nessoDataLocation?.subscribe((state) => {
     if (!state.moving) host.setWritesPaused(false)
   })
-  const flush = () => { void persistence.flush() }
+  const flush = () => {
+    void persistence.flush()
+  }
   const onVisibilityChange = () => {
     if (document.visibilityState === 'hidden') flush()
   }
   window.addEventListener('pagehide', flush)
   document.addEventListener('visibilitychange', onVisibilityChange)
-  return { ...persistence, save, dispose: () => {
-    stopUpdateSave?.()
-    stopMoveSave?.()
-    stopMoveState?.()
-    host.setWritesPaused(false)
-    window.removeEventListener('pagehide', flush)
-    document.removeEventListener('visibilitychange', onVisibilityChange)
-    void persistence.dispose()
-  } }
+  return {
+    ...persistence,
+    save,
+    dispose: () => {
+      stopUpdateSave?.()
+      stopMoveSave?.()
+      stopMoveState?.()
+      host.setWritesPaused(false)
+      window.removeEventListener('pagehide', flush)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+      void persistence.dispose()
+    },
+  }
 }
 
-export function useNessoStore<T>(selector: (state: HostState) => T, store: HostStore = nessoStore): T {
+export function useNessoStore<T>(
+  selector: (state: HostState) => T,
+  store: HostStore = nessoStore,
+): T {
   return useSyncExternalStore(store.subscribe, () => selector(store.getState()))
 }

@@ -10,7 +10,10 @@ export type GraphCommands = {
 }
 
 export type ConceptMapContext = {
-  readonly store: Pick<NessoStore, 'getState' | 'subscribe' | 'applyOperations' | 'conceptPlacementOffset' | 'undo' | 'redo'>
+  readonly store: Pick<
+    NessoStore,
+    'getState' | 'subscribe' | 'applyOperations' | 'conceptPlacementOffset' | 'undo' | 'redo'
+  >
   readonly commands: GraphCommands
 }
 
@@ -30,7 +33,10 @@ class ConceptMapError extends NessoError {
 
 export function useCanvasContext(): ConceptMapContext {
   const context = useContext(StoreContext)
-  if (!context) throw new ConceptMapError([{ path: 'context', message: 'Graph renderer rendered outside its provider' }])
+  if (!context)
+    throw new ConceptMapError([
+      { path: 'context', message: 'Graph renderer rendered outside its provider' },
+    ])
   return context
 }
 

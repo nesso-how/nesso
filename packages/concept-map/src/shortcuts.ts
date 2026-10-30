@@ -3,7 +3,8 @@ import { translate } from './i18n/index.ts'
 
 export function conceptMapShortcuts(locale: Locale) {
   const t = translate(locale)
-  const modifier = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl'
+  const modifier =
+    typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl'
   return {
     title: t('shortcutsTitle'),
     rows: [

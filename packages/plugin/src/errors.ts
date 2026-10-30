@@ -19,16 +19,33 @@ export class PluginError extends NessoError {
   readonly code: string
   readonly displayMessage?: LocalizedText
   constructor(code: string, issues: ErrorIssue[], displayMessage?: LocalizedText) {
-    const bounded = issues.slice(0, 32).map(({ path, message }) => ({ path: boundText(path, 256), message: boundText(message, 2048) }))
+    const bounded = issues.slice(0, 32).map(({ path, message }) => ({
+      path: boundText(path, 256),
+      message: boundText(message, 2048),
+    }))
     if (!bounded.length) bounded.push({ path: 'plugin', message: 'Plugin request failed' })
     super(bounded)
     this.code = code
-    if (displayMessage) this.displayMessage = { en: boundText(displayMessage.en, 2048), ...(displayMessage.it !== undefined ? { it: boundText(displayMessage.it, 2048) } : {}), ...(displayMessage['zh-CN'] !== undefined ? { 'zh-CN': boundText(displayMessage['zh-CN'], 2048) } : {}) }
+    if (displayMessage)
+      this.displayMessage = {
+        en: boundText(displayMessage.en, 2048),
+        ...(displayMessage.it !== undefined ? { it: boundText(displayMessage.it, 2048) } : {}),
+        ...(displayMessage['zh-CN'] !== undefined
+          ? { 'zh-CN': boundText(displayMessage['zh-CN'], 2048) }
+          : {}),
+      }
   }
 }
 
 export function parseOrThrow(schema: ZodType, value: unknown, prefix = ''): any {
   const parsed = schema.safeParse(value)
-  if (!parsed.success) throw new PluginError('invalid-input', parsed.error.issues.map((issue) => ({ path: `${prefix}${issue.path.join('.')}`, message: issue.message })))
+  if (!parsed.success)
+    throw new PluginError(
+      'invalid-input',
+      parsed.error.issues.map((issue) => ({
+        path: `${prefix}${issue.path.join('.')}`,
+        message: issue.message,
+      })),
+    )
   return parsed.data
 }

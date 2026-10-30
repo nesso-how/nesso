@@ -8,7 +8,14 @@ export const schemaContext = {
 } as const
 
 export const newIri = () => `urn:uuid:${crypto.randomUUID()}`
-export const isAbsoluteIri = (value: unknown): value is string => typeof value === 'string' && /^[a-z][a-z0-9+.-]*:/i.test(value)
-export const relationKey = ({ source, predicate, target }: {
-  source: string; predicate: string; target: string
+export const isAbsoluteIri = (value: unknown): value is string =>
+  typeof value === 'string' && /^[a-z][a-z0-9+.-]*:/i.test(value)
+export const relationKey = ({
+  source,
+  predicate,
+  target,
+}: {
+  source: string
+  predicate: string
+  target: string
 }) => JSON.stringify([source, predicate, target])

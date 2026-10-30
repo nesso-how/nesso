@@ -4,6 +4,8 @@ export type TrustedRequest = (event: IpcMainEvent | IpcMainInvokeEvent) => boole
 
 export function createTrustedRequest(dev: boolean): TrustedRequest {
   const url = dev ? 'http://127.0.0.1:5173/' : 'nesso://app/'
-  return (event) => BrowserWindow.getAllWindows().some((window) => window.webContents === event.sender)
-    && event.senderFrame === event.sender.mainFrame && event.senderFrame.url === url
+  return (event) =>
+    BrowserWindow.getAllWindows().some((window) => window.webContents === event.sender) &&
+    event.senderFrame === event.sender.mainFrame &&
+    event.senderFrame.url === url
 }

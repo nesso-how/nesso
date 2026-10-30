@@ -19,7 +19,13 @@ const fixture = (context: TestContext) => {
   }
   return { file, encryption, storage: createAiStorage(file, encryption) }
 }
-const input = { name: 'OpenAI', provider: 'openai' as const, endpoint: 'https://api.openai.com/v1', model: 'model', apiKey: 'secret' }
+const input = {
+  name: 'OpenAI',
+  provider: 'openai' as const,
+  endpoint: 'https://api.openai.com/v1',
+  model: 'model',
+  apiKey: 'secret',
+}
 
 test('secure storage is accessed only when saving or reading existing credentials', async (context) => {
   const { file, encryption, storage } = fixture(context)
@@ -41,7 +47,11 @@ test('unavailable encryption and insecure Linux backends preserve existing conne
   const before = readFileSync(file)
   for (const unavailable of [
     createAiStorage(file, { ...encryption, isEncryptionAvailable: () => false }),
-    createAiStorage(file, { ...encryption, getSelectedStorageBackend: () => 'basic_text' }, 'linux'),
+    createAiStorage(
+      file,
+      { ...encryption, getSelectedStorageBackend: () => 'basic_text' },
+      'linux',
+    ),
   ]) {
     assert.throws(() => unavailable.read(), ElectronError)
     assert.throws(() => unavailable.write('replacement'), ElectronError)

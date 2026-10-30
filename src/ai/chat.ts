@@ -11,9 +11,22 @@ type Snapshot = {
   readonly issues: readonly { path: string; message: string }[]
 }
 
-export function createAiChat(bridge: Pick<AiBridge, 'chat' | 'stop' | 'reply' | 'subscribeChat'>, store: HostStore, documentation: AiDocumentation) {
+export function createAiChat(
+  bridge: Pick<AiBridge, 'chat' | 'stop' | 'reply' | 'subscribeChat'>,
+  store: HostStore,
+  documentation: AiDocumentation,
+) {
   let state: Snapshot = { phase: 'idle', tool: null, issues: [] }
-  let active: { id: string; messageId: string; controller: AbortController; turn: ReturnType<typeof createAiTurn>; historyAvailable: boolean; failure?: NessoError } | undefined
+  let active:
+    | {
+        id: string
+        messageId: string
+        controller: AbortController
+        turn: ReturnType<typeof createAiTurn>
+        historyAvailable: boolean
+        failure?: NessoError
+      }
+    | undefined
   const listeners = new Set<() => void>()
   const publish = (next: Snapshot) => {
     state = next
@@ -21,7 +34,10 @@ export function createAiChat(bridge: Pick<AiBridge, 'chat' | 'stop' | 'reply' | 
   }
   const update = (id: string, change: (message: AiChatMessage) => AiChatMessage) => {
     const messages = store.getState().conversation.messages
-    if (messages.some((message) => message.id === id)) store.setChatMessages(messages.map((message) => message.id === id ? change(message) : message))
+    if (messages.some((message) => message.id === id))
+      store.setChatMessages(
+        messages.map((message) => (message.id === id ? change(message) : message)),
+      )
   }
   const stop = () => {
     if (!active || active.controller.signal.aborted) return
@@ -45,15 +61,20 @@ export function createAiChat(bridge: Pick<AiBridge, 'chat' | 'stop' | 'reply' | 
     try {
       if (event.type === 'activity') {
         if (state.tool !== event.tool) publish({ ...state, tool: event.tool })
-      } else if (event.type === 'text') update(run.messageId, (message) => ({ ...message, content: message.content + event.text }))
+      } else if (event.type === 'text')
+        update(run.messageId, (message) => ({ ...message, content: message.content + event.text }))
       else {
         const value = run.turn.execute(event.name, event.input)
         if (event.name === 'history' && 'available' in value) run.historyAvailable = value.available
         bridge.reply({ id: run.id, callId: event.callId, result: { value } })
       }
     } catch (error) {
-      run.failure = error instanceof NessoError ? error : new NessoError([{ path: 'ai.chat', message: 'Chat response failed validation' }])
-      if (event.type === 'tool') bridge.reply({ id: run.id, callId: event.callId, result: { issues: run.failure.issues } })
+      run.failure =
+        error instanceof NessoError
+          ? error
+          : new NessoError([{ path: 'ai.chat', message: 'Chat response failed validation' }])
+      if (event.type === 'tool')
+        bridge.reply({ id: run.id, callId: event.callId, result: { issues: run.failure.issues } })
       stop()
     }
   })
@@ -64,46 +85,97 @@ export function createAiChat(bridge: Pick<AiBridge, 'chat' | 'stop' | 'reply' | 
   }
   return {
     getSnapshot: () => state,
-    subscribe: (listener: () => void) => { listeners.add(listener); return () => { listeners.delete(listener) } },
-    stop, clear,
-    dispose: () => { stop(); unsubscribe(); unsubscribeStore() },
-    send: async (content: string, boundary: Parameters<typeof createAiTurn>[0], locale: AiChatRequest['locale']) => {
+    subscribe: (listener: () => void) => {
+      listeners.add(listener)
+      return () => {
+        listeners.delete(listener)
+      }
+    },
+    stop,
+    clear,
+    dispose: () => {
+      stop()
+      unsubscribe()
+      unsubscribeStore()
+    },
+    send: async (
+      content: string,
+      boundary: Parameters<typeof createAiTurn>[0],
+      locale: AiChatRequest['locale'],
+    ) => {
       const text = content.trim()
       if (!text || active) return
       const messages = store.getState().conversation.messages
       if (text.length > 100_000 || messages.length > 498) {
-        publish({ ...state, issues: [{ path: 'ai.chat', message: 'Conversation limit reached. Clear the chat to start again' }] })
+        publish({
+          ...state,
+          issues: [
+            {
+              path: 'ai.chat',
+              message: 'Conversation limit reached. Clear the chat to start again',
+            },
+          ],
+        })
         return
       }
       const controller = new AbortController()
       const turn = createAiTurn(boundary, controller.signal, documentation)
-      const run = { id: crypto.randomUUID(), messageId: crypto.randomUUID(), controller, turn, historyAvailable: false, failure: undefined as NessoError | undefined }
+      const run = {
+        id: crypto.randomUUID(),
+        messageId: crypto.randomUUID(),
+        controller,
+        turn,
+        historyAvailable: false,
+        failure: undefined as NessoError | undefined,
+      }
       active = run
-      const history = [...messages, { id: crypto.randomUUID(), role: 'user' as const, content: text }]
-      store.setChatMessages([...history, { id: run.messageId, role: 'assistant', content: '', outcome: 'cancelled' }])
+      const history = [
+        ...messages,
+        { id: crypto.randomUUID(), role: 'user' as const, content: text },
+      ]
+      store.setChatMessages([
+        ...history,
+        { id: run.messageId, role: 'assistant', content: '', outcome: 'cancelled' },
+      ])
       publish({ ...state, phase: 'generating', tool: null, issues: [] })
       let outcome: AiChatMessage['outcome'] = 'cancelled'
       let summary: AiChatMessage['summary']
       try {
-        const result = await bridge.chat({ id: run.id, messages: history, context: JSON.stringify(turn.execute('context', {})), locale })
+        const result = await bridge.chat({
+          id: run.id,
+          messages: history,
+          context: JSON.stringify(turn.execute('context', {})),
+          locale,
+        })
         if (run.failure) throw run.failure
         if (controller.signal.aborted) return
         if ('issues' in result) throw new NessoError([...result.issues])
         const commit = await turn.commit()
         const { effects } = commit
-        const changed = run.historyAvailable || effects.memberships > 0
-          || [effects.concepts, effects.relations, effects.relationTypes, effects.views].some((group) => group.added + group.updated + group.removed > 0)
+        const changed =
+          run.historyAvailable ||
+          effects.memberships > 0 ||
+          [effects.concepts, effects.relations, effects.relationTypes, effects.views].some(
+            (group) => group.added + group.updated + group.removed > 0,
+          )
         outcome = changed && !run.historyAvailable ? 'applied' : 'complete'
         if (outcome === 'applied') summary = summarizeCounts(effects)
       } catch (error) {
         if (run.failure || !controller.signal.aborted) {
           outcome = 'error'
-          const issues = error instanceof NessoError ? error.issues : [{ path: 'ai.chat', message: 'Chat request failed; no changes were applied' }]
+          const issues =
+            error instanceof NessoError
+              ? error.issues
+              : [{ path: 'ai.chat', message: 'Chat request failed; no changes were applied' }]
           publish({ ...state, issues })
         }
       } finally {
         turn.cancel()
-        update(run.messageId, (message) => ({ ...message, outcome, ...(summary ? { summary } : {}) }))
+        update(run.messageId, (message) => ({
+          ...message,
+          outcome,
+          ...(summary ? { summary } : {}),
+        }))
         active = undefined
         publish({ ...state, phase: 'idle', tool: null })
       }

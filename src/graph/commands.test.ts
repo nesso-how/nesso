@@ -9,7 +9,10 @@ const graph: Graph = {
     { id: 'urn:b', label: 'Beta', position: { x: 110, y: 70 } },
     { id: 'urn:c', label: 'Gamma', position: { x: 210, y: 120 } },
   ],
-  relationTypes: [{ id: 'urn:links', label: 'Links' }, { id: 'urn:unused', label: 'Unused' }],
+  relationTypes: [
+    { id: 'urn:links', label: 'Links' },
+    { id: 'urn:unused', label: 'Unused' },
+  ],
   relations: [
     { source: 'urn:a', predicate: 'urn:links', target: 'urn:b' },
     { source: 'urn:b', predicate: 'urn:links', target: 'urn:c' },
@@ -17,7 +20,10 @@ const graph: Graph = {
 }
 
 test('copy includes internal relations or selected relation endpoints, but not unrelated items', () => {
-  const selection = [{ kind: 'concept' as const, id: 'urn:a' }, { kind: 'concept' as const, id: 'urn:b' }]
+  const selection = [
+    { kind: 'concept' as const, id: 'urn:a' },
+    { kind: 'concept' as const, id: 'urn:b' },
+  ]
   const text = copyGraph(graph, selection)!
   const copied = parseGraph(JSON.parse(text))
   assert.deepEqual(copied, {
@@ -32,8 +38,16 @@ test('copy includes internal relations or selected relation endpoints, but not u
 
 test('paste positions the group at the requested point and rejects non-JSON clipboard data', () => {
   const text = copyGraph(graph, [{ kind: 'relation', id: relationKey(graph.relations[0]) }])!
-  const additions = pasteOperations(text, { x: 500, y: 600 }).filter((operation) => operation.kind === 'concept.add')
-  assert.deepEqual(additions.map((operation) => operation.position), [{ x: 500, y: 600 }, { x: 600, y: 650 }])
+  const additions = pasteOperations(text, { x: 500, y: 600 }).filter(
+    (operation) => operation.kind === 'concept.add',
+  )
+  assert.deepEqual(
+    additions.map((operation) => operation.position),
+    [
+      { x: 500, y: 600 },
+      { x: 600, y: 650 },
+    ],
+  )
   assert.throws(() => pasteOperations('not a graph'), SchemaError)
 })
 
@@ -41,7 +55,13 @@ test('deletion covers every visible concept regardless of relations or off-view 
   const view = { ...graph, concepts: graph.concepts.slice(0, 2) }
   const selected = view.concepts.map(({ id }) => ({ kind: 'concept' as const, id }))
   assert.equal(selectionCoversGraph(selected, view), true)
-  assert.equal(selectionCoversGraph([...selected, { kind: 'relation', id: 'edge' }, { kind: 'concept', id: 'urn:c' }], view), true)
+  assert.equal(
+    selectionCoversGraph(
+      [...selected, { kind: 'relation', id: 'edge' }, { kind: 'concept', id: 'urn:c' }],
+      view,
+    ),
+    true,
+  )
   assert.equal(selectionCoversGraph([selected[0], { kind: 'concept', id: 'urn:c' }], view), false)
   assert.equal(selectionCoversGraph([selected[0], { kind: 'relation', id: 'urn:b' }], view), false)
   assert.equal(selectionCoversGraph([], view), false)

@@ -17,14 +17,18 @@ const fixture = (): Graph => ({
     { id: 'urn:hidden', label: 'Hidden', position: { x: 50, y: 60 } },
   ],
   relations: [{ source: 'urn:one', predicate: 'urn:links', target: 'urn:two' }],
-  relationTypes: [{ id: 'urn:links', label: 'links' }, { id: 'urn:unused', label: 'unused' }],
+  relationTypes: [
+    { id: 'urn:links', label: 'links' },
+    { id: 'urn:unused', label: 'unused' },
+  ],
 })
 
 const memoryStorage = () => {
   const records = new Map<PersistenceSection, unknown>()
   const writes: PersistenceSection[] = []
   return {
-    records, writes,
+    records,
+    writes,
     read: async (key: PersistenceSection) => structuredClone(records.get(key)),
     write: async (key: PersistenceSection, value: unknown) => {
       records.set(key, structuredClone(value))
@@ -35,16 +39,26 @@ const memoryStorage = () => {
 
 const registeredHost = (graph: Graph | null, restored = {}) => {
   const host = createNessoStore(graph, restored)
-  host.registerVocab({ id: 'vocab', defaultTypeId: 'urn:links', relationTypes: [{ id: 'urn:links', label: 'links' }] })
+  host.registerVocab({
+    id: 'vocab',
+    defaultTypeId: 'urn:links',
+    relationTypes: [{ id: 'urn:links', label: 'links' }],
+  })
   host.registerRenderer({ id: 'graph' })
   host.registerTheme(themeFixture)
   return host
 }
 
-const setPluginData = (host: ReturnType<typeof createNessoStore>, value: string, revision = 0) => host.store.applyOperations([{
-  kind: 'plugin-storage.set', pluginId: 'nesso-plugin-example', documentId: host.store.getState().documentId,
-  revision, record: { key: 'settings', value },
-}])
+const setPluginData = (host: ReturnType<typeof createNessoStore>, value: string, revision = 0) =>
+  host.store.applyOperations([
+    {
+      kind: 'plugin-storage.set',
+      pluginId: 'nesso-plugin-example',
+      documentId: host.store.getState().documentId,
+      revision,
+      record: { key: 'settings', value },
+    },
+  ])
 
 const savedStorage = () => {
   const storage = memoryStorage()
@@ -52,7 +66,12 @@ const savedStorage = () => {
   host.store.setLocale('it')
   host.store.setChatMessages([{ id: 'user', role: 'user', content: 'Hello' }])
   const state = host.store.getState()
-  storage.records.set('document', { version: 2, documentId: state.documentId, graph: serializeGraph(state.graph as Graph), workspace: state.workspace })
+  storage.records.set('document', {
+    version: 2,
+    documentId: state.documentId,
+    graph: serializeGraph(state.graph as Graph),
+    workspace: state.workspace,
+  })
   storage.records.set('preferences', { version: 1, preferences: state.preferences })
   storage.records.set('conversation', { version: 1, messages: state.conversation.messages })
   return storage
@@ -74,10 +93,15 @@ test('startup writes only missing records', async () => {
 test('plugin resolution saves corrected preferences without rewriting other records', async () => {
   const storage = savedStorage()
   const original = await loadPersistence(storage)
-  storage.records.set('preferences', { version: 1, preferences: {
-    ...original.preferences,
-    activeVocabId: 'unavailable-vocab', activeRendererId: 'unavailable-renderer', activeThemeId: 'unavailable-theme',
-  } })
+  storage.records.set('preferences', {
+    version: 1,
+    preferences: {
+      ...original.preferences,
+      activeVocabId: 'unavailable-vocab',
+      activeRendererId: 'unavailable-renderer',
+      activeThemeId: 'unavailable-theme',
+    },
+  })
   const loaded = await loadPersistence(storage)
   const host = registeredHost(loaded.graph!, loaded)
   const persistence = connectPersistence(host, storage, loaded)
@@ -88,12 +112,40 @@ test('plugin resolution saves corrected preferences without rewriting other reco
 })
 
 test('startup saves durable changes made before autosave connects', async () => {
-  const changes: { section: PersistenceSection; apply: (host: ReturnType<typeof registeredHost>) => void }[] = [
-    { section: 'document', apply: (host) => { host.store.setConceptLabel('urn:one', 'Changed before autosave') } },
-    { section: 'document', apply: (host) => { host.store.setConceptDescription('urn:one', 'Changed description') } },
-    { section: 'document', apply: (host) => { host.store.setViewport('graph', { x: 30, y: 40, zoom: 0.75 }) } },
-    { section: 'conversation', apply: (host) => { host.store.clearChat() } },
-    { section: 'preferences', apply: (host) => { host.store.applyOperations([{ kind: 'preferences.inspectorTab', value: 'chat' }]) } },
+  const changes: {
+    section: PersistenceSection
+    apply: (host: ReturnType<typeof registeredHost>) => void
+  }[] = [
+    {
+      section: 'document',
+      apply: (host) => {
+        host.store.setConceptLabel('urn:one', 'Changed before autosave')
+      },
+    },
+    {
+      section: 'document',
+      apply: (host) => {
+        host.store.setConceptDescription('urn:one', 'Changed description')
+      },
+    },
+    {
+      section: 'document',
+      apply: (host) => {
+        host.store.setViewport('graph', { x: 30, y: 40, zoom: 0.75 })
+      },
+    },
+    {
+      section: 'conversation',
+      apply: (host) => {
+        host.store.clearChat()
+      },
+    },
+    {
+      section: 'preferences',
+      apply: (host) => {
+        host.store.applyOperations([{ kind: 'preferences.inspectorTab', value: 'chat' }])
+      },
+    },
   ]
   for (const { section, apply } of changes) {
     const storage = savedStorage()
@@ -114,12 +166,16 @@ test('startup saves durable changes made before autosave connects', async () => 
 test('record reads start in parallel and isolate failures in section order', async () => {
   const storage = savedStorage()
   const started: PersistenceSection[] = []
-  const completions = new Map<PersistenceSection, { resolve: (value: unknown) => void; reject: (error: unknown) => void }>()
+  const completions = new Map<
+    PersistenceSection,
+    { resolve: (value: unknown) => void; reject: (error: unknown) => void }
+  >()
   const loading = loadPersistence({
-    read: (section) => new Promise((resolve, reject) => {
-      started.push(section)
-      completions.set(section, { resolve, reject })
-    }),
+    read: (section) =>
+      new Promise((resolve, reject) => {
+        started.push(section)
+        completions.set(section, { resolve, reject })
+      }),
     write: storage.write,
   })
   assert.deepEqual(started, ['document', 'preferences', 'conversation', 'plugin-storage'])
@@ -136,9 +192,13 @@ test('record reads start in parallel and isolate failures in section order', asy
   assert.equal(loaded.issues[1].path, 'conversation.version')
   assert.equal(loaded.preferences, undefined)
   assert.equal(loaded.conversation, undefined)
-  assert.deepEqual(loaded.issues.map(({ section, operation }) => ({ section, operation })), [
-    { section: 'preferences', operation: 'read' }, { section: 'conversation', operation: 'read' },
-  ])
+  assert.deepEqual(
+    loaded.issues.map(({ section, operation }) => ({ section, operation })),
+    [
+      { section: 'preferences', operation: 'read' },
+      { section: 'conversation', operation: 'read' },
+    ],
+  )
 })
 
 test('durable state round-trips without rewriting restored records or persisting runtime state', async () => {
@@ -153,7 +213,9 @@ test('durable state round-trips without rewriting restored records or persisting
   host.store.applyOperations([{ kind: 'preferences.inspectorTab', value: 'chat' }])
   host.store.setViewport('graph', { x: 100, y: 200, zoom: 0.75 })
   host.store.setConceptLabel('urn:one', 'Renamed')
-  host.store.setChatMessages([{ id: 'assistant', role: 'assistant', content: 'Proposed rename.', outcome: 'applied' }])
+  host.store.setChatMessages([
+    { id: 'assistant', role: 'assistant', content: 'Proposed rename.', outcome: 'applied' },
+  ])
   host.store.setSelection([{ kind: 'concept', id: 'urn:one' }])
   const persistence = connectPersistence(host, storage, await loadPersistence(storage))
   host.store.renameView(viewId, 'Renamed pair')
@@ -171,8 +233,14 @@ test('durable state round-trips without rewriting restored records or persisting
   assert.equal(reopened.preferences.inspectorTab, 'chat')
   assert.deepEqual(reopened.history, { canUndo: false, canRedo: false })
   assert.deepEqual(reopened.persistenceIssues, [])
-  assert.deepEqual(reopened.viewGraph.concepts.map(({ id }) => id), ['urn:one', 'urn:two'])
-  assert.deepEqual(Object.keys(storage.records.get('conversation') as object), ['version', 'messages'])
+  assert.deepEqual(
+    reopened.viewGraph.concepts.map(({ id }) => id),
+    ['urn:one', 'urn:two'],
+  )
+  assert.deepEqual(Object.keys(storage.records.get('conversation') as object), [
+    'version',
+    'messages',
+  ])
   assert.equal('themes' in (storage.records.get('preferences') as object), false)
   storage.writes.length = 0
   const reopenedPersistence = connectPersistence(reopenedHost, storage, restored)
@@ -187,9 +255,17 @@ test('durable state round-trips without rewriting restored records or persisting
   assert.deepEqual(reset.workspace, { activeViewId: null, savedViews: [], viewports: {} })
   assert.deepEqual(reset.preferences, preferences)
   assert.deepEqual(reset.conversation?.messages, [])
-  storage.records.set('document', { version: 2, documentId: 'urn:deleted', graph: null, workspace: null })
+  storage.records.set('document', {
+    version: 2,
+    documentId: 'urn:deleted',
+    graph: null,
+    workspace: null,
+  })
   const deleted = await loadPersistence(storage)
-  assert.equal(registeredHost(deleted.graph ?? null, deleted).store.getState().graph.concepts.length, 1)
+  assert.equal(
+    registeredHost(deleted.graph ?? null, deleted).store.getState().graph.concepts.length,
+    1,
+  )
   await persistence.dispose()
 })
 
@@ -233,7 +309,9 @@ test('autosave debounces durable sections and drains edits on shutdown', async (
   assert.deepEqual(storage.writes, ['preferences'])
   assert.equal((await loadPersistence(storage)).preferences?.inspectorTab, 'chat')
   storage.writes.length = 0
-  host.store.setChatMessages([{ id: 'assistant', role: 'assistant', content: 'Complete', outcome: 'complete' }])
+  host.store.setChatMessages([
+    { id: 'assistant', role: 'assistant', content: 'Complete', outcome: 'complete' },
+  ])
   await persistence.flush()
   assert.deepEqual(storage.writes, ['conversation'])
   host.store.setConceptLabel('urn:one', 'Before closing')
@@ -252,23 +330,93 @@ test('malformed records stay protected while the other sections save', async () 
   const longType = fixture()
   longType.relationTypes[0].label = 'x'.repeat(maxRelationLabelLength + 1)
   const invalid: [PersistenceSection, unknown, string?][] = [
-    ['document', null], ['preferences', null], ['conversation', null],
+    ['document', null],
+    ['preferences', null],
+    ['conversation', null],
     ['conversation', { version: 2, messages: [] }],
-    ['conversation', { version: 1, messages: [{ id: 'invalid', role: 'system', content: 'Invalid' }] }],
+    [
+      'conversation',
+      { version: 1, messages: [{ id: 'invalid', role: 'system', content: 'Invalid' }] },
+    ],
     ['document', { version: 2 }],
-    ['document', { version: 1, graph: serializeGraph(fixture()), workspace: state.workspace }, 'document.version'],
-    ['document', { version: 2, documentId: state.documentId, graph: serializeGraph(longConcept), workspace: state.workspace }],
-    ['document', { version: 2, documentId: state.documentId, graph: serializeGraph(longType), workspace: state.workspace }],
-    ['document', { version: 2, documentId: state.documentId, graph: serializeGraph({ concepts: [], relations: [], relationTypes: [] }), workspace: state.workspace }],
-    ['document', { version: 2, documentId: state.documentId, graph: serializeGraph(fixture()), workspace: { ...state.workspace, activeViewId: 'unknown' } }],
-    ['document', { version: 2, documentId: state.documentId, graph: serializeGraph(fixture()), workspace: { ...state.workspace, savedViews: [{ id: 'bad', name: 'Bad', pinned: false, conceptIds: ['missing'] }] } }],
+    [
+      'document',
+      { version: 1, graph: serializeGraph(fixture()), workspace: state.workspace },
+      'document.version',
+    ],
+    [
+      'document',
+      {
+        version: 2,
+        documentId: state.documentId,
+        graph: serializeGraph(longConcept),
+        workspace: state.workspace,
+      },
+    ],
+    [
+      'document',
+      {
+        version: 2,
+        documentId: state.documentId,
+        graph: serializeGraph(longType),
+        workspace: state.workspace,
+      },
+    ],
+    [
+      'document',
+      {
+        version: 2,
+        documentId: state.documentId,
+        graph: serializeGraph({ concepts: [], relations: [], relationTypes: [] }),
+        workspace: state.workspace,
+      },
+    ],
+    [
+      'document',
+      {
+        version: 2,
+        documentId: state.documentId,
+        graph: serializeGraph(fixture()),
+        workspace: { ...state.workspace, activeViewId: 'unknown' },
+      },
+    ],
+    [
+      'document',
+      {
+        version: 2,
+        documentId: state.documentId,
+        graph: serializeGraph(fixture()),
+        workspace: {
+          ...state.workspace,
+          savedViews: [{ id: 'bad', name: 'Bad', pinned: false, conceptIds: ['missing'] }],
+        },
+      },
+    ],
     ['preferences', { version: 1, preferences: { ...state.preferences, activeThemeId: null } }],
-    ...[null, 'invalid', 1].map((inspectorTab): [PersistenceSection, unknown] => ['preferences', { version: 1, preferences: { ...state.preferences, inspectorTab } }]),
-    ['preferences', { version: 1, preferences: { ...state.preferences, panels: { explorerWidth: 0, inspectorWidth: 280 } } }],
-    ...[null, ['missing'], ['sidebar', 'sidebar']].map((collapsedSections): [PersistenceSection, unknown] => ['preferences', { version: 1, preferences: { ...state.preferences, collapsedSections } }]),
+    ...[null, 'invalid', 1].map((inspectorTab): [PersistenceSection, unknown] => [
+      'preferences',
+      { version: 1, preferences: { ...state.preferences, inspectorTab } },
+    ]),
+    [
+      'preferences',
+      {
+        version: 1,
+        preferences: { ...state.preferences, panels: { explorerWidth: 0, inspectorWidth: 280 } },
+      },
+    ],
+    ...[null, ['missing'], ['sidebar', 'sidebar']].map(
+      (collapsedSections): [PersistenceSection, unknown] => [
+        'preferences',
+        { version: 1, preferences: { ...state.preferences, collapsedSections } },
+      ],
+    ),
     ['preferences', { version: 1, preferences: { ...state.preferences, locale: 'fr' } }],
     ['preferences', { version: 1, preferences: { ...state.preferences, introSeen: 'true' } }],
-    ['preferences', { version: 1, preferences: { ...state.preferences, inspectorTab: 'content' } }, 'preferences.inspectorTab'],
+    [
+      'preferences',
+      { version: 1, preferences: { ...state.preferences, inspectorTab: 'content' } },
+      'preferences.inspectorTab',
+    ],
   ]
   for (const [section, value, expectedPath] of invalid) {
     const storage = memoryStorage()
@@ -315,7 +463,11 @@ test('an unreadable conversation is overwritten only after explicit clear', asyn
 })
 
 test('storage failures preserve records and allow retrying the latest edits', async () => {
-  const denied = await loadPersistence(createIndexedDbStorage(() => { throw new Error('Access denied') }))
+  const denied = await loadPersistence(
+    createIndexedDbStorage(() => {
+      throw new Error('Access denied')
+    }),
+  )
   assert.deepEqual(denied.blocked, ['document', 'preferences', 'conversation', 'plugin-storage'])
   assert.match(denied.issues[0].message, /Access denied/)
   const storage = memoryStorage()
@@ -337,7 +489,9 @@ test('storage failures preserve records and allow retrying the latest edits', as
   host.store.setConceptLabel('urn:one', 'Unsaved')
   assert.equal(await persistence.flush(), false)
   assert.deepEqual(storage.records.get('document'), original)
-  assert.deepEqual(host.store.getState().persistenceIssues, [{ section: 'document', operation: 'write', path: 'document', message: 'Disk full' }])
+  assert.deepEqual(host.store.getState().persistenceIssues, [
+    { section: 'document', operation: 'write', path: 'document', message: 'Disk full' },
+  ])
   deniedWrite = false
   assert.equal(await persistence.flush(), true)
   assert.equal((await loadPersistence(limited)).graph?.concepts[0].label, 'Unsaved')
@@ -351,7 +505,9 @@ test('flush serializes overlapping writes and drains changes made during a save'
   const persistence = connectPersistence(host, storage, await loadPersistence(storage))
   const write = storage.write
   let release!: () => void
-  const gate = new Promise<void>((resolve) => { release = resolve })
+  const gate = new Promise<void>((resolve) => {
+    release = resolve
+  })
   let active = 0
   storage.write = async (section, value) => {
     active++
@@ -401,7 +557,10 @@ test('explicit recovery replaces only the chosen record and keeps failed replace
   assert.equal(await persistence.recover('preferences'), true)
   assert.deepEqual(storage.writes, ['preferences'])
   assert.deepEqual((await loadPersistence(storage)).blocked, ['conversation', 'plugin-storage'])
-  assert.equal(host.store.getState().persistenceIssues.some((issue) => issue.section === 'preferences'), false)
+  assert.equal(
+    host.store.getState().persistenceIssues.some((issue) => issue.section === 'preferences'),
+    false,
+  )
   host.store.setLocale('en')
   assert.equal(await persistence.flush(), true)
   assert.deepEqual(storage.writes, ['preferences', 'preferences'])

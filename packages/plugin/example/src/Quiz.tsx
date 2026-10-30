@@ -10,7 +10,9 @@ export function Quiz({ document, storage, viewId }: ActionContext) {
 
   useEffect(() => {
     void storage.list().then((records) => {
-      const value = records.find((record) => record.key === key && record.conceptId === undefined)?.value
+      const value = records.find(
+        (record) => record.key === key && record.conceptId === undefined,
+      )?.value
       setStep(typeof value === 'number' ? value : 0)
     })
   }, [storage, key])
@@ -34,14 +36,33 @@ export function Quiz({ document, storage, viewId }: ActionContext) {
     <section className="quiz">
       <div className="quiz-card">
         <h1>Concept Quiz</h1>
-        <p data-step>Step {Math.min(step + 1, relations.length)} / {relations.length}</p>
-        {relation ? <>
-          <p data-question>{conceptLabel(relation.source)} — {relationType?.label || relation.predicate} → ?</p>
-          <p data-answer role="status">{revealed ? conceptLabel(relation.target) : ''}</p>
-        </> : <p data-result role="status">{relations.length ? 'Quiz complete!' : 'This view has no relations.'}</p>}
+        <p data-step>
+          Step {Math.min(step + 1, relations.length)} / {relations.length}
+        </p>
+        {relation ? (
+          <>
+            <p data-question>
+              {conceptLabel(relation.source)} — {relationType?.label || relation.predicate} → ?
+            </p>
+            <p data-answer role="status">
+              {revealed ? conceptLabel(relation.target) : ''}
+            </p>
+          </>
+        ) : (
+          <p data-result role="status">
+            {relations.length ? 'Quiz complete!' : 'This view has no relations.'}
+          </p>
+        )}
         <footer>
-          <Button variant="outline" onClick={() => void saveStep(0)}>Reset</Button>
-          <Button disabled={!relation} onClick={() => revealed ? void saveStep(step + 1) : setRevealed(true)}>{buttonLabel}</Button>
+          <Button variant="outline" onClick={() => void saveStep(0)}>
+            Reset
+          </Button>
+          <Button
+            disabled={!relation}
+            onClick={() => (revealed ? void saveStep(step + 1) : setRevealed(true))}
+          >
+            {buttonLabel}
+          </Button>
         </footer>
       </div>
     </section>

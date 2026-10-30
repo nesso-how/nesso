@@ -4,7 +4,11 @@ import { notifications } from '@/notifications'
 import { nessoStore } from '@/store'
 import type { HostState, HostStore } from '@/store/types'
 
-export function ConceptColor({ store = nessoStore, concepts, readonly = false }: {
+export function ConceptColor({
+  store = nessoStore,
+  concepts,
+  readonly = false,
+}: {
   store?: HostStore
   concepts: HostState['graph']['concepts']
   readonly?: boolean
@@ -23,7 +27,9 @@ export function ConceptColor({ store = nessoStore, concepts, readonly = false }:
           interactionId ? { historyGroup: interactionId } : undefined,
         )
       }}
-      onCopyError={() => { notifications.api.notify({ tone: 'warning', title: t('copyColorFailed') }) }}
+      onCopyError={() => {
+        notifications.api.notify({ tone: 'warning', title: t('copyColorFailed') })
+      }}
       inputProps={{ 'data-document-edit': true }}
       labels={{
         color: t('color'),

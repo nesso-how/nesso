@@ -5,7 +5,13 @@ A framework-independent graph model, validation, and a minimal JSON-LD profile. 
 ## Usage
 
 ```ts
-import { parseGraph, relationKey, serializeGraph, validateGraph, type Graph } from '@nesso-how/schema'
+import {
+  parseGraph,
+  relationKey,
+  serializeGraph,
+  validateGraph,
+  type Graph,
+} from '@nesso-how/schema'
 
 const graph: Graph = {
   concepts: [

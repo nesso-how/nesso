@@ -1,8 +1,29 @@
-import { useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent, type ReactNode } from 'react'
+import {
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent,
+  type PointerEvent,
+  type ReactNode,
+} from 'react'
 import { cn } from 'cn'
 import { PanelToggle } from './panel-toggle'
 
-export function SidePanel({ id, side, open, size, minSize, maxSize, onToggle, onSizeChange, toggleLabel, resizeLabel, className, children }: {
+export function SidePanel({
+  id,
+  side,
+  open,
+  size,
+  minSize,
+  maxSize,
+  onToggle,
+  onSizeChange,
+  toggleLabel,
+  resizeLabel,
+  className,
+  children,
+}: {
   id: string
   side: 'left' | 'right'
   open: boolean
@@ -21,7 +42,12 @@ export function SidePanel({ id, side, open, size, minSize, maxSize, onToggle, on
   const [available, setAvailable] = useState<number | null>(null)
   const [dragSize, setDragSize] = useState<number | null>(null)
   const direction = side === 'left' ? 1 : -1
-  const limit = typeof maxSize === 'number' ? maxSize : available === null ? size : available * parseFloat(maxSize) / 100
+  const limit =
+    typeof maxSize === 'number'
+      ? maxSize
+      : available === null
+        ? size
+        : (available * parseFloat(maxSize)) / 100
   const maximum = Math.max(minSize, Math.min(limit, available ?? limit))
   const clamp = (value: number) => Math.min(maximum, Math.max(minSize, value))
   const currentSize = clamp(dragSize ?? size)
@@ -46,7 +72,8 @@ export function SidePanel({ id, side, open, size, minSize, maxSize, onToggle, on
     const keys = ['ArrowLeft', 'ArrowRight']
     if (event.key === 'Home') onSizeChange(minSize)
     else if (event.key === 'End') onSizeChange(maximum)
-    else if (keys.includes(event.key)) onSizeChange(clamp(currentSize + (event.key === keys[1] ? 10 : -10) * direction))
+    else if (keys.includes(event.key))
+      onSizeChange(clamp(currentSize + (event.key === keys[1] ? 10 : -10) * direction))
     else return
     event.preventDefault()
   }
@@ -57,8 +84,17 @@ export function SidePanel({ id, side, open, size, minSize, maxSize, onToggle, on
   }
 
   return (
-    <div ref={root} className={cn('side-panel', className)} data-side={side} data-open={open} data-resizing={dragSize !== null || undefined} style={{ '--panel-size': `${currentSize}px` } as CSSProperties}>
-      <div id={id} className="side-panel-content" inert={!open} aria-hidden={!open}>{children}</div>
+    <div
+      ref={root}
+      className={cn('side-panel', className)}
+      data-side={side}
+      data-open={open}
+      data-resizing={dragSize !== null || undefined}
+      style={{ '--panel-size': `${currentSize}px` } as CSSProperties}
+    >
+      <div id={id} className="side-panel-content" inert={!open} aria-hidden={!open}>
+        {children}
+      </div>
       <div
         className="side-panel-resize"
         role="separator"
@@ -90,7 +126,14 @@ export function SidePanel({ id, side, open, size, minSize, maxSize, onToggle, on
         onPointerCancel={cancelResize}
         onLostPointerCapture={cancelResize}
       />
-      <PanelToggle side={side} open={open} aria-label={toggleLabel} aria-controls={id} title={toggleLabel} onClick={onToggle} />
+      <PanelToggle
+        side={side}
+        open={open}
+        aria-label={toggleLabel}
+        aria-controls={id}
+        title={toggleLabel}
+        onClick={onToggle}
+      />
     </div>
   )
 }

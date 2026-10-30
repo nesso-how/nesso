@@ -3,16 +3,27 @@
   "version": "1.0.0-alpha.31",
   "license": "MIT",
   "type": "module",
-  "nesso": {
-    "apiVersion": 1,
-    "kind": "vocab",
-    "entry": "dist/definition.json",
-    "writes": [], "capabilities": []
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "devDependencies": {
+    "@nesso-how/plugin": "workspace:*"
+  },
+  "peerDependencies": {
+    "@nesso-how/plugin": "workspace:*"
   },
   "i18n": {
     "metadata": {
-      "name": { "en": "Base Vocabulary", "it": "Base Vocabulary", "zh-CN": "基础词汇表" },
-      "description": { "en": "A shared language for relationships between concepts.", "it": "Un linguaggio condiviso per le relazioni tra concetti.", "zh-CN": "用于表达概念之间关系的通用语言。" },
+      "name": {
+        "en": "Base Vocabulary",
+        "it": "Base Vocabulary",
+        "zh-CN": "基础词汇表"
+      },
+      "description": {
+        "en": "A shared language for relationships between concepts.",
+        "it": "Un linguaggio condiviso per le relazioni tra concetti.",
+        "zh-CN": "用于表达概念之间关系的通用语言。"
+      },
       "documentation": {
         "en": "Base provides linksTo, partOf, causes, kindOf, dependsOn, exampleOf, contradicts, defines, enables, and precedes relation types. Its default linksTo relation is displayed without a label. Switching vocabulary leaves existing relations unchanged.",
         "it": "Base fornisce i tipi di relazione linksTo, partOf, causes, kindOf, dependsOn, exampleOf, contradicts, defines, enables e precedes. La relazione predefinita linksTo viene visualizzata senza etichetta. Cambiare vocabolario lascia invariate le relazioni esistenti.",
@@ -20,13 +31,11 @@
       }
     }
   },
-  "exports": {
-    ".": "./src/index.ts"
-  },
-  "peerDependencies": {
-    "@nesso-how/plugin": "workspace:*"
-  },
-  "devDependencies": {
-    "@nesso-how/plugin": "workspace:*"
+  "nesso": {
+    "apiVersion": 1,
+    "kind": "vocab",
+    "entry": "dist/definition.json",
+    "writes": [],
+    "capabilities": []
   }
 }

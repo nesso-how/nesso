@@ -29,24 +29,24 @@ Keep React and React DOM external in your plugin bundle. Import your own layout 
 Install React/React DOM and configure [Tailwind CSS 4](https://tailwindcss.com/docs/installation) in your application. Import the package's source CSS after Tailwind in your main stylesheet:
 
 ```css
-@import "tailwindcss";
-@import "@nesso-how/ui/styles.css";
+@import 'tailwindcss';
+@import '@nesso-how/ui/styles.css';
 ```
 
 Your build must compile this CSS; it is not a precompiled stylesheet. Supply the theme CSS variables on your document or component container: colors such as `--background`, `--foreground`, and `--border`; `--font-sans` and `--font-mono`; `--radius-control` and `--radius-object` with length units; and `--duration-state` with time units. No theme values or font files are included. See the [theme schema](https://github.com/nesso-how/nesso/blob/main/packages/plugin/src/definitions.ts) for all color tokens and [Paper's theme](https://github.com/nesso-how/nesso/blob/main/plugins/paper-theme/src/index.ts) for example values.
 
 ## Components
 
-| Area | Exports |
-| --- | --- |
-| Buttons and inputs | `Button`, `IconButton`, `Input`, `Label`, `PreferenceSelect`, `ColorPicker` |
-| Forms and rows | `Field`, `FieldHint`, `ListRow`, `ListRowButton`, `ListRowDetail`, `ListRowTitle`, `RevealActions`, `PromptForm` |
-| Menus and popovers | `Menu`, `MenuItem`, `MenuPopup`, `MenuRadioItem`, `Popover`, `PopoverPopup` |
+| Area                   | Exports                                                                                                                   |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Buttons and inputs     | `Button`, `IconButton`, `Input`, `Label`, `PreferenceSelect`, `ColorPicker`                                               |
+| Forms and rows         | `Field`, `FieldHint`, `ListRow`, `ListRowButton`, `ListRowDetail`, `ListRowTitle`, `RevealActions`, `PromptForm`          |
+| Menus and popovers     | `Menu`, `MenuItem`, `MenuPopup`, `MenuRadioItem`, `Popover`, `PopoverPopup`                                               |
 | Search and suggestions | `Combobox`, `ComboboxItem`, `ComboboxPopup`, `Autocomplete`, `AutocompleteClear`, `AutocompleteItem`, `AutocompletePopup` |
-| Dialogs | `Dialog`, `DialogActions`, `DialogPopup`, `ConfirmDialog`, `TextPromptDialog` |
-| Panels and disclosure | `SidePanel`, `PanelHeader`, `SectionHeading`, `Collapsible`, `Tabs` |
-| Feedback | `Banner`, `ToastViewport`, `Spinner` |
-| Labels and icons | `Kbd`, `ContextLabel`, `ActionIcon` |
+| Dialogs                | `Dialog`, `DialogActions`, `DialogPopup`, `ConfirmDialog`, `TextPromptDialog`                                             |
+| Panels and disclosure  | `SidePanel`, `PanelHeader`, `SectionHeading`, `Collapsible`, `Tabs`                                                       |
+| Feedback               | `Banner`, `ToastViewport`, `Spinner`                                                                                      |
+| Labels and icons       | `Kbd`, `ContextLabel`, `ActionIcon`                                                                                       |
 
 `Button` supports `default`, `outline`, and `ghost` variants. `SidePanel` supports controlled resizing and collapse. `Spinner` accepts an accessible `label` and respects reduced motion. State, content, and event handling remain yours to provide.
 

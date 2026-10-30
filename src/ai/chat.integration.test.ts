@@ -1,32 +1,72 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { aiTools, type AiChatEvent, type AiChatRequest, type AiDocumentation, type AiResult, type AiToolReply } from '@nesso-how/ai'
+import {
+  aiTools,
+  type AiChatEvent,
+  type AiChatRequest,
+  type AiDocumentation,
+  type AiResult,
+  type AiToolReply,
+} from '@nesso-how/ai'
 import type { AiBridge } from '../../electron/ai-bridge.ts'
 import { createNessoStore } from '../store/create.ts'
 import { createAiChat } from './chat.ts'
 
 const fixture = () => {
   const listeners = new Set<(event: AiChatEvent) => void>()
-  const receive = (event: AiChatEvent) => { for (const listener of listeners) listener(event) }
+  const receive = (event: AiChatEvent) => {
+    for (const listener of listeners) listener(event)
+  }
   let finish: (result: AiResult<true>) => void = () => {}
   let input: AiChatRequest
   const replies: AiToolReply[] = []
   const bridge: Pick<AiBridge, 'chat' | 'stop' | 'reply' | 'subscribeChat'> = {
-    chat: (value) => { input = value; return new Promise((resolve) => { finish = resolve }) },
+    chat: (value) => {
+      input = value
+      return new Promise((resolve) => {
+        finish = resolve
+      })
+    },
     stop: () => finish({ issues: [{ path: 'chat', message: 'Stopped' }] }),
-    reply: (value) => { replies.push(value) },
-    subscribeChat: (listener) => { listeners.add(listener); return () => { listeners.delete(listener) } },
+    reply: (value) => {
+      replies.push(value)
+    },
+    subscribeChat: (listener) => {
+      listeners.add(listener)
+      return () => {
+        listeners.delete(listener)
+      }
+    },
   }
-  const host = createNessoStore({ concepts: [{ id: 'urn:first', label: 'First', position: { x: 0, y: 0 } }], relations: [], relationTypes: [] })
-  const documentation = Object.fromEntries(aiTools.read_docs.inputSchema.shape.topic.options.map((topic) => [topic, `# ${topic}`])) as AiDocumentation
+  const host = createNessoStore({
+    concepts: [{ id: 'urn:first', label: 'First', position: { x: 0, y: 0 } }],
+    relations: [],
+    relationTypes: [],
+  })
+  const documentation = Object.fromEntries(
+    aiTools.read_docs.inputSchema.shape.topic.options.map((topic) => [topic, `# ${topic}`]),
+  ) as AiDocumentation
   const chat = createAiChat(bridge, host.store, documentation)
   return {
-    chat, host, replies, finish: (result: AiResult<true>) => finish(result),
-    tool: (name: string, value: unknown) => receive({ id: input.id, type: 'tool', callId: name, name, input: value }),
-    activity: (tool: keyof typeof aiTools | null, id = input.id) => receive({ id, type: 'activity', tool }),
+    chat,
+    host,
+    replies,
+    finish: (result: AiResult<true>) => finish(result),
+    tool: (name: string, value: unknown) =>
+      receive({ id: input.id, type: 'tool', callId: name, name, input: value }),
+    activity: (tool: keyof typeof aiTools | null, id = input.id) =>
+      receive({ id, type: 'activity', tool }),
     emit: (text: string) => receive({ id: input.id, type: 'text', text }),
-    edit: (operations: unknown[]) => receive({ id: input.id, type: 'tool', callId: 'edit', name: 'edit', input: { operations } }),
-    history: (action: unknown) => receive({ id: input.id, type: 'tool', callId: 'history', name: 'history', input: { action } }),
+    edit: (operations: unknown[]) =>
+      receive({ id: input.id, type: 'tool', callId: 'edit', name: 'edit', input: { operations } }),
+    history: (action: unknown) =>
+      receive({
+        id: input.id,
+        type: 'tool',
+        callId: 'history',
+        name: 'history',
+        input: { action },
+      }),
   }
 }
 
@@ -78,7 +118,12 @@ test('chat commits only after generation and clears its conversation on document
   await task
   assert.equal(f.host.store.getState().graph.concepts[0].label, 'Renamed')
   assert.equal(f.host.store.getState().conversation.messages.at(-1)?.outcome, 'applied')
-  assert.deepEqual(f.host.store.getState().conversation.messages.at(-1)?.summary, { added: 0, updated: 1, removed: 0, memberships: 0 })
+  assert.deepEqual(f.host.store.getState().conversation.messages.at(-1)?.summary, {
+    added: 0,
+    updated: 1,
+    removed: 0,
+    memberships: 0,
+  })
   f.host.store.undo()
   f.host.store.setSelection([{ kind: 'concept', id: 'urn:first' }])
   assert.equal(f.host.store.getState().conversation.messages.length, 2)
@@ -128,8 +173,13 @@ test('Stop, clear and generation failure discard staged edits and cannot resurre
     assert.equal(f.host.store.getState().graph.concepts[0].label, 'First')
     assert.equal(f.chat.getSnapshot().phase, 'idle')
     assert.equal(f.chat.getSnapshot().tool, null)
-    if (action === 'clear' || action === 'store-clear') assert.deepEqual(f.host.store.getState().conversation.messages, [])
-    else assert.equal(f.host.store.getState().conversation.messages.at(-1)?.outcome, action === 'failure' ? 'error' : 'cancelled')
+    if (action === 'clear' || action === 'store-clear')
+      assert.deepEqual(f.host.store.getState().conversation.messages, [])
+    else
+      assert.equal(
+        f.host.store.getState().conversation.messages.at(-1)?.outcome,
+        action === 'failure' ? 'error' : 'cancelled',
+      )
     f.chat.dispose()
   }
 })

@@ -7,7 +7,11 @@ import { connectUpdates, type UpdateState } from './updates.ts'
 
 const version = '1.0.0-alpha.28'
 
-const fixture = (context: TestContext, checkForUpdates = async () => null, nativeUpdates = true) => {
+const fixture = (
+  context: TestContext,
+  checkForUpdates = async () => null,
+  nativeUpdates = true,
+) => {
   let check = () => {}
   const interval = context.mock.method(globalThis, 'setInterval', (callback: () => void) => {
     check = callback
@@ -24,7 +28,11 @@ const fixture = (context: TestContext, checkForUpdates = async () => null, nativ
   })
   const nativeUpdater = Object.assign(new EventEmitter(), { checkForUpdates: context.mock.fn() })
   const notify = context.mock.fn((_state: UpdateState) => {})
-  const updates = connectUpdates(updater as unknown as AppUpdater, nativeUpdates ? nativeUpdater as unknown as AutoUpdater : undefined, notify)
+  const updates = connectUpdates(
+    updater as unknown as AppUpdater,
+    nativeUpdates ? (nativeUpdater as unknown as AutoUpdater) : undefined,
+    notify,
+  )
   return { updater, nativeUpdater, updates, notify, interval, check: () => check() }
 }
 
@@ -74,7 +82,9 @@ test('updates download automatically but restart only after confirmation, valida
 
 test('failed downloads are retried automatically at the next interval', async (context) => {
   const { updater, updates, check } = fixture(context)
-  updater.downloadUpdate.mock.mockImplementationOnce(async () => { throw new Error('Download failed') })
+  updater.downloadUpdate.mock.mockImplementationOnce(async () => {
+    throw new Error('Download failed')
+  })
   updater.emit('update-available', { version })
   await Promise.resolve()
   assert.equal(updates.getState(), null)
@@ -134,7 +144,9 @@ test('installation failures preserve the downloaded version and allow retrying',
   updater.emit('update-available', { version })
   updater.emit('update-downloaded')
   updates.restart()
-  updater.quitAndInstall.mock.mockImplementationOnce(() => { throw new Error('Install failed') })
+  updater.quitAndInstall.mock.mockImplementationOnce(() => {
+    throw new Error('Install failed')
+  })
   updates.install(true)
   assert.deepEqual(updates.getState(), { status: 'ready', version, error: 'install' })
   updates.restart()

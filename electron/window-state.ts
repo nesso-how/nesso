@@ -5,7 +5,10 @@ import { z } from 'zod'
 import { ElectronError } from './errors.ts'
 
 const rectangle = z.strictObject({
-  x: z.int(), y: z.int(), width: z.int().positive(), height: z.int().positive(),
+  x: z.int(),
+  y: z.int(),
+  width: z.int().positive(),
+  height: z.int().positive(),
 })
 const schema = z.strictObject({
   bounds: rectangle,
@@ -13,15 +16,22 @@ const schema = z.strictObject({
   maximized: z.boolean(),
 })
 const report = (error: unknown) => {
-  console.error(new ElectronError([{ path: 'windowState', message: error instanceof Error ? error.message : String(error) }]))
+  console.error(
+    new ElectronError([
+      { path: 'windowState', message: error instanceof Error ? error.message : String(error) },
+    ]),
+  )
 }
 
 type WindowDisplay = Pick<Display, 'id' | 'workArea'>
 
-export function createWindowState(directory: string, screen: {
-  getAllDisplays: () => WindowDisplay[]
-  getDisplayMatching: (bounds: Rectangle) => WindowDisplay
-}) {
+export function createWindowState(
+  directory: string,
+  screen: {
+    getAllDisplays: () => WindowDisplay[]
+    getDisplayMatching: (bounds: Rectangle) => WindowDisplay
+  },
+) {
   const file = path.join(directory, 'window-state.json')
   let state: z.infer<typeof schema> | undefined
   try {
@@ -38,7 +48,8 @@ export function createWindowState(directory: string, screen: {
     const x = state.bounds.x + (display ? area.x - state.display.workArea.x : 0)
     const y = state.bounds.y + (display ? area.y - state.display.workArea.y : 0)
     bounds = {
-      width, height,
+      width,
+      height,
       x: Math.max(area.x, Math.min(x, area.x + area.width - width)),
       y: Math.max(area.y, Math.min(y, area.y + area.height - height)),
     }
@@ -48,7 +59,9 @@ export function createWindowState(directory: string, screen: {
     maximized: state?.maximized ?? false,
     track: (window: BrowserWindow) => {
       let maximized = window.isMaximized()
-      const updateMaximized = () => { if (!window.isMinimized()) maximized = window.isMaximized() }
+      const updateMaximized = () => {
+        if (!window.isMinimized()) maximized = window.isMaximized()
+      }
       window.on('maximize', updateMaximized)
       window.on('unmaximize', updateMaximized)
       window.on('resize', updateMaximized)

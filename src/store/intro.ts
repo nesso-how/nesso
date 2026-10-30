@@ -21,13 +21,24 @@ export function setIntroStep(store: NessoStore, step: number) {
   const hasConceptView = workspace.savedViews.some(({ id }) => id === conceptViewId)
   store.applyOperations([
     ...(step === 0 && !hasConceptView
-      ? [{ kind: 'view.create' as const, id: conceptViewId, name: graph.concepts[0].label, conceptIds: [graph.concepts[0].id] }]
+      ? [
+          {
+            kind: 'view.create' as const,
+            id: conceptViewId,
+            name: graph.concepts[0].label,
+            conceptIds: [graph.concepts[0].id],
+          },
+        ]
       : []),
     { kind: 'view.activate', id: step === 0 ? conceptViewId : null },
-    ...(step > 0 && hasConceptView
-      ? [{ kind: 'view.remove' as const, id: conceptViewId }]
-      : []),
-    { kind: 'selection.set', value: step === 0 || step === 2 ? [{ kind: 'concept', id: step === 0 ? graph.concepts[0].id : focusConceptId }] : [] },
+    ...(step > 0 && hasConceptView ? [{ kind: 'view.remove' as const, id: conceptViewId }] : []),
+    {
+      kind: 'selection.set',
+      value:
+        step === 0 || step === 2
+          ? [{ kind: 'concept', id: step === 0 ? graph.concepts[0].id : focusConceptId }]
+          : [],
+    },
   ])
 }
 
