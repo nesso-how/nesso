@@ -1,0 +1,45 @@
+{
+  "name": "@nesso-how/mist-theme",
+  "version": "1.0.0-alpha.31",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@fontsource-variable/geist": "^5.3.0",
+    "@fontsource/ibm-plex-mono": "^5.2.7"
+  },
+  "devDependencies": {
+    "@nesso-how/plugin": "workspace:*"
+  },
+  "peerDependencies": {
+    "@nesso-how/plugin": "workspace:*"
+  },
+  "i18n": {
+    "metadata": {
+      "name": {
+        "en": "Mist",
+        "it": "Mist",
+        "zh-CN": "Mist"
+      },
+      "description": {
+        "en": "A cool light theme with misty blue surfaces, slate text, and steel blue accents.",
+        "it": "Un tema chiaro e freddo con superfici azzurrate, testo ardesia e accenti blu acciaio.",
+        "zh-CN": "冷色浅色主题，雾蓝界面、石板文字和钢蓝色点缀。"
+      },
+      "documentation": {
+        "en": "Mist brings a cool, calm palette to Nesso, with Geist and IBM Plex Mono fonts. It does not change your graph or views.",
+        "it": "Mist porta in Nesso una palette fredda e calma, con i font Geist e IBM Plex Mono. Non modifica il grafo o le viste.",
+        "zh-CN": "Mist 为 Nesso 带来冷静的冷色调，采用 Geist 和 IBM Plex Mono 字体，不会改变你的图谱或视图。"
+      }
+    }
+  },
+  "nesso": {
+    "apiVersion": 1,
+    "kind": "theme",
+    "entry": "dist/definition.json",
+    "writes": [],
+    "capabilities": []
+  }
+}

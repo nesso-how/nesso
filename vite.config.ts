@@ -15,6 +15,7 @@ export default defineConfig({
         const roots = [
           'plugins/kernel-theme/src',
           'plugins/paper-theme/src',
+          'plugins/mist-theme/src',
           'plugins/base-vocab/src',
           'plugins/import/src',
           'plugins/export/src',
@@ -24,9 +25,14 @@ export default defineConfig({
           'packages/i18n/src',
           'packages/ui/src',
         ].map((directory) => path.resolve(import.meta.dirname, directory) + path.sep)
-        const manifests = ['kernel-theme', 'paper-theme', 'base-vocab', 'import', 'export'].map(
-          (name) => path.resolve(import.meta.dirname, 'plugins', name, 'package.json'),
-        )
+        const manifests = [
+          'kernel-theme',
+          'paper-theme',
+          'mist-theme',
+          'base-vocab',
+          'import',
+          'export',
+        ].map((name) => path.resolve(import.meta.dirname, 'plugins', name, 'package.json'))
         const script = path.resolve(import.meta.dirname, 'scripts/build-plugins.ts')
         let timer: ReturnType<typeof setTimeout> | undefined
         let running = false

@@ -54,6 +54,7 @@ try {
   for (const [name, kind] of [
     ['kernel-theme', 'theme'],
     ['paper-theme', 'theme'],
+    ['mist-theme', 'theme'],
     ['base-vocab', 'vocab'],
   ] as const) {
     const directory = path.join(root, 'plugins', name)

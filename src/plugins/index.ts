@@ -12,6 +12,7 @@ import {
 import { defaultLocale, type Locale } from '@nesso-how/i18n'
 import kernelPackage from '../../plugins/kernel-theme/package.json'
 import paperPackage from '../../plugins/paper-theme/package.json'
+import mistPackage from '../../plugins/mist-theme/package.json'
 import baseVocabPackage from '../../plugins/base-vocab/package.json'
 import exportPackage from '../../plugins/export/package.json'
 import importPackage from '../../plugins/import/package.json'
@@ -407,6 +408,7 @@ export async function initializeBundledPlugins() {
     [
       { package: kernelPackage, id: 'kernel-theme' },
       { package: paperPackage, id: 'paper-theme' },
+      { package: mistPackage, id: 'mist-theme' },
       { package: baseVocabPackage, id: 'base-vocab' },
     ].map(async ({ package: source, id }): Promise<PluginEntry> => {
       const manifest = parsePluginManifest(source.nesso)
