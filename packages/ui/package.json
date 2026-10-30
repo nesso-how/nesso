@@ -1,6 +1,6 @@
 {
   "name": "@nesso-how/ui",
-  "version": "1.0.0-alpha.31",
+  "version": "1.0.0-alpha.32",
   "description": "Reusable React primitives and shared styles for Nesso, usable in the app and in isolated plugin panels",
   "license": "MIT",
   "repository": {

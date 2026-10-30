@@ -28,7 +28,7 @@
     "prepack": "npm run build"
   },
   "dependencies": {
-    "@nesso-how/ui": "1.0.0-alpha.31",
+    "@nesso-how/ui": "1.0.0-alpha.32",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },

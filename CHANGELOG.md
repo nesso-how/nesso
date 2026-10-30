@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.0-alpha.32 — 2026-10-30
+
+### Features
+
+- **theme:** Add mist cool light theme (#215)
+- **review:** Add FSRS spaced repetition plugin (#216)
+
 ## 1.0.0-alpha.31 — 2026-10-30
 
 No user-facing changes.
