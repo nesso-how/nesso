@@ -1,5 +1,7 @@
 import { build } from 'vite'
 import tailwindcss from '@tailwindcss/vite'
+import cssInjectedByJs from 'vite-plugin-css-injected-by-js'
+import { esmExternalRequirePlugin } from 'rolldown/plugins'
 import { readFile, writeFile, mkdir, mkdtemp, rename, rm } from 'node:fs/promises'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -24,7 +26,7 @@ const publish = async (file: string, content: string | Uint8Array) => {
   await rename(temporary, file)
 }
 try {
-  for (const name of ['import', 'export']) {
+  for (const name of ['import', 'export', 'review']) {
     const directory = path.join(root, 'plugins', name)
     const source = JSON.parse(await readFile(path.join(directory, 'package.json'), 'utf8'))
     const manifest = parsePluginManifest(source.nesso)
@@ -32,9 +34,17 @@ try {
     await build({
       configFile: false,
       publicDir: false,
+      plugins: [
+        cssInjectedByJs(),
+        esmExternalRequirePlugin({ external: [/^react(?:-dom)?(?:\/|$)/] }),
+      ],
       define: { 'process.env.NODE_ENV': JSON.stringify('production') },
       build: {
         target: 'es2022',
+        rolldownOptions: {
+          output: { codeSplitting: false },
+        },
+        cssCodeSplit: false,
         assetsInlineLimit: Infinity,
         lib: {
           entry: path.join(directory, 'src/index.ts'),

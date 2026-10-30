@@ -28,6 +28,6 @@
     "noFallthroughCasesInSwitch": true
   },
   "references": [{ "path": "./packages/ai" }],
-  "include": ["src"],
-  "exclude": ["src/**/*.test.ts"]
+  "include": ["src", "plugins/*/src"],
+  "exclude": ["**/*.test.ts"]
 }

@@ -44,16 +44,19 @@ export function createPluginPanel(
       close()
       if (signal.aborted) return Promise.resolve()
       const state = store.getState()
-      const view = state.workspace.savedViews.find(({ id }) => id === invocation.viewId)
       const action = invocation.descriptors.find(({ id }) => id === invocation.actionId)
       if (!source.manifest.capabilities.includes('ui') || !action?.ui)
         throw new PluginError('denied', [{ path: 'ui', message: 'UI not authorized' }])
-      if (invocation.viewId !== null && !view)
+      if (
+        invocation.viewId !== null &&
+        !state.workspace.savedViews.some(({ id }) => id === invocation.viewId)
+      )
         throw new PluginError('stale-context', [
           { path: 'panel', message: 'Target view no longer exists' },
         ])
-      const locale = state.preferences.locale ?? defaultLocale
       return new Promise<void>((resolve) => {
+        let target = invocation
+        let activeViewId = state.workspace.activeViewId
         const end = () => {
           if (session?.close !== end) return
           session = undefined
@@ -65,26 +68,41 @@ export function createPluginPanel(
           publish()
           resolve()
         }
+        const mount = () => {
+          detach?.()
+          detach = undefined
+          const next = store.getState()
+          const locale = next.preferences.locale ?? defaultLocale
+          session = { source, invocation: target, close: end }
+          current = {
+            id: crypto.randomUUID(),
+            pluginName: resolvePluginText(source.i18n.metadata.name, locale),
+            title: resolvePluginText(action.label, locale),
+            viewName:
+              next.workspace.savedViews.find(({ id }) => id === target.viewId)?.name ?? null,
+            status: 'loading',
+          }
+          publish()
+        }
         const unsubscribe = store.subscribe(() => {
           const next = store.getState()
           if (
             next.documentId !== state.documentId ||
             next.documentEpoch !== state.documentEpoch ||
-            (invocation.viewId !== null &&
-              !next.workspace.savedViews.some(({ id }) => id === invocation.viewId))
-          )
+            (target.viewId !== null &&
+              !next.workspace.savedViews.some(({ id }) => id === target.viewId))
+          ) {
             end()
+            return
+          }
+          if (next.workspace.activeViewId !== activeViewId) {
+            activeViewId = next.workspace.activeViewId
+            target = { ...target, viewId: activeViewId }
+            mount()
+          }
         })
-        session = { source, invocation, close: end }
-        current = {
-          id: crypto.randomUUID(),
-          pluginName: resolvePluginText(source.i18n.metadata.name, locale),
-          title: resolvePluginText(action.label, locale),
-          viewName: view?.name ?? null,
-          status: 'loading',
-        }
         signal.addEventListener('abort', end, { once: true })
-        publish()
+        mount()
       })
     },
     attach: (frame: HTMLIFrameElement, id: string) => {

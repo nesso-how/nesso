@@ -1,0 +1,53 @@
+{
+  "name": "@nesso-how/review",
+  "version": "1.0.0-alpha.31",
+  "description": "Spaced repetition for concepts, with private progress shared across views",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@nesso-how/ui": "workspace:*",
+    "ts-fsrs": "6.0.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@nesso-how/plugin": "workspace:*",
+    "@types/react": "^19.2.18"
+  },
+  "peerDependencies": {
+    "@nesso-how/plugin": "workspace:*",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "i18n": {
+    "metadata": {
+      "name": {
+        "en": "Review",
+        "it": "Ripasso",
+        "zh-CN": "复习"
+      },
+      "description": {
+        "en": "Practice recalling the concepts in a view with spaced repetition.",
+        "it": "Ripassa i concetti di una vista con la ripetizione dilazionata.",
+        "zh-CN": "通过间隔重复练习回忆视图中的概念。"
+      },
+      "documentation": {
+        "en": "Review includes every concept in the invoked view. Reveal descriptions and in-view connections, then rate your recall. FSRS-6 schedules the next review. Private progress follows each concept across views without changing your graph.",
+        "it": "Ripasso include tutti i concetti della vista. Mostra descrizioni e connessioni nella vista, poi valuta il ricordo. FSRS-6 programma il prossimo ripasso. I progressi privati seguono ogni concetto nelle diverse viste senza modificare il grafo.",
+        "zh-CN": "复习包含所选视图的所有概念。显示描述和视图内的连接后，评价回忆程度。FSRS-6 安排下次复习。私人进度随概念跨视图共享，不改变图谱。"
+      }
+    }
+  },
+  "nesso": {
+    "apiVersion": 1,
+    "kind": "actions",
+    "entry": "dist/index.js",
+    "writes": [],
+    "capabilities": [
+      "storage",
+      "ui"
+    ]
+  }
+}

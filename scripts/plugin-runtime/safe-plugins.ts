@@ -48,7 +48,7 @@ export async function verifySafePlugins({ window, url }: CheckContext) {
     await evaluate<number>(
       `[...document.querySelectorAll('.plugin-row')].filter(row => row.getClientRects().length).length`,
     ),
-    5,
+    6,
   )
   assert.equal(
     await evaluate<boolean>(

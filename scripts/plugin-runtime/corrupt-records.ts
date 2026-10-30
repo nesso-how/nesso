@@ -77,7 +77,7 @@ export async function verifyCorruptRecords({ window, url }: CheckContext) {
   const rows = await evaluate<string[]>(
     `[...document.querySelectorAll('.plugin-row')].filter(row => row.getClientRects().length).map(row => row.innerText)`,
   )
-  assert.equal(rows.length, 8)
+  assert.equal(rows.length, 9)
   for (const kind of ['actions', 'theme', 'vocab'])
     assert.ok(
       rows.some((text) => text.includes(`test-restored-${kind}`) && text.includes('Enabled')),

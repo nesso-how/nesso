@@ -135,7 +135,7 @@ Nesso supplies React, the `@nesso-how/ui` component stylesheet, and theme CSS va
 
 #### Lifecycle
 
-Use React effects to clean up subscriptions and resources. Panels have no action execution timeout, but initialization and API requests have deadlines. Uncaught errors or rejected promises fail the session; handle expected errors in your UI. Nesso provides the title, close control, and loading/failure screens. Closing or replacing a panel discards its React state: save progress through `storage` during use, not during cleanup, which is best effort.
+Use React effects to clean up subscriptions and resources. Panels have no action execution timeout, but initialization and API requests have deadlines. Uncaught errors or rejected promises fail the session; handle expected errors in your UI. Nesso provides the title, close control, and loading/failure screens. Changing the active view revokes the current panel instance and mounts the same action in a new instance for the selected view, including All. Closing or replacing a panel discards its React state: save progress through `storage` during use, not during cleanup, which is best effort.
 
 ### Read the invoked view
 
@@ -147,7 +147,7 @@ The graph snapshot provides:
 
 - `viewGraph`: `{ concepts, relations, relationTypes }` for the invoked view.
 - `selected`: the invoked view's selection.
-- `targetViewId`: the invoked view's ID, or `null` for All; navigation does not change the target.
+- `targetViewId`: the invoked view's ID, or `null` for All; fixed for each invocation. Headless actions keep their target during navigation; panels restart with a new invocation when the active view changes.
 - `activeVocab`: the current vocabulary, or `null`.
 
 Concept and relation-type IDs are absolute IRIs. Relations are `{ source, predicate, target }` triples; use `JSON.stringify([source, predicate, target])` as their selection/write ID.
