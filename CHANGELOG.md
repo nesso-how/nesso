@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.0-alpha.30 — 2026-10-30
+
+### Features
+
+- **plugin:** Add isolated central UI panels (#212)
+
 ## 1.0.0-alpha.29 — 2026-10-29
 
 No user-facing changes.
