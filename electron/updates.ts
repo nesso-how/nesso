@@ -14,7 +14,11 @@ export type UpdateBridge = {
   beforeInstall: (save: () => Promise<boolean>) => () => void
 }
 
-export function connectUpdates(updater: AppUpdater, nativeUpdater: AutoUpdater | undefined, notify: (state: UpdateState) => void) {
+export function connectUpdates(
+  updater: AppUpdater,
+  nativeUpdater: AutoUpdater | undefined,
+  notify: (state: UpdateState) => void,
+) {
   let state: UpdateState = null
   let checking = false
   let installTimer: ReturnType<typeof setTimeout> | undefined
@@ -27,9 +31,14 @@ export function connectUpdates(updater: AppUpdater, nativeUpdater: AutoUpdater |
     notify(state)
   }
   const fail = (error: unknown) => {
-    console.error(new ElectronError([{ path: 'update', message: error instanceof Error ? error.message : String(error) }]))
+    console.error(
+      new ElectronError([
+        { path: 'update', message: error instanceof Error ? error.message : String(error) },
+      ]),
+    )
     clearTimeout(installTimer)
-    if (state?.status === 'saving' || state?.status === 'installing') publish({ ...state, status: 'ready', error: 'install' })
+    if (state?.status === 'saving' || state?.status === 'installing')
+      publish({ ...state, status: 'ready', error: 'install' })
     else if (state?.status !== 'ready') publish(null)
   }
 
@@ -64,7 +73,12 @@ export function connectUpdates(updater: AppUpdater, nativeUpdater: AutoUpdater |
     }
   }
   void check()
-  setInterval(() => { void check() }, 60 * 60 * 1000).unref()
+  setInterval(
+    () => {
+      void check()
+    },
+    60 * 60 * 1000,
+  ).unref()
 
   return {
     getState: () => state,

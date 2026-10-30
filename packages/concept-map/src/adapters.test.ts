@@ -2,16 +2,31 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { Position } from '@xyflow/react'
 import type { Graph } from '@nesso-how/schema'
-import { containsPoint, createGraphElements, facingSide, indexGraph, outsideEdge, outsideNode, relationEdge } from './adapters.ts'
+import {
+  containsPoint,
+  createGraphElements,
+  facingSide,
+  indexGraph,
+  outsideEdge,
+  outsideNode,
+  relationEdge,
+} from './adapters.ts'
 
 test('graph elements preserve dimensions and unchanged identities across snapshots without sharing instance caches', () => {
   const graph: Graph = {
-    concepts: [{ id: 'urn:a', label: 'A', position: { x: 0, y: 0 } }, { id: 'urn:b', label: 'B', position: { x: 400, y: 0 } }],
+    concepts: [
+      { id: 'urn:a', label: 'A', position: { x: 0, y: 0 } },
+      { id: 'urn:b', label: 'B', position: { x: 400, y: 0 } },
+    ],
     relationTypes: [{ id: 'urn:links', label: 'links' }],
     relations: [{ source: 'urn:a', predicate: 'urn:links', target: 'urn:b' }],
   }
   const adapt = createGraphElements()
-  const options = { selected: [], sizes: { 'urn:a': { width: 350, height: 50 } }, label: () => 'A to B' }
+  const options = {
+    selected: [],
+    sizes: { 'urn:a': { width: 350, height: 50 } },
+    label: () => 'A to B',
+  }
   const before = adapt({ ...options, graph, indexed: indexGraph(graph) })
   const cloned = structuredClone(graph)
   cloned.concepts[0].position.x = 20
@@ -23,24 +38,51 @@ test('graph elements preserve dimensions and unchanged identities across snapsho
   assert.equal(after.nodes[1], before.nodes[1])
   assert.equal(after.edges[0], before.edges[0])
   assert.equal(after.edges, before.edges)
-  const repeated = adapt({ ...options, graph: structuredClone(cloned), indexed: indexGraph(cloned) })
+  const repeated = adapt({
+    ...options,
+    graph: structuredClone(cloned),
+    indexed: indexGraph(cloned),
+  })
   assert.equal(repeated.nodes, after.nodes)
   assert.equal(repeated.edges, after.edges)
-  const translated = adapt({ ...options, graph: cloned, indexed: indexGraph(cloned), label: () => 'A verso B' })
+  const translated = adapt({
+    ...options,
+    graph: cloned,
+    indexed: indexGraph(cloned),
+    label: () => 'A verso B',
+  })
   assert.notEqual(translated.edges[0], after.edges[0])
   assert.equal(translated.edges[0].ariaLabel, 'A verso B')
-  const selected = adapt({ ...options, graph: cloned, indexed: indexGraph(cloned), selected: [{ kind: 'concept', id: 'urn:b' }] })
+  const selected = adapt({
+    ...options,
+    graph: cloned,
+    indexed: indexGraph(cloned),
+    selected: [{ kind: 'concept', id: 'urn:b' }],
+  })
   assert.equal(selected.nodes[1].selected, true)
   const isolated = createGraphElements()({ ...options, graph, indexed: indexGraph(graph) })
   assert.notEqual(isolated.nodes[1], before.nodes[1])
-  const editing = { enabled: true, id: null as string | null, maxLength: 120, onChange: (_id: string | null) => {} }
+  const editing = {
+    enabled: true,
+    id: null as string | null,
+    maxLength: 120,
+    onChange: (_id: string | null) => {},
+  }
   const editable = adapt({ ...options, graph, indexed: indexGraph(graph), editing })
-  const active = adapt({ ...options, graph, indexed: indexGraph(graph), editing: { ...editing, id: 'urn:a' } })
+  const active = adapt({
+    ...options,
+    graph,
+    indexed: indexGraph(graph),
+    editing: { ...editing, id: 'urn:a' },
+  })
   assert.equal(active.nodes[0].data.editing, true)
   assert.equal(active.nodes[0].data.maxLength, editing.maxLength)
   assert.notEqual(active.nodes[0], editable.nodes[0])
   assert.equal(active.nodes[1], editable.nodes[1])
-  assert.equal(adapt({ ...options, graph, indexed: indexGraph(graph), editing }).nodes[0].data.editing, false)
+  assert.equal(
+    adapt({ ...options, graph, indexed: indexGraph(graph), editing }).nodes[0].data.editing,
+    false,
+  )
   const colored = structuredClone(graph)
   colored.concepts[0].color = '#ff0000'
   const changed = adapt({ ...options, graph: colored, indexed: indexGraph(colored), editing })

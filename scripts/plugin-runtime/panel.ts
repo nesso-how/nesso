@@ -23,7 +23,17 @@ export async function verifyPanel({ window, url, name, attempted }: CheckContext
     {id:'browse',label:{en:'Browse'},ui:Browse},
     {id:'broken',label:{en:'Broken'},ui:()=>{throw new Error('Render failure')}},
   ];`
-  const state = { ...actionState(), targetViewId: 'urn:target', locale: 'it', theme: { ...actionState().theme, background: '#ffffff' }, viewGraph: { concepts: [{ id: 'urn:a', label: 'A', position: { x: 0, y: 0 } }], relations: [], relationTypes: [] } }
+  const state = {
+    ...actionState(),
+    targetViewId: 'urn:target',
+    locale: 'it',
+    theme: { ...actionState().theme, background: '#ffffff' },
+    viewGraph: {
+      concepts: [{ id: 'urn:a', label: 'A', position: { x: 0, y: 0 } }],
+      relations: [],
+      relationTypes: [],
+    },
+  }
   await window.webContents.executeJavaScript(`window.__openPanel=async(actionId)=>{
     window.__panel={ready:0,requests:[],pong:false,failed:false};
     const frame=document.createElement('iframe');frame.id='panel-probe';frame.sandbox='allow-scripts';frame.title='Plugin panel';frame.style='width:600px;height:400px';
@@ -38,28 +48,79 @@ export async function verifyPanel({ window, url, name, attempted }: CheckContext
     frame.contentWindow.postMessage({type:'bootstrap',token:'probe',entry:${JSON.stringify(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`)}},'*',[channel.port2]);
   };window.__openPanel('browse')`)
   const evaluate = <T>(code: string) => window.webContents.executeJavaScript(code) as Promise<T>
-  await waitFor(() => evaluate<number>('window.__panel.ready'), (ready) => ready === 2)
-  await waitFor(() => evaluate<number>('window.__panel.requests.length'), (count) => count === 1)
+  await waitFor(
+    () => evaluate<number>('window.__panel.ready'),
+    (ready) => ready === 2,
+  )
+  await waitFor(
+    () => evaluate<number>('window.__panel.requests.length'),
+    (count) => count === 1,
+  )
   const result = await evaluate('JSON.parse(window.__panel.requests[0].params.description.en)')
-  assert.deepEqual(result, { target: 'urn:target', concepts: ['urn:a'], dom: true, bridges: true, host: true, storage: true, network: true, worker: true })
-  const content = window.webContents.mainFrame.framesInSubtree.find((frame) => frame.url === 'about:srcdoc')!
+  assert.deepEqual(result, {
+    target: 'urn:target',
+    concepts: ['urn:a'],
+    dom: true,
+    bridges: true,
+    host: true,
+    storage: true,
+    network: true,
+    worker: true,
+  })
+  const content = window.webContents.mainFrame.framesInSubtree.find(
+    (frame) => frame.url === 'about:srcdoc',
+  )!
   assert.ok(content)
-  await evaluate(`window.__panelPort.postMessage({type:'state',state:${JSON.stringify({ ...state, revision: 1, locale: 'en', theme: { ...state.theme, background: '#eeeeee' } })}});window.__panelPort.postMessage({type:'ping',id:1});`)
+  await evaluate(
+    `window.__panelPort.postMessage({type:'state',state:${JSON.stringify({ ...state, revision: 1, locale: 'en', theme: { ...state.theme, background: '#eeeeee' } })}});window.__panelPort.postMessage({type:'ping',id:1});`,
+  )
   await waitFor(() => evaluate<boolean>('window.__panel.pong'), Boolean)
-  await waitFor(() => content.executeJavaScript(`document.getElementById('root').textContent==='Plugin content'`), Boolean)
-  assert.deepEqual(await content.executeJavaScript(`({lang:document.documentElement.lang,background:document.documentElement.style.getPropertyValue('--background'),content:document.getElementById('root').textContent})`), { lang: 'en', background: '#eeeeee', content: 'Plugin content' })
+  await waitFor(
+    () =>
+      content.executeJavaScript(`document.getElementById('root').textContent==='Plugin content'`),
+    Boolean,
+  )
+  assert.deepEqual(
+    await content.executeJavaScript(
+      `({lang:document.documentElement.lang,background:document.documentElement.style.getPropertyValue('--background'),content:document.getElementById('root').textContent})`,
+    ),
+    { lang: 'en', background: '#eeeeee', content: 'Plugin content' },
+  )
   await evaluate(`window.__panelPort.postMessage({type:'close',reason:'Closed'})`)
-  await waitFor(() => content.executeJavaScript(`document.documentElement.dataset.cleaned==='true' && document.getElementById('root').textContent===''`), Boolean)
-  await evaluate(`window.__panelPort.close();document.querySelector('#panel-probe').remove();window.__openPanel('broken')`)
+  await waitFor(
+    () =>
+      content.executeJavaScript(
+        `document.documentElement.dataset.cleaned==='true' && document.getElementById('root').textContent===''`,
+      ),
+    Boolean,
+  )
+  await evaluate(
+    `window.__panelPort.close();document.querySelector('#panel-probe').remove();window.__openPanel('broken')`,
+  )
   await waitFor(() => evaluate<boolean>('window.__panel.failed'), Boolean)
-  await evaluate(`window.__panelPort.close();document.querySelector('#panel-probe').remove();window.__openPanel('other')`)
-  await waitFor(() => evaluate<number>('window.__panel.ready'), (ready) => ready === 2)
-  const other = window.webContents.mainFrame.framesInSubtree.find((frame) => frame.url === 'about:srcdoc')!
-  assert.equal(await other.executeJavaScript(`document.getElementById('root').textContent`), 'Other UI')
+  await evaluate(
+    `window.__panelPort.close();document.querySelector('#panel-probe').remove();window.__openPanel('other')`,
+  )
+  await waitFor(
+    () => evaluate<number>('window.__panel.ready'),
+    (ready) => ready === 2,
+  )
+  const other = window.webContents.mainFrame.framesInSubtree.find(
+    (frame) => frame.url === 'about:srcdoc',
+  )!
+  assert.equal(
+    await other.executeJavaScript(`document.getElementById('root').textContent`),
+    'Other UI',
+  )
   await other.executeJavaScript(`setTimeout(()=>document.querySelector('#root button').click(),0)`)
-  await waitFor(() => evaluate<number>('window.__panel.requests.length'), (count) => count === 1)
+  await waitFor(
+    () => evaluate<number>('window.__panel.requests.length'),
+    (count) => count === 1,
+  )
   await evaluate(`window.__panelPort.close();document.querySelector('#panel-probe').remove()`)
   assert.equal(await evaluate(`!!document.querySelector('#panel-probe')`), false)
   assert.equal(attempted.length, 0)
-  console.log(`${name}: React UI selection, hooks, cleanup, render failure, sandbox, presentation updates and responsive host during busy content passed`)
+  console.log(
+    `${name}: React UI selection, hooks, cleanup, render failure, sandbox, presentation updates and responsive host during busy content passed`,
+  )
 }

@@ -10,11 +10,15 @@ import type { PluginBridge } from '../shared/plugins.js'
 const { contextBridge, ipcRenderer } = require('electron') as typeof import('electron')
 const beforeSave = (request: string, reply: string, save: () => Promise<boolean>) => {
   const prepare = async () => {
-    const saved = await Promise.resolve().then(save).catch(() => false)
+    const saved = await Promise.resolve()
+      .then(save)
+      .catch(() => false)
     ipcRenderer.send(reply, saved)
   }
   ipcRenderer.on(request, prepare)
-  return () => { ipcRenderer.removeListener(request, prepare) }
+  return () => {
+    ipcRenderer.removeListener(request, prepare)
+  }
 }
 
 const updater: UpdateBridge = {
@@ -22,7 +26,9 @@ const updater: UpdateBridge = {
     const receive = (_event: unknown, state: UpdateState) => listener(state)
     ipcRenderer.on('update:state', receive)
     ipcRenderer.send('update:subscribe')
-    return () => { ipcRenderer.removeListener('update:state', receive) }
+    return () => {
+      ipcRenderer.removeListener('update:state', receive)
+    }
   },
   restart: () => ipcRenderer.send('update:restart'),
   beforeInstall: (save) => beforeSave('update:prepare', 'update:install', save),
@@ -33,7 +39,12 @@ const persistence: PersistenceBridge = {
   write: (section, value) => ipcRenderer.invoke('storage:write', section, value),
   beforeClose: (save, confirm) => {
     const stop = beforeSave('storage:prepare', 'storage:closed', async () => {
-      if (await Promise.resolve().then(save).catch(() => false)) return true
+      if (
+        await Promise.resolve()
+          .then(save)
+          .catch(() => false)
+      )
+        return true
       ipcRenderer.send('storage:confirming')
       return confirm()
     })
@@ -52,15 +63,21 @@ const dataLocation: DataLocationBridge = {
   subscribe: (listener) => {
     const receive = (_event: unknown, state: DataLocationState) => listener(state)
     ipcRenderer.on('data-location:state', receive)
-    return () => { ipcRenderer.removeListener('data-location:state', receive) }
+    return () => {
+      ipcRenderer.removeListener('data-location:state', receive)
+    }
   },
   beforeMove: (save) => {
     const prepare = async (_event: unknown, id: string) => {
-      const saved = await Promise.resolve().then(save).catch(() => false)
+      const saved = await Promise.resolve()
+        .then(save)
+        .catch(() => false)
       ipcRenderer.send('data-location:prepared', id, saved)
     }
     ipcRenderer.on('data-location:prepare', prepare)
-    return () => { ipcRenderer.removeListener('data-location:prepare', prepare) }
+    return () => {
+      ipcRenderer.removeListener('data-location:prepare', prepare)
+    }
   },
 }
 contextBridge.exposeInMainWorld('nessoDataLocation', dataLocation)
@@ -75,8 +92,10 @@ const plugins: PluginBridge = {
   list: () => ipcRenderer.invoke('plugins:list'),
   search: (query, offset) => ipcRenderer.invoke('plugins:search', query, offset),
   latest: (name) => ipcRenderer.invoke('plugins:latest', name),
-  propose: (id, input, locale, replacing) => ipcRenderer.invoke('plugins:propose', id, input, locale, replacing),
-  installNpm: (id, input, locale, replacing) => ipcRenderer.invoke('plugins:npm', id, input, locale, replacing),
+  propose: (id, input, locale, replacing) =>
+    ipcRenderer.invoke('plugins:propose', id, input, locale, replacing),
+  installNpm: (id, input, locale, replacing) =>
+    ipcRenderer.invoke('plugins:npm', id, input, locale, replacing),
   settle: (id, contentId, valid) => ipcRenderer.invoke('plugins:settle', id, contentId, valid),
   cancel: (id) => ipcRenderer.send('plugins:cancel', id),
   approve: (challenge, allow) => ipcRenderer.invoke('plugins:approve', challenge, allow),
@@ -113,7 +132,9 @@ const ai: AiBridge = {
   subscribeChat: (listener) => {
     const receive = (_event: unknown, event: AiChatEvent) => listener(event)
     ipcRenderer.on('ai:chat-event', receive)
-    return () => { ipcRenderer.removeListener('ai:chat-event', receive) }
+    return () => {
+      ipcRenderer.removeListener('ai:chat-event', receive)
+    }
   },
 }
 contextBridge.exposeInMainWorld('nessoAi', ai)
@@ -126,13 +147,17 @@ const mcp: McpBridge = {
   subscribeState: (listener) => {
     const receive = (_event: unknown, state: McpState) => listener(state)
     ipcRenderer.on('mcp:state', receive)
-    return () => { ipcRenderer.removeListener('mcp:state', receive) }
+    return () => {
+      ipcRenderer.removeListener('mcp:state', receive)
+    }
   },
   subscribeTools: (listener) => {
     const receive = (_event: unknown, event: McpEvent) => listener(event)
     ipcRenderer.on('mcp:tool', receive)
     ipcRenderer.send('mcp:ready')
-    return () => { ipcRenderer.removeListener('mcp:tool', receive) }
+    return () => {
+      ipcRenderer.removeListener('mcp:tool', receive)
+    }
   },
   disconnect: () => ipcRenderer.send('mcp:disconnect'),
   reply: (id, result) => ipcRenderer.send('mcp:reply', id, result),

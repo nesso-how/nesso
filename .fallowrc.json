@@ -1,6 +1,16 @@
 {
   "$schema": "./node_modules/fallow/schema.json",
-  "entry": ["src/lib/utils.ts", "src/plugins/panel.css", "site/index.html", "electron/preload.cts", "packages/plugin/src/guard.ts", "packages/plugin/src/worker.ts", "packages/plugin/src/action-relay.ts", "packages/plugin/src/panel.ts", "packages/plugin/src/react.ts"],
+  "entry": [
+    "src/lib/utils.ts",
+    "src/plugins/panel.css",
+    "site/index.html",
+    "electron/preload.cts",
+    "packages/plugin/src/guard.ts",
+    "packages/plugin/src/worker.ts",
+    "packages/plugin/src/action-relay.ts",
+    "packages/plugin/src/panel.ts",
+    "packages/plugin/src/react.ts"
+  ],
   "workspaces": { "patterns": ["packages/plugin/example"] },
   "ignoreDependencies": ["shadcn"],
   "rules": {

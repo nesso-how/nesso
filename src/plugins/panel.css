@@ -1,4 +1,11 @@
-@import "tailwindcss" source(none);
-@import "@nesso-how/ui/styles.css";
+@import 'tailwindcss' source(none);
+@import '@nesso-how/ui/styles.css';
 
-html,body { margin: 0; min-height: 100%; background: var(--background); color: var(--foreground); font-family: var(--font-sans), sans-serif; }
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), sans-serif;
+}

@@ -7,7 +7,9 @@ import { renderSite } from './i18n.ts'
 
 const root = import.meta.dirname
 const stylesheet = new URL('./styles.css', import.meta.url)
-const { version } = JSON.parse(readFileSync(resolve(root, '../package.json'), 'utf8')) as { version: string }
+const { version } = JSON.parse(readFileSync(resolve(root, '../package.json'), 'utf8')) as {
+  version: string
+}
 
 export default defineConfig({
   root,
@@ -25,7 +27,9 @@ export default defineConfig({
           const styled = html.replace('{{styles}}', () => readFileSync(stylesheet, 'utf8'))
           if (!context.server) return styled
           const path = new URL(context.originalUrl ?? context.path, 'https://nesso.how').pathname
-          const locale = locales.find((language) => path === `/${language}/` || path === `/${language}`) ?? defaultLocale
+          const locale =
+            locales.find((language) => path === `/${language}/` || path === `/${language}`) ??
+            defaultLocale
           return renderSite(styled, locale, version)
         },
       },

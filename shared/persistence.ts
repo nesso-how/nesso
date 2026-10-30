@@ -1,6 +1,16 @@
-export const persistenceSections = ['document', 'preferences', 'conversation', 'plugin-storage'] as const
-export type PersistenceSection = typeof persistenceSections[number]
-export type PersistenceIssue = { section: PersistenceSection; operation: 'read' | 'write'; path: string; message: string }
+export const persistenceSections = [
+  'document',
+  'preferences',
+  'conversation',
+  'plugin-storage',
+] as const
+export type PersistenceSection = (typeof persistenceSections)[number]
+export type PersistenceIssue = {
+  section: PersistenceSection
+  operation: 'read' | 'write'
+  path: string
+  message: string
+}
 
 export type PersistenceStorage = {
   read: (section: PersistenceSection) => Promise<unknown>

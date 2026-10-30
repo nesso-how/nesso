@@ -5,7 +5,7 @@ export class NessoError extends Error {
   readonly issues: ErrorIssue[]
 
   constructor(issues: ErrorIssue[]) {
-    super(issues.map(({ path, message }) => path ? `${path}: ${message}` : message).join('\n'))
+    super(issues.map(({ path, message }) => (path ? `${path}: ${message}` : message)).join('\n'))
     this.issues = issues
   }
 }

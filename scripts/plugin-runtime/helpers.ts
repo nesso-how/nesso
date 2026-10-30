@@ -13,8 +13,18 @@ export type CheckContext = {
 export function connectFixtureStorage() {
   const saved = new Map<string, unknown>()
   ipcMain.handle('storage:read', (_event, section: string) => ({ value: saved.get(section) }))
-  ipcMain.handle('storage:write', (_event, section: string, value: unknown) => { saved.set(section, value); return { value: null } })
-  ipcMain.handle('data-location:state', () => ({ value: { directory: 'test-profile', defaultDirectory: 'test-profile', moving: false, cleanupPending: false } }))
+  ipcMain.handle('storage:write', (_event, section: string, value: unknown) => {
+    saved.set(section, value)
+    return { value: null }
+  })
+  ipcMain.handle('data-location:state', () => ({
+    value: {
+      directory: 'test-profile',
+      defaultDirectory: 'test-profile',
+      moving: false,
+      cleanupPending: false,
+    },
+  }))
   return saved
 }
 
@@ -26,7 +36,12 @@ export async function openFixtureWorkspace({ window, url }: Pick<CheckContext, '
   await evaluate(`document.querySelector('.intro-header button').click()`)
   await waitFor(() => evaluate<boolean>(`!!document.querySelector('#canvas .react-flow')`), Boolean)
   await waitFor(async () => saved.has('document'), Boolean)
-  await waitFor(async () => !!(saved.get('preferences') as { preferences?: { introSeen?: boolean } } | undefined)?.preferences?.introSeen, Boolean)
+  await waitFor(
+    async () =>
+      !!(saved.get('preferences') as { preferences?: { introSeen?: boolean } } | undefined)
+        ?.preferences?.introSeen,
+    Boolean,
+  )
   return { saved, evaluate }
 }
 
@@ -36,13 +51,17 @@ export async function countWorkers(window: BrowserWindow) {
 }
 
 export const actionState = (): ActionState => ({
-  revision: 0, contextId: 'probe', locale: 'en',
+  revision: 0,
+  contextId: 'probe',
+  locale: 'en',
   theme: Object.fromEntries(themeTokens.map((token) => [token, ''])),
   conceptPlacementOffset: { x: 160, y: 100 },
   viewGraph: { concepts: [], relations: [], relationTypes: [] },
   targetViewId: null,
   workspace: { activeViewId: null, savedViews: [] },
-  selected: [], activeVocab: null, history: { canUndo: false, canRedo: false },
+  selected: [],
+  activeVocab: null,
+  history: { canUndo: false, canRedo: false },
 })
 
 export async function waitFor<T>(read: () => Promise<T>, ready: (value: T) => boolean): Promise<T> {

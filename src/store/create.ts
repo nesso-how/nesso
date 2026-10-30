@@ -1,8 +1,4 @@
-import type {
-  Preferences,
-  ThemeDefinition,
-  VocabDefinition,
-} from '@nesso-how/plugin'
+import type { Preferences, ThemeDefinition, VocabDefinition } from '@nesso-how/plugin'
 import {
   newIri,
   isAbsoluteIri,
@@ -14,8 +10,21 @@ import {
 import { createStore } from 'zustand/vanilla'
 import { createCommands } from './commands.ts'
 import { createHistory } from './history.ts'
-import { applyStateOperations, checkGraph, materialize, newGraph, newWorkspace } from './operations.ts'
-import { defaultPanels, fail, maxRelationLabelLength, parseConversation, parsePreferences, parseWorkspace } from './settings.ts'
+import {
+  applyStateOperations,
+  checkGraph,
+  materialize,
+  newGraph,
+  newWorkspace,
+} from './operations.ts'
+import {
+  defaultPanels,
+  fail,
+  maxRelationLabelLength,
+  parseConversation,
+  parsePreferences,
+  parseWorkspace,
+} from './settings.ts'
 import type { HostState, HostStore, RendererDefinition, RestoredState } from './types.ts'
 import type { PersistenceIssue } from '../../shared/persistence.ts'
 import { parseDefinition } from '@nesso-how/plugin/runtime'
@@ -26,25 +35,34 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
   const initial = graph ? structuredClone(graph) : newGraph(newIri())
   const documentId = graph && restored.documentId ? restored.documentId : newIri()
   if (!isAbsoluteIri(documentId)) fail('documentId', 'Expected an absolute document IRI')
-  const pluginStorage = graph && restored.pluginStorage ? parsePluginStorage({ version: 1, documentId, plugins: restored.pluginStorage }).plugins : []
-  const workspace = graph && restored.workspace ? parseWorkspace(restored.workspace) : newWorkspace()
+  const pluginStorage =
+    graph && restored.pluginStorage
+      ? parsePluginStorage({ version: 1, documentId, plugins: restored.pluginStorage }).plugins
+      : []
+  const workspace =
+    graph && restored.workspace ? parseWorkspace(restored.workspace) : newWorkspace()
   const initialIds = new Set(initial.concepts.map((concept) => concept.id))
   if (workspace.savedViews.some((view) => view.conceptIds.some((id) => !initialIds.has(id)))) {
     fail('workspace.savedViews', 'Unknown concept in view')
   }
-  const preferences: Preferences = restored.preferences ? parsePreferences(restored.preferences) : {
-    activeVocabId: '',
-    activeRendererId: '',
-    activeThemeId: '',
-    panels: { ...defaultPanels },
-  }
+  const preferences: Preferences = restored.preferences
+    ? parsePreferences(restored.preferences)
+    : {
+        activeVocabId: '',
+        activeRendererId: '',
+        activeThemeId: '',
+        panels: { ...defaultPanels },
+      }
   const store = createStore<HostState>()(() => ({
     graph: initial,
     documentEpoch: 0,
     documentId,
     pluginStorage,
     workspace,
-    conversation: parseConversation({ version: 1, messages: restored.conversation?.messages ?? [] }),
+    conversation: parseConversation({
+      version: 1,
+      messages: restored.conversation?.messages ?? [],
+    }),
     preferences: { ...preferences, activeVocabId: '', activeRendererId: '', activeThemeId: '' },
     viewGraph: materialize(initial, workspace),
     selected: [],
@@ -53,12 +71,17 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
     history: { canUndo: false, canRedo: false },
   }))
 
-  const history = createHistory(store.getState, (next) => store.setState({ ...next, history: history.flags() }))
+  const history = createHistory(store.getState, (next) =>
+    store.setState({ ...next, history: history.flags() }),
+  )
   let writesPaused = false
 
   const applyOperations: HostStore['applyOperations'] = (operations, options) => {
-    if (writesPaused && operations.length) fail('storage', 'Local data is being moved; try again when the transfer completes')
-    const historyOperation = operations.find(({ kind }) => kind === 'history.undo' || kind === 'history.redo')
+    if (writesPaused && operations.length)
+      fail('storage', 'Local data is being moved; try again when the transfer completes')
+    const historyOperation = operations.find(
+      ({ kind }) => kind === 'history.undo' || kind === 'history.redo',
+    )
     if (historyOperation) {
       if (operations.length !== 1) fail('operations', 'History operations must be applied alone')
       if (historyOperation.kind === 'history.undo') history.undo()
@@ -69,15 +92,25 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
     const { next, delta, reset } = applyStateOperations(state, operations, { renderers, themes })
     history.record(delta, options?.historyGroup, reset)
     const flags = history.flags()
-    const historyState = flags.canUndo === state.history.canUndo && flags.canRedo === state.history.canRedo ? state.history : flags
-    if (next !== state || historyState !== state.history || reset) store.setState({ ...next, documentEpoch: state.documentEpoch + (reset ? 1 : 0), history: historyState })
+    const historyState =
+      flags.canUndo === state.history.canUndo && flags.canRedo === state.history.canRedo
+        ? state.history
+        : flags
+    if (next !== state || historyState !== state.history || reset)
+      store.setState({
+        ...next,
+        documentEpoch: state.documentEpoch + (reset ? 1 : 0),
+        history: historyState,
+      })
   }
 
   const renderers = new Map<string, RendererDefinition>()
 
   const registerRenderer = (renderer: RendererDefinition): void => {
     if (renderers.has(renderer.id)) {
-      throw new SchemaError([{ path: 'renderer.id', message: `Duplicate renderer id: ${renderer.id}` }])
+      throw new SchemaError([
+        { path: 'renderer.id', message: `Duplicate renderer id: ${renderer.id}` },
+      ])
     }
     renderers.set(renderer.id, renderer)
     const state = store.getState()
@@ -114,12 +147,16 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
     clearChat: () => applyOperations([{ kind: 'conversation.clear' }]),
     getViewGraph: (id) => {
       const state = store.getState()
-      if (!state.workspace.savedViews.some((view) => view.id === id)) fail('view.id', 'Unknown view')
+      if (!state.workspace.savedViews.some((view) => view.id === id))
+        fail('view.id', 'Unknown view')
       return materialize(state.graph, { ...state.workspace, activeViewId: id })
     },
   }
 
-  const prepareVocab = (vocab: VocabDefinition, existing: readonly VocabDefinition[]): VocabDefinition => {
+  const prepareVocab = (
+    vocab: VocabDefinition,
+    existing: readonly VocabDefinition[],
+  ): VocabDefinition => {
     const issues: SchemaIssue[] = validateGraph({
       concepts: [],
       relationTypes: vocab.relationTypes,
@@ -128,12 +165,21 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
     if (!vocab.id || existing.some((item) => item.id === vocab.id)) {
       issues.push({ path: 'id', message: `Duplicate or missing vocabulary id: ${vocab.id}` })
     }
-    if (!vocab.defaultTypeId || !vocab.relationTypes.some((type) => type.id === vocab.defaultTypeId)) {
-      issues.push({ path: 'defaultTypeId', message: `Default type is not offered by vocabulary: ${vocab.id}` })
+    if (
+      !vocab.defaultTypeId ||
+      !vocab.relationTypes.some((type) => type.id === vocab.defaultTypeId)
+    ) {
+      issues.push({
+        path: 'defaultTypeId',
+        message: `Default type is not offered by vocabulary: ${vocab.id}`,
+      })
     }
     vocab.relationTypes.forEach((type, index) => {
       if (type.label.length > maxRelationLabelLength) {
-        issues.push({ path: `relationTypes[${index}].label`, message: `Relation label must not exceed ${maxRelationLabelLength} characters` })
+        issues.push({
+          path: `relationTypes[${index}].label`,
+          message: `Relation label must not exceed ${maxRelationLabelLength} characters`,
+        })
       }
     })
     if (issues.length > 0) throw new SchemaError(issues)
@@ -147,12 +193,18 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
       vocabs: [...state.vocabs, prepared],
       preferences: {
         ...state.preferences,
-        activeVocabId: vocab.id === preferences.activeVocabId ? vocab.id : state.preferences.activeVocabId || vocab.id,
+        activeVocabId:
+          vocab.id === preferences.activeVocabId
+            ? vocab.id
+            : state.preferences.activeVocabId || vocab.id,
       },
     })
   }
 
-  const replacePluginDefinitions = (definitions: readonly (VocabDefinition | ThemeDefinition)[], restoring = false): void => {
+  const replacePluginDefinitions = (
+    definitions: readonly (VocabDefinition | ThemeDefinition)[],
+    restoring = false,
+  ): void => {
     const vocabs: VocabDefinition[] = []
     const nextThemes = new Map<string, ThemeDefinition>()
     for (const definition of definitions) {
@@ -164,10 +216,27 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
     }
     const state = store.getState()
     const vocabIds = vocabs.map(({ id }) => id)
-    const activeVocabId = restoring && vocabIds.includes(preferences.activeVocabId) ? preferences.activeVocabId : vocabIds.includes(state.preferences.activeVocabId) ? state.preferences.activeVocabId : vocabIds[0] ?? ''
-    const activeThemeId = restoring && nextThemes.has(preferences.activeThemeId) ? preferences.activeThemeId : nextThemes.has(state.preferences.activeThemeId) ? state.preferences.activeThemeId : nextThemes.keys().next().value ?? ''
+    const activeVocabId =
+      restoring && vocabIds.includes(preferences.activeVocabId)
+        ? preferences.activeVocabId
+        : vocabIds.includes(state.preferences.activeVocabId)
+          ? state.preferences.activeVocabId
+          : (vocabIds[0] ?? '')
+    const activeThemeId =
+      restoring && nextThemes.has(preferences.activeThemeId)
+        ? preferences.activeThemeId
+        : nextThemes.has(state.preferences.activeThemeId)
+          ? state.preferences.activeThemeId
+          : (nextThemes.keys().next().value ?? '')
     themes = nextThemes
-    store.setState({ vocabs, preferences: activeVocabId === state.preferences.activeVocabId && activeThemeId === state.preferences.activeThemeId ? state.preferences : { ...state.preferences, activeVocabId, activeThemeId } })
+    store.setState({
+      vocabs,
+      preferences:
+        activeVocabId === state.preferences.activeVocabId &&
+        activeThemeId === state.preferences.activeThemeId
+          ? state.preferences
+          : { ...state.preferences, activeVocabId, activeThemeId },
+    })
   }
 
   const setPersistenceIssues = (issues: readonly Readonly<PersistenceIssue>[]): void => {
@@ -176,9 +245,25 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
     }
   }
 
-  const previewOperations = (state: Parameters<typeof applyStateOperations>[0], operations: Parameters<typeof applyStateOperations>[1]) =>
-    applyStateOperations(state, operations, { renderers, themes })
+  const previewOperations = (
+    state: Parameters<typeof applyStateOperations>[0],
+    operations: Parameters<typeof applyStateOperations>[1],
+  ) => applyStateOperations(state, operations, { renderers, themes })
 
-  const setWritesPaused = (value: boolean) => { writesPaused = value }
-  return { store: nessoStore, previewOperations, setPersistenceIssues, setWritesPaused, registerVocab, registerRenderer, getRenderer, registerTheme, getTheme, listThemes, replacePluginDefinitions }
+  const setWritesPaused = (value: boolean) => {
+    writesPaused = value
+  }
+  return {
+    store: nessoStore,
+    previewOperations,
+    setPersistenceIssues,
+    setWritesPaused,
+    registerVocab,
+    registerRenderer,
+    getRenderer,
+    registerTheme,
+    getTheme,
+    listThemes,
+    replacePluginDefinitions,
+  }
 }

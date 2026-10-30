@@ -1,6 +1,20 @@
 import type { SavedView } from '@nesso-how/plugin'
 import { defaultLocale } from '@nesso-how/i18n'
-import { ActionIcon, Button, IconButton, ListRow, ListRowButton, ListRowDetail, ListRowTitle, Menu, MenuItem, MenuPopup, RevealActions, SectionHeading, TextPromptDialog } from '@nesso-how/ui'
+import {
+  ActionIcon,
+  Button,
+  IconButton,
+  ListRow,
+  ListRowButton,
+  ListRowDetail,
+  ListRowTitle,
+  Menu,
+  MenuItem,
+  MenuPopup,
+  RevealActions,
+  SectionHeading,
+  TextPromptDialog,
+} from '@nesso-how/ui'
 import { MoreHorizontal, Pencil, Pin, PinOff, Settings2, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Sidebar } from './SidebarLayout'
@@ -18,13 +32,38 @@ function ViewActionGroup({ viewId }: { viewId: string | null }) {
   const actions = useViewActions()
   return (
     <Menu.Group>
-      <Menu.GroupLabel className="px-2.5 pt-1 pb-0.5 text-[11px] leading-4 text-muted-foreground">{t('actions')}</Menu.GroupLabel>
-      {actions.map((action) => <MenuItem key={action.id} className="pl-4" onClick={() => { void invokeAction(action.id, viewId) }}><ActionIcon name={action.icon} />{action.label[locale] ?? action.label.en}</MenuItem>)}
+      <Menu.GroupLabel className="px-2.5 pt-1 pb-0.5 text-[11px] leading-4 text-muted-foreground">
+        {t('actions')}
+      </Menu.GroupLabel>
+      {actions.map((action) => (
+        <MenuItem
+          key={action.id}
+          className="pl-4"
+          onClick={() => {
+            void invokeAction(action.id, viewId)
+          }}
+        >
+          <ActionIcon name={action.icon} />
+          {action.label[locale] ?? action.label.en}
+        </MenuItem>
+      ))}
     </Menu.Group>
   )
 }
 
-export function AppSidebar({ store = nessoStore, readonly = false, bare = false, onNavigate, onOpenSettings }: { store?: HostStore; readonly?: boolean; bare?: boolean; onNavigate?: () => void; onOpenSettings?: () => void }) {
+export function AppSidebar({
+  store = nessoStore,
+  readonly = false,
+  bare = false,
+  onNavigate,
+  onOpenSettings,
+}: {
+  store?: HostStore
+  readonly?: boolean
+  bare?: boolean
+  onNavigate?: () => void
+  onOpenSettings?: () => void
+}) {
   const t = useTranslation(store)
   const workspace = useNessoStore((state) => state.workspace, store)
   const conceptCount = useNessoStore((state) => state.graph.concepts.length, store)
@@ -63,29 +102,51 @@ export function AppSidebar({ store = nessoStore, readonly = false, bare = false,
       </ListRowButton>
       <RevealActions className="mr-1">
         <Menu.Root open={menu === view.id} onOpenChange={(open) => setMenu(open ? view.id : null)}>
-          <Menu.Trigger disabled={readonly} ref={(element: HTMLButtonElement | null) => {
-            if (element) menuTriggers.current.set(view.id, element)
-            else menuTriggers.current.delete(view.id)
-          }} render={<IconButton aria-label={t('actionsFor', { name: view.name })} />}>
+          <Menu.Trigger
+            disabled={readonly}
+            ref={(element: HTMLButtonElement | null) => {
+              if (element) menuTriggers.current.set(view.id, element)
+              else menuTriggers.current.delete(view.id)
+            }}
+            render={<IconButton aria-label={t('actionsFor', { name: view.name })} />}
+          >
             <MoreHorizontal />
           </Menu.Trigger>
           <MenuPopup>
-            <MenuItem onClick={() => {
-              renamingId.current = view.id
-              setRenaming(view)
-            }}><Pencil />{t('renameView')}</MenuItem>
-            <MenuItem onClick={() => {
-              host.store.setViewPinned(view.id, !view.pinned)
-              requestAnimationFrame(() => {
-                const trigger = menuTriggers.current.get(view.id)
-                const target = trigger?.getClientRects().length ? trigger : createTrigger.current
-                target?.focus()
-              })
-            }}>{view.pinned ? <PinOff /> : <Pin />}{t(view.pinned ? 'unpinView' : 'pinView')}</MenuItem>
+            <MenuItem
+              onClick={() => {
+                renamingId.current = view.id
+                setRenaming(view)
+              }}
+            >
+              <Pencil />
+              {t('renameView')}
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                host.store.setViewPinned(view.id, !view.pinned)
+                requestAnimationFrame(() => {
+                  const trigger = menuTriggers.current.get(view.id)
+                  const target = trigger?.getClientRects().length ? trigger : createTrigger.current
+                  target?.focus()
+                })
+              }}
+            >
+              {view.pinned ? <PinOff /> : <Pin />}
+              {t(view.pinned ? 'unpinView' : 'pinView')}
+            </MenuItem>
             <Menu.Separator className="my-1 h-px bg-border" />
             <ViewActionGroup viewId={view.id} />
             <Menu.Separator className="my-1 h-px bg-border" />
-            <MenuItem onClick={() => { deletingId.current = view.id; setDeleting(view) }}><Trash2 />{t('deleteView')}</MenuItem>
+            <MenuItem
+              onClick={() => {
+                deletingId.current = view.id
+                setDeleting(view)
+              }}
+            >
+              <Trash2 />
+              {t('deleteView')}
+            </MenuItem>
           </MenuPopup>
         </Menu.Root>
       </RevealActions>
@@ -93,33 +154,60 @@ export function AppSidebar({ store = nessoStore, readonly = false, bare = false,
   )
 
   const heading = (label: string, id: string, open: boolean, toggle: () => void) => (
-    <SectionHeading open={open} className="min-h-8" aria-controls={id} onClick={toggle}>{label}</SectionHeading>
+    <SectionHeading open={open} className="min-h-8" aria-controls={id} onClick={toggle}>
+      {label}
+    </SectionHeading>
   )
 
   const content = (
     <>
       <div className="flex min-h-0 flex-1 flex-col px-3 pt-5">
         <NewViewButton ref={createTrigger} disabled={readonly} />
-        {heading(t('pinnedViews'), 'pinned-views', pinnedOpen, () => store.setSectionOpen('sidebar.pinned-views', !pinnedOpen))}
-        <div className="explorer-scroll min-h-0 flex-1 overflow-y-auto p-1.5 -mx-1.5" onScroll={() => setMenu(null)}>
+        {heading(t('pinnedViews'), 'pinned-views', pinnedOpen, () =>
+          store.setSectionOpen('sidebar.pinned-views', !pinnedOpen),
+        )}
+        <div
+          className="explorer-scroll min-h-0 flex-1 overflow-y-auto p-1.5 -mx-1.5"
+          onScroll={() => setMenu(null)}
+        >
           <div id="pinned-views" hidden={!pinnedOpen} className="mt-1 space-y-0.5">
             <ListRow className="has-[[aria-current]]:bg-pressed">
-              <ListRowButton onClick={() => navigate(null)} aria-current={workspace.activeViewId === null ? 'page' : undefined}>
+              <ListRowButton
+                onClick={() => navigate(null)}
+                aria-current={workspace.activeViewId === null ? 'page' : undefined}
+              >
                 <ListRowTitle>{t('completeGraph')}</ListRowTitle>
                 <ListRowDetail>{t('conceptCount', { count: conceptCount })}</ListRowDetail>
               </ListRowButton>
               <RevealActions className="mr-1">
-                <Menu.Root open={menu === 'complete-graph'} onOpenChange={(open) => setMenu(open ? 'complete-graph' : null)}>
-                  <Menu.Trigger disabled={readonly} ref={(element: HTMLButtonElement | null) => {
-                    if (element) menuTriggers.current.set('complete-graph', element)
-                    else menuTriggers.current.delete('complete-graph')
-                  }} render={<IconButton aria-label={t('actionsFor', { name: t('completeGraph') })} />}>
+                <Menu.Root
+                  open={menu === 'complete-graph'}
+                  onOpenChange={(open) => setMenu(open ? 'complete-graph' : null)}
+                >
+                  <Menu.Trigger
+                    disabled={readonly}
+                    ref={(element: HTMLButtonElement | null) => {
+                      if (element) menuTriggers.current.set('complete-graph', element)
+                      else menuTriggers.current.delete('complete-graph')
+                    }}
+                    render={
+                      <IconButton aria-label={t('actionsFor', { name: t('completeGraph') })} />
+                    }
+                  >
                     <MoreHorizontal />
                   </Menu.Trigger>
                   <MenuPopup>
                     <ViewActionGroup viewId={null} />
                     <Menu.Separator className="my-1 h-px bg-border" />
-                    <MenuItem onClick={() => { deletingId.current = 'complete-graph'; setDeleting('complete-graph') }}><Trash2 />{t('deleteView')}</MenuItem>
+                    <MenuItem
+                      onClick={() => {
+                        deletingId.current = 'complete-graph'
+                        setDeleting('complete-graph')
+                      }}
+                    >
+                      <Trash2 />
+                      {t('deleteView')}
+                    </MenuItem>
                   </MenuPopup>
                 </Menu.Root>
               </RevealActions>
@@ -127,31 +215,66 @@ export function AppSidebar({ store = nessoStore, readonly = false, bare = false,
             {pinned.map(row)}
           </div>
           <div className="mt-4">
-            {heading(t('views'), 'saved-views', viewsOpen, () => store.setSectionOpen('sidebar.views', !viewsOpen))}
-            <div id="saved-views" hidden={!viewsOpen} className="sidebar-views mt-1 space-y-0.5">{ordinary.map(row)}</div>
+            {heading(t('views'), 'saved-views', viewsOpen, () =>
+              store.setSectionOpen('sidebar.views', !viewsOpen),
+            )}
+            <div id="saved-views" hidden={!viewsOpen} className="sidebar-views mt-1 space-y-0.5">
+              {ordinary.map(row)}
+            </div>
           </div>
         </div>
       </div>
-      {(onOpenSettings || readonly) && <div className="shrink-0 border-t px-3 py-2">
-        <Button data-settings-trigger disabled={readonly} variant="ghost" className="w-full justify-start text-muted-foreground" onClick={onOpenSettings}><Settings2 />{t('settings')}</Button>
-      </div>}
+      {(onOpenSettings || readonly) && (
+        <div className="shrink-0 border-t px-3 py-2">
+          <Button
+            data-settings-trigger
+            disabled={readonly}
+            variant="ghost"
+            className="w-full justify-start text-muted-foreground"
+            onClick={onOpenSettings}
+          >
+            <Settings2 />
+            {t('settings')}
+          </Button>
+        </div>
+      )}
     </>
   )
 
   return (
     <>
-      {bare ? content : (
-        <Sidebar>
-          {content}
-        </Sidebar>
+      {bare ? content : <Sidebar>{content}</Sidebar>}
+      {!readonly && (
+        <TextPromptDialog
+          open={renaming !== null}
+          onOpenChange={(open) => {
+            if (!open) setRenaming(null)
+          }}
+          title={t('renameView')}
+          description={t('renameDescription')}
+          initialValue={renaming?.name ?? ''}
+          nameLabel={t('name')}
+          submitLabel={t('saveName')}
+          cancelLabel={t('cancel')}
+          maxLength={maxViewNameLength}
+          finalFocus={() =>
+            menuTriggers.current.get(renamingId.current ?? '') ?? createTrigger.current
+          }
+          onSubmit={(name) => {
+            if (renaming) host.store.renameView(renaming.id, name)
+            setRenaming(null)
+          }}
+        />
       )}
       {!readonly && (
-        <TextPromptDialog open={renaming !== null} onOpenChange={(open) => { if (!open) setRenaming(null) }} title={t('renameView')} description={t('renameDescription')} initialValue={renaming?.name ?? ''} nameLabel={t('name')} submitLabel={t('saveName')} cancelLabel={t('cancel')} maxLength={maxViewNameLength} finalFocus={() => menuTriggers.current.get(renamingId.current ?? '') ?? createTrigger.current} onSubmit={(name) => {
-          if (renaming) host.store.renameView(renaming.id, name)
-          setRenaming(null)
-        }} />
+        <DeleteViewDialog
+          target={deleting}
+          onClose={() => setDeleting(null)}
+          finalFocus={() =>
+            menuTriggers.current.get(deletingId.current ?? '') ?? createTrigger.current
+          }
+        />
       )}
-      {!readonly && <DeleteViewDialog target={deleting} onClose={() => setDeleting(null)} finalFocus={() => menuTriggers.current.get(deletingId.current ?? '') ?? createTrigger.current} />}
     </>
   )
 }

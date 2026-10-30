@@ -1,9 +1,18 @@
 import { PluginError, runtimeLimits } from '@nesso-how/plugin/runtime'
 
-export async function withInitializationTimeout<T>(load: (signal: AbortSignal) => Promise<T>, parent: AbortSignal): Promise<T> {
+export async function withInitializationTimeout<T>(
+  load: (signal: AbortSignal) => Promise<T>,
+  parent: AbortSignal,
+): Promise<T> {
   const controller = new AbortController()
   const signal = AbortSignal.any([parent, controller.signal])
-  const timer = setTimeout(() => controller.abort(new PluginError('timeout', [{ path: 'plugin', message: 'Plugin loading timed out' }])), runtimeLimits.initialization)
+  const timer = setTimeout(
+    () =>
+      controller.abort(
+        new PluginError('timeout', [{ path: 'plugin', message: 'Plugin loading timed out' }]),
+      ),
+    runtimeLimits.initialization,
+  )
   let cancel: (() => void) | undefined
   try {
     signal.throwIfAborted()

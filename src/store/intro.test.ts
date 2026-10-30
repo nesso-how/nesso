@@ -13,7 +13,9 @@ test('intro steps reuse one graph and restore the seed views when moving forward
 
   for (const step of [1, 2, 1, 0, 1]) {
     let notifications = 0
-    const unsubscribe = store.subscribe(() => { notifications++ })
+    const unsubscribe = store.subscribe(() => {
+      notifications++
+    })
     setIntroStep(store, step)
     unsubscribe()
     const state = store.getState()
@@ -21,7 +23,12 @@ test('intro steps reuse one graph and restore the seed views when moving forward
     assert.ok(notifications <= 1)
     assert.deepEqual(state.viewGraph.concepts, step === 0 ? [graph.concepts[0]] : graph.concepts)
     if (step > 0) assert.deepEqual(state.workspace.savedViews, seed.workspace.savedViews)
-    assert.deepEqual(state.selected, step === 0 || step === 2 ? [{ kind: 'concept', id: graph.concepts[step === 0 ? 0 : 3].id }] : [])
+    assert.deepEqual(
+      state.selected,
+      step === 0 || step === 2
+        ? [{ kind: 'concept', id: graph.concepts[step === 0 ? 0 : 3].id }]
+        : [],
+    )
   }
 })
 
@@ -57,7 +64,9 @@ test('completing the intro selects seed Focus once, then preserves selection', (
   const { store } = createNessoStore(seed.graph, { workspace: seed.workspace })
   const original = store.getState()
   let notifications = 0
-  const unsubscribe = store.subscribe(() => { notifications++ })
+  const unsubscribe = store.subscribe(() => {
+    notifications++
+  })
   completeIntro(store)
   unsubscribe()
   assert.equal(notifications, 1)

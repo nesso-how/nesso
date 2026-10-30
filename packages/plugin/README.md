@@ -33,11 +33,13 @@ export const create = (): readonly ActionContribution[] => {
     run: async ({ document }) => {
       const state = document.getState()
 
-      const operations: readonly NessoOperation[] = state.viewGraph.concepts.map(({ id, label }) => ({
-        kind: 'concept.label',
-        id,
-        value: label.toUpperCase(),
-      }))
+      const operations: readonly NessoOperation[] = state.viewGraph.concepts.map(
+        ({ id, label }) => ({
+          kind: 'concept.label',
+          id,
+          value: label.toUpperCase(),
+        }),
+      )
 
       await document.applyOperations(operations)
     },
@@ -109,7 +111,13 @@ import type { ActionContext, ActionContribution } from '@nesso-how/plugin'
 
 function Browse({ document }: ActionContext) {
   const state = useSyncExternalStore(document.subscribe, document.getState)
-  return <ul>{state.viewGraph.concepts.map(({ id, label }) => <li key={id}>{label}</li>)}</ul>
+  return (
+    <ul>
+      {state.viewGraph.concepts.map(({ id, label }) => (
+        <li key={id}>{label}</li>
+      ))}
+    </ul>
+  )
 }
 
 export const create = (): readonly ActionContribution[] => [
@@ -148,24 +156,24 @@ Concept and relation-type IDs are absolute IRIs. Relations are `{ source, predic
 
 Call helpers on `document` and declare their operation kinds in `nesso.writes`:
 
-| Helper | Required `writes` entry |
-| --- | --- |
-| `setConceptLabel(id, value)` | `concept.label` |
-| `setConceptDescription(id, value)` | `concept.description` |
-| `setConceptColor(id, value)` | `concept.color` |
-| `setConceptBold(id, value)` | `concept.bold` |
-| `setConceptItalic(id, value)` | `concept.italic` |
-| `setConceptPosition(id, { x, y })` | `concept.position` |
-| `setConceptPositions([{ id, position: { x, y } }])` | `concept.positions` |
-| `addConcept(position?)` | `concept.add` |
-| `removeConcept(id)` | `concept.remove` |
-| `connect(source, target)` | `relation.connect` |
-| `reconnectRelation(id, source, target)` | `relation.reconnect` |
-| `setRelationType(id, typeId)` | `relation.type` |
-| `createRelationType(id, label)` | `relation.type.create` |
-| `removeRelation(id)` | `relation.remove` |
-| `setSelection([{ kind, id }])` | `selection.set` |
-| `setViewMembership(viewId, conceptId, included)` | `view.membership` |
+| Helper                                              | Required `writes` entry |
+| --------------------------------------------------- | ----------------------- |
+| `setConceptLabel(id, value)`                        | `concept.label`         |
+| `setConceptDescription(id, value)`                  | `concept.description`   |
+| `setConceptColor(id, value)`                        | `concept.color`         |
+| `setConceptBold(id, value)`                         | `concept.bold`          |
+| `setConceptItalic(id, value)`                       | `concept.italic`        |
+| `setConceptPosition(id, { x, y })`                  | `concept.position`      |
+| `setConceptPositions([{ id, position: { x, y } }])` | `concept.positions`     |
+| `addConcept(position?)`                             | `concept.add`           |
+| `removeConcept(id)`                                 | `concept.remove`        |
+| `connect(source, target)`                           | `relation.connect`      |
+| `reconnectRelation(id, source, target)`             | `relation.reconnect`    |
+| `setRelationType(id, typeId)`                       | `relation.type`         |
+| `createRelationType(id, label)`                     | `relation.type.create`  |
+| `removeRelation(id)`                                | `relation.remove`       |
+| `setSelection([{ kind, id }])`                      | `selection.set`         |
+| `setViewMembership(viewId, conceptId, included)`    | `view.membership`       |
 
 `addConcept` returns the new IRI. New concepts join the active saved view and link to the single selected concept, if any. These links and `connect` use the vocabulary's default relation type. `createRelationType` creates and assigns a type to the given relation.
 
@@ -177,11 +185,11 @@ The invoked view is **not a write sandbox**: permitted writes can affect the who
 
 ### Files, notifications, and failures
 
-| API | Required capability | Result |
-| --- | --- | --- |
-| `files.open({ extensions: ['json'], mimeTypes: ['application/json'] })` | `files` | `{ name, mediaType, text }`, or `null` on cancellation. Extensions omit the dot. |
-| `files.save({ name: 'graph.json', mediaType: 'application/json', text })` | `files` | `{ saved: boolean }`; cancellation returns `false`. |
-| `notifications.notify({ tone: 'info', title: { en: 'Done' }, description: { en: 'Labels updated' } })` | `notifications` | A notification ID. Tone is `info` or `warning`; description is optional. |
+| API                                                                                                    | Required capability | Result                                                                           |
+| ------------------------------------------------------------------------------------------------------ | ------------------- | -------------------------------------------------------------------------------- |
+| `files.open({ extensions: ['json'], mimeTypes: ['application/json'] })`                                | `files`             | `{ name, mediaType, text }`, or `null` on cancellation. Extensions omit the dot. |
+| `files.save({ name: 'graph.json', mediaType: 'application/json', text })`                              | `files`             | `{ saved: boolean }`; cancellation returns `false`.                              |
+| `notifications.notify({ tone: 'info', title: { en: 'Done' }, description: { en: 'Labels updated' } })` | `notifications`     | A notification ID. Tone is `info` or `warning`; description is optional.         |
 
 Files use UTF-8 text and host-managed dialogs or browser downloads; `files` grants no unrestricted filesystem access. Plugins have no Node, host DOM, direct filesystem, clipboard, or network access.
 
@@ -225,15 +233,15 @@ Await all storage calls before the action returns. Success means the validated c
 
 Storage accepts finite JSON primitives, dense arrays, and plain objects, including `null`; not `undefined`, dates, maps, functions, cyclic data, or custom prototypes. Returned snapshots and stored payloads are independent copies.
 
-| Budget | Limit |
-| --- | --- |
-| Record, encoded as UTF-8 JSON | 256 KiB |
-| Namespace snapshot | 8 MiB |
-| Total plugin storage per document | 64 MiB |
-| Records per plugin | 10,000 |
-| Plugin namespaces per document | 128 |
-| Record nesting | 24 levels |
-| Record key | 1–128 characters |
+| Budget                            | Limit            |
+| --------------------------------- | ---------------- |
+| Record, encoded as UTF-8 JSON     | 256 KiB          |
+| Namespace snapshot                | 8 MiB            |
+| Total plugin storage per document | 64 MiB           |
+| Records per plugin                | 10,000           |
+| Plugin namespaces per document    | 128              |
+| Record nesting                    | 24 levels        |
+| Record key                        | 1–128 characters |
 
 Concept IDs must be absolute IRIs and refer to an existing document concept when writing. Deletes may remove retained orphan records. Keys are logical identifiers, not paths. Normal action channel request, deadline, rate, and cancellation limits also apply.
 
@@ -244,9 +252,7 @@ Set `nesso.kind` to `"vocab"`, `entry` to a package-local JSON file such as `"di
 ```json
 {
   "id": "my-vocab",
-  "relationTypes": [
-    { "id": "urn:my-vocab:depends-on", "label": "depends on" }
-  ],
+  "relationTypes": [{ "id": "urn:my-vocab:depends-on", "label": "depends on" }],
   "defaultTypeId": "urn:my-vocab:depends-on"
 }
 ```

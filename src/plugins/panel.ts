@@ -5,19 +5,40 @@ import type { FileBridge } from '../../shared/files.ts'
 import type { HostStore } from '../store/types.ts'
 import { loadActions, type ActionPackage } from './actions.ts'
 
-type Invocation = { readonly actionId: string; readonly viewId: string | null; readonly descriptors: readonly ActionDescriptor[] }
-type Panel = { readonly id: string; readonly pluginName: string; readonly title: string; readonly viewName: string | null; readonly status: 'loading' | 'ready' | 'failed' }
+type Invocation = {
+  readonly actionId: string
+  readonly viewId: string | null
+  readonly descriptors: readonly ActionDescriptor[]
+}
+type Panel = {
+  readonly id: string
+  readonly pluginName: string
+  readonly title: string
+  readonly viewName: string | null
+  readonly status: 'loading' | 'ready' | 'failed'
+}
 
-export function createPluginPanel(store: HostStore, notifications: Notifications, bridge?: FileBridge) {
+export function createPluginPanel(
+  store: HostStore,
+  notifications: Notifications,
+  bridge?: FileBridge,
+) {
   let current: Panel | null = null
   let session: { source: ActionPackage; invocation: Invocation; close: () => void } | undefined
   let detach: (() => void) | undefined
   const listeners = new Set<() => void>()
-  const publish = () => { for (const listener of listeners) listener() }
+  const publish = () => {
+    for (const listener of listeners) listener()
+  }
   const close = () => session?.close()
   return {
     getSnapshot: () => current,
-    subscribe: (listener: () => void) => { listeners.add(listener); return () => { listeners.delete(listener) } },
+    subscribe: (listener: () => void) => {
+      listeners.add(listener)
+      return () => {
+        listeners.delete(listener)
+      }
+    },
     close,
     open: (source: ActionPackage, invocation: Invocation, signal: AbortSignal) => {
       close()
@@ -25,8 +46,12 @@ export function createPluginPanel(store: HostStore, notifications: Notifications
       const state = store.getState()
       const view = state.workspace.savedViews.find(({ id }) => id === invocation.viewId)
       const action = invocation.descriptors.find(({ id }) => id === invocation.actionId)
-      if (!source.manifest.capabilities.includes('ui') || !action?.ui) throw new PluginError('denied', [{ path: 'ui', message: 'UI not authorized' }])
-      if (invocation.viewId !== null && !view) throw new PluginError('stale-context', [{ path: 'panel', message: 'Target view no longer exists' }])
+      if (!source.manifest.capabilities.includes('ui') || !action?.ui)
+        throw new PluginError('denied', [{ path: 'ui', message: 'UI not authorized' }])
+      if (invocation.viewId !== null && !view)
+        throw new PluginError('stale-context', [
+          { path: 'panel', message: 'Target view no longer exists' },
+        ])
       const locale = state.preferences.locale ?? defaultLocale
       return new Promise<void>((resolve) => {
         const end = () => {
@@ -42,10 +67,22 @@ export function createPluginPanel(store: HostStore, notifications: Notifications
         }
         const unsubscribe = store.subscribe(() => {
           const next = store.getState()
-          if (next.documentId !== state.documentId || next.documentEpoch !== state.documentEpoch || invocation.viewId !== null && !next.workspace.savedViews.some(({ id }) => id === invocation.viewId)) end()
+          if (
+            next.documentId !== state.documentId ||
+            next.documentEpoch !== state.documentEpoch ||
+            (invocation.viewId !== null &&
+              !next.workspace.savedViews.some(({ id }) => id === invocation.viewId))
+          )
+            end()
         })
         session = { source, invocation, close: end }
-        current = { id: crypto.randomUUID(), pluginName: resolvePluginText(source.i18n.metadata.name, locale), title: resolvePluginText(action.label, locale), viewName: view?.name ?? null, status: 'loading' }
+        current = {
+          id: crypto.randomUUID(),
+          pluginName: resolvePluginText(source.i18n.metadata.name, locale),
+          title: resolvePluginText(action.label, locale),
+          viewName: view?.name ?? null,
+          status: 'loading',
+        }
         signal.addEventListener('abort', end, { once: true })
         publish()
       })
@@ -60,7 +97,10 @@ export function createPluginPanel(store: HostStore, notifications: Notifications
         current = { ...current, status }
         publish()
       }
-      void loadActions(store, source, notifications, bridge, invocation, controller.signal, { element: frame, ready: () => update('ready') }).catch(() => update('failed'))
+      void loadActions(store, source, notifications, bridge, invocation, controller.signal, {
+        element: frame,
+        ready: () => update('ready'),
+      }).catch(() => update('failed'))
       detach = () => controller.abort()
       return detach
     },

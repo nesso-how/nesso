@@ -8,10 +8,15 @@ const count = <T>(changes: readonly Change<T>[]): AiEffects['concepts'] => ({
   removed: changes.filter(({ before, after }) => before && !after).length,
 })
 
-export function summarizeEffects({ delta, relationRewrites }: ReturnType<typeof applyStateOperations>): AiEffects {
+export function summarizeEffects({
+  delta,
+  relationRewrites,
+}: ReturnType<typeof applyStateOperations>): AiEffects {
   const before = new Set(relationRewrites.map((rewrite) => rewrite.before))
   const after = new Set(relationRewrites.map((rewrite) => rewrite.after))
-  const relations = count(delta.relations.filter((change) => !before.has(change.id) && !after.has(change.id)))
+  const relations = count(
+    delta.relations.filter((change) => !before.has(change.id) && !after.has(change.id)),
+  )
   const groups = {
     concepts: count(delta.concepts),
     relations: { ...relations, updated: relations.updated + relationRewrites.length },

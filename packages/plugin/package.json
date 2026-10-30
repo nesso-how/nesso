@@ -8,8 +8,11 @@
     "url": "git+https://github.com/nesso-how/nesso.git",
     "directory": "packages/plugin"
   },
+  "files": [
+    "dist",
+    "example"
+  ],
   "type": "module",
-  "files": ["dist", "example"],
   "types": "./dist/index.d.ts",
   "exports": {
     ".": "./src/index.ts",
@@ -17,12 +20,21 @@
     "./package": "./src/package.ts"
   },
   "publishConfig": {
-    "access": "public",
     "exports": {
-      ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
-      "./runtime": { "types": "./dist/runtime.d.ts", "default": "./dist/runtime.js" },
-      "./package": { "types": "./dist/package.d.ts", "default": "./dist/package.js" }
-    }
+      ".": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "./runtime": {
+        "types": "./dist/runtime.d.ts",
+        "default": "./dist/runtime.js"
+      },
+      "./package": {
+        "types": "./dist/package.d.ts",
+        "default": "./dist/package.js"
+      }
+    },
+    "access": "public"
   },
   "scripts": {
     "build": "tsc -p ../../tsconfig.plugin.json && tsdown",

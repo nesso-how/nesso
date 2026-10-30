@@ -7,17 +7,24 @@ import { prepareDataTransfer } from './data-transfer.ts'
 function fixture() {
   const bus = new EventEmitter()
   const sent: { id: number; request: string }[] = []
-  const windows = [1, 2].map((id) => Object.assign(new EventEmitter(), {
-    id,
-    send: (_channel: string, request: string) => { sent.push({ id, request }) },
-  }))
+  const windows = [1, 2].map((id) =>
+    Object.assign(new EventEmitter(), {
+      id,
+      send: (_channel: string, request: string) => {
+        sent.push({ id, request })
+      },
+    }),
+  )
   const reply = (id: number, request: string, saved: unknown, trusted = true) => {
     bus.emit('data-location:prepared', { sender: { id }, trusted }, request, saved)
   }
-  const prepare = (timeout = 1000) => prepareDataTransfer(
-    windows as unknown as WebContents[], bus as typeof ipcMain,
-    (event) => (event as IpcMainEvent & { trusted: boolean }).trusted, timeout,
-  )
+  const prepare = (timeout = 1000) =>
+    prepareDataTransfer(
+      windows as unknown as WebContents[],
+      bus as typeof ipcMain,
+      (event) => (event as IpcMainEvent & { trusted: boolean }).trusted,
+      timeout,
+    )
   const clean = () => {
     assert.equal(bus.listenerCount('data-location:prepared'), 0)
     for (const window of windows) {
@@ -31,7 +38,9 @@ function fixture() {
 test('transfer preparation requires successful trusted acknowledgements from every window', async () => {
   const { sent, reply, prepare, clean } = fixture()
   let finished = false
-  const pending = prepare().then(() => { finished = true })
+  const pending = prepare().then(() => {
+    finished = true
+  })
   const request = sent[0].request
   assert.equal(sent[1].request, request)
   reply(1, request, true, false)

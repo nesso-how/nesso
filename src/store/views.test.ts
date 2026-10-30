@@ -4,7 +4,11 @@ import { createNessoStore } from './create.ts'
 import { buildDeleteViewOperations } from './views.ts'
 
 const fixture = () => ({
-  concepts: ['urn:one', 'urn:two', 'urn:three'].map((id) => ({ id, label: id, position: { x: 0, y: 0 } })),
+  concepts: ['urn:one', 'urn:two', 'urn:three'].map((id) => ({
+    id,
+    label: id,
+    position: { x: 0, y: 0 },
+  })),
   relationTypes: [{ id: 'urn:links', label: 'links' }],
   relations: [{ source: 'urn:one', predicate: 'urn:links', target: 'urn:two' }],
 })
@@ -21,9 +25,18 @@ test('view deletion optionally removes shared concepts and memberships as one un
     store.applyOperations(buildDeleteViewOperations(before, target, withConcepts))
     const after = store.getState()
     assert.equal(notifications, 1)
-    assert.equal(after.workspace.savedViews.some((view) => view.id === target), false)
-    assert.deepEqual(after.workspace.savedViews.find((view) => view.id === shared)?.conceptIds, withConcepts ? ['urn:three'] : ['urn:two', 'urn:three'])
-    assert.deepEqual(after.graph.concepts.map((concept) => concept.id), withConcepts ? ['urn:three'] : ['urn:one', 'urn:two', 'urn:three'])
+    assert.equal(
+      after.workspace.savedViews.some((view) => view.id === target),
+      false,
+    )
+    assert.deepEqual(
+      after.workspace.savedViews.find((view) => view.id === shared)?.conceptIds,
+      withConcepts ? ['urn:three'] : ['urn:two', 'urn:three'],
+    )
+    assert.deepEqual(
+      after.graph.concepts.map((concept) => concept.id),
+      withConcepts ? ['urn:three'] : ['urn:one', 'urn:two', 'urn:three'],
+    )
     assert.deepEqual(after.graph.relations, withConcepts ? [] : before.graph.relations)
     if (!withConcepts) assert.equal(after.graph, before.graph)
     store.undo()
@@ -45,11 +58,19 @@ test('deleting all concepts leaves a fresh disconnected concept and preserves un
     store.applyOperations(buildDeleteViewOperations(before, complete ? null : target, true))
     const after = store.getState()
     assert.equal(after.graph.concepts.length, 1)
-    assert.equal(before.graph.concepts.some((concept) => concept.id === after.graph.concepts[0].id), false)
+    assert.equal(
+      before.graph.concepts.some((concept) => concept.id === after.graph.concepts[0].id),
+      false,
+    )
     assert.deepEqual(after.graph.relations, [])
     assert.deepEqual(after.selected, [])
     assert.equal(after.workspace.activeViewId, null)
-    assert.deepEqual(after.workspace.savedViews, complete ? [] : [{ ...before.workspace.savedViews.find((view) => view.id === shared), conceptIds: [] }])
+    assert.deepEqual(
+      after.workspace.savedViews,
+      complete
+        ? []
+        : [{ ...before.workspace.savedViews.find((view) => view.id === shared), conceptIds: [] }],
+    )
     store.undo()
     assert.deepEqual(store.getState().graph, before.graph)
     assert.deepEqual(store.getState().workspace.savedViews, before.workspace.savedViews)

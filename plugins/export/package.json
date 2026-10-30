@@ -3,33 +3,60 @@
   "version": "1.0.0-alpha.31",
   "license": "MIT",
   "type": "module",
-  "nesso": {
-    "apiVersion": 1, "kind": "actions", "entry": "dist/index.js", "writes": [], "capabilities": ["files", "notifications"]
-  },
-  "i18n": {
-    "metadata": {
-      "name": { "en": "Export", "it": "Export", "zh-CN": "导出" },
-      "description": { "en": "Export your views as JSON-LD.", "it": "Esporta le tue viste in formato JSON-LD.", "zh-CN": "将视图导出为 JSON-LD。" },
-      "documentation": {
-        "en": "Export saves the invoked view as JSON-LD, including concepts, internal relations, and relation types. All exports the complete graph.",
-        "it": "Export salva la vista invocata in JSON-LD, inclusi concetti, relazioni interne e tipi. Tutto esporta il grafo completo.",
-        "zh-CN": "导出功能将调用的视图保存为 JSON-LD，包括概念、内部关系和类型。全部视图导出完整图谱。"
-      }
-    },
-    "label": { "en": "Export json", "it": "Esporta json", "zh-CN": "导出 json" },
-    "viewExported": { "en": "View exported", "it": "Vista esportata", "zh-CN": "视图已导出" },
-    "viewExportedDescription": { "en": "JSON-LD file saved or download requested.", "it": "File JSON-LD salvato o download avviato.", "zh-CN": "JSON-LD 文件已保存或下载已开始。" }
-  },
   "exports": {
     ".": "./src/index.ts"
   },
   "dependencies": {
     "@nesso-how/schema": "workspace:*"
   },
+  "devDependencies": {
+    "@nesso-how/plugin": "workspace:*"
+  },
   "peerDependencies": {
     "@nesso-how/plugin": "workspace:*"
   },
-  "devDependencies": {
-    "@nesso-how/plugin": "workspace:*"
+  "i18n": {
+    "metadata": {
+      "name": {
+        "en": "Export",
+        "it": "Export",
+        "zh-CN": "导出"
+      },
+      "description": {
+        "en": "Export your views as JSON-LD.",
+        "it": "Esporta le tue viste in formato JSON-LD.",
+        "zh-CN": "将视图导出为 JSON-LD。"
+      },
+      "documentation": {
+        "en": "Export saves the invoked view as JSON-LD, including concepts, internal relations, and relation types. All exports the complete graph.",
+        "it": "Export salva la vista invocata in JSON-LD, inclusi concetti, relazioni interne e tipi. Tutto esporta il grafo completo.",
+        "zh-CN": "导出功能将调用的视图保存为 JSON-LD，包括概念、内部关系和类型。全部视图导出完整图谱。"
+      }
+    },
+    "label": {
+      "en": "Export json",
+      "it": "Esporta json",
+      "zh-CN": "导出 json"
+    },
+    "viewExported": {
+      "en": "View exported",
+      "it": "Vista esportata",
+      "zh-CN": "视图已导出"
+    },
+    "viewExportedDescription": {
+      "en": "JSON-LD file saved or download requested.",
+      "it": "File JSON-LD salvato o download avviato.",
+      "zh-CN": "JSON-LD 文件已保存或下载已开始。"
+    }
+  },
+  "nesso": {
+    "apiVersion": 1,
+    "kind": "actions",
+    "entry": "dist/index.js",
+    "writes": [],
+    "capabilities": [
+      "files",
+      "notifications"
+    ]
   }
 }

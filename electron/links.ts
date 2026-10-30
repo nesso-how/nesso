@@ -2,11 +2,21 @@ import type { WebContents } from 'electron'
 import { ElectronError } from './errors.ts'
 import { isAllowedExternalLink, isAllowedPluginLink } from '../shared/link-policy.ts'
 
-export function connectExternalLinks(contents: Pick<WebContents, 'setWindowOpenHandler'>, openExternal: (url: string) => Promise<void>) {
+export function connectExternalLinks(
+  contents: Pick<WebContents, 'setWindowOpenHandler'>,
+  openExternal: (url: string) => Promise<void>,
+) {
   contents.setWindowOpenHandler(({ url }) => {
     if (isAllowedExternalLink(url) || isAllowedPluginLink(url)) {
       void openExternal(url).catch((error: unknown) => {
-        console.error(new ElectronError([{ path: 'external-link', message: error instanceof Error ? error.message : String(error) }]))
+        console.error(
+          new ElectronError([
+            {
+              path: 'external-link',
+              message: error instanceof Error ? error.message : String(error),
+            },
+          ]),
+        )
       })
     }
     return { action: 'deny' }

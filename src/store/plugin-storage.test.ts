@@ -4,13 +4,41 @@ import { pluginStorageLimits } from '@nesso-how/plugin/runtime'
 import { createNessoStore } from './create.ts'
 import { parsePluginStorage, type PluginStorageWrite } from './plugin-storage.ts'
 
-const graph = { concepts: [{ id: 'urn:a', label: 'A', position: { x: 0, y: 0 } }, { id: 'urn:b', label: 'B', position: { x: 100, y: 0 } }], relations: [], relationTypes: [] }
-const set = (host: ReturnType<typeof createNessoStore>, key: string, value: unknown, conceptId?: string, revision = 0, pluginId = 'nesso-plugin-example'): PluginStorageWrite => ({
-  kind: 'plugin-storage.set', documentId: host.store.getState().documentId, pluginId, revision,
-  record: conceptId === undefined ? { key, value: value as never } : { key, value: value as never, conceptId },
+const graph = {
+  concepts: [
+    { id: 'urn:a', label: 'A', position: { x: 0, y: 0 } },
+    { id: 'urn:b', label: 'B', position: { x: 100, y: 0 } },
+  ],
+  relations: [],
+  relationTypes: [],
+}
+const set = (
+  host: ReturnType<typeof createNessoStore>,
+  key: string,
+  value: unknown,
+  conceptId?: string,
+  revision = 0,
+  pluginId = 'nesso-plugin-example',
+): PluginStorageWrite => ({
+  kind: 'plugin-storage.set',
+  documentId: host.store.getState().documentId,
+  pluginId,
+  revision,
+  record:
+    conceptId === undefined
+      ? { key, value: value as never }
+      : { key, value: value as never, conceptId },
 })
-const remove = (host: ReturnType<typeof createNessoStore>, key: string, conceptId?: string, revision = 0): PluginStorageWrite => ({
-  kind: 'plugin-storage.delete', documentId: host.store.getState().documentId, pluginId: 'nesso-plugin-example', revision,
+const remove = (
+  host: ReturnType<typeof createNessoStore>,
+  key: string,
+  conceptId?: string,
+  revision = 0,
+): PluginStorageWrite => ({
+  kind: 'plugin-storage.delete',
+  documentId: host.store.getState().documentId,
+  pluginId: 'nesso-plugin-example',
+  revision,
   key: conceptId === undefined ? { key } : { key, conceptId },
 })
 
@@ -49,13 +77,18 @@ test('storage writes are immutable and outside graph history, including net no-o
     assert.throws(() => host.store.applyOperations([operation]))
     assert.equal(host.store.getState(), evolved)
   }
-  assert.throws(() => host.store.applyOperations([
-    { kind: 'concept.label', id: 'urn:a', value: 'Must roll back' },
-    set(host, 'bad', 0, 'urn:missing', 5),
-  ]))
+  assert.throws(() =>
+    host.store.applyOperations([
+      { kind: 'concept.label', id: 'urn:a', value: 'Must roll back' },
+      set(host, 'bad', 0, 'urn:missing', 5),
+    ]),
+  )
   assert.equal(host.store.getState(), evolved)
   host.setWritesPaused(true)
-  assert.throws(() => host.store.applyOperations([remove(host, 'progress', undefined, 5)]), /being moved/)
+  assert.throws(
+    () => host.store.applyOperations([remove(host, 'progress', undefined, 5)]),
+    /being moved/,
+  )
   assert.equal(host.store.getState(), evolved)
   host.setWritesPaused(false)
   host.store.setConceptLabel('urn:a', 'Changed')
@@ -88,7 +121,9 @@ test('view edits and concept deletion retain progress for undo, while a reset st
   assert.deepEqual(host.store.getState().pluginStorage, [])
   assert.equal(host.store.getState().history.canUndo, false)
   const reset = host.store.getState()
-  assert.throws(() => host.store.applyOperations([{ ...set(host, 'progress', 0), documentId: saved.documentId }]))
+  assert.throws(() =>
+    host.store.applyOperations([{ ...set(host, 'progress', 0), documentId: saved.documentId }]),
+  )
   assert.equal(host.store.getState(), reset)
 })
 
@@ -96,22 +131,51 @@ test('storage restoration rejects duplicate namespaces/records and namespace and
   const record = { key: 'progress', value: null }
   const entry = { pluginId: 'nesso-plugin-example', revision: 1, records: [record] }
   const saved = { version: 1, documentId: 'urn:document', plugins: [entry] }
-  assert.deepEqual(parsePluginStorage(saved), { documentId: saved.documentId, plugins: saved.plugins })
+  assert.deepEqual(parsePluginStorage(saved), {
+    documentId: saved.documentId,
+    plugins: saved.plugins,
+  })
   for (const value of [
-    { ...saved, version: 2 }, { ...saved, documentId: 'relative' }, { ...saved, plugins: [entry, entry] },
+    { ...saved, version: 2 },
+    { ...saved, documentId: 'relative' },
+    { ...saved, plugins: [entry, entry] },
     { ...saved, plugins: [{ ...entry, records: [record, record] }] },
     { ...saved, plugins: [{ ...entry, pluginId: '../other' }] },
-  ]) assert.throws(() => parsePluginStorage(value))
-  const full = createNessoStore(graph, { documentId: saved.documentId, pluginStorage: [{ ...entry, records: Array.from({ length: pluginStorageLimits.records }, (_, index) => ({ key: String(index), value: null })) }] })
+  ])
+    assert.throws(() => parsePluginStorage(value))
+  const full = createNessoStore(graph, {
+    documentId: saved.documentId,
+    pluginStorage: [
+      {
+        ...entry,
+        records: Array.from({ length: pluginStorageLimits.records }, (_, index) => ({
+          key: String(index),
+          value: null,
+        })),
+      },
+    ],
+  })
   const before = full.store.getState()
   assert.throws(() => full.store.applyOperations([set(full, 'overflow', null, undefined, 1)]))
   assert.equal(full.store.getState(), before)
   const text = 'x'.repeat(240 * 1024)
-  const large = createNessoStore(graph, { pluginStorage: [{ ...entry, records: Array.from({ length: 34 }, (_, index) => ({ key: String(index), value: text })) }] })
+  const large = createNessoStore(graph, {
+    pluginStorage: [
+      {
+        ...entry,
+        records: Array.from({ length: 34 }, (_, index) => ({ key: String(index), value: text })),
+      },
+    ],
+  })
   const largeBefore = large.store.getState()
   assert.throws(() => large.store.applyOperations([set(large, 'overflow', text, undefined, 1)]))
   assert.equal(large.store.getState(), largeBefore)
-  const namespaces = createNessoStore(graph, { pluginStorage: Array.from({ length: pluginStorageLimits.namespaces }, (_, index) => ({ ...entry, pluginId: `nesso-plugin-${index}` })) })
+  const namespaces = createNessoStore(graph, {
+    pluginStorage: Array.from({ length: pluginStorageLimits.namespaces }, (_, index) => ({
+      ...entry,
+      pluginId: `nesso-plugin-${index}`,
+    })),
+  })
   const namespaceBefore = namespaces.store.getState()
   assert.throws(() => namespaces.store.applyOperations([set(namespaces, 'overflow', null)]))
   assert.equal(namespaces.store.getState(), namespaceBefore)

@@ -10,20 +10,39 @@ export const aiProviders = {
 
 export type AiProvider = keyof typeof aiProviders
 const text = (max = 256) => z.string().max(max).trim().min(1)
-export const aiConnectionInput = z.object({
-  id: text().optional(),
-  name: text(80),
-  provider: z.enum(Object.keys(aiProviders) as AiProvider[]),
-  endpoint: text(2048).pipe(z.url()),
-  model: text(),
-  apiKey: z.string().max(8192).trim().optional(),
-  authentication: z.enum(['api-key', 'chatgpt']).optional(),
-  accountId: text().optional(),
-}).refine((entry) => entry.authentication !== 'chatgpt' || entry.provider === 'openai' && entry.endpoint.replace(/\/+$/, '') === aiProviders.openai.endpoint,
-  { path: ['authentication'], message: 'ChatGPT authentication requires the official OpenAI endpoint' })
+export const aiConnectionInput = z
+  .object({
+    id: text().optional(),
+    name: text(80),
+    provider: z.enum(Object.keys(aiProviders) as AiProvider[]),
+    endpoint: text(2048).pipe(z.url()),
+    model: text(),
+    apiKey: z.string().max(8192).trim().optional(),
+    authentication: z.enum(['api-key', 'chatgpt']).optional(),
+    accountId: text().optional(),
+  })
+  .refine(
+    (entry) =>
+      entry.authentication !== 'chatgpt' ||
+      (entry.provider === 'openai' &&
+        entry.endpoint.replace(/\/+$/, '') === aiProviders.openai.endpoint),
+    {
+      path: ['authentication'],
+      message: 'ChatGPT authentication requires the official OpenAI endpoint',
+    },
+  )
 export type AiConnectionInput = Readonly<z.infer<typeof aiConnectionInput>>
-export type AiConnection = Omit<AiConnectionInput, 'id' | 'apiKey'> & { readonly id: string; readonly hasKey: boolean }
+export type AiConnection = Omit<AiConnectionInput, 'id' | 'apiKey'> & {
+  readonly id: string
+  readonly hasKey: boolean
+}
 export type AiAccount = { readonly id: string; readonly email: string; readonly signedIn: boolean }
-export type AiConnections = { readonly connections: readonly AiConnection[]; readonly activeId: string | null; readonly accounts: readonly AiAccount[] }
+export type AiConnections = {
+  readonly connections: readonly AiConnection[]
+  readonly activeId: string | null
+  readonly accounts: readonly AiAccount[]
+}
 export type AiSignIn = { readonly state: AiConnections; readonly accountId: string }
-export type AiResult<T> = { readonly value: T } | { readonly issues: readonly { readonly path: string; readonly message: string }[] }
+export type AiResult<T> =
+  | { readonly value: T }
+  | { readonly issues: readonly { readonly path: string; readonly message: string }[] }

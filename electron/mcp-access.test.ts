@@ -6,10 +6,13 @@ import { ElectronError } from './errors.ts'
 test('MCP access persists until revoked and preserves stored credentials on validation or write failure', () => {
   let stored: string | null = null
   let blocked = false
-  const storage = { read: () => stored, write: (value: string) => {
-    if (blocked) throw new ElectronError([{ path: 'storage', message: 'Write failed' }])
-    stored = value
-  } }
+  const storage = {
+    read: () => stored,
+    write: (value: string) => {
+      if (blocked) throw new ElectronError([{ path: 'storage', message: 'Write failed' }])
+      stored = value
+    },
+  }
   const access = createMcpAccess(storage)
   const token = access.get()
   assert.equal(createMcpAccess(storage).get(), token)

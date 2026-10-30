@@ -63,12 +63,26 @@
   z-index: 1;
 }
 
-.graph-presentation .react-flow__node { animation: graph-object-in 280ms ease-out; }
-.graph-presentation .react-flow__edge { animation: graph-object-in 380ms ease-out; }
-@keyframes graph-object-in { from { opacity: 0; } to { opacity: 1; } }
+.graph-presentation .react-flow__node {
+  animation: graph-object-in 280ms ease-out;
+}
+.graph-presentation .react-flow__edge {
+  animation: graph-object-in 380ms ease-out;
+}
+@keyframes graph-object-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
 
 @media (prefers-reduced-motion: reduce) {
-  .graph-presentation .react-flow__node, .graph-presentation .react-flow__edge { animation: none; }
+  .graph-presentation .react-flow__node,
+  .graph-presentation .react-flow__edge {
+    animation: none;
+  }
 }
 
 .react-flow__edgeupdater {

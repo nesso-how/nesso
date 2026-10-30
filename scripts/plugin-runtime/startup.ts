@@ -5,23 +5,36 @@ import { waitFor, type CheckContext } from './helpers.ts'
 
 export async function verifyStartup({ window, url }: CheckContext) {
   let release = () => {}
-  const hold = () => new Promise((resolve) => { release = () => resolve({ value: { safeMode: false, packages: [], issues: [] } }) })
+  const hold = () =>
+    new Promise((resolve) => {
+      release = () => resolve({ value: { safeMode: false, packages: [], issues: [] } })
+    })
   let listing = hold()
   ipcMain.handle('plugins:list', () => listing)
   ipcMain.handle('storage:read', () => ({ value: undefined }))
   ipcMain.handle('storage:write', () => ({ value: null }))
-  const inspect = () => window.webContents.executeJavaScript(`({
+  const inspect = () =>
+    window.webContents.executeJavaScript(`({
     splash: !!document.querySelector('.splash'),
     playing: !!document.querySelector('.splash.is-playing'),
     busy: document.querySelector('.splash')?.getAttribute('aria-busy'),
     intro: !!document.querySelector('.intro'),
     warnings: document.querySelectorAll('[data-slot="toast"][data-tone="warning"]').length,
     recovery: !!document.querySelector('.startup-recovery')
-  })`) as Promise<{ splash: boolean; playing: boolean; busy: string | null; intro: boolean; warnings: number; recovery: boolean }>
+  })`) as Promise<{
+      splash: boolean
+      playing: boolean
+      busy: string | null
+      intro: boolean
+      warnings: number
+      recovery: boolean
+    }>
 
   await window.loadURL(url)
   await waitFor(inspect, (state) => state.busy === 'true')
-  await window.webContents.executeJavaScript(`document.querySelector('.splash').dispatchEvent(new KeyboardEvent('keydown', {key:'Escape',bubbles:true}))`)
+  await window.webContents.executeJavaScript(
+    `document.querySelector('.splash').dispatchEvent(new KeyboardEvent('keydown', {key:'Escape',bubbles:true}))`,
+  )
   await window.webContents.executeJavaScript('new Promise(resolve => setTimeout(resolve, 1100))')
   assert.equal((await inspect()).splash, true)
   assert.equal((await inspect()).intro, false)

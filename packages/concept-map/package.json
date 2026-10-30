@@ -1,9 +1,9 @@
 {
   "name": "@nesso-how/concept-map",
   "version": "0.0.0",
+  "private": true,
   "license": "MIT",
   "type": "module",
-  "private": true,
   "exports": {
     ".": "./src/index.tsx"
   },
@@ -16,13 +16,13 @@
     "cn": "^0.4.0",
     "lucide-react": "^1.48.0"
   },
+  "devDependencies": {
+    "@nesso-how/plugin": "workspace:*",
+    "@types/react": "^19.2.18"
+  },
   "peerDependencies": {
     "@nesso-how/plugin": "workspace:*",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
-  },
-  "devDependencies": {
-    "@nesso-how/plugin": "workspace:*",
-    "@types/react": "^19.2.18"
   }
 }

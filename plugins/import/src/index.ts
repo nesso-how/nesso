@@ -21,7 +21,8 @@ export function buildImportOperations(
       { kind: 'concept.add', id, position: { ...concept.position } },
       { kind: 'concept.label', id, value: concept.label },
     )
-    if (concept.description !== undefined) operations.push({ kind: 'concept.description', id, value: concept.description })
+    if (concept.description !== undefined)
+      operations.push({ kind: 'concept.description', id, value: concept.description })
   }
   const types = new Map(snapshot.relationTypes.map((type) => [type.id, type]))
   for (const relation of snapshot.relations) {
@@ -32,29 +33,51 @@ export function buildImportOperations(
     if (type) operations.push({ kind: 'relation.connect', source, target, type })
   }
   if (viewId !== null && viewId !== activeViewId) {
-    for (const id of ids.values()) operations.push({ kind: 'view.membership', viewId, conceptId: id, included: true })
+    for (const id of ids.values())
+      operations.push({ kind: 'view.membership', viewId, conceptId: id, included: true })
   }
   if (activeViewId !== null && activeViewId !== viewId) {
-    for (const id of ids.values()) operations.push({ kind: 'view.membership', viewId: activeViewId, conceptId: id, included: false })
+    for (const id of ids.values())
+      operations.push({
+        kind: 'view.membership',
+        viewId: activeViewId,
+        conceptId: id,
+        included: false,
+      })
   }
   return operations
 }
 
 class ImportError extends PluginError {
   override name = 'ImportError'
-  constructor() { super('failed', [{ path: 'import', message: i18n.importFailure.en }], i18n.importFailure) }
+  constructor() {
+    super('failed', [{ path: 'import', message: i18n.importFailure.en }], i18n.importFailure)
+  }
 }
 
-export const create = (): readonly ActionContribution[] => [{
-  id: 'import-view', label: i18n.label, icon: 'upload',
-  run: async ({ document, files, viewId }) => {
-    const file = await files.open({ extensions: ['jsonld', 'json'], mimeTypes: ['application/ld+json', 'application/json'] })
-    if (!file) return
-    const state = await document.refresh()
-    let operations: NessoOperation[]
-    try {
-      operations = buildImportOperations(parseGraph(JSON.parse(file.text)), state.workspace.activeViewId, viewId)
-    } catch { throw new ImportError() }
-    await document.applyOperations(operations)
+export const create = (): readonly ActionContribution[] => [
+  {
+    id: 'import-view',
+    label: i18n.label,
+    icon: 'upload',
+    run: async ({ document, files, viewId }) => {
+      const file = await files.open({
+        extensions: ['jsonld', 'json'],
+        mimeTypes: ['application/ld+json', 'application/json'],
+      })
+      if (!file) return
+      const state = await document.refresh()
+      let operations: NessoOperation[]
+      try {
+        operations = buildImportOperations(
+          parseGraph(JSON.parse(file.text)),
+          state.workspace.activeViewId,
+          viewId,
+        )
+      } catch {
+        throw new ImportError()
+      }
+      await document.applyOperations(operations)
+    },
   },
-}]
+]

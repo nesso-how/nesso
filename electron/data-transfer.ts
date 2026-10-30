@@ -3,18 +3,27 @@ import type { ipcMain, IpcMainEvent, WebContents } from 'electron'
 import type { TrustedRequest } from './ipc.ts'
 import { ElectronError } from './errors.ts'
 
-export async function prepareDataTransfer(windows: readonly WebContents[], ipc: Pick<typeof ipcMain, 'on' | 'removeListener'>, trusted: TrustedRequest, timeout = 10_000) {
+export async function prepareDataTransfer(
+  windows: readonly WebContents[],
+  ipc: Pick<typeof ipcMain, 'on' | 'removeListener'>,
+  trusted: TrustedRequest,
+  timeout = 10_000,
+) {
   const id = randomUUID()
   const pending = new Set(windows.map((window) => window.id))
-  let receive: (event: IpcMainEvent, request: unknown, saved: unknown) => void = () => { }
-  let fail: () => void = () => { }
+  let receive: (event: IpcMainEvent, request: unknown, saved: unknown) => void = () => {}
+  let fail: () => void = () => {}
   let timer: ReturnType<typeof setTimeout> | undefined
   try {
     await new Promise<void>((resolve, reject) => {
-      fail = () => reject(new ElectronError([{ path: 'dataLocation', message: 'storageSaveFailure' }]))
+      fail = () =>
+        reject(new ElectronError([{ path: 'dataLocation', message: 'storageSaveFailure' }]))
       receive = (event, request, saved) => {
         if (!trusted(event) || request !== id || !pending.has(event.sender.id)) return
-        if (saved !== true) { fail(); return }
+        if (saved !== true) {
+          fail()
+          return
+        }
         pending.delete(event.sender.id)
         if (!pending.size) resolve()
       }

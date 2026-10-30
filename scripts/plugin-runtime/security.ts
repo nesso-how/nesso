@@ -41,17 +41,52 @@ export async function verifyWorker({ window, url, name, attempted }: CheckContex
     };
     window.postMessage({type:'bootstrap',token:'probe',entry:${JSON.stringify(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`)}},'*',[channel.port2]);
   `)
-  await waitFor(async () => window.webContents.executeJavaScript("window.__probe.some(value=>value.title?.en==='Busy')") as Promise<boolean>, (value) => value)
-  assert.deepEqual(await window.webContents.executeJavaScript("JSON.parse(window.__probe.find(value=>value.title?.en==='Probe').description.en)"), { helper: true, dom: true, bridges: true, origin: 'null', storage: true, fetch: true, module: true, xhr: true, socket: true, navigation: true })
-  const operations = await window.webContents.executeJavaScript("window.__probe.find(value=>value.operations).operations")
+  await waitFor(
+    async () =>
+      window.webContents.executeJavaScript(
+        "window.__probe.some(value=>value.title?.en==='Busy')",
+      ) as Promise<boolean>,
+    (value) => value,
+  )
+  assert.deepEqual(
+    await window.webContents.executeJavaScript(
+      "JSON.parse(window.__probe.find(value=>value.title?.en==='Probe').description.en)",
+    ),
+    {
+      helper: true,
+      dom: true,
+      bridges: true,
+      origin: 'null',
+      storage: true,
+      fetch: true,
+      module: true,
+      xhr: true,
+      socket: true,
+      navigation: true,
+    },
+  )
+  const operations = await window.webContents.executeJavaScript(
+    'window.__probe.find(value=>value.operations).operations',
+  )
   assert.equal(operations.length, 1)
-  assert.deepEqual(operations[0], { kind: 'concept.add', id: operations[0].id, position: { x: 12, y: 34 } })
+  assert.deepEqual(operations[0], {
+    kind: 'concept.add',
+    id: operations[0].id,
+    position: { x: 12, y: 34 },
+  })
   assert.match(operations[0].id, /^urn:uuid:/)
-  assert.ok(await workers() > before)
-  assert.equal(await window.webContents.executeJavaScript("window.__responsive=true;window.__responsive"), true)
-  await window.webContents.executeJavaScript("window.__port.close();document.querySelector('iframe').src='about:blank';document.querySelector('iframe').remove()")
+  assert.ok((await workers()) > before)
+  assert.equal(
+    await window.webContents.executeJavaScript('window.__responsive=true;window.__responsive'),
+    true,
+  )
+  await window.webContents.executeJavaScript(
+    "window.__port.close();document.querySelector('iframe').src='about:blank';document.querySelector('iframe').remove()",
+  )
   await waitFor(workers, (value) => value === before)
   assert.equal(await window.webContents.executeJavaScript('window.__complete'), false)
   assert.equal(attempted.length, 0)
-  console.log(`${name}: asynchronous helper in opaque action worker, denied storage/network/navigation, responsive host and terminated busy worker passed`)
+  console.log(
+    `${name}: asynchronous helper in opaque action worker, denied storage/network/navigation, responsive host and terminated busy worker passed`,
+  )
 }

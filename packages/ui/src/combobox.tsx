@@ -16,5 +16,10 @@ export function ComboboxPopup({ className, children, ...props }: Combobox.Popup.
 }
 
 export function ComboboxItem({ className, ...props }: Combobox.Item.Props) {
-  return <Combobox.Item className={cn('nesso-option cursor-default px-2.5 py-2', className)} {...props} />
+  return (
+    <Combobox.Item
+      className={cn('nesso-option cursor-default px-2.5 py-2', className)}
+      {...props}
+    />
+  )
 }

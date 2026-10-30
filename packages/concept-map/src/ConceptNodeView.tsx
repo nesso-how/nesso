@@ -1,6 +1,11 @@
 import { Handle, Position, useStore, type NodeProps } from '@xyflow/react'
 import { cn } from 'cn'
-import { useEffect, useRef, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent } from 'react'
+import {
+  useEffect,
+  useRef,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type MouseEvent as ReactMouseEvent,
+} from 'react'
 import { newIri } from '@nesso-how/schema'
 import { contrastColor } from '@nesso-how/ui'
 import type { ConceptNode } from './types'
@@ -13,16 +18,24 @@ const activateHandle = (event: ReactKeyboardEvent<HTMLDivElement>) => {
   event.preventDefault()
   event.stopPropagation()
   const bounds = event.currentTarget.getBoundingClientRect()
-  event.currentTarget.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: bounds.x + bounds.width / 2, clientY: bounds.y + bounds.height / 2 }))
+  event.currentTarget.dispatchEvent(
+    new MouseEvent('click', {
+      bubbles: true,
+      clientX: bounds.x + bounds.width / 2,
+      clientY: bounds.y + bounds.height / 2,
+    }),
+  )
 }
 
 export function ConceptNodeView({ id, data, selected, isConnectable }: NodeProps<ConceptNode>) {
   const t = useTranslation()
   const { store } = useCanvasContext()
   const zoom = useStore((state) => state.transform[2])
-  const connecting = useStore((state) => state.connectionClickStartHandle
-    ? state.connectionClickStartHandle.nodeId !== id
-    : state.connection.inProgress && state.connection.fromNode.id !== id)
+  const connecting = useStore((state) =>
+    state.connectionClickStartHandle
+      ? state.connectionClickStartHandle.nodeId !== id
+      : state.connection.inProgress && state.connection.fromNode.id !== id,
+  )
   const editing = !!data.editable && !!data.editing
   const inputRef = useRef<HTMLInputElement | null>(null)
   const rootRef = useRef<HTMLDivElement>(null)
@@ -51,7 +64,9 @@ export function ConceptNodeView({ id, data, selected, isConnectable }: NodeProps
     data.onEditingChange?.(null)
     if (input.value === data.label) return
     try {
-      store.applyOperations([{ kind: 'concept.label', id, value: input.value }], { historyGroup: newIri() })
+      store.applyOperations([{ kind: 'concept.label', id, value: input.value }], {
+        historyGroup: newIri(),
+      })
     } catch {
       input.value = data.label
     }
@@ -59,8 +74,13 @@ export function ConceptNodeView({ id, data, selected, isConnectable }: NodeProps
 
   const onEditKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
     event.stopPropagation()
-    if (event.key === 'Enter') { refocus.current = true; event.currentTarget.blur() }
-    else if (event.key === 'Escape') { refocus.current = true; data.onEditingChange?.(null) }
+    if (event.key === 'Enter') {
+      refocus.current = true
+      event.currentTarget.blur()
+    } else if (event.key === 'Escape') {
+      refocus.current = true
+      data.onEditingChange?.(null)
+    }
   }
 
   return (
@@ -72,7 +92,9 @@ export function ConceptNodeView({ id, data, selected, isConnectable }: NodeProps
         height: conceptNodeMinSize.height,
         ...(data.color ? { background: data.color, color: contrastColor(data.color) } : {}),
       }}
-      onClick={(event) => { if ((event.target as Element).closest('.react-flow__handle')) event.stopPropagation() }}
+      onClick={(event) => {
+        if ((event.target as Element).closest('.react-flow__handle')) event.stopPropagation()
+      }}
       onDoubleClick={startEditing}
       className={cn(
         'concept-node flex items-center justify-center rounded-lg border bg-card px-3 py-1 text-[13.5px] leading-[18px] hover:border-(--handle)',
@@ -83,9 +105,32 @@ export function ConceptNodeView({ id, data, selected, isConnectable }: NodeProps
       )}
     >
       {Object.values(Position).map((position) => (
-        <Handle key={position} id={position} type="source" position={position} isConnectable={false} className="!pointer-events-none opacity-0" />
+        <Handle
+          key={position}
+          id={position}
+          type="source"
+          position={position}
+          isConnectable={false}
+          className="!pointer-events-none opacity-0"
+        />
       ))}
-      <Handle id="target" type="target" position={Position.Top} isConnectable={isConnectable} isConnectableStart={false} isConnectableEnd={isConnectable} role="button" aria-label={t('connectTo', { name: data.label })} aria-hidden={!connecting || !isConnectable} tabIndex={connecting && isConnectable ? 0 : -1} onKeyDown={activateHandle} className={cn('node-target !inset-0 !size-full !transform-none !border-0 opacity-0', !connecting && '!pointer-events-none')} />
+      <Handle
+        id="target"
+        type="target"
+        position={Position.Top}
+        isConnectable={isConnectable}
+        isConnectableStart={false}
+        isConnectableEnd={isConnectable}
+        role="button"
+        aria-label={t('connectTo', { name: data.label })}
+        aria-hidden={!connecting || !isConnectable}
+        tabIndex={connecting && isConnectable ? 0 : -1}
+        onKeyDown={activateHandle}
+        className={cn(
+          'node-target !inset-0 !size-full !transform-none !border-0 opacity-0',
+          !connecting && '!pointer-events-none',
+        )}
+      />
       {editing ? (
         <input
           ref={inputRef}
@@ -113,7 +158,10 @@ export function ConceptNodeView({ id, data, selected, isConnectable }: NodeProps
         tabIndex={selected && isConnectable ? 0 : -1}
         onKeyDown={activateHandle}
         style={{ scale: 1 / zoom }}
-        className={cn('node-source !left-auto !right-0 !transform-none !translate-x-1/2 !-translate-y-1/2 !border-0 !bg-transparent', (!selected || !isConnectable) && '!pointer-events-none opacity-0')}
+        className={cn(
+          'node-source !left-auto !right-0 !transform-none !translate-x-1/2 !-translate-y-1/2 !border-0 !bg-transparent',
+          (!selected || !isConnectable) && '!pointer-events-none opacity-0',
+        )}
       />
     </div>
   )

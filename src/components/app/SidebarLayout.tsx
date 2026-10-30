@@ -10,7 +10,8 @@ const SidebarContext = createContext<{ open: boolean; toggle: () => void } | nul
 
 function useSidebar() {
   const sidebar = useContext(SidebarContext)
-  if (!sidebar) throw new NessoError([{ path: 'sidebar', message: 'Sidebar must be inside SidebarProvider' }])
+  if (!sidebar)
+    throw new NessoError([{ path: 'sidebar', message: 'Sidebar must be inside SidebarProvider' }])
   return sidebar
 }
 
@@ -18,8 +19,14 @@ export function SidebarProvider({ children, ...props }: ComponentProps<'div'>) {
   const open = useNessoStore((state) => !state.preferences.collapsedSections?.includes('sidebar'))
 
   return (
-    <SidebarContext.Provider value={{ open, toggle: () => host.store.setSectionOpen('sidebar', !open) }}>
-      <div data-slot="sidebar-wrapper" className="flex h-svh w-full flex-col overflow-hidden" {...props}>
+    <SidebarContext.Provider
+      value={{ open, toggle: () => host.store.setSectionOpen('sidebar', !open) }}
+    >
+      <div
+        data-slot="sidebar-wrapper"
+        className="flex h-svh w-full flex-col overflow-hidden"
+        {...props}
+      >
         {children}
       </div>
     </SidebarContext.Provider>
@@ -40,7 +47,9 @@ export function Sidebar({ children }: ComponentProps<'div'>) {
       minSize={panelLimits.explorerWidth.min}
       maxSize={panelLimits.explorerWidth.max}
       onToggle={toggle}
-      onSizeChange={(explorerWidth) => host.store.setPanelSizes({ ...host.store.getState().preferences.panels, explorerWidth })}
+      onSizeChange={(explorerWidth) =>
+        host.store.setPanelSizes({ ...host.store.getState().preferences.panels, explorerWidth })
+      }
       toggleLabel={t(open ? 'collapseSidebar' : 'expandSidebar')}
       resizeLabel={t('resizeSidebar')}
       className="hidden text-sidebar-foreground md:block"
@@ -53,5 +62,10 @@ export function Sidebar({ children }: ComponentProps<'div'>) {
 }
 
 export function SidebarInset({ className, ...props }: ComponentProps<'main'>) {
-  return <main className={cn('relative flex w-full flex-1 flex-col bg-background', className)} {...props} />
+  return (
+    <main
+      className={cn('relative flex w-full flex-1 flex-col bg-background', className)}
+      {...props}
+    />
+  )
 }

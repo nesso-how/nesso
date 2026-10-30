@@ -11,4 +11,4 @@ export const cases = {
 } as const
 
 export type Scenario = keyof typeof cases
-export type Platform = typeof cases[Scenario][number]
+export type Platform = (typeof cases)[Scenario][number]

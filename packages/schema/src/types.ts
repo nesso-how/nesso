@@ -1,5 +1,13 @@
 export type Position = { x: number; y: number }
-export type Concept = { id: string; label: string; description?: string; color?: string; bold?: boolean; italic?: boolean; position: Position }
+export type Concept = {
+  id: string
+  label: string
+  description?: string
+  color?: string
+  bold?: boolean
+  italic?: boolean
+  position: Position
+}
 export type RelationType = { id: string; label: string }
 export type Relation = { source: string; predicate: string; target: string }
 

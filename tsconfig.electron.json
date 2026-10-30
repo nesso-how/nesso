@@ -9,6 +9,12 @@
     "strict": true
   },
   "references": [{ "path": "./packages/ai" }, { "path": "./packages/errors" }],
-  "include": ["electron/**/*.ts", "electron/**/*.cts", "shared/**/*.ts", "packages/schema/src/**/*.ts", "packages/plugin/src/**/*.ts"],
+  "include": [
+    "electron/**/*.ts",
+    "electron/**/*.cts",
+    "shared/**/*.ts",
+    "packages/schema/src/**/*.ts",
+    "packages/plugin/src/**/*.ts"
+  ],
   "exclude": ["electron/**/*.test.ts"]
 }

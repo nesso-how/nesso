@@ -20,7 +20,14 @@ test('the host applies only registered themes, tracks changes, and disconnects c
     assert.equal(applied.length, 1)
     host.store.setActiveTheme('alternative')
     assert.deepEqual(applied, ['light', 'alternative'])
-    host.replacePluginDefinitions([{ ...themeFixture, id: 'alternative', metrics: { ...themeFixture.metrics, 'radius-control': 8 } }, themeFixture])
+    host.replacePluginDefinitions([
+      {
+        ...themeFixture,
+        id: 'alternative',
+        metrics: { ...themeFixture.metrics, 'radius-control': 8 },
+      },
+      themeFixture,
+    ])
     assert.deepEqual(applied, ['light', 'alternative', 'alternative'])
     assert.equal(host.getTheme('alternative')!.metrics['radius-control'], 8)
     disconnect()

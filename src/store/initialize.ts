@@ -8,11 +8,21 @@ export function initializeNessoStore(loaded: LoadedState, languages: readonly st
   const locale = loaded.preferences?.locale ?? detectLocale(languages)
   const firstRun = loaded.graph === undefined && !loaded.blocked.includes('document')
   const seed = firstRun ? createSeedDocument(locale) : undefined
-  const pluginStorage = loaded.graph && loaded.pluginStorage && !loaded.blocked.includes('document') && !loaded.blocked.includes('plugin-storage')
-    ? collectPluginStorageOrphans(loaded.pluginStorage, new Set(loaded.graph.concepts.map(({ id }) => id)))
-    : loaded.pluginStorage
+  const pluginStorage =
+    loaded.graph &&
+    loaded.pluginStorage &&
+    !loaded.blocked.includes('document') &&
+    !loaded.blocked.includes('plugin-storage')
+      ? collectPluginStorageOrphans(
+          loaded.pluginStorage,
+          new Set(loaded.graph.concepts.map(({ id }) => id)),
+        )
+      : loaded.pluginStorage
   const restored = { ...loaded, pluginStorage }
-  const host = createNessoStore(seed?.graph ?? loaded.graph ?? null, seed ? { ...restored, workspace: seed.workspace } : restored)
+  const host = createNessoStore(
+    seed?.graph ?? loaded.graph ?? null,
+    seed ? { ...restored, workspace: seed.workspace } : restored,
+  )
   host.store.setLocale(locale)
   host.setPersistenceIssues(loaded.issues)
   return host

@@ -1,7 +1,18 @@
 import assert from 'node:assert/strict'
 import test, { type TestContext } from 'node:test'
 import { createHash, randomUUID } from 'node:crypto'
-import { chmod, mkdir, mkdtemp, readFile, readdir, realpath, rename, rm, symlink, writeFile } from 'node:fs/promises'
+import {
+  chmod,
+  mkdir,
+  mkdtemp,
+  readFile,
+  readdir,
+  realpath,
+  rename,
+  rm,
+  symlink,
+  writeFile,
+} from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { createDataLocation } from './data-location.ts'
@@ -26,9 +37,14 @@ async function fixture(context: TestContext, committed?: boolean) {
       await writeFile(path.join(source, name), data)
       await writeFile(path.join(destination, name), data)
     }
-    await writeFile(bootstrap, JSON.stringify({ directory: committed ? destination : source, identity,
-      transfer: { source, destination, files: files.map(({ name, hash }) => ({ name, hash })) },
-    }))
+    await writeFile(
+      bootstrap,
+      JSON.stringify({
+        directory: committed ? destination : source,
+        identity,
+        transfer: { source, destination, files: files.map(({ name, hash }) => ({ name, hash })) },
+      }),
+    )
   }
   return { root, source, destination, bootstrap, identity, files }
 }
@@ -36,15 +52,24 @@ async function fixture(context: TestContext, committed?: boolean) {
 test('moves JSON records live and restores the default, leaving credentials and profile files local', async (context) => {
   const { source, destination } = await fixture(context)
   await mkdir(path.join(source, 'Cache'))
-  for (const name of ['ai-connections.enc', 'mcp-access.enc']) await writeFile(path.join(source, name), 'local secret')
+  for (const name of ['ai-connections.enc', 'mcp-access.enc'])
+    await writeFile(path.join(source, name), 'local secret')
   const location = await createDataLocation(source)
   const storage = createFileStorage(location.directory)
   for (const section of persistenceSections) await storage.write(section, { version: 1 })
   await location.move(destination)
   assert.equal(location.state().directory, destination)
   assert.equal(location.state().cleanupPending, false)
-  assert.deepEqual((await readdir(source)).sort(), ['Cache', 'ai-connections.enc', 'data-location.json', 'mcp-access.enc'])
-  assert.deepEqual((await readdir(destination)).sort(), ['.nesso-data-id', ...persistenceSections.map((section) => `${section}.json`)].sort())
+  assert.deepEqual((await readdir(source)).sort(), [
+    'Cache',
+    'ai-connections.enc',
+    'data-location.json',
+    'mcp-access.enc',
+  ])
+  assert.deepEqual(
+    (await readdir(destination)).sort(),
+    ['.nesso-data-id', ...persistenceSections.map((section) => `${section}.json`)].sort(),
+  )
   await storage.write('document', { version: 2 })
   assert.equal((await createDataLocation(source)).state().directory, destination)
   assert.deepEqual(await storage.read('document'), { version: 2 })
@@ -52,14 +77,16 @@ test('moves JSON records live and restores the default, leaving credentials and 
   await location.move(source)
   assert.deepEqual(await readdir(destination), [])
   assert.deepEqual(await storage.read('document'), { version: 2 })
-  for (const name of ['ai-connections.enc', 'mcp-access.enc']) assert.equal(await readFile(path.join(source, name), 'utf8'), 'local secret')
+  for (const name of ['ai-connections.enc', 'mcp-access.enc'])
+    assert.equal(await readFile(path.join(source, name), 'utf8'), 'local secret')
 })
 
 test('rejects occupied, overlapping and invalid destinations, and never transfers symlinked records', async (context) => {
   const { root, source, destination } = await fixture(context)
   const location = await createDataLocation(source)
   await mkdir(path.join(source, 'nested'))
-  for (const directory of [root, path.join(source, 'nested')]) await assert.rejects(location.validate(directory), /storageNested/)
+  for (const directory of [root, path.join(source, 'nested')])
+    await assert.rejects(location.validate(directory), /storageNested/)
   await assert.rejects(location.validate('relative'), /storageDestination/)
   await writeFile(path.join(destination, 'foreign'), 'keep')
   await assert.rejects(location.move(destination), /storageOccupied/)
@@ -84,8 +111,14 @@ test('startup recovers interrupted transfers on either side of activation withou
     const location = await createDataLocation(source)
     assert.equal(location.state().directory, committed ? destination : source)
     assert.equal(location.state().cleanupPending, false)
-    assert.deepEqual(JSON.parse(await readFile(path.join(location.directory(), 'document.json'), 'utf8')), { version: 1 })
-    assert.deepEqual((await readdir(committed ? source : destination)).sort(), committed ? ['data-location.json'] : ['foreign'])
+    assert.deepEqual(
+      JSON.parse(await readFile(path.join(location.directory(), 'document.json'), 'utf8')),
+      { version: 1 },
+    )
+    assert.deepEqual(
+      (await readdir(committed ? source : destination)).sort(),
+      committed ? ['data-location.json'] : ['foreign'],
+    )
     assert.equal(await readFile(path.join(destination, 'foreign'), 'utf8'), 'keep')
   }
 })
@@ -111,7 +144,10 @@ test('cleanup preserves changed, partial, missing or unowned data and retries af
     assert.equal(location.state().cleanupPending, true)
     await assert.rejects(location.cleanup())
     await assert.rejects(location.move(source), /storageCleanup/)
-    assert.equal(await readFile(path.join(source, 'document.json'), 'utf8'), failure === 'source' ? 'changed' : files[0].data)
+    assert.equal(
+      await readFile(path.join(source, 'document.json'), 'utf8'),
+      failure === 'source' ? 'changed' : files[0].data,
+    )
     await writeFile(target, files[0].data)
     await location.cleanup()
     assert.equal(location.state().cleanupPending, false)
