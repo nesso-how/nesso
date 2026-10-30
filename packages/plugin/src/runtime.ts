@@ -300,6 +300,7 @@ export const actionIconNames = [
   'file-down',
   'file-up',
   'folder',
+  'glasses',
   'globe',
   'layers',
   'pencil',

@@ -47,3 +47,54 @@ test('central sessions are revoked by replacement, cancellation, reset or target
     assert.equal(panel.getSnapshot(), null)
   }
 })
+
+test('view navigation replaces panel instances without ending the action or reopening closed panels', async () => {
+  for (const reason of ['close', 'abort'] as const) {
+    const host = createNessoStore(null)
+    const panel = createPluginPanel(host.store, { notify: () => '', dismiss: () => {} })
+    const first = host.store.createView('First', [])
+    const second = host.store.createView('Second', [])
+    host.store.setView(first)
+    const controller = new AbortController()
+    let ended = false
+    const pending = panel
+      .open(
+        source,
+        {
+          viewId: first,
+          actionId: 'browse',
+          descriptors: [{ id: 'browse', label: { en: 'Browse' }, ui: true as const }],
+        },
+        controller.signal,
+      )
+      .then(() => {
+        ended = true
+      })
+    const initial = panel.getSnapshot()!
+    assert.equal(initial.viewName, 'First')
+    host.store.setLocale('it')
+    assert.equal(panel.getSnapshot(), initial)
+    const instances = new Set([initial.id])
+    for (const [id, name] of [
+      [second, 'Second'],
+      [null, null],
+      [first, 'First'],
+    ] as const) {
+      host.store.setView(id)
+      const next = panel.getSnapshot()!
+      assert.equal(instances.has(next.id), false)
+      instances.add(next.id)
+      assert.equal(next.viewName, name)
+      assert.equal(next.status, 'loading')
+      await Promise.resolve()
+      assert.equal(ended, false)
+    }
+    host.store.deleteView(second)
+    assert.ok(panel.getSnapshot())
+    if (reason === 'close') panel.close()
+    else controller.abort()
+    await pending
+    host.store.setView(null)
+    assert.equal(panel.getSnapshot(), null)
+  }
+})

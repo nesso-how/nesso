@@ -1,10 +1,20 @@
-import { useEffect, useRef, type RefObject } from 'react'
+import { useEffect, useRef, useState, type RefObject } from 'react'
 import { IconButton, PanelHeader, Spinner } from '@nesso-how/ui'
 import { ChevronRight, X } from 'lucide-react'
 import { pluginPanel, usePluginPanel } from '../../plugins/index.ts'
 import { useNessoStore } from '../../store/index.ts'
 import { translate } from '../../i18n/index.ts'
 import { defaultLocale } from '@nesso-how/i18n'
+
+function DelayedSpinner({ label }: { label: string }) {
+  const [slow, setSlow] = useState(false)
+  useEffect(() => {
+    const timer = setTimeout(() => setSlow(true), 250)
+    return () => clearTimeout(timer)
+  }, [])
+  if (!slow) return null
+  return <Spinner className="plugin-panel-loading absolute inset-0" label={label} />
+}
 
 export function PluginPanel({ canvas }: { canvas: RefObject<HTMLDivElement | null> }) {
   const panel = usePluginPanel()
@@ -73,11 +83,7 @@ export function PluginPanel({ canvas }: { canvas: RefObject<HTMLDivElement | nul
       </PanelHeader>
       <div className="relative flex min-h-0 flex-1" aria-busy={panel.status === 'loading'}>
         {panel.status === 'loading' && (
-          <Spinner
-            key={`loading-${panel.id}`}
-            className="plugin-panel-loading absolute inset-0"
-            label={t('pluginPanelLoading')}
-          />
+          <DelayedSpinner key={`loading-${panel.id}`} label={t('pluginPanelLoading')} />
         )}
         {panel.status === 'failed' && (
           <p role="alert" className="absolute inset-0 p-4 text-sm">

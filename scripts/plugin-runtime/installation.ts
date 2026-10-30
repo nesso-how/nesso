@@ -997,7 +997,7 @@ async function verifyFailures(driver: Driver, state: InstallState, window: Brows
       driver.evaluate<number>(
         `[...document.querySelectorAll('.plugin-row')].filter(row => row.getClientRects().length).length`,
       ),
-    (count) => count === 8,
+    (count) => count === 9,
   )
   assert.equal(state.metadataRequests, requestsBeforeReload)
   assert.equal(

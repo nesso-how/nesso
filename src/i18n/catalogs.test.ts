@@ -55,6 +55,7 @@ test('UI catalogs cover the host, site and bundled plugin interfaces in all supp
     '../../packages/concept-map/src/i18n',
     '../../plugins/export/package.json',
     '../../plugins/import/package.json',
+    '../../plugins/review/package.json',
     '../../plugins/base-vocab/package.json',
     '../../plugins/kernel-theme/package.json',
     '../../plugins/paper-theme/package.json',
