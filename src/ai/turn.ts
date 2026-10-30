@@ -1,4 +1,4 @@
-import type { NessoOperation, NessoState } from '@nesso-how/plugin'
+import type { NessoOperation, NessoState } from '@nesso-how/core'
 import { ZodError } from 'zod'
 import { aiTools, type AiDocumentation, type AiToolResults } from '@nesso-how/ai'
 import type { createNessoStore } from '../store/create.ts'

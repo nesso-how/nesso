@@ -1,4 +1,4 @@
-import type { GraphSnapshot, NessoOperation, Selection } from '@nesso-how/plugin'
+import type { GraphSnapshot, NessoOperation, Selection } from '@nesso-how/core'
 import {
   newIri,
   parseGraph,

@@ -1,10 +1,4 @@
-import type {
-  PanelSizes,
-  Preferences,
-  SectionId,
-  Viewport,
-  WorkspaceState,
-} from '@nesso-how/plugin'
+import type { PanelSizes, Preferences, SectionId, Viewport, WorkspaceState } from '@nesso-how/core'
 import { isLocale } from '@nesso-how/i18n'
 import { aiConversation, aiTextLimits } from '@nesso-how/ai'
 import { NessoError } from '@nesso-how/errors'

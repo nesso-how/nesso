@@ -2,7 +2,7 @@ import { isAbsoluteIri, parseGraph, serializeGraph, type Graph } from '@nesso-ho
 import type { createNessoStore } from './create.ts'
 import { NessoError } from '@nesso-how/errors'
 import { fail, object, parseConversation, parsePreferences, parseWorkspace } from './settings.ts'
-import type { Preferences, WorkspaceState } from '@nesso-how/plugin'
+import type { Preferences, WorkspaceState } from '@nesso-how/core'
 import type { HostState } from './types.ts'
 import {
   persistenceSections as sections,

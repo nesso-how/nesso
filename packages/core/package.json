@@ -1,0 +1,14 @@
+{
+  "name": "@nesso-how/core",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@nesso-how/i18n": "workspace:*",
+    "@nesso-how/schema": "workspace:*"
+  }
+}

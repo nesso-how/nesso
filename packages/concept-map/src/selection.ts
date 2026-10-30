@@ -1,4 +1,4 @@
-import type { Selection } from '@nesso-how/plugin'
+import type { Selection } from '@nesso-how/core'
 import type { EdgeChange, NodeChange } from '@xyflow/react'
 
 export const selectionForContextMenu = (selected: Selection, item: Selection[number]): Selection =>

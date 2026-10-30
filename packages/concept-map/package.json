@@ -8,6 +8,7 @@
     ".": "./src/index.tsx"
   },
   "dependencies": {
+    "@nesso-how/core": "workspace:*",
     "@nesso-how/errors": "workspace:*",
     "@nesso-how/i18n": "workspace:*",
     "@nesso-how/schema": "workspace:*",
@@ -17,11 +18,9 @@
     "lucide-react": "^1.48.0"
   },
   "devDependencies": {
-    "@nesso-how/plugin": "workspace:*",
     "@types/react": "^19.2.18"
   },
   "peerDependencies": {
-    "@nesso-how/plugin": "workspace:*",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   }

@@ -4,7 +4,7 @@ Trusted React Flow renderer: canvas, node/edge views, and adapters rendering the
 
 ## Usage
 
-Render `ConceptMap` with an injected store, host commands, and `focusRef`. It subscribes to that store instance and applies local gesture edits synchronously through `applyOperations`. It is a trusted React component, not an isolated plugin; it never imports host internals or accesses the system clipboard.
+Render `ConceptMap` with an injected `NessoStore` from `@nesso-how/core`, host commands, and `focusRef`. It subscribes to that store instance and applies local gesture edits synchronously through `applyOperations`. It is a trusted React component, not an isolated plugin; it never imports host internals or accesses the system clipboard.
 
 The host's `GraphWorkspace` configures `ConceptMap` and mounts the renderer-independent interactions in `src/graph`: shortcuts, clipboard I/O, deletion policy and confirmation requests, notifications, and clipboard async guards. The renderer owns geometry, local gestures, inline editing state, and its temporary gesture lock. It exposes its root element through `focusRef` so host focus restoration needs no renderer DOM selectors. Intro uses a separate store and workspace with both `readOnly` and `preview` enabled.
 

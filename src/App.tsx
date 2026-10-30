@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import type { SavedView } from '@nesso-how/plugin'
+import type { SavedView } from '@nesso-how/core'
 import { defaultLocale } from '@nesso-how/i18n'
 import { Inspector } from '@/components/app/Inspector'
 import { ToastsHost } from '@/components/app/Toasts'

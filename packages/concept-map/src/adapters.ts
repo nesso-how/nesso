@@ -1,4 +1,4 @@
-import type { GraphSnapshot, Selection } from '@nesso-how/plugin'
+import type { GraphSnapshot, Selection } from '@nesso-how/core'
 import { relationKey } from '@nesso-how/schema'
 import { MarkerType, Position } from '@xyflow/react'
 import type { ConceptNode, RelationEdge } from './types'

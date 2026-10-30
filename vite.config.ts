@@ -19,6 +19,7 @@ export default defineConfig({
           'plugins/import/src',
           'plugins/export/src',
           'packages/plugin/src',
+          'packages/core/src',
           'packages/schema/src',
           'packages/i18n/src',
           'packages/ui/src',

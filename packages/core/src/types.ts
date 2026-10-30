@@ -1,6 +1,5 @@
 import type { Graph, Position, RelationType } from '@nesso-how/schema'
 import type { Locale } from '@nesso-how/i18n'
-export type { ThemeDefinition } from './definitions.ts'
 
 export type DeepReadonly<T> = T extends readonly (infer U)[]
   ? readonly DeepReadonly<U>[]

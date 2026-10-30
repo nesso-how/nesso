@@ -109,7 +109,8 @@ The app lives in `src/`, with desktop services in `electron/`. Shared packages l
 | Package                                            | Kind     | Responsibility                                                            |
 | -------------------------------------------------- | -------- | ------------------------------------------------------------------------- |
 | [`@nesso-how/schema`](packages/schema/)            | Core     | Graph model, validation, and JSON-LD.                                     |
-| [`@nesso-how/plugin`](packages/plugin/)            | Core     | Public types, plugin validation, and asynchronous clients.                |
+| [`@nesso-how/core`](packages/core/)                | Core     | Shared state, operation and store contracts, and write helpers.           |
+| [`@nesso-how/plugin`](packages/plugin/)            | Core     | Plugin contracts, validation, and asynchronous clients.                   |
 | [`@nesso-how/errors`](packages/errors/)            | Core     | Shared structured errors with issue paths and messages.                   |
 | [`@nesso-how/i18n`](packages/i18n/)                | Core     | i18next with typed keys, isolated translators, and English fallback.      |
 | [`@nesso-how/ui`](packages/ui/)                    | Core     | Shared React controls and styles.                                         |

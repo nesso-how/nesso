@@ -1,5 +1,5 @@
 import type { Locale } from '@nesso-how/i18n'
-import type { NessoStore } from '@nesso-how/plugin'
+import type { NessoStore } from '@nesso-how/core'
 import { createSeedDocument } from '../data/seed.ts'
 import { createNessoStore } from './create.ts'
 import type { HostOperation, HostStore } from './types.ts'

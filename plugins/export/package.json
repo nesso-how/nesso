@@ -10,6 +10,7 @@
     "@nesso-how/schema": "workspace:*"
   },
   "devDependencies": {
+    "@nesso-how/core": "workspace:*",
     "@nesso-how/plugin": "workspace:*"
   },
   "peerDependencies": {

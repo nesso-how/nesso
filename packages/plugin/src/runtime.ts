@@ -7,7 +7,7 @@ import type {
   Selection,
   SavedView,
   VocabDefinition,
-} from './types.ts'
+} from '@nesso-how/core'
 import type { Locale } from '@nesso-how/i18n'
 import { parseOrThrow, PluginError } from './errors.ts'
 import { parseDefinition, themeColors, type Definition } from './definitions.ts'
@@ -19,7 +19,7 @@ import {
   type FileOpenResult,
   type FileSaveOptions,
 } from './files.ts'
-import { createWriteCommands } from './commands.ts'
+import { createWriteCommands } from '../../core/src/commands.ts'
 import { localizedText, text, type LocalizedText } from './i18n.ts'
 import { checkMessageSize } from './data.ts'
 import {

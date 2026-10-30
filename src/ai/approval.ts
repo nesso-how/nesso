@@ -1,4 +1,4 @@
-import type { Notifications } from '@nesso-how/plugin'
+import type { Notifications } from '@nesso-how/core'
 import type { AiEffects } from '@nesso-how/ai'
 import type { translate } from '../i18n/index.ts'
 import { summarizeCounts } from './effects.ts'

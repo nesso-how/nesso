@@ -270,4 +270,6 @@ Set `nesso.kind` to `"theme"`, point `entry` to your JSON definition, and use em
 
 Only light themes are supported. Use readable text contrast; arbitrary CSS and remote fonts are unsupported.
 
-For the full API and validation rules, see [action types](src/runtime.ts), [graph operations](src/types.ts), and [theme/vocabulary schemas](src/definitions.ts).
+The SDK exposes shared graph and operation types from the internal [`@nesso-how/core`](../core/) package. Trusted renderers use its synchronous store contract; plugins use only the permission-limited asynchronous `ActionContext` above. The published SDK bundles these shared contracts and helpers, so plugin projects need no separate core dependency.
+
+For the full API and validation rules, see [action types](src/runtime.ts), [graph operations](../core/src/types.ts), and [theme/vocabulary schemas](src/definitions.ts).

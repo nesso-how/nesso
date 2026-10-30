@@ -6,7 +6,7 @@ import {
   type ActionState,
   type FileSaveOptions,
 } from '@nesso-how/plugin/runtime'
-import { createWriteCommands } from '@nesso-how/plugin'
+import { createWriteCommands } from '@nesso-how/core'
 import { create } from './index.ts'
 
 test('export uses only the supplied target graph and notifies after accepted saves, not cancellation or failure', async (context) => {

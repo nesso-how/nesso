@@ -10,7 +10,7 @@ import {
 } from '@nesso-how/plugin/runtime'
 import { createNessoStore } from '../store/create.ts'
 import { connectActionChannel } from './action-channel.ts'
-import type { NessoOperation } from '@nesso-how/plugin'
+import type { NessoOperation } from '@nesso-how/core'
 
 const descriptors: readonly ActionDescriptor[] = [{ id: 'example', label: { en: 'Example' } }]
 const base = {

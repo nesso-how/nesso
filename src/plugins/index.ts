@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react'
 import { host, nessoStore, registerTheme, registerVocab } from '@/store'
-import type { ThemeDefinition, VocabDefinition } from '@nesso-how/plugin'
+import type { VocabDefinition } from '@nesso-how/core'
+import type { ThemeDefinition } from '@nesso-how/plugin'
 import {
   parseContribution,
   parsePluginI18n,

@@ -7,7 +7,7 @@ export default defineConfig({
   tsconfig: '../../tsconfig.plugin.json',
   dts: true,
   deps: {
-    alwaysBundle: ['@nesso-how/errors', '@nesso-how/schema', '@nesso-how/i18n'],
+    alwaysBundle: ['@nesso-how/core', '@nesso-how/errors', '@nesso-how/schema', '@nesso-how/i18n'],
     onlyImport: ['zod', 'semver', 'validate-npm-package-name', 'react'],
   },
 })

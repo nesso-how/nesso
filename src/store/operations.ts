@@ -5,9 +5,9 @@ import type {
   Preferences,
   SavedView,
   Selection,
-  ThemeDefinition,
   WorkspaceState,
-} from '@nesso-how/plugin'
+} from '@nesso-how/core'
+import type { ThemeDefinition } from '@nesso-how/plugin'
 import {
   newIri,
   relationKey,

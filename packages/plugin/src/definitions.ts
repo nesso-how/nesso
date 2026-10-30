@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { validateGraph } from '../../schema/src/validate.ts'
 import { parseOrThrow } from './errors.ts'
-import type { DeepReadonly, VocabDefinition } from './types.ts'
+import type { DeepReadonly, VocabDefinition } from '@nesso-how/core'
 
 export const themeColors = [
   'background',

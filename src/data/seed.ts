@@ -1,5 +1,5 @@
 import type { Locale } from '@nesso-how/i18n'
-import type { WorkspaceState } from '@nesso-how/plugin'
+import type { WorkspaceState } from '@nesso-how/core'
 import { parseGraph, type Graph } from '@nesso-how/schema'
 import seed from './seed-graph.json' with { type: 'json' }
 import seedViews from './seed-views.json' with { type: 'json' }

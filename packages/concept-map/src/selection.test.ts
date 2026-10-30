@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import type { Selection } from '@nesso-how/plugin'
+import type { Selection } from '@nesso-how/core'
 import { selectionForContextMenu, selectionFromChanges } from './selection.ts'
 
 test('renderer selection batches retain every selected item and toggle only their own kind', () => {
