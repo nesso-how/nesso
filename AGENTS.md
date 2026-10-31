@@ -5,6 +5,11 @@ See [README.md](README.md) for the product overview, architecture, and package d
 ## Code
 
 - Leave changes uncommitted and unpushed unless the user explicitly requests a commit or push.
+- Before opening a PR, fetch `origin` and ensure the branch includes the latest `origin/main`; resolve or report blockers before proceeding.
+- Complete applicable sections of `.github/pull_request_template.md` for PRs and the matching `.github/ISSUE_TEMPLATE/` template for issues, when available.
+- Run `gh workflow run review.yml -f pr=NUMBER` only on explicit request; wait for the review result before enabling auto-merge if both are requested.
+- Enable auto-merge only on explicit request; watch the PR until merged or blocked, and report blockers.
+- After a PR merges during the session, fetch `origin` and fast-forward `main` to `origin/main` in the primary checkout, not the session worktree. Report blockers; never discard changes or force updates.
 - Do not add backward-compatibility code or migration ladders.
 - Prefer the smallest clear implementation. Reuse existing code; avoid unnecessary abstractions, duplication, and redundant tests without sacrificing readability, correctness, or essential coverage.
 - Keep AGENTS.md files minimal: durable development rules and architectural boundaries only. Do not duplicate inherited instructions, implementation details, functional specifications, or progress reports; keep supported behavior in types, validators, and tests.
