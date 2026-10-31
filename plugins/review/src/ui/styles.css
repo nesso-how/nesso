@@ -44,7 +44,7 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: 76px 0 50px;
+  padding: 76px 0;
   box-sizing: border-box;
 }
 .review-overview > h1,
@@ -293,8 +293,7 @@
     width: calc(100% - 40px);
   }
   .review-overview {
-    padding-top: 45px;
-    padding-bottom: 30px;
+    padding-block: 45px;
   }
   .review-study {
     padding-top: 35px;
