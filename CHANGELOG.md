@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.0.0-alpha.33 — 2026-10-31
+
+### Features
+
+- **i18n:** Rename general graph to overview (#217)
+- **notes:** Add markdown editing with lists and links (#220)
+
+### Fixes
+
+- **review:** Constrain panel height and balance padding (#218)
+- **i18n:** Use overview for general graph labels
+
 ## 1.0.0-alpha.32 — 2026-10-30
 
 ### Features
