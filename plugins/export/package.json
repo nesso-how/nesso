@@ -29,9 +29,9 @@
         "zh-CN": "将视图导出为 JSON-LD。"
       },
       "documentation": {
-        "en": "Export saves the invoked view as JSON-LD, including concepts, internal relations, and relation types. All exports the complete graph.",
-        "it": "Export salva la vista invocata in JSON-LD, inclusi concetti, relazioni interne e tipi. Tutto esporta il grafo completo.",
-        "zh-CN": "导出功能将调用的视图保存为 JSON-LD，包括概念、内部关系和类型。全部视图导出完整图谱。"
+        "en": "Export saves the invoked view as JSON-LD, including concepts, internal relations, and relation types. Overview exports the complete graph.",
+        "it": "Export salva la vista invocata in JSON-LD, inclusi concetti, relazioni interne e tipi. Panoramica esporta il grafo completo.",
+        "zh-CN": "导出功能将调用的视图保存为 JSON-LD，包括概念、内部关系和类型。概览视图导出完整图谱。"
       }
     },
     "label": {

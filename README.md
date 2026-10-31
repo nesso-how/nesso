@@ -22,7 +22,7 @@ Nesso keeps things minimal and efficient, with just a few key elements:
 
 - **Concepts** represent ideas. You can change their color, make their labels bold or italic, and add a plain-text description.
 - **Relations** connect concepts with a direction and a type that describes the connection.
-- **Views** offer different perspectives on the same graph. The default **All** view contains the complete graph and cannot be deleted. Saved views are named subsets of its concepts.
+- **Views** offer different perspectives on the same graph. The default **Overview** view contains the complete graph and cannot be deleted. Saved views are named subsets of its concepts.
 - **Vocabularies** provide relation types. You can name your own relation types or define vocabularies as plugins.
 - **Plugins** are npm packages providing vocabularies, themes, or actions on the current view. Install them from Settings → Plugins on desktop, or [create your own](packages/plugin/README.md#create-a-plugin).
 - **Review** is a bundled plugin for FSRS spaced repetition over a view’s concepts.
