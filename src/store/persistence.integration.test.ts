@@ -12,7 +12,7 @@ import themeFixture from '../../packages/plugin/test/theme.json' with { type: 'j
 
 const fixture = (): Graph => ({
   concepts: [
-    { id: 'urn:one', label: 'One', description: 'Definition\nExample', position: { x: 10, y: 20 } },
+    { id: 'urn:one', label: 'One', notes: 'Definition\nExample', position: { x: 10, y: 20 } },
     { id: 'urn:two', label: 'Two', position: { x: 30, y: 40 } },
     { id: 'urn:hidden', label: 'Hidden', position: { x: 50, y: 60 } },
   ],
@@ -125,7 +125,7 @@ test('startup saves durable changes made before autosave connects', async () => 
     {
       section: 'document',
       apply: (host) => {
-        host.store.setConceptDescription('urn:one', 'Changed description')
+        host.store.setConceptNotes('urn:one', 'Changed notes')
       },
     },
     {

@@ -73,7 +73,7 @@ const relationType = z.strictObject({ id, label: z.string() })
 const locale = z.enum(['en', 'it', 'zh-CN'])
 const operation = z.discriminatedUnion('kind', [
   z.strictObject({ kind: z.literal('concept.label'), id, value: z.string() }),
-  z.strictObject({ kind: z.literal('concept.description'), id, value: z.string() }),
+  z.strictObject({ kind: z.literal('concept.notes'), id, value: z.string() }),
   z.strictObject({ kind: z.literal('concept.color'), id, value: z.string() }),
   z.strictObject({ kind: z.literal('concept.bold'), id, value: z.boolean() }),
   z.strictObject({ kind: z.literal('concept.italic'), id, value: z.boolean() }),
@@ -162,7 +162,7 @@ const jsonEntry = z
   .regex(/^(?:[\w-]+\/)*[\w-]+\.json$/)
 const pluginWriteKinds = [
   'concept.label',
-  'concept.description',
+  'concept.notes',
   'concept.color',
   'concept.bold',
   'concept.italic',
@@ -405,7 +405,7 @@ const graph = z.strictObject({
     z.strictObject({
       id,
       label: z.string(),
-      description: z.string().optional(),
+      notes: z.string().optional(),
       color: z
         .string()
         .regex(/^#[0-9a-fA-F]{6}$/)

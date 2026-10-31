@@ -8,7 +8,7 @@ import zhCN from './seed-translations/zh-CN.json' with { type: 'json' }
 
 type SeedTranslation = Readonly<{
   conceptLabels: Readonly<Record<string, string>>
-  conceptDescriptions: Readonly<Record<string, string>>
+  conceptNotes: Readonly<Record<string, string>>
   relationTypeLabels: Readonly<Record<string, string>>
   viewNames: Readonly<Record<string, string>>
 }>
@@ -24,7 +24,7 @@ export function createSeedDocument(locale: Locale): { graph: Graph; workspace: W
       concepts: graph.concepts.map((concept) => ({
         ...concept,
         label: translation?.conceptLabels[concept.id] ?? concept.label,
-        description: translation?.conceptDescriptions[concept.id] ?? concept.description,
+        notes: translation?.conceptNotes[concept.id] ?? concept.notes,
       })),
       relationTypes: graph.relationTypes.map((type) => ({
         ...type,

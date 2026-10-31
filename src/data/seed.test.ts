@@ -12,7 +12,7 @@ test('seed translations cover every label and view name without changing documen
   assert.deepEqual(english.workspace, { activeViewId: null, savedViews: seedViews, viewports: {} })
   for (const locale of ['it', 'zh-CN'] as const) {
     const translation: Record<
-      'conceptLabels' | 'conceptDescriptions' | 'relationTypeLabels' | 'viewNames',
+      'conceptLabels' | 'conceptNotes' | 'relationTypeLabels' | 'viewNames',
       Record<string, string>
     > = JSON.parse(
       readFileSync(new URL(`./seed-translations/${locale}.json`, import.meta.url), 'utf8'),
@@ -23,7 +23,7 @@ test('seed translations cover every label and view name without changing documen
       locale,
     )
     assert.deepEqual(
-      Object.keys(translation.conceptDescriptions).sort(),
+      Object.keys(translation.conceptNotes).sort(),
       english.graph.concepts.map(({ id }) => id).sort(),
       locale,
     )
@@ -47,7 +47,7 @@ test('seed translations cover every label and view name without changing documen
       concepts: english.graph.concepts.map((concept) => ({
         ...concept,
         label: translation.conceptLabels[concept.id],
-        description: translation.conceptDescriptions[concept.id],
+        notes: translation.conceptNotes[concept.id],
       })),
       relationTypes: english.graph.relationTypes.map((type) => ({
         ...type,

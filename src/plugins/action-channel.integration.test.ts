@@ -390,11 +390,7 @@ test('discovery sends no state and denies requests; invocation rejects changed d
 })
 
 test('typed plugin writes are asynchronous, synchronize snapshots and preserve validation, declarations and history groups', async (t) => {
-  const instance = fixture(false, undefined, [
-    'concept.label',
-    'concept.color',
-    'concept.description',
-  ])
+  const instance = fixture(false, undefined, ['concept.label', 'concept.color', 'concept.notes'])
   t.after(instance.close)
   await instance.start()
   const { document } = instance.client.context
@@ -419,8 +415,8 @@ test('typed plugin writes are asynchronous, synchronize snapshots and preserve v
   assert.equal(instance.host.store.getState(), committed)
   await document.setConceptColor('urn:a', '#123456')
   assert.equal(instance.host.store.getState().graph.concepts[0].color, '#123456')
-  await document.setConceptDescription('urn:a', 'Described')
-  assert.equal(instance.host.store.getState().graph.concepts[0].description, 'Described')
+  await document.setConceptNotes('urn:a', 'Notes')
+  assert.equal(instance.host.store.getState().graph.concepts[0].notes, 'Notes')
   instance.host.store.setConceptLabel('urn:a', 'Host edit', 'edit')
   await document.refresh()
   await document.setConceptLabel('urn:a', 'Plugin edit', 'edit')

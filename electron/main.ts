@@ -16,7 +16,7 @@ import { ElectronError } from './errors.ts'
 import { connectUpdates } from './updates.ts'
 import { connectAi } from './ai.ts'
 import { connectMcp } from './mcp.ts'
-import { connectExternalLinks } from './links.ts'
+import { connectNotesLinks, connectExternalLinks } from './links.ts'
 import { connectDesktopPersistence } from './persistence.ts'
 import { createTrustedRequest } from './ipc.ts'
 import { createDataLocation } from './data-location.ts'
@@ -84,6 +84,7 @@ app
   .whenReady()
   .then(async () => {
     const trusted = createTrustedRequest(dev)
+    connectNotesLinks(ipcMain, trusted, (url) => shell.openExternal(url))
     connectFiles(trusted)
     connectPlugins(trusted)
     const location = await createDataLocation(app.getPath('userData'))

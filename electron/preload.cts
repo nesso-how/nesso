@@ -6,6 +6,7 @@ import type { PersistenceBridge } from '../shared/persistence.js'
 import type { DataLocationBridge, DataLocationState } from '../shared/data-location.js'
 import type { FileBridge } from '../shared/files.js'
 import type { PluginBridge } from '../shared/plugins.js'
+import type { NotesLinkBridge } from '../shared/link-policy.js'
 
 const { contextBridge, ipcRenderer } = require('electron') as typeof import('electron')
 const beforeSave = (request: string, reply: string, save: () => Promise<boolean>) => {
@@ -87,6 +88,10 @@ const files: FileBridge = {
   cancel: (id) => ipcRenderer.send('files:cancel', id),
 }
 contextBridge.exposeInMainWorld('nessoFiles', files)
+const notesLinks: NotesLinkBridge = {
+  open: (url) => ipcRenderer.invoke('notes-link:open', url),
+}
+contextBridge.exposeInMainWorld('nessoNotesLinks', notesLinks)
 let pluginSubscribers = 0
 const plugins: PluginBridge = {
   list: () => ipcRenderer.invoke('plugins:list'),

@@ -13,7 +13,7 @@ export type GraphSnapshot = DeepReadonly<Graph>
 
 export type NessoOperation =
   | { readonly kind: 'concept.label'; readonly id: string; readonly value: string }
-  | { readonly kind: 'concept.description'; readonly id: string; readonly value: string }
+  | { readonly kind: 'concept.notes'; readonly id: string; readonly value: string }
   | { readonly kind: 'concept.color'; readonly id: string; readonly value: string }
   | { readonly kind: 'concept.bold'; readonly id: string; readonly value: boolean }
   | { readonly kind: 'concept.italic'; readonly id: string; readonly value: boolean }
@@ -149,7 +149,7 @@ export type NessoStore = {
     historyGroup?: string,
   ) => void
   readonly setConceptLabel: (id: string, label: string, historyGroup?: string) => void
-  readonly setConceptDescription: (id: string, description: string, historyGroup?: string) => void
+  readonly setConceptNotes: (id: string, notes: string, historyGroup?: string) => void
   readonly setConceptColor: (id: string, color: string, historyGroup?: string) => void
   readonly setConceptBold: (id: string, value: boolean, historyGroup?: string) => void
   readonly setConceptItalic: (id: string, value: boolean, historyGroup?: string) => void

@@ -17,7 +17,7 @@ const operation = z.discriminatedUnion('kind', [
     id,
     value: z.string().max(aiTextLimits.conceptLabel),
   }),
-  z.strictObject({ kind: z.literal('concept.description'), id, value: z.string() }),
+  z.strictObject({ kind: z.literal('concept.notes'), id, value: z.string() }),
   z.strictObject({ kind: z.literal('concept.position'), id, value: position }),
   z.strictObject({
     kind: z.literal('concept.positions'),

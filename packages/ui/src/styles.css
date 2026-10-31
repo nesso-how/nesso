@@ -44,6 +44,38 @@
     outline: none;
   }
 
+  .nesso-markdown-input {
+    display: flex;
+  }
+
+  .nesso-markdown-input .cm-editor {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .nesso-markdown-bold {
+    font-weight: 700;
+  }
+
+  .nesso-markdown-italic {
+    font-style: italic;
+  }
+
+  .nesso-markdown-link {
+    color: var(--primary);
+    text-decoration: underline;
+  }
+
+  .nesso-markdown-syntax {
+    color: var(--muted-foreground);
+  }
+
+  .nesso-markdown-list-marker {
+    display: inline-block;
+    min-width: var(--nesso-list-indent);
+    text-indent: 0;
+  }
+
   .nesso-popup {
     border: 1px solid var(--border);
     border-radius: var(--radius-object);

@@ -1,6 +1,26 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { isAllowedExternalLink, isAllowedPluginLink } from './link-policy.ts'
+import { isAllowedNotesLink, isAllowedExternalLink, isAllowedPluginLink } from './link-policy.ts'
+
+test('notes links allow HTTPS destinations without credentials without widening app or plugin links', () => {
+  const url = 'https://en.wikipedia.org/wiki/Knowledge?source=nesso#Overview'
+  assert.equal(isAllowedNotesLink(url), true)
+  assert.equal(isAllowedExternalLink(url), false)
+  assert.equal(isAllowedPluginLink(url), false)
+  for (const url of [
+    'http://example.com',
+    'file:///etc/passwd',
+    'javascript:alert(1)',
+    'data:text/html,<script>alert(1)</script>',
+    'mailto:hello@example.com',
+    'https://user:pass@example.com',
+    'https://user@example.com',
+    '//example.com',
+    '/relative',
+    '',
+  ])
+    assert.equal(isAllowedNotesLink(url), false, url)
+})
 
 test('plugin links allow only HTTPS npm package pages and GitHub repository roots without widening assistant links', () => {
   for (const url of [

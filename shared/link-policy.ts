@@ -1,3 +1,16 @@
+export type NotesLinkBridge = {
+  open: (url: string) => Promise<boolean>
+}
+
+export function isAllowedNotesLink(url: string): boolean {
+  try {
+    const destination = new URL(url)
+    return destination.protocol === 'https:' && !destination.username && !destination.password
+  } catch {
+    return false
+  }
+}
+
 export function isAllowedExternalLink(url: string): boolean {
   try {
     const destination = new URL(url)

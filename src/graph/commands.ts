@@ -83,9 +83,9 @@ export function pasteOperations(
       { kind: 'selection.set', value: [] },
       { kind: 'concept.add', id: concept.id, position: concept.position },
       { kind: 'concept.label', id: concept.id, value: concept.label },
-      ...(concept.description === undefined
+      ...(concept.notes === undefined
         ? []
-        : [{ kind: 'concept.description' as const, id: concept.id, value: concept.description }]),
+        : [{ kind: 'concept.notes' as const, id: concept.id, value: concept.notes }]),
       ...(concept.color === undefined
         ? []
         : [{ kind: 'concept.color' as const, id: concept.id, value: concept.color }]),

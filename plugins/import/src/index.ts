@@ -21,8 +21,8 @@ export function buildImportOperations(
       { kind: 'concept.add', id, position: { ...concept.position } },
       { kind: 'concept.label', id, value: concept.label },
     )
-    if (concept.description !== undefined)
-      operations.push({ kind: 'concept.description', id, value: concept.description })
+    if (concept.notes !== undefined)
+      operations.push({ kind: 'concept.notes', id, value: concept.notes })
   }
   const types = new Map(snapshot.relationTypes.map((type) => [type.id, type]))
   for (const relation of snapshot.relations) {

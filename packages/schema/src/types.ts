@@ -2,7 +2,7 @@ export type Position = { x: number; y: number }
 export type Concept = {
   id: string
   label: string
-  description?: string
+  notes?: string
   color?: string
   bold?: boolean
   italic?: boolean

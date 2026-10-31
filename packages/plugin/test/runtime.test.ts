@@ -30,7 +30,7 @@ test('manifests and action descriptors reject unknown authority, duplicates and 
       ...manifest,
       writes: [
         'concept.label',
-        'concept.description',
+        'concept.notes',
         'concept.color',
         'concept.position',
         'concept.positions',

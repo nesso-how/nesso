@@ -91,7 +91,7 @@ export function parseGraph(value: unknown): Graph {
       ...(italic === undefined ? {} : { italic }),
       ...(entry['rdfs:comment'] === undefined
         ? {}
-        : { description: string(entry['rdfs:comment'], `${path}.rdfs:comment`) }),
+        : { notes: string(entry['rdfs:comment'], `${path}.rdfs:comment`) }),
     })
   }
 
@@ -129,7 +129,7 @@ export function serializeGraph(graph: Graph): JsonObject {
     'rdfs:label': label,
   }))
   const concepts = new Map<string, JsonObject>(
-    graph.concepts.map(({ id, label, description, color, bold, italic, position }) => [
+    graph.concepts.map(({ id, label, notes, color, bold, italic, position }) => [
       id,
       {
         '@id': id,
@@ -138,7 +138,7 @@ export function serializeGraph(graph: Graph): JsonObject {
         ...(color === undefined ? {} : { color }),
         ...(bold === undefined ? {} : { bold }),
         ...(italic === undefined ? {} : { italic }),
-        ...(description === undefined ? {} : { 'rdfs:comment': description }),
+        ...(notes === undefined ? {} : { 'rdfs:comment': notes }),
       },
     ]),
   )
