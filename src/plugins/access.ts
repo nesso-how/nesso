@@ -3,7 +3,7 @@ import type { translate } from '../i18n/index.ts'
 
 const writes = {
   'concept.label': 'pluginAccessLabel',
-  'concept.description': 'pluginAccessDescription',
+  'concept.notes': 'pluginAccessNotes',
   'concept.color': 'pluginAccessColor',
   'concept.bold': 'pluginAccessEmphasis',
   'concept.italic': 'pluginAccessEmphasis',

@@ -41,9 +41,9 @@ export function createWriteCommands<Commit, Created>(
         [{ kind: 'concept.label', id, value }],
         historyGroup ? { historyGroup } : undefined,
       ),
-    setConceptDescription: (id, value, historyGroup) =>
+    setConceptNotes: (id, value, historyGroup) =>
       applyOperations(
-        [{ kind: 'concept.description', id, value }],
+        [{ kind: 'concept.notes', id, value }],
         historyGroup ? { historyGroup } : undefined,
       ),
     setConceptColor: (id, value, historyGroup) =>

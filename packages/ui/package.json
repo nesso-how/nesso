@@ -34,6 +34,10 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
+    "@codemirror/commands": "^6.11.1",
+    "@codemirror/state": "^6.7.6",
+    "@codemirror/view": "^6.43.15",
+    "@lezer/markdown": "^1.8.1",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.4.0",
     "lucide-react": "^1.48.0"

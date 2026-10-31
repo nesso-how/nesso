@@ -25,8 +25,8 @@ export function validateGraph(graph: {
       })
     }
     concepts.add(concept.id)
-    if (concept.description !== undefined && typeof concept.description !== 'string') {
-      issues.push({ path: `concepts[${index}].description`, message: 'Expected a string' })
+    if (concept.notes !== undefined && typeof concept.notes !== 'string') {
+      issues.push({ path: `concepts[${index}].notes`, message: 'Expected a string' })
     }
     if (!Number.isFinite(concept.position.x) || !Number.isFinite(concept.position.y)) {
       issues.push({

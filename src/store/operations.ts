@@ -276,10 +276,10 @@ export const applyStateOperations = (
           concept.label === operation.value ? concept : { ...concept, label: operation.value },
         )
         break
-      case 'concept.description':
+      case 'concept.notes':
       case 'concept.color':
         updateConcept(operation.id, (concept) => {
-          const key = operation.kind === 'concept.color' ? 'color' : 'description'
+          const key = operation.kind === 'concept.color' ? 'color' : 'notes'
           const value = key === 'color' ? operation.value.toLowerCase() : operation.value
           if ((concept[key] ?? '') === value) return concept
           const next = { ...concept }

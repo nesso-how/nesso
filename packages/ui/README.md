@@ -39,7 +39,7 @@ Your build must compile this CSS; it is not a precompiled stylesheet. Supply the
 
 | Area                   | Exports                                                                                                                   |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| Buttons and inputs     | `Button`, `IconButton`, `Input`, `Label`, `PreferenceSelect`, `ColorPicker`                                               |
+| Buttons and inputs     | `Button`, `IconButton`, `Input`, `MarkdownInput`, `Label`, `PreferenceSelect`, `ColorPicker`                              |
 | Forms and rows         | `Field`, `FieldHint`, `ListRow`, `ListRowButton`, `ListRowDetail`, `ListRowTitle`, `RevealActions`, `PromptForm`          |
 | Menus and popovers     | `Menu`, `MenuItem`, `MenuPopup`, `MenuRadioItem`, `Popover`, `PopoverPopup`                                               |
 | Search and suggestions | `Combobox`, `ComboboxItem`, `ComboboxPopup`, `Autocomplete`, `AutocompleteClear`, `AutocompleteItem`, `AutocompletePopup` |
@@ -49,5 +49,7 @@ Your build must compile this CSS; it is not a precompiled stylesheet. Supply the
 | Labels and icons       | `Kbd`, `ContextLabel`, `ActionIcon`                                                                                       |
 
 `Button` supports `default`, `outline`, and `ghost` variants. `SidePanel` supports controlled resizing and collapse. `Spinner` accepts an accessible `label` and respects reduced motion. State, content, and event handling remain yours to provide.
+
+`MarkdownInput` provides a live preview of bold, italic, links, and bullet or numbered lists in one field without a toolbar. Markdown delimiters reappear when the cursor or selection enters formatted text, including link destinations and list markers. Enter continues a list, incrementing the current number for numbered lists; Enter on an empty nested item returns to the parent level, and on an empty top-level item ends the list. Tab nests the current item under the previous one; Shift+Tab moves it up a level. Both move the item's continuation lines and children together, leaving unrelated text alone. At level boundaries they leave content and focus unchanged; outside lists they retain normal focus navigation. Shift+Enter inserts a plain line break. Existing items are not renumbered, and there are no checklists. It accepts the unchanged Markdown source through `value` and `onChange`, supports Cmd/Ctrl+B/I on selections, and preserves line breaks. Set `history={false}` when the host owns undo/redo and its shortcuts. Cmd/Ctrl-click requests `onOpenLink`; read-only fields request it on a regular click. The host is responsible for validating and opening destinations.
 
 The package also exports `useMediaQuery`, `contrastColor`, `presetColors`, and the `ActionIconName` and `ToastItem` types. See the [public exports](https://github.com/nesso-how/nesso/blob/main/packages/ui/src/index.ts) and component source files for prop definitions; published TypeScript declarations provide editor completion.

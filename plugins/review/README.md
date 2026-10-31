@@ -4,7 +4,7 @@ Isolated action plugin for spaced-repetition practice of a view’s concepts wit
 
 ## Usage
 
-Open the bundled **Review** action from a view’s actions. The overview includes every concept in that view, with new and due concepts first. Start a round, recall each concept, reveal its description and in-view connections, then choose **Again / Hard / Good / Easy**. Space reveals; keys 1–4 rate. Escape or **End session** finishes the round immediately and returns to the overview, keeping completed reviews and leaving remaining concepts available.
+Open the bundled **Review** action from a view’s actions. The overview includes every concept in that view, with new and due concepts first. Start a round, recall each concept, reveal its notes and in-view connections, then choose **Again / Hard / Good / Easy**. Space reveals; keys 1–4 rate. Escape or **End session** finishes the round immediately and returns to the overview, keeping completed reviews and leaving remaining concepts available.
 
 Each round covers its currently due concepts once and returns to the overview. Ratings save progress shared across overlapping views; closing the panel discards only the unfinished round. Progress is private plugin data, excluded from JSON-LD and graph history. Invalid records or failed writes block further ratings until progress is explicitly reloaded, without advancing the round or overwriting saved data.
 

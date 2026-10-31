@@ -10,6 +10,7 @@ import {
   ContextLabel,
   Input,
   Label,
+  MarkdownInput,
 } from '@nesso-how/ui'
 import { ArrowUpDown, Trash2 } from 'lucide-react'
 import { ViewDetails } from './ViewDetails'
@@ -20,6 +21,8 @@ import { InspectorSection } from './InspectorSection'
 import { nessoStore, useNessoStore } from '@/store'
 import type { HostStore } from '@/store/types'
 import { useTranslation } from '@/i18n'
+import { isAllowedNotesLink } from '../../../shared/link-policy'
+import { notifications } from '@/notifications'
 
 function RelationInput({
   edgeId,
@@ -240,28 +243,38 @@ export function Inspector({
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="concept-description">{t('description')}</Label>
-            <textarea
+            <Label htmlFor="concept-notes">{t('notes')}</Label>
+            <MarkdownInput
               key={concept.id}
-              id="concept-description"
-              className="nesso-input field-sizing-content max-h-[50vh] min-h-24 w-full resize-none overflow-y-auto border border-input bg-background px-2.5 py-2 focus-visible:border-muted-foreground"
-              rows={4}
+              id="concept-notes"
+              className="max-h-[50vh]"
+              aria-label={t('notes')}
               data-document-edit
-              value={concept.description ?? ''}
+              value={concept.notes ?? ''}
               readOnly={readonly}
+              history={false}
               onFocus={() => {
                 textGroup.current = newIri()
               }}
               onBlur={() => {
                 textGroup.current = undefined
               }}
-              onChange={(event) => {
+              onOpenLink={async (url) => {
+                if (isAllowedNotesLink(url)) {
+                  try {
+                    if (window.nessoNotesLinks) {
+                      if (await window.nessoNotesLinks.open(url)) return
+                    } else {
+                      window.open(new URL(url).href, '_blank', 'noopener,noreferrer')
+                      return
+                    }
+                  } catch {}
+                }
+                notifications.api.notify({ tone: 'warning', title: t('notesLinkOpenFailed') })
+              }}
+              onChange={(value) => {
                 if (!readonly)
-                  store.setConceptDescription(
-                    concept.id,
-                    event.target.value,
-                    (textGroup.current ??= newIri()),
-                  )
+                  store.setConceptNotes(concept.id, value, (textGroup.current ??= newIri()))
               }}
             />
           </div>

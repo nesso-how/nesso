@@ -52,7 +52,7 @@
       "selection.set",
       "concept.add",
       "concept.label",
-      "concept.description",
+      "concept.notes",
       "relation.connect",
       "view.membership"
     ],

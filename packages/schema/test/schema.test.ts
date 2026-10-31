@@ -32,14 +32,19 @@ const fixture = {
 
 test('a graph with compact and custom predicates survives a JSON-LD round trip', () => {
   const graph = parseGraph(fixture)
-  assert.equal(graph.concepts[0].description, 'A definition.\nAn example.')
+  assert.equal(graph.concepts[0].notes, 'A definition.\nAn example.')
   assert.equal(graph.concepts[0].color, '#e1ecde')
   assert.equal(Object.hasOwn(graph.concepts[1], 'color'), false)
   const custom = 'urn:uuid:82d7d311-382c-45ee-9ec6-7e3b247d489b'
   graph.relationTypes.push({ id: custom, label: 'supports' })
   graph.relations.push(...targets.map((target) => ({ source: subject, predicate: custom, target })))
   const original = structuredClone(graph)
-  const restored = parseGraph(serializeGraph(graph))
+  const serialized = serializeGraph(graph)
+  const entry = (serialized['@graph'] as Record<string, unknown>[]).find(
+    (entry) => entry['@id'] === subject,
+  )!
+  assert.equal(entry['rdfs:comment'], graph.concepts[0].notes)
+  const restored = parseGraph(serialized)
   assert.deepEqual(graph, original)
   assert.deepEqual(restored.concepts, graph.concepts)
   assert.deepEqual(restored.relationTypes, graph.relationTypes)
@@ -95,14 +100,13 @@ test('graph validation and serialization reject relative concept and relation-ty
   }
 })
 
-test('descriptions must be strings at graph and JSON-LD boundaries', () => {
+test('notes must be strings at graph and JSON-LD boundaries', () => {
   const graph = parseGraph(fixture)
-  graph.concepts[0].description = 42 as never
+  graph.concepts[0].notes = 42 as never
   assert.throws(
     () => serializeGraph(graph),
     (error: unknown) =>
-      error instanceof SchemaError &&
-      error.issues.some(({ path }) => path === 'concepts[0].description'),
+      error instanceof SchemaError && error.issues.some(({ path }) => path === 'concepts[0].notes'),
   )
   assert.throws(
     () =>

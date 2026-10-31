@@ -70,7 +70,7 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
         return
       }
       if (introOpen || !(event.metaKey || event.ctrlKey)) return
-      if (isEditableTarget(target) && !target?.hasAttribute('data-document-edit')) return
+      if (isEditableTarget(target) && !target?.closest('[data-document-edit]')) return
       const key = event.key.toLowerCase()
       if (key !== 'z' && !(key === 'y' && event.ctrlKey && !event.metaKey)) return
       event.preventDefault()

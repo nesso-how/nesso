@@ -159,7 +159,7 @@ Call helpers on `document` and declare their operation kinds in `nesso.writes`:
 | Helper                                              | Required `writes` entry |
 | --------------------------------------------------- | ----------------------- |
 | `setConceptLabel(id, value)`                        | `concept.label`         |
-| `setConceptDescription(id, value)`                  | `concept.description`   |
+| `setConceptNotes(id, value)`                        | `concept.notes`         |
 | `setConceptColor(id, value)`                        | `concept.color`         |
 | `setConceptBold(id, value)`                         | `concept.bold`          |
 | `setConceptItalic(id, value)`                       | `concept.italic`        |

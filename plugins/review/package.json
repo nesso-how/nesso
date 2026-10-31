@@ -34,9 +34,9 @@
         "zh-CN": "通过间隔重复练习回忆视图中的概念。"
       },
       "documentation": {
-        "en": "Review includes every concept in the invoked view. Reveal descriptions and in-view connections, then rate your recall. FSRS-6 schedules the next review. Private progress follows each concept across views without changing your graph.",
-        "it": "Ripasso include tutti i concetti della vista. Mostra descrizioni e connessioni nella vista, poi valuta il ricordo. FSRS-6 programma il prossimo ripasso. I progressi privati seguono ogni concetto nelle diverse viste senza modificare il grafo.",
-        "zh-CN": "复习包含所选视图的所有概念。显示描述和视图内的连接后，评价回忆程度。FSRS-6 安排下次复习。私人进度随概念跨视图共享，不改变图谱。"
+        "en": "Review includes every concept in the invoked view. Reveal notes and in-view connections, then rate your recall. FSRS-6 schedules the next review. Private progress follows each concept across views without changing your graph.",
+        "it": "Ripasso include tutti i concetti della vista. Mostra note e connessioni nella vista, poi valuta il ricordo. FSRS-6 programma il prossimo ripasso. I progressi privati seguono ogni concetto nelle diverse viste senza modificare il grafo.",
+        "zh-CN": "复习包含所选视图的所有概念。显示笔记和视图内的连接后，评价回忆程度。FSRS-6 安排下次复习。私人进度随概念跨视图共享，不改变图谱。"
       }
     }
   },

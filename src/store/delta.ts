@@ -166,7 +166,7 @@ export const sameConcept = (
 ): boolean =>
   a.id === b.id &&
   a.label === b.label &&
-  a.description === b.description &&
+  a.notes === b.notes &&
   a.color === b.color &&
   a.bold === b.bold &&
   a.italic === b.italic &&

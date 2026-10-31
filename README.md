@@ -16,11 +16,11 @@ We often understand and remember through associations: one idea brings another t
 
 Your knowledge isn’t scattered across files and folders but lives in **one connected graph that grows with your understanding**. **Views** let you focus on a project, question, or theme without splitting that knowledge into separate copies. The same concept can appear in several views, with edits shared across them.
 
-![Nesso showing the Understanding view of a learning graph, with the selected concept’s description, connections, and shared views in the Inspector.](.github/assets/nesso-understanding.png)
+![Nesso showing the Understanding view of a learning graph, with the selected concept’s notes, connections, and shared views in the Inspector.](.github/assets/nesso-understanding.png)
 
 Nesso keeps things minimal and efficient, with just a few key elements:
 
-- **Concepts** represent ideas. You can change their color, make their labels bold or italic, and add a plain-text description.
+- **Concepts** represent ideas. You can change their color, make their labels bold or italic, and add Markdown notes (bold, italic, lists, links).
 - **Relations** connect concepts with a direction and a type that describes the connection.
 - **Views** offer different perspectives on the same graph. The default **Overview** view contains the complete graph and cannot be deleted. Saved views are named subsets of its concepts.
 - **Vocabularies** provide relation types. You can name your own relation types or define vocabularies as plugins.

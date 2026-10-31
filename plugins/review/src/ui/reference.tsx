@@ -17,9 +17,7 @@ export function Reference({
   )
   return (
     <div className="review-answer">
-      <p className="review-reference">
-        {current.description?.trim() ? current.description : t.noReference}
-      </p>
+      <p className="review-reference">{current.notes?.trim() ? current.notes : t.noReference}</p>
       {relations.length > 0 && (
         <section className="review-connections">
           <h2>{t.connections}</h2>

@@ -57,6 +57,18 @@ export function ShortcutSettings({ titleRef }: { titleRef: Ref<HTMLHeadingElemen
         { label: t('shortcutClearSelection'), keys: [['Esc']] },
       ],
     },
+    {
+      id: 'notes',
+      title: t('notes'),
+      rows: [
+        { label: t('shortcutNotesBold'), keys: [[modifier, 'B']] },
+        { label: t('shortcutNotesItalic'), keys: [[modifier, 'I']] },
+        { label: t('shortcutNotesIndent'), keys: [['Tab']] },
+        { label: t('shortcutNotesOutdent'), keys: [[shift, 'Tab']] },
+        { label: t('shortcutNotesLineBreak'), keys: [[shift, 'Enter']] },
+        { label: t('shortcutNotesOpenLink'), keys: [[modifier, t('shortcutClick')]] },
+      ],
+    },
     { id: 'concept-map', ...conceptMapShortcuts(locale) },
   ]
 
