@@ -83,7 +83,7 @@ export const aiTools = {
   },
   views: {
     description:
-      'List paginated saved-view summaries, or read a page of membership IDs with id. All is the complete graph, has id null and cannot be deleted. Deleting the active saved view falls back to All.',
+      'List paginated saved-view summaries, or read a page of membership IDs with id. Overview is the complete graph, has id null and cannot be deleted. Deleting the active saved view falls back to Overview.',
     inputSchema: z.strictObject({ id: id.nullable().optional(), ...page }),
   },
   relation_types: {

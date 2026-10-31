@@ -19,7 +19,7 @@ export function readAiTool(
       const view = state.workspace.savedViews.find(({ id }) => id === state.workspace.activeViewId)
       const vocab = state.vocabs.find(({ id }) => id === state.preferences.activeVocabId)
       return {
-        activeView: { id: view?.id ?? null, name: view?.name ?? 'All' },
+        activeView: { id: view?.id ?? null, name: view?.name ?? 'Overview' },
         counts: {
           concepts: state.graph.concepts.length,
           relations: state.graph.relations.length,
@@ -68,7 +68,7 @@ export function readAiTool(
       if (query.id === undefined)
         return page(
           [
-            { id: null, name: 'All', concepts: state.graph.concepts.length, pinned: true },
+            { id: null, name: 'Overview', concepts: state.graph.concepts.length, pinned: true },
             ...state.workspace.savedViews.map((view) => ({
               id: view.id,
               name: view.name,
@@ -82,7 +82,7 @@ export function readAiTool(
       if (query.id !== null && !view) return undefined
       return {
         id: view?.id ?? null,
-        name: view?.name ?? 'All',
+        name: view?.name ?? 'Overview',
         members: page(view?.conceptIds ?? state.graph.concepts.map(({ id }) => id), query),
       }
     }
