@@ -2,7 +2,7 @@ export const messages = {
   en: {
     review: 'Review',
     start: 'Start',
-    all: 'All',
+    all: 'Overview',
     concepts: 'Concepts',
     ready: 'concepts ready to review.',
     readyOne: 'concept ready to review.',
@@ -40,7 +40,7 @@ export const messages = {
   it: {
     review: 'Ripasso',
     start: 'Inizia',
-    all: 'Tutti',
+    all: 'Panoramica',
     concepts: 'Concetti',
     ready: 'concetti da ripassare.',
     readyOne: 'concetto da ripassare.',
@@ -78,7 +78,7 @@ export const messages = {
   'zh-CN': {
     review: '复习',
     start: '开始',
-    all: '全部',
+    all: '概览',
     concepts: '概念',
     ready: '个概念待复习。',
     readyOne: '个概念待复习。',
