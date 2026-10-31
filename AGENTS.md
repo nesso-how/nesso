@@ -5,6 +5,7 @@ See [README.md](README.md) for the product overview, architecture, and package d
 ## Code
 
 - Leave changes uncommitted and unpushed unless the user explicitly requests a commit or push.
+- Before opening a PR, fetch `origin` and ensure the branch includes the latest `origin/main`; resolve or report blockers before proceeding.
 - Complete applicable sections of `.github/pull_request_template.md` for PRs and the matching `.github/ISSUE_TEMPLATE/` template for issues, when available.
 - Run `gh workflow run review.yml -f pr=NUMBER` only on explicit request; wait for the review result before enabling auto-merge if both are requested.
 - Enable auto-merge only on explicit request; watch the PR until merged or blocked, and report blockers.
