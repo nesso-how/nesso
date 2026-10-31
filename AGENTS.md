@@ -6,6 +6,7 @@ See [README.md](README.md) for the product overview, architecture, and package d
 
 - Leave changes uncommitted and unpushed unless the user explicitly requests a commit or push.
 - Complete applicable sections of `.github/pull_request_template.md` for PRs and the matching `.github/ISSUE_TEMPLATE/` template for issues, when available.
+- Run `gh workflow run review.yml -f pr=NUMBER` only on explicit request; wait for the review result before enabling auto-merge if both are requested.
 - Enable auto-merge only on explicit request; watch the PR until merged or blocked, and report blockers.
 - After a PR merges during the session, fetch `origin` and fast-forward `main` to `origin/main` in the primary checkout, not the session worktree. Report blockers; never discard changes or force updates.
 - Do not add backward-compatibility code or migration ladders.
