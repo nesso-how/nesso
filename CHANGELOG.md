@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.0.0-alpha.34 — 2026-11-01
+
+### Features
+
+- **mcp:** Persist server intent and autostart (#223)
+- **backup:** Add manual backup and restore (#224)
+
+### Fixes
+
+- **vocab:** Localize vocabulary relation labels (#222)
+- **desktop:** Integrate native application menus (#225)
+
 ## 1.0.0-alpha.33 — 2026-10-31
 
 ### Features
