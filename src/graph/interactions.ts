@@ -8,12 +8,12 @@ import {
   type RefObject,
 } from 'react'
 import { defaultLocale } from '@nesso-how/i18n'
-import { relationKey, type Position } from '@nesso-how/schema'
+import type { Position } from '@nesso-how/schema'
 import type { HostStore } from '../store/types.ts'
 import { notifications } from '../notifications/index.ts'
 import { useNessoStore } from '../store/index.ts'
 import { translate } from '../i18n/index.ts'
-import { copyGraph, pasteOperations, selectionCoversGraph } from './commands.ts'
+import { copyGraph, graphSelection, pasteOperations, selectionCoversGraph } from './commands.ts'
 
 export const isEditableTarget = (target: EventTarget | null): boolean =>
   target instanceof Element &&
@@ -62,13 +62,7 @@ export function useGraphInteractions(
     )
   const selectAll = useCallback(() => {
     const { viewGraph } = store.getState()
-    store.setSelection([
-      ...viewGraph.concepts.map(({ id }) => ({ kind: 'concept' as const, id })),
-      ...viewGraph.relations.map((relation) => ({
-        kind: 'relation' as const,
-        id: relationKey(relation),
-      })),
-    ])
+    store.setSelection(graphSelection(viewGraph))
   }, [store])
   useEffect(() => {
     if (readOnly) return

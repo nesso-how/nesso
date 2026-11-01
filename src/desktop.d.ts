@@ -7,6 +7,7 @@ import type { FileBridge } from '../shared/files'
 import type { PluginBridge } from '../shared/plugins'
 import type { NotesLinkBridge } from '../shared/link-policy'
 import type { BackupBridge } from '../shared/backup'
+import type { MenuBridge } from '../shared/menu'
 
 declare global {
   interface Window {
@@ -19,5 +20,6 @@ declare global {
     nessoPlugins?: PluginBridge
     nessoNotesLinks?: NotesLinkBridge
     nessoBackups?: BackupBridge
+    nessoMenu?: MenuBridge
   }
 }
