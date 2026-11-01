@@ -7,6 +7,7 @@ import type { DataLocationBridge, DataLocationState } from '../shared/data-locat
 import type { FileBridge } from '../shared/files.js'
 import type { PluginBridge } from '../shared/plugins.js'
 import type { NotesLinkBridge } from '../shared/link-policy.js'
+import type { BackupBridge } from '../shared/backup.js'
 
 const { contextBridge, ipcRenderer } = require('electron') as typeof import('electron')
 const beforeSave = (request: string, reply: string, save: () => Promise<boolean>) => {
@@ -35,9 +36,12 @@ const updater: UpdateBridge = {
   beforeInstall: (save) => beforeSave('update:prepare', 'update:install', save),
 }
 contextBridge.exposeInMainWorld('nessoUpdater', updater)
+let storageSession: Promise<number> | undefined
+const session = () => (storageSession ??= ipcRenderer.invoke('storage:session'))
 const persistence: PersistenceBridge = {
-  read: (section) => ipcRenderer.invoke('storage:read', section),
-  write: (section, value) => ipcRenderer.invoke('storage:write', section, value),
+  read: async (section) => ipcRenderer.invoke('storage:read', section, await session()),
+  write: async (section, value) =>
+    ipcRenderer.invoke('storage:write', section, value, await session()),
   beforeClose: (save, confirm) => {
     const stop = beforeSave('storage:prepare', 'storage:closed', async () => {
       if (
@@ -82,6 +86,13 @@ const dataLocation: DataLocationBridge = {
   },
 }
 contextBridge.exposeInMainWorld('nessoDataLocation', dataLocation)
+const backups: BackupBridge = {
+  create: () => ipcRenderer.invoke('backup:create'),
+  choose: () => ipcRenderer.invoke('backup:choose'),
+  restore: (id) => ipcRenderer.invoke('backup:restore', id),
+  cancel: () => ipcRenderer.send('backup:cancel'),
+}
+contextBridge.exposeInMainWorld('nessoBackups', backups)
 const files: FileBridge = {
   open: (id, options) => ipcRenderer.invoke('files:open', id, options),
   save: (id, options) => ipcRenderer.invoke('files:save', id, options),

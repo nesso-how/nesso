@@ -92,3 +92,41 @@ test('close preparation saves first, asks the host for consent only on failure a
     assert.equal(ipcRenderer.listenerCount('storage:prepare'), 0)
   }
 })
+
+test('each renderer pins its storage generation so a restored document cannot be overwritten by stale autosave', async () => {
+  let generation = 1
+  const calls: { channel: string; args: unknown[] }[] = []
+  const start = () => {
+    let bridge!: PersistenceBridge
+    const ipcRenderer = Object.assign(new EventEmitter(), {
+      invoke: async (channel: string, ...args: unknown[]) => {
+        calls.push({ channel, args })
+        return channel === 'storage:session' ? generation : { value: null }
+      },
+    })
+    runInNewContext(preload, {
+      require: () => ({
+        ipcRenderer,
+        contextBridge: {
+          exposeInMainWorld: (name: string, value: PersistenceBridge) => {
+            if (name === 'nessoPersistence') bridge = value
+          },
+        },
+      }),
+    })
+    return bridge
+  }
+  const old = start()
+  await Promise.all([old.read('document'), old.read('preferences')])
+  generation++
+  await old.write('document', 'stale state')
+  const fresh = start()
+  await fresh.read('document')
+  assert.equal(calls.filter(({ channel }) => channel === 'storage:session').length, 2)
+  assert.deepEqual(calls.find(({ channel }) => channel === 'storage:write')?.args, [
+    'document',
+    'stale state',
+    1,
+  ])
+  assert.deepEqual(calls.at(-1), { channel: 'storage:read', args: ['document', 2] })
+})

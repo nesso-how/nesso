@@ -6,6 +6,7 @@ import { z } from 'zod'
 import type { DataLocationState } from '../shared/data-location.ts'
 import { persistenceSections } from '../shared/persistence.ts'
 import { ElectronError } from './errors.ts'
+import { containsPath, syncDirectory, writeFileData } from './file-system.ts'
 
 const marker = '.nesso-data-id'
 const names = [...persistenceSections.map((section) => `${section}.json` as const), marker] as const
@@ -23,27 +24,6 @@ const fail = (message: string): never => {
 }
 const missing = (error: unknown) => (error as NodeJS.ErrnoException).code === 'ENOENT'
 const digest = (bytes: Buffer | string) => createHash('sha256').update(bytes).digest('hex')
-const contains = (parent: string, child: string) => {
-  const relative = path.relative(parent, child)
-  return (
-    relative === '' ||
-    (relative !== '..' && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative))
-  )
-}
-const syncDirectory = async (directory: string) => {
-  if (process.platform === 'win32') return
-  try {
-    const handle = await open(directory, 'r')
-    try {
-      await handle.sync()
-    } finally {
-      await handle.close()
-    }
-  } catch (error) {
-    if (!['EINVAL', 'ENOTSUP', 'EOPNOTSUPP'].includes((error as NodeJS.ErrnoException).code ?? ''))
-      throw error
-  }
-}
 const readFileData = async (file: string) => {
   try {
     if (!(await lstat(file)).isFile()) fail('storageSource')
@@ -52,15 +32,6 @@ const readFileData = async (file: string) => {
     throw error
   }
   return readFile(file)
-}
-const writeFileData = async (file: string, data: Buffer | string, exclusive = true) => {
-  const handle = await open(file, exclusive ? 'wx' : 'w', 0o600)
-  try {
-    await handle.writeFile(data)
-    await handle.sync()
-  } finally {
-    await handle.close()
-  }
 }
 
 export async function createDataLocation(userData: string) {
@@ -107,8 +78,8 @@ export async function createDataLocation(userData: string) {
     if (
       !path.isAbsolute(source) ||
       !path.isAbsolute(destination) ||
-      contains(source, destination) ||
-      contains(destination, source) ||
+      containsPath(source, destination) ||
+      containsPath(destination, source) ||
       (config.directory !== source && !committed) ||
       (committed &&
         (files.at(-1)?.name !== marker || files.at(-1)?.hash !== digest(config.identity))) ||
@@ -154,7 +125,7 @@ export async function createDataLocation(userData: string) {
       return fail('storageUnavailable')
     }
     if (canonical === config.directory) return canonical
-    if (contains(config.directory, canonical) || contains(canonical, config.directory))
+    if (containsPath(config.directory, canonical) || containsPath(canonical, config.directory))
       fail('storageNested')
     const entries = await readdir(canonical)
     if (

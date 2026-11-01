@@ -34,7 +34,7 @@ export function connectStartupCheck(profile: string): void {
           document.querySelector('.intro-header button')?.click()
           if (!document.querySelector('#canvas .react-flow')) return
           clearInterval(timer)
-          if (!window.nessoPersistence || !window.nessoPlugins || !window.nessoDataLocation) {
+          if (!window.nessoPersistence || !window.nessoPlugins || !window.nessoDataLocation || !window.nessoBackups) {
             reject('Desktop preload bridges are missing')
           } else resolve(true)
         }, 100)

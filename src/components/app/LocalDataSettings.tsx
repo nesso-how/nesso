@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Button, Dialog, DialogActions, DialogPopup, Input } from '@nesso-how/ui'
-import { ArrowUpRight, Folder, RotateCcw } from 'lucide-react'
+import { Button, Dialog, DialogActions, DialogPopup, IconButton, Input } from '@nesso-how/ui'
+import { Folder, RotateCcw } from 'lucide-react'
 import { useTranslation } from '@/i18n'
 import { notifications } from '@/notifications'
 import type { DataLocationBridge, DataLocationState } from '../../../shared/data-location'
+import { BackupSettings } from './BackupSettings'
 
 const issueKeys = [
   'storageConfig',
@@ -95,37 +96,42 @@ export function LocalDataSettings({ bridge }: { bridge: DataLocationBridge }) {
       setWorking(false)
     }
   }
-  const disabled = working || state?.moving
+  const disabled = working || state?.moving || state?.recoveryRequired
   const restoring = !!destination && destination === state?.defaultDirectory
   return (
     <section className="settings-section" aria-labelledby="settings-storage">
-      <div className="flex items-center justify-between gap-3">
-        <h3 id="settings-storage" className="settings-section-title">
-          {t('localData')}
-        </h3>
-        {state && (
-          <span className="settings-badge">
-            {t(state.directory === state.defaultDirectory ? 'storageDefault' : 'storageCustom')}
-          </span>
-        )}
-      </div>
+      <h3 id="settings-storage" className="settings-section-title">
+        {t('localData')}
+      </h3>
       <p className="mt-1 text-xs leading-[18px] text-muted-foreground">{t('storageDescription')}</p>
       <label htmlFor="data-directory" className="mt-4 block text-xs">
         {t('storageDirectory')}
       </label>
       <div className="mt-2 flex items-center gap-2">
         <div className="relative min-w-0 flex-1">
-          <Folder
-            className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground"
-            aria-hidden="true"
-          />
           <Input
             id="data-directory"
-            className="pl-8 font-mono text-xs"
+            className="pr-10"
             readOnly
             value={state?.directory ?? ''}
             title={state?.directory}
           />
+          <IconButton
+            className="absolute top-1/2 right-1 -translate-y-1/2 text-muted-foreground"
+            aria-label={t('storageOpen')}
+            title={t('storageOpen')}
+            disabled={disabled || !state}
+            onClick={() => {
+              void bridge
+                .open()
+                .then((result) => {
+                  if ('issues' in result) problem(result.issues)
+                })
+                .catch(() => fail(t('storageOpenFailure')))
+            }}
+          >
+            <Folder aria-hidden="true" />
+          </IconButton>
         </div>
         <Button
           variant="outline"
@@ -137,25 +143,8 @@ export function LocalDataSettings({ bridge }: { bridge: DataLocationBridge }) {
           {t('storageChange')}
         </Button>
       </div>
-      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="-ml-2 text-muted-foreground"
-          disabled={disabled || !state}
-          onClick={() => {
-            void bridge
-              .open()
-              .then((result) => {
-                if ('issues' in result) problem(result.issues)
-              })
-              .catch(() => fail(t('storageOpenFailure')))
-          }}
-        >
-          <ArrowUpRight />
-          {t('storageOpen')}
-        </Button>
-        {state && state.directory !== state.defaultDirectory && (
+      {state && state.directory !== state.defaultDirectory && (
+        <div className="mt-2">
           <Button
             variant="ghost"
             size="sm"
@@ -168,8 +157,8 @@ export function LocalDataSettings({ bridge }: { bridge: DataLocationBridge }) {
             <RotateCcw />
             {t('storageRestore')}
           </Button>
-        )}
-      </div>
+        </div>
+      )}
       {state?.cleanupPending && (
         <div className="mt-3 text-xs leading-[18px] text-muted-foreground">
           <p>{t('storageCleanup')}</p>
@@ -196,6 +185,12 @@ export function LocalDataSettings({ bridge }: { bridge: DataLocationBridge }) {
             {t('storageRetryCleanup')}
           </Button>
         </div>
+      )}
+      {window.nessoBackups && (
+        <BackupSettings
+          bridge={window.nessoBackups}
+          disabled={!!disabled || !state || state.cleanupPending}
+        />
       )}
       <Dialog.Root
         open={!!destination && !state?.moving}
@@ -250,18 +245,37 @@ export function LocalDataSettings({ bridge }: { bridge: DataLocationBridge }) {
 
 export function DataTransferDialog({ bridge }: { bridge: DataLocationBridge }) {
   const t = useTranslation()
-  const [moving, setMoving] = useState(false)
-  useEffect(() => bridge.subscribe((state) => setMoving(state.moving)), [bridge])
+  const [state, setState] = useState<DataLocationState>()
+  useEffect(() => bridge.subscribe(setState), [bridge])
+  const backup = state?.activity
   return (
-    <Dialog.Root open={moving} onOpenChange={() => {}}>
+    <Dialog.Root open={!!state?.moving || !!state?.recoveryRequired} onOpenChange={() => {}}>
       <DialogPopup data-data-transfer>
-        <Dialog.Title className="text-sm font-medium">{t('storageMoving')}</Dialog.Title>
+        <Dialog.Title className="text-sm font-medium">
+          {t(
+            state?.recoveryRequired
+              ? 'backupRecoveryTitle'
+              : backup === 'backup'
+                ? 'backupCreating'
+                : backup === 'restore'
+                  ? 'backupRestoring'
+                  : 'storageMoving',
+          )}
+        </Dialog.Title>
         <Dialog.Description className="mt-2 text-xs leading-[18px] text-muted-foreground">
-          {t('storageMovingDescription')}
+          {t(
+            state?.recoveryRequired
+              ? 'backupRecoveryRequired'
+              : backup
+                ? 'backupWorkingDescription'
+                : 'storageMovingDescription',
+          )}
         </Dialog.Description>
-        <p role="status" className="mt-5 text-xs text-muted-foreground">
-          {t('storageVerifying')}
-        </p>
+        {!state?.recoveryRequired && (
+          <p role="status" className="mt-5 text-xs text-muted-foreground">
+            {t(backup ? 'backupVerifying' : 'storageVerifying')}
+          </p>
+        )}
       </DialogPopup>
     </Dialog.Root>
   )

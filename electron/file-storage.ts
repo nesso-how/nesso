@@ -1,7 +1,8 @@
-import { mkdir, open, readFile, rename } from 'node:fs/promises'
+import { mkdir, readFile, rename } from 'node:fs/promises'
 import path from 'node:path'
 import type { PersistenceStorage } from '../shared/persistence.ts'
 import { ElectronError } from './errors.ts'
+import { writeFileData } from './file-system.ts'
 
 export function createFileStorage(directory: string | (() => string)): PersistenceStorage {
   let queue = Promise.resolve()
@@ -29,13 +30,7 @@ export function createFileStorage(directory: string | (() => string)): Persisten
           const base = resolve()
           const file = path.join(base, `${section}.json`)
           if (typeof directory === 'string') await mkdir(base, { recursive: true })
-          const temporary = await open(`${file}.tmp`, 'w', 0o600)
-          try {
-            await temporary.writeFile(text, 'utf8')
-            await temporary.sync()
-          } finally {
-            await temporary.close()
-          }
+          await writeFileData(`${file}.tmp`, text, false)
           await rename(`${file}.tmp`, file)
         })
         queue = write.catch(() => {})

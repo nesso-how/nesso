@@ -16,6 +16,7 @@ export function connectDesktopPersistence(
   trusted: TrustedRequest,
   location: DataLocation,
   locked: () => boolean,
+  generation: () => number,
 ) {
   const storage = createFileStorage(() => {
     if (locked()) throw new ElectronError([{ path: 'dataLocation', message: 'storageBusy' }])
@@ -26,9 +27,14 @@ export function connectDesktopPersistence(
     section: unknown,
     write: boolean,
     value?: unknown,
+    session?: unknown,
   ) => {
     try {
-      if (!trusted(event) || !persistenceSections.includes(section as PersistenceSection)) {
+      if (
+        !trusted(event) ||
+        session !== generation() ||
+        !persistenceSections.includes(section as PersistenceSection)
+      ) {
         throw new ElectronError([{ path: 'storage', message: 'Invalid storage request' }])
       }
       if (write) {
@@ -45,9 +51,12 @@ export function connectDesktopPersistence(
       }
     }
   }
-  ipcMain.handle('storage:read', (event, section: unknown) => handle(event, section, false))
-  ipcMain.handle('storage:write', (event, section: unknown, value: unknown) =>
-    handle(event, section, true, value),
+  ipcMain.handle('storage:session', (event) => (trusted(event) ? generation() : null))
+  ipcMain.handle('storage:read', (event, section: unknown, session: unknown) =>
+    handle(event, section, false, undefined, session),
+  )
+  ipcMain.handle('storage:write', (event, section: unknown, value: unknown, session: unknown) =>
+    handle(event, section, true, value, session),
   )
   let quitting = false
   app.on('before-quit', (event) => {
@@ -66,6 +75,9 @@ export function connectDesktopPersistence(
     let confirming = false
     let saved = false
     let timer: ReturnType<typeof setTimeout> | undefined
+    window.webContents.on('did-start-navigation', () => {
+      ready = false
+    })
     const belongs = (event: IpcMainEvent) => trusted(event) && event.sender === window.webContents
     const onReady = (event: IpcMainEvent) => {
       if (belongs(event)) ready = true
