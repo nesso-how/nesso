@@ -1,4 +1,6 @@
 import { IconButton } from '@nesso-how/ui'
+import { resolveRelationTypeLabel } from '@nesso-how/core'
+import { defaultLocale } from '@nesso-how/i18n'
 import { relationKey } from '@nesso-how/schema'
 import { ArrowLeft, ArrowRight, Minus, Plus } from 'lucide-react'
 import { nessoStore, useNessoStore } from '@/store'
@@ -17,6 +19,8 @@ export function ConceptConnections({
 }) {
   const t = useTranslation(store)
   const graph = useNessoStore((state) => state.graph, store)
+  const vocabs = useNessoStore((state) => state.vocabs, store)
+  const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale, store)
   const viewGraph = useNessoStore((state) => state.viewGraph, store)
   const activeViewId = useNessoStore((state) => state.workspace.activeViewId, store)
   const visible = new Set(viewGraph.concepts.map((concept) => concept.id))
@@ -33,8 +37,8 @@ export function ConceptConnections({
           const Direction = outgoing ? ArrowRight : ArrowLeft
           const otherId = outgoing ? relation.target : relation.source
           const other = graph.concepts.find((concept) => concept.id === otherId)
-          const label =
-            graph.relationTypes.find((type) => type.id === relation.predicate)?.label ?? ''
+          const type = graph.relationTypes.find((type) => type.id === relation.predicate)
+          const label = type ? resolveRelationTypeLabel(type, vocabs, locale) : ''
           const included = visible.has(otherId)
           const MembershipIcon = included ? Minus : Plus
           return (

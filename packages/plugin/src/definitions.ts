@@ -104,12 +104,22 @@ const themeDefinition = z
       context.addIssue({ code: 'custom', path: ['fonts'], message: 'Font face limit exceeded' })
   })
 
+export const vocabRelationType = z.strictObject({
+  id: z.string().min(1).max(2048),
+  label: z.string().max(30),
+  translations: z
+    .strictObject({
+      en: z.string().trim().min(1).max(30).optional(),
+      it: z.string().trim().min(1).max(30).optional(),
+      'zh-CN': z.string().trim().min(1).max(30).optional(),
+    })
+    .optional(),
+})
+
 const vocabDefinition = z
   .strictObject({
     id: contributionId,
-    relationTypes: z
-      .array(z.strictObject({ id: z.string().min(1).max(2048), label: z.string().max(30) }))
-      .min(1),
+    relationTypes: z.array(vocabRelationType).min(1),
     defaultTypeId: z.string().min(1).max(2048),
   })
   .superRefine(({ relationTypes, defaultTypeId }, context) => {

@@ -10,7 +10,7 @@ import type {
 } from '@nesso-how/core'
 import type { Locale } from '@nesso-how/i18n'
 import { parseOrThrow, PluginError } from './errors.ts'
-import { parseDefinition, themeColors, type Definition } from './definitions.ts'
+import { parseDefinition, themeColors, vocabRelationType, type Definition } from './definitions.ts'
 import {
   fileOpenOptions,
   fileOpenResult,
@@ -438,7 +438,7 @@ const actionStateSchema = z.strictObject({
   selected: selection,
   targetViewId: id.nullable(),
   activeVocab: z
-    .strictObject({ id, relationTypes: z.array(relationType), defaultTypeId: id })
+    .strictObject({ id, relationTypes: z.array(vocabRelationType), defaultTypeId: id })
     .nullable(),
   history: z.strictObject({ canUndo: z.boolean(), canRedo: z.boolean() }),
   workspace: z.strictObject({

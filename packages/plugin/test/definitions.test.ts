@@ -65,3 +65,27 @@ test('vocabularies retain absolute stable IRIs and reject duplicate types, unkno
   ])
     assert.throws(() => parseContribution('vocab', value), PluginError)
 })
+
+test('vocabulary translations accept supported locales and reject invalid or oversized labels', () => {
+  const definition = {
+    id: 'example',
+    relationTypes: [
+      {
+        id: 'urn:part',
+        label: 'partOf',
+        translations: { en: 'is part of', it: 'è parte di', 'zh-CN': '是其一部分' },
+      },
+    ],
+    defaultTypeId: 'urn:part',
+  }
+  assert.deepEqual(parseDefinition('vocab', definition), definition)
+  for (const translations of [{ fr: 'fait partie de' }, { it: '   ' }, { it: 'a'.repeat(31) }])
+    assert.throws(
+      () =>
+        parseDefinition('vocab', {
+          ...definition,
+          relationTypes: [{ ...definition.relationTypes[0], translations }],
+        }),
+      PluginError,
+    )
+})

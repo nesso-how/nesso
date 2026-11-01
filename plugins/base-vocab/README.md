@@ -6,6 +6,8 @@ Base's default relation vocabulary plugin: `linksTo`, `partOf`, `causes`, `kindO
 
 The build supplies the manifest and `definition.json` data. The host parses and validates the definition without executing it. Its default type is `linksTo`; the graph renderer hides the active vocabulary's default relation label. See the [plugin guide](../../packages/plugin/README.md).
 
+Display labels are supplied in English, Italian, and Simplified Chinese in `src/labels.json`. They follow the app locale without changing the canonical labels or stable IRIs saved in the graph. User-defined relation types are not translated.
+
 ## API
 
 - `relationIds`: stable IRIs for the ten relation types.

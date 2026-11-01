@@ -1,5 +1,6 @@
 import { useState, type ReactNode, type RefObject } from 'react'
 import { defaultLocale } from '@nesso-how/i18n'
+import { resolveRelationTypeLabel } from '@nesso-how/core'
 import { Button, ConfirmDialog } from '@nesso-how/ui'
 import { ArrowLeft, Check, ExternalLink } from 'lucide-react'
 import type { NpmPlugin, PluginAccess } from '../../../shared/plugins.ts'
@@ -121,14 +122,15 @@ function Contributions({ entry }: { entry: PluginEntry }) {
         </ul>
       </section>
     )
-  if (entry.kind === 'vocab' && entry.contribution)
+  const vocab = entry.kind === 'vocab' ? entry.contribution : undefined
+  if (vocab)
     return (
       <section className="settings-section">
         <h3 className="settings-section-title">{t('vocab')}</h3>
         <div className="mt-3 flex flex-wrap gap-2">
-          {entry.contribution.relationTypes.map((type) => (
+          {vocab.relationTypes.map((type) => (
             <span className="settings-badge" key={type.id}>
-              {type.label}
+              {resolveRelationTypeLabel(type, [vocab], locale)}
             </span>
           ))}
         </div>

@@ -1064,8 +1064,7 @@ test('positions and multiple selections are owned, normalized and ignore no-ops'
 test('registered vocabularies and their inserted types are owned independently by each store', () => {
   const input = {
     id: 'shared',
-    label: 'Shared',
-    relationTypes: [{ id: 'urn:shared-type', label: 'shared' }],
+    relationTypes: [{ id: 'urn:shared-type', label: 'shared', translations: { it: 'condivisa' } }],
     defaultTypeId: 'urn:shared-type',
   }
   const a = createNessoStore(fixture())
@@ -1076,12 +1075,14 @@ test('registered vocabularies and their inserted types are owned independently b
   input.defaultTypeId = 'urn:changed'
   input.relationTypes[0].id = 'urn:changed'
   input.relationTypes[0].label = 'changed'
+  input.relationTypes[0].translations.it = 'modificata'
   for (const host of [a, b]) {
     host.store.setSelection([{ kind: 'concept', id: 'urn:n1' }])
     host.store.addConcept()
     const state = host.store.getState()
     assert.equal(state.preferences.activeVocabId, 'shared')
     assert.equal(state.vocabs[0].defaultTypeId, 'urn:shared-type')
+    assert.equal(state.vocabs[0].relationTypes[0].translations?.it, 'condivisa')
     assert.deepEqual(state.graph.relationTypes.at(-1), { id: 'urn:shared-type', label: 'shared' })
     assert.notEqual(state.graph.relationTypes.at(-1), state.vocabs[0].relationTypes[0])
   }

@@ -193,7 +193,7 @@ export const applyStateOperations = (
   }
 
   const withType = (type: Readonly<RelationType>): void => {
-    if (!types.get(type.id)) types.add({ ...type })
+    if (!types.get(type.id)) types.add({ id: type.id, label: type.label })
   }
 
   const updateConcept = (
