@@ -131,6 +131,7 @@ export const parsePreferences = (value: unknown): Preferences => {
   const preferences = object(value, 'preferences', [
     'locale',
     'introSeen',
+    'mcpEnabled',
     'activeVocabId',
     'activeRendererId',
     'activeThemeId',
@@ -142,6 +143,8 @@ export const parsePreferences = (value: unknown): Preferences => {
   if (locale !== undefined && !isLocale(locale)) fail('preferences.locale', 'Unsupported locale')
   if (preferences.introSeen !== undefined && typeof preferences.introSeen !== 'boolean')
     fail('preferences.introSeen', 'Expected a boolean')
+  if (preferences.mcpEnabled !== undefined && typeof preferences.mcpEnabled !== 'boolean')
+    fail('preferences.mcpEnabled', 'Expected a boolean')
   const inspectorTab = preferences.inspectorTab
   if (inspectorTab !== undefined && inspectorTab !== 'details' && inspectorTab !== 'chat')
     fail('preferences.inspectorTab', 'Unknown inspector tab')
@@ -160,6 +163,9 @@ export const parsePreferences = (value: unknown): Preferences => {
   return {
     ...(isLocale(locale) ? { locale } : {}),
     ...(preferences.introSeen === undefined ? {} : { introSeen: preferences.introSeen as boolean }),
+    ...(preferences.mcpEnabled === undefined
+      ? {}
+      : { mcpEnabled: preferences.mcpEnabled as boolean }),
     activeVocabId: string(preferences.activeVocabId, 'preferences.activeVocabId'),
     activeRendererId: string(preferences.activeRendererId, 'preferences.activeRendererId'),
     activeThemeId:

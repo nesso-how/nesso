@@ -39,6 +39,7 @@ export function connectMcp(trusted: TrustedRequest, location: DataLocation) {
     url: server?.state.url ?? stoppedUrl,
     token: access.get(),
     running: !!server,
+    changing,
   })
   const current = (): AiResult<McpState> => {
     try {
@@ -157,6 +158,7 @@ export function connectMcp(trusted: TrustedRequest, location: DataLocation) {
     if (changing)
       return { issues: [{ path: 'mcp', message: 'MCP server is starting or stopping' }] }
     changing = true
+    publish()
     try {
       const wasRunning = !!server
       const owner = host
@@ -174,6 +176,7 @@ export function connectMcp(trusted: TrustedRequest, location: DataLocation) {
       }
     } finally {
       changing = false
+      publish()
     }
   })
   ipcMain.handle('mcp:enabled', async (event, enabled: unknown): Promise<AiResult<McpState>> => {
@@ -182,6 +185,7 @@ export function connectMcp(trusted: TrustedRequest, location: DataLocation) {
     if (changing)
       return { issues: [{ path: 'mcp', message: 'MCP server is starting or stopping' }] }
     changing = true
+    publish()
     try {
       if (!enabled) await stop()
       else if (!server) {
@@ -199,6 +203,7 @@ export function connectMcp(trusted: TrustedRequest, location: DataLocation) {
       }
     } finally {
       changing = false
+      publish()
     }
   })
   app.on('before-quit', () => {

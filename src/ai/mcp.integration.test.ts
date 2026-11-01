@@ -1,30 +1,39 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
+import { setImmediate } from 'node:timers/promises'
 import { aiTools, type AiDocumentation, type AiResult } from '@nesso-how/ai'
 import type { McpBridge, McpEvent } from '../../electron/mcp-bridge.ts'
 import { createNessoStore } from '../store/create.ts'
-import { connectMcpHost } from './mcp.ts'
+import { connectMcpHost, setMcpEnabled } from './mcp.ts'
 
-const fixture = () => {
+const fixture = (enabled = false, failure?: 'result' | 'reject') => {
   const host = createNessoStore({
     concepts: [{ id: 'urn:one', label: 'One', position: { x: 0, y: 0 } }],
     relations: [],
     relationTypes: [],
   })
+  if (enabled) host.store.applyOperations([{ kind: 'preferences.mcpEnabled', value: true }])
   let listener: (event: McpEvent) => void = () => {}
   let busy = false
   const replies = new Map<string, AiResult<unknown>>()
+  const attempts: boolean[] = []
+  const errors: string[] = []
+  let disconnected = false
+  const state = { url: 'http://127.0.0.1:3210/mcp', token: '0'.repeat(64), changing: false }
   const bridge: McpBridge = {
     getState: async () => ({
-      value: { url: 'http://127.0.0.1:3210/mcp', token: '0'.repeat(64), running: false },
+      value: { ...state, running: false },
     }),
-    setEnabled: async (enabled) => ({
-      value: { url: 'http://127.0.0.1:3210/mcp', token: '0'.repeat(64), running: enabled },
-    }),
+    setEnabled: async (enabled) => {
+      attempts.push(enabled)
+      if (failure === 'reject') throw new Error('Disconnected')
+      if (failure === 'result') return { issues: [{ path: 'mcp', message: 'Port unavailable' }] }
+      return { value: { ...state, running: enabled } }
+    },
     copyUrl: async () => ({ value: true }),
     copyToken: async () => ({ value: true }),
     regenerateAccess: async () => ({
-      value: { url: 'http://127.0.0.1:3210/mcp', token: '0'.repeat(64), running: false },
+      value: { ...state, running: false },
     }),
     subscribeState: () => () => {},
     subscribeTools: (next) => {
@@ -33,7 +42,9 @@ const fixture = () => {
         listener = () => {}
       }
     },
-    disconnect: () => {},
+    disconnect: () => {
+      disconnected = true
+    },
     reply: (id, result) => {
       replies.set(id, result)
     },
@@ -48,7 +59,17 @@ const fixture = () => {
   const documentation = Object.fromEntries(
     aiTools.read_docs.inputSchema.shape.topic.options.map((topic) => [topic, `# ${topic}`]),
   ) as AiDocumentation
-  const dispose = connectMcpHost(bridge, host, approve, approve, () => busy, documentation)
+  const dispose = connectMcpHost(
+    bridge,
+    host,
+    approve,
+    approve,
+    () => busy,
+    documentation,
+    (message) => {
+      errors.push(message)
+    },
+  )
   const decide = (approved: boolean) => {
     assert.ok(approval)
     approval.resolve(approved)
@@ -56,6 +77,10 @@ const fixture = () => {
   }
   return {
     host,
+    bridge,
+    attempts,
+    errors,
+    disconnected: () => disconnected,
     replies,
     dispose,
     decide,
@@ -66,6 +91,38 @@ const fixture = () => {
     },
   }
 }
+
+test('MCP restores the desired state, and disconnecting never disables automatic startup', async () => {
+  for (const enabled of [false, true]) {
+    const f = fixture(enabled)
+    await setImmediate()
+    assert.deepEqual(f.attempts, enabled ? [true] : [])
+    const before = f.host.store.getState()
+    f.dispose()
+    assert.equal(f.disconnected(), true)
+    assert.equal(f.host.store.getState(), before)
+  }
+})
+
+test('MCP startup failures are reported without clearing the preference, and can be retried or disabled', async () => {
+  for (const failure of ['result', 'reject'] as const) {
+    const f = fixture(true, failure)
+    await setImmediate()
+    assert.equal(f.errors.length, 1)
+    assert.equal(f.host.store.getState().preferences.mcpEnabled, true)
+    await setMcpEnabled(f.bridge, f.host.store, true).catch(() => {})
+    assert.equal(f.host.store.getState().preferences.mcpEnabled, true)
+    await setMcpEnabled(f.bridge, f.host.store, false).catch(() => {})
+    assert.equal(f.host.store.getState().preferences.mcpEnabled, false)
+    assert.deepEqual(f.attempts, [true, true, false])
+    f.dispose()
+
+    const disconnected = fixture(true, failure)
+    disconnected.dispose()
+    await setImmediate()
+    assert.deepEqual(disconnected.errors, [])
+  }
+})
 
 test('MCP reads are immediate; edits and shared history require consent and reject concurrent requests', async () => {
   const f = fixture()

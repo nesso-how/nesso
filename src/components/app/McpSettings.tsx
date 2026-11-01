@@ -4,9 +4,12 @@ import { Check, Copy, Eye, EyeOff, Play, RefreshCw, Square } from 'lucide-react'
 import type { AiResult } from '@nesso-how/ai'
 import type { McpBridge, McpState } from '../../../electron/mcp-bridge'
 import { useTranslation } from '@/i18n'
+import { host, useNessoStore } from '@/store'
+import { setMcpEnabled } from '@/ai/mcp'
 
 export function McpSettings({ bridge }: { bridge: McpBridge }) {
   const t = useTranslation()
+  const enabled = useNessoStore((state) => state.preferences.mcpEnabled ?? false)
   const id = useId()
   const [state, setState] = useState<McpState | null>(null)
   const [busy, setBusy] = useState(true)
@@ -79,6 +82,8 @@ export function McpSettings({ bridge }: { bridge: McpBridge }) {
     }
   }
   const running = state?.running ?? false
+  const active = enabled || running
+  const working = busy || !!state?.changing
   return (
     <>
       <section className="settings-section" aria-labelledby={`${id}-title`}>
@@ -87,22 +92,43 @@ export function McpSettings({ bridge }: { bridge: McpBridge }) {
             <h3 id={`${id}-title`}>{t('mcp')}</h3>
             <span className={`mcp-status${running ? ' running' : ''}`} role="status">
               <span className="mcp-status-dot" aria-hidden="true" />
-              {t(running ? 'mcpRunning' : 'mcpStopped')}
+              {t(
+                state?.changing
+                  ? 'aiSettingsWorking'
+                  : running
+                    ? 'mcpRunning'
+                    : enabled
+                      ? 'mcpNotRunning'
+                      : 'mcpStopped',
+              )}
             </span>
           </div>
-          <Button
-            size="sm"
-            variant="ghost"
-            className="ai-new-connection"
-            disabled={busy || !state}
-            onClick={() => void run(() => bridge.setEnabled(!running))}
-          >
-            {running ? <Square /> : <Play />}
-            {t(busy ? 'aiSettingsWorking' : running ? 'mcpStop' : 'mcpStart')}
-          </Button>
+          <div className="flex items-center gap-2">
+            {enabled && !running && (
+              <Button
+                size="sm"
+                variant="ghost"
+                disabled={working || !state}
+                onClick={() => void run(() => setMcpEnabled(bridge, host.store, true))}
+              >
+                <RefreshCw />
+                {t('mcpRetry')}
+              </Button>
+            )}
+            <Button
+              size="sm"
+              variant="ghost"
+              className="ai-new-connection"
+              disabled={working || !state}
+              onClick={() => void run(() => setMcpEnabled(bridge, host.store, !active))}
+            >
+              {active ? <Square /> : <Play />}
+              {t(working ? 'aiSettingsWorking' : active ? 'mcpStop' : 'mcpStart')}
+            </Button>
+          </div>
         </div>
         <p className="settings-page-description">
-          {t('mcpDescription')} {t('mcpClientHint')}
+          {t('mcpDescription')} {t('mcpAutoStartHint')} {t('mcpClientHint')}
         </p>
         {state && (
           <div className="mcp-credentials">
@@ -120,7 +146,7 @@ export function McpSettings({ bridge }: { bridge: McpBridge }) {
                   <IconButton
                     aria-label={t(copiedUrl ? 'mcpUrlCopied' : 'mcpCopyUrl')}
                     title={t(copiedUrl ? 'mcpUrlCopied' : 'mcpCopyUrl')}
-                    disabled={busy}
+                    disabled={working}
                     onClick={() => void copy('url')}
                   >
                     {copiedUrl ? <Check /> : <Copy />}
@@ -145,7 +171,7 @@ export function McpSettings({ bridge }: { bridge: McpBridge }) {
                     aria-label={t(showToken ? 'mcpHideToken' : 'mcpShowToken')}
                     title={t(showToken ? 'mcpHideToken' : 'mcpShowToken')}
                     aria-pressed={showToken}
-                    disabled={busy}
+                    disabled={working}
                     onClick={() => setShowToken(!showToken)}
                   >
                     {showToken ? <EyeOff /> : <Eye />}
@@ -153,7 +179,7 @@ export function McpSettings({ bridge }: { bridge: McpBridge }) {
                   <IconButton
                     aria-label={t('mcpRegenerate')}
                     title={t('mcpRegenerate')}
-                    disabled={busy}
+                    disabled={working}
                     onClick={() => setConfirming(true)}
                   >
                     <RefreshCw />
@@ -161,7 +187,7 @@ export function McpSettings({ bridge }: { bridge: McpBridge }) {
                   <IconButton
                     aria-label={t(copiedToken ? 'mcpTokenCopied' : 'mcpCopyToken')}
                     title={t(copiedToken ? 'mcpTokenCopied' : 'mcpCopyToken')}
-                    disabled={busy}
+                    disabled={working}
                     onClick={() => void copy('token')}
                   >
                     {copiedToken ? <Check /> : <Copy />}

@@ -141,6 +141,7 @@ export const sameWorkspace = (left: WorkspaceState, right: WorkspaceState): bool
 export const samePreferences = (left: Preferences, right: Preferences): boolean =>
   left.locale === right.locale &&
   left.introSeen === right.introSeen &&
+  (left.mcpEnabled ?? false) === (right.mcpEnabled ?? false) &&
   left.activeVocabId === right.activeVocabId &&
   left.activeRendererId === right.activeRendererId &&
   left.activeThemeId === right.activeThemeId &&
@@ -523,6 +524,11 @@ export const applyStateOperations = (
         break
       case 'preferences.intro-seen':
         preferences = { ...preferences, introSeen: true }
+        break
+      case 'preferences.mcpEnabled':
+        if (typeof operation.value !== 'boolean')
+          fail('preferences.mcpEnabled', 'Expected a boolean')
+        preferences = { ...preferences, mcpEnabled: operation.value }
         break
       case 'preferences.panels':
         preferences = { ...preferences, panels: { ...operation.value } }
