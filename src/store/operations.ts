@@ -526,7 +526,8 @@ export const applyStateOperations = (
         preferences = { ...preferences, introSeen: true }
         break
       case 'preferences.mcpEnabled':
-        if (typeof operation.value !== 'boolean') fail('preferences.mcpEnabled', 'Expected a boolean')
+        if (typeof operation.value !== 'boolean')
+          fail('preferences.mcpEnabled', 'Expected a boolean')
         preferences = { ...preferences, mcpEnabled: operation.value }
         break
       case 'preferences.panels':
