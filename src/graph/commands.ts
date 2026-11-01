@@ -8,6 +8,11 @@ import {
   type Position,
 } from '@nesso-how/schema'
 
+export const graphSelection = (graph: GraphSnapshot): Selection => [
+  ...graph.concepts.map(({ id }) => ({ kind: 'concept' as const, id })),
+  ...graph.relations.map((relation) => ({ kind: 'relation' as const, id: relationKey(relation) })),
+]
+
 export const selectionCoversGraph = (selected: Selection, graph: GraphSnapshot): boolean => {
   const concepts = new Set(
     selected.filter((item) => item.kind === 'concept').map((item) => item.id),

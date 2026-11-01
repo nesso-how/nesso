@@ -8,6 +8,7 @@ import type { FileBridge } from '../shared/files.js'
 import type { PluginBridge } from '../shared/plugins.js'
 import type { NotesLinkBridge } from '../shared/link-policy.js'
 import type { BackupBridge } from '../shared/backup.js'
+import type { MenuBridge, MenuCommand } from '../shared/menu.js'
 
 const { contextBridge, ipcRenderer } = require('electron') as typeof import('electron')
 const beforeSave = (request: string, reply: string, save: () => Promise<boolean>) => {
@@ -103,6 +104,18 @@ const notesLinks: NotesLinkBridge = {
   open: (url) => ipcRenderer.invoke('notes-link:open', url),
 }
 contextBridge.exposeInMainWorld('nessoNotesLinks', notesLinks)
+const menu: MenuBridge = {
+  subscribe: (listener) => {
+    const receive = (_event: unknown, command: MenuCommand) => listener(command)
+    ipcRenderer.on('menu:command', receive)
+    return () => {
+      ipcRenderer.removeListener('menu:command', receive)
+    }
+  },
+  setState: (state) => ipcRenderer.send('menu:state', state),
+  edit: (command) => ipcRenderer.send('menu:edit', command),
+}
+contextBridge.exposeInMainWorld('nessoMenu', menu)
 let pluginSubscribers = 0
 const plugins: PluginBridge = {
   list: () => ipcRenderer.invoke('plugins:list'),

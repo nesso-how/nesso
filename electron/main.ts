@@ -27,6 +27,7 @@ import { connectPlugins } from './plugins.ts'
 import { connectStartupCheck } from './startup-check.ts'
 import { createWindowState } from './window-state.ts'
 import { createRecordReplacement } from './record-replacement.ts'
+import { connectMenu } from './menu.ts'
 
 const dev = !app.isPackaged && process.argv.includes('--dev')
 const root = path.join(app.getAppPath(), 'dist')
@@ -85,6 +86,7 @@ app
   .whenReady()
   .then(async () => {
     const trusted = createTrustedRequest(dev)
+    connectMenu(trusted, dev)
     connectNotesLinks(ipcMain, trusted, (url) => shell.openExternal(url))
     connectFiles(trusted)
     connectPlugins(trusted)

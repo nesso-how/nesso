@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { SavedView } from '@nesso-how/core'
 import { defaultLocale } from '@nesso-how/i18n'
 import { Inspector } from '@/components/app/Inspector'
@@ -18,7 +18,7 @@ import { Intro } from '@/components/app/Intro'
 import { completeIntro } from '@/store/intro'
 import { DeleteViewDialog } from '@/components/app/DeleteViewDialog'
 import { GraphWorkspace } from '@/components/app/GraphWorkspace'
-import { isEditableTarget } from '@/graph/interactions'
+import { useAppCommands } from '@/app-commands'
 import { PluginApprovalDialog } from '@/components/app/PluginApprovalDialog'
 import { UpdateBar } from '@/components/app/UpdateBar'
 import { PluginPanel } from '@/components/app/PluginPanel'
@@ -51,39 +51,22 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
   useEffect(() => {
     document.documentElement.lang = locale
   }, [locale])
-  useEffect(() => {
-    if (readonly) return
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (pluginPanel || document.querySelector('[data-data-transfer][data-open]')) return
-      if (event.defaultPrevented || event.isComposing || event.altKey) return
-      const target = event.target instanceof HTMLElement ? event.target : null
-      if (event.key === '?' && !event.metaKey && !event.ctrlKey) {
-        if (
-          event.repeat ||
-          isEditableTarget(target) ||
-          target?.closest('[role="dialog"]:not(.settings-popup), [role="alertdialog"]')
-        )
-          return
-        event.preventDefault()
-        setSettingsPage('shortcuts')
-        setSettingsOpen(true)
-        return
-      }
-      if (introOpen || !(event.metaKey || event.ctrlKey)) return
-      if (isEditableTarget(target) && !target?.closest('[data-document-edit]')) return
-      const key = event.key.toLowerCase()
-      if (key !== 'z' && !(key === 'y' && event.ctrlKey && !event.metaKey)) return
-      event.preventDefault()
-      if (key === 'y' || event.shiftKey) host.store.redo()
-      else host.store.undo()
-    }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [readonly, introOpen, pluginPanel])
-  const openSettings = () => {
-    setSettingsPage('general')
-    setSettingsOpen(true)
-  }
+  const openSettingsPage = useCallback(
+    (page: string) => {
+      setSettingsPage(page)
+      setSettingsOpen(true)
+    },
+    [setSettingsPage, setSettingsOpen],
+  )
+  useAppCommands({
+    store: host.store,
+    readonly,
+    introOpen,
+    pluginPanel: !!pluginPanel,
+    focusRef: canvas,
+    openSettings: openSettingsPage,
+  })
+  const openSettings = () => openSettingsPage('general')
   const finishIntro = () => {
     completeIntro(host.store)
     setIntroOpen(false)
