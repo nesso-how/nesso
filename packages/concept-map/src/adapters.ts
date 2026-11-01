@@ -1,4 +1,10 @@
-import type { GraphSnapshot, Selection } from '@nesso-how/core'
+import {
+  resolveRelationTypeLabel,
+  type GraphSnapshot,
+  type Selection,
+  type VocabDefinition,
+} from '@nesso-how/core'
+import { defaultLocale, type Locale } from '@nesso-how/i18n'
 import { relationKey } from '@nesso-how/schema'
 import { MarkerType, Position } from '@xyflow/react'
 import type { ConceptNode, RelationEdge } from './types'
@@ -11,9 +17,18 @@ type ConceptBounds = ConceptNodeSize & { position: ConceptView['position'] }
 export type ConceptNodeSizes = Record<string, ConceptNodeSize>
 export const conceptNodeMinSize: ConceptNodeSize = { width: 100, height: 44 }
 
-export const indexGraph = (graph: GraphSnapshot) => ({
+export const indexGraph = (
+  graph: GraphSnapshot,
+  vocabs: readonly VocabDefinition[] = [],
+  locale: Locale = defaultLocale,
+) => ({
   concepts: new Map(graph.concepts.map((concept) => [concept.id, concept])),
-  relationTypes: new Map(graph.relationTypes.map((type) => [type.id, type])),
+  relationTypes: new Map(
+    graph.relationTypes.map((type) => [
+      type.id,
+      { id: type.id, label: resolveRelationTypeLabel(type, vocabs, locale) },
+    ]),
+  ),
 })
 
 export const facingSide = (from: ConceptBounds, to: ConceptBounds): Position => {

@@ -1,4 +1,5 @@
 import type { VocabDefinition } from '@nesso-how/plugin'
+import labels from './labels.json' with { type: 'json' }
 
 export const relationIds = {
   linksTo: 'urn:uuid:c7aeeb73-f438-5bc6-a02b-87c06755a15d',
@@ -15,9 +16,9 @@ export const relationIds = {
 
 export const defaultRelationId = relationIds.linksTo
 
-export const defaultRelationTypes: VocabDefinition['relationTypes'] = Object.entries(
-  relationIds,
-).map(([label, id]) => ({ id, label }))
+export const defaultRelationTypes: VocabDefinition['relationTypes'] = (
+  Object.keys(relationIds) as (keyof typeof relationIds)[]
+).map((label) => ({ id: relationIds[label], label, translations: labels[label] }))
 
 export const create = (): VocabDefinition => ({
   id: 'base-vocab',

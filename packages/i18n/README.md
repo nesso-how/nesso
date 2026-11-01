@@ -50,7 +50,7 @@ console.log(t('conceptCount', { count: 2 }))
 
 Catalogs use native i18next JSON: `{{name}}` placeholders and plural suffixes such as `_one`/`_other`, plus `_many` for Italian. Simplified Chinese uses only `_other` for every count. Call plural messages by their base key with a finite `count`. Bundled resources initialize synchronously; i18next handles interpolation and plural selection.
 
-The host uses a saved `preferences.locale` when available; otherwise it detects a supported locale from `navigator.languages`, falling back to English, and persists the choice. Plugins read and subscribe through their injected store. Translate interface text, not document contents or vocabulary IRIs.
+The host uses a saved `preferences.locale` when available; otherwise it detects a supported locale from `navigator.languages`, falling back to English, and persists the choice. Plugins read and subscribe through their injected store. Translate interface text, not document contents or vocabulary IRIs. Vocabulary plugins may supply localized relation display labels in their definitions; these do not replace stored document labels.
 
 ## API
 

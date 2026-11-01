@@ -1,0 +1,12 @@
+{
+  "linksTo": { "en": "links to", "it": "è collegato a", "zh-CN": "关联到" },
+  "partOf": { "en": "is part of", "it": "è parte di", "zh-CN": "是其一部分" },
+  "causes": { "en": "causes", "it": "causa", "zh-CN": "导致" },
+  "kindOf": { "en": "is a kind of", "it": "è un tipo di", "zh-CN": "是一种" },
+  "dependsOn": { "en": "depends on", "it": "dipende da", "zh-CN": "依赖于" },
+  "exampleOf": { "en": "is an example of", "it": "è un esempio di", "zh-CN": "是其示例" },
+  "contradicts": { "en": "contradicts", "it": "contraddice", "zh-CN": "与之矛盾" },
+  "defines": { "en": "defines", "it": "definisce", "zh-CN": "定义" },
+  "enables": { "en": "enables", "it": "rende possibile", "zh-CN": "使之成为可能" },
+  "precedes": { "en": "precedes", "it": "precede", "zh-CN": "先于" }
+}

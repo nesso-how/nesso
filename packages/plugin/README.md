@@ -252,12 +252,20 @@ Set `nesso.kind` to `"vocab"`, `entry` to a package-local JSON file such as `"di
 ```json
 {
   "id": "my-vocab",
-  "relationTypes": [{ "id": "urn:my-vocab:depends-on", "label": "depends on" }],
+  "relationTypes": [
+    {
+      "id": "urn:my-vocab:depends-on",
+      "label": "depends on",
+      "translations": { "en": "depends on", "it": "dipende da", "zh-CN": "依赖于" }
+    }
+  ],
   "defaultTypeId": "urn:my-vocab:depends-on"
 }
 ```
 
 Use stable absolute IRIs for relation types and choose a default from your own list. See [Base Vocab](../../plugins/base-vocab/) for a larger example.
+
+`label` is the canonical label saved in the graph. Optional `translations` provides display labels for `en`, `it`, and `zh-CN`, each nonempty and at most 30 characters. The app resolves the current locale, then English, then `label`, without changing document data. Translations apply only when the type's IRI and canonical label match an installed vocabulary; custom labels remain unchanged. Missing or disabled vocabularies fall back to the stored label.
 
 ## Themes
 

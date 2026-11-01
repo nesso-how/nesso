@@ -17,3 +17,4 @@ export type {
   WorkspaceState,
 } from './types.ts'
 export { createWriteCommands } from './commands.ts'
+export { resolveRelationTypeLabel } from './vocab.ts'

@@ -74,7 +74,9 @@ export type NessoOperation =
 
 export type VocabDefinition = {
   readonly id: string
-  readonly relationTypes: readonly Readonly<RelationType>[]
+  readonly relationTypes: readonly (Readonly<RelationType> & {
+    readonly translations?: Readonly<Partial<Record<Locale, string>>>
+  })[]
   readonly defaultTypeId: string
 }
 

@@ -45,14 +45,20 @@ test('graph elements preserve dimensions and unchanged identities across snapsho
   })
   assert.equal(repeated.nodes, after.nodes)
   assert.equal(repeated.edges, after.edges)
+  const vocab = {
+    id: 'example',
+    relationTypes: [{ ...graph.relationTypes[0], translations: { it: 'collega' } }],
+    defaultTypeId: 'urn:links',
+  }
   const translated = adapt({
     ...options,
     graph: cloned,
-    indexed: indexGraph(cloned),
+    indexed: indexGraph(cloned, [vocab], 'it'),
     label: () => 'A verso B',
   })
   assert.notEqual(translated.edges[0], after.edges[0])
   assert.equal(translated.edges[0].ariaLabel, 'A verso B')
+  assert.equal(translated.edges[0].label, 'collega')
   const selected = adapt({
     ...options,
     graph: cloned,

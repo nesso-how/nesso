@@ -23,6 +23,7 @@ import {
   Undo2,
 } from 'lucide-react'
 import type { Selection } from '@nesso-how/core'
+import { defaultLocale } from '@nesso-how/i18n'
 import {
   Background,
   BackgroundVariant,
@@ -75,7 +76,9 @@ export function Canvas({
 }: CanvasProps) {
   const t = useTranslation()
   const graph = useNesso((state) => state.viewGraph)
-  const indexed = useMemo(() => indexGraph(graph), [graph])
+  const vocabs = useNesso((state) => state.vocabs)
+  const locale = useNesso((state) => state.preferences.locale ?? defaultLocale)
+  const indexed = useMemo(() => indexGraph(graph, vocabs, locale), [graph, vocabs, locale])
   const selected = useNesso((state) => state.selected)
   const fullGraph = useNesso((state) => state.graph)
   const view = useNesso((state) => state.workspace.activeViewId)
@@ -146,13 +149,13 @@ export function Canvas({
     if (!outsideActive) return null
     const visible = new Set(graph.concepts.map((concept) => concept.id))
     return {
-      indexed: indexGraph(fullGraph),
+      indexed: indexGraph(fullGraph, vocabs, locale),
       concepts: fullGraph.concepts.filter((concept) => !visible.has(concept.id)),
       relations: fullGraph.relations.filter(
         (relation) => !(visible.has(relation.source) && visible.has(relation.target)),
       ),
     }
-  }, [outsideActive, graph, fullGraph])
+  }, [outsideActive, graph, fullGraph, vocabs, locale])
   const elements = adapt({
     graph,
     indexed,

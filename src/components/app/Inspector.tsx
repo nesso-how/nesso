@@ -1,4 +1,6 @@
 import { newIri, relationKey, type RelationType } from '@nesso-how/schema'
+import { resolveRelationTypeLabel } from '@nesso-how/core'
+import { defaultLocale } from '@nesso-how/i18n'
 import { maxConceptLabelLength, maxRelationLabelLength } from '@/store/settings'
 import { useRef, useState } from 'react'
 import {
@@ -146,13 +148,17 @@ export function Inspector({
   const selected = useNessoStore((state) => state.selected, store)
   const viewGraph = useNessoStore((state) => state.viewGraph, store)
   const vocabs = useNessoStore((state) => state.vocabs, store)
+  const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale, store)
   const activeVocabId = useNessoStore((state) => state.preferences.activeVocabId, store)
   const activeVocab = vocabs.find((vocab) => vocab.id === activeVocabId)
   const offered = new Map<string, Readonly<RelationType>>()
   for (const type of [...graph.relationTypes, ...(activeVocab?.relationTypes ?? [])]) {
     if (type.id !== activeVocab?.defaultTypeId && !offered.has(type.id)) offered.set(type.id, type)
   }
-  const relationTypes = [...offered.values()]
+  const relationTypes = [...offered.values()].map((type) => ({
+    id: type.id,
+    label: resolveRelationTypeLabel(type, vocabs, locale),
+  }))
   const item = selected.length === 1 ? selected[0] : undefined
   const conceptIds = selected.filter((item) => item.kind === 'concept').map((item) => item.id)
   const relationCount = selected.length - conceptIds.length

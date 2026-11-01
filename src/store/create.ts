@@ -184,7 +184,7 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
       }
     })
     if (issues.length > 0) throw new SchemaError(issues)
-    return structuredClone(vocab)
+    return parseDefinition('vocab', vocab)
   }
 
   const registerVocab = (vocab: VocabDefinition): void => {

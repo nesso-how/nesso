@@ -158,6 +158,24 @@ test('action projections stay bound to the invoked view, filter off-view selecti
   assert.equal(instance.host.store.getState().graph.concepts[0].color, '#123456')
 })
 
+test('action clients receive vocabulary translations without adding them to document types', async (t) => {
+  const instance = fixture(false, undefined, ['relation.connect'])
+  t.after(instance.close)
+  const vocab = {
+    id: 'example',
+    relationTypes: [{ id: 'urn:part', label: 'partOf', translations: { it: 'è parte di' } }],
+    defaultTypeId: 'urn:part',
+  }
+  instance.host.registerVocab(vocab)
+  await instance.start()
+  const { document } = instance.client.context
+  assert.deepEqual(document.getState().activeVocab, vocab)
+  await document.connect('urn:a', 'urn:b')
+  assert.deepEqual(instance.host.store.getState().graph.relationTypes, [
+    { id: 'urn:part', label: 'partOf' },
+  ])
+})
+
 test('injected panel presentation updates never advance the graph write baseline', async (t) => {
   const instance = fixture(false, undefined, ['concept.label'], ['ui'], undefined, undefined, true)
   t.after(instance.close)
