@@ -1,6 +1,11 @@
 import type { aiTools, AiResult } from '@nesso-how/ai'
 
-export type McpState = { readonly url: string; readonly token: string; readonly running: boolean }
+export type McpState = {
+  readonly url: string
+  readonly token: string
+  readonly running: boolean
+  readonly changing: boolean
+}
 export type McpEvent =
   | {
       readonly type: 'tool'

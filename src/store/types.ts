@@ -31,6 +31,7 @@ export type HostOperation =
   | NessoOperation
   | PluginStorageWrite
   | { readonly kind: 'preferences.intro-seen' }
+  | { readonly kind: 'preferences.mcpEnabled'; readonly value: boolean }
   | {
       readonly kind: 'preferences.inspectorTab'
       readonly value: NonNullable<Preferences['inspectorTab']>

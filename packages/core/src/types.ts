@@ -116,6 +116,7 @@ export type SectionId =
 export type Preferences = {
   readonly locale?: Locale
   readonly introSeen?: boolean
+  readonly mcpEnabled?: boolean
   readonly activeVocabId: string
   readonly activeRendererId: string
   readonly activeThemeId: string

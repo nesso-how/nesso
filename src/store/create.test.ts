@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import type { NessoOperation, SectionId, Selection, VocabDefinition } from '@nesso-how/core'
+import type { SectionId, Selection, VocabDefinition } from '@nesso-how/core'
 import { relationKey, SchemaError, type Graph } from '@nesso-how/schema'
 import { maxConceptLabelLength, maxRelationLabelLength } from './settings.ts'
 import { createNessoStore } from './create.ts'
 import { NessoError } from '@nesso-how/errors'
-import { sectionIds } from './types.ts'
+import { sectionIds, type HostOperation } from './types.ts'
 import themeFixture from '../../packages/plugin/test/theme.json' with { type: 'json' }
 
 const fixture = (): Graph => ({
@@ -872,13 +872,15 @@ test('invalid state batches reject every preceding change without notification',
   const snapshot = structuredClone(before)
   let notifications = 0
   store.subscribe(() => notifications++)
-  const invalid: readonly NessoOperation[] = [
+  const invalid: readonly HostOperation[] = [
     { kind: 'view.rename', id: viewId, name: '' },
     { kind: 'view.create', id: viewId, name: 'Duplicate', conceptIds: [] },
     { kind: 'view.membership', viewId, conceptId: 'missing', included: true },
     { kind: 'preferences.panels', value: { explorerWidth: NaN, inspectorWidth: 300 } },
     { kind: 'preferences.renderer', id: 'missing' },
     { kind: 'preferences.locale', value: 'fr' as never },
+    { kind: 'preferences.mcpEnabled', value: 'true' as never },
+    { kind: 'preferences.mcpEnabled', value: undefined as never },
     { kind: 'document.reset', id: '' },
     { kind: 'concept.position', id: 'urn:n1', value: { x: NaN, y: 0 } },
   ]

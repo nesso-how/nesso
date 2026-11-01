@@ -90,6 +90,21 @@ test('startup writes only missing records', async () => {
   }
 })
 
+test('MCP intent round-trips in preferences without touching document or conversation records', async () => {
+  const storage = savedStorage()
+  const loaded = await loadPersistence(storage)
+  const host = registeredHost(loaded.graph!, loaded)
+  const persistence = connectPersistence(host, storage, loaded)
+  storage.writes.length = 0
+  host.store.applyOperations([{ kind: 'preferences.mcpEnabled', value: true }])
+  assert.equal(await persistence.flush(), true)
+  assert.deepEqual(storage.writes, ['preferences'])
+  const restored = await loadPersistence(storage)
+  const reopened = registeredHost(restored.graph!, restored)
+  assert.equal(reopened.store.getState().preferences.mcpEnabled, true)
+  await persistence.dispose()
+})
+
 test('plugin resolution saves corrected preferences without rewriting other records', async () => {
   const storage = savedStorage()
   const original = await loadPersistence(storage)

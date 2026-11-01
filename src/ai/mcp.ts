@@ -2,6 +2,12 @@ import type { AiDocumentation, AiResult, AiToolResults } from '@nesso-how/ai'
 import type { McpBridge } from '../../electron/mcp-bridge.ts'
 import { NessoError } from '@nesso-how/errors'
 import { createAiTurn } from './turn.ts'
+import type { HostStore } from '../store/types.ts'
+
+export function setMcpEnabled(bridge: McpBridge, store: HostStore, enabled: boolean) {
+  store.applyOperations([{ kind: 'preferences.mcpEnabled', value: enabled }])
+  return bridge.setEnabled(enabled)
+}
 
 export function connectMcpHost(
   bridge: McpBridge,
@@ -10,7 +16,9 @@ export function connectMcpHost(
   approveHistory: (action: 'undo' | 'redo', signal: AbortSignal) => Promise<boolean>,
   busy: () => boolean,
   documentation: AiDocumentation,
+  reportError: (message: string) => void,
 ) {
+  let connected = true
   let active: { id: string; controller: AbortController } | undefined
   const unsubscribe = bridge.subscribeTools(async (event) => {
     if (event.type === 'cancel') {
@@ -68,7 +76,19 @@ export function connectMcpHost(
     }
     bridge.reply(event.id, result)
   })
+  if (boundary.store.getState().preferences.mcpEnabled) {
+    void bridge
+      .setEnabled(true)
+      .then((result) => {
+        if (connected && 'issues' in result)
+          reportError(result.issues.map(({ message }) => message).join('\n'))
+      })
+      .catch(() => {
+        if (connected) reportError('MCP server operation failed')
+      })
+  }
   return () => {
+    connected = false
     active?.controller.abort()
     unsubscribe()
     bridge.disconnect()

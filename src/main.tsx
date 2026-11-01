@@ -79,6 +79,12 @@ const stopMcp = window.nessoMcp
       createAiHistoryApproval(notifications.api, getTranslation),
       () => !!chat && chat.getSnapshot().phase !== 'idle',
       documentation,
+      (message) =>
+        notifications.api.notify({
+          tone: 'warning',
+          title: getTranslation()('mcpFailure'),
+          description: message,
+        }),
     )
   : () => {}
 window.addEventListener('pagehide', stopChat)
