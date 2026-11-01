@@ -5,6 +5,7 @@ export const aiProviders = {
   anthropic: { name: 'Anthropic', endpoint: 'https://api.anthropic.com/v1' },
   gemini: { name: 'Gemini', endpoint: 'https://generativelanguage.googleapis.com/v1beta' },
   openrouter: { name: 'OpenRouter', endpoint: 'https://openrouter.ai/api/v1' },
+  demonroute: { name: 'Demon Route', endpoint: 'https://api.demonroute.com/v1' },
   custom: { name: 'OpenAI-compatible', endpoint: 'http://localhost:11434/v1' },
 } as const
 
