@@ -2,11 +2,7 @@ import { constants } from 'node:fs'
 import { mkdir, open, readdir, rm } from 'node:fs/promises'
 import path from 'node:path'
 import { createHash } from 'node:crypto'
-import {
-  packageLimits,
-  verifyPluginPackage,
-  type PreparedPlugin,
-} from '../packages/plugin/src/package.ts'
+import { packageLimits, verifyPluginPackage, type PreparedPlugin } from '@nesso-how/plugin/package'
 import { npmIntegrity, type InstalledPlugin } from '../shared/plugins.ts'
 import { ElectronError } from './errors.ts'
 import { saveChosenFile } from './file-access.ts'

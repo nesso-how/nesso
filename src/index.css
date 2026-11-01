@@ -1002,7 +1002,6 @@
 }
 .settings-page-description {
   margin-top: 8px;
-  max-width: 56ch;
   color: var(--muted-foreground);
   font-size: 12px;
   line-height: 18px;
@@ -1054,9 +1053,6 @@
   flex-direction: column;
   min-width: 0;
   min-height: 0;
-}
-.plugin-settings .settings-page-description {
-  max-width: none;
 }
 .plugin-scroll {
   flex: 1;
@@ -1224,9 +1220,10 @@
 }
 .ai-account-row {
   min-height: 36px;
+  font-size: 13px;
+  line-height: 20px;
 }
 .ai-signin-description {
-  max-width: 47ch;
   margin-bottom: 18px;
   color: var(--muted-foreground);
   font-size: 12px;
@@ -1340,8 +1337,6 @@
 }
 .mcp-credential-input.nesso-input {
   padding-right: 36px;
-  font-family: var(--font-mono);
-  font-size: 11px;
 }
 .mcp-credential-input-multiple.nesso-input {
   padding-right: 96px;

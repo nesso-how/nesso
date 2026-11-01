@@ -13,7 +13,7 @@ import {
 import { createHash } from 'node:crypto'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
-import { packageLimits, preparePluginPackage } from '../packages/plugin/src/package.ts'
+import { packageLimits, preparePluginPackage } from '@nesso-how/plugin/package'
 import { createPluginStorage } from './plugin-storage.ts'
 import themeFixture from '../packages/plugin/test/theme.json' with { type: 'json' }
 

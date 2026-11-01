@@ -1,7 +1,7 @@
 import { constants } from 'node:fs'
 import { open, rename, rm, type FileHandle } from 'node:fs/promises'
 import path from 'node:path'
-import { fileTextLimit, type FileSaveOptions } from '../packages/plugin/src/files.ts'
+import { fileTextLimit, type FileSaveOptions } from '@nesso-how/plugin/runtime'
 import { ElectronError } from './errors.ts'
 
 export async function readChosenFile(filename: string, mediaType: string, current: () => boolean) {

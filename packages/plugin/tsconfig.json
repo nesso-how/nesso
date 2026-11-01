@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.plugin.json",
+  "compilerOptions": {
+    "target": "ES2023",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "noEmit": false,
+    "declaration": true,
+    "rootDir": "src",
+    "outDir": "dist/node",
+    "rewriteRelativeImportExtensions": true
+  },
+  "include": ["src/index.ts", "src/runtime.ts", "src/package.ts"]
+}

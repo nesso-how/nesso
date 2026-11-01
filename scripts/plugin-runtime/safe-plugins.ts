@@ -5,7 +5,7 @@ import path from 'node:path'
 import { connectPlugins } from '../../electron/plugins.ts'
 import { createPluginStorage } from '../../electron/plugin-storage.ts'
 import { createTrustedRequest } from '../../electron/ipc.ts'
-import { preparePluginPackage } from '../../packages/plugin/src/package.ts'
+import { preparePluginPackage } from '@nesso-how/plugin/package'
 import { openFixtureWorkspace, type CheckContext } from './helpers.ts'
 
 export async function verifySafePlugins({ window, url }: CheckContext) {
@@ -48,7 +48,7 @@ export async function verifySafePlugins({ window, url }: CheckContext) {
     await evaluate<number>(
       `[...document.querySelectorAll('.plugin-row')].filter(row => row.getClientRects().length).length`,
     ),
-    6,
+    7,
   )
   assert.equal(
     await evaluate<boolean>(

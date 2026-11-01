@@ -2,6 +2,8 @@ export type DataLocationState = {
   directory: string
   defaultDirectory: string
   moving: boolean
+  activity?: 'backup' | 'restore'
+  recoveryRequired?: boolean
   cleanupPending: boolean
 }
 

@@ -19,7 +19,7 @@ import {
   type FileOpenResult,
   type FileSaveOptions,
 } from './files.ts'
-import { createWriteCommands } from '../../core/src/commands.ts'
+import { createWriteCommands } from '@nesso-how/core'
 import { localizedText, text, type LocalizedText } from './i18n.ts'
 import { checkMessageSize } from './data.ts'
 import {
@@ -37,6 +37,7 @@ export {
   pluginStorageLimits,
 } from './storage.ts'
 export { resolvePluginText, type LocalizedText } from './i18n.ts'
+export { fontFaces } from './theme-fonts.ts'
 export { parseOrThrow, PluginError } from './errors.ts'
 export { parseDefinition, themeColors, type Definition } from './definitions.ts'
 export {

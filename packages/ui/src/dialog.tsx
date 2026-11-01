@@ -38,6 +38,7 @@ export function ConfirmDialog({
   cancelLabel,
   confirmLabel,
   onConfirm,
+  disabled = false,
   initialFocus,
   finalFocus,
   children,
@@ -49,6 +50,7 @@ export function ConfirmDialog({
   cancelLabel: string
   confirmLabel: string
   onConfirm: () => void
+  disabled?: boolean
   initialFocus?: Dialog.Popup.Props['initialFocus']
   finalFocus?: Dialog.Popup.Props['finalFocus']
   children?: ReactNode
@@ -63,10 +65,12 @@ export function ConfirmDialog({
         </Dialog.Description>
         {children}
         <DialogActions>
-          <Dialog.Close render={<Button ref={cancel} variant="outline" />}>
+          <Dialog.Close render={<Button ref={cancel} variant="outline" disabled={disabled} />}>
             {cancelLabel}
           </Dialog.Close>
-          <Button onClick={onConfirm}>{confirmLabel}</Button>
+          <Button disabled={disabled} onClick={onConfirm}>
+            {confirmLabel}
+          </Button>
         </DialogActions>
       </DialogPopup>
     </Dialog.Root>

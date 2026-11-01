@@ -22,6 +22,7 @@ export default defineConfig({
           'packages/plugin/src',
           'packages/core/src',
           'packages/schema/src',
+          'packages/errors/src',
           'packages/i18n/src',
           'packages/ui/src',
         ].map((directory) => path.resolve(import.meta.dirname, directory) + path.sep)
@@ -46,8 +47,8 @@ export default defineConfig({
           }
           running = true
           child = execFile(
-            process.execPath,
-            [script],
+            'pnpm',
+            ['build:plugins'],
             { cwd: import.meta.dirname },
             (error, _stdout, stderr) => {
               running = false
@@ -69,7 +70,6 @@ export default defineConfig({
             !manifests.includes(file) &&
             file !== script &&
             file !== path.resolve(import.meta.dirname, 'shared/plugin-policy.ts') &&
-            file !== path.resolve(import.meta.dirname, 'shared/theme-fonts.ts') &&
             file !== path.resolve(import.meta.dirname, 'src/plugins/panel.css')
           )
             return

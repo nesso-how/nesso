@@ -6,6 +6,7 @@ import type { DataLocationBridge } from '../shared/data-location'
 import type { FileBridge } from '../shared/files'
 import type { PluginBridge } from '../shared/plugins'
 import type { NotesLinkBridge } from '../shared/link-policy'
+import type { BackupBridge } from '../shared/backup'
 
 declare global {
   interface Window {
@@ -17,5 +18,6 @@ declare global {
     nessoFiles?: FileBridge
     nessoPlugins?: PluginBridge
     nessoNotesLinks?: NotesLinkBridge
+    nessoBackups?: BackupBridge
   }
 }

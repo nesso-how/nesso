@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { createPluginApproval } from './plugin-approval.ts'
-import { preparePluginPackage } from '../packages/plugin/src/package.ts'
+import { preparePluginPackage } from '@nesso-how/plugin/package'
 import type { InstalledPlugin, PluginAccess } from '../shared/plugins.ts'
 
 const integrity = `sha512-${Buffer.alloc(64).toString('base64')}`

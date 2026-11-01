@@ -30,7 +30,7 @@ export const startAutosave = (prepare: () => void) => {
     return persistence.flush()
   })
   const stopMoveState = window.nessoDataLocation?.subscribe((state) => {
-    if (!state.moving) host.setWritesPaused(false)
+    if (!state.moving && !state.recoveryRequired) host.setWritesPaused(false)
   })
   const flush = () => {
     void persistence.flush()

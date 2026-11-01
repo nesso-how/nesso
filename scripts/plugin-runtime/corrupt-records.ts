@@ -7,7 +7,7 @@ import path from 'node:path'
 import { connectPlugins } from '../../electron/plugins.ts'
 import { createPluginStorage } from '../../electron/plugin-storage.ts'
 import { createTrustedRequest } from '../../electron/ipc.ts'
-import { preparePluginPackage } from '../../packages/plugin/src/package.ts'
+import { preparePluginPackage } from '@nesso-how/plugin/package'
 import theme from '../../packages/plugin/test/theme.json' with { type: 'json' }
 import { openFixtureWorkspace, waitFor, type CheckContext } from './helpers.ts'
 
@@ -77,7 +77,7 @@ export async function verifyCorruptRecords({ window, url }: CheckContext) {
   const rows = await evaluate<string[]>(
     `[...document.querySelectorAll('.plugin-row')].filter(row => row.getClientRects().length).map(row => row.innerText)`,
   )
-  assert.equal(rows.length, 9)
+  assert.equal(rows.length, 10)
   for (const kind of ['actions', 'theme', 'vocab'])
     assert.ok(
       rows.some((text) => text.includes(`test-restored-${kind}`) && text.includes('Enabled')),

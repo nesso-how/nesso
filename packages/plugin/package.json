@@ -15,9 +15,21 @@
   "type": "module",
   "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./runtime": "./src/runtime.ts",
-    "./package": "./src/package.ts"
+    ".": {
+      "types": "./dist/node/index.d.ts",
+      "browser": "./src/index.ts",
+      "default": "./dist/node/index.js"
+    },
+    "./runtime": {
+      "types": "./dist/node/runtime.d.ts",
+      "browser": "./src/runtime.ts",
+      "default": "./dist/node/runtime.js"
+    },
+    "./package": {
+      "types": "./dist/node/package.d.ts",
+      "browser": "./src/package.ts",
+      "default": "./dist/node/package.js"
+    }
   },
   "publishConfig": {
     "exports": {
@@ -37,7 +49,7 @@
     "access": "public"
   },
   "scripts": {
-    "build": "tsc -p ../../tsconfig.plugin.json && tsdown",
+    "build": "tsc -p ../../tsconfig.plugin.json && tsdown && tsc -p tsconfig.json",
     "prepack": "pnpm run build"
   },
   "dependencies": {

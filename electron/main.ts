@@ -26,6 +26,7 @@ import { connectFiles } from './files.ts'
 import { connectPlugins } from './plugins.ts'
 import { connectStartupCheck } from './startup-check.ts'
 import { createWindowState } from './window-state.ts'
+import { createRecordReplacement } from './record-replacement.ts'
 
 const dev = !app.isPackaged && process.argv.includes('--dev')
 const root = path.join(app.getAppPath(), 'dist')
@@ -88,6 +89,7 @@ app
     connectFiles(trusted)
     connectPlugins(trusted)
     const location = await createDataLocation(app.getPath('userData'))
+    await createRecordReplacement(() => location.directory()).recover()
     const ai = connectAi(trusted, location)
     const mcp = connectMcp(trusted, location)
     let installingUpdate = false
@@ -96,7 +98,12 @@ app
       location,
       () => installingUpdate || ai.busy() || mcp.busy(),
     )
-    const connectPersistence = connectDesktopPersistence(trusted, location, dataLocation.locked)
+    const connectPersistence = connectDesktopPersistence(
+      trusted,
+      location,
+      dataLocation.locked,
+      dataLocation.generation,
+    )
     const allowedPermissions = ['clipboard-read', 'clipboard-sanitized-write', 'fileSystem']
     const canUsePermission = (
       contents: WebContents | null,
@@ -142,7 +149,7 @@ app
     }
     await createWindow(connectPersistence)
     app.on('activate', () => {
-      if (location.state().moving) return
+      if (location.state().moving || dataLocation.locked()) return
       if (BrowserWindow.getAllWindows().length === 0)
         void createWindow(connectPersistence).catch(report)
     })

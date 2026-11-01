@@ -1,7 +1,7 @@
 import type { ThemeDefinition } from '@nesso-how/plugin'
 import sansRanges from '@fontsource-variable/geist/unicode.json' with { type: 'json' }
 import monoRanges from '@fontsource/ibm-plex-mono/unicode.json' with { type: 'json' }
-import { fontFaces } from '../../../shared/theme-fonts.ts'
+import { fontFaces } from '@nesso-how/plugin/runtime'
 
 export const create = (): ThemeDefinition => ({
   id: 'kernel-theme',
