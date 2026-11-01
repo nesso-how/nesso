@@ -3,7 +3,6 @@ import test from 'node:test'
 import { relationKey, type Graph } from '@nesso-how/schema'
 import { createNessoStore } from './create.ts'
 import { copyGraph, pasteOperations } from '../graph/commands.ts'
-import { buildImportOperations } from '../../plugins/import/src/index.ts'
 
 const fixture = (): Graph => ({
   concepts: [
@@ -67,7 +66,7 @@ test('paste uses one atomic undoable batch, preserves parallel types, and joins 
   assert.deepEqual(store.getState().workspace.savedViews, before.workspace.savedViews)
 })
 
-test('import preserves disconnected concepts and parallel relations in either order as one undoable edit', () => {
+test('operation batches preserve disconnected concepts and parallel relations in either order as one undoable edit', () => {
   for (const predicates of [[], ['urn:links', 'urn:custom'], ['urn:custom', 'urn:links']]) {
     const host = createNessoStore(fixture())
     host.registerVocab({
@@ -80,28 +79,33 @@ test('import preserves disconnected concepts and parallel relations in either or
       defaultTypeId: 'urn:links',
     })
     const store = host.store
-    const viewId = host.store.createView('Target', ['urn:n1'])
+    host.store.createView('Target', ['urn:n1'])
     store.setSelection([{ kind: 'concept', id: 'urn:n1' }])
     const before = store.getState()
-    const snapshot: Graph = {
-      concepts: fixture().concepts.slice(0, 2),
-      relationTypes: [
-        { id: 'urn:links', label: 'links' },
-        { id: 'urn:custom', label: 'Custom' },
-      ],
-      relations: predicates.map((predicate) => ({ source: 'urn:n1', predicate, target: 'urn:n2' })),
-    }
-    store.applyOperations(buildImportOperations(snapshot, before.workspace.activeViewId, viewId))
+    store.applyOperations([
+      { kind: 'selection.set', value: [] },
+      { kind: 'concept.add', id: 'urn:copy-a' },
+      { kind: 'concept.label', id: 'urn:copy-a', value: 'One' },
+      { kind: 'selection.set', value: [] },
+      { kind: 'concept.add', id: 'urn:copy-b' },
+      { kind: 'concept.label', id: 'urn:copy-b', value: 'Two' },
+      ...predicates.map((predicate) => ({
+        kind: 'relation.connect' as const,
+        source: 'urn:copy-a',
+        target: 'urn:copy-b',
+        type: { id: predicate, label: predicate === 'urn:links' ? 'links' : 'Custom' },
+      })),
+    ])
     const after = store.getState()
     const copies = after.graph.concepts.slice(before.graph.concepts.length)
     assert.deepEqual(
       copies.map((concept) => concept.label),
-      snapshot.concepts.map((concept) => concept.label),
+      ['One', 'Two'],
     )
     assert.deepEqual(
       after.graph.relations.slice(before.graph.relations.length),
-      snapshot.relations.map((relation) => ({
-        ...relation,
+      predicates.map((predicate) => ({
+        predicate,
         source: copies[0].id,
         target: copies[1].id,
       })),

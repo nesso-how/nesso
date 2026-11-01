@@ -11,7 +11,7 @@ import { pipeline } from 'node:stream/promises'
 import registryFetch from 'npm-registry-fetch'
 import { Header, type HeaderData } from 'tar'
 import { acquireNpmPlugin, latestNpmPlugin, searchNpmPlugins } from './plugin-npm.ts'
-import { preparePluginPackage } from '../packages/plugin/src/package.ts'
+import { preparePluginPackage } from '@nesso-how/plugin/package'
 import themeFixture from '../packages/plugin/test/theme.json' with { type: 'json' }
 
 const manifest = {

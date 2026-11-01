@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import gt from 'semver/functions/gt.js'
 import prerelease from 'semver/functions/prerelease.js'
-import { PluginError } from '../packages/plugin/src/errors.ts'
+import { PluginError } from '@nesso-how/plugin/runtime'
 import type { InstalledPlugin, PluginAccess } from '../shared/plugins.ts'
 
 export function createPluginApproval(

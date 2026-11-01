@@ -6,11 +6,7 @@ import { readFile, writeFile, mkdir, mkdtemp, rename, rm } from 'node:fs/promise
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { actionRunnerCsp, panelRunnerCsp } from '../shared/plugin-policy.ts'
-import {
-  parseDefinition,
-  parsePluginI18n,
-  parsePluginManifest,
-} from '../packages/plugin/src/runtime.ts'
+import { parseDefinition, parsePluginI18n, parsePluginManifest } from '@nesso-how/plugin/runtime'
 
 const root = path.resolve(import.meta.dirname, '..')
 const script = (code: string) => `<script>${code.replace(/<\/script/gi, '<\\/script')}</script>`

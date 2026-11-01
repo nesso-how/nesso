@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { validateGraph } from '../../schema/src/validate.ts'
+import { validateGraph } from '@nesso-how/schema'
 import { parseOrThrow } from './errors.ts'
 import type { DeepReadonly, VocabDefinition } from '@nesso-how/core'
 

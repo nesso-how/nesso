@@ -11,6 +11,7 @@ export async function verifyStartup({ window, url }: CheckContext) {
     })
   let listing = hold()
   ipcMain.handle('plugins:list', () => listing)
+  ipcMain.handle('storage:session', () => 0)
   ipcMain.handle('storage:read', () => ({ value: undefined }))
   ipcMain.handle('storage:write', () => ({ value: null }))
   const inspect = () =>

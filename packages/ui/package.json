@@ -15,8 +15,15 @@
   "sideEffects": false,
   "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./styles.css": "./src/styles.css"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "browser": "./src/index.ts",
+      "default": "./dist/index.js"
+    },
+    "./styles.css": {
+      "browser": "./src/styles.css",
+      "default": "./dist/styles.css"
+    }
   },
   "publishConfig": {
     "exports": {

@@ -1,10 +1,6 @@
 import assert from 'node:assert/strict'
 import { parseGraph, serializeGraph } from '@nesso-how/schema'
-import {
-  parseContribution,
-  parseDefinition,
-  type ActionState,
-} from '../../packages/plugin/src/runtime.ts'
+import { parseContribution, parseDefinition, type ActionState } from '@nesso-how/plugin/runtime'
 import { actionState, waitFor, type CheckContext } from './helpers.ts'
 
 type Probe = {

@@ -5,7 +5,7 @@ import { persistenceSections } from '../shared/persistence.ts'
 import { parseBackup } from '../src/store/backup.ts'
 import { createFileStorage } from './file-storage.ts'
 import { readChosenFile, saveChosenFile } from './file-access.ts'
-import { fileTextLimit } from '../packages/plugin/src/files.ts'
+import { fileTextLimit } from '@nesso-how/plugin/runtime'
 
 export function createBackups(directory: () => string, appVersion: string) {
   const candidates = new Map<number, { id: string; backup: Backup }>()

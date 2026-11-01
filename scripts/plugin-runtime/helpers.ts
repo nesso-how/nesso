@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { ipcMain, type BrowserWindow } from 'electron'
 import type { Platform } from './cases.ts'
-import { themeTokens, type ActionState } from '../../packages/plugin/src/runtime.ts'
+import { themeTokens, type ActionState } from '@nesso-how/plugin/runtime'
 
 export type CheckContext = {
   window: BrowserWindow
@@ -12,6 +12,7 @@ export type CheckContext = {
 
 export function connectFixtureStorage() {
   const saved = new Map<string, unknown>()
+  ipcMain.handle('storage:session', () => 0)
   ipcMain.handle('storage:read', (_event, section: string) => ({ value: saved.get(section) }))
   ipcMain.handle('storage:write', (_event, section: string, value: unknown) => {
     saved.set(section, value)

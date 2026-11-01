@@ -1,7 +1,7 @@
 import type { Locale } from '@nesso-how/i18n'
 import { z } from 'zod'
-import type { PluginPackageInput, PreparedPlugin } from '../packages/plugin/src/package.ts'
-import type { PluginManifest } from '../packages/plugin/src/runtime.ts'
+import type { PluginPackageInput, PreparedPlugin } from '@nesso-how/plugin/package'
+import type { PluginManifest } from '@nesso-how/plugin/runtime'
 
 export type PluginResult<T> =
   | { readonly value: T }

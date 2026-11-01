@@ -1,4 +1,4 @@
-import type { ThemeDefinition } from '@nesso-how/plugin'
+import type { ThemeDefinition } from './definitions.ts'
 
 export const fontFaces = (
   ranges: Record<string, string>,

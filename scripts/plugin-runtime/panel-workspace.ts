@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { ipcMain } from 'electron'
 import { build } from 'vite'
-import { preparePluginPackage } from '../../packages/plugin/src/package.ts'
+import { preparePluginPackage } from '@nesso-how/plugin/package'
 import source from '../../packages/plugin/example/package.json' with { type: 'json' }
 import { openFixtureWorkspace, waitFor, type CheckContext } from './helpers.ts'
 

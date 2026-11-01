@@ -5,14 +5,14 @@ import { connectPlugins } from '../../electron/plugins.ts'
 import { createTrustedRequest } from '../../electron/ipc.ts'
 import { ElectronError } from '../../electron/errors.ts'
 import { connectExternalLinks } from '../../electron/links.ts'
-import { preparePluginPackage, parsePackageIdentity } from '../../packages/plugin/src/package.ts'
+import { preparePluginPackage, parsePackageIdentity } from '@nesso-how/plugin/package'
 import theme from '../../packages/plugin/test/theme.json' with { type: 'json' }
 import { connectFixtureStorage, countWorkers, waitFor, type CheckContext } from './helpers.ts'
 
 const kinds = ['actions', 'theme', 'vocab'] as const
 type Kind = (typeof kinds)[number]
 const readScope =
-  'When you run an action, it receives the concepts and relations in that view. Running it on All gives it access to the entire graph.'
+  'When you run an action, it receives the concepts and relations in that view. Running it on Overview gives it access to the entire graph.'
 const effectScope =
   'Changes to document content can affect the whole document, not just the view where you run an action.'
 const fileScope =
@@ -809,7 +809,7 @@ async function verifyStopDisable(driver: Driver, window: BrowserWindow) {
     await driver.evaluate(
       `document.querySelector('.settings-popup button[aria-label="Close"]').click()`,
     )
-    await driver.evaluate(`document.querySelector('[aria-label="Actions for All"]').click()`)
+    await driver.evaluate(`document.querySelector('[aria-label="Actions for Overview"]').click()`)
     await waitFor(
       () =>
         driver.evaluate<boolean>(
@@ -997,7 +997,7 @@ async function verifyFailures(driver: Driver, state: InstallState, window: Brows
       driver.evaluate<number>(
         `[...document.querySelectorAll('.plugin-row')].filter(row => row.getClientRects().length).length`,
       ),
-    (count) => count === 9,
+    (count) => count === 10,
   )
   assert.equal(state.metadataRequests, requestsBeforeReload)
   assert.equal(

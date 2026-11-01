@@ -12,12 +12,8 @@ import {
   packageLimits,
   parsePackageIdentity,
   preparePluginPackage,
-} from '../packages/plugin/src/package.ts'
-import {
-  parsePluginI18n,
-  parsePluginManifest,
-  PluginError,
-} from '../packages/plugin/src/runtime.ts'
+} from '@nesso-how/plugin/package'
+import { parsePluginI18n, parsePluginManifest, PluginError } from '@nesso-how/plugin/runtime'
 import prerelease from 'semver/functions/prerelease.js'
 import { ElectronError } from './errors.ts'
 import { npmIntegrity } from '../shared/plugins.ts'

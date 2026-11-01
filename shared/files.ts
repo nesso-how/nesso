@@ -1,8 +1,4 @@
-import type {
-  FileOpenOptions,
-  FileOpenResult,
-  FileSaveOptions,
-} from '../packages/plugin/src/files.ts'
+import type { FileOpenOptions, FileOpenResult, FileSaveOptions } from '@nesso-how/plugin/runtime'
 
 export type FileBridge = {
   readonly open: (id: string, options: FileOpenOptions) => Promise<FileOpenResult>

@@ -1,5 +1,5 @@
 import { BrowserWindow, dialog, ipcMain } from 'electron'
-import { parseFileOptions } from '../packages/plugin/src/files.ts'
+import { parseFileOptions } from '@nesso-how/plugin/runtime'
 import type { TrustedRequest } from './ipc.ts'
 import { ElectronError } from './errors.ts'
 import { readChosenFile, saveChosenFile } from './file-access.ts'
