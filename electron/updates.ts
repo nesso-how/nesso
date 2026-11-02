@@ -14,6 +14,8 @@ export type UpdateBridge = {
   beforeInstall: (save: () => Promise<boolean>) => () => void
 }
 
+export const INSTALL_FEEDBACK_MS = 1_000
+
 export function connectUpdates(
   updater: AppUpdater,
   nativeUpdater: AutoUpdater | undefined,
@@ -93,11 +95,13 @@ export function connectUpdates(
       clearTimeout(installTimer)
       if (!saved) return publish({ ...state, status: 'ready', error: 'save' })
       publish({ ...state, status: 'installing' })
-      try {
-        updater.quitAndInstall()
-      } catch (error) {
-        fail(error)
-      }
+      installTimer = setTimeout(() => {
+        try {
+          updater.quitAndInstall()
+        } catch (error) {
+          fail(error)
+        }
+      }, INSTALL_FEEDBACK_MS)
     },
   }
 }

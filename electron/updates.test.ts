@@ -3,7 +3,7 @@ import { EventEmitter } from 'node:events'
 import test, { type TestContext } from 'node:test'
 import type { AutoUpdater } from 'electron'
 import type { AppUpdater } from 'electron-updater'
-import { connectUpdates, type UpdateState } from './updates.ts'
+import { connectUpdates, INSTALL_FEEDBACK_MS, type UpdateState } from './updates.ts'
 
 const version = '1.0.0-alpha.28'
 
@@ -52,6 +52,7 @@ test('updates check at startup and hourly without overlap, retrying after failur
 })
 
 test('updates download automatically but restart only after confirmation, validation and saving', (context) => {
+  context.mock.timers.enable({ apis: ['setTimeout'] })
   const { updater, nativeUpdater, updates, notify, check } = fixture(context)
   assert.equal(updater.autoInstallOnAppQuit, false)
 
@@ -75,6 +76,8 @@ test('updates download automatically but restart only after confirmation, valida
   assert.equal(updater.quitAndInstall.mock.callCount(), 0)
   updates.install(true)
   assert.deepEqual(updates.getState(), { status: 'installing', version })
+  assert.equal(updater.quitAndInstall.mock.callCount(), 0)
+  context.mock.timers.tick(INSTALL_FEEDBACK_MS)
   assert.equal(updater.quitAndInstall.mock.callCount(), 1)
   updates.install(true)
   assert.equal(updater.quitAndInstall.mock.callCount(), 1)
@@ -101,6 +104,7 @@ test('failed downloads are retried automatically at the next interval', async (c
 })
 
 test('Windows and Linux updates become ready without the macOS native updater', (context) => {
+  context.mock.timers.enable({ apis: ['setTimeout'] })
   const { updater, nativeUpdater, updates } = fixture(context, async () => null, false)
   updater.emit('update-downloaded')
   assert.equal(updates.getState(), null)
@@ -115,6 +119,7 @@ test('Windows and Linux updates become ready without the macOS native updater', 
   assert.deepEqual(updates.getState(), { status: 'ready', version, error: 'save' })
   updates.restart()
   updates.install(true)
+  context.mock.timers.tick(INSTALL_FEEDBACK_MS)
   assert.equal(updater.quitAndInstall.mock.callCount(), 1)
 })
 
@@ -135,11 +140,13 @@ test('failed or missing save acknowledgements prevent restarting and allow retry
   assert.equal(updater.quitAndInstall.mock.callCount(), 0)
   updates.restart()
   updates.install(true)
+  context.mock.timers.tick(INSTALL_FEEDBACK_MS)
   assert.equal(updater.quitAndInstall.mock.callCount(), 1)
   assert.equal(updater.downloadUpdate.mock.callCount(), 1)
 })
 
 test('installation failures preserve the downloaded version and allow retrying', (context) => {
+  context.mock.timers.enable({ apis: ['setTimeout'] })
   const { updater, updates } = fixture(context, async () => null, false)
   updater.emit('update-available', { version })
   updater.emit('update-downloaded')
@@ -148,10 +155,13 @@ test('installation failures preserve the downloaded version and allow retrying',
     throw new Error('Install failed')
   })
   updates.install(true)
+  assert.equal(updater.quitAndInstall.mock.callCount(), 0)
+  context.mock.timers.tick(INSTALL_FEEDBACK_MS)
   assert.deepEqual(updates.getState(), { status: 'ready', version, error: 'install' })
   updates.restart()
   updates.install(true)
   assert.deepEqual(updates.getState(), { status: 'installing', version })
+  context.mock.timers.tick(INSTALL_FEEDBACK_MS)
   assert.equal(updater.quitAndInstall.mock.callCount(), 2)
   assert.equal(updater.downloadUpdate.mock.callCount(), 1)
 })
