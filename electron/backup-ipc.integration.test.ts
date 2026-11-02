@@ -92,6 +92,12 @@ test('native backup IPC coordinates windows, honors cancellation, validates befo
     issues?: unknown
   }
   assert.ok(untrusted.issues)
+  const untrustedBackup = (await handlers.get('storage:backup')!(
+    { ...event, trusted: false },
+    0,
+  )) as { issues?: unknown }
+  assert.ok(untrustedBackup.issues)
+  assert.equal((await call('storage:backup', 0)).value, null)
   assert.equal((await call('backup:create')).value, false)
   nextFile = path.join(directory, 'document.json')
   assert.equal((await call('backup:create')).issues?.[0].message, 'backupDestination')
@@ -120,8 +126,12 @@ test('native backup IPC coordinates windows, honors cancellation, validates befo
   assert.equal(transfer.generation(), 1)
   assert.equal(transfer.locked(), false)
   assert.ok((await call('storage:write', 'conversation', { stale: true }, 0)).issues)
+  assert.ok((await call('storage:backup', 0)).issues)
   for (const section of Object.keys(backup.records))
-    assert.deepEqual((await call('storage:read', section, 1)).value, backup.records[section])
+    assert.deepEqual(
+      (await call('storage:read', section, 1)).value,
+      backup.records[section] ?? undefined,
+    )
   const interrupted = await choose()
   await writeFile(path.join(directory, '.nesso-restore.json'), 'unreadable journal')
   assert.equal(
@@ -136,4 +146,5 @@ test('native backup IPC coordinates windows, honors cancellation, validates befo
     true,
   )
   assert.ok((await call('storage:write', 'conversation', { stale: true }, 1)).issues)
+  assert.ok((await call('storage:backup', 1)).issues)
 })

@@ -4,4 +4,6 @@ Shared structured errors for Nesso packages, the host, and repository scripts, w
 
 `NessoError` carries `issues: ErrorIssue[]`, where each issue has a `path` and `message`. Its message joins issues with newlines, prefixing nonempty paths with `path: `.
 
+`validationIssues` converts validation issue paths into the shared dotted/bracketed notation, with an optional domain prefix, without depending on a validation library.
+
 Package-scoped errors extend `NessoError` to retain their names and domain-specific behavior. `PluginError` also bounds issues and localized messages before passing them to the base class. All scoped errors can be handled as `NessoError`.

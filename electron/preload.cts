@@ -43,6 +43,7 @@ const persistence: PersistenceBridge = {
   read: async (section) => ipcRenderer.invoke('storage:read', section, await session()),
   write: async (section, value) =>
     ipcRenderer.invoke('storage:write', section, value, await session()),
+  backup: async () => ipcRenderer.invoke('storage:backup', await session()),
   beforeClose: (save, confirm) => {
     const stop = beforeSave('storage:prepare', 'storage:closed', async () => {
       if (

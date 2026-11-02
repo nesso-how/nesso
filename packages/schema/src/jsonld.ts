@@ -1,38 +1,48 @@
-import { isAbsoluteIri, schemaContext } from './core.ts'
-import { fail, SchemaError } from './errors.ts'
+import { z } from 'zod'
+import { schemaContext } from './core.ts'
+import { fail, parseSchema, SchemaError } from './errors.ts'
 import { validateGraph } from './validate.ts'
-import type { Concept, Graph, Relation, RelationType } from './types.ts'
+import {
+  conceptSchema,
+  iriSchema,
+  positionSchema,
+  type Concept,
+  type Graph,
+  type Relation,
+  type RelationType,
+} from './types.ts'
 
 type JsonObject = Record<string, unknown>
+const jsonObject = z.record(z.string(), z.unknown())
+const jsonldDocument = z.strictObject({ '@context': jsonObject, '@graph': z.array(jsonObject) })
+const jsonldType = z.strictObject({
+  '@id': iriSchema,
+  '@type': z.literal('rdf:Property'),
+  'rdfs:label': z.string(),
+})
+const jsonldConcept = z
+  .object({
+    '@id': iriSchema,
+    'rdfs:label': conceptSchema.shape.label,
+    'rdfs:comment': conceptSchema.shape.notes,
+    position: positionSchema.optional(),
+    color: conceptSchema.shape.color,
+    bold: conceptSchema.shape.bold,
+    italic: conceptSchema.shape.italic,
+  })
+  .catchall(z.unknown())
 
 function object(value: unknown, path: string): JsonObject {
-  if (!value || typeof value !== 'object' || Array.isArray(value))
-    fail(path, 'Expected a JSON object')
-  return value as JsonObject
-}
-
-function string(value: unknown, path: string): string {
-  if (typeof value !== 'string') fail(path, 'Expected a string')
-  return value
-}
-
-function boolean(value: unknown, path: string): boolean {
-  if (typeof value !== 'boolean') fail(path, 'Expected a boolean')
-  return value as boolean
+  return parseSchema(jsonObject, value, path)
 }
 
 function iri(value: unknown, path: string): string {
-  const id = string(value, path)
-  if (!isAbsoluteIri(id)) fail(path, `Expected an absolute IRI: ${id}`)
-  return id
+  return parseSchema(iriSchema, value, path)
 }
 
 export function parseGraph(value: unknown): Graph {
-  const document = object(value, '')
-  if (Object.keys(document).some((key) => key !== '@context' && key !== '@graph')) {
-    fail('', 'Unsupported document property')
-  }
-  const context = object(document['@context'], '@context')
+  const document = parseSchema(jsonldDocument, value)
+  const context = document['@context']
   for (const term of ['rdf', 'rdfs', 'position'] as const) {
     const expected = schemaContext[term]
     const actual = context[term]
@@ -45,7 +55,6 @@ export function parseGraph(value: unknown): Graph {
       }
     }
   }
-  if (!Array.isArray(document['@graph'])) fail('@graph', 'Expected an array')
 
   const predicates = new Map<string, string>()
   for (const [term, definition] of Object.entries(context)) {
@@ -58,40 +67,28 @@ export function parseGraph(value: unknown): Graph {
 
   const concepts: Concept[] = []
   const relationTypes: RelationType[] = []
-  const entries: JsonObject[] = document['@graph'].map((entry, index) =>
-    object(entry, `@graph[${index}]`),
-  )
+  const entries = document['@graph']
   for (const [index, entry] of entries.entries()) {
     const path = `@graph[${index}]`
     const id = iri(entry['@id'], `${path}.@id`)
-    const label = string(entry['rdfs:label'], `${path}.rdfs:label`)
     if (entry['@type'] === 'rdf:Property') {
-      if (Object.keys(entry).some((key) => !['@id', '@type', 'rdfs:label'].includes(key))) {
-        fail(path, `Unsupported relation type property: ${id}`)
-      }
-      relationTypes.push({ id, label })
+      const type = parseSchema(jsonldType, entry, path)
+      relationTypes.push({ id, label: type['rdfs:label'] })
       continue
     }
     if (entry['@type'] !== undefined) fail(`${path}.@type`, `Unsupported concept type: ${id}`)
-    const position =
-      entry.position === undefined ? { x: 0, y: 0 } : object(entry.position, `${path}.position`)
-    if (typeof position.x !== 'number' || typeof position.y !== 'number') {
-      fail(`${path}.position`, `Invalid position: ${id}`)
-    }
-    const color =
-      entry.color === undefined ? undefined : string(entry.color, `${path}.color`).toLowerCase()
-    const bold = entry.bold === undefined ? undefined : boolean(entry.bold, `${path}.bold`)
-    const italic = entry.italic === undefined ? undefined : boolean(entry.italic, `${path}.italic`)
+    const parsed = parseSchema(jsonldConcept, entry, path)
+    const position = parsed.position ?? { x: 0, y: 0 }
+    const color = parsed.color?.toLowerCase()
+    const { bold, italic } = parsed
     concepts.push({
       id,
-      label,
+      label: parsed['rdfs:label'],
       position: { x: position.x, y: position.y },
       ...(color === undefined ? {} : { color }),
       ...(bold === undefined ? {} : { bold }),
       ...(italic === undefined ? {} : { italic }),
-      ...(entry['rdfs:comment'] === undefined
-        ? {}
-        : { notes: string(entry['rdfs:comment'], `${path}.rdfs:comment`) }),
+      ...(parsed['rdfs:comment'] === undefined ? {} : { notes: parsed['rdfs:comment'] }),
     })
   }
 

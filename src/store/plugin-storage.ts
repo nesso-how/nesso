@@ -1,5 +1,6 @@
 import validateName from 'validate-npm-package-name'
-import { isAbsoluteIri } from '@nesso-how/schema'
+import { z } from 'zod'
+import { iriSchema, isAbsoluteIri } from '@nesso-how/schema'
 import type { PluginStorageKey, PluginStorageRecord } from '@nesso-how/plugin'
 import {
   checkMessageSize,
@@ -9,7 +10,7 @@ import {
   pluginStorageLimits,
   PluginError,
 } from '@nesso-how/plugin/runtime'
-import { fail, object } from './settings.ts'
+import { fail, parseSettings } from './settings.ts'
 
 export type PluginStorageNamespace = ReturnType<typeof parsePluginStorageSnapshot> & {
   readonly pluginId: string
@@ -33,27 +34,35 @@ export type PluginStorageWrite =
 const recordId = (record: { readonly key: string; readonly conceptId?: string }) =>
   JSON.stringify([record.conceptId ?? null, record.key])
 
-const checkPluginId = (value: unknown): string => {
-  if (typeof value !== 'string' || value.length > 214 || !validateName(value).validForNewPackages)
-    fail('pluginId', 'Expected a valid npm package name')
-  return value as string
-}
+const pluginIdSchema = z
+  .string()
+  .max(214)
+  .refine((id) => validateName(id).validForNewPackages, 'Expected a valid npm package name')
+const checkPluginId = (value: unknown): string => parseSettings(pluginIdSchema, value, 'pluginId')
+
+const storageSchema = z.strictObject({
+  version: z.literal(1),
+  documentId: iriSchema,
+  plugins: z
+    .array(
+      z.strictObject({
+        pluginId: pluginIdSchema,
+        revision: z.unknown(),
+        records: z.unknown(),
+      }),
+    )
+    .max(pluginStorageLimits.namespaces),
+})
 
 export function parsePluginStorage(value: unknown): {
   readonly documentId: string
   readonly plugins: readonly PluginStorageNamespace[]
 } {
   checkMessageSize(value, pluginStorageLimits.total)
-  const saved = object(value, '', ['version', 'documentId', 'plugins'])
-  if (saved.version !== 1) fail('version', 'Unsupported storage version')
-  if (typeof saved.documentId !== 'string' || !isAbsoluteIri(saved.documentId))
-    fail('documentId', 'Expected an absolute document IRI')
-  if (!Array.isArray(saved.plugins) || saved.plugins.length > pluginStorageLimits.namespaces)
-    fail('plugins', 'Plugin namespace limit exceeded')
+  const saved = parseSettings(storageSchema, value)
   const identities = new Set<string>()
-  const plugins = (saved.plugins as unknown[]).map((value) => {
-    const entry = object(value, 'plugins', ['pluginId', 'revision', 'records'])
-    const pluginId = checkPluginId(entry.pluginId)
+  const plugins = saved.plugins.map((entry) => {
+    const { pluginId } = entry
     if (identities.has(pluginId)) fail('plugins', 'Duplicate plugin namespace')
     identities.add(pluginId)
     const snapshot = parsePluginStorageSnapshot({
@@ -64,7 +73,7 @@ export function parsePluginStorage(value: unknown): {
       fail('plugins.records', 'Duplicate storage record')
     return { pluginId, ...snapshot }
   })
-  return { documentId: saved.documentId as string, plugins }
+  return { documentId: saved.documentId, plugins }
 }
 
 export function applyPluginStorage(
@@ -114,17 +123,4 @@ export function applyPluginStorage(
     fail('storage', 'Plugin namespace limit exceeded')
   checkMessageSize(next, pluginStorageLimits.total - 4096)
   return next
-}
-
-export function collectPluginStorageOrphans(
-  plugins: readonly PluginStorageNamespace[],
-  conceptIds: ReadonlySet<string>,
-): readonly PluginStorageNamespace[] {
-  const next = plugins.map((entry) => {
-    const records = entry.records.filter(
-      (record) => record.conceptId === undefined || conceptIds.has(record.conceptId),
-    )
-    return records.length === entry.records.length ? entry : { ...entry, records }
-  })
-  return next.every((entry, index) => entry === plugins[index]) ? plugins : next
 }

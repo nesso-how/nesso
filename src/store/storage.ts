@@ -4,6 +4,8 @@ import type {
   PersistenceStorage,
 } from '../../shared/persistence.ts'
 import { NessoError } from '@nesso-how/errors'
+import { persistenceSections } from '../../shared/persistence.ts'
+import { createBackup } from './backup.ts'
 
 export function createIndexedDbStorage(source: () => IDBFactory): PersistenceStorage {
   let database: Promise<IDBDatabase> | undefined
@@ -62,6 +64,31 @@ export function createIndexedDbStorage(source: () => IDBFactory): PersistenceSto
     write: async (section, value) => {
       await transaction(section, value, true)
     },
+    backup: async () => {
+      const db = await open()
+      const snapshot = await new Promise<Partial<Record<PersistenceSection, unknown>>>(
+        (resolve, reject) => {
+          const tx = db.transaction('records', 'readonly')
+          const records = tx.objectStore('records')
+          const snapshot: Partial<Record<PersistenceSection, unknown>> = {}
+          for (const section of persistenceSections) {
+            const request = records.get(section)
+            request.onsuccess = () => {
+              snapshot[section] = request.result
+            }
+          }
+          tx.oncomplete = () => resolve(snapshot)
+          tx.onabort = () => reject(tx.error)
+        },
+      )
+      const text = await createBackup({ read: async (section) => snapshot[section] })
+      await new Promise<void>((resolve, reject) => {
+        const tx = db.transaction('records', 'readwrite')
+        tx.objectStore('records').add(JSON.parse(text), `backup:${crypto.randomUUID()}`)
+        tx.oncomplete = () => resolve()
+        tx.onabort = () => reject(tx.error)
+      })
+    },
   }
 }
 
@@ -74,6 +101,10 @@ export function createDesktopStorage(bridge: PersistenceBridge): PersistenceStor
     },
     write: async (section, value) => {
       const result = await bridge.write(section, value)
+      if ('issues' in result) throw new NessoError(result.issues)
+    },
+    backup: async () => {
+      const result = await bridge.backup()
       if ('issues' in result) throw new NessoError(result.issues)
     },
   }

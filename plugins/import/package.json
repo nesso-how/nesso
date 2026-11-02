@@ -53,6 +53,9 @@
       "concept.add",
       "concept.label",
       "concept.notes",
+      "concept.color",
+      "concept.bold",
+      "concept.italic",
       "relation.connect",
       "view.membership"
     ],

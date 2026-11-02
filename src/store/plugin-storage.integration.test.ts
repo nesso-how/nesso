@@ -20,6 +20,7 @@ const memoryStorage = () => {
   return {
     records,
     writes,
+    backup: async () => {},
     read: async (section: PersistenceSection) => structuredClone(records.get(section)),
     write: async (section: PersistenceSection, value: unknown) => {
       records.set(section, structuredClone(value))
@@ -82,7 +83,7 @@ test('plugin progress round-trips independently of graph JSON-LD without rewriti
   await persistence.dispose()
 })
 
-test('startup removes only concept orphans after successful restoration and persists cleanup without executing plugins', async () => {
+test('startup preserves concept-associated plugin records without executing plugins or rewriting storage', async () => {
   const { storage, host, persistence } = await fixture()
   put(host, 'settings', { enabled: true })
   put(host, 'progress', 'live', 'urn:a')
@@ -93,16 +94,16 @@ test('startup removes only concept orphans after successful restoration and pers
   const loaded = await loadPersistence(storage)
   assert.equal(loaded.pluginStorage?.[0].records.length, 3)
   const reopened = initializeNessoStore(loaded, ['en'])
-  assert.equal(reopened.store.getState().pluginStorage[0].records.length, 2)
+  assert.equal(reopened.store.getState().pluginStorage[0].records.length, 3)
   assert.deepEqual(storage.records.get('plugin-storage'), original)
   storage.writes.length = 0
   const restoredPersistence = connectPersistence(reopened, storage, loaded)
   assert.equal(await restoredPersistence.flush(), true)
-  assert.deepEqual(storage.writes, ['plugin-storage'])
-  const cleaned = await loadPersistence(storage)
+  assert.deepEqual(storage.writes, [])
+  const restored = await loadPersistence(storage)
   assert.deepEqual(
-    cleaned.pluginStorage?.[0].records.map(({ conceptId }) => conceptId),
-    [undefined, 'urn:a'],
+    restored.pluginStorage?.[0].records.map(({ conceptId }) => conceptId),
+    [undefined, 'urn:a', 'urn:b'],
   )
   await restoredPersistence.dispose()
 })

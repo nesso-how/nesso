@@ -1,6 +1,6 @@
 # @nesso-how/schema
 
-A framework-independent graph model, validation, and a minimal JSON-LD profile. Its only runtime dependency is the dependency-free `@nesso-how/errors` package.
+A framework-independent graph model with Zod schemas, inferred TypeScript types, and a minimal JSON-LD profile.
 
 ## Usage
 
@@ -43,4 +43,4 @@ Relations use absolute predicate IRIs or local aliases mapped to known relation 
 - `relationKey`: identify a relation by its source, predicate, and target.
 - `schemaContext`: the JSON-LD context of the profile.
 
-Parsing and serialization validate the graph and throw `SchemaError` with structured `issues` on failure. See [types](src/types.ts) and [exports](src/index.ts).
+Parsing and serialization validate the graph and throw `SchemaError`, a subclass of `NessoError`, with structured `issues` on failure. See [schemas and inferred types](src/types.ts) and [exports](src/index.ts).

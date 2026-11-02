@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
+import { NessoError } from '@nesso-how/errors'
 import {
   parseGraph,
   relationKey,
@@ -78,11 +79,20 @@ test('parse failures report structured issues', () => {
     () => parseGraph(broken),
     (error: unknown) =>
       error instanceof SchemaError &&
-      error.issues.some(
-        ({ path, message }) =>
-          path === '@graph[4].position' && message === 'Invalid position: urn:uuid:broken',
-      ),
+      error.issues.some(({ path }) => path === '@graph[4].position.x'),
   )
+})
+
+test('graph structure is validated consistently and schema errors share the common error base', () => {
+  const graph = parseGraph(fixture)
+  graph.concepts[0].label = undefined as never
+  assert.ok(validateGraph(graph).length)
+  assert.throws(
+    () => serializeGraph(graph),
+    (error) => error instanceof SchemaError && error instanceof NessoError,
+  )
+  for (const graph of [null, {}, { concepts: [null], relationTypes: [], relations: [] }])
+    assert.ok(validateGraph(graph).length)
 })
 
 test('graph validation and serialization reject relative concept and relation-type identifiers', () => {

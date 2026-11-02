@@ -4,6 +4,8 @@ import { parseGraph } from '@nesso-how/schema'
 import { connectPlugins } from '../../electron/plugins.ts'
 import { createTrustedRequest } from '../../electron/ipc.ts'
 import type { PersistenceSection } from '../../shared/persistence.ts'
+import { persistenceSections } from '../../shared/persistence.ts'
+import type { Backup } from '../../shared/backup.ts'
 import { connectFixtureStorage, waitFor, type CheckContext } from './helpers.ts'
 
 export async function verifyStorage({ window, url, name }: CheckContext) {
@@ -48,7 +50,10 @@ export async function verifyStorage({ window, url, name }: CheckContext) {
     Boolean,
   )
   const document = await waitFor(
-    async () => (await read('document')) as { documentId: string; graph: unknown } | undefined,
+    async () =>
+      (await read('document')) as
+        | { documentId: string; graph: unknown; workspace: unknown }
+        | undefined,
     Boolean,
   )
   assert.ok(document)
@@ -69,14 +74,14 @@ export async function verifyStorage({ window, url, name }: CheckContext) {
     ],
   })
   await reload()
-  const cleaned = await waitFor(
+  const preserved = await waitFor(
     async () =>
       (await read('plugin-storage')) as { plugins: { records: { conceptId?: string }[] }[] },
-    (value) => value.plugins[0].records.length === 2,
+    (value) => value.plugins[0].records.length === 3,
   )
   assert.deepEqual(
-    cleaned.plugins[0].records.map((record) => record.conceptId),
-    [undefined, conceptId],
+    preserved.plugins[0].records.map((record) => record.conceptId),
+    [undefined, conceptId, 'urn:missing'],
   )
   const restored = (await read('document')) as typeof document
   assert.equal(restored.documentId, document.documentId)
@@ -91,7 +96,48 @@ export async function verifyStorage({ window, url, name }: CheckContext) {
   const protectedDocument = (await read('document')) as typeof document
   assert.equal(protectedDocument.documentId, document.documentId)
   assert.deepEqual(protectedDocument.graph, document.graph)
+  const legacy = { version: 1, graph: document.graph, workspace: document.workspace }
+  await write('plugin-storage', undefined)
+  await write('document', legacy)
+  const originalRecords = Object.fromEntries(
+    await Promise.all(
+      persistenceSections.map(async (section) => [section, (await read(section)) ?? null]),
+    ),
+  )
+  await reload()
+  const upgraded = await waitFor(
+    async () =>
+      (await read('document')) as {
+        version: number
+        documentId: string
+        graph: unknown
+        workspace: unknown
+      },
+    (value) => value.version === 2,
+  )
+  assert.deepEqual(upgraded.graph, document.graph)
+  assert.deepEqual(upgraded.workspace, document.workspace)
+  const backups = saved
+    ? [...saved.entries()]
+        .filter(([key]) => key.startsWith('backup:'))
+        .map(([, value]) => value as Backup)
+    : await evaluate<Backup[]>(`new Promise((resolve,reject)=>{
+      const opened=indexedDB.open('nesso',1);
+      opened.onerror=()=>reject(opened.error);
+      opened.onsuccess=()=>{
+        const db=opened.result;
+        const tx=db.transaction('records','readonly');
+        const records=tx.objectStore('records');
+        const request=records.openCursor();
+        const originals=[];
+        request.onsuccess=()=>{const cursor=request.result;if(!cursor)return;if(String(cursor.key).startsWith('backup:'))originals.push(cursor.value);cursor.continue()};
+        tx.oncomplete=()=>{db.close();resolve(originals)};
+        tx.onabort=()=>{db.close();reject(tx.error)};
+      };
+    })`)
+  assert.equal(backups.length, 1)
+  assert.deepEqual(backups[0].records, originalRecords)
   console.log(
-    `${name}: plugin data restored, concept orphans cleaned without a plugin, and unreadable storage visibly protected`,
+    `${name}: plugin data preserved, unreadable storage protected, and document v1 upgraded with a complete backup`,
   )
 }

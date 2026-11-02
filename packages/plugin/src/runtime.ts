@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { graphSchema, positionSchema } from '@nesso-how/schema'
 import type { ComponentType } from 'react'
 import type {
   DeepReadonly,
@@ -68,7 +69,7 @@ export const themeTokens = [
 ] as const
 
 const id = z.string().min(1).max(2048)
-const position = z.strictObject({ x: z.number(), y: z.number() })
+const position = positionSchema
 const selection = z.array(z.strictObject({ kind: z.enum(['concept', 'relation']), id }))
 const relationType = z.strictObject({ id, label: z.string() })
 const locale = z.enum(['en', 'it', 'zh-CN'])
@@ -401,24 +402,6 @@ export type ActionContext = {
   readonly signal: AbortSignal
 }
 
-const graph = z.strictObject({
-  concepts: z.array(
-    z.strictObject({
-      id,
-      label: z.string(),
-      notes: z.string().optional(),
-      color: z
-        .string()
-        .regex(/^#[0-9a-fA-F]{6}$/)
-        .optional(),
-      bold: z.boolean().optional(),
-      italic: z.boolean().optional(),
-      position,
-    }),
-  ),
-  relationTypes: z.array(relationType),
-  relations: z.array(z.strictObject({ source: id, predicate: id, target: id })),
-})
 const actionStateSchema = z.strictObject({
   revision: z.number().int().nonnegative(),
   contextId: id,
@@ -435,7 +418,7 @@ const actionStateSchema = z.strictObject({
     ),
   ),
   conceptPlacementOffset: position,
-  viewGraph: graph,
+  viewGraph: graphSchema,
   selected: selection,
   targetViewId: id.nullable(),
   activeVocab: z

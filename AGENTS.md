@@ -10,7 +10,7 @@ See [README.md](README.md) for the product overview, architecture, and package d
 - Run `gh workflow run review.yml -f pr=NUMBER` only on explicit request; wait for the review result before enabling auto-merge if both are requested.
 - Enable auto-merge only on explicit request; watch the PR until merged or blocked, and report blockers.
 - After a PR merges during the session, fetch `origin` and fast-forward `main` to `origin/main` in the primary checkout, not the session worktree. Report blockers; never discard changes or force updates.
-- Do not add backward-compatibility code or migration ladders.
+- Migrate published persisted formats through explicit, lossless version steps shared by startup and backup restoration. Preserve originals before writing upgrades, reject unknown versions, and avoid generic migration frameworks or scattered compatibility branches.
 - Prefer the smallest clear implementation. Reuse existing code; avoid unnecessary abstractions, duplication, and redundant tests without sacrificing readability, correctness, or essential coverage.
 - Keep AGENTS.md files minimal: durable development rules and architectural boundaries only. Do not duplicate inherited instructions, implementation details, functional specifications, or progress reports; keep supported behavior in types, validators, and tests.
 - Use English and TypeScript for code, tests, and scripts; JavaScript only when required by tooling. Keep data and documentation in native formats. No code comments.
@@ -25,6 +25,7 @@ See [README.md](README.md) for the product overview, architecture, and package d
 
 ## Architecture
 
+- Keep app, plugin SDK, plugin API, persisted record, backup envelope, and private plugin data versions independent. Choose data migrations by format version, never app version; private plugin schemas remain plugin-owned.
 - Keep modules focused and interfaces small and cohesive. Depend on explicit contracts at architectural boundaries; introduce abstractions only for concrete needs.
 - Consolidate repeated app UI in `@nesso-how/ui`; keep app-specific state and domain logic in the host.
 - Plugins and trusted renderers use only injected APIs, never app internals or a concrete store. Keep instances independent; no module-global mutable store. React subscriptions use the injected instance with `useSyncExternalStore`.

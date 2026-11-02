@@ -7,10 +7,12 @@ import type { DataLocationState } from '../shared/data-location.ts'
 import { persistenceSections } from '../shared/persistence.ts'
 import { ElectronError } from './errors.ts'
 import { containsPath, syncDirectory, writeFileData } from './file-system.ts'
+import { automaticBackupName } from '../shared/backup.ts'
 
 const marker = '.nesso-data-id'
 const names = [...persistenceSections.map((section) => `${section}.json` as const), marker] as const
-const fileSchema = z.strictObject({ name: z.enum(names), hash: z.string().regex(/^[0-9a-f]{64}$/) })
+const ownedName = z.union([z.enum(names), z.string().regex(automaticBackupName)])
+const fileSchema = z.strictObject({ name: ownedName, hash: z.string().regex(/^[0-9a-f]{64}$/) })
 const configSchema = z.strictObject({
   directory: z.string(),
   identity: z.uuid(),
@@ -130,7 +132,10 @@ export async function createDataLocation(userData: string) {
     const entries = await readdir(canonical)
     if (
       canonical === defaultDirectory
-        ? entries.some((name) => names.some((owned) => name === owned || name === `${owned}.tmp`))
+        ? entries.some(
+            (name) =>
+              ownedName.safeParse(name).success || names.some((owned) => name === `${owned}.tmp`),
+          )
         : entries.length > 0
     )
       fail('storageOccupied')
@@ -142,8 +147,9 @@ export async function createDataLocation(userData: string) {
     if (destination === config.directory) return state()
     const source = config.directory
     await checkDirectory(source, config.identity)
-    const data = new Map<(typeof names)[number], Buffer>()
-    for (const name of names) {
+    const data = new Map<string, Buffer>()
+    const backups = (await readdir(source)).filter((name) => automaticBackupName.test(name)).sort()
+    for (const name of [...names.slice(0, -1), ...backups, marker]) {
       const bytes = await readFileData(path.join(source, name))
       if (bytes) data.set(name, bytes)
     }

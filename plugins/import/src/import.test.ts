@@ -9,6 +9,9 @@ const snapshot: Graph = {
       id: 'urn:old-a',
       label: 'Alpha',
       notes: 'Definition\nExample',
+      color: '#aabbcc',
+      bold: true,
+      italic: true,
       position: { x: 1, y: 2 },
     },
     { id: 'urn:old-b', label: 'Beta', position: { x: 3, y: 4 } },
@@ -43,6 +46,15 @@ test('import remaps concept ids and connects original types in the target view',
     [{ kind: 'concept.notes', id: ids[0], value: 'Definition\nExample' }],
   )
   const connects = operations.filter((operation) => operation.kind === 'relation.connect')
+  for (const [kind, value] of [
+    ['concept.color', '#aabbcc'],
+    ['concept.bold', true],
+    ['concept.italic', true],
+  ] as const)
+    assert.deepEqual(
+      operations.filter((operation) => operation.kind === kind),
+      [{ kind, id: ids[0], value }],
+    )
   assert.equal(connects.length, 3)
   assert.deepEqual(
     connects.map((operation) => operation.type?.id),

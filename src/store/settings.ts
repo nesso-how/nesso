@@ -1,7 +1,8 @@
-import type { PanelSizes, Preferences, SectionId, Viewport, WorkspaceState } from '@nesso-how/core'
+import { z } from 'zod'
+import type { PanelSizes, Preferences, WorkspaceState } from '@nesso-how/core'
 import { isLocale } from '@nesso-how/i18n'
 import { aiConversation, aiTextLimits } from '@nesso-how/ai'
-import { NessoError } from '@nesso-how/errors'
+import { NessoError, validationIssues } from '@nesso-how/errors'
 import { sectionIds } from './types.ts'
 
 export const defaultPanels: PanelSizes = { explorerWidth: 180, inspectorWidth: 210 }
@@ -22,158 +23,69 @@ export const fail = (path: string, message: string): never => {
   throw new NessoError([{ path, message }])
 }
 
-export const parseConversation = (value: unknown) => {
-  const parsed = aiConversation.safeParse(value)
-  if (!parsed.success)
-    throw new NessoError(
-      parsed.error.issues.map(({ path, message }) => ({ path: path.join('.'), message })),
-    )
-  return { messages: parsed.data.messages }
-}
-
-export const object = (
+export function parseSettings<T extends z.ZodType>(
+  schema: T,
   value: unknown,
-  path: string,
-  keys?: readonly string[],
-): Record<string, unknown> => {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) fail(path, 'Expected an object')
-  const result = value as Record<string, unknown>
-  const unsupported = keys && Object.keys(result).find((key) => !keys.includes(key))
-  if (unsupported !== undefined)
-    fail(path ? `${path}.${unsupported}` : unsupported, 'Unsupported property')
-  return result
+  prefix = '',
+): z.output<T> {
+  const parsed = schema.safeParse(value)
+  if (!parsed.success) throw new NessoError(validationIssues(parsed.error.issues, prefix))
+  return parsed.data
 }
 
-const string = (value: unknown, path: string): string => {
-  if (typeof value !== 'string') fail(path, 'Expected a string')
-  return value as string
-}
+export const parseConversation = (value: unknown) => ({
+  messages: parseSettings(aiConversation, value).messages,
+})
 
-const number = (value: unknown, path: string, minimum?: number, maximum?: number): number => {
-  if (typeof value !== 'number' || !Number.isFinite(value)) fail(path, 'Expected a finite number')
-  const result = value as number
-  if (minimum !== undefined && result < minimum) fail(path, `Expected at least ${minimum}`)
-  if (maximum !== undefined && result > maximum) fail(path, `Expected at most ${maximum}`)
-  return result
-}
-
-const parseViewport = (value: unknown, path: string): Viewport => {
-  const viewport = object(value, path, ['x', 'y', 'zoom'])
-  const zoom = number(viewport.zoom, `${path}.zoom`)
-  if (zoom <= 0) fail(`${path}.zoom`, 'Expected a positive zoom')
-  return { x: number(viewport.x, `${path}.x`), y: number(viewport.y, `${path}.y`), zoom }
-}
-
-const parsePanels = (value: unknown): PanelSizes => {
-  const panels = object(value, 'preferences.panels', ['explorerWidth', 'inspectorWidth'])
-  return {
-    explorerWidth: number(
-      panels.explorerWidth,
-      'preferences.panels.explorerWidth',
-      panelLimits.explorerWidth.min,
-      panelLimits.explorerWidth.max,
-    ),
-    inspectorWidth: number(
-      panels.inspectorWidth,
-      'preferences.panels.inspectorWidth',
-      panelLimits.inspectorWidth.min,
-    ),
-  }
-}
-
-const parseViewName = (value: unknown, path: string): string => {
-  const name = string(value, path).trim()
-  if (!name || name.length > maxViewNameLength)
-    fail(path, `Expected a name of 1–${maxViewNameLength} characters`)
-  return name
-}
-
-export const parseWorkspace = (value: unknown): WorkspaceState => {
-  const workspace = object(value, 'workspace', ['activeViewId', 'savedViews', 'viewports'])
-  if (!Array.isArray(workspace.savedViews)) fail('workspace.savedViews', 'Expected saved views')
-  const ids = new Set<string>()
-  const savedViews = (workspace.savedViews as unknown[]).map((value, index) => {
-    const path = `workspace.savedViews[${index}]`
-    const view = object(value, path, ['id', 'name', 'conceptIds', 'pinned'])
-    const id = string(view.id, `${path}.id`)
-    const name = parseViewName(view.name, `${path}.name`)
-    if (!id || ids.has(id)) fail(`${path}.id`, 'Duplicate or missing view id')
-    ids.add(id)
-    if (!Array.isArray(view.conceptIds) || !view.conceptIds.every((id) => typeof id === 'string')) {
-      fail(`${path}.conceptIds`, 'Expected concept ids')
-    }
-    const conceptIds = view.conceptIds as string[]
-    if (new Set(conceptIds).size !== conceptIds.length)
-      fail(`${path}.conceptIds`, 'Duplicate concept id')
-    if (typeof view.pinned !== 'boolean') fail(`${path}.pinned`, 'Expected a boolean')
-    return { id, name, conceptIds: [...conceptIds], pinned: view.pinned as boolean }
+const viewportSchema = z.strictObject({ x: z.number(), y: z.number(), zoom: z.number().positive() })
+const savedViewSchema = z.strictObject({
+  id: z.string().min(1),
+  name: z.string().trim().min(1).max(maxViewNameLength),
+  conceptIds: z
+    .array(z.string())
+    .refine((ids) => new Set(ids).size === ids.length, 'Duplicate concept id'),
+  pinned: z.boolean(),
+})
+const workspaceSchema = z
+  .strictObject({
+    activeViewId: z.string().nullable(),
+    savedViews: z.array(savedViewSchema),
+    viewports: z.record(z.string().min(1), viewportSchema),
   })
-  const activeViewId =
-    workspace.activeViewId === null
-      ? null
-      : string(workspace.activeViewId, 'workspace.activeViewId')
-  if (activeViewId !== null && !ids.has(activeViewId))
-    fail('workspace.activeViewId', 'Unknown view')
-  const viewports = object(workspace.viewports, 'workspace.viewports')
-  return {
-    activeViewId,
-    savedViews,
-    viewports: Object.fromEntries(
-      Object.entries(viewports).map(([id, viewport]) => {
-        if (!id) fail('workspace.viewports', 'Expected a renderer id')
-        return [id, parseViewport(viewport, `workspace.viewports.${id}`)]
-      }),
-    ),
-  }
-}
+  .superRefine((workspace, context) => {
+    const ids = new Set<string>()
+    for (const [index, view] of workspace.savedViews.entries()) {
+      if (ids.has(view.id))
+        context.addIssue({
+          code: 'custom',
+          path: ['savedViews', index, 'id'],
+          message: 'Duplicate view id',
+        })
+      ids.add(view.id)
+    }
+    if (workspace.activeViewId !== null && !ids.has(workspace.activeViewId))
+      context.addIssue({ code: 'custom', path: ['activeViewId'], message: 'Unknown view' })
+  }) satisfies z.ZodType<WorkspaceState>
 
-export const parsePreferences = (value: unknown): Preferences => {
-  const preferences = object(value, 'preferences', [
-    'locale',
-    'introSeen',
-    'mcpEnabled',
-    'activeVocabId',
-    'activeRendererId',
-    'activeThemeId',
-    'panels',
-    'inspectorTab',
-    'collapsedSections',
-  ])
-  const locale = preferences.locale
-  if (locale !== undefined && !isLocale(locale)) fail('preferences.locale', 'Unsupported locale')
-  if (preferences.introSeen !== undefined && typeof preferences.introSeen !== 'boolean')
-    fail('preferences.introSeen', 'Expected a boolean')
-  if (preferences.mcpEnabled !== undefined && typeof preferences.mcpEnabled !== 'boolean')
-    fail('preferences.mcpEnabled', 'Expected a boolean')
-  const inspectorTab = preferences.inspectorTab
-  if (inspectorTab !== undefined && inspectorTab !== 'details' && inspectorTab !== 'chat')
-    fail('preferences.inspectorTab', 'Unknown inspector tab')
-  let collapsedSections: SectionId[] | undefined
-  if (preferences.collapsedSections !== undefined) {
-    if (!Array.isArray(preferences.collapsedSections))
-      fail('preferences.collapsedSections', 'Expected section ids')
-    collapsedSections = (preferences.collapsedSections as unknown[]).map((id, index) => {
-      if (!(sectionIds as readonly unknown[]).includes(id))
-        fail(`preferences.collapsedSections[${index}]`, 'Unknown section')
-      return id as SectionId
-    })
-    if (new Set(collapsedSections).size !== collapsedSections.length)
-      fail('preferences.collapsedSections', 'Duplicate section id')
-  }
-  return {
-    ...(isLocale(locale) ? { locale } : {}),
-    ...(preferences.introSeen === undefined ? {} : { introSeen: preferences.introSeen as boolean }),
-    ...(preferences.mcpEnabled === undefined
-      ? {}
-      : { mcpEnabled: preferences.mcpEnabled as boolean }),
-    activeVocabId: string(preferences.activeVocabId, 'preferences.activeVocabId'),
-    activeRendererId: string(preferences.activeRendererId, 'preferences.activeRendererId'),
-    activeThemeId:
-      preferences.activeThemeId === undefined
-        ? ''
-        : string(preferences.activeThemeId, 'preferences.activeThemeId'),
-    panels: parsePanels(preferences.panels),
-    ...(inspectorTab === 'details' || inspectorTab === 'chat' ? { inspectorTab } : {}),
-    ...(collapsedSections === undefined ? {} : { collapsedSections }),
-  }
-}
+export const preferencesSchema = z.strictObject({
+  locale: z.custom<NonNullable<Preferences['locale']>>(isLocale, 'Unsupported locale').optional(),
+  introSeen: z.boolean().optional(),
+  mcpEnabled: z.boolean().optional(),
+  activeVocabId: z.string(),
+  activeRendererId: z.string(),
+  activeThemeId: z.string().default(''),
+  panels: z.strictObject({
+    explorerWidth: z.number().min(panelLimits.explorerWidth.min).max(panelLimits.explorerWidth.max),
+    inspectorWidth: z.number().min(panelLimits.inspectorWidth.min),
+  }),
+  inspectorTab: z.enum(['details', 'chat']).optional(),
+  collapsedSections: z
+    .array(z.enum(sectionIds))
+    .refine((ids) => new Set(ids).size === ids.length, 'Duplicate section id')
+    .optional(),
+}) satisfies z.ZodType<Preferences>
+
+export const parseWorkspace = (value: unknown): WorkspaceState =>
+  parseSettings(workspaceSchema, value, 'workspace')
+export const parsePreferences = (value: unknown): Preferences =>
+  parseSettings(preferencesSchema, value, 'preferences')

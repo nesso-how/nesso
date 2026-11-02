@@ -14,6 +14,7 @@
     "build": "tsc -b"
   },
   "dependencies": {
-    "@nesso-how/errors": "workspace:*"
+    "@nesso-how/errors": "workspace:*",
+    "zod": "^4.6.5"
   }
 }

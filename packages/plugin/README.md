@@ -224,10 +224,9 @@ Await all storage calls before the action returns. Success means the validated c
 
 - A document has a persistent identity outside graph JSON-LD. Resetting it creates a new identity and empty plugin storage; a mismatched saved identity is reported and protected, never silently attached to another document.
 - Removing a view or changing membership does not delete concept data.
-- Deleting a concept retains its records during the current app session so document Undo/Redo can recover it. Private storage changes themselves do not enter graph history.
-- On startup, after the document and plugin storage restore successfully, Nesso removes records whose explicit `conceptId` is absent from the graph. Graph history does not survive restart. Cleanup is skipped after failed restoration and does not execute plugin code.
-- Put data that should be cleaned with a concept, including its logs, inside concept-associated records. IDs embedded in arbitrary payloads are opaque and cannot be cleaned by the host.
-- Disabling, uninstalling, replacing, or crashing a plugin does not delete its stored data. Startup reference cleanup still applies even when the plugin is absent.
+- Deleting a concept retains its records, including across restart and backup restoration. Document Undo/Redo can recover the concept during the current app session; private storage changes themselves do not enter graph history.
+- Use concept-associated records to identify a concept's data, including its logs. Plugins may explicitly delete records no longer needed; IDs embedded in arbitrary payloads remain opaque to the host.
+- Disabling, uninstalling, replacing, or crashing a plugin does not delete its stored data.
 
 #### Limits
 
