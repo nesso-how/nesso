@@ -1,7 +1,6 @@
 import type { Notifications } from '@nesso-how/core'
-import type { AiEffects } from '@nesso-how/ai'
+import { summarizeAiEffects, type AiEffects } from '@nesso-how/ai'
 import type { translate } from '../i18n/index.ts'
-import { summarizeCounts } from './effects.ts'
 
 const confirm = (
   notifications: Notifications,
@@ -48,7 +47,7 @@ export function createAiApproval(
       notifications,
       signal,
       t(title),
-      t('aiEditApproval', summarizeCounts(effects)),
+      t('aiEditApproval', summarizeAiEffects(effects)),
       t,
     )
   }

@@ -7,6 +7,7 @@ import { z } from 'zod'
 import {
   aiChatInstructions,
   aiChatMessages,
+  aiChatLimits,
   aiTools,
   type AiChatRequest,
   type AiChatEvent,
@@ -156,7 +157,7 @@ export function createAiChatRun(
           reportActivity()
         } else if (part.type === 'text-delta') {
           length += part.text.length
-          if (length > 100_000) throw failure()
+          if (length > aiChatLimits.messageLength) throw failure()
           emit({ id: input.id, type: 'text', text: part.text })
         } else if (part.type === 'error') throw failure(part.error)
         else if (part.type === 'tool-error' || part.type === 'abort') throw failure()

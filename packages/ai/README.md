@@ -1,6 +1,6 @@
 # @nesso-how/ai
 
-Framework-independent tool contracts, message formats, provider settings, and assistant instructions for Nesso's desktop AI chat and local MCP server. The host owns state and execution; Electron handles credentials and transport.
+Framework-independent tool contracts, message formats, effect summaries, shared limits, provider settings, and assistant instructions for Nesso's desktop AI chat and local MCP server. The host owns state and execution; Electron handles credentials and transport.
 
 ## Usage
 
@@ -27,7 +27,8 @@ Chat applies a turn's writes together only after the response completes successf
 - `aiTools`: tool descriptions and Zod input schemas, with `AiToolResults` and `AiEffects` result types.
 - `aiConversation`, `aiChatRequest`: persisted conversation and transport request schemas, with message, event, and reply contracts.
 - `aiChatInstructions`, `aiChatMessages`: assistant instructions and provider-bound messages with document context and host outcomes.
-- `aiTextLimits`: shared text limits.
+- `summarizeAiEffects`, `hasAiEffects`: summarize effect counts and detect document changes without accessing host state.
+- `aiTextLimits`, `aiChatLimits`: shared graph text limits and conversation message, count, and context limits.
 - `aiProviders`: provider defaults, connections, accounts, and result types.
 
 `@nesso-how/ai/providers` exposes connection schemas and types without loading tool schemas. See [src/index.ts](src/index.ts) and [src/providers.ts](src/providers.ts) for all exports.
