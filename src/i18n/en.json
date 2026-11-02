@@ -372,6 +372,8 @@
   "relationCount_one": "{{count}} relation",
   "relationCount_other": "{{count}} relations",
   "actionsFor": "Actions for {{name}}",
+  "actionBadgeCount_one": "{{count}} item",
+  "actionBadgeCount_other": "{{count}} items",
   "renameView": "Rename",
   "pinView": "Pin",
   "unpinView": "Unpin",

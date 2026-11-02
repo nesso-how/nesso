@@ -5,7 +5,13 @@ import {
   type Grade,
 } from 'ts-fsrs'
 import { z } from 'zod'
-import { PluginError, type ActionContext } from '@nesso-how/plugin'
+import {
+  PluginError,
+  type ActionBadgeInput,
+  type ActionBadgeResult,
+  type ActionContext,
+  type PluginStorageRecord,
+} from '@nesso-how/plugin'
 
 type Progress = {
   readonly model: 'FSRS-6'
@@ -59,21 +65,9 @@ const storedProgress = z.strictObject({
 })
 const storageKey = 'progress'
 
-export async function createReview(
-  storage: ActionContext['storage'],
-  now: () => Date = () => new Date(),
-) {
-  const scheduler = await DefaultScheduler({
-    version: 'FSRS-6',
-    desiredRetention: 0.9,
-    enableShortTerm: true,
-    learningSteps: ['1m', '10m'],
-    relearningSteps: ['10m'],
-    enableFuzz: false,
-    maximumInterval: 36500,
-  })
+function restoreProgress(records: readonly PluginStorageRecord[]) {
   const progress = new Map<string, Progress>()
-  for (const record of await storage.list()) {
+  for (const record of records) {
     if (record.key !== storageKey) continue
     try {
       if (!record.conceptId) throw new PluginError('invalid-input', [])
@@ -92,6 +86,35 @@ export async function createReview(
       ])
     }
   }
+  return progress
+}
+
+export function reviewBadge({ viewGraph, records, now }: ActionBadgeInput): ActionBadgeResult {
+  const progress = restoreProgress(records)
+  let value = 0
+  let refreshAt = Infinity
+  for (const { id } of viewGraph.concepts) {
+    const due = progress.get(id)?.card.dueAt.getTime()
+    if (due === undefined || due <= now) value++
+    else refreshAt = Math.min(refreshAt, due)
+  }
+  return { value, ...(Number.isFinite(refreshAt) ? { refreshAt } : {}) }
+}
+
+export async function createReview(
+  storage: ActionContext['storage'],
+  now: () => Date = () => new Date(),
+) {
+  const scheduler = await DefaultScheduler({
+    version: 'FSRS-6',
+    desiredRetention: 0.9,
+    enableShortTerm: true,
+    learningSteps: ['1m', '10m'],
+    relearningSteps: ['10m'],
+    enableFuzz: false,
+    maximumInterval: 36500,
+  })
+  const progress = restoreProgress(await storage.list())
   let snapshot: Snapshot = {
     progress,
     session: null,

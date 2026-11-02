@@ -9,6 +9,8 @@ export type { ThemeDefinition } from './definitions.ts'
 export { PluginError } from './errors.ts'
 export type {
   ActionContext,
+  ActionBadgeInput,
+  ActionBadgeResult,
   ActionContribution,
   ActionDescriptor,
   ActionIconName,

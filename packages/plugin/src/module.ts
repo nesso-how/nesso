@@ -53,6 +53,7 @@ export function validateActions(
     actions.some(
       (action) =>
         !action ||
+        (action.badge !== undefined && typeof action.badge !== 'function') ||
         (action.ui !== undefined
           ? !isComponent(action.ui) || action.run !== undefined
           : typeof action.run !== 'function'),

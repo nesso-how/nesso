@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from 'react'
+import { useCallback, useSyncExternalStore } from 'react'
 import { host, nessoStore, registerTheme, registerVocab } from '@/store'
 import type { VocabDefinition } from '@nesso-how/core'
 import type { ThemeDefinition } from '@nesso-how/plugin'
@@ -26,6 +26,8 @@ import { translate } from '../i18n/index.ts'
 import { packageFonts, parsePackageIdentity, verifyPluginPackage } from '@nesso-how/plugin/package'
 import type { InstalledPlugin, PluginResult } from '../../shared/plugins.ts'
 import { createPluginPanel } from './panel.ts'
+import { createActionBadges } from './badges.ts'
+import { executeActionBadge } from './badge-execution.ts'
 
 export const pluginPanel = createPluginPanel(nessoStore, notifications.api, window.nessoFiles)
 export const usePluginPanel = () =>
@@ -47,6 +49,34 @@ const publishActions = () => {
 const installations = new Map<string, AbortController>()
 const changing = new Set<string>()
 const registry = createPluginRegistry()
+const actionBadges = createActionBadges(nessoStore, registry, (plugin, actionId, input, signal) => {
+  const source = actions.get(plugin.id)
+  if (!source || changing.has(plugin.id))
+    return Promise.reject(
+      new PluginError('unavailable', [{ path: 'badge', message: 'Plugin unavailable' }]),
+    )
+  return executeActionBadge(source, plugin.contribution, actionId, input, signal)
+})
+const refreshBadges = () => actionBadges.setForeground(document.visibilityState === 'visible')
+document.addEventListener('visibilitychange', refreshBadges)
+window.addEventListener('focus', refreshBadges)
+window.addEventListener('pageshow', refreshBadges)
+refreshBadges()
+import.meta.hot?.dispose(() => {
+  document.removeEventListener('visibilitychange', refreshBadges)
+  window.removeEventListener('focus', refreshBadges)
+  window.removeEventListener('pageshow', refreshBadges)
+  actionBadges.dispose()
+})
+export const useViewActionBadge = (actionId: string, viewId: string | null, visible: boolean) =>
+  useSyncExternalStore(
+    useCallback(
+      (listener: () => void) =>
+        visible ? actionBadges.watch(actionId, viewId, listener) : () => {},
+      [actionId, viewId, visible],
+    ),
+    () => (visible ? actionBadges.getValue(actionId, viewId) : null),
+  )
 const getTranslation = () => translate(nessoStore.getState().preferences.locale ?? defaultLocale)
 export const getThemePresentation = (id: string) => themes.get(id)
 export const usePlugins = () => useSyncExternalStore(registry.subscribe, registry.getSnapshot)
@@ -64,6 +94,7 @@ export const pluginMetadata = (plugin: Pick<PluginEntry, 'i18n'>, locale: Locale
   documentation: resolvePluginText(plugin.i18n.metadata.documentation, locale),
 })
 export const stopPluginActions = () => {
+  actionBadges.setForeground(false)
   for (const controller of active.keys()) controller.abort()
   for (const [id, controller] of installations) {
     controller.abort()
@@ -71,6 +102,7 @@ export const stopPluginActions = () => {
   }
 }
 export const stopExternalActions = (name: string) => {
+  actionBadges.invalidatePlugin(name)
   let stopped = 0
   for (const [controller, source] of active)
     if (source === name && !controller.signal.aborted) {

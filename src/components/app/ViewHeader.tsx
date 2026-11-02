@@ -5,6 +5,7 @@ import { useTranslation } from '@/i18n'
 import { invokeAction, useViewActions } from '@/plugins'
 import { useNessoStore } from '@/store'
 import { ViewActions } from './ViewActions'
+import { ActionBadge } from './ActionBadge'
 
 export function ViewHeader({ readonly = false }: { readonly?: boolean }) {
   const t = useTranslation()
@@ -24,13 +25,20 @@ export function ViewHeader({ readonly = false }: { readonly?: boolean }) {
               disabled={readonly}
               variant="ghost"
               size="sm"
-              className="hidden w-auto sm:inline-flex"
+              className="relative hidden w-auto sm:inline-flex"
               onClick={() => {
                 void invokeAction(review.id, workspace.activeViewId)
               }}
             >
               <ActionIcon name={review.icon} />
               {review.label[locale] ?? review.label.en}
+              {review.badge && (
+                <ActionBadge
+                  actionId={review.id}
+                  viewId={workspace.activeViewId}
+                  label={review.label[locale] ?? review.label.en}
+                />
+              )}
             </Button>
           )}
           <Menu.Root key={workspace.activeViewId ?? 'complete-graph'}>

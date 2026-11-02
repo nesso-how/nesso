@@ -137,6 +137,22 @@ Nesso supplies React, the `@nesso-how/ui` component stylesheet, and theme CSS va
 
 Use React effects to clean up subscriptions and resources. Panels have no action execution timeout, but initialization and API requests have deadlines. Uncaught errors or rejected promises fail the session; handle expected errors in your UI. Nesso provides the title, close control, and loading/failure screens. Changing the active view revokes the current panel instance and mounts the same action in a new instance for the selected view, including All. Closing or replacing a panel discards its React state: save progress through `storage` during use, not during cleanup, which is best effort.
 
+### Action badges
+
+Add optional `badge(input)` to a `run` or `ui` action. It may return synchronously or asynchronously:
+
+```ts
+badge: ({ viewGraph }) => ({
+  value: viewGraph.concepts.length,
+})
+```
+
+- `input`: readonly `viewId` (`null` for All), target `viewGraph`, private document storage `records` (requires `storage`; otherwise empty), and `now` in Unix milliseconds.
+- Return `{ value: number | null, refreshAt?: number }`. `value` is an integer from 0 to 999,999; zero and `null` hide the badge.
+- For time-dependent counts, calculate from `now` and return `refreshAt` as an absolute Unix-millisecond timestamp. Omit it otherwise. Timed refreshes run no more often than every 15 seconds.
+
+Runs in an isolated Worker with no action APIs and a 2-second calculation limit. Nesso calculates only visible badges and refreshes them after graph, saved-view, or plugin storage changes. Results are not persisted; failures hide the badge.
+
 ### Read the invoked view
 
 - `document.getState()` returns the latest readonly local snapshot synchronously and makes it the basis for subsequent writes.

@@ -1,6 +1,11 @@
 import assert from 'node:assert/strict'
 import { parseGraph, serializeGraph } from '@nesso-how/schema'
-import { parseContribution, parseDefinition, type ActionState } from '@nesso-how/plugin/runtime'
+import {
+  parseContribution,
+  parseDefinition,
+  type ActionBadgeResult,
+  type ActionState,
+} from '@nesso-how/plugin/runtime'
 import { actionState, waitFor, type CheckContext } from './helpers.ts'
 
 type Probe = {
@@ -9,6 +14,7 @@ type Probe = {
   discoveryRequests: number
   requests: { method: string; params: { name?: string; text?: string } }[]
   complete?: { ok: boolean; error?: { code: string } }
+  badge?: ActionBadgeResult
   error?: string
 }
 
@@ -30,6 +36,7 @@ export async function verifyBundled({ window, url }: CheckContext) {
     ['import', 'run'],
     ['export', 'run'],
     ['import', 'conflict'],
+    ['review', 'badge'],
   ] as const) {
     const invocation = phase !== 'discovery'
     const conflict = phase === 'conflict'
@@ -47,7 +54,9 @@ export async function verifyBundled({ window, url }: CheckContext) {
         const result=window.__bundled;
         if(data.type==='contribution'){
           result.contribution=data.value;result.discoveryRequests=result.requests.length;
-          if(${invocation}){
+           if(${phase === 'badge'}){
+             channel.port1.postMessage({type:'badge',actionId:data.value[0].id,input:{viewId:null,viewGraph:${JSON.stringify(graph)},records:[],now:0}});
+           }else if(${invocation}){
             channel.port1.postMessage({type:'invoke',actionId:data.value[0].id,state:${JSON.stringify(state)}});
           }else result.done=true;
         }
@@ -64,6 +73,7 @@ export async function verifyBundled({ window, url }: CheckContext) {
           channel.port1.postMessage({type:'response',id:data.id,ok:allowed,...(allowed?{value:data.method==='files.save'?{saved:false}:null}:{error:{code:'denied',issues:[{path:'probe',message:'Unexpected request'}]}})});
         }
         if(data.type==='complete'){result.complete=data;result.done=true}
+        if(data.type==='badge-result'){result.badge=data.value;result.done=true}
         if(data.type==='close'){result.error=data.reason;result.done=true}
       };
       frame.contentWindow.postMessage({type:'bootstrap',token:'probe',entry},'*',[channel.port2]);
@@ -80,7 +90,11 @@ export async function verifyBundled({ window, url }: CheckContext) {
         descriptors.map(({ id }) => id),
         [`${name}-view`],
       )
-      if (invocation) {
+      if (phase === 'badge') {
+        assert.equal(descriptors[0].badge, true)
+        assert.deepEqual(result.badge, { value: 1 })
+        assert.deepEqual(result.requests, [])
+      } else if (invocation) {
         assert.equal(result.complete?.ok, !conflict, name)
         if (conflict) assert.equal(result.complete?.error?.code, 'stale-state')
         assert.deepEqual(
