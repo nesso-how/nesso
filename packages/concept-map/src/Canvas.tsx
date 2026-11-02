@@ -117,6 +117,7 @@ export function Canvas({
   const [editId, setEditId] = useState<string | null>(null)
   const { fitView, screenToFlowPosition, getNodes, getNodesBounds, setViewport } = useReactFlow()
   const zoom = useFlowStore((state) => state.transform[2])
+  const userSelecting = useFlowStore((state) => state.userSelectionActive)
   const [sizes, setSizes] = useState<ConceptNodeSizes>({})
   const [contextMenu, setContextMenu] = useState<{
     x: number
@@ -431,6 +432,28 @@ export function Canvas({
   }, [readOnly, canvas])
 
   useEffect(() => {
+    const prevent = (event: Event) => {
+      const target = event.target
+      if (
+        target instanceof Element &&
+        canvas.current?.contains(target) &&
+        !target.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"])')
+      )
+        event.preventDefault()
+    }
+    document.addEventListener('selectstart', prevent)
+    return () => document.removeEventListener('selectstart', prevent)
+  }, [canvas])
+
+  useEffect(() => {
+    if (!userSelecting) return
+    window.getSelection()?.removeAllRanges()
+    const prevent = (event: Event) => event.preventDefault()
+    document.addEventListener('selectstart', prevent)
+    return () => document.removeEventListener('selectstart', prevent)
+  }, [userSelecting])
+
+  useEffect(() => {
     if (hasOverlay || navigation.current === view) return
     navigation.current = view
     const frame = requestAnimationFrame(() => {
@@ -487,6 +510,16 @@ export function Canvas({
           ? 'h-full w-full outline-none graph-reconnecting'
           : 'h-full w-full outline-none'
       }
+      onPointerDown={(event) => {
+        if (
+          event.shiftKey &&
+          event.target instanceof Element &&
+          !event.target.closest(
+            'input, textarea, select, [contenteditable]:not([contenteditable="false"])',
+          )
+        )
+          window.getSelection()?.removeAllRanges()
+      }}
       onKeyDown={(event) => {
         if (event.defaultPrevented || event.nativeEvent.isComposing) return
         if (
@@ -614,6 +647,7 @@ export function Canvas({
           canvas.current?.focus()
         }}
         onPaneContextMenu={(event) => handleContextMenu(event)}
+        onSelectionStart={() => window.getSelection()?.removeAllRanges()}
         onSelectionContextMenu={(event) => handleContextMenu(event, undefined, 'selection')}
         onDoubleClick={handlePaneDoubleClick}
         zoomOnDoubleClick={false}
@@ -637,7 +671,7 @@ export function Canvas({
         {!hasOverlay && (
           <Panel
             position="top-left"
-            className="canvas-label pointer-events-none font-mono text-[10px] text-muted-foreground"
+            className="canvas-label pointer-events-none font-mono text-[10px] text-muted-foreground select-none"
           >
             {viewName} · {t('conceptCount', { count: viewCount })}
           </Panel>
@@ -695,7 +729,7 @@ export function Canvas({
         {!hasOverlay && (
           <Panel
             position="bottom-right"
-            className="canvas-label pointer-events-none font-mono text-[10px] text-muted-foreground"
+            className="canvas-label pointer-events-none font-mono text-[10px] text-muted-foreground select-none"
             aria-label={t('zoomLevel')}
           >
             {Math.round(zoom * 100)}%
