@@ -1,4 +1,9 @@
-import type { AiDocumentation, AiResult, AiToolResults } from '@nesso-how/ai'
+import {
+  hasAiEffects,
+  type AiDocumentation,
+  type AiResult,
+  type AiToolResults,
+} from '@nesso-how/ai'
 import type { McpBridge } from '../../electron/mcp-bridge.ts'
 import { NessoError } from '@nesso-how/errors'
 import { createAiTurn } from './turn.ts'
@@ -50,10 +55,7 @@ export function connectMcpHost(
           const changed =
             event.name === 'history'
               ? (value as AiToolResults['history']).available
-              : effects.memberships > 0 ||
-                [effects.concepts, effects.relations, effects.relationTypes, effects.views].some(
-                  (group) => group.added + group.updated + group.removed > 0,
-                )
+              : hasAiEffects(effects)
           result = {
             value: {
               ...commit,

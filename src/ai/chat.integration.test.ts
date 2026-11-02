@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import {
   aiTools,
+  aiChatLimits,
   type AiChatEvent,
   type AiChatRequest,
   type AiDocumentation,
@@ -69,6 +70,27 @@ const fixture = () => {
       }),
   }
 }
+
+test('chat reserves space for both new messages within the shared limit', async () => {
+  const f = fixture()
+  const messages = Array.from({ length: aiChatLimits.messageCount - 1 }, (_, index) => ({
+    id: String(index),
+    role: 'user' as const,
+    content: 'Previous message',
+  }))
+  f.host.store.setChatMessages(messages)
+  const full = f.host.store.getState()
+  await f.chat.send('Explain Nesso', f.host, 'en')
+  assert.equal(f.host.store.getState(), full)
+  assert.equal(f.chat.getSnapshot().issues.length, 1)
+
+  f.host.store.setChatMessages(messages.slice(1))
+  const sending = f.chat.send('Explain Nesso', f.host, 'en')
+  f.finish({ value: true })
+  await sending
+  assert.equal(f.host.store.getState().conversation.messages.length, aiChatLimits.messageCount)
+  f.chat.dispose()
+})
 
 test('chat reads documentation with transient activity, ignores unrelated events and clears between turns', async () => {
   const f = fixture()

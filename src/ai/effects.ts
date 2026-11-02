@@ -1,4 +1,4 @@
-import { type AiChatMessage, type AiEffects } from '@nesso-how/ai'
+import type { AiEffects } from '@nesso-how/ai'
 import type { Change } from '../store/delta.ts'
 import type { applyStateOperations } from '../store/operations.ts'
 
@@ -26,14 +26,4 @@ export function summarizeEffects({
   const updatedViews = delta.views.filter((view) => view.before && view.after)
   const memberships = updatedViews.reduce((total, view) => total + view.members.length, 0)
   return { ...groups, memberships }
-}
-
-export function summarizeCounts(effects: AiEffects): NonNullable<AiChatMessage['summary']> {
-  const groups = [effects.concepts, effects.relations, effects.relationTypes, effects.views]
-  return {
-    added: groups.reduce((total, group) => total + group.added, 0),
-    updated: groups.reduce((total, group) => total + group.updated, 0),
-    removed: groups.reduce((total, group) => total + group.removed, 0),
-    memberships: effects.memberships,
-  }
 }

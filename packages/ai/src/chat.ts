@@ -2,11 +2,12 @@ import { z } from 'zod'
 import { locales } from '@nesso-how/i18n'
 import type { AiToolResults } from './results.ts'
 import type { aiTools } from './tools.ts'
+import { aiChatLimits } from './policy.ts'
 
 const aiChatMessage = z.strictObject({
   id: z.string().min(1).max(128),
   role: z.enum(['user', 'assistant']),
-  content: z.string().max(100_000),
+  content: z.string().max(aiChatLimits.messageLength),
   outcome: z.enum(['complete', 'applied', 'cancelled', 'error']).optional(),
   summary: z
     .strictObject({
@@ -19,12 +20,12 @@ const aiChatMessage = z.strictObject({
 })
 export const aiConversation = z.strictObject({
   version: z.literal(1),
-  messages: z.array(aiChatMessage).max(500),
+  messages: z.array(aiChatMessage).max(aiChatLimits.messageCount),
 })
 export const aiChatRequest = z.strictObject({
   id: z.string().min(1).max(128),
-  messages: z.array(aiChatMessage).min(1).max(500),
-  context: z.string().max(32_000),
+  messages: z.array(aiChatMessage).min(1).max(aiChatLimits.messageCount),
+  context: z.string().max(aiChatLimits.contextLength),
   locale: z.enum(locales),
 })
 export type AiChatMessage = z.infer<typeof aiChatMessage>

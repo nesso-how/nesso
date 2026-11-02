@@ -1,8 +1,15 @@
-import type { aiTools, AiChatMessage, AiChatRequest, AiDocumentation } from '@nesso-how/ai'
+import {
+  aiChatLimits,
+  hasAiEffects,
+  summarizeAiEffects,
+  type aiTools,
+  type AiChatMessage,
+  type AiChatRequest,
+  type AiDocumentation,
+} from '@nesso-how/ai'
 import type { AiBridge } from '../../electron/ai-bridge.ts'
 import { NessoError } from '@nesso-how/errors'
 import { createAiTurn } from './turn.ts'
-import { summarizeCounts } from './effects.ts'
 import type { HostStore } from '../store/types.ts'
 
 type Snapshot = {
@@ -106,7 +113,10 @@ export function createAiChat(
       const text = content.trim()
       if (!text || active) return
       const messages = store.getState().conversation.messages
-      if (text.length > 100_000 || messages.length > 498) {
+      if (
+        text.length > aiChatLimits.messageLength ||
+        messages.length + 2 > aiChatLimits.messageCount
+      ) {
         publish({
           ...state,
           issues: [
@@ -152,14 +162,9 @@ export function createAiChat(
         if ('issues' in result) throw new NessoError([...result.issues])
         const commit = await turn.commit()
         const { effects } = commit
-        const changed =
-          run.historyAvailable ||
-          effects.memberships > 0 ||
-          [effects.concepts, effects.relations, effects.relationTypes, effects.views].some(
-            (group) => group.added + group.updated + group.removed > 0,
-          )
+        const changed = run.historyAvailable || hasAiEffects(effects)
         outcome = changed && !run.historyAvailable ? 'applied' : 'complete'
-        if (outcome === 'applied') summary = summarizeCounts(effects)
+        if (outcome === 'applied') summary = summarizeAiEffects(effects)
       } catch (error) {
         if (run.failure || !controller.signal.aborted) {
           outcome = 'error'

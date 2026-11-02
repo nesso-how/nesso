@@ -1,6 +1,7 @@
 export { aiTools } from './tools.ts'
 export { aiChatInstructions, aiChatMessages } from './prompt.ts'
-export { aiTextLimits } from './policy.ts'
+export { aiTextLimits, aiChatLimits } from './policy.ts'
+export { summarizeAiEffects, hasAiEffects } from './effects.ts'
 export type { AiEffects, AiToolResults } from './results.ts'
 export type { AiDocumentation } from './docs.ts'
 export {
