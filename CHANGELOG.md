@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.0.0-beta.1 — 2026-11-02
+
+### Features
+
+- **site:** Add umami analytics with download events (#228)
+- **ui:** Expose view actions and refine canvas controls (#231)
+- **search:** Add global search dialog (#232)
+- **plugins:** Add action badges with review count (#233)
+
+### Fixes
+
+- **site:** Hide graph on mobile to avoid squashed render (#226)
+- **canvas:** Prevent native text selection during shift box-select (#227)
+- **updates:** Delay quitAndInstall so restart feedback is visible (#234)
+
 ## 1.0.0-alpha.34 — 2026-11-01
 
 ### Features
