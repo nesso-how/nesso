@@ -153,7 +153,7 @@
 .intro-header {
   position: relative;
   display: flex;
-  height: 49px;
+  height: var(--nesso-panel-bar-height);
   flex-shrink: 0;
   align-items: center;
   justify-content: space-between;
@@ -177,7 +177,6 @@
   text-align: center;
 }
 .intro-header button {
-  color: var(--muted-foreground);
   font-size: 11px;
 }
 .intro-body {
@@ -616,11 +615,10 @@
   align-items: center;
   gap: 7px;
   padding: 0;
-  color: var(--muted-foreground);
+  color: var(--foreground);
   font-size: 12px;
 }
 .assistant-tabs button[data-active] {
-  color: var(--foreground);
   font-weight: 500;
 }
 .assistant-tabs button[data-active]::after {
@@ -896,8 +894,10 @@
   text-align: center;
   text-wrap: pretty;
 }
-.chat-note button:hover {
+.chat-note button {
   color: var(--foreground);
+}
+.chat-note button:hover {
   text-decoration: underline;
 }
 @keyframes chat-message-enter {
@@ -970,11 +970,7 @@
 }
 .settings-nav[aria-current='page'] {
   background: var(--pressed);
-  font-weight: 500;
   color: var(--foreground);
-}
-.settings-nav:not([aria-current]) {
-  color: var(--muted-foreground);
 }
 .settings-footer {
   display: flex;
@@ -1154,13 +1150,11 @@
 }
 .ai-back {
   margin: -4px 0 14px -10px;
-  color: var(--muted-foreground);
   cursor: pointer;
 }
 .ai-back:hover,
 .ai-back:active {
   background: transparent;
-  color: var(--foreground);
 }
 .ai-new-connection {
   margin-right: -10px;
@@ -1187,7 +1181,6 @@
 }
 .ai-connection-type button {
   padding-inline: 15px;
-  color: var(--muted-foreground);
 }
 .ai-connection-type button[aria-pressed='true'] {
   background: var(--pressed);
@@ -1249,7 +1242,6 @@
 }
 .ai-usage {
   margin: 16px 0 0 -10px;
-  color: var(--muted-foreground);
 }
 .ai-connection-form > .nesso-field,
 .ai-model-field {

@@ -27,8 +27,16 @@ export async function verifyPanelWorkspace(context: CheckContext) {
     `document.querySelector('#canvas .react-flow').dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))`,
   )
   const open = async () => {
+    await evaluate(`document.querySelector('#canvas header button[aria-haspopup="menu"]').click()`)
+    await waitFor(
+      () =>
+        evaluate<boolean>(
+          `[...document.querySelectorAll('[role="menuitem"]')].some(item=>item.textContent.trim()==='Concept Quiz')`,
+        ),
+      Boolean,
+    )
     await evaluate(
-      `(()=>{const button=[...document.querySelectorAll('button')].find(button=>button.textContent.trim()==='Concept Quiz');if(!button)throw new Error('Missing example action');button.click()})()`,
+      `[...document.querySelectorAll('[role="menuitem"]')].find(item=>item.textContent.trim()==='Concept Quiz').click()`,
     )
     await waitFor(
       () =>
@@ -39,17 +47,13 @@ export async function verifyPanelWorkspace(context: CheckContext) {
     )
   }
   await waitFor(
-    () =>
-      evaluate<boolean>(
-        `[...document.querySelectorAll('button')].some(button=>button.textContent.trim()==='Concept Quiz')`,
-      ),
-    Boolean,
-  )
-  await waitFor(
     async () => saved.get('document') as { workspace: { viewports: Record<string, unknown> } },
     (record) => Object.keys(record?.workspace.viewports ?? {}).length > 0,
   )
   const before = structuredClone(saved.get('document'))
+  const header = await evaluate<{ name: string; height: string }>(
+    `(()=>{const header=document.querySelector('#canvas header');return {name:header.querySelector('h1').textContent,height:getComputedStyle(header).height}})()`,
+  )
   const progress = () =>
     (
       saved.get('plugin-storage') as
@@ -58,6 +62,12 @@ export async function verifyPanelWorkspace(context: CheckContext) {
     )?.plugins.find(({ pluginId }) => pluginId === source.name)?.records ?? []
   await evaluate(`window.__canvas=document.querySelector('#canvas .react-flow')`)
   await open()
+  assert.deepEqual(
+    await evaluate(
+      `(()=>{const header=document.querySelector('[data-plugin-panel] header');return {name:header.querySelector('h2').textContent,action:header.querySelector('h2 + span').textContent,height:getComputedStyle(header).height}})()`,
+    ),
+    { ...header, action: 'Concept Quiz' },
+  )
   assert.equal(
     await evaluate(
       `document.querySelector('[data-plugin-panel] [aria-busy]').getAttribute('aria-busy')`,

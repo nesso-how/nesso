@@ -1,0 +1,60 @@
+import { defaultLocale } from '@nesso-how/i18n'
+import { ActionIcon, Button, IconButton, Menu, MenuPopup, PanelHeader } from '@nesso-how/ui'
+import { MoreHorizontal } from 'lucide-react'
+import { useTranslation } from '@/i18n'
+import { invokeAction, useViewActions } from '@/plugins'
+import { useNessoStore } from '@/store'
+import { ViewActions } from './ViewActions'
+
+export function ViewHeader({ readonly = false }: { readonly?: boolean }) {
+  const t = useTranslation()
+  const workspace = useNessoStore((state) => state.workspace)
+  const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale)
+  const review = useViewActions().find((action) => action.id === 'review-view')
+  const view = workspace.savedViews.find((view) => view.id === workspace.activeViewId)
+  const name = view?.name ?? t('completeGraph')
+
+  return (
+    <PanelHeader
+      size="lg"
+      actions={
+        <>
+          {review && (
+            <Button
+              disabled={readonly}
+              variant="ghost"
+              size="sm"
+              className="hidden w-auto sm:inline-flex"
+              onClick={() => {
+                void invokeAction(review.id, workspace.activeViewId)
+              }}
+            >
+              <ActionIcon name={review.icon} />
+              {review.label[locale] ?? review.label.en}
+            </Button>
+          )}
+          <Menu.Root key={workspace.activeViewId ?? 'complete-graph'}>
+            <Menu.Trigger
+              disabled={readonly}
+              render={
+                <IconButton
+                  aria-label={t('actionsFor', { name })}
+                  title={t('actionsFor', { name })}
+                />
+              }
+            >
+              <MoreHorizontal />
+            </Menu.Trigger>
+            <MenuPopup align="end">
+              <ViewActions viewId={workspace.activeViewId} inlineActionId={review?.id} />
+            </MenuPopup>
+          </Menu.Root>
+        </>
+      }
+    >
+      <h1 className="truncate text-[13px] font-medium" title={name}>
+        {name}
+      </h1>
+    </PanelHeader>
+  )
+}

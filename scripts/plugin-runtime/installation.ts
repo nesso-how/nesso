@@ -809,7 +809,9 @@ async function verifyStopDisable(driver: Driver, window: BrowserWindow) {
     await driver.evaluate(
       `document.querySelector('.settings-popup button[aria-label="Close"]').click()`,
     )
-    await driver.evaluate(`document.querySelector('[aria-label="Actions for Overview"]').click()`)
+    await driver.evaluate(
+      `document.querySelector('#canvas header [aria-label="Actions for Overview"]').click()`,
+    )
     await waitFor(
       () =>
         driver.evaluate<boolean>(

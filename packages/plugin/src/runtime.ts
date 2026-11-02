@@ -309,6 +309,7 @@ export const actionIconNames = [
   'play',
   'plus',
   'refresh',
+  'repeat',
   'scissors',
   'search',
   'share',

@@ -5,7 +5,7 @@ export const create = (): readonly ActionContribution[] => [
   {
     id: 'review-view',
     label: { en: 'Review', it: 'Ripasso', 'zh-CN': '复习' },
-    icon: 'glasses',
+    icon: 'repeat',
     ui: ReviewPanel,
   },
 ]

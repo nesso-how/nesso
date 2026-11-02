@@ -167,57 +167,55 @@ export function Practice({
               onStart={() => start()}
             />
           )}
+          {current && (
+            <div ref={controls} className="review-controls review-width">
+              {revealed ? (
+                <>
+                  <p className="review-rating-title">
+                    {t.rate} <span className="review-rating-keys">1–4</span>
+                  </p>
+                  <div className="review-ratings">
+                    {previews.map(({ grade, card }) => (
+                      <Button
+                        key={grade}
+                        variant="outline"
+                        disabled={busy || failed}
+                        aria-keyshortcuts={String(grade)}
+                        onClick={() => rate(grade)}
+                      >
+                        <span>{ratings[grade]}</span>
+                        <span className="review-rating-interval">
+                          {formatInterval(card.dueAt, time, t)}
+                        </span>
+                      </Button>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <div className="review-reveal">
+                  <Button
+                    disabled={busy || failed}
+                    aria-keyshortcuts="Space"
+                    onClick={() => review.reveal()}
+                  >
+                    {t.reveal}
+                  </Button>
+                  <Kbd>{t.space}</Kbd>
+                </div>
+              )}
+              <Button
+                className="review-end"
+                variant="ghost"
+                disabled={busy}
+                aria-keyshortcuts="Escape"
+                onClick={() => review.finish()}
+              >
+                {t.end}
+              </Button>
+            </div>
+          )}
         </div>
       </div>
-      {current && (
-        <div className="review-bottom">
-          <div ref={controls} className="review-controls review-width">
-            {revealed ? (
-              <>
-                <p className="review-rating-title">
-                  {t.rate} <span className="review-rating-keys">1–4</span>
-                </p>
-                <div className="review-ratings">
-                  {previews.map(({ grade, card }) => (
-                    <Button
-                      key={grade}
-                      variant="outline"
-                      disabled={busy || failed}
-                      aria-keyshortcuts={String(grade)}
-                      onClick={() => rate(grade)}
-                    >
-                      <span>{ratings[grade]}</span>
-                      <span className="review-rating-interval">
-                        {formatInterval(card.dueAt, time, t)}
-                      </span>
-                    </Button>
-                  ))}
-                </div>
-              </>
-            ) : (
-              <div className="review-reveal">
-                <Button
-                  disabled={busy || failed}
-                  aria-keyshortcuts="Space"
-                  onClick={() => review.reveal()}
-                >
-                  {t.reveal}
-                </Button>
-                <Kbd>{t.space}</Kbd>
-              </div>
-            )}
-            <Button
-              className="review-end"
-              variant="ghost"
-              disabled={busy}
-              aria-keyshortcuts="Escape"
-              onClick={() => review.finish()}
-            >
-              {t.end}
-            </Button>
-          </div>
-        </div>
-      )}
       <span className="review-sr" role="status" aria-live="polite">
         {!busy && session && session.index > 0 ? t.recorded : ''}
       </span>
