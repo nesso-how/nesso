@@ -466,11 +466,7 @@ footer {
     justify-content: center;
   }
   .graph {
-    width: min(100%, 430px);
-    justify-self: center;
-  }
-  .graph svg {
-    max-height: 250px;
+    display: none;
   }
   footer {
     min-height: 60px;
@@ -488,9 +484,6 @@ footer {
   }
   .actions {
     margin-top: 20px;
-  }
-  .graph svg {
-    max-height: 175px;
   }
   footer {
     min-height: 52px;
@@ -533,9 +526,6 @@ footer {
   }
   .actions {
     margin-top: 20px;
-  }
-  .graph svg {
-    max-height: 260px;
   }
   footer {
     min-height: 44px;
