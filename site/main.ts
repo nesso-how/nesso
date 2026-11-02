@@ -30,6 +30,7 @@ const download = document.querySelector<HTMLAnchorElement>('[data-download-versi
 const label = download?.querySelector('span')
 
 if (download?.dataset.downloadVersion && download.dataset.downloadLabel && label) {
+  download.setAttribute('data-umami-event-platform', platform)
   const target = desktopDownload(platform, download.dataset.downloadVersion)
   if (target) {
     download.href = target.href

@@ -34,6 +34,12 @@
     <style>
       {{styles}}
     </style>
+    <script
+      defer
+      src="https://cloud.umami.is/script.js"
+      data-website-id="d72df74a-c7c1-4baa-9f31-7649c420d2bc"
+      data-domains="nesso.how"
+    ></script>
   </head>
   <body>
     <div class="page">
@@ -69,6 +75,7 @@
               href="https://github.com/nesso-how/nesso/releases/tag/v%NESSO_VERSION%"
               data-download-version="%NESSO_VERSION%"
               data-download-label="{{downloadPlatform}}"
+              data-umami-event="download"
             >
               <span>{{download}}</span>
               <svg
@@ -129,10 +136,15 @@
               target="_blank"
               rel="noopener noreferrer"
               aria-label="{{otherDownloadsLabel}}"
+              data-umami-event="other-downloads"
               >{{otherDownloads}}</a
             >
             <span aria-hidden="true">·</span>
-            <span><a class="download-link" href="https://app.nesso.how">{{webDemo}}</a></span>
+            <span
+              ><a class="download-link" href="https://app.nesso.how" data-umami-event="open-demo"
+                >{{webDemo}}</a
+              ></span
+            >
           </nav>
         </section>
         <figure class="graph">
