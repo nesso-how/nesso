@@ -1,7 +1,14 @@
-import { isAbsoluteIri, parseGraph, serializeGraph, type Graph } from '@nesso-how/schema'
+import { z } from 'zod'
+import { parseGraph, serializeGraph, type Graph } from '@nesso-how/schema'
 import type { createNessoStore } from './create.ts'
 import { NessoError } from '@nesso-how/errors'
-import { fail, object, parseConversation, parsePreferences, parseWorkspace } from './settings.ts'
+import {
+  fail,
+  parseConversation,
+  parseSettings,
+  parseWorkspace,
+  preferencesSchema,
+} from './settings.ts'
 import type { Preferences, WorkspaceState } from '@nesso-how/core'
 import type { HostState } from './types.ts'
 import {
@@ -12,6 +19,9 @@ import {
 } from '../../shared/persistence.ts'
 import { checkGraph, sameGraph, samePreferences, sameWorkspace } from './operations.ts'
 import { parsePluginStorage } from './plugin-storage.ts'
+import { migrateDocument } from './migrations.ts'
+
+const preferencesRecord = z.strictObject({ version: z.literal(1), preferences: preferencesSchema })
 
 export type LoadedState = {
   graph?: Graph | null
@@ -22,6 +32,7 @@ export type LoadedState = {
   conversation?: HostState['conversation']
   blocked: Section[]
   issues: PersistenceIssue[]
+  upgrades?: Partial<Record<Section, unknown>>
 }
 
 const storageIssues = (
@@ -46,7 +57,9 @@ const storageIssues = (
   }))
 }
 
-export const loadPersistence = async (storage: PersistenceStorage): Promise<LoadedState> => {
+export const loadPersistence = async (
+  storage: Pick<PersistenceStorage, 'read'>,
+): Promise<LoadedState> => {
   const loaded: LoadedState = { blocked: [], issues: [] }
   const records = await Promise.allSettled(sections.map(async (section) => storage.read(section)))
   for (const [index, section] of sections.entries()) {
@@ -68,36 +81,28 @@ export const loadPersistence = async (storage: PersistenceStorage): Promise<Load
         loaded.pluginStorage = saved.plugins
         continue
       }
-      const saved = object(
-        value,
-        '',
-        section === 'document'
-          ? ['version', 'documentId', 'graph', 'workspace']
-          : ['version', 'preferences'],
-      )
-      if (saved.version !== (section === 'document' ? 2 : 1))
-        fail('version', 'Unsupported storage version')
       if (section === 'document') {
-        if (typeof saved.documentId !== 'string' || !isAbsoluteIri(saved.documentId))
-          fail('documentId', 'Expected an absolute document IRI')
+        const saved = migrateDocument(value)
         if (saved.graph === null) {
           if (saved.workspace !== null) fail('workspace', 'Expected no workspace without a graph')
           loaded.graph = null
-          continue
+        } else {
+          const graph = parseGraph(saved.graph)
+          checkGraph(graph)
+          const workspace = parseWorkspace(saved.workspace)
+          const ids = new Set(graph.concepts.map((concept) => concept.id))
+          for (const [index, view] of workspace.savedViews.entries()) {
+            if (view.conceptIds.some((id) => !ids.has(id)))
+              fail(`workspace.savedViews[${index}].conceptIds`, 'Unknown concept')
+          }
+          loaded.graph = graph
+          loaded.workspace = workspace
         }
-        const graph = parseGraph(saved.graph)
-        checkGraph(graph)
-        const workspace = parseWorkspace(saved.workspace)
-        const ids = new Set(graph.concepts.map((concept) => concept.id))
-        for (const [index, view] of workspace.savedViews.entries()) {
-          if (view.conceptIds.some((id) => !ids.has(id)))
-            fail(`workspace.savedViews[${index}].conceptIds`, 'Unknown concept')
-        }
-        loaded.graph = graph
-        loaded.documentId = saved.documentId as string
-        loaded.workspace = workspace
+        loaded.documentId = saved.documentId
+        if ((value as { version: number }).version !== saved.version)
+          (loaded.upgrades ??= {}).document = saved
       } else {
-        loaded.preferences = parsePreferences(saved.preferences)
+        loaded.preferences = parseSettings(preferencesRecord, value).preferences
       }
     } catch (error) {
       loaded.blocked.push(section)
@@ -119,6 +124,7 @@ export const connectPersistence = (
   let readIssues = loaded.issues
   const changed = {
     document:
+      loaded.upgrades?.document !== undefined ||
       !loaded.graph ||
       !loaded.workspace ||
       previous.documentId !== loaded.documentId ||
@@ -140,9 +146,21 @@ export const connectPersistence = (
   let serializedGraph:
     | { source: HostState['graph']; value: ReturnType<typeof serializeGraph> }
     | undefined
-  let savedDocumentId = loaded.documentId
+  let savedDocumentId = loaded.upgrades?.document === undefined ? loaded.documentId : undefined
+  let needsBackup = loaded.upgrades !== undefined
 
   const save = async (): Promise<void> => {
+    if (needsBackup && pending.size) {
+      try {
+        await storage.backup()
+        needsBackup = false
+      } catch (error) {
+        const section = sections.find((section) => loaded.upgrades?.[section] !== undefined)!
+        writeIssues[section] = storageIssues(section, error, 'write')
+        host.setPersistenceIssues([...readIssues, ...Object.values(writeIssues).flat()])
+        return
+      }
+    }
     while (pending.size) {
       const batch = sections.filter((section) => pending.has(section))
       pending.clear()

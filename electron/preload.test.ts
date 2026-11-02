@@ -120,6 +120,7 @@ test('each renderer pins its storage generation so a restored document cannot be
   await Promise.all([old.read('document'), old.read('preferences')])
   generation++
   await old.write('document', 'stale state')
+  await old.backup()
   const fresh = start()
   await fresh.read('document')
   assert.equal(calls.filter(({ channel }) => channel === 'storage:session').length, 2)
@@ -129,4 +130,5 @@ test('each renderer pins its storage generation so a restored document cannot be
     1,
   ])
   assert.deepEqual(calls.at(-1), { channel: 'storage:read', args: ['document', 2] })
+  assert.deepEqual(calls.find(({ channel }) => channel === 'storage:backup')?.args, [1])
 })

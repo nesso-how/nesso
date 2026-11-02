@@ -6,6 +6,7 @@ import {
   type IpcMainEvent,
   type IpcMainInvokeEvent,
 } from 'electron'
+import { NessoError } from '@nesso-how/errors'
 import { persistenceSections, type PersistenceSection } from '../shared/persistence.ts'
 import { createFileStorage } from './file-storage.ts'
 import { ElectronError } from './errors.ts'
@@ -25,7 +26,7 @@ export function connectDesktopPersistence(
   const handle = async (
     event: IpcMainInvokeEvent,
     section: unknown,
-    write: boolean,
+    operation: 'read' | 'write' | 'backup',
     value?: unknown,
     session?: unknown,
   ) => {
@@ -33,11 +34,15 @@ export function connectDesktopPersistence(
       if (
         !trusted(event) ||
         session !== generation() ||
-        !persistenceSections.includes(section as PersistenceSection)
+        (operation !== 'backup' && !persistenceSections.includes(section as PersistenceSection))
       ) {
         throw new ElectronError([{ path: 'storage', message: 'Invalid storage request' }])
       }
-      if (write) {
+      if (operation === 'backup') {
+        await storage.backup()
+        return { value: null }
+      }
+      if (operation === 'write') {
         await storage.write(section as PersistenceSection, value)
         return { value: null }
       }
@@ -45,7 +50,7 @@ export function connectDesktopPersistence(
     } catch (error) {
       return {
         issues:
-          error instanceof ElectronError
+          error instanceof NessoError
             ? error.issues
             : [{ path: '', message: error instanceof Error ? error.message : 'Storage failed' }],
       }
@@ -53,10 +58,13 @@ export function connectDesktopPersistence(
   }
   ipcMain.handle('storage:session', (event) => (trusted(event) ? generation() : null))
   ipcMain.handle('storage:read', (event, section: unknown, session: unknown) =>
-    handle(event, section, false, undefined, session),
+    handle(event, section, 'read', undefined, session),
   )
   ipcMain.handle('storage:write', (event, section: unknown, value: unknown, session: unknown) =>
-    handle(event, section, true, value, session),
+    handle(event, section, 'write', value, session),
+  )
+  ipcMain.handle('storage:backup', (event, session: unknown) =>
+    handle(event, undefined, 'backup', undefined, session),
   )
   let quitting = false
   app.on('before-quit', (event) => {

@@ -26,9 +26,14 @@ const fixture = (): Graph => ({
 const memoryStorage = () => {
   const records = new Map<PersistenceSection, unknown>()
   const writes: PersistenceSection[] = []
+  const backups: Map<PersistenceSection, unknown>[] = []
   return {
     records,
     writes,
+    backups,
+    backup: async () => {
+      backups.push(structuredClone(records))
+    },
     read: async (key: PersistenceSection) => structuredClone(records.get(key)),
     write: async (key: PersistenceSection, value: unknown) => {
       records.set(key, structuredClone(value))
@@ -86,8 +91,72 @@ test('startup writes only missing records', async () => {
     const persistence = connectPersistence(host, storage, loaded)
     assert.equal(await persistence.flush(), true)
     assert.deepEqual(storage.writes, [section])
+    assert.deepEqual(storage.backups, [])
     await persistence.dispose()
   }
+})
+
+test('a failed pre-migration backup protects every section and retries before saving the latest edits', async () => {
+  const storage = savedStorage()
+  const current = storage.records.get('document') as { graph: unknown; workspace: unknown }
+  storage.records.set('document', {
+    version: 1,
+    graph: current.graph,
+    workspace: current.workspace,
+  })
+  const originals = structuredClone(storage.records)
+  const loaded = await loadPersistence(storage)
+  const host = registeredHost(loaded.graph!, loaded)
+  const backup = storage.backup
+  let denied = true
+  storage.backup = async () => {
+    if (denied) throw new Error('Backup failed')
+    await backup()
+  }
+  const persistence = connectPersistence(host, storage, loaded)
+  host.store.setLocale('en')
+  host.store.setChatMessages([{ id: 'new', role: 'user', content: 'Unsaved' }])
+  assert.equal(await persistence.flush(), false)
+  assert.deepEqual(storage.records, originals)
+  assert.deepEqual(storage.writes, [])
+  assert.match(host.store.getState().persistenceIssues[0].message, /Backup failed/)
+  denied = false
+  assert.equal(await persistence.flush(), true)
+  assert.equal(storage.backups.length, 1)
+  assert.deepEqual(storage.backups[0], originals)
+  const restored = await loadPersistence(storage)
+  assert.equal(restored.preferences?.locale, 'en')
+  assert.equal(restored.conversation?.messages[0].content, 'Unsaved')
+  assert.deepEqual(host.store.getState().persistenceIssues, [])
+  await persistence.dispose()
+})
+
+test('plugin data waits for the migrated document identity to be saved without repeating its backup', async () => {
+  const storage = savedStorage()
+  const current = storage.records.get('document') as { graph: unknown; workspace: unknown }
+  const original = { version: 1, graph: current.graph, workspace: current.workspace }
+  storage.records.set('document', original)
+  const loaded = await loadPersistence(storage)
+  const host = registeredHost(loaded.graph!, loaded)
+  const write = storage.write
+  let denied = true
+  storage.write = async (section, value) => {
+    if (section === 'document' && denied) throw new Error('Disk full')
+    await write(section, value)
+  }
+  const persistence = connectPersistence(host, storage, loaded)
+  setPluginData(host, 'After migration')
+  assert.equal(await persistence.flush(), false)
+  assert.deepEqual(storage.records.get('document'), original)
+  assert.equal(storage.records.has('plugin-storage'), false)
+  denied = false
+  assert.equal(await persistence.flush(), true)
+  assert.equal(storage.backups.length, 1)
+  assert.deepEqual(
+    (await loadPersistence(storage)).pluginStorage,
+    host.store.getState().pluginStorage,
+  )
+  await persistence.dispose()
 })
 
 test('MCP intent round-trips in preferences without touching document or conversation records', async () => {
@@ -191,7 +260,6 @@ test('record reads start in parallel and isolate failures in section order', asy
         started.push(section)
         completions.set(section, { resolve, reject })
       }),
-    write: storage.write,
   })
   assert.deepEqual(started, ['document', 'preferences', 'conversation', 'plugin-storage'])
   completions.get('plugin-storage')!.resolve(undefined)
@@ -356,7 +424,7 @@ test('malformed records stay protected while the other sections save', async () 
     ['document', { version: 2 }],
     [
       'document',
-      { version: 1, graph: serializeGraph(fixture()), workspace: state.workspace },
+      { version: 99, graph: serializeGraph(fixture()), workspace: state.workspace },
       'document.version',
     ],
     [
@@ -495,6 +563,10 @@ test('storage failures preserve records and allow retrying the latest edits', as
       return { value: null }
     },
     beforeClose: () => () => {},
+    backup: async () => {
+      await storage.backup()
+      return { value: null }
+    },
   })
   const host = registeredHost(fixture())
   const persistence = connectPersistence(host, limited, await loadPersistence(limited))
@@ -594,6 +666,7 @@ test('workspace-only changes reuse the serialized graph', async () => {
   const host = registeredHost(fixture())
   const graphs: unknown[] = []
   const storage: PersistenceStorage = {
+    backup: async () => {},
     read: async () => undefined,
     write: async (section, value) => {
       if (section !== 'document') return

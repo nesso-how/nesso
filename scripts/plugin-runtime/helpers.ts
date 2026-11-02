@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { ipcMain, type BrowserWindow } from 'electron'
 import type { Platform } from './cases.ts'
 import { themeTokens, type ActionState } from '@nesso-how/plugin/runtime'
+import { createBackup } from '../../src/store/backup.ts'
 
 export type CheckContext = {
   window: BrowserWindow
@@ -16,6 +17,11 @@ export function connectFixtureStorage() {
   ipcMain.handle('storage:read', (_event, section: string) => ({ value: saved.get(section) }))
   ipcMain.handle('storage:write', (_event, section: string, value: unknown) => {
     saved.set(section, value)
+    return { value: null }
+  })
+  ipcMain.handle('storage:backup', async () => {
+    const text = await createBackup({ read: async (section) => saved.get(section) })
+    saved.set(`backup:${crypto.randomUUID()}`, JSON.parse(text))
     return { value: null }
   })
   ipcMain.handle('data-location:state', () => ({

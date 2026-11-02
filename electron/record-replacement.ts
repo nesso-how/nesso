@@ -21,7 +21,13 @@ export function createRecordReplacement(directory: () => string) {
       throw error
     }
   }
-  const write = async (file: string, text: string) => {
+  const write = async (file: string, text: string | null) => {
+    if (text === null) {
+      await unlink(file).catch((error: NodeJS.ErrnoException) => {
+        if (error.code !== 'ENOENT') throw error
+      })
+      return
+    }
     const temporary = `${file}.restore-tmp`
     await writeFileData(temporary, text, false)
     await rename(temporary, file)
@@ -44,11 +50,7 @@ export function createRecordReplacement(directory: () => string) {
     const { records } = journalSchema.parse(JSON.parse(text))
     for (const section of persistenceSections) {
       const file = path.join(base, `${section}.json`)
-      if (records[section] === null) {
-        await unlink(file).catch((error: NodeJS.ErrnoException) => {
-          if (error.code !== 'ENOENT') throw error
-        })
-      } else await write(file, records[section])
+      await write(file, records[section])
     }
     await syncDirectory(base)
     await cleanup(base)
@@ -74,7 +76,7 @@ export function createRecordReplacement(directory: () => string) {
         ),
       )
       const prepared = persistenceSections.map((section) => {
-        const text = JSON.stringify(records[section])
+        const text = records[section] === null ? null : JSON.stringify(records[section])
         if (text === undefined)
           throw new ElectronError([{ path: 'backup', message: 'backupInvalid' }])
         return { section, text }

@@ -6,6 +6,8 @@ Action plugin importing a Nesso JSON-LD file into the current graph.
 
 The bundled **Import** action runs in an isolated worker and reads a user-selected file through the host. It merges concepts, relations, and missing relation types with fresh concept IDs into one atomic history entry. Imported concepts join the invoked view even if navigation changes during file selection. Invalid files report a localized failure without touching the graph.
 
+Import/export exchange a graph view, not the complete application state; use a manual backup for full restoration.
+
 ## API
 
 - `create()`: factory contributing the `import-view` action; `run(context)` receives its execution APIs. Access declarations and localized labels/failure text live in `package.json`; Nesso resolves the current language with an English fallback.

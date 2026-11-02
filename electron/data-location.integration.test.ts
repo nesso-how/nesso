@@ -71,10 +71,13 @@ test('moves JSON records live and restores the default, leaving credentials and 
     ['.nesso-data-id', ...persistenceSections.map((section) => `${section}.json`)].sort(),
   )
   await storage.write('document', { version: 2 })
+  const backup = `nesso-backup-${randomUUID()}.json`
+  await writeFile(path.join(destination, backup), 'complete backup')
   assert.equal((await createDataLocation(source)).state().directory, destination)
   assert.deepEqual(await storage.read('document'), { version: 2 })
   assert.deepEqual(await storage.read('plugin-storage'), { version: 1 })
   await location.move(source)
+  assert.equal(await readFile(path.join(source, backup), 'utf8'), 'complete backup')
   assert.deepEqual(await readdir(destination), [])
   assert.deepEqual(await storage.read('document'), { version: 2 })
   for (const name of ['ai-connections.enc', 'mcp-access.enc'])

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { NessoError } from './index.ts'
+import { NessoError, validationIssues } from './index.ts'
 
 test('structured errors retain issues and format paths consistently', () => {
   const issues = [
@@ -12,4 +12,8 @@ test('structured errors retain issues and format paths consistently', () => {
   assert.equal(error.name, 'NessoError')
   assert.equal(error.issues, issues)
   assert.equal(error.message, 'document.label: Required\nInvalid document')
+  assert.deepEqual(
+    validationIssues([{ path: ['concepts', 0, 'label'], message: 'Required' }], 'document'),
+    [{ path: 'document.concepts[0].label', message: 'Required' }],
+  )
 })

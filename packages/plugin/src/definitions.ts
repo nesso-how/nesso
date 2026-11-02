@@ -123,7 +123,11 @@ const vocabDefinition = z
     defaultTypeId: z.string().min(1).max(2048),
   })
   .superRefine(({ relationTypes, defaultTypeId }, context) => {
-    for (const issue of validateGraph({ concepts: [], relations: [], relationTypes }))
+    for (const issue of validateGraph({
+      concepts: [],
+      relations: [],
+      relationTypes: relationTypes.map(({ id, label }) => ({ id, label })),
+    }))
       context.addIssue({ code: 'custom', path: ['relationTypes'], message: issue.message })
     if (!relationTypes.some(({ id }) => id === defaultTypeId))
       context.addIssue({

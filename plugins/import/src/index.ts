@@ -23,6 +23,12 @@ export function buildImportOperations(
     )
     if (concept.notes !== undefined)
       operations.push({ kind: 'concept.notes', id, value: concept.notes })
+    if (concept.color !== undefined)
+      operations.push({ kind: 'concept.color', id, value: concept.color })
+    if (concept.bold !== undefined)
+      operations.push({ kind: 'concept.bold', id, value: concept.bold })
+    if (concept.italic !== undefined)
+      operations.push({ kind: 'concept.italic', id, value: concept.italic })
   }
   const types = new Map(snapshot.relationTypes.map((type) => [type.id, type]))
   for (const relation of snapshot.relations) {

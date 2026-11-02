@@ -160,7 +160,7 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
   ): VocabDefinition => {
     const issues: SchemaIssue[] = validateGraph({
       concepts: [],
-      relationTypes: vocab.relationTypes,
+      relationTypes: vocab.relationTypes.map(({ id, label }) => ({ id, label })),
       relations: [],
     })
     if (!vocab.id || existing.some((item) => item.id === vocab.id)) {

@@ -1114,8 +1114,8 @@ test('position batches reject invalid coordinates atomically in every view mode'
             { id: 'urn:n1', position: { x: 10, y: 20 } },
             { id: 'urn:n3', position: { x: 30, y: invalid } },
           ]),
-        ),
-        [{ path: 'concepts[2].position', message: 'Invalid position: urn:n3' }],
+        ).map(({ path }) => path),
+        ['concepts[2].position.y'],
       )
       assert.equal(store.getState(), before)
       assert.equal(notifications, 0)

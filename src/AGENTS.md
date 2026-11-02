@@ -11,6 +11,7 @@
 ## Persistence
 
 - Use the shared asynchronous persistence API; keep native file access behind the Electron bridge. Keep graph and workspace in one atomic record; preferences and conversation are separate records.
+- Keep host record migrations in `src/store/migrations.ts`, invoked through `loadPersistence` for both startup and backup restoration.
 - Validate restoration and resolve saved plugin IDs before autosave. Serialize writes to preserve save order.
 - Await successful saving before desktop close, update installation, or recovery reload. Web lifecycle flushes are best effort.
 - Never overwrite unreadable records automatically; require explicit recovery. Report storage failures visibly and keep editing available in memory.
