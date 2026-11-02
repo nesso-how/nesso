@@ -13,6 +13,7 @@ export function useAppCommands({
   pluginPanel,
   focusRef,
   openSettings,
+  openSearch,
 }: {
   store: HostStore
   readonly: boolean
@@ -20,6 +21,7 @@ export function useAppCommands({
   pluginPanel: boolean
   focusRef: RefObject<HTMLElement | null>
   openSettings: (page: string) => void
+  openSearch: () => void
 }) {
   useEffect(() => {
     const menu = window.nessoMenu
@@ -39,6 +41,13 @@ export function useAppCommands({
     }
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.defaultPrevented || event.isComposing || event.altKey) return
+      if ((event.metaKey || event.ctrlKey) && !event.shiftKey && event.key.toLowerCase() === 'k') {
+        const current = context(event.target)
+        if (event.repeat || readonly || !current.canOpenSettings) return
+        event.preventDefault()
+        openSearch()
+        return
+      }
       if (event.key === '?' && !event.metaKey && !event.ctrlKey) {
         const current = context(event.target)
         if (
@@ -114,5 +123,5 @@ export function useAppCommands({
       document.removeEventListener('focusin', onFocus)
       document.removeEventListener('focusout', onFocus)
     }
-  }, [store, readonly, introOpen, pluginPanel, focusRef, openSettings])
+  }, [store, readonly, introOpen, pluginPanel, focusRef, openSettings, openSearch])
 }

@@ -1,7 +1,7 @@
 import type { NessoState, NessoStore } from '@nesso-how/core'
 import { NessoError } from '@nesso-how/errors'
 import type { Position } from '@nesso-how/schema'
-import { createContext, useContext, useSyncExternalStore, type RefObject } from 'react'
+import { createContext, useContext, useSyncExternalStore, type Ref, type RefObject } from 'react'
 
 export type GraphCommands = {
   readonly deleteSelection: () => void
@@ -17,7 +17,12 @@ export type ConceptMapContext = {
   readonly commands: GraphCommands
 }
 
+export type ConceptMapHandle = {
+  readonly focusConcept: (id: string) => void
+}
+
 export type CanvasProps = {
+  readonly ref?: Ref<ConceptMapHandle>
   readonly focusRef: RefObject<HTMLDivElement | null>
   readonly readOnly?: boolean
   readonly preview?: boolean

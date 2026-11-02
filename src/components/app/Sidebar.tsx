@@ -2,6 +2,7 @@ import type { SavedView } from '@nesso-how/core'
 import {
   Button,
   IconButton,
+  Kbd,
   ListRow,
   ListRowButton,
   ListRowDetail,
@@ -13,7 +14,7 @@ import {
   SectionHeading,
   TextPromptDialog,
 } from '@nesso-how/ui'
-import { MoreHorizontal, Pencil, Pin, PinOff, Settings2, Trash2 } from 'lucide-react'
+import { MoreHorizontal, Pencil, Pin, PinOff, Search, Settings2, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Sidebar } from './SidebarLayout'
 import { NewViewButton } from './NewViewButton'
@@ -29,12 +30,14 @@ export function AppSidebar({
   bare = false,
   onNavigate,
   onOpenSettings,
+  onOpenSearch,
 }: {
   store?: HostStore
   readonly?: boolean
   bare?: boolean
   onNavigate?: () => void
   onOpenSettings?: () => void
+  onOpenSearch?: () => void
 }) {
   const t = useTranslation(store)
   const workspace = useNessoStore((state) => state.workspace, store)
@@ -132,6 +135,23 @@ export function AppSidebar({
   const content = (
     <>
       <div className="flex min-h-0 flex-1 flex-col px-3 pt-5">
+        {onOpenSearch && (
+          <>
+            <Button
+              variant="ghost"
+              className="w-full justify-start"
+              onClick={onOpenSearch}
+              aria-keyshortcuts="Meta+K Control+K"
+            >
+              <Search />
+              {t('search')}
+              <Kbd className="ml-auto h-5 min-w-0 border-transparent px-1 text-[9px]">
+                {/Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl'} K
+              </Kbd>
+            </Button>
+            <div aria-hidden className="my-2 h-px bg-border" />
+          </>
+        )}
         <NewViewButton ref={createTrigger} disabled={readonly} />
         {heading(t('pinnedViews'), 'pinned-views', pinnedOpen, () =>
           store.setSectionOpen('sidebar.pinned-views', !pinnedOpen),
@@ -193,7 +213,8 @@ export function AppSidebar({
         </div>
       </div>
       {(onOpenSettings || readonly) && (
-        <div className="shrink-0 border-t px-3 py-2">
+        <div className="shrink-0 px-3 py-2">
+          <div aria-hidden className="mb-2 h-px bg-border" />
           <Button
             data-settings-trigger
             disabled={readonly}
