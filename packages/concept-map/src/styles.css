@@ -61,6 +61,12 @@
 
 .react-flow .react-flow__panel.canvas-label {
   z-index: 1;
+  user-select: none;
+}
+
+.react-flow .react-flow__pane.selection,
+.react-flow .react-flow__pane.selection * {
+  user-select: none !important;
 }
 
 .graph-presentation .react-flow__node {
