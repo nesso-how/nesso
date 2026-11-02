@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import type { ConceptMapHandle } from '@nesso-how/concept-map'
 import type { SavedView } from '@nesso-how/core'
 import { defaultLocale } from '@nesso-how/i18n'
 import { Inspector } from '@/components/app/Inspector'
@@ -22,8 +23,10 @@ import { useAppCommands } from '@/app-commands'
 import { PluginApprovalDialog } from '@/components/app/PluginApprovalDialog'
 import { UpdateBar } from '@/components/app/UpdateBar'
 import { PluginPanel } from '@/components/app/PluginPanel'
-import { usePluginPanel } from '@/plugins'
+import { pluginPanel as activePluginPanel, usePluginPanel } from '@/plugins'
 import { ViewHeader } from '@/components/app/ViewHeader'
+import { SearchDialog } from '@/components/app/SearchDialog'
+import { openSearchResult } from '@/graph/search'
 
 export default function App({ persistence }: { persistence: ReturnType<typeof startAutosave> }) {
   const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale)
@@ -34,10 +37,13 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
     (state) => !state.preferences.collapsedSections?.includes('inspector'),
   )
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const openSearch = useCallback(() => setSearchOpen(true), [setSearchOpen])
   const [introOpen, setIntroOpen] = useState(() => !host.store.getState().preferences.introSeen)
   const [settingsPage, setSettingsPage] = useState('general')
   const [deleting, setDeleting] = useState<SavedView | 'complete-graph' | null>(null)
   const canvas = useRef<HTMLDivElement>(null)
+  const renderer = useRef<ConceptMapHandle>(null)
   const pluginPanel = usePluginPanel()
   const readonly = useMediaQuery('(max-width: 767px)')
   const deleteView = () => {
@@ -66,6 +72,7 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
     pluginPanel: !!pluginPanel,
     focusRef: canvas,
     openSettings: openSettingsPage,
+    openSearch,
   })
   const openSettings = () => openSettingsPage('general')
   const finishIntro = () => {
@@ -81,7 +88,7 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
           <Intro onFinish={finishIntro} />
         ) : (
           <div className="workspace-boot relative flex min-h-0 flex-1 overflow-hidden">
-            {!readonly && <AppSidebar onOpenSettings={openSettings} />}
+            {!readonly && <AppSidebar onOpenSettings={openSettings} onOpenSearch={openSearch} />}
             <SidebarInset className="relative min-w-0 overflow-hidden">
               <div className="flex min-h-0 flex-1">
                 <div id="canvas" className="relative min-h-0 min-w-0 flex-1">
@@ -93,6 +100,7 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
                     <ViewHeader readonly={readonly} />
                     <div className="min-h-0 flex-1">
                       <GraphWorkspace
+                        ref={renderer}
                         store={host.store}
                         suspended={!!pluginPanel}
                         onDeleteView={deleteView}
@@ -142,6 +150,17 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
         <PersistenceBanner persistence={persistence} />
       </SidebarProvider>
       {(readonly || !settingsOpen) && <ToastsHost />}
+      <SearchDialog
+        store={host.store}
+        open={!readonly && !introOpen && searchOpen}
+        onOpenChange={setSearchOpen}
+        focusRef={canvas}
+        onSelect={(result) => {
+          activePluginPanel.close()
+          openSearchResult(host.store, result)
+          if (result.kind === 'concept') renderer.current?.focusConcept(result.id)
+        }}
+      />
       {window.nessoUpdater && <UpdateBar updater={window.nessoUpdater} />}
       <Dialog.Root open={!readonly && settingsOpen} onOpenChange={setSettingsOpen}>
         {!readonly && settingsOpen && (

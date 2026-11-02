@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useImperativeHandle,
   useMemo,
   useRef,
   useState,
@@ -68,6 +69,7 @@ const multiSelectionKeys = ['Meta', 'Control', 'Shift']
 type ContextMenuTarget = Selection[number]['kind'] | 'pane' | 'selection'
 
 export function Canvas({
+  ref,
   readOnly = false,
   preview = false,
   bottomInset = 0,
@@ -110,6 +112,8 @@ export function Canvas({
   )
   const paneSelection = useRef<Selection>([])
   const [editId, setEditId] = useState<string | null>(null)
+  const [focusTarget, setFocusTarget] = useState<string | null>(null)
+  useImperativeHandle(ref, () => ({ focusConcept: setFocusTarget }), [])
   const { fitView, screenToFlowPosition, getNodes, getNodesBounds, setViewport } = useReactFlow()
   const zoom = useFlowStore((state) => state.transform[2])
   const userSelecting = useFlowStore((state) => state.userSelectionActive)
@@ -451,13 +455,26 @@ export function Canvas({
   useEffect(() => {
     if (hasOverlay || navigation.current === view) return
     navigation.current = view
+    if (focusTarget) return
     const frame = requestAnimationFrame(() => {
       setContextMenu(null)
       dragGroup.current = undefined
       void fitView(animatedFraming)
     })
     return () => cancelAnimationFrame(frame)
-  }, [view, fitView, hasOverlay, animatedFraming])
+  }, [view, fitView, hasOverlay, animatedFraming, focusTarget])
+
+  useEffect(() => {
+    if (!focusTarget || !nodesInitialized || !width || !height) return
+    const frame = requestAnimationFrame(() => {
+      if (graph.concepts.some(({ id }) => id === focusTarget)) {
+        void fitView({ ...animatedFraming, nodes: [{ id: focusTarget }] })
+        canvas.current?.focus()
+      }
+      setFocusTarget(null)
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [focusTarget, nodesInitialized, graph, width, height, fitView, animatedFraming, canvas])
 
   useEffect(() => {
     if (!outsideFit.current) return

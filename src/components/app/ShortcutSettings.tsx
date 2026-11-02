@@ -26,7 +26,10 @@ export function ShortcutSettings({ titleRef }: { titleRef: Ref<HTMLHeadingElemen
     {
       id: 'general',
       title: t('general'),
-      rows: [{ label: t('shortcutOpenShortcuts'), keys: [['?']] }],
+      rows: [
+        { label: t('search'), keys: [[modifier, 'K']] },
+        { label: t('shortcutOpenShortcuts'), keys: [['?']] },
+      ],
     },
     {
       id: 'shortcutsEditing',
