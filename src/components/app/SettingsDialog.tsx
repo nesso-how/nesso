@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { defaultLocale, isLocale, localeNames, locales } from '@nesso-how/i18n'
-import { Button, Dialog, DialogPopup, PreferenceSelect } from '@nesso-how/ui'
+import { Button, Dialog, DialogPopup, PanelHeader, PreferenceSelect } from '@nesso-how/ui'
 import { Info, Keyboard, MessageCircle, Package, Settings2, X } from 'lucide-react'
 import { pluginMetadata, usePlugins } from '@/plugins'
 import { host, useNessoStore } from '@/store'
@@ -81,24 +81,27 @@ export function SettingsDialog({
         return trigger?.getClientRects().length ? trigger : null
       }}
     >
-      <header className="flex h-[52px] shrink-0 items-center justify-between border-b px-5">
+      <PanelHeader
+        actions={
+          <Dialog.Close
+            render={
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="text-muted-foreground"
+                aria-label={t('close')}
+              />
+            }
+          >
+            <X />
+          </Dialog.Close>
+        }
+      >
         <Dialog.Title ref={title} tabIndex={-1} className="text-sm font-medium outline-none">
           {t('settings')}
         </Dialog.Title>
         <Dialog.Description className="sr-only">{t('generalDescription')}</Dialog.Description>
-        <Dialog.Close
-          render={
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="-mr-1 text-muted-foreground"
-              aria-label={t('close')}
-            />
-          }
-        >
-          <X />
-        </Dialog.Close>
-      </header>
+      </PanelHeader>
       <div className="settings-body">
         <nav ref={navigation} className="settings-sidebar" aria-label={t('settings')}>
           <p className="settings-nav-heading">Nesso</p>

@@ -148,7 +148,6 @@ export function LocalDataSettings({ bridge }: { bridge: DataLocationBridge }) {
           <Button
             variant="ghost"
             size="sm"
-            className="text-muted-foreground"
             disabled={disabled || state.cleanupPending}
             onClick={() => {
               void choose(true)

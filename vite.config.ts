@@ -19,6 +19,7 @@ export default defineConfig({
           'plugins/base-vocab/src',
           'plugins/import/src',
           'plugins/export/src',
+          'plugins/review/src',
           'packages/plugin/src',
           'packages/core/src',
           'packages/schema/src',
@@ -33,6 +34,7 @@ export default defineConfig({
           'base-vocab',
           'import',
           'export',
+          'review',
         ].map((name) => path.resolve(import.meta.dirname, 'plugins', name, 'package.json'))
         const script = path.resolve(import.meta.dirname, 'scripts/build-plugins.ts')
         let timer: ReturnType<typeof setTimeout> | undefined
@@ -49,7 +51,7 @@ export default defineConfig({
           child = execFile(
             'pnpm',
             ['build:plugins'],
-            { cwd: import.meta.dirname },
+            { cwd: import.meta.dirname, env: { ...process.env, NODE_ENV: 'production' } },
             (error, _stdout, stderr) => {
               running = false
               if (closed) return

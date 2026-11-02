@@ -4,7 +4,7 @@
   --xy-node-border-radius: var(--radius-object);
   --xy-controls-button-background-color: var(--background);
   --xy-controls-button-background-color-hover: var(--hover);
-  --xy-controls-button-color: var(--muted-foreground);
+  --xy-controls-button-color: color-mix(in srgb, var(--foreground) 20%, var(--muted-foreground));
   --xy-controls-button-color-hover: var(--foreground);
   --xy-controls-button-border-color: var(--border);
   --xy-controls-box-shadow: none;
@@ -165,6 +165,7 @@
   color: var(--foreground);
 }
 
+.react-flow__controls-button:disabled,
 .react-flow__controls-button:disabled:hover {
   background: var(--background);
   color: var(--muted-foreground);

@@ -1,8 +1,4 @@
 {
-  "completeGraph": "Panoramica",
-  "conceptCount_one": "{{count}} concetto",
-  "conceptCount_many": "{{count}} concetti",
-  "conceptCount_other": "{{count}} concetti",
   "fitView": "Adatta alla vista",
   "lockInteractions": "Blocca interazioni",
   "unlockInteractions": "Sblocca interazioni",

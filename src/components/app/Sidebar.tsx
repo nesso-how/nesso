@@ -1,7 +1,5 @@
 import type { SavedView } from '@nesso-how/core'
-import { defaultLocale } from '@nesso-how/i18n'
 import {
-  ActionIcon,
   Button,
   IconButton,
   ListRow,
@@ -20,36 +18,10 @@ import { useEffect, useRef, useState } from 'react'
 import { Sidebar } from './SidebarLayout'
 import { NewViewButton } from './NewViewButton'
 import { DeleteViewDialog } from './DeleteViewDialog'
-import { invokeAction, useViewActions } from '@/plugins'
 import { host, nessoStore, useNessoStore } from '@/store'
 import { maxViewNameLength } from '@/store/settings'
 import type { HostStore } from '@/store/types'
 import { useTranslation } from '@/i18n'
-
-function ViewActionGroup({ viewId }: { viewId: string | null }) {
-  const t = useTranslation()
-  const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale)
-  const actions = useViewActions()
-  return (
-    <Menu.Group>
-      <Menu.GroupLabel className="px-2.5 pt-1 pb-0.5 text-[11px] leading-4 text-muted-foreground">
-        {t('actions')}
-      </Menu.GroupLabel>
-      {actions.map((action) => (
-        <MenuItem
-          key={action.id}
-          className="pl-4"
-          onClick={() => {
-            void invokeAction(action.id, viewId)
-          }}
-        >
-          <ActionIcon name={action.icon} />
-          {action.label[locale] ?? action.label.en}
-        </MenuItem>
-      ))}
-    </Menu.Group>
-  )
-}
 
 export function AppSidebar({
   store = nessoStore,
@@ -136,8 +108,6 @@ export function AppSidebar({
               {t(view.pinned ? 'unpinView' : 'pinView')}
             </MenuItem>
             <Menu.Separator className="my-1 h-px bg-border" />
-            <ViewActionGroup viewId={view.id} />
-            <Menu.Separator className="my-1 h-px bg-border" />
             <MenuItem
               onClick={() => {
                 deletingId.current = view.id
@@ -197,8 +167,6 @@ export function AppSidebar({
                     <MoreHorizontal />
                   </Menu.Trigger>
                   <MenuPopup>
-                    <ViewActionGroup viewId={null} />
-                    <Menu.Separator className="my-1 h-px bg-border" />
                     <MenuItem
                       onClick={() => {
                         deletingId.current = 'complete-graph'
@@ -230,7 +198,7 @@ export function AppSidebar({
             data-settings-trigger
             disabled={readonly}
             variant="ghost"
-            className="w-full justify-start text-muted-foreground"
+            className="w-full justify-start"
             onClick={onOpenSettings}
           >
             <Settings2 />

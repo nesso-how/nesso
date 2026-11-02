@@ -23,6 +23,7 @@ import { PluginApprovalDialog } from '@/components/app/PluginApprovalDialog'
 import { UpdateBar } from '@/components/app/UpdateBar'
 import { PluginPanel } from '@/components/app/PluginPanel'
 import { usePluginPanel } from '@/plugins'
+import { ViewHeader } from '@/components/app/ViewHeader'
 
 export default function App({ persistence }: { persistence: ReturnType<typeof startAutosave> }) {
   const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale)
@@ -84,13 +85,20 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
             <SidebarInset className="relative min-w-0 overflow-hidden">
               <div className="flex min-h-0 flex-1">
                 <div id="canvas" className="relative min-h-0 min-w-0 flex-1">
-                  <div className="h-full w-full" hidden={!!pluginPanel} inert={!!pluginPanel}>
-                    <GraphWorkspace
-                      store={host.store}
-                      suspended={!!pluginPanel}
-                      onDeleteView={deleteView}
-                      focusRef={canvas}
-                    />
+                  <div
+                    className="flex h-full w-full flex-col"
+                    hidden={!!pluginPanel}
+                    inert={!!pluginPanel}
+                  >
+                    <ViewHeader readonly={readonly} />
+                    <div className="min-h-0 flex-1">
+                      <GraphWorkspace
+                        store={host.store}
+                        suspended={!!pluginPanel}
+                        onDeleteView={deleteView}
+                        focusRef={canvas}
+                      />
+                    </div>
                   </div>
                   <PluginPanel canvas={canvas} />
                 </div>

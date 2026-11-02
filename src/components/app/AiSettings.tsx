@@ -537,7 +537,6 @@ export function AiSettings({
                           type="button"
                           size="sm"
                           variant="ghost"
-                          className="text-muted-foreground"
                           onClick={() => setPendingSignOut(true)}
                         >
                           {t('aiSignOut')}

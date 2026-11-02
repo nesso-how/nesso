@@ -85,11 +85,6 @@ export function Canvas({
   const defaultTypeId = useNesso(
     (state) => state.vocabs.find(({ id }) => id === state.preferences.activeVocabId)?.defaultTypeId,
   )
-  const viewName =
-    useNesso(
-      (state) =>
-        state.workspace.savedViews.find((saved) => saved.id === state.workspace.activeViewId)?.name,
-    ) ?? t('completeGraph')
   const viewCount = graph.concepts.length
   const { store, commands } = useCanvasContext()
   const write = store.applyOperations
@@ -668,14 +663,6 @@ export function Canvas({
         fitViewOptions={fitViewOptions}
         minZoom={0.2}
       >
-        {!hasOverlay && (
-          <Panel
-            position="top-left"
-            className="canvas-label pointer-events-none font-mono text-[10px] text-muted-foreground select-none"
-          >
-            {viewName} · {t('conceptCount', { count: viewCount })}
-          </Panel>
-        )}
         <Background
           variant={BackgroundVariant.Dots}
           gap={20}
@@ -736,96 +723,116 @@ export function Canvas({
           </Panel>
         )}
         {!readOnly && (
-          <Controls
-            position="top-right"
-            orientation="horizontal"
-            showZoom={false}
-            showFitView={false}
-            showInteractive={false}
-          >
-            <ControlButton
-              onClick={store.undo}
-              disabled={!canUndo}
-              title={t('undo')}
-              aria-label={t('undo')}
+          <>
+            <Controls
+              position="top-left"
+              orientation="horizontal"
+              showZoom={false}
+              showFitView={false}
+              showInteractive={false}
             >
-              <Undo2 aria-hidden="true" />
-            </ControlButton>
-            <ControlButton
-              onClick={store.redo}
-              disabled={!canRedo}
-              title={t('redo')}
-              aria-label={t('redo')}
+              <ControlButton
+                onClick={store.undo}
+                disabled={!canUndo}
+                title={t('undo')}
+                aria-label={t('undo')}
+              >
+                <Undo2 aria-hidden="true" />
+              </ControlButton>
+              <ControlButton
+                onClick={store.redo}
+                disabled={!canRedo}
+                title={t('redo')}
+                aria-label={t('redo')}
+              >
+                <Redo2 aria-hidden="true" />
+              </ControlButton>
+              <div
+                role="separator"
+                aria-orientation="vertical"
+                className="mx-1 h-4 w-px shrink-0 self-center bg-border"
+              />
+              <ControlButton
+                onClick={() => {
+                  void commands.copy()
+                }}
+                disabled={selected.length === 0}
+                title={t('copy')}
+                aria-label={t('copy')}
+              >
+                <Copy aria-hidden="true" />
+              </ControlButton>
+              <ControlButton
+                onClick={() => {
+                  void commands.copy(true)
+                }}
+                disabled={!canCut}
+                title={t('cut')}
+                aria-label={t('cut')}
+              >
+                <Scissors aria-hidden="true" />
+              </ControlButton>
+              <ControlButton
+                onClick={() => {
+                  void commands.paste()
+                }}
+                disabled={!interactive}
+                title={t('paste')}
+                aria-label={t('paste')}
+              >
+                <ClipboardPaste aria-hidden="true" />
+              </ControlButton>
+            </Controls>
+            <Controls
+              position="top-right"
+              orientation="horizontal"
+              showZoom={false}
+              showFitView={false}
+              showInteractive={false}
             >
-              <Redo2 aria-hidden="true" />
-            </ControlButton>
-            <ControlButton
-              onClick={toggleBold}
-              disabled={!canEmphasize}
-              title={`${t('bold')} (${emphasizeModifier === '⌘' ? '⌘B' : 'Ctrl+B'})`}
-              aria-label={t('bold')}
-              aria-keyshortcuts="Control+b Meta+b"
-              aria-pressed={allBold}
-            >
-              <Bold aria-hidden="true" />
-            </ControlButton>
-            <ControlButton
-              onClick={toggleItalic}
-              disabled={!canEmphasize}
-              title={`${t('italic')} (${emphasizeModifier === '⌘' ? '⌘I' : 'Ctrl+I'})`}
-              aria-label={t('italic')}
-              aria-keyshortcuts="Control+i Meta+i"
-              aria-pressed={allItalic}
-            >
-              <Italic aria-hidden="true" />
-            </ControlButton>
-            <ControlButton
-              onClick={() => {
-                void commands.copy()
-              }}
-              disabled={selected.length === 0}
-              title={t('copy')}
-              aria-label={t('copy')}
-            >
-              <Copy aria-hidden="true" />
-            </ControlButton>
-            <ControlButton
-              onClick={() => {
-                void commands.copy(true)
-              }}
-              disabled={!canCut}
-              title={t('cut')}
-              aria-label={t('cut')}
-            >
-              <Scissors aria-hidden="true" />
-            </ControlButton>
-            <ControlButton
-              onClick={() => {
-                void commands.paste()
-              }}
-              disabled={!interactive}
-              title={t('paste')}
-              aria-label={t('paste')}
-            >
-              <ClipboardPaste aria-hidden="true" />
-            </ControlButton>
-            <ControlButton
-              onClick={handleDelete}
-              disabled={!canDelete}
-              title={t('delete')}
-              aria-label={t('delete')}
-            >
-              <Trash2 aria-hidden="true" />
-            </ControlButton>
-            <ControlButton
-              onClick={handleAdd}
-              disabled={!interactive}
-              title={t('addConcept')}
-              aria-label={t('addConcept')}
-            >
-              <Plus aria-hidden="true" />
-            </ControlButton>
-          </Controls>
+              <ControlButton
+                onClick={toggleBold}
+                disabled={!canEmphasize}
+                title={`${t('bold')} (${emphasizeModifier === '⌘' ? '⌘B' : 'Ctrl+B'})`}
+                aria-label={t('bold')}
+                aria-keyshortcuts="Control+b Meta+b"
+                aria-pressed={allBold}
+              >
+                <Bold aria-hidden="true" />
+              </ControlButton>
+              <ControlButton
+                onClick={toggleItalic}
+                disabled={!canEmphasize}
+                title={`${t('italic')} (${emphasizeModifier === '⌘' ? '⌘I' : 'Ctrl+I'})`}
+                aria-label={t('italic')}
+                aria-keyshortcuts="Control+i Meta+i"
+                aria-pressed={allItalic}
+              >
+                <Italic aria-hidden="true" />
+              </ControlButton>
+              <div
+                role="separator"
+                aria-orientation="vertical"
+                className="mx-1 h-4 w-px shrink-0 self-center bg-border"
+              />
+              <ControlButton
+                onClick={handleDelete}
+                disabled={!canDelete}
+                title={t('delete')}
+                aria-label={t('delete')}
+              >
+                <Trash2 aria-hidden="true" />
+              </ControlButton>
+              <ControlButton
+                onClick={handleAdd}
+                disabled={!interactive}
+                title={t('addConcept')}
+                aria-label={t('addConcept')}
+              >
+                <Plus aria-hidden="true" />
+              </ControlButton>
+            </Controls>
+          </>
         )}
       </ReactFlow>
       <GraphContextMenu

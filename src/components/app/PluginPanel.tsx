@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type RefObject } from 'react'
 import { IconButton, PanelHeader, Spinner } from '@nesso-how/ui'
-import { ChevronRight, X } from 'lucide-react'
+import { X } from 'lucide-react'
 import { pluginPanel, usePluginPanel } from '../../plugins/index.ts'
 import { useNessoStore } from '../../store/index.ts'
 import { translate } from '../../i18n/index.ts'
@@ -51,6 +51,7 @@ export function PluginPanel({ canvas }: { canvas: RefObject<HTMLDivElement | nul
       data-plugin-panel
     >
       <PanelHeader
+        size="lg"
         actions={
           <IconButton
             ref={close}
@@ -62,22 +63,20 @@ export function PluginPanel({ canvas }: { canvas: RefObject<HTMLDivElement | nul
           </IconButton>
         }
       >
-        <div className="flex min-w-0 items-center gap-3">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
           <h2
             id="plugin-panel-title"
             aria-label={title}
-            title={title}
-            className="flex min-w-0 items-center gap-2 text-[13px]"
-          >
-            <span className="shrink-0 text-xs text-muted-foreground">{panel.pluginName}</span>
-            <ChevronRight aria-hidden="true" className="size-3 shrink-0 text-muted-foreground" />
-            <span className="truncate font-medium">{panel.title}</span>
-          </h2>
-          <span
             title={viewName}
-            className="max-w-[30%] truncate border-l pl-3 text-xs text-muted-foreground"
+            className="min-w-0 truncate text-[13px] font-medium"
           >
             {viewName}
+          </h2>
+          <span
+            title={title}
+            className="max-w-[30%] truncate border-l pl-3 text-xs text-muted-foreground"
+          >
+            {panel.title}
           </span>
         </div>
       </PanelHeader>

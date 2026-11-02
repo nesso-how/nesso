@@ -1,7 +1,4 @@
 {
-  "completeGraph": "Overview",
-  "conceptCount_one": "{{count}} concept",
-  "conceptCount_other": "{{count}} concepts",
   "fitView": "Fit view",
   "lockInteractions": "Lock interactions",
   "unlockInteractions": "Unlock interactions",

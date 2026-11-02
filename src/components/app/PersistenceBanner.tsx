@@ -135,7 +135,7 @@ export function PersistenceBanner({
                         if (unreadable) setDialog(section)
                         else void recover(section)
                       }}
-                      className="text-muted-foreground underline underline-offset-2 hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
+                      className="text-foreground underline underline-offset-2 disabled:pointer-events-none disabled:opacity-50"
                     >
                       {unreadable ? t('persistenceReplace') : t('persistenceRetry')}
                     </button>

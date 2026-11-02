@@ -24,6 +24,18 @@
   --radius-lg: var(--radius-object);
 }
 
+@layer base {
+  :root {
+    --nesso-panel-bar-height: 40px;
+  }
+
+  @media (pointer: coarse) {
+    :root {
+      --nesso-panel-bar-height: 52px;
+    }
+  }
+}
+
 @layer components {
   .nesso-button,
   .nesso-input,
@@ -138,7 +150,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    height: 49px;
+    height: var(--nesso-panel-bar-height);
     padding: 0 14px 0 20px;
     border-bottom: 1px solid var(--border);
   }
@@ -146,7 +158,6 @@
     display: flex;
     flex-shrink: 0;
     gap: 2px;
-    color: var(--muted-foreground);
   }
   .nesso-panel-actions button {
     width: 26px;
