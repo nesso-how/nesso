@@ -365,6 +365,7 @@
   "conceptCount_other": "{{count}} 个概念",
   "relationCount_other": "{{count}} 条关系",
   "actionsFor": "{{name}} 的操作",
+  "actionBadgeCount_other": "{{count}} 项",
   "renameView": "重命名",
   "pinView": "置顶",
   "unpinView": "取消置顶",

@@ -29,6 +29,7 @@ import {
   pluginStorageRevision,
   pluginStorageSnapshot,
   type PluginStorage,
+  type PluginStorageRecord,
 } from './storage.ts'
 export { checkMessageSize } from './data.ts'
 export {
@@ -59,6 +60,29 @@ export const runtimeLimits = {
   action: 120_000,
   heartbeat: 15_000,
 } as const
+
+export const badgeLimits = {
+  value: 999_999,
+  execution: 2_000,
+  refresh: 15_000,
+  rate: 1_000,
+} as const
+
+const actionBadgeResult = z.strictObject({
+  value: z.number().int().min(0).max(badgeLimits.value).nullable(),
+  refreshAt: z.number().int().min(0).max(8_640_000_000_000_000).optional(),
+})
+
+export type ActionBadgeInput = {
+  readonly viewId: string | null
+  readonly viewGraph: GraphSnapshot
+  readonly records: readonly PluginStorageRecord[]
+  readonly now: number
+}
+export type ActionBadgeResult = DeepReadonly<z.infer<typeof actionBadgeResult>>
+
+export const parseActionBadgeResult = (value: unknown): ActionBadgeResult =>
+  parseOrThrow(actionBadgeResult, value)
 export const themeTokens = [
   ...themeColors,
   'font-sans',
@@ -275,6 +299,7 @@ const message = z.union([
   z.strictObject({ type: z.literal('panel-ready') }),
   z.strictObject({ type: z.literal('pong'), id: z.number().int().positive() }),
   z.strictObject({ type: z.literal('contribution'), value: z.unknown() }),
+  z.strictObject({ type: z.literal('badge-result'), value: actionBadgeResult }),
   z.strictObject({ type: z.literal('close'), reason: z.string().max(2048) }),
   z.strictObject({ type: z.literal('complete'), ok: z.literal(true) }),
   z.strictObject({ type: z.literal('complete'), ok: z.literal(false), error: wireError }),
@@ -292,6 +317,7 @@ const actionDescriptor = z.strictObject({
     .regex(/^[a-z]+(?:-[a-z]+)*$/)
     .optional(),
   ui: z.literal(true).optional(),
+  badge: z.literal(true).optional(),
 })
 export const actionIconNames = [
   'arrow-right',
@@ -327,8 +353,9 @@ const actionDescriptors = z
     'Action IDs must be unique',
   )
 export type ActionDescriptor = DeepReadonly<z.infer<typeof actionDescriptor>>
-export type ActionContribution = Omit<ActionDescriptor, 'ui'> &
-  (
+export type ActionContribution = Omit<ActionDescriptor, 'ui' | 'badge'> & {
+  readonly badge?: (input: ActionBadgeInput) => ActionBadgeResult | Promise<ActionBadgeResult>
+} & (
     | { readonly ui: ComponentType<ActionContext>; readonly run?: never }
     | { readonly ui?: never; readonly run: (context: ActionContext) => void | Promise<void> }
   )

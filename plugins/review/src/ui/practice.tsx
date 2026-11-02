@@ -26,6 +26,7 @@ export function Practice({
   const reading = useRef<HTMLDivElement>(null)
   const controls = useRef<HTMLDivElement>(null)
   const previous = useRef<{ id: string; content: HTMLElement } | null>(null)
+  const instant = useRef(false)
   const { session, busy, failed } = snapshot
   const concepts = state.viewGraph.concepts
   const ids = concepts.map(({ id }) => id)
@@ -57,6 +58,9 @@ export function Practice({
     previous.current = currentId
       ? { id: currentId, content: area.cloneNode(true) as HTMLElement }
       : null
+    const immediate = instant.current
+    instant.current = false
+    if (immediate) return
     const animations: Animation[] = []
     let outgoing: HTMLElement | undefined
     const fade = (element: HTMLElement | null, duration: number, delay = 0) => {
@@ -112,13 +116,16 @@ export function Practice({
         return
       if (event.code === 'Space' && !revealed) {
         event.preventDefault()
+        instant.current = true
         if (session) review.reveal()
         else start()
       } else if (session && revealed && /^[1-4]$/.test(event.key)) {
         event.preventDefault()
+        instant.current = true
         rate(Number(event.key) as 1 | 2 | 3 | 4)
       } else if (session && event.key === 'Escape') {
         event.preventDefault()
+        instant.current = true
         review.finish()
       }
     }

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { PluginError, type ActionContext, type PluginStorageRecord } from '@nesso-how/plugin'
-import { createReview } from './scheduler.ts'
+import { createReview, reviewBadge } from './scheduler.ts'
 
 function fixture() {
   let time = new Date('2026-10-30T12:00:00.000Z')
@@ -43,6 +43,31 @@ function fixture() {
     },
   }
 }
+
+test('badges count only target-view concepts and request the next change using shared progress', async () => {
+  const f = fixture()
+  const review = await createReview(f.storage, f.now)
+  review.setScope(['urn:a'])
+  review.start()
+  review.reveal()
+  await review.rate(3)
+  const due = review.getSnapshot().progress.get('urn:a')!.card.dueAt.getTime()
+  const input = {
+    viewId: null,
+    viewGraph: {
+      concepts: ['urn:a', 'urn:b'].map((id) => ({ id, label: id, position: { x: 0, y: 0 } })),
+      relations: [],
+      relationTypes: [],
+    },
+    records: [...f.records.values()],
+    now: f.now().getTime(),
+  }
+  assert.deepEqual(reviewBadge(input), { value: 1, refreshAt: due })
+  assert.deepEqual(reviewBadge({ ...input, now: due }), { value: 2 })
+  assert.deepEqual(reviewBadge({ ...input, viewGraph: { ...input.viewGraph, concepts: [] } }), {
+    value: 0,
+  })
+})
 
 test('concepts are automatically due; empty or unrevealed sessions never write', async () => {
   const f = fixture()

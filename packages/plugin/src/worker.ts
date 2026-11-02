@@ -1,6 +1,7 @@
 import {
   createPluginClient,
   parseContribution,
+  parseActionBadgeResult,
   PluginError,
   type ActionContribution,
 } from './runtime.ts'
@@ -18,11 +19,20 @@ const bootstrap = async (event: MessageEvent) => {
     const actions = await module.create()
     validateActions(actions)
     const invoke = async ({ data }: MessageEvent) => {
-      if (data?.type !== 'invoke') return
+      if (data?.type !== 'invoke' && data?.type !== 'badge') return
       port.removeEventListener('message', invoke)
       try {
-        const client = createPluginClient(port, data.state)
         const action = actions.find(({ id }) => id === data.actionId)
+        if (data.type === 'badge') {
+          if (!action?.badge)
+            throw new PluginError('invalid-input', [
+              { path: 'badge', message: 'Missing badge provider' },
+            ])
+          const value = parseActionBadgeResult(await action.badge(data.input))
+          port.postMessage({ type: 'badge-result', value })
+          return
+        }
+        const client = createPluginClient(port, data.state)
         if (!action || action.ui) {
           client.close()
           return
@@ -64,11 +74,12 @@ const bootstrap = async (event: MessageEvent) => {
       type: 'contribution',
       value: parseContribution(
         'actions',
-        actions.map(({ id, label, icon, ui }) => ({
+        actions.map(({ id, label, icon, ui, badge }) => ({
           id,
           label,
           ...(icon !== undefined ? { icon } : {}),
           ...(ui ? { ui: true } : {}),
+          ...(badge ? { badge: true } : {}),
         })),
       ),
     })
