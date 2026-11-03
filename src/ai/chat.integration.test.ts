@@ -6,6 +6,7 @@ import {
   type AiChatEvent,
   type AiChatRequest,
   type AiDocumentation,
+  type AiEffects,
   type AiResult,
   type AiToolReply,
 } from '@nesso-how/ai'
@@ -47,11 +48,22 @@ const fixture = () => {
   const documentation = Object.fromEntries(
     aiTools.read_docs.inputSchema.shape.topic.options.map((topic) => [topic, `# ${topic}`]),
   ) as AiDocumentation
-  const chat = createAiChat(bridge, host.store, documentation)
+  const approvals: { effects: AiEffects; resolve: (approved: boolean) => void }[] = []
+  const chat = createAiChat(
+    bridge,
+    host.store,
+    documentation,
+    (effects, signal) =>
+      new Promise((resolve) => {
+        approvals.push({ effects, resolve })
+        signal.addEventListener('abort', () => resolve(false), { once: true })
+      }),
+  )
   return {
     chat,
     host,
     replies,
+    approvals,
     finish: (result: AiResult<true>) => finish(result),
     tool: (name: string, value: unknown) =>
       receive({ id: input.id, type: 'tool', callId: name, name, input: value }),
@@ -204,4 +216,66 @@ test('Stop, clear and generation failure discard staged edits and cannot resurre
       )
     f.chat.dispose()
   }
+})
+
+test('chat asks before applying turns that remove five or more concepts', async () => {
+  const f = fixture()
+  const ids = Array.from({ length: 6 }, (_, index) => `urn:c${index}`)
+  f.host.store.applyOperations(
+    ids.flatMap((id) => [
+      { kind: 'selection.set', value: [] },
+      { kind: 'concept.add', id },
+    ]),
+  )
+  const settle = () => new Promise((resolve) => setImmediate(resolve))
+  const labels = () => f.host.store.getState().graph.concepts.map(({ id }) => id)
+  const before = labels()
+  const propose = async (count: number) => {
+    const task = f.chat.send('Remove concepts', f.host, 'en')
+    f.edit(ids.slice(0, count).map((id) => ({ kind: 'concept.remove', id })))
+    f.finish({ value: true })
+    await settle()
+    return task
+  }
+  const outcome = () => f.host.store.getState().conversation.messages.at(-1)?.outcome
+
+  await propose(4)
+  assert.equal(f.approvals.length, 0)
+  assert.equal(labels().length, before.length - 4)
+  f.host.store.undo()
+
+  const rejected = propose(5)
+  await settle()
+  assert.equal(f.approvals.length, 1)
+  assert.equal(f.approvals[0].effects.concepts.removed, 5)
+  assert.deepEqual(labels(), before)
+  f.approvals[0].resolve(false)
+  await rejected
+  assert.deepEqual(labels(), before)
+  assert.equal(outcome(), 'cancelled')
+
+  const approved = propose(5)
+  await settle()
+  f.approvals[1].resolve(true)
+  await approved
+  assert.deepEqual(labels(), ['urn:first', 'urn:c5'])
+  assert.equal(outcome(), 'applied')
+  f.host.store.undo()
+
+  const stopped = propose(5)
+  await settle()
+  f.chat.stop()
+  await stopped
+  assert.equal(f.approvals.length, 3)
+  assert.deepEqual(labels(), before)
+  assert.equal(outcome(), 'cancelled')
+
+  const stale = propose(5)
+  await settle()
+  f.host.store.setConceptLabel('urn:first', 'Changed')
+  f.approvals[3].resolve(true)
+  await stale
+  assert.deepEqual(labels(), before)
+  assert.equal(outcome(), 'error')
+  f.chat.dispose()
 })

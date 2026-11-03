@@ -1,6 +1,6 @@
 import type { NessoOperation, NessoState } from '@nesso-how/core'
 import { ZodError } from 'zod'
-import { aiTools, type AiDocumentation, type AiToolResults } from '@nesso-how/ai'
+import { aiTools, type AiDocumentation, type AiEffects, type AiToolResults } from '@nesso-how/ai'
 import type { createNessoStore } from '../store/create.ts'
 import { NessoError } from '@nesso-how/errors'
 import { summarizeEffects } from './effects.ts'
@@ -92,13 +92,16 @@ export function createAiTurn(
         throw errorOf(error)
       }
     },
-    commit: async () => {
+    commit: async (approve?: (effects: AiEffects) => boolean | Promise<boolean>) => {
       try {
         if (status !== 'staging') fail('turn', 'Turn is closed or applying')
         status = 'committing'
         current()
         const preview = boundary.previewOperations(base, operations)
         const effects = summarizeEffects(preview)
+        if (!history && approve && !(await approve(effects)))
+          return { status: 'cancelled' as const, effects }
+        if (signal?.aborted) return { status: 'cancelled' as const, effects }
         current()
         boundary.store.applyOperations(
           history ? [{ kind: history === 'undo' ? 'history.undo' : 'history.redo' }] : operations,

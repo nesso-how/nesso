@@ -243,6 +243,7 @@
   "mcpFailure": "Operazione del server MCP non riuscita.",
   "mcpCopyFailure": "Impossibile copiare. Riprova.",
   "mcpApproval": "Applicare modifiche MCP esterne?",
+  "aiRemovalApproval": "Applicare le eliminazioni dell'AI?",
   "mcpUndoApproval": "Un client MCP esterno richiede di annullare l’ultima modifica nella cronologia condivisa del documento.",
   "mcpRedoApproval": "Un client MCP esterno richiede di ripristinare l’ultima modifica nella cronologia condivisa del documento.",
   "ai": "AI",

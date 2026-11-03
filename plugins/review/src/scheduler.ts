@@ -48,22 +48,43 @@ const fields = {
   scheduledDays: z.number().int().nonnegative(),
   learningStep: z.number().int().nonnegative(),
 }
-const storedProgress = z.strictObject({
+const storedCard = z.strictObject({
+  ...fields,
+  reps: z.number().int().nonnegative(),
+  lapses: z.number().int().nonnegative(),
+})
+const storedLog = z.strictObject({
+  ...fields,
+  rating: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]),
+  reviewTime: z.iso.datetime().transform((value) => new Date(value)),
+})
+const maxLogs = 20
+const progressV1 = z.strictObject({
   model: z.literal('FSRS-6'),
-  card: z.strictObject({
-    ...fields,
-    reps: z.number().int().nonnegative(),
-    lapses: z.number().int().nonnegative(),
-  }),
-  logs: z.array(
-    z.strictObject({
-      ...fields,
-      rating: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]),
-      reviewTime: z.iso.datetime().transform((value) => new Date(value)),
-    }),
-  ),
+  card: storedCard,
+  logs: z.array(storedLog),
+})
+const progressV2 = z.strictObject({
+  version: z.literal(2),
+  model: z.literal('FSRS-6'),
+  card: storedCard,
+  logs: z.array(storedLog).max(maxLogs),
 })
 const storageKey = 'progress'
+
+function upgradeV1(value: z.infer<typeof progressV1>): z.infer<typeof progressV2> {
+  if (value.card.reps !== value.logs.length) throw new PluginError('invalid-input', [])
+  return { version: 2, ...value, logs: value.logs.slice(-maxLogs) }
+}
+
+function parseProgress(value: unknown): Progress {
+  const { model, card, logs } =
+    typeof value === 'object' && value !== null && Object.hasOwn(value, 'version')
+      ? progressV2.parse(value)
+      : upgradeV1(progressV1.parse(value))
+  if (logs.length !== Math.min(card.reps, maxLogs)) throw new PluginError('invalid-input', [])
+  return { model, card, logs }
+}
 
 function restoreProgress(records: readonly PluginStorageRecord[]) {
   const progress = new Map<string, Progress>()
@@ -72,13 +93,9 @@ function restoreProgress(records: readonly PluginStorageRecord[]) {
     try {
       if (record.scope?.kind !== 'concept') throw new PluginError('invalid-input', [])
       const conceptId = record.scope.id
-      const value = storedProgress.parse(record.value)
+      const value = parseProgress(record.value)
       const { card, logs } = value
-      if (
-        card.cardId !== conceptId ||
-        card.reps !== logs.length ||
-        logs.some((log) => log.cardId !== conceptId)
-      )
+      if (card.cardId !== conceptId || logs.some((log) => log.cardId !== conceptId))
         throw new PluginError('invalid-input', [])
       progress.set(conceptId, value)
     } catch {
@@ -193,9 +210,12 @@ export async function createReview(
         const next: Progress = {
           model: 'FSRS-6',
           card: result.card,
-          logs: [...(snapshot.progress.get(id)?.logs ?? []), result.revlog],
+          logs: [...(snapshot.progress.get(id)?.logs ?? []), result.revlog].slice(-maxLogs),
         }
-        await storage.set(storageKey, JSON.parse(JSON.stringify(next)), { kind: 'concept', id })
+        await storage.set(storageKey, JSON.parse(JSON.stringify({ version: 2, ...next })), {
+          kind: 'concept',
+          id,
+        })
         const progress = new Map(snapshot.progress).set(id, next)
         const remaining = session.ids.slice(session.index + 1).filter((id) => scope.includes(id))
         const reviewed = session.index + 1

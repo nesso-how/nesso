@@ -195,7 +195,7 @@ Call helpers on `document` and declare their operation kinds in `nesso.writes`:
 
 `addConcept` returns the new IRI. New concepts join the active saved view and link to the single selected concept, if any. These links and `connect` use the vocabulary's default relation type. `createRelationType` creates and assigns a type to the given relation.
 
-For related edits, use `document.applyOperations(operations)` as in the quickstart. The entire batch succeeds or changes nothing. Separate calls are separate transactions. Raw `concept.add` operations require an explicit new absolute IRI.
+For related edits, use `document.applyOperations(operations)` as in the quickstart. The entire batch succeeds or changes nothing. Editing, reconnecting, retyping, or removing an unknown concept or relation rejects the batch, as does reconnecting or retyping onto an existing relation; removing an item already removed earlier in the same batch, such as a relation of a removed concept, is allowed. Separate calls are separate transactions. Raw `concept.add` operations require an explicit new absolute IRI.
 
 Every write checks against the last snapshot you read, or the initial snapshot if you haven't read one. Successful writes advance that baseline, so awaited sequential writes work normally. Incoming updates alone do not advance it. A conflict rejects with `stale-state`; let the failure propagate so Nesso can ask the user to run the action again. Never retry mutations automatically or read a new snapshot just to submit edits calculated from old data.
 

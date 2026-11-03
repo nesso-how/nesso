@@ -3,6 +3,8 @@ import { test } from 'node:test'
 import { PluginError, type ActionContext, type PluginStorageRecord } from '@nesso-how/plugin'
 import { createReview, reviewBadge } from './scheduler.ts'
 
+type Value = PluginStorageRecord['value']
+
 function fixture() {
   let time = new Date('2026-10-30T12:00:00.000Z')
   const records = new Map<string, PluginStorageRecord>()
@@ -200,5 +202,54 @@ test('failed writes block progress and retries; invalid records remain untouched
     f.records.set('urn:a', { key: 'progress', scope: { kind: 'concept', id: 'urn:a' }, value })
     await assert.rejects(createReview(f.storage, f.now), PluginError)
     assert.deepEqual(f.records.get('urn:a')?.value, value)
+  }
+})
+
+test('version 1 progress keeps its schedule and only the latest logs from the next rating', async () => {
+  const f = fixture()
+  const first = await createReview(f.storage, f.now)
+  first.setScope(['urn:a'])
+  first.start()
+  first.reveal()
+  await first.rate(3)
+  const { version, ...stored } = f.records.get('urn:a')!.value as {
+    version: number
+    card: { reps: number }
+    logs: Value[]
+  }
+  assert.equal(version, 2)
+  const logs = Array.from({ length: 30 }, () => stored.logs[0])
+  const legacy = { ...stored, card: { ...stored.card, reps: 30 }, logs }
+  f.records.set('urn:a', {
+    key: 'progress',
+    scope: { kind: 'concept', id: 'urn:a' },
+    value: legacy,
+  })
+  const reopened = await createReview(f.storage, f.now)
+  assert.equal(reopened.getSnapshot().progress.get('urn:a')!.logs.length, 20)
+  assert.equal(reopened.getSnapshot().progress.get('urn:a')!.card.reps, 30)
+  assert.deepEqual(f.records.get('urn:a')!.value, legacy)
+  f.advance(400 * 86_400_000)
+  reopened.setScope(['urn:a'])
+  reopened.start()
+  reopened.reveal()
+  await reopened.rate(3)
+  const upgraded = f.records.get('urn:a')!.value as typeof stored & { version: number }
+  assert.equal(upgraded.version, 2)
+  assert.equal(upgraded.card.reps, 31)
+  assert.equal(upgraded.logs.length, 20)
+  assert.deepEqual(
+    upgraded.logs.at(-1),
+    JSON.parse(JSON.stringify(reopened.getSnapshot().progress.get('urn:a')!.logs.at(-1))),
+  )
+  const invalid = [
+    { ...legacy, card: { ...legacy.card, reps: 29 } },
+    { ...legacy, version: 2 },
+    { ...legacy, version: 2, logs: logs.slice(0, 5) },
+    { ...upgraded, version: 3 },
+  ]
+  for (const value of invalid) {
+    f.records.set('urn:a', { key: 'progress', scope: { kind: 'concept', id: 'urn:a' }, value })
+    await assert.rejects(createReview(f.storage, f.now), PluginError)
   }
 })

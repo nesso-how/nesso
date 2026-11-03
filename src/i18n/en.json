@@ -242,6 +242,7 @@
   "mcpFailure": "MCP server operation failed.",
   "mcpCopyFailure": "Could not copy. Try again.",
   "mcpApproval": "Apply external MCP changes?",
+  "aiRemovalApproval": "Apply the AI's deletions?",
   "mcpUndoApproval": "An external MCP client requests Undo on the shared document history.",
   "mcpRedoApproval": "An external MCP client requests Redo on the shared document history.",
   "ai": "AI",

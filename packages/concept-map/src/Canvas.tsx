@@ -288,10 +288,13 @@ export function Canvas({
           setDragged(positions)
         } else {
           dragPositions.current = null
+          const existing = new Set(store.getState().graph.concepts.map(({ id }) => id))
           write([
             {
               kind: 'concept.positions',
-              updates: [...positions].map(([id, position]) => ({ id, position })),
+              updates: [...positions]
+                .filter(([id]) => existing.has(id))
+                .map(([id, position]) => ({ id, position })),
             },
           ])
           setDragged(null)
@@ -299,7 +302,7 @@ export function Canvas({
       }
       onObjectChanges('concept', changes)
     },
-    [readOnly, write, onObjectChanges],
+    [readOnly, store, write, onObjectChanges],
   )
 
   const cancelConnection = () => {

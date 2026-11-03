@@ -32,6 +32,7 @@ function RelationInput({
   label,
   defaultTypeId,
   relationTypes,
+  taken,
   onSave,
   onCreate,
   readonly,
@@ -41,6 +42,7 @@ function RelationInput({
   label: string
   defaultTypeId: string | undefined
   relationTypes: readonly Readonly<RelationType>[]
+  taken: ReadonlySet<string>
   onSave: (id: string, typeId: string) => void
   onCreate: (id: string, label: string) => void
   readonly: boolean
@@ -52,15 +54,23 @@ function RelationInput({
   const highlighted = useRef<Readonly<RelationType> | undefined>(undefined)
   const query = value.trim().toLowerCase()
   const visible = relationTypes.filter(
-    (item) => item.id !== typeId && item.label.toLowerCase().includes(query),
+    (item) => item.id !== typeId && !taken.has(item.id) && item.label.toLowerCase().includes(query),
   )
+  const choose = (id: string, next: string) => {
+    if (taken.has(id)) {
+      setValue(label)
+      return
+    }
+    onSave(edgeId, id)
+    setValue(next)
+  }
 
   const save = (raw: string) => {
     if (readonly) return
     const trimmed = raw.trim()
     if (trimmed.toLowerCase() === label.trim().toLowerCase()) return
     if (!trimmed) {
-      if (defaultTypeId) onSave(edgeId, defaultTypeId)
+      if (defaultTypeId) choose(defaultTypeId, '')
       return
     }
     const matches = relationTypes.filter(
@@ -71,9 +81,12 @@ function RelationInput({
       setOpen(true)
       return
     }
-    if (matches.length === 1) onSave(edgeId, matches[0].id)
-    else onCreate(edgeId, trimmed)
-    setValue(matches[0]?.label ?? trimmed)
+    if (matches.length === 1) {
+      choose(matches[0].id, matches[0].label)
+      return
+    }
+    onCreate(edgeId, trimmed)
+    setValue(trimmed)
   }
 
   return (
@@ -90,7 +103,7 @@ function RelationInput({
           if (readonly) return
           setValue(next)
           setError(false)
-          if (details.reason === 'clear-press' && defaultTypeId) onSave(edgeId, defaultTypeId)
+          if (details.reason === 'clear-press' && defaultTypeId) choose(defaultTypeId, '')
         }}
         onItemHighlighted={(item) => {
           highlighted.current = item
@@ -184,6 +197,18 @@ export function Inspector({
     selectedRelationId === activeVocab?.defaultTypeId
       ? ''
       : (relationTypes.find((item) => item.id === selectedRelationId)?.label ?? '')
+  const parallelTypes = new Set(
+    selectedEdge
+      ? graph.relations
+          .filter(
+            (relation) =>
+              relation !== selectedEdge &&
+              relation.source === selectedEdge.source &&
+              relation.target === selectedEdge.target,
+          )
+          .map((relation) => relation.predicate)
+      : [],
+  )
   const invertedExists = selectedEdge
     ? graph.relations.some(
         (relation) =>
@@ -297,6 +322,7 @@ export function Inspector({
             label={selectedRelationLabel}
             defaultTypeId={activeVocab?.defaultTypeId}
             relationTypes={relationTypes}
+            taken={parallelTypes}
             onSave={store.setRelationType}
             onCreate={store.createRelationType}
             readonly={readonly}

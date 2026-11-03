@@ -39,7 +39,7 @@ const confirm = (
 export function createAiApproval(
   notifications: Notifications,
   getTranslation: () => ReturnType<typeof translate>,
-  title: 'mcpApproval',
+  title: 'mcpApproval' | 'aiRemovalApproval',
 ) {
   return (effects: AiEffects, signal: AbortSignal) => {
     const t = getTranslation()
