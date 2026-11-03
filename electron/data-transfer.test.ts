@@ -62,8 +62,20 @@ test('failed saves, window destruction, navigation and missing acknowledgements 
     const { sent, windows, reply, prepare, clean } = fixture()
     const pending = prepare(failure === 'timeout' ? 1 : 1000)
     if (failure === 'save') reply(1, sent[0].request, false)
-    else if (failure !== 'timeout') windows[0].emit(failure)
+    else if (failure !== 'timeout')
+      windows[0].emit(failure, { isMainFrame: true, isSameDocument: false })
     await assert.rejects(pending, /storageSaveFailure/)
     clean()
   }
+})
+
+test('plugin frame and same-document navigation do not interrupt a transfer', async () => {
+  const { sent, windows, reply, prepare, clean } = fixture()
+  const pending = prepare()
+  windows[0].emit('did-start-navigation', { isMainFrame: false, isSameDocument: false })
+  windows[1].emit('did-start-navigation', { isMainFrame: true, isSameDocument: true })
+  reply(1, sent[0].request, true)
+  reply(2, sent[0].request, true)
+  await pending
+  clean()
 })

@@ -16,6 +16,7 @@ import type { McpEvent, McpState } from './mcp-bridge.ts'
 import { createMcpAccess } from './mcp-access.ts'
 import { createAiStorage } from './ai-storage.ts'
 import type { TrustedRequest } from './ipc.ts'
+import { onDocumentNavigation } from './navigation.ts'
 import type { DataLocation } from './data-location.ts'
 
 const replySchema = z.union([
@@ -32,6 +33,7 @@ export function connectMcp(trusted: TrustedRequest, location: DataLocation) {
     createAiStorage(path.join(app.getPath('userData'), 'mcp-access.enc'), safeStorage),
   )
   let host: WebContents | undefined
+  let stopNavigation = () => {}
   let server: Awaited<ReturnType<typeof startMcpServer>> | undefined
   let changing = false
   let pending: { id: string; finish: (result: AiResult<unknown>) => void } | undefined
@@ -121,14 +123,14 @@ export function connectMcp(trusted: TrustedRequest, location: DataLocation) {
   const disconnected = () => {
     void stop()
     host?.removeListener('destroyed', disconnected)
-    host?.removeListener('did-start-navigation', disconnected)
+    stopNavigation()
     host = undefined
   }
   ipcMain.on('mcp:ready', (event) => {
     if (!trusted(event) || host) return
     host = event.sender
     host.once('destroyed', disconnected)
-    host.on('did-start-navigation', disconnected)
+    stopNavigation = onDocumentNavigation(host, disconnected)
   })
   ipcMain.on('mcp:disconnect', (event) => {
     if (trusted(event) && host === event.sender) disconnected()

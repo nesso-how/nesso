@@ -5,6 +5,7 @@ import { NessoError } from '@nesso-how/errors'
 import type { DataLocation } from './data-location.ts'
 import { ElectronError } from './errors.ts'
 import type { TrustedRequest } from './ipc.ts'
+import { onDocumentNavigation } from './navigation.ts'
 import { prepareDataTransfer } from './data-transfer.ts'
 import { createBackups } from './backups.ts'
 import { createRecordReplacement } from './record-replacement.ts'
@@ -190,7 +191,7 @@ export function connectDataLocation(
     if (trusted(event)) backups.cancel(event.sender.id)
   })
   app.on('web-contents-created', (_event, contents) => {
-    contents.on('did-start-navigation', () => backups.cancel(contents.id))
+    onDocumentNavigation(contents, () => backups.cancel(contents.id))
     contents.once('destroyed', () => backups.cancel(contents.id))
   })
   ipcMain.handle(
