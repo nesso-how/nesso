@@ -7,6 +7,7 @@ import { ElectronError } from './errors.ts'
 import { createAiChatRun } from './ai-chat.ts'
 import { createChatGptAuth } from './ai-oauth.ts'
 import type { TrustedRequest } from './ipc.ts'
+import { onDocumentNavigation } from './navigation.ts'
 import type { DataLocation } from './data-location.ts'
 
 export function connectAi(trusted: TrustedRequest, location: DataLocation) {
@@ -26,7 +27,7 @@ export function connectAi(trusted: TrustedRequest, location: DataLocation) {
     signIn = attempt
     const cancel = () => attempt.controller.abort()
     event.sender.once('destroyed', cancel)
-    event.sender.on('did-start-navigation', cancel)
+    const stopNavigation = onDocumentNavigation(event.sender, cancel)
     try {
       return { value: await connections.signIn(id, attempt.controller.signal) }
     } catch (error) {
@@ -38,7 +39,7 @@ export function connectAi(trusted: TrustedRequest, location: DataLocation) {
       }
     } finally {
       event.sender.removeListener('destroyed', cancel)
-      event.sender.removeListener('did-start-navigation', cancel)
+      stopNavigation()
       if (signIn === attempt) signIn = undefined
     }
   })
@@ -104,7 +105,7 @@ export function connectAi(trusted: TrustedRequest, location: DataLocation) {
       run?.cancel()
     }
     event.sender.once('destroyed', cancel)
-    event.sender.on('did-start-navigation', cancel)
+    const stopNavigation = onDocumentNavigation(event.sender, cancel)
     try {
       const entry = await connections.active()
       controller.signal.throwIfAborted()
@@ -123,7 +124,7 @@ export function connectAi(trusted: TrustedRequest, location: DataLocation) {
       }
     } finally {
       event.sender.removeListener('destroyed', cancel)
-      event.sender.removeListener('did-start-navigation', cancel)
+      stopNavigation()
       if (runs.get(senderId) === run) runs.delete(senderId)
       preparing.delete(senderId)
     }

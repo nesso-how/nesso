@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import type { ipcMain, IpcMainEvent, WebContents } from 'electron'
 import type { TrustedRequest } from './ipc.ts'
 import { ElectronError } from './errors.ts'
+import { onDocumentNavigation } from './navigation.ts'
 
 export async function prepareDataTransfer(
   windows: readonly WebContents[],
@@ -14,6 +15,7 @@ export async function prepareDataTransfer(
   let receive: (event: IpcMainEvent, request: unknown, saved: unknown) => void = () => {}
   let fail: () => void = () => {}
   let timer: ReturnType<typeof setTimeout> | undefined
+  const stopNavigation: (() => void)[] = []
   try {
     await new Promise<void>((resolve, reject) => {
       fail = () =>
@@ -31,7 +33,7 @@ export async function prepareDataTransfer(
       ipc.on('data-location:prepared', receive)
       for (const window of windows) {
         window.once('destroyed', fail)
-        window.once('did-start-navigation', fail)
+        stopNavigation.push(onDocumentNavigation(window, fail))
         window.send('data-location:prepare', id)
       }
       if (!pending.size) resolve()
@@ -39,9 +41,7 @@ export async function prepareDataTransfer(
   } finally {
     clearTimeout(timer)
     ipc.removeListener('data-location:prepared', receive)
-    for (const window of windows) {
-      window.removeListener('destroyed', fail)
-      window.removeListener('did-start-navigation', fail)
-    }
+    for (const window of windows) window.removeListener('destroyed', fail)
+    for (const stop of stopNavigation) stop()
   }
 }

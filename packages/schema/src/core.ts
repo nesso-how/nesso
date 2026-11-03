@@ -7,6 +7,16 @@ export const schemaContext = {
   italic: { '@id': 'urn:uuid:a532a410-360e-4449-9750-9934b49b2d39' },
 } as const
 
+export const conceptKeys = [
+  '@id',
+  'rdfs:label',
+  'rdfs:comment',
+  'position',
+  'color',
+  'bold',
+  'italic',
+]
+
 export const newIri = () => `urn:uuid:${crypto.randomUUID()}`
 export const isAbsoluteIri = (value: unknown): value is string =>
   typeof value === 'string' && /^[a-z][a-z0-9+.-]*:/i.test(value)

@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { isAbsoluteIri, relationKey } from './core.ts'
+import { conceptKeys, isAbsoluteIri, relationKey } from './core.ts'
 
 export const iriSchema = z
   .string({ error: 'Expected an absolute IRI' })
@@ -17,7 +17,10 @@ export const conceptSchema = z.strictObject({
   italic: z.boolean().optional(),
   position: positionSchema,
 })
-export const relationTypeSchema = z.strictObject({ id: iriSchema, label: z.string() })
+export const relationTypeSchema = z.strictObject({
+  id: iriSchema.refine((id) => !conceptKeys.includes(id), 'Reserved concept property IRI'),
+  label: z.string(),
+})
 const relationSchema = z.strictObject({
   source: iriSchema,
   predicate: iriSchema,

@@ -155,6 +155,12 @@ test('messages reject non-data values, excessive nesting, unknown methods and ex
   let nested: unknown = null
   for (let index = 0; index < 34; index++) nested = { nested }
   assert.throws(() => checkMessageSize(nested, 1024), PluginError)
+  let shared: unknown = 'leaf'
+  for (let index = 0; index < 32; index++) shared = { a: shared, b: shared }
+  assert.throws(() => checkMessageSize(shared, 1024 * 1024), /Message limit exceeded/)
+  const repeated = { text: 'x'.repeat(1000) }
+  assert.throws(() => checkMessageSize(Array(2000).fill(repeated), 1024 * 1024), PluginError)
+  assert.doesNotThrow(() => checkMessageSize({ a: repeated, b: repeated }, 4096))
   const request = {
     type: 'request',
     id: 1,

@@ -110,6 +110,30 @@ test('graph validation and serialization reject relative concept and relation-ty
   }
 })
 
+test('relation types cannot reuse concept property keys at graph and JSON-LD boundaries', () => {
+  for (const id of ['rdfs:label', 'rdfs:comment']) {
+    const graph = parseGraph(fixture)
+    graph.relationTypes[0].id = id
+    for (const relation of graph.relations) relation.predicate = id
+    assert.ok(
+      validateGraph(graph).some(
+        (issue) => issue.path === 'relationTypes[0].id' && /Reserved/.test(issue.message),
+      ),
+    )
+    assert.throws(() => serializeGraph(graph), SchemaError)
+    assert.throws(
+      () =>
+        parseGraph({
+          '@context': { ...schemaContext, connects: { '@id': id, '@type': '@id' } },
+          '@graph': fixture['@graph'].map((entry) =>
+            entry['@id'] === predicate ? { ...entry, '@id': id } : entry,
+          ),
+        }),
+      SchemaError,
+    )
+  }
+})
+
 test('notes must be strings at graph and JSON-LD boundaries', () => {
   const graph = parseGraph(fixture)
   graph.concepts[0].notes = 42 as never

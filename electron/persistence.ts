@@ -11,6 +11,7 @@ import { persistenceSections, type PersistenceSection } from '../shared/persiste
 import { createFileStorage } from './file-storage.ts'
 import { ElectronError } from './errors.ts'
 import type { TrustedRequest } from './ipc.ts'
+import { onDocumentNavigation } from './navigation.ts'
 import type { DataLocation } from './data-location.ts'
 
 export function connectDesktopPersistence(
@@ -83,7 +84,7 @@ export function connectDesktopPersistence(
     let confirming = false
     let saved = false
     let timer: ReturnType<typeof setTimeout> | undefined
-    window.webContents.on('did-start-navigation', () => {
+    onDocumentNavigation(window.webContents, () => {
       ready = false
     })
     const belongs = (event: IpcMainEvent) => trusted(event) && event.sender === window.webContents

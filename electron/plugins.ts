@@ -4,6 +4,7 @@ import { preparePluginPackage, type PluginPackageInput } from '@nesso-how/plugin
 import { PluginError, resolvePluginText } from '@nesso-how/plugin/runtime'
 import type { InstalledPlugin, PluginResult } from '../shared/plugins.ts'
 import type { TrustedRequest } from './ipc.ts'
+import { onDocumentNavigation } from './navigation.ts'
 import { createPluginStorage } from './plugin-storage.ts'
 import { acquireNpmPlugin, latestNpmPlugin, searchNpmPlugins } from './plugin-npm.ts'
 import { createPluginApproval } from './plugin-approval.ts'
@@ -46,15 +47,12 @@ export function connectPlugins(
     const disconnect = () => {
       ready.delete(event.sender.id)
       event.sender.removeListener('destroyed', disconnect)
-      event.sender.removeListener('did-start-navigation', navigating)
+      stopNavigation()
       if (pending?.owner === event.sender.id) pending.cancel()
-    }
-    const navigating = (details: { isMainFrame: boolean }) => {
-      if (details.isMainFrame) disconnect()
     }
     ready.set(event.sender.id, disconnect)
     event.sender.once('destroyed', disconnect)
-    event.sender.on('did-start-navigation', navigating)
+    const stopNavigation = onDocumentNavigation(event.sender, disconnect)
   })
   ipcMain.on('plugins:disconnect', (event) => {
     if (!trusted(event)) return
@@ -78,7 +76,7 @@ export function connectPlugins(
       metadata.set(event.sender.id, controller)
       const cancel = () => controller.abort()
       event.sender.once('destroyed', cancel)
-      event.sender.once('did-start-navigation', cancel)
+      const stopNavigation = onDocumentNavigation(event.sender, cancel)
       try {
         const value =
           operation === 'search'
@@ -99,7 +97,7 @@ export function connectPlugins(
       } finally {
         if (metadata.get(event.sender.id) === controller) metadata.delete(event.sender.id)
         event.sender.removeListener('destroyed', cancel)
-        event.sender.removeListener('did-start-navigation', cancel)
+        stopNavigation()
       }
     })
   for (const source of ['development', 'npm'] as const)
@@ -181,7 +179,7 @@ export function connectPlugins(
               attempt.approval?.revoke()
               clearTimeout(timer)
               event.sender.removeListener('destroyed', cancel)
-              event.sender.removeListener('did-start-navigation', navigating)
+              stopNavigation()
               if (cancelled) {
                 controller.abort()
                 if (!event.sender.isDestroyed())
@@ -190,12 +188,9 @@ export function connectPlugins(
               resolve(result)
             },
           }
-          const navigating = (details: { isMainFrame: boolean }) => {
-            if (details.isMainFrame) cancel()
-          }
           pending = attempt
           event.sender.once('destroyed', cancel)
-          event.sender.on('did-start-navigation', navigating)
+          const stopNavigation = onDocumentNavigation(event.sender, cancel)
           void (async () => {
             const prepared =
               source === 'npm'

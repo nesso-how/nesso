@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { schemaContext } from './core.ts'
+import { conceptKeys, schemaContext } from './core.ts'
 import { fail, parseSchema, SchemaError } from './errors.ts'
 import { validateGraph } from './validate.ts'
 import {
@@ -98,10 +98,7 @@ export function parseGraph(value: unknown): Graph {
     if (entry['@type'] === 'rdf:Property') continue
     const id = iri(entry['@id'], `@graph[${index}].@id`)
     for (const [term, value] of Object.entries(entry)) {
-      if (
-        ['@id', 'rdfs:label', 'rdfs:comment', 'position', 'color', 'bold', 'italic'].includes(term)
-      )
-        continue
+      if (conceptKeys.includes(term)) continue
       const path = `@graph[${index}].${term}`
       const predicate = predicates.get(term) ?? (known.has(term) ? term : undefined)
       if (!predicate || !known.has(predicate)) fail(path, `Unsupported property: ${term}`)
