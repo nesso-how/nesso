@@ -352,6 +352,35 @@ test('durable state round-trips without rewriting restored records or persisting
   await persistence.dispose()
 })
 
+test('autosave writes continuous edits within the maximum delay', async (context) => {
+  context.mock.timers.enable({ apis: ['setTimeout'] })
+  const storage = memoryStorage()
+  const host = registeredHost(fixture())
+  const persistence = connectPersistence(host, storage, await loadPersistence(storage))
+  await persistence.flush()
+  storage.writes.length = 0
+  const settle = () => new Promise((resolve) => setImmediate(resolve))
+  for (let step = 1; step < 20; step++) {
+    host.store.setConceptLabel('urn:one', `Step ${step}`)
+    context.mock.timers.tick(100)
+  }
+  await settle()
+  assert.deepEqual(storage.writes, [])
+  host.store.setConceptLabel('urn:one', 'Step 20')
+  context.mock.timers.tick(100)
+  await settle()
+  assert.deepEqual(storage.writes, ['document'])
+  assert.equal((await loadPersistence(storage)).graph?.concepts[0].label, 'Step 20')
+  host.store.setConceptLabel('urn:one', 'Later')
+  context.mock.timers.tick(199)
+  await settle()
+  assert.deepEqual(storage.writes, ['document'])
+  context.mock.timers.tick(1)
+  await settle()
+  assert.deepEqual(storage.writes, ['document', 'document'])
+  await persistence.dispose()
+})
+
 test('autosave debounces durable sections and drains edits on shutdown', async (context) => {
   context.mock.timers.enable({ apis: ['setTimeout'] })
   const storage = memoryStorage()
