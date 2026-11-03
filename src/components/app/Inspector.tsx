@@ -2,7 +2,7 @@ import { newIri, relationKey, type RelationType } from '@nesso-how/schema'
 import { resolveRelationTypeLabel } from '@nesso-how/core'
 import { defaultLocale } from '@nesso-how/i18n'
 import { maxConceptLabelLength, maxRelationLabelLength } from '@/store/settings'
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import {
   Autocomplete,
   AutocompleteClear,
@@ -162,9 +162,11 @@ export function Inspector({
   const item = selected.length === 1 ? selected[0] : undefined
   const conceptIds = selected.filter((item) => item.kind === 'concept').map((item) => item.id)
   const relationCount = selected.length - conceptIds.length
-  const outsideCount = conceptIds.filter(
-    (id) => !viewGraph.concepts.some((concept) => concept.id === id),
-  ).length
+  const visibleIds = useMemo(
+    () => new Set(viewGraph.concepts.map((concept) => concept.id)),
+    [viewGraph.concepts],
+  )
+  const outsideCount = conceptIds.filter((id) => !visibleIds.has(id)).length
   const concept =
     item?.kind === 'concept' ? graph.concepts.find((concept) => concept.id === item.id) : undefined
   const selectedEdge =
