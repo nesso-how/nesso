@@ -42,6 +42,7 @@ import {
   type ConnectionLineComponentProps,
   type NodeChange,
   type NodeTypes,
+  type XYPosition,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import './styles.css'
@@ -82,7 +83,22 @@ export function Canvas({
   const graph = useNesso((state) => state.viewGraph)
   const vocabs = useNesso((state) => state.vocabs)
   const locale = useNesso((state) => state.preferences.locale ?? defaultLocale)
-  const indexed = useMemo(() => indexGraph(graph, vocabs, locale), [graph, vocabs, locale])
+  const dragPositions = useRef<ReadonlyMap<string, XYPosition> | null>(null)
+  const [dragged, setDragged] = useState<ReadonlyMap<string, XYPosition> | null>(null)
+  const displayed = useMemo(
+    () =>
+      dragged
+        ? {
+            ...graph,
+            concepts: graph.concepts.map((concept) => {
+              const position = dragged.get(concept.id)
+              return position ? { ...concept, position } : concept
+            }),
+          }
+        : graph,
+    [graph, dragged],
+  )
+  const indexed = useMemo(() => indexGraph(displayed, vocabs, locale), [displayed, vocabs, locale])
   const selected = useNesso((state) => state.selected)
   const fullGraph = useNesso((state) => state.graph)
   const view = useNesso((state) => state.workspace.activeViewId)
@@ -100,7 +116,6 @@ export function Canvas({
   const navigation = useRef(view)
   const reconnecting = useRef<Reconnection | null>(null)
   const [reconnectDrag, setReconnectDrag] = useState<Reconnection | null>(null)
-  const dragGroup = useRef<string | undefined>(undefined)
   const hasOverlay = preview
   const framed = useRef(false)
   const framedGraph = useRef(graph)
@@ -159,7 +174,7 @@ export function Canvas({
     }
   }, [outsideActive, graph, fullGraph, vocabs, locale])
   const elements = adapt({
-    graph,
+    graph: displayed,
     indexed,
     selected,
     sizes,
@@ -235,23 +250,28 @@ export function Canvas({
           for (const change of dimensions) next[change.id] = change.size
           return next
         })
-      if (
-        changes.some((change) => change.type === 'position' && change.dragging) &&
-        !dragGroup.current
-      )
-        dragGroup.current = newIri()
-      const updates = changes.flatMap((change) =>
+      const moves = changes.flatMap((change) =>
         change.type === 'position' && change.position
-          ? [{ id: change.id, position: change.position }]
+          ? [{ id: change.id, position: change.position, dragging: change.dragging }]
           : [],
       )
-      const complete =
-        updates.length > 0 &&
-        !changes.some((change) => change.type === 'position' && change.dragging)
-      if (!readOnly && updates.length) {
-        write([{ kind: 'concept.positions', updates }], { historyGroup: dragGroup.current })
+      if (!readOnly && moves.length) {
+        const positions = new Map(dragPositions.current)
+        for (const { id, position } of moves) positions.set(id, position)
+        if (moves.some(({ dragging }) => dragging)) {
+          dragPositions.current = positions
+          setDragged(positions)
+        } else {
+          dragPositions.current = null
+          write([
+            {
+              kind: 'concept.positions',
+              updates: [...positions].map(([id, position]) => ({ id, position })),
+            },
+          ])
+          setDragged(null)
+        }
       }
-      if (complete) dragGroup.current = undefined
       onObjectChanges('concept', changes)
     },
     [readOnly, write, onObjectChanges],
@@ -480,7 +500,6 @@ export function Canvas({
     if (focusTarget) return
     const frame = requestAnimationFrame(() => {
       setContextMenu(null)
-      dragGroup.current = undefined
       void fitView(animatedFraming)
     })
     return () => cancelAnimationFrame(frame)
