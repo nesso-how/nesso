@@ -1013,6 +1013,43 @@ test('batches validate only the final document and link additions only to a surv
   }
 })
 
+test('consecutive removals apply together between other edits and undo as one step', () => {
+  const graph = fixture()
+  graph.concepts.push({ id: 'urn:n4', label: 'Four', position: { x: 3, y: 0 } })
+  graph.relations.push(
+    { source: 'urn:n3', predicate: 'urn:links', target: 'urn:n4' },
+    { source: 'urn:n2', predicate: 'urn:links', target: 'urn:n4' },
+  )
+  const host = createNessoStore(graph)
+  host.registerVocab(vocabA)
+  host.store.createView('Group', ['urn:n1', 'urn:n2', 'urn:n4'])
+  const before = host.store.getState()
+  host.store.applyOperations([
+    { kind: 'relation.remove', id: relationKey(graph.relations[3]) },
+    { kind: 'concept.remove', id: 'urn:n1' },
+    { kind: 'concept.remove', id: 'urn:missing' },
+    { kind: 'relation.remove', id: relationKey(graph.relations[0]) },
+    { kind: 'concept.label', id: 'urn:n2', value: 'Kept' },
+    { kind: 'concept.remove', id: 'urn:n4' },
+  ])
+  const after = host.store.getState()
+  assert.deepEqual(
+    after.graph.concepts.map(({ id, label }) => [id, label]),
+    [
+      ['urn:n2', 'Kept'],
+      ['urn:n3', 'Three'],
+    ],
+  )
+  assert.deepEqual(after.graph.relations, [])
+  assert.deepEqual(after.workspace.savedViews[0].conceptIds, ['urn:n2'])
+  host.store.undo()
+  assert.deepEqual(host.store.getState().graph, before.graph)
+  assert.deepEqual(host.store.getState().workspace, before.workspace)
+  host.store.redo()
+  assert.deepEqual(host.store.getState().graph, after.graph)
+  assert.deepEqual(host.store.getState().workspace, after.workspace)
+})
+
 test('custom relation types disappear only after their last use in the whole graph is removed', () => {
   for (const action of ['retype', 'delete', 'concept'] as const) {
     const graph = fixture()

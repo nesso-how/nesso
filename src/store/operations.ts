@@ -32,6 +32,10 @@ import { applyPluginStorage } from './plugin-storage.ts'
 
 export const conceptPlacementOffset = Object.freeze({ x: 160, y: 100 })
 
+type Removal = Extract<HostOperation, { kind: 'concept.remove' | 'relation.remove' }>
+const isRemoval = (operation: HostOperation): operation is Removal =>
+  operation.kind === 'concept.remove' || operation.kind === 'relation.remove'
+
 export const checkGraph = (graph: GraphSnapshot): void => {
   const issues = validateGraph(graph)
   if (graph.concepts.length === 0)
@@ -254,7 +258,34 @@ export const applyStateOperations = (
     return name.trim()
   }
 
-  for (const operation of operations) {
+  const remove = (removals: readonly Removal[]): void => {
+    const conceptIds = new Set<string>()
+    const relationIds = new Set<string>()
+    for (const { kind, id } of removals) {
+      if (kind === 'relation.remove') {
+        relationOrigins?.delete(id)
+        relationIds.add(id)
+      } else if (concepts.get(id)) conceptIds.add(id)
+    }
+    if (conceptIds.size + relationIds.size === 0) return
+    relations.removeWhere(
+      (relation) =>
+        conceptIds.has(relation.source) ||
+        conceptIds.has(relation.target) ||
+        (relationIds.size > 0 && relationIds.has(relationKey(relation))),
+    )
+    if (conceptIds.size === 0) return
+    concepts.removeWhere((concept) => conceptIds.has(concept.id))
+    for (const view of views.items)
+      if (view.conceptIds.some((id) => conceptIds.has(id)))
+        updateView(view.id, (view) => ({
+          ...view,
+          conceptIds: view.conceptIds.filter((id) => !conceptIds.has(id)),
+        }))
+  }
+
+  for (let index = 0; index < operations.length; index++) {
+    const operation = operations[index]
     switch (operation.kind) {
       case 'plugin-storage.set':
       case 'plugin-storage.delete':
@@ -345,18 +376,12 @@ export const applyStateOperations = (
           )
         break
       }
-      case 'concept.remove': {
-        if (!concepts.get(operation.id)) break
-        relations.removeWhere(
-          (relation) => relation.source === operation.id || relation.target === operation.id,
-        )
-        concepts.removeWhere((concept) => concept.id === operation.id)
-        for (const view of views.items)
-          if (view.conceptIds.includes(operation.id))
-            updateView(view.id, (view) => ({
-              ...view,
-              conceptIds: view.conceptIds.filter((id) => id !== operation.id),
-            }))
+      case 'concept.remove':
+      case 'relation.remove': {
+        let end = index + 1
+        while (end < operations.length && isRemoval(operations[end])) end++
+        remove(operations.slice(index, end).filter(isRemoval))
+        index = end - 1
         break
       }
       case 'relation.connect': {
@@ -412,11 +437,6 @@ export const applyStateOperations = (
           updateRelation(operation.id, { source: operation.source, target: operation.target })
         }
         break
-      case 'relation.remove': {
-        relationOrigins?.delete(operation.id)
-        relations.removeWhere((relation) => relationKey(relation) === operation.id)
-        break
-      }
       case 'document.reset':
         documentId = newIri()
         pluginStorage = []
