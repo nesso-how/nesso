@@ -8,6 +8,7 @@ import { defaultLocale, type Locale } from '@nesso-how/i18n'
 import { relationKey } from '@nesso-how/schema'
 import { MarkerType, Position } from '@xyflow/react'
 import type { ConceptNode, RelationEdge } from './types'
+import { reconnectableEndpoints, selectedRelations } from './reconnection.ts'
 
 type ConceptView = GraphSnapshot['concepts'][number]
 type RelationView = GraphSnapshot['relations'][number]
@@ -90,7 +91,7 @@ export function outsideNode(concept: ConceptView, measured?: ConceptNodeSize): C
 export function relationEdge(
   relation: RelationView,
   selected: boolean,
-  singleSelection: boolean,
+  reconnectable: RelationEdge['reconnectable'],
   graph: ReturnType<typeof indexGraph>,
   defaultTypeId?: string,
   sizes: ConceptNodeSizes = {},
@@ -124,7 +125,7 @@ export function relationEdge(
     },
     interactionWidth: 18,
     selected,
-    reconnectable: selected && singleSelection,
+    reconnectable: selected && reconnectable,
     markerEnd: {
       type: MarkerType.ArrowClosed,
       width: 14,
@@ -181,9 +182,10 @@ export function createGraphElements() {
     const selectedConcepts = new Set(
       selected.filter(({ kind }) => kind === 'concept').map(({ id }) => id),
     )
-    const selectedRelations = new Set(
+    const selectedRelationIds = new Set(
       selected.filter(({ kind }) => kind === 'relation').map(({ id }) => id),
     )
+    const reconnectable = reconnectableEndpoints(selectedRelations(graph, selected))
     const nodes = graph.concepts.map((concept) => {
       const node = conceptNode(concept, selectedConcepts.has(concept.id), sizes[concept.id])
       node.data = {
@@ -215,8 +217,8 @@ export function createGraphElements() {
       const edge = {
         ...relationEdge(
           relation,
-          selectedRelations.has(relationKey(relation)),
-          selected.length === 1,
+          selectedRelationIds.has(relationKey(relation)),
+          reconnectable,
           indexed,
           defaultTypeId,
           sizes,

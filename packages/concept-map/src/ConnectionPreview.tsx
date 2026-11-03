@@ -1,10 +1,13 @@
 import {
   BezierEdge,
   Position,
+  useReactFlow,
   type ConnectionLineComponentProps,
   type InternalNode,
 } from '@xyflow/react'
 import { facingSide } from './adapters'
+import { relationKey } from '@nesso-how/schema'
+import type { Reconnection } from './reconnection'
 
 const bounds = (node: InternalNode) => ({
   position: node.internals.positionAbsolute,
@@ -26,7 +29,7 @@ const anchor = (node: InternalNode, side: Position) => {
   }
 }
 
-export function ConnectionPreview({
+function PreviewLine({
   fromNode,
   fromHandle,
   toNode,
@@ -54,4 +57,17 @@ export function ConnectionPreview({
       interactionWidth={0}
     />
   )
+}
+
+export function ConnectionPreview({
+  reconnection,
+  ...props
+}: ConnectionLineComponentProps & { reconnection?: Reconnection | null }) {
+  const { getInternalNode } = useReactFlow()
+  if (!reconnection) return <PreviewLine {...props} />
+  const fixed = reconnection.endpoint === 'source' ? 'target' : 'source'
+  return reconnection.relations.map((relation) => {
+    const node = getInternalNode(relation[fixed])
+    return node ? <PreviewLine key={relationKey(relation)} {...props} fromNode={node} /> : null
+  })
 }
