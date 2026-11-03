@@ -24,8 +24,9 @@ Nesso keeps things minimal and efficient, with just a few key elements:
 - **Relations** connect concepts with a direction and a type that describes the connection.
 - **Views** offer different perspectives on the same graph. The default **Overview** view contains the complete graph and cannot be deleted. Saved views are named subsets of its concepts.
 - **Vocabularies** provide relation types. You can name your own relation types or define vocabularies as plugins.
-- **Plugins** are npm packages providing vocabularies, themes, or actions on the current view. Install them from Settings → Plugins on desktop, or [create your own](packages/plugin/README.md#create-a-plugin).
-- **Review** is a bundled plugin for FSRS spaced repetition over a view’s concepts.
+- **Plugins** are npm packages providing vocabularies, themes, or actions on the current view. Install them from Settings → Plugins on desktop, or [create your own](packages/plugin/README.md#create-a-plugin). Nesso built-in plugins are built around the same system, some of them:
+  - **Review** for FSRS spaced repetition over a view’s concepts.
+  - **Notes** live-preview Markdown editor for each view’s project notes and brainstorming.
 - **AI** helps you explore, expand, and organize your graph on desktop. Chat using your own API key (BYOK), a local model, or ChatGPT sign-in, or connect external assistants through the local MCP server.
 
 Use the Explorer to navigate views, the canvas to build the graph, and the Inspector to edit the selection, manage views, or chat with AI on desktop.
@@ -127,6 +128,7 @@ The app lives in `src/`, with desktop services in `electron/`. Shared packages l
 | [`@nesso-how/export`](plugins/export/)             | Plugin   | Graph and view export as JSON-LD.                                         |
 | [`@nesso-how/import`](plugins/import/)             | Plugin   | Merge a Nesso JSON-LD file into the current graph.                        |
 | [`@nesso-how/review`](plugins/review/)             | Plugin   | Isolated concept review with FSRS and private concept-scoped progress.    |
+| [`@nesso-how/notes`](plugins/notes/)               | Plugin   | Free-form Markdown notes scoped to each view, with autosave.              |
 | [`@nesso-how/kernel-theme`](plugins/kernel-theme/) | Plugin   | Kernel theme tokens and bundled fonts.                                    |
 | [`@nesso-how/paper-theme`](plugins/paper-theme/)   | Plugin   | Warm ivory surfaces and restrained terracotta accents.                    |
 | [`@nesso-how/mist-theme`](plugins/mist-theme/)     | Plugin   | Cool misty blue surfaces and steel blue accents.                          |

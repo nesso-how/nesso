@@ -11,7 +11,7 @@ export function Quiz({ document, storage, viewId }: ActionContext) {
   useEffect(() => {
     void storage.list().then((records) => {
       const value = records.find(
-        (record) => record.key === key && record.conceptId === undefined,
+        (record) => record.key === key && record.scope === undefined,
       )?.value
       setStep(typeof value === 'number' ? value : 0)
     })

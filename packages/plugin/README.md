@@ -67,7 +67,7 @@ Keep the example's build configuration and set these fields in `package.json`:
   "version": "1.0.0",
   "keywords": ["nesso-plugin"],
   "nesso": {
-    "apiVersion": 1,
+    "apiVersion": 2,
     "kind": "actions",
     "entry": "dist/index.js",
     "writes": ["concept.label"],
@@ -84,6 +84,8 @@ Keep the example's build configuration and set these fields in `package.json`:
 ```
 
 Declare the operations your action uses in `writes`. The optional permissions listed in `capabilities` are `files`, `notifications`, `storage`, and `ui`. The first three authorize their APIs; `ui` authorizes interactive UI contributions. All fields shown under `nesso` and `i18n.metadata` are required. Add the `nesso-plugin` keyword for discovery in Settings → Plugins.
+
+API version, npm SDK version, host storage envelope version, and private payload versions remain independent: bump only what your change affects.
 
 `i18n.metadata.name` names the plugin in Settings. Each action defines its own `label` for menus, independently of the plugin name. Labels and metadata use `{ en: string, it?: string, 'zh-CN'?: string }`, with English required as the fallback.
 
@@ -218,19 +220,26 @@ Declare `storage` to read, write, or delete your plugin's private data. Nesso de
 ```ts
 const records = await storage.list()
 
-await storage.set('progress', { attempts: 1, answers: ['good'] }, concept.id)
+await storage.set(
+  'progress',
+  { attempts: 1, answers: ['good'] },
+  { kind: 'concept', id: concept.id },
+)
 await storage.set('settings', { enabled: true })
-await storage.delete('progress', concept.id)
+if (viewId !== null)
+  await storage.set('notes', { text: 'Project ideas' }, { kind: 'view', id: viewId })
+await storage.delete('progress', { kind: 'concept', id: concept.id })
 ```
 
-`storage.list()` returns all records as an array. Each record has a `key`, a JSON `value`, and optionally a `conceptId`:
+`storage.list()` returns all records as an array, including records associated with deleted concepts or views. Each record has a `key`, a JSON `value`, and an optional `scope`:
 
-- Without `conceptId`, the record belongs to the document, for example plugin configuration.
-- With `conceptId`, it belongs to that concept in the document. The same key can be used for different concepts and for document-level data.
-- Views do not create storage namespaces. A concept's data is shared across all views containing it.
+- Without `scope`, the record belongs to the document, for example plugin configuration or notes for Overview (`viewId === null`).
+- With `{ kind: 'concept', id }`, it belongs to that concept. Its data is shared across all views containing the concept.
+- With `{ kind: 'view', id }`, it belongs to that saved view, independently of its name or membership. Use a non-null `viewId`.
+- Scopes identify records within the same plugin/document namespace; they do not create separate namespaces or revision baselines. The same key can be used at document scope and for different concepts and views, including a concept and view with the same ID.
 - Payloads belong to the plugin: the host does not interpret their fields or implement domain logic.
 
-`storage.set(key, value, conceptId?)` saves one record and `storage.delete(key, conceptId?)` removes one. Each call is a single transaction returning `true` when storage changed and `false` for valid net-no-op writes, such as saving an identical value or deleting a missing record. Failed writes throw instead of returning `false`.
+`storage.set(key, value, scope?)` saves one record and `storage.delete(key, scope?)` removes one. Set requires the referenced concept or saved view to exist. Concept IDs must be absolute IRIs; view IDs are opaque identifiers. Delete also accepts references to deleted entities so plugins can explicitly remove orphan records. Each call is a single transaction returning `true` when storage changed and `false` for valid net-no-op writes, such as saving an identical value or deleting a missing record. Failed writes throw instead of returning `false`.
 
 The SDK tracks storage revisions internally. Every mutation checks against the last listed snapshot or the preceding successful mutation. If you haven't listed storage, the first mutation reads its baseline automatically. Concurrent changes reject stale writes with `stale-state`, without refreshing the baseline or retrying automatically. List storage again before recomputing edits; never refresh just to resubmit edits calculated from old data. Document reads do not refresh the storage baseline, and storage writes do not invalidate the document snapshot. Document edits and private storage calls are separate transactions.
 
@@ -239,9 +248,9 @@ Await all storage calls before the action returns. Success means the validated c
 #### Data lifecycle
 
 - A document has a persistent identity outside graph JSON-LD. Resetting it creates a new identity and empty plugin storage; a mismatched saved identity is reported and protected, never silently attached to another document.
-- Removing a view or changing membership does not delete concept data.
-- Deleting a concept retains its records, including across restart and backup restoration. Document Undo/Redo can recover the concept during the current app session; private storage changes themselves do not enter graph history.
-- Use concept-associated records to identify a concept's data, including its logs. Plugins may explicitly delete records no longer needed; IDs embedded in arbitrary payloads remain opaque to the host.
+- Renaming a view or changing membership does not affect scoped records. Removing a view does not delete concept data.
+- Deleting a concept or saved view retains its records, including across restart and backup restoration. Document Undo/Redo can recover the entity during the current app session, reconnecting its records by the same ID; private storage changes themselves do not enter graph history. Creating a different entity with the same name does not reconnect old records.
+- Use explicit scopes to identify concept or view data, including logs. Plugins own payload schemas and any explicit cleanup; the host does not automatically purge orphan records. IDs embedded in arbitrary keys or payloads remain opaque to the host.
 - Disabling, uninstalling, replacing, or crashing a plugin does not delete its stored data.
 
 #### Limits

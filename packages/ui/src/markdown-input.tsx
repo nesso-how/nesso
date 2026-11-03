@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef, useState, type ComponentProps } from 'react'
 import { cn } from 'cn'
 import { Annotation, Compartment, EditorState, Transaction } from '@codemirror/state'
-import { EditorView, ViewPlugin, keymap } from '@codemirror/view'
+import { EditorView, ViewPlugin, keymap, placeholder as editorPlaceholder } from '@codemirror/view'
 import { defaultKeymap, history as editorHistory, historyKeymap } from '@codemirror/commands'
 import {
   continueMarkdownList,
@@ -16,6 +16,7 @@ type MarkdownInputProps = Omit<ComponentProps<'div'>, 'onChange' | 'children' | 
   readOnly?: boolean
   history?: boolean
   onOpenLink?: (url: string) => void
+  placeholder?: string
 }
 
 const externalChange = Annotation.define<boolean>()
@@ -44,6 +45,7 @@ export function MarkdownInput({
   readOnly = false,
   history = true,
   onOpenLink,
+  placeholder,
   className,
   id,
   'aria-label': ariaLabel,
@@ -144,9 +146,10 @@ export function MarkdownInput({
           spellcheck: 'true',
         }),
         ...(history ? [editorHistory(), keymap.of(historyKeymap)] : []),
+        ...(placeholder ? [editorPlaceholder(placeholder)] : []),
       ]),
     })
-  }, [configuration, readOnly, history, id, ariaLabel, ariaLabelledBy])
+  }, [configuration, readOnly, history, id, ariaLabel, ariaLabelledBy, placeholder])
 
   useLayoutEffect(() => {
     const view = editor.current

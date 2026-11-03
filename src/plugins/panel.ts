@@ -12,6 +12,7 @@ type Invocation = {
 }
 type Panel = {
   readonly id: string
+  readonly actionId: string
   readonly pluginName: string
   readonly title: string
   readonly viewName: string | null
@@ -76,6 +77,7 @@ export function createPluginPanel(
           session = { source, invocation: target, close: end }
           current = {
             id: crypto.randomUUID(),
+            actionId: target.actionId,
             pluginName: resolvePluginText(source.i18n.metadata.name, locale),
             title: resolvePluginText(action.label, locale),
             viewName:

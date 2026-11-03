@@ -17,6 +17,7 @@ import baseVocabPackage from '../../plugins/base-vocab/package.json'
 import exportPackage from '../../plugins/export/package.json'
 import importPackage from '../../plugins/import/package.json'
 import reviewPackage from '../../plugins/review/package.json'
+import notesPackage from '../../plugins/notes/package.json'
 import { notifications } from '../notifications/index.ts'
 import { prepareTheme, type ThemePresentation } from '../theme/prepare.ts'
 import { createPluginRegistry, type PluginEntry } from './registry.ts'
@@ -32,6 +33,7 @@ import { executeActionBadge } from './badge-execution.ts'
 export const pluginPanel = createPluginPanel(nessoStore, notifications.api, window.nessoFiles)
 export const usePluginPanel = () =>
   useSyncExternalStore(pluginPanel.subscribe, pluginPanel.getSnapshot)
+export const canvasTabActionIds: readonly string[] = ['notes', 'review']
 
 const themes = new Map<string, ThemePresentation>()
 const actions = new Map<string, ActionPackage>()
@@ -288,20 +290,19 @@ export async function initializeExternalPlugins(signal: AbortSignal) {
     }
     if (signal.aborted) return () => {}
     publish([...registry.getSnapshot(), ...entries], staged, true)
-    const failed = [
-      ...stored.issues.map(({ path }) => path),
-      ...entries
-        .filter((entry) => entry.error)
-        .map(
-          (entry) =>
-            pluginMetadata(entry, nessoStore.getState().preferences.locale ?? defaultLocale).name,
-        ),
-    ]
-    if (failed.length)
+    const failed = entries
+      .filter((entry) => entry.error)
+      .map(
+        (entry) =>
+          pluginMetadata(entry, nessoStore.getState().preferences.locale ?? defaultLocale).name,
+      )
+    if (failed.length || stored.issues.length)
       notifications.api.notify({
         tone: 'warning',
         title: t('pluginExternalFailed'),
-        description: `${t('pluginExternalFailedDescription')}\n\n${failed.join(', ')}`,
+        description: `${t('pluginExternalFailedDescription')}${
+          failed.length ? `\n\n${failed.join(', ')}` : ''
+        }${stored.issues.length ? `\n\n${t('pluginExternalFailedStaleHint')}` : ''}`,
       })
   } catch {
     notifications.api.notify({
@@ -504,6 +505,7 @@ export async function initializeBundledPlugins() {
       { source: exportPackage, id: 'export' },
       { source: importPackage, id: 'import' },
       { source: reviewPackage, id: 'review' },
+      { source: notesPackage, id: 'notes' },
     ].map(async ({ source, id }): Promise<PluginEntry> => {
       const manifest = parsePluginManifest(source.nesso)
       if (manifest.kind !== 'actions')

@@ -70,16 +70,17 @@ function restoreProgress(records: readonly PluginStorageRecord[]) {
   for (const record of records) {
     if (record.key !== storageKey) continue
     try {
-      if (!record.conceptId) throw new PluginError('invalid-input', [])
+      if (record.scope?.kind !== 'concept') throw new PluginError('invalid-input', [])
+      const conceptId = record.scope.id
       const value = storedProgress.parse(record.value)
       const { card, logs } = value
       if (
-        card.cardId !== record.conceptId ||
+        card.cardId !== conceptId ||
         card.reps !== logs.length ||
-        logs.some((log) => log.cardId !== record.conceptId)
+        logs.some((log) => log.cardId !== conceptId)
       )
         throw new PluginError('invalid-input', [])
-      progress.set(record.conceptId, value)
+      progress.set(conceptId, value)
     } catch {
       throw new PluginError('invalid-input', [
         { path: 'progress', message: 'Review progress could not be restored safely' },
@@ -194,7 +195,7 @@ export async function createReview(
           card: result.card,
           logs: [...(snapshot.progress.get(id)?.logs ?? []), result.revlog],
         }
-        await storage.set(storageKey, JSON.parse(JSON.stringify(next)), id)
+        await storage.set(storageKey, JSON.parse(JSON.stringify(next)), { kind: 'concept', id })
         const progress = new Map(snapshot.progress).set(id, next)
         const remaining = session.ids.slice(session.index + 1).filter((id) => scope.includes(id))
         const reviewed = session.index + 1

@@ -76,11 +76,14 @@ export async function verifyStorage({ window, url, name }: CheckContext) {
   await reload()
   const preserved = await waitFor(
     async () =>
-      (await read('plugin-storage')) as { plugins: { records: { conceptId?: string }[] }[] },
-    (value) => value.plugins[0].records.length === 3,
+      (await read('plugin-storage')) as {
+        version: number
+        plugins: { records: { scope?: { id: string } }[] }[]
+      },
+    (value) => value.version === 2 && value.plugins[0].records.length === 3,
   )
   assert.deepEqual(
-    preserved.plugins[0].records.map((record) => record.conceptId),
+    preserved.plugins[0].records.map((record) => record.scope?.id),
     [undefined, conceptId, 'urn:missing'],
   )
   const restored = (await read('document')) as typeof document
@@ -135,8 +138,23 @@ export async function verifyStorage({ window, url, name }: CheckContext) {
         tx.onabort=()=>{db.close();reject(tx.error)};
       };
     })`)
-  assert.equal(backups.length, 1)
-  assert.deepEqual(backups[0].records, originalRecords)
+  assert.equal(backups.length, 2)
+  const documentBackup = backups.find(
+    (backup) => (backup.records.document as { version: number }).version === 1,
+  )
+  assert.deepEqual(documentBackup?.records, originalRecords)
+  const pluginBackup = backups.find(
+    (backup) => (backup.records['plugin-storage'] as { version: number } | null)?.version === 1,
+  )
+  assert.ok(pluginBackup)
+  assert.deepEqual(
+    (
+      pluginBackup.records['plugin-storage'] as {
+        plugins: { records: { conceptId?: string }[] }[]
+      }
+    ).plugins[0].records.map(({ conceptId }) => conceptId),
+    [undefined, conceptId, 'urn:missing'],
+  )
   console.log(
     `${name}: plugin data preserved, unreadable storage protected, and document v1 upgraded with a complete backup`,
   )

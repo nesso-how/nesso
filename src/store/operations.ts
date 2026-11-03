@@ -264,6 +264,7 @@ export const applyStateOperations = (
           pluginStorage,
           operation,
           new Set(concepts.items.map(({ id }) => id)),
+          new Set(views.items.map(({ id }) => id)),
         )
         break
       case 'conversation.messages':

@@ -33,7 +33,7 @@ export async function verifyCorruptRecords({ window, url }: CheckContext) {
         manifest: {
           name: `test-restored-${kind}`,
           version: '1.0.0',
-          nesso: { apiVersion: 1, kind, entry, writes: [], capabilities: [] },
+          nesso: { apiVersion: 2, kind, entry, writes: [], capabilities: [] },
           i18n: {
             metadata: {
               name: { en: `Restored ${kind}` },
@@ -68,7 +68,10 @@ export async function verifyCorruptRecords({ window, url }: CheckContext) {
       evaluate<string>(
         `[...document.querySelectorAll('[data-slot="toast"][data-tone="warning"]')].map(toast => toast.textContent).join(' ')`,
       ),
-    (text) => text.includes(corrupt) && text.includes('Some external plugins could not be loaded'),
+    (text) =>
+      text.includes('Some external plugins could not be loaded') &&
+      text.includes('outdated package') &&
+      !text.includes(corrupt),
   )
   await evaluate(`document.querySelector('[data-settings-trigger]').click()`)
   await evaluate(
@@ -77,7 +80,7 @@ export async function verifyCorruptRecords({ window, url }: CheckContext) {
   const rows = await evaluate<string[]>(
     `[...document.querySelectorAll('.plugin-row')].filter(row => row.getClientRects().length).map(row => row.innerText)`,
   )
-  assert.equal(rows.length, 10)
+  assert.equal(rows.length, 11)
   for (const kind of ['actions', 'theme', 'vocab'])
     assert.ok(
       rows.some((text) => text.includes(`test-restored-${kind}`) && text.includes('Enabled')),

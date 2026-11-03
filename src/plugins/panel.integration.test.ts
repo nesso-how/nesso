@@ -7,7 +7,7 @@ import type { ActionPackage } from './actions.ts'
 const source: ActionPackage = {
   name: 'nesso-plugin-panel',
   entry: new Uint8Array([1]),
-  manifest: { apiVersion: 1, kind: 'actions', entry: 'index.js', writes: [], capabilities: ['ui'] },
+  manifest: { apiVersion: 2, kind: 'actions', entry: 'index.js', writes: [], capabilities: ['ui'] },
   i18n: {
     metadata: {
       name: { en: 'Example' },

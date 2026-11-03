@@ -41,7 +41,7 @@
     }
   },
   "nesso": {
-    "apiVersion": 1,
+    "apiVersion": 2,
     "kind": "actions",
     "entry": "dist/index.js",
     "writes": [],

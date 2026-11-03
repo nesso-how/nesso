@@ -6,32 +6,33 @@ import { ActionBadge } from './ActionBadge'
 
 export function ViewActions({
   viewId,
-  inlineActionId,
+  inlineActionIds = [],
 }: {
   viewId: string | null
-  inlineActionId?: string
+  inlineActionIds?: readonly string[]
 }) {
   const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale)
   const actions = useViewActions()
 
-  return actions.map((action) => (
-    <MenuItem
-      key={action.id}
-      className={action.id === inlineActionId ? 'sm:hidden' : undefined}
-      onClick={() => {
-        void invokeAction(action.id, viewId)
-      }}
-    >
-      <ActionIcon name={action.icon} />
-      {action.label[locale] ?? action.label.en}
-      {action.badge && (
-        <ActionBadge
-          actionId={action.id}
-          viewId={viewId}
-          label={action.label[locale] ?? action.label.en}
-          inline
-        />
-      )}
-    </MenuItem>
-  ))
+  return actions
+    .filter((action) => !inlineActionIds.includes(action.id))
+    .map((action) => (
+      <MenuItem
+        key={action.id}
+        onClick={() => {
+          void invokeAction(action.id, viewId)
+        }}
+      >
+        <ActionIcon name={action.icon} />
+        {action.label[locale] ?? action.label.en}
+        {action.badge && (
+          <ActionBadge
+            actionId={action.id}
+            viewId={viewId}
+            label={action.label[locale] ?? action.label.en}
+            inline
+          />
+        )}
+      </MenuItem>
+    ))
 }

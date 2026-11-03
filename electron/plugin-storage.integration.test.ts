@@ -26,7 +26,7 @@ test('installed actions restore verified bytes offline, reject conflicts and can
     version: '1.0.0',
     author: 'Test Author <private@example.test>',
     repository: 'github:example/plugin',
-    nesso: { apiVersion: 1, kind: 'actions', entry: 'dist/index.js', writes: [], capabilities: [] },
+    nesso: { apiVersion: 2, kind: 'actions', entry: 'dist/index.js', writes: [], capabilities: [] },
     i18n: {
       metadata: {
         name: { en: 'Test' },
@@ -87,7 +87,7 @@ test('manual updates atomically replace one exact package, preserve disabled sta
   const manifest = {
     name: 'nesso-plugin-test',
     version: '1.0.0',
-    nesso: { apiVersion: 1, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
+    nesso: { apiVersion: 2, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
     i18n: {
       metadata: {
         name: { en: 'Test' },
@@ -178,7 +178,7 @@ test('definition records restore offline with exact font bytes and reject tamper
     const manifest = {
       name: `nesso-test-${kind}`,
       version: '1.0.0',
-      nesso: { apiVersion: 1, kind, entry: 'definition.json', writes: [], capabilities: [] },
+      nesso: { apiVersion: 2, kind, entry: 'definition.json', writes: [], capabilities: [] },
       i18n: {
         metadata: {
           name: { en: 'Test' },
@@ -236,7 +236,7 @@ test('unreadable records are isolated without losing valid packages or permittin
       manifest: {
         name,
         version,
-        nesso: { apiVersion: 1, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
+        nesso: { apiVersion: 2, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
         i18n: {
           metadata: {
             name: { en: name },
@@ -285,7 +285,6 @@ test('unreadable records are isolated without losing valid packages or permittin
     await assert.rejects(storage.check(fresh))
     await assert.rejects(storage.install(fresh, () => true))
     await assert.rejects(storage.install(next, () => true, valid.contentId))
-    await assert.rejects(storage.install(bad, () => true))
     await assert.rejects(storage.setEnabled(valid.contentId, false))
     await assert.rejects(storage.remove(valid.contentId))
     assert.deepEqual(await readFile(file), bytes)
@@ -295,6 +294,48 @@ test('unreadable records are isolated without losing valid packages or permittin
   await writeFile(file, original)
   assert.equal((await storage.list()).issues.length, 0)
   await storage.install(next, () => true, valid.contentId)
+})
+
+test('a verified package replaces its own unreadable record and preserves neighboring packages', async (t) => {
+  const directory = await mkdtemp(path.join(tmpdir(), 'nesso-stale-packages-'))
+  t.after(() => rm(directory, { recursive: true, force: true }))
+  const storage = createPluginStorage(directory)
+  const prepare = (name: string, version = '1.0.0') =>
+    preparePluginPackage({
+      manifest: {
+        name,
+        version,
+        nesso: { apiVersion: 2, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
+        i18n: {
+          metadata: {
+            name: { en: name },
+            description: { en: 'Test' },
+            documentation: { en: 'Test' },
+          },
+        },
+      },
+      files: [{ path: 'index.js', bytes: new TextEncoder().encode('export const create=()=>[]') }],
+    })
+  const stale = await prepare('nesso-stale')
+  const neighbor = await storage.install(await prepare('nesso-neighbor'), () => true)
+  await storage.install(stale, () => true)
+  const recordName = `${createHash('sha256').update(stale.name).digest('hex')}.json`
+  const file = path.join(directory, recordName)
+  const stored = await readFile(file, 'utf8')
+  await writeFile(file, stored.replace('"apiVersion":2', '"apiVersion":1'))
+  assert.deepEqual(await storage.list(), {
+    packages: [neighbor],
+    issues: [{ path: recordName, message: 'Could not read installed package record' }],
+  })
+  await assert.rejects(storage.install(await prepare('nesso-fresh'), () => true))
+  const healed = await storage.install(await prepare('nesso-stale', '1.1.0'), () => true)
+  assert.equal(healed.version, '1.1.0')
+  const listing = await storage.list()
+  assert.deepEqual(
+    listing.packages.sort((a, b) => a.name.localeCompare(b.name)),
+    [healed, neighbor].sort((a, b) => a.name.localeCompare(b.name)),
+  )
+  assert.deepEqual(listing.issues, [])
 })
 
 test('invalid file entries are isolated without following links or altering files', async (t) => {

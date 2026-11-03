@@ -203,7 +203,7 @@ async function buildFixture(state: InstallState, name: string, version: string) 
           }
         : {}),
       nesso: {
-        apiVersion: 1,
+        apiVersion: 2,
         kind,
         entry,
         writes: kind === 'actions' ? ['concept.label'] : [],
@@ -999,7 +999,7 @@ async function verifyFailures(driver: Driver, state: InstallState, window: Brows
       driver.evaluate<number>(
         `[...document.querySelectorAll('.plugin-row')].filter(row => row.getClientRects().length).length`,
       ),
-    (count) => count === 10,
+    (count) => count === 11,
   )
   assert.equal(state.metadataRequests, requestsBeforeReload)
   assert.equal(

@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState, type RefObject } from 'react'
 import { IconButton, PanelHeader, Spinner } from '@nesso-how/ui'
 import { X } from 'lucide-react'
-import { pluginPanel, usePluginPanel } from '../../plugins/index.ts'
+import { canvasTabActionIds, pluginPanel, usePluginPanel } from '../../plugins/index.ts'
 import { useNessoStore } from '../../store/index.ts'
 import { translate } from '../../i18n/index.ts'
 import { defaultLocale } from '@nesso-how/i18n'
+
+type PanelSnapshot = NonNullable<ReturnType<typeof usePluginPanel>>
 
 function DelayedSpinner({ label }: { label: string }) {
   const [slow, setSlow] = useState(false)
@@ -16,32 +18,81 @@ function DelayedSpinner({ label }: { label: string }) {
   return <Spinner className="plugin-panel-loading absolute inset-0" label={label} />
 }
 
+export function PluginContent({
+  panel,
+  canvas,
+  viewName,
+}: {
+  panel: PanelSnapshot
+  canvas: RefObject<HTMLDivElement | null>
+  viewName?: string | null
+}) {
+  const frame = useRef<HTMLIFrameElement>(null)
+  const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale)
+  const t = translate(locale)
+  const id = panel.id
+  useEffect(() => {
+    const element = frame.current
+    if (!element) return
+    return pluginPanel.attach(element, id)
+  }, [id, canvas])
+  const title =
+    viewName == null
+      ? `${panel.pluginName}: ${panel.title}`
+      : `${panel.pluginName}: ${panel.title} — ${viewName}`
+  return (
+    <div className="relative flex min-h-0 flex-1" aria-busy={panel.status === 'loading'}>
+      {panel.status === 'loading' && (
+        <DelayedSpinner key={`loading-${panel.id}`} label={t('pluginPanelLoading')} />
+      )}
+      {panel.status === 'failed' && (
+        <p role="alert" className="absolute inset-0 p-4 text-sm">
+          {t('pluginPanelFailed')}
+        </p>
+      )}
+      <iframe
+        key={panel.id}
+        ref={frame}
+        title={title}
+        sandbox="allow-scripts"
+        referrerPolicy="no-referrer"
+        className="min-h-0 w-full flex-1 border-0 transition-opacity duration-150 motion-reduce:transition-none"
+        style={{
+          visibility: panel.status === 'ready' ? 'visible' : 'hidden',
+          opacity: panel.status === 'ready' ? 1 : 0,
+        }}
+      />
+    </div>
+  )
+}
+
 export function PluginPanel({ canvas }: { canvas: RefObject<HTMLDivElement | null> }) {
   const panel = usePluginPanel()
-  const frame = useRef<HTMLIFrameElement>(null)
   const close = useRef<HTMLButtonElement>(null)
   const opened = useRef(false)
   const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale)
   const t = translate(locale)
+  const tabbed = !!panel && canvasTabActionIds.includes(panel.actionId)
+  const external = !!panel && !tabbed
   const id = panel?.id
   useEffect(() => {
-    if (panel?.status === 'failed') close.current?.focus()
-  }, [panel?.status])
+    if (panel?.status === 'failed' && external) close.current?.focus()
+  }, [panel?.status, external])
   useEffect(() => {
-    if (!id) {
-      if (opened.current)
-        requestAnimationFrame(() => {
-          if (!pluginPanel.getSnapshot()) canvas.current?.focus()
-        })
-      opened.current = false
+    if (!external) {
+      if (!id) {
+        if (opened.current)
+          requestAnimationFrame(() => {
+            if (!pluginPanel.getSnapshot()) canvas.current?.focus()
+          })
+        opened.current = false
+      }
       return
     }
-    if (!frame.current) return
     opened.current = true
     close.current?.focus()
-    return pluginPanel.attach(frame.current, id)
-  }, [id, canvas])
-  if (!panel) return null
+  }, [id, external, canvas])
+  if (!panel || tabbed) return null
   const viewName = panel.viewName ?? t('completeGraph')
   const title = `${panel.pluginName}: ${panel.title} — ${viewName}`
   return (
@@ -80,28 +131,7 @@ export function PluginPanel({ canvas }: { canvas: RefObject<HTMLDivElement | nul
           </span>
         </div>
       </PanelHeader>
-      <div className="relative flex min-h-0 flex-1" aria-busy={panel.status === 'loading'}>
-        {panel.status === 'loading' && (
-          <DelayedSpinner key={`loading-${panel.id}`} label={t('pluginPanelLoading')} />
-        )}
-        {panel.status === 'failed' && (
-          <p role="alert" className="absolute inset-0 p-4 text-sm">
-            {t('pluginPanelFailed')}
-          </p>
-        )}
-        <iframe
-          key={panel.id}
-          ref={frame}
-          title={title}
-          sandbox="allow-scripts"
-          referrerPolicy="no-referrer"
-          className="min-h-0 w-full flex-1 border-0 transition-opacity duration-150 motion-reduce:transition-none"
-          style={{
-            visibility: panel.status === 'ready' ? 'visible' : 'hidden',
-            opacity: panel.status === 'ready' ? 1 : 0,
-          }}
-        />
-      </div>
+      <PluginContent panel={panel} canvas={canvas} viewName={viewName} />
     </section>
   )
 }

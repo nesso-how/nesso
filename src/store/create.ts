@@ -38,7 +38,7 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
   if (!isAbsoluteIri(documentId)) fail('documentId', 'Expected an absolute document IRI')
   const pluginStorage =
     graph && restored.pluginStorage
-      ? parsePluginStorage({ version: 1, documentId, plugins: restored.pluginStorage }).plugins
+      ? parsePluginStorage({ version: 2, documentId, plugins: restored.pluginStorage }).plugins
       : []
   const workspace =
     graph && restored.workspace ? parseWorkspace(restored.workspace) : newWorkspace()

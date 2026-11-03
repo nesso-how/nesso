@@ -22,7 +22,7 @@ const publish = async (file: string, content: string | Uint8Array) => {
   await rename(temporary, file)
 }
 try {
-  for (const name of ['import', 'export', 'review']) {
+  for (const name of ['import', 'export', 'review', 'notes']) {
     const directory = path.join(root, 'plugins', name)
     const source = JSON.parse(await readFile(path.join(directory, 'package.json'), 'utf8'))
     const manifest = parsePluginManifest(source.nesso)

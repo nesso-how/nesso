@@ -617,15 +617,30 @@ test('storage capability authorizes listing and single writes independently of g
   assert.equal(writable.client.context.document.getState(), snapshot)
   await writable.client.context.document.setConceptLabel('urn:a', 'Still current')
   assert.equal(await writable.client.context.storage.set('settings', { retention: 0.9 }), false)
-  await assert.rejects(writable.client.context.storage.set('bad', null, 'urn:missing'), {
-    code: 'invalid-input',
-  })
-  await assert.rejects(writable.client.context.storage.set('bad', null, 'relative'), {
-    code: 'invalid-input',
-  })
-  assert.equal(await writable.client.context.storage.delete('settings', 'relative'), false)
+  await assert.rejects(
+    writable.client.context.storage.set('bad', null, { kind: 'concept', id: 'urn:missing' }),
+    {
+      code: 'invalid-input',
+    },
+  )
+  await assert.rejects(
+    writable.client.context.storage.set('bad', null, { kind: 'concept', id: 'relative' }),
+    {
+      code: 'invalid-input',
+    },
+  )
+  assert.equal(
+    await writable.client.context.storage.delete('settings', { kind: 'concept', id: 'relative' }),
+    false,
+  )
   assert.equal(await writable.client.context.storage.delete('settings'), true)
   assert.deepEqual(await writable.client.context.storage.list(), [])
+  const scope = { kind: 'view', id: writable.host.store.createView('Project', ['urn:a']) } as const
+  const { storage } = writable.client.context
+  assert.equal(await storage.set('notes', 'Project', scope), true)
+  assert.deepEqual(await storage.list(), [{ key: 'notes', value: 'Project', scope }])
+  assert.equal(await storage.delete('notes', scope), true)
+  assert.deepEqual(await storage.list(), [])
 })
 
 test('storage namespaces follow granted package identity, synchronize across instances and reject stale writes without retries', async (t) => {
@@ -641,7 +656,10 @@ test('storage namespaces follow granted package identity, synchronize across ins
   const secondStorage = second.client.context.storage
   assert.deepEqual(await firstStorage.list(), [])
   assert.equal(await firstStorage.set('settings', { enabled: true }), true)
-  assert.equal(await firstStorage.set('progress', { count: 1 }, 'urn:b'), true)
+  assert.equal(
+    await firstStorage.set('progress', { count: 1 }, { kind: 'concept', id: 'urn:b' }),
+    true,
+  )
   const shared = await secondStorage.list()
   assert.equal(shared.length, 2)
   assert.ok(shared.every((record) => !('pluginId' in record)))

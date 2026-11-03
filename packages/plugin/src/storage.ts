@@ -37,9 +37,14 @@ const isJsonValue = (value: unknown, depth = 0): value is JsonValue => {
   )
 }
 
+const pluginStorageScope = z.discriminatedUnion('kind', [
+  z.strictObject({ kind: z.literal('concept'), id: z.string().max(2048) }),
+  z.strictObject({ kind: z.literal('view'), id: z.string().max(2048) }),
+])
+
 const fields = {
   key: z.string().min(1).max(128),
-  conceptId: z.string().max(2048).optional(),
+  scope: pluginStorageScope.optional(),
 }
 export const pluginStorageKey = z.strictObject(fields)
 export const pluginStorageRecord = z
@@ -67,14 +72,15 @@ export const pluginStorageSnapshot = z.strictObject({
 
 export type PluginStorageRecord = DeepReadonly<z.infer<typeof pluginStorageRecord>>
 export type PluginStorageKey = DeepReadonly<z.infer<typeof pluginStorageKey>>
+export type PluginStorageScope = DeepReadonly<z.infer<typeof pluginStorageScope>>
 export type PluginStorage = {
   readonly list: () => Promise<readonly PluginStorageRecord[]>
   readonly set: (
     key: string,
     value: PluginStorageRecord['value'],
-    conceptId?: string,
+    scope?: PluginStorageScope,
   ) => Promise<boolean>
-  readonly delete: (key: string, conceptId?: string) => Promise<boolean>
+  readonly delete: (key: string, scope?: PluginStorageScope) => Promise<boolean>
 }
 
 export function parsePluginStorageSnapshot(

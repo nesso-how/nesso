@@ -20,6 +20,7 @@ export default defineConfig({
           'plugins/import/src',
           'plugins/export/src',
           'plugins/review/src',
+          'plugins/notes/src',
           'packages/plugin/src',
           'packages/core/src',
           'packages/schema/src',
@@ -35,6 +36,7 @@ export default defineConfig({
           'import',
           'export',
           'review',
+          'notes',
         ].map((name) => path.resolve(import.meta.dirname, 'plugins', name, 'package.json'))
         const script = path.resolve(import.meta.dirname, 'scripts/build-plugins.ts')
         let timer: ReturnType<typeof setTimeout> | undefined

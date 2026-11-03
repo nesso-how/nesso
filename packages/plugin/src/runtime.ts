@@ -176,7 +176,7 @@ export function parsePluginI18n(value: unknown): PluginI18n {
 }
 
 const manifestFields = {
-  apiVersion: z.literal(1),
+  apiVersion: z.literal(2),
 }
 const jsEntry = z
   .string()
@@ -659,7 +659,7 @@ export function createPluginClient(port: MessagePort, initial: unknown) {
   }
   const mutateStorage = async (
     method: 'storage.set' | 'storage.delete',
-    params: { readonly key: string; readonly value?: unknown; readonly conceptId?: string },
+    params: Omit<PluginStorageRecord, 'value'> & { readonly value?: unknown },
   ) => {
     if (storageRevision === undefined) await listStorage()
     const result = await call<{ readonly revision: number; readonly changed: boolean }>(method, {
@@ -691,13 +691,10 @@ export function createPluginClient(port: MessagePort, initial: unknown) {
     },
     storage: {
       list: listStorage,
-      set: (key, value, conceptId) =>
-        mutateStorage(
-          'storage.set',
-          conceptId === undefined ? { key, value } : { key, value, conceptId },
-        ),
-      delete: (key, conceptId) =>
-        mutateStorage('storage.delete', conceptId === undefined ? { key } : { key, conceptId }),
+      set: (key, value, scope) =>
+        mutateStorage('storage.set', scope === undefined ? { key, value } : { key, value, scope }),
+      delete: (key, scope) =>
+        mutateStorage('storage.delete', scope === undefined ? { key } : { key, scope }),
     },
     signal: controller.signal,
   }

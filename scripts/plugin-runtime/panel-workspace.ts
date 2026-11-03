@@ -52,7 +52,7 @@ export async function verifyPanelWorkspace(context: CheckContext) {
   )
   const before = structuredClone(saved.get('document'))
   const header = await evaluate<{ name: string; height: string }>(
-    `(()=>{const header=document.querySelector('#canvas header');return {name:header.querySelector('h1').textContent,height:getComputedStyle(header).height}})()`,
+    `(()=>{const header=document.querySelector('#canvas header');const trigger=header.querySelector('button[aria-haspopup="menu"]');return {name:trigger.getAttribute('aria-label').replace(/^Actions for /,''),height:getComputedStyle(header).height}})()`,
   )
   const progress = () =>
     (

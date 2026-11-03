@@ -19,7 +19,7 @@ import {
 } from '../../shared/persistence.ts'
 import { checkGraph, sameGraph, samePreferences, sameWorkspace } from './operations.ts'
 import { parsePluginStorage } from './plugin-storage.ts'
-import { migrateDocument } from './migrations.ts'
+import { migrateDocument, migratePluginStorage } from './migrations.ts'
 
 const preferencesRecord = z.strictObject({ version: z.literal(1), preferences: preferencesSchema })
 
@@ -73,12 +73,15 @@ export const loadPersistence = async (
         continue
       }
       if (section === 'plugin-storage') {
-        const saved = parsePluginStorage(value)
+        const migrated = migratePluginStorage(value)
+        const saved = parsePluginStorage(migrated)
         if (!loaded.graph || loaded.blocked.includes('document'))
           fail('documentId', 'The document must load successfully before restoring plugin storage')
         if (saved.documentId !== loaded.documentId)
           fail('documentId', 'Plugin storage belongs to another document')
         loaded.pluginStorage = saved.plugins
+        if ((value as { version: number }).version !== 2)
+          (loaded.upgrades ??= {})['plugin-storage'] = migrated
         continue
       }
       if (section === 'document') {
@@ -135,9 +138,10 @@ export const connectPersistence = (
       !loaded.conversation ||
       JSON.stringify(previous.conversation) !== JSON.stringify(loaded.conversation),
     'plugin-storage':
-      loaded.pluginStorage === undefined
+      loaded.upgrades?.['plugin-storage'] !== undefined ||
+      (loaded.pluginStorage === undefined
         ? previous.pluginStorage.length > 0
-        : JSON.stringify(previous.pluginStorage) !== JSON.stringify(loaded.pluginStorage),
+        : JSON.stringify(previous.pluginStorage) !== JSON.stringify(loaded.pluginStorage)),
   }
   const pending = new Set(sections.filter((section) => changed[section] && !blocked.has(section)))
   let timer: ReturnType<typeof setTimeout> | undefined
@@ -190,7 +194,7 @@ export const connectPersistence = (
                 ? { version: 1, preferences: state.preferences }
                 : section === 'conversation'
                   ? { version: 1, messages: state.conversation.messages }
-                  : { version: 1, documentId: state.documentId, plugins: state.pluginStorage }
+                  : { version: 2, documentId: state.documentId, plugins: state.pluginStorage }
           await storage.write(section, saved)
           if (section === 'document') savedDocumentId = state.documentId
           if (replace) {

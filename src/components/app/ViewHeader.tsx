@@ -1,8 +1,14 @@
 import { defaultLocale } from '@nesso-how/i18n'
-import { ActionIcon, Button, IconButton, Menu, MenuPopup, PanelHeader } from '@nesso-how/ui'
+import { ActionIcon, IconButton, Menu, MenuPopup, PanelHeader, Tabs } from '@nesso-how/ui'
 import { MoreHorizontal } from 'lucide-react'
 import { useTranslation } from '@/i18n'
-import { invokeAction, useViewActions } from '@/plugins'
+import {
+  canvasTabActionIds,
+  invokeAction,
+  pluginPanel,
+  usePluginPanel,
+  useViewActions,
+} from '@/plugins'
 import { useNessoStore } from '@/store'
 import { ViewActions } from './ViewActions'
 import { ActionBadge } from './ActionBadge'
@@ -11,7 +17,10 @@ export function ViewHeader({ readonly = false }: { readonly?: boolean }) {
   const t = useTranslation()
   const workspace = useNessoStore((state) => state.workspace)
   const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale)
-  const review = useViewActions().find((action) => action.id === 'review-view')
+  const actions = useViewActions()
+  const panel = usePluginPanel()
+  const tabs = canvasTabActionIds.flatMap((id) => actions.filter((action) => action.id === id))
+  const value = panel && canvasTabActionIds.includes(panel.actionId) ? panel.actionId : 'graph'
   const view = workspace.savedViews.find((view) => view.id === workspace.activeViewId)
   const name = view?.name ?? t('completeGraph')
 
@@ -19,50 +28,61 @@ export function ViewHeader({ readonly = false }: { readonly?: boolean }) {
     <PanelHeader
       size="lg"
       actions={
-        <>
-          {review && (
-            <Button
-              disabled={readonly}
-              variant="ghost"
-              size="sm"
-              className="relative hidden w-auto sm:inline-flex"
-              onClick={() => {
-                void invokeAction(review.id, workspace.activeViewId)
-              }}
-            >
-              <ActionIcon name={review.icon} />
-              {review.label[locale] ?? review.label.en}
-              {review.badge && (
-                <ActionBadge
-                  actionId={review.id}
-                  viewId={workspace.activeViewId}
-                  label={review.label[locale] ?? review.label.en}
-                />
-              )}
-            </Button>
-          )}
-          <Menu.Root key={workspace.activeViewId ?? 'complete-graph'}>
-            <Menu.Trigger
-              disabled={readonly}
-              render={
-                <IconButton
-                  aria-label={t('actionsFor', { name })}
-                  title={t('actionsFor', { name })}
-                />
-              }
-            >
-              <MoreHorizontal />
-            </Menu.Trigger>
-            <MenuPopup align="end">
-              <ViewActions viewId={workspace.activeViewId} inlineActionId={review?.id} />
-            </MenuPopup>
-          </Menu.Root>
-        </>
+        <Menu.Root key={workspace.activeViewId ?? 'complete-graph'}>
+          <Menu.Trigger
+            disabled={readonly}
+            render={
+              <IconButton
+                aria-label={t('actionsFor', { name })}
+                title={t('actionsFor', { name })}
+              />
+            }
+          >
+            <MoreHorizontal />
+          </Menu.Trigger>
+          <MenuPopup align="end">
+            <ViewActions
+              viewId={workspace.activeViewId}
+              inlineActionIds={tabs.map(({ id }) => id)}
+            />
+          </MenuPopup>
+        </Menu.Root>
       }
     >
-      <h1 className="truncate text-[13px] font-medium" title={name}>
-        {name}
-      </h1>
+      <Tabs.Root
+        value={value}
+        className="flex self-stretch"
+        onValueChange={(next) => {
+          if (next === 'graph') pluginPanel.close()
+          else void invokeAction(next, workspace.activeViewId)
+        }}
+      >
+        <Tabs.List aria-label={t('canvasTabs')} className="canvas-tabs">
+          <Tabs.Tab value="graph">
+            <ActionIcon name="share" />
+            {t('canvasGraph')}
+          </Tabs.Tab>
+          {tabs.length > 0 && (
+            <>
+              <span aria-hidden="true" className="h-4 w-px bg-border" />
+              {tabs.map((action) => (
+                <Tabs.Tab key={action.id} value={action.id} disabled={readonly}>
+                  <ActionIcon name={action.icon} />
+                  {action.label[locale] ?? action.label.en}
+                  {action.badge && (
+                    <ActionBadge
+                      actionId={action.id}
+                      viewId={workspace.activeViewId}
+                      label={action.label[locale] ?? action.label.en}
+                      inline
+                    />
+                  )}
+                </Tabs.Tab>
+              ))}
+            </>
+          )}
+        </Tabs.List>
+      </Tabs.Root>
     </PanelHeader>
   )
 }

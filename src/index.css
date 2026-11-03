@@ -635,6 +635,37 @@
   border-radius: 50%;
   background: var(--primary);
 }
+.canvas-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.canvas-tabs button {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 10px;
+  border-radius: var(--radius-control);
+  color: var(--foreground);
+  font-size: 12px;
+}
+.canvas-tabs button svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+.canvas-tabs button:hover,
+.canvas-tabs button[data-active] {
+  background: var(--hover);
+}
+.canvas-tabs button:disabled {
+  opacity: 0.5;
+}
+.canvas-tabs button:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
 .chat-panel {
   display: flex;
   height: 100%;

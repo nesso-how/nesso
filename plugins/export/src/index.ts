@@ -6,7 +6,7 @@ const { i18n } = source
 
 export const create = (): readonly ActionContribution[] => [
   {
-    id: 'export-view',
+    id: 'export',
     label: i18n.label,
     icon: 'download',
     run: async ({ document, files, notifications, viewId }) => {

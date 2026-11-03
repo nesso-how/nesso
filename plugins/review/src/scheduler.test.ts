@@ -11,17 +11,17 @@ function fixture() {
   let release: (() => void) | undefined
   const storage: ActionContext['storage'] = {
     list: async () => structuredClone([...records.values()]),
-    set: async (key, value, conceptId) => {
-      calls.push({ key, value, conceptId })
+    set: async (key, value, scope) => {
+      calls.push({ key, value, scope })
       if (release)
         await new Promise<void>((resolve) => {
           release = resolve
         })
       if (fail) throw new PluginError('stale-state', [{ path: 'storage', message: 'Conflict' }])
-      records.set(conceptId!, structuredClone({ key, value, conceptId }))
+      records.set(scope!.id, structuredClone({ key, value, scope }))
       return true
     },
-    delete: async (_key, id) => records.delete(id!),
+    delete: async (_key, scope) => records.delete(scope!.id),
   }
   return {
     records,
@@ -100,7 +100,7 @@ test('each rating persists its preview and log, then completes the round', async
     assert.deepEqual(review.getSnapshot().outcome, { reviewed: 1, complete: true })
     assert.equal(review.getSnapshot().session, null)
     assert.deepEqual(review.due(), [])
-    assert.equal(f.calls[0].conceptId, 'urn:a')
+    assert.deepEqual(f.calls[0].scope, { kind: 'concept', id: 'urn:a' })
   }
 })
 
@@ -197,7 +197,7 @@ test('failed writes block progress and retries; invalid records remain untouched
     { model: 'FSRS-6', card: { dueAt: 'invalid' }, logs: [] },
   ]
   for (const value of invalid) {
-    f.records.set('urn:a', { key: 'progress', conceptId: 'urn:a', value })
+    f.records.set('urn:a', { key: 'progress', scope: { kind: 'concept', id: 'urn:a' }, value })
     await assert.rejects(createReview(f.storage, f.now), PluginError)
     assert.deepEqual(f.records.get('urn:a')?.value, value)
   }
