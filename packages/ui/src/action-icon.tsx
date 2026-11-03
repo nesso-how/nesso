@@ -53,6 +53,7 @@ const icons = {
 export type ActionIconName = keyof typeof icons
 
 export function ActionIcon({ name, ...props }: { name?: string } & ComponentProps<typeof Zap>) {
-  const Icon = (name !== undefined ? icons[name as ActionIconName] : undefined) ?? Zap
+  const Icon =
+    name !== undefined && Object.hasOwn(icons, name) ? icons[name as ActionIconName] : Zap
   return <Icon aria-hidden="true" {...props} />
 }
