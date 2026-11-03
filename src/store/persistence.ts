@@ -265,8 +265,9 @@ export const connectPersistence = (
       'plugin-storage':
         state.documentId !== previous.documentId || state.pluginStorage !== previous.pluginStorage,
     }
+    const reset = state.documentId !== previous.documentId
     previous = state
-    if (changed.conversation && state.conversation.messages.length === 0) {
+    if (changed.conversation && !reset && state.conversation.messages.length === 0) {
       blocked.delete('conversation')
       readIssues = readIssues.filter((issue) => issue.section !== 'conversation')
     }
