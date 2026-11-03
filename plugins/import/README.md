@@ -10,7 +10,7 @@ Import/export exchange a graph view, not the complete application state; use a m
 
 ## API
 
-- `create()`: factory contributing the `import-view` action; `run(context)` receives its execution APIs. Access declarations and localized labels/failure text live in `package.json`; Nesso resolves the current language with an English fallback.
+- `create()`: factory contributing the `import` action; `run(context)` receives its execution APIs. Access declarations and localized labels/failure text live in `package.json`; Nesso resolves the current language with an English fallback.
 - `buildImportOperations(snapshot, activeViewId, viewId)`: pure merge of a parsed graph into one atomic operation batch.
 
 See [src/index.ts](src/index.ts) for definitions.

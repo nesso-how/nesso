@@ -4,7 +4,7 @@ import { reviewBadge } from './scheduler.ts'
 
 export const create = (): readonly ActionContribution[] => [
   {
-    id: 'review-view',
+    id: 'review',
     label: { en: 'Review', it: 'Ripasso', 'zh-CN': '复习' },
     icon: 'repeat',
     ui: ReviewPanel,

@@ -63,7 +63,7 @@ class ImportError extends PluginError {
 
 export const create = (): readonly ActionContribution[] => [
   {
-    id: 'import-view',
+    id: 'import',
     label: i18n.label,
     icon: 'upload',
     run: async ({ document, files, viewId }) => {

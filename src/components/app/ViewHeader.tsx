@@ -12,7 +12,7 @@ export function ViewHeader({ readonly = false }: { readonly?: boolean }) {
   const workspace = useNessoStore((state) => state.workspace)
   const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale)
   const actions = useViewActions()
-  const inlineActions = ['notes', 'review-view'].flatMap((id) =>
+  const inlineActions = ['notes', 'review'].flatMap((id) =>
     actions.filter((action) => action.id === id),
   )
   const view = workspace.savedViews.find((view) => view.id === workspace.activeViewId)
