@@ -32,7 +32,7 @@ Documents use an inline `@context` and `@graph` entries for concepts and `rdf:Pr
 
 Concepts have an optional `notes` string, serialized as `rdfs:comment`. The JSON-LD representation is independent of the in-memory property name.
 
-Relations use absolute predicate IRIs or local aliases mapped to known relation types with `@type: '@id'`. Remote contexts are not resolved; other non-predicate context terms are ignored. Unsupported document and graph-entry properties are rejected.
+Relations use absolute predicate IRIs or local aliases mapped to known relation types with `@type: '@id'`. Relation types cannot use concept property keys such as `rdfs:label` or `rdfs:comment`. Remote contexts are not resolved; other non-predicate context terms are ignored. Unsupported document and graph-entry properties are rejected.
 
 ## API
 
