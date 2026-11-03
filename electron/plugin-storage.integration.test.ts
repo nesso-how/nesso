@@ -26,7 +26,7 @@ test('installed actions restore verified bytes offline, reject conflicts and can
     version: '1.0.0',
     author: 'Test Author <private@example.test>',
     repository: 'github:example/plugin',
-    nesso: { apiVersion: 1, kind: 'actions', entry: 'dist/index.js', writes: [], capabilities: [] },
+    nesso: { apiVersion: 2, kind: 'actions', entry: 'dist/index.js', writes: [], capabilities: [] },
     i18n: {
       metadata: {
         name: { en: 'Test' },
@@ -87,7 +87,7 @@ test('manual updates atomically replace one exact package, preserve disabled sta
   const manifest = {
     name: 'nesso-plugin-test',
     version: '1.0.0',
-    nesso: { apiVersion: 1, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
+    nesso: { apiVersion: 2, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
     i18n: {
       metadata: {
         name: { en: 'Test' },
@@ -178,7 +178,7 @@ test('definition records restore offline with exact font bytes and reject tamper
     const manifest = {
       name: `nesso-test-${kind}`,
       version: '1.0.0',
-      nesso: { apiVersion: 1, kind, entry: 'definition.json', writes: [], capabilities: [] },
+      nesso: { apiVersion: 2, kind, entry: 'definition.json', writes: [], capabilities: [] },
       i18n: {
         metadata: {
           name: { en: 'Test' },
@@ -236,7 +236,7 @@ test('unreadable records are isolated without losing valid packages or permittin
       manifest: {
         name,
         version,
-        nesso: { apiVersion: 1, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
+        nesso: { apiVersion: 2, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
         i18n: {
           metadata: {
             name: { en: name },

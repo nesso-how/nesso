@@ -159,6 +159,7 @@
   "introStep": "Step {{step}} of {{total}}",
   "introStepCount": "{{step}} of {{total}}",
   "notes": "Notes",
+  "notesPlaceholder": "Add notes about this concept…",
   "notesLinkOpenFailed": "Could not open the link. Only HTTPS addresses without embedded credentials are allowed.",
   "localData": "Local data",
   "storageDescription": "Nesso’s graph, views, preferences, chat and plugin data. Credentials stay on this device in the default folder.",

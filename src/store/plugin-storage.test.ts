@@ -27,7 +27,7 @@ const set = (
   record:
     conceptId === undefined
       ? { key, value: value as never }
-      : { key, value: value as never, conceptId },
+      : { key, value: value as never, scope: { kind: 'concept', id: conceptId } },
 })
 const remove = (
   host: ReturnType<typeof createNessoStore>,
@@ -39,7 +39,7 @@ const remove = (
   documentId: host.store.getState().documentId,
   pluginId: 'nesso-plugin-example',
   revision,
-  key: conceptId === undefined ? { key } : { key, conceptId },
+  key: conceptId === undefined ? { key } : { key, scope: { kind: 'concept', id: conceptId } },
 })
 
 test('storage writes are immutable and outside graph history, including net no-ops', () => {
@@ -130,13 +130,13 @@ test('view edits and concept deletion retain progress for undo, while a reset st
 test('storage restoration rejects duplicate namespaces/records and namespace and record quotas are atomic', () => {
   const record = { key: 'progress', value: null }
   const entry = { pluginId: 'nesso-plugin-example', revision: 1, records: [record] }
-  const saved = { version: 1, documentId: 'urn:document', plugins: [entry] }
+  const saved = { version: 2, documentId: 'urn:document', plugins: [entry] }
   assert.deepEqual(parsePluginStorage(saved), {
     documentId: saved.documentId,
     plugins: saved.plugins,
   })
   for (const value of [
-    { ...saved, version: 2 },
+    { ...saved, version: 3 },
     { ...saved, documentId: 'relative' },
     { ...saved, plugins: [entry, entry] },
     { ...saved, plugins: [{ ...entry, records: [record, record] }] },
@@ -179,4 +179,60 @@ test('storage restoration rejects duplicate namespaces/records and namespace and
   const namespaceBefore = namespaces.store.getState()
   assert.throws(() => namespaces.store.applyOperations([set(namespaces, 'overflow', null)]))
   assert.equal(namespaces.store.getState(), namespaceBefore)
+})
+
+test('view scopes are distinct, validate live references and retain records through deletion and undo', () => {
+  const host = createNessoStore(graph)
+  host.store.applyOperations([
+    { kind: 'view.create', id: 'urn:a', name: 'Project', conceptIds: ['urn:a'] },
+  ])
+  const scope = { kind: 'view', id: 'urn:a' } as const
+  const write = (revision: number, id: string = scope.id): PluginStorageWrite => ({
+    kind: 'plugin-storage.set',
+    documentId: host.store.getState().documentId,
+    pluginId: 'nesso-plugin-example',
+    revision,
+    record: { key: 'notes', value: 'Project notes', scope: { ...scope, id } },
+  })
+  host.store.applyOperations([
+    set(host, 'notes', 'Document'),
+    set(host, 'notes', 'Concept', 'urn:a', 1),
+    write(2),
+  ])
+  const saved = host.store.getState().pluginStorage
+  assert.equal(saved[0].records.length, 3)
+  host.store.renameView('urn:a', 'Renamed')
+  host.store.setViewMembership('urn:a', 'urn:a', false)
+  assert.equal(host.store.getState().pluginStorage, saved)
+  host.store.deleteView('urn:a')
+  assert.equal(host.store.getState().pluginStorage, saved)
+  assert.throws(() => host.store.applyOperations([write(3)]), /Unknown view/)
+  host.store.undo()
+  assert.equal(host.store.getState().workspace.savedViews[0].id, 'urn:a')
+  host.store.applyOperations([write(3)])
+  assert.equal(host.store.getState().pluginStorage, saved)
+  for (const id of ['urn:missing', 'relative']) {
+    const before = host.store.getState()
+    assert.throws(() => host.store.applyOperations([write(3, id)]))
+    assert.equal(host.store.getState(), before)
+  }
+  host.store.deleteView('urn:a')
+  host.store.applyOperations([
+    {
+      kind: 'plugin-storage.delete',
+      documentId: host.store.getState().documentId,
+      pluginId: 'nesso-plugin-example',
+      revision: 3,
+      key: { key: 'notes', scope },
+    },
+  ])
+  assert.equal(host.store.getState().pluginStorage[0].records.length, 2)
+  host.store.applyOperations([
+    { kind: 'view.create', id: 'energy', name: 'Energy', conceptIds: ['urn:a'] },
+    write(4, 'energy'),
+  ])
+  assert.deepEqual(host.store.getState().pluginStorage[0].records[2].scope, {
+    kind: 'view',
+    id: 'energy',
+  })
 })

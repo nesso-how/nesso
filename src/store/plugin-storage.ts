@@ -31,8 +31,8 @@ export type PluginStorageWrite =
       readonly key: PluginStorageKey
     }
 
-const recordId = (record: { readonly key: string; readonly conceptId?: string }) =>
-  JSON.stringify([record.conceptId ?? null, record.key])
+const recordId = (record: PluginStorageKey) =>
+  JSON.stringify([record.scope?.kind ?? null, record.scope?.id ?? null, record.key])
 
 const pluginIdSchema = z
   .string()
@@ -41,7 +41,7 @@ const pluginIdSchema = z
 const checkPluginId = (value: unknown): string => parseSettings(pluginIdSchema, value, 'pluginId')
 
 const storageSchema = z.strictObject({
-  version: z.literal(1),
+  version: z.literal(2),
   documentId: iriSchema,
   plugins: z
     .array(
@@ -80,6 +80,7 @@ export function applyPluginStorage(
   plugins: readonly PluginStorageNamespace[],
   write: PluginStorageWrite,
   conceptIds: ReadonlySet<string>,
+  viewIds: ReadonlySet<string>,
 ): readonly PluginStorageNamespace[] {
   const pluginId = checkPluginId(write.pluginId)
   const previous = plugins.find((entry) => entry.pluginId === pluginId)
@@ -96,10 +97,13 @@ export function applyPluginStorage(
     records.delete(recordId(key))
   } else {
     const record = parsePluginStorageRecord(write.record)
-    if (record.conceptId !== undefined && !isAbsoluteIri(record.conceptId))
-      fail('storage.conceptId', 'Expected an absolute concept IRI')
-    if (record.conceptId !== undefined && !conceptIds.has(record.conceptId))
-      fail('storage.conceptId', 'Unknown concept')
+    if (record.scope !== undefined) {
+      const { kind, id } = record.scope
+      if (kind === 'concept' && !isAbsoluteIri(id))
+        fail('storage.scope.id', 'Expected an absolute IRI')
+      if (!(kind === 'concept' ? conceptIds : viewIds).has(id))
+        fail('storage.scope.id', kind === 'concept' ? 'Unknown concept' : 'Unknown view')
+    }
     records.set(recordId(record), record)
   }
   if (

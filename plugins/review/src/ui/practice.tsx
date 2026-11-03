@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
-import { Button, Kbd } from '@nesso-how/ui'
+import { Button, Kbd, PluginContent, PluginPage } from '@nesso-how/ui'
 import type { ActionContext, ActionState } from '@nesso-how/plugin'
 import type { Review } from '../scheduler.ts'
 import { messages } from '../i18n.ts'
@@ -135,7 +135,7 @@ export function Practice({
   const previews = current ? review.preview(current.id, time) : []
   const ratings = { 1: t.again, 2: t.hard, 3: t.good, 4: t.easy }
   return (
-    <div className="review-panel" aria-busy={busy}>
+    <PluginPage className="review-panel" aria-busy={busy}>
       {failed && (
         <div className="review-error" role="alert">
           <p>{t.saveError}</p>
@@ -147,7 +147,7 @@ export function Practice({
       <div className={`review-main${current ? ' is-studying' : ''}`}>
         <div ref={reading} className="review-reading">
           {current && session ? (
-            <div className="review-study review-width">
+            <PluginContent className="review-study">
               <p className="review-step">
                 {session.index + 1} / {session.ids.length}
               </p>
@@ -162,7 +162,7 @@ export function Practice({
               ) : (
                 <p className="review-prompt">{t.prompt}</p>
               )}
-            </div>
+            </PluginContent>
           ) : (
             <Overview
               state={state}
@@ -175,7 +175,7 @@ export function Practice({
             />
           )}
           {current && (
-            <div ref={controls} className="review-controls review-width">
+            <PluginContent ref={controls} className="review-controls">
               {revealed ? (
                 <>
                   <p className="review-rating-title">
@@ -219,13 +219,13 @@ export function Practice({
               >
                 {t.end}
               </Button>
-            </div>
+            </PluginContent>
           )}
         </div>
       </div>
       <span className="review-sr" role="status" aria-live="polite">
         {!busy && session && session.index > 0 ? t.recorded : ''}
       </span>
-    </div>
+    </PluginPage>
   )
 }

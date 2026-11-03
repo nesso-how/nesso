@@ -53,6 +53,7 @@ export function AssistantPanel({
       className="flex h-full min-h-0 flex-col"
     >
       <PanelHeader
+        size="lg"
         actions={
           <>
             {tab === 'chat' && (

@@ -16,6 +16,7 @@ import { verifyCorruptRecords } from './corrupt-records.ts'
 import { verifyStorage } from './storage.ts'
 import { verifyPanel } from './panel.ts'
 import { verifyPanelWorkspace } from './panel-workspace.ts'
+import { verifyNotes } from './notes.ts'
 
 const [scenario, name, profile] = process.argv.slice(2) as [Scenario, Platform, string]
 assert.ok(
@@ -135,6 +136,9 @@ app
           break
         case 'panel':
           await verifyPanel(context)
+          break
+        case 'notes':
+          await verifyNotes(context)
           break
         case 'panel-workspace':
           await verifyPanelWorkspace(context)

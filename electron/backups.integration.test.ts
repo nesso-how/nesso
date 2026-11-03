@@ -28,7 +28,11 @@ test('manual backups round-trip every record, exclude device secrets and bind co
       pluginId: '@nesso-how/review',
       documentId: initial.documentId,
       revision: 0,
-      record: { key: 'progress', conceptId: initial.graph.concepts[0].id, value: { reviews: 3 } },
+      record: {
+        key: 'progress',
+        scope: { kind: 'concept', id: initial.graph.concepts[0].id },
+        value: { reviews: 3 },
+      },
     },
   ])
   const persistence = connectPersistence(host, storage, await loadPersistence(storage))
@@ -56,9 +60,11 @@ test('manual backups round-trip every record, exclude device secrets and bind co
   ])
     await assert.rejects(parseBackup(value), /backupInvalid|backupUnsupported/)
   const orphan = structuredClone(backup) as Backup & {
-    records: { 'plugin-storage': { plugins: { records: { conceptId: string }[] }[] } }
+    records: {
+      'plugin-storage': { plugins: { records: { scope: { kind: 'concept'; id: string } }[] }[] }
+    }
   }
-  orphan.records['plugin-storage'].plugins[0].records[0].conceptId = 'urn:missing'
+  orphan.records['plugin-storage'].plugins[0].records[0].scope.id = 'urn:missing'
   assert.deepEqual(await parseBackup(orphan), orphan)
   await writeFile(path.join(directory, 'preferences.json'), 'unreadable')
   await writeFile(file, 'keep existing export')

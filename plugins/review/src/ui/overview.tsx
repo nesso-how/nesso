@@ -1,5 +1,5 @@
 import type { MouseEvent, RefObject } from 'react'
-import { Button, Kbd } from '@nesso-how/ui'
+import { Button, Kbd, PluginContent } from '@nesso-how/ui'
 import type { ActionState } from '@nesso-how/plugin'
 import type { Review } from '../scheduler.ts'
 import { messages } from '../i18n.ts'
@@ -39,7 +39,7 @@ export function Overview({
   )
   const next = ordered[0] && progress.get(ordered[0].id)?.card.dueAt
   return (
-    <div className="review-overview review-width">
+    <PluginContent className="review-overview">
       <h1 ref={heading} tabIndex={-1}>
         {title}
       </h1>
@@ -100,6 +100,6 @@ export function Overview({
           <Kbd>{t.space}</Kbd>
         </div>
       )}
-    </div>
+    </PluginContent>
   )
 }

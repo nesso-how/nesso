@@ -11,7 +11,10 @@ export function ViewHeader({ readonly = false }: { readonly?: boolean }) {
   const t = useTranslation()
   const workspace = useNessoStore((state) => state.workspace)
   const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale)
-  const review = useViewActions().find((action) => action.id === 'review-view')
+  const actions = useViewActions()
+  const inlineActions = ['notes', 'review-view'].flatMap((id) =>
+    actions.filter((action) => action.id === id),
+  )
   const view = workspace.savedViews.find((view) => view.id === workspace.activeViewId)
   const name = view?.name ?? t('completeGraph')
 
@@ -20,27 +23,28 @@ export function ViewHeader({ readonly = false }: { readonly?: boolean }) {
       size="lg"
       actions={
         <>
-          {review && (
+          {inlineActions.map((action) => (
             <Button
+              key={action.id}
               disabled={readonly}
               variant="ghost"
               size="sm"
               className="relative hidden w-auto sm:inline-flex"
               onClick={() => {
-                void invokeAction(review.id, workspace.activeViewId)
+                void invokeAction(action.id, workspace.activeViewId)
               }}
             >
-              <ActionIcon name={review.icon} />
-              {review.label[locale] ?? review.label.en}
-              {review.badge && (
+              <ActionIcon name={action.icon} />
+              {action.label[locale] ?? action.label.en}
+              {action.badge && (
                 <ActionBadge
-                  actionId={review.id}
+                  actionId={action.id}
                   viewId={workspace.activeViewId}
-                  label={review.label[locale] ?? review.label.en}
+                  label={action.label[locale] ?? action.label.en}
                 />
               )}
             </Button>
-          )}
+          ))}
           <Menu.Root key={workspace.activeViewId ?? 'complete-graph'}>
             <Menu.Trigger
               disabled={readonly}
@@ -54,7 +58,10 @@ export function ViewHeader({ readonly = false }: { readonly?: boolean }) {
               <MoreHorizontal />
             </Menu.Trigger>
             <MenuPopup align="end">
-              <ViewActions viewId={workspace.activeViewId} inlineActionId={review?.id} />
+              <ViewActions
+                viewId={workspace.activeViewId}
+                inlineActionIds={inlineActions.map(({ id }) => id)}
+              />
             </MenuPopup>
           </Menu.Root>
         </>

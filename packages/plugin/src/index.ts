@@ -20,4 +20,9 @@ export type {
   PluginManifest,
 } from './runtime.ts'
 export { actionIconNames } from './runtime.ts'
-export type { PluginStorage, PluginStorageKey, PluginStorageRecord } from './storage.ts'
+export type {
+  PluginStorage,
+  PluginStorageKey,
+  PluginStorageRecord,
+  PluginStorageScope,
+} from './storage.ts'

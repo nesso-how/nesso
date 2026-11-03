@@ -16,7 +16,7 @@ export async function verifySafePlugins({ window, url }: CheckContext) {
     manifest: {
       name: 'test-safe-plugins',
       version: '1.0.0',
-      nesso: { apiVersion: 1, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
+      nesso: { apiVersion: 2, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
       i18n: {
         metadata: {
           name: { en: 'Safe mode probe' },
@@ -48,7 +48,7 @@ export async function verifySafePlugins({ window, url }: CheckContext) {
     await evaluate<number>(
       `[...document.querySelectorAll('.plugin-row')].filter(row => row.getClientRects().length).length`,
     ),
-    7,
+    8,
   )
   assert.equal(
     await evaluate<boolean>(

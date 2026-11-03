@@ -1,6 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
-import { Banner, Button, Dialog, DialogActions, DialogPopup } from '@nesso-how/ui'
-import { ChevronRight } from 'lucide-react'
+import {
+  Banner,
+  BannerDetails,
+  BannerRow,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogPopup,
+} from '@nesso-how/ui'
 import { useNessoStore, type startAutosave } from '@/store'
 import { useTranslation } from '@/i18n'
 import { notifications } from '@/notifications'
@@ -96,59 +103,55 @@ export function PersistenceBanner({
   return (
     <>
       {issues.length > 0 && (
-        <Banner tone="warning" className="shrink-0 rounded-none border-x-0 border-b-0 p-0">
-          <details className="group">
-            <summary className="flex min-h-9 cursor-pointer list-none items-center gap-2 rounded-sm px-3 py-2 leading-4 hover:bg-accent active:bg-pressed [&::-webkit-details-marker]:hidden [@media(pointer:coarse)]:min-h-11">
-              <ChevronRight className="size-3.5 shrink-0 text-muted-foreground transition-transform duration-(--duration-state) group-open:rotate-90" />
-              <span>{problems.join(' ')}</span>
-            </summary>
-            <div className="px-3 pb-3">
-              <p className="font-mono text-[10px] text-muted-foreground">{t('technicalDetails')}</p>
-              <ul className="mt-1 list-inside list-disc break-words text-muted-foreground">
-                {issues.map(({ path, message, operation }, index) => (
-                  <li key={index}>
-                    {t(operation === 'read' ? 'persistenceRead' : 'persistenceWrite')} · {path}:{' '}
-                    {message}
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] leading-4">
-                <a
-                  href="https://github.com/nesso-how/nesso/discussions"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-muted-foreground underline underline-offset-2 hover:text-foreground"
+        <Banner tone="warning" className="shrink-0 rounded-none border-x-0 border-b-0">
+          <BannerRow
+            message={problems.join(' ')}
+            actions={affected.map((section) => {
+              const unreadable = issues.some(
+                (issue) => issue.section === section && issue.operation === 'read',
+              )
+              return (
+                <Button
+                  key={section}
+                  variant="outline"
+                  size="sm"
+                  disabled={working}
+                  onClick={() => {
+                    setFailed(false)
+                    if (unreadable) setDialog(section)
+                    else void recover(section)
+                  }}
                 >
-                  {t('getHelp')}
-                </a>
-                {affected.map((section) => {
-                  const unreadable = issues.some(
-                    (issue) => issue.section === section && issue.operation === 'read',
-                  )
-                  return (
-                    <button
-                      key={section}
-                      type="button"
-                      disabled={working}
-                      onClick={() => {
-                        setFailed(false)
-                        if (unreadable) setDialog(section)
-                        else void recover(section)
-                      }}
-                      className="text-foreground underline underline-offset-2 disabled:pointer-events-none disabled:opacity-50"
-                    >
-                      {unreadable ? t('persistenceReplace') : t('persistenceRetry')}
-                    </button>
-                  )
-                })}
-              </div>
-              {failed && (
-                <p role="alert" className="mt-2 text-xs">
-                  {t('persistenceRecoveryFailed')}
-                </p>
-              )}
+                  {unreadable ? t('persistenceReplace') : t('persistenceRetry')}
+                </Button>
+              )
+            })}
+          />
+          <BannerDetails label={t('technicalDetails')}>
+            <ul className="list-inside list-disc break-words font-mono text-[10px] text-muted-foreground">
+              {issues.map(({ path, message, operation }, index) => (
+                <li key={index}>
+                  {t(operation === 'read' ? 'persistenceRead' : 'persistenceWrite')} · {path}:{' '}
+                  {message}
+                </li>
+              ))}
+            </ul>
+            <div className="mt-2 text-[11px] leading-4">
+              <a
+                href="https://github.com/nesso-how/nesso/discussions"
+                target="_blank"
+                rel="noreferrer"
+                className="text-muted-foreground underline underline-offset-2 hover:text-foreground"
+              >
+                {t('getHelp')}
+              </a>
             </div>
-          </details>
+            {failed && (
+              <p role="alert" className="mt-2 text-xs">
+                {t('persistenceRecoveryFailed')}
+              </p>
+            )}
+          </BannerDetails>
         </Banner>
       )}
       <Dialog.Root

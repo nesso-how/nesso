@@ -255,6 +255,7 @@ export function Inspector({
               id="concept-notes"
               className="max-h-[50vh]"
               aria-label={t('notes')}
+              placeholder={t('notesPlaceholder')}
               data-document-edit
               value={concept.notes ?? ''}
               readOnly={readonly}

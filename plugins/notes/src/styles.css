@@ -1,0 +1,49 @@
+.notes-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.notes-document {
+  min-height: 100%;
+}
+
+.notes-document h1 {
+  margin: 0 0 1.5rem;
+  font-size: 28px;
+  font-weight: 500;
+  letter-spacing: -0.8px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.notes-editor.nesso-markdown-input {
+  min-height: 60vh;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  font-size: 1rem;
+  line-height: 1.75;
+  box-shadow: none;
+}
+
+.notes-editor .cm-content {
+  min-height: 60vh;
+}
+
+.notes-editor .cm-placeholder {
+  color: color-mix(in srgb, var(--muted-foreground) 70%, transparent);
+}
+
+.notes-status {
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+}
+
+.notes-banner {
+  flex-shrink: 0;
+  border-inline: 0;
+  border-bottom: 0;
+  border-radius: 0;
+}

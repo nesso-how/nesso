@@ -1,0 +1,52 @@
+{
+  "name": "@nesso-how/notes",
+  "version": "1.0.0-beta.1",
+  "description": "Free-form Markdown notes for each view",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@nesso-how/ui": "workspace:*",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@nesso-how/plugin": "workspace:*",
+    "@types/react": "^19.2.18"
+  },
+  "peerDependencies": {
+    "@nesso-how/plugin": "workspace:*",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "i18n": {
+    "metadata": {
+      "name": {
+        "en": "Notes",
+        "it": "Note",
+        "zh-CN": "笔记"
+      },
+      "description": {
+        "en": "Write ideas, questions and project notes for each view.",
+        "it": "Scrivi idee, domande e appunti di progetto per ogni vista.",
+        "zh-CN": "为每个视图记录想法、问题和项目笔记。"
+      },
+      "documentation": {
+        "en": "Open Notes on a view to write freely with live Markdown preview. Notes save automatically in private plugin storage, separately from concept notes and graph history. Overview uses document-level notes. Deleting a view retains its notes; undoing the deletion reconnects them.",
+        "it": "Apri Note su una vista per scrivere liberamente con anteprima Markdown. Le note si salvano automaticamente nello storage privato del plugin, separate dalle note dei concetti e dalla cronologia del grafo. Panoramica usa note a livello di documento. Eliminare una vista conserva le note; annullare l’eliminazione le ricollega.",
+        "zh-CN": "在视图中打开笔记，自由书写并实时预览 Markdown。笔记自动保存到插件私有存储，与概念笔记和图谱历史记录分开。概览使用文档级笔记。删除视图会保留其笔记；撤销删除会重新关联笔记。"
+      }
+    }
+  },
+  "nesso": {
+    "apiVersion": 2,
+    "kind": "actions",
+    "entry": "dist/index.js",
+    "writes": [],
+    "capabilities": [
+      "storage",
+      "ui"
+    ]
+  }
+}

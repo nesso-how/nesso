@@ -17,6 +17,7 @@ import baseVocabPackage from '../../plugins/base-vocab/package.json'
 import exportPackage from '../../plugins/export/package.json'
 import importPackage from '../../plugins/import/package.json'
 import reviewPackage from '../../plugins/review/package.json'
+import notesPackage from '../../plugins/notes/package.json'
 import { notifications } from '../notifications/index.ts'
 import { prepareTheme, type ThemePresentation } from '../theme/prepare.ts'
 import { createPluginRegistry, type PluginEntry } from './registry.ts'
@@ -504,6 +505,7 @@ export async function initializeBundledPlugins() {
       { source: exportPackage, id: 'export' },
       { source: importPackage, id: 'import' },
       { source: reviewPackage, id: 'review' },
+      { source: notesPackage, id: 'notes' },
     ].map(async ({ source, id }): Promise<PluginEntry> => {
       const manifest = parsePluginManifest(source.nesso)
       if (manifest.kind !== 'actions')

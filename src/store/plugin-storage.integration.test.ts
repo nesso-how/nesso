@@ -4,6 +4,7 @@ import type { PersistenceSection } from '../../shared/persistence.ts'
 import { createNessoStore } from './create.ts'
 import { initializeNessoStore } from './initialize.ts'
 import { connectPersistence, loadPersistence } from './persistence.ts'
+import { parseBackup } from './backup.ts'
 
 const graph = {
   concepts: [
@@ -47,7 +48,7 @@ const put = (
       record:
         conceptId === undefined
           ? { key, value: value as never }
-          : { key, value: value as never, conceptId },
+          : { key, value: value as never, scope: { kind: 'concept', id: conceptId } },
     },
   ])
 }
@@ -83,18 +84,30 @@ test('plugin progress round-trips independently of graph JSON-LD without rewriti
   await persistence.dispose()
 })
 
-test('startup preserves concept-associated plugin records without executing plugins or rewriting storage', async () => {
+test('startup and backups retain concept and view orphans without executing plugins or rewriting storage', async () => {
   const { storage, host, persistence } = await fixture()
   put(host, 'settings', { enabled: true })
   put(host, 'progress', 'live', 'urn:a')
   put(host, 'progress', 'deleted', 'urn:b')
+  const viewId = host.store.createView('Project', ['urn:a'])
+  const record = { key: 'notes', scope: { kind: 'view', id: viewId }, value: 'Keep me' } as const
+  host.store.applyOperations([
+    {
+      kind: 'plugin-storage.set',
+      pluginId: 'nesso-plugin-example',
+      documentId: host.store.getState().documentId,
+      revision: 3,
+      record,
+    },
+  ])
+  host.store.deleteView(viewId)
   host.store.removeConcept('urn:b')
   await persistence.dispose()
   const original = structuredClone(storage.records.get('plugin-storage'))
   const loaded = await loadPersistence(storage)
-  assert.equal(loaded.pluginStorage?.[0].records.length, 3)
+  assert.deepEqual(loaded.blocked, [])
   const reopened = initializeNessoStore(loaded, ['en'])
-  assert.equal(reopened.store.getState().pluginStorage[0].records.length, 3)
+  assert.deepEqual(reopened.store.getState().pluginStorage, loaded.pluginStorage)
   assert.deepEqual(storage.records.get('plugin-storage'), original)
   storage.writes.length = 0
   const restoredPersistence = connectPersistence(reopened, storage, loaded)
@@ -102,14 +115,29 @@ test('startup preserves concept-associated plugin records without executing plug
   assert.deepEqual(storage.writes, [])
   const restored = await loadPersistence(storage)
   assert.deepEqual(
-    restored.pluginStorage?.[0].records.map(({ conceptId }) => conceptId),
-    [undefined, 'urn:a', 'urn:b'],
+    restored.pluginStorage?.[0].records.map(({ scope }) => scope?.id),
+    [undefined, 'urn:a', 'urn:b', viewId],
   )
+  assert.deepEqual(restored.pluginStorage?.[0].records[3], record)
+  const backup = await parseBackup({
+    format: 'nesso-backup',
+    version: 1,
+    createdAt: new Date().toISOString(),
+    appVersion: '1.0.0',
+    records: Object.fromEntries(storage.records),
+  })
+  assert.deepEqual(backup.records['plugin-storage'], original)
   await restoredPersistence.dispose()
 })
 
 test('failed, missing or mismatched document/storage restoration never overwrites or cleans saved plugin data', async () => {
-  for (const failure of ['document', 'plugin-storage', 'missing-document', 'wrong-document']) {
+  for (const failure of [
+    'document',
+    'plugin-storage',
+    'missing-document',
+    'wrong-document',
+    'future-version',
+  ]) {
     const { storage, host, persistence } = await fixture()
     put(host, 'progress', 'keep', 'urn:b')
     host.store.removeConcept('urn:b')
@@ -121,6 +149,11 @@ test('failed, missing or mismatched document/storage restoration never overwrite
       storage.records.set('plugin-storage', {
         ...(storage.records.get('plugin-storage') as object),
         documentId: 'urn:other-document',
+      })
+    if (failure === 'future-version')
+      storage.records.set('plugin-storage', {
+        ...(storage.records.get('plugin-storage') as object),
+        version: 3,
       })
     const original = structuredClone(storage.records.get('plugin-storage'))
     const loaded = await loadPersistence(storage)
@@ -162,4 +195,67 @@ test('reset storage cannot replace the old document data until the new document 
   assert.equal(restored.documentId, host.store.getState().documentId)
   assert.deepEqual(restored.pluginStorage, [])
   await persistence.dispose()
+})
+
+test('legacy concept storage migrates losslessly through startup and backup restoration, preserving originals before upgrade', async () => {
+  const { storage, host, persistence } = await fixture()
+  await persistence.dispose()
+  const legacy = {
+    version: 1,
+    documentId: host.store.getState().documentId,
+    plugins: [
+      {
+        pluginId: 'nesso-plugin-example',
+        revision: 7,
+        records: [
+          { key: 'settings', value: { enabled: true } },
+          { key: 'progress', conceptId: 'urn:a', value: ['live'] },
+          { key: 'progress', conceptId: 'urn:deleted', value: { orphan: true } },
+        ],
+      },
+    ],
+  }
+  storage.records.set('plugin-storage', structuredClone(legacy))
+  const originals = structuredClone(storage.records)
+  const loaded = await loadPersistence(storage)
+  assert.deepEqual(loaded.blocked, [])
+  assert.deepEqual(storage.records, originals)
+  assert.deepEqual(loaded.pluginStorage?.[0], {
+    pluginId: 'nesso-plugin-example',
+    revision: 7,
+    records: [
+      { key: 'settings', value: { enabled: true } },
+      { key: 'progress', scope: { kind: 'concept', id: 'urn:a' }, value: ['live'] },
+      { key: 'progress', scope: { kind: 'concept', id: 'urn:deleted' }, value: { orphan: true } },
+    ],
+  })
+  const backup = {
+    format: 'nesso-backup',
+    version: 1,
+    createdAt: new Date().toISOString(),
+    appVersion: '1.0.0',
+    records: Object.fromEntries([...originals]),
+  }
+  const reopened = initializeNessoStore(loaded, ['en'])
+  let backedUp = false
+  let backupFails = true
+  storage.backup = async () => {
+    assert.deepEqual(storage.records, originals)
+    if (backupFails) throw new Error('Backup failed')
+    backedUp = true
+  }
+  const upgraded = connectPersistence(reopened, storage, loaded)
+  assert.equal(await upgraded.flush(), false)
+  assert.deepEqual(storage.records, originals)
+  backupFails = false
+  assert.equal(await upgraded.flush(), true)
+  assert.equal(backedUp, true)
+  assert.equal((storage.records.get('plugin-storage') as { version: number }).version, 2)
+  assert.equal((await loadPersistence(storage)).upgrades, undefined)
+  await upgraded.dispose()
+  const restored = await parseBackup(backup)
+  const restoredState = await loadPersistence({
+    read: async (section) => restored.records[section] ?? undefined,
+  })
+  assert.deepEqual(restoredState.pluginStorage, loaded.pluginStorage)
 })

@@ -15,6 +15,6 @@ Each round covers its currently due concepts once and returns to the overview. R
 - `create()`: factory contributing the `review-view` action with an isolated React panel. Metadata and `storage`/`ui` access declarations live in `package.json`; localized action labels and panel messages live in `src/index.ts` and `src/i18n.ts`.
 - `createReview(storage)`: plugin-local scheduler using pinned `ts-fsrs@6.0.0` (FSRS-6, default weights), 90% retention, 1-minute/10-minute learning steps, a 10-minute relearning step, a 36,500-day maximum interval, and no fuzzing.
 - `reviewBadge(input)`: readonly count and next refresh time using the same progress validation as the panel, without initializing FSRS.
-- Each concept’s first rating creates a concept-associated `progress` record; subsequent ratings atomically update its card and review log. The host owns persistence and orphan cleanup.
+- Each concept’s first rating creates a concept-associated `progress` record; subsequent ratings atomically update its card and review log. The host owns persistence and retains records after concept deletion; the plugin owns its payload schema and explicit cleanup.
 
 See [src/index.ts](src/index.ts), [src/scheduler.ts](src/scheduler.ts), and the [plugin guide](../../packages/plugin/README.md).

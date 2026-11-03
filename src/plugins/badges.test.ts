@@ -73,7 +73,7 @@ test('consumers share queries; storage changes invalidate overlapping views and 
       pluginId: f.plugin.id,
       documentId: f.host.store.getState().documentId,
       revision: 0,
-      record: { key: 'progress', conceptId: 'urn:a', value: 1 },
+      record: { key: 'progress', scope: { kind: 'concept', id: 'urn:a' }, value: 1 },
     },
   ])
   assert.equal(f.calls[1].signal.aborted, true)
@@ -82,7 +82,9 @@ test('consumers share queries; storage changes invalidate overlapping views and 
   assert.equal(f.badges.getValue('count', f.first), null)
   assert.equal(f.badges.getValue('count', f.second), null)
   t.mock.timers.tick(badgeLimits.rate)
-  assert.deepEqual(f.calls[2].input.records, [{ key: 'progress', conceptId: 'urn:a', value: 1 }])
+  assert.deepEqual(f.calls[2].input.records, [
+    { key: 'progress', scope: { kind: 'concept', id: 'urn:a' }, value: 1 },
+  ])
   f.calls[2].resolve({ value: 2 })
   await settle()
   assert.equal(f.badges.getValue('count', f.first), 2)

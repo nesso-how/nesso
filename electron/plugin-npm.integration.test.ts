@@ -21,7 +21,7 @@ const manifest = {
   repository: { type: 'git', url: 'git+https://github.com/example/plugin.git' },
   scripts: { install: 'never run' },
   dependencies: { anything: '*' },
-  nesso: { apiVersion: 1, kind: 'actions', entry: 'dist/index.js', writes: [], capabilities: [] },
+  nesso: { apiVersion: 2, kind: 'actions', entry: 'dist/index.js', writes: [], capabilities: [] },
   i18n: {
     metadata: { name: { en: 'Test' }, description: { en: 'Test' }, documentation: { en: 'Test' } },
   },
@@ -106,7 +106,8 @@ test('latest metadata admits all supported kinds and rejects deprecated versions
     { ...manifest, version: '1.2.0', deprecated: 'Temporary test package' },
     { ...manifest, version: '1.3.0-beta.1' },
     { ...manifest, name: 'other-package' },
-    { ...manifest, nesso: { ...manifest.nesso, apiVersion: 2 } },
+    { ...manifest, nesso: { ...manifest.nesso, apiVersion: 1 } },
+    { ...manifest, nesso: { ...manifest.nesso, apiVersion: 3 } },
   ]) {
     document = invalid
     await assert.rejects(latestNpmPlugin(manifest.name, new AbortController().signal, request))
@@ -145,7 +146,7 @@ test('discovery enforces the exact keyword, excludes deprecated plugins, filters
           deprecated: name === 'deprecated' ? 'Temporary test package' : undefined,
           description: 'Description-only match',
           i18n: { metadata: { ...manifest.i18n.metadata, name: { en: 'Visible display name' } } },
-          nesso: { ...manifest.nesso, apiVersion: name === 'future' ? 2 : 1 },
+          nesso: { ...manifest.nesso, apiVersion: name === 'future' ? 3 : 2 },
         }),
       )
     }

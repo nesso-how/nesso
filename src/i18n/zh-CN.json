@@ -158,6 +158,7 @@
   "introStep": "第 {{step}} 步，共 {{total}} 步",
   "introStepCount": "{{step}} / {{total}}",
   "notes": "笔记",
+  "notesPlaceholder": "添加关于此概念的笔记…",
   "notesLinkOpenFailed": "无法打开链接。仅允许不含嵌入凭据的 HTTPS 地址。",
   "localData": "本地数据",
   "storageDescription": "Nesso 的图谱、视图、偏好设置、聊天和插件数据。凭据保存在此设备的默认文件夹中。",

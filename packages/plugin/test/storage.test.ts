@@ -8,7 +8,7 @@ import {
   pluginStorageLimits,
 } from '../src/storage.ts'
 
-test('storage contracts accept JSON records, concept keys and single writes without namespace authority', () => {
+test('storage contracts accept scoped JSON records and single writes without namespace authority', () => {
   assert.deepEqual(
     parsePluginStorageRecord({
       key: 'settings',
@@ -17,29 +17,40 @@ test('storage contracts accept JSON records, concept keys and single writes with
     { key: 'settings', value: { retention: 0.9, steps: [1, true, null, 'text'] } },
   )
   assert.deepEqual(
-    parsePluginStorageRecord({ key: 'progress', conceptId: 'urn:concept', value: { due: 10 } }),
-    { key: 'progress', conceptId: 'urn:concept', value: { due: 10 } },
+    parsePluginStorageRecord({
+      key: 'progress',
+      scope: { kind: 'concept', id: 'urn:concept' },
+      value: { due: 10 },
+    }),
+    { key: 'progress', scope: { kind: 'concept', id: 'urn:concept' }, value: { due: 10 } },
   )
-  assert.deepEqual(parsePluginStorageKey({ key: 'obsolete', conceptId: 'urn:concept' }), {
-    key: 'obsolete',
-    conceptId: 'urn:concept',
-  })
   assert.deepEqual(
-    parsePluginStorageRecord({ key: 'progress', conceptId: 'relative', value: null }),
-    { key: 'progress', conceptId: 'relative', value: null },
+    parsePluginStorageKey({ key: 'obsolete', scope: { kind: 'concept', id: 'urn:concept' } }),
+    {
+      key: 'obsolete',
+      scope: { kind: 'concept', id: 'urn:concept' },
+    },
+  )
+  assert.deepEqual(
+    parsePluginStorageRecord({
+      key: 'progress',
+      scope: { kind: 'concept', id: 'relative' },
+      value: null,
+    }),
+    { key: 'progress', scope: { kind: 'concept', id: 'relative' }, value: null },
   )
   const list = { type: 'request', id: 1, contextId: 'context', method: 'storage.list', params: {} }
   assert.deepEqual(parsePluginMessage(list), list)
   const set = {
     ...list,
     method: 'storage.set',
-    params: { revision: 0, key: 'settings', value: null },
+    params: { revision: 0, key: 'notes', scope: { kind: 'view', id: 'urn:view' }, value: null },
   }
   assert.deepEqual(parsePluginMessage(set), set)
   const remove = {
     ...list,
     method: 'storage.delete',
-    params: { revision: 0, key: 'settings', conceptId: 'urn:concept' },
+    params: { revision: 0, key: 'settings', scope: { kind: 'concept', id: 'urn:concept' } },
   }
   assert.deepEqual(parsePluginMessage(remove), remove)
   for (const params of [
@@ -51,7 +62,7 @@ test('storage contracts accept JSON records, concept keys and single writes with
     assert.throws(() => parsePluginMessage({ ...list, method: 'storage.set', params }), PluginError)
   }
   const manifest = {
-    apiVersion: 1,
+    apiVersion: 2,
     kind: 'actions',
     entry: 'index.js',
     writes: [],
@@ -92,9 +103,13 @@ test('storage payloads reject non-JSON values, unsupported fields, excessive nes
   for (const change of [
     { key: '' },
     { key: 'x'.repeat(129) },
-    { conceptId: null },
-    { conceptId: 'x'.repeat(2049) },
     { namespace: 'other' },
+    { conceptId: 'urn:legacy' },
+    { scope: null },
+    { scope: { kind: 'document' } },
+    { scope: { kind: 'view', id: null } },
+    { scope: { kind: 'view', id: 'x'.repeat(2049) } },
+    { scope: { kind: 'view', id: 'urn:view', extra: true } },
   ]) {
     assert.throws(() => parsePluginStorageRecord({ ...key, value: null, ...change }), PluginError)
   }

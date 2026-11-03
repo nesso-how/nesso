@@ -160,6 +160,7 @@
   "introStep": "Passaggio {{step}} di {{total}}",
   "introStepCount": "{{step}} di {{total}}",
   "notes": "Note",
+  "notesPlaceholder": "Aggiungi note su questo concetto…",
   "notesLinkOpenFailed": "Impossibile aprire il link. Sono consentiti solo indirizzi HTTPS senza credenziali incorporate.",
   "localData": "Dati locali",
   "storageDescription": "Grafo, viste, preferenze, chat e dati dei plugin. Le credenziali restano sul dispositivo nella cartella predefinita.",
