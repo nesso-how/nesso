@@ -9,6 +9,7 @@ import {
   PluginError,
   resolvePluginText,
 } from '../src/runtime.ts'
+import { pluginErrorCode } from '../src/errors.ts'
 
 const manifest = {
   apiVersion: 2,
@@ -273,4 +274,18 @@ test('plugin errors own bounded UTF-8 issues and never serialize oversized parse
   )
   assert.ok(new TextEncoder().encode(error.displayMessage!.en).byteLength <= 2048)
   assert.equal(error.displayMessage!.it, 'Errore')
+})
+
+test('plugin error codes survive errors from another package copy and unknown codes fail', () => {
+  class CopiedPluginError extends Error {
+    code: string
+    constructor(code: string) {
+      super(code)
+      this.code = code
+    }
+  }
+  assert.equal(pluginErrorCode(new PluginError('cancelled', [])), 'cancelled')
+  assert.equal(pluginErrorCode(new CopiedPluginError('stale-state')), 'stale-state')
+  for (const error of [new CopiedPluginError('constructor'), { code: 'denied' }, new Error('x')])
+    assert.equal(pluginErrorCode(error), 'failed')
 })

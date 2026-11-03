@@ -5,6 +5,7 @@ import {
   PluginError,
   type ActionContribution,
 } from './runtime.ts'
+import { pluginErrorCode } from './errors.ts'
 import { localizedText } from './i18n.ts'
 import { validateActions } from './module.ts'
 
@@ -53,7 +54,7 @@ const bootstrap = async (event: MessageEvent) => {
           error instanceof Error && 'displayMessage' in error ? error.displayMessage : undefined,
         )
         const safe = new PluginError(
-          error instanceof PluginError ? error.code : 'failed',
+          pluginErrorCode(error),
           issues,
           display.success ? display.data : undefined,
         )

@@ -10,7 +10,7 @@ import type {
   VocabDefinition,
 } from '@nesso-how/core'
 import type { Locale } from '@nesso-how/i18n'
-import { parseOrThrow, PluginError } from './errors.ts'
+import { parseOrThrow, PluginError, pluginErrorCodes } from './errors.ts'
 import { parseDefinition, themeColors, vocabRelationType, type Definition } from './definitions.ts'
 import {
   fileOpenOptions,
@@ -277,17 +277,7 @@ const request = z.discriminatedUnion('method', [
   z.strictObject({ ...envelope, method: z.literal('files.save'), params: fileSaveOptions }),
 ])
 const wireError = z.strictObject({
-  code: z.enum([
-    'invalid-input',
-    'denied',
-    'stale-state',
-    'stale-context',
-    'unavailable',
-    'cancelled',
-    'timeout',
-    'closed',
-    'failed',
-  ]),
+  code: z.enum(pluginErrorCodes),
   issues: z
     .array(z.strictObject({ path: text(256), message: text(2048) }))
     .min(1)
