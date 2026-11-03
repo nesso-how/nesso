@@ -738,21 +738,28 @@ test('group reconnections publish once, retain selection and undo in one step', 
   assert.equal(store.getState().history.canUndo, false)
 })
 
-test('invalid reconnects roll back atomically and duplicate, self or unchanged reconnects are no-ops', () => {
+test('duplicate, self, empty, unknown or invalid reconnects roll back atomically', () => {
   const { store } = createNessoStore(fixture())
   const id = relationKey(store.getState().graph.relations[0])
   store.setSelection([{ kind: 'relation', id }])
   const before = store.getState()
   let notifications = 0
   store.subscribe(() => notifications++)
+  store.reconnectRelation(id, 'urn:n1', 'urn:n2')
   for (const [edgeId, source, target] of [
-    [id, 'urn:n1', 'urn:n2'],
     [id, 'urn:n1', 'urn:n3'],
     [id, 'urn:n1', 'urn:n1'],
     [id, '', 'urn:n2'],
     ['missing', 'urn:n2', 'urn:n3'],
   ])
-    store.reconnectRelation(edgeId, source, target)
+    assert.throws(
+      () =>
+        store.applyOperations([
+          { kind: 'concept.label', id: 'urn:n1', value: 'Temporary' },
+          { kind: 'relation.reconnect', id: edgeId, source, target },
+        ]),
+      NessoError,
+    )
   assert.throws(
     () =>
       store.applyOperations([
@@ -1055,8 +1062,8 @@ test('consecutive removals apply together between other edits and undo as one st
   host.store.applyOperations([
     { kind: 'relation.remove', id: relationKey(graph.relations[3]) },
     { kind: 'concept.remove', id: 'urn:n1' },
-    { kind: 'concept.remove', id: 'urn:missing' },
     { kind: 'relation.remove', id: relationKey(graph.relations[0]) },
+    { kind: 'concept.remove', id: 'urn:n1' },
     { kind: 'concept.label', id: 'urn:n2', value: 'Kept' },
     { kind: 'concept.remove', id: 'urn:n4' },
   ])
@@ -1217,12 +1224,11 @@ test('position batches reject invalid coordinates atomically in every view mode'
   }
 })
 
-test('position batches ignore unknown ids and use the last position for repeated ids', () => {
+test('position batches use the last position for repeated ids', () => {
   const { store } = createNessoStore(fixture())
   let notifications = 0
   store.subscribe(() => notifications++)
   store.setConceptPositions([
-    { id: 'urn:missing', position: { x: NaN, y: NaN } },
     { id: 'urn:n1', position: { x: NaN, y: NaN } },
     { id: 'urn:n1', position: { x: 10, y: 20 } },
   ])
@@ -1247,16 +1253,52 @@ test('domain no-ops preserve state identity and do not notify subscribers', () =
   let notifications = 0
   store.subscribe(() => notifications++)
   store.setConceptPositions([])
-  store.setConceptPositions([{ id: 'urn:missing', position: { x: 1, y: 2 } }])
   store.setConceptPosition('urn:n1', { x: 0, y: 0 })
   store.setConceptLabel('urn:n1', 'One')
-  store.setConceptLabel('urn:missing', 'Missing')
-  store.removeConcept('urn:missing')
-  store.removeRelation('missing')
-  const id = relationKey(graph.relations[0])
-  store.setRelationType(id, 'urn:part')
+  store.setRelationType(relationKey(graph.relations[0]), 'urn:links')
   store.connect('urn:n1', 'urn:n2')
   store.connect('urn:n1', 'urn:n1')
+  assert.equal(store.getState(), before)
+  assert.equal(notifications, 0)
+})
+
+test('edits and removals of unknown or duplicate items reject the whole batch', () => {
+  const graph = fixture()
+  graph.relationTypes.push({ id: 'urn:part', label: 'part' })
+  graph.relations.push({ source: 'urn:n1', predicate: 'urn:part', target: 'urn:n2' })
+  const { store, registerVocab } = createNessoStore(graph)
+  registerVocab(vocabA)
+  const before = store.getState()
+  let notifications = 0
+  store.subscribe(() => notifications++)
+  const id = relationKey(graph.relations[0])
+  const operations: HostOperation[] = [
+    { kind: 'concept.label', id: 'urn:missing', value: 'Missing' },
+    { kind: 'concept.notes', id: 'urn:missing', value: 'Missing' },
+    { kind: 'concept.bold', id: 'urn:missing', value: true },
+    { kind: 'concept.positions', updates: [{ id: 'urn:missing', position: { x: 1, y: 2 } }] },
+    { kind: 'concept.remove', id: 'urn:missing' },
+    { kind: 'relation.remove', id: 'missing' },
+    { kind: 'relation.type', id: 'missing', typeId: 'urn:part' },
+    { kind: 'relation.type', id, typeId: 'urn:part' },
+  ]
+  for (const operation of operations)
+    assert.throws(
+      () =>
+        store.applyOperations([
+          { kind: 'concept.label', id: 'urn:n1', value: 'Temporary' },
+          operation,
+        ]),
+      NessoError,
+    )
+  assert.throws(
+    () =>
+      store.applyOperations([
+        { kind: 'relation.reconnect', id, source: 'urn:n2', target: 'urn:n3' },
+        { kind: 'relation.remove', id },
+      ]),
+    NessoError,
+  )
   assert.equal(store.getState(), before)
   assert.equal(notifications, 0)
 })

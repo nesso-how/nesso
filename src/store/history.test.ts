@@ -79,7 +79,6 @@ test('notes edits share view data, group history, clear cleanly and preserve no-
   assert.equal(after.graph.relations, before.graph.relations)
   assert.equal(after.workspace, before.workspace)
   store.setConceptNotes('urn:n0', 'Definition\nExample')
-  store.setConceptNotes('urn:missing', 'Ignored')
   store.applyOperations([
     { kind: 'concept.notes', id: 'urn:n0', value: 'Temporary' },
     { kind: 'concept.notes', id: 'urn:n0', value: 'Definition\nExample' },

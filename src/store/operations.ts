@@ -207,8 +207,7 @@ export const applyStateOperations = (
     id: string,
     update: (concept: GraphSnapshot['concepts'][number]) => GraphSnapshot['concepts'][number],
   ): void => {
-    const concept = concepts.get(id)
-    if (!concept) return
+    const concept = concepts.get(id) ?? fail('concept.id', 'Unknown concept')
     const next = update(concept)
     concepts.set(id, next)
   }
@@ -230,12 +229,11 @@ export const applyStateOperations = (
     updates: Partial<Relation>,
     type?: Readonly<RelationType>,
   ): void => {
-    const relation = relations.get(id)
-    if (!relation) return
+    const relation = relations.get(id) ?? fail('relation.id', 'Unknown relation')
     const next = { ...relation, ...updates }
     const triple = relationKey(next)
     if (triple === id) return
-    if (relations.get(triple)) return
+    if (relations.get(triple)) fail('relation.id', 'Duplicate relation')
     if (type) withType(type)
     const origin = origins().get(id)
     relationOrigins!.delete(id)
@@ -260,24 +258,32 @@ export const applyStateOperations = (
     return name.trim()
   }
 
+  const removedConcepts = new Set<string>()
+  const removedRelations = new Set<string>()
   const remove = (removals: readonly Removal[]): void => {
     const conceptIds = new Set<string>()
     const relationIds = new Set<string>()
     for (const { kind, id } of removals) {
       if (kind === 'relation.remove') {
-        relationOrigins?.delete(id)
-        relationIds.add(id)
+        if (relations.get(id)) {
+          relationOrigins?.delete(id)
+          relationIds.add(id)
+        } else if (!removedRelations.has(id)) fail('relation.id', 'Unknown relation')
       } else if (concepts.get(id)) conceptIds.add(id)
+      else if (!removedConcepts.has(id)) fail('concept.id', 'Unknown concept')
     }
     if (conceptIds.size + relationIds.size === 0) return
-    relations.removeWhere(
-      (relation) =>
+    relations.removeWhere((relation) => {
+      const hit =
         conceptIds.has(relation.source) ||
         conceptIds.has(relation.target) ||
-        (relationIds.size > 0 && relationIds.has(relationKey(relation))),
-    )
+        (relationIds.size > 0 && relationIds.has(relationKey(relation)))
+      if (hit) removedRelations.add(relationKey(relation))
+      return hit
+    })
     if (conceptIds.size === 0) return
     concepts.removeWhere((concept) => conceptIds.has(concept.id))
+    for (const id of conceptIds) removedConcepts.add(id)
     for (const view of views.items)
       if (view.conceptIds.some((id) => conceptIds.has(id)))
         updateView(view.id, (view) => ({
@@ -454,9 +460,9 @@ export const applyStateOperations = (
         break
       }
       case 'relation.reconnect':
-        if (operation.source && operation.target && operation.source !== operation.target) {
-          updateRelation(operation.id, { source: operation.source, target: operation.target })
-        }
+        if (!operation.source || !operation.target || operation.source === operation.target)
+          fail('relation.target', 'Relation must connect two different concepts')
+        updateRelation(operation.id, { source: operation.source, target: operation.target })
         break
       case 'document.reset':
         documentId = newIri()
