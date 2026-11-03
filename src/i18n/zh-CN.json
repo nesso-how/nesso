@@ -241,6 +241,7 @@
   "mcpFailure": "MCP 服务器操作失败。",
   "mcpCopyFailure": "无法复制，请重试。",
   "mcpApproval": "应用外部 MCP 更改？",
+  "aiRemovalApproval": "应用 AI 的删除操作？",
   "mcpUndoApproval": "外部 MCP 客户端请求撤销共享文档历史记录中的上一步操作。",
   "mcpRedoApproval": "外部 MCP 客户端请求重做共享文档历史记录中的上一步操作。",
   "ai": "AI",

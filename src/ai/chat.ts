@@ -6,6 +6,7 @@ import {
   type AiChatMessage,
   type AiChatRequest,
   type AiDocumentation,
+  type AiEffects,
 } from '@nesso-how/ai'
 import type { AiBridge } from '../../electron/ai-bridge.ts'
 import { NessoError } from '@nesso-how/errors'
@@ -18,10 +19,13 @@ type Snapshot = {
   readonly issues: readonly { path: string; message: string }[]
 }
 
+const confirmedRemovals = 5
+
 export function createAiChat(
   bridge: Pick<AiBridge, 'chat' | 'stop' | 'reply' | 'subscribeChat'>,
   store: HostStore,
   documentation: AiDocumentation,
+  approveRemovals: (effects: AiEffects, signal: AbortSignal) => Promise<boolean>,
 ) {
   let state: Snapshot = { phase: 'idle', tool: null, issues: [] }
   let active:
@@ -161,7 +165,12 @@ export function createAiChat(
         if (run.failure) throw run.failure
         if (controller.signal.aborted) return
         if ('issues' in result) throw new NessoError([...result.issues])
-        const commit = await turn.commit()
+        const commit = await turn.commit(
+          (effects) =>
+            effects.concepts.removed < confirmedRemovals ||
+            approveRemovals(effects, controller.signal),
+        )
+        if (commit.status === 'cancelled') return
         const { effects } = commit
         const changed = run.historyAvailable || hasAiEffects(effects)
         outcome = changed && !run.historyAvailable ? 'applied' : 'complete'
