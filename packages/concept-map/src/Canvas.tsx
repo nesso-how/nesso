@@ -2,10 +2,12 @@ import {
   useCallback,
   useEffect,
   useImperativeHandle,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
   type MouseEvent as ReactMouseEvent,
+  type RefObject,
 } from 'react'
 import {
   Bold,
@@ -71,6 +73,30 @@ const easeOut = (t: number) => 1 - Math.pow(1 - t, 3)
 const multiSelectionKeys = ['Meta', 'Control', 'Shift']
 type ContextMenuTarget = Selection[number]['kind'] | 'pane' | 'selection'
 
+function ZoomLevel({
+  target,
+  visible,
+}: {
+  target: RefObject<HTMLDivElement | null>
+  visible: boolean
+}) {
+  const t = useTranslation()
+  const zoom = useFlowStore((state) => state.transform[2])
+  useLayoutEffect(() => {
+    target.current?.style.setProperty('--graph-zoom', String(zoom))
+  }, [target, zoom])
+  if (!visible) return null
+  return (
+    <Panel
+      position="bottom-right"
+      className="canvas-label pointer-events-none font-mono text-[10px] text-muted-foreground select-none"
+      aria-label={t('zoomLevel')}
+    >
+      {Math.round(zoom * 100)}%
+    </Panel>
+  )
+}
+
 export function Canvas({
   ref,
   readOnly = false,
@@ -132,7 +158,6 @@ export function Canvas({
   const [focusTarget, setFocusTarget] = useState<string | null>(null)
   useImperativeHandle(ref, () => ({ focusConcept: setFocusTarget }), [])
   const { fitView, screenToFlowPosition, getNodes, getNodesBounds, setViewport } = useReactFlow()
-  const zoom = useFlowStore((state) => state.transform[2])
   const userSelecting = useFlowStore((state) => state.userSelectionActive)
   const [sizes, setSizes] = useState<ConceptNodeSizes>({})
   const [contextMenu, setContextMenu] = useState<{
@@ -675,7 +700,7 @@ export function Canvas({
             : undefined
         }
         {...objectHandlers}
-        reconnectRadius={5 / zoom}
+        reconnectRadius={5}
         connectionMode={ConnectionMode.Loose}
         isValidConnection={({ source, target }) => {
           const graph = store.getState().graph
@@ -776,15 +801,7 @@ export function Canvas({
             )}
           </Controls>
         )}
-        {!hasOverlay && (
-          <Panel
-            position="bottom-right"
-            className="canvas-label pointer-events-none font-mono text-[10px] text-muted-foreground select-none"
-            aria-label={t('zoomLevel')}
-          >
-            {Math.round(zoom * 100)}%
-          </Panel>
-        )}
+        <ZoomLevel target={canvas} visible={!hasOverlay} />
         {!readOnly && (
           <>
             <Controls

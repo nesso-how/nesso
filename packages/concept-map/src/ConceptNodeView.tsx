@@ -30,7 +30,6 @@ const activateHandle = (event: ReactKeyboardEvent<HTMLDivElement>) => {
 export function ConceptNodeView({ id, data, selected, isConnectable }: NodeProps<ConceptNode>) {
   const t = useTranslation()
   const { store } = useCanvasContext()
-  const zoom = useStore((state) => state.transform[2])
   const connecting = useStore((state) =>
     state.connectionClickStartHandle
       ? state.connectionClickStartHandle.nodeId !== id
@@ -157,7 +156,6 @@ export function ConceptNodeView({ id, data, selected, isConnectable }: NodeProps
         aria-hidden={!selected || !isConnectable}
         tabIndex={selected && isConnectable ? 0 : -1}
         onKeyDown={activateHandle}
-        style={{ scale: 1 / zoom }}
         className={cn(
           'node-source !left-auto !right-0 !transform-none !translate-x-1/2 !-translate-y-1/2 !border-0 !bg-transparent',
           (!selected || !isConnectable) && '!pointer-events-none opacity-0',
