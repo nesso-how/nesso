@@ -68,7 +68,10 @@ export async function verifyCorruptRecords({ window, url }: CheckContext) {
       evaluate<string>(
         `[...document.querySelectorAll('[data-slot="toast"][data-tone="warning"]')].map(toast => toast.textContent).join(' ')`,
       ),
-    (text) => text.includes(corrupt) && text.includes('Some external plugins could not be loaded'),
+    (text) =>
+      text.includes('Some external plugins could not be loaded') &&
+      text.includes('outdated package') &&
+      !text.includes(corrupt),
   )
   await evaluate(`document.querySelector('[data-settings-trigger]').click()`)
   await evaluate(

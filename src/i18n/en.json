@@ -244,6 +244,8 @@
   "ai": "AI",
   "chat": "Chat",
   "aiInspectorTabs": "Inspector tabs",
+  "canvasTabs": "Canvas tabs",
+  "canvasGraph": "Graph",
   "aiYou": "You",
   "aiAssistant": "Nesso",
   "aiNewChat": "New chat",

@@ -33,6 +33,7 @@ import { executeActionBadge } from './badge-execution.ts'
 export const pluginPanel = createPluginPanel(nessoStore, notifications.api, window.nessoFiles)
 export const usePluginPanel = () =>
   useSyncExternalStore(pluginPanel.subscribe, pluginPanel.getSnapshot)
+export const canvasTabActionIds: readonly string[] = ['notes', 'review']
 
 const themes = new Map<string, ThemePresentation>()
 const actions = new Map<string, ActionPackage>()

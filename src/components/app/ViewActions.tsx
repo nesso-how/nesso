@@ -14,24 +14,25 @@ export function ViewActions({
   const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale)
   const actions = useViewActions()
 
-  return actions.map((action) => (
-    <MenuItem
-      key={action.id}
-      className={inlineActionIds.includes(action.id) ? 'sm:hidden' : undefined}
-      onClick={() => {
-        void invokeAction(action.id, viewId)
-      }}
-    >
-      <ActionIcon name={action.icon} />
-      {action.label[locale] ?? action.label.en}
-      {action.badge && (
-        <ActionBadge
-          actionId={action.id}
-          viewId={viewId}
-          label={action.label[locale] ?? action.label.en}
-          inline
-        />
-      )}
-    </MenuItem>
-  ))
+  return actions
+    .filter((action) => !inlineActionIds.includes(action.id))
+    .map((action) => (
+      <MenuItem
+        key={action.id}
+        onClick={() => {
+          void invokeAction(action.id, viewId)
+        }}
+      >
+        <ActionIcon name={action.icon} />
+        {action.label[locale] ?? action.label.en}
+        {action.badge && (
+          <ActionBadge
+            actionId={action.id}
+            viewId={viewId}
+            label={action.label[locale] ?? action.label.en}
+            inline
+          />
+        )}
+      </MenuItem>
+    ))
 }

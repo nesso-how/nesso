@@ -88,7 +88,7 @@ export async function verifyBundled({ window, url }: CheckContext) {
       const descriptors = parseContribution('actions', result.contribution)
       assert.deepEqual(
         descriptors.map(({ id }) => id),
-        [`${name}-view`],
+        [name],
       )
       if (phase === 'badge') {
         assert.equal(descriptors[0].badge, true)
