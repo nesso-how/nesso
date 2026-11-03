@@ -14,6 +14,23 @@ const boundText = (text: string, limit: number) => {
   return result
 }
 
+export const pluginErrorCodes = [
+  'invalid-input',
+  'denied',
+  'stale-state',
+  'stale-context',
+  'unavailable',
+  'cancelled',
+  'timeout',
+  'closed',
+  'failed',
+] as const
+
+export function pluginErrorCode(error: unknown) {
+  const code = error instanceof Error && 'code' in error ? error.code : undefined
+  return pluginErrorCodes.find((known) => known === code) ?? 'failed'
+}
+
 export class PluginError extends NessoError {
   override name = 'PluginError'
   readonly code: string

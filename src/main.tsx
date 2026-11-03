@@ -17,6 +17,7 @@ import { createAiApproval, createAiHistoryApproval } from '@/ai/approval'
 import './index.css'
 import App from './App'
 import { Splash } from '@/components/app/Splash'
+import { ErrorBoundary } from '@/components/app/ErrorBoundary'
 
 const root = createRoot(document.getElementById('root')!)
 const animate =
@@ -25,7 +26,9 @@ const animate =
 const showApp = () =>
   root.render(
     <StrictMode>
-      <App persistence={persistence} />
+      <ErrorBoundary save={persistence.save}>
+        <App persistence={persistence} />
+      </ErrorBoundary>
     </StrictMode>,
   )
 const showSplash = (ready: boolean) =>
