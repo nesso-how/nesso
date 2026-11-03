@@ -62,6 +62,11 @@ test('isolated translators handle interpolation, English fallback and native plu
   assert.equal(t('greeting', { name: 'Omar' }), 'Ciao, Omar')
 })
 
+test('each locale keeps one stable translator for render dependencies', () => {
+  assert.equal(translate('it'), translate('it'))
+  assert.notEqual(translate('it'), translate('en'))
+})
+
 test('Simplified Chinese uses the same plural form for every count', () => {
   const t = translate('zh-CN')
   for (const count of [0, 1, 2]) assert.equal(t('count', { count }), `${count} 个概念`)

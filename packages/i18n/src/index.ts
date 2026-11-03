@@ -45,8 +45,11 @@ export function createTranslator<C extends Catalog>(
     ),
   })
 
-  return (locale: Locale) =>
-    (key: TranslationKey<C>, values: Values = {}): string => {
+  const translators = new Map<Locale, (key: TranslationKey<C>, values?: Values) => string>()
+  return (locale: Locale) => {
+    const cached = translators.get(locale)
+    if (cached) return cached
+    const t = (key: TranslationKey<C>, values: Values = {}): string => {
       if (
         english[`${key}_other`] !== undefined &&
         (typeof values.count !== 'number' || !Number.isFinite(values.count))
@@ -71,4 +74,7 @@ export function createTranslator<C extends Catalog>(
         },
       })
     }
+    translators.set(locale, t)
+    return t
+  }
 }
