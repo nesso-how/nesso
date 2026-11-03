@@ -69,14 +69,16 @@ export function createPluginPanel(
           publish()
           resolve()
         }
-        const mount = () => {
-          detach?.()
-          detach = undefined
+        const mount = (reuse = false) => {
+          if (!reuse) {
+            detach?.()
+            detach = undefined
+          }
           const next = store.getState()
           const locale = next.preferences.locale ?? defaultLocale
           session = { source, invocation: target, close: end }
           current = {
-            id: crypto.randomUUID(),
+            id: reuse && current ? current.id : crypto.randomUUID(),
             actionId: target.actionId,
             pluginName: resolvePluginText(source.i18n.metadata.name, locale),
             title: resolvePluginText(action.label, locale),
@@ -100,7 +102,7 @@ export function createPluginPanel(
           if (next.workspace.activeViewId !== activeViewId) {
             activeViewId = next.workspace.activeViewId
             target = { ...target, viewId: activeViewId }
-            mount()
+            mount(current?.status !== 'failed')
           }
         })
         signal.addEventListener('abort', end, { once: true })

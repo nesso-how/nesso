@@ -10,9 +10,10 @@ export async function verifyPanel({ window, url, name, attempted }: CheckContext
   import {jsx} from 'react/jsx-runtime';
   import 'react/jsx-dev-runtime';
   export {useState} from 'react';
+  const moduleIdentity={};
   function Browse(context){
     const [ready,setReady]=useState(false);
-    useEffect(()=>{void(async()=>{
+    useEffect(()=>{(window.__contexts??=[]).push(context);window.__moduleIdentity=moduleIdentity;void(async()=>{
     const dynamic=await import('react');
     if(React.createElement!==createElement||ReactNamespace.useState!==useState||dynamic.useState!==useState||ReactDOM.flushSync!==flushSync||ReactDOMClient.createRoot!==createRoot||typeof jsx!=='function')throw new Error('React module identity changed');
     const state=context.document.getState();
@@ -42,15 +43,17 @@ export async function verifyPanel({ window, url, name, attempted }: CheckContext
       relationTypes: [],
     },
   }
-  await window.webContents.executeJavaScript(`window.__openPanel=async(actionId)=>{
+  await window.webContents
+    .executeJavaScript(`window.__openPanel=async(actionId,reuse=false,initial=${JSON.stringify(state)})=>{
     window.__panel={ready:0,requests:[],pong:false,failed:false};
-    const frame=document.createElement('iframe');frame.id='panel-probe';frame.sandbox='allow-scripts';frame.title='Plugin panel';frame.style='width:600px;height:400px';
-    const loaded=new Promise(resolve=>frame.onload=resolve);frame.src=${JSON.stringify(`${new URL('plugin-runner/panel.html', url)}#probe`)};document.body.append(frame);await loaded;
+    const frame=reuse?document.querySelector('#panel-probe'):document.createElement('iframe');
+    if(!reuse){frame.id='panel-probe';frame.sandbox='allow-scripts';frame.title='Plugin panel';frame.style='width:600px;height:400px';
+    const loaded=new Promise(resolve=>frame.onload=resolve);frame.src=${JSON.stringify(`${new URL('plugin-runner/panel.html', url)}#probe`)};document.body.append(frame);await loaded;}
     const channel=new MessageChannel();window.__panelPort=channel.port1;
     window.onmessage=event=>{if(event.source===frame.contentWindow&&event.data?.type==='plugin-closed')window.__panel.failed=true};
     channel.port1.onmessage=({data})=>{
-      if(data.type==='panel-ready'){if(++window.__panel.ready===1)channel.port1.postMessage({type:'invoke',actionId,state:${JSON.stringify(state)}})}
-      if(data.type==='request'){window.__panel.requests.push(data);channel.port1.postMessage({type:'response',id:data.id,ok:true,value:'notice'})}
+      if(data.type==='panel-ready'){if(++window.__panel.ready===1)channel.port1.postMessage({type:'invoke',actionId,state:initial})}
+      if(data.type==='request'){window.__panel.requests.push(data);if(data.params.title?.en!=='Deferred')channel.port1.postMessage({type:'response',id:data.id,ok:true,value:'notice'})}
       if(data.type==='pong')window.__panel.pong=true;
     };
     frame.contentWindow.postMessage({type:'bootstrap',token:'probe',entry:${JSON.stringify(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`)}},'*',[channel.port2]);
@@ -94,6 +97,40 @@ export async function verifyPanel({ window, url, name, attempted }: CheckContext
     ),
     { lang: 'en', background: '#eeeeee', content: 'Plugin content' },
   )
+  await content.executeJavaScript(
+    `window.__initialDocument=document;window.__initialModule=window.__moduleIdentity;window.__pending=window.__contexts[0].notifications.notify({tone:'info',title:{en:'Deferred'}}).then(()=> 'completed',error=>error.code);undefined`,
+  )
+  await waitFor(
+    () => evaluate<number>('window.__panel.requests.length'),
+    (count) => count === 2,
+  )
+  await evaluate(
+    `window.__openPanel('browse',true,${JSON.stringify({ ...state, contextId: 'next-view', targetViewId: null })})`,
+  )
+  await waitFor(
+    () =>
+      content.executeJavaScript(
+        `window.__contexts.length===2 && document.getElementById('root').textContent==='Plugin content'`,
+      ),
+    Boolean,
+  )
+  assert.deepEqual(
+    await content.executeJavaScript(
+      `(async()=>({document:document===window.__initialDocument,module:window.__moduleIdentity===window.__initialModule,aborted:window.__contexts[0].signal.aborted,current:window.__contexts[1].signal.aborted,target:window.__contexts[1].viewId,context:window.__contexts[1].document.getState().contextId,pending:await window.__pending,stale:await window.__contexts[0].notifications.notify({tone:'info',title:{en:'Stale'}}).then(()=> 'completed',error=>error.code),cleaned:document.documentElement.dataset.cleaned}))()`,
+    ),
+    {
+      document: true,
+      module: true,
+      aborted: true,
+      current: false,
+      target: null,
+      context: 'next-view',
+      pending: 'closed',
+      stale: 'closed',
+      cleaned: 'true',
+    },
+  )
+  assert.equal(await evaluate('window.__panel.requests.length'), 1)
   await evaluate(`window.__panelPort.postMessage({type:'close',reason:'Closed'})`)
   await waitFor(
     () =>
@@ -129,6 +166,6 @@ export async function verifyPanel({ window, url, name, attempted }: CheckContext
   assert.equal(await evaluate(`!!document.querySelector('#panel-probe')`), false)
   assert.equal(attempted.length, 0)
   console.log(
-    `${name}: React UI selection, hooks, cleanup, render failure, sandbox, presentation updates and responsive host during busy content passed`,
+    `${name}: React UI, frame reuse, context cancellation, cleanup, sandbox, failures and responsive host during busy content passed`,
   )
 }

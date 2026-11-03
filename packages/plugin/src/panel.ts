@@ -1,10 +1,11 @@
 import { createPluginClient, PluginError, type ActionContribution } from './runtime.ts'
 import { validateActions } from './module.ts'
 
+let cleanup: (() => void) | undefined
 const bootstrap = (event: MessageEvent) => {
   if (event.source !== parent || event.data?.type !== 'bootstrap' || event.ports.length !== 1)
     return
-  window.removeEventListener('message', bootstrap)
+  cleanup?.()
   const port = event.ports[0]
   const runtime: string = JSON.parse(
     document.querySelector<HTMLScriptElement>('#react-imports')!.textContent!,
@@ -18,11 +19,13 @@ const bootstrap = (event: MessageEvent) => {
     root?.unmount()
     root = undefined
   }
-  const cleanup = () => {
+  const dispose = () => {
+    window.removeEventListener('error', fail)
+    window.removeEventListener('unhandledrejection', fail)
     client?.close()
     unmount()
   }
-  window.addEventListener('pagehide', cleanup, { once: true })
+  cleanup = dispose
   port.addEventListener('message', async ({ data }) => {
     if (data?.type !== 'invoke' || client) return
     try {
@@ -39,6 +42,7 @@ const bootstrap = (event: MessageEvent) => {
       const module: {
         create: () => readonly ActionContribution[] | Promise<readonly ActionContribution[]>
       } = await import(event.data.entry)
+      if (client.context.signal.aborted) return
       const actions = await module.create()
       validateActions(actions)
       if (client.context.signal.aborted) return
@@ -51,10 +55,11 @@ const bootstrap = (event: MessageEvent) => {
       ReactDOM.flushSync(() => root!.render(React.createElement(action.ui!, client!.context)))
       if (!client.context.signal.aborted) port.postMessage({ type: 'panel-ready' })
     } catch {
-      fail()
+      if (cleanup === dispose && !client?.context.signal.aborted) fail()
     }
   })
   port.start()
   port.postMessage({ type: 'panel-ready' })
 }
+window.addEventListener('pagehide', () => cleanup?.(), { once: true })
 window.addEventListener('message', bootstrap)

@@ -12,15 +12,16 @@ export async function verifyNotes({ window, url }: CheckContext) {
     },
   }
   await evaluate(`window.__notesRecords=[];window.__notesRevision=0;
-    window.__openNotes=async(viewId)=>{
+    window.__openNotes=async(viewId,reuse=false)=>{
       window.__notesReady=0;
       const response=await fetch(${JSON.stringify(new URL('preinstalled/notes/index.js', url).href)});
       const bytes=new Uint8Array(await response.arrayBuffer());
       const entry='data:text/javascript;base64,'+btoa(Array.from(bytes,byte=>String.fromCharCode(byte)).join(''));
-      const frame=document.createElement('iframe');frame.id='notes-probe';frame.sandbox='allow-scripts';frame.style='width:700px;height:600px';
+       const frame=reuse?document.querySelector('#notes-probe'):document.createElement('iframe');
+       if(!reuse){frame.id='notes-probe';frame.sandbox='allow-scripts';frame.style='width:700px;height:600px';
       const loaded=new Promise(resolve=>frame.onload=resolve);
       frame.src=${JSON.stringify(`${new URL('plugin-runner/panel.html', url)}#notes`)};
-      document.body.append(frame);await loaded;
+       document.body.append(frame);await loaded;}
       const channel=new MessageChannel();window.__notesPort=channel.port1;
       channel.port1.onmessage=({data})=>{
         if(data.type==='panel-ready'&&++window.__notesReady===1)
@@ -44,8 +45,8 @@ export async function verifyNotes({ window, url }: CheckContext) {
       };
       frame.contentWindow.postMessage({type:'bootstrap',token:'notes',entry},'*',[channel.port2]);
     };undefined`)
-  const open = async (viewId: string | null) => {
-    await evaluate(`window.__openNotes(${JSON.stringify(viewId)})`)
+  const open = async (viewId: string | null, reuse = false) => {
+    await evaluate(`window.__openNotes(${JSON.stringify(viewId)},${reuse})`)
     await waitFor(
       () => evaluate<number>('window.__notesReady'),
       (ready) => ready === 2,
@@ -97,6 +98,21 @@ export async function verifyNotes({ window, url }: CheckContext) {
   assert.equal(
     await frame.executeJavaScript(
       `Number(getComputedStyle(document.querySelector('.nesso-markdown-bold')).fontWeight)>=600`,
+    ),
+    true,
+  )
+  await frame.executeJavaScript(`window.__retainedDocument=document`)
+  frame = await open(null, true)
+  assert.equal(
+    await frame.executeJavaScript(
+      `window.__retainedDocument===document && !document.querySelector('.cm-content').textContent.includes('Project ideas')`,
+    ),
+    true,
+  )
+  frame = await open('urn:project', true)
+  assert.equal(
+    await frame.executeJavaScript(
+      `window.__retainedDocument===document && document.querySelector('.cm-content').textContent.includes('Project ideas')`,
     ),
     true,
   )

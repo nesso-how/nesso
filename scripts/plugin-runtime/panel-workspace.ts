@@ -89,7 +89,7 @@ export async function verifyPanelWorkspace(context: CheckContext) {
   )
   assert.equal(
     await evaluate(
-      `document.querySelector('#canvas > div').hidden && document.querySelector('#canvas > div').inert`,
+      `!document.querySelector('#canvas .react-flow').checkVisibility() && document.querySelector('#canvas > div').inert`,
     ),
     true,
   )
@@ -255,6 +255,48 @@ export async function verifyPanelWorkspace(context: CheckContext) {
     `window.__canvas.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))`,
   )
   assert.deepEqual(saved.get('document'), before)
+  await open()
+  const reused = context.window.webContents.mainFrame.framesInSubtree.find(
+    (frame) => frame.url === 'about:srcdoc',
+  )!
+  await evaluate(`window.__externalFrame=document.querySelector('[data-plugin-panel] iframe')`)
+  await reused.executeJavaScript(`window.__retainedDocument=document`)
+  for (const view of ['Energy', 'Rest', 'Overview']) {
+    await evaluate(
+      `[...document.querySelectorAll('#saved-views button,#pinned-views button')].find(button=>button.textContent.trim().startsWith(${JSON.stringify(view)})).click()`,
+    )
+    await waitFor(
+      () =>
+        evaluate<boolean>(
+          `document.querySelector('[data-plugin-panel] iframe')?.style.visibility==='visible' && document.querySelector('[data-plugin-panel] h2')?.textContent===${JSON.stringify(view)}`,
+        ),
+      Boolean,
+    )
+    assert.equal(
+      await evaluate(
+        `document.querySelector('[data-plugin-panel] iframe')===window.__externalFrame`,
+      ),
+      true,
+    )
+    assert.equal(await reused.executeJavaScript(`window.__retainedDocument===document`), true)
+    await waitFor(() => reused.executeJavaScript(`!!document.querySelector('.quiz')`), Boolean)
+    assert.equal(
+      await reused.executeJavaScript(`document.querySelector('[data-answer]')?.textContent??''`),
+      '',
+    )
+  }
+  await evaluate(`document.querySelector('[data-plugin-panel] header button').click()`)
+  await waitFor(() => evaluate<boolean>(`!document.querySelector('[data-plugin-panel]')`), Boolean)
+  assert.equal(
+    await evaluate(
+      `document.querySelector('#canvas .react-flow__viewport').style.transform.includes('NaN')`,
+    ),
+    false,
+  )
+  assert.deepEqual(
+    (saved.get('document') as { graph: unknown }).graph,
+    (before as { graph: unknown }).graph,
+  )
   console.log(
     'desktop: external panels and bundled tabs preserve the canvas and viewport; focus restoration, shortcut suspension and crash recovery passed',
   )

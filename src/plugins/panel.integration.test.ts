@@ -49,7 +49,7 @@ test('central sessions are revoked by replacement, cancellation, reset or target
   }
 })
 
-test('view navigation replaces panel instances without ending the action or reopening closed panels', async () => {
+test('view navigation reuses panel frames without ending the action or reopening closed panels', async () => {
   for (const reason of ['close', 'abort'] as const) {
     const host = createNessoStore(null)
     const panel = createPluginPanel(host.store, { notify: () => '', dismiss: () => {} })
@@ -75,7 +75,6 @@ test('view navigation replaces panel instances without ending the action or reop
     assert.equal(initial.viewName, 'First')
     host.store.setLocale('it')
     assert.equal(panel.getSnapshot(), initial)
-    const instances = new Set([initial.id])
     for (const [id, name] of [
       [second, 'Second'],
       [null, null],
@@ -83,8 +82,7 @@ test('view navigation replaces panel instances without ending the action or reop
     ] as const) {
       host.store.setView(id)
       const next = panel.getSnapshot()!
-      assert.equal(instances.has(next.id), false)
-      instances.add(next.id)
+      assert.equal(next.id, initial.id)
       assert.equal(next.viewName, name)
       assert.equal(next.status, 'loading')
       await Promise.resolve()
