@@ -35,11 +35,14 @@ export function useGraphInteractions(
 ) {
   const epoch = useNessoStore((state) => state.documentEpoch, store)
   const canvas = useRef<HTMLDivElement>(null)
-  const editable = useRef(!readOnly)
+  const clipboardEpoch = useRef(0)
   const pasted = useRef({ epoch, text: '', count: 0 })
-  useLayoutEffect(() => {
-    editable.current = !readOnly
-  }, [readOnly])
+  useLayoutEffect(
+    () => () => {
+      clipboardEpoch.current++
+    },
+    [readOnly],
+  )
   const focus = () => focusRef.current?.focus()
   const notify = (key: 'pasteFailed' | 'commandFailed' | 'clipboardUnavailable') =>
     notifications.api.notify({
@@ -104,6 +107,7 @@ export function useGraphInteractions(
         return
       const before = store.getState()
       const element = canvas.current
+      const version = clipboardEpoch.current
       try {
         const text = copyGraph(before.graph, before.selected)
         if (!text) return
@@ -112,26 +116,39 @@ export function useGraphInteractions(
           event.clipboardData.setData('text/plain', text)
         } else await navigator.clipboard.writeText(text)
       } catch {
-        if (canvas.current === element) notify('clipboardUnavailable')
+        if (canvas.current === element && clipboardEpoch.current === version)
+          notify('clipboardUnavailable')
         return
       }
-      if (canvas.current !== element || store.getState() !== before) return
-      if (cut && editable.current) remove()
+      if (
+        canvas.current !== element ||
+        clipboardEpoch.current !== version ||
+        store.getState() !== before
+      )
+        return
+      if (cut) remove()
       focus()
     },
     paste: async (text?: string, position?: Position) => {
       if (readOnly) return
       const before = store.getState()
       const element = canvas.current
+      const version = clipboardEpoch.current
       if (text === undefined) {
         try {
           text = await navigator.clipboard.readText()
         } catch {
-          if (canvas.current === element) notify('clipboardUnavailable')
+          if (canvas.current === element && clipboardEpoch.current === version)
+            notify('clipboardUnavailable')
           return
         }
       }
-      if (canvas.current !== element || store.getState() !== before || !editable.current) return
+      if (
+        canvas.current !== element ||
+        clipboardEpoch.current !== version ||
+        store.getState() !== before
+      )
+        return
       const count =
         pasted.current.epoch === epoch && pasted.current.text === text
           ? pasted.current.count + 1

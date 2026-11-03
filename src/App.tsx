@@ -101,12 +101,12 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
                     inert={!!overlayPanel}
                   >
                     <ViewHeader readonly={readonly} />
-                    <div className="min-h-0 flex-1">
-                      {tabbedPanel ? (
-                        <div className="flex h-full flex-col">
-                          <PluginContent panel={tabbedPanel} canvas={canvas} />
-                        </div>
-                      ) : (
+                    <div className="relative min-h-0 flex-1">
+                      <div
+                        className="h-full"
+                        style={{ contentVisibility: tabbedPanel ? 'hidden' : undefined }}
+                        inert={!!tabbedPanel}
+                      >
                         <GraphWorkspace
                           ref={renderer}
                           store={host.store}
@@ -114,6 +114,11 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
                           onDeleteView={deleteView}
                           focusRef={canvas}
                         />
+                      </div>
+                      {tabbedPanel && (
+                        <div className="absolute inset-0 flex flex-col">
+                          <PluginContent panel={tabbedPanel} canvas={canvas} />
+                        </div>
                       )}
                     </div>
                   </div>

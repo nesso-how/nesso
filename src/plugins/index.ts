@@ -29,6 +29,7 @@ import type { InstalledPlugin, PluginResult } from '../../shared/plugins.ts'
 import { createPluginPanel } from './panel.ts'
 import { createActionBadges } from './badges.ts'
 import { executeActionBadge } from './badge-execution.ts'
+import { createPluginEntry } from './entry.ts'
 
 export const pluginPanel = createPluginPanel(nessoStore, notifications.api, window.nessoFiles)
 export const usePluginPanel = () =>
@@ -174,7 +175,7 @@ const discoverExternal = async (
   if (verified.nesso.kind === 'actions') {
     const source: ActionPackage = {
       name: verified.name,
-      entry: bytes,
+      entry: createPluginEntry(bytes),
       manifest: verified.nesso,
       i18n: verified.i18n,
     }
@@ -515,7 +516,7 @@ export async function initializeBundledPlugins() {
       const i18n = parsePluginI18n(source.i18n)
       const packageEntry = {
         name: source.name,
-        entry: `preinstalled/${id}/index.js`,
+        entry: createPluginEntry(`preinstalled/${id}/index.js`),
         manifest,
         i18n,
       }

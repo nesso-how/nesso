@@ -23,6 +23,15 @@ export async function verifyPanelWorkspace(context: CheckContext) {
     value: { safeMode: false, packages: [{ ...prepared, enabled: true }], issues: [] },
   }))
   const { evaluate, saved } = await openFixtureWorkspace(context)
+  const assertShortcutsSuspended = async () => {
+    await evaluate(
+      `window.dispatchEvent(new KeyboardEvent('keydown',{key:'a',ctrlKey:true,bubbles:true}));window.dispatchEvent(new KeyboardEvent('keydown',{key:'z',ctrlKey:true,bubbles:true}))`,
+    )
+    assert.equal(
+      await evaluate(`document.querySelectorAll('#canvas .react-flow__node.selected').length`),
+      0,
+    )
+  }
   await evaluate(
     `document.querySelector('#canvas .react-flow').dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))`,
   )
@@ -134,13 +143,7 @@ export async function verifyPanelWorkspace(context: CheckContext) {
     () => content.executeJavaScript(`document.querySelector('[data-answer]').textContent.length>0`),
     Boolean,
   )
-  await evaluate(
-    `window.dispatchEvent(new KeyboardEvent('keydown',{key:'a',ctrlKey:true,bubbles:true}));window.dispatchEvent(new KeyboardEvent('keydown',{key:'z',ctrlKey:true,bubbles:true}))`,
-  )
-  assert.equal(
-    await evaluate(`document.querySelectorAll('#canvas .react-flow__node.selected').length`),
-    0,
-  )
+  await assertShortcutsSuspended()
   await evaluate(`document.querySelector('[data-plugin-panel] header button').click()`)
   await waitFor(
     () =>
@@ -197,7 +200,62 @@ export async function verifyPanelWorkspace(context: CheckContext) {
   await evaluate(`document.querySelector('[data-plugin-panel] header button').click()`)
   await waitFor(() => evaluate<boolean>(`!document.querySelector('[data-plugin-panel]')`), Boolean)
   assert.deepEqual(saved.get('document'), before)
+  const viewport = await evaluate<string>(
+    `document.querySelector('#canvas .react-flow__viewport').style.transform`,
+  )
+  const concepts = await evaluate<number>(
+    `document.querySelectorAll('#canvas .react-flow__node').length`,
+  )
+  await evaluate(
+    `Object.defineProperty(navigator.clipboard,'readText',{configurable:true,value:()=>new Promise(resolve=>{window.__resolvePaste=resolve})});document.querySelector('#canvas button[aria-label="Paste"]').click()`,
+  )
+  assert.equal(await evaluate(`typeof window.__resolvePaste`), 'function')
+  for (const tab of ['Notes', 'Review', 'Graph']) {
+    await evaluate(
+      `window.__panelFrame=document.querySelector('#canvas iframe');[...document.querySelectorAll('#canvas [role="tab"]')].find(tab=>tab.textContent.trim().startsWith(${JSON.stringify(tab)})).click()`,
+    )
+    await waitFor(
+      () =>
+        evaluate<boolean>(
+          tab === 'Graph'
+            ? `!document.querySelector('#canvas iframe') && document.activeElement===window.__canvas.parentElement`
+            : `document.querySelector('#canvas iframe')!==window.__panelFrame && document.querySelector('#canvas iframe')?.style.visibility==='visible'`,
+        ),
+      Boolean,
+    )
+    assert.deepEqual(
+      await evaluate(
+        `(()=>{const canvas=document.querySelector('#canvas .react-flow');return {same:canvas===window.__canvas,visible:canvas.checkVisibility(),inert:!!canvas.closest('[inert]'),viewport:canvas.querySelector('.react-flow__viewport').style.transform}})()`,
+      ),
+      {
+        same: true,
+        visible: tab === 'Graph',
+        inert: tab !== 'Graph',
+        viewport,
+      },
+    )
+    if (tab !== 'Graph') await assertShortcutsSuspended()
+  }
+  assert.equal(
+    await evaluate(
+      `new Promise(resolve=>{window.__resolvePaste(${JSON.stringify(JSON.stringify((before as { graph: unknown }).graph))});requestAnimationFrame(()=>{delete navigator.clipboard.readText;resolve(document.querySelectorAll('#canvas .react-flow__node').length)})})`,
+    ),
+    concepts,
+  )
+  await evaluate(
+    `window.dispatchEvent(new KeyboardEvent('keydown',{key:'a',ctrlKey:true,bubbles:true}))`,
+  )
+  assert.equal(
+    await evaluate(
+      `document.querySelectorAll('#canvas .react-flow__node.selected').length===document.querySelectorAll('#canvas .react-flow__node').length`,
+    ),
+    true,
+  )
+  await evaluate(
+    `window.__canvas.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))`,
+  )
+  assert.deepEqual(saved.get('document'), before)
   console.log(
-    'desktop: standalone example discovered and opened through a view action; mounted canvas, focus restoration, shortcut suspension and crash recovery passed',
+    'desktop: external panels and bundled tabs preserve the canvas and viewport; focus restoration, shortcut suspension and crash recovery passed',
   )
 }
