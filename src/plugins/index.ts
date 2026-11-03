@@ -289,20 +289,19 @@ export async function initializeExternalPlugins(signal: AbortSignal) {
     }
     if (signal.aborted) return () => {}
     publish([...registry.getSnapshot(), ...entries], staged, true)
-    const failed = [
-      ...stored.issues.map(({ path }) => path),
-      ...entries
-        .filter((entry) => entry.error)
-        .map(
-          (entry) =>
-            pluginMetadata(entry, nessoStore.getState().preferences.locale ?? defaultLocale).name,
-        ),
-    ]
-    if (failed.length)
+    const failed = entries
+      .filter((entry) => entry.error)
+      .map(
+        (entry) =>
+          pluginMetadata(entry, nessoStore.getState().preferences.locale ?? defaultLocale).name,
+      )
+    if (failed.length || stored.issues.length)
       notifications.api.notify({
         tone: 'warning',
         title: t('pluginExternalFailed'),
-        description: `${t('pluginExternalFailedDescription')}\n\n${failed.join(', ')}`,
+        description: `${t('pluginExternalFailedDescription')}${
+          failed.length ? `\n\n${failed.join(', ')}` : ''
+        }${stored.issues.length ? `\n\n${t('pluginExternalFailedStaleHint')}` : ''}`,
       })
   } catch {
     notifications.api.notify({

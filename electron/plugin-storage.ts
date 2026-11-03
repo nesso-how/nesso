@@ -100,7 +100,16 @@ export function createPluginStorage(directory: string) {
       ].includes(prepared.name)
     )
       fail('Bundled package identities are reserved')
-    const { installed, total, sizes } = await scan()
+    let scanned: Awaited<ReturnType<typeof scan>>
+    try {
+      scanned = await scan()
+    } catch (error) {
+      const relaxed = await scan(false)
+      const stale = path.basename(filename(prepared.name))
+      if (!relaxed.issues.length || !relaxed.issues.every(({ path }) => path === stale)) throw error
+      scanned = relaxed
+    }
+    const { installed, total, sizes } = scanned
     const previous = installed.find(({ name }) => name === prepared.name)
     if (
       replacing === undefined

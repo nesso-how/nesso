@@ -122,6 +122,7 @@
   "pluginInstallWarning": "Approval applies only to this exact content and its declared access. Discovery runs after approval. Installation stores the package on this device for offline use; dependencies and lifecycle scripts are never installed or executed.",
   "pluginExternalFailed": "Some plugins could not load",
   "pluginExternalFailedDescription": "Some external plugins could not be loaded and were skipped. Nesso will try again next launch. Built-in features and your document remain available.",
+  "pluginExternalFailedStaleHint": "An outdated package may need reinstalling from Find on npm. Saved data is preserved.",
   "pluginExternal": "External · development proposal",
   "pluginRemove": "Remove plugin",
   "pluginStop": "Stop actions",
