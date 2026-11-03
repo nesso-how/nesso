@@ -5,6 +5,7 @@ import { relationKey, SchemaError, type Graph } from '@nesso-how/schema'
 import { maxConceptLabelLength, maxRelationLabelLength } from './settings.ts'
 import { createNessoStore } from './create.ts'
 import { NessoError } from '@nesso-how/errors'
+import { aiChatLimits } from '@nesso-how/ai'
 import { sectionIds, type HostOperation } from './types.ts'
 import themeFixture from '../../packages/plugin/test/theme.json' with { type: 'json' }
 
@@ -168,6 +169,33 @@ test('conversation writes are validated, isolated from document history and clea
   assert.equal(notifications, 1)
   assert.deepEqual(store.getState().conversation.messages, [])
   assert.deepEqual(store.getState().history, { canUndo: false, canRedo: false })
+})
+
+test('conversation appends extend one known message within its limit', () => {
+  const { store } = createNessoStore(fixture())
+  store.setChatMessages([
+    { id: 'user', role: 'user', content: 'Hello' },
+    { id: 'reply', role: 'assistant', content: 'Hi', outcome: 'cancelled' },
+  ])
+  const before = store.getState()
+  store.appendChatText('reply', ' there')
+  const after = store.getState()
+  assert.deepEqual(after.conversation.messages[1], {
+    id: 'reply',
+    role: 'assistant',
+    content: 'Hi there',
+    outcome: 'cancelled',
+  })
+  assert.equal(after.conversation.messages[0], before.conversation.messages[0])
+  assert.equal(after.history, before.history)
+  store.appendChatText('reply', '')
+  assert.equal(store.getState(), after)
+  assert.throws(() => store.appendChatText('missing', 'text'), NessoError)
+  assert.throws(
+    () => store.appendChatText('reply', 'x'.repeat(aiChatLimits.messageLength)),
+    NessoError,
+  )
+  assert.equal(store.getState(), after)
 })
 
 test('invalid batches leave state untouched whether validation or an operation fails', () => {
@@ -1011,6 +1039,43 @@ test('batches validate only the final document and link additions only to a surv
     )
     assert.deepEqual(state.selected, [{ kind: 'concept', id: 'urn:n4' }])
   }
+})
+
+test('consecutive removals apply together between other edits and undo as one step', () => {
+  const graph = fixture()
+  graph.concepts.push({ id: 'urn:n4', label: 'Four', position: { x: 3, y: 0 } })
+  graph.relations.push(
+    { source: 'urn:n3', predicate: 'urn:links', target: 'urn:n4' },
+    { source: 'urn:n2', predicate: 'urn:links', target: 'urn:n4' },
+  )
+  const host = createNessoStore(graph)
+  host.registerVocab(vocabA)
+  host.store.createView('Group', ['urn:n1', 'urn:n2', 'urn:n4'])
+  const before = host.store.getState()
+  host.store.applyOperations([
+    { kind: 'relation.remove', id: relationKey(graph.relations[3]) },
+    { kind: 'concept.remove', id: 'urn:n1' },
+    { kind: 'concept.remove', id: 'urn:missing' },
+    { kind: 'relation.remove', id: relationKey(graph.relations[0]) },
+    { kind: 'concept.label', id: 'urn:n2', value: 'Kept' },
+    { kind: 'concept.remove', id: 'urn:n4' },
+  ])
+  const after = host.store.getState()
+  assert.deepEqual(
+    after.graph.concepts.map(({ id, label }) => [id, label]),
+    [
+      ['urn:n2', 'Kept'],
+      ['urn:n3', 'Three'],
+    ],
+  )
+  assert.deepEqual(after.graph.relations, [])
+  assert.deepEqual(after.workspace.savedViews[0].conceptIds, ['urn:n2'])
+  host.store.undo()
+  assert.deepEqual(host.store.getState().graph, before.graph)
+  assert.deepEqual(host.store.getState().workspace, before.workspace)
+  host.store.redo()
+  assert.deepEqual(host.store.getState().graph, after.graph)
+  assert.deepEqual(host.store.getState().workspace, after.workspace)
 })
 
 test('custom relation types disappear only after their last use in the whole graph is removed', () => {

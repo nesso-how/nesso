@@ -145,6 +145,7 @@ export const connectPersistence = (
   }
   const pending = new Set(sections.filter((section) => changed[section] && !blocked.has(section)))
   let timer: ReturnType<typeof setTimeout> | undefined
+  let deadline: ReturnType<typeof setTimeout> | undefined
   const writeIssues: Partial<Record<Section, PersistenceIssue[]>> = {}
   let writing: Promise<void> | undefined
   let serializedGraph:
@@ -215,6 +216,8 @@ export const connectPersistence = (
 
   const flush = (): Promise<boolean> => {
     clearTimeout(timer)
+    clearTimeout(deadline)
+    deadline = undefined
     writing ??= Promise.resolve()
       .then(save)
       .finally(() => {
@@ -245,6 +248,9 @@ export const connectPersistence = (
     timer = setTimeout(() => {
       void flush()
     }, 200)
+    deadline ??= setTimeout(() => {
+      void flush()
+    }, 2000)
   }
 
   const unsubscribe = host.store.subscribe(() => {

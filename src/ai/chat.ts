@@ -68,9 +68,10 @@ export function createAiChat(
     try {
       if (event.type === 'activity') {
         if (state.tool !== event.tool) publish({ ...state, tool: event.tool })
-      } else if (event.type === 'text')
-        update(run.messageId, (message) => ({ ...message, content: message.content + event.text }))
-      else {
+      } else if (event.type === 'text') {
+        if (store.getState().conversation.messages.some(({ id }) => id === run.messageId))
+          store.appendChatText(run.messageId, event.text)
+      } else {
         const value = run.turn.execute(event.name, event.input)
         if (event.name === 'history' && 'available' in value) run.historyAvailable = value.available
         bridge.reply({ id: run.id, callId: event.callId, result: { value } })

@@ -122,6 +122,7 @@ test('native edges use facing borders, preserve predicates and keep the default 
     const edge = relationEdge(graph.relations[0], false, false, indexed, 'urn:links')
     assert.equal(edge.sourceHandle, source)
     assert.equal(edge.targetHandle, target)
+    assert.equal(edge.className, `graph-source-${source} graph-target-${target}`)
     assert.equal(edge.label, undefined)
     assert.equal(edge.interactionWidth, 18)
   }

@@ -145,6 +145,7 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
     ...createCommands(applyOperations),
     applyOperations,
     setChatMessages: (value) => applyOperations([{ kind: 'conversation.messages', value }]),
+    appendChatText: (id, text) => applyOperations([{ kind: 'conversation.append', id, text }]),
     clearChat: () => applyOperations([{ kind: 'conversation.clear' }]),
     getViewGraph: (id) => {
       const state = store.getState()

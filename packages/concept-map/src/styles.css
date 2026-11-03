@@ -16,6 +16,7 @@
 .react-flow .node-source {
   width: 24px;
   height: 24px;
+  scale: calc(1 / var(--graph-zoom, 1));
 }
 
 .react-flow .node-source::before {
@@ -98,6 +99,28 @@
   stroke-width: 1;
   vector-effect: non-scaling-stroke;
   cursor: crosshair;
+  transform-box: fill-box;
+  scale: calc(1 / var(--graph-zoom, 1));
+}
+
+.graph-source-left .react-flow__edgeupdater-source,
+.graph-target-left .react-flow__edgeupdater-target {
+  transform-origin: right;
+}
+
+.graph-source-right .react-flow__edgeupdater-source,
+.graph-target-right .react-flow__edgeupdater-target {
+  transform-origin: left;
+}
+
+.graph-source-top .react-flow__edgeupdater-source,
+.graph-target-top .react-flow__edgeupdater-target {
+  transform-origin: bottom;
+}
+
+.graph-source-bottom .react-flow__edgeupdater-source,
+.graph-target-bottom .react-flow__edgeupdater-target {
+  transform-origin: top;
 }
 
 .react-flow__edgeupdater:hover,

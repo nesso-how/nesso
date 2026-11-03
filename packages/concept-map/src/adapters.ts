@@ -102,12 +102,17 @@ export function relationEdge(
   })
   const source = bounds(relation.source)
   const target = bounds(relation.target)
+  const sourceHandle =
+    relation.source === relation.target ? Position.Right : facingSide(source, target)
+  const targetHandle =
+    relation.source === relation.target ? Position.Top : facingSide(target, source)
   return {
     id: relationKey(relation),
     source: relation.source,
     target: relation.target,
-    sourceHandle: relation.source === relation.target ? Position.Right : facingSide(source, target),
-    targetHandle: relation.source === relation.target ? Position.Top : facingSide(target, source),
+    sourceHandle,
+    targetHandle,
+    className: `graph-source-${sourceHandle} graph-target-${targetHandle}`,
     label:
       relation.predicate === defaultTypeId
         ? undefined
