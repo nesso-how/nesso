@@ -39,6 +39,7 @@ import {
   useStore as useFlowStore,
   useStoreApi,
   type EdgeChange,
+  type ConnectionLineComponentProps,
   type NodeChange,
   type NodeTypes,
 } from '@xyflow/react'
@@ -61,6 +62,7 @@ import type { ConceptNode, RelationEdge } from './types'
 import { useNesso, useCanvasContext, type CanvasProps } from './store'
 import { selectionForContextMenu, selectionFromChanges } from './selection'
 import { useTranslation } from './i18n'
+import { reconnectOperations, selectedRelations, type Reconnection } from './reconnection'
 
 const nodeTypes: NodeTypes = { concept: ConceptNodeView }
 const fitViewOptions = { padding: 0.3, maxZoom: 1.2 }
@@ -96,8 +98,8 @@ export function Canvas({
   const LockIcon = interactive ? LockOpen : Lock
   const [initialViewport] = useState(() => store.getState().workspace.viewports['concept-map'])
   const navigation = useRef(view)
-  const reconnecting = useRef<RelationEdge | null>(null)
-  const [reconnectDrag, setReconnectDrag] = useState(false)
+  const reconnecting = useRef<Reconnection | null>(null)
+  const [reconnectDrag, setReconnectDrag] = useState<Reconnection | null>(null)
   const dragGroup = useRef<string | undefined>(undefined)
   const hasOverlay = preview
   const framed = useRef(false)
@@ -184,17 +186,26 @@ export function Canvas({
         : elements.nodes,
     [outsideGraph, sizes, elements.nodes],
   )
-  const edges = useMemo(
-    () =>
-      outsideGraph
-        ? [
-            ...outsideGraph.relations.map((relation) =>
-              outsideEdge(relation, outsideGraph.indexed, defaultTypeId, sizes),
-            ),
-            ...elements.edges,
-          ]
-        : elements.edges,
-    [outsideGraph, sizes, defaultTypeId, elements.edges],
+  const edges = useMemo(() => {
+    const edges = outsideGraph
+      ? [
+          ...outsideGraph.relations.map((relation) =>
+            outsideEdge(relation, outsideGraph.indexed, defaultTypeId, sizes),
+          ),
+          ...elements.edges,
+        ]
+      : elements.edges
+    if (!reconnectDrag) return edges
+    const ids = new Set(reconnectDrag.relations.map(relationKey))
+    return edges.map((edge) =>
+      ids.has(edge.id) ? { ...edge, className: 'graph-reconnecting-edge' } : edge,
+    )
+  }, [outsideGraph, sizes, defaultTypeId, elements.edges, reconnectDrag])
+  const connectionPreview = useCallback(
+    (props: ConnectionLineComponentProps) => (
+      <ConnectionPreview {...props} reconnection={reconnectDrag} />
+    ),
+    [reconnectDrag],
   )
 
   const onObjectChanges = useCallback(
@@ -248,7 +259,7 @@ export function Canvas({
 
   const cancelConnection = () => {
     reconnecting.current = null
-    setReconnectDrag(false)
+    setReconnectDrag(null)
     flow.getState().cancelConnection()
     flow.setState({ connectionClickStartHandle: null })
   }
@@ -387,20 +398,31 @@ export function Canvas({
       onEdgeContextMenu: (event: ReactMouseEvent, edge: RelationEdge) =>
         handleContextMenu(event, { kind: 'relation', id: edge.id }),
       onReconnect: interactive
-        ? (edge: RelationEdge, { source, target }: { source: string; target: string }) => {
-            write([{ kind: 'relation.reconnect', id: edge.id, source, target }])
+        ? (_edge: RelationEdge, connection: { source: string; target: string }) => {
+            const reconnect = reconnecting.current
+            if (!reconnect) return
+            const operations = reconnectOperations(
+              store.getState().graph,
+              reconnect,
+              connection[reconnect.endpoint],
+            )
+            if (operations.length) write(operations)
           }
         : undefined,
-      onReconnectStart: (_event: unknown, edge: RelationEdge) => {
-        reconnecting.current = edge
-        setReconnectDrag(true)
+      onReconnectStart: (_event: unknown, _edge: RelationEdge, handleType: 'source' | 'target') => {
+        const state = store.getState()
+        reconnecting.current = {
+          relations: selectedRelations(state.viewGraph, state.selected),
+          endpoint: handleType === 'source' ? 'target' : 'source',
+        }
+        setReconnectDrag(reconnecting.current)
       },
       onReconnectEnd: () => {
         reconnecting.current = null
-        setReconnectDrag(false)
+        setReconnectDrag(null)
       },
     }),
-    [handleContextMenu, interactive, write],
+    [handleContextMenu, interactive, write, store],
   )
 
   const handlePaneDoubleClick = (event: ReactMouseEvent) => {
@@ -619,7 +641,7 @@ export function Canvas({
         ariaLabelConfig={ariaLabelConfig}
         nodesDraggable={interactive}
         elementsSelectable={interactive || hasOverlay}
-        nodesConnectable={interactive && singleSelection}
+        nodesConnectable={interactive && (singleSelection || !!reconnectDrag)}
         edgesReconnectable={interactive}
         multiSelectionKeyCode={multiSelectionKeys}
         deleteKeyCode={null}
@@ -637,18 +659,23 @@ export function Canvas({
         reconnectRadius={5 / zoom}
         connectionMode={ConnectionMode.Loose}
         isValidConnection={({ source, target }) => {
-          const relations = store.getState().graph.relations
-          const predicate =
-            relations.find((relation) => relationKey(relation) === reconnecting.current?.id)
-              ?.predicate ?? defaultTypeId
+          const graph = store.getState().graph
+          const reconnect = reconnecting.current
+          if (reconnect)
+            return (
+              reconnectOperations(
+                graph,
+                reconnect,
+                reconnect.endpoint === 'source' ? source : target,
+              ).length > 0
+            )
           return (
             source !== target &&
-            !relations.some(
+            !graph.relations.some(
               (relation) =>
-                relationKey(relation) !== reconnecting.current?.id &&
                 relation.source === source &&
                 relation.target === target &&
-                relation.predicate === predicate,
+                relation.predicate === defaultTypeId,
             )
           )
         }}
@@ -663,7 +690,7 @@ export function Canvas({
         onSelectionContextMenu={(event) => handleContextMenu(event, undefined, 'selection')}
         onDoubleClick={handlePaneDoubleClick}
         zoomOnDoubleClick={false}
-        connectionLineComponent={ConnectionPreview}
+        connectionLineComponent={connectionPreview}
         connectionLineStyle={{ stroke: 'var(--handle)', strokeWidth: 1.2, strokeDasharray: '4 4' }}
         elevateEdgesOnSelect
         proOptions={{ hideAttribution: true }}

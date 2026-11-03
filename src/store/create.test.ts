@@ -681,6 +681,35 @@ test('reconnecting either endpoint preserves its predicate, shared objects and v
   }
 })
 
+test('group reconnections publish once, retain selection and undo in one step', () => {
+  const graph = fixture()
+  graph.concepts.push({ id: 'urn:n4', label: 'Four', position: { x: 3, y: 0 } })
+  const { store } = createNessoStore(graph)
+  store.setSelection(
+    graph.relations.map((relation) => ({ kind: 'relation', id: relationKey(relation) })),
+  )
+  let publications = 0
+  store.subscribe(() => publications++)
+  store.applyOperations(
+    graph.relations.map((relation) => ({
+      kind: 'relation.reconnect',
+      id: relationKey(relation),
+      source: 'urn:n4',
+      target: relation.target,
+    })),
+  )
+  const expected = graph.relations.map((relation) => ({ ...relation, source: 'urn:n4' }))
+  assert.equal(publications, 1)
+  assert.deepEqual(store.getState().graph.relations, expected)
+  assert.deepEqual(
+    store.getState().selected,
+    expected.map((relation) => ({ kind: 'relation', id: relationKey(relation) })),
+  )
+  store.undo()
+  assert.deepEqual(store.getState().graph, graph)
+  assert.equal(store.getState().history.canUndo, false)
+})
+
 test('invalid reconnects roll back atomically and duplicate, self or unchanged reconnects are no-ops', () => {
   const { store } = createNessoStore(fixture())
   const id = relationKey(store.getState().graph.relations[0])

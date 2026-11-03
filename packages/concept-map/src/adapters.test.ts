@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { Position } from '@xyflow/react'
-import type { Graph } from '@nesso-how/schema'
+import { relationKey, type Graph } from '@nesso-how/schema'
+import type { Selection } from '@nesso-how/core'
 import {
   containsPoint,
   createGraphElements,
@@ -146,6 +147,65 @@ test('native edges use facing borders, preserve predicates and keep the default 
   const pointer = { position: { x: 600, y: 125 }, width: 0, height: 0 }
   assert.equal(facingSide(source, pointer), Position.Bottom)
   assert.equal(facingSide(pointer, source), Position.Left)
+})
+
+test('selected relation groups expose only shared reconnect anchors and update cached edges', () => {
+  const graph: Graph = {
+    concepts: ['a', 'b', 'c'].map((id) => ({
+      id: `urn:${id}`,
+      label: id,
+      position: { x: 0, y: 0 },
+    })),
+    relationTypes: [{ id: 'urn:links', label: 'links' }],
+    relations: [
+      { source: 'urn:a', predicate: 'urn:links', target: 'urn:b' },
+      { source: 'urn:a', predicate: 'urn:links', target: 'urn:c' },
+      { source: 'urn:c', predicate: 'urn:links', target: 'urn:b' },
+    ],
+  }
+  const adapt = createGraphElements()
+  const edges = (indices: number[], extra: Selection = []) =>
+    adapt({
+      graph,
+      indexed: indexGraph(graph),
+      selected: [
+        ...indices.map((index) => ({
+          kind: 'relation' as const,
+          id: relationKey(graph.relations[index]),
+        })),
+        ...extra,
+      ],
+      sizes: {},
+      label: () => '',
+    }).edges
+  const single = edges([0])
+  assert.deepEqual(
+    single.map((edge) => edge.reconnectable),
+    [true, false, false],
+  )
+  const source = edges([0, 1])
+  assert.deepEqual(
+    source.map((edge) => edge.reconnectable),
+    ['source', 'source', false],
+  )
+  assert.deepEqual(
+    edges([0, 2]).map((edge) => edge.reconnectable),
+    ['target', false, 'target'],
+  )
+  assert.ok(edges([1, 2]).every((edge) => edge.reconnectable === false))
+  assert.ok(edges([]).every((edge) => edge.reconnectable === false))
+  assert.ok(
+    edges([0, 1], [{ kind: 'concept', id: 'urn:a' }]).every((edge) => edge.reconnectable === false),
+  )
+  assert.ok(
+    edges([0], [{ kind: 'relation', id: 'missing' }]).every((edge) => edge.reconnectable === false),
+  )
+  graph.relationTypes.push({ id: 'urn:other', label: 'other' })
+  graph.relations[1] = { ...graph.relations[0], predicate: 'urn:other' }
+  assert.deepEqual(
+    edges([0, 1]).map((edge) => edge.reconnectable),
+    [true, true, false],
+  )
 })
 
 test('outside adapters render the rest of the graph as inert decoration', () => {
