@@ -37,6 +37,7 @@ export type HostOperation =
       readonly value: NonNullable<Preferences['inspectorTab']>
     }
   | { readonly kind: 'conversation.messages'; readonly value: readonly AiChatMessage[] }
+  | { readonly kind: 'conversation.append'; readonly id: string; readonly text: string }
   | { readonly kind: 'conversation.clear' }
 
 export type HostStore = Omit<NessoStore, 'getState' | 'applyOperations'> & {
@@ -46,6 +47,7 @@ export type HostStore = Omit<NessoStore, 'getState' | 'applyOperations'> & {
     options?: Parameters<NessoStore['applyOperations']>[1],
   ) => void
   readonly setChatMessages: (messages: readonly AiChatMessage[]) => void
+  readonly appendChatText: (id: string, text: string) => void
   readonly clearChat: () => void
 }
 

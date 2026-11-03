@@ -18,6 +18,7 @@ import {
   type RelationType,
 } from '@nesso-how/schema'
 import { isLocale } from '@nesso-how/i18n'
+import { aiChatLimits } from '@nesso-how/ai'
 import {
   fail,
   maxConceptLabelLength,
@@ -185,6 +186,7 @@ export const applyStateOperations = (
   let workspace = state.workspace
   let preferences = state.preferences
   let conversation = state.conversation
+  let conversationReplaced = false
   let documentId = state.documentId
   let pluginStorage = state.pluginStorage
   let selected = state.selected
@@ -300,9 +302,28 @@ export const applyStateOperations = (
         break
       case 'conversation.messages':
         conversation = parseConversation({ version: 1, messages: operation.value })
+        conversationReplaced = true
         break
+      case 'conversation.append': {
+        if (typeof operation.text !== 'string') fail('conversation.text', 'Expected a string')
+        const position = conversation.messages.findIndex((message) => message.id === operation.id)
+        if (position < 0) fail('conversation.id', 'Unknown message')
+        if (operation.text === '') break
+        const message = conversation.messages[position]
+        const content = message.content + operation.text
+        if (content.length > aiChatLimits.messageLength)
+          fail(
+            'conversation.content',
+            `Message must not exceed ${aiChatLimits.messageLength} characters`,
+          )
+        const messages = [...conversation.messages]
+        messages[position] = { ...message, content }
+        conversation = { messages }
+        break
+      }
       case 'conversation.clear':
         conversation = { messages: [] }
+        conversationReplaced = true
         break
       case 'concept.label':
         updateConcept(operation.id, (concept) =>
@@ -447,6 +468,7 @@ export const applyStateOperations = (
         views = new ListEdit([], (item: SavedView) => item.id, sameView)
         workspace = newWorkspace()
         conversation = { messages: [] }
+        conversationReplaced = true
         selected = []
         explicitSelection = selected
         reset = true
@@ -625,6 +647,7 @@ export const applyStateOperations = (
   }
   selected = reconcileSelection(candidate, selected)
   if (
+    conversationReplaced &&
     conversation !== state.conversation &&
     JSON.stringify(conversation) === JSON.stringify(state.conversation) &&
     !state.persistenceIssues.some(({ path }) => path.startsWith('conversation'))

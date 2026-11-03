@@ -5,6 +5,7 @@ import { relationKey, SchemaError, type Graph } from '@nesso-how/schema'
 import { maxConceptLabelLength, maxRelationLabelLength } from './settings.ts'
 import { createNessoStore } from './create.ts'
 import { NessoError } from '@nesso-how/errors'
+import { aiChatLimits } from '@nesso-how/ai'
 import { sectionIds, type HostOperation } from './types.ts'
 import themeFixture from '../../packages/plugin/test/theme.json' with { type: 'json' }
 
@@ -168,6 +169,33 @@ test('conversation writes are validated, isolated from document history and clea
   assert.equal(notifications, 1)
   assert.deepEqual(store.getState().conversation.messages, [])
   assert.deepEqual(store.getState().history, { canUndo: false, canRedo: false })
+})
+
+test('conversation appends extend one known message within its limit', () => {
+  const { store } = createNessoStore(fixture())
+  store.setChatMessages([
+    { id: 'user', role: 'user', content: 'Hello' },
+    { id: 'reply', role: 'assistant', content: 'Hi', outcome: 'cancelled' },
+  ])
+  const before = store.getState()
+  store.appendChatText('reply', ' there')
+  const after = store.getState()
+  assert.deepEqual(after.conversation.messages[1], {
+    id: 'reply',
+    role: 'assistant',
+    content: 'Hi there',
+    outcome: 'cancelled',
+  })
+  assert.equal(after.conversation.messages[0], before.conversation.messages[0])
+  assert.equal(after.history, before.history)
+  store.appendChatText('reply', '')
+  assert.equal(store.getState(), after)
+  assert.throws(() => store.appendChatText('missing', 'text'), NessoError)
+  assert.throws(
+    () => store.appendChatText('reply', 'x'.repeat(aiChatLimits.messageLength)),
+    NessoError,
+  )
+  assert.equal(store.getState(), after)
 })
 
 test('invalid batches leave state untouched whether validation or an operation fails', () => {
