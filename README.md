@@ -125,7 +125,7 @@ The app lives in `src/`, with desktop services in `electron/`. Shared packages l
 | [`@nesso-how/ai`](packages/ai/)                    | Core     | Shared chat and MCP tool contracts, policies, and assistant instructions. |
 | [`@nesso-how/concept-map`](packages/concept-map/)  | Renderer | Trusted React Flow canvas for the host-provided visible graph.            |
 | [`@nesso-how/base-vocab`](plugins/base-vocab/)     | Plugin   | Default relation vocabulary.                                              |
-| [`@nesso-how/export`](plugins/export/)             | Plugin   | Graph and view export as JSON-LD.                                         |
+| [`@nesso-how/export`](plugins/export/)             | Plugin   | Graph and view export as JSON-LD or PNG.                                  |
 | [`@nesso-how/import`](plugins/import/)             | Plugin   | Merge a Nesso JSON-LD file into the current graph.                        |
 | [`@nesso-how/review`](plugins/review/)             | Plugin   | Isolated concept review with FSRS and private concept-scoped progress.    |
 | [`@nesso-how/notes`](plugins/notes/)               | Plugin   | Free-form Markdown notes scoped to each view, with autosave.              |

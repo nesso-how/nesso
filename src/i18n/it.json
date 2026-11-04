@@ -93,6 +93,7 @@
   "pluginReadScope": "Quando esegui un’azione, questa riceve i concetti e le relazioni di quella vista. Eseguendola su {{view}}, le dai accesso all’intero grafo.",
   "pluginEffectScope": "Le modifiche al contenuto possono interessare l’intero documento, non solo la vista da cui esegui un’azione.",
   "pluginFileScope": "Il plugin può leggere o salvare file solo tramite Nesso. Non può esplorare i file del dispositivo.",
+  "pluginAccessImages": "Generare un'immagine della vista invocata",
   "pluginNotificationScope": "Le notifiche compaiono dentro Nesso, non come notifiche di sistema.",
   "pluginContentIdentity": "Identità del contenuto",
   "pluginHashHint": "L’hash identifica il contenuto esatto, non certifica che il pacchetto sia verificato o sicuro.",

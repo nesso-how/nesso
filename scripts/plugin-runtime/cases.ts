@@ -4,6 +4,7 @@ export const cases = {
   notes: ['desktop', 'static-web'],
   'panel-workspace': ['desktop'],
   bundled: ['desktop', 'static-web'],
+  images: ['desktop', 'static-web'],
   storage: ['desktop', 'static-web'],
   startup: ['desktop'],
   installation: ['desktop'],

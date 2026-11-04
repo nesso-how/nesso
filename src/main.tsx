@@ -61,6 +61,7 @@ try {
   throw error
 }
 const fonts = document.createElement('style')
+fonts.dataset.nessoThemeFonts = ''
 document.head.append(fonts)
 const stopTheme = connectTheme(host, (definition) => {
   const theme = getThemePresentation(definition.id)!

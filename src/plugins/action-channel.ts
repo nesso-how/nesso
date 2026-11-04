@@ -9,6 +9,8 @@ import {
   type FileOpenOptions,
   type FileOpenResult,
   type FileSaveOptions,
+  type ImageRenderOptions,
+  type RenderedImage,
 } from '@nesso-how/plugin/runtime'
 import { relationKey } from '@nesso-how/schema'
 import type { NessoOperation } from '@nesso-how/core'
@@ -46,6 +48,11 @@ export function connectActionChannel(
     complete: () => void
     failed: (error: PluginError) => void
     theme?: () => Readonly<Record<string, string>>
+    renderImage?: (
+      viewId: string | null,
+      options: ImageRenderOptions,
+      signal: AbortSignal,
+    ) => Promise<RenderedImage>
   },
 ) {
   const controller = new AbortController()
@@ -61,6 +68,7 @@ export function connectActionChannel(
   let registered = false
   let running = false
   let interaction = false
+  let rendering = false
   let remaining = runtimeLimits.action as number
   let started = 0
   let waiting = 0
@@ -253,6 +261,23 @@ export function connectActionChannel(
       })
       notifications.push({ id, tone: message.params.tone })
       return id
+    }
+    if (message.method === 'images.renderView') {
+      if (!capabilities.has('images')) fail('denied', 'Capability not declared')
+      if (!effects.renderImage) fail('unavailable', 'Image rendering is unavailable')
+      if (rendering) fail('unavailable', 'Another image render is pending')
+      rendering = true
+      const signal = AbortSignal.any([
+        controller.signal,
+        AbortSignal.timeout(runtimeLimits.deadline),
+      ])
+      try {
+        const result = await effects.renderImage!(target, message.params, signal)
+        assertCurrent(message.contextId)
+        return result
+      } finally {
+        rendering = false
+      }
     }
     if (!capabilities.has('files')) fail('denied', 'Capability not declared')
     if (interaction) fail('unavailable', 'Another host interaction is pending')

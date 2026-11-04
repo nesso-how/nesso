@@ -57,6 +57,7 @@ test('export uses only the supplied target graph and notifies after accepted sav
       applyOperations: async () => assert.fail('Export must not write'),
     },
     files: { open: async () => assert.fail('Export must not open files'), save },
+    images: { renderView: async () => assert.fail('JSON-LD export must not render images') },
     storage: { list: noStorage, set: noStorage, delete: noStorage },
     notifications: { notify },
     signal: new AbortController().signal,
@@ -73,7 +74,8 @@ test('export uses only the supplied target graph and notifies after accepted sav
   await exporting
   assert.equal(save.mock.calls[0].arguments[0].name, 'nesso-test-view.jsonld')
   assert.equal(save.mock.calls[0].arguments[0].mediaType, 'application/ld+json')
-  assert.ok(save.mock.calls[0].arguments[0].text.includes('urn:concept'))
+  const written = save.mock.calls[0].arguments[0]
+  assert.ok('text' in written && written.text.includes('urn:concept'))
   assert.deepEqual(notify.mock.calls[0].arguments[0].title, {
     en: 'View exported',
     it: 'Vista esportata',

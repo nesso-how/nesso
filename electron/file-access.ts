@@ -46,7 +46,10 @@ export async function saveChosenFile(
   try {
     const file = await open(temporary, 'wx', 0o600)
     try {
-      await file.writeFile(options.text, 'utf8')
+      await file.writeFile(
+        'text' in options ? options.text : Buffer.from(options.base64, 'base64'),
+        'utf8',
+      )
       await file.sync()
     } finally {
       await file.close()
@@ -55,7 +58,7 @@ export async function saveChosenFile(
     await rename(temporary, filename)
     return { saved: true }
   } catch {
-    throw new ElectronError([{ path: 'files', message: 'Could not save the chosen text file' }])
+    throw new ElectronError([{ path: 'files', message: 'Could not save the chosen file' }])
   } finally {
     await rm(temporary, { force: true }).catch(() => {})
   }

@@ -35,13 +35,17 @@ export function connectFixtureStorage() {
   return saved
 }
 
-export async function openFixtureWorkspace({ window, url }: Pick<CheckContext, 'window' | 'url'>) {
+export async function openFixtureWorkspace(
+  { window, url }: Pick<CheckContext, 'window' | 'url'>,
+  persisted = true,
+) {
   const saved = connectFixtureStorage()
   const evaluate = <T>(script: string) => window.webContents.executeJavaScript(script) as Promise<T>
   await window.loadURL(url)
   await waitFor(() => evaluate<boolean>(`!!document.querySelector('.intro')`), Boolean)
   await evaluate(`document.querySelector('.intro-header button').click()`)
   await waitFor(() => evaluate<boolean>(`!!document.querySelector('#canvas .react-flow')`), Boolean)
+  if (!persisted) return { saved, evaluate }
   await waitFor(async () => saved.has('document'), Boolean)
   await waitFor(
     async () =>
