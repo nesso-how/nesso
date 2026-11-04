@@ -13,10 +13,11 @@ import { conceptPlacementOffset } from '../store/operations.ts'
 import { connectActionChannel } from './action-channel.ts'
 import { loadPluginFrame } from './frame.ts'
 import { createPluginFiles } from './files.ts'
+import type { createPluginEntry } from './entry.ts'
 
 export type ActionPackage = {
   readonly name: string
-  readonly entry: string | Uint8Array
+  readonly entry: ReturnType<typeof createPluginEntry>
   readonly manifest: Extract<PluginManifest, { kind: 'actions' }>
   readonly i18n: PluginI18n
 }

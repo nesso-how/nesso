@@ -1,12 +1,14 @@
 import { createPluginClient, PluginError, type ActionContribution } from './runtime.ts'
-import { resolvePluginEntry, validateActions } from './module.ts'
+import { validateActions } from './module.ts'
 
 const bootstrap = (event: MessageEvent) => {
   if (event.source !== parent || event.data?.type !== 'bootstrap' || event.ports.length !== 1)
     return
   window.removeEventListener('message', bootstrap)
   const port = event.ports[0]
-  const runtime = document.querySelector<HTMLScriptElement>('#react-runtime')!.textContent!
+  const runtime: string = JSON.parse(
+    document.querySelector<HTMLScriptElement>('#react-imports')!.textContent!,
+  ).imports['nesso:react']
   const fail = () => parent.postMessage({ type: 'worker-failed', token: event.data.token }, '*')
   window.addEventListener('error', fail)
   window.addEventListener('unhandledrejection', fail)
@@ -36,7 +38,7 @@ const bootstrap = (event: MessageEvent) => {
       client.context.signal.addEventListener('abort', unmount, { once: true })
       const module: {
         create: () => readonly ActionContribution[] | Promise<readonly ActionContribution[]>
-      } = await import(await resolvePluginEntry(event.data.entry, runtime))
+      } = await import(event.data.entry)
       const actions = await module.create()
       validateActions(actions)
       if (client.context.signal.aborted) return

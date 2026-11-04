@@ -7,6 +7,7 @@ import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { actionRunnerCsp, panelRunnerCsp } from '../shared/plugin-policy.ts'
 import { parseDefinition, parsePluginI18n, parsePluginManifest } from '@nesso-how/plugin/runtime'
+import { reactModules } from '../packages/plugin/src/module.ts'
 
 const root = path.resolve(import.meta.dirname, '..')
 const script = (code: string) => `<script>${code.replace(/<\/script/gi, '<\\/script')}</script>`
@@ -38,7 +39,7 @@ try {
       build: {
         target: 'es2022',
         rolldownOptions: {
-          output: { codeSplitting: false },
+          output: { codeSplitting: false, minify: true },
         },
         cssCodeSplit: false,
         assetsInlineLimit: Infinity,
@@ -143,7 +144,22 @@ try {
   const worker = await readFile(path.join(staging, 'runner/worker.js'))
   const relay = await readFile(path.join(staging, 'runner/action-relay.js'), 'utf8')
   const react = await readFile(path.join(staging, 'runner/react.js'))
-  const runtime = `<script id="react-runtime" type="application/json">data:text/javascript;base64,${react.toString('base64')}</script>`
+  const reactSource = `data:text/javascript;base64,${react.toString('base64')}`
+  const runtime = `<script id="react-runtime" type="application/json">${reactSource}</script>`
+  const namespaces: typeof import('../packages/plugin/src/react.ts') = await import(
+    pathToFileURL(path.join(staging, 'runner/react.js')).href
+  )
+  const imports = {
+    'nesso:react': reactSource,
+    ...Object.fromEntries(
+      Object.entries(reactModules).map(([name, namespace]) => {
+        const keys = Object.keys(namespaces[namespace]).filter((key) => key !== 'default')
+        const code = `import {${namespace} as value} from 'nesso:react';export const {${keys.join(',')}}=value;export default value.default;`
+        return [name, `data:text/javascript;base64,${Buffer.from(code).toString('base64')}`]
+      }),
+    ),
+  }
+  const importMap = `<script id="react-imports" type="importmap">${JSON.stringify({ imports })}</script>`
   const action = html(
     actionRunnerCsp,
     `${runtime}<script id="worker-source" type="application/json">data:text/javascript;base64,${worker.toString('base64')}</script>${script(relay)}`,
@@ -159,7 +175,7 @@ try {
     guarded(
       panelRunnerCsp,
       'Plugin content',
-      html(panelRunnerCsp, `${runtime}<main id="root"></main>${script(panel)}`, styles),
+      html(panelRunnerCsp, `${importMap}<main id="root"></main>${script(panel)}`, styles),
     ),
   )
 } finally {

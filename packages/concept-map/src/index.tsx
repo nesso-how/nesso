@@ -1,11 +1,16 @@
 import { ReactFlowProvider } from '@xyflow/react'
+import { memo } from 'react'
 import { Canvas } from './Canvas'
 import { StoreContext, type CanvasProps, type ConceptMapContext } from './store'
 
 export { conceptMapShortcuts } from './shortcuts'
 export type { ConceptMapHandle } from './store'
 
-export function ConceptMap({ store, commands, ...props }: ConceptMapContext & CanvasProps) {
+export const ConceptMap = memo(function ConceptMap({
+  store,
+  commands,
+  ...props
+}: ConceptMapContext & CanvasProps) {
   return (
     <StoreContext.Provider value={{ store, commands }}>
       <ReactFlowProvider>
@@ -13,4 +18,4 @@ export function ConceptMap({ store, commands, ...props }: ConceptMapContext & Ca
       </ReactFlowProvider>
     </StoreContext.Provider>
   )
-}
+})

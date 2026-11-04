@@ -3,10 +3,11 @@ import test from 'node:test'
 import { createNessoStore } from '../store/create.ts'
 import { createPluginPanel } from './panel.ts'
 import type { ActionPackage } from './actions.ts'
+import { createPluginEntry } from './entry.ts'
 
 const source: ActionPackage = {
   name: 'nesso-plugin-panel',
-  entry: new Uint8Array([1]),
+  entry: createPluginEntry(new Uint8Array([1])),
   manifest: { apiVersion: 2, kind: 'actions', entry: 'index.js', writes: [], capabilities: ['ui'] },
   i18n: {
     metadata: {

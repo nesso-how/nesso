@@ -4,6 +4,14 @@ import type { ActionContribution } from './runtime.ts'
 
 const moduleUrl = (code: string) => `data:text/javascript,${encodeURIComponent(code)}`
 
+export const reactModules = {
+  react: 'React',
+  'react-dom': 'ReactDOM',
+  'react-dom/client': 'ReactDOMClient',
+  'react/jsx-runtime': 'JSXRuntime',
+  'react/jsx-dev-runtime': 'JSXDevRuntime',
+} as const
+
 export async function resolvePluginEntry(entry: string, source: string): Promise<string> {
   let code = new TextDecoder().decode(
     Uint8Array.from(atob(entry.slice(entry.indexOf(',') + 1)), (character) =>
@@ -11,22 +19,15 @@ export async function resolvePluginEntry(entry: string, source: string): Promise
     ),
   )
   const [imports] = parse(code)
-  const modules = {
-    react: 'React',
-    'react-dom': 'ReactDOM',
-    'react-dom/client': 'ReactDOMClient',
-    'react/jsx-runtime': 'JSXRuntime',
-    'react/jsx-dev-runtime': 'JSXDevRuntime',
-  } as const
-  const replacements = imports.filter(({ n }) => n !== undefined && Object.hasOwn(modules, n))
+  const replacements = imports.filter(({ n }) => n !== undefined && Object.hasOwn(reactModules, n))
   if (!replacements.length) return entry
   const runtime: typeof import('./react.ts') = await import(source)
   const urls = new Map<string, string>()
   for (const { n, s, e, d } of replacements.reverse()) {
-    const name = n as keyof typeof modules
+    const name = n as keyof typeof reactModules
     let url = urls.get(name)
     if (!url) {
-      const namespace = modules[name]
+      const namespace = reactModules[name]
       const keys = Object.keys(runtime[namespace]).filter((key) => key !== 'default')
       url = moduleUrl(
         `import {${namespace} as value} from ${JSON.stringify(source)};export const {${keys.join(',')}}=value;export default value.default;`,

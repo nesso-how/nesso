@@ -3,10 +3,18 @@ import { actionState, waitFor, type CheckContext } from './helpers.ts'
 
 export async function verifyPanel({ window, url, name, attempted }: CheckContext) {
   await window.loadURL(url)
-  const code = `import {createElement,useEffect,useState} from 'react';
+  const code = `import React,{createElement,useEffect,useState} from 'react';
+  import * as ReactNamespace from 'react';
+  import ReactDOM,{flushSync} from 'react-dom';
+  import ReactDOMClient,{createRoot} from 'react-dom/client';
+  import {jsx} from 'react/jsx-runtime';
+  import 'react/jsx-dev-runtime';
+  export {useState} from 'react';
   function Browse(context){
     const [ready,setReady]=useState(false);
     useEffect(()=>{void(async()=>{
+    const dynamic=await import('react');
+    if(React.createElement!==createElement||ReactNamespace.useState!==useState||dynamic.useState!==useState||ReactDOM.flushSync!==flushSync||ReactDOMClient.createRoot!==createRoot||typeof jsx!=='function')throw new Error('React module identity changed');
     const state=context.document.getState();
     const result={target:context.viewId,concepts:state.viewGraph.concepts.map(c=>c.id),dom:document.getElementById('root').ownerDocument===document,bridges:typeof require==='undefined'&&typeof process==='undefined'&&typeof window.nessoPlugins==='undefined'&&typeof window.nessoStorage==='undefined'};
     try{parent.document.body;result.host=false}catch{result.host=true}

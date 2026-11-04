@@ -1,8 +1,9 @@
 import { PluginError, runtimeLimits } from '@nesso-how/plugin/runtime'
+import type { createPluginEntry } from './entry.ts'
 
 export function loadPluginFrame(
   element: HTMLIFrameElement,
-  assets: { entry: string | Uint8Array; panel?: boolean },
+  assets: { entry: ReturnType<typeof createPluginEntry>; panel?: boolean },
   connect: (
     port: MessagePort,
     ready: () => void,
@@ -46,29 +47,10 @@ export function loadPluginFrame(
       fail(new PluginError('closed', [{ path: 'plugin', message: 'Plugin navigated away' }]))
   }
   window.addEventListener('message', navigated)
-  const fetchAsset = async (asset: string | Uint8Array) => {
-    let bytes: Uint8Array
-    if (typeof asset === 'string') {
-      const response = await fetch(new URL(asset, document.baseURI), {
-        signal: controller.signal,
-        cache: 'no-store',
-      })
-      if (!response.ok)
-        throw new PluginError('failed', [
-          { path: 'package', message: 'Could not load bundled plugin assets' },
-        ])
-      bytes = new Uint8Array(await response.arrayBuffer())
-    } else bytes = asset
-    if (bytes.byteLength > 16 * 1024 * 1024)
-      throw new PluginError('invalid-input', [
-        { path: 'package', message: 'Plugin asset limit exceeded' },
-      ])
-    return new Uint8Array(bytes)
-  }
-  void fetchAsset(assets.entry)
-    .then((code) => {
+  void assets
+    .entry(controller.signal)
+    .then((source) => {
       if (disposed) return
-      const source = `data:text/javascript;base64,${btoa(Array.from(code, (byte) => String.fromCharCode(byte)).join(''))}`
       element.onload = () => {
         if (disposed) return
         if (connection) {
