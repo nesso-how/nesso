@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.0-beta.3 — 2026-11-04
+
+### Features
+
+- **kernel:** Refresh theme tokens and shared node metrics (#253)
+
 ## 1.0.0-beta.2 — 2026-11-04
 
 ### Documentation
