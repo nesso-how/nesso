@@ -6,6 +6,7 @@ import { stripTypeScriptTypes } from 'node:module'
 import { runInNewContext } from 'node:vm'
 import type { PersistenceBridge } from '../shared/persistence.ts'
 import type { PluginBridge } from '../shared/plugins.ts'
+import type { UpdateBridge } from './updates.ts'
 
 const preload = stripTypeScriptTypes(
   readFileSync(new URL('./preload.cts', import.meta.url), 'utf8'),
@@ -47,11 +48,14 @@ test('only runtime subscriptions advertise readiness and observer cleanup never 
   assert.deepEqual(sent, ['plugins:ready', 'plugins:disconnect'])
 })
 
-test('close preparation saves first, asks the host for consent only on failure and reports the explicit decision', async () => {
-  for (const [saved, approved] of [
-    [true, false],
-    [false, false],
-    [false, true],
+test('close and update preparation save first, ask the host for consent only on failure and report the explicit decision', async () => {
+  for (const [saved, approved, update] of [
+    [true, false, false],
+    [false, false, false],
+    [false, true, false],
+    [true, false, true],
+    [false, false, true],
+    [false, true, true],
   ]) {
     const exposed = new Map<string, unknown>()
     const sent: string[] = []
@@ -59,10 +63,13 @@ test('close preparation saves first, asks the host for consent only on failure a
     const result = new Promise<boolean>((resolve) => {
       complete = resolve
     })
+    const [prefix, prepare, reply] = update
+      ? ['update', 'update:prepare', 'update:install']
+      : ['storage', 'storage:prepare', 'storage:closed']
     const ipcRenderer = Object.assign(new EventEmitter(), {
       send: (channel: string, value: boolean) => {
         sent.push(channel)
-        if (channel === 'storage:closed') complete(value)
+        if (channel === reply) complete(value)
       },
     })
     runInNewContext(preload, {
@@ -75,21 +82,23 @@ test('close preparation saves first, asks the host for consent only on failure a
         },
       }),
     })
-    const bridge = exposed.get('nessoPersistence') as PersistenceBridge
-    const stop = bridge.beforeClose(
-      async () => saved,
-      async () => approved,
-    )
-    ipcRenderer.emit('storage:prepare')
+    const stop = update
+      ? (exposed.get('nessoUpdater') as UpdateBridge).beforeInstall(
+          async () => saved,
+          async () => approved,
+        )
+      : (exposed.get('nessoPersistence') as PersistenceBridge).beforeClose(
+          async () => saved,
+          async () => approved,
+        )
+    ipcRenderer.emit(prepare)
     assert.equal(await result, saved || approved)
     assert.deepEqual(
-      sent,
-      saved
-        ? ['storage:ready', 'storage:closed']
-        : ['storage:ready', 'storage:confirming', 'storage:closed'],
+      sent.filter((channel) => channel !== 'storage:ready'),
+      saved ? [reply] : [`${prefix}:confirming`, reply],
     )
     stop()
-    assert.equal(ipcRenderer.listenerCount('storage:prepare'), 0)
+    assert.equal(ipcRenderer.listenerCount(prepare), 0)
   }
 })
 

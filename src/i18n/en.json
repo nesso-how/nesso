@@ -470,6 +470,8 @@
   "persistenceCloseDescription": "Closing will discard changes that could not be saved. Keep Nesso open to resolve the storage problem. Existing files will not be replaced.",
   "persistenceKeepOpen": "Keep open",
   "persistenceCloseWithoutSaving": "Close without saving",
+  "persistenceUpdateDescription": "Restarting to update will discard changes that could not be saved. Existing files will not be replaced.",
+  "persistenceUpdateAnyway": "Restart anyway",
   "technicalDetails": "Technical details",
   "getHelp": "Get help",
   "ambiguousRelation": "Choose a relation type: this label has multiple IRIs.",

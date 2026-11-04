@@ -23,6 +23,18 @@ const beforeSave = (request: string, reply: string, save: () => Promise<boolean>
     ipcRenderer.removeListener(request, prepare)
   }
 }
+const confirmSave =
+  (confirming: string, save: () => Promise<boolean>, confirm: () => Promise<boolean>) =>
+  async () => {
+    if (
+      await Promise.resolve()
+        .then(save)
+        .catch(() => false)
+    )
+      return true
+    ipcRenderer.send(confirming)
+    return confirm()
+  }
 
 const updater: UpdateBridge = {
   subscribe: (listener) => {
@@ -34,7 +46,8 @@ const updater: UpdateBridge = {
     }
   },
   restart: () => ipcRenderer.send('update:restart'),
-  beforeInstall: (save) => beforeSave('update:prepare', 'update:install', save),
+  beforeInstall: (save, confirm) =>
+    beforeSave('update:prepare', 'update:install', confirmSave('update:confirming', save, confirm)),
 }
 contextBridge.exposeInMainWorld('nessoUpdater', updater)
 let storageSession: Promise<number> | undefined
@@ -45,16 +58,11 @@ const persistence: PersistenceBridge = {
     ipcRenderer.invoke('storage:write', section, value, await session()),
   backup: async () => ipcRenderer.invoke('storage:backup', await session()),
   beforeClose: (save, confirm) => {
-    const stop = beforeSave('storage:prepare', 'storage:closed', async () => {
-      if (
-        await Promise.resolve()
-          .then(save)
-          .catch(() => false)
-      )
-        return true
-      ipcRenderer.send('storage:confirming')
-      return confirm()
-    })
+    const stop = beforeSave(
+      'storage:prepare',
+      'storage:closed',
+      confirmSave('storage:confirming', save, confirm),
+    )
     ipcRenderer.send('storage:ready')
     return stop
   },

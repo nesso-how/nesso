@@ -145,6 +145,9 @@ app
       ipcMain.on('update:restart', (event) => {
         if (trusted(event) && !location.state().moving) updates.restart()
       })
+      ipcMain.on('update:confirming', (event) => {
+        if (trusted(event)) updates.confirming()
+      })
       ipcMain.on('update:install', (event, saved: unknown) => {
         if (!trusted(event)) return
         updates.install(saved === true)
