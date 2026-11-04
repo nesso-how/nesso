@@ -117,6 +117,7 @@ export type Preferences = {
   readonly locale?: Locale
   readonly introSeen?: boolean
   readonly mcpEnabled?: boolean
+  readonly disabledBundledActionPlugins?: readonly string[]
   readonly activeVocabId: string
   readonly activeRendererId: string
   readonly activeThemeId: string

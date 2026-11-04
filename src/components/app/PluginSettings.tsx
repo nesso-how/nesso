@@ -213,7 +213,7 @@ function InstalledGroups({
             key={entry.id}
             entry={{ ...entry, name: entry.id }}
             locale={locale}
-            status={t('pluginEnabled')}
+            status={t(entry.disabled ? 'pluginDisabled' : 'pluginEnabled')}
             onClick={() => onOpen(entry.id, 'plugins')}
           />
         ))}

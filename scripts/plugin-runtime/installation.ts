@@ -279,7 +279,7 @@ function setupInstallation(window: BrowserWindow, saved: Map<string, unknown>): 
   return state
 }
 
-async function verifyBundledDetails(driver: Driver) {
+async function verifyBundledDetails(driver: Driver, state: InstallState, window: BrowserWindow) {
   for (const name of [
     '@nesso-how/kernel-theme',
     '@nesso-how/paper-theme',
@@ -294,6 +294,12 @@ async function verifyBundledDetails(driver: Driver) {
       `[...document.querySelector('.plugin-scroll:not([hidden]) .settings-page-title').parentElement.querySelectorAll('.settings-badge')].map(badge => badge.textContent)`,
     )
     assert.deepEqual(badges, inUse ? ['Enabled', 'In use'] : ['Enabled'])
+    assert.deepEqual(
+      await driver.evaluate<string[]>(
+        `[...document.querySelectorAll('.plugin-detail-footer button')].map(button => button.textContent.trim()).filter(label => ['Disable', 'Remove plugin'].includes(label))`,
+      ),
+      actions ? ['Disable'] : [],
+    )
     assert.deepEqual((await driver.attribution()).links, [])
     if (actions)
       assert.deepEqual(
@@ -317,6 +323,33 @@ async function verifyBundledDetails(driver: Driver) {
     )
     await driver.click('Plugins', '.settings-sidebar')
   }
+  await driver.open('@nesso-how/notes')
+  await driver.click('Disable', '.plugin-detail-footer')
+  await driver.click('Disable', '[role="dialog"][data-open]:not(.settings-popup)')
+  await driver.headerReady('Enable')
+  await waitFor(
+    async () =>
+      state.saved.get('preferences') as {
+        preferences: { disabledBundledActionPlugins?: string[] }
+      },
+    (record) =>
+      record?.preferences.disabledBundledActionPlugins?.includes('@nesso-how/notes') ?? false,
+  )
+  const reloaded = once(window.webContents, 'did-finish-load')
+  window.reload()
+  await reloaded
+  await driver.settings()
+  await driver.open('@nesso-how/notes')
+  await driver.headerReady('Enable')
+  const notesVisible = () =>
+    driver.evaluate<boolean>(
+      `[...document.querySelectorAll('#canvas [role="tab"]')].some(tab => tab.textContent.trim() === 'Notes')`,
+    )
+  assert.equal(await notesVisible(), false)
+  await driver.click('Enable', '.plugin-detail-footer')
+  await driver.headerReady('Disable')
+  assert.equal(await notesVisible(), true)
+  await driver.click('Plugins', '.settings-sidebar')
 }
 
 async function verifyBundledThemeSwitch(driver: Driver, state: InstallState) {
@@ -1096,7 +1129,7 @@ export async function verifyInstallation({ window, url }: CheckContext) {
     false,
   )
   await driver.click('Plugins', '.settings-sidebar')
-  await verifyBundledDetails(driver)
+  await verifyBundledDetails(driver, state, window)
   await verifyBundledThemeSwitch(driver, state)
   await verifyBrowse(driver, state)
   const firstInstallApprovals = await verifyFirstInstall(driver, state, window)

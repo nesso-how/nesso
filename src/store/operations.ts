@@ -147,6 +147,11 @@ export const samePreferences = (left: Preferences, right: Preferences): boolean 
   left.locale === right.locale &&
   left.introSeen === right.introSeen &&
   (left.mcpEnabled ?? false) === (right.mcpEnabled ?? false) &&
+  sameItems(
+    left.disabledBundledActionPlugins ?? [],
+    right.disabledBundledActionPlugins ?? [],
+    (a, b) => a === b,
+  ) &&
   left.activeVocabId === right.activeVocabId &&
   left.activeRendererId === right.activeRendererId &&
   left.activeThemeId === right.activeThemeId &&
@@ -581,6 +586,11 @@ export const applyStateOperations = (
         break
       case 'preferences.panels':
         preferences = { ...preferences, panels: { ...operation.value } }
+        break
+      case 'preferences.disabledBundledActionPlugins':
+        if (!Array.isArray(operation.value))
+          fail('preferences.disabledBundledActionPlugins', 'Expected an array')
+        preferences = { ...preferences, disabledBundledActionPlugins: [...operation.value] }
         break
       case 'preferences.inspectorTab':
         preferences = { ...preferences, inspectorTab: operation.value }

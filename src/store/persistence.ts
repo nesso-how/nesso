@@ -1,14 +1,7 @@
-import { z } from 'zod'
 import { parseGraph, serializeGraph, type Graph } from '@nesso-how/schema'
 import type { createNessoStore } from './create.ts'
 import { NessoError } from '@nesso-how/errors'
-import {
-  fail,
-  parseConversation,
-  parseSettings,
-  parseWorkspace,
-  preferencesSchema,
-} from './settings.ts'
+import { fail, parseConversation, parseWorkspace } from './settings.ts'
 import type { Preferences, WorkspaceState } from '@nesso-how/core'
 import type { HostState } from './types.ts'
 import {
@@ -19,9 +12,7 @@ import {
 } from '../../shared/persistence.ts'
 import { checkGraph, sameGraph, samePreferences, sameWorkspace } from './operations.ts'
 import { parsePluginStorage } from './plugin-storage.ts'
-import { migrateDocument, migratePluginStorage } from './migrations.ts'
-
-const preferencesRecord = z.strictObject({ version: z.literal(1), preferences: preferencesSchema })
+import { migrateDocument, migratePluginStorage, migratePreferences } from './migrations.ts'
 
 export type LoadedState = {
   graph?: Graph | null
@@ -105,7 +96,10 @@ export const loadPersistence = async (
         if ((value as { version: number }).version !== saved.version)
           (loaded.upgrades ??= {}).document = saved
       } else {
-        loaded.preferences = parseSettings(preferencesRecord, value).preferences
+        const saved = migratePreferences(value)
+        loaded.preferences = saved.preferences
+        if ((value as { version: number }).version !== saved.version)
+          (loaded.upgrades ??= {}).preferences = saved
       }
     } catch (error) {
       loaded.blocked.push(section)
@@ -133,7 +127,10 @@ export const connectPersistence = (
       previous.documentId !== loaded.documentId ||
       !sameGraph(previous.graph, loaded.graph) ||
       !sameWorkspace(previous.workspace, loaded.workspace),
-    preferences: !loaded.preferences || !samePreferences(previous.preferences, loaded.preferences),
+    preferences:
+      loaded.upgrades?.preferences !== undefined ||
+      !loaded.preferences ||
+      !samePreferences(previous.preferences, loaded.preferences),
     conversation:
       !loaded.conversation ||
       JSON.stringify(previous.conversation) !== JSON.stringify(loaded.conversation),
@@ -192,7 +189,7 @@ export const connectPersistence = (
                   workspace: state.workspace,
                 }
               : section === 'preferences'
-                ? { version: 1, preferences: state.preferences }
+                ? { version: 2, preferences: state.preferences }
                 : section === 'conversation'
                   ? { version: 1, messages: state.conversation.messages }
                   : { version: 2, documentId: state.documentId, plugins: state.pluginStorage }

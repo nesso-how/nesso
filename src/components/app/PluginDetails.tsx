@@ -7,8 +7,8 @@ import type { NpmPlugin, PluginAccess } from '../../../shared/plugins.ts'
 import {
   pluginMetadata,
   removeExternalPlugin,
-  setExternalPluginEnabled,
-  stopExternalActions,
+  setPluginEnabled,
+  stopActionsForPlugin,
   usePluginActionsRunning,
 } from '@/plugins'
 import type { PluginEntry } from '@/plugins/registry'
@@ -248,24 +248,25 @@ function LifecycleControls({
   const [confirming, setConfirming] = useState<'disable' | 'remove'>()
   const [working, setWorking] = useState(false)
   const run = async (action: LifecycleAction) => {
-    if (!entry.contentId || working) return
+    if (working) return
     setWorking(true)
     setConfirming(undefined)
     if (
       (action === 'disable' || action === 'remove') &&
+      entry.contentId &&
       installation.attempt?.replacing === entry.contentId
     )
       onCancel()
     try {
       if (action === 'stop') {
-        stopExternalActions(entry.id)
+        stopActionsForPlugin(entry.id)
         onLifecycle(action)
         return
       }
       const success =
         action === 'remove'
-          ? await removeExternalPlugin(entry.contentId)
-          : await setExternalPluginEnabled(entry.contentId, action === 'enable')
+          ? entry.contentId && (await removeExternalPlugin(entry.contentId))
+          : await setPluginEnabled(entry, action === 'enable')
       if (success) {
         if (action === 'remove')
           notifications.api.notify({
@@ -298,9 +299,16 @@ function LifecycleControls({
           {t('pluginStop')}
         </Button>
       )}
-      <Button size="sm" variant="ghost" disabled={working} onClick={() => setConfirming('remove')}>
-        {t('pluginRemove')}
-      </Button>
+      {entry.contentId && (
+        <Button
+          size="sm"
+          variant="ghost"
+          disabled={working}
+          onClick={() => setConfirming('remove')}
+        >
+          {t('pluginRemove')}
+        </Button>
+      )}
       <ConfirmDialog
         open={!!confirming}
         onOpenChange={(open) => {
@@ -454,12 +462,13 @@ function DetailFooter({
   useAvailable: boolean
   controls: ReactNode
 }) {
-  if (!useAvailable && !((installed?.contentId || target) && window.nessoPlugins)) return null
+  const lifecycleAvailable = !!installed && (!!installed.contentId || installed.kind === 'actions')
+  if (!useAvailable && !lifecycleAvailable && !(target && window.nessoPlugins)) return null
   return (
     <footer className="plugin-detail-footer">
       <div className="flex flex-wrap gap-1">
         {useAvailable && installed && <UseControl entry={installed} />}
-        {installed?.contentId && (
+        {lifecycleAvailable && installed && (
           <LifecycleControls
             entry={installed}
             installation={installation}
