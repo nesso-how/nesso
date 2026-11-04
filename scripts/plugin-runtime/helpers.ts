@@ -43,7 +43,7 @@ export async function openFixtureWorkspace(
   const evaluate = <T>(script: string) => window.webContents.executeJavaScript(script) as Promise<T>
   await window.loadURL(url)
   await waitFor(() => evaluate<boolean>(`!!document.querySelector('.intro')`), Boolean)
-  await evaluate(`document.querySelector('.intro-header button').click()`)
+  await evaluate(`document.querySelector('.intro-skip').click()`)
   await waitFor(() => evaluate<boolean>(`!!document.querySelector('#canvas .react-flow')`), Boolean)
   if (!persisted) return { saved, evaluate }
   await waitFor(async () => saved.has('document'), Boolean)

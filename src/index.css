@@ -150,35 +150,6 @@
     opacity: 1;
   }
 }
-.intro-header {
-  position: relative;
-  display: flex;
-  height: var(--nesso-panel-bar-height);
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  padding: 0 22px;
-  border-bottom: 1px solid var(--border);
-}
-.intro-header img {
-  height: auto;
-  flex-shrink: 0;
-}
-.intro-mode {
-  position: absolute;
-  left: 50%;
-  max-width: calc(100% - 244px);
-  transform: translateX(-50%);
-  color: var(--muted-foreground);
-  font-family: var(--font-mono);
-  font-size: 10px;
-  line-height: 1.5;
-  text-align: center;
-}
-.intro-header button {
-  font-size: 11px;
-}
 .intro-body {
   display: flex;
   flex: 1;
@@ -227,8 +198,36 @@
 }
 .intro-canvas {
   position: relative;
+  display: flex;
+  flex-direction: column;
+}
+.intro-preview-tabs {
+  position: absolute;
+  z-index: 4;
+  top: 20px;
+  left: 20px;
+  max-width: calc(100% - 40px);
+  padding: 4px;
+  border-radius: var(--radius-control);
+  background: var(--background);
+}
+.intro-review-tab[aria-disabled='true'] {
+  opacity: 1;
+  box-shadow:
+    0 0 0 1px var(--primary),
+    0 0 0 3px var(--selection-halo);
+}
+.intro-copy > .intro-relation {
+  color: var(--foreground);
+  overflow-wrap: anywhere;
+}
+.intro-relation span {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted-foreground);
 }
 .intro-overlay {
+  z-index: 4;
   position: absolute;
   bottom: 28px;
   left: 28px;
@@ -289,6 +288,11 @@
   align-items: center;
   gap: 7px;
   margin-top: 22px;
+  flex-wrap: wrap;
+}
+.intro-navigation > .intro-skip {
+  color: var(--muted-foreground);
+  font-size: 11px;
 }
 .intro-navigation > span {
   margin-right: auto;
@@ -408,13 +412,6 @@
     transform: scaleX(1);
   }
 }
-.intro-desktop-note a {
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-.intro-desktop-note a:hover {
-  color: var(--foreground);
-}
 .about {
   display: flex;
   min-height: 100%;
@@ -482,10 +479,6 @@
 }
 
 @media (max-width: 767px) {
-  .intro-header {
-    gap: 12px;
-    padding-inline: 16px;
-  }
   .intro-body {
     flex-direction: column;
     overflow-y: auto;
@@ -495,8 +488,17 @@
     flex-direction: column;
   }
   .intro-canvas {
-    min-height: 580px;
+    min-height: 0;
     flex-shrink: 0;
+  }
+  .intro-graph {
+    height: 340px;
+    flex: none;
+  }
+  .intro-overlay {
+    position: static;
+    width: auto;
+    margin: 16px;
   }
   .intro-explorer-slot,
   .intro-inspector-slot {
