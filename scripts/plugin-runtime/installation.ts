@@ -361,7 +361,7 @@ async function verifyBundledThemeSwitch(driver: Driver, state: InstallState) {
   const before = structuredClone(state.saved.get('document'))
   for (const [id, primary] of [
     ['paper-theme', '#934a35'],
-    ['kernel-theme', '#393939'],
+    ['kernel-theme', '#1a202b'],
   ]) {
     await driver.activateTheme(`@nesso-how/${id}`)
     await waitFor(
