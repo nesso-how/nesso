@@ -1,4 +1,12 @@
-import { app, BrowserWindow, ipcMain, Menu, shell, type MenuItemConstructorOptions } from 'electron'
+import {
+  app,
+  BrowserWindow,
+  ipcMain,
+  Menu,
+  shell,
+  type MenuItemConstructorOptions,
+  type WebContents,
+} from 'electron'
 import type { TrustedRequest } from './ipc.ts'
 import { ElectronError } from './errors.ts'
 import { menuState, type MenuCommand, type MenuState } from '../shared/menu.ts'
@@ -120,6 +128,17 @@ function createMenuTemplate(state: MenuState, dev: boolean): MenuItemConstructor
       ],
     },
   ]
+}
+
+export function connectTabShortcuts(contents: WebContents) {
+  const mac = process.platform === 'darwin'
+  contents.on('before-input-event', (event, input) => {
+    const digit = /^Digit([1-9])$/.exec(input.code)
+    if (!digit || input.type !== 'keyDown' || input.shift || input.alt) return
+    if (!(mac ? input.meta : input.control)) return
+    event.preventDefault()
+    if (!input.isAutoRepeat) contents.send('menu:tab', Number(digit[1]) - 1)
+  })
 }
 
 export function connectMenu(trusted: TrustedRequest, dev: boolean) {

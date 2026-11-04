@@ -3,6 +3,7 @@ import { ipcMain } from 'electron'
 import { build } from 'vite'
 import { preparePluginPackage } from '@nesso-how/plugin/package'
 import source from '../../packages/plugin/example/package.json' with { type: 'json' }
+import { connectTabShortcuts } from '../../electron/menu.ts'
 import { openFixtureWorkspace, waitFor, type CheckContext } from './helpers.ts'
 
 export async function verifyPanelWorkspace(context: CheckContext) {
@@ -277,14 +278,18 @@ export async function verifyPanelWorkspace(context: CheckContext) {
         `${source.name}:concept-quiz`,
       ]),
   )
+  connectTabShortcuts(context.window.webContents)
   for (const [digit, selected] of [
     [4, 'Concept Quiz'],
     [2, 'Notes'],
     [1, 'Graph'],
   ] as const) {
-    await evaluate(
-      `window.dispatchEvent(new KeyboardEvent('keydown',{key:'${digit}',code:'Digit${digit}',ctrlKey:true,bubbles:true}))`,
-    )
+    await evaluate(`document.querySelector('[data-plugin-panel] iframe')?.focus()`)
+    context.window.webContents.sendInputEvent({
+      type: 'keyDown',
+      keyCode: String(digit),
+      modifiers: [process.platform === 'darwin' ? 'meta' : 'control'],
+    })
     await waitFor(
       () =>
         evaluate<boolean>(

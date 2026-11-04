@@ -113,6 +113,13 @@ const menu: MenuBridge = {
       ipcRenderer.removeListener('menu:command', receive)
     }
   },
+  subscribeTabs: (listener) => {
+    const receive = (_event: unknown, index: number) => listener(index)
+    ipcRenderer.on('menu:tab', receive)
+    return () => {
+      ipcRenderer.removeListener('menu:tab', receive)
+    }
+  },
   setState: (state) => ipcRenderer.send('menu:state', state),
   edit: (command) => ipcRenderer.send('menu:edit', command),
 }
