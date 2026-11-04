@@ -152,6 +152,7 @@ export const samePreferences = (left: Preferences, right: Preferences): boolean 
     right.disabledBundledActionPlugins ?? [],
     (a, b) => a === b,
   ) &&
+  sameItems(left.canvasTabOrder ?? [], right.canvasTabOrder ?? [], (a, b) => a === b) &&
   left.activeVocabId === right.activeVocabId &&
   left.activeRendererId === right.activeRendererId &&
   left.activeThemeId === right.activeThemeId &&
@@ -592,6 +593,13 @@ export const applyStateOperations = (
           fail('preferences.disabledBundledActionPlugins', 'Expected an array')
         preferences = { ...preferences, disabledBundledActionPlugins: [...operation.value] }
         break
+      case 'preferences.canvasTabOrder.append': {
+        if (!Array.isArray(operation.ids)) fail('preferences.canvasTabOrder', 'Expected an array')
+        const order = preferences.canvasTabOrder ?? []
+        const unseen = [...new Set(operation.ids)].filter((id) => !order.includes(id))
+        if (unseen.length) preferences = { ...preferences, canvasTabOrder: [...order, ...unseen] }
+        break
+      }
       case 'preferences.inspectorTab':
         preferences = { ...preferences, inspectorTab: operation.value }
         break

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
+import type { Preferences } from '@nesso-how/core'
 import { parseGraph, serializeGraph, type Graph } from '@nesso-how/schema'
 import { createNessoStore } from './create.ts'
 import { connectPersistence, loadPersistence } from './persistence.ts'
@@ -77,7 +78,7 @@ const savedStorage = () => {
     graph: serializeGraph(state.graph as Graph),
     workspace: state.workspace,
   })
-  storage.records.set('preferences', { version: 2, preferences: state.preferences })
+  storage.records.set('preferences', { version: 3, preferences: state.preferences })
   storage.records.set('conversation', { version: 1, messages: state.conversation.messages })
   return storage
 }
@@ -174,32 +175,38 @@ test('MCP intent round-trips in preferences without touching document or convers
   await persistence.dispose()
 })
 
-test('version 1 preferences migrate losslessly after preserving originals', async () => {
-  const storage = savedStorage()
-  const current = await loadPersistence(storage)
-  const original = { version: 1, preferences: current.preferences }
-  storage.records.set('preferences', original)
-  const loaded = await loadPersistence(storage)
-  assert.deepEqual(loaded.preferences, current.preferences)
-  assert.equal(loaded.preferences?.disabledBundledActionPlugins, undefined)
-  const host = registeredHost(loaded.graph!, loaded)
-  const persistence = connectPersistence(host, storage, loaded)
-  assert.equal(await persistence.flush(), true)
-  assert.deepEqual(storage.writes, ['preferences'])
-  assert.equal(storage.backups.length, 1)
-  assert.deepEqual(storage.backups[0].get('preferences'), original)
-  assert.deepEqual(storage.records.get('preferences'), {
-    version: 2,
-    preferences: original.preferences,
-  })
-  await persistence.dispose()
+test('earlier preferences migrate losslessly and seed the tab order after preserving originals', async () => {
+  const current = (await loadPersistence(savedStorage())).preferences!
+  const { canvasTabOrder: _, ...legacy } = current
+  assert.deepEqual(current.canvasTabOrder, ['@nesso-how/notes:notes', '@nesso-how/review:review'])
+  for (const original of [
+    { version: 1, preferences: legacy },
+    { version: 2, preferences: { ...legacy, disabledBundledActionPlugins: ['@nesso-how/export'] } },
+  ]) {
+    const storage = savedStorage()
+    storage.records.set('preferences', original)
+    const loaded = await loadPersistence(storage)
+    const expected: Preferences = {
+      ...original.preferences,
+      canvasTabOrder: current.canvasTabOrder,
+    }
+    assert.deepEqual(loaded.preferences, expected)
+    const host = registeredHost(loaded.graph!, loaded)
+    const persistence = connectPersistence(host, storage, loaded)
+    assert.equal(await persistence.flush(), true)
+    assert.deepEqual(storage.writes, ['preferences'])
+    assert.equal(storage.backups.length, 1)
+    assert.deepEqual(storage.backups[0].get('preferences'), original)
+    assert.deepEqual(storage.records.get('preferences'), { version: 3, preferences: expected })
+    await persistence.dispose()
+  }
 })
 
 test('plugin resolution saves corrected preferences without rewriting other records', async () => {
   const storage = savedStorage()
   const original = await loadPersistence(storage)
   storage.records.set('preferences', {
-    version: 1,
+    version: 3,
     preferences: {
       ...original.preferences,
       activeVocabId: 'unavailable-vocab',
@@ -528,29 +535,29 @@ test('malformed records stay protected while the other sections save', async () 
         },
       },
     ],
-    ['preferences', { version: 1, preferences: { ...state.preferences, activeThemeId: null } }],
+    ['preferences', { version: 3, preferences: { ...state.preferences, activeThemeId: null } }],
     ...[null, 'invalid', 1].map((inspectorTab): [PersistenceSection, unknown] => [
       'preferences',
-      { version: 1, preferences: { ...state.preferences, inspectorTab } },
+      { version: 3, preferences: { ...state.preferences, inspectorTab } },
     ]),
     [
       'preferences',
       {
-        version: 1,
+        version: 3,
         preferences: { ...state.preferences, panels: { explorerWidth: 0, inspectorWidth: 280 } },
       },
     ],
     ...[null, ['missing'], ['sidebar', 'sidebar']].map(
       (collapsedSections): [PersistenceSection, unknown] => [
         'preferences',
-        { version: 1, preferences: { ...state.preferences, collapsedSections } },
+        { version: 3, preferences: { ...state.preferences, collapsedSections } },
       ],
     ),
-    ['preferences', { version: 1, preferences: { ...state.preferences, locale: 'fr' } }],
-    ['preferences', { version: 1, preferences: { ...state.preferences, introSeen: 'true' } }],
+    ['preferences', { version: 3, preferences: { ...state.preferences, locale: 'fr' } }],
+    ['preferences', { version: 3, preferences: { ...state.preferences, introSeen: 'true' } }],
     [
       'preferences',
-      { version: 1, preferences: { ...state.preferences, inspectorTab: 'content' } },
+      { version: 3, preferences: { ...state.preferences, inspectorTab: 'content' } },
       'preferences.inspectorTab',
     ],
   ]

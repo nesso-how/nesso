@@ -1,28 +1,90 @@
+import { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { defaultLocale } from '@nesso-how/i18n'
-import { ActionIcon, IconButton, Menu, MenuPopup, PanelHeader, Tabs } from '@nesso-how/ui'
-import { MoreHorizontal } from 'lucide-react'
+import { ActionIcon, IconButton, Menu, MenuItem, MenuPopup, PanelHeader, Tabs } from '@nesso-how/ui'
+import { ChevronDown, MoreHorizontal } from 'lucide-react'
 import { useTranslation } from '@/i18n'
+import { openCanvasTab, useCanvasTabs, usePluginPanel, useViewActions } from '@/plugins'
 import {
-  canvasTabActionIds,
-  invokeAction,
-  pluginPanel,
-  usePluginPanel,
-  useViewActions,
-} from '@/plugins'
+  sameTabLayout,
+  visibleTabs,
+  type CanvasTab,
+  type CanvasTabLayout,
+} from '@/plugins/canvas-tabs'
 import { useNessoStore } from '@/store'
 import { ViewActions } from './ViewActions'
 import { ActionBadge } from './ActionBadge'
+
+const shortcut = (index: number) => {
+  if (!window.nessoMenu || index > 8) return undefined
+  return `${/Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl+'}${index + 1}`
+}
 
 export function ViewHeader({ readonly = false }: { readonly?: boolean }) {
   const t = useTranslation()
   const workspace = useNessoStore((state) => state.workspace)
   const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale)
-  const actions = useViewActions()
+  const tabs = useCanvasTabs()
+  const commands = useViewActions().length > 0
   const panel = usePluginPanel()
-  const tabs = canvasTabActionIds.flatMap((id) => actions.filter((action) => action.id === id))
-  const value = panel && canvasTabActionIds.includes(panel.actionId) ? panel.actionId : 'graph'
+  const root = useRef<HTMLDivElement>(null)
+  const measure = useRef<HTMLDivElement>(null)
+  const [layout, setLayout] = useState<CanvasTabLayout | null>(null)
+  const activeIndex = tabs.findIndex(({ id }) => id === panel?.actionId)
+  const value = activeIndex < 0 ? 'graph' : tabs[activeIndex].id
+  const shown = visibleTabs(tabs, activeIndex, layout)
+  const hidden = tabs.filter((tab) => !shown.includes(tab))
   const view = workspace.savedViews.find((view) => view.id === workspace.activeViewId)
   const name = view?.name ?? t('completeGraph')
+  const label = (tab: CanvasTab) => tab.label[locale] ?? tab.label.en
+  const content = (tab: CanvasTab) => (
+    <>
+      <ActionIcon name={tab.icon} />
+      {label(tab)}
+      {tab.badge && (
+        <ActionBadge actionId={tab.id} viewId={workspace.activeViewId} label={label(tab)} inline />
+      )}
+    </>
+  )
+  const keys = tabs.map(({ key }) => key).join('\n')
+
+  useLayoutEffect(() => {
+    const container = root.current
+    const row = measure.current
+    if (!container || !row) return
+    const update = () => {
+      const items = [...row.children] as HTMLElement[]
+      const width = (element: HTMLElement) => element.getBoundingClientRect().width
+      const gap = parseFloat(getComputedStyle(row).columnGap) || 0
+      const next: CanvasTabLayout = {
+        available: width(container),
+        gap,
+        fixed: width(items[0]) + gap + width(items[1]),
+        more: width(items[items.length - 1]),
+        tabs: items.slice(2, -1).map(width),
+      }
+      setLayout((previous) => (previous && sameTabLayout(previous, next) ? previous : next))
+    }
+    update()
+    const observer = new ResizeObserver(update)
+    observer.observe(container)
+    for (const item of row.children) observer.observe(item)
+    return () => observer.disconnect()
+  }, [keys, locale])
+
+  const tab = (value: string, index: number, children: ReactNode, text: string) => {
+    const key = shortcut(index)
+    return (
+      <Tabs.Tab
+        key={value}
+        value={value}
+        disabled={readonly && value !== 'graph'}
+        className="canvas-tab"
+        title={key ? `${text} ${key}` : undefined}
+      >
+        {children}
+      </Tabs.Tab>
+    )
+  }
 
   return (
     <PanelHeader
@@ -30,7 +92,7 @@ export function ViewHeader({ readonly = false }: { readonly?: boolean }) {
       actions={
         <Menu.Root key={workspace.activeViewId ?? 'complete-graph'}>
           <Menu.Trigger
-            disabled={readonly}
+            disabled={readonly || !commands}
             render={
               <IconButton
                 aria-label={t('actionsFor', { name })}
@@ -41,47 +103,81 @@ export function ViewHeader({ readonly = false }: { readonly?: boolean }) {
             <MoreHorizontal />
           </Menu.Trigger>
           <MenuPopup align="end">
-            <ViewActions
-              viewId={workspace.activeViewId}
-              inlineActionIds={tabs.map(({ id }) => id)}
-            />
+            <ViewActions viewId={workspace.activeViewId} />
           </MenuPopup>
         </Menu.Root>
       }
     >
       <Tabs.Root
+        ref={root}
         value={value}
-        className="flex self-stretch"
-        onValueChange={(next) => {
-          if (next === 'graph') pluginPanel.close()
-          else void invokeAction(next, workspace.activeViewId)
-        }}
+        className="relative flex min-w-0 flex-1 items-center gap-1 self-stretch"
+        onValueChange={(next: string) => openCanvasTab(next === 'graph' ? null : next)}
       >
-        <Tabs.List aria-label={t('canvasTabs')} className="canvas-tabs">
-          <Tabs.Tab value="graph">
+        <div
+          ref={measure}
+          aria-hidden="true"
+          inert
+          className="canvas-tabs pointer-events-none invisible absolute top-0 left-0 whitespace-nowrap"
+        >
+          <span className="canvas-tab">
             <ActionIcon name="share" />
             {t('canvasGraph')}
-          </Tabs.Tab>
-          {tabs.length > 0 && (
+          </span>
+          <span className="h-4 w-px" />
+          {tabs.map((tab) => (
+            <span key={tab.key} className="canvas-tab">
+              {content(tab)}
+            </span>
+          ))}
+          <span className="canvas-tabs-more">
+            <ChevronDown />9
+          </span>
+        </div>
+        <Tabs.List
+          aria-label={t('canvasTabs')}
+          className="canvas-tabs -m-[3px] min-w-0 overflow-hidden p-[3px]"
+        >
+          {tab(
+            'graph',
+            0,
             <>
-              <span aria-hidden="true" className="h-4 w-px bg-border" />
-              {tabs.map((action) => (
-                <Tabs.Tab key={action.id} value={action.id} disabled={readonly}>
-                  <ActionIcon name={action.icon} />
-                  {action.label[locale] ?? action.label.en}
-                  {action.badge && (
-                    <ActionBadge
-                      actionId={action.id}
-                      viewId={workspace.activeViewId}
-                      label={action.label[locale] ?? action.label.en}
-                      inline
-                    />
-                  )}
-                </Tabs.Tab>
-              ))}
-            </>
+              <ActionIcon name="share" />
+              {t('canvasGraph')}
+            </>,
+            t('canvasGraph'),
           )}
+          {tabs.length > 0 && <span aria-hidden="true" className="h-4 w-px bg-border" />}
+          {shown.map((item) => tab(item.id, tabs.indexOf(item) + 1, content(item), label(item)))}
         </Tabs.List>
+        {hidden.length > 0 && (
+          <Menu.Root>
+            <Menu.Trigger
+              disabled={readonly}
+              className="canvas-tabs-more"
+              aria-label={t('moreTabs', { count: hidden.length })}
+              title={t('moreTabs', { count: hidden.length })}
+            >
+              <ChevronDown />
+              {hidden.length}
+            </Menu.Trigger>
+            <MenuPopup>
+              {hidden.map((item) => {
+                const key = shortcut(tabs.indexOf(item) + 1)
+                return (
+                  <MenuItem key={item.key} onClick={() => openCanvasTab(item.id)}>
+                    {content(item)}
+                    {key && (
+                      <span className="ml-auto pl-4 font-mono text-[10px] text-muted-foreground">
+                        {key}
+                      </span>
+                    )}
+                  </MenuItem>
+                )
+              })}
+            </MenuPopup>
+          </Menu.Root>
+        )}
       </Tabs.Root>
     </PanelHeader>
   )

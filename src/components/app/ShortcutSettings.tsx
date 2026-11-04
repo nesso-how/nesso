@@ -29,6 +29,7 @@ export function ShortcutSettings({ titleRef }: { titleRef: Ref<HTMLHeadingElemen
       rows: [
         { label: t('search'), keys: [[modifier, 'K']] },
         { label: t('shortcutOpenShortcuts'), keys: [['?']] },
+        ...(window.nessoMenu ? [{ label: t('shortcutCanvasTab'), keys: [[modifier, '1–9']] }] : []),
       ],
     },
     {

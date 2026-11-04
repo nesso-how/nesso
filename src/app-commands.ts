@@ -14,6 +14,7 @@ export function useAppCommands({
   focusRef,
   openSettings,
   openSearch,
+  openTab,
 }: {
   store: HostStore
   readonly: boolean
@@ -22,6 +23,7 @@ export function useAppCommands({
   focusRef: RefObject<HTMLElement | null>
   openSettings: (page: string) => void
   openSearch: () => void
+  openTab: (index: number) => void
 }) {
   useEffect(() => {
     const menu = window.nessoMenu
@@ -30,6 +32,8 @@ export function useAppCommands({
       const transferring = !!document.querySelector('[data-data-transfer][data-open]')
       const dialog = !!document.querySelector('[role="dialog"], [role="alertdialog"]')
       return {
+        transferring,
+        dialog,
         blocked: readonly || introOpen || pluginPanel || transferring || dialog,
         nativeEditing: isEditableTarget(target) || element?.tagName === 'IFRAME',
         documentEditing: !!element?.closest('[data-document-edit]'),
@@ -46,6 +50,14 @@ export function useAppCommands({
         if (event.repeat || readonly || !current.canOpenSettings) return
         event.preventDefault()
         openSearch()
+        return
+      }
+      const digit = /^Digit([1-9])$/.exec(event.code)
+      if (menu && digit && (event.metaKey || event.ctrlKey) && !event.shiftKey) {
+        const current = context(event.target)
+        if (readonly || introOpen || current.transferring || current.dialog) return
+        event.preventDefault()
+        if (!event.repeat) openTab(Number(digit[1]) - 1)
         return
       }
       if (event.key === '?' && !event.metaKey && !event.ctrlKey) {
@@ -123,5 +135,5 @@ export function useAppCommands({
       document.removeEventListener('focusin', onFocus)
       document.removeEventListener('focusout', onFocus)
     }
-  }, [store, readonly, introOpen, pluginPanel, focusRef, openSettings, openSearch])
+  }, [store, readonly, introOpen, pluginPanel, focusRef, openSettings, openSearch, openTab])
 }

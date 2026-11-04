@@ -87,8 +87,11 @@ test('migration backups preserve all original records and restore through the ma
   const document = (await storage.read('document')) as { graph: unknown; workspace: unknown }
   const legacy = { version: 1, graph: document.graph, workspace: document.workspace }
   await storage.write('document', legacy)
-  const preferences = (await storage.read('preferences')) as { preferences: unknown }
-  await storage.write('preferences', { version: 1, preferences: preferences.preferences })
+  const preferences = (await storage.read('preferences')) as {
+    preferences: Record<string, unknown>
+  }
+  const { canvasTabOrder: _, ...legacyPreferences } = preferences.preferences
+  await storage.write('preferences', { version: 1, preferences: legacyPreferences })
   const originals = Object.fromEntries(
     await Promise.all(
       persistenceSections.map(async (section) => [section, (await storage.read(section)) ?? null]),
@@ -123,7 +126,7 @@ test('migration backups preserve all original records and restore through the ma
   const candidate = await manual.choose(1, file)
   const restored = manual.take(1, candidate.id)
   assert.deepEqual(restored.records.preferences, {
-    version: 2,
+    version: 3,
     preferences: preferences.preferences,
   })
   await storage.write('plugin-storage', { version: 1, documentId: loaded.documentId, plugins: [] })

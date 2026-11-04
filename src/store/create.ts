@@ -19,6 +19,7 @@ import {
   newWorkspace,
 } from './operations.ts'
 import {
+  defaultCanvasTabOrder,
   defaultPanels,
   fail,
   maxRelationLabelLength,
@@ -53,6 +54,7 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
         activeRendererId: '',
         activeThemeId: '',
         panels: { ...defaultPanels },
+        canvasTabOrder: [...defaultCanvasTabOrder],
       }
   const store = createStore<HostState>()(() => ({
     graph: initial,
