@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.0.0-beta.4 — 2026-11-04
+
+### Documentation
+
+- **readme:** Refresh screenshot for current ui
+
+### Features
+
+- **intro:** Guide users through relations, views and review (#254)
+- **site:** Redesign landing around learning and connected knowledge (#255)
+
 ## 1.0.0-beta.3 — 2026-11-04
 
 ### Features
