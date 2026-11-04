@@ -15,6 +15,7 @@ export type NativeEditCommand = Extract<MenuCommand, 'undo' | 'redo' | 'selectAl
 
 export type MenuBridge = {
   subscribe: (listener: (command: MenuCommand) => void) => () => void
+  subscribeTabs: (listener: (index: number) => void) => () => void
   setState: (state: MenuState) => void
   edit: (command: NativeEditCommand) => void
 }

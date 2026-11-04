@@ -27,7 +27,7 @@ import { connectPlugins } from './plugins.ts'
 import { connectStartupCheck } from './startup-check.ts'
 import { createWindowState } from './window-state.ts'
 import { createRecordReplacement } from './record-replacement.ts'
-import { connectMenu } from './menu.ts'
+import { connectMenu, connectTabShortcuts } from './menu.ts'
 
 const dev = !app.isPackaged && process.argv.includes('--dev')
 const root = path.join(app.getAppPath(), 'dist')
@@ -76,6 +76,7 @@ const createWindow = async (connectPersistence: (window: BrowserWindow) => void)
     if (event.url !== url) event.preventDefault()
   })
   connectExternalLinks(window.webContents, (url) => shell.openExternal(url))
+  connectTabShortcuts(window.webContents)
   await window.loadURL(url)
   window.setBounds(state.bounds)
   if (state.maximized) window.maximize()

@@ -52,14 +52,6 @@ export function useAppCommands({
         openSearch()
         return
       }
-      const digit = /^Digit([1-9])$/.exec(event.code)
-      if (menu && digit && (event.metaKey || event.ctrlKey) && !event.shiftKey) {
-        const current = context(event.target)
-        if (readonly || introOpen || current.transferring || current.dialog) return
-        event.preventDefault()
-        if (!event.repeat) openTab(Number(digit[1]) - 1)
-        return
-      }
       if (event.key === '?' && !event.metaKey && !event.ctrlKey) {
         const current = context(event.target)
         if (
@@ -94,6 +86,10 @@ export function useAppCommands({
       } else if (current.canOpenSettings) {
         openSettings(command === 'settings' ? 'general' : command)
       }
+    })
+    const stopTabs = menu?.subscribeTabs((index) => {
+      const current = context(document.activeElement)
+      if (!readonly && !introOpen && !current.transferring && !current.dialog) openTab(index)
     })
     let previous = ''
     const update = () => {
@@ -130,6 +126,7 @@ export function useAppCommands({
     return () => {
       active = false
       stopMenu?.()
+      stopTabs?.()
       stopStore?.()
       window.removeEventListener('keydown', onKeyDown)
       document.removeEventListener('focusin', onFocus)
