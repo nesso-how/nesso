@@ -31,7 +31,7 @@ export function connectStartupCheck(profile: string): void {
         window.addEventListener('error', (event) => reject(event.message))
         window.addEventListener('unhandledrejection', (event) => reject(String(event.reason)))
         const timer = setInterval(() => {
-          document.querySelector('.intro-header button')?.click()
+          document.querySelector('.intro-skip')?.click()
           if (!document.querySelector('#canvas .react-flow')) return
           clearInterval(timer)
           if (!window.nessoPersistence || !window.nessoPlugins || !window.nessoDataLocation || !window.nessoBackups) {

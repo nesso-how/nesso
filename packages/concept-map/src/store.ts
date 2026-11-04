@@ -15,6 +15,7 @@ export type ConceptMapContext = {
     'getState' | 'subscribe' | 'applyOperations' | 'conceptPlacementOffset' | 'undo' | 'redo'
   >
   readonly commands: GraphCommands
+  readonly connection?: { readonly source: string; readonly target: string }
 }
 
 export type ConceptMapHandle = {
@@ -26,6 +27,7 @@ export type CanvasProps = {
   readonly focusRef: RefObject<HTMLDivElement | null>
   readonly readOnly?: boolean
   readonly preview?: boolean
+  readonly showContext?: boolean
   readonly bottomInset?: number
   readonly conceptLabelMaxLength?: number
 }

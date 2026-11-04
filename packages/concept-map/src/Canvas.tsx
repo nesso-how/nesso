@@ -66,6 +66,7 @@ import { useNesso, useCanvasContext, type CanvasProps } from './store'
 import { selectionForContextMenu, selectionFromChanges } from './selection'
 import { useTranslation } from './i18n'
 import { reconnectOperations, selectedRelations, type Reconnection } from './reconnection'
+import { canConnect } from './connection'
 
 const nodeTypes: NodeTypes = { concept: ConceptNodeView }
 const fitViewOptions = { padding: 0.3, maxZoom: 1.2 }
@@ -101,6 +102,7 @@ export function Canvas({
   ref,
   readOnly = false,
   preview = false,
+  showContext = false,
   bottomInset = 0,
   conceptLabelMaxLength,
   focusRef: canvas,
@@ -132,7 +134,7 @@ export function Canvas({
     (state) => state.vocabs.find(({ id }) => id === state.preferences.activeVocabId)?.defaultTypeId,
   )
   const viewCount = graph.concepts.length
-  const { store, commands } = useCanvasContext()
+  const { store, commands, connection } = useCanvasContext()
   const write = store.applyOperations
   const flow = useStoreApi()
   const [locked, setLocked] = useState(false)
@@ -166,7 +168,7 @@ export function Canvas({
     target: ContextMenuTarget
   } | null>(null)
   const [outside, setOutside] = useState(false)
-  const outsideActive = outside && view !== null
+  const outsideActive = (outside || showContext) && view !== null
   const [adapt] = useState(createGraphElements)
   const selection = useCallback(
     (value: Selection) => {
@@ -311,6 +313,11 @@ export function Canvas({
     flow.getState().cancelConnection()
     flow.setState({ connectionClickStartHandle: null })
   }
+
+  useEffect(() => {
+    flow.getState().cancelConnection()
+    flow.setState({ connectionClickStartHandle: null })
+  }, [connection, view, flow])
 
   const canDelete = interactive && selected.length > 0
   const canCut =
@@ -640,6 +647,17 @@ export function Canvas({
           toggleOutside()
           return
         }
+        if (event.key === 'Escape') {
+          const state = flow.getState()
+          if (
+            state.connection.inProgress ||
+            state.connectionClickStartHandle ||
+            reconnecting.current
+          ) {
+            cancelConnection()
+            event.preventDefault()
+          }
+        }
         if (readOnly) return
         if ((event.metaKey || event.ctrlKey) && !event.altKey && !event.shiftKey && !hasOverlay) {
           const key = event.key.toLowerCase()
@@ -667,28 +685,16 @@ export function Canvas({
             return
           }
         }
-        if (event.key === 'Escape') {
-          const state = flow.getState()
-          if (
-            state.connection.inProgress ||
-            state.connectionClickStartHandle ||
-            reconnecting.current
-          ) {
-            cancelConnection()
-            event.preventDefault()
-          }
-        }
       }}
     >
       <ReactFlow
-        className={hasOverlay ? 'graph-presentation' : undefined}
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
         ariaLabelConfig={ariaLabelConfig}
         nodesDraggable={interactive}
         elementsSelectable={interactive || hasOverlay}
-        nodesConnectable={interactive && (singleSelection || !!reconnectDrag)}
+        nodesConnectable={!!connection || (interactive && (singleSelection || !!reconnectDrag))}
         edgesReconnectable={interactive}
         multiSelectionKeyCode={multiSelectionKeys}
         deleteKeyCode={null}
@@ -696,8 +702,10 @@ export function Canvas({
         onNodesChange={onNodesChange}
         onEdgesChange={(changes) => onObjectChanges('relation', changes)}
         onConnect={
-          interactive
+          interactive || connection
             ? ({ source, target }) => {
+                if (!canConnect(store.getState().graph, source, target, defaultTypeId, connection))
+                  return
                 write([{ kind: 'relation.connect', source, target }])
               }
             : undefined
@@ -716,15 +724,7 @@ export function Canvas({
                 reconnect.endpoint === 'source' ? source : target,
               ).length > 0
             )
-          return (
-            source !== target &&
-            !graph.relations.some(
-              (relation) =>
-                relation.source === source &&
-                relation.target === target &&
-                relation.predicate === defaultTypeId,
-            )
-          )
+          return canConnect(graph, source, target, defaultTypeId, connection)
         }}
         onPaneClick={(event) => {
           if (event.detail === 1) paneSelection.current = store.getState().selected

@@ -36,6 +36,7 @@ function RelationInput({
   onSave,
   onCreate,
   readonly,
+  autoFocus,
 }: {
   edgeId: string
   typeId: string
@@ -46,6 +47,7 @@ function RelationInput({
   onSave: (id: string, typeId: string) => void
   onCreate: (id: string, label: string) => void
   readonly: boolean
+  autoFocus?: boolean
 }) {
   const t = useTranslation()
   const [value, setValue] = useState(label)
@@ -113,6 +115,7 @@ function RelationInput({
         <div className="relative">
           <Autocomplete.Input
             id="relation-label"
+            autoFocus={autoFocus}
             readOnly={readonly}
             maxLength={maxRelationLabelLength}
             aria-invalid={Boolean(error)}
@@ -151,9 +154,13 @@ function RelationInput({
 export function Inspector({
   store = nessoStore,
   readonly = false,
+  relationTypeOnly = false,
+  focusRelation = false,
 }: {
   store?: HostStore
   readonly?: boolean
+  relationTypeOnly?: boolean
+  focusRelation?: boolean
 }) {
   const t = useTranslation(store)
   const textGroup = useRef<string | undefined>(undefined)
@@ -326,6 +333,7 @@ export function Inspector({
             onSave={store.setRelationType}
             onCreate={store.createRelationType}
             readonly={readonly}
+            autoFocus={focusRelation}
           />
           <InspectorSection store={store} id="inspector.nodes" title={t('nodes')}>
             <div className="mt-2 space-y-3">
@@ -344,7 +352,7 @@ export function Inspector({
               <Button
                 variant="outline"
                 className="w-full justify-start"
-                disabled={readonly || invertedExists}
+                disabled={readonly || relationTypeOnly || invertedExists}
                 onClick={() => {
                   if (selectedEdge)
                     store.reconnectRelation(
@@ -398,7 +406,7 @@ export function Inspector({
       )}
       {selectedEdge && (
         <Button
-          disabled={readonly}
+          disabled={readonly || relationTypeOnly}
           variant="outline"
           className="w-full justify-start"
           onClick={() => store.removeRelation(relationKey(selectedEdge))}

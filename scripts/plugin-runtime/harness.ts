@@ -18,6 +18,7 @@ import { verifyPanel } from './panel.ts'
 import { verifyPanelWorkspace } from './panel-workspace.ts'
 import { verifyNotes } from './notes.ts'
 import { verifyImages } from './images.ts'
+import { verifyIntro } from './intro.ts'
 
 const [scenario, name, profile] = process.argv.slice(2) as [Scenario, Platform, string]
 assert.ok(
@@ -51,6 +52,7 @@ app
       'storage',
       'panel-workspace',
       'images',
+      'intro',
     ].includes(scenario)
     protocol.handle('nesso', (request) =>
       !workspace && new URL(request.url).pathname === '/'
@@ -150,6 +152,9 @@ app
           break
         case 'images':
           await verifyImages(context)
+          break
+        case 'intro':
+          await verifyIntro(context)
           break
         case 'startup':
           await verifyStartup(context)

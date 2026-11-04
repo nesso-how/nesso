@@ -5,6 +5,7 @@ export const cases = {
   'panel-workspace': ['desktop'],
   bundled: ['desktop', 'static-web'],
   images: ['desktop', 'static-web'],
+  intro: ['desktop', 'static-web'],
   storage: ['desktop', 'static-web'],
   startup: ['desktop'],
   installation: ['desktop'],

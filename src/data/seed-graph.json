@@ -16,7 +16,7 @@
     {
       "@id": "urn:nesso:example:coffee",
       "rdfs:label": "Coffee",
-      "rdfs:comment": "A familiar drink that boosts energy but can disrupt sleep.",
+      "rdfs:comment": "A familiar drink, usually had in the morning.",
       "color": "#f5f1ee",
       "position": { "x": 0, "y": 0 },
       "boosts": { "@id": "urn:nesso:example:energy" },

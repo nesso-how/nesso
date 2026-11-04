@@ -1,10 +1,17 @@
-import type { Locale } from '@nesso-how/i18n'
-import type { NessoStore } from '@nesso-how/core'
+import { defaultLocale, type Locale } from '@nesso-how/i18n'
+import type { NessoStore, VocabDefinition } from '@nesso-how/core'
+import { relationKey } from '@nesso-how/schema'
 import { createSeedDocument } from '../data/seed.ts'
 import { createNessoStore } from './create.ts'
 import type { HostOperation, HostStore } from './types.ts'
 
 const conceptViewId = 'intro-concept'
+const connectionViewId = 'intro-connection'
+export const introConnection = {
+  source: 'urn:nesso:example:coffee',
+  target: 'urn:nesso:example:sleep',
+} as const
+const seedRelationTypeId = 'urn:nesso:example:disrupts'
 export const focusConceptId = 'urn:nesso:example:focus'
 
 export function completeIntro(store: HostStore) {
@@ -17,34 +24,70 @@ export function completeIntro(store: HostStore) {
 }
 
 export function setIntroStep(store: NessoStore, step: number) {
-  const { graph, workspace } = store.getState()
-  const hasConceptView = workspace.savedViews.some(({ id }) => id === conceptViewId)
+  const { graph, workspace, vocabs, preferences } = store.getState()
+  const relation = graph.relations.find(
+    ({ source, target }) => source === introConnection.source && target === introConnection.target,
+  )
+  const defaultTypeId = vocabs.find(({ id }) => id === preferences.activeVocabId)?.defaultTypeId
+  const temporaryId = step === 0 ? conceptViewId : step === 1 ? connectionViewId : null
+  const fallback = step > 1 && (!relation || relation.predicate === defaultTypeId)
   store.applyOperations([
-    ...(step === 0 && !hasConceptView
+    ...(temporaryId && !workspace.savedViews.some(({ id }) => id === temporaryId)
       ? [
           {
             kind: 'view.create' as const,
-            id: conceptViewId,
+            id: temporaryId,
             name: graph.concepts[0].label,
-            conceptIds: [graph.concepts[0].id],
+            conceptIds:
+              step === 0
+                ? [introConnection.source]
+                : [introConnection.source, introConnection.target],
           },
         ]
       : []),
-    { kind: 'view.activate', id: step === 0 ? conceptViewId : null },
-    ...(step > 0 && hasConceptView ? [{ kind: 'view.remove' as const, id: conceptViewId }] : []),
+    { kind: 'view.activate', id: temporaryId ?? (step === 3 ? 'rest' : null) },
+    ...workspace.savedViews.flatMap(({ id }) =>
+      (id === conceptViewId || id === connectionViewId) && id !== temporaryId
+        ? [{ kind: 'view.remove' as const, id }]
+        : [],
+    ),
+    ...(fallback
+      ? [
+          ...(relation ? [{ kind: 'relation.remove' as const, id: relationKey(relation) }] : []),
+          {
+            kind: 'relation.connect' as const,
+            ...introConnection,
+            type: createSeedDocument(preferences.locale ?? defaultLocale).graph.relationTypes.find(
+              ({ id }) => id === seedRelationTypeId,
+            )!,
+          },
+        ]
+      : []),
     {
       kind: 'selection.set',
       value:
-        step === 0 || step === 2
-          ? [{ kind: 'concept', id: step === 0 ? graph.concepts[0].id : focusConceptId }]
-          : [],
+        step === 0 || (step === 1 && !relation)
+          ? [{ kind: 'concept', id: introConnection.source }]
+          : step === 1 && relation
+            ? [{ kind: 'relation', id: relationKey(relation) }]
+            : [],
     },
   ])
 }
 
-export function createIntroStore(locale: Locale) {
+export function createIntroStore(locale: Locale, vocab: VocabDefinition) {
   const seed = createSeedDocument(locale)
-  const { store } = createNessoStore(seed.graph, { workspace: seed.workspace })
+  const { store, registerVocab } = createNessoStore(
+    {
+      ...seed.graph,
+      relations: seed.graph.relations.filter(
+        ({ source, target }) =>
+          source !== introConnection.source || target !== introConnection.target,
+      ),
+    },
+    { workspace: seed.workspace },
+  )
+  registerVocab(vocab)
   store.setLocale(locale)
   setIntroStep(store, 0)
   return store
