@@ -1,5 +1,32 @@
 # Changelog
 
+## 1.0.0-beta.2 — 2026-11-04
+
+### Documentation
+
+- **readme:** Refresh app screenshot (#235)
+
+### Features
+
+- **concept-map:** Reconnect shared relation endpoints together (#237)
+- **plugins:** Allow toggling bundled actions (#248)
+- **plugins:** Show ui actions as canvas tabs (#249)
+- **export:** Add permission-checked PNG view export (#251)
+
+### Fixes
+
+- Address project review findings (#236)
+- Harden host recovery, plugin errors, and electron fuses (#238)
+- Harden batch, chat and review data safety (#242)
+- **desktop:** Handle tab shortcuts inside plugin panels (#250)
+
+### Performance
+
+- Remove per-frame work from hot interaction paths (#241)
+- **plugins:** Speed up panel loading and tab switching (#243)
+- **plugins:** Reuse panel frames across view changes (#244)
+- **plugins:** Cache badges and remove panel fade (#246)
+
 ## 1.0.0-beta.1 — 2026-11-02
 
 ### Features
