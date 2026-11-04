@@ -41,7 +41,12 @@ export async function verifyImages(context: CheckContext) {
     }
   })()`)
   assert.ok(geometry.edges.length > 0, 'The export fixture must contain relations')
-  await evaluate(`document.querySelector('#canvas header button[aria-haspopup="menu"]').click()`)
+  const trigger = `#canvas header button[aria-haspopup="menu"]:not(.canvas-tabs-more):not([disabled])`
+  await waitFor(
+    () => evaluate<boolean>(`!!document.querySelector(${JSON.stringify(trigger)})`),
+    Boolean,
+  )
+  await evaluate(`document.querySelector(${JSON.stringify(trigger)}).click()`)
   await waitFor(
     () =>
       evaluate<boolean>(
