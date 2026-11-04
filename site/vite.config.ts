@@ -13,6 +13,11 @@ const { version } = JSON.parse(readFileSync(resolve(root, '../package.json'), 'u
 
 export default defineConfig({
   root,
+  build: {
+    rolldownOptions: {
+      input: { index: resolve(root, 'index.html'), notFound: resolve(root, '404.html') },
+    },
+  },
   plugins: [
     {
       name: 'nesso-site',
@@ -36,6 +41,9 @@ export default defineConfig({
       generateBundle: {
         order: 'post',
         handler(_, bundle) {
+          const notFound = bundle['404.html']
+          if (notFound?.type === 'asset' && typeof notFound.source === 'string')
+            notFound.source = renderSite(notFound.source, defaultLocale, version)
           const template = bundle['index.html']
           if (template?.type !== 'asset' || typeof template.source !== 'string') return
           const html = template.source

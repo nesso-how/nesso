@@ -140,7 +140,7 @@
   "pluginActionFailedDescription": "{{name}} could not complete the action. Try again.",
   "pluginActionConflictDescription": "{{name}} could not apply its latest edits because the document changed. Run the action again.",
   "about": "About",
-  "aboutDescription": "A local-first desktop app for connecting ideas and building understanding through a personal knowledge graph.",
+  "aboutDescription": "A local-first desktop app for learning, with a personal knowledge graph that grows with you.",
   "aboutWebsite": "Website",
   "aboutDiscussions": "Discussions",
   "discoverNesso": "Discover Nesso",

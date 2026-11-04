@@ -141,7 +141,7 @@
   "pluginActionFailedDescription": "{{name}} non è riuscito a completare l’azione. Riprova.",
   "pluginActionConflictDescription": "{{name}} non ha potuto applicare le ultime modifiche perché il documento è cambiato. Esegui di nuovo l’azione.",
   "about": "Informazioni",
-  "aboutDescription": "Un’app desktop local-first per collegare idee e costruire comprensione attraverso un grafo di conoscenza personale.",
+  "aboutDescription": "Un’app desktop local-first per imparare, con un grafo di conoscenza personale che cresce con te.",
   "aboutWebsite": "Sito web",
   "aboutDiscussions": "Discussioni",
   "discoverNesso": "Scopri Nesso",

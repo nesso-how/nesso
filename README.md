@@ -3,7 +3,7 @@
 <img src="public/icon.svg" alt="Nesso" width="96">
 
 </br>
-A local-first desktop app for connecting ideas and building understanding through a personal knowledge graph.
+A desktop app for learning, with a personal knowledge graph that grows with you. Connect ideas, work through them in notes, and review what you’ve learned.
 </br></br>
 
 [![CI](https://github.com/nesso-how/nesso/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/nesso-how/nesso/actions/workflows/ci.yml)
@@ -16,7 +16,7 @@ We often understand and remember through associations: one idea brings another t
 
 Your knowledge isn’t scattered across files and folders but lives in **one connected graph that grows with your understanding**. **Views** let you focus on a project, question, or theme without splitting that knowledge into separate copies. The same concept can appear in several views, with edits shared across them.
 
-![Nesso showing the Understanding view of a learning graph, with the selected concept’s notes, connections, and shared views in the Inspector.](.github/assets/nesso-understanding.png)
+![Nesso showing the Understanding view of a learning graph, with the selected concept’s notes, connections, and shared views in the Inspector.](site/public/nesso-understanding.png)
 
 Nesso keeps things minimal and efficient, with just a few key elements:
 
