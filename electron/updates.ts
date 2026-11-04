@@ -11,7 +11,7 @@ export type UpdateState = {
 export type UpdateBridge = {
   subscribe: (listener: (state: UpdateState) => void) => () => void
   restart: () => void
-  beforeInstall: (save: () => Promise<boolean>) => () => void
+  beforeInstall: (save: () => Promise<boolean>, confirm: () => Promise<boolean>) => () => void
 }
 
 export const INSTALL_FEEDBACK_MS = 1_000
@@ -89,6 +89,9 @@ export function connectUpdates(
       const { version } = state
       installTimer = setTimeout(() => publish({ status: 'ready', version, error: 'save' }), 10_000)
       publish({ status: 'saving', version })
+    },
+    confirming: () => {
+      if (state?.status === 'saving') clearTimeout(installTimer)
     },
     install: (saved: boolean) => {
       if (state?.status !== 'saving') return

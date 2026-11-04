@@ -480,6 +480,8 @@
   "persistenceCloseDescription": "Chiudendo perderai le modifiche che non è stato possibile salvare. Mantieni aperto Nesso per risolvere il problema di archiviazione. I file esistenti non verranno sostituiti.",
   "persistenceKeepOpen": "Mantieni aperto",
   "persistenceCloseWithoutSaving": "Chiudi senza salvare",
+  "persistenceUpdateDescription": "Riavviando per aggiornare perderai le modifiche che non è stato possibile salvare. I file esistenti non verranno sostituiti.",
+  "persistenceUpdateAnyway": "Riavvia comunque",
   "technicalDetails": "Dettagli tecnici",
   "getHelp": "Chiedi aiuto",
   "ambiguousRelation": "Scegli un tipo di relazione: questa etichetta corrisponde a più IRI.",

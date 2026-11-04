@@ -460,6 +460,8 @@
   "persistenceCloseDescription": "关闭将丢弃未能保存的更改。请保持 Nesso 开启以解决存储问题，现有文件不会被替换。",
   "persistenceKeepOpen": "保持开启",
   "persistenceCloseWithoutSaving": "不保存并关闭",
+  "persistenceUpdateDescription": "重启以更新将丢弃未能保存的更改，现有文件不会被替换。",
+  "persistenceUpdateAnyway": "仍然重启",
   "technicalDetails": "技术详情",
   "getHelp": "获取帮助",
   "ambiguousRelation": "请选择关系类型：此标签对应多个 IRI。",

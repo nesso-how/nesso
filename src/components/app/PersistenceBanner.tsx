@@ -39,7 +39,7 @@ export function PersistenceBanner({
 }) {
   const t = useTranslation()
   const issues = useNessoStore((state) => state.persistenceIssues)
-  const [dialog, setDialog] = useState<PersistenceSection | 'close'>()
+  const [dialog, setDialog] = useState<PersistenceSection | 'close' | 'update'>()
   const [working, setWorking] = useState(false)
   const [failed, setFailed] = useState(false)
   const cancel = useRef<HTMLButtonElement>(null)
@@ -60,17 +60,18 @@ export function PersistenceBanner({
   )
 
   useEffect(() => {
-    const stop = window.nessoPersistence?.beforeClose(
-      persistence.save,
-      () =>
-        new Promise<boolean>((resolve) => {
-          close.current = resolve
-          setFailed(false)
-          setDialog('close')
-        }),
-    )
+    const confirm = (kind: 'close' | 'update') => () =>
+      new Promise<boolean>((resolve) => {
+        close.current?.(false)
+        close.current = resolve
+        setFailed(false)
+        setDialog(kind)
+      })
+    const stop = window.nessoPersistence?.beforeClose(persistence.save, confirm('close'))
+    const stopUpdate = window.nessoUpdater?.beforeInstall(persistence.save, confirm('update'))
     return () => {
       stop?.()
+      stopUpdate?.()
       close.current?.(false)
       close.current = undefined
     }
@@ -162,7 +163,7 @@ export function PersistenceBanner({
       >
         <DialogPopup initialFocus={cancel}>
           <Dialog.Title className="text-sm font-medium">
-            {dialog === 'close'
+            {dialog === 'close' || dialog === 'update'
               ? t('persistenceCloseTitle')
               : dialog
                 ? t(replaceTitles[dialog])
@@ -170,7 +171,11 @@ export function PersistenceBanner({
           </Dialog.Title>
           <Dialog.Description className="mt-2 text-xs leading-[18px] text-muted-foreground">
             {t(
-              dialog === 'close' ? 'persistenceCloseDescription' : 'persistenceReplaceDescription',
+              dialog === 'close'
+                ? 'persistenceCloseDescription'
+                : dialog === 'update'
+                  ? 'persistenceUpdateDescription'
+                  : 'persistenceReplaceDescription',
             )}
           </Dialog.Description>
           {dialog === 'document' && (
@@ -190,12 +195,16 @@ export function PersistenceBanner({
             <Button
               disabled={working}
               onClick={() => {
-                if (dialog === 'close') finish(true)
+                if (dialog === 'close' || dialog === 'update') finish(true)
                 else if (dialog) void recover(dialog)
               }}
             >
               {t(
-                dialog === 'close' ? 'persistenceCloseWithoutSaving' : 'persistenceReplaceConfirm',
+                dialog === 'close'
+                  ? 'persistenceCloseWithoutSaving'
+                  : dialog === 'update'
+                    ? 'persistenceUpdateAnyway'
+                    : 'persistenceReplaceConfirm',
               )}
             </Button>
           </DialogActions>

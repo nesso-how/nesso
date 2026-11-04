@@ -22,7 +22,6 @@ export const startAutosave = (prepare: () => void) => {
     if (document.activeElement instanceof HTMLElement) document.activeElement.blur()
     return persistence.flush()
   }
-  const stopUpdateSave = window.nessoUpdater?.beforeInstall(save)
   const stopMoveSave = window.nessoDataLocation?.beforeMove(async () => {
     prepare()
     if (document.activeElement instanceof HTMLElement) document.activeElement.blur()
@@ -44,7 +43,6 @@ export const startAutosave = (prepare: () => void) => {
     ...persistence,
     save,
     dispose: () => {
-      stopUpdateSave?.()
       stopMoveSave?.()
       stopMoveState?.()
       host.setWritesPaused(false)
