@@ -97,7 +97,7 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
                 <div id="canvas" className="relative min-h-0 min-w-0 flex-1">
                   <div
                     className="flex h-full w-full flex-col"
-                    hidden={!!overlayPanel}
+                    style={{ contentVisibility: overlayPanel ? 'hidden' : undefined }}
                     inert={!!overlayPanel}
                   >
                     <ViewHeader readonly={readonly} />

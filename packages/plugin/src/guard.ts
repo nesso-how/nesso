@@ -1,4 +1,10 @@
 const token = location.hash.slice(1)
+const frame = document.querySelector<HTMLIFrameElement>('iframe')!
+let pending: MessageEvent | undefined
+let started = false
+let connected = false
+const send = (event: MessageEvent) =>
+  frame.contentWindow!.postMessage(event.data, '*', [event.ports[0]])
 const bootstrap = (event: MessageEvent) => {
   if (
     event.source !== parent ||
@@ -7,8 +13,14 @@ const bootstrap = (event: MessageEvent) => {
     event.ports.length !== 1
   )
     return
-  window.removeEventListener('message', bootstrap)
-  const frame = document.querySelector<HTMLIFrameElement>('iframe')!
+  if (connected) {
+    send(event)
+    return
+  }
+  pending?.ports[0].close()
+  pending = event
+  if (started) return
+  started = true
   window.addEventListener('message', (event) => {
     if (
       event.source === frame.contentWindow &&
@@ -18,14 +30,14 @@ const bootstrap = (event: MessageEvent) => {
       parent.postMessage({ type: 'plugin-closed', token }, '*')
   })
   window.addEventListener('focus', () => frame.contentWindow!.focus())
-  let connected = false
   frame.addEventListener('load', () => {
     if (connected) {
       parent.postMessage({ type: 'plugin-closed', token }, '*')
       return
     }
     connected = true
-    frame.contentWindow!.postMessage(event.data, '*', [event.ports[0]])
+    send(pending!)
+    pending = undefined
   })
   frame.srcdoc = document.querySelector<HTMLTemplateElement>('#runner')!.innerHTML
 }

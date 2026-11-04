@@ -96,14 +96,14 @@ export function executeActionBadge(
       if (closed) return
       closed = true
       signal.removeEventListener('abort', cancel)
-      stop()
+      runtime.close()
       frame.remove()
       if (result instanceof PluginError) reject(result)
       else resolve(result)
     }
     const cancel = () =>
       finish(new PluginError('cancelled', [{ path: 'badge', message: 'Badge cancelled' }]))
-    const stop = loadPluginFrame(
+    const runtime = loadPluginFrame(
       frame,
       { entry: source.entry },
       (port, ready) =>

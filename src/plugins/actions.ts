@@ -49,10 +49,14 @@ export function loadActions(
     frame.referrerPolicy = 'no-referrer'
     if (!panel) document.body.append(frame)
     let observer: MutationObserver | undefined
+    let unsubscribe: (() => void) | undefined
+    let activeViewId = store.getState().workspace.activeViewId
+    let target = invocation
     const cleanup = () => {
       signal?.removeEventListener('abort', cancel)
       observer?.disconnect()
-      stop()
+      unsubscribe?.()
+      frameRuntime.close()
       if (!panel) frame.remove()
     }
     const cancel = () => {
@@ -65,16 +69,11 @@ export function loadActions(
         themeTokens.map((token) => [token, style.getPropertyValue(`--${token}`).trim()]),
       )
     }
-    const base = {
-      contextId: crypto.randomUUID(),
-      locale: store.getState().preferences.locale ?? defaultLocale,
-      theme: theme(),
-      conceptPlacementOffset,
-    }
-    const stop = loadPluginFrame(
+    const frameRuntime = loadPluginFrame(
       frame,
       { entry: source.entry, panel: !!panel },
       (port, ready, failed) => {
+        const invocation = target
         if (
           invocation?.viewId !== null &&
           invocation?.viewId !== undefined &&
@@ -93,7 +92,12 @@ export function loadActions(
             invocation,
             ...(panel ? { mode: 'panel' } : {}),
           },
-          base,
+          {
+            contextId: crypto.randomUUID(),
+            locale: store.getState().preferences.locale ?? defaultLocale,
+            theme: theme(),
+            conceptPlacementOffset,
+          },
           {
             theme: panel ? theme : undefined,
             files: {
@@ -137,6 +141,15 @@ export function loadActions(
         reject(error)
       },
     )
+    if (panel && invocation)
+      unsubscribe = store.subscribe(() => {
+        const viewId = store.getState().workspace.activeViewId
+        if (viewId === activeViewId) return
+        activeViewId = viewId
+        target = { ...invocation, viewId }
+        observer?.disconnect()
+        frameRuntime.reconnect()
+      })
     signal?.addEventListener('abort', cancel, { once: true })
   })
 }

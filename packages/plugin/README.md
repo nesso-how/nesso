@@ -137,7 +137,7 @@ Nesso supplies React, the `@nesso-how/ui` component stylesheet, and theme CSS va
 
 #### Lifecycle
 
-Use React effects to clean up subscriptions and resources. Panels have no action execution timeout, but initialization and API requests have deadlines. Uncaught errors or rejected promises fail the session; handle expected errors in your UI. Nesso provides the title, close control, and loading/failure screens. Changing the active view revokes the current panel instance and mounts the same action in a new instance for the selected view, including All. Closing or replacing a panel discards its React state: save progress through `storage` during use, not during cleanup, which is best effort.
+Use React effects to clean up subscriptions and resources. Panels have no action execution timeout, but initialization and API requests have deadlines. Uncaught errors or rejected promises fail the session; handle expected errors in your UI. Nesso provides the title, close control, and loading/failure screens. Changing the active view revokes the current channel and context and mounts a fresh React instance for the selected view, including All, while reusing the sandbox and loaded modules. Closing or replacing a panel discards its React state: save progress through `storage` during use, not during cleanup, which is best effort.
 
 ### Action badges
 
