@@ -26,17 +26,17 @@
 :root {
   color-scheme: light;
   --background: #fff;
-  --foreground: #292929;
+  --foreground: #2f3237;
   --canvas: #f8f8f8;
-  --primary: #393939;
-  --primary-hover: #202020;
-  --muted-foreground: #6b6b6b;
-  --border: #dedede;
-  --node-border: #cdcdcd;
-  --edge: #adadad;
-  --selection-halo: #39393924;
-  --radius-control: 3px;
-  --radius-object: 4px;
+  --primary: #1a202b;
+  --primary-hover: #0f141c;
+  --muted-foreground: #62666d;
+  --border: #dcdfe3;
+  --node-border: #c9cdd3;
+  --edge: #a9aeb6;
+  --selection-halo: #1a202b24;
+  --radius-control: 4px;
+  --radius-object: 6px;
   --duration-state: 140ms;
 }
 

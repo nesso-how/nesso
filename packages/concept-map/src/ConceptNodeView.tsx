@@ -96,11 +96,12 @@ export function ConceptNodeView({ id, data, selected, isConnectable }: NodeProps
       }}
       onDoubleClick={startEditing}
       className={cn(
-        'concept-node flex items-center justify-center rounded-lg border bg-card px-3 py-1 text-[13.5px] leading-[18px] hover:border-(--handle)',
+        'concept-node flex items-center justify-center rounded-[calc(var(--radius-object)+2px)] border bg-card px-3 py-1 text-[14px] leading-[18px] transition-[border-color,box-shadow] duration-(--duration-state) ease-[cubic-bezier(0.22,1,0.36,1)] hover:border-(--handle)',
         data.bold ? 'font-semibold' : 'font-normal',
         data.italic && 'italic',
-        !data.color && 'transition-colors',
-        selected ? 'border-primary shadow-[0_0_0_2px_var(--selection-halo)]' : 'border-node-border',
+        selected
+          ? 'border-primary shadow-[0_0_0_2px_var(--selection-halo)] duration-[180ms]'
+          : 'border-node-border',
       )}
     >
       {Object.values(Position).map((position) => (
