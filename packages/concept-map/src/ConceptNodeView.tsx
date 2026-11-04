@@ -29,7 +29,9 @@ const activateHandle = (event: ReactKeyboardEvent<HTMLDivElement>) => {
 
 export function ConceptNodeView({ id, data, selected, isConnectable }: NodeProps<ConceptNode>) {
   const t = useTranslation()
-  const { store } = useCanvasContext()
+  const { store, connection } = useCanvasContext()
+  const canStart = selected && isConnectable && (!connection || connection.source === id)
+  const canEnd = isConnectable && (!connection || connection.target === id)
   const connecting = useStore((state) =>
     state.connectionClickStartHandle
       ? state.connectionClickStartHandle.nodeId !== id
@@ -118,13 +120,13 @@ export function ConceptNodeView({ id, data, selected, isConnectable }: NodeProps
         id="target"
         type="target"
         position={Position.Top}
-        isConnectable={isConnectable}
+        isConnectable={canEnd}
         isConnectableStart={false}
-        isConnectableEnd={isConnectable}
+        isConnectableEnd={canEnd}
         role="button"
         aria-label={t('connectTo', { name: data.label })}
-        aria-hidden={!connecting || !isConnectable}
-        tabIndex={connecting && isConnectable ? 0 : -1}
+        aria-hidden={!connecting || !canEnd}
+        tabIndex={connecting && canEnd ? 0 : -1}
         onKeyDown={activateHandle}
         className={cn(
           'node-target !inset-0 !size-full !transform-none !border-0 opacity-0',
@@ -151,15 +153,15 @@ export function ConceptNodeView({ id, data, selected, isConnectable }: NodeProps
         id="create"
         type="source"
         position={Position.Top}
-        isConnectable={selected && isConnectable}
+        isConnectable={canStart}
         aria-label={t('connectFrom', { name: data.label })}
         role="button"
-        aria-hidden={!selected || !isConnectable}
-        tabIndex={selected && isConnectable ? 0 : -1}
+        aria-hidden={!canStart}
+        tabIndex={canStart ? 0 : -1}
         onKeyDown={activateHandle}
         className={cn(
           'node-source !left-auto !right-0 !transform-none !translate-x-1/2 !-translate-y-1/2 !border-0 !bg-transparent',
-          (!selected || !isConnectable) && '!pointer-events-none opacity-0',
+          !canStart && '!pointer-events-none opacity-0',
         )}
       />
     </div>

@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
-import { Button } from '@nesso-how/ui'
-import { ArrowLeft, ArrowRight, X } from 'lucide-react'
-import { createIntroStore, setIntroStep } from '@/store/intro'
+import { Button, useMediaQuery } from '@nesso-how/ui'
+import { resolveRelationTypeLabel } from '@nesso-how/core'
+import { ArrowLeft, ArrowRight } from 'lucide-react'
+import { createIntroStore, introConnection, setIntroStep } from '@/store/intro'
 import { useTranslation } from '@/i18n'
 import { defaultLocale } from '@nesso-how/i18n'
 import { useNessoStore } from '@/store'
@@ -9,25 +10,49 @@ import { resolveInspector } from '@/store/settings'
 import { chat } from '@/ai'
 import { AppSidebar } from './Sidebar'
 import { Inspector } from './Inspector'
-import { AssistantPanel } from './AssistantPanel'
 import { GraphWorkspace } from './GraphWorkspace'
+import { ViewHeader } from './ViewHeader'
+import reviewPackage from '../../../plugins/review/package.json'
 
 const chapters = [
   { title: 'introConceptTitle', description: 'introConceptDescription' },
   { title: 'introConnectionsTitle', description: 'introConnectionsDescription' },
-  { title: 'introUnderstandingTitle', description: 'introUnderstandingDescription' },
+  { title: 'introViewsTitle', description: 'introViewsDescription' },
+  { title: 'introReviewTitle', description: 'introReviewDescription' },
 ] as const
 
 const lastStep = chapters.length - 1
+const reviewTabs = [
+  {
+    id: 'review',
+    key: 'intro-review',
+    label: reviewPackage.i18n.metadata.name,
+    icon: 'repeat',
+    badge: true,
+  },
+] as const
 
 export function Intro({ onFinish }: { onFinish: () => void }) {
   const t = useTranslation()
+  const compact = useMediaQuery('(max-width: 767px)')
   const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale)
   const panels = useNessoStore((state) => state.preferences.panels)
-  const { width: inspectorWidth, minWidth: inspectorMinWidth } = resolveInspector(panels, !!chat)
+  const vocab = useNessoStore((state) => state.vocabs.find(({ id }) => id === 'base-vocab')!)
+  const { width: inspectorWidth, minWidth: inspectorMinWidth } = resolveInspector(panels, false)
   const [step, setStep] = useState(0)
   const title = useRef<HTMLHeadingElement>(null)
-  const store = useMemo(() => createIntroStore(locale), [locale])
+  const store = useMemo(() => createIntroStore(locale, vocab), [locale, vocab])
+  const graph = useNessoStore((state) => state.graph, store)
+  const selected = useNessoStore((state) => state.selected, store)
+  const relation = graph.relations.find(
+    ({ source, target }) => source === introConnection.source && target === introConnection.target,
+  )
+  const relationType = relation && graph.relationTypes.find(({ id }) => id === relation.predicate)
+  const relationLabel =
+    relationType && relationType.id !== vocab.defaultTypeId
+      ? resolveRelationTypeLabel(relationType, [vocab], locale)
+      : ''
+  const inspectorOpen = step === 1 && selected.length === 1 && selected[0].kind === 'relation'
   const narrative = useRef<HTMLElement>(null)
   const [bottomInset, setBottomInset] = useState(0)
   useEffect(() => {
@@ -42,12 +67,7 @@ export function Intro({ onFinish }: { onFinish: () => void }) {
   }, [store, step])
 
   const progress = { step: step + 1, total: chapters.length }
-  const description = t(
-    step === lastStep && chat ? 'introUnderstandingDesktopDescription' : chapters[step].description,
-  )
-  const [desktopBefore, desktopAfter] = t('introDesktopDescription', {
-    website: '<website>',
-  }).split('<website>')
+  const description = t(chapters[step].description)
 
   return (
     <section
@@ -86,20 +106,12 @@ export function Intro({ onFinish }: { onFinish: () => void }) {
         }
       }}
     >
-      <header className="intro-header">
-        <img src="/logo.svg" width="94" height="24" alt="Nesso" />
-        <span className="intro-mode">{t('introReadonly')}</span>
-        <Button variant="ghost" size="sm" onClick={onFinish}>
-          {t('introSkip')}
-          <X aria-hidden="true" />
-        </Button>
-      </header>
       <div className="intro-body">
         <div
           className="intro-explorer-slot"
-          data-open={step > 0}
-          inert={step === 0}
-          aria-hidden={step === 0}
+          data-open={step >= 2}
+          inert={step < 2}
+          aria-hidden={step < 2}
         >
           <aside className="intro-explorer" aria-label={t('views')}>
             <AppSidebar store={store} readonly bare />
@@ -107,7 +119,20 @@ export function Intro({ onFinish }: { onFinish: () => void }) {
         </div>
         <div className="intro-workspace flex min-h-0 min-w-0 flex-1">
           <div className="intro-canvas min-h-0 min-w-0 flex-1">
-            <GraphWorkspace store={store} preview bottomInset={bottomInset} />
+            {step === lastStep && (
+              <div className="intro-preview-tabs">
+                <ViewHeader store={store} readonly preview={{ tabs: reviewTabs, badgeCount: 3 }} />
+              </div>
+            )}
+            <div className="intro-graph min-h-0 flex-1">
+              <GraphWorkspace
+                store={store}
+                preview
+                connection={step === 1 && !relation ? introConnection : undefined}
+                showContext={step >= 2}
+                bottomInset={compact ? 0 : bottomInset}
+              />
+            </div>
             <section
               ref={narrative}
               className="intro-narrative intro-overlay"
@@ -122,18 +147,22 @@ export function Intro({ onFinish }: { onFinish: () => void }) {
                     .split('**')
                     .map((part, index) => (index % 2 ? <strong key={index}>{part}</strong> : part))}
                 </p>
-                {step === lastStep && !chat && (
-                  <p className="intro-desktop-note">
-                    {desktopBefore}
-                    <a href="https://nesso.how" target="_blank" rel="noopener noreferrer">
-                      nesso.how
-                    </a>
-                    {desktopAfter}
+                {(step === 1 || step === lastStep) && relationLabel && (
+                  <p className="intro-relation">
+                    {graph.concepts.find(({ id }) => id === introConnection.source)?.label}
+                    <span> · {relationLabel} · </span>
+                    {graph.concepts.find(({ id }) => id === introConnection.target)?.label}
                   </p>
+                )}
+                {step === lastStep && !!chat && (
+                  <p className="intro-desktop-note">{t('introChatNote')}</p>
                 )}
               </div>
               <nav className="intro-navigation" aria-label={t('introNavigation')}>
                 <span aria-label={t('introStep', progress)}>{t('introStepCount', progress)}</span>
+                <Button className="intro-skip" variant="ghost" size="sm" onClick={onFinish}>
+                  {t('introSkip')}
+                </Button>
                 <Button
                   variant="ghost"
                   size="icon-sm"
@@ -158,17 +187,12 @@ export function Intro({ onFinish }: { onFinish: () => void }) {
           </div>
           <div
             className="intro-inspector-slot"
-            data-open={step === lastStep}
-            inert={step !== lastStep}
-            aria-hidden={step !== lastStep}
+            data-open={inspectorOpen}
+            inert={!inspectorOpen}
+            aria-hidden={!inspectorOpen}
           >
             <div className="intro-inspector">
-              {step === lastStep &&
-                (chat ? (
-                  <AssistantPanel chat={chat} store={store} readonly />
-                ) : (
-                  <Inspector store={store} readonly />
-                ))}
+              {inspectorOpen && <Inspector store={store} relationTypeOnly focusRelation />}
             </div>
           </div>
         </div>

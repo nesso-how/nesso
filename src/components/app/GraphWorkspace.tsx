@@ -1,4 +1,12 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, type Ref, type RefObject } from 'react'
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  type ComponentProps,
+  type Ref,
+  type RefObject,
+} from 'react'
 import { ConceptMap, type ConceptMapHandle } from '@nesso-how/concept-map'
 import type { Position } from '@nesso-how/schema'
 import { useMediaQuery } from '@nesso-how/ui'
@@ -10,6 +18,8 @@ export function GraphWorkspace({
   ref,
   store,
   preview = false,
+  connection,
+  showContext = false,
   suspended = false,
   bottomInset = 0,
   onDeleteView,
@@ -18,6 +28,8 @@ export function GraphWorkspace({
   ref?: Ref<ConceptMapHandle>
   store: HostStore
   preview?: boolean
+  connection?: ComponentProps<typeof ConceptMap>['connection']
+  showContext?: boolean
   suspended?: boolean
   bottomInset?: number
   onDeleteView?: () => void
@@ -57,6 +69,8 @@ export function GraphWorkspace({
         commands={rendererCommands}
         readOnly={readOnly}
         preview={preview}
+        connection={connection}
+        showContext={showContext}
         bottomInset={bottomInset}
         focusRef={target}
         conceptLabelMaxLength={maxConceptLabelLength}

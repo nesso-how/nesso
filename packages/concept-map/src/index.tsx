@@ -9,10 +9,11 @@ export type { ConceptMapHandle } from './store'
 export const ConceptMap = memo(function ConceptMap({
   store,
   commands,
+  connection,
   ...props
 }: ConceptMapContext & CanvasProps) {
   return (
-    <StoreContext.Provider value={{ store, commands }}>
+    <StoreContext.Provider value={{ store, commands, connection }}>
       <ReactFlowProvider>
         <Canvas {...props} />
       </ReactFlowProvider>

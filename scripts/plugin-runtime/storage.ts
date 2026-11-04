@@ -42,7 +42,7 @@ export async function verifyStorage({ window, url, name }: CheckContext) {
   }
   await window.loadURL(url)
   await waitFor(() => evaluate<boolean>(`!!document.querySelector('.intro')`), Boolean)
-  await evaluate(`document.querySelector('.intro-header button').click()`)
+  await evaluate(`document.querySelector('.intro-skip').click()`)
   await waitFor(
     async () =>
       !!((await read('preferences')) as { preferences?: { introSeen?: boolean } } | undefined)
