@@ -54,7 +54,7 @@ export const containsPoint = (
   point.y >= concept.position.y &&
   point.y <= concept.position.y + size.height
 
-function conceptNode(
+export function conceptNode(
   concept: ConceptView,
   selected: boolean,
   measured?: ConceptNodeSize,

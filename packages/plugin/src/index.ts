@@ -20,6 +20,7 @@ export type {
   PluginManifest,
 } from './runtime.ts'
 export { actionIconNames } from './runtime.ts'
+export type { ImageRenderOptions, RenderedImage } from './images.ts'
 export type {
   PluginStorage,
   PluginStorageKey,

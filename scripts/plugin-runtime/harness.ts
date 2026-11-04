@@ -17,6 +17,7 @@ import { verifyStorage } from './storage.ts'
 import { verifyPanel } from './panel.ts'
 import { verifyPanelWorkspace } from './panel-workspace.ts'
 import { verifyNotes } from './notes.ts'
+import { verifyImages } from './images.ts'
 
 const [scenario, name, profile] = process.argv.slice(2) as [Scenario, Platform, string]
 assert.ok(
@@ -49,6 +50,7 @@ app
       'corrupt-records',
       'storage',
       'panel-workspace',
+      'images',
     ].includes(scenario)
     protocol.handle('nesso', (request) =>
       !workspace && new URL(request.url).pathname === '/'
@@ -145,6 +147,9 @@ app
           break
         case 'bundled':
           await verifyBundled(context)
+          break
+        case 'images':
+          await verifyImages(context)
           break
         case 'startup':
           await verifyStartup(context)

@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { readChosenFile, saveChosenFile } from './file-access.ts'
 
-test('chosen file access is UTF-8 only, exposes no directory and saves atomically without late replacement', async (t) => {
+test('chosen file reads are UTF-8 only and saves preserve bytes atomically without late replacement', async (t) => {
   const directory = await mkdtemp(path.join(tmpdir(), 'nesso-file-test-'))
   t.after(() => rm(directory, { recursive: true, force: true }))
   const filename = path.join(directory, 'graph.jsonld')
@@ -34,6 +34,20 @@ test('chosen file access is UTF-8 only, exposes no directory and saves atomicall
     { saved: true },
   )
   assert.equal(await readFile(filename, 'utf8'), 'Saved')
+  const binary = Buffer.from([0, 255, 137, 80, 78, 71])
+  assert.deepEqual(
+    await saveChosenFile(
+      filename,
+      {
+        name: 'graph.png',
+        mediaType: 'image/png',
+        base64: binary.toString('base64'),
+      },
+      () => true,
+    ),
+    { saved: true },
+  )
+  assert.deepEqual(await readFile(filename), binary)
   assert.deepEqual(await readdir(directory), ['graph.jsonld'])
   await writeFile(filename, new Uint8Array([0xff, 0xfe]))
   await assert.rejects(readChosenFile(filename, 'application/ld+json', () => true))

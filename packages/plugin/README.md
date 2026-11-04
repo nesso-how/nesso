@@ -201,15 +201,19 @@ Every write checks against the last snapshot you read, or the initial snapshot i
 
 The invoked view is **not a write sandbox**: permitted writes can affect the whole document. Only the operations listed above are available to plugins.
 
-### Files, notifications, and failures
+### Files, images, notifications, and failures
 
 | API                                                                                                    | Required capability | Result                                                                           |
 | ------------------------------------------------------------------------------------------------------ | ------------------- | -------------------------------------------------------------------------------- |
 | `files.open({ extensions: ['json'], mimeTypes: ['application/json'] })`                                | `files`             | `{ name, mediaType, text }`, or `null` on cancellation. Extensions omit the dot. |
 | `files.save({ name: 'graph.json', mediaType: 'application/json', text })`                              | `files`             | `{ saved: boolean }`; cancellation returns `false`.                              |
+| `files.save({ name: 'graph.png', mediaType: 'image/png', base64 })`                                    | `files`             | `{ saved: boolean }`; the host decodes canonical base64 before saving.           |
+| `images.renderView({ format: 'png', scale: 2 })`                                                       | `images`            | `{ mediaType: 'image/png', base64 }` for the invoked view.                       |
 | `notifications.notify({ tone: 'info', title: { en: 'Done' }, description: { en: 'Labels updated' } })` | `notifications`     | A notification ID. Tone is `info` or `warning`; description is optional.         |
 
-Files use UTF-8 text and host-managed dialogs or browser downloads; `files` grants no unrestricted filesystem access. Plugins have no Node, host DOM, direct filesystem, clipboard, or network access.
+File saves accept exactly one of UTF-8 `text` or canonical `base64` (without a data URL prefix), with a 16 MiB decoded byte limit. File opening remains UTF-8 text only. Host-managed dialogs or browser downloads grant no unrestricted filesystem access. Plugins have no Node, host DOM, direct filesystem, clipboard, or network access.
+
+`images.renderView` captures the invoked view with the current theme and fonts, without selection or canvas controls. Scale defaults to `2`, or accepts `4`. Empty or oversized images fail rather than silently downscaling (8192 pixels per side, 16,777,216 pixels total, 16 MiB PNG). Save the result separately with `files.save({ name: 'view.png', ...image })`; this also requires `files`.
 
 Failures throw `PluginError` with `code` and `{ path, message }[]` issues. Let them propagate instead of reporting success. Files and notifications cannot be rolled back with graph edits.
 

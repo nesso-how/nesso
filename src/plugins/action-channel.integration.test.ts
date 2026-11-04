@@ -7,6 +7,8 @@ import {
   PluginError,
   type ActionDescriptor,
   type FileOpenResult,
+  type ImageRenderOptions,
+  type RenderedImage,
 } from '@nesso-how/plugin/runtime'
 import { createNessoStore } from '../store/create.ts'
 import { connectActionChannel } from './action-channel.ts'
@@ -36,6 +38,7 @@ function fixture(
   host = createNessoStore(graph),
   pluginId = 'nesso-plugin-example',
   panel = false,
+  renderImage?: Parameters<typeof connectActionChannel>[4]['renderImage'],
 ) {
   const contributions = panel
     ? descriptors.map((action) => ({ ...action, ui: true as const }))
@@ -64,6 +67,7 @@ function fixture(
     base,
     {
       files: { open, save: async () => ({ saved: true }) },
+      renderImage,
       notify: ({ title, description }) => {
         notified.push(title)
         descriptions.push(description)
@@ -121,6 +125,39 @@ function fixture(
     close,
   }
 }
+
+test('image rendering requires its own capability, is scoped to the invoked view and revokes pending renders', async (t) => {
+  const started = Promise.withResolvers<AbortSignal>()
+  const rendered = Promise.withResolvers<RenderedImage>()
+  const render = t.mock.fn(
+    (_viewId: string | null, _options: ImageRenderOptions, signal: AbortSignal) => {
+      started.resolve(signal)
+      return rendered.promise
+    },
+  )
+  const denied = fixture(false, undefined, [], ['files'], undefined, undefined, false, render)
+  t.after(denied.close)
+  await denied.start()
+  await assert.rejects(denied.client.context.images.renderView({ format: 'png' }), {
+    code: 'denied',
+  })
+  assert.equal(render.mock.callCount(), 0)
+  const allowed = fixture(false, undefined, [], ['images'], undefined, undefined, false, render)
+  t.after(allowed.close)
+  await allowed.start()
+  const pending = allowed.client.context.images.renderView({ format: 'png' })
+  const rejected = assert.rejects(pending, { code: 'closed' })
+  const signal = await started.promise
+  await assert.rejects(allowed.client.context.images.renderView({ format: 'png' }), {
+    code: 'unavailable',
+  })
+  assert.deepEqual(render.mock.calls[0].arguments.slice(0, 2), [allowed.target, { format: 'png' }])
+  assert.equal(allowed.host.store.getState().workspace.activeViewId, null)
+  allowed.close()
+  assert.equal(signal.aborted, true)
+  rendered.resolve({ mediaType: 'image/png', base64: 'AA==' })
+  await rejected
+})
 
 test('action projections stay bound to the invoked view, filter off-view selection and synchronize atomic writes', async (t) => {
   const instance = fixture()

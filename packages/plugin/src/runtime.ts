@@ -1,4 +1,11 @@
 import { z } from 'zod'
+import {
+  imageRenderOptions,
+  renderedImage,
+  type ImageRenderOptions,
+  type RenderedImage,
+} from './images.ts'
+export type { ImageRenderOptions, RenderedImage } from './images.ts'
 import { graphSchema, positionSchema } from '@nesso-how/schema'
 import type { ComponentType } from 'react'
 import type {
@@ -212,7 +219,7 @@ const manifest = z
       kind: z.literal('actions'),
       entry: jsEntry,
       writes: operationDeclarations,
-      capabilities: z.array(z.enum(['files', 'notifications', 'storage', 'ui'])),
+      capabilities: z.array(z.enum(['files', 'images', 'notifications', 'storage', 'ui'])),
     }),
     ...(['theme', 'vocab'] as const).map((kind) =>
       z.strictObject({
@@ -275,6 +282,11 @@ const request = z.discriminatedUnion('method', [
   }),
   z.strictObject({ ...envelope, method: z.literal('files.open'), params: fileOpenOptions }),
   z.strictObject({ ...envelope, method: z.literal('files.save'), params: fileSaveOptions }),
+  z.strictObject({
+    ...envelope,
+    method: z.literal('images.renderView'),
+    params: imageRenderOptions,
+  }),
 ])
 const wireError = z.strictObject({
   code: z.enum(pluginErrorCodes),
@@ -417,6 +429,9 @@ export type ActionContext = {
     readonly save: (options: FileSaveOptions) => Promise<{ readonly saved: boolean }>
   }
   readonly storage: PluginStorage
+  readonly images: {
+    readonly renderView: (options: ImageRenderOptions) => Promise<RenderedImage>
+  }
   readonly signal: AbortSignal
 }
 
@@ -478,6 +493,7 @@ const results = {
   'notifications.notify': id,
   'files.open': fileOpenResult,
   'files.save': z.strictObject({ saved: z.boolean() }),
+  'images.renderView': renderedImage,
 } satisfies Record<RequestMethod, z.ZodType>
 
 export function parsePluginMessage(value: unknown): z.infer<typeof message> {
@@ -675,6 +691,7 @@ export function createPluginClient(port: MessagePort, initial: unknown) {
       applyOperations,
     },
     notifications: { notify: (value) => call('notifications.notify', value) },
+    images: { renderView: (options) => call('images.renderView', options) },
     files: {
       open: (options) => call('files.open', options),
       save: (options) => call('files.save', options),

@@ -13,6 +13,13 @@
   --xy-selection-border: 1px solid var(--primary);
 }
 
+.graph-image-export *,
+.graph-image-export *::before,
+.graph-image-export *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
 .react-flow .node-source {
   width: 24px;
   height: 24px;

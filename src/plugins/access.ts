@@ -21,6 +21,7 @@ const writes = {
 } as const
 const capabilities = {
   files: 'pluginAccessFiles',
+  images: 'pluginAccessImages',
   notifications: 'pluginAccessNotify',
   storage: 'pluginAccessStorage',
   ui: 'pluginAccessUI',

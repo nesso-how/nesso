@@ -91,6 +91,7 @@
   "pluginReadScope": "运行操作时，它会接收该视图中的概念和关系。在{{view}}视图中运行操作会让它访问整个图谱。",
   "pluginEffectScope": "对文档内容的修改可能影响整个文档，而不仅限于运行操作的视图。",
   "pluginFileScope": "插件只能通过 Nesso 读取或保存文件，无法浏览设备上的文件。",
+  "pluginAccessImages": "生成调用视图的图像",
   "pluginNotificationScope": "通知显示在 Nesso 内部，而不是系统通知中。",
   "pluginContentIdentity": "内容标识",
   "pluginHashHint": "哈希标识确切内容，并不证明包已被审核或安全。",

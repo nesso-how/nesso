@@ -92,6 +92,7 @@
   "pluginReadScope": "When you run an action, it receives the concepts and relations in that view. Running it on {{view}} gives it access to the entire graph.",
   "pluginEffectScope": "Changes to document content can affect the whole document, not just the view where you run an action.",
   "pluginFileScope": "The plugin can only read or save files through Nesso. It cannot browse your device.",
+  "pluginAccessImages": "Render an image of the invoked view",
   "pluginNotificationScope": "Notifications appear inside Nesso, not as system notifications.",
   "pluginContentIdentity": "Content identity",
   "pluginHashHint": "The hash identifies exact content, not whether a package is reviewed or safe.",

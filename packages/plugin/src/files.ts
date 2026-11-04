@@ -13,7 +13,7 @@ export const fileOpenOptions = z.strictObject({
     .max(16),
   mimeTypes: z.array(mediaType).max(16),
 })
-export const fileSaveOptions = z.strictObject({
+const fileFields = {
   name: z
     .string()
     .trim()
@@ -29,16 +29,32 @@ export const fileSaveOptions = z.strictObject({
         ),
     ),
   mediaType,
-  text: z
-    .string()
-    .max(fileTextLimit)
-    .refine(
-      (value) => new TextEncoder().encode(value).byteLength <= fileTextLimit,
-      'File text byte limit exceeded',
-    ),
-})
+}
+const fileText = z
+  .string()
+  .max(fileTextLimit)
+  .refine(
+    (value) => new TextEncoder().encode(value).byteLength <= fileTextLimit,
+    'File text byte limit exceeded',
+  )
+export const fileBase64 = z
+  .string()
+  .max(4 * Math.ceil(fileTextLimit / 3))
+  .regex(/^[A-Za-z0-9+/]*={0,2}$/)
+  .refine((value) => {
+    const size = (value.length / 4) * 3 - (value.endsWith('==') ? 2 : value.endsWith('=') ? 1 : 0)
+    try {
+      return value.length % 4 === 0 && size <= fileTextLimit && btoa(atob(value)) === value
+    } catch {
+      return false
+    }
+  }, 'Invalid base64 or file byte limit exceeded')
+export const fileSaveOptions = z.union([
+  z.strictObject({ ...fileFields, text: fileText }),
+  z.strictObject({ ...fileFields, base64: fileBase64 }),
+])
 export const fileOpenResult = z
-  .strictObject({ name: z.string().min(1).max(240), mediaType, text: fileSaveOptions.shape.text })
+  .strictObject({ name: z.string().min(1).max(240), mediaType, text: fileText })
   .nullable()
 export type FileOpenOptions = z.infer<typeof fileOpenOptions>
 export type FileSaveOptions = z.infer<typeof fileSaveOptions>

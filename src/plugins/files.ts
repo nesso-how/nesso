@@ -92,6 +92,10 @@ export function createPluginFiles(bridge: FileBridge | undefined, signal: AbortS
     })
   const browserSave = async (options: FileSaveOptions): Promise<{ saved: boolean }> => {
     if (signal.aborted) return Promise.reject(closed())
+    const content =
+      'text' in options
+        ? options.text
+        : Uint8Array.from(atob(options.base64), (character) => character.charCodeAt(0))
     const picker = (globalThis as PickerHost).showSaveFilePicker
     if (picker) {
       try {
@@ -116,7 +120,7 @@ export function createPluginFiles(bridge: FileBridge | undefined, signal: AbortS
         }
         signal.addEventListener('abort', abort, { once: true })
         try {
-          await writable.write(options.text)
+          await writable.write(content)
           if (signal.aborted) return { saved: false }
           await writable.close()
           return { saved: !signal.aborted }
@@ -135,7 +139,8 @@ export function createPluginFiles(bridge: FileBridge | undefined, signal: AbortS
           throw unavailable()
       }
     }
-    const url = URL.createObjectURL(new Blob([options.text], { type: options.mediaType }))
+    if (signal.aborted) throw closed()
+    const url = URL.createObjectURL(new Blob([content], { type: options.mediaType }))
     try {
       const anchor = document.createElement('a')
       anchor.href = url

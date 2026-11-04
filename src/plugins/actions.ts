@@ -13,6 +13,7 @@ import { conceptPlacementOffset } from '../store/operations.ts'
 import { connectActionChannel } from './action-channel.ts'
 import { loadPluginFrame } from './frame.ts'
 import { createPluginFiles } from './files.ts'
+import { renderViewImage } from './images.ts'
 import type { createPluginEntry } from './entry.ts'
 
 export type ActionPackage = {
@@ -100,6 +101,8 @@ export function loadActions(
           },
           {
             theme: panel ? theme : undefined,
+            renderImage: (viewId, options, signal) =>
+              renderViewImage(store, viewId, options, signal),
             files: {
               open: (options) => files.open(options),
               save: (options) => files.save(options),
