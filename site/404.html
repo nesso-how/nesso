@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="{{lang}}">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="robots" content="noindex" />
+    <title>{{notFoundTitle}} — Nesso</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <style>
+      {{styles}}
+    </style>
+  </head>
+  <body>
+    <main class="container not-found">
+      <a class="brand" href="{{pagePath}}" aria-label="{{home}}"
+        ><img class="brand-mark" src="/favicon.svg" alt="" width="28" height="28" /><span
+          class="wordmark"
+          >nesso<span class="cursor" aria-hidden="true"></span></span
+      ></a>
+      <p class="eyebrow">404</p>
+      <h1>{{notFoundTitle}}</h1>
+      <p>{{notFoundDescription}}</p>
+      <a class="button button-primary" href="{{pagePath}}">{{backHome}}</a>
+      <nav class="language-switcher mono" aria-label="{{language}}">{{languageLinks}}</nav>
+    </main>
+  </body>
+</html>

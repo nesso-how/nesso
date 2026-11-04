@@ -139,7 +139,7 @@
   "pluginActionFailedDescription": "{{name}} 无法完成此操作。请重试。",
   "pluginActionConflictDescription": "文档已更改，{{name}} 无法应用本次提交的修改。请重新运行此操作。",
   "about": "关于",
-  "aboutDescription": "一款本地优先的桌面应用，通过个人知识图谱连接想法、加深理解。",
+  "aboutDescription": "一款本地优先的桌面学习应用，个人知识图谱随你一同成长。",
   "aboutWebsite": "网站",
   "aboutDiscussions": "讨论",
   "discoverNesso": "了解 Nesso",
