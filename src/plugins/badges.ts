@@ -5,6 +5,7 @@ import {
 } from '@nesso-how/plugin/runtime'
 import type { HostStore } from '../store/types.ts'
 import { materialize } from '../store/operations.ts'
+import { sameIds } from '../store/delta.ts'
 import type { createPluginRegistry, PluginEntry } from './registry.ts'
 
 type ActionPlugin = Extract<PluginEntry, { kind: 'actions' }>
@@ -18,6 +19,7 @@ type Badge = {
   started: number
 }
 const key = (actionId: string, viewId: string | null) => JSON.stringify([actionId, viewId])
+const cacheLimit = 64
 
 export function createActionBadges(
   store: HostStore,
@@ -48,10 +50,14 @@ export function createActionBadges(
   const publish = (badge: Badge) => {
     for (const listener of badge.listeners) listener()
   }
-  const invalidate = (matches: (badge: Badge) => boolean) => {
-    for (const badge of badges.values()) {
+  const invalidate = (matches: (badge: Badge) => boolean, keepValue = false) => {
+    for (const [id, badge] of badges) {
       if (!matches(badge)) continue
-      badge.value = null
+      if (!badge.listeners.size) {
+        badges.delete(id)
+        continue
+      }
+      if (!keepValue || !current(badge)) badge.value = null
       badge.refreshAt = 0
       if (running?.badge === badge) running.controller.abort()
       publish(badge)
@@ -61,6 +67,7 @@ export function createActionBadges(
   const current = (badge: Badge) => {
     const state = store.getState()
     return (
+      badge.listeners.size > 0 &&
       pluginFor(badge.actionId) &&
       (badge.viewId === null || state.workspace.savedViews.some(({ id }) => id === badge.viewId))
     )
@@ -125,21 +132,28 @@ export function createActionBadges(
     const state = store.getState()
     const documentChanged =
       state.documentId !== previous.documentId || state.documentEpoch !== previous.documentEpoch
-    const graphChanged =
-      state.graph !== previous.graph || state.workspace.savedViews !== previous.workspace.savedViews
-    invalidate(
-      (badge) =>
-        documentChanged ||
-        graphChanged ||
+    const graphChanged = state.graph !== previous.graph
+    const viewsChanged = state.workspace.savedViews !== previous.workspace.savedViews
+    invalidate((badge) => {
+      if (documentChanged || graphChanged) return true
+      if (viewsChanged && badge.viewId !== null) {
+        const next = state.workspace.savedViews.find(({ id }) => id === badge.viewId)
+        const before = previous.workspace.savedViews.find(({ id }) => id === badge.viewId)
+        if (!next || !before || !sameIds(next.conceptIds, before.conceptIds)) return true
+      }
+      return (
         state.pluginStorage.find(({ pluginId }) => pluginId === badge.pluginId) !==
-          previous.pluginStorage.find(({ pluginId }) => pluginId === badge.pluginId),
-    )
+        previous.pluginStorage.find(({ pluginId }) => pluginId === badge.pluginId)
+      )
+    }, !documentChanged)
     previous = state
   })
   const unsubscribeRegistry = registry.subscribe(() => invalidate(() => true))
   return {
-    getValue: (actionId: string, viewId: string | null) =>
-      badges.get(key(actionId, viewId))?.value ?? null,
+    getValue: (actionId: string, viewId: string | null) => {
+      const badge = badges.get(key(actionId, viewId))
+      return badge && (badge.listeners.size || badge.refreshAt > Date.now()) ? badge.value : null
+    },
     watch(actionId: string, viewId: string | null, listener: () => void) {
       const plugin = pluginFor(actionId)
       if (!plugin) return () => {}
@@ -153,14 +167,23 @@ export function createActionBadges(
         refreshAt: 0,
         started: -Infinity,
       }
+      if (!entry.listeners.size && entry.refreshAt <= Date.now()) entry.value = null
       badges.set(id, entry)
       entry.listeners.add(listener)
       schedule()
       return () => {
         entry.listeners.delete(listener)
-        if (!entry.listeners.size) {
+        if (!entry.listeners.size && badges.get(id) === entry) {
+          if (running?.badge === entry) {
+            running.controller.abort()
+            entry.refreshAt = 0
+          }
           badges.delete(id)
-          if (running?.badge === entry) running.controller.abort()
+          if (entry.refreshAt > Date.now()) badges.set(id, entry)
+          for (const [cachedId, cached] of badges) {
+            if (badges.size <= cacheLimit) break
+            if (!cached.listeners.size) badges.delete(cachedId)
+          }
         }
         schedule()
       }
@@ -168,7 +191,10 @@ export function createActionBadges(
     invalidatePlugin: (pluginId: string) => invalidate((badge) => badge.pluginId === pluginId),
     setForeground(visible: boolean) {
       foreground = visible
-      invalidate((badge) => (visible ? badge.refreshAt <= Date.now() : running?.badge === badge))
+      invalidate(
+        (badge) => (visible ? badge.refreshAt <= Date.now() : running?.badge === badge),
+        true,
+      )
     },
     dispose() {
       foreground = false
