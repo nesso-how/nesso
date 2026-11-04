@@ -36,6 +36,7 @@ export type HostOperation =
       readonly kind: 'preferences.disabledBundledActionPlugins'
       readonly value: readonly string[]
     }
+  | { readonly kind: 'preferences.canvasTabOrder.append'; readonly ids: readonly string[] }
   | {
       readonly kind: 'preferences.inspectorTab'
       readonly value: NonNullable<Preferences['inspectorTab']>

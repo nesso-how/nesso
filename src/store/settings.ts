@@ -6,6 +6,10 @@ import { NessoError, validationIssues } from '@nesso-how/errors'
 import { sectionIds } from './types.ts'
 
 export const defaultPanels: PanelSizes = { explorerWidth: 180, inspectorWidth: 210 }
+export const defaultCanvasTabOrder: readonly string[] = [
+  '@nesso-how/notes:notes',
+  '@nesso-how/review:review',
+]
 export const panelLimits = {
   explorerWidth: { min: 180, max: 480 },
   inspectorWidth: { min: 200 },
@@ -74,6 +78,10 @@ export const preferencesSchema = z.strictObject({
   disabledBundledActionPlugins: z
     .array(z.string().min(1))
     .refine((ids) => new Set(ids).size === ids.length, 'Duplicate plugin id')
+    .optional(),
+  canvasTabOrder: z
+    .array(z.string().min(1))
+    .refine((ids) => new Set(ids).size === ids.length, 'Duplicate tab id')
     .optional(),
   activeVocabId: z.string(),
   activeRendererId: z.string(),

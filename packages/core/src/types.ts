@@ -118,6 +118,7 @@ export type Preferences = {
   readonly introSeen?: boolean
   readonly mcpEnabled?: boolean
   readonly disabledBundledActionPlugins?: readonly string[]
+  readonly canvasTabOrder?: readonly string[]
   readonly activeVocabId: string
   readonly activeRendererId: string
   readonly activeThemeId: string

@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { iriSchema, newIri } from '@nesso-how/schema'
 import { checkMessageSize, pluginStorageLimits } from '@nesso-how/plugin/runtime'
-import { fail, parseSettings, preferencesSchema } from './settings.ts'
+import { defaultCanvasTabOrder, fail, parseSettings, preferencesSchema } from './settings.ts'
 
 const documentV1 = z.strictObject({
   version: z.literal(1),
@@ -17,19 +17,28 @@ const documentV2 = z.strictObject({
 const versionSchema = z.object({ version: z.number().int().positive() })
 const preferencesV1 = z.strictObject({
   version: z.literal(1),
-  preferences: preferencesSchema.omit({ disabledBundledActionPlugins: true }),
+  preferences: preferencesSchema.omit({ disabledBundledActionPlugins: true, canvasTabOrder: true }),
 })
-const preferencesV2 = z.strictObject({ version: z.literal(2), preferences: preferencesSchema })
+const preferencesV2 = z.strictObject({
+  version: z.literal(2),
+  preferences: preferencesSchema.omit({ canvasTabOrder: true }),
+})
+const preferencesV3 = z.strictObject({ version: z.literal(3), preferences: preferencesSchema })
 
-export function migratePreferences(value: unknown): z.infer<typeof preferencesV2> {
+export function migratePreferences(value: unknown): z.infer<typeof preferencesV3> {
   const { version } = parseSettings(versionSchema, value)
   switch (version) {
-    case 1: {
-      const saved = parseSettings(preferencesV1, value)
-      return { ...saved, version: 2 }
+    case 1:
+      return migratePreferences({ ...parseSettings(preferencesV1, value), version: 2 })
+    case 2: {
+      const saved = parseSettings(preferencesV2, value)
+      return {
+        version: 3,
+        preferences: { ...saved.preferences, canvasTabOrder: [...defaultCanvasTabOrder] },
+      }
     }
-    case 2:
-      return parseSettings(preferencesV2, value)
+    case 3:
+      return parseSettings(preferencesV3, value)
     default:
       return fail('version', 'Unsupported preferences version')
   }

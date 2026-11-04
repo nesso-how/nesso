@@ -189,7 +189,7 @@ export const connectPersistence = (
                   workspace: state.workspace,
                 }
               : section === 'preferences'
-                ? { version: 2, preferences: state.preferences }
+                ? { version: 3, preferences: state.preferences }
                 : section === 'conversation'
                   ? { version: 1, messages: state.conversation.messages }
                   : { version: 2, documentId: state.documentId, plugins: state.pluginStorage }

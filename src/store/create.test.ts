@@ -1513,6 +1513,33 @@ test('UI and viewport writes own their inputs, ignore no-ops and reject invalid 
   )
 })
 
+test('canvas tab order starts with bundled tabs, appends only unseen ids and ignores no-ops', () => {
+  const host = createNessoStore(fixture())
+  const bundled = ['@nesso-how/notes:notes', '@nesso-how/review:review']
+  assert.deepEqual(host.store.getState().preferences.canvasTabOrder, bundled)
+  const ids = ['@nesso-how/review:review', 'example:quiz', 'example:quiz', 'other:map']
+  host.store.applyOperations([{ kind: 'preferences.canvasTabOrder.append', ids }])
+  ids.push('late:tab')
+  const state = host.store.getState()
+  assert.deepEqual(state.preferences.canvasTabOrder, [...bundled, 'example:quiz', 'other:map'])
+  let notifications = 0
+  host.store.subscribe(() => notifications++)
+  host.store.applyOperations([
+    { kind: 'preferences.canvasTabOrder.append', ids: ['other:map', '@nesso-how/notes:notes'] },
+  ])
+  assert.equal(host.store.getState(), state)
+  assert.equal(notifications, 0)
+  for (const invalid of [[''], 'example:quiz' as never]) {
+    assert.throws(
+      () =>
+        host.store.applyOperations([{ kind: 'preferences.canvasTabOrder.append', ids: invalid }]),
+      NessoError,
+    )
+    assert.equal(host.store.getState(), state)
+  }
+  assert.equal(host.store.getState().history.canUndo, false)
+})
+
 test('theme registration and activation are validated, isolated, and leave the document untouched', () => {
   const host = createNessoStore(fixture())
   const other = createNessoStore(fixture())

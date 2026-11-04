@@ -22,8 +22,8 @@ import { GraphWorkspace } from '@/components/app/GraphWorkspace'
 import { useAppCommands } from '@/app-commands'
 import { PluginApprovalDialog } from '@/components/app/PluginApprovalDialog'
 import { UpdateBar } from '@/components/app/UpdateBar'
-import { PluginPanel, PluginContent } from '@/components/app/PluginPanel'
-import { pluginPanel as activePluginPanel, canvasTabActionIds, usePluginPanel } from '@/plugins'
+import { PluginContent } from '@/components/app/PluginPanel'
+import { pluginPanel as activePluginPanel, openCanvasTabAt, usePluginPanel } from '@/plugins'
 import { ViewHeader } from '@/components/app/ViewHeader'
 import { SearchDialog } from '@/components/app/SearchDialog'
 import { openSearchResult } from '@/graph/search'
@@ -45,9 +45,6 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
   const canvas = useRef<HTMLDivElement>(null)
   const renderer = useRef<ConceptMapHandle>(null)
   const pluginPanel = usePluginPanel()
-  const tabbedPanel =
-    pluginPanel && canvasTabActionIds.includes(pluginPanel.actionId) ? pluginPanel : null
-  const overlayPanel = pluginPanel && !tabbedPanel
   const readonly = useMediaQuery('(max-width: 767px)')
   const deleteView = () => {
     const { workspace } = host.store.getState()
@@ -76,6 +73,7 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
     focusRef: canvas,
     openSettings: openSettingsPage,
     openSearch,
+    openTab: openCanvasTabAt,
   })
   const openSettings = () => openSettingsPage('general')
   const finishIntro = () => {
@@ -94,35 +92,28 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
             {!readonly && <AppSidebar onOpenSettings={openSettings} onOpenSearch={openSearch} />}
             <SidebarInset className="relative min-w-0 overflow-hidden">
               <div className="flex min-h-0 flex-1">
-                <div id="canvas" className="relative min-h-0 min-w-0 flex-1">
-                  <div
-                    className="flex h-full w-full flex-col"
-                    style={{ contentVisibility: overlayPanel ? 'hidden' : undefined }}
-                    inert={!!overlayPanel}
-                  >
-                    <ViewHeader readonly={readonly} />
-                    <div className="relative min-h-0 flex-1">
-                      <div
-                        className="h-full"
-                        style={{ contentVisibility: tabbedPanel ? 'hidden' : undefined }}
-                        inert={!!tabbedPanel}
-                      >
-                        <GraphWorkspace
-                          ref={renderer}
-                          store={host.store}
-                          suspended={!!pluginPanel}
-                          onDeleteView={deleteView}
-                          focusRef={canvas}
-                        />
-                      </div>
-                      {tabbedPanel && (
-                        <div className="absolute inset-0 flex flex-col">
-                          <PluginContent panel={tabbedPanel} canvas={canvas} />
-                        </div>
-                      )}
+                <div id="canvas" className="relative flex min-h-0 min-w-0 flex-1 flex-col">
+                  <ViewHeader readonly={readonly} />
+                  <div className="relative min-h-0 flex-1">
+                    <div
+                      className="h-full"
+                      style={{ contentVisibility: pluginPanel ? 'hidden' : undefined }}
+                      inert={!!pluginPanel}
+                    >
+                      <GraphWorkspace
+                        ref={renderer}
+                        store={host.store}
+                        suspended={!!pluginPanel}
+                        onDeleteView={deleteView}
+                        focusRef={canvas}
+                      />
                     </div>
+                    {pluginPanel && (
+                      <div className="absolute inset-0 flex flex-col">
+                        <PluginContent panel={pluginPanel} />
+                      </div>
+                    )}
                   </div>
-                  <PluginPanel canvas={canvas} />
                 </div>
                 {!readonly && (
                   <SidePanel

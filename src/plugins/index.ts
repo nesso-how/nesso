@@ -1,5 +1,5 @@
-import { useCallback, useSyncExternalStore } from 'react'
-import { host, nessoStore, registerTheme, registerVocab } from '@/store'
+import { useCallback, useMemo, useSyncExternalStore } from 'react'
+import { host, nessoStore, registerTheme, registerVocab, useNessoStore } from '@/store'
 import type { VocabDefinition } from '@nesso-how/core'
 import type { ThemeDefinition } from '@nesso-how/plugin'
 import {
@@ -30,11 +30,11 @@ import { createPluginPanel } from './panel.ts'
 import { createActionBadges } from './badges.ts'
 import { executeActionBadge } from './badge-execution.ts'
 import { createPluginEntry } from './entry.ts'
+import { canvasTabs } from './canvas-tabs.ts'
 
 export const pluginPanel = createPluginPanel(nessoStore, notifications.api, window.nessoFiles)
 export const usePluginPanel = () =>
   useSyncExternalStore(pluginPanel.subscribe, pluginPanel.getSnapshot)
-export const canvasTabActionIds: readonly string[] = ['notes', 'review']
 
 const themes = new Map<string, ThemePresentation>()
 const actions = new Map<string, ActionPackage>()
@@ -52,6 +52,14 @@ const publishActions = () => {
 const installations = new Map<string, AbortController>()
 const changing = new Set<string>()
 const registry = createPluginRegistry()
+registry.subscribe(() => {
+  const order = nessoStore.getState().preferences.canvasTabOrder ?? []
+  const ids = canvasTabs(registry.getSnapshot()).map(({ key }) => key)
+  if (!ids.some((id) => !order.includes(id))) return
+  try {
+    nessoStore.applyOperations([{ kind: 'preferences.canvasTabOrder.append', ids }])
+  } catch {}
+})
 const bundledActions = [
   { source: exportPackage, id: 'export' },
   { source: importPackage, id: 'import' },
@@ -96,7 +104,25 @@ export const usePluginActionsRunning = (name: string) =>
     [...active].some(([controller, source]) => source === name && !controller.signal.aborted),
   )
 export const useViewActions = () =>
-  usePlugins().flatMap((plugin) => (plugin.kind === 'actions' ? plugin.contribution : []))
+  usePlugins().flatMap((plugin) =>
+    plugin.kind === 'actions' ? plugin.contribution.filter(({ ui }) => !ui) : [],
+  )
+export const useCanvasTabs = () => {
+  const plugins = usePlugins()
+  const order = useNessoStore((state) => state.preferences.canvasTabOrder)
+  return useMemo(() => canvasTabs(plugins, order), [plugins, order])
+}
+export const openCanvasTab = (actionId: string | null) => {
+  if (actionId === null) pluginPanel.close()
+  else if (pluginPanel.getSnapshot()?.actionId !== actionId) void invokeAction(actionId)
+}
+export const openCanvasTabAt = (index: number) => {
+  if (index === 0) return openCanvasTab(null)
+  const tab = canvasTabs(registry.getSnapshot(), nessoStore.getState().preferences.canvasTabOrder)[
+    index - 1
+  ]
+  if (tab) openCanvasTab(tab.id)
+}
 export const pluginMetadata = (plugin: Pick<PluginEntry, 'i18n'>, locale: Locale) => ({
   name: resolvePluginText(plugin.i18n.metadata.name, locale),
   description: resolvePluginText(plugin.i18n.metadata.description, locale),
