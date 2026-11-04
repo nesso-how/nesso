@@ -33,6 +33,10 @@ export type HostOperation =
   | { readonly kind: 'preferences.intro-seen' }
   | { readonly kind: 'preferences.mcpEnabled'; readonly value: boolean }
   | {
+      readonly kind: 'preferences.disabledBundledActionPlugins'
+      readonly value: readonly string[]
+    }
+  | {
       readonly kind: 'preferences.inspectorTab'
       readonly value: NonNullable<Preferences['inspectorTab']>
     }

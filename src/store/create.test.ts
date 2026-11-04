@@ -945,6 +945,9 @@ test('invalid state batches reject every preceding change without notification',
     { kind: 'preferences.locale', value: 'fr' as never },
     { kind: 'preferences.mcpEnabled', value: 'true' as never },
     { kind: 'preferences.mcpEnabled', value: undefined as never },
+    { kind: 'preferences.disabledBundledActionPlugins', value: 'notes' as never },
+    { kind: 'preferences.disabledBundledActionPlugins', value: [''] },
+    { kind: 'preferences.disabledBundledActionPlugins', value: ['notes', 'notes'] },
     { kind: 'document.reset', id: '' },
     { kind: 'concept.position', id: 'urn:n1', value: { x: NaN, y: 0 } },
   ]
@@ -1447,17 +1450,23 @@ test('UI and viewport writes own their inputs, ignore no-ops and reject invalid 
   const conceptIds = ['urn:n1', 'urn:n2']
   const panels = { explorerWidth: 300, inspectorWidth: 350 }
   const viewport = { x: 100, y: -200, zoom: 0.8 }
+  const disabled = ['@nesso-how/notes']
   const viewId = host.store.createView('Pair', conceptIds)
   host.store.setPanelSizes(panels)
   host.store.setViewport('graph', viewport)
+  host.store.applyOperations([
+    { kind: 'preferences.disabledBundledActionPlugins', value: disabled },
+  ])
   conceptIds.push('urn:n3')
   panels.explorerWidth = NaN
   viewport.x = NaN
+  disabled.push('@nesso-how/review')
   const state = host.store.getState()
   assert.equal(state.graph, graph)
   assert.deepEqual(state.workspace.savedViews[0].conceptIds, ['urn:n1', 'urn:n2'])
   assert.deepEqual(state.workspace.viewports.graph, { x: 100, y: -200, zoom: 0.8 })
   assert.deepEqual(state.preferences.panels, { explorerWidth: 300, inspectorWidth: 350 })
+  assert.deepEqual(state.preferences.disabledBundledActionPlugins, ['@nesso-how/notes'])
   let notifications = 0
   host.store.subscribe(() => notifications++)
   host.store.setViewMembership(viewId, 'urn:n1', true)
@@ -1465,6 +1474,9 @@ test('UI and viewport writes own their inputs, ignore no-ops and reject invalid 
   host.store.setView(viewId)
   host.store.setPanelSizes({ explorerWidth: 300, inspectorWidth: 350 })
   host.store.setViewport('graph', { x: 100, y: -200, zoom: 0.8 })
+  host.store.applyOperations([
+    { kind: 'preferences.disabledBundledActionPlugins', value: ['@nesso-how/notes'] },
+  ])
   assert.equal(host.store.getState(), state)
   assert.equal(notifications, 0)
   const writes = [

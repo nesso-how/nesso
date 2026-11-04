@@ -71,6 +71,10 @@ export const preferencesSchema = z.strictObject({
   locale: z.custom<NonNullable<Preferences['locale']>>(isLocale, 'Unsupported locale').optional(),
   introSeen: z.boolean().optional(),
   mcpEnabled: z.boolean().optional(),
+  disabledBundledActionPlugins: z
+    .array(z.string().min(1))
+    .refine((ids) => new Set(ids).size === ids.length, 'Duplicate plugin id')
+    .optional(),
   activeVocabId: z.string(),
   activeRendererId: z.string(),
   activeThemeId: z.string().default(''),

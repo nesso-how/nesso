@@ -23,6 +23,7 @@ test('manual backups round-trip every record, exclude device secrets and bind co
   host.store.setChatMessages([{ id: 'question', role: 'user', content: 'Remember this' }])
   const initial = host.store.getState()
   host.store.applyOperations([
+    { kind: 'preferences.disabledBundledActionPlugins', value: ['@nesso-how/review'] },
     {
       kind: 'plugin-storage.set',
       pluginId: '@nesso-how/review',
@@ -57,6 +58,7 @@ test('manual backups round-trip every record, exclude device secrets and bind co
     { ...backup, version: 2 },
     { ...backup, records: { ...backup.records, preferences: undefined } },
     { ...backup, records: { ...backup.records, document: { version: 99 } } },
+    { ...backup, records: { ...backup.records, preferences: { version: 99 } } },
   ])
     await assert.rejects(parseBackup(value), /backupInvalid|backupUnsupported/)
   const orphan = structuredClone(backup) as Backup & {
@@ -85,6 +87,8 @@ test('migration backups preserve all original records and restore through the ma
   const document = (await storage.read('document')) as { graph: unknown; workspace: unknown }
   const legacy = { version: 1, graph: document.graph, workspace: document.workspace }
   await storage.write('document', legacy)
+  const preferences = (await storage.read('preferences')) as { preferences: unknown }
+  await storage.write('preferences', { version: 1, preferences: preferences.preferences })
   const originals = Object.fromEntries(
     await Promise.all(
       persistenceSections.map(async (section) => [section, (await storage.read(section)) ?? null]),
@@ -118,6 +122,10 @@ test('migration backups preserve all original records and restore through the ma
   const manual = createBackups(() => directory, '1.0.0-alpha.34')
   const candidate = await manual.choose(1, file)
   const restored = manual.take(1, candidate.id)
+  assert.deepEqual(restored.records.preferences, {
+    version: 2,
+    preferences: preferences.preferences,
+  })
   await storage.write('plugin-storage', { version: 1, documentId: loaded.documentId, plugins: [] })
   await createRecordReplacement(() => directory).replace(restored.records)
   const result = await loadPersistence(storage)

@@ -52,6 +52,12 @@ const publishActions = () => {
 const installations = new Map<string, AbortController>()
 const changing = new Set<string>()
 const registry = createPluginRegistry()
+const bundledActions = [
+  { source: exportPackage, id: 'export' },
+  { source: importPackage, id: 'import' },
+  { source: reviewPackage, id: 'review' },
+  { source: notesPackage, id: 'notes' },
+]
 const actionBadges = createActionBadges(nessoStore, registry, (plugin, actionId, input, signal) => {
   const source = actions.get(plugin.id)
   if (!source || changing.has(plugin.id))
@@ -104,7 +110,7 @@ export const stopPluginActions = () => {
     window.nessoPlugins?.cancel(id)
   }
 }
-export const stopExternalActions = (name: string) => {
+export const stopActionsForPlugin = (name: string) => {
   actionBadges.invalidatePlugin(name)
   let stopped = 0
   for (const [controller, source] of active)
@@ -348,7 +354,7 @@ export async function initializeExternalPlugins(signal: AbortSignal) {
           ])
         changing.add(entry.id)
         locked = true
-        stopExternalActions(entry.id)
+        stopActionsForPlugin(entry.id)
         result(await bridge.settle(event.id, event.package.contentId, true))
         publish(
           [...registry.getSnapshot().filter((previous) => previous.id !== entry.id), entry],
@@ -370,32 +376,51 @@ export async function initializeExternalPlugins(signal: AbortSignal) {
   }
 }
 
-export async function setExternalPluginEnabled(contentId: string, enabled: boolean) {
-  const entry = registry.getSnapshot().find((plugin) => plugin.contentId === contentId)
+export async function setPluginEnabled(target: PluginEntry, enabled: boolean) {
+  const entry = registry
+    .getSnapshot()
+    .find((plugin) => plugin.id === target.id && plugin.contentId === target.contentId)
   const bridge = window.nessoPlugins
-  if (!entry || !bridge || changing.size) return
+  const bundled = bundledActions.find(({ source }) => source.name === target.id)
+  if (!entry || changing.size || (entry.contentId ? !bridge : !bundled)) return
   changing.add(entry.id)
-  stopExternalActions(entry.id)
+  stopActionsForPlugin(entry.id)
   const controller = new AbortController()
   try {
-    const prepared = result(await bridge.list()).packages.find(
-      (record) => record.contentId === contentId,
-    )
-    if (!prepared)
-      throw new PluginError('stale-state', [
-        { path: 'plugins', message: 'Installed package changed' },
+    let discovered: DiscoveredPlugin
+    if (entry.contentId && bridge) {
+      const prepared = result(await bridge.list()).packages.find(
+        (record) => record.contentId === entry.contentId,
+      )
+      if (!prepared)
+        throw new PluginError('stale-state', [
+          { path: 'plugins', message: 'Installed package changed' },
+        ])
+      const loaded = enabled
+        ? await discoverExternal({ ...prepared, enabled }, controller.signal, [], entry.contentId)
+        : undefined
+      const record = result(await bridge.setEnabled(entry.contentId, enabled))
+      discovered = loaded ?? { entry: externalEntry(record) }
+    } else {
+      discovered = await discoverBundledActions(bundled!, enabled)
+      registry.check(
+        registry
+          .getSnapshot()
+          .map((previous) => (previous.id === entry.id ? discovered.entry : previous)),
+      )
+      const disabled = nessoStore.getState().preferences.disabledBundledActionPlugins ?? []
+      nessoStore.applyOperations([
+        {
+          kind: 'preferences.disabledBundledActionPlugins',
+          value: [...disabled.filter((id) => id !== entry.id), ...(enabled ? [] : [entry.id])],
+        },
       ])
-    const discovered = enabled
-      ? await discoverExternal({ ...prepared, enabled }, controller.signal, [], contentId)
-      : undefined
-    const record = result(await bridge.setEnabled(contentId, enabled))
+    }
     publish(
       registry
         .getSnapshot()
-        .map((previous) =>
-          previous.id === entry.id ? (discovered?.entry ?? externalEntry(record)) : previous,
-        ),
-      discovered ? [discovered] : [],
+        .map((previous) => (previous.id === entry.id ? discovered.entry : previous)),
+      [discovered],
     )
     return true
   } catch {
@@ -418,7 +443,7 @@ export async function removeExternalPlugin(contentId: string) {
   const entry = registry.getSnapshot().find((plugin) => plugin.contentId === contentId)
   if (!entry || !window.nessoPlugins || changing.size) return
   changing.add(entry.id)
-  stopExternalActions(entry.id)
+  stopActionsForPlugin(entry.id)
   try {
     result(await window.nessoPlugins.remove(contentId))
     publish(registry.getSnapshot().filter((plugin) => plugin.contentId !== contentId))
@@ -435,6 +460,40 @@ export async function removeExternalPlugin(contentId: string) {
     return false
   } finally {
     changing.delete(entry.id)
+  }
+}
+
+async function discoverBundledActions(
+  { source, id }: (typeof bundledActions)[number],
+  enabled: boolean,
+): Promise<DiscoveredPlugin> {
+  const manifest = parsePluginManifest(source.nesso)
+  if (manifest.kind !== 'actions')
+    throw new PluginError('invalid-input', [
+      { path: 'manifest.kind', message: 'Expected an action package' },
+    ])
+  const i18n = parsePluginI18n(source.i18n)
+  const packageEntry: ActionPackage = {
+    name: source.name,
+    entry: createPluginEntry(`preinstalled/${id}/index.js`),
+    manifest,
+    i18n,
+  }
+  const contribution = enabled ? await loadActions(nessoStore, packageEntry, notifications.api) : []
+  const { author, repository } = parsePackageIdentity(source)
+  return {
+    entry: {
+      id: source.name,
+      version: source.version,
+      author,
+      repository,
+      kind: 'actions',
+      i18n,
+      access: { writes: manifest.writes, capabilities: manifest.capabilities },
+      disabled: !enabled,
+      contribution,
+    },
+    source: enabled ? packageEntry : undefined,
   }
 }
 
@@ -501,41 +560,14 @@ export async function initializeBundledPlugins() {
     if (entry.kind === 'theme' && entry.contribution) registerTheme(entry.contribution)
     if (entry.kind === 'vocab' && entry.contribution) registerVocab(entry.contribution)
   }
+  const disabled = nessoStore.getState().preferences.disabledBundledActionPlugins ?? []
   const commands = await Promise.all(
-    [
-      { source: exportPackage, id: 'export' },
-      { source: importPackage, id: 'import' },
-      { source: reviewPackage, id: 'review' },
-      { source: notesPackage, id: 'notes' },
-    ].map(async ({ source, id }): Promise<PluginEntry> => {
-      const manifest = parsePluginManifest(source.nesso)
-      if (manifest.kind !== 'actions')
-        throw new PluginError('invalid-input', [
-          { path: 'manifest.kind', message: 'Expected an action package' },
-        ])
-      const i18n = parsePluginI18n(source.i18n)
-      const packageEntry = {
-        name: source.name,
-        entry: createPluginEntry(`preinstalled/${id}/index.js`),
-        manifest,
-        i18n,
-      }
-      const descriptors = await loadActions(nessoStore, packageEntry, notifications.api)
-      actions.set(source.name, packageEntry)
-      const { author, repository } = parsePackageIdentity(source)
-      return {
-        id: source.name,
-        version: source.version,
-        author,
-        repository,
-        kind: 'actions',
-        i18n,
-        access: { writes: manifest.writes, capabilities: manifest.capabilities },
-        contribution: descriptors,
-      }
-    }),
+    bundledActions.map((bundled) =>
+      discoverBundledActions(bundled, !disabled.includes(bundled.source.name)),
+    ),
   )
-  registry.replace([...entries, ...commands])
+  for (const { entry, source } of commands) if (source) actions.set(entry.id, source)
+  registry.replace([...entries, ...commands.map(({ entry }) => entry)])
 }
 
 export async function invokeAction(

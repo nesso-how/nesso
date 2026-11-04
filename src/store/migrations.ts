@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { iriSchema, newIri } from '@nesso-how/schema'
 import { checkMessageSize, pluginStorageLimits } from '@nesso-how/plugin/runtime'
-import { fail, parseSettings } from './settings.ts'
+import { fail, parseSettings, preferencesSchema } from './settings.ts'
 
 const documentV1 = z.strictObject({
   version: z.literal(1),
@@ -15,6 +15,25 @@ const documentV2 = z.strictObject({
   workspace: z.unknown(),
 })
 const versionSchema = z.object({ version: z.number().int().positive() })
+const preferencesV1 = z.strictObject({
+  version: z.literal(1),
+  preferences: preferencesSchema.omit({ disabledBundledActionPlugins: true }),
+})
+const preferencesV2 = z.strictObject({ version: z.literal(2), preferences: preferencesSchema })
+
+export function migratePreferences(value: unknown): z.infer<typeof preferencesV2> {
+  const { version } = parseSettings(versionSchema, value)
+  switch (version) {
+    case 1: {
+      const saved = parseSettings(preferencesV1, value)
+      return { ...saved, version: 2 }
+    }
+    case 2:
+      return parseSettings(preferencesV2, value)
+    default:
+      return fail('version', 'Unsupported preferences version')
+  }
+}
 
 const pluginStorageV1 = z.strictObject({
   version: z.literal(1),

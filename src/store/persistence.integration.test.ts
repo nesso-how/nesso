@@ -77,7 +77,7 @@ const savedStorage = () => {
     graph: serializeGraph(state.graph as Graph),
     workspace: state.workspace,
   })
-  storage.records.set('preferences', { version: 1, preferences: state.preferences })
+  storage.records.set('preferences', { version: 2, preferences: state.preferences })
   storage.records.set('conversation', { version: 1, messages: state.conversation.messages })
   return storage
 }
@@ -171,6 +171,27 @@ test('MCP intent round-trips in preferences without touching document or convers
   const restored = await loadPersistence(storage)
   const reopened = registeredHost(restored.graph!, restored)
   assert.equal(reopened.store.getState().preferences.mcpEnabled, true)
+  await persistence.dispose()
+})
+
+test('version 1 preferences migrate losslessly after preserving originals', async () => {
+  const storage = savedStorage()
+  const current = await loadPersistence(storage)
+  const original = { version: 1, preferences: current.preferences }
+  storage.records.set('preferences', original)
+  const loaded = await loadPersistence(storage)
+  assert.deepEqual(loaded.preferences, current.preferences)
+  assert.equal(loaded.preferences?.disabledBundledActionPlugins, undefined)
+  const host = registeredHost(loaded.graph!, loaded)
+  const persistence = connectPersistence(host, storage, loaded)
+  assert.equal(await persistence.flush(), true)
+  assert.deepEqual(storage.writes, ['preferences'])
+  assert.equal(storage.backups.length, 1)
+  assert.deepEqual(storage.backups[0].get('preferences'), original)
+  assert.deepEqual(storage.records.get('preferences'), {
+    version: 2,
+    preferences: original.preferences,
+  })
   await persistence.dispose()
 })
 
@@ -294,6 +315,9 @@ test('durable state round-trips without rewriting restored records or persisting
   host.store.applyOperations([{ kind: 'preferences.intro-seen' }])
   for (const id of sectionIds) host.store.setSectionOpen(id, false)
   host.store.applyOperations([{ kind: 'preferences.inspectorTab', value: 'chat' }])
+  host.store.applyOperations([
+    { kind: 'preferences.disabledBundledActionPlugins', value: ['@nesso-how/notes'] },
+  ])
   host.store.setViewport('graph', { x: 100, y: 200, zoom: 0.75 })
   host.store.setConceptLabel('urn:one', 'Renamed')
   host.store.setChatMessages([
