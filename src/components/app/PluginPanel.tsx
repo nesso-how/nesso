@@ -56,10 +56,9 @@ export function PluginContent({
         title={title}
         sandbox="allow-scripts"
         referrerPolicy="no-referrer"
-        className="min-h-0 w-full flex-1 border-0 transition-opacity duration-150 motion-reduce:transition-none"
+        className="min-h-0 w-full flex-1 border-0"
         style={{
           visibility: panel.status === 'ready' ? 'visible' : 'hidden',
-          opacity: panel.status === 'ready' ? 1 : 0,
         }}
       />
     </div>
