@@ -54,7 +54,11 @@ export function Practice({
     if (!area) return
     const old = previous.current
     const scrollTop = area.scrollTop
-    if (old?.id !== currentId) area.scrollTop = 0
+    if (old?.id !== currentId) {
+      area.scrollTop = 0
+      const study = area.querySelector('.review-study')
+      if (study) study.scrollTop = 0
+    }
     previous.current = currentId
       ? { id: currentId, content: area.cloneNode(true) as HTMLElement }
       : null

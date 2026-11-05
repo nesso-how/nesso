@@ -24,7 +24,7 @@ export function SidebarProvider({ children, ...props }: ComponentProps<'div'>) {
     >
       <div
         data-slot="sidebar-wrapper"
-        className="flex h-svh w-full flex-col overflow-hidden"
+        className="flex h-dvh w-full flex-col overflow-hidden pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)]"
         {...props}
       >
         {children}

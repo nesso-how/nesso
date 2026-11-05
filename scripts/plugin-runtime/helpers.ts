@@ -84,3 +84,12 @@ export async function waitFor<T>(read: () => Promise<T>, ready: (value: T) => bo
   }
   assert.fail('Plugin runtime check timed out')
 }
+
+export async function panelFrame(window: BrowserWindow, readyScript: string) {
+  const frame = window.webContents.mainFrame.framesInSubtree.find(
+    (frame) => frame.url === 'about:srcdoc',
+  )
+  assert.ok(frame)
+  await waitFor(() => frame.executeJavaScript(readyScript), Boolean)
+  return frame
+}

@@ -12,6 +12,7 @@ export { ContextLabel } from './context-label'
 export { Banner, BannerDetails, BannerRow } from './banner'
 export { ToastViewport, type ToastItem } from './toast'
 export { Dialog, DialogActions, DialogPopup, ConfirmDialog } from './dialog'
+export { BottomSheet } from './sheet'
 export { PromptForm, TextPromptDialog } from './prompt'
 export {
   Field,

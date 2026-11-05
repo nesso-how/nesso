@@ -159,7 +159,15 @@ export function Canvas({
   const [editId, setEditId] = useState<string | null>(null)
   const [focusTarget, setFocusTarget] = useState<string | null>(null)
   useImperativeHandle(ref, () => ({ focusConcept: setFocusTarget }), [])
-  const { fitView, screenToFlowPosition, getNodes, getNodesBounds, setViewport } = useReactFlow()
+  const {
+    fitView,
+    screenToFlowPosition,
+    getNodes,
+    getNodesBounds,
+    setViewport,
+    setCenter,
+    getZoom,
+  } = useReactFlow()
   const userSelecting = useFlowStore((state) => state.userSelectionActive)
   const [sizes, setSizes] = useState<ConceptNodeSizes>({})
   const [contextMenu, setContextMenu] = useState<{
@@ -172,10 +180,9 @@ export function Canvas({
   const [adapt] = useState(createGraphElements)
   const selection = useCallback(
     (value: Selection) => {
-      if (readOnly && !hasOverlay) return
       write([{ kind: 'selection.set', value }])
     },
-    [write, readOnly, hasOverlay],
+    [write],
   )
   const ariaLabelConfig = useMemo(
     () => ({
@@ -255,13 +262,12 @@ export function Canvas({
       kind: 'concept' | 'relation',
       changes: (NodeChange<ConceptNode> | EdgeChange<RelationEdge>)[],
     ) => {
-      if (readOnly && !hasOverlay) return
       const state = store.getState()
       const current = state.selected
       const next = selectionFromChanges(current, kind, changes)
       if (next !== current) selection(next)
     },
-    [readOnly, hasOverlay, store, selection],
+    [store, selection],
   )
 
   const onNodesChange = useCallback(
@@ -544,13 +550,37 @@ export function Canvas({
     if (!focusTarget || !nodesInitialized || !width || !height) return
     const frame = requestAnimationFrame(() => {
       if (graph.concepts.some(({ id }) => id === focusTarget)) {
-        void fitView({ ...animatedFraming, nodes: [{ id: focusTarget }] })
-        canvas.current?.focus()
+        if (bottomInset > 0) {
+          const bounds = getNodesBounds([focusTarget])
+          const zoom = getZoom()
+          void setCenter(
+            bounds.x + bounds.width / 2,
+            bounds.y + bounds.height / 2 + bottomInset / 2 / zoom,
+            { zoom, duration, ease: easeOut, interpolate: 'linear' },
+          )
+        } else {
+          void fitView({ ...animatedFraming, nodes: [{ id: focusTarget }] })
+          canvas.current?.focus()
+        }
       }
       setFocusTarget(null)
     })
     return () => cancelAnimationFrame(frame)
-  }, [focusTarget, nodesInitialized, graph, width, height, fitView, animatedFraming, canvas])
+  }, [
+    focusTarget,
+    nodesInitialized,
+    graph,
+    width,
+    height,
+    fitView,
+    animatedFraming,
+    canvas,
+    bottomInset,
+    getNodesBounds,
+    getZoom,
+    setCenter,
+    duration,
+  ])
 
   useEffect(() => {
     if (!outsideFit.current) return
@@ -693,7 +723,8 @@ export function Canvas({
         nodeTypes={nodeTypes}
         ariaLabelConfig={ariaLabelConfig}
         nodesDraggable={interactive}
-        elementsSelectable={interactive || hasOverlay}
+        elementsSelectable={interactive || hasOverlay || readOnly}
+        defaultEdgeOptions={{ selectable: !readOnly || hasOverlay }}
         nodesConnectable={!!connection || (interactive && (singleSelection || !!reconnectDrag))}
         edgesReconnectable={interactive}
         multiSelectionKeyCode={multiSelectionKeys}

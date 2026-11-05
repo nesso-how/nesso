@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { actionState, waitFor, type CheckContext } from './helpers.ts'
+import { actionState, panelFrame, waitFor, type CheckContext } from './helpers.ts'
 
 export async function verifyNotes({ window, url }: CheckContext) {
   await window.loadURL(url)
@@ -51,18 +51,10 @@ export async function verifyNotes({ window, url }: CheckContext) {
       () => evaluate<number>('window.__notesReady'),
       (ready) => ready === 2,
     )
-    const frame = window.webContents.mainFrame.framesInSubtree.find(
-      (frame) => frame.url === 'about:srcdoc',
-    )!
-    assert.ok(frame)
-    await waitFor(
-      () =>
-        frame.executeJavaScript(
-          `!!document.querySelector('.notes-editor .cm-content, [data-slot="banner"]')`,
-        ),
-      Boolean,
+    return panelFrame(
+      window,
+      `!!document.querySelector('.notes-editor .cm-content, [data-slot="banner"]')`,
     )
-    return frame
   }
   const close = async () => {
     await evaluate(`window.__notesPort.postMessage({type:'close',reason:'Closed'})`)

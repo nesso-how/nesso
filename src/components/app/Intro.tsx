@@ -12,6 +12,8 @@ import { AppSidebar } from './Sidebar'
 import { Inspector } from './Inspector'
 import { GraphWorkspace } from './GraphWorkspace'
 import { ViewHeader } from './ViewHeader'
+import { CompactIntro } from './CompactIntro'
+import { IntroDescription } from './IntroDescription'
 import reviewPackage from '../../../plugins/review/package.json'
 
 const chapters = [
@@ -33,8 +35,12 @@ const reviewTabs = [
 ] as const
 
 export function Intro({ onFinish }: { onFinish: () => void }) {
-  const t = useTranslation()
   const compact = useMediaQuery('(max-width: 767px)')
+  return compact ? <CompactIntro onFinish={onFinish} /> : <DesktopIntro onFinish={onFinish} />
+}
+
+function DesktopIntro({ onFinish }: { onFinish: () => void }) {
+  const t = useTranslation()
   const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale)
   const panels = useNessoStore((state) => state.preferences.panels)
   const vocab = useNessoStore((state) => state.vocabs.find(({ id }) => id === 'base-vocab')!)
@@ -130,7 +136,7 @@ export function Intro({ onFinish }: { onFinish: () => void }) {
                 preview
                 connection={step === 1 && !relation ? introConnection : undefined}
                 showContext={step >= 2}
-                bottomInset={compact ? 0 : bottomInset}
+                bottomInset={bottomInset}
               />
             </div>
             <section
@@ -142,11 +148,7 @@ export function Intro({ onFinish }: { onFinish: () => void }) {
                 <h1 ref={title} id="intro-title" tabIndex={-1}>
                   {t(chapters[step].title)}
                 </h1>
-                <p>
-                  {description
-                    .split('**')
-                    .map((part, index) => (index % 2 ? <strong key={index}>{part}</strong> : part))}
-                </p>
+                <IntroDescription>{description}</IntroDescription>
                 {(step === 1 || step === lastStep) && relationLabel && (
                   <p className="intro-relation">
                     {graph.concepts.find(({ id }) => id === introConnection.source)?.label}

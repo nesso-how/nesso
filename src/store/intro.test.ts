@@ -166,4 +166,7 @@ test('completing the intro selects seed Focus once, then preserves selection', (
   assert.equal(fresh.store.getState().preferences.introSeen, true)
   assert.equal(fresh.store.getState().selected, before.selected)
   assert.equal(fresh.store.getState().graph, before.graph)
+
+  completeIntro(store, false)
+  assert.deepEqual(store.getState().selected, [])
 })

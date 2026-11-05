@@ -39,10 +39,6 @@ export async function verifyIntro({ window, url, name }: CheckContext) {
   )
   assert.equal(await evaluate(`document.querySelectorAll('.intro .react-flow__edge').length`), 0)
 
-  window.setContentSize(390, 844)
-  await ready(
-    `matchMedia('(max-width: 767px)').matches && document.querySelector('.intro-graph').getBoundingClientRect().height===340`,
-  )
   await handle('Connect from Coffee')
   await ready(
     `document.querySelector('[aria-label="Connect to Sleep"]')?.getAttribute('aria-hidden')==='false'`,
@@ -70,23 +66,12 @@ export async function verifyIntro({ window, url, name }: CheckContext) {
     )
   }
   assert.equal(await evaluate(`document.querySelector('#relation-label').value`), '')
-  assert.equal(
-    await evaluate(`document.querySelector('.intro-body').scrollWidth<=innerWidth`),
-    true,
-  )
-  assert.equal(
-    await evaluate(
-      `document.querySelector('.intro-narrative').getBoundingClientRect().top>=document.querySelector('.intro-graph').getBoundingClientRect().bottom`,
-    ),
-    true,
-  )
   await window.webContents.insertText('keeps me awake')
   key('Enter')
   await ready(
     `document.querySelector('.intro-relation')?.textContent==='Coffee · keeps me awake · Sleep'`,
   )
 
-  window.setContentSize(1280, 900)
   await next()
   await title('See it from another angle')
   await ready(`document.querySelectorAll('.intro .react-flow__node').length===4`)

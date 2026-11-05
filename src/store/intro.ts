@@ -14,10 +14,11 @@ export const introConnection = {
 const seedRelationTypeId = 'urn:nesso:example:disrupts'
 export const focusConceptId = 'urn:nesso:example:focus'
 
-export function completeIntro(store: HostStore) {
+export function completeIntro(store: HostStore, selectExample = true) {
   const { graph, preferences } = store.getState()
   const operations: HostOperation[] = [{ kind: 'preferences.intro-seen' }]
-  if (!preferences.introSeen && graph.concepts.some(({ id }) => id === focusConceptId)) {
+  if (!selectExample) operations.push({ kind: 'selection.set', value: [] })
+  else if (!preferences.introSeen && graph.concepts.some(({ id }) => id === focusConceptId)) {
     operations.push({ kind: 'selection.set', value: [{ kind: 'concept', id: focusConceptId }] })
   }
   store.applyOperations(operations)
@@ -75,7 +76,7 @@ export function setIntroStep(store: NessoStore, step: number) {
   ])
 }
 
-export function createIntroStore(locale: Locale, vocab: VocabDefinition) {
+export function createIntroStore(locale: Locale, vocab: VocabDefinition, step = 0) {
   const seed = createSeedDocument(locale)
   const { store, registerVocab } = createNessoStore(
     {
@@ -89,6 +90,6 @@ export function createIntroStore(locale: Locale, vocab: VocabDefinition) {
   )
   registerVocab(vocab)
   store.setLocale(locale)
-  setIntroStep(store, 0)
+  setIntroStep(store, step)
   return store
 }
