@@ -29,50 +29,42 @@ async function share(text: string, copied: string, failed: string) {
 export function ConceptSheet({
   canvas,
   onCover,
-  onNavigate,
 }: {
   canvas: RefObject<HTMLElement | null>
   onCover: (height: number) => void
-  onNavigate: (id: string) => void
 }) {
   const t = useTranslation()
   const selected = useNessoStore((state) => state.selected)
-  const graph = useNessoStore((state) => state.graph)
-  const viewGraph = useNessoStore((state) => state.viewGraph)
+  const graph = useNessoStore((state) => state.viewGraph)
   const vocabs = useNessoStore((state) => state.vocabs)
   const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale)
   const pluginPanel = usePluginPanel()
-  const [initialSelection] = useState(selected)
-  const item =
-    selected !== initialSelection && selected.length === 1 && selected[0].kind === 'concept'
-      ? selected[0]
-      : undefined
-  const concept = item && viewGraph.concepts.find(({ id }) => id === item.id)
+  const item = selected.length === 1 && selected[0].kind === 'concept' ? selected[0] : undefined
+  const concept = item && graph.concepts.find(({ id }) => id === item.id)
   const [shown, setShown] = useState<Concept | undefined>(concept)
   if (concept && concept !== shown) setShown(concept)
   const open = !!concept && !pluginPanel
   const [popup, setPopup] = useState<HTMLDivElement | null>(null)
 
   useLayoutEffect(() => {
-    if (!open || !popup) {
+    const element = canvas.current
+    if (!open || !popup || !element) {
       onCover(0)
       return
     }
     const measure = () => {
-      const bounds = canvas.current?.getBoundingClientRect()
+      const bounds = element.getBoundingClientRect()
       onCover(
-        bounds
-          ? Math.min(
-              bounds.height,
-              Math.max(0, popup.offsetHeight - (window.innerHeight - bounds.bottom)),
-            )
-          : 0,
+        Math.min(
+          bounds.height,
+          Math.max(0, popup.offsetHeight - (window.innerHeight - bounds.bottom)),
+        ),
       )
     }
     measure()
     const observer = new ResizeObserver(measure)
     observer.observe(popup)
-    if (canvas.current) observer.observe(canvas.current)
+    observer.observe(element)
     return () => {
       observer.disconnect()
       onCover(0)
@@ -80,7 +72,7 @@ export function ConceptSheet({
   }, [open, popup, canvas, onCover])
 
   const connections = shown
-    ? viewGraph.relations.filter(
+    ? graph.relations.filter(
         (relation) => relation.source === shown.id || relation.target === shown.id,
       )
     : []
@@ -104,17 +96,19 @@ export function ConceptSheet({
         </span>
       }
       footer={
-        <>
-          <p className="min-w-0 flex-1 text-xs text-muted-foreground">{t('sharePrompt')}</p>
-          <Button
-            variant="outline"
-            className="min-h-11"
-            onClick={() => void share(t('shareText'), t('linkCopied'), t('shareFailed'))}
-          >
-            <Share2 />
-            {t('shareNesso')}
-          </Button>
-        </>
+        !window.nessoMenu && (
+          <>
+            <p className="min-w-0 flex-1 text-xs text-muted-foreground">{t('sharePrompt')}</p>
+            <Button
+              variant="outline"
+              className="min-h-11"
+              onClick={() => void share(t('shareText'), t('linkCopied'), t('shareFailed'))}
+            >
+              <Share2 />
+              {t('shareNesso')}
+            </Button>
+          </>
+        )
       }
     >
       {shown && (
@@ -149,7 +143,7 @@ export function ConceptSheet({
                       <button
                         type="button"
                         className="flex min-h-12 w-full items-center gap-2.5 text-left active:bg-pressed"
-                        onClick={() => onNavigate(otherId)}
+                        onClick={() => host.store.setSelection([{ kind: 'concept', id: otherId }])}
                       >
                         <span className="inline-flex w-28 shrink-0 items-center gap-1.5 font-mono text-[10px] leading-[14px] text-muted-foreground">
                           <Direction aria-hidden="true" className="size-3 shrink-0" />

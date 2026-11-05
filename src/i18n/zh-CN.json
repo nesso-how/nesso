@@ -158,7 +158,6 @@
   "introCompactDescription": "Nesso 是用于学习的知识图谱。从熟悉的**概念**开始，赋予概念之间的**关系**以意义。",
   "introCompactExplore": "轻触概念查看笔记和连接。切换视图获得不同视角，再通过复习检验理解。",
   "introCompactDesktopNote": "此演示在浏览器中运行。使用适用于 macOS、Windows 和 Linux 的 Nesso 编辑图谱。",
-  "compactGraphHint": "轻触概念查看笔记和连接",
   "introSkip": "跳过介绍",
   "introContinue": "继续",
   "introExplore": "探索 Nesso",

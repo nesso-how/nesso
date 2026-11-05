@@ -13,6 +13,7 @@ import { Inspector } from './Inspector'
 import { GraphWorkspace } from './GraphWorkspace'
 import { ViewHeader } from './ViewHeader'
 import { CompactIntro } from './CompactIntro'
+import { IntroDescription } from './IntroDescription'
 import reviewPackage from '../../../plugins/review/package.json'
 
 const chapters = [
@@ -147,11 +148,7 @@ function DesktopIntro({ onFinish }: { onFinish: () => void }) {
                 <h1 ref={title} id="intro-title" tabIndex={-1}>
                   {t(chapters[step].title)}
                 </h1>
-                <p>
-                  {description
-                    .split('**')
-                    .map((part, index) => (index % 2 ? <strong key={index}>{part}</strong> : part))}
-                </p>
+                <IntroDescription>{description}</IntroDescription>
                 {(step === 1 || step === lastStep) && relationLabel && (
                   <p className="intro-relation">
                     {graph.concepts.find(({ id }) => id === introConnection.source)?.label}

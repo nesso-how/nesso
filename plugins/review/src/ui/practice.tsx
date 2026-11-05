@@ -1,4 +1,4 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { Button, Kbd, PluginContent, PluginPage } from '@nesso-how/ui'
 import type { ActionContext, ActionState } from '@nesso-how/plugin'
 import type { Review } from '../scheduler.ts'
@@ -21,7 +21,6 @@ export function Practice({
 }) {
   const snapshot = useSyncExternalStore(review.subscribe, review.getSnapshot)
   const t = messages[state.locale]
-  const answerId = useId()
   const [time, setTime] = useState(() => new Date())
   const heading = useRef<HTMLHeadingElement>(null)
   const reading = useRef<HTMLDivElement>(null)
@@ -161,10 +160,6 @@ export function Practice({
                 <h1 ref={heading} tabIndex={-1}>
                   {current.label}
                 </h1>
-              </div>
-              <div className="review-response">
-                <label htmlFor={answerId}>{t.prompt}</label>
-                <textarea id={answerId} key={current.id} rows={3} readOnly={revealed} />
               </div>
               {revealed ? (
                 <Reference current={current} graph={state.viewGraph} t={t} />

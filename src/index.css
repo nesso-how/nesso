@@ -498,11 +498,11 @@
 }
 .compact-intro-graph {
   height: clamp(220px, 34dvh, 300px);
-  flex-shrink: 0;
+  flex: 1 0 auto;
   border-bottom: 1px solid var(--border);
 }
 .compact-intro-copy {
-  flex: 1;
+  flex-shrink: 0;
   padding: 28px 20px 0;
 }
 .compact-intro-copy h1 {
@@ -736,16 +736,6 @@
 }
 .compact-tab-label {
   white-space: nowrap;
-}
-.compact-graph-hint {
-  position: absolute;
-  inset-inline: 20px;
-  bottom: 16px;
-  color: var(--muted-foreground);
-  font-size: 12px;
-  line-height: 18px;
-  text-align: center;
-  pointer-events: none;
 }
 .concept-sheet-notes.nesso-markdown-input {
   font-size: var(--nesso-reading-font-size);

@@ -159,7 +159,6 @@
   "introCompactDescription": "Nesso is a knowledge graph for learning. Start with familiar **concepts**, then give meaning to the **relations** between them.",
   "introCompactExplore": "Tap a concept to explore its notes and connections. Switch views for another perspective, then test yourself with Review.",
   "introCompactDesktopNote": "This demo runs in your browser. Edit your graph in Nesso for macOS, Windows and Linux.",
-  "compactGraphHint": "Tap a concept to see its notes and connections",
   "introSkip": "Skip intro",
   "introContinue": "Continue",
   "introExplore": "Explore Nesso",

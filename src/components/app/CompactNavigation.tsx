@@ -47,7 +47,7 @@ export function ViewSwitcher() {
           <span className="truncate">{name}</span>
           <ChevronDown aria-hidden="true" />
         </Menu.Trigger>
-        <MenuPopup className="w-[calc(100vw-16px)]">
+        <MenuPopup sideOffset={6} className="w-[calc(100vw-16px)]">
           <Menu.RadioGroup
             value={workspace.activeViewId ?? overview}
             onValueChange={(value: string) => host.store.setView(value === overview ? null : value)}
@@ -75,7 +75,7 @@ export function CanvasTabBar() {
   const viewId = useNessoStore((state) => state.workspace.activeViewId)
   const tabs = useCanvasTabs()
   const panel = usePluginPanel()
-  if (tabs.length === 0) return null
+  if (tabs.length === 0) return <div className="shrink-0 pb-[env(safe-area-inset-bottom,0px)]" />
   const value = tabs.find(({ id }) => id === panel?.actionId)?.id ?? 'graph'
 
   return (

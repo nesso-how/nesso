@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ConceptMapHandle } from '@nesso-how/concept-map'
 import type { SavedView } from '@nesso-how/core'
 import { defaultLocale } from '@nesso-how/i18n'
@@ -30,6 +30,8 @@ import { ConceptSheet } from '@/components/app/ConceptSheet'
 import { SearchDialog } from '@/components/app/SearchDialog'
 import { openSearchResult } from '@/graph/search'
 
+const compactQuery = '(max-width: 767px)'
+
 export default function App({ persistence }: { persistence: ReturnType<typeof startAutosave> }) {
   const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale)
   const t = translate(locale)
@@ -47,7 +49,7 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
   const canvas = useRef<HTMLDivElement>(null)
   const renderer = useRef<ConceptMapHandle>(null)
   const pluginPanel = usePluginPanel()
-  const compact = useMediaQuery('(max-width: 767px)')
+  const compact = useMediaQuery(compactQuery)
   const readonly = compact
   const workspaceRef = useRef<HTMLDivElement>(null)
   const [sheetCover, setSheetCover] = useState(0)
@@ -68,9 +70,14 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
   useEffect(() => {
     document.documentElement.lang = locale
   }, [locale])
-  useLayoutEffect(() => {
-    if (compact) host.store.setSelection([])
-  }, [compact])
+  useEffect(() => {
+    const query = window.matchMedia(compactQuery)
+    const clear = () => {
+      if (query.matches) host.store.setSelection([])
+    }
+    query.addEventListener('change', clear)
+    return () => query.removeEventListener('change', clear)
+  }, [])
   useEffect(() => {
     if (focusedConcept && sheetCover > 0) renderer.current?.focusConcept(focusedConcept)
   }, [focusedConcept, sheetCover])
@@ -125,9 +132,6 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
                         onDeleteView={deleteView}
                         focusRef={canvas}
                       />
-                      {compact && !focusedConcept && (
-                        <p className="compact-graph-hint">{t('compactGraphHint')}</p>
-                      )}
                     </div>
                     {pluginPanel && (
                       <div className="absolute inset-0 flex flex-col">
@@ -174,13 +178,7 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
             </SidebarInset>
           </div>
         )}
-        {compact && !introOpen && (
-          <ConceptSheet
-            canvas={workspaceRef}
-            onCover={setSheetCover}
-            onNavigate={(id) => host.store.setSelection([{ kind: 'concept', id }])}
-          />
-        )}
+        {compact && !introOpen && <ConceptSheet canvas={workspaceRef} onCover={setSheetCover} />}
         <PersistenceBanner persistence={persistence} />
       </SidebarProvider>
       {(compact || !settingsOpen) && <ToastsHost />}

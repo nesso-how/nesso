@@ -724,6 +724,7 @@ export function Canvas({
         ariaLabelConfig={ariaLabelConfig}
         nodesDraggable={interactive}
         elementsSelectable={interactive || hasOverlay || readOnly}
+        defaultEdgeOptions={{ selectable: !readOnly || hasOverlay }}
         nodesConnectable={!!connection || (interactive && (singleSelection || !!reconnectDrag))}
         edgesReconnectable={interactive}
         multiSelectionKeyCode={multiSelectionKeys}

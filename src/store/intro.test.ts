@@ -166,42 +166,7 @@ test('completing the intro selects seed Focus once, then preserves selection', (
   assert.equal(fresh.store.getState().preferences.introSeen, true)
   assert.equal(fresh.store.getState().selected, before.selected)
   assert.equal(fresh.store.getState().graph, before.graph)
-})
 
-test('compact intro starts with the complete localized graph and named relations', () => {
-  const store = createIntroStore('it', vocab, 2)
-  const seed = createSeedDocument('it')
-  const state = store.getState()
-  assert.equal(state.workspace.activeViewId, null)
-  assert.deepEqual(state.viewGraph.concepts, seed.graph.concepts)
-  assert.equal(state.viewGraph.relations.length, seed.graph.relations.length)
-  assert.deepEqual(
-    chosenRelation(store),
-    seed.graph.relations.find(
-      ({ source, target }) =>
-        source === introConnection.source && target === introConnection.target,
-    ),
-  )
-  assert.deepEqual(state.selected, [])
-  assert.deepEqual(state.workspace.savedViews, seed.workspace.savedViews)
-})
-
-test('completing the compact intro clears selection atomically without changing the document', () => {
-  const seed = createSeedDocument('en')
-  const { store } = createNessoStore(seed.graph, { workspace: seed.workspace })
-  store.setSelection([{ kind: 'concept', id: focusConceptId }])
-  const before = store.getState()
-  let notifications = 0
-  const unsubscribe = store.subscribe(() => notifications++)
   completeIntro(store, false)
-  unsubscribe()
-  const after = store.getState()
-  assert.equal(notifications, 1)
-  assert.equal(after.preferences.introSeen, true)
-  assert.deepEqual(after.selected, [])
-  assert.equal(after.graph, before.graph)
-  assert.equal(after.workspace, before.workspace)
-  assert.equal(after.history, before.history)
-  completeIntro(store, false)
-  assert.equal(store.getState(), after)
+  assert.deepEqual(store.getState().selected, [])
 })

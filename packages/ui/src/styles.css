@@ -34,11 +34,6 @@
   @media (pointer: coarse) {
     :root {
       --nesso-panel-bar-height: 52px;
-    }
-  }
-
-  @media (pointer: coarse), (max-width: 767px) {
-    :root {
       --nesso-reading-font-size: 15px;
       --nesso-reading-line-height: 23px;
     }

@@ -151,9 +151,6 @@
   line-height: 1.8;
   margin-top: 16px !important;
 }
-.review-response {
-  display: none;
-}
 .review-reference {
   font-size: 14px;
   line-height: 1.9;
@@ -187,7 +184,7 @@
   color: var(--muted-foreground);
 }
 .review-controls {
-  padding: 16px 0 24px;
+  padding-block: 16px 24px;
 }
 .review-reveal {
   display: flex;
@@ -268,18 +265,6 @@
   border: 0;
 }
 @media (max-width: 767px) {
-  .is-studying .review-reading {
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-  .review-study {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    padding: 24px 20px;
-  }
   .review-step {
     margin-bottom: 16px !important;
   }
@@ -287,40 +272,7 @@
     font-size: 25px;
   }
   .review-question h1 {
-    font-size: 18px;
-    line-height: 24px;
-    letter-spacing: normal;
-  }
-  .review-response {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    margin-top: 18px;
-  }
-  .review-response label {
-    color: var(--muted-foreground);
-    font-size: 12px;
-    line-height: 18px;
-  }
-  .review-response textarea {
-    width: 100%;
-    box-sizing: border-box;
-    padding: 10px;
-    resize: vertical;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-control);
-    background: var(--background);
-    color: var(--foreground);
-    font-family: inherit;
-    font-size: max(16px, var(--nesso-reading-font-size));
-    line-height: var(--nesso-reading-line-height);
-  }
-  .review-response textarea:focus-visible {
-    outline: 2px solid var(--ring);
-    outline-offset: 2px;
-  }
-  .review-prompt {
-    display: none;
+    font-size: 27px;
   }
   .review-intro {
     font-size: 12px;
@@ -349,6 +301,35 @@
   }
   .review-connections {
     margin-top: 20px;
+  }
+  .review-ratings button {
+    min-width: 0;
+    padding: 10px 8px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}
+@media (pointer: coarse) {
+  .is-studying .review-reading {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .review-study {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 24px 20px;
+  }
+  .review-question h1 {
+    font-size: 18px;
+    line-height: 24px;
+    letter-spacing: normal;
+  }
+  .review-reference {
+    font-size: var(--nesso-reading-font-size);
+    line-height: var(--nesso-reading-line-height);
   }
   .review-controls {
     flex-shrink: 0;
