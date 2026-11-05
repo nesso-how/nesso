@@ -139,7 +139,10 @@ export function ConceptSheet({
                   const type = graph.relationTypes.find(({ id }) => id === relation.predicate)
                   const label = type ? resolveRelationTypeLabel(type, vocabs, locale) : ''
                   return (
-                    <li key={relationKey(relation)} className="border-b border-border">
+                    <li
+                      key={relationKey(relation)}
+                      className="border-b border-border last:border-b-0"
+                    >
                       <button
                         type="button"
                         className="flex min-h-12 w-full items-center gap-2.5 text-left active:bg-pressed"
