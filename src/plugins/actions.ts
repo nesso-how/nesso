@@ -41,7 +41,8 @@ export function loadActions(
       reject(new PluginError('cancelled', [{ path: 'action', message: 'Action cancelled' }]))
       return
     }
-    const container = panel?.frame ?? createPluginFrame(document.createElement('iframe'))
+    const container =
+      panel?.frame ?? createPluginFrame(document.createElement('iframe'), source.entry)
     const frame = container.element
     if (!panel) {
       frame.hidden = true
@@ -51,15 +52,14 @@ export function loadActions(
     frame.referrerPolicy = 'no-referrer'
     if (!panel) document.body.append(frame)
     let observer: MutationObserver | undefined
-    let unsubscribe: (() => void) | undefined
-    let activeViewId = store.getState().workspace.activeViewId
-    let target = invocation
     const cleanup = () => {
       signal?.removeEventListener('abort', cancel)
       observer?.disconnect()
-      unsubscribe?.()
       frameRuntime.close()
-      if (!panel) frame.remove()
+      if (!panel) {
+        container.close()
+        frame.remove()
+      }
     }
     const cancel = () => {
       cleanup()
@@ -72,9 +72,7 @@ export function loadActions(
       )
     }
     const frameRuntime = container.load(
-      source.entry,
-      (port, ready, failed) => {
-        const invocation = target
+      (port, failed) => {
         if (
           invocation?.viewId !== null &&
           invocation?.viewId !== undefined &&
@@ -114,14 +112,10 @@ export function loadActions(
               }),
             dismiss: notifications.dismiss,
             discovered: (descriptors) => {
-              ready()
               cleanup()
               resolve(descriptors)
             },
-            activated: () => {
-              ready()
-              panel?.ready()
-            },
+            activated: () => panel?.ready(),
             complete: () => {
               cleanup()
               resolve(invocation!.descriptors)
@@ -144,15 +138,6 @@ export function loadActions(
         reject(error)
       },
     )
-    if (panel && invocation)
-      unsubscribe = store.subscribe(() => {
-        const viewId = store.getState().workspace.activeViewId
-        if (viewId === activeViewId) return
-        activeViewId = viewId
-        target = { ...invocation, viewId }
-        observer?.disconnect()
-        frameRuntime.reconnect()
-      })
     signal?.addEventListener('abort', cancel, { once: true })
   })
 }

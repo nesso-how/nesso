@@ -18,14 +18,19 @@ export function connectBadgeChannel(
   actionId: string,
   input: ActionBadgeInput,
   effects: {
-    ready: () => void
     complete: (value: ActionBadgeResult) => void
     failed: (error: PluginError) => void
   },
 ) {
   let closed = false
   let invoked = false
-  let timer: ReturnType<typeof setTimeout> | undefined
+  let timer = setTimeout(
+    () =>
+      close(
+        new PluginError('timeout', [{ path: 'badge', message: 'Badge initialization timed out' }]),
+      ),
+    runtimeLimits.initialization,
+  )
   const close = (error?: PluginError) => {
     if (closed) return
     closed = true
@@ -47,7 +52,7 @@ export function connectBadgeChannel(
             { path: 'badge', message: 'Badge provider changed after discovery' },
           ])
         invoked = true
-        effects.ready()
+        clearTimeout(timer)
         timer = setTimeout(
           () =>
             close(
@@ -103,11 +108,10 @@ export function executeActionBadge(
     }
     const cancel = () =>
       finish(new PluginError('cancelled', [{ path: 'badge', message: 'Badge cancelled' }]))
-    const runtime = createPluginFrame(frame).load(
-      source.entry,
-      (port, ready) =>
+    const runtime = createPluginFrame(frame, source.entry)
+    runtime.load(
+      (port) =>
         connectBadgeChannel(port, descriptors, actionId, input, {
-          ready,
           complete: finish,
           failed: finish,
         }),

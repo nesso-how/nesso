@@ -1,6 +1,11 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { badgeLimits, type ActionBadgeResult, type PluginError } from '@nesso-how/plugin/runtime'
+import {
+  badgeLimits,
+  runtimeLimits,
+  type ActionBadgeResult,
+  type PluginError,
+} from '@nesso-how/plugin/runtime'
 import { connectBadgeChannel } from './badge-execution.ts'
 
 const descriptors = [{ id: 'count', label: { en: 'Count' }, badge: true as const }]
@@ -16,7 +21,6 @@ function fixture() {
   const failure = Promise.withResolvers<PluginError>()
   const result = Promise.withResolvers<ActionBadgeResult>()
   const channel = connectBadgeChannel(port1, descriptors, 'count', input, {
-    ready: () => {},
     complete: result.resolve,
     failed: failure.resolve,
   })
@@ -79,9 +83,11 @@ test('malformed badges, changed descriptors and stalled providers fail closed', 
     value: [{ ...descriptors[0], badge: undefined }],
   })
   assert.equal((await changed.failure).code, 'denied')
-  const stalled = fixture()
-  t.after(stalled.close)
-  await stalled.start()
-  t.mock.timers.tick(badgeLimits.execution)
-  assert.equal((await stalled.failure).code, 'timeout')
+  for (const initialized of [false, true]) {
+    const stalled = fixture()
+    t.after(stalled.close)
+    if (initialized) await stalled.start()
+    t.mock.timers.tick(initialized ? badgeLimits.execution : runtimeLimits.initialization)
+    assert.equal((await stalled.failure).code, 'timeout')
+  }
 })

@@ -32,7 +32,13 @@ import { openSearchResult } from '@/graph/search'
 
 const compactQuery = '(max-width: 767px)'
 
-export default function App({ persistence }: { persistence: ReturnType<typeof startAutosave> }) {
+export default function App({
+  persistence,
+  loading,
+}: {
+  persistence: ReturnType<typeof startAutosave>
+  loading: boolean
+}) {
   const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale)
   const t = translate(locale)
   const panels = useNessoStore((state) => state.preferences.panels)
@@ -91,7 +97,7 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
   useAppCommands({
     store: host.store,
     readonly,
-    introOpen,
+    introOpen: introOpen || loading,
     pluginPanel: !!pluginPanel,
     focusRef: canvas,
     openSettings: openSettingsPage,
@@ -108,75 +114,75 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
   return (
     <>
       <SidebarProvider>
-        {introOpen ? (
-          <Intro onFinish={finishIntro} />
-        ) : (
-          <div className="workspace-boot relative flex min-h-0 flex-1 overflow-hidden">
-            {!compact && <AppSidebar onOpenSettings={openSettings} onOpenSearch={openSearch} />}
-            <SidebarInset className="relative min-w-0 overflow-hidden">
-              <div className="flex min-h-0 flex-1">
-                <div id="canvas" className="relative flex min-h-0 min-w-0 flex-1 flex-col">
-                  {compact ? <ViewSwitcher /> : <ViewHeader readonly={readonly} />}
-                  <div ref={workspaceRef} className="relative min-h-0 flex-1">
-                    <div
-                      className="graph-surface h-full"
-                      style={{
-                        contentVisibility: pluginPanel ? 'hidden' : undefined,
-                        opacity: pluginPanel ? 0 : 1,
-                      }}
-                      inert={!!pluginPanel}
-                    >
-                      <GraphWorkspace
-                        ref={renderer}
-                        store={host.store}
-                        readOnly={readonly}
-                        suspended={!!pluginPanel}
-                        bottomInset={sheetCover}
-                        onDeleteView={deleteView}
-                        focusRef={canvas}
-                      />
-                    </div>
-                    <PluginContent panel={pluginPanel} />
-                  </div>
-                  {compact && <CanvasTabBar />}
-                </div>
-                {!compact && (
-                  <SidePanel
-                    id="inspector-panel"
-                    side="right"
-                    open={detailsOpen}
-                    size={inspectorWidth}
-                    minSize={inspectorMinWidth}
-                    maxSize="45%"
-                    onToggle={() => host.store.setSectionOpen('inspector', !detailsOpen)}
-                    onSizeChange={(inspectorWidth) =>
-                      host.store.setPanelSizes({
-                        ...host.store.getState().preferences.panels,
-                        inspectorWidth,
-                      })
-                    }
-                    toggleLabel={t(detailsOpen ? 'collapseDetails' : 'expandDetails')}
-                    resizeLabel={t('resizeInspector')}
+        {introOpen && <Intro onFinish={finishIntro} />}
+        <div
+          className="workspace-boot relative flex min-h-0 flex-1 overflow-hidden"
+          style={{ display: introOpen ? 'none' : undefined }}
+        >
+          {!compact && <AppSidebar onOpenSettings={openSettings} onOpenSearch={openSearch} />}
+          <SidebarInset className="relative min-w-0 overflow-hidden">
+            <div className="flex min-h-0 flex-1">
+              <div id="canvas" className="relative flex min-h-0 min-w-0 flex-1 flex-col">
+                {compact ? <ViewSwitcher /> : <ViewHeader readonly={readonly} />}
+                <div ref={workspaceRef} className="relative min-h-0 flex-1">
+                  <div
+                    className="graph-surface h-full"
+                    style={{
+                      contentVisibility: pluginPanel ? 'hidden' : undefined,
+                      opacity: pluginPanel ? 0 : 1,
+                    }}
+                    inert={!!pluginPanel}
                   >
-                    {chat ? (
-                      <AssistantPanel
-                        chat={chat}
-                        onClose={() => host.store.setSectionOpen('inspector', false)}
-                        onOpenSettings={() => {
-                          setSettingsPage('ai')
-                          setSettingsOpen(true)
-                        }}
-                        settingsOpen={settingsOpen}
-                      />
-                    ) : (
-                      <Inspector />
-                    )}
-                  </SidePanel>
-                )}
+                    <GraphWorkspace
+                      ref={renderer}
+                      store={host.store}
+                      readOnly={readonly}
+                      suspended={!!pluginPanel}
+                      bottomInset={sheetCover}
+                      onDeleteView={deleteView}
+                      focusRef={canvas}
+                    />
+                  </div>
+                  <PluginContent panel={pluginPanel} />
+                </div>
+                {compact && <CanvasTabBar />}
               </div>
-            </SidebarInset>
-          </div>
-        )}
+              {!compact && (
+                <SidePanel
+                  id="inspector-panel"
+                  side="right"
+                  open={detailsOpen}
+                  size={inspectorWidth}
+                  minSize={inspectorMinWidth}
+                  maxSize="45%"
+                  onToggle={() => host.store.setSectionOpen('inspector', !detailsOpen)}
+                  onSizeChange={(inspectorWidth) =>
+                    host.store.setPanelSizes({
+                      ...host.store.getState().preferences.panels,
+                      inspectorWidth,
+                    })
+                  }
+                  toggleLabel={t(detailsOpen ? 'collapseDetails' : 'expandDetails')}
+                  resizeLabel={t('resizeInspector')}
+                >
+                  {chat ? (
+                    <AssistantPanel
+                      chat={chat}
+                      onClose={() => host.store.setSectionOpen('inspector', false)}
+                      onOpenSettings={() => {
+                        setSettingsPage('ai')
+                        setSettingsOpen(true)
+                      }}
+                      settingsOpen={settingsOpen}
+                    />
+                  ) : (
+                    <Inspector />
+                  )}
+                </SidePanel>
+              )}
+            </div>
+          </SidebarInset>
+        </div>
         {compact && !introOpen && <ConceptSheet canvas={workspaceRef} onCover={setSheetCover} />}
         <PersistenceBanner persistence={persistence} />
       </SidebarProvider>
@@ -199,6 +205,7 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
             page={settingsPage}
             onPageChange={setSettingsPage}
             onDiscover={() => {
+              activePluginPanel.close()
               setSettingsOpen(false)
               setIntroOpen(true)
             }}

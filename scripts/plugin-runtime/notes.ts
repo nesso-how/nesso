@@ -21,7 +21,8 @@ export async function verifyNotes({ window, url }: CheckContext) {
        if(!reuse){frame.id='notes-probe';frame.sandbox='allow-scripts';frame.style='width:700px;height:600px';
       const loaded=new Promise(resolve=>frame.onload=resolve);
       frame.src=${JSON.stringify(`${new URL('plugin-runner/panel.html', url)}#notes`)};
-       document.body.append(frame);await loaded;}
+       document.body.append(frame);await loaded;
+       await new Promise(resolve=>{window.onmessage=event=>{if(event.source===frame.contentWindow&&event.data?.type==='plugin-ready'&&event.data.guard==='notes')resolve()};frame.contentWindow.postMessage({type:'prepare',guard:'notes',token:'notes',entry},'*')});}
       const channel=new MessageChannel();window.__notesPort=channel.port1;
       channel.port1.onmessage=({data})=>{
         if(data.type==='panel-ready'&&++window.__notesReady===1)
@@ -43,7 +44,7 @@ export async function verifyNotes({ window, url }: CheckContext) {
         }else throw new Error('Unexpected notes request: '+data.method);
         channel.port1.postMessage({type:'response',id:data.id,ok:true,value});
       };
-      frame.contentWindow.postMessage({type:'bootstrap',guard:'notes',token:'notes',entry},'*',[channel.port2]);
+       frame.contentWindow.postMessage({type:'bootstrap',guard:'notes',token:'notes'},'*',[channel.port2]);
     };undefined`)
   const open = async (viewId: string | null, reuse = false) => {
     await evaluate(`window.__openNotes(${JSON.stringify(viewId)},${reuse})`)

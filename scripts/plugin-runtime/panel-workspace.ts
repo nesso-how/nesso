@@ -24,6 +24,12 @@ export async function verifyPanelWorkspace(context: CheckContext) {
     value: { safeMode: false, packages: [{ ...prepared, enabled: true }], issues: [] },
   }))
   const { evaluate, saved } = await openFixtureWorkspace(context)
+  const preloaded = context.window.webContents.mainFrame.framesInSubtree.filter(
+    (frame) => frame.url === 'about:srcdoc',
+  )
+  assert.equal(preloaded.length, 2)
+  for (const frame of preloaded)
+    assert.equal(await frame.executeJavaScript(`document.getElementById('root').textContent`), '')
   const assertShortcutsSuspended = async () => {
     await evaluate(
       `window.dispatchEvent(new KeyboardEvent('keydown',{key:'a',ctrlKey:true,bubbles:true}));window.dispatchEvent(new KeyboardEvent('keydown',{key:'z',ctrlKey:true,bubbles:true}))`,
@@ -67,7 +73,7 @@ export async function verifyPanelWorkspace(context: CheckContext) {
     await waitFor(
       () =>
         evaluate<boolean>(
-          `!!document.querySelector('[data-plugin-panel] iframe') && getComputedStyle(document.querySelector('[data-plugin-panel] iframe')).visibility==='visible'`,
+          `document.querySelector('[data-plugin-panel] iframe:not([hidden])')?.style.visibility==='visible'`,
         ),
       Boolean,
     )
@@ -88,9 +94,6 @@ export async function verifyPanelWorkspace(context: CheckContext) {
     )?.plugins.find(({ pluginId }) => pluginId === source.name)?.records ?? []
   await evaluate(`window.__canvas=document.querySelector('#canvas .react-flow')`)
   await open()
-  await evaluate(
-    `window.__persistentPanelFrame=document.querySelector('[data-plugin-panel] iframe')`,
-  )
   assert.deepEqual(
     await evaluate(
       `(()=>{const header=document.querySelector('#canvas header');return {header:document.querySelectorAll('#canvas header').length,height:getComputedStyle(header).height,selected:header.querySelector('[role="tab"][aria-selected="true"]').textContent.trim(),inert:!!header.closest('[inert]')}})()`,
@@ -111,8 +114,6 @@ export async function verifyPanelWorkspace(context: CheckContext) {
     context.window,
     `document.querySelectorAll('.quiz button').length===2 && !document.querySelector('.quiz button').disabled`,
   )
-  const shell = content.parent!
-  await shell.executeJavaScript(`window.__retainedDocument=document`)
   const firstQuestion = await content.executeJavaScript(
     `document.querySelector('[data-question]').textContent`,
   )
@@ -154,11 +155,7 @@ export async function verifyPanelWorkspace(context: CheckContext) {
   )
   await assertShortcutsSuspended()
   await graph()
-  await waitFor(
-    () => shell.executeJavaScript(`document.querySelectorAll('iframe').length`),
-    (count) => count === 0,
-  )
-  assert.equal(content.detached, true)
+  await waitFor(async () => content.detached, Boolean)
   await waitFor(
     () => evaluate<boolean>(`document.activeElement.closest('#canvas')!==null`),
     Boolean,
@@ -173,6 +170,7 @@ export async function verifyPanelWorkspace(context: CheckContext) {
     context.window,
     `document.querySelectorAll('.quiz button').length===2 && !document.querySelector('.quiz button').disabled`,
   )
+  assert.notEqual(frame, content)
   assert.equal(
     await frame.executeJavaScript(`document.querySelector('[data-question]').textContent`),
     nextQuestion,
@@ -215,14 +213,13 @@ export async function verifyPanelWorkspace(context: CheckContext) {
   )
   assert.equal(await evaluate(`typeof window.__resolvePaste`), 'function')
   for (const tab of ['Notes', 'Review', 'Graph']) {
-    await evaluate(`window.__panelFrame=document.querySelector('#canvas iframe')`)
     await choose(tab)
     await waitFor(
       () =>
         evaluate<boolean>(
           tab === 'Graph'
-            ? `document.querySelector('#canvas iframe')===window.__panelFrame && !document.querySelector('[data-plugin-panel]') && document.activeElement===window.__canvas.parentElement`
-            : `document.querySelector('#canvas iframe')===window.__panelFrame && document.querySelector('#canvas iframe')?.style.visibility==='visible'`,
+            ? `!document.querySelector('[data-plugin-panel]') && document.activeElement===window.__canvas.parentElement`
+            : `document.querySelector('[data-plugin-panel] iframe:not([hidden])')?.style.visibility==='visible'`,
         ),
       Boolean,
     )
@@ -237,7 +234,16 @@ export async function verifyPanelWorkspace(context: CheckContext) {
         viewport,
       },
     )
-    if (tab !== 'Graph') await assertShortcutsSuspended()
+    if (tab !== 'Graph') {
+      const frame = await panelFrame(
+        context.window,
+        tab === 'Notes'
+          ? `!!document.querySelector('.notes-editor')`
+          : `!!document.querySelector('.review-start')`,
+      )
+      assert.ok(preloaded.includes(frame))
+      await assertShortcutsSuspended()
+    }
   }
   assert.equal(
     await evaluate(
@@ -281,7 +287,7 @@ export async function verifyPanelWorkspace(context: CheckContext) {
     [2, 'Notes'],
     [1, 'Graph'],
   ] as const) {
-    await evaluate(`document.querySelector('[data-plugin-panel] iframe')?.focus()`)
+    await evaluate(`document.querySelector('[data-plugin-panel] iframe:not([hidden])')?.focus()`)
     context.window.webContents.sendInputEvent({
       type: 'keyDown',
       keyCode: String(digit),
@@ -290,16 +296,17 @@ export async function verifyPanelWorkspace(context: CheckContext) {
     await waitFor(
       () =>
         evaluate<boolean>(
-          `document.querySelector('#canvas [role="tab"][aria-selected="true"]')?.textContent.trim()===${JSON.stringify(selected)} && ${selected === 'Graph' ? `!document.querySelector('[data-plugin-panel]')` : `document.querySelector('[data-plugin-panel] iframe')?.style.visibility==='visible'`}`,
+          `document.querySelector('#canvas [role="tab"][aria-selected="true"]')?.textContent.trim()===${JSON.stringify(selected)} && ${selected === 'Graph' ? `!document.querySelector('[data-plugin-panel]')` : `document.querySelector('[data-plugin-panel] iframe:not([hidden])')?.style.visibility==='visible'`}`,
         ),
       Boolean,
     )
   }
   await open()
-  const reused = context.window.webContents.mainFrame.framesInSubtree.find(
-    (frame) => frame.url === 'about:srcdoc',
-  )!
-  await evaluate(`window.__externalFrame=document.querySelector('[data-plugin-panel] iframe')`)
+  const reused = await panelFrame(context.window, `!!document.querySelector('.quiz')`)
+  assert.equal(await evaluate(`document.querySelectorAll('#canvas iframe').length`), 3)
+  await evaluate(
+    `window.__externalFrame=document.querySelector('[data-plugin-panel] iframe:not([hidden])')`,
+  )
   await reused.executeJavaScript(`window.__retainedDocument=document`)
   for (const view of ['Energy', 'Rest', 'Overview']) {
     await evaluate(
@@ -308,13 +315,13 @@ export async function verifyPanelWorkspace(context: CheckContext) {
     await waitFor(
       () =>
         evaluate<boolean>(
-          `document.querySelector('[data-plugin-panel] iframe')?.style.visibility==='visible' && document.querySelector('#canvas .nesso-panel-actions button')?.getAttribute('aria-label')===${JSON.stringify(`Actions for ${view}`)}`,
+          `document.querySelector('[data-plugin-panel] iframe:not([hidden])')?.style.visibility==='visible' && document.querySelector('#canvas .nesso-panel-actions button')?.getAttribute('aria-label')===${JSON.stringify(`Actions for ${view}`)}`,
         ),
       Boolean,
     )
     assert.equal(
       await evaluate(
-        `document.querySelector('[data-plugin-panel] iframe')===window.__externalFrame`,
+        `document.querySelector('[data-plugin-panel] iframe:not([hidden])')===window.__externalFrame`,
       ),
       true,
     )
@@ -333,21 +340,25 @@ export async function verifyPanelWorkspace(context: CheckContext) {
       ),
     Boolean,
   )
-  assert.equal(reused.detached, true)
+  await waitFor(async () => reused.detached, Boolean)
   assert.equal(
     await evaluate(
       `document.querySelector('[data-plugin-panel] [role="alert"]')?.textContent ?? null`,
     ),
     null,
   )
-  await panelFrame(context.window, `!!document.querySelector('.notes-editor .cm-content')`)
-  assert.equal(await shell.executeJavaScript(`window.__retainedDocument===document`), true)
-  assert.equal(
-    await evaluate(
-      `document.querySelector('[data-plugin-panel] iframe')===window.__persistentPanelFrame`,
+  assert.ok(
+    preloaded.includes(
+      await panelFrame(context.window, `!!document.querySelector('.notes-editor .cm-content')`),
     ),
-    true,
   )
+  await choose('Review')
+  assert.ok(
+    preloaded.includes(
+      await panelFrame(context.window, `!!document.querySelector('.review-start')`),
+    ),
+  )
+  assert.equal(await evaluate(`document.querySelectorAll('#canvas iframe').length`), 2)
   await graph()
   assert.equal(
     await evaluate(
@@ -360,6 +371,6 @@ export async function verifyPanelWorkspace(context: CheckContext) {
     (before as { graph: unknown }).graph,
   )
   console.log(
-    'desktop: plugin tabs reuse one shell; canvas preservation, focus and shortcuts passed',
+    'desktop: retained built-ins, transient panels, clean sessions, canvas preservation, focus and shortcuts passed',
   )
 }

@@ -4,7 +4,9 @@ import type { Notifications } from '@nesso-how/core'
 import type { FileBridge } from '../../shared/files.ts'
 import type { HostStore } from '../store/types.ts'
 import { loadActions, type ActionPackage } from './actions.ts'
-import type { createPluginFrame } from './frame.ts'
+import { createPluginFrame } from './frame.ts'
+
+const retainedPlugins = ['@nesso-how/notes', '@nesso-how/review']
 
 type Invocation = {
   readonly actionId: string
@@ -13,11 +15,19 @@ type Invocation = {
 }
 type Panel = {
   readonly id: string
+  readonly frameId: string
   readonly actionId: string
   readonly pluginName: string
   readonly title: string
   readonly viewName: string | null
   readonly status: 'loading' | 'ready' | 'failed'
+}
+type Frame = {
+  id: string
+  source: ActionPackage
+  ready: Promise<void>
+  warmed: () => void
+  runtime?: ReturnType<typeof createPluginFrame>
 }
 
 export function createPluginPanel(
@@ -26,15 +36,47 @@ export function createPluginPanel(
   bridge?: FileBridge,
 ) {
   let current: Panel | null = null
-  let session: { source: ActionPackage; invocation: Invocation; close: () => void } | undefined
-  let detach: (() => void) | undefined
+  let session: { source: ActionPackage; start: () => void; close: () => void } | undefined
+  let frames: Frame[] = []
   const listeners = new Set<() => void>()
   const publish = () => {
     for (const listener of listeners) listener()
   }
   const close = () => session?.close()
+  const remove = (frame: Frame) => {
+    frames = frames.filter((item) => item !== frame)
+    frame.runtime?.close()
+    frame.runtime = undefined
+    frame.warmed()
+    publish()
+  }
+  const invalidate = (name?: string) => {
+    if (!name || session?.source.name === name) close()
+    for (const frame of frames) if (!name || frame.source.name === name) remove(frame)
+  }
+  const prepare = (source: ActionPackage) => {
+    const existing = frames.find((frame) => frame.source.name === source.name)
+    if (existing?.source === source) return existing
+    if (existing) remove(existing)
+    let warmed!: () => void
+    const ready = new Promise<void>((resolve) => {
+      warmed = resolve
+    })
+    const frame: Frame = { id: crypto.randomUUID(), source, ready, warmed }
+    frames = [...frames, frame]
+    publish()
+    return frame
+  }
+  let document = store.getState()
+  store.subscribe(() => {
+    const next = store.getState()
+    if (next.documentId !== document.documentId || next.documentEpoch !== document.documentEpoch)
+      invalidate()
+    document = next
+  })
   return {
     getSnapshot: () => current,
+    getFrames: () => frames,
     subscribe: (listener: () => void) => {
       listeners.add(listener)
       return () => {
@@ -42,6 +84,13 @@ export function createPluginPanel(
       }
     },
     close,
+    invalidate,
+    preload: (sources: readonly ActionPackage[]) =>
+      Promise.all(
+        sources
+          .filter(({ name }) => retainedPlugins.includes(name))
+          .map((source) => prepare(source).ready),
+      ),
     open: (source: ActionPackage, invocation: Invocation, signal: AbortSignal) => {
       close()
       if (signal.aborted) return Promise.resolve()
@@ -57,8 +106,10 @@ export function createPluginPanel(
           { path: 'panel', message: 'Target view no longer exists' },
         ])
       return new Promise<void>((resolve) => {
+        const id = crypto.randomUUID()
         let target = invocation
         let activeViewId = state.workspace.activeViewId
+        let detach: (() => void) | undefined
         const end = () => {
           if (session?.close !== end) return
           session = undefined
@@ -66,20 +117,20 @@ export function createPluginPanel(
           signal.removeEventListener('abort', end)
           unsubscribe()
           detach?.()
-          detach = undefined
+          if (!retainedPlugins.includes(source.name))
+            for (const frame of frames) if (frame.source === source) remove(frame)
           publish()
           resolve()
         }
-        const mount = (reuse = false) => {
-          if (!reuse) {
-            detach?.()
-            detach = undefined
-          }
+        const mount = () => {
+          detach?.()
+          detach = undefined
           const next = store.getState()
           const locale = next.preferences.locale ?? defaultLocale
-          session = { source, invocation: target, close: end }
+          const frame = prepare(source)
           current = {
-            id: reuse && current ? current.id : crypto.randomUUID(),
+            id,
+            frameId: frame.id,
             actionId: target.actionId,
             pluginName: resolvePluginText(source.i18n.metadata.name, locale),
             title: resolvePluginText(action.label, locale),
@@ -88,14 +139,24 @@ export function createPluginPanel(
             status: 'loading',
           }
           publish()
+          if (!frame.runtime) return
+          const controller = new AbortController()
+          const update = (status: Panel['status']) => {
+            if (controller.signal.aborted || current?.id !== id) return
+            current = { ...current, status }
+            publish()
+          }
+          detach = () => controller.abort()
+          void loadActions(store, source, notifications, bridge, target, controller.signal, {
+            frame: frame.runtime,
+            ready: () => update('ready'),
+          }).catch(() => update('failed'))
         }
         const unsubscribe = store.subscribe(() => {
           const next = store.getState()
           if (
-            next.documentId !== state.documentId ||
-            next.documentEpoch !== state.documentEpoch ||
-            (target.viewId !== null &&
-              !next.workspace.savedViews.some(({ id }) => id === target.viewId))
+            target.viewId !== null &&
+            !next.workspace.savedViews.some(({ id }) => id === target.viewId)
           ) {
             end()
             return
@@ -103,29 +164,25 @@ export function createPluginPanel(
           if (next.workspace.activeViewId !== activeViewId) {
             activeViewId = next.workspace.activeViewId
             target = { ...target, viewId: activeViewId }
-            mount(current?.status !== 'failed')
+            mount()
           }
         })
+        session = { source, start: mount, close: end }
         signal.addEventListener('abort', end, { once: true })
         mount()
       })
     },
-    attach: (frame: ReturnType<typeof createPluginFrame>, id: string) => {
-      if (!session || current?.id !== id) return () => {}
-      detach?.()
-      const { source, invocation } = session
-      const controller = new AbortController()
-      const update = (status: Panel['status']) => {
-        if (controller.signal.aborted || current?.id !== id) return
-        current = { ...current, status }
-        publish()
+    mount: (id: string, element: HTMLIFrameElement) => {
+      const frame = frames.find((frame) => frame.id === id)
+      if (!frame) return
+      const runtime = createPluginFrame(element, frame.source.entry, true, () => remove(frame))
+      frame.runtime = runtime
+      void runtime.ready.then(frame.warmed, () => {})
+      if (current?.frameId === id) session?.start()
+      return () => {
+        runtime.close()
+        if (frame.runtime === runtime) frame.runtime = undefined
       }
-      void loadActions(store, source, notifications, bridge, invocation, controller.signal, {
-        frame,
-        ready: () => update('ready'),
-      }).catch(() => update('failed'))
-      detach = () => controller.abort()
-      return detach
     },
   }
 }

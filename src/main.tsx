@@ -5,6 +5,7 @@ import {
   getThemePresentation,
   initializeBundledPlugins,
   initializeExternalPlugins,
+  preloadPluginPanels,
   stopPluginActions,
 } from '@/plugins'
 import { notifications } from '@/notifications'
@@ -23,21 +24,22 @@ const root = createRoot(document.getElementById('root')!)
 const animate =
   (performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined)
     ?.type !== 'reload'
-const showApp = () =>
+const showApp = (loading = false, ready = false) =>
   root.render(
     <StrictMode>
-      <ErrorBoundary save={persistence.save}>
-        <App persistence={persistence} />
-      </ErrorBoundary>
+      <div key="app" className="contents" inert={loading} aria-hidden={loading}>
+        <ErrorBoundary save={persistence.save}>
+          <App persistence={persistence} loading={loading} />
+        </ErrorBoundary>
+      </div>
+      {loading && <Splash key="splash" ready={ready} animate={animate} onDone={showApp} />}
     </StrictMode>,
   )
-const showSplash = (ready: boolean) =>
-  root.render(
-    <StrictMode>
-      <Splash ready={ready} animate={animate} onDone={showApp} />
-    </StrictMode>,
-  )
-showSplash(false)
+root.render(
+  <StrictMode>
+    <Splash key="splash" ready={false} animate={animate} onDone={showApp} />
+  </StrictMode>,
+)
 
 const framePolicy = document.createElement('meta')
 framePolicy.httpEquiv = 'Content-Security-Policy'
@@ -109,4 +111,7 @@ import.meta.hot?.dispose(() => {
   window.removeEventListener('pagehide', stopExternalPlugins)
 })
 
-showSplash(true)
+const panels = preloadPluginPanels()
+showApp(true)
+await panels
+showApp(true, true)

@@ -29,6 +29,7 @@ export async function verifyIntro({ window, url, name }: CheckContext) {
   window.setContentSize(1280, 900)
   await window.loadURL(url)
   await title('Start from an idea')
+  await ready(`!document.querySelector('.splash')`)
   await ready(`document.querySelectorAll('.intro .react-flow__node').length===1`)
   if (name === 'desktop') await waitFor(async () => saved.has('document'), Boolean)
   const before = structuredClone(saved.get('document'))
@@ -89,7 +90,10 @@ export async function verifyIntro({ window, url, name }: CheckContext) {
     `document.querySelector('[role="tab"][aria-disabled="true"]')?.textContent==='Review3'`,
   )
   await evaluate(`document.querySelector('[role="tab"][aria-disabled="true"]').click()`)
-  assert.equal(await evaluate(`document.querySelectorAll('[data-plugin-panel], iframe').length`), 0)
+  assert.equal(
+    await evaluate(`document.querySelectorAll('[data-plugin-panel], .intro iframe').length`),
+    0,
+  )
   assert.equal(
     await evaluate(`document.querySelector('.intro-relation').textContent`),
     'Coffee · keeps me awake · Sleep',

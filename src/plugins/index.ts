@@ -129,6 +129,7 @@ export const pluginMetadata = (plugin: Pick<PluginEntry, 'i18n'>, locale: Locale
   documentation: resolvePluginText(plugin.i18n.metadata.documentation, locale),
 })
 export const stopPluginActions = () => {
+  pluginPanel.invalidate()
   actionBadges.setForeground(false)
   for (const controller of active.keys()) controller.abort()
   for (const [id, controller] of installations) {
@@ -137,6 +138,7 @@ export const stopPluginActions = () => {
   }
 }
 export const stopActionsForPlugin = (name: string) => {
+  pluginPanel.invalidate(name)
   actionBadges.invalidatePlugin(name)
   let stopped = 0
   for (const [controller, source] of active)
@@ -595,6 +597,8 @@ export async function initializeBundledPlugins() {
   for (const { entry, source } of commands) if (source) actions.set(entry.id, source)
   registry.replace([...entries, ...commands.map(({ entry }) => entry)])
 }
+
+export const preloadPluginPanels = () => pluginPanel.preload([...actions.values()])
 
 export async function invokeAction(
   actionId: string,
