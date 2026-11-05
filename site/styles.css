@@ -189,7 +189,6 @@ h3 {
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
 }
 .repository-link {
   width: 36px;
@@ -248,9 +247,6 @@ html:not([data-desktop]) .web-cta:hover {
   background: var(--primary-hover);
   border-color: var(--primary-hover);
   color: var(--primary-foreground);
-}
-.header [data-download-version] {
-  max-width: 160px;
 }
 .skip-link {
   position: fixed;
@@ -629,21 +625,6 @@ pre:focus-visible {
   .header-inner {
     gap: 12px;
   }
-  .repository-link {
-    display: none;
-  }
-  .header-actions {
-    justify-content: flex-end;
-    flex-wrap: wrap;
-    padding-block: 8px;
-  }
-  .header [data-download-version] {
-    max-width: 130px;
-  }
-  .header .button {
-    font-size: 12px;
-    padding-inline: 10px;
-  }
   .workspace-captions,
   .elements-grid,
   .split {
@@ -680,16 +661,6 @@ pre:focus-visible {
   .header .cursor {
     width: 6px;
     margin-left: 2px;
-  }
-  .header-actions {
-    gap: 4px;
-  }
-  .header .button {
-    font-size: 11px;
-    padding-inline: 6px;
-  }
-  .header [data-download-version] {
-    max-width: 100px;
   }
   .ai-grid {
     grid-template-columns: 1fr;
