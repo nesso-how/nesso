@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.0.0-beta.5 — 2026-11-05
+
+### Features
+
+- **mobile:** Add responsive demo showcase (#256)
+
+### Fixes
+
+- **site:** Use fixed dark brand mark in header and footer (#261)
+
+### Performance
+
+- **plugins:** Reuse panel shell across plugin switches (#258)
+- **plugins:** Preload and retain built-in panel modules (#260)
+
 ## 1.0.0-beta.4 — 2026-11-04
 
 ### Documentation
