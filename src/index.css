@@ -576,9 +576,22 @@
 }
 
 .plugin-panel-loading {
-  animation: plugin-panel-loading 0s 150ms both;
+  animation: plugin-panel-fade 150ms ease-out 250ms both;
 }
-@keyframes plugin-panel-loading {
+.plugin-panel-frame,
+.graph-surface {
+  transition: opacity 150ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .plugin-panel-loading {
+    animation-duration: 0s;
+  }
+  .plugin-panel-frame,
+  .graph-surface {
+    transition: none;
+  }
+}
+@keyframes plugin-panel-fade {
   from {
     opacity: 0;
   }
