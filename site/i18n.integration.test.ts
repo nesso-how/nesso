@@ -65,10 +65,10 @@ test('the site build emits complete localized pages with matching language links
     assert.ok(html.includes(`hreflang="${locale}" aria-current="page"`))
     assert.match(html, /data-download-version="\d+\.\d+\.\d+[^"]*"/)
     assert.match(html, /data-download-label="[^"]*\{platform\}[^"]*"/)
-    assert.equal([...html.matchAll(/data-download-version=/g)].length, 3)
+    assert.equal([...html.matchAll(/data-download-version=/g)].length, 2)
     assert.equal(
       [...html.matchAll(/<a\b[^>]*data-download-version=[^>]*\bhidden\b[^>]*>/g)].length,
-      3,
+      2,
     )
     assert.match(html, /<img[^>]+src="\/nesso-understanding.png"[^>]+alt="[^"]+"/)
     assert.match(html, /<code><span class="hljs-punctuation">/)
