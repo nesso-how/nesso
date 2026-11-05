@@ -9,7 +9,6 @@ import {
 } from 'react'
 import { ConceptMap, type ConceptMapHandle } from '@nesso-how/concept-map'
 import type { Position } from '@nesso-how/schema'
-import { useMediaQuery } from '@nesso-how/ui'
 import { useGraphInteractions } from '../../graph/interactions.ts'
 import type { HostStore } from '../../store/types.ts'
 import { maxConceptLabelLength } from '../../store/settings.ts'
@@ -18,6 +17,7 @@ export function GraphWorkspace({
   ref,
   store,
   preview = false,
+  readOnly: locked = false,
   connection,
   showContext = false,
   suspended = false,
@@ -28,6 +28,7 @@ export function GraphWorkspace({
   ref?: Ref<ConceptMapHandle>
   store: HostStore
   preview?: boolean
+  readOnly?: boolean
   connection?: ComponentProps<typeof ConceptMap>['connection']
   showContext?: boolean
   suspended?: boolean
@@ -35,10 +36,9 @@ export function GraphWorkspace({
   onDeleteView?: () => void
   focusRef?: RefObject<HTMLDivElement | null>
 }) {
-  const compact = useMediaQuery('(max-width: 767px)')
   const localFocus = useRef<HTMLDivElement>(null)
   const target = focusRef ?? localFocus
-  const readOnly = preview || compact
+  const readOnly = preview || locked
   const { epoch, commands, surfaceProps } = useGraphInteractions(store, {
     readOnly: readOnly || suspended,
     preview,

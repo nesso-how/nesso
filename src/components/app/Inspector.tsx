@@ -23,8 +23,7 @@ import { InspectorSection } from './InspectorSection'
 import { nessoStore, useNessoStore } from '@/store'
 import type { HostStore } from '@/store/types'
 import { useTranslation } from '@/i18n'
-import { isAllowedNotesLink } from '../../../shared/link-policy'
-import { notifications } from '@/notifications'
+import { openNotesLink } from './notes-link'
 
 function RelationInput({
   edgeId,
@@ -300,19 +299,7 @@ export function Inspector({
               onBlur={() => {
                 textGroup.current = undefined
               }}
-              onOpenLink={async (url) => {
-                if (isAllowedNotesLink(url)) {
-                  try {
-                    if (window.nessoNotesLinks) {
-                      if (await window.nessoNotesLinks.open(url)) return
-                    } else {
-                      window.open(new URL(url).href, '_blank', 'noopener,noreferrer')
-                      return
-                    }
-                  } catch {}
-                }
-                notifications.api.notify({ tone: 'warning', title: t('notesLinkOpenFailed') })
-              }}
+              onOpenLink={(url) => openNotesLink(url, t('notesLinkOpenFailed'))}
               onChange={(value) => {
                 if (!readonly)
                   store.setConceptNotes(concept.id, value, (textGroup.current ??= newIri()))

@@ -27,11 +27,20 @@
 @layer base {
   :root {
     --nesso-panel-bar-height: 40px;
+    --nesso-reading-font-size: 13px;
+    --nesso-reading-line-height: 20px;
   }
 
   @media (pointer: coarse) {
     :root {
       --nesso-panel-bar-height: 52px;
+    }
+  }
+
+  @media (pointer: coarse), (max-width: 767px) {
+    :root {
+      --nesso-reading-font-size: 15px;
+      --nesso-reading-line-height: 23px;
     }
   }
 }
@@ -95,6 +104,57 @@
     color: var(--foreground);
     box-shadow: 0 8px 24px #00000014;
     outline: none;
+  }
+
+  .nesso-sheet {
+    display: flex;
+    width: 100%;
+    max-height: min(60dvh, calc(100dvh - 96px));
+    flex-direction: column;
+    border-top: 1px solid var(--border);
+    border-radius: calc(var(--radius-object) * 2) calc(var(--radius-object) * 2) 0 0;
+    background: var(--background);
+    color: var(--foreground);
+    box-shadow: 0 -8px 24px #00000014;
+    outline: none;
+    transform: translateY(var(--drawer-swipe-movement-y, 0px));
+    transition: transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .nesso-sheet[data-swiping] {
+    transition-duration: 0s;
+    user-select: none;
+  }
+
+  .nesso-sheet[data-starting-style],
+  .nesso-sheet[data-ending-style] {
+    transform: translateY(calc(100% + 2px));
+  }
+
+  .nesso-sheet-handle {
+    flex-shrink: 0;
+    width: 36px;
+    height: 4px;
+    margin: 8px auto 0;
+    border-radius: 2px;
+    background: var(--node-border);
+  }
+
+  .nesso-sheet-title {
+    min-width: 0;
+    font-size: 18px;
+    line-height: 24px;
+    font-weight: 500;
+    overflow-wrap: anywhere;
+  }
+
+  .nesso-sheet-footer {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px calc(16px + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid var(--border);
   }
 
   .nesso-option[data-highlighted] {
@@ -340,6 +400,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .nesso-sheet {
+    transition: none;
+  }
   *,
   *::before,
   *::after {

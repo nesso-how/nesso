@@ -40,6 +40,8 @@ Nesso is primarily a desktop app for **macOS, Windows, and Linux**. Download it 
 
 The [web demo](https://app.nesso.how) lets you try the graph editor in your browser. AI assistance, plugin installation, and the local MCP server are available in the desktop app.
 
+On phones, the demo is read-only: switch views, tap concepts to explore their notes and connections, and try Review or Notes from the bottom tabs. Review progress and view notes stay local without changing the graph. Graph editing is available on larger screens.
+
 ## Architecture
 
 ```mermaid

@@ -6,6 +6,7 @@ export const cases = {
   bundled: ['desktop', 'static-web'],
   images: ['desktop', 'static-web'],
   intro: ['desktop', 'static-web'],
+  compact: ['static-web'],
   storage: ['desktop', 'static-web'],
   startup: ['desktop'],
   installation: ['desktop'],

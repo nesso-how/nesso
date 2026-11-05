@@ -43,12 +43,14 @@ Your build must compile this CSS; it is not a precompiled stylesheet. Supply the
 | Forms and rows         | `Field`, `FieldHint`, `ListRow`, `ListRowButton`, `ListRowDetail`, `ListRowTitle`, `RevealActions`, `PromptForm`          |
 | Menus and popovers     | `Menu`, `MenuItem`, `MenuPopup`, `MenuRadioItem`, `Popover`, `PopoverPopup`                                               |
 | Search and suggestions | `Combobox`, `ComboboxItem`, `ComboboxPopup`, `Autocomplete`, `AutocompleteClear`, `AutocompleteItem`, `AutocompletePopup` |
-| Dialogs                | `Dialog`, `DialogActions`, `DialogPopup`, `ConfirmDialog`, `TextPromptDialog`                                             |
+| Dialogs                | `Dialog`, `DialogActions`, `DialogPopup`, `ConfirmDialog`, `TextPromptDialog`, `BottomSheet`                              |
 | Panels and disclosure  | `SidePanel`, `PanelHeader`, `PluginPage`, `PluginContent`, `SectionHeading`, `Collapsible`, `Tabs`                        |
 | Feedback               | `Banner`, `BannerRow`, `BannerDetails`, `ToastViewport`, `Spinner`                                                        |
 | Labels and icons       | `Kbd`, `ContextLabel`, `ActionIcon`                                                                                       |
 
 `Button` supports `default`, `outline`, and `ghost` variants. `SidePanel` supports controlled resizing and collapse. `Spinner` accepts an accessible `label` and respects reduced motion. State, content, and event handling remain yours to provide.
+
+`BottomSheet` is a controlled, non-modal drawer with a title, close label, optional footer, and popup ref for measuring covered content. It supports swipe-down dismissal, safe-area padding, and reduced motion. Reading text can use `--nesso-reading-font-size` and `--nesso-reading-line-height`, which increase from 13/20px to 15/23px on narrow screens or coarse pointers.
 
 `MarkdownInput` provides a live preview of bold, italic, links, and bullet or numbered lists in one field without a toolbar. Markdown delimiters reappear when the cursor or selection enters formatted text, including link destinations and list markers. Enter continues a list, incrementing the current number for numbered lists; Enter on an empty nested item returns to the parent level, and on an empty top-level item ends the list. Tab nests the current item under the previous one; Shift+Tab moves it up a level. Both move the item's continuation lines and children together, leaving unrelated text alone. At level boundaries they leave content and focus unchanged; outside lists they retain normal focus navigation. Shift+Enter inserts a plain line break. Existing items are not renumbered, and there are no checklists. It accepts the unchanged Markdown source through `value` and `onChange`, supports Cmd/Ctrl+B/I on selections, and preserves line breaks. Set `history={false}` when the host owns undo/redo and its shortcuts. Cmd/Ctrl-click requests `onOpenLink`; read-only fields request it on a regular click. The host is responsible for validating and opening destinations.
 

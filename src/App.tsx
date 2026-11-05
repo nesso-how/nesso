@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { ConceptMapHandle } from '@nesso-how/concept-map'
 import type { SavedView } from '@nesso-how/core'
 import { defaultLocale } from '@nesso-how/i18n'
@@ -25,6 +25,8 @@ import { UpdateBar } from '@/components/app/UpdateBar'
 import { PluginContent } from '@/components/app/PluginPanel'
 import { pluginPanel as activePluginPanel, openCanvasTabAt, usePluginPanel } from '@/plugins'
 import { ViewHeader } from '@/components/app/ViewHeader'
+import { CanvasTabBar, ViewSwitcher } from '@/components/app/CompactNavigation'
+import { ConceptSheet } from '@/components/app/ConceptSheet'
 import { SearchDialog } from '@/components/app/SearchDialog'
 import { openSearchResult } from '@/graph/search'
 
@@ -45,7 +47,15 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
   const canvas = useRef<HTMLDivElement>(null)
   const renderer = useRef<ConceptMapHandle>(null)
   const pluginPanel = usePluginPanel()
-  const readonly = useMediaQuery('(max-width: 767px)')
+  const compact = useMediaQuery('(max-width: 767px)')
+  const readonly = compact
+  const workspaceRef = useRef<HTMLDivElement>(null)
+  const [sheetCover, setSheetCover] = useState(0)
+  const focusedConcept = useNessoStore((state) =>
+    compact && state.selected.length === 1 && state.selected[0].kind === 'concept'
+      ? state.selected[0].id
+      : null,
+  )
   const deleteView = () => {
     const { workspace } = host.store.getState()
     setDeleting(
@@ -58,6 +68,12 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
   useEffect(() => {
     document.documentElement.lang = locale
   }, [locale])
+  useLayoutEffect(() => {
+    if (compact) host.store.setSelection([])
+  }, [compact])
+  useEffect(() => {
+    if (focusedConcept && sheetCover > 0) renderer.current?.focusConcept(focusedConcept)
+  }, [focusedConcept, sheetCover])
   const openSettingsPage = useCallback(
     (page: string) => {
       setSettingsPage(page)
@@ -77,7 +93,7 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
   })
   const openSettings = () => openSettingsPage('general')
   const finishIntro = () => {
-    completeIntro(host.store)
+    completeIntro(host.store, !compact)
     setIntroOpen(false)
     requestAnimationFrame(() => canvas.current?.focus())
   }
@@ -89,12 +105,12 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
           <Intro onFinish={finishIntro} />
         ) : (
           <div className="workspace-boot relative flex min-h-0 flex-1 overflow-hidden">
-            {!readonly && <AppSidebar onOpenSettings={openSettings} onOpenSearch={openSearch} />}
+            {!compact && <AppSidebar onOpenSettings={openSettings} onOpenSearch={openSearch} />}
             <SidebarInset className="relative min-w-0 overflow-hidden">
               <div className="flex min-h-0 flex-1">
                 <div id="canvas" className="relative flex min-h-0 min-w-0 flex-1 flex-col">
-                  <ViewHeader readonly={readonly} />
-                  <div className="relative min-h-0 flex-1">
+                  {compact ? <ViewSwitcher /> : <ViewHeader readonly={readonly} />}
+                  <div ref={workspaceRef} className="relative min-h-0 flex-1">
                     <div
                       className="h-full"
                       style={{ contentVisibility: pluginPanel ? 'hidden' : undefined }}
@@ -103,10 +119,15 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
                       <GraphWorkspace
                         ref={renderer}
                         store={host.store}
+                        readOnly={readonly}
                         suspended={!!pluginPanel}
+                        bottomInset={sheetCover}
                         onDeleteView={deleteView}
                         focusRef={canvas}
                       />
+                      {compact && !focusedConcept && (
+                        <p className="compact-graph-hint">{t('compactGraphHint')}</p>
+                      )}
                     </div>
                     {pluginPanel && (
                       <div className="absolute inset-0 flex flex-col">
@@ -114,8 +135,9 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
                       </div>
                     )}
                   </div>
+                  {compact && <CanvasTabBar />}
                 </div>
-                {!readonly && (
+                {!compact && (
                   <SidePanel
                     id="inspector-panel"
                     side="right"
@@ -152,12 +174,19 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
             </SidebarInset>
           </div>
         )}
+        {compact && !introOpen && (
+          <ConceptSheet
+            canvas={workspaceRef}
+            onCover={setSheetCover}
+            onNavigate={(id) => host.store.setSelection([{ kind: 'concept', id }])}
+          />
+        )}
         <PersistenceBanner persistence={persistence} />
       </SidebarProvider>
-      {(readonly || !settingsOpen) && <ToastsHost />}
+      {(compact || !settingsOpen) && <ToastsHost />}
       <SearchDialog
         store={host.store}
-        open={!readonly && !introOpen && searchOpen}
+        open={!compact && !introOpen && searchOpen}
         onOpenChange={setSearchOpen}
         focusRef={canvas}
         onSelect={(result) => {
@@ -167,8 +196,8 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
         }}
       />
       {window.nessoUpdater && <UpdateBar updater={window.nessoUpdater} />}
-      <Dialog.Root open={!readonly && settingsOpen} onOpenChange={setSettingsOpen}>
-        {!readonly && settingsOpen && (
+      <Dialog.Root open={!compact && settingsOpen} onOpenChange={setSettingsOpen}>
+        {!compact && settingsOpen && (
           <SettingsDialog
             page={settingsPage}
             onPageChange={setSettingsPage}
