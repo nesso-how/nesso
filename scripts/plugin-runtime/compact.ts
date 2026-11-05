@@ -22,6 +22,7 @@ export async function verifyCompact({ window, url, name }: CheckContext) {
   window.setContentSize(390, 844)
   await window.loadURL(url)
   await ready(`!!document.querySelector('.compact-intro-footer button')`)
+  await ready(`!document.querySelector('.splash')`)
   assert.equal(
     await evaluate(`!!document.querySelector('.compact-intro-footer p')`),
     name === 'static-web',
@@ -65,8 +66,6 @@ export async function verifyCompact({ window, url, name }: CheckContext) {
     return frame
   }
   let frame = await openReview()
-  const shell = frame.parent!
-  await shell.executeJavaScript(`window.__retainedDocument=document`)
   const reviewReady = (script: string) => waitFor(() => frame.executeJavaScript(script), Boolean)
   await reviewReady(`!!document.querySelector('.review-reveal button')`)
   window.setContentSize(1000, 900)
@@ -90,12 +89,12 @@ export async function verifyCompact({ window, url, name }: CheckContext) {
   await click('.compact-tab-list [role="tab"]')
   await ready(`!document.querySelector('[data-plugin-panel]')`)
   await waitFor(
-    () => shell.executeJavaScript(`document.querySelectorAll('iframe').length`),
-    (count) => count === 0,
+    () => frame.executeJavaScript(`document.getElementById('root').textContent===''`),
+    Boolean,
   )
-  assert.equal(frame.detached, true)
+  const retained = frame
   frame = await openReview()
-  assert.equal(await shell.executeJavaScript(`window.__retainedDocument===document`), true)
+  assert.equal(frame, retained)
   const { targetInfos } = await window.webContents.debugger.sendCommand('Target.getTargets')
   const panel = targetInfos.find((target: { type: string }) => target.type === 'iframe')
   if (panel) {

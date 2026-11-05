@@ -19,7 +19,7 @@ export async function verifyStartup({ window, url }: CheckContext) {
     splash: !!document.querySelector('.splash'),
     playing: !!document.querySelector('.splash.is-playing'),
     busy: document.querySelector('.splash')?.getAttribute('aria-busy'),
-    intro: !!document.querySelector('.intro'),
+    intro: !!document.querySelector('.intro') && !document.querySelector('.intro').closest('[inert]'),
     warnings: document.querySelectorAll('[data-slot="toast"][data-tone="warning"]').length,
     recovery: !!document.querySelector('.startup-recovery')
   })`) as Promise<{

@@ -1,18 +1,33 @@
 import { createPluginClient, PluginError, type ActionContribution } from './runtime.ts'
 import { validateActions } from './module.ts'
 
+const runtime: string = JSON.parse(
+  document.querySelector<HTMLScriptElement>('#react-imports')!.textContent!,
+).imports['nesso:react']
+const load = (entry: string) =>
+  Promise.all([
+    import(entry) as Promise<{
+      create: () => readonly ActionContribution[] | Promise<readonly ActionContribution[]>
+    }>,
+    import(runtime) as Promise<typeof import('./react.ts')>,
+  ])
+let modules: ReturnType<typeof load> | undefined
 let cleanup: (() => void) | undefined
 const bootstrap = (event: MessageEvent) => {
-  if (event.source !== parent || event.data?.type !== 'bootstrap' || event.ports.length !== 1)
+  if (event.source !== parent) return
+  const fail = () => parent.postMessage({ type: 'worker-failed', token: event.data.token }, '*')
+  if (event.data?.type === 'prepare' && !modules) {
+    window.addEventListener('error', fail)
+    window.addEventListener('unhandledrejection', fail)
+    modules = load(event.data.entry)
+    void modules
+      .then(() => parent.postMessage({ type: 'worker-ready', token: event.data.token }, '*'))
+      .catch(fail)
     return
+  }
+  if (event.data?.type !== 'bootstrap' || event.ports.length !== 1) return
   cleanup?.()
   const port = event.ports[0]
-  const runtime: string = JSON.parse(
-    document.querySelector<HTMLScriptElement>('#react-imports')!.textContent!,
-  ).imports['nesso:react']
-  const fail = () => parent.postMessage({ type: 'worker-failed', token: event.data.token }, '*')
-  window.addEventListener('error', fail)
-  window.addEventListener('unhandledrejection', fail)
   let client: ReturnType<typeof createPluginClient> | undefined
   let root: import('react-dom/client').Root | undefined
   const unmount = () => {
@@ -20,8 +35,6 @@ const bootstrap = (event: MessageEvent) => {
     root = undefined
   }
   const dispose = () => {
-    window.removeEventListener('error', fail)
-    window.removeEventListener('unhandledrejection', fail)
     client?.close()
     unmount()
   }
@@ -39,9 +52,7 @@ const bootstrap = (event: MessageEvent) => {
       applyTheme()
       client.context.document.subscribe(applyTheme)
       client.context.signal.addEventListener('abort', unmount, { once: true })
-      const module: {
-        create: () => readonly ActionContribution[] | Promise<readonly ActionContribution[]>
-      } = await import(event.data.entry)
+      const [module, { React, ReactDOM, ReactDOMClient }] = await modules!
       if (client.context.signal.aborted) return
       const actions = await module.create()
       validateActions(actions)
@@ -49,8 +60,6 @@ const bootstrap = (event: MessageEvent) => {
       const action = actions.find(({ id }) => id === data.actionId)
       if (!action?.ui)
         throw new PluginError('invalid-input', [{ path: 'ui', message: 'Missing action UI' }])
-      const { React, ReactDOM, ReactDOMClient }: typeof import('./react.ts') = await import(runtime)
-      if (client.context.signal.aborted) return
       root = ReactDOMClient.createRoot(document.getElementById('root')!, { onUncaughtError: fail })
       ReactDOM.flushSync(() => root!.render(React.createElement(action.ui!, client!.context)))
       if (!client.context.signal.aborted) port.postMessage({ type: 'panel-ready' })

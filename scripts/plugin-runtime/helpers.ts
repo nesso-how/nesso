@@ -43,6 +43,7 @@ export async function openFixtureWorkspace(
   const evaluate = <T>(script: string) => window.webContents.executeJavaScript(script) as Promise<T>
   await window.loadURL(url)
   await waitFor(() => evaluate<boolean>(`!!document.querySelector('.intro')`), Boolean)
+  await waitFor(() => evaluate<boolean>(`!document.querySelector('.splash')`), Boolean)
   await evaluate(`document.querySelector('.intro-skip').click()`)
   await waitFor(() => evaluate<boolean>(`!!document.querySelector('#canvas .react-flow')`), Boolean)
   if (!persisted) return { saved, evaluate }
@@ -86,10 +87,11 @@ export async function waitFor<T>(read: () => Promise<T>, ready: (value: T) => bo
 }
 
 export async function panelFrame(window: BrowserWindow, readyScript: string) {
-  const frame = window.webContents.mainFrame.framesInSubtree.find(
-    (frame) => frame.url === 'about:srcdoc',
-  )
+  const frame = await waitFor(async () => {
+    for (const frame of window.webContents.mainFrame.framesInSubtree) {
+      if (frame.url === 'about:srcdoc' && (await frame.executeJavaScript(readyScript))) return frame
+    }
+  }, Boolean)
   assert.ok(frame)
-  await waitFor(() => frame.executeJavaScript(readyScript), Boolean)
   return frame
 }
