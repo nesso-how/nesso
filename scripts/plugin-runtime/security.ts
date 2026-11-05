@@ -39,7 +39,7 @@ export async function verifyWorker({ window, url, name, attempted }: CheckContex
       }
       if(data.type==='complete')window.__complete=true;
     };
-    window.postMessage({type:'bootstrap',token:'probe',entry:${JSON.stringify(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`)}},'*',[channel.port2]);
+    window.postMessage({type:'bootstrap',guard:'probe',token:'probe',entry:${JSON.stringify(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`)}},'*',[channel.port2]);
   `)
   await waitFor(
     async () =>

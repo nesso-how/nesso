@@ -4,6 +4,7 @@ import type { Notifications } from '@nesso-how/core'
 import type { FileBridge } from '../../shared/files.ts'
 import type { HostStore } from '../store/types.ts'
 import { loadActions, type ActionPackage } from './actions.ts'
+import type { createPluginFrame } from './frame.ts'
 
 type Invocation = {
   readonly actionId: string
@@ -109,7 +110,7 @@ export function createPluginPanel(
         mount()
       })
     },
-    attach: (frame: HTMLIFrameElement, id: string) => {
+    attach: (frame: ReturnType<typeof createPluginFrame>, id: string) => {
       if (!session || current?.id !== id) return () => {}
       detach?.()
       const { source, invocation } = session
@@ -120,7 +121,7 @@ export function createPluginPanel(
         publish()
       }
       void loadActions(store, source, notifications, bridge, invocation, controller.signal, {
-        element: frame,
+        frame,
         ready: () => update('ready'),
       }).catch(() => update('failed'))
       detach = () => controller.abort()

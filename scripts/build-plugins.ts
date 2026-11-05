@@ -110,6 +110,7 @@ try {
       define: { 'process.env.NODE_ENV': JSON.stringify('production') },
       build: {
         target: 'es2022',
+        rolldownOptions: { output: { minify: true } },
         lib: {
           entry: path.join(root, `packages/plugin/src/${entry}.ts`),
           formats: [entry === 'react' ? 'es' : 'iife'],
@@ -138,7 +139,7 @@ try {
   const guarded = (csp: string, title: string, content: string) =>
     html(
       csp,
-      `<iframe title="${title}" sandbox="allow-scripts" referrerpolicy="no-referrer"></iframe><template id="runner">${content}</template>${script(guard)}`,
+      `<template id="runner" data-title="${title}">${content}</template>${script(guard)}`,
       'html,body,iframe{display:block;margin:0;height:100%;width:100%;border:0;overflow:hidden}',
     )
   const worker = await readFile(path.join(staging, 'runner/worker.js'))

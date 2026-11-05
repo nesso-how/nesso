@@ -76,7 +76,7 @@ export async function verifyBundled({ window, url }: CheckContext) {
         if(data.type==='badge-result'){result.badge=data.value;result.done=true}
         if(data.type==='close'){result.error=data.reason;result.done=true}
       };
-      frame.contentWindow.postMessage({type:'bootstrap',token:'probe',entry},'*',[channel.port2]);
+      frame.contentWindow.postMessage({type:'bootstrap',guard:'probe',token:'probe',entry},'*',[channel.port2]);
     })()`)
     try {
       const result = await waitFor(

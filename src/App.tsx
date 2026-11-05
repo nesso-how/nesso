@@ -119,8 +119,11 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
                   {compact ? <ViewSwitcher /> : <ViewHeader readonly={readonly} />}
                   <div ref={workspaceRef} className="relative min-h-0 flex-1">
                     <div
-                      className="h-full"
-                      style={{ contentVisibility: pluginPanel ? 'hidden' : undefined }}
+                      className="graph-surface h-full"
+                      style={{
+                        contentVisibility: pluginPanel ? 'hidden' : undefined,
+                        opacity: pluginPanel ? 0 : 1,
+                      }}
                       inert={!!pluginPanel}
                     >
                       <GraphWorkspace
@@ -133,11 +136,7 @@ export default function App({ persistence }: { persistence: ReturnType<typeof st
                         focusRef={canvas}
                       />
                     </div>
-                    {pluginPanel && (
-                      <div className="absolute inset-0 flex flex-col">
-                        <PluginContent panel={pluginPanel} />
-                      </div>
-                    )}
+                    <PluginContent panel={pluginPanel} />
                   </div>
                   {compact && <CanvasTabBar />}
                 </div>

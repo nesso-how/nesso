@@ -11,7 +11,7 @@ import type { PluginI18n, PluginManifest } from '@nesso-how/plugin'
 import type { FileBridge } from '../../shared/files.ts'
 import { conceptPlacementOffset } from '../store/operations.ts'
 import { connectActionChannel } from './action-channel.ts'
-import { loadPluginFrame } from './frame.ts'
+import { createPluginFrame } from './frame.ts'
 import { createPluginFiles } from './files.ts'
 import { renderViewImage } from './images.ts'
 import type { createPluginEntry } from './entry.ts'
@@ -34,14 +34,15 @@ export function loadActions(
     descriptors: readonly ActionDescriptor[]
   },
   signal?: AbortSignal,
-  panel?: { element: HTMLIFrameElement; ready: () => void },
+  panel?: { frame: ReturnType<typeof createPluginFrame>; ready: () => void },
 ) {
   return new Promise<readonly ActionDescriptor[]>((resolve, reject) => {
     if (signal?.aborted) {
       reject(new PluginError('cancelled', [{ path: 'action', message: 'Action cancelled' }]))
       return
     }
-    const frame = panel?.element ?? document.createElement('iframe')
+    const container = panel?.frame ?? createPluginFrame(document.createElement('iframe'))
+    const frame = container.element
     if (!panel) {
       frame.hidden = true
       frame.title = source.name
@@ -70,9 +71,8 @@ export function loadActions(
         themeTokens.map((token) => [token, style.getPropertyValue(`--${token}`).trim()]),
       )
     }
-    const frameRuntime = loadPluginFrame(
-      frame,
-      { entry: source.entry, panel: !!panel },
+    const frameRuntime = container.load(
+      source.entry,
       (port, ready, failed) => {
         const invocation = target
         if (

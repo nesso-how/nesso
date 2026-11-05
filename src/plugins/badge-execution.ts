@@ -9,7 +9,7 @@ import {
   type ActionDescriptor,
 } from '@nesso-how/plugin/runtime'
 import type { ActionPackage } from './actions.ts'
-import { loadPluginFrame } from './frame.ts'
+import { createPluginFrame } from './frame.ts'
 import { listenPluginPort } from './messages.ts'
 
 export function connectBadgeChannel(
@@ -103,9 +103,8 @@ export function executeActionBadge(
     }
     const cancel = () =>
       finish(new PluginError('cancelled', [{ path: 'badge', message: 'Badge cancelled' }]))
-    const runtime = loadPluginFrame(
-      frame,
-      { entry: source.entry },
+    const runtime = createPluginFrame(frame).load(
+      source.entry,
       (port, ready) =>
         connectBadgeChannel(port, descriptors, actionId, input, {
           ready,

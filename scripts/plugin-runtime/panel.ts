@@ -44,19 +44,19 @@ export async function verifyPanel({ window, url, name, attempted }: CheckContext
     },
   }
   await window.webContents
-    .executeJavaScript(`window.__openPanel=async(actionId,reuse=false,initial=${JSON.stringify(state)})=>{
+    .executeJavaScript(`window.__openPanel=async(actionId,reuse=false,initial=${JSON.stringify(state)},token='probe')=>{
     window.__panel={ready:0,requests:[],pong:false,failed:false};
     const frame=reuse?document.querySelector('#panel-probe'):document.createElement('iframe');
     if(!reuse){frame.id='panel-probe';frame.sandbox='allow-scripts';frame.title='Plugin panel';frame.style='width:600px;height:400px';
     const loaded=new Promise(resolve=>frame.onload=resolve);frame.src=${JSON.stringify(`${new URL('plugin-runner/panel.html', url)}#probe`)};document.body.append(frame);await loaded;}
     const channel=new MessageChannel();window.__panelPort=channel.port1;
-    window.onmessage=event=>{if(event.source===frame.contentWindow&&event.data?.type==='plugin-closed')window.__panel.failed=true};
+    window.onmessage=event=>{if(event.source===frame.contentWindow&&event.data?.type==='plugin-closed'&&event.data.token===token)window.__panel.failed=true};
     channel.port1.onmessage=({data})=>{
       if(data.type==='panel-ready'){if(++window.__panel.ready===1)channel.port1.postMessage({type:'invoke',actionId,state:initial})}
       if(data.type==='request'){window.__panel.requests.push(data);if(data.params.title?.en!=='Deferred')channel.port1.postMessage({type:'response',id:data.id,ok:true,value:'notice'})}
       if(data.type==='pong')window.__panel.pong=true;
     };
-    frame.contentWindow.postMessage({type:'bootstrap',token:'probe',entry:${JSON.stringify(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`)}},'*',[channel.port2]);
+    frame.contentWindow.postMessage({type:'bootstrap',guard:'probe',token,entry:${JSON.stringify(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`)}},'*',[channel.port2]);
   };window.__openPanel('browse')`)
   const evaluate = <T>(code: string) => window.webContents.executeJavaScript(code) as Promise<T>
   await waitFor(
@@ -82,6 +82,8 @@ export async function verifyPanel({ window, url, name, attempted }: CheckContext
     (frame) => frame.url === 'about:srcdoc',
   )!
   assert.ok(content)
+  const shell = content.parent!
+  await shell.executeJavaScript(`window.__retainedShell=document`)
   await evaluate(
     `window.__panelPort.postMessage({type:'state',state:${JSON.stringify({ ...state, revision: 1, locale: 'en', theme: { ...state.theme, background: '#eeeeee' } })}});window.__panelPort.postMessage({type:'ping',id:1});`,
   )
@@ -139,13 +141,11 @@ export async function verifyPanel({ window, url, name, attempted }: CheckContext
       ),
     Boolean,
   )
-  await evaluate(
-    `window.__panelPort.close();document.querySelector('#panel-probe').remove();window.__openPanel('broken')`,
-  )
+  await evaluate(`window.__panelPort.close();window.__openPanel('broken',true,undefined,'broken')`)
   await waitFor(() => evaluate<boolean>('window.__panel.failed'), Boolean)
-  await evaluate(
-    `window.__panelPort.close();document.querySelector('#panel-probe').remove();window.__openPanel('other')`,
-  )
+  assert.equal(await shell.executeJavaScript(`window.__retainedShell===document`), true)
+  assert.equal(content.detached, true)
+  await evaluate(`window.__panelPort.close();window.__openPanel('other',true,undefined,'other')`)
   await waitFor(
     () => evaluate<number>('window.__panel.ready'),
     (ready) => ready === 2,
@@ -157,15 +157,25 @@ export async function verifyPanel({ window, url, name, attempted }: CheckContext
     await other.executeJavaScript(`document.getElementById('root').textContent`),
     'Other UI',
   )
+  assert.equal(await other.executeJavaScript(`typeof window.__initialDocument`), 'undefined')
+  await shell.executeJavaScript(
+    `window.addEventListener('message',event=>{if(event.data?.type==='reset')event.ports[0]?.postMessage('processed')})`,
+  )
+  await evaluate(
+    `Promise.all([{type:'reset',guard:'probe',token:'probe'},{type:'reset',guard:'wrong',token:'other'}].map(data=>new Promise(resolve=>{const channel=new MessageChannel();channel.port1.onmessage=()=>{channel.port1.close();resolve()};document.querySelector('#panel-probe').contentWindow.postMessage(data,'*',[channel.port2])})))`,
+  )
+  await other.executeJavaScript(
+    `new Promise(resolve=>{const channel=new MessageChannel();channel.port1.onmessage=()=>{channel.port1.close();resolve()};parent.postMessage({type:'reset',guard:'probe',token:'other'},'*',[channel.port2])})`,
+  )
   await other.executeJavaScript(`setTimeout(()=>document.querySelector('#root button').click(),0)`)
   await waitFor(
     () => evaluate<number>('window.__panel.requests.length'),
     (count) => count === 1,
   )
   await evaluate(`window.__panelPort.close();document.querySelector('#panel-probe').remove()`)
-  assert.equal(await evaluate(`!!document.querySelector('#panel-probe')`), false)
+  await waitFor(async () => other.detached, Boolean)
   assert.equal(attempted.length, 0)
   console.log(
-    `${name}: React UI, frame reuse, context cancellation, cleanup, sandbox, failures and responsive host during busy content passed`,
+    `${name}: React UI, persistent shell, isolated session replacement, context cancellation, sandbox and busy content disposal passed`,
   )
 }

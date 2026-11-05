@@ -1,36 +1,57 @@
-const token = location.hash.slice(1)
-const frame = document.querySelector<HTMLIFrameElement>('iframe')!
+const guard = location.hash.slice(1)
+const template = document.querySelector<HTMLTemplateElement>('#runner')!
+const content = template.innerHTML
+let frame: HTMLIFrameElement | undefined
+let token: string | undefined
 let pending: MessageEvent | undefined
-let started = false
 let connected = false
+const reset = () => {
+  pending?.ports[0].close()
+  pending = undefined
+  frame?.remove()
+  frame = undefined
+  token = undefined
+  connected = false
+}
 const send = (event: MessageEvent) =>
-  frame.contentWindow!.postMessage(event.data, '*', [event.ports[0]])
-const bootstrap = (event: MessageEvent) => {
+  frame!.contentWindow!.postMessage(event.data, '*', [event.ports[0]])
+window.addEventListener('focus', () => frame?.contentWindow?.focus())
+window.addEventListener('message', (event: MessageEvent) => {
   if (
-    event.source !== parent ||
-    event.data?.type !== 'bootstrap' ||
-    event.data.token !== token ||
+    frame &&
+    event.source === frame.contentWindow &&
+    event.data?.type === 'worker-failed' &&
+    event.data.token === token
+  )
+    parent.postMessage({ type: 'plugin-closed', token }, '*')
+  if (event.source !== parent || event.data?.guard !== guard) return
+  if (event.data.type === 'reset') {
+    if (event.data.token === token) reset()
+    parent.postMessage({ type: 'plugin-reset', guard, token: event.data.token }, '*')
+    return
+  }
+  if (
+    event.data.type !== 'bootstrap' ||
+    typeof event.data.token !== 'string' ||
     event.ports.length !== 1
   )
     return
+  if (event.data.token !== token) reset()
+  token = event.data.token
   if (connected) {
     send(event)
     return
   }
   pending?.ports[0].close()
   pending = event
-  if (started) return
-  started = true
-  window.addEventListener('message', (event) => {
-    if (
-      event.source === frame.contentWindow &&
-      event.data?.type === 'worker-failed' &&
-      event.data.token === token
-    )
-      parent.postMessage({ type: 'plugin-closed', token }, '*')
-  })
-  window.addEventListener('focus', () => frame.contentWindow!.focus())
-  frame.addEventListener('load', () => {
+  if (frame) return
+  const element = document.createElement('iframe')
+  frame = element
+  element.title = template.dataset.title!
+  element.sandbox.add('allow-scripts')
+  element.referrerPolicy = 'no-referrer'
+  element.addEventListener('load', () => {
+    if (frame !== element) return
     if (connected) {
       parent.postMessage({ type: 'plugin-closed', token }, '*')
       return
@@ -39,6 +60,6 @@ const bootstrap = (event: MessageEvent) => {
     send(pending!)
     pending = undefined
   })
-  frame.srcdoc = document.querySelector<HTMLTemplateElement>('#runner')!.innerHTML
-}
-window.addEventListener('message', bootstrap)
+  element.srcdoc = content
+  document.body.prepend(element)
+})

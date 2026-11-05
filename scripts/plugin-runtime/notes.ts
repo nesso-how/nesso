@@ -43,7 +43,7 @@ export async function verifyNotes({ window, url }: CheckContext) {
         }else throw new Error('Unexpected notes request: '+data.method);
         channel.port1.postMessage({type:'response',id:data.id,ok:true,value});
       };
-      frame.contentWindow.postMessage({type:'bootstrap',token:'notes',entry},'*',[channel.port2]);
+      frame.contentWindow.postMessage({type:'bootstrap',guard:'notes',token:'notes',entry},'*',[channel.port2]);
     };undefined`)
   const open = async (viewId: string | null, reuse = false) => {
     await evaluate(`window.__openNotes(${JSON.stringify(viewId)},${reuse})`)

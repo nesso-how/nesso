@@ -65,6 +65,8 @@ export async function verifyCompact({ window, url, name }: CheckContext) {
     return frame
   }
   let frame = await openReview()
+  const shell = frame.parent!
+  await shell.executeJavaScript(`window.__retainedDocument=document`)
   const reviewReady = (script: string) => waitFor(() => frame.executeJavaScript(script), Boolean)
   await reviewReady(`!!document.querySelector('.review-reveal button')`)
   window.setContentSize(1000, 900)
@@ -87,7 +89,13 @@ export async function verifyCompact({ window, url, name }: CheckContext) {
   await ready(`!!document.querySelector('.compact-tab-bar')`)
   await click('.compact-tab-list [role="tab"]')
   await ready(`!document.querySelector('[data-plugin-panel]')`)
+  await waitFor(
+    () => shell.executeJavaScript(`document.querySelectorAll('iframe').length`),
+    (count) => count === 0,
+  )
+  assert.equal(frame.detached, true)
   frame = await openReview()
+  assert.equal(await shell.executeJavaScript(`window.__retainedDocument===document`), true)
   const { targetInfos } = await window.webContents.debugger.sendCommand('Target.getTargets')
   const panel = targetInfos.find((target: { type: string }) => target.type === 'iframe')
   if (panel) {
