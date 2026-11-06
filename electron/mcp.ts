@@ -168,18 +168,19 @@ export function connectMcp(trusted: TrustedRequest, location: DataLocation) {
       access.revoke()
       if (wasRunning && owner && !owner.isDestroyed() && host === owner) await start(owner)
       else publish()
-      return current()
     } catch (error) {
+      changing = false
+      publish()
       return {
         issues:
           error instanceof ElectronError
             ? error.issues
             : [{ path: 'mcp', message: 'Could not regenerate the MCP token' }],
       }
-    } finally {
-      changing = false
-      publish()
     }
+    changing = false
+    publish()
+    return current()
   })
   ipcMain.handle('mcp:enabled', async (event, enabled: unknown): Promise<AiResult<McpState>> => {
     if (!trusted(event) || typeof enabled !== 'boolean')
@@ -195,18 +196,19 @@ export function connectMcp(trusted: TrustedRequest, location: DataLocation) {
           throw new ElectronError([{ path: 'mcp', message: 'The document is not ready' }])
         await start(host)
       }
-      return current()
     } catch (error) {
+      changing = false
+      publish()
       return {
         issues:
           error instanceof ElectronError
             ? error.issues
             : [{ path: 'mcp', message: 'MCP server operation failed' }],
       }
-    } finally {
-      changing = false
-      publish()
     }
+    changing = false
+    publish()
+    return current()
   })
   app.on('before-quit', () => {
     if (!location.state().moving) void stop()
