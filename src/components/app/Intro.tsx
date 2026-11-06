@@ -174,9 +174,10 @@ function DesktopIntro({
                 bottomInset={bottomInset}
               />
             </div>
+            {step === 0 && <div className="intro-scrim" aria-hidden="true" />}
             <section
               ref={narrative}
-              className="intro-narrative intro-overlay"
+              className={`intro-narrative intro-overlay${step === 0 ? ' intro-narrative-first' : ''}`}
               aria-labelledby="intro-title"
             >
               <div className="intro-copy" key={step}>

@@ -223,11 +223,30 @@
   left: 28px;
   width: min(382px, calc(100% - 56px));
 }
+.intro-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background: rgb(0 0 0 / 0.24);
+  animation: intro-scrim-in 200ms ease-out;
+}
+@keyframes intro-scrim-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
 .intro-narrative {
   padding: 18px 20px;
   background: var(--background);
   border: 1px solid var(--border);
   border-radius: var(--radius-object);
+}
+.intro-narrative-first {
+  border-color: color-mix(in srgb, var(--foreground) 32%, var(--border));
 }
 .intro-copy {
   animation: intro-copy-in 260ms ease-out;

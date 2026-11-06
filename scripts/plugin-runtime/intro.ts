@@ -31,10 +31,12 @@ export async function verifyIntro({ window, url, name }: CheckContext) {
   await title('Start from an idea')
   await ready(`!document.querySelector('.splash')`)
   await ready(`document.querySelectorAll('.intro .react-flow__node').length===1`)
+  assert.equal(await evaluate(`!!document.querySelector('.intro-scrim')`), true)
   if (name === 'desktop') await waitFor(async () => saved.has('document'), Boolean)
   const before = structuredClone(saved.get('document'))
   await next()
   await title('Decide how they connect')
+  assert.equal(await evaluate(`!!document.querySelector('.intro-scrim')`), false)
   await ready(
     `document.querySelector('[aria-label="Connect from Coffee"]')?.getAttribute('aria-hidden')==='false'`,
   )
