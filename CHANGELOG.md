@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.0.0-beta.6 — 2026-11-06
+
+### Documentation
+
+- **plugins:** Add agent workflow and landing prompt (#268)
+
+### Features
+
+- **concept-map:** Add automatic relation groups (#269)
+- **plugins:** Separate private storage by provenance (#263)
+- **ai:** Let mcp agents propose local plugins (#266)
+
+### Fixes
+
+- **splash:** Prevent font swaps during startup (#262)
+- **site:** Clarify italian editing description (#264)
+
 ## 1.0.0-beta.5 — 2026-11-05
 
 ### Features
