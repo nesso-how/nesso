@@ -87,9 +87,19 @@ export async function verifyIntro({ window, url, name }: CheckContext) {
   await next()
   await title('Test yourself')
   await ready(
-    `document.querySelector('[role="tab"][aria-disabled="true"]')?.textContent==='Review3'`,
+    `document.querySelector('.intro-review-tab[aria-disabled="true"]')?.textContent==='Review3'`,
   )
-  await evaluate(`document.querySelector('[role="tab"][aria-disabled="true"]').click()`)
+  assert.deepEqual(
+    await evaluate(
+      `[...document.querySelectorAll('.intro [role="tab"]')].map(tab=>[tab.textContent,tab.getAttribute('aria-disabled')==='true'])`,
+    ),
+    [
+      ['Graph', false],
+      ['Notes', true],
+      ['Review3', true],
+    ],
+  )
+  await evaluate(`document.querySelector('.intro-review-tab').click()`)
   assert.equal(
     await evaluate(`document.querySelectorAll('[data-plugin-panel], .intro iframe').length`),
     0,

@@ -4,6 +4,7 @@ import { createSeedDocument } from '../data/seed.ts'
 import { createNessoStore } from './create.ts'
 import { relationKey } from '@nesso-how/schema'
 import {
+  canDiscardIntroExample,
   completeIntro,
   createIntroStore,
   focusConceptId,
@@ -156,7 +157,7 @@ test('completing the intro selects seed Focus once, then preserves selection', (
   assert.equal(store.getState().history, original.history)
 
   const replayed = store.getState()
-  completeIntro(store)
+  completeIntro(store, { keepExample: false })
   assert.equal(store.getState(), replayed)
 
   const fresh = createNessoStore(null)
@@ -167,6 +168,22 @@ test('completing the intro selects seed Focus once, then preserves selection', (
   assert.equal(fresh.store.getState().selected, before.selected)
   assert.equal(fresh.store.getState().graph, before.graph)
 
-  completeIntro(store, false)
+  completeIntro(store, { selectExample: false })
   assert.deepEqual(store.getState().selected, [])
+})
+
+test('discarding the first-run example starts a fresh document', () => {
+  const seed = createSeedDocument('en')
+  const { store } = createNessoStore(seed.graph, { workspace: seed.workspace })
+  assert.equal(canDiscardIntroExample(store.getState()), true)
+  completeIntro(store, { keepExample: false })
+  const state = store.getState()
+  assert.equal(state.preferences.introSeen, true)
+  assert.equal(state.graph.concepts.length, 1)
+  assert.ok(!seed.graph.concepts.some(({ id }) => id === state.graph.concepts[0].id))
+  assert.deepEqual(state.graph.relations, [])
+  assert.deepEqual(state.graph.relationTypes, [])
+  assert.deepEqual(state.workspace.savedViews, [])
+  assert.deepEqual(state.selected, [])
+  assert.equal(canDiscardIntroExample(state), false)
 })
