@@ -78,10 +78,11 @@ export async function verifyStorage({ window, url, name }: CheckContext) {
     async () =>
       (await read('plugin-storage')) as {
         version: number
-        plugins: { records: { scope?: { id: string } }[] }[]
+        plugins: { local: boolean; records: { scope?: { id: string } }[] }[]
       },
-    (value) => value.version === 2 && value.plugins[0].records.length === 3,
+    (value) => value.version === 3 && value.plugins[0].records.length === 3,
   )
+  assert.equal(preserved.plugins[0].local, false)
   assert.deepEqual(
     preserved.plugins[0].records.map((record) => record.scope?.id),
     [undefined, conceptId, 'urn:missing'],

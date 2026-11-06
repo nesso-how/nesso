@@ -71,7 +71,7 @@ export const loadPersistence = async (
         if (saved.documentId !== loaded.documentId)
           fail('documentId', 'Plugin storage belongs to another document')
         loaded.pluginStorage = saved.plugins
-        if ((value as { version: number }).version !== 2)
+        if ((value as { version: number }).version !== 3)
           (loaded.upgrades ??= {})['plugin-storage'] = migrated
         continue
       }
@@ -192,7 +192,7 @@ export const connectPersistence = (
                 ? { version: 3, preferences: state.preferences }
                 : section === 'conversation'
                   ? { version: 1, messages: state.conversation.messages }
-                  : { version: 2, documentId: state.documentId, plugins: state.pluginStorage }
+                  : { version: 3, documentId: state.documentId, plugins: state.pluginStorage }
           await storage.write(section, saved)
           if (section === 'document') savedDocumentId = state.documentId
           if (replace) {

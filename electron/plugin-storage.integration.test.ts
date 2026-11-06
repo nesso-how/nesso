@@ -46,6 +46,15 @@ test('installed actions restore verified bytes offline, reject conflicts and can
   })
   await assert.rejects(storage.install(prepared, () => false))
   assert.deepEqual(await storage.list(), { packages: [], issues: [] })
+  for (const name of ['@nesso-how/review', '@nesso-how/notes']) {
+    const bundled = await preparePluginPackage({
+      manifest: { ...manifest, name },
+      files: [
+        { path: 'dist/index.js', bytes: new TextEncoder().encode('export const create=()=>[]') },
+      ],
+    })
+    await assert.rejects(storage.check(bundled), /reserved/)
+  }
   await storage.check(prepared)
   await storage.install(prepared, () => true)
   assert.deepEqual(await createPluginStorage(directory).list(), {
@@ -140,16 +149,21 @@ test('manual updates atomically replace one exact package, preserve disabled sta
   assert.equal(await readFile(file, 'utf8'), bytes)
   assert.deepEqual(await readdir(directory), [recordName])
   assert.equal((await storage.check(next, previous.contentId)).enabled, false)
-  const acquired = { ...next, npmIntegrity: `sha512-${Buffer.alloc(64).toString('base64')}` }
-  await storage.install(acquired, () => true, previous.contentId)
+  const npmIntegrity = `sha512-${Buffer.alloc(64).toString('base64')}`
+  await assert.rejects(
+    storage.install({ ...next, npmIntegrity }, () => true, previous.contentId),
+    /provenance/,
+  )
+  assert.equal(await readFile(file, 'utf8'), bytes)
+  await storage.install(next, () => true, previous.contentId)
   assert.deepEqual(await readdir(directory), [recordName])
   assert.deepEqual(await createPluginStorage(directory).list(), {
-    packages: [{ ...acquired, enabled: false }],
+    packages: [{ ...next, enabled: false }],
     issues: [],
   })
   await storage.setEnabled(next.contentId, true)
   assert.deepEqual(await createPluginStorage(directory).list(), {
-    packages: [{ ...acquired, enabled: true }],
+    packages: [{ ...next, enabled: true }],
     issues: [],
   })
   await assert.rejects(storage.setEnabled(previous.contentId, true))
@@ -168,6 +182,23 @@ test('manual updates atomically replace one exact package, preserve disabled sta
     packages: [{ ...previous, enabled: true }],
     issues: [],
   })
+  const published = { ...unrelated, npmIntegrity }
+  await storage.install(published, () => true)
+  const local = await preparePluginPackage({
+    manifest: { ...manifest, name: 'nesso-plugin-other', version: '1.1.0' },
+    files: [{ path: 'index.js', bytes: new TextEncoder().encode('export const create=()=>[1]') }],
+  })
+  await assert.rejects(
+    storage.install(local, () => true, published.contentId),
+    /provenance/,
+  )
+  assert.deepEqual(
+    new Set((await createPluginStorage(directory).list()).packages),
+    new Set([
+      { ...previous, enabled: true },
+      { ...published, enabled: true },
+    ]),
+  )
 })
 
 test('definition records restore offline with exact font bytes and reject tampered updates without replacing providers', async (t) => {

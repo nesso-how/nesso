@@ -18,6 +18,7 @@ import type { createPluginEntry } from './entry.ts'
 
 export type ActionPackage = {
   readonly name: string
+  readonly local: boolean
   readonly entry: ReturnType<typeof createPluginEntry>
   readonly manifest: Extract<PluginManifest, { kind: 'actions' }>
   readonly i18n: PluginI18n
@@ -88,6 +89,7 @@ export function loadActions(
           {
             ...source.manifest,
             pluginId: source.name,
+            local: source.local,
             invocation,
             ...(panel ? { mode: 'panel' } : {}),
           },

@@ -62,13 +62,21 @@ const pluginStorageV1 = z.strictObject({
   ),
 })
 
+const pluginStorageV2 = z.strictObject({
+  version: z.literal(2),
+  documentId: iriSchema,
+  plugins: z.array(
+    z.strictObject({ pluginId: z.string(), revision: z.unknown(), records: z.unknown() }),
+  ),
+})
+
 export function migratePluginStorage(value: unknown): unknown {
   checkMessageSize(value, pluginStorageLimits.total)
   const { version } = parseSettings(versionSchema, value)
   switch (version) {
     case 1: {
       const saved = parseSettings(pluginStorageV1, value)
-      return {
+      return migratePluginStorage({
         ...saved,
         version: 2,
         plugins: saved.plugins.map((entry) => ({
@@ -79,9 +87,21 @@ export function migratePluginStorage(value: unknown): unknown {
               : { ...record, scope: { kind: 'concept', id: conceptId } },
           ),
         })),
+      })
+    }
+    case 2: {
+      const saved = parseSettings(pluginStorageV2, value)
+      return {
+        ...saved,
+        version: 3,
+        plugins: saved.plugins.map(({ pluginId, ...entry }) => ({
+          pluginId,
+          local: false,
+          ...entry,
+        })),
       }
     }
-    case 2:
+    case 3:
       return value
     default:
       return fail('version', 'Unsupported plugin storage version')

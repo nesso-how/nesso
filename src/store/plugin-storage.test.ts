@@ -23,6 +23,7 @@ const set = (
   kind: 'plugin-storage.set',
   documentId: host.store.getState().documentId,
   pluginId,
+  local: false,
   revision,
   record:
     conceptId === undefined
@@ -38,6 +39,7 @@ const remove = (
   kind: 'plugin-storage.delete',
   documentId: host.store.getState().documentId,
   pluginId: 'nesso-plugin-example',
+  local: false,
   revision,
   key: conceptId === undefined ? { key } : { key, scope: { kind: 'concept', id: conceptId } },
 })
@@ -102,6 +104,28 @@ test('storage writes are immutable and outside graph history, including net no-o
   assert.equal(host.store.getState().pluginStorage[0].records.length, 2)
 })
 
+test('local and published packages with the same name keep separate namespaces', () => {
+  const host = createNessoStore(graph)
+  host.store.applyOperations([
+    set(host, 'settings', 'published'),
+    { ...set(host, 'settings', 'local'), local: true },
+  ])
+  const saved = host.store.getState()
+  assert.deepEqual(
+    saved.pluginStorage.map(({ local, revision, records }) => [local, revision, records[0].value]),
+    [
+      [false, 1, 'published'],
+      [true, 1, 'local'],
+    ],
+  )
+  assert.throws(() =>
+    host.store.applyOperations([
+      { ...set(host, 'settings', 0, undefined, 1), local: 'yes' as never },
+    ]),
+  )
+  assert.equal(host.store.getState(), saved)
+})
+
 test('view edits and concept deletion retain progress for undo, while a reset starts a fresh document namespace', () => {
   const host = createNessoStore(graph)
   host.store.applyOperations([set(host, 'progress', { count: 1 }, 'urn:a')])
@@ -129,14 +153,17 @@ test('view edits and concept deletion retain progress for undo, while a reset st
 
 test('storage restoration rejects duplicate namespaces/records and namespace and record quotas are atomic', () => {
   const record = { key: 'progress', value: null }
-  const entry = { pluginId: 'nesso-plugin-example', revision: 1, records: [record] }
-  const saved = { version: 2, documentId: 'urn:document', plugins: [entry] }
+  const entry = { pluginId: 'nesso-plugin-example', local: false, revision: 1, records: [record] }
+  const saved = { version: 3, documentId: 'urn:document', plugins: [entry] }
   assert.deepEqual(parsePluginStorage(saved), {
     documentId: saved.documentId,
     plugins: saved.plugins,
   })
+  const both = { ...saved, plugins: [entry, { ...entry, local: true }] }
+  assert.deepEqual(parsePluginStorage(both).plugins, both.plugins)
   for (const value of [
-    { ...saved, version: 3 },
+    { ...saved, version: 4 },
+    { ...saved, plugins: [{ ...entry, local: undefined }] },
     { ...saved, documentId: 'relative' },
     { ...saved, plugins: [entry, entry] },
     { ...saved, plugins: [{ ...entry, records: [record, record] }] },
@@ -191,6 +218,7 @@ test('view scopes are distinct, validate live references and retain records thro
     kind: 'plugin-storage.set',
     documentId: host.store.getState().documentId,
     pluginId: 'nesso-plugin-example',
+    local: false,
     revision,
     record: { key: 'notes', value: 'Project notes', scope: { ...scope, id } },
   })
@@ -222,6 +250,7 @@ test('view scopes are distinct, validate live references and retain records thro
       kind: 'plugin-storage.delete',
       documentId: host.store.getState().documentId,
       pluginId: 'nesso-plugin-example',
+      local: false,
       revision: 3,
       key: { key: 'notes', scope },
     },

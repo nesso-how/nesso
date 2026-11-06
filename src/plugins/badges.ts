@@ -6,13 +6,15 @@ import {
 import type { HostStore } from '../store/types.ts'
 import { materialize } from '../store/operations.ts'
 import { sameIds } from '../store/delta.ts'
-import type { createPluginRegistry, PluginEntry } from './registry.ts'
+import { findPluginStorage } from '../store/plugin-storage.ts'
+import { isLocalPlugin, type createPluginRegistry, type PluginEntry } from './registry.ts'
 
 type ActionPlugin = Extract<PluginEntry, { kind: 'actions' }>
 type Badge = {
   actionId: string
   viewId: string | null
   pluginId: string
+  local: boolean
   listeners: Set<() => void>
   value: number | null
   refreshAt: number
@@ -97,6 +99,7 @@ export function createActionBadges(
     running = { badge, controller }
     badge.refreshAt = Infinity
     badge.pluginId = plugin.id
+    badge.local = isLocalPlugin(plugin)
     badge.started = now
     nextStart = now + badgeLimits.rate
     const state = store.getState()
@@ -104,7 +107,7 @@ export function createActionBadges(
       viewId: badge.viewId,
       viewGraph: materialize(state.graph, { ...state.workspace, activeViewId: badge.viewId }),
       records: plugin.access?.capabilities.includes('storage')
-        ? (state.pluginStorage.find(({ pluginId }) => pluginId === plugin.id)?.records ?? [])
+        ? (findPluginStorage(state.pluginStorage, badge.pluginId, badge.local)?.records ?? [])
         : [],
       now,
     }
@@ -142,8 +145,8 @@ export function createActionBadges(
         if (!next || !before || !sameIds(next.conceptIds, before.conceptIds)) return true
       }
       return (
-        state.pluginStorage.find(({ pluginId }) => pluginId === badge.pluginId) !==
-        previous.pluginStorage.find(({ pluginId }) => pluginId === badge.pluginId)
+        findPluginStorage(state.pluginStorage, badge.pluginId, badge.local) !==
+        findPluginStorage(previous.pluginStorage, badge.pluginId, badge.local)
       )
     }, !documentChanged)
     previous = state
@@ -162,6 +165,7 @@ export function createActionBadges(
         actionId,
         viewId,
         pluginId: plugin.id,
+        local: isLocalPlugin(plugin),
         listeners: new Set(),
         value: null,
         refreshAt: 0,
