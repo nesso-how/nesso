@@ -22,7 +22,7 @@
   "alsoMacWindows": "Also for macOS and Windows",
   "allPlatforms": "Available for macOS, Windows, and Linux",
   "mitLicensed": "MIT licensed",
-  "screenshotAlt": "Nesso showing the Understanding view of a learning graph, with the selected concept’s notes, connections, and shared views in the Inspector.",
+  "screenshotAlt": "Nesso showing a learning graph where concepts sharing a relation are grouped, with the selected concept’s notes, connections, and views in the Inspector.",
   "explorer": "Explorer",
   "explorerDescription": "Browse the whole graph or the views you’ve made.",
   "workspace": "Workspace",

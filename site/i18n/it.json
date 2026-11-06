@@ -22,7 +22,7 @@
   "alsoMacWindows": "Anche per macOS e Windows",
   "allPlatforms": "Disponibile per macOS, Windows e Linux",
   "mitLicensed": "Licenza MIT",
-  "screenshotAlt": "Nesso mostra la vista Understanding di un grafo sull’apprendimento, con le note, le connessioni e le viste condivise del concetto selezionato nell’Inspector.",
+  "screenshotAlt": "Nesso mostra un grafo sull’apprendimento in cui i concetti con una relazione in comune sono raggruppati, con le note, le connessioni e le viste del concetto selezionato nell’Inspector.",
   "explorer": "Explorer",
   "explorerDescription": "Esplora il grafo completo o le viste che hai creato.",
   "workspace": "Workspace",
