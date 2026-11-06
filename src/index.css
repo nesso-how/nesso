@@ -336,7 +336,6 @@
   transform-origin: center;
 }
 .splash-wordmark {
-  font-family: var(--font-mono, monospace);
   transform-box: fill-box;
 }
 .splash-underline {
