@@ -58,3 +58,25 @@ if (hero && backToTop) {
     backToTop.hidden = entry.isIntersecting || entry.boundingClientRect.bottom > 0
   }).observe(hero)
 }
+
+const copyPrompt = document.querySelector<HTMLButtonElement>('[data-copy-plugin-prompt]')
+const promptDetails = document.querySelector<HTMLDetailsElement>('#plugin-prompt')
+const promptText = promptDetails?.querySelector('textarea')
+const promptStatus = document.querySelector('#plugin-prompt-status')
+if (copyPrompt && promptDetails && promptText && promptStatus) {
+  copyPrompt.addEventListener('click', async () => {
+    copyPrompt.disabled = true
+    promptStatus.textContent = ''
+    try {
+      await navigator.clipboard.writeText(promptText.value)
+      promptStatus.textContent = copyPrompt.dataset.copied ?? ''
+    } catch {
+      promptDetails.open = true
+      promptText.focus()
+      promptText.select()
+      promptStatus.textContent = copyPrompt.dataset.copyFailed ?? ''
+    } finally {
+      copyPrompt.disabled = false
+    }
+  })
+}

@@ -24,7 +24,7 @@ Nesso keeps things minimal and efficient, with just a few key elements:
 - **Relations** connect concepts with a direction and a type that describes the connection.
 - **Views** offer different perspectives on the same graph. The default **Overview** view contains the complete graph and cannot be deleted. Saved views are named subsets of its concepts.
 - **Vocabularies** provide relation types. You can name your own relation types or define vocabularies as plugins.
-- **Plugins** are npm packages providing vocabularies, themes, or actions on the current view. Install them from Settings → Plugins on desktop, or [create your own](packages/plugin/README.md#create-a-plugin). Nesso built-in plugins are built around the same system, some of them:
+- **Plugins** add vocabularies, themes, and actions. They can also work as mini-apps inside Nesso, with their own interface and persistent data. Install published packages from Settings → Plugins on desktop, or [create your own with an agent](packages/plugin/README.md#create-a-plugin) and approve a local install through MCP, without publishing to npm. Nesso’s built-in plugins use the same system:
   - **Review** for FSRS spaced repetition over a view’s concepts.
   - **Notes** live-preview Markdown editor for each view’s project notes and brainstorming.
 - **AI** helps you explore, expand, and organize your graph on desktop. Chat using your own API key (BYOK), a local model, or ChatGPT sign-in, or connect external assistants through the local MCP server.

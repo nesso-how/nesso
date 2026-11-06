@@ -4,21 +4,34 @@ Build Nesso plugins with TypeScript: **actions** read and edit graphs, **vocabul
 
 ## Install
 
-With Node.js and npm installed, add the SDK to your TypeScript project:
+Use Node.js 24. To add the SDK to an existing TypeScript project:
 
 ```sh
 npm install --save-dev @nesso-how/plugin
 ```
 
-This installs the development SDK, not a plugin in Nesso. If you are starting a new plugin, use the example below for TypeScript and bundler configuration, including React UI support. To install and try your built plugin in the desktop app, follow the [local testing instructions](example/README.md#test-an-unpublished-build).
+For a new project, start with the [standalone example](example/), which includes TypeScript, Vite, and React configuration. Plugins can be installed locally through MCP without publishing to npm.
 
 ## Create a plugin
 
-Copy the [standalone action example](example/) into a separate project. It includes the SDK, TypeScript configuration, and bundler setup:
+### With an agent
+
+Use an agent such as Claude Code or Codex that can create files and run commands on your computer. Nesso's internal chat cannot build or install plugins.
+
+1. In the desktop app, open Settings → AI → MCP and start the server. If `plugins` and `propose_plugin` are not available, update Nesso.
+2. In your agent's MCP configuration, connect to the URL shown in Nesso using Streamable HTTP and an `Authorization: Bearer <token>` header. Copy the token from Settings into the client's configuration, not into a chat message, source file, or repository. Keep Nesso open.
+3. Describe the plugin you want, or use this prompt:
+
+> Build a Nesso plugin that [describe the behavior]. Call `read_docs` for `plugin` and `plugin-example` through Nesso MCP and follow the documented workflow, then propose a local installation for my approval in Nesso.
+
+The agent should work in a separate project, choose a unique package name, and request only the permissions the plugin needs. For a panel, also read `read_docs` with `{"topic":"ui"}`. Follow [Build and test](#build-and-test), then [Install or update through MCP](#install-or-update-through-mcp). Nesso reads the finished package; it never installs dependencies or runs build scripts.
+
+### By hand
+
+Copy the [standalone example](example/) into a separate project and install its dependencies:
 
 ```sh
 npm install
-npm run build
 ```
 
 Choose your own package name and action ID, then edit `src/index.ts`:
@@ -49,13 +62,7 @@ export const create = (): readonly ActionContribution[] => {
 }
 ```
 
-This changes labels in the invoked view in one undoable batch. Shared concepts change in every view containing them.
-
-How the example works:
-
-- `create()` defines the actions. Nesso supplies the execution context to `run`, where graph data is always available.
-- `applyOperations` takes an array of edits. Here, `.map()` creates one `concept.label` edit per concept, with its ID and new label.
-- Writes automatically check that the snapshot you read is still current. If it changed, the entire batch is rejected rather than overwriting newer edits.
+`create()` defines the action; Nesso calls `run` when the user invokes it. This action uppercases every concept label in that view with one undoable batch. Shared concepts change in every view containing them.
 
 ### Package metadata and permissions
 
@@ -83,21 +90,73 @@ Keep the example's build configuration and set these fields in `package.json`:
 }
 ```
 
-Declare the operations your action uses in `writes`. The optional permissions listed in `capabilities` are `files`, `notifications`, `storage`, and `ui`. The first three authorize their APIs; `ui` authorizes interactive UI contributions. All fields shown under `nesso` and `i18n.metadata` are required. Add the `nesso-plugin` keyword for discovery in Settings → Plugins.
+Declare the operations your action uses in `writes`. Available capabilities are `files`, `images`, `notifications`, `storage`, and `ui`: the first four grant access to their APIs; `ui` allows interactive panels. Declare only what you use. All fields shown under `nesso` and `i18n.metadata` are required. The `nesso-plugin` keyword makes published packages discoverable in Settings → Plugins.
 
-API version, npm SDK version, host storage envelope version, and private payload versions remain independent: bump only what your change affects.
+`nesso.apiVersion` identifies the plugin API, not the SDK version or your package's version.
 
 `i18n.metadata.name` names the plugin in Settings. Each action defines its own `label` for menus, independently of the plugin name. Labels and metadata use `{ en: string, it?: string, 'zh-CN'?: string }`, with English required as the fallback.
 
 ### Build and test
 
-Run `npm run build`, then follow the example's [local testing instructions](example/README.md#test-an-unpublished-build).
+Run `npm run build` to typecheck and build the example. Use `npm run check` to typecheck without building.
 
-Actions ship one browser ES module with dependencies bundled except React and React DOM, which Nesso supplies inside the sandbox. Keep `react`, `react/*`, `react-dom`, and `react-dom/*` external in your bundler; the example's build handles this. The runtime supports React 19. Test and install external plugins in the desktop app.
+Test calculations, graph edit generation, and storage transformations separately from React and host APIs. Node.js 24 can run pure TypeScript tests with `node --test "src/**/*.test.ts"`, using `node:test` and `node:assert/strict`. These tests need `.ts` imports and cannot load JSX or DOM-dependent modules. Add `@types/node` and `node` to your test TypeScript configuration's `types` if needed.
+
+An action package ships one browser ES module. Bundle its dependencies except `react`, `react/*`, `react-dom`, and `react-dom/*`; Nesso supplies React 19 in the sandbox. The example's Vite configuration handles this.
+
+Before installing, validate the built package with `preparePluginPackage`. Save this as `validate.ts` in the project root and run `node validate.ts` after building:
+
+```ts
+import { readFile } from 'node:fs/promises'
+import { preparePluginPackage } from '@nesso-how/plugin/package'
+import { parseDefinition, parsePluginManifest } from '@nesso-how/plugin/runtime'
+
+const manifest = JSON.parse(await readFile('package.json', 'utf8'))
+const nesso = parsePluginManifest(manifest.nesso)
+const entry = new Uint8Array(await readFile(nesso.entry))
+const files = [{ path: nesso.entry, bytes: entry }]
+
+if (nesso.kind === 'theme') {
+  const theme = parseDefinition('theme', JSON.parse(new TextDecoder().decode(entry)))
+  const fonts = new Set(
+    Object.values(theme.fonts).flatMap(({ faces }) => faces.map(({ path }) => path)),
+  )
+  for (const path of fonts) files.push({ path, bytes: new Uint8Array(await readFile(path)) })
+}
+
+const prepared = await preparePluginPackage({ manifest, files })
+console.log(prepared.name, prepared.version, prepared.contentId)
+```
+
+This checks metadata, permission declarations, file sizes, UTF-8, and theme/vocabulary definitions without running action code. Validation failures throw `PluginError` with details in `issues`. It does not call `create()` or test behavior; those still need testing in Nesso.
+
+### Install or update through MCP
+
+Connect to the [desktop MCP server](#with-an-agent) and call `plugins` to check installed names and local builds. Then call `propose_plugin` with the absolute package root, containing `package.json` and the built entry:
+
+```json
+{ "directory": "/absolute/path/to/nesso-plugin-my-action" }
+```
+
+Pass the package root, not `dist`, an archive, or inline JavaScript. Nesso reads only `package.json`, the `nesso.entry` file, and any WOFF2 fonts referenced by a theme. Relative paths, files outside the directory (including through symlinks), and oversized files are rejected.
+
+Tell the user to switch to Nesso before proposing. Every install or replacement needs approval within the **120-second** request timeout, which includes processing time. The result is one of:
+
+- `installed`: includes `name`, `version`, and `contentId`.
+- `cancelled`: the proposal was not approved. Do not automatically propose again.
+- `failed`: includes `{ path, message }[]` issues to fix before a new proposal.
+
+If the client times out or disconnects, call `plugins` to check whether installation completed. Do not retry automatically or report success without confirmation.
+
+Local plugins stay installed across restarts and appear in Settings → Plugins with a **Local** badge. They are not verified by npm or checked for npm updates. Rebuilding your project does not update the installed copy.
+
+To update a local plugin the user has asked to replace, call `plugins`, find its entry with `local: true`, and pass its current `contentId` as `replacing` alongside `directory`. MCP cannot replace or shadow npm-installed or bundled plugins; use a different package name for your local copy.
+
+Try the installed action from a view's actions menu, or choose the theme/vocabulary in Settings. Check that the plugin handles cancellation and stale-state errors, closes cleanly, and restores saved data after restarting Nesso.
 
 ## Action API
 
-Nesso passes `{ document, storage, files, notifications, signal, viewId }` to `run` as `ActionContext`. `document` exposes the shared graph, view membership, and transient selection; `storage` holds the plugin's private data for that document.
+Nesso passes `{ document, storage, files, images, notifications, signal, viewId }` to `run` as `ActionContext`. `document` exposes the shared graph, view membership, and transient selection; `storage` holds the plugin's private data for that document.
 
 `create()` receives no arguments and returns an array of actions with unique lowercase kebab-case IDs, localized labels, optional icons, and either a `run(context)` handler or a React component in `ui`. The two forms are mutually exclusive. Use `ActionIconName` for supported icons.
 
@@ -137,7 +196,9 @@ Nesso supplies React, the `@nesso-how/ui` component stylesheet, and theme CSS va
 
 #### Lifecycle
 
-Use React effects to clean up subscriptions and resources. Panels have no action execution timeout, but initialization and API requests have deadlines. Uncaught errors or rejected promises fail the session; handle expected errors in your UI. Nesso provides the title, close control, and loading/failure screens. Each opening or active-view change revokes the previous channel and context and mounts a fresh React instance. Nesso preloads and retains sandboxes for a subset of built-in plugins, without a context or host channel until opened. Other sandboxes are discarded when their session ends. All sandboxes are discarded on failure, plugin replacement/removal, document change, or app unmount. Keep module scope free of mutable state and effects. Save progress through `storage` during use, not during cleanup, which is best effort.
+Nesso provides the panel title, close control, and loading/error screens. Opening a panel or changing the active view starts a new React instance and invalidates the previous context. Closing it, changing documents, replacing/removing the plugin, or a runtime failure ends the session.
+
+Keep mutable state inside the component and clean up subscriptions in React effects. Save progress through `storage` as it changes; cleanup may not finish. Panels have no action execution timeout, but initialization and API requests have deadlines. Handle expected errors in the UI; uncaught errors or rejected promises fail the session.
 
 ### Action badges
 
@@ -219,7 +280,7 @@ Failures throw `PluginError` with `code` and `{ path, message }[]` issues. Let t
 
 ### Private persistent storage
 
-Declare `storage` to read, write, or delete your plugin's private data. Nesso derives the namespace from the authorized npm package name, its provenance, and the current document, never from plugin-provided identity fields. Different versions and action instances of the same package share data; different packages and documents do not. Locally installed packages and npm-installed packages never share data, even with the same name, and an installed package can only be replaced by one with the same provenance.
+Declare `storage` to read, write, or delete private data. Storage is separate for each package name, installation source (local or npm), and document. Versions and action instances of the same package share data; a local install and an npm install never do, even with the same name. Plugins cannot choose another package's namespace.
 
 ```ts
 const records = await storage.list()
@@ -241,20 +302,24 @@ await storage.delete('progress', { kind: 'concept', id: concept.id })
 - With `{ kind: 'concept', id }`, it belongs to that concept. Its data is shared across all views containing the concept.
 - With `{ kind: 'view', id }`, it belongs to that saved view, independently of its name or membership. Use a non-null `viewId`.
 - Scopes identify records within the same plugin/document namespace; they do not create separate namespaces or revision baselines. The same key can be used at document scope and for different concepts and views, including a concept and view with the same ID.
-- Payloads belong to the plugin: the host does not interpret their fields or implement domain logic.
+- Your plugin owns the payload format and any migrations. Version it independently of the SDK and package version; Nesso does not interpret its fields.
 
-`storage.set(key, value, scope?)` saves one record and `storage.delete(key, scope?)` removes one. Set requires the referenced concept or saved view to exist. Concept IDs must be absolute IRIs; view IDs are opaque identifiers. Delete also accepts references to deleted entities so plugins can explicitly remove orphan records. Each call is a single transaction returning `true` when storage changed and `false` for valid net-no-op writes, such as saving an identical value or deleting a missing record. Failed writes throw instead of returning `false`.
+`storage.set(key, value, scope?)` saves one record and `storage.delete(key, scope?)` removes one. Each call is a single transaction returning `true` if data changed, or `false` if nothing changed, such as saving an identical value or deleting a missing record. Failed writes throw.
 
-The SDK tracks storage revisions internally. Every mutation checks against the last listed snapshot or the preceding successful mutation. If you haven't listed storage, the first mutation reads its baseline automatically. Concurrent changes reject stale writes with `stale-state`, without refreshing the baseline or retrying automatically. List storage again before recomputing edits; never refresh just to resubmit edits calculated from old data. Document reads do not refresh the storage baseline, and storage writes do not invalidate the document snapshot. Document edits and private storage calls are separate transactions.
+Setting a scoped record requires the concept or saved view to exist. Concept IDs must be absolute IRIs; view IDs are opaque identifiers. Deleting a record also accepts references to deleted entities.
 
-Await all storage calls before the action returns. Success means the validated change was committed in memory, not that a disk write has finished. Nesso autosaves through its shared persistence API, reports failures in its persistence banner, and waits for saving before desktop close, update installation, and data-folder transfers. Unreadable records are protected until explicit recovery; in-memory editing can continue but may remain unsaved.
+Each write checks the storage revision from your last `storage.list()` or successful write. If you have not listed storage, the SDK reads the initial revision for you. Concurrent changes reject the write with `stale-state`; the SDK does not retry or refresh the revision. List storage again and recompute your changes rather than resubmitting old data.
+
+Document and storage revisions are independent: reading one does not refresh the other. Graph edits and storage calls are separate transactions.
+
+Await all storage calls before the action returns. Success means the change is in memory, not necessarily on disk. Nesso autosaves, reports save failures in its persistence banner, and waits for saving before closing the desktop app. Unreadable records require user recovery and are not overwritten automatically.
 
 #### Data lifecycle
 
 - A document has a persistent identity outside graph JSON-LD. Resetting it creates a new identity and empty plugin storage; a mismatched saved identity is reported and protected, never silently attached to another document.
 - Renaming a view or changing membership does not affect scoped records. Removing a view does not delete concept data.
 - Deleting a concept or saved view retains its records, including across restart and backup restoration. Document Undo/Redo can recover the entity during the current app session, reconnecting its records by the same ID; private storage changes themselves do not enter graph history. Creating a different entity with the same name does not reconnect old records.
-- Use explicit scopes to identify concept or view data, including logs. Plugins own payload schemas and any explicit cleanup; the host does not automatically purge orphan records. IDs embedded in arbitrary keys or payloads remain opaque to the host.
+- Use scopes for concept or view data, including logs. Nesso does not interpret IDs embedded in keys or payloads and does not automatically delete orphaned records; your plugin must clean them up explicitly.
 - Disabling, uninstalling, replacing, or crashing a plugin does not delete its stored data.
 
 #### Limits
@@ -271,7 +336,7 @@ Storage accepts finite JSON primitives, dense arrays, and plain objects, includi
 | Record nesting                    | 24 levels        |
 | Record key                        | 1–128 characters |
 
-Concept IDs must be absolute IRIs and refer to an existing document concept when writing. Deletes may remove retained orphan records. Keys are logical identifiers, not paths. Normal action channel request, deadline, rate, and cancellation limits also apply.
+Keys are logical identifiers, not file paths. Action channel size, deadline, rate, and cancellation limits also apply.
 
 ## Vocabularies
 
@@ -306,6 +371,8 @@ Set `nesso.kind` to `"theme"`, point `entry` to your JSON definition, and use em
 
 Only light themes are supported. Use readable text contrast; arbitrary CSS and remote fonts are unsupported.
 
-The SDK exposes shared graph and operation types from the internal [`@nesso-how/core`](../core/) package. Trusted renderers use its synchronous store contract; plugins use only the permission-limited asynchronous `ActionContext` above. The published SDK bundles these shared contracts and helpers, so plugin projects need no separate core dependency.
+## API reference
+
+Import graph and operation types from `@nesso-how/plugin`; no separate `@nesso-how/core` dependency is needed.
 
 For the full API and validation rules, see [action types](src/runtime.ts), [graph operations](../core/src/types.ts), and [theme/vocabulary schemas](src/definitions.ts).

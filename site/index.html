@@ -199,13 +199,33 @@
             <h2 id="plugins-title">{{pluginsTitle}}</h2>
             <p>{{pluginsDescription}}</p>
             <p>{{pluginsContracts}}</p>
-            <a
-              class="button button-small"
-              href="https://github.com/nesso-how/nesso/blob/main/packages/plugin/README.md#create-a-plugin"
-              target="_blank"
-              rel="noopener noreferrer"
-              >{{createPlugin}}</a
-            >
+            <p id="plugin-create-hint">{{pluginAgentHint}}</p>
+            <div class="actions">
+              <button
+                class="button button-small"
+                type="button"
+                data-copy-plugin-prompt
+                data-copied="{{pluginPromptCopied}}"
+                data-copy-failed="{{pluginPromptCopyFailed}}"
+                aria-describedby="plugin-create-hint"
+                aria-controls="plugin-prompt"
+              >
+                {{createPlugin}}
+              </button>
+              <a
+                class="button button-small"
+                href="https://github.com/nesso-how/nesso/blob/main/packages/plugin/README.md#create-a-plugin"
+                target="_blank"
+                rel="noopener noreferrer"
+                >{{pluginSdkGuide}}</a
+              >
+              <span class="mono" role="status" id="plugin-prompt-status"></span>
+            </div>
+            <details class="plugin-prompt" id="plugin-prompt">
+              <summary>{{pluginPromptShow}}</summary>
+              <textarea readonly rows="8" aria-label="{{pluginPromptLabel}}">
+{{pluginPrompt}}</textarea>
+            </details>
           </div>
           <div>
             <p class="eyebrow built-in-label">{{builtIn}}</p>
