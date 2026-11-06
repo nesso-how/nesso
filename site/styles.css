@@ -295,22 +295,11 @@ html:not([data-desktop]) .web-cta:hover {
   margin-inline: auto;
   margin-top: clamp(48px, 7vw, 80px);
 }
-.app-screenshot {
-  position: relative;
-  overflow: hidden;
-  border-radius: var(--radius-object);
-}
-.app-screenshot::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border: 1px solid var(--border);
-  border-radius: inherit;
-  pointer-events: none;
-}
-.app-screenshot > img {
+.app-preview > img {
   display: block;
-  width: 100%;
+  width: calc(100% * 2624 / 2400);
+  max-width: none;
+  margin-inline: calc(-100% * 112 / 2400);
   height: auto;
 }
 .workspace-captions {

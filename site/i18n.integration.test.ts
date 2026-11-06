@@ -71,7 +71,7 @@ test('the site build emits complete localized pages with matching language links
       [...html.matchAll(/<a\b[^>]*data-download-version=[^>]*\bhidden\b[^>]*>/g)].length,
       2,
     )
-    assert.match(html, /<img[^>]+src="\/nesso-understanding.png"[^>]+alt="[^"]+"/)
+    assert.match(html, /<img[^>]+src="\/nesso-understanding.webp"[^>]+alt="[^"]+"/)
     assert.match(html, /<code><span class="hljs-punctuation">/)
     assert.ok(html.includes('<span class="hljs-attr">'))
     assert.ok(html.includes('<span class="hljs-string">'))
