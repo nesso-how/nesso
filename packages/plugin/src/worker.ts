@@ -9,6 +9,16 @@ import { pluginErrorCode } from './errors.ts'
 import { localizedText } from './i18n.ts'
 import { validateActions } from './module.ts'
 
+const structuredIssues = (error: unknown) =>
+  error instanceof Error &&
+  'issues' in error &&
+  Array.isArray(error.issues) &&
+  error.issues.every(
+    (issue) => typeof issue?.path === 'string' && typeof issue?.message === 'string',
+  )
+    ? (error.issues as { path: string; message: string }[])
+    : undefined
+
 const bootstrap = async (event: MessageEvent) => {
   if (event.data?.type !== 'bootstrap' || event.ports.length !== 1) return
   self.removeEventListener('message', bootstrap)
@@ -41,15 +51,9 @@ const bootstrap = async (event: MessageEvent) => {
         await action.run(client.context)
         port.postMessage({ type: 'complete', ok: true })
       } catch (error) {
-        const issues =
-          error instanceof Error &&
-          'issues' in error &&
-          Array.isArray(error.issues) &&
-          error.issues.every(
-            (issue) => typeof issue?.path === 'string' && typeof issue?.message === 'string',
-          )
-            ? error.issues
-            : [{ path: 'action', message: 'Action execution failed' }]
+        const issues = structuredIssues(error) ?? [
+          { path: 'action', message: 'Action execution failed' },
+        ]
         const display = localizedText(2048).safeParse(
           error instanceof Error && 'displayMessage' in error ? error.displayMessage : undefined,
         )
@@ -84,8 +88,14 @@ const bootstrap = async (event: MessageEvent) => {
         })),
       ),
     })
-  } catch {
-    port.postMessage({ type: 'close', reason: 'Action initialization failed' })
+  } catch (error) {
+    const issues = structuredIssues(error)
+    port.postMessage({
+      type: 'close',
+      reason: issues
+        ? new PluginError('invalid-input', issues).message.slice(0, 2048)
+        : 'Action initialization failed',
+    })
     port.close()
   }
 }

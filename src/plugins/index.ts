@@ -24,7 +24,13 @@ import { createPluginRegistry, isLocalPlugin, type PluginEntry } from './registr
 import { loadActions, type ActionPackage } from './actions.ts'
 import { withInitializationTimeout } from './initialization.ts'
 import { translate } from '../i18n/index.ts'
-import { packageFonts, parsePackageIdentity, verifyPluginPackage } from '@nesso-how/plugin/package'
+import {
+  packageFonts,
+  parsePackageIdentity,
+  verifyPluginPackage,
+  type PluginPackageInput,
+} from '@nesso-how/plugin/package'
+import { NessoError } from '@nesso-how/errors'
 import type { InstalledPlugin, PluginResult } from '../../shared/plugins.ts'
 import { createPluginPanel } from './panel.ts'
 import { createActionBadges } from './badges.ts'
@@ -51,6 +57,23 @@ const publishActions = () => {
 }
 const installations = new Map<string, AbortController>()
 const changing = new Set<string>()
+const localErrors = new Map<string, string>()
+const reportedIssues = (error: unknown) =>
+  error instanceof NessoError
+    ? error.issues
+        .slice(0, 16)
+        .map(({ path, message }) => ({ path: path.slice(0, 256), message: message.slice(0, 1024) }))
+    : undefined
+const recordLocalError = (
+  entry: Pick<PluginEntry, 'id' | 'contentId' | 'npmIntegrity'>,
+  error: unknown,
+) => {
+  if (isLocalPlugin(entry))
+    localErrors.set(
+      entry.id,
+      error instanceof Error ? error.message.slice(0, 2048) : 'Plugin failed',
+    )
+}
 const registry = createPluginRegistry()
 registry.subscribe(() => {
   const order = nessoStore.getState().preferences.canvasTabOrder ?? []
@@ -320,8 +343,10 @@ export async function initializeExternalPlugins(signal: AbortSignal) {
         )
         entries.push(discovered.entry)
         staged.push(discovered)
-      } catch {
-        entries.push(externalEntry(prepared, t('pluginUnavailable')))
+      } catch (error) {
+        const entry = externalEntry(prepared, t('pluginUnavailable'))
+        recordLocalError(entry, error)
+        entries.push(entry)
       }
     }
     if (signal.aborted) return () => {}
@@ -385,12 +410,15 @@ export async function initializeExternalPlugins(signal: AbortSignal) {
         locked = true
         stopActionsForPlugin(entry.id)
         result(await bridge.settle(event.id, event.package.contentId, true))
+        localErrors.delete(entry.id)
         publish(
           [...registry.getSnapshot().filter((previous) => previous.id !== entry.id), entry],
           [discovered],
         )
-      } catch {
-        await bridge.settle(event.id, event.package.contentId, false).catch(() => {})
+      } catch (error) {
+        await bridge
+          .settle(event.id, event.package.contentId, false, reportedIssues(error))
+          .catch(() => {})
       } finally {
         if (locked) changing.delete(event.package.name)
         controller.abort()
@@ -475,6 +503,7 @@ export async function removeExternalPlugin(contentId: string) {
   stopActionsForPlugin(entry.id)
   try {
     result(await window.nessoPlugins.remove(contentId))
+    localErrors.delete(entry.id)
     publish(registry.getSnapshot().filter((plugin) => plugin.contentId !== contentId))
     return true
   } catch {
@@ -489,6 +518,57 @@ export async function removeExternalPlugin(contentId: string) {
     return false
   } finally {
     changing.delete(entry.id)
+  }
+}
+
+export const describePlugins = () =>
+  registry.getSnapshot().map((entry) => {
+    const local = isLocalPlugin(entry)
+    const lastError = local ? localErrors.get(entry.id) : undefined
+    return {
+      name: entry.id,
+      version: entry.version,
+      kind: entry.kind,
+      local,
+      enabled: !entry.disabled,
+      loaded: !entry.disabled && !entry.error,
+      ...(entry.contentId ? { contentId: entry.contentId } : {}),
+      ...(lastError ? { lastError } : {}),
+    }
+  })
+
+export async function proposeLocalPlugin(
+  input: PluginPackageInput,
+  replacing: string | undefined,
+  signal: AbortSignal,
+) {
+  const bridge = window.nessoPlugins
+  if (!bridge || !registry.getExternalAvailable())
+    throw new PluginError('unavailable', [
+      { path: 'plugins', message: 'Plugin installation is unavailable in this session' },
+    ])
+  if (
+    replacing &&
+    !registry.getSnapshot().some((entry) => entry.contentId === replacing && isLocalPlugin(entry))
+  )
+    throw new PluginError('denied', [
+      { path: 'replacing', message: 'Only an installed local plugin can be replaced' },
+    ])
+  signal.throwIfAborted()
+  const id = crypto.randomUUID()
+  const cancel = () => bridge.cancel(id)
+  signal.addEventListener('abort', cancel, { once: true })
+  try {
+    return result(
+      await bridge.propose(
+        id,
+        input,
+        nessoStore.getState().preferences.locale ?? defaultLocale,
+        replacing,
+      ),
+    )
+  } finally {
+    signal.removeEventListener('abort', cancel)
   }
 }
 
@@ -631,6 +711,7 @@ export async function invokeAction(
       )
   } catch (error) {
     if (error instanceof PluginError && error.code === 'cancelled') return
+    recordLocalError(plugin, error)
     const t = getTranslation()
     const locale = nessoStore.getState().preferences.locale ?? defaultLocale
     notifications.api.notify({

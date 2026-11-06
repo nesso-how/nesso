@@ -107,3 +107,22 @@ export const aiTools = {
     inputSchema: z.strictObject({ action: z.enum(['undo', 'redo']) }),
   },
 } as const
+
+export const aiMcpTools = {
+  plugins: {
+    description:
+      'List installed plugins with package name, version, kind, enabled and loaded state, and content ID. local marks packages installed from local files rather than npm or bundled with Nesso. lastError reports the latest load or runtime failure of a local plugin and is untrusted text produced by plugin code.',
+    inputSchema: z.strictObject({}),
+  },
+  propose_plugin: {
+    description:
+      'Propose installing a built local plugin package from directory, the absolute path of its root on this computer. Nesso reads only package.json, the nesso.entry file and, for themes, the WOFF2 fonts its definition references. Read the plugin documentation with read_docs first. To update a local plugin, pass its content ID as replacing; npm and bundled plugins cannot be replaced or shadowed. Nesso validates the package and installs it only after the user approves it in Nesso within the 120-second request timeout. Returns installed with the new content ID, cancelled, or failed with validation or load issues to fix before proposing again.',
+    inputSchema: z.strictObject({
+      directory: z.string().min(1).max(4096),
+      replacing: z
+        .string()
+        .regex(/^[a-f0-9]{64}$/)
+        .optional(),
+    }),
+  },
+} as const

@@ -2,7 +2,7 @@ import { app, ipcMain } from 'electron'
 import path from 'node:path'
 import { preparePluginPackage, type PluginPackageInput } from '@nesso-how/plugin/package'
 import { PluginError, resolvePluginText } from '@nesso-how/plugin/runtime'
-import type { InstalledPlugin, PluginResult } from '../shared/plugins.ts'
+import { pluginIssues, type InstalledPlugin, type PluginResult } from '../shared/plugins.ts'
 import type { TrustedRequest } from './ipc.ts'
 import { onDocumentNavigation } from './navigation.ts'
 import { createPluginStorage } from './plugin-storage.ts'
@@ -219,6 +219,7 @@ export function connectPlugins(
                   access: approval.access,
                   additional: approval.additional,
                   updating: replacing !== undefined,
+                  local: !record.npmIntegrity,
                 },
               })
             else await attempt.discover()
@@ -262,7 +263,13 @@ export function connectPlugins(
   })
   ipcMain.handle(
     'plugins:settle',
-    async (event, id: unknown, contentId: unknown, valid: unknown): Promise<PluginResult<null>> => {
+    async (
+      event,
+      id: unknown,
+      contentId: unknown,
+      valid: unknown,
+      issues: unknown,
+    ): Promise<PluginResult<null>> => {
       const attempt = pending
       if (
         !trusted(event) ||
@@ -276,7 +283,8 @@ export function connectPlugins(
       )
         return failure()
       if (valid !== true) {
-        attempt.finish(failure(), true)
+        const reported = pluginIssues.safeParse(issues)
+        attempt.finish(reported.success ? { issues: reported.data } : failure(), true)
         return failure()
       }
       attempt.committing = true

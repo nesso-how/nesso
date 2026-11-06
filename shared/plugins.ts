@@ -3,9 +3,12 @@ import { z } from 'zod'
 import type { PluginPackageInput, PreparedPlugin } from '@nesso-how/plugin/package'
 import type { PluginManifest } from '@nesso-how/plugin/runtime'
 
-export type PluginResult<T> =
-  | { readonly value: T }
-  | { readonly issues: readonly { readonly path: string; readonly message: string }[] }
+type Issues = readonly { readonly path: string; readonly message: string }[]
+export type PluginResult<T> = { readonly value: T } | { readonly issues: Issues }
+export const pluginIssues = z
+  .array(z.strictObject({ path: z.string().max(256), message: z.string().max(1024) }))
+  .min(1)
+  .max(16)
 export const npmIntegrity = z.string().regex(/^sha512-[A-Za-z0-9+/]{86}==$/)
 export type InstalledPlugin = PreparedPlugin & {
   readonly enabled: boolean
@@ -28,6 +31,7 @@ export type PluginApproval = {
   readonly access: PluginAccess
   readonly additional: boolean
   readonly updating: boolean
+  readonly local: boolean
 }
 export type PluginBridge = {
   readonly list: () => Promise<
@@ -54,7 +58,12 @@ export type PluginBridge = {
     locale: Locale,
     replacing?: string,
   ) => Promise<PluginResult<InstalledPlugin | null>>
-  readonly settle: (id: string, contentId: string, valid: boolean) => Promise<PluginResult<null>>
+  readonly settle: (
+    id: string,
+    contentId: string,
+    valid: boolean,
+    issues?: Issues,
+  ) => Promise<PluginResult<null>>
   readonly cancel: (id: string) => void
   readonly approve: (challenge: string, allow: boolean) => Promise<PluginResult<null>>
   readonly remove: (contentId: string) => Promise<PluginResult<null>>

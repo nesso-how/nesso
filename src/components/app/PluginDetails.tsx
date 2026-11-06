@@ -11,7 +11,7 @@ import {
   stopActionsForPlugin,
   usePluginActionsRunning,
 } from '@/plugins'
-import type { PluginEntry } from '@/plugins/registry'
+import { isLocalPlugin, type PluginEntry } from '@/plugins/registry'
 import type { createPluginInstaller } from '@/plugins/installer'
 import { pluginAccessLabels } from '@/plugins/access'
 import { translate } from '@/i18n'
@@ -170,7 +170,7 @@ function InstallControl({
         {t(installed ? 'pluginUpdateAction' : 'pluginInstall')}
       </Button>
     )
-  if (!installed?.contentId) return null
+  if (!installed?.contentId || isLocalPlugin(installed)) return null
   const updated = installation.updated === `${installed.id}@${installed.version}`
   return (
     <Button
@@ -362,6 +362,7 @@ function DetailHeader({
   title,
   version,
   status,
+  local,
   inUse,
 }: {
   titleRef: RefObject<HTMLHeadingElement | null>
@@ -371,6 +372,7 @@ function DetailHeader({
   title: string
   version: string
   status: string
+  local: boolean
   inUse: boolean
 }) {
   const t = translate(useNessoStore((state) => state.preferences.locale ?? defaultLocale))
@@ -389,6 +391,7 @@ function DetailHeader({
             </h2>
             <div className="flex flex-wrap justify-end gap-1">
               <span className="settings-badge">{status}</span>
+              {local && <span className="settings-badge">{t('pluginLocal')}</span>}
               {inUse && <span className="settings-badge">{t('inUse')}</span>}
             </div>
           </div>
@@ -510,6 +513,7 @@ export function PluginDetails(props: Props) {
                   : 'pluginEnabled'
               : 'pluginNotInstalled',
           )}
+          local={!!installed && isLocalPlugin(installed)}
           inUse={inUse}
         />
         <DetailBody

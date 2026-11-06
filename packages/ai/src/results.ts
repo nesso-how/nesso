@@ -50,4 +50,28 @@ export type AiToolResults = {
   readonly selection: Page<{ readonly kind: 'concept' | 'relation'; readonly id: string }>
   readonly edit: AiEffects
   readonly history: { readonly action: 'undo' | 'redo'; readonly available: boolean }
+  readonly plugins: {
+    readonly items: readonly {
+      readonly name: string
+      readonly version: string
+      readonly kind: 'actions' | 'theme' | 'vocab'
+      readonly local: boolean
+      readonly enabled: boolean
+      readonly loaded: boolean
+      readonly contentId?: string
+      readonly lastError?: string
+    }[]
+  }
+  readonly propose_plugin:
+    | {
+        readonly status: 'installed'
+        readonly name: string
+        readonly version: string
+        readonly contentId: string
+      }
+    | { readonly status: 'cancelled' }
+    | {
+        readonly status: 'failed'
+        readonly issues: readonly { readonly path: string; readonly message: string }[]
+      }
 }

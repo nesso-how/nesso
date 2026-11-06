@@ -28,6 +28,8 @@
   "pluginAdditionalDescription": "Questo aggiornamento richiede ulteriori accessi:",
   "pluginAllowUpdate": "Consenti e aggiorna",
   "pluginNoAccess": "Non dichiara scritture o capacità.",
+  "pluginLocal": "Locale",
+  "pluginLocalApproval": "Pacchetto locale, non verificato da npm. È stato proposto da file su questo computer, ad esempio da un assistente AI. Installalo solo se ti fidi della sua origine.",
   "pluginAccessLabel": "Rinominare concetti",
   "pluginAccessNotes": "Modificare le note dei concetti",
   "pluginAccessColor": "Cambiare colore ai concetti",

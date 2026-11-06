@@ -1,4 +1,4 @@
-export { aiTools } from './tools.ts'
+export { aiTools, aiMcpTools } from './tools.ts'
 export { aiChatInstructions, aiChatMessages } from './prompt.ts'
 export { aiTextLimits, aiChatLimits } from './policy.ts'
 export { summarizeAiEffects, hasAiEffects } from './effects.ts'

@@ -19,7 +19,7 @@ import type {
 } from '../../../shared/plugins.ts'
 import { translate } from '@/i18n'
 import { pluginMetadata, useExternalPluginsAvailable, usePlugins } from '@/plugins'
-import type { PluginEntry } from '@/plugins/registry'
+import { isLocalPlugin, type PluginEntry } from '@/plugins/registry'
 import { createPluginInstaller } from '@/plugins/installer'
 import { checkPluginUpdates } from '@/plugins/updates'
 import { notifications } from '@/notifications'
@@ -198,7 +198,9 @@ function InstalledGroups({
                       ? 'pluginUnavailable'
                       : 'pluginEnabled',
                 )}
-                update={update && t('pluginUpdateAvailable')}
+                update={
+                  isLocalPlugin(entry) ? t('pluginLocal') : update && t('pluginUpdateAvailable')
+                }
                 onClick={() => onOpen(entry.id, 'plugins', update)}
               />
             )
@@ -240,10 +242,11 @@ export function PluginSettings({
   const [back, setBack] = useState('plugins')
   const { installer, installation } = usePluginInstaller(bridge, setSelected)
   const external = plugins.filter((entry) => entry.contentId)
+  const published = external.filter((entry) => !isLocalPlugin(entry))
   const { updates, checking, checkUpdates } = usePluginUpdateCheck(
     bridge,
     externalAvailable,
-    external,
+    published,
     plugins,
     installation,
     setSelected,
@@ -282,7 +285,7 @@ export function PluginSettings({
                 <Button
                   variant="ghost"
                   size="sm"
-                  disabled={checking || installation.running || !external.length}
+                  disabled={checking || installation.running || !published.length}
                   onClick={() => (updates.length ? start(updates) : void checkUpdates())}
                 >
                   <RefreshCw />

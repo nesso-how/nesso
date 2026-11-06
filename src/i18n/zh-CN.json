@@ -26,6 +26,8 @@
   "pluginAdditionalDescription": "此更新需要额外访问权限：",
   "pluginAllowUpdate": "允许并更新",
   "pluginNoAccess": "未声明写入操作或能力。",
+  "pluginLocal": "本地",
+  "pluginLocalApproval": "本地软件包，未经 npm 验证。它来自此计算机上的文件，例如由 AI 助手提议。请仅在信任其来源时安装。",
   "pluginAccessLabel": "重命名概念",
   "pluginAccessNotes": "编辑概念笔记",
   "pluginAccessColor": "更改概念颜色",

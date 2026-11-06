@@ -53,6 +53,9 @@ export function PluginApprovalDialog({ bridge }: { bridge: PluginBridge }) {
         <p className="mt-3 break-all font-mono text-xs">
           {approval?.name}@{approval?.version}
         </p>
+        {approval?.local && (
+          <p className="mt-3 rounded border p-3 text-xs leading-5">{t('pluginLocalApproval')}</p>
+        )}
         <Dialog.Description className="mt-3 text-xs leading-5 text-muted-foreground">
           {approval?.additional ? t('pluginAdditionalDescription') : approval?.description}
         </Dialog.Description>
