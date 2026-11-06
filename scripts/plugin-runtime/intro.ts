@@ -31,10 +31,12 @@ export async function verifyIntro({ window, url, name }: CheckContext) {
   await title('Start from an idea')
   await ready(`!document.querySelector('.splash')`)
   await ready(`document.querySelectorAll('.intro .react-flow__node').length===1`)
+  assert.equal(await evaluate(`!!document.querySelector('.intro-scrim')`), true)
   if (name === 'desktop') await waitFor(async () => saved.has('document'), Boolean)
   const before = structuredClone(saved.get('document'))
   await next()
   await title('Decide how they connect')
+  assert.equal(await evaluate(`!!document.querySelector('.intro-scrim')`), false)
   await ready(
     `document.querySelector('[aria-label="Connect from Coffee"]')?.getAttribute('aria-hidden')==='false'`,
   )
@@ -87,9 +89,19 @@ export async function verifyIntro({ window, url, name }: CheckContext) {
   await next()
   await title('Test yourself')
   await ready(
-    `document.querySelector('[role="tab"][aria-disabled="true"]')?.textContent==='Review3'`,
+    `document.querySelector('.intro-review-tab[aria-disabled="true"]')?.textContent==='Review3'`,
   )
-  await evaluate(`document.querySelector('[role="tab"][aria-disabled="true"]').click()`)
+  assert.deepEqual(
+    await evaluate(
+      `[...document.querySelectorAll('.intro [role="tab"]')].map(tab=>[tab.textContent,tab.getAttribute('aria-disabled')==='true'])`,
+    ),
+    [
+      ['Graph', false],
+      ['Notes', true],
+      ['Review3', true],
+    ],
+  )
+  await evaluate(`document.querySelector('.intro-review-tab').click()`)
   assert.equal(
     await evaluate(`document.querySelectorAll('[data-plugin-panel], .intro iframe').length`),
     0,

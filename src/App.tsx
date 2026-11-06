@@ -105,8 +105,8 @@ export default function App({
     openTab: openCanvasTabAt,
   })
   const openSettings = () => openSettingsPage('general')
-  const finishIntro = () => {
-    completeIntro(host.store, !compact)
+  const finishIntro = (keepExample: boolean) => {
+    completeIntro(host.store, { selectExample: !compact, keepExample })
     setIntroOpen(false)
     requestAnimationFrame(() => canvas.current?.focus())
   }

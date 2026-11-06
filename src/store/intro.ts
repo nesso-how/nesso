@@ -1,9 +1,10 @@
 import { defaultLocale, type Locale } from '@nesso-how/i18n'
 import type { NessoStore, VocabDefinition } from '@nesso-how/core'
-import { relationKey } from '@nesso-how/schema'
+import { newIri, relationKey } from '@nesso-how/schema'
 import { createSeedDocument } from '../data/seed.ts'
 import { createNessoStore } from './create.ts'
-import type { HostOperation, HostStore } from './types.ts'
+import { sameGraph, sameWorkspace } from './operations.ts'
+import type { HostOperation, HostState, HostStore } from './types.ts'
 
 const conceptViewId = 'intro-concept'
 const connectionViewId = 'intro-connection'
@@ -14,10 +15,21 @@ export const introConnection = {
 const seedRelationTypeId = 'urn:nesso:example:disrupts'
 export const focusConceptId = 'urn:nesso:example:focus'
 
-export function completeIntro(store: HostStore, selectExample = true) {
+export function canDiscardIntroExample({ graph, workspace, preferences }: HostState) {
+  if (preferences.introSeen) return false
+  const seed = createSeedDocument(preferences.locale ?? defaultLocale)
+  return (
+    sameGraph(graph, seed.graph) &&
+    sameWorkspace({ ...workspace, activeViewId: null, viewports: {} }, seed.workspace)
+  )
+}
+
+export function completeIntro(store: HostStore, { selectExample = true, keepExample = true } = {}) {
   const { graph, preferences } = store.getState()
   const operations: HostOperation[] = [{ kind: 'preferences.intro-seen' }]
-  if (!selectExample) operations.push({ kind: 'selection.set', value: [] })
+  if (!keepExample && canDiscardIntroExample(store.getState())) {
+    operations.push({ kind: 'document.reset', id: newIri() })
+  } else if (!selectExample) operations.push({ kind: 'selection.set', value: [] })
   else if (!preferences.introSeen && graph.concepts.some(({ id }) => id === focusConceptId)) {
     operations.push({ kind: 'selection.set', value: [{ kind: 'concept', id: focusConceptId }] })
   }

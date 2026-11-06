@@ -103,7 +103,7 @@ export function ViewHeader({
         key={value}
         value={value}
         disabled={readonly && value !== 'graph'}
-        className={preview && value !== 'graph' ? 'canvas-tab intro-review-tab' : 'canvas-tab'}
+        className={preview && value === 'review' ? 'canvas-tab intro-review-tab' : 'canvas-tab'}
         title={key ? `${text} ${key}` : undefined}
       >
         {children}
@@ -186,8 +186,6 @@ export function ViewHeader({
       )}
     </Tabs.Root>
   )
-
-  if (preview) return navigation
 
   return (
     <PanelHeader

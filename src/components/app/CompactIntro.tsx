@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, type ReactNode } from 'react'
 import { defaultLocale } from '@nesso-how/i18n'
 import { Button } from '@nesso-how/ui'
 import { ArrowRight } from 'lucide-react'
@@ -8,7 +8,13 @@ import { createIntroStore } from '@/store/intro'
 import { GraphWorkspace } from './GraphWorkspace'
 import { IntroDescription } from './IntroDescription'
 
-export function CompactIntro({ onFinish }: { onFinish: () => void }) {
+export function CompactIntro({
+  onFinish,
+  exampleChoice,
+}: {
+  onFinish: () => void
+  exampleChoice: ReactNode
+}) {
   const t = useTranslation()
   const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale)
   const vocab = useNessoStore((state) => state.vocabs.find(({ id }) => id === 'base-vocab')!)
@@ -32,6 +38,7 @@ export function CompactIntro({ onFinish }: { onFinish: () => void }) {
           <p className="text-muted-foreground">{t('introCompactExplore')}</p>
         </div>
         <footer className="compact-intro-footer">
+          {exampleChoice}
           <Button onClick={onFinish}>
             {t('introExplore')}
             <ArrowRight aria-hidden="true" />

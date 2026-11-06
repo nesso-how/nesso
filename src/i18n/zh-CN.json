@@ -163,6 +163,7 @@
   "introSkip": "跳过介绍",
   "introContinue": "继续",
   "introExplore": "探索 Nesso",
+  "introKeepExample": "保留示例图谱",
   "introPrevious": "上一步",
   "introNavigation": "介绍导航",
   "introStep": "第 {{step}} 步，共 {{total}} 步",

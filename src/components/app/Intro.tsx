@@ -1,8 +1,13 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { Button, useMediaQuery } from '@nesso-how/ui'
 import { resolveRelationTypeLabel } from '@nesso-how/core'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
-import { createIntroStore, introConnection, setIntroStep } from '@/store/intro'
+import {
+  canDiscardIntroExample,
+  createIntroStore,
+  introConnection,
+  setIntroStep,
+} from '@/store/intro'
 import { useTranslation } from '@/i18n'
 import { defaultLocale } from '@nesso-how/i18n'
 import { useNessoStore } from '@/store'
@@ -14,6 +19,7 @@ import { GraphWorkspace } from './GraphWorkspace'
 import { ViewHeader } from './ViewHeader'
 import { CompactIntro } from './CompactIntro'
 import { IntroDescription } from './IntroDescription'
+import notesPackage from '../../../plugins/notes/package.json'
 import reviewPackage from '../../../plugins/review/package.json'
 
 const chapters = [
@@ -24,7 +30,13 @@ const chapters = [
 ] as const
 
 const lastStep = chapters.length - 1
-const reviewTabs = [
+const introTabs = [
+  {
+    id: 'notes',
+    key: 'intro-notes',
+    label: notesPackage.i18n.metadata.name,
+    icon: 'pencil',
+  },
   {
     id: 'review',
     key: 'intro-review',
@@ -34,12 +46,37 @@ const reviewTabs = [
   },
 ] as const
 
-export function Intro({ onFinish }: { onFinish: () => void }) {
+export function Intro({ onFinish }: { onFinish: (keepExample: boolean) => void }) {
+  const t = useTranslation()
   const compact = useMediaQuery('(max-width: 767px)')
-  return compact ? <CompactIntro onFinish={onFinish} /> : <DesktopIntro onFinish={onFinish} />
+  const canDiscardExample = useNessoStore(canDiscardIntroExample)
+  const [keepExample, setKeepExample] = useState(true)
+  const exampleChoice = canDiscardExample && (
+    <label className="flex cursor-pointer items-center gap-2 text-xs">
+      <input
+        type="checkbox"
+        checked={keepExample}
+        onChange={(event) => setKeepExample(event.target.checked)}
+        className="size-4 shrink-0 accent-primary"
+      />
+      {t('introKeepExample')}
+    </label>
+  )
+  const finish = () => onFinish(keepExample)
+  return compact ? (
+    <CompactIntro onFinish={finish} exampleChoice={exampleChoice} />
+  ) : (
+    <DesktopIntro onFinish={finish} exampleChoice={exampleChoice} />
+  )
 }
 
-function DesktopIntro({ onFinish }: { onFinish: () => void }) {
+function DesktopIntro({
+  onFinish,
+  exampleChoice,
+}: {
+  onFinish: () => void
+  exampleChoice: ReactNode
+}) {
   const t = useTranslation()
   const locale = useNessoStore((state) => state.preferences.locale ?? defaultLocale)
   const panels = useNessoStore((state) => state.preferences.panels)
@@ -126,9 +163,7 @@ function DesktopIntro({ onFinish }: { onFinish: () => void }) {
         <div className="intro-workspace flex min-h-0 min-w-0 flex-1">
           <div className="intro-canvas min-h-0 min-w-0 flex-1">
             {step === lastStep && (
-              <div className="intro-preview-tabs">
-                <ViewHeader store={store} readonly preview={{ tabs: reviewTabs, badgeCount: 3 }} />
-              </div>
+              <ViewHeader store={store} readonly preview={{ tabs: introTabs, badgeCount: 3 }} />
             )}
             <div className="intro-graph min-h-0 flex-1">
               <GraphWorkspace
@@ -139,9 +174,10 @@ function DesktopIntro({ onFinish }: { onFinish: () => void }) {
                 bottomInset={bottomInset}
               />
             </div>
+            {step === 0 && <div className="intro-scrim" aria-hidden="true" />}
             <section
               ref={narrative}
-              className="intro-narrative intro-overlay"
+              className={`intro-narrative intro-overlay${step === 0 ? ' intro-narrative-first' : ''}`}
               aria-labelledby="intro-title"
             >
               <div className="intro-copy" key={step}>
@@ -160,6 +196,7 @@ function DesktopIntro({ onFinish }: { onFinish: () => void }) {
                   <p className="intro-desktop-note">{t('introChatNote')}</p>
                 )}
               </div>
+              {step === lastStep && exampleChoice && <div className="mt-4">{exampleChoice}</div>}
               <nav className="intro-navigation" aria-label={t('introNavigation')}>
                 <span aria-label={t('introStep', progress)}>{t('introStepCount', progress)}</span>
                 <Button className="intro-skip" variant="ghost" size="sm" onClick={onFinish}>

@@ -164,6 +164,7 @@
   "introSkip": "Skip intro",
   "introContinue": "Continue",
   "introExplore": "Explore Nesso",
+  "introKeepExample": "Keep the example graph",
   "introPrevious": "Previous step",
   "introNavigation": "Introduction navigation",
   "introStep": "Step {{step}} of {{total}}",

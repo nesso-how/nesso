@@ -165,6 +165,7 @@
   "introSkip": "Salta intro",
   "introContinue": "Continua",
   "introExplore": "Esplora Nesso",
+  "introKeepExample": "Mantieni il grafo di esempio",
   "introPrevious": "Passaggio precedente",
   "introNavigation": "Navigazione dell'introduzione",
   "introStep": "Passaggio {{step}} di {{total}}",
