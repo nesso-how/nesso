@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.0-beta.7 — 2026-11-06
+
+### Documentation
+
+- **readme:** Refresh screenshot with relation groups (#273)
+
+### Features
+
+- **intro:** Keep example graph optional and show real tabs (#271)
+
 ## 1.0.0-beta.6 — 2026-11-06
 
 ### Documentation
