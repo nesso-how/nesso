@@ -13,7 +13,7 @@ import {
 } from '@/plugins'
 import { isLocalPlugin, type PluginEntry } from '@/plugins/registry'
 import type { createPluginInstaller } from '@/plugins/installer'
-import { pluginAccessLabels } from '@/plugins/access'
+import { pluginAccessGroups } from '@/plugins/access'
 import { translate } from '@/i18n'
 import { notifications } from '@/notifications'
 import { host, useNessoStore } from '@/store'
@@ -74,32 +74,32 @@ function PackageAttribution({
 
 function DeclaredAccess({ access }: { access: PluginAccess }) {
   const t = translate(useNessoStore((state) => state.preferences.locale ?? defaultLocale))
-  const labels = pluginAccessLabels(access, t)
+  const groups = pluginAccessGroups(access, t)
+  const empty = !groups.writes.length && !groups.capabilities.length
   return (
     <section className="settings-section">
       <h3 className="settings-section-title">{t('pluginDeclaredAccess')}</h3>
-      {labels.length ? (
-        <ul className="mt-3 space-y-1 text-xs text-muted-foreground">
-          {labels.map((label) => (
-            <li key={label}>{label}</li>
-          ))}
-        </ul>
-      ) : (
+      {empty ? (
         <p className="mt-3 text-xs text-muted-foreground">{t('pluginNoAccess')}</p>
-      )}
-      <p className="mt-3 text-xs leading-5 text-muted-foreground">
-        {t('pluginReadScope', { view: t('completeGraph') })}
-      </p>
-      {access.writes.some((kind) => kind !== 'selection.set') && (
-        <p className="mt-3 text-xs leading-5 text-muted-foreground">{t('pluginEffectScope')}</p>
-      )}
-      {access.capabilities.includes('files') && (
-        <p className="mt-3 text-xs leading-5 text-muted-foreground">{t('pluginFileScope')}</p>
-      )}
-      {access.capabilities.includes('notifications') && (
-        <p className="mt-3 text-xs leading-5 text-muted-foreground">
-          {t('pluginNotificationScope')}
-        </p>
+      ) : (
+        <ul className="mt-3 space-y-1 pl-4 text-xs text-muted-foreground">
+          {groups.writes.length ? (
+            <li>
+              <span className="font-medium">{t('pluginAccessWrites')}:</span>{' '}
+              <span className="lowercase">{groups.writes.join(', ')}</span>
+            </li>
+          ) : null}
+          {groups.capabilities.length ? (
+            <li>
+              <p className="font-medium">{t('pluginAccessCapabilities')}:</p>
+              <ul className="mt-1 list-inside list-disc space-y-1 pl-4">
+                {groups.capabilities.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </li>
+          ) : null}
+        </ul>
       )}
     </section>
   )

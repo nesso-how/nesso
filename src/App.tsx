@@ -29,6 +29,7 @@ import { CanvasTabBar, ViewSwitcher } from '@/components/app/CompactNavigation'
 import { ConceptSheet } from '@/components/app/ConceptSheet'
 import { SearchDialog } from '@/components/app/SearchDialog'
 import { openSearchResult } from '@/graph/search'
+import { usePluginInstallNotifications } from '@/components/app/usePluginInstallNotifications'
 
 const compactQuery = '(max-width: 767px)'
 
@@ -47,6 +48,12 @@ export default function App({
     (state) => !state.preferences.collapsedSections?.includes('inspector'),
   )
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [actionsOpen, setActionsOpen] = useState(false)
+  const showPluginCommands = useCallback(() => {
+    setSettingsOpen(false)
+    setActionsOpen(true)
+  }, [setActionsOpen, setSettingsOpen])
+  usePluginInstallNotifications(showPluginCommands)
   const [searchOpen, setSearchOpen] = useState(false)
   const openSearch = useCallback(() => setSearchOpen(true), [setSearchOpen])
   const [introOpen, setIntroOpen] = useState(() => !host.store.getState().preferences.introSeen)
@@ -123,7 +130,15 @@ export default function App({
           <SidebarInset className="relative min-w-0 overflow-hidden">
             <div className="flex min-h-0 flex-1">
               <div id="canvas" className="relative flex min-h-0 min-w-0 flex-1 flex-col">
-                {compact ? <ViewSwitcher /> : <ViewHeader readonly={readonly} />}
+                {compact ? (
+                  <ViewSwitcher />
+                ) : (
+                  <ViewHeader
+                    readonly={readonly}
+                    actionsOpen={actionsOpen}
+                    onActionsOpenChange={setActionsOpen}
+                  />
+                )}
                 <div ref={workspaceRef} className="relative min-h-0 flex-1">
                   <div
                     className="graph-surface h-full"

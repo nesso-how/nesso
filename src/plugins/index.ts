@@ -20,7 +20,12 @@ import reviewPackage from '../../plugins/review/package.json'
 import notesPackage from '../../plugins/notes/package.json'
 import { notifications } from '../notifications/index.ts'
 import { prepareTheme, type ThemePresentation } from '../theme/prepare.ts'
-import { createPluginRegistry, isLocalPlugin, type PluginEntry } from './registry.ts'
+import {
+  createPluginRegistry,
+  isLocalPlugin,
+  pluginMenuActions,
+  type PluginEntry,
+} from './registry.ts'
 import { loadActions, type ActionPackage } from './actions.ts'
 import { withInitializationTimeout } from './initialization.ts'
 import { translate } from '../i18n/index.ts'
@@ -126,10 +131,7 @@ export const usePluginActionsRunning = (name: string) =>
   useSyncExternalStore(subscribeActions, () =>
     [...active].some(([controller, source]) => source === name && !controller.signal.aborted),
   )
-export const useViewActions = () =>
-  usePlugins().flatMap((plugin) =>
-    plugin.kind === 'actions' ? plugin.contribution.filter(({ ui }) => !ui) : [],
-  )
+export const useViewActions = () => usePlugins().flatMap(pluginMenuActions)
 export const useCanvasTabs = () => {
   const plugins = usePlugins()
   const order = useNessoStore((state) => state.preferences.canvasTabOrder)

@@ -23,6 +23,11 @@ export type PluginEntry = {
 export const isLocalPlugin = (plugin: Pick<PluginEntry, 'contentId' | 'npmIntegrity'>) =>
   plugin.contentId !== undefined && plugin.npmIntegrity === undefined
 
+export const pluginMenuActions = (plugin: PluginEntry) =>
+  plugin.kind === 'actions' && !plugin.disabled && !plugin.error
+    ? plugin.contribution.filter(({ ui }) => !ui)
+    : []
+
 export function createPluginRegistry() {
   let entries: readonly PluginEntry[] = []
   let externalAvailable = false
