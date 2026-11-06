@@ -4,6 +4,7 @@ import { toCanvas } from 'html-to-image'
 import { defaultLocale } from '@nesso-how/i18n'
 import { indexGraph } from './adapters'
 import type { ConceptMapContext } from './store'
+import type { ConceptMapPresentation } from './presentation'
 import { ImageCanvas } from './ImageCanvas'
 import { imageBounds, ConceptMapImageError } from './image-bounds'
 import '@xyflow/react/dist/style.css'
@@ -15,12 +16,14 @@ export async function renderConceptMapImage({
   fontStyles,
   scale = 2,
   signal,
+  presentation,
 }: {
   store: ConceptMapContext['store']
   theme: Readonly<Record<string, string>>
   fontStyles: string
   scale?: 2 | 4
   signal: AbortSignal
+  presentation?: ConceptMapPresentation
 }): Promise<{ mediaType: 'image/png'; base64: string }> {
   const fail = (message: string) => new ConceptMapImageError([{ path: 'image', message }])
   const state = store.getState()
@@ -72,15 +75,15 @@ export async function renderConceptMapImage({
     )
     await document.fonts.ready
     check()
-    await new Promise<void>((resolve) =>
-      root.render(createElement(ImageCanvas, { store, ready: resolve })),
+    const edgeCount = await new Promise<number>((resolve) =>
+      root.render(createElement(ImageCanvas, { store, presentation, ready: resolve })),
     )
     await new Promise<void>((resolve) =>
       requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
     )
     check()
     const viewport = mount.querySelector<HTMLElement>('.react-flow__viewport')!
-    if (viewport.querySelectorAll('.react-flow__edge-path').length !== graph.relations.length)
+    if (viewport.querySelectorAll('.react-flow__edge-path').length !== edgeCount)
       throw fail('Could not render every relation')
     const origin = viewport.getBoundingClientRect()
     const rects = [

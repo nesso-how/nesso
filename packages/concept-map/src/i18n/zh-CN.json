@@ -1,4 +1,6 @@
 {
+  "groupRelations": "组合关系",
+  "ungroupRelations": "取消关系组合",
   "fitView": "适应视图",
   "lockInteractions": "锁定交互",
   "unlockInteractions": "解锁交互",

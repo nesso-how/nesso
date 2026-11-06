@@ -319,6 +319,7 @@ test('durable state round-trips without rewriting restored records or persisting
   host.store.setViewPinned(viewId, true)
   host.store.setPanelSizes({ explorerWidth: 310, inspectorWidth: 330 })
   host.store.setLocale('zh-CN')
+  host.store.applyOperations([{ kind: 'preferences.relationGroups', value: false }])
   host.store.applyOperations([{ kind: 'preferences.intro-seen' }])
   for (const id of sectionIds) host.store.setSectionOpen(id, false)
   host.store.applyOperations([{ kind: 'preferences.inspectorTab', value: 'chat' }])
@@ -345,6 +346,7 @@ test('durable state round-trips without rewriting restored records or persisting
   }
   assert.deepEqual(reopened.selected, [])
   assert.equal(reopened.preferences.inspectorTab, 'chat')
+  assert.equal(reopened.preferences.relationGroups, false)
   assert.deepEqual(reopened.history, { canUndo: false, canRedo: false })
   assert.deepEqual(reopened.persistenceIssues, [])
   assert.deepEqual(

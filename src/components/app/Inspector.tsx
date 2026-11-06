@@ -24,9 +24,9 @@ import { nessoStore, useNessoStore } from '@/store'
 import type { HostStore } from '@/store/types'
 import { useTranslation } from '@/i18n'
 import { openNotesLink } from './notes-link'
+import { relationSelection, relationTypeOperations } from '@/graph/relation-selection'
 
 function RelationInput({
-  edgeId,
   typeId,
   label,
   defaultTypeId,
@@ -37,14 +37,13 @@ function RelationInput({
   readonly,
   autoFocus,
 }: {
-  edgeId: string
   typeId: string
   label: string
   defaultTypeId: string | undefined
   relationTypes: readonly Readonly<RelationType>[]
   taken: ReadonlySet<string>
-  onSave: (id: string, typeId: string) => void
-  onCreate: (id: string, label: string) => void
+  onSave: (typeId: string) => void
+  onCreate: (label: string) => void
   readonly: boolean
   autoFocus?: boolean
 }) {
@@ -62,7 +61,7 @@ function RelationInput({
       setValue(label)
       return
     }
-    onSave(edgeId, id)
+    onSave(id)
     setValue(next)
   }
 
@@ -86,7 +85,7 @@ function RelationInput({
       choose(matches[0].id, matches[0].label)
       return
     }
-    onCreate(edgeId, trimmed)
+    onCreate(trimmed)
     setValue(trimmed)
   }
 
@@ -130,7 +129,11 @@ function RelationInput({
         <AutocompletePopup>
           <Autocomplete.List>
             {(item: Readonly<RelationType>) => (
-              <AutocompleteItem key={item.id} value={item} onClick={() => onSave(edgeId, item.id)}>
+              <AutocompleteItem
+                key={item.id}
+                value={item}
+                onClick={() => choose(item.id, item.label)}
+              >
                 {item.label}
                 {relationTypes.some(
                   (type) =>
@@ -188,16 +191,14 @@ export function Inspector({
   const outsideCount = conceptIds.filter((id) => !visibleIds.has(id)).length
   const concept =
     item?.kind === 'concept' ? graph.concepts.find((concept) => concept.id === item.id) : undefined
-  const selectedEdge =
-    item?.kind === 'relation'
-      ? graph.relations.find((relation) => relationKey(relation) === item.id)
-      : undefined
-  const sourceLabel = selectedEdge
-    ? (graph.concepts.find((item) => item.id === selectedEdge.source)?.label ?? '?')
-    : null
-  const targetLabel = selectedEdge
-    ? (graph.concepts.find((item) => item.id === selectedEdge.target)?.label ?? '?')
-    : null
+  const selectedEdges = relationSelection(graph, selected)
+  const selectedEdge = selectedEdges[0]
+  const labels = (ids: readonly string[]) =>
+    [...new Set(ids)]
+      .map((id) => graph.concepts.find((concept) => concept.id === id)?.label ?? '?')
+      .join(', ')
+  const sourceLabel = labels(selectedEdges.map(({ source }) => source))
+  const targetLabel = labels(selectedEdges.map(({ target }) => target))
   const selectedRelationId = selectedEdge?.predicate
   const selectedRelationLabel =
     selectedRelationId === activeVocab?.defaultTypeId
@@ -208,20 +209,22 @@ export function Inspector({
       ? graph.relations
           .filter(
             (relation) =>
-              relation !== selectedEdge &&
-              relation.source === selectedEdge.source &&
-              relation.target === selectedEdge.target,
+              !selectedEdges.includes(relation) &&
+              selectedEdges.some(
+                (edge) => relation.source === edge.source && relation.target === edge.target,
+              ),
           )
           .map((relation) => relation.predicate)
       : [],
   )
   const invertedExists = selectedEdge
-    ? graph.relations.some(
-        (relation) =>
-          relation !== selectedEdge &&
-          relation.source === selectedEdge.target &&
-          relation.target === selectedEdge.source &&
-          relation.predicate === selectedEdge.predicate,
+    ? graph.relations.some((relation) =>
+        selectedEdges.some(
+          (edge) =>
+            relation.source === edge.target &&
+            relation.target === edge.source &&
+            relation.predicate === edge.predicate,
+        ),
       )
     : false
 
@@ -231,10 +234,12 @@ export function Inspector({
       aria-label={t('details')}
       className="flex h-full flex-col gap-[26px] overflow-y-auto bg-background px-5 py-6 text-sm"
     >
-      {selected.length > 0 && <ContextLabel>{t(item ? item.kind : 'selection')}</ContextLabel>}
+      {selected.length > 0 && (
+        <ContextLabel>{t(selectedEdge ? 'relation' : item ? item.kind : 'selection')}</ContextLabel>
+      )}
       {selected.length === 0 ? (
         <ViewDetails store={store} readonly={readonly} />
-      ) : selected.length > 1 ? (
+      ) : selected.length > 1 && !selectedEdge ? (
         <div className="flex flex-col gap-1.5">
           <p className="text-xs text-muted-foreground">
             {[
@@ -310,15 +315,18 @@ export function Inspector({
       ) : selectedEdge ? (
         <section className="flex flex-col gap-[26px]">
           <RelationInput
-            key={`${relationKey(selectedEdge)}:${selectedRelationLabel}`}
-            edgeId={relationKey(selectedEdge)}
+            key={`${selectedEdges.map(relationKey).join('|')}:${selectedRelationLabel}`}
             typeId={selectedEdge.predicate}
             label={selectedRelationLabel}
             defaultTypeId={activeVocab?.defaultTypeId}
             relationTypes={relationTypes}
             taken={parallelTypes}
-            onSave={store.setRelationType}
-            onCreate={store.createRelationType}
+            onSave={(typeId) =>
+              store.applyOperations(relationTypeOperations(selectedEdges, { id: typeId }))
+            }
+            onCreate={(label) =>
+              store.applyOperations(relationTypeOperations(selectedEdges, { label }))
+            }
             readonly={readonly}
             autoFocus={focusRelation}
           />
@@ -341,12 +349,14 @@ export function Inspector({
                 className="w-full justify-start"
                 disabled={readonly || relationTypeOnly || invertedExists}
                 onClick={() => {
-                  if (selectedEdge)
-                    store.reconnectRelation(
-                      relationKey(selectedEdge),
-                      selectedEdge.target,
-                      selectedEdge.source,
-                    )
+                  store.applyOperations(
+                    selectedEdges.map((edge) => ({
+                      kind: 'relation.reconnect',
+                      id: relationKey(edge),
+                      source: edge.target,
+                      target: edge.source,
+                    })),
+                  )
                 }}
               >
                 <ArrowUpDown />
@@ -396,7 +406,11 @@ export function Inspector({
           disabled={readonly || relationTypeOnly}
           variant="outline"
           className="w-full justify-start"
-          onClick={() => store.removeRelation(relationKey(selectedEdge))}
+          onClick={() =>
+            store.applyOperations(
+              selectedEdges.map((edge) => ({ kind: 'relation.remove', id: relationKey(edge) })),
+            )
+          }
         >
           <Trash2 />
           {t('deleteRelation')}

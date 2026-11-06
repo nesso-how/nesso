@@ -9,7 +9,9 @@ export type ConceptData = {
   maxLength?: number
   editing?: boolean
   onEditingChange?: (id: string | null) => void
+  members?: readonly string[]
+  onGroupSelect?: (members: readonly string[]) => void
 }
-export type ConceptNode = Node<ConceptData, 'concept'>
+export type ConceptNode = Node<ConceptData, 'concept' | 'relationGroup'>
 
-export type RelationEdge = Edge
+export type RelationEdge = Edge<{ relations?: readonly string[] }>

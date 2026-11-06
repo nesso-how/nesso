@@ -9,8 +9,10 @@ export async function renderViewImage(
   signal: AbortSignal,
 ) {
   const state = store.getState()
+  const presentation = store.getConceptMapPresentation()
   const snapshot = {
     ...state,
+    workspace: { ...state.workspace, activeViewId: viewId },
     viewGraph: materialize(state.graph, { ...state.workspace, activeViewId: viewId }),
     selected: [],
   }
@@ -24,6 +26,7 @@ export async function renderViewImage(
     throw new PluginError('denied', [{ path: 'image', message: 'Image rendering is read-only' }])
   }
   return renderConceptMapImage({
+    presentation,
     store: {
       getState: () => snapshot,
       subscribe: () => () => {},

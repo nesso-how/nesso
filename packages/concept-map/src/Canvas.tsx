@@ -17,6 +17,7 @@ import {
   Lock,
   LockOpen,
   Layers,
+  Group,
   Maximize,
   ClipboardPaste,
   Plus,
@@ -50,6 +51,9 @@ import '@xyflow/react/dist/style.css'
 import './styles.css'
 import { newIri, relationKey } from '@nesso-how/schema'
 import { ConceptNodeView } from './ConceptNodeView'
+import { GroupNodeView } from './GroupNodeView'
+import { groupRelations, keepGroups } from './groups'
+import type { RelationGroup } from './groups'
 import { ConnectionPreview } from './ConnectionPreview'
 import { GraphContextMenu } from './GraphContextMenu'
 import {
@@ -68,7 +72,7 @@ import { useTranslation } from './i18n'
 import { reconnectOperations, selectedRelations, type Reconnection } from './reconnection'
 import { canConnect } from './connection'
 
-const nodeTypes: NodeTypes = { concept: ConceptNodeView }
+const nodeTypes: NodeTypes = { concept: ConceptNodeView, relationGroup: GroupNodeView }
 const fitViewOptions = { padding: 0.3, maxZoom: 1.2 }
 const easeOut = (t: number) => 1 - Math.pow(1 - t, 3)
 const multiSelectionKeys = ['Meta', 'Control', 'Shift']
@@ -99,6 +103,7 @@ function ZoomLevel({
 }
 
 export function Canvas({
+  onPresentation,
   ref,
   readOnly = false,
   preview = false,
@@ -145,6 +150,7 @@ export function Canvas({
   const reconnecting = useRef<Reconnection | null>(null)
   const [reconnectDrag, setReconnectDrag] = useState<Reconnection | null>(null)
   const hasOverlay = preview
+  const selectable = interactive || hasOverlay || readOnly
   const framed = useRef(false)
   const framedGraph = useRef(graph)
   const width = useFlowStore((state) => state.width)
@@ -177,6 +183,13 @@ export function Canvas({
   } | null>(null)
   const [outside, setOutside] = useState(false)
   const outsideActive = (outside || showContext) && view !== null
+  const grouping = useNesso((state) => state.preferences.relationGroups ?? true)
+  const [retained, setRetained] = useState({ view, grouping, groups: [] as RelationGroup[] })
+  const kept = useMemo(
+    () =>
+      keepGroups(retained.view === view && retained.grouping === grouping ? retained.groups : []),
+    [retained, view, grouping],
+  )
   const [adapt] = useState(createGraphElements)
   const selection = useCallback(
     (value: Selection) => {
@@ -207,7 +220,94 @@ export function Canvas({
       ),
     }
   }, [outsideActive, graph, fullGraph, vocabs, locale])
+  const groups = useMemo(
+    () =>
+      grouping
+        ? groupRelations({
+            concepts: displayed.concepts,
+            relations: displayed.relations,
+            sizes,
+            obstacles: outsideGraph?.concepts,
+            kept,
+          })
+        : [],
+    [grouping, displayed, sizes, outsideGraph, kept],
+  )
+  if (
+    retained.view !== view ||
+    retained.grouping !== grouping ||
+    retained.groups.length !== groups.length ||
+    retained.groups.some((group, index) => group.key !== groups[index].key)
+  )
+    setRetained({ view, grouping, groups })
+  useLayoutEffect(() => {
+    if (dragged) return
+    onPresentation?.({
+      graph: fullGraph,
+      viewId: view,
+      groups: groups.filter((group) => {
+        const count = group.relations.filter((id) =>
+          selected.some((item) => item.kind === 'relation' && item.id === id),
+        ).length
+        return count === 0 || count === group.relations.length
+      }),
+    })
+  }, [groups, dragged, onPresentation, fullGraph, view, sizes, selected])
+  const groupDrag = useRef<{
+    pointerId: number
+    members: readonly string[]
+    origin: XYPosition
+    moved: boolean
+  } | null>(null)
+  const selectGroup = useCallback(
+    (members: readonly string[]) => {
+      if (!selectable) return
+      selection(members.map((id) => ({ kind: 'concept', id })))
+    },
+    [selection, selectable],
+  )
+  const moveGroup = useCallback(
+    (members: readonly string[], delta: XYPosition, done: boolean) => {
+      const positions = new Map(
+        store
+          .getState()
+          .graph.concepts.filter(({ id }) => members.includes(id))
+          .map(({ id, position }) => [id, { x: position.x + delta.x, y: position.y + delta.y }]),
+      )
+      if (done) {
+        write([
+          {
+            kind: 'concept.positions',
+            updates: [...positions].map(([id, position]) => ({ id, position })),
+          },
+        ])
+        dragPositions.current = null
+        setDragged(null)
+      } else {
+        dragPositions.current = positions
+        setDragged(positions)
+      }
+    },
+    [store, write],
+  )
+  const cancelGroupDrag = () => {
+    if (!groupDrag.current) return
+    groupDrag.current = null
+    dragPositions.current = null
+    setDragged(null)
+  }
   const elements = adapt({
+    groups,
+    preview: new Set(
+      dragged
+        ? groups
+            .filter(
+              (group) => dragged.has(group.anchor) || group.members.some((id) => dragged.has(id)),
+            )
+            .map(({ key }) => key)
+        : [],
+    ),
+    onGroupSelect: selectGroup,
     graph: displayed,
     indexed,
     selected,
@@ -272,7 +372,10 @@ export function Canvas({
 
   const onNodesChange = useCallback(
     (changes: NodeChange<ConceptNode>[]) => {
-      const dimensions = changes.flatMap((change) =>
+      const concepts = changes.filter(
+        (change) => !('id' in change) || !change.id.startsWith('#group:'),
+      )
+      const dimensions = concepts.flatMap((change) =>
         change.type === 'dimensions' && change.dimensions
           ? [{ id: change.id, size: change.dimensions }]
           : [],
@@ -283,7 +386,7 @@ export function Canvas({
           for (const change of dimensions) next[change.id] = change.size
           return next
         })
-      const moves = changes.flatMap((change) =>
+      const moves = concepts.flatMap((change) =>
         change.type === 'position' && change.position
           ? [{ id: change.id, position: change.position, dragging: change.dragging }]
           : [],
@@ -308,7 +411,7 @@ export function Canvas({
           setDragged(null)
         }
       }
-      onObjectChanges('concept', changes)
+      onObjectChanges('concept', concepts)
     },
     [readOnly, store, write, onObjectChanges],
   )
@@ -454,10 +557,18 @@ export function Canvas({
   )
   const objectHandlers = useMemo(
     () => ({
-      onNodeContextMenu: (event: ReactMouseEvent, node: ConceptNode) =>
-        handleContextMenu(event, { kind: 'concept', id: node.id }),
-      onEdgeContextMenu: (event: ReactMouseEvent, edge: RelationEdge) =>
-        handleContextMenu(event, { kind: 'relation', id: edge.id }),
+      onNodeContextMenu: (event: ReactMouseEvent, node: ConceptNode) => {
+        if (node.type === 'relationGroup') {
+          if (interactive) selectGroup(node.data.members!)
+          handleContextMenu(event, undefined, 'selection')
+        } else handleContextMenu(event, { kind: 'concept', id: node.id })
+      },
+      onEdgeContextMenu: (event: ReactMouseEvent, edge: RelationEdge) => {
+        if (edge.data?.relations) {
+          if (interactive) selection(edge.data.relations.map((id) => ({ kind: 'relation', id })))
+          handleContextMenu(event, undefined, 'relation')
+        } else handleContextMenu(event, { kind: 'relation', id: edge.id })
+      },
       onReconnect: interactive
         ? (_edge: RelationEdge, connection: { source: string; target: string }) => {
             const reconnect = reconnecting.current
@@ -483,7 +594,7 @@ export function Canvas({
         setReconnectDrag(null)
       },
     }),
-    [handleContextMenu, interactive, write, store],
+    [handleContextMenu, interactive, write, store, selection, selectGroup],
   )
 
   const handlePaneDoubleClick = (event: ReactMouseEvent) => {
@@ -630,6 +741,25 @@ export function Canvas({
       }
       onPointerDown={(event) => {
         if (
+          selectable &&
+          !groupDrag.current &&
+          event.button === 0 &&
+          event.target instanceof Element &&
+          event.target.closest('.relation-group')
+        ) {
+          const id = event.target.closest('.react-flow__node')?.getAttribute('data-id')
+          const group = groups.find((group) => `#group:${group.key}` === id)
+          if (group) {
+            event.currentTarget.setPointerCapture(event.pointerId)
+            groupDrag.current = {
+              pointerId: event.pointerId,
+              members: group.members,
+              origin: screenToFlowPosition({ x: event.clientX, y: event.clientY }),
+              moved: false,
+            }
+          }
+        }
+        if (
           event.shiftKey &&
           event.target instanceof Element &&
           !event.target.closest(
@@ -638,6 +768,27 @@ export function Canvas({
         )
           window.getSelection()?.removeAllRanges()
       }}
+      onPointerMove={(event) => {
+        const drag = groupDrag.current
+        if (!drag || drag.pointerId !== event.pointerId || !interactive) return
+        const point = screenToFlowPosition({ x: event.clientX, y: event.clientY })
+        const delta = { x: point.x - drag.origin.x, y: point.y - drag.origin.y }
+        if (!drag.moved && Math.hypot(delta.x, delta.y) < 3) return
+        drag.moved = true
+        moveGroup(drag.members, delta, false)
+      }}
+      onPointerUp={(event) => {
+        const drag = groupDrag.current
+        if (!drag || drag.pointerId !== event.pointerId) return
+        cancelGroupDrag()
+        if (!drag.moved) selectGroup(drag.members)
+        else if (interactive) {
+          const point = screenToFlowPosition({ x: event.clientX, y: event.clientY })
+          moveGroup(drag.members, { x: point.x - drag.origin.x, y: point.y - drag.origin.y }, true)
+        }
+      }}
+      onPointerCancel={cancelGroupDrag}
+      onLostPointerCapture={cancelGroupDrag}
       onKeyDown={(event) => {
         if (event.defaultPrevented || event.nativeEvent.isComposing) return
         if (
@@ -649,6 +800,19 @@ export function Canvas({
           return
         if (contextMenu) {
           event.stopPropagation()
+          return
+        }
+        if (
+          !readOnly &&
+          !hasOverlay &&
+          !event.altKey &&
+          !event.ctrlKey &&
+          !event.metaKey &&
+          !event.shiftKey &&
+          event.key.toLowerCase() === 'g'
+        ) {
+          event.preventDefault()
+          write([{ kind: 'preferences.relationGroups', value: !grouping }])
           return
         }
         if (
@@ -723,7 +887,7 @@ export function Canvas({
         nodeTypes={nodeTypes}
         ariaLabelConfig={ariaLabelConfig}
         nodesDraggable={interactive}
-        elementsSelectable={interactive || hasOverlay || readOnly}
+        elementsSelectable={selectable}
         defaultEdgeOptions={{ selectable: !readOnly || hasOverlay }}
         nodesConnectable={!!connection || (interactive && (singleSelection || !!reconnectDrag))}
         edgesReconnectable={interactive}
@@ -731,7 +895,20 @@ export function Canvas({
         deleteKeyCode={null}
         disableKeyboardA11y
         onNodesChange={onNodesChange}
-        onEdgesChange={(changes) => onObjectChanges('relation', changes)}
+        onEdgesChange={(changes) =>
+          onObjectChanges(
+            'relation',
+            changes.flatMap((change) => {
+              const group =
+                'id' in change
+                  ? groups.find((group) => `#group:${group.key}` === change.id)
+                  : undefined
+              return group && change.type === 'select'
+                ? group.relations.map((id) => ({ ...change, id }))
+                : [change]
+            }),
+          )
+        }
         onConnect={
           interactive || connection
             ? ({ source, target }) => {
@@ -830,6 +1007,15 @@ export function Canvas({
                   aria-pressed={outsideActive}
                 >
                   <Layers aria-hidden="true" />
+                </ControlButton>
+                <ControlButton
+                  onClick={() => write([{ kind: 'preferences.relationGroups', value: !grouping }])}
+                  title={`${t(grouping ? 'ungroupRelations' : 'groupRelations')} (G)`}
+                  aria-label={t(grouping ? 'ungroupRelations' : 'groupRelations')}
+                  aria-keyshortcuts="g"
+                  aria-pressed={grouping}
+                >
+                  <Group aria-hidden="true" />
                 </ControlButton>
               </>
             )}

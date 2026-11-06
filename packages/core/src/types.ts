@@ -69,6 +69,7 @@ export type NessoOperation =
   | { readonly kind: 'preferences.renderer'; readonly id: string }
   | { readonly kind: 'preferences.theme'; readonly id: string }
   | { readonly kind: 'preferences.locale'; readonly value: Locale }
+  | { readonly kind: 'preferences.relationGroups'; readonly value: boolean }
   | { readonly kind: 'preferences.panels'; readonly value: PanelSizes }
   | { readonly kind: 'preferences.section'; readonly id: SectionId; readonly open: boolean }
 
@@ -124,6 +125,7 @@ export type Preferences = {
   readonly activeThemeId: string
   readonly panels: PanelSizes
   readonly inspectorTab?: 'details' | 'chat'
+  readonly relationGroups?: boolean
   readonly collapsedSections?: readonly SectionId[]
 }
 

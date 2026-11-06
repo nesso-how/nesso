@@ -3,6 +3,7 @@ import test from 'node:test'
 import { Position } from '@xyflow/react'
 import { relationKey, type Graph } from '@nesso-how/schema'
 import type { Selection } from '@nesso-how/core'
+import { groupRelations } from './groups.ts'
 import {
   containsPoint,
   createGraphElements,
@@ -12,6 +13,76 @@ import {
   outsideNode,
   relationEdge,
 } from './adapters.ts'
+
+test('group adapters preserve identities, expose member relations and expand partial selections', () => {
+  const graph: Graph = {
+    concepts: [
+      { id: 'urn:a', label: 'A', position: { x: 0, y: -160 } },
+      { id: 'urn:b', label: 'B', position: { x: 0, y: 0 } },
+      { id: 'urn:c', label: 'C', position: { x: 120, y: 0 } },
+    ],
+    relations: ['urn:b', 'urn:c'].map((target) => ({
+      source: 'urn:a',
+      predicate: 'urn:p',
+      target,
+    })),
+    relationTypes: [{ id: 'urn:p', label: 'links' }],
+  }
+  const groups = groupRelations(graph)
+  const adapt = createGraphElements()
+  const options = {
+    graph,
+    indexed: indexGraph(graph),
+    groups,
+    sizes: {},
+    label: (relation: Graph['relations'][number]) => `${relation.source} to ${relation.target}`,
+  }
+  const before = adapt({ ...options, selected: [] })
+  assert.equal(before.nodes.length, 4)
+  assert.equal(before.nodes[0].type, 'relationGroup')
+  assert.equal(before.nodes[0].selectable, false)
+  assert.deepEqual(before.nodes[0].measured, {
+    width: groups[0].bounds.width,
+    height: groups[0].bounds.height,
+  })
+  assert.equal(before.edges.length, 1)
+  assert.equal(before.edges[0].source, 'urn:a')
+  assert.deepEqual(before.edges[0].data?.relations, groups[0].relations)
+  const repeated = adapt({ ...options, groups: groupRelations(graph), selected: [] })
+  assert.equal(repeated.nodes, before.nodes)
+  assert.equal(repeated.edges, before.edges)
+  const selected: Selection = graph.relations.map((relation) => ({
+    kind: 'relation',
+    id: relationKey(relation),
+  }))
+  assert.equal(adapt({ ...options, selected }).edges[0].selected, true)
+  const partial = adapt({ ...options, selected: selected.slice(0, 1) })
+  assert.equal(partial.nodes.length, 3)
+  assert.equal(partial.edges.length, 2)
+  assert.equal(partial.edges[0].selected, true)
+  assert.equal(partial.edges[1].selected, false)
+  const hiddenDefault = adapt({ ...options, selected: [], defaultTypeId: 'urn:p' })
+  assert.equal(hiddenDefault.edges[0].label, undefined)
+  const moved = structuredClone(graph)
+  for (const concept of moved.concepts.slice(1)) {
+    concept.position.x += concept.id === 'urn:c' ? 24 : 20
+    concept.position.y += 10
+  }
+  const movedGroups = groupRelations(moved)
+  const dragged = adapt({
+    ...options,
+    graph: moved,
+    indexed: indexGraph(moved),
+    groups: movedGroups,
+    selected: [],
+  })
+  assert.equal(dragged.nodes[0].id, before.nodes[0].id)
+  assert.equal(dragged.edges[0].id, before.edges[0].id)
+  assert.deepEqual(dragged.nodes[0].measured, {
+    width: movedGroups[0].bounds.width,
+    height: movedGroups[0].bounds.height,
+  })
+})
 
 test('graph elements preserve dimensions and unchanged identities across snapshots without sharing instance caches', () => {
   const graph: Graph = {
