@@ -74,7 +74,7 @@
   "yourData": "I tuoi dati",
   "dataTitle": "Un grafo, sul tuo dispositivo, in un formato aperto",
   "dataDescription": "Il tuo grafo è salvato localmente in JSON-LD, un formato aperto che puoi esportare e portare con te.",
-  "editingDescription": "Nesso valida ogni modifica al grafo, comprese quelle dell’AI o dei plugin. Le modifiche vengono applicate tutte insieme o per niente e condividono la stessa cronologia di annullamento e ripristino.",
+  "editingDescription": "Nesso valida ogni modifica al grafo, comprese quelle dell’AI o dei plugin. Le modifiche vengono applicate in blocco. Se una non è valida, non ne viene applicata nessuna. Tutte condividono la stessa cronologia di annullamento e ripristino.",
   "jsonExampleLabel": "Un esempio di grafo Nesso in JSON-LD",
   "openSource": "Open source",
   "openSourceTitle": "Il progetto è su GitHub",
