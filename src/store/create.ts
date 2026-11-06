@@ -29,6 +29,7 @@ import {
 } from './settings.ts'
 import type { HostState, HostStore, RendererDefinition, RestoredState } from './types.ts'
 import type { PersistenceIssue } from '../../shared/persistence.ts'
+import type { ConceptMapPresentation } from '@nesso-how/concept-map/presentation'
 import { parseDefinition } from '@nesso-how/plugin/runtime'
 import { parsePluginStorage } from './plugin-storage.ts'
 
@@ -141,7 +142,12 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
 
   const listThemes = (): readonly ThemeDefinition[] => [...themes.values()]
 
+  let conceptMapPresentation: ConceptMapPresentation | undefined
   const nessoStore: HostStore = {
+    getConceptMapPresentation: () => conceptMapPresentation,
+    setConceptMapPresentation: (value) => {
+      conceptMapPresentation = value
+    },
     getState: store.getState,
     subscribe: store.subscribe,
     ...createCommands(applyOperations),

@@ -1,4 +1,6 @@
 {
+  "groupRelations": "Group relations",
+  "ungroupRelations": "Ungroup relations",
   "fitView": "Fit view",
   "lockInteractions": "Lock interactions",
   "unlockInteractions": "Unlock interactions",

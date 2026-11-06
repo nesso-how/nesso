@@ -8,14 +8,21 @@ import {
 } from '@xyflow/react'
 import { defaultLocale } from '@nesso-how/i18n'
 import { ConceptNodeView } from './ConceptNodeView'
-import { conceptNode, conceptNodeMinSize, indexGraph, relationEdge } from './adapters'
+import { GroupNodeView } from './GroupNodeView'
+import { groupRelations } from './groups'
+import { conceptNode, conceptNodeMinSize, createGraphElements, indexGraph } from './adapters'
 import { StoreContext, type ConceptMapContext } from './store'
+import type { ConceptMapPresentation } from './presentation'
 import { ConceptMapImageError } from './image-bounds'
 
-const nodeTypes = { concept: ConceptNodeView }
-type ImageProps = { store: ConceptMapContext['store']; ready: () => void }
+const nodeTypes = { concept: ConceptNodeView, relationGroup: GroupNodeView }
+type ImageProps = {
+  store: ConceptMapContext['store']
+  ready: (edges: number) => void
+  presentation?: ConceptMapPresentation
+}
 
-function ImageFlow({ store, ready }: ImageProps) {
+function ImageFlow({ store, ready, presentation }: ImageProps) {
   const state = store.getState()
   const initial = useMemo(
     () => ({
@@ -27,27 +34,46 @@ function ImageFlow({ store, ready }: ImageProps) {
   const [nodes, , onNodesChange] = useNodesState(initial.nodes)
   const initialized = useNodesInitialized()
   const sizes = Object.fromEntries(
-    nodes.map(({ id, measured }) => [
-      id,
-      {
-        width: measured?.width ?? conceptNodeMinSize.width,
-        height: measured?.height ?? conceptNodeMinSize.height,
-      },
-    ]),
+    nodes
+      .filter(({ measured }) => measured?.width && measured.height)
+      .map(({ id, measured }) => [
+        id,
+        {
+          width: measured?.width ?? conceptNodeMinSize.width,
+          height: measured?.height ?? conceptNodeMinSize.height,
+        },
+      ]),
   )
   const defaultTypeId = state.vocabs.find(
     ({ id }) => id === state.preferences.activeVocabId,
   )?.defaultTypeId
-  const edges = state.viewGraph.relations.map((relation) =>
-    relationEdge(relation, false, false, initial.indexed, defaultTypeId, sizes),
-  )
+  const adapt = useMemo(() => createGraphElements(), [])
+  const groups = !(state.preferences.relationGroups ?? true)
+    ? []
+    : presentation?.graph === state.graph && presentation.viewId === state.workspace.activeViewId
+      ? presentation.groups
+      : groupRelations({
+          concepts: state.viewGraph.concepts,
+          relations: state.viewGraph.relations,
+          sizes,
+        })
+  const elements = adapt({
+    graph: state.viewGraph,
+    indexed: initial.indexed,
+    selected: [],
+    sizes,
+    defaultTypeId,
+    groups,
+    label: () => '',
+  })
   useEffect(() => {
-    if (initialized && nodes.every(({ measured }) => measured?.width && measured.height)) ready()
-  }, [initialized, nodes, ready])
+    if (initialized && nodes.every(({ measured }) => measured?.width && measured.height))
+      ready(elements.edges.length)
+  }, [initialized, nodes, ready, elements.edges.length])
   return (
     <ReactFlow
-      nodes={nodes}
-      edges={edges}
+      nodes={elements.nodes}
+      edges={elements.edges}
       nodeTypes={nodeTypes}
       connectionMode={ConnectionMode.Loose}
       onNodesChange={onNodesChange}
@@ -61,7 +87,7 @@ function ImageFlow({ store, ready }: ImageProps) {
   )
 }
 
-export function ImageCanvas({ store, ready }: ImageProps) {
+export function ImageCanvas({ store, ready, presentation }: ImageProps) {
   const readOnly = () => {
     throw new ConceptMapImageError([{ path: 'image', message: 'Image rendering is read-only' }])
   }
@@ -77,7 +103,7 @@ export function ImageCanvas({ store, ready }: ImageProps) {
       }}
     >
       <ReactFlowProvider>
-        <ImageFlow store={store} ready={ready} />
+        <ImageFlow store={store} ready={ready} presentation={presentation} />
       </ReactFlowProvider>
     </StoreContext.Provider>
   )

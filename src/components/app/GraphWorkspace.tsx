@@ -74,6 +74,7 @@ export function GraphWorkspace({
         bottomInset={bottomInset}
         focusRef={target}
         conceptLabelMaxLength={maxConceptLabelLength}
+        onPresentation={preview ? undefined : store.setConceptMapPresentation}
       />
     </div>
   )

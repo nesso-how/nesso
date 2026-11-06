@@ -91,6 +91,7 @@ export const preferencesSchema = z.strictObject({
     inspectorWidth: z.number().min(panelLimits.inspectorWidth.min),
   }),
   inspectorTab: z.enum(['details', 'chat']).optional(),
+  relationGroups: z.boolean().optional(),
   collapsedSections: z
     .array(z.enum(sectionIds))
     .refine((ids) => new Set(ids).size === ids.length, 'Duplicate section id')

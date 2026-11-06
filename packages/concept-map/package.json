@@ -6,7 +6,8 @@
   "type": "module",
   "exports": {
     ".": "./src/index.tsx",
-    "./image": "./src/image.ts"
+    "./image": "./src/image.ts",
+    "./presentation": "./src/presentation.ts"
   },
   "dependencies": {
     "@nesso-how/core": "workspace:*",

@@ -1,4 +1,5 @@
 import type { NessoState, NessoStore } from '@nesso-how/core'
+import type { ConceptMapPresentation } from './presentation'
 import { NessoError } from '@nesso-how/errors'
 import type { Position } from '@nesso-how/schema'
 import { createContext, useContext, useSyncExternalStore, type Ref, type RefObject } from 'react'
@@ -23,6 +24,7 @@ export type ConceptMapHandle = {
 }
 
 export type CanvasProps = {
+  readonly onPresentation?: (value: ConceptMapPresentation) => void
   readonly ref?: Ref<ConceptMapHandle>
   readonly focusRef: RefObject<HTMLDivElement | null>
   readonly readOnly?: boolean

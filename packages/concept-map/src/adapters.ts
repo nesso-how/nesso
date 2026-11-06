@@ -9,6 +9,7 @@ import { relationKey } from '@nesso-how/schema'
 import { MarkerType, Position } from '@xyflow/react'
 import type { ConceptNode, RelationEdge } from './types'
 import { reconnectableEndpoints, selectedRelations } from './reconnection.ts'
+import type { RelationGroup } from './groups.ts'
 
 type ConceptView = GraphSnapshot['concepts'][number]
 type RelationView = GraphSnapshot['relations'][number]
@@ -170,6 +171,9 @@ export function createGraphElements() {
     defaultTypeId,
     label,
     editing,
+    groups = [],
+    preview = new Set(),
+    onGroupSelect,
   }: {
     graph: GraphSnapshot
     indexed: ReturnType<typeof indexGraph>
@@ -177,6 +181,9 @@ export function createGraphElements() {
     sizes: ConceptNodeSizes
     defaultTypeId?: string
     label: (relation: RelationView) => string
+    groups?: readonly RelationGroup[]
+    preview?: ReadonlySet<string>
+    onGroupSelect?: ConceptNode['data']['onGroupSelect']
     editing?: {
       id: string | null
       enabled: boolean
@@ -218,29 +225,109 @@ export function createGraphElements() {
         ? previous
         : node
     })
-    const edges = graph.relations.map((relation) => {
-      const edge = {
+    const visibleGroups = groups.filter((group) => {
+      const count = group.relations.filter((id) => selectedRelationIds.has(id)).length
+      return count === 0 || count === group.relations.length
+    })
+    const grouped = new Set(visibleGroups.flatMap((group) => group.relations))
+    const edges = graph.relations
+      .filter((relation) => !grouped.has(relationKey(relation)))
+      .map((relation) => {
+        const edge = {
+          ...relationEdge(
+            relation,
+            selectedRelationIds.has(relationKey(relation)),
+            reconnectable,
+            indexed,
+            defaultTypeId,
+            sizes,
+          ),
+          ariaLabel: label(relation),
+        }
+        const previous = previousEdges.get(edge.id)
+        return previous &&
+          previous.sourceHandle === edge.sourceHandle &&
+          previous.targetHandle === edge.targetHandle &&
+          previous.label === edge.label &&
+          previous.ariaLabel === edge.ariaLabel &&
+          previous.selected === edge.selected &&
+          previous.reconnectable === edge.reconnectable
+          ? previous
+          : edge
+      })
+    for (const group of visibleGroups) {
+      const id = `#group:${group.key}`
+      const names = group.members.map((id) => indexed.concepts.get(id)!.label).join(', ')
+      const node: ConceptNode = {
+        id,
+        type: 'relationGroup',
+        position: { x: group.bounds.x, y: group.bounds.y },
+        width: group.bounds.width,
+        height: group.bounds.height,
+        measured: { width: group.bounds.width, height: group.bounds.height },
+        style: { width: group.bounds.width, height: group.bounds.height },
+        data: { label: names, members: group.members, onGroupSelect, editable: editing?.enabled },
+        ariaLabel: names,
+        selectable: false,
+        draggable: false,
+        connectable: false,
+        deletable: false,
+        zIndex: -1,
+        className: `graph-relation-group${preview.has(group.key) ? ' graph-group-preview' : ''}${group.members.every((id) => selectedConcepts.has(id)) ? ' graph-group-selected' : ''}`,
+      }
+      const before = previousNodes.get(id)
+      nodes.unshift(
+        before &&
+          before.position.x === node.position.x &&
+          before.position.y === node.position.y &&
+          before.width === node.width &&
+          before.height === node.height &&
+          before.data.label === names &&
+          before.className === node.className &&
+          before.data.onGroupSelect === onGroupSelect &&
+          before.data.editable === node.data.editable
+          ? before
+          : node,
+      )
+      const concept = { id, label: names, position: node.position }
+      const groupIndex = { ...indexed, concepts: new Map([...indexed.concepts, [id, concept]]) }
+      const relation = {
+        source: group.direction === 'out' ? group.anchor : id,
+        target: group.direction === 'out' ? id : group.anchor,
+        predicate: group.predicate,
+      }
+      const edge: RelationEdge = {
         ...relationEdge(
           relation,
-          selectedRelationIds.has(relationKey(relation)),
-          reconnectable,
-          indexed,
+          group.relations.every((id) => selectedRelationIds.has(id)),
+          false,
+          groupIndex,
           defaultTypeId,
-          sizes,
+          { ...sizes, [id]: group.bounds },
         ),
-        ariaLabel: label(relation),
+        id,
+        data: { relations: group.relations },
+        ariaLabel: group.members
+          .map((member) =>
+            label({
+              ...relation,
+              ...(group.direction === 'out' ? { target: member } : { source: member }),
+            }),
+          )
+          .join('; '),
       }
-      const previous = previousEdges.get(edge.id)
-      return previous &&
-        previous.sourceHandle === edge.sourceHandle &&
-        previous.targetHandle === edge.targetHandle &&
-        previous.label === edge.label &&
-        previous.ariaLabel === edge.ariaLabel &&
-        previous.selected === edge.selected &&
-        previous.reconnectable === edge.reconnectable
-        ? previous
-        : edge
-    })
+      const old = previousEdges.get(id)
+      edges.push(
+        old &&
+          old.sourceHandle === edge.sourceHandle &&
+          old.targetHandle === edge.targetHandle &&
+          old.label === edge.label &&
+          old.ariaLabel === edge.ariaLabel &&
+          old.selected === edge.selected
+          ? old
+          : edge,
+      )
+    }
     if (nodes.length !== nodeList.length || nodes.some((node, index) => node !== nodeList[index])) {
       nodeList = nodes
       previousNodes = new Map(nodes.map((node) => [node.id, node]))
