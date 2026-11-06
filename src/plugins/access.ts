@@ -27,9 +27,10 @@ const capabilities = {
   ui: 'pluginAccessUI',
 } as const
 
-export const pluginAccessLabels = (access: PluginAccess, t: ReturnType<typeof translate>) => [
-  ...new Set([
-    ...access.writes.map((value) => t(writes[value])),
-    ...access.capabilities.map((value) => t(capabilities[value])),
-  ]),
-]
+export const pluginAccessGroups = (
+  access: PluginAccess,
+  t: ReturnType<typeof translate>,
+): { writes: string[]; capabilities: string[] } => ({
+  writes: [...new Set(access.writes.map((value) => t(writes[value])))],
+  capabilities: [...new Set(access.capabilities.map((value) => t(capabilities[value])))],
+})

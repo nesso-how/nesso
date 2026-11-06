@@ -24,10 +24,14 @@ export function ViewHeader({
   readonly = false,
   store = nessoStore,
   preview,
+  actionsOpen,
+  onActionsOpenChange,
 }: {
   readonly?: boolean
   store?: HostStore
   preview?: { readonly tabs: readonly CanvasTab[]; readonly badgeCount: number }
+  actionsOpen?: boolean
+  onActionsOpenChange?: (open: boolean) => void
 }) {
   const t = useTranslation(store)
   const workspace = useNessoStore((state) => state.workspace, store)
@@ -191,7 +195,11 @@ export function ViewHeader({
     <PanelHeader
       size="lg"
       actions={
-        <Menu.Root key={workspace.activeViewId ?? 'complete-graph'}>
+        <Menu.Root
+          key={workspace.activeViewId ?? 'complete-graph'}
+          open={actionsOpen}
+          onOpenChange={onActionsOpenChange}
+        >
           <Menu.Trigger
             disabled={readonly || !commands}
             render={
