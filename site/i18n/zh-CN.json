@@ -22,7 +22,7 @@
   "alsoMacWindows": "也支持 macOS 和 Windows",
   "allPlatforms": "支持 macOS、Windows 和 Linux",
   "mitLicensed": "MIT 许可证",
-  "screenshotAlt": "Nesso 中学习图谱的 Understanding 视图，检查器显示所选概念的笔记、连接以及包含该概念的其他视图。",
+  "screenshotAlt": "Nesso 中的学习图谱，共享同一关系的概念自动分组，检查器显示所选概念的笔记、连接和所属视图。",
   "explorer": "资源管理器",
   "explorerDescription": "浏览整个图谱或你创建的视图。",
   "workspace": "工作区",

@@ -16,7 +16,7 @@ We often understand and remember through associations: one idea brings another t
 
 Your knowledge isn’t scattered across files and folders but lives in **one connected graph that grows with your understanding**. **Views** let you focus on a project, question, or theme without splitting that knowledge into separate copies. The same concept can appear in several views, with edits shared across them.
 
-![Nesso showing the Understanding view of a learning graph, with the selected concept’s notes, connections, and shared views in the Inspector.](site/public/nesso-understanding.png)
+![Nesso showing a learning graph where concepts sharing a relation are grouped, with the selected concept’s notes, connections, and views in the Inspector.](site/public/nesso-understanding.png)
 
 Nesso keeps things minimal and efficient, with just a few key elements:
 

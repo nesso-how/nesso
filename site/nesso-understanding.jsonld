@@ -1,0 +1,257 @@
+{
+  "@context": {
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "position": {
+      "@id": "urn:uuid:af4fb77d-c82c-5e04-bf5c-68588670d18b",
+      "@type": "@json"
+    },
+    "sparks": {
+      "@id": "urn:nesso:example:sparks",
+      "@type": "@id"
+    },
+    "guide": {
+      "@id": "urn:nesso:example:guide",
+      "@type": "@id"
+    },
+    "reveals": {
+      "@id": "urn:nesso:example:reveals",
+      "@type": "@id"
+    },
+    "deepen": {
+      "@id": "urn:nesso:example:deepen",
+      "@type": "@id"
+    },
+    "strengthens": {
+      "@id": "urn:nesso:example:strengthens",
+      "@type": "@id"
+    },
+    "supports": {
+      "@id": "urn:nesso:example:supports",
+      "@type": "@id"
+    },
+    "refines": {
+      "@id": "urn:nesso:example:refines",
+      "@type": "@id"
+    },
+    "enables": {
+      "@id": "urn:nesso:example:enables",
+      "@type": "@id"
+    }
+  },
+  "@graph": [
+    {
+      "@id": "urn:nesso:example:sparks",
+      "@type": "rdf:Property",
+      "rdfs:label": "sparks"
+    },
+    {
+      "@id": "urn:nesso:example:guide",
+      "@type": "rdf:Property",
+      "rdfs:label": "guide"
+    },
+    {
+      "@id": "urn:nesso:example:reveals",
+      "@type": "rdf:Property",
+      "rdfs:label": "reveals"
+    },
+    {
+      "@id": "urn:nesso:example:deepen",
+      "@type": "rdf:Property",
+      "rdfs:label": "deepen"
+    },
+    {
+      "@id": "urn:nesso:example:strengthens",
+      "@type": "rdf:Property",
+      "rdfs:label": "strengthens"
+    },
+    {
+      "@id": "urn:nesso:example:supports",
+      "@type": "rdf:Property",
+      "rdfs:label": "supports"
+    },
+    {
+      "@id": "urn:nesso:example:refines",
+      "@type": "rdf:Property",
+      "rdfs:label": "refines"
+    },
+    {
+      "@id": "urn:nesso:example:enables",
+      "@type": "rdf:Property",
+      "rdfs:label": "enables"
+    },
+    {
+      "@id": "urn:nesso:example:curiosity",
+      "rdfs:label": "Curiosity",
+      "rdfs:comment": "The pull toward what we do not yet know.",
+      "color": "#F6E7D2",
+      "position": {
+        "x": 20,
+        "y": 0
+      },
+      "sparks": {
+        "@id": "urn:nesso:example:questions"
+      }
+    },
+    {
+      "@id": "urn:nesso:example:questions",
+      "rdfs:label": "Questions",
+      "rdfs:comment": "Open problems that give attention a direction.",
+      "color": "#F6E7D2",
+      "position": {
+        "x": 280,
+        "y": 0
+      },
+      "guide": {
+        "@id": "urn:nesso:example:exploration"
+      }
+    },
+    {
+      "@id": "urn:nesso:example:exploration",
+      "rdfs:label": "Exploration",
+      "rdfs:comment": "Trying ideas out, comparing sources and following leads.",
+      "color": "#F6E7D2",
+      "position": {
+        "x": 280,
+        "y": 120
+      },
+      "reveals": {
+        "@id": "urn:nesso:example:connections"
+      }
+    },
+    {
+      "@id": "urn:nesso:example:connections",
+      "rdfs:label": "Connections",
+      "rdfs:comment": "Links between new ideas and what we already know.",
+      "color": "#DDEBD8",
+      "position": {
+        "x": 280,
+        "y": 240
+      },
+      "deepen": {
+        "@id": "urn:nesso:example:understanding"
+      }
+    },
+    {
+      "@id": "urn:nesso:example:understanding",
+      "rdfs:label": "Understanding",
+      "rdfs:comment": "Being able to explain how ideas relate, recognize patterns and apply them in new situations. It grows through exploration, practice and feedback.",
+      "color": "#DDEBD8",
+      "bold": true,
+      "position": {
+        "x": 280,
+        "y": 380
+      },
+      "enables": [
+        {
+          "@id": "urn:nesso:example:explaining"
+        },
+        {
+          "@id": "urn:nesso:example:solving"
+        },
+        {
+          "@id": "urn:nesso:example:transfer"
+        }
+      ]
+    },
+    {
+      "@id": "urn:nesso:example:retrieval",
+      "rdfs:label": "Retrieval practice",
+      "rdfs:comment": "Recalling an idea from memory instead of rereading it.",
+      "color": "#DCE7F3",
+      "italic": true,
+      "position": {
+        "x": 0,
+        "y": 500
+      },
+      "strengthens": {
+        "@id": "urn:nesso:example:memory"
+      }
+    },
+    {
+      "@id": "urn:nesso:example:spacing",
+      "rdfs:label": "Spaced repetition",
+      "rdfs:comment": "Reviewing at growing intervals, just before forgetting.",
+      "color": "#DCE7F3",
+      "italic": true,
+      "position": {
+        "x": 0,
+        "y": 560
+      },
+      "strengthens": {
+        "@id": "urn:nesso:example:memory"
+      }
+    },
+    {
+      "@id": "urn:nesso:example:interleaving",
+      "rdfs:label": "Interleaving",
+      "rdfs:comment": "Mixing related topics so each one is easier to tell apart.",
+      "color": "#DCE7F3",
+      "italic": true,
+      "position": {
+        "x": 0,
+        "y": 620
+      },
+      "strengthens": {
+        "@id": "urn:nesso:example:memory"
+      }
+    },
+    {
+      "@id": "urn:nesso:example:memory",
+      "rdfs:label": "Long-term memory",
+      "rdfs:comment": "Knowledge that stays available long after it was first learned.",
+      "color": "#E5DFF3",
+      "bold": true,
+      "position": {
+        "x": 0,
+        "y": 380
+      },
+      "supports": {
+        "@id": "urn:nesso:example:understanding"
+      }
+    },
+    {
+      "@id": "urn:nesso:example:feedback",
+      "rdfs:label": "Feedback",
+      "rdfs:comment": "Signals that show where an explanation holds and where it breaks.",
+      "color": "#F6DEDA",
+      "position": {
+        "x": 280,
+        "y": 540
+      },
+      "refines": {
+        "@id": "urn:nesso:example:understanding"
+      }
+    },
+    {
+      "@id": "urn:nesso:example:explaining",
+      "rdfs:label": "Explaining",
+      "rdfs:comment": "Putting an idea into your own words for someone else.",
+      "color": "#F3EBC9",
+      "position": {
+        "x": 540,
+        "y": 320
+      }
+    },
+    {
+      "@id": "urn:nesso:example:solving",
+      "rdfs:label": "Problem solving",
+      "rdfs:comment": "Using what you know to work through something unfamiliar.",
+      "color": "#F3EBC9",
+      "position": {
+        "x": 540,
+        "y": 380
+      }
+    },
+    {
+      "@id": "urn:nesso:example:transfer",
+      "rdfs:label": "Transfer",
+      "rdfs:comment": "Applying an idea in a context different from where it was learned.",
+      "color": "#F3EBC9",
+      "position": {
+        "x": 540,
+        "y": 440
+      }
+    }
+  ]
+}
