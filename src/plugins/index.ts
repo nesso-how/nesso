@@ -20,7 +20,7 @@ import reviewPackage from '../../plugins/review/package.json'
 import notesPackage from '../../plugins/notes/package.json'
 import { notifications } from '../notifications/index.ts'
 import { prepareTheme, type ThemePresentation } from '../theme/prepare.ts'
-import { createPluginRegistry, type PluginEntry } from './registry.ts'
+import { createPluginRegistry, isLocalPlugin, type PluginEntry } from './registry.ts'
 import { loadActions, type ActionPackage } from './actions.ts'
 import { withInitializationTimeout } from './initialization.ts'
 import { translate } from '../i18n/index.ts'
@@ -209,6 +209,7 @@ const discoverExternal = async (
   if (verified.nesso.kind === 'actions') {
     const source: ActionPackage = {
       name: verified.name,
+      local: isLocalPlugin(prepared),
       entry: createPluginEntry(bytes),
       manifest: verified.nesso,
       i18n: verified.i18n,
@@ -503,6 +504,7 @@ async function discoverBundledActions(
   const i18n = parsePluginI18n(source.i18n)
   const packageEntry: ActionPackage = {
     name: source.name,
+    local: false,
     entry: createPluginEntry(`preinstalled/${id}/index.js`),
     manifest,
     i18n,

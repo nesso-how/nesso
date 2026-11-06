@@ -77,6 +77,7 @@ test('consumers share queries; storage changes invalidate overlapping views and 
     {
       kind: 'plugin-storage.set',
       pluginId: f.plugin.id,
+      local: false,
       documentId: f.host.store.getState().documentId,
       revision: 0,
       record: { key: 'progress', scope: { kind: 'concept', id: 'urn:a' }, value: 1 },
@@ -255,6 +256,7 @@ test('inactive cache is bounded, ignores view metadata and is invalidated by gra
     {
       kind: 'plugin-storage.set',
       pluginId: f.plugin.id,
+      local: false,
       documentId: f.host.store.getState().documentId,
       revision: 0,
       record: { key: 'progress', value: 1 },

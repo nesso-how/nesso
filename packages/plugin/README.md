@@ -219,7 +219,7 @@ Failures throw `PluginError` with `code` and `{ path, message }[]` issues. Let t
 
 ### Private persistent storage
 
-Declare `storage` to read, write, or delete your plugin's private data. Nesso derives the namespace from the authorized npm package name and current document, never from plugin-provided identity fields. Different versions and action instances of the same package share data; different packages and documents do not.
+Declare `storage` to read, write, or delete your plugin's private data. Nesso derives the namespace from the authorized npm package name, its provenance, and the current document, never from plugin-provided identity fields. Different versions and action instances of the same package share data; different packages and documents do not. Locally installed packages and npm-installed packages never share data, even with the same name, and an installed package can only be replaced by one with the same provenance.
 
 ```ts
 const records = await storage.list()

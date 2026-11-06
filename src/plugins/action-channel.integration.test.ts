@@ -57,6 +57,7 @@ function fixture(
     host.store,
     {
       pluginId,
+      local: false,
       writes,
       capabilities,
       ...(panel ? { mode: 'panel' } : {}),
@@ -724,6 +725,7 @@ test('storage initializes the write baseline lazily and rejects overlapping writ
     {
       kind: 'plugin-storage.set',
       pluginId: 'nesso-plugin-example',
+      local: false,
       documentId: host.store.getState().documentId,
       revision: 0,
       record: { key: 'settings', value: 'saved' },

@@ -7,6 +7,7 @@ import { createPluginEntry } from './entry.ts'
 
 const source: ActionPackage = {
   name: 'nesso-plugin-panel',
+  local: false,
   entry: createPluginEntry(new Uint8Array([1])),
   manifest: { apiVersion: 2, kind: 'actions', entry: 'index.js', writes: [], capabilities: ['ui'] },
   i18n: {

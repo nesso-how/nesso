@@ -17,10 +17,12 @@ import type { NessoOperation } from '@nesso-how/core'
 import type { HostStore } from '../store/types.ts'
 import { NessoError } from '@nesso-how/errors'
 import { materialize } from '../store/operations.ts'
+import { findPluginStorage } from '../store/plugin-storage.ts'
 import { listenPluginPort, type PluginMessage } from './messages.ts'
 
 type Grant = {
   readonly pluginId: string
+  readonly local: boolean
   readonly writes: readonly NessoOperation['kind'][]
   readonly capabilities: readonly string[]
   readonly mode?: 'panel'
@@ -225,22 +227,21 @@ export function connectActionChannel(
     ) {
       if (!capabilities.has('storage')) fail('denied', 'Capability not declared')
       const snapshot = () => {
-        const entry = store
-          .getState()
-          .pluginStorage.find(({ pluginId }) => pluginId === grant.pluginId)
+        const entry = findPluginStorage(store.getState().pluginStorage, grant.pluginId, grant.local)
         return { revision: entry?.revision ?? 0, records: entry?.records ?? [] }
       }
       if (message.method === 'storage.list') return snapshot()
+      const { pluginId, local } = grant
       const before = snapshot().revision
       if (message.method === 'storage.set') {
         const { revision, ...record } = message.params
         store.applyOperations([
-          { kind: 'plugin-storage.set', pluginId: grant.pluginId, documentId, revision, record },
+          { kind: 'plugin-storage.set', pluginId, local, documentId, revision, record },
         ])
       } else {
         const { revision, ...key } = message.params
         store.applyOperations([
-          { kind: 'plugin-storage.delete', pluginId: grant.pluginId, documentId, revision, key },
+          { kind: 'plugin-storage.delete', pluginId, local, documentId, revision, key },
         ])
       }
       const revision = snapshot().revision

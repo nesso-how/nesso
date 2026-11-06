@@ -97,6 +97,8 @@ export function createPluginStorage(directory: string) {
         '@nesso-how/base-vocab',
         '@nesso-how/import',
         '@nesso-how/export',
+        '@nesso-how/review',
+        '@nesso-how/notes',
       ].includes(prepared.name)
     )
       fail('Bundled package identities are reserved')
@@ -117,6 +119,8 @@ export function createPluginStorage(directory: string) {
         : !previous || previous.contentId !== replacing || previous.contentId === prepared.contentId
     )
       fail('Package identity changed or is already installed')
+    if (previous && !previous.npmIntegrity !== !prepared.npmIntegrity)
+      fail('Package provenance changed')
     const record: InstalledPlugin = {
       ...prepared,
       ...origin(prepared.npmIntegrity),

@@ -14,11 +14,13 @@ import { fail, parseSettings } from './settings.ts'
 
 export type PluginStorageNamespace = ReturnType<typeof parsePluginStorageSnapshot> & {
   readonly pluginId: string
+  readonly local: boolean
 }
 export type PluginStorageWrite =
   | {
       readonly kind: 'plugin-storage.set'
       readonly pluginId: string
+      readonly local: boolean
       readonly documentId: string
       readonly revision: number
       readonly record: PluginStorageRecord
@@ -26,6 +28,7 @@ export type PluginStorageWrite =
   | {
       readonly kind: 'plugin-storage.delete'
       readonly pluginId: string
+      readonly local: boolean
       readonly documentId: string
       readonly revision: number
       readonly key: PluginStorageKey
@@ -40,13 +43,20 @@ const pluginIdSchema = z
   .refine((id) => validateName(id).validForNewPackages, 'Expected a valid npm package name')
 const checkPluginId = (value: unknown): string => parseSettings(pluginIdSchema, value, 'pluginId')
 
+export const findPluginStorage = (
+  plugins: readonly PluginStorageNamespace[],
+  pluginId: string,
+  local: boolean,
+) => plugins.find((entry) => entry.pluginId === pluginId && entry.local === local)
+
 const storageSchema = z.strictObject({
-  version: z.literal(2),
+  version: z.literal(3),
   documentId: iriSchema,
   plugins: z
     .array(
       z.strictObject({
         pluginId: pluginIdSchema,
+        local: z.boolean(),
         revision: z.unknown(),
         records: z.unknown(),
       }),
@@ -62,16 +72,17 @@ export function parsePluginStorage(value: unknown): {
   const saved = parseSettings(storageSchema, value)
   const identities = new Set<string>()
   const plugins = saved.plugins.map((entry) => {
-    const { pluginId } = entry
-    if (identities.has(pluginId)) fail('plugins', 'Duplicate plugin namespace')
-    identities.add(pluginId)
+    const { pluginId, local } = entry
+    const identity = JSON.stringify([pluginId, local])
+    if (identities.has(identity)) fail('plugins', 'Duplicate plugin namespace')
+    identities.add(identity)
     const snapshot = parsePluginStorageSnapshot({
       revision: entry.revision,
       records: entry.records,
     })
     if (new Set(snapshot.records.map(recordId)).size !== snapshot.records.length)
       fail('plugins.records', 'Duplicate storage record')
-    return { pluginId, ...snapshot }
+    return { pluginId, local, ...snapshot }
   })
   return { documentId: saved.documentId, plugins }
 }
@@ -83,7 +94,8 @@ export function applyPluginStorage(
   viewIds: ReadonlySet<string>,
 ): readonly PluginStorageNamespace[] {
   const pluginId = checkPluginId(write.pluginId)
-  const previous = plugins.find((entry) => entry.pluginId === pluginId)
+  const local = parseSettings(z.boolean(), write.local, 'local')
+  const previous = findPluginStorage(plugins, pluginId, local)
   const revision = previous?.revision ?? 0
   if (!Number.isSafeInteger(write.revision) || write.revision < 0)
     fail('storage.revision', 'Expected a nonnegative safe integer')
@@ -119,7 +131,7 @@ export function applyPluginStorage(
     fail('storage.records', 'Storage record limit exceeded')
   const snapshot = { revision: revision + 1, records: [...records.values()] }
   checkMessageSize(snapshot, pluginStorageLimits.namespace)
-  const entry = { pluginId, ...snapshot }
+  const entry = { pluginId, local, ...snapshot }
   const next = previous
     ? plugins.map((value) => (value === previous ? entry : value))
     : [...plugins, entry]

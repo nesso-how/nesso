@@ -27,6 +27,7 @@ test('manual backups round-trip every record, exclude device secrets and bind co
     {
       kind: 'plugin-storage.set',
       pluginId: '@nesso-how/review',
+      local: false,
       documentId: initial.documentId,
       revision: 0,
       record: {

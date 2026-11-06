@@ -60,6 +60,7 @@ const setPluginData = (host: ReturnType<typeof createNessoStore>, value: string,
     {
       kind: 'plugin-storage.set',
       pluginId: 'nesso-plugin-example',
+      local: false,
       documentId: host.store.getState().documentId,
       revision,
       record: { key: 'settings', value },

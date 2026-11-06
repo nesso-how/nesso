@@ -20,6 +20,9 @@ export type PluginEntry = {
   | { readonly kind: 'actions'; readonly contribution: readonly ActionDescriptor[] }
 )
 
+export const isLocalPlugin = (plugin: Pick<PluginEntry, 'contentId' | 'npmIntegrity'>) =>
+  plugin.contentId !== undefined && plugin.npmIntegrity === undefined
+
 export function createPluginRegistry() {
   let entries: readonly PluginEntry[] = []
   let externalAvailable = false
