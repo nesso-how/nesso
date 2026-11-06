@@ -181,7 +181,7 @@ async function buildFixture(state: InstallState, name: string, version: string) 
   const content =
     kind === 'actions'
       ? state.brokenActions
-        ? 'export function create(){throw new Error("Broken plugin discovery")}'
+        ? 'export function create(){throw Object.assign(new Error("Hidden"),{issues:[{path:"create",message:"Broken plugin discovery"}]})}'
         : 'export function create(){return [{id:"test-action",label:{en:"Test action"},async run({document}){const concept=document.getState().viewGraph.concepts[0];await document.setConceptLabel(concept.id,concept.label+"!");while(true){}}}]}'
       : JSON.stringify(
           kind === 'theme'
@@ -525,6 +525,7 @@ async function installKind(
     (approvalState) => approvalState.open && approvalState.focused === 'Cancel',
   )
   assert.equal(prompt.count, approvalsBeforeInstall + 1)
+  assert.equal(prompt.text.includes('not verified by npm'), false)
   assert.ok(
     await driver.evaluate<boolean>(
       `window.nessoPlugins.approve('wrong-challenge', true).then(result => 'issues' in result)`,
@@ -1070,6 +1071,10 @@ async function verifyFailures(driver: Driver, state: InstallState, window: Brows
   await driver.headerReady('Update')
   await driver.click('Update', '.plugin-detail-footer')
   await driver.headerReady('Check for updates')
+  await driver.toast('Could not update plugin')
+  const description = await driver.toastDescription('Could not update plugin')
+  assert.match(description, /create: Broken plugin discovery/)
+  assert.doesNotMatch(description, /Hidden/)
   assert.equal(
     (await driver.records()).find(({ name }) => name === 'test-actions')?.version,
     '1.2.0',
@@ -1097,6 +1102,60 @@ async function verifyFailures(driver: Driver, state: InstallState, window: Brows
   assert.equal(
     await driver.evaluate<boolean>(
       `[...document.querySelectorAll('.settings-popup button')].some(button => button.textContent.includes('Reload without external plugins'))`,
+    ),
+    false,
+  )
+}
+
+async function verifyLocalProposal(driver: Driver) {
+  console.log(
+    'installation/desktop: local proposals disclose provenance, never shadow npm packages and skip update checks',
+  )
+  await driver.click('Plugins', '.settings-sidebar')
+  await driver.evaluate(
+    `window.__approvals = []; window.nessoPlugins.subscribe(event => { if(event.type === 'approval') window.__approvals.push(event.approval) }); true`,
+  )
+  const code =
+    'export function create(){return [{id:"local-action",label:{en:"Local action"},run(){}}]}'
+  const propose = (name: string) => {
+    const manifest = {
+      name,
+      version: '1.0.0',
+      nesso: { apiVersion: 2, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
+      i18n: {
+        metadata: {
+          name: { en: 'Test local' },
+          description: { en: 'Local package' },
+          documentation: { en: 'Local proposal check' },
+        },
+      },
+    }
+    return `window.nessoPlugins.propose(crypto.randomUUID(), {manifest:${JSON.stringify(manifest)},files:[{path:'index.js',bytes:new TextEncoder().encode(${JSON.stringify(code)})}]}, 'en')`
+  }
+  assert.deepEqual(await driver.evaluate(propose('test-actions')), {
+    issues: [{ path: 'plugins', message: 'Package identity changed or is already installed' }],
+  })
+  await driver.evaluate(`window.__local = ${propose('test-local')}; true`)
+  const prompt = await waitFor(driver.approval, (approvalState) => approvalState.open)
+  assert.match(prompt.text, /Local package, not verified by npm/)
+  await driver.click('Install', '.plugin-approval[data-open]')
+  const installed = await driver.evaluate<{ value: { name: string; npmIntegrity?: string } }>(
+    'window.__local',
+  )
+  assert.equal(installed.value.name, 'test-local')
+  assert.equal(installed.value.npmIntegrity, undefined)
+  await waitFor(
+    () =>
+      driver.evaluate<string[]>(
+        `[...document.querySelectorAll('.plugin-row')].filter(row => row.textContent.includes('test-local')).flatMap(row => [...row.querySelectorAll('.settings-badge')].map(badge => badge.textContent))`,
+      ),
+    (badges) => badges.includes('Local'),
+  )
+  await driver.open('test-local')
+  await driver.headerReady('Disable')
+  assert.equal(
+    await driver.evaluate<boolean>(
+      `[...document.querySelectorAll('.plugin-detail-footer button')].some(button => button.textContent.trim() === 'Check for updates')`,
     ),
     false,
   )
@@ -1139,4 +1198,5 @@ export async function verifyInstallation({ window, url }: CheckContext) {
   await verifyStopDisable(driver, window)
   await verifyRoutineUpdates(driver, state, firstInstallApprovals)
   await verifyFailures(driver, state, window)
+  await verifyLocalProposal(driver)
 }

@@ -4,7 +4,10 @@ import { setImmediate } from 'node:timers/promises'
 import { aiTools, type AiDocumentation, type AiResult } from '@nesso-how/ai'
 import type { McpBridge, McpEvent } from '../../electron/mcp-bridge.ts'
 import { createNessoStore } from '../store/create.ts'
+import type { PluginPackageInput } from '@nesso-how/plugin/package'
+import { NessoError } from '@nesso-how/errors'
 import { connectMcpHost, setMcpEnabled } from './mcp.ts'
+import type { AiPlugins } from './plugins.ts'
 
 const fixture = (enabled = false, failure?: 'result' | 'reject') => {
   const host = createNessoStore({
@@ -59,6 +62,18 @@ const fixture = (enabled = false, failure?: 'result' | 'reject') => {
   const documentation = Object.fromEntries(
     aiTools.read_docs.inputSchema.shape.topic.options.map((topic) => [topic, `# ${topic}`]),
   ) as AiDocumentation
+  const proposals: { input: PluginPackageInput; replacing?: string; signal: AbortSignal }[] = []
+  let proposal: ReturnType<typeof Promise.withResolvers<{ contentId: string } | null>> | undefined
+  const plugins: AiPlugins = {
+    list: () => [],
+    propose: (input, replacing, signal) => {
+      proposals.push({ input, replacing, signal })
+      proposal = Promise.withResolvers()
+      return proposal.promise.then(
+        (installed) => installed && { name: 'nesso-plugin-local', version: '1.1.0', ...installed },
+      )
+    },
+  }
   const dispose = connectMcpHost(
     bridge,
     host,
@@ -69,6 +84,7 @@ const fixture = (enabled = false, failure?: 'result' | 'reject') => {
     (message) => {
       errors.push(message)
     },
+    plugins,
   )
   const decide = (approved: boolean) => {
     assert.ok(approval)
@@ -86,6 +102,12 @@ const fixture = (enabled = false, failure?: 'result' | 'reject') => {
     decide,
     awaitingApproval: () => !!approval,
     emit: (event: McpEvent) => listener(event),
+    proposals,
+    settle: (installed: { contentId: string } | null | Error) => {
+      assert.ok(proposal)
+      if (installed instanceof Error) proposal.reject(installed)
+      else proposal.resolve(installed)
+    },
     setBusy: () => {
       busy = true
     },
@@ -186,6 +208,49 @@ test('MCP reads are immediate; edits and shared history require consent and reje
   f.setBusy()
   await f.emit({ type: 'tool', id: 'chat', name: 'context', input: {} })
   assert.ok('issues' in f.replies.get('chat')!)
+  f.dispose()
+})
+
+test('MCP lists plugins and reports local proposals as installed, cancelled or failed without touching the document', async () => {
+  const f = fixture()
+  const before = f.host.store.getState()
+  await f.emit({ type: 'tool', id: 'list', name: 'plugins', input: {} })
+  assert.deepEqual(f.replies.get('list'), { value: { items: [] } })
+  const received = {
+    manifest: { name: 'nesso-plugin-local', version: '1.1.0' },
+    files: [{ path: 'dist/index.js', bytes: new TextEncoder().encode('export const create') }],
+  }
+  const issues = [{ path: 'manifest.nesso', message: 'Invalid manifest' }]
+  const contentId = 'b'.repeat(64)
+  for (const [outcome, expected] of [
+    [
+      { contentId },
+      { status: 'installed', name: 'nesso-plugin-local', version: '1.1.0', contentId },
+    ],
+    [null, { status: 'cancelled' }],
+    [new NessoError(issues), { status: 'failed', issues }],
+    ['cancel', { status: 'cancelled' }],
+  ] as const) {
+    const pending = f.emit({
+      type: 'tool',
+      id: 'propose',
+      name: 'propose_plugin',
+      input: { package: received, replacing: 'a'.repeat(64) },
+    })
+    const request = f.proposals.at(-1)!
+    if (outcome === 'cancel') {
+      await f.emit({ type: 'cancel', id: 'propose' })
+      assert.equal(request.signal.aborted, true)
+      f.settle(new Error('Cancelled'))
+    } else f.settle(outcome)
+    await pending
+    assert.deepEqual(f.replies.get('propose'), { value: expected })
+  }
+  assert.deepEqual(
+    f.proposals.map(({ input, replacing }) => [input, replacing]),
+    Array(4).fill([received, 'a'.repeat(64)]),
+  )
+  assert.equal(f.host.store.getState(), before)
   f.dispose()
 })
 

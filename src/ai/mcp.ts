@@ -7,6 +7,7 @@ import {
 import type { McpBridge } from '../../electron/mcp-bridge.ts'
 import { NessoError } from '@nesso-how/errors'
 import { createAiTurn } from './turn.ts'
+import { executeAiPluginTool, type AiPlugins } from './plugins.ts'
 import type { HostStore } from '../store/types.ts'
 
 export function setMcpEnabled(bridge: McpBridge, store: HostStore, enabled: boolean) {
@@ -22,6 +23,7 @@ export function connectMcpHost(
   busy: () => boolean,
   documentation: AiDocumentation,
   reportError: (message: string) => void,
+  plugins: AiPlugins,
 ) {
   let connected = true
   let active: { id: string; controller: AbortController } | undefined
@@ -42,7 +44,10 @@ export function connectMcpHost(
     const turn = createAiTurn(boundary, signal, documentation)
     let result: AiResult<unknown>
     try {
-      const value = turn.execute(event.name, event.input)
+      const value =
+        event.name === 'plugins' || event.name === 'propose_plugin'
+          ? await executeAiPluginTool(plugins, event.name, event.input, signal)
+          : turn.execute(event.name, event.input)
       if (event.name === 'edit' || event.name === 'history') {
         const approved =
           event.name === 'edit'

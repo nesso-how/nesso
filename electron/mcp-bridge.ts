@@ -1,4 +1,4 @@
-import type { aiTools, AiResult } from '@nesso-how/ai'
+import type { aiMcpTools, aiTools, AiResult } from '@nesso-how/ai'
 
 export type McpState = {
   readonly url: string
@@ -10,7 +10,7 @@ export type McpEvent =
   | {
       readonly type: 'tool'
       readonly id: string
-      readonly name: keyof typeof aiTools
+      readonly name: keyof typeof aiTools | keyof typeof aiMcpTools
       readonly input: unknown
     }
   | { readonly type: 'cancel'; readonly id: string }

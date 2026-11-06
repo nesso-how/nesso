@@ -27,6 +27,8 @@
   "pluginAdditionalDescription": "This update needs additional access:",
   "pluginAllowUpdate": "Allow and update",
   "pluginNoAccess": "Declares no writes or capabilities.",
+  "pluginLocal": "Local",
+  "pluginLocalApproval": "Local package, not verified by npm. It was proposed from files on this computer, for example by an AI assistant. Install it only if you trust its source.",
   "pluginAccessLabel": "Rename concepts",
   "pluginAccessNotes": "Edit concept notes",
   "pluginAccessColor": "Recolor concepts",

@@ -141,7 +141,8 @@ const plugins: PluginBridge = {
     ipcRenderer.invoke('plugins:propose', id, input, locale, replacing),
   installNpm: (id, input, locale, replacing) =>
     ipcRenderer.invoke('plugins:npm', id, input, locale, replacing),
-  settle: (id, contentId, valid) => ipcRenderer.invoke('plugins:settle', id, contentId, valid),
+  settle: (id, contentId, valid, issues) =>
+    ipcRenderer.invoke('plugins:settle', id, contentId, valid, issues),
   cancel: (id) => ipcRenderer.send('plugins:cancel', id),
   approve: (challenge, allow) => ipcRenderer.invoke('plugins:approve', challenge, allow),
   remove: (contentId) => ipcRenderer.invoke('plugins:remove', contentId),

@@ -1,9 +1,12 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { request } from 'node:http'
+import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import path from 'node:path'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
-import { aiTools } from '@nesso-how/ai'
+import { aiMcpTools, aiTools } from '@nesso-how/ai'
 import { startMcpServer } from './mcp-server.ts'
 
 const headers = (token: string) => ({
@@ -63,7 +66,10 @@ test('MCP authenticates local requests and exposes validated tools with host res
     }),
   )
   const { tools } = await client.listTools()
-  assert.deepEqual(tools.map(({ name }) => name).sort(), Object.keys(aiTools).sort())
+  assert.deepEqual(
+    tools.map(({ name }) => name).sort(),
+    Object.keys({ ...aiTools, ...aiMcpTools }).sort(),
+  )
   assert.equal(tools.find(({ name }) => name === 'read_docs')?.annotations?.readOnlyHint, true)
   assert.deepEqual(tools.find(({ name }) => name === 'read_docs')?.inputSchema.properties?.topic, {
     type: 'string',
@@ -88,6 +94,84 @@ test('MCP authenticates local requests and exposes validated tools with host res
   })
   assert.equal(invalidDocs.isError, true)
   assert.equal(calls.length, 2)
+})
+
+test('MCP plugin proposals forward only the package entry and referenced fonts read from its directory', async (t) => {
+  const root = await mkdtemp(path.join(tmpdir(), 'nesso-mcp-plugin-'))
+  t.after(() => rm(root, { recursive: true, force: true }))
+  const directory = path.join(root, 'theme')
+  await mkdir(path.join(directory, 'dist'), { recursive: true })
+  await mkdir(path.join(directory, 'fonts'))
+  const face = { path: 'fonts/a.woff2', weight: [400, 400], style: 'normal' }
+  const definition = JSON.stringify({
+    ...JSON.parse(await readFile('packages/plugin/test/theme.json', 'utf8')),
+    fonts: { sans: { faces: [face] }, mono: { faces: [face] } },
+  })
+  const manifest = {
+    name: 'nesso-plugin-theme',
+    version: '1.0.0',
+    nesso: {
+      apiVersion: 2,
+      kind: 'theme',
+      entry: 'dist/definition.json',
+      writes: [],
+      capabilities: [],
+    },
+  }
+  await writeFile(path.join(directory, 'package.json'), JSON.stringify(manifest))
+  await writeFile(path.join(directory, 'dist/definition.json'), definition)
+  await writeFile(path.join(directory, 'fonts/a.woff2'), 'wOF2')
+  await writeFile(path.join(directory, 'fonts/unused.woff2'), 'wOF2')
+  await writeFile(path.join(root, 'outside.woff2'), 'wOF2')
+  const calls: unknown[] = []
+  const server = await startMcpServer(
+    async (name, input) => {
+      calls.push({ name, input })
+      return { value: { status: 'cancelled' } }
+    },
+    'test',
+    token,
+    0,
+  )
+  t.after(() => server.close())
+  const client = new Client({ name: 'test', version: '1' })
+  t.after(() => client.close())
+  await client.connect(
+    new StreamableHTTPClientTransport(new URL(server.state.url), {
+      requestInit: { headers: headers(server.token) },
+    }),
+  )
+  const propose = async (target: string) =>
+    JSON.parse(
+      (
+        (await client.callTool({ name: 'propose_plugin', arguments: { directory: target } }))
+          .content as { text: string }[]
+      )[0].text,
+    )
+  assert.deepEqual(await propose(directory), { status: 'cancelled' })
+  const bytes = (text: string) => new Uint8Array(Buffer.from(text))
+  assert.deepEqual(calls, [
+    {
+      name: 'propose_plugin',
+      input: {
+        package: {
+          manifest,
+          files: [
+            { path: 'dist/definition.json', bytes: bytes(definition) },
+            { path: 'fonts/a.woff2', bytes: bytes('wOF2') },
+          ],
+        },
+      },
+    },
+  ])
+  await rm(path.join(directory, 'fonts/a.woff2'))
+  await symlink(path.join(root, 'outside.woff2'), path.join(directory, 'fonts/a.woff2'))
+  for (const [target, issue] of [
+    ['theme', { path: 'directory', message: 'Expected the absolute path of a package directory' }],
+    [directory, { path: 'fonts/a.woff2', message: 'Expected a file inside the package directory' }],
+  ] as const)
+    assert.deepEqual(await propose(target), { status: 'failed', issues: [issue] })
+  assert.equal(calls.length, 1)
 })
 
 test(

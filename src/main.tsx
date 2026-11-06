@@ -12,7 +12,7 @@ import { notifications } from '@/notifications'
 import { host, startAutosave } from '@/store'
 import { connectTheme } from '@/theme'
 import { translate } from '@/i18n'
-import { chat, documentation } from '@/ai'
+import { aiPlugins, chat, documentation } from '@/ai'
 import { connectMcpHost } from '@/ai/mcp'
 import { createAiApproval, createAiHistoryApproval } from '@/ai/approval'
 import './index.css'
@@ -91,6 +91,7 @@ const stopMcp = window.nessoMcp
           title: getTranslation()('mcpFailure'),
           description: message,
         }),
+      aiPlugins,
     )
   : () => {}
 window.addEventListener('pagehide', stopChat)
