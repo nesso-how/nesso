@@ -213,10 +213,12 @@ h3 {
   border-radius: var(--radius-control);
   background: var(--background);
   color: var(--foreground);
+  font-family: inherit;
   font-size: 14px;
   line-height: 1.4;
   text-align: center;
   text-decoration: none;
+  cursor: pointer;
   transition:
     background-color var(--duration-state),
     border-color var(--duration-state);
@@ -397,6 +399,27 @@ html:not([data-desktop]) .web-cta:hover {
 }
 .section-copy > .button {
   margin-top: 8px;
+}
+.plugin-prompt {
+  width: 100%;
+  font-size: 13px;
+}
+.plugin-prompt summary {
+  cursor: pointer;
+}
+.plugin-prompt textarea {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--sidebar);
+  color: var(--foreground);
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  resize: vertical;
 }
 .built-in-label {
   margin-bottom: 8px;

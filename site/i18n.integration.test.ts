@@ -49,6 +49,7 @@ test('the site build emits complete localized pages with matching language links
   })
   assert.ok('output' in result)
   for (const locale of locales) {
+    const messages = { en, it, 'zh-CN': zhCN }[locale]
     const path = locale === 'en' ? '/' : `/${locale}/`
     const page = result.output.find((file) => file.fileName === `${path.slice(1)}index.html`)
     assert.ok(page?.type === 'asset' && typeof page.source === 'string')
@@ -87,6 +88,31 @@ test('the site build emits complete localized pages with matching language links
       ['why', 'elements', 'plugins', 'data'],
     )
     assert.ok(html.includes('id="ai"'))
+    assert.match(
+      html,
+      /<button\b[^>]*type="button"[^>]*data-copy-plugin-prompt[^>]*aria-describedby="plugin-create-hint"[^>]*aria-controls="plugin-prompt"/,
+    )
+    assert.ok(html.includes(messages.createPlugin))
+    assert.ok(html.includes(`data-copied="${messages.pluginPromptCopied}"`))
+    assert.ok(html.includes(`data-copy-failed="${messages.pluginPromptCopyFailed}"`))
+    assert.ok(html.includes('<span class="mono" role="status" id="plugin-prompt-status">'))
+    assert.ok(html.includes(`<summary>${messages.pluginPromptShow}</summary>`))
+    const prompt = html.match(/<textarea\b[^>]*readonly[^>]*>([\s\S]*?)<\/textarea>/)
+    assert.ok(prompt)
+    assert.equal(
+      prompt[1].trim(),
+      messages.pluginPrompt
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;'),
+    )
+    assert.ok(
+      html.includes(
+        'href="https://github.com/nesso-how/nesso/blob/main/packages/plugin/README.md#create-a-plugin"',
+      ),
+    )
     assertSoftwareApplication(html, path)
     assert.doesNotMatch(html, /{{|%NESSO_VERSION%|In development\./)
     for (const language of locales) {

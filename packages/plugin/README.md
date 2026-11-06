@@ -10,9 +10,27 @@ With Node.js and npm installed, add the SDK to your TypeScript project:
 npm install --save-dev @nesso-how/plugin
 ```
 
-This installs the development SDK, not a plugin in Nesso. If you are starting a new plugin, use the example below for TypeScript and bundler configuration, including React UI support. To install and try your built plugin in the desktop app, follow the [local testing instructions](example/README.md#test-an-unpublished-build).
+This installs the development SDK, not a plugin in Nesso. If you are starting a new plugin, use the example below for TypeScript and bundler configuration, including React UI support. You can install a built plugin locally through MCP without publishing it to npm.
 
 ## Create a plugin
+
+### With a coding agent
+
+You can ask a coding agent such as Claude Code or Codex to build and propose a plugin. This uses an external agent with local file and command access, not Nesso's internal chat.
+
+1. Open the desktop app, go to Settings → AI → MCP, and start the server. Use a Nesso version whose MCP tools include `plugins` and `propose_plugin`.
+2. In your agent's MCP configuration, connect to the URL shown in Nesso using Streamable HTTP and an `Authorization: Bearer <token>` header. Copy the token from Settings into the client's configuration, not into a chat message, source file, or repository. Keep Nesso open.
+3. Describe what you want. The agent should read `read_docs` with `{"topic":"plugin"}` and `{"topic":"plugin-example"}`, then call `plugins` to check installed names and any local build to update. For a panel, it should also read `{"topic":"ui"}`.
+4. The agent creates a separate local project using the official SDK and example, with a unique package name and only the necessary permissions. It installs dependencies and runs typechecks, pure-logic tests, the build, and [offline package validation](#build-and-test) outside Nesso.
+5. Once checks pass, the agent tells you to switch to Nesso and calls `propose_plugin` with the **absolute package root directory**, containing `package.json` and the built entry. Review the declared access and approve within **120 seconds**, including processing time.
+
+For example, ask your agent:
+
+> Build a Nesso plugin that [describe the behavior]. Read the Nesso MCP plugin and plugin-example documentation first. Use the official SDK in a separate project, with minimal permissions. Typecheck, test pure logic, build, and validate the package offline. Then propose the built package directory through MCP and wait for my approval in Nesso. Do not publish to npm.
+
+Nesso only reads the package; it never installs dependencies or runs build scripts. [Local installation and replacement](#install-or-update-through-mcp) are permanent, approval-based operations, not temporary previews.
+
+### By hand
 
 Copy the [standalone action example](example/) into a separate project. It includes the SDK, TypeScript configuration, and bundler setup:
 
@@ -91,9 +109,57 @@ API version, npm SDK version, host storage envelope version, and private payload
 
 ### Build and test
 
-Run `npm run build`, then follow the example's [local testing instructions](example/README.md#test-an-unpublished-build).
+Use Node.js 24. Run `npm run check` for TypeScript and `npm run build` for the distributable; the example's build also runs its typecheck. Keep calculations, operation generation, and private-data transformations in pure functions and test them with `node:test` and `node:assert/strict`, for example with `node --test "src/**/*.test.ts"`. Use `.ts` imports for tests run directly by Node, keep JSX and DOM-dependent modules out of them, and add `@types/node` and `node` to your test TypeScript configuration's `types` when needed.
 
 Actions ship one browser ES module with dependencies bundled except React and React DOM, which Nesso supplies inside the sandbox. Keep `react`, `react/*`, `react-dom`, and `react-dom/*` external in your bundler; the example's build handles this. The runtime supports React 19. Test and install external plugins in the desktop app.
+
+Before proposing, validate the exact built bytes offline with `preparePluginPackage` from `@nesso-how/plugin/package`. Save this as `validate.ts` in the project root and run `node validate.ts` after building:
+
+```ts
+import { readFile } from 'node:fs/promises'
+import { preparePluginPackage } from '@nesso-how/plugin/package'
+import { parseDefinition, parsePluginManifest } from '@nesso-how/plugin/runtime'
+
+const manifest = JSON.parse(await readFile('package.json', 'utf8'))
+const nesso = parsePluginManifest(manifest.nesso)
+const entry = new Uint8Array(await readFile(nesso.entry))
+const files = [{ path: nesso.entry, bytes: entry }]
+
+if (nesso.kind === 'theme') {
+  const theme = parseDefinition('theme', JSON.parse(new TextDecoder().decode(entry)))
+  const fonts = new Set(
+    Object.values(theme.fonts).flatMap(({ faces }) => faces.map(({ path }) => path)),
+  )
+  for (const path of fonts) files.push({ path, bytes: new Uint8Array(await readFile(path)) })
+}
+
+const prepared = await preparePluginPackage({ manifest, files })
+console.log(prepared.name, prepared.version, prepared.contentId)
+```
+
+This validates metadata, permissions, file budgets, UTF-8, and theme/vocabulary definitions without contacting Nesso or executing action code. It does not typecheck JavaScript, run `create()`, or verify action behavior. Nesso repeats package validation and, after approval, discovers actions in the isolated runtime. Fix structured `PluginError.issues` rather than bypassing checks.
+
+### Install or update through MCP
+
+With the [desktop MCP connection](#with-a-coding-agent) running, have your client call `propose_plugin` with arguments such as:
+
+```json
+{ "directory": "/absolute/path/to/nesso-plugin-my-action" }
+```
+
+Use the package root, not `dist`, an archive, or inline JavaScript. Nesso reads only `package.json`, the `nesso.entry` file, and any WOFF2 fonts referenced by a theme. Relative paths, files escaping the directory (including through symlinks), and oversized files are rejected. No npm publication is needed.
+
+Every proposal requires approval in Nesso within the 120-second MCP request timeout. The result is one of:
+
+- `installed`: includes `name`, `version`, and `contentId`. The plugin stays installed across restarts; editing the project or rebuilding does not update it automatically.
+- `cancelled`: the proposal was not approved. Do not automatically propose again.
+- `failed`: includes `{ path, message }[]` issues to fix before a new proposal. Offline validation cannot catch every initialization or runtime failure.
+
+If the client reports a timeout or disconnection instead of a result, call `plugins` to check the installed state before trying again. Do not claim installation succeeded without confirmation.
+
+To update, call `plugins`, find the intended entry with `local: true`, and pass its current `contentId` as `replacing` alongside `directory`. A replacement requires fresh approval. MCP cannot replace or shadow an npm-installed or bundled plugin; choose a different package name for your own plugin. Local installs show a **Local** badge and are not verified by npm or checked for npm updates. Manage them in Settings → Plugins. Their private data is separate from npm packages with the same name.
+
+After installing, try the action from a view's actions menu, or choose the theme/vocabulary in Settings. Exercise permissions, cancellation, stale-state failures, UI lifecycle, and persistence in Nesso; pure-logic tests and offline validation do not cover these host interactions.
 
 ## Action API
 
