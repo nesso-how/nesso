@@ -33,6 +33,18 @@ export async function verifyStartup({ window, url }: CheckContext) {
 
   await window.loadURL(url)
   await waitFor(inspect, (state) => state.busy === 'true')
+  const branding = await window.webContents.executeJavaScript(`(async () => {
+    const source = await (await fetch(new URL('logo.svg', document.baseURI))).text()
+    const logo = new DOMParser().parseFromString(source, 'image/svg+xml')
+    return {
+      wordmark: document.querySelector('.splash-wordmark')?.getAttribute('d'),
+      logoWordmark: logo.querySelector('#wordmark')?.getAttribute('d'),
+      text: document.querySelectorAll('.splash-logo text').length + logo.querySelectorAll('text').length
+    }
+  })()`)
+  assert.ok(branding.wordmark)
+  assert.equal(branding.wordmark, branding.logoWordmark)
+  assert.equal(branding.text, 0)
   await window.webContents.executeJavaScript(
     `document.querySelector('.splash').dispatchEvent(new KeyboardEvent('keydown', {key:'Escape',bubbles:true}))`,
   )
