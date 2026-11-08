@@ -70,8 +70,8 @@ export async function verifyCorruptRecords({ window, url }: CheckContext) {
         `[...document.querySelectorAll('[data-slot="toast"][data-tone="warning"]')].map(toast => toast.textContent).join(' ')`,
       ),
     (text) =>
-      text.includes('Some external plugins could not be loaded') &&
-      text.includes('outdated package') &&
+      text.includes('Nesso skipped them') &&
+      text.includes('reinstall it from Find on npm') &&
       text.includes('test-unreadable') &&
       !text.includes(corrupt),
   )

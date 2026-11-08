@@ -526,6 +526,7 @@
   color: var(--muted-foreground);
   font-size: 12px;
   line-height: 18px;
+  white-space: pre-line;
 }
 .toast-actions {
   display: flex;

@@ -339,9 +339,13 @@ export async function initializeExternalPlugins(signal: AbortSignal) {
       notifications.api.notify({
         tone: 'warning',
         title: t('pluginExternalFailed'),
-        description: `${t('pluginExternalFailedDescription')}${
-          failed.length ? `\n\n${failed.join(', ')}` : ''
-        }${stored.issues.length ? `\n\n${t('pluginExternalFailedStaleHint')}` : ''}`,
+        description: [
+          t('pluginExternalFailedDescription'),
+          failed.map((name) => `• ${name}`).join('\n'),
+          stored.issues.length ? t('pluginExternalFailedStaleHint') : '',
+        ]
+          .filter(Boolean)
+          .join('\n\n'),
       })
   } catch {
     notifications.api.notify({
