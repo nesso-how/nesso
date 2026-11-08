@@ -203,7 +203,7 @@ async function buildFixture(state: InstallState, name: string, version: string) 
           }
         : {}),
       nesso: {
-        apiVersion: 2,
+        apiVersion: 3,
         kind,
         entry,
         writes: kind === 'actions' ? ['concept.label'] : [],
@@ -359,6 +359,9 @@ async function verifyBundledThemeSwitch(driver: Driver, state: InstallState) {
     (record) => Object.keys(record?.workspace.viewports ?? {}).length > 0,
   )
   const before = structuredClone(state.saved.get('document'))
+  const fonts = await driver.evaluate<string[]>(
+    `['sans','mono'].map(role => getComputedStyle(document.documentElement).getPropertyValue('--font-' + role).trim())`,
+  )
   for (const [id, primary] of [
     ['paper-theme', '#934a35'],
     ['kernel-theme', '#1a202b'],
@@ -375,6 +378,12 @@ async function verifyBundledThemeSwitch(driver: Driver, state: InstallState) {
       primary,
     )
     assert.deepEqual(state.saved.get('document'), before)
+    assert.deepEqual(
+      await driver.evaluate<string[]>(
+        `['sans','mono'].map(role => getComputedStyle(document.documentElement).getPropertyValue('--font-' + role).trim())`,
+      ),
+      fonts,
+    )
     await driver.dismissToasts()
   }
   await driver.click('Plugins', '.settings-sidebar')
@@ -1121,7 +1130,7 @@ async function verifyLocalProposal(driver: Driver) {
     const manifest = {
       name,
       version: '1.0.0',
-      nesso: { apiVersion: 2, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
+      nesso: { apiVersion: 3, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
       i18n: {
         metadata: {
           name: { en: 'Test local' },

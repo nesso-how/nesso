@@ -15,8 +15,6 @@ import {
 
 export const packageLimits = {
   entry: 16 * 1024 * 1024,
-  font: 4 * 1024 * 1024,
-  fonts: 32,
   record: 32 * 1024 * 1024,
   installed: 32,
   total: 128 * 1024 * 1024,
@@ -33,7 +31,6 @@ export type PreparedPlugin = {
   readonly nesso: PluginManifest
   readonly i18n: PluginI18n
   readonly code: string
-  readonly fonts: readonly { readonly path: string; readonly data: string }[]
   readonly contentId: string
 }
 
@@ -122,61 +119,23 @@ export async function preparePluginPackage(input: PluginPackageInput): Promise<P
   } = parsePackageIdentity(input.manifest)
   const nesso = parsePluginManifest(declaration)
   const i18n = parsePluginI18n(translations)
+  if (!Array.isArray(input.files) || input.files.length !== 1)
+    throw new PluginError('invalid-input', [
+      { path: 'files', message: 'Expected one plugin entry only' },
+    ])
+  const file = input.files[0]
   if (
-    !Array.isArray(input.files) ||
-    !input.files.length ||
-    input.files.length > (nesso.kind === 'theme' ? packageLimits.fonts + 1 : 1)
+    !file ||
+    file.path !== nesso.entry ||
+    !(file.bytes instanceof Uint8Array) ||
+    !file.bytes.byteLength ||
+    file.bytes.byteLength > packageLimits.entry
   )
     throw new PluginError('invalid-input', [
-      { path: 'files', message: 'Expected one entry and supported local theme fonts only' },
+      { path: 'files', message: 'Expected the plugin entry within size limits' },
     ])
-  const paths = new Set<string>()
-  const fonts: { path: string; data: string }[] = []
-  const files: { path: string; size: number; sha256: string }[] = []
-  let bytes: Uint8Array | undefined
-  let admitted = 0
-  for (const file of input.files) {
-    if (
-      !file ||
-      typeof file.path !== 'string' ||
-      file.path.length > 240 ||
-      paths.has(file.path) ||
-      !(file.bytes instanceof Uint8Array) ||
-      !file.bytes.byteLength ||
-      file.bytes.byteLength > (file.path === nesso.entry ? packageLimits.entry : packageLimits.font)
-    )
-      throw new PluginError('invalid-input', [
-        { path: 'files', message: 'Invalid, duplicate, or oversized package file' },
-      ])
-    paths.add(file.path)
-    admitted +=
-      file.path === nesso.entry ? file.bytes.byteLength : Math.ceil(file.bytes.byteLength / 3) * 4
-    if (admitted > packageLimits.record)
-      throw new PluginError('invalid-input', [
-        { path: 'files', message: 'Package record budget exceeded' },
-      ])
-    const content = new Uint8Array(file.bytes)
-    if (file.path === nesso.entry) bytes = content
-    else {
-      if (
-        nesso.kind !== 'theme' ||
-        !/^(?:[\w-]+\/)*[\w-]+\.woff2$/.test(file.path) ||
-        new TextDecoder().decode(content.subarray(0, 4)) !== 'wOF2'
-      )
-        throw new PluginError('invalid-input', [
-          { path: file.path, message: 'Expected a package-local WOFF2 font' },
-        ])
-      let binary = ''
-      for (let offset = 0; offset < content.length; offset += 32_768)
-        binary += String.fromCharCode(...content.subarray(offset, offset + 32_768))
-      fonts.push({ path: file.path, data: btoa(binary) })
-    }
-    files.push({ path: file.path, size: content.byteLength, sha256: await sha256Hex(content) })
-  }
-  if (!bytes)
-    throw new PluginError('invalid-input', [
-      { path: 'nesso.entry', message: 'Missing plugin entry' },
-    ])
+  const bytes = new Uint8Array(file.bytes)
+  const files = [{ path: file.path, size: bytes.byteLength, sha256: await sha256Hex(bytes) }]
   let code: string
   try {
     code = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes)
@@ -196,9 +155,7 @@ export async function preparePluginPackage(input: PluginPackageInput): Promise<P
     }
     parseDefinition(nesso.kind, raw)
   }
-  const order = (left: { path: string }, right: { path: string }) =>
-    left.path < right.path ? -1 : left.path > right.path ? 1 : 0
-  const index = { name, version, author, repository, nesso, i18n, files: files.sort(order) }
+  const index = { name, version, author, repository, nesso, i18n, files }
   const prepared = {
     name,
     version,
@@ -207,7 +164,6 @@ export async function preparePluginPackage(input: PluginPackageInput): Promise<P
     nesso,
     i18n,
     code,
-    fonts: fonts.sort(order),
     contentId: await sha256Hex(new TextEncoder().encode(canonical(index))),
   }
   if (new TextEncoder().encode(JSON.stringify(prepared)).byteLength > packageLimits.record)
@@ -217,41 +173,11 @@ export async function preparePluginPackage(input: PluginPackageInput): Promise<P
   return prepared
 }
 
-export function packageFonts(value: PreparedPlugin): ReadonlyMap<string, Uint8Array> {
-  if (!Array.isArray(value.fonts) || value.fonts.length > packageLimits.fonts)
-    throw new PluginError('invalid-input', [
-      { path: 'fonts', message: 'Invalid installed font assets' },
-    ])
-  return new Map(
-    value.fonts.map((font) => {
-      if (
-        !font ||
-        typeof font.path !== 'string' ||
-        typeof font.data !== 'string' ||
-        font.data.length > Math.ceil(packageLimits.font / 3) * 4
-      )
-        throw new PluginError('invalid-input', [
-          { path: 'fonts', message: 'Invalid font encoding or budget' },
-        ])
-      try {
-        return [font.path, Uint8Array.from(atob(font.data), (character) => character.charCodeAt(0))]
-      } catch {
-        throw new PluginError('invalid-input', [
-          { path: 'fonts', message: 'Invalid font encoding' },
-        ])
-      }
-    }),
-  )
-}
-
 export async function verifyPluginPackage(value: PreparedPlugin): Promise<PreparedPlugin> {
   if (!value || typeof value.code !== 'string' || value.code.length > packageLimits.entry)
     throw new PluginError('invalid-input', [
       { path: 'package', message: 'Invalid installed plugin package' },
     ])
-  const fonts = packageFonts(value)
-  if (fonts.size !== value.fonts.length)
-    throw new PluginError('invalid-input', [{ path: 'fonts', message: 'Duplicate font assets' }])
   const prepared = await preparePluginPackage({
     manifest: {
       name: value.name,
@@ -261,10 +187,7 @@ export async function verifyPluginPackage(value: PreparedPlugin): Promise<Prepar
       nesso: value.nesso,
       i18n: value.i18n,
     },
-    files: [
-      { path: value.nesso?.entry, bytes: new TextEncoder().encode(value.code) },
-      ...[...fonts].map(([path, bytes]) => ({ path, bytes })),
-    ],
+    files: [{ path: value.nesso?.entry, bytes: new TextEncoder().encode(value.code) }],
   })
   if (prepared.contentId !== value.contentId)
     throw new PluginError('denied', [

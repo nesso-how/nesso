@@ -30,7 +30,6 @@ import { loadActions, type ActionPackage } from './actions.ts'
 import { withInitializationTimeout } from './initialization.ts'
 import { translate } from '../i18n/index.ts'
 import {
-  packageFonts,
   parsePackageIdentity,
   verifyPluginPackage,
   type PluginPackageInput,
@@ -177,19 +176,6 @@ const result = <T>(reply: PluginResult<T>): T => {
   if ('issues' in reply) throw new PluginError('failed', [...reply.issues])
   return reply.value
 }
-const preparePresentation = async (
-  definition: ThemeDefinition,
-  assets: ReadonlyMap<string, Uint8Array>,
-) => {
-  for (const [path, bytes] of assets) {
-    try {
-      await new FontFace('nesso-validation', new Uint8Array(bytes)).load()
-    } catch {
-      throw new PluginError('invalid-input', [{ path, message: 'Could not decode theme font' }])
-    }
-  }
-  return prepareTheme(definition, assets)
-}
 const parseDefinitionCode = (kind: 'theme' | 'vocab', code: string, path: string) => {
   let raw: unknown
   try {
@@ -257,20 +243,7 @@ const discoverExternal = async (
     if ('relationTypes' in contribution)
       discovered = { entry: { ...externalEntry(prepared), kind: 'vocab', contribution } }
     else {
-      const assets = packageFonts(verified)
-      const referenced = new Set(
-        [...contribution.fonts.sans.faces, ...contribution.fonts.mono.faces].map(
-          ({ path }) => path,
-        ),
-      )
-      if (
-        assets.size !== referenced.size ||
-        [...assets.keys()].some((path) => !referenced.has(path))
-      )
-        throw new PluginError('invalid-input', [
-          { path: 'fonts', message: 'Theme must reference exactly its admitted font assets' },
-        ])
-      const presentation = await preparePresentation(contribution, assets)
+      const presentation = prepareTheme(contribution)
       discovered = {
         entry: { ...externalEntry(prepared), kind: 'theme', contribution },
         presentation,
@@ -353,12 +326,15 @@ export async function initializeExternalPlugins(signal: AbortSignal) {
     }
     if (signal.aborted) return () => {}
     publish([...registry.getSnapshot(), ...entries], staged, true)
-    const failed = entries
-      .filter((entry) => entry.error)
-      .map(
-        (entry) =>
-          pluginMetadata(entry, nessoStore.getState().preferences.locale ?? defaultLocale).name,
-      )
+    const failed = [
+      ...entries
+        .filter((entry) => entry.error)
+        .map(
+          (entry) =>
+            pluginMetadata(entry, nessoStore.getState().preferences.locale ?? defaultLocale).name,
+        ),
+      ...stored.issues.flatMap(({ name }) => (name ? [name] : [])),
+    ]
     if (failed.length || stored.issues.length)
       notifications.api.notify({
         tone: 'warning',
@@ -645,26 +621,7 @@ export async function initializeBundledPlugins() {
         i18n: parsePluginI18n(source.i18n),
       }
       if ('relationTypes' in contribution) return { ...entry, kind: 'vocab', contribution }
-      const paths = [
-        ...new Set(
-          [...contribution.fonts.sans.faces, ...contribution.fonts.mono.faces].map(
-            ({ path }) => path,
-          ),
-        ),
-      ]
-      const assets = new Map(
-        await Promise.all(
-          paths.map(async (path): Promise<[string, Uint8Array]> => {
-            const response = await fetch(new URL(`preinstalled/${id}/${path}`, document.baseURI))
-            if (!response.ok)
-              throw new PluginError('failed', [
-                { path: 'fonts', message: 'Could not load bundled font' },
-              ])
-            return [path, new Uint8Array(await response.arrayBuffer())]
-          }),
-        ),
-      )
-      themes.set(contribution.id, await preparePresentation(contribution, assets))
+      themes.set(contribution.id, prepareTheme(contribution))
       return { ...entry, kind: 'theme', contribution }
     }),
   )

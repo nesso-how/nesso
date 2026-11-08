@@ -62,14 +62,10 @@ try {
   showPluginRecovery(t('pluginsFailed'), t('pluginsRetry'), () => location.reload())
   throw error
 }
-const fonts = document.createElement('style')
-fonts.dataset.nessoThemeFonts = ''
-document.head.append(fonts)
 const stopTheme = connectTheme(host, (definition) => {
   const theme = getThemePresentation(definition.id)!
   for (const [key, value] of Object.entries(theme.tokens))
     document.documentElement.style.setProperty(`--${key}`, value)
-  fonts.textContent = theme.fontStyles
   document.documentElement.setAttribute('data-theme', definition.id)
 })
 const externalStartup = new AbortController()
@@ -100,7 +96,6 @@ window.addEventListener('pagehide', stopPluginActions)
 window.addEventListener('pagehide', stopExternalPlugins)
 import.meta.hot?.dispose(() => {
   stopTheme()
-  fonts.remove()
   persistence.dispose()
   chat?.dispose()
   stopMcp()

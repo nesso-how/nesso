@@ -5,7 +5,7 @@ import {
   parsePackageIdentity,
   type PluginPackageInput,
 } from '@nesso-how/plugin/package'
-import { parseDefinition, parsePluginManifest, PluginError } from '@nesso-how/plugin/runtime'
+import { parsePluginManifest, PluginError } from '@nesso-how/plugin/runtime'
 
 const invalid = (at: string, message: string) =>
   new PluginError('invalid-input', [{ path: at, message }])
@@ -43,15 +43,6 @@ export async function readPluginDirectory(directory: string): Promise<PluginPack
   const manifest = text(await read('package.json', 64 * 1024), 'package.json')
   const nesso = parsePluginManifest(parsePackageIdentity(manifest).nesso)
   const entry = await read(nesso.entry, packageLimits.entry)
-  const fonts =
-    nesso.kind === 'theme'
-      ? new Set(
-          Object.values(parseDefinition('theme', text(entry, nesso.entry)).fonts).flatMap(
-            ({ faces }) => faces.map((face) => face.path),
-          ),
-        )
-      : []
   const files = [{ path: nesso.entry, bytes: entry }]
-  for (const font of fonts) files.push({ path: font, bytes: await read(font, packageLimits.font) })
   return { manifest, files }
 }

@@ -128,18 +128,5 @@ export async function verifyBundled({ window, url }: CheckContext) {
     assert.equal(response.ok, true, name)
     const definition = parseDefinition(kind, JSON.parse(response.text))
     assert.equal(definition.id, name)
-    if ('fonts' in definition) {
-      const paths = [
-        ...new Set(
-          [...definition.fonts.sans.faces, ...definition.fonts.mono.faces].map(
-            ({ path }) => `preinstalled/${name}/${path}`,
-          ),
-        ),
-      ]
-      assert.ok(paths.length > 0)
-      await window.webContents.executeJavaScript(
-        `Promise.all(${JSON.stringify(paths)}.map(async path=>{const response=await fetch(path);if(!response.ok)throw new Error('Could not load bundled font');await new FontFace('probe',await response.arrayBuffer()).load()})).then(()=>true)`,
-      )
-    }
   }
 }

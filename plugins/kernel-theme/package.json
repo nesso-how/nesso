@@ -2,13 +2,12 @@
   "name": "@nesso-how/kernel-theme",
   "version": "1.0.0-beta.7",
   "license": "MIT",
+  "files": [
+    "dist/definition.json"
+  ],
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
-  },
-  "dependencies": {
-    "@fontsource-variable/geist": "^5.3.0",
-    "@fontsource/ibm-plex-mono": "^5.2.7"
+    ".": "./dist/definition.json"
   },
   "devDependencies": {
     "@nesso-how/plugin": "workspace:*"
@@ -29,14 +28,14 @@
         "zh-CN": "通过 Kernel 主题呈现 Nesso 的视觉风格。"
       },
       "documentation": {
-        "en": "Kernel supplies the app's light theme tokens and fonts. It does not change your graph or views.",
-        "it": "Kernel fornisce i token del tema chiaro e i font dell’app. Non modifica il grafo o le viste.",
-        "zh-CN": "Kernel 提供应用的浅色主题设计变量和字体，不会改变你的图谱或视图。"
+        "en": "Kernel supplies the app's light theme tokens. It does not change your graph or views.",
+        "it": "Kernel fornisce i token del tema chiaro dell’app. Non modifica il grafo o le viste.",
+        "zh-CN": "Kernel 提供应用的浅色主题设计变量，不会改变你的图谱或视图。"
       }
     }
   },
   "nesso": {
-    "apiVersion": 2,
+    "apiVersion": 3,
     "kind": "theme",
     "entry": "dist/definition.json",
     "writes": [],

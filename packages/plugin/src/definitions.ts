@@ -27,26 +27,6 @@ const contributionId = z
   .max(64)
   .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
 const color = z.string().regex(/^#[\da-fA-F]{6}([\da-fA-F]{2})?$/)
-const fontFace = z.strictObject({
-  path: z
-    .string()
-    .max(240)
-    .regex(/^(?:[\w-]+\/)*[\w-]+\.woff2$/),
-  weight: z
-    .tuple([z.number().int().min(1).max(1000), z.number().int().min(1).max(1000)])
-    .refine(([min, max]) => min <= max),
-  style: z.enum(['normal', 'italic']),
-  unicodeRange: z
-    .array(
-      z
-        .tuple([z.number().int().min(0).max(0x10ffff), z.number().int().min(0).max(0x10ffff)])
-        .refine(([min, max]) => min <= max),
-    )
-    .min(1)
-    .max(64)
-    .optional(),
-})
-const font = z.strictObject({ faces: z.array(fontFace).max(32) })
 const luminance = (value: string) => {
   const channels = [1, 3, 5].map((offset) => parseInt(value.slice(offset, offset + 2), 16) / 255)
   const linear = channels.map((value) =>
@@ -73,9 +53,8 @@ const themeDefinition = z
       'radius-object': z.number().min(0).max(16),
       'duration-state': z.number().int().min(0).max(300),
     }),
-    fonts: z.strictObject({ sans: font, mono: font }),
   })
-  .superRefine(({ colors, fonts }, context) => {
+  .superRefine(({ colors }, context) => {
     for (const key of ['background', 'canvas', 'sidebar'] as const) {
       if (!opaque(colors[key]) || luminance(colors[key]) < 0.8)
         context.addIssue({
@@ -100,8 +79,6 @@ const themeDefinition = z
         path: ['colors', 'primary-foreground'],
         message: 'Insufficient primary contrast',
       })
-    if (fonts.sans.faces.length + fonts.mono.faces.length > 32)
-      context.addIssue({ code: 'custom', path: ['fonts'], message: 'Font face limit exceeded' })
   })
 
 export const vocabRelationType = z.strictObject({

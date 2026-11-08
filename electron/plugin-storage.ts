@@ -30,10 +30,11 @@ export function createPluginStorage(directory: string) {
     const records = entries.filter(({ name }) => name.endsWith('.json'))
     if (records.length > packageLimits.installed) fail('Installed package budget exceeded')
     const installed: InstalledPlugin[] = []
-    const issues: { path: string; message: string }[] = []
+    const issues: { path: string; message: string; name?: string }[] = []
     const sizes = new Map<string, number>()
     let total = 0
     for (const entry of records) {
+      let name: string | undefined
       try {
         if (!entry.isFile() || !/^[a-f0-9]{64}\.json$/.test(entry.name))
           fail('Invalid installed package record')
@@ -61,6 +62,12 @@ export function createPluginStorage(directory: string) {
           await file.close()
         }
         const record = JSON.parse(text)
+        if (
+          typeof record?.name === 'string' &&
+          record.name.length <= 214 &&
+          path.basename(filename(record.name)) === entry.name
+        )
+          name = record.name
         const prepared = await verifyPluginPackage(record)
         if (
           typeof record.enabled !== 'boolean' ||
@@ -72,7 +79,11 @@ export function createPluginStorage(directory: string) {
         sizes.set(prepared.name, size)
       } catch (error) {
         if (strict || total > packageLimits.total) throw error
-        issues.push({ path: entry.name, message: 'Could not read installed package record' })
+        issues.push({
+          path: entry.name,
+          message: 'Could not read installed package record',
+          ...(name ? { name } : {}),
+        })
       }
     }
     return { installed, total, sizes, issues }

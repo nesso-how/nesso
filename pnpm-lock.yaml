@@ -178,6 +178,12 @@ importers:
       '@ai-sdk/openai-compatible':
         specifier: ^3.0.66
         version: 3.0.66(zod@4.6.5)
+      '@fontsource-variable/geist':
+        specifier: ^5.3.0
+        version: 5.3.0
+      '@fontsource/ibm-plex-mono':
+        specifier: ^5.2.7
+        version: 5.3.0
       '@modelcontextprotocol/sdk':
         specifier: ^1.32.1
         version: 1.32.1(supports-color@7.2.0)(zod@4.6.5)
@@ -509,26 +515,12 @@ importers:
         version: link:../../packages/plugin
 
   plugins/kernel-theme:
-    dependencies:
-      '@fontsource-variable/geist':
-        specifier: ^5.3.0
-        version: 5.3.0
-      '@fontsource/ibm-plex-mono':
-        specifier: ^5.2.7
-        version: 5.3.0
     devDependencies:
       '@nesso-how/plugin':
         specifier: workspace:*
         version: link:../../packages/plugin
 
   plugins/mist-theme:
-    dependencies:
-      '@fontsource-variable/geist':
-        specifier: ^5.3.0
-        version: 5.3.0
-      '@fontsource/ibm-plex-mono':
-        specifier: ^5.2.7
-        version: 5.3.0
     devDependencies:
       '@nesso-how/plugin':
         specifier: workspace:*
@@ -557,13 +549,6 @@ importers:
         version: 19.3.0
 
   plugins/paper-theme:
-    dependencies:
-      '@fontsource-variable/geist':
-        specifier: ^5.3.0
-        version: 5.3.0
-      '@fontsource/ibm-plex-mono':
-        specifier: ^5.2.7
-        version: 5.3.0
     devDependencies:
       '@nesso-how/plugin':
         specifier: workspace:*

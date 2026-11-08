@@ -18,8 +18,8 @@ const latest = (entry: PluginEntry, version = '1.1.0'): NpmPlugin => ({
   i18n,
   nesso:
     entry.kind === 'actions'
-      ? { apiVersion: 2, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] }
-      : { apiVersion: 2, kind: entry.kind, entry: 'definition.json', writes: [], capabilities: [] },
+      ? { apiVersion: 3, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] }
+      : { apiVersion: 3, kind: entry.kind, entry: 'definition.json', writes: [], capabilities: [] },
 })
 
 test('manual checks share one metadata path for all kinds and never propose downgrades', async () => {

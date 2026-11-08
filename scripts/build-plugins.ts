@@ -78,23 +78,6 @@ try {
       publish(path.join(root, 'public/preinstalled', name, 'definition.json'), text),
       publish(path.join(directory, manifest.entry), text),
     ])
-    if (kind === 'theme') {
-      for (const [font, stem] of [
-        ['@fontsource-variable/geist', 'geist-{subset}-wght-normal'],
-        ['@fontsource/ibm-plex-mono', 'ibm-plex-mono-{subset}-400-normal'],
-      ]) {
-        const fontRoot = path.join(directory, 'node_modules', font)
-        const ranges = JSON.parse(await readFile(path.join(fontRoot, 'unicode.json'), 'utf8'))
-        for (const subset of Object.keys(ranges)) {
-          const filename = `${stem.replace('{subset}', subset)}.woff2`
-          const bytes = await readFile(path.join(fontRoot, 'files', filename))
-          await Promise.all([
-            publish(path.join(root, 'public/preinstalled', name, 'fonts', filename), bytes),
-            publish(path.join(directory, 'fonts', filename), bytes),
-          ])
-        }
-      }
-    }
   }
   const output = path.join(root, 'public/plugin-runner')
   for (const [entry, name] of [

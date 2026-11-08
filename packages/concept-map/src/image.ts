@@ -13,14 +13,12 @@ import './styles.css'
 export async function renderConceptMapImage({
   store,
   theme,
-  fontStyles,
   scale = 2,
   signal,
   presentation,
 }: {
   store: ConceptMapContext['store']
   theme: Readonly<Record<string, string>>
-  fontStyles: string
   scale?: 2 | 4
   signal: AbortSignal
   presentation?: ConceptMapPresentation
@@ -45,9 +43,6 @@ export async function renderConceptMapImage({
     color: theme.foreground,
   })
   for (const [key, value] of Object.entries(theme)) element.style.setProperty(`--${key}`, value)
-  const fonts = document.createElement('style')
-  fonts.textContent = fontStyles
-  element.append(fonts)
   const mount = document.createElement('div')
   Object.assign(mount.style, { width: '100%', height: '100%' })
   element.append(mount)
@@ -106,7 +101,6 @@ export async function renderConceptMapImage({
       pixelRatio: scale,
       skipAutoScale: true,
       backgroundColor: theme.canvas,
-      fontEmbedCSS: fontStyles,
       style: {
         transform: `translate(${-bounds.x}px, ${-bounds.y}px) scale(1)`,
         transformOrigin: '0 0',

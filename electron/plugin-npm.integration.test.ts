@@ -21,7 +21,7 @@ const manifest = {
   repository: { type: 'git', url: 'git+https://github.com/example/plugin.git' },
   scripts: { install: 'never run' },
   dependencies: { anything: '*' },
-  nesso: { apiVersion: 2, kind: 'actions', entry: 'dist/index.js', writes: [], capabilities: [] },
+  nesso: { apiVersion: 3, kind: 'actions', entry: 'dist/index.js', writes: [], capabilities: [] },
   i18n: {
     metadata: { name: { en: 'Test' }, description: { en: 'Test' }, documentation: { en: 'Test' } },
   },
@@ -146,7 +146,7 @@ test('discovery enforces the exact keyword, excludes deprecated plugins, filters
           deprecated: name === 'deprecated' ? 'Temporary test package' : undefined,
           description: 'Description-only match',
           i18n: { metadata: { ...manifest.i18n.metadata, name: { en: 'Visible display name' } } },
-          nesso: { ...manifest.nesso, apiVersion: name === 'future' ? 3 : 2 },
+          nesso: { ...manifest.nesso, apiVersion: name === 'future' ? 4 : 3 },
         }),
       )
     }
@@ -212,7 +212,7 @@ test('npm acquisition streams real registry-fetch responses, verifies SHA-512, a
   ])
 })
 
-test('npm definition acquisition shares validation and binds only local WOFF2 theme assets', async (t) => {
+test('npm definition acquisition shares validation and ignores assets outside the JSON entry', async (t) => {
   let received = manifest
   let bytes = archive(entries)
   const request = await registry(t, (req, res) =>
@@ -241,7 +241,7 @@ test('npm definition acquisition shares validation and binds only local WOFF2 th
     assert.deepEqual(prepared, {
       ...(await preparePluginPackage({
         manifest: received,
-        files: [{ path: 'definition.json', bytes: Buffer.from(definitionFile.data) }, ...fonts],
+        files: [{ path: 'definition.json', bytes: Buffer.from(definitionFile.data) }],
       })),
       npmIntegrity: metadata(bytes).dist.integrity,
     })
@@ -251,7 +251,10 @@ test('npm definition acquisition shares validation and binds only local WOFF2 th
     { path: 'package/definition.json', data: JSON.stringify(theme) },
     { path: 'package/fonts/bad.woff2', data: 'invalid' },
   ])
-  await assert.rejects(acquireNpmPlugin(spec, new AbortController().signal, request))
+  assert.equal(
+    (await acquireNpmPlugin(spec, new AbortController().signal, request)).code,
+    JSON.stringify(theme),
+  )
 })
 
 test('npm acquisition rejects inexact identities, untrusted URLs and redirects, malformed metadata, integrity mismatches and cancelled requests', async (t) => {

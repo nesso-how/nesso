@@ -96,22 +96,18 @@ test('MCP authenticates local requests and exposes validated tools with host res
   assert.equal(calls.length, 2)
 })
 
-test('MCP plugin proposals forward only the package entry and referenced fonts read from its directory', async (t) => {
+test('MCP plugin proposals forward only the package entry read from its directory', async (t) => {
   const root = await mkdtemp(path.join(tmpdir(), 'nesso-mcp-plugin-'))
   t.after(() => rm(root, { recursive: true, force: true }))
   const directory = path.join(root, 'theme')
   await mkdir(path.join(directory, 'dist'), { recursive: true })
   await mkdir(path.join(directory, 'fonts'))
-  const face = { path: 'fonts/a.woff2', weight: [400, 400], style: 'normal' }
-  const definition = JSON.stringify({
-    ...JSON.parse(await readFile('packages/plugin/test/theme.json', 'utf8')),
-    fonts: { sans: { faces: [face] }, mono: { faces: [face] } },
-  })
+  const definition = await readFile('packages/plugin/test/theme.json', 'utf8')
   const manifest = {
     name: 'nesso-plugin-theme',
     version: '1.0.0',
     nesso: {
-      apiVersion: 2,
+      apiVersion: 3,
       kind: 'theme',
       entry: 'dist/definition.json',
       writes: [],
@@ -156,19 +152,19 @@ test('MCP plugin proposals forward only the package entry and referenced fonts r
       input: {
         package: {
           manifest,
-          files: [
-            { path: 'dist/definition.json', bytes: bytes(definition) },
-            { path: 'fonts/a.woff2', bytes: bytes('wOF2') },
-          ],
+          files: [{ path: 'dist/definition.json', bytes: bytes(definition) }],
         },
       },
     },
   ])
-  await rm(path.join(directory, 'fonts/a.woff2'))
-  await symlink(path.join(root, 'outside.woff2'), path.join(directory, 'fonts/a.woff2'))
+  await rm(path.join(directory, 'dist/definition.json'))
+  await symlink(path.join(root, 'outside.woff2'), path.join(directory, 'dist/definition.json'))
   for (const [target, issue] of [
     ['theme', { path: 'directory', message: 'Expected the absolute path of a package directory' }],
-    [directory, { path: 'fonts/a.woff2', message: 'Expected a file inside the package directory' }],
+    [
+      directory,
+      { path: 'dist/definition.json', message: 'Expected a file inside the package directory' },
+    ],
   ] as const)
     assert.deepEqual(await propose(target), { status: 'failed', issues: [issue] })
   assert.equal(calls.length, 1)

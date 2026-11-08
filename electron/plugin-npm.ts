@@ -363,15 +363,9 @@ export async function acquireNpmPlugin(
     const nesso = parsePluginManifest(received.nesso)
     const entry = files.get(nesso.entry)
     if (!entry) throw failure()
-    const fonts =
-      nesso.kind === 'theme'
-        ? [...files]
-            .filter(([path]) => path.endsWith('.woff2'))
-            .map(([path, bytes]) => ({ path, bytes }))
-        : []
     const prepared = await preparePluginPackage({
       manifest,
-      files: [{ path: nesso.entry, bytes: entry }, ...fonts],
+      files: [{ path: nesso.entry, bytes: entry }],
     })
     signal.throwIfAborted()
     return { ...prepared, npmIntegrity: dist.integrity }

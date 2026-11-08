@@ -74,7 +74,7 @@ Keep the example's build configuration and set these fields in `package.json`:
   "version": "1.0.0",
   "keywords": ["nesso-plugin"],
   "nesso": {
-    "apiVersion": 2,
+    "apiVersion": 3,
     "kind": "actions",
     "entry": "dist/index.js",
     "writes": ["concept.label"],
@@ -109,20 +109,12 @@ Before installing, validate the built package with `preparePluginPackage`. Save 
 ```ts
 import { readFile } from 'node:fs/promises'
 import { preparePluginPackage } from '@nesso-how/plugin/package'
-import { parseDefinition, parsePluginManifest } from '@nesso-how/plugin/runtime'
+import { parsePluginManifest } from '@nesso-how/plugin/runtime'
 
 const manifest = JSON.parse(await readFile('package.json', 'utf8'))
 const nesso = parsePluginManifest(manifest.nesso)
 const entry = new Uint8Array(await readFile(nesso.entry))
 const files = [{ path: nesso.entry, bytes: entry }]
-
-if (nesso.kind === 'theme') {
-  const theme = parseDefinition('theme', JSON.parse(new TextDecoder().decode(entry)))
-  const fonts = new Set(
-    Object.values(theme.fonts).flatMap(({ faces }) => faces.map(({ path }) => path)),
-  )
-  for (const path of fonts) files.push({ path, bytes: new Uint8Array(await readFile(path)) })
-}
 
 const prepared = await preparePluginPackage({ manifest, files })
 console.log(prepared.name, prepared.version, prepared.contentId)
@@ -138,7 +130,7 @@ Connect to the [desktop MCP server](#with-an-agent) and call `plugins` to check 
 { "directory": "/absolute/path/to/nesso-plugin-my-action" }
 ```
 
-Pass the package root, not `dist`, an archive, or inline JavaScript. Nesso reads only `package.json`, the `nesso.entry` file, and any WOFF2 fonts referenced by a theme. Relative paths, files outside the directory (including through symlinks), and oversized files are rejected.
+Pass the package root, not `dist`, an archive, or inline JavaScript. Nesso reads only `package.json` and the `nesso.entry` file. Relative paths, files outside the directory (including through symlinks), and oversized files are rejected.
 
 Tell the user to switch to Nesso before proposing. Every install or replacement needs approval within the **120-second** request timeout, which includes processing time. The result is one of:
 
@@ -367,9 +359,8 @@ Set `nesso.kind` to `"theme"`, point `entry` to your JSON definition, and use em
 - `id`: a lowercase kebab-case contribution ID.
 - `colors`: every required token, using `#RRGGBB` or `#RRGGBBAA`. Start with [Paper's palette](../../plugins/paper-theme/src/index.ts) or [Kernel's](../../plugins/kernel-theme/src/index.ts).
 - `metrics`: `radius-control` and `radius-object` in pixels, and `duration-state` in milliseconds.
-- `fonts`: `sans` and `mono`, each with a `faces` array. Use `[]` for system fallbacks, or include local WOFF2 files with package-relative `path`, `weight: [min, max]`, and `style: "normal"` or `"italic"`.
 
-Only light themes are supported. Use readable text contrast; arbitrary CSS and remote fonts are unsupported.
+Only light themes are supported. Use readable text contrast; arbitrary CSS and plugin fonts are unsupported. Theme packages ship only their JSON entry. Nesso owns `--font-sans` (Geist) and `--font-mono` (IBM Plex Mono), with system fallbacks for other scripts. Switching themes does not change typography.
 
 ## API reference
 

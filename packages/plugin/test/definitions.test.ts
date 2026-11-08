@@ -3,7 +3,7 @@ import test from 'node:test'
 import { parseContribution, parseDefinition, PluginError } from '../src/runtime.ts'
 import theme from './theme.json' with { type: 'json' }
 
-test('theme definitions reject CSS authority, dark surfaces, unreadable text and invalid font descriptors', () => {
+test('theme definitions reject CSS authority, dark surfaces, unreadable text and plugin fonts', () => {
   assert.deepEqual(parseDefinition('theme', theme), theme)
   for (const value of [
     { ...theme, css: 'body{}' },
@@ -12,36 +12,8 @@ test('theme definitions reject CSS authority, dark surfaces, unreadable text and
     { ...theme, colors: { ...theme.colors, background: '#000000' } },
     { ...theme, colors: { ...theme.colors, foreground: '#eeeeee' } },
     { ...theme, metrics: { ...theme.metrics, 'duration-state': 301 } },
-    {
-      ...theme,
-      fonts: {
-        ...theme.fonts,
-        sans: { faces: [{ path: '../private.woff2', weight: [400, 400], style: 'normal' }] },
-      },
-    },
-    {
-      ...theme,
-      fonts: {
-        ...theme.fonts,
-        sans: { faces: [{ path: 'fonts/font.woff2', weight: [900, 100], style: 'normal' }] },
-      },
-    },
-    {
-      ...theme,
-      fonts: {
-        ...theme.fonts,
-        sans: {
-          faces: [
-            {
-              path: 'fonts/font.woff2',
-              weight: [400, 400],
-              style: 'normal',
-              unicodeRange: [[100, 10]],
-            },
-          ],
-        },
-      },
-    },
+    { ...theme, fonts: { sans: { faces: [] }, mono: { faces: [] } } },
+    { ...theme, metrics: { ...theme.metrics, 'font-sans': 'Other' } },
   ])
     assert.throws(() => parseContribution('theme', value), PluginError)
 })

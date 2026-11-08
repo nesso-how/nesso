@@ -19,6 +19,5 @@
     "edge": "#adadad",
     "handle": "#858585"
   },
-  "metrics": { "radius-control": 3, "radius-object": 4, "duration-state": 140 },
-  "fonts": { "sans": { "faces": [] }, "mono": { "faces": [] } }
+  "metrics": { "radius-control": 3, "radius-object": 4, "duration-state": 140 }
 }

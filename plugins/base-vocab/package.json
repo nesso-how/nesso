@@ -2,9 +2,12 @@
   "name": "@nesso-how/base-vocab",
   "version": "1.0.0-beta.7",
   "license": "MIT",
+  "files": [
+    "dist/definition.json"
+  ],
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./dist/definition.json"
   },
   "devDependencies": {
     "@nesso-how/plugin": "workspace:*"
@@ -32,7 +35,7 @@
     }
   },
   "nesso": {
-    "apiVersion": 2,
+    "apiVersion": 3,
     "kind": "vocab",
     "entry": "dist/definition.json",
     "writes": [],
