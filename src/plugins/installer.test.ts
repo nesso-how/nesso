@@ -7,7 +7,7 @@ const target = (name: string) => ({
   package: {
     name,
     version: '1.2.0',
-    nesso: { apiVersion: 2, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
+    nesso: { apiVersion: 3, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
     i18n: {
       metadata: { name: { en: name }, description: { en: name }, documentation: { en: name } },
     },
@@ -88,7 +88,6 @@ test('cancellation skips queued packages but reports an already committed update
     ...target('first').package,
     code: 'test',
     contentId: 'new-content',
-    fonts: [],
     enabled: false,
   }
   pending.resolve({ value: installed })
@@ -122,7 +121,6 @@ test('successful updates retain earlier results while later batch items run', as
       ...target('first').package,
       code: 'test',
       contentId: 'first-content',
-      fonts: [],
       enabled: false,
     },
   })
@@ -134,7 +132,6 @@ test('successful updates retain earlier results while later batch items run', as
       ...target('second').package,
       code: 'test',
       contentId: 'second-content',
-      fonts: [],
       enabled: false,
     },
   })

@@ -1,7 +1,4 @@
 import type { ThemeDefinition } from '@nesso-how/plugin'
-import sansRanges from '@fontsource-variable/geist/unicode.json' with { type: 'json' }
-import monoRanges from '@fontsource/ibm-plex-mono/unicode.json' with { type: 'json' }
-import { fontFaces } from '@nesso-how/plugin/runtime'
 
 export const create = (): ThemeDefinition => ({
   id: 'mist-theme',
@@ -25,8 +22,4 @@ export const create = (): ThemeDefinition => ({
     handle: '#6b849c',
   },
   metrics: { 'radius-control': 3, 'radius-object': 5, 'duration-state': 140 },
-  fonts: {
-    sans: fontFaces(sansRanges, 'geist-{subset}-wght-normal', [100, 900]),
-    mono: fontFaces(monoRanges, 'ibm-plex-mono-{subset}-400-normal', [400, 400]),
-  },
 })

@@ -23,4 +23,4 @@
 - Require authorization bound to exact received content and declarations before executing received code; keep product confirmations separate from authorization.
 - Validate raw channel requests against accepted declarations, instance identity, and execution mode. Project only authorized data and reject undeclared access without dynamic permission prompts.
 - Revoke channels before teardown or replacement, cancel pending interactions, and ignore late replies without relying on plugin cleanup. Removing or failing a plugin must not delete document data.
-- Apply only validated theme tokens/fonts to host DOM; compose host overlays outside the trusted canvas.
+- Apply only validated theme tokens to host DOM; compose host overlays outside the trusted canvas.

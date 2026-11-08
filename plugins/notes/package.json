@@ -40,7 +40,7 @@
     }
   },
   "nesso": {
-    "apiVersion": 2,
+    "apiVersion": 3,
     "kind": "actions",
     "entry": "dist/index.js",
     "writes": [],

@@ -20,7 +20,6 @@ export async function renderViewImage(
   const theme = Object.fromEntries(
     themeTokens.map((token) => [token, style.getPropertyValue(`--${token}`).trim()]),
   )
-  const fontStyles = document.querySelector('style[data-nesso-theme-fonts]')?.textContent ?? ''
   const { renderConceptMapImage } = await import('@nesso-how/concept-map/image')
   const readOnly = () => {
     throw new PluginError('denied', [{ path: 'image', message: 'Image rendering is read-only' }])
@@ -36,7 +35,6 @@ export async function renderViewImage(
       conceptPlacementOffset: store.conceptPlacementOffset,
     },
     theme,
-    fontStyles,
     scale: options.scale,
     signal,
   })

@@ -16,6 +16,9 @@ import path from 'node:path'
 import { packageLimits, preparePluginPackage } from '@nesso-how/plugin/package'
 import { createPluginStorage } from './plugin-storage.ts'
 import themeFixture from '../packages/plugin/test/theme.json' with { type: 'json' }
+import legacyRecords from './fixtures/plugin-records-v1.json' with { type: 'json' }
+import { verifyPluginPackage } from '@nesso-how/plugin/package'
+import { parseDefinition } from '@nesso-how/plugin/runtime'
 
 test('installed actions restore verified bytes offline, reject conflicts and cancellation, and preserve valid records on failure or removal', async (t) => {
   const directory = await mkdtemp(path.join(tmpdir(), 'nesso-packages-'))
@@ -26,7 +29,7 @@ test('installed actions restore verified bytes offline, reject conflicts and can
     version: '1.0.0',
     author: 'Test Author <private@example.test>',
     repository: 'github:example/plugin',
-    nesso: { apiVersion: 2, kind: 'actions', entry: 'dist/index.js', writes: [], capabilities: [] },
+    nesso: { apiVersion: 3, kind: 'actions', entry: 'dist/index.js', writes: [], capabilities: [] },
     i18n: {
       metadata: {
         name: { en: 'Test' },
@@ -96,7 +99,7 @@ test('manual updates atomically replace one exact package, preserve disabled sta
   const manifest = {
     name: 'nesso-plugin-test',
     version: '1.0.0',
-    nesso: { apiVersion: 2, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
+    nesso: { apiVersion: 3, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
     i18n: {
       metadata: {
         name: { en: 'Test' },
@@ -201,7 +204,7 @@ test('manual updates atomically replace one exact package, preserve disabled sta
   )
 })
 
-test('definition records restore offline with exact font bytes and reject tampered updates without replacing providers', async (t) => {
+test('definition records restore offline and reject tampered updates without replacing providers', async (t) => {
   const directory = await mkdtemp(path.join(tmpdir(), 'nesso-definition-records-'))
   t.after(() => rm(directory, { recursive: true, force: true }))
   const storage = createPluginStorage(directory)
@@ -209,7 +212,7 @@ test('definition records restore offline with exact font bytes and reject tamper
     const manifest = {
       name: `nesso-test-${kind}`,
       version: '1.0.0',
-      nesso: { apiVersion: 2, kind, entry: 'definition.json', writes: [], capabilities: [] },
+      nesso: { apiVersion: 3, kind, entry: 'definition.json', writes: [], capabilities: [] },
       i18n: {
         metadata: {
           name: { en: 'Test' },
@@ -228,9 +231,6 @@ test('definition records restore offline with exact font bytes and reject tamper
           }
     const files = [
       { path: 'definition.json', bytes: new TextEncoder().encode(JSON.stringify(definition)) },
-      ...(kind === 'theme'
-        ? [{ path: 'fonts/sans.woff2', bytes: new TextEncoder().encode('wOF2font') }]
-        : []),
     ]
     const prepared = await preparePluginPackage({ manifest, files })
     await storage.install(prepared, () => true)
@@ -245,7 +245,7 @@ test('definition records restore offline with exact font bytes and reject tamper
           {
             ...prepared,
             version: '1.1.0',
-            fonts: [{ path: 'fonts/sans.woff2', data: btoa('wOF2tampered') }],
+            code: `${prepared.code}\n`,
           },
           () => true,
           prepared.contentId,
@@ -267,7 +267,7 @@ test('unreadable records are isolated without losing valid packages or permittin
       manifest: {
         name,
         version,
-        nesso: { apiVersion: 2, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
+        nesso: { apiVersion: 3, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
         i18n: {
           metadata: {
             name: { en: name },
@@ -336,7 +336,7 @@ test('a verified package replaces its own unreadable record and preserves neighb
       manifest: {
         name,
         version,
-        nesso: { apiVersion: 2, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
+        nesso: { apiVersion: 3, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
         i18n: {
           metadata: {
             name: { en: name },
@@ -353,7 +353,7 @@ test('a verified package replaces its own unreadable record and preserves neighb
   const recordName = `${createHash('sha256').update(stale.name).digest('hex')}.json`
   const file = path.join(directory, recordName)
   const stored = await readFile(file, 'utf8')
-  await writeFile(file, stored.replace('"apiVersion":2', '"apiVersion":1'))
+  await writeFile(file, stored.replace('"apiVersion":3', '"apiVersion":1'))
   assert.deepEqual(await storage.list(), {
     packages: [neighbor],
     issues: [{ path: recordName, message: 'Could not read installed package record' }],
@@ -409,4 +409,84 @@ test('corrupt records still consume record, count, and aggregate scan budgets', 
   await assert.rejects(storage.list(), /Installed package budget exceeded/)
   for (const file of files) await writeFile(file, '{')
   await assert.rejects(storage.list(), /Installed package budget exceeded/)
+})
+
+test('published package records migrate once, preserving originals, approvals, provenance, enabled state and definition IDs', async (t) => {
+  const directory = await mkdtemp(path.join(tmpdir(), 'nesso-migrate-packages-'))
+  t.after(() => rm(directory, { recursive: true, force: true }))
+  const originalText = (record: (typeof legacyRecords)[number]) =>
+    `${record.nesso.kind === 'actions' ? '\ufeff' : ''}${JSON.stringify(record)}`
+  for (const record of legacyRecords) {
+    const file = `${createHash('sha256').update(record.name).digest('hex')}.json`
+    await writeFile(path.join(directory, file), originalText(record))
+  }
+  const storage = createPluginStorage(directory)
+  const result = await storage.list()
+  assert.deepEqual(result.issues, [])
+  assert.equal(result.packages.length, legacyRecords.length)
+  for (const record of result.packages) {
+    const legacy = legacyRecords.find(({ name }) => name === record.name)!
+    const original = originalText(legacy)
+    const file = `${createHash('sha256').update(record.name).digest('hex')}.json`
+    const backup = `${file}.${createHash('sha256').update(original).digest('hex')}.v1.bak`
+    assert.equal(await readFile(path.join(directory, backup), 'utf8'), original)
+    assert.equal(record.enabled, legacy.enabled)
+    assert.equal(record.npmIntegrity, legacy.npmIntegrity)
+    assert.equal(record.nesso.apiVersion, 3)
+    assert.equal('fonts' in record, false)
+    assert.notEqual(record.contentId, legacy.contentId)
+    await verifyPluginPackage(record)
+    if (record.nesso.kind !== 'actions') {
+      const definition = parseDefinition(record.nesso.kind, JSON.parse(record.code))
+      assert.equal(definition.id, JSON.parse(legacy.code).id)
+      assert.equal('fonts' in definition, false)
+    } else assert.equal(record.code, legacy.code)
+    assert.equal(JSON.parse(await readFile(path.join(directory, file), 'utf8')).formatVersion, 2)
+  }
+  const files = await readdir(directory)
+  assert.deepEqual(await createPluginStorage(directory).list(), result)
+  assert.deepEqual(await readdir(directory), files)
+  const legacy = legacyRecords[0]
+  const file = `${createHash('sha256').update(legacy.name).digest('hex')}.json`
+  await writeFile(path.join(directory, file), originalText(legacy))
+  assert.deepEqual(await storage.list(), result)
+  assert.deepEqual(await readdir(directory), files)
+})
+
+test('migration rejects tampered and unknown package formats without overwriting or backing up invalid records', async (t) => {
+  const directory = await mkdtemp(path.join(tmpdir(), 'nesso-invalid-migration-'))
+  t.after(() => rm(directory, { recursive: true, force: true }))
+  const legacy = legacyRecords.find(({ nesso }) => nesso.kind === 'theme')!
+  const file = `${createHash('sha256').update(legacy.name).digest('hex')}.json`
+  for (const record of [
+    { ...legacy, code: `${legacy.code}\n` },
+    { ...legacy, fonts: [{ ...legacy.fonts[0], data: btoa('wOF2tampered') }] },
+    { ...legacy, nesso: { ...legacy.nesso, apiVersion: 1 } },
+    { ...legacy, formatVersion: 99 },
+    { ...legacy, enabled: 'true' },
+    { ...legacy, npmIntegrity: 'invalid' },
+  ]) {
+    const text = JSON.stringify(record)
+    await writeFile(path.join(directory, file), text)
+    assert.deepEqual(await createPluginStorage(directory).list(), {
+      packages: [],
+      issues: [{ path: file, message: 'Could not read installed package record' }],
+    })
+    assert.equal(await readFile(path.join(directory, file), 'utf8'), text)
+    assert.deepEqual(await readdir(directory), [file])
+  }
+})
+
+test('migration refuses to overwrite the source when its original cannot be preserved', async (t) => {
+  const directory = await mkdtemp(path.join(tmpdir(), 'nesso-migration-backup-'))
+  t.after(() => rm(directory, { recursive: true, force: true }))
+  const legacy = legacyRecords[0]
+  const original = JSON.stringify(legacy)
+  const file = `${createHash('sha256').update(legacy.name).digest('hex')}.json`
+  const backup = `${file}.${createHash('sha256').update(original).digest('hex')}.v1.bak`
+  await writeFile(path.join(directory, file), original)
+  await writeFile(path.join(directory, backup), 'Existing data')
+  assert.equal((await createPluginStorage(directory).list()).issues.length, 1)
+  assert.equal(await readFile(path.join(directory, file), 'utf8'), original)
+  assert.equal(await readFile(path.join(directory, backup), 'utf8'), 'Existing data')
 })

@@ -46,7 +46,6 @@ export {
   pluginStorageLimits,
 } from './storage.ts'
 export { resolvePluginText, type LocalizedText } from './i18n.ts'
-export { fontFaces } from './theme-fonts.ts'
 export { parseOrThrow, PluginError } from './errors.ts'
 export { parseDefinition, themeColors, type Definition } from './definitions.ts'
 export {
@@ -183,7 +182,7 @@ export function parsePluginI18n(value: unknown): PluginI18n {
 }
 
 const manifestFields = {
-  apiVersion: z.literal(2),
+  apiVersion: z.literal(3),
 }
 const jsEntry = z
   .string()

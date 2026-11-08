@@ -16,7 +16,7 @@ export async function verifySafePlugins({ window, url }: CheckContext) {
     manifest: {
       name: 'test-safe-plugins',
       version: '1.0.0',
-      nesso: { apiVersion: 2, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
+      nesso: { apiVersion: 3, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
       i18n: {
         metadata: {
           name: { en: 'Safe mode probe' },

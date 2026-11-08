@@ -1,13 +1,13 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { packageFonts, preparePluginPackage, verifyPluginPackage } from '../src/package.ts'
+import { preparePluginPackage, verifyPluginPackage } from '../src/package.ts'
 import themeFixture from './theme.json' with { type: 'json' }
 
 const manifest = {
   name: 'nesso-plugin-test',
   version: '1.0.0',
   nesso: {
-    apiVersion: 2,
+    apiVersion: 3,
     kind: 'actions',
     entry: 'index.js',
     writes: ['concept.label'],
@@ -237,7 +237,7 @@ test('action packages reject unsafe paths, extra assets, unsupported authority, 
     await assert.rejects(preparePluginPackage({ manifest, files: entries }))
 })
 
-test('definition packages bind local font bytes and sorted paths to approval without executing definitions', async () => {
+test('definition packages bind only the JSON entry to approval without executing definitions', async () => {
   const font = { path: 'fonts/sans.woff2', bytes: new TextEncoder().encode('wOF2font') }
   const vocab = {
     id: 'test-vocab',
@@ -256,7 +256,7 @@ test('definition packages bind local font bytes and sorted paths to approval wit
     }
     const prepared = await preparePluginPackage({
       manifest: source,
-      files: kind === 'theme' ? [entry, font] : [entry],
+      files: [entry],
     })
     assert.deepEqual(await verifyPluginPackage(prepared), prepared)
     await assert.rejects(
@@ -276,32 +276,13 @@ test('definition packages bind local font bytes and sorted paths to approval wit
         ],
       }),
     )
-    if (kind === 'vocab') {
-      await assert.rejects(preparePluginPackage({ manifest: source, files: [entry, font] }))
-      continue
-    }
-    assert.deepEqual(packageFonts(prepared).get(font.path), font.bytes)
-    assert.equal(
-      (await preparePluginPackage({ manifest: source, files: [font, entry] })).contentId,
-      prepared.contentId,
-    )
+    await assert.rejects(preparePluginPackage({ manifest: source, files: [entry, font] }))
     await assert.rejects(
       verifyPluginPackage({
         ...prepared,
-        fonts: [{ ...prepared.fonts[0], data: btoa('wOF2changed') }],
+        code: `${prepared.code}\n`,
       }),
       { code: 'denied' },
     )
-    await assert.rejects(
-      verifyPluginPackage({ ...prepared, fonts: [...prepared.fonts, ...prepared.fonts] }),
-    )
-    for (const path of ['../font.woff2', 'fonts/a.woff', 'fonts/a.woff2?x', 'fonts//a.woff2'])
-      await assert.rejects(
-        preparePluginPackage({ manifest: source, files: [entry, { ...font, path }] }),
-      )
-    for (const bytes of [new TextEncoder().encode('invalid'), new Uint8Array(4 * 1024 * 1024 + 1)])
-      await assert.rejects(
-        preparePluginPackage({ manifest: source, files: [entry, { ...font, bytes }] }),
-      )
   }
 })

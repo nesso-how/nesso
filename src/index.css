@@ -1,6 +1,13 @@
 @import 'tailwindcss';
 @import '@nesso-how/ui/styles.css';
+@import '@fontsource-variable/geist';
+@import '@fontsource/ibm-plex-mono/400.css';
 @source "../packages/concept-map/src";
+
+:root {
+  --font-sans: 'Geist Variable', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+}
 
 @layer base {
   * {

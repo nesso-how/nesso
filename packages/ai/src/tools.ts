@@ -116,7 +116,7 @@ export const aiMcpTools = {
   },
   propose_plugin: {
     description:
-      'Propose installing a built local plugin package from directory, the absolute path of its root on this computer. Nesso reads only package.json, the nesso.entry file and, for themes, the WOFF2 fonts its definition references. Read the plugin documentation with read_docs first. To update a local plugin, pass its content ID as replacing; npm and bundled plugins cannot be replaced or shadowed. Nesso validates the package and installs it only after the user approves it in Nesso within the 120-second request timeout. Returns installed with the new content ID, cancelled, or failed with validation or load issues to fix before proposing again.',
+      'Propose installing a built local plugin package from directory, the absolute path of its root on this computer. Nesso reads only package.json and the nesso.entry file. Read the plugin documentation with read_docs first. To update a local plugin, pass its content ID as replacing; npm and bundled plugins cannot be replaced or shadowed. Nesso validates the package and installs it only after the user approves it in Nesso within the 120-second request timeout. Returns installed with the new content ID, cancelled, or failed with validation or load issues to fix before proposing again.',
     inputSchema: z.strictObject({
       directory: z.string().min(1).max(4096),
       replacing: z

@@ -203,7 +203,7 @@ async function buildFixture(state: InstallState, name: string, version: string) 
           }
         : {}),
       nesso: {
-        apiVersion: 2,
+        apiVersion: 3,
         kind,
         entry,
         writes: kind === 'actions' ? ['concept.label'] : [],
@@ -359,8 +359,28 @@ async function verifyBundledThemeSwitch(driver: Driver, state: InstallState) {
     (record) => Object.keys(record?.workspace.viewports ?? {}).length > 0,
   )
   const before = structuredClone(state.saved.get('document'))
+  const fonts = await driver.evaluate<string[]>(
+    `['sans','mono'].map(role => getComputedStyle(document.documentElement).getPropertyValue('--font-' + role).trim())`,
+  )
+  assert.match(fonts[0], /Geist Variable/)
+  assert.match(fonts[1], /IBM Plex Mono/)
+  assert.equal(
+    await driver.evaluate<boolean>(
+      `(async () => {
+        for (const family of ['Geist Variable', 'IBM Plex Mono']) {
+          for (const text of ['Nesso', 'Знания', 'kiến thức']) {
+            const faces = await document.fonts.load('400 14px "' + family + '"', text)
+            if (!faces.length || faces.some(face => face.status !== 'loaded')) return false
+          }
+        }
+        return true
+      })()`,
+    ),
+    true,
+  )
   for (const [id, primary] of [
     ['paper-theme', '#934a35'],
+    ['mist-theme', '#2f5d8a'],
     ['kernel-theme', '#1a202b'],
   ]) {
     await driver.activateTheme(`@nesso-how/${id}`)
@@ -375,6 +395,12 @@ async function verifyBundledThemeSwitch(driver: Driver, state: InstallState) {
       primary,
     )
     assert.deepEqual(state.saved.get('document'), before)
+    assert.deepEqual(
+      await driver.evaluate<string[]>(
+        `['sans','mono'].map(role => getComputedStyle(document.documentElement).getPropertyValue('--font-' + role).trim())`,
+      ),
+      fonts,
+    )
     await driver.dismissToasts()
   }
   await driver.click('Plugins', '.settings-sidebar')
@@ -1121,7 +1147,7 @@ async function verifyLocalProposal(driver: Driver) {
     const manifest = {
       name,
       version: '1.0.0',
-      nesso: { apiVersion: 2, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
+      nesso: { apiVersion: 3, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
       i18n: {
         metadata: {
           name: { en: 'Test local' },

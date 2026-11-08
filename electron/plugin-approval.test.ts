@@ -13,7 +13,7 @@ const make = async (
     manifest: {
       name: 'test-plugin',
       version,
-      nesso: { apiVersion: 2, kind: 'actions', entry: 'index.js', ...access },
+      nesso: { apiVersion: 3, kind: 'actions', entry: 'index.js', ...access },
       i18n: {
         metadata: {
           name: { en: 'Test' },
@@ -99,7 +99,7 @@ test('stale, changed-kind, nonmatching, prerelease and non-newer npm targets are
     {
       ...next,
       nesso: {
-        apiVersion: 2,
+        apiVersion: 3,
         kind: 'vocab',
         entry: 'definition.json',
         writes: [],
@@ -122,7 +122,7 @@ test('theme and vocabulary declarations use the same first-install and routine-u
   for (const kind of ['theme', 'vocab'] as const) {
     const previous: InstalledPlugin = {
       ...actions,
-      nesso: { apiVersion: 2, kind, entry: 'definition.json', writes: [], capabilities: [] },
+      nesso: { apiVersion: 3, kind, entry: 'definition.json', writes: [], capabilities: [] },
     }
     const received = { ...previous, version: '1.1.0', contentId: 'new-content' }
     assert.ok(createPluginApproval(received, undefined, true).challenge)
