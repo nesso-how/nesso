@@ -34,6 +34,7 @@ export function createPluginPanel(
   store: HostStore,
   notifications: Notifications,
   bridge?: FileBridge,
+  terminate?: (url: string) => void,
 ) {
   let current: Panel | null = null
   let session: { source: ActionPackage; start: () => void; close: () => void } | undefined
@@ -139,7 +140,8 @@ export function createPluginPanel(
             status: 'loading',
           }
           publish()
-          if (!frame.runtime) return
+          const runtime = frame.runtime
+          if (!runtime) return
           const controller = new AbortController()
           const update = (status: Panel['status']) => {
             if (controller.signal.aborted || current?.id !== id) return
@@ -148,8 +150,14 @@ export function createPluginPanel(
           }
           detach = () => controller.abort()
           void loadActions(store, source, notifications, bridge, target, controller.signal, {
-            frame: frame.runtime,
+            frame: runtime,
             ready: () => update('ready'),
+            unresponsive:
+              terminate &&
+              (() => {
+                terminate(runtime.element.src)
+                for (const item of frames) if (item !== frame) remove(item)
+              }),
           }).catch(() => update('failed'))
         }
         const unsubscribe = store.subscribe(() => {

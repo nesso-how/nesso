@@ -52,6 +52,7 @@ function fixture(
   const notified: string[] = []
   const descriptions: (string | undefined)[] = []
   const dismissed: string[] = []
+  const unresponsive: number[] = []
   const runtime = connectActionChannel(
     channel.port1,
     host.store,
@@ -79,6 +80,7 @@ function fixture(
       },
       discovered: (value) => found.push(value),
       activated: () => {},
+      unresponsive: () => unresponsive.push(failures.length),
       complete: () => {},
       failed: (error) => failures.push(error),
     },
@@ -122,6 +124,7 @@ function fixture(
     notified,
     descriptions,
     dismissed,
+    unresponsive,
     start,
     close,
   }
@@ -244,6 +247,7 @@ test('panel sessions have heartbeats rather than a bounded action lifetime', asy
   assert.equal(instance.failures.length, 0)
   instance.channel.port2.onmessage = null
   t.mock.timers.tick(runtimeLimits.heartbeat * 2)
+  assert.deepEqual(instance.unresponsive, [0])
   assert.equal(instance.failures[0].code, 'timeout')
   assert.equal(instance.runtime.signal.aborted, true)
 })

@@ -16,6 +16,7 @@ import { verifyCorruptRecords } from './corrupt-records.ts'
 import { verifyStorage } from './storage.ts'
 import { verifyPanel } from './panel.ts'
 import { verifyPanelWorkspace } from './panel-workspace.ts'
+import { verifyBusyPanel } from './busy-panel.ts'
 import { verifyNotes } from './notes.ts'
 import { verifyImages } from './images.ts'
 import { verifyIntro } from './intro.ts'
@@ -52,6 +53,7 @@ app
       'corrupt-records',
       'storage',
       'panel-workspace',
+      'busy-panel',
       'images',
       'intro',
       'compact',
@@ -148,6 +150,9 @@ app
           break
         case 'panel-workspace':
           await verifyPanelWorkspace(context)
+          break
+        case 'busy-panel':
+          await verifyBusyPanel(context)
           break
         case 'bundled':
           await verifyBundled(context)

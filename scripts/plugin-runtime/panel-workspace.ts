@@ -1,28 +1,17 @@
 import assert from 'node:assert/strict'
-import { ipcMain } from 'electron'
-import { build } from 'vite'
-import { preparePluginPackage } from '@nesso-how/plugin/package'
 import source from '../../packages/plugin/example/package.json' with { type: 'json' }
 import { connectTabShortcuts } from '../../electron/menu.ts'
-import { openFixtureWorkspace, panelFrame, waitFor, type CheckContext } from './helpers.ts'
+import {
+  chooseTab,
+  listExamplePlugin,
+  openFixtureWorkspace,
+  panelFrame,
+  waitFor,
+  type CheckContext,
+} from './helpers.ts'
 
 export async function verifyPanelWorkspace(context: CheckContext) {
-  const output = await build({
-    configFile: new URL('../../packages/plugin/example/vite.config.ts', import.meta.url).pathname,
-    logLevel: 'silent',
-    build: { write: false },
-  })
-  const bundle = Array.isArray(output) ? output[0] : output
-  assert.ok('output' in bundle)
-  const chunk = bundle.output.find((item) => item.type === 'chunk')
-  assert.ok(chunk?.type === 'chunk')
-  const prepared = await preparePluginPackage({
-    manifest: source,
-    files: [{ path: source.nesso.entry, bytes: new TextEncoder().encode(chunk.code) }],
-  })
-  ipcMain.handle('plugins:list', () => ({
-    value: { safeMode: false, packages: [{ ...prepared, enabled: true }], issues: [] },
-  }))
+  await listExamplePlugin()
   const { evaluate, saved } = await openFixtureWorkspace(context)
   const preloaded = context.window.webContents.mainFrame.framesInSubtree.filter(
     (frame) => frame.url === 'about:srcdoc',
@@ -53,21 +42,7 @@ export async function verifyPanelWorkspace(context: CheckContext) {
     evaluate<{ visible: string[]; hidden: string[] }>(
       `(async()=>{const visible=[...document.querySelectorAll('#canvas [role="tab"]')].map(tab=>tab.textContent.trim().replace(/\\d+$/,''));const more=document.querySelector('#canvas button.canvas-tabs-more');if(!more)return {visible,hidden:[]};more.click();await new Promise(resolve=>setTimeout(resolve,100));const hidden=[...document.querySelectorAll('[role="menuitem"]')].map(item=>item.textContent.trim().replace(/(Ctrl\\+|⌘)\\d$/,'').replace(/\\d+$/,''));document.activeElement.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));await new Promise(resolve=>setTimeout(resolve,100));return {visible,hidden}})()`,
     )
-  const choose = async (name: string) => {
-    const tab = `[...document.querySelectorAll('#canvas [role="tab"]')].find(tab=>tab.textContent.trim().startsWith(${JSON.stringify(name)}))`
-    const item = `[...document.querySelectorAll('[role="menuitem"]')].find(item=>item.textContent.trim().startsWith(${JSON.stringify(name)}))`
-    await waitFor(
-      () =>
-        evaluate<boolean>(
-          `!!${tab} || !!document.querySelector('#canvas button.canvas-tabs-more')`,
-        ),
-      Boolean,
-    )
-    if (await evaluate<boolean>(`!!${tab}`)) return evaluate(`${tab}.click()`)
-    await evaluate(`document.querySelector('#canvas button.canvas-tabs-more').click()`)
-    await waitFor(() => evaluate<boolean>(`!!${item}`), Boolean)
-    await evaluate(`${item}.click()`)
-  }
+  const choose = (name: string) => chooseTab(evaluate, name)
   const open = async () => {
     await choose('Concept Quiz')
     await waitFor(

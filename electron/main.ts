@@ -8,6 +8,7 @@ import {
   screen,
   session,
   shell,
+  webContents,
   type WebContents,
 } from 'electron'
 import electronUpdater from 'electron-updater'
@@ -24,6 +25,7 @@ import { connectDataLocation } from './data-location-ipc.ts'
 import { serveAppAsset } from './asset-protocol.ts'
 import { connectFiles } from './files.ts'
 import { connectPlugins } from './plugins.ts'
+import { connectPluginTermination } from './plugin-termination.ts'
 import { connectStartupCheck } from './startup-check.ts'
 import { createWindowState } from './window-state.ts'
 import { createRecordReplacement } from './record-replacement.ts'
@@ -91,6 +93,7 @@ app
     connectNotesLinks(ipcMain, trusted, (url) => shell.openExternal(url))
     connectFiles(trusted)
     connectPlugins(trusted)
+    connectPluginTermination(ipcMain, trusted, () => webContents.getAllWebContents())
     const location = await createDataLocation(app.getPath('userData'))
     await createRecordReplacement(() => location.directory()).recover()
     const ai = connectAi(trusted, location)

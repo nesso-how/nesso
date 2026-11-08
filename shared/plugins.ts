@@ -69,6 +69,7 @@ export type PluginBridge = {
     issues?: Issues,
   ) => Promise<PluginResult<null>>
   readonly cancel: (id: string) => void
+  readonly terminate: (url: string) => void
   readonly approve: (challenge: string, allow: boolean) => Promise<PluginResult<null>>
   readonly remove: (contentId: string) => Promise<PluginResult<null>>
   readonly setEnabled: (
