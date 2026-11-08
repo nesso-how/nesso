@@ -6,39 +6,6 @@ import { packageLimits, verifyPluginPackage, type PreparedPlugin } from '@nesso-
 import { npmIntegrity, type InstalledPlugin } from '../shared/plugins.ts'
 import { ElectronError } from './errors.ts'
 import { saveChosenFile } from './file-access.ts'
-import { migratePluginRecord, serializePluginRecord } from './plugin-records.ts'
-
-async function preserveOriginal(filename: string, bytes: Buffer) {
-  const original = `${filename}.${createHash('sha256').update(bytes).digest('hex')}.v1.bak`
-  try {
-    const backup = await open(original, 'wx', 0o600)
-    try {
-      await backup.writeFile(bytes)
-      await backup.sync()
-    } finally {
-      await backup.close()
-    }
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error
-    const backup = await open(
-      original,
-      constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK,
-    )
-    try {
-      const stat = await backup.stat()
-      if (
-        !stat.isFile() ||
-        stat.size !== bytes.byteLength ||
-        !(await backup.readFile()).equals(bytes)
-      )
-        throw new ElectronError([
-          { path: 'plugins', message: 'Could not preserve original installed package record' },
-        ])
-    } finally {
-      await backup.close()
-    }
-  }
-}
 
 export function createPluginStorage(directory: string) {
   let queue = Promise.resolve()
@@ -63,10 +30,11 @@ export function createPluginStorage(directory: string) {
     const records = entries.filter(({ name }) => name.endsWith('.json'))
     if (records.length > packageLimits.installed) fail('Installed package budget exceeded')
     const installed: InstalledPlugin[] = []
-    const issues: { path: string; message: string }[] = []
+    const issues: { path: string; message: string; name?: string }[] = []
     const sizes = new Map<string, number>()
     let total = 0
     for (const entry of records) {
+      let name: string | undefined
       try {
         if (!entry.isFile() || !/^[a-f0-9]{64}\.json$/.test(entry.name))
           fail('Invalid installed package record')
@@ -75,7 +43,6 @@ export function createPluginStorage(directory: string) {
           constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK,
         )
         let text: string
-        let bytes: Buffer
         let size = 0
         try {
           const chunks: Uint8Array[] = []
@@ -90,41 +57,33 @@ export function createPluginStorage(directory: string) {
               fail('Installed package budget exceeded')
             chunks.push(chunk)
           }
-          bytes = Buffer.concat(chunks, size)
-          text = new TextDecoder('utf-8', { fatal: true }).decode(bytes)
+          text = new TextDecoder('utf-8', { fatal: true }).decode(Buffer.concat(chunks, size))
         } finally {
           await file.close()
         }
         const record = JSON.parse(text)
-        const prepared = await migratePluginRecord(record)
+        if (
+          typeof record?.name === 'string' &&
+          record.name.length <= 214 &&
+          path.basename(filename(record.name)) === entry.name
+        )
+          name = record.name
+        const prepared = await verifyPluginPackage(record)
         if (
           typeof record.enabled !== 'boolean' ||
           entry.name !== path.basename(filename(prepared.name)) ||
           installed.some(({ name }) => name === prepared.name)
         )
           fail('Invalid installed package record')
-        if (record.formatVersion === undefined || record.formatVersion === 1) {
-          await preserveOriginal(path.join(directory, entry.name), bytes)
-          const upgraded = serializePluginRecord(prepared)
-          const upgradedSize = Buffer.byteLength(upgraded)
-          if (
-            upgradedSize > packageLimits.record ||
-            total - size + upgradedSize > packageLimits.total
-          )
-            fail('Installed package budget exceeded')
-          await saveChosenFile(
-            path.join(directory, entry.name),
-            { name: 'package.json', mediaType: 'application/json', text: upgraded },
-            () => true,
-          )
-          total += upgradedSize - size
-          size = upgradedSize
-        }
-        installed.push(prepared)
+        installed.push({ ...prepared, ...origin(record.npmIntegrity), enabled: record.enabled })
         sizes.set(prepared.name, size)
       } catch (error) {
         if (strict || total > packageLimits.total) throw error
-        issues.push({ path: entry.name, message: 'Could not read installed package record' })
+        issues.push({
+          path: entry.name,
+          message: 'Could not read installed package record',
+          ...(name ? { name } : {}),
+        })
       }
     }
     return { installed, total, sizes, issues }
@@ -178,7 +137,7 @@ export function createPluginStorage(directory: string) {
       ...origin(prepared.npmIntegrity),
       enabled: previous?.enabled ?? true,
     }
-    const text = serializePluginRecord(record)
+    const text = JSON.stringify(record)
     const size = new TextEncoder().encode(text).byteLength
     const previousSize = sizes.get(prepared.name) ?? 0
     if (
@@ -207,13 +166,18 @@ export function createPluginStorage(directory: string) {
     return record
   }
   return {
-    list: () =>
-      change(async () => {
-        const { installed, issues } = await scan(false)
-        return { packages: installed, issues }
-      }),
-    check: (prepared: PreparedPlugin & Pick<InstalledPlugin, 'npmIntegrity'>, replacing?: string) =>
-      change(async () => (await check(prepared, replacing)).record),
+    list: async () => {
+      await queue
+      const { installed, issues } = await scan(false)
+      return { packages: installed, issues }
+    },
+    check: async (
+      prepared: PreparedPlugin & Pick<InstalledPlugin, 'npmIntegrity'>,
+      replacing?: string,
+    ) => {
+      await queue
+      return (await check(prepared, replacing)).record
+    },
     install: (
       input: PreparedPlugin & Pick<InstalledPlugin, 'npmIntegrity'>,
       current: () => boolean,
@@ -231,7 +195,7 @@ export function createPluginStorage(directory: string) {
       change(async () => {
         const previous = await find(contentId)
         const record = { ...previous.record, enabled }
-        const text = serializePluginRecord(record)
+        const text = JSON.stringify(record)
         const size = new TextEncoder().encode(text).byteLength
         if (size > packageLimits.record || previous.remaining + size > packageLimits.total)
           fail('Installed package budget exceeded')

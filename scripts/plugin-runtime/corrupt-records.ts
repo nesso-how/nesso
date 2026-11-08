@@ -58,7 +58,8 @@ export async function verifyCorruptRecords({ window, url }: CheckContext) {
   const { saved, evaluate } = await openFixtureWorkspace({ window, url })
   const document = structuredClone(saved.get('document'))
   const corrupt = `${createHash('sha256').update('test-unreadable').digest('hex')}.json`
-  await writeFile(path.join(directory, corrupt), '{')
+  const outdated = JSON.stringify({ name: 'test-unreadable', nesso: { apiVersion: 2 } })
+  await writeFile(path.join(directory, corrupt), outdated)
   const reloaded = once(window.webContents, 'did-finish-load')
   window.reload()
   await reloaded
@@ -71,6 +72,7 @@ export async function verifyCorruptRecords({ window, url }: CheckContext) {
     (text) =>
       text.includes('Some external plugins could not be loaded') &&
       text.includes('outdated package') &&
+      text.includes('test-unreadable') &&
       !text.includes(corrupt),
   )
   await evaluate(`document.querySelector('[data-settings-trigger]').click()`)
@@ -121,7 +123,7 @@ export async function verifyCorruptRecords({ window, url }: CheckContext) {
     Boolean,
   )
   assert.deepEqual(saved.get('document'), document)
-  assert.equal(await readFile(path.join(directory, corrupt), 'utf8'), '{')
+  assert.equal(await readFile(path.join(directory, corrupt), 'utf8'), outdated)
   for (const [name, bytes] of records)
     assert.deepEqual(await readFile(path.join(directory, name)), bytes)
   console.log(

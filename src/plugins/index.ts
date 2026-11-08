@@ -326,12 +326,15 @@ export async function initializeExternalPlugins(signal: AbortSignal) {
     }
     if (signal.aborted) return () => {}
     publish([...registry.getSnapshot(), ...entries], staged, true)
-    const failed = entries
-      .filter((entry) => entry.error)
-      .map(
-        (entry) =>
-          pluginMetadata(entry, nessoStore.getState().preferences.locale ?? defaultLocale).name,
-      )
+    const failed = [
+      ...entries
+        .filter((entry) => entry.error)
+        .map(
+          (entry) =>
+            pluginMetadata(entry, nessoStore.getState().preferences.locale ?? defaultLocale).name,
+        ),
+      ...stored.issues.flatMap(({ name }) => (name ? [name] : [])),
+    ]
     if (failed.length || stored.issues.length)
       notifications.api.notify({
         tone: 'warning',

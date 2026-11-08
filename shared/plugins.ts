@@ -38,7 +38,11 @@ export type PluginBridge = {
     PluginResult<{
       readonly safeMode: boolean
       readonly packages: readonly InstalledPlugin[]
-      readonly issues: readonly { readonly path: string; readonly message: string }[]
+      readonly issues: readonly {
+        readonly path: string
+        readonly message: string
+        readonly name?: string
+      }[]
     }>
   >
   readonly search: (

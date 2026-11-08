@@ -16,9 +16,6 @@ import path from 'node:path'
 import { packageLimits, preparePluginPackage } from '@nesso-how/plugin/package'
 import { createPluginStorage } from './plugin-storage.ts'
 import themeFixture from '../packages/plugin/test/theme.json' with { type: 'json' }
-import legacyRecords from './fixtures/plugin-records-v1.json' with { type: 'json' }
-import { verifyPluginPackage } from '@nesso-how/plugin/package'
-import { parseDefinition } from '@nesso-how/plugin/runtime'
 
 test('installed actions restore verified bytes offline, reject conflicts and cancellation, and preserve valid records on failure or removal', async (t) => {
   const directory = await mkdtemp(path.join(tmpdir(), 'nesso-packages-'))
@@ -83,7 +80,9 @@ test('installed actions restore verified bytes offline, reject conflicts and can
   await writeFile(file, previous.replace('Never execute in main', 'Tampered entry bytes'))
   assert.deepEqual(await storage.list(), {
     packages: [],
-    issues: [{ path: recordName, message: 'Could not read installed package record' }],
+    issues: [
+      { path: recordName, message: 'Could not read installed package record', name: manifest.name },
+    ],
   })
   await assert.rejects(storage.install(other, () => true))
   await writeFile(file, previous)
@@ -130,7 +129,9 @@ test('manual updates atomically replace one exact package, preserve disabled sta
   await writeFile(file, bytes.replace('"enabled":false', '"enabled":"false"'))
   assert.deepEqual(await storage.list(), {
     packages: [],
-    issues: [{ path: recordName, message: 'Could not read installed package record' }],
+    issues: [
+      { path: recordName, message: 'Could not read installed package record', name: manifest.name },
+    ],
   })
   await writeFile(file, bytes)
   await assert.rejects(storage.install(next, () => true))
@@ -296,14 +297,14 @@ test('unreadable records are isolated without losing valid packages or permittin
         .map(async (name) => [name, await readFile(path.join(directory, name))] as const),
     ),
   )
-  for (const bytes of [
-    Buffer.from('{'),
-    Buffer.from([0xff]),
-    Buffer.from(JSON.stringify({ ...bad, enabled: 'true' })),
-    Buffer.from(JSON.stringify({ ...bad, npmIntegrity: 'invalid' })),
-    Buffer.from(JSON.stringify({ ...bad, code: 'tampered' })),
-    Buffer.from(JSON.stringify(valid)),
-  ]) {
+  for (const [bytes, name] of [
+    [Buffer.from('{')],
+    [Buffer.from([0xff])],
+    [Buffer.from(JSON.stringify({ ...bad, enabled: 'true' })), bad.name],
+    [Buffer.from(JSON.stringify({ ...bad, npmIntegrity: 'invalid' })), bad.name],
+    [Buffer.from(JSON.stringify({ ...bad, code: 'tampered' })), bad.name],
+    [Buffer.from(JSON.stringify(valid))],
+  ] as const) {
     await writeFile(file, bytes)
     const listing = await createPluginStorage(directory).list()
     assert.deepEqual(
@@ -311,7 +312,11 @@ test('unreadable records are isolated without losing valid packages or permittin
       [{ ...disabled, enabled: false }, valid],
     )
     assert.deepEqual(listing.issues, [
-      { path: recordName, message: 'Could not read installed package record' },
+      {
+        path: recordName,
+        message: 'Could not read installed package record',
+        ...(name ? { name } : {}),
+      },
     ])
     await assert.rejects(storage.check(fresh))
     await assert.rejects(storage.install(fresh, () => true))
@@ -356,7 +361,9 @@ test('a verified package replaces its own unreadable record and preserves neighb
   await writeFile(file, stored.replace('"apiVersion":3', '"apiVersion":1'))
   assert.deepEqual(await storage.list(), {
     packages: [neighbor],
-    issues: [{ path: recordName, message: 'Could not read installed package record' }],
+    issues: [
+      { path: recordName, message: 'Could not read installed package record', name: stale.name },
+    ],
   })
   await assert.rejects(storage.install(await prepare('nesso-fresh'), () => true))
   const healed = await storage.install(await prepare('nesso-stale', '1.1.0'), () => true)
@@ -409,57 +416,4 @@ test('corrupt records still consume record, count, and aggregate scan budgets', 
   await assert.rejects(storage.list(), /Installed package budget exceeded/)
   for (const file of files) await writeFile(file, '{')
   await assert.rejects(storage.list(), /Installed package budget exceeded/)
-})
-
-test('published package records migrate once, preserving originals, provenance, enabled state and definition IDs', async (t) => {
-  const directory = await mkdtemp(path.join(tmpdir(), 'nesso-migrate-packages-'))
-  t.after(() => rm(directory, { recursive: true, force: true }))
-  for (const record of legacyRecords) {
-    const file = `${createHash('sha256').update(record.name).digest('hex')}.json`
-    await writeFile(path.join(directory, file), JSON.stringify(record))
-  }
-  const storage = createPluginStorage(directory)
-  const result = await storage.list()
-  assert.deepEqual(result.issues, [])
-  assert.equal(result.packages.length, legacyRecords.length)
-  for (const record of result.packages) {
-    const legacy = legacyRecords.find(({ name }) => name === record.name)!
-    const original = JSON.stringify(legacy)
-    const file = `${createHash('sha256').update(record.name).digest('hex')}.json`
-    const backup = `${file}.${createHash('sha256').update(original).digest('hex')}.v1.bak`
-    assert.equal(await readFile(path.join(directory, backup), 'utf8'), original)
-    assert.equal(record.enabled, legacy.enabled)
-    assert.equal(record.npmIntegrity, legacy.npmIntegrity)
-    assert.equal(record.nesso.apiVersion, 3)
-    assert.equal('fonts' in record, false)
-    await verifyPluginPackage(record)
-    if (record.nesso.kind !== 'actions') {
-      const definition = parseDefinition(record.nesso.kind, JSON.parse(record.code))
-      assert.equal(definition.id, JSON.parse(legacy.code).id)
-    } else assert.equal(record.code, legacy.code)
-    assert.equal(JSON.parse(await readFile(path.join(directory, file), 'utf8')).formatVersion, 2)
-  }
-  const files = await readdir(directory)
-  assert.deepEqual(await createPluginStorage(directory).list(), result)
-  assert.deepEqual(await readdir(directory), files)
-})
-
-test('migration rejects tampered and unknown package formats without overwriting or backing up invalid records', async (t) => {
-  const directory = await mkdtemp(path.join(tmpdir(), 'nesso-invalid-migration-'))
-  t.after(() => rm(directory, { recursive: true, force: true }))
-  const legacy = legacyRecords.find(({ nesso }) => nesso.kind === 'theme')!
-  const file = `${createHash('sha256').update(legacy.name).digest('hex')}.json`
-  for (const record of [
-    { ...legacy, fonts: [{ ...legacy.fonts[0], data: btoa('wOF2tampered') }] },
-    { ...legacy, formatVersion: 99 },
-  ]) {
-    const text = JSON.stringify(record)
-    await writeFile(path.join(directory, file), text)
-    assert.deepEqual(await createPluginStorage(directory).list(), {
-      packages: [],
-      issues: [{ path: file, message: 'Could not read installed package record' }],
-    })
-    assert.equal(await readFile(path.join(directory, file), 'utf8'), text)
-    assert.deepEqual(await readdir(directory), [file])
-  }
 })
