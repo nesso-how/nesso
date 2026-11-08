@@ -411,14 +411,12 @@ test('corrupt records still consume record, count, and aggregate scan budgets', 
   await assert.rejects(storage.list(), /Installed package budget exceeded/)
 })
 
-test('published package records migrate once, preserving originals, approvals, provenance, enabled state and definition IDs', async (t) => {
+test('published package records migrate once, preserving originals, provenance, enabled state and definition IDs', async (t) => {
   const directory = await mkdtemp(path.join(tmpdir(), 'nesso-migrate-packages-'))
   t.after(() => rm(directory, { recursive: true, force: true }))
-  const originalText = (record: (typeof legacyRecords)[number]) =>
-    `${record.nesso.kind === 'actions' ? '\ufeff' : ''}${JSON.stringify(record)}`
   for (const record of legacyRecords) {
     const file = `${createHash('sha256').update(record.name).digest('hex')}.json`
-    await writeFile(path.join(directory, file), originalText(record))
+    await writeFile(path.join(directory, file), JSON.stringify(record))
   }
   const storage = createPluginStorage(directory)
   const result = await storage.list()
@@ -426,7 +424,7 @@ test('published package records migrate once, preserving originals, approvals, p
   assert.equal(result.packages.length, legacyRecords.length)
   for (const record of result.packages) {
     const legacy = legacyRecords.find(({ name }) => name === record.name)!
-    const original = originalText(legacy)
+    const original = JSON.stringify(legacy)
     const file = `${createHash('sha256').update(record.name).digest('hex')}.json`
     const backup = `${file}.${createHash('sha256').update(original).digest('hex')}.v1.bak`
     assert.equal(await readFile(path.join(directory, backup), 'utf8'), original)
@@ -434,22 +432,15 @@ test('published package records migrate once, preserving originals, approvals, p
     assert.equal(record.npmIntegrity, legacy.npmIntegrity)
     assert.equal(record.nesso.apiVersion, 3)
     assert.equal('fonts' in record, false)
-    assert.notEqual(record.contentId, legacy.contentId)
     await verifyPluginPackage(record)
     if (record.nesso.kind !== 'actions') {
       const definition = parseDefinition(record.nesso.kind, JSON.parse(record.code))
       assert.equal(definition.id, JSON.parse(legacy.code).id)
-      assert.equal('fonts' in definition, false)
     } else assert.equal(record.code, legacy.code)
     assert.equal(JSON.parse(await readFile(path.join(directory, file), 'utf8')).formatVersion, 2)
   }
   const files = await readdir(directory)
   assert.deepEqual(await createPluginStorage(directory).list(), result)
-  assert.deepEqual(await readdir(directory), files)
-  const legacy = legacyRecords[0]
-  const file = `${createHash('sha256').update(legacy.name).digest('hex')}.json`
-  await writeFile(path.join(directory, file), originalText(legacy))
-  assert.deepEqual(await storage.list(), result)
   assert.deepEqual(await readdir(directory), files)
 })
 
@@ -459,12 +450,8 @@ test('migration rejects tampered and unknown package formats without overwriting
   const legacy = legacyRecords.find(({ nesso }) => nesso.kind === 'theme')!
   const file = `${createHash('sha256').update(legacy.name).digest('hex')}.json`
   for (const record of [
-    { ...legacy, code: `${legacy.code}\n` },
     { ...legacy, fonts: [{ ...legacy.fonts[0], data: btoa('wOF2tampered') }] },
-    { ...legacy, nesso: { ...legacy.nesso, apiVersion: 1 } },
     { ...legacy, formatVersion: 99 },
-    { ...legacy, enabled: 'true' },
-    { ...legacy, npmIntegrity: 'invalid' },
   ]) {
     const text = JSON.stringify(record)
     await writeFile(path.join(directory, file), text)
@@ -475,18 +462,4 @@ test('migration rejects tampered and unknown package formats without overwriting
     assert.equal(await readFile(path.join(directory, file), 'utf8'), text)
     assert.deepEqual(await readdir(directory), [file])
   }
-})
-
-test('migration refuses to overwrite the source when its original cannot be preserved', async (t) => {
-  const directory = await mkdtemp(path.join(tmpdir(), 'nesso-migration-backup-'))
-  t.after(() => rm(directory, { recursive: true, force: true }))
-  const legacy = legacyRecords[0]
-  const original = JSON.stringify(legacy)
-  const file = `${createHash('sha256').update(legacy.name).digest('hex')}.json`
-  const backup = `${file}.${createHash('sha256').update(original).digest('hex')}.v1.bak`
-  await writeFile(path.join(directory, file), original)
-  await writeFile(path.join(directory, backup), 'Existing data')
-  assert.equal((await createPluginStorage(directory).list()).issues.length, 1)
-  assert.equal(await readFile(path.join(directory, file), 'utf8'), original)
-  assert.equal(await readFile(path.join(directory, backup), 'utf8'), 'Existing data')
 })

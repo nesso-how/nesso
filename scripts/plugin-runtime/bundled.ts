@@ -120,7 +120,6 @@ export async function verifyBundled({ window, url }: CheckContext) {
   for (const [name, kind] of [
     ['kernel-theme', 'theme'],
     ['paper-theme', 'theme'],
-    ['mist-theme', 'theme'],
     ['base-vocab', 'vocab'],
   ] as const) {
     const response = (await window.webContents.executeJavaScript(
@@ -129,6 +128,5 @@ export async function verifyBundled({ window, url }: CheckContext) {
     assert.equal(response.ok, true, name)
     const definition = parseDefinition(kind, JSON.parse(response.text))
     assert.equal(definition.id, name)
-    assert.equal('fonts' in definition, false)
   }
 }

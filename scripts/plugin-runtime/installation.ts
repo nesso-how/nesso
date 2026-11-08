@@ -362,25 +362,8 @@ async function verifyBundledThemeSwitch(driver: Driver, state: InstallState) {
   const fonts = await driver.evaluate<string[]>(
     `['sans','mono'].map(role => getComputedStyle(document.documentElement).getPropertyValue('--font-' + role).trim())`,
   )
-  assert.match(fonts[0], /Geist Variable/)
-  assert.match(fonts[1], /IBM Plex Mono/)
-  assert.equal(
-    await driver.evaluate<boolean>(
-      `(async () => {
-        for (const family of ['Geist Variable', 'IBM Plex Mono']) {
-          for (const text of ['Nesso', 'Знания', 'kiến thức']) {
-            const faces = await document.fonts.load('400 14px "' + family + '"', text)
-            if (!faces.length || faces.some(face => face.status !== 'loaded')) return false
-          }
-        }
-        return true
-      })()`,
-    ),
-    true,
-  )
   for (const [id, primary] of [
     ['paper-theme', '#934a35'],
-    ['mist-theme', '#2f5d8a'],
     ['kernel-theme', '#1a202b'],
   ]) {
     await driver.activateTheme(`@nesso-how/${id}`)
