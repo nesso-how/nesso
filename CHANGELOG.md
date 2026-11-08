@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.0-beta.8 — 2026-11-08
+
+### Fixes
+
+- **site:** Drop screenshot frame and serve webp (#274)
+
 ## 1.0.0-beta.7 — 2026-11-06
 
 ### Documentation
