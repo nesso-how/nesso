@@ -13,12 +13,14 @@ import { ElectronError } from './errors.ts'
 import type { TrustedRequest } from './ipc.ts'
 import { onDocumentNavigation } from './navigation.ts'
 import type { DataLocation } from './data-location.ts'
+import type { AutomaticBackups } from './automatic-backups.ts'
 
 export function connectDesktopPersistence(
   trusted: TrustedRequest,
   location: DataLocation,
   locked: () => boolean,
   generation: () => number,
+  automatic: AutomaticBackups,
 ) {
   const storage = createFileStorage(() => {
     if (locked()) throw new ElectronError([{ path: 'dataLocation', message: 'storageBusy' }])
@@ -27,7 +29,7 @@ export function connectDesktopPersistence(
   const handle = async (
     event: IpcMainInvokeEvent,
     section: unknown,
-    operation: 'read' | 'write' | 'backup',
+    operation: 'read' | 'write' | 'backup' | 'snapshot',
     value?: unknown,
     session?: unknown,
   ) => {
@@ -35,12 +37,18 @@ export function connectDesktopPersistence(
       if (
         !trusted(event) ||
         session !== generation() ||
-        (operation !== 'backup' && !persistenceSections.includes(section as PersistenceSection))
+        ((operation === 'read' || operation === 'write') &&
+          !persistenceSections.includes(section as PersistenceSection))
       ) {
         throw new ElectronError([{ path: 'storage', message: 'Invalid storage request' }])
       }
       if (operation === 'backup') {
         await storage.backup()
+        return { value: null }
+      }
+      if (operation === 'snapshot') {
+        if (locked()) throw new ElectronError([{ path: 'dataLocation', message: 'storageBusy' }])
+        await automatic.capture()
         return { value: null }
       }
       if (operation === 'write') {
@@ -66,6 +74,9 @@ export function connectDesktopPersistence(
   )
   ipcMain.handle('storage:backup', (event, session: unknown) =>
     handle(event, undefined, 'backup', undefined, session),
+  )
+  ipcMain.handle('storage:snapshot', (event, session: unknown) =>
+    handle(event, undefined, 'snapshot', undefined, session),
   )
   let quitting = false
   app.on('before-quit', (event) => {

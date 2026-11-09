@@ -104,7 +104,6 @@ export function SettingsDialog({
       </PanelHeader>
       <div className="settings-body">
         <nav ref={navigation} className="settings-sidebar" aria-label={t('settings')}>
-          <p className="settings-nav-heading">Nesso</p>
           <Button
             variant="ghost"
             className="settings-nav w-full justify-start"

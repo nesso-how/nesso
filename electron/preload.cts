@@ -57,6 +57,7 @@ const persistence: PersistenceBridge = {
   write: async (section, value) =>
     ipcRenderer.invoke('storage:write', section, value, await session()),
   backup: async () => ipcRenderer.invoke('storage:backup', await session()),
+  snapshot: async () => ipcRenderer.invoke('storage:snapshot', await session()),
   beforeClose: (save, confirm) => {
     const stop = beforeSave(
       'storage:prepare',
@@ -97,6 +98,10 @@ const dataLocation: DataLocationBridge = {
 }
 contextBridge.exposeInMainWorld('nessoDataLocation', dataLocation)
 const backups: BackupBridge = {
+  automaticState: () => ipcRenderer.invoke('backup:automatic-state'),
+  chooseDirectory: () => ipcRenderer.invoke('backup:directory'),
+  useDefaultDirectory: () => ipcRenderer.invoke('backup:default-directory'),
+  openDirectory: () => ipcRenderer.invoke('backup:open-directory'),
   create: () => ipcRenderer.invoke('backup:create'),
   choose: () => ipcRenderer.invoke('backup:choose'),
   restore: (id) => ipcRenderer.invoke('backup:restore', id),

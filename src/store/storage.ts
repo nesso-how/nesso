@@ -107,5 +107,9 @@ export function createDesktopStorage(bridge: PersistenceBridge): PersistenceStor
       const result = await bridge.backup()
       if ('issues' in result) throw new NessoError(result.issues)
     },
+    snapshot: async () => {
+      const result = await bridge.snapshot()
+      if ('issues' in result) throw new NessoError(result.issues)
+    },
   }
 }

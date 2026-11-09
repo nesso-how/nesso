@@ -82,6 +82,7 @@
   "dataTitle": "一个图谱，保存在你的设备上，采用开放格式",
   "dataDescription": "图谱以 JSON-LD 开放格式保存在本地，你可以随时导出并带走。",
   "editingDescription": "Nesso 会验证对图谱的每次修改，包括来自 AI 或插件的修改。每批修改要么全部应用，要么完全不应用。所有修改共用同一份撤销和重做记录。",
+  "backupDescription": "桌面版 Nesso 会自动保留最近 10 份数据副本，出问题时可以恢复你的工作。",
   "jsonExampleLabel": "JSON-LD 格式的 Nesso 图谱示例",
   "openSource": "开源",
   "openSourceTitle": "项目托管在 GitHub",

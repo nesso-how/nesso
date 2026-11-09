@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Button, Dialog, DialogActions, DialogPopup, IconButton, Input } from '@nesso-how/ui'
-import { Folder, RotateCcw } from 'lucide-react'
+import { Button, Dialog, DialogActions, DialogPopup, DirectoryField } from '@nesso-how/ui'
 import { useTranslation } from '@/i18n'
 import { notifications } from '@/notifications'
 import type { DataLocationBridge, DataLocationState } from '../../../shared/data-location'
@@ -104,60 +103,35 @@ export function LocalDataSettings({ bridge }: { bridge: DataLocationBridge }) {
         {t('localData')}
       </h3>
       <p className="mt-1 text-xs leading-[18px] text-muted-foreground">{t('storageDescription')}</p>
-      <label htmlFor="data-directory" className="mt-4 block text-xs">
-        {t('storageDirectory')}
-      </label>
-      <div className="mt-2 flex items-center gap-2">
-        <div className="relative min-w-0 flex-1">
-          <Input
-            id="data-directory"
-            className="pr-10"
-            readOnly
-            value={state?.directory ?? ''}
-            title={state?.directory}
-          />
-          <IconButton
-            className="absolute top-1/2 right-1 -translate-y-1/2 text-muted-foreground"
-            aria-label={t('storageOpen')}
-            title={t('storageOpen')}
-            disabled={disabled || !state}
-            onClick={() => {
-              void bridge
-                .open()
-                .then((result) => {
-                  if ('issues' in result) problem(result.issues)
-                })
-                .catch(() => fail(t('storageOpenFailure')))
-            }}
-          >
-            <Folder aria-hidden="true" />
-          </IconButton>
-        </div>
-        <Button
-          variant="outline"
-          disabled={disabled || !state || state.cleanupPending}
-          onClick={() => {
-            void choose(false)
-          }}
-        >
-          {t('storageChange')}
-        </Button>
-      </div>
-      {state && state.directory !== state.defaultDirectory && (
-        <div className="mt-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            disabled={disabled || state.cleanupPending}
-            onClick={() => {
-              void choose(true)
-            }}
-          >
-            <RotateCcw />
-            {t('storageRestore')}
-          </Button>
-        </div>
-      )}
+      <DirectoryField
+        label={t('storageDirectory')}
+        value={state?.directory}
+        labels={{
+          open: t('storageOpen'),
+          change: t('storageChange'),
+          restore: t('storageRestore'),
+        }}
+        disabled={!!disabled || !state}
+        changeDisabled={state?.cleanupPending}
+        onOpen={() => {
+          void bridge
+            .open()
+            .then((result) => {
+              if ('issues' in result) problem(result.issues)
+            })
+            .catch(() => fail(t('storageOpenFailure')))
+        }}
+        onChange={() => {
+          void choose(false)
+        }}
+        onRestore={
+          state && state.directory !== state.defaultDirectory
+            ? () => {
+                void choose(true)
+              }
+            : undefined
+        }
+      />
       {state?.cleanupPending && (
         <div className="mt-3 text-xs leading-[18px] text-muted-foreground">
           <p>{t('storageCleanup')}</p>

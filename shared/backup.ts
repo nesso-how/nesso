@@ -14,9 +14,20 @@ export const backupSchema = z.strictObject({
 export type Backup = z.infer<typeof backupSchema>
 
 export type BackupCandidate = { id: string; createdAt: string }
+export type AutomaticBackupState = {
+  directory: string
+  defaultDirectory: string
+  lastBackup?: string
+  failed: boolean
+  configurationFailed: boolean
+}
 type Result<T> = { value: T } | { issues: { path: string; message: string }[] }
 
 export type BackupBridge = {
+  automaticState: () => Promise<Result<AutomaticBackupState>>
+  chooseDirectory: () => Promise<Result<AutomaticBackupState | null>>
+  useDefaultDirectory: () => Promise<Result<AutomaticBackupState>>
+  openDirectory: () => Promise<Result<null>>
   create: () => Promise<Result<boolean>>
   choose: () => Promise<Result<BackupCandidate | null>>
   restore: (id: string) => Promise<Result<null>>
