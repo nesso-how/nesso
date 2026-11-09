@@ -93,6 +93,19 @@ test('largest candidate wins, then a kept candidate, independently of relation o
   )
 })
 
+test('members may anchor other groups, but each relation joins one group', () => {
+  const graph = fixture()
+  graph.concepts.push(concept('e', 500, -400), concept('f', 620, -400))
+  graph.relations.push(relation('b', 'e'), relation('b', 'f'))
+  assert.deepEqual(
+    groupRelations(graph).map(({ anchor }) => anchor),
+    ['urn:a', 'urn:b'],
+  )
+  graph.concepts.push(concept('z', 120, -200))
+  graph.relations = [relation('a', 'b'), relation('a', 'c'), relation('z', 'b')]
+  assert.equal(groupRelations(graph).length, 1)
+})
+
 test('identical type labels do not combine predicates, and sizes affect closeness', () => {
   const graph = fixture()
   graph.relations = [relation('a', 'b'), relation('a', 'c', 'urn:q')]
