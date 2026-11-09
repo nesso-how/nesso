@@ -50,9 +50,4 @@ jobs:
       - name: Allow Chromium sandbox
         run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
       - name: Check plugin runtime
-        run: |
-          for mode in contents show; do
-            echo "mode: $mode"
-            NESSO_FOCUS=$mode xvfb-run -a node scripts/test-plugin-runtime.ts notes desktop || true
-            NESSO_FOCUS=$mode xvfb-run -a node scripts/test-plugin-runtime.ts intro desktop || true
-          done
+        run: xvfb-run -a node scripts/test-plugin-runtime.ts

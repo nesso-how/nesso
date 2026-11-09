@@ -131,11 +131,7 @@ app
       )
         console.error(event.message.slice(0, 2048))
     })
-    if (process.env.NESSO_FOCUS === 'show') {
-      window.showInactive()
-      window.focus()
-    }
-    if (process.env.NESSO_FOCUS) window.webContents.focus()
+    if (process.platform === 'linux') window.show()
     const context: CheckContext = { window, url, name, attempted }
     try {
       if (scenario === 'bundled') {
