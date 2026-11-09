@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.0.0-beta.9 — 2026-11-09
+
+### Features
+
+- **backup:** Add automatic backups with custom folders (#279)
+
+### Fixes
+
+- **plugins:** List skipped plugins clearly in the startup warning (#276)
+- **plugins:** Recover unresponsive panels (#277)
+
 ## 1.0.0-beta.8 — 2026-11-08
 
 ### Fixes
