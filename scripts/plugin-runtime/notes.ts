@@ -76,9 +76,27 @@ export async function verifyNotes({ window, url }: CheckContext) {
     },
   )
   const text = '**Project ideas**\n- First idea'
-  await frame.executeJavaScript(
-    `document.querySelector('.cm-content').focus();document.execCommand('insertText',false,${JSON.stringify(text)})`,
-  )
+  const type = async (text: string) => {
+    if (process.platform === 'linux') {
+      window.focus()
+      window.webContents.focus()
+      await waitFor(
+        () =>
+          frame.executeJavaScript(
+            `document.querySelector('.cm-content').focus();document.hasFocus() && document.activeElement===document.querySelector('.cm-content')`,
+          ),
+        Boolean,
+      )
+    }
+    assert.equal(
+      await frame.executeJavaScript(
+        `document.querySelector('.cm-content').focus();document.execCommand('insertText',false,${JSON.stringify(text)})`,
+        true,
+      ),
+      true,
+    )
+  }
+  await type(text)
   await waitFor(savedText, (value) => value === text)
   await frame.executeJavaScript(
     `document.querySelector('.cm-content').dispatchEvent(new KeyboardEvent('keydown',{key:'z',metaKey:/Mac/.test(navigator.platform),ctrlKey:!/Mac/.test(navigator.platform),bubbles:true,cancelable:true}))`,
@@ -118,9 +136,7 @@ export async function verifyNotes({ window, url }: CheckContext) {
     true,
   )
   await evaluate(`window.__notesFailure='save'`)
-  await frame.executeJavaScript(
-    `document.querySelector('.cm-content').focus();document.execCommand('insertText',false,'Unsaved draft')`,
-  )
+  await type('Unsaved draft')
   await waitFor(
     () => frame.executeJavaScript(`!!document.querySelector('[data-slot="banner"]')`),
     Boolean,
