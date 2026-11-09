@@ -1,6 +1,6 @@
 {
   "name": "@nesso-how/review",
-  "version": "1.0.0-beta.10",
+  "version": "1.0.0-beta.11",
   "description": "Spaced repetition for concepts, with private progress shared across views",
   "license": "MIT",
   "type": "module",

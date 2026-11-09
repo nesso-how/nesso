@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.0-beta.11 — 2026-11-09
+
+### Fixes
+
+- **ai:** Link batch-added concepts to the turn's initial selection (#281)
+- **concept-map:** Downscale oversized png exports (#282)
+
 ## 1.0.0-beta.10 — 2026-11-09
 
 ### Fixes
