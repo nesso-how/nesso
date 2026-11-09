@@ -103,14 +103,33 @@ test('edits apply directly without approval, including bulk updates and addition
   assert.deepEqual(effects.relations, { added: 0, updated: 1, removed: 0 })
   assert.equal((await retype.commit()).status, 'applied')
   host.store.createView('Bulk', ['urn:n0'])
-  const additions = begin()
-  additions.execute('edit', {
-    operations: Array.from({ length: 12 }, (_, index) => ({
-      kind: 'concept.add',
-      id: `urn:new${index}`,
-    })),
-  })
-  assert.equal((await additions.commit()).status, 'applied')
+  for (const [prefix, selection] of [
+    ['urn:loose', []],
+    ['urn:linked', [{ kind: 'concept', id: 'urn:n0' }]],
+  ] as const) {
+    host.store.setSelection(selection)
+    const relations = host.store.getState().graph.relations
+    const additions = begin()
+    const preview = additions.execute('edit', {
+      operations: Array.from({ length: 12 }, (_, index) => ({
+        kind: 'concept.add',
+        id: `${prefix}${index}`,
+      })),
+    }) as AiEffects
+    const result = await additions.commit()
+    assert.equal(result.status, 'applied')
+    assert.deepEqual(result.effects, preview)
+    const added = host.store
+      .getState()
+      .graph.relations.filter((relation) => !relations.includes(relation))
+    assert.equal(preview.relations.added, added.length)
+    assert.deepEqual(
+      added.map(({ source, target }) => [source, target]),
+      selection.length
+        ? Array.from({ length: 12 }, (_, index) => ['urn:n0', `${prefix}${index}`])
+        : [],
+    )
+  }
 })
 
 test('deletion applies directly without host consent; reset, selection and navigation are rejected', async () => {
