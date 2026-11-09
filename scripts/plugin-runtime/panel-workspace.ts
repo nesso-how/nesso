@@ -16,7 +16,7 @@ export async function verifyPanelWorkspace(context: CheckContext) {
   const preloaded = await waitFor(
     async () =>
       context.window.webContents.mainFrame.framesInSubtree.filter(
-        (frame) => frame.url === 'about:srcdoc',
+        (frame) => frame?.url === 'about:srcdoc',
       ),
     (frames) => frames.length === 2,
   )

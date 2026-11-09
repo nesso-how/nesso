@@ -19,7 +19,7 @@ export async function verifyBusyPanel(context: CheckContext) {
   const { evaluate } = await openFixtureWorkspace(context)
   const host = context.window.webContents.mainFrame
   const preloaded = await waitFor(
-    async () => host.framesInSubtree.filter((frame) => frame.url === 'about:srcdoc'),
+    async () => host.framesInSubtree.filter((frame) => frame?.url === 'about:srcdoc'),
     (frames) => frames.length === 2,
   )
   const quiz = `!!document.querySelector('.quiz button')`

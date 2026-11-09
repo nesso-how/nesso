@@ -129,7 +129,8 @@ export async function chooseTab(evaluate: <T>(script: string) => Promise<T>, nam
 export async function panelFrame(window: BrowserWindow, readyScript: string) {
   const frame = await waitFor(async () => {
     for (const frame of window.webContents.mainFrame.framesInSubtree) {
-      if (frame.url === 'about:srcdoc' && (await frame.executeJavaScript(readyScript))) return frame
+      if (frame?.url === 'about:srcdoc' && (await frame.executeJavaScript(readyScript)))
+        return frame
     }
   }, Boolean)
   assert.ok(frame)
