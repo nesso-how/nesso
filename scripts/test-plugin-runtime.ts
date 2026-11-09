@@ -49,7 +49,7 @@ async function run({ scenario, platform }: (typeof selected)[number]) {
       path: name,
       message: signal ? `Terminated by ${signal}` : `Exited with status ${status}`,
     })
-    console.error(`${name}: failed; profile retained at ${profile}`)
+    console.log(`${name}: failed; profile retained at ${profile}`)
   }
 }
 await Promise.all(
