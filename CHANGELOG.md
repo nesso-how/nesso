@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.0-beta.10 — 2026-11-09
+
+### Fixes
+
+- **concept-map:** Let grouped concepts anchor other groups (#280)
+
 ## 1.0.0-beta.9 — 2026-11-09
 
 ### Features
