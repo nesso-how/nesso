@@ -98,7 +98,7 @@ export async function renderConceptMapImage({
     const canvas = await toCanvas(viewport, {
       width: bounds.width,
       height: bounds.height,
-      pixelRatio: scale,
+      pixelRatio: bounds.scale,
       skipAutoScale: true,
       backgroundColor: theme.canvas,
       style: {
@@ -107,7 +107,10 @@ export async function renderConceptMapImage({
       },
     })
     check()
-    if (canvas.width !== bounds.width * scale || canvas.height !== bounds.height * scale)
+    if (
+      canvas.width !== bounds.width * bounds.scale ||
+      canvas.height !== bounds.height * bounds.scale
+    )
       throw fail('Image dimensions changed during rendering')
     const blob = await new Promise<Blob>((resolve, reject) =>
       canvas.toBlob(

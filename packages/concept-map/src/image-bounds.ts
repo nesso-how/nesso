@@ -6,7 +6,7 @@ export class ConceptMapImageError extends NessoError {
 
 export function imageBounds(
   rects: readonly { x: number; y: number; width: number; height: number }[],
-  scale: number,
+  maxScale: number,
 ) {
   const padding = 32
   let left = Infinity
@@ -21,16 +21,19 @@ export function imageBounds(
   }
   const width = Math.ceil(right - left + padding * 2)
   const height = Math.ceil(bottom - top + padding * 2)
-  if (
-    ![left, top, width, height].every(Number.isFinite) ||
-    width <= 0 ||
-    height <= 0 ||
-    width * scale > 8192 ||
-    height * scale > 8192 ||
-    width * height * scale * scale > 16_777_216
-  )
+  const scale =
+    [left, top, width, height].every(Number.isFinite) && width > 0 && height > 0
+      ? [4, 2, 1].find(
+          (value) =>
+            value <= maxScale &&
+            width * value <= 8192 &&
+            height * value <= 8192 &&
+            width * height * value * value <= 16_777_216,
+        )
+      : undefined
+  if (!scale)
     throw new ConceptMapImageError([
       { path: 'image', message: 'Image exceeds the dimension or pixel budget' },
     ])
-  return { x: left - padding, y: top - padding, width, height }
+  return { x: left - padding, y: top - padding, width, height, scale }
 }
