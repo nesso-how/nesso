@@ -18,6 +18,10 @@ export async function verifyImages(context: CheckContext) {
     await evaluate(
       `window.showSaveFilePicker=async({suggestedName})=>({createWritable:async()=>({write:async(bytes)=>{window.__imageFile={name:suggestedName,mediaType:'image/png',base64:btoa(Array.from(bytes,byte=>String.fromCharCode(byte)).join(''))}},close:async()=>{},abort:async()=>{}})});void 0`,
     )
+  await waitFor(
+    () => evaluate<boolean>(`!!document.querySelector('#canvas .react-flow__edge-path')`),
+    Boolean,
+  )
   const before = await evaluate(
     `({transform:document.querySelector('#canvas .react-flow__viewport').style.transform,selected:document.querySelectorAll('#canvas .selected').length})`,
   )

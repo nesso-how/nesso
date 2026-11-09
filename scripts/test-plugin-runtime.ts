@@ -1,4 +1,4 @@
-import { spawnSync } from 'node:child_process'
+import { spawn } from 'node:child_process'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
@@ -20,11 +20,11 @@ if (!selected.length)
   throw new NessoError([{ path: 'tests', message: 'No matching scenario or platform' }])
 
 const failures: { path: string; message: string }[] = []
-for (const { scenario, platform } of selected) {
+const queue = [...selected]
+async function run({ scenario, platform }: (typeof selected)[number]) {
   const name = `${scenario}/${platform}`
   const profile = mkdtempSync(path.join(tmpdir(), `nesso-${scenario}-${platform}-`))
-  console.log(`${name}: starting`)
-  const result = spawnSync(
+  const child = spawn(
     electron,
     [
       harness,
@@ -33,17 +33,30 @@ for (const { scenario, platform } of selected) {
       profile,
       ...(scenario === 'safe-plugins' ? ['--safe-plugins'] : []),
     ],
-    { stdio: 'inherit', timeout: 75_000, killSignal: 'SIGKILL' },
+    { stdio: ['ignore', 'pipe', 'pipe'], timeout: 75_000, killSignal: 'SIGKILL' },
   )
-  if (result.status === 0) rmSync(profile, { recursive: true, force: true })
+  let output = ''
+  child.stdout.on('data', (chunk) => (output += chunk))
+  child.stderr.on('data', (chunk) => (output += chunk))
+  child.on('error', (error) => (output += `${error.message}\n`))
+  const [status, signal] = await new Promise<[number | null, NodeJS.Signals | null]>((resolve) =>
+    child.on('close', (code, killed) => resolve([code, killed])),
+  )
+  process.stdout.write(`${name}: finished\n${output}`)
+  if (status === 0) rmSync(profile, { recursive: true, force: true })
   else {
-    const message =
-      result.error?.message ??
-      (result.signal ? `Terminated by ${result.signal}` : `Exited with status ${result.status}`)
-    failures.push({ path: name, message })
+    failures.push({
+      path: name,
+      message: signal ? `Terminated by ${signal}` : `Exited with status ${status}`,
+    })
     console.error(`${name}: failed; profile retained at ${profile}`)
   }
 }
+await Promise.all(
+  Array.from({ length: Math.min(4, selected.length) }, async () => {
+    for (let next = queue.shift(); next; next = queue.shift()) await run(next)
+  }),
+)
 console.log(
   `Plugin runtime checks: ${selected.length - failures.length} passed, ${failures.length} failed`,
 )
