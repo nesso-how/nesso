@@ -13,10 +13,13 @@ import {
 export async function verifyPanelWorkspace(context: CheckContext) {
   await listExamplePlugin()
   const { evaluate, saved } = await openFixtureWorkspace(context)
-  const preloaded = context.window.webContents.mainFrame.framesInSubtree.filter(
-    (frame) => frame.url === 'about:srcdoc',
+  const preloaded = await waitFor(
+    async () =>
+      context.window.webContents.mainFrame.framesInSubtree.filter(
+        (frame) => frame.url === 'about:srcdoc',
+      ),
+    (frames) => frames.length === 2,
   )
-  assert.equal(preloaded.length, 2)
   for (const frame of preloaded)
     assert.equal(await frame.executeJavaScript(`document.getElementById('root').textContent`), '')
   const assertShortcutsSuspended = async () => {
