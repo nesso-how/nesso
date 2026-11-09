@@ -34,3 +34,20 @@ jobs:
           sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
           xvfb-run -a pnpm test:desktop release/linux-unpacked/nesso
       - run: pnpm analyze --format github-annotations --quiet
+
+  plugin-runtime:
+    if: github.event_name == 'push' || github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - name: Allow Chromium sandbox
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+      - name: Check plugin runtime
+        run: node scripts/test-plugin-runtime.ts

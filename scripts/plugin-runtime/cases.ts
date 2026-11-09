@@ -3,6 +3,7 @@ export const cases = {
   panel: ['desktop', 'static-web'],
   notes: ['desktop', 'static-web'],
   'panel-workspace': ['desktop'],
+  'busy-panel': ['desktop'],
   bundled: ['desktop', 'static-web'],
   images: ['desktop', 'static-web'],
   intro: ['desktop', 'static-web'],

@@ -79,7 +79,7 @@ export async function verifyPanel({ window, url, name, attempted }: CheckContext
     worker: true,
   })
   const content = window.webContents.mainFrame.framesInSubtree.find(
-    (frame) => frame.url === 'about:srcdoc',
+    (frame) => frame?.url === 'about:srcdoc',
   )!
   assert.ok(content)
   const shell = content.parent!

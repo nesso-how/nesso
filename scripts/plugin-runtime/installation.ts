@@ -11,13 +11,8 @@ import { connectFixtureStorage, countWorkers, waitFor, type CheckContext } from 
 
 const kinds = ['actions', 'theme', 'vocab'] as const
 type Kind = (typeof kinds)[number]
-const readScope =
-  'When you run an action, it receives the concepts and relations in that view. Running it on Overview gives it access to the entire graph.'
-const effectScope =
-  'Changes to document content can affect the whole document, not just the view where you run an action.'
-const fileScope =
-  'The plugin can only read or save files through Nesso. It cannot browse your device.'
-const notificationScope = 'Notifications appear inside Nesso, not as system notifications.'
+const files = 'Open and save files through Nesso’s picker'
+const notifications = 'Post Nesso notifications'
 
 type Driver = {
   evaluate: <T>(script: string) => Promise<T>
@@ -35,7 +30,7 @@ type Driver = {
     text: string
     links: { href: string; target: string; rel: string }[]
   }>
-  declaredAccess: () => Promise<{ labels: string[]; notes: string[] } | null>
+  declaredAccess: () => Promise<{ writes: string[]; capabilities: string[] } | null>
   search: (query: string) => Promise<void>
   approval: () => Promise<{
     open: boolean
@@ -126,8 +121,8 @@ function createDriver(window: BrowserWindow): Driver {
         `({text:document.querySelector('.plugin-scroll:not([hidden]) .plugin-attribution')?.textContent ?? '',links:[...document.querySelectorAll('.plugin-scroll:not([hidden]) .plugin-attribution a')].map(link => ({href:link.href,target:link.target,rel:link.rel}))})`,
       ),
     declaredAccess: () =>
-      evaluate<{ labels: string[]; notes: string[] } | null>(
-        `(() => { const heading = [...document.querySelectorAll('.plugin-scroll:not([hidden]) h3')].find(heading => heading.textContent === 'Declared access'); const section = heading?.closest('section'); return section ? { labels: [...section.querySelectorAll('li')].map(item => item.textContent), notes: [...section.querySelectorAll('p')].map(paragraph => paragraph.textContent) } : null; })()`,
+      evaluate<{ writes: string[]; capabilities: string[] } | null>(
+        `(() => { const heading = [...document.querySelectorAll('.plugin-scroll:not([hidden]) h3')].find(heading => heading.textContent === 'Declared access'); const section = heading?.closest('section'); return section ? { writes: section.querySelector('.lowercase')?.textContent.split(', ') ?? [], capabilities: [...section.querySelectorAll('li li')].map(item => item.textContent) } : null; })()`,
       ),
     search: async (query: string) => {
       await evaluate<void>(
@@ -303,10 +298,25 @@ async function verifyBundledDetails(driver: Driver, state: InstallState, window:
     assert.deepEqual((await driver.attribution()).links, [])
     if (actions)
       assert.deepEqual(
-        (await driver.declaredAccess())?.notes,
+        await driver.declaredAccess(),
         name === '@nesso-how/import'
-          ? [readScope, effectScope, fileScope]
-          : [readScope, fileScope, notificationScope],
+          ? {
+              writes: [
+                'Change selection',
+                'Create concepts',
+                'Rename concepts',
+                'Edit concept notes',
+                'Recolor concepts',
+                'Style concepts',
+                'Connect relations',
+                'Update view membership',
+              ],
+              capabilities: [files],
+            }
+          : {
+              writes: [],
+              capabilities: [files, 'Render an image of the invoked view', notifications],
+            },
       )
     else assert.equal(await driver.declaredAccess(), null)
     assert.equal(
@@ -348,7 +358,7 @@ async function verifyBundledDetails(driver: Driver, state: InstallState, window:
   assert.equal(await notesVisible(), false)
   await driver.click('Enable', '.plugin-detail-footer')
   await driver.headerReady('Disable')
-  assert.equal(await notesVisible(), true)
+  await waitFor(notesVisible, Boolean)
   await driver.click('Plugins', '.settings-sidebar')
 }
 
@@ -491,8 +501,7 @@ async function installKind(
   window: BrowserWindow,
 ) {
   await driver.open(`test-${kind}`)
-  const access =
-    kind === 'actions' ? { labels: ['Rename concepts'], notes: [readScope, effectScope] } : null
+  const access = kind === 'actions' ? { writes: ['Rename concepts'], capabilities: [] } : null
   assert.deepEqual(await driver.declaredAccess(), access)
   const details = await driver.attribution()
   assert.equal(
@@ -1052,8 +1061,8 @@ async function verifyFailures(driver: Driver, state: InstallState, window: Brows
   await driver.open('test-actions')
   assert.match((await driver.attribution()).text, /By Test Author/)
   assert.deepEqual(await driver.declaredAccess(), {
-    labels: ['Rename concepts', 'Post Nesso notifications'],
-    notes: [readScope, effectScope, notificationScope],
+    writes: ['Rename concepts'],
+    capabilities: [notifications],
   })
   assert.deepEqual(
     (await driver.attribution()).links.map(({ href }) => href),

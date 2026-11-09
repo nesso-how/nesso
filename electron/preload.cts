@@ -144,6 +144,7 @@ const plugins: PluginBridge = {
   settle: (id, contentId, valid, issues) =>
     ipcRenderer.invoke('plugins:settle', id, contentId, valid, issues),
   cancel: (id) => ipcRenderer.send('plugins:cancel', id),
+  terminate: (url) => ipcRenderer.send('plugins:terminate', url),
   approve: (challenge, allow) => ipcRenderer.invoke('plugins:approve', challenge, allow),
   remove: (contentId) => ipcRenderer.invoke('plugins:remove', contentId),
   setEnabled: (contentId, enabled) => ipcRenderer.invoke('plugins:enabled', contentId, enabled),

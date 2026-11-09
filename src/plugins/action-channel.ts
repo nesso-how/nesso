@@ -47,6 +47,7 @@ export function connectActionChannel(
     dismiss: (id: string) => void
     discovered: (descriptors: readonly ActionDescriptor[]) => void
     activated: () => void
+    unresponsive?: () => void
     complete: () => void
     failed: (error: PluginError) => void
     theme?: () => Readonly<Record<string, string>>
@@ -334,6 +335,7 @@ export function connectActionChannel(
         effects.activated()
         heartbeat = setInterval(() => {
           if (ping !== pong) {
+            effects.unresponsive?.()
             failed(
               new PluginError('timeout', [
                 { path: 'panel', message: 'Plugin panel stopped responding' },

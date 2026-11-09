@@ -35,7 +35,11 @@ export function loadActions(
     descriptors: readonly ActionDescriptor[]
   },
   signal?: AbortSignal,
-  panel?: { frame: ReturnType<typeof createPluginFrame>; ready: () => void },
+  panel?: {
+    frame: ReturnType<typeof createPluginFrame>
+    ready: () => void
+    unresponsive?: () => void
+  },
 ) {
   return new Promise<readonly ActionDescriptor[]>((resolve, reject) => {
     if (signal?.aborted) {
@@ -118,6 +122,7 @@ export function loadActions(
               resolve(descriptors)
             },
             activated: () => panel?.ready(),
+            unresponsive: panel?.unresponsive,
             complete: () => {
               cleanup()
               resolve(invocation!.descriptors)

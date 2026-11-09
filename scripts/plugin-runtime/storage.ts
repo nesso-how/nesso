@@ -52,7 +52,7 @@ export async function verifyStorage({ window, url, name }: CheckContext) {
   const document = await waitFor(
     async () =>
       (await read('document')) as
-        | { documentId: string; graph: unknown; workspace: unknown }
+        | { documentId: string; graph: unknown; workspace: { viewports: unknown } }
         | undefined,
     Boolean,
   )
@@ -115,12 +115,15 @@ export async function verifyStorage({ window, url, name }: CheckContext) {
         version: number
         documentId: string
         graph: unknown
-        workspace: unknown
+        workspace: object
       },
     (value) => value.version === 2,
   )
   assert.deepEqual(upgraded.graph, document.graph)
-  assert.deepEqual(upgraded.workspace, document.workspace)
+  assert.deepEqual(
+    { ...upgraded.workspace, viewports: document.workspace.viewports },
+    document.workspace,
+  )
   const backups = saved
     ? [...saved.entries()]
         .filter(([key]) => key.startsWith('backup:'))

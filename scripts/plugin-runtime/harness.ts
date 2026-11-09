@@ -16,6 +16,7 @@ import { verifyCorruptRecords } from './corrupt-records.ts'
 import { verifyStorage } from './storage.ts'
 import { verifyPanel } from './panel.ts'
 import { verifyPanelWorkspace } from './panel-workspace.ts'
+import { verifyBusyPanel } from './busy-panel.ts'
 import { verifyNotes } from './notes.ts'
 import { verifyImages } from './images.ts'
 import { verifyIntro } from './intro.ts'
@@ -52,6 +53,7 @@ app
       'corrupt-records',
       'storage',
       'panel-workspace',
+      'busy-panel',
       'images',
       'intro',
       'compact',
@@ -129,6 +131,7 @@ app
       )
         console.error(event.message.slice(0, 2048))
     })
+    if (process.platform === 'linux') window.show()
     const context: CheckContext = { window, url, name, attempted }
     try {
       if (scenario === 'bundled') {
@@ -148,6 +151,9 @@ app
           break
         case 'panel-workspace':
           await verifyPanelWorkspace(context)
+          break
+        case 'busy-panel':
+          await verifyBusyPanel(context)
           break
         case 'bundled':
           await verifyBundled(context)

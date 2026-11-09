@@ -42,7 +42,12 @@ import { executeActionBadge } from './badge-execution.ts'
 import { createPluginEntry } from './entry.ts'
 import { canvasTabs } from './canvas-tabs.ts'
 
-export const pluginPanel = createPluginPanel(nessoStore, notifications.api, window.nessoFiles)
+export const pluginPanel = createPluginPanel(
+  nessoStore,
+  notifications.api,
+  window.nessoFiles,
+  window.nessoPlugins?.terminate,
+)
 export const usePluginPanel = () =>
   useSyncExternalStore(pluginPanel.subscribe, pluginPanel.getSnapshot)
 
