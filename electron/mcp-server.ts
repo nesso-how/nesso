@@ -86,7 +86,7 @@ export async function startMcpServer(
           inputSchema: definition.inputSchema,
           description:
             name === 'edit'
-              ? 'Apply ordered undoable graph and saved-view operations as a single atomic batch after approval in Nesso. Supply unique absolute IRIs for new concepts and types. New concepts join the active view and link to a single selected concept using the default type. Returns the final status and effects; cancelled calls apply nothing.'
+              ? 'Apply ordered undoable graph and saved-view operations as a single atomic batch after approval in Nesso. Supply unique absolute IRIs for new concepts and types. New concepts join the active view and link to the concept selected when the edit began, if exactly one, using the default type; concepts added in the same batch do not link to each other. Returns the final status and effects; cancelled calls apply nothing.'
               : name === 'history'
                 ? 'Undo or redo shared document history after approval in Nesso. Use only when the user explicitly requests it.'
                 : definition.description,

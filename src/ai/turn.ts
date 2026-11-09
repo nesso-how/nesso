@@ -37,6 +37,12 @@ export function createAiTurn(
   let history: 'undo' | 'redo' | undefined
   let candidate: NessoState = base
   let status: 'staging' | 'committing' | 'closed' = 'staging'
+  const staged = (batch: readonly NessoOperation[]): NessoOperation[] =>
+    batch.flatMap((operation): NessoOperation[] =>
+      operation.kind === 'concept.add'
+        ? [{ kind: 'selection.set', value: base.selected }, operation]
+        : [operation],
+    )
   const cancel = () => {
     status = 'closed'
     operations = []
@@ -70,7 +76,7 @@ export function createAiTurn(
           if (operations.length + batch.length > 1000)
             fail('operations', 'Turn exceeds 1000 operations')
           const next = [...operations, ...batch]
-          const preview = boundary.previewOperations(base, next)
+          const preview = boundary.previewOperations(base, staged(next))
           operations = next
           candidate = preview.next
           return summarizeEffects(preview)
@@ -97,14 +103,15 @@ export function createAiTurn(
         if (status !== 'staging') fail('turn', 'Turn is closed or applying')
         status = 'committing'
         current()
-        const preview = boundary.previewOperations(base, operations)
+        const prepared = staged(operations)
+        const preview = boundary.previewOperations(base, prepared)
         const effects = summarizeEffects(preview)
         if (!history && approve && !(await approve(effects)))
           return { status: 'cancelled' as const, effects }
         if (signal?.aborted) return { status: 'cancelled' as const, effects }
         current()
         boundary.store.applyOperations(
-          history ? [{ kind: history === 'undo' ? 'history.undo' : 'history.redo' }] : operations,
+          history ? [{ kind: history === 'undo' ? 'history.undo' : 'history.redo' }] : prepared,
         )
         return { status: 'applied' as const, effects }
       } catch (error) {
