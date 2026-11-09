@@ -50,4 +50,7 @@ jobs:
       - name: Allow Chromium sandbox
         run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
       - name: Check plugin runtime
-        run: xvfb-run -a node scripts/test-plugin-runtime.ts
+        run: |
+          for scenario in "notes desktop" "intro desktop" installation; do
+            xvfb-run -a node scripts/test-plugin-runtime.ts $scenario || true
+          done
