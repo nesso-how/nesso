@@ -200,6 +200,7 @@ export async function createDataLocation(userData: string) {
     return state()
   }
   return {
+    identity: () => config.identity,
     state,
     validate,
     move,

@@ -177,6 +177,13 @@ export const connectPersistence = (
           ) {
             fail('documentId', 'Save the document before saving its plugin storage')
           }
+          if (
+            section === 'document' &&
+            savedDocumentId !== undefined &&
+            savedDocumentId !== state.documentId
+          ) {
+            await storage.snapshot?.().catch(() => {})
+          }
           if (section === 'document' && serializedGraph?.source !== state.graph) {
             serializedGraph = { source: state.graph, value: serializeGraph(state.graph as Graph) }
           }

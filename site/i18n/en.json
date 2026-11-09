@@ -82,6 +82,7 @@
   "dataTitle": "One graph, on your device, in an open format",
   "dataDescription": "Your graph is stored locally as JSON-LD, an open format you can export and take with you.",
   "editingDescription": "Nesso validates every change to your graph, including those made by AI or plugins. Changes land together or not at all, and share the same undo and redo history.",
+  "backupDescription": "On desktop, Nesso automatically keeps the latest 10 copies of your data, so you can recover your work if something goes wrong.",
   "jsonExampleLabel": "An example Nesso graph in JSON-LD",
   "openSource": "Open source",
   "openSourceTitle": "The project is on GitHub",

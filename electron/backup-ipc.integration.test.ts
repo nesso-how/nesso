@@ -2,14 +2,15 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { EventEmitter } from 'node:events'
 import { registerHooks } from 'node:module'
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { createDataLocation } from './data-location.ts'
 import { createFileStorage } from './file-storage.ts'
 import { createNessoStore } from '../src/store/create.ts'
 import { connectPersistence, loadPersistence } from '../src/store/persistence.ts'
-import type { BackupCandidate } from '../shared/backup.ts'
+import type { AutomaticBackupState, BackupCandidate } from '../shared/backup.ts'
+import { createAutomaticBackups } from './automatic-backups.ts'
 
 test('native backup IPC coordinates windows, honors cancellation, validates before confirmation and fences stale saves after restore', async (context) => {
   const root = await mkdtemp(path.join(tmpdir(), 'nesso-backup-ipc-'))
@@ -29,6 +30,7 @@ test('native backup IPC coordinates windows, honors cancellation, validates befo
       handlers.set(name, handler),
   })
   let nextFile: string | undefined
+  let opened: string | undefined
   let saved = true
   let reloads = 0
   const windows = [1, 2].map((id) => ({
@@ -62,7 +64,12 @@ test('native backup IPC coordinates windows, honors cancellation, validates befo
       showOpenDialog: async () => ({ canceled: !nextFile, filePaths: nextFile ? [nextFile] : [] }),
       showSaveDialog: async () => ({ canceled: !nextFile, filePath: nextFile }),
     },
-    shell: { openPath: async () => '' },
+    shell: {
+      openPath: async (directory: string) => {
+        opened = directory
+        return ''
+      },
+    },
   })
   const hooks = registerHooks({
     resolve: (specifier, context, next) =>
@@ -80,23 +87,30 @@ test('native backup IPC coordinates windows, honors cancellation, validates befo
   const { connectDataLocation } = await import('./data-location-ipc.ts')
   const { connectDesktopPersistence } = await import('./persistence.ts')
   const trusted = (event: unknown) => (event as Event).trusted
-  const transfer = connectDataLocation(trusted, location, () => false)
-  connectDesktopPersistence(trusted, location, transfer.locked, transfer.generation)
+  const automatic = await createAutomaticBackups(directory, storage, app.getVersion(), location)
+  const copies = automatic.state().directory
+  const transfer = connectDataLocation(trusted, location, () => false, automatic)
+  connectDesktopPersistence(trusted, location, transfer.locked, transfer.generation, automatic)
   const event: Event = { sender: windows[0].webContents, trusted: true }
   const call = (channel: string, ...input: unknown[]) =>
     handlers.get(channel)!(event, ...input) as Promise<{
       value: unknown
       issues?: { message: string }[]
     }>
-  const untrusted = (await handlers.get('backup:create')!({ ...event, trusted: false })) as {
-    issues?: unknown
+  for (const channel of [
+    'backup:create',
+    'storage:backup',
+    'backup:directory',
+    'backup:default-directory',
+    'backup:open-directory',
+  ]) {
+    const result = (await handlers.get(channel)!({ ...event, trusted: false }, 0)) as {
+      issues?: unknown
+    }
+    assert.ok(result.issues)
   }
-  assert.ok(untrusted.issues)
-  const untrustedBackup = (await handlers.get('storage:backup')!(
-    { ...event, trusted: false },
-    0,
-  )) as { issues?: unknown }
-  assert.ok(untrustedBackup.issues)
+  assert.equal((await call('backup:open-directory')).value, null)
+  assert.equal(opened, copies)
   assert.equal((await call('storage:backup', 0)).value, null)
   assert.equal((await call('backup:create')).value, false)
   nextFile = path.join(directory, 'document.json')
@@ -127,11 +141,24 @@ test('native backup IPC coordinates windows, honors cancellation, validates befo
   assert.equal(transfer.locked(), false)
   assert.ok((await call('storage:write', 'conversation', { stale: true }, 0)).issues)
   assert.ok((await call('storage:backup', 0)).issues)
+  assert.ok((await call('storage:snapshot', 0)).issues)
   for (const section of Object.keys(backup.records))
     assert.deepEqual(
       (await call('storage:read', section, 1)).value,
       backup.records[section] ?? undefined,
     )
+  const [safetyCopy] = await readdir(copies)
+  const preserved = JSON.parse(await readFile(path.join(copies, safetyCopy), 'utf8'))
+  assert.equal(preserved.records.conversation.messages[0].content, 'not in backup')
+  nextFile = undefined
+  assert.equal((await call('backup:directory')).value, null)
+  nextFile = path.join(root, 'cloud')
+  await mkdir(nextFile)
+  const selected = (await call('backup:directory')).value as AutomaticBackupState
+  assert.notEqual(selected.directory, copies)
+  const reset = (await call('backup:default-directory')).value as AutomaticBackupState
+  assert.equal(reset.directory, copies)
+  nextFile = path.join(root, 'backup.json')
   const interrupted = await choose()
   await writeFile(path.join(directory, '.nesso-restore.json'), 'unreadable journal')
   assert.equal(
@@ -147,4 +174,5 @@ test('native backup IPC coordinates windows, honors cancellation, validates befo
   )
   assert.ok((await call('storage:write', 'conversation', { stale: true }, 1)).issues)
   assert.ok((await call('storage:backup', 1)).issues)
+  assert.equal((await call('backup:default-directory')).issues?.[0].message, 'storageBusy')
 })

@@ -635,6 +635,7 @@ test('storage failures preserve records and allow retrying the latest edits', as
       await storage.backup()
       return { value: null }
     },
+    snapshot: async () => ({ value: null }),
   })
   const host = registeredHost(fixture())
   const persistence = connectPersistence(host, limited, await loadPersistence(limited))

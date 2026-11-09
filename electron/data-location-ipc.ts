@@ -10,11 +10,13 @@ import { prepareDataTransfer } from './data-transfer.ts'
 import { createBackups } from './backups.ts'
 import { createRecordReplacement } from './record-replacement.ts'
 import { containsPath } from './file-system.ts'
+import type { AutomaticBackups } from './automatic-backups.ts'
 
 export function connectDataLocation(
   trusted: TrustedRequest,
   location: DataLocation,
   busy: () => boolean,
+  automatic: AutomaticBackups,
 ) {
   let locked = false
   let candidate: string | undefined
@@ -134,14 +136,14 @@ export function connectDataLocation(
       }),
     ),
   )
-  const pick = async (event: IpcMainInvokeEvent, save: boolean) => {
+  const pick = async (event: IpcMainInvokeEvent, kind: 'save' | 'open' | 'directory') => {
     if (locked || choosing || location.state().moving || busy())
       throw new ElectronError([{ path: 'backup', message: 'storageBusy' }])
     const window = BrowserWindow.fromWebContents(event.sender)
     if (!window) throw new ElectronError([{ path: 'backup', message: 'backupFailed' }])
     choosing = true
     try {
-      if (save) {
+      if (kind === 'save') {
         const result = await dialog.showSaveDialog(window, {
           defaultPath: `nesso-backup-${new Date().toISOString().replace(/[:.]/g, '-')}.json`,
           filters: [{ name: 'Nesso backup', extensions: ['json'] }],
@@ -149,8 +151,9 @@ export function connectDataLocation(
         return result.canceled ? undefined : result.filePath
       }
       const result = await dialog.showOpenDialog(window, {
-        properties: ['openFile'],
-        filters: [{ name: 'Nesso backup', extensions: ['json'] }],
+        properties: kind === 'directory' ? ['openDirectory', 'createDirectory'] : ['openFile'],
+        defaultPath: automatic.state().directory,
+        filters: kind === 'open' ? [{ name: 'Nesso backup', extensions: ['json'] }] : undefined,
       })
       return result.canceled ? undefined : result.filePaths[0]
     } finally {
@@ -160,7 +163,7 @@ export function connectDataLocation(
   ipcMain.handle(
     'backup:create',
     handle(async (event) => {
-      const file = await pick(event, true)
+      const file = await pick(event, 'save')
       if (!file || event.sender.isDestroyed() || !trusted(event)) return false
       await transaction(async () => {
         const parent = await realpath(path.dirname(file))
@@ -177,7 +180,7 @@ export function connectDataLocation(
     'backup:choose',
     handle(async (event) => {
       backups.cancel(event.sender.id)
-      const file = await pick(event, false)
+      const file = await pick(event, 'open')
       if (!file || event.sender.isDestroyed() || !trusted(event)) return null
       const candidate = await backups.choose(event.sender.id, file)
       if (event.sender.isDestroyed() || !trusted(event)) {
@@ -199,6 +202,7 @@ export function connectDataLocation(
     handle(async (event, id) => {
       const backup = backups.take(event.sender.id, id)
       await transaction(async () => {
+        await automatic.capture()
         try {
           await replacement.replace(backup.records)
         } catch (error) {
@@ -214,5 +218,38 @@ export function connectDataLocation(
       return null
     }, 'backupFailed'),
   )
+  ipcMain.handle(
+    'backup:directory',
+    handle(async (event) => {
+      const directory = await pick(event, 'directory')
+      if (!directory || event.sender.isDestroyed() || !trusted(event)) return null
+      if (locked || location.state().moving)
+        throw new ElectronError([{ path: 'backup', message: 'storageBusy' }])
+      return automatic.setDirectory(directory)
+    }, 'backupFailed'),
+  )
+  ipcMain.handle(
+    'backup:default-directory',
+    handle(() => {
+      if (locked || location.state().moving)
+        throw new ElectronError([{ path: 'backup', message: 'storageBusy' }])
+      return automatic.setDirectory()
+    }, 'backupFailed'),
+  )
+  ipcMain.handle(
+    'backup:open-directory',
+    handle(async () => {
+      if (await shell.openPath(await automatic.directory()))
+        throw new ElectronError([{ path: 'backup', message: 'backupFailed' }])
+      return null
+    }, 'backupFailed'),
+  )
+  ipcMain.handle(
+    'backup:automatic-state',
+    handle(() => automatic.state(), 'backupFailed'),
+  )
+  setInterval(() => {
+    if (!locked && !location.state().moving) automatic.capture().catch(() => {})
+  }, 15 * 60_000).unref()
   return { locked: () => locked, generation: () => generation }
 }

@@ -28,6 +28,7 @@ Nesso keeps things minimal and efficient, with just a few key elements:
   - **Review** for FSRS spaced repetition over a view’s concepts.
   - **Notes** live-preview Markdown editor for each view’s project notes and brainstorming.
 - **AI** helps you explore, expand, and organize your graph on desktop. Chat using your own API key (BYOK), a local model, or ChatGPT sign-in, or connect external assistants through the local MCP server.
+- **Automatic backups** keep the latest 10 copies of your work on desktop, saved every 15 minutes and before a reset or restore. Choose a backup folder or restore a copy in Settings → Local data → Backup.
 
 Use the Explorer to navigate views, the canvas to build the graph, and the Inspector to edit the selection, manage views, or chat with AI on desktop.
 

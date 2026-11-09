@@ -39,7 +39,7 @@ Your build must compile this CSS; it is not a precompiled stylesheet. Supply the
 
 | Area                   | Exports                                                                                                                   |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| Buttons and inputs     | `Button`, `IconButton`, `Input`, `MarkdownInput`, `Label`, `PreferenceSelect`, `ColorPicker`                              |
+| Buttons and inputs     | `Button`, `IconButton`, `Input`, `DirectoryField`, `MarkdownInput`, `Label`, `PreferenceSelect`, `ColorPicker`            |
 | Forms and rows         | `Field`, `FieldHint`, `ListRow`, `ListRowButton`, `ListRowDetail`, `ListRowTitle`, `RevealActions`, `PromptForm`          |
 | Menus and popovers     | `Menu`, `MenuItem`, `MenuPopup`, `MenuRadioItem`, `Popover`, `PopoverPopup`                                               |
 | Search and suggestions | `Combobox`, `ComboboxItem`, `ComboboxPopup`, `Autocomplete`, `AutocompleteClear`, `AutocompleteItem`, `AutocompletePopup` |

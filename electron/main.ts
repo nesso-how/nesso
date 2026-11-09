@@ -30,6 +30,8 @@ import { connectStartupCheck } from './startup-check.ts'
 import { createWindowState } from './window-state.ts'
 import { createRecordReplacement } from './record-replacement.ts'
 import { connectMenu, connectTabShortcuts } from './menu.ts'
+import { createAutomaticBackups } from './automatic-backups.ts'
+import { createFileStorage } from './file-storage.ts'
 
 const dev = !app.isPackaged && process.argv.includes('--dev')
 const root = path.join(app.getAppPath(), 'dist')
@@ -99,16 +101,24 @@ app
     const ai = connectAi(trusted, location)
     const mcp = connectMcp(trusted, location)
     let installingUpdate = false
+    const automatic = await createAutomaticBackups(
+      app.getPath('userData'),
+      createFileStorage(() => location.directory()),
+      app.getVersion(),
+      location,
+    )
     const dataLocation = connectDataLocation(
       trusted,
       location,
       () => installingUpdate || ai.busy() || mcp.busy(),
+      automatic,
     )
     const connectPersistence = connectDesktopPersistence(
       trusted,
       location,
       dataLocation.locked,
       dataLocation.generation,
+      automatic,
     )
     const allowedPermissions = ['clipboard-read', 'clipboard-sanitized-write', 'fileSystem']
     const canUsePermission = (

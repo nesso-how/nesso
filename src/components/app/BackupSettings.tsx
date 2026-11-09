@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { Button, ConfirmDialog } from '@nesso-how/ui'
+import { Button, ConfirmDialog, DirectoryField } from '@nesso-how/ui'
 import { Download, RotateCcw } from 'lucide-react'
 import { useTranslation } from '@/i18n'
 import { useNessoStore } from '@/store'
 import { notifications } from '@/notifications'
-import type { BackupBridge, BackupCandidate } from '../../../shared/backup'
+import type { AutomaticBackupState, BackupBridge, BackupCandidate } from '../../../shared/backup'
 
 const issueKeys = [
   'backupInvalid',
@@ -22,11 +22,20 @@ export function BackupSettings({ bridge, disabled }: { bridge: BackupBridge; dis
   const t = useTranslation()
   const locale = useNessoStore((state) => state.preferences.locale)
   const [candidate, setCandidate] = useState<BackupCandidate>()
+  const [automatic, setAutomatic] = useState<AutomaticBackupState>()
   const [working, setWorking] = useState(false)
   const active = useRef(false)
   const mounted = useRef(true)
+  const format = (date: string, dateStyle: 'medium' | 'long') =>
+    new Intl.DateTimeFormat(locale, { dateStyle, timeStyle: 'short' }).format(new Date(date))
   useEffect(() => {
     mounted.current = true
+    void bridge
+      .automaticState()
+      .then((result) => {
+        if (mounted.current && 'value' in result) setAutomatic(result.value)
+      })
+      .catch(() => {})
     return () => {
       mounted.current = false
       bridge.cancel()
@@ -41,7 +50,15 @@ export function BackupSettings({ bridge, disabled }: { bridge: BackupBridge; dis
         .join(' '),
     })
   }
-  const run = async (operation: 'create' | 'choose' | 'restore') => {
+  const run = async (
+    operation:
+      | 'create'
+      | 'choose'
+      | 'restore'
+      | 'chooseDirectory'
+      | 'useDefaultDirectory'
+      | 'openDirectory',
+  ) => {
     if (active.current || disabled || (operation === 'restore' && !candidate)) return
     active.current = true
     setWorking(true)
@@ -56,7 +73,10 @@ export function BackupSettings({ bridge, disabled }: { bridge: BackupBridge; dis
       if ('issues' in result) problem(result.issues)
       else if (result.value === true)
         notifications.api.notify({ tone: 'info', title: t('backupCreated') })
-      else if (result.value) setCandidate(result.value)
+      else if (result.value) {
+        if ('directory' in result.value) setAutomatic(result.value)
+        else setCandidate(result.value)
+      }
       if (operation === 'restore') setCandidate(undefined)
     } catch {
       problem([{ message: operation === 'restore' ? 'backupRestoreFailed' : 'backupFailed' }])
@@ -72,10 +92,53 @@ export function BackupSettings({ bridge, disabled }: { bridge: BackupBridge; dis
       setCandidate(undefined)
     }
   }
+  const backupError = automatic?.configurationFailed
+    ? 'automaticBackupConfig'
+    : automatic?.failed
+      ? 'automaticBackupFailed'
+      : undefined
   return (
-    <div className="mt-5">
+    <div className="mt-5 border-t border-border pt-5">
       <h4 className="text-xs font-medium">{t('backup')}</h4>
       <p className="mt-1 text-xs leading-[18px] text-muted-foreground">{t('backupDescription')}</p>
+      {automatic && (
+        <>
+          <DirectoryField
+            label={t('automaticBackupDirectory')}
+            value={automatic.directory}
+            labels={{
+              open: t('storageOpen'),
+              change: t('storageChange'),
+              restore: t('storageRestore'),
+            }}
+            disabled={disabled || working}
+            onOpen={() => {
+              void run('openDirectory')
+            }}
+            onChange={() => {
+              void run('chooseDirectory')
+            }}
+            onRestore={
+              automatic.directory !== automatic.defaultDirectory || automatic.configurationFailed
+                ? () => {
+                    void run('useDefaultDirectory')
+                  }
+                : undefined
+            }
+          />
+          <p
+            role={backupError ? 'alert' : 'status'}
+            className={`mt-2 text-xs leading-[18px] ${backupError ? 'text-destructive' : 'text-muted-foreground'}`}
+          >
+            {backupError
+              ? t(backupError)
+              : automatic.lastBackup &&
+                t('automaticBackupLast', {
+                  date: format(automatic.lastBackup, 'medium'),
+                })}
+          </p>
+        </>
+      )}
       <div className="mt-3 flex flex-wrap gap-2">
         <Button
           variant="outline"
@@ -114,9 +177,7 @@ export function BackupSettings({ bridge, disabled }: { bridge: BackupBridge; dis
       >
         {candidate && (
           <p className="mt-2 text-xs text-muted-foreground">
-            {new Intl.DateTimeFormat(locale, { dateStyle: 'long', timeStyle: 'short' }).format(
-              new Date(candidate.createdAt),
-            )}
+            {format(candidate.createdAt, 'long')}
           </p>
         )}
       </ConfirmDialog>

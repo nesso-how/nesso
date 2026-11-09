@@ -130,6 +130,7 @@ test('each renderer pins its storage generation so a restored document cannot be
   generation++
   await old.write('document', 'stale state')
   await old.backup()
+  await old.snapshot()
   const fresh = start()
   await fresh.read('document')
   assert.equal(calls.filter(({ channel }) => channel === 'storage:session').length, 2)
@@ -140,4 +141,5 @@ test('each renderer pins its storage generation so a restored document cannot be
   ])
   assert.deepEqual(calls.at(-1), { channel: 'storage:read', args: ['document', 2] })
   assert.deepEqual(calls.find(({ channel }) => channel === 'storage:backup')?.args, [1])
+  assert.deepEqual(calls.find(({ channel }) => channel === 'storage:snapshot')?.args, [1])
 })

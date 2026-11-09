@@ -88,6 +88,7 @@ test('the site build emits complete localized pages with matching language links
       ['why', 'elements', 'plugins', 'data'],
     )
     assert.ok(html.includes('id="ai"'))
+    assert.ok(html.includes(messages.backupDescription))
     assert.match(
       html,
       /<button\b[^>]*type="button"[^>]*data-copy-plugin-prompt[^>]*aria-describedby="plugin-create-hint"[^>]*aria-controls="plugin-prompt"/,

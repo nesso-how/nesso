@@ -174,10 +174,21 @@ test('failed, missing or mismatched document/storage restoration never overwrite
   }
 })
 
-test('reset storage cannot replace the old document data until the new document identity is saved', async () => {
+test('reset snapshots the old document before saving the new identity and plugin data', async () => {
   const { storage, host, persistence } = await fixture()
+  let document = structuredClone(storage.records.get('document'))
+  let snapshots = 0
+  Object.assign(storage, {
+    snapshot: async () => {
+      assert.deepEqual(storage.records.get('document'), document)
+      snapshots++
+    },
+  })
   put(host, 'settings', 'old')
+  host.store.setConceptLabel('urn:a', 'Edited')
   await persistence.flush()
+  assert.equal(snapshots, 0)
+  document = structuredClone(storage.records.get('document'))
   const original = structuredClone(storage.records.get('plugin-storage'))
   const save = storage.write
   storage.write = async (section, value) => {
@@ -186,6 +197,7 @@ test('reset storage cannot replace the old document data until the new document 
   }
   host.store.resetGraph()
   assert.equal(await persistence.flush(), false)
+  assert.equal(snapshots, 1)
   assert.deepEqual(storage.records.get('plugin-storage'), original)
   assert.ok(host.store.getState().persistenceIssues.some(({ section }) => section === 'document'))
   storage.write = save
