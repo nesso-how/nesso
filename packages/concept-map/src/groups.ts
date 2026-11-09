@@ -123,8 +123,7 @@ export function groupRelations({
     if (
       groups.some(
         (group) =>
-          candidate.members.includes(group.anchor) ||
-          group.members.includes(candidate.anchor) ||
+          candidate.relations.some((id) => group.relations.includes(id)) ||
           overlaps(group.bounds, candidate.bounds),
       )
     )
