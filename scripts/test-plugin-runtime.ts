@@ -20,19 +20,22 @@ if (!selected.length)
   throw new NessoError([{ path: 'tests', message: 'No matching scenario or platform' }])
 
 const failures: { path: string; message: string }[] = []
-const queue = [...selected]
-async function run({ scenario, platform }: (typeof selected)[number]) {
+const queue = selected.map((item, index) => ({ ...item, display: String(99 + index) }))
+async function run({ scenario, platform, display }: (typeof queue)[number]) {
   const name = `${scenario}/${platform}`
   const profile = mkdtempSync(path.join(tmpdir(), `nesso-${scenario}-${platform}-`))
+  const args = [
+    harness,
+    scenario,
+    platform,
+    profile,
+    ...(scenario === 'safe-plugins' ? ['--safe-plugins'] : []),
+  ]
   const child = spawn(
-    electron,
-    [
-      harness,
-      scenario,
-      platform,
-      profile,
-      ...(scenario === 'safe-plugins' ? ['--safe-plugins'] : []),
-    ],
+    process.platform === 'linux' ? 'xvfb-run' : electron,
+    process.platform === 'linux'
+      ? ['-n', display, '-s', '-screen 0 1280x800x24', electron, ...args]
+      : args,
     { stdio: ['ignore', 'pipe', 'pipe'], timeout: 75_000, killSignal: 'SIGKILL' },
   )
   let output = ''

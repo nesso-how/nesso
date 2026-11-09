@@ -358,7 +358,7 @@ async function verifyBundledDetails(driver: Driver, state: InstallState, window:
   assert.equal(await notesVisible(), false)
   await driver.click('Enable', '.plugin-detail-footer')
   await driver.headerReady('Disable')
-  assert.equal(await notesVisible(), true)
+  await waitFor(notesVisible, Boolean)
   await driver.click('Plugins', '.settings-sidebar')
 }
 
