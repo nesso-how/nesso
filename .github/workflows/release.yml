@@ -162,16 +162,11 @@ jobs:
             package="$(node -p "const p = require('./packages/plugin/example/package.json'); p.dependencies?.['$dependency'] ?? p.devDependencies?.['$dependency']")"
             [ "$version" = "$package" ] || { echo "tag $version does not match example dependency $dependency version $package"; exit 1; }
           done
-          channel=latest
-          if [[ "$version" == *-* ]]; then
-            channel="${version#*-}"
-            channel="${channel%%.*}"
-          fi
           for directory in $packages; do
             if [ "$directory" = packages/plugin/example ]; then
-              npm publish "$RUNNER_TEMP/plugin-example" --tag "$channel"
+              npm publish "$RUNNER_TEMP/plugin-example" --tag latest
             else
-              pnpm --dir "$directory" publish --tag "$channel" --no-git-checks
+              pnpm --dir "$directory" publish --tag latest --no-git-checks
             fi
           done
       - name: Publish release and update files

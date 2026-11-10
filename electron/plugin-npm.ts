@@ -166,7 +166,7 @@ export async function latestNpmPlugin(
   }
   const signal = AbortSignal.any([cancellation, AbortSignal.timeout(limits.deadline)])
   const responses = await Promise.allSettled(
-    (beta ? ['latest', 'beta'] : ['latest']).map((tag) =>
+    ['latest'].map((tag) =>
       json(`${registry}/${encodeURIComponent(name)}/${tag}`, limits.metadata, signal, request),
     ),
   )
