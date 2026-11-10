@@ -25,6 +25,44 @@ test('assistant Markdown renders basic formatting and code', () => {
   }
 })
 
+test('assistant Markdown renders tables with aligned columns and inline formatting', () => {
+  const html = render(
+    '| Topic | Progress | Reviews |\n| :--- | :---: | ---: |\n| **Memory** | In progress | 3 |\n| `FSRS` | Ready | 12 |',
+  )
+  for (const expected of [
+    '<div class="chat-markdown-table" tabindex="0"><table>',
+    '<thead>',
+    '<tbody>',
+    '<th style="text-align:left">Topic</th>',
+    '<th style="text-align:center">Progress</th>',
+    '<th style="text-align:right">Reviews</th>',
+    '<td style="text-align:left"><strong>Memory</strong></td>',
+    '<td style="text-align:center">In progress</td>',
+    '<td style="text-align:right">3</td>',
+    '<td style="text-align:left"><code>FSRS</code></td>',
+  ]) {
+    assert.ok(html.includes(expected), expected)
+  }
+  assert.equal((html.match(/<tr>/g) ?? []).length, 3)
+})
+
+test('assistant Markdown renders tables while a response is still streaming', () => {
+  const html = render('| Topic | Progress |\n| --- | --- |\n| Memory | In pro')
+  assert.match(html, /<table>/)
+  assert.match(html, /<td>In pro<\/td>/)
+})
+
+test('assistant Markdown keeps table content subject to HTML, image and link restrictions', () => {
+  const html = render(
+    '| Content |\n| --- |\n| [Nesso](https://nesso.how) |\n| [Unsafe](https://evil.example) |\n| ![Image](https://evil.example/pixel) |\n| <img src="https://evil.example/pixel"> |\n| <script>alert(1)</script> |',
+  )
+  assert.match(html, /<table>/)
+  assert.doesNotMatch(html, /<script|<img|evil\.example/)
+  assert.equal((html.match(/<a /g) ?? []).length, 1)
+  assert.match(html, /href="https:\/\/nesso\.how" target="_blank" rel="noopener noreferrer"/)
+  assert.match(html, /<td><span>Unsafe<\/span><\/td>/)
+})
+
 test('assistant Markdown omits HTML and images and only links to trusted HTTPS destinations', () => {
   const html = render(
     '<script>alert(1)</script>\n\n<img src="https://evil.example/pixel">\n\n![Image](https://evil.example/pixel)\n\n[Unsafe](javascript:alert) [Other](https://evil.example) [Relative](/settings) [HTTP](http://nesso.how) [Credentials](https://user:pass@nesso.how) [Lookalike](https://nesso.how.evil.example) [Wrong repo](https://github.com/nesso-how/nesso-other)\n\n[Nesso](https://nesso.how) [Help](https://github.com/nesso-how/nesso/discussions)',

@@ -931,6 +931,33 @@
 .chat-markdown hr {
   border-top: 1px solid var(--border);
 }
+.chat-markdown-table {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+}
+.chat-markdown-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  line-height: 20px;
+  overflow-wrap: normal;
+}
+.chat-markdown-table :is(th, td) {
+  min-width: 100px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+.chat-markdown-table th {
+  background: var(--sidebar);
+  font-weight: 600;
+}
+.chat-markdown-table tbody tr:last-child td {
+  border-bottom: 0;
+}
 .chat-confirmation-actions {
   display: flex;
   flex-wrap: wrap;
