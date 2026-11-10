@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.0-beta.13 — 2026-11-10
+
+### Features
+
+- **import:** Create and activate a view on json import (#292)
+
+### Fixes
+
+- **import:** Update harness for view.create access (#293)
+
 ## 1.0.0-beta.12 — 2026-11-10
 
 ### Features
