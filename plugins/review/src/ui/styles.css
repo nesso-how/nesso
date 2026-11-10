@@ -146,9 +146,9 @@
 }
 .review-prompt {
   font-size: 14px;
-  color: var(--muted-foreground);
-  line-height: 1.8;
+  line-height: 1.9;
   margin-top: 16px !important;
+  overflow-wrap: anywhere;
 }
 .review-reference {
   font-size: 14px;
@@ -218,7 +218,6 @@
 .review-ratings {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  max-width: 420px;
   gap: 8px;
 }
 .review-ratings button {
@@ -233,6 +232,22 @@
 .review-rating-interval {
   font-size: 10px;
   color: var(--muted-foreground);
+}
+.review-ratings .review-rating-grade-1 > span:first-child {
+  color: color-mix(in srgb, #c0392b 55%, var(--foreground));
+  font-weight: 500;
+}
+.review-ratings .review-rating-grade-2 > span:first-child {
+  color: color-mix(in srgb, #d35400 55%, var(--foreground));
+  font-weight: 500;
+}
+.review-ratings .review-rating-grade-3 > span:first-child {
+  color: color-mix(in srgb, #1e8e4f 55%, var(--foreground));
+  font-weight: 500;
+}
+.review-ratings .review-rating-grade-4 > span:first-child {
+  color: color-mix(in srgb, #2470a8 55%, var(--foreground));
+  font-weight: 500;
 }
 .review-error,
 .review-status {
@@ -291,6 +306,7 @@
   .review-list {
     margin-top: 24px;
   }
+  .review-prompt,
   .review-reference {
     font-size: var(--nesso-reading-font-size);
     line-height: var(--nesso-reading-line-height);
@@ -330,6 +346,7 @@
     line-height: 24px;
     letter-spacing: normal;
   }
+  .review-prompt,
   .review-reference {
     font-size: var(--nesso-reading-font-size);
     line-height: var(--nesso-reading-line-height);
@@ -358,10 +375,6 @@
     min-height: 44px !important;
     margin-top: 8px;
     font-size: 13px !important;
-  }
-  .review-ratings {
-    max-width: none;
-    gap: 8px;
   }
   .review-ratings button {
     min-width: 0;

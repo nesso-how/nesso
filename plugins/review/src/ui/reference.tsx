@@ -1,4 +1,5 @@
 import type { ActionState } from '@nesso-how/plugin'
+import { MarkdownInput } from '@nesso-how/ui'
 import { cues } from '../cues.ts'
 import type { messages } from '../i18n.ts'
 
@@ -37,7 +38,19 @@ export function Reference({ current, graph, t }: Props) {
   )
   return (
     <div className="review-answer">
-      <p className="review-reference">{current.notes?.trim() ? current.notes : t.noReference}</p>
+      {current.notes?.trim() ? (
+        <MarkdownInput
+          key={current.id}
+          className="review-reference min-h-0 overflow-visible border-0 bg-transparent p-0"
+          aria-label={current.label}
+          value={current.notes}
+          onChange={() => {}}
+          readOnly
+          history={false}
+        />
+      ) : (
+        <p className="review-reference">{t.noReference}</p>
+      )}
       {relations.length > 0 && (
         <section className="review-connections">
           <h2>{t.connections}</h2>
