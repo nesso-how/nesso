@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.0.0-beta.12 — 2026-11-10
+
+### Features
+
+- **review:** Cue relation types in recall prompts (#285)
+- **chat:** Render markdown tables (#287)
+- **chat:** Highlight code blocks (#288)
+- **release:** Unify app and plugin publishing (#289)
+- **notes:** Restore scroll position per view on reopen (#290)
+- **notes:** Add task lists and refine markdown spacing (#291)
+
 ## 1.0.0-beta.11 — 2026-11-09
 
 ### Fixes
