@@ -135,6 +135,7 @@ export async function verifyNotes({ window, url }: CheckContext) {
       `new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(document.querySelector('.notes-content').scrollTop))))`,
     ) as Promise<number>
   frame = await open(null, true)
+  assert.equal(await scrollTop(), 0)
   await frame.executeJavaScript(
     `(()=>{const content=document.querySelector('.notes-content');content.scrollTop=content.scrollHeight/2})()`,
   )
