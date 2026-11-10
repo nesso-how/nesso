@@ -189,6 +189,7 @@ export function Practice({
                     {previews.map(({ grade, card }) => (
                       <Button
                         key={grade}
+                        className={`review-rating-grade-${grade}`}
                         variant="outline"
                         disabled={busy || failed}
                         aria-keyshortcuts={String(grade)}
