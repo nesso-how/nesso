@@ -182,6 +182,10 @@
   font-size: 11px;
   color: var(--muted-foreground);
 }
+.review-blank {
+  font-family: var(--font-mono);
+  color: var(--muted-foreground);
+}
 .review-controls {
   padding-block: 16px 24px;
 }

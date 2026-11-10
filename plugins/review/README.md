@@ -4,7 +4,7 @@ Isolated action plugin for spaced-repetition practice of a view’s concepts wit
 
 ## Usage
 
-Open the bundled **Review** action from a view’s actions. The overview includes every concept in that view, with new and due concepts first. Start a round, recall each concept, reveal its notes and in-view connections, then choose **Again / Hard / Good / Easy**. Space reveals; keys 1–4 rate. Escape or **End session** finishes the round immediately and returns to the overview, keeping completed reviews and leaving remaining concepts available.
+Open the bundled **Review** action from a view’s actions. The overview includes every concept in that view, with new and due concepts first. Start a round and recall each concept: when it has in-view connections, the prompt lists their relation types and directions with the other concepts hidden, and also asks for an explanation if the concept has notes; otherwise it asks only for an explanation. Reveal its notes and in-view connections, then choose **Again / Hard / Good / Easy**. Space reveals; keys 1–4 rate. Escape or **End session** finishes the round immediately and returns to the overview, keeping completed reviews and leaving remaining concepts available.
 
 The action badge counts new and due concepts in its target view, even with the panel closed. It updates after progress or graph changes and when the next scheduled concept becomes due; zero counts are hidden.
 
