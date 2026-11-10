@@ -8,7 +8,7 @@ const render = (content: string) => renderToStaticMarkup(createElement(ChatMarkd
 
 test('assistant Markdown renders basic formatting and code', () => {
   const html = render(
-    '# Title\n\n**Bold** and *italic* with `code`.\n\n- First\n- Second\n\n1. Ordered\n\n> Quote\n\n```ts\nconst value = 1\n```',
+    '# Title\n\n**Bold** and *italic* with `code`.\n\n- First\n- Second\n\n1. Ordered\n\n> Quote\n\n```\nconst value = 1\n```',
   )
   for (const expected of [
     '<h1>Title</h1>',
@@ -19,10 +19,27 @@ test('assistant Markdown renders basic formatting and code', () => {
     '<li>First</li>',
     '<ol>',
     '<blockquote>',
-    '<pre><code class="language-ts">const value = 1\n</code></pre>',
+    '<pre><code>const value = 1\n</code></pre>',
   ]) {
     assert.ok(html.includes(expected), expected)
   }
+})
+
+test('assistant Markdown highlights complete and streaming code without interpreting its content', () => {
+  const source = '```ts\nconst value = "<script>alert(1)</script>'
+  for (const content of [source, `${source}"\n\`\`\``]) {
+    const html = render(content)
+    assert.match(html, /<code class="hljs language-ts">/)
+    assert.match(html, /<span class="hljs-keyword">const<\/span>/)
+    assert.match(html, /&lt;script&gt;alert\(1\)&lt;\/script&gt;/)
+    assert.doesNotMatch(html, /<script\b/)
+  }
+})
+
+test('assistant Markdown keeps unknown languages unhighlighted', () => {
+  const html = render('```nesso-unknown\nconst value = 1\n```')
+  assert.match(html, /const value = 1\n<\/code><\/pre>/)
+  assert.doesNotMatch(html, /<span/)
 })
 
 test('assistant Markdown renders tables with aligned columns and inline formatting', () => {

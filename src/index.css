@@ -924,6 +924,24 @@
   border-radius: 0;
   background: transparent;
 }
+.chat-markdown :is(.hljs-comment, .hljs-quote) {
+  color: var(--muted-foreground);
+}
+.chat-markdown :is(.hljs-keyword, .hljs-selector-tag, .hljs-doctag, .hljs-meta) {
+  color: #7c3c85;
+}
+.chat-markdown :is(.hljs-string, .hljs-regexp, .hljs-addition) {
+  color: #37643a;
+}
+.chat-markdown :is(.hljs-number, .hljs-literal, .hljs-built_in, .hljs-symbol) {
+  color: #854b23;
+}
+.chat-markdown :is(.hljs-title, .hljs-attr, .hljs-type, .hljs-name, .hljs-selector-class) {
+  color: #245985;
+}
+.chat-markdown .hljs-deletion {
+  color: #934a35;
+}
 .chat-markdown a {
   text-decoration: underline;
   text-underline-offset: 2px;

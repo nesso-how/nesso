@@ -1,10 +1,12 @@
 import { createElement, memo } from 'react'
 import Markdown, { type Components } from 'react-markdown'
+import rehypeHighlight from 'rehype-highlight'
 import remarkGfm from 'remark-gfm'
 import { isAllowedExternalLink } from '../../../shared/link-policy.ts'
 
 const disallowedElements = ['img']
 const remarkPlugins = [remarkGfm]
+const rehypePlugins = [rehypeHighlight]
 const urlTransform = (url: string) => (isAllowedExternalLink(url) ? url : '')
 const components: Components = {
   a: ({ href, children }) =>
@@ -25,7 +27,14 @@ export const ChatMarkdown = memo(function ChatMarkdown({ content }: { content: s
     { className: 'chat-markdown' },
     createElement(
       Markdown,
-      { skipHtml: true, disallowedElements, urlTransform, components, remarkPlugins },
+      {
+        skipHtml: true,
+        disallowedElements,
+        urlTransform,
+        components,
+        remarkPlugins,
+        rehypePlugins,
+      },
       content,
     ),
   )
