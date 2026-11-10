@@ -61,6 +61,7 @@
   }
 
   .nesso-markdown-input {
+    --nesso-list-inset: 0.5em;
     display: flex;
   }
 
@@ -90,6 +91,29 @@
     display: inline-block;
     min-width: var(--nesso-list-indent);
     text-indent: 0;
+  }
+
+  .nesso-markdown-bullet {
+    display: inline-block;
+    transform: scale(1.2);
+  }
+
+  .nesso-markdown-task {
+    width: 0.875em;
+    height: 0.875em;
+    margin: 0;
+    vertical-align: -0.1em;
+    accent-color: var(--primary);
+    cursor: pointer;
+  }
+
+  .nesso-markdown-input [aria-readonly='true'] .nesso-markdown-task {
+    cursor: default;
+  }
+
+  .nesso-markdown-task-done {
+    color: var(--muted-foreground);
+    text-decoration: line-through;
   }
 
   .nesso-popup {

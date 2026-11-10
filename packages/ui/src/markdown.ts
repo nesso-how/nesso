@@ -1,31 +1,117 @@
-import { EditorSelection, type EditorState, type Range } from '@codemirror/state'
+import { EditorSelection, Facet, type EditorState, type Range } from '@codemirror/state'
 import { Decoration, WidgetType, type DecorationSet, type EditorView } from '@codemirror/view'
-import { parser } from '@lezer/markdown'
+import { parser, TaskList } from '@lezer/markdown'
+
+type SyntaxNode = ReturnType<ReturnType<typeof parser.parse>['resolveInner']>
 
 const listPrefix = /^(\s*)([-+*]|(\d{1,9})([.)]))([\t ]+|$)/
+const taskPrefix = /^\[[ xX]\]([\t ]+|$)/
+const taskParser = parser.configure(TaskList)
+
+export const markdownTasks = Facet.define<boolean | undefined, boolean>({
+  combine: (values) => values.some(Boolean),
+})
+
+const parse = (state: EditorState) =>
+  (state.facet(markdownTasks) ? taskParser : parser).parse(state.doc.toString())
 
 class ListMarker extends WidgetType {
   readonly label: string
+  readonly checked: boolean | null
 
-  constructor(label: string) {
+  constructor(label: string, checked: boolean | null = null) {
     super()
     this.label = label
+    this.checked = checked
   }
 
   eq(other: ListMarker) {
-    return this.label === other.label
+    return this.label === other.label && this.checked === other.checked
   }
 
   toDOM(view: EditorView) {
-    const marker = view.dom.ownerDocument.createElement('span')
+    const document = view.dom.ownerDocument
+    const marker = document.createElement('span')
     marker.className = 'nesso-markdown-list-marker'
     marker.textContent = this.label
+    if (this.label === '• ') {
+      const bullet = document.createElement('span')
+      bullet.className = 'nesso-markdown-bullet'
+      bullet.textContent = '•'
+      marker.replaceChildren(bullet, document.createTextNode(' '))
+    }
+    if (this.checked !== null) {
+      const checkbox = document.createElement('input')
+      checkbox.type = 'checkbox'
+      checkbox.className = 'nesso-markdown-task'
+      checkbox.checked = this.checked
+      checkbox.tabIndex = -1
+      marker.append(checkbox)
+    }
     return marker
   }
 
   ignoreEvent() {
     return false
   }
+}
+
+function markerWidth(item: SyntaxNode) {
+  const marker = item.getChild('ListMark')!
+  const task = item.getChild('Task') ? 1.4 : 0
+  return item.parent?.name === 'BulletList'
+    ? { ch: 0, em: task || 1 }
+    : { ch: marker.to - marker.from - 1, em: 0.75 + task }
+}
+
+function markerLabel(state: EditorState, item: SyntaxNode, checked: boolean | null) {
+  if (item.parent?.name !== 'BulletList') {
+    const marker = item.getChild('ListMark')!
+    return `${state.sliceDoc(marker.from, marker.to)} `
+  }
+  return checked === null ? '• ' : ''
+}
+
+function listPadding(item: SyntaxNode) {
+  const padding = { ch: 0, em: 0 }
+  for (let node: SyntaxNode | null = item; node; node = node.parent) {
+    if (node.name !== 'ListItem') continue
+    const width = markerWidth(node)
+    padding.ch += width.ch
+    padding.em += width.em
+  }
+  return padding
+}
+
+function listItemDecorations(state: EditorState, item: SyntaxNode, active: boolean) {
+  const marker = item.getChild('ListMark')!
+  const task = item.getChild('Task')
+  const taskMarker = task?.getChild('TaskMarker')
+  const checked = taskMarker
+    ? state.sliceDoc(taskMarker.from + 1, taskMarker.from + 2) !== ' '
+    : null
+  const line = state.doc.lineAt(marker.from)
+  const from = /^[\t ]*$/.test(state.sliceDoc(line.from, marker.from)) ? line.from : marker.from
+  const start = taskMarker?.to ?? marker.to
+  const end = start + state.sliceDoc(start, line.to).match(/^[\t ]*/)![0].length
+  const label = markerLabel(state, item, checked)
+  const width = markerWidth(item)
+  const padding = listPadding(item)
+  const decorations = [
+    Decoration.line({
+      class: 'nesso-markdown-list-item',
+      attributes: {
+        style: `--nesso-list-indent: calc(${width.ch}ch + ${width.em}em); --nesso-list-padding: calc(var(--nesso-list-inset) + ${padding.ch}ch + ${padding.em}em)`,
+      },
+    }).range(line.from),
+    (active
+      ? Decoration.mark({ class: 'nesso-markdown-syntax nesso-markdown-list-marker' })
+      : Decoration.replace({ widget: new ListMarker(label, checked) })
+    ).range(from, end),
+  ]
+  if (checked && task && end < task.to)
+    decorations.push(Decoration.mark({ class: 'nesso-markdown-task-done' }).range(end, task.to))
+  return decorations
 }
 
 export function markdownDecorations(state: EditorState, focused: boolean): DecorationSet {
@@ -39,7 +125,7 @@ export function markdownDecorations(state: EditorState, focused: boolean): Decor
     decorations.push(decoration.range(from, to))
   }
 
-  parser.parse(source).iterate({
+  parse(state).iterate({
     enter(node) {
       if (['Image', 'InlineCode', 'FencedCode', 'CodeBlock', 'HTMLBlock'].includes(node.name))
         return false
@@ -47,26 +133,8 @@ export function markdownDecorations(state: EditorState, focused: boolean): Decor
         focused &&
         state.selection.ranges.some((range) => range.from <= node.to && range.to >= node.from)
 
-      if (node.name === 'ListItem') {
-        const marker = node.node.getChild('ListMark')!
-        const line = state.doc.lineAt(marker.from)
-        const end = marker.to + (source.slice(marker.to, line.to).match(/^[\t ]*/)?.[0].length ?? 0)
-        const label =
-          node.node.parent?.name === 'BulletList' ? '•' : source.slice(marker.from, marker.to)
-        const width = Math.max(3, end - marker.from)
-        decorations.push(
-          Decoration.line({
-            class: 'nesso-markdown-list-item',
-            attributes: {
-              style: `--nesso-list-indent: ${width}ch; --nesso-list-padding: ${marker.from - line.from + width}ch`,
-            },
-          }).range(line.from),
-          (active
-            ? Decoration.mark({ class: 'nesso-markdown-syntax nesso-markdown-list-marker' })
-            : Decoration.replace({ widget: new ListMarker(`${label} `) })
-          ).range(marker.from, end),
-        )
-      }
+      if (node.name === 'ListItem')
+        decorations.push(...listItemDecorations(state, node.node, active))
 
       if (node.name === 'StrongEmphasis' || node.name === 'Emphasis') {
         const [open, close] = node.node.getChildren('EmphasisMark')
@@ -105,7 +173,7 @@ function markdownListItem(state: EditorState) {
   const { from, to } = state.selection.main
   const line = state.doc.lineAt(from)
   if (to > line.to) return null
-  let node = parser.parse(state.doc.toString()).resolveInner(from, -1)
+  let node = parse(state).resolveInner(from, -1)
   while (node.name !== 'ListItem') {
     if (['FencedCode', 'CodeBlock', 'HTMLBlock'].includes(node.name) || !node.parent) return null
     node = node.parent
@@ -167,16 +235,23 @@ export function continueMarkdownList(state: EditorState) {
   if (!item) return null
   const { node, firstLine, prefix } = item
   let { from, to } = state.selection.main
-  if (from < firstLine.from + prefix[0].length) return null
-  let insert = nextListPrefix(prefix)
+  const task = state.facet(markdownTasks)
+    ? (firstLine.text.slice(prefix[0].length).match(taskPrefix)?.[0] ?? '')
+    : ''
+  if (from < firstLine.from + prefix[0].length + task.length) return null
+  const next = (prefix: RegExpMatchArray) => {
+    const marker = nextListPrefix(prefix)
+    return marker === null ? null : marker + (task && '[ ] ')
+  }
+  let insert = next(prefix)
   if (
     state.doc.lineAt(from).from === firstLine.from &&
-    !firstLine.text.slice(prefix[0].length).trim()
+    !firstLine.text.slice(prefix[0].length + task.length).trim()
   ) {
     const parent = node.parent?.parent
     const parentPrefix =
       parent?.name === 'ListItem' ? state.doc.lineAt(parent.from).text.match(listPrefix) : null
-    insert = parentPrefix ? nextListPrefix(parentPrefix) : ''
+    insert = parentPrefix ? next(parentPrefix) : ''
     from = firstLine.from
     to = firstLine.to
   } else if (insert !== null) insert = `\n${insert}`
@@ -188,12 +263,26 @@ export function continueMarkdownList(state: EditorState) {
   }
 }
 
+export function toggleMarkdownTask(state: EditorState, position: number) {
+  if (state.readOnly || !state.facet(markdownTasks)) return null
+  const marker = parse(state)
+    .resolveInner(position, 1)
+    .parent?.getChild('Task')
+    ?.getChild('TaskMarker')
+  if (!marker) return null
+  const from = marker.from + 1
+  return {
+    changes: { from, to: from + 1, insert: state.sliceDoc(from, from + 1) === ' ' ? 'x' : ' ' },
+    userEvent: 'input.toggle',
+  }
+}
+
 export function toggleMarkdownFormat(state: EditorState, marker: '*' | '**') {
   if (state.readOnly) return null
   const { from, to } = state.selection.main
   const selected = state.sliceDoc(from, to)
   let delimiters: { from: number; to: number }[] | undefined
-  parser.parse(state.doc.toString()).iterate({
+  parse(state).iterate({
     enter(node) {
       if (node.name !== (marker === '**' ? 'StrongEmphasis' : 'Emphasis')) return
       const [open, close] = node.node.getChildren('EmphasisMark')

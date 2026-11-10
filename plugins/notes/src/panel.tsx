@@ -138,6 +138,7 @@ function Editor({
         value={state.text}
         onChange={notes.setText}
         readOnly={state.failed}
+        tasks
         placeholder={t.placeholder}
       />
     </NotesPage>
