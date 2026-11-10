@@ -309,7 +309,7 @@ async function verifyBundledDetails(driver: Driver, state: InstallState, window:
                 'Recolor concepts',
                 'Style concepts',
                 'Connect relations',
-                'Update view membership',
+                'Create views',
               ],
               capabilities: [files],
             }
