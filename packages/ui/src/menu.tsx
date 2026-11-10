@@ -17,7 +17,7 @@ export function MenuPopup({
       <Menu.Positioner align={align} anchor={anchor} sideOffset={sideOffset} className="z-50">
         <Menu.Popup
           className={cn(
-            'nesso-popup w-max min-w-32 max-w-[calc(100vw-32px)] max-h-(--available-height) overflow-y-auto p-1',
+            'nesso-popup nesso-scroll w-max min-w-32 max-w-[calc(100vw-32px)] max-h-(--available-height) overflow-y-auto p-1',
             className,
           )}
           {...props}

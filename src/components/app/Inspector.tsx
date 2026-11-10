@@ -232,7 +232,7 @@ export function Inspector({
     <aside
       id="details-panel"
       aria-label={t('details')}
-      className="flex h-full flex-col gap-[26px] overflow-y-auto bg-background px-5 py-6 text-sm"
+      className="nesso-scroll flex h-full flex-col gap-[26px] overflow-y-auto bg-background px-5 py-6 text-sm"
     >
       {selected.length > 0 && (
         <ContextLabel>{t(selectedEdge ? 'relation' : item ? item.kind : 'selection')}</ContextLabel>

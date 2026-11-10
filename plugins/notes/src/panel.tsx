@@ -16,7 +16,7 @@ function NotesPage({
 }) {
   return (
     <PluginPage className="notes-page">
-      <div className="notes-content">
+      <div className="notes-content nesso-scroll">
         <PluginContent className="notes-document">
           <h1 id="notes-title">{title}</h1>
           {children}

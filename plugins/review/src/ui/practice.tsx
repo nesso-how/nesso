@@ -149,9 +149,9 @@ export function Practice({
         </div>
       )}
       <div className={`review-main${current ? ' is-studying' : ''}`}>
-        <div ref={reading} className="review-reading">
+        <div ref={reading} className="review-reading nesso-scroll">
           {current && session ? (
-            <PluginContent className="review-study">
+            <PluginContent className="review-study nesso-scroll">
               <p className="review-step">
                 {session.index + 1} / {session.ids.length}
               </p>
@@ -179,7 +179,7 @@ export function Practice({
             />
           )}
           {current && (
-            <PluginContent ref={controls} className="review-controls">
+            <PluginContent ref={controls} className="review-controls nesso-scroll">
               {revealed ? (
                 <>
                   <p className="review-rating-title">

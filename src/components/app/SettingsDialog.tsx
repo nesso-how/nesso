@@ -103,7 +103,7 @@ export function SettingsDialog({
         <Dialog.Description className="sr-only">{t('generalDescription')}</Dialog.Description>
       </PanelHeader>
       <div className="settings-body">
-        <nav ref={navigation} className="settings-sidebar" aria-label={t('settings')}>
+        <nav ref={navigation} className="settings-sidebar nesso-scroll" aria-label={t('settings')}>
           <Button
             variant="ghost"
             className="settings-nav w-full justify-start"
@@ -156,7 +156,9 @@ export function SettingsDialog({
             </Button>
           </div>
         </nav>
-        <div className={`settings-content${pluginPage ? ' settings-plugin-content' : ''}`}>
+        <div
+          className={`settings-content nesso-scroll${pluginPage ? ' settings-plugin-content' : ''}`}
+        >
           <PluginSettings page={page} onPageChange={setPage} titleRef={pageTitle} />
           {page === 'shortcuts' && <ShortcutSettings titleRef={pageTitle} />}
           {page === 'about' && <About titleRef={pageTitle} onDiscover={onDiscover} />}

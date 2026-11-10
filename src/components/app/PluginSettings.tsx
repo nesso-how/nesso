@@ -270,7 +270,7 @@ export function PluginSettings({
   if (page !== 'plugins' && page !== 'plugin-find' && !name) return null
   return (
     <div className="plugin-settings">
-      <div className="plugin-scroll" hidden={detail}>
+      <div className="plugin-scroll nesso-scroll" hidden={detail}>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2
             ref={detail ? undefined : titleRef}

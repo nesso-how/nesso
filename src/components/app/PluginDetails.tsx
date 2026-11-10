@@ -496,7 +496,7 @@ export function PluginDetails(props: Props) {
   const metadata = pluginMetadata(info, locale)
   return (
     <>
-      <div className="plugin-scroll">
+      <div className="plugin-scroll nesso-scroll">
         <DetailHeader
           titleRef={titleRef}
           back={back}

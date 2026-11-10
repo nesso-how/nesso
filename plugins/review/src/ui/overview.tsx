@@ -71,7 +71,7 @@ export function Overview({
         </p>
       )}
       {ordered.length ? (
-        <ul className="review-list" tabIndex={0} aria-label={t.concepts}>
+        <ul className="review-list nesso-scroll" tabIndex={0} aria-label={t.concepts}>
           {ordered.map((concept) => {
             const record = progress.get(concept.id)
             return (
