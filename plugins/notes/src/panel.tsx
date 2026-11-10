@@ -1,22 +1,53 @@
-import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react'
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+} from 'react'
 import { Banner, BannerRow, Button, MarkdownInput, PluginContent, PluginPage } from '@nesso-how/ui'
 import type { ActionContext } from '@nesso-how/plugin'
 import { createNotes, type Notes } from './notes.ts'
 import { messages } from './i18n.ts'
 import './styles.css'
 
+const scrollPositions = new Map<string | null, number>()
+
 function NotesPage({
   title,
   children,
   banner,
+  viewId,
 }: {
   title: string
   children?: ReactNode
   banner?: ReactNode
+  viewId?: string | null
 }) {
+  const content = useRef<HTMLDivElement>(null)
+  useLayoutEffect(() => {
+    if (viewId === undefined) return
+    const element = content.current!
+    const target = scrollPositions.get(viewId) ?? 0
+    const restore = () => {
+      element.scrollTop = target
+    }
+    restore()
+    const frame = requestAnimationFrame(restore)
+    return () => cancelAnimationFrame(frame)
+  }, [viewId])
   return (
     <PluginPage className="notes-page">
-      <div className="notes-content nesso-scroll">
+      <div
+        ref={content}
+        className="notes-content nesso-scroll"
+        onScroll={
+          viewId === undefined
+            ? undefined
+            : ({ currentTarget }) => scrollPositions.set(viewId, currentTarget.scrollTop)
+        }
+      >
         <PluginContent className="notes-document">
           <h1 id="notes-title">{title}</h1>
           {children}
@@ -86,16 +117,19 @@ function Editor({
   notes,
   title,
   locale,
+  viewId,
 }: {
   notes: Notes
   title: string
   locale: keyof typeof messages
+  viewId: string | null
 }) {
   const state = useSyncExternalStore(notes.subscribe, notes.getSnapshot)
   const t = messages[locale]
   return (
     <NotesPage
       title={title}
+      viewId={viewId}
       banner={state.failed ? <BannerRow message={t.saveError} /> : undefined}
     >
       <MarkdownInput
@@ -130,5 +164,5 @@ export function NotesPanel({ document, storage, viewId, signal }: ActionContext)
         </p>
       </NotesPage>
     )
-  return <Editor notes={notes} title={title} locale={state.locale} />
+  return <Editor notes={notes} title={title} locale={state.locale} viewId={viewId} />
 }

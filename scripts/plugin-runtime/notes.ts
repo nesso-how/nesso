@@ -127,6 +127,27 @@ export async function verifyNotes({ window, url }: CheckContext) {
     ),
     true,
   )
+  await evaluate(
+    `window.__notesRecords.push({key:'notes',value:{version:1,text:'Line\\n'.repeat(200)}});for(const record of window.__notesRecords)if(record.scope)record.value.text+='\\nLine'.repeat(200)`,
+  )
+  const scrollTop = () =>
+    frame.executeJavaScript(
+      `new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(document.querySelector('.notes-content').scrollTop))))`,
+    ) as Promise<number>
+  frame = await open(null, true)
+  await frame.executeJavaScript(
+    `(()=>{const content=document.querySelector('.notes-content');content.scrollTop=content.scrollHeight/2})()`,
+  )
+  const scrolled = await scrollTop()
+  assert.ok(scrolled > 0)
+  await evaluate(
+    `document.querySelector('#notes-probe').hidden=true;window.__notesPort.postMessage({type:'close',reason:'Closed'});new Promise(resolve=>setTimeout(resolve,200))`,
+  )
+  await evaluate(`document.querySelector('#notes-probe').hidden=false`)
+  frame = await open('urn:project', true)
+  assert.equal(await scrollTop(), 0)
+  frame = await open(null, true)
+  assert.equal(await scrollTop(), scrolled)
   await close()
   frame = await open('urn:project')
   assert.equal(

@@ -4,7 +4,7 @@ Isolated action plugin for free-form Markdown notes on each view without changin
 
 ## Usage
 
-Open the bundled **Notes** action from a view’s actions. The view name is the title; the shared `MarkdownInput` editor provides live preview and autosave without a toolbar or Save button. Undo/redo stays local to the editor. Overview has document-level notes; each saved view has its own notes.
+Open the bundled **Notes** action from a view’s actions. The view name is the title; the shared `MarkdownInput` editor provides live preview and autosave without a toolbar or Save button. Undo/redo stays local to the editor. Overview has document-level notes; each saved view has its own notes. Reopening the panel restores each view's scroll position from memory until the app closes or the document changes; it is never saved.
 
 Notes are private plugin data, separate from concept notes, JSON-LD exports, and graph history, but included in backups. Deleting a view retains its notes across restart; undoing deletion reconnects them. There is no automatic cleanup or orphan-recovery interface.
 
