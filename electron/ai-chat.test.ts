@@ -28,11 +28,14 @@ const input: AiChatRequest = {
     { id: 'user', role: 'user', content: 'Add a concept' },
   ],
 }
-const completion = (delta: object, finish = 'stop') =>
+const completion = (delta: object, finish = 'stop', usage?: object) =>
   new Response(
     [
       { choices: [{ index: 0, delta, finish_reason: null }] },
-      { choices: [{ index: 0, delta: {}, finish_reason: finish }] },
+      {
+        choices: [{ index: 0, delta: {}, finish_reason: finish }],
+        ...(usage ? { usage } : {}),
+      },
     ]
       .map(
         (value) =>
@@ -76,7 +79,11 @@ test('provider streaming shares tool schemas, waits for host replies and keeps l
         'tool_calls',
       )
     assert.ok(body.messages.some((message: { role: string }) => message.role === 'tool'))
-    return completion({ content: 'A proposed concept.' })
+    return completion({ content: 'A proposed concept.' }, 'stop', {
+      prompt_tokens: 120,
+      completion_tokens: 30,
+      total_tokens: 150,
+    })
   }
   const run = createAiChatRun(
     entry,
@@ -100,7 +107,7 @@ test('provider streaming shares tool schemas, waits for host replies and keeps l
     },
     request,
   )
-  assert.equal(await run.result, true)
+  assert.deepEqual(await run.result, { totalTokens: 150 })
   assert.equal(calls, 2)
   assert.deepEqual(
     events.filter(({ type }) => type !== 'activity').map(({ type }) => type),
@@ -150,10 +157,15 @@ test('Stop, tool failure and incomplete provider replies never report successful
       },
       request,
     )
-    await assert.rejects(
-      run.result,
-      (error) => error instanceof ElectronError && !error.message.includes('secret-key'),
-    )
+    await assert.rejects(run.result, (error) => {
+      assert.ok(error instanceof ElectronError)
+      assert.ok(!error.message.includes('secret-key'))
+      assert.equal(
+        error.issues[0].message,
+        mode === 'http' ? 'aiChatAuthenticationFailed' : 'aiChatProviderFailed',
+      )
+      return true
+    })
   }
 })
 
@@ -241,7 +253,7 @@ test('ChatGPT streaming uses stateless Responses, namespaced tools and preserves
     },
     request,
   )
-  assert.equal(await run.result, true)
+  assert.deepEqual(await run.result, {})
   assert.equal(calls, 2)
   assert.deepEqual(
     events.filter(({ type }) => type !== 'activity').map(({ type }) => type),
@@ -311,7 +323,7 @@ test(
       callId: 'context-call',
       result: { value: { items: [], total: 0, nextOffset: null } },
     })
-    assert.equal(await run.result, true)
+    assert.deepEqual(await run.result, {})
     assert.deepEqual(activities, ['context', 'concepts', 'context', null])
   },
 )
@@ -350,9 +362,8 @@ test('ChatGPT usage errors after output are actionable and interrupted streams n
       (error) =>
         error instanceof ElectronError &&
         !error.message.includes('secret') &&
-        (terminal.startsWith('subscription')
-          ? error.issues[0].path === 'chatgpt.usage'
-          : error.issues[0].path === 'chat'),
+        error.issues[0].message ===
+          (terminal.startsWith('subscription') ? 'aiChatUsageUnavailable' : 'aiChatProviderFailed'),
     )
   }
 })

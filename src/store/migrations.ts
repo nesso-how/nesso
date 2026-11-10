@@ -1,7 +1,15 @@
 import { z } from 'zod'
 import { iriSchema, newIri } from '@nesso-how/schema'
 import { checkMessageSize, pluginStorageLimits } from '@nesso-how/plugin/runtime'
+import { aiChatLimits, aiConversation } from '@nesso-how/ai'
 import { defaultCanvasTabOrder, fail, parseSettings, preferencesSchema } from './settings.ts'
+
+const conversationV1 = z.strictObject({
+  version: z.literal(1),
+  messages: z
+    .array(aiConversation.shape.messages.element.omit({ stats: true }))
+    .max(aiChatLimits.messageCount),
+})
 
 const documentV1 = z.strictObject({
   version: z.literal(1),
@@ -41,6 +49,18 @@ export function migratePreferences(value: unknown): z.infer<typeof preferencesV3
       return parseSettings(preferencesV3, value)
     default:
       return fail('version', 'Unsupported preferences version')
+  }
+}
+
+export function migrateConversation(value: unknown): z.infer<typeof aiConversation> {
+  const { version } = parseSettings(versionSchema, value)
+  switch (version) {
+    case 1:
+      return migrateConversation({ ...parseSettings(conversationV1, value), version: 2 })
+    case 2:
+      return parseSettings(aiConversation, value)
+    default:
+      return fail('version', 'Unsupported conversation version')
   }
 }
 

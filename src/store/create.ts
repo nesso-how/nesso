@@ -64,7 +64,7 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
     pluginStorage,
     workspace,
     conversation: parseConversation({
-      version: 1,
+      version: 2,
       messages: restored.conversation?.messages ?? [],
     }),
     preferences: { ...preferences, activeVocabId: '', activeRendererId: '', activeThemeId: '' },

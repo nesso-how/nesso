@@ -10,6 +10,7 @@ import {
   aiChatLimits,
   aiTools,
   type AiChatRequest,
+  type AiChatResult,
   type AiChatEvent,
   type AiToolReply,
 } from '@nesso-how/ai'
@@ -36,28 +37,11 @@ const failure = (error?: unknown) => {
     code === 'subscription_sharing_usage_limit_exceeded' ||
     code === 'subscription_sharing_usage_unavailable'
   ) {
-    return new ElectronError([
-      {
-        path: 'chatgpt.usage',
-        message:
-          'ChatGPT plan usage is unavailable or its limit was reached. Manage usage in ChatGPT settings',
-      },
-    ])
+    return new ElectronError([{ path: 'chatgpt.usage', message: 'aiChatUsageUnavailable' }])
   }
   if (parsed.success && parsed.data.statusCode === 401)
-    return new ElectronError([
-      {
-        path: 'chat',
-        message:
-          'Provider authentication expired or was revoked. Update the connection or sign in again',
-      },
-    ])
-  return new ElectronError([
-    {
-      path: 'chat',
-      message: 'Provider request failed or was incomplete. Check the connection and try again',
-    },
-  ])
+    return new ElectronError([{ path: 'chat', message: 'aiChatAuthenticationFailed' }])
+  return new ElectronError([{ path: 'chat', message: 'aiChatProviderFailed' }])
 }
 
 const modelFor = (entry: Connection, request: typeof fetch) => {
@@ -115,7 +99,7 @@ export function createAiChatRun(
       },
     ]),
   )
-  const result = (async (): Promise<true> => {
+  const result = (async (): Promise<AiChatResult> => {
     try {
       const safeRequest: typeof fetch = (url, options) =>
         request(url, { ...options, redirect: 'error' })
@@ -139,6 +123,7 @@ export function createAiChatRun(
       })
       let length = 0
       let complete = false
+      let totalTokens: number | undefined
       const activeTools = new Map<string, keyof typeof aiTools>()
       let activity: keyof typeof aiTools | null = null
       const reportActivity = () => {
@@ -161,10 +146,18 @@ export function createAiChatRun(
           emit({ id: input.id, type: 'text', text: part.text })
         } else if (part.type === 'error') throw failure(part.error)
         else if (part.type === 'tool-error' || part.type === 'abort') throw failure()
-        else if (part.type === 'finish') complete = part.finishReason === 'stop'
+        else if (part.type === 'finish') {
+          complete = part.finishReason === 'stop'
+          const { inputTokens, outputTokens, totalTokens: reported } = part.totalUsage
+          totalTokens =
+            reported ??
+            (inputTokens !== undefined && outputTokens !== undefined
+              ? inputTokens + outputTokens
+              : undefined)
+        }
       }
       if (!complete || signal.aborted) throw failure()
-      return true
+      return totalTokens === undefined ? {} : { totalTokens }
     } catch (error) {
       throw error instanceof ElectronError ? error : failure(error)
     } finally {

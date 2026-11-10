@@ -9,6 +9,12 @@ const aiChatMessage = z.strictObject({
   role: z.enum(['user', 'assistant']),
   content: z.string().max(aiChatLimits.messageLength),
   outcome: z.enum(['complete', 'applied', 'cancelled', 'error']).optional(),
+  stats: z
+    .strictObject({
+      durationMs: z.number().min(0),
+      totalTokens: z.number().int().min(0).optional(),
+    })
+    .optional(),
   summary: z
     .strictObject({
       added: z.number().int().min(0),
@@ -19,7 +25,7 @@ const aiChatMessage = z.strictObject({
     .optional(),
 })
 export const aiConversation = z.strictObject({
-  version: z.literal(1),
+  version: z.literal(2),
   messages: z.array(aiChatMessage).max(aiChatLimits.messageCount),
 })
 export const aiChatRequest = z.strictObject({
@@ -30,6 +36,7 @@ export const aiChatRequest = z.strictObject({
 })
 export type AiChatMessage = z.infer<typeof aiChatMessage>
 export type AiChatRequest = z.infer<typeof aiChatRequest>
+export type AiChatResult = { readonly totalTokens?: number }
 export type AiChatEvent = { readonly id: string } & (
   | { readonly type: 'text'; readonly text: string }
   | { readonly type: 'activity'; readonly tool: keyof typeof aiTools | null }

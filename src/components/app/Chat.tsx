@@ -1,6 +1,17 @@
-import { useEffect, useRef, useSyncExternalStore } from 'react'
-import { Button } from '@nesso-how/ui'
-import { ArrowUp, ArrowUpRight, Check, MessageCircle, Redo2, Square, Undo2, X } from 'lucide-react'
+import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
+import { Button, IconButton } from '@nesso-how/ui'
+import {
+  ArrowUp,
+  ArrowUpRight,
+  Check,
+  Copy,
+  MessageCircle,
+  Redo2,
+  RotateCcw,
+  Square,
+  Undo2,
+  X,
+} from 'lucide-react'
 import { defaultLocale } from '@nesso-how/i18n'
 import type { aiTools, AiChatMessage } from '@nesso-how/ai'
 import type { createAiChat } from '@/ai/chat'
@@ -15,6 +26,13 @@ const outcomes = {
   cancelled: 'aiChatCancelled',
   error: 'aiChatFailed',
 } as const
+const issueKeys = [
+  'aiChatProviderFailed',
+  'aiChatAuthenticationFailed',
+  'aiChatUsageUnavailable',
+  'aiChatLimitReached',
+  'storageBusy',
+] as const
 const starters = ['aiStarterHelp', 'aiStarterAnalysis', 'aiStarterAdd', 'aiStarterView'] as const
 const activities = {
   read_docs: 'aiChatReadingDocs',
@@ -28,6 +46,29 @@ const activities = {
   history: 'aiChatPreparingHistory',
 } as const satisfies Record<keyof typeof aiTools, string>
 
+const describeStats = (
+  stats: NonNullable<AiChatMessage['stats']>,
+  locale: string,
+  t: ReturnType<typeof useTranslation>,
+): string => {
+  const parts = [
+    new Intl.NumberFormat(locale, {
+      style: 'unit',
+      unit: 'second',
+      unitDisplay: 'narrow',
+      maximumFractionDigits: 1,
+    }).format(stats.durationMs / 1000),
+  ]
+  if (stats.totalTokens !== undefined)
+    parts.push(
+      t('aiMessageTokens', {
+        count: stats.totalTokens,
+        tokens: new Intl.NumberFormat(locale).format(stats.totalTokens),
+      }),
+    )
+  return parts.join(' · ')
+}
+
 const describeChanges = (
   summary: NonNullable<AiChatMessage['summary']>,
   t: ReturnType<typeof useTranslation>,
@@ -38,6 +79,45 @@ const describeChanges = (
   if (summary.removed > 0) parts.push(t('aiChangeRemoved', { count: summary.removed }))
   if (summary.memberships > 0) parts.push(t('aiChangeMembership', { count: summary.memberships }))
   return parts.join(' · ')
+}
+
+function CopyResponse({ content, t }: { content: string; t: ReturnType<typeof useTranslation> }) {
+  const [copied, setCopied] = useState(false)
+  const timer = useRef<number>(undefined)
+  useEffect(() => () => clearTimeout(timer.current), [])
+  if (!content) return null
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(content)
+      setCopied(true)
+      clearTimeout(timer.current)
+      timer.current = window.setTimeout(() => setCopied(false), 2500)
+    } catch {
+      setCopied(false)
+      notifications.api.notify({ tone: 'warning', title: t('aiCopyFailed') })
+    }
+  }
+  return (
+    <MessageAction label={t(copied ? 'copied' : 'aiCopyResponse')} onClick={() => void copy()}>
+      {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
+    </MessageAction>
+  )
+}
+
+function MessageAction({
+  label,
+  onClick,
+  children,
+}: {
+  label: string
+  onClick: () => void
+  children: ReactNode
+}) {
+  return (
+    <IconButton className="chat-action" aria-label={label} title={label} onClick={onClick}>
+      {children}
+    </IconButton>
+  )
 }
 
 export function Chat({
@@ -70,6 +150,22 @@ export function Chat({
   let lastAppliedId: string | undefined
   for (const message of messages)
     if (message.role === 'assistant' && message.outcome === 'applied') lastAppliedId = message.id
+  const lastOutcome = messages.at(-1)?.outcome
+  const editable = !readonly && !busy
+  const retryable = editable && (lastOutcome === 'error' || lastOutcome === 'cancelled')
+  const issues =
+    !readonly &&
+    state.issues
+      .map(({ message }) => {
+        const key = issueKeys.find((key) => key === message)
+        return key ? t(key) : message
+      })
+      .join('\n')
+  const turnIssues =
+    retryable &&
+    lastOutcome === 'error' &&
+    state.issues.every(({ path }) => path !== 'ai.limit') &&
+    issues
   const usageLimit = !readonly && state.issues.some(({ path }) => path === 'chatgpt.usage')
   const manageUsage = async () => {
     try {
@@ -95,6 +191,10 @@ export function Chat({
     follow.current = true
     void chat.send(draft, host, locale)
     onDraftChange('')
+  }
+  const retry = () => {
+    follow.current = true
+    void chat.retry(host, locale)
   }
   return (
     <section aria-label={t('chat')} className="chat-panel">
@@ -137,22 +237,21 @@ export function Chat({
           aria-live="polite"
           aria-relevant="additions text"
         >
-          {messages.map((message, index) => (
-            <article
-              key={message.id}
-              className={`chat-message ${message.role}`}
-              aria-label={t(message.role === 'user' ? 'aiYou' : 'aiAssistant')}
-            >
-              {message.content &&
-                (message.role === 'assistant' ? (
-                  <ChatMarkdown content={message.content} />
-                ) : (
-                  <p>{message.content}</p>
-                ))}
-              {message.role === 'assistant' &&
-                (index !== messages.length - 1 || !busy) &&
-                message.outcome &&
-                message.outcome !== 'complete' && (
+          {messages.map((message, index) => {
+            const settled = message.role === 'assistant' && (index !== messages.length - 1 || !busy)
+            return (
+              <article
+                key={message.id}
+                className={`chat-message ${message.role}`}
+                aria-label={t(message.role === 'user' ? 'aiYou' : 'aiAssistant')}
+              >
+                {message.content &&
+                  (message.role === 'assistant' ? (
+                    <ChatMarkdown content={message.content} />
+                  ) : (
+                    <p>{message.content}</p>
+                  ))}
+                {settled && message.outcome && message.outcome !== 'complete' && (
                   <div className="chat-outcome">
                     {message.outcome === 'applied' ? (
                       <Check aria-hidden="true" />
@@ -165,43 +264,65 @@ export function Chat({
                     ) : null}
                   </div>
                 )}
-              {!readonly &&
-                !busy &&
-                (canUndo || canRedo) &&
-                message.role === 'assistant' &&
-                message.outcome === 'applied' &&
-                message.id === lastAppliedId && (
-                  <div className="chat-confirmation-actions">
-                    {canUndo && (
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        title={t('aiUndoTitle')}
-                        aria-label={t('aiUndoTitle')}
-                        onClick={() => store.undo()}
-                      >
-                        <Undo2 aria-hidden="true" />
-                        {t('aiUndo')}
-                      </Button>
+                {turnIssues && index === messages.length - 1 && (
+                  <p role="alert" className="chat-outcome-detail">
+                    {turnIssues}
+                  </p>
+                )}
+                {editable &&
+                  (canUndo || canRedo) &&
+                  message.role === 'assistant' &&
+                  message.outcome === 'applied' &&
+                  message.id === lastAppliedId && (
+                    <div className="chat-confirmation-actions">
+                      {canUndo && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          title={t('aiUndoTitle')}
+                          aria-label={t('aiUndoTitle')}
+                          onClick={() => store.undo()}
+                        >
+                          <Undo2 aria-hidden="true" />
+                          {t('aiUndo')}
+                        </Button>
+                      )}
+                      {canRedo && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          title={t('aiRedoTitle')}
+                          aria-label={t('aiRedoTitle')}
+                          onClick={() => store.redo()}
+                        >
+                          <Redo2 aria-hidden="true" />
+                          {t('aiRedo')}
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                {settled && (
+                  <div className="chat-message-actions">
+                    {retryable && index === messages.length - 1 && (
+                      <MessageAction label={t('aiRetry')} onClick={retry}>
+                        <RotateCcw aria-hidden="true" />
+                      </MessageAction>
                     )}
-                    {canRedo && (
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        title={t('aiRedoTitle')}
-                        aria-label={t('aiRedoTitle')}
-                        onClick={() => store.redo()}
-                      >
-                        <Redo2 aria-hidden="true" />
-                        {t('aiRedo')}
-                      </Button>
-                    )}
+                    <div className="chat-message-secondary">
+                      <CopyResponse content={message.content} t={t} />
+                      {message.stats && (
+                        <span className="chat-message-stats" title={t('aiMessageStats')}>
+                          {describeStats(message.stats, locale, t)}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 )}
-            </article>
-          ))}
+              </article>
+            )
+          })}
         </div>
         {busy && (
           <div role="status" className="chat-working">
@@ -215,9 +336,9 @@ export function Chat({
             )}
           </div>
         )}
-        {!readonly && state.issues.length > 0 && (
+        {issues && !turnIssues && (
           <p role="alert" className="mb-5 whitespace-pre-line text-xs text-destructive">
-            {state.issues.map(({ message }) => message).join('\n')}
+            {issues}
           </p>
         )}
         {usageLimit && (
