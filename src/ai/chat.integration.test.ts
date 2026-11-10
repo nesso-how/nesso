@@ -5,6 +5,7 @@ import {
   aiChatLimits,
   type AiChatEvent,
   type AiChatRequest,
+  type AiChatResult,
   type AiDocumentation,
   type AiEffects,
   type AiResult,
@@ -19,7 +20,7 @@ const fixture = () => {
   const receive = (event: AiChatEvent) => {
     for (const listener of listeners) listener(event)
   }
-  let finish: (result: AiResult<true>) => void = () => {}
+  let finish: (result: AiResult<AiChatResult>) => void = () => {}
   let input: AiChatRequest
   const replies: AiToolReply[] = []
   const bridge: Pick<AiBridge, 'chat' | 'stop' | 'reply' | 'subscribeChat'> = {
@@ -64,7 +65,7 @@ const fixture = () => {
     host,
     replies,
     approvals,
-    finish: (result: AiResult<true>) => finish(result),
+    finish: (result: AiResult<AiChatResult>) => finish(result),
     tool: (name: string, value: unknown) =>
       receive({ id: input.id, type: 'tool', callId: name, name, input: value }),
     activity: (tool: keyof typeof aiTools | null, id = input.id) =>
@@ -98,7 +99,7 @@ test('chat reserves space for both new messages within the shared limit', async 
 
   f.host.store.setChatMessages(messages.slice(1))
   const sending = f.chat.send('Explain Nesso', f.host, 'en')
-  f.finish({ value: true })
+  f.finish({ value: {} })
   await sending
   assert.equal(f.host.store.getState().conversation.messages.length, aiChatLimits.messageCount)
   f.chat.dispose()
@@ -123,7 +124,7 @@ test('chat reads documentation with transient activity, ignores unrelated events
   assert.equal(f.chat.getSnapshot().tool, null)
   assert.equal(f.host.store.getState(), before)
   f.activity('concepts')
-  f.finish({ value: true })
+  f.finish({ value: {} })
   await sending
   assert.equal(f.host.store.getState().graph, before.graph)
   assert.equal(f.host.store.getState().history, before.history)
@@ -148,7 +149,7 @@ test('chat commits only after generation and clears its conversation on document
   f.edit([{ kind: 'concept.label', id: 'urn:first', value: 'Renamed' }])
   assert.equal(f.host.store.getState().graph.concepts[0].label, 'First')
   assert.ok('value' in f.replies[0].result)
-  f.finish({ value: true })
+  f.finish({ value: {} })
   await task
   assert.equal(f.host.store.getState().graph.concepts[0].label, 'Renamed')
   assert.equal(f.host.store.getState().conversation.messages.at(-1)?.outcome, 'applied')
@@ -163,7 +164,7 @@ test('chat commits only after generation and clears its conversation on document
   assert.equal(f.host.store.getState().conversation.messages.length, 2)
   const reset = f.chat.send('Reset', f.host, 'en')
   f.host.store.resetGraph()
-  f.finish({ value: true })
+  f.finish({ value: {} })
   await reset
   assert.equal(f.host.store.getState().conversation.messages.length, 0)
   assert.equal(f.host.store.getState().history.canUndo, false)
@@ -175,14 +176,14 @@ test('history turns report completion instead of applied, leaving action buttons
   const edit = f.chat.send('Rename it', f.host, 'en')
   f.emit('Proposed rename.')
   f.edit([{ kind: 'concept.label', id: 'urn:first', value: 'Renamed' }])
-  f.finish({ value: true })
+  f.finish({ value: {} })
   await edit
   assert.equal(f.host.store.getState().graph.concepts[0].label, 'Renamed')
   assert.equal(f.host.store.getState().conversation.messages.at(-1)?.outcome, 'applied')
   const undo = f.chat.send('Undo that', f.host, 'en')
   f.emit('Undone.')
   f.history('undo')
-  f.finish({ value: true })
+  f.finish({ value: {} })
   await undo
   const messages = f.host.store.getState().conversation.messages
   assert.equal(messages.at(-1)?.outcome, 'complete')
@@ -190,6 +191,19 @@ test('history turns report completion instead of applied, leaving action buttons
   assert.equal(messages.filter(({ outcome }) => outcome === 'applied').length, 1)
   assert.equal(f.host.store.getState().graph.concepts[0].label, 'First')
   assert.deepEqual(f.host.store.getState().history, { canUndo: false, canRedo: true })
+  f.chat.dispose()
+})
+
+test('chat stores response timing and provider token totals on the assistant message', async () => {
+  const f = fixture()
+  const task = f.chat.send('Explain Nesso', f.host, 'en')
+  f.emit('A reply.')
+  f.finish({ value: { totalTokens: 150 } })
+  await task
+  const message = f.host.store.getState().conversation.messages.at(-1)
+  assert.equal(message?.stats?.totalTokens, 150)
+  assert.ok(message?.stats && message.stats.durationMs >= 0)
+  assert.deepEqual(Object.keys(message!).sort(), ['content', 'id', 'outcome', 'role', 'stats'])
   f.chat.dispose()
 })
 
@@ -218,6 +232,28 @@ test('Stop, clear and generation failure discard staged edits and cannot resurre
   }
 })
 
+test('retry resends only a failed or cancelled last turn in place', async () => {
+  const f = fixture()
+  const failed = f.chat.send('Rename it', f.host, 'en')
+  f.finish({ issues: [{ path: 'chat', message: 'Provider failed' }] })
+  await failed
+  const retried = f.chat.retry(f.host, 'en')
+  f.emit('Renamed.')
+  f.finish({ value: {} })
+  await retried
+  const messages = f.host.store.getState().conversation.messages
+  assert.deepEqual(
+    messages.map(({ role, content, outcome }) => [role, content, outcome]),
+    [
+      ['user', 'Rename it', undefined],
+      ['assistant', 'Renamed.', 'complete'],
+    ],
+  )
+  await f.chat.retry(f.host, 'en')
+  assert.equal(f.host.store.getState().conversation.messages, messages)
+  f.chat.dispose()
+})
+
 test('chat asks before applying turns that remove five or more concepts', async () => {
   const f = fixture()
   const ids = Array.from({ length: 6 }, (_, index) => `urn:c${index}`)
@@ -233,7 +269,7 @@ test('chat asks before applying turns that remove five or more concepts', async 
   const propose = async (count: number) => {
     const task = f.chat.send('Remove concepts', f.host, 'en')
     f.edit(ids.slice(0, count).map((id) => ({ kind: 'concept.remove', id })))
-    f.finish({ value: true })
+    f.finish({ value: {} })
     await settle()
     return task
   }

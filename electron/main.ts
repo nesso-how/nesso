@@ -19,7 +19,7 @@ import { connectAi } from './ai.ts'
 import { connectMcp } from './mcp.ts'
 import { connectNotesLinks, connectExternalLinks } from './links.ts'
 import { connectDesktopPersistence } from './persistence.ts'
-import { createTrustedRequest } from './ipc.ts'
+import { appUrl, createTrustedRequest } from './ipc.ts'
 import { createDataLocation } from './data-location.ts'
 import { connectDataLocation } from './data-location-ipc.ts'
 import { serveAppAsset } from './asset-protocol.ts'
@@ -34,6 +34,7 @@ import { createAutomaticBackups } from './automatic-backups.ts'
 import { createFileStorage } from './file-storage.ts'
 
 const dev = !app.isPackaged && process.argv.includes('--dev')
+const rendererUrl = appUrl(dev)
 const root = path.join(app.getAppPath(), 'dist')
 const startupCheckProfile = process.env.NESSO_STARTUP_CHECK_PROFILE
 if (startupCheckProfile) connectStartupCheck(startupCheckProfile)
@@ -61,7 +62,6 @@ const report = (error: unknown): void => {
 }
 
 const createWindow = async (connectPersistence: (window: BrowserWindow) => void): Promise<void> => {
-  const url = dev ? 'http://127.0.0.1:5173/' : 'nesso://app/'
   const state = createWindowState(app.getPath('userData'), screen)
   const window = new BrowserWindow({
     ...state.bounds,
@@ -77,11 +77,11 @@ const createWindow = async (connectPersistence: (window: BrowserWindow) => void)
   state.track(window)
   connectPersistence(window)
   window.webContents.on('will-navigate', (event) => {
-    if (event.url !== url) event.preventDefault()
+    if (event.url !== rendererUrl) event.preventDefault()
   })
   connectExternalLinks(window.webContents, (url) => shell.openExternal(url))
   connectTabShortcuts(window.webContents)
-  await window.loadURL(url)
+  await window.loadURL(rendererUrl)
   window.setBounds(state.bounds)
   if (state.maximized) window.maximize()
   window.show()
@@ -90,7 +90,7 @@ const createWindow = async (connectPersistence: (window: BrowserWindow) => void)
 app
   .whenReady()
   .then(async () => {
-    const trusted = createTrustedRequest(dev)
+    const trusted = createTrustedRequest(rendererUrl)
     connectMenu(trusted, dev)
     connectNotesLinks(ipcMain, trusted, (url) => shell.openExternal(url))
     connectFiles(trusted)
@@ -128,7 +128,7 @@ app
     ): boolean =>
       allowedPermissions.includes(permission) &&
       details.isMainFrame &&
-      details.requestingUrl === (dev ? 'http://127.0.0.1:5173/' : 'nesso://app/') &&
+      details.requestingUrl === rendererUrl &&
       BrowserWindow.getAllWindows().some(
         (window) =>
           window.webContents === contents && contents.mainFrame.url === details.requestingUrl,

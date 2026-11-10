@@ -2,7 +2,7 @@ import { app, ipcMain, safeStorage, shell } from 'electron'
 import path from 'node:path'
 import { createAiConnections } from './ai-connections.ts'
 import { createAiStorage } from './ai-storage.ts'
-import { aiChatRequest, type AiResult, type AiToolReply } from '@nesso-how/ai'
+import { aiChatRequest, type AiChatResult, type AiResult, type AiToolReply } from '@nesso-how/ai'
 import { ElectronError } from './errors.ts'
 import { createAiChatRun } from './ai-chat.ts'
 import { createChatGptAuth } from './ai-oauth.ts'
@@ -88,7 +88,7 @@ export function connectAi(trusted: TrustedRequest, location: DataLocation) {
       }
     })
   }
-  ipcMain.handle('ai:chat', async (event, value: unknown): Promise<AiResult<true>> => {
+  ipcMain.handle('ai:chat', async (event, value: unknown): Promise<AiResult<AiChatResult>> => {
     if (!trusted(event)) return { issues: [{ path: 'desktop', message: 'Untrusted request' }] }
     if (location.state().moving)
       return { issues: [{ path: 'dataLocation', message: 'storageBusy' }] }

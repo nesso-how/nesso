@@ -1,7 +1,7 @@
 import { parseGraph, serializeGraph, type Graph } from '@nesso-how/schema'
 import type { createNessoStore } from './create.ts'
 import { NessoError } from '@nesso-how/errors'
-import { fail, parseConversation, parseWorkspace } from './settings.ts'
+import { fail, parseWorkspace } from './settings.ts'
 import type { Preferences, WorkspaceState } from '@nesso-how/core'
 import type { HostState } from './types.ts'
 import {
@@ -12,7 +12,12 @@ import {
 } from '../../shared/persistence.ts'
 import { checkGraph, sameGraph, samePreferences, sameWorkspace } from './operations.ts'
 import { parsePluginStorage } from './plugin-storage.ts'
-import { migrateDocument, migratePluginStorage, migratePreferences } from './migrations.ts'
+import {
+  migrateConversation,
+  migrateDocument,
+  migratePluginStorage,
+  migratePreferences,
+} from './migrations.ts'
 
 export type LoadedState = {
   graph?: Graph | null
@@ -60,7 +65,10 @@ export const loadPersistence = async (
       const value = record.value
       if (value === undefined) continue
       if (section === 'conversation') {
-        loaded.conversation = parseConversation(value)
+        const saved = migrateConversation(value)
+        loaded.conversation = { messages: saved.messages }
+        if ((value as { version: number }).version !== saved.version)
+          (loaded.upgrades ??= {}).conversation = saved
         continue
       }
       if (section === 'plugin-storage') {
@@ -132,6 +140,7 @@ export const connectPersistence = (
       !loaded.preferences ||
       !samePreferences(previous.preferences, loaded.preferences),
     conversation:
+      loaded.upgrades?.conversation !== undefined ||
       !loaded.conversation ||
       JSON.stringify(previous.conversation) !== JSON.stringify(loaded.conversation),
     'plugin-storage':
@@ -198,7 +207,7 @@ export const connectPersistence = (
               : section === 'preferences'
                 ? { version: 3, preferences: state.preferences }
                 : section === 'conversation'
-                  ? { version: 1, messages: state.conversation.messages }
+                  ? { version: 2, messages: state.conversation.messages }
                   : { version: 3, documentId: state.documentId, plugins: state.pluginStorage }
           await storage.write(section, saved)
           if (section === 'document') savedDocumentId = state.documentId

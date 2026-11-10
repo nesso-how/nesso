@@ -9,6 +9,7 @@ export {
   aiChatRequest,
   type AiChatMessage,
   type AiChatRequest,
+  type AiChatResult,
   type AiChatEvent,
   type AiToolReply,
 } from './chat.ts'

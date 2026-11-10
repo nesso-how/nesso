@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { once } from 'node:events'
 import { parseGraph } from '@nesso-how/schema'
 import { connectPlugins } from '../../electron/plugins.ts'
-import { createTrustedRequest } from '../../electron/ipc.ts'
+import { appUrl, createTrustedRequest } from '../../electron/ipc.ts'
 import type { PersistenceSection } from '../../shared/persistence.ts'
 import { persistenceSections } from '../../shared/persistence.ts'
 import type { Backup } from '../../shared/backup.ts'
@@ -10,7 +10,7 @@ import { connectFixtureStorage, waitFor, type CheckContext } from './helpers.ts'
 
 export async function verifyStorage({ window, url, name }: CheckContext) {
   const saved = name === 'desktop' ? connectFixtureStorage() : undefined
-  if (saved) connectPlugins(createTrustedRequest(false))
+  if (saved) connectPlugins(createTrustedRequest(appUrl(false)))
   const evaluate = <T>(script: string) => window.webContents.executeJavaScript(script) as Promise<T>
   const indexedDb = (section: PersistenceSection, writing: boolean, value?: unknown) =>
     evaluate<unknown>(`new Promise((resolve,reject)=>{

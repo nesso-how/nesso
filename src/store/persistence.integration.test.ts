@@ -80,7 +80,7 @@ const savedStorage = () => {
     workspace: state.workspace,
   })
   storage.records.set('preferences', { version: 3, preferences: state.preferences })
-  storage.records.set('conversation', { version: 1, messages: state.conversation.messages })
+  storage.records.set('conversation', { version: 2, messages: state.conversation.messages })
   return storage
 }
 
@@ -203,6 +203,38 @@ test('earlier preferences migrate losslessly and seed the tab order after preser
   }
 })
 
+test('earlier conversations migrate losslessly before saving message statistics', async () => {
+  const original = {
+    version: 1,
+    messages: [
+      { id: 'user', role: 'user', content: 'Hello' },
+      {
+        id: 'assistant',
+        role: 'assistant',
+        content: 'Applied.',
+        outcome: 'applied',
+        summary: { added: 1, updated: 0, removed: 0, memberships: 0 },
+      },
+    ],
+  }
+  const storage = savedStorage()
+  storage.records.set('conversation', original)
+  const loaded = await loadPersistence(storage)
+  assert.deepEqual(loaded.conversation?.messages, original.messages)
+  assert.deepEqual(loaded.upgrades?.conversation, { version: 2, messages: original.messages })
+  const host = registeredHost(loaded.graph!, loaded)
+  const persistence = connectPersistence(host, storage, loaded)
+  assert.equal(await persistence.flush(), true)
+  assert.deepEqual(storage.writes, ['conversation'])
+  assert.equal(storage.backups.length, 1)
+  assert.deepEqual(storage.backups[0].get('conversation'), original)
+  assert.deepEqual(storage.records.get('conversation'), {
+    version: 2,
+    messages: original.messages,
+  })
+  await persistence.dispose()
+})
+
 test('plugin resolution saves corrected preferences without rewriting other records', async () => {
   const storage = savedStorage()
   const original = await loadPersistence(storage)
@@ -292,7 +324,7 @@ test('record reads start in parallel and isolate failures in section order', asy
   })
   assert.deepEqual(started, ['document', 'preferences', 'conversation', 'plugin-storage'])
   completions.get('plugin-storage')!.resolve(undefined)
-  completions.get('conversation')!.resolve({ version: 2, messages: [] })
+  completions.get('conversation')!.resolve({ version: 3, messages: [] })
   completions.get('preferences')!.reject(new Error('Access denied'))
   completions.get('document')!.resolve(storage.records.get('document'))
   const loaded = await loading
@@ -330,7 +362,13 @@ test('durable state round-trips without rewriting restored records or persisting
   host.store.setViewport('graph', { x: 100, y: 200, zoom: 0.75 })
   host.store.setConceptLabel('urn:one', 'Renamed')
   host.store.setChatMessages([
-    { id: 'assistant', role: 'assistant', content: 'Proposed rename.', outcome: 'applied' },
+    {
+      id: 'assistant',
+      role: 'assistant',
+      content: 'Proposed rename.',
+      outcome: 'applied',
+      stats: { durationMs: 1234, totalTokens: 56 },
+    },
   ])
   host.store.setSelection([{ kind: 'concept', id: 'urn:one' }])
   const persistence = connectPersistence(host, storage, await loadPersistence(storage))
@@ -479,7 +517,7 @@ test('malformed records stay protected while the other sections save', async () 
     ['document', null],
     ['preferences', null],
     ['conversation', null],
-    ['conversation', { version: 2, messages: [] }],
+    ['conversation', { version: 3, messages: [] }],
     [
       'conversation',
       { version: 1, messages: [{ id: 'invalid', role: 'system', content: 'Invalid' }] },
@@ -608,7 +646,7 @@ test('an unreadable conversation is overwritten only after explicit clear', asyn
   assert.ok(host.store.getState().persistenceIssues.some(({ path }) => path === 'conversation'))
   host.store.clearChat()
   assert.equal(await persistence.flush(), true)
-  assert.deepEqual(storage.records.get('conversation'), { version: 1, messages: [] })
+  assert.deepEqual(storage.records.get('conversation'), { version: 2, messages: [] })
   assert.deepEqual(host.store.getState().persistenceIssues, [])
   await persistence.dispose()
 })

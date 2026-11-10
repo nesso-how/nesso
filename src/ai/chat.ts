@@ -95,7 +95,7 @@ export function createAiChat(
     store.clearChat()
     publish({ ...state, issues: [] })
   }
-  return {
+  const chat = {
     getSnapshot: () => state,
     subscribe: (listener: () => void) => {
       listeners.add(listener)
@@ -122,15 +122,7 @@ export function createAiChat(
         text.length > aiChatLimits.messageLength ||
         messages.length + 2 > aiChatLimits.messageCount
       ) {
-        publish({
-          ...state,
-          issues: [
-            {
-              path: 'ai.chat',
-              message: 'Conversation limit reached. Clear the chat to start again',
-            },
-          ],
-        })
+        publish({ ...state, issues: [{ path: 'ai.limit', message: 'aiChatLimitReached' }] })
         return
       }
       const controller = new AbortController()
@@ -155,6 +147,8 @@ export function createAiChat(
       publish({ ...state, phase: 'generating', tool: null, issues: [] })
       let outcome: AiChatMessage['outcome'] = 'cancelled'
       let summary: AiChatMessage['summary']
+      let stats: AiChatMessage['stats']
+      const startedAt = performance.now()
       try {
         const result = await bridge.chat({
           id: run.id,
@@ -162,6 +156,9 @@ export function createAiChat(
           context: JSON.stringify(turn.execute('context', {})),
           locale,
         })
+        stats = { durationMs: performance.now() - startedAt }
+        if (!('issues' in result) && result.value.totalTokens !== undefined)
+          stats.totalTokens = result.value.totalTokens
         if (run.failure) throw run.failure
         if (controller.signal.aborted) return
         if ('issues' in result) throw new NessoError([...result.issues])
@@ -176,24 +173,39 @@ export function createAiChat(
         outcome = changed && !run.historyAvailable ? 'applied' : 'complete'
         if (outcome === 'applied') summary = summarizeAiEffects(effects)
       } catch (error) {
+        stats ??= { durationMs: performance.now() - startedAt }
         if (run.failure || !controller.signal.aborted) {
           outcome = 'error'
-          const issues =
-            error instanceof NessoError
-              ? error.issues
-              : [{ path: 'ai.chat', message: 'Chat request failed; no changes were applied' }]
-          publish({ ...state, issues })
+          publish({ ...state, issues: error instanceof NessoError ? error.issues : [] })
         }
       } finally {
         turn.cancel()
         update(run.messageId, (message) => ({
           ...message,
           outcome,
+          stats,
           ...(summary ? { summary } : {}),
         }))
         active = undefined
         publish({ ...state, phase: 'idle', tool: null })
       }
     },
+    retry: async (
+      boundary: Parameters<typeof createAiTurn>[0],
+      locale: AiChatRequest['locale'],
+    ) => {
+      const messages = store.getState().conversation.messages
+      const [prompt, reply] = messages.slice(-2)
+      if (
+        active ||
+        prompt?.role !== 'user' ||
+        reply?.role !== 'assistant' ||
+        (reply.outcome !== 'error' && reply.outcome !== 'cancelled')
+      )
+        return
+      store.setChatMessages(messages.slice(0, -2))
+      await chat.send(prompt.content, boundary, locale)
+    },
   }
+  return chat
 }

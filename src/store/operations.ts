@@ -314,7 +314,7 @@ export const applyStateOperations = (
         )
         break
       case 'conversation.messages':
-        conversation = parseConversation({ version: 1, messages: operation.value })
+        conversation = parseConversation({ version: 2, messages: operation.value })
         conversationReplaced = true
         break
       case 'conversation.append': {

@@ -3,6 +3,7 @@ import type {
   AiConnections,
   AiResult,
   AiChatRequest,
+  AiChatResult,
   AiChatEvent,
   AiToolReply,
   AiSignIn,
@@ -21,7 +22,7 @@ export type AiBridge = {
     accountId: string,
   ) => Promise<AiResult<{ state: AiConnections; revoked: boolean }>>
   readonly manageUsage: () => Promise<AiResult<true>>
-  readonly chat: (input: AiChatRequest) => Promise<AiResult<true>>
+  readonly chat: (input: AiChatRequest) => Promise<AiResult<AiChatResult>>
   readonly stop: (id: string) => void
   readonly reply: (input: AiToolReply) => void
   readonly subscribeChat: (listener: (event: AiChatEvent) => void) => () => void

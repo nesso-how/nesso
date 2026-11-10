@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { ipcMain, webContents } from 'electron'
-import { createTrustedRequest } from '../../electron/ipc.ts'
+import { appUrl, createTrustedRequest } from '../../electron/ipc.ts'
 import { connectPluginTermination } from '../../electron/plugin-termination.ts'
 import {
   chooseTab,
@@ -13,7 +13,7 @@ import {
 
 export async function verifyBusyPanel(context: CheckContext) {
   await listExamplePlugin()
-  connectPluginTermination(ipcMain, createTrustedRequest(false), () =>
+  connectPluginTermination(ipcMain, createTrustedRequest(appUrl(false)), () =>
     webContents.getAllWebContents(),
   )
   const { evaluate } = await openFixtureWorkspace(context)
