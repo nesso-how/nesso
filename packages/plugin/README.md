@@ -194,7 +194,7 @@ Nesso supplies React, the `@nesso-how/ui` component stylesheet, and theme CSS va
 
 Nesso provides the panel title, close control, and loading/error screens. Opening a panel or changing the active view starts a new React instance and invalidates the previous context. Closing it, changing documents, replacing/removing the plugin, or a runtime failure ends the session.
 
-Keep mutable state inside the component and clean up subscriptions in React effects. Save progress through `storage` as it changes; cleanup may not finish. Panels have no action execution timeout, but initialization and API requests have deadlines. Handle expected errors in the UI; uncaught errors or rejected promises fail the session.
+Keep mutable state inside the component and clean up subscriptions in React effects. Module-scope state is not guaranteed between sessions: Nesso may reuse or discard the runtime, so keep state in the instance or `storage`. Save progress through `storage` as it changes; cleanup may not finish. Panels have no action execution timeout, but initialization and API requests have deadlines. Handle expected errors in the UI; uncaught errors or rejected promises fail the session.
 
 ### Action badges
 

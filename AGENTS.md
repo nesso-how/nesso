@@ -26,7 +26,7 @@ See [README.md](README.md) for the product overview, architecture, and package d
 - Keep app, plugin SDK, plugin API, persisted record, backup envelope, and private plugin data versions independent. Choose data migrations by format version, never app version; private plugin schemas remain plugin-owned.
 - Keep modules focused and interfaces small and cohesive. Depend on explicit contracts at architectural boundaries; introduce abstractions only for concrete needs.
 - Consolidate repeated app UI in `@nesso-how/ui`; keep app-specific state and domain logic in the host.
-- Plugins and trusted renderers use only injected APIs, never app internals or a concrete store. Keep instances independent; no module-global mutable store. React subscriptions use the injected instance with `useSyncExternalStore`.
+- Plugins and trusted renderers use only injected APIs, never app internals or a concrete store. Keep instances independent; no module-global mutable store, except ephemeral UI state in preloaded built-in panels. React subscriptions use the injected instance with `useSyncExternalStore`.
 - Only the host materializes `viewGraph`; plugins never recompute it. Do not persist selection, plugin definitions, or `viewGraph`.
 - The host workspace owns editing policy, shortcuts, clipboard I/O, confirmations, and editing forms independently of the active renderer. Renderers own geometry and local gestures, subscribe to injected state, map gestures to store operations, and request host actions only for behavior outside the store.
 - Keep React Flow components, types, event mapping, and renderer-specific styles in trusted `packages/concept-map`; the host never imports React Flow. Keep trusted renderers outside the isolated plugin runtime.
