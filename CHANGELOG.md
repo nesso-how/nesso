@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.0-beta.14 — 2026-11-10
+
+### Features
+
+- **review:** Render notes as markdown and polish ratings (#295)
+
 ## 1.0.0-beta.13 — 2026-11-10
 
 ### Features
