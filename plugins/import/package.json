@@ -28,9 +28,9 @@
         "zh-CN": "从 JSON-LD 文件导入 Nesso 视图。"
       },
       "documentation": {
-        "en": "Import merges a JSON-LD file into the graph with fresh concept IDs, preserving labels, positions, relations, and relation types. Imported concepts join the view the action runs on.",
-        "it": "Import unisce un file JSON-LD nel grafo con nuovi ID di concetto, preservando etichette, posizioni, relazioni e tipi. I concetti importati entrano nella vista da cui parte l’azione.",
-        "zh-CN": "导入功能将 JSON-LD 文件合并到图谱，创建新概念 ID 并保留标签、位置、关系和类型。导入的概念加入执行操作的视图。"
+        "en": "Import merges a JSON-LD file into a new view with fresh concept IDs, preserving labels, positions, relations, and relation types. The new view is named after the file and activated, so the canvas frames it.",
+        "it": "Import unisce un file JSON-LD in una nuova vista con nuovi ID di concetto, preservando etichette, posizioni, relazioni e tipi. La nuova vista prende il nome dal file e viene attivata, così il canvas la inquadra.",
+        "zh-CN": "导入功能将 JSON-LD 文件合并到新视图，创建新概念 ID 并保留标签、位置、关系和类型。新视图以文件名命名并激活，画布会自动框选它。"
       }
     },
     "label": {
@@ -57,7 +57,7 @@
       "concept.bold",
       "concept.italic",
       "relation.connect",
-      "view.membership"
+      "view.create"
     ],
     "capabilities": [
       "files"

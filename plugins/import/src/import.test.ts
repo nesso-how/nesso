@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import type { Graph } from '@nesso-how/schema'
-import { buildImportOperations } from './index.ts'
+import { buildImportOperations, deriveViewName } from './index.ts'
 
 const snapshot: Graph = {
   concepts: [
@@ -30,8 +30,14 @@ const snapshot: Graph = {
   ],
 }
 
-test('import remaps concept ids and connects original types in the target view', () => {
-  const operations = buildImportOperations(snapshot, 'urn:active', 'urn:target')
+test('import creates a new view and remaps concept ids with original types', () => {
+  const operations = buildImportOperations(snapshot, 'urn:view', 'My view')
+  assert.deepEqual(operations[0], {
+    kind: 'view.create',
+    id: 'urn:view',
+    name: 'My view',
+    conceptIds: [],
+  })
   const adds = operations.filter((operation) => operation.kind === 'concept.add')
   assert.equal(adds.length, 2)
   const ids = adds.map((operation) => (operation.kind === 'concept.add' ? operation.id : ''))
@@ -60,27 +66,20 @@ test('import remaps concept ids and connects original types in the target view',
     connects.map((operation) => operation.type?.id),
     ['urn:knows', 'urn:likes', 'urn:likes'],
   )
-  const joins = operations.filter(
-    (operation) => operation.kind === 'view.membership' && operation.viewId === 'urn:target',
-  )
-  assert.equal(joins.length, 2)
-  assert.ok(joins.every((operation) => operation.kind === 'view.membership' && operation.included))
-  const leaves = operations.filter(
-    (operation) => operation.kind === 'view.membership' && operation.viewId === 'urn:active',
-  )
-  assert.equal(leaves.length, 2)
-  assert.ok(
-    leaves.every((operation) => operation.kind === 'view.membership' && !operation.included),
+  assert.ok(operations.every((operation) => operation.kind !== 'view.membership'))
+  assert.deepEqual(operations.at(-1), { kind: 'selection.set', value: [] })
+})
+
+test('empty snapshots are no-ops', () => {
+  assert.deepEqual(
+    buildImportOperations({ concepts: [], relationTypes: [], relations: [] }, 'urn:view', 'My view'),
+    [],
   )
 })
 
-test('import into the active view skips membership edits and empty snapshots are no-ops', () => {
-  const same = buildImportOperations(snapshot, 'urn:active', 'urn:active')
-  assert.ok(same.every((operation) => operation.kind !== 'view.membership'))
-  assert.deepEqual(
-    buildImportOperations({ concepts: [], relationTypes: [], relations: [] }, 'urn:active', null),
-    [],
-  )
-  const complete = buildImportOperations(snapshot, null, null)
-  assert.ok(complete.every((operation) => operation.kind !== 'view.membership'))
+test('view names derive from file names', () => {
+  assert.equal(deriveViewName('nesso-my-view.jsonld'), 'My view')
+  assert.equal(deriveViewName('Graph.json'), 'Graph')
+  assert.equal(deriveViewName('nesso-Shopping_List.JSON'), 'Shopping List')
+  assert.equal(deriveViewName('.json'), 'Import')
 })

@@ -208,6 +208,7 @@ const pluginWriteKinds = [
   'relation.type.create',
   'relation.remove',
   'selection.set',
+  'view.create',
   'view.membership',
 ] as const
 const operationDeclarations = z.array(z.enum(pluginWriteKinds))

@@ -5,13 +5,24 @@ import source from '../package.json' with { type: 'json' }
 
 const { i18n } = source
 
+export function deriveViewName(fileName: string): string {
+  const base = fileName.replace(/\.(jsonld|json)$/i, '')
+  const stripped = base.toLowerCase().startsWith('nesso-') ? base.slice(6) : base
+  const spaced = stripped.replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim()
+  const raw = spaced || base.trim() || 'Import'
+  const name = raw.slice(0, 70).trim()
+  return (name.charAt(0).toUpperCase() + name.slice(1)) || 'Import'
+}
+
 export function buildImportOperations(
   snapshot: Graph,
-  activeViewId: string | null,
-  viewId: string | null,
+  viewId: string,
+  viewName: string,
 ): NessoOperation[] {
   if (snapshot.concepts.length === 0) return []
-  const operations: NessoOperation[] = []
+  const operations: NessoOperation[] = [
+    { kind: 'view.create', id: viewId, name: viewName, conceptIds: [] },
+  ]
   const ids = new Map<string, string>()
   for (const concept of snapshot.concepts) {
     const id = newIri()
@@ -38,19 +49,7 @@ export function buildImportOperations(
     const type = types.get(relation.predicate)
     if (type) operations.push({ kind: 'relation.connect', source, target, type })
   }
-  if (viewId !== null && viewId !== activeViewId) {
-    for (const id of ids.values())
-      operations.push({ kind: 'view.membership', viewId, conceptId: id, included: true })
-  }
-  if (activeViewId !== null && activeViewId !== viewId) {
-    for (const id of ids.values())
-      operations.push({
-        kind: 'view.membership',
-        viewId: activeViewId,
-        conceptId: id,
-        included: false,
-      })
-  }
+  operations.push({ kind: 'selection.set', value: [] })
   return operations
 }
 
@@ -66,19 +65,19 @@ export const create = (): readonly ActionContribution[] => [
     id: 'import',
     label: i18n.label,
     icon: 'upload',
-    run: async ({ document, files, viewId }) => {
+    run: async ({ document, files }) => {
       const file = await files.open({
         extensions: ['jsonld', 'json'],
         mimeTypes: ['application/ld+json', 'application/json'],
       })
       if (!file) return
-      const state = await document.refresh()
+      await document.refresh()
       let operations: NessoOperation[]
       try {
         operations = buildImportOperations(
           parseGraph(JSON.parse(file.text)),
-          state.workspace.activeViewId,
-          viewId,
+          newIri(),
+          deriveViewName(file.name),
         )
       } catch {
         throw new ImportError()
