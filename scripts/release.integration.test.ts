@@ -21,12 +21,7 @@ function fixture(context: TestContext) {
   context.after(() => rmSync(directory, { recursive: true, force: true }))
   const cwd = join(directory, 'project')
   mkdirSync(join(cwd, 'scripts'), { recursive: true })
-  for (const file of [
-    'scripts/release.ts',
-    'scripts/release-common.ts',
-    'scripts/release-notes.ts',
-    'cliff.toml',
-  ]) {
+  for (const file of ['scripts/release.ts', 'scripts/release-notes.ts', 'cliff.toml']) {
     copyFileSync(new URL(`../${file}`, import.meta.url), join(cwd, file))
   }
   mkdirSync(join(cwd, 'node_modules', '@nesso-how'), { recursive: true })
@@ -130,15 +125,25 @@ test('releasing the current version still commits its changelog before tagging',
   assert.match(releaseNotes(project.changelog(), 'v1.0.0-alpha.2'), /No user-facing changes/)
 })
 
-test('releases sync listed packages, built-in plugins and the example UI dependency with the app version', (context) => {
+test('releases sync published packages, built-in plugins and example dependencies with the app version', (context) => {
   const project = fixture(context)
-  const listed = ['packages/ui', 'packages/extra']
-  writeFileSync(join(project.cwd, 'scripts/release-packages.json'), JSON.stringify(listed))
+  const listed = ['packages/ui', 'packages/plugin', 'packages/plugin/example']
+  copyFileSync(
+    new URL('./release-packages.json', import.meta.url),
+    join(project.cwd, 'scripts/release-packages.json'),
+  )
   const packages = [
     ...listed,
-    ...['kernel-theme', 'paper-theme', 'base-vocab', 'import', 'export'].map(
-      (plugin) => `plugins/${plugin}`,
-    ),
+    ...[
+      'kernel-theme',
+      'paper-theme',
+      'mist-theme',
+      'base-vocab',
+      'import',
+      'export',
+      'review',
+      'notes',
+    ].map((plugin) => `plugins/${plugin}`),
   ]
   for (const path of packages) {
     mkdirSync(join(project.cwd, path), { recursive: true })
@@ -148,33 +153,72 @@ test('releases sync listed packages, built-in plugins and the example UI depende
     )
   }
   const examplePath = 'packages/plugin/example/package.json'
-  mkdirSync(join(project.cwd, 'packages/plugin/example'), { recursive: true })
   writeFileSync(
     join(project.cwd, examplePath),
-    '{"version":"0.4.0","dependencies":{"@nesso-how/ui":"1.0.0-alpha.1"},"devDependencies":{"@nesso-how/plugin":"0.4.0"}}\n',
+    '{"version":"0.4.0","dependencies":{"@nesso-how/ui":"1.0.0-alpha.1"},"devDependencies":{"@nesso-how/plugin":"0.4.0","vite":"^8.3.0"},"nesso":{"apiVersion":3}}\n',
   )
   project.git('add', '.')
-  project.commit('feat: add built-in plugins and UI')
-  project.commit('fix: adjust theme')
-  project.release('--alpha')
+  project.commit('feat: add plugins and published packages')
+  project.release('--beta')
   for (const path of packages) {
     const manifest = JSON.parse(readFileSync(join(project.cwd, path, 'package.json'), 'utf8')) as {
       version?: unknown
     }
-    assert.equal(manifest.version, '1.0.0-alpha.2')
+    assert.equal(manifest.version, '1.0.0-beta.1')
   }
   const example = JSON.parse(readFileSync(join(project.cwd, examplePath), 'utf8')) as {
-    version: string
     dependencies: Record<string, string>
     devDependencies: Record<string, string>
+    nesso: { apiVersion: number }
   }
-  assert.equal(example.dependencies['@nesso-how/ui'], '1.0.0-alpha.2')
-  assert.equal(example.version, '0.4.0')
-  assert.equal(example.devDependencies['@nesso-how/plugin'], '0.4.0')
+  assert.equal(example.dependencies['@nesso-how/ui'], '1.0.0-beta.1')
+  assert.equal(example.devDependencies['@nesso-how/plugin'], '1.0.0-beta.1')
+  assert.equal(example.devDependencies.vite, '^8.3.0')
+  assert.equal(example.nesso.apiVersion, 3)
   const committed = project.git('show', '--format=', '--name-only', 'HEAD').split('\n')
   for (const path of packages) assert.ok(committed.includes(`${path}/package.json`))
-  assert.ok(committed.includes(examplePath))
   assert.equal(project.git('status', '--porcelain'), '')
+})
+
+test('invalid release metadata fails before changing versions, history or tags', (context) => {
+  for (const manifest of [
+    '{"version":"0.8.0","dependencies":{"@nesso-how/ui":"1.0.0-alpha.1"}}',
+    '{"version":"0.8.0","devDependencies":{"@nesso-how/plugin":"0.8.0"}}',
+    '{"dependencies":{"@nesso-how/ui":"1.0.0-alpha.1","@nesso-how/plugin":"0.8.0"}}',
+    '{"version":"0.8.0","dependencies":{"@nesso-how/ui":"0.8.0","@nesso-how/plugin":"0.8.0"},}',
+  ]) {
+    const project = fixture(context)
+    const example = 'packages/plugin/example'
+    mkdirSync(join(project.cwd, example), { recursive: true })
+    writeFileSync(join(project.cwd, example, 'package.json'), manifest)
+    writeFileSync(join(project.cwd, 'scripts/release-packages.json'), JSON.stringify([example]))
+    project.git('add', '.')
+    project.commit('test: use invalid release metadata')
+    const head = project.git('rev-parse', 'HEAD')
+    const result = spawnSync(process.execPath, ['scripts/release.ts', '--alpha'], {
+      cwd: project.cwd,
+      encoding: 'utf8',
+    })
+    assert.equal(result.status, 1)
+    assert.match(result.stderr, /expected exactly one|JSON/)
+    assert.equal(project.git('status', '--porcelain'), '')
+    assert.equal(project.git('rev-parse', 'HEAD'), head)
+    assert.equal(project.git('tag', '--list', 'v1.0.0-alpha.2'), '')
+  }
+})
+
+test('releases refuse an existing tag without changing files or history', (context) => {
+  const project = fixture(context)
+  project.git('tag', 'v1.0.0-alpha.2')
+  const head = project.git('rev-parse', 'HEAD')
+  const result = spawnSync(process.execPath, ['scripts/release.ts', '--alpha'], {
+    cwd: project.cwd,
+    encoding: 'utf8',
+  })
+  assert.equal(result.status, 1)
+  assert.match(result.stderr, /tag v1.0.0-alpha.2 already exists/)
+  assert.equal(project.git('status', '--porcelain'), '')
+  assert.equal(project.git('rev-parse', 'HEAD'), head)
 })
 
 test('changelog generation failures leave the version, history and tags unchanged', (context) => {

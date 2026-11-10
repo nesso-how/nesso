@@ -117,6 +117,25 @@ test('stale, changed-kind, nonmatching, prerelease and non-newer npm targets are
   assert.equal(routine.authorized(next, previous), false)
 })
 
+test('beta apps approve beta installs and newer updates without admitting other previews or downgrades', async () => {
+  const received = await make('1.0.0-beta.2')
+  const initial = createPluginApproval(received, undefined, true, true)
+  assert.ok(initial.challenge)
+  const previous = await make('1.0.0-beta.1')
+  const update = createPluginApproval(received, previous, true, true)
+  assert.equal(update.source, 'existing-access')
+  const stable = await make('1.0.0')
+  assert.equal(createPluginApproval(stable, received, true, true).source, 'existing-access')
+  for (const rejected of [
+    await make('1.0.0-beta.1'),
+    await make('2.0.0-alpha.1'),
+    await make('2.0.0-rc.1'),
+  ]) {
+    assert.throws(() => createPluginApproval(rejected, received, true, true))
+  }
+  assert.throws(() => createPluginApproval(received, stable, true, true))
+})
+
 test('theme and vocabulary declarations use the same first-install and routine-update policy', async () => {
   const actions = await make('1.0.0')
   for (const kind of ['theme', 'vocab'] as const) {

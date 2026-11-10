@@ -15,6 +15,7 @@ import {
 } from '@nesso-how/plugin/package'
 import { parsePluginI18n, parsePluginManifest, PluginError } from '@nesso-how/plugin/runtime'
 import prerelease from 'semver/functions/prerelease.js'
+import gt from 'semver/functions/gt.js'
 import { ElectronError } from './errors.ts'
 import { npmIntegrity } from '../shared/plugins.ts'
 import type { NpmPlugin } from '../shared/plugins.ts'
@@ -136,10 +137,27 @@ const json = async (url: string, limit: number, signal: AbortSignal, request: Re
     new TextDecoder('utf-8', { fatal: true }).decode(await download(url, limit, signal, request)),
   )
 
+function parseNpmPlugin(metadata: unknown, name: string, beta: boolean): NpmPlugin {
+  const { deprecated } = z.object({ deprecated: z.string().optional() }).parse(metadata)
+  const received = parsePackageIdentity(metadata)
+  const preview = prerelease(received.version)
+  if (deprecated || received.name !== name || (preview && (!beta || preview[0] !== 'beta')))
+    throw failure()
+  return {
+    name: received.name,
+    version: received.version,
+    author: received.author,
+    repository: received.repository,
+    nesso: parsePluginManifest(received.nesso),
+    i18n: parsePluginI18n(received.i18n),
+  }
+}
+
 export async function latestNpmPlugin(
   name: unknown,
   cancellation: AbortSignal,
   request: RegistryRequest = registryFetch,
+  beta = false,
 ): Promise<NpmPlugin> {
   if (typeof name !== 'string' || !validateName(name).validForNewPackages) {
     throw new PluginError('invalid-input', [
@@ -147,35 +165,35 @@ export async function latestNpmPlugin(
     ])
   }
   const signal = AbortSignal.any([cancellation, AbortSignal.timeout(limits.deadline)])
-  const metadata = await json(
-    `${registry}/${encodeURIComponent(name)}/latest`,
-    limits.metadata,
-    signal,
-    request,
+  const responses = await Promise.allSettled(
+    (beta ? ['latest', 'beta'] : ['latest']).map((tag) =>
+      json(`${registry}/${encodeURIComponent(name)}/${tag}`, limits.metadata, signal, request),
+    ),
   )
-  try {
-    const { deprecated } = z.object({ deprecated: z.string().optional() }).parse(metadata)
-    const received = parsePackageIdentity(metadata)
-    if (deprecated || received.name !== name || prerelease(received.version)) throw failure()
-    return {
-      name: received.name,
-      version: received.version,
-      author: received.author,
-      repository: received.repository,
-      nesso: parsePluginManifest(received.nesso),
-      i18n: parsePluginI18n(received.i18n),
-    }
-  } catch {
-    throw new PluginError('invalid-input', [
-      { path: 'npm', message: 'The latest version is not a compatible stable Nesso plugin.' },
-    ])
+  signal.throwIfAborted()
+  if (responses.every((response) => response.status === 'rejected')) throw failure()
+  let latest: NpmPlugin | undefined
+  for (const response of responses) {
+    if (response.status === 'rejected') continue
+    try {
+      const plugin = parseNpmPlugin(response.value, name, beta)
+      if (!latest || gt(plugin.version, latest.version)) latest = plugin
+    } catch {}
   }
+  if (latest) return latest
+  throw new PluginError('invalid-input', [
+    {
+      path: 'npm',
+      message: 'No compatible Nesso plugin version is available in this app channel.',
+    },
+  ])
 }
 
 export async function searchNpmPlugins(
   input: unknown,
   cancellation: AbortSignal,
   request: RegistryRequest = registryFetch,
+  beta = false,
 ) {
   const { query, offset } = z
     .object({
@@ -211,7 +229,7 @@ export async function searchNpmPlugins(
       if (!entry.keywords?.includes('nesso-plugin')) continue
       let plugin: NpmPlugin
       try {
-        plugin = await latestNpmPlugin(entry.name, signal, request)
+        plugin = await latestNpmPlugin(entry.name, signal, request, beta)
       } catch (error) {
         signal.throwIfAborted()
         if (error instanceof PluginError) continue

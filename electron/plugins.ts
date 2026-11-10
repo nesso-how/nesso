@@ -1,5 +1,6 @@
 import { app, ipcMain } from 'electron'
 import path from 'node:path'
+import prerelease from 'semver/functions/prerelease.js'
 import { preparePluginPackage, type PluginPackageInput } from '@nesso-how/plugin/package'
 import { PluginError, resolvePluginText } from '@nesso-how/plugin/runtime'
 import { pluginIssues, type InstalledPlugin, type PluginResult } from '../shared/plugins.ts'
@@ -15,6 +16,7 @@ export function connectPlugins(
   acquire: typeof acquireNpmPlugin = acquireNpmPlugin,
 ) {
   const storage = createPluginStorage(path.join(app.getPath('userData'), 'plugins'))
+  const beta = prerelease(app.getVersion())?.[0] === 'beta'
   const safeMode = process.argv.includes('--safe-plugins')
   const ready = new Map<number, () => void>()
   let pending:
@@ -80,8 +82,8 @@ export function connectPlugins(
       try {
         const value =
           operation === 'search'
-            ? await searchNpmPlugins({ query: input, offset }, controller.signal)
-            : await latestNpmPlugin(input, controller.signal)
+            ? await searchNpmPlugins({ query: input, offset }, controller.signal, undefined, beta)
+            : await latestNpmPlugin(input, controller.signal, undefined, beta)
         if (controller.signal.aborted || !trusted(event)) return failure()
         return { value }
       } catch {
@@ -205,7 +207,7 @@ export function connectPlugins(
               (entry) => entry.name === record.name,
             )
             if (pending !== attempt || !trusted(event)) return
-            const approval = createPluginApproval(record, previous, source === 'npm')
+            const approval = createPluginApproval(record, previous, source === 'npm', beta)
             attempt.approval = approval
             if (approval.challenge)
               event.sender.send('plugins:event', {

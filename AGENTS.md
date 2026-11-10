@@ -19,8 +19,7 @@ See [README.md](README.md) for the product overview, architecture, and package d
 
 ## Release
 
-- Release the app and listed npm packages together from clean `main` using `pnpm release`; see `pnpm release --help` for options and behavior. Keep app-versioned packages in `scripts/release-packages.json`, in dependency-first publication order.
-- Release the plugin SDK separately using `pnpm release:plugin`; see `pnpm release:plugin --help` for options and behavior. The script bumps `packages/plugin/package.json`, commits, tags `plugin-v<version>`, and pushes. Never reuse a `plugin-v*` tag for a version already on the registry.
+- Release the app, UI, plugin SDK, and official example together from clean `main` using `pnpm release`; see `pnpm release --help` for options and behavior. Keep published packages in `scripts/release-packages.json`, in dependency-first publication order.
 
 ## Architecture
 

@@ -183,6 +183,56 @@ test('discovery enforces the exact keyword, excludes deprecated plugins, filters
   )
 })
 
+test('beta discovery selects the newest compatible stable or beta metadata and tolerates missing tags', async (t) => {
+  let stable: unknown = { ...manifest, version: '1.0.0' }
+  let beta: unknown = { ...manifest, version: '1.1.0-beta.2' }
+  const requested: string[] = []
+  const request = await registry(t, (req, res) => {
+    requested.push(req.url!)
+    if (req.url?.startsWith('/-/v1/search')) {
+      res.end(
+        JSON.stringify({
+          total: 1,
+          objects: [{ package: { name: manifest.name, keywords: ['nesso-plugin'] } }],
+        }),
+      )
+      return
+    }
+    const metadata = req.url?.endsWith('/beta') ? beta : stable
+    if (!metadata) res.writeHead(404).end()
+    else res.end(JSON.stringify(metadata))
+  })
+  const signal = new AbortController().signal
+  assert.equal((await latestNpmPlugin(manifest.name, signal, request)).version, '1.0.0')
+  assert.equal(
+    requested.some((url) => url.endsWith('/beta')),
+    false,
+  )
+  const found = await searchNpmPlugins({ query: '' }, signal, request, true)
+  assert.equal(found.packages[0]?.version, '1.1.0-beta.2')
+  stable = { ...manifest, version: '1.1.0' }
+  assert.equal((await latestNpmPlugin(manifest.name, signal, request, true)).version, '1.1.0')
+  stable = undefined
+  assert.equal(
+    (await latestNpmPlugin(manifest.name, signal, request, true)).version,
+    '1.1.0-beta.2',
+  )
+  stable = { ...manifest, version: '1.0.0' }
+  for (const invalid of [
+    undefined,
+    { ...manifest, version: '1.1.0-beta.2', nesso: { ...manifest.nesso, apiVersion: 4 } },
+    { ...manifest, version: '2.0.0-alpha.1' },
+    { ...manifest, version: '2.0.0-rc.1' },
+  ]) {
+    beta = invalid
+    assert.equal((await latestNpmPlugin(manifest.name, signal, request, true)).version, '1.0.0')
+  }
+  stable = undefined
+  await assert.rejects(latestNpmPlugin(manifest.name, signal, request, true))
+  beta = undefined
+  await assert.rejects(searchNpmPlugins({ query: '' }, signal, request, true))
+})
+
 test('npm acquisition streams real registry-fetch responses, verifies SHA-512, and admits only the declared entry without executing scripts', async (t) => {
   const bytes = archive(entries)
   const requested: string[] = []

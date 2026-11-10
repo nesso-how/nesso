@@ -8,6 +8,7 @@ export function createPluginApproval(
   received: InstalledPlugin,
   previous: InstalledPlugin | undefined,
   npm: boolean,
+  beta = false,
 ) {
   if (
     previous &&
@@ -19,12 +20,17 @@ export function createPluginApproval(
       { path: 'plugins', message: 'The installed package identity or kind changed' },
     ])
   }
+  const preview = prerelease(received.version)
   if (
     npm &&
-    (prerelease(received.version) || (previous && !gt(received.version, previous.version)))
+    ((preview && (!beta || preview[0] !== 'beta')) ||
+      (previous && !gt(received.version, previous.version)))
   ) {
     throw new PluginError('invalid-input', [
-      { path: 'version', message: 'Choose a newer stable package version' },
+      {
+        path: 'version',
+        message: 'Choose a newer package version compatible with this app channel',
+      },
     ])
   }
   const baseline: PluginAccess | undefined =
