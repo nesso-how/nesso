@@ -6,7 +6,7 @@ import { messages } from '../i18n.ts'
 import { ConceptDot } from './concept-dot.tsx'
 import { formatInterval } from './format.ts'
 import { Overview } from './overview.tsx'
-import { Reference } from './reference.tsx'
+import { Prompt, Reference } from './reference.tsx'
 
 export function Practice({
   state,
@@ -164,7 +164,7 @@ export function Practice({
               {revealed ? (
                 <Reference current={current} graph={state.viewGraph} t={t} />
               ) : (
-                <p className="review-prompt">{t.prompt}</p>
+                <Prompt current={current} graph={state.viewGraph} t={t} />
               )}
             </PluginContent>
           ) : (
