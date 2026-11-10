@@ -4,13 +4,17 @@ Build Nesso plugins with TypeScript: **actions** read and edit graphs, **vocabul
 
 ## Install
 
-Use Node.js 24. To add the SDK to an existing TypeScript project:
+Use Node.js 24. During Nesso's beta, add the SDK to an existing TypeScript project with:
 
 ```sh
-npm install --save-dev @nesso-how/plugin
+npm install --save-dev @nesso-how/plugin@beta
 ```
 
 For a new project, start with the [standalone example](example/), which includes TypeScript, Vite, and React configuration. Plugins can be installed locally through MCP without publishing to npm.
+
+The app, UI package, SDK, and official example share a release version and npm channel. Plugin compatibility is identified separately by `nesso.apiVersion`; matching the app's exact version is not required. Stable releases use npm's default `latest` channel instead of `beta`.
+
+The desktop plugin catalog uses `latest` in stable apps. Beta apps also check `beta` and offer the newest compatible stable or beta version. Other prerelease channels are not included.
 
 ## Create a plugin
 

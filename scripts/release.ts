@@ -1,7 +1,7 @@
+import { execFileSync } from 'node:child_process'
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { NessoError } from '@nesso-how/errors'
-import { commitTagPush, fail, guardRelease, run } from './release-common.ts'
 import { releaseNotes } from './release-notes.ts'
 import releasePackages from './release-packages.json' with { type: 'json' }
 
@@ -21,8 +21,8 @@ Release from a clean main branch. Without an argument, release the current versi
 Choose an explicit version or bump with --major, --minor, --patch, --alpha or --beta.
 
 Generate CHANGELOG.md from Conventional Commits using cliff.toml, sync built-in
-plugins, the packages in scripts/release-packages.json and the example's UI
-dependency, commit them with the version bump, then tag and atomically push
+plugins, the packages in scripts/release-packages.json and the example's UI/SDK
+dependencies, commit them with the version bump, then tag and atomically push
 main and the tag to origin. CI publishes the listed packages with the app's
 version and release channel, in list order.
 Alpha/beta notes cover changes since the previous release. Stable notes cover
@@ -31,6 +31,22 @@ release. Internal changes are omitted unless breaking.
 GitHub releases use the same changelog entry.
 
 --help, -h  Show this help without changing files or publishing a release.`
+
+function fail(path: string, message: string): never {
+  throw new NessoError([{ path, message }])
+}
+
+function run(command: string, args: string[]): string {
+  try {
+    return execFileSync(command, args, {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    }).trim()
+  } catch (unknownError) {
+    const message = unknownError instanceof Error ? unknownError.message : String(unknownError)
+    return fail(`${command} ${args.join(' ')}`, message)
+  }
+}
 
 function parseVersion(input: string): Version {
   const match = /^v?(\d+)\.(\d+)\.(\d+)(?:-(alpha|beta)\.(\d+))?$/.exec(input.trim())
@@ -120,7 +136,10 @@ function main(): void {
     )
   const version = formatVersion(target)
   const tag = `v${version}`
-  guardRelease(tag)
+  if (run('git', ['rev-parse', '--abbrev-ref', 'HEAD']) !== 'main')
+    fail('git', 'must release from main')
+  if (run('git', ['status', '--porcelain']) !== '') fail('git', 'working tree is not clean')
+  if (run('git', ['tag', '--list', tag]) !== '') fail('git', `tag ${tag} already exists`)
   const tags = run('git', ['tag', '--merged', 'HEAD', '--sort=-version:refname']).split('\n')
   const previous = tags.find((candidate) => {
     if (!/^v\d+\.\d+\.\d+(?:-(alpha|beta)\.\d+)?$/.test(candidate)) return false
@@ -149,12 +168,12 @@ function main(): void {
   if (changelog.split('\n').some((line) => line.startsWith(`## ${version} — `))) {
     fail('CHANGELOG.md', `entry for ${tag} already exists`)
   }
+  const updates = new Map<string, string>()
   if (version !== data.version) {
     const matches = raw.match(/"version":\s*"[^"]*"/g) ?? []
     if (matches.length !== 1) fail('package.json', 'expected exactly one version field')
-    writeFileSync(location, raw.replace(/("version":\s*")[^"]*(")/, `$1${version}$2`))
+    updates.set('package.json', raw.replace(/("version":\s*")[^"]*(")/, `$1${version}$2`))
   }
-  const synced: string[] = []
   for (const directory of [
     ...releasePackages,
     ...[
@@ -165,6 +184,7 @@ function main(): void {
       'import',
       'export',
       'review',
+      'notes',
     ].map((plugin) => `plugins/${plugin}`),
   ]) {
     const path = `${directory}/package.json`
@@ -173,34 +193,33 @@ function main(): void {
       if (releasePackages.includes(directory)) fail(path, 'release package is missing')
       continue
     }
-    const packageRaw = readFileSync(packageLocation, 'utf8')
+    let packageRaw = readFileSync(packageLocation, 'utf8')
+    const manifest = JSON.parse(packageRaw) as { version?: unknown }
     const matches = packageRaw.match(/"version":\s*"[^"]*"/g) ?? []
-    if (matches.length !== 1) fail(path, 'expected exactly one version field')
-    if ((JSON.parse(packageRaw) as { version?: unknown }).version !== version) {
-      writeFileSync(
-        packageLocation,
-        packageRaw.replace(/("version":\s*")[^"]*(")/, `$1${version}$2`),
-      )
+    if (typeof manifest.version !== 'string' || matches.length !== 1)
+      fail(path, 'expected exactly one version field')
+    packageRaw = packageRaw.replace(/("version":\s*")[^"]*(")/, `$1${version}$2`)
+    if (directory === 'packages/plugin/example') {
+      for (const dependency of ['@nesso-how/ui', '@nesso-how/plugin']) {
+        const pattern = new RegExp(`("${dependency}":\\s*")[^"]*(")`, 'g')
+        if ([...packageRaw.matchAll(pattern)].length !== 1)
+          fail(path, `expected exactly one ${dependency} dependency`)
+        packageRaw = packageRaw.replace(pattern, `$1${version}$2`)
+      }
     }
-    synced.push(path)
+    updates.set(path, packageRaw)
   }
-  const examplePath = 'packages/plugin/example/package.json'
-  const exampleLocation = new URL(`../${examplePath}`, import.meta.url)
-  if (existsSync(exampleLocation)) {
-    const exampleRaw = readFileSync(exampleLocation, 'utf8')
-    const dependencies = exampleRaw.match(/"@nesso-how\/ui":\s*"[^"]*"/g) ?? []
-    if (dependencies.length !== 1) fail(examplePath, 'expected exactly one UI dependency')
-    writeFileSync(
-      exampleLocation,
-      exampleRaw.replace(/("@nesso-how\/ui":\s*")[^"]*(")/, `$1${version}$2`),
-    )
-    synced.push(examplePath)
-  }
-  writeFileSync(
-    changelogLocation,
+  updates.set(
+    'CHANGELOG.md',
     `# Changelog\n\n${entry}\n\n${changelog.replace(/^# Changelog\s*/, '')}`,
   )
-  commitTagPush(['package.json', 'CHANGELOG.md', ...synced], `chore: release ${version}`, tag)
+  for (const [path, contents] of updates)
+    writeFileSync(new URL(`../${path}`, import.meta.url), contents)
+  run('git', ['add', ...updates.keys()])
+  run('git', ['commit', '-m', `chore: release ${version}`])
+  run('git', ['tag', tag])
+  run('git', ['push', '--atomic', 'origin', 'main', tag])
+  console.log(tag)
 }
 
 try {

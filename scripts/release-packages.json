@@ -1,1 +1,1 @@
-["packages/ui"]
+["packages/ui", "packages/plugin", "packages/plugin/example"]

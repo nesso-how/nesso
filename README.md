@@ -147,7 +147,9 @@ For desktop development with live reload, run `pnpm dev --host 127.0.0.1 --stric
 
 Checks: `pnpm build`, `pnpm lint`, `pnpm test`, `pnpm test:plugin-runtime`, and `pnpm analyze --summary`.
 
-See the [plugin guide](packages/plugin/README.md#create-a-plugin) for plugin authoring, or `pnpm release --help` for release options.
+See the [plugin guide](packages/plugin/README.md#create-a-plugin) for plugin authoring, or `pnpm release --help` for release options. The app, UI package, plugin SDK, and official example are released together with the same version and channel.
+
+Configure npm trusted publishing for all published packages to use the GitHub Actions workflow `release.yml`.
 
 ## Troubleshooting
 

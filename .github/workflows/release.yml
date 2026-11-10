@@ -135,6 +135,14 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
       - run: pnpm install --frozen-lockfile --ignore-scripts
       - run: pnpm build:packages
+      - name: Pack UI and SDK for the standalone example
+        run: |
+          pnpm --dir packages/ui pack --out "$RUNNER_TEMP/nesso-ui.tgz"
+          pnpm --dir packages/plugin pack --out "$RUNNER_TEMP/plugin-sdk.tgz"
+          cp -R packages/plugin/example "$RUNNER_TEMP/plugin-example"
+      - name: Install example build dependencies
+        run: npm install --no-save --package-lock=false "$RUNNER_TEMP/nesso-ui.tgz" "$RUNNER_TEMP/plugin-sdk.tgz"
+        working-directory: ${{ runner.temp }}/plugin-example
       - uses: actions/download-artifact@v4
         with:
           pattern: nesso-*
@@ -150,13 +158,21 @@ jobs:
             private="$(node -p "require('./$directory/package.json').private === true")"
             [ "$private" = false ] || { echo "$directory is private"; exit 1; }
           done
+          for dependency in @nesso-how/ui @nesso-how/plugin; do
+            package="$(node -p "const p = require('./packages/plugin/example/package.json'); p.dependencies?.['$dependency'] ?? p.devDependencies?.['$dependency']")"
+            [ "$version" = "$package" ] || { echo "tag $version does not match example dependency $dependency version $package"; exit 1; }
+          done
           channel=latest
           if [[ "$version" == *-* ]]; then
             channel="${version#*-}"
             channel="${channel%%.*}"
           fi
           for directory in $packages; do
-            pnpm --dir "$directory" publish --tag "$channel" --no-git-checks
+            if [ "$directory" = packages/plugin/example ]; then
+              npm publish "$RUNNER_TEMP/plugin-example" --tag "$channel"
+            else
+              pnpm --dir "$directory" publish --tag "$channel" --no-git-checks
+            fi
           done
       - name: Publish release and update files
         run: |
