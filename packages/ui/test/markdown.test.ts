@@ -5,11 +5,13 @@ import {
   continueMarkdownList,
   indentMarkdownList,
   markdownDecorations,
+  markdownTasks,
   toggleMarkdownFormat,
+  toggleMarkdownTask,
 } from '../src/markdown.ts'
 
-function preview(source: string, selection?: { anchor: number; head?: number }) {
-  const state = EditorState.create({ doc: source, selection })
+function preview(source: string, selection?: { anchor: number; head?: number }, tasks = false) {
+  const state = EditorState.create({ doc: source, selection, extensions: markdownTasks.of(tasks) })
   const hidden: { from: number; to: number; label: string }[] = []
   const marks: string[] = []
   const links: string[] = []
@@ -20,7 +22,11 @@ function preview(source: string, selection?: { anchor: number; head?: number }) 
       if (value.spec.attributes?.['data-markdown-link'])
         links.push(value.spec.attributes['data-markdown-link'])
       if (value.spec.class) marks.push(value.spec.class)
-      else hidden.push({ from, to, label: value.spec.widget?.label ?? '' })
+      else {
+        const widget = value.spec.widget
+        const box = widget?.checked == null ? '' : widget.checked ? '☑ ' : '☐ '
+        hidden.push({ from, to, label: (widget?.label ?? '') + box })
+      }
     },
   )
   let text = source
@@ -54,11 +60,64 @@ test('cursor and selections reveal only the Markdown they touch', () => {
 test('lists render inline formatting and reveal markers in active items', () => {
   const source = '- **Bold**\n  - *italic*\n\n3) [Nesso](https://nesso.how)\n4) Next'
   const result = preview(source)
-  assert.equal(result.text, '• Bold\n  • italic\n\n3) Nesso\n4) Next')
+  assert.equal(result.text, '• Bold\n• italic\n\n3) Nesso\n4) Next')
   assert.equal(result.marks.filter((mark) => mark === 'nesso-markdown-list-item').length, 4)
   const items = '- First\n+ Second'
   assert.equal(preview(items, { anchor: 4 }).text, '- First\n• Second')
   assert.equal(preview(items, { anchor: 3, head: 13 }).text, items)
+})
+
+test('task lists render checkboxes only when enabled', () => {
+  const source = '- [ ] Open\n- [x] Done\n1. [X] Numbered'
+  assert.equal(preview(source).text, '• [ ] Open\n• [x] Done\n1. [X] Numbered')
+  const result = preview(source, undefined, true)
+  assert.equal(result.text, '☐ Open\n☑ Done\n1. ☑ Numbered')
+  assert.equal(result.marks.filter((mark) => mark === 'nesso-markdown-task-done').length, 2)
+  assert.equal(preview(source, { anchor: 3 }, true).text, '- [ ] Open\n☑ Done\n1. ☑ Numbered')
+})
+
+test('task toggles flip the item marker and respect read-only and disabled fields', () => {
+  const source = '- [ ] Open\n  - [x] Nested\n- Plain'
+  const state = EditorState.create({ doc: source, extensions: markdownTasks.of(true) })
+  const toggle = (position: number) => state.update(toggleMarkdownTask(state, position)!).state
+  assert.equal(toggle(0).doc.toString(), '- [x] Open\n  - [x] Nested\n- Plain')
+  assert.equal(toggle(13).doc.toString(), '- [ ] Open\n  - [ ] Nested\n- Plain')
+  assert.equal(toggleMarkdownTask(state, source.indexOf('- Plain')), null)
+  assert.equal(toggleMarkdownTask(EditorState.create({ doc: source }), 0), null)
+  const readonly = EditorState.create({
+    doc: source,
+    extensions: [markdownTasks.of(true), EditorState.readOnly.of(true)],
+  })
+  assert.equal(toggleMarkdownTask(readonly, 0), null)
+})
+
+test('Enter continues task lists with unchecked items and exits empty ones', () => {
+  for (const [source, anchor, expected] of [
+    ['- [x] Done', 10, '- [x] Done\n- [ ] '],
+    ['2. [ ] Next', 11, '2. [ ] Next\n3. [ ] '],
+    ['- [ ] Open\n- [ ] ', 17, '- [ ] Open\n'],
+    ['- Parent\n  - [ ] ', 17, '- Parent\n- [ ] '],
+  ] as const) {
+    const state = EditorState.create({
+      doc: source,
+      selection: { anchor },
+      extensions: markdownTasks.of(true),
+    })
+    const next = state.update(continueMarkdownList(state)!).state
+    assert.equal(next.doc.toString(), expected)
+    assert.equal(next.selection.main.head, anchor + expected.length - source.length)
+  }
+  const inside = EditorState.create({
+    doc: '- [ ] Open',
+    selection: { anchor: 3 },
+    extensions: markdownTasks.of(true),
+  })
+  assert.equal(continueMarkdownList(inside), null)
+  const disabled = EditorState.create({ doc: '- [ ] Open', selection: { anchor: 10 } })
+  assert.equal(
+    disabled.update(continueMarkdownList(disabled)!).state.doc.toString(),
+    '- [ ] Open\n- ',
+  )
 })
 
 test('Enter continues or splits lists, promotes empty nested items and exits empty top-level items', () => {

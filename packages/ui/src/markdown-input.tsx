@@ -7,7 +7,9 @@ import {
   continueMarkdownList,
   indentMarkdownList,
   markdownDecorations,
+  markdownTasks,
   toggleMarkdownFormat,
+  toggleMarkdownTask,
 } from './markdown'
 
 type MarkdownInputProps = Omit<ComponentProps<'div'>, 'onChange' | 'children' | 'defaultValue'> & {
@@ -15,6 +17,7 @@ type MarkdownInputProps = Omit<ComponentProps<'div'>, 'onChange' | 'children' | 
   onChange: (value: string) => void
   readOnly?: boolean
   history?: boolean
+  tasks?: boolean
   onOpenLink?: (url: string) => void
   placeholder?: string
 }
@@ -28,7 +31,8 @@ const livePreview = ViewPlugin.define(
         update.docChanged ||
         update.selectionSet ||
         update.focusChanged ||
-        update.startState.readOnly !== update.state.readOnly
+        update.startState.readOnly !== update.state.readOnly ||
+        update.startState.facet(markdownTasks) !== update.state.facet(markdownTasks)
       )
         this.decorations = markdownDecorations(
           update.state,
@@ -38,12 +42,28 @@ const livePreview = ViewPlugin.define(
   }),
   { decorations: (plugin) => plugin.decorations },
 )
+const taskCheckboxes = EditorView.domEventHandlers({
+  mousedown(event, view) {
+    const task = (event.target as Element).closest('.nesso-markdown-task')
+    if (!task) return false
+    event.preventDefault()
+    const transaction = toggleMarkdownTask(view.state, view.posAtDOM(task))
+    if (transaction) view.dispatch(transaction)
+    return true
+  },
+  click(event) {
+    if (!(event.target as Element).closest('.nesso-markdown-task')) return false
+    event.preventDefault()
+    return true
+  },
+})
 
 export function MarkdownInput({
   value,
   onChange,
   readOnly = false,
   history = true,
+  tasks,
   onOpenLink,
   placeholder,
   className,
@@ -74,10 +94,11 @@ export function MarkdownInput({
           '.cm-content, .cm-line': { padding: '0' },
           '.cm-line.nesso-markdown-list-item': {
             paddingInlineStart: 'var(--nesso-list-padding)',
-            textIndent: 'calc(-1 * var(--nesso-list-padding))',
+            textIndent: 'calc(-1 * var(--nesso-list-indent))',
           },
         }),
         livePreview,
+        taskCheckboxes,
         configuration.of([]),
         keymap.of([
           ...(['Tab', 'Shift-Tab'] as const).map((key) => ({
@@ -137,6 +158,7 @@ export function MarkdownInput({
       effects: configuration.reconfigure([
         EditorState.readOnly.of(readOnly),
         EditorView.editable.of(!readOnly),
+        markdownTasks.of(tasks),
         EditorView.contentAttributes.of({
           ...(id ? { id } : {}),
           ...(ariaLabel ? { 'aria-label': ariaLabel } : {}),
@@ -149,7 +171,7 @@ export function MarkdownInput({
         ...(placeholder ? [editorPlaceholder(placeholder)] : []),
       ]),
     })
-  }, [configuration, readOnly, history, id, ariaLabel, ariaLabelledBy, placeholder])
+  }, [configuration, readOnly, history, tasks, id, ariaLabel, ariaLabelledBy, placeholder])
 
   useLayoutEffect(() => {
     const view = editor.current
