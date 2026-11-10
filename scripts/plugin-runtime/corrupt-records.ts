@@ -6,7 +6,7 @@ import { readFile, readdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { connectPlugins } from '../../electron/plugins.ts'
 import { createPluginStorage } from '../../electron/plugin-storage.ts'
-import { createTrustedRequest } from '../../electron/ipc.ts'
+import { appUrl, createTrustedRequest } from '../../electron/ipc.ts'
 import { preparePluginPackage } from '@nesso-how/plugin/package'
 import theme from '../../packages/plugin/test/theme.json' with { type: 'json' }
 import { openFixtureWorkspace, waitFor, type CheckContext } from './helpers.ts'
@@ -54,7 +54,7 @@ export async function verifyCorruptRecords({ window, url }: CheckContext) {
       ),
     ),
   )
-  connectPlugins(createTrustedRequest(false))
+  connectPlugins(createTrustedRequest(appUrl(false)))
   const { saved, evaluate } = await openFixtureWorkspace({ window, url })
   const document = structuredClone(saved.get('document'))
   const corrupt = `${createHash('sha256').update('test-unreadable').digest('hex')}.json`

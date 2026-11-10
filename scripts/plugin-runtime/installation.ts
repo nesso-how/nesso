@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { once } from 'node:events'
 import { ipcMain, type BrowserWindow } from 'electron'
 import { connectPlugins } from '../../electron/plugins.ts'
-import { createTrustedRequest } from '../../electron/ipc.ts'
+import { appUrl, createTrustedRequest } from '../../electron/ipc.ts'
 import { ElectronError } from '../../electron/errors.ts'
 import { connectExternalLinks } from '../../electron/links.ts'
 import { preparePluginPackage, parsePackageIdentity } from '@nesso-how/plugin/package'
@@ -230,7 +230,7 @@ function setupInstallation(window: BrowserWindow, saved: Map<string, unknown>): 
   connectExternalLinks(window.webContents, async (url) => {
     state.openedLinks.push(url)
   })
-  connectPlugins(createTrustedRequest(false), async (input, signal) => {
+  connectPlugins(createTrustedRequest(appUrl(false)), async (input, signal) => {
     signal.throwIfAborted()
     if (state.fault)
       throw new ElectronError([{ path: 'npm', message: 'Acquisition validation failed' }])

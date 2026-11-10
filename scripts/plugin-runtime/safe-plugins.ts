@@ -4,7 +4,7 @@ import { readFile, readdir } from 'node:fs/promises'
 import path from 'node:path'
 import { connectPlugins } from '../../electron/plugins.ts'
 import { createPluginStorage } from '../../electron/plugin-storage.ts'
-import { createTrustedRequest } from '../../electron/ipc.ts'
+import { appUrl, createTrustedRequest } from '../../electron/ipc.ts'
 import { preparePluginPackage } from '@nesso-how/plugin/package'
 import { openFixtureWorkspace, type CheckContext } from './helpers.ts'
 
@@ -35,7 +35,7 @@ export async function verifySafePlugins({ window, url }: CheckContext) {
   const installed = await storage.install(prepared, () => true)
   const filename = path.join(directory, (await readdir(directory))[0])
   const before = await readFile(filename, 'utf8')
-  connectPlugins(createTrustedRequest(false))
+  connectPlugins(createTrustedRequest(appUrl(false)))
   const { saved, evaluate } = await openFixtureWorkspace({ window, url })
   const document = structuredClone(saved.get('document'))
   await evaluate(`document.querySelector('[data-settings-trigger]').click()`)
