@@ -1,15 +1,35 @@
 import type { ActionState } from '@nesso-how/plugin'
+import { cues } from '../cues.ts'
 import type { messages } from '../i18n.ts'
 
-export function Reference({
-  current,
-  graph,
-  t,
-}: {
+type Props = {
   current: ActionState['viewGraph']['concepts'][number]
   graph: ActionState['viewGraph']
   t: (typeof messages)[keyof typeof messages]
-}) {
+}
+
+export function Prompt({ current, graph, t }: Props) {
+  const items = cues(current.id, graph)
+  if (!items.length) return <p className="review-prompt">{t.prompt}</p>
+  const blank = <span className="review-blank">?</span>
+  const self = <span>{current.label}</span>
+  return (
+    <>
+      <p className="review-prompt">{current.notes?.trim() ? t.explainAll : t.recall}</p>
+      <section className="review-connections">
+        {items.map(({ key, outgoing, label }) => (
+          <div className="review-relation" key={key}>
+            {outgoing ? self : blank}
+            <span className="review-predicate">{label} →</span>
+            {outgoing ? blank : self}
+          </div>
+        ))}
+      </section>
+    </>
+  )
+}
+
+export function Reference({ current, graph, t }: Props) {
   const concepts = new Map(graph.concepts.map((concept) => [concept.id, concept]))
   const types = new Map(graph.relationTypes.map((type) => [type.id, type.label]))
   const relations = graph.relations.filter(
