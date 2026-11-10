@@ -72,7 +72,11 @@ test('import creates a new view and remaps concept ids with original types', () 
 
 test('empty snapshots are no-ops', () => {
   assert.deepEqual(
-    buildImportOperations({ concepts: [], relationTypes: [], relations: [] }, 'urn:view', 'My view'),
+    buildImportOperations(
+      { concepts: [], relationTypes: [], relations: [] },
+      'urn:view',
+      'My view',
+    ),
     [],
   )
 })

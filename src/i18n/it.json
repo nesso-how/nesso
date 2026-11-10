@@ -44,6 +44,7 @@
   "pluginAccessCreateType": "Creare tipi di relazione",
   "pluginAccessRemoveRelation": "Rimuovere relazioni",
   "pluginAccessSelection": "Cambiare la selezione",
+  "pluginAccessCreateView": "Creare viste",
   "pluginAccessMembership": "Modificare le appartenenze alle viste",
   "pluginAccessFiles": "Aprire e salvare file tramite il selettore di Nesso",
   "pluginAccessNotify": "Mostrare notifiche di Nesso",

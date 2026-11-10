@@ -17,6 +17,7 @@ const writes = {
   'relation.type.create': 'pluginAccessCreateType',
   'relation.remove': 'pluginAccessRemoveRelation',
   'selection.set': 'pluginAccessSelection',
+  'view.create': 'pluginAccessCreateView',
   'view.membership': 'pluginAccessMembership',
 } as const
 const capabilities = {

@@ -11,7 +11,7 @@ export function deriveViewName(fileName: string): string {
   const spaced = stripped.replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim()
   const raw = spaced || base.trim() || 'Import'
   const name = raw.slice(0, 70).trim()
-  return (name.charAt(0).toUpperCase() + name.slice(1)) || 'Import'
+  return name.charAt(0).toUpperCase() + name.slice(1) || 'Import'
 }
 
 export function buildImportOperations(

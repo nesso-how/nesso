@@ -42,6 +42,7 @@
   "pluginAccessCreateType": "创建关系类型",
   "pluginAccessRemoveRelation": "移除关系",
   "pluginAccessSelection": "更改选择",
+  "pluginAccessCreateView": "创建视图",
   "pluginAccessMembership": "更改视图成员",
   "pluginAccessFiles": "通过 Nesso 文件选择器打开和保存文件",
   "pluginAccessNotify": "显示 Nesso 通知",
