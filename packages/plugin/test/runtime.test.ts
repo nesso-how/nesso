@@ -43,10 +43,11 @@ test('manifests and action descriptors reject unknown authority, duplicates and 
         'relation.type.create',
         'relation.remove',
         'selection.set',
+        'view.create',
         'view.membership',
       ],
     }).writes.length,
-    14,
+    15,
   )
   for (const value of [
     { ...manifest, apiVersion: 1 },
@@ -68,7 +69,6 @@ test('manifests and action descriptors reject unknown authority, duplicates and 
     { ...manifest, writes: ['preferences.theme'] },
     { ...manifest, writes: ['preferences.panels'] },
     { ...manifest, writes: ['preferences.section'] },
-    { ...manifest, writes: ['view.create'] },
     { ...manifest, writes: ['view.rename'] },
     { ...manifest, writes: ['view.pin'] },
     { ...manifest, writes: ['view.remove'] },

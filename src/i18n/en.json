@@ -43,6 +43,7 @@
   "pluginAccessCreateType": "Create relation types",
   "pluginAccessRemoveRelation": "Remove relations",
   "pluginAccessSelection": "Change selection",
+  "pluginAccessCreateView": "Create views",
   "pluginAccessMembership": "Update view membership",
   "pluginAccessFiles": "Open and save files through Nesso’s picker",
   "pluginAccessNotify": "Post Nesso notifications",
