@@ -16,7 +16,7 @@ export function PopoverPopup({
       <Popover.Positioner align={align} anchor={anchor} sideOffset={sideOffset} className="z-50">
         <Popover.Popup
           className={cn(
-            'nesso-popup z-50 max-h-(--available-height) overflow-y-auto p-3 outline-none',
+            'nesso-popup nesso-scroll z-50 max-h-(--available-height) overflow-y-auto p-3 outline-none',
             className,
           )}
           {...props}

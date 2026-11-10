@@ -165,7 +165,7 @@ export function MarkdownInput({
       {...props}
       ref={container}
       className={cn(
-        'nesso-input nesso-markdown-input min-h-24 w-full overflow-y-auto border border-input bg-background px-2.5 py-2 focus-within:border-muted-foreground',
+        'nesso-input nesso-markdown-input nesso-scroll min-h-24 w-full overflow-y-auto border border-input bg-background px-2.5 py-2 focus-within:border-muted-foreground',
         className,
       )}
     />

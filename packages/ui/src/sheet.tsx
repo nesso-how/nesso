@@ -53,7 +53,7 @@ export function BottomSheet({
                 <X />
               </Drawer.Close>
             </div>
-            <Drawer.Content className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pt-1 pb-5">
+            <Drawer.Content className="nesso-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pt-1 pb-5">
               {children}
             </Drawer.Content>
             {footer && <div className="nesso-sheet-footer">{footer}</div>}

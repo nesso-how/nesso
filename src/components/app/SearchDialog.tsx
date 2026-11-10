@@ -135,7 +135,7 @@ export function SearchDialog({
             </span>
           </div>
           <Combobox.List
-            className="explorer-scroll min-h-0 overflow-y-auto px-2 pb-3"
+            className="nesso-scroll min-h-0 overflow-y-auto px-2 pb-3"
             aria-label={t('searchResults')}
           >
             {(group: (typeof groups)[number]) => (

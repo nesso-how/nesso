@@ -100,7 +100,7 @@ export function Chat({
     <section aria-label={t('chat')} className="chat-panel">
       <div
         ref={scroller}
-        className="chat-scroll"
+        className="chat-scroll nesso-scroll"
         onScroll={(event) => {
           const element = event.currentTarget
           follow.current = element.scrollHeight - element.scrollTop - element.clientHeight < 48
@@ -238,6 +238,7 @@ export function Chat({
         >
           <textarea
             ref={input}
+            className="nesso-scroll"
             readOnly={readonly}
             aria-label={t('aiMessage')}
             placeholder={t('aiMessagePlaceholder')}

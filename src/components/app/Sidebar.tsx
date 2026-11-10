@@ -157,7 +157,7 @@ export function AppSidebar({
           store.setSectionOpen('sidebar.pinned-views', !pinnedOpen),
         )}
         <div
-          className="explorer-scroll min-h-0 flex-1 overflow-y-auto p-1.5 -mx-1.5"
+          className="nesso-scroll min-h-0 flex-1 overflow-y-auto p-1.5 -mx-1.5"
           onScroll={() => setMenu(null)}
         >
           <div id="pinned-views" hidden={!pinnedOpen} className="mt-1 space-y-0.5">

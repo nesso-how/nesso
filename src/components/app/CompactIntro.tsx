@@ -28,7 +28,7 @@ export function CompactIntro({
           {t('introSkip')}
         </Button>
       </header>
-      <div className="compact-intro-scroll">
+      <div className="compact-intro-scroll nesso-scroll">
         <div className="compact-intro-graph">
           <GraphWorkspace store={store} preview />
         </div>

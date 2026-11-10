@@ -9,7 +9,10 @@ export function AutocompletePopup({ className, children, ...props }: Autocomplet
     <Autocomplete.Portal>
       <Autocomplete.Positioner sideOffset={4} className="z-50 outline-none">
         <Autocomplete.Popup
-          className={cn('nesso-popup max-h-72 w-(--anchor-width) overflow-y-auto p-1', className)}
+          className={cn(
+            'nesso-popup nesso-scroll max-h-72 w-(--anchor-width) overflow-y-auto p-1',
+            className,
+          )}
           {...props}
         >
           {children}

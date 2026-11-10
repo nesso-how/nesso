@@ -102,7 +102,7 @@ export function ConceptViews({
               />
             </div>
           )}
-          <Combobox.List className="max-h-60 overflow-y-auto">
+          <Combobox.List className="nesso-scroll max-h-60 overflow-y-auto">
             {(view) => (
               <ComboboxItem key={view.id} value={view} className="break-words">
                 {view.name}

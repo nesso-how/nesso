@@ -64,7 +64,6 @@
   border-top: 1px solid var(--border);
   overflow-y: auto;
   overscroll-behavior-y: contain;
-  scrollbar-width: thin;
   scrollbar-gutter: stable;
 }
 .review-list:focus-visible {
