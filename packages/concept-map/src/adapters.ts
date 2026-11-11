@@ -296,11 +296,12 @@ export function createGraphElements() {
         target: group.direction === 'out' ? id : group.anchor,
         predicate: group.predicate,
       }
+      const endpoint = group.direction === 'out' ? 'source' : 'target'
       const edge: RelationEdge = {
         ...relationEdge(
           relation,
           group.relations.every((id) => selectedRelationIds.has(id)),
-          false,
+          reconnectable === true || reconnectable === endpoint ? endpoint : false,
           groupIndex,
           defaultTypeId,
           { ...sizes, [id]: group.bounds },
@@ -323,7 +324,8 @@ export function createGraphElements() {
           old.targetHandle === edge.targetHandle &&
           old.label === edge.label &&
           old.ariaLabel === edge.ariaLabel &&
-          old.selected === edge.selected
+          old.selected === edge.selected &&
+          old.reconnectable === edge.reconnectable
           ? old
           : edge,
       )

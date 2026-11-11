@@ -64,7 +64,7 @@ export function ConnectionPreview({
   ...props
 }: ConnectionLineComponentProps & { reconnection?: Reconnection | null }) {
   const { getInternalNode } = useReactFlow()
-  if (!reconnection) return <PreviewLine {...props} />
+  if (!reconnection || props.fromNode.type === 'relationGroup') return <PreviewLine {...props} />
   const fixed = reconnection.endpoint === 'source' ? 'target' : 'source'
   return reconnection.relations.map((relation) => {
     const node = getInternalNode(relation[fixed])

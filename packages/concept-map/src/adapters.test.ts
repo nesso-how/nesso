@@ -55,7 +55,25 @@ test('group adapters preserve identities, expose member relations and expand par
     kind: 'relation',
     id: relationKey(relation),
   }))
-  assert.equal(adapt({ ...options, selected }).edges[0].selected, true)
+  const grouped = adapt({ ...options, selected }).edges[0]
+  assert.equal(grouped.selected, true)
+  assert.equal(grouped.reconnectable, 'source')
+  const incoming = graph.relations.map(({ source, target }) => ({
+    source: target,
+    predicate: 'urn:p',
+    target: source,
+  }))
+  const reversed = { ...graph, relations: incoming }
+  assert.equal(
+    adapt({
+      ...options,
+      graph: reversed,
+      indexed: indexGraph(reversed),
+      groups: groupRelations(reversed),
+      selected: incoming.map((relation) => ({ kind: 'relation', id: relationKey(relation) })),
+    }).edges[0].reconnectable,
+    'target',
+  )
   const partial = adapt({ ...options, selected: selected.slice(0, 1) })
   assert.equal(partial.nodes.length, 3)
   assert.equal(partial.edges.length, 2)

@@ -347,7 +347,9 @@ export function Canvas({
     if (!reconnectDrag) return edges
     const ids = new Set(reconnectDrag.relations.map(relationKey))
     return edges.map((edge) =>
-      ids.has(edge.id) ? { ...edge, className: 'graph-reconnecting-edge' } : edge,
+      ids.has(edge.id) || edge.data?.relations?.some((id) => ids.has(id))
+        ? { ...edge, className: 'graph-reconnecting-edge' }
+        : edge,
     )
   }, [outsideGraph, sizes, defaultTypeId, elements.edges, reconnectDrag])
   const connectionPreview = useCallback(
