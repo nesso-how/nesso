@@ -3,7 +3,7 @@ import { defaultLocale } from '@nesso-how/i18n'
 import { resolveRelationTypeLabel } from '@nesso-how/core'
 import { Button, ConfirmDialog } from '@nesso-how/ui'
 import { ArrowLeft, Check, ExternalLink } from 'lucide-react'
-import type { NpmPlugin, PluginAccess } from '../../../shared/plugins.ts'
+import type { NpmPlugin, PluginAccess as Access } from '../../../shared/plugins.ts'
 import {
   pluginMetadata,
   removeExternalPlugin,
@@ -13,10 +13,10 @@ import {
 } from '@/plugins'
 import { isLocalPlugin, type PluginEntry } from '@/plugins/registry'
 import type { createPluginInstaller } from '@/plugins/installer'
-import { pluginAccessGroups } from '@/plugins/access'
 import { translate } from '@/i18n'
 import { notifications } from '@/notifications'
 import { host, useNessoStore } from '@/store'
+import { PluginAccess } from './PluginAccess'
 import { PluginKindIcon } from './PluginRow'
 import { isAllowedPluginLink } from '../../../shared/link-policy.ts'
 
@@ -46,7 +46,12 @@ function PackageAttribution({
   const t = translate(useNessoStore((state) => state.preferences.locale ?? defaultLocale))
   const links = [
     ...(npm
-      ? [{ label: t('pluginViewNpm'), url: `https://www.npmjs.com/package/${info.name}` }]
+      ? [
+          {
+            label: t('pluginViewNpm'),
+            url: `https://www.npmjs.com/package/${info.name}`,
+          },
+        ]
       : []),
     ...(info.repository ? [{ label: t('pluginSourceGitHub'), url: info.repository }] : []),
   ].filter(({ url }) => isAllowedPluginLink(url))
@@ -72,35 +77,12 @@ function PackageAttribution({
   )
 }
 
-function DeclaredAccess({ access }: { access: PluginAccess }) {
+function DeclaredAccess({ access }: { access: Access }) {
   const t = translate(useNessoStore((state) => state.preferences.locale ?? defaultLocale))
-  const groups = pluginAccessGroups(access, t)
-  const empty = !groups.writes.length && !groups.capabilities.length
   return (
     <section className="settings-section">
-      <h3 className="settings-section-title">{t('pluginDeclaredAccess')}</h3>
-      {empty ? (
-        <p className="mt-3 text-xs text-muted-foreground">{t('pluginNoAccess')}</p>
-      ) : (
-        <ul className="mt-3 space-y-1 pl-4 text-xs text-muted-foreground">
-          {groups.writes.length ? (
-            <li>
-              <span className="font-medium">{t('pluginAccessWrites')}:</span>{' '}
-              <span className="lowercase">{groups.writes.join(', ')}</span>
-            </li>
-          ) : null}
-          {groups.capabilities.length ? (
-            <li>
-              <p className="font-medium">{t('pluginAccessCapabilities')}:</p>
-              <ul className="mt-1 list-inside list-disc space-y-1 pl-4">
-                {groups.capabilities.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </li>
-          ) : null}
-        </ul>
-      )}
+      <h3 className="settings-section-title mb-3">{t('pluginDeclaredAccess')}</h3>
+      <PluginAccess access={access} />
     </section>
   )
 }
