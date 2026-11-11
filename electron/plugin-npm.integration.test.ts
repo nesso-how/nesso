@@ -21,7 +21,7 @@ const manifest = {
   repository: { type: 'git', url: 'git+https://github.com/example/plugin.git' },
   scripts: { install: 'never run' },
   dependencies: { anything: '*' },
-  nesso: { apiVersion: 3, kind: 'actions', entry: 'dist/index.js', writes: [], capabilities: [] },
+  nesso: { apiVersion: 4, kind: 'actions', entry: 'dist/index.js', writes: [], capabilities: [] },
   i18n: {
     metadata: { name: { en: 'Test' }, description: { en: 'Test' }, documentation: { en: 'Test' } },
   },
@@ -146,7 +146,7 @@ test('discovery enforces the exact keyword, excludes deprecated plugins, filters
           deprecated: name === 'deprecated' ? 'Temporary test package' : undefined,
           description: 'Description-only match',
           i18n: { metadata: { ...manifest.i18n.metadata, name: { en: 'Visible display name' } } },
-          nesso: { ...manifest.nesso, apiVersion: name === 'future' ? 4 : 3 },
+          nesso: { ...manifest.nesso, apiVersion: name === 'future' ? 5 : 4 },
         }),
       )
     }
@@ -218,7 +218,7 @@ test('latest discovery gates prereleases by app channel and tolerates missing me
   assert.equal((await latestNpmPlugin(manifest.name, signal, request, true)).version, '1.1.0')
   for (const invalid of [
     undefined,
-    { ...manifest, version: '1.1.0-beta.2', nesso: { ...manifest.nesso, apiVersion: 4 } },
+    { ...manifest, version: '1.1.0-beta.2', nesso: { ...manifest.nesso, apiVersion: 5 } },
     { ...manifest, version: '2.0.0-alpha.1' },
     { ...manifest, version: '2.0.0-rc.1' },
   ]) {

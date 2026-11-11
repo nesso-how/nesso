@@ -35,7 +35,7 @@
     }
   },
   "nesso": {
-    "apiVersion": 3,
+    "apiVersion": 4,
     "kind": "theme",
     "entry": "dist/definition.json",
     "writes": [],

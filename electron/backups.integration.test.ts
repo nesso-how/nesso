@@ -3,6 +3,7 @@ import test from 'node:test'
 import { mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
+import type { WorkspaceState } from '@nesso-how/core'
 import { createNessoStore } from '../src/store/create.ts'
 import { connectPersistence, loadPersistence } from '../src/store/persistence.ts'
 import { parseBackup } from '../src/store/backup.ts'
@@ -85,8 +86,31 @@ test('migration backups preserve all original records and restore through the ma
   const persistence = connectPersistence(host, storage, await loadPersistence(storage))
   assert.equal(await persistence.flush(), true)
   await persistence.dispose()
-  const document = (await storage.read('document')) as { graph: unknown; workspace: unknown }
-  const legacy = { version: 1, graph: document.graph, workspace: document.workspace }
+  const document = (await storage.read('document')) as {
+    graph: { '@graph': { '@id': string }[] }
+    workspace: WorkspaceState
+  }
+  const positions = new Map(
+    document.workspace.savedViews.flatMap(({ members }) =>
+      members.map(({ id, position }) => [id, position]),
+    ),
+  )
+  const legacy = {
+    version: 1,
+    graph: {
+      ...document.graph,
+      '@graph': document.graph['@graph'].map((node) =>
+        positions.has(node['@id']) ? { ...node, position: positions.get(node['@id']) } : node,
+      ),
+    },
+    workspace: {
+      ...document.workspace,
+      savedViews: document.workspace.savedViews.map(({ members, ...view }) => ({
+        ...view,
+        conceptIds: members.map(({ id }) => id),
+      })),
+    },
+  }
   await storage.write('document', legacy)
   const preferences = (await storage.read('preferences')) as {
     preferences: Record<string, unknown>
@@ -107,8 +131,7 @@ test('migration backups preserve all original records and restore through the ma
   assert.equal(await autosave.flush(), true)
   await autosave.dispose()
   assert.deepEqual(await storage.read('document'), {
-    ...legacy,
-    version: 2,
+    ...document,
     documentId: loaded.documentId,
   })
   const upgraded = await loadPersistence(storage)

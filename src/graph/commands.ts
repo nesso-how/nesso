@@ -1,4 +1,4 @@
-import type { GraphSnapshot, NessoOperation, Selection } from '@nesso-how/core'
+import type { GraphSnapshot, NessoOperation, Selection, ViewGraphSnapshot } from '@nesso-how/core'
 import {
   newIri,
   parseGraph,
@@ -20,7 +20,7 @@ export const selectionCoversGraph = (selected: Selection, graph: GraphSnapshot):
   return graph.concepts.length > 0 && graph.concepts.every((concept) => concepts.has(concept.id))
 }
 
-export function copyGraph(graph: GraphSnapshot, selected: Selection): string | null {
+export function copyGraph(graph: ViewGraphSnapshot, selected: Selection): string | null {
   const concepts = new Set(
     selected.filter((item) => item.kind === 'concept').map((item) => item.id),
   )
@@ -39,12 +39,18 @@ export function copyGraph(graph: GraphSnapshot, selected: Selection): string | n
   const copied = graph.concepts.filter((concept) => concepts.has(concept.id))
   if (!copied.length) return null
   const types = new Set(relations.map((relation) => relation.predicate))
+  const members = copied.flatMap(({ id, position, color, bold, italic }) =>
+    position ? [{ id, position, color, bold, italic }] : [],
+  )
   return JSON.stringify(
-    serializeGraph({
-      concepts: copied,
-      relations,
-      relationTypes: graph.relationTypes.filter((type) => types.has(type.id)),
-    }),
+    serializeGraph(
+      {
+        concepts: copied.map(({ id, label, notes }) => ({ id, label, notes })),
+        relations,
+        relationTypes: graph.relationTypes.filter((type) => types.has(type.id)),
+      },
+      members.length ? [{ id: newIri(), name: '', members }] : [],
+    ),
   )
 }
 
@@ -52,6 +58,7 @@ export function pasteOperations(
   text: string,
   position?: Readonly<Position>,
   offset = 40,
+  inView = true,
 ): NessoOperation[] {
   let document: unknown
   try {
@@ -59,24 +66,34 @@ export function pasteOperations(
   } catch {
     throw new SchemaError([{ path: 'clipboard', message: 'Expected a JSON-LD graph' }])
   }
-  const graph = parseGraph(document)
+  const { graph, views } = parseGraph(document)
   if (!graph.concepts.length)
     throw new SchemaError([{ path: 'clipboard', message: 'Expected at least one concept' }])
   const ids = new Map(graph.concepts.map((concept) => [concept.id, newIri()]))
-  const origin = graph.concepts.reduce(
-    (point, concept) => ({
-      x: Math.min(point.x, concept.position.x),
-      y: Math.min(point.y, concept.position.y),
+  const members = inView ? (views[0]?.members ?? []) : []
+  const origin = members.reduce(
+    (point, { position }) => ({
+      x: Math.min(point.x, position.x),
+      y: Math.min(point.y, position.y),
     }),
     { x: Infinity, y: Infinity },
   )
   const delta = position
     ? { x: position.x - origin.x, y: position.y - origin.y }
     : { x: offset, y: offset }
+  const presentation = new Map(
+    members.map((member) => [
+      member.id,
+      {
+        ...member,
+        position: { x: member.position.x + delta.x, y: member.position.y + delta.y },
+      },
+    ]),
+  )
   const concepts = graph.concepts.map((concept) => ({
     ...concept,
+    ...presentation.get(concept.id),
     id: ids.get(concept.id)!,
-    position: { x: concept.position.x + delta.x, y: concept.position.y + delta.y },
   }))
   const relations = graph.relations.map((relation) => ({
     ...relation,

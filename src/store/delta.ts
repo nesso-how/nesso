@@ -160,13 +160,14 @@ export const mergeChanges = <T>(
   )
 }
 
+type Member = SavedView['members'][number]
+
 export const sameConcept = (
   a: GraphSnapshot['concepts'][number],
   b: GraphSnapshot['concepts'][number],
-): boolean =>
+): boolean => a.id === b.id && a.label === b.label && a.notes === b.notes
+export const sameMember = (a: Member, b: Member): boolean =>
   a.id === b.id &&
-  a.label === b.label &&
-  a.notes === b.notes &&
   a.color === b.color &&
   a.bold === b.bold &&
   a.italic === b.italic &&
@@ -178,11 +179,13 @@ export const sameType = (
 ): boolean => a.id === b.id && a.label === b.label
 export const sameIds = (a: readonly string[], b: readonly string[]): boolean =>
   a === b || (a.length === b.length && a.every((id, index) => id === b[index]))
+export const sameMembers = (a: readonly Member[], b: readonly Member[]): boolean =>
+  a === b || (a.length === b.length && a.every((member, index) => sameMember(member, b[index])))
 export const sameView = (a: SavedView, b: SavedView): boolean =>
-  a.id === b.id && a.name === b.name && a.pinned === b.pinned && sameIds(a.conceptIds, b.conceptIds)
+  a.id === b.id && a.name === b.name && a.pinned === b.pinned && sameMembers(a.members, b.members)
 
-type ViewMetadata = Omit<SavedView, 'conceptIds'>
-export type ViewChange = Change<ViewMetadata> & { readonly members: readonly Change<string>[] }
+type ViewMetadata = Omit<SavedView, 'members'>
+export type ViewChange = Change<ViewMetadata> & { readonly members: readonly Change<Member>[] }
 export type DocumentDelta = {
   readonly concepts: readonly Change<GraphSnapshot['concepts'][number]>[]
   readonly relations: readonly Change<GraphSnapshot['relations'][number]>[]
@@ -192,24 +195,32 @@ export type DocumentDelta = {
 
 export const viewChanges = (changes: readonly Change<SavedView>[]): ViewChange[] =>
   changes.map(({ id, before, after }) => {
-    const oldIds = before?.value.conceptIds ?? []
-    const newIds = after?.value.conceptIds ?? []
-    const oldIndices = new Map(oldIds.map((id, index) => [id, index]))
-    const newIndices = new Map(newIds.map((id, index) => [id, index]))
+    const oldMembers = before?.value.members ?? []
+    const newMembers = after?.value.members ?? []
+    const oldIndices = new Map(oldMembers.map(({ id }, index) => [id, index]))
+    const newIndices = new Map(newMembers.map(({ id }, index) => [id, index]))
     const reordered = !sameIds(
-      oldIds.filter((id) => newIndices.has(id)),
-      newIds.filter((id) => oldIndices.has(id)),
+      oldMembers.flatMap(({ id }) => (newIndices.has(id) ? [id] : [])),
+      newMembers.flatMap(({ id }) => (oldIndices.has(id) ? [id] : [])),
     )
-    const members = [...new Set([...oldIds, ...newIds])].flatMap((id): Change<string>[] => {
+    const ids = [...new Set([...oldIndices.keys(), ...newIndices.keys()])]
+    const members = ids.flatMap((id): Change<Member>[] => {
       const oldIndex = oldIndices.get(id)
       const newIndex = newIndices.get(id)
-      if (oldIndex === newIndex || (!reordered && oldIndex !== undefined && newIndex !== undefined))
+      const old = oldIndex === undefined ? undefined : oldMembers[oldIndex]
+      const next = newIndex === undefined ? undefined : newMembers[newIndex]
+      if (
+        old &&
+        next &&
+        (oldIndex === newIndex || !reordered) &&
+        (old === next || sameMember(old, next))
+      )
         return []
       return [
         {
           id,
-          before: oldIndex === undefined ? undefined : { index: oldIndex, value: id },
-          after: newIndex === undefined ? undefined : { index: newIndex, value: id },
+          before: old && { index: oldIndex!, value: old },
+          after: next && { index: newIndex!, value: next },
         },
       ]
     })

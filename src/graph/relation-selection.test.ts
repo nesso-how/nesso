@@ -5,7 +5,7 @@ import { createNessoStore } from '../store/create.ts'
 import { relationSelection, relationTypeOperations } from './relation-selection.ts'
 
 const fixture = (): Graph => ({
-  concepts: ['a', 'b', 'c'].map((id) => ({ id: `urn:${id}`, label: id, position: { x: 0, y: 0 } })),
+  concepts: ['a', 'b', 'c'].map((id) => ({ id: `urn:${id}`, label: id })),
   relations: [
     { source: 'urn:a', predicate: 'urn:p', target: 'urn:b' },
     { source: 'urn:a', predicate: 'urn:p', target: 'urn:c' },

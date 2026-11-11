@@ -3,6 +3,7 @@ import {
   type ActionBadgeInput,
   type ActionBadgeResult,
 } from '@nesso-how/plugin/runtime'
+import type { SavedView } from '@nesso-how/core'
 import type { HostStore } from '../store/types.ts'
 import { materialize } from '../store/operations.ts'
 import { sameIds } from '../store/delta.ts'
@@ -142,7 +143,8 @@ export function createActionBadges(
       if (viewsChanged && badge.viewId !== null) {
         const next = state.workspace.savedViews.find(({ id }) => id === badge.viewId)
         const before = previous.workspace.savedViews.find(({ id }) => id === badge.viewId)
-        if (!next || !before || !sameIds(next.conceptIds, before.conceptIds)) return true
+        const ids = (view: SavedView) => view.members.map(({ id }) => id)
+        if (!next || !before || !sameIds(ids(next), ids(before))) return true
       }
       return (
         findPluginStorage(state.pluginStorage, badge.pluginId, badge.local) !==

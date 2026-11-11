@@ -18,11 +18,12 @@ export function ConceptViews({
 }) {
   const t = useTranslation(store)
   const workspace = useNessoStore((state) => state.workspace, store)
+  const includes = (view: SavedView, id: string) => view.members.some((member) => member.id === id)
   const memberships = workspace.savedViews.filter((view) =>
-    conceptIds.some((id) => view.conceptIds.includes(id)),
+    conceptIds.some((id) => includes(view, id)),
   )
   const available = workspace.savedViews.filter((view) =>
-    conceptIds.some((id) => !view.conceptIds.includes(id)),
+    conceptIds.some((id) => !includes(view, id)),
   )
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
@@ -49,8 +50,7 @@ export function ConceptViews({
                 {view.name}
                 {conceptIds.length > 1 && (
                   <span className="ml-2 text-xs text-muted-foreground">
-                    {conceptIds.filter((id) => view.conceptIds.includes(id)).length}/
-                    {conceptIds.length}
+                    {conceptIds.filter((id) => includes(view, id)).length}/{conceptIds.length}
                   </span>
                 )}
               </span>

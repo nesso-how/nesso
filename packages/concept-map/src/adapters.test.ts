@@ -1,18 +1,17 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { Position } from '@xyflow/react'
-import { relationKey, type Graph } from '@nesso-how/schema'
+import {
+  relationKey,
+  type Concept,
+  type Graph as Snapshot,
+  type Presentation,
+} from '@nesso-how/schema'
 import type { Selection } from '@nesso-how/core'
 import { groupRelations } from './groups.ts'
-import {
-  containsPoint,
-  createGraphElements,
-  facingSide,
-  indexGraph,
-  outsideEdge,
-  outsideNode,
-  relationEdge,
-} from './adapters.ts'
+import { createGraphElements, facingSide, indexGraph, relationEdge } from './adapters.ts'
+
+type Graph = Omit<Snapshot, 'concepts'> & { concepts: (Concept & Presentation)[] }
 
 test('group adapters preserve identities, expose member relations and expand partial selections', () => {
   const graph: Graph = {
@@ -185,7 +184,6 @@ test('graph elements preserve dimensions and unchanged identities across snapsho
   assert.equal(changed.nodes[0].data.color, '#ff0000')
   assert.notEqual(changed.nodes[0], editable.nodes[0])
   assert.equal(changed.nodes[1], editable.nodes[1])
-  assert.equal(outsideNode(colored.concepts[0]).data.color, '#ff0000')
   const cleared = adapt({ ...options, graph, indexed: indexGraph(graph), editing })
   assert.equal(cleared.nodes[0].data.color, undefined)
   assert.notEqual(cleared.nodes[0], changed.nodes[0])
@@ -296,44 +294,4 @@ test('selected relation groups expose only shared reconnect anchors and update c
     edges([0, 1]).map((edge) => edge.reconnectable),
     [true, true, false],
   )
-})
-
-test('outside adapters render the rest of the graph as inert decoration', () => {
-  const graph: Graph = {
-    concepts: [
-      { id: 'urn:a', label: 'A', position: { x: 0, y: 0 } },
-      { id: 'urn:b', label: 'B', position: { x: 400, y: 0 } },
-    ],
-    relationTypes: [{ id: 'urn:links', label: 'links' }],
-    relations: [{ source: 'urn:a', predicate: 'urn:links', target: 'urn:b' }],
-  }
-  const indexed = indexGraph(graph)
-  const node = outsideNode(graph.concepts[0], { width: 120, height: 50 })
-  assert.equal(node.data.label, 'A')
-  assert.deepEqual(node.measured, { width: 120, height: 50 })
-  assert.equal(node.className, 'graph-outside-node')
-  assert.equal(node.selectable, false)
-  assert.equal(node.draggable, false)
-  assert.equal(node.connectable, false)
-  assert.equal(node.deletable, false)
-  assert.equal(node.focusable, false)
-  assert.deepEqual(node.domAttributes, { 'aria-hidden': true })
-  const edge = outsideEdge(graph.relations[0], indexed, 'urn:links')
-  assert.equal(edge.className, 'graph-outside-edge')
-  assert.equal(edge.label, undefined)
-  assert.equal(edge.interactionWidth, 0)
-  assert.equal(edge.selectable, false)
-  assert.equal(edge.focusable, false)
-  assert.equal(edge.deletable, false)
-  assert.deepEqual(edge.domAttributes, { 'aria-hidden': true })
-  assert.equal(outsideEdge(graph.relations[0], indexed, 'urn:other').label, 'links')
-})
-
-test('containsPoint matches the measured concept box', () => {
-  const concept = { id: 'urn:a', label: 'A', position: { x: 10, y: 20 } }
-  const size = { width: 100, height: 40 }
-  assert.equal(containsPoint(concept, size, { x: 10, y: 20 }), true)
-  assert.equal(containsPoint(concept, size, { x: 110, y: 60 }), true)
-  assert.equal(containsPoint(concept, size, { x: 9, y: 20 }), false)
-  assert.equal(containsPoint(concept, size, { x: 10, y: 61 }), false)
 })

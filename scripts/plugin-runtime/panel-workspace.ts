@@ -139,7 +139,7 @@ export async function verifyPanelWorkspace(context: CheckContext) {
     Boolean,
   )
   await waitFor(
-    async () => progress().find(({ key }) => key === 'quiz:all')?.value,
+    async () => progress().find(({ key }) => key === 'quiz:energy')?.value,
     (value) => value === 1,
   )
   const nextQuestion = await content.executeJavaScript(
@@ -178,7 +178,7 @@ export async function verifyPanelWorkspace(context: CheckContext) {
   )
   await frame.executeJavaScript(`document.querySelector('.quiz button').click()`)
   await waitFor(
-    async () => progress().find(({ key }) => key === 'quiz:all')?.value,
+    async () => progress().find(({ key }) => key === 'quiz:energy')?.value,
     (value) => value === 0,
   )
   await waitFor(
@@ -305,7 +305,7 @@ export async function verifyPanelWorkspace(context: CheckContext) {
     `window.__externalFrame=document.querySelector('[data-plugin-panel] iframe:not([hidden])')`,
   )
   await reused.executeJavaScript(`window.__retainedDocument=document`)
-  for (const view of ['Energy', 'Rest', 'Overview']) {
+  for (const view of ['Rest', 'Overview', 'Energy']) {
     await evaluate(
       `[...document.querySelectorAll('#saved-views button,#pinned-views button')].find(button=>button.textContent.trim().startsWith(${JSON.stringify(view)})).click()`,
     )

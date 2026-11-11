@@ -8,6 +8,10 @@ export async function renderViewImage(
   options: ImageRenderOptions,
   signal: AbortSignal,
 ) {
+  if (viewId === null)
+    throw new PluginError('unavailable', [
+      { path: 'viewId', message: 'Images require a saved view' },
+    ])
   const state = store.getState()
   const presentation = store.getConceptMapPresentation()
   const snapshot = {

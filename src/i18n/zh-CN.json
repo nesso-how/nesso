@@ -154,7 +154,7 @@
   "introConnectionsTitle": "由你决定如何连接",
   "introConnectionsDescription": "咖啡与睡眠有关，但是什么关系？从右上角的圆点将**咖啡**连接到**睡眠**，然后在检查器中为**关系**命名。没有标准答案：做出判断就是理解的开始。",
   "introViewsTitle": "换个角度看",
-  "introViewsDescription": "**视图**展示同一图谱的不同部分。试着在**精力**和**休息**之间切换：咖啡仍是同一个概念，位置也不变。",
+  "introViewsDescription": "**视图**展示同一图谱的不同部分。试着在**精力**和**休息**之间切换：咖啡仍是同一个概念，在每个视图中各自排布。",
   "introReviewTitle": "检验你的理解",
   "introReviewDescription": "每个视图都有自己的**复习**，数字表示到期需要复习的概念数。打开后，你用自己的话解释每个概念，再查看它和你选择的关系：",
   "introChatNote": "在桌面应用中，AI 聊天位于检查器的“详情”旁边。",
@@ -574,5 +574,6 @@
   "info": "信息",
   "warning": "警告",
   "confirmation": "确认",
-  "toastQueued": "{{count}} 条待处理"
+  "toastQueued": "{{count}} 条待处理",
+  "overviewPlaceholder": "打开一个视图来排布其中的概念。"
 }

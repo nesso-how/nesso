@@ -1,8 +1,8 @@
-import type { GraphSnapshot } from '@nesso-how/core'
+import type { PresentedGraph } from './types.ts'
 import type { RelationGroup } from './groups.ts'
 
 export type ConceptMapPresentation = {
-  graph: GraphSnapshot
+  graph: PresentedGraph
   viewId: string | null
   groups: readonly RelationGroup[]
 }

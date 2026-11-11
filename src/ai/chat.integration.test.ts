@@ -42,7 +42,7 @@ const fixture = () => {
     },
   }
   const host = createNessoStore({
-    concepts: [{ id: 'urn:first', label: 'First', position: { x: 0, y: 0 } }],
+    concepts: [{ id: 'urn:first', label: 'First' }],
     relations: [],
     relationTypes: [],
   })

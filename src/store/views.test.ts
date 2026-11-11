@@ -7,7 +7,6 @@ const fixture = () => ({
   concepts: ['urn:one', 'urn:two', 'urn:three'].map((id) => ({
     id,
     label: id,
-    position: { x: 0, y: 0 },
   })),
   relationTypes: [{ id: 'urn:links', label: 'links' }],
   relations: [{ source: 'urn:one', predicate: 'urn:links', target: 'urn:two' }],
@@ -30,7 +29,7 @@ test('view deletion optionally removes shared concepts and memberships as one un
       false,
     )
     assert.deepEqual(
-      after.workspace.savedViews.find((view) => view.id === shared)?.conceptIds,
+      after.workspace.savedViews.find((view) => view.id === shared)?.members.map(({ id }) => id),
       withConcepts ? ['urn:three'] : ['urn:two', 'urn:three'],
     )
     assert.deepEqual(
@@ -64,13 +63,15 @@ test('deleting all concepts leaves a fresh disconnected concept and preserves un
     )
     assert.deepEqual(after.graph.relations, [])
     assert.deepEqual(after.selected, [])
-    assert.equal(after.workspace.activeViewId, null)
-    assert.deepEqual(
-      after.workspace.savedViews,
-      complete
-        ? []
-        : [{ ...before.workspace.savedViews.find((view) => view.id === shared), conceptIds: [] }],
-    )
+    const [{ id, ...remaining }, ...rest] = after.workspace.savedViews
+    assert.deepEqual(rest, [])
+    assert.equal(after.workspace.activeViewId, id)
+    if (!complete) assert.equal(id, shared)
+    assert.deepEqual(remaining, {
+      name: complete ? 'View 1' : 'Shared',
+      pinned: false,
+      members: [{ id: after.graph.concepts[0].id, position: { x: 0, y: 0 } }],
+    })
     store.undo()
     assert.deepEqual(store.getState().graph, before.graph)
     assert.deepEqual(store.getState().workspace.savedViews, before.workspace.savedViews)

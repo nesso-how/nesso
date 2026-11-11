@@ -37,7 +37,7 @@ export async function verifyPanel({ window, url, name, attempted }: CheckContext
     locale: 'it',
     theme: { ...actionState().theme, background: '#ffffff' },
     viewGraph: {
-      concepts: [{ id: 'urn:a', label: 'A', position: { x: 0, y: 0 } }],
+      concepts: [{ id: 'urn:a', label: 'A' }],
       relations: [],
       relationTypes: [],
     },

@@ -62,7 +62,7 @@ test('storage contracts accept scoped JSON records and single writes without nam
     assert.throws(() => parsePluginMessage({ ...list, method: 'storage.set', params }), PluginError)
   }
   const manifest = {
-    apiVersion: 3,
+    apiVersion: 4,
     kind: 'actions',
     entry: 'index.js',
     writes: [],

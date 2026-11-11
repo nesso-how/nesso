@@ -89,13 +89,14 @@ export const loadPersistence = async (
           if (saved.workspace !== null) fail('workspace', 'Expected no workspace without a graph')
           loaded.graph = null
         } else {
-          const graph = parseGraph(saved.graph)
+          const { graph, views } = parseGraph(saved.graph)
+          if (views.length) fail('graph', 'Concept presentation belongs to the workspace')
           checkGraph(graph)
           const workspace = parseWorkspace(saved.workspace)
           const ids = new Set(graph.concepts.map((concept) => concept.id))
           for (const [index, view] of workspace.savedViews.entries()) {
-            if (view.conceptIds.some((id) => !ids.has(id)))
-              fail(`workspace.savedViews[${index}].conceptIds`, 'Unknown concept')
+            if (view.members.some(({ id }) => !ids.has(id)))
+              fail(`workspace.savedViews[${index}].members`, 'Unknown concept')
           }
           loaded.graph = graph
           loaded.workspace = workspace
@@ -199,7 +200,7 @@ export const connectPersistence = (
           const saved =
             section === 'document'
               ? {
-                  version: 2,
+                  version: 3,
                   documentId: state.documentId,
                   graph: serializedGraph!.value,
                   workspace: state.workspace,

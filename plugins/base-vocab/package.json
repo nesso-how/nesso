@@ -35,7 +35,7 @@
     }
   },
   "nesso": {
-    "apiVersion": 3,
+    "apiVersion": 4,
     "kind": "vocab",
     "entry": "dist/definition.json",
     "writes": [],

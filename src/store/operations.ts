@@ -5,6 +5,7 @@ import type {
   Preferences,
   SavedView,
   Selection,
+  ViewGraphSnapshot,
   WorkspaceState,
 } from '@nesso-how/core'
 import type { ThemeDefinition } from '@nesso-how/plugin'
@@ -28,12 +29,13 @@ import {
   parseWorkspace,
 } from './settings.ts'
 import { sectionIds, type HostOperation, type HostState, type RendererDefinition } from './types.ts'
-import { ListEdit, sameConcept, sameIds, sameType, sameView, viewChanges } from './delta.ts'
+import { ListEdit, sameConcept, sameMembers, sameType, sameView, viewChanges } from './delta.ts'
 import { applyPluginStorage } from './plugin-storage.ts'
 
 export const conceptPlacementOffset = Object.freeze({ x: 160, y: 100 })
 
 type Removal = Extract<HostOperation, { kind: 'concept.remove' | 'relation.remove' }>
+type Member = SavedView['members'][number]
 const isRemoval = (operation: HostOperation): operation is Removal =>
   operation.kind === 'concept.remove' || operation.kind === 'relation.remove'
 
@@ -74,36 +76,72 @@ export const materialize = (
   graph: GraphSnapshot,
   workspace: WorkspaceState,
   previous?: NessoState,
-): GraphSnapshot => {
+): ViewGraphSnapshot => {
   if (workspace.activeViewId === null) return graph
-  const visibleIds =
-    workspace.savedViews.find((view) => view.id === workspace.activeViewId)?.conceptIds ?? []
-  const previousIds =
-    previous?.workspace.savedViews.find((view) => view.id === workspace.activeViewId)?.conceptIds ??
-    []
-  const sameScope =
-    previous?.workspace.activeViewId === workspace.activeViewId && sameIds(visibleIds, previousIds)
-  if (sameScope && graph === previous.graph) return previous.viewGraph
-  const ids = new Set(visibleIds)
+  const members =
+    workspace.savedViews.find((view) => view.id === workspace.activeViewId)?.members ?? []
+  const previousMembers =
+    previous && previous.workspace.activeViewId === workspace.activeViewId
+      ? previous.workspace.savedViews.find((view) => view.id === workspace.activeViewId)?.members
+      : undefined
+  const samePresentation = !!previousMembers && sameMembers(members, previousMembers)
+  if (samePresentation && graph === previous!.graph) return previous!.viewGraph
+  const scoped =
+    !!previousMembers &&
+    members.length === previousMembers.length &&
+    members.every(({ id }, index) => id === previousMembers[index].id)
+  const presentation = new Map(members.map((member) => [member.id, member]))
+  const reusable = new Map(
+    previousMembers ? previous!.viewGraph.concepts.map((concept) => [concept.id, concept]) : [],
+  )
+  const previousPresentation = new Map(previousMembers?.map((member) => [member.id, member]))
+  const previousConcepts = new Map(previous?.graph.concepts.map((concept) => [concept.id, concept]))
   return {
     concepts:
-      sameScope && graph.concepts === previous.graph.concepts
-        ? previous.viewGraph.concepts
-        : graph.concepts.filter((concept) => ids.has(concept.id)),
+      samePresentation && graph.concepts === previous!.graph.concepts
+        ? previous!.viewGraph.concepts
+        : graph.concepts.flatMap((concept) => {
+            const member = presentation.get(concept.id)
+            if (!member) return []
+            const reused = reusable.get(concept.id)
+            if (
+              reused &&
+              previousConcepts.get(concept.id) === concept &&
+              previousPresentation.get(concept.id) === member
+            )
+              return [reused]
+            const { id: _, ...view } = member
+            return [{ ...concept, ...view }]
+          }),
     relations:
-      sameScope && graph.relations === previous.graph.relations
-        ? previous.viewGraph.relations
+      scoped && graph.relations === previous!.graph.relations
+        ? previous!.viewGraph.relations
         : graph.relations.filter(
-            (relation) => ids.has(relation.source) && ids.has(relation.target),
+            (relation) => presentation.has(relation.source) && presentation.has(relation.target),
           ),
     relationTypes: graph.relationTypes,
   }
 }
 
-export const newGraph = (id: string): Graph => ({
-  concepts: [{ id, label: 'Concept 1', position: { x: 0, y: 0 } }],
-  relationTypes: [],
-  relations: [],
+export const defaultViewName = 'View 1'
+
+export const newDocument = (
+  conceptId: string,
+  viewId: string,
+): { graph: Graph; workspace: WorkspaceState } => ({
+  graph: { concepts: [{ id: conceptId, label: 'Concept 1' }], relationTypes: [], relations: [] },
+  workspace: {
+    activeViewId: viewId,
+    savedViews: [
+      {
+        id: viewId,
+        name: defaultViewName,
+        members: [{ id: conceptId, position: { x: 0, y: 0 } }],
+        pinned: false,
+      },
+    ],
+    viewports: {},
+  },
 })
 
 export const newWorkspace = (): WorkspaceState => ({
@@ -135,7 +173,7 @@ export const sameWorkspace = (left: WorkspaceState, right: WorkspaceState): bool
       a.id === b.id &&
       a.name === b.name &&
       a.pinned === b.pinned &&
-      sameItems(a.conceptIds, b.conceptIds, (a, b) => a === b),
+      sameMembers(a.members, b.members),
   ) &&
   Object.keys(left.viewports).length === Object.keys(right.viewports).length &&
   Object.entries(left.viewports).every(([id, a]) => {
@@ -219,16 +257,63 @@ export const applyStateOperations = (
     concepts.set(id, next)
   }
 
+  const updateMembers = (ids: ReadonlySet<string>, update: (member: Member) => Member): void => {
+    for (const id of ids) if (!concepts.get(id)) fail('concept.id', 'Unknown concept')
+    const viewId = workspace.activeViewId ?? fail('workspace.activeViewId', 'No active view')
+    updateView(viewId, (view) => {
+      let found = 0
+      let changed = false
+      const members = view.members.map((member) => {
+        if (!ids.has(member.id)) return member
+        found++
+        const next = update(member)
+        changed ||= next !== member
+        return next
+      })
+      if (found !== ids.size) fail('view.members', 'Concept is not in the active view')
+      return changed ? { ...view, members } : view
+    })
+  }
+
   const setPositions = (
     updates: Extract<NessoOperation, { kind: 'concept.positions' }>['updates'],
   ): void => {
     if (updates.length === 0) return
-    for (const { id, position } of updates)
-      updateConcept(id, (concept) =>
-        position.x === concept.position.x && position.y === concept.position.y
-          ? concept
-          : { ...concept, position: { x: position.x, y: position.y } },
-      )
+    const positions = new Map(updates.map(({ id, position }) => [id, position]))
+    updateMembers(new Set(positions.keys()), (member) => {
+      const position = positions.get(member.id)!
+      return position.x === member.position.x && position.y === member.position.y
+        ? member
+        : { ...member, position: { x: position.x, y: position.y } }
+    })
+  }
+
+  const placeMember = (
+    id: string,
+    members: readonly Member[],
+    sources: readonly SavedView[] = [],
+  ): Member => {
+    for (const source of sources) {
+      const copied = source.members.find((member) => member.id === id)
+      if (copied) return copied
+    }
+    const placed = new Map(members.map((member) => [member.id, member]))
+    const relation = relations.items.find(
+      (relation) =>
+        (relation.source === id && placed.has(relation.target)) ||
+        (relation.target === id && placed.has(relation.source)),
+    )
+    const neighbor =
+      relation && placed.get(relation.source === id ? relation.target : relation.source)
+    return {
+      id,
+      position: neighbor
+        ? {
+            x: neighbor.position.x + conceptPlacementOffset.x,
+            y: neighbor.position.y + conceptPlacementOffset.y,
+          }
+        : { x: 0, y: 0 },
+    }
   }
 
   const updateRelation = (
@@ -292,10 +377,10 @@ export const applyStateOperations = (
     concepts.removeWhere((concept) => conceptIds.has(concept.id))
     for (const id of conceptIds) removedConcepts.add(id)
     for (const view of views.items)
-      if (view.conceptIds.some((id) => conceptIds.has(id)))
+      if (view.members.some(({ id }) => conceptIds.has(id)))
         updateView(view.id, (view) => ({
           ...view,
-          conceptIds: view.conceptIds.filter((id) => !conceptIds.has(id)),
+          members: view.members.filter(({ id }) => !conceptIds.has(id)),
         }))
   }
 
@@ -344,23 +429,26 @@ export const applyStateOperations = (
         )
         break
       case 'concept.notes':
-      case 'concept.color':
         updateConcept(operation.id, (concept) => {
-          const key = operation.kind === 'concept.color' ? 'color' : 'notes'
-          const value = key === 'color' ? operation.value.toLowerCase() : operation.value
-          if ((concept[key] ?? '') === value) return concept
-          const next = { ...concept }
-          if (value === '') delete next[key]
-          else next[key] = value
-          return next
+          if ((concept.notes ?? '') === operation.value) return concept
+          const { notes: _, ...next } = concept
+          return operation.value === '' ? next : { ...next, notes: operation.value }
+        })
+        break
+      case 'concept.color':
+        updateMembers(new Set([operation.id]), (member) => {
+          const value = operation.value.toLowerCase()
+          if ((member.color ?? '') === value) return member
+          const { color: _, ...next } = member
+          return value === '' ? next : { ...next, color: value }
         })
         break
       case 'concept.bold':
       case 'concept.italic':
-        updateConcept(operation.id, (concept) => {
+        updateMembers(new Set([operation.id]), (member) => {
           const key = operation.kind === 'concept.bold' ? 'bold' : 'italic'
-          if ((concept[key] ?? false) === operation.value) return concept
-          const next = { ...concept }
+          if ((member[key] ?? false) === operation.value) return member
+          const next = { ...member }
           if (!operation.value) delete next[key]
           else next[key] = true
           return next
@@ -381,17 +469,7 @@ export const applyStateOperations = (
         const vocab = source ? activeVocab() : null
         const type = vocab?.relationTypes.find((item) => item.id === vocab.defaultTypeId)
         if (type) withType(type)
-        concepts.add({
-          id: operation.id,
-          label: `Concept ${concepts.items.length + 1}`,
-          ...(source?.color === undefined ? {} : { color: source.color }),
-          position: operation.position
-            ? { x: operation.position.x, y: operation.position.y }
-            : {
-                x: (source?.position.x ?? 0) + conceptPlacementOffset.x,
-                y: (source?.position.y ?? 0) + conceptPlacementOffset.y,
-              },
-        })
+        concepts.add({ id: operation.id, label: `Concept ${concepts.items.length + 1}` })
         if (source && vocab) {
           const relation = {
             source: source.id,
@@ -403,11 +481,25 @@ export const applyStateOperations = (
         }
         selected = [{ kind: 'concept', id: operation.id }]
         if (workspace.activeViewId !== null)
-          updateView(workspace.activeViewId, (view) =>
-            view.conceptIds.includes(operation.id)
-              ? view
-              : { ...view, conceptIds: [...view.conceptIds, operation.id] },
-          )
+          updateView(workspace.activeViewId, (view) => {
+            if (view.members.some(({ id }) => id === operation.id)) return view
+            const origin = source && view.members.find(({ id }) => id === source.id)
+            const position = operation.position ?? {
+              x: (origin?.position.x ?? 0) + conceptPlacementOffset.x,
+              y: (origin?.position.y ?? 0) + conceptPlacementOffset.y,
+            }
+            return {
+              ...view,
+              members: [
+                ...view.members,
+                {
+                  id: operation.id,
+                  position: { x: position.x, y: position.y },
+                  ...(origin?.color === undefined ? {} : { color: origin.color }),
+                },
+              ],
+            }
+          })
         break
       }
       case 'concept.remove':
@@ -471,21 +563,23 @@ export const applyStateOperations = (
           fail('relation.target', 'Relation must connect two different concepts')
         updateRelation(operation.id, { source: operation.source, target: operation.target })
         break
-      case 'document.reset':
+      case 'document.reset': {
+        const document = newDocument(operation.id, newIri())
         documentId = newIri()
         pluginStorage = []
         relationOrigins?.clear()
-        concepts = new ListEdit(newGraph(operation.id).concepts, (item) => item.id, sameConcept)
+        concepts = new ListEdit(document.graph.concepts, (item) => item.id, sameConcept)
         relations = new ListEdit([], relationKey, (a, b) => relationKey(a) === relationKey(b))
         types = new ListEdit([], (item: Readonly<RelationType>) => item.id, sameType)
-        views = new ListEdit([], (item: SavedView) => item.id, sameView)
-        workspace = newWorkspace()
+        views = new ListEdit(document.workspace.savedViews, (item: SavedView) => item.id, sameView)
+        workspace = document.workspace
         conversation = { messages: [] }
         conversationReplaced = true
         selected = []
         explicitSelection = selected
         reset = true
         break
+      }
       case 'selection.set':
         selected = reconcileSelection(
           graph(),
@@ -501,15 +595,17 @@ export const applyStateOperations = (
         selected = reconcileSelection(materialize(graph(), workspace), selected)
         explicitSelection = selected
         break
-      case 'view.create':
-        views.add({
-          id: operation.id,
-          name: viewName(operation.name),
-          conceptIds: [...new Set(operation.conceptIds)],
-          pinned: false,
-        })
+      case 'view.create': {
+        const active =
+          workspace.activeViewId === null ? undefined : views.get(workspace.activeViewId)
+        const sources = active ? [active, ...views.items] : views.items
+        const members: Member[] = []
+        for (const id of new Set(operation.conceptIds))
+          members.push(placeMember(id, members, sources))
+        views.add({ id: operation.id, name: viewName(operation.name), members, pinned: false })
         workspace = { ...workspace, activeViewId: operation.id, savedViews: views.items }
         break
+      }
       case 'view.rename':
         updateView(operation.id, (view) => {
           const name = viewName(operation.name)
@@ -525,13 +621,13 @@ export const applyStateOperations = (
         if (!concepts.get(operation.conceptId)) fail('view.conceptId', 'Unknown concept')
         if (typeof operation.included !== 'boolean') fail('view.included', 'Expected a boolean')
         updateView(operation.viewId, (view) =>
-          view.conceptIds.includes(operation.conceptId) === operation.included
+          view.members.some(({ id }) => id === operation.conceptId) === operation.included
             ? view
             : {
                 ...view,
-                conceptIds: operation.included
-                  ? [...view.conceptIds, operation.conceptId]
-                  : view.conceptIds.filter((id) => id !== operation.conceptId),
+                members: operation.included
+                  ? [...view.members, placeMember(operation.conceptId, view.members)]
+                  : view.members.filter(({ id }) => id !== operation.conceptId),
               },
         )
         break
@@ -663,10 +759,10 @@ export const applyStateOperations = (
     parseWorkspace(workspace)
     if (
       viewEdit.changes.some((change) =>
-        change.after?.value.conceptIds.some((id) => !concepts.get(id)),
+        change.after?.value.members.some(({ id }) => !concepts.get(id)),
       )
     )
-      fail('view.conceptIds', 'Unknown concept')
+      fail('view.members', 'Unknown concept')
     if (sameWorkspace(workspace, state.workspace)) workspace = state.workspace
   }
   if (preferences !== state.preferences) {

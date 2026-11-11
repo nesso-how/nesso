@@ -198,7 +198,7 @@ async function buildFixture(state: InstallState, name: string, version: string) 
           }
         : {}),
       nesso: {
-        apiVersion: 3,
+        apiVersion: 4,
         kind,
         entry,
         writes: kind === 'actions' ? ['concept.label'] : [],
@@ -308,8 +308,10 @@ async function verifyBundledDetails(driver: Driver, state: InstallState, window:
                 'Edit concept notes',
                 'Recolor concepts',
                 'Style concepts',
+                'Move concepts',
                 'Connect relations',
                 'Create views',
+                'Update view membership',
               ],
               capabilities: [files],
             }
@@ -862,7 +864,7 @@ async function verifyStopDisable(driver: Driver, window: BrowserWindow) {
       `document.querySelector('.settings-popup button[aria-label="Close"]').click()`,
     )
     await driver.evaluate(
-      `document.querySelector('#canvas header [aria-label="Actions for Overview"]').click()`,
+      `document.querySelector('#canvas header [aria-label="Actions for Energy"]').click()`,
     )
     await waitFor(
       () =>
@@ -1139,7 +1141,7 @@ async function verifyLocalProposal(driver: Driver) {
     const manifest = {
       name,
       version: '1.0.0',
-      nesso: { apiVersion: 3, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
+      nesso: { apiVersion: 4, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
       i18n: {
         metadata: {
           name: { en: 'Test local' },

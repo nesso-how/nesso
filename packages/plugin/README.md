@@ -78,7 +78,7 @@ Keep the example's build configuration and set these fields in `package.json`:
   "version": "1.0.0",
   "keywords": ["nesso-plugin"],
   "nesso": {
-    "apiVersion": 3,
+    "apiVersion": 4,
     "kind": "actions",
     "entry": "dist/index.js",
     "writes": ["concept.label"],
@@ -220,7 +220,7 @@ Runs in an isolated Worker with no action APIs and a 2-second calculation limit.
 
 The graph snapshot provides:
 
-- `viewGraph`: `{ concepts, relations, relationTypes }` for the invoked view.
+- `viewGraph`: `{ concepts, relations, relationTypes }` for the invoked view. In a saved view, concepts carry its `position`, `color`, `bold`, and `italic`.
 - `selected`: the invoked view's selection.
 - `targetViewId`: the invoked view's ID, or `null` for All; fixed for each invocation. Headless actions keep their target during navigation; panels restart with a new invocation when the active view changes.
 - `activeVocab`: the current vocabulary, or `null`.
@@ -250,7 +250,7 @@ Call helpers on `document` and declare their operation kinds in `nesso.writes`:
 | `setSelection([{ kind, id }])`                      | `selection.set`         |
 | `setViewMembership(viewId, conceptId, included)`    | `view.membership`       |
 
-`addConcept` returns the new IRI. New concepts join the active saved view and link to the single selected concept, if any. These links and `connect` use the vocabulary's default relation type. `createRelationType` creates and assigns a type to the given relation.
+Position, color, and style helpers edit the invoked saved view; they reject the batch in All, after navigation, or for concepts outside the view. `addConcept` returns the new IRI. New concepts join the active saved view, at the given position or near the single selected concept, and link to that concept, if any. These links and `connect` use the vocabulary's default relation type. `createRelationType` creates and assigns a type to the given relation.
 
 For related edits, use `document.applyOperations(operations)` as in the quickstart. The entire batch succeeds or changes nothing. Editing, reconnecting, retyping, or removing an unknown concept or relation rejects the batch, as does reconnecting or retyping onto an existing relation; removing an item already removed earlier in the same batch, such as a relation of a removed concept, is allowed. Separate calls are separate transactions. Raw `concept.add` operations require an explicit new absolute IRI.
 

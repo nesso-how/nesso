@@ -33,7 +33,7 @@ export async function verifyCorruptRecords({ window, url }: CheckContext) {
         manifest: {
           name: `test-restored-${kind}`,
           version: '1.0.0',
-          nesso: { apiVersion: 3, kind, entry, writes: [], capabilities: [] },
+          nesso: { apiVersion: 4, kind, entry, writes: [], capabilities: [] },
           i18n: {
             metadata: {
               name: { en: `Restored ${kind}` },

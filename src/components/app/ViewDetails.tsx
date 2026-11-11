@@ -69,12 +69,14 @@ export function ViewDetails({
       {view && (
         <ViewName key={`${view.id}:${view.name}`} store={store} view={view} readonly={readonly} />
       )}
-      <ConceptColor
-        key={view?.id ?? 'complete-graph'}
-        store={store}
-        concepts={viewGraph.concepts}
-        readonly={readonly || viewGraph.concepts.length === 0}
-      />
+      {view && (
+        <ConceptColor
+          key={view.id}
+          store={store}
+          concepts={viewGraph.concepts}
+          readonly={readonly || viewGraph.concepts.length === 0}
+        />
+      )}
       <section aria-labelledby="view-content-heading">
         <h3 id="view-content-heading" className="text-xs font-medium">
           {t('content')}

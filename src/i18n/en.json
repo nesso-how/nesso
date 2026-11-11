@@ -155,7 +155,7 @@
   "introConnectionsTitle": "Decide how they connect",
   "introConnectionsDescription": "Coffee has something to do with sleep, but how? Connect **Coffee** to **Sleep** from the circle at the top right, then name the **relation** in the Inspector. There is no right answer: deciding is already understanding.",
   "introViewsTitle": "See it from another angle",
-  "introViewsDescription": "**Views** show different parts of the same graph. Switch between **Energy** and **Rest**: coffee stays the same concept, in the same place.",
+  "introViewsDescription": "**Views** show different parts of the same graph. Switch between **Energy** and **Rest**: coffee stays the same concept, arranged for each view.",
   "introReviewTitle": "Test yourself",
   "introReviewDescription": "Every view has its own **Review**, and the number shows the concepts due. When you open it, you explain each concept in your own words, then see it again with the relations you chose:",
   "introChatNote": "In the desktop app, AI chat is in the Inspector, next to Details.",
@@ -588,5 +588,6 @@
   "info": "Info",
   "warning": "Warning",
   "confirmation": "Confirmation",
-  "toastQueued": "{{count}} waiting"
+  "toastQueued": "{{count}} waiting",
+  "overviewPlaceholder": "Open a view to arrange its concepts."
 }

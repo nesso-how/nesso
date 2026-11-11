@@ -3,6 +3,7 @@ export type {
   NessoOperation,
   SavedView,
   Selection,
+  ViewGraphSnapshot,
   VocabDefinition,
 } from '@nesso-how/core'
 export type { ThemeDefinition } from './definitions.ts'

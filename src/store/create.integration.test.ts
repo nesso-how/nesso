@@ -6,9 +6,9 @@ import { copyGraph, pasteOperations } from '../graph/commands.ts'
 
 const fixture = (): Graph => ({
   concepts: [
-    { id: 'urn:n1', label: 'One', position: { x: 0, y: 0 } },
-    { id: 'urn:n2', label: 'Two', position: { x: 1, y: 0 } },
-    { id: 'urn:n3', label: 'Three', position: { x: 2, y: 0 } },
+    { id: 'urn:n1', label: 'One' },
+    { id: 'urn:n2', label: 'Two' },
+    { id: 'urn:n3', label: 'Three' },
   ],
   relationTypes: [{ id: 'urn:links', label: 'links' }],
   relations: [
@@ -22,7 +22,11 @@ test('paste uses one atomic undoable batch, preserves parallel types, and joins 
   store.createView('Active', ['urn:n1'])
   store.setSelection([{ kind: 'concept', id: 'urn:n1' }])
   const before = store.getState()
-  const copied = fixture()
+  const graph = fixture()
+  const copied = {
+    ...graph,
+    concepts: graph.concepts.map((concept, x) => ({ ...concept, position: { x, y: 0 } })),
+  }
   copied.concepts[0].notes = 'Definition\nExample'
   copied.relationTypes.push({ id: 'urn:custom', label: 'Custom' })
   copied.relations.push({ ...copied.relations[0], predicate: 'urn:custom' })
@@ -35,12 +39,13 @@ test('paste uses one atomic undoable batch, preserves parallel types, and joins 
   store.applyOperations(pasteOperations(text))
   const after = store.getState()
   const copies = after.graph.concepts.slice(3)
+  const placed = after.viewGraph.concepts.slice(1)
   const relations = after.graph.relations.slice(2)
   assert.equal(copies[0].notes, copied.concepts[0].notes)
   assert.equal(Object.hasOwn(copies[1], 'notes'), false)
   assert.equal(notifications, 1)
   assert.deepEqual(
-    copies.map((concept) => ({ label: concept.label, position: concept.position })),
+    placed.map((concept) => ({ label: concept.label, position: concept.position })),
     [
       { label: 'One', position: { x: 40, y: 40 } },
       { label: 'Two', position: { x: 41, y: 40 } },

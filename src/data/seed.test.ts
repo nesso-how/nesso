@@ -8,8 +8,12 @@ import { createSeedDocument } from './seed.ts'
 
 test('seed translations cover every label and view name without changing document structure', () => {
   const english = createSeedDocument('en')
-  assert.deepEqual(english.graph, parseGraph(seed))
-  assert.deepEqual(english.workspace, { activeViewId: null, savedViews: seedViews, viewports: {} })
+  assert.deepEqual(parseGraph(seed), { graph: english.graph, views: [] })
+  assert.deepEqual(english.workspace, {
+    activeViewId: seedViews[0].id,
+    savedViews: seedViews,
+    viewports: {},
+  })
   for (const locale of ['it', 'zh-CN'] as const) {
     const translation: Record<
       'conceptLabels' | 'conceptNotes' | 'relationTypeLabels' | 'viewNames',

@@ -19,7 +19,11 @@ export function searchGraph(
   views: readonly SavedView[],
   query: string,
   overview: string,
+  activeViewId: string | null = null,
 ): SearchResult[] {
+  const colors = new Map(
+    views.find(({ id }) => id === activeViewId)?.members.map(({ id, color }) => [id, color]),
+  )
   const text = normalize(query)
   const tokens = text.split(/\s+/)
   const rank = (items: SearchResult[]) => {
@@ -52,7 +56,7 @@ export function searchGraph(
         kind: 'view' as const,
         id: view.id,
         label: view.name,
-        count: view.conceptIds.length,
+        count: view.members.length,
       })),
     ]),
     ...rank(
@@ -61,7 +65,7 @@ export function searchGraph(
         id: concept.id,
         label: concept.label,
         notes: concept.notes,
-        color: concept.color,
+        color: colors.get(concept.id),
       })),
     ),
   ]
@@ -76,7 +80,10 @@ export function openSearchResult(store: HostStore, result: SearchResult): void {
     if (!graph.concepts.some(({ id }) => id === result.id)) return
     const current = workspace.savedViews.find(({ id }) => id === workspace.activeViewId)
     store.applyOperations([
-      { kind: 'view.activate', id: current?.conceptIds.includes(result.id) ? current.id : null },
+      {
+        kind: 'view.activate',
+        id: current?.members.some(({ id }) => id === result.id) ? current.id : null,
+      },
       { kind: 'selection.set', value: [{ kind: 'concept', id: result.id }] },
       { kind: 'preferences.section', id: 'inspector', open: true },
       { kind: 'preferences.inspectorTab', value: 'details' },

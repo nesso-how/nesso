@@ -35,7 +35,10 @@ export type AiToolResults = {
     readonly id: string
     readonly label: string
     readonly notes?: string
-    readonly position: { readonly x: number; readonly y: number }
+    readonly position?: { readonly x: number; readonly y: number }
+    readonly color?: string
+    readonly bold?: boolean
+    readonly italic?: boolean
   }>
   readonly relations: Page<{
     readonly id: string

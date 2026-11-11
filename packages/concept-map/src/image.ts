@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { toCanvas } from 'html-to-image'
 import { defaultLocale } from '@nesso-how/i18n'
 import { indexGraph } from './adapters'
+import { presentedGraph } from './types'
 import type { ConceptMapContext } from './store'
 import type { ConceptMapPresentation } from './presentation'
 import { ImageCanvas } from './ImageCanvas'
@@ -25,7 +26,7 @@ export async function renderConceptMapImage({
 }): Promise<{ mediaType: 'image/png'; base64: string }> {
   const fail = (message: string) => new ConceptMapImageError([{ path: 'image', message }])
   const state = store.getState()
-  const graph = state.viewGraph
+  const graph = presentedGraph(state)
   if (signal.aborted) throw fail('Image rendering cancelled')
   if (!graph.concepts.length) throw fail('Cannot render an empty view')
   const element = document.createElement('div')

@@ -23,8 +23,8 @@ const base = {
 }
 const graph = {
   concepts: [
-    { id: 'urn:a', label: 'A', position: { x: 0, y: 0 } },
-    { id: 'urn:b', label: 'B', position: { x: 100, y: 0 } },
+    { id: 'urn:a', label: 'A' },
+    { id: 'urn:b', label: 'B' },
   ],
   relationTypes: [],
   relations: [],
@@ -181,6 +181,10 @@ test('action projections stay bound to the invoked view, filter off-view selecti
   )
   assert.deepEqual(before.selected, [])
   assert.equal('conceptIds' in before.workspace.savedViews[0], false)
+  await assert.rejects(
+    document.applyOperations([{ kind: 'concept.color', id: 'urn:a', value: '#123456' }]),
+    { code: 'stale-context' },
+  )
   instance.host.store.setView(instance.target)
   await document.refresh()
   await document.applyOperations([{ kind: 'concept.label', id: 'urn:a', value: 'Changed' }])
@@ -196,7 +200,7 @@ test('action projections stay bound to the invoked view, filter off-view selecti
     { code: 'denied' },
   )
   await document.applyOperations([{ kind: 'concept.color', id: 'urn:a', value: '#123456' }])
-  assert.equal(instance.host.store.getState().graph.concepts[0].color, '#123456')
+  assert.equal(instance.host.store.getState().viewGraph.concepts[0].color, '#123456')
 })
 
 test('action clients receive vocabulary translations without adding them to document types', async (t) => {
@@ -270,6 +274,7 @@ test('plugin batches and helpers automatically reject stale reads without change
   for (const delivered of [false, true]) {
     const instance = fixture()
     t.after(instance.close)
+    instance.host.store.setView(instance.target)
     await instance.start()
     const { document, files } = instance.client.context
     const snapshot = document.getState()
@@ -295,7 +300,7 @@ test('plugin batches and helpers automatically reject stale reads without change
     await document.setConceptLabel('urn:a', 'Recomputed')
     await document.setConceptColor('urn:a', '#123456')
     assert.equal(instance.host.store.getState().graph.concepts[0].label, 'Recomputed')
-    assert.equal(instance.host.store.getState().graph.concepts[0].color, '#123456')
+    assert.equal(instance.host.store.getState().viewGraph.concepts[0].color, '#123456')
   }
 })
 
@@ -452,6 +457,7 @@ test('discovery sends no state and denies requests; invocation rejects changed d
 test('typed plugin writes are asynchronous, synchronize snapshots and preserve validation, declarations and history groups', async (t) => {
   const instance = fixture(false, undefined, ['concept.label', 'concept.color', 'concept.notes'])
   t.after(instance.close)
+  instance.host.store.setView(instance.target)
   await instance.start()
   const { document } = instance.client.context
   const before = instance.host.store.getState()
@@ -474,7 +480,7 @@ test('typed plugin writes are asynchronous, synchronize snapshots and preserve v
   assert.equal('undo' in document, false)
   assert.equal(instance.host.store.getState(), committed)
   await document.setConceptColor('urn:a', '#123456')
-  assert.equal(instance.host.store.getState().graph.concepts[0].color, '#123456')
+  assert.equal(instance.host.store.getState().viewGraph.concepts[0].color, '#123456')
   await document.setConceptNotes('urn:a', 'Notes')
   assert.equal(instance.host.store.getState().graph.concepts[0].notes, 'Notes')
   instance.host.store.setConceptLabel('urn:a', 'Host edit', 'edit')
@@ -496,6 +502,7 @@ test('concept colors cross isolated snapshots and declared commands with atomic 
   })
   const instance = fixture(false, undefined, ['concept.color', 'concept.label'])
   t.after(instance.close)
+  instance.host.store.setView(instance.target)
   instance.host.store.setConceptColor('urn:a', '#123456')
   await instance.start()
   const { document } = instance.client.context
@@ -557,7 +564,9 @@ test('plugin creation helpers resolve stable IDs after commit and reject failed 
   const concept = await document.addConcept({ x: 40, y: 50 })
   const state = document.getState()
   assert.ok(state.viewGraph.concepts.some(({ id }) => id === concept))
-  assert.ok(instance.host.store.getState().workspace.savedViews[0].conceptIds.includes(concept))
+  assert.ok(
+    instance.host.store.getState().workspace.savedViews[0].members.some(({ id }) => id === concept),
+  )
   await document.setConceptLabel(concept, 'Created', 'edit')
   const created = document.getState()
   assert.equal(created.viewGraph.concepts.find(({ id }) => id === concept)?.label, 'Created')

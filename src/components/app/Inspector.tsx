@@ -189,6 +189,9 @@ export function Inspector({
     [viewGraph.concepts],
   )
   const outsideCount = conceptIds.filter((id) => !visibleIds.has(id)).length
+  const styled = viewGraph.concepts.filter(
+    (concept) => concept.position && conceptIds.includes(concept.id),
+  )
   const concept =
     item?.kind === 'concept' ? graph.concepts.find((concept) => concept.id === item.id) : undefined
   const selectedEdges = relationSelection(graph, selected)
@@ -366,11 +369,11 @@ export function Inspector({
           </InspectorSection>
         </section>
       ) : null}
-      {conceptIds.length > 0 && (
+      {conceptIds.length > 0 && styled.length === conceptIds.length && (
         <ConceptColor
           key={`color:${JSON.stringify(conceptIds)}`}
           store={store}
-          concepts={graph.concepts.filter((concept) => conceptIds.includes(concept.id))}
+          concepts={styled}
           readonly={readonly}
         />
       )}

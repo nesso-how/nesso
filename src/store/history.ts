@@ -5,6 +5,7 @@ import {
   hasDelta,
   mergeChanges,
   sameConcept,
+  sameMember,
   type Change,
   type DocumentDelta,
   type ViewChange,
@@ -14,14 +15,36 @@ import { parseWorkspace } from './settings.ts'
 
 export const historyLimit = 100
 
-const mergeDelta = (left: DocumentDelta, right: DocumentDelta): DocumentDelta => ({
-  ...left,
-  concepts: mergeChanges(left.concepts, right.concepts, sameConcept),
-})
+const stable = ({ before, after }: Change<unknown>): boolean =>
+  !!before && !!after && before.index === after.index
+
+const sameMetadata = (view: ViewChange): boolean =>
+  stable(view) &&
+  view.before!.value.name === view.after!.value.name &&
+  view.before!.value.pinned === view.after!.value.pinned
+
+const mergeDelta = (left: DocumentDelta, right: DocumentDelta): DocumentDelta => {
+  const views = new Map(left.views.map((view) => [view.id, view]))
+  for (const view of right.views) {
+    const previous = views.get(view.id)
+    views.set(
+      view.id,
+      previous
+        ? { ...previous, members: mergeChanges(previous.members, view.members, sameMember) }
+        : view,
+    )
+  }
+  return {
+    ...left,
+    concepts: mergeChanges(left.concepts, right.concepts, sameConcept),
+    views: [...views.values()].filter((view) => view.members.length > 0 || !sameMetadata(view)),
+  }
+}
 
 const canMerge = (delta: DocumentDelta): boolean =>
-  delta.views.length + delta.relations.length + delta.relationTypes.length === 0 &&
-  delta.concepts.every(({ before, after }) => before && after && before.index === after.index)
+  delta.relations.length + delta.relationTypes.length === 0 &&
+  delta.concepts.every(stable) &&
+  delta.views.every((view) => sameMetadata(view) && view.members.every(stable))
 
 const restoreViews = (
   views: readonly SavedView[],
@@ -36,10 +59,10 @@ const restoreViews = (
       index: target.index,
       value: {
         ...target.value,
-        conceptIds: applyChanges(
-          existing.get(change.id)?.conceptIds ?? [],
+        members: applyChanges(
+          existing.get(change.id)?.members ?? [],
           change.members,
-          (id) => id,
+          (member) => member.id,
           forward,
         ),
       },
@@ -106,9 +129,11 @@ export const createHistory = (getState: () => NessoState, publish: (next: NessoS
       }
       if (!hasDelta(delta)) return
       const previous = past.at(-1)
-      const stableIndices = previous?.delta.concepts.every(
-        ({ before, after }) => after && (!before || before.index === after.index),
-      )
+      const settled = ({ before, after }: Change<unknown>) =>
+        !!after && (!before || before.index === after.index)
+      const stableIndices =
+        previous?.delta.concepts.every(settled) &&
+        previous.delta.views.every((view) => view.members.every(settled))
       if (
         group &&
         group === previous?.group &&

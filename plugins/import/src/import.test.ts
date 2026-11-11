@@ -1,20 +1,14 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import type { Graph } from '@nesso-how/schema'
+import type { NessoOperation } from '@nesso-how/plugin'
+import type { Graph, View } from '@nesso-how/schema'
 import { buildImportOperations, deriveViewName } from './index.ts'
 
-const snapshot: Graph = {
+const graph: Graph = {
   concepts: [
-    {
-      id: 'urn:old-a',
-      label: 'Alpha',
-      notes: 'Definition\nExample',
-      color: '#aabbcc',
-      bold: true,
-      italic: true,
-      position: { x: 1, y: 2 },
-    },
-    { id: 'urn:old-b', label: 'Beta', position: { x: 3, y: 4 } },
+    { id: 'urn:old-a', label: 'Alpha', notes: 'Definition\nExample' },
+    { id: 'urn:old-b', label: 'Beta' },
+    { id: 'urn:old-c', label: 'Gamma' },
   ],
   relationTypes: [
     { id: 'urn:knows', label: 'knows' },
@@ -29,29 +23,60 @@ const snapshot: Graph = {
     { source: 'urn:old-a', predicate: 'urn:knows', target: 'urn:old-a' },
   ],
 }
+const views: View[] = [
+  {
+    id: 'urn:old-view',
+    name: '',
+    members: [
+      { id: 'urn:old-a', position: { x: 1, y: 2 }, color: '#aabbcc', bold: true, italic: true },
+      { id: 'urn:old-b', position: { x: 3, y: 4 } },
+    ],
+  },
+  { id: 'urn:other-view', name: 'Other', members: [{ id: 'urn:old-b', position: { x: 5, y: 6 } }] },
+]
 
-test('import creates a new view and remaps concept ids with original types', () => {
-  const operations = buildImportOperations(snapshot, 'urn:view', 'My view')
-  assert.deepEqual(operations[0], {
-    kind: 'view.create',
-    id: 'urn:view',
-    name: 'My view',
-    conceptIds: [],
-  })
-  const adds = operations.filter((operation) => operation.kind === 'concept.add')
-  assert.equal(adds.length, 2)
-  const ids = adds.map((operation) => (operation.kind === 'concept.add' ? operation.id : ''))
+const conceptIds = (operations: readonly NessoOperation[]) =>
+  operations.flatMap((operation) => (operation.kind === 'concept.add' ? [operation.id] : []))
+
+test('import recreates file views with presentation and remaps concept ids with original types', () => {
+  const operations = buildImportOperations({ graph, views }, 'urn:active', 'My view')
+  const ids = conceptIds(operations)
+  assert.equal(ids.length, 3)
   assert.ok(ids.every((id) => !id.startsWith('urn:old-')))
-  const labels = operations.filter((operation) => operation.kind === 'concept.label')
+  const [gamma, alpha, beta] = ids
   assert.deepEqual(
-    labels.map((operation) => (operation.kind === 'concept.label' ? operation.value : '')),
-    ['Alpha', 'Beta'],
+    operations.filter((operation) => operation.kind === 'concept.label').map(({ id }) => id),
+    [gamma, alpha, beta],
   )
   assert.deepEqual(
     operations.filter((operation) => operation.kind === 'concept.notes'),
-    [{ kind: 'concept.notes', id: ids[0], value: 'Definition\nExample' }],
+    [{ kind: 'concept.notes', id: alpha, value: 'Definition\nExample' }],
   )
-  const connects = operations.filter((operation) => operation.kind === 'relation.connect')
+  const created = operations.filter((operation) => operation.kind === 'view.create')
+  assert.deepEqual(
+    created.map(({ name, conceptIds }) => [name, conceptIds]),
+    [
+      ['My view', []],
+      ['Other', []],
+    ],
+  )
+  assert.deepEqual(
+    operations.filter((operation) => operation.kind === 'view.membership'),
+    [
+      { kind: 'view.membership', viewId: 'urn:active', conceptId: gamma, included: false },
+      { kind: 'view.membership', viewId: created[1].id, conceptId: beta, included: true },
+    ],
+  )
+  assert.deepEqual(
+    operations
+      .filter((operation) => operation.kind === 'concept.add')
+      .map(({ position }) => position),
+    [undefined, { x: 1, y: 2 }, { x: 3, y: 4 }],
+  )
+  assert.deepEqual(
+    operations.filter((operation) => operation.kind === 'concept.position'),
+    [{ kind: 'concept.position', id: beta, value: { x: 5, y: 6 } }],
+  )
   for (const [kind, value] of [
     ['concept.color', '#aabbcc'],
     ['concept.bold', true],
@@ -59,21 +84,34 @@ test('import creates a new view and remaps concept ids with original types', () 
   ] as const)
     assert.deepEqual(
       operations.filter((operation) => operation.kind === kind),
-      [{ kind, id: ids[0], value }],
+      [{ kind, id: alpha, value }],
     )
-  assert.equal(connects.length, 3)
+  const connects = operations.filter((operation) => operation.kind === 'relation.connect')
   assert.deepEqual(
     connects.map((operation) => operation.type?.id),
     ['urn:knows', 'urn:likes', 'urn:likes'],
   )
-  assert.ok(operations.every((operation) => operation.kind !== 'view.membership'))
   assert.deepEqual(operations.at(-1), { kind: 'selection.set', value: [] })
+})
+
+test('graph-only files merge into the graph without creating views', () => {
+  const operations = buildImportOperations({ graph, views: [] }, null, 'My view')
+  const ids = conceptIds(operations)
+  assert.ok(
+    operations.every(
+      (operation) => operation.kind !== 'view.create' && operation.kind !== 'view.membership',
+    ),
+  )
+  assert.deepEqual(operations.at(-1), {
+    kind: 'selection.set',
+    value: ids.map((id) => ({ kind: 'concept', id })),
+  })
 })
 
 test('empty snapshots are no-ops', () => {
   assert.deepEqual(
     buildImportOperations(
-      { concepts: [], relationTypes: [], relations: [] },
+      { graph: { concepts: [], relationTypes: [], relations: [] }, views: [] },
       'urn:view',
       'My view',
     ),

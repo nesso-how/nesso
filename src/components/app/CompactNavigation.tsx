@@ -26,7 +26,7 @@ export function ViewSwitcher() {
       </span>
     </MenuRadioItem>
   )
-  const savedOption = (view: SavedView) => option(view.id, view.name, view.conceptIds.length)
+  const savedOption = (view: SavedView) => option(view.id, view.name, view.members.length)
   const group = (label: string, children: ReactNode) => (
     <Menu.Group>
       <Menu.GroupLabel className="px-2.5 pt-2 pb-1 font-mono text-[11px] leading-4 text-muted-foreground">

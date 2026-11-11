@@ -65,7 +65,16 @@ test('deleted and unreadable documents start with one fresh concept rather than 
     assert.equal(state.graph.concepts.length, 1)
     assert.equal(state.graph.concepts[0].label, 'Concept 1')
     assert.deepEqual(state.graph.relations, [])
-    assert.deepEqual(state.workspace.savedViews, [])
+    assert.deepEqual(
+      state.workspace.savedViews.map(({ id, name, members }) => [id, name, members]),
+      [
+        [
+          state.workspace.activeViewId,
+          'View 1',
+          [{ id: state.graph.concepts[0].id, position: { x: 0, y: 0 } }],
+        ],
+      ],
+    )
     assert.deepEqual(state.persistenceIssues, loaded.issues)
   }
 })

@@ -7,7 +7,7 @@ const target = (name: string) => ({
   package: {
     name,
     version: '1.2.0',
-    nesso: { apiVersion: 3, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
+    nesso: { apiVersion: 4, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
     i18n: {
       metadata: { name: { en: name }, description: { en: name }, documentation: { en: name } },
     },

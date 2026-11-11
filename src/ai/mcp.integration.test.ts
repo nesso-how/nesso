@@ -11,7 +11,7 @@ import type { AiPlugins } from './plugins.ts'
 
 const fixture = (enabled = false, failure?: 'result' | 'reject') => {
   const host = createNessoStore({
-    concepts: [{ id: 'urn:one', label: 'One', position: { x: 0, y: 0 } }],
+    concepts: [{ id: 'urn:one', label: 'One' }],
     relations: [],
     relationTypes: [],
   })

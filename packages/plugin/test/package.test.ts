@@ -7,7 +7,7 @@ const manifest = {
   name: 'nesso-plugin-test',
   version: '1.0.0',
   nesso: {
-    apiVersion: 3,
+    apiVersion: 4,
     kind: 'actions',
     entry: 'index.js',
     writes: ['concept.label'],

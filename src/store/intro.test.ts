@@ -29,11 +29,14 @@ const chosenRelation = (store: ReturnType<typeof createIntroStore>) =>
         source === introConnection.source && target === introConnection.target,
     )
 
-test('intro steps frame the idea, connection, complete graph and Rest without moving concepts', () => {
+test('intro steps frame the idea, connection, Energy and Rest without moving concepts', () => {
   const store = createIntroStore('en', vocab)
   const graph = store.getState().graph
   const seed = createSeedDocument('en')
-  assert.deepEqual(store.getState().viewGraph.concepts, [graph.concepts[0]])
+  assert.deepEqual(
+    store.getState().viewGraph.concepts.map(({ id }) => id),
+    [graph.concepts[0].id],
+  )
   assert.deepEqual(store.getState().viewGraph.relations, [])
 
   assert.equal(chosenRelation(store), undefined)
@@ -52,9 +55,9 @@ test('intro steps frame the idea, connection, complete graph and Rest without mo
         ? [introConnection.source]
         : step === 1
           ? [introConnection.source, introConnection.target]
-          : step === 3
-            ? seed.workspace.savedViews.find(({ id }) => id === 'rest')!.conceptIds
-            : graph.concepts.map(({ id }) => id)
+          : seed.workspace.savedViews
+              .find(({ id }) => id === (step === 3 ? 'rest' : 'energy'))!
+              .members.map(({ id }) => id)
     assert.deepEqual(
       state.viewGraph.concepts.map(({ id }) => id),
       ids,
@@ -84,12 +87,15 @@ test('intro navigation stays isolated from the user document and its viewport', 
   for (const step of [1, 2, 3, 0]) setIntroStep(intro, step)
   setIntroStep(intro, 1)
   intro.createRelationType(relationKey(chosenRelation(intro)!), 'My relation')
-  intro.setView('energy')
-  assert.equal(intro.getState().workspace.activeViewId, 'energy')
+  intro.setView('rest')
+  assert.equal(intro.getState().workspace.activeViewId, 'rest')
   assert.ok(intro.getState().viewGraph.concepts.length < intro.getState().graph.concepts.length)
   setIntroStep(intro, 2)
-  assert.equal(intro.getState().workspace.activeViewId, null)
-  assert.deepEqual(intro.getState().viewGraph.concepts, seed.graph.concepts)
+  assert.equal(intro.getState().workspace.activeViewId, 'energy')
+  assert.deepEqual(
+    intro.getState().viewGraph.concepts.map(({ id }) => id),
+    seed.workspace.savedViews[0].members.map(({ id }) => id),
+  )
   assert.equal(host.store.getState(), original)
   assert.equal(intro.getState().preferences.locale, 'it')
   assert.equal(intro.getState().pluginStorage.length, 0)
@@ -183,7 +189,16 @@ test('discarding the first-run example starts a fresh document', () => {
   assert.ok(!seed.graph.concepts.some(({ id }) => id === state.graph.concepts[0].id))
   assert.deepEqual(state.graph.relations, [])
   assert.deepEqual(state.graph.relationTypes, [])
-  assert.deepEqual(state.workspace.savedViews, [])
+  assert.deepEqual(
+    state.workspace.savedViews.map(({ id, name, members }) => [id, name, members]),
+    [
+      [
+        state.workspace.activeViewId,
+        'View 1',
+        [{ id: state.graph.concepts[0].id, position: { x: 0, y: 0 } }],
+      ],
+    ],
+  )
   assert.deepEqual(state.selected, [])
   assert.equal(canDiscardIntroExample(state), false)
 })
