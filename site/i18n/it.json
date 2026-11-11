@@ -43,7 +43,7 @@
   "plugins": "Plugin",
   "pluginsTitle": "Una base essenziale. Il resto sono plugin",
   "pluginsDescription": "I plugin aggiungono vocabolari, temi e azioni. Possono anche essere mini-app dentro Nesso, con una propria interfaccia e dati salvati tra una sessione e l’altra, come Notes e Review.",
-  "pluginsContracts": "I plugin inclusi in Nesso usano lo stesso SDK disponibile per quelli esterni, che si possono installare solo nell’app desktop.",
+  "pluginsContracts": "I plugin inclusi in Nesso usano lo stesso SDK disponibile per quelli esterni, che si possono installare solo nell’app desktop. Ogni plugin dichiara ciò di cui ha bisogno e funziona isolato dall’app, quindi può usare solo le API che Nesso gli mette a disposizione.",
   "createPlugin": "Copia il prompt per un plugin",
   "pluginAgentHint": "Se hai un’idea in mente, descrivila al tuo agente, ad esempio Claude Code o Codex, per creare un plugin locale tramite il server MCP di Nesso. Qui sotto trovi un prompt pronto da copiare.",
   "pluginSdkGuide": "Guida SDK",

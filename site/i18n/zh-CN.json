@@ -43,7 +43,7 @@
   "plugins": "插件",
   "pluginsTitle": "精简的核心，其余交给插件",
   "pluginsDescription": "插件可添加词汇表、主题和操作，也可以成为 Nesso 内的小应用，像 Notes 和 Review 一样拥有自己的界面，并保留上次使用时的数据。",
-  "pluginsContracts": "Nesso 的内置插件和外部插件使用同一套 SDK。外部插件只能在桌面应用中安装。",
+  "pluginsContracts": "Nesso 的内置插件和外部插件使用同一套 SDK。外部插件只能在桌面应用中安装。每个插件都需声明所需权限，并与应用隔离运行，只能使用 Nesso 提供的 API。",
   "createPlugin": "复制创建插件的提示词",
   "pluginAgentHint": "如果你有想法，可以告诉 Claude Code 或 Codex 等智能体，让它通过 Nesso 的 MCP 服务器创建本地插件。下方提供了可直接复制的提示词。",
   "pluginSdkGuide": "SDK 指南",
