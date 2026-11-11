@@ -1334,14 +1334,8 @@
   width: min(440px, calc(100vw - 32px));
 }
 .plugin-access {
-  border: 1px solid var(--border);
-  border-radius: var(--radius-control);
-}
-.plugin-access-group {
-  padding: 12px;
-}
-.plugin-access-group + .plugin-access-group {
-  border-top: 1px solid var(--border);
+  display: grid;
+  gap: 16px;
 }
 .plugin-access-heading {
   margin-bottom: 8px;

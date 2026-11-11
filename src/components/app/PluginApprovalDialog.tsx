@@ -60,6 +60,9 @@ export function PluginApprovalDialog({ bridge }: { bridge: PluginBridge }) {
         </Dialog.Description>
         {approval && (
           <div className="mt-4">
+            {!approval.additional && (
+              <p className="mb-3 text-xs font-medium">{t('pluginDeclaredAccess')}</p>
+            )}
             <PluginAccess access={approval.access} />
           </div>
         )}
