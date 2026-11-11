@@ -29,7 +29,22 @@ export function ShortcutSettings({ titleRef }: { titleRef: Ref<HTMLHeadingElemen
       rows: [
         { label: t('search'), keys: [[modifier, 'K']] },
         { label: t('shortcutOpenShortcuts'), keys: [['?']] },
-        ...(window.nessoMenu ? [{ label: t('shortcutCanvasTab'), keys: [[modifier, '1–9']] }] : []),
+        ...(window.nessoMenu
+          ? [
+              { label: t('settings'), keys: [[modifier, ',']] },
+              { label: t('shortcutCanvasTab'), keys: [[modifier, '1–9']] },
+              { label: t('shortcutFullscreen'), keys: mac ? [['Ctrl', modifier, 'F']] : [['F11']] },
+              {
+                label: t('shortcutZoomIn'),
+                keys: [
+                  [modifier, '+'],
+                  [modifier, '='],
+                ],
+              },
+              { label: t('shortcutZoomOut'), keys: [[modifier, '-']] },
+              { label: t('shortcutActualSize'), keys: [[modifier, '0']] },
+            ]
+          : []),
       ],
     },
     {

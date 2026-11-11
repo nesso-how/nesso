@@ -5,6 +5,7 @@ import { imageBounds } from '../../packages/concept-map/src/image-bounds.ts'
 import { openFixtureWorkspace, waitFor, type CheckContext } from './helpers.ts'
 
 export async function verifyImages(context: CheckContext) {
+  context.window.setSize(1280, 900)
   const scale = 4
   let written: FileSaveOptions | undefined
   ipcMain.handle('plugins:list', () => ({ value: { safeMode: false, packages: [], issues: [] } }))
@@ -45,6 +46,7 @@ export async function verifyImages(context: CheckContext) {
     }
   })()`)
   assert.ok(geometry.edges.length > 0, 'The export fixture must contain relations')
+  if (context.name === 'desktop') context.window.webContents.setZoomLevel(1)
   const trigger = `#canvas header button[aria-haspopup="menu"]:not(.canvas-tabs-more):not([disabled])`
   await waitFor(
     () => evaluate<boolean>(`!!document.querySelector(${JSON.stringify(trigger)})`),

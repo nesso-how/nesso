@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
+import { Menu } from 'electron'
 import source from '../../packages/plugin/example/package.json' with { type: 'json' }
-import { connectTabShortcuts } from '../../electron/menu.ts'
+import { connectMenu, connectTabShortcuts } from '../../electron/menu.ts'
 import {
   chooseTab,
   listExamplePlugin,
@@ -11,6 +12,7 @@ import {
 } from './helpers.ts'
 
 export async function verifyPanelWorkspace(context: CheckContext) {
+  connectMenu(() => true, false)
   await listExamplePlugin()
   const { evaluate, saved } = await openFixtureWorkspace(context)
   const preloaded = await waitFor(
@@ -105,6 +107,23 @@ export async function verifyPanelWorkspace(context: CheckContext) {
   assert.equal(
     await content.executeJavaScript(`getComputedStyle(document.querySelector('.quiz')).display`),
     'grid',
+  )
+  const pixelRatio = await evaluate<number>('window.devicePixelRatio')
+  const zoomIn = Menu.getApplicationMenu()
+    ?.items.flatMap((item) => item.submenu?.items ?? [])
+    .find((item) => item.accelerator === 'CmdOrCtrl+=')
+  assert.ok(zoomIn)
+  zoomIn.click({}, context.window, context.window.webContents)
+  await waitFor(async () => {
+    const ratio = await evaluate<number>('window.devicePixelRatio')
+    return (
+      ratio > pixelRatio && ratio === (await content.executeJavaScript('window.devicePixelRatio'))
+    )
+  }, Boolean)
+  context.window.webContents.setZoomLevel(0)
+  await waitFor(
+    () => content.executeJavaScript('window.devicePixelRatio'),
+    (ratio) => ratio === pixelRatio,
   )
   await content.executeJavaScript(`document.querySelector('.quiz button:last-child').click()`)
   await waitFor(
