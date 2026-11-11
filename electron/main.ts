@@ -28,6 +28,7 @@ import { connectPlugins } from './plugins.ts'
 import { connectPluginTermination } from './plugin-termination.ts'
 import { connectStartupCheck } from './startup-check.ts'
 import { createWindowState } from './window-state.ts'
+import { connectWindowZoom } from './zoom.ts'
 import { createRecordReplacement } from './record-replacement.ts'
 import { connectMenu, connectTabShortcuts } from './menu.ts'
 import { createAutomaticBackups } from './automatic-backups.ts'
@@ -75,6 +76,7 @@ const createWindow = async (connectPersistence: (window: BrowserWindow) => void)
     },
   })
   state.track(window)
+  connectWindowZoom(window, app.getPath('userData'))
   connectPersistence(window)
   window.webContents.on('will-navigate', (event) => {
     if (event.url !== rendererUrl) event.preventDefault()

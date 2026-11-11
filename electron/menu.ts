@@ -87,6 +87,16 @@ function createMenuTemplate(state: MenuState, dev: boolean): MenuItemConstructor
     {
       label: t.view,
       submenu: [
+        { role: 'zoomIn', label: t.zoomIn },
+        {
+          role: 'zoomIn',
+          label: t.zoomIn,
+          accelerator: 'CmdOrCtrl+=',
+          visible: false,
+        },
+        { role: 'zoomOut', label: t.zoomOut },
+        { role: 'resetZoom', label: t.actualSize },
+        { type: 'separator' },
         { role: 'togglefullscreen', label: t.fullscreen },
         ...(dev
           ? [
