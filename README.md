@@ -151,6 +151,30 @@ See the [plugin guide](packages/plugin/README.md#create-a-plugin) for plugin aut
 
 Configure npm trusted publishing for all published packages to use the GitHub Actions workflow `release.yml`.
 
+## FAQ
+
+### Where is my data stored?
+
+On your device. The desktop app saves everything in a local data folder, which you can change in Settings → Local data. The web demo keeps data in your browser. Nesso has no account and no server of its own. You can export your graph or any view as JSON-LD, an open format, and import it back.
+
+### Can I sync Nesso across devices?
+
+Not yet. You can move the data folder into a cloud-synced folder, but keep its files available offline and edit from one device only. Credentials always stay on the device.
+
+### Do I need AI to use Nesso?
+
+No. AI is optional and off until you set it up. When you use it, requests go straight from your device to the provider you chose, or stay on your computer with a local model.
+
+### Is it safe to install a plugin?
+
+Nesso is designed so that you don't have to trust a plugin with more than it asks for. Before installing, you see exactly which graph edits it can make and which capabilities it needs, such as opening files or storing its own data. Your approval applies only to that exact package and that access.
+
+Plugin code runs isolated from the app. It can't reach the network, the app's interface, or your computer directly, and it can only use the APIs Nesso provides. Files are opened or saved only through dialogs you confirm. Themes and vocabularies are plain data and never run code. Plugin edits go through the same history as yours, so you can undo them, and removing a plugin never deletes your graph.
+
+### Why not let plugins do anything?
+
+Giving plugins full access to the app would make some features easier to build, but every plugin would then need to be trusted completely. Adding limits later is hard once many plugins depend on that access. So we started from the other end. We open the plugin system step by step, adding new APIs when a real use case needs them. Some ideas take a little longer this way, but the access a plugin gets never grows without you knowing.
+
 ## Troubleshooting
 
 If a suspected plugin problem prevents startup, quit Nesso completely and relaunch it with `--safe-plugins`:
