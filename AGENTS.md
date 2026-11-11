@@ -8,7 +8,7 @@ See [README.md](README.md) for the product overview, architecture, and package d
 - Before opening a PR, fetch `origin` and ensure the branch includes the latest `origin/main`; resolve or report blockers before proceeding.
 - Complete applicable sections of `.github/pull_request_template.md` for PRs and the matching `.github/ISSUE_TEMPLATE/` template for issues, when available.
 - Enable auto-merge only on explicit request; watch the PR until merged or blocked, and report blockers.
-- After a PR merges during the session, fetch `origin` and fast-forward `main` to `origin/main` in the primary checkout, not the session worktree. Report blockers; never discard changes or force updates.
+- Fetch `origin` before starting work and after a PR merges during the session. Fast-forward `main` to `origin/main` in the main clone, and start new branches, including in session worktrees, from `origin/main`. Report blockers; never discard changes or force updates.
 - Migrate published persisted formats through explicit, lossless version steps shared by startup and backup restoration. Preserve originals before writing upgrades, reject unknown versions, and avoid generic migration frameworks or scattered compatibility branches.
 - Prefer the smallest clear implementation. Reuse existing code; avoid unnecessary abstractions, duplication, and redundant tests without sacrificing readability, correctness, or essential coverage.
 - Keep AGENTS.md files minimal: durable development rules and architectural boundaries only. Do not duplicate inherited instructions, implementation details, functional specifications, or progress reports; keep supported behavior in types, validators, and tests.
