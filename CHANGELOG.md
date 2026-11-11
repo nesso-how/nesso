@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.0.0-beta.15 — 2026-11-11
+
+### Documentation
+
+- **agents:** Fetch and start from origin/main before work
+- **site:** Explain plugin isolation in the plugins section
+- **readme:** Add faq on data, sync, ai and plugins
+
+### Features
+
+- **chat:** Add copy, retry and response stats (#305)
+- **plugins:** Render declared access as chips and capability rows (#307)
+- **graph:** Reconnect grouped relations from their anchor (#309)
+- **desktop:** Add persistent interface zoom (#311)
+
 ## 1.0.0-beta.14 — 2026-11-10
 
 ### Features
