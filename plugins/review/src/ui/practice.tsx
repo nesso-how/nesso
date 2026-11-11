@@ -183,7 +183,7 @@ export function Practice({
               {revealed ? (
                 <>
                   <p className="review-rating-title">
-                    {t.rate} <span className="review-rating-keys">1–4</span>
+                    {t.rate} <Kbd className="review-rating-keys">1–4</Kbd>
                   </p>
                   <div className="review-ratings">
                     {previews.map(({ grade, card }) => (
