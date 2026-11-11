@@ -31,7 +31,13 @@ const capabilities = {
 export const pluginAccessGroups = (
   access: PluginAccess,
   t: ReturnType<typeof translate>,
-): { writes: string[]; capabilities: string[] } => ({
+): {
+  writes: string[]
+  capabilities: { id: PluginAccess['capabilities'][number]; label: string }[]
+} => ({
   writes: [...new Set(access.writes.map((value) => t(writes[value])))],
-  capabilities: [...new Set(access.capabilities.map((value) => t(capabilities[value])))],
+  capabilities: [...new Set(access.capabilities)].map((id) => ({
+    id,
+    label: t(capabilities[id]),
+  })),
 })

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Button, Dialog, DialogActions, DialogPopup } from '@nesso-how/ui'
 import type { PluginApproval, PluginBridge } from '../../../shared/plugins.ts'
 import { useTranslation } from '@/i18n'
-import { pluginAccessGroups } from '@/plugins/access'
+import { PluginAccess } from './PluginAccess'
 
 export function PluginApprovalDialog({ bridge }: { bridge: PluginBridge }) {
   const t = useTranslation()
@@ -32,8 +32,6 @@ export function PluginApprovalDialog({ bridge }: { bridge: PluginBridge }) {
       setWorking(false)
     }
   }
-  const groups = approval ? pluginAccessGroups(approval.access, t) : undefined
-  const empty = !groups || (!groups.writes.length && !groups.capabilities.length)
   return (
     <Dialog.Root
       open={!!approval}
@@ -60,30 +58,13 @@ export function PluginApprovalDialog({ bridge }: { bridge: PluginBridge }) {
         <Dialog.Description className="mt-3 text-xs leading-5 text-muted-foreground">
           {approval?.additional ? t('pluginAdditionalDescription') : approval?.description}
         </Dialog.Description>
-        {empty ? (
-          <p className="mt-3 text-xs text-muted-foreground">{t('pluginNoAccess')}</p>
-        ) : (
-          <>
-            <p className="mt-3 text-xs font-medium">{t('pluginDeclaredAccess')}</p>
-            <div className="mt-1 space-y-1 pl-4 text-xs">
-              {groups?.writes.length ? (
-                <p>
-                  <span className="font-medium">{t('pluginAccessWrites')}:</span>{' '}
-                  <span className="lowercase">{groups.writes.join(', ')}</span>
-                </p>
-              ) : null}
-              {groups?.capabilities.length ? (
-                <div>
-                  <p className="font-medium">{t('pluginAccessCapabilities')}:</p>
-                  <ul className="list-inside list-disc pl-4">
-                    {groups.capabilities.map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
-              ) : null}
-            </div>
-          </>
+        {approval && (
+          <div className="mt-4">
+            {!approval.additional && (
+              <p className="mb-3 text-xs font-medium">{t('pluginDeclaredAccess')}</p>
+            )}
+            <PluginAccess access={approval.access} />
+          </div>
         )}
         <DialogActions>
           <Button

@@ -122,7 +122,7 @@ function createDriver(window: BrowserWindow): Driver {
       ),
     declaredAccess: () =>
       evaluate<{ writes: string[]; capabilities: string[] } | null>(
-        `(() => { const heading = [...document.querySelectorAll('.plugin-scroll:not([hidden]) h3')].find(heading => heading.textContent === 'Declared access'); const section = heading?.closest('section'); return section ? { writes: section.querySelector('.lowercase')?.textContent.split(', ') ?? [], capabilities: [...section.querySelectorAll('li li')].map(item => item.textContent) } : null; })()`,
+        `(() => { const heading = [...document.querySelectorAll('.plugin-scroll:not([hidden]) h3')].find(heading => heading.textContent === 'Declared access'); const section = heading?.closest('section'); return section ? { writes: [...section.querySelectorAll('.plugin-access li.settings-badge')].map(item => item.textContent), capabilities: [...section.querySelectorAll('.plugin-access li:not(.settings-badge)')].map(item => item.textContent) } : null; })()`,
       ),
     search: async (query: string) => {
       await evaluate<void>(

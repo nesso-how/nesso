@@ -1333,6 +1333,17 @@
 .plugin-approval {
   width: min(440px, calc(100vw - 32px));
 }
+.plugin-access {
+  display: grid;
+  gap: 16px;
+}
+.plugin-access-heading {
+  margin-bottom: 8px;
+  color: var(--muted-foreground);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 16px;
+}
 
 .ai-settings {
   min-width: 0;
