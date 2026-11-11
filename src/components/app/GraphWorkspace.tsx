@@ -24,6 +24,8 @@ export function GraphWorkspace({
   suspended = false,
   bottomInset = 0,
   onDeleteView,
+  onConfirmDelete,
+  onAddExisting,
   focusRef,
 }: {
   ref?: Ref<ConceptMapHandle>
@@ -34,6 +36,8 @@ export function GraphWorkspace({
   suspended?: boolean
   bottomInset?: number
   onDeleteView?: () => void
+  onConfirmDelete?: () => void
+  onAddExisting?: () => void
   focusRef?: RefObject<HTMLDivElement | null>
 }) {
   const t = useTranslation()
@@ -48,17 +52,21 @@ export function GraphWorkspace({
     readOnly: readOnly || suspended,
     preview,
     onDeleteView,
+    onConfirmDelete,
     focusRef: target,
   })
   const currentCommands = useRef(commands)
+  const currentAddExisting = useRef(onAddExisting)
   useLayoutEffect(() => {
     currentCommands.current = commands
-  }, [commands])
+    currentAddExisting.current = onAddExisting
+  }, [commands, onAddExisting])
   const rendererCommands = useMemo(
     () => ({
       deleteSelection: () => currentCommands.current.deleteSelection(),
       copy: (cut?: boolean) => currentCommands.current.copy(cut),
       paste: (text?: string, position?: Position) => currentCommands.current.paste(text, position),
+      addExisting: () => currentAddExisting.current?.(),
     }),
     [],
   )

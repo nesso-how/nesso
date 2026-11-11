@@ -14,10 +14,12 @@ import {
   Copy,
   Italic,
   ListChecks,
+  ListPlus,
   Lock,
   LockOpen,
   Group,
   Maximize,
+  Network,
   ClipboardPaste,
   Plus,
   Redo2,
@@ -51,6 +53,10 @@ import './styles.css'
 import { newIri, relationKey } from '@nesso-how/schema'
 import { ConceptNodeView } from './ConceptNodeView'
 import { GroupNodeView } from './GroupNodeView'
+import { GhostNodeView } from './GhostNodeView'
+import { conceptBoxes, estimatedSize, ghostElements, ghostPrefix } from './ghosts'
+import { arrange, type LayoutBounds } from './layout'
+import { outsideNeighbors } from './neighbors'
 import { groupRelations, keepGroups } from './groups'
 import type { RelationGroup } from './groups'
 import { ConnectionPreview } from './ConnectionPreview'
@@ -68,7 +74,11 @@ import { useTranslation } from './i18n'
 import { reconnectOperations, selectedRelations, type Reconnection } from './reconnection'
 import { canConnect } from './connection'
 
-const nodeTypes: NodeTypes = { concept: ConceptNodeView, relationGroup: GroupNodeView }
+const nodeTypes: NodeTypes = {
+  concept: ConceptNodeView,
+  relationGroup: GroupNodeView,
+  ghost: GhostNodeView,
+}
 const fitViewOptions = { padding: 0.3, maxZoom: 1.2 }
 const easeOut = (t: number) => 1 - Math.pow(1 - t, 3)
 const multiSelectionKeys = ['Meta', 'Control', 'Shift']
@@ -128,7 +138,14 @@ export function Canvas({
   )
   const indexed = useMemo(() => indexGraph(displayed, vocabs, locale), [displayed, vocabs, locale])
   const selected = useNesso((state) => state.selected)
-  const conceptCount = useNesso((state) => state.graph.concepts.length)
+  const concepts = useNesso((state) => state.graph.concepts)
+  const relations = useNesso((state) => state.graph.relations)
+  const conceptCount = concepts.length
+  const labels = useMemo(() => new Map(concepts.map(({ id, label }) => [id, label])), [concepts])
+  const outside = useMemo(
+    () => outsideNeighbors(relations, new Set(graph.concepts.map(({ id }) => id))),
+    [relations, graph.concepts],
+  )
   const view = useNesso((state) => state.workspace.activeViewId)
   const defaultTypeId = useNesso(
     (state) => state.vocabs.find(({ id }) => id === state.preferences.activeVocabId)?.defaultTypeId,
@@ -159,7 +176,6 @@ export function Canvas({
   const paneSelection = useRef<Selection>([])
   const [editId, setEditId] = useState<string | null>(null)
   const [focusTarget, setFocusTarget] = useState<string | null>(null)
-  useImperativeHandle(ref, () => ({ focusConcept: setFocusTarget }), [])
   const {
     fitView,
     screenToFlowPosition,
@@ -176,6 +192,7 @@ export function Canvas({
     y: number
     target: ContextMenuTarget
   } | null>(null)
+  const [more, setMore] = useState<{ x: number; y: number; ids: readonly string[] } | null>(null)
   const grouping = useNesso((state) => state.preferences.relationGroups ?? true)
   const [retained, setRetained] = useState({ view, grouping, groups: [] as RelationGroup[] })
   const kept = useMemo(
@@ -276,7 +293,114 @@ export function Canvas({
     dragPositions.current = null
     setDragged(null)
   }
+  const visibleBounds = useCallback((): LayoutBounds => {
+    const {
+      transform: [x, y, zoom],
+      width,
+      height,
+    } = flow.getState()
+    const inset = 24 / zoom
+    return {
+      x: inset - x / zoom,
+      y: inset - y / zoom,
+      width: width / zoom - 2 * inset,
+      height: height / zoom - 2 * inset,
+    }
+  }, [flow])
+  const viewportPosition = useCallback(
+    (position?: XYPosition) => {
+      const bounds = visibleBounds()
+      const maxX = Math.max(bounds.x, bounds.x + bounds.width - conceptNodeMinSize.width)
+      const maxY = Math.max(bounds.y, bounds.y + bounds.height - conceptNodeMinSize.height)
+      const { x, y } = position ?? { x: (bounds.x + maxX) / 2, y: (bounds.y + maxY) / 2 }
+      return {
+        x: Math.max(bounds.x, Math.min(x, maxX)),
+        y: Math.max(bounds.y, Math.min(y, maxY)),
+      }
+    },
+    [visibleBounds],
+  )
+  const addMember = useCallback(
+    (id: string, position: XYPosition) => {
+      const viewId = store.getState().workspace.activeViewId
+      if (!viewId) return
+      write([
+        { kind: 'view.membership', viewId, conceptId: id, included: true },
+        { kind: 'concept.position', id, value: position },
+      ])
+    },
+    [store, write],
+  )
+  const addNear = useCallback(
+    (id: string) => {
+      const state = store.getState()
+      const { concepts: members, relations: shown } = presentedGraph(state)
+      const ids = new Set(members.map((concept) => concept.id))
+      const links = state.graph.relations.filter(
+        ({ source, target }) =>
+          (source === id && ids.has(target)) || (target === id && ids.has(source)),
+      )
+      const label = state.graph.concepts.find((concept) => concept.id === id)?.label ?? ''
+      addMember(
+        id,
+        links.length === 0
+          ? viewportPosition()
+          : arrange({
+              fixed: conceptBoxes(members, sizes),
+              free: [{ id, ...estimatedSize(label, sizes, id) }],
+              links: [...shown, ...links],
+            }).get(id)!,
+      )
+    },
+    [store, sizes, viewportPosition, addMember],
+  )
+  useImperativeHandle(
+    ref,
+    () => ({
+      focusConcept: setFocusTarget,
+      addToView: (id) => {
+        if (!presentedGraph(store.getState()).concepts.some((concept) => concept.id === id))
+          addNear(id)
+        setFocusTarget(id)
+      },
+    }),
+    [store, addNear],
+  )
+  const anchor =
+    interactive &&
+    !hasOverlay &&
+    !dragged &&
+    selected.length === 1 &&
+    selected[0].kind === 'concept'
+      ? selected[0].id
+      : null
+  const ghosts = useMemo(() => {
+    const neighbors = anchor ? outside.get(anchor) : undefined
+    if (!anchor || !neighbors) return null
+    return ghostElements({
+      anchor,
+      neighbors,
+      labels,
+      concepts: graph.concepts,
+      relations: graph.relations,
+      sizes,
+      bounds: visibleBounds(),
+      typeLabel: (predicate) =>
+        predicate === defaultTypeId ? undefined : indexed.relationTypes.get(predicate)?.label,
+    })
+  }, [
+    anchor,
+    outside,
+    labels,
+    graph.concepts,
+    graph.relations,
+    sizes,
+    visibleBounds,
+    defaultTypeId,
+    indexed,
+  ])
   const elements = adapt({
+    outside: interactive ? outside : undefined,
     groups,
     preview: new Set(
       dragged
@@ -305,15 +429,20 @@ export function Canvas({
         target: indexed.concepts.get(relation.target)?.label ?? '',
       }),
   })
+  const nodes = useMemo(
+    () => (ghosts ? [...elements.nodes, ...ghosts.nodes] : elements.nodes),
+    [elements.nodes, ghosts],
+  )
   const edges = useMemo(() => {
-    if (!reconnectDrag) return elements.edges
+    const shown = ghosts ? [...elements.edges, ...ghosts.edges] : elements.edges
+    if (!reconnectDrag) return shown
     const ids = new Set(reconnectDrag.relations.map(relationKey))
-    return elements.edges.map((edge) =>
+    return shown.map((edge) =>
       ids.has(edge.id) || edge.data?.relations?.some((id) => ids.has(id))
         ? { ...edge, className: 'graph-reconnecting-edge' }
         : edge,
     )
-  }, [elements.edges, reconnectDrag])
+  }, [elements.edges, ghosts, reconnectDrag])
   const connectionPreview = useCallback(
     (props: ConnectionLineComponentProps) => (
       <ConnectionPreview {...props} reconnection={reconnectDrag} />
@@ -337,7 +466,9 @@ export function Canvas({
   const onNodesChange = useCallback(
     (changes: NodeChange<ConceptNode>[]) => {
       const concepts = changes.filter(
-        (change) => !('id' in change) || !change.id.startsWith('#group:'),
+        (change) =>
+          !('id' in change) ||
+          (!change.id.startsWith('#group:') && !change.id.startsWith(ghostPrefix)),
       )
       const dimensions = concepts.flatMap((change) =>
         change.type === 'dimensions' && change.dimensions
@@ -422,23 +553,13 @@ export function Canvas({
       state.selected.length === 1 && state.selected[0].kind === 'concept'
         ? presentedGraph(state).concepts.find((concept) => concept.id === state.selected[0].id)
         : undefined
-    const placement = () => {
-      const bounds = element.getBoundingClientRect()
-      const topLeft = screenToFlowPosition({ x: bounds.left + 24, y: bounds.top + 24 })
-      const bottomRight = screenToFlowPosition({ x: bounds.right - 24, y: bounds.bottom - 24 })
-      const maxX = Math.max(topLeft.x, bottomRight.x - conceptNodeMinSize.width)
-      const maxY = Math.max(topLeft.y, bottomRight.y - conceptNodeMinSize.height)
-      const position = source
-        ? {
-            x: source.position.x + store.conceptPlacementOffset.x,
-            y: source.position.y + store.conceptPlacementOffset.y,
-          }
-        : { x: (topLeft.x + maxX) / 2, y: (topLeft.y + maxY) / 2 }
-      return {
-        x: Math.max(topLeft.x, Math.min(position.x, maxX)),
-        y: Math.max(topLeft.y, Math.min(position.y, maxY)),
-      }
-    }
+    const placement = () =>
+      viewportPosition(
+        source && {
+          x: source.position.x + store.conceptPlacementOffset.x,
+          y: source.position.y + store.conceptPlacementOffset.y,
+        },
+      )
     const historyGroup = newIri()
     const id = newIri()
     write([{ kind: 'concept.add', id, position: placement() }], { historyGroup })
@@ -452,6 +573,26 @@ export function Canvas({
       )
         write([{ kind: 'concept.position', id, value: placement() }], { historyGroup })
     })
+  }
+
+  const canRearrange = interactive && (selectedConcepts.length > 0 || viewCount > 1)
+  const rearrangeLabel = t(selectedConcepts.length > 0 ? 'rearrangeSelection' : 'rearrangeView')
+  const rearrange = () => {
+    const { concepts, relations } = presentedGraph(store.getState())
+    const chosen = new Set(selectedConcepts.map(({ id }) => id))
+    const moving = ({ id }: { id: string }) => chosen.size === 0 || chosen.has(id)
+    const boxes = conceptBoxes(concepts, sizes)
+    const positions = arrange({
+      fixed: boxes.filter((box) => !moving(box)),
+      free: boxes.filter(moving),
+      links: relations,
+    })
+    write([
+      {
+        kind: 'concept.positions',
+        updates: [...positions].map(([id, position]) => ({ id, position })),
+      },
+    ])
   }
 
   const handleDelete = () => {
@@ -513,14 +654,26 @@ export function Canvas({
   )
   const objectHandlers = useMemo(
     () => ({
+      onNodeClick: (event: ReactMouseEvent, node: ConceptNode) => {
+        if (node.type !== 'ghost') return
+        if (node.data.members) {
+          const bounds = (event.currentTarget as Element).getBoundingClientRect()
+          setMore({ x: bounds.left, y: bounds.bottom, ids: node.data.members })
+        } else {
+          addMember(node.id.slice(ghostPrefix.length), node.position)
+          canvas.current?.focus()
+        }
+      },
       onNodeContextMenu: (event: ReactMouseEvent, node: ConceptNode) => {
-        if (node.type === 'relationGroup') {
+        if (node.type === 'ghost') event.preventDefault()
+        else if (node.type === 'relationGroup') {
           if (interactive) selectGroup(node.data.members!)
           handleContextMenu(event, undefined, 'selection')
         } else handleContextMenu(event, { kind: 'concept', id: node.id })
       },
       onEdgeContextMenu: (event: ReactMouseEvent, edge: RelationEdge) => {
-        if (edge.data?.relations) {
+        if (edge.id.startsWith(ghostPrefix)) event.preventDefault()
+        else if (edge.data?.relations) {
           if (interactive) selection(edge.data.relations.map((id) => ({ kind: 'relation', id })))
           handleContextMenu(event, undefined, 'relation')
         } else handleContextMenu(event, { kind: 'relation', id: edge.id })
@@ -550,7 +703,7 @@ export function Canvas({
         setReconnectDrag(null)
       },
     }),
-    [handleContextMenu, interactive, write, store, selection, selectGroup],
+    [handleContextMenu, interactive, write, store, selection, selectGroup, addMember, canvas],
   )
 
   const handlePaneDoubleClick = (event: ReactMouseEvent) => {
@@ -759,6 +912,19 @@ export function Canvas({
           return
         }
         if (
+          canRearrange &&
+          !hasOverlay &&
+          !event.altKey &&
+          !event.ctrlKey &&
+          !event.metaKey &&
+          !event.shiftKey &&
+          event.key.toLowerCase() === 'l'
+        ) {
+          event.preventDefault()
+          if (!event.repeat) rearrange()
+          return
+        }
+        if (
           !hasOverlay &&
           !event.altKey &&
           !event.ctrlKey &&
@@ -811,7 +977,7 @@ export function Canvas({
       }}
     >
       <ReactFlow
-        nodes={elements.nodes}
+        nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
         ariaLabelConfig={ariaLabelConfig}
@@ -934,6 +1100,15 @@ export function Canvas({
                   aria-pressed={grouping}
                 >
                   <Group aria-hidden="true" />
+                </ControlButton>
+                <ControlButton
+                  onClick={rearrange}
+                  disabled={!canRearrange}
+                  title={`${rearrangeLabel} (L)`}
+                  aria-label={rearrangeLabel}
+                  aria-keyshortcuts="l"
+                >
+                  <Network aria-hidden="true" />
                 </ControlButton>
               </>
             )}
@@ -1105,6 +1280,27 @@ export function Canvas({
                 },
               ]
             : []),
+          ...(!readOnly && contextMenu?.target === 'pane' && view !== null
+            ? [
+                {
+                  label: t('addExistingConcept'),
+                  icon: ListPlus,
+                  onClick: commands.addExisting,
+                  disabled: !interactive,
+                },
+              ]
+            : []),
+          ...(!readOnly &&
+          (contextMenu?.target === 'concept' || contextMenu?.target === 'selection')
+            ? [
+                {
+                  label: t('rearrangeSelection'),
+                  icon: Network,
+                  onClick: rearrange,
+                  disabled: !interactive || selectedConcepts.length === 0,
+                },
+              ]
+            : []),
           ...(!readOnly && contextMenu && contextMenu.target !== 'pane'
             ? [{ label: t('delete'), icon: Trash2, onClick: handleDelete, disabled: !canDelete }]
             : []),
@@ -1122,6 +1318,18 @@ export function Canvas({
             },
           },
         ]}
+      />
+      <GraphContextMenu
+        position={more}
+        label={t('moreOutsideNeighbors')}
+        onClose={() => setMore(null)}
+        finalFocus={canvas}
+        actions={(more?.ids ?? []).map((id) => ({
+          id,
+          label: labels.get(id) ?? '',
+          icon: Plus,
+          onClick: () => addNear(id),
+        }))}
       />
     </div>
   )

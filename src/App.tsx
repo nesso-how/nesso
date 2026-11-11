@@ -18,6 +18,7 @@ import { DataTransferDialog } from '@/components/app/LocalDataSettings'
 import { Intro } from '@/components/app/Intro'
 import { completeIntro } from '@/store/intro'
 import { DeleteViewDialog } from '@/components/app/DeleteViewDialog'
+import { DeleteConceptsDialog } from '@/components/app/DeleteConceptsDialog'
 import { GraphWorkspace } from '@/components/app/GraphWorkspace'
 import { useAppCommands } from '@/app-commands'
 import { PluginApprovalDialog } from '@/components/app/PluginApprovalDialog'
@@ -28,7 +29,7 @@ import { ViewHeader } from '@/components/app/ViewHeader'
 import { CanvasTabBar, ViewSwitcher } from '@/components/app/CompactNavigation'
 import { ConceptSheet } from '@/components/app/ConceptSheet'
 import { SearchDialog } from '@/components/app/SearchDialog'
-import { openSearchResult } from '@/graph/search'
+import { addToActiveView, openSearchResult } from '@/graph/search'
 import { usePluginInstallNotifications } from '@/components/app/usePluginInstallNotifications'
 
 const compactQuery = '(max-width: 767px)'
@@ -54,11 +55,15 @@ export default function App({
     setActionsOpen(true)
   }, [setActionsOpen, setSettingsOpen])
   usePluginInstallNotifications(showPluginCommands)
-  const [searchOpen, setSearchOpen] = useState(false)
-  const openSearch = useCallback(() => setSearchOpen(true), [setSearchOpen])
+  const [search, setSearch] = useState<'search' | 'add' | null>(null)
+  const openSearch = useCallback(() => setSearch('search'), [setSearch])
+  const openAddExisting = useCallback(() => {
+    if (host.store.getState().workspace.activeViewId !== null) setSearch('add')
+  }, [setSearch])
   const [introOpen, setIntroOpen] = useState(() => !host.store.getState().preferences.introSeen)
   const [settingsPage, setSettingsPage] = useState('general')
   const [deleting, setDeleting] = useState<SavedView | 'complete-graph' | null>(null)
+  const [deletingConcepts, setDeletingConcepts] = useState(false)
   const canvas = useRef<HTMLDivElement>(null)
   const renderer = useRef<ConceptMapHandle>(null)
   const pluginPanel = usePluginPanel()
@@ -109,6 +114,7 @@ export default function App({
     focusRef: canvas,
     openSettings: openSettingsPage,
     openSearch,
+    openAddExisting,
     openTab: openCanvasTabAt,
   })
   const openSettings = () => openSettingsPage('general')
@@ -155,6 +161,8 @@ export default function App({
                       suspended={!!pluginPanel}
                       bottomInset={sheetCover}
                       onDeleteView={deleteView}
+                      onConfirmDelete={() => setDeletingConcepts(true)}
+                      onAddExisting={openAddExisting}
                       focusRef={canvas}
                     />
                   </div>
@@ -204,13 +212,20 @@ export default function App({
       {(compact || !settingsOpen) && <ToastsHost />}
       <SearchDialog
         store={host.store}
-        open={!compact && !introOpen && searchOpen}
-        onOpenChange={setSearchOpen}
+        open={!compact && !introOpen && search !== null}
+        adding={search === 'add'}
+        onOpenChange={(open) => {
+          if (!open) setSearch(null)
+        }}
         focusRef={canvas}
         onSelect={(result) => {
           activePluginPanel.close()
           openSearchResult(host.store, result)
           if (result.kind === 'concept') renderer.current?.focusConcept(result.id)
+        }}
+        onAdd={(id) => {
+          activePluginPanel.close()
+          addToActiveView(host.store, renderer.current, id)
         }}
       />
       {window.nessoUpdater && <UpdateBar updater={window.nessoUpdater} />}
@@ -232,6 +247,12 @@ export default function App({
       <DeleteViewDialog
         target={deleting}
         onClose={() => setDeleting(null)}
+        finalFocus={() => canvas.current}
+      />
+      <DeleteConceptsDialog
+        store={host.store}
+        open={deletingConcepts}
+        onClose={() => setDeletingConcepts(false)}
         finalFocus={() => canvas.current}
       />
     </>

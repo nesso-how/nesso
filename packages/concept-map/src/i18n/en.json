@@ -28,5 +28,12 @@
   "shortcutRename": "Rename selected concept",
   "shortcutBold": "Toggle bold",
   "shortcutItalic": "Toggle italic",
-  "shortcutFitView": "Fit view"
+  "shortcutFitView": "Fit view",
+  "outsideNeighbors": "Related concepts outside this view: {{count}}",
+  "addToView": "Add {{name}} to the view",
+  "moreOutsideNeighbors": "More related concepts",
+  "rearrangeSelection": "Rearrange selection",
+  "rearrangeView": "Rearrange view",
+  "shortcutRearrange": "Rearrange selection or view",
+  "addExistingConcept": "Add existing concept…"
 }

@@ -3,7 +3,7 @@ import test from 'node:test'
 import type { GraphSnapshot, SavedView } from '@nesso-how/core'
 import { createSeedDocument } from '../data/seed.ts'
 import { createNessoStore } from '../store/create.ts'
-import { openSearchResult, searchGraph, type SearchResult } from './search.ts'
+import { addToActiveView, openSearchResult, searchGraph, type SearchResult } from './search.ts'
 
 const graph: GraphSnapshot = {
   concepts: [
@@ -123,4 +123,27 @@ test('opening search results is atomic navigation, preserves document history an
   openSearchResult(store, { ...rest, id: 'deleted' })
   openSearchResult(store, { kind: 'concept', id: 'urn:deleted', label: '' })
   assert.equal(store.getState(), unchanged)
+})
+
+test('adding a concept joins the active view and selects it', () => {
+  const seed = createSeedDocument('en')
+  const { store } = createNessoStore(seed.graph, { workspace: seed.workspace })
+  const sleep = 'urn:nesso:example:sleep'
+  const members = () =>
+    store
+      .getState()
+      .workspace.savedViews.find(({ id }) => id === 'energy')!
+      .members.map(({ id }) => id)
+  store.setView(null)
+  const overview = store.getState()
+  addToActiveView(store, null, sleep)
+  assert.equal(store.getState(), overview)
+  store.setView('energy')
+  const added: string[] = []
+  addToActiveView(store, { addToView: (id) => added.push(id) }, sleep)
+  assert.deepEqual(added, [sleep])
+  assert.ok(!members().includes(sleep))
+  addToActiveView(store, null, sleep)
+  assert.ok(members().includes(sleep))
+  assert.deepEqual(store.getState().selected, [{ kind: 'concept', id: sleep }])
 })

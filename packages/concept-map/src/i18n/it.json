@@ -28,5 +28,12 @@
   "shortcutRename": "Rinomina il concetto selezionato",
   "shortcutBold": "Attiva/disattiva grassetto",
   "shortcutItalic": "Attiva/disattiva corsivo",
-  "shortcutFitView": "Adatta la vista"
+  "shortcutFitView": "Adatta la vista",
+  "outsideNeighbors": "Concetti collegati fuori da questa vista: {{count}}",
+  "addToView": "Aggiungi {{name}} alla vista",
+  "moreOutsideNeighbors": "Altri concetti collegati",
+  "rearrangeSelection": "Riordina selezione",
+  "rearrangeView": "Riordina vista",
+  "shortcutRearrange": "Riordina selezione o vista",
+  "addExistingConcept": "Aggiungi concetto esistente…"
 }

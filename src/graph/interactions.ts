@@ -13,7 +13,14 @@ import type { HostStore } from '../store/types.ts'
 import { notifications } from '../notifications/index.ts'
 import { useNessoStore } from '../store/index.ts'
 import { translate } from '../i18n/index.ts'
-import { copyGraph, graphSelection, pasteOperations, selectionCoversGraph } from './commands.ts'
+import {
+  copyGraph,
+  deleteOperations,
+  deletionNeedsConfirmation,
+  graphSelection,
+  pasteOperations,
+  selectionCoversGraph,
+} from './commands.ts'
 
 export const isEditableTarget = (target: EventTarget | null): boolean =>
   target instanceof Element &&
@@ -25,11 +32,13 @@ export function useGraphInteractions(
     readOnly,
     preview,
     onDeleteView,
+    onConfirmDelete,
     focusRef,
   }: {
     readOnly: boolean
     preview: boolean
     onDeleteView?: () => void
+    onConfirmDelete?: () => void
     focusRef: RefObject<HTMLElement | null>
   },
 ) {
@@ -37,6 +46,7 @@ export function useGraphInteractions(
   const canvas = useRef<HTMLDivElement>(null)
   const clipboardEpoch = useRef(0)
   const pasted = useRef({ epoch, text: '', count: 0 })
+  const cutText = useRef({ epoch, text: '' })
   useLayoutEffect(
     () => () => {
       clipboardEpoch.current++
@@ -56,13 +66,11 @@ export function useGraphInteractions(
       selected.filter(({ kind }) => kind === 'concept').length < graph.concepts.length
     )
   }
-  const remove = () =>
-    store.applyOperations(
-      store.getState().selected.map(({ kind, id }) => ({
-        kind: kind === 'concept' ? 'concept.remove' : 'relation.remove',
-        id,
-      })),
-    )
+  const remove = () => {
+    const state = store.getState()
+    if (deletionNeedsConfirmation(state)) onConfirmDelete?.()
+    else store.applyOperations(deleteOperations(state))
+  }
   const selectAll = useCallback(() => {
     const { viewGraph } = store.getState()
     store.setSelection(graphSelection(viewGraph))
@@ -108,9 +116,9 @@ export function useGraphInteractions(
       const before = store.getState()
       const element = canvas.current
       const version = clipboardEpoch.current
+      const text = copyGraph(before.viewGraph, before.selected)
+      if (!text) return
       try {
-        const text = copyGraph(before.viewGraph, before.selected)
-        if (!text) return
         if (event) {
           event.preventDefault()
           event.clipboardData.setData('text/plain', text)
@@ -126,7 +134,10 @@ export function useGraphInteractions(
         store.getState() !== before
       )
         return
-      if (cut) remove()
+      if (cut) {
+        cutText.current = { epoch, text }
+        remove()
+      }
       focus()
     },
     paste: async (text?: string, position?: Position) => {
@@ -160,6 +171,9 @@ export function useGraphInteractions(
           position,
           count * 40,
           before.workspace.activeViewId !== null,
+          cutText.current.epoch === epoch && cutText.current.text === text
+            ? { graph: before.graph, viewId: before.workspace.activeViewId }
+            : undefined,
         )
       } catch {
         notify('pasteFailed')
