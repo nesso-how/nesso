@@ -1,11 +1,21 @@
-import type { ActionState } from '@nesso-how/plugin'
+import { resolveRelationTypeLabel, type ActionState } from '@nesso-how/plugin'
 
-type Graph = ActionState['viewGraph']
+type State = Pick<ActionState, 'viewGraph' | 'activeVocab' | 'locale'>
 
-export function cues(conceptId: string, graph: Graph) {
-  const types = new Map(graph.relationTypes.map(({ id, label }) => [id, label]))
+export function relationTypeLabels({ viewGraph, activeVocab, locale }: State) {
+  const vocabs = activeVocab ? [activeVocab] : []
+  return new Map(
+    viewGraph.relationTypes.map((type) => [
+      type.id,
+      resolveRelationTypeLabel(type, vocabs, locale),
+    ]),
+  )
+}
+
+export function cues(conceptId: string, state: State) {
+  const types = relationTypeLabels(state)
   const seen = new Map<string, { outgoing: boolean; label: string }>()
-  for (const { source, predicate, target } of graph.relations) {
+  for (const { source, predicate, target } of state.viewGraph.relations) {
     if (source !== conceptId && target !== conceptId) continue
     const outgoing = source === conceptId
     seen.set(JSON.stringify([outgoing, predicate]), {

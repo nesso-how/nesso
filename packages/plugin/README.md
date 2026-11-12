@@ -225,6 +225,8 @@ The graph snapshot provides:
 - `targetViewId`: the invoked view's ID, or `null` for All; fixed for each invocation. Headless actions keep their target during navigation; panels restart with a new invocation when the active view changes.
 - `activeVocab`: the current vocabulary, or `null`.
 
+`viewGraph` contains stored relation-type labels. `resolveRelationTypeLabel(type, vocabs, locale)`, exported by `@nesso-how/plugin`, returns a translated display label from the supplied vocabularies, preserving custom labels.
+
 Concept and relation-type IDs are absolute IRIs. Relations are `{ source, predicate, target }` triples; use `JSON.stringify([source, predicate, target])` as their selection/write ID.
 
 ### Write the graph
