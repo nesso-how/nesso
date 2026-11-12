@@ -148,10 +148,46 @@ export const mergeChanges = <T>(
   right: readonly Change<T>[],
   equal: (a: T, b: T) => boolean,
 ): Change<T>[] => {
-  const merged = new Map(left.map((change) => [change.id, change]))
+  if (left.length === 0 || right.length === 0) return [...left, ...right]
+  const reindex = (changes: readonly Change<T>[], forward: boolean) => {
+    const structural = changes.filter(
+      ({ before, after }) => !before || !after || before.index !== after.index,
+    )
+    const source = structural.flatMap((change) => {
+      const value = forward ? change.before : change.after
+      return value ? [value.index] : []
+    })
+    const target = structural
+      .flatMap((change) => {
+        const value = forward ? change.after : change.before
+        return value ? [value.index] : []
+      })
+      .sort((a, b) => a - b)
+    return (entry: Entry<T> | undefined): Entry<T> | undefined => {
+      if (!entry || structural.length === 0) return entry
+      let index = entry.index - source.filter((index) => index < entry.index).length
+      for (const inserted of target) {
+        if (inserted > index) break
+        index++
+      }
+      return index === entry.index ? entry : { ...entry, index }
+    }
+  }
+  const after = reindex(right, true)
+  const before = reindex(left, false)
+  const rightIds = new Set(right.map(({ id }) => id))
+  const merged = new Map(
+    left.map((change) => [
+      change.id,
+      rightIds.has(change.id) ? change : { ...change, after: after(change.after) },
+    ]),
+  )
   for (const change of right) {
     const previous = merged.get(change.id)
-    merged.set(change.id, previous ? { ...change, before: previous.before } : change)
+    merged.set(change.id, {
+      ...change,
+      before: previous ? previous.before : before(change.before),
+    })
   }
   return [...merged.values()].filter(({ before, after }) =>
     before && after

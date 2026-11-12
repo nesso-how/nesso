@@ -21,6 +21,7 @@ import { verifyNotes } from './notes.ts'
 import { verifyImages } from './images.ts'
 import { verifyIntro } from './intro.ts'
 import { verifyCompact } from './compact.ts'
+import { verifyCreation } from './creation.ts'
 
 const [scenario, name, profile] = process.argv.slice(2) as [Scenario, Platform, string]
 assert.ok(
@@ -57,6 +58,7 @@ app
       'images',
       'intro',
       'compact',
+      'creation',
     ].includes(scenario)
     protocol.handle('nesso', (request) =>
       !workspace && new URL(request.url).pathname === '/'
@@ -166,6 +168,9 @@ app
           break
         case 'compact':
           await verifyCompact(context)
+          break
+        case 'creation':
+          await verifyCreation(context)
           break
         case 'startup':
           await verifyStartup(context)

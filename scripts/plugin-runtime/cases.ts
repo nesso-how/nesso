@@ -8,6 +8,7 @@ export const cases = {
   images: ['desktop', 'static-web'],
   intro: ['desktop', 'static-web'],
   compact: ['desktop', 'static-web'],
+  creation: ['desktop', 'static-web'],
   storage: ['desktop', 'static-web'],
   startup: ['desktop'],
   installation: ['desktop'],

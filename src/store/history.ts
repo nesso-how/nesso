@@ -6,6 +6,7 @@ import {
   mergeChanges,
   sameConcept,
   sameMember,
+  sameType,
   type Change,
   type DocumentDelta,
   type ViewChange,
@@ -35,16 +36,19 @@ const mergeDelta = (left: DocumentDelta, right: DocumentDelta): DocumentDelta =>
     )
   }
   return {
-    ...left,
     concepts: mergeChanges(left.concepts, right.concepts, sameConcept),
+    relations: mergeChanges(
+      left.relations,
+      right.relations,
+      (a, b) => relationKey(a) === relationKey(b),
+    ),
+    relationTypes: mergeChanges(left.relationTypes, right.relationTypes, sameType),
     views: [...views.values()].filter((view) => view.members.length > 0 || !sameMetadata(view)),
   }
 }
 
-const canMerge = (delta: DocumentDelta): boolean =>
-  delta.relations.length + delta.relationTypes.length === 0 &&
-  delta.concepts.every(stable) &&
-  delta.views.every((view) => sameMetadata(view) && view.members.every(stable))
+const canMerge = (left: DocumentDelta, right: DocumentDelta): boolean =>
+  left.views.every(stable) && right.views.every(sameMetadata)
 
 const restoreViews = (
   views: readonly SavedView[],
@@ -130,17 +134,11 @@ export const createHistory = (getState: () => NessoState, publish: (next: NessoS
       }
       if (!hasDelta(delta)) return
       const previous = past.at(-1)
-      const settled = ({ before, after }: Change<unknown>) =>
-        !!after && (!before || before.index === after.index)
-      const stableIndices =
-        previous?.delta.concepts.every(settled) &&
-        previous.delta.views.every((view) => view.members.every(settled))
       if (
         group &&
         group === previous?.group &&
         future.length === 0 &&
-        stableIndices &&
-        canMerge(delta)
+        canMerge(previous.delta, delta)
       ) {
         previous.delta = mergeDelta(previous.delta, delta)
         if (!hasDelta(previous.delta)) past.pop()

@@ -101,7 +101,6 @@ export function ImageCanvas({ store, ready, presentation }: ImageProps) {
           deleteSelection: readOnly,
           copy: async () => readOnly(),
           paste: async () => readOnly(),
-          addExisting: readOnly,
         },
       }}
     >

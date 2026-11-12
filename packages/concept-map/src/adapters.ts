@@ -152,6 +152,8 @@ export function createGraphElements() {
       id: string | null
       enabled: boolean
       maxLength?: number
+      historyGroup?: string
+      onReuse?: (id: string) => void
       onChange: (id: string | null) => void
     }
   }) => {
@@ -170,6 +172,8 @@ export function createGraphElements() {
         editing: editing?.id === concept.id,
         maxLength: editing?.maxLength,
         onEditingChange: editing?.onChange,
+        historyGroup: editing?.id === concept.id ? editing.historyGroup : undefined,
+        onReuse: editing?.id === concept.id ? editing.onReuse : undefined,
       }
       const previous = previousNodes.get(node.id)
       return previous &&
@@ -183,6 +187,8 @@ export function createGraphElements() {
         previous.data.editing === node.data.editing &&
         previous.data.maxLength === node.data.maxLength &&
         previous.data.onEditingChange === node.data.onEditingChange &&
+        previous.data.historyGroup === node.data.historyGroup &&
+        previous.data.onReuse === node.data.onReuse &&
         previous.selected === node.selected &&
         previous.measured?.width === node.measured?.width &&
         previous.measured?.height === node.measured?.height

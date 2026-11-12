@@ -52,10 +52,6 @@ export function ShortcutSettings({ titleRef }: { titleRef: Ref<HTMLHeadingElemen
       title: t('shortcutsEditing'),
       rows: [
         { label: t('shortcutAddConcept'), keys: [[modifier, 'Enter']] },
-        {
-          label: t('shortcutAddExisting'),
-          keys: [mac ? [shift, modifier, 'K'] : [modifier, shift, 'K']],
-        },
         { label: t('shortcutUndo'), keys: [[modifier, 'Z']] },
         {
           label: t('shortcutRedo'),

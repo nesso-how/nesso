@@ -14,7 +14,6 @@ export function useAppCommands({
   focusRef,
   openSettings,
   openSearch,
-  openAddExisting,
   openTab,
 }: {
   store: HostStore
@@ -24,7 +23,6 @@ export function useAppCommands({
   focusRef: RefObject<HTMLElement | null>
   openSettings: (page: string) => void
   openSearch: () => void
-  openAddExisting: () => void
   openTab: (index: number) => void
 }) {
   useEffect(() => {
@@ -47,12 +45,11 @@ export function useAppCommands({
     }
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.defaultPrevented || event.isComposing || event.altKey) return
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+      if ((event.metaKey || event.ctrlKey) && !event.shiftKey && event.key.toLowerCase() === 'k') {
         const current = context(event.target)
         if (event.repeat || readonly || !current.canOpenSettings) return
         event.preventDefault()
-        if (event.shiftKey) openAddExisting()
-        else openSearch()
+        openSearch()
         return
       }
       if (event.key === '?' && !event.metaKey && !event.ctrlKey) {
@@ -135,15 +132,5 @@ export function useAppCommands({
       document.removeEventListener('focusin', onFocus)
       document.removeEventListener('focusout', onFocus)
     }
-  }, [
-    store,
-    readonly,
-    introOpen,
-    pluginPanel,
-    focusRef,
-    openSettings,
-    openSearch,
-    openAddExisting,
-    openTab,
-  ])
+  }, [store, readonly, introOpen, pluginPanel, focusRef, openSettings, openSearch, openTab])
 }

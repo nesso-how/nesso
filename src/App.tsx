@@ -55,11 +55,8 @@ export default function App({
     setActionsOpen(true)
   }, [setActionsOpen, setSettingsOpen])
   usePluginInstallNotifications(showPluginCommands)
-  const [search, setSearch] = useState<'search' | 'add' | null>(null)
-  const openSearch = useCallback(() => setSearch('search'), [setSearch])
-  const openAddExisting = useCallback(() => {
-    if (host.store.getState().workspace.activeViewId !== null) setSearch('add')
-  }, [setSearch])
+  const [searchOpen, setSearchOpen] = useState(false)
+  const openSearch = useCallback(() => setSearchOpen(true), [setSearchOpen])
   const [introOpen, setIntroOpen] = useState(() => !host.store.getState().preferences.introSeen)
   const [settingsPage, setSettingsPage] = useState('general')
   const [deleting, setDeleting] = useState<SavedView | 'complete-graph' | null>(null)
@@ -114,7 +111,6 @@ export default function App({
     focusRef: canvas,
     openSettings: openSettingsPage,
     openSearch,
-    openAddExisting,
     openTab: openCanvasTabAt,
   })
   const openSettings = () => openSettingsPage('general')
@@ -162,7 +158,6 @@ export default function App({
                       bottomInset={sheetCover}
                       onDeleteView={deleteView}
                       onConfirmDelete={() => setDeletingConcepts(true)}
-                      onAddExisting={openAddExisting}
                       focusRef={canvas}
                     />
                   </div>
@@ -213,11 +208,8 @@ export default function App({
       {(compact || !settingsOpen) && <ToastsHost />}
       <SearchDialog
         store={host.store}
-        open={!compact && !introOpen && search !== null}
-        adding={search === 'add'}
-        onOpenChange={(open) => {
-          if (!open) setSearch(null)
-        }}
+        open={!compact && !introOpen && searchOpen}
+        onOpenChange={setSearchOpen}
         focusRef={canvas}
         onSelect={(result) => {
           activePluginPanel.close()

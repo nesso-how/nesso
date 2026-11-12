@@ -9,7 +9,6 @@ import type { HostStore } from '@/store/types'
 export function SearchDialog({
   store,
   open,
-  adding = false,
   onOpenChange,
   onSelect,
   onAdd,
@@ -17,7 +16,6 @@ export function SearchDialog({
 }: {
   store: HostStore
   open: boolean
-  adding?: boolean
   onOpenChange: (open: boolean) => void
   onSelect: (result: SearchResult) => void
   onAdd: (id: string) => void
@@ -41,24 +39,17 @@ export function SearchDialog({
     activeViewId !== null && result?.kind === 'concept' && !members.has(result.id)
   const results = useMemo(() => {
     if (!open) return []
-    if (adding)
-      return searchGraph(
-        { ...graph, concepts: graph.concepts.filter(({ id }) => !members.has(id)) },
-        [],
-        query,
-        overview,
-      ).filter((result) => result.kind === 'concept')
     return searchGraph(graph, views, query, overview, activeViewId).filter(
       (result) => filter === 'all' || result.kind === filter,
     )
-  }, [open, adding, graph, members, views, query, overview, activeViewId, filter])
+  }, [open, graph, views, query, overview, activeViewId, filter])
   const choose = (result: SearchResult, add: boolean) => {
     navigating.current = true
     if (add && result.kind === 'concept') onAdd(result.id)
     else onSelect(result)
     onOpenChange(false)
   }
-  const placeholder = t(adding ? 'addExistingPlaceholder' : 'searchPlaceholder')
+  const placeholder = t('searchPlaceholder')
   const groups = (['view', 'concept'] as const)
     .map((kind) => ({ kind, items: results.filter((result) => result.kind === kind) }))
     .filter((group) => group.items.length > 0)
@@ -94,7 +85,7 @@ export function SearchDialog({
           highlighted.current = result
         }}
         onValueChange={(result) => {
-          if (result) choose(result, adding)
+          if (result) choose(result, false)
         }}
       >
         <DialogPopup
@@ -107,9 +98,7 @@ export function SearchDialog({
           finalFocus={() => (navigating.current ? focusRef.current : undefined)}
         >
           <Dialog.Title className="sr-only">{placeholder}</Dialog.Title>
-          <Dialog.Description className="sr-only">
-            {t(adding ? 'addExistingScope' : 'searchScope')}
-          </Dialog.Description>
+          <Dialog.Description className="sr-only">{t('searchScope')}</Dialog.Description>
           <div className="flex min-h-16 shrink-0 items-center gap-3 border-b px-5">
             <Search className="size-[19px] shrink-0 text-muted-foreground" />
             <Combobox.Input
@@ -119,7 +108,6 @@ export function SearchDialog({
               className="min-w-0 flex-1 bg-transparent py-5 text-[15px] outline-none placeholder:text-muted-foreground"
               onKeyDown={(event) => {
                 if (
-                  !adding &&
                   !event.nativeEvent.isComposing &&
                   (event.metaKey || event.ctrlKey) &&
                   event.key === 'Enter' &&
@@ -149,7 +137,7 @@ export function SearchDialog({
           </div>
           <div className="flex shrink-0 items-center justify-between gap-3 px-4 pt-3 pb-1.5">
             <div className="flex gap-1" role="group" aria-label={t('search')}>
-              {(adding ? [] : (['all', 'view', 'concept'] as const)).map((kind) => (
+              {(['all', 'view', 'concept'] as const).map((kind) => (
                 <Button
                   key={kind}
                   variant="ghost"
@@ -205,7 +193,7 @@ export function SearchDialog({
                           {t('conceptCount', { count: result.count })}
                         </span>
                       )}
-                      {!adding && outside(result) && (
+                      {outside(result) && (
                         <Button
                           variant="ghost"
                           size="sm"
@@ -254,9 +242,9 @@ export function SearchDialog({
             </span>
             <span className="flex items-center gap-1">
               <Kbd>↵</Kbd>
-              {t(adding ? 'searchAdd' : 'searchOpen')}
+              {t('searchOpen')}
             </span>
-            {!adding && activeViewId !== null && (
+            {activeViewId !== null && (
               <span className="flex items-center gap-1">
                 <Kbd>{/Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl'}</Kbd>
                 <Kbd>↵</Kbd>

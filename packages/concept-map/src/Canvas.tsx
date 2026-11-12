@@ -14,7 +14,6 @@ import {
   Copy,
   Italic,
   ListChecks,
-  ListPlus,
   Lock,
   LockOpen,
   Group,
@@ -72,6 +71,7 @@ import { selectionForContextMenu, selectionFromChanges } from './selection'
 import { useTranslation } from './i18n'
 import { reconnectOperations, selectedRelations, type Reconnection } from './reconnection'
 import { canConnect } from './connection'
+import { reuseConceptOperations } from './creation'
 
 const nodeTypes: NodeTypes = {
   concept: ConceptNodeView,
@@ -168,8 +168,22 @@ export function Canvas({
     [duration],
   )
   const paneSelection = useRef<Selection>([])
-  const [editId, setEditId] = useState<string | null>(null)
+  const [editing, setEditing] = useState<{
+    id: string
+    historyGroup?: string
+    viewId: string | null
+  } | null>(null)
+  const changeEditing = useCallback(
+    (id: string | null) =>
+      setEditing(id ? { id, viewId: store.getState().workspace.activeViewId } : null),
+    [store],
+  )
   const [focusTarget, setFocusTarget] = useState<string | null>(null)
+  const [focusAfterReuse, setFocusAfterReuse] = useState(0)
+  useLayoutEffect(() => {
+    if (!focusAfterReuse) return
+    canvas.current?.focus()
+  }, [focusAfterReuse, canvas])
   const {
     fitView,
     screenToFlowPosition,
@@ -351,6 +365,16 @@ export function Canvas({
     }),
     [store, addNear],
   )
+  const reuseConcept = useCallback(
+    (id: string) => {
+      const state = store.getState()
+      if (!editing?.historyGroup || editing.viewId !== state.workspace.activeViewId) return
+      write(reuseConceptOperations(state, editing.id, id), { historyGroup: editing.historyGroup })
+      setEditing(null)
+      setFocusAfterReuse((request) => request + 1)
+    },
+    [store, editing, write],
+  )
   const elements = adapt({
     groups,
     preview: new Set(
@@ -369,10 +393,12 @@ export function Canvas({
     sizes,
     defaultTypeId,
     editing: {
-      id: editId,
+      id: editing?.viewId === view ? editing.id : null,
       enabled: interactive,
       maxLength: conceptLabelMaxLength,
-      onChange: setEditId,
+      onChange: changeEditing,
+      historyGroup: editing?.historyGroup,
+      onReuse: editing?.historyGroup && view !== null ? reuseConcept : undefined,
     },
     label: (relation) =>
       t('relationFromTo', {
@@ -505,10 +531,9 @@ export function Canvas({
           y: source.position.y + store.conceptPlacementOffset.y,
         },
       )
-    const historyGroup = newIri()
     const id = newIri()
-    write([{ kind: 'concept.add', id, position: placement() }], { historyGroup })
-    setEditId(id)
+    write([{ kind: 'concept.add', id, position: placement() }], { historyGroup: id })
+    setEditing({ id, historyGroup: id, viewId: state.workspace.activeViewId })
     requestAnimationFrame(() => {
       const current = store.getState()
       if (
@@ -516,7 +541,7 @@ export function Canvas({
         current.workspace.activeViewId === state.workspace.activeViewId &&
         current.graph.concepts.some((concept) => concept.id === id)
       )
-        write([{ kind: 'concept.position', id, value: placement() }], { historyGroup })
+        write([{ kind: 'concept.position', id, value: placement() }], { historyGroup: id })
     })
   }
 
@@ -559,18 +584,21 @@ export function Canvas({
   const addConceptAt = (point: { x: number; y: number }, selection = store.getState().selected) => {
     const position = screenToFlowPosition(point)
     const id = newIri()
-    write([
-      { kind: 'selection.set', value: selection },
-      {
-        kind: 'concept.add',
-        id,
-        position: {
-          x: position.x - conceptNodeMinSize.width / 2,
-          y: position.y - conceptNodeMinSize.height / 2,
+    write(
+      [
+        { kind: 'selection.set', value: selection },
+        {
+          kind: 'concept.add',
+          id,
+          position: {
+            x: position.x - conceptNodeMinSize.width / 2,
+            y: position.y - conceptNodeMinSize.height / 2,
+          },
         },
-      },
-    ])
-    setEditId(id)
+      ],
+      { historyGroup: id },
+    )
+    setEditing({ id, historyGroup: id, viewId: store.getState().workspace.activeViewId })
   }
 
   const openContextMenu = useCallback(
@@ -903,7 +931,7 @@ export function Canvas({
           const current = store.getState().selected
           if (current.length === 1 && current[0].kind === 'concept') {
             event.preventDefault()
-            setEditId(current[0].id)
+            changeEditing(current[0].id)
             return
           }
         }
@@ -1209,16 +1237,6 @@ export function Canvas({
                     if (contextMenu.target === 'pane') addConceptAt(contextMenu)
                     else handleAdd()
                   },
-                  disabled: !interactive,
-                },
-              ]
-            : []),
-          ...(!readOnly && contextMenu?.target === 'pane' && view !== null
-            ? [
-                {
-                  label: t('addExistingConcept'),
-                  icon: ListPlus,
-                  onClick: commands.addExisting,
                   disabled: !interactive,
                 },
               ]
