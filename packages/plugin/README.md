@@ -14,6 +14,8 @@ For a new project, start with the [standalone example](example/), which includes
 
 The app, UI package, SDK, and official example share a release version on npm's default `latest` channel, including beta versions. Plugin compatibility is identified separately by `nesso.apiVersion`; matching the app's exact version is not required.
 
+The [compatibility guide](../../docs/compatibility.md#plugin-api) explains API support and version changes.
+
 The desktop plugin catalog offers the newest compatible version on `latest`. Other prerelease channels are not included.
 
 ## Create a plugin
@@ -299,6 +301,8 @@ await storage.delete('progress', { kind: 'concept', id: concept.id })
 - With `{ kind: 'view', id }`, it belongs to that saved view, independently of its name or membership. Use a non-null `viewId`.
 - Scopes identify records within the same plugin/document namespace; they do not create separate namespaces or revision baselines. The same key can be used at document scope and for different concepts and views, including a concept and view with the same ID.
 - Your plugin owns the payload format and any migrations. Version it independently of the SDK and package version; Nesso does not interpret its fields.
+
+The [downgrade and backup policy](../../docs/compatibility.md#downgrades-and-backups) also applies to private plugin data.
 
 `storage.set(key, value, scope?)` saves one record and `storage.delete(key, scope?)` removes one. Each call is a single transaction returning `true` if data changed, or `false` if nothing changed, such as saving an identical value or deleting a missing record. Failed writes throw.
 

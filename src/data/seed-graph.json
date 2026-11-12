@@ -1,7 +1,9 @@
 {
+  "schemaVersion": 1,
   "@context": {
     "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
     "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "schemaVersion": { "@id": "urn:uuid:222c3bab-82c0-492c-bac4-e48272823081" },
     "position": { "@id": "urn:uuid:af4fb77d-c82c-5e04-bf5c-68588670d18b", "@type": "@json" },
     "boosts": { "@id": "urn:nesso:example:boosts", "@type": "@id" },
     "helps": { "@id": "urn:nesso:example:helps", "@type": "@id" },

@@ -1,6 +1,7 @@
 import { z } from 'zod'
-import { conceptKeys, newIri, schemaContext } from './core.ts'
+import { conceptKeys, schemaContext } from './core.ts'
 import { fail, parseSchema, SchemaError } from './errors.ts'
+import { migrateGraph } from './migrations.ts'
 import { validateGraph } from './validate.ts'
 import {
   conceptSchema,
@@ -8,7 +9,6 @@ import {
   presentationSchema,
   type Concept,
   type Graph,
-  type Presentation,
   type Relation,
   type RelationType,
   type View,
@@ -16,7 +16,11 @@ import {
 
 type JsonObject = Record<string, unknown>
 const jsonObject = z.record(z.string(), z.unknown())
-const jsonldDocument = z.strictObject({ '@context': jsonObject, '@graph': z.array(jsonObject) })
+const jsonldDocument = z.strictObject({
+  schemaVersion: z.literal(1),
+  '@context': jsonObject,
+  '@graph': z.array(jsonObject),
+})
 const jsonldType = z.strictObject({
   '@id': iriSchema,
   '@type': z.literal('rdf:Property'),
@@ -27,7 +31,6 @@ const jsonldConcept = z
     '@id': iriSchema,
     'rdfs:label': conceptSchema.shape.label,
     'rdfs:comment': conceptSchema.shape.notes,
-    ...presentationSchema.partial().shape,
   })
   .catchall(z.unknown())
 const jsonldView = z.strictObject({
@@ -63,19 +66,10 @@ function checkTerms(context: JsonObject, terms: readonly (keyof typeof schemaCon
   }
 }
 
-function presentation({ position, color, bold, italic }: Partial<Presentation>): Presentation {
-  return {
-    position: position ? { x: position.x, y: position.y } : { x: 0, y: 0 },
-    ...(color === undefined ? {} : { color: color.toLowerCase() }),
-    ...(bold === undefined ? {} : { bold }),
-    ...(italic === undefined ? {} : { italic }),
-  }
-}
-
 export function parseGraph(value: unknown): { graph: Graph; views: View[] } {
-  const document = parseSchema(jsonldDocument, value)
+  const document = parseSchema(jsonldDocument, migrateGraph(value))
   const context = document['@context']
-  checkTerms(context, ['rdf', 'rdfs', 'position'])
+  checkTerms(context, ['rdf', 'rdfs', 'schemaVersion', 'position'])
 
   const predicates = new Map<string, string>()
   for (const [term, definition] of Object.entries(context)) {
@@ -89,7 +83,6 @@ export function parseGraph(value: unknown): { graph: Graph; views: View[] } {
   const concepts: Concept[] = []
   const relationTypes: RelationType[] = []
   const views: View[] = []
-  const inline = new Map<string, Presentation>()
   const entries = document['@graph']
   for (const [index, entry] of entries.entries()) {
     const path = `@graph[${index}]`
@@ -105,32 +98,24 @@ export function parseGraph(value: unknown): { graph: Graph; views: View[] } {
       views.push({
         id,
         name: view['rdfs:label'],
-        members: view.members.map(({ concept, ...member }) => ({
+        members: view.members.map(({ concept, position, color, bold, italic }) => ({
           id: concept['@id'],
-          ...presentation(member),
+          position,
+          ...(color === undefined ? {} : { color: color.toLowerCase() }),
+          ...(bold === undefined ? {} : { bold }),
+          ...(italic === undefined ? {} : { italic }),
         })),
       })
       continue
     }
     if (entry['@type'] !== undefined) fail(`${path}.@type`, `Unsupported concept type: ${id}`)
     const parsed = parseSchema(jsonldConcept, entry, path)
-    const { position, color, bold, italic } = parsed
-    if ([position, color, bold, italic].some((value) => value !== undefined))
-      inline.set(id, presentation(parsed))
     concepts.push({
       id,
       label: parsed['rdfs:label'],
       ...(parsed['rdfs:comment'] === undefined ? {} : { notes: parsed['rdfs:comment'] }),
     })
   }
-  if (inline.size && views.length) fail('@graph', 'Concept presentation belongs to views')
-  if (inline.size)
-    views.push({
-      id: newIri(),
-      name: '',
-      members: concepts.map(({ id }) => ({ id, ...(inline.get(id) ?? presentation({})) })),
-    })
-
   const known = new Set(relationTypes.map((type) => type.id))
   const relations: Relation[] = []
   for (const [index, entry] of entries.entries()) {
@@ -178,6 +163,7 @@ export function serializeGraph(graph: Graph, views: readonly View[] = []): JsonO
     else entry[relation.predicate] = [{ '@id': relation.target }]
   }
   return {
+    schemaVersion: 1,
     '@context': structuredClone(schemaContext),
     '@graph': [
       ...entries,

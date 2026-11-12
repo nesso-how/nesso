@@ -87,13 +87,7 @@ All graph edits go through one API: `applyOperations`. The UI, trusted renderers
 
 The same mechanism supports efficient, delta-based undo and redo. History records only what changed instead of storing a full copy of the graph for every edit. AI-generated edits also use this shared history and can be undone or redone just like manual changes.
 
-### Data schemas
-
-- **Document:** [envelope and migrations](src/store/migrations.ts), [graph](packages/schema/src/types.ts), and [workspace](src/store/settings.ts).
-- **Preferences:** [record envelope](src/store/persistence.ts) and [settings](src/store/settings.ts).
-- **Conversation:** [chat schema](packages/ai/src/chat.ts).
-- **Plugin data:** [storage envelope](src/store/plugin-storage.ts); private payload schemas belong to each plugin.
-- **Backup:** [backup envelope](shared/backup.ts).
+The [compatibility guide](docs/compatibility.md) covers data migrations, plugin API support, downgrades, and data formats.
 
 ### Plugins
 
