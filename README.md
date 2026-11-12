@@ -115,25 +115,25 @@ On desktop, chat with your own API key (BYOK), a local model, or ChatGPT sign-in
 
 The app lives in `src/`, with desktop services in `electron/`. Shared packages live in `packages/`: **Core** packages provide contracts and reusable building blocks, while **Renderer** packages provide trusted graph interfaces. Bundled **Plugin** packages live in `plugins/` and deliberately use the same contracts as external plugins, so Nesso tests those contracts through its own everyday features before others build on them.
 
-| Package                                                 | Kind     | Responsibility                                                            |
-| ------------------------------------------------------- | -------- | ------------------------------------------------------------------------- |
-| [`@nesso-how/schema`](packages/schema/)                 | Core     | Graph model, validation, and JSON-LD.                                     |
-| [`@nesso-how/core`](packages/core/)                     | Core     | Shared state, operation and store contracts, and write helpers.           |
-| [`@nesso-how/plugin`](packages/plugin/)                 | Core     | Plugin contracts, validation, and asynchronous clients.                   |
-| [`@nesso-how/errors`](packages/errors/)                 | Core     | Shared structured errors with issue paths and messages.                   |
-| [`@nesso-how/i18n`](packages/i18n/)                     | Core     | i18next with typed keys, isolated translators, and English fallback.      |
-| [`@nesso-how/ui`](packages/ui/)                         | Core     | Shared React controls and styles.                                         |
-| [`@nesso-how/ai`](packages/ai/)                         | Core     | Shared chat and MCP tool contracts, policies, and assistant instructions. |
-| [`@nesso-how/concept-map`](packages/concept-map/)       | Renderer | Trusted React Flow canvas for the host-provided visible graph.            |
+| Package                                                   | Kind     | Responsibility                                                            |
+| --------------------------------------------------------- | -------- | ------------------------------------------------------------------------- |
+| [`@nesso-how/schema`](packages/schema/)                   | Core     | Graph model, validation, and JSON-LD.                                     |
+| [`@nesso-how/core`](packages/core/)                       | Core     | Shared state, operation and store contracts, and write helpers.           |
+| [`@nesso-how/plugin`](packages/plugin/)                   | Core     | Plugin contracts, validation, and asynchronous clients.                   |
+| [`@nesso-how/errors`](packages/errors/)                   | Core     | Shared structured errors with issue paths and messages.                   |
+| [`@nesso-how/i18n`](packages/i18n/)                       | Core     | i18next with typed keys, isolated translators, and English fallback.      |
+| [`@nesso-how/ui`](packages/ui/)                           | Core     | Shared React controls and styles.                                         |
+| [`@nesso-how/ai`](packages/ai/)                           | Core     | Shared chat and MCP tool contracts, policies, and assistant instructions. |
+| [`@nesso-how/concept-map`](packages/concept-map/)         | Renderer | Trusted React Flow canvas for the host-provided visible graph.            |
 | [`@nesso-how/knowledge-graph`](packages/knowledge-graph/) | Renderer | Trusted Canvas 2D overview of the complete graph.                         |
-| [`@nesso-how/base-vocab`](plugins/base-vocab/)          | Plugin   | Default relation vocabulary.                                              |
-| [`@nesso-how/export`](plugins/export/)                  | Plugin   | Graph and view export as JSON-LD or PNG.                                  |
-| [`@nesso-how/import`](plugins/import/)                  | Plugin   | Merge a Nesso JSON-LD file into the current graph.                        |
-| [`@nesso-how/review`](plugins/review/)                  | Plugin   | Isolated concept review with FSRS and private concept-scoped progress.    |
-| [`@nesso-how/notes`](plugins/notes/)                    | Plugin   | Free-form Markdown notes scoped to each view, with autosave.              |
-| [`@nesso-how/kernel-theme`](plugins/kernel-theme/)      | Plugin   | Kernel theme tokens.                                                      |
-| [`@nesso-how/paper-theme`](plugins/paper-theme/)        | Plugin   | Warm ivory surfaces and restrained terracotta accents.                    |
-| [`@nesso-how/mist-theme`](plugins/mist-theme/)          | Plugin   | Cool misty blue surfaces and steel blue accents.                          |
+| [`@nesso-how/base-vocab`](plugins/base-vocab/)            | Plugin   | Default relation vocabulary.                                              |
+| [`@nesso-how/export`](plugins/export/)                    | Plugin   | Graph and view export as JSON-LD or PNG.                                  |
+| [`@nesso-how/import`](plugins/import/)                    | Plugin   | Merge a Nesso JSON-LD file into the current graph.                        |
+| [`@nesso-how/review`](plugins/review/)                    | Plugin   | Isolated concept review with FSRS and private concept-scoped progress.    |
+| [`@nesso-how/notes`](plugins/notes/)                      | Plugin   | Free-form Markdown notes scoped to each view, with autosave.              |
+| [`@nesso-how/kernel-theme`](plugins/kernel-theme/)        | Plugin   | Kernel theme tokens.                                                      |
+| [`@nesso-how/paper-theme`](plugins/paper-theme/)          | Plugin   | Warm ivory surfaces and restrained terracotta accents.                    |
+| [`@nesso-how/mist-theme`](plugins/mist-theme/)            | Plugin   | Cool misty blue surfaces and steel blue accents.                          |
 
 ## Development
 
