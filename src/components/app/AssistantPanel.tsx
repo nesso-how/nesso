@@ -1,4 +1,5 @@
-import { useEffect, useState, useSyncExternalStore } from 'react'
+import { useEffect, useState, useSyncExternalStore, type RefObject } from 'react'
+import type { ConceptMapHandle } from '@nesso-how/concept-map'
 import { IconButton, PanelHeader, Tabs } from '@nesso-how/ui'
 import { SquarePen, X } from 'lucide-react'
 import type { createAiChat } from '@/ai/chat'
@@ -15,7 +16,7 @@ export function AssistantPanel({
   settingsOpen = false,
   store = host.store,
   readonly = false,
-  addToView,
+  renderer,
 }: {
   chat: ReturnType<typeof createAiChat>
   onClose?: () => void
@@ -23,7 +24,7 @@ export function AssistantPanel({
   settingsOpen?: boolean
   store?: HostStore
   readonly?: boolean
-  addToView?: (id: string) => void
+  renderer?: RefObject<ConceptMapHandle | null>
 }) {
   const t = useTranslation(store)
   const selected = useNessoStore((state) => state.selected.length > 0, store)
@@ -91,7 +92,7 @@ export function AssistantPanel({
         </Tabs.List>
       </PanelHeader>
       <Tabs.Panel value="details" className="min-h-0 flex-1">
-        <Inspector store={store} readonly={readonly} addToView={addToView} />
+        <Inspector store={store} readonly={readonly} renderer={renderer} />
       </Tabs.Panel>
       <Tabs.Panel value="chat" keepMounted className="min-h-0 flex-1 data-[hidden]:hidden">
         <Chat

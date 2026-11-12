@@ -238,28 +238,3 @@
     animation: none;
   }
 }
-.concept-outside {
-  position: absolute;
-  top: -8px;
-  left: -8px;
-  display: none;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 4px;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--node-border);
-  border-radius: 9px;
-  background: var(--background);
-  color: var(--muted-foreground);
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-style: normal;
-  font-weight: 400;
-}
-.react-flow:not(:has(.react-flow__node.selected, .react-flow__edge.selected))
-  .react-flow__node:hover
-  .concept-outside,
-.react-flow__node.selected .concept-outside {
-  display: flex;
-}

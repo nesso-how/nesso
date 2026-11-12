@@ -66,7 +66,6 @@ export default function App({
   const [deletingConcepts, setDeletingConcepts] = useState(false)
   const canvas = useRef<HTMLDivElement>(null)
   const renderer = useRef<ConceptMapHandle>(null)
-  const addToView = (id: string) => renderer.current?.addToView(id)
   const pluginPanel = usePluginPanel()
   const compact = useMediaQuery(compactQuery)
   const readonly = compact
@@ -198,10 +197,10 @@ export default function App({
                         setSettingsOpen(true)
                       }}
                       settingsOpen={settingsOpen}
-                      addToView={addToView}
+                      renderer={renderer}
                     />
                   ) : (
-                    <Inspector addToView={addToView} />
+                    <Inspector renderer={renderer} />
                   )}
                 </SidePanel>
               )}

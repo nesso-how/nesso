@@ -1,11 +1,25 @@
-import { Button, Combobox, ComboboxItem, ComboboxPopup, IconButton, Input } from '@nesso-how/ui'
-import { Plus, X } from 'lucide-react'
+import {
+  Button,
+  Combobox,
+  ComboboxItem,
+  ComboboxPopup,
+  IconButton,
+  Input,
+  ListRow,
+  ListRowButton,
+  ListRowDetail,
+  ListRowTitle,
+} from '@nesso-how/ui'
+import { Plus } from 'lucide-react'
 import type { SavedView } from '@nesso-how/core'
 import { useRef, useState } from 'react'
 import { nessoStore, useNessoStore } from '@/store'
 import type { HostStore } from '@/store/types'
+import { maxViewNameLength } from '@/store/settings'
 import { InspectorSection } from './InspectorSection'
 import { useTranslation } from '@/i18n'
+
+type Option = { readonly id: string; readonly name: string; readonly create?: true }
 
 export function ConceptViews({
   store = nessoStore,
@@ -18,19 +32,26 @@ export function ConceptViews({
 }) {
   const t = useTranslation(store)
   const workspace = useNessoStore((state) => state.workspace, store)
-  const includes = (view: SavedView, id: string) => view.members.some((member) => member.id === id)
-  const memberships = workspace.savedViews.filter((view) =>
-    conceptIds.some((id) => includes(view, id)),
-  )
-  const available = workspace.savedViews.filter((view) =>
-    conceptIds.some((id) => !includes(view, id)),
-  )
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const trigger = useRef<HTMLButtonElement>(null)
-  const setMembership = (viewId: string, included: boolean) =>
+  const coverage = (view: SavedView) =>
+    conceptIds.filter((id) => view.members.some((member) => member.id === id)).length
+  const listed = workspace.savedViews.filter((view) => coverage(view) > 0)
+  const others = workspace.savedViews.filter((view) => coverage(view) === 0)
+  const name = query.trim()
+  const options: readonly Option[] =
+    name && !workspace.savedViews.some((view) => view.name === name)
+      ? [...others, { id: '', name, create: true }]
+      : others
+  const addTo = (viewId: string) =>
     store.applyOperations(
-      conceptIds.map((conceptId) => ({ kind: 'view.membership', viewId, conceptId, included })),
+      conceptIds.map((conceptId) => ({
+        kind: 'view.membership',
+        viewId,
+        conceptId,
+        included: true,
+      })),
     )
 
   return (
@@ -42,33 +63,46 @@ export function ConceptViews({
         if (!expanded) setOpen(false)
       }}
     >
-      {memberships.length > 0 && (
-        <ul className="mt-2 space-y-1 text-[13px] leading-[19px]">
-          {memberships.map((view) => (
-            <li key={view.id} className="flex items-center gap-2">
-              <span className="min-w-0 flex-1 break-words">
-                {view.name}
-                {conceptIds.length > 1 && (
-                  <span className="ml-2 text-xs text-muted-foreground">
-                    {conceptIds.filter((id) => includes(view, id)).length}/{conceptIds.length}
-                  </span>
-                )}
-              </span>
-              <IconButton
-                disabled={readonly}
-                aria-label={t('removeFromView', { name: view.name })}
-                onClick={() => setMembership(view.id, false)}
+      {listed.length > 0 && (
+        <div className="mt-1.5 flex flex-col gap-0.5">
+          {listed.map((view) => {
+            const count = coverage(view)
+            return (
+              <ListRow
+                key={view.id}
+                className="min-h-0 has-[[aria-current]]:bg-[color-mix(in_srgb,var(--hover),var(--pressed))]"
               >
-                <X />
-              </IconButton>
-            </li>
-          ))}
-        </ul>
+                <ListRowButton
+                  className="py-1.5"
+                  onClick={() => store.setView(view.id)}
+                  aria-current={view.id === workspace.activeViewId ? 'page' : undefined}
+                >
+                  <ListRowTitle>{view.name}</ListRowTitle>
+                  {conceptIds.length > 1 && (
+                    <ListRowDetail>
+                      {count}/{conceptIds.length}
+                    </ListRowDetail>
+                  )}
+                </ListRowButton>
+                {count < conceptIds.length && (
+                  <IconButton
+                    disabled={readonly}
+                    className="mr-1"
+                    aria-label={t('addSelectionToView', { name: view.name })}
+                    onClick={() => addTo(view.id)}
+                  >
+                    <Plus />
+                  </IconButton>
+                )}
+              </ListRow>
+            )
+          })}
+        </div>
       )}
-      <Combobox.Root<SavedView>
+      <Combobox.Root<Option>
         disabled={readonly}
-        items={available}
-        itemToStringLabel={(view) => view.name}
+        items={options}
+        itemToStringLabel={(option) => option.name}
         value={null}
         open={open}
         onOpenChange={(next) => {
@@ -79,43 +113,55 @@ export function ConceptViews({
         onInputValueChange={(next, details) => {
           if (details.reason !== 'item-press') setQuery(next)
         }}
-        onValueChange={(view) => {
-          if (!view) return
-          setMembership(view.id, true)
+        onValueChange={(option) => {
+          if (!option) return
+          if (option.create) store.createView(option.name, conceptIds)
+          else addTo(option.id)
           setOpen(false)
         }}
       >
         <Combobox.Trigger
           ref={trigger}
-          render={<Button variant="outline" className="mt-3 w-full justify-start bg-transparent" />}
+          render={<Button variant="outline" className="mt-2 w-full justify-start bg-transparent" />}
         >
           <Plus />
-          {t('addToView')}
-        </Combobox.Trigger>
-        <ComboboxPopup aria-label={t('addToView')} finalFocus={trigger}>
-          {available.length > 0 && (
-            <div className="p-1">
-              <Combobox.Input
-                aria-label={t('findView')}
-                placeholder={t('findViewPlaceholder')}
-                render={<Input className="h-8 text-xs" />}
-              />
-            </div>
+          {t('otherViews')}
+          {others.length > 0 && (
+            <span className="ml-auto font-mono text-[10px] text-muted-foreground">
+              {others.length}
+            </span>
           )}
+        </Combobox.Trigger>
+        <ComboboxPopup aria-label={t('otherViews')} finalFocus={trigger}>
+          <div className="p-1">
+            <Combobox.Input
+              aria-label={t('findView')}
+              placeholder={t('findOrCreateView')}
+              maxLength={maxViewNameLength}
+              render={<Input className="h-8 text-xs" />}
+            />
+          </div>
           <Combobox.List className="nesso-scroll max-h-60 overflow-y-auto">
-            {(view) => (
-              <ComboboxItem key={view.id} value={view} className="break-words">
-                {view.name}
+            {(option: Option) => (
+              <ComboboxItem
+                key={option.id || 'create'}
+                value={option}
+                className={`break-words ${option.create ? 'flex items-center gap-2 [&_svg]:size-3.5' : ''}`}
+              >
+                {option.create ? (
+                  <>
+                    <Plus />
+                    {t('newViewNamed', { name: option.name })}
+                  </>
+                ) : (
+                  option.name
+                )}
               </ComboboxItem>
             )}
           </Combobox.List>
           <Combobox.Empty>
             <p className="px-2.5 py-2 text-xs text-muted-foreground">
-              {workspace.savedViews.length === 0
-                ? t('noSavedViews')
-                : available.length === 0
-                  ? t('allViewsConcepts', { count: conceptIds.length })
-                  : t('noMatchingViews')}
+              {t(name ? 'noMatchingViews' : 'createViewHint')}
             </p>
           </Combobox.Empty>
         </ComboboxPopup>

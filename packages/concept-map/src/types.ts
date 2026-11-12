@@ -18,7 +18,6 @@ export type ConceptData = {
   onEditingChange?: (id: string | null) => void
   members?: readonly string[]
   onGroupSelect?: (members: readonly string[]) => void
-  outside?: number
 }
 export type ConceptNode = Node<ConceptData, 'concept' | 'relationGroup'>
 

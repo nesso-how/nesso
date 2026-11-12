@@ -54,7 +54,6 @@ import { newIri, relationKey } from '@nesso-how/schema'
 import { ConceptNodeView } from './ConceptNodeView'
 import { GroupNodeView } from './GroupNodeView'
 import { arrange, type LayoutBounds } from './layout'
-import { outsideNeighbors } from './neighbors'
 import { groupRelations, keepGroups } from './groups'
 import type { RelationGroup } from './groups'
 import { ConnectionPreview } from './ConnectionPreview'
@@ -137,13 +136,7 @@ export function Canvas({
   )
   const indexed = useMemo(() => indexGraph(displayed, vocabs, locale), [displayed, vocabs, locale])
   const selected = useNesso((state) => state.selected)
-  const concepts = useNesso((state) => state.graph.concepts)
-  const relations = useNesso((state) => state.graph.relations)
-  const conceptCount = concepts.length
-  const outside = useMemo(
-    () => outsideNeighbors(relations, new Set(graph.concepts.map(({ id }) => id))),
-    [relations, graph.concepts],
-  )
+  const conceptCount = useNesso((state) => state.graph.concepts.length)
   const view = useNesso((state) => state.workspace.activeViewId)
   const defaultTypeId = useNesso(
     (state) => state.vocabs.find(({ id }) => id === state.preferences.activeVocabId)?.defaultTypeId,
@@ -356,7 +349,6 @@ export function Canvas({
     [store, addNear],
   )
   const elements = adapt({
-    outside: interactive ? outside : undefined,
     groups,
     preview: new Set(
       dragged

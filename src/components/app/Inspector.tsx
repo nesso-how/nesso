@@ -2,7 +2,8 @@ import { newIri, relationKey, type RelationType } from '@nesso-how/schema'
 import { resolveRelationTypeLabel } from '@nesso-how/core'
 import { defaultLocale } from '@nesso-how/i18n'
 import { maxConceptLabelLength, maxRelationLabelLength } from '@/store/settings'
-import { useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState, type RefObject } from 'react'
+import type { ConceptMapHandle } from '@nesso-how/concept-map'
 import {
   Autocomplete,
   AutocompleteClear,
@@ -160,13 +161,13 @@ export function Inspector({
   readonly = false,
   relationTypeOnly = false,
   focusRelation = false,
-  addToView,
+  renderer,
 }: {
   store?: HostStore
   readonly?: boolean
   relationTypeOnly?: boolean
   focusRelation?: boolean
-  addToView?: (id: string) => void
+  renderer?: RefObject<ConceptMapHandle | null>
 }) {
   const t = useTranslation(store)
   const textGroup = useRef<string | undefined>(undefined)
@@ -387,8 +388,9 @@ export function Inspector({
           key={`connections:${concept.id}`}
           store={store}
           conceptId={concept.id}
+          defaultTypeId={activeVocab?.defaultTypeId}
           readonly={readonly}
-          addToView={addToView}
+          renderer={renderer}
         />
       )}
       {conceptIds.length > 0 && (

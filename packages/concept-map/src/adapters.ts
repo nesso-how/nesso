@@ -138,7 +138,6 @@ export function createGraphElements() {
     groups = [],
     preview = new Set(),
     onGroupSelect,
-    outside,
   }: {
     graph: PresentedGraph
     indexed: ReturnType<typeof indexGraph>
@@ -149,7 +148,6 @@ export function createGraphElements() {
     groups?: readonly RelationGroup[]
     preview?: ReadonlySet<string>
     onGroupSelect?: ConceptNode['data']['onGroupSelect']
-    outside?: ReadonlyMap<string, readonly unknown[]>
     editing?: {
       id: string | null
       enabled: boolean
@@ -172,7 +170,6 @@ export function createGraphElements() {
         editing: editing?.id === concept.id,
         maxLength: editing?.maxLength,
         onEditingChange: editing?.onChange,
-        outside: outside?.get(concept.id)?.length,
       }
       const previous = previousNodes.get(node.id)
       return previous &&
@@ -186,7 +183,6 @@ export function createGraphElements() {
         previous.data.editing === node.data.editing &&
         previous.data.maxLength === node.data.maxLength &&
         previous.data.onEditingChange === node.data.onEditingChange &&
-        previous.data.outside === node.data.outside &&
         previous.selected === node.selected &&
         previous.measured?.width === node.measured?.width &&
         previous.measured?.height === node.measured?.height
