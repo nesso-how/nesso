@@ -46,6 +46,7 @@
     "@nesso-how/core": "workspace:*",
     "@nesso-how/errors": "workspace:*",
     "@nesso-how/i18n": "workspace:*",
+    "@nesso-how/knowledge-graph": "workspace:*",
     "@nesso-how/plugin": "workspace:*",
     "@nesso-how/schema": "workspace:*",
     "@nesso-how/ui": "workspace:*",

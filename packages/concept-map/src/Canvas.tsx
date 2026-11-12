@@ -113,6 +113,7 @@ export function Canvas({
   preview = false,
   bottomInset = 0,
   conceptLabelMaxLength,
+  restoreViewport = true,
   focusRef: canvas,
 }: CanvasProps) {
   const t = useTranslation()
@@ -148,7 +149,9 @@ export function Canvas({
   const [locked, setLocked] = useState(false)
   const interactive = !readOnly && !locked
   const LockIcon = interactive ? LockOpen : Lock
-  const [initialViewport] = useState(() => store.getState().workspace.viewports['concept-map'])
+  const [initialViewport] = useState(() =>
+    restoreViewport ? store.getState().workspace.viewports['concept-map'] : undefined,
+  )
   const navigation = useRef(view)
   const reconnecting = useRef<Reconnection | null>(null)
   const [reconnectDrag, setReconnectDrag] = useState<Reconnection | null>(null)

@@ -9,6 +9,7 @@ import type { AiChatMessage } from '@nesso-how/ai'
 import type { PersistenceIssue } from '../../shared/persistence.ts'
 import type { PluginStorageNamespace, PluginStorageWrite } from './plugin-storage.ts'
 import type { ConceptMapPresentation } from '@nesso-how/concept-map/presentation'
+import type { KnowledgeGraphLayout } from '@nesso-how/knowledge-graph/layout'
 
 export const sectionIds = [
   'sidebar',
@@ -49,6 +50,7 @@ export type HostOperation =
 export type HostStore = Omit<NessoStore, 'getState' | 'applyOperations'> & {
   readonly getConceptMapPresentation: () => ConceptMapPresentation | undefined
   readonly setConceptMapPresentation: (value: ConceptMapPresentation) => void
+  readonly knowledgeGraphLayout: KnowledgeGraphLayout
   readonly getState: () => HostState
   readonly applyOperations: (
     operations: readonly HostOperation[],

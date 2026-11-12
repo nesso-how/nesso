@@ -29,7 +29,7 @@ const chosenRelation = (store: ReturnType<typeof createIntroStore>) =>
         source === introConnection.source && target === introConnection.target,
     )
 
-test('intro steps frame the idea, connection, Energy and Rest without moving concepts', () => {
+test('intro steps frame the idea, connection, whole map and Rest without moving concepts', () => {
   const store = createIntroStore('en', vocab)
   const graph = store.getState().graph
   const seed = createSeedDocument('en')
@@ -56,7 +56,7 @@ test('intro steps frame the idea, connection, Energy and Rest without moving con
         : step === 1
           ? [introConnection.source, introConnection.target]
           : seed.workspace.savedViews
-              .find(({ id }) => id === (step === 3 ? 'rest' : 'energy'))!
+              .find(({ id }) => id === (step === 3 ? 'rest' : 'coffee'))!
               .members.map(({ id }) => id)
     assert.deepEqual(
       state.viewGraph.concepts.map(({ id }) => id),
@@ -91,7 +91,7 @@ test('intro navigation stays isolated from the user document and its viewport', 
   assert.equal(intro.getState().workspace.activeViewId, 'rest')
   assert.ok(intro.getState().viewGraph.concepts.length < intro.getState().graph.concepts.length)
   setIntroStep(intro, 2)
-  assert.equal(intro.getState().workspace.activeViewId, 'energy')
+  assert.equal(intro.getState().workspace.activeViewId, 'coffee')
   assert.deepEqual(
     intro.getState().viewGraph.concepts.map(({ id }) => id),
     seed.workspace.savedViews[0].members.map(({ id }) => id),

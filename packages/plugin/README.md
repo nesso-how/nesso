@@ -274,7 +274,7 @@ The invoked view is **not a write sandbox**: permitted writes can affect the who
 
 File saves accept exactly one of UTF-8 `text` or canonical `base64` (without a data URL prefix), with a 16 MiB decoded byte limit. File opening remains UTF-8 text only. Host-managed dialogs or browser downloads grant no unrestricted filesystem access. Plugins have no Node, host DOM, direct filesystem, clipboard, or network access.
 
-`images.renderView` captures the invoked view with the current theme and fonts, without selection or canvas controls. Scale defaults to `2`, or accepts `4`, and is a maximum: views too large for it render at the highest of `4`, `2`, or `1` within 8192 pixels per side and 16,777,216 pixels total. Empty views, views over that budget at scale `1`, and PNGs over 16 MiB fail. Save the result separately with `files.save({ name: 'view.png', ...image })`; this also requires `files`.
+`images.renderView` captures the invoked view with the current theme and fonts, without selection or canvas controls. In the Overview (`viewId` `null`) it captures the overview map of the complete graph. Scale defaults to `2`, or accepts `4`, and is a maximum: views too large for it render at the highest of `4`, `2`, or `1` within 8192 pixels per side and 16,777,216 pixels total. Empty views, views over that budget at scale `1`, and PNGs over 16 MiB fail. Save the result separately with `files.save({ name: 'view.png', ...image })`; this also requires `files`.
 
 Failures throw `PluginError` with `code` and `{ path, message }[]` issues. Let them propagate instead of reporting success. Files and notifications cannot be rolled back with graph edits.
 

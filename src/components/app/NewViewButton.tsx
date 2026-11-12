@@ -1,6 +1,8 @@
 import { useState, type Ref } from 'react'
 import { LayersPlus } from 'lucide-react'
 import { Button, Dialog, TextPromptDialog } from '@nesso-how/ui'
+import { viewPositions } from '@nesso-how/knowledge-graph/layout'
+import { newIri } from '@nesso-how/schema'
 import { host } from '@/store'
 import { maxViewNameLength } from '@/store/settings'
 import { useTranslation } from '@/i18n'
@@ -56,7 +58,15 @@ export function NewViewButton({
       cancelLabel={t('cancel')}
       maxLength={maxViewNameLength}
       onSubmit={(name) => {
-        host.store.createView(name, conceptIds)
+        const { store } = host
+        const updates =
+          store.getState().workspace.activeViewId === null
+            ? viewPositions(store.knowledgeGraphLayout, conceptIds)
+            : []
+        store.applyOperations([
+          { kind: 'view.create', id: newIri(), name, conceptIds },
+          ...(updates.length ? [{ kind: 'concept.positions' as const, updates }] : []),
+        ])
         setOpen(false)
       }}
     />

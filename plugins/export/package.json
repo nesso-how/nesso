@@ -29,9 +29,9 @@
         "zh-CN": "将视图导出为 JSON-LD 或 PNG。"
       },
       "documentation": {
-        "en": "Export saves the invoked view as JSON-LD, including its layout and styles, or as a high-resolution PNG with the current theme. Overview exports the complete graph as JSON-LD, without layout. PNG includes all concepts and internal relations, without canvas controls or selection.",
-        "it": "Export salva la vista invocata in JSON-LD, con disposizione e stili, o come PNG ad alta risoluzione con il tema corrente. Panoramica esporta il grafo completo in JSON-LD, senza disposizione. Il PNG include tutti i concetti e le relazioni interne, senza controlli o selezione.",
-        "zh-CN": "将调用的视图保存为包含布局和样式的 JSON-LD，或使用当前主题的高分辨率 PNG。概览将完整图谱导出为不含布局的 JSON-LD。PNG 包含所有概念和内部关系，不含画布控件或选中状态。"
+        "en": "Export saves the invoked view as JSON-LD, including its layout and styles, or as a high-resolution PNG with the current theme. Overview exports the complete graph as JSON-LD, without layout, or as a PNG of the overview map. PNG includes all concepts and internal relations, without canvas controls or selection.",
+        "it": "Export salva la vista invocata in JSON-LD, con disposizione e stili, o come PNG ad alta risoluzione con il tema corrente. Panoramica esporta il grafo completo in JSON-LD, senza disposizione, o come PNG della mappa di panoramica. Il PNG include tutti i concetti e le relazioni interne, senza controlli o selezione.",
+        "zh-CN": "将调用的视图保存为包含布局和样式的 JSON-LD，或使用当前主题的高分辨率 PNG。概览将完整图谱导出为不含布局的 JSON-LD，或导出为概览图的 PNG。PNG 包含所有概念和内部关系，不含画布控件或选中状态。"
       }
     },
     "label": {

@@ -202,6 +202,9 @@ importers:
       '@nesso-how/i18n':
         specifier: workspace:*
         version: link:packages/i18n
+      '@nesso-how/knowledge-graph':
+        specifier: workspace:*
+        version: link:packages/knowledge-graph
       '@nesso-how/plugin':
         specifier: workspace:*
         version: link:packages/plugin
@@ -398,6 +401,37 @@ importers:
       i18next:
         specifier: ^26.4.2
         version: 26.4.2(typescript@7.0.2)
+
+  packages/knowledge-graph:
+    dependencies:
+      '@nesso-how/core':
+        specifier: workspace:*
+        version: link:../core
+      '@nesso-how/errors':
+        specifier: workspace:*
+        version: link:../errors
+      '@nesso-how/i18n':
+        specifier: workspace:*
+        version: link:../i18n
+      '@nesso-how/schema':
+        specifier: workspace:*
+        version: link:../schema
+      d3-force:
+        specifier: ^3.0.1
+        version: 3.0.1
+      lucide-react:
+        specifier: ^1.48.0
+        version: 1.48.0(react@19.3.0)
+      react:
+        specifier: ^19.2.8
+        version: 19.3.0
+    devDependencies:
+      '@types/d3-force':
+        specifier: ^3.0.10
+        version: 3.0.10
+      '@types/react':
+        specifier: ^19.2.18
+        version: 19.3.0
 
   packages/plugin:
     dependencies:

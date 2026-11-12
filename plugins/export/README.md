@@ -6,7 +6,7 @@ Isolated action plugin exporting a view as JSON-LD or PNG.
 
 The bundled **Export json** and **Export PNG** actions run in a fresh worker. They receive only the invoked view (`null` targets the complete graph), without changing navigation. The host saves the file through a native desktop dialog or browser download.
 
-PNG export captures the full view at 4× resolution with the current theme and fonts, without selection or canvas controls. See the [plugin SDK](../../packages/plugin/README.md#files-images-notifications-and-failures) for image and file APIs.
+PNG export captures the full view at 4× resolution with the current theme and fonts, without selection or canvas controls; in the Overview it captures the overview map of the complete graph. See the [plugin SDK](../../packages/plugin/README.md#files-images-notifications-and-failures) for image and file APIs.
 
 The host lists view-scoped actions in the saved-view menus and resolves labels and notifications from the English, Italian, and Simplified Chinese messages in `package.json.i18n`. Graph contents are exported unchanged. A completion notification is sent only after the host accepts the save, not on cancellation or failure.
 

@@ -61,7 +61,7 @@ export function setIntroStep(store: NessoStore, step: number) {
           },
         ]
       : []),
-    { kind: 'view.activate', id: temporaryId ?? (step === 3 ? 'rest' : 'energy') },
+    { kind: 'view.activate', id: temporaryId ?? (step === 3 ? 'rest' : 'coffee') },
     ...workspace.savedViews.flatMap(({ id }) =>
       (id === conceptViewId || id === connectionViewId) && id !== temporaryId
         ? [{ kind: 'view.remove' as const, id }]

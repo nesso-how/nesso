@@ -7,6 +7,7 @@ export const aiDocumentationTopic = z.enum([
   'plugin-example',
   'schema',
   'concept-map',
+  'knowledge-graph',
   'ui',
 ])
 

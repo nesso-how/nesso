@@ -43,7 +43,7 @@ export async function verifyBusyPanel(context: CheckContext) {
   }
   await waitFor(exited, Boolean)
   await waitFor(async () => preloaded.every((frame) => frame.detached), Boolean)
-  await chooseTab(evaluate, 'Graph')
+  await chooseTab(evaluate, 'Map')
   await chooseTab(evaluate, 'Concept Quiz')
   const recovered = await panelFrame(context.window, quiz)
   assert.ok(![pid, host.osProcessId].includes(recovered.osProcessId))

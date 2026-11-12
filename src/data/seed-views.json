@@ -1,5 +1,44 @@
 [
   {
+    "id": "coffee",
+    "name": "Coffee",
+    "pinned": false,
+    "members": [
+      {
+        "id": "urn:nesso:example:coffee",
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "color": "#f5f1ee"
+      },
+      {
+        "id": "urn:nesso:example:energy",
+        "position": {
+          "x": 380,
+          "y": 0
+        },
+        "color": "#f2f5f7"
+      },
+      {
+        "id": "urn:nesso:example:sleep",
+        "position": {
+          "x": 0,
+          "y": 230
+        },
+        "color": "#f9f5f9"
+      },
+      {
+        "id": "urn:nesso:example:focus",
+        "position": {
+          "x": 380,
+          "y": 230
+        },
+        "color": "#f4f7f2"
+      }
+    ]
+  },
+  {
     "id": "energy",
     "name": "Energy",
     "pinned": false,

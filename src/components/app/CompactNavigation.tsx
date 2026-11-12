@@ -52,10 +52,13 @@ export function ViewSwitcher() {
             value={workspace.activeViewId ?? overview}
             onValueChange={(value: string) => host.store.setView(value === overview ? null : value)}
           >
-            {group(t('pinnedViews'), [
-              option(overview, t('completeGraph'), conceptCount),
-              ...pinned.map(savedOption),
-            ])}
+            {option(overview, t('completeGraph'), conceptCount)}
+            {pinned.length > 0 && (
+              <>
+                <Menu.Separator className="my-1 h-px bg-border" />
+                {group(t('pinnedViews'), pinned.map(savedOption))}
+              </>
+            )}
             {ordinary.length > 0 && (
               <>
                 <Menu.Separator className="my-1 h-px bg-border" />
@@ -77,6 +80,7 @@ export function CanvasTabBar() {
   const panel = usePluginPanel()
   if (tabs.length === 0) return <div className="shrink-0 pb-[env(safe-area-inset-bottom,0px)]" />
   const value = tabs.find(({ id }) => id === panel?.actionId)?.id ?? 'graph'
+  const canvasLabel = viewId === null ? 'canvasGraph' : 'canvasMap'
 
   return (
     <Tabs.Root
@@ -87,7 +91,7 @@ export function CanvasTabBar() {
       <Tabs.List aria-label={t('canvasTabs')} className="compact-tab-list">
         <Tabs.Tab value="graph" className="compact-tab">
           <ActionIcon name="share" />
-          <span className="compact-tab-label">{t('canvasGraph')}</span>
+          <span className="compact-tab-label">{t(canvasLabel)}</span>
         </Tabs.Tab>
         {tabs.map((tab) => {
           const label = tab.label[locale] ?? tab.label.en

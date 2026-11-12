@@ -94,18 +94,24 @@ test('import recreates file views with presentation and remaps concept ids with 
   assert.deepEqual(operations.at(-1), { kind: 'selection.set', value: [] })
 })
 
-test('graph-only files merge into the graph without creating views', () => {
-  const operations = buildImportOperations({ graph, views: [] }, null, 'My view')
-  const ids = conceptIds(operations)
-  assert.ok(
-    operations.every(
-      (operation) => operation.kind !== 'view.create' && operation.kind !== 'view.membership',
-    ),
+test('graph-only files open a new view with every concept laid out on a grid', () => {
+  const operations = buildImportOperations({ graph, views: [] }, 'urn:active', 'My view')
+  assert.deepEqual(
+    operations
+      .filter((operation) => operation.kind === 'view.create')
+      .map(({ name, conceptIds }) => [name, conceptIds]),
+    [['My view', []]],
   )
-  assert.deepEqual(operations.at(-1), {
-    kind: 'selection.set',
-    value: ids.map((id) => ({ kind: 'concept', id })),
-  })
+  assert.deepEqual(
+    operations
+      .filter((operation) => operation.kind === 'concept.add')
+      .map(({ position }) => position),
+    [
+      { x: 0, y: 0 },
+      { x: 240, y: 0 },
+      { x: 0, y: 120 },
+    ],
+  )
 })
 
 test('empty snapshots are no-ops', () => {

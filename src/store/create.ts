@@ -149,6 +149,7 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
     setConceptMapPresentation: (value) => {
       conceptMapPresentation = value
     },
+    knowledgeGraphLayout: new Map(),
     getState: store.getState,
     subscribe: store.subscribe,
     ...createCommands(applyOperations),

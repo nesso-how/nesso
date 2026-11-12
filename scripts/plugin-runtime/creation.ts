@@ -25,6 +25,10 @@ export async function verifyCreation(context: CheckContext) {
     await click('#canvas [aria-label="Add concept"]')
     await ready(`document.activeElement?.matches('${label}')`)
   }
+  await evaluate(
+    `[...document.querySelectorAll('button')].find(button=>button.textContent.trim().startsWith('Energy')).click()`,
+  )
+  await ready(`document.querySelectorAll('#canvas .react-flow__node[data-id]').length===3`)
   const baseline = await nodes()
   for (const mouse of [false, true]) {
     await create()
@@ -126,6 +130,8 @@ export async function verifyCreation(context: CheckContext) {
   await evaluate(
     `[...document.querySelectorAll('button')].find(button=>button.textContent.trim().startsWith('Other views')).click()`,
   )
+  await ready(`document.activeElement?.matches('[aria-label="Find a view"]')`)
+  await context.window.webContents.insertText('Single')
   await ready(`document.querySelector('[role="option"]')?.textContent==='Single'`)
   await click('[role="option"]')
   await ready(

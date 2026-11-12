@@ -13,7 +13,7 @@
   "searchNavigate": "per navigare",
   "searchOpen": "per aprire",
   "searchAdd": "per aggiungere alla vista",
-  "addToView": "Aggiungi alla vista",
+  "addToView": "Aggiungi a una vista",
   "searchScope": "Tutte le viste e i concetti",
   "commandFailed": "Impossibile applicare il comando del canvas.",
   "pasteFailed": "Impossibile incollare: gli appunti devono contenere un grafo Nesso valido.",
@@ -158,7 +158,7 @@
   "introConnectionsTitle": "Decidi tu come si collegano",
   "introConnectionsDescription": "Il caffè ha a che fare con il sonno, ma in che modo? Collega **Caffè** a **Sonno** dal cerchio in alto a destra, poi dai un nome alla **relazione** nell’Inspector. Non c’è una risposta giusta: decidere è già capire.",
   "introViewsTitle": "Guarda da un’altra prospettiva",
-  "introViewsDescription": "Le **viste** mostrano parti diverse dello stesso grafo. Passa da **Energia** a **Riposo**: il caffè resta lo stesso concetto, disposto per ogni vista.",
+  "introViewsDescription": "Le **viste** mostrano parti diverse dello stesso grafo. Passa da **Energia** a **Riposo**: il caffè resta lo stesso concetto, disposto per ogni vista. La **Panoramica** mostra tutto il grafo insieme.",
   "introReviewTitle": "Mettiti alla prova",
   "introReviewDescription": "Ogni vista ha il suo **Ripasso**, e il numero indica i concetti da ripassare. Quando lo apri spieghi ogni concetto a parole tue, poi lo ritrovi con le relazioni che hai scelto:",
   "introChatNote": "Sull’app desktop la chat AI è nell’Inspector, accanto a Dettagli.",
@@ -269,6 +269,7 @@
   "moreTabs_many": "{{count}} altre schede",
   "moreTabs_other": "{{count}} altre schede",
   "canvasGraph": "Grafo",
+  "canvasMap": "Mappa",
   "aiYou": "Tu",
   "aiAssistant": "Nesso",
   "aiNewChat": "Nuova chat",
@@ -606,5 +607,6 @@
   "warning": "Attenzione",
   "confirmation": "Conferma",
   "toastQueued": "{{count}} in attesa",
-  "overviewPlaceholder": "Apri una vista per disporre i suoi concetti."
+  "openInView": "Apri nella vista",
+  "createViewWithConcept": "Crea una vista con questo concetto"
 }
