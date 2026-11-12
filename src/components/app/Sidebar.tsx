@@ -134,26 +134,24 @@ export function AppSidebar({
 
   const content = (
     <>
-      <div className="flex min-h-0 flex-1 flex-col px-3 pt-5">
+      <div className="flex min-h-0 flex-1 flex-col px-3 pt-2">
         {onOpenSearch && (
-          <>
-            <Button
-              variant="ghost"
-              className="w-full justify-start"
-              onClick={onOpenSearch}
-              aria-keyshortcuts="Meta+K Control+K"
-            >
-              <Search />
-              {t('search')}
-              <Kbd className="ml-auto h-5 min-w-0 border-transparent px-1 text-[9px]">
-                {/Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl'} K
-              </Kbd>
-            </Button>
-            <div aria-hidden className="my-2 h-px bg-border" />
-          </>
+          <Button
+            variant="ghost"
+            className="w-full justify-start"
+            onClick={onOpenSearch}
+            aria-keyshortcuts="Meta+K Control+K"
+          >
+            <Search />
+            {t('search')}
+            <Kbd className="ml-auto h-5 min-w-0 border-transparent px-1 text-[9px]">
+              {/Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl'} K
+            </Kbd>
+          </Button>
         )}
         <NewViewButton ref={createTrigger} disabled={readonly} />
-        <ListRow className="mt-1.5 has-[[aria-current]]:bg-pressed">
+        <div aria-hidden className="my-2 h-px bg-border" />
+        <ListRow className="has-[[aria-current]]:bg-pressed">
           <ListRowButton
             onClick={() => navigate(null)}
             aria-current={workspace.activeViewId === null ? 'page' : undefined}

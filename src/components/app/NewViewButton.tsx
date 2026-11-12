@@ -25,11 +25,7 @@ export function NewViewButton({
           ref={ref}
           disabled={disabled}
           render={
-            <Button
-              variant="ghost"
-              className="mb-3 w-full justify-start"
-              aria-label={t('newView')}
-            />
+            <Button variant="ghost" className="w-full justify-start" aria-label={t('newView')} />
           }
         >
           <LayersPlus />
