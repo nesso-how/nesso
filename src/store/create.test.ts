@@ -514,8 +514,13 @@ test('saved views materialize shared subsets, reconcile membership and never cha
   ]
   host.store.setSelection(selected)
   host.store.setViewMembership(id, 'urn:n2', false)
-  assert.deepEqual(host.store.getState().selected, selected)
+  assert.deepEqual(host.store.getState().selected, [selected[0]])
   assert.deepEqual(host.store.getState().viewGraph.relations, [])
+  host.store.setSelection(selected)
+  assert.deepEqual(host.store.getState().selected, [selected[0]])
+  host.store.undo()
+  assert.deepEqual(host.store.getState().selected, [selected[0]])
+  host.store.redo()
   host.store.setViewMembership(id, 'urn:n2', true)
   const beforePin = host.store.getState()
   host.store.setViewPinned(id, true)
@@ -551,6 +556,7 @@ test('switching views preserves visible selections, including every selection in
     { kind: 'concept', id: 'urn:n2' },
     { kind: 'relation', id: relationKey(graph.relations[0]) },
   ]
+  host.store.setView(null)
   host.store.setSelection(selected)
   host.store.setView(pair)
   assert.deepEqual(host.store.getState().selected, selected)
@@ -736,7 +742,8 @@ test('reconnecting either endpoint preserves its predicate, shared objects and v
     graph.relations[0].predicate = 'urn:custom'
     const host = createNessoStore(graph)
     host.registerVocab(vocabB)
-    host.store.createView('Pair', ['urn:n1', 'urn:n2'])
+    const pair = host.store.createView('Pair', ['urn:n1', 'urn:n2'])
+    host.store.setView(null)
     const id = relationKey(graph.relations[0])
     const selected: Selection = [
       { kind: 'relation', id },
@@ -757,7 +764,7 @@ test('reconnecting either endpoint preserves its predicate, shared objects and v
     assert.equal(after.graph.relationTypes, before.graph.relationTypes)
     assert.equal(after.graph.concepts, before.graph.concepts)
     assert.equal(after.workspace, before.workspace)
-    assert.deepEqual(after.viewGraph.relations, [])
+    assert.deepEqual(host.store.getViewGraph(pair).relations, [])
     assert.deepEqual(before, snapshot)
   }
 })
