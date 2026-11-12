@@ -14,6 +14,15 @@ type ConceptBounds = ConceptNodeSize & { position: ConceptView['position'] }
 export type ConceptNodeSizes = Record<string, ConceptNodeSize>
 export const conceptNodeMinSize: ConceptNodeSize = { width: 100, height: 44 }
 
+export const estimatedSize = (label: string, sizes: ConceptNodeSizes, id: string) =>
+  sizes[id] ?? {
+    width: Math.max(conceptNodeMinSize.width, label.length * 8 + 26),
+    height: conceptNodeMinSize.height,
+  }
+
+export const conceptBoxes = (concepts: PresentedGraph['concepts'], sizes: ConceptNodeSizes) =>
+  concepts.map(({ id, position }) => ({ id, position, ...(sizes[id] ?? conceptNodeMinSize) }))
+
 export const indexGraph = (
   graph: PresentedGraph,
   vocabs: readonly VocabDefinition[] = [],
@@ -129,7 +138,6 @@ export function createGraphElements() {
     groups = [],
     preview = new Set(),
     onGroupSelect,
-    outside,
   }: {
     graph: PresentedGraph
     indexed: ReturnType<typeof indexGraph>
@@ -140,7 +148,6 @@ export function createGraphElements() {
     groups?: readonly RelationGroup[]
     preview?: ReadonlySet<string>
     onGroupSelect?: ConceptNode['data']['onGroupSelect']
-    outside?: ReadonlyMap<string, readonly unknown[]>
     editing?: {
       id: string | null
       enabled: boolean
@@ -163,7 +170,6 @@ export function createGraphElements() {
         editing: editing?.id === concept.id,
         maxLength: editing?.maxLength,
         onEditingChange: editing?.onChange,
-        outside: outside?.get(concept.id)?.length,
       }
       const previous = previousNodes.get(node.id)
       return previous &&
@@ -177,7 +183,6 @@ export function createGraphElements() {
         previous.data.editing === node.data.editing &&
         previous.data.maxLength === node.data.maxLength &&
         previous.data.onEditingChange === node.data.onEditingChange &&
-        previous.data.outside === node.data.outside &&
         previous.selected === node.selected &&
         previous.measured?.width === node.measured?.width &&
         previous.measured?.height === node.measured?.height

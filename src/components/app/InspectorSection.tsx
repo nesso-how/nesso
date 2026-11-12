@@ -8,12 +8,14 @@ export function InspectorSection({
   store = nessoStore,
   id,
   title,
+  count,
   children,
   onOpenChange,
 }: {
   store?: HostStore
   id: SectionId
   title: string
+  count?: number
   children: ReactNode
   onOpenChange?: (open: boolean) => void
 }) {
@@ -32,6 +34,12 @@ export function InspectorSection({
           render={(props, state) => (
             <SectionHeading {...props} open={state.open} className="px-0">
               {title}
+              {count !== undefined && (
+                <span className="ml-auto font-mono text-[10px]">
+                  <span className="sr-only">, </span>
+                  {count}
+                </span>
+              )}
             </SectionHeading>
           )}
         />

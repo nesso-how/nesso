@@ -106,12 +106,13 @@ const restore = (state: NessoState, delta: DocumentDelta, forward: boolean): Nes
       ? state.workspace
       : { ...state.workspace, savedViews, activeViewId }
   if (workspace !== state.workspace) parseWorkspace(workspace)
+  const viewGraph = materialize(graph, workspace, state)
   return {
     ...state,
     graph,
     workspace,
-    selected: reconcileSelection(graph, state.selected),
-    viewGraph: materialize(graph, workspace, state),
+    selected: reconcileSelection(viewGraph, state.selected),
+    viewGraph,
   }
 }
 

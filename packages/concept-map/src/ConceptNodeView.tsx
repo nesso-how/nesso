@@ -149,11 +149,6 @@ export function ConceptNodeView({ id, data, selected, isConnectable }: NodeProps
       ) : (
         <span className="whitespace-nowrap text-center">{data.label}</span>
       )}
-      {!!data.outside && (
-        <span className="concept-outside" title={t('outsideNeighbors', { count: data.outside })}>
-          {data.outside}
-        </span>
-      )}
       <Handle
         id="create"
         type="source"

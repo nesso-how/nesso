@@ -197,9 +197,10 @@ export default function App({
                         setSettingsOpen(true)
                       }}
                       settingsOpen={settingsOpen}
+                      renderer={renderer}
                     />
                   ) : (
-                    <Inspector />
+                    <Inspector renderer={renderer} />
                   )}
                 </SidePanel>
               )}
@@ -226,6 +227,7 @@ export default function App({
         onAdd={(id) => {
           activePluginPanel.close()
           addToActiveView(host.store, renderer.current, id)
+          renderer.current?.focusConcept(id)
         }}
       />
       {window.nessoUpdater && <UpdateBar updater={window.nessoUpdater} />}
