@@ -69,10 +69,7 @@ export function ConceptViews({
           {listed.map((view) => {
             const count = coverage(view)
             return (
-              <ListRow
-                key={view.id}
-                className="min-h-0 has-[[aria-current]]:bg-[color-mix(in_srgb,var(--hover),var(--pressed))]"
-              >
+              <ListRow key={view.id} className="min-h-0 has-[[aria-current]]:bg-accent">
                 <ListRowButton
                   className="py-1.5"
                   onClick={() => store.setView(view.id)}
