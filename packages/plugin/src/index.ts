@@ -6,6 +6,7 @@ export type {
   ViewGraphSnapshot,
   VocabDefinition,
 } from '@nesso-how/core'
+export { resolveRelationTypeLabel } from '@nesso-how/core'
 export type { ThemeDefinition } from './definitions.ts'
 export { PluginError } from './errors.ts'
 export type {

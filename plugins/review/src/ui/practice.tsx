@@ -162,9 +162,9 @@ export function Practice({
                 </h1>
               </div>
               {revealed ? (
-                <Reference current={current} graph={state.viewGraph} t={t} />
+                <Reference current={current} state={state} t={t} />
               ) : (
-                <Prompt current={current} graph={state.viewGraph} t={t} />
+                <Prompt current={current} state={state} t={t} />
               )}
             </PluginContent>
           ) : (
