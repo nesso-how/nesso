@@ -6,8 +6,8 @@ import { parsePluginStorage, type PluginStorageWrite } from './plugin-storage.ts
 
 const graph = {
   concepts: [
-    { id: 'urn:a', label: 'A', position: { x: 0, y: 0 } },
-    { id: 'urn:b', label: 'B', position: { x: 100, y: 0 } },
+    { id: 'urn:a', label: 'A' },
+    { id: 'urn:b', label: 'B' },
   ],
   relations: [],
   relationTypes: [],

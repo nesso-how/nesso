@@ -22,6 +22,7 @@ export function SearchDialog({
   const t = useTranslation(store)
   const graph = useNessoStore((state) => state.graph, store)
   const views = useNessoStore((state) => state.workspace.savedViews, store)
+  const activeViewId = useNessoStore((state) => state.workspace.activeViewId, store)
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<'all' | SearchResult['kind']>('all')
   const input = useRef<HTMLInputElement>(null)
@@ -30,11 +31,11 @@ export function SearchDialog({
   const results = useMemo(
     () =>
       open
-        ? searchGraph(graph, views, query, overview).filter(
+        ? searchGraph(graph, views, query, overview, activeViewId).filter(
             (result) => filter === 'all' || result.kind === filter,
           )
         : [],
-    [open, graph, views, query, overview, filter],
+    [open, graph, views, query, overview, activeViewId, filter],
   )
   const groups = (['view', 'concept'] as const)
     .map((kind) => ({ kind, items: results.filter((result) => result.kind === kind) }))

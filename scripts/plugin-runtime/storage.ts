@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { once } from 'node:events'
+import type { WorkspaceState } from '@nesso-how/core'
 import { parseGraph } from '@nesso-how/schema'
 import { connectPlugins } from '../../electron/plugins.ts'
 import { appUrl, createTrustedRequest } from '../../electron/ipc.ts'
@@ -52,12 +53,16 @@ export async function verifyStorage({ window, url, name }: CheckContext) {
   const document = await waitFor(
     async () =>
       (await read('document')) as
-        | { documentId: string; graph: unknown; workspace: { viewports: unknown } }
+        | {
+            documentId: string
+            graph: { schemaVersion: number; '@graph': { '@id': string }[] }
+            workspace: WorkspaceState
+          }
         | undefined,
     Boolean,
   )
   assert.ok(document)
-  const conceptId = parseGraph(document.graph).concepts[0].id
+  const conceptId = parseGraph(document.graph).graph.concepts[0].id
   await write('plugin-storage', {
     version: 1,
     documentId: document.documentId,
@@ -100,7 +105,29 @@ export async function verifyStorage({ window, url, name }: CheckContext) {
   const protectedDocument = (await read('document')) as typeof document
   assert.equal(protectedDocument.documentId, document.documentId)
   assert.deepEqual(protectedDocument.graph, document.graph)
-  const legacy = { version: 1, graph: document.graph, workspace: document.workspace }
+  const presentation = new Map(
+    document.workspace.savedViews.flatMap(({ members }) =>
+      members.map(({ id, ...member }) => [id, member]),
+    ),
+  )
+  const { schemaVersion: _, ...legacyGraph } = document.graph
+  const legacy = {
+    version: 1,
+    graph: {
+      ...legacyGraph,
+      '@graph': document.graph['@graph'].map((node) => ({
+        ...node,
+        ...presentation.get(node['@id']),
+      })),
+    },
+    workspace: {
+      ...document.workspace,
+      savedViews: document.workspace.savedViews.map(({ members, ...view }) => ({
+        ...view,
+        conceptIds: members.map(({ id }) => id),
+      })),
+    },
+  }
   await write('plugin-storage', undefined)
   await write('document', legacy)
   const originalRecords = Object.fromEntries(
@@ -117,7 +144,7 @@ export async function verifyStorage({ window, url, name }: CheckContext) {
         graph: unknown
         workspace: object
       },
-    (value) => value.version === 2,
+    (value) => value.version === 3,
   )
   assert.deepEqual(upgraded.graph, document.graph)
   assert.deepEqual(

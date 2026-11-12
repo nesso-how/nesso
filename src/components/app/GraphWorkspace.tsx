@@ -3,6 +3,7 @@ import {
   useLayoutEffect,
   useMemo,
   useRef,
+  useSyncExternalStore,
   type ComponentProps,
   type Ref,
   type RefObject,
@@ -12,6 +13,7 @@ import type { Position } from '@nesso-how/schema'
 import { useGraphInteractions } from '../../graph/interactions.ts'
 import type { HostStore } from '../../store/types.ts'
 import { maxConceptLabelLength } from '../../store/settings.ts'
+import { useTranslation } from '@/i18n'
 
 export function GraphWorkspace({
   ref,
@@ -19,7 +21,6 @@ export function GraphWorkspace({
   preview = false,
   readOnly: locked = false,
   connection,
-  showContext = false,
   suspended = false,
   bottomInset = 0,
   onDeleteView,
@@ -30,12 +31,16 @@ export function GraphWorkspace({
   preview?: boolean
   readOnly?: boolean
   connection?: ComponentProps<typeof ConceptMap>['connection']
-  showContext?: boolean
   suspended?: boolean
   bottomInset?: number
   onDeleteView?: () => void
   focusRef?: RefObject<HTMLDivElement | null>
 }) {
+  const t = useTranslation()
+  const overview = useSyncExternalStore(
+    store.subscribe,
+    () => store.getState().workspace.activeViewId === null,
+  )
   const localFocus = useRef<HTMLDivElement>(null)
   const target = focusRef ?? localFocus
   const readOnly = preview || locked
@@ -63,19 +68,24 @@ export function GraphWorkspace({
 
   return (
     <div key={epoch} {...surfaceProps} className="h-full w-full">
-      <ConceptMap
-        ref={ref}
-        store={store}
-        commands={rendererCommands}
-        readOnly={readOnly}
-        preview={preview}
-        connection={connection}
-        showContext={showContext}
-        bottomInset={bottomInset}
-        focusRef={target}
-        conceptLabelMaxLength={maxConceptLabelLength}
-        onPresentation={preview ? undefined : store.setConceptMapPresentation}
-      />
+      {overview ? (
+        <div className="flex h-full items-center justify-center p-6 text-center text-sm text-muted-foreground">
+          {t('overviewPlaceholder')}
+        </div>
+      ) : (
+        <ConceptMap
+          ref={ref}
+          store={store}
+          commands={rendererCommands}
+          readOnly={readOnly}
+          preview={preview}
+          connection={connection}
+          bottomInset={bottomInset}
+          focusRef={target}
+          conceptLabelMaxLength={maxConceptLabelLength}
+          onPresentation={preview ? undefined : store.setConceptMapPresentation}
+        />
+      )}
     </div>
   )
 }

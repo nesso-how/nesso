@@ -26,7 +26,7 @@ test('installed actions restore verified bytes offline, reject conflicts and can
     version: '1.0.0',
     author: 'Test Author <private@example.test>',
     repository: 'github:example/plugin',
-    nesso: { apiVersion: 3, kind: 'actions', entry: 'dist/index.js', writes: [], capabilities: [] },
+    nesso: { apiVersion: 4, kind: 'actions', entry: 'dist/index.js', writes: [], capabilities: [] },
     i18n: {
       metadata: {
         name: { en: 'Test' },
@@ -98,7 +98,7 @@ test('manual updates atomically replace one exact package, preserve disabled sta
   const manifest = {
     name: 'nesso-plugin-test',
     version: '1.0.0',
-    nesso: { apiVersion: 3, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
+    nesso: { apiVersion: 4, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
     i18n: {
       metadata: {
         name: { en: 'Test' },
@@ -213,7 +213,7 @@ test('definition records restore offline and reject tampered updates without rep
     const manifest = {
       name: `nesso-test-${kind}`,
       version: '1.0.0',
-      nesso: { apiVersion: 3, kind, entry: 'definition.json', writes: [], capabilities: [] },
+      nesso: { apiVersion: 4, kind, entry: 'definition.json', writes: [], capabilities: [] },
       i18n: {
         metadata: {
           name: { en: 'Test' },
@@ -268,7 +268,7 @@ test('unreadable records are isolated without losing valid packages or permittin
       manifest: {
         name,
         version,
-        nesso: { apiVersion: 3, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
+        nesso: { apiVersion: 4, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
         i18n: {
           metadata: {
             name: { en: name },
@@ -341,7 +341,7 @@ test('a verified package replaces its own unreadable record and preserves neighb
       manifest: {
         name,
         version,
-        nesso: { apiVersion: 3, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
+        nesso: { apiVersion: 4, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
         i18n: {
           metadata: {
             name: { en: name },
@@ -358,7 +358,7 @@ test('a verified package replaces its own unreadable record and preserves neighb
   const recordName = `${createHash('sha256').update(stale.name).digest('hex')}.json`
   const file = path.join(directory, recordName)
   const stored = await readFile(file, 'utf8')
-  await writeFile(file, stored.replace('"apiVersion":3', '"apiVersion":1'))
+  await writeFile(file, stored.replace('"apiVersion":4', '"apiVersion":1'))
   assert.deepEqual(await storage.list(), {
     packages: [neighbor],
     issues: [

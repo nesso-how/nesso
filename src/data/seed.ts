@@ -16,7 +16,7 @@ type SeedTranslation = Readonly<{
 const translations: Readonly<Partial<Record<Locale, SeedTranslation>>> = { it, 'zh-CN': zhCN }
 
 export function createSeedDocument(locale: Locale): { graph: Graph; workspace: WorkspaceState } {
-  const graph = parseGraph(seed)
+  const { graph } = parseGraph(seed)
   const translation = translations[locale]
   return {
     graph: {
@@ -32,11 +32,11 @@ export function createSeedDocument(locale: Locale): { graph: Graph; workspace: W
       })),
     },
     workspace: {
-      activeViewId: null,
+      activeViewId: seedViews[0].id,
       savedViews: seedViews.map((view) => ({
         ...view,
         name: translation?.viewNames[view.id] ?? view.name,
-        conceptIds: [...view.conceptIds],
+        members: structuredClone(view.members),
       })),
       viewports: {},
     },

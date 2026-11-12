@@ -34,10 +34,11 @@ test('landing translations cover the same content with concise metadata', () => 
 })
 
 test('the displayed JSON-LD example is a complete supported graph', () => {
-  const graph = parseGraph(example)
+  const { graph, views } = parseGraph(example)
   assert.equal(graph.concepts.length, 2)
   assert.equal(graph.relations.length, 1)
   assert.equal(graph.relationTypes.length, 1)
+  assert.deepEqual(views, [])
 })
 
 test('the site build emits complete localized pages with matching language links, metadata and download labels', async () => {

@@ -20,9 +20,9 @@ Your knowledge isn’t scattered across files and folders but lives in **one con
 
 Nesso keeps things minimal and efficient, with just a few key elements:
 
-- **Concepts** represent ideas. You can change their color, make their labels bold or italic, and add Markdown notes (bold, italic, lists, links).
+- **Concepts** represent ideas. They have a label and Markdown notes (bold, italic, lists, links).
 - **Relations** connect concepts with a direction and a type that describes the connection.
-- **Views** offer different perspectives on the same graph. The default **Overview** view contains the complete graph and cannot be deleted. Saved views are named subsets of its concepts.
+- **Views** offer different perspectives on the same graph. The default **Overview** view contains the complete graph and cannot be deleted. Saved views are named subsets of its concepts, each with its own positions, colors, and bold or italic labels.
 - **Vocabularies** provide relation types. You can name your own relation types or define vocabularies as plugins.
 - **Plugins** add vocabularies, themes, and actions. They can also work as mini-apps inside Nesso, with their own interface and persistent data. Install published packages from Settings → Plugins on desktop, or [create your own with an agent](packages/plugin/README.md#create-a-plugin) and approve a local install through MCP, without publishing to npm. Nesso’s built-in plugins use the same system:
   - **Review** for FSRS spaced repetition over a view’s concepts.
@@ -87,13 +87,7 @@ All graph edits go through one API: `applyOperations`. The UI, trusted renderers
 
 The same mechanism supports efficient, delta-based undo and redo. History records only what changed instead of storing a full copy of the graph for every edit. AI-generated edits also use this shared history and can be undone or redone just like manual changes.
 
-### Data schemas
-
-- **Document:** [envelope and migrations](src/store/migrations.ts), [graph](packages/schema/src/types.ts), and [workspace](src/store/settings.ts).
-- **Preferences:** [record envelope](src/store/persistence.ts) and [settings](src/store/settings.ts).
-- **Conversation:** [chat schema](packages/ai/src/chat.ts).
-- **Plugin data:** [storage envelope](src/store/plugin-storage.ts); private payload schemas belong to each plugin.
-- **Backup:** [backup envelope](shared/backup.ts).
+The [compatibility guide](docs/compatibility.md) covers data migrations, plugin API support, downgrades, and data formats.
 
 ### Plugins
 

@@ -7,21 +7,25 @@ import { openSearchResult, searchGraph, type SearchResult } from './search.ts'
 
 const graph: GraphSnapshot = {
   concepts: [
-    { id: 'urn:test:memory', label: 'Memory', notes: 'Practice recall.', position: { x: 0, y: 0 } },
-    { id: 'urn:test:working', label: 'Working memory', position: { x: 100, y: 100 } },
+    { id: 'urn:test:memory', label: 'Memory', notes: 'Practice recall.' },
+    { id: 'urn:test:working', label: 'Working memory' },
     {
       id: 'urn:test:spacing',
       label: 'Spaced repetition',
       notes: 'Practice recall at increasing intervals.',
-      position: { x: 200, y: 200 },
     },
-    { id: 'urn:test:unicode', label: '记忆', position: { x: 300, y: 300 } },
+    { id: 'urn:test:unicode', label: '记忆' },
   ],
   relations: [],
   relationTypes: [],
 }
 const views: readonly SavedView[] = [
-  { id: 'memory', name: 'Memory', pinned: false, conceptIds: ['urn:test:memory'] },
+  {
+    id: 'memory',
+    name: 'Memory',
+    pinned: false,
+    members: [{ id: 'urn:test:memory', position: { x: 0, y: 0 }, color: '#ffeeee' }],
+  },
 ]
 
 test('search groups views and concepts, ranks labels before notes, and normalizes queries', () => {
@@ -69,6 +73,12 @@ test('suggestions are bounded per group', () => {
       notes: 'Practice recall.',
       color: undefined,
     },
+  )
+  const colored = searchGraph(graph, views, 'memory', 'Overview', 'memory')
+  assert.equal(colored.find(({ id }) => id === 'urn:test:memory')?.kind, 'concept')
+  assert.deepEqual(
+    colored.flatMap((result) => (result.kind === 'concept' ? [result.color] : [])),
+    ['#ffeeee', undefined],
   )
 })
 

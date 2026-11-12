@@ -12,6 +12,7 @@ export type {
   SavedView,
   SectionId,
   Selection,
+  ViewGraphSnapshot,
   Viewport,
   VocabDefinition,
   WorkspaceState,

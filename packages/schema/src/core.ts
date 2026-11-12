@@ -1,21 +1,17 @@
 export const schemaContext = {
   rdf: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
   rdfs: 'http://www.w3.org/2000/01/rdf-schema#',
+  schemaVersion: { '@id': 'urn:uuid:222c3bab-82c0-492c-bac4-e48272823081' },
   position: { '@id': 'urn:uuid:af4fb77d-c82c-5e04-bf5c-68588670d18b', '@type': '@json' },
   color: { '@id': 'urn:uuid:c9d8a2c8-6ed8-5d10-83ee-fb11e19a4db1' },
   bold: { '@id': 'urn:uuid:5d843456-1cae-4e78-9121-80dc1eaaec41' },
   italic: { '@id': 'urn:uuid:a532a410-360e-4449-9750-9934b49b2d39' },
+  View: 'urn:uuid:266b403a-90c8-470f-b9e0-73c712ba2cf8',
+  members: { '@id': 'urn:uuid:ea405e81-beae-4cb7-a13c-3b31c1f2c82f' },
+  concept: { '@id': 'urn:uuid:011331b1-50a3-4d46-aa1a-9f87193f0844' },
 } as const
 
-export const conceptKeys = [
-  '@id',
-  'rdfs:label',
-  'rdfs:comment',
-  'position',
-  'color',
-  'bold',
-  'italic',
-]
+export const conceptKeys = ['@id', 'rdfs:label', 'rdfs:comment']
 
 export const newIri = () => `urn:uuid:${crypto.randomUUID()}`
 export const isAbsoluteIri = (value: unknown): value is string =>

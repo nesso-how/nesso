@@ -72,7 +72,7 @@ export function readAiTool(
             ...state.workspace.savedViews.map((view) => ({
               id: view.id,
               name: view.name,
-              concepts: view.conceptIds.length,
+              concepts: view.members.length,
               pinned: view.pinned,
             })),
           ],
@@ -83,7 +83,10 @@ export function readAiTool(
       return {
         id: view?.id ?? null,
         name: view?.name ?? 'Overview',
-        members: page(view?.conceptIds ?? state.graph.concepts.map(({ id }) => id), query),
+        members: page(
+          (view?.members ?? state.graph.concepts).map(({ id }) => id),
+          query,
+        ),
       }
     }
     case 'relation_types': {

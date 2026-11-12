@@ -12,7 +12,6 @@ export function conceptMapShortcuts(locale: Locale) {
       { label: t('shortcutBold'), keys: [[modifier, 'B']] },
       { label: t('shortcutItalic'), keys: [[modifier, 'I']] },
       { label: t('shortcutFitView'), keys: [['F']] },
-      { label: t('shortcutOutside'), keys: [['O']] },
       { label: t('groupRelations'), keys: [['G']] },
     ],
   }

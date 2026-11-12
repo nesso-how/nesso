@@ -12,7 +12,6 @@ const fixture = (count = 3) => {
     concepts: Array.from({ length: count }, (_, index) => ({
       id: `urn:n${index}`,
       label: `Node ${index}`,
-      position: { x: index, y: 0 },
     })),
     relations: [{ source: 'urn:n0', predicate: 'urn:links', target: 'urn:n1' }],
     relationTypes: [{ id: 'urn:links', label: 'links' }],

@@ -15,7 +15,7 @@ import {
   applyStateOperations,
   checkGraph,
   materialize,
-  newGraph,
+  newDocument,
   newWorkspace,
 } from './operations.ts'
 import {
@@ -35,7 +35,8 @@ import { parsePluginStorage } from './plugin-storage.ts'
 
 export const createNessoStore = (graph: Graph | null, restored: RestoredState = {}) => {
   if (graph) checkGraph(graph)
-  const initial = graph ? structuredClone(graph) : newGraph(newIri())
+  const fresh = graph ? undefined : newDocument(newIri(), newIri())
+  const initial = fresh ? fresh.graph : structuredClone(graph!)
   const documentId = graph && restored.documentId ? restored.documentId : newIri()
   if (!isAbsoluteIri(documentId)) fail('documentId', 'Expected an absolute document IRI')
   const pluginStorage =
@@ -43,9 +44,9 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
       ? parsePluginStorage({ version: 3, documentId, plugins: restored.pluginStorage }).plugins
       : []
   const workspace =
-    graph && restored.workspace ? parseWorkspace(restored.workspace) : newWorkspace()
+    fresh?.workspace ?? (restored.workspace ? parseWorkspace(restored.workspace) : newWorkspace())
   const initialIds = new Set(initial.concepts.map((concept) => concept.id))
-  if (workspace.savedViews.some((view) => view.conceptIds.some((id) => !initialIds.has(id)))) {
+  if (workspace.savedViews.some((view) => view.members.some(({ id }) => !initialIds.has(id)))) {
     fail('workspace.savedViews', 'Unknown concept in view')
   }
   const preferences: Preferences = restored.preferences

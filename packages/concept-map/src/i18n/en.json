@@ -4,8 +4,6 @@
   "fitView": "Fit view",
   "lockInteractions": "Lock interactions",
   "unlockInteractions": "Unlock interactions",
-  "showRestOfGraph": "Show the rest of the graph",
-  "hideRestOfGraph": "Hide the rest of the graph",
   "zoomLevel": "Zoom level",
   "undo": "Undo",
   "redo": "Redo",
@@ -30,6 +28,5 @@
   "shortcutRename": "Rename selected concept",
   "shortcutBold": "Toggle bold",
   "shortcutItalic": "Toggle italic",
-  "shortcutFitView": "Fit view",
-  "shortcutOutside": "Toggle background views"
+  "shortcutFitView": "Fit view"
 }

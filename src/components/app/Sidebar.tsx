@@ -73,7 +73,7 @@ export function AppSidebar({
         aria-current={workspace.activeViewId === view.id ? 'page' : undefined}
       >
         <ListRowTitle>{view.name}</ListRowTitle>
-        <ListRowDetail>{t('conceptCount', { count: view.conceptIds.length })}</ListRowDetail>
+        <ListRowDetail>{t('conceptCount', { count: view.members.length })}</ListRowDetail>
       </ListRowButton>
       <RevealActions className="mr-1">
         <Menu.Root open={menu === view.id} onOpenChange={(open) => setMenu(open ? view.id : null)}>

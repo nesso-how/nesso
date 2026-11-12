@@ -13,7 +13,7 @@ import { createActionBadges } from './badges.ts'
 function fixture(t: TestContext) {
   t.mock.timers.enable({ apis: ['setTimeout', 'Date'] })
   const host = createNessoStore({
-    concepts: ['a', 'b'].map((id) => ({ id: `urn:${id}`, label: id, position: { x: 0, y: 0 } })),
+    concepts: ['a', 'b'].map((id) => ({ id: `urn:${id}`, label: id })),
     relations: [],
     relationTypes: [],
   })

@@ -1,6 +1,6 @@
 import { resolveRelationTypeLabel } from '@nesso-how/core'
 import { defaultLocale } from '@nesso-how/i18n'
-import { relationKey, type Concept } from '@nesso-how/schema'
+import { relationKey } from '@nesso-how/schema'
 import { BottomSheet, Button, ContextLabel, MarkdownInput } from '@nesso-how/ui'
 import { ArrowLeft, ArrowRight, ChevronRight, Share2 } from 'lucide-react'
 import { useLayoutEffect, useState, type RefObject } from 'react'
@@ -41,7 +41,7 @@ export function ConceptSheet({
   const pluginPanel = usePluginPanel()
   const item = selected.length === 1 && selected[0].kind === 'concept' ? selected[0] : undefined
   const concept = item && graph.concepts.find(({ id }) => id === item.id)
-  const [shown, setShown] = useState<Concept | undefined>(concept)
+  const [shown, setShown] = useState(concept)
   if (concept && concept !== shown) setShown(concept)
   const open = !!concept && !pluginPanel
   const [popup, setPopup] = useState<HTMLDivElement | null>(null)

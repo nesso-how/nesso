@@ -6,14 +6,14 @@ import {
   type RenderedImage,
 } from './images.ts'
 export type { ImageRenderOptions, RenderedImage } from './images.ts'
-import { graphSchema, positionSchema } from '@nesso-how/schema'
+import { positionSchema, viewGraphSchema } from '@nesso-how/schema'
 import type { ComponentType } from 'react'
 import type {
   DeepReadonly,
-  GraphSnapshot,
   NessoOperation,
   Selection,
   SavedView,
+  ViewGraphSnapshot,
   VocabDefinition,
 } from '@nesso-how/core'
 import type { Locale } from '@nesso-how/i18n'
@@ -81,7 +81,7 @@ const actionBadgeResult = z.strictObject({
 
 export type ActionBadgeInput = {
   readonly viewId: string | null
-  readonly viewGraph: GraphSnapshot
+  readonly viewGraph: ViewGraphSnapshot
   readonly records: readonly PluginStorageRecord[]
   readonly now: number
 }
@@ -182,7 +182,7 @@ export function parsePluginI18n(value: unknown): PluginI18n {
 }
 
 const manifestFields = {
-  apiVersion: z.literal(3),
+  apiVersion: z.literal(4),
 }
 const jsEntry = z
   .string()
@@ -379,7 +379,7 @@ export type ActionState = {
   readonly locale: Locale
   readonly theme: Readonly<Record<string, string>>
   readonly conceptPlacementOffset: Readonly<{ x: number; y: number }>
-  readonly viewGraph: GraphSnapshot
+  readonly viewGraph: ViewGraphSnapshot
   readonly selected: Selection
   readonly workspace: {
     readonly activeViewId: string | null
@@ -451,7 +451,7 @@ const actionStateSchema = z.strictObject({
     ),
   ),
   conceptPlacementOffset: position,
-  viewGraph: graphSchema,
+  viewGraph: viewGraphSchema,
   selected: selection,
   targetViewId: id.nullable(),
   activeVocab: z

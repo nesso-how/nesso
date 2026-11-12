@@ -20,7 +20,10 @@ export function canDiscardIntroExample({ graph, workspace, preferences }: HostSt
   const seed = createSeedDocument(preferences.locale ?? defaultLocale)
   return (
     sameGraph(graph, seed.graph) &&
-    sameWorkspace({ ...workspace, activeViewId: null, viewports: {} }, seed.workspace)
+    sameWorkspace(
+      { ...workspace, activeViewId: seed.workspace.activeViewId, viewports: {} },
+      seed.workspace,
+    )
   )
 }
 
@@ -58,7 +61,7 @@ export function setIntroStep(store: NessoStore, step: number) {
           },
         ]
       : []),
-    { kind: 'view.activate', id: temporaryId ?? (step === 3 ? 'rest' : null) },
+    { kind: 'view.activate', id: temporaryId ?? (step === 3 ? 'rest' : 'energy') },
     ...workspace.savedViews.flatMap(({ id }) =>
       (id === conceptViewId || id === connectionViewId) && id !== temporaryId
         ? [{ kind: 'view.remove' as const, id }]

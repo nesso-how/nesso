@@ -4,8 +4,6 @@
   "fitView": "Adatta alla vista",
   "lockInteractions": "Blocca interazioni",
   "unlockInteractions": "Sblocca interazioni",
-  "showRestOfGraph": "Mostra il resto del grafo",
-  "hideRestOfGraph": "Nascondi il resto del grafo",
   "zoomLevel": "Livello di zoom",
   "undo": "Annulla",
   "redo": "Ripeti",
@@ -30,6 +28,5 @@
   "shortcutRename": "Rinomina il concetto selezionato",
   "shortcutBold": "Attiva/disattiva grassetto",
   "shortcutItalic": "Attiva/disattiva corsivo",
-  "shortcutFitView": "Adatta la vista",
-  "shortcutOutside": "Attiva/disattiva viste di sfondo"
+  "shortcutFitView": "Adatta la vista"
 }

@@ -16,7 +16,6 @@ import {
   ListChecks,
   Lock,
   LockOpen,
-  Layers,
   Group,
   Maximize,
   ClipboardPaste,
@@ -59,13 +58,10 @@ import { GraphContextMenu } from './GraphContextMenu'
 import {
   createGraphElements,
   conceptNodeMinSize,
-  containsPoint,
   indexGraph,
-  outsideEdge,
-  outsideNode,
   type ConceptNodeSizes,
 } from './adapters'
-import type { ConceptNode, RelationEdge } from './types'
+import { presentedGraph, type ConceptNode, type RelationEdge } from './types'
 import { useNesso, useCanvasContext, type CanvasProps } from './store'
 import { selectionForContextMenu, selectionFromChanges } from './selection'
 import { useTranslation } from './i18n'
@@ -107,13 +103,12 @@ export function Canvas({
   ref,
   readOnly = false,
   preview = false,
-  showContext = false,
   bottomInset = 0,
   conceptLabelMaxLength,
   focusRef: canvas,
 }: CanvasProps) {
   const t = useTranslation()
-  const graph = useNesso((state) => state.viewGraph)
+  const graph = useNesso(presentedGraph)
   const vocabs = useNesso((state) => state.vocabs)
   const locale = useNesso((state) => state.preferences.locale ?? defaultLocale)
   const dragPositions = useRef<ReadonlyMap<string, XYPosition> | null>(null)
@@ -133,7 +128,7 @@ export function Canvas({
   )
   const indexed = useMemo(() => indexGraph(displayed, vocabs, locale), [displayed, vocabs, locale])
   const selected = useNesso((state) => state.selected)
-  const fullGraph = useNesso((state) => state.graph)
+  const conceptCount = useNesso((state) => state.graph.concepts.length)
   const view = useNesso((state) => state.workspace.activeViewId)
   const defaultTypeId = useNesso(
     (state) => state.vocabs.find(({ id }) => id === state.preferences.activeVocabId)?.defaultTypeId,
@@ -181,8 +176,6 @@ export function Canvas({
     y: number
     target: ContextMenuTarget
   } | null>(null)
-  const [outside, setOutside] = useState(false)
-  const outsideActive = (outside || showContext) && view !== null
   const grouping = useNesso((state) => state.preferences.relationGroups ?? true)
   const [retained, setRetained] = useState({ view, grouping, groups: [] as RelationGroup[] })
   const kept = useMemo(
@@ -209,17 +202,6 @@ export function Canvas({
   )
 
   const singleSelection = selected.length === 1
-  const outsideGraph = useMemo(() => {
-    if (!outsideActive) return null
-    const visible = new Set(graph.concepts.map((concept) => concept.id))
-    return {
-      indexed: indexGraph(fullGraph, vocabs, locale),
-      concepts: fullGraph.concepts.filter((concept) => !visible.has(concept.id)),
-      relations: fullGraph.relations.filter(
-        (relation) => !(visible.has(relation.source) && visible.has(relation.target)),
-      ),
-    }
-  }, [outsideActive, graph, fullGraph, vocabs, locale])
   const groups = useMemo(
     () =>
       grouping
@@ -227,11 +209,10 @@ export function Canvas({
             concepts: displayed.concepts,
             relations: displayed.relations,
             sizes,
-            obstacles: outsideGraph?.concepts,
             kept,
           })
         : [],
-    [grouping, displayed, sizes, outsideGraph, kept],
+    [grouping, displayed, sizes, kept],
   )
   if (
     retained.view !== view ||
@@ -243,7 +224,7 @@ export function Canvas({
   useLayoutEffect(() => {
     if (dragged) return
     onPresentation?.({
-      graph: fullGraph,
+      graph,
       viewId: view,
       groups: groups.filter((group) => {
         const count = group.relations.filter((id) =>
@@ -252,7 +233,7 @@ export function Canvas({
         return count === 0 || count === group.relations.length
       }),
     })
-  }, [groups, dragged, onPresentation, fullGraph, view, sizes, selected])
+  }, [groups, dragged, onPresentation, graph, view, sizes, selected])
   const groupDrag = useRef<{
     pointerId: number
     members: readonly string[]
@@ -269,9 +250,8 @@ export function Canvas({
   const moveGroup = useCallback(
     (members: readonly string[], delta: XYPosition, done: boolean) => {
       const positions = new Map(
-        store
-          .getState()
-          .graph.concepts.filter(({ id }) => members.includes(id))
+        presentedGraph(store.getState())
+          .concepts.filter(({ id }) => members.includes(id))
           .map(({ id, position }) => [id, { x: position.x + delta.x, y: position.y + delta.y }]),
       )
       if (done) {
@@ -325,33 +305,15 @@ export function Canvas({
         target: indexed.concepts.get(relation.target)?.label ?? '',
       }),
   })
-  const nodes = useMemo(
-    () =>
-      outsideGraph
-        ? [
-            ...outsideGraph.concepts.map((concept) => outsideNode(concept, sizes[concept.id])),
-            ...elements.nodes,
-          ]
-        : elements.nodes,
-    [outsideGraph, sizes, elements.nodes],
-  )
   const edges = useMemo(() => {
-    const edges = outsideGraph
-      ? [
-          ...outsideGraph.relations.map((relation) =>
-            outsideEdge(relation, outsideGraph.indexed, defaultTypeId, sizes),
-          ),
-          ...elements.edges,
-        ]
-      : elements.edges
-    if (!reconnectDrag) return edges
+    if (!reconnectDrag) return elements.edges
     const ids = new Set(reconnectDrag.relations.map(relationKey))
-    return edges.map((edge) =>
+    return elements.edges.map((edge) =>
       ids.has(edge.id) || edge.data?.relations?.some((id) => ids.has(id))
         ? { ...edge, className: 'graph-reconnecting-edge' }
         : edge,
     )
-  }, [outsideGraph, sizes, defaultTypeId, elements.edges, reconnectDrag])
+  }, [elements.edges, reconnectDrag])
   const connectionPreview = useCallback(
     (props: ConnectionLineComponentProps) => (
       <ConnectionPreview {...props} reconnection={reconnectDrag} />
@@ -432,9 +394,8 @@ export function Canvas({
 
   const canDelete = interactive && selected.length > 0
   const canCut =
-    canDelete &&
-    selected.filter(({ kind }) => kind === 'concept').length < fullGraph.concepts.length
-  const selectedConcepts = fullGraph.concepts.filter((concept) =>
+    canDelete && selected.filter(({ kind }) => kind === 'concept').length < conceptCount
+  const selectedConcepts = graph.concepts.filter((concept) =>
     selected.some(({ kind, id }) => kind === 'concept' && id === concept.id),
   )
   const allBold = selectedConcepts.length > 0 && selectedConcepts.every((concept) => concept.bold)
@@ -453,20 +414,13 @@ export function Canvas({
   const canUndo = useNesso((state) => state.history.canUndo)
   const canRedo = useNesso((state) => state.history.canRedo)
 
-  const outsideFit = useRef(false)
-  const outsideLabel = t(outsideActive ? 'hideRestOfGraph' : 'showRestOfGraph')
-  const toggleOutside = () => {
-    outsideFit.current = true
-    setOutside((value) => !value)
-  }
-
   const handleAdd = () => {
     const element = canvas.current
     if (!element) return
     const state = store.getState()
     const source =
       state.selected.length === 1 && state.selected[0].kind === 'concept'
-        ? state.graph.concepts.find((concept) => concept.id === state.selected[0].id)
+        ? presentedGraph(state).concepts.find((concept) => concept.id === state.selected[0].id)
         : undefined
     const placement = () => {
       const bounds = element.getBoundingClientRect()
@@ -608,13 +562,6 @@ export function Canvas({
       )
     )
       return
-    const point = screenToFlowPosition({ x: event.clientX, y: event.clientY })
-    if (
-      outsideGraph?.concepts.some((concept) =>
-        containsPoint(concept, sizes[concept.id] ?? conceptNodeMinSize, point),
-      )
-    )
-      return
     addConceptAt({ x: event.clientX, y: event.clientY }, paneSelection.current)
   }
 
@@ -694,12 +641,6 @@ export function Canvas({
     setCenter,
     duration,
   ])
-
-  useEffect(() => {
-    if (!outsideFit.current) return
-    outsideFit.current = false
-    void fitView(animatedFraming)
-  })
 
   useEffect(() => {
     if (!hasOverlay || !nodesInitialized || !width || !height) return
@@ -829,20 +770,6 @@ export function Canvas({
           void fitView(animatedFraming)
           return
         }
-        if (
-          !readOnly &&
-          !hasOverlay &&
-          view !== null &&
-          !event.altKey &&
-          !event.ctrlKey &&
-          !event.metaKey &&
-          !event.shiftKey &&
-          event.key.toLowerCase() === 'o'
-        ) {
-          event.preventDefault()
-          toggleOutside()
-          return
-        }
         if (event.key === 'Escape') {
           const state = flow.getState()
           if (
@@ -884,7 +811,7 @@ export function Canvas({
       }}
     >
       <ReactFlow
-        nodes={nodes}
+        nodes={elements.nodes}
         edges={edges}
         nodeTypes={nodeTypes}
         ariaLabelConfig={ariaLabelConfig}
@@ -998,17 +925,6 @@ export function Canvas({
                   aria-pressed={!interactive}
                 >
                   <LockIcon aria-hidden="true" />
-                </ControlButton>
-                <ControlButton
-                  className="react-flow__controls-outside"
-                  onClick={toggleOutside}
-                  disabled={view === null}
-                  title={`${outsideLabel} (O)`}
-                  aria-label={outsideLabel}
-                  aria-keyshortcuts="o"
-                  aria-pressed={outsideActive}
-                >
-                  <Layers aria-hidden="true" />
                 </ControlButton>
                 <ControlButton
                   onClick={() => write([{ kind: 'preferences.relationGroups', value: !grouping }])}

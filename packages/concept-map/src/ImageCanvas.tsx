@@ -13,6 +13,7 @@ import { groupRelations } from './groups'
 import { conceptNode, conceptNodeMinSize, createGraphElements, indexGraph } from './adapters'
 import { StoreContext, type ConceptMapContext } from './store'
 import type { ConceptMapPresentation } from './presentation'
+import { presentedGraph } from './types'
 import { ConceptMapImageError } from './image-bounds'
 
 const nodeTypes = { concept: ConceptNodeView, relationGroup: GroupNodeView }
@@ -24,12 +25,13 @@ type ImageProps = {
 
 function ImageFlow({ store, ready, presentation }: ImageProps) {
   const state = store.getState()
+  const graph = presentedGraph(state)
   const initial = useMemo(
     () => ({
-      nodes: state.viewGraph.concepts.map((concept) => conceptNode(concept, false)),
-      indexed: indexGraph(state.viewGraph, state.vocabs, state.preferences.locale ?? defaultLocale),
+      nodes: graph.concepts.map((concept) => conceptNode(concept, false)),
+      indexed: indexGraph(graph, state.vocabs, state.preferences.locale ?? defaultLocale),
     }),
-    [state],
+    [graph, state],
   )
   const [nodes, , onNodesChange] = useNodesState(initial.nodes)
   const initialized = useNodesInitialized()
@@ -50,15 +52,15 @@ function ImageFlow({ store, ready, presentation }: ImageProps) {
   const adapt = useMemo(() => createGraphElements(), [])
   const groups = !(state.preferences.relationGroups ?? true)
     ? []
-    : presentation?.graph === state.graph && presentation.viewId === state.workspace.activeViewId
+    : presentation?.graph === graph && presentation.viewId === state.workspace.activeViewId
       ? presentation.groups
       : groupRelations({
-          concepts: state.viewGraph.concepts,
-          relations: state.viewGraph.relations,
+          concepts: graph.concepts,
+          relations: graph.relations,
           sizes,
         })
   const elements = adapt({
-    graph: state.viewGraph,
+    graph,
     indexed: initial.indexed,
     selected: [],
     sizes,

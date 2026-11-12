@@ -109,7 +109,7 @@ export function useGraphInteractions(
       const element = canvas.current
       const version = clipboardEpoch.current
       try {
-        const text = copyGraph(before.graph, before.selected)
+        const text = copyGraph(before.viewGraph, before.selected)
         if (!text) return
         if (event) {
           event.preventDefault()
@@ -155,7 +155,12 @@ export function useGraphInteractions(
           : 1
       let operations: ReturnType<typeof pasteOperations>
       try {
-        operations = pasteOperations(text, position, count * 40)
+        operations = pasteOperations(
+          text,
+          position,
+          count * 40,
+          before.workspace.activeViewId !== null,
+        )
       } catch {
         notify('pasteFailed')
         return

@@ -1,18 +1,13 @@
-import {
-  resolveRelationTypeLabel,
-  type GraphSnapshot,
-  type Selection,
-  type VocabDefinition,
-} from '@nesso-how/core'
+import { resolveRelationTypeLabel, type Selection, type VocabDefinition } from '@nesso-how/core'
 import { defaultLocale, type Locale } from '@nesso-how/i18n'
 import { relationKey } from '@nesso-how/schema'
 import { MarkerType, Position } from '@xyflow/react'
-import type { ConceptNode, RelationEdge } from './types'
+import type { ConceptNode, PresentedGraph, RelationEdge } from './types'
 import { reconnectableEndpoints, selectedRelations } from './reconnection.ts'
 import type { RelationGroup } from './groups.ts'
 
-type ConceptView = GraphSnapshot['concepts'][number]
-type RelationView = GraphSnapshot['relations'][number]
+type ConceptView = PresentedGraph['concepts'][number]
+type RelationView = PresentedGraph['relations'][number]
 
 export type ConceptNodeSize = { width: number; height: number }
 type ConceptBounds = ConceptNodeSize & { position: ConceptView['position'] }
@@ -20,7 +15,7 @@ export type ConceptNodeSizes = Record<string, ConceptNodeSize>
 export const conceptNodeMinSize: ConceptNodeSize = { width: 100, height: 44 }
 
 export const indexGraph = (
-  graph: GraphSnapshot,
+  graph: PresentedGraph,
   vocabs: readonly VocabDefinition[] = [],
   locale: Locale = defaultLocale,
 ) => ({
@@ -45,16 +40,6 @@ export const facingSide = (from: ConceptBounds, to: ConceptBounds): Position => 
       : Position.Top
 }
 
-export const containsPoint = (
-  concept: ConceptView,
-  size: ConceptNodeSize,
-  point: ConceptView['position'],
-) =>
-  point.x >= concept.position.x &&
-  point.x <= concept.position.x + size.width &&
-  point.y >= concept.position.y &&
-  point.y <= concept.position.y + size.height
-
 export function conceptNode(
   concept: ConceptView,
   selected: boolean,
@@ -73,19 +58,6 @@ export function conceptNode(
     },
     ariaLabel: concept.label,
     selected,
-  }
-}
-
-export function outsideNode(concept: ConceptView, measured?: ConceptNodeSize): ConceptNode {
-  return {
-    ...conceptNode(concept, false, measured),
-    className: 'graph-outside-node',
-    selectable: false,
-    draggable: false,
-    connectable: false,
-    deletable: false,
-    focusable: false,
-    domAttributes: { 'aria-hidden': true },
   }
 }
 
@@ -141,23 +113,6 @@ export function relationEdge(
   }
 }
 
-export function outsideEdge(
-  relation: RelationView,
-  graph: ReturnType<typeof indexGraph>,
-  defaultTypeId?: string,
-  sizes: ConceptNodeSizes = {},
-): RelationEdge {
-  return {
-    ...relationEdge(relation, false, false, graph, defaultTypeId, sizes),
-    className: 'graph-outside-edge',
-    selectable: false,
-    focusable: false,
-    deletable: false,
-    interactionWidth: 0,
-    domAttributes: { 'aria-hidden': true },
-  }
-}
-
 export function createGraphElements() {
   let previousNodes = new Map<string, ConceptNode>()
   let previousEdges = new Map<string, RelationEdge>()
@@ -175,7 +130,7 @@ export function createGraphElements() {
     preview = new Set(),
     onGroupSelect,
   }: {
-    graph: GraphSnapshot
+    graph: PresentedGraph
     indexed: ReturnType<typeof indexGraph>
     selected: Selection
     sizes: ConceptNodeSizes

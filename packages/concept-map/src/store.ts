@@ -29,7 +29,6 @@ export type CanvasProps = {
   readonly focusRef: RefObject<HTMLDivElement | null>
   readonly readOnly?: boolean
   readonly preview?: boolean
-  readonly showContext?: boolean
   readonly bottomInset?: number
   readonly conceptLabelMaxLength?: number
 }

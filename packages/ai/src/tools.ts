@@ -68,7 +68,7 @@ export const aiTools = {
   },
   concepts: {
     description:
-      'Read a page of concepts by IDs or label search. Defaults to the active view; use all for the complete graph.',
+      "Read a page of concepts by IDs or label search. Defaults to the active view, where concepts include that view's position and style; use all for the complete graph without presentation.",
     inputSchema: z.strictObject({
       ids: ids.optional(),
       query: z.string().max(256).optional(),
@@ -98,7 +98,7 @@ export const aiTools = {
   },
   edit: {
     description:
-      'Stage ordered undoable graph and saved-view operations, not live writes. Supply unique absolute IRIs for new concepts and types. New concepts join the active view and link to the concept selected when the turn began, if exactly one, using the default type; concepts added in the same turn do not link to each other. All edits in a turn apply together after validation and any required approval, as a single undoable batch. All edit calls in a turn merge into one batch that can only be undone together.',
+      'Stage ordered undoable graph and saved-view operations, not live writes. Supply unique absolute IRIs for new concepts and types. Positions, colors and text styles belong to the active saved view and are rejected in Overview or for concepts outside it. New concepts join the active saved view, or no view in Overview, and link to the concept selected when the turn began, if exactly one, using the default type; concepts added in the same turn do not link to each other. All edits in a turn apply together after validation and any required approval, as a single undoable batch. All edit calls in a turn merge into one batch that can only be undone together.',
     inputSchema: z.strictObject({ operations: z.array(operation).min(1).max(500) }),
   },
   history: {

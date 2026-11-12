@@ -33,6 +33,14 @@ type Grant = {
   }
 }
 
+const presentationKinds = new Set<NessoOperation['kind']>([
+  'concept.position',
+  'concept.positions',
+  'concept.color',
+  'concept.bold',
+  'concept.italic',
+])
+
 export function connectActionChannel(
   port: MessagePort,
   store: HostStore,
@@ -214,6 +222,11 @@ export function connectActionChannel(
       if (operations.some(({ kind }) => !allowed.has(kind)))
         fail('denied', 'Operation not declared')
       if (expectedRevision !== revision) fail('stale-state', 'Snapshot changed before commit')
+      if (
+        store.getState().workspace.activeViewId !== target &&
+        operations.some(({ kind }) => presentationKinds.has(kind))
+      )
+        fail('stale-context', 'The active view changed')
       const before = revision
       store.applyOperations(operations, {
         historyGroup: options?.historyGroup ? `${instanceId}:${options.historyGroup}` : undefined,

@@ -4,8 +4,6 @@
   "fitView": "适应视图",
   "lockInteractions": "锁定交互",
   "unlockInteractions": "解锁交互",
-  "showRestOfGraph": "显示图的其余部分",
-  "hideRestOfGraph": "隐藏图的其余部分",
   "zoomLevel": "缩放级别",
   "undo": "撤销",
   "redo": "重做",
@@ -30,6 +28,5 @@
   "shortcutRename": "重命名所选概念",
   "shortcutBold": "切换粗体",
   "shortcutItalic": "切换斜体",
-  "shortcutFitView": "适应视图",
-  "shortcutOutside": "切换背景视图"
+  "shortcutFitView": "适应视图"
 }

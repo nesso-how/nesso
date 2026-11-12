@@ -77,14 +77,21 @@ export async function verifyIntro({ window, url, name }: CheckContext) {
 
   await next()
   await title('See it from another angle')
-  await ready(`document.querySelectorAll('.intro .react-flow__node').length===4`)
-  const positions = await frames()
-  for (const view of ['Energy', 'Rest']) {
+  await ready(`document.querySelectorAll('.intro .react-flow__node').length===3`)
+  const energy = await frames()
+  for (const [view, hidden, shown] of [
+    ['Rest', 'urn:nesso:example:energy', 'urn:nesso:example:sleep'],
+    ['Energy', 'urn:nesso:example:sleep', 'urn:nesso:example:energy'],
+  ]) {
     await evaluate(
       `[...document.querySelectorAll('.intro-explorer button')].find(button=>button.textContent.startsWith('${view}')).click()`,
     )
-    await ready(`document.querySelectorAll('.intro .graph-outside-node').length===1`)
-    assert.deepEqual(await frames(), positions)
+    await ready(
+      `!document.querySelector('.intro [data-id="${hidden}"]')&&!!document.querySelector('.intro [data-id="${shown}"]')`,
+    )
+    const current = await frames()
+    for (const id of ['urn:nesso:example:coffee', 'urn:nesso:example:focus'])
+      assert.equal(current[id], energy[id])
   }
   await next()
   await title('Test yourself')
@@ -121,6 +128,9 @@ export async function verifyIntro({ window, url, name }: CheckContext) {
   await next()
   await ready(
     `!document.querySelector('.intro') && !!document.querySelector('#canvas .react-flow')`,
+  )
+  await evaluate(
+    `[...document.querySelectorAll('#saved-views button')].find(button=>button.textContent.trim().startsWith('Rest')).click()`,
   )
   await ready(
     `[...document.querySelectorAll('#canvas .react-flow__edge-text')].some(edge=>edge.textContent==='can disrupt')`,

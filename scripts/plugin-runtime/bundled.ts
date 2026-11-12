@@ -20,7 +20,7 @@ type Probe = {
 
 export async function verifyBundled({ window, url }: CheckContext) {
   const graph = {
-    concepts: [{ id: 'urn:probe:concept', label: 'Probe', position: { x: 0, y: 0 } }],
+    concepts: [{ id: 'urn:probe:concept', label: 'Probe' }],
     relations: [],
     relationTypes: [],
   }
@@ -108,7 +108,7 @@ export async function verifyBundled({ window, url }: CheckContext) {
         if (name === 'export') {
           const saved = result.requests.find(({ method }) => method === 'files.save')!.params
           assert.equal(saved.name, 'nesso-graph.jsonld')
-          assert.deepEqual(parseGraph(JSON.parse(saved.text!)), graph)
+          assert.deepEqual(parseGraph(JSON.parse(saved.text!)), { graph, views: [] })
         }
       } else assert.deepEqual(result.requests, [])
     } finally {

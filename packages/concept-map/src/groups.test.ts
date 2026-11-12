@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import type { Graph } from '@nesso-how/schema'
+import type { Concept, Graph as Snapshot, Presentation } from '@nesso-how/schema'
 import { groupRelations, keepGroups } from './groups.ts'
+
+type Graph = Omit<Snapshot, 'concepts'> & { concepts: (Concept & Presentation)[] }
 
 const concept = (id: string, x: number, y = 0) => ({
   id: `urn:${id}`,
@@ -68,9 +70,8 @@ test('hysteresis retains members to 48 px but returning members need 28 px', () 
   assert.equal(groupRelations({ ...graph, kept })[0].members.length, 3)
 })
 
-test('displayed context, anchors and padded bounds are obstacles', () => {
+test('anchors and padded bounds are obstacles', () => {
   const graph = fixture()
-  assert.equal(groupRelations({ ...graph, obstacles: [concept('outside', 108, 35)] }).length, 0)
   graph.concepts[0].position = { x: 108, y: 35 }
   assert.equal(groupRelations(graph).length, 0)
 })

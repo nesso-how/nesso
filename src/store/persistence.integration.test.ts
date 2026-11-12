@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import type { Preferences } from '@nesso-how/core'
+import type { Preferences, WorkspaceState } from '@nesso-how/core'
 import { parseGraph, serializeGraph, type Graph } from '@nesso-how/schema'
 import { createNessoStore } from './create.ts'
 import { connectPersistence, loadPersistence } from './persistence.ts'
@@ -13,9 +13,9 @@ import themeFixture from '../../packages/plugin/test/theme.json' with { type: 'j
 
 const fixture = (): Graph => ({
   concepts: [
-    { id: 'urn:one', label: 'One', notes: 'Definition\nExample', position: { x: 10, y: 20 } },
-    { id: 'urn:two', label: 'Two', position: { x: 30, y: 40 } },
-    { id: 'urn:hidden', label: 'Hidden', position: { x: 50, y: 60 } },
+    { id: 'urn:one', label: 'One', notes: 'Definition\nExample' },
+    { id: 'urn:two', label: 'Two' },
+    { id: 'urn:hidden', label: 'Hidden' },
   ],
   relations: [{ source: 'urn:one', predicate: 'urn:links', target: 'urn:two' }],
   relationTypes: [
@@ -23,6 +23,45 @@ const fixture = (): Graph => ({
     { id: 'urn:unused', label: 'unused' },
   ],
 })
+
+const positions = new Map([
+  ['urn:one', { x: 10, y: 20 }],
+  ['urn:two', { x: 30, y: 40 }],
+  ['urn:hidden', { x: 50, y: 60 }],
+])
+const workspace = (): WorkspaceState => ({
+  activeViewId: 'urn:view',
+  viewports: {},
+  savedViews: [
+    {
+      id: 'urn:view',
+      name: 'Pair',
+      pinned: false,
+      members: ['urn:one', 'urn:two'].map((id) => ({ id, position: positions.get(id)! })),
+    },
+  ],
+})
+const legacyDocument = () => {
+  const { schemaVersion: _, ...document } = serializeGraph(fixture()) as {
+    schemaVersion: number
+    '@graph': { '@id': string }[]
+  }
+  return {
+    graph: {
+      ...document,
+      '@graph': document['@graph'].map((node) =>
+        positions.has(node['@id']) ? { ...node, position: positions.get(node['@id']) } : node,
+      ),
+    },
+    workspace: {
+      activeViewId: 'urn:view',
+      viewports: {},
+      savedViews: [
+        { id: 'urn:view', name: 'Pair', pinned: false, conceptIds: ['urn:one', 'urn:two'] },
+      ],
+    },
+  }
+}
 
 const memoryStorage = () => {
   const records = new Map<PersistenceSection, unknown>()
@@ -69,12 +108,12 @@ const setPluginData = (host: ReturnType<typeof createNessoStore>, value: string,
 
 const savedStorage = () => {
   const storage = memoryStorage()
-  const host = registeredHost(fixture())
+  const host = registeredHost(fixture(), { workspace: workspace() })
   host.store.setLocale('it')
   host.store.setChatMessages([{ id: 'user', role: 'user', content: 'Hello' }])
   const state = host.store.getState()
   storage.records.set('document', {
-    version: 2,
+    version: 3,
     documentId: state.documentId,
     graph: serializeGraph(state.graph as Graph),
     workspace: state.workspace,
@@ -100,12 +139,7 @@ test('startup writes only missing records', async () => {
 
 test('a failed pre-migration backup protects every section and retries before saving the latest edits', async () => {
   const storage = savedStorage()
-  const current = storage.records.get('document') as { graph: unknown; workspace: unknown }
-  storage.records.set('document', {
-    version: 1,
-    graph: current.graph,
-    workspace: current.workspace,
-  })
+  storage.records.set('document', { version: 1, ...legacyDocument() })
   const originals = structuredClone(storage.records)
   const loaded = await loadPersistence(storage)
   const host = registeredHost(loaded.graph!, loaded)
@@ -135,8 +169,7 @@ test('a failed pre-migration backup protects every section and retries before sa
 
 test('plugin data waits for the migrated document identity to be saved without repeating its backup', async () => {
   const storage = savedStorage()
-  const current = storage.records.get('document') as { graph: unknown; workspace: unknown }
-  const original = { version: 1, graph: current.graph, workspace: current.workspace }
+  const original = { version: 1, ...legacyDocument() }
   storage.records.set('document', original)
   const loaded = await loadPersistence(storage)
   const host = registeredHost(loaded.graph!, loaded)
@@ -158,6 +191,39 @@ test('plugin data waits for the migrated document identity to be saved without r
     (await loadPersistence(storage)).pluginStorage,
     host.store.getState().pluginStorage,
   )
+  await persistence.dispose()
+})
+
+test('legacy documents move inline presentation into saved views and collect unsorted concepts', async () => {
+  const storage = savedStorage()
+  const original = { version: 2, documentId: 'urn:document', ...legacyDocument() }
+  storage.records.set('document', original)
+  const loaded = await loadPersistence(storage)
+  assert.deepEqual(loaded.graph, fixture())
+  assert.equal(loaded.documentId, 'urn:document')
+  const [pair, unsorted, ...rest] = loaded.workspace!.savedViews
+  assert.deepEqual(rest, [])
+  assert.deepEqual(pair, workspace().savedViews[0])
+  assert.deepEqual(
+    { ...unsorted, id: undefined },
+    {
+      id: undefined,
+      name: 'Unsorted',
+      pinned: false,
+      members: [{ id: 'urn:hidden', position: { x: 50, y: 60 } }],
+    },
+  )
+  const host = registeredHost(loaded.graph!, loaded)
+  const persistence = connectPersistence(host, storage, loaded)
+  assert.equal(await persistence.flush(), true)
+  assert.deepEqual(storage.backups[0].get('document'), original)
+  const saved = storage.records.get('document') as {
+    version: number
+    graph: { schemaVersion: number }
+  }
+  assert.equal(saved.version, 3)
+  assert.equal(saved.graph.schemaVersion, 1)
+  assert.deepEqual(parseGraph(saved.graph).views, [])
   await persistence.dispose()
 })
 
@@ -376,7 +442,7 @@ test('durable state round-trips without rewriting restored records or persisting
   await persistence.flush()
   const saved = storage.records.get('document') as { graph: unknown }
   assert.deepEqual(Object.keys(saved), ['version', 'documentId', 'graph', 'workspace'])
-  assert.deepEqual(parseGraph(saved.graph), host.store.getState().graph)
+  assert.deepEqual(parseGraph(saved.graph), { graph: host.store.getState().graph, views: [] })
   const restored = await loadPersistence(storage)
   const reopenedHost = registeredHost(restored.graph!, restored)
   const reopened = reopenedHost.store.getState()
@@ -407,7 +473,18 @@ test('durable state round-trips without rewriting restored records or persisting
   await persistence.flush()
   const reset = await loadPersistence(storage)
   assert.equal(reset.graph?.concepts.length, 1)
-  assert.deepEqual(reset.workspace, { activeViewId: null, savedViews: [], viewports: {} })
+  assert.deepEqual(reset.workspace, {
+    activeViewId: reset.workspace?.savedViews[0].id,
+    savedViews: [
+      {
+        id: reset.workspace?.savedViews[0].id,
+        name: 'View 1',
+        pinned: false,
+        members: [{ id: reset.graph?.concepts[0].id, position: { x: 0, y: 0 } }],
+      },
+    ],
+    viewports: {},
+  })
   assert.deepEqual(reset.preferences, preferences)
   assert.deepEqual(reset.conversation?.messages, [])
   storage.records.set('document', {
@@ -531,7 +608,17 @@ test('malformed records stay protected while the other sections save', async () 
     [
       'document',
       {
-        version: 2,
+        version: 3,
+        documentId: state.documentId,
+        graph: { ...serializeGraph(fixture()), schemaVersion: 2 },
+        workspace: state.workspace,
+      },
+      'document.schemaVersion',
+    ],
+    [
+      'document',
+      {
+        version: 3,
         documentId: state.documentId,
         graph: serializeGraph(longConcept),
         workspace: state.workspace,
@@ -540,7 +627,7 @@ test('malformed records stay protected while the other sections save', async () 
     [
       'document',
       {
-        version: 2,
+        version: 3,
         documentId: state.documentId,
         graph: serializeGraph(longType),
         workspace: state.workspace,
@@ -549,7 +636,7 @@ test('malformed records stay protected while the other sections save', async () 
     [
       'document',
       {
-        version: 2,
+        version: 3,
         documentId: state.documentId,
         graph: serializeGraph({ concepts: [], relations: [], relationTypes: [] }),
         workspace: state.workspace,
@@ -558,7 +645,7 @@ test('malformed records stay protected while the other sections save', async () 
     [
       'document',
       {
-        version: 2,
+        version: 3,
         documentId: state.documentId,
         graph: serializeGraph(fixture()),
         workspace: { ...state.workspace, activeViewId: 'unknown' },
@@ -567,13 +654,29 @@ test('malformed records stay protected while the other sections save', async () 
     [
       'document',
       {
-        version: 2,
+        version: 3,
         documentId: state.documentId,
         graph: serializeGraph(fixture()),
         workspace: {
           ...state.workspace,
-          savedViews: [{ id: 'bad', name: 'Bad', pinned: false, conceptIds: ['missing'] }],
+          savedViews: [
+            {
+              id: 'bad',
+              name: 'Bad',
+              pinned: false,
+              members: [{ id: 'missing', position: { x: 0, y: 0 } }],
+            },
+          ],
         },
+      },
+    ],
+    [
+      'document',
+      {
+        version: 3,
+        documentId: state.documentId,
+        graph: legacyDocument().graph,
+        workspace: state.workspace,
       },
     ],
     ['preferences', { version: 3, preferences: { ...state.preferences, activeThemeId: null } }],

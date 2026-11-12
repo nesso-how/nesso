@@ -170,7 +170,6 @@ function DesktopIntro({
                 store={store}
                 preview
                 connection={step === 1 && !relation ? introConnection : undefined}
-                showContext={step >= 2}
                 bottomInset={bottomInset}
               />
             </div>

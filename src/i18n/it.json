@@ -156,7 +156,7 @@
   "introConnectionsTitle": "Decidi tu come si collegano",
   "introConnectionsDescription": "Il caffè ha a che fare con il sonno, ma in che modo? Collega **Caffè** a **Sonno** dal cerchio in alto a destra, poi dai un nome alla **relazione** nell’Inspector. Non c’è una risposta giusta: decidere è già capire.",
   "introViewsTitle": "Guarda da un’altra prospettiva",
-  "introViewsDescription": "Le **viste** mostrano parti diverse dello stesso grafo. Passa da **Energia** a **Riposo**: il caffè resta lo stesso concetto, nello stesso punto.",
+  "introViewsDescription": "Le **viste** mostrano parti diverse dello stesso grafo. Passa da **Energia** a **Riposo**: il caffè resta lo stesso concetto, disposto per ogni vista.",
   "introReviewTitle": "Mettiti alla prova",
   "introReviewDescription": "Ogni vista ha il suo **Ripasso**, e il numero indica i concetti da ripassare. Quando lo apri spieghi ogni concetto a parole tue, poi lo ritrovi con le relazioni che hai scelto:",
   "introChatNote": "Sull’app desktop la chat AI è nell’Inspector, accanto a Dettagli.",
@@ -602,5 +602,6 @@
   "info": "Info",
   "warning": "Attenzione",
   "confirmation": "Conferma",
-  "toastQueued": "{{count}} in attesa"
+  "toastQueued": "{{count}} in attesa",
+  "overviewPlaceholder": "Apri una vista per disporre i suoi concetti."
 }

@@ -3,6 +3,7 @@ import type { PanelSizes, Preferences, WorkspaceState } from '@nesso-how/core'
 import { isLocale } from '@nesso-how/i18n'
 import { aiConversation, aiTextLimits } from '@nesso-how/ai'
 import { NessoError, validationIssues } from '@nesso-how/errors'
+import { viewMemberSchema } from '@nesso-how/schema'
 import { sectionIds } from './types.ts'
 
 export const defaultPanels: PanelSizes = { explorerWidth: 180, inspectorWidth: 210 }
@@ -45,9 +46,12 @@ const viewportSchema = z.strictObject({ x: z.number(), y: z.number(), zoom: z.nu
 const savedViewSchema = z.strictObject({
   id: z.string().min(1),
   name: z.string().trim().min(1).max(maxViewNameLength),
-  conceptIds: z
-    .array(z.string())
-    .refine((ids) => new Set(ids).size === ids.length, 'Duplicate concept id'),
+  members: z
+    .array(viewMemberSchema)
+    .refine(
+      (members) => new Set(members.map(({ id }) => id)).size === members.length,
+      'Duplicate concept id',
+    ),
   pinned: z.boolean(),
 })
 const workspaceSchema = z

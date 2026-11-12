@@ -1,8 +1,23 @@
+import type { ViewGraphSnapshot } from '@nesso-how/plugin'
 import type { ActionContribution } from '@nesso-how/plugin/runtime'
-import { serializeGraph, type Graph } from '@nesso-how/schema'
+import { newIri, serializeGraph } from '@nesso-how/schema'
 import source from '../package.json' with { type: 'json' }
 
 const { i18n } = source
+
+function serializeView(graph: ViewGraphSnapshot, name?: string) {
+  const members = graph.concepts.flatMap(({ id, position, color, bold, italic }) =>
+    position ? [{ id, position: { ...position }, color, bold, italic }] : [],
+  )
+  return serializeGraph(
+    {
+      concepts: graph.concepts.map(({ id, label, notes }) => ({ id, label, notes })),
+      relationTypes: graph.relationTypes.map((type) => ({ ...type })),
+      relations: graph.relations.map((relation) => ({ ...relation })),
+    },
+    name === undefined ? [] : [{ id: newIri(), name, members }],
+  )
+}
 
 export const create = (): readonly ActionContribution[] =>
   (['jsonld', 'png'] as const).map((format) => ({
@@ -11,7 +26,8 @@ export const create = (): readonly ActionContribution[] =>
     icon: 'download',
     run: async ({ document, files, images, notifications, viewId }) => {
       const state = await document.refresh()
-      const name = state.workspace.savedViews.find(({ id }) => id === viewId)?.name ?? 'graph'
+      const view = state.workspace.savedViews.find(({ id }) => id === viewId)
+      const name = view?.name ?? 'graph'
       const filename =
         name
           .trim()
@@ -24,11 +40,7 @@ export const create = (): readonly ActionContribution[] =>
           ? await images.renderView({ format: 'png', scale: 4 })
           : {
               mediaType: 'application/ld+json',
-              text: JSON.stringify(
-                serializeGraph(structuredClone(state.viewGraph) as Graph),
-                null,
-                2,
-              ),
+              text: JSON.stringify(serializeView(state.viewGraph, view?.name), null, 2),
             }),
       })
       if (!result.saved) return

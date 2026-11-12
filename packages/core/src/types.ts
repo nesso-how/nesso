@@ -1,4 +1,11 @@
-import type { Graph, Position, RelationType } from '@nesso-how/schema'
+import type {
+  Concept,
+  Graph,
+  Position,
+  Presentation,
+  RelationType,
+  ViewMember,
+} from '@nesso-how/schema'
 import type { Locale } from '@nesso-how/i18n'
 
 export type DeepReadonly<T> = T extends readonly (infer U)[]
@@ -10,6 +17,10 @@ export type DeepReadonly<T> = T extends readonly (infer U)[]
 export type Selection = readonly { readonly kind: 'concept' | 'relation'; readonly id: string }[]
 
 export type GraphSnapshot = DeepReadonly<Graph>
+
+export type ViewGraphSnapshot = DeepReadonly<
+  Omit<Graph, 'concepts'> & { concepts: (Concept & Partial<Presentation>)[] }
+>
 
 export type NessoOperation =
   | { readonly kind: 'concept.label'; readonly id: string; readonly value: string }
@@ -84,7 +95,7 @@ export type VocabDefinition = {
 export type SavedView = {
   readonly id: string
   readonly name: string
-  readonly conceptIds: readonly string[]
+  readonly members: readonly DeepReadonly<ViewMember>[]
   readonly pinned: boolean
 }
 
@@ -133,7 +144,7 @@ export type NessoState = {
   readonly graph: GraphSnapshot
   readonly workspace: WorkspaceState
   readonly preferences: Preferences
-  readonly viewGraph: GraphSnapshot
+  readonly viewGraph: ViewGraphSnapshot
   readonly selected: Selection
   readonly vocabs: readonly VocabDefinition[]
   readonly history: { readonly canUndo: boolean; readonly canRedo: boolean }
@@ -185,7 +196,7 @@ export type NessoStore = {
   readonly setViewPinned: (id: string, pinned: boolean) => void
   readonly setViewMembership: (viewId: string, conceptId: string, included: boolean) => void
   readonly deleteView: (id: string) => void
-  readonly getViewGraph: (id: string) => GraphSnapshot
+  readonly getViewGraph: (id: string) => ViewGraphSnapshot
 }
 
 export type NotificationAction = {

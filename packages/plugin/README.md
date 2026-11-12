@@ -14,6 +14,8 @@ For a new project, start with the [standalone example](example/), which includes
 
 The app, UI package, SDK, and official example share a release version on npm's default `latest` channel, including beta versions. Plugin compatibility is identified separately by `nesso.apiVersion`; matching the app's exact version is not required.
 
+The [compatibility guide](../../docs/compatibility.md#plugin-api) explains API support and version changes.
+
 The desktop plugin catalog offers the newest compatible version on `latest`. Other prerelease channels are not included.
 
 ## Create a plugin
@@ -78,7 +80,7 @@ Keep the example's build configuration and set these fields in `package.json`:
   "version": "1.0.0",
   "keywords": ["nesso-plugin"],
   "nesso": {
-    "apiVersion": 3,
+    "apiVersion": 4,
     "kind": "actions",
     "entry": "dist/index.js",
     "writes": ["concept.label"],
@@ -220,7 +222,7 @@ Runs in an isolated Worker with no action APIs and a 2-second calculation limit.
 
 The graph snapshot provides:
 
-- `viewGraph`: `{ concepts, relations, relationTypes }` for the invoked view.
+- `viewGraph`: `{ concepts, relations, relationTypes }` for the invoked view. In a saved view, concepts carry its `position`, `color`, `bold`, and `italic`.
 - `selected`: the invoked view's selection.
 - `targetViewId`: the invoked view's ID, or `null` for All; fixed for each invocation. Headless actions keep their target during navigation; panels restart with a new invocation when the active view changes.
 - `activeVocab`: the current vocabulary, or `null`.
@@ -252,7 +254,7 @@ Call helpers on `document` and declare their operation kinds in `nesso.writes`:
 | `setSelection([{ kind, id }])`                      | `selection.set`         |
 | `setViewMembership(viewId, conceptId, included)`    | `view.membership`       |
 
-`addConcept` returns the new IRI. New concepts join the active saved view and link to the single selected concept, if any. These links and `connect` use the vocabulary's default relation type. `createRelationType` creates and assigns a type to the given relation.
+Position, color, and style helpers edit the invoked saved view; they reject the batch in All, after navigation, or for concepts outside the view. `addConcept` returns the new IRI. New concepts join the active saved view, at the given position or near the single selected concept, and link to that concept, if any. These links and `connect` use the vocabulary's default relation type. `createRelationType` creates and assigns a type to the given relation.
 
 For related edits, use `document.applyOperations(operations)` as in the quickstart. The entire batch succeeds or changes nothing. Editing, reconnecting, retyping, or removing an unknown concept or relation rejects the batch, as does reconnecting or retyping onto an existing relation; removing an item already removed earlier in the same batch, such as a relation of a removed concept, is allowed. Separate calls are separate transactions. Raw `concept.add` operations require an explicit new absolute IRI.
 
@@ -301,6 +303,8 @@ await storage.delete('progress', { kind: 'concept', id: concept.id })
 - With `{ kind: 'view', id }`, it belongs to that saved view, independently of its name or membership. Use a non-null `viewId`.
 - Scopes identify records within the same plugin/document namespace; they do not create separate namespaces or revision baselines. The same key can be used at document scope and for different concepts and views, including a concept and view with the same ID.
 - Your plugin owns the payload format and any migrations. Version it independently of the SDK and package version; Nesso does not interpret its fields.
+
+The [downgrade and backup policy](../../docs/compatibility.md#downgrades-and-backups) also applies to private plugin data.
 
 `storage.set(key, value, scope?)` saves one record and `storage.delete(key, scope?)` removes one. Each call is a single transaction returning `true` if data changed, or `false` if nothing changed, such as saving an identical value or deleting a missing record. Failed writes throw.
 

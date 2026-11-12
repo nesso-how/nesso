@@ -3,6 +3,7 @@ import test from 'node:test'
 import { mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
+import type { WorkspaceState } from '@nesso-how/core'
 import { createNessoStore } from '../src/store/create.ts'
 import { connectPersistence, loadPersistence } from '../src/store/persistence.ts'
 import { parseBackup } from '../src/store/backup.ts'
@@ -45,6 +46,7 @@ test('manual backups round-trip every record, exclude device secrets and bind co
   const file = path.join(root, 'backup.json')
   await backups.save(file)
   const backup = await parseBackup(JSON.parse(await readFile(file, 'utf8')))
+  const document = backup.records.document as { graph: object }
   assert.deepEqual(Object.keys(backup.records), [...persistenceSections])
   assert.equal(JSON.stringify(backup).includes('secret'), false)
   for (const section of persistenceSections)
@@ -59,6 +61,13 @@ test('manual backups round-trip every record, exclude device secrets and bind co
     { ...backup, version: 2 },
     { ...backup, records: { ...backup.records, preferences: undefined } },
     { ...backup, records: { ...backup.records, document: { version: 99 } } },
+    {
+      ...backup,
+      records: {
+        ...backup.records,
+        document: { ...document, graph: { ...document.graph, schemaVersion: 2 } },
+      },
+    },
     { ...backup, records: { ...backup.records, preferences: { version: 99 } } },
   ])
     await assert.rejects(parseBackup(value), /backupInvalid|backupUnsupported/)
@@ -85,13 +94,37 @@ test('migration backups preserve all original records and restore through the ma
   const persistence = connectPersistence(host, storage, await loadPersistence(storage))
   assert.equal(await persistence.flush(), true)
   await persistence.dispose()
-  const document = (await storage.read('document')) as { graph: unknown; workspace: unknown }
-  const legacy = { version: 1, graph: document.graph, workspace: document.workspace }
+  const document = (await storage.read('document')) as {
+    graph: { schemaVersion: number; '@graph': { '@id': string }[] }
+    workspace: WorkspaceState
+  }
+  const positions = new Map(
+    document.workspace.savedViews.flatMap(({ members }) =>
+      members.map(({ id, position }) => [id, position]),
+    ),
+  )
+  const { schemaVersion: _, ...legacyGraph } = document.graph
+  const legacy = {
+    version: 1,
+    graph: {
+      ...legacyGraph,
+      '@graph': document.graph['@graph'].map((node) =>
+        positions.has(node['@id']) ? { ...node, position: positions.get(node['@id']) } : node,
+      ),
+    },
+    workspace: {
+      ...document.workspace,
+      savedViews: document.workspace.savedViews.map(({ members, ...view }) => ({
+        ...view,
+        conceptIds: members.map(({ id }) => id),
+      })),
+    },
+  }
   await storage.write('document', legacy)
   const preferences = (await storage.read('preferences')) as {
     preferences: Record<string, unknown>
   }
-  const { canvasTabOrder: _, ...legacyPreferences } = preferences.preferences
+  const { canvasTabOrder: _order, ...legacyPreferences } = preferences.preferences
   await storage.write('preferences', { version: 1, preferences: legacyPreferences })
   const originals = Object.fromEntries(
     await Promise.all(
@@ -107,8 +140,7 @@ test('migration backups preserve all original records and restore through the ma
   assert.equal(await autosave.flush(), true)
   await autosave.dispose()
   assert.deepEqual(await storage.read('document'), {
-    ...legacy,
-    version: 2,
+    ...document,
     documentId: loaded.documentId,
   })
   const upgraded = await loadPersistence(storage)
