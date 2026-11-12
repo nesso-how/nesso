@@ -5,7 +5,7 @@ import { app } from 'electron'
 import { readFile, readdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { connectPlugins } from '../../electron/plugins.ts'
-import { createPluginStorage } from '../../electron/plugin-storage.ts'
+import { createPluginStorage } from '../../electron/plugin-storage/index.ts'
 import { appUrl, createTrustedRequest } from '../../electron/ipc.ts'
 import { preparePluginPackage } from '@nesso-how/plugin/package'
 import theme from '../../packages/plugin/test/theme.json' with { type: 'json' }
