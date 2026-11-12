@@ -161,6 +161,7 @@ test('MCP reads are immediate; edits and shared history require consent and reje
     'plugin-example',
     'schema',
     'concept-map',
+    'knowledge-graph',
     'ui',
   ])
   for (const topic of topics) {

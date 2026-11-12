@@ -45,7 +45,7 @@ export function AppSidebar({
   const collapsed = useNessoStore((state) => state.preferences.collapsedSections, store)
   const pinnedOpen = !collapsed?.includes('sidebar.pinned-views')
   const viewsOpen = !collapsed?.includes('sidebar.views')
-  const [deleting, setDeleting] = useState<SavedView | 'complete-graph' | null>(null)
+  const [deleting, setDeleting] = useState<SavedView | null>(null)
   const [renaming, setRenaming] = useState<SavedView | null>(null)
   const [menu, setMenu] = useState<string | null>(null)
   const createTrigger = useRef<HTMLButtonElement>(null)
@@ -153,56 +153,30 @@ export function AppSidebar({
           </>
         )}
         <NewViewButton ref={createTrigger} disabled={readonly} />
-        {heading(t('pinnedViews'), 'pinned-views', pinnedOpen, () =>
-          store.setSectionOpen('sidebar.pinned-views', !pinnedOpen),
-        )}
+        <ListRow className="mt-1.5 has-[[aria-current]]:bg-pressed">
+          <ListRowButton
+            onClick={() => navigate(null)}
+            aria-current={workspace.activeViewId === null ? 'page' : undefined}
+          >
+            <ListRowTitle>{t('completeGraph')}</ListRowTitle>
+            <ListRowDetail>{t('conceptCount', { count: conceptCount })}</ListRowDetail>
+          </ListRowButton>
+        </ListRow>
         <div
           className="nesso-scroll min-h-0 flex-1 overflow-y-auto p-1.5 -mx-1.5"
           onScroll={() => setMenu(null)}
         >
-          <div id="pinned-views" hidden={!pinnedOpen} className="mt-1 space-y-0.5">
-            <ListRow className="has-[[aria-current]]:bg-pressed">
-              <ListRowButton
-                onClick={() => navigate(null)}
-                aria-current={workspace.activeViewId === null ? 'page' : undefined}
-              >
-                <ListRowTitle>{t('completeGraph')}</ListRowTitle>
-                <ListRowDetail>{t('conceptCount', { count: conceptCount })}</ListRowDetail>
-              </ListRowButton>
-              <RevealActions className="mr-1">
-                <Menu.Root
-                  open={menu === 'complete-graph'}
-                  onOpenChange={(open) => setMenu(open ? 'complete-graph' : null)}
-                >
-                  <Menu.Trigger
-                    disabled={readonly}
-                    ref={(element: HTMLButtonElement | null) => {
-                      if (element) menuTriggers.current.set('complete-graph', element)
-                      else menuTriggers.current.delete('complete-graph')
-                    }}
-                    render={
-                      <IconButton aria-label={t('actionsFor', { name: t('completeGraph') })} />
-                    }
-                  >
-                    <MoreHorizontal />
-                  </Menu.Trigger>
-                  <MenuPopup>
-                    <MenuItem
-                      onClick={() => {
-                        deletingId.current = 'complete-graph'
-                        setDeleting('complete-graph')
-                      }}
-                    >
-                      <Trash2 />
-                      {t('deleteView')}
-                    </MenuItem>
-                  </MenuPopup>
-                </Menu.Root>
-              </RevealActions>
-            </ListRow>
-            {pinned.map(row)}
-          </div>
-          <div className="mt-4">
+          {pinned.length > 0 && (
+            <div className="mb-4">
+              {heading(t('pinnedViews'), 'pinned-views', pinnedOpen, () =>
+                store.setSectionOpen('sidebar.pinned-views', !pinnedOpen),
+              )}
+              <div id="pinned-views" hidden={!pinnedOpen} className="mt-1 space-y-0.5">
+                {pinned.map(row)}
+              </div>
+            </div>
+          )}
+          <div>
             {heading(t('views'), 'saved-views', viewsOpen, () =>
               store.setSectionOpen('sidebar.views', !viewsOpen),
             )}

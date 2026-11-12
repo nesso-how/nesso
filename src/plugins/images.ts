@@ -8,11 +8,21 @@ export async function renderViewImage(
   options: ImageRenderOptions,
   signal: AbortSignal,
 ) {
-  if (viewId === null)
-    throw new PluginError('unavailable', [
-      { path: 'viewId', message: 'Images require a saved view' },
-    ])
   const state = store.getState()
+  const style = getComputedStyle(document.documentElement)
+  const theme = Object.fromEntries(
+    themeTokens.map((token) => [token, style.getPropertyValue(`--${token}`).trim()]),
+  )
+  if (viewId === null) {
+    const { renderKnowledgeGraphImage } = await import('@nesso-how/knowledge-graph/image')
+    return renderKnowledgeGraphImage({
+      state,
+      layout: store.knowledgeGraphLayout,
+      theme,
+      scale: options.scale,
+      signal,
+    })
+  }
   const presentation = store.getConceptMapPresentation()
   const snapshot = {
     ...state,
@@ -20,10 +30,6 @@ export async function renderViewImage(
     viewGraph: materialize(state.graph, { ...state.workspace, activeViewId: viewId }),
     selected: [],
   }
-  const style = getComputedStyle(document.documentElement)
-  const theme = Object.fromEntries(
-    themeTokens.map((token) => [token, style.getPropertyValue(`--${token}`).trim()]),
-  )
   const { renderConceptMapImage } = await import('@nesso-how/concept-map/image')
   const readOnly = () => {
     throw new PluginError('denied', [{ path: 'image', message: 'Image rendering is read-only' }])

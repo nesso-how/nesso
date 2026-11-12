@@ -5,6 +5,7 @@ import plugin from '../../packages/plugin/README.md?raw'
 import pluginExample from '../../packages/plugin/example/README.md?raw'
 import schema from '../../packages/schema/README.md?raw'
 import conceptMap from '../../packages/concept-map/README.md?raw'
+import overviewGraph from '../../packages/knowledge-graph/README.md?raw'
 import ui from '../../packages/ui/README.md?raw'
 
 export const documentation: AiDocumentation = {
@@ -14,5 +15,6 @@ export const documentation: AiDocumentation = {
   'plugin-example': pluginExample,
   schema,
   'concept-map': conceptMap,
+  'knowledge-graph': overviewGraph,
   ui,
 }

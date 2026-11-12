@@ -49,6 +49,7 @@ export function ViewHeader({
   const hidden = tabs.filter((tab) => !shown.includes(tab))
   const view = workspace.savedViews.find((view) => view.id === workspace.activeViewId)
   const name = view?.name ?? t('completeGraph')
+  const canvasLabel = view ? 'canvasMap' : 'canvasGraph'
   const label = (tab: CanvasTab) => tab.label[locale] ?? tab.label.en
   const content = (tab: CanvasTab) => (
     <>
@@ -132,7 +133,7 @@ export function ViewHeader({
       >
         <span className="canvas-tab">
           <ActionIcon name="share" />
-          {t('canvasGraph')}
+          {t(canvasLabel)}
         </span>
         <span className="h-4 w-px" />
         {tabs.map((tab) => (
@@ -153,9 +154,9 @@ export function ViewHeader({
           0,
           <>
             <ActionIcon name="share" />
-            {t('canvasGraph')}
+            {t(canvasLabel)}
           </>,
-          t('canvasGraph'),
+          t(canvasLabel),
         )}
         {tabs.length > 0 && <span aria-hidden="true" className="h-4 w-px bg-border" />}
         {shown.map((item) => tab(item.id, tabs.indexOf(item) + 1, content(item), label(item)))}

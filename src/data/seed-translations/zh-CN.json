@@ -17,5 +17,5 @@
     "urn:nesso:example:disrupts": "可能干扰",
     "urn:nesso:example:supports": "支持"
   },
-  "viewNames": { "energy": "精力", "rest": "休息" }
+  "viewNames": { "coffee": "咖啡", "energy": "精力", "rest": "休息" }
 }

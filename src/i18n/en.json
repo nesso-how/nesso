@@ -159,7 +159,7 @@
   "introConnectionsTitle": "Decide how they connect",
   "introConnectionsDescription": "Coffee has something to do with sleep, but how? Connect **Coffee** to **Sleep** from the circle at the top right, then name the **relation** in the Inspector. There is no right answer: deciding is already understanding.",
   "introViewsTitle": "See it from another angle",
-  "introViewsDescription": "**Views** show different parts of the same graph. Switch between **Energy** and **Rest**: coffee stays the same concept, arranged for each view.",
+  "introViewsDescription": "**Views** show different parts of the same graph. Switch between **Energy** and **Rest**: coffee stays the same concept, arranged for each view. The **Overview** shows the whole graph at once.",
   "introReviewTitle": "Test yourself",
   "introReviewDescription": "Every view has its own **Review**, and the number shows the concepts due. When you open it, you explain each concept in your own words, then see it again with the relations you chose:",
   "introChatNote": "In the desktop app, AI chat is in the Inspector, next to Details.",
@@ -269,6 +269,7 @@
   "moreTabs_one": "{{count}} more tab",
   "moreTabs_other": "{{count}} more tabs",
   "canvasGraph": "Graph",
+  "canvasMap": "Map",
   "aiYou": "You",
   "aiAssistant": "Nesso",
   "aiNewChat": "New chat",
@@ -533,7 +534,6 @@
   "removeConceptFromCurrentView": "Remove {{name}} from current view",
   "addConceptToCurrentView": "Add {{name}} to current view",
   "removeFromView": "Remove from {{name}}",
-  "addToView": "Add to view",
   "findView": "Find a view",
   "findViewPlaceholder": "Find a view…",
   "noSavedViews": "No saved views yet. Create one in the Explorer.",
@@ -596,5 +596,6 @@
   "warning": "Warning",
   "confirmation": "Confirmation",
   "toastQueued": "{{count}} waiting",
-  "overviewPlaceholder": "Open a view to arrange its concepts."
+  "openInView": "Open in view",
+  "createViewWithConcept": "Create view with this concept"
 }

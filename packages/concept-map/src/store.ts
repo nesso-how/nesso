@@ -33,6 +33,7 @@ export type CanvasProps = {
   readonly preview?: boolean
   readonly bottomInset?: number
   readonly conceptLabelMaxLength?: number
+  readonly restoreViewport?: boolean
 }
 
 export const StoreContext = createContext<ConceptMapContext | null>(null)
