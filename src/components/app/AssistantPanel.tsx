@@ -15,6 +15,7 @@ export function AssistantPanel({
   settingsOpen = false,
   store = host.store,
   readonly = false,
+  addToView,
 }: {
   chat: ReturnType<typeof createAiChat>
   onClose?: () => void
@@ -22,6 +23,7 @@ export function AssistantPanel({
   settingsOpen?: boolean
   store?: HostStore
   readonly?: boolean
+  addToView?: (id: string) => void
 }) {
   const t = useTranslation(store)
   const selected = useNessoStore((state) => state.selected.length > 0, store)
@@ -89,7 +91,7 @@ export function AssistantPanel({
         </Tabs.List>
       </PanelHeader>
       <Tabs.Panel value="details" className="min-h-0 flex-1">
-        <Inspector store={store} readonly={readonly} />
+        <Inspector store={store} readonly={readonly} addToView={addToView} />
       </Tabs.Panel>
       <Tabs.Panel value="chat" keepMounted className="min-h-0 flex-1 data-[hidden]:hidden">
         <Chat

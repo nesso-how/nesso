@@ -8,7 +8,6 @@ type Props = {
   onClose: () => void
   finalFocus: RefObject<HTMLDivElement | null>
   actions: readonly {
-    id?: string
     label: string
     icon: LucideIcon
     onClick: () => void
@@ -36,8 +35,8 @@ export function GraphContextMenu({ position, label, onClose, finalFocus, actions
           onKeyDown={(event) => event.stopPropagation()}
           onContextMenu={(event) => event.preventDefault()}
         >
-          {actions.map(({ id, label, icon: Icon, onClick, disabled }) => (
-            <MenuItem key={id ?? label} onClick={onClick} disabled={disabled}>
+          {actions.map(({ label, icon: Icon, onClick, disabled }) => (
+            <MenuItem key={label} onClick={onClick} disabled={disabled}>
               <Icon aria-hidden="true" />
               {label}
             </MenuItem>

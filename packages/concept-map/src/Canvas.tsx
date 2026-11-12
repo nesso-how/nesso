@@ -53,8 +53,6 @@ import './styles.css'
 import { newIri, relationKey } from '@nesso-how/schema'
 import { ConceptNodeView } from './ConceptNodeView'
 import { GroupNodeView } from './GroupNodeView'
-import { GhostNodeView } from './GhostNodeView'
-import { conceptBoxes, estimatedSize, ghostElements, ghostPrefix } from './ghosts'
 import { arrange, type LayoutBounds } from './layout'
 import { outsideNeighbors } from './neighbors'
 import { groupRelations, keepGroups } from './groups'
@@ -63,7 +61,9 @@ import { ConnectionPreview } from './ConnectionPreview'
 import { GraphContextMenu } from './GraphContextMenu'
 import {
   createGraphElements,
+  conceptBoxes,
   conceptNodeMinSize,
+  estimatedSize,
   indexGraph,
   type ConceptNodeSizes,
 } from './adapters'
@@ -77,7 +77,6 @@ import { canConnect } from './connection'
 const nodeTypes: NodeTypes = {
   concept: ConceptNodeView,
   relationGroup: GroupNodeView,
-  ghost: GhostNodeView,
 }
 const fitViewOptions = { padding: 0.3, maxZoom: 1.2 }
 const easeOut = (t: number) => 1 - Math.pow(1 - t, 3)
@@ -141,7 +140,6 @@ export function Canvas({
   const concepts = useNesso((state) => state.graph.concepts)
   const relations = useNesso((state) => state.graph.relations)
   const conceptCount = concepts.length
-  const labels = useMemo(() => new Map(concepts.map(({ id, label }) => [id, label])), [concepts])
   const outside = useMemo(
     () => outsideNeighbors(relations, new Set(graph.concepts.map(({ id }) => id))),
     [relations, graph.concepts],
@@ -192,7 +190,6 @@ export function Canvas({
     y: number
     target: ContextMenuTarget
   } | null>(null)
-  const [more, setMore] = useState<{ x: number; y: number; ids: readonly string[] } | null>(null)
   const grouping = useNesso((state) => state.preferences.relationGroups ?? true)
   const [retained, setRetained] = useState({ view, grouping, groups: [] as RelationGroup[] })
   const kept = useMemo(
@@ -320,20 +317,11 @@ export function Canvas({
     },
     [visibleBounds],
   )
-  const addMember = useCallback(
-    (id: string, position: XYPosition) => {
-      const viewId = store.getState().workspace.activeViewId
-      if (!viewId) return
-      write([
-        { kind: 'view.membership', viewId, conceptId: id, included: true },
-        { kind: 'concept.position', id, value: position },
-      ])
-    },
-    [store, write],
-  )
   const addNear = useCallback(
     (id: string) => {
       const state = store.getState()
+      const viewId = state.workspace.activeViewId
+      if (!viewId) return
       const { concepts: members, relations: shown } = presentedGraph(state)
       const ids = new Set(members.map((concept) => concept.id))
       const links = state.graph.relations.filter(
@@ -341,18 +329,20 @@ export function Canvas({
           (source === id && ids.has(target)) || (target === id && ids.has(source)),
       )
       const label = state.graph.concepts.find((concept) => concept.id === id)?.label ?? ''
-      addMember(
-        id,
+      const position =
         links.length === 0
           ? viewportPosition()
           : arrange({
               fixed: conceptBoxes(members, sizes),
               free: [{ id, ...estimatedSize(label, sizes, id) }],
               links: [...shown, ...links],
-            }).get(id)!,
-      )
+            }).get(id)!
+      write([
+        { kind: 'view.membership', viewId, conceptId: id, included: true },
+        { kind: 'concept.position', id, value: position },
+      ])
     },
-    [store, sizes, viewportPosition, addMember],
+    [store, sizes, viewportPosition, write],
   )
   useImperativeHandle(
     ref,
@@ -361,44 +351,10 @@ export function Canvas({
       addToView: (id) => {
         if (!presentedGraph(store.getState()).concepts.some((concept) => concept.id === id))
           addNear(id)
-        setFocusTarget(id)
       },
     }),
     [store, addNear],
   )
-  const anchor =
-    interactive &&
-    !hasOverlay &&
-    !dragged &&
-    selected.length === 1 &&
-    selected[0].kind === 'concept'
-      ? selected[0].id
-      : null
-  const ghosts = useMemo(() => {
-    const neighbors = anchor ? outside.get(anchor) : undefined
-    if (!anchor || !neighbors) return null
-    return ghostElements({
-      anchor,
-      neighbors,
-      labels,
-      concepts: graph.concepts,
-      relations: graph.relations,
-      sizes,
-      bounds: visibleBounds(),
-      typeLabel: (predicate) =>
-        predicate === defaultTypeId ? undefined : indexed.relationTypes.get(predicate)?.label,
-    })
-  }, [
-    anchor,
-    outside,
-    labels,
-    graph.concepts,
-    graph.relations,
-    sizes,
-    visibleBounds,
-    defaultTypeId,
-    indexed,
-  ])
   const elements = adapt({
     outside: interactive ? outside : undefined,
     groups,
@@ -429,20 +385,16 @@ export function Canvas({
         target: indexed.concepts.get(relation.target)?.label ?? '',
       }),
   })
-  const nodes = useMemo(
-    () => (ghosts ? [...elements.nodes, ...ghosts.nodes] : elements.nodes),
-    [elements.nodes, ghosts],
-  )
+  const nodes = elements.nodes
   const edges = useMemo(() => {
-    const shown = ghosts ? [...elements.edges, ...ghosts.edges] : elements.edges
-    if (!reconnectDrag) return shown
+    if (!reconnectDrag) return elements.edges
     const ids = new Set(reconnectDrag.relations.map(relationKey))
-    return shown.map((edge) =>
+    return elements.edges.map((edge) =>
       ids.has(edge.id) || edge.data?.relations?.some((id) => ids.has(id))
         ? { ...edge, className: 'graph-reconnecting-edge' }
         : edge,
     )
-  }, [elements.edges, ghosts, reconnectDrag])
+  }, [elements.edges, reconnectDrag])
   const connectionPreview = useCallback(
     (props: ConnectionLineComponentProps) => (
       <ConnectionPreview {...props} reconnection={reconnectDrag} />
@@ -466,9 +418,7 @@ export function Canvas({
   const onNodesChange = useCallback(
     (changes: NodeChange<ConceptNode>[]) => {
       const concepts = changes.filter(
-        (change) =>
-          !('id' in change) ||
-          (!change.id.startsWith('#group:') && !change.id.startsWith(ghostPrefix)),
+        (change) => !('id' in change) || !change.id.startsWith('#group:'),
       )
       const dimensions = concepts.flatMap((change) =>
         change.type === 'dimensions' && change.dimensions
@@ -654,26 +604,14 @@ export function Canvas({
   )
   const objectHandlers = useMemo(
     () => ({
-      onNodeClick: (event: ReactMouseEvent, node: ConceptNode) => {
-        if (node.type !== 'ghost') return
-        if (node.data.members) {
-          const bounds = (event.currentTarget as Element).getBoundingClientRect()
-          setMore({ x: bounds.left, y: bounds.bottom, ids: node.data.members })
-        } else {
-          addMember(node.id.slice(ghostPrefix.length), node.position)
-          canvas.current?.focus()
-        }
-      },
       onNodeContextMenu: (event: ReactMouseEvent, node: ConceptNode) => {
-        if (node.type === 'ghost') event.preventDefault()
-        else if (node.type === 'relationGroup') {
+        if (node.type === 'relationGroup') {
           if (interactive) selectGroup(node.data.members!)
           handleContextMenu(event, undefined, 'selection')
         } else handleContextMenu(event, { kind: 'concept', id: node.id })
       },
       onEdgeContextMenu: (event: ReactMouseEvent, edge: RelationEdge) => {
-        if (edge.id.startsWith(ghostPrefix)) event.preventDefault()
-        else if (edge.data?.relations) {
+        if (edge.data?.relations) {
           if (interactive) selection(edge.data.relations.map((id) => ({ kind: 'relation', id })))
           handleContextMenu(event, undefined, 'relation')
         } else handleContextMenu(event, { kind: 'relation', id: edge.id })
@@ -703,7 +641,7 @@ export function Canvas({
         setReconnectDrag(null)
       },
     }),
-    [handleContextMenu, interactive, write, store, selection, selectGroup, addMember, canvas],
+    [handleContextMenu, interactive, write, store, selection, selectGroup],
   )
 
   const handlePaneDoubleClick = (event: ReactMouseEvent) => {
@@ -1318,18 +1256,6 @@ export function Canvas({
             },
           },
         ]}
-      />
-      <GraphContextMenu
-        position={more}
-        label={t('moreOutsideNeighbors')}
-        onClose={() => setMore(null)}
-        finalFocus={canvas}
-        actions={(more?.ids ?? []).map((id) => ({
-          id,
-          label: labels.get(id) ?? '',
-          icon: Plus,
-          onClick: () => addNear(id),
-        }))}
       />
     </div>
   )

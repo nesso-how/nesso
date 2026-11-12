@@ -12,10 +12,12 @@ export function ConceptConnections({
   store = nessoStore,
   conceptId,
   readonly = false,
+  addToView,
 }: {
   store?: HostStore
   conceptId: string
   readonly?: boolean
+  addToView?: (id: string) => void
 }) {
   const t = useTranslation(store)
   const graph = useNessoStore((state) => state.graph, store)
@@ -68,7 +70,11 @@ export function ConceptConnections({
                     included ? 'removeConceptFromCurrentView' : 'addConceptToCurrentView',
                     { name: other?.label ?? '' },
                   )}
-                  onClick={() => store.setViewMembership(activeViewId, otherId, !included)}
+                  onClick={() =>
+                    !included && addToView
+                      ? addToView(otherId)
+                      : store.setViewMembership(activeViewId, otherId, !included)
+                  }
                 >
                   <MembershipIcon />
                 </IconButton>

@@ -238,37 +238,10 @@
     animation: none;
   }
 }
-.graph-ghost {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px 12px;
-  border: 1px dashed var(--node-border);
-  border-radius: calc(var(--radius-object) + 2px);
-  background: color-mix(in srgb, var(--card) 60%, transparent);
-  color: var(--muted-foreground);
-  font-size: 14px;
-  line-height: 18px;
-  white-space: nowrap;
-  cursor: pointer;
-  animation: relation-group-in 180ms ease-out;
-}
-.graph-ghost:hover,
-.graph-ghost:focus-visible {
-  border-color: var(--handle);
-  color: var(--foreground);
-}
-.graph-ghost:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
-}
-.react-flow__edge.graph-ghost-edge .react-flow__edge-path {
-  stroke-dasharray: 4 4;
-}
 .concept-outside {
   position: absolute;
   top: -8px;
-  right: -8px;
+  left: -8px;
   display: none;
   min-width: 18px;
   height: 18px;
@@ -286,11 +259,7 @@
 }
 .react-flow:not(:has(.react-flow__node.selected, .react-flow__edge.selected))
   .react-flow__node:hover
-  .concept-outside {
+  .concept-outside,
+.react-flow__node.selected .concept-outside {
   display: flex;
-}
-@media (prefers-reduced-motion: reduce) {
-  .graph-ghost {
-    animation: none;
-  }
 }

@@ -160,11 +160,13 @@ export function Inspector({
   readonly = false,
   relationTypeOnly = false,
   focusRelation = false,
+  addToView,
 }: {
   store?: HostStore
   readonly?: boolean
   relationTypeOnly?: boolean
   focusRelation?: boolean
+  addToView?: (id: string) => void
 }) {
   const t = useTranslation(store)
   const textGroup = useRef<string | undefined>(undefined)
@@ -386,6 +388,7 @@ export function Inspector({
           store={store}
           conceptId={concept.id}
           readonly={readonly}
+          addToView={addToView}
         />
       )}
       {conceptIds.length > 0 && (

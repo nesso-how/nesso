@@ -20,6 +20,6 @@ export type ConceptData = {
   onGroupSelect?: (members: readonly string[]) => void
   outside?: number
 }
-export type ConceptNode = Node<ConceptData, 'concept' | 'relationGroup' | 'ghost'>
+export type ConceptNode = Node<ConceptData, 'concept' | 'relationGroup'>
 
 export type RelationEdge = Edge<{ relations?: readonly string[] }>

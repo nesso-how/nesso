@@ -14,6 +14,15 @@ type ConceptBounds = ConceptNodeSize & { position: ConceptView['position'] }
 export type ConceptNodeSizes = Record<string, ConceptNodeSize>
 export const conceptNodeMinSize: ConceptNodeSize = { width: 100, height: 44 }
 
+export const estimatedSize = (label: string, sizes: ConceptNodeSizes, id: string) =>
+  sizes[id] ?? {
+    width: Math.max(conceptNodeMinSize.width, label.length * 8 + 26),
+    height: conceptNodeMinSize.height,
+  }
+
+export const conceptBoxes = (concepts: PresentedGraph['concepts'], sizes: ConceptNodeSizes) =>
+  concepts.map(({ id, position }) => ({ id, position, ...(sizes[id] ?? conceptNodeMinSize) }))
+
 export const indexGraph = (
   graph: PresentedGraph,
   vocabs: readonly VocabDefinition[] = [],

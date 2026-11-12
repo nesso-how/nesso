@@ -66,6 +66,7 @@ export default function App({
   const [deletingConcepts, setDeletingConcepts] = useState(false)
   const canvas = useRef<HTMLDivElement>(null)
   const renderer = useRef<ConceptMapHandle>(null)
+  const addToView = (id: string) => renderer.current?.addToView(id)
   const pluginPanel = usePluginPanel()
   const compact = useMediaQuery(compactQuery)
   const readonly = compact
@@ -197,9 +198,10 @@ export default function App({
                         setSettingsOpen(true)
                       }}
                       settingsOpen={settingsOpen}
+                      addToView={addToView}
                     />
                   ) : (
-                    <Inspector />
+                    <Inspector addToView={addToView} />
                   )}
                 </SidePanel>
               )}
@@ -226,6 +228,7 @@ export default function App({
         onAdd={(id) => {
           activePluginPanel.close()
           addToActiveView(host.store, renderer.current, id)
+          renderer.current?.focusConcept(id)
         }}
       />
       {window.nessoUpdater && <UpdateBar updater={window.nessoUpdater} />}

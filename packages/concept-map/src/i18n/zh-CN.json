@@ -30,8 +30,6 @@
   "shortcutItalic": "切换斜体",
   "shortcutFitView": "适应视图",
   "outsideNeighbors": "此视图之外的相关概念：{{count}}",
-  "addToView": "将{{name}}添加到视图",
-  "moreOutsideNeighbors": "更多相关概念",
   "rearrangeSelection": "重新排列所选内容",
   "rearrangeView": "重新排列视图",
   "shortcutRearrange": "重新排列所选内容或视图",

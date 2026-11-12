@@ -34,11 +34,11 @@ export async function verifyImages(context: CheckContext) {
     const origin = viewport.getBoundingClientRect()
     const zoom = new DOMMatrix(getComputedStyle(viewport).transform).a
     return {
-      rects: [...viewport.querySelectorAll('.react-flow__node:not(.react-flow__node-ghost), .react-flow__edge:not(.graph-ghost-edge) :is(.react-flow__edge-path, .react-flow__edge-textwrapper)')].map(node => {
+      rects: [...viewport.querySelectorAll('.react-flow__node, .react-flow__edge-path, .react-flow__edge-textwrapper')].map(node => {
         const rect = node.getBoundingClientRect()
         return { x: (rect.left - origin.left) / zoom, y: (rect.top - origin.top) / zoom, width: rect.width / zoom, height: rect.height / zoom }
       }),
-      edges: [...viewport.querySelectorAll('.react-flow__edge:not(.graph-ghost-edge) .react-flow__edge-path')].map(path =>
+      edges: [...viewport.querySelectorAll('.react-flow__edge-path')].map(path =>
         [0.2, 0.35, 0.65, 0.8].map(fraction => {
           const point = path.getPointAtLength(path.getTotalLength() * fraction)
           return { x: point.x, y: point.y }
