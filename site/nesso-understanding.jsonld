@@ -1,11 +1,21 @@
 {
+  "schemaVersion": 1,
   "@context": {
     "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
     "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "schemaVersion": {
+      "@id": "urn:uuid:222c3bab-82c0-492c-bac4-e48272823081"
+    },
     "position": {
       "@id": "urn:uuid:af4fb77d-c82c-5e04-bf5c-68588670d18b",
       "@type": "@json"
     },
+    "color": { "@id": "urn:uuid:c9d8a2c8-6ed8-5d10-83ee-fb11e19a4db1" },
+    "bold": { "@id": "urn:uuid:5d843456-1cae-4e78-9121-80dc1eaaec41" },
+    "italic": { "@id": "urn:uuid:a532a410-360e-4449-9750-9934b49b2d39" },
+    "View": "urn:uuid:266b403a-90c8-470f-b9e0-73c712ba2cf8",
+    "members": { "@id": "urn:uuid:ea405e81-beae-4cb7-a13c-3b31c1f2c82f" },
+    "concept": { "@id": "urn:uuid:011331b1-50a3-4d46-aa1a-9f87193f0844" },
     "sparks": {
       "@id": "urn:nesso:example:sparks",
       "@type": "@id"
@@ -83,12 +93,7 @@
     {
       "@id": "urn:nesso:example:curiosity",
       "rdfs:label": "Curiosity",
-      "rdfs:comment": "The pull toward what we do not yet know.",
-      "color": "#F6E7D2",
-      "position": {
-        "x": 20,
-        "y": 0
-      },
+      "rdfs:comment": "The **pull** toward what we do not yet *know*.",
       "sparks": {
         "@id": "urn:nesso:example:questions"
       }
@@ -96,12 +101,7 @@
     {
       "@id": "urn:nesso:example:questions",
       "rdfs:label": "Questions",
-      "rdfs:comment": "Open problems that give attention a direction.",
-      "color": "#F6E7D2",
-      "position": {
-        "x": 280,
-        "y": 0
-      },
+      "rdfs:comment": "Open **problems** that give attention a *direction*.",
       "guide": {
         "@id": "urn:nesso:example:exploration"
       }
@@ -109,12 +109,7 @@
     {
       "@id": "urn:nesso:example:exploration",
       "rdfs:label": "Exploration",
-      "rdfs:comment": "Trying ideas out, comparing sources and following leads.",
-      "color": "#F6E7D2",
-      "position": {
-        "x": 280,
-        "y": 120
-      },
+      "rdfs:comment": "**Trying** ideas out, comparing sources and following *leads*.",
       "reveals": {
         "@id": "urn:nesso:example:connections"
       }
@@ -122,12 +117,7 @@
     {
       "@id": "urn:nesso:example:connections",
       "rdfs:label": "Connections",
-      "rdfs:comment": "Links between new ideas and what we already know.",
-      "color": "#DDEBD8",
-      "position": {
-        "x": 280,
-        "y": 240
-      },
+      "rdfs:comment": "Links between *new ideas* and what we already **know**.",
       "deepen": {
         "@id": "urn:nesso:example:understanding"
       }
@@ -135,13 +125,7 @@
     {
       "@id": "urn:nesso:example:understanding",
       "rdfs:label": "Understanding",
-      "rdfs:comment": "Being able to explain how ideas relate, recognize patterns and apply them in new situations. It grows through exploration, practice and feedback.",
-      "color": "#DDEBD8",
-      "bold": true,
-      "position": {
-        "x": 280,
-        "y": 380
-      },
+      "rdfs:comment": "Being able to **explain** how ideas relate, recognize patterns and apply them in new situations. It grows through exploration, practice and *feedback*.",
       "enables": [
         {
           "@id": "urn:nesso:example:explaining"
@@ -157,13 +141,7 @@
     {
       "@id": "urn:nesso:example:retrieval",
       "rdfs:label": "Retrieval practice",
-      "rdfs:comment": "Recalling an idea from memory instead of rereading it.",
-      "color": "#DCE7F3",
-      "italic": true,
-      "position": {
-        "x": 0,
-        "y": 500
-      },
+      "rdfs:comment": "**Recalling** an idea from memory instead of *rereading* it.",
       "strengthens": {
         "@id": "urn:nesso:example:memory"
       }
@@ -171,13 +149,7 @@
     {
       "@id": "urn:nesso:example:spacing",
       "rdfs:label": "Spaced repetition",
-      "rdfs:comment": "Reviewing at growing intervals, just before forgetting.",
-      "color": "#DCE7F3",
-      "italic": true,
-      "position": {
-        "x": 0,
-        "y": 560
-      },
+      "rdfs:comment": "Reviewing at growing **intervals**, just before *forgetting*.",
       "strengthens": {
         "@id": "urn:nesso:example:memory"
       }
@@ -185,13 +157,7 @@
     {
       "@id": "urn:nesso:example:interleaving",
       "rdfs:label": "Interleaving",
-      "rdfs:comment": "Mixing related topics so each one is easier to tell apart.",
-      "color": "#DCE7F3",
-      "italic": true,
-      "position": {
-        "x": 0,
-        "y": 620
-      },
+      "rdfs:comment": "**Mixing** related topics so each one is easier to *tell apart*.",
       "strengthens": {
         "@id": "urn:nesso:example:memory"
       }
@@ -199,13 +165,7 @@
     {
       "@id": "urn:nesso:example:memory",
       "rdfs:label": "Long-term memory",
-      "rdfs:comment": "Knowledge that stays available long after it was first learned.",
-      "color": "#E5DFF3",
-      "bold": true,
-      "position": {
-        "x": 0,
-        "y": 380
-      },
+      "rdfs:comment": "Knowledge that stays *available* long after it was first **learned**.",
       "supports": {
         "@id": "urn:nesso:example:understanding"
       }
@@ -213,12 +173,7 @@
     {
       "@id": "urn:nesso:example:feedback",
       "rdfs:label": "Feedback",
-      "rdfs:comment": "Signals that show where an explanation holds and where it breaks.",
-      "color": "#F6DEDA",
-      "position": {
-        "x": 280,
-        "y": 540
-      },
+      "rdfs:comment": "Signals that show where an explanation **holds** and where it *breaks*.",
       "refines": {
         "@id": "urn:nesso:example:understanding"
       }
@@ -226,32 +181,197 @@
     {
       "@id": "urn:nesso:example:explaining",
       "rdfs:label": "Explaining",
-      "rdfs:comment": "Putting an idea into your own words for someone else.",
-      "color": "#F3EBC9",
-      "position": {
-        "x": 540,
-        "y": 320
-      }
+      "rdfs:comment": "Putting an idea into **your own words** for *someone else*."
     },
     {
       "@id": "urn:nesso:example:solving",
       "rdfs:label": "Problem solving",
-      "rdfs:comment": "Using what you know to work through something unfamiliar.",
-      "color": "#F3EBC9",
-      "position": {
-        "x": 540,
-        "y": 380
-      }
+      "rdfs:comment": "Using what you **know** to work through something *unfamiliar*."
     },
     {
       "@id": "urn:nesso:example:transfer",
       "rdfs:label": "Transfer",
-      "rdfs:comment": "Applying an idea in a context different from where it was learned.",
-      "color": "#F3EBC9",
-      "position": {
-        "x": 540,
-        "y": 440
-      }
+      "rdfs:comment": "Applying an idea in a context *different* from where it was **learned**."
+    },
+    {
+      "@id": "urn:nesso:example:view:learning",
+      "@type": "View",
+      "rdfs:label": "Learning",
+      "members": [
+        {
+          "concept": { "@id": "urn:nesso:example:curiosity" },
+          "position": { "x": 20, "y": 0 },
+          "color": "#F6E7D2"
+        },
+        {
+          "concept": { "@id": "urn:nesso:example:questions" },
+          "position": { "x": 280, "y": 0 },
+          "color": "#F6E7D2"
+        },
+        {
+          "concept": { "@id": "urn:nesso:example:exploration" },
+          "position": { "x": 280, "y": 120 },
+          "color": "#F6E7D2"
+        },
+        {
+          "concept": { "@id": "urn:nesso:example:connections" },
+          "position": { "x": 280, "y": 240 },
+          "color": "#DDEBD8"
+        },
+        {
+          "concept": { "@id": "urn:nesso:example:understanding" },
+          "position": { "x": 280, "y": 380 },
+          "color": "#DDEBD8",
+          "bold": true
+        },
+        {
+          "concept": { "@id": "urn:nesso:example:retrieval" },
+          "position": { "x": 0, "y": 500 },
+          "color": "#DCE7F3",
+          "italic": true
+        },
+        {
+          "concept": { "@id": "urn:nesso:example:spacing" },
+          "position": { "x": 0, "y": 560 },
+          "color": "#DCE7F3",
+          "italic": true
+        },
+        {
+          "concept": { "@id": "urn:nesso:example:interleaving" },
+          "position": { "x": 0, "y": 620 },
+          "color": "#DCE7F3",
+          "italic": true
+        },
+        {
+          "concept": { "@id": "urn:nesso:example:memory" },
+          "position": { "x": 0, "y": 380 },
+          "color": "#E5DFF3",
+          "bold": true
+        },
+        {
+          "concept": { "@id": "urn:nesso:example:feedback" },
+          "position": { "x": 280, "y": 540 },
+          "color": "#F6DEDA"
+        },
+        {
+          "concept": { "@id": "urn:nesso:example:explaining" },
+          "position": { "x": 540, "y": 320 },
+          "color": "#F3EBC9"
+        },
+        {
+          "concept": { "@id": "urn:nesso:example:solving" },
+          "position": { "x": 540, "y": 380 },
+          "color": "#F3EBC9"
+        },
+        {
+          "concept": { "@id": "urn:nesso:example:transfer" },
+          "position": { "x": 540, "y": 440 },
+          "color": "#F3EBC9"
+        }
+      ]
+    },
+    {
+      "@id": "urn:nesso:example:view:curiosity",
+      "@type": "View",
+      "rdfs:label": "Curiosity loop",
+      "members": [
+        {
+          "concept": { "@id": "urn:nesso:example:curiosity" },
+          "position": { "x": 20, "y": 0 },
+          "color": "#F6E7D2"
+        },
+        {
+          "concept": { "@id": "urn:nesso:example:questions" },
+          "position": { "x": 280, "y": 0 },
+          "color": "#F6E7D2"
+        },
+        {
+          "concept": { "@id": "urn:nesso:example:exploration" },
+          "position": { "x": 280, "y": 120 },
+          "color": "#F6E7D2"
+        },
+        {
+          "concept": { "@id": "urn:nesso:example:connections" },
+          "position": { "x": 280, "y": 240 },
+          "color": "#DDEBD8"
+        },
+        {
+          "concept": { "@id": "urn:nesso:example:understanding" },
+          "position": { "x": 280, "y": 380 },
+          "color": "#DDEBD8",
+          "bold": true
+        }
+      ]
+    },
+    {
+      "@id": "urn:nesso:example:view:study",
+      "@type": "View",
+      "rdfs:label": "Study habits",
+      "members": [
+        {
+          "concept": { "@id": "urn:nesso:example:understanding" },
+          "position": { "x": 280, "y": 380 },
+          "color": "#DDEBD8",
+          "bold": true
+        },
+        {
+          "concept": { "@id": "urn:nesso:example:retrieval" },
+          "position": { "x": 0, "y": 500 },
+          "color": "#DCE7F3",
+          "italic": true
+        },
+        {
+          "concept": { "@id": "urn:nesso:example:spacing" },
+          "position": { "x": 0, "y": 560 },
+          "color": "#DCE7F3",
+          "italic": true
+        },
+        {
+          "concept": { "@id": "urn:nesso:example:interleaving" },
+          "position": { "x": 0, "y": 620 },
+          "color": "#DCE7F3",
+          "italic": true
+        },
+        {
+          "concept": { "@id": "urn:nesso:example:memory" },
+          "position": { "x": 0, "y": 380 },
+          "color": "#E5DFF3",
+          "bold": true
+        }
+      ]
+    },
+    {
+      "@id": "urn:nesso:example:view:applying",
+      "@type": "View",
+      "rdfs:label": "Applying ideas",
+      "members": [
+        {
+          "concept": { "@id": "urn:nesso:example:understanding" },
+          "position": { "x": 280, "y": 380 },
+          "color": "#DDEBD8",
+          "bold": true
+        },
+        {
+          "concept": { "@id": "urn:nesso:example:feedback" },
+          "position": { "x": 280, "y": 540 },
+          "color": "#F6DEDA"
+        },
+        {
+          "concept": { "@id": "urn:nesso:example:explaining" },
+          "position": { "x": 540, "y": 320 },
+          "color": "#F3EBC9"
+        },
+        {
+          "concept": { "@id": "urn:nesso:example:solving" },
+          "position": { "x": 540, "y": 380 },
+          "color": "#F3EBC9"
+        },
+        {
+          "concept": { "@id": "urn:nesso:example:transfer" },
+          "position": { "x": 540, "y": 440 },
+          "color": "#F3EBC9"
+        }
+      ]
     }
   ]
 }

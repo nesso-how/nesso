@@ -291,15 +291,14 @@ html:not([data-desktop]) .web-cta:hover {
   color: var(--muted-foreground);
 }
 .app-preview {
-  max-width: 1000px;
   margin-inline: auto;
   margin-top: clamp(48px, 7vw, 80px);
 }
 .app-preview > img {
   display: block;
-  width: calc(100% * 2624 / 2400);
+  width: calc(100% * 2784 / 2560);
   max-width: none;
-  margin-inline: calc(-100% * 112 / 2400);
+  margin-inline: calc(-100% * 112 / 2560);
   height: auto;
 }
 .workspace-captions {
