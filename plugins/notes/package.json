@@ -1,6 +1,6 @@
 {
   "name": "@nesso-how/notes",
-  "version": "1.0.0-beta.15",
+  "version": "1.0.0-beta.16",
   "description": "Free-form Markdown notes for each view",
   "license": "MIT",
   "type": "module",

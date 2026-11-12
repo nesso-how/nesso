@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.0.0-beta.16 — 2026-11-12
+
+### Breaking Changes
+
+- **views:** Move concept presentation into saved views (#316)
+  move concept presentation into saved views (#316)
+
+### Features
+
+- **views:** Bring existing concepts into a view (#317)
+- **views:** Add an overview renderer for the whole graph (#319)
+
+### Fixes
+
+- **review:** Localize relation labels (#325)
+
 ## 1.0.0-beta.15 — 2026-11-11
 
 ### Documentation

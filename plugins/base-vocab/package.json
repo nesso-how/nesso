@@ -1,6 +1,6 @@
 {
   "name": "@nesso-how/base-vocab",
-  "version": "1.0.0-beta.15",
+  "version": "1.0.0-beta.16",
   "license": "MIT",
   "files": [
     "dist/definition.json"
