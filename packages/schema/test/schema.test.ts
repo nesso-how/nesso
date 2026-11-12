@@ -42,12 +42,15 @@ test('a graph with compact and custom predicates survives a JSON-LD round trip',
   graph.relations.push(...targets.map((target) => ({ source: subject, predicate: custom, target })))
   const original = structuredClone(graph)
   const serialized = serializeGraph(graph)
+  assert.equal(serialized.schemaVersion, 1)
   const entry = (serialized['@graph'] as Record<string, unknown>[]).find(
     (entry) => entry['@id'] === subject,
   )!
   assert.equal(entry['rdfs:comment'], graph.concepts[0].notes)
   const { graph: restored, views } = parseGraph(serialized)
   assert.deepEqual(views, [])
+  const { schemaVersion: _, ...unversioned } = serialized
+  assert.deepEqual(parseGraph(unversioned), { graph, views: [] })
   assert.deepEqual(graph, original)
   assert.deepEqual(restored.concepts, graph.concepts)
   assert.deepEqual(restored.relationTypes, graph.relationTypes)
@@ -158,20 +161,56 @@ test('notes must be strings at graph and JSON-LD boundaries', () => {
   )
 })
 
-test('inline concept presentation from earlier files is read as one view', () => {
-  const { graph, views } = parseGraph(fixture)
+test('legacy documents preserve presentation and relation aliases when migrated', () => {
+  const { connects: _, ...concept } = fixture['@graph'][1]
+  const legacy = {
+    '@context': {
+      ...Object.fromEntries(
+        Object.entries(fixture['@context']).filter(
+          ([term]) => !['schemaVersion', 'View', 'members', 'concept'].includes(term),
+        ),
+      ),
+      schemaVersion: { '@id': predicate, '@type': '@id' },
+      View: { '@id': predicate, '@type': '@id' },
+    },
+    '@graph': [
+      fixture['@graph'][0],
+      {
+        ...concept,
+        bold: false,
+        italic: true,
+        schemaVersion: { '@id': targets[0] },
+        [predicate]: { '@id': targets[1] },
+      },
+      { ...fixture['@graph'][2], View: { '@id': subject } },
+      { '@id': targets[1], 'rdfs:label': 'Three' },
+    ],
+  }
+  const original = structuredClone(legacy)
+  const { graph, views } = parseGraph(legacy)
   assert.deepEqual(graph.concepts[0], {
     id: subject,
     label: 'One',
     notes: 'A definition.\nAn example.',
   })
+  assert.deepEqual(
+    graph.relations.map(relationKey).sort(),
+    [
+      { source: subject, predicate, target: targets[0] },
+      { source: subject, predicate, target: targets[1] },
+      { source: targets[0], predicate, target: subject },
+    ]
+      .map(relationKey)
+      .sort(),
+  )
   assert.equal(views.length, 1)
   assert.equal(views[0].name, '')
   assert.deepEqual(views[0].members, [
-    { id: subject, position: { x: 10, y: 20 }, color: '#e1ecde' },
+    { id: subject, position: { x: 10, y: 20 }, color: '#e1ecde', bold: false, italic: true },
     { id: targets[0], position: { x: 30, y: 40 } },
-    { id: targets[1], position: { x: 50, y: 60 } },
+    { id: targets[1], position: { x: 0, y: 0 } },
   ])
+  assert.deepEqual(legacy, original)
 })
 
 test('views keep their members presentation across a JSON-LD round trip', () => {
@@ -188,6 +227,32 @@ test('views keep their members presentation across a JSON-LD round trip', () => 
   const entries = serialized['@graph'] as Record<string, unknown>[]
   assert.ok(entries.every((entry) => entry['@type'] === 'View' || !('position' in entry)))
   assert.deepEqual(parseGraph(serialized), { graph, views: [view] })
+  const { schemaVersion: _, ...unversioned } = serialized
+  assert.deepEqual(parseGraph(unversioned), { graph, views: [view] })
+})
+
+test('versioned documents reject unknown versions, invalid mappings and legacy presentation', () => {
+  const document = serializeGraph(parse(fixture))
+  for (const schemaVersion of [2, '1'])
+    assert.throws(
+      () => parseGraph({ ...document, schemaVersion }),
+      (error: unknown) =>
+        error instanceof SchemaError && error.issues.some(({ path }) => path === 'schemaVersion'),
+    )
+  assert.throws(
+    () =>
+      parseGraph({
+        ...document,
+        '@context': { ...schemaContext, schemaVersion: { '@id': 'urn:wrong' } },
+      }),
+    (error: unknown) =>
+      error instanceof SchemaError &&
+      error.issues.some(({ path }) => path === '@context.schemaVersion'),
+  )
+  assert.throws(
+    () => parseGraph({ ...fixture, schemaVersion: 1 }),
+    /Unsupported property: position/,
+  )
 })
 
 test('views are validated against the graph', () => {
@@ -222,7 +287,7 @@ test('views are validated against the graph', () => {
 })
 
 test('documents cannot mix inline concept presentation with views', () => {
-  const serialized = serializeGraph(parse(fixture), [
+  const { schemaVersion: _, ...serialized } = serializeGraph(parse(fixture), [
     { id: 'https://example.org/view/project', name: 'Project', members: [] },
   ])
   const entries = serialized['@graph'] as Record<string, unknown>[]
