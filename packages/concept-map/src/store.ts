@@ -8,7 +8,6 @@ export type GraphCommands = {
   readonly deleteSelection: () => void
   readonly copy: (cut?: boolean) => Promise<void>
   readonly paste: (text?: string, position?: Position) => Promise<void>
-  readonly addExisting: () => void
 }
 
 export type ConceptMapContext = {

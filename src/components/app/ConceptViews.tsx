@@ -45,14 +45,15 @@ export function ConceptViews({
       ? [...others, { id: '', name, create: true }]
       : others
   const addTo = (viewId: string) =>
-    store.applyOperations(
-      conceptIds.map((conceptId) => ({
-        kind: 'view.membership',
+    store.applyOperations([
+      ...conceptIds.map((conceptId) => ({
+        kind: 'view.membership' as const,
         viewId,
         conceptId,
         included: true,
       })),
-    )
+      { kind: 'view.activate', id: viewId },
+    ])
 
   return (
     <InspectorSection
