@@ -12,7 +12,7 @@ import { createFileStorage } from './file-storage.ts'
 import { ElectronError } from './errors.ts'
 import type { TrustedRequest } from './ipc.ts'
 import { onDocumentNavigation } from './navigation.ts'
-import type { DataLocation } from './data-location.ts'
+import type { DataLocation } from './data-location/index.ts'
 import type { AutomaticBackups } from './automatic-backups.ts'
 
 export function connectDesktopPersistence(
