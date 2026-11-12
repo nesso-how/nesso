@@ -77,11 +77,11 @@ export async function verifyIntro({ window, url, name }: CheckContext) {
 
   await next()
   await title('See it from another angle')
-  await ready(`document.querySelectorAll('.intro .react-flow__node').length===3`)
-  const energy = await frames()
+  await ready(`document.querySelectorAll('.intro .react-flow__node').length===4`)
+  let energy: Record<string, string> | undefined
   for (const [view, hidden, shown] of [
-    ['Rest', 'urn:nesso:example:energy', 'urn:nesso:example:sleep'],
     ['Energy', 'urn:nesso:example:sleep', 'urn:nesso:example:energy'],
+    ['Rest', 'urn:nesso:example:energy', 'urn:nesso:example:sleep'],
   ]) {
     await evaluate(
       `[...document.querySelectorAll('.intro-explorer button')].find(button=>button.textContent.startsWith('${view}')).click()`,
@@ -90,6 +90,7 @@ export async function verifyIntro({ window, url, name }: CheckContext) {
       `!document.querySelector('.intro [data-id="${hidden}"]')&&!!document.querySelector('.intro [data-id="${shown}"]')`,
     )
     const current = await frames()
+    energy ??= current
     for (const id of ['urn:nesso:example:coffee', 'urn:nesso:example:focus'])
       assert.equal(current[id], energy[id])
   }
@@ -103,7 +104,7 @@ export async function verifyIntro({ window, url, name }: CheckContext) {
       `[...document.querySelectorAll('.intro [role="tab"]')].map(tab=>[tab.textContent,tab.getAttribute('aria-disabled')==='true'])`,
     ),
     [
-      ['Graph', false],
+      ['Map', false],
       ['Notes', true],
       ['Review3', true],
     ],

@@ -37,7 +37,7 @@ export async function verifyPanelWorkspace(context: CheckContext) {
     `document.querySelector('#canvas .react-flow').dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))`,
   )
   const graph = async () => {
-    await choose('Graph')
+    await choose('Map')
     await waitFor(
       () => evaluate<boolean>(`!document.querySelector('[data-plugin-panel]')`),
       Boolean,
@@ -139,7 +139,7 @@ export async function verifyPanelWorkspace(context: CheckContext) {
     Boolean,
   )
   await waitFor(
-    async () => progress().find(({ key }) => key === 'quiz:energy')?.value,
+    async () => progress().find(({ key }) => key === 'quiz:coffee')?.value,
     (value) => value === 1,
   )
   const nextQuestion = await content.executeJavaScript(
@@ -178,7 +178,7 @@ export async function verifyPanelWorkspace(context: CheckContext) {
   )
   await frame.executeJavaScript(`document.querySelector('.quiz button').click()`)
   await waitFor(
-    async () => progress().find(({ key }) => key === 'quiz:energy')?.value,
+    async () => progress().find(({ key }) => key === 'quiz:coffee')?.value,
     (value) => value === 0,
   )
   await waitFor(
@@ -209,12 +209,12 @@ export async function verifyPanelWorkspace(context: CheckContext) {
     `Object.defineProperty(navigator.clipboard,'readText',{configurable:true,value:()=>new Promise(resolve=>{window.__resolvePaste=resolve})});document.querySelector('#canvas button[aria-label="Paste"]').click()`,
   )
   assert.equal(await evaluate(`typeof window.__resolvePaste`), 'function')
-  for (const tab of ['Notes', 'Review', 'Graph']) {
+  for (const tab of ['Notes', 'Review', 'Map']) {
     await choose(tab)
     await waitFor(
       () =>
         evaluate<boolean>(
-          tab === 'Graph'
+          tab === 'Map'
             ? `!document.querySelector('[data-plugin-panel]') && document.activeElement===window.__canvas.parentElement`
             : `document.querySelector('[data-plugin-panel] iframe:not([hidden])')?.style.visibility==='visible'`,
         ),
@@ -226,12 +226,12 @@ export async function verifyPanelWorkspace(context: CheckContext) {
       ),
       {
         same: true,
-        visible: tab === 'Graph',
-        inert: tab !== 'Graph',
+        visible: tab === 'Map',
+        inert: tab !== 'Map',
         viewport,
       },
     )
-    if (tab !== 'Graph') {
+    if (tab !== 'Map') {
       const frame = await panelFrame(
         context.window,
         tab === 'Notes'
@@ -262,10 +262,7 @@ export async function verifyPanelWorkspace(context: CheckContext) {
   )
   assert.deepEqual(saved.get('document'), before)
   const order = await tabs()
-  assert.deepEqual(
-    [...order.visible, ...order.hidden],
-    ['Graph', 'Notes', 'Review', 'Concept Quiz'],
-  )
+  assert.deepEqual([...order.visible, ...order.hidden], ['Map', 'Notes', 'Review', 'Concept Quiz'])
   await waitFor(
     async () =>
       (saved.get('preferences') as { preferences: { canvasTabOrder?: string[] } } | undefined)
@@ -282,7 +279,7 @@ export async function verifyPanelWorkspace(context: CheckContext) {
   for (const [digit, selected] of [
     [4, 'Concept Quiz'],
     [2, 'Notes'],
-    [1, 'Graph'],
+    [1, 'Map'],
   ] as const) {
     await evaluate(`document.querySelector('[data-plugin-panel] iframe:not([hidden])')?.focus()`)
     context.window.webContents.sendInputEvent({
@@ -293,7 +290,7 @@ export async function verifyPanelWorkspace(context: CheckContext) {
     await waitFor(
       () =>
         evaluate<boolean>(
-          `document.querySelector('#canvas [role="tab"][aria-selected="true"]')?.textContent.trim()===${JSON.stringify(selected)} && ${selected === 'Graph' ? `!document.querySelector('[data-plugin-panel]')` : `document.querySelector('[data-plugin-panel] iframe:not([hidden])')?.style.visibility==='visible'`}`,
+          `document.querySelector('#canvas [role="tab"][aria-selected="true"]')?.textContent.trim()===${JSON.stringify(selected)} && ${selected === 'Map' ? `!document.querySelector('[data-plugin-panel]')` : `document.querySelector('[data-plugin-panel] iframe:not([hidden])')?.style.visibility==='visible'`}`,
         ),
       Boolean,
     )
@@ -305,9 +302,9 @@ export async function verifyPanelWorkspace(context: CheckContext) {
     `window.__externalFrame=document.querySelector('[data-plugin-panel] iframe:not([hidden])')`,
   )
   await reused.executeJavaScript(`window.__retainedDocument=document`)
-  for (const view of ['Rest', 'Overview', 'Energy']) {
+  for (const view of ['Rest', 'Overview', 'Coffee']) {
     await evaluate(
-      `[...document.querySelectorAll('#saved-views button,#pinned-views button')].find(button=>button.textContent.trim().startsWith(${JSON.stringify(view)})).click()`,
+      `[...document.querySelectorAll('button')].find(button=>button.textContent.trim().startsWith(${JSON.stringify(view)})).click()`,
     )
     await waitFor(
       () =>
