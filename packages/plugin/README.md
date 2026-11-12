@@ -254,7 +254,7 @@ Call helpers on `document` and declare their operation kinds in `nesso.writes`:
 | `setSelection([{ kind, id }])`                      | `selection.set`         |
 | `setViewMembership(viewId, conceptId, included)`    | `view.membership`       |
 
-Position, color, and style helpers edit the invoked saved view; they reject the batch in All, after navigation, or for concepts outside the view. `addConcept` returns the new IRI. New concepts join the active saved view, at the given position or near the single selected concept, and link to that concept, if any. These links and `connect` use the vocabulary's default relation type. `createRelationType` creates and assigns a type to the given relation.
+Position, color, and style helpers edit the invoked saved view; they reject the batch in All, after navigation, or for concepts outside the view. `addConcept` returns the new IRI. New concepts join the active saved view, at the given position or near the single selected concept, and link to that concept, if any. These links and `connect` use the vocabulary's default relation type. `createRelationType` creates and assigns a type to the given relation. The selection keeps only concepts and relations visible in the active view.
 
 For related edits, use `document.applyOperations(operations)` as in the quickstart. The entire batch succeeds or changes nothing. Editing, reconnecting, retyping, or removing an unknown concept or relation rejects the batch, as does reconnecting or retyping onto an existing relation; removing an item already removed earlier in the same batch, such as a relation of a removed concept, is allowed. Separate calls are separate transactions. Raw `concept.add` operations require an explicit new absolute IRI.
 

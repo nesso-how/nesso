@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState, type RefObject } from 'react'
 import { Button, Combobox, ComboboxItem, Dialog, DialogPopup, Kbd } from '@nesso-how/ui'
-import { CornerDownLeft, Layers, Search } from 'lucide-react'
+import { CornerDownLeft, Layers, Plus, Search } from 'lucide-react'
 import { useNessoStore } from '@/store'
 import { useTranslation } from '@/i18n'
 import { searchGraph, type SearchResult } from '@/graph/search'
@@ -11,12 +11,14 @@ export function SearchDialog({
   open,
   onOpenChange,
   onSelect,
+  onAdd,
   focusRef,
 }: {
   store: HostStore
   open: boolean
   onOpenChange: (open: boolean) => void
   onSelect: (result: SearchResult) => void
+  onAdd: (id: string) => void
   focusRef: RefObject<HTMLElement | null>
 }) {
   const t = useTranslation(store)
@@ -27,16 +29,27 @@ export function SearchDialog({
   const [filter, setFilter] = useState<'all' | SearchResult['kind']>('all')
   const input = useRef<HTMLInputElement>(null)
   const navigating = useRef(false)
+  const highlighted = useRef<SearchResult | undefined>(undefined)
   const overview = t('completeGraph')
-  const results = useMemo(
-    () =>
-      open
-        ? searchGraph(graph, views, query, overview, activeViewId).filter(
-            (result) => filter === 'all' || result.kind === filter,
-          )
-        : [],
-    [open, graph, views, query, overview, activeViewId, filter],
+  const members = useMemo(
+    () => new Set(views.find(({ id }) => id === activeViewId)?.members.map(({ id }) => id)),
+    [views, activeViewId],
   )
+  const outside = (result?: SearchResult) =>
+    activeViewId !== null && result?.kind === 'concept' && !members.has(result.id)
+  const results = useMemo(() => {
+    if (!open) return []
+    return searchGraph(graph, views, query, overview, activeViewId).filter(
+      (result) => filter === 'all' || result.kind === filter,
+    )
+  }, [open, graph, views, query, overview, activeViewId, filter])
+  const choose = (result: SearchResult, add: boolean) => {
+    navigating.current = true
+    if (add && result.kind === 'concept') onAdd(result.id)
+    else onSelect(result)
+    onOpenChange(false)
+  }
+  const placeholder = t('searchPlaceholder')
   const groups = (['view', 'concept'] as const)
     .map((kind) => ({ kind, items: results.filter((result) => result.kind === kind) }))
     .filter((group) => group.items.length > 0)
@@ -68,11 +81,11 @@ export function SearchDialog({
         onInputValueChange={(value, details) => {
           if (details.reason === 'input-change') setQuery(value)
         }}
+        onItemHighlighted={(result) => {
+          highlighted.current = result
+        }}
         onValueChange={(result) => {
-          if (!result) return
-          navigating.current = true
-          onSelect(result)
-          onOpenChange(false)
+          if (result) choose(result, false)
         }}
       >
         <DialogPopup
@@ -84,16 +97,27 @@ export function SearchDialog({
           }}
           finalFocus={() => (navigating.current ? focusRef.current : undefined)}
         >
-          <Dialog.Title className="sr-only">{t('searchPlaceholder')}</Dialog.Title>
+          <Dialog.Title className="sr-only">{placeholder}</Dialog.Title>
           <Dialog.Description className="sr-only">{t('searchScope')}</Dialog.Description>
           <div className="flex min-h-16 shrink-0 items-center gap-3 border-b px-5">
             <Search className="size-[19px] shrink-0 text-muted-foreground" />
             <Combobox.Input
               ref={input}
-              aria-label={t('searchPlaceholder')}
-              placeholder={t('searchPlaceholder')}
+              aria-label={placeholder}
+              placeholder={placeholder}
               className="min-w-0 flex-1 bg-transparent py-5 text-[15px] outline-none placeholder:text-muted-foreground"
               onKeyDown={(event) => {
+                if (
+                  !event.nativeEvent.isComposing &&
+                  (event.metaKey || event.ctrlKey) &&
+                  event.key === 'Enter' &&
+                  outside(highlighted.current)
+                ) {
+                  event.preventDefault()
+                  event.preventBaseUIHandler()
+                  choose(highlighted.current!, true)
+                  return
+                }
                 if (
                   !event.nativeEvent.isComposing &&
                   !event.altKey &&
@@ -169,6 +193,21 @@ export function SearchDialog({
                           {t('conceptCount', { count: result.count })}
                         </span>
                       )}
+                      {outside(result) && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          tabIndex={-1}
+                          className="h-6 shrink-0 gap-1 px-1.5 text-[11px] text-muted-foreground opacity-0 group-hover:opacity-100 group-data-highlighted:opacity-100"
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            choose(result, true)
+                          }}
+                        >
+                          <Plus className="size-3" />
+                          {t('addToView')}
+                        </Button>
+                      )}
                       <CornerDownLeft className="size-3.5 shrink-0 text-muted-foreground opacity-0 group-data-highlighted:opacity-100" />
                     </ComboboxItem>
                   )}
@@ -205,6 +244,13 @@ export function SearchDialog({
               <Kbd>↵</Kbd>
               {t('searchOpen')}
             </span>
+            {activeViewId !== null && (
+              <span className="flex items-center gap-1">
+                <Kbd>{/Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl'}</Kbd>
+                <Kbd>↵</Kbd>
+                {t('searchAdd')}
+              </span>
+            )}
           </footer>
         </DialogPopup>
       </Combobox.Root>

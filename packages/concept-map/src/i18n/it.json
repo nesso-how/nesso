@@ -28,5 +28,9 @@
   "shortcutRename": "Rinomina il concetto selezionato",
   "shortcutBold": "Attiva/disattiva grassetto",
   "shortcutItalic": "Attiva/disattiva corsivo",
-  "shortcutFitView": "Adatta la vista"
+  "shortcutFitView": "Adatta la vista",
+  "rearrangeSelection": "Riordina selezione",
+  "rearrangeView": "Riordina vista",
+  "shortcutRearrange": "Riordina selezione o vista",
+  "reuseConcept": "Usa un concetto esistente"
 }

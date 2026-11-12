@@ -15,6 +15,8 @@ export type ConceptData = {
   editable?: boolean
   maxLength?: number
   editing?: boolean
+  historyGroup?: string
+  onReuse?: (id: string) => void
   onEditingChange?: (id: string | null) => void
   members?: readonly string[]
   onGroupSelect?: (members: readonly string[]) => void

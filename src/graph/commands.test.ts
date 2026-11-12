@@ -2,7 +2,13 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import type { ViewGraphSnapshot } from '@nesso-how/core'
 import { parseGraph, relationKey, SchemaError } from '@nesso-how/schema'
-import { copyGraph, pasteOperations, selectionCoversGraph } from './commands.ts'
+import {
+  copyGraph,
+  deleteOperations,
+  deletionNeedsConfirmation,
+  pasteOperations,
+  selectionCoversGraph,
+} from './commands.ts'
 
 const graph: ViewGraphSnapshot = {
   concepts: [
@@ -96,4 +102,68 @@ test('deletion covers every visible concept regardless of relations or off-view 
   assert.equal(selectionCoversGraph([selected[0], { kind: 'relation', id: 'urn:b' }], view), false)
   assert.equal(selectionCoversGraph([], view), false)
   assert.equal(selectionCoversGraph(selected, { ...view, concepts: [] }), false)
+})
+
+test('delete removes shared concepts from the view and the rest from the graph', () => {
+  const view = (id: string, ids: string[]) => ({
+    id,
+    name: id,
+    pinned: false,
+    members: ids.map((id) => ({ id, position: { x: 0, y: 0 } })),
+  })
+  const savedViews = [view('urn:v1', ['urn:a', 'urn:b']), view('urn:v2', ['urn:a'])]
+  const selected = [
+    { kind: 'concept' as const, id: 'urn:a' },
+    { kind: 'concept' as const, id: 'urn:b' },
+    { kind: 'relation' as const, id: relationKey(graph.relations[0]) },
+  ]
+  const state = (activeViewId: string | null, ids = selected) => ({
+    selected: ids,
+    workspace: { activeViewId, savedViews, viewports: {} },
+  })
+  assert.deepEqual(deleteOperations(state('urn:v1')), [
+    { kind: 'view.membership', viewId: 'urn:v1', conceptId: 'urn:a', included: false },
+    { kind: 'concept.remove', id: 'urn:b' },
+    { kind: 'relation.remove', id: relationKey(graph.relations[0]) },
+  ])
+  assert.equal(deleteOperations(state(null))[0].kind, 'concept.remove')
+  assert.equal(deletionNeedsConfirmation(state('urn:v1')), false)
+  assert.equal(deletionNeedsConfirmation(state(null)), true)
+  assert.equal(deletionNeedsConfirmation(state(null, [{ kind: 'concept', id: 'urn:c' }])), false)
+})
+
+test('paste after cut reuses surviving concepts and recreates removed ones', () => {
+  const text = copyGraph(graph, [
+    { kind: 'concept', id: 'urn:a' },
+    { kind: 'concept', id: 'urn:b' },
+  ])!
+  const survivor = { ...graph, concepts: graph.concepts.slice(0, 1), relations: [] }
+  const operations = pasteOperations(text, { x: 0, y: 0 }, 40, true, {
+    graph: survivor,
+    viewId: 'urn:v',
+  })
+  const added = operations.flatMap((operation) =>
+    operation.kind === 'concept.add' ? [operation.id] : [],
+  )
+  assert.equal(added.length, 1)
+  assert.notEqual(added[0], 'urn:b')
+  assert.deepEqual(operations[0], {
+    kind: 'view.membership',
+    viewId: 'urn:v',
+    conceptId: 'urn:a',
+    included: true,
+  })
+  assert.ok(
+    operations.some(
+      (operation) =>
+        operation.kind === 'relation.connect' &&
+        operation.source === 'urn:a' &&
+        operation.target === added[0],
+    ),
+  )
+  const kept = pasteOperations(text, undefined, 40, true, { graph, viewId: 'urn:v' })
+  assert.equal(
+    kept.some(({ kind }) => kind === 'concept.add' || kind === 'relation.connect'),
+    false,
+  )
 })

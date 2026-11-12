@@ -28,5 +28,9 @@
   "shortcutRename": "Rename selected concept",
   "shortcutBold": "Toggle bold",
   "shortcutItalic": "Toggle italic",
-  "shortcutFitView": "Fit view"
+  "shortcutFitView": "Fit view",
+  "rearrangeSelection": "Rearrange selection",
+  "rearrangeView": "Rearrange view",
+  "shortcutRearrange": "Rearrange selection or view",
+  "reuseConcept": "Use an existing concept"
 }

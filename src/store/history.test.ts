@@ -6,6 +6,7 @@ import { createNessoStore } from './create.ts'
 import { historyLimit } from './history.ts'
 import { NessoError } from '@nesso-how/errors'
 import { applyStateOperations } from './operations.ts'
+import { reuseConceptOperations } from '../../packages/concept-map/src/creation.ts'
 
 const fixture = (): Graph => ({
   concepts: Array.from({ length: 4 }, (_, i) => ({
@@ -297,7 +298,7 @@ test('no-ops and failures preserve redo; new document edits clear it; reset clea
   assert.equal(host.store.getState(), reset)
 })
 
-test('mixed structural batches restore original indices and merge a creation with its placement correction', () => {
+test('mixed structural batches round-trip and creation, placement and naming share one undo step', () => {
   const host = createNessoStore(fixture(), { workspace: viewed() })
   const before = host.store.getState().viewGraph
   host.store.applyOperations([
@@ -318,7 +319,13 @@ test('mixed structural batches restore original indices and merge a creation wit
     [{ kind: 'concept.position', id: 'urn:placed', value: { x: 80, y: 90 } }],
     { historyGroup: 'placement' },
   )
+  host.store.applyOperations([{ kind: 'concept.label', id: 'urn:placed', value: 'Named' }], {
+    historyGroup: 'placement',
+  })
   const placed = host.store.getState().viewGraph
+  host.store.setConceptLabel('urn:placed', 'Renamed')
+  host.store.undo()
+  assert.deepEqual(host.store.getState().viewGraph, placed)
   host.store.undo()
   assert.deepEqual(host.store.getState().viewGraph, after)
   host.store.redo()
@@ -360,6 +367,97 @@ test('explicit text and drag groups merge adjacent edits, cancel net changes and
   host.store.undo()
   assert.equal(host.store.getState().graph.concepts[0].label, 'ABC')
   assert.deepEqual(host.store.getState().viewGraph.concepts[0].position, { x: 0, y: 0 })
+})
+
+test('reusing a newly created concept preserves existing data, avoids duplicate links and undoes the complete creation', () => {
+  for (const linked of [false, true]) {
+    const graph = fixture()
+    if (linked)
+      graph.relations.push({ source: 'urn:n0', predicate: 'urn:custom', target: 'urn:n2' })
+    graph.concepts[2].notes = 'Keep existing notes'
+    const workspace = viewed()
+    const host = createNessoStore(graph, {
+      workspace: {
+        ...workspace,
+        savedViews: [{ ...workspace.savedViews[0], members: members(0, 1) }],
+      },
+    })
+    host.registerVocab({
+      id: 'vocab',
+      defaultTypeId: 'urn:custom',
+      relationTypes: graph.relationTypes,
+    })
+    host.store.setSelection([{ kind: 'concept', id: 'urn:n0' }])
+    const before = host.store.getState()
+    host.store.applyOperations(
+      [{ kind: 'concept.add', id: 'urn:new', position: { x: 80, y: 90 } }],
+      { historyGroup: 'reuse' },
+    )
+    host.store.applyOperations(reuseConceptOperations(host.store.getState(), 'urn:new', 'urn:n2'), {
+      historyGroup: 'reuse',
+    })
+    const after = host.store.getState()
+    assert.deepEqual(after.graph.concepts, before.graph.concepts)
+    assert.equal(after.graph.concepts[2], before.graph.concepts[2])
+    assert.equal(after.graph.relations.length, 2)
+    assert.equal(new Set(after.graph.relations.map(relationKey)).size, 2)
+    assert.deepEqual(after.viewGraph.concepts.at(-1)?.position, { x: 80, y: 90 })
+    assert.deepEqual(after.selected, [{ kind: 'concept', id: 'urn:n2' }])
+    host.store.undo()
+    assert.deepEqual(host.store.getState().graph, before.graph)
+    assert.deepEqual(host.store.getState().workspace.savedViews, before.workspace.savedViews)
+    assert.equal(host.store.getState().history.canUndo, false)
+    host.store.redo()
+    assert.deepEqual(host.store.getState().graph, after.graph)
+    assert.deepEqual(host.store.getState().viewGraph, after.viewGraph)
+  }
+})
+
+test('grouped structural edits reconcile indices of surviving changes across removals', () => {
+  const host = createNessoStore(fixture(), { workspace: viewed() })
+  const before = host.store.getState()
+  host.store.applyOperations(
+    [
+      { kind: 'concept.label', id: 'urn:n3', value: 'Changed' },
+      { kind: 'concept.remove', id: 'urn:n0' },
+    ],
+    { historyGroup: 'structural' },
+  )
+  host.store.applyOperations(
+    [
+      { kind: 'concept.label', id: 'urn:n2', value: 'Also changed' },
+      { kind: 'concept.remove', id: 'urn:n1' },
+    ],
+    { historyGroup: 'structural' },
+  )
+  const after = host.store.getState()
+  host.store.undo()
+  assert.deepEqual(host.store.getState().graph, before.graph)
+  assert.deepEqual(host.store.getState().workspace.savedViews, before.workspace.savedViews)
+  assert.equal(host.store.getState().history.canUndo, false)
+  host.store.redo()
+  assert.deepEqual(host.store.getState().graph, after.graph)
+  assert.deepEqual(host.store.getState().viewGraph, after.viewGraph)
+})
+
+test('view removal separates history groups before editing a shifted view', () => {
+  const workspace = {
+    ...viewed(),
+    savedViews: [
+      { id: 'urn:first', name: 'First', pinned: false, members: [] },
+      ...viewed().savedViews,
+    ],
+  }
+  const { store } = createNessoStore(fixture(), { workspace })
+  store.applyOperations([{ kind: 'view.remove', id: 'urn:first' }], { historyGroup: 'views' })
+  const removed = store.getState().workspace.savedViews
+  store.applyOperations([{ kind: 'concept.position', id: 'urn:n0', value: { x: 10, y: 0 } }], {
+    historyGroup: 'views',
+  })
+  store.undo()
+  assert.deepEqual(store.getState().workspace.savedViews, removed)
+  store.undo()
+  assert.deepEqual(store.getState().workspace.savedViews, workspace.savedViews)
 })
 
 test('history is bounded and instance-local', () => {

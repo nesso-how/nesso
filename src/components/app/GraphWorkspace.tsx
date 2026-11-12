@@ -24,6 +24,7 @@ export function GraphWorkspace({
   suspended = false,
   bottomInset = 0,
   onDeleteView,
+  onConfirmDelete,
   focusRef,
 }: {
   ref?: Ref<ConceptMapHandle>
@@ -34,6 +35,7 @@ export function GraphWorkspace({
   suspended?: boolean
   bottomInset?: number
   onDeleteView?: () => void
+  onConfirmDelete?: () => void
   focusRef?: RefObject<HTMLDivElement | null>
 }) {
   const t = useTranslation()
@@ -48,6 +50,7 @@ export function GraphWorkspace({
     readOnly: readOnly || suspended,
     preview,
     onDeleteView,
+    onConfirmDelete,
     focusRef: target,
   })
   const currentCommands = useRef(commands)

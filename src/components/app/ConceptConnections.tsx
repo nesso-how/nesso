@@ -1,8 +1,10 @@
-import { IconButton } from '@nesso-how/ui'
+import { IconButton, ListRow, ListRowButton, ListRowDetail, ListRowTitle } from '@nesso-how/ui'
 import { resolveRelationTypeLabel } from '@nesso-how/core'
+import type { ConceptMapHandle } from '@nesso-how/concept-map'
 import { defaultLocale } from '@nesso-how/i18n'
 import { relationKey } from '@nesso-how/schema'
-import { ArrowLeft, ArrowRight, Minus, Plus } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Plus } from 'lucide-react'
+import type { RefObject } from 'react'
 import { nessoStore, useNessoStore } from '@/store'
 import type { HostStore } from '@/store/types'
 import { InspectorSection } from './InspectorSection'
@@ -11,11 +13,15 @@ import { useTranslation } from '@/i18n'
 export function ConceptConnections({
   store = nessoStore,
   conceptId,
+  defaultTypeId,
   readonly = false,
+  renderer,
 }: {
   store?: HostStore
   conceptId: string
+  defaultTypeId: string | undefined
   readonly?: boolean
+  renderer?: RefObject<ConceptMapHandle | null>
 }) {
   const t = useTranslation(store)
   const graph = useNessoStore((state) => state.graph, store)
@@ -24,59 +30,96 @@ export function ConceptConnections({
   const viewGraph = useNessoStore((state) => state.viewGraph, store)
   const activeViewId = useNessoStore((state) => state.workspace.activeViewId, store)
   const visible = new Set(viewGraph.concepts.map((concept) => concept.id))
-  const connections = graph.relations.filter(
-    (relation) => relation.source === conceptId || relation.target === conceptId,
-  )
+  const connections = graph.relations
+    .filter((relation) => relation.source === conceptId || relation.target === conceptId)
+    .map((relation) => {
+      const outgoing = relation.source === conceptId
+      const otherId = outgoing ? relation.target : relation.source
+      const type =
+        relation.predicate === defaultTypeId
+          ? undefined
+          : graph.relationTypes.find((type) => type.id === relation.predicate)
+      return {
+        relation,
+        outgoing,
+        otherId,
+        label: graph.concepts.find((concept) => concept.id === otherId)?.label ?? '',
+        type: type ? resolveRelationTypeLabel(type, vocabs, locale) : '',
+        included: visible.has(otherId),
+      }
+    })
+    .sort(
+      (a, b) => Number(b.included) - Number(a.included) || a.label.localeCompare(b.label, locale),
+    )
   if (connections.length === 0) return null
 
-  return (
-    <InspectorSection store={store} id="inspector.connections" title={t('connections')}>
-      <div className="mt-2 space-y-2">
-        {connections.map((relation) => {
-          const outgoing = relation.source === conceptId
-          const Direction = outgoing ? ArrowRight : ArrowLeft
-          const otherId = outgoing ? relation.target : relation.source
-          const other = graph.concepts.find((concept) => concept.id === otherId)
-          const type = graph.relationTypes.find((type) => type.id === relation.predicate)
-          const label = type ? resolveRelationTypeLabel(type, vocabs, locale) : ''
-          const included = visible.has(otherId)
-          const MembershipIcon = included ? Minus : Plus
-          return (
-            <div
-              key={relationKey(relation)}
-              className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 gap-y-1 text-xs"
+  const select = (id: string) => {
+    store.setSelection([{ kind: 'concept', id }])
+    renderer?.current?.focusConcept(id)
+  }
+  const add = (id: string) => {
+    if (activeViewId === null) return
+    if (renderer?.current) renderer.current.addToView(id)
+    else store.setViewMembership(activeViewId, id, true)
+  }
+  const row = ({ relation, otherId, label, type, included }: (typeof connections)[number]) => {
+    const detail = [type, included ? '' : t('notInView')].filter(Boolean).join(' · ')
+    const content = (
+      <>
+        <ListRowTitle className={included ? undefined : 'text-muted-foreground'}>
+          {label}
+        </ListRowTitle>
+        {detail && <ListRowDetail>{detail}</ListRowDetail>}
+      </>
+    )
+    return (
+      <ListRow key={relationKey(relation)} className="min-h-0">
+        {included ? (
+          <ListRowButton className="py-1.5" onClick={() => select(otherId)}>
+            {content}
+          </ListRowButton>
+        ) : (
+          <>
+            <div className="min-w-0 flex-1 px-2.5 py-1.5">{content}</div>
+            <IconButton
+              disabled={readonly}
+              className="mr-1"
+              title={t('addToCurrentView')}
+              aria-label={t('addConceptToCurrentView', { name: label })}
+              onClick={() => add(otherId)}
             >
-              <span
-                title={t(outgoing ? 'outgoingRelation' : 'incomingRelation')}
-                className="col-start-1 inline-flex min-h-6 max-w-full items-center gap-1.5 justify-self-start font-mono text-[10px] leading-[14px] text-muted-foreground"
-              >
-                <Direction aria-hidden="true" className="size-3 shrink-0" />
-                <span className="sr-only">
-                  {t(outgoing ? 'outgoingRelation' : 'incomingRelation')}:{' '}
-                </span>
-                <span className="min-w-0 break-words">{label}</span>
-              </span>
-              <span className="col-start-1 row-start-2 min-h-6 min-w-0 max-w-full justify-self-start text-[13px] leading-[19px] break-words">
-                {other?.label}
-              </span>
-              {activeViewId !== null && (
-                <IconButton
-                  disabled={readonly}
-                  className="col-start-2 row-span-2 row-start-1 self-center"
-                  title={t(included ? 'removeFromCurrentView' : 'addToCurrentView')}
-                  aria-label={t(
-                    included ? 'removeConceptFromCurrentView' : 'addConceptToCurrentView',
-                    { name: other?.label ?? '' },
-                  )}
-                  onClick={() => store.setViewMembership(activeViewId, otherId, !included)}
-                >
-                  <MembershipIcon />
-                </IconButton>
-              )}
-            </div>
-          )
-        })}
+              <Plus />
+            </IconButton>
+          </>
+        )}
+      </ListRow>
+    )
+  }
+  const group = (outgoing: boolean) => {
+    const items = connections.filter((connection) => connection.outgoing === outgoing)
+    if (items.length === 0) return null
+    const Direction = outgoing ? ArrowRight : ArrowLeft
+    return (
+      <div className="mt-2">
+        <h3 className="flex items-center gap-1.5 font-mono text-[10px] leading-4 font-normal text-muted-foreground">
+          <Direction aria-hidden="true" className="size-3 shrink-0" />
+          {t(outgoing ? 'outgoing' : 'incoming')}
+          {items.length < connections.length && ` · ${items.length}`}
+        </h3>
+        <div className="mt-1 flex flex-col gap-0.5">{items.map(row)}</div>
       </div>
+    )
+  }
+
+  return (
+    <InspectorSection
+      store={store}
+      id="inspector.connections"
+      title={t('connections')}
+      count={connections.length}
+    >
+      {group(true)}
+      {group(false)}
     </InspectorSection>
   )
 }

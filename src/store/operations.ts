@@ -304,7 +304,11 @@ export const applyStateOperations = (
         (relation.target === id && placed.has(relation.source)),
     )
     const neighbor =
-      relation && placed.get(relation.source === id ? relation.target : relation.source)
+      (relation && placed.get(relation.source === id ? relation.target : relation.source)) ??
+      members.reduce<Member | undefined>(
+        (lowest, member) => (!lowest || member.position.y > lowest.position.y ? member : lowest),
+        undefined,
+      )
     return {
       id,
       position: neighbor
@@ -769,7 +773,8 @@ export const applyStateOperations = (
     parsePreferences(preferences)
     if (samePreferences(preferences, state.preferences)) preferences = state.preferences
   }
-  selected = reconcileSelection(candidate, selected)
+  const viewGraph = materialize(candidate, workspace, state)
+  selected = reconcileSelection(viewGraph, selected)
   if (
     conversationReplaced &&
     conversation !== state.conversation &&
@@ -803,7 +808,7 @@ export const applyStateOperations = (
         documentId,
         pluginStorage,
         selected,
-        viewGraph: materialize(candidate, workspace, state),
+        viewGraph,
       }
   let relationRewrites: { before: string; after: string }[] = []
   if (relationOrigins?.size) {

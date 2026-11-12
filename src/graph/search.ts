@@ -71,6 +71,19 @@ export function searchGraph(
   ]
 }
 
+export function addToActiveView(
+  store: HostStore,
+  renderer: { readonly addToView: (id: string) => void } | null,
+  id: string,
+): void {
+  const { graph, workspace } = store.getState()
+  const viewId = workspace.activeViewId
+  if (viewId === null || !graph.concepts.some((concept) => concept.id === id)) return
+  if (renderer) renderer.addToView(id)
+  else store.applyOperations([{ kind: 'view.membership', viewId, conceptId: id, included: true }])
+  store.applyOperations([{ kind: 'selection.set', value: [{ kind: 'concept', id }] }])
+}
+
 export function openSearchResult(store: HostStore, result: SearchResult): void {
   const { graph, workspace } = store.getState()
   if (result.kind === 'view') {

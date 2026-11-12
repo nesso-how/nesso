@@ -13,6 +13,7 @@ export function conceptMapShortcuts(locale: Locale) {
       { label: t('shortcutItalic'), keys: [[modifier, 'I']] },
       { label: t('shortcutFitView'), keys: [['F']] },
       { label: t('groupRelations'), keys: [['G']] },
+      { label: t('shortcutRearrange'), keys: [['L']] },
     ],
   }
 }

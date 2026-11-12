@@ -17,10 +17,12 @@
     "@nesso-how/ui": "workspace:*",
     "@xyflow/react": "^12.12.0",
     "cn": "^0.4.0",
+    "d3-force": "^3.0.1",
     "html-to-image": "1.11.11",
     "lucide-react": "^1.48.0"
   },
   "devDependencies": {
+    "@types/d3-force": "^3.0.10",
     "@types/react": "^19.2.18"
   },
   "peerDependencies": {

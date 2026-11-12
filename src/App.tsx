@@ -18,6 +18,7 @@ import { DataTransferDialog } from '@/components/app/LocalDataSettings'
 import { Intro } from '@/components/app/Intro'
 import { completeIntro } from '@/store/intro'
 import { DeleteViewDialog } from '@/components/app/DeleteViewDialog'
+import { DeleteConceptsDialog } from '@/components/app/DeleteConceptsDialog'
 import { GraphWorkspace } from '@/components/app/GraphWorkspace'
 import { useAppCommands } from '@/app-commands'
 import { PluginApprovalDialog } from '@/components/app/PluginApprovalDialog'
@@ -28,7 +29,7 @@ import { ViewHeader } from '@/components/app/ViewHeader'
 import { CanvasTabBar, ViewSwitcher } from '@/components/app/CompactNavigation'
 import { ConceptSheet } from '@/components/app/ConceptSheet'
 import { SearchDialog } from '@/components/app/SearchDialog'
-import { openSearchResult } from '@/graph/search'
+import { addToActiveView, openSearchResult } from '@/graph/search'
 import { usePluginInstallNotifications } from '@/components/app/usePluginInstallNotifications'
 
 const compactQuery = '(max-width: 767px)'
@@ -59,6 +60,7 @@ export default function App({
   const [introOpen, setIntroOpen] = useState(() => !host.store.getState().preferences.introSeen)
   const [settingsPage, setSettingsPage] = useState('general')
   const [deleting, setDeleting] = useState<SavedView | 'complete-graph' | null>(null)
+  const [deletingConcepts, setDeletingConcepts] = useState(false)
   const canvas = useRef<HTMLDivElement>(null)
   const renderer = useRef<ConceptMapHandle>(null)
   const pluginPanel = usePluginPanel()
@@ -155,6 +157,7 @@ export default function App({
                       suspended={!!pluginPanel}
                       bottomInset={sheetCover}
                       onDeleteView={deleteView}
+                      onConfirmDelete={() => setDeletingConcepts(true)}
                       focusRef={canvas}
                     />
                   </div>
@@ -189,9 +192,10 @@ export default function App({
                         setSettingsOpen(true)
                       }}
                       settingsOpen={settingsOpen}
+                      renderer={renderer}
                     />
                   ) : (
-                    <Inspector />
+                    <Inspector renderer={renderer} />
                   )}
                 </SidePanel>
               )}
@@ -211,6 +215,11 @@ export default function App({
           activePluginPanel.close()
           openSearchResult(host.store, result)
           if (result.kind === 'concept') renderer.current?.focusConcept(result.id)
+        }}
+        onAdd={(id) => {
+          activePluginPanel.close()
+          addToActiveView(host.store, renderer.current, id)
+          renderer.current?.focusConcept(id)
         }}
       />
       {window.nessoUpdater && <UpdateBar updater={window.nessoUpdater} />}
@@ -232,6 +241,12 @@ export default function App({
       <DeleteViewDialog
         target={deleting}
         onClose={() => setDeleting(null)}
+        finalFocus={() => canvas.current}
+      />
+      <DeleteConceptsDialog
+        store={host.store}
+        open={deletingConcepts}
+        onClose={() => setDeletingConcepts(false)}
         finalFocus={() => canvas.current}
       />
     </>

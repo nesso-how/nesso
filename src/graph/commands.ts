@@ -1,4 +1,10 @@
-import type { GraphSnapshot, NessoOperation, Selection, ViewGraphSnapshot } from '@nesso-how/core'
+import type {
+  GraphSnapshot,
+  NessoOperation,
+  NessoState,
+  Selection,
+  ViewGraphSnapshot,
+} from '@nesso-how/core'
 import {
   newIri,
   parseGraph,
@@ -19,6 +25,27 @@ export const selectionCoversGraph = (selected: Selection, graph: GraphSnapshot):
   )
   return graph.concepts.length > 0 && graph.concepts.every((concept) => concepts.has(concept.id))
 }
+
+type DeletionState = Pick<NessoState, 'selected' | 'workspace'>
+
+const inOtherView = ({ workspace }: DeletionState, id: string) =>
+  workspace.savedViews.some(
+    (view) => view.id !== workspace.activeViewId && view.members.some((member) => member.id === id),
+  )
+
+export const deleteOperations = (state: DeletionState): NessoOperation[] => {
+  const viewId = state.workspace.activeViewId
+  return state.selected.map(({ kind, id }): NessoOperation => {
+    if (kind === 'relation') return { kind: 'relation.remove', id }
+    return viewId && inOtherView(state, id)
+      ? { kind: 'view.membership', viewId, conceptId: id, included: false }
+      : { kind: 'concept.remove', id }
+  })
+}
+
+export const deletionNeedsConfirmation = (state: DeletionState): boolean =>
+  state.workspace.activeViewId === null &&
+  state.selected.some(({ kind, id }) => kind === 'concept' && inOtherView(state, id))
 
 export function copyGraph(graph: ViewGraphSnapshot, selected: Selection): string | null {
   const concepts = new Set(
@@ -59,6 +86,7 @@ export function pasteOperations(
   position?: Readonly<Position>,
   offset = 40,
   inView = true,
+  reuse?: { readonly graph: GraphSnapshot; readonly viewId: string | null },
 ): NessoOperation[] {
   let document: unknown
   try {
@@ -69,7 +97,11 @@ export function pasteOperations(
   const { graph, views } = parseGraph(document)
   if (!graph.concepts.length)
     throw new SchemaError([{ path: 'clipboard', message: 'Expected at least one concept' }])
-  const ids = new Map(graph.concepts.map((concept) => [concept.id, newIri()]))
+  const kept = new Set(reuse?.graph.concepts.map(({ id }) => id))
+  const linked = new Set(reuse?.graph.relations.map(relationKey))
+  const ids = new Map(
+    graph.concepts.map((concept) => [concept.id, kept.has(concept.id) ? concept.id : newIri()]),
+  )
   const members = inView ? (views[0]?.members ?? []) : []
   const origin = members.reduce(
     (point, { position }) => ({
@@ -101,29 +133,45 @@ export function pasteOperations(
     target: ids.get(relation.target)!,
   }))
   return [
-    ...concepts.flatMap((concept): NessoOperation[] => [
-      { kind: 'selection.set', value: [] },
-      { kind: 'concept.add', id: concept.id, position: concept.position },
-      { kind: 'concept.label', id: concept.id, value: concept.label },
-      ...(concept.notes === undefined
-        ? []
-        : [{ kind: 'concept.notes' as const, id: concept.id, value: concept.notes }]),
-      ...(concept.color === undefined
-        ? []
-        : [{ kind: 'concept.color' as const, id: concept.id, value: concept.color }]),
-      ...(concept.bold === undefined
-        ? []
-        : [{ kind: 'concept.bold' as const, id: concept.id, value: concept.bold }]),
-      ...(concept.italic === undefined
-        ? []
-        : [{ kind: 'concept.italic' as const, id: concept.id, value: concept.italic }]),
-    ]),
-    ...relations.map((relation): NessoOperation => ({
-      kind: 'relation.connect',
-      source: relation.source,
-      target: relation.target,
-      type: graph.relationTypes.find((type) => type.id === relation.predicate)!,
-    })),
+    ...concepts.flatMap((concept): NessoOperation[] => {
+      const style: NessoOperation[] = [
+        ...(concept.color === undefined
+          ? []
+          : [{ kind: 'concept.color' as const, id: concept.id, value: concept.color }]),
+        ...(concept.bold === undefined
+          ? []
+          : [{ kind: 'concept.bold' as const, id: concept.id, value: concept.bold }]),
+        ...(concept.italic === undefined
+          ? []
+          : [{ kind: 'concept.italic' as const, id: concept.id, value: concept.italic }]),
+      ]
+      if (!kept.has(concept.id))
+        return [
+          { kind: 'selection.set', value: [] },
+          { kind: 'concept.add', id: concept.id, position: concept.position },
+          { kind: 'concept.label', id: concept.id, value: concept.label },
+          ...(concept.notes === undefined
+            ? []
+            : [{ kind: 'concept.notes' as const, id: concept.id, value: concept.notes }]),
+          ...style,
+        ]
+      if (!reuse?.viewId) return []
+      return [
+        { kind: 'view.membership', viewId: reuse.viewId, conceptId: concept.id, included: true },
+        ...(concept.position
+          ? [{ kind: 'concept.position' as const, id: concept.id, value: concept.position }]
+          : []),
+        ...style,
+      ]
+    }),
+    ...relations
+      .filter((relation) => !linked.has(relationKey(relation)))
+      .map((relation): NessoOperation => ({
+        kind: 'relation.connect',
+        source: relation.source,
+        target: relation.target,
+        type: graph.relationTypes.find((type) => type.id === relation.predicate)!,
+      })),
     {
       kind: 'selection.set',
       value: [

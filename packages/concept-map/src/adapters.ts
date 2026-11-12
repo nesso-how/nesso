@@ -14,6 +14,15 @@ type ConceptBounds = ConceptNodeSize & { position: ConceptView['position'] }
 export type ConceptNodeSizes = Record<string, ConceptNodeSize>
 export const conceptNodeMinSize: ConceptNodeSize = { width: 100, height: 44 }
 
+export const estimatedSize = (label: string, sizes: ConceptNodeSizes, id: string) =>
+  sizes[id] ?? {
+    width: Math.max(conceptNodeMinSize.width, label.length * 8 + 26),
+    height: conceptNodeMinSize.height,
+  }
+
+export const conceptBoxes = (concepts: PresentedGraph['concepts'], sizes: ConceptNodeSizes) =>
+  concepts.map(({ id, position }) => ({ id, position, ...(sizes[id] ?? conceptNodeMinSize) }))
+
 export const indexGraph = (
   graph: PresentedGraph,
   vocabs: readonly VocabDefinition[] = [],
@@ -143,6 +152,8 @@ export function createGraphElements() {
       id: string | null
       enabled: boolean
       maxLength?: number
+      historyGroup?: string
+      onReuse?: (id: string) => void
       onChange: (id: string | null) => void
     }
   }) => {
@@ -161,6 +172,8 @@ export function createGraphElements() {
         editing: editing?.id === concept.id,
         maxLength: editing?.maxLength,
         onEditingChange: editing?.onChange,
+        historyGroup: editing?.id === concept.id ? editing.historyGroup : undefined,
+        onReuse: editing?.id === concept.id ? editing.onReuse : undefined,
       }
       const previous = previousNodes.get(node.id)
       return previous &&
@@ -174,6 +187,8 @@ export function createGraphElements() {
         previous.data.editing === node.data.editing &&
         previous.data.maxLength === node.data.maxLength &&
         previous.data.onEditingChange === node.data.onEditingChange &&
+        previous.data.historyGroup === node.data.historyGroup &&
+        previous.data.onReuse === node.data.onReuse &&
         previous.selected === node.selected &&
         previous.measured?.width === node.measured?.width &&
         previous.measured?.height === node.measured?.height

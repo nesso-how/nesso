@@ -21,6 +21,7 @@ export type ConceptMapContext = {
 
 export type ConceptMapHandle = {
   readonly focusConcept: (id: string) => void
+  readonly addToView: (id: string) => void
 }
 
 export type CanvasProps = {

@@ -2,7 +2,8 @@ import { newIri, relationKey, type RelationType } from '@nesso-how/schema'
 import { resolveRelationTypeLabel } from '@nesso-how/core'
 import { defaultLocale } from '@nesso-how/i18n'
 import { maxConceptLabelLength, maxRelationLabelLength } from '@/store/settings'
-import { useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState, type RefObject } from 'react'
+import type { ConceptMapHandle } from '@nesso-how/concept-map'
 import {
   Autocomplete,
   AutocompleteClear,
@@ -20,11 +21,13 @@ import { ConceptViews } from './ConceptViews'
 import { ConceptConnections } from './ConceptConnections'
 import { ConceptColor } from './ConceptColor'
 import { InspectorSection } from './InspectorSection'
+import { DeleteConceptsDialog } from './DeleteConceptsDialog'
 import { nessoStore, useNessoStore } from '@/store'
 import type { HostStore } from '@/store/types'
 import { useTranslation } from '@/i18n'
 import { openNotesLink } from './notes-link'
 import { relationSelection, relationTypeOperations } from '@/graph/relation-selection'
+import { deleteOperations, deletionNeedsConfirmation } from '@/graph/commands'
 
 function RelationInput({
   typeId,
@@ -158,14 +161,17 @@ export function Inspector({
   readonly = false,
   relationTypeOnly = false,
   focusRelation = false,
+  renderer,
 }: {
   store?: HostStore
   readonly?: boolean
   relationTypeOnly?: boolean
   focusRelation?: boolean
+  renderer?: RefObject<ConceptMapHandle | null>
 }) {
   const t = useTranslation(store)
   const textGroup = useRef<string | undefined>(undefined)
+  const [confirming, setConfirming] = useState(false)
   const graph = useNessoStore((state) => state.graph, store)
   const selected = useNessoStore((state) => state.selected, store)
   const viewGraph = useNessoStore((state) => state.viewGraph, store)
@@ -382,7 +388,9 @@ export function Inspector({
           key={`connections:${concept.id}`}
           store={store}
           conceptId={concept.id}
+          defaultTypeId={activeVocab?.defaultTypeId}
           readonly={readonly}
+          renderer={renderer}
         />
       )}
       {conceptIds.length > 0 && (
@@ -398,12 +406,17 @@ export function Inspector({
           variant="outline"
           className="w-full justify-start"
           disabled={readonly || graph.concepts.length <= 1}
-          onClick={() => store.removeConcept(concept.id)}
+          onClick={() => {
+            const state = store.getState()
+            if (deletionNeedsConfirmation(state)) setConfirming(true)
+            else store.applyOperations(deleteOperations(state))
+          }}
         >
           <Trash2 />
           {t('deleteConcept')}
         </Button>
       )}
+      <DeleteConceptsDialog store={store} open={confirming} onClose={() => setConfirming(false)} />
       {selectedEdge && (
         <Button
           disabled={readonly || relationTypeOnly}
