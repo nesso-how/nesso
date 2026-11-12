@@ -42,6 +42,7 @@ test('manual backups round-trip every record, exclude device secrets and bind co
   assert.equal(await persistence.flush(), true)
   await persistence.dispose()
   await writeFile(path.join(directory, 'ai-connections.enc'), 'secret')
+  await writeFile(path.join(directory, `ai-connections.enc.backup-${'a'.repeat(64)}`), 'old secret')
   const backups = createBackups(() => directory, '1.0.0-alpha.33')
   const file = path.join(root, 'backup.json')
   await backups.save(file)

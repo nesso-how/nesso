@@ -52,8 +52,12 @@ async function fixture(context: TestContext, committed?: boolean) {
 test('moves JSON records live and restores the default, leaving credentials and profile files local', async (context) => {
   const { source, destination } = await fixture(context)
   await mkdir(path.join(source, 'Cache'))
-  for (const name of ['ai-connections.enc', 'mcp-access.enc'])
-    await writeFile(path.join(source, name), 'local secret')
+  const credentials = [
+    'ai-connections.enc',
+    `ai-connections.enc.backup-${'a'.repeat(64)}`,
+    'mcp-access.enc',
+  ]
+  for (const name of credentials) await writeFile(path.join(source, name), 'local secret')
   const location = await createDataLocation(source)
   const storage = createFileStorage(location.directory)
   for (const section of persistenceSections) await storage.write(section, { version: 1 })
@@ -63,6 +67,7 @@ test('moves JSON records live and restores the default, leaving credentials and 
   assert.deepEqual((await readdir(source)).sort(), [
     'Cache',
     'ai-connections.enc',
+    credentials[1],
     'data-location.json',
     'mcp-access.enc',
   ])
@@ -80,7 +85,7 @@ test('moves JSON records live and restores the default, leaving credentials and 
   assert.equal(await readFile(path.join(source, backup), 'utf8'), 'complete backup')
   assert.deepEqual(await readdir(destination), [])
   assert.deepEqual(await storage.read('document'), { version: 2 })
-  for (const name of ['ai-connections.enc', 'mcp-access.enc'])
+  for (const name of credentials)
     assert.equal(await readFile(path.join(source, name), 'utf8'), 'local secret')
 })
 
