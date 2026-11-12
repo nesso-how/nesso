@@ -42,7 +42,10 @@ const workspace = (): WorkspaceState => ({
   ],
 })
 const legacyDocument = () => {
-  const document = serializeGraph(fixture()) as { '@graph': { '@id': string }[] }
+  const { schemaVersion: _, ...document } = serializeGraph(fixture()) as {
+    schemaVersion: number
+    '@graph': { '@id': string }[]
+  }
   return {
     graph: {
       ...document,
@@ -214,8 +217,12 @@ test('legacy documents move inline presentation into saved views and collect uns
   const persistence = connectPersistence(host, storage, loaded)
   assert.equal(await persistence.flush(), true)
   assert.deepEqual(storage.backups[0].get('document'), original)
-  const saved = storage.records.get('document') as { version: number; graph: unknown }
+  const saved = storage.records.get('document') as {
+    version: number
+    graph: { schemaVersion: number }
+  }
   assert.equal(saved.version, 3)
+  assert.equal(saved.graph.schemaVersion, 1)
   assert.deepEqual(parseGraph(saved.graph).views, [])
   await persistence.dispose()
 })
@@ -597,6 +604,16 @@ test('malformed records stay protected while the other sections save', async () 
       'document',
       { version: 99, graph: serializeGraph(fixture()), workspace: state.workspace },
       'document.version',
+    ],
+    [
+      'document',
+      {
+        version: 3,
+        documentId: state.documentId,
+        graph: { ...serializeGraph(fixture()), schemaVersion: 2 },
+        workspace: state.workspace,
+      },
+      'document.schemaVersion',
     ],
     [
       'document',

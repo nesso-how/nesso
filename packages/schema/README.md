@@ -39,11 +39,13 @@ console.log(validateGraph(restored.graph, restored.views), relationKey(graph.rel
 
 ## JSON-LD profile
 
-Documents use an inline `@context` and `@graph` entries for concepts and `rdf:Property` relation types, identified by absolute IRIs. The `rdf`, `rdfs`, and `position` mappings must match `schemaContext`.
+Documents carry `schemaVersion: 1`, an inline `@context`, and `@graph` entries for concepts and `rdf:Property` relation types, identified by absolute IRIs. The `rdf`, `rdfs`, `schemaVersion`, and `position` mappings must match `schemaContext`. `schemaVersion` identifies the Nesso profile, independently of app, storage, backup, and plugin versions; it is not the JSON-LD standard's `@version` keyword.
 
 Concepts have an optional `notes` string, serialized as `rdfs:comment`. The JSON-LD representation is independent of the in-memory property name.
 
-Views are optional `@graph` entries with `@type: 'View'`, an `rdfs:label` name, and `members`, each referencing a `concept` with its `position` and optional `color`, `bold`, and `italic`. Older documents with this presentation on concept entries are read as one unnamed view of every concept.
+Views are optional `@graph` entries with `@type: 'View'`, an `rdfs:label` name, and `members`, each referencing a `concept` with its `position` and optional `color`, `bold`, and `italic`.
+
+`parseGraph` accepts the current profile and supported legacy documents without modifying its input. `serializeGraph` always writes the current profile.
 
 Relations use absolute predicate IRIs or local aliases mapped to known relation types with `@type: '@id'`. Relation types cannot use concept property keys such as `rdfs:label` or `rdfs:comment`. Remote contexts are not resolved; other non-predicate context terms are ignored. Unsupported document and graph-entry properties are rejected.
 

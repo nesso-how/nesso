@@ -55,7 +55,7 @@ export async function verifyStorage({ window, url, name }: CheckContext) {
       (await read('document')) as
         | {
             documentId: string
-            graph: { '@graph': { '@id': string }[] }
+            graph: { schemaVersion: number; '@graph': { '@id': string }[] }
             workspace: WorkspaceState
           }
         | undefined,
@@ -110,10 +110,11 @@ export async function verifyStorage({ window, url, name }: CheckContext) {
       members.map(({ id, ...member }) => [id, member]),
     ),
   )
+  const { schemaVersion: _, ...legacyGraph } = document.graph
   const legacy = {
     version: 1,
     graph: {
-      ...document.graph,
+      ...legacyGraph,
       '@graph': document.graph['@graph'].map((node) => ({
         ...node,
         ...presentation.get(node['@id']),
