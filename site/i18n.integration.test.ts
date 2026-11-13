@@ -116,6 +116,16 @@ test('the site build emits complete localized pages with matching language links
       ),
     )
     assertSoftwareApplication(html, path)
+    assert.ok(html.includes('<meta property="og:site_name" content="Nesso" />'))
+    const website = [
+      ...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g),
+    ].map((script) => JSON.parse(script[1]))[1]
+    assert.deepEqual(website, {
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      name: 'Nesso',
+      url: 'https://nesso.how/',
+    })
     assert.doesNotMatch(html, /{{|%NESSO_VERSION%|In development\./)
     for (const language of locales) {
       assert.ok(html.includes(`<link rel="alternate" hreflang="${language}"`))
