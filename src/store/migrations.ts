@@ -2,7 +2,14 @@ import { z } from 'zod'
 import { iriSchema, newIri, parseGraph, serializeGraph } from '@nesso-how/schema'
 import { checkMessageSize, pluginStorageLimits } from '@nesso-how/plugin/runtime'
 import { aiChatLimits, aiConversation } from '@nesso-how/ai'
-import { defaultCanvasTabOrder, fail, parseSettings, preferencesSchema } from './settings.ts'
+import { viewportKey } from '@nesso-how/core'
+import {
+  defaultCanvasTabOrder,
+  fail,
+  parseSettings,
+  parseWorkspace,
+  preferencesSchema,
+} from './settings.ts'
 
 const conversationV1 = z.strictObject({
   version: z.literal(1),
@@ -23,6 +30,7 @@ const documentV2 = z.strictObject({
   workspace: z.unknown(),
 })
 const documentV3 = documentV2.extend({ version: z.literal(3) })
+const documentV4 = documentV2.extend({ version: z.literal(4) })
 const workspaceV2 = z.looseObject({
   savedViews: z.array(z.looseObject({ conceptIds: z.array(z.string()) })),
 })
@@ -132,7 +140,7 @@ export function migratePluginStorage(value: unknown): unknown {
   }
 }
 
-export function migrateDocument(value: unknown): z.infer<typeof documentV3> {
+export function migrateDocument(value: unknown): z.infer<typeof documentV4> {
   const { version } = parseSettings(versionSchema, value)
   switch (version) {
     case 1: {
@@ -141,7 +149,7 @@ export function migrateDocument(value: unknown): z.infer<typeof documentV3> {
     }
     case 2: {
       const saved = parseSettings(documentV2, value)
-      if (saved.graph === null) return parseSettings(documentV3, { ...saved, version: 3 })
+      if (saved.graph === null) return migrateDocument({ ...saved, version: 3 })
       const { graph, views } = parseGraph(saved.graph)
       const workspace = parseSettings(workspaceV2, saved.workspace)
       const presentation = new Map(views[0]?.members.map((member) => [member.id, member]))
@@ -149,7 +157,7 @@ export function migrateDocument(value: unknown): z.infer<typeof documentV3> {
         ids.map((id) => presentation.get(id) ?? { id, position: { x: 0, y: 0 } })
       const listed = new Set(workspace.savedViews.flatMap(({ conceptIds }) => conceptIds))
       const unsorted = graph.concepts.flatMap(({ id }) => (listed.has(id) ? [] : [id]))
-      return parseSettings(documentV3, {
+      return migrateDocument({
         ...saved,
         version: 3,
         graph: serializeGraph(graph),
@@ -167,8 +175,25 @@ export function migrateDocument(value: unknown): z.infer<typeof documentV3> {
         },
       })
     }
-    case 3:
-      return parseSettings(documentV3, value)
+    case 3: {
+      const saved = parseSettings(documentV3, value)
+      const workspace = saved.workspace === null ? null : parseWorkspace(saved.workspace)
+      return {
+        ...saved,
+        version: 4,
+        workspace: workspace && {
+          ...workspace,
+          viewports: Object.fromEntries(
+            Object.entries(workspace.viewports).map(([rendererId, viewport]) => [
+              viewportKey(rendererId, workspace.activeViewId),
+              viewport,
+            ]),
+          ),
+        },
+      }
+    }
+    case 4:
+      return parseSettings(documentV4, value)
     default:
       return fail('version', 'Unsupported storage version')
   }

@@ -26,7 +26,7 @@ import {
   Trash2,
   Undo2,
 } from 'lucide-react'
-import type { Selection } from '@nesso-how/core'
+import { viewportKey, type Selection } from '@nesso-how/core'
 import { defaultLocale } from '@nesso-how/i18n'
 import {
   Background,
@@ -150,9 +150,10 @@ export function Canvas({
   const interactive = !readOnly && !locked
   const LockIcon = interactive ? LockOpen : Lock
   const [initialViewport] = useState(() =>
-    restoreViewport ? store.getState().workspace.viewports['concept-map'] : undefined,
+    restoreViewport && !preview
+      ? store.getState().workspace.viewports[viewportKey('concept-map', view)]
+      : undefined,
   )
-  const navigation = useRef(view)
   const reconnecting = useRef<Reconnection | null>(null)
   const [reconnectDrag, setReconnectDrag] = useState<Reconnection | null>(null)
   const hasOverlay = preview
@@ -710,17 +711,6 @@ export function Canvas({
   }, [userSelecting])
 
   useEffect(() => {
-    if (hasOverlay || navigation.current === view) return
-    navigation.current = view
-    if (focusTarget) return
-    const frame = requestAnimationFrame(() => {
-      setContextMenu(null)
-      void fitView(animatedFraming)
-    })
-    return () => cancelAnimationFrame(frame)
-  }, [view, fitView, hasOverlay, animatedFraming, focusTarget])
-
-  useEffect(() => {
     if (!focusTarget || !nodesInitialized || !width || !height) return
     const frame = requestAnimationFrame(() => {
       if (graph.concepts.some(({ id }) => id === focusTarget)) {
@@ -1011,7 +1001,8 @@ export function Canvas({
           readOnly
             ? undefined
             : (_event, value) => {
-                write([{ kind: 'viewport.set', rendererId: 'concept-map', value }])
+                if (store.getState().workspace.activeViewId !== view) return
+                write([{ kind: 'viewport.set', rendererId: 'concept-map', viewId: view, value }])
               }
         }
         fitView={!initialViewport && !hasOverlay}

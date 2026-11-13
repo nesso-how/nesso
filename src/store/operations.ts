@@ -8,6 +8,7 @@ import type {
   ViewGraphSnapshot,
   WorkspaceState,
 } from '@nesso-how/core'
+import { viewportKey } from '@nesso-how/core'
 import type { ThemeDefinition } from '@nesso-how/plugin'
 import {
   newIri,
@@ -645,14 +646,18 @@ export const applyStateOperations = (
           savedViews: views.items,
         }
         break
-      case 'viewport.set':
+      case 'viewport.set': {
         if (!registry.renderers.has(operation.rendererId))
           fail('rendererId', `Unknown renderer: ${operation.rendererId}`)
+        const viewId = operation.viewId === undefined ? workspace.activeViewId : operation.viewId
+        if (viewId !== null && !views.get(viewId)) fail('view.id', 'Unknown view')
+        const key = viewportKey(operation.rendererId, viewId)
         workspace = {
           ...workspace,
-          viewports: { ...workspace.viewports, [operation.rendererId]: { ...operation.value } },
+          viewports: { ...workspace.viewports, [key]: { ...operation.value } },
         }
         break
+      }
       case 'preferences.vocab':
         if (!state.vocabs.some((vocab) => vocab.id === operation.id)) {
           throw new SchemaError([
