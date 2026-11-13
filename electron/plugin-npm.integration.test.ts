@@ -96,6 +96,7 @@ test('latest metadata admits all supported kinds and rejects deprecated versions
       },
     }
     const plugin = await latestNpmPlugin(manifest.name, new AbortController().signal, request)
+    assert.ok(plugin)
     assert.equal(plugin.name, manifest.name)
     assert.equal(plugin.version, '1.2.0')
     assert.equal(plugin.nesso.kind, kind)
@@ -110,7 +111,10 @@ test('latest metadata admits all supported kinds and rejects deprecated versions
     { ...manifest, nesso: { ...manifest.nesso, apiVersion: 3 } },
   ]) {
     document = invalid
-    await assert.rejects(latestNpmPlugin(manifest.name, new AbortController().signal, request))
+    assert.equal(
+      await latestNpmPlugin(manifest.name, new AbortController().signal, request),
+      undefined,
+    )
   }
 })
 
@@ -201,7 +205,7 @@ test('latest discovery gates prereleases by app channel and tolerates missing me
     else res.end(JSON.stringify(document))
   })
   const signal = new AbortController().signal
-  assert.equal((await latestNpmPlugin(manifest.name, signal, request)).version, '1.0.0')
+  assert.equal((await latestNpmPlugin(manifest.name, signal, request))?.version, '1.0.0')
   assert.equal(
     requested.some((url) => url.endsWith('/beta')),
     false,
@@ -209,21 +213,20 @@ test('latest discovery gates prereleases by app channel and tolerates missing me
   const found = await searchNpmPlugins({ query: '' }, signal, request, true)
   assert.equal(found.packages[0]?.version, '1.0.0')
   document = { ...manifest, version: '1.1.0-beta.2' }
-  await assert.rejects(latestNpmPlugin(manifest.name, signal, request))
+  assert.equal(await latestNpmPlugin(manifest.name, signal, request), undefined)
   assert.equal(
-    (await latestNpmPlugin(manifest.name, signal, request, true)).version,
+    (await latestNpmPlugin(manifest.name, signal, request, true))?.version,
     '1.1.0-beta.2',
   )
   document = { ...manifest, version: '1.1.0' }
-  assert.equal((await latestNpmPlugin(manifest.name, signal, request, true)).version, '1.1.0')
+  assert.equal((await latestNpmPlugin(manifest.name, signal, request, true))?.version, '1.1.0')
   for (const invalid of [
-    undefined,
     { ...manifest, version: '1.1.0-beta.2', nesso: { ...manifest.nesso, apiVersion: 5 } },
     { ...manifest, version: '2.0.0-alpha.1' },
     { ...manifest, version: '2.0.0-rc.1' },
   ]) {
     document = invalid
-    await assert.rejects(latestNpmPlugin(manifest.name, signal, request, true))
+    assert.equal(await latestNpmPlugin(manifest.name, signal, request, true), undefined)
   }
   document = undefined
   await assert.rejects(latestNpmPlugin(manifest.name, signal, request, true))

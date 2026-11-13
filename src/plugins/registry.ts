@@ -11,6 +11,7 @@ export type PluginEntry = {
   readonly contentId?: string
   readonly npmIntegrity?: string
   readonly error?: string
+  readonly incompatible?: boolean
   readonly disabled?: boolean
   readonly access?: PluginAccess
   readonly i18n: PluginI18n

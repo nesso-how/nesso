@@ -7,7 +7,8 @@ export async function verifyStartup({ window, url }: CheckContext) {
   let release = () => {}
   const hold = () =>
     new Promise((resolve) => {
-      release = () => resolve({ value: { safeMode: false, packages: [], issues: [] } })
+      release = () =>
+        resolve({ value: { safeMode: false, packages: [], incompatible: [], issues: [] } })
     })
   let listing = hold()
   ipcMain.handle('plugins:list', () => listing)

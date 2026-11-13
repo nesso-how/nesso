@@ -8,7 +8,9 @@ export async function verifyImages(context: CheckContext) {
   context.window.setSize(1280, 900)
   const scale = 4
   let written: FileSaveOptions | undefined
-  ipcMain.handle('plugins:list', () => ({ value: { safeMode: false, packages: [], issues: [] } }))
+  ipcMain.handle('plugins:list', () => ({
+    value: { safeMode: false, packages: [], incompatible: [], issues: [] },
+  }))
   ipcMain.handle('files:save', (_event, _id: string, options: FileSaveOptions) => {
     written = options
     return { saved: true }
