@@ -10,6 +10,7 @@ import {
   CONFIRM_TIMEOUT_MS,
   INSTALL_FEEDBACK_MS,
   INSTALL_TIMEOUT_MS,
+  STARTUP_CHECK_FALLBACK_MS,
   type UpdateState,
 } from './updates.ts'
 
@@ -20,6 +21,7 @@ const fixture = (
   checkForUpdates = async () => null,
   nativeUpdates = true,
   installOnQuit = false,
+  startupComplete = true,
 ) => {
   let check = () => {}
   const interval = context.mock.method(globalThis, 'setInterval', (callback: () => void) => {
@@ -43,12 +45,24 @@ const fixture = (
     notify,
     installOnQuit,
   )
+  if (startupComplete) updates.start()
   return { updater, nativeUpdater, updates, notify, interval, check: () => check() }
 }
 
-test('updates check at startup and hourly without overlap, retrying after failure', async (context) => {
+test('updates check once startup completes and hourly without overlap, retrying after failure', async (context) => {
+  context.mock.timers.enable({ apis: ['setTimeout'] })
   const pending = Promise.withResolvers<null>()
-  const { updater, updates, interval, check } = fixture(context, () => pending.promise)
+  const { updater, updates, interval, check } = fixture(
+    context,
+    () => pending.promise,
+    true,
+    false,
+    false,
+  )
+  assert.equal(updater.checkForUpdates.mock.callCount(), 0)
+  updates.start()
+  updates.start()
+  context.mock.timers.tick(STARTUP_CHECK_FALLBACK_MS)
   assert.equal(updater.checkForUpdates.mock.callCount(), 1)
   assert.equal(interval.mock.calls[0].arguments[1], 60 * 60 * 1000)
   check()
@@ -59,6 +73,17 @@ test('updates check at startup and hourly without overlap, retrying after failur
   updater.checkForUpdates.mock.mockImplementationOnce(async () => null)
   check()
   assert.equal(updater.checkForUpdates.mock.callCount(), 2)
+})
+
+test('updates still check after the fallback when startup never completes', (context) => {
+  context.mock.timers.enable({ apis: ['setTimeout'] })
+  const { updater, updates } = fixture(context, async () => null, true, false, false)
+  context.mock.timers.tick(STARTUP_CHECK_FALLBACK_MS - 1)
+  assert.equal(updater.checkForUpdates.mock.callCount(), 0)
+  context.mock.timers.tick(1)
+  assert.equal(updater.checkForUpdates.mock.callCount(), 1)
+  updates.start()
+  assert.equal(updater.checkForUpdates.mock.callCount(), 1)
 })
 
 test('updates download automatically but restart only after confirmation, validation and saving', (context) => {

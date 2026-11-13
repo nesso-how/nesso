@@ -46,6 +46,7 @@ const updater: UpdateBridge = {
     }
   },
   restart: () => ipcRenderer.send('update:restart'),
+  startupComplete: () => ipcRenderer.send('update:startup-complete'),
   beforeInstall: (save, confirm) =>
     beforeSave('update:prepare', 'update:install', confirmSave('update:confirming', save, confirm)),
 }
