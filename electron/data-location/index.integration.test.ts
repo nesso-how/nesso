@@ -15,11 +15,13 @@ import {
 } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
-import { createDataLocation } from './data-location.ts'
-import { createFileStorage } from './file-storage.ts'
-import { persistenceSections } from '../shared/persistence.ts'
+import { createDataLocation } from './index.ts'
+import { createFileStorage } from '../file-storage.ts'
+import { persistenceSections } from '../../shared/persistence.ts'
 
-async function fixture(context: TestContext, committed?: boolean) {
+const digest = (data: string | Buffer) => createHash('sha256').update(data).digest('hex')
+
+async function fixture(context: TestContext, committed?: boolean, legacy = false) {
   const root = await realpath(await mkdtemp(path.join(tmpdir(), 'nesso-location-')))
   context.after(() => rm(root, { recursive: true, force: true }))
   const source = path.join(root, 'default')
@@ -30,7 +32,7 @@ async function fixture(context: TestContext, committed?: boolean) {
   const identity = randomUUID()
   const files = ['document.json', '.nesso-data-id'].map((name) => {
     const data = name === 'document.json' ? '{"version":1}' : identity
-    return { name, data, hash: createHash('sha256').update(data).digest('hex') }
+    return { name, data, hash: digest(data) }
   })
   if (committed !== undefined) {
     for (const { name, data } of files) {
@@ -40,6 +42,7 @@ async function fixture(context: TestContext, committed?: boolean) {
     await writeFile(
       bootstrap,
       JSON.stringify({
+        ...(legacy ? {} : { version: 1 }),
         directory: committed ? destination : source,
         identity,
         transfer: { source, destination, files: files.map(({ name, hash }) => ({ name, hash })) },
@@ -113,8 +116,15 @@ test('rejects occupied, overlapping and invalid destinations, and never transfer
 })
 
 test('startup recovers interrupted transfers on either side of activation without deleting unrelated files', async (context) => {
-  for (const committed of [false, true]) {
-    const { source, destination } = await fixture(context, committed)
+  for (const [committed, legacy] of [
+    [false, false],
+    [true, false],
+    [false, true],
+    [true, true],
+  ]) {
+    const { source, destination, bootstrap, identity } = await fixture(context, committed, legacy)
+    const original = await readFile(bootstrap)
+    const backup = `data-location.json.backup-${digest(original)}`
     await writeFile(path.join(destination, 'foreign'), 'keep')
     const location = await createDataLocation(source)
     assert.equal(location.state().directory, committed ? destination : source)
@@ -125,9 +135,15 @@ test('startup recovers interrupted transfers on either side of activation withou
     )
     assert.deepEqual(
       (await readdir(committed ? source : destination)).sort(),
-      committed ? ['data-location.json'] : ['foreign'],
+      committed ? ['data-location.json', ...(legacy ? [backup] : [])] : ['foreign'],
     )
     assert.equal(await readFile(path.join(destination, 'foreign'), 'utf8'), 'keep')
+    assert.deepEqual(JSON.parse(await readFile(bootstrap, 'utf8')), {
+      version: 1,
+      directory: location.state().directory,
+      identity,
+    })
+    if (legacy) assert.deepEqual(await readFile(path.join(source, backup)), original)
   }
 })
 
@@ -177,4 +193,57 @@ test('missing or replaced data folders and corrupt configuration never fall back
   assert.deepEqual(await readdir(destination), [])
   await writeFile(bootstrap, 'broken config')
   await assert.rejects(createDataLocation(source), /storageConfig/)
+})
+
+test('legacy configurations are read unchanged and upgrade only after their exact original is preserved', async (context) => {
+  const { root, source, destination, bootstrap, identity } = await fixture(context)
+  const legacy = JSON.stringify({ directory: source, identity })
+  await writeFile(path.join(source, '.nesso-data-id'), identity)
+  await writeFile(bootstrap, legacy)
+  const location = await createDataLocation(source)
+  assert.equal(await readFile(bootstrap, 'utf8'), legacy)
+  const backup = `${bootstrap}.backup-${digest(legacy)}`
+  await mkdir(backup)
+  await assert.rejects(location.move(destination))
+  assert.equal(await readFile(bootstrap, 'utf8'), legacy)
+  assert.deepEqual(await readdir(destination), [])
+  await rm(backup, { recursive: true })
+  await location.move(destination)
+  assert.equal(await readFile(backup, 'utf8'), legacy)
+  assert.deepEqual(JSON.parse(await readFile(bootstrap, 'utf8')), {
+    version: 1,
+    directory: destination,
+    identity,
+  })
+  const offline = JSON.stringify({ directory: destination, identity })
+  await writeFile(bootstrap, offline)
+  await rename(destination, path.join(root, 'offline'))
+  await assert.rejects(createDataLocation(source), /storageUnavailable/)
+  assert.equal(await readFile(bootstrap, 'utf8'), offline)
+})
+
+test('unsupported versions and invalid journals are rejected before cleanup or writes', async (context) => {
+  const { source, destination, bootstrap, identity, files } = await fixture(context, true)
+  const transfer = { source, destination, files: files.map(({ name, hash }) => ({ name, hash })) }
+  for (const config of [
+    { version: 2, directory: destination, identity, transfer },
+    {
+      directory: destination,
+      identity,
+      transfer: { ...transfer, files: [{ ...transfer.files[0], hash: 'x' }] },
+    },
+    { directory: destination, identity, transfer, extra: true },
+  ]) {
+    await writeFile(bootstrap, JSON.stringify(config))
+    await assert.rejects(createDataLocation(source), /storageConfig/)
+    assert.equal(await readFile(bootstrap, 'utf8'), JSON.stringify(config))
+    for (const directory of [source, destination])
+      for (const { name, data } of files)
+        assert.equal(await readFile(path.join(directory, name), 'utf8'), data)
+  }
+  assert.deepEqual((await readdir(source)).sort(), [
+    '.nesso-data-id',
+    'data-location.json',
+    'document.json',
+  ])
 })

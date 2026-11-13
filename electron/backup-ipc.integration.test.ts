@@ -5,7 +5,7 @@ import { registerHooks } from 'node:module'
 import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
-import { createDataLocation } from './data-location.ts'
+import { createDataLocation } from './data-location/index.ts'
 import { createFileStorage } from './file-storage.ts'
 import { createNessoStore } from '../src/store/create.ts'
 import { connectPersistence, loadPersistence } from '../src/store/persistence.ts'
@@ -84,7 +84,7 @@ test('native backup IPC coordinates windows, honors cancellation, validates befo
     hooks.deregister()
     Reflect.deleteProperty(globalThis, '__nessoBackupElectron')
   })
-  const { connectDataLocation } = await import('./data-location-ipc.ts')
+  const { connectDataLocation } = await import('./data-location/ipc.ts')
   const { connectDesktopPersistence } = await import('./persistence.ts')
   const trusted = (event: unknown) => (event as Event).trusted
   const automatic = await createAutomaticBackups(directory, storage, app.getVersion(), location)
