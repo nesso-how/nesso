@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.0-beta.21 — 2026-11-13
+
+### Features
+
+- **notes:** Add inline code formatting (#342)
+
+### Fixes
+
+- **updates:** Check for updates after startup completes (#343)
+
 ## 1.0.0-beta.20 — 2026-11-13
 
 ### Fixes
