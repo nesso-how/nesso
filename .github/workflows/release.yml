@@ -83,7 +83,7 @@ jobs:
             win) pnpm test:desktop release/win-unpacked/Nesso.exe "release/Nesso-${VERSION}-x64.exe" ;;
             linux)
               sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
-              xvfb-run -a pnpm test:desktop release/linux-unpacked/nesso release/Nesso-x86_64.AppImage
+              xvfb-run -a pnpm test:desktop release/linux-unpacked/nesso release/Nesso-x86_64.AppImage "release/Nesso-${VERSION}-amd64.deb"
               ;;
           esac
       - name: Verify packages and update metadata

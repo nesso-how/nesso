@@ -8,12 +8,12 @@ import path from 'node:path'
 import { promisify } from 'node:util'
 import { NessoError } from '@nesso-how/errors'
 
-const [executable, update] = process.argv.slice(2)
-if (!executable || !existsSync(executable) || (update && !existsSync(update)))
+const [executable, ...updates] = process.argv.slice(2)
+if (!executable || !existsSync(executable) || !updates.every((file) => existsSync(file)))
   throw new NessoError([
     {
       path: 'startup-check',
-      message: 'Expected a packaged app executable path and an optional update package path',
+      message: 'Expected a packaged app executable path and optional update artifact paths',
     },
   ])
 const profile = mkdtempSync(path.join(tmpdir(), 'nesso-desktop-startup-'))
@@ -42,7 +42,27 @@ const launch = async (stage: string, file: string, env: NodeJS.ProcessEnv, timeo
   console.log(`Packaged desktop ${stage}: passed`)
 }
 
-const checkUpdate = async (file: string) => {
+const checkUpdate = async (files: string[]) => {
+  let file = files[0]
+  const env: NodeJS.ProcessEnv = {}
+  if (process.platform === 'linux') {
+    const identity = path.join(path.dirname(path.resolve(executable)), 'resources', 'package-type')
+    let extension = 'AppImage'
+    if (existsSync(identity)) {
+      const type = readFileSync(identity, 'utf8').trim()
+      if (['deb', 'rpm', 'pacman'].includes(type)) extension = type
+    }
+    const artifact = files.find((candidate) => candidate.endsWith(`.${extension}`))
+    if (!artifact)
+      throw new NessoError([
+        {
+          path: 'update',
+          message: `The packaged app requires a .${extension} artifact for the update check`,
+        },
+      ])
+    file = artifact
+    env.APPIMAGE = extension === 'AppImage' ? path.resolve(artifact) : undefined
+  }
   const name = path.basename(file)
   const content = readFileSync(file)
   const sha512 = createHash('sha512').update(content).digest('base64')
@@ -78,7 +98,7 @@ const checkUpdate = async (file: string) => {
       target,
       {
         NESSO_UPDATE_FEED: `http://127.0.0.1:${(server.address() as AddressInfo).port}/`,
-        ...(process.platform === 'linux' && { APPIMAGE: path.resolve(file) }),
+        ...env,
       },
       300_000,
     )
@@ -90,7 +110,7 @@ const checkUpdate = async (file: string) => {
 
 try {
   for (const stage of ['first launch', 'restart']) await launch(stage, executable, {}, 60_000)
-  if (update) await checkUpdate(update)
+  if (updates.length) await checkUpdate(updates)
 } finally {
   rmSync(profile, { recursive: true, force: true })
 }
