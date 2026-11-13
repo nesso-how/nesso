@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.0-beta.18 — 2026-11-13
+
+### Fixes
+
+- **overview:** Improve label scaling, framing and rendering (#335)
+- **overview:** Place imported concepts beside their neighbors (#339)
+- **updates:** Recover from failed and stalled updates (#337)
+
 ## 1.0.0-beta.17 — 2026-11-13
 
 ### Documentation
