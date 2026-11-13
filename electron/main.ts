@@ -181,6 +181,9 @@ app
       ipcMain.on('update:subscribe', (event) => {
         if (trusted(event)) event.sender.send('update:state', updates.getState())
       })
+      ipcMain.on('update:startup-complete', (event) => {
+        if (trusted(event)) updates.start()
+      })
       ipcMain.on('update:restart', (event) => {
         if (trusted(event) && !location.state().moving) updates.restart()
       })

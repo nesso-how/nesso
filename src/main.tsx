@@ -111,3 +111,4 @@ const panels = preloadPluginPanels()
 showApp(true)
 await panels
 showApp(true, true)
+window.nessoUpdater?.startupComplete()

@@ -13,12 +13,14 @@ export type UpdateState = {
 export type UpdateBridge = {
   subscribe: (listener: (state: UpdateState) => void) => () => void
   restart: () => void
+  startupComplete: () => void
   beforeInstall: (save: () => Promise<boolean>, confirm: () => Promise<boolean>) => () => void
 }
 
 export const INSTALL_FEEDBACK_MS = 1_000
 export const INSTALL_TIMEOUT_MS = 30_000
 export const CONFIRM_TIMEOUT_MS = 10 * 60 * 1000
+export const STARTUP_CHECK_FALLBACK_MS = 60_000
 
 export function connectUpdates(
   updater: AppUpdater,
@@ -101,7 +103,14 @@ export function connectUpdates(
       checking = false
     }
   }
-  void check()
+  let started = false
+  const start = () => {
+    clearTimeout(fallback)
+    if (started) return
+    started = true
+    void check()
+  }
+  const fallback = setTimeout(start, STARTUP_CHECK_FALLBACK_MS)
   setInterval(
     () => {
       if (state?.status === 'downloading' && !state.error && !progress) {
@@ -116,6 +125,7 @@ export function connectUpdates(
 
   return {
     getState: () => state,
+    start,
     restart: () => {
       if (state?.status !== 'ready') return
       const { version } = state
