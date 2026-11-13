@@ -3,12 +3,20 @@ name: Release
 on:
   push:
     tags: ['v*']
+  pull_request:
+    paths:
+      - .github/workflows/release.yml
+      - electron/updates.ts
+      - electron/startup-check.ts
+      - scripts/test-desktop.ts
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     strategy:
       fail-fast: false
       matrix:
@@ -37,6 +45,7 @@ jobs:
         id: release
         run: |
           version="${GITHUB_REF_NAME#v}"
+          if [[ "$GITHUB_REF_TYPE" != tag ]]; then version="$(node -p "require('./package.json').version")"; fi
           channel=latest
           if [[ "$version" == *-* ]]; then
             channel="${version#*-}"
@@ -122,6 +131,7 @@ jobs:
             release/${{ steps.release.outputs.channel }}*.yml
 
   publish:
+    if: github.event_name == 'push'
     needs: build
     runs-on: ubuntu-24.04
     permissions:
