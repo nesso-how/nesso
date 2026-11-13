@@ -25,6 +25,7 @@ export type Highlight = {
 }
 
 const labelGap = 14
+const faded = 0.4
 
 export const readTheme = (value: (token: keyof Theme) => string): Theme =>
   Object.fromEntries(
@@ -91,7 +92,7 @@ export function draw(
     if (concepts.has(target.id)) near.add(source.id)
   }
   const dim = (...ids: string[]) =>
-    concepts.size > 0 && !ids.some((id) => concepts.has(id)) ? 0.2 : 1
+    concepts.size > 0 && !ids.some((id) => concepts.has(id)) ? faded : 1
   const lit = (id: string) => relations.has(id) || id === hovered
   const shown = lines.filter(
     ({ id, source, target }) =>
@@ -138,7 +139,7 @@ export function draw(
     context.beginPath()
     context.arc(x, y, radius + 0.75, 0, 2 * Math.PI)
     context.fill()
-    context.globalAlpha = near.has(bubble.id) || concepts.size === 0 ? 1 : 0.2
+    context.globalAlpha = near.has(bubble.id) || concepts.size === 0 ? 1 : faded
     if (selected) {
       context.fillStyle = theme['selection-halo']
       context.beginPath()
