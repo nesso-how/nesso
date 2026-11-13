@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { backupSchema, type AutomaticBackupState } from '../shared/backup.ts'
 import type { PersistenceStorage } from '../shared/persistence.ts'
 import { createBackup } from '../src/store/backup.ts'
-import type { DataLocation } from './data-location.ts'
+import type { DataLocation } from './data-location/index.ts'
 import { ElectronError } from './errors.ts'
 import { containsPath, syncDirectory, writeFileData } from './file-system.ts'
 

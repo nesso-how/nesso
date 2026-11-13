@@ -8,7 +8,7 @@ import { createAiChatRun } from './ai-chat.ts'
 import { createChatGptAuth } from './ai-oauth.ts'
 import type { TrustedRequest } from './ipc.ts'
 import { onDocumentNavigation } from './navigation.ts'
-import type { DataLocation } from './data-location.ts'
+import type { DataLocation } from './data-location/index.ts'
 
 export function connectAi(trusted: TrustedRequest, location: DataLocation) {
   const connections = createAiConnections(

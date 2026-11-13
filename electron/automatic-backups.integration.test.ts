@@ -15,7 +15,7 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { createAutomaticBackups } from './automatic-backups.ts'
 import { createFileStorage } from './file-storage.ts'
-import { createDataLocation } from './data-location.ts'
+import { createDataLocation } from './data-location/index.ts'
 import { createNessoStore } from '../src/store/create.ts'
 import { connectPersistence, loadPersistence } from '../src/store/persistence.ts'
 

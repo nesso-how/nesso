@@ -3,17 +3,19 @@ import { lstatSync, readFileSync, realpathSync } from 'node:fs'
 import { lstat, mkdir, open, readFile, readdir, realpath, rename, unlink } from 'node:fs/promises'
 import path from 'node:path'
 import { z } from 'zod'
-import type { DataLocationState } from '../shared/data-location.ts'
-import { persistenceSections } from '../shared/persistence.ts'
-import { ElectronError } from './errors.ts'
-import { containsPath, syncDirectory, writeFileData } from './file-system.ts'
-import { automaticBackupName } from '../shared/backup.ts'
+import type { DataLocationState } from '../../shared/data-location.ts'
+import { persistenceSections } from '../../shared/persistence.ts'
+import { ElectronError } from '../errors.ts'
+import { containsPath, syncDirectory, writeFileData } from '../file-system.ts'
+import { automaticBackupName } from '../../shared/backup.ts'
+import { migrateDataLocation } from './migrations.ts'
 
 const marker = '.nesso-data-id'
 const names = [...persistenceSections.map((section) => `${section}.json` as const), marker] as const
 const ownedName = z.union([z.enum(names), z.string().regex(automaticBackupName)])
 const fileSchema = z.strictObject({ name: ownedName, hash: z.string().regex(/^[0-9a-f]{64}$/) })
 const configSchema = z.strictObject({
+  version: z.literal(1),
   directory: z.string(),
   identity: z.uuid(),
   transfer: z
@@ -41,15 +43,19 @@ export async function createDataLocation(userData: string) {
   const defaultDirectory = await realpath(userData)
   const bootstrap = path.join(defaultDirectory, 'data-location.json')
   let config: Config
+  let original: Buffer | undefined
   let moving = false
   try {
-    config = configSchema.parse(JSON.parse(await readFile(bootstrap, 'utf8')))
+    const bytes = await readFile(bootstrap)
+    const migrated = migrateDataLocation(JSON.parse(bytes.toString('utf8')))
+    config = configSchema.parse(migrated.config)
+    if (migrated.upgraded) original = bytes
   } catch (error) {
     if (!missing(error)) fail('storageConfig')
     const identity = await readFileData(path.join(defaultDirectory, marker))
     const parsed = z.uuid().safeParse(identity?.toString() ?? randomUUID())
     if (!parsed.success) return fail('storageConfig')
-    config = { directory: defaultDirectory, identity: parsed.data }
+    config = { version: 1, directory: defaultDirectory, identity: parsed.data }
     if (!identity) {
       await writeFileData(path.join(defaultDirectory, marker), config.identity)
       await syncDirectory(defaultDirectory)
@@ -67,6 +73,13 @@ export async function createDataLocation(userData: string) {
   }
   await checkDirectory(config.directory, config.identity)
   const persist = async (next: Config) => {
+    if (original) {
+      const backup = `${bootstrap}.backup-${digest(original)}`
+      await writeFileData(`${backup}.tmp`, original, false)
+      await rename(`${backup}.tmp`, backup)
+      await syncDirectory(defaultDirectory)
+      original = undefined
+    }
     await writeFileData(`${bootstrap}.tmp`, JSON.stringify(next), false)
     await rename(`${bootstrap}.tmp`, bootstrap)
     config = next
@@ -105,7 +118,7 @@ export async function createDataLocation(userData: string) {
       await unlink(file)
     }
     await syncDirectory(committed ? source : destination)
-    await persist({ directory: config.directory, identity: config.identity })
+    await persist({ version: 1, directory: config.directory, identity: config.identity })
   }
   if (config.transfer) {
     try {
