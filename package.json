@@ -51,6 +51,7 @@
     "@nesso-how/schema": "workspace:*",
     "@nesso-how/ui": "workspace:*",
     "ai": "^7.0.133",
+    "builder-util-runtime": "9.7.0",
     "cn": "^0.4.0",
     "electron-updater": "^6.8.9",
     "jose": "^6.2.12",
@@ -126,6 +127,9 @@
     },
     "win": {
       "icon": "public/icon-512.png"
+    },
+    "appImage": {
+      "artifactName": "${productName}-${arch}.${ext}"
     },
     "linux": {
       "icon": "public/icon-512.png",

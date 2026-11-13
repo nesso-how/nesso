@@ -21,7 +21,7 @@ function assertSoftwareApplication(html: string, path: string) {
   assert.equal(app.operatingSystem, 'macOS, Windows, Linux')
   assert.equal(app.downloadUrl.length, 3)
   for (const download of app.downloadUrl)
-    assert.ok(download.includes(`/v${app.softwareVersion}/Nesso-${app.softwareVersion}-`))
+    assert.ok(download.includes(`/v${app.softwareVersion}/Nesso-`))
 }
 
 test('landing translations cover the same content with concise metadata', () => {

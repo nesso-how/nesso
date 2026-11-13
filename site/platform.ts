@@ -15,8 +15,10 @@ export function desktopDownload(
   version: string,
 ) {
   if (platform === 'other') return null
-  const suffix = { macOS: 'universal.dmg', Windows: 'x64.exe', Linux: 'x86_64.AppImage' }[platform]
-  return {
-    href: `https://github.com/nesso-how/nesso/releases/download/v${version}/Nesso-${version}-${suffix}`,
-  }
+  const file = {
+    macOS: `Nesso-${version}-universal.dmg`,
+    Windows: `Nesso-${version}-x64.exe`,
+    Linux: 'Nesso-x86_64.AppImage',
+  }[platform]
+  return { href: `https://github.com/nesso-how/nesso/releases/download/v${version}/${file}` }
 }

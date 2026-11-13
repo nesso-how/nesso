@@ -176,7 +176,7 @@ If a suspected plugin problem prevents startup, quit Nesso completely and relaun
 
 - **macOS:** `open -a Nesso --args --safe-plugins`
 - **Windows (PowerShell):** `& "C:\path\to\Nesso.exe" --safe-plugins`
-- **Linux:** `nesso --safe-plugins`, or `./Nesso-<version>-<arch>.AppImage` for an AppImage.
+- **Linux:** `nesso --safe-plugins`, or `./Nesso-<arch>.AppImage` for an AppImage.
 
 Installed packages and documents are preserved. Quit and relaunch without the flag to resume normal operation.
 

@@ -1,8 +1,9 @@
 import { useEffect, useId, useState } from 'react'
 import { Button } from '@nesso-how/ui'
-import { CircleAlert, Download, LoaderCircle, RefreshCw } from 'lucide-react'
+import { CircleAlert, Download, ExternalLink, LoaderCircle, RefreshCw } from 'lucide-react'
 import type { UpdateBridge, UpdateState } from '../../../electron/updates'
 import { useTranslation } from '@/i18n'
+import { releasesUrl } from '../../../shared/link-policy.ts'
 
 const presentations = {
   ready: {
@@ -11,6 +12,7 @@ const presentations = {
     hint: 'updateReadyDescription',
     busy: false,
     Icon: Download,
+    ActionIcon: RefreshCw,
   },
   saving: {
     message: 'updateReady',
@@ -18,6 +20,7 @@ const presentations = {
     hint: null,
     busy: true,
     Icon: Download,
+    ActionIcon: LoaderCircle,
   },
   installing: {
     message: 'updateReady',
@@ -25,6 +28,15 @@ const presentations = {
     hint: null,
     busy: true,
     Icon: Download,
+    ActionIcon: LoaderCircle,
+  },
+  download: {
+    message: 'updateDownloadFailure',
+    action: 'updateDownloadManually',
+    hint: 'updateDownloadFailureDescription',
+    busy: false,
+    Icon: CircleAlert,
+    ActionIcon: ExternalLink,
   },
   save: {
     message: 'updateSaveFailure',
@@ -32,6 +44,7 @@ const presentations = {
     hint: 'updateFailureDescription',
     busy: false,
     Icon: CircleAlert,
+    ActionIcon: RefreshCw,
   },
   install: {
     message: 'updateInstallFailure',
@@ -39,6 +52,7 @@ const presentations = {
     hint: 'updateFailureDescription',
     busy: false,
     Icon: CircleAlert,
+    ActionIcon: RefreshCw,
   },
 } as const
 
@@ -48,12 +62,12 @@ export function UpdateBar({ updater }: { updater: UpdateBridge }) {
   const hintId = useId()
   useEffect(() => updater.subscribe(setState), [updater])
 
-  if (!state || state.status === 'downloading') return null
+  if (!state) return null
   const phase = state.error ?? state.status
-  const { message, action, hint: hintKey, busy, Icon } = presentations[phase]
+  if (phase === 'downloading') return null
+  const { message, action, hint: hintKey, busy, Icon, ActionIcon } = presentations[phase]
   const label = t(action)
   const hint = hintKey ? t(hintKey) : ''
-  const ActionIcon = busy ? LoaderCircle : RefreshCw
 
   return (
     <div className="update-position" data-state={phase}>
@@ -74,7 +88,11 @@ export function UpdateBar({ updater }: { updater: UpdateBridge }) {
           disabled={busy}
           aria-label={phase === 'ready' ? t('updateActionLabel') : label}
           aria-describedby={hint ? hintId : undefined}
-          onClick={() => updater.restart()}
+          onClick={() =>
+            phase === 'download'
+              ? window.open(releasesUrl, '_blank', 'noopener,noreferrer')
+              : updater.restart()
+          }
         >
           {label}
           <ActionIcon

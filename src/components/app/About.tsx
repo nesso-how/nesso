@@ -2,6 +2,7 @@ import type { Ref } from 'react'
 import { ArrowRight, BookOpen, ExternalLink, GitFork, Globe, MessageCircle } from 'lucide-react'
 import { useTranslation } from '@/i18n'
 import appPackage from '../../../package.json'
+import { releasesUrl } from '../../../shared/link-policy.ts'
 
 export function About({
   titleRef,
@@ -67,11 +68,7 @@ export function About({
         >
           {t('aboutLicense')}
         </a>
-        <a
-          href="https://github.com/nesso-how/nesso/releases/latest"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
+        <a href={releasesUrl} target="_blank" rel="noopener noreferrer">
           v{appPackage.version}
         </a>
       </div>
