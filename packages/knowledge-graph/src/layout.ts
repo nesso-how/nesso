@@ -56,19 +56,22 @@ export function scene(
   for (const { source, target } of relations)
     for (const id of [source, target]) degree.set(id, (degree.get(id) ?? 0) + 1)
   const spread = spacing * Math.sqrt(graph.concepts.length)
-  let cached = 0
+  const fresh = new Set<Bubble>()
   const bubbles = graph.concepts.map(({ id, label }): Bubble => {
     const radius = 8 + 3 * Math.sqrt(degree.get(id) ?? 0)
     const known = previous.get(id)
     if (known) return Object.assign(known, { label, radius })
     const position = layout.get(id)
-    if (position) cached++
-    return {
+    if (position) return { id, label, radius, ...position }
+    const bubble = {
       id,
       label,
       radius,
-      ...(position ?? { x: hash(id, 2166136261) * spread, y: hash(id, 374761393) * spread }),
+      x: hash(id, 2166136261) * spread,
+      y: hash(id, 374761393) * spread,
     }
+    fresh.add(bubble)
+    return bubble
   })
   const byId = new Map(bubbles.map((bubble) => [bubble.id, bubble]))
   const lines = relations.map((relation): Line => ({
@@ -77,7 +80,31 @@ export function scene(
     source: byId.get(relation.source)!,
     target: byId.get(relation.target)!,
   }))
-  return { bubbles, lines, settled: previous.size > 0 || cached === bubbles.length, cached }
+  const neighbors = new Map<Bubble, Bubble[]>()
+  for (const { source, target } of lines)
+    for (const [from, to] of [
+      [source, target],
+      [target, source],
+    ]) {
+      const list = neighbors.get(from) ?? []
+      list.push(to)
+      neighbors.set(from, list)
+    }
+  const placed = bubbles.filter((bubble) => !fresh.has(bubble))
+  const unplaced = new Set(fresh)
+  for (const anchor of placed)
+    for (const bubble of neighbors.get(anchor) ?? []) {
+      if (!unplaced.delete(bubble)) continue
+      bubble.x = anchor.x! + hash(bubble.id, 2166136261) * spacing
+      bubble.y = anchor.y! + hash(bubble.id, 374761393) * spacing
+      placed.push(bubble)
+    }
+  return {
+    bubbles,
+    lines,
+    settled: previous.size > 0 || !fresh.size,
+    heat: bubbles.length ? Math.max(0.3, fresh.size / bubbles.length) : 0.3,
+  }
 }
 
 export const simulation = (bubbles: Bubble[], lines: Line[]) =>
@@ -100,10 +127,7 @@ export const simulation = (bubbles: Bubble[], lines: Line[]) =>
 
 export function settle(graph: KnowledgeGraphInput, layout: KnowledgeGraphLayout) {
   const result = scene(graph, layout)
-  if (!result.settled)
-    simulation(result.bubbles, result.lines)
-      .alpha(result.cached ? 0.3 : 1)
-      .tick(ticks)
+  if (!result.settled) simulation(result.bubbles, result.lines).alpha(result.heat).tick(ticks)
   remember(result.bubbles, layout)
   return result
 }

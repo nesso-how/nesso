@@ -4,7 +4,7 @@ Trusted Canvas 2D renderer showing the complete graph in the Overview, when no s
 
 ## Usage
 
-Render `KnowledgeGraph` with an injected `NessoStore`, a host-owned `KnowledgeGraphLayout` cache, and `focusRef`. Concepts are bubbles sized by their number of relations and joined by straight directed lines, laid out by a d3-force simulation. Initial positions derive from concept IDs; the layout settles before the first frame, is cached in the given map for the session, and is never persisted. Theme tokens and fonts are inherited from the host.
+Render `KnowledgeGraph` with an injected `NessoStore`, a host-owned `KnowledgeGraphLayout` cache, and `focusRef`. Concepts are bubbles sized by their number of relations and joined by straight directed lines, laid out by a d3-force simulation. Initial positions derive from concept IDs; concepts added later start beside an already placed neighbor, and the simulation restarts with more energy the larger the share of new concepts. The layout settles before the first frame, is cached in the given map for the session, and is never persisted. Theme tokens and fonts are inherited from the host.
 
 ## Controls
 

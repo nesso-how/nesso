@@ -221,7 +221,7 @@ export function KnowledgeGraph({
         byId = new Map(current.bubbles.map((bubble) => [bubble.id, bubble]))
         if (changed) {
           forces.stop()
-          forces = animate(current.bubbles, current.lines).alpha(0.3)
+          forces = animate(current.bubbles, current.lines).alpha(next.heat)
           if (reduced) forces.tick(300)
           else forces.restart()
           remember(current.bubbles, layout)
