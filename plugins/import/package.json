@@ -28,9 +28,9 @@
         "zh-CN": "从 JSON-LD 文件导入 Nesso 概念和视图。"
       },
       "documentation": {
-        "en": "Import merges a JSON-LD file into the graph with fresh concept IDs, preserving labels, notes, relations, and relation types. Each view in the file becomes a new view with its layout and styles, named after the file when it has no name. A file without views opens a new view named after the file, with its concepts laid out on a grid.",
-        "it": "Import unisce un file JSON-LD al grafo con nuovi ID di concetto, preservando etichette, note, relazioni e tipi. Ogni vista del file diventa una nuova vista con disposizione e stili, e prende il nome dal file se non ne ha uno. Un file senza viste apre una nuova vista con il nome del file e i concetti disposti a griglia.",
-        "zh-CN": "导入功能将 JSON-LD 文件合并到图谱中，创建新概念 ID 并保留标签、笔记、关系和类型。文件中的每个视图都会成为带有布局和样式的新视图，未命名时以文件名命名。没有视图的文件会打开一个以文件名命名的新视图，概念按网格排列。"
+        "en": "Import merges a JSON-LD file into the graph with fresh concept IDs, preserving labels, notes, relations, and relation types. Each view in the file becomes a new view with its layout and styles, named after the file when it has no name. A file without views imports only concepts and relations, without creating views or adding concepts to the active view.",
+        "it": "Import unisce un file JSON-LD al grafo con nuovi ID di concetto, preservando etichette, note, relazioni e tipi. Ogni vista del file diventa una nuova vista con disposizione e stili, e prende il nome dal file se non ne ha uno. Un file senza viste importa solo concetti e relazioni, senza creare viste o aggiungere concetti alla vista attiva.",
+        "zh-CN": "导入功能将 JSON-LD 文件合并到图谱中，创建新概念 ID 并保留标签、笔记、关系和类型。文件中的每个视图都会成为带有布局和样式的新视图，未命名时以文件名命名。没有视图的文件仅导入概念和关系，不创建视图，也不向当前视图添加概念。"
       }
     },
     "label": {

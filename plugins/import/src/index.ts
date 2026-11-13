@@ -1,6 +1,6 @@
 import { PluginError, type NessoOperation } from '@nesso-how/plugin'
 import type { ActionContribution } from '@nesso-how/plugin/runtime'
-import { newIri, parseGraph, type Concept, type Position, type View } from '@nesso-how/schema'
+import { newIri, parseGraph, type Concept, type Position } from '@nesso-how/schema'
 import source from '../package.json' with { type: 'json' }
 
 const { i18n } = source
@@ -14,28 +14,12 @@ export function deriveViewName(fileName: string): string {
   return name.charAt(0).toUpperCase() + name.slice(1) || 'Import'
 }
 
-const gridPosition = (index: number, count: number): Position => {
-  const columns = Math.ceil(Math.sqrt(count))
-  return { x: (index % columns) * 240, y: Math.floor(index / columns) * 120 }
-}
-
 export function buildImportOperations(
-  { graph, views: fileViews }: ReturnType<typeof parseGraph>,
+  { graph, views }: ReturnType<typeof parseGraph>,
   activeViewId: string | null,
   viewName: string,
 ): NessoOperation[] {
   if (graph.concepts.length === 0) return []
-  const views: readonly Pick<View, 'name' | 'members'>[] = fileViews.length
-    ? fileViews
-    : [
-        {
-          name: '',
-          members: graph.concepts.map(({ id }, index) => ({
-            id,
-            position: gridPosition(index, graph.concepts.length),
-          })),
-        },
-      ]
   const ids = new Map(graph.concepts.map((concept) => [concept.id, newIri()]))
   const concepts = new Map(graph.concepts.map((concept) => [concept.id, concept]))
   const listed = new Set(views.flatMap(({ members }) => members.map(({ id }) => id)))
