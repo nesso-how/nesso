@@ -3,12 +3,6 @@ name: Release
 on:
   push:
     tags: ['v*']
-  pull_request:
-    paths:
-      - .github/workflows/release.yml
-      - electron/updates.ts
-      - electron/startup-check.ts
-      - scripts/test-desktop.ts
   workflow_dispatch:
 
 permissions:
@@ -16,7 +10,6 @@ permissions:
 
 jobs:
   build:
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     strategy:
       fail-fast: false
       matrix:
@@ -61,7 +54,6 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          CSC_FOR_PULL_REQUEST: true
         run: |
           : "${CSC_LINK:?Missing APPLE_CERTIFICATE secret}"
           : "${CSC_KEY_PASSWORD:?Missing APPLE_CERTIFICATE_PASSWORD secret}"
