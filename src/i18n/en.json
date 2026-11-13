@@ -565,6 +565,7 @@
   "shortcutClearSelection": "Clear selection",
   "shortcutNotesBold": "Toggle bold",
   "shortcutNotesItalic": "Toggle italic",
+  "shortcutNotesCode": "Toggle inline code",
   "shortcutNotesIndent": "Indent list item",
   "shortcutNotesOutdent": "Outdent list item",
   "shortcutNotesLineBreak": "Line break without a new list item",

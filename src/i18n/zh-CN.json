@@ -553,6 +553,7 @@
   "shortcutClearSelection": "清除选择",
   "shortcutNotesBold": "切换粗体",
   "shortcutNotesItalic": "切换斜体",
+  "shortcutNotesCode": "切换行内代码",
   "shortcutNotesIndent": "增加列表项缩进",
   "shortcutNotesOutdent": "减少列表项缩进",
   "shortcutNotesLineBreak": "换行而不新建列表项",

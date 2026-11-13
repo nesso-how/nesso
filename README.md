@@ -20,7 +20,7 @@ Your knowledge isn’t scattered across files and folders but lives in **one con
 
 Nesso keeps things minimal and efficient, with just a few key elements:
 
-- **Concepts** represent ideas. They have a label and Markdown notes (bold, italic, lists, links).
+- **Concepts** represent ideas. They have a label and Markdown notes (bold, italic, inline code, lists, links).
 - **Relations** connect concepts with a direction and a type that describes the connection.
 - **Views** offer different perspectives on the same graph. The default **Overview** shows the complete graph as a map of bubbles for navigation and cannot be deleted. Saved views are named subsets of its concepts, each with its own positions, colors, and bold or italic labels.
 - **Vocabularies** provide relation types. You can name your own relation types or define vocabularies as plugins.

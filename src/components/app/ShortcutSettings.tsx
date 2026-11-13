@@ -82,6 +82,7 @@ export function ShortcutSettings({ titleRef }: { titleRef: Ref<HTMLHeadingElemen
       rows: [
         { label: t('shortcutNotesBold'), keys: [[modifier, 'B']] },
         { label: t('shortcutNotesItalic'), keys: [[modifier, 'I']] },
+        { label: t('shortcutNotesCode'), keys: [[modifier, 'E']] },
         { label: t('shortcutNotesIndent'), keys: [['Tab']] },
         { label: t('shortcutNotesOutdent'), keys: [[shift, 'Tab']] },
         { label: t('shortcutNotesLineBreak'), keys: [[shift, 'Enter']] },

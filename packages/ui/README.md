@@ -52,7 +52,7 @@ Your build must compile this CSS; it is not a precompiled stylesheet. Supply the
 
 `BottomSheet` is a controlled, non-modal drawer with a title, close label, optional footer, and popup ref for measuring covered content. It supports swipe-down dismissal, safe-area padding, and reduced motion. Reading text can use `--nesso-reading-font-size` and `--nesso-reading-line-height`, which increase from 13/20px to 15/23px on narrow screens or coarse pointers.
 
-`MarkdownInput` accepts Markdown through `value`/`onChange`, with live preview of emphasis, links, and lists. Syntax reappears around the selection. Cmd/Ctrl+B/I toggles formatting; Enter continues or exits lists, Tab/Shift+Tab changes nesting, and Shift+Enter inserts a line break. Optional `tasks` enables clickable task checkboxes; `placeholder` appears when empty.
+`MarkdownInput` accepts Markdown through `value`/`onChange`, with live preview of emphasis, inline code, links, and lists. Syntax reappears around the selection. Cmd/Ctrl+B/I/E toggles bold, italic, and inline code; Enter continues or exits lists, Tab/Shift+Tab changes nesting, and Shift+Enter inserts a line break. Optional `tasks` enables clickable task checkboxes; `placeholder` appears when empty.
 
 Undo/redo is local by default. Use `history={false}` for host-owned history or `history="focus"` to reset local history on blur and external value changes. Exhausted local history never falls through. Menu commands can send `beforeinput` events (`historyUndo`/`historyRedo`) to the focused editor inside `[data-local-history]`.
 

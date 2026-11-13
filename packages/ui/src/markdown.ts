@@ -7,6 +7,26 @@ type SyntaxNode = ReturnType<ReturnType<typeof parser.parse>['resolveInner']>
 const listPrefix = /^(\s*)([-+*]|(\d{1,9})([.)]))([\t ]+|$)/
 const taskPrefix = /^\[[ xX]\]([\t ]+|$)/
 const taskParser = parser.configure(TaskList)
+const formats = {
+  '**': {
+    node: 'StrongEmphasis',
+    mark: 'EmphasisMark',
+    decoration: Decoration.mark({ class: 'nesso-markdown-bold' }),
+  },
+  '*': {
+    node: 'Emphasis',
+    mark: 'EmphasisMark',
+    decoration: Decoration.mark({ class: 'nesso-markdown-italic' }),
+  },
+  '`': {
+    node: 'InlineCode',
+    mark: 'CodeMark',
+    decoration: Decoration.mark({
+      class: 'nesso-markdown-code',
+      attributes: { spellcheck: 'false' },
+    }),
+  },
+}
 
 export const markdownTasks = Facet.define<boolean | undefined, boolean>({
   combine: (values) => values.some(Boolean),
@@ -127,8 +147,7 @@ export function markdownDecorations(state: EditorState, focused: boolean): Decor
 
   parse(state).iterate({
     enter(node) {
-      if (['Image', 'InlineCode', 'FencedCode', 'CodeBlock', 'HTMLBlock'].includes(node.name))
-        return false
+      if (['Image', 'FencedCode', 'CodeBlock', 'HTMLBlock'].includes(node.name)) return false
       const active =
         focused &&
         state.selection.ranges.some((range) => range.from <= node.to && range.to >= node.from)
@@ -136,13 +155,10 @@ export function markdownDecorations(state: EditorState, focused: boolean): Decor
       if (node.name === 'ListItem')
         decorations.push(...listItemDecorations(state, node.node, active))
 
-      if (node.name === 'StrongEmphasis' || node.name === 'Emphasis') {
-        const [open, close] = node.node.getChildren('EmphasisMark')
-        decorations.push(
-          Decoration.mark({
-            class: node.name === 'StrongEmphasis' ? 'nesso-markdown-bold' : 'nesso-markdown-italic',
-          }).range(open.to, close.from),
-        )
+      const format = Object.values(formats).find((format) => format.node === node.name)
+      if (format) {
+        const [open, close] = node.node.getChildren(format.mark)
+        decorations.push(format.decoration.range(open.to, close.from))
         syntax(open.from, open.to, active)
         syntax(close.from, close.to, active)
       }
@@ -277,15 +293,16 @@ export function toggleMarkdownTask(state: EditorState, position: number) {
   }
 }
 
-export function toggleMarkdownFormat(state: EditorState, marker: '*' | '**') {
+export function toggleMarkdownFormat(state: EditorState, marker: keyof typeof formats) {
   if (state.readOnly) return null
   const { from, to } = state.selection.main
   const selected = state.sliceDoc(from, to)
+  const format = formats[marker]
   let delimiters: { from: number; to: number }[] | undefined
   parse(state).iterate({
     enter(node) {
-      if (node.name !== (marker === '**' ? 'StrongEmphasis' : 'Emphasis')) return
-      const [open, close] = node.node.getChildren('EmphasisMark')
+      if (node.name !== format.node) return
+      const [open, close] = node.node.getChildren(format.mark)
       if ((from === node.from && to === node.to) || (from >= open.to && to <= close.from))
         delimiters = [open, close].map(({ from, to }) => ({ from, to }))
     },

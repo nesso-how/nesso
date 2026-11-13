@@ -577,6 +577,7 @@
   "shortcutClearSelection": "Deseleziona tutto",
   "shortcutNotesBold": "Attiva/disattiva grassetto",
   "shortcutNotesItalic": "Attiva/disattiva corsivo",
+  "shortcutNotesCode": "Attiva/disattiva codice inline",
   "shortcutNotesIndent": "Annida voce dell’elenco",
   "shortcutNotesOutdent": "Promuovi voce dell’elenco",
   "shortcutNotesLineBreak": "A capo senza nuova voce dell’elenco",
