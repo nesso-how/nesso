@@ -94,25 +94,53 @@ test('import recreates file views with presentation and remaps concept ids with 
   assert.deepEqual(operations.at(-1), { kind: 'selection.set', value: [] })
 })
 
-test('graph-only files open a new view with every concept laid out on a grid', () => {
-  const operations = buildImportOperations({ graph, views: [] }, 'urn:active', 'My view')
-  assert.deepEqual(
-    operations
-      .filter((operation) => operation.kind === 'view.create')
-      .map(({ name, conceptIds }) => [name, conceptIds]),
-    [['My view', []]],
-  )
-  assert.deepEqual(
-    operations
-      .filter((operation) => operation.kind === 'concept.add')
-      .map(({ position }) => position),
-    [
-      { x: 0, y: 0 },
-      { x: 240, y: 0 },
-      { x: 0, y: 120 },
-    ],
-  )
-})
+for (const activeViewId of [null, 'urn:active'])
+  test(`graph-only files import without views or layout from ${activeViewId ?? 'Overview'}`, () => {
+    const operations = buildImportOperations({ graph, views: [] }, activeViewId, 'My view')
+    const ids = conceptIds(operations)
+    assert.equal(ids.length, graph.concepts.length)
+    assert.ok(ids.every((id) => !id.startsWith('urn:old-')))
+    assert.deepEqual(
+      operations
+        .filter((operation) => operation.kind === 'concept.label')
+        .map(({ value }) => value),
+      graph.concepts.map(({ label }) => label),
+    )
+    assert.deepEqual(
+      operations.filter((operation) => operation.kind === 'concept.notes'),
+      [{ kind: 'concept.notes', id: ids[0], value: 'Definition\nExample' }],
+    )
+    assert.deepEqual(
+      operations.filter((operation) => operation.kind === 'view.create'),
+      [],
+    )
+    assert.deepEqual(
+      operations
+        .filter((operation) => operation.kind === 'concept.add')
+        .map(({ position }) => position),
+      [undefined, undefined, undefined],
+    )
+    assert.deepEqual(
+      operations.filter((operation) => operation.kind === 'view.membership'),
+      activeViewId === null
+        ? []
+        : ids.map((conceptId) => ({
+            kind: 'view.membership',
+            viewId: activeViewId,
+            conceptId,
+            included: false,
+          })),
+    )
+    assert.deepEqual(
+      operations.filter((operation) => operation.kind === 'relation.connect'),
+      [
+        { kind: 'relation.connect', source: ids[0], target: ids[1], type: graph.relationTypes[0] },
+        { kind: 'relation.connect', source: ids[1], target: ids[0], type: graph.relationTypes[1] },
+        { kind: 'relation.connect', source: ids[0], target: ids[1], type: graph.relationTypes[1] },
+      ],
+    )
+    assert.deepEqual(operations.at(-1), { kind: 'selection.set', value: [] })
+  })
 
 test('empty snapshots are no-ops', () => {
   assert.deepEqual(
