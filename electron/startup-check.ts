@@ -28,8 +28,9 @@ export function connectStartupCheck(profile: string, update: boolean): void {
     window.webContents.once('did-finish-load', () => {
       void window.webContents
         .executeJavaScript(`new Promise((resolve, reject) => {
-        window.addEventListener('error', (event) => reject(event.message))
-        window.addEventListener('unhandledrejection', (event) => reject(String(event.reason)))
+        let stage = 'startup'
+        window.addEventListener('error', (event) => reject(stage + ': ' + (event.error?.stack ?? event.message)))
+        window.addEventListener('unhandledrejection', (event) => reject(stage + ': ' + (event.reason?.stack ?? String(event.reason))))
         const timer = setInterval(() => {
           document.querySelector('.intro-skip')?.click()
           if (!document.querySelector('#canvas .react-flow')) return
@@ -37,10 +38,13 @@ export function connectStartupCheck(profile: string, update: boolean): void {
           if (!window.nessoPersistence || !window.nessoPlugins || !window.nessoDataLocation || !window.nessoBackups || !window.nessoUpdater) {
             reject('Desktop preload bridges are missing')
           } else if (!${update}) resolve(true)
-          else window.nessoUpdater.subscribe((state) => {
-            if (state?.status === 'ready') resolve(true)
-            else if (state?.error) reject('Update ' + state.error + ' failed')
-          })
+          else {
+            stage = 'update'
+            window.nessoUpdater.subscribe((state) => {
+              if (state?.status === 'ready') resolve(true)
+              else if (state?.error) reject('Update ' + state.error + ' failed')
+            })
+          }
         }, 100)
       })`)
         .then(() => {

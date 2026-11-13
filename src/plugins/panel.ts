@@ -183,6 +183,7 @@ export function createPluginPanel(
     mount: (id: string, element: HTMLIFrameElement) => {
       const frame = frames.find((frame) => frame.id === id)
       if (!frame) return
+      element.title = frame.source.name
       const runtime = createPluginFrame(element, frame.source.entry, true, () => remove(frame))
       frame.runtime = runtime
       void runtime.ready.then(frame.warmed, () => {})
