@@ -1,76 +1,11 @@
 import { randomUUID } from 'node:crypto'
 import { z } from 'zod'
 import { aiConnectionInput, type AiConnections, type AiSignIn } from '@nesso-how/ai/providers'
-import { ElectronError } from './errors.ts'
-import { chatGptAccount, type createChatGptAuth } from './ai-oauth.ts'
+import { ElectronError } from '../errors.ts'
+import { chatGptAccount, type createChatGptAuth } from '../ai-oauth.ts'
+import { connectionInput, storedRecord } from './schema.ts'
+import { migrateAiConnections } from './migrations.ts'
 
-const connectionInput = aiConnectionInput.safeExtend({
-  endpoint: aiConnectionInput.shape.endpoint.transform((value, context) => {
-    const url = new URL(value)
-    const loopback = ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)
-    if (
-      !(url.protocol === 'https:' || (url.protocol === 'http:' && loopback)) ||
-      url.username ||
-      url.password ||
-      url.search ||
-      url.hash
-    ) {
-      context.addIssue({
-        code: 'custom',
-        message: 'Use HTTPS, or HTTP on localhost, without credentials, query or fragment',
-      })
-    }
-    return value.replace(/\/+$/, '')
-  }),
-})
-const storedConnection = connectionInput
-  .safeExtend({
-    id: aiConnectionInput.shape.id.unwrap(),
-    apiKey: aiConnectionInput.shape.apiKey.unwrap(),
-  })
-  .refine(
-    (entry) =>
-      entry.authentication === 'chatgpt'
-        ? !!entry.accountId && !entry.apiKey
-        : entry.provider === 'custom' || !!entry.apiKey,
-    { path: ['apiKey'], message: 'Credentials required for the selected authentication method' },
-  )
-const storedRecord = z
-  .object({
-    connections: z.array(storedConnection),
-    activeId: z.string().nullable(),
-    hostId: z
-      .string()
-      .regex(/^urn:uuid:[0-9a-f-]{36}$/)
-      .optional(),
-    accounts: z.array(chatGptAccount).max(1).optional(),
-  })
-  .refine(
-    ({ connections }) => new Set(connections.map(({ id }) => id)).size === connections.length,
-    { path: ['connections'], message: 'Duplicate connection ID' },
-  )
-  .refine(
-    ({ connections, activeId }) =>
-      activeId === null || connections.some(({ id }) => id === activeId),
-    { path: ['activeId'], message: 'Invalid active connection' },
-  )
-  .refine(
-    ({ connections }) =>
-      connections.filter((entry) => entry.authentication === 'chatgpt').length <= 1,
-    { path: ['connections'], message: 'Only one ChatGPT connection is allowed' },
-  )
-  .refine(({ accounts, hostId }) => !accounts?.length || !!hostId, {
-    path: ['hostId'],
-    message: 'ChatGPT accounts require a persisted host ID',
-  })
-  .refine(
-    ({ connections, accounts }) =>
-      connections.every(
-        (entry) =>
-          entry.authentication !== 'chatgpt' || accounts?.some(({ id }) => id === entry.accountId),
-      ),
-    { path: ['accountId'], message: 'Unknown ChatGPT account' },
-  )
 const discoveryInput = connectionInput.safeExtend({ model: z.string().transform(() => '') })
 const cursor = z.string().max(2048).trim().min(1)
 const modelPage = z.object({
@@ -85,9 +20,13 @@ const geminiModelPage = z.object({
 const chatGptModels = z.object({
   models: z.array(z.object({ slug: aiConnectionInput.shape.model, visibility: z.string() })),
 })
-type Connection = z.infer<typeof storedConnection>
 type Record = z.infer<typeof storedRecord>
-type Storage = { read: () => string | null; write: (value: string) => void }
+type Connection = Record['connections'][number]
+type Storage = {
+  read: () => string | null
+  write: (value: string) => void
+  upgrade: (value: string) => void
+}
 
 const fail = (path: string, message: string): never => {
   throw new ElectronError([{ path, message }])
@@ -188,12 +127,22 @@ export function createAiConnections(
     } catch {
       return fail('storage', 'Cannot decrypt AI connections; existing data has not been changed')
     }
-    if (raw === null) return { connections: [], activeId: null }
+    if (raw === null) return { version: 1, connections: [], activeId: null }
+    let migrated: ReturnType<typeof migrateAiConnections>
     try {
-      return parse(storedRecord, JSON.parse(raw))
-    } catch {
+      migrated = migrateAiConnections(JSON.parse(raw))
+    } catch (error) {
+      if (error instanceof ElectronError) throw error
       return fail('storage', 'Unreadable AI connections; existing data has not been changed')
     }
+    if (migrated.upgraded) {
+      try {
+        storage.upgrade(JSON.stringify(migrated.record))
+      } catch {
+        return fail('storage', 'Cannot securely upgrade AI connections')
+      }
+    }
+    return migrated.record
   }
   const snapshot = (record: Record): AiConnections => ({
     activeId: record.activeId,

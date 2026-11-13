@@ -1,6 +1,6 @@
 import { app, ipcMain, safeStorage, shell } from 'electron'
 import path from 'node:path'
-import { createAiConnections } from './ai-connections.ts'
+import { createAiConnections } from './ai-connections/index.ts'
 import { createAiStorage } from './ai-storage.ts'
 import { aiChatRequest, type AiChatResult, type AiResult, type AiToolReply } from '@nesso-how/ai'
 import { ElectronError } from './errors.ts'

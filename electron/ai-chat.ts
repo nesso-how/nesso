@@ -14,7 +14,7 @@ import {
   type AiChatEvent,
   type AiToolReply,
 } from '@nesso-how/ai'
-import type { createAiConnections } from './ai-connections.ts'
+import type { createAiConnections } from './ai-connections/index.ts'
 import { ElectronError } from './errors.ts'
 
 type Connection = Awaited<ReturnType<ReturnType<typeof createAiConnections>['active']>>

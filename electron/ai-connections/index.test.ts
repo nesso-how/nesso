@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { createAiConnections } from './ai-connections.ts'
+import { createAiConnections } from './index.ts'
 import { aiProviders, type AiConnectionInput, type AiProvider } from '@nesso-how/ai/providers'
-import { ElectronError } from './errors.ts'
-import type { createChatGptAuth } from './ai-oauth.ts'
+import { ElectronError } from '../errors.ts'
+import type { createChatGptAuth } from '../ai-oauth.ts'
 
 const input: AiConnectionInput = {
   name: 'Local',
@@ -18,6 +18,9 @@ const fixture = (request?: typeof fetch, auth?: ReturnType<typeof createChatGptA
     write: (value: string) => {
       raw = value
     },
+    upgrade: (value: string) => {
+      raw = value
+    },
   }
   return { storage, connections: createAiConnections(storage, request, auth) }
 }
@@ -25,6 +28,7 @@ const fixture = (request?: typeof fetch, auth?: ReturnType<typeof createChatGptA
 test('connections persist activation and edits without exposing or transferring stored credentials', () => {
   const { connections, storage } = fixture()
   const first = connections.save({ ...input, apiKey: 'secret' }).connections[0]
+  assert.equal(JSON.parse(storage.read()!).version, 1)
   assert.equal(first.endpoint, 'http://localhost:11434/v1')
   assert.equal(first.hasKey, true)
   assert.equal(JSON.stringify(first).includes('secret'), false)
@@ -265,6 +269,9 @@ test('unreadable storage and failed durable writes never overwrite existing conn
     write: () => {
       writes++
     },
+    upgrade: () => {
+      writes++
+    },
   })
   assert.throws(() => broken.list(), ElectronError)
   assert.throws(() => broken.save(input), ElectronError)
@@ -289,6 +296,9 @@ test('unreadable storage and failed durable writes never overwrite existing conn
       write: () => {
         writes++
       },
+      upgrade: () => {
+        writes++
+      },
     })
     assert.throws(() => protectedConnections.list(), ElectronError)
     assert.throws(() => protectedConnections.save(input), ElectronError)
@@ -299,9 +309,75 @@ test('unreadable storage and failed durable writes never overwrite existing conn
     write: () => {
       throw new Error('Keychain unavailable')
     },
+    upgrade: storage.upgrade,
   })
   assert.throws(() => unavailable.save(input), ElectronError)
   assert.equal(storage.read(), before)
+})
+
+const legacyRecord = {
+  connections: [
+    { ...input, id: 'local-connection', apiKey: ' synthetic-api-key ' },
+    { ...chatGptInput, id: 'chatgpt-connection', apiKey: '' },
+  ],
+  activeId: 'chatgpt-connection',
+  hostId: 'urn:uuid:22222222-2222-4222-8222-222222222222',
+  accounts: [account],
+}
+
+test('unversioned API-key and ChatGPT connections upgrade losslessly once and remain usable', async () => {
+  let raw = JSON.stringify(legacyRecord)
+  let upgrades = 0
+  const storage = {
+    read: () => raw,
+    write: (value: string) => {
+      raw = value
+    },
+    upgrade: (value: string) => {
+      upgrades++
+      raw = value
+    },
+  }
+  const connections = createAiConnections(storage)
+  const state = connections.list()
+  assert.deepEqual(JSON.parse(raw), { ...legacyRecord, version: 1 })
+  assert.equal((await connections.active()).apiKey, account.session.accessToken)
+  assert.deepEqual(createAiConnections(storage).list(), state)
+  assert.equal(upgrades, 1)
+  connections.activate('local-connection')
+  assert.equal((await connections.active()).apiKey, legacyRecord.connections[0].apiKey)
+})
+
+test('unknown versions and malformed records never migrate, discard fields or permit credential writes', () => {
+  const invalidRecords = [
+    ...[2, '1'].map((version) => ({ ...legacyRecord, version })),
+    { ...legacyRecord, extra: 'unknown' },
+    {
+      ...legacyRecord,
+      accounts: [{ ...account, session: { ...account.session, extra: 'unknown' } }],
+    },
+  ]
+  let writes = 0
+  for (const invalid of invalidRecords) {
+    const raw = JSON.stringify(invalid)
+    const connections = createAiConnections({
+      read: () => raw,
+      write: () => {
+        writes++
+      },
+      upgrade: () => {
+        writes++
+      },
+    })
+    for (const run of [() => connections.list(), () => connections.save(input)]) {
+      assert.throws(run, (error) => {
+        assert.ok(error instanceof ElectronError)
+        assert.doesNotMatch(error.message, /secret|synthetic-api-key/)
+        return true
+      })
+    }
+  }
+  assert.equal(writes, 0)
 })
 
 test('verification uses provider authentication, blocks redirects and never performs inference or leaks provider errors', async () => {

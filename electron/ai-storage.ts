@@ -1,5 +1,7 @@
 import type { safeStorage } from 'electron'
-import { readFileSync, renameSync, writeFileSync } from 'node:fs'
+import { createHash } from 'node:crypto'
+import { closeSync, fsyncSync, openSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
+import path from 'node:path'
 import { ElectronError } from './errors.ts'
 
 export function createAiStorage(
@@ -20,6 +22,29 @@ export function createAiStorage(
       ])
     }
   }
+  const syncDirectory = () => {
+    if (platform === 'win32') return
+    const handle = openSync(path.dirname(file), 'r')
+    try {
+      fsyncSync(handle)
+    } catch (error) {
+      if (
+        !['EINVAL', 'ENOTSUP', 'EOPNOTSUPP'].includes((error as NodeJS.ErrnoException).code ?? '')
+      )
+        throw error
+    } finally {
+      closeSync(handle)
+    }
+  }
+  const replace = (target: string, data: Buffer) => {
+    writeFileSync(`${target}.tmp`, data, { mode: 0o600, flush: true })
+    renameSync(`${target}.tmp`, target)
+    syncDirectory()
+  }
+  const write = (value: string) => {
+    available()
+    replace(file, encryption.encryptString(value))
+  }
   return {
     read: () => {
       let encrypted: Buffer
@@ -32,10 +57,12 @@ export function createAiStorage(
       available()
       return encryption.decryptString(encrypted)
     },
-    write: (value: string) => {
+    write,
+    upgrade: (value: string) => {
       available()
-      writeFileSync(`${file}.tmp`, encryption.encryptString(value), { mode: 0o600 })
-      renameSync(`${file}.tmp`, file)
+      const original = readFileSync(file)
+      replace(`${file}.backup-${createHash('sha256').update(original).digest('hex')}`, original)
+      write(value)
     },
   }
 }
