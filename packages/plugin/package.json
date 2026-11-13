@@ -1,6 +1,6 @@
 {
   "name": "@nesso-how/plugin",
-  "version": "1.0.0-beta.19",
+  "version": "1.0.0-beta.20",
   "description": "Types, validation, and asynchronous clients for isolated Nesso plugins",
   "license": "MIT",
   "repository": {

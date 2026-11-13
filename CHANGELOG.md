@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.0-beta.20 — 2026-11-13
+
+### Fixes
+
+- **plugins:** Report loading timeout context (#341)
+
 ## 1.0.0-beta.19 — 2026-11-13
 
 ### Fixes
