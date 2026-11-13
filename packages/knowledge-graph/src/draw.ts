@@ -83,6 +83,7 @@ export function draw(
   { concepts, relations, hovered }: Highlight,
 ) {
   const labelScale = Math.min(k, 1)
+  const border = `color-mix(in srgb, ${theme['node-border']} 80%, ${theme['muted-foreground']})`
   const point = ({ x, y }: Bubble) => ({ x: x! * k + tx, y: y! * k + ty })
   const near = new Set(concepts)
   for (const { source, target } of lines) {
@@ -103,24 +104,26 @@ export function draw(
     const from = point(line.source)
     const to = point(line.target)
     const angle = Math.atan2(to.y - from.y, to.x - from.x)
+    const clearance = line.target.radius * k + 1.5
     const end = {
-      x: to.x - Math.cos(angle) * line.target.radius * k,
-      y: to.y - Math.sin(angle) * line.target.radius * k,
+      x: to.x - Math.cos(angle) * clearance,
+      y: to.y - Math.sin(angle) * clearance,
     }
     const active = shown.includes(line)
     context.globalAlpha = lit(line.id) ? 1 : dim(line.source.id, line.target.id)
     context.strokeStyle = context.fillStyle = active ? theme.foreground : theme.edge
-    context.lineWidth = active ? 1.75 : 1.25
+    context.lineWidth = active ? 1.25 : 0.75
     context.beginPath()
     context.moveTo(from.x, from.y)
     context.lineTo(end.x, end.y)
     context.stroke()
+    context.fillStyle = active ? theme.foreground : theme['muted-foreground']
     context.beginPath()
     context.moveTo(end.x, end.y)
     for (const side of [-1, 1])
       context.lineTo(
-        end.x - Math.cos(angle + side * 0.45) * 7,
-        end.y - Math.sin(angle + side * 0.45) * 7,
+        end.x - Math.cos(angle + side * 0.45) * 6 * labelScale,
+        end.y - Math.sin(angle + side * 0.45) * 6 * labelScale,
       )
     context.fill()
   }
@@ -143,8 +146,8 @@ export function draw(
       context.fill()
     }
     context.fillStyle = selected ? theme.primary : theme.background
-    context.strokeStyle = selected || bubble.id === hovered ? theme.primary : theme['node-border']
-    context.lineWidth = 1.5
+    context.strokeStyle = selected || bubble.id === hovered ? theme.primary : border
+    context.lineWidth = selected || bubble.id === hovered ? 1.5 : 1
     context.beginPath()
     context.arc(x, y, radius, 0, 2 * Math.PI)
     context.fill()
