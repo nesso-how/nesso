@@ -124,8 +124,14 @@ export function MarkdownInput({
               return true
             },
           },
-          ...(['**', '*'] as const).map((marker) => ({
-            key: marker === '**' ? 'Mod-b' : 'Mod-i',
+          ...(
+            [
+              ['Mod-b', '**'],
+              ['Mod-i', '*'],
+              ['Mod-e', '`'],
+            ] as const
+          ).map(([key, marker]) => ({
+            key,
             run: (view: EditorView) => {
               const transaction = toggleMarkdownFormat(view.state, marker)
               if (!transaction) return false

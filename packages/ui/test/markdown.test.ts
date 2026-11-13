@@ -35,7 +35,7 @@ function preview(source: string, selection?: { anchor: number; head?: number }, 
   return { text, marks, links }
 }
 
-test('live preview renders emphasis and links but leaves code and images literal', () => {
+test('live preview renders emphasis, inline code and links but leaves code blocks and images literal', () => {
   const source = '**Bold** *italic* ***both*** [Nesso](<https://nesso.how> "Title")'
   const result = preview(source)
   assert.equal(result.text, 'Bold italic both Nesso')
@@ -43,7 +43,10 @@ test('live preview renders emphasis and links but leaves code and images literal
   assert.ok(result.marks.includes('nesso-markdown-italic'))
   assert.ok(result.marks.includes('nesso-markdown-link'))
   assert.deepEqual(result.links, ['https://nesso.how'])
-  const literal = '`**code**`\n\n```\n- code\n```\n\n![**image**](https://nesso.how/image.png)'
+  const code = preview('`**code**` and ``a`b``')
+  assert.equal(code.text, '**code** and a`b')
+  assert.deepEqual(code.marks, ['nesso-markdown-code', 'nesso-markdown-code'])
+  const literal = '```\n- code\n```\n\n![**image**](https://nesso.how/image.png)'
   assert.equal(preview(literal).text, literal)
 })
 
@@ -55,6 +58,9 @@ test('cursor and selections reveal only the Markdown they touch', () => {
   assert.equal(preview(source, { anchor: 3, head: 17 }).text, source)
   const link = '[**Nesso**](<https://nesso.how> "Title")'
   assert.equal(preview(link, { anchor: 5 }).text, link)
+  const code = 'Run `npm test` now'
+  assert.equal(preview(code, { anchor: 6 }).text, code)
+  assert.equal(preview(code, { anchor: 1 }).text, 'Run npm test now')
 })
 
 test('lists render inline formatting and reveal markers in active items', () => {
@@ -190,7 +196,7 @@ test('list shortcuts leave ordinary text, code, read-only fields and cross-line 
 })
 
 test('formatting shortcuts wrap selections and remove selected or surrounding delimiters', () => {
-  for (const marker of ['*', '**'] as const) {
+  for (const marker of ['*', '**', '`'] as const) {
     const plain = EditorState.create({ doc: 'Text', selection: EditorSelection.range(0, 4) })
     const wrapped = plain.update(toggleMarkdownFormat(plain, marker)!).state
     assert.equal(wrapped.doc.toString(), `${marker}Text${marker}`)
@@ -219,4 +225,6 @@ test('formatting shortcuts preserve the other emphasis style and work at the cur
   assert.equal(both.update(toggleMarkdownFormat(both, '**')!).state.doc.toString(), '*Text*')
   const cursor = bold.update({ selection: { anchor: 4 } }).state
   assert.equal(cursor.update(toggleMarkdownFormat(cursor, '**')!).state.doc.toString(), 'Text')
+  const code = EditorState.create({ doc: '``a`b``', selection: { anchor: 3 } })
+  assert.equal(code.update(toggleMarkdownFormat(code, '`')!).state.doc.toString(), 'a`b')
 })
