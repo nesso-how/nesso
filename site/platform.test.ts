@@ -26,13 +26,13 @@ test('mobile and unrecognized systems do not select desktop downloads', () => {
 
 test('desktop downloads point directly to the platform package for the release', () => {
   const version = '1.0.0-alpha.9'
-  for (const [platform, suffix] of [
-    ['macOS', 'universal.dmg'],
-    ['Windows', 'x64.exe'],
-    ['Linux', 'x86_64.AppImage'],
+  for (const [platform, file] of [
+    ['macOS', `Nesso-${version}-universal.dmg`],
+    ['Windows', `Nesso-${version}-x64.exe`],
+    ['Linux', 'Nesso-x86_64.AppImage'],
   ] as const) {
     assert.deepEqual(desktopDownload(platform, version), {
-      href: `https://github.com/nesso-how/nesso/releases/download/v${version}/Nesso-${version}-${suffix}`,
+      href: `https://github.com/nesso-how/nesso/releases/download/v${version}/${file}`,
     })
   }
   assert.equal(desktopDownload('other', version), null)

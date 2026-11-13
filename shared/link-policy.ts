@@ -1,3 +1,5 @@
+export const releasesUrl = 'https://github.com/nesso-how/nesso/releases'
+
 export type NotesLinkBridge = {
   open: (url: string) => Promise<boolean>
 }

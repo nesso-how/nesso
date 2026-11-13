@@ -3,7 +3,7 @@ import { writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { ElectronError } from './errors.ts'
 
-export function connectStartupCheck(profile: string): void {
+export function connectStartupCheck(profile: string, update: boolean): void {
   if (!path.isAbsolute(profile))
     throw new ElectronError([
       { path: 'startup-check', message: 'Expected an absolute profile path' },
@@ -15,7 +15,7 @@ export function connectStartupCheck(profile: string): void {
   }
   const deadline = setTimeout(
     () => fail(new ElectronError([{ path: 'startup-check', message: 'Startup timed out' }])),
-    45_000,
+    update ? 240_000 : 45_000,
   )
   process.on('uncaughtException', fail)
   process.on('unhandledRejection', fail)
@@ -34,9 +34,13 @@ export function connectStartupCheck(profile: string): void {
           document.querySelector('.intro-skip')?.click()
           if (!document.querySelector('#canvas .react-flow')) return
           clearInterval(timer)
-          if (!window.nessoPersistence || !window.nessoPlugins || !window.nessoDataLocation || !window.nessoBackups) {
+          if (!window.nessoPersistence || !window.nessoPlugins || !window.nessoDataLocation || !window.nessoBackups || !window.nessoUpdater) {
             reject('Desktop preload bridges are missing')
-          } else resolve(true)
+          } else if (!${update}) resolve(true)
+          else window.nessoUpdater.subscribe((state) => {
+            if (state?.status === 'ready') resolve(true)
+            else if (state?.error) reject('Update ' + state.error + ' failed')
+          })
         }, 100)
       })`)
         .then(() => {

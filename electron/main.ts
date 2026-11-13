@@ -33,12 +33,17 @@ import { createRecordReplacement } from './record-replacement.ts'
 import { connectMenu, connectTabShortcuts } from './menu.ts'
 import { createAutomaticBackups } from './automatic-backups.ts'
 import { createFileStorage } from './file-storage.ts'
+import { releasesUrl } from '../shared/link-policy.ts'
 
 const dev = !app.isPackaged && process.argv.includes('--dev')
 const rendererUrl = appUrl(dev)
 const root = path.join(app.getAppPath(), 'dist')
 const startupCheckProfile = process.env.NESSO_STARTUP_CHECK_PROFILE
-if (startupCheckProfile) connectStartupCheck(startupCheckProfile)
+const updateFeed = startupCheckProfile && process.env.NESSO_UPDATE_FEED
+const updatesEnabled = app.isPackaged && (!startupCheckProfile || Boolean(updateFeed))
+const installUpdatesOnQuit =
+  !updateFeed && (process.platform === 'win32' || Boolean(process.env.APPIMAGE))
+if (startupCheckProfile) connectStartupCheck(startupCheckProfile, Boolean(updateFeed))
 
 if (!app.requestSingleInstanceLock()) app.exit(0)
 
@@ -52,14 +57,30 @@ const report = (error: unknown): void => {
       { path: 'desktop', message: error instanceof Error ? error.message : String(error) },
     ]),
   )
-  if (app.isReady())
-    dialog.showErrorBox(
-      'Nesso',
-      app.getLocale().startsWith('it')
-        ? 'Impossibile aprire i dati locali. Verifica che la cartella dati e gli eventuali dischi esterni siano accessibili, poi riapri Nesso. Nessun dato è stato sostituito.'
-        : 'Could not open local data. Make sure the data folder and any external drives are accessible, then reopen Nesso. No data has been replaced.',
-    )
-  app.exit(1)
+  if (!app.isReady()) return app.exit(1)
+  const choice = dialog.showMessageBoxSync({
+    type: 'error',
+    title: 'Nesso',
+    ...(app.getLocale().startsWith('it')
+      ? {
+          message:
+            'Impossibile aprire i dati locali. Verifica che la cartella dati e gli eventuali dischi esterni siano accessibili, poi riapri Nesso. Nessun dato è stato sostituito.',
+          buttons: ['Chiudi', 'Scarica l’ultima versione'],
+        }
+      : {
+          message:
+            'Could not open local data. Make sure the data folder and any external drives are accessible, then reopen Nesso. No data has been replaced.',
+          buttons: ['Close', 'Download latest version'],
+        }),
+    defaultId: 0,
+    cancelId: 0,
+    noLink: true,
+  })
+  if (choice !== 1) return app.exit(1)
+  void shell.openExternal(releasesUrl).then(
+    () => app.exit(1),
+    () => app.exit(1),
+  )
 }
 
 const createWindow = async (connectPersistence: (window: BrowserWindow) => void): Promise<void> => {
@@ -142,7 +163,9 @@ app
       callback(canUsePermission(contents, permission, details)),
     )
     protocol.handle('nesso', (request) => serveAppAsset(root, request))
-    if (app.isPackaged && !startupCheckProfile) {
+    if (updatesEnabled) {
+      if (updateFeed)
+        electronUpdater.autoUpdater.setFeedURL({ provider: 'generic', url: updateFeed })
       const updates = connectUpdates(
         electronUpdater.autoUpdater,
         process.platform === 'darwin' ? autoUpdater : undefined,
@@ -153,6 +176,7 @@ app
             if (state?.status === 'saving') window.webContents.send('update:prepare')
           }
         },
+        installUpdatesOnQuit,
       )
       ipcMain.on('update:subscribe', (event) => {
         if (trusted(event)) event.sender.send('update:state', updates.getState())

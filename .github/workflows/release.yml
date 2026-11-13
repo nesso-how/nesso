@@ -74,14 +74,16 @@ jobs:
             sleep "$((attempt * 30))"
           done
           spctl --assess --type execute --verbose=2 "$app"
-      - name: Check packaged desktop startup and restart
+      - name: Check packaged desktop startup, restart, and update download
+        env:
+          VERSION: ${{ steps.release.outputs.version }}
         run: |
           case "${{ matrix.platform }}" in
-            mac) pnpm test:desktop release/mac-universal/Nesso.app/Contents/MacOS/Nesso ;;
-            win) pnpm test:desktop release/win-unpacked/Nesso.exe ;;
+            mac) pnpm test:desktop release/mac-universal/Nesso.app/Contents/MacOS/Nesso "release/Nesso-${VERSION}-universal.zip" ;;
+            win) pnpm test:desktop release/win-unpacked/Nesso.exe "release/Nesso-${VERSION}-x64.exe" ;;
             linux)
               sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
-              xvfb-run -a pnpm test:desktop release/linux-unpacked/nesso
+              xvfb-run -a pnpm test:desktop release/linux-unpacked/nesso release/Nesso-x86_64.AppImage
               ;;
           esac
       - name: Verify packages and update metadata
@@ -101,7 +103,7 @@ jobs:
               test -s "release/${CHANNEL}.yml"
               ;;
             linux)
-              test -s "release/Nesso-${VERSION}-x86_64.AppImage"
+              test -s "release/Nesso-x86_64.AppImage"
               test -s "release/Nesso-${VERSION}-amd64.deb"
               test -s "release/${CHANNEL}-linux.yml"
               ;;
