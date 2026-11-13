@@ -1,5 +1,24 @@
 # Changelog
 
+## 1.0.0-beta.17 — 2026-11-13
+
+### Documentation
+
+- **site:** Refresh page titles and descriptions for search
+
+### Features
+
+- **site:** Declare site name for search and social previews
+
+### Fixes
+
+- **plugins:** Retain incompatible plugin records without blocking (#332)
+- **notes:** Keep concept undo local while editing (#333)
+- **ai:** Version persisted connection records (#329)
+- **plugins:** Version installed plugin records (#330)
+- **storage:** Version data location configuration (#331)
+- **import:** Preserve graph-only files without creating views (#334)
+
 ## 1.0.0-beta.16 — 2026-11-12
 
 ### Breaking Changes
