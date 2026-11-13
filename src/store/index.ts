@@ -12,6 +12,7 @@ const loaded = await loadPersistence(storage)
 export const host = initializeNessoStore(loaded, navigator.languages)
 
 host.registerRenderer({ id: 'concept-map' })
+host.registerRenderer({ id: 'knowledge-graph' })
 
 export const { store: nessoStore, registerVocab, registerTheme } = host
 

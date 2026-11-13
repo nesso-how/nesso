@@ -9,7 +9,7 @@ import {
   type RefObject,
 } from 'react'
 import { Maximize, Redo2, Undo2 } from 'lucide-react'
-import type { NessoStore, Selection } from '@nesso-how/core'
+import { viewportKey, type NessoStore, type Selection } from '@nesso-how/core'
 import { defaultLocale } from '@nesso-how/i18n'
 import { bounds, draw, readTheme, relationLabels, type Transform } from './draw.ts'
 import {
@@ -102,7 +102,21 @@ export function KnowledgeGraph({
     let pending: string[] = []
     let frame = 0
     let motion = 0
-    let transform: Transform = { x: 0, y: 0, k: 1 }
+    const saved = store.getState().workspace.viewports[viewportKey('knowledge-graph', null)]
+    let transform: Transform = saved
+      ? { x: saved.x, y: saved.y, k: saved.zoom }
+      : { x: 0, y: 0, k: 1 }
+    const save = (value = transform) => {
+      if (readOnly || store.getState().workspace.activeViewId !== null) return
+      store.applyOperations([
+        {
+          kind: 'viewport.set',
+          rendererId: 'knowledge-graph',
+          viewId: null,
+          value: { x: value.x, y: value.y, zoom: value.k },
+        },
+      ])
+    }
     const render = () => {
       frame = 0
       const ratio = window.devicePixelRatio || 1
@@ -133,6 +147,8 @@ export function KnowledgeGraph({
       })
     let forces = animate(current.bubbles, current.lines)
     const move = (next: Transform) => {
+      cancelAnimationFrame(motion)
+      save(next)
       if (reduced) {
         transform = next
         invalidate()
@@ -151,7 +167,6 @@ export function KnowledgeGraph({
         render()
         if (progress < 1) motion = requestAnimationFrame(step)
       }
-      cancelAnimationFrame(motion)
       motion = requestAnimationFrame(step)
     }
     const fit = () => {
@@ -169,7 +184,13 @@ export function KnowledgeGraph({
         y: height / 2 - (box.y + box.height / 2) * k,
       }
     }
-    transform = fit() ?? transform
+    if (!saved) {
+      const initial = fit()
+      if (initial) {
+        transform = initial
+        save()
+      }
+    }
     recenter.current = () => {
       const next = fit()
       if (next) move(next)
@@ -271,6 +292,7 @@ export function KnowledgeGraph({
     } | null = null
     const onPointerDown = (event: PointerEvent) => {
       if (event.button !== 0) return
+      cancelAnimationFrame(motion)
       element.setPointerCapture(event.pointerId)
       const bubble = hit(event)
       gesture = {
@@ -319,7 +341,10 @@ export function KnowledgeGraph({
       if (gesture.bubble) {
         gesture.bubble.fx = (point.x - transform.x) / transform.k
         gesture.bubble.fy = (point.y - transform.y) / transform.k
-      } else transform = { ...gesture.origin, x: gesture.origin.x + dx, y: gesture.origin.y + dy }
+      } else {
+        transform = { ...gesture.origin, x: gesture.origin.x + dx, y: gesture.origin.y + dy }
+        save()
+      }
       invalidate()
     }
     const onPointerUp = (event: PointerEvent) => {
@@ -360,6 +385,7 @@ export function KnowledgeGraph({
     }
     const onWheel = (event: WheelEvent) => {
       event.preventDefault()
+      cancelAnimationFrame(motion)
       const point = local(event)
       const delta = event.deltaY * (event.deltaMode === 1 ? 20 : 1) * (event.ctrlKey ? 5 : 1)
       const k = Math.min(4, Math.max(0.1, transform.k * Math.exp(-delta * 0.002)))
@@ -368,6 +394,7 @@ export function KnowledgeGraph({
         x: point.x - ((point.x - transform.x) * k) / transform.k,
         y: point.y - ((point.y - transform.y) * k) / transform.k,
       }
+      save()
       invalidate()
     }
     const onKeyDown = (event: KeyboardEvent) => {
@@ -405,7 +432,7 @@ export function KnowledgeGraph({
       element.removeEventListener('wheel', onWheel)
       container.removeEventListener('keydown', onKeyDown)
     }
-  }, [store, layout, focusRef])
+  }, [store, layout, focusRef, readOnly])
 
   return (
     <div

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import type { SectionId, Selection, VocabDefinition, WorkspaceState } from '@nesso-how/core'
+import { viewportKey } from '@nesso-how/core'
 import { relationKey, SchemaError, type Graph } from '@nesso-how/schema'
 import { maxConceptLabelLength, maxRelationLabelLength } from './settings.ts'
 import { createNessoStore } from './create.ts'
@@ -966,7 +967,11 @@ test('state batches share ordered graph, view and preference changes, including 
   assert.deepEqual(state.selected, [{ kind: 'concept', id: 'urn:n4' }])
   assert.deepEqual(state.preferences.panels, { explorerWidth: 300, inspectorWidth: 350 })
   assert.deepEqual(state.preferences.collapsedSections, ['sidebar.views'])
-  assert.deepEqual(state.workspace.viewports.graph, { x: 10, y: 20, zoom: 0.8 })
+  assert.deepEqual(state.workspace.viewports[viewportKey('graph', 'urn:second')], {
+    x: 10,
+    y: 20,
+    zoom: 0.8,
+  })
   store.applyOperations([
     { kind: 'document.reset', id: 'urn:fresh' },
     { kind: 'view.create', id: 'urn:fresh-view', name: 'Fresh', conceptIds: ['urn:fresh'] },
@@ -1527,7 +1532,11 @@ test('UI and viewport writes own their inputs, ignore no-ops and reject invalid 
     state.workspace.savedViews[0].members.map(({ id }) => id),
     ['urn:n1', 'urn:n2'],
   )
-  assert.deepEqual(state.workspace.viewports.graph, { x: 100, y: -200, zoom: 0.8 })
+  assert.deepEqual(state.workspace.viewports[viewportKey('graph', viewId)], {
+    x: 100,
+    y: -200,
+    zoom: 0.8,
+  })
   assert.deepEqual(state.preferences.panels, { explorerWidth: 300, inspectorWidth: 350 })
   assert.deepEqual(state.preferences.disabledBundledActionPlugins, ['@nesso-how/notes'])
   let notifications = 0
@@ -1557,6 +1566,7 @@ test('UI and viewport writes own their inputs, ignore no-ops and reject invalid 
     () => host.store.setViewport('missing', { x: 0, y: 0, zoom: 1 }),
     () => host.store.setViewport('graph', { x: Infinity, y: 0, zoom: 1 }),
     () => host.store.setViewport('graph', { x: 0, y: 0, zoom: 0 }),
+    () => host.store.setViewport('graph', { x: 0, y: 0, zoom: 1 }, 'missing'),
   ]
   for (const write of writes) {
     assert.throws(write, (error: unknown) => error instanceof NessoError && error.issues.length > 0)

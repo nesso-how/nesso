@@ -43,12 +43,11 @@ export function GraphWorkspace({
   onConfirmDelete?: () => void
   focusRef?: RefObject<HTMLDivElement | null>
 }) {
-  const overview = useSyncExternalStore(
+  const activeViewId = useSyncExternalStore(
     store.subscribe,
-    () => store.getState().workspace.activeViewId === null,
+    () => store.getState().workspace.activeViewId,
   )
-  const [restoreViewport, setRestoreViewport] = useState(!overview)
-  if (overview && restoreViewport) setRestoreViewport(false)
+  const overview = activeViewId === null
   const localFocus = useRef<HTMLDivElement>(null)
   const target = focusRef ?? localFocus
   const readOnly = preview || locked
@@ -82,9 +81,9 @@ export function GraphWorkspace({
     const id = pending.current
     pending.current = null
     if (id !== null) (overview ? graph.current : map.current)?.focusConcept(id)
-  }, [overview])
+  }, [activeViewId, overview])
   const focusConcept = (id: string) => {
-    if ((store.getState().workspace.activeViewId === null) !== overview) pending.current = id
+    if (store.getState().workspace.activeViewId !== activeViewId) pending.current = id
     else (overview ? graph.current : map.current)?.focusConcept(id)
   }
   useImperativeHandle(ref, () => ({
@@ -142,7 +141,6 @@ export function GraphWorkspace({
           bottomInset={bottomInset}
           focusRef={target}
           conceptLabelMaxLength={maxConceptLabelLength}
-          restoreViewport={restoreViewport}
           onPresentation={preview ? undefined : store.setConceptMapPresentation}
         />
       )}

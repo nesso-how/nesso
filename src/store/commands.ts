@@ -8,8 +8,8 @@ export const createCommands = (
   ...createWriteCommands(applyOperations, (id) => id),
   conceptPlacementOffset,
   applyOperations,
-  setViewport: (rendererId, value) =>
-    applyOperations([{ kind: 'viewport.set', rendererId, value }]),
+  setViewport: (rendererId, value, viewId) =>
+    applyOperations([{ kind: 'viewport.set', rendererId, value, viewId }]),
   setActiveRenderer: (id) => applyOperations([{ kind: 'preferences.renderer', id }]),
   resetGraph: () => applyOperations([{ kind: 'document.reset', id: newIri() }]),
 })

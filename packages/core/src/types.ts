@@ -75,7 +75,12 @@ export type NessoOperation =
       readonly included: boolean
     }
   | { readonly kind: 'view.remove'; readonly id: string }
-  | { readonly kind: 'viewport.set'; readonly rendererId: string; readonly value: Viewport }
+  | {
+      readonly kind: 'viewport.set'
+      readonly rendererId: string
+      readonly viewId?: string | null
+      readonly value: Viewport
+    }
   | { readonly kind: 'preferences.vocab'; readonly id: string }
   | { readonly kind: 'preferences.renderer'; readonly id: string }
   | { readonly kind: 'preferences.theme'; readonly id: string }
@@ -156,7 +161,7 @@ export type NessoStore = {
   readonly conceptPlacementOffset: Readonly<Position>
   readonly setSelection: (selection: Selection) => void
   readonly setView: (id: string | null) => void
-  readonly setViewport: (rendererId: string, viewport: Viewport) => void
+  readonly setViewport: (rendererId: string, viewport: Viewport, viewId?: string | null) => void
   readonly setConceptPosition: (
     id: string,
     position: Readonly<Position>,

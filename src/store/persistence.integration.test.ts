@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import type { Preferences, WorkspaceState } from '@nesso-how/core'
+import { viewportKey } from '@nesso-how/core'
 import { parseGraph, serializeGraph, type Graph } from '@nesso-how/schema'
 import { createNessoStore } from './create.ts'
 import { connectPersistence, loadPersistence } from './persistence.ts'
@@ -113,7 +114,7 @@ const savedStorage = () => {
   host.store.setChatMessages([{ id: 'user', role: 'user', content: 'Hello' }])
   const state = host.store.getState()
   storage.records.set('document', {
-    version: 3,
+    version: 4,
     documentId: state.documentId,
     graph: serializeGraph(state.graph as Graph),
     workspace: state.workspace,
@@ -194,13 +195,16 @@ test('plugin data waits for the migrated document identity to be saved without r
   await persistence.dispose()
 })
 
-test('legacy documents move inline presentation into saved views and collect unsorted concepts', async () => {
+test('legacy documents migrate view presentation and viewports and collect unsorted concepts', async () => {
   const storage = savedStorage()
   const original = { version: 2, documentId: 'urn:document', ...legacyDocument() }
+  const viewport = { x: 100, y: -200, zoom: 0.8 }
+  original.workspace.viewports = { graph: viewport }
   storage.records.set('document', original)
   const loaded = await loadPersistence(storage)
   assert.deepEqual(loaded.graph, fixture())
   assert.equal(loaded.documentId, 'urn:document')
+  assert.deepEqual(loaded.workspace!.viewports, { [viewportKey('graph', 'urn:view')]: viewport })
   const [pair, unsorted, ...rest] = loaded.workspace!.savedViews
   assert.deepEqual(rest, [])
   assert.deepEqual(pair, workspace().savedViews[0])
@@ -221,9 +225,37 @@ test('legacy documents move inline presentation into saved views and collect uns
     version: number
     graph: { schemaVersion: number }
   }
-  assert.equal(saved.version, 3)
+  assert.equal(saved.version, 4)
   assert.equal(saved.graph.schemaVersion, 1)
   assert.deepEqual(parseGraph(saved.graph).views, [])
+  await persistence.dispose()
+})
+
+test('each view and Overview retain their viewport across navigation and reopening', async () => {
+  const storage = savedStorage()
+  const loaded = await loadPersistence(storage)
+  const host = registeredHost(loaded.graph!, loaded)
+  host.registerRenderer({ id: 'knowledge-graph' })
+  const { store } = host
+  const persistence = connectPersistence(host, storage, loaded)
+  const first = { x: 100, y: 200, zoom: 0.8 }
+  const second = { x: -50, y: 30, zoom: 1.2 }
+  const overview = { x: 20, y: -70, zoom: 0.5 }
+  store.setViewport('graph', first)
+  const other = store.createView('Other', ['urn:two'])
+  store.setViewport('graph', second)
+  store.setView(null)
+  store.setViewport('knowledge-graph', overview, null)
+  store.setView('urn:view')
+  const expected = {
+    [viewportKey('graph', 'urn:view')]: first,
+    [viewportKey('graph', other)]: second,
+    [viewportKey('knowledge-graph', null)]: overview,
+  }
+  assert.equal(await persistence.flush(), true)
+  const reopened = await loadPersistence(storage)
+  assert.deepEqual(reopened.workspace?.viewports, expected)
+  assert.equal(reopened.workspace?.activeViewId, 'urn:view')
   await persistence.dispose()
 })
 
