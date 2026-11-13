@@ -156,6 +156,7 @@ export async function verifyCreation(context: CheckContext) {
   const mod: ('meta' | 'control')[] = [process.platform === 'darwin' ? 'meta' : 'control']
   await evaluate(`${notes}.focus()`)
   key('A', mod)
+  await ready(`!getSelection().isCollapsed && ${notes}.contains(getSelection().anchorNode)`)
   await context.window.webContents.insertText('Draft')
   await ready(`${notes}.textContent==='Draft'`)
   key('A', mod)
