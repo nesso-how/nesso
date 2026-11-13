@@ -76,7 +76,18 @@ export function useAppCommands({
       if (command === 'undo' || command === 'redo') {
         const target = historyTarget(current)
         if (target === 'document') store[command]()
-        else if (target === 'native') menu.edit(command)
+        else if (target === 'native') {
+          const element = document.activeElement
+          if (element?.closest('[data-local-history]'))
+            element.dispatchEvent(
+              new InputEvent('beforeinput', {
+                inputType: command === 'undo' ? 'historyUndo' : 'historyRedo',
+                bubbles: true,
+                cancelable: true,
+              }),
+            )
+          else menu.edit(command)
+        }
       } else if (command === 'selectAll') {
         if (current.nativeEditing) menu.edit(command)
         else if (!current.blocked) {

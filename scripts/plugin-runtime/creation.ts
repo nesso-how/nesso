@@ -11,9 +11,9 @@ export async function verifyCreation(context: CheckContext) {
   const ready = (script: string) => waitFor(() => evaluate<boolean>(script), Boolean)
   const click = (selector: string) =>
     evaluate(`document.querySelector(${JSON.stringify(selector)}).click()`)
-  const key = (keyCode: string) => {
-    context.window.webContents.sendInputEvent({ type: 'keyDown', keyCode })
-    context.window.webContents.sendInputEvent({ type: 'keyUp', keyCode })
+  const key = (keyCode: string, modifiers: ('meta' | 'control' | 'shift')[] = []) => {
+    context.window.webContents.sendInputEvent({ type: 'keyDown', keyCode, modifiers })
+    context.window.webContents.sendInputEvent({ type: 'keyUp', keyCode, modifiers })
   }
   const nodes = () =>
     evaluate<string[]>(
@@ -148,4 +148,28 @@ export async function verifyCreation(context: CheckContext) {
   )
   await click('#canvas [aria-label="Undo"]')
   await ready(`!document.querySelector('${focus}') && !!document.querySelector('${coffee}')`)
+
+  await click(coffee)
+  const notes = `document.querySelector('#concept-notes')`
+  const originalNotes = await evaluate<string>(`${notes}.textContent`)
+  const beforeNotes = await nodes()
+  const mod: ('meta' | 'control')[] = [process.platform === 'darwin' ? 'meta' : 'control']
+  await evaluate(`${notes}.focus()`)
+  key('A', mod)
+  await context.window.webContents.insertText('Draft')
+  await ready(`${notes}.textContent==='Draft'`)
+  key('A', mod)
+  key('B', mod)
+  await ready(`!!${notes}.querySelector('.nesso-markdown-bold')`)
+  key('Z', mod)
+  await ready(`${notes}.textContent==='Draft' && !${notes}.querySelector('.nesso-markdown-bold')`)
+  key('Z', mod)
+  await ready(`${notes}.textContent===${JSON.stringify(originalNotes)}`)
+  key('Z', mod)
+  assert.deepEqual(await nodes(), beforeNotes)
+  key('Z', [...mod, 'shift'])
+  await ready(`${notes}.textContent==='Draft'`)
+  await evaluate(`${notes}.blur();${notes}.dispatchEvent(new FocusEvent('blur'));${notes}.focus()`)
+  key('Z', mod)
+  assert.equal(await evaluate(`${notes}.textContent`), 'Draft')
 }

@@ -2,7 +2,7 @@ import { useLayoutEffect, useRef, useState, type ComponentProps } from 'react'
 import { cn } from 'cn'
 import { Annotation, Compartment, EditorState, Transaction } from '@codemirror/state'
 import { EditorView, ViewPlugin, keymap, placeholder as editorPlaceholder } from '@codemirror/view'
-import { defaultKeymap, history as editorHistory, historyKeymap } from '@codemirror/commands'
+import { defaultKeymap, history as editorHistory, historyKeymap, redo } from '@codemirror/commands'
 import {
   continueMarkdownList,
   indentMarkdownList,
@@ -16,13 +16,17 @@ type MarkdownInputProps = Omit<ComponentProps<'div'>, 'onChange' | 'children' | 
   value: string
   onChange: (value: string) => void
   readOnly?: boolean
-  history?: boolean
+  history?: boolean | 'focus'
   tasks?: boolean
   onOpenLink?: (url: string) => void
   placeholder?: string
 }
 
 const externalChange = Annotation.define<boolean>()
+const resetHistory = (view: EditorView, compartment: Compartment) => {
+  view.dispatch({ effects: compartment.reconfigure([]) })
+  view.dispatch({ effects: compartment.reconfigure(editorHistory()) })
+}
 const livePreview = ViewPlugin.define(
   (view) => ({
     decorations: markdownDecorations(view.state, view.hasFocus && !view.state.readOnly),
@@ -76,6 +80,7 @@ export function MarkdownInput({
   const editor = useRef<EditorView | null>(null)
   const callbacks = useRef({ onChange, onOpenLink })
   const [configuration] = useState(() => new Compartment())
+  const [historyState] = useState(() => new Compartment())
   const [initialValue] = useState(value)
 
   useLayoutEffect(() => {
@@ -167,25 +172,54 @@ export function MarkdownInput({
           'aria-readonly': String(readOnly),
           spellcheck: 'true',
         }),
-        ...(history ? [editorHistory(), keymap.of(historyKeymap)] : []),
+        ...(history
+          ? [
+              historyState.of(editorHistory()),
+              keymap.of([
+                ...historyKeymap,
+                { key: 'Mod-Shift-z', run: redo, preventDefault: true },
+              ]),
+            ]
+          : []),
+        ...(history === 'focus'
+          ? [
+              EditorView.domEventHandlers({
+                blur(_event, view) {
+                  resetHistory(view, historyState)
+                },
+              }),
+            ]
+          : []),
         ...(placeholder ? [editorPlaceholder(placeholder)] : []),
       ]),
     })
-  }, [configuration, readOnly, history, tasks, id, ariaLabel, ariaLabelledBy, placeholder])
+  }, [
+    configuration,
+    historyState,
+    readOnly,
+    history,
+    tasks,
+    id,
+    ariaLabel,
+    ariaLabelledBy,
+    placeholder,
+  ])
 
   useLayoutEffect(() => {
     const view = editor.current
     if (!view || value === view.state.doc.toString()) return
+    if (history === 'focus') resetHistory(view, historyState)
     view.dispatch({
       changes: { from: 0, to: view.state.doc.length, insert: value },
       annotations: [externalChange.of(true), Transaction.addToHistory.of(false)],
     })
-  }, [value])
+  }, [value, history, historyState])
 
   return (
     <div
       {...props}
       ref={container}
+      data-local-history={history ? '' : undefined}
       className={cn(
         'nesso-input nesso-markdown-input nesso-scroll min-h-24 w-full overflow-y-auto border border-input bg-background px-2.5 py-2 focus-within:border-muted-foreground',
         className,

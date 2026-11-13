@@ -303,10 +303,9 @@ export function Inspector({
               className="max-h-[50vh]"
               aria-label={t('notes')}
               placeholder={t('notesPlaceholder')}
-              data-document-edit
               value={concept.notes ?? ''}
               readOnly={readonly}
-              history={false}
+              history="focus"
               onFocus={() => {
                 textGroup.current = newIri()
               }}
