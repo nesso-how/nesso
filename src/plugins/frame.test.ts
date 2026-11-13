@@ -16,6 +16,7 @@ function fixture(t: TestContext) {
   })
   const element = {
     src: '',
+    title: '@nesso-how/notes',
     onload: null as (() => void) | null,
     contentWindow: { postMessage: post },
   }
@@ -151,5 +152,30 @@ test('failed and cancelled preloads cannot connect late entries', async (t) => {
       assert.equal(f.connect.mock.callCount(), 0)
       assert.equal(f.element.src, 'about:blank')
       assert.equal(f.signal().aborted, true)
+    })
+})
+
+test('loading timeouts identify the plugin and unfinished initialization stages', async (t) => {
+  for (const stage of ['runner', 'entry', 'modules'])
+    await t.test(stage, async (t) => {
+      t.mock.timers.enable({ apis: ['setTimeout'] })
+      const f = fixture(t)
+      if (stage !== 'runner') f.element.onload!()
+      if (stage !== 'entry') f.entry.resolve('data:text/javascript,export{}')
+      await new Promise(setImmediate)
+      const rejected = assert.rejects(f.container.ready, (error: unknown) => {
+        assert.ok(error instanceof PluginError)
+        assert.equal(error.code, 'timeout')
+        assert.match(error.message, /@nesso-how\/notes/)
+        assert.ok(
+          error.message.includes(
+            `runner=${stage !== 'runner'}, entry=${stage !== 'entry'}, panel=true`,
+          ),
+        )
+        return true
+      })
+      t.mock.timers.tick(runtimeLimits.initialization)
+      await rejected
+      assert.equal(f.discarded.mock.callCount(), 1)
     })
 })

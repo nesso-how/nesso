@@ -38,9 +38,18 @@ export function createPluginFrame(
     close()
     discarded()
   }
+  let navigated = false
+  let entryLoaded = false
   const deadline = setTimeout(
     () =>
-      fail(new PluginError('timeout', [{ path: 'plugin', message: 'Plugin loading timed out' }])),
+      fail(
+        new PluginError('timeout', [
+          {
+            path: 'plugin',
+            message: `Plugin loading timed out (${element.title || 'unnamed'}; runner=${navigated}, entry=${entryLoaded}, panel=${panel})`,
+          },
+        ]),
+      ),
     runtimeLimits.initialization,
   )
   const message = (event: MessageEvent) => {
@@ -50,7 +59,6 @@ export function createPluginFrame(
       fail(new PluginError('closed', [{ path: 'plugin', message: 'Plugin content failed' }]))
   }
   window.addEventListener('message', message)
-  let navigated = false
   element.onload = () => {
     if (navigated)
       fail(new PluginError('closed', [{ path: 'plugin', message: 'Plugin navigated away' }]))
@@ -59,7 +67,13 @@ export function createPluginFrame(
       resolveLoaded()
     }
   }
-  const source = Promise.all([entry(controller.signal), loaded]).then(([entry]) => {
+  const source = Promise.all([
+    entry(controller.signal).then((value) => {
+      entryLoaded = true
+      return value
+    }),
+    loaded,
+  ]).then(([entry]) => {
     controller.signal.throwIfAborted()
     if (panel)
       element.contentWindow!.postMessage({ type: 'prepare', guard, token: guard, entry }, '*')
