@@ -63,7 +63,7 @@ export async function verifySafePlugins({ window, url }: CheckContext) {
     0,
   )
   assert.deepEqual(await evaluate(`window.nessoPlugins.list()`), {
-    value: { safeMode: true, packages: [], issues: [] },
+    value: { safeMode: true, packages: [], incompatible: [], issues: [] },
   })
   const blocked = await evaluate<boolean[]>(`Promise.all([
     window.nessoPlugins.search(''),
@@ -75,7 +75,7 @@ export async function verifySafePlugins({ window, url }: CheckContext) {
   ]).then(results => results.map(result => 'issues' in result))`)
   assert.deepEqual(blocked, [true, true, true, true, true, true])
   assert.equal(await readFile(filename, 'utf8'), before)
-  assert.deepEqual(await storage.list(), { packages: [installed], issues: [] })
+  assert.deepEqual(await storage.list(), { packages: [installed], incompatible: [], issues: [] })
   assert.deepEqual(saved.get('document'), document)
   console.log(
     'safe-plugins/desktop: CLI flag skips external loading and blocks management without changing installed records',

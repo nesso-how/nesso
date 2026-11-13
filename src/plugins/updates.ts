@@ -11,15 +11,13 @@ export async function checkPluginUpdates(
   for (const entry of installed) {
     try {
       const result = await bridge.latest(entry.id)
-      if (
-        'issues' in result ||
-        result.value.name !== entry.id ||
-        result.value.nesso.kind !== entry.kind
-      ) {
+      const latest = 'value' in result ? result.value : undefined
+      if (latest === null) continue
+      if (!latest || latest.name !== entry.id || latest.nesso.kind !== entry.kind) {
         failed(entry.id)
         continue
       }
-      if (gt(result.value.version, entry.version)) updates.push(result.value)
+      if (gt(latest.version, entry.version)) updates.push(latest)
     } catch {
       failed(entry.id)
     }

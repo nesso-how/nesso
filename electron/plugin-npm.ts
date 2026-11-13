@@ -158,7 +158,7 @@ export async function latestNpmPlugin(
   cancellation: AbortSignal,
   request: RegistryRequest = registryFetch,
   beta = false,
-): Promise<NpmPlugin> {
+): Promise<NpmPlugin | undefined> {
   if (typeof name !== 'string' || !validateName(name).validForNewPackages) {
     throw new PluginError('invalid-input', [
       { path: 'name', message: 'Expected a valid npm package name' },
@@ -180,13 +180,7 @@ export async function latestNpmPlugin(
       if (!latest || gt(plugin.version, latest.version)) latest = plugin
     } catch {}
   }
-  if (latest) return latest
-  throw new PluginError('invalid-input', [
-    {
-      path: 'npm',
-      message: 'No compatible Nesso plugin version is available in this app channel.',
-    },
-  ])
+  return latest
 }
 
 export async function searchNpmPlugins(
@@ -227,7 +221,7 @@ export async function searchNpmPlugins(
     for (const { package: entry } of result.objects) {
       signal.throwIfAborted()
       if (!entry.keywords?.includes('nesso-plugin')) continue
-      let plugin: NpmPlugin
+      let plugin: NpmPlugin | undefined
       try {
         plugin = await latestNpmPlugin(entry.name, signal, request, beta)
       } catch (error) {
@@ -235,6 +229,7 @@ export async function searchNpmPlugins(
         if (error instanceof PluginError) continue
         throw error
       }
+      if (!plugin) continue
       const names = [plugin.name, ...Object.values(plugin.i18n.metadata.name)]
         .join(' ')
         .toLowerCase()

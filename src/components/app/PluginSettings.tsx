@@ -192,11 +192,13 @@ function InstalledGroups({
                 entry={{ ...entry, name: entry.id }}
                 locale={locale}
                 status={t(
-                  entry.disabled
-                    ? 'pluginDisabled'
-                    : entry.error
-                      ? 'pluginUnavailable'
-                      : 'pluginEnabled',
+                  entry.incompatible
+                    ? 'pluginIncompatible'
+                    : entry.disabled
+                      ? 'pluginDisabled'
+                      : entry.error
+                        ? 'pluginUnavailable'
+                        : 'pluginEnabled',
                 )}
                 update={
                   isLocalPlugin(entry) ? t('pluginLocal') : update && t('pluginUpdateAvailable')

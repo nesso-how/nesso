@@ -14,6 +14,10 @@ export type InstalledPlugin = PreparedPlugin & {
   readonly enabled: boolean
   readonly npmIntegrity?: string
 }
+export type IncompatiblePlugin = Pick<
+  InstalledPlugin,
+  'name' | 'version' | 'author' | 'repository' | 'i18n' | 'contentId' | 'enabled' | 'npmIntegrity'
+> & { readonly kind: PluginManifest['kind']; readonly apiVersion: number }
 export type NpmPlugin = Pick<
   PreparedPlugin,
   'name' | 'version' | 'author' | 'repository' | 'nesso' | 'i18n'
@@ -38,6 +42,7 @@ export type PluginBridge = {
     PluginResult<{
       readonly safeMode: boolean
       readonly packages: readonly InstalledPlugin[]
+      readonly incompatible: readonly IncompatiblePlugin[]
       readonly issues: readonly {
         readonly path: string
         readonly message: string
@@ -49,7 +54,7 @@ export type PluginBridge = {
     query: string,
     offset?: number,
   ) => Promise<PluginResult<{ readonly packages: readonly NpmPlugin[]; readonly next?: number }>>
-  readonly latest: (name: string) => Promise<PluginResult<NpmPlugin>>
+  readonly latest: (name: string) => Promise<PluginResult<NpmPlugin | null>>
   readonly propose: (
     id: string,
     input: PluginPackageInput,

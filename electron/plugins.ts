@@ -64,7 +64,10 @@ export function connectPlugins(
     if (!trusted(event)) return failure()
     try {
       return {
-        value: { safeMode, ...(safeMode ? { packages: [], issues: [] } : await storage.list()) },
+        value: {
+          safeMode,
+          ...(safeMode ? { packages: [], incompatible: [], issues: [] } : await storage.list()),
+        },
       }
     } catch {
       return failure()
@@ -83,7 +86,7 @@ export function connectPlugins(
         const value =
           operation === 'search'
             ? await searchNpmPlugins({ query: input, offset }, controller.signal, undefined, beta)
-            : await latestNpmPlugin(input, controller.signal, undefined, beta)
+            : ((await latestNpmPlugin(input, controller.signal, undefined, beta)) ?? null)
         if (controller.signal.aborted || !trusted(event)) return failure()
         return { value }
       } catch {

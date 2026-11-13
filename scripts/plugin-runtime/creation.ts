@@ -3,7 +3,9 @@ import { ipcMain } from 'electron'
 import { openFixtureWorkspace, waitFor, type CheckContext } from './helpers.ts'
 
 export async function verifyCreation(context: CheckContext) {
-  ipcMain.handle('plugins:list', () => ({ value: { safeMode: false, packages: [], issues: [] } }))
+  ipcMain.handle('plugins:list', () => ({
+    value: { safeMode: false, packages: [], incompatible: [], issues: [] },
+  }))
   context.window.setContentSize(1280, 900)
   const { evaluate } = await openFixtureWorkspace(context, false)
   const ready = (script: string) => waitFor(() => evaluate<boolean>(script), Boolean)

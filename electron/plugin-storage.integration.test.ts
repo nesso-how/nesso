@@ -45,7 +45,7 @@ test('installed actions restore verified bytes offline, reject conflicts and can
     ],
   })
   await assert.rejects(storage.install(prepared, () => false))
-  assert.deepEqual(await storage.list(), { packages: [], issues: [] })
+  assert.deepEqual(await storage.list(), { packages: [], incompatible: [], issues: [] })
   for (const name of ['@nesso-how/review', '@nesso-how/notes']) {
     const bundled = await preparePluginPackage({
       manifest: { ...manifest, name },
@@ -59,6 +59,7 @@ test('installed actions restore verified bytes offline, reject conflicts and can
   await storage.install(prepared, () => true)
   assert.deepEqual(await createPluginStorage(directory).list(), {
     packages: [{ ...prepared, enabled: true }],
+    incompatible: [],
     issues: [],
   })
   const [recordName] = await readdir(directory)
@@ -80,6 +81,7 @@ test('installed actions restore verified bytes offline, reject conflicts and can
   await writeFile(file, previous.replace('Never execute in main', 'Tampered entry bytes'))
   assert.deepEqual(await storage.list(), {
     packages: [],
+    incompatible: [],
     issues: [
       { path: recordName, message: 'Could not read installed package record', name: manifest.name },
     ],
@@ -88,7 +90,11 @@ test('installed actions restore verified bytes offline, reject conflicts and can
   await writeFile(file, previous)
   await storage.install(other, () => true)
   await storage.remove(prepared.contentId)
-  assert.deepEqual(await storage.list(), { packages: [{ ...other, enabled: true }], issues: [] })
+  assert.deepEqual(await storage.list(), {
+    packages: [{ ...other, enabled: true }],
+    incompatible: [],
+    issues: [],
+  })
 })
 
 test('manual updates atomically replace one exact package, preserve disabled state, and leave the previous record intact on failure', async (t) => {
@@ -121,6 +127,7 @@ test('manual updates atomically replace one exact package, preserve disabled sta
   const disabled = { ...previous, enabled: false }
   assert.deepEqual(await createPluginStorage(directory).list(), {
     packages: [disabled],
+    incompatible: [],
     issues: [],
   })
   const [recordName] = await readdir(directory)
@@ -129,6 +136,7 @@ test('manual updates atomically replace one exact package, preserve disabled sta
   await writeFile(file, bytes.replace('"enabled":false', '"enabled":"false"'))
   assert.deepEqual(await storage.list(), {
     packages: [],
+    incompatible: [],
     issues: [
       { path: recordName, message: 'Could not read installed package record', name: manifest.name },
     ],
@@ -163,11 +171,13 @@ test('manual updates atomically replace one exact package, preserve disabled sta
   assert.deepEqual(await readdir(directory), [recordName])
   assert.deepEqual(await createPluginStorage(directory).list(), {
     packages: [{ ...next, enabled: false }],
+    incompatible: [],
     issues: [],
   })
   await storage.setEnabled(next.contentId, true)
   assert.deepEqual(await createPluginStorage(directory).list(), {
     packages: [{ ...next, enabled: true }],
+    incompatible: [],
     issues: [],
   })
   await assert.rejects(storage.setEnabled(previous.contentId, true))
@@ -184,6 +194,7 @@ test('manual updates atomically replace one exact package, preserve disabled sta
   await storage.setEnabled(previous.contentId, true)
   assert.deepEqual(await createPluginStorage(directory).list(), {
     packages: [{ ...previous, enabled: true }],
+    incompatible: [],
     issues: [],
   })
   const published = { ...unrelated, npmIntegrity }
@@ -358,14 +369,18 @@ test('a verified package replaces its own unreadable record and preserves neighb
   const recordName = `${createHash('sha256').update(stale.name).digest('hex')}.json`
   const file = path.join(directory, recordName)
   const stored = await readFile(file, 'utf8')
-  await writeFile(file, stored.replace('"apiVersion":4', '"apiVersion":1'))
+  await writeFile(file, stored.replace('"enabled":true', '"enabled":"true"'))
   assert.deepEqual(await storage.list(), {
     packages: [neighbor],
+    incompatible: [],
     issues: [
       { path: recordName, message: 'Could not read installed package record', name: stale.name },
     ],
   })
-  await assert.rejects(storage.install(await prepare('nesso-fresh'), () => true))
+  await assert.rejects(
+    storage.install(await prepare('nesso-fresh'), () => true),
+    /Unreadable installed package records block changes: nesso-stale\./,
+  )
   const healed = await storage.install(await prepare('nesso-stale', '1.1.0'), () => true)
   assert.equal(healed.version, '1.1.0')
   const listing = await storage.list()
@@ -374,6 +389,83 @@ test('a verified package replaces its own unreadable record and preserves neighb
     [healed, neighbor].sort((a, b) => a.name.localeCompare(b.name)),
   )
   assert.deepEqual(listing.issues, [])
+})
+
+test('records for another plugin API are retained without loading, blocking changes, or escaping budgets', async (t) => {
+  const directory = await mkdtemp(path.join(tmpdir(), 'nesso-incompatible-packages-'))
+  t.after(() => rm(directory, { recursive: true, force: true }))
+  const storage = createPluginStorage(directory)
+  const npmIntegrity = `sha512-${Buffer.alloc(64).toString('base64')}`
+  const prepare = (name: string, version = '1.0.0') =>
+    preparePluginPackage({
+      manifest: {
+        name,
+        version,
+        nesso: { apiVersion: 4, kind: 'actions', entry: 'index.js', writes: [], capabilities: [] },
+        i18n: {
+          metadata: {
+            name: { en: name },
+            description: { en: 'Test' },
+            documentation: { en: 'Test' },
+          },
+        },
+      },
+      files: [{ path: 'index.js', bytes: new TextEncoder().encode(`export const v='${version}'`) }],
+    })
+  const downgrade = async (name: string) => {
+    const file = path.join(directory, `${createHash('sha256').update(name).digest('hex')}.json`)
+    await writeFile(
+      file,
+      (await readFile(file, 'utf8')).replace('"apiVersion":4', '"apiVersion":3'),
+    )
+  }
+  const legacy = await storage.install(
+    { ...(await prepare('nesso-legacy')), npmIntegrity },
+    () => true,
+  )
+  await storage.setEnabled(legacy.contentId, false)
+  await downgrade(legacy.name)
+  const retained = {
+    name: legacy.name,
+    version: legacy.version,
+    author: undefined,
+    repository: undefined,
+    i18n: legacy.i18n,
+    contentId: legacy.contentId,
+    enabled: false,
+    kind: 'actions',
+    apiVersion: 3,
+    npmIntegrity,
+  }
+  assert.deepEqual(await createPluginStorage(directory).list(), {
+    packages: [],
+    incompatible: [retained],
+    issues: [],
+  })
+  const unrelated = await storage.install(await prepare('nesso-unrelated'), () => true)
+  const next = { ...(await prepare(legacy.name, '1.1.0')), npmIntegrity }
+  await assert.rejects(
+    storage.install(next, () => true),
+    /already installed/,
+  )
+  await assert.rejects(storage.setEnabled(legacy.contentId, true))
+  const updated = await storage.install(next, () => true, legacy.contentId)
+  const listing = await createPluginStorage(directory).list()
+  assert.deepEqual(
+    listing.packages.sort((a, b) => a.name.localeCompare(b.name)),
+    [updated, unrelated].sort((a, b) => a.name.localeCompare(b.name)),
+  )
+  assert.deepEqual([listing.incompatible, listing.issues], [[], []])
+  await downgrade(unrelated.name)
+  await storage.remove(unrelated.contentId)
+  assert.deepEqual(await storage.list(), { packages: [updated], incompatible: [], issues: [] })
+  for (let index = 1; index < packageLimits.installed; index++)
+    await storage.install(await prepare(`nesso-filler-${index}`), () => true)
+  await downgrade('nesso-filler-1')
+  await assert.rejects(
+    storage.install(await prepare('nesso-overflow'), () => true),
+    /Installed package budget exceeded/,
+  )
 })
 
 test('invalid file entries are isolated without following links or altering files', async (t) => {
@@ -405,6 +497,7 @@ test('corrupt records still consume record, count, and aggregate scan budgets', 
   await truncate(files[0], packageLimits.record + 1)
   assert.deepEqual(await storage.list(), {
     packages: [],
+    incompatible: [],
     issues: [{ path: path.basename(files[0]), message: 'Could not read installed package record' }],
   })
   await truncate(files[0], packageLimits.record)

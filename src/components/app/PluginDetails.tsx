@@ -406,7 +406,11 @@ function DetailBody({
       <PackageAttribution info={info} npm={!!target || !!installed?.npmIntegrity} />
       {installed?.error && (
         <p className="mt-5 rounded border p-3 text-xs leading-5" role="status">
-          {t('pluginUnavailableDescription')}
+          {t(
+            installed.incompatible
+              ? 'pluginIncompatibleDescription'
+              : 'pluginUnavailableDescription',
+          )}
         </p>
       )}
       {active && (
@@ -488,11 +492,13 @@ export function PluginDetails(props: Props) {
           version={`${info.name}@${info.version}`}
           status={t(
             installed
-              ? installed.disabled
-                ? 'pluginDisabled'
-                : installed.error
-                  ? 'pluginUnavailable'
-                  : 'pluginEnabled'
+              ? installed.incompatible
+                ? 'pluginIncompatible'
+                : installed.disabled
+                  ? 'pluginDisabled'
+                  : installed.error
+                    ? 'pluginUnavailable'
+                    : 'pluginEnabled'
               : 'pluginNotInstalled',
           )}
           local={!!installed && isLocalPlugin(installed)}
@@ -513,7 +519,7 @@ export function PluginDetails(props: Props) {
         useAvailable={useAvailable}
         onCancel={props.onCancel}
         onLifecycle={props.onLifecycle}
-        controls={!installed?.error && <InstallControl {...props} />}
+        controls={(!installed?.error || installed.incompatible) && <InstallControl {...props} />}
       />
     </>
   )

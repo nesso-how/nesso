@@ -108,7 +108,12 @@ export async function listExamplePlugin() {
     files: [{ path: example.nesso.entry, bytes: new TextEncoder().encode(chunk.code) }],
   })
   ipcMain.handle('plugins:list', () => ({
-    value: { safeMode: false, packages: [{ ...prepared, enabled: true }], issues: [] },
+    value: {
+      safeMode: false,
+      packages: [{ ...prepared, enabled: true }],
+      incompatible: [],
+      issues: [],
+    },
   }))
 }
 

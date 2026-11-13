@@ -6,6 +6,7 @@ import {
   parseContribution,
   parsePluginI18n,
   parsePluginManifest,
+  pluginApiVersion,
   PluginError,
   resolvePluginText,
 } from '@nesso-how/plugin/runtime'
@@ -35,7 +36,7 @@ import {
   type PluginPackageInput,
 } from '@nesso-how/plugin/package'
 import { NessoError } from '@nesso-how/errors'
-import type { InstalledPlugin, PluginResult } from '../../shared/plugins.ts'
+import type { IncompatiblePlugin, InstalledPlugin, PluginResult } from '../../shared/plugins.ts'
 import { createPluginPanel } from './panel.ts'
 import { createActionBadges } from './badges.ts'
 import { executeActionBadge } from './badge-execution.ts'
@@ -190,23 +191,33 @@ const parseDefinitionCode = (kind: 'theme' | 'vocab', code: string, path: string
   }
   return parseContribution(kind, raw)
 }
-const externalEntry = (prepared: InstalledPlugin, error?: string): PluginEntry => {
+const packageEntry = (
+  plugin: Omit<IncompatiblePlugin, 'apiVersion'>,
+  details: Pick<PluginEntry, 'access' | 'error' | 'incompatible'>,
+): PluginEntry => {
   const entry = {
-    id: prepared.name,
-    version: prepared.version,
-    author: prepared.author,
-    repository: prepared.repository,
-    i18n: prepared.i18n,
-    access: { writes: prepared.nesso.writes, capabilities: prepared.nesso.capabilities },
-    contentId: prepared.contentId,
-    npmIntegrity: prepared.npmIntegrity,
-    disabled: !prepared.enabled,
-    ...(error ? { error } : {}),
+    id: plugin.name,
+    version: plugin.version,
+    author: plugin.author,
+    repository: plugin.repository,
+    i18n: plugin.i18n,
+    contentId: plugin.contentId,
+    npmIntegrity: plugin.npmIntegrity,
+    disabled: !plugin.enabled,
+    ...details,
   }
-  return prepared.nesso.kind === 'actions'
+  return plugin.kind === 'actions'
     ? { ...entry, kind: 'actions', contribution: [] }
-    : { ...entry, kind: prepared.nesso.kind }
+    : { ...entry, kind: plugin.kind }
 }
+const externalEntry = (prepared: InstalledPlugin, error?: string) =>
+  packageEntry(
+    { ...prepared, kind: prepared.nesso.kind },
+    {
+      access: { writes: prepared.nesso.writes, capabilities: prepared.nesso.capabilities },
+      ...(error ? { error } : {}),
+    },
+  )
 type DiscoveredPlugin = {
   entry: PluginEntry
   source?: ActionPackage
@@ -310,6 +321,16 @@ export async function initializeExternalPlugins(signal: AbortSignal) {
     if (stored.safeMode) return () => {}
     const entries: PluginEntry[] = []
     const staged: DiscoveredPlugin[] = []
+    for (const plugin of stored.incompatible) {
+      const entry = packageEntry(plugin, { error: t('pluginIncompatible'), incompatible: true })
+      recordLocalError(
+        entry,
+        new Error(
+          `Targets plugin API ${plugin.apiVersion}; this app supports only API ${pluginApiVersion}`,
+        ),
+      )
+      entries.push(entry)
+    }
     for (const prepared of stored.packages) {
       if (signal.aborted) return () => {}
       if (!prepared.enabled) {
@@ -347,7 +368,9 @@ export async function initializeExternalPlugins(signal: AbortSignal) {
         description: [
           t('pluginExternalFailedDescription'),
           failed.map((name) => `• ${name}`).join('\n'),
-          stored.issues.length ? t('pluginExternalFailedStaleHint') : '',
+          stored.issues.length || stored.incompatible.length
+            ? t('pluginExternalFailedStaleHint')
+            : '',
         ]
           .filter(Boolean)
           .join('\n\n'),

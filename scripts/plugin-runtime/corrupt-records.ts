@@ -71,7 +71,7 @@ export async function verifyCorruptRecords({ window, url }: CheckContext) {
       ),
     (text) =>
       text.includes('Nesso skipped them') &&
-      text.includes('reinstall it from Find on npm') &&
+      text.includes('reinstall unreadable ones from Find on npm') &&
       text.includes('test-unreadable') &&
       !text.includes(corrupt),
   )

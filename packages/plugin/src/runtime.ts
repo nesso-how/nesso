@@ -181,8 +181,9 @@ export function parsePluginI18n(value: unknown): PluginI18n {
   return parseOrThrow(pluginI18n, value, 'i18n.')
 }
 
+export const pluginApiVersion = 4
 const manifestFields = {
-  apiVersion: z.literal(4),
+  apiVersion: z.literal(pluginApiVersion),
 }
 const jsEntry = z
   .string()

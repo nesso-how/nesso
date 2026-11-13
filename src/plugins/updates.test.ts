@@ -67,3 +67,14 @@ test('incompatible kinds, mismatched identities and network failures preserve pa
   assert.deepEqual(updates, [])
   assert.deepEqual(failed, ['actions', 'theme', 'vocab'])
 })
+
+test('a reachable registry without a compatible version reports no update rather than a failure', async () => {
+  const failed: string[] = []
+  assert.deepEqual(
+    await checkPluginUpdates({ latest: async () => ({ value: null }) }, installed, (name) =>
+      failed.push(name),
+    ),
+    [],
+  )
+  assert.deepEqual(failed, [])
+})

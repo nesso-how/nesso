@@ -4,7 +4,9 @@ import { connectFixtureStorage, waitFor, type CheckContext } from './helpers.ts'
 
 export async function verifyIntro({ window, url, name }: CheckContext) {
   const saved = connectFixtureStorage()
-  ipcMain.handle('plugins:list', () => ({ value: { safeMode: false, packages: [], issues: [] } }))
+  ipcMain.handle('plugins:list', () => ({
+    value: { safeMode: false, packages: [], incompatible: [], issues: [] },
+  }))
   const evaluate = <T>(script: string) => window.webContents.executeJavaScript(script) as Promise<T>
   const ready = (script: string) => waitFor(() => evaluate<boolean>(script), Boolean)
   const next = () =>
