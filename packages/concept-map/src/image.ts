@@ -23,7 +23,7 @@ export async function renderConceptMapImage({
   scale?: 2 | 4
   signal: AbortSignal
   presentation?: ConceptMapPresentation
-}): Promise<{ mediaType: 'image/png'; base64: string }> {
+}): Promise<HTMLCanvasElement> {
   const fail = (message: string) => new ConceptMapImageError([{ path: 'image', message }])
   const state = store.getState()
   const graph = presentedGraph(state)
@@ -113,22 +113,7 @@ export async function renderConceptMapImage({
       canvas.height !== bounds.height * bounds.scale
     )
       throw fail('Image dimensions changed during rendering')
-    const blob = await new Promise<Blob>((resolve, reject) =>
-      canvas.toBlob(
-        (value) => (value ? resolve(value) : reject(fail('Could not encode PNG'))),
-        'image/png',
-      ),
-    )
-    if (blob.size > 16 * 1024 * 1024) throw fail('Image exceeds the file byte budget')
-    check()
-    const base64 = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onload = () => resolve((reader.result as string).split(',')[1])
-      reader.onerror = () => reject(fail('Could not encode image'))
-      reader.readAsDataURL(blob)
-    })
-    check()
-    return { mediaType: 'image/png' as const, base64 }
+    return canvas
   }
   try {
     return await Promise.race([

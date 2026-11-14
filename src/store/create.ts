@@ -17,12 +17,12 @@ import {
   materialize,
   newDocument,
   newWorkspace,
+  relationLabelIssues,
 } from './operations.ts'
 import {
   defaultCanvasTabOrder,
   defaultPanels,
   fail,
-  maxRelationLabelLength,
   parseConversation,
   parsePreferences,
   parseWorkspace,
@@ -186,14 +186,7 @@ export const createNessoStore = (graph: Graph | null, restored: RestoredState = 
         message: `Default type is not offered by vocabulary: ${vocab.id}`,
       })
     }
-    vocab.relationTypes.forEach((type, index) => {
-      if (type.label.length > maxRelationLabelLength) {
-        issues.push({
-          path: `relationTypes[${index}].label`,
-          message: `Relation label must not exceed ${maxRelationLabelLength} characters`,
-        })
-      }
-    })
+    issues.push(...relationLabelIssues(vocab.relationTypes))
     if (issues.length > 0) throw new SchemaError(issues)
     return parseDefinition('vocab', vocab)
   }

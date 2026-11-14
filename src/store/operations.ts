@@ -18,6 +18,7 @@ import {
   type Graph,
   type Relation,
   type RelationType,
+  type SchemaIssue,
 } from '@nesso-how/schema'
 import { isLocale } from '@nesso-how/i18n'
 import { aiChatLimits } from '@nesso-how/ai'
@@ -40,6 +41,18 @@ type Member = SavedView['members'][number]
 const isRemoval = (operation: HostOperation): operation is Removal =>
   operation.kind === 'concept.remove' || operation.kind === 'relation.remove'
 
+export const relationLabelIssues = (types: readonly { label: string }[]): SchemaIssue[] =>
+  types.flatMap((type, index) =>
+    type.label.length > maxRelationLabelLength
+      ? [
+          {
+            path: `relationTypes[${index}].label`,
+            message: `Relation label must not exceed ${maxRelationLabelLength} characters`,
+          },
+        ]
+      : [],
+  )
+
 export const checkGraph = (graph: GraphSnapshot): void => {
   const issues = validateGraph(graph)
   if (graph.concepts.length === 0)
@@ -52,14 +65,7 @@ export const checkGraph = (graph: GraphSnapshot): void => {
       })
     }
   })
-  graph.relationTypes.forEach((type, index) => {
-    if (type.label.length > maxRelationLabelLength) {
-      issues.push({
-        path: `relationTypes[${index}].label`,
-        message: `Relation label must not exceed ${maxRelationLabelLength} characters`,
-      })
-    }
-  })
+  issues.push(...relationLabelIssues(graph.relationTypes))
   if (issues.length > 0) throw new SchemaError(issues)
 }
 
