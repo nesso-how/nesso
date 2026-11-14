@@ -21,7 +21,7 @@ export async function renderKnowledgeGraphImage({
   theme: Readonly<Record<string, string>>
   scale?: 2 | 4
   signal: AbortSignal
-}): Promise<{ mediaType: 'image/png'; base64: string }> {
+}): Promise<HTMLCanvasElement> {
   const fail = (message: string) => new KnowledgeGraphImageError([{ path: 'image', message }])
   const check = () => {
     if (signal.aborted) throw fail('Image rendering cancelled')
@@ -56,17 +56,5 @@ export async function renderKnowledgeGraphImage({
     { x: margin - box.x, y: margin - box.y, k: 1 },
     { concepts: new Set(), relations: new Set(), hovered: null },
   )
-  const blob = await new Promise<Blob>((resolve, reject) =>
-    canvas.toBlob(
-      (value) => (value ? resolve(value) : reject(fail('Could not encode PNG'))),
-      'image/png',
-    ),
-  )
-  if (blob.size > 16 * 1024 * 1024) throw fail('Image exceeds the file byte budget')
-  check()
-  const bytes = new Uint8Array(await blob.arrayBuffer())
-  let binary = ''
-  for (let index = 0; index < bytes.length; index += 0x8000)
-    binary += String.fromCharCode(...bytes.subarray(index, index + 0x8000))
-  return { mediaType: 'image/png', base64: btoa(binary) }
+  return canvas
 }

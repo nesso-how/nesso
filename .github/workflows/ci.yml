@@ -33,7 +33,9 @@ jobs:
         run: |
           sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
           xvfb-run -a pnpm test:desktop release/linux-unpacked/nesso
-      - run: pnpm analyze --format github-annotations --quiet
+      - run: pnpm analyze --summary --quiet
+      - if: github.event_name == 'pull_request'
+        run: pnpm analyze audit --base origin/${{ github.base_ref }} --format github-annotations --quiet
 
   plugin-runtime:
     if: github.event_name == 'push' || github.event.pull_request.draft == false

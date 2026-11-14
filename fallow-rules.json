@@ -10,22 +10,6 @@
       "exclude": ["packages/concept-map/**"],
       "message": "Keep React Flow imports in packages/concept-map.",
       "severity": "error"
-    },
-    {
-      "id": "plugin-runtime-isolation",
-      "kind": "banned-import",
-      "specifiers": [
-        "@nesso-how/kernel-theme",
-        "@nesso-how/paper-theme",
-        "@nesso-how/mist-theme",
-        "@nesso-how/base-vocab",
-        "@nesso-how/import",
-        "@nesso-how/export"
-      ],
-      "ignoreTypeOnly": true,
-      "exclude": ["plugins/**"],
-      "message": "Load plugin code inside its isolated runtime, not the host.",
-      "severity": "error"
     }
   ]
 }

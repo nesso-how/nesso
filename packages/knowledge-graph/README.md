@@ -21,4 +21,4 @@ Selection goes through the injected store, so the host's inspector, deletion rul
 
 - `KnowledgeGraph({ store, layout, readOnly?, focusRef?, onOpen?, ref? })`: renders the overview. `ref` exposes `focusConcept(id)` to center a concept. See [src/index.tsx](src/index.tsx).
 - `settle(graph, layout)` and `viewPositions(layout, ids)` from `@nesso-how/knowledge-graph/layout`: compute the cached layout without rendering, and scale cached positions to seed a new saved view. See [src/layout.ts](src/layout.ts).
-- `renderKnowledgeGraphImage({ state, layout, theme, scale?, signal })` from `@nesso-how/knowledge-graph/image`: returns `{ mediaType: 'image/png', base64 }` of the settled overview, within the same pixel and byte budgets as view images. See [src/image.ts](src/image.ts).
+- `renderKnowledgeGraphImage({ state, layout, theme, scale?, signal })` from `@nesso-how/knowledge-graph/image`: returns a canvas of the settled overview, within the same pixel budget as view images. See [src/image.ts](src/image.ts).

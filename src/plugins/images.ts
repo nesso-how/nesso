@@ -1,8 +1,41 @@
 import type { HostStore } from '../store/types.ts'
 import { materialize } from '../store/operations.ts'
-import { PluginError, themeTokens, type ImageRenderOptions } from '@nesso-how/plugin/runtime'
+import { NessoError } from '@nesso-how/errors'
+import {
+  PluginError,
+  themeTokens,
+  type ImageRenderOptions,
+  type RenderedImage,
+} from '@nesso-how/plugin/runtime'
+
+class ViewImageError extends NessoError {
+  override name = 'ViewImageError'
+}
 
 export async function renderViewImage(
+  store: HostStore,
+  viewId: string | null,
+  options: ImageRenderOptions,
+  signal: AbortSignal,
+): Promise<RenderedImage> {
+  const canvas = await renderViewCanvas(store, viewId, options, signal)
+  const fail = (message: string) => new ViewImageError([{ path: 'image', message }])
+  const blob = await new Promise<Blob>((resolve, reject) =>
+    canvas.toBlob(
+      (value) => (value ? resolve(value) : reject(fail('Could not encode PNG'))),
+      'image/png',
+    ),
+  )
+  if (blob.size > 16 * 1024 * 1024) throw fail('Image exceeds the file byte budget')
+  const bytes = new Uint8Array(await blob.arrayBuffer())
+  if (signal.aborted) throw fail('Image rendering cancelled')
+  let binary = ''
+  for (let index = 0; index < bytes.length; index += 0x8000)
+    binary += String.fromCharCode(...bytes.subarray(index, index + 0x8000))
+  return { mediaType: 'image/png', base64: btoa(binary) }
+}
+
+async function renderViewCanvas(
   store: HostStore,
   viewId: string | null,
   options: ImageRenderOptions,
