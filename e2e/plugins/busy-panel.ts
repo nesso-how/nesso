@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { ipcMain, webContents } from 'electron'
 import { appUrl, createTrustedRequest } from '../../electron/ipc.ts'
 import { connectPluginTermination } from '../../electron/plugin-termination.ts'
+import { runtimeLimits } from '@nesso-how/plugin/runtime'
 import {
   chooseTab,
   listExamplePlugin,
@@ -16,6 +17,10 @@ export async function verifyBusyPanel(context: CheckContext) {
   connectPluginTermination(ipcMain, createTrustedRequest(appUrl(false)), () =>
     webContents.getAllWebContents(),
   )
+  context.window.webContents.debugger.attach()
+  await context.window.webContents.debugger.sendCommand('Page.addScriptToEvaluateOnNewDocument', {
+    source: `{const set=setInterval;setInterval=(f,ms,...a)=>set(f,ms===${runtimeLimits.heartbeat}?2000:ms,...a)}`,
+  })
   const { evaluate } = await openFixtureWorkspace(context)
   const host = context.window.webContents.mainFrame
   const preloaded = await waitFor(
@@ -31,7 +36,6 @@ export async function verifyBusyPanel(context: CheckContext) {
   await waitFor(
     () => evaluate<boolean>(`!!document.querySelector('[data-plugin-panel] [role="alert"]')`),
     Boolean,
-    40_000,
   )
   const exited = async () => {
     try {
